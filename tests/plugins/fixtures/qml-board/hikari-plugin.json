@@ -1,0 +1,18 @@
+{
+  "id": "com.example.board",
+  "name": "Board",
+  "version": "1.0.0",
+  "api": 1,
+  "main": "main.lua",
+  "authors": ["Ana"],
+  "description": "Shows a board in its own QML panel",
+  "tier": "unrestricted",
+  "contributes": {
+    "commands": [{"id": "ping", "title": "Ping the board"}],
+    "panels": [
+      {"id": "board", "title": "Board", "area": "left", "qml": "qml/Board.qml"},
+      {"id": "notes", "title": "Notes"}
+    ],
+    "settings": [{"id": "count", "title": "Count", "type": "integer", "default": 0, "maximum": 10}]
+  }
+}

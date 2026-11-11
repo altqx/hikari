@@ -41,6 +41,7 @@ struct Panel {
     std::string id;
     std::string title;
     PanelArea area = PanelArea::Right;
+    std::string qml; // a package path: a QML panel; empty: a declarative one
 };
 
 struct Setting {
@@ -73,13 +74,15 @@ struct Manifest {
     std::vector<Contribution> commands;
     std::vector<Panel> panels;
     std::vector<Setting> settings;
+
+    bool hasQmlPanels() const;
 };
 
 // The published JSON Schema, docs/schemas/hikari-plugin.schema.json.
 std::string_view manifestSchema();
 
 struct ManifestProblem {
-    enum class Kind { NotJson, Schema, DuplicateId, BadDefault, NeedsNewerApi };
+    enum class Kind { NotJson, Schema, DuplicateId, BadDefault, NeedsNewerApi, QmlNeedsFullTrust };
     Kind kind = Kind::Schema;
     std::string at;     // a JSON pointer into the manifest
     std::string detail; // English, technical: the parser's or validator's words

@@ -220,7 +220,7 @@ DialogWindow {
                 hotkeys.optionsMap(accel, window, "cancel")
             else
                 settingsHotkeyMapping.ask(conflict, answer => hotkeys.optionsMap(accel, window, answer))
-        }, { anchor: row && row.visible ? row : from, clear: () => hotkeys.optionsDelete() })
+        }, { anchor: row && row.visible ? row : from, clear: () => hotkeys.optionsDelete(), command: target.id })
     }
     function chooseCatalog(index) {
         const r = app.chooseSettingsCatalog(values, index)
@@ -319,12 +319,16 @@ DialogWindow {
     component SettingCheck: CheckBox {
         id: check
         required property string setting
+        property string tip
         objectName: "setting_" + setting
         leftPadding: 1
         spacing: 9
         Layout.fillWidth: text.length > 0
         Layout.preferredHeight: Math.max(implicitIndicatorHeight, contentItem.implicitHeight) + topPadding + bottomPadding
         Accessible.name: text
+        Accessible.description: tip
+        ToolTip.text: tip
+        ToolTip.visible: hovered && tip !== ""
         function refresh() { checked = dialog.values[setting] === true }
         Component.onCompleted: {
             if (contentItem && contentItem.wrapMode !== undefined)
@@ -593,6 +597,45 @@ DialogWindow {
                                 text: qsTr("Choose…")
                                 Accessible.name: qsTr("Choose external font folder")
                                 onClicked: fontsFolderDialog.open()
+                            }
+                        }
+                    }
+                    SettingsSection {
+                        objectName: "settingsTrustedFolders"
+                        title: qsTr("Trusted folders")
+                        SettingNote { text: qsTr("HikariSub trusts these folders and the folders inside them: scripts a subtitle file names load without asking, and a file inside a Project opens the Project.") }
+                        Label {
+                            objectName: "settingsTrustedFoldersEmpty"
+                            visible: (dialog.values["trust.folders"] || []).length === 0
+                            text: qsTr("No trusted folders")
+                            color: Theme.muted
+                            Layout.leftMargin: 24
+                        }
+                        Repeater {
+                            model: dialog.values["trust.folders"] || []
+                            delegate: RowLayout {
+                                id: trustedRow
+                                required property string modelData
+                                spacing: 8
+                                Layout.fillWidth: true
+                                Layout.leftMargin: 24
+                                Label {
+                                    text: trustedRow.modelData
+                                    textFormat: Text.PlainText
+                                    elide: Text.ElideMiddle
+                                    Layout.fillWidth: true
+                                    ToolTip.text: trustedRow.modelData
+                                    ToolTip.visible: truncated && trustedHover.hovered
+                                    HoverHandler { id: trustedHover }
+                                }
+                                Button {
+                                    objectName: "settingsUntrustFolder"
+                                    text: qsTr("Remove")
+                                    Accessible.description: qsTr("Stop trusting %1").arg(trustedRow.modelData)
+                                    onClicked: dialog.put("trust.folders",
+                                                          (dialog.values["trust.folders"] || [])
+                                                              .filter(f => f !== trustedRow.modelData))
+                                }
                             }
                         }
                     }
@@ -1232,6 +1275,11 @@ DialogWindow {
                         SettingCheck { setting: "audio.mergeEveryNWithSyllable"; text: qsTr("Merge every “n” with the previous syllable") }
                         SettingCheck { setting: "audio.karaokeMoveOnClick"; text: qsTr("Move the syllable line after a click") }
                         SettingCheck { setting: "audio.karaokeDoubleConsonantApart"; text: qsTr("Give a double consonant its own syllable (so|ma|t|ta)") }
+                        SettingCheck {
+                            setting: "audio.karaokeThaiClusters"
+                            text: qsTr("Split Thai into character clusters")
+                            tip: qsTr("Auto split gives each Thai character cluster its own syllable, so กิน becomes กิ|น. Turn it off to keep each Thai word one syllable.")
+                        }
                         SettingsRow {
                             iconRole: "karaoke"
                             text: qsTr("Long syllables for %1").arg("\\kf")
@@ -1363,45 +1411,6 @@ DialogWindow {
                                 text: qsTr("Clear last answers…")
                                 enabled: (dialog.values["automation.dialogAnswers"] || []).length > 0
                                 onClicked: dialog.clearLastAnswers()
-                            }
-                        }
-                    }
-                    SettingsSection {
-                        objectName: "settingsTrustedFolders"
-                        title: qsTr("Trusted script folders")
-                        SettingNote { text: qsTr("Scripts a subtitle file names load without asking when they are in one of these folders.") }
-                        Label {
-                            objectName: "settingsTrustedFoldersEmpty"
-                            visible: (dialog.values["automation.trustedFolders"] || []).length === 0
-                            text: qsTr("No trusted folders")
-                            color: Theme.muted
-                            Layout.leftMargin: 24
-                        }
-                        Repeater {
-                            model: dialog.values["automation.trustedFolders"] || []
-                            delegate: RowLayout {
-                                id: trustedRow
-                                required property string modelData
-                                spacing: 8
-                                Layout.fillWidth: true
-                                Layout.leftMargin: 24
-                                Label {
-                                    text: trustedRow.modelData
-                                    textFormat: Text.PlainText
-                                    elide: Text.ElideMiddle
-                                    Layout.fillWidth: true
-                                    ToolTip.text: trustedRow.modelData
-                                    ToolTip.visible: truncated && trustedHover.hovered
-                                    HoverHandler { id: trustedHover }
-                                }
-                                Button {
-                                    objectName: "settingsUntrustFolder"
-                                    text: qsTr("Remove")
-                                    Accessible.description: qsTr("Stop trusting %1").arg(trustedRow.modelData)
-                                    onClicked: dialog.put("automation.trustedFolders",
-                                                          (dialog.values["automation.trustedFolders"] || [])
-                                                              .filter(f => f !== trustedRow.modelData))
-                                }
                             }
                         }
                     }
@@ -1723,8 +1732,6 @@ DialogWindow {
                             text: qsTr("Include the file name")
                             Layout.leftMargin: 22
                         }
-                        SettingCheck { setting: "privacy.starPrompt"; text: qsTr("Suggest starring HikariSub on GitHub") }
-                        SettingNote { text: qsTr("At most twice, after you have used HikariSub on several days. The counts stay on this computer.") }
                         SettingCheck { setting: "plugins.network"; text: qsTr("Let plugins connect to the internet") }
                         SettingNote { text: qsTr("HikariSub makes each request, over HTTPS and only to the hosts the plugin listed when you installed it. Off: HikariSub refuses every request a plugin makes through it. A Full trust plugin can still connect on its own.") }
                     }

@@ -1,0 +1,6 @@
+{
+    "apply": {
+        "outcome": "stopped",
+        "refusal": "You put something in the main data box\nbut it is wrong in ways I can't imagine."
+    }
+}

@@ -92,7 +92,7 @@ Nothing here adds a command or a hotkey.
 
 ### Scripts a subtitle file names (2026-10-31)
 
-Legacy and Aegisub load every script a file's `Automation Scripts` names when the Automation menu opens. HikariSub asks first. The Automation menu, Run the last loaded script, Load script and the panel's "This file names scripts" offer all go through one question that lists the scripts' full paths: **Load** (for this file, this session), **Don't load** (remembered for this file for the session; Escape too) or **Always trust scripts in this folder** (Load, and the folders join Settings › Automation › Trusted script folders, where they can be removed). The panel's offer keeps the declined scripts and asks again. Scripts in the shipped Autoload and Include and in the user's autoload folders never ask. Load script still loads the file picked.
+Legacy and Aegisub load every script a file's `Automation Scripts` names when the Automation menu opens. HikariSub asks first. The Automation menu, Run the last loaded script, Load script and the panel's "This file names scripts" offer all go through one question that lists the scripts' full paths: **Load** (for this file, this session), **Don't load** (remembered for this file for the session; Escape too) or **Always trust scripts in this folder** (Load, and the folders join Settings › General › Trusted folders, where they can be removed). The panel's offer keeps the declined scripts and asks again. Scripts in the shipped Autoload and Include and in the user's autoload folders never ask. Load script still loads the file picked.
 
 Each dialogue line's `line.extra` is the Line's extradata ([document model](document-model.md), FA3 [#560](https://github.com/altqx/hikari/issues/560)) as Aegisub 3.5 gives it: a table of string keys and values, a later entry winning over an earlier one with the same key. A script writes it as Aegisub reads it. Only string keys count, a number value becomes its string, any other value becomes `<not a string>`, and a value that is neither a table nor nil fails the run with Aegisub's "dialogue extradata must be a table". A changed table replaces the Line's values in the macro's one undo step, and the save writes them; an unchanged one keeps the Line's entries as they were, repeated keys included. `line.raw` carries no `{=id}` block.
 
@@ -106,11 +106,33 @@ Scripts get Aegisub 3.5.1's Lua API with the additions of arch1t3cht's fork ([FA
 - `frame_from_ms` and `ms_from_frame` round as Aegisub does (`AegisubFrameTimes`, ported from libaegisub's `vfr.cpp`). Only the automation services use it.
 - `aegisub.lfs`, `aegisub.util.deep_copy`, `include()` and `require()` errors behave as in Aegisub 3.5. Argument checking stays as lenient as it was.
 
+### Host calls in a run (AU1, [#837](https://github.com/altqx/hikari/issues/837))
+
+The helper asks the app as little as it can while a run lasts, and the answers are the ones the app would give each time.
+
+- `frame_from_ms` and `ms_from_frame` fetch the video's frame times once a run (`FrameTimes`) and answer in the helper with the same `AegisubFrameTimes`.
+- `text_extents` asks once a run for each style and text, through `karaoke_layout::ExtentsCache` (`extents_cache.h`), which caches any `TextMeasurePort`, failures included. The bundled karaskel measures a Line, its syllables and its furigana with `aegisub.__karaskel_impl.measure_many(style, texts[, count])`, one `TextExtentsMany` request for the texts not yet measured. It returns four numbers a text in one flat table, nil where `text_extents` returns nothing, and raises `text_extents`' errors.
+- `get_frame` asks only for the frame's size. `getPixel` and `getPixelFormatted` ask for one pixel, until a frame object has read 64. Then, or on `frame:data()`, the frame is copied once. The app keeps a run's last two decoded frames and forgets them when the run ends.
+- On Windows the text measure keeps its device context and up to 64 GDI fonts.
+
 The third-party corpus (`tests/fixtures/automation-thirdparty`) runs all 14 of arch1t3cht's macros scripts on a fixture with folds and a perspective plane in its extradata, a 23.976 fps fixture video and a clipboard. `expected.json` pins each run.
 - FocusLines draws at random angles, so its drawings are masked (`random_drawings`).
 - AegisubChain's run is Manage Chains. Its Configure fails with the bundled DependencyControl, because `ipairs` over a config list raises "numerically indexed config hive keys are not supported". It fails the same way in Aegisub 3.5.1, whose LuaJIT also honours `__ipairs`.
 
 Stock modules always load from the shipped Include: a module or `include` file whose top-level name is in the shipped Include comes from there before the script's folder and the user's Include. The DependencyControl-managed packages (`l0`, `a-mo`, `BM`, `DM`, `PT`, `requireffi`, `SubInspector`, `json`, `Yutils`, `lyger`) keep the script folder → user Include → shipped order, so DependencyControl's updates win, and a module the shipped Include lacks resolves as before. This covers `moonscript` as Aegisub 3.5 does by loading its support files by exact path.
+
+### Loading faster (AU2, [#838](https://github.com/altqx/hikari/issues/838))
+
+- **MoonScript compile cache.** A `.moon` script or module compiles once. The compiled Lua and its line table are kept in the user folder's cache, `MoonScript/`, one entry for each file and compiler (`CompileCache`, `compile_cache.h`). An entry is used only while its file holds exactly the source it was compiled from, and the compiler (`moonscript.lua`) is the same text. So a changed script, or a new MoonScript, compiles again. Error lines map to the `.moon` source as before. The cache is best effort: one that can't be written leaves every load compiling, as before. A script that requires DependencyControl compiles ~46 modules (~0.3 s); from the cache it loads in a fraction of that.
+- **Kara Effector loads on first use.** `utils.lua` (which karaskel includes) binds `ke4`, the `R` family, `interpolate*`, and ke4's `temp` and `recall` to stand-ins (`effector-auto4-lazy.lua`). The first use of any of them requires `effector-auto4` and puts the real ones in their place. A global the script set itself in the meantime keeps the script's value, as when ke4 loaded first. A script holding a stand-in compares unequal to the real function, the only difference from loading it up front.
+
+### Thai support (TH2, 2026-11-09)
+
+Thai support by Jibrill: the fixes from Jibrill's Aegisub scripts, carried over with Jibrill's permission ([TH0 #834](https://github.com/altqx/hikari/issues/834)).
+
+- `unicode.graphemes(s)` iterates grapheme clusters ([TH2-unicode-graphemes](compatibility-decisions.md#th2-unicode-graphemes)). The native `grapheme_end` in `aegisub.__unicode_impl` calls `core::graphemeEnd`, the same split the karaoke editor uses.
+- BezierToText places clusters, not code points ([TH2-bezier-clusters](compatibility-decisions.md#th2-bezier-clusters)).
+- "Letter spacing to positioned clusters…" (`fsp-to-pos.lua`, from Jibrill's "Fsp for thai char" 1.2) replaces `\fsp` with one `\pos` Line per cluster, so renderers can't space a mark away from its base. The spacing comes from the dialog or from the Line: its Style's spacing, then each `\fsp`. Lines wrap at the margins unless WrapStyle is 2. `\pos` and `\an` in the Line set the anchor. Each Line gets `\fsp0` when the Style has spacing. The original Line becomes a comment. Lines with `\move` or a drawing are left alone and logged. Unlike 1.2, it doesn't decompose ำ (Q140), keeps `\fn`, `\r` and `\b` resets, and treats `\n` as a space outside WrapStyle 2.
 
 ## Accepted cancellation and transaction policy (2026-09-29)
 

@@ -104,12 +104,11 @@ describe("McpServer, 2026-07-28", () => {
     });
 
     test("a refused write answers HA1's words as a tool error", async () => {
-        const { send } = server({ "document.apply": new RpcError(ErrorCode.hikariApi,
-            "Edits through MCP arrive with the review.", { code: "refused" }) });
-        const { reply } = await send(request(1, "tools/call", { name: "document_apply",
-            arguments: { revision: 1, name: "Fix", edits: [] } }));
+        const refusal = "Through MCP, only document.apply writes; its edits land in the review.";
+        const { send } = server({ "selection.set": new RpcError(ErrorCode.hikariApi, refusal, { code: "refused" }) });
+        const { reply } = await send(request(1, "tools/call", { name: "selection_set", arguments: { selected: [1] } }));
         expect(reply.result).toMatchObject({ isError: true,
-            content: [{ type: "text", text: "Edits through MCP arrive with the review." }] });
+            content: [{ type: "text", text: "Through MCP, only document_apply writes; its edits land in the review." }] });
     });
 
     test("Streamable HTTP headers must agree with the message", async () => {

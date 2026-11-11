@@ -304,6 +304,8 @@ Content content(Code code, const Roles &roles)
         c.syntax = {QColor(), rgb(0x8791FD), rgb(0x00C3FF), rgb(0x00C3FF), rgb(0x0076FF), rgb(0xADABAB),
                     rgb(0xBDB76B), rgb(0xFB4544), rgb(0x00C3FF), rgb(0x8D80D3), rgb(0x11A243), rgb(0x4EC9B0),
                     rgb(0xE5A0D9)};
+        c.ports = {rgb(0xC9A0FF), rgb(0x7FD6A8), rgb(0x8EC5FF), rgb(0xF2C46D), rgb(0xFF9EB5), rgb(0xFFB37A), rgb(0xB0B8C0),
+                   rgb(0x66D9E8)};
         break;
     case Code::Light:
         c.spellcheck = rgb(0xD70000);
@@ -315,6 +317,8 @@ Content content(Code code, const Roles &roles)
         c.syntax = {QColor(), rgb(0x7E3B00), rgb(0x787600), rgb(0x787600), rgb(0x34C200), rgb(0x817F7F),
                     rgb(0xBDB76B), rgb(0xFB4544), rgb(0x00C3FF), rgb(0x8D80D3), rgb(0x11A243), rgb(0x00796B),
                     rgb(0xAD1457)};
+        c.ports = {rgb(0x6B3FB0), rgb(0x1E7A4F), rgb(0x1F5FAD), rgb(0x8A6100), rgb(0xB0306A), rgb(0xA04E00), rgb(0x5A6570),
+                   rgb(0x00707F)};
         a.background = 0xFFDDE3E8;
         a.lineStart = a.lineEnd = 0xFF940000;
         a.inactiveBoundary = 0xFF00875A;
@@ -394,6 +398,8 @@ Content content(Code code, const Roles &roles)
         break;
     }
     c.syntax[0] = roles.text;
+    if (isHighContrast(code))
+        c.ports.fill(roles.text);
     a.selectionBackground = a.selectionModified = toArgb(selection);
     a.waveformSelected = toArgb(roles.accent);
     c.comparisonSelection = roles.accent;
@@ -745,6 +751,17 @@ QVariantList Theme::syntax() const
     QVariantList out;
     for (const QColor &c : theme::current().content.syntax)
         out << c;
+    return out;
+}
+
+QVariantMap Theme::ports() const
+{
+    QVariantMap out;
+    const auto &colours = theme::current().content.ports;
+    for (std::size_t i = 0; i < theme::kPortColourTypes.size(); ++i)
+        out.insert(QString::fromLatin1(theme::kPortColourTypes[i]), colours[i]);
+    out.insert(QStringLiteral("Time"), colours[2]);
+    out.insert(QStringLiteral("Alpha"), colours[2]);
     return out;
 }
 

@@ -1,0 +1,179 @@
+{
+  "apply": {
+    "events": [
+      {
+        "end": 4190,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)\\clip(500,300,780,420)}Rect clip",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4150,
+        "style": "Sign",
+        "text": "{\\bord1.87\\clip(467.54,319.44,729.41,431.67)\\frz-1.88\\fscx93.52\\fscy93.52\\pos(597.09,375.48)\\shad0.94}Rect clip"
+      },
+      {
+        "end": 4230,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)\\clip(500,300,780,420)}Rect clip",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4190,
+        "style": "Sign",
+        "text": "{\\bord1.9\\clip(474.04,314.48,740.44,428.65)\\frz-1.41\\fscx95.14\\fscy95.14\\pos(606.18,371.52)\\shad0.95}Rect clip"
+      },
+      {
+        "end": 4270,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)\\clip(500,300,780,420)}Rect clip",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4230,
+        "style": "Sign",
+        "text": "{\\bord1.94\\clip(481.61,309.59,752.55,425.7)\\frz-0.94\\fscx96.76\\fscy96.76\\pos(616.36,367.61)\\shad0.97}Rect clip"
+      },
+      {
+        "end": 4310,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)\\clip(500,300,780,420)}Rect clip",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4270,
+        "style": "Sign",
+        "text": "{\\bord1.97\\clip(490.27,304.76,765.73,422.82)\\frz-0.47\\fscx98.38\\fscy98.38\\pos(627.64,363.77)\\shad0.98}Rect clip"
+      },
+      {
+        "end": 4350,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)\\clip(500,300,780,420)}Rect clip",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4310,
+        "style": "Sign",
+        "text": "{\\bord2\\clip(500,300,780,420)\\frz0\\fscx100\\fscy100\\pos(640,360)\\shad1}Rect clip"
+      },
+      {
+        "end": 4400,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)\\clip(500,300,780,420)}Rect clip",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4350,
+        "style": "Sign",
+        "text": "{\\bord2.03\\clip(510.81,295.31,795.35,417.25)\\frz0.47\\fscx101.62\\fscy101.62\\pos(653.46,356.29)\\shad1.02}Rect clip"
+      },
+      {
+        "end": 4440,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)\\clip(500,300,780,420)}Rect clip",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4400,
+        "style": "Sign",
+        "text": "{\\bord2.06\\clip(522.71,290.68,811.77,414.56)\\frz0.94\\fscx103.24\\fscy103.24\\pos(668.01,352.64)\\shad1.03}Rect clip"
+      },
+      {
+        "end": 4480,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)\\clip(500,300,780,420)}Rect clip",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4440,
+        "style": "Sign",
+        "text": "{\\bord2.1\\clip(535.68,286.12,829.28,411.95)\\frz1.41\\fscx104.86\\fscy104.86\\pos(683.65,349.06)\\shad1.05}Rect clip"
+      },
+      {
+        "end": 4520,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)\\clip(500,300,780,420)}Rect clip",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4480,
+        "style": "Sign",
+        "text": "{\\bord2.13\\clip(549.74,281.62,847.87,409.4)\\frz1.88\\fscx106.48\\fscy106.48\\pos(700.38,345.54)\\shad1.06}Rect clip"
+      },
+      {
+        "end": 4560,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)\\clip(500,300,780,420)}Rect clip",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4520,
+        "style": "Sign",
+        "text": "{\\bord2.16\\clip(564.87,277.2,867.53,406.91)\\frz2.35\\fscx108.09\\fscy108.09\\pos(718.2,342.09)\\shad1.08}Rect clip"
+      },
+      {
+        "end": 4600,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)\\clip(500,300,780,420)}Rect clip",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4560,
+        "style": "Sign",
+        "text": "{\\bord2.19\\clip(581.08,272.84,888.28,404.49)\\frz2.82\\fscx109.71\\fscy109.71\\pos(737.12,338.69)\\shad1.1}Rect clip"
+      },
+      {
+        "end": 4650,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)\\clip(500,300,780,420)}Rect clip",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4600,
+        "style": "Sign",
+        "text": "{\\bord2.23\\clip(598.38,268.54,910.11,402.14)\\frz3.29\\fscx111.33\\fscy111.33\\pos(757.13,335.36)\\shad1.11}Rect clip"
+      },
+      {
+        "end": 4690,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)\\clip(500,300,780,420)}Rect clip",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4650,
+        "style": "Sign",
+        "text": "{\\bord2.26\\clip(616.75,264.32,933.01,399.86)\\frz3.76\\fscx112.95\\fscy112.95\\pos(778.23,332.1)\\shad1.13}Rect clip"
+      }
+    ],
+    "outcome": "ok",
+    "unchanged": 13,
+    "undo_steps": 1
+  },
+  "departure": "D13"
+}

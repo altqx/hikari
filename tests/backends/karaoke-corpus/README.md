@@ -46,6 +46,8 @@ from the 3.2.2 script after adding a Document, run the test with
 
 `departures/` holds Documents whose output is meant to differ from 3.2.2,
 each for a named entry in the compatibility ledger. They are compared with
-their own golden only. `named-line-templates` locks
-TH5b-line-template-order: the unnamed line templates in file order, then
-the named ones in the order their names first appear.
+their own golden only. `thai` locks TH1-template-char-graphemes: `template
+char` over Thai clusters, a combining accent, an emoji ZWJ sequence and a
+flag. `named-line-templates` locks TH5b-line-template-order: the unnamed
+line templates in file order, then the named ones in the order their names
+first appear.

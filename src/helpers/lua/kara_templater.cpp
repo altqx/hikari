@@ -588,8 +588,6 @@ private:
     int m_currentSource = 0;
     bool m_collecting = false;
     karaskel_tables::Head m_head;
-    karaskel_tables::HostMeasure m_measure{L};
-    std::optional<application::karaoke_layout::ExtentsCache> m_extents;
     std::optional<application::karaoke_layout::Layout> m_layout;
     std::map<int, std::vector<int>> m_collected; // newline table refs per karaoke Line
     absl::flat_hash_map<std::string, Chunk> m_chunks;
@@ -1209,8 +1207,7 @@ int Run::applyOne(int syl, int line, const kt::Template &t, kt::Variables &vars,
 void Run::applyTemplates(const std::vector<int> *sources, const std::set<int> *chosen)
 {
     makeTenv();
-    m_extents.emplace(m_measure);
-    m_layout.emplace(lua_helper::staged().info, lua_helper::staged().styles, *m_extents, m_head.video);
+    m_layout.emplace(karaskel_tables::stagedLayout(m_head.video));
     for (const kt::TemplateRef &t : m_templates.once) {
         const double since = clockNow();
         runCode(*t);
@@ -1230,14 +1227,13 @@ void Run::applyTemplates(const std::vector<int> *sources, const std::set<int> *c
         lua_pushboolean(L, false);
         lua_setfield(L, l, "comment");
         const double since = clockNow();
-        std::vector<std::string> unused;
-        const auto layout = m_layout->line(lua_helper::karaokeSource(*dialogueAt(i)), i, {}, unused);
+        std::vector<std::string> unmeasured;
+        const auto layout = karaskel_tables::layLine(L, *m_layout, *dialogueAt(i), i, unmeasured);
         pushRef(m_styles);
         karaskel_tables::pushKaraskelLine(L, -1, l, layout);
         lua_settop(L, l);
-        for (const std::string &failure : m_measure.failures)
-            problem(2, std::nullopt, std::nullopt, failure);
-        m_measure.failures.clear();
+        for (const std::string &failure : unmeasured)
+            problem(2, std::nullopt, std::nullopt, failure + "; it counts as 0 wide.\n");
         if (m_stats && !m_quiet) {
             m_stats->prepare += clockNow() - since;
             ++m_stats->lines;

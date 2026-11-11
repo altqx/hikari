@@ -7,6 +7,7 @@
 #include <fstream>
 #include <iostream>
 #include <iterator>
+#include <expected>
 #include <map>
 #include <string>
 #include <thread>
@@ -92,6 +93,36 @@ std::int64_t spawnSleeper()
 #endif
 }
 
+struct FakeTurn {
+    Json promptId;
+    std::string say;
+    std::vector<Json> calls;
+    std::size_t next = 0;
+    std::string reason = "end_turn";
+    bool hang = false;
+    bool cancelled = false;
+    bool calling = false;
+};
+
+void sessionUpdate(const std::string &session, Json update)
+{
+    send(Json::object({{"jsonrpc", "2.0"}, {"method", "session/update"},
+                       {"params", Json::object({{"sessionId", session}, {"update", std::move(update)}})}}));
+}
+
+void keep(const std::string &session, Json message)
+{
+    sessionUpdate(session, Json::object({{"sessionUpdate", "history"}, {"message", std::move(message)}}));
+}
+
+std::string toolName(std::string operation)
+{
+    for (char &c : operation)
+        if (c == '.')
+            c = '_';
+    return operation;
+}
+
 void sleepForever()
 {
     for (;;)
@@ -132,6 +163,43 @@ int main(int argc, char **argv)
     std::vector<Json> hanging;
     Json received = Json::array();
     std::int64_t nextId = 1;
+    std::map<std::string, FakeTurn> turns;
+    std::map<std::int64_t, std::string> sessionCalls;
+    const auto finish = [&](const std::string &session, const std::string &reason) {
+        FakeTurn &turn = turns.at(session);
+        if (!turn.say.empty())
+            keep(session, Json::object({{"author", "assistant"},
+                                        {"parts", Json::array({Json::object({{"type", "text"}, {"text", turn.say}})})}}));
+        respond(turn.promptId, Json::object({{"stopReason", reason}}));
+        turns.erase(session);
+    };
+    const auto advance = [&](const std::string &session) {
+        FakeTurn &turn = turns.at(session);
+        if (turn.cancelled)
+            return finish(session, "cancelled");
+        if (turn.next < turn.calls.size()) {
+            const Json call = turn.calls[turn.next];
+            const std::string callId = "c" + std::to_string(++turn.next);
+            const Json *operation = call.find("operation");
+            const Json *params = call.find("params");
+            const std::string name = operation && operation->isString() ? operation->asString() : std::string();
+            sessionUpdate(session, Json::object({{"sessionUpdate", "tool_call"}, {"toolCallId", callId},
+                                                 {"title", toolName(name)},
+                                                 {"kind", name == "document.apply" ? "edit" : "other"},
+                                                 {"status", "in_progress"},
+                                                 {"rawInput", params ? *params : Json::object()}}));
+            const std::int64_t mine = nextId++;
+            sessionCalls.emplace(mine, session);
+            turn.calling = true;
+            send(Json::object({{"jsonrpc", "2.0"}, {"id", mine}, {"method", "_hikari/api.call"},
+                               {"params", Json::object({{"operation", name},
+                                                        {"params", params ? *params : Json::object()},
+                                                        {"session", session}})}}));
+            return;
+        }
+        if (!turn.hang)
+            finish(session, turn.reason);
+    };
     std::string line;
     while (std::getline(std::cin, line)) {
         auto parsed = Json::parse(line);
@@ -141,6 +209,25 @@ int main(int argc, char **argv)
         const Json *method = message.find("method");
         const Json *id = message.find("id");
         const Json *params = message.find("params");
+        if (!method && id && id->isInt() && sessionCalls.contains(id->asInt())) {
+            const std::string session = sessionCalls.at(id->asInt());
+            sessionCalls.erase(id->asInt());
+            received.push(Json::object({{"method", "answer"}, {"params", message}}));
+            if (!turns.contains(session))
+                continue;
+            FakeTurn &turn = turns.at(session);
+            turn.calling = false;
+            const Json *error = message.find("error");
+            const Json *result = message.find("result");
+            sessionUpdate(session, Json::object({{"sessionUpdate", "tool_call_update"},
+                                                 {"toolCallId", "c" + std::to_string(turn.next)},
+                                                 {"status", error ? "failed" : "completed"},
+                                                 {"content", Json::array({Json::object({{"type", "content"},
+                                                     {"content", Json::object({{"type", "text"},
+                                                         {"text", (error ? *error : result ? *result : Json()).dump()}})}})})}}));
+            advance(session);
+            continue;
+        }
         if (!method) {
             const auto it = id && id->isInt() ? waiting.find(id->asInt()) : waiting.end();
             if (it != waiting.end()) {
@@ -166,11 +253,26 @@ int main(int argc, char **argv)
                 }
             continue;
         }
+        if (name == "session/cancel") {
+            const Json *session = params ? params->find("sessionId") : nullptr;
+            received.push(Json::object({{"method", name}, {"params", params ? *params : Json()}}));
+            if (session && session->isString() && turns.contains(session->asString())) {
+                FakeTurn &turn = turns.at(session->asString());
+                turn.cancelled = true;
+                if (!turn.calling)
+                    finish(session->asString(), "cancelled");
+            }
+            if (id)
+                respond(*id, nullptr);
+            continue;
+        }
         if (!id)
             continue;
         if (name == "initialize") {
             if (g_mode == "silent")
                 continue;
+            if (g_mode == "slow-initialize")
+                std::this_thread::sleep_for(std::chrono::milliseconds(200));
             g_initialize = params ? *params : Json();
             respond(*id, Json::object({{"protocolVersion", g_mode == "old-protocol" ? 0 : 1},
                                        {"hikariApiVersion", g_apiVersion}, {"requiredApiVersion", g_requiredApi},
@@ -190,11 +292,63 @@ int main(int argc, char **argv)
             respond(*id, received);
         } else if (name == "_hikari/providers.set" || name == "_hikari/conversation.end") {
             respond(*id, nullptr);
+        } else if (name == "session/new") {
+            respond(*id, Json::object({{"sessionId", *arg.find("sessionId")}}));
+        } else if (name == "session/prompt") {
+            const std::string session = arg.find("sessionId")->asString();
+            const Json &prompt = *arg.find("prompt");
+            const std::string text = prompt.asArray().at(0).find("text")->asString();
+            keep(session, Json::object({{"author", "user"}, {"parts", prompt}}));
+            FakeTurn turn;
+            turn.promptId = *id;
+            const auto script = text.starts_with("{") ? Json::parse(text) : std::expected<Json, Json::ParseError>{};
+            if (script && script->isObject()) {
+                if (const Json *marker = script->find("crashUnless")) {
+                    if (!std::filesystem::exists(marker->asString())) {
+                        std::ofstream(marker->asString()) << "crashed";
+                        std::fputs("fake sidecar: crashing mid-turn\n", stderr);
+                        std::fflush(stderr);
+                        std::_Exit(3);
+                    }
+                    turn.say = "recovered";
+                }
+                if (const Json *say = script->find("say"))
+                    turn.say = say->asString();
+                if (const Json *calls = script->find("calls"))
+                    turn.calls = calls->asArray();
+                if (const Json *reason = script->find("reason"))
+                    turn.reason = reason->asString();
+                turn.hang = script->find("hang") != nullptr;
+                if (const Json *usage = script->find("usage"))
+                    sessionUpdate(session, Json::object({{"sessionUpdate", "usage"}, {"usage", *usage}}));
+            } else {
+                turn.say = "ok: " + text;
+            }
+            if (!turn.say.empty())
+                sessionUpdate(session, Json::object({{"sessionUpdate", "agent_message_chunk"},
+                                                     {"content", Json::object({{"type", "text"}, {"text", turn.say}})}}));
+            turns[session] = std::move(turn);
+            advance(session);
+        } else if (name == "_hikari/session.steer") {
+            const std::string session = arg.find("sessionId")->asString();
+            const auto it = turns.find(session);
+            const bool taken = it != turns.end() && !it->second.cancelled &&
+                               (it->second.calling || it->second.next < it->second.calls.size());
+            respond(*id, Json::object({{"taken", taken}}));
+        } else if (name == "_hikari/session.close") {
+            turns.erase(arg.find("sessionId")->asString());
+            respond(*id, nullptr);
         } else if (name == "_hikari/complete") {
             const Json *request = arg.find("request");
             const Json *model = request ? request->find("model") : nullptr;
             const std::string modelId = model && model->isString() ? model->asString() : std::string();
-            if (modelId == "hang") {
+            if (modelId == "approve" || modelId == "escalate") {
+                const std::string text = modelId == "approve"
+                    ? R"(Sure. {"decision": "approve"})"
+                    : R"({"decision": "escalate", "reason": "The user didn't ask for that."})";
+                respond(*id, Json::object({{"reason", "end"}, {"text", text}, {"toolCalls", Json::array()},
+                                           {"usage", Json::object({{"inputTokens", 1000000}, {"outputTokens", 0}})}}));
+            } else if (modelId == "hang") {
                 hanging.push_back(*id);
             } else if (modelId == "fail") {
                 send(Json::object({{"jsonrpc", "2.0"}, {"id", *id},
@@ -202,6 +356,19 @@ int main(int argc, char **argv)
                                                            {"data", Json::object({{"kind", "rateLimited"},
                                                                                   {"httpStatus", 429},
                                                                                   {"detail", "slow down"}})}})}}));
+            } else if (modelId == "cites") {
+                respond(*id, Json::object({{"reason", "end"}, {"text", "Sung by Aimer [1]."}, {"toolCalls", Json::array()},
+                                           {"usage", Json::object({{"inputTokens", 1}, {"outputTokens", 1},
+                                                                   {"cachedInputTokens", 0}, {"cacheWriteTokens", 0},
+                                                                   {"cacheWriteHourTokens", 0}})},
+                                           {"citations", Json::array({Json::object({{"index", 1},
+                                                                                    {"url", "https://example.org/a"},
+                                                                                    {"title", "A"},
+                                                                                    {"quote", "Aimer"}})})},
+                                           {"searchSuggestions", "<div>chips</div>"},
+                                           {"providerState", Json::object({{"type", "providerState"},
+                                                                           {"wire", "gemini"},
+                                                                           {"json", "[]"}})}}));
             } else {
                 const Json *stream = arg.find("stream");
                 send(Json::object({{"jsonrpc", "2.0"}, {"method", "session/update"},
@@ -212,6 +379,22 @@ int main(int argc, char **argv)
                                                                    {"cachedInputTokens", 0}, {"cacheWriteTokens", 2},
                                                                    {"cacheWriteHourTokens", 1}})}}));
             }
+        } else if (name == "_hikari/search.test") {
+            const Json *service = arg.find("service");
+            const std::string chosen = service && service->isString() ? service->asString() : std::string();
+            const auto refuse = [&](const char *kind, int status, const char *detail) {
+                send(Json::object({{"jsonrpc", "2.0"}, {"id", *id},
+                                   {"error", Json::object({{"code", -32010}, {"message", detail},
+                                                           {"data", Json::object({{"kind", kind},
+                                                                                  {"httpStatus", status},
+                                                                                  {"detail", detail}})}})}}));
+            };
+            if (chosen == "exa")
+                refuse("unauthorized", 401, "invalid key");
+            else if (chosen == "tavily")
+                refuse("rateLimited", 432, "plan limit exceeded");
+            else
+                respond(*id, nullptr);
         } else if (name == "_hikari/models.list") {
             respond(*id, Json::object({{"models", Json::array({Json::object({{"id", "b/model"}, {"name", "B"}})})}}));
         } else if (name == "echo") {

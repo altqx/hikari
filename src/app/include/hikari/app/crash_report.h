@@ -47,6 +47,7 @@ struct System {
     int screens = 1;
     QString scale;    // Analytics::scaleBucket
     QString layout;   // a preset's id, "saved" or "custom"
+    QJsonObject ai;   // Analytics::kAiVersionProperties; empty with AI off
 
     static System current(const QString &version, const QString &package, int screens, qreal scale,
                           const QString &layout);

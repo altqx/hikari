@@ -29,11 +29,44 @@ FocusScope {
     objectName: "reviewPanel"
 
     function undo(change, item) {
-        if (review.editedSince(change, item) > 0) {
-            confirming = { change: change, item: item }
+        const edited = review.editedSince(change, item)
+        if (edited > 0) {
+            confirming = { change: change, item: item, edited: edited }
             return
         }
         review.undo(change, item, false)
+    }
+    function undoAnyway() {
+        const target = confirming
+        confirming = null
+        review.undo(target.change, target.item, true)
+    }
+    function asking(change, item) {
+        return confirming !== null && confirming.change === change && confirming.item === item
+    }
+
+    component Question: Pane {
+        id: question
+        property string text
+        default property alias actions: actionRow.data
+        Layout.fillWidth: true
+        padding: 6
+        background: Rectangle {
+            color: Theme.raised
+            border.color: Theme.warning
+            radius: 4
+        }
+        ColumnLayout {
+            width: parent.width
+            Label {
+                Layout.fillWidth: true
+                wrapMode: Text.WordWrap
+                text: question.text
+            }
+            RowLayout {
+                id: actionRow
+            }
+        }
     }
 
     component RowButtons: RowLayout {
@@ -169,6 +202,21 @@ FocusScope {
                                         onKeep: panel.review.keep(changeBlock.modelData.change, -1)
                                     }
                                 }
+                                Question {
+                                    objectName: "reviewConfirmChange"
+                                    visible: panel.asking(changeBlock.modelData.change, -1)
+                                    text: qsTr("You changed %n line(s) after this change. Undo puts the whole change back as it was before the AI, which drops your edits.", "", panel.confirming?.edited ?? 0)
+                                    Button {
+                                        objectName: "reviewConfirmChangeUndo"
+                                        text: qsTr("Undo anyway")
+                                        onClicked: panel.undoAnyway()
+                                    }
+                                    Button {
+                                        objectName: "reviewConfirmChangeCancel"
+                                        text: qsTr("Cancel")
+                                        onClicked: panel.confirming = null
+                                    }
+                                }
                                 Label {
                                     visible: changeBlock.modelData.waiting === 0
                                     color: Theme.muted
@@ -179,9 +227,6 @@ FocusScope {
                                     delegate: ColumnLayout {
                                         id: itemBlock
                                         required property var modelData
-                                        readonly property bool asking: panel.confirming !== null
-                                                                       && panel.confirming.change === changeBlock.modelData.change
-                                                                       && panel.confirming.item === itemBlock.modelData.item
                                         Layout.fillWidth: true
                                         spacing: 0
                                         ItemDelegate {
@@ -218,38 +263,18 @@ FocusScope {
                                                 }
                                             }
                                         }
-                                        Pane {
+                                        Question {
                                             objectName: "reviewConfirm"
-                                            visible: itemBlock.asking
-                                            Layout.fillWidth: true
-                                            padding: 6
-                                            background: Rectangle {
-                                                color: Theme.raised
-                                                border.color: Theme.warning
-                                                radius: 4
+                                            visible: panel.asking(changeBlock.modelData.change, itemBlock.modelData.item)
+                                            text: qsTr("You changed it after this change. Undo puts it back as it was before the AI, which drops your edit.")
+                                            Button {
+                                                objectName: "reviewUndoAnyway"
+                                                text: qsTr("Undo anyway")
+                                                onClicked: panel.undoAnyway()
                                             }
-                                            ColumnLayout {
-                                                width: parent.width
-                                                Label {
-                                                    Layout.fillWidth: true
-                                                    wrapMode: Text.WordWrap
-                                                    text: qsTr("You changed it after this change. Undo puts it back as it was before the AI, which drops your edit.")
-                                                }
-                                                RowLayout {
-                                                    Button {
-                                                        objectName: "reviewUndoAnyway"
-                                                        text: qsTr("Undo anyway")
-                                                        onClicked: {
-                                                            const target = panel.confirming
-                                                            panel.confirming = null
-                                                            panel.review.undo(target.change, target.item, true)
-                                                        }
-                                                    }
-                                                    Button {
-                                                        text: qsTr("Cancel")
-                                                        onClicked: panel.confirming = null
-                                                    }
-                                                }
+                                            Button {
+                                                text: qsTr("Cancel")
+                                                onClicked: panel.confirming = null
                                             }
                                         }
                                     }
@@ -258,44 +283,25 @@ FocusScope {
                         }
                     }
                 }
-                Pane {
+                Question {
                     objectName: "reviewConfirmAll"
-                    visible: panel.confirming !== null && panel.confirming.change === 0
-                    Layout.fillWidth: true
+                    visible: panel.asking(0, -1)
                     Layout.margins: 8
-                    padding: 6
-                    background: Rectangle {
-                        color: Theme.raised
-                        border.color: Theme.warning
-                        radius: 4
+                    text: qsTr("You edited some of these lines after the AI did. Undo all leaves them as they are unless you undo them anyway.")
+                    Button {
+                        text: qsTr("Undo all anyway")
+                        onClicked: panel.undoAnyway()
                     }
-                    ColumnLayout {
-                        width: parent.width
-                        Label {
-                            Layout.fillWidth: true
-                            wrapMode: Text.WordWrap
-                            text: qsTr("You edited some of these lines after the AI did. Undo all leaves them as they are unless you undo them anyway.")
+                    Button {
+                        text: qsTr("Leave my edits")
+                        onClicked: {
+                            panel.confirming = null
+                            panel.review.undo(0, -1, false)
                         }
-                        RowLayout {
-                            Button {
-                                text: qsTr("Undo all anyway")
-                                onClicked: {
-                                    panel.confirming = null
-                                    panel.review.undo(0, -1, true)
-                                }
-                            }
-                            Button {
-                                text: qsTr("Leave my edits")
-                                onClicked: {
-                                    panel.confirming = null
-                                    panel.review.undo(0, -1, false)
-                                }
-                            }
-                            Button {
-                                text: qsTr("Cancel")
-                                onClicked: panel.confirming = null
-                            }
-                        }
+                    }
+                    Button {
+                        text: qsTr("Cancel")
+                        onClicked: panel.confirming = null
                     }
                 }
                 Label {

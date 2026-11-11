@@ -16,6 +16,7 @@
 #include <QtTest>
 
 #include <algorithm>
+#include <functional>
 #include <memory>
 
 using namespace hikari;
@@ -119,6 +120,38 @@ class ApiHostTest : public QObject {
         }
     }
     bool heardEvent(const std::string &name) const { return std::ranges::find(heard, name) != heard.end(); }
+    QList<QQuickItem *> visibleNamed(const QString &name) const
+    {
+        QList<QQuickItem *> out;
+        std::function<void(QQuickItem *)> walk = [&](QQuickItem *at) {
+            if (!at->isVisible())
+                return;
+            if (at->objectName() == name)
+                out << at;
+            for (QQuickItem *child : at->childItems())
+                walk(child);
+        };
+        walk(window()->contentItem());
+        return out;
+    }
+    QQuickItem *changeRowUndo() const
+    {
+        const auto inItemRow = [](QQuickItem *at) {
+            for (; at; at = at->parentItem())
+                if (at->objectName() == QLatin1String("reviewItem"))
+                    return true;
+            return false;
+        };
+        for (QQuickItem *button : visibleNamed(QStringLiteral("reviewUndo")))
+            if (!inItemRow(button))
+                return button;
+        return nullptr;
+    }
+    bool clickVisible(const QString &name) const
+    {
+        const auto found = visibleNamed(name);
+        return found.size() == 1 && QMetaObject::invokeMethod(found.front(), "click");
+    }
 
 private slots:
     void init()
@@ -242,6 +275,56 @@ private slots:
         QCOMPARE(textAt(0), std::u8string(u8"mine"));
         QVERIFY(application->review()->undoLine(true));
         QCOMPARE(textAt(0), std::u8string(u8"first"));
+    }
+
+    void undoOnAChangeRowWithALineEditedSinceAsksFirst()
+    {
+        const auto lines = session().document().lines();
+        const auto first = lines[0]->id, second = lines[1]->id;
+        QVERIFY(call("document.apply", QStringLiteral(R"({"revision": %1, "name": "Tightened both", "edits": [
+            {"op": "set_line", "line": %2, "fields": {"text": "one"}},
+            {"op": "set_line", "line": %3, "fields": {"text": "two"}}]})")
+                                           .arg(session().revision())
+                                           .arg(first.value)
+                                           .arg(second.value)
+                                           .toUtf8()
+                                           .constData(),
+                     reviewedAi()));
+        QVERIFY(select(first));
+        application->editor().textEdited(QStringLiteral("mine"), 4);
+        QVERIFY(application->editor().commitFromField(false));
+        QCOMPARE(textAt(0), std::u8string(u8"mine"));
+        QCOMPARE(reviewRoleAt(0), int(ui::LineTableModel::ReviewState::EditedSince));
+        QCOMPARE(application->review()->waiting(), 2);
+
+        QVERIFY(shell(QStringLiteral("root.showPanel(reviewDock), reviewDock.isOpen")).toBool());
+        QTRY_VERIFY(changeRowUndo());
+        const auto steps = session().historySize();
+        QVERIFY(QMetaObject::invokeMethod(changeRowUndo(), "click"));
+        QTRY_COMPARE(visibleNamed(QStringLiteral("reviewConfirmChange")).size(), 1);
+        QCOMPARE(visibleNamed(QStringLiteral("reviewConfirmChange")).front()->property("text").toString(),
+                 QStringLiteral("You changed 1 line(s) after this change. Undo puts the whole change back as it was "
+                                "before the AI, which drops your edits."));
+        QCOMPARE(session().historySize(), steps);
+        QVERIFY(visibleNamed(QStringLiteral("reviewConfirm")).isEmpty());
+        shoot(QStringLiteral("review-change-row-confirm"));
+
+        QVERIFY(clickVisible(QStringLiteral("reviewConfirmChangeCancel")));
+        QTRY_VERIFY(visibleNamed(QStringLiteral("reviewConfirmChange")).isEmpty());
+        QCOMPARE(textAt(0), std::u8string(u8"mine"));
+        QCOMPARE(textAt(1), std::u8string(u8"two"));
+        QCOMPARE(session().historySize(), steps);
+        QCOMPARE(application->review()->waiting(), 2);
+
+        QVERIFY(QMetaObject::invokeMethod(changeRowUndo(), "click"));
+        QTRY_COMPARE(visibleNamed(QStringLiteral("reviewConfirmChange")).size(), 1);
+        QVERIFY(clickVisible(QStringLiteral("reviewConfirmChangeUndo")));
+        QTRY_COMPARE(textAt(0), std::u8string(u8"first"));
+        QCOMPARE(textAt(1), std::u8string(u8"second"));
+        QCOMPARE(session().historySize(), steps + 1);
+        QCOMPARE(session().history().back().name, std::string("Undo AI: Tightened both"));
+        QCOMPARE(application->review()->waiting(), 0);
+        QVERIFY(visibleNamed(QStringLiteral("reviewConfirmChange")).isEmpty());
     }
 
     void restoringACheckpointUndoesTheTurnKeptChangesToo()
@@ -374,6 +457,67 @@ private slots:
         const auto audio = call("audio.info", "{}");
         QVERIFY(audio);
         QVERIFY(*audio == *api::Json::parse(R"({"open": false})"));
+    }
+
+    void oneLineIsDrawnApartFromTheVideosSubtitles()
+    {
+        application->video().openVideo(QStringLiteral("?dummy:25.000000:250:320:180:47:163:254:"));
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().hasVideo(), 20000);
+        const auto first = session().document().lines().front()->id;
+        const auto box = call("document.apply", QStringLiteral(R"({"revision": %1, "name": "Box", "edits": [
+            {"op": "set_line", "line": %2, "fields": {"text": "{\\pos(20,20)\\an7\\bord0\\shad0\\p1}m 0 0 l 60 0 60 40 0 40"}}]})")
+                                                    .arg(session().revision())
+                                                    .arg(first.value)
+                                                    .toUtf8()
+                                                    .constData());
+        QVERIFY2(box, box ? "" : box.error().message.c_str());
+        QTest::qWait(100);
+        const std::uint64_t videoScripts = application->video().session().subtitleUpdates();
+
+        const auto ink = call("video.ink_bounds", QStringLiteral(R"({"frame": 0, "line": %1})").arg(first.value).toUtf8().constData());
+        QVERIFY2(ink, ink ? "" : ink.error().message.c_str());
+        const api::Json &bounds = *ink->find("bounds");
+        QVERIFY(bounds.isObject());
+        const int x0 = int(bounds.find("x")->asInt()), y0 = int(bounds.find("y")->asInt());
+        const int x1 = x0 + int(bounds.find("width")->asInt()), y1 = y0 + int(bounds.find("height")->asInt());
+        QVERIFY(x1 <= 320 && y1 <= 180 && x1 - x0 > 4 && y1 - y0 > 4);
+        const auto second = session().document().lines()[1]->id;
+        QVERIFY(*call("video.ink_bounds", QStringLiteral(R"({"frame": 0, "line": %1})").arg(second.value).toUtf8().constData())
+                     ->find("bounds") == api::Json());
+
+        const auto frameOf = [this](const QString &params) {
+            std::optional<api::Result> answer;
+            hikariApi().call(assistant(), "video.frame", *api::Json::parse(params.toStdString()),
+                             [&](api::Result r) { answer = std::move(r); });
+            QTest::qWaitFor([&] { return answer.has_value(); }, 20000);
+            return answer && *answer ? QByteArray::fromBase64(QByteArray::fromStdString((*answer)->find("data")->asString()))
+                                     : QByteArray();
+        };
+        const QByteArray drawn = frameOf(QStringLiteral(R"({"frame": 0, "line": %1, "maxEdge": 4096})").arg(first.value));
+        const QByteArray bare = frameOf(QStringLiteral(R"({"frame": 0, "subtitles": false, "maxEdge": 4096})"));
+        QCOMPARE(drawn.size(), 320 * 180 * 4);
+        QCOMPARE(bare.size(), drawn.size());
+        int inside = 0;
+        for (int y = 0; y < 180; ++y)
+            for (int x = 0; x < 320; ++x) {
+                const bool same = drawn.mid((y * 320 + x) * 4, 4) == bare.mid((y * 320 + x) * 4, 4);
+                if (x >= x0 && x < x1 && y >= y0 && y < y1)
+                    inside += same ? 0 : 1;
+                else
+                    QVERIFY2(same, qPrintable(QStringLiteral("%1,%2").arg(x).arg(y)));
+            }
+        QVERIFY(inside > 0);
+
+        std::optional<api::Result> sampled;
+        hikariApi().call(assistant(), "video.colours", *api::Json::parse(R"({"frame": 0, "points": [{"x": 300, "y": 170}]})"),
+                         [&](api::Result r) { sampled = std::move(r); });
+        QTRY_VERIFY_WITH_TIMEOUT(sampled.has_value(), 20000);
+        QVERIFY(*sampled);
+        const auto *pixel = reinterpret_cast<const unsigned char *>(bare.constData()) + (170 * 320 + 300) * 4;
+        QCOMPARE(QString::fromStdString((*sampled)->find("colours")->asArray().front().find("colour")->asString()),
+                 QStringLiteral("&H%1%2%3&").arg(pixel[0], 2, 16, QLatin1Char('0')).arg(pixel[1], 2, 16, QLatin1Char('0'))
+                     .arg(pixel[2], 2, 16, QLatin1Char('0')).toUpper());
+        QCOMPARE(application->video().session().subtitleUpdates(), videoScripts);
     }
 
     void aUserCommandIsHeard()

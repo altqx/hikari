@@ -2,6 +2,389 @@
 <!DOCTYPE TS>
 <TS version="2.1" language="ta">
 <context>
+    <name>HikariSub.Agent</name>
+    <message>
+        <source>Agent</source>
+        <translation>முகவர்</translation>
+    </message>
+    <message>
+        <source>Export as Markdown</source>
+        <translation>Markdown ஆக ஏற்றுமதி செய்</translation>
+    </message>
+    <message>
+        <source>Markdown (*.md)</source>
+        <translation>Markdown (*.md)</translation>
+    </message>
+    <message>
+        <source>The thread couldn’t be saved there.</source>
+        <translation>இழையை அங்கே சேமிக்க முடியவில்லை.</translation>
+    </message>
+    <message>
+        <source>Agent panel</source>
+        <translation>முகவர் பலகம்</translation>
+    </message>
+    <message>
+        <source>New agent thread</source>
+        <translation>புதிய முகவர் இழை</translation>
+    </message>
+    <message>
+        <source>Manual</source>
+        <translation>கைமுறை</translation>
+    </message>
+    <message>
+        <source>Full access</source>
+        <translation>முழு அணுகல்</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>தானியங்கு</translation>
+    </message>
+    <message>
+        <source>Turn on Full access?</source>
+        <translation>முழு அணுகலை இயக்கவா?</translation>
+    </message>
+    <message>
+        <source>The agent changes subtitles, styles and settings without asking. Every change still lands in the review and can be undone.</source>
+        <translation>முகவர் கேட்காமலேயே வசனங்கள், பாணிகள், அமைப்புகளை மாற்றுகிறது. ஒவ்வொரு மாற்றமும் மதிப்பாய்வில் சேர்கிறது, அதைச் செயல்தவிர்க்கலாம்.</translation>
+    </message>
+    <message>
+        <source>These still ask, in every mode: deleting or overwriting files outside the subtitles’ folders, running external programs and installing plugins, sending local files to the network, and changing AI permissions, keys or budgets.</source>
+        <translation>இவை எல்லாப் பயன்முறைகளிலும் இன்னும் கேட்கும்: வசனக் கோப்புறைகளுக்கு வெளியே உள்ள கோப்புகளை நீக்குதல் அல்லது மேலெழுதுதல், வெளி நிரல்களை இயக்குதல், செருகுநிரல்களை நிறுவுதல், உள்ளூர்க் கோப்புகளைப் பிணையத்துக்கு அனுப்புதல், AI அனுமதிகள், விசைகள் அல்லது வரவுசெலவுகளை மாற்றுதல்.</translation>
+    </message>
+    <message>
+        <source>Don’t warn me again</source>
+        <translation>மீண்டும் எச்சரிக்க வேண்டாம்</translation>
+    </message>
+    <message>
+        <source>Turn on Full access</source>
+        <translation>முழு அணுகலை இயக்கு</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>ரத்துசெய்</translation>
+    </message>
+    <message>
+        <source>Threads</source>
+        <translation>இழைகள்</translation>
+    </message>
+    <message>
+        <source>New thread</source>
+        <translation>புதிய இழை</translation>
+    </message>
+    <message>
+        <source>Thread menu</source>
+        <translation>இழை மெனு</translation>
+    </message>
+    <message>
+        <source>Add a provider to use the agent</source>
+        <translation>முகவரைப் பயன்படுத்த ஒரு வழங்குநரைச் சேர்க்கவும்</translation>
+    </message>
+    <message>
+        <source>HikariSub has no AI server. The agent runs on a provider you add: an API key, a ChatGPT or OpenRouter sign-in, or a model on this computer.</source>
+        <translation>HikariSub-க்கு AI சேவையகம் இல்லை. நீங்கள் சேர்க்கும் வழங்குநரில் முகவர் இயங்குகிறது: ஒரு API விசை, ChatGPT அல்லது OpenRouter உள்நுழைவு, அல்லது இந்தக் கணினியில் உள்ள ஒரு மாதிரி.</translation>
+    </message>
+    <message>
+        <source>Open Settings › AI</source>
+        <translation>அமைப்புகள் › AI ஐத் திற</translation>
+    </message>
+    <message>
+        <source>Nothing is sent or downloaded until you add one.</source>
+        <translation>நீங்கள் ஒன்றைச் சேர்க்கும் வரை எதுவும் அனுப்பப்படாது, பதிவிறக்கப்படாது.</translation>
+    </message>
+    <message>
+        <source>Search threads</source>
+        <translation>இழைகளைத் தேடு</translation>
+    </message>
+    <message>
+        <source>Today</source>
+        <translation>இன்று</translation>
+    </message>
+    <message>
+        <source>Yesterday</source>
+        <translation>நேற்று</translation>
+    </message>
+    <message>
+        <source>cost not reported</source>
+        <translation>செலவு தெரிவிக்கப்படவில்லை</translation>
+    </message>
+    <message>
+        <source>running</source>
+        <translation>இயங்குகிறது</translation>
+    </message>
+    <message>
+        <source>at cap</source>
+        <translation>வரம்பை எட்டியது</translation>
+    </message>
+    <message>
+        <source>Queued · %1</source>
+        <translation>வரிசையில் · %1</translation>
+    </message>
+    <message>
+        <source>Steer now</source>
+        <translation>இப்போதே வழிநடத்து</translation>
+    </message>
+    <message>
+        <source>Edit</source>
+        <translation>திருத்து</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>அகற்று</translation>
+    </message>
+    <message>
+        <source>%1 of %2 tokens</source>
+        <translation>%2 இல் %1 டோக்கன்கள்</translation>
+    </message>
+    <message>
+        <source>%1 tokens</source>
+        <translation>%1 டோக்கன்கள்</translation>
+    </message>
+    <message>
+        <source>%1 of %2</source>
+        <translation>%2 இல் %1</translation>
+    </message>
+    <message>
+        <source>%1 · active tab</source>
+        <translation>%1 · செயலில் உள்ள தாவல்</translation>
+    </message>
+    <message>
+        <source>Ask, or type @ to attach, / for commands</source>
+        <translation>கேளுங்கள், அல்லது இணைக்க @, கட்டளைகளுக்கு / தட்டச்சிடுங்கள்</translation>
+    </message>
+    <message>
+        <source>Add a provider first</source>
+        <translation>முதலில் ஒரு வழங்குநரைச் சேர்க்கவும்</translation>
+    </message>
+    <message>
+        <source>Message</source>
+        <translation>செய்தி</translation>
+    </message>
+    <message>
+        <source>Attach</source>
+        <translation>இணை</translation>
+    </message>
+    <message>
+        <source>Stop</source>
+        <translation>நிறுத்து</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>அனுப்பு</translation>
+    </message>
+    <message>
+        <source>Rename thread…</source>
+        <translation>இழையை மறுபெயரிடு…</translation>
+    </message>
+    <message>
+        <source>Export as Markdown…</source>
+        <translation>Markdown ஆக ஏற்றுமதி செய்…</translation>
+    </message>
+    <message>
+        <source>Delete thread</source>
+        <translation>இழையை நீக்கு</translation>
+    </message>
+    <message>
+        <source>Delete this thread?</source>
+        <translation>இந்த இழையை நீக்கவா?</translation>
+    </message>
+    <message>
+        <source>The conversation goes. Changes it made stay in your subtitles and in the review.</source>
+        <translation>உரையாடல் நீக்கப்படும். அது செய்த மாற்றங்கள் உங்கள் வசனங்களிலும் மதிப்பாய்விலும் இருக்கும்.</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>நீக்கு</translation>
+    </message>
+    <message>
+        <source>Change mode</source>
+        <translation>பயன்முறையை மாற்று</translation>
+    </message>
+    <message>
+        <source>Settings › AI…</source>
+        <translation>அமைப்புகள் › AI…</translation>
+    </message>
+    <message>
+        <source>You approve every change. Reading never asks.</source>
+        <translation>ஒவ்வொரு மாற்றத்தையும் நீங்கள் ஒப்புதலளிக்கிறீர்கள். படித்தல் ஒருபோதும் கேட்காது.</translation>
+    </message>
+    <message>
+        <source>The judge model approves each action, or asks you. It sees the action and your messages, never your files.</source>
+        <translation>நடுவர் மாதிரி ஒவ்வொரு செயலையும் ஒப்புக்கொள்கிறது, அல்லது உங்களைக் கேட்கிறது. அது செயலையும் உங்கள் செய்திகளையும் பார்க்கும், உங்கள் கோப்புகளை ஒருபோதும் பார்க்காது.</translation>
+    </message>
+    <message>
+        <source>Nothing asks except the always-ask list. Edits apply at once and stay undoable.</source>
+        <translation>எப்போதும் கேட்கும் பட்டியலைத் தவிர எதுவும் கேட்காது. திருத்தங்கள் உடனே பொருந்தும், செயல்தவிர்க்கவும் முடியும்.</translation>
+    </message>
+    <message>
+        <source>Default for new threads…</source>
+        <translation>புதிய இழைகளுக்கான இயல்புநிலை…</translation>
+    </message>
+    <message>
+        <source>Rename thread</source>
+        <translation>இழையை மறுபெயரிடு</translation>
+    </message>
+    <message>
+        <source>Thread name</source>
+        <translation>இழையின் பெயர்</translation>
+    </message>
+    <message>
+        <source>Rename</source>
+        <translation>மறுபெயரிடு</translation>
+    </message>
+    <message>
+        <source>steered</source>
+        <translation>வழிநடத்தப்பட்டது</translation>
+    </message>
+    <message>
+        <source>Restore checkpoint</source>
+        <translation>சோதனைப்புள்ளியை மீட்டமை</translation>
+    </message>
+    <message>
+        <source>judge approved</source>
+        <translation>நடுவர் ஒப்புக்கொண்டது</translation>
+    </message>
+    <message>
+        <source>Review</source>
+        <translation>மதிப்பாய்வு</translation>
+    </message>
+    <message>
+        <source>Plan</source>
+        <translation>திட்டம்</translation>
+    </message>
+    <message>
+        <source>Judge asks you</source>
+        <translation>நடுவர் உங்களைக் கேட்கிறது</translation>
+    </message>
+    <message>
+        <source>Allow %1?</source>
+        <translation>%1 ஐ அனுமதிக்கவா?</translation>
+    </message>
+    <message>
+        <source>Run %1?</source>
+        <translation>%1 ஐ இயக்கவா?</translation>
+    </message>
+    <message>
+        <source>asks in every mode</source>
+        <translation>எல்லாப் பயன்முறைகளிலும் கேட்கும்</translation>
+    </message>
+    <message>
+        <source>Why: %1</source>
+        <translation>காரணம்: %1</translation>
+    </message>
+    <message>
+        <source>Allow</source>
+        <translation>அனுமதி</translation>
+    </message>
+    <message>
+        <source>Allow once</source>
+        <translation>ஒருமுறை அனுமதி</translation>
+    </message>
+    <message>
+        <source>Allow in this thread</source>
+        <translation>இந்த இழையில் அனுமதி</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>மறு</translation>
+    </message>
+    <message>
+        <source>Deny and tell the agent…</source>
+        <translation>மறுத்து முகவரிடம் சொல்…</translation>
+    </message>
+    <message>
+        <source>What should it do instead?</source>
+        <translation>அதற்குப் பதிலாக அது என்ன செய்ய வேண்டும்?</translation>
+    </message>
+    <message>
+        <source>Allowed</source>
+        <translation>அனுமதிக்கப்பட்டது</translation>
+    </message>
+    <message>
+        <source>Allowed in this thread</source>
+        <translation>இந்த இழையில் அனுமதிக்கப்பட்டது</translation>
+    </message>
+    <message>
+        <source>Denied</source>
+        <translation>மறுக்கப்பட்டது</translation>
+    </message>
+    <message>
+        <source>No longer needed</source>
+        <translation>இனி தேவையில்லை</translation>
+    </message>
+    <message>
+        <source>This thread reached its %1 cap</source>
+        <translation>இந்த இழை அதன் %1 வரம்பை எட்டியது</translation>
+    </message>
+    <message>
+        <source>Today’s %1 cap is reached</source>
+        <translation>இன்றைய %1 வரம்பு எட்டப்பட்டது</translation>
+    </message>
+    <message>
+        <source>AI component stopped</source>
+        <translation>AI கூறு நின்றுவிட்டது</translation>
+    </message>
+    <message>
+        <source>Turn failed</source>
+        <translation>சுற்று தோல்வியடைந்தது</translation>
+    </message>
+    <message>
+        <source>You stopped the turn.</source>
+        <translation>நீங்கள் சுற்றை நிறுத்தினீர்கள்.</translation>
+    </message>
+    <message>
+        <source>The answer reached the model’s length limit.</source>
+        <translation>பதில் மாதிரியின் நீள வரம்பை எட்டியது.</translation>
+    </message>
+    <message>
+        <source>The model declined to answer.</source>
+        <translation>மாதிரி பதிலளிக்க மறுத்தது.</translation>
+    </message>
+    <message>
+        <source>The turn stopped after its most model requests.</source>
+        <translation>அதிகபட்ச மாதிரிக் கோரிக்கைகளுக்குப் பிறகு சுற்று நின்றது.</translation>
+    </message>
+    <message>
+        <source>Choose a chat model in Settings › AI</source>
+        <translation>அமைப்புகள் › AI இல் ஒரு அரட்டை மாதிரியைத் தேர்ந்தெடுக்கவும்</translation>
+    </message>
+    <message>
+        <source>AI component isn’t ready</source>
+        <translation>AI கூறு தயாராக இல்லை</translation>
+    </message>
+    <message>
+        <source>The turn stopped after its last change. Raise the cap for this thread to go on.</source>
+        <translation>சுற்று அதன் கடைசி மாற்றத்துக்குப் பிறகு நின்றது. தொடர, இந்த இழையின் வரம்பை உயர்த்தவும்.</translation>
+    </message>
+    <message>
+        <source>Every thread stops until tomorrow, or until you raise the cap in Settings › AI.</source>
+        <translation>நாளை வரை, அல்லது அமைப்புகள் › AI இல் வரம்பை உயர்த்தும் வரை, எல்லா இழைகளும் நிற்கும்.</translation>
+    </message>
+    <message>
+        <source>The turn was interrupted and won’t rerun by itself. Changes it made stay in the review.</source>
+        <translation>சுற்று இடைமறிக்கப்பட்டது, தானாக மீண்டும் இயங்காது. அது செய்த மாற்றங்கள் மதிப்பாய்வில் இருக்கும்.</translation>
+    </message>
+    <message>
+        <source>HikariSub is still getting the AI component, or it couldn’t start.</source>
+        <translation>HikariSub இன்னும் AI கூறைப் பெற்றுக்கொண்டிருக்கிறது, அல்லது அதைத் தொடங்க முடியவில்லை.</translation>
+    </message>
+    <message>
+        <source>Raise to %1 and continue</source>
+        <translation>%1 ஆக உயர்த்தித் தொடர்</translation>
+    </message>
+    <message>
+        <source>Continue.</source>
+        <translation>தொடரவும்.</translation>
+    </message>
+    <message>
+        <source>Retry the turn</source>
+        <translation>சுற்றை மீண்டும் முயல்</translation>
+    </message>
+    <message>
+        <source>Show the log</source>
+        <translation>பதிவைக் காட்டு</translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.Audio</name>
     <message>
         <source>Play</source>
@@ -5279,6 +5662,10 @@ Failed to copy %2 fonts.</source>
         <translation>திற…</translation>
     </message>
     <message>
+        <source>Open folder…</source>
+        <translation>கோப்புறையைத் திற…</translation>
+    </message>
+    <message>
         <source>Open video…</source>
         <translation>வீடியோவைத் திற…</translation>
     </message>
@@ -5316,6 +5703,30 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Dismiss</source>
         <translation>நிராகரி</translation>
+    </message>
+    <message>
+        <source>Reopen last tabs (%1)</source>
+        <translation>கடைசி தாவல்களை மீண்டும் திற (%1)</translation>
+    </message>
+    <message>
+        <source>Recent projects</source>
+        <translation>சமீபத்திய திட்டப்பணிகள்</translation>
+    </message>
+    <message>
+        <source>No recent projects</source>
+        <translation>சமீபத்திய திட்டப்பணிகள் இல்லை</translation>
+    </message>
+    <message>
+        <source>No matching projects</source>
+        <translation>பொருந்தும் திட்டப்பணிகள் இல்லை</translation>
+    </message>
+    <message>
+        <source>Filter recent projects</source>
+        <translation>சமீபத்திய திட்டப்பணிகளை வடிகட்டு</translation>
+    </message>
+    <message>
+        <source>Remove missing folders</source>
+        <translation>காணாத கோப்புறைகளை அகற்று</translation>
     </message>
     <message>
         <source>Recent files</source>
@@ -6549,6 +6960,10 @@ Failed to copy %2 fonts.</source>
         <translation>பார்வைக்கோணம்</translation>
     </message>
     <message>
+        <source>Gradient</source>
+        <translation>சாய்வு</translation>
+    </message>
+    <message>
         <source>Vector clip: move points</source>
         <translation>திசையன் கிளிப்: புள்ளிகளை நகர்த்து</translation>
     </message>
@@ -6689,6 +7104,42 @@ Failed to copy %2 fonts.</source>
         <translation>பார்வைக்கோணக் கண்காணிப்பு…</translation>
     </message>
     <message>
+        <source>Apply motion data…</source>
+        <translation>அசைவுத் தரவைப் பயன்படுத்து…</translation>
+    </message>
+    <message>
+        <source>Revert motion data</source>
+        <translation>அசைவுத் தரவைத் திரும்பப்பெறு</translation>
+    </message>
+    <message>
+        <source>Copy motion data from lines</source>
+        <translation>வரிகளிலிருந்து அசைவுத் தரவை நகலெடு</translation>
+    </message>
+    <message>
+        <source>Copy Power-Pin track from lines</source>
+        <translation>வரிகளிலிருந்து Power-Pin தடத்தை நகலெடு</translation>
+    </message>
+    <message>
+        <source>Extend tracked lines…</source>
+        <translation>கண்காணித்த வரிகளை நீட்டு…</translation>
+    </message>
+    <message>
+        <source>Extrapolate \move to the line</source>
+        <translation>\move ஐ வரி முழுவதற்கும் புறச்செருகு</translation>
+    </message>
+    <message>
+        <source>Move tab to new window</source>
+        <translation>தாவலை புதிய சாளரத்திற்கு நகர்த்து</translation>
+    </message>
+    <message>
+        <source>Move tab to window</source>
+        <translation>தாவலை சாளரத்திற்கு நகர்த்து</translation>
+    </message>
+    <message>
+        <source>Close window</source>
+        <translation>சாளரத்தை மூடு</translation>
+    </message>
+    <message>
         <source>Keep AI change</source>
         <translation type="unfinished"></translation>
     </message>
@@ -6714,6 +7165,26 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Review panel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Agent panel</source>
+        <translation>முகவர் பலகம்</translation>
+    </message>
+    <message>
+        <source>New agent thread</source>
+        <translation>புதிய முகவர் இழை</translation>
+    </message>
+    <message>
+        <source>Open folder…</source>
+        <translation>கோப்புறையைத் திற…</translation>
+    </message>
+    <message>
+        <source>Close project</source>
+        <translation>திட்டப்பணியை மூடு</translation>
+    </message>
+    <message>
+        <source>Node effects</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -6745,8 +7216,8 @@ Failed to copy %2 fonts.</source>
         <translation>நகலெடுத்தல், வெட்டுதல், ஒட்டுதல் ஆகியவற்றுக்குக் குறுக்குவிசைகளைப் பயன்படுத்த முடியாது.</translation>
     </message>
     <message>
-        <source>You cannot use the program exit shortcut.</source>
-        <translation>நிரலை விட்டு வெளியேறும் குறுக்குவிசையைப் பயன்படுத்த முடியாது.</translation>
+        <source>Alt+F4 is kept for closing the window.</source>
+        <translation>Alt+F4 சாளரத்தை மூடுவதற்காக ஒதுக்கப்பட்டுள்ளது.</translation>
     </message>
     <message>
         <source>Align to video…</source>
@@ -7457,6 +7928,14 @@ Failed to copy %2 fonts.</source>
         <translation>வடிவமைப்பு மற்றும் மேம்பாடு</translation>
     </message>
     <message>
+        <source>Thai support for automation scripts</source>
+        <translation>தானியங்கு ஸ்கிரிப்டுகளில் தாய் மொழி ஆதரவு</translation>
+    </message>
+    <message>
+        <source>No licence stated</source>
+        <translation>உரிமம் குறிப்பிடப்படவில்லை</translation>
+    </message>
+    <message>
         <source>Translation</source>
         <translation>மொழிபெயர்ப்பு</translation>
     </message>
@@ -7527,6 +8006,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Check spelling</source>
         <translation>எழுத்துப்பிழை சரிபார்ப்பு</translation>
+    </message>
+    <message>
+        <source>Carries each selected line’s timed %1 on at the same speed from its start to its end</source>
+        <translation>தேர்ந்தெடுத்த ஒவ்வொரு வரியின் நேரமிட்ட %1 ஐ அதே வேகத்தில் வரியின் தொடக்கம் முதல் முடிவு வரை தொடரும்</translation>
+    </message>
+    <message>
+        <source>Extrapolate %1 to the line</source>
+        <translation>%1 ஐ வரி முழுவதற்கும் புறச்செருகு</translation>
     </message>
     <message>
         <source>Install, turn on and off, and uninstall plugins</source>
@@ -7612,6 +8099,10 @@ Failed to copy %2 fonts.</source>
         <translation>தொடக்க நேரத்தால் வரிசைப்படுத்துங்கள்</translation>
     </message>
     <message>
+        <source>%1 - %2 - HikariSub</source>
+        <translation>%1 - %2 - HikariSub</translation>
+    </message>
+    <message>
         <source>Sort by end time</source>
         <translation>இறுதி நேரத்தால் வரிசைப்படுத்துங்கள்</translation>
     </message>
@@ -7652,6 +8143,14 @@ Failed to copy %2 fonts.</source>
         <translation>வசனக் கோப்பைத் திற</translation>
     </message>
     <message>
+        <source>Open a folder as a project</source>
+        <translation>ஒரு கோப்புறையைத் திட்டப்பணியாகத் திற</translation>
+    </message>
+    <message>
+        <source>Open &amp;folder…</source>
+        <translation>கோப்புறையைத் திற… (&amp;f)</translation>
+    </message>
+    <message>
         <source>Recently opened subtitles</source>
         <translation>அண்மைக் காலத்தில் திறக்கப்பட்ட வசன வரிகள்</translation>
     </message>
@@ -7662,6 +8161,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Remove subtitles from the editor</source>
         <translation>திருத்தியிலிருந்து வசன வரிகளை அகற்று</translation>
+    </message>
+    <message>
+        <source>Close this window’s tabs and its project</source>
+        <translation>இந்தச் சாளரத்தின் தாவல்களையும் அதன் திட்டப்பணியையும் மூடு</translation>
+    </message>
+    <message>
+        <source>Close pro&amp;ject</source>
+        <translation>திட்டப்பணியை மூடு (&amp;j)</translation>
     </message>
     <message>
         <source>Opens video file</source>
@@ -7734,6 +8241,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Program settings</source>
         <translation>நிரல் அமைப்புகள்</translation>
+    </message>
+    <message>
+        <source>Close this window; closing the last window exits the program</source>
+        <translation>இந்தச் சாளரத்தை மூடும்; கடைசிச் சாளரத்தை மூடினால் நிரல் வெளியேறும்</translation>
+    </message>
+    <message>
+        <source>Close &amp;window</source>
+        <translation>சாளரத்தை மூடு (&amp;w)</translation>
     </message>
     <message>
         <source>Exit the program</source>
@@ -7852,6 +8367,18 @@ Failed to copy %2 fonts.</source>
         <translation>அடுத்து வரும் வரிகள், முடிவு வீடியோவில்</translation>
     </message>
     <message>
+        <source>Tracking</source>
+        <translation>கண்காணிப்பு</translation>
+    </message>
+    <message>
+        <source>Applies After Effects motion data from Mocha or Blender to the selected lines, one line a frame</source>
+        <translation>Mocha அல்லது Blender இலிருந்து வரும் After Effects அசைவுத் தரவைத் தேர்ந்தெடுத்த வரிகளுக்குப் பயன்படுத்தும், ஒரு சட்டகத்துக்கு ஒரு வரி</translation>
+    </message>
+    <message>
+        <source>Apply motion data…</source>
+        <translation>அசைவுத் தரவைப் பயன்படுத்து…</translation>
+    </message>
+    <message>
         <source>Applies Power-Pin tracking data to the selected lines, one line a frame</source>
         <translation>தேர்ந்தெடுத்த வரிகளுக்கு Power-Pin கண்காணிப்புத் தரவைப் பயன்படுத்தும், ஒரு சட்டகத்துக்கு ஒரு வரி</translation>
     </message>
@@ -7870,6 +8397,38 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Reload video</source>
         <translation>வீடியோவை மீண்டும் ஏற்று</translation>
+    </message>
+    <message>
+        <source>Puts the tracked lines of the selection back as the lines they were made from</source>
+        <translation>தேர்வில் உள்ள கண்காணித்த வரிகளை அவை உருவாக்கப்பட்ட அசல் வரிகளாகத் திரும்ப மாற்றும்</translation>
+    </message>
+    <message>
+        <source>Revert motion data</source>
+        <translation>அசைவுத் தரவைத் திரும்பப்பெறு</translation>
+    </message>
+    <message>
+        <source>Copies the selected frame-by-frame lines’ position, scale and rotation as motion data</source>
+        <translation>சட்டகம் சட்டகமாக அமைந்த தேர்ந்தெடுத்த வரிகளின் நிலை, அளவீடு, சுழற்சியை அசைவுத் தரவாக நகலெடுக்கும்</translation>
+    </message>
+    <message>
+        <source>Copy motion data from lines</source>
+        <translation>வரிகளிலிருந்து அசைவுத் தரவை நகலெடு</translation>
+    </message>
+    <message>
+        <source>Copies the selected lines’ perspective planes as Power-Pin data, one quad a frame</source>
+        <translation>தேர்ந்தெடுத்த வரிகளின் பார்வைக்கோணத் தளங்களை Power-Pin தரவாக நகலெடுக்கும், ஒரு சட்டகத்துக்கு ஒரு நாற்கரம்</translation>
+    </message>
+    <message>
+        <source>Copy Power-Pin track from lines</source>
+        <translation>வரிகளிலிருந்து Power-Pin தடத்தை நகலெடு</translation>
+    </message>
+    <message>
+        <source>Fits the selected frame-by-frame lines’ motion and carries it on for more frames</source>
+        <translation>சட்டகம் சட்டகமாக அமைந்த தேர்ந்தெடுத்த வரிகளின் அசைவைப் பொருத்தி, மேலும் பல சட்டகங்களுக்குத் தொடரும்</translation>
+    </message>
+    <message>
+        <source>Extend tracked lines…</source>
+        <translation>கண்காணித்த வரிகளை நீட்டு…</translation>
     </message>
     <message>
         <source>Render cost</source>
@@ -8791,6 +9350,1058 @@ Failed to copy %2 fonts.</source>
     </message>
 </context>
 <context>
+    <name>HikariSub.NodeEffects</name>
+    <message>
+        <source>Edits this file’s node effects on a canvas, with a preview on the video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Node effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Graph</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Graph: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Node</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Source lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1, %2: %3 of %4 inputs wired</source>
+        <extracomment>A node on the canvas for a screen reader: &quot;Choose, palette: 1 of 1 inputs wired&quot;</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add node</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>1 node</source>
+        <extracomment>The graph&apos;s size in the Graph header: &quot;12 nodes · 13 wires&quot;</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n nodes</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>1 wire</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n wires</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Fit the graph in view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 %</source>
+        <extracomment>The canvas zoom: &quot;100 %&quot;</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Has a problem</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not trusted</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>1 more output</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n more outputs</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Fewer outputs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This file has no node effects yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This graph can’t be read</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A graph turns karaoke lines into new lines. It is saved in the file as a Comment line, and the lines it writes are marked fx with its name.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New graph</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>From a preset</source>
+        <translation type="unfinished">ஒரு முன்னமைவிலிருந்து</translation>
+    </message>
+    <message>
+        <source>From the library…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Number</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text</source>
+        <translation type="unfinished">உரை</translation>
+    </message>
+    <message>
+        <source>Colour</source>
+        <translation type="unfinished">வண்ணம்</translation>
+    </message>
+    <message>
+        <source>Alpha</source>
+        <translation type="unfinished">ஆல்ஃபா</translation>
+    </message>
+    <message>
+        <source>Time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Point</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tags</source>
+        <translation type="unfinished">குறிச்சொற்கள்</translation>
+    </message>
+    <message>
+        <source>Drawing</source>
+        <translation type="unfinished">வரைபடம்</translation>
+    </message>
+    <message>
+        <source>Yes or no</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Units</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Search nodes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nodes with a %1 input, for %2 › %3</source>
+        <extracomment>Over the Add node list after a wire is dropped in empty space: &quot;Nodes with a Tags input, for fade › tags&quot;</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recently added</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nodes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No node matches.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enter adds %1 here, wired from %2 › %3</source>
+        <extracomment>Under the filtered Add node list: &quot;Enter adds Transform here, wired from fade › tags&quot;</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 ms</source>
+        <extracomment>A time a node effect took: %1 milliseconds
+----------
+The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;</extracomment>
+        <translation type="unfinished">%1 ms</translation>
+    </message>
+    <message>
+        <source>Not wired</source>
+        <extracomment>A wired input in the inspector: &quot;From palette › value&quot;</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>From %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Disconnect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose a colour</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n nodes selected.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Select a node to see its fields.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>“%1” is not a node this HikariSub knows. It may come from a newer version. Update HikariSub, or delete the node; its fields and wires are kept until then.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation type="unfinished">பெயர்</translation>
+    </message>
+    <message>
+        <source>Fields</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>+ graph seed %1</source>
+        <extracomment>Under a Random node&apos;s seed: its numbers also depend on the graph&apos;s seed</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lua code</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Value %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove value %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add value</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>ms</source>
+        <translation type="unfinished">ms</translation>
+    </message>
+    <message>
+        <source>New seed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>X position</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Y position</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Inputs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Outputs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>to %1</source>
+        <extracomment>An output&apos;s wires in the inspector: &quot;to fade › tags, emit › tags&quot;</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>On line %1, from the last run</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not run: the graph has problems.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not run: the file’s Lua is not trusted.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No values: this node didn’t run on the line.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Timing</source>
+        <translation type="unfinished">நேரமிடல்</translation>
+    </message>
+    <message numerus="yes">
+        <source>Wrote %n lines in %1 on the last run</source>
+        <extracomment>A node&apos;s timing: &quot;Last run 0.42 ms on line 12&quot;; an Emit adds how many lines it wrote</extracomment>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Last run %1 on line %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>1 line</source>
+        <translation type="unfinished">1 வரி</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n lines</source>
+        <translation type="unfinished">
+            <numerusform>%n வரி</numerusform>
+            <numerusform>%n வரிகள்</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Preview on the video</source>
+        <translation type="unfinished">வீடியோவில் முன்னோட்டமிடு</translation>
+    </message>
+    <message>
+        <source>Loop the line</source>
+        <translation type="unfinished">வரியைச் சுழற்சியாக இயக்கு</translation>
+    </message>
+    <message>
+        <source>Preview</source>
+        <translation type="unfinished">முன்னோட்டம்</translation>
+    </message>
+    <message>
+        <source>Preview on line %1</source>
+        <translation type="unfinished">வரி %1 இல் முன்னோட்டம்</translation>
+    </message>
+    <message>
+        <source>Kept from the last run that worked</source>
+        <translation type="unfinished">வேலை செய்த கடைசி இயக்கத்திலிருந்து வைக்கப்பட்டது</translation>
+    </message>
+    <message>
+        <source>No karaoke line of this graph’s style to preview on.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing runs until the file’s Lua is trusted.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No preview: the graph has problems.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The graph writes no lines for line %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>1 karaoke line</source>
+        <extracomment>Which karaoke lines the graph applies to: &quot;24 karaoke lines, Default&quot; or &quot;24 karaoke lines, all styles&quot;</extracomment>
+        <translation type="unfinished">1 கரோக்கி வரி</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n karaoke lines</source>
+        <translation type="unfinished">
+            <numerusform>%n கரோக்கி வரி</numerusform>
+            <numerusform>%n கரோக்கி வரிகள்</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>all styles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Line %1, %2</source>
+        <translation type="unfinished">வரி %1, %2</translation>
+    </message>
+    <message>
+        <source>Pick or add a graph to see the karaoke lines it applies to.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No graph</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Graph menu</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Style</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All styles</source>
+        <translation type="unfinished">அனைத்து பாணிகளும்</translation>
+    </message>
+    <message>
+        <source>Seed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No problems</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>1 problem</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n problems</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Apply stopped with a problem; nothing changed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Applied: %n lines from %1 in %2</source>
+        <extracomment>After Apply: %n the Lines written, %1 the karaoke Lines they came from, %2 the run&apos;s time</extracomment>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Apply</source>
+        <translation type="unfinished">பயன்படுத்து</translation>
+    </message>
+    <message>
+        <source>Apply to every karaoke line</source>
+        <translation type="unfinished">ஒவ்வொரு கரோக்கி வரிக்கும் பயன்படுத்து</translation>
+    </message>
+    <message>
+        <source>Apply options</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Leave node effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This file’s node effects run Lua code with your rights. Preview them if you trust the file.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This graph was saved by a newer HikariSub, so it opens read-only. Update HikariSub to edit it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rename…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Duplicate</source>
+        <translation type="unfinished">நகலாக்கு</translation>
+    </message>
+    <message>
+        <source>Save to the library</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keeps a copy of this graph in your user folder, to add to other files.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete graph</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Removes the graph line and the lines it wrote. Undo brings them back.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Apply to the selected lines</source>
+        <translation type="unfinished">தேர்ந்தெடுத்த வரிகளுக்குப் பயன்படுத்து</translation>
+    </message>
+    <message>
+        <source>Only the lines selected in “Source lines” are regenerated; the others keep their output.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select karaoke lines in “Source lines” first.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Graph name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">ரத்துசெய்</translation>
+    </message>
+    <message>
+        <source>Rename</source>
+        <translation type="unfinished">மறுபெயரிடு</translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;Preview&lt;/b&gt; · line %1 · %2</source>
+        <extracomment>Over the video: the node effects&apos; preview of Line %1, %2 &quot;not applied&quot; or &quot;last run that worked&quot;</extracomment>
+        <translation type="unfinished">&lt;b&gt;முன்னோட்டம்&lt;/b&gt; · வரி %1 · %2</translation>
+    </message>
+    <message>
+        <source>last run that worked</source>
+        <translation type="unfinished">வேலை செய்த கடைசி இயக்கம்</translation>
+    </message>
+    <message>
+        <source>not applied</source>
+        <translation type="unfinished">பயன்படுத்தப்படவில்லை</translation>
+    </message>
+    <message>
+        <source>yes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>no</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Value</source>
+        <translation type="unfinished">மதிப்பு</translation>
+    </message>
+    <message>
+        <source>There is no graph to wire.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A %1 can’t connect to a %2 input.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A node can’t take its own output.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>That port doesn’t exist.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>That wire would make a loop.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A graph name can’t be empty, start or end with a space, end with a dot, or hold “karaoke”, a comma, a double quote, a control character or any of / \ : * ? &lt; &gt; |.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Another graph in this file has that name.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 copy</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Nodes</name>
+    <message>
+        <source>For each</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Repeat</source>
+        <translation type="unfinished">மீண்டும் செய்</translation>
+    </message>
+    <message>
+        <source>Each unit `count` times; j runs from 1 to count.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Frames</source>
+        <translation type="unfinished">சட்டகங்கள்</translation>
+    </message>
+    <message>
+        <source>Unit info</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each unit of every karaoke line the graph applies to: the line itself, its syllables, their characters or the furigana. Blank units (no duration or only spaces) can be skipped.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each unit once per step of time from `start` to `end` (absolute ms); without them, the unit’s own span.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>What the karaoke templater’s $variables give for the current unit and its line, rounded as the templater rounds them. Times of a syllable are from its line’s start.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Number</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A number.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text</source>
+        <translation type="unfinished">உரை</translation>
+    </message>
+    <message>
+        <source>A text.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Colour</source>
+        <translation type="unfinished">வண்ணம்</translation>
+    </message>
+    <message>
+        <source>A colour.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Point</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A point from its coordinates.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose</source>
+        <translation type="unfinished">தேர்வுசெய்</translation>
+    </message>
+    <message>
+        <source>One of a list of values by its place (from 1); places past the end wrap around.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Calculate</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Arithmetic in doubles, as Lua does it. modulo is a - floor(a/b)*b; round is floor(a + 0.5). One-input operations use a.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Compare</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Whether a stands in that relation to b.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Progress</source>
+        <translation type="unfinished">முன்னேற்றம்</translation>
+    </message>
+    <message>
+        <source>How far index is through count, from 0 at the first to 1 at the last, eased.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Random</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A seeded random number from min to max, in multiples of step from min when step is above 0. The same graph seed, node and scope give the same number on every run and platform.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Retime</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A line’s start and end as the templater’s retime(mode, start_offset, end_offset) sets them.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The units of the current line joined: each one’s tags as an override block, then its text (unwired, the unit’s own).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>One line per unit: the source line with these times, Layer, tags and text (or drawing), Effect “fx &lt;graph name&gt;”. Unwired times are the source line’s. Lines come in the templater’s order: Line units first, then by syllable, then by `order`.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A graph inside a node. Its inputs are its Group input’s ports, its outputs its Group output’s.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lua code run in the automation helper once per line for all its units, only once the user trusts the document’s Lua. Its inputs are globals and it sets its outputs as globals; it gets no random numbers.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The first step’s start; null: the unit’s start.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The last step’s end; null: the unit’s end.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The values’ type.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>One number per output line, per unit (the same across repeats and frames) or per line.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Added to the graph’s seed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The templater’s retime mode.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>When it starts, from the line’s start.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The unit’s text while no text is wired: without tags, with them, or none.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Write the line.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Its layer.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The unit’s text while no text or drawing is wired: without tags, with them, or none.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stagger</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>step times the place: index - 1 from the start, count - index from the end, or the distance from the middle.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tag</source>
+        <translation type="unfinished">குறிச்சொல்</translation>
+    </message>
+    <message>
+        <source>One override tag after `before`. pos and org take point, clip and iclip take point and point2 (or drawing), colours take colour, alpha tags take alpha, fn and r take text, raw writes text as it is, and the others take value.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>\move after `before`, with its times when timed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fade</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>\fad after `before`.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Transform</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>\t over `tags` after `before`; t1 and t2 when timed, accel when it is not 1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Gradient</source>
+        <translation type="unfinished">சாய்வு</translation>
+    </message>
+    <message>
+        <source>The colour at progress (0 to 1) along evenly spaced stops.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shape</source>
+        <translation type="unfinished">வடிவம்</translation>
+    </message>
+    <message>
+        <source>A vector drawing.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Join</source>
+        <translation type="unfinished">இணை</translation>
+    </message>
+    <message>
+        <source>Emit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Group</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Group input</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Inside a group: its inputs, as outputs.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Group output</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Inside a group: its outputs, as inputs.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lua</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>What one unit is.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Leave out units with no duration or only spaces.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How many times.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>One step, in ms.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The number.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The text.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The colour, as #RRGGBB.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Across.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Down.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The values, at least one.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The place.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The operation.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The first operand.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The second operand.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The relation.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The easing (quadratic).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The place, from 1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How many places.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The smallest value.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The largest value.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>0: any value.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Added to the start (sylpct: a percentage).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Added to the end (sylpct: a percentage).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Where the first unit is.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The time between places.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The tag, without its backslash.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Its number.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Its point, as [x, y].</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Its second point.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Its colour, as #RRGGBB.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Its alpha, 0 (opaque) to 255.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Its text.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Where it starts, as [x, y].</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Where it ends.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Write t1 and t2.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>When it ends.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The fade in, in ms.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The fade out, in ms.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The acceleration.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The stops, as #RRGGBB, at least one.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How far along.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The drawing commands.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The \p scale.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Its place among the emits for one unit; ties keep graph order.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The inner nodes and wires.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The ports, each a name and a port type.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Its inputs, each a name and a port type.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The code.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Its outputs.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Units</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Values</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Math</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tags</source>
+        <translation type="unfinished">குறிச்சொற்கள்</translation>
+    </message>
+    <message>
+        <source>Colours</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drawings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Output</source>
+        <translation type="unfinished">வெளியீடு</translation>
+    </message>
+    <message>
+        <source>Groups</source>
+        <translation type="unfinished">குழுக்கள்</translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.Options</name>
     <message>
         <source>Theme</source>
@@ -9039,6 +10650,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Give a double consonant its own syllable (so|ma|t|ta)</source>
         <translation>இரட்டை மெய்யெழுத்துக்குத் தனி அசை கொடு (so|ma|t|ta)</translation>
+    </message>
+    <message>
+        <source>Split Thai into character clusters</source>
+        <translation>தாய் மொழியை எழுத்துக் கொத்துகளாகப் பிரி</translation>
+    </message>
+    <message>
+        <source>Auto split gives each Thai character cluster its own syllable, so กิน becomes กิ|น. Turn it off to keep each Thai word one syllable.</source>
+        <translation>தானியங்கு பிரிப்பு ஒவ்வொரு தாய் எழுத்துக் கொத்துக்கும் தனி அசை கொடுக்கும், எனவே กิน என்பது กิ|น ஆகும். ஒவ்வொரு தாய் சொல்லையும் ஒரே அசையாக வைக்க இதை அணைக்கவும்.</translation>
     </message>
     <message>
         <source>Long syllables for %1</source>
@@ -9817,11 +11436,11 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Trusted script folders</source>
-        <translation>நம்பகமான ச்கிரிப்ட் கோப்புறைகள்</translation>
+        <translation type="vanished">நம்பகமான ச்கிரிப்ட் கோப்புறைகள்</translation>
     </message>
     <message>
         <source>Scripts a subtitle file names load without asking when they are in one of these folders.</source>
-        <translation>வசனக் கோப்பு குறிப்பிடும் ச்கிரிப்ட்கள் இந்தக் கோப்புறைகளில் ஒன்றில் இருந்தால் கேட்காமல் ஏற்றப்படும்.</translation>
+        <translation type="vanished">வசனக் கோப்பு குறிப்பிடும் ச்கிரிப்ட்கள் இந்தக் கோப்புறைகளில் ஒன்றில் இருந்தால் கேட்காமல் ஏற்றப்படும்.</translation>
     </message>
     <message>
         <source>No trusted folders</source>
@@ -9878,6 +11497,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>AI</source>
         <translation>AI</translation>
+    </message>
+    <message>
+        <source>Trusted folders</source>
+        <translation>நம்பகமான கோப்புறைகள்</translation>
+    </message>
+    <message>
+        <source>HikariSub trusts these folders and the folders inside them: scripts a subtitle file names load without asking, and a file inside a Project opens the Project.</source>
+        <translation>HikariSub இந்தக் கோப்புறைகளையும் அவற்றுக்குள் உள்ள கோப்புறைகளையும் நம்புகிறது: வசனக் கோப்பு குறிப்பிடும் ச்கிரிப்ட்கள் கேட்காமல் ஏற்றப்படும், ஒரு திட்டப்பணியில் உள்ள கோப்பு அந்தத் திட்டப்பணியைத் திறக்கும்.</translation>
     </message>
     <message>
         <source>Legacy</source>
@@ -10009,11 +11636,11 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Suggest starring HikariSub on GitHub</source>
-        <translation>GitHub-இல் HikariSub-க்கு நட்சத்திரம் இடப் பரிந்துரை</translation>
+        <translation type="vanished">GitHub-இல் HikariSub-க்கு நட்சத்திரம் இடப் பரிந்துரை</translation>
     </message>
     <message>
         <source>At most twice, after you have used HikariSub on several days. The counts stay on this computer.</source>
-        <translation>பல நாட்கள் HikariSub-ஐப் பயன்படுத்திய பிறகு, அதிகபட்சம் இரண்டு முறை. எண்ணிக்கைகள் இந்தக் கணினியிலேயே இருக்கும்.</translation>
+        <translation type="vanished">பல நாட்கள் HikariSub-ஐப் பயன்படுத்திய பிறகு, அதிகபட்சம் இரண்டு முறை. எண்ணிக்கைகள் இந்தக் கணினியிலேயே இருக்கும்.</translation>
     </message>
     <message>
         <source>Let plugins connect to the internet</source>
@@ -10314,6 +11941,10 @@ Failed to copy %2 fonts.</source>
         <translation>AI கூறைப் பதிவிறக்க முடியவில்லை</translation>
     </message>
     <message>
+        <source>Couldn’t check: bad signature</source>
+        <translation>சரிபார்க்க முடியவில்லை: தவறான கையொப்பம்</translation>
+    </message>
+    <message>
         <source>Downloaded AI component is damaged</source>
         <translation>பதிவிறக்கிய AI கூறு சேதமடைந்துள்ளது</translation>
     </message>
@@ -10324,6 +11955,160 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Test failed</source>
         <translation>சோதனை தோல்வியடைந்தது</translation>
+    </message>
+    <message>
+        <source>Up to date · checked just now</source>
+        <translation>புதுப்பித்த நிலையில் · இப்போதுதான் சரிபார்க்கப்பட்டது</translation>
+    </message>
+    <message numerus="yes">
+        <source>Up to date · checked %n minute(s) ago</source>
+        <translation>
+            <numerusform>புதுப்பித்த நிலையில் · %n நிமிடத்துக்கு முன் சரிபார்க்கப்பட்டது</numerusform>
+            <numerusform>புதுப்பித்த நிலையில் · %n நிமிடங்களுக்கு முன் சரிபார்க்கப்பட்டது</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Up to date · checked %n hour(s) ago</source>
+        <translation>
+            <numerusform>புதுப்பித்த நிலையில் · %n மணிநேரத்துக்கு முன் சரிபார்க்கப்பட்டது</numerusform>
+            <numerusform>புதுப்பித்த நிலையில் · %n மணிநேரங்களுக்கு முன் சரிபார்க்கப்பட்டது</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Up to date · checked %1</source>
+        <translation>புதுப்பித்த நிலையில் · %1 அன்று சரிபார்க்கப்பட்டது</translation>
+    </message>
+    <message>
+        <source>Checking…</source>
+        <translation>சரிபார்க்கிறது…</translation>
+    </message>
+    <message>
+        <source>Downloading %1 · %2 of %3 MB</source>
+        <translation>%1 பதிவிறக்குகிறது · %3 MB-இல் %2</translation>
+    </message>
+    <message>
+        <source>Couldn’t check: no connection</source>
+        <translation>சரிபார்க்க முடியவில்லை: இணைப்பு இல்லை</translation>
+    </message>
+    <message>
+        <source>%1 is ready · starts once AI has been idle for 2 minutes</source>
+        <translation>%1 தயார் · AI 2 நிமிடங்கள் பயன்படுத்தப்படாதபோது தொடங்கும்</translation>
+    </message>
+    <message>
+        <source>%1 is available · %2 MB</source>
+        <translation>%1 கிடைக்கிறது · %2 MB</translation>
+    </message>
+    <message>
+        <source>Newest this HikariSub runs</source>
+        <translation>இந்த HikariSub இயக்கக்கூடிய புதியது</translation>
+    </message>
+    <message>
+        <source>Up to date</source>
+        <translation>புதுப்பித்த நிலையில்</translation>
+    </message>
+    <message>
+        <source>Last checked %1. HikariSub tries again in an hour.</source>
+        <translation>கடைசியாக %1 அன்று சரிபார்க்கப்பட்டது. HikariSub ஒரு மணிநேரத்தில் மீண்டும் முயலும்.</translation>
+    </message>
+    <message>
+        <source>HikariSub tries again in an hour.</source>
+        <translation>HikariSub ஒரு மணிநேரத்தில் மீண்டும் முயலும்.</translation>
+    </message>
+    <message>
+        <source>HikariSub keeps %1 and installs nothing from that list.</source>
+        <translation>HikariSub %1-ஐ வைத்துக்கொள்கிறது, அந்தப் பட்டியலிலிருந்து எதையும் நிறுவாது.</translation>
+    </message>
+    <message>
+        <source>Update HikariSub to get newer AI features.</source>
+        <translation>புதிய AI அம்சங்களைப் பெற HikariSub-ஐப் புதுப்பிக்கவும்.</translation>
+    </message>
+    <message>
+        <source>Claude’s installer</source>
+        <translation>Claude நிறுவி</translation>
+    </message>
+    <message>
+        <source>Codex’s installer</source>
+        <translation>Codex நிறுவி</translation>
+    </message>
+    <message>
+        <source>Running %1. New sessions use the new version.</source>
+        <translation>%1 இயங்குகிறது. புதிய அமர்வுகள் புதிய பதிப்பைப் பயன்படுத்தும்.</translation>
+    </message>
+    <message>
+        <source>Still %1 after %2. Run it in a terminal to see why.</source>
+        <translation>%2-க்குப் பிறகும் %1. ஏன் என்று பார்க்க அதை முனையத்தில் இயக்கவும்.</translation>
+    </message>
+    <message>
+        <source>%1 didn’t finish. Run it in a terminal to see why.</source>
+        <translation>%1 முடியவில்லை. ஏன் என்று பார்க்க அதை முனையத்தில் இயக்கவும்.</translation>
+    </message>
+    <message>
+        <source>A %1 session is running in the agent panel. Update now waits until it ends.</source>
+        <translation>முகவர் பலகத்தில் ஒரு %1 அமர்வு இயங்குகிறது. அது முடியும் வரை இப்போது புதுப்பி காத்திருக்கும்.</translation>
+    </message>
+    <message>
+        <source>Installed with %1.</source>
+        <translation>%1 மூலம் நிறுவப்பட்டது.</translation>
+    </message>
+    <message>
+        <source>Installed with %1, so HikariSub won’t update it. Run this in a terminal:</source>
+        <translation>%1 மூலம் நிறுவப்பட்டதால் HikariSub அதைப் புதுப்பிக்காது. இதை முனையத்தில் இயக்கவும்.</translation>
+    </message>
+    <message>
+        <source>Installed with %1; update it as you installed it.</source>
+        <translation>%1 மூலம் நிறுவப்பட்டது; நிறுவிய முறையிலேயே புதுப்பிக்கவும்.</translation>
+    </message>
+    <message>
+        <source>Installed in an unknown way; update it as you installed it.</source>
+        <translation>தெரியாத முறையில் நிறுவப்பட்டது; நிறுவிய முறையிலேயே புதுப்பிக்கவும்.</translation>
+    </message>
+    <message>
+        <source>%1 has a fault that breaks HikariSub’s agent.</source>
+        <translation>%1-இல் HikariSub முகவரைச் செயலிழக்கச் செய்யும் பிழை உள்ளது.</translation>
+    </message>
+    <message>
+        <source>%1 is older than the oldest HikariSub supports (%2).</source>
+        <translation>%1, HikariSub ஆதரிக்கும் மிகப் பழைய பதிப்பை (%2) விடப் பழையது.</translation>
+    </message>
+    <message>
+        <source>%1 · %2 is out · installed with %3</source>
+        <translation>%1 · %2 வெளிவந்துள்ளது · %3 மூலம் நிறுவப்பட்டது</translation>
+    </message>
+    <message>
+        <source>%1 · %2 is out.</source>
+        <translation>%1 · %2 வெளிவந்துள்ளது.</translation>
+    </message>
+    <message>
+        <source>%1 · installed with %2</source>
+        <translation>%1 · %2 மூலம் நிறுவப்பட்டது</translation>
+    </message>
+    <message>
+        <source>%1 · installed in an unknown way</source>
+        <translation>%1 · தெரியாத முறையில் நிறுவப்பட்டது</translation>
+    </message>
+    <message>
+        <source>Updating…</source>
+        <translation>புதுப்பிக்கிறது…</translation>
+    </message>
+    <message>
+        <source>Update didn’t take</source>
+        <translation>புதுப்பிப்பு பலிக்கவில்லை</translation>
+    </message>
+    <message>
+        <source>Update available</source>
+        <translation>புதுப்பிப்பு கிடைக்கிறது</translation>
+    </message>
+    <message>
+        <source>Unsupported version</source>
+        <translation>ஆதரிக்கப்படாத பதிப்பு</translation>
+    </message>
+    <message>
+        <source>Known broken version</source>
+        <translation>பிழை உள்ளதாக அறியப்பட்ட பதிப்பு</translation>
+    </message>
+    <message>
+        <source>Update now</source>
+        <translation>இப்போது புதுப்பி</translation>
     </message>
     <message>
         <source>Edit “%1”</source>
@@ -10592,10 +12377,6 @@ Failed to copy %2 fonts.</source>
         <translation>PATH-இல் கிடைக்கவில்லை.</translation>
     </message>
     <message>
-        <source>Found on PATH · %1.</source>
-        <translation>PATH-இல் கிடைத்தது · %1.</translation>
-    </message>
-    <message>
         <source>Found on PATH.</source>
         <translation>PATH-இல் கிடைத்தது.</translation>
     </message>
@@ -10692,6 +12473,198 @@ Failed to copy %2 fonts.</source>
         <translation>மீண்டும் முயல்</translation>
     </message>
     <message>
+        <source>MCP</source>
+        <translation>MCP</translation>
+    </message>
+    <message>
+        <source>Let agents outside HikariSub edit through MCP</source>
+        <translation>HikariSub க்கு வெளியே உள்ள முகவர்கள் MCP வழியாகத் திருத்த அனுமதி</translation>
+    </message>
+    <message>
+        <source>Claude Code, Codex and other agents read the open documents. Their edits wait in the review until you keep or undo them.</source>
+        <translation>Claude Code, Codex மற்றும் பிற முகவர்கள் திறந்த ஆவணங்களைப் படிக்கும். நீங்கள் வைத்துக்கொள்ளும் வரை அல்லது செயல்தவிர்க்கும் வரை அவற்றின் திருத்தங்கள் மதிப்பாய்வில் காத்திருக்கும்.</translation>
+    </message>
+    <message>
+        <source>MCP needs the AI component, downloaded once: %1 MB.</source>
+        <translation>MCP க்கு AI கூறு தேவை, அது ஒருமுறை பதிவிறக்கப்படும்: %1 MB.</translation>
+    </message>
+    <message>
+        <source>MCP needs the AI component, downloaded once.</source>
+        <translation>MCP க்கு AI கூறு தேவை, அது ஒருமுறை பதிவிறக்கப்படும்.</translation>
+    </message>
+    <message>
+        <source>It runs only while an agent uses HikariSub, and never while AI is turned off.</source>
+        <translation>ஒரு முகவர் HikariSub ஐப் பயன்படுத்தும்போது மட்டுமே இயங்கும், AI அணைக்கப்பட்டிருக்கும்போது ஒருபோதும் இயங்காது.</translation>
+    </message>
+    <message>
+        <source>Download</source>
+        <translation>பதிவிறக்கு</translation>
+    </message>
+    <message>
+        <source>It needs the AI component</source>
+        <translation>இதற்கு AI கூறு தேவை</translation>
+    </message>
+    <message>
+        <source>MCP stays off. %1.</source>
+        <translation>MCP அணைந்தே இருக்கும். %1.</translation>
+    </message>
+    <message>
+        <source>Also listen on http://127.0.0.1</source>
+        <translation>http://127.0.0.1 இலும் கேள்</translation>
+    </message>
+    <message>
+        <source>Also listen on http://127.0.0.1:%1</source>
+        <translation>http://127.0.0.1:%1 இலும் கேள்</translation>
+    </message>
+    <message>
+        <source>For agents that connect over HTTP. Only this computer can reach it, and only with the token.</source>
+        <translation>HTTP வழியாக இணையும் முகவர்களுக்கு. இந்தக் கணினி மட்டுமே, டோக்கனுடன் மட்டுமே இதை அணுக முடியும்.</translation>
+    </message>
+    <message>
+        <source>Copy setup</source>
+        <translation>அமைப்பை நகலெடு</translation>
+    </message>
+    <message>
+        <source>Reset token</source>
+        <translation>டோக்கனை மீட்டமை</translation>
+    </message>
+    <message>
+        <source>New token saved.</source>
+        <translation>புதிய டோக்கன் சேமிக்கப்பட்டது.</translation>
+    </message>
+    <message>
+        <source>Copied. Run it in a terminal.</source>
+        <translation>நகலெடுக்கப்பட்டது. அதை முனையத்தில் இயக்கவும்.</translation>
+    </message>
+    <message>
+        <source>Copied. Paste it into the agent’s settings.</source>
+        <translation>நகலெடுக்கப்பட்டது. அதை முகவரின் அமைப்புகளில் ஒட்டவும்.</translation>
+    </message>
+    <message>
+        <source>Claude Code command</source>
+        <translation>Claude Code கட்டளை</translation>
+    </message>
+    <message>
+        <source>Codex config.toml</source>
+        <translation>Codex config.toml</translation>
+    </message>
+    <message>
+        <source>JSON with the address and token</source>
+        <translation>முகவரியும் டோக்கனும் உள்ள JSON</translation>
+    </message>
+    <message>
+        <source>Holds your token; keep it private.</source>
+        <translation>உங்கள் டோக்கன் இதில் உள்ளது; அதைத் தனிப்பட்டதாக வைத்திருங்கள்.</translation>
+    </message>
+    <message>
+        <source>Reset token makes a new token. Agents set up with the old one stop working until you copy the setup again.</source>
+        <translation>டோக்கனை மீட்டமை ஒரு புதிய டோக்கனை உருவாக்கும். பழைய டோக்கனுடன் அமைக்கப்பட்ட முகவர்கள், நீங்கள் அமைப்பை மீண்டும் நகலெடுக்கும் வரை வேலை செய்யாது.</translation>
+    </message>
+    <message>
+        <source>The JSON setup needs the address: press OK or Apply to start listening on 127.0.0.1.</source>
+        <translation>JSON அமைப்புக்கு முகவரி தேவை: 127.0.0.1 இல் கேட்கத் தொடங்க சரி அல்லது பயன்படுத்து என்பதை அழுத்தவும்.</translation>
+    </message>
+    <message>
+        <source>The JSON setup is for agents that connect over HTTP, so it needs “Also listen on http://127.0.0.1”.</source>
+        <translation>JSON அமைப்பு HTTP வழியாக இணையும் முகவர்களுக்கானது, எனவே “http://127.0.0.1 இலும் கேள்” இயக்கப்பட வேண்டும்.</translation>
+    </message>
+    <message>
+        <source>Agent</source>
+        <translation>முகவர்</translation>
+    </message>
+    <message>
+        <source>Mode for new threads</source>
+        <translation>புதிய இழைகளுக்கான பயன்முறை</translation>
+    </message>
+    <message>
+        <source>Manual</source>
+        <translation>கைமுறை</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>தானியங்கு</translation>
+    </message>
+    <message>
+        <source>Full access</source>
+        <translation>முழு அணுகல்</translation>
+    </message>
+    <message>
+        <source>Cost cap per thread</source>
+        <translation>இழை ஒன்றுக்கான செலவு வரம்பு</translation>
+    </message>
+    <message>
+        <source>Cost cap per day</source>
+        <translation>நாள் ஒன்றுக்கான செலவு வரம்பு</translation>
+    </message>
+    <message>
+        <source>No cap</source>
+        <translation>வரம்பு இல்லை</translation>
+    </message>
+    <message>
+        <source>At a cap the turn stops after its current change. The agent never raises a cap; only you can.</source>
+        <translation>வரம்பை எட்டியதும் சுற்று அதன் தற்போதைய மாற்றத்துக்குப் பிறகு நிற்கும். முகவர் ஒருபோதும் வரம்பை உயர்த்தாது; நீங்கள் மட்டுமே உயர்த்த முடியும்.</translation>
+    </message>
+    <message>
+        <source>Show the cost meter</source>
+        <translation>செலவு அளவியைக் காட்டு</translation>
+    </message>
+    <message>
+        <source>AI components</source>
+        <translation>AI கூறுகள்</translation>
+    </message>
+    <message>
+        <source>What’s new</source>
+        <translation>புதிதாக என்ன</translation>
+    </message>
+    <message>
+        <source>AI component %1 stopped working, so HikariSub went back to %2 and won’t install %1 again.</source>
+        <translation>AI கூறு %1 வேலை செய்வதை நிறுத்தியதால் HikariSub %2-க்குத் திரும்பியது, %1-ஐ மீண்டும் நிறுவாது.</translation>
+    </message>
+    <message>
+        <source>A crash report was sent.</source>
+        <translation>செயலிழப்பு அறிக்கை அனுப்பப்பட்டது.</translation>
+    </message>
+    <message>
+        <source>Dismiss</source>
+        <translation>நிராகரி</translation>
+    </message>
+    <message>
+        <source>AI component</source>
+        <translation>AI கூறு</translation>
+    </message>
+    <message>
+        <source>Runs on</source>
+        <translation>இயங்குவது</translation>
+    </message>
+    <message>
+        <source>Provider libraries</source>
+        <translation>வழங்குநர் நூலகங்கள்</translation>
+    </message>
+    <message>
+        <source>Status</source>
+        <translation>நிலை</translation>
+    </message>
+    <message>
+        <source>Check now</source>
+        <translation>இப்போது சரிபார்</translation>
+    </message>
+    <message>
+        <source>Update AI components automatically</source>
+        <translation>AI கூறுகளைத் தானாகப் புதுப்பி</translation>
+    </message>
+    <message>
+        <source>Your administrator turned automatic updates off on this computer.</source>
+        <translation>உங்கள் நிர்வாகி இந்தக் கணினியில் தானியங்கு புதுப்பிப்புகளை முடக்கியுள்ளார்.</translation>
+    </message>
+    <message>
+        <source>HikariSub checks every hour while AI is on. A new version downloads in the background and starts once AI has been idle for 2 minutes. If it doesn’t start, HikariSub goes back to the one before.</source>
+        <translation>AI இயக்கத்தில் இருக்கும்போது HikariSub ஒவ்வொரு மணிநேரமும் சரிபார்க்கிறது. புதிய பதிப்பு பின்னணியில் பதிவிறங்கி, AI 2 நிமிடங்கள் பயன்படுத்தப்படாதபோது தொடங்கும். அது தொடங்காவிட்டால் HikariSub முந்தைய பதிப்புக்குத் திரும்பும்.</translation>
+    </message>
+    <message>
+        <source>HikariSub still checks every hour, and downloads only when you press Update now.</source>
+        <translation>HikariSub இன்னும் ஒவ்வொரு மணிநேரமும் சரிபார்க்கிறது, இப்போது புதுப்பி என்பதை அழுத்தும்போது மட்டும் பதிவிறக்குகிறது.</translation>
+    </message>
+    <message>
         <source>Use prompt caching</source>
         <translation>ப்ராம்ப்ட் தற்காலிகச் சேமிப்பைப் பயன்படுத்து</translation>
     </message>
@@ -10714,6 +12687,126 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Requests go only to the providers you add. The operating system doesn’t sandbox the AI component yet.</source>
         <translation type="vanished">கோரிக்கைகள் நீங்கள் சேர்க்கும் வழங்குநர்களுக்கு மட்டுமே செல்லும். இயக்க முறைமை இன்னும் AI கூறைத் தனிமைப்படுத்தவில்லை.</translation>
+    </message>
+    <message>
+        <source>Web search</source>
+        <translation>இணையத் தேடல்</translation>
+    </message>
+    <message>
+        <source>Let AI search the web</source>
+        <translation>AI இணையத்தில் தேட அனுமதி</translation>
+    </message>
+    <message>
+        <source>The agent can look up names, terms, lyrics and references, and says where it found them. The provider or your search service gets each search the agent writes and the pages it opens.</source>
+        <translation>முகவர் பெயர்கள், சொற்கள், பாடல் வரிகள், குறிப்புகளைத் தேடி, அவற்றை எங்கே கண்டது என்று சொல்லும். முகவர் எழுதும் ஒவ்வொரு தேடலும் அது திறக்கும் பக்கங்களும் வழங்குநருக்கோ உங்கள் தேடல் சேவைக்கோ செல்லும்.</translation>
+    </message>
+    <message>
+        <source>Google Search, and reads pages</source>
+        <translation>Google தேடல், பக்கங்களையும் படிக்கும்</translation>
+    </message>
+    <message>
+        <source>Its own search, and reads pages</source>
+        <translation>சொந்தத் தேடல், பக்கங்களையும் படிக்கும்</translation>
+    </message>
+    <message>
+        <source>Needs a search service</source>
+        <translation>தேடல் சேவை தேவை</translation>
+    </message>
+    <message>
+        <source>Gemini answers that searched show Google’s search suggestions, as Google’s terms require.</source>
+        <translation>தேடலைப் பயன்படுத்திய Gemini பதில்கள், Google விதிமுறைகளின்படி Google தேடல் பரிந்துரைகளைக் காட்டும்.</translation>
+    </message>
+    <message>
+        <source>Search service</source>
+        <translation>தேடல் சேவை</translation>
+    </message>
+    <message>
+        <source>Brave Search (search only)</source>
+        <translation>Brave Search (தேடல் மட்டும்)</translation>
+    </message>
+    <message>
+        <source>Brave Search only searches: providers without their own search can’t read a page with it.</source>
+        <translation>Brave Search தேடல் மட்டுமே செய்யும்: சொந்தத் தேடல் இல்லாத வழங்குநர்கள் இதன் மூலம் பக்கத்தைப் படிக்க முடியாது.</translation>
+    </message>
+    <message>
+        <source>For providers without their own search. Anthropic, Google Gemini, OpenAI and OpenRouter search without one.</source>
+        <translation>சொந்தத் தேடல் இல்லாத வழங்குநர்களுக்கு. Anthropic, Google Gemini, OpenAI, OpenRouter ஆகியவை இது இல்லாமலே தேடும்.</translation>
+    </message>
+    <message>
+        <source>%1 key</source>
+        <translation>%1 விசை</translation>
+    </message>
+    <message>
+        <source>Replace key…</source>
+        <translation>விசையை மாற்று…</translation>
+    </message>
+    <message>
+        <source>Add anyway</source>
+        <translation>இருந்தாலும் சேர்</translation>
+    </message>
+    <message>
+        <source>Remove key</source>
+        <translation>விசையை அகற்று</translation>
+    </message>
+    <message>
+        <source>Get a %1 key</source>
+        <translation>%1 விசையைப் பெறு</translation>
+    </message>
+    <message>
+        <source>Connected</source>
+        <translation>இணைக்கப்பட்டது</translation>
+    </message>
+    <message>
+        <source>Searches used up (%1)</source>
+        <translation>தேடல்கள் தீர்ந்துவிட்டன (%1)</translation>
+    </message>
+    <message>
+        <source>Add a provider to test the key</source>
+        <translation>விசையைச் சோதிக்க ஒரு வழங்குநரைச் சேர்க்கவும்</translation>
+    </message>
+    <message>
+        <source>Can’t reach %1</source>
+        <translation>%1-ஐ அடைய முடியவில்லை</translation>
+    </message>
+    <message>
+        <source>Search service error (%1)</source>
+        <translation>தேடல் சேவைப் பிழை (%1)</translation>
+    </message>
+    <message>
+        <source>Not tested</source>
+        <translation>சோதிக்கப்படவில்லை</translation>
+    </message>
+    <message>
+        <source>Saved in the keychain. HikariSub sends only the searches the agent writes, never your files. Test connection runs one search, which counts against your %1 plan.</source>
+        <translation>விசைக்கொத்தில் சேமிக்கப்படும். முகவர் எழுதும் தேடல்களை மட்டுமே HikariSub அனுப்பும், உங்கள் கோப்புகளை ஒருபோதும் அனுப்பாது. இணைப்பைச் சோதித்தல் ஒரு தேடலை இயக்கும், அது உங்கள் %1 திட்டத்தில் கணக்கிடப்படும்.</translation>
+    </message>
+    <message>
+        <source>%1 refused the key. Paste a new one from your %1 dashboard.</source>
+        <translation>%1 விசையை நிராகரித்தது. உங்கள் %1 கட்டுப்பாட்டுப் பலகத்திலிருந்து புதியதை ஒட்டவும்.</translation>
+    </message>
+    <message>
+        <source>Your %1 plan has no searches left. Until it resets, providers without their own search answer without searching and say so.</source>
+        <translation>உங்கள் %1 திட்டத்தில் தேடல்கள் இல்லை. அது மீட்டமைக்கப்படும் வரை, சொந்தத் தேடல் இல்லாத வழங்குநர்கள் தேடாமல் பதிலளித்து அதைச் சொல்லும்.</translation>
+    </message>
+    <message>
+        <source>The key is in the keychain. Providers charge for their own searches on top of tokens. %1 bills searches on your %1 plan.</source>
+        <translation>விசை விசைக்கொத்தில் உள்ளது. வழங்குநர்கள் டோக்கன்களுடன் தங்கள் சொந்தத் தேடல்களுக்கும் கட்டணம் வசூலிப்பார்கள். %1 தேடல்களை உங்கள் %1 திட்டத்தில் கணக்கிடும்.</translation>
+    </message>
+    <message>
+        <source>Remove the %1 key?</source>
+        <translation>%1 விசையை அகற்றவா?</translation>
+    </message>
+    <message>
+        <source>It is deleted from the keychain. Providers without their own search stop searching until you add a key.</source>
+        <translation>இது விசைக்கொத்திலிருந்து நீக்கப்படும். நீங்கள் விசையைச் சேர்க்கும் வரை சொந்தத் தேடல் இல்லாத வழங்குநர்கள் தேட மாட்டார்கள்.</translation>
+    </message>
+    <message>
+        <source>Requests go only to the providers you add and to %1. The AI component runs in a sandbox and reaches the network only through HikariSub.</source>
+        <translation>கோரிக்கைகள் நீங்கள் சேர்க்கும் வழங்குநர்களுக்கும் %1-க்கும் மட்டுமே செல்லும். AI கூறு தனிமைப்படுத்தப்பட்ட சூழலில் இயங்குகிறது, மேலும் HikariSub வழியாக மட்டுமே பிணையத்தை அடைகிறது.</translation>
+    </message>
+    <message>
+        <source>Requests go only to the providers you add and to %1. The AI component isn’t sandboxed on this system.</source>
+        <translation>கோரிக்கைகள் நீங்கள் சேர்க்கும் வழங்குநர்களுக்கும் %1-க்கும் மட்டுமே செல்லும். இந்தக் கணினியில் AI கூறு தனிமைப்படுத்தப்படவில்லை.</translation>
     </message>
 </context>
 <context>
@@ -10743,6 +12836,10 @@ Failed to copy %2 fonts.</source>
         <translation>இந்தச் செருகுநிரலுக்கு Hikari API %1 தேவை, ஆனால் இந்த HikariSub இல் API %2 உள்ளது. இதை நிறுவ HikariSub ஐப் புதுப்பிக்கவும்.</translation>
     </message>
     <message>
+        <source>Only Full trust plugins can ship QML panels.</source>
+        <translation>முழு நம்பிக்கை செருகுநிரல்கள் மட்டுமே QML பலகங்களைக் கொண்டிருக்க முடியும்.</translation>
+    </message>
+    <message>
         <source>hikari-plugin.json fails the plugin schema at %1: %2</source>
         <translation>%1 இல் hikari-plugin.json செருகுநிரல் ச்கீமாவுக்கு இணங்கவில்லை: %2</translation>
     </message>
@@ -10761,6 +12858,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>The package breaks the media rules: %1 %2.</source>
         <translation>தொகுப்பு ஊடக விதிகளை மீறுகிறது: %1 %2.</translation>
+    </message>
+    <message>
+        <source>The package lacks its panel file, %1.</source>
+        <translation>தொகுப்பில் அதன் பலகக் கோப்பான %1 இல்லை.</translation>
+    </message>
+    <message>
+        <source>%1 imports %2, which plugin panels can’t use.</source>
+        <translation>%1, செருகுநிரல் பலகங்கள் பயன்படுத்த முடியாத %2 ஐ இறக்குகிறது.</translation>
     </message>
     <message>
         <source>The package has a signature, but its manifest names no publicKey to check it with.</source>
@@ -10793,6 +12898,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Full trust: it may run native code outside HikariSub’s limits.</source>
         <translation>முழு நம்பிக்கை: இது HikariSub இன் வரம்புகளுக்கு வெளியே நேட்டிவ் குறியீட்டை இயக்கக்கூடும்.</translation>
+    </message>
+    <message>
+        <source>Shows its own panels inside HikariSub</source>
+        <translation>HikariSub இனுள் தனது சொந்தப் பலகங்களைக் காட்டுகிறது</translation>
     </message>
     <message>
         <source>Read and edit every open subtitle file: %1</source>
@@ -10893,6 +13002,18 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Install plugin</source>
         <translation>செருகுநிரலை நிறுவு</translation>
+    </message>
+    <message>
+        <source>“%1” can’t be installed while plugin updates are off.</source>
+        <translation>செருகுநிரல் புதுப்பிப்புகள் அணைக்கப்பட்டிருக்கும்போது “%1”-ஐ நிறுவ முடியாது.</translation>
+    </message>
+    <message>
+        <source>The link came from the marketplace website. HikariSub looks the plugin up in its own signed list, so it needs to check the marketplace first.</source>
+        <translation>இந்த இணைப்பு சந்தை இணையதளத்திலிருந்து வந்தது. HikariSub தன் சொந்தக் கையொப்பமிட்ட பட்டியலில் செருகுநிரலைத் தேடுகிறது, எனவே முதலில் சந்தையைச் சரிபார்க்க வேண்டும்.</translation>
+    </message>
+    <message>
+        <source>Turn on plugin updates</source>
+        <translation>செருகுநிரல் புதுப்பிப்புகளை இயக்கு</translation>
     </message>
     <message>
         <source>Update plugin</source>
@@ -11215,6 +13336,10 @@ Failed to copy %2 fonts.</source>
         <translation>அனுமதிகள்</translation>
     </message>
     <message>
+        <source>HikariSub keeps it to these permissions, but it isn’t sandboxed on this system.</source>
+        <translation>HikariSub இதை இந்த அனுமதிகளுக்குள் மட்டுமே வைத்திருக்கிறது, ஆனால் இந்த அமைப்பில் இது சாண்ட்பாக்ஸில் இயங்கவில்லை.</translation>
+    </message>
+    <message>
         <source>Remembered folders</source>
         <translation>நினைவில் வைத்த கோப்புறைகள்</translation>
     </message>
@@ -11369,6 +13494,22 @@ Failed to copy %2 fonts.</source>
         <translation>காட்டு</translation>
     </message>
     <message>
+        <source>HikariSub closed while %1’s panel was open.</source>
+        <translation>%1 இன் பலகம் திறந்திருந்தபோது HikariSub மூடப்பட்டது.</translation>
+    </message>
+    <message>
+        <source>The panel couldn’t load.</source>
+        <translation>பலகத்தை ஏற்ற முடியவில்லை.</translation>
+    </message>
+    <message>
+        <source>Its panels stay closed until you choose Load again.</source>
+        <translation>நீங்கள் மீண்டும் ஏற்று என்பதைத் தேர்வுசெய்யும் வரை இதன் பலகங்கள் மூடியே இருக்கும்.</translation>
+    </message>
+    <message>
+        <source>Load again</source>
+        <translation>மீண்டும் ஏற்று</translation>
+    </message>
+    <message>
         <source>%1 isn’t installed.</source>
         <translation>%1 நிறுவப்படவில்லை.</translation>
     </message>
@@ -11463,6 +13604,57 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>All files (*)</source>
         <translation>எல்லா கோப்புகளும் (*)</translation>
+    </message>
+    <message>
+        <source>HikariSub closed while its panel was open, so its panels stay closed until you choose Load again.</source>
+        <translation>இதன் பலகம் திறந்திருந்தபோது HikariSub மூடப்பட்டதால், நீங்கள் மீண்டும் ஏற்று என்பதைத் தேர்வுசெய்யும் வரை இதன் பலகங்கள் மூடியே இருக்கும்.</translation>
+    </message>
+    <message>
+        <source>Its root isn’t an Item.</source>
+        <translation>இதன் மூலம் Item அல்ல.</translation>
+    </message>
+    <message>
+        <source>Its panel “%1” couldn’t load: %2</source>
+        <translation>இதன் பலகம் “%1” ஐ ஏற்ற முடியவில்லை: %2</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Project</name>
+    <message>
+        <source>Project settings</source>
+        <translation>திட்டப்பணி அமைப்புகள்</translation>
+    </message>
+    <message>
+        <source>%1 could not be read, so its settings don’t apply.</source>
+        <translation>%1 ஐப் படிக்க முடியவில்லை, எனவே அதன் அமைப்புகள் பொருந்தாது.</translation>
+    </message>
+    <message>
+        <source>%1 could not be read, so its settings don’t apply. It is kept as %2.</source>
+        <translation>%1 ஐப் படிக்க முடியவில்லை, எனவே அதன் அமைப்புகள் பொருந்தாது. அது %2 ஆக வைக்கப்பட்டுள்ளது.</translation>
+    </message>
+    <message>
+        <source>A Project can’t set %1, so the project file’s value is ignored.</source>
+        <translation>ஒரு திட்டப்பணி %1 ஐ அமைக்க முடியாது, எனவே திட்டப்பணிக் கோப்பின் மதிப்பு புறக்கணிக்கப்படுகிறது.</translation>
+    </message>
+    <message>
+        <source>Open folder</source>
+        <translation>கோப்புறையைத் திற</translation>
+    </message>
+    <message>
+        <source>%1 is not a folder.</source>
+        <translation>%1 ஒரு கோப்புறை அல்ல.</translation>
+    </message>
+    <message>
+        <source>This tab now uses the project %1.</source>
+        <translation>இந்தத் தாவல் இப்போது %1 திட்டப்பணியைப் பயன்படுத்துகிறது.</translation>
+    </message>
+    <message>
+        <source>This file is in the project %1.</source>
+        <translation>இந்தக் கோப்பு %1 திட்டப்பணியில் உள்ளது.</translation>
+    </message>
+    <message>
+        <source>Open project</source>
+        <translation>திட்டப்பணியைத் திற</translation>
     </message>
 </context>
 <context>
@@ -11706,6 +13898,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Open a subtitle file to keep QC notes in it.</source>
         <translation>QC குறிப்புகளை வைக்க ஒரு வசனக் கோப்பைத் திறக்கவும்.</translation>
+    </message>
+    <message>
+        <source>Only ASS and SSA files can keep QC notes. Save this file as ASS to add notes.</source>
+        <translation>ASS மற்றும் SSA கோப்புகள் மட்டுமே QC குறிப்புகளை வைத்திருக்க முடியும். குறிப்புகளைச் சேர்க்க இந்தக் கோப்பை ASS ஆகச் சேமிக்கவும்.</translation>
     </message>
     <message>
         <source>Paste notes</source>
@@ -12253,7 +14449,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Restore checkpoint</source>
-        <translation type="unfinished"></translation>
+        <translation>சோதனைப்புள்ளியை மீட்டமை</translation>
     </message>
     <message>
         <source>Every AI change from this turn on is undone, kept ones too, in every tab it touched, as one history step per tab.</source>
@@ -12374,6 +14570,13 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>By %1</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>You changed %n line(s) after this change. Undo puts the whole change back as it was before the AI, which drops your edits.</source>
+        <translation>
+            <numerusform>இந்த மாற்றத்துக்குப் பிறகு %n வரியை மாற்றினீர்கள். செயல்தவிர்த்தால் முழு மாற்றமும் AI-க்கு முந்தைய நிலைக்குத் திரும்பும், உங்கள் திருத்தங்கள் நீக்கப்படும்.</numerusform>
+            <numerusform>இந்த மாற்றத்துக்குப் பிறகு %n வரிகளை மாற்றினீர்கள். செயல்தவிர்த்தால் முழு மாற்றமும் AI-க்கு முந்தைய நிலைக்குத் திரும்பும், உங்கள் திருத்தங்கள் நீக்கப்படும்.</numerusform>
+        </translation>
     </message>
     <message>
         <source>All kept or undone</source>
@@ -15079,6 +17282,10 @@ Styles deleted:
         <translation>இதற்கு மாறு</translation>
     </message>
     <message>
+        <source>Move tab to new window</source>
+        <translation>தாவலை புதிய சாளரத்திற்கு நகர்த்து</translation>
+    </message>
+    <message>
         <source>Close</source>
         <translation>மூடு</translation>
     </message>
@@ -15164,6 +17371,10 @@ Styles deleted:
     <message>
         <source>Video only</source>
         <translation>வீடியோ மட்டும்</translation>
+    </message>
+    <message>
+        <source>Move tab to window</source>
+        <translation>தாவலை சாளரத்திற்கு நகர்த்து</translation>
     </message>
 </context>
 <context>
@@ -16921,6 +19132,329 @@ Styles deleted:
         <source>Cancel</source>
         <translation>ரத்துசெய்</translation>
     </message>
+    <message>
+        <source>Position</source>
+        <translation>நிலை</translation>
+    </message>
+    <message>
+        <source>Scale</source>
+        <translation>அளவீடு</translation>
+    </message>
+    <message>
+        <source>Rotation</source>
+        <translation>சுழற்சி</translation>
+    </message>
+    <message>
+        <source>Select two or more lines, one a frame.</source>
+        <translation>ஒரு சட்டகத்துக்கு ஒன்றாக, இரண்டு அல்லது அதற்கு மேற்பட்ட வரிகளைத் தேர்ந்தெடுக்கவும்.</translation>
+    </message>
+    <message>
+        <source>Line %1 isn’t the next frame of the sign: each line must cover one frame and follow on from the one before, with the same text and layer.</source>
+        <translation>வரி %1 டைப்செட் உரையின் அடுத்த சட்டகம் அல்ல: ஒவ்வொரு வரியும் ஒரு சட்டகத்தை உள்ளடக்கி, அதே உரை மற்றும் அடுக்குடன் முந்தைய வரியைத் தொடர்ந்து வர வேண்டும்.</translation>
+    </message>
+    <message>
+        <source>Line %1 is animated (\t, \move, \fad or karaoke). Extend lines that hold still on each frame.</source>
+        <translation>வரி %1 அசைவூட்டப்பட்டுள்ளது (\t, \move, \fad அல்லது கரோக்கி). ஒவ்வொரு சட்டகத்திலும் அசையாமல் இருக்கும் வரிகளை நீட்டிக்கவும்.</translation>
+    </message>
+    <message>
+        <source>Line %1 has no \pos.</source>
+        <translation>வரி %1 இல் \pos இல்லை.</translation>
+    </message>
+    <message numerus="yes">
+        <source>The video has fewer than %n frame(s) before line %1.</source>
+        <translation>
+            <numerusform>வரி %1 க்கு முன் வீடியோவில் %n சட்டகத்துக்கும் குறைவாகவே உள்ளது.</numerusform>
+            <numerusform>வரி %1 க்கு முன் வீடியோவில் %n சட்டகங்களுக்கும் குறைவாகவே உள்ளன.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The lines can’t be extended.</source>
+        <translation>வரிகளை நீட்டிக்க முடியாது.</translation>
+    </message>
+    <message>
+        <source>Paste the After Effects keyframe data exported from Mocha or Blender. Apply reads its Position, Scale and Rotation.</source>
+        <translation>Mocha அல்லது Blender இலிருந்து ஏற்றுமதி செய்த After Effects கீஃப்ரேம் தரவை ஒட்டவும். பயன்படுத்து அதன் நிலை, அளவீடு, சுழற்சியைப் படிக்கும்.</translation>
+    </message>
+    <message>
+        <source>This isn’t motion data: no After Effects keyframe data with Position, Scale and Rotation was found.</source>
+        <translation>இது அசைவுத் தரவு அல்ல: நிலை, அளவீடு, சுழற்சி கொண்ட After Effects கீஃப்ரேம் தரவு எதுவும் கிடைக்கவில்லை.</translation>
+    </message>
+    <message>
+        <source>The data starts at frame %1 and runs past the selection’s last frame. Pick an earlier start.</source>
+        <translation>தரவு சட்டகம் %1 இல் தொடங்கி, தேர்வின் கடைசிச் சட்டகத்தைத் தாண்டிச் செல்கிறது. முந்தைய தொடக்கத்தைத் தேர்ந்தெடுக்கவும்.</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n frame(s) of data for %1 frames: %2 extrapolated before, %3 after.</source>
+        <translation>
+            <numerusform>%1 சட்டகங்களுக்கு %n சட்டகத் தரவு: முன்னால் %2, பின்னால் %3 புறச்செருகப்பட்டன.</numerusform>
+            <numerusform>%1 சட்டகங்களுக்கு %n சட்டகங்களின் தரவு: முன்னால் %2, பின்னால் %3 புறச்செருகப்பட்டன.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>%1 fits poorly at the start; check frames %2–%3.</source>
+        <translation>%1 தொடக்கத்தில் சரியாகப் பொருந்தவில்லை; சட்டகங்கள் %2–%3 ஐச் சரிபார்க்கவும்.</translation>
+    </message>
+    <message>
+        <source>%1 fits poorly at the end; check frames %2–%3.</source>
+        <translation>%1 முடிவில் சரியாகப் பொருந்தவில்லை; சட்டகங்கள் %2–%3 ஐச் சரிபார்க்கவும்.</translation>
+    </message>
+    <message numerus="yes">
+        <source>The data has %n frame(s), but the selected lines cover %1 (%2–%3). Select lines that span the tracked frames, or extrapolate.</source>
+        <translation>
+            <numerusform>தரவில் %n சட்டகம் உள்ளது, ஆனால் தேர்ந்தெடுத்த வரிகள் %1 சட்டகங்களை (%2–%3) உள்ளடக்குகின்றன. கண்காணித்த சட்டகங்களை உள்ளடக்கும் வரிகளைத் தேர்ந்தெடுக்கவும், அல்லது புறச்செருகவும்.</numerusform>
+            <numerusform>தரவில் %n சட்டகங்கள் உள்ளன, ஆனால் தேர்ந்தெடுத்த வரிகள் %1 சட்டகங்களை (%2–%3) உள்ளடக்குகின்றன. கண்காணித்த சட்டகங்களை உள்ளடக்கும் வரிகளைத் தேர்ந்தெடுக்கவும், அல்லது புறச்செருகவும்.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Paste the data the clips follow.</source>
+        <translation>கிளிப்புகள் பின்தொடர வேண்டிய தரவை ஒட்டவும்.</translation>
+    </message>
+    <message>
+        <source>This isn’t motion data.</source>
+        <translation>இது அசைவுத் தரவு அல்ல.</translation>
+    </message>
+    <message numerus="yes">
+        <source>The clip data has %n frame(s); the motion data has %1.</source>
+        <translation>
+            <numerusform>கிளிப் தரவில் %n சட்டகம் உள்ளது; அசைவுத் தரவில் %1 உள்ளன.</numerusform>
+            <numerusform>கிளிப் தரவில் %n சட்டகங்கள் உள்ளன; அசைவுத் தரவில் %1 உள்ளன.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n frame(s). Moves the clips from frame %1.</source>
+        <translation>
+            <numerusform>%n சட்டகம். சட்டகம் %1 இலிருந்து கிளிப்புகளை நகர்த்தும்.</numerusform>
+            <numerusform>%n சட்டகங்கள். சட்டகம் %1 இலிருந்து கிளிப்புகளை நகர்த்தும்.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The data doesn’t cover the selected lines’ frames.</source>
+        <translation>தேர்ந்தெடுத்த வரிகளின் சட்டகங்களைத் தரவு உள்ளடக்கவில்லை.</translation>
+    </message>
+    <message>
+        <source>No selected line has motion data to revert.</source>
+        <translation>திரும்பப்பெற வேண்டிய அசைவுத் தரவு உள்ள தேர்ந்தெடுத்த வரி எதுவும் இல்லை.</translation>
+    </message>
+    <message>
+        <source>Open a video first: motion data is per frame.</source>
+        <translation>முதலில் ஒரு வீடியோவைத் திறக்கவும்: அசைவுத் தரவு சட்டகம் வாரியானது.</translation>
+    </message>
+    <message>
+        <source>Select two or more lines of one sign, frame by frame.</source>
+        <translation>ஒரே டைப்செட் உரையின் இரண்டு அல்லது அதற்கு மேற்பட்ட வரிகளைச் சட்டகம் சட்டகமாகத் தேர்ந்தெடுக்கவும்.</translation>
+    </message>
+    <message>
+        <source>Line %1 doesn’t follow on from the line before with the same text and layer.</source>
+        <translation>வரி %1, அதே உரை மற்றும் அடுக்குடன் உள்ள முந்தைய வரியைத் தொடர்ந்து வரவில்லை.</translation>
+    </message>
+    <message>
+        <source>Line %1 has no \pos or \move.</source>
+        <translation>வரி %1 இல் \pos அல்லது \move இல்லை.</translation>
+    </message>
+    <message numerus="yes">
+        <source>Copied %n frame(s) of motion data</source>
+        <translation>
+            <numerusform>அசைவுத் தரவின் %n சட்டகம் நகலெடுக்கப்பட்டது</numerusform>
+            <numerusform>அசைவுத் தரவின் %n சட்டகங்கள் நகலெடுக்கப்பட்டன</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Open a video first: tracking data is per frame.</source>
+        <translation>முதலில் ஒரு வீடியோவைத் திறக்கவும்: கண்காணிப்புத் தரவு சட்டகம் வாரியானது.</translation>
+    </message>
+    <message>
+        <source>Select the lines to copy.</source>
+        <translation>நகலெடுக்க வேண்டிய வரிகளைத் தேர்ந்தெடுக்கவும்.</translation>
+    </message>
+    <message>
+        <source>Line %1 overlaps another selected line. Copy one sign at a time.</source>
+        <translation>வரி %1 தேர்ந்தெடுத்த மற்றொரு வரியுடன் மேற்பொருந்துகிறது. ஒரு நேரத்தில் ஒரு டைப்செட் உரையை நகலெடுக்கவும்.</translation>
+    </message>
+    <message>
+        <source>Line %1 has \move, which a Power-Pin track can’t hold.</source>
+        <translation>வரி %1 இல் \move உள்ளது, அதை Power-Pin தடத்தில் வைக்க முடியாது.</translation>
+    </message>
+    <message>
+        <source>Line %1’s text can’t be measured.</source>
+        <translation>வரி %1 இன் உரையை அளக்க முடியவில்லை.</translation>
+    </message>
+    <message numerus="yes">
+        <source>Copied %n frame(s) of Power-Pin data</source>
+        <translation>
+            <numerusform>Power-Pin தரவின் %n சட்டகம் நகலெடுக்கப்பட்டது</numerusform>
+            <numerusform>Power-Pin தரவின் %n சட்டகங்கள் நகலெடுக்கப்பட்டன</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Extrapolated \move on %n line(s)</source>
+        <translation>
+            <numerusform>%n வரியில் \move புறச்செருகப்பட்டது</numerusform>
+            <numerusform>%n வரிகளில் \move புறச்செருகப்பட்டது</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>No selected line has a \move with start and end times.</source>
+        <translation>தொடக்க மற்றும் முடிவு நேரங்கள் கொண்ட \move உள்ள தேர்ந்தெடுத்த வரி எதுவும் இல்லை.</translation>
+    </message>
+    <message numerus="yes">
+        <source>Fits position, scale and rotation over the %n selected line(s) (degree %1, error %2 px).</source>
+        <translation>
+            <numerusform>தேர்ந்தெடுத்த %n வரியின் மீது நிலை, அளவீடு, சுழற்சியைப் பொருத்துகிறது (படி %1, பிழை %2 px).</numerusform>
+            <numerusform>தேர்ந்தெடுத்த %n வரிகளின் மீது நிலை, அளவீடு, சுழற்சியைப் பொருத்துகிறது (படி %1, பிழை %2 px).</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>%1 fits poorly (error %2); check the new frames.</source>
+        <translation>%1 சரியாகப் பொருந்தவில்லை (பிழை %2); புதிய சட்டகங்களைச் சரிபார்க்கவும்.</translation>
+    </message>
+    <message>
+        <source>The file is too large to be motion data.</source>
+        <translation>இந்தக் கோப்பு அசைவுத் தரவாக இருக்க முடியாத அளவுக்கு மிகப் பெரியது.</translation>
+    </message>
+    <message>
+        <source>Could not read the file: %1</source>
+        <translation>கோப்பைப் படிக்க முடியவில்லை: %1</translation>
+    </message>
+    <message>
+        <source>Paste</source>
+        <translation>ஒட்டு</translation>
+    </message>
+    <message>
+        <source>Open file…</source>
+        <translation>கோப்பைத் திற…</translation>
+    </message>
+    <message>
+        <source>Open tracking data</source>
+        <translation>கண்காணிப்புத் தரவைத் திற</translation>
+    </message>
+    <message>
+        <source>Tracking data (*.txt)</source>
+        <translation>கண்காணிப்புத் தரவு (*.txt)</translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation>அனைத்துக் கோப்புகளும் (*)</translation>
+    </message>
+    <message>
+        <source>Apply motion data</source>
+        <translation>அசைவுத் தரவைப் பயன்படுத்து</translation>
+    </message>
+    <message>
+        <source>Motion data</source>
+        <translation>அசைவுத் தரவு</translation>
+    </message>
+    <message>
+        <source>Clip data</source>
+        <translation>கிளிப் தரவு</translation>
+    </message>
+    <message>
+        <source>Follow</source>
+        <translation>பின்தொடர்</translation>
+    </message>
+    <message>
+        <source>Absolute</source>
+        <translation>முழுமையான</translation>
+    </message>
+    <message>
+        <source>Position x</source>
+        <translation>நிலை x</translation>
+    </message>
+    <message>
+        <source>Position y</source>
+        <translation>நிலை y</translation>
+    </message>
+    <message>
+        <source>Outline</source>
+        <translation>வெளிக்கோடு</translation>
+    </message>
+    <message>
+        <source>Shadow</source>
+        <translation>நிழல்</translation>
+    </message>
+    <message>
+        <source>Blur</source>
+        <translation>மங்கல்</translation>
+    </message>
+    <message>
+        <source>Blur factor, percent</source>
+        <translation>மங்கல் காரணி, சதவீதத்தில்</translation>
+    </message>
+    <message>
+        <source>Clips</source>
+        <translation>கிளிப்புகள்</translation>
+    </message>
+    <message>
+        <source>Rect clips</source>
+        <translation>செவ்வகக் கிளிப்புகள்</translation>
+    </message>
+    <message>
+        <source>Vector clips</source>
+        <translation>திசையன் கிளிப்புகள்</translation>
+    </message>
+    <message>
+        <source>Rect to vector</source>
+        <translation>செவ்வகத்தைத் திசையனாக்கு</translation>
+    </message>
+    <message>
+        <source>Clips only</source>
+        <translation>கிளிப்புகள் மட்டும்</translation>
+    </message>
+    <message>
+        <source>Track clips with other data</source>
+        <translation>வேறு தரவைக் கொண்டு கிளிப்புகளைக் கண்காணி</translation>
+    </message>
+    <message>
+        <source>Bake transforms and fades</source>
+        <translation>உருமாற்றங்களையும் மங்கல்களையும் நிலைப்படுத்து</translation>
+    </message>
+    <message>
+        <source>One line with %1 and %2</source>
+        <translation>%1 மற்றும் %2 உடன் ஒரே வரி</translation>
+    </message>
+    <message>
+        <source>Extrapolate past the data</source>
+        <translation>தரவுக்கு அப்பால் புறச்செருகு</translation>
+    </message>
+    <message>
+        <source>Data starts at frame</source>
+        <translation>தரவு தொடங்கும் சட்டகம்</translation>
+    </message>
+    <message>
+        <source>Extend tracked lines</source>
+        <translation>கண்காணித்த வரிகளை நீட்டு</translation>
+    </message>
+    <message>
+        <source>Add</source>
+        <translation>சேர்</translation>
+    </message>
+    <message>
+        <source>Frames to add</source>
+        <translation>சேர்க்க வேண்டிய சட்டகங்கள்</translation>
+    </message>
+    <message>
+        <source>frames</source>
+        <translation>சட்டகங்கள்</translation>
+    </message>
+    <message>
+        <source>before the first line</source>
+        <translation>முதல் வரிக்கு முன்</translation>
+    </message>
+    <message>
+        <source>after the last line</source>
+        <translation>கடைசி வரிக்குப் பின்</translation>
+    </message>
+    <message>
+        <source>Where to add them</source>
+        <translation>அவற்றை எங்கே சேர்ப்பது</translation>
+    </message>
+    <message>
+        <source>Move the origin (%1)</source>
+        <translation>மூலப்புள்ளியை நகர்த்து (%1)</translation>
+    </message>
+    <message>
+        <source>Extend</source>
+        <translation>நீட்டு</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Translation</name>
@@ -18106,6 +20640,18 @@ or codecs or a splitter may be missing</source>
         <translation>வரை</translation>
     </message>
     <message>
+        <source>Stops</source>
+        <translation>நிறுத்தங்கள்</translation>
+    </message>
+    <message>
+        <source>Blend</source>
+        <translation>கலவை</translation>
+    </message>
+    <message>
+        <source>Steps</source>
+        <translation>படிகள்</translation>
+    </message>
+    <message>
         <source>In</source>
         <translation>தோன்றல்</translation>
     </message>
@@ -18891,6 +21437,202 @@ increasing or decreasing the value.</source>
     <message>
         <source>Text alignment works the same as in styles</source>
         <translation>பாணிகளில் உள்ளதைப் போலவே உரைச் சீரமைப்பு செயல்படுகிறது</translation>
+    </message>
+    <message>
+        <source>Rectangle strips</source>
+        <translation>செவ்வகப் பட்டைகள்</translation>
+    </message>
+    <message>
+        <source>Rotated strips</source>
+        <translation>சுழற்றிய பட்டைகள்</translation>
+    </message>
+    <message>
+        <source>Skewed strips</source>
+        <translation>சாய்ந்த பட்டைகள்</translation>
+    </message>
+    <message>
+        <source>Strips along the clip</source>
+        <translation>கிளிப்பை ஒட்டிய பட்டைகள்</translation>
+    </message>
+    <message>
+        <source>Wedge strips</source>
+        <translation>ஆப்பு பட்டைகள்</translation>
+    </message>
+    <message>
+        <source>By character</source>
+        <translation>எழுத்து வாரியாக</translation>
+    </message>
+    <message>
+        <source>By line</source>
+        <translation>வரி வாரியாக</translation>
+    </message>
+    <message>
+        <source>Mask shape</source>
+        <translation>முகமூடி வடிவம்</translation>
+    </message>
+    <message>
+        <source>Where the gradient takes its values from</source>
+        <translation>சாய்வின் மதிப்புகள் எங்கிருந்து வருகின்றன</translation>
+    </message>
+    <message>
+        <source>Tags the gradient changes</source>
+        <translation>சாய்வு மாற்றும் குறிச்சொற்கள்</translation>
+    </message>
+    <message>
+        <source>Remove the tag from the gradient</source>
+        <translation>சாய்விலிருந்து குறிச்சொல்லை அகற்று</translation>
+    </message>
+    <message>
+        <source>How colours mix</source>
+        <translation>நிறங்கள் கலக்கும் விதம்</translation>
+    </message>
+    <message>
+        <source>How far along the text each character is</source>
+        <translation>உரையில் ஒவ்வொரு எழுத்தும் எவ்வளவு தூரத்தில் உள்ளது</translation>
+    </message>
+    <message>
+        <source>Merge equal strips</source>
+        <translation>ஒரே மாதிரியான பட்டைகளை இணை</translation>
+    </message>
+    <message>
+        <source>Apply gradient (Enter)</source>
+        <translation>சாய்வைப் பயன்படுத்து (Enter)</translation>
+    </message>
+    <message>
+        <source>Wedge</source>
+        <translation>ஆப்பு</translation>
+    </message>
+    <message>
+        <source>Box</source>
+        <translation>பெட்டி</translation>
+    </message>
+    <message>
+        <source>Ring</source>
+        <translation>வளையம்</translation>
+    </message>
+    <message>
+        <source>Star</source>
+        <translation>நட்சத்திரம்</translation>
+    </message>
+    <message>
+        <source>Vignette</source>
+        <translation>விக்னெட்</translation>
+    </message>
+    <message>
+        <source>Values</source>
+        <translation>மதிப்புகள்</translation>
+    </message>
+    <message>
+        <source>Picked lines</source>
+        <translation>தேர்ந்த வரிகள்</translation>
+    </message>
+    <message>
+        <source>RGB</source>
+        <translation>RGB</translation>
+    </message>
+    <message>
+        <source>HSL</source>
+        <translation>HSL</translation>
+    </message>
+    <message>
+        <source>By width</source>
+        <translation>அகல வாரியாக</translation>
+    </message>
+    <message>
+        <source>By count</source>
+        <translation>எண்ணிக்கை வாரியாக</translation>
+    </message>
+    <message>
+        <source>In the gradient</source>
+        <translation>சாய்வில் உள்ளவை</translation>
+    </message>
+    <message>
+        <source>Colour and alpha</source>
+        <translation>நிறமும் ஆல்ஃபாவும்</translation>
+    </message>
+    <message>
+        <source>Border, shadow and blur</source>
+        <translation>விளிம்பு, நிழல், மங்கல்</translation>
+    </message>
+    <message>
+        <source>Text</source>
+        <translation>உரை</translation>
+    </message>
+    <message>
+        <source>Spacing</source>
+        <translation>இடைவெளி</translation>
+    </message>
+    <message>
+        <source>Thickness</source>
+        <translation>தடிமன்</translation>
+    </message>
+    <message>
+        <source>Spikes</source>
+        <translation>முனைகள்</translation>
+    </message>
+    <message>
+        <source>Centre</source>
+        <translation>மையம்</translation>
+    </message>
+    <message>
+        <source>Hole</source>
+        <translation>துளை</translation>
+    </message>
+    <message>
+        <source>Accel</source>
+        <translation>முடுக்கம்</translation>
+    </message>
+    <message>
+        <source>Strip</source>
+        <translation>பட்டை</translation>
+    </message>
+    <message>
+        <source>Overlap</source>
+        <translation>மேல்படிதல்</translation>
+    </message>
+    <message>
+        <source>Skew</source>
+        <translation>சாய்மானம்</translation>
+    </message>
+    <message>
+        <source>px</source>
+        <translation>px</translation>
+    </message>
+    <message>
+        <source>Choose a tag for the gradient</source>
+        <translation>சாய்வுக்கு ஒரு குறிச்சொல்லைத் தேர்ந்தெடுக்கவும்</translation>
+    </message>
+    <message>
+        <source>Pick two or more lines as stops</source>
+        <translation>நிறுத்தங்களாக இரண்டு அல்லது அதற்கு மேற்பட்ட வரிகளைத் தேர்ந்தெடுக்கவும்</translation>
+    </message>
+    <message>
+        <source>The picked lines must have the same text and tag blocks</source>
+        <translation>தேர்ந்த வரிகளில் அதே உரையும் குறிச்சொல் தொகுதிகளும் இருக்க வேண்டும்</translation>
+    </message>
+    <message>
+        <source>No tag differs between the picked lines</source>
+        <translation>தேர்ந்த வரிகளுக்கு இடையே எந்தக் குறிச்சொல்லும் வேறுபடவில்லை</translation>
+    </message>
+    <message>
+        <source>Drag from where the gradient starts to where it ends</source>
+        <translation>சாய்வு தொடங்கும் இடத்திலிருந்து முடியும் இடம் வரை இழுக்கவும்</translation>
+    </message>
+    <message>
+        <source>The line has no text or clip to cover</source>
+        <translation>வரியில் மூட உரையோ கிளிப்போ இல்லை</translation>
+    </message>
+    <message>
+        <source>Strips along the clip need a clip on the line</source>
+        <translation>கிளிப்பை ஒட்டிய பட்டைகளுக்கு வரியில் கிளிப் தேவை</translation>
+    </message>
+    <message>
+        <source>Gradients do not work on an inverse clip</source>
+        <translation>தலைகீழ் கிளிப்பில் சாய்வுகள் வேலை செய்யாது</translation>
+    </message>
+    <message>
+        <source>No characters on the line</source>
+        <translation>வரியில் எழுத்துகள் இல்லை</translation>
     </message>
     <message>
         <source>Edit</source>

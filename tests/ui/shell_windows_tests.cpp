@@ -19,9 +19,11 @@
 #include <QQmlApplicationEngine>
 #include <QQuickItem>
 #include <QQuickWindow>
+#include <QScopeGuard>
 #include <QScreen>
 #include <QSignalSpy>
 #include <QTemporaryDir>
+#include <QtQuickTest/quicktest.h>
 #include <QtTest>
 
 #include <functional>
@@ -35,7 +37,8 @@ namespace {
 const char *const kPanels[] = {"videoDock",     "audioDock",      "originalDock",  "editorDock", "gridDock",
                                "referenceDock", "timingDock",     "searchDock",    "automationDock",
                                "spellDock",     "stylesDock",     "templateDock",  "logDock",
-                               "postprocessorDock", "qcNotesDock", "reviewDock"};
+                               "postprocessorDock", "qcNotesDock", "reviewDock", "agentDock", "nodeGraphDock",
+                               "nodeInspectorDock", "nodeSourcesDock"};
 
 QString writeSubtitles(const QString &path, const char *text, int width, const char *more = "")
 {
@@ -90,11 +93,12 @@ class ShellWindowsTest : public QObject {
     }
     static QVariantList overlay(QQuickWindow *window) { return controller(window, "visualTools")->property("overlay").toList(); }
     QQuickWindow *shellWindow(int window) const { return window == 0 ? first() : second.data(); }
-    void focus(int window)
+    void focus(int window) { focus(shellWindow(window)); }
+    void focus(QQuickWindow *window)
     {
-        shellWindow(window)->requestActivate();
-        QTRY_COMPARE(QGuiApplication::focusWindow(), shellWindow(window));
-        QTRY_COMPARE(application->workspace().activeWindow(), window);
+        window->requestActivate();
+        QTRY_COMPARE(QGuiApplication::focusWindow(), window);
+        QTRY_COMPARE(application->workspace().activeWindow(), shellId(window));
     }
     static QList<QQuickItem *> itemsNamed(QQuickWindow *window, const QString &name)
     {
@@ -308,6 +312,62 @@ class ShellWindowsTest : public QObject {
                                           Q_ARG(QVariant, QStringLiteral("GLOBAL_QUIT"))));
         QVERIFY(ran.toBool());
     }
+    QQuickWindow *newestShellWindow() const
+    {
+        QQuickWindow *newest = nullptr;
+        for (QWindow *w : QGuiApplication::topLevelWindows())
+            if (auto *shell = qobject_cast<QQuickWindow *>(w);
+                shell && shell->isVisible() && shellId(shell) > (newest ? shellId(newest) : 0))
+                newest = shell;
+        return newest;
+    }
+    application::DocumentId openTab(int window, const char *name)
+    {
+        focus(window);
+        [&] { QVERIFY(application->openFile(writeSubtitles(dir.filePath(QLatin1String(name) + u".ass"), name, 640))); }();
+        for (const QVariant &row : application->windowTabs(window))
+            if (row.toMap().value(QStringLiteral("title")).toString() == QLatin1String(name) + u".ass")
+                return application::DocumentId{row.toMap().value(QStringLiteral("id")).toULongLong()};
+        return {};
+    }
+    static QQuickItem *tab(QQuickWindow *window, int index)
+    {
+        const auto found = itemsNamed(window, QStringLiteral("documentTab%1").arg(index));
+        return found.isEmpty() ? nullptr : found.front();
+    }
+    QPoint tabCentre(QQuickWindow *window, int index) const
+    {
+        QQuickTest::qWaitForPolish(window);
+        QQuickItem *tab = ShellWindowsTest::tab(window, index);
+        return tab ? window->mapToGlobal(tab->mapToScene(QPointF(tab->width() / 2, tab->height() / 2))).toPoint() : QPoint();
+    }
+    void sideBySide()
+    {
+        first()->setGeometry(0, 0, 790, 470);
+        second->setGeometry(490, 480, 790, 470);
+        QTRY_COMPARE(second->position(), QPoint(490, 480));
+        QTRY_VERIFY(second->property("arrangementSettled").toBool());
+    }
+    static void dragTab(QQuickWindow *window, QPoint from, QPoint to)
+    {
+        const QPoint below = from + QPoint(0, 80);
+        sendMouse(window, QEvent::MouseButtonPress, from, Qt::LeftButton);
+        for (int i = 1; i <= 8; ++i)
+            sendMouse(window, QEvent::MouseMove, from + (below - from) * i / 8, Qt::LeftButton);
+        for (int i = 1; i <= 8; ++i)
+            sendMouse(window, QEvent::MouseMove, below + (to - below) * i / 8, Qt::LeftButton);
+        sendMouse(window, QEvent::MouseButtonRelease, to, Qt::NoButton);
+    }
+    QStringList menuTitles(QObject *menu) const
+    {
+        QStringList out;
+        for (int i = 0;; ++i) {
+            QObject *row = menu->findChild<QObject *>(QStringLiteral("moveTabToWindow%1").arg(i));
+            if (!row)
+                return out;
+            out << row->property("text").toString();
+        }
+    }
     void loadSession(const QString &file)
     {
         const QPointer<QQuickWindow> before = second;
@@ -352,9 +412,9 @@ private slots:
     }
     void cleanup()
     {
-        if (second && !application->quitApproved()) {
-            closeDiscarding(second);
-            QTRY_VERIFY(!second);
+        while (QPointer<QQuickWindow> other = application->quitApproved() ? nullptr : newestShellWindow()) {
+            closeDiscarding(other);
+            QTRY_VERIFY(!other);
         }
         application->setSessionRestore(0);
         application->endSession();
@@ -374,7 +434,7 @@ private slots:
         QVERIFY(menus);
         QCOMPARE(menus->property("count").toInt(), first()->findChild<QObject *>(QStringLiteral("appMenus"))->property("count").toInt());
         QVERIFY(item(second, "documentTabBar")->property("shown").toBool());
-        for (const char *own : {"shell", "editor", "visualTools", "videoView", "statusBar", "templateEditor", "kanjiTimer"})
+        for (const char *own : {"shell", "editor", "visualTools", "videoView", "statusBar", "templateEditor", "nodeEffects", "kanjiTimer"})
             QVERIFY2(controller(second, own) != controller(first(), own), own);
         QCOMPARE(second->property("hotkeys").value<QObject *>(), first()->property("hotkeys").value<QObject *>());
         QVERIFY(second->property("workspaceLayout").value<QObject *>() != first()->property("workspaceLayout").value<QObject *>());
@@ -869,6 +929,78 @@ private slots:
         QTRY_VERIFY(!first()->isVisible());
     }
 
+    void altF4ClosesOnlyTheWindowItIsPressedIn()
+    {
+        edit(firstTab);
+        edit(secondTab);
+        second->requestActivate();
+        QTRY_COMPARE(QGuiApplication::focusWindow(), second.get());
+        QTest::keyClick(second, Qt::Key_F4, Qt::AltModifier);
+        QTRY_COMPARE(reviewed(second).size(), 1);
+        QCOMPARE(reviewed(second).first().toMap().value(QStringLiteral("id")).toULongLong(), secondTab.value);
+        QCOMPARE(application->closeKind(), QStringLiteral("window"));
+        QVERIFY(reviewed(first()).isEmpty());
+        QVERIFY(QMetaObject::invokeMethod(unsaved(second), "discardAll"));
+        QTRY_VERIFY(!second);
+        QVERIFY(first()->isVisible());
+        QVERIFY(!application->quitApproved());
+        QVERIFY(modified(firstTab));
+        QFile file(application->lastSessionPath());
+        QVERIFY(file.open(QIODevice::ReadOnly));
+        const QJsonObject saved = QJsonDocument::fromJson(file.readAll()).object();
+        QCOMPARE(saved.value(QStringLiteral("closed")).toBool(true), false);
+        QVERIFY(saved.value(QStringLiteral("windows")).toArray().size() <= 1);
+        const QJsonArray tabs = saved.value(QStringLiteral("tabs")).toArray();
+        QCOMPARE(tabs.size(), 1);
+        QCOMPARE(tabs.first().toObject().value(QStringLiteral("window")).toInt(0), 0);
+        QVERIFY(tabs.first().toObject().value(QStringLiteral("subtitles")).toString().endsWith(QStringLiteral("first.ass")));
+    }
+
+    void altF4InTheLastWindowQuits()
+    {
+        second->close();
+        QTRY_VERIFY(!second);
+        first()->requestActivate();
+        QTRY_COMPARE(QGuiApplication::focusWindow(), first());
+        QTest::keyClick(first(), Qt::Key_F4, Qt::AltModifier);
+        QTRY_VERIFY(application->quitApproved());
+        QTRY_VERIFY(!first()->isVisible());
+    }
+
+    void exitTakesAKeyInTheHotkeysSettingsAndItQuitsEveryWindow()
+    {
+        auto &hotkeys = application->hotkeys();
+        QCOMPARE(hotkeys.accelOf(QStringLiteral("GLOBAL_QUIT"), 0), QString());
+        hotkeys.beginOptions();
+        hotkeys.search(QStringLiteral("Global Exit"));
+        int position = -1;
+        const QVariantList shown = hotkeys.rows();
+        for (int i = 0; i < shown.size(); ++i)
+            if (shown[i].toMap().value(QStringLiteral("text")).toString() == QLatin1String("Global Exit"))
+                position = i;
+        QVERIFY(position >= 0);
+        QCOMPARE(shown[position].toMap().value(QStringLiteral("accel")).toString(), QString());
+        hotkeys.select(position);
+        hotkeys.optionsMap(QStringLiteral("Ctrl-Alt-Q"), 0, QStringLiteral("cancel"));
+        hotkeys.commitOptions();
+        QCOMPARE(hotkeys.accelOf(QStringLiteral("GLOBAL_QUIT"), 0), QStringLiteral("Ctrl-Alt-Q"));
+        QObject *exitItem = second->findChild<QObject *>(QStringLiteral("exitMenuItem"));
+        QVERIFY(exitItem);
+        QTRY_COMPARE(exitItem->property("keysText").toString(), QStringLiteral("Ctrl+Alt+Q"));
+
+        edit(firstTab);
+        edit(secondTab);
+        second->requestActivate();
+        QTRY_COMPARE(QGuiApplication::focusWindow(), second.get());
+        QTest::keyClick(second, Qt::Key_Q, Qt::ControlModifier | Qt::AltModifier);
+        QTRY_COMPARE(reviewed(second).size(), 2);
+        QCOMPARE(application->closeKind(), QStringLiteral("quit"));
+        QVERIFY(QMetaObject::invokeMethod(unsaved(second), "discardAll"));
+        QTRY_VERIFY(application->quitApproved());
+        QTRY_VERIFY(!first()->isVisible());
+        QTRY_VERIFY(!second || !second->isVisible());
+    }
+
     void quitFromAnyWindowReviewsEveryWindowOnce()
     {
         application->setSessionRestore(2);
@@ -991,6 +1123,193 @@ private slots:
         QTRY_COMPARE(titles(shellId(second)), (QStringList{"second.ass", "third.ass*"}));
         QVERIFY(application->workspace().tabs(0).empty());
         QVERIFY(!first()->isVisible());
+    }
+
+    void aTabDraggedOutOfEveryWindowOpensANewWindowHoldingIt()
+    {
+        sideBySide();
+        const auto third = openTab(0, "third");
+        application->selectTab(1);
+        QCOMPARE(titles(0), (QStringList{"first.ass", "third.ass*"}));
+        edit(third);
+        auto *session = application->files().session(third);
+        application::Selection selection = session->selection();
+        selection.active = session->document().lines().front()->id;
+        selection.selected = {*selection.active};
+        session->setSelection(selection);
+        application->scrollRestored();
+        application->setTargetScroll(3);
+        QVERIFY(QMetaObject::invokeMethod(first(), "applyPreset", Q_ARG(QVariant, QStringLiteral("Timing"))));
+        const auto *before = first()->property("workspaceLayout").value<ui::WorkspaceLayoutController *>();
+        QTRY_COMPARE(before->preset(), QStringLiteral("Timing"));
+        QTRY_VERIFY(!dock(first(), "videoDock")->property("isOpen").toBool());
+        application->selectTab(0);
+        const QString firstPreset = before->preset();
+        application->selectTab(1);
+        QTRY_COMPARE(before->preset(), QStringLiteral("Timing"));
+        const auto cursor = session->historyCursor();
+        const auto revision = session->revision();
+        const int reviews = application->quitReviews();
+        QSignalSpy written(application.get(), &app::Application::documentWritten);
+        QSignalSpy shown(application.get(), &app::Application::tabShown);
+
+        dragTab(first(), tabCentre(first(), 1), QPoint(1200, 120));
+        QQuickWindow *opened = nullptr;
+        QTRY_VERIFY((opened = newestShellWindow()) && opened != second);
+        QTRY_VERIFY(opened->property("arrangementSettled").toBool());
+        QCOMPARE(titles(shellId(opened)), (QStringList{"third.ass*"}));
+        QCOMPARE(titles(0), (QStringList{"first.ass*"}));
+        QCOMPARE(titles(1), (QStringList{"second.ass*"}));
+        QCOMPARE(application->workspace().activeWindow(), shellId(opened));
+        QCOMPARE(opened->width(), first()->width());
+        QVERIFY(opened->height() >= first()->height());
+        QCOMPARE(session->historyCursor(), cursor);
+        QCOMPARE(session->revision(), revision);
+        QCOMPARE(session->selection(), selection);
+        QVERIFY(rows(shellId(opened)).front().toMap().value(QStringLiteral("modified")).toBool());
+        QVERIFY(!shown.isEmpty());
+        QCOMPARE(shown.last().first().toInt(), 3);
+        QCOMPARE(editorText(opened), QStringLiteral("edited"));
+        QTRY_COMPARE(opened->property("workspaceLayout").value<ui::WorkspaceLayoutController *>()->preset(),
+                     QStringLiteral("Timing"));
+        QTRY_COMPARE(before->preset(), firstPreset);
+        QVERIFY(written.isEmpty());
+        QCOMPARE(application->quitReviews(), reviews);
+        QVERIFY(reviewed(first()).isEmpty());
+    }
+
+    void aTabDroppedOnAnotherWindowsBarLandsAtTheDropIndex()
+    {
+        sideBySide();
+        const auto third = openTab(0, "third");
+        openTab(1, "fourth");
+        focus(0);
+        dragTab(first(), tabCentre(first(), 1), tabCentre(second, 1) - QPoint(20, 0));
+        QTRY_COMPARE(titles(1), (QStringList{"second.ass", "third.ass*", "fourth.ass"}));
+        QCOMPARE(titles(0), (QStringList{"first.ass*"}));
+        QCOMPARE(application->workspace().window(third), 1);
+        QVERIFY(!newestShellWindow() || newestShellWindow() == second);
+    }
+
+    void aTabDroppedOverAWindowButOffItsBarStays()
+    {
+        sideBySide();
+        openTab(0, "third");
+        dragTab(first(), tabCentre(first(), 1), second->mapToGlobal(QPoint(150, 90)));
+        QTest::qWait(300);
+        QCOMPARE(titles(0), (QStringList{"first.ass", "third.ass*"}));
+        QCOMPARE(titles(1), (QStringList{"second.ass*"}));
+        QCOMPARE(newestShellWindow(), second.data());
+    }
+
+    void aTabDraggedOutAndBackOntoItsOwnBarReorders()
+    {
+        sideBySide();
+        openTab(0, "third");
+        const QPoint from = tabCentre(first(), 1);
+        const QPoint back = tabCentre(first(), 0) - QPoint(20, 0);
+        sendMouse(first(), QEvent::MouseButtonPress, from, Qt::LeftButton);
+        for (int i = 1; i <= 8; ++i)
+            sendMouse(first(), QEvent::MouseMove, from + QPoint(0, 10 * i), Qt::LeftButton);
+        for (int i = 1; i <= 8; ++i)
+            sendMouse(first(), QEvent::MouseMove, from + QPoint(0, 80) + (back - from - QPoint(0, 80)) * i / 8, Qt::LeftButton);
+        sendMouse(first(), QEvent::MouseButtonRelease, back, Qt::NoButton);
+        QTRY_COMPARE(titles(0), (QStringList{"third.ass*", "first.ass"}));
+        QCOMPARE(newestShellWindow(), second.data());
+    }
+
+    void theMoveCommandsWorkFromTheTabMenuAndTheirHotkeys()
+    {
+        const auto third = openTab(0, "third");
+        QObject *menu = first()->findChild<QObject *>(QStringLiteral("documentTabMenu"));
+        QVERIFY(QMetaObject::invokeMethod(item(first(), "documentTabBar"), "openTabMenu", Q_ARG(QVariant, 1),
+                                          Q_ARG(QVariant, QVariant::fromValue(tab(first(), 1))),
+                                          Q_ARG(QVariant, 0), Q_ARG(QVariant, 0)));
+        QTRY_VERIFY(menu->property("visible").toBool());
+        QObject *moveMenu = menu->findChild<QObject *>(QStringLiteral("moveTabToWindowMenu"));
+        QVERIFY(moveMenu->property("enabled").toBool());
+        QCOMPARE(menuTitles(moveMenu), (QStringList{"second.ass"}));
+        QObject *toSecond = moveMenu->findChild<QObject *>(QStringLiteral("moveTabToWindow0"));
+        QVERIFY(QMetaObject::invokeMethod(toSecond, "triggered"));
+        QTRY_COMPARE(titles(1), (QStringList{"second.ass", "third.ass*"}));
+
+        QVariant ran;
+        focus(1);
+        QVERIFY(QMetaObject::invokeMethod(second, "globalHotkey", Q_RETURN_ARG(QVariant, ran),
+                                          Q_ARG(QVariant, QStringLiteral("GLOBAL_MOVE_TAB_TO_NEW_WINDOW"))));
+        QVERIFY(ran.toBool());
+        QQuickWindow *opened = nullptr;
+        QTRY_VERIFY((opened = newestShellWindow()) && opened != second);
+        QTRY_COMPARE(titles(shellId(opened)), (QStringList{"third.ass*"}));
+        QCOMPARE(titles(1), (QStringList{"second.ass*"}));
+
+        QTRY_VERIFY(opened->property("arrangementSettled").toBool());
+        focus(opened);
+        QVERIFY(QMetaObject::invokeMethod(opened, "globalHotkey", Q_RETURN_ARG(QVariant, ran),
+                                          Q_ARG(QVariant, QStringLiteral("GLOBAL_MOVE_TAB_TO_WINDOW"))));
+        QObject *popup = opened->findChild<QObject *>(QStringLiteral("moveTabToWindowPopup"));
+        QTRY_VERIFY(popup->property("visible").toBool());
+        QCOMPARE(menuTitles(popup), (QStringList{"first.ass", "second.ass"}));
+        QVERIFY(QMetaObject::invokeMethod(popup->findChild<QObject *>(QStringLiteral("moveTabToWindow0")), "triggered"));
+        QTRY_COMPARE(titles(0), (QStringList{"first.ass", "third.ass*"}));
+        QTRY_VERIFY(!opened->isVisible());
+        QCOMPARE(application->workspace().window(third), 0);
+    }
+
+    void theMoveCommandsAreReachableByKeyboardWithAccessibleNames()
+    {
+        QAccessible::setActive(true);
+        const auto inactive = qScopeGuard([] { QAccessible::setActive(false); });
+        openTab(0, "third");
+        QQuickItem *current = tab(first(), 1);
+        QVERIFY(current);
+        current->forceActiveFocus(Qt::TabFocusReason);
+        QTRY_VERIFY(current->hasActiveFocus());
+        QTest::keyClick(first(), Qt::Key_Menu);
+        QObject *menu = first()->findChild<QObject *>(QStringLiteral("documentTabMenu"));
+        QTRY_VERIFY(menu->property("opened").toBool());
+        const auto highlight = [&](QObject *in, const std::function<bool(QQuickItem *)> &wanted) -> QQuickItem * {
+            for (int i = 0; i < 30; ++i) {
+                QQuickItem *at = nullptr;
+                QMetaObject::invokeMethod(in, "itemAt", Q_RETURN_ARG(QQuickItem *, at),
+                                          Q_ARG(int, in->property("currentIndex").toInt()));
+                if (at && wanted(at))
+                    return at;
+                QTest::keyClick(first(), Qt::Key_Down);
+            }
+            return nullptr;
+        };
+        const auto name = [](QQuickItem *row) { return QAccessible::queryAccessibleInterface(row)->text(QAccessible::Name); };
+        QQuickItem *toNew = highlight(menu, [](QQuickItem *row) { return row->objectName() == u"tabMenuMoveToNewWindow"; });
+        QVERIFY(toNew);
+        QCOMPARE(name(toNew), QStringLiteral("Move tab to new window"));
+        QObject *sub = menu->findChild<QObject *>(QStringLiteral("moveTabToWindowMenu"));
+        QQuickItem *toWindow = highlight(menu, [&](QQuickItem *row) { return row->property("subMenu").value<QObject *>() == sub; });
+        QVERIFY(toWindow);
+        QCOMPARE(name(toWindow), QStringLiteral("Move tab to window"));
+        QTest::keyClick(first(), Qt::Key_Right);
+        QTRY_VERIFY(sub->property("opened").toBool());
+        QQuickItem *row = highlight(sub, [](QQuickItem *r) { return r->objectName() == u"moveTabToWindow0"; });
+        QVERIFY(row);
+        QCOMPARE(name(row), QStringLiteral("second.ass"));
+        QTest::keyClick(first(), Qt::Key_Return);
+        QTRY_COMPARE(titles(1), (QStringList{"second.ass", "third.ass*"}));
+    }
+
+    void movingAWindowsLastTabAwayClosesIt()
+    {
+        QVERIFY(application->moveTab(secondTab.value, 0, 0));
+        QTRY_VERIFY(!second);
+        QCOMPARE(titles(0), (QStringList{"second.ass*", "first.ass"}));
+        QVERIFY(first()->isVisible());
+
+        QVERIFY(application->moveTabToNewWindow(firstTab.value, {}, false));
+        QQuickWindow *opened = nullptr;
+        QTRY_VERIFY((opened = newestShellWindow()));
+        QVERIFY(application->moveTab(secondTab.value, shellId(opened), -1));
+        QTRY_VERIFY(!first()->isVisible());
+        QCOMPARE(titles(shellId(opened)), (QStringList{"first.ass", "second.ass*"}));
+        QVERIFY(!application->quitApproved());
     }
 };
 

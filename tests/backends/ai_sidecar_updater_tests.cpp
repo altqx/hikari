@@ -141,7 +141,7 @@ TEST_F(AiSidecarUpdaterTest, RefusesAManifestSignedForAnotherVersion)
     channel.publish(signer, {}, QStringLiteral("1.0.0"));
     const Outcome outcome = install();
     ASSERT_TRUE(outcome.error);
-    EXPECT_EQ(*outcome.error, SidecarDownloadError::Manifest);
+    EXPECT_EQ(*outcome.error, SidecarDownloadError::Signature);
     EXPECT_FALSE(reopened().current());
 }
 
@@ -151,7 +151,7 @@ TEST_F(AiSidecarUpdaterTest, RefusesAManifestSignedWithAnotherKey)
     channel.publish(hikari::test::MinisignSigner());
     const Outcome outcome = install();
     ASSERT_TRUE(outcome.error);
-    EXPECT_EQ(*outcome.error, SidecarDownloadError::Manifest);
+    EXPECT_EQ(*outcome.error, SidecarDownloadError::Signature);
 }
 
 TEST_F(AiSidecarUpdaterTest, RefusesAManifestWithoutASignature)
@@ -161,7 +161,7 @@ TEST_F(AiSidecarUpdaterTest, RefusesAManifestWithoutASignature)
     server.files.erase(channel.path(QString::fromLatin1(kChannelSignature)));
     const Outcome outcome = install();
     ASSERT_TRUE(outcome.error);
-    EXPECT_EQ(*outcome.error, SidecarDownloadError::Manifest);
+    EXPECT_EQ(*outcome.error, SidecarDownloadError::Signature);
 }
 
 TEST_F(AiSidecarUpdaterTest, RefusesAMalformedManifestEvenWhenSigned)
@@ -170,7 +170,7 @@ TEST_F(AiSidecarUpdaterTest, RefusesAMalformedManifestEvenWhenSigned)
     channel.publishBytes(signer, "{\"schema\": 2}", QStringLiteral("1.1.0"));
     const Outcome outcome = install();
     ASSERT_TRUE(outcome.error);
-    EXPECT_EQ(*outcome.error, SidecarDownloadError::Manifest);
+    EXPECT_EQ(*outcome.error, SidecarDownloadError::Signature);
 }
 
 TEST_F(AiSidecarUpdaterTest, ABundleWithTheWrongHashIsDeletedAndNeverInstalled)
@@ -332,7 +332,7 @@ TEST_F(AiSidecarUpdaterTest, RefusesAManifestOlderThanOneAlreadySeen)
     replay.publish(signer);
     const Outcome outcome = stage();
     ASSERT_TRUE(outcome.error);
-    EXPECT_EQ(*outcome.error, SidecarDownloadError::Manifest);
+    EXPECT_EQ(*outcome.error, SidecarDownloadError::Signature);
     EXPECT_EQ(reopened().current()->version, QStringLiteral("1.2.0"));
 }
 
@@ -348,6 +348,65 @@ TEST_F(AiSidecarUpdaterTest, AnUnchangedManifestIsNotDownloadedAgain)
     EXPECT_EQ(server.notModified, 1);
     EXPECT_EQ(server.fetches(".minisig"), signatures);
     EXPECT_TRUE(reopened().lastCheck().isValid());
+}
+
+TEST_F(AiSidecarUpdaterTest, ACheckSaysWhatTheNewestDownloadsAndWhatOnlyANewerAppRuns)
+{
+    channel.addRelease({QStringLiteral("1.1.0")});
+    channel.publish(signer);
+    ASSERT_TRUE(install().installed);
+    channel.addRelease({QStringLiteral("1.2.0")});
+    channel.addRelease({.version = QStringLiteral("1.3.0"), .requiredApi = kCompat.apiVersion + 1});
+    channel.agents = QJsonObject{{QStringLiteral("claude"), QJsonObject{{QStringLiteral("minimum"), QStringLiteral("2.0.0")},
+                                                                       {QStringLiteral("broken"), QJsonArray{QStringLiteral("2.0.9")}}}}};
+    channel.publish(signer);
+    const Outcome outcome = run([](AiSidecarUpdater &u) { u.check(false); });
+    ASSERT_TRUE(outcome.checked) << outcome.detail.toStdString();
+
+    AiSidecarUpdater updater = reopened();
+    EXPECT_EQ(updater.available(), QStringLiteral("1.2.0"));
+    const qint64 bundle = server.files.at(channel.path(bundleAssetName(QStringLiteral("1.2.0")))).size();
+    EXPECT_EQ(updater.availableBytes(), bundle);
+    EXPECT_TRUE(updater.newerNeedsApp());
+    const AgentCompat claude{.minimum = QStringLiteral("2.0.0"), .broken = {QStringLiteral("2.0.9")}};
+    EXPECT_EQ(updater.agentCompat(), (std::map<QString, AgentCompat>{{QStringLiteral("claude"), claude}}));
+}
+
+TEST_F(AiSidecarUpdaterTest, TheRollbackNoticeLastsUntilDismissed)
+{
+    {
+        AiSidecarUpdater updater = reopened();
+        EXPECT_FALSE(updater.rollback());
+        updater.setRollback(SidecarRollback{.version = QStringLiteral("1.2.0"), .to = QStringLiteral("1.1.0"),
+                                            .reason = QStringLiteral("crashed"), .reportSent = true});
+    }
+    {
+        AiSidecarUpdater updater = reopened();
+        ASSERT_TRUE(updater.rollback());
+        EXPECT_EQ(updater.rollback()->version, QStringLiteral("1.2.0"));
+        EXPECT_EQ(updater.rollback()->to, QStringLiteral("1.1.0"));
+        EXPECT_EQ(updater.rollback()->reason, QStringLiteral("crashed"));
+        EXPECT_TRUE(updater.rollback()->reportSent);
+        updater.setRollback(std::nullopt);
+    }
+    EXPECT_FALSE(reopened().rollback());
+}
+
+TEST(AiChannel, KeepsOnlyValidAgentLimits)
+{
+    hikari::test::LocalRelease server;
+    FakeChannel channel(server);
+    channel.addRuntime(kRuntime, "runtime");
+    channel.addRelease({QStringLiteral("1.1.0")});
+    channel.agents = QJsonObject{
+        {QStringLiteral("codex"), QJsonObject{{QStringLiteral("minimum"), QStringLiteral("0.40.0")},
+                                              {QStringLiteral("broken"), QJsonArray{QStringLiteral("0.41.0"), QStringLiteral("soon")}}}},
+        {QStringLiteral("claude"), QJsonObject{{QStringLiteral("minimum"), QStringLiteral("later")}}},
+        {QStringLiteral("gemini"), QJsonObject{{QStringLiteral("minimum"), QStringLiteral("1.0.0")}}}};
+    const auto parsed = parseChannel(channel.manifest(QStringLiteral("1.1.0")));
+    ASSERT_TRUE(parsed);
+    const AgentCompat codex{.minimum = QStringLiteral("0.40.0"), .broken = {QStringLiteral("0.41.0")}};
+    EXPECT_EQ(parsed->agents, (std::map<QString, AgentCompat>{{QStringLiteral("codex"), codex}}));
 }
 
 TEST(AiChannel, ParsesTheManifestNewestFirst)

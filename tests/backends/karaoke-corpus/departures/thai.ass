@@ -1,0 +1,18 @@
+[Script Info]
+; TH1: template char walks grapheme clusters (Thai, combining Latin, emoji ZWJ and flags); not compared against 3.2.2
+Title: TH1 corpus thai
+ScriptType: v4.00+
+WrapStyle: 0
+PlayResX: 1280
+PlayResY: 720
+ScaledBorderAndShadow: yes
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Thai,Tahoma,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,8,20,20,20,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Comment: 0,0:00:00.00,0:00:05.00,Thai,,0,0,0,template syl char,{\an5\pos($center,$middle)\clip($left,0,$right,720)\t($start,$end,\fscx120)}
+Dialogue: 0,0:00:01.00,0:00:04.00,Thai,,0,0,0,,{\k40}กิน{\k60}น้ำ{\k0} {\k50}ขึ้น{\k45}ไป
+Dialogue: 0,0:00:05.00,0:00:07.00,Thai,,0,0,0,,{\k50}café{\k0} {\k40}👨‍👩‍👧{\k30}🇹🇭

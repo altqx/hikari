@@ -96,7 +96,12 @@ Item {
         return seen.size
     }
     readonly property bool resultsInFiles: rows.some(r => !r.header && r.file)
-    readonly property size minimumSize: Qt.size(300, 120)
+    readonly property real optionsFixedWidth: Math.ceil(Math.max(folderChecks.implicitWidth, fieldButtons.implicitWidth,
+                                                                 linesButtons.implicitWidth, inTextButtons.implicitWidth,
+                                                                 matchAtButtons.implicitWidth, includeCommentsBox.implicitWidth))
+    readonly property size minimumSize: Qt.size(Math.max(300, 2 * controls.Layout.margins + optionsScroll.Layout.leftMargin
+                                                         + optionsScroll.leftPadding + optionsScroll.rightPadding + optionsFixedWidth),
+                                                120)
     signal escaped()
 
     readonly property var scopeChoices: [
@@ -615,12 +620,20 @@ Item {
                 Layout.preferredHeight: search.wide || !search.resultsVisible ? -1
                                         : Math.min(optionsGrid.implicitHeight, search.height * 0.45)
                 Layout.leftMargin: foldButton.width + rowsGrid.columnSpacing
-                contentWidth: availableWidth
+                contentWidth: Math.max(availableWidth, search.optionsFixedWidth)
+                leftPadding: mirrored ? effectiveScrollBarWidth : 0
+                rightPadding: mirrored ? 0 : effectiveScrollBarWidth
                 clip: true
+
+                Binding {
+                    target: optionsScroll.contentItem
+                    property: "clip"
+                    value: true
+                }
 
                 GridLayout {
                     id: optionsGrid
-                    width: optionsScroll.availableWidth
+                    width: optionsScroll.contentWidth
                     columns: search.wide ? 2 : 1
                     columnSpacing: 8
                     rowSpacing: search.wide ? 6 : 2
@@ -686,6 +699,7 @@ Item {
 
                     Item { visible: search.inFolder && search.wide; implicitWidth: 1; implicitHeight: 1 }
                     RowLayout {
+                        id: folderChecks
                         visible: search.inFolder
                         CheckBox {
                             objectName: "findSubfolders"
@@ -703,6 +717,7 @@ Item {
 
                     OptionLabel { text: qsTr("Field") }
                     SegmentedButtons {
+                        id: fieldButtons
                         objectName: "findField"
                         choices: search.fieldChoices
                         currentIndex: search.fieldChoices.findIndex(c => c.value === search.field)
@@ -712,6 +727,7 @@ Item {
 
                     OptionLabel { text: qsTr("Lines"); visible: search.scope === "document" }
                     SegmentedButtons {
+                        id: linesButtons
                         objectName: "findLines"
                         visible: search.scope === "document"
                         choices: search.linesChoices
@@ -742,6 +758,7 @@ Item {
 
                     OptionLabel { text: qsTr("In text") }
                     SegmentedButtons {
+                        id: inTextButtons
                         objectName: "findInText"
                         choices: search.inTextChoices
                         currentIndex: search.inTextChoices.findIndex(c => c.value === search.inText)
@@ -751,6 +768,7 @@ Item {
 
                     OptionLabel { text: qsTr("Match at") }
                     SegmentedButtons {
+                        id: matchAtButtons
                         objectName: "findMatchAt"
                         choices: search.matchAtChoices
                         currentIndex: search.matchAtChoices.findIndex(c => c.value === search.matchAt)
@@ -760,6 +778,7 @@ Item {
 
                     Item { visible: search.wide; implicitWidth: 1; implicitHeight: 1 }
                     CheckBox {
+                        id: includeCommentsBox
                         objectName: "findIncludeComments"
                         text: qsTr("Include comments")
                         checked: search.includeComments

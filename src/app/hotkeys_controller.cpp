@@ -194,8 +194,6 @@ std::string symbolOf(int id)
 
 QString commandName(int id)
 {
-    if (id == application::kGlobalQuit)
-        return QCoreApplication::translate("HikariSub.Hotkeys", "Exit");
     const std::string name = application::hotkeyName(id);
     return name.empty() ? qs(symbolOf(id)) : ui::hotkeyCommandName(name);
 }
@@ -690,7 +688,8 @@ QVariantMap HotkeysController::mapTarget() const
     if (!m_list || m_list->selection() < 0)
         return {};
     const int row = m_list->selection();
-    return {{QStringLiteral("name"), shownName(m_list->row(row))},
+    return {{QStringLiteral("id"), m_list->row(row).key.id},
+            {QStringLiteral("name"), shownName(m_list->row(row))},
             {QStringLiteral("windows"), m_list->mapOffersWindows(row)},
             {QStringLiteral("type"), m_list->row(row).key.type}};
 }
@@ -816,9 +815,9 @@ void HotkeysController::resetDefaults()
     emit rowsChanged();
 }
 
-QVariantMap HotkeysController::capture(int key, int modifiers, int window) const
+QVariantMap HotkeysController::capture(int key, int modifiers, int window, int command) const
 {
-    const auto c = application::captureHotkey(pressOf(key, modifiers), window);
+    const auto c = application::captureHotkey(pressOf(key, modifiers), window, command);
     const char *result = c.result == application::HotkeyCapture::Result::Accepted  ? "accepted"
                          : c.result == application::HotkeyCapture::Result::Refused ? "refused"
                                                                                     : "ignored";

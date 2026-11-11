@@ -26,6 +26,18 @@ Item {
     readonly property bool missing: status === "missing"
     readonly property bool off: status === "off"
     readonly property bool drawn: status === "running" && panelState.tree !== null && panelState.tree !== undefined
+    readonly property bool qmlPanel: panelState ? panelState.qml : false
+    readonly property bool held: qmlPanel && panelState.held
+    readonly property bool qmlTroubled: status === "running" && qmlPanel && (held || panelState.loadError.length > 0)
+    readonly property Item qmlItem: panelState ? panelState.item : null
+    readonly property size minimumBodySize: {
+        const item = body.qmlItem
+        if (!item)
+            return Qt.size(160, 120)
+        const width = item.Layout.minimumWidth > 0 ? item.Layout.minimumWidth : item.implicitWidth
+        const height = item.Layout.minimumHeight > 0 ? item.Layout.minimumHeight : item.implicitHeight
+        return Qt.size(Math.min(Math.max(width, 160), 320), Math.min(Math.max(height, 80), 120))
+    }
     readonly property var host: ({
         send: event => body.ui.send(body.dock, event),
         packageRoot: panelState ? panelState.packageRoot.toString() : "",
@@ -36,14 +48,19 @@ Item {
     signal turnOn(string pluginId)
     signal restart(string pluginId)
     signal details(string pluginId)
+    signal copy(string text)
 
     onShownChanged: ui.setShown(dock, shown)
     Component.onCompleted: {
         lastPluginName = livePluginName
         lastTitle = liveTitle
+        ui.setQmlHost(dock, qmlHost)
         ui.setShown(dock, shown)
     }
-    Component.onDestruction: ui.setShown(dock, false)
+    Component.onDestruction: {
+        ui.setQmlHost(dock, null)
+        ui.setShown(dock, false)
+    }
 
     Loader {
         id: popover
@@ -63,6 +80,64 @@ Item {
             height: Math.max(implicitHeight, scroll.availableHeight)
             node: body.drawn ? body.panelState.tree : null
             host: body.host
+        }
+    }
+
+    Item {
+        id: qmlHost
+        objectName: "pluginQmlHost"
+        anchors.fill: parent
+        visible: body.status === "running" && body.qmlPanel && !body.qmlTroubled
+    }
+
+    ColumnLayout {
+        objectName: "pluginQmlTrouble"
+        visible: body.qmlTroubled
+        anchors.centerIn: parent
+        width: Math.min(parent.width - 24, 420)
+        spacing: 8
+        Icon {
+            Layout.alignment: Qt.AlignHCenter
+            iconRole: "notice-warning"
+            size: 32
+            color: Theme.warning
+        }
+        Label {
+            objectName: "pluginQmlTroubleText"
+            Layout.fillWidth: true
+            horizontalAlignment: Text.AlignHCenter
+            wrapMode: Text.Wrap
+            textFormat: Text.PlainText
+            text: body.held ? qsTr("HikariSub closed while %1’s panel was open.").arg(body.pluginName)
+                            : qsTr("The panel couldn’t load.")
+        }
+        Label {
+            objectName: "pluginQmlTroubleDetail"
+            Layout.fillWidth: true
+            horizontalAlignment: body.held ? Text.AlignHCenter : Text.AlignLeft
+            wrapMode: body.held ? Text.Wrap : Text.WrapAnywhere
+            textFormat: Text.PlainText
+            font.family: body.held ? Qt.application.font.family : "monospace"
+            color: Theme.muted
+            text: body.held ? qsTr("Its panels stay closed until you choose Load again.")
+                            : body.qmlTroubled ? body.panelState.loadError : ""
+        }
+        RowLayout {
+            Layout.alignment: Qt.AlignHCenter
+            spacing: 12
+            IconTextButton {
+                objectName: "pluginQmlLoadAgain"
+                iconRole: "restart"
+                text: qsTr("Load again")
+                onClicked: body.ui.loadAgain(body.dock)
+            }
+            IconTextButton {
+                objectName: "pluginQmlCopy"
+                visible: !body.held
+                iconRole: "edit-copy"
+                text: qsTr("Copy")
+                onClicked: body.copy(body.panelState.loadError)
+            }
         }
     }
 

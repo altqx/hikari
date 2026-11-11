@@ -10,6 +10,9 @@
 # the 3.2.2 reference script keeps its original bytes.
 /tests/backends/karaoke-corpus/** -text
 
+# TH2: the bundled-macro corpus and its goldens are compared byte for byte, and the tests look for LF line ends.
+/tests/backends/macro-corpus/** -text
+
 # KE3: the preset fixture and its goldens are compared byte for byte.
 /tests/backends/karaoke-presets/** -text
 
@@ -30,6 +33,8 @@
 /tests/fixtures/import/** -text
 # FA3: the Aegisub extradata fixtures are compared byte for byte (BOM, CRLF).
 /tests/fixtures/aegisub-extradata/** -text
+# AU8: Aegisub-Motion data is pasted as exported (CRLF in main.txt).
+/tests/fixtures/motion-data/** -text
 
 # tools/icons/draw_icons.py writes the icons and their manifest with LF; tools.draw-icons compares them byte for byte.
 /src/ui/icons/** text eol=lf
@@ -42,3 +47,6 @@
 /packaging/icons/** text eol=lf
 /packaging/linux/icons/hicolor/scalable/** text eol=lf
 /tools/icons/app_icons.* text eol=lf
+
+# PL9: ApiReferenceMarkdown compares the generated reference byte for byte.
+/docs/api-reference.md text eol=lf

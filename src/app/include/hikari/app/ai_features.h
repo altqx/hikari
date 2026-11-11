@@ -1,9 +1,11 @@
 #pragma once
 
 #include "hikari/application/ai_providers.h"
+#include "hikari/backends/ai_agent_cli.h"
 #include "hikari/backends/ai_sidecar_updater.h"
 
 #include <QDateTime>
+#include <QJsonObject>
 #include <QObject>
 #include <QString>
 
@@ -12,6 +14,7 @@
 #include <map>
 #include <memory>
 #include <optional>
+#include <string>
 
 namespace hikari::api {
 class Api;
@@ -20,7 +23,6 @@ namespace hikari::backends::ai {
 class AgentBroker;
 class AiRequests;
 class AiSignIn;
-struct CodexCli;
 class AiSidecarHost;
 }
 namespace hikari::ui {
@@ -40,6 +42,8 @@ class AiFeatures final : public QObject {
 public:
     static constexpr const char *kOffSetting = "ai.off";
     static constexpr const char *kCachingSetting = "ai.promptCaching";
+    static constexpr const char *kWebSearchSetting = "ai.webSearch";
+    static constexpr const char *kSearchServiceSetting = "ai.searchService";
     static constexpr const char *kAutoUpdateSetting = "ai.autoUpdate";
 
     struct Timing {
@@ -61,9 +65,15 @@ public:
         /// Adds the agent CLIs the sidecar may ask Qt to start.
         std::function<void(backends::ai::AgentBroker &)> agents;
         std::function<std::unique_ptr<backends::ai::AiSignIn>(application::ai::KeyStore &)> signIn;
-        std::function<void(std::function<void(std::optional<backends::ai::CodexCli>)>)> findCodex;
+        /// Finds an agent CLI ("claude" or "codex") and asks it for its version.
+        std::function<void(const QString &agent, std::function<void(std::optional<backends::ai::AgentCli>)>)> findAgent;
+        std::function<backends::ai::AgentInstall(const backends::ai::AgentCli &)> agentInstall;
+        /// The latest version an install's own source offers; empty when it couldn't be read.
+        std::function<void(const backends::ai::AgentInstall &, std::function<void(QString)>)> agentLatest;
         /// The Codex CLI's sign-in, which Import reads and never writes.
         QString codexAuthPath;
+        /// Sends a crash report for a rolled-back sidecar; true when one went.
+        std::function<bool(const QString &version, const QString &reason)> reportRollback;
         Timing timing;
     };
     /// The keychain, providers.json and the sidecar under <userFolder>/ai.
@@ -77,6 +87,7 @@ public:
     application::ai::KeyStore *keys() const;
     application::ai::ConfigStore *configs() const;
     application::ai::Providers *providers() const;
+    application::ai::SearchKeys *searchKeys() const;
     backends::ai::AiRequests *requests() const;
     /// Null with AI off, or in builds that run their own sidecar.
     backends::ai::AiSidecarUpdater *updater() const;
@@ -87,6 +98,9 @@ public:
     backends::ai::AiSidecarHost *sidecarForAction();
     /// The sidecar for the MCP server, which needs no provider. Null with AI off or without an installed sidecar.
     backends::ai::AiSidecarHost *sidecarForMcp();
+    /// Applies the web search settings. The sidecar gets the search service only once its key is in the keychain, so
+    /// call this after a search key is stored or removed.
+    void applyWebSearch();
     /// While the user adds their first provider, its Test connection may start the sidecar too.
     void setDrafting(bool drafting);
     /// The host if one was built; never builds it.
@@ -96,6 +110,10 @@ public:
     /// Whether the sidecar runs fully sandboxed: the host's own coverage once it is built, else what this system can
     /// enforce.
     bool sandboxed() const;
+    /// The running sidecar's version and its runtime's and provider libraries', as ai_* event properties.
+    QJsonObject versionProperties() const;
+    /// How many sessions of `agent` ("claude" or "codex") the sidecar is running.
+    std::size_t agentSessions(const std::string &agent) const;
 
     bool autoUpdate() const;
     bool autoUpdateOffByPolicy() const;
@@ -114,7 +132,8 @@ signals:
     void switched(bool on);
     /// The sidecar's version, the check or the staged update changed.
     void componentsChanged();
-    /// `version` failed `initialize` or crashed twice; the previous sidecar runs again and `version` is skipped.
+    /// `version` failed `initialize` or crashed twice (`reason` "initialize" or "crashed"); the previous sidecar runs
+    /// again and `version` is skipped.
     void rolledBack(QString version, QString reason);
 
 private:

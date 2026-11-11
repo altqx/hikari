@@ -1,9 +1,11 @@
 File
 File > Open… [GLOBAL_OPEN_SUBS]
+File > Open folder… [GLOBAL_OPEN_FOLDER]
 File > Recently opened subtitles >
 File > Recently opened subtitles > None
 File > Remove subtitles from the editor [GLOBAL_REMOVE_SUBS]
 File > Close [GLOBAL_CLOSE_PAGE]
+File > Close project [GLOBAL_CLOSE_PROJECT]
 File > Open video… [GLOBAL_OPEN_VIDEO]
 File > Import subtitles from MKV… [GRID_SUBS_FROM_MKV]
 File > Save [GLOBAL_SAVE_SUBS]
@@ -21,7 +23,8 @@ File > Last session > Save session to file [GLOBAL_SAVE_EXTERNAL_SESSION]
 File > Last session > Ask whether to load the last session at program startup
 File > Last session > Load last session after program start
 File > Settings [GLOBAL_SETTINGS]
-File > Exit
+File > Close window [GLOBAL_CLOSE_WINDOW]
+File > Exit [GLOBAL_QUIT]
 Edit
 Edit > Undo [GLOBAL_UNDO]
 Edit > Redo [GLOBAL_REDO]
@@ -100,7 +103,16 @@ Video > Shift by frames to video > Selected lines, start at video [GLOBAL_SHIFT_
 Video > Shift by frames to video > Selected lines, end at video [GLOBAL_SHIFT_FRAMES_TO_VIDEO_END]
 Video > Shift by frames to video > Following lines, start at video [GLOBAL_SHIFT_FOLLOWING_FRAMES_TO_VIDEO_START]
 Video > Shift by frames to video > Following lines, end at video [GLOBAL_SHIFT_FOLLOWING_FRAMES_TO_VIDEO_END]
-Video > Perspective tracking… [GLOBAL_PERSPECTIVE_TRACKING]
+Video > Tracking >
+Video > Tracking > Apply motion data… [GLOBAL_APPLY_MOTION_DATA]
+Video > Tracking > Perspective tracking… [GLOBAL_PERSPECTIVE_TRACKING]
+Video > Tracking > Revert motion data [GLOBAL_REVERT_MOTION_DATA]
+Video > Tracking > -
+Video > Tracking > Copy motion data from lines [GLOBAL_COPY_MOTION_DATA]
+Video > Tracking > Copy Power-Pin track from lines [GLOBAL_COPY_POWER_PIN_TRACK]
+Video > Tracking > -
+Video > Tracking > Extend tracked lines… [GLOBAL_EXTEND_TRACKED_LINES]
+Video > Tracking > Extrapolate \move to the line [GLOBAL_EXTRAPOLATE_MOVE]
 Video > Previous frame [GLOBAL_PREVIOUS_FRAME]
 Video > Next frame [GLOBAL_NEXT_FRAME]
 Video > Go to start time of line [GLOBAL_SET_VIDEO_AT_START_TIME]
@@ -170,9 +182,15 @@ View > Panels > Styles >
 View > Panels > Template editor >
 View > Panels > QC notes >
 View > Panels > Review >
+View > Panels > Agent >
+View > Panels > Graph >
+View > Panels > Node >
+View > Panels > Source lines >
 View > Panels > -
 View > Move panel…
 View > Restore the previous layout
+View > -
+View > Node effects [GLOBAL_NODE_EFFECTS]
 View > -
 View > Log
 View > Hide tags [GLOBAL_HIDE_TAGS]

@@ -36,6 +36,7 @@ DialogWindow {
             ["uchardet", "uchardet contributors", "MPL 1.1, GPL 2 or LGPL 2.1"],
             ["Harper", "Automattic and Harper contributors", "Apache 2.0"],
             ["YTSubConverter", "arcusmaximus", "MIT"],
+            ["BezierToText", "an eer? and Bakura", qsTr("No licence stated")],
             ["en_US Hunspell dictionary", "Kevin Atkinson, Geoff Kuenning and others", "LGPL and BSD"],
             ["sjp.pl Polish dictionary", "sjp.pl contributors", "GPL 2, LGPL 2.1, MPL 1.1, Apache 2.0 or CC BY 4.0"],
             ["th_TH Hunspell dictionary", "NECTEC (LEXiTRON) and libthai contributors", "LGPL"],
@@ -105,6 +106,7 @@ DialogWindow {
         Layout.preferredWidth: 492
         SectionLabel { text: qsTr("Development"); font: credits.fontAt(11, Font.DemiBold); Layout.topMargin: 6 }
         Person { objectName: "creditsDevelopment"; name: "altqx"; role: qsTr("Design and development"); Layout.fillWidth: true }
+        Person { objectName: "creditsThaiSupport"; name: "Jibrill"; role: qsTr("Thai support for automation scripts"); Layout.fillWidth: true }
         SectionLabel { text: qsTr("Translation"); font: credits.fontAt(11, Font.DemiBold); Layout.topMargin: 12 }
         Person { objectName: "creditsTranslation"; name: "altqx"; role: qsTr("Korean, Polish, Tamil and Thai"); Layout.fillWidth: true }
         SectionLabel { text: qsTr("Built with"); font: credits.fontAt(11, Font.DemiBold); Layout.topMargin: 12 }

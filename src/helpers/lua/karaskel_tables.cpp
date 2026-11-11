@@ -1,6 +1,7 @@
 #include "karaskel_tables.h"
 
 #include "lua_helper_internal.h"
+#include "lua_host_cache.h"
 
 extern "C" {
 #include <lauxlib.h>
@@ -154,14 +155,24 @@ void pushHighlight(lua_State *L, const kl::Highlight &h)
 
 }
 
-std::optional<application::TextExtents> HostMeasure::measure(const std::vector<std::string> &style,
-                                                             const std::string &text)
+kl::Layout stagedLayout(std::optional<application::Resolution> video)
 {
-    auto e = lua_helper::textExtents(L, lua_helper::canonicalStyle(style), text);
-    if (!e)
-        failures.push_back("Could not measure \"" + text + "\" in the Style \"" +
-                           (style.empty() ? std::string() : style.front()) + "\"; it counts as 0 wide.\n");
-    return e;
+    const auto &staged = lua_helper::staged();
+    std::vector<application::MacroStyleLine> styles;
+    styles.reserve(staged.styles.size());
+    for (const application::MacroStyleLine &s : staged.styles)
+        styles.push_back({lua_helper::canonicalStyle(s.fields)});
+    return kl::Layout(staged.info, styles, lua_host::runExtents(), video);
+}
+
+kl::Line layLine(lua_State *L, kl::Layout &layout, const application::MacroDialogueLine &dialogue, double li,
+                 std::vector<std::string> &problems)
+{
+    kl::Line out;
+    lua_helper::raiseOnHostFailure(L, "text_extents", [&] {
+        out = layout.line(lua_helper::karaokeSource(dialogue), li, {}, problems);
+    });
+    return out;
 }
 
 Head pushKaraskelHead(lua_State *L, int subs, bool generateFurigana)
@@ -445,12 +456,9 @@ int preprocLine(lua_State *L)
     if (lua_toboolean(L, -1))
         video = application::Resolution{static_cast<int>(lua_tonumber(L, -2)), static_cast<int>(lua_tonumber(L, -1))};
     lua_pop(L, 2);
-    HostMeasure measure(L);
-    kl::ExtentsCache extents(measure);
-    const auto &staged = lua_helper::staged();
-    kl::Layout layout(staged.info, staged.styles, extents, video);
+    kl::Layout layout = stagedLayout(video);
     std::vector<std::string> problems;
-    pushKaraskelLine(L, 3, 4, layout.line(lua_helper::karaokeSource(*dialogue), 0, {}, problems));
+    pushKaraskelLine(L, 3, 4, layLine(L, layout, *dialogue, 0, problems));
     return 1;
 }
 
@@ -458,12 +466,18 @@ int preprocLine(lua_State *L)
 
 void install(lua_State *L)
 {
-    lua_createtable(L, 0, 2);
+    lua_getfield(L, -1, "__karaskel_impl");
+    if (!lua_istable(L, -1)) {
+        lua_pop(L, 1);
+        lua_newtable(L);
+        lua_pushvalue(L, -1);
+        lua_setfield(L, -3, "__karaskel_impl");
+    }
     lua_pushcfunction(L, collectHead);
     lua_setfield(L, -2, "collect_head");
     lua_pushcfunction(L, preprocLine);
     lua_setfield(L, -2, "preproc_line");
-    lua_setfield(L, -2, "__karaskel_impl");
+    lua_pop(L, 1);
 }
 
 }

@@ -40,9 +40,9 @@ private:
 bool isMissingLocalFile(const std::string &path, const std::function<bool(const std::string &)> &exists,
                         const std::function<bool(char drive)> &isRemoteDrive);
 
-// By extension: unknown ones open as video, archives and programs are
-// refused, a session file (.hksession, .kls) only opens alone.
-enum class OpenKind { Subtitles, Script, Keyframes, Video, Session, Refused };
+// An existing folder opens as a Project. Otherwise by extension: unknown ones open as video,
+// archives and programs are refused, a session file (.hksession, .kls) only opens alone.
+enum class OpenKind { Subtitles, Script, Keyframes, Video, Session, Folder, Refused };
 OpenKind openKindOf(std::string_view path, bool single);
 
 }

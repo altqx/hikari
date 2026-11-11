@@ -454,12 +454,21 @@ FocusScope {
             spacing: 8
             Item { Layout.fillHeight: true }
             Label {
+                visible: !panel.qcNotes.hasDocument || panel.qcNotes.canKeepNotes
                 text: panel.qcNotes.hasDocument ? qsTr("Drop a notes file here") : qsTr("Open a subtitle file to keep QC notes in it.")
                 font.bold: true
                 Layout.alignment: Qt.AlignHCenter
             }
+            Label {
+                objectName: "qcNotesEmptyReason"
+                visible: panel.qcNotes.hasDocument && !panel.qcNotes.canKeepNotes
+                text: qsTr("Only ASS and SSA files can keep QC notes. Save this file as ASS to add notes.")
+                wrapMode: Text.WordWrap
+                horizontalAlignment: Text.AlignHCenter
+                Layout.fillWidth: true
+            }
             RowLayout {
-                visible: panel.qcNotes.hasDocument
+                visible: panel.qcNotes.hasDocument && panel.qcNotes.canKeepNotes
                 Layout.alignment: Qt.AlignHCenter
                 Button {
                     objectName: "qcNotesEmptyImport"
@@ -475,7 +484,7 @@ FocusScope {
                 }
             }
             Label {
-                visible: panel.qcNotes.hasDocument
+                visible: panel.qcNotes.hasDocument && panel.qcNotes.canKeepNotes
                 text: qsTr("Notes start with a time: 3:24 - …\n[Section] lines group them.")
                 color: Theme.muted
                 horizontalAlignment: Text.AlignHCenter

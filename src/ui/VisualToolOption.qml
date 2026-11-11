@@ -46,7 +46,7 @@ Loader {
         IconToolButton {
             objectName: option.nameOf
             // MUST KILL: icon_tests parses this iconRole list from its single source line
-            iconRole: ["frame-to-scale", "scale-x", "link", "scale-y", "original-frame", "tool-scale-rotation", "resample", "two-points", "vector-drag", "vector-line", "vector-bezier", "vector-bspline", "vector-point", "vector-delete", "clip-invert", "shift-position", "shift-move-start", "shift-move-end", "shift-clips", "shift-drawings", "shift-origins", "tag-edit", "copy-position", "perspective-plane", "perspective-lock-outer", "perspective-grid"].includes(option.modelData.iconRole) ? option.modelData.iconRole : ""
+            iconRole: ["frame-to-scale", "scale-x", "link", "scale-y", "original-frame", "tool-scale-rotation", "resample", "two-points", "vector-drag", "vector-line", "vector-bezier", "vector-bspline", "vector-point", "vector-delete", "clip-invert", "shift-position", "shift-move-start", "shift-move-end", "shift-clips", "shift-drawings", "shift-origins", "tag-edit", "copy-position", "perspective-plane", "perspective-lock-outer", "perspective-grid", "gradient-rect", "gradient-rotated", "gradient-skew", "gradient-clip-edge", "gradient-vector", "gradient-by-char", "gradient-by-line", "gradient-merge", "remove", "commit"].includes(option.modelData.iconRole) ? option.modelData.iconRole : ""
             text: option.tooltip.split("\n")[0]
             tip: option.tooltip
             checkable: option.modelData.kind === "toggle"

@@ -9,7 +9,7 @@ using namespace hikari::backends;
 using namespace hikari::backends::helper;
 
 // The node's code picks what it does: "hang", "crash", "fail", "rows" (each output is the batch's
-// row count) or anything else (each output repeats the input at its index).
+// row count), "slow" (echoes after 200 ms) or anything else (each output repeats the input at its index).
 int main()
 {
     return runHelper(lua::kHelperName, lua::kProtocolVersion, [](const Frame &request, Responder &r) {
@@ -24,6 +24,8 @@ int main()
                 std::this_thread::sleep_for(std::chrono::seconds(1));
         if (call->code == "crash")
             std::_Exit(3);
+        if (call->code == "slow")
+            std::this_thread::sleep_for(std::chrono::milliseconds(200));
         if (call->code == "fail")
             return r.terminal(Outcome::Failed, bytesOf("code:1: fake failure"));
         lua::NodeRows rows;

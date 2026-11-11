@@ -27,6 +27,7 @@ Each change is a named departure in the [compatibility decisions](compatibility-
 | KE1-regenerate-selected | "Apply karaoke template to selected lines" replaces only the selected karaoke Lines' generated Lines, as one undo step. |
 | KE1-template-timing | A run reports its time and, per template or code Line, the time it took and the Lines it generated. The report goes to the status bar and the Log. |
 | KE1-render-cost-overlay | "Show / hide render cost" in the Video menu and the video's context menu (GLOBAL_VIDEO_RENDER_COST) draws over the video what the shown frame's subtitles cost to draw. |
+| TH1-template-char-graphemes | `template char` gives each grapheme cluster its own Line, so `กิน` gives `กิ` and `น` and `น้ำ` stays whole; a combining accent, an emoji ZWJ sequence and a flag are one char. 2.1.7 splits by code point. `graphemes = false` in a `code once` Line splits as 2.1.7 does. Thai support by Jibrill. |
 | TH5b-builtin-templater | The templater is built in rather than a script in Autoload. It can be reloaded but not edited or unloaded. Its macros and their shortcuts keep their names. |
 | TH5b-line-template-order | Named line templates run after the unnamed ones, in the order their names first appear. |
 | TH5b-no-leaked-globals | Evaluating an `!expression!` no longer sets the globals `f` and `err`. |
@@ -34,7 +35,7 @@ Each change is a named departure in the [compatibility decisions](compatibility-
 | TH5b-unmeasured-text | Text the host cannot measure is a problem and counts as 0 wide; 3.2.2 stopped the run. |
 | TH5b-native-layout | Karaoke Lines are laid out from the Styles as they were when the run started; `code` Lines that change Style tables no longer move later syllables. |
 
-The generated Lines are byte for byte 3.2.2's in every case, apart from the order of several named line templates and the marks below, which a save adds to `[Aegisub Extradata]`. The macro returns a selection only when there were problems; otherwise the selection stays as it was.
+The generated Lines are byte for byte 3.2.2's in every case, apart from `char` templates over clusters (TH1, locked by `departures/thai.ass`), the order of several named line templates (`departures/named-line-templates.ass`) and the marks below, which a save adds to `[Aegisub Extradata]`. The macro returns a selection only when there were problems; otherwise the selection stays as it was.
 
 ### Regenerating the selected Lines
 

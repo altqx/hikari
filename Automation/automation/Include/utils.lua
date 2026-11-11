@@ -28,31 +28,7 @@
 	]]
 
 	util = require 'aegisub.util'
-	ke4 = require 'effector-auto4'
-	----------------------
-	-- ke4 short functions
-	R =		ke4.math.R
-	Rs =	ke4.math.Rs
-	Rd =	ke4.math.Rd
-	Rc =	ke4.math.Rc
-	Rm =	ke4.math.Rm
-	Rds =	ke4.math.Rds
-	Rsd =	ke4.math.Rds
-	Rcs =	ke4.math.Rcs
-	Rsc =	ke4.math.Rcs
-	Rms =	ke4.math.Rms
-	Rsm =	ke4.math.Rms
-	Rr =	ke4.math.Rr
-	Rsr =	ke4.math.Rsr
-	Rrs =	ke4.math.Rsr
-	Rdr =	ke4.math.Rdr
-	Rcr =	ke4.math.Rcr
-	Rmr =	ke4.math.Rmr
-	Rdrs =	ke4.math.Rdrs
-	Rcrs =	ke4.math.Rcrs
-	Rmrs =	ke4.math.Rmrs
-	Re =	ke4.math.Re
-	----------------------
+	require 'effector-auto4-lazy' ()
 	
 	table.copy = util.copy
 	copy_line = util.copy
@@ -66,9 +42,6 @@
 	HSV_to_RGB = util.HSV_to_RGB
 	HSL_to_RGB = util.HSL_to_RGB
 	clamp = util.clamp
-	interpolate = ke4.tag.ipol
-	interpolate_alpha = ke4.tag.ipol
-	interpolate_color = ke4.tag.ipol
 	string.headtail = util.headtail
 	string.trim = util.trim
 	string.words = util.words

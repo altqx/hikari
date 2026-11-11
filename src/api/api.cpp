@@ -142,4 +142,12 @@ void Api::revokeFiles(const std::string &callerId)
     std::erase_if(m_grants, [&](const auto &grant) { return grant.first == callerId; });
 }
 
+std::optional<std::string> Api::grantedPath(const std::string &callerId, std::string_view handle) const
+{
+    for (const auto &[id, file] : m_grants)
+        if (id == callerId && file.handle == handle)
+            return file.path;
+    return std::nullopt;
+}
+
 }

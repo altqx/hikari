@@ -75,6 +75,8 @@ public:
         QString automationDir; // <application>/Automation, holding automation/{Autoload,Include}
         // Where user scripts live and scripts write; empty: automationDir.
         QString userAutomationDir;
+        // Empty: MoonScript compiles at every load.
+        QString compileCache;
     };
     using EditorSource = std::function<ui::LineEditorController &()>;
     using ShellSource = std::function<ui::ShellController &()>;

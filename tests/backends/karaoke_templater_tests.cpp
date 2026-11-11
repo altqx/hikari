@@ -10,6 +10,7 @@
 #include "hikari/core/extradata.h"
 #include "karaoke_marks.h"
 #include "hikari/core/text_projection.h"
+#include "fake_text_measure.h"
 
 #include <QCoreApplication>
 #include <QDir>
@@ -23,6 +24,7 @@
 
 #include <algorithm>
 #include <cstring>
+#include <filesystem>
 #include <functional>
 #include <map>
 #include <optional>
@@ -82,22 +84,6 @@ std::string textOf(const std::vector<std::byte> &bytes)
     return std::string(reinterpret_cast<const char *>(bytes.data()), bytes.size());
 }
 
-HostServiceReply textExtents(const HostServiceRequest &r)
-{
-    const auto number = [&](std::size_t i) { return i < r.style.size() ? std::stod(r.style[i]) : 0.0; };
-    const double size = number(2), scaleX = number(11) / 100, scaleY = number(12) / 100, spacing = number(13);
-    const QString text = QString::fromStdString(r.strings.at(0));
-    double ems = 0;
-    int chars = 0;
-    for (const char32_t c : text.toUcs4()) {
-        ems += c >= 0x2E80 ? 1.0 : 0.55;
-        ++chars;
-    }
-    HostServiceReply out;
-    out.numbers = {ems * size * scaleX + spacing * chars, size * scaleY, size * 0.21, 0};
-    return out;
-}
-
 struct Outcome {
     std::optional<LuaScriptHost::RunOutcome> outcome;
     QString message;
@@ -119,8 +105,9 @@ protected:
     {
         auto host = std::make_unique<LuaScriptHost>(QStringLiteral(HIKARI_LUA_HELPER), script,
                                                     QStringLiteral(HIKARI_LUA_INCLUDE));
-        host->setServiceHandler([](const HostServiceRequest &r, LuaScriptHost::ServiceReply reply) {
-            reply(r.service == HostService::TextExtents ? textExtents(r) : HostServiceReply::unavailable());
+        host->setServiceHandler([this](const HostServiceRequest &r, LuaScriptHost::ServiceReply reply) {
+            ++asked[r.service];
+            reply(answer(r));
         });
         QObject::connect(host.get(), &LuaScriptHost::logged, [this](const QString &t) { run.log << t; });
         QObject::connect(host.get(), &LuaScriptHost::finished,
@@ -196,6 +183,8 @@ protected:
 
     Outcome run;
     QJsonObject report;
+    std::function<HostServiceReply(const HostServiceRequest &)> answer = hikari::test::fakeMeasureReply;
+    std::map<HostService, int> asked;
 };
 
 QStringList corpus()
@@ -329,6 +318,97 @@ TEST_F(KaraokeTemplater, NamedLineTemplatesRunAfterUnnamedOnesInTheOrderTheirNam
     EXPECT_TRUE(std::ranges::is_sorted(at));
 }
 
+TEST_F(KaraokeTemplater, CharTemplatesWalkGraphemeClusters)
+{
+    const QString document = corpusDir() + QStringLiteral("/departures/thai.ass");
+    const QString golden = corpusDir() + QStringLiteral("/departures/thai.out.ass");
+    const std::string oracle = templated(document, oracleScript());
+    ASSERT_FALSE(oracle.empty());
+    if (qEnvironmentVariableIsSet("HIKARI_UPDATE_KARAOKE_GOLDENS")) {
+        QFile out(golden);
+        ASSERT_TRUE(out.open(QIODevice::WriteOnly));
+        out.write(oracle.data(), static_cast<qint64>(oracle.size()));
+    }
+    EXPECT_EQ(oracle, textOf(readBytes(golden)));
+    EXPECT_EQ(templated(document, builtinScript()), oracle);
+    EXPECT_NE(oracle, templated(document, pristineScript()));
+}
+
+TEST_F(KaraokeTemplater, GraphemesFalseSplitsCharsByCodePointAsAegisubDoes)
+{
+    const auto bytes = editedCorpus(
+        QStringLiteral("departures/thai.ass"),
+        {{"Comment: 0,0:00:00.00,0:00:05.00,Thai,,0,0,0,template",
+          "Comment: 0,0:00:00.00,0:00:05.00,Thai,,0,0,0,code once,graphemes = false\n"
+          "Comment: 0,0:00:00.00,0:00:05.00,Thai,,0,0,0,template"}});
+    const std::string stock = templatedBytes(bytes, pristineScript());
+    ASSERT_FALSE(stock.empty());
+    EXPECT_EQ(templatedBytes(bytes, oracleScript()), stock);
+    EXPECT_EQ(templatedBytes(bytes, builtinScript()), stock);
+}
+
+constexpr const char *kCharTemplateDocument = R"([Script Info]
+ScriptType: v4.00+
+PlayResX: 1280
+PlayResY: 720
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Default,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,8,20,20,20,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Comment: 0,0:00:00.00,0:00:05.00,Default,,0,0,0,template char,{\pos($x,$y)}
+Dialogue: 0,0:00:01.00,0:00:03.00,Default,,0,0,0,karaoke,{\k20}ka{\k20}ra{\k20}o{\k20}ke
+Dialogue: 0,0:00:04.00,0:00:06.00,Default,,0,0,0,karaoke,{\k20}ka{\k20}ra{\k20}ka{\k20}ra
+)";
+
+TEST_F(KaraokeTemplater, CharTemplatesMeasureEachTextOnceARun)
+{
+    const auto bytes = bytesOf(kCharTemplateDocument);
+    const std::string batched = templatedBytes(bytes, oracleScript());
+    ASSERT_FALSE(batched.empty());
+    EXPECT_EQ(asked[HostService::TextExtentsMany], 2) << "one batch a karaoke Line";
+    EXPECT_EQ(asked[HostService::TextExtents], 4) << "k, a, r and e; o is a syllable already measured";
+
+    answer = [](const HostServiceRequest &r) {
+        return r.service == HostService::TextExtentsMany ? HostServiceReply::unavailable()
+                                                         : hikari::test::fakeMeasureReply(r);
+    };
+    asked.clear();
+    EXPECT_EQ(templatedBytes(bytes, oracleScript()), batched);
+    EXPECT_EQ(asked[HostService::TextExtentsMany], 1) << "asked once, then text by text for the rest of the run";
+    EXPECT_EQ(asked[HostService::TextExtents], 10) << "each distinct non-empty text once, where 25 were asked before";
+}
+
+TEST_F(KaraokeTemplater, TheBuiltinMeasuresEachTextOnceARunWithTheScriptsItRuns)
+{
+    const auto bytes = bytesOf(kCharTemplateDocument);
+    const std::string oracle = templatedBytes(bytes, oracleScript());
+    answer = [](const HostServiceRequest &r) {
+        return r.service == HostService::TextExtentsMany ? HostServiceReply::unavailable()
+                                                         : hikari::test::fakeMeasureReply(r);
+    };
+    asked.clear();
+    EXPECT_EQ(templatedBytes(bytes, builtinScript()), oracle);
+    EXPECT_EQ(asked[HostService::TextExtents], 10) << "the layout and the char templates' text_extents share one memo";
+}
+
+TEST_F(KaraokeTemplater, TextTheHostCannotMeasureIsAProblemAndCountsAsZeroWide)
+{
+    answer = [](const HostServiceRequest &r) {
+        return r.service == HostService::TextExtents || r.service == HostService::TextExtentsMany
+                   ? HostServiceReply::unavailable()
+                   : hikari::test::fakeMeasureReply(r);
+    };
+    const std::string out = templatedBytes(bytesOf(kCharTemplateDocument), builtinScript());
+    ASSERT_FALSE(out.empty()) << "the run goes on";
+    EXPECT_NE(out.find("{\\pos(640,"), std::string::npos) << "every char at the centre, 0 wide\n" << out;
+    EXPECT_TRUE(run.log.join(QString()).contains(
+        QStringLiteral("could not measure text in the Style \"Default\"; it counts as 0 wide.")))
+        << run.log.join(QString()).toStdString();
+}
+
 TEST_F(KaraokeTemplater, AReopenedFileKnowsWhichKaraokeLineEachLineCameFrom)
 {
     hikari::application::EditSession session(hikari::core::loadAss(readBytes(corpusDir() + "/stock-tutorials.ass")).document);
@@ -405,6 +485,19 @@ TEST_F(KaraokeTemplater, MacroIsNotOfferedWithoutATemplate)
     ASSERT_TRUE(host->validate(macro(*host, "Apply karaoke template"), *snapshot));
     ASSERT_TRUE(waitFor([&] { return run.outcome.has_value(); }));
     EXPECT_EQ(*run.outcome, LuaScriptHost::RunOutcome::NotValid);
+}
+
+TEST_F(KaraokeTemplater, KaraEffectorLoadsOnlyWhenATemplateUsesIt)
+{
+    auto host = load(oracleScript());
+    ASSERT_EQ(host->state(), LuaScriptHost::State::Ready) << host->lastError().toStdString();
+    const auto loaded = [&](const char *name) {
+        return std::ranges::any_of(host->info().loadedFiles, [&](const std::string &file) {
+            return std::filesystem::path(file).filename() == name;
+        });
+    };
+    EXPECT_TRUE(loaded("utils.lua"));
+    EXPECT_FALSE(loaded("effector-auto4.lua")) << "ke4.ass's golden covers a template that loads it";
 }
 
 

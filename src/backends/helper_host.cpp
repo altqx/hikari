@@ -48,8 +48,17 @@ void HelperHost::start()
     m_process.start(m_program, m_arguments);
     QTimer::singleShot(m_limits.handshakeMs, this, [this] {
         if (m_state == State::Starting)
+            readPending();
+        if (m_state == State::Starting)
             stop();
     });
+}
+
+void HelperHost::readPending()
+{
+    // Qt watches stdout only after the start notification, and a timer can run before a ready pipe's notifier.
+    if (m_process.state() != QProcess::NotRunning)
+        m_process.waitForReadyRead(0);
 }
 
 void HelperHost::write(const Frame &frame)

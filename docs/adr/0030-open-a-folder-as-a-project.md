@@ -18,8 +18,9 @@ On 2026-11-04 altqx settled Projects in two grilling rounds, answering "yes to a
 
 - **The project file is `.hikari/project.toml`, and it is optional.** HikariSub writes it the first time a Project-level setting changes. Opening a folder without one adds no files.
 - **Beside it** are `catalogs/`, `layouts.json`, `dictionary.txt` and `automation/`.
+- **Its tables and keys are `settings.toml`'s,** plus `version = 1`, so a line can move between the two files. This replaces the research note's `[settings]` table (coordinator, 2026-11-10, PJ3 #771).
 - **Hand edits survive.** HikariSub writes only the keys it changed, so comments elsewhere in the file stay.
-- **`.hikari/project.local.toml`** is an optional file for personal overrides that a team doesn't share.
+- **`.hikari/project.local.toml`** is an optional file for personal overrides that a team doesn't share. HikariSub never writes it.
 - **One `.hikari/` applies.** Nested folders don't layer in v1.
 - **Nothing machine-specific goes in `.hikari/`:** no absolute paths, sessions or window state.
 
@@ -57,6 +58,8 @@ The Explorer is core, not a plugin ([ADR 0022](0022-hikarisub-plugins.md), "Plug
 - **Default < User < Project, per key,** for an allowlist of settings.
 - **A Project can never set:** privacy, analytics, updates, AI providers and permissions, plugin network, trusted folders, the theme and UI fonts, or hotkeys. Display preferences stay the user's.
 - **Settings gets two tabs, Yours and Project.**
+- **The allowlist** is the dictionary language and spelling switch, grammar, the Script Info defaults for new files, and moving tags from the original in translation mode. Lists are replaced, not merged.
+- **A setting that widens** what a Project may do applies only once its folder is trusted. None of today's allowlisted settings widens.
 
 ## Shared things with a Project tier
 
@@ -91,7 +94,7 @@ The Explorer is core, not a plugin ([ADR 0022](0022-hikarisub-plugins.md), "Plug
 
 ## Trust
 
-- **One Trusted folders list** replaces Automation's Trusted script folders.
+- **One Trusted folders list** replaces Automation's Trusted script folders. It sits on the General page and is kept as `trust.folders`; the old `automation.trustedFolders` moves there once (owner, 2026-11-10).
 - **An untrusted Project** still applies its styles, dictionaries, layouts and settings that only restrict. It loads no scripts, changes no plugin on/off, and doesn't widen AI permissions.
 - **The trust question** comes on first open only when `.hikari/` holds scripts or plugin settings.
 

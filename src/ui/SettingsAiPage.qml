@@ -17,6 +17,23 @@ ScrollView {
     property string editing: ""
     property var stagedRoles: ({})
     readonly property var codex: ai ? ai.codex : ({})
+    readonly property var components: ai ? ai.components : ({})
+    readonly property var agents: ai ? ai.agents : ({})
+    readonly property bool autoUpdate: dialog.values["ai.autoUpdate"] === true && components.policyOff !== true
+    readonly property bool webSearchOn: dialog.values["ai.webSearch"] === true
+    readonly property string stagedService: dialog.values["ai.searchService"] ?? ""
+    readonly property var search: ai ? ai.search : ({})
+    readonly property bool searchKeySaved: search.service === stagedService && search.hasKey === true
+    readonly property string searchVia: webSearchOn && stagedService !== "" ? serviceName(stagedService) : ""
+    property bool replacingSearchKey: false
+    property string testedSearchKey: ""
+    readonly property var searchServices: [
+        {id: "", name: qsTr("None"), menuText: qsTr("None")},
+        {id: "brave", name: "Brave Search", menuText: qsTr("Brave Search (search only)")},
+        {id: "tavily", name: "Tavily", menuText: "Tavily"},
+        {id: "exa", name: "Exa", menuText: "Exa"},
+        {id: "firecrawl", name: "Firecrawl", menuText: "Firecrawl"}
+    ]
     property bool codexBrowser: false
     readonly property string codeFontFamily: {
         const marked = ["Cascadia Mono", "Consolas", "Menlo", "JetBrains Mono", "Noto Sans Mono"]
@@ -43,8 +60,66 @@ ScrollView {
     function reload() {
         stagedRoles = ai ? Object.assign({}, ai.roles) : {}
         closeForm()
-        if (ai && ai.on)
+        if (ai && ai.on) {
             ai.checkCodex()
+            ai.checkAgents()
+            ai.checkSearchKey(stagedService)
+        }
+    }
+    onStagedServiceChanged: {
+        replacingSearchKey = false
+        testedSearchKey = ""
+        searchKeyField.clear()
+        if (ai && ai.on)
+            ai.checkSearchKey(stagedService)
+    }
+    function serviceName(id) {
+        return searchServices.find(s => s.id === id)?.name ?? id
+    }
+    function searchHow(row) {
+        if (row.searchesNatively)
+            return row.preset === "gemini" ? qsTr("Google Search, and reads pages") : qsTr("Its own search, and reads pages")
+        return searchKeySaved ? serviceName(stagedService) : qsTr("Needs a search service")
+    }
+    function searchStatus() {
+        const name = serviceName(search.service ?? "")
+        switch (search.state) {
+        case "checking": return ""
+        case "saving": return qsTr("Saving…")
+        case "testing": return qsTr("Testing…")
+        case "ok": return qsTr("Connected")
+        case "failed":
+            switch (search.error) {
+            case "unauthorized": return qsTr("Key rejected (%1)").arg(search.httpStatus)
+            case "rateLimited": return qsTr("Searches used up (%1)").arg(search.httpStatus)
+            case "noProvider": return qsTr("Add a provider to test the key")
+            case "network": return qsTr("Can’t reach %1").arg(name)
+            case "server": return qsTr("Search service error (%1)").arg(search.httpStatus)
+            }
+            return failureText(search.error, search.httpStatus)
+        }
+        return qsTr("Not tested")
+    }
+    function searchNote() {
+        const name = serviceName(stagedService)
+        if (!searchKeySaved || replacingSearchKey)
+            return qsTr("Saved in the keychain. HikariSub sends only the searches the agent writes, never your files. Test connection runs one search, which counts against your %1 plan.").arg(name)
+        if (search.state === "failed" && search.error === "unauthorized")
+            return qsTr("%1 refused the key. Paste a new one from your %1 dashboard.").arg(name)
+        if (search.state === "failed" && search.error === "rateLimited")
+            return qsTr("Your %1 plan has no searches left. Until it resets, providers without their own search answer without searching and say so.").arg(name)
+        return qsTr("The key is in the keychain. Providers charge for their own searches on top of tokens. %1 bills searches on your %1 plan.").arg(name)
+    }
+    function askRemoveSearchKey() {
+        const name = serviceName(stagedService)
+        dialog.ask({
+            title: qsTr("Remove key"),
+            text: qsTr("Remove the %1 key?").arg(name),
+            detail: qsTr("It is deleted from the keychain. Providers without their own search stop searching until you add a key."),
+            severity: "warning",
+            choices: [{ id: "remove", text: qsTr("Remove"), role: "destructive" },
+                      { id: "cancel", text: qsTr("Cancel"), role: "reject", isDefault: true }]
+        }, answer => { if (answer === "remove") page.ai.removeSearchKey(page.stagedService) })
     }
     function signInCodex(browser) {
         codexBrowser = browser
@@ -133,12 +208,115 @@ ScrollView {
         case "form": return qsTr("Fill in the name and a valid address")
         case "downloadManifest":
         case "downloadNetwork": return qsTr("Can’t download the AI component")
+        case "downloadSignature": return qsTr("Couldn’t check: bad signature")
         case "downloadDamaged": return qsTr("Downloaded AI component is damaged")
         case "downloadDisk": return qsTr("Can’t save the AI component")
         }
         return qsTr("Test failed")
     }
     function megabytes(bytes) { return Math.max(1, Math.round(bytes / 1000000)) }
+    function tenths(bytes) { return Number(bytes / 1000000).toLocaleString(Qt.locale(), "f", 1) }
+    function checkedText(ms) {
+        const minutes = Math.floor((Date.now() - ms) / 60000)
+        if (minutes < 1)
+            return qsTr("Up to date · checked just now")
+        if (minutes < 60)
+            return qsTr("Up to date · checked %n minute(s) ago", "", minutes)
+        const hours = Math.floor(minutes / 60)
+        if (hours < 24)
+            return qsTr("Up to date · checked %n hour(s) ago", "", hours)
+        return qsTr("Up to date · checked %1").arg(new Date(ms).toLocaleString(Qt.locale(), Locale.ShortFormat))
+    }
+    function componentStatus(c) {
+        if (c.state === "checking")
+            return { tone: "muted", text: qsTr("Checking…") }
+        if (c.state === "downloading")
+            return { tone: "muted", text: qsTr("Downloading %1 · %2 of %3 MB").arg(c.available, tenths(c.received), tenths(c.total)) }
+        if (c.error === "downloadNetwork" || c.error === "downloadManifest")
+            return { tone: "bad", text: qsTr("Couldn’t check: no connection") }
+        if (c.error)
+            return { tone: "bad", text: failureText(c.error, 0) }
+        if (c.staged)
+            return { tone: "ok", text: qsTr("%1 is ready · starts once AI has been idle for 2 minutes").arg(c.staged) }
+        if (c.available)
+            return { tone: "warn", text: qsTr("%1 is available · %2 MB").arg(c.available, tenths(c.availableBytes)) }
+        if (c.newerNeedsApp)
+            return { tone: "ok", text: qsTr("Newest this HikariSub runs") }
+        return { tone: "ok", text: c.checkedAt ? checkedText(c.checkedAt) : qsTr("Up to date") }
+    }
+    function componentNote(c) {
+        if (c.state)
+            return ""
+        if (c.error === "downloadNetwork" || c.error === "downloadManifest")
+            return c.checkedAt ? qsTr("Last checked %1. HikariSub tries again in an hour.").arg(new Date(c.checkedAt).toLocaleString(Qt.locale(), Locale.ShortFormat))
+                               : qsTr("HikariSub tries again in an hour.")
+        if (c.error === "downloadSignature")
+            return qsTr("HikariSub keeps %1 and installs nothing from that list.").arg(c.version)
+        if (!c.error && !c.staged && !c.available && c.newerNeedsApp)
+            return qsTr("Update HikariSub to get newer AI features.")
+        return ""
+    }
+    function toneColor(tone) {
+        return tone === "ok" ? Theme.success : tone === "warn" ? Theme.warning : tone === "bad" ? Theme.danger : Theme.muted
+    }
+    function methodName(row, name) {
+        switch (row.method) {
+        case "native": return row.agent === "claude" ? qsTr("Claude’s installer") : qsTr("Codex’s installer")
+        case "npm": return "npm"
+        case "pnpm": return "pnpm"
+        case "bun": return "Bun"
+        case "yarn": return "Yarn"
+        case "volta": return "Volta"
+        case "homebrew": return "Homebrew"
+        case "winget": return "WinGet"
+        case "chocolatey": return "Chocolatey"
+        case "mise": return "mise"
+        }
+        return ""
+    }
+    function agentFailed(row) { return row.outcome === "unchanged" || row.outcome === "failed" || row.outcome === "timedOut" }
+    function agentNeedsUpdate(row) { return row.badge === "update" || row.badge === "unsupported" || row.badge === "broken" }
+    function agentLine(row, name) {
+        if (!row.found)
+            return qsTr("Not found on PATH.")
+        if (row.state === "updating")
+            return qsTr("Running %1. New sessions use the new version.").arg(row.command)
+        if (row.outcome === "unchanged")
+            return qsTr("Still %1 after %2. Run it in a terminal to see why.").arg(row.version, row.command)
+        if (agentFailed(row))
+            return qsTr("%1 didn’t finish. Run it in a terminal to see why.").arg(row.command)
+        if (!row.version)
+            return qsTr("Found on PATH.")
+        if (row.session && row.canUpdate && agentNeedsUpdate(row))
+            return qsTr("A %1 session is running in the agent panel. Update now waits until it ends.").arg(name)
+        const method = methodName(row, name)
+        const how = row.canUpdate ? qsTr("Installed with %1.").arg(method)
+                  : row.command ? qsTr("Installed with %1, so HikariSub won’t update it. Run this in a terminal:").arg(method)
+                  : method ? qsTr("Installed with %1; update it as you installed it.").arg(method)
+                  : qsTr("Installed in an unknown way; update it as you installed it.")
+        if (row.badge === "broken")
+            return qsTr("%1 has a fault that breaks HikariSub’s agent.").arg(row.version) + " " + how
+        if (row.badge === "unsupported")
+            return qsTr("%1 is older than the oldest HikariSub supports (%2).").arg(row.version, row.minimum) + " " + how
+        if (row.badge === "update")
+            return row.canUpdate ? qsTr("%1 · %2 is out · installed with %3").arg(row.version, row.latest, method)
+                                 : qsTr("%1 · %2 is out.").arg(row.version, row.latest) + " " + how
+        return method ? qsTr("%1 · installed with %2").arg(row.version, method)
+                      : qsTr("%1 · installed in an unknown way").arg(row.version)
+    }
+    function agentBadge(row) {
+        if (row.state === "updating")
+            return { tone: "muted", text: qsTr("Updating…") }
+        if (agentFailed(row))
+            return { tone: "bad", text: qsTr("Update didn’t take") }
+        switch (row.badge) {
+        case "update": return { tone: "warn", text: qsTr("Update available") }
+        case "current": return { tone: "ok", text: qsTr("Up to date") }
+        case "unsupported": return { tone: "warn", text: qsTr("Unsupported version") }
+        case "broken": return { tone: "bad", text: qsTr("Known broken version") }
+        }
+        return { tone: "", text: "" }
+    }
 
     Connections {
         target: page.dialog
@@ -158,14 +336,25 @@ ScrollView {
         spacing: 9
         Layout.fillWidth: true
         Accessible.name: text
-        function refresh() { checked = page.dialog.values[setting] === true }
+        property bool forcedOff: false
+        function refresh() { checked = !forcedOff && page.dialog.values[setting] === true }
+        onForcedOffChanged: refresh()
         Component.onCompleted: {
             if (contentItem && contentItem.wrapMode !== undefined)
                 contentItem.wrapMode = Text.Wrap
             refresh()
         }
+        property bool asksFirst: false
+        signal askedOn()
         Connections { target: page.dialog; function onReloaded() { check.refresh() } }
-        onToggled: page.dialog.put(setting, checked)
+        onToggled: {
+            if (asksFirst && checked) {
+                checked = false
+                askedOn()
+            } else {
+                page.dialog.put(setting, checked)
+            }
+        }
     }
     component Note: Label {
         color: Theme.muted
@@ -183,6 +372,169 @@ ScrollView {
             to: 360
             duration: 1200
             loops: Animation.Infinite
+        }
+    }
+    component Badge: Rectangle {
+        id: badge
+        property string tone
+        property alias text: badgeLabel.text
+        visible: text !== ""
+        color: "transparent"
+        border.color: page.toneColor(tone)
+        radius: height / 2
+        implicitWidth: badgeLabel.implicitWidth + 16
+        implicitHeight: badgeLabel.implicitHeight + 2
+        Label {
+            id: badgeLabel
+            anchors.centerIn: parent
+            color: page.toneColor(badge.tone)
+            font.pixelSize: 11
+        }
+    }
+    component Command: RowLayout {
+        id: command
+        property string text
+        spacing: 8
+        Layout.fillWidth: true
+        Label {
+            text: command.text
+            textFormat: Text.PlainText
+            font.family: page.codeFontFamily
+            elide: Text.ElideRight
+            Layout.fillWidth: true
+        }
+        IconTextButton {
+            iconRole: "edit-copy"
+            text: qsTr("Copy")
+            onClicked: page.dialog.app.copyText(command.text)
+        }
+    }
+    component AgentProgram: ColumnLayout {
+        id: program
+        required property string agent
+        required property string name
+        readonly property var row: Object.assign({ agent: agent }, page.agents[agent] ?? {})
+        readonly property var badge: page.agentBadge(row)
+        readonly property bool failing: page.agentFailed(row)
+        readonly property bool updating: row.state === "updating"
+        readonly property bool offersUpdate: row.canUpdate === true && !updating && !failing && page.agentNeedsUpdate(row)
+        objectName: "aiAgent_" + agent
+        spacing: 6
+        Layout.fillWidth: true
+        RowLayout {
+            spacing: 8
+            Layout.fillWidth: true
+            Label { text: program.name; font.bold: true }
+            Label {
+                text: program.row.path ?? ""
+                textFormat: Text.PlainText
+                font.family: page.codeFontFamily
+                color: Theme.muted
+                elide: Text.ElideMiddle
+                Layout.fillWidth: true
+            }
+            Badge {
+                objectName: "aiAgentBadge_" + program.agent
+                tone: program.badge.tone
+                text: program.badge.text
+            }
+        }
+        Label {
+            objectName: "aiAgentLine_" + program.agent
+            text: page.agentLine(program.row, program.name)
+            textFormat: Text.PlainText
+            color: Theme.muted
+            wrapMode: Text.Wrap
+            Layout.fillWidth: true
+        }
+        Label {
+            visible: program.failing && (program.row.lastLine ?? "") !== ""
+            text: program.row.lastLine ?? ""
+            textFormat: Text.PlainText
+            font.family: page.codeFontFamily
+            color: Theme.muted
+            elide: Text.ElideRight
+            Layout.fillWidth: true
+        }
+        Command {
+            objectName: "aiAgentCommand_" + program.agent
+            visible: program.row.state !== "updating" && (program.row.command ?? "") !== ""
+                     && (program.failing || (!program.row.canUpdate && page.agentNeedsUpdate(program.row)))
+            text: program.row.command ?? ""
+        }
+        RowLayout {
+            visible: program.offersUpdate || program.updating
+            spacing: 8
+            Layout.fillWidth: true
+            Item { Layout.fillWidth: true }
+            Button {
+                objectName: "aiAgentUpdate_" + program.agent
+                visible: program.offersUpdate
+                enabled: program.row.session !== true
+                text: qsTr("Update now")
+                onClicked: page.ai.updateAgent(program.agent)
+            }
+            Button {
+                objectName: "aiAgentCancel_" + program.agent
+                visible: program.updating
+                text: qsTr("Cancel")
+                onClicked: page.ai.cancelAgentUpdate(program.agent)
+            }
+        }
+    }
+    component DownloadNotice: Rectangle {
+        id: notice
+        property string title
+        property string text
+        default property alias actions: noticeActions.data
+        readonly property var download: page.ai ? page.ai.download : ({})
+        color: Theme.raised
+        border.color: Theme.line
+        implicitHeight: noticeRow.implicitHeight + 16
+        Layout.fillWidth: true
+        Rectangle { width: 3; height: parent.height; color: Theme.accent }
+        RowLayout {
+            id: noticeRow
+            x: 12
+            y: 8
+            width: parent.width - 22
+            spacing: 8
+            Icon { iconRole: "notice-info"; Layout.alignment: Qt.AlignTop }
+            ColumnLayout {
+                spacing: 4
+                Layout.fillWidth: true
+                Label {
+                    text: notice.title
+                    font.bold: true
+                    wrapMode: Text.Wrap
+                    Layout.fillWidth: true
+                }
+                Label {
+                    text: notice.text
+                    wrapMode: Text.Wrap
+                    Layout.fillWidth: true
+                }
+                RowLayout {
+                    visible: !!notice.download.active
+                    spacing: 8
+                    ProgressBar {
+                        objectName: notice.objectName + "Progress"
+                        from: 0
+                        to: Math.max(1, notice.download.size || 0)
+                        value: notice.download.received || 0
+                        Layout.preferredWidth: 180
+                    }
+                    Label {
+                        text: qsTr("%1 of %2 MB").arg(Math.round((notice.download.received || 0) / 1000000), page.megabytes(notice.download.size || 0))
+                        color: Theme.muted
+                    }
+                }
+                RowLayout {
+                    id: noticeActions
+                    visible: children.length > 0
+                    spacing: 8
+                }
+            }
         }
     }
     component StatusDot: Rectangle {
@@ -404,54 +756,13 @@ ScrollView {
                 Layout.leftMargin: 182
                 Layout.fillWidth: true
             }
-            Rectangle {
+            DownloadNotice {
                 objectName: "aiDownloadNotice"
                 visible: form.download.needed
-                color: Theme.raised
-                border.color: Theme.line
-                implicitHeight: noticeRow.implicitHeight + 16
-                Layout.fillWidth: true
-                Rectangle { width: 3; height: parent.height; color: Theme.accent }
-                RowLayout {
-                    id: noticeRow
-                    x: 12
-                    y: 8
-                    width: parent.width - 22
-                    spacing: 8
-                    Icon { iconRole: "notice-info"; Layout.alignment: Qt.AlignTop }
-                    ColumnLayout {
-                        spacing: 4
-                        Layout.fillWidth: true
-                        Label {
-                            text: form.download.size > 0
-                                  ? qsTr("Your first provider downloads the AI component once: %1 MB.").arg(page.megabytes(form.download.size))
-                                  : qsTr("Your first provider downloads the AI component once.")
-                            font.bold: true
-                            wrapMode: Text.Wrap
-                            Layout.fillWidth: true
-                        }
-                        Label {
-                            text: qsTr("Test connection and Add download it. It runs only when you use an AI feature, and never while AI is turned off.")
-                            wrapMode: Text.Wrap
-                            Layout.fillWidth: true
-                        }
-                        RowLayout {
-                            visible: form.download.active
-                            spacing: 8
-                            ProgressBar {
-                                objectName: "aiDownloadProgress"
-                                from: 0
-                                to: Math.max(1, form.download.size)
-                                value: form.download.received
-                                Layout.preferredWidth: 180
-                            }
-                            Label {
-                                text: qsTr("%1 of %2 MB").arg(Math.round(form.download.received / 1000000), page.megabytes(form.download.size))
-                                color: Theme.muted
-                            }
-                        }
-                    }
-                }
+                title: form.download.size > 0
+                       ? qsTr("Your first provider downloads the AI component once: %1 MB.").arg(page.megabytes(form.download.size))
+                       : qsTr("Your first provider downloads the AI component once.")
+                text: qsTr("Test connection and Add download it. It runs only when you use an AI feature, and never while AI is turned off.")
             }
             RowLayout {
                 spacing: 8
@@ -777,9 +1088,205 @@ ScrollView {
         }
 
         SettingsSection {
+            objectName: "aiWebSearch"
+            visible: page.live
+            title: qsTr("Web search")
+            AiCheck { setting: "ai.webSearch"; text: qsTr("Let AI search the web") }
+            Note { text: qsTr("The agent can look up names, terms, lyrics and references, and says where it found them. The provider or your search service gets each search the agent writes and the pages it opens.") }
+            Rectangle {
+                objectName: "aiSearchProviders"
+                visible: page.webSearchOn && page.providerList.length > 0
+                color: "transparent"
+                border.color: Theme.line
+                radius: 2
+                implicitHeight: searchList.implicitHeight + 2
+                Layout.fillWidth: true
+                Layout.leftMargin: 24
+                ColumnLayout {
+                    id: searchList
+                    x: 1
+                    y: 1
+                    width: parent.width - 2
+                    spacing: 0
+                    Repeater {
+                        model: page.providerList
+                        delegate: RowLayout {
+                            id: searchRow
+                            required property var modelData
+                            readonly property bool needsService: !modelData.searchesNatively && !page.searchKeySaved
+                            objectName: "aiSearchHow_" + modelData.id
+                            spacing: 8
+                            Layout.fillWidth: true
+                            Layout.margins: 6
+                            Layout.leftMargin: 10
+                            Label { text: searchRow.modelData.name; elide: Text.ElideRight; Layout.fillWidth: true }
+                            Label {
+                                objectName: "aiSearchHow"
+                                text: page.searchHow(searchRow.modelData)
+                                color: searchRow.needsService ? Theme.warning : Theme.success
+                            }
+                        }
+                    }
+                }
+            }
+            Note {
+                objectName: "aiGeminiSuggestionsNote"
+                visible: page.webSearchOn && page.providerList.some(p => p.preset === "gemini" && p.searchesNatively)
+                text: qsTr("Gemini answers that searched show Google’s search suggestions, as Google’s terms require.")
+                Layout.topMargin: 0
+            }
+            SettingsRow {
+                id: serviceRow
+                text: qsTr("Search service")
+                labelWidth: 200
+                enabled: page.webSearchOn
+                ComboBox {
+                    id: serviceChoice
+                    objectName: "setting_ai.searchService"
+                    readonly property var docsValues: page.searchServices.map(s => ({value: s.id, label: s.menuText}))
+                    model: page.searchServices
+                    textRole: "menuText"
+                    valueRole: "id"
+                    Accessible.name: serviceRow.text
+                    Layout.fillWidth: true
+                    Layout.maximumWidth: 420
+                    function refresh() { currentIndex = Math.max(0, indexOfValue(page.stagedService)) }
+                    Component.onCompleted: refresh()
+                    Connections { target: page; function onStagedServiceChanged() { serviceChoice.refresh() } }
+                    onActivated: index => page.dialog.put("ai.searchService", valueAt(index))
+                }
+            }
+            Note {
+                text: page.stagedService === "brave"
+                      ? qsTr("Brave Search only searches: providers without their own search can’t read a page with it.")
+                      : qsTr("For providers without their own search. Anthropic, Google Gemini, OpenAI and OpenRouter search without one.")
+                enabled: page.webSearchOn
+                Layout.leftMargin: 208
+                Layout.topMargin: -2
+            }
+            SettingsRow {
+                id: searchKeyRow
+                objectName: "aiSearchKeyRow"
+                visible: page.webSearchOn && page.stagedService !== "" && page.search.state !== "checking"
+                text: qsTr("%1 key").arg(page.serviceName(page.stagedService))
+                labelWidth: 200
+                TextField {
+                    id: searchKeyField
+                    objectName: "aiSearchKey"
+                    visible: !page.searchKeySaved || page.replacingSearchKey
+                    echoMode: showSearchKey.checked ? TextInput.Normal : TextInput.Password
+                    Layout.fillWidth: true
+                    Accessible.name: searchKeyRow.text
+                    onAccepted: if (text.trim() !== "") saveSearchKey.clicked()
+                    Connections {
+                        target: page.ai
+                        function onSearchKeyStored() {
+                            searchKeyField.clear()
+                            page.testedSearchKey = ""
+                            page.replacingSearchKey = false
+                        }
+                    }
+                }
+                IconToolButton {
+                    id: showSearchKey
+                    visible: searchKeyField.visible
+                    iconRole: checked ? "hide" : "show"
+                    text: checked ? qsTr("Hide key") : qsTr("Show key")
+                    checkable: true
+                }
+                StatusDot {
+                    visible: searchStatusLabel.text !== ""
+                    status: page.search.state ?? ""
+                }
+                Label {
+                    id: searchStatusLabel
+                    objectName: "aiSearchStatus"
+                    text: page.search.service === page.stagedService ? page.searchStatus() : ""
+                    visible: text !== ""
+                    color: page.search.state === "ok" ? Theme.success
+                         : page.search.state === "failed" ? (page.search.error === "rateLimited" ? Theme.warning : Theme.danger)
+                         : Theme.muted
+                    elide: Text.ElideRight
+                    Layout.fillWidth: !searchKeyField.visible
+                }
+                IconTextButton {
+                    id: saveSearchKey
+                    objectName: "aiSearchTest"
+                    iconRole: "test-connection"
+                    text: qsTr("Test connection")
+                    enabled: page.search.state !== "testing" && page.search.state !== "saving"
+                             && (searchKeyField.visible ? searchKeyField.text.trim() !== "" : true)
+                    onClicked: {
+                        if (searchKeyField.visible) {
+                            page.testedSearchKey = searchKeyField.text
+                            page.ai.saveSearchKey(page.stagedService, searchKeyField.text)
+                        } else {
+                            page.ai.testSearchKey(page.stagedService)
+                        }
+                    }
+                }
+                Button {
+                    objectName: "aiSearchAddAnyway"
+                    visible: searchKeyField.visible && page.search.service === page.stagedService
+                             && page.search.canAddAnyway === true && searchKeyField.text === page.testedSearchKey
+                    text: qsTr("Add anyway")
+                    onClicked: page.ai.addSearchKeyAnyway(page.stagedService, searchKeyField.text)
+                }
+                Button {
+                    objectName: "aiSearchReplaceKey"
+                    visible: page.searchKeySaved && !page.replacingSearchKey && page.search.error === "unauthorized"
+                    text: qsTr("Replace key…")
+                    onClicked: page.replacingSearchKey = true
+                }
+                Button {
+                    objectName: "aiSearchRemoveKey"
+                    visible: page.searchKeySaved && !page.replacingSearchKey
+                    text: qsTr("Remove key")
+                    onClicked: page.askRemoveSearchKey()
+                }
+            }
+            Note {
+                objectName: "aiSearchKeyNote"
+                visible: searchKeyRow.visible
+                text: page.searchNote()
+                Layout.leftMargin: 208
+                Layout.topMargin: -2
+            }
+            LinkButton {
+                objectName: "aiSearchKeys"
+                visible: searchKeyRow.visible && (!page.searchKeySaved || page.replacingSearchKey)
+                iconRole: "open-link"
+                text: qsTr("Get a %1 key").arg(page.serviceName(page.stagedService))
+                Layout.leftMargin: 206
+                onClicked: page.ai.openSearchKeys(page.stagedService)
+            }
+        }
+
+        SettingsSection {
             objectName: "aiExternalAgents"
             visible: page.live
             title: qsTr("External agents")
+            Timer {
+                interval: 2000
+                repeat: true
+                running: page.live && page.visible
+                onTriggered: page.ai.refreshAgentSessions()
+            }
+            Rectangle {
+                color: "transparent"
+                border.color: Theme.line
+                radius: 2
+                implicitHeight: claudeProgram.implicitHeight + 20
+                Layout.fillWidth: true
+                AgentProgram {
+                    id: claudeProgram
+                    agent: "claude"
+                    name: "Claude Code"
+                    x: 10
+                    y: 10
+                    width: parent.width - 20
+                }
+            }
             Rectangle {
                 color: "transparent"
                 border.color: Theme.line
@@ -796,27 +1303,7 @@ ScrollView {
                     y: 10
                     width: parent.width - 20
                     spacing: 6
-                    RowLayout {
-                        spacing: 8
-                        Layout.fillWidth: true
-                        Label { text: "Codex"; font.bold: true }
-                        Label {
-                            text: page.codex.path ?? ""
-                            textFormat: Text.PlainText
-                            color: Theme.muted
-                            elide: Text.ElideMiddle
-                            Layout.fillWidth: true
-                        }
-                    }
-                    Label {
-                        objectName: "aiCodexFound"
-                        textFormat: Text.PlainText
-                        text: !page.codex.found ? qsTr("Not found on PATH.")
-                                                : page.codex.version ? qsTr("Found on PATH · %1.").arg(page.codex.version)
-                                                                     : qsTr("Found on PATH.")
-                        color: Theme.muted
-                        Layout.fillWidth: true
-                    }
+                    AgentProgram { agent: "codex"; name: "Codex" }
                     ColumnLayout {
                         objectName: "aiCodexSignedOut"
                         visible: !codexColumn.panel && !page.codex.signedIn && codexColumn.error === ""
@@ -1037,6 +1524,358 @@ ScrollView {
         }
 
         SettingsSection {
+            id: mcpSection
+            objectName: "aiMcp"
+            readonly property bool serverOn: page.dialog.values["ai.mcp.server"] === true
+            readonly property bool httpOn: serverOn && page.dialog.values["ai.mcp.http"] === true
+            readonly property var setup: page.ai && page.ai.mcp ? page.ai.mcp.setup : ({})
+            property string copied: ""
+            property bool offering: false
+            property string stayedOff: ""
+            function turnOn() {
+                page.dialog.put("ai.mcp.server", true)
+                mcpServerCheck.checked = true
+            }
+            function copy(kind) {
+                page.dialog.app.copyText(setup[kind])
+                copied = kind
+                copiedTimer.restart()
+            }
+            visible: page.live
+            title: qsTr("MCP")
+            Connections {
+                target: page.dialog
+                function onReloaded() {
+                    if (mcpSection.offering)
+                        page.ai.cancelComponent()
+                    mcpSection.offering = false
+                    mcpSection.stayedOff = ""
+                }
+            }
+            Connections {
+                target: page.ai
+                function onComponentReady(installed) {
+                    if (!mcpSection.offering)
+                        return
+                    mcpSection.offering = false
+                    if (installed)
+                        mcpSection.turnOn()
+                    else
+                        mcpSection.stayedOff = page.failureText(page.ai.download.error, 0, "")
+                }
+            }
+            AiCheck {
+                id: mcpServerCheck
+                setting: "ai.mcp.server"
+                asksFirst: true
+                text: qsTr("Let agents outside HikariSub edit through MCP")
+                onAskedOn: {
+                    mcpSection.stayedOff = ""
+                    if (page.ai.componentNeeded())
+                        mcpSection.offering = true
+                    else
+                        mcpSection.turnOn()
+                }
+            }
+            Note { text: qsTr("Claude Code, Codex and other agents read the open documents. Their edits wait in the review until you keep or undo them.") }
+            DownloadNotice {
+                objectName: "aiMcpDownload"
+                visible: mcpSection.offering
+                title: download.size > 0
+                       ? qsTr("MCP needs the AI component, downloaded once: %1 MB.").arg(page.megabytes(download.size))
+                       : qsTr("MCP needs the AI component, downloaded once.")
+                text: qsTr("It runs only while an agent uses HikariSub, and never while AI is turned off.")
+                PrimaryButton {
+                    objectName: "aiMcpDownloadStart"
+                    text: qsTr("Download")
+                    enabled: !page.ai.download.active
+                    onClicked: page.ai.installComponent()
+                }
+                Button {
+                    objectName: "aiMcpDownloadCancel"
+                    text: qsTr("Cancel")
+                    onClicked: {
+                        page.ai.cancelComponent()
+                        mcpSection.offering = false
+                        mcpSection.stayedOff = qsTr("It needs the AI component")
+                    }
+                }
+            }
+            Note {
+                objectName: "aiMcpStayedOff"
+                visible: mcpSection.stayedOff !== "" && !mcpSection.serverOn && !mcpSection.offering
+                color: Theme.danger
+                text: qsTr("MCP stays off. %1.").arg(mcpSection.stayedOff)
+            }
+            AiCheck {
+                property string docsLabel: qsTr("Also listen on http://127.0.0.1")
+                setting: "ai.mcp.http"
+                visible: mcpSection.serverOn
+                Layout.leftMargin: 24
+                text: mcpSection.setup.port ? qsTr("Also listen on http://127.0.0.1:%1").arg(mcpSection.setup.port) : docsLabel
+            }
+            Note {
+                visible: mcpSection.serverOn
+                Layout.leftMargin: 48
+                text: qsTr("For agents that connect over HTTP. Only this computer can reach it, and only with the token.")
+            }
+            RowLayout {
+                visible: mcpSection.serverOn
+                spacing: 8
+                Layout.leftMargin: 22
+                Layout.fillWidth: true
+                IconTextButton {
+                    id: copySetupButton
+                    objectName: "aiMcpCopySetup"
+                    iconRole: "edit-copy"
+                    text: qsTr("Copy setup")
+                    onClicked: copySetupMenu.popup(copySetupButton, 0, copySetupButton.height)
+                }
+                IconTextButton {
+                    objectName: "aiMcpResetToken"
+                    iconRole: "refresh"
+                    text: qsTr("Reset token")
+                    onClicked: {
+                        page.ai.mcp.resetToken()
+                        mcpSection.copied = "token"
+                        copiedTimer.restart()
+                    }
+                }
+                Label {
+                    objectName: "aiMcpCopied"
+                    visible: mcpSection.copied !== ""
+                    text: mcpSection.copied === "token" ? qsTr("New token saved.")
+                        : mcpSection.copied === "claudeCode" ? qsTr("Copied. Run it in a terminal.")
+                        : qsTr("Copied. Paste it into the agent’s settings.")
+                    color: Theme.muted
+                    elide: Text.ElideRight
+                    Layout.fillWidth: true
+                    Timer { id: copiedTimer; interval: 4000; onTriggered: mcpSection.copied = "" }
+                }
+                ShellMenu {
+                    id: copySetupMenu
+                    objectName: "aiMcpCopyMenu"
+                    ShellMenuItem {
+                        objectName: "aiMcpCopyClaudeCode"
+                        iconRole: "run-script"
+                        text: qsTr("Claude Code command")
+                        onTriggered: mcpSection.copy("claudeCode")
+                    }
+                    ShellMenuItem {
+                        objectName: "aiMcpCopyCodex"
+                        iconRole: "settings"
+                        text: qsTr("Codex config.toml")
+                        onTriggered: mcpSection.copy("codex")
+                    }
+                    ShellMenuItem {
+                        objectName: "aiMcpCopyJson"
+                        iconRole: "network"
+                        enabled: !!mcpSection.setup.json
+                        text: qsTr("JSON with the address and token")
+                        reason: qsTr("Holds your token; keep it private.")
+                        onTriggered: mcpSection.copy("json")
+                    }
+                }
+            }
+            Note {
+                objectName: "aiMcpResetNote"
+                visible: mcpSection.serverOn
+                text: qsTr("Reset token makes a new token. Agents set up with the old one stop working until you copy the setup again.")
+            }
+            Note {
+                objectName: "aiMcpJsonNote"
+                visible: mcpSection.serverOn && !mcpSection.setup.json
+                text: mcpSection.httpOn ? qsTr("The JSON setup needs the address: press OK or Apply to start listening on 127.0.0.1.")
+                                        : qsTr("The JSON setup is for agents that connect over HTTP, so it needs “Also listen on http://127.0.0.1”.")
+            }
+        }
+
+        SettingsSection {
+            objectName: "aiAgent"
+            visible: page.live
+            title: qsTr("Agent")
+            SettingsRow {
+                text: qsTr("Mode for new threads")
+                ComboBox {
+                    id: agentMode
+                    objectName: "setting_ai.agent.mode"
+                    readonly property var modes: ["manual", "auto", "full"]
+                    model: [qsTr("Manual"), qsTr("Auto"), qsTr("Full access")]
+                    Accessible.name: qsTr("Mode for new threads")
+                    Layout.preferredWidth: 200
+                    function refresh() { currentIndex = Math.max(0, modes.indexOf(page.dialog.values["ai.agent.mode"] ?? "auto")) }
+                    Component.onCompleted: refresh()
+                    Connections { target: page.dialog; function onReloaded() { agentMode.refresh() } }
+                    onActivated: index => page.dialog.put("ai.agent.mode", modes[index])
+                }
+            }
+            Repeater {
+                model: [{setting: "ai.agent.threadCapCents", text: qsTr("Cost cap per thread"), to: 100000},
+                        {setting: "ai.agent.dailyCapCents", text: qsTr("Cost cap per day"), to: 1000000}]
+                SettingsRow {
+                    id: capRow
+                    required property var modelData
+                    text: modelData.text
+                    SpinBox {
+                        id: cap
+                        objectName: "setting_" + capRow.modelData.setting
+                        from: 0
+                        to: capRow.modelData.to
+                        stepSize: 50
+                        editable: true
+                        Accessible.name: capRow.modelData.text
+                        Layout.preferredWidth: 140
+                        textFromValue: (value, locale) => value === 0 ? qsTr("No cap")
+                                                                       : "$" + Number(value / 100).toLocaleString(locale, "f", 2)
+                        valueFromText: (text, locale) => {
+                            const n = Number.fromLocaleString(locale, text.replace("$", "").trim())
+                            return isNaN(n) ? 0 : Math.round(n * 100)
+                        }
+                        validator: RegularExpressionValidator { regularExpression: /.*/ }
+                        function refresh() { value = page.dialog.values[capRow.modelData.setting] ?? 0 }
+                        Component.onCompleted: refresh()
+                        Connections { target: page.dialog; function onReloaded() { cap.refresh() } }
+                        onValueModified: page.dialog.put(capRow.modelData.setting, value)
+                    }
+                }
+            }
+            Note { text: qsTr("At a cap the turn stops after its current change. The agent never raises a cap; only you can.") }
+            AiCheck { setting: "ai.agent.costMeter"; text: qsTr("Show the cost meter") }
+        }
+
+        SettingsSection {
+            id: componentsSection
+            objectName: "aiComponents"
+            readonly property var c: page.components
+            readonly property var status: page.componentStatus(c)
+            readonly property var rollback: c.rollback ?? ({})
+            visible: page.live && c.present === true
+            title: qsTr("AI components")
+            trailing: LinkButton {
+                objectName: "aiWhatsNew"
+                iconRole: "open-link"
+                text: qsTr("What’s new")
+                onClicked: page.ai.openWhatsNew()
+            }
+            Rectangle {
+                objectName: "aiRollbackNotice"
+                visible: (componentsSection.rollback.version ?? "") !== ""
+                color: "transparent"
+                border.color: Theme.warning
+                radius: 2
+                implicitHeight: noticeRow.implicitHeight + 20
+                Layout.fillWidth: true
+                RowLayout {
+                    id: noticeRow
+                    x: 10
+                    y: 10
+                    width: parent.width - 20
+                    spacing: 8
+                    Icon { iconRole: "notice-warning"; Layout.alignment: Qt.AlignTop }
+                    Label {
+                        objectName: "aiRollbackText"
+                        readonly property var r: componentsSection.rollback
+                        text: qsTr("AI component %1 stopped working, so HikariSub went back to %2 and won’t install %1 again.").arg(r.version ?? "", r.to ?? "")
+                              + (r.reportSent === true ? " " + qsTr("A crash report was sent.") : "")
+                        textFormat: Text.PlainText
+                        wrapMode: Text.Wrap
+                        Layout.fillWidth: true
+                    }
+                    Button {
+                        objectName: "aiRollbackDismiss"
+                        text: qsTr("Dismiss")
+                        onClicked: page.ai.dismissComponentNotice()
+                    }
+                }
+            }
+            GridLayout {
+                columns: 2
+                columnSpacing: 16
+                rowSpacing: 8
+                Layout.fillWidth: true
+                Label { text: qsTr("AI component"); color: Theme.muted }
+                Label { objectName: "aiComponentVersion"; text: componentsSection.c.version ?? ""; textFormat: Text.PlainText }
+                Label { visible: !!componentsSection.c.runtime; text: qsTr("Runs on"); color: Theme.muted }
+                Label { visible: !!componentsSection.c.runtime; text: "Bun " + componentsSection.c.runtime; textFormat: Text.PlainText }
+                Label { visible: libraries.text !== ""; text: qsTr("Provider libraries"); color: Theme.muted }
+                Label {
+                    id: libraries
+                    visible: text !== ""
+                    text: [["Anthropic", componentsSection.c.anthropic], ["OpenAI", componentsSection.c.openai],
+                           ["Google Gen AI", componentsSection.c.google]].filter(p => !!p[1]).map(p => p[0] + " " + p[1]).join(" · ")
+                    textFormat: Text.PlainText
+                    wrapMode: Text.Wrap
+                    Layout.fillWidth: true
+                }
+                Label { text: qsTr("Status"); color: Theme.muted }
+                RowLayout {
+                    spacing: 8
+                    Layout.fillWidth: true
+                    BusyIcon { visible: !!componentsSection.c.state }
+                    Rectangle {
+                        visible: !componentsSection.c.state
+                        implicitWidth: 8
+                        implicitHeight: 8
+                        radius: 4
+                        color: page.toneColor(componentsSection.status.tone)
+                    }
+                    Label {
+                        objectName: "aiComponentStatus"
+                        text: componentsSection.status.text
+                        textFormat: Text.PlainText
+                        color: componentsSection.status.tone === "ok" || componentsSection.status.tone === "muted"
+                               ? Theme.text : page.toneColor(componentsSection.status.tone)
+                        wrapMode: Text.Wrap
+                        Layout.fillWidth: true
+                    }
+                    IconTextButton {
+                        objectName: "aiComponentCheck"
+                        visible: !componentsSection.c.state
+                        iconRole: "refresh"
+                        text: qsTr("Check now")
+                        onClicked: page.ai.checkComponents()
+                    }
+                    PrimaryButton {
+                        objectName: "aiComponentUpdate"
+                        visible: !componentsSection.c.state && !componentsSection.c.error && !!componentsSection.c.available
+                                 && !componentsSection.c.staged
+                        text: qsTr("Update now")
+                        onClicked: page.ai.updateComponents()
+                    }
+                    Button {
+                        objectName: "aiComponentCancel"
+                        visible: componentsSection.c.state === "downloading"
+                        text: qsTr("Cancel")
+                        onClicked: page.ai.cancelComponents()
+                    }
+                }
+                Item { visible: componentNote.visible; implicitWidth: 1 }
+                Label {
+                    id: componentNote
+                    objectName: "aiComponentNote"
+                    visible: text !== ""
+                    text: page.componentNote(componentsSection.c)
+                    textFormat: Text.PlainText
+                    color: Theme.muted
+                    wrapMode: Text.Wrap
+                    Layout.fillWidth: true
+                }
+            }
+            AiCheck {
+                setting: "ai.autoUpdate"
+                text: qsTr("Update AI components automatically")
+                forcedOff: componentsSection.c.policyOff === true
+                enabled: !forcedOff
+            }
+            Note {
+                objectName: "aiAutoUpdateNote"
+                text: componentsSection.c.policyOff === true ? qsTr("Your administrator turned automatic updates off on this computer.")
+                    : page.autoUpdate ? qsTr("HikariSub checks every hour while AI is on. A new version downloads in the background and starts once AI has been idle for 2 minutes. If it doesn’t start, HikariSub goes back to the one before.")
+                    : qsTr("HikariSub still checks every hour, and downloads only when you press Update now.")
+            }
+        }
+
+        SettingsSection {
             objectName: "aiPrivacy"
             visible: page.live
             title: qsTr("Privacy")
@@ -1052,8 +1891,13 @@ ScrollView {
             Note {
                 objectName: "aiSandboxNote"
                 color: page.ai.sandboxed ? Theme.muted : Theme.warning
-                text: page.ai.sandboxed ? qsTr("Requests go only to the providers you add. The AI component runs in a sandbox and reaches the network only through HikariSub.")
-                                        : qsTr("Requests go only to the providers you add. The AI component isn’t sandboxed on this system.")
+                text: {
+                    if (page.searchVia !== "")
+                        return page.ai.sandboxed ? qsTr("Requests go only to the providers you add and to %1. The AI component runs in a sandbox and reaches the network only through HikariSub.").arg(page.searchVia)
+                                                 : qsTr("Requests go only to the providers you add and to %1. The AI component isn’t sandboxed on this system.").arg(page.searchVia)
+                    return page.ai.sandboxed ? qsTr("Requests go only to the providers you add. The AI component runs in a sandbox and reaches the network only through HikariSub.")
+                                             : qsTr("Requests go only to the providers you add. The AI component isn’t sandboxed on this system.")
+                }
             }
         }
     }

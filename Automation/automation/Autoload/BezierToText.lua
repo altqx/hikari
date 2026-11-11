@@ -1,5 +1,5 @@
+--Bezier Curve Imposition by an eer?, with fixes by Bakura. No licence is stated; bundled with credit to its authors.
 --Script Usage: Make a Bezier curve in aeigsub using the clip drawing function.
---fixes by Bakura
 --The Curve can not consist of more than one line.
 --Example Line: "{\clip(m 0 300 b 0 0 300 0 300 300)}It really works!"
 
@@ -7,8 +7,18 @@ include("karaskel.lua")
 
 script_name = "Bezier Curve Imposition"
 script_description = "An effect to impose text onto a Bezier curve"
-script_author = "an eer? & Bakura"
-script_version = "1.0"
+script_author = "an eer? & Bakura; Thai support by Jibrill"
+script_version = "1.1"
+
+local graphemes = unicode.graphemes
+
+local function first_grapheme(text)
+	return graphemes(text)()
+end
+
+local function continues_grapheme(base, cluster)
+	return #first_grapheme(base .. cluster) > #base
+end
 
 out={}
 b_p = {}
@@ -54,8 +64,15 @@ function do_fx(meta, line)
 	arc = x
 	local linetext = string.gsub(line.text, "\\frz?([0-9.-]+)", "")
 	local linetags = ""
-	
-	for char in unicode.chars(linetext) do
+	local pos = 1
+	local glyph, glyphLine, glyphTags
+
+	while pos <= #linetext do
+		local char = linetext:sub(pos, pos + unicode.charwidth(linetext, pos) - 1)
+		if not block and char ~= "{" and char ~= "}" then
+			local runEnd = linetext:find("[{}\\]", pos + 1) or #linetext + 1
+			char = first_grapheme(linetext:sub(pos, runEnd - 1))
+		end
 		local split = (lastchar == "\\" and (char == "N" or char == "n" or char == "h"))
 		if char == "{" then
 			block = true
@@ -63,6 +80,11 @@ function do_fx(meta, line)
 		elseif char == "}" then
 			block = false
 			linetags = linetags .. char
+		elseif not block and not split and not blockSplit and char ~= " " and glyph and continues_grapheme(glyph, char) then
+			glyph = glyph .. char
+			glyphLine.text = string.gsub(glyphLine.text .. linetags:sub(glyphTags + 1) .. char, "}{", "")
+			glyphTags = #linetags
+			x = x + aegisub.text_extents(line.styleref, char)
 		elseif not block and not split and not blockSplit and char ~= " " then
 			local width, height, descent, ext_lead = aegisub.text_extents(line.styleref, char)
 			x = x + (width / 2)
@@ -111,6 +133,7 @@ function do_fx(meta, line)
 			l = result()
 			l.text = linetags .. string.format("{\\an2\\pos(%5.5f,%5.5f)\\frz%5.3f}%s", x_c[g], y_c[g], (-theta*(180/math.pi)), char)
 			l.text = string.gsub(l.text, "}{", "")
+			glyph, glyphLine, glyphTags = char, l, #linetags
 
 			
 			x = x + (width / 2)
@@ -119,6 +142,7 @@ function do_fx(meta, line)
 			if not block then
 				local width, height, descent, ext_lead = aegisub.text_extents(line.styleref, char)
 				x = x + width
+				glyph = nil
 			end
 				
 			if block then
@@ -127,6 +151,7 @@ function do_fx(meta, line)
 		end
 		lastchar = char
 		blockSplit = split
+		pos = pos + #char
 	end
 
 end

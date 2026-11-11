@@ -2,6 +2,7 @@
 
 #include "hikari/application/automation.h"
 #include "hikari/application/automation_services.h"
+#include "hikari/application/extents_cache.h"
 #include "hikari/application/resample.h"
 #include "hikari/core/document.h"
 
@@ -32,24 +33,6 @@ struct StyleInfo {
     double fontsize = 0, scaleX = 100, scaleY = 100, spacing = 0, angle = 0, outline = 0, shadow = 0;
     int align = 2, marginL = 0, marginR = 0, marginV = 0;
     StyleColour primary, secondary, outlineColour, back;
-};
-
-// One measuring cache per run, keyed by the Style's fields and the text.
-class ExtentsCache {
-public:
-    struct Result {
-        std::optional<TextExtents> extents;
-        bool measuredNow = false;
-    };
-
-    explicit ExtentsCache(TextMeasurePort &measure) : m_measure(measure) {}
-    Result measure(const std::vector<std::string> &style, const std::string &text);
-    std::size_t measured() const { return m_measured; }
-
-private:
-    TextMeasurePort &m_measure;
-    std::map<std::pair<std::string, std::string>, std::optional<TextExtents>, std::less<>> m_cache;
-    std::size_t m_measured = 0;
 };
 
 // A unit's $variables as the templater's set_ctx_syl (or, for the Line, apply_line) sets them.

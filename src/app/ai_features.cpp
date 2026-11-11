@@ -21,6 +21,8 @@
 #include <QStandardPaths>
 #include <QTimer>
 
+#include <cstdint>
+
 namespace hikari::app {
 
 namespace {
@@ -55,12 +57,15 @@ struct AiFeatures::Live {
     std::unique_ptr<application::ai::ConfigStore> configs;
     std::unique_ptr<backends::ai::AiSidecarUpdater> updater;
     std::unique_ptr<application::ai::Providers> providers;
+    std::unique_ptr<application::ai::SearchKeys> searchKeys;
     std::unique_ptr<backends::ai::AiRequests> requests;
     std::unique_ptr<backends::ai::HttpRelay> relay;
     std::unique_ptr<backends::ai::AiSidecarHost> host;
     std::unique_ptr<backends::ai::AgentBroker> agents;
     std::unique_ptr<backends::ai::AiSignIn> signIn;
     bool drafting = false;
+    std::uint64_t webSearchApplied = 0;
+    std::shared_ptr<bool> alive = std::make_shared<bool>(true);
     QString hostVersion;
     bool hostReady = false;
     std::deque<qint64> crashes;
@@ -121,7 +126,18 @@ AiFeatures::Ports AiFeatures::defaultPorts(const QString &userFolder, api::Api *
                 broker.add("codex", std::move(*spec));
     };
     ports.signIn = [](application::ai::KeyStore &keys) { return std::make_unique<backends::ai::AiSignIn>(keys); };
-    ports.findCodex = backends::ai::findCodexCli;
+    ports.findAgent = [](const QString &agent, std::function<void(std::optional<backends::ai::AgentCli>)> done) {
+        backends::ai::probeAgentCli(agent, std::move(done));
+    };
+    ports.agentInstall = [](const backends::ai::AgentCli &cli) {
+        return backends::ai::detectAgentInstall(cli.agent, cli.path, cli.realPath, backends::ai::currentAgentHost());
+    };
+    ports.agentLatest = [ai, latest = std::shared_ptr<backends::ai::AgentLatestVersions>()](
+                            const backends::ai::AgentInstall &install, std::function<void(QString)> done) mutable {
+        if (!latest)
+            latest = std::make_shared<backends::ai::AgentLatestVersions>(ai + QStringLiteral("/agent-versions.json"));
+        latest->latest(install, backends::ai::claudeUpdateChannel(QDir::homePath()), std::move(done));
+    };
     ports.codexAuthPath = QDir::homePath() + QStringLiteral("/.codex/auth.json");
     return ports;
 }
@@ -134,6 +150,8 @@ AiFeatures::AiFeatures(ui::SettingsStore &settings, Ports ports, QObject *parent
             apply();
         else if (id == QLatin1String(kCachingSetting) && m_live)
             m_live->requests->setCaching(m_settings.boolean(kCachingSetting));
+        else if (id == QLatin1String(kWebSearchSetting) || id == QLatin1String(kSearchServiceSetting))
+            applyWebSearch();
         else if (id == QLatin1String(kAutoUpdateSetting) && m_live) {
             emit componentsChanged();
             if (autoUpdate())
@@ -159,7 +177,13 @@ void AiFeatures::apply()
         m_live->requests =
             std::make_unique<backends::ai::AiRequests>(*m_live->providers, [this] { return sidecarForAction(); });
         m_live->requests->setCaching(m_settings.boolean(kCachingSetting));
-        m_live->relay = std::make_unique<backends::ai::HttpRelay>(m_live->requests->relayTargets());
+        m_live->searchKeys = std::make_unique<application::ai::SearchKeys>(*m_live->keys);
+        applyWebSearch();
+        m_live->relay = std::make_unique<backends::ai::HttpRelay>(backends::ai::withSearchTargets(
+            m_live->requests->relayTargets(), *m_live->searchKeys,
+            [requests = m_live->requests.get()](application::ai::SearchService service) {
+                return requests->searchAccess(service);
+            }));
         if (m_ports.signIn)
             m_live->signIn = m_ports.signIn(*m_live->keys);
         if (m_ports.sidecarUpdater)
@@ -169,6 +193,23 @@ void AiFeatures::apply()
         m_live.reset();
     }
     emit switched(wanted);
+}
+
+void AiFeatures::applyWebSearch()
+{
+    if (!m_live)
+        return;
+    const bool on = m_settings.boolean(kWebSearchSetting);
+    const auto service = application::ai::searchServiceFromId(m_settings.text(kSearchServiceSetting).toStdString());
+    const std::uint64_t applied = ++m_live->webSearchApplied;
+    m_live->requests->setWebSearch(on, std::nullopt);
+    if (!on || !service)
+        return;
+    m_live->searchKeys->read(*service, [this, alive = std::weak_ptr(m_live->alive), applied,
+                                        service](std::optional<std::string> key) {
+        if (alive.lock() && key && m_live->webSearchApplied == applied)
+            m_live->requests->setWebSearch(true, service);
+    });
 }
 
 void AiFeatures::startUpdates()
@@ -336,17 +377,17 @@ void AiFeatures::watchHost(backends::ai::AiSidecarHost *host, const QString &ver
     });
     if (m_ports.localSidecar)
         return;
-    connect(host, &AiSidecarHost::refused, this, [this, version](const QString &reason) { failed(version, reason); });
-    connect(host, &AiSidecarHost::lost, this, [this, version](const QString &reason) {
+    connect(host, &AiSidecarHost::refused, this, [this, version] { failed(version, QStringLiteral("initialize")); });
+    connect(host, &AiSidecarHost::lost, this, [this, version] {
         if (!m_live->hostReady)
-            return failed(version, reason);
+            return failed(version, QStringLiteral("initialize"));
         m_live->hostReady = false;
         const qint64 now = m_live->clock.elapsed();
         m_live->crashes.push_back(now);
         while (now - m_live->crashes.front() > m_ports.timing.crashWindowMs)
             m_live->crashes.pop_front();
         if (m_live->crashes.size() >= 2)
-            failed(version, reason);
+            failed(version, QStringLiteral("crashed"));
     });
 }
 
@@ -357,7 +398,11 @@ void AiFeatures::failed(const QString &version, const QString &reason)
     if (!current || current->version != version || updater->previous().isEmpty())
         return;
     updater->reject(version);
+    const auto now = updater->current();
+    const QString to = now ? now->version : QString();
     replaceHost();
+    const bool reported = m_ports.reportRollback && m_ports.reportRollback(version, reason);
+    updater->setRollback(backends::ai::SidecarRollback{.version = version, .to = to, .reason = reason, .reportSent = reported});
     emit rolledBack(version, reason);
     emit componentsChanged();
 }
@@ -380,6 +425,11 @@ application::ai::ConfigStore *AiFeatures::configs() const
 application::ai::Providers *AiFeatures::providers() const
 {
     return m_live ? m_live->providers.get() : nullptr;
+}
+
+application::ai::SearchKeys *AiFeatures::searchKeys() const
+{
+    return m_live ? m_live->searchKeys.get() : nullptr;
 }
 
 backends::ai::AiRequests *AiFeatures::requests() const
@@ -406,6 +456,26 @@ QString AiFeatures::sidecarVersion() const
         return QString::fromStdString(m_live->host->info().version);
     const auto install = runnable();
     return install ? install->version : QString();
+}
+
+QJsonObject AiFeatures::versionProperties() const
+{
+    const auto install = runnable();
+    if (!m_live || !install)
+        return {};
+    QJsonObject properties{{QStringLiteral("ai_component_version"), sidecarVersion()}};
+    for (const auto &[package, property] : {std::pair{"bun", "ai_runtime_version"},
+                                            std::pair{"@anthropic-ai/sdk", "ai_anthropic_version"},
+                                            std::pair{"openai", "ai_openai_version"},
+                                            std::pair{"@google/genai", "ai_google_version"}})
+        if (const auto it = install->packages.find(QLatin1String(package)); it != install->packages.end())
+            properties.insert(QLatin1String(property), it->second);
+    return properties;
+}
+
+std::size_t AiFeatures::agentSessions(const std::string &agent) const
+{
+    return m_live && m_live->agents ? m_live->agents->running(agent) : 0;
 }
 
 backends::ai::AiSignIn *AiFeatures::signIn() const

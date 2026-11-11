@@ -7,6 +7,7 @@ extern "C" {
 #include <lua.h>
 }
 
+#include <functional>
 #include <optional>
 #include <string>
 #include <vector>
@@ -22,9 +23,8 @@ std::optional<application::MacroDialogueLine> dialogueOf(lua_State *L);
 // A Style's fields as aegisub.text_extents sends them: read into a style table and written back.
 std::vector<std::string> canonicalStyle(const std::vector<std::string> &fields);
 
-// aegisub.text_extents for canonical fields; std::nullopt when the host has no answer.
-std::optional<application::TextExtents> textExtents(lua_State *L, const std::vector<std::string> &style,
-                                                    const std::string &text);
+// Runs `call`; a host that could not answer raises aegisub.<name>'s error, as the call from Lua would.
+void raiseOnHostFailure(lua_State *L, const char *name, const std::function<void()> &call);
 
 // aegisub.parse_karaoke_data on the line table at `line`: its syllables from index 0, read from the text, or from
 // the translation when the text is empty.

@@ -81,6 +81,7 @@ protected:
     {
         auto host = std::make_unique<LuaScriptHost>(QStringLiteral(HIKARI_LUA_HELPER), script, include);
         host->setServiceHandler(std::move(services));
+        host->setCompileCache(compileCache);
         QObject::connect(host.get(), &LuaScriptHost::logged, [this](const QString &t) { run.log << t; });
         QObject::connect(host.get(), &LuaScriptHost::progressChanged, [this](double p) { run.progress << p; });
         QObject::connect(host.get(), &LuaScriptHost::dialogWithdrawn, [this] { ++run.withdrawn; });
@@ -112,6 +113,7 @@ protected:
     }
 
     RunRecord run;
+    QString compileCache;
 };
 
 TEST_F(LuaHelper, LoadsTheUnchangedBundledEdgeblurScript)
@@ -859,6 +861,26 @@ struct FakeServices {
     bool audio = true;
     std::int64_t peaksStatus = 0;
     std::vector<std::int64_t> resolution{1920, 1080};
+    std::vector<std::int64_t> frameStarts = everyFortyMs();
+    std::vector<std::byte> pixels{std::byte{0},    std::byte{0},    std::byte{0},    std::byte{0},
+                                  std::byte{0x10}, std::byte{0x20}, std::byte{0x30}, std::byte{0x40}};
+
+    static std::vector<std::int64_t> everyFortyMs()
+    {
+        std::vector<std::int64_t> starts;
+        for (std::int64_t i = 0; i < 100; ++i)
+            starts.push_back(i * 40);
+        return starts;
+    }
+    hikari::application::AegisubFrameTimes frameTimes() const
+    {
+        return *hikari::application::AegisubFrameTimes::fromFrameStarts(frameStarts);
+    }
+    int count(hikari::application::HostService service) const
+    {
+        using hikari::application::HostServiceRequest;
+        return static_cast<int>(std::ranges::count(requests, service, &HostServiceRequest::service));
+    }
 
     LuaScriptHost::ServiceHandler handler()
     {
@@ -870,8 +892,12 @@ struct FakeServices {
                 return reply(HostServiceReply::unavailable());
             HostServiceReply out;
             switch (r.service) {
-            case HostService::FrameFromMs: out.integers = {r.integers.at(0) / 40}; break;
-            case HostService::MsFromFrame: out.integers = {r.integers.at(0) * 40}; break;
+            case HostService::FrameTimes: {
+                const auto timecodes = frameTimes().timecodes();
+                out.integers = {timecodes.numerator, timecodes.last};
+                out.integers.insert(out.integers.end(), timecodes.startsMs.begin(), timecodes.startsMs.end());
+                break;
+            }
             case HostService::VideoSize: out.integers = {640, 360, 16, 9}; break;
             case HostService::Keyframes: out.integers = {0, 24, 48}; break;
             case HostService::AudioSelection: out.integers = {1000, 2000}; break;
@@ -884,10 +910,23 @@ struct FakeServices {
             case HostService::DecodePath: out.strings = {"/home/u/" + r.strings.at(0).substr(6)}; break;
             case HostService::Frame:
                 out.integers = {2, 1};
-                out.pixels = {std::byte{0}, std::byte{0}, std::byte{0}, std::byte{0},
-                              std::byte{0x10}, std::byte{0x20}, std::byte{0x30}, std::byte{0x40}};
+                out.pixels = pixels;
                 break;
+            case HostService::FrameSize: out.integers = {2, 1}; break;
+            case HostService::FramePixel: {
+                const auto at = static_cast<std::size_t>(r.integers.at(2)) * 4;
+                out.integers = {std::to_integer<std::int64_t>(pixels.at(at)),
+                                std::to_integer<std::int64_t>(pixels.at(at + 1)),
+                                std::to_integer<std::int64_t>(pixels.at(at + 2))};
+                break;
+            }
             case HostService::TextExtents: out.numbers = {10.5, 20, 4, 1}; break;
+            case HostService::TextExtentsMany:
+                for (std::size_t i = 0; i < r.strings.size(); ++i) {
+                    out.integers.push_back(1);
+                    out.numbers.insert(out.numbers.end(), {10.5 + static_cast<double>(i), 20, 4, 1});
+                }
+                break;
             case HostService::ClipboardGet: out.strings = {clipboard}; break;
             case HostService::ClipboardSet:
                 clipboard = r.strings.at(0);
@@ -935,7 +974,7 @@ TEST_F(LuaHelper, MediaServicesAnswerInTheLegacyShapes)
     ASSERT_TRUE(runMacro(*host, macro(*host, "Media"), {}, run));
     ASSERT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
     ASSERT_EQ(run.log.size(), 7);
-    EXPECT_EQ(run.log[0], "25,1000");
+    EXPECT_EQ(run.log[0], "25,980");
     EXPECT_EQ(run.log[1], "640,360,2,true");
     EXPECT_EQ(run.log[2], "3,24");
     EXPECT_EQ(run.log[3], "1000,2000");
@@ -948,8 +987,52 @@ TEST_F(LuaHelper, MediaServicesAnswerInTheLegacyShapes)
         EXPECT_NE(r.run, 0u);
     }
     using hikari::application::HostService;
-    EXPECT_EQ(services.requests.back().service, HostService::Frame);
-    EXPECT_EQ(services.requests.back().integers, (std::vector<std::int64_t>{3, 1}));
+    EXPECT_EQ(services.requests.back().service, HostService::FramePixel);
+    EXPECT_EQ(services.requests.back().integers, (std::vector<std::int64_t>{3, 1, 1, 0}));
+    EXPECT_EQ(services.count(HostService::FrameSize), 1);
+    EXPECT_EQ(services.count(HostService::Frame), 0) << "pixel reads never copy the frame";
+}
+
+TEST_F(LuaHelper, FrameTimesCrossOnceARunAndAnswerFromTheSameTable)
+{
+    using hikari::application::HostService;
+    FakeServices services;
+    services.frameStarts = {0, 33, 67, 100, 142, 183, 225, 300, 301, 400};
+    auto host = load(fixture("services.lua"), services.handler());
+    ASSERT_EQ(host->state(), LuaScriptHost::State::Ready);
+    ASSERT_TRUE(runMacro(*host, macro(*host, "Frame times"), {}, run));
+    ASSERT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
+    const auto times = services.frameTimes();
+    QStringList expected;
+    for (std::int64_t ms = -100; ms <= 700; ms += 7)
+        expected << QString::number(times.frameFromMs(ms));
+    for (std::int64_t frame = -3; frame <= 20; ++frame)
+        expected << QString::number(times.msFromFrame(frame));
+    EXPECT_EQ(run.log, QStringList{expected.join(QLatin1Char(','))});
+    EXPECT_EQ(services.count(HostService::FrameTimes), 1);
+    EXPECT_EQ(services.count(HostService::FrameFromMs) + services.count(HostService::MsFromFrame), 0);
+
+    ASSERT_TRUE(runMacro(*host, macro(*host, "Frame times"), {}, run));
+    EXPECT_EQ(services.count(HostService::FrameTimes), 2) << "each run reads the video's times afresh";
+    services.available = false;
+    ASSERT_TRUE(runMacro(*host, macro(*host, "Frame times"), {}, run));
+    ASSERT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
+    EXPECT_EQ(run.log.value(0).count(QStringLiteral("nil")), expected.size());
+    EXPECT_EQ(services.count(HostService::FrameTimes), 3) << "no video is asked once too";
+}
+
+TEST_F(LuaHelper, PixelReadsCrossOneAtATimeUntilTheFrameIsCopied)
+{
+    using hikari::application::HostService;
+    FakeServices services;
+    auto host = load(fixture("services.lua"), services.handler());
+    ASSERT_EQ(host->state(), LuaScriptHost::State::Ready);
+    ASSERT_TRUE(runMacro(*host, macro(*host, "Pixel loop"), {}, run));
+    ASSERT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
+    EXPECT_EQ(run.log, (QStringList{"100,48,32,16,&H102030&,userdata,8"}));
+    EXPECT_EQ(services.count(HostService::FrameSize), 1);
+    EXPECT_EQ(services.count(HostService::FramePixel), 64);
+    EXPECT_EQ(services.count(HostService::Frame), 1) << "copied once, then read in the helper";
 }
 
 TEST_F(LuaHelper, VersionAndFrameDataMatchTheFork)
@@ -1129,6 +1212,29 @@ TEST_F(LuaHelper, TextExtentsFollowTheLegacyChecks)
     EXPECT_EQ(services.requests[0].strings, std::vector<std::string>{"Hello"});
     EXPECT_EQ(services.requests[0].style.at(0), "Default");
     EXPECT_EQ(services.requests[0].style.at(2), "20");
+}
+
+TEST_F(LuaHelper, TextIsMeasuredOnceARunAndBatchesTogether)
+{
+    using hikari::application::HostService;
+    FakeServices services;
+    auto host = load(fixture("services.lua"), services.handler());
+    auto session = macroSession();
+    const auto snapshot = hikari::application::snapshotForMacro(session);
+    ASSERT_TRUE(runMacro(*host, macro(*host, "Measure many"), *snapshot, run));
+    ASSERT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
+    EXPECT_EQ(run.log, (QStringList{"10.5,10.5,10.5", "24,10.5,11.5,20,0,12.5,10.5", "0",
+                                    "First argument of text_extents must be a table",
+                                    "Second argument of text_extents must be a string but is of type nil"}));
+    ASSERT_EQ(services.requests.size(), 3u);
+    EXPECT_EQ(services.requests[0].service, HostService::TextExtents);
+    EXPECT_EQ(services.requests[1].service, HostService::TextExtents);
+    EXPECT_EQ(services.requests[1].strings, std::vector<std::string>{"World"});
+    EXPECT_EQ(services.requests[2].service, HostService::TextExtentsMany);
+    EXPECT_EQ(services.requests[2].strings, (std::vector<std::string>{"a", "b", "c"}));
+
+    ASSERT_TRUE(runMacro(*host, macro(*host, "Measure many"), *snapshot, run));
+    EXPECT_EQ(services.requests.size(), 6u) << "a new run measures afresh";
 }
 
 TEST_F(LuaHelper, ClipboardRoundTripsThroughTheFfiTable)
@@ -1404,6 +1510,10 @@ TEST_F(LuaHelper, NativePreloadsMatchTheLegacyModules)
                                            "false,true"}));
     EXPECT_EQ(logOf("RegexTraced"), (QStringList{"0"}));
     EXPECT_EQ(logOf("Unicode"), (QStringList{QStringLiteral("STRASSE,àéî,strasse"), "3,26085"}));
+    EXPECT_EQ(logOf("Graphemes"), (QStringList{QStringLiteral("กิ|น|น้ำ,e\u0301|a,"),
+                                               QStringLiteral("👨‍👩‍👧|!,🇹🇭|🇯🇵|🇹"), "1 2 1,1 1,3 2", "1"}));
+    EXPECT_EQ(logOf("GraphemesFallback"),
+              (QStringList{QStringLiteral("true,กิ|น|น้ำ,e\u0301|a"), QStringLiteral("👨‍👩‍👧|!,3 2")}));
     EXPECT_EQ(logOf("Lpeg"), (QStringList{"4,0.10"}));
     EXPECT_EQ(logOf("Luabins"), (QStringList{"true,1,two,3"}));
     EXPECT_EQ(logOf("Lfs"), (QStringList{"true", "directory,nil", "true", "file,0,nil", "a.txt", "nil,nil",
@@ -1424,6 +1534,86 @@ TEST_F(LuaHelper, MoonScriptMacrosLoadAndMapErrorLines)
     EXPECT_TRUE(run.message.contains("moon failure")) << run.message.toStdString();
     EXPECT_TRUE(run.message.contains(QStringLiteral("File \"%1\", line 7").arg(fixture("moon-macro.moon"))))
         << run.message.toStdString();
+}
+
+QByteArray readAll(const QString &path)
+{
+    QFile f(path);
+    return f.open(QIODevice::ReadOnly) ? f.readAll() : QByteArray();
+}
+
+void writeAll(const QString &path, const QByteArray &bytes)
+{
+    QFile f(path);
+    ASSERT_TRUE(f.open(QIODevice::WriteOnly | QIODevice::Truncate));
+    f.write(bytes);
+}
+
+QStringList cacheEntries(const QString &dir)
+{
+    return QDir(dir).entryList(QDir::Files);
+}
+
+TEST_F(LuaHelper, MoonScriptLoadsFromTheCompileCacheAndKeepsItsErrorLines)
+{
+    QTemporaryDir cache;
+    ASSERT_TRUE(cache.isValid());
+    compileCache = cache.path();
+    {
+        auto host = load(fixture("moon-macro.moon"));
+        ASSERT_EQ(host->state(), LuaScriptHost::State::Ready) << host->lastError().toStdString();
+    }
+    const QStringList entries = cacheEntries(cache.path());
+    ASSERT_EQ(entries.size(), 1) << entries.join(' ').toStdString();
+    const QString entry = cache.filePath(entries[0]);
+    QByteArray bytes = readAll(entry);
+    const qsizetype code = bytes.lastIndexOf("moon ran ");
+    ASSERT_GT(code, bytes.indexOf("moon ran ")) << "the source, then the compiled Lua";
+    bytes.replace(code, 9, "from hit ");
+    writeAll(entry, bytes);
+
+    auto host = load(fixture("moon-macro.moon"));
+    ASSERT_EQ(host->state(), LuaScriptHost::State::Ready) << host->lastError().toStdString();
+    ASSERT_TRUE(runToEnd(*host, "Moon"));
+    EXPECT_EQ(run.log, QStringList{"from hit 2,4,6"}) << "the cached Lua ran, not a new compile";
+    ASSERT_TRUE(runToEnd(*host, "Moon error"));
+    EXPECT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Failed);
+    EXPECT_TRUE(run.message.contains(QStringLiteral("File \"%1\", line 7").arg(fixture("moon-macro.moon"))))
+        << run.message.toStdString();
+}
+
+TEST_F(LuaHelper, AChangedSourceOrCompilerMissesTheCompileCache)
+{
+    QTemporaryDir cache, work, compiler;
+    ASSERT_TRUE(cache.isValid() && work.isValid() && compiler.isValid());
+    compileCache = cache.path();
+    const QString script = work.filePath(QStringLiteral("moon-macro.moon"));
+    const QByteArray source = readAll(fixture("moon-macro.moon"));
+    writeAll(script, source);
+    const auto ranAfterTampering = [&](const QString &include) {
+        for (const QString &name : cacheEntries(cache.path())) {
+            QByteArray bytes = readAll(cache.filePath(name));
+            const qsizetype code = bytes.lastIndexOf("moon ran ");
+            if (code > bytes.indexOf("moon ran "))
+                writeAll(cache.filePath(name), bytes.replace(code, 9, "from hit "));
+        }
+        auto host = load(script, {}, include);
+        EXPECT_EQ(host->state(), LuaScriptHost::State::Ready) << host->lastError().toStdString();
+        EXPECT_TRUE(runToEnd(*host, "Moon"));
+        return run.log;
+    };
+    const QString include = QStringLiteral(HIKARI_LUA_INCLUDE);
+    EXPECT_EQ(ranAfterTampering(include), QStringList{"moon ran 2,4,6"}) << "nothing cached yet";
+    EXPECT_EQ(ranAfterTampering(include), QStringList{"from hit 2,4,6"});
+
+    writeAll(script, source + "\n-- changed\n");
+    EXPECT_EQ(ranAfterTampering(include), QStringList{"moon ran 2,4,6"}) << "a changed source";
+    EXPECT_EQ(cacheEntries(cache.path()).size(), 1) << "the file's entry was replaced";
+
+    writeAll(compiler.filePath(QStringLiteral("moonscript.lua")),
+             readAll(include + QStringLiteral("/moonscript.lua")) + "\n-- another compiler\n");
+    EXPECT_EQ(ranAfterTampering(compiler.path()), QStringList{"moon ran 2,4,6"}) << "a new compiler";
+    EXPECT_EQ(cacheEntries(cache.path()).size(), 2);
 }
 
 // DependencyControl's first require runs an update check against live third-party feeds.
@@ -1486,7 +1676,7 @@ TEST_F(LuaHelper, BundledScriptsLoadUnchanged)
     for (const char *firstParty : {"macro-1-edgeblur.lua", "macro-2-mkfullwitdh.lua", "strip-tags.lua",
                                    "cleantags-autoload.lua", "karaoke-auto-leadin.lua",
                                    "select-overlaps.moon", "BezierToText.lua", "gradient-factory.lua",
-                                   "skew gradient.lua", "a-mo.Aegisub-Motion.moon",
+                                   "skew gradient.lua", "fsp-to-pos.lua", "a-mo.Aegisub-Motion.moon",
                                    "l0.DependencyControl.Toolbox.moon"}) {
         const auto it = results.find(QString::fromLatin1(firstParty));
         ASSERT_NE(it, results.end()) << firstParty;
@@ -1508,20 +1698,30 @@ TEST_F(LuaHelper, DependencyControlLoadsWhileTheScriptLoads)
 #ifdef _WIN32
     paths.windows = true;
 #endif
-    int decodedWhileLoading = 0;
-    auto host = load(fixture("depctrl-load.lua"),
-                     [&](const hikari::application::HostServiceRequest &r, LuaScriptHost::ServiceReply reply) {
-                         if (r.service != hikari::application::HostService::DecodePath)
-                             return reply(hikari::application::HostServiceReply::unavailable());
-                         ++decodedWhileLoading;
-                         hikari::application::HostServiceReply out;
-                         out.strings = {hikari::application::decodeAutomationPath(r.strings.at(0), paths)};
-                         reply(out);
-                     });
-    ASSERT_EQ(host->state(), LuaScriptHost::State::Ready) << host->lastError().toStdString();
-    EXPECT_GT(decodedWhileLoading, 0);
-    ASSERT_TRUE(runToEnd(*host, "Show"));
-    EXPECT_EQ(run.log, QStringList{"true,table,"});
+    QTemporaryDir cache;
+    ASSERT_TRUE(cache.isValid());
+    compileCache = cache.path();
+    std::vector<double> loadMs;
+    for (const char *pass : {"compiling", "from the compile cache"}) {
+        int decodedWhileLoading = 0;
+        auto host = load(fixture("depctrl-load.lua"),
+                         [&](const hikari::application::HostServiceRequest &r, LuaScriptHost::ServiceReply reply) {
+                             if (r.service != hikari::application::HostService::DecodePath)
+                                 return reply(hikari::application::HostServiceReply::unavailable());
+                             ++decodedWhileLoading;
+                             hikari::application::HostServiceReply out;
+                             out.strings = {hikari::application::decodeAutomationPath(r.strings.at(0), paths)};
+                             reply(out);
+                         });
+        ASSERT_EQ(host->state(), LuaScriptHost::State::Ready) << pass << ": " << host->lastError().toStdString();
+        EXPECT_GT(decodedWhileLoading, 0) << pass;
+        ASSERT_TRUE(runToEnd(*host, "Show")) << pass;
+        EXPECT_EQ(run.log, QStringList{"true,table,"}) << pass;
+        loadMs.push_back(host->loadMs());
+        std::fprintf(stderr, "DependencyControl load %s: %.0f ms\n", pass, host->loadMs());
+    }
+    EXPECT_FALSE(cacheEntries(cache.path()).isEmpty());
+    EXPECT_LT(loadMs[1], loadMs[0] / 2);
 }
 
 TEST_F(LuaHelper, DependencyControlConfigSuitsOldScriptsAndOtherWriters)

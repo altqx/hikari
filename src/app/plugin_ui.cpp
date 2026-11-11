@@ -1,13 +1,12 @@
 #include "hikari/app/plugin_ui.h"
 
 #include "hikari/plugins/surface.h"
+#include "plugin_variant.h"
 #include "workspace_layout.h"
 
 #include <QCollator>
 #include <QDir>
 #include <QStandardPaths>
-#include <QJsonArray>
-#include <QJsonDocument>
 
 #include <algorithm>
 
@@ -20,19 +19,6 @@ using api::Json;
 QString qs(std::string_view s)
 {
     return QString::fromUtf8(s.data(), qsizetype(s.size()));
-}
-
-QVariant toVariant(const Json &json)
-{
-    const QByteArray text = QByteArray::fromStdString(Json::array({json}).dump());
-    return QJsonDocument::fromJson(text).array().at(0).toVariant();
-}
-
-Json fromVariant(const QVariant &value)
-{
-    const QByteArray text = QJsonDocument(QJsonArray{QJsonValue::fromVariant(value)}).toJson(QJsonDocument::Compact);
-    auto parsed = Json::parse(text.toStdString());
-    return parsed && parsed->isArray() && !parsed->asArray().empty() ? parsed->asArray().front() : Json();
 }
 
 std::string result(Json value = Json::object())
@@ -186,7 +172,16 @@ void PluginFileRequest::reject()
 
 PluginUi::PluginUi(Deliver deliver, QObject *parent) : QObject(parent), m_deliver(std::move(deliver)) {}
 
-PluginUi::~PluginUi() = default;
+PluginUi::~PluginUi()
+{
+    for (auto &[dock, qml] : m_qml)
+        if (QQuickItem *item = qml.item) {
+            disconnect(item, nullptr, this, nullptr);
+            delete item;
+        }
+    m_qml.clear();
+    writeLoadedPanels();
+}
 
 void PluginUi::setPlugins(std::vector<Plugin> plugins)
 {
@@ -199,16 +194,28 @@ void PluginUi::setPlugins(std::vector<Plugin> plugins)
         }
         next.emplace(known.plugin.id, std::move(known));
     }
-    for (const auto &[id, old] : m_plugins)
-        if (const auto now = next.find(id); now == next.end() || !now->second.plugin.enabled) {
+    for (const auto &[id, old] : m_plugins) {
+        const auto now = next.find(id);
+        if (now == next.end() || !now->second.plugin.enabled) {
             closeDialogsOf(id);
             dropFileRequestsOf(id);
         }
+        if (now == next.end() || now->second.plugin.version != old.plugin.version ||
+            now->second.plugin.unrestricted != old.plugin.unrestricted)
+            for (auto &[dock, qml] : m_qml)
+                if (dock.startsWith(QStringLiteral("plugin:") + qs(id) + u'/')) {
+                    unloadQml(dock);
+                    qml.error.clear();
+                }
+    }
     m_plugins = std::move(next);
     for (auto &[dock, state] : m_panels)
         refresh(*state);
     relist();
     emit pluginStatesChanged();
+    noticeHeld();
+    for (const auto &[id, known] : m_plugins)
+        loadShownQmlOf(id);
 }
 
 QVariantMap PluginUi::pluginState(const QString &plugin) const
@@ -235,6 +242,7 @@ void PluginUi::running(const std::string &plugin)
             if (m_shown.contains(dock))
                 deliver(plugin, "panel:" + state->panelId().toStdString(), Json::object({{"kind", "show"}}), {});
         }
+    loadShownQmlOf(plugin);
 }
 
 void PluginUi::stopped(const std::string &plugin, const QString &status, const QString &reason)
@@ -285,6 +293,12 @@ void PluginUi::refresh(PluginPanelState &state)
         m_values.erase(state.dock());
         state.setTree({}, {});
     }
+    if (state.status() != QStringLiteral("running"))
+        unloadQml(state.dock());
+    const bool qml = declared && !declared->qml.empty();
+    const auto entry = m_qml.find(state.dock());
+    state.setQml(qml, entry != m_qml.end() ? entry->second.error : QString(),
+                 qml && m_held.contains(state.pluginId().toStdString()), entry != m_qml.end() ? entry->second.item.data() : nullptr);
 }
 
 void PluginUi::relist()
@@ -356,6 +370,10 @@ void PluginUi::serve(const std::string &plugin, const std::string &operation, co
         reply(result());
         return;
     }
+    if (operation == "panels.post") {
+        post(plugin, params, reply);
+        return;
+    }
     if (operation == "dialogs.show" || operation == "dialogs.ask") {
         present(plugin, params, operation == "dialogs.ask" ? std::optional<Reply>(reply) : std::nullopt, reply);
         return;
@@ -414,6 +432,7 @@ void PluginUi::setShown(const QString &dock, bool shown)
     PluginPanelState *state = panel(dock);
     if (parts && state && state->status() == QStringLiteral("running"))
         deliver(parts->plugin, "panel:" + parts->panel, Json::object({{"kind", "show"}}), {});
+    loadQml(dock);
 }
 
 void PluginUi::send(const QString &dock, const QVariantMap &event)

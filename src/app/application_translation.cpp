@@ -19,8 +19,9 @@ void Application::setUpTranslationControls()
 {
     const auto apply = [this] {
         for (auto *views : allViews()) {
-            views->editor->setMoveTags(m_settings->boolean(kMoveTags));
-            views->shell->setRunMarks(m_settings->boolean(kMoveTags));
+            const bool moveTags = views->settings->settings().boolean(kMoveTags);
+            views->editor->setMoveTags(moveTags);
+            views->shell->setRunMarks(moveTags);
         }
         m_files->setSaveOptions(core::AssSaveOptions{.hideOriginalOnVideo = m_settings->boolean(kHideOriginal)});
     };
