@@ -60,6 +60,7 @@ Number, Text, Colour, Alpha, Time, Point, Tags, Drawing, Bool and Units.
 | time | `retime` (the templater's ten modes), `stagger` |
 | tags | `tag` (one override tag), `move`, `fade`, `transform` |
 | colours | `gradient` |
+| audio | `peaks` (the audio's level over a unit's span) |
 | drawings | `shape` |
 | text | `join` (one piece per unit, e.g. `{\kf$kdur}` and the syllable) |
 | output | `emit` (writes one Line per element) |
@@ -83,6 +84,12 @@ Number, Text, Colour, Alpha, Time, Point, Tags, Drawing, Bool and Units.
 - `particles` spreads `count` particles at random over a `rectangle` or an `ellipse` `width` × `height` centred on the unit. Each gives its `offset`, its `position` and `random`, a number from 0 to 1 of its own. The particles draw from the graph's seed as Random does, with the node's `seed` and the particle's place, so the same graph, seed and Line give the same particles.
 
 Offsets and angles are rounded to thousandths, so Linux and Windows write the same numbers.
+
+**Audio peaks.** `audio.peaks` gives the level of the Document's audio over the unit's span, or from `start` to `end` (absolute ms). It reads the audio as the Hikari API's `audio.peaks` does, through `application::audioPeaks` with one bucket: from the peak table once the audio has loaded, sample by sample before. `level` is the loudest sample from 0 to 1; `low` and `high` are the lowest and highest from -1 to 1.
+
+- With no audio open, or while it opens, it gives 0 and the run has a problem at the node ("has no audio to read, so it gives 0").
+- As with any run that has a problem, Apply refuses it and the preview keeps the last run that worked.
+- The cache keys a graph with this node on the audio too, so other audio runs it again.
 
 **Highlights and inline-fx** (NE5c, [#908](https://github.com/altqx/hikari/issues/908)). Both follow karaskel's parse of the karaoke Line, as the templater does.
 
@@ -214,7 +221,7 @@ NE2 ([#424](https://github.com/altqx/hikari/issues/424)) edits a Document's grap
 - **Preview.** While the mode is shown, the graph runs on the current source Line on every edit, with NE1's cache. The video draws that Line's output in place of its generated Lines, with the badge "Preview · line N · not applied"; Source lines has the eye and Loop the line. A graph with problems keeps the last run that worked, dimmed.
 - **Lua trust** is the Template editor's choice for the open Document: trusting the file's Lua in either one covers both.
 - **Presets.** "From a preset" lists all ten KE3 presets ([karaoke presets](karaoke-presets.md)) as graphs, under their Template-editor names. Each graph writes the same Lines as its template, byte for byte (`hikari_application_node_effects_tests`), and uses only catalogue nodes, without Lua. Colour sweep, Glow and Echo have two emits, one per template Layer.
-- **Examples.** After the presets, "From a preset" lists one example per node that no template can express: "Gradient strips" (`clip_gradient`), "Ring of copies" (`array` on a circle), "Particle burst" (`particles`), "Highlight flashes" (`highlights`) and "Paint and cloud" (`inline_fx`). Each validates and gives the same Lines on every run.
+- **Examples.** After the presets, "From a preset" lists one example per newer node: "Gradient strips" (`clip_gradient`), "Ring of copies" (`array` on a circle), "Particle burst" (`particles`), "Audio pulse" (`audio.peaks`, which needs audio open), "Highlight flashes" (`highlights`) and "Paint and cloud" (`inline_fx`). Each validates and gives the same Lines on every run. The last two also export as template lines.
 
 ## Export as template lines
 
@@ -223,7 +230,7 @@ NE4 ([#426](https://github.com/altqx/hikari/issues/426)). The mode bar menu's "E
 - **One template per Emit,** in the engine's order. Its class comes from the Emit's units: `syl`, `syl char`, `furi` or `pre-line`, with `noblank` when blank units are left out and `loop N` for a Repeat with a constant count (`j` and `maxj` read its place and count). Highlights becomes `multi`, when it leaves out blank highlights exactly when its For each leaves out blank units, and comes before any Repeat. Inline-fx becomes `fx name`. An empty name becomes a `code syl` (or `code furi`) Line that sets an `fxgroup` for units without an inline-fx, and the template takes `fxgroup`. An Emit on Line units that takes its text from a Join of the Line's syllables becomes a `pre-line <id>` and `line <id>` pair; the id is the graph name and the Emit's id. The Emit's constant Layer is the template's Layer; "All styles" adds `all`.
 - **Times** come from one Retime node as `!retime(mode, start, end)!`, or are the Line's when unwired.
 - **Values** become constants, the templater's `$variables` (Unit info), `orgline.styleref` fields (Style values) or Lua expressions (`math.*`, a table for Choose).
-- **What blocks it.** A node with no template form refuses the export, and a popup lists each one with the reason; choosing one selects it. Random numbers, Lua nodes, Frames, Clip gradient, Array, Particles, Gradient, Compare, Style colours, a unit's place from For each, a condition on an Emit, a Layer or Repeat count that is not constant, times from anything but one Retime node, a Line timed by a syllable, and text with `!` or `$` all block it, as does every node the compiler does not know yet.
+- **What blocks it.** A node with no template form refuses the export, and a popup lists each one with the reason; choosing one selects it. Random numbers, Lua nodes, Frames, Clip gradient, Array, Particles, Audio peaks, Gradient, Compare, Style colours, a unit's place from For each, a condition on an Emit, a Layer or Repeat count that is not constant, times from anything but one Retime node, a Line timed by a syllable, and text with `!` or `$` all block it, as does every node the compiler does not know yet.
 - **Tests.** `KaraokePresets.ExportedPresetGraphsGiveTheGoldensThroughTheStockTemplater` exports the ten preset graphs and runs them through the unchanged 3.2.2 `kara-templater.lua` and the built-in templater; the generated Lines equal the goldens.
 
 ## On the Hikari API

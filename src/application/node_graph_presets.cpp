@@ -479,6 +479,27 @@ constexpr std::string_view kParticleBurst = R"({"format": 1, "nodes": [
     {"from": "time.start", "to": "emit.start"}, {"from": "time.end", "to": "emit.end"},
     {"from": "fade.tags", "to": "emit.tags"}]})";
 
+constexpr std::string_view kAudioPulse = R"({"format": 1, "nodes": [
+    {"id": "syl", "type": "units.for_each"},
+    {"id": "info", "type": "units.info"},
+    {"id": "peak", "type": "audio.peaks"},
+    {"id": "grow", "type": "math.calculate", "fields": {"op": "multiply", "b": 60}},
+    {"id": "size", "type": "math.calculate", "fields": {"op": "add", "b": 100}},
+    {"id": "an", "type": "tags.tag", "fields": {"tag": "an", "value": 5}},
+    {"id": "centre", "type": "values.point"},
+    {"id": "pos", "type": "tags.tag", "fields": {"tag": "pos"}},
+    {"id": "fscx", "type": "tags.tag", "fields": {"tag": "fscx"}},
+    {"id": "fscy", "type": "tags.tag", "fields": {"tag": "fscy"}},
+    {"id": "time", "type": "time.retime", "fields": {"mode": "syl", "end_offset": 200}},
+    {"id": "emit", "type": "output.emit"}],
+  "wires": [
+    {"from": "info.center", "to": "centre.x"}, {"from": "info.middle", "to": "centre.y"},
+    {"from": "an.tags", "to": "pos.before"}, {"from": "centre.point", "to": "pos.point"},
+    {"from": "peak.level", "to": "grow.a"}, {"from": "grow.result", "to": "size.a"},
+    {"from": "pos.tags", "to": "fscx.before"}, {"from": "size.result", "to": "fscx.value"},
+    {"from": "fscx.tags", "to": "fscy.before"}, {"from": "size.result", "to": "fscy.value"},
+    {"from": "syl.units", "to": "emit.units"}, {"from": "time.start", "to": "emit.start"},
+    {"from": "time.end", "to": "emit.end"}, {"from": "fscy.tags", "to": "emit.tags"}]})";
 constexpr std::string_view kHighlightFlashes = R"({"format": 1, "nodes": [
     {"id": "syl", "type": "units.for_each"},
     {"id": "hl", "type": "units.highlights"},
@@ -554,6 +575,7 @@ constexpr NodeGraphPreset kPresets[] = {
     {{}, kGradientStrips, "gradient-strips"},
     {{}, kRingOfCopies, "ring-of-copies"},
     {{}, kParticleBurst, "particle-burst"},
+    {{}, kAudioPulse, "audio-pulse"},
     {{}, kHighlightFlashes, "highlight-flashes"},
     {{}, kPaintAndCloud, "paint-and-cloud"},
 };

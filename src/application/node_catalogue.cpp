@@ -277,6 +277,12 @@ std::vector<NodeSpec> makeCatalogue()
                  {field("colours", FieldKind::List, Json::array({Json("#FFFFFF"), Json("#000000")}),
                         "The stops, as #RRGGBB, at least one."),
                   field("progress", FieldKind::Number, Json(0), "How far along.")}});
+    c.push_back({"audio.peaks", "audio",
+                 "The audio's level over the unit's span, or from start to end (absolute ms), read as the Hikari API's audio.peaks reads it. level is the loudest sample from 0 to 1; low and high are the lowest and highest from -1 to 1. Without audio it gives 0 and the graph shows a problem.",
+                 {port("start", Time), port("end", Time)},
+                 {port("level", Number), port("low", Number), port("high", Number)},
+                 {field("start", FieldKind::Time, Json(), "The span's start; null: the unit's start."),
+                  field("end", FieldKind::Time, Json(), "The span's end; null: the unit's end.")}});
     c.push_back({"drawings.shape", "drawings", "A vector drawing.", {}, {port("drawing", Drawing)},
                  {field("shape", FieldKind::Text, Json("m 0 0 l 10 0 10 10 0 10"), "The drawing commands."),
                   atLeast(field("scale", FieldKind::Integer, Json(1), "The \\p scale."), 1)}});
