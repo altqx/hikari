@@ -114,7 +114,18 @@ std::optional<std::string> listProblem(const GraphNode &node)
     return std::nullopt;
 }
 
-constexpr std::string_view kRequiredUnits[] = {"units.repeat", "units.frames", "text.join", "output.emit"};
+constexpr std::string_view kLoopNodes[] = {"units.repeat", "units.frames", "units.clip_gradient", "units.array",
+                                           "units.particles"};
+
+bool isLoopNode(std::string_view type)
+{
+    return std::ranges::find(kLoopNodes, type) != std::end(kLoopNodes);
+}
+
+bool needsUnits(std::string_view type)
+{
+    return isLoopNode(type) || type == "text.join" || type == "output.emit";
+}
 constexpr std::string_view kLuaTypes[] = {"Number", "Text", "Colour", "Alpha", "Time", "Point", "Bool", "Tags"};
 
 struct Level {
@@ -233,18 +244,19 @@ struct Level {
                 add(to, w.to.port,
                     "takes " + std::string(portTypeName(in->type)) + ", not " + std::string(portTypeName(out->type)));
         }
-        for (const GraphNode &node : graph.nodes)
-            if (std::ranges::find(kRequiredUnits, node.type) != std::end(kRequiredUnits) && ports.contains(node.id) &&
-                !fed.contains({node.id, "units"}))
+        for (const GraphNode &node : graph.nodes) {
+            if (needsUnits(node.type) && ports.contains(node.id) && !fed.contains({node.id, "units"}))
                 add(prefix + node.id, "units", "needs units wired in");
+            if (node.type == "units.array" && ports.contains(node.id) && nodeField(node, "shape") == Json("path") &&
+                !fed.contains({node.id, "path"}))
+                add(prefix + node.id, "path", "needs a drawing wired in for a path");
+        }
     }
 };
 
-constexpr std::string_view kDomainNodes[] = {"units.for_each", "units.repeat", "units.frames"};
-
 bool isDomainNode(const GraphNode &node)
 {
-    return std::ranges::find(kDomainNodes, node.type) != std::end(kDomainNodes);
+    return node.type == "units.for_each" || isLoopNode(node.type);
 }
 
 struct Flow {
@@ -316,7 +328,7 @@ struct Flow {
     {
         for (const GraphNode &node : graph.nodes) {
             const bool own = node.type == "output.emit" || node.type == "text.join";
-            if (!own && node.type != "units.repeat" && node.type != "units.frames")
+            if (!own && !isLoopNode(node.type))
                 continue;
             std::set<std::string> domain = chainFrom(node.id);
             const auto ports = nodePorts(node);

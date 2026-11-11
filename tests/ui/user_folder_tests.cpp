@@ -132,8 +132,8 @@ private slots:
 
     void bundledPathsMapIntoTheLayout()
     {
-        QCOMPARE(UserFolder::seededPath(QStringLiteral("Automation/automation/Autoload/kara-templater.lua")),
-                 QStringLiteral("automation/autoload/kara-templater.lua"));
+        QCOMPARE(UserFolder::seededPath(QStringLiteral("Automation/automation/Autoload/strip-tags.lua")),
+                 QStringLiteral("automation/autoload/strip-tags.lua"));
         QCOMPARE(UserFolder::seededPath(QStringLiteral("Automation/automation/Include/l0/DependencyControl.moon")),
                  QStringLiteral("automation/include/l0/DependencyControl.moon"));
         QCOMPARE(UserFolder::seededPath(QStringLiteral("Dictionary/en_US.dic")), QStringLiteral("dictionaries/en_US.dic"));

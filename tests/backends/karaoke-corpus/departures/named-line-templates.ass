@@ -1,0 +1,24 @@
+[Script Info]
+; TH5b-line-template-order: named line templates run after the unnamed ones, in the order their names first appear
+Title: TH5b corpus named line templates
+ScriptType: v4.00+
+WrapStyle: 0
+PlayResX: 1280
+PlayResY: 720
+ScaledBorderAndShadow: yes
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Default,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,8,20,20,20,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Comment: 0,0:00:00.00,0:00:05.00,Default,,0,0,0,template line second,{\fad(100,100)}
+Comment: 0,0:00:00.00,0:00:05.00,Default,,0,0,0,template line,{\be1}
+Comment: 0,0:00:00.00,0:00:05.00,Default,,0,0,0,template line first,{\blur2}
+Comment: 0,0:00:00.00,0:00:05.00,Default,,0,0,0,template pre-line second,{\an5}
+Comment: 0,0:00:00.00,0:00:05.00,Default,,0,0,0,template line,{\bord3}
+Comment: 0,0:00:00.00,0:00:05.00,Default,,0,0,0,template line third,{\shad2}
+Comment: 0,0:00:00.00,0:00:05.00,Default,,0,0,0,template line fourth,{\i1}
+Comment: 0,0:00:00.00,0:00:05.00,Default,,0,0,0,template line fifth,{\u1}
+Dialogue: 0,0:00:01.00,0:00:03.00,Default,,0,0,0,,{\k50}ka{\k50}ra

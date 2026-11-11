@@ -1,9 +1,11 @@
 # Karaoke template corpus (KE1)
 
-`karaoke_templater_tests` templates each `*.ass` here with the bundled
-`Automation/automation/Autoload/kara-templater.lua` and compares the saved
-Document byte for byte with `<name>.out.ass`. The same run with
-`kara-templater-aegisub-3.2.2.lua` must give the same bytes.
+`karaoke_templater_tests` templates each `*.ass` here with the built-in
+Karaoke Templater and compares the saved Document byte for byte with
+`<name>.out.ass`. The same run with `kara-templater-aegisub-3.2.2.lua`, and
+with `kara-templater-hikari.lua`, must give the same bytes.
+`kara-templater-hikari.lua` is the Lua script HikariSub bundled before the
+templater was built in (TH5b-builtin-templater), kept here as the oracle.
 
 ## The behaviour matched
 
@@ -46,4 +48,6 @@ from the 3.2.2 script after adding a Document, run the test with
 each for a named entry in the compatibility ledger. They are compared with
 their own golden only. `thai` locks TH1-template-char-graphemes: `template
 char` over Thai clusters, a combining accent, an emoji ZWJ sequence and a
-flag.
+flag. `named-line-templates` locks TH5b-line-template-order: the unnamed
+line templates in file order, then the named ones in the order their names
+first appear.
