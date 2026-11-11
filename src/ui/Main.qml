@@ -3655,7 +3655,6 @@ ApplicationWindow {
                 id: fieldAiMenu
                 objectName: field.objectName + "AiMenu"
                 controller: root.inlineAi
-                ready: root.agent.ready
                 editor: true
                 shown: root.inlineAi.on && field.role === 0 && root.editor.hasLine
                 onChosen: ask => inlineAiBox.begin(ask, true, field)
@@ -5902,7 +5901,6 @@ ApplicationWindow {
                             id: editorAiMenu
                             objectName: "editorAiMenu"
                             controller: root.inlineAi
-                            ready: root.agent.ready
                             editor: true
                             onChosen: ask => inlineAiBox.begin(ask, true, lineText)
                             onRepeatRequested: root.repeatInlineAi(true, lineText)
@@ -6082,7 +6080,6 @@ ApplicationWindow {
                         id: gridAiHotkeyMenu
                         objectName: "gridAiHotkeyMenu"
                         controller: root.inlineAi
-                        ready: root.agent.ready
                         lineCount: Math.max(1, root.shell.selectedCount)
                         onChosen: ask => inlineAiBox.begin(ask, false, null)
                         onRepeatRequested: root.repeatInlineAi(false, null)
@@ -6272,7 +6269,6 @@ ApplicationWindow {
                         InlineAiMenu {
                             objectName: "gridAiMenu"
                             controller: root.inlineAi
-                            ready: root.agent.ready
                             lineCount: gridMenu.lineCount
                             onChosen: ask => inlineAiBox.begin(ask, false, null)
                             onRepeatRequested: root.repeatInlineAi(false, null)
@@ -8932,7 +8928,7 @@ ApplicationWindow {
     Action {
         id: repeatAiActionAction
         text: qsTranslate("HikariSub.Hotkeys", "Repeat last AI action")
-        enabled: root.inlineAi.on && root.agent.ready && !!root.inlineAi.last.action
+        enabled: root.inlineAi.on && !!root.inlineAi.ready.any && !!root.inlineAi.last.action
         onTriggered: {
             if (root.hotkeyGesture("GLOBAL_REPEAT_AI_ACTION"))
                 return
