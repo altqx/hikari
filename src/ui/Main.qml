@@ -6938,6 +6938,36 @@ ApplicationWindow {
             }
         }
         InlineBar {
+            id: projectTrustBar
+            objectName: "projectTrustBar"
+            property string dismissed: ""
+            readonly property string folder: {
+                root.projectRevision
+                return root.app.projectRoot(root.shellWindow)
+            }
+            readonly property bool needed: {
+                root.projectRevision
+                return root.app.projectNeedsTrust(root.shellWindow)
+            }
+            visible: needed && dismissed !== folder
+            iconRole: "trust"
+            closable: false
+            text: qsTranslate("HikariSub.Project", "This project has its own scripts or plugin settings. Trust “%1” to run them.")
+                  .arg(root.projectName)
+            Layout.fillWidth: true
+            IconTextButton {
+                iconRole: "trust"
+                objectName: "projectTrust"
+                text: qsTranslate("HikariSub.Project", "Trust folder")
+                onClicked: root.app.trustProject(root.shellWindow)
+            }
+            Button {
+                objectName: "projectTrustNotNow"
+                text: qsTranslate("HikariSub.MainWindow", "Not now")
+                onClicked: projectTrustBar.dismissed = projectTrustBar.folder
+            }
+        }
+        InlineBar {
             id: projectOfferBar
             objectName: "projectOfferBar"
             property string folder: ""
@@ -8338,6 +8368,7 @@ ApplicationWindow {
         sourceComponent: Component {
             SettingsDialog {
                 app: root.app
+                shellWindow: root.shellWindow
                 notices: root.notices
                 hotkeys: root.hotkeys
                 updates: root.updates

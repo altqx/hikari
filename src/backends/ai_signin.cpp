@@ -11,6 +11,7 @@
 #include <QNetworkRequest>
 #include <QPointer>
 #include <QRandomGenerator>
+#include <QSaveFile>
 #include <QTcpServer>
 #include <QTcpSocket>
 #include <QTimer>
@@ -177,6 +178,84 @@ std::optional<CodexSession> sessionFromCodexAuth(const QString &authJsonPath)
     if (s.access.empty() || s.refresh.empty())
         return std::nullopt;
     return s;
+}
+
+bool writeCodexAuth(const QString &authJsonPath, const CodexSession &session)
+{
+    QSaveFile file(authJsonPath);
+    if (!file.open(QIODevice::WriteOnly) || !file.setPermissions(QFileDevice::ReadOwner | QFileDevice::WriteOwner))
+        return false;
+    const QJsonObject tokens{{QStringLiteral("id_token"), QString::fromStdString(session.idToken)},
+                             {QStringLiteral("access_token"), QString::fromStdString(session.access)},
+                             {QStringLiteral("refresh_token"), QString::fromStdString(session.refresh)},
+                             {QStringLiteral("account_id"), QString::fromStdString(session.accountId)}};
+    const QJsonObject auth{{QStringLiteral("auth_mode"), QStringLiteral("chatgpt")},
+                           {QStringLiteral("OPENAI_API_KEY"), QJsonValue::Null},
+                           {QStringLiteral("tokens"), tokens},
+                           {QStringLiteral("last_refresh"),
+                            QDateTime::currentDateTimeUtc().toString(Qt::ISODateWithMs)}};
+    file.write(QJsonDocument(auth).toJson(QJsonDocument::Compact));
+    return file.commit();
+}
+
+CodexLease::CodexLease(app::KeyStore &keys, QString codexHome) : m_keys(keys), m_home(std::move(codexHome)) {}
+
+QString CodexLease::authPath() const
+{
+    return m_home + QStringLiteral("/auth.json");
+}
+
+void CodexLease::acquire(std::function<void(QString error)> done)
+{
+    if (m_users > 0) {
+        ++m_users;
+        return done({});
+    }
+    m_keys.read(kCodexSecret, [this, alive = std::weak_ptr(m_alive), done = std::move(done)](app::KeyResult result) {
+        if (!alive.lock())
+            return;
+        if (m_users > 0) {
+            ++m_users;
+            return done({});
+        }
+        const auto *json = std::get_if<std::string>(&result);
+        const std::optional<CodexSession> stored = json ? sessionFromJson(*json) : std::nullopt;
+        if (!stored) {
+            QFile::remove(authPath());
+            return done(QStringLiteral("Sign in with ChatGPT for Codex in Settings first"));
+        }
+        const std::optional<CodexSession> left = sessionFromCodexAuth(authPath());
+        if (!(left && left->accountId == stored->accountId) && !writeCodexAuth(authPath(), *stored))
+            return done(QStringLiteral("Codex's sign-in couldn't be written"));
+        ++m_users;
+        done({});
+    });
+}
+
+void CodexLease::release()
+{
+    if (m_users > 0 && --m_users == 0)
+        giveBack();
+}
+
+void CodexLease::giveBack()
+{
+    m_keys.read(kCodexSecret, [this, alive = std::weak_ptr(m_alive)](app::KeyResult result) {
+        if (!alive.lock() || m_users > 0)
+            return;
+        const auto *json = std::get_if<std::string>(&result);
+        const std::optional<CodexSession> stored = json ? sessionFromJson(*json) : std::nullopt;
+        const std::optional<CodexSession> refreshed = sessionFromCodexAuth(authPath());
+        if (!stored || !refreshed || refreshed->accountId != stored->accountId || *refreshed == *stored) {
+            QFile::remove(authPath());
+            return;
+        }
+        m_keys.write(kCodexSecret, sessionJson(*refreshed),
+                     [this, alive](std::optional<app::KeyError> error) {
+                         if (alive.lock() && !error && m_users == 0)
+                             QFile::remove(authPath());
+                     });
+    });
 }
 
 SignInClock SignInClock::system()

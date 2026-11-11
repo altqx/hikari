@@ -1405,7 +1405,6 @@ NOT_REPLACED = {
 PENDING = {}
 for card, roles in {
     "AI2 #430": ["review-panel"],
-    "PJ3 #771": ["trust"],
     "PJ4 #772": ["explorer", "new-subtitle-file", "show-all-files", "group-by-name"],
     "PJ5 #773": ["mine", "copy-to-tier", "move-to-tier"],
     "PJ8 #776": ["untrusted"],
