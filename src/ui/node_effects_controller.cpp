@@ -1466,14 +1466,34 @@ bool NodeEffectsController::duplicateGraph()
     return done;
 }
 
-QVariantList NodeEffectsController::exportAsTemplate()
+namespace {
+constexpr std::string_view kExportFormat = "nodeEffects.exportFormat";
+}
+
+void NodeEffectsController::setSettings(application::Settings *settings)
+{
+    m_settings = settings;
+    emit exportFormatChanged();
+}
+
+bool NodeEffectsController::exportKaraOK() const
+{
+    return !m_settings || m_settings->text(kExportFormat) != "stock";
+}
+
+QVariantList NodeEffectsController::exportAsTemplate(bool karaOK)
 {
     if (!m_current)
         return {};
+    if (m_settings && karaOK != exportKaraOK()) {
+        m_settings->set(kExportFormat, std::string(karaOK ? "karaOK" : "stock"));
+        emit exportFormatChanged();
+    }
     const core::LineId line = *m_current;
+    const auto format = karaOK ? application::TemplateFormat::KaraOK : application::TemplateFormat::Stock;
     std::vector<application::NodeEffectProblem> blockers;
     runGraphCommand([&](application::EditSession &s) {
-        auto exported = application::exportTemplateLines(s, line);
+        auto exported = application::exportTemplateLines(s, line, format);
         if (!exported)
             blockers = std::move(exported.error());
         return exported.has_value();

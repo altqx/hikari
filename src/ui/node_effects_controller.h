@@ -4,6 +4,7 @@
 #include "hikari/application/edit_session.h"
 #include "hikari/application/node_effects.h"
 #include "hikari/application/node_graph.h"
+#include "hikari/application/settings.h"
 
 #include <QObject>
 #include <QPointer>
@@ -73,6 +74,7 @@ class NodeEffectsController : public QObject {
     Q_PROPERTY(bool canApply READ canApply NOTIFY changed)
     Q_PROPERTY(bool canApplySelected READ canApplySelected NOTIFY changed)
     Q_PROPERTY(QVariantMap lastApply READ lastApply NOTIFY changed)
+    Q_PROPERTY(bool exportKaraOK READ exportKaraOK NOTIFY exportFormatChanged)
 
 public:
     using SessionSource = std::function<application::EditSession *()>;
@@ -89,6 +91,7 @@ public:
     void setLuaNodes(LuaNodesSource source);
     void setAudio(AudioSource source) { m_audio = std::move(source); }
     void setLibraryFolder(std::filesystem::path folder);
+    void setSettings(application::Settings *settings);
     void setEditable(bool editable);
     void setMeasure(application::TextMeasurePort *measure) { m_measure = measure; }
     void setDelays(int previewMs, int commitMs);
@@ -179,7 +182,9 @@ public:
     Q_INVOKABLE bool duplicateGraph();
     Q_INVOKABLE bool deleteGraph();
     // Inserts the graph's template Lines after it; when it has no template form, the nodes that block it.
-    Q_INVOKABLE QVariantList exportAsTemplate();
+    bool exportKaraOK() const;
+    // karaOK template syntax, or Aegisub 3.2.2's; remembered for the next export.
+    Q_INVOKABLE QVariantList exportAsTemplate(bool karaOK);
     Q_INVOKABLE bool apply(bool selectedOnly);
     Q_INVOKABLE void trustDocument();
 
@@ -190,6 +195,7 @@ signals:
     void inspectorChanged();
     void previewChanged();
     void recentChanged();
+    void exportFormatChanged();
     void libraryChanged();
     void documentEdited();
     void videoChanged();
@@ -219,6 +225,7 @@ private:
     AudioSource m_audio;
     QtTextMeasurePort m_qtMeasure;
     application::TextMeasurePort *m_measure = &m_qtMeasure;
+    application::Settings *m_settings = nullptr;
     std::filesystem::path m_libraryFolder;
     bool m_editable = false;
     bool m_shown = false;

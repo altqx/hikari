@@ -65,6 +65,8 @@ class TemplateEditorController : public QObject {
     Q_PROPERTY(QVariantMap lastApply READ lastApply NOTIFY changed)
     Q_PROPERTY(QVariantMap values READ values NOTIFY valuesChanged)
     Q_PROPERTY(QVariantList presets READ presets CONSTANT)
+    Q_PROPERTY(bool karaOKMode READ karaOKMode NOTIFY changed)
+    Q_PROPERTY(bool modeInFile READ modeInFile NOTIFY changed)
 
 public:
     using SessionSource = std::function<application::EditSession *()>;
@@ -139,6 +141,11 @@ public:
     int changedCount() const;
     QVariantMap lastApply() const { return m_lastApply; }
     QVariantMap values() const { return m_values; }
+    bool karaOKMode() const;
+    // The mode comes from the file's mode line rather than from its template syntax.
+    bool modeInFile() const;
+    // Writes the mode line, one undo step "Set template mode".
+    Q_INVOKABLE bool setKaraOKMode(bool karaOK);
 
     Q_INVOKABLE void setText(const QString &text);
     Q_INVOKABLE void setEffect(const QString &effect);
