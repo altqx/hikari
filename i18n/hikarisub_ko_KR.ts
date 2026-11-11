@@ -1786,12 +1786,28 @@ Output device: %2</source>
         <translation>편집기를 시작할 수 없습니다.</translation>
     </message>
     <message>
+        <source>Not loaded: its macros %1 are the built-in Karaoke Templater’s, which runs them instead.</source>
+        <translation>불러오지 않음: 이 스크립트의 매크로 %1은(는) 내장 Karaoke Templater의 매크로이며, 내장 버전이 대신 실행합니다.</translation>
+    </message>
+    <message>
+        <source>Built-in</source>
+        <translation>기본 제공</translation>
+    </message>
+    <message>
         <source>The macro was cancelled; nothing was changed.</source>
         <translation>매크로가 취소되어 아무것도 변경되지 않았습니다.</translation>
     </message>
     <message>
         <source>The macro was cancelled; only the script resolution was set.</source>
         <translation>매크로가 취소되어 스크립트 해상도만 설정되었습니다.</translation>
+    </message>
+    <message>
+        <source>“%1” can’t run on this document: it needs %2 MB, and a macro can use at most %3 MB.</source>
+        <translation>“%1” 매크로를 이 문서에서 실행할 수 없습니다. %2MB가 필요하지만 매크로는 최대 %3MB까지만 사용할 수 있습니다.</translation>
+    </message>
+    <message>
+        <source>Run the macro on a smaller file, for example a copy with only the lines it needs.</source>
+        <translation>더 작은 파일에서 매크로를 실행하십시오. 예를 들어 필요한 줄만 남긴 사본을 사용하십시오.</translation>
     </message>
     <message>
         <source>Validation Lua script “%1” failed</source>
@@ -2655,6 +2671,18 @@ Output device: %2</source>
         <translation>덮어쓰기</translation>
     </message>
     <message>
+        <source>Import lyrics</source>
+        <translation>가사 가져오기</translation>
+    </message>
+    <message>
+        <source>Lyrics (*.lrc *.krc *.qrc *.ttml)</source>
+        <translation>가사 (*.lrc *.krc *.qrc *.ttml)</translation>
+    </message>
+    <message>
+        <source>Could not read %1.</source>
+        <translation>%1(을)를 읽을 수 없습니다.</translation>
+    </message>
+    <message>
         <source>Open subtitles</source>
         <translation>자막 열기</translation>
     </message>
@@ -2663,8 +2691,12 @@ Output device: %2</source>
         <translation>자막 (*.ass *.ssa *.srt *.sub *.txt *.mpl)</translation>
     </message>
     <message>
+        <source>Word-timed lyrics (*.lrc *.krc *.qrc *.ttml)</source>
+        <translation>단어별 타이밍 가사 (*.lrc *.krc *.qrc *.ttml)</translation>
+    </message>
+    <message>
         <source>Word-timed lyrics (*.lrc *.ttml)</source>
-        <translation>단어별 타이밍 가사 (*.lrc *.ttml)</translation>
+        <translation type="vanished">단어별 타이밍 가사 (*.lrc *.ttml)</translation>
     </message>
     <message>
         <source>YouTube timed text (*.ytt *.srv3)</source>
@@ -2749,6 +2781,10 @@ Output device: %2</source>
     <message>
         <source>it has no timed lyrics</source>
         <translation>타이밍이 있는 가사가 없음</translation>
+    </message>
+    <message>
+        <source>it is encrypted. Decode it to text with your own tool first</source>
+        <translation>암호화되어 있습니다. 먼저 사용하는 도구로 텍스트로 디코딩하세요</translation>
     </message>
     <message>
         <source>Could not import %1: line %2: %3. Nothing was imported.</source>
@@ -2968,6 +3004,130 @@ Output device: %2</source>
     <message>
         <source>Saves %1 · Discards %2</source>
         <translation>%1 저장 · %2 버림</translation>
+    </message>
+    <message>
+        <source>The file is not text in this encoding.</source>
+        <translation>이 인코딩으로는 파일이 텍스트가 아닙니다.</translation>
+    </message>
+    <message>
+        <source>LRC</source>
+        <translation>LRC</translation>
+    </message>
+    <message>
+        <source>TTML</source>
+        <translation>TTML</translation>
+    </message>
+    <message>
+        <source>Kugou KRC, decoded</source>
+        <translation>Kugou KRC, 디코딩됨</translation>
+    </message>
+    <message>
+        <source>QQ Music QRC, decoded</source>
+        <translation>QQ Music QRC, 디코딩됨</translation>
+    </message>
+    <message>
+        <source>word-timed</source>
+        <translation>단어별 타이밍</translation>
+    </message>
+    <message>
+        <source>line-timed</source>
+        <translation>줄별 타이밍</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n lines</source>
+        <translation>
+            <numerusform>%n줄</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>offset %1 s applied</source>
+        <translation>오프셋 %1초 적용됨</translation>
+    </message>
+    <message>
+        <source>File</source>
+        <translation>파일</translation>
+    </message>
+    <message>
+        <source>Format</source>
+        <translation>형식</translation>
+    </message>
+    <message>
+        <source>Song</source>
+        <translation>노래</translation>
+    </message>
+    <message>
+        <source>Encoding</source>
+        <translation>인코딩</translation>
+    </message>
+    <message>
+        <source>%1 · detected</source>
+        <translation>%1 · 감지됨</translation>
+    </message>
+    <message>
+        <source>This Kugou lyrics file is encrypted, so HikariSub can’t read it.</source>
+        <translation>이 Kugou 가사 파일은 암호화되어 있어 HikariSub에서 읽을 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>This QQ Music lyrics file is encrypted, so HikariSub can’t read it.</source>
+        <translation>이 QQ Music 가사 파일은 암호화되어 있어 HikariSub에서 읽을 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>Decode it to text with your own tool first, then import the decoded file. HikariSub doesn’t decrypt lyric files.</source>
+        <translation>먼저 사용하는 도구로 텍스트로 디코딩한 다음 디코딩된 파일을 가져오세요. HikariSub는 가사 파일을 복호화하지 않습니다.</translation>
+    </message>
+    <message>
+        <source>Preview</source>
+        <translation>미리 보기</translation>
+    </message>
+    <message numerus="yes">
+        <source>and %n more lines</source>
+        <translation>
+            <numerusform>외 %n줄</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Add the lines to</source>
+        <translation>줄을 추가할 위치</translation>
+    </message>
+    <message>
+        <source>After the last line of the open file</source>
+        <translation>열린 파일의 마지막 줄 뒤</translation>
+    </message>
+    <message>
+        <source>A new file</source>
+        <translation>새 파일</translation>
+    </message>
+    <message>
+        <source>Style</source>
+        <translation>스타일</translation>
+    </message>
+    <message>
+        <source>End times</source>
+        <translation>끝 시간</translation>
+    </message>
+    <message>
+        <source>Each line ends when the next one starts</source>
+        <translation>각 줄은 다음 줄이 시작할 때 끝남</translation>
+    </message>
+    <message>
+        <source>Leave a gap before the next line</source>
+        <translation>다음 줄 앞에 간격 두기</translation>
+    </message>
+    <message>
+        <source>Gap (s)</source>
+        <translation>간격(초)</translation>
+    </message>
+    <message>
+        <source>Last line lasts (s)</source>
+        <translation>마지막 줄 길이(초)</translation>
+    </message>
+    <message>
+        <source>Choose another file…</source>
+        <translation>다른 파일 선택…</translation>
+    </message>
+    <message>
+        <source>Import</source>
+        <translation>가져오기</translation>
     </message>
 </context>
 <context>
@@ -7218,6 +7378,10 @@ Failed to copy %2 fonts.</source>
         <translation>창 닫기</translation>
     </message>
     <message>
+        <source>Import lyrics…</source>
+        <translation>가사 가져오기…</translation>
+    </message>
+    <message>
         <source>Keep AI change</source>
         <translation type="unfinished"></translation>
     </message>
@@ -8256,6 +8420,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Import subtitles from MKV…</source>
         <translation>MKV에서 자막 가져오기…</translation>
+    </message>
+    <message>
+        <source>Turns a lyrics file into lines, in the open file or a new one</source>
+        <translation>가사 파일을 열린 파일이나 새 파일의 줄로 바꿉니다</translation>
+    </message>
+    <message>
+        <source>Import lyrics…</source>
+        <translation>가사 가져오기…</translation>
     </message>
     <message>
         <source>Save current file</source>
@@ -9878,6 +10050,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Export as template lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Adds template lines after the graph line that make the same lines in Aegisub’s karaoke templater.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Delete graph</source>
         <translation type="unfinished"></translation>
     </message>
@@ -9895,6 +10075,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Select karaoke lines in “Source lines” first.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>These nodes have no form in a karaoke template, so the graph can’t be exported:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -9953,6 +10137,30 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>That wire would make a loop.</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Gradient strips</source>
+        <translation>그라데이션 띠</translation>
+    </message>
+    <message>
+        <source>Each line cut into eight strips, coloured from pink to blue.</source>
+        <translation>각 줄을 여덟 개의 띠로 자르고 분홍에서 파랑으로 색칠합니다.</translation>
+    </message>
+    <message>
+        <source>Ring of copies</source>
+        <translation>복제 고리</translation>
+    </message>
+    <message>
+        <source>Eight copies of each syllable on a circle around it, each turned to its place, while it is sung.</source>
+        <translation>각 음절이 불리는 동안 그 둘레의 원 위에 여덟 개의 복제가 놓이고, 각각 제자리 방향으로 돌아갑니다.</translation>
+    </message>
+    <message>
+        <source>Particle burst</source>
+        <translation>입자 폭발</translation>
+    </message>
+    <message>
+        <source>Twelve copies of each syllable fly out to random places around it and fade.</source>
+        <translation>각 음절의 복제 열두 개가 주변의 무작위 위치로 날아가며 사라집니다.</translation>
     </message>
     <message>
         <source>A graph name can’t be empty, start or end with a space, end with a dot, or hold “karaoke”, a comma, a double quote, a control character or any of / \ : * ? &lt; &gt; |.</source>
@@ -10146,6 +10354,30 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Clip gradient</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each unit once per strip of its box, side by side across or stacked down: the strip’s \clip rectangle (whole pixels, the edges shared) and its colour along the gradient.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Array</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each unit once per copy: on a grid centred on it, on a circle around it, or spread evenly along a path drawn from its position. angle is in degrees, as \frz takes it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Particles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each unit once per particle, spread at random over a rectangle or an ellipse centred on it. The same graph seed, node seed and line give the same particles on every run and platform.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>step times the place: index - 1 from the start, count - index from the end, or the distance from the middle.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -10243,6 +10475,66 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>One step, in ms.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How many strips.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Strips side by side from left to right, or stacked from top to bottom.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The gradient’s stops, as #RRGGBB, at least one.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Added to the box on every side, in pixels.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Where the copies go.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Grid: copies in a row.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Grid: rows.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Grid: from one copy to the next, as [across, down].</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Circle and path: how many copies.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Circle: its radius.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Circle: the first copy’s angle, in degrees counter-clockwise from the right.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How many particles.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The area they spread over.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The area’s width.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The area’s height.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -14459,7 +14751,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Deleted</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">삭제됨</translation>
     </message>
     <message>
         <source>New</source>
@@ -17745,8 +18037,8 @@ Styles deleted:
         <translation>영상에서 미리 보기</translation>
     </message>
     <message>
-        <source>The karaoke templater runs on an open subtitle file once its script (kara-templater.lua) is loaded.</source>
-        <translation>노래방 템플릿 실행기는 스크립트(kara-templater.lua)를 불러온 뒤 열려 있는 자막 파일에서 실행됩니다.</translation>
+        <source>The karaoke templater runs on an open subtitle file once the built-in Karaoke Templater has loaded.</source>
+        <translation>노래방 템플릿 실행기는 내장 Karaoke Templater를 불러온 뒤 열려 있는 자막 파일에서 실행됩니다.</translation>
     </message>
     <message>
         <source>Templates</source>

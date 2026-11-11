@@ -3,9 +3,18 @@
 #include <cstdint>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace hikari::application {
+
+// The Karaoke Templater built into the Lua helper: a script entry with no file.
+inline constexpr std::string_view kBuiltinKaraokeTemplater = "builtin:karaoke-templater";
+
+bool isBuiltinScript(std::string_view path);
+
+// The file name aliases and hotkeys know the script by; the built-in keeps kara-templater.lua's.
+std::string scriptFileName(const std::string &path);
 
 struct MacroIdentity {
     std::string scriptPath;

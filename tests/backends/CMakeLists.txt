@@ -10,6 +10,10 @@ if(WIN32)
 endif()
 hikari_add_gtest(hikari_backends_legacy_text_tests SOURCES legacy_text_file_tests.cpp
     LIBRARIES hikari_backends LABELS backends)
+hikari_add_gtest(hikari_backends_lyrics_text_tests SOURCES lyrics_text_tests.cpp
+    LIBRARIES hikari_backends LABELS backends)
+target_compile_definitions(hikari_backends_lyrics_text_tests PRIVATE
+    HIKARI_LYRICS_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/lyrics")
 hikari_add_gtest(hikari_backends_open_save_tests SOURCES open_save_reopen_tests.cpp
     LIBRARIES hikari_backends LABELS backends)
 target_compile_definitions(hikari_backends_open_save_tests PRIVATE
@@ -149,7 +153,7 @@ hikari_add_gtest(hikari_backends_karaoke_templater_tests SOURCES karaoke_templat
 target_compile_definitions(hikari_backends_karaoke_templater_tests PRIVATE
     HIKARI_LUA_HELPER="$<TARGET_FILE:hikari_lua_helper>"
     HIKARI_LUA_INCLUDE="${HIKARI_AUTOMATION_STAGE}/Include"
-    HIKARI_KARAOKE_TEMPLATER="${HIKARI_AUTOMATION_STAGE}/Autoload/kara-templater.lua"
+    HIKARI_KARAOKE_TEMPLATER_ORACLE="${CMAKE_CURRENT_SOURCE_DIR}/karaoke-corpus/kara-templater-hikari.lua"
     HIKARI_KARAOKE_CORPUS="${CMAKE_CURRENT_SOURCE_DIR}/karaoke-corpus")
 target_include_directories(hikari_backends_karaoke_templater_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
 add_dependencies(hikari_backends_karaoke_templater_tests hikari_lua_helper hikari_automation_stage)
@@ -166,7 +170,6 @@ hikari_add_gtest(hikari_backends_karaoke_preview_tests SOURCES karaoke_preview_r
 target_compile_definitions(hikari_backends_karaoke_preview_tests PRIVATE
     HIKARI_LUA_HELPER="$<TARGET_FILE:hikari_lua_helper>"
     HIKARI_LUA_INCLUDE="${HIKARI_AUTOMATION_STAGE}/Include"
-    HIKARI_KARAOKE_TEMPLATER="${HIKARI_AUTOMATION_STAGE}/Autoload/kara-templater.lua"
     HIKARI_KARAOKE_CORPUS="${CMAKE_CURRENT_SOURCE_DIR}/karaoke-corpus")
 target_include_directories(hikari_backends_karaoke_preview_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
 add_dependencies(hikari_backends_karaoke_preview_tests hikari_lua_helper hikari_automation_stage)
@@ -176,7 +179,6 @@ hikari_add_gtest(hikari_backends_karaoke_presets_tests SOURCES karaoke_presets_t
 target_compile_definitions(hikari_backends_karaoke_presets_tests PRIVATE
     HIKARI_LUA_HELPER="$<TARGET_FILE:hikari_lua_helper>"
     HIKARI_LUA_INCLUDE="${HIKARI_AUTOMATION_STAGE}/Include"
-    HIKARI_KARAOKE_TEMPLATER="${HIKARI_AUTOMATION_STAGE}/Autoload/kara-templater.lua"
     HIKARI_KARAOKE_CORPUS="${CMAKE_CURRENT_SOURCE_DIR}/karaoke-corpus"
     HIKARI_KARAOKE_PRESETS="${PROJECT_SOURCE_DIR}/src/application/karaoke-presets"
     HIKARI_KARAOKE_PRESET_FIXTURES="${CMAKE_CURRENT_SOURCE_DIR}/karaoke-presets")

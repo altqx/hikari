@@ -14,3 +14,4 @@ Keywords=subtitle;subtitles;ass;ssa;srt;typesetting;karaoke;
 MimeType=@HIKARISUB_DESKTOP_MIMETYPES@x-scheme-handler/hikarisub;
 StartupNotify=true
 StartupWMClass=HikariSub
+@HIKARISUB_DESKTOP_ACTIONS@

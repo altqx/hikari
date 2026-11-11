@@ -416,6 +416,15 @@ TEST(StartupArguments, WindowFlagsLeaveTheFiles)
     EXPECT_EQ(parseStartupArguments({"-n", "-r"}).window, WindowRequest::Reuse);
 }
 
+TEST(StartupArguments, OpenFolderAsksForAFolder)
+{
+    EXPECT_FALSE(parseStartupArguments({"show"}).openFolder);
+    const auto a = parseStartupArguments({"--open-folder", "-n"});
+    EXPECT_TRUE(a.openFolder);
+    EXPECT_EQ(a.window, WindowRequest::New);
+    EXPECT_TRUE(a.rest.empty());
+}
+
 TEST(UpdateVerify, releaseVersionsOnly)
 {
     EXPECT_TRUE(isReleaseVersion("0.2.0"));

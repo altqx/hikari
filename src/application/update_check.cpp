@@ -808,6 +808,8 @@ StartupArguments parseStartupArguments(const std::vector<std::string> &arguments
             out.window = WindowRequest::New;
         else if (argument == "-r" || argument == "--reuse-window")
             out.window = WindowRequest::Reuse;
+        else if (argument == "--open-folder")
+            out.openFolder = true;
         else
             out.rest.push_back(argument);
     }

@@ -285,7 +285,7 @@ void Application::loadAssociations(application::DocumentId document, const appli
         media.position = 0;
         if (shown) {
             if (!load.videoAudio)
-                m_keepTabAudio = media.video;
+                activeMedia().keepTabAudio = media.video;
             activeMedia().video->openVideo(media.video);
         }
     }

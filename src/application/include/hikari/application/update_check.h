@@ -283,6 +283,7 @@ struct StartupArguments {
     bool mcp = false; // --mcp: relay stdio to the running HikariSub's MCP server
     std::string mcpChannel; // --channel <name> with --mcp: an agent session's private channel; the token is in HIKARI_MCP_TOKEN
     WindowRequest window = WindowRequest::Default; // the last of -n/--new-window and -r/--reuse-window
+    bool openFolder = false; // --open-folder: show the Open folder picker
     std::vector<std::string> rest;
 };
 StartupArguments parseStartupArguments(const std::vector<std::string> &arguments);

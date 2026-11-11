@@ -244,12 +244,14 @@
       ut\stub handler.lock, "release"
       -- readFile sees no existing file, save writes fresh
       (ut\stub FILEOPS_MODULE_NAME, "getAttributes")\returns {attr: false, path: "/config/test.json"}
-      writeHandle = {setvbuf: ->, write: ->, flush: ->, close: ->}
+      writeHandle = {setvbuf: (->), write: (-> true), flush: (-> true), close: (-> true)}
       openStub = (ut\stub io, "open")\returns writeHandle
+      renameStub = (ut\stub os, "rename")\returns true
       (ut\stub DKJSON_MODULE_NAME, "encode")\returns '{"key":"value"}'
       result = handler\save!
       ut\assertTrue result
-      openStub\assertCalledOnceWith "/config/test.json", "w"
+      openStub\assertCalledOnceWith "/config/test.json.writing", "w"
+      renameStub\assertCalledOnceWith "/config/test.json.writing", "/config/test.json"
 
     -- save with views: exercises mergeHive + cleanHive
 
@@ -274,7 +276,8 @@
       (ut\stub handlerB.lock, "lock")\returns Lock.LockState.Held, 0
       ut\stub handlerB.lock, "release"
       (ut\stub FILEOPS_MODULE_NAME, "getAttributes")\returns {attr: false, path: "/config/test.json"}
-      (ut\stub io, "open")\returns {setvbuf: ->, write: ->, flush: ->, close: ->}
+      (ut\stub io, "open")\returns {setvbuf: (->), write: (-> true), flush: (-> true), close: (-> true)}
+      (ut\stub os, "rename")\returns true
       (ut\stub DKJSON_MODULE_NAME, "encode")\returns '{}'
 
       -- Switch the view from Handler A to Handler B (what setFile does
@@ -326,7 +329,8 @@
       (ut\stub handler.lock, "lock")\returns Lock.LockState.Held, 0
       ut\stub handler.lock, "release"
       (ut\stub FILEOPS_MODULE_NAME, "getAttributes")\returns {attr: false, path: "/config/test.json"}
-      (ut\stub io, "open")\returns {setvbuf: ->, write: ->, flush: ->, close: ->}
+      (ut\stub io, "open")\returns {setvbuf: (->), write: (-> true), flush: (-> true), close: (-> true)}
+      (ut\stub os, "rename")\returns true
       (ut\stub DKJSON_MODULE_NAME, "encode")\returns '{}'
       fakeView = {__hivePath: {"section", "key"}, __class: ConfigView}
       result = handler\save fakeView
@@ -345,11 +349,14 @@
       written = {}
       writeHandle = {
         setvbuf: ->
-        write: (_, ...) -> written[#written + 1] = table.concat {...}
-        flush: ->
-        close: ->
+        write: (_, ...) ->
+          written[#written + 1] = table.concat {...}
+          true
+        flush: -> true
+        close: -> true
       }
       (ut\stub io, "open")\returns writeHandle
+      (ut\stub os, "rename")\returns true
       result = handler\save!
       ut\assertTrue result
       out = table.concat written

@@ -317,18 +317,17 @@ void markGeneratedLines(Document &document, const std::function<std::u8string()>
         }
         tokens.emplace(source->first, std::move(*token));
     }
-    std::vector<std::pair<LineId, std::vector<Extradata>>> edits;
-    for (const auto *line : lines) {
-        auto extra = line->extra;
-        if (const auto own = tokens.find(line->id); own != tokens.end())
+    document.editLines([&](LineRecord &line) {
+        auto extra = line.extra;
+        if (const auto own = tokens.find(line.id); own != tokens.end())
             extra = withExtradata(std::move(extra), kKaraSourceKey, u8"1;" + own->second);
-        if (const auto from = tokens.find(line->generatedFrom); line->generatedFrom.value && from != tokens.end())
+        if (const auto from = tokens.find(line.generatedFrom); line.generatedFrom.value && from != tokens.end())
             extra = withExtradata(withoutExtradata(std::move(extra), kKaraSourceKey), kKaraFromKey, u8"1;" + from->second);
-        if (extra != line->extra)
-            edits.emplace_back(line->id, std::move(extra));
-    }
-    for (auto &[id, extra] : edits)
-        document.editLine(id, [&](LineRecord &line) { line.extra = std::move(extra); });
+        if (extra == line.extra)
+            return false;
+        line.extra = std::move(extra);
+        return true;
+    });
 }
 
 std::u8string extradataClipboard(const std::vector<std::vector<Extradata>> &rows)
