@@ -611,13 +611,14 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_renderer.setCsriFolder(std::filesystem::path(QCoreApplication::applicationDirPath().toStdU16String()) / u"Csri");
     m_renderer.setLog([this](const std::string &text) { m_log->log(QString::fromStdString(text)); });
     m_mainMedia = std::make_unique<WindowMedia>();
+    m_mainViews.media = m_mainMedia.get();
     makeVideo(*m_mainMedia);
     m_luaHelper = luaHelperPath(options.luaHelper);
     m_automation = std::make_unique<AutomationShell>(
         AutomationShell::Paths{m_luaHelper, automationPath(options.automationDir),
                                options.userAutomationDir, options.compileCacheDir},
         *m_files,
-        m_workspace, [this]() -> ui::LineEditorController & { return editor(); }, *activeMedia().video,
+        m_workspace, [this]() -> ui::LineEditorController & { return editor(); }, [this]() -> ui::VideoController & { return video(); },
         [this]() -> ui::ShellController & { return shell(); }, *activeMedia().videoHelper);
     m_automation->setDocumentChanged([this] { refreshViews(); });
     m_automation->setBeforeRun([this] { commitTemplates(); });
@@ -699,7 +700,6 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         options.presetsDir.isEmpty() ? QString() : options.presetsDir + QStringLiteral("/layouts.json"));
     m_gridFilter = std::make_unique<ui::GridFilterController>(*m_settings);
     makeViews(m_mainViews, 0);
-    m_videoFullscreen = std::make_unique<ui::VideoFullscreenController>(*activeMedia().video, *m_mainViews.videoView, *m_settings);
     choosePlayer();
     setUpTranslationControls();
     setUpFileArrangements();
@@ -1044,10 +1044,10 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             application::reloadSubtitleFonts();
             if (!m_fontCatalogs)
                 return;
-            setVideoFonts(m_videoDocument);
-            if (m_videoDocument) {
-                m_videoRevision.reset();
-                m_videoScript.clear();
+            setVideoFonts(activeMedia().videoDocument);
+            if (activeMedia().videoDocument) {
+                activeMedia().videoRevision.reset();
+                activeMedia().videoScript.clear();
                 refreshVideo();
             }
         };
@@ -1177,6 +1177,7 @@ void Application::makeVideo(WindowMedia &media)
     media.video->setMediaInfo(media.videoHelper.get(), media.videoHelper.get());
     media.generalPlayer = std::make_unique<backends::QtGeneralPlayer>(m_playbackAudio);
     media.video->session().setGeneralPlayer(media.generalPlayer.get());
+    media.video->session().setBeforePlay([this, &media] { takePlayback(media); });
     media.video->session().setFrameWorker([this](std::function<void()> task) {
         QMetaObject::invokeMethod(this, std::move(task), Qt::QueuedConnection);
     });
@@ -1214,6 +1215,7 @@ void Application::makeAudio(WindowMedia &media)
     media.audioPlayer->setMono(m_settings->boolean("audio.playMono"));
     media.audio->setPlaybackSettings([this] { return m_settings->integer("audio.markPlayTime"); });
     media.audio->setVideoPlayback([&media] { return media.video->playing(); }, [&media] { media.video->pause(); });
+    media.audio->setBeforePlay([this, &media] { takePlayback(media); });
     media.audioConnections << connect(media.audioPlayer.get(), &backends::AudioBoxPlayer::failed, this,
                                   [this](const QString &message) {
                                       m_log->notice(ui::LogController::Error,
@@ -1223,74 +1225,74 @@ void Application::makeAudio(WindowMedia &media)
 
 void Application::wireMedia(WindowMedia &media)
 {
-    connect(media.video.get(), &ui::VideoController::changed, this, [this] {
-        if (directShowPlayback())
-            activeMedia().video->session().preparePlayer();
+    connect(media.video.get(), &ui::VideoController::changed, this, [this, &media] {
+        if (directShowPlayback() && holdsDirectShow(media))
+            media.video->session().preparePlayer();
     });
-    connect(media.video.get(), &ui::VideoController::changed, m_analytics.get(), [this] {
+    connect(media.video.get(), &ui::VideoController::changed, m_analytics.get(), [this, &media] {
         using State = application::VideoSession::State;
-        const State state = activeMedia().video->session().state();
-        const State before = std::exchange(m_videoUsageState, state);
+        const State state = media.video->session().state();
+        const State before = std::exchange(media.videoUsageState, state);
         if (state == before)
             return;
         if (state == State::Opening)
-            m_videoOpenClock.start();
+            media.videoOpenClock.start();
         else if (state == State::Ready || state == State::Failed)
-            m_analytics->mediaOpened(true, before == State::Opening ? m_videoOpenClock.elapsed() : 0, state == State::Ready,
-                                     activeMedia().video->dummy() ? QStringLiteral("dummy") : QStringLiteral("file"));
+            m_analytics->mediaOpened(true, before == State::Opening ? media.videoOpenClock.elapsed() : 0, state == State::Ready,
+                                     media.video->dummy() ? QStringLiteral("dummy") : QStringLiteral("file"));
     });
-    connect(media.video.get(), &ui::VideoController::changed, this, [this] {
-        const auto &video = activeMedia().video->session();
+    connect(media.video.get(), &ui::VideoController::changed, this, [this, &media] {
+        const auto &video = media.video->session();
         const bool ready = video.state() == application::VideoSession::State::Ready;
         const auto timedBy = ready || video.replacedFrameTimes()
                                  ? std::optional(std::pair(ready ? video.path() : std::string(), video.frameTimesSerial()))
                                  : std::nullopt;
-        if (timedBy == m_editorTimebaseFor)
+        if (timedBy == media.editorTimebaseFor)
             return;
-        m_editorTimebaseFor = timedBy;
-        for (auto *views : allViews())
-            views->editor->setVideoTimebase(timedBy ? std::optional(video.legacyTimebase()) : std::nullopt);
+        media.editorTimebaseFor = timedBy;
+        views(media.window).editor->setVideoTimebase(timedBy ? std::optional(video.legacyTimebase()) : std::nullopt);
     });
-    connect(media.video.get(), &ui::VideoController::changed, this, &Application::logVideoFailure);
-    connect(media.video.get(), &ui::VideoController::changed, this, &Application::logPlaybackFailure);
-    connect(media.video.get(), &ui::VideoController::changed, this, [this] {
-        const auto &video = activeMedia().video->session();
+    connect(media.video.get(), &ui::VideoController::changed, this, [this, &media] { logVideoFailure(media); });
+    connect(media.video.get(), &ui::VideoController::changed, this, [this, &media] { logPlaybackFailure(media); });
+    connect(media.video.get(), &ui::VideoController::changed, this, [this, &media] {
+        const auto &video = media.video->session();
         if (video.state() == application::VideoSession::State::Opening)
-            m_resolutionCheckedVideo.clear();
-        if (video.state() != application::VideoSession::State::Ready || !video.lastFrame())
+            media.resolutionCheckedVideo.clear();
+        if (&media != &activeMedia() || video.state() != application::VideoSession::State::Ready || !video.lastFrame())
             return;
         const QString path = QString::fromStdString(video.path());
-        if (path == m_resolutionCheckedVideo)
+        if (path == media.resolutionCheckedVideo)
             return;
-        m_resolutionCheckedVideo = path;
+        media.resolutionCheckedVideo = path;
         checkVideoMatrix();
         checkResolution();
         checkLayoutResolution();
     });
-    connect(media.video.get(), &ui::VideoController::changed, this, [this] {
-        if (m_pendingKeyframes.isEmpty() || activeMedia().video->session().state() != application::VideoSession::State::Ready)
+    connect(media.video.get(), &ui::VideoController::changed, this, [this, &media] {
+        if (&media != &activeMedia() || media.pendingKeyframes.isEmpty()
+            || media.video->session().state() != application::VideoSession::State::Ready)
             return;
-        const QString path = std::exchange(m_pendingKeyframes, QString());
+        const QString path = std::exchange(media.pendingKeyframes, QString());
         const QString problem = openKeyframes(QUrl::fromLocalFile(path));
         if (!problem.isEmpty())
             m_log->notice(ui::LogController::Warning, QCoreApplication::translate("HikariSub.MainWindow", "Open keyframes"),
                           problem);
     });
-    media.audioConnections << connect(media.audio.get(), &ui::AudioController::changed, this, [this] {
+    media.audioConnections << connect(media.audio.get(), &ui::AudioController::changed, this, [this, &media] {
         using State = application::AudioBox::State;
-        const application::AudioBox &box = activeMedia().audio->box();
+        const application::AudioBox &box = media.audio->box();
         const State state = box.state();
-        const State before = std::exchange(m_audioUsageState, state);
+        const State before = std::exchange(media.audioUsageState, state);
         if (state == before)
             return;
         if (state == State::Opening || state == State::Loading) {
-            if (state == State::Opening || !m_audioOpenClock.isValid())
-                m_audioOpenClock.start();
+            if (state == State::Opening || !media.audioOpenClock.isValid())
+                media.audioOpenClock.start();
             return;
         }
-        const qint64 elapsed = m_audioOpenClock.isValid() ? m_audioOpenClock.elapsed() : 0;
-        const bool opening = m_audioOpenClock.isValid() || state == State::Ready;
-        m_audioOpenClock.invalidate();
+        const qint64 elapsed = media.audioOpenClock.isValid() ? media.audioOpenClock.elapsed() : 0;
+        const bool opening = media.audioOpenClock.isValid() || state == State::Ready;
+        media.audioOpenClock.invalidate();
         const bool failed = box.error() && *box.error() != application::SourceError::Cancelled;
         if (!opening || (state == State::Closed && !failed))
             return;
@@ -1308,12 +1310,12 @@ void Application::wireMedia(WindowMedia &media)
             m_log->notice(error ? ui::LogController::Error : ui::LogController::Warning,
                           QCoreApplication::translate("HikariSub.MainWindow", "Open audio"), message);
     });
-    media.audioConnections << connect(media.video.get(), &ui::VideoController::changed, this, &Application::followVideoInAudio);
-    media.audioConnections << connect(media.audio.get(), &ui::AudioController::changed, this, &Application::releaseReadIndexHandoff);
+    media.audioConnections << connect(media.video.get(), &ui::VideoController::changed, this, [this, &media] { followVideoInAudio(media); });
+    media.audioConnections << connect(media.audio.get(), &ui::AudioController::changed, this, [this, &media] { releaseReadIndexHandoff(media); });
     media.audioConnections << connect(media.audio.get(), &ui::AudioController::findingOnsetsChanged, this,
                                   &Application::noticeOnsets);
-    media.audioConnections << connect(media.audio.get(), &ui::AudioController::changed, this, [this] {
-        if (!activeMedia().video->playing())
+    media.audioConnections << connect(media.audio.get(), &ui::AudioController::changed, this, [this, &media] {
+        if (!media.video->playing())
             for (auto *views : allViews())
                 views->templateEditor->hostChanged();
     });
@@ -1354,17 +1356,18 @@ void Application::wireMedia(WindowMedia &media)
         const auto *line = lines[static_cast<std::size_t>(key)];
         return QString::fromStdU16String(core::toUtf16(line->translation.empty() ? line->text : line->translation));
     });
-    media.audio->setFollowAudio([this](int ms) { showVideoAtAudio(ms); });
-    media.video->setOpenFilter([this](const QString &path, std::function<void(application::IndexRequest)> asVideo) {
+    media.audio->setFollowAudio([this, &media](int ms) { showVideoAtAudio(media, ms); });
+    media.video->setOpenFilter([this, &media](const QString &path, std::function<void(application::IndexRequest)> asVideo) {
         QPointer<Application> self(this);
-        activeMedia().videoHelper->probe(path.toStdString(), [self, path, asVideo = std::move(asVideo)](
+        QPointer<ui::AudioController> audio(media.audio.get());
+        media.videoHelper->probe(path.toStdString(), [self, audio, path, asVideo = std::move(asVideo)](
                                                      std::expected<application::MediaProbe, application::AudioFailure> probe) {
-            if (!self)
+            if (!self || !audio)
                 return;
             if (!probe)
                 return asVideo({});
             if (!probe->hasVideo && !probe->audio.empty())
-                return self->activeMedia().audio->openAudio(path);
+                return audio->openAudio(path);
             const auto choice = application::legacyAudioTrackChoice(probe->audio, self->m_audioSettings().acceptedStreams);
             auto openWith = [self, path, asVideo](int track) {
                 if (self)
@@ -1372,7 +1375,7 @@ void Application::wireMedia(WindowMedia &media)
             };
             if (choice.track || choice.rows.empty())
                 return openWith(choice.track.value_or(-1));
-            self->activeMedia().audio->askTrack(choice.rows, [openWith, tracks = choice.rowTracks](std::optional<int> row) {
+            audio->askTrack(choice.rows, [openWith, tracks = choice.rowTracks](std::optional<int> row) {
                 if (row && *row >= 0 && *row < static_cast<int>(tracks.size()))
                     openWith(tracks[static_cast<std::size_t>(*row)]);
             });
@@ -1382,9 +1385,9 @@ void Application::wireMedia(WindowMedia &media)
         if (home())
             newDocument();
     };
-    media.video->setBeforeOpen([this, documentForMedia] {
+    media.video->setBeforeOpen([this, &media, documentForMedia] {
         documentForMedia();
-        if (!m_enteringTabMedia)
+        if (!media.enteringTabMedia)
             closeTimecodes();
     });
     media.audio->setBeforeOpen(documentForMedia);
@@ -1516,74 +1519,74 @@ void Application::refreshAudio()
         if (activeId)
             key = std::tuple(target->value, activeId->value, session->revision());
     }
-    bool select = key && key != m_audioLine;
-    if (select && m_audioCommitting && m_audioLine && std::get<0>(*key) == std::get<0>(*m_audioLine) &&
-        std::get<1>(*key) == std::get<1>(*m_audioLine))
+    bool select = key && key != activeMedia().audioLine;
+    if (select && m_audioCommitting && activeMedia().audioLine && std::get<0>(*key) == std::get<0>(*activeMedia().audioLine) &&
+        std::get<1>(*key) == std::get<1>(*activeMedia().audioLine))
         select = false;
-    m_audioLine = key;
+    activeMedia().audioLine = key;
     activeMedia().audio->setLines(std::move(lines), active, select);
 }
 
-void Application::followVideoInAudio()
+void Application::followVideoInAudio(WindowMedia &media)
 {
-    const auto &video = activeMedia().video->session();
+    const auto &video = media.video->session();
     const auto state = video.state();
     if (state == application::VideoSession::State::Opening) {
-        m_audioFollowedVideo.clear();
-        m_pendingIndexHandoff.clear();
+        media.audioFollowedVideo.clear();
+        media.pendingIndexHandoff.clear();
     } else if (state == application::VideoSession::State::Closed) {
-        m_audioFollowedVideo.clear();
+        media.audioFollowedVideo.clear();
     }
-    if (state == application::VideoSession::State::Ready && m_audioFollowedVideo != QString::fromStdString(video.path())) {
-        m_audioFollowedVideo = QString::fromStdString(video.path());
-        if (keepTabAudio(m_audioFollowedVideo)) {
+    if (state == application::VideoSession::State::Ready && media.audioFollowedVideo != QString::fromStdString(video.path())) {
+        media.audioFollowedVideo = QString::fromStdString(video.path());
+        if (keepTabAudio(media, media.audioFollowedVideo)) {
         } else if (video.dummy()) {
-            if (const QString own = dummyVideoAudio(m_audioFollowedVideo);
-                !own.isEmpty() && !(activeMedia().audio->hasAudio() && activeMedia().audio->path() == own))
-                activeMedia().audio->openAudio(own);
+            if (const QString own = dummyVideoAudio(media.audioFollowedVideo);
+                !own.isEmpty() && !(media.audio->hasAudio() && media.audio->path() == own))
+                media.audio->openAudio(own);
         } else if (video.hasAudio()) {
-            activeMedia().audio->openFromVideo(m_audioFollowedVideo, video.audioTrack(), video.newIndex(),
+            media.audio->openFromVideo(media.audioFollowedVideo, video.audioTrack(), video.newIndex(),
                                    QString::fromStdString(video.indexHandoff()));
-            m_pendingIndexHandoff = video.indexHandoff();
-            releaseReadIndexHandoff();
-        } else if (activeMedia().audio->hasAudio())
-            activeMedia().audio->closeAudio();
-        activeMedia().audio->trimCache();
+            media.pendingIndexHandoff = video.indexHandoff();
+            releaseReadIndexHandoff(media);
+        } else if (media.audio->hasAudio())
+            media.audio->closeAudio();
+        media.audio->trimCache();
     }
     if (state != application::VideoSession::State::Ready) {
-        if (m_audioTimebase) {
-            m_audioTimebase.reset();
-            m_audioKeyframes.clear();
-            activeMedia().audio->setKeyframes({});
-            activeMedia().audio->setKeyframeSnapTimes({});
+        if (media.audioTimebase) {
+            media.audioTimebase.reset();
+            media.audioKeyframes.clear();
+            media.audio->setKeyframes({});
+            media.audio->setKeyframeSnapTimes({});
         }
-        activeMedia().audio->setVideoFrame(std::nullopt);
-        syncAudioWithVideo();
+        media.audio->setVideoFrame(std::nullopt);
+        syncAudioWithVideo(media);
         return;
     }
-    if (!m_audioTimebase || m_audioTimebasePath != video.path() || m_audioTimebaseSerial != video.frameTimesSerial()
-        || m_audioKeyframes != video.keyframes()) {
-        m_audioTimebasePath = video.path();
-        m_audioTimebaseSerial = video.frameTimesSerial();
-        m_audioKeyframes = video.keyframes();
-        m_audioTimebase = video.legacyTimebase();
+    if (!media.audioTimebase || media.audioTimebasePath != video.path() || media.audioTimebaseSerial != video.frameTimesSerial()
+        || media.audioKeyframes != video.keyframes()) {
+        media.audioTimebasePath = video.path();
+        media.audioTimebaseSerial = video.frameTimesSerial();
+        media.audioKeyframes = video.keyframes();
+        media.audioTimebase = video.legacyTimebase();
         std::vector<int> ms;
-        ms.reserve(m_audioKeyframes.size());
-        for (const int frame : m_audioKeyframes)
-            ms.push_back(m_audioTimebase->msAt(frame));
+        ms.reserve(media.audioKeyframes.size());
+        for (const int frame : media.audioKeyframes)
+            ms.push_back(media.audioTimebase->msAt(frame));
         std::vector<int> snap;
         snap.reserve(ms.size());
         for (const int keyMs : ms)
-            snap.push_back(m_audioTimebase->startTimeFor(m_audioTimebase->frameAt(keyMs)));
-        activeMedia().audio->setKeyframeSnapTimes(std::move(snap));
-        activeMedia().audio->setKeyframes(std::move(ms));
+            snap.push_back(media.audioTimebase->startTimeFor(media.audioTimebase->frameAt(keyMs)));
+        media.audio->setKeyframeSnapTimes(std::move(snap));
+        media.audio->setKeyframes(std::move(ms));
     }
     std::optional<application::AudioVideoFrame> paused;
     if (!video.playing() && !video.stopped())
         if (const auto frame = video.reportedFrame())
-            paused = application::audioVideoFrame(*m_audioTimebase, *frame);
-    activeMedia().audio->setVideoFrame(paused);
-    syncAudioWithVideo();
+            paused = application::audioVideoFrame(*media.audioTimebase, *frame);
+    media.audio->setVideoFrame(paused);
+    syncAudioWithVideo(media);
 }
 
 void Application::rememberRecentAudio(const QString &path)
@@ -1729,11 +1732,11 @@ void Application::makeViews(WindowViews &v, int shellWindow)
         const auto *frames = v.editor->frameTimebase();
         v.shell->setFrameTimebase(frames ? std::optional(*frames) : std::nullopt);
     });
-    const auto &video = activeMedia().video->session();
+    const auto &video = v.media->video->session();
     if (video.state() == application::VideoSession::State::Ready || video.replacedFrameTimes())
         v.editor->setVideoTimebase(video.legacyTimebase());
-    v.editor->setVideoTimeSource([this]() -> std::optional<std::int64_t> {
-        const auto &session = activeMedia().video->session();
+    v.editor->setVideoTimeSource([media = v.media]() -> std::optional<std::int64_t> {
+        const auto &session = media->video->session();
         const auto frame = session.reportedFrame();
         const auto start = frame ? session.frameStart(*frame) : std::nullopt;
         if (!start)
@@ -1819,9 +1822,8 @@ void Application::makeViews(WindowViews &v, int shellWindow)
         if (m_settings->boolean("grid.foldGenerated") != v.shell->foldGenerated())
             m_settings->set("grid.foldGenerated", v.shell->foldGenerated());
     });
-    v.visualTools = std::make_unique<ui::VisualToolsController>(*activeMedia().video, *m_settings,
+    v.visualTools = std::make_unique<ui::VisualToolsController>(*v.media->video, *m_settings,
                                                                 [this, shellWindow] { return windowSession(shellWindow); });
-    v.visualTools->setPictureShown([this, shellWindow] { return pictureShowsWindow(shellWindow); });
     v.visualTools->setShownLines([this] { return shownLines(); });
     v.visualTools->setEditorHotkey([this](int id) {
         if (!m_hotkeys)
@@ -1833,13 +1835,13 @@ void Application::makeViews(WindowViews &v, int shellWindow)
         editor().reloadFromSession();
         refreshViews();
     });
-    v.visualTools->setPreview([this](const core::Document *preview) {
+    v.visualTools->setPreview([this, media = v.media](const core::Document *preview) {
         auto *session = targetSession();
         if (!session)
             return;
         setVideoFonts(m_workspace.editingTarget());
-        activeMedia().video->session().setSubtitles(rendererScript(preview ? *preview : session->document()));
-        m_videoScript.clear();
+        media->video->session().setSubtitles(rendererScript(preview ? *preview : session->document()));
+        media->videoScript.clear();
     });
     v.visualTools->setLog([this, &v](const QString &text) {
         m_log->notice(ui::LogController::Warning, v.visualTools->toolName(), text);
@@ -1868,9 +1870,10 @@ void Application::makeViews(WindowViews &v, int shellWindow)
             names.insert(names.end(), own.begin(), own.end());
         v.visualTools->setLeasedFonts(names);
     }
-    v.videoView = std::make_unique<ui::VideoViewController>(*activeMedia().video, *v.visualTools, *m_settings);
-    v.videoView->setPlayer(m_activePlayer ? m_activePlayer : activeMedia().generalPlayer.get());
-    v.statusBar = std::make_unique<ui::StatusBarController>(*activeMedia().video, *v.visualTools,
+    v.videoView = std::make_unique<ui::VideoViewController>(*v.media->video, *v.visualTools, *m_settings);
+    v.videoView->setPlayer(v.media->generalPlayer.get());
+    v.fullscreen = std::make_unique<ui::VideoFullscreenController>(*v.media->video, *v.videoView, *m_settings);
+    v.statusBar = std::make_unique<ui::StatusBarController>(*v.media->video, *v.visualTools,
                                                             [this, shellWindow]() -> const core::Document * {
                                                                 auto *session = windowSession(shellWindow);
                                                                 return session ? &session->document() : nullptr;
@@ -1904,7 +1907,7 @@ void Application::makeTemplateEditor(WindowViews &v, int shellWindow)
     });
     editor->setTemplater(&m_automation->templater());
     editor->setHostState([this] { return m_automation->hostState(); });
-    connect(activeMedia().video.get(), &ui::VideoController::changed, editor, [this, editor] {
+    connect(v.media->video.get(), &ui::VideoController::changed, editor, [this, editor] {
         if (!activeMedia().video->playing())
             editor->hostChanged();
     });
@@ -1914,17 +1917,17 @@ void Application::makeTemplateEditor(WindowViews &v, int shellWindow)
                 scheduleAutosave(application::DocumentId{document.first});
             });
     connect(editor, &ui::TemplateEditorController::videoChanged, this, [this, active, editor] {
-        if (active() && (m_videoShowsTemplate || editor->videoPreview()))
+        if (active() && (activeMedia().videoShowsTemplate || editor->videoPreview()))
             showVideoSubtitles();
     });
-    connect(activeMedia().video.get(), &ui::VideoController::changed, editor, [this, active, editor] {
+    connect(v.media->video.get(), &ui::VideoController::changed, editor, [this, active, editor] {
         if (!active() || !editor->videoPreview())
             return;
         const auto &video = activeMedia().video->session();
         const auto frame = video.reportedFrame();
         const auto at = frame ? video.frameStart(*frame) : std::nullopt;
         const auto window = editor->videoWindow(at ? at->microseconds() / 1000 : 0, video.playing());
-        if (m_templateWindow != std::pair(window.fromMs, window.toMs))
+        if (activeMedia().templateWindow != std::pair(window.fromMs, window.toMs))
             showVideoSubtitles();
     });
     connect(m_automation.get(), &AutomationShell::progressChanged, editor, [editor] { editor->refresh(); });
@@ -1939,7 +1942,7 @@ void Application::makeNodeEffects(WindowViews &v, int shellWindow)
     effects->setLibraryFolder(std::filesystem::path(m_userFolder.toStdU16String()) / u"node-effects");
     connect(effects, &ui::NodeEffectsController::documentEdited, this, [this] { refreshViews(); });
     connect(effects, &ui::NodeEffectsController::videoChanged, this, [this, active, effects] {
-        if (active() && (m_videoShowsTemplate || effects->videoPreview()))
+        if (active() && (activeMedia().videoShowsTemplate || effects->videoPreview()))
             showVideoSubtitles();
     });
     effects->shareTrustWith(v.templateEditor.get());
@@ -2015,15 +2018,21 @@ std::vector<Application::WindowViews *> Application::allViews()
     return out;
 }
 
+std::vector<Application::WindowMedia *> Application::allMedia()
+{
+    std::vector<WindowMedia *> out;
+    if (m_mainMedia)
+        out.push_back(m_mainMedia.get());
+    for (auto &[id, shell] : m_shellWindows)
+        if (shell.media)
+            out.push_back(shell.media.get());
+    return out;
+}
+
 application::EditSession *Application::windowSession(int shellWindow) const
 {
     const auto tab = m_workspace.currentTab(shellWindow);
     return tab ? m_files->session(*tab) : nullptr;
-}
-
-bool Application::pictureShowsWindow(int shellWindow) const
-{
-    return m_workspace.activeWindow() == shellWindow;
 }
 
 Application::~Application()
@@ -2035,11 +2044,14 @@ Application::~Application()
     for (auto *views : allViews())
         views->templateEditor.reset();
     // MUST KILL: teardown order: the audio side before the video and helpers it reads through
-    releaseAudio(*m_mainMedia);
+    for (auto *media : allMedia())
+        releaseAudio(*media);
     m_audioRouting.reset();
-    m_mainMedia->audioPlayer.reset();
+    for (auto *media : allMedia())
+        media->audioPlayer.reset();
     m_audioOutput.reset();
-    m_mainMedia->audioHelper.reset();
+    for (auto *media : allMedia())
+        media->audioHelper.reset();
     m_port->waitIdle();
     if (m_localisation)
         QGuiApplication::setFont(m_startFont);
@@ -2216,11 +2228,11 @@ bool Application::openFile(const QString &path)
     return true;
 }
 
-void Application::releaseReadIndexHandoff()
+void Application::releaseReadIndexHandoff(WindowMedia &media)
 {
-    if (m_pendingIndexHandoff.empty() || (activeMedia().audio->hasAudio() && !activeMedia().audio->loaded()))
+    if (media.pendingIndexHandoff.empty() || (media.audio->hasAudio() && !media.audio->loaded()))
         return;
-    activeMedia().videoHelper->releaseIndexHandoff(std::exchange(m_pendingIndexHandoff, std::string()));
+    media.videoHelper->releaseIndexHandoff(std::exchange(media.pendingIndexHandoff, std::string()));
 }
 
 void Application::trimAudioCache()
@@ -2381,6 +2393,8 @@ void Application::refreshWindowViews(int shellWindow)
     v.nodeEffects->setEditable(tab && m_workspace.checkContentCommand(*tab).has_value());
     v.nodeEffects->refresh();
     v.kanjiTimer->documentEdited();
+    if (tab != v.media->videoDocument)
+        switchTabMedia(*v.media, tab);
     v.visualTools->refresh();
     v.statusBar->setTimecodesFile(tabTimecodes(tab));
     v.statusBar->refresh();
@@ -2388,12 +2402,12 @@ void Application::refreshWindowViews(int shellWindow)
 
 bool Application::showVideoSubtitles()
 {
-    const auto target = m_videoDocument;
+    const auto target = activeMedia().videoDocument;
     auto *session = target ? m_files->session(*target) : nullptr;
     if (!session)
         return false;
     if (setVideoFonts(target))
-        m_videoScript.clear();
+        activeMedia().videoScript.clear();
     bool edited = false;
     std::optional<core::Document> draft;
     if (!m_settings->boolean("video.disableLiveEditing") && activeViews().editorDocument == target && activeMedia().video->hasVideo())
@@ -2410,18 +2424,18 @@ bool Application::showVideoSubtitles()
         const std::int64_t ms = at ? at->microseconds() / 1000 : 0;
         templated = templateEditor().videoDocument(draft ? *draft : session->document(), ms, video.playing());
         const auto window = templateEditor().videoWindow(ms, video.playing());
-        m_templateWindow = std::pair(window.fromMs, window.toMs);
+        activeMedia().templateWindow = std::pair(window.fromMs, window.toMs);
     }
-    if (draft || templated || m_videoShowsDraft || m_videoShowsTemplate || session->revision() != m_videoRevision) {
-        if (session->revision() != m_videoRevision)
-            edited = m_videoRevision.has_value();
-        m_videoRevision = session->revision();
-        m_videoShowsDraft = draft.has_value();
-        m_videoShowsTemplate = templated.has_value();
+    if (draft || templated || activeMedia().videoShowsDraft || activeMedia().videoShowsTemplate || session->revision() != activeMedia().videoRevision) {
+        if (session->revision() != activeMedia().videoRevision)
+            edited = activeMedia().videoRevision.has_value();
+        activeMedia().videoRevision = session->revision();
+        activeMedia().videoShowsDraft = draft.has_value();
+        activeMedia().videoShowsTemplate = templated.has_value();
         auto script = visualTools().subtitles(templated ? *templated : draft ? *draft : session->document(),
                                                [this](const core::Document &d) { return rendererScript(d); });
-        if (script != m_videoScript) {
-            m_videoScript = script;
+        if (script != activeMedia().videoScript) {
+            activeMedia().videoScript = script;
             activeMedia().video->session().setSubtitles(std::move(script));
         }
     }
@@ -2463,13 +2477,13 @@ bool Application::setVideoFonts(std::optional<application::DocumentId> document)
     const auto same = [](const application::FontLease &a, const application::FontLease &b) {
         return a.family == b.family && a.bytes == b.bytes;
     };
-    if (std::ranges::equal(fonts, m_videoFonts, same))
+    if (std::ranges::equal(fonts, activeMedia().videoFonts, same))
         return false;
-    m_videoFonts = fonts;
+    activeMedia().videoFonts = fonts;
     if (m_mainViews.visualTools) {
         decltype(m_leasedFontNames) read;
         std::vector<std::string> names;
-        for (const auto &font : m_videoFonts) {
+        for (const auto &font : activeMedia().videoFonts) {
             if (!font.bytes)
                 continue;
             const auto known = std::ranges::find(m_leasedFontNames, font.bytes, &decltype(read)::value_type::first);
@@ -2485,6 +2499,22 @@ bool Application::setVideoFonts(std::optional<application::DocumentId> document)
     return true;
 }
 
+void Application::switchTabMedia(WindowMedia &media, std::optional<application::DocumentId> tab)
+{
+    const auto previous = media.videoDocument;
+    leaveTabMedia(media, previous);
+    media.videoDocument = tab;
+    media.videoRevision.reset();
+    media.videoScript.clear();
+    media.videoLine.reset();
+    if (!media.keepVideoOnEnter) {
+        media.video->resetForTarget();
+        if (&media == &activeMedia())
+            showAssociationOffer();
+    }
+    enterTabMedia(media, previous, tab);
+}
+
 void Application::refreshVideo()
 {
     if (m_holdVideoRefresh)
@@ -2494,19 +2524,8 @@ void Application::refreshVideo()
     const auto left = std::exchange(m_leftEditedLine, std::nullopt);
     const auto target = m_workspace.editingTarget();
     auto *session = target ? m_files->session(*target) : nullptr;
-    if (target != m_videoDocument) {
-        const auto previous = m_videoDocument;
-        leaveTabMedia(previous);
-        m_videoDocument = target;
-        m_videoRevision.reset();
-        m_videoScript.clear();
-        m_videoLine.reset();
-        if (!m_keepVideoOnEnter) {
-            activeMedia().video->resetForTarget();
-            showAssociationOffer();
-        }
-        enterTabMedia(previous, target);
-    }
+    if (target != activeMedia().videoDocument)
+        switchTabMedia(activeMedia(), target);
     visualTools().refresh();
     if (!session)
         return;
@@ -2524,9 +2543,9 @@ void Application::refreshVideo()
                 lineTimes = std::pair(line->start.value, line->end.value);
     activeMedia().video->setActiveLineTimes(lineTimes);
     bool rowChanged = false;
-    if (active && active != m_videoLine) {
-        rowChanged = m_videoLine.has_value();
-        m_videoLine = active;
+    if (active && active != activeMedia().videoLine) {
+        rowChanged = activeMedia().videoLine.has_value();
+        activeMedia().videoLine = active;
     }
     followActiveLine(rowChanged, edited, left);
 }
@@ -2804,7 +2823,7 @@ void Application::finishClose()
                 showAssociationOffer();
             } else if (!videoAfter.isEmpty()) {
                 if (fullscreenAfter)
-                    m_videoFullscreen->enterWhenShown(videoAfter);
+                    videoFullscreen().enterWhenShown(videoAfter);
                 activeMedia().video->openVideo(videoAfter);
             }
             QTimer::singleShot(0, this, [this] { checkResolution(); });
@@ -3252,9 +3271,9 @@ bool Application::reloadTarget()
         selectLegacyActiveLine(*session);
     recordFileTime(*target);
     ++m_reloads;
-    m_videoRevision.reset();
-    m_videoScript.clear();
-    m_videoLine.reset();
+    activeMedia().videoRevision.reset();
+    activeMedia().videoScript.clear();
+    activeMedia().videoLine.reset();
     m_comparedRevisions.erase(target->value);
     refreshComparison();
     editor().reloadFromSession();
@@ -3901,7 +3920,7 @@ void Application::applyMatroska(application::MatroskaLoaded loaded, bool newTab)
         media.video = QDir::toNativeSeparators(readyVideo(activeMedia().video->session()));
         media.position = targetVideoPosition();
         media.audio = activeMedia().audio->hasAudio() ? QDir::toNativeSeparators(activeMedia().audio->path()) : QString();
-        m_keepVideoOnEnter = !media.video.isEmpty();
+        activeMedia().keepVideoOnEnter = !media.video.isEmpty();
         m_tabMedia[id.value] = media;
     }
     m_workspace.add(id, QFileInfo(subsPath).fileName().toStdString());
@@ -4174,7 +4193,7 @@ QString Application::openKeyframes(const QUrl &file)
     if (video.state() != application::VideoSession::State::Ready) {
         if (QString problem; keyframesWithoutVideo(path, problem))
             return problem;
-        m_pendingKeyframes = path;
+        activeMedia().pendingKeyframes = path;
         return {};
     }
     QFile f(path);
@@ -6180,9 +6199,16 @@ QQuickWindow *Application::openShellWindow(QQmlEngine &engine)
                 &ui::WorkspaceLayoutController::reloadSavedLayouts);
     }
     m_shellWindows[id].layout = std::move(layout);
+    auto media = std::make_unique<WindowMedia>();
+    media->window = id;
+    makeVideo(*media);
+    makeAudio(*media);
     auto views = std::make_unique<WindowViews>();
+    views->media = media.get();
     makeViews(*views, id);
+    m_shellWindows[id].media = std::move(media);
     m_shellWindows[id].views = std::move(views);
+    wireMedia(*m_shellWindows[id].media);
     QQmlComponent component(&engine, QStringLiteral("Hikari.Ui"), QStringLiteral("Main"));
     auto *window = qobject_cast<QQuickWindow *>(component.createWithInitialProperties(qmlProperties(id)));
     if (!window) {
@@ -6391,6 +6417,7 @@ void Application::hideFirstWindow()
 {
     if (!m_firstWindow || m_firstWindowHidden)
         return;
+    stopMedia(*m_mainMedia);
     leaveShellWindow(0);
     m_firstWindowHidden = true;
     m_closeApproved.reset();
@@ -6446,6 +6473,7 @@ void Application::forgetShellWindow(int shellWindow)
     keepProjectTabs(shellWindow);
     m_projects->forget(shellWindow);
     found->second.closing = true;
+    stopMedia(media(shellWindow));
     leaveShellWindow(shellWindow);
     closeShellWindowDocuments(shellWindow);
     connect(window, &QObject::destroyed, this, [this, shellWindow] {
@@ -6462,8 +6490,8 @@ QVariantMap Application::qmlProperties(int shellWindow)
     return {{QStringLiteral("shellWindow"), shellWindow},
             {QStringLiteral("shell"), QVariant::fromValue(views(shellWindow).shell.get())},
             {QStringLiteral("editor"), QVariant::fromValue(views(shellWindow).editor.get())},
-            {QStringLiteral("video"), QVariant::fromValue(activeMedia().video.get())},
-            {QStringLiteral("audio"), QVariant::fromValue(activeMedia().audio.get())},
+            {QStringLiteral("video"), QVariant::fromValue(media(shellWindow).video.get())},
+            {QStringLiteral("audio"), QVariant::fromValue(media(shellWindow).audio.get())},
             {QStringLiteral("automation"), QVariant::fromValue(static_cast<QObject *>(m_automation.get()))},
             {QStringLiteral("automationManager"), QVariant::fromValue(m_automation->managerController())},
             {QStringLiteral("templateEditor"), QVariant::fromValue(views(shellWindow).templateEditor.get())},
@@ -6480,7 +6508,7 @@ QVariantMap Application::qmlProperties(int shellWindow)
             {QStringLiteral("visualTools"), QVariant::fromValue(views(shellWindow).visualTools.get())},
             {QStringLiteral("videoView"), QVariant::fromValue(views(shellWindow).videoView.get())},
             {QStringLiteral("statusBar"), QVariant::fromValue(views(shellWindow).statusBar.get())},
-            {QStringLiteral("videoFullscreen"), QVariant::fromValue(m_videoFullscreen.get())},
+            {QStringLiteral("videoFullscreen"), QVariant::fromValue(views(shellWindow).fullscreen.get())},
             {QStringLiteral("automationHotkeys"), QVariant::fromValue(static_cast<QObject *>(m_automationHotkeys.get()))},
             {QStringLiteral("settingsImport"), QVariant::fromValue(static_cast<QObject *>(m_settingsImport.get()))},
             {QStringLiteral("hotkeys"), QVariant::fromValue(static_cast<QObject *>(m_hotkeys.get()))},
@@ -6566,16 +6594,16 @@ void Application::settingChanged(const QString &id)
     else if (id == QLatin1String("video.subtitleProvider") &&
              m_renderer.select(m_settings->text("video.subtitleProvider").toStdString())) {
         m_fontCollector->setDisplayRenderer(QString::fromStdString(m_renderer.provider()));
-        m_videoRevision.reset();
-        m_videoScript.clear();
+        activeMedia().videoRevision.reset();
+        activeMedia().videoScript.clear();
         refreshVideo();
         applySubtitlesAt();
     } else if (id == QLatin1String("video.previewSubtitlesAt")) {
         applySubtitlesAt();
     } else if (id == QLatin1String("video.renderCost")) {
         m_renderer.countCost(m_settings->boolean("video.renderCost"));
-        m_videoRevision.reset();
-        m_videoScript.clear();
+        activeMedia().videoRevision.reset();
+        activeMedia().videoScript.clear();
         refreshVideo();
     }
 }

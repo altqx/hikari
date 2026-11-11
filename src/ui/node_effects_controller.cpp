@@ -37,6 +37,27 @@ QString qstr(std::u8string_view s)
     return QString::fromUtf8(reinterpret_cast<const char *>(s.data()), qsizetype(s.size()));
 }
 
+struct NodeExampleText {
+    const char *example, *title, *description;
+};
+
+constexpr NodeExampleText kExamples[] = {
+    {"gradient-strips", QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Gradient strips"),
+     QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Each line cut into eight strips, coloured from pink to blue.")},
+    {"ring-of-copies", QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Ring of copies"),
+     QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Eight copies of each syllable on a circle around it, each turned to its place, while it is sung.")},
+    {"particle-burst", QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Particle burst"),
+     QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Twelve copies of each syllable fly out to random places around it and fade.")},
+};
+
+const NodeExampleText *exampleText(std::string_view example)
+{
+    if (example.empty())
+        return nullptr;
+    const auto it = std::ranges::find_if(kExamples, [&](const NodeExampleText &e) { return e.example == example; });
+    return it == std::end(kExamples) ? nullptr : &*it;
+}
+
 std::string utf8(const QString &s)
 {
     return s.toStdString();
@@ -760,6 +781,14 @@ QVariantList NodeEffectsController::presets()
     const QVariantList templates = TemplateEditorController::presets();
     const auto graphs = application::nodeGraphPresets();
     for (int i = 0; i < int(graphs.size()); ++i) {
+        if (const NodeExampleText *example = exampleText(graphs[std::size_t(i)].example)) {
+            out << QVariantMap{
+                {QStringLiteral("index"), i},
+                {QStringLiteral("title"), QCoreApplication::translate("HikariSub.NodeEffects", example->title)},
+                {QStringLiteral("description"),
+                 QCoreApplication::translate("HikariSub.NodeEffects", example->description)}};
+            continue;
+        }
         const QString file = qstr(graphs[std::size_t(i)].templateFile);
         for (const QVariant &t : templates)
             if (t.toMap().value(QStringLiteral("file")).toString() == file)

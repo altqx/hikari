@@ -986,7 +986,7 @@ Pane {
                 spacing: 4
                 CheckBox {
                     objectName: "enabled_" + scriptItem.row.index
-                    visible: !scriptItem.script.inDocument
+                    visible: !scriptItem.script.inDocument && !scriptItem.script.builtIn
                     checked: scriptItem.script.enabled ?? true
                     enabled: scriptItem.state !== "running" && scriptItem.state !== "loading"
                     padding: 0
@@ -1004,6 +1004,13 @@ Pane {
                     HoverHandler { id: nameHover }
                     ToolTip.visible: nameHover.hovered && (truncated || (scriptItem.script.description ?? "") !== "")
                     ToolTip.text: (scriptItem.script.description ?? "") !== "" ? scriptItem.script.description : text
+                }
+                Label {
+                    objectName: "builtIn_" + scriptItem.row.index
+                    visible: scriptItem.script.builtIn ?? false
+                    text: qsTr("Built-in")
+                    color: Theme.muted
+                    font.pixelSize: Math.max(10, Qt.application.font.pixelSize - 2)
                 }
                 Label {
                     objectName: "state_" + scriptItem.row.index
@@ -1553,7 +1560,7 @@ Pane {
             objectName: "scriptMenuEdit"
             iconRole: "edit"
             text: qsTr("Edit script")
-            enabled: root.automation !== null
+            enabled: root.automation !== null && scriptMenu.script !== null && !scriptMenu.script.builtIn
             onTriggered: root.automation.editScript(scriptMenu.script.path)
         }
         MenuSeparator {}
@@ -1562,7 +1569,7 @@ Pane {
             iconRole: "unload"
             text: qsTr("Unload")
             enabled: scriptMenu.script !== null && scriptMenu.script.state !== "running"
-                     && scriptMenu.script.state !== "disabled"
+                     && scriptMenu.script.state !== "disabled" && !scriptMenu.script.builtIn
             onTriggered: root.controller.unload(scriptMenu.script.path)
         }
     }

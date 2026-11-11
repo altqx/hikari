@@ -1,4 +1,5 @@
 #include "automation_manager_controller.h"
+#include "hikari/application/automation_registry.h"
 #include "hikari/backends/automation_manager.h"
 #include "menu_rows.h"
 
@@ -107,6 +108,36 @@ private slots:
                           options->mapToScene(QPointF(options->width() / 2, options->height() / 2)).toPoint());
         QTRY_VERIFY(scriptMenu->property("opened").toBool());
         QCOMPARE(menu_rows::shown(scriptMenu), scriptRows);
+        QVERIFY(QMetaObject::invokeMethod(scriptMenu, "close"));
+    }
+
+    void theBuiltinTemplaterReloadsButIsNeitherEditedNorUnloaded()
+    {
+        const QString builtin = QString::fromUtf8(hikari::application::kBuiltinKaraokeTemplater);
+        controller->setAutoload([] { return QStringList(); }, [](const QString &, bool) {});
+        controller->load(builtin);
+        QTRY_COMPARE_WITH_TIMEOUT(scriptState(0), QStringLiteral("ready"), 30'000);
+        const auto script = controller->scripts().value(0).toMap();
+        QVERIFY(script.value("builtIn").toBool());
+        QCOMPARE(script.value("name").toString(), QStringLiteral("Karaoke Templater"));
+        QCOMPARE(script.value("fileName").toString(), QStringLiteral("kara-templater.lua"));
+        QCOMPARE(script.value("macros").toList().value(1).toMap().value("alias").toString(),
+                 QStringLiteral("kara-templater.lua:1"));
+        QVERIFY(QTest::qWaitForWindowExposed(view.get()));
+        QTRY_VERIFY(item(QStringLiteral("builtIn_0")));
+        QVERIFY(item(QStringLiteral("builtIn_0"))->property("visible").toBool());
+        QVERIFY(!item(QStringLiteral("enabled_0"))->property("visible").toBool());
+        QVERIFY(item(QStringLiteral("reload_0"))->property("visible").toBool());
+        auto *options = qobject_cast<QQuickItem *>(item(QStringLiteral("scriptMenu_0")));
+        QVERIFY(options);
+        QTest::mouseClick(view.get(), Qt::LeftButton, {},
+                          options->mapToScene(QPointF(options->width() / 2, options->height() / 2)).toPoint());
+        auto *scriptMenu = view->rootObject()->findChild<QObject *>(QStringLiteral("automationScriptMenu"));
+        QTRY_VERIFY(scriptMenu->property("opened").toBool());
+        const auto row = [&](const char *name) { return scriptMenu->findChild<QObject *>(QLatin1String(name)); };
+        QVERIFY(row("scriptMenuReload")->property("enabled").toBool());
+        QVERIFY(!row("scriptMenuEdit")->property("enabled").toBool());
+        QVERIFY(!row("scriptMenuUnload")->property("enabled").toBool());
         QVERIFY(QMetaObject::invokeMethod(scriptMenu, "close"));
     }
 

@@ -5,6 +5,8 @@
 
 #include <map>
 #include <set>
+#include <variant>
+#include <vector>
 
 namespace hikari::application {
 
@@ -237,45 +239,30 @@ std::expected<void, MacroApplyFailure> applyMacroResult(EditSession &session, co
         command.apply = [&](core::Document &doc) {
             if (headerChanged && !applyInfoAndStyles(doc, snapshot, result))
                 return false;
-            for (const auto &d : snapshot.dialogues)
-                if (!kept.contains(d.id) && !doc.removeLine(core::LineId{d.id}))
-                    return false;
-            std::optional<core::LineId> previous;
+            doc.removeLinesIf([&](const core::LineRecord &l) {
+                return before.contains(l.id.value) && !kept.contains(l.id.value);
+            });
+            std::map<std::uint64_t, const MacroDialogueLine *> edits;
+            std::vector<std::variant<core::LineId, core::LineRecord>> order;
+            std::set<std::uint64_t> placed;
             for (const auto &d : result.dialogues) {
-                const bool existing = d.id != 0 && kept.contains(d.id);
-                core::LineId id{d.id};
-                if (existing) {
-                    const auto *old = before[d.id];
-                    if (!sameFields(d, *old) && !doc.editLine(id, [&](core::LineRecord &l) { assign(l, d); }))
-                        return false;
-                    const auto lines = doc.lines();
-                    std::size_t at = 0, prevAt = 0;
-                    for (std::size_t k = 0; k < lines.size(); ++k) {
-                        if (lines[k]->id == id)
-                            at = k;
-                        if (previous && lines[k]->id == *previous)
-                            prevAt = k;
-                    }
-                    const bool inPlace = previous ? at == prevAt + 1 : at == 0;
-                    if (!inPlace) {
-                        const std::size_t target = previous ? prevAt + 1 : 0;
-                        const std::optional<core::LineId> before =
-                            target < lines.size() ? std::optional(lines[target]->id) : std::nullopt;
-                        if (!doc.moveLine(id, before))
-                            return false;
-                    }
+                if (kept.contains(d.id) && placed.insert(d.id).second) {
+                    if (!sameFields(d, *before[d.id]))
+                        edits[d.id] = &d;
+                    order.emplace_back(core::LineId{d.id});
                 } else {
-                    core::LineRecord fresh;
-                    assign(fresh, d);
-                    const auto newId = previous ? doc.insertLineAfter(*previous, fresh)
-                                                : (doc.lines().empty() ? doc.appendLine(fresh)
-                                                                       : doc.insertLineBefore(doc.lines().front()->id, fresh));
-                    if (!newId)
-                        return false;
-                    id = *newId;
+                    order.emplace_back(lineOfMacro(d));
                 }
-                previous = id;
             }
+            doc.editLines([&](core::LineRecord &l) {
+                const auto edit = edits.find(l.id.value);
+                if (edit == edits.end())
+                    return false;
+                assign(l, *edit->second);
+                return true;
+            });
+            if (!doc.arrangeLines(std::move(order)))
+                return false;
             core::markGeneratedLines(doc);
             return true;
         };

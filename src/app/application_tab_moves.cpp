@@ -43,6 +43,10 @@ bool Application::moveTab(qulonglong document, int shellWindow, int index)
         return true;
     }
     carryTabArrangement(id, from, shellWindow);
+    if (auto &source = media(from); source.videoDocument == id) {
+        source.video->pause();
+        leaveTabMedia(source, id);
+    }
     m_workspace.moveTab(id, shellWindow, at);
     showTabArrangement(from);
     refreshViews();

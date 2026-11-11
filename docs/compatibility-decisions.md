@@ -152,6 +152,30 @@ Grid › "Split lines into characters" and the node-effect `char` units split te
 
 The karaoke templater's `template char` splits a syllable by grapheme cluster (UAX #29, `unicode.graphemes`). A base character keeps its marks: `กิน` gives `กิ` and `น`, `น้ำ` stays one char, ำ is not decomposed, and a combining accent, an emoji ZWJ sequence or a flag is one char. Karaoke Templater 2.1.7 splits by code point, which puts each Thai mark on a Line of its own. A `code once` Line with `graphemes = false` splits as 2.1.7 does. Text without combining marks, joiners or surrogate pairs gives 2.1.7's output byte for byte, as the corpus shows. [TH1 #829](https://github.com/altqx/hikari/issues/829), owner decisions Q138–Q141.
 
+## TH5b-builtin-templater
+
+The Karaoke Templater is built in. The Lua helper runs it natively. Lua runs only the templates' `code` Lines and `!expressions!`. The Script Manager lists it as built-in: it can be reloaded, but not edited or unloaded. Its macros keep their names, and shortcuts still know them as `kara-templater.lua:0` and `:1`. `kara-templater.lua` is no longer bundled in Autoload; it stays in the tests as the oracle. A loaded script whose macro names are the built-in's is unloaded, and the Runs log says so once. The "Karaoke template" export filter isn't available, because HikariSub has no export filters. To generate the lines, run the "Apply karaoke template" macro. [TH5b #833](https://github.com/altqx/hikari/issues/833), owner decisions Q178 and Q179.
+
+## TH5b-line-template-order
+
+Named line templates run after the unnamed ones, in the order their names first appear. Unnamed line templates run in file order, as before. 3.2.2 took named templates from a Lua table with `pairs`, and LuaJIT seeds its string hash at random, so their order could change from one run to the next. [TH5b #833](https://github.com/altqx/hikari/issues/833).
+
+## TH5b-no-leaked-globals
+
+Evaluating an `!expression!` no longer sets the globals `f` and `err`. 3.2.2 compiled each expression into those two globals, so a template or `code` Line could read the last compiled expression's function or error. [TH5b #833](https://github.com/altqx/hikari/issues/833).
+
+## TH5b-no-trace-lines
+
+The templater no longer writes its level 5 trace lines ("Applying template to one syllable with text: …" and similar), even at trace level 5. Problems are still logged at levels 2 and 3 as before. [TH5b #833](https://github.com/altqx/hikari/issues/833).
+
+## TH5b-unmeasured-text
+
+When the host cannot measure a karaoke Line's text, the templater logs "could not measure text in the Style …" as a problem, counts that text as 0 wide and goes on. 3.2.2 stopped the run with a Lua error. [TH5b #833](https://github.com/altqx/hikari/issues/833).
+
+## TH5b-native-layout
+
+The templater lays karaoke Lines out from the Document's Styles as they were when the run started. A `code` Line that changes a Style table (`line.styleref`, the `styles` table) or replaces `aegisub.text_extents` no longer changes where later Lines' syllables go. `char` templates still measure each character with `aegisub.text_extents`, as 3.2.2 did. [TH5b #833](https://github.com/altqx/hikari/issues/833).
+
 ## 892-script-info-on-save
 
 Every save but an autosave writes the Script Info values switched on in the `scriptProperties.*` settings (Title, Original Script, Original Translation, Original Editing, Original Timing, Script Updated By) into the file, as legacy's `SubsGrid::SwapAssProperties` does. They come from the window's settings, so a Project's values win over the user's. With `scriptProperties.askForChange` on, a dialog first lists each value that would change, old and new, with a check box. OK writes the checked values, Skip saves without any of them, and Cancel stops the save. In legacy the check boxes are the switches themselves and OK stores them in the settings; here they apply to that one save. Legacy's third button, "Disable confirmation", turned the question off for good and then saved without the values; Skip keeps the question on. The values are one undo step, "Changing the subtitle header", and it stays when the save fails. [#892](https://github.com/altqx/hikari/issues/892), owner decision Q234 2026-11-11, refined the same day.

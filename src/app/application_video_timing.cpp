@@ -152,10 +152,10 @@ void Application::followGridPress(std::optional<core::LineId> before, core::Line
 void Application::trackVideoFollow(WindowMedia &media)
 {
     auto last = std::make_shared<VideoSession::State>(VideoSession::State::Closed);
-    connect(media.video.get(), &ui::VideoController::changed, this, [this, last] {
-        auto &video = activeMedia().video->session();
+    connect(media.video.get(), &ui::VideoController::changed, this, [this, &media, last] {
+        auto &video = media.video->session();
         const auto state = std::exchange(*last, video.state());
-        if (video.state() != VideoSession::State::Opening || state == VideoSession::State::Opening)
+        if (&media != &activeMedia() || video.state() != VideoSession::State::Opening || state == VideoSession::State::Opening)
             return;
         if (!m_settings->boolean("video.openAtActiveLine") || targetUntitled())
             return;
@@ -304,13 +304,13 @@ bool Application::selectVisibleLineAfterFullScreen()
 
 bool Application::openEditorFromFullScreen()
 {
-    if (!m_videoFullscreen->active())
+    if (!videoFullscreen().active())
         return false;
     if (activeMedia().video->playing())
         activeMedia().video->pause();
     if (!targetUntitled())
         selectLineFromVideo();
-    return m_videoFullscreen->leave();
+    return videoFullscreen().leave();
 }
 
 bool Application::centerTimesInFrames()
