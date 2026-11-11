@@ -1944,6 +1944,12 @@ void Application::makeNodeEffects(WindowViews &v, int shellWindow)
     });
     effects->shareTrustWith(v.templateEditor.get());
     effects->setLuaNodes([this] { return &luaNodes(); });
+    effects->setAudio([this]() -> std::optional<const application::DisplayAudio *> {
+        ui::AudioController *audio = activeMedia().audio.get();
+        if (!audio || !audio->box().isOpen())
+            return std::nullopt;
+        return audio->box().audio();
+    });
 }
 
 void Application::makeKanjiTimer(WindowViews &v, int shellWindow)

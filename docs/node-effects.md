@@ -60,6 +60,7 @@ Number, Text, Colour, Alpha, Time, Point, Tags, Drawing, Bool and Units.
 | time | `retime` (the templater's ten modes), `stagger` |
 | tags | `tag` (one override tag), `move`, `fade`, `transform` |
 | colours | `gradient` |
+| audio | `peaks` (the audio's level over a unit's span) |
 | drawings | `shape` |
 | text | `join` (one piece per unit, e.g. `{\kf$kdur}` and the syllable) |
 | output | `emit` (writes one Line per element) |
@@ -83,6 +84,12 @@ Number, Text, Colour, Alpha, Time, Point, Tags, Drawing, Bool and Units.
 - `particles` spreads `count` particles at random over a `rectangle` or an `ellipse` `width` × `height` centred on the unit. Each gives its `offset`, its `position` and `random`, a number from 0 to 1 of its own. The particles draw from the graph's seed as Random does, with the node's `seed` and the particle's place, so the same graph, seed and Line give the same particles.
 
 Offsets and angles are rounded to thousandths, so Linux and Windows write the same numbers.
+
+**Audio peaks.** `audio.peaks` gives the level of the Document's audio over the unit's span, or from `start` to `end` (absolute ms). It reads the audio as the Hikari API's `audio.peaks` does, through `application::audioPeaks` with one bucket: from the peak table once the audio has loaded, sample by sample before. `level` is the loudest sample from 0 to 1; `low` and `high` are the lowest and highest from -1 to 1.
+
+- With no audio open, or while it opens, it gives 0 and the run has a problem at the node ("has no audio to read, so it gives 0").
+- As with any run that has a problem, Apply refuses it and the preview keeps the last run that worked.
+- The cache keys a graph with this node on the audio too, so other audio runs it again.
 
 **Groups.** A group holds a graph of its own.
 
@@ -208,7 +215,7 @@ NE2 ([#424](https://github.com/altqx/hikari/issues/424)) edits a Document's grap
 - **Preview.** While the mode is shown, the graph runs on the current source Line on every edit, with NE1's cache. The video draws that Line's output in place of its generated Lines, with the badge "Preview · line N · not applied"; Source lines has the eye and Loop the line. A graph with problems keeps the last run that worked, dimmed.
 - **Lua trust** is the Template editor's choice for the open Document: trusting the file's Lua in either one covers both.
 - **Presets.** "From a preset" lists all ten KE3 presets ([karaoke presets](karaoke-presets.md)) as graphs, under their Template-editor names. Each graph writes the same Lines as its template, byte for byte (`hikari_application_node_effects_tests`), and uses only catalogue nodes, without Lua. Colour sweep, Glow and Echo have two emits, one per template Layer.
-- **Examples.** After the presets, "From a preset" lists one example per node that no template can express: "Gradient strips" (`clip_gradient`), "Ring of copies" (`array` on a circle) and "Particle burst" (`particles`). Each validates and gives the same Lines on every run.
+- **Examples.** After the presets, "From a preset" lists one example per node that no template can express: "Gradient strips" (`clip_gradient`), "Ring of copies" (`array` on a circle), "Particle burst" (`particles`) and "Audio pulse" (`audio.peaks`, which needs audio open). Each validates and gives the same Lines on every run.
 
 ## On the Hikari API
 

@@ -53,7 +53,7 @@ NodeColour nodeColour(karaoke_layout::StyleColour c)
 
 enum class Kind {
     ForEach, Repeat, Frames, ClipGradient, Array, Particles, Info, Number, Text, Colour, Point, Choose, Calculate, Compare, Progress, Random,
-    Retime, Stagger, Tag, Move, Fade, Transform, Gradient, Shape, Join, Emit, Lua
+    Retime, Stagger, Tag, Move, Fade, Transform, Gradient, Shape, AudioPeaks, Join, Emit, Lua
 };
 
 const std::map<std::string, Kind, std::less<>> kKinds{
@@ -65,6 +65,7 @@ const std::map<std::string, Kind, std::less<>> kKinds{
     {"math.random", Kind::Random},     {"time.retime", Kind::Retime},      {"time.stagger", Kind::Stagger},
     {"tags.tag", Kind::Tag},           {"tags.move", Kind::Move},          {"tags.fade", Kind::Fade},
     {"tags.transform", Kind::Transform}, {"colours.gradient", Kind::Gradient}, {"drawings.shape", Kind::Shape},
+    {"audio.peaks", Kind::AudioPeaks},
     {"text.join", Kind::Join},         {"output.emit", Kind::Emit},        {"lua.code", Kind::Lua}};
 
 enum class Level { Constant, Line, Element };
@@ -301,7 +302,7 @@ struct Compiled {
     std::vector<int> emits;
     std::vector<int> lua;
     std::vector<std::vector<int>> emitLua;
-    bool chars = false, furi = false;
+    bool chars = false, furi = false, audio = false;
     std::vector<std::string> emitSignature;
 };
 
@@ -356,6 +357,8 @@ Compiled compile(const NodeGraph &flat)
             c.furi = c.furi || n.mode == "furi";
             break;
         case Kind::Frames:
+        case Kind::AudioPeaks:
+            c.audio = c.audio || n.kind == Kind::AudioPeaks;
             if (const Json v = nodeField(g, "start"); v.isNumber())
                 n.start = v.asNumber();
             if (const Json v = nodeField(g, "end"); v.isNumber())
@@ -453,6 +456,7 @@ Compiled compile(const NodeGraph &flat)
         case Kind::Array:
         case Kind::Particles:
         case Kind::Info:
+        case Kind::AudioPeaks:
         case Kind::Retime:
         case Kind::Lua:
             l = Level::Element;
@@ -536,9 +540,10 @@ struct Generated {
 class Evaluator {
 public:
     Evaluator(const Compiled &c, const karaoke_layout::Line &line, std::u8string_view name, std::int64_t seed,
-              LuaNodePort *lua, std::atomic<bool> &luaStopped, Problems &problems, NodeValueTrace *trace)
-        : m_c(c), m_line(line), m_name(name), m_seed(seed), m_lua(lua), m_luaStopped(luaStopped), m_problems(problems),
-          m_trace(trace),
+              const NodeEffectOptions &options, std::atomic<bool> &luaStopped, Problems &problems,
+              NodeValueTrace *trace)
+        : m_c(c), m_line(line), m_name(name), m_seed(seed), m_lua(options.lua), m_audio(options.audio),
+          m_luaStopped(luaStopped), m_problems(problems), m_trace(trace),
           m_lineMemo(static_cast<std::size_t>(c.slots))
     {
     }
@@ -863,6 +868,7 @@ private:
     NodeValue info(std::string_view port, const Element &e) const;
     NodeValue join(int node, const Element &e);
     NodeValue lua(int node, int port, const Element &e, Memo &memo);
+    NodeValue audioPeak(int node, int port, const Element &e, Memo &memo);
     bool luaBatch(int node, const std::vector<Element> &elements, std::vector<Memo> &memos);
 
     const Compiled &m_c;
@@ -870,6 +876,7 @@ private:
     std::u8string_view m_name;
     std::int64_t m_seed;
     LuaNodePort *m_lua;
+    std::optional<const DisplayAudio *> m_audio;
     std::atomic<bool> &m_luaStopped;
     Problems &m_problems;
     NodeValueTrace *m_trace;
@@ -1142,6 +1149,8 @@ NodeValue Evaluator::compute(int node, int port, const Element &e, Memo &memo)
         return gradientAt(n.list, num("progress"));
     case Kind::Shape:
         return NodeDrawing{n.text, static_cast<int>(n.number)};
+    case Kind::AudioPeaks:
+        return audioPeak(node, port, e, memo);
     case Kind::Join:
         return join(node, e);
     case Kind::Lua:
@@ -1150,6 +1159,33 @@ NodeValue Evaluator::compute(int node, int port, const Element &e, Memo &memo)
         break;
     }
     return 0.0;
+}
+
+NodeValue Evaluator::audioPeak(int node, int port, const Element &e, Memo &memo)
+{
+    const CNode &n = m_c.nodes[node];
+    if (!m_audio) {
+        m_problems.add(n.graph->id, "has no audio to read, so it gives 0");
+        return 0.0;
+    }
+    if (!*m_audio || (*m_audio)->sampleRate() <= 0) {
+        m_problems.add(n.graph->id, "waits for the audio to open, so it gives 0");
+        return 0.0;
+    }
+    const Unit &u = unitOf(e);
+    const double lineStart = static_cast<double>(m_line.macro.startMs);
+    const double start = wired(node, "start") || n.start ? number(node, "start", e, memo) : lineStart + u.relStart;
+    const double end = wired(node, "end") || n.end ? number(node, "end", e, memo) : lineStart + u.relEnd;
+    if (!std::isfinite(start) || !std::isfinite(end) || end <= start)
+        return 0.0;
+    const auto peaks = audioPeaks(**m_audio, static_cast<std::int64_t>(std::max(0.0, start)),
+                                  static_cast<std::int64_t>(std::max(1.0, end)), 1);
+    if (!peaks) {
+        m_problems.add(n.graph->id, "reads a span too long while the audio is still loading, so it gives 0");
+        return 0.0;
+    }
+    const double low = peaks->min.front() / 32768.0, high = peaks->max.front() / 32768.0;
+    return port == 0 ? std::max(std::fabs(low), std::fabs(high)) : port == 1 ? low : high;
 }
 
 NodeValue Evaluator::lua(int node, int port, const Element &e, Memo &memo)
@@ -1259,10 +1295,22 @@ struct LineResult {
     std::vector<NodeEffectProblem> problems;
 };
 
-std::string cacheKey(const Compiled &c, int emitRank, const karaoke_layout::Line &line, std::u8string_view name)
+std::string audioState(const std::optional<const DisplayAudio *> &audio)
+{
+    if (!audio)
+        return "none";
+    if (!*audio)
+        return "opening";
+    const DisplayAudio &a = **audio;
+    return std::to_string(reinterpret_cast<std::uintptr_t>(&a)) + ' ' + std::to_string(a.sampleRate()) + ' ' +
+           std::to_string(a.sampleCount()) + ' ' + std::to_string(a.decoded()) + (a.finished() ? " done" : "");
+}
+
+std::string cacheKey(const Compiled &c, int emitRank, const karaoke_layout::Line &line, std::u8string_view name,
+                     const std::string &audio)
 {
     return narrow(name) + '\x1e' + std::to_string(c.flat.seed) + '\x1e' + c.emitSignature[emitRank] + '\x1e' +
-           line.signature;
+           line.signature + '\x1e' + audio;
 }
 
 }
@@ -1328,6 +1376,7 @@ NodeEffectRun runNodeEffect(const core::Document &document, std::u8string_view n
     std::vector<std::atomic<std::int64_t>> nanos(compiled.emits.size());
     std::vector<std::atomic<std::size_t>> counts(compiled.emits.size());
     std::atomic<bool> luaStopped = false;
+    const std::string audio = compiled.audio ? audioState(options.audio) : std::string();
     const auto work = [&](std::size_t i) {
         if (luaStopped)
             return;
@@ -1335,12 +1384,13 @@ NodeEffectRun runNodeEffect(const core::Document &document, std::u8string_view n
         Problems problems{r.problems, core::LineId{lines[i].macro.id}};
         for (const std::string &p : layoutProblems[i])
             problems.add({}, p);
-        Evaluator eval(compiled, lines[i], name, graph.seed, options.lua, luaStopped, problems,
+        Evaluator eval(compiled, lines[i], name, graph.seed, options, luaStopped, problems,
                        i == 0 ? options.trace : nullptr);
         for (std::size_t k = 0; k < compiled.emits.size() && !luaStopped; ++k) {
             const auto t0 = std::chrono::steady_clock::now();
             std::vector<Generated> out;
-            const std::string key = options.cache ? cacheKey(compiled, static_cast<int>(k), lines[i], name) : "";
+            const std::string key =
+                options.cache ? cacheKey(compiled, static_cast<int>(k), lines[i], name, audio) : "";
             bool cached = false;
             if (options.cache) {
                 auto &store = options.cache->store();

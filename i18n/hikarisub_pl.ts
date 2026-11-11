@@ -10117,6 +10117,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Dwanaście kopii każdej sylaby wylatuje w losowe miejsca wokół niej i znika.</translation>
     </message>
     <message>
+        <source>Audio pulse</source>
+        <translation>Puls dźwięku</translation>
+    </message>
+    <message>
+        <source>Each syllable grows with how loud the audio is while it is sung. Needs audio open.</source>
+        <translation>Każda sylaba rośnie wraz z głośnością dźwięku, gdy jest śpiewana. Wymaga otwartego dźwięku.</translation>
+    </message>
+    <message>
         <source>A graph name can’t be empty, start or end with a space, end with a dot, or hold “karaoke”, a comma, a double quote, a control character or any of / \ : * ? &lt; &gt; |.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -10376,6 +10384,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Audio peaks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The audio’s level over the unit’s span, or from start to end (absolute ms), read as the Hikari API’s audio.peaks reads it. level is the loudest sample from 0 to 1; low and high are the lowest and highest from -1 to 1. Without audio it gives 0 and the graph shows a problem.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Shape</source>
         <translation type="unfinished">Kształt</translation>
     </message>
@@ -10489,6 +10505,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>The area’s height.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The span’s start; null: the unit’s start.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The span’s end; null: the unit’s end.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -10694,6 +10718,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Colours</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio</source>
+        <translation type="unfinished">Audio</translation>
     </message>
     <message>
         <source>Drawings</source>
