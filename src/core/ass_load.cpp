@@ -646,7 +646,7 @@ bool Document::arrangeLines(std::vector<std::variant<LineId, LineRecord>> order)
         std::size_t prev = none;
         std::size_t next = none;
     };
-    std::vector<Node> nodes(1);
+    std::vector<Node> nodes{Node{}};
     const auto pushLinked = [&](Node node) {
         node.prev = nodes.size() - 1;
         nodes.back().next = nodes.size();
