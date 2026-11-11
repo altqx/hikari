@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>AI7c #886 — Manual-mode proposals</title>
+<style>
+[data-theme=dark]{--bg:#171B20;--panel:#20262D;--raised:#29313A;--field:#171D24;--text:#E8EDF2;--muted:#A5B1BD;--line:#414B57;--accent:#9CDBC9;--onaccent:#102C24;--select:#304C47;--focus:#E8EDF2;--danger:#FFADAD;--warning:#E0A030;--success:#4DBA4D;--disabled:#75818D;--addbg:rgba(77,186,77,.24);--addfg:#B8EBB8;--delbg:rgba(255,173,173,.18);--delfg:#FFC2C2;--userbg:#304C47}
+[data-theme=light]{--bg:#E5E9EC;--panel:#F9FAFB;--raised:#EDF0F3;--field:#FFFFFF;--text:#202832;--muted:#526170;--line:#AAB5BE;--accent:#145C4C;--onaccent:#FFFFFF;--select:#D6EBE4;--focus:#202832;--danger:#A51F31;--warning:#8A5A00;--success:#008000;--disabled:#74808B;--addbg:#D3EFD3;--addfg:#0B4F0B;--delbg:#F8D7DA;--delfg:#8B1A2B;--userbg:#D6EBE4}
+[data-theme=hcw]{--bg:#FFFFFF;--panel:#FFFFFF;--raised:#EBEBEB;--field:#FFFFFF;--text:#000000;--muted:#1A1A1A;--line:#000000;--accent:#0037B3;--onaccent:#FFFFFF;--select:#C9DAF8;--focus:#000000;--danger:#A00000;--warning:#6B4500;--success:#005A00;--disabled:#6E6E6E;--addbg:#CCEBCC;--addfg:#003300;--delbg:#F5CCCC;--delfg:#5C0000;--userbg:#C9DAF8}
+[data-theme=hcb]{--bg:#000000;--panel:#000000;--raised:#1A1A1A;--field:#000000;--text:#FFFFFF;--muted:#E6E6E6;--line:#FFFFFF;--accent:#FFE500;--onaccent:#000000;--select:#3D3500;--focus:#FFFFFF;--danger:#FF8080;--warning:#FFC266;--success:#80FF80;--disabled:#A6A6A6;--addbg:#003D00;--addfg:#B3FFB3;--delbg:#4D0000;--delfg:#FFB3B3;--userbg:#3D3500}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font:13px/1.35 "Inter","Noto Sans",sans-serif}
+.sheet{padding:16px;display:grid;grid-template-columns:repeat(4,440px);gap:16px;align-items:start}
+h1{font-size:15px;margin:0 0 4px;padding:16px 16px 0}
+.cap{font-size:12px;color:var(--muted);margin:0 0 6px}
+.panel{background:var(--panel);border:1px solid var(--line);width:440px}
+.head{display:flex;justify-content:space-between;padding:8px 12px;font-weight:600;border-bottom:1px solid var(--line)}
+.title{display:flex;align-items:center;gap:8px;padding:8px 12px;font-weight:600}
+.title .mode{margin-left:auto;font-weight:400;font-size:11px;border:1px solid var(--line);border-radius:9px;padding:0 7px;color:var(--muted)}
+.body{padding:0 12px 10px}
+.user{background:var(--userbg);margin:6px 0 6px 60px;padding:6px 9px;border-radius:4px}
+.say{margin:6px 0}
+.tool{color:var(--muted);margin:4px 0;display:flex;gap:6px;align-items:center}
+.card{border:1px solid var(--line);border-left:3px solid var(--accent);background:var(--raised);padding:8px 10px;margin:6px 0}
+.card.stale{border-left-color:var(--warning)}
+.card.done{border-left-color:var(--success);display:flex;align-items:center;gap:8px;font-weight:600}
+.card.done .link{margin-left:auto;font-weight:400;color:var(--accent)}
+.card.gone{border-left-color:var(--disabled);color:var(--muted)}
+.ch{display:flex;align-items:center;gap:7px;font-weight:600;margin-bottom:6px}
+.ch .doc{font-weight:400;color:var(--muted)}
+.ch .tag{margin-left:auto;font-weight:400;font-size:11px;border:1px solid var(--line);border-radius:9px;padding:0 7px}
+.rows{border:1px solid var(--line);background:var(--field)}
+.row{display:grid;grid-template-columns:34px 1fr;border-bottom:1px solid var(--line);padding:4px 6px;gap:6px}
+.row:last-child{border-bottom:0}
+.row .n{color:var(--muted);font-variant-numeric:tabular-nums}
+.row:hover,.row.f{outline:2px solid var(--focus);outline-offset:-2px}
+del{background:var(--delbg);color:var(--delfg)}
+ins{background:var(--addbg);color:var(--addfg);text-decoration:none}
+.k{font-size:11px;color:var(--muted)}
+.more{color:var(--accent);margin:5px 0 0;font-size:12px}
+.note{margin:7px 0 0;color:var(--muted)}
+.note.warn{color:var(--warning)}
+.btns{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+button{font:inherit;color:var(--text);background:var(--panel);border:1px solid var(--line);padding:3px 10px;border-radius:2px}
+button.pri{background:var(--accent);color:var(--onaccent);border-color:var(--accent)}
+button.f{outline:2px solid var(--focus);outline-offset:1px}
+button:disabled{color:var(--disabled)}
+.reply{margin-top:8px;display:flex;gap:6px}
+.reply input{flex:1;font:inherit;background:var(--field);color:var(--text);border:1px solid var(--focus);padding:3px 6px}
+.foot{display:flex;justify-content:space-between;color:var(--muted);padding:6px 12px;border-top:1px solid var(--line)}
+.composer{margin:0 12px 12px;border:1px solid var(--line);padding:6px 8px;background:var(--field)}
+.composer .ph{color:var(--muted)}
+.composer .bar{display:flex;gap:12px;margin-top:6px;color:var(--muted)}
+.menu{border:1px solid var(--line);background:var(--raised);margin:8px 12px;padding:4px 0}
+.mi{padding:5px 10px 5px 28px;position:relative}
+.mi b{display:block;font-weight:600}
+.mi span{color:var(--muted);font-size:12px}
+.mi.on::before{content:"✓";position:absolute;left:10px;top:5px}
+.mi.f{background:var(--select)}
+.num{display:inline-block;min-width:18px;height:18px;border-radius:9px;background:var(--accent);color:var(--onaccent);font-size:11px;text-align:center;line-height:18px;font-weight:700;margin-right:4px}
+</style>
+</head>
+<body>
+<div id="sheets"></div>
+<template id="sheet">
+<div class="sheet">
+  <div>
+    <p class="cap"><span class="num">1</span><span class="num">2</span><span class="num">3</span><span class="num">6</span><span class="num">7</span>A proposal waits in the timeline. Nothing is written yet; Apply has the focus.</p>
+    <div class="panel">
+      <div class="head">Agent<span>⋯</span></div>
+      <div class="title">⟲ Shorten the long lines<span class="mode">Manual</span></div>
+      <div class="body">
+        <div class="user">Shorten every line over 15 CPS, and drop the duplicate sign.</div>
+        <div class="tool">○ lines_find</div>
+        <div class="say">Three lines run over 15 CPS, and line 7 repeats line 6.</div>
+        <div class="card" role="group" aria-label="Proposal: Shortened, 4 lines">
+          <div class="ch">✎ Proposed: Shortened <span class="doc">· episode.ass</span><span class="tag">4 lines</span></div>
+          <div class="rows">
+            <div class="row"><span class="n">#2</span><span><del>A rather long first line that goes on</del> <ins>A long first line</ins></span></div>
+            <div class="row"><span class="n">#4</span><span><del>I really don’t think that we should go</del> <ins>I don’t think we should go</ins></span></div>
+            <div class="row"><span class="n">#5</span><span><del>Wait, wait — hold on a second!</del> <ins>Wait — hold on!</ins></span></div>
+            <div class="row"><span class="n">#7</span><span><del>{\an8}KEEP OUT</del> <span class="k">deleted</span></span></div>
+          </div>
+          <div class="note">Click a row to select its Line. Applying adds one undoable step to the review.</div>
+          <div class="btns">
+            <button class="pri f">Apply</button><button>Decline</button><button>Decline and tell the agent…</button>
+          </div>
+        </div>
+      </div>
+      <div class="foot"><span>1,204 tokens</span><span>$0.01 of $2.00</span></div>
+      <div class="composer"><div class="ph">Ask, or type @ to attach, / for commands</div><div class="bar"><span>＋</span><span>Fake model ⌄</span><span>Manual ⌄</span><span style="margin-left:auto">■</span></div></div>
+    </div>
+  </div>
+  <div>
+    <p class="cap"><span class="num">4</span>Decline and tell the agent: the reply goes back with the refusal.</p>
+    <div class="panel">
+      <div class="head">Agent<span>⋯</span></div>
+      <div class="title">⟲ Shorten the long lines<span class="mode">Manual</span></div>
+      <div class="body">
+        <div class="card">
+          <div class="ch">✎ Proposed: Shortened <span class="doc">· episode.ass</span><span class="tag">4 lines</span></div>
+          <div class="rows">
+            <div class="row"><span class="n">#2</span><span><del>A rather long first line that goes on</del> <ins>A long first line</ins></span></div>
+            <div class="row"><span class="n">#4</span><span><del>I really don’t think that we should go</del> <ins>I don’t think we should go</ins></span></div>
+            <div class="row"><span class="n">#5</span><span><del>Wait, wait — hold on a second!</del> <ins>Wait — hold on!</ins></span></div>
+          </div>
+          <div class="more">Show all 4 lines</div>
+          <div class="reply"><input value="Keep line 7, it’s on purpose. The rest is fine."><button class="pri">Decline</button></div>
+        </div>
+        <div class="card gone">✕ Declined: Shortened · nothing changed</div>
+        <div class="say">Understood. I’ll keep line 7 and shorten only lines 2, 4 and 5.</div>
+        <div class="tool">◌ document_apply</div>
+      </div>
+      <div class="foot"><span>1,388 tokens</span><span>$0.01 of $2.00</span></div>
+    </div>
+  </div>
+  <div>
+    <p class="cap"><span class="num">5</span>The subtitles changed while it waited: Apply is off; Ask again sends the agent back to read.</p>
+    <div class="panel">
+      <div class="head">Agent<span>⋯</span></div>
+      <div class="title">⟲ Shorten the long lines<span class="mode">Manual</span></div>
+      <div class="body">
+        <div class="card stale">
+          <div class="ch">⚠ Proposed: Shortened <span class="doc">· episode.ass</span><span class="tag">out of date</span></div>
+          <div class="rows">
+            <div class="row"><span class="n">#2</span><span><del>A rather long first line that goes on</del> <ins>A long first line</ins></span></div>
+            <div class="row"><span class="n">#4</span><span><del>I really don’t think that we should go</del> <ins>I don’t think we should go</ins></span></div>
+          </div>
+          <div class="more">Show all 3 lines</div>
+          <div class="note warn">The subtitles changed after the agent read them.</div>
+          <div class="btns"><button disabled>Apply</button><button class="pri f">Ask again</button><button>Decline</button></div>
+        </div>
+      </div>
+      <div class="foot"><span>1,388 tokens</span><span>$0.01 of $2.00</span></div>
+    </div>
+  </div>
+  <div>
+    <p class="cap"><span class="num">8</span><span class="num">9</span>After Apply the card becomes today’s change row. The mode menu says what Manual does.</p>
+    <div class="panel">
+      <div class="head">Agent<span>⋯</span></div>
+      <div class="title">⟲ Shorten the long lines<span class="mode">Manual</span></div>
+      <div class="body">
+        <div class="say">I shortened lines 2, 4 and 5.</div>
+        <div class="card done">⊘ Shortened · episode.ass<span class="link">≡ Review</span></div>
+      </div>
+      <div class="menu">
+        <div class="mi on f"><b>Manual</b><span>You approve each subtitle edit before it’s made, and every other change. Reading never asks.</span></div>
+        <div class="mi"><b>Auto</b><span>The judge model approves each action, or asks you. It sees the action and your messages, never your files.</span></div>
+        <div class="mi"><b>Full access</b><span>Nothing asks except the always-ask list. Edits apply at once and stay undoable.</span></div>
+      </div>
+      <div class="foot"><span>1,540 tokens</span><span>$0.01 of $2.00</span></div>
+      <div class="composer"><div class="ph">Ask, or type @ to attach, / for commands</div><div class="bar"><span>＋</span><span>Fake model ⌄</span><span>Manual ⌄</span><span style="margin-left:auto">➤</span></div></div>
+    </div>
+  </div>
+</div>
+</template>
+<script>
+const names={light:"Light",dark:"Dark",hcw:"High contrast white",hcb:"High contrast black"};
+const only=new URLSearchParams(location.search).get("theme");
+for(const t of only?[only]:Object.keys(names)){
+  const wrap=document.createElement("section");wrap.dataset.theme=t;wrap.style.background="var(--bg)";
+  wrap.innerHTML=`<h1>AI7c #886 · Manual-mode proposals · ${names[t]}</h1>`;
+  document.documentElement.dataset.theme=t;wrap.appendChild(document.getElementById("sheet").content.cloneNode(true));
+  document.getElementById("sheets").appendChild(wrap);
+}
+</script>
+</body>
+</html>
