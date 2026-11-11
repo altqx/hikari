@@ -51,7 +51,7 @@ Send report posts to PostHog's `/batch/`, through our own proxy at `https://i.hi
 
 With AI on, every report also carries the AI component's version and those of its Bun and provider libraries (the `ai_*` properties in [analytics.md](analytics.md)), and the report's System lines list them.
 
-**A rolled-back AI component** ([ADR 0031](adr/0031-the-ai-sidecar-updates-on-its-own.md)) sends a `crash_report` of kind `ai_component` at once, only with **Always send crash reports** on: the system, the settings summary, the `ai_*` versions now running, `ai_failed_version` and `ai_failure` (`initialize` or `crashed`). It has no Log lines and no note, and no window opens; Settings › AI › AI components says it was sent.
+**A rolled-back AI component** ([ADR 0031](adr/0031-the-ai-sidecar-updates-on-its-own.md)) sends a `crash_report` of kind `ai_component` at once, only with **Always send crash reports** on: the system, the settings summary, the windows, the `ai_*` versions now running, `ai_failed_version` and `ai_failure` (`initialize` or `crashed`). It has no Log lines and no note, and no window opens; Settings › AI › AI components says it was sent.
 
 Only release builds carry the PostHog key; without it the window has no Send report, and Open GitHub issue still works.
 
