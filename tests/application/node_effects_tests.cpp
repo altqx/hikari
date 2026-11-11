@@ -1,3 +1,4 @@
+#include "hikari/application/audio_display.h"
 #include "hikari/application/edit_session.h"
 #include "hikari/application/generated_runs.h"
 #include "hikari/application/karaoke_syllables.h"
@@ -823,11 +824,107 @@ TEST(NodeEffectsParticles, TheirValuesAreReadOnlyInsideTheirUnits)
                                          {"scale", "a", "reads spark.random outside its units"}}));
 }
 
+namespace {
+
+constexpr int kAudioRate = 25600;
+
+DisplayAudio loudAudio(int fromMs, int toMs, bool finished = true)
+{
+    DisplayAudio audio(kAudioRate, std::int64_t(kAudioRate) * 15);
+    std::vector<std::int16_t> samples(std::size_t(kAudioRate) * 15, 0);
+    for (std::size_t i = std::size_t(fromMs) * kAudioRate / 1000; i < std::size_t(toMs) * kAudioRate / 1000; ++i)
+        samples[i] = 16384;
+    audio.appendFrames(samples.data(), std::int64_t(samples.size()), 1);
+    if (finished)
+        audio.finish();
+    return audio;
+}
+
+std::string peakGraph(std::string_view fields = "{}")
+{
+    return R"({"format": 1, "nodes": [
+    {"id": "syl", "type": "units.for_each"},
+    {"id": "peak", "type": "audio.peaks", "fields": )" +
+           std::string(fields) + R"(},
+    {"id": "blur", "type": "tags.tag", "fields": {"tag": "blur"}},
+    {"id": "emit", "type": "output.emit"}],
+  "wires": [
+    {"from": "syl.units", "to": "emit.units"}, {"from": "peak.level", "to": "blur.value"},
+    {"from": "blur.tags", "to": "emit.tags"}]})";
+}
+
+std::vector<std::string> blursOfFirstLine(const std::vector<std::string> &lines)
+{
+    std::vector<std::string> out;
+    for (std::size_t k = 0; k < 7 && k < lines.size(); ++k)
+        out.push_back(between(lines[k], "\\blur", '\\'));
+    return out;
+}
+
+NodeEffectRun peakRun(const std::string &graph, NodeEffectOptions options)
+{
+    static FakeMeasure measure;
+    options.measure = &measure;
+    const core::Document doc = fixtureWith(commentLine("graph g", graphText(graphOf(graph))));
+    auto run = runDocumentGraph(doc, graphLineOf(doc, u8"g"), options);
+    EXPECT_TRUE(run);
+    return run ? std::move(*run) : NodeEffectRun{};
+}
+
+}
+
+TEST(NodeEffectsAudioPeaks, GivesTheLevelOverEachUnitsSpan)
+{
+    const DisplayAudio audio = loudAudio(1000, 1400);
+    NodeEffectOptions options;
+    options.audio = &audio;
+    const auto lines = runOn(peakGraph(), options);
+    ASSERT_EQ(lines.size(), 17u);
+    EXPECT_EQ(blursOfFirstLine(lines), (std::vector<std::string>{"0.5", "0", "0", "0", "0", "0", "0"}));
+    EXPECT_EQ(blursOfFirstLine(runOn(peakGraph(R"({"start": 1100, "end": 1200})"), options)),
+              (std::vector<std::string>(7, "0.5")));
+    const DisplayAudio loading = loudAudio(1000, 1400, false);
+    options.audio = &loading;
+    EXPECT_EQ(blursOfFirstLine(runOn(peakGraph(), options)), blursOfFirstLine(lines));
+}
+
+TEST(NodeEffectsAudioPeaks, WithoutAudioTheGraphShowsAProblemAndItGivesZero)
+{
+    const NodeEffectRun none = peakRun(peakGraph(), {});
+    ASSERT_FALSE(none.problems.empty());
+    EXPECT_EQ(none.problems.front().node, "peak");
+    EXPECT_EQ(none.problems.front().message, "has no audio to read, so it gives 0");
+    ASSERT_EQ(none.lines.size(), 17u);
+    EXPECT_EQ(blursOfFirstLine(linesOf(none)), (std::vector<std::string>(7, "0")));
+    NodeEffectOptions opening;
+    opening.audio = nullptr;
+    const NodeEffectRun waiting = peakRun(peakGraph(), opening);
+    ASSERT_FALSE(waiting.problems.empty());
+    EXPECT_EQ(waiting.problems.front().message, "waits for the audio to open, so it gives 0");
+}
+
+TEST(NodeEffectsAudioPeaks, TheCacheKeepsLinesOnlyForTheSameAudio)
+{
+    const DisplayAudio early = loudAudio(1000, 1400), late = loudAudio(1400, 1750);
+    NodeEffectCache cache;
+    NodeEffectOptions options;
+    options.cache = &cache;
+    options.audio = &early;
+    const auto first = blursOfFirstLine(runOn(peakGraph(), options));
+    options.audio = &late;
+    EXPECT_EQ(blursOfFirstLine(runOn(peakGraph(), options)),
+              (std::vector<std::string>{"0", "0.5", "0", "0", "0", "0", "0"}));
+    options.audio = &early;
+    EXPECT_EQ(blursOfFirstLine(runOn(peakGraph(), options)), first);
+}
+
 TEST(NodeEffectExamples, EachShowsItsNodeAndRunsTheSameEveryTime)
 {
     const std::map<std::string_view, std::string_view> nodeOf = {{"gradient-strips", "units.clip_gradient"},
                                                                  {"ring-of-copies", "units.array"},
-                                                                 {"particle-burst", "units.particles"}};
+                                                                 {"particle-burst", "units.particles"},
+                                                                 {"audio-pulse", "audio.peaks"}};
+    const DisplayAudio audio = loudAudio(1000, 1400);
     std::set<std::string_view> seen;
     for (const NodeGraphPreset &p : nodeGraphPresets()) {
         if (p.example.empty())
@@ -841,6 +938,7 @@ TEST(NodeEffectExamples, EachShowsItsNodeAndRunsTheSameEveryTime)
         NodeEffectOptions one, many;
         one.threads = 1;
         many.threads = 8;
+        one.audio = many.audio = &audio;
         const auto lines = runOn(p.graph, one);
         EXPECT_FALSE(lines.empty()) << p.example;
         EXPECT_EQ(lines, runOn(p.graph, many)) << p.example;
@@ -863,4 +961,118 @@ TEST(KaraokeSyllables, SplitsAsTheAutomationHelperDoes)
     ASSERT_EQ(plain.size(), 2u);
     EXPECT_EQ(plain[1].start, 1000);
     EXPECT_EQ(plain[1].duration, 3000);
+}
+
+namespace {
+
+std::vector<std::string> blockersOf(std::string_view json)
+{
+    std::vector<std::string> out;
+    const auto lines = exportTemplateLines(graphOf(json), u8"g");
+    EXPECT_FALSE(lines.has_value());
+    if (!lines)
+        for (const NodeEffectProblem &p : lines.error())
+            out.push_back(p.node);
+    return out;
+}
+
+}
+
+TEST(NodeEffectExport, ClassicFillBecomesOnePreLineAndLineTemplate)
+{
+    const auto lines = exportTemplateLines(graphOf(kClassicFill), u8"Classic fill");
+    ASSERT_TRUE(lines.has_value());
+    const std::vector<TemplateLine> expected{
+        {0, u8"template pre-line classic_fill_emit", u8"!retime(\"line\", (-300), 300)!{\\fad(300,300)\\k30}"},
+        {0, u8"template line classic_fill_emit", u8"{\\kf$kdur}"}};
+    EXPECT_EQ(*lines, expected);
+}
+
+TEST(NodeEffectExport, SparklesLoopsAndDrawsWithoutText)
+{
+    const auto lines = exportTemplateLines(graphOf(kSparkles), u8"s");
+    ASSERT_TRUE(lines.has_value());
+    ASSERT_EQ(lines->size(), 2u);
+    EXPECT_EQ((*lines)[1].layer, 1);
+    EXPECT_EQ((*lines)[1].effect, u8"template syl noblank notext loop 8");
+    EXPECT_TRUE((*lines)[1].text.ends_with(u8"\\p1}m 0 -5 l 5 0 0 5 -5 0"));
+}
+
+TEST(NodeEffectExport, NodesWithoutATemplateFormBlockTheExportByName)
+{
+    EXPECT_EQ(blockersOf(R"({"format": 1, "nodes": [
+        {"id": "syl", "type": "units.for_each"},
+        {"id": "dice", "type": "math.random", "fields": {"max": 10}},
+        {"id": "blur", "type": "tags.tag", "fields": {"tag": "blur"}},
+        {"id": "emit", "type": "output.emit"}],
+      "wires": [{"from": "dice.value", "to": "blur.value"}, {"from": "blur.tags", "to": "emit.tags"},
+                {"from": "syl.units", "to": "emit.units"}]})"),
+              std::vector<std::string>{"dice"});
+    EXPECT_EQ(blockersOf(R"({"format": 1, "nodes": [
+        {"id": "syl", "type": "units.for_each"},
+        {"id": "info", "type": "units.info"},
+        {"id": "long", "type": "math.compare", "fields": {"op": "greater", "b": 300}},
+        {"id": "later", "type": "math.calculate", "fields": {"op": "add", "b": 100}},
+        {"id": "emit", "type": "output.emit"}],
+      "wires": [{"from": "info.duration", "to": "long.a"}, {"from": "long.result", "to": "emit.when"},
+                {"from": "info.start", "to": "later.a"}, {"from": "later.result", "to": "emit.start"},
+                {"from": "syl.units", "to": "emit.units"}]})"),
+              (std::vector<std::string>{"long", "emit"}));
+    EXPECT_EQ(blockersOf(R"({"format": 1, "nodes": [
+        {"id": "line", "type": "units.for_each", "fields": {"unit": "line", "skip_blank": false}},
+        {"id": "time", "type": "time.retime", "fields": {"mode": "syl"}},
+        {"id": "emit", "type": "output.emit"}],
+      "wires": [{"from": "line.units", "to": "emit.units"}, {"from": "time.start", "to": "emit.start"},
+                {"from": "time.end", "to": "emit.end"}]})"),
+              std::vector<std::string>{"time"});
+}
+
+TEST(NodeEffectExport, AudioPeaksBlockTheExport)
+{
+    const auto lines = exportTemplateLines(graphOf(peakGraph()), u8"g");
+    ASSERT_FALSE(lines.has_value());
+    ASSERT_EQ(lines.error().size(), 1u);
+    EXPECT_EQ(lines.error().front().node, "peak");
+    EXPECT_EQ(lines.error().front().message, "reads the audio, which the templater can't");
+}
+
+TEST(NodeEffectExport, StripsCopiesAndParticlesBlockTheExport)
+{
+    for (const std::string type : {"units.clip_gradient", "units.array", "units.particles"}) {
+        SCOPED_TRACE(type);
+        const auto lines = exportTemplateLines(graphOf(R"({"format": 1, "nodes": [
+            {"id": "syl", "type": "units.for_each"},
+            {"id": "many", "type": ")" + type + R"("},
+            {"id": "emit", "type": "output.emit"}],
+          "wires": [{"from": "syl.units", "to": "many.units"}, {"from": "many.units", "to": "emit.units"}]})"),
+                                               u8"g");
+        ASSERT_FALSE(lines.has_value());
+        ASSERT_EQ(lines.error().size(), 1u);
+        EXPECT_EQ(lines.error().front().node, "many");
+        EXPECT_NE(lines.error().front().message.find("which"), std::string::npos);
+    }
+}
+
+TEST(NodeEffectExport, ExportAddsTheTemplateLinesAfterTheGraphInOneStep)
+{
+    EditSession session(presetDocument(kPresets[1]));
+    const std::string before = text(core::encodeAss(session.document()));
+    const core::LineId graph = graphLineOf(session.document(), u8"bounce");
+    ASSERT_TRUE(exportTemplateLines(session, graph));
+    std::vector<const core::LineRecord *> added;
+    bool after = false;
+    for (const core::LineRecord *l : session.document().lines()) {
+        if (after && l->effect.starts_with(u8"template "))
+            added.push_back(l);
+        after = after || l->id == graph;
+    }
+    ASSERT_EQ(added.size(), 4u);
+    for (const core::LineRecord *l : added) {
+        EXPECT_TRUE(l->comment);
+        EXPECT_EQ(l->style, u8"Romaji");
+        EXPECT_EQ(l->effect, u8"template syl noblank");
+    }
+    EXPECT_EQ(session.history().back().name, "Export as template lines");
+    ASSERT_TRUE(session.undo());
+    EXPECT_EQ(text(core::encodeAss(session.document())), before);
 }

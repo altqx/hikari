@@ -1271,7 +1271,7 @@ icon("tool-text-on-path", "Text on path", [], [VISUAL],
 
 icon("reinstall-scripts", "Reinstall scripts", [], ["automation-reset"], SCRIPT_CUT + DOWNLOAD_BADGE)
 
-icon("layers", "Blur and glow layers", [], [GRIDMENU, SUBS],
+icon("layers", "Blur and glow layers", [], [GRIDMENU, SUBS, "text-field-menu"],
      LAYERS_TOP + accent(stroke("M1.5 8l6.5 3.5L14.5 8M1.5 11l6.5 3.5 6.5-3.5")))
 icon("layers-repeat", "Repeat blur and glow layers", [], [GRIDMENU, SUBS],
      solid("M6 1.5l4.5 2.5L6 6.5 1.5 4z") + stroke("M1.5 6.5l4.5 2.5 2.5-1.25M1.5 9l4.5 2.5 1.5-.75") + REPEAT_BADGE)
@@ -1412,7 +1412,6 @@ for card, roles in {
     "AI21 #725": ["compact"],
     "AI24 #744": ["update"],
     "PL7 #419": ["plugin-sandbox"],
-    "AU4 #839": ["remove-tags"],
     "AU6 #845": ["shape-unite", "shape-subtract", "shape-intersect", "shape-exclude", "shape-offset", "clip-to-shape",
                  "shape-to-clip", "shape-merge"],
     "AU9 #844": ["graph-shake", "graph-wobble", "graph-bounce", "graph-typewriter", "graph-fade-by-letter",
@@ -1422,7 +1421,6 @@ for card, roles in {
     "AU11 #846": ["track-colour", "find-fade"],
     "AU14 #847": ["tool-text-on-path"],
     "AU16 #850": ["reinstall-scripts"],
-    "AU18 #852": ["layers", "layers-repeat"],
     "AU19 #853": ["snap-start-to-previous-keyframe", "snap-start-to-next-keyframe", "snap-end-to-previous-keyframe",
                   "snap-end-to-next-keyframe", "lead-in-remove", "lead-out-remove", "timing-assistant"],
     "AU20 #854": ["line-break-insert", "line-break-left", "line-break-right", "line-break-remove", "change-case",
@@ -1431,7 +1429,6 @@ for card, roles in {
                   "align-bottom", "distribute-horizontal", "distribute-vertical", "pos-to-margins", "margins-to-pos",
                   "phantom", "cycle-values", "shift-by-x", "shift-by-y"],
     "AU22 #856": ["interpolate-lines"],
-    "AU23 #857": ["import-lyrics"],
     "TH5 #833": ["builtin-script"],
 }.items():
     for role in roles:

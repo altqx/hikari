@@ -302,6 +302,7 @@ constexpr const char *kHotkeyCommands[] = {
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Copy Power-Pin track from lines"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Extend tracked lines…"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Extrapolate \\move to the line"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Remove tags…"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "QC notes panel"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Next QC note"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Previous QC note"),
@@ -309,6 +310,7 @@ constexpr const char *kHotkeyCommands[] = {
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Move tab to new window"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Move tab to window"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Close window"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Import lyrics…"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Exit"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Keep AI change"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Undo AI change"),
@@ -322,6 +324,8 @@ constexpr const char *kHotkeyCommands[] = {
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Open folder…"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Close project"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Node effects"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Blur and glow layers…"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Build layers with the last values"),
 };
 
 constexpr const char *kHotkeyWindows[] = {

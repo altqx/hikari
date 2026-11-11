@@ -4672,8 +4672,7 @@
    "surfaces": [
     "grid-menu",
     "line-editor"
-   ],
-   "pending": "AU4 #839"
+   ]
   },
   {
    "role": "shape-unite",
@@ -5083,9 +5082,9 @@
    "legacy": [],
    "surfaces": [
     "grid-menu",
-    "menu:subtitles"
-   ],
-   "pending": "AU18 #852"
+    "menu:subtitles",
+    "text-field-menu"
+   ]
   },
   {
    "role": "layers-repeat",
@@ -5097,8 +5096,7 @@
    "surfaces": [
     "grid-menu",
     "menu:subtitles"
-   ],
-   "pending": "AU18 #852"
+   ]
   },
   {
    "role": "snap-start-to-previous-keyframe",
@@ -5546,8 +5544,7 @@
    "legacy": [],
    "surfaces": [
     "menu:file"
-   ],
-   "pending": "AU23 #857"
+   ]
   },
   {
    "role": "builtin-script",

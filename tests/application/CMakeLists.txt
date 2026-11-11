@@ -44,6 +44,8 @@ hikari_add_gtest(hikari_application_grid_commands_tests SOURCES grid_commands_te
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_grid_clipboard_tests SOURCES grid_clipboard_tests.cpp
     LIBRARIES hikari_application LABELS application)
+hikari_add_gtest(hikari_application_lyrics_insert_tests SOURCES lyrics_insert_tests.cpp
+    LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_grid_filtering_tests SOURCES grid_filtering_tests.cpp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_grid_groups_tests SOURCES grid_groups_tests.cpp
@@ -57,6 +59,7 @@ hikari_add_gtest(hikari_application_recovery_store_tests SOURCES recovery_store_
 hikari_add_gtest(hikari_application_automation_hotkeys_tests SOURCES automation_hotkeys_tests.cpp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_frame_bake_tests SOURCES frame_bake_tests.cpp LIBRARIES hikari_application LABELS application)
+hikari_add_gtest(hikari_application_layer_builders_tests SOURCES layer_builders_tests.cpp LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_grid_split_tests SOURCES grid_split_tests.cpp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_recent_files_tests SOURCES recent_files_tests.cpp
@@ -258,6 +261,9 @@ hikari_add_gtest(hikari_application_visual_gradient_tests SOURCES visual_gradien
 hikari_add_gtest(hikari_application_karaoke_layout_tests SOURCES karaoke_layout_tests.cpp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_karaoke_templates_tests SOURCES karaoke_templates_tests.cpp
+    LIBRARIES hikari_application LABELS application)
+
+hikari_add_gtest(hikari_application_tag_removal_tests SOURCES tag_removal_tests.cpp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_dependency_control_tests SOURCES dependency_control_tests.cpp
     LIBRARIES hikari_application LABELS application)

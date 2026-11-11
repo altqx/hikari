@@ -443,6 +443,38 @@ void DisplayAudio::readFrames(std::int64_t start, std::int64_t count, std::int16
         m_store->read(first, last - first, out + (first - start) * channels);
 }
 
+std::expected<AudioPeakBuckets, AudioPeaksTooLong> audioPeaks(const DisplayAudio &audio, std::int64_t startMs,
+                                                               std::int64_t endMs, int buckets)
+{
+    constexpr std::int64_t kMaxRawSamples = 20'000'000;
+    const std::int64_t first = startMs * audio.sampleRate() / 1000;
+    const std::int64_t count = std::max<std::int64_t>(1, (endMs - startMs) * audio.sampleRate() / 1000);
+    const WaveformPeaks *table = audio.peaks();
+    const bool fromTable = table && count / buckets >= table->blockSamples();
+    if (!fromTable && count > kMaxRawSamples)
+        return std::unexpected(AudioPeaksTooLong{});
+    std::vector<std::int16_t> raw;
+    if (!fromTable) {
+        raw.resize(static_cast<std::size_t>(count));
+        audio.read(first, count, raw.data());
+    }
+    AudioPeakBuckets out;
+    for (int i = 0; i < buckets; ++i) {
+        const std::int64_t from = count * i / buckets, to = std::max(from + 1, count * (i + 1) / buckets);
+        std::int16_t lo = 0, hi = 0;
+        if (fromTable) {
+            table->range(first + from, to - from, &lo, &hi);
+        } else {
+            const auto [mn, mx] = std::minmax_element(raw.begin() + from, raw.begin() + std::min(to, count));
+            lo = *mn;
+            hi = *mx;
+        }
+        out.min.push_back(lo);
+        out.max.push_back(hi);
+    }
+    return out;
+}
+
 WaveformColumns legacyWaveform(const DisplayAudio &audio, std::int64_t start, int w, int h, int samples, float scale)
 {
     WaveformColumns out;

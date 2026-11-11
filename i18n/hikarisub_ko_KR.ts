@@ -2667,6 +2667,18 @@ Output device: %2</source>
         <translation>덮어쓰기</translation>
     </message>
     <message>
+        <source>Import lyrics</source>
+        <translation>가사 가져오기</translation>
+    </message>
+    <message>
+        <source>Lyrics (*.lrc *.krc *.qrc *.ttml)</source>
+        <translation>가사 (*.lrc *.krc *.qrc *.ttml)</translation>
+    </message>
+    <message>
+        <source>Could not read %1.</source>
+        <translation>%1(을)를 읽을 수 없습니다.</translation>
+    </message>
+    <message>
         <source>Open subtitles</source>
         <translation>자막 열기</translation>
     </message>
@@ -2675,8 +2687,12 @@ Output device: %2</source>
         <translation>자막 (*.ass *.ssa *.srt *.sub *.txt *.mpl)</translation>
     </message>
     <message>
+        <source>Word-timed lyrics (*.lrc *.krc *.qrc *.ttml)</source>
+        <translation>단어별 타이밍 가사 (*.lrc *.krc *.qrc *.ttml)</translation>
+    </message>
+    <message>
         <source>Word-timed lyrics (*.lrc *.ttml)</source>
-        <translation>단어별 타이밍 가사 (*.lrc *.ttml)</translation>
+        <translation type="vanished">단어별 타이밍 가사 (*.lrc *.ttml)</translation>
     </message>
     <message>
         <source>YouTube timed text (*.ytt *.srv3)</source>
@@ -2761,6 +2777,10 @@ Output device: %2</source>
     <message>
         <source>it has no timed lyrics</source>
         <translation>타이밍이 있는 가사가 없음</translation>
+    </message>
+    <message>
+        <source>it is encrypted. Decode it to text with your own tool first</source>
+        <translation>암호화되어 있습니다. 먼저 사용하는 도구로 텍스트로 디코딩하세요</translation>
     </message>
     <message>
         <source>Could not import %1: line %2: %3. Nothing was imported.</source>
@@ -2980,6 +3000,130 @@ Output device: %2</source>
     <message>
         <source>Saves %1 · Discards %2</source>
         <translation>%1 저장 · %2 버림</translation>
+    </message>
+    <message>
+        <source>The file is not text in this encoding.</source>
+        <translation>이 인코딩으로는 파일이 텍스트가 아닙니다.</translation>
+    </message>
+    <message>
+        <source>LRC</source>
+        <translation>LRC</translation>
+    </message>
+    <message>
+        <source>TTML</source>
+        <translation>TTML</translation>
+    </message>
+    <message>
+        <source>Kugou KRC, decoded</source>
+        <translation>Kugou KRC, 디코딩됨</translation>
+    </message>
+    <message>
+        <source>QQ Music QRC, decoded</source>
+        <translation>QQ Music QRC, 디코딩됨</translation>
+    </message>
+    <message>
+        <source>word-timed</source>
+        <translation>단어별 타이밍</translation>
+    </message>
+    <message>
+        <source>line-timed</source>
+        <translation>줄별 타이밍</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n lines</source>
+        <translation>
+            <numerusform>%n줄</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>offset %1 s applied</source>
+        <translation>오프셋 %1초 적용됨</translation>
+    </message>
+    <message>
+        <source>File</source>
+        <translation>파일</translation>
+    </message>
+    <message>
+        <source>Format</source>
+        <translation>형식</translation>
+    </message>
+    <message>
+        <source>Song</source>
+        <translation>노래</translation>
+    </message>
+    <message>
+        <source>Encoding</source>
+        <translation>인코딩</translation>
+    </message>
+    <message>
+        <source>%1 · detected</source>
+        <translation>%1 · 감지됨</translation>
+    </message>
+    <message>
+        <source>This Kugou lyrics file is encrypted, so HikariSub can’t read it.</source>
+        <translation>이 Kugou 가사 파일은 암호화되어 있어 HikariSub에서 읽을 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>This QQ Music lyrics file is encrypted, so HikariSub can’t read it.</source>
+        <translation>이 QQ Music 가사 파일은 암호화되어 있어 HikariSub에서 읽을 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>Decode it to text with your own tool first, then import the decoded file. HikariSub doesn’t decrypt lyric files.</source>
+        <translation>먼저 사용하는 도구로 텍스트로 디코딩한 다음 디코딩된 파일을 가져오세요. HikariSub는 가사 파일을 복호화하지 않습니다.</translation>
+    </message>
+    <message>
+        <source>Preview</source>
+        <translation>미리 보기</translation>
+    </message>
+    <message numerus="yes">
+        <source>and %n more lines</source>
+        <translation>
+            <numerusform>외 %n줄</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Add the lines to</source>
+        <translation>줄을 추가할 위치</translation>
+    </message>
+    <message>
+        <source>After the last line of the open file</source>
+        <translation>열린 파일의 마지막 줄 뒤</translation>
+    </message>
+    <message>
+        <source>A new file</source>
+        <translation>새 파일</translation>
+    </message>
+    <message>
+        <source>Style</source>
+        <translation>스타일</translation>
+    </message>
+    <message>
+        <source>End times</source>
+        <translation>끝 시간</translation>
+    </message>
+    <message>
+        <source>Each line ends when the next one starts</source>
+        <translation>각 줄은 다음 줄이 시작할 때 끝남</translation>
+    </message>
+    <message>
+        <source>Leave a gap before the next line</source>
+        <translation>다음 줄 앞에 간격 두기</translation>
+    </message>
+    <message>
+        <source>Gap (s)</source>
+        <translation>간격(초)</translation>
+    </message>
+    <message>
+        <source>Last line lasts (s)</source>
+        <translation>마지막 줄 길이(초)</translation>
+    </message>
+    <message>
+        <source>Choose another file…</source>
+        <translation>다른 파일 선택…</translation>
+    </message>
+    <message>
+        <source>Import</source>
+        <translation>가져오기</translation>
     </message>
 </context>
 <context>
@@ -5966,6 +6110,14 @@ Failed to copy %2 fonts.</source>
         <translation>취소</translation>
     </message>
     <message>
+        <source>Blur and glow layers…</source>
+        <translation>흐림 및 글로우 레이어…</translation>
+    </message>
+    <message>
+        <source>Build layers with the last values</source>
+        <translation>마지막 값으로 레이어 만들기</translation>
+    </message>
+    <message>
         <source>Shift+click to set a shortcut</source>
         <translation>Shift+클릭으로 단축키를 설정합니다</translation>
     </message>
@@ -7218,6 +7370,10 @@ Failed to copy %2 fonts.</source>
         <translation>줄 전체로 \move 외삽</translation>
     </message>
     <message>
+        <source>Remove tags…</source>
+        <translation>태그 제거…</translation>
+    </message>
+    <message>
         <source>Move tab to new window</source>
         <translation>탭을 새 창으로 이동</translation>
     </message>
@@ -7228,6 +7384,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Close window</source>
         <translation>창 닫기</translation>
+    </message>
+    <message>
+        <source>Import lyrics…</source>
+        <translation>가사 가져오기…</translation>
     </message>
     <message>
         <source>Keep AI change</source>
@@ -7695,6 +7855,269 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Accept all suggestions</source>
         <translation>모든 제안 수락</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Layers</name>
+    <message>
+        <source>Turn on glow, border or shadow.</source>
+        <translation>글로우, 테두리 또는 그림자를 켜세요.</translation>
+    </message>
+    <message>
+        <source>Select the lines to build layers under.</source>
+        <translation>아래에 레이어를 만들 줄을 선택하세요.</translation>
+    </message>
+    <message numerus="yes">
+        <source>At most %n glow layer(s) can be built at once.</source>
+        <translation>
+            <numerusform>글로우 레이어는 한 번에 최대 %n개까지 만들 수 있습니다.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>A shadow can have at most %n step(s). Set fewer steps.</source>
+        <translation>
+            <numerusform>그림자는 최대 %n단계까지 가능합니다. 단계를 줄이세요.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>That builds more than %n line(s). Select fewer lines.</source>
+        <translation>
+            <numerusform>%n줄을 넘게 만들게 됩니다. 줄을 더 적게 선택하세요.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Nothing to build for the selected lines.</source>
+        <translation>선택한 줄에 만들 것이 없습니다.</translation>
+    </message>
+    <message numerus="yes">
+        <source>Builds %n line(s) under line %1.</source>
+        <translation>
+            <numerusform>%1번 줄 아래에 %n줄을 만듭니다.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>It moves up from layer %1 to layer %2.</source>
+        <translation>레이어 %1에서 레이어 %2(으)로 올라갑니다.</translation>
+    </message>
+    <message numerus="yes">
+        <source>Builds %n line(s) under the selected lines.</source>
+        <translation>
+            <numerusform>선택한 줄 아래에 %n줄을 만듭니다.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Each moves up by the lines built under it.</source>
+        <translation>각 줄은 그 아래에 만든 줄 수만큼 위로 올라갑니다.</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) have no border and skip Border.</source>
+        <translation>
+            <numerusform>%n줄은 테두리가 없어 테두리를 건너뜁니다.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) have a shadow under 1 px and skip Shadow.</source>
+        <translation>
+            <numerusform>%n줄은 그림자가 1px 미만이라 그림자를 건너뜁니다.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Line %1 (layer %2) is shown with line %3 and was above it. Once built, line %3’s stack covers it.</source>
+        <translation>%1번 줄(레이어 %2)은 %3번 줄과 함께 표시되며 그 위에 있었습니다. 만들고 나면 %3번 줄의 스택이 이 줄을 덮습니다.</translation>
+    </message>
+    <message>
+        <source>The layers can’t be built here.</source>
+        <translation>여기에서는 레이어를 만들 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>Build layers once from Blur and glow layers… to choose the values.</source>
+        <translation>값을 정하려면 ‘흐림 및 글로우 레이어…’에서 레이어를 한 번 만드세요.</translation>
+    </message>
+    <message numerus="yes">
+        <source>Built %n layer line(s)</source>
+        <translation>
+            <numerusform>레이어 줄 %n개를 만들었습니다</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Blur and glow layers</source>
+        <translation>흐림 및 글로우 레이어</translation>
+    </message>
+    <message>
+        <source>Line</source>
+        <translation>줄</translation>
+    </message>
+    <message>
+        <source>Glow</source>
+        <translation>글로우</translation>
+    </message>
+    <message>
+        <source>Blurred copies under each line</source>
+        <translation>각 줄 아래의 흐린 복사본</translation>
+    </message>
+    <message>
+        <source>Blur</source>
+        <translation>흐림</translation>
+    </message>
+    <message>
+        <source>Border</source>
+        <translation>테두리</translation>
+    </message>
+    <message>
+        <source>Colour</source>
+        <translation>색상</translation>
+    </message>
+    <message>
+        <source>Alpha</source>
+        <translation>알파</translation>
+    </message>
+    <message>
+        <source>Glow %1 blur</source>
+        <translation>글로우 %1 흐림</translation>
+    </message>
+    <message>
+        <source>Glow %1 border, added to the line’s</source>
+        <translation>글로우 %1 테두리, 줄의 테두리에 더함</translation>
+    </message>
+    <message>
+        <source>Glow %1 colour: the line’s border colour</source>
+        <translation>글로우 %1 색상: 줄의 테두리 색상</translation>
+    </message>
+    <message>
+        <source>Glow %1 colour</source>
+        <translation>글로우 %1 색상</translation>
+    </message>
+    <message>
+        <source>Glow %1 alpha, hex</source>
+        <translation>글로우 %1 알파, 16진수</translation>
+    </message>
+    <message>
+        <source>Remove glow %1</source>
+        <translation>글로우 %1 제거</translation>
+    </message>
+    <message>
+        <source>Add a glow layer</source>
+        <translation>글로우 레이어 추가</translation>
+    </message>
+    <message>
+        <source>The border on its own layer, blurred apart from the fill</source>
+        <translation>채우기와 따로 흐리게 한, 별도 레이어의 테두리</translation>
+    </message>
+    <message>
+        <source>Under the border</source>
+        <translation>테두리 아래</translation>
+    </message>
+    <message>
+        <source>Border colour</source>
+        <translation>테두리 색상</translation>
+    </message>
+    <message>
+        <source>Transparent</source>
+        <translation>투명</translation>
+    </message>
+    <message>
+        <source>A thin fill-coloured border closes the gap under the blur</source>
+        <translation>채우기 색의 얇은 테두리가 흐림 아래의 틈을 메웁니다</translation>
+    </message>
+    <message>
+        <source>Border blur</source>
+        <translation>테두리 흐림</translation>
+    </message>
+    <message>
+        <source>Line’s</source>
+        <translation>줄 값</translation>
+    </message>
+    <message>
+        <source>The fill keeps the line’s blur.</source>
+        <translation>채우기는 줄의 흐림을 유지합니다.</translation>
+    </message>
+    <message>
+        <source>Hide the fill under the border during fades</source>
+        <translation>페이드 중에 테두리 아래 채우기 숨기기</translation>
+    </message>
+    <message>
+        <source>Fade transition, ms</source>
+        <translation>페이드 전환, ms</translation>
+    </message>
+    <message>
+        <source>ms</source>
+        <translation>ms</translation>
+    </message>
+    <message>
+        <source>Second border</source>
+        <translation>두 번째 테두리</translation>
+    </message>
+    <message>
+        <source>Second border width</source>
+        <translation>두 번째 테두리 두께</translation>
+    </message>
+    <message>
+        <source>Second border colour: the line’s fill colour</source>
+        <translation>두 번째 테두리 색상: 줄의 채우기 색상</translation>
+    </message>
+    <message>
+        <source>Second border colour</source>
+        <translation>두 번째 테두리 색상</translation>
+    </message>
+    <message>
+        <source>Shadow</source>
+        <translation>그림자</translation>
+    </message>
+    <message>
+        <source>A 3D shadow of stacked copies</source>
+        <translation>복사본을 쌓은 3D 그림자</translation>
+    </message>
+    <message>
+        <source>Steps</source>
+        <translation>단계</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>자동</translation>
+    </message>
+    <message>
+        <source>Auto: one a pixel of each line’s shadow offset</source>
+        <translation>자동: 각 줄의 그림자 오프셋 1픽셀마다 하나</translation>
+    </message>
+    <message>
+        <source>Nearest copy: the line’s shadow colour</source>
+        <translation>가장 가까운 복사본: 줄의 그림자 색상</translation>
+    </message>
+    <message>
+        <source>Nearest copy colour</source>
+        <translation>가장 가까운 복사본 색상</translation>
+    </message>
+    <message>
+        <source>Farthest copy: the line’s shadow colour</source>
+        <translation>가장 먼 복사본: 줄의 그림자 색상</translation>
+    </message>
+    <message>
+        <source>Farthest copy colour</source>
+        <translation>가장 먼 복사본 색상</translation>
+    </message>
+    <message>
+        <source>Nearest copy alpha, hex</source>
+        <translation>가장 가까운 복사본 알파, 16진수</translation>
+    </message>
+    <message>
+        <source>Farthest copy alpha, hex</source>
+        <translation>가장 먼 복사본 알파, 16진수</translation>
+    </message>
+    <message>
+        <source>Blur where a line has none</source>
+        <translation>흐림이 없는 줄의 흐림</translation>
+    </message>
+    <message>
+        <source>Preview on video</source>
+        <translation>영상에서 미리 보기</translation>
+    </message>
+    <message>
+        <source>Build layers</source>
+        <translation>레이어 만들기</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>취소</translation>
     </message>
 </context>
 <context>
@@ -8270,6 +8693,14 @@ Failed to copy %2 fonts.</source>
         <translation>MKV에서 자막 가져오기…</translation>
     </message>
     <message>
+        <source>Turns a lyrics file into lines, in the open file or a new one</source>
+        <translation>가사 파일을 열린 파일이나 새 파일의 줄로 바꿉니다</translation>
+    </message>
+    <message>
+        <source>Import lyrics…</source>
+        <translation>가사 가져오기…</translation>
+    </message>
+    <message>
         <source>Save current file</source>
         <translation>현재 파일 저장</translation>
     </message>
@@ -8364,6 +8795,22 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Selects lines by expressions</source>
         <translation>조건식으로 줄을 선택합니다</translation>
+    </message>
+    <message>
+        <source>Builds glow, border and shadow layers under the selected lines</source>
+        <translation>선택한 줄 아래에 글로우, 테두리, 그림자 레이어를 만듭니다</translation>
+    </message>
+    <message>
+        <source>&amp;Blur and glow layers…</source>
+        <translation>흐림 및 글로우 레이어…[&amp;B]</translation>
+    </message>
+    <message>
+        <source>Builds the layers again with the values Blur and glow layers last built with</source>
+        <translation>‘흐림 및 글로우 레이어’가 마지막으로 쓴 값으로 레이어를 다시 만듭니다</translation>
+    </message>
+    <message>
+        <source>Build layers with the &amp;last values</source>
+        <translation>마지막 값으로 레이어 만들기[&amp;L]</translation>
     </message>
     <message>
         <source>Notes from a QC pass, kept in the file, with the lines they mark</source>
@@ -9890,6 +10337,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Export as template lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Adds template lines after the graph line that make the same lines in Aegisub’s karaoke templater.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Delete graph</source>
         <translation type="unfinished"></translation>
     </message>
@@ -9907,6 +10362,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Select karaoke lines in “Source lines” first.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>These nodes have no form in a karaoke template, so the graph can’t be exported:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -9989,6 +10448,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Twelve copies of each syllable fly out to random places around it and fade.</source>
         <translation>각 음절의 복제 열두 개가 주변의 무작위 위치로 날아가며 사라집니다.</translation>
+    </message>
+    <message>
+        <source>Audio pulse</source>
+        <translation>소리 맥박</translation>
+    </message>
+    <message>
+        <source>Each syllable grows with how loud the audio is while it is sung. Needs audio open.</source>
+        <translation>각 음절이 불리는 동안 소리의 크기에 따라 커집니다. 오디오가 열려 있어야 합니다.</translation>
     </message>
     <message>
         <source>A graph name can’t be empty, start or end with a space, end with a dot, or hold “karaoke”, a comma, a double quote, a control character or any of / \ : * ? &lt; &gt; |.</source>
@@ -10250,6 +10717,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Audio peaks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The audio’s level over the unit’s span, or from start to end (absolute ms), read as the Hikari API’s audio.peaks reads it. level is the loudest sample from 0 to 1; low and high are the lowest and highest from -1 to 1. Without audio it gives 0 and the graph shows a problem.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Shape</source>
         <translation type="unfinished">도형</translation>
     </message>
@@ -10363,6 +10838,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>The area’s height.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The span’s start; null: the unit’s start.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The span’s end; null: the unit’s end.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -10568,6 +11051,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Colours</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio</source>
+        <translation type="unfinished">소리</translation>
     </message>
     <message>
         <source>Drawings</source>
@@ -14579,7 +15066,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Deleted</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">삭제됨</translation>
     </message>
     <message>
         <source>New</source>
@@ -17842,6 +18329,245 @@ Styles deleted:
     <message>
         <source>%1, %2, %3 of %4</source>
         <translation>%1, %2, %3/%4</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Tags</name>
+    <message numerus="yes">
+        <source>Changed %n line(s)</source>
+        <translation>
+            <numerusform>%n줄을 바꿨습니다</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>No line changes.</source>
+        <translation>바뀌는 줄이 없습니다.</translation>
+    </message>
+    <message>
+        <source>Remove tags…</source>
+        <translation>태그 제거…</translation>
+    </message>
+    <message>
+        <source>Remove tags</source>
+        <translation>태그 제거</translation>
+    </message>
+    <message>
+        <source>Colour</source>
+        <translation>색상</translation>
+    </message>
+    <message>
+        <source>Alpha</source>
+        <translation>알파</translation>
+    </message>
+    <message>
+        <source>Border</source>
+        <translation>테두리</translation>
+    </message>
+    <message>
+        <source>Shadow</source>
+        <translation>그림자</translation>
+    </message>
+    <message>
+        <source>Blur</source>
+        <translation>흐림</translation>
+    </message>
+    <message>
+        <source>Font</source>
+        <translation>글꼴</translation>
+    </message>
+    <message>
+        <source>Scale</source>
+        <translation>크기</translation>
+    </message>
+    <message>
+        <source>Spacing</source>
+        <translation>간격</translation>
+    </message>
+    <message>
+        <source>Rotation</source>
+        <translation>회전</translation>
+    </message>
+    <message>
+        <source>Shear</source>
+        <translation>기울이기</translation>
+    </message>
+    <message>
+        <source>Bold, italic, underline, strikeout</source>
+        <translation>굵게, 기울임, 밑줄, 취소선</translation>
+    </message>
+    <message>
+        <source>Position</source>
+        <translation>위치</translation>
+    </message>
+    <message>
+        <source>Origin</source>
+        <translation>원점</translation>
+    </message>
+    <message>
+        <source>Alignment</source>
+        <translation>정렬</translation>
+    </message>
+    <message>
+        <source>Clip</source>
+        <translation>클립</translation>
+    </message>
+    <message>
+        <source>Fade</source>
+        <translation>페이드</translation>
+    </message>
+    <message>
+        <source>Transforms</source>
+        <translation>변환</translation>
+    </message>
+    <message>
+        <source>Karaoke</source>
+        <translation>노래방</translation>
+    </message>
+    <message>
+        <source>Reset</source>
+        <translation>재설정</translation>
+    </message>
+    <message>
+        <source>Wrap style</source>
+        <translation>줄 바꿈 스타일</translation>
+    </message>
+    <message>
+        <source>Drawing</source>
+        <translation>도형</translation>
+    </message>
+    <message>
+        <source>Other tags</source>
+        <translation>기타 태그</translation>
+    </message>
+    <message>
+        <source>Any tag not listed</source>
+        <translation>목록에 없는 모든 태그</translation>
+    </message>
+    <message>
+        <source>Remove comments</source>
+        <translation>주석 제거</translation>
+    </message>
+    <message>
+        <source>Blocks with no tag, such as {note}</source>
+        <translation>{note}처럼 태그가 없는 블록</translation>
+    </message>
+    <message>
+        <source>Merge adjacent tag blocks</source>
+        <translation>인접한 태그 블록 합치기</translation>
+    </message>
+    <message>
+        <source>%1 becomes %2</source>
+        <translation>%1 → %2</translation>
+    </message>
+    <message>
+        <source>Drop overridden tags</source>
+        <translation>덮어쓰인 태그 버리기</translation>
+    </message>
+    <message>
+        <source>A tag a later one in its block replaces, and repeats of %1, %2, %3 and %4</source>
+        <translation>같은 블록에서 뒤의 태그가 대신하는 태그와 %1, %2, %3, %4의 반복</translation>
+    </message>
+    <message>
+        <source>Clean Tags rules</source>
+        <translation>Clean Tags 규칙</translation>
+    </message>
+    <message>
+        <source>What the bundled Clean Tags script does: merges blocks, moves line-wide tags to the start, drops empty blocks</source>
+        <translation>내장 Clean Tags 스크립트와 같습니다: 블록을 합치고, 줄 전체에 적용되는 태그를 앞으로 옮기고, 빈 블록을 버립니다</translation>
+    </message>
+    <message>
+        <source>Delete lines left empty</source>
+        <translation>비게 된 줄 삭제</translation>
+    </message>
+    <message>
+        <source>Lines</source>
+        <translation>줄</translation>
+    </message>
+    <message>
+        <source>Selected lines</source>
+        <translation>선택한 줄</translation>
+    </message>
+    <message>
+        <source>Whole file, without comment lines</source>
+        <translation>파일 전체(주석 줄 제외)</translation>
+    </message>
+    <message>
+        <source>Blocks</source>
+        <translation>블록</translation>
+    </message>
+    <message>
+        <source>All blocks</source>
+        <translation>모든 블록</translation>
+    </message>
+    <message>
+        <source>Start block</source>
+        <translation>시작 블록</translation>
+    </message>
+    <message>
+        <source>Inline blocks</source>
+        <translation>본문 블록</translation>
+    </message>
+    <message>
+        <source>Tags</source>
+        <translation>태그</translation>
+    </message>
+    <message>
+        <source>Clear</source>
+        <translation>지우기</translation>
+    </message>
+    <message>
+        <source>Select all</source>
+        <translation>모두 선택</translation>
+    </message>
+    <message>
+        <source>Clean up</source>
+        <translation>정리</translation>
+    </message>
+    <message>
+        <source>Preview</source>
+        <translation>미리 보기</translation>
+    </message>
+    <message>
+        <source>Line %1: %2</source>
+        <translation>%1번 줄: %2</translation>
+    </message>
+    <message>
+        <source>deleted</source>
+        <translation>삭제됨</translation>
+    </message>
+    <message>
+        <source>Line deleted</source>
+        <translation>줄 삭제됨</translation>
+    </message>
+    <message>
+        <source>No line changes</source>
+        <translation>바뀌는 줄 없음</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) change</source>
+        <translation>
+            <numerusform>%n줄 바뀜</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n deleted</source>
+        <translation>
+            <numerusform>%n줄 삭제</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>first %n shown</source>
+        <translation>
+            <numerusform>처음 %n줄 표시</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>제거</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>취소</translation>
     </message>
 </context>
 <context>

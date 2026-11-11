@@ -53,6 +53,12 @@ hikari_add_gtest(hikari_core_grammar_tests SOURCES grammar_tests.cpp LIBRARIES h
 
 hikari_add_gtest(hikari_core_tag_commands_tests SOURCES tag_commands_tests.cpp LIBRARIES hikari_core LABELS core)
 hikari_add_gtest(hikari_core_tag_list_tests SOURCES tag_list_tests.cpp LIBRARIES hikari_core LABELS core)
+hikari_add_gtest(hikari_core_tag_cleanup_tests SOURCES tag_cleanup_tests.cpp LIBRARIES hikari_core LABELS core)
+hikari_add_gtest(hikari_core_cleantags_parity_tests SOURCES cleantags_parity_tests.cpp
+    LIBRARIES hikari_core Hikari::luajit LABELS core)
+target_compile_definitions(hikari_core_cleantags_parity_tests PRIVATE
+    HIKARI_CLEANTAGS_LUA="${PROJECT_SOURCE_DIR}/Automation/automation/Include/cleantags.lua"
+    HIKARI_FIXTURES_DIR="${PROJECT_SOURCE_DIR}/tests/fixtures")
 hikari_add_gtest(hikari_core_editor_font_colour_tests SOURCES editor_font_colour_tests.cpp LIBRARIES hikari_core LABELS core)
 hikari_add_gtest(hikari_core_clipboard_rows_tests SOURCES clipboard_rows_tests.cpp LIBRARIES hikari_core LABELS core)
 hikari_add_gtest(hikari_core_conversion_tests SOURCES conversion_tests.cpp LIBRARIES hikari_core LABELS core)
