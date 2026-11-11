@@ -597,20 +597,26 @@ bool InlineAiController::apply(const QVariantList &keys)
     for (const QVariant &k : keys)
         chosen.push_back(k.toULongLong());
     const bool ok = write(chosen);
-    for (Line &line : m_run->lines)
-        if (line.state == LineState::Changed)
-            line.state = LineState::Dropped;
+    closeResults();
     emit runChanged();
     return ok;
+}
+
+void InlineAiController::closeResults()
+{
+    for (Line &line : m_run->lines) {
+        if (line.state == LineState::Changed)
+            line.state = LineState::Dropped;
+        else if (line.state == LineState::Edited)
+            line.after.clear();
+    }
 }
 
 void InlineAiController::discard()
 {
     if (!m_run || (m_run->engine && m_run->engine->running()))
         return;
-    for (Line &line : m_run->lines)
-        if (line.state == LineState::Changed)
-            line.state = LineState::Dropped;
+    closeResults();
     emit runChanged();
 }
 

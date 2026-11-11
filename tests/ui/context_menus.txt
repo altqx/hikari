@@ -13,6 +13,18 @@ Line editor text > Delete
 Line editor text > -
 Line editor text > Select all
 Line editor text > -
+Line editor text > Remove tags… [GLOBAL_REMOVE_TAGS]
+Line editor text > -
+Line editor text > AI >
+Line editor text > AI > Rewrite…
+Line editor text > AI > Shorten to 15 CPS
+Line editor text > AI > Fix spelling and grammar
+Line editor text > AI > Translate to English
+Line editor text > AI > Translate to…
+Line editor text > AI > -
+Line editor text > AI > Repeat last AI action [GLOBAL_REPEAT_AI_ACTION]
+Line editor text > AI > Add a model in Settings › AI…
+Line editor text > -
 Line editor text > Check spelling
 Text field
 Text field > Undo
@@ -43,6 +55,15 @@ Grid > Paste special > Copy columns [GRID_COPY_COLUMNS]
 Grid > Paste special > Paste columns [GRID_PASTE_COLUMNS]
 Grid > Paste special > -
 Grid > Paste special > Paste translation from a file… [GRID_PASTE_TRANSLATION]
+Grid > AI >
+Grid > AI > Rewrite…
+Grid > AI > Shorten to 15 CPS
+Grid > AI > Fix spelling and grammar
+Grid > AI > Translate to English
+Grid > AI > Translate to…
+Grid > AI > -
+Grid > AI > Repeat last AI action [GLOBAL_REPEAT_AI_ACTION]
+Grid > AI > Add a model in Settings › AI…
 Grid > -
 Grid > Join >
 Grid > Join > Join [GRID_JOIN_LINES]
@@ -56,6 +77,7 @@ Grid > Split > -
 Grid > Split > Into characters [GRID_SPLIT_BY_CHARS]
 Grid > Split > Into words [GRID_SPLIT_BY_WORDS]
 Grid > Split > By wraps [GRID_SPLIT_BY_WRAPS]
+Grid > Remove tags… [GLOBAL_REMOVE_TAGS]
 Grid > Swap lines [GRID_SWAP_LINES]
 Grid > Make times continuous >
 Grid > Make times continuous > With the previous line [GRID_MAKE_CONTINOUS_PREVIOUS_LINE]

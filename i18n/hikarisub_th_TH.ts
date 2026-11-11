@@ -10704,7 +10704,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Fade</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">เฟด</translation>
     </message>
     <message>
         <source>\fad after `before`.</source>

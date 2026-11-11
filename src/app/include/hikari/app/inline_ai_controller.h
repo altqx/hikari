@@ -133,6 +133,7 @@ private:
     const core::Document *documentOf(application::DocumentId document) const;
     std::string mode() const;
     void dropEdited();
+    void closeResults();
 
     Wiring m_wiring;
     std::unique_ptr<Run> m_run;

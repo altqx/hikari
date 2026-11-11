@@ -55,14 +55,6 @@ ShellMenu {
         enabled: menu.ready
         onTriggered: menu.chosen({action: "translate", choose: true})
     }
-    MenuSeparator { visible: menu.customActions.length > 0; height: visible ? implicitHeight : 0 }
-    ShellMenuItem {
-        objectName: "inlineAiYours"
-        text: qsTr("Your actions")
-        enabled: false
-        visible: menu.customActions.length > 0
-        height: visible ? implicitHeight : 0
-    }
     Instantiator {
         model: menu.customActions
         delegate: ShellMenuItem {
@@ -79,8 +71,8 @@ ShellMenu {
         onObjectAdded: (index, object) => menu.insertItem(menu.customStart + index, object)
         onObjectRemoved: (index, object) => menu.removeItem(object)
     }
-    readonly property int customStart: 7
     MenuSeparator {}
+    readonly property int customStart: 6
     ShellMenuItem {
         objectName: "inlineAiRepeat"
         command: "GLOBAL_REPEAT_AI_ACTION"
