@@ -17,7 +17,7 @@ A record holds the error (the signal, the Windows exception, or `APP_HANG` and h
 The start after a crash, or after the program was closed while frozen, turns the record into a report, kept in `reports/crash-report.json` until it is answered:
 
 - the record;
-- the system: version, channel, package, OS and its version, architecture, Qt version, screens and scale, the layout preset. The report's text names the system as people know it: the distribution and its version with the Linux kernel's version ("Omarchy 4.0.0.r7433.g64833fa (Linux 7.2)"), or the Windows edition; the sent properties keep the OS id and version;
+- the system: version, channel, package, OS and its version, architecture, Qt version, screens and scale, the layout preset, the windows: each window's number of tabs and which was active. The report's text names the system as people know it: the distribution and its version with the Linux kernel's version ("Omarchy 4.0.0.r7433.g64833fa (Linux 7.2)"), or the Windows edition; the sent properties keep the OS id and version;
 - a settings summary: ids and values from a fixed list (theme, language, renderer, player, autosave, usage data and so on), never a folder, font or name;
 - the last 200 Log lines.
 
@@ -51,7 +51,7 @@ Send report posts to PostHog's `/batch/`, through our own proxy at `https://i.hi
 
 With AI on, every report also carries the AI component's version and those of its Bun and provider libraries (the `ai_*` properties in [analytics.md](analytics.md)), and the report's System lines list them.
 
-**A rolled-back AI component** ([ADR 0031](adr/0031-the-ai-sidecar-updates-on-its-own.md)) sends a `crash_report` of kind `ai_component` at once, only with **Always send crash reports** on: the system, the settings summary, the `ai_*` versions now running, `ai_failed_version` and `ai_failure` (`initialize` or `crashed`). It has no Log lines and no note, and no window opens; Settings › AI › AI components says it was sent.
+**A rolled-back AI component** ([ADR 0031](adr/0031-the-ai-sidecar-updates-on-its-own.md)) sends a `crash_report` of kind `ai_component` at once, only with **Always send crash reports** on: the system, the settings summary, the windows, the `ai_*` versions now running, `ai_failed_version` and `ai_failure` (`initialize` or `crashed`). It has no Log lines and no note, and no window opens; Settings › AI › AI components says it was sent.
 
 Only release builds carry the PostHog key; without it the window has no Send report, and Open GitHub issue still works.
 

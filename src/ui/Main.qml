@@ -6292,6 +6292,17 @@ ApplicationWindow {
                             }
                         }
                         ShellMenuItem { command: "GLOBAL_REMOVE_TAGS"; iconRole: "remove-tags"; objectName: "gridRemoveTags"; action: removeTagsAction }
+                        ShellMenuItem {
+                            command: "GLOBAL_INTERPOLATE_LINES"
+                            iconRole: "interpolate-lines"
+                            objectName: "interpolateLines"
+                            text: qsTranslate("HikariSub.Grid", "Interpolate across lines…")
+                            help: root.shell.selectedCount < 3
+                                  ? qsTranslate("HikariSub.Grid", "Select at least three lines: the first, the last and the lines between them.")
+                                  : qsTranslate("HikariSub.Grid", "Fills the lines between the first and last selected line with the tag values between theirs")
+                            enabled: root.shell.hasEditingTarget && root.shell.selectedCount >= 3
+                            onTriggered: if (!root.hotkeyGesture("GLOBAL_INTERPOLATE_LINES")) root.openInterpolateLines()
+                        }
                         ShellMenuItem { command: "GRID_SWAP_LINES"; iconRole: "swap-lines"; objectName: "swapLines"; text: qsTranslate("HikariSub.Grid", "Swap lines"); onTriggered: if (!root.gridGesture(this, "GRID_SWAP_LINES")) root.app.swapLines() }
                         ShellMenu {
                             objectName: "gridContinuousMenu"
@@ -7152,6 +7163,8 @@ ApplicationWindow {
         objectName: "toastStack"
         log: root.log
         settings: root.app.settings
+        shellWindow: root.shellWindow
+        activeWindow: root.app.lastUsedWindow === root.shellWindow
         readonly property bool inFullscreen: root.videoFullscreen.active
         parent: inFullscreen ? videoFullscreenWindow.contentItem : root.Overlay.overlay.parent
         anchors.right: parent ? parent.right : undefined
@@ -7219,6 +7232,7 @@ ApplicationWindow {
     }
     Connections {
         target: root.app.pluginManager
+        enabled: notices.activeWindow
         function onRolledBack(id, name, version) {
             root.notices.post("info", qsTranslate("HikariSub.Plugins", "%1 rolled back to %2").arg(name, version),
                               qsTranslate("HikariSub.Plugins", "Automatic updates skip the version you left."),
@@ -7227,6 +7241,7 @@ ApplicationWindow {
     }
     Connections {
         target: root.app.pluginMarketplace
+        enabled: notices.activeWindow
         function onRevoked(id, name, version, reason) {
             root.notices.post("warning", qsTranslate("HikariSub.Plugins", "%1 turned off").arg(name),
                               qsTranslate("HikariSub.Plugins", "The marketplace revoked version %1: %2.").arg(version, reason),
@@ -7520,6 +7535,7 @@ ApplicationWindow {
     }
     AutomationNotices {
         automation: root.automation
+        active: notices.activeWindow
         toasts: root.notices
         messages: root.messages
     }
@@ -8050,6 +8066,7 @@ ApplicationWindow {
     }
     Connections {
         target: root.updates
+        enabled: notices.activeWindow
         function onFinished(outcome, release, interactive) {
             if (outcome === "available") {
                 updateAvailable.showRelease(release, !interactive)
@@ -8112,6 +8129,7 @@ ApplicationWindow {
     }
     Connections {
         target: root.crashReports
+        enabled: notices.activeWindow
         function onFreezeNoticed(seconds) {
             root.notices.post("warning", qsTranslate("HikariSub.Reports", "HikariSub stopped responding for %n seconds", "", seconds),
                               qsTranslate("HikariSub.Reports", "It works again. Send a report of where it was stuck?"),
@@ -8171,6 +8189,19 @@ ApplicationWindow {
         active: false
         sourceComponent: MotionDataWindow {
             app: root.app
+            settings: root.app.settings
+        }
+    }
+    function openInterpolateLines() {
+        interpolateLinesLoader.active = true
+        interpolateLinesLoader.item.openDialog()
+    }
+    Loader {
+        id: interpolateLinesLoader
+        active: false
+        sourceComponent: InterpolateLinesWindow {
+            app: root.app
+            shell: root.shell
             settings: root.app.settings
         }
     }
@@ -8323,6 +8354,7 @@ ApplicationWindow {
     }
     Connections {
         target: root.app
+        enabled: notices.activeWindow
         function onResolutionMismatch(sizes) { root.askResolutionMismatch(sizes) }
         function onVideoPropertyQuestion(question) { root.askVideoProperty(question) }
     }
@@ -8570,9 +8602,12 @@ ApplicationWindow {
     Connections {
         target: root.app
         function onAegisubFoldsFound(document, folds) {
+            if (root.app.windowOfTab(document) !== root.shellWindow)
+                return
             root.notices.post("info", qsTranslate("HikariSub.Grid", "Aegisub folds"),
                               qsTranslate("HikariSub.Grid", "This file has %n Aegisub folds.", "", folds), {
                 actions: [{ text: qsTranslate("HikariSub.Grid", "Convert to line groups"), run: () => {
+                    root.app.activateShellWindow(root.shellWindow)
                     const tab = root.app.tabs.findIndex(t => t.id === document)
                     if (tab >= 0)
                         root.app.selectTab(tab)
@@ -8582,10 +8617,12 @@ ApplicationWindow {
         }
         function onFoldsConverted(converted, skipped) {
             const done = qsTranslate("HikariSub.Grid", "%n Aegisub folds became line groups.", "", converted)
-            root.notices.post("info", qsTranslate("HikariSub.Grid", "Convert Aegisub folds to line groups"), skipped === 0 ? done
+            root.notices.postForApp("info", qsTranslate("HikariSub.Grid", "Convert Aegisub folds to line groups"), skipped === 0 ? done
                               : done + " " + qsTranslate("HikariSub.Grid", "%n folds were skipped: they overlap a line group or do not pair.", "", skipped))
         }
         function onGroupBreakRefused(description, title) {
+            if (!notices.activeWindow)
+                return
             if (!description) {
                 root.notices.post("warning", qsTranslate("HikariSub.Grid", "This would leave lines outside their line group"),
                             qsTranslate("HikariSub.Grid", "Nothing was changed."))
@@ -8685,7 +8722,7 @@ ApplicationWindow {
             root.workspaceLayout.resumeMode("Karaoke")
         if (root.app.gettingStartedDue())
             Qt.callLater(() => gettingStartedDialog.openSetup())
-        if (root.crashReports.pending.length > 0
+        if (root.shellWindow === 0 && root.crashReports.pending.length > 0
                 && !(root.crashReports.canSend && root.app.settings.value("privacy.alwaysSendCrashReports") === true))
             Qt.callLater(() => crashReportWindow.showReport("start"))
     }
@@ -9064,6 +9101,7 @@ ApplicationWindow {
         case "GLOBAL_IMPORT_LYRICS": lyricsDialog.show(); return true
         case "GLOBAL_IMPORT_LEGACY_SETTINGS": root.importLegacySettings(); return true
         case "GLOBAL_CONVERT_FOLDS_TO_GROUPS": if (editing) root.app.convertFoldsToGroups(); return true
+        case "GLOBAL_INTERPOLATE_LINES": if (editing) root.openInterpolateLines(); return true
         case "GLOBAL_PLAY_ACTUAL_LINE":
             if (root.video.hasVideo) {
                 root.focusPanel(lineText, Qt.OtherFocusReason)

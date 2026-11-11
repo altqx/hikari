@@ -76,8 +76,10 @@ public:
 
     Q_INVOKABLE void log(const QString &text, hikari::ui::LogController::Severity severity = Info,
                          const QString &title = {});
+    static constexpr int kActiveWindow = -1;
+    // window: the shell window whose tab the notice is about; kActiveWindow for none.
     Q_INVOKABLE void notice(hikari::ui::LogController::Severity severity, const QString &title, const QString &text,
-                            const QString &details = {});
+                            const QString &details = {}, int window = kActiveWindow);
     Q_INVOKABLE void replayNotices();
     // MUST KILL: reveal(0) means the "N more notices" toast, not an entry
     Q_INVOKABLE void reveal(int id);
@@ -85,12 +87,13 @@ public:
     Q_INVOKABLE void copyShown() const;
     Q_INVOKABLE void copyEntry(int id) const;
     void setClock(std::function<QString()> clock) { m_clock = std::move(clock); }
+    void setActiveWindow(std::function<int()> active) { m_activeWindow = std::move(active); }
 
 signals:
     void changed();
     void markedChanged();
     void noticed(int id, hikari::ui::LogController::Severity severity, const QString &title, const QString &text,
-                 const QString &details);
+                 const QString &details, int window);
     void added(const QString &time, hikari::ui::LogController::Severity severity, const QString &title,
                const QString &text, const QString &details);
     void revealRequested();
@@ -112,8 +115,13 @@ private:
     LogEntries *m_entries;
     int m_counts[3] = {0, 0, 0};
     int m_marked = 0;
-    std::vector<int> m_unshown;
+    struct Unshown {
+        int id;
+        int window;
+    };
+    std::vector<Unshown> m_unshown;
     std::function<QString()> m_clock;
+    std::function<int()> m_activeWindow;
 };
 
 }
