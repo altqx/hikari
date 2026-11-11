@@ -363,6 +363,66 @@
         <translation>இனி தேவையில்லை</translation>
     </message>
     <message>
+        <source>Run this Lua script?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 · macro “%2”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>on %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 isn’t installed, so the script will stop when it loads.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Runs as an Automation macro: one undo step, and Force stop while it runs. Saved in the AI scripts folder, never added to Autoload.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Run</source>
+        <translation type="unfinished">இயக்கு</translation>
+    </message>
+    <message>
+        <source>Don’t run</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Don’t run and tell the agent…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Running %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ran %1 · one undo step</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 didn’t finish: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Didn’t run %1 · “%2”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Didn’t run %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Force stop</source>
+        <translation type="unfinished">கட்டாயமாக நிறுத்து</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation type="unfinished">திற</translation>
+    </message>
+    <message>
         <source>This thread reached its %1 cap</source>
         <translation>இந்த இழை அதன் %1 வரம்பை எட்டியது</translation>
     </message>
@@ -7378,6 +7438,14 @@ Failed to copy %2 fonts.</source>
         <translation>நேரங்களைச் சட்டகங்களுக்குள் மையப்படுத்து</translation>
     </message>
     <message>
+        <source>Track colour…</source>
+        <translation>வண்ணத்தைக் கண்காணி…</translation>
+    </message>
+    <message>
+        <source>Find fade…</source>
+        <translation>மங்கலைக் கண்டறி…</translation>
+    </message>
+    <message>
         <source>Import legacy settings…</source>
         <translation>பழைய பதிப்பின் அமைப்புகளை இறக்குமதி செய்…</translation>
     </message>
@@ -7456,6 +7524,54 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Interpolate across lines…</source>
         <translation>வரிகளுக்கு இடையே இடைக்கணிப்பு…</translation>
+    </message>
+    <message>
+        <source>Insert balanced break</source>
+        <translation>சமநிலை வரி முறிவைச் செருகு</translation>
+    </message>
+    <message>
+        <source>Move break left</source>
+        <translation>முறிவை இடப்புறம் நகர்த்து</translation>
+    </message>
+    <message>
+        <source>Move break right</source>
+        <translation>முறிவை வலப்புறம் நகர்த்து</translation>
+    </message>
+    <message>
+        <source>Remove breaks</source>
+        <translation>வரி முறிவுகளை நீக்கு</translation>
+    </message>
+    <message>
+        <source>Wrap only at \N (\q2)</source>
+        <translation>\N இல் மட்டும் மடி (\q2)</translation>
+    </message>
+    <message>
+        <source>Change case to lowercase</source>
+        <translation>சிற்றெழுத்துக்கு மாற்று</translation>
+    </message>
+    <message>
+        <source>Change case to UPPERCASE</source>
+        <translation>பேரெழுத்துக்கு மாற்று</translation>
+    </message>
+    <message>
+        <source>Change case to Title Case</source>
+        <translation>தலைப்பு வடிவத்துக்கு மாற்று</translation>
+    </message>
+    <message>
+        <source>Change case to Sentence case</source>
+        <translation>வாக்கிய வடிவத்துக்கு மாற்று</translation>
+    </message>
+    <message>
+        <source>Change text to full-width</source>
+        <translation>உரையை முழு அகலத்துக்கு மாற்று</translation>
+    </message>
+    <message>
+        <source>Change text to half-width</source>
+        <translation>உரையை அரை அகலத்துக்கு மாற்று</translation>
+    </message>
+    <message>
+        <source>Swap dialogue alternatives</source>
+        <translation>உரையாடல் மாற்றுகளை இடமாற்று</translation>
     </message>
     <message>
         <source>Move tab to new window</source>
@@ -9574,6 +9690,22 @@ Failed to copy %2 fonts.</source>
         <translation>நேரக்குறியீடுகளை மூடு</translation>
     </message>
     <message>
+        <source>Follows a picked point’s colour across the selected lines’ frames and writes it as colour or alpha tags</source>
+        <translation>தேர்ந்த புள்ளியின் வண்ணத்தைத் தேர்ந்த வரிகளின் சட்டகங்கள் தோறும் பின்தொடர்ந்து, வண்ண அல்லது ஆல்ஃபா குறிச்சொற்களாக எழுதும்</translation>
+    </message>
+    <message>
+        <source>Track colour…</source>
+        <translation>வண்ணத்தைக் கண்காணி…</translation>
+    </message>
+    <message>
+        <source>Finds where the active line’s sign fades in and out at a picked point and writes %1</source>
+        <translation>தேர்ந்த புள்ளியில் செயலில் உள்ள வரியின் அடையாளம் எங்கே உள்மங்கி வெளிமங்குகிறது என்று கண்டறிந்து %1 ஐ எழுதும்</translation>
+    </message>
+    <message>
+        <source>Find fade…</source>
+        <translation>மங்கலைக் கண்டறி…</translation>
+    </message>
+    <message>
         <source>Shift by frames to video</source>
         <translation>சட்டகங்களாக வீடியோவுக்கு நகர்த்து</translation>
     </message>
@@ -9624,6 +9756,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Applies Power-Pin tracking data to the selected lines, one line a frame</source>
         <translation>தேர்ந்தெடுத்த வரிகளுக்கு Power-Pin கண்காணிப்புத் தரவைப் பயன்படுத்தும், ஒரு சட்டகத்துக்கு ஒரு வரி</translation>
+    </message>
+    <message>
+        <source>Find fade</source>
+        <translation>மங்கலைக் கண்டறி</translation>
+    </message>
+    <message>
+        <source>Track colour</source>
+        <translation>வண்ணத்தைக் கண்காணி</translation>
     </message>
     <message>
         <source>Open a video first: tracking data is per frame.</source>
@@ -20304,6 +20444,65 @@ Styles deleted:
     </message>
 </context>
 <context>
+    <name>HikariSub.Text</name>
+    <message>
+        <source>Swap dialogue alternatives</source>
+        <translation>உரையாடல் மாற்றுகளை இடமாற்று</translation>
+    </message>
+    <message>
+        <source>Line breaks</source>
+        <translation>வரி முறிவுகள்</translation>
+    </message>
+    <message>
+        <source>Insert balanced break</source>
+        <translation>சமநிலை வரி முறிவைச் செருகு</translation>
+    </message>
+    <message>
+        <source>Move break left</source>
+        <translation>முறிவை இடப்புறம் நகர்த்து</translation>
+    </message>
+    <message>
+        <source>Move break right</source>
+        <translation>முறிவை வலப்புறம் நகர்த்து</translation>
+    </message>
+    <message>
+        <source>Remove breaks</source>
+        <translation>வரி முறிவுகளை நீக்கு</translation>
+    </message>
+    <message>
+        <source>Wrap only at %1 (%2)</source>
+        <translation>%1 இல் மட்டும் மடி (%2)</translation>
+    </message>
+    <message>
+        <source>Change case</source>
+        <translation>எழுத்து வடிவை மாற்று</translation>
+    </message>
+    <message>
+        <source>lowercase</source>
+        <translation>சிற்றெழுத்து</translation>
+    </message>
+    <message>
+        <source>UPPERCASE</source>
+        <translation>பேரெழுத்து</translation>
+    </message>
+    <message>
+        <source>Title Case</source>
+        <translation>தலைப்பு வடிவம்</translation>
+    </message>
+    <message>
+        <source>Sentence case</source>
+        <translation>வாக்கிய வடிவம்</translation>
+    </message>
+    <message>
+        <source>Full-width</source>
+        <translation>முழு அகலம்</translation>
+    </message>
+    <message>
+        <source>Half-width</source>
+        <translation>அரை அகலம்</translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.TextMenu</name>
     <message>
         <source>Undo</source>
@@ -22519,6 +22718,159 @@ or codecs or a splitter may be missing</source>
     <message>
         <source>Close</source>
         <translation>மூடு</translation>
+    </message>
+    <message>
+        <source>Track colour</source>
+        <translation>வண்ணத்தைக் கண்காணி</translation>
+    </message>
+    <message>
+        <source>Select the lines to track first.</source>
+        <translation>முதலில் கண்காணிக்க வேண்டிய வரிகளைத் தேர்ந்தெடுக்கவும்.</translation>
+    </message>
+    <message>
+        <source>The clipboard holds no After Effects tracking data.</source>
+        <translation>இடைநிலைப்பலகையில் After Effects கண்காணிப்புத் தரவு இல்லை.</translation>
+    </message>
+    <message>
+        <source>The tracking data doesn’t have one row for each frame of the active line.</source>
+        <translation>கண்காணிப்புத் தரவில் செயலில் உள்ள வரியின் ஒவ்வொரு சட்டகத்துக்கும் ஒரு நிரை இல்லை.</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n selected lines, %1 to %2, %3 frames. Frames are read without subtitles.</source>
+        <translation>
+            <numerusform>%n தேர்ந்த வரி, %1 முதல் %2 வரை, %3 சட்டகங்கள். சட்டகங்கள் வசனங்கள் இல்லாமல் படிக்கப்படும்.</numerusform>
+            <numerusform>%n தேர்ந்த வரிகள், %1 முதல் %2 வரை, %3 சட்டகங்கள். சட்டகங்கள் வசனங்கள் இல்லாமல் படிக்கப்படும்.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Follow tracking data</source>
+        <translation>கண்காணிப்புத் தரவைப் பின்தொடர்</translation>
+    </message>
+    <message>
+        <source>Moves the point with After Effects tracking data from the clipboard, one row for each frame of the active line</source>
+        <translation>இடைநிலைப்பலகையில் உள்ள After Effects கண்காணிப்புத் தரவின்படி புள்ளியை நகர்த்தும், செயலில் உள்ள வரியின் ஒவ்வொரு சட்டகத்துக்கும் ஒரு நிரை</translation>
+    </message>
+    <message numerus="yes">
+        <source>After Effects data, %n frames, from the clipboard</source>
+        <translation>
+            <numerusform>இடைநிலைப்பலகையிலிருந்து After Effects தரவு, %n சட்டகம்</numerusform>
+            <numerusform>இடைநிலைப்பலகையிலிருந்து After Effects தரவு, %n சட்டகங்கள்</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Alpha</source>
+        <translation>ஆல்ஃபா</translation>
+    </message>
+    <message>
+        <source>Skip repeated colours</source>
+        <translation>மீண்டும் வரும் வண்ணங்களைத் தவிர்</translation>
+    </message>
+    <message>
+        <source>A frame whose value is the same as the frame before writes no %1</source>
+        <translation>முந்தைய சட்டகத்தின் அதே மதிப்புள்ள சட்டகம் %1 ஐ எழுதாது</translation>
+    </message>
+    <message>
+        <source>Sign colour</source>
+        <translation>அடையாள வண்ணம்</translation>
+    </message>
+    <message>
+        <source>Background colour</source>
+        <translation>பின்னணி வண்ணம்</translation>
+    </message>
+    <message>
+        <source>Use the point’s colour</source>
+        <translation>புள்ளியின் வண்ணத்தைப் பயன்படுத்து</translation>
+    </message>
+    <message>
+        <source>Colour on each frame</source>
+        <translation>ஒவ்வொரு சட்டகத்திலும் வண்ணம்</translation>
+    </message>
+    <message>
+        <source>Result</source>
+        <translation>முடிவு</translation>
+    </message>
+    <message>
+        <source>Reading frame %1 of %2…</source>
+        <translation>%2 இல் %1 ஆம் சட்டகம் படிக்கப்படுகிறது…</translation>
+    </message>
+    <message>
+        <source>Read %1 of %2 frames</source>
+        <translation>%2 சட்டகங்களில் %1 படிக்கப்பட்டன</translation>
+    </message>
+    <message>
+        <source>Apply</source>
+        <translation>பயன்படுத்து</translation>
+    </message>
+    <message>
+        <source>Find fade</source>
+        <translation>மங்கலைக் கண்டறி</translation>
+    </message>
+    <message>
+        <source>Select a line first.</source>
+        <translation>முதலில் ஒரு வரியைத் தேர்ந்தெடுக்கவும்.</translation>
+    </message>
+    <message>
+        <source>Move the video to a frame of the line where the sign is fully shown.</source>
+        <translation>அடையாளம் முழுமையாகக் காட்டப்படும் வரியின் ஒரு சட்டகத்துக்கு வீடியோவை நகர்த்தவும்.</translation>
+    </message>
+    <message>
+        <source>The tracking data doesn’t have one row for each frame of the line.</source>
+        <translation>கண்காணிப்புத் தரவில் வரியின் ஒவ்வொரு சட்டகத்துக்கும் ஒரு நிரை இல்லை.</translation>
+    </message>
+    <message>
+        <source>No frame up to this one has the point’s colour, so the fade in can’t be found.</source>
+        <translation>இதுவரையிலான எந்தச் சட்டகத்திலும் புள்ளியின் வண்ணம் இல்லை, எனவே உள்மங்கலைக் கண்டறிய முடியாது.</translation>
+    </message>
+    <message>
+        <source>The point keeps its colour to the end of the line, so the fade out can’t be found.</source>
+        <translation>வரியின் இறுதிவரை புள்ளி தன் வண்ணத்தை வைத்திருக்கிறது, எனவே வெளிமங்கலைக் கண்டறிய முடியாது.</translation>
+    </message>
+    <message numerus="yes">
+        <source>Line %1, %2 to %3, %n frames. The point’s colour on this frame is the fully shown colour.</source>
+        <translation>
+            <numerusform>வரி %1, %2 முதல் %3 வரை, %n சட்டகம். இந்தச் சட்டகத்தில் புள்ளியின் வண்ணமே முழுமையாகக் காட்டப்படும் வண்ணம்.</numerusform>
+            <numerusform>வரி %1, %2 முதல் %3 வரை, %n சட்டகங்கள். இந்தச் சட்டகத்தில் புள்ளியின் வண்ணமே முழுமையாகக் காட்டப்படும் வண்ணம்.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Point</source>
+        <translation>புள்ளி</translation>
+    </message>
+    <message>
+        <source>Moves the point with After Effects tracking data from the clipboard, one row for each frame of the line</source>
+        <translation>இடைநிலைப்பலகையில் உள்ள After Effects கண்காணிப்புத் தரவின்படி புள்ளியை நகர்த்தும், வரியின் ஒவ்வொரு சட்டகத்துக்கும் ஒரு நிரை</translation>
+    </message>
+    <message>
+        <source>Find</source>
+        <translation>கண்டறி</translation>
+    </message>
+    <message>
+        <source>Fade in</source>
+        <translation>உள்மங்கல்</translation>
+    </message>
+    <message>
+        <source>Fade out</source>
+        <translation>வெளிமங்கல்</translation>
+    </message>
+    <message>
+        <source>How far, in RGB, a frame’s colour may be from the point’s and still count as shown</source>
+        <translation>ஒரு சட்டகத்தின் வண்ணம் புள்ளியின் வண்ணத்திலிருந்து RGB இல் எவ்வளவு விலகியும் காட்டப்பட்டதாகக் கணக்கிடப்படலாம்</translation>
+    </message>
+    <message>
+        <source>Distance from the colour on each frame</source>
+        <translation>ஒவ்வொரு சட்டகத்திலும் வண்ணத்திலிருந்து தொலைவு</translation>
+    </message>
+    <message>
+        <source>fade in ends, frame %1</source>
+        <translation>உள்மங்கல் முடிவு, சட்டகம் %1</translation>
+    </message>
+    <message>
+        <source>fade out starts, frame %1</source>
+        <translation>வெளிமங்கல் தொடக்கம், சட்டகம் %1</translation>
+    </message>
+    <message>
+        <source>Arrow keys move the point; Enter applies</source>
+        <translation>அம்பு விசைகள் புள்ளியை நகர்த்தும்; Enter பயன்படுத்தும்</translation>
     </message>
 </context>
 <context>

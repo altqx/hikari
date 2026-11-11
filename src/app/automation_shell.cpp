@@ -557,6 +557,14 @@ QString AutomationShell::includeDir() const
     return QDir(m_paths.automationDir).filePath(QStringLiteral("automation/Include"));
 }
 
+QStringList AutomationShell::includeFolders() const
+{
+    QStringList dirs;
+    for (const auto &dir : folders(m_paths).include)
+        dirs << QString::fromStdString(dir);
+    return dirs;
+}
+
 QString AutomationShell::autoloadDir() const
 {
     return QDir(m_paths.automationDir).filePath(QStringLiteral("automation/Autoload"));

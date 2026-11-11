@@ -2413,6 +2413,73 @@
       }
     },
     {
+      "name": "automation.run",
+      "access": "write",
+      "summary": "Saves a Lua Automation script to the AI scripts folder and runs one of its macros on the active tab's selection, once the user approves the script. The run is one undo step.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9 _.-]*$",
+            "maxLength": 64,
+            "description": "The script's file name without .lua; an earlier script of that name is replaced."
+          },
+          "script": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 262144,
+            "description": "The whole Lua script, registering its macro with aegisub.register_macro."
+          },
+          "macro": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The macro to run, by its registered name; default the first."
+          }
+        },
+        "required": [
+          "name",
+          "script"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "file": {
+            "type": "string",
+            "description": "The saved script's file name."
+          },
+          "outcome": {
+            "enum": [
+              "applied",
+              "refused",
+              "failed",
+              "cancelled",
+              "declined",
+              "stopped",
+              "lost",
+              "invalid"
+            ]
+          },
+          "message": {
+            "type": "string"
+          },
+          "log": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "file",
+          "outcome",
+          "message",
+          "log"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
       "name": "nodes.catalogue",
       "access": "read",
       "summary": "The node types the node-effect editor offers, with their ports and parameters.",

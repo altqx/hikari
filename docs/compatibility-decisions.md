@@ -114,6 +114,29 @@ The Gradient visual tool does natively what the gradient scripts do (records in 
 - **G8, wedge thickness.** Thickness is limited to 0–1. phos declares a minimum of 1 and a maximum of 0.
 - **G9, inline tags.** In the strip modes, inline instances of an interpolated tag are replaced, so no older `\1c` overrides a strip. Gradient Factory removes only the last channel's.
 
+## AU11-video-analysis
+
+Video › "Track colour…" and "Find fade…" do natively what zah.aegi-color-track 2.1.1 and phos.AutoFade 1.1.2 do (records in [AU11 #846](https://github.com/altqx/hikari/issues/846)). Both read one pixel a frame, decoded without subtitles. The departures below were accepted at the owner's gate on 2026-11-11 (Q271–Q278).
+
+- **V1, repeated colours.** Skip repeated colours, on by default, writes no `\t` for a frame whose value is the same as the last one written. With it off, the tags are byte for byte color-track's.
+- **V2, alpha hex.** A colour equal to the sign or background colour writes `&H00&` or `&HFF&`. color-track writes the decimal `&H0&` and `&H255&`.
+- **V3, tracking data.** Tracking data moves the picked point by the data's offset from the video's frame. color-track reads the rows as absolute positions, which is the same when the picked point is the tracked point.
+- **V4, each Line's own frames.** Each selected Line gets the colours of its own frames. color-track tracks over the first selected Line's frames and writes that to every Line.
+- **V5, every frame.** Find fade checks every frame after the video's frame for the fade out. AutoFade first halves the distance to the end while the colour holds, so it can step over a flicker.
+- **V6, unread frames.** A frame where the point is outside the picture counts as neither shown nor gone. AutoFade stops with an error.
+
+## AU20-text-commands
+
+Line breaks, Change case and Swap dialogue alternatives do natively what these scripts do: ua.LineBreaker, petzku.Autowrapper, l0.InsertLineBreaks, ua.ChangeCase, Flux.TitleCase, zf.allCharsTo and Flux.DialogSwapper. The bundled "Make text fullwidth" demo still ships unchanged. The behaviour record and the owner's answers are on [AU20 #854](https://github.com/altqx/hikari/issues/854) (Q279–Q286, 2026-11-11).
+
+- **T1, balanced break.** The break goes where the two rendered halves are closest in width, measured with the Line's style and tags. The break points are ICU's, so Thai and CJK break between words and never inside a grapheme cluster. A point right after `. , ? ! : ;` wins when it is within 10% of the Line's width of the best one. Line Breaker's English word lists aren't ported.
+- **T2, removing a break.** A `\N` becomes one space, or nothing where the script needs no space (CJK, Thai).
+- **T3, `\q2`.** "Wrap only at \N" sets or clears `\q2` in the start block of the selected Lines. Autowrapper's file-wide pass and its Effect notes aren't ported.
+- **T4, Sentence case.** Other letters are lowered only when the whole Line is in capitals. ua.ChangeCase's lists of months, weekdays, languages and honorifics aren't ported.
+- **T5, Full-width.** The output is the demo's byte for byte (`tests/fixtures/au20/fullwidth-golden.tsv`, made by running the demo), except that `\N`, `\n`, `\h` and drawings stay as they are. The demo turns `\N` into `＼Ｎ`, so the break is lost, and it converts drawing commands.
+- **T6, Half-width.** `｛`, `｝` and `＼` stay full-width, so the result never gains a tag or an escape.
+- **T7, Dialog Swapper.** It works on the selection with the `*` delimiter. The script's style-name filter and its delimiter setting aren't ported. A Line whose Effect is `***` still has its comment state toggled.
+
 ## AU8-motion-data
 
 Video › Tracking does natively what Aegisub-Motion 1.0.9, 0x.DeriveTrack, arch.DerivePerspTrack, petzku.ExtrapolateMove and phos.ExtrapolateTracking do. On the 35-case corpus it matches Aegisub-Motion's output where that output is stable (`docs/research/motion-data-parity.md`). The bundled scripts still ship unchanged. The departures below were accepted by the owner on 2026-11-09 (Q201–Q206). [AU8 #842](https://github.com/altqx/hikari/issues/842).

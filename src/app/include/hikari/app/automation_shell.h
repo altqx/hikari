@@ -200,6 +200,7 @@ public:
     ui::ScriptResolutionPromptController *resolutionPrompt() { return &m_resolutionPrompt; }
     backends::AutomationManager &manager() { return m_manager; }
     QString includeDir() const;
+    QStringList includeFolders() const;
     QString autoloadDir() const;
     // A user script replaces a shipped one of the same name.
     QStringList autoloadScripts() const;

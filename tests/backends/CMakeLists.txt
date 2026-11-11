@@ -61,7 +61,7 @@ add_dependencies(hikari_backends_plugin_process_tests hikari_plugin_helper hikar
 # Generated at build time: discovered GoogleTest cases ignore a CTest setup fixture.
 set(HIKARI_MEDIA_FIXTURE_DIR "${CMAKE_CURRENT_BINARY_DIR}/media-fixtures")
 set(_hikari_media_fixtures "")
-foreach(kind cfr vfr bframes longgop long longaudio audio tracks unknown color601 color709 color709full colorhd colorhdr audiodelay audioonly sar mkvextract yuv10 keypoint)
+foreach(kind cfr vfr bframes longgop long longaudio audio tracks unknown color601 color709 color709full colorhd colorhdr audiodelay audioonly sar mkvextract yuv10 keypoint fade)
     set(out "${HIKARI_MEDIA_FIXTURE_DIR}/${kind}.mkv")
     add_custom_command(OUTPUT "${out}"
         COMMAND "${CMAKE_COMMAND}" -E make_directory "${HIKARI_MEDIA_FIXTURE_DIR}"
@@ -539,3 +539,6 @@ target_include_directories(hikari_backends_ai_agent_cli_tests PRIVATE "${PROJECT
 target_compile_definitions(hikari_backends_ai_agent_cli_tests PRIVATE
     HIKARI_FAKE_AGENT_CLI="$<TARGET_FILE:hikari_fake_agent_cli>")
 add_dependencies(hikari_backends_ai_agent_cli_tests hikari_fake_agent_cli)
+
+hikari_add_gtest(hikari_backends_icu_text_tests SOURCES icu_text_tests.cpp
+    LIBRARIES hikari_backends LABELS backends)
