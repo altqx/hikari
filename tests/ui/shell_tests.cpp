@@ -13797,7 +13797,7 @@ private slots:
         {
             QFile f(kf);
             QVERIFY(f.open(QIODevice::WriteOnly));
-            f.write("# keyframe format v1\nfps 25\n0\n10\n20\n45\n");
+            f.write("# keyframe format v1\nfps 23.976\n0\n10\n20\n45\n");
         }
         QVERIFY(application->openFile(path));
         auto *session = application->files().session(*application->workspace().editingTarget());
@@ -13851,16 +13851,16 @@ private slots:
         QTRY_COMPARE(session->selection().active, line(3)->id);
         QCOMPARE(session->historySize(), steps + 1);
         QCOMPARE(session->history().back().name, std::string("Timing assistant"));
-        QCOMPARE(frames(1), (Frames{21, 35}));
+        QCOMPARE(frames(1), (Frames{20, 34}));
         QCOMPARE(line(0)->end.value, line(1)->start.value);
-        QCOMPARE(frames(2), (Frames{30, 33}));
+        QCOMPARE(frames(2), (Frames{29, 32}));
 
         QTRY_COMPARE(item("assistantPosition")->property("text").toString(), QStringLiteral("Line 3 of 3"));
         press(Qt::Key_C, Qt::AltModifier);
         QTRY_VERIFY(item("assistantStartEdit")->isVisible());
         item("assistantStartEdit")->setProperty("text", QStringLiteral("0:00:01.52"));
         press(Qt::Key_Return);
-        QTRY_COMPARE(frames(3).first, 38);
+        QTRY_COMPARE(frames(3).first, 37);
         QCOMPARE(session->historySize(), steps + 2);
         QTRY_VERIFY(item("assistantEmpty")->isVisible());
         QCOMPARE(item("assistantEmpty")->property("text").toString(), QStringLiteral("No more lines. Accepted 2, skipped 1."));
@@ -21480,7 +21480,8 @@ private slots:
                                      "AI", "Updates and privacy"}));
         QVERIFY(dialogItem("settingsDialog", "settingsPageHotkeys"));
         QCOMPARE(hotkeyRows().size(), 331);
-        QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Global Close current tab"));
+        QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(),
+                 QStringLiteral("Global Accept the timing assistant\u2019s suggestion"));
         QCOMPARE(application->hotkeys().selected(), 0);
         QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "hotkeyFilter"), "activated", Q_ARG(int, 5)));
         QCOMPARE(hotkeyRows().size(), int(std::ranges::count_if(application::hotkeyNames(), [](const auto &n) {

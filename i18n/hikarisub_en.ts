@@ -1142,16 +1142,16 @@
     </message>
     <message numerus="yes">
         <source>Snapped to the keyframe %n frame(s) earlier.</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>Snapped to the keyframe %n frame earlier.</numerusform>
+            <numerusform>Snapped to the keyframe %n frames earlier.</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>Snapped to the keyframe %n frame(s) later.</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>Snapped to the keyframe %n frame later.</numerusform>
+            <numerusform>Snapped to the keyframe %n frames later.</numerusform>
         </translation>
     </message>
 </context>

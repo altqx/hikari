@@ -372,8 +372,9 @@ TEST(Hotkeys, ListOrderIsAddHotkeysOnList)
     auto live = defaultHotkeys();
     list.build(live);
     ASSERT_EQ(list.rowCount(), 331u);
-    EXPECT_EQ(list.row(0).text, "Global Close current tab");
-    EXPECT_EQ(list.row(0).accel, "Ctrl-W");
+    EXPECT_EQ(list.row(0).text, "Global Accept the timing assistant’s suggestion");
+    EXPECT_EQ(list.row(0).accel, "");
+    EXPECT_EQ(rowNamed(list, "Global Close current tab").accel, "Ctrl-W");
     EXPECT_EQ(rowNamed(list, "Global Hide tags in the line editor").accel, "");
     EXPECT_EQ(rowNamed(list, "Global Render cost").accel, "");
     EXPECT_EQ(rowNamed(list, "Video Full screen bar: when the pointer moves / always / never").accel, "Tab");
@@ -955,8 +956,8 @@ TEST(Hotkeys, FilteredListShowsAndHidesBlocks)
     list.filter(1);
     ASSERT_TRUE(list.filtered());
     const auto shown = list.shown();
-    ASSERT_EQ(shown.front(), 0);
-    EXPECT_EQ(list.hiddenBlock(-1), 0);
+    ASSERT_EQ(shown.front(), 16);
+    EXPECT_EQ(list.hiddenBlock(-1), 1);
     int position = -1;
     for (int i = 0; i + 1 < int(shown.size()); ++i)
         if (shown[std::size_t(i) + 1] > shown[std::size_t(i)] + 1) {
