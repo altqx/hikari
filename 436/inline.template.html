@@ -1,0 +1,542 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI inline actions mockup</title>
+<style>
+:root, [data-theme="dark"] {
+  --bg:#171B20; --panel:#20262D; --raised:#29313A; --field:#171D24; --text:#E8EDF2; --muted:#A5B1BD; --line:#414B57;
+  --accent:#9CDBC9; --onaccent:#102C24; --select:#304C47; --focus:#E8EDF2; --danger:#FFADAD; --warning:#E0A030; --success:#4DBA4D; --disabled:#75818D; --control:#7A8691;
+  --alt:#242A31; --label:#2F3136; --labelmod:#322F4E; --gridsel:#2D4A44;
+  --addbg:rgba(77,186,77,.24); --addfg:#B8EBB8; --delbg:rgba(255,173,173,.18); --delfg:#FFC2C2;
+  --video:#0B0E12;
+}
+[data-theme="light"] {
+  --bg:#E5E9EC; --panel:#F9FAFB; --raised:#EDF0F3; --field:#FFFFFF; --text:#202832; --muted:#526170; --line:#AAB5BE;
+  --accent:#145C4C; --onaccent:#FFFFFF; --select:#D6EBE4; --focus:#202832; --danger:#A51F31; --warning:#8A5A00; --success:#008000; --disabled:#74808B; --control:#76828D;
+  --alt:#F0F2F4; --label:#C9CED3; --labelmod:#B0ADD8; --gridsel:#CFE6DF;
+  --addbg:#D3EFD3; --addfg:#0B4F0B; --delbg:#F8D7DA; --delfg:#8B1A2B;
+  --video:#1A1F26;
+}
+[data-theme="hcw"] {
+  --bg:#FFFFFF; --panel:#FFFFFF; --raised:#EBEBEB; --field:#FFFFFF; --text:#000000; --muted:#1A1A1A; --line:#000000;
+  --accent:#0037B3; --onaccent:#FFFFFF; --select:#C9DAF8; --focus:#000000; --danger:#A00000; --warning:#6B4500; --success:#005A00; --disabled:#6E6E6E; --control:#000000;
+  --alt:#FFFFFF; --label:#E0E0E0; --labelmod:#D0D0FF; --gridsel:#C9DAF8;
+  --addbg:#CCF2CC; --addfg:#003A00; --delbg:#FFD6D6; --delfg:#7A0000;
+  --video:#000000;
+}
+[data-theme="hcb"] {
+  --bg:#000000; --panel:#080808; --raised:#151515; --field:#000000; --text:#FFFFFF; --muted:#EEEEEE; --line:#FFFFFF;
+  --accent:#FFFF00; --onaccent:#000000; --select:#253F60; --focus:#FFFFFF; --danger:#FFADAD; --warning:#FFD54A; --success:#7CFC7C; --disabled:#8C8C8C; --control:#FFFFFF;
+  --alt:#000000; --label:#1E1E1E; --labelmod:#000060; --gridsel:#253F60;
+  --addbg:#003A00; --addfg:#9CFF9C; --delbg:#3A0000; --delfg:#FFC0C0;
+  --video:#000000;
+}
+* { box-sizing:border-box; }
+html { background:var(--bg); }
+body { margin:0; background:var(--bg); color:var(--text); font:13px/1.35 "Noto Sans","Segoe UI",system-ui,sans-serif; }
+svg { width:16px; height:16px; flex:none; display:block; }
+svg .acc { stroke:var(--accent); }
+svg .acc circle { fill:var(--accent); }
+.mono { font-family:"JetBrains Mono","Cascadia Mono","DejaVu Sans Mono",monospace; font-size:12px; }
+
+.pick { display:flex; gap:6px; padding:12px 24px 0; }
+.pick button { font:inherit; color:var(--text); background:var(--raised); border:1px solid var(--line); border-radius:2px; padding:3px 10px; cursor:pointer; }
+.pick button[aria-pressed="true"] { background:var(--select); border-color:var(--accent); font-weight:600; }
+.shot .pick { display:none; }
+
+.sheet { padding:18px 24px 26px; display:grid; grid-template-columns:904px 904px; gap:22px 24px; align-items:start; width:1880px; }
+.full { grid-column:1 / -1; }
+.col { display:flex; flex-direction:column; gap:22px; }
+.cap { font-size:12px; color:var(--muted); margin:0 0 6px; max-width:900px; }
+.full .cap { max-width:1600px; }
+.cap b { color:var(--text); font-weight:600; }
+.head { grid-column:1 / -1; display:flex; align-items:baseline; gap:14px; }
+.head h1 { font-size:15px; margin:0; }
+.head span { color:var(--muted); font-size:12px; }
+
+.win { background:var(--bg); border:1px solid var(--line); border-radius:4px; box-shadow:0 10px 30px rgba(0,0,0,.35); overflow:hidden; display:flex; flex-direction:column; }
+.menubar { height:28px; display:flex; align-items:center; gap:2px; padding:0 6px; background:var(--panel); }
+.menubar span { padding:0 8px; }
+.tabbar { height:32px; display:flex; align-items:flex-end; gap:2px; padding:0 6px; background:var(--panel); border-bottom:1px solid var(--line); }
+.dtab { height:27px; display:flex; align-items:center; gap:6px; padding:0 6px 0 10px; border:1px solid var(--line); border-bottom:0; border-radius:3px 3px 0 0; background:var(--raised); color:var(--muted); position:relative; }
+.dtab.on { background:var(--bg); color:var(--text); border-color:var(--accent); }
+.dtab.on::after { content:""; position:absolute; left:-1px; right:-1px; bottom:-1px; height:1px; background:var(--bg); }
+.dtab.hot { outline:1px solid var(--focus); outline-offset:-3px; }
+.dtab .x svg { width:14px; height:14px; }
+.badge { display:inline-flex; align-items:center; gap:3px; height:17px; padding:0 5px 0 3px; border-radius:9px; background:var(--accent); color:var(--onaccent); font-size:11px; font-weight:700; }
+.badge svg { width:13px; height:13px; }
+.badge svg path, .badge svg .acc { stroke:var(--onaccent); }
+.badge.out { background:transparent; color:var(--accent); box-shadow:inset 0 0 0 1px var(--accent); }
+.badge.out svg path, .badge.out svg .acc { stroke:var(--accent); }
+.plus { width:26px; height:26px; display:flex; align-items:center; justify-content:center; }
+
+.body { display:grid; gap:4px; padding:4px; flex:1; min-height:0; }
+.dock { background:var(--panel); border:1px solid var(--line); border-radius:3px; display:flex; flex-direction:column; min-height:0; overflow:hidden; position:relative; }
+.dh { height:30px; display:flex; align-items:center; gap:8px; padding:0 4px 0 10px; font-weight:700; flex:none; }
+.dh .sp { flex:1; }
+.dh .tabs { display:flex; gap:0; align-self:stretch; margin-left:-10px; }
+.dh .tabs span { display:flex; align-items:center; gap:6px; padding:0 12px; font-weight:400; color:var(--muted); border-bottom:2px solid transparent; }
+.dh .tabs span.on { color:var(--text); font-weight:700; border-bottom-color:var(--accent); }
+.ib { width:26px; height:26px; display:inline-flex; align-items:center; justify-content:center; border-radius:2px; flex:none; }
+.ib.sm { width:22px; height:22px; }
+.ib.box1 { border:1px solid var(--control); background:var(--raised); }
+.btn { height:26px; padding:0 10px; display:inline-flex; align-items:center; gap:6px; border:1px solid var(--control); border-radius:2px; background:var(--raised); white-space:nowrap; flex:none; }
+.btn.sm { height:22px; padding:0 8px; font-size:12px; }
+.btn.primary { background:var(--accent); color:var(--onaccent); border-color:var(--accent); font-weight:600; }
+.btn.primary svg path, .btn.primary svg .acc { stroke:var(--onaccent); }
+.btn.ring, .ring { outline:1px solid var(--focus); outline-offset:2px; }
+.btn.dis { color:var(--disabled); border-color:var(--disabled); }
+.kbd { font-size:11px; color:var(--muted); border:1px solid var(--line); border-radius:2px; padding:0 4px; }
+.mut { color:var(--muted); }
+.warn { color:var(--warning); }
+.ok { color:var(--success); }
+.sp { flex:1; }
+
+.lebar { display:flex; align-items:center; gap:8px; margin:0 10px; padding:5px 6px 5px 8px; border:1px solid var(--accent); border-bottom:0; border-radius:2px 2px 0 0; background:var(--select); font-size:12px; }
+.lebar.pend { border-style:dashed; }
+.letext { margin:0 10px; min-height:62px; background:var(--field); border:1px solid var(--accent); border-radius:0 0 2px 2px; padding:7px 9px; font-size:14px; line-height:1.55; }
+.letext.pend { border-style:dashed; }
+.lefields { display:flex; align-items:center; gap:8px; padding:8px 10px 10px; flex-wrap:wrap; }
+.lefields .f { display:flex; align-items:center; gap:6px; }
+.fld { height:26px; display:inline-flex; align-items:center; gap:6px; background:var(--field); border:1px solid var(--control); border-radius:2px; padding:0 7px; white-space:nowrap; }
+.fld.chg { border-color:var(--accent); box-shadow:inset 0 0 0 1px var(--accent); }
+.was { color:var(--delfg); background:var(--delbg); text-decoration:line-through; padding:0 2px; border-radius:2px; }
+.toolrow { display:flex; align-items:center; gap:2px; padding:2px 8px 6px; }
+.toolrow .ib svg { opacity:.9; }
+
+del { color:var(--delfg); background:var(--delbg); text-decoration:line-through; text-decoration-thickness:1px; border-radius:2px; padding:0 1px; }
+ins { color:var(--addfg); background:var(--addbg); text-decoration:underline; text-underline-offset:3px; border-radius:2px; padding:0 1px; }
+
+.rbar { display:flex; align-items:center; gap:8px; padding:5px 6px 5px 8px; margin:0 6px 4px; background:var(--select); border:1px solid var(--accent); border-radius:2px; font-size:12px; flex:none; }
+.rbar.pend { border-style:dashed; }
+.rbar b { font-weight:700; }
+.grid { flex:1; min-height:0; overflow:hidden; font-size:12.5px; }
+.gr { display:grid; grid-template-columns:44px 26px 82px 82px 96px 62px 38px 1fr; height:22px; align-items:center; white-space:nowrap; }
+.gr > span { padding:0 6px; overflow:hidden; text-overflow:ellipsis; }
+.gr.hd { color:var(--muted); height:22px; border-bottom:1px solid var(--line); }
+.gr:nth-child(even):not(.hd) { background:var(--alt); }
+.gr > span:first-child { background:var(--label); align-self:stretch; display:flex; align-items:center; position:relative; padding-left:9px; }
+.gr.hd > span:first-child { background:transparent; }
+.gr.sel { background:var(--gridsel) !important; box-shadow:inset 0 0 0 1px var(--accent); }
+.gr.ai > span:first-child::before, .gr.pend > span:first-child::before { content:""; position:absolute; left:0; top:0; bottom:0; width:4px; background:var(--accent); }
+.gr.pend > span:first-child::before { background:repeating-linear-gradient(to bottom, var(--accent) 0 4px, transparent 4px 7px); }
+.gr.ai > span:first-child, .gr.pend > span:first-child { background:var(--labelmod); }
+.gr.ghost { color:var(--muted); }
+.gr.ghost > span:not(:first-child) { text-decoration:line-through; }
+.gr.ghost > span:first-child::before { content:""; position:absolute; left:0; top:0; bottom:0; width:4px; background:repeating-linear-gradient(to bottom, var(--danger) 0 4px, transparent 4px 7px); }
+.gr .mk { display:inline-flex; width:12px; justify-content:center; font-weight:700; color:var(--accent); margin-left:auto; padding-right:3px; }
+.gr .mk.del { color:var(--danger); }
+.gr .chg { background:var(--addbg); color:var(--addfg); text-decoration:underline; text-underline-offset:3px; border-radius:2px; padding:0 1px; }
+.cpsbad { color:var(--danger); font-weight:600; }
+.gr .you { display:inline-block; width:7px; height:7px; border-radius:4px; background:var(--warning); margin-left:6px; vertical-align:1px; }
+
+.status { height:24px; display:flex; align-items:center; gap:18px; padding:0 12px; font-size:12px; color:var(--muted); background:var(--panel); border-top:1px solid var(--line); }
+.status .r { margin-left:auto; display:flex; gap:18px; }
+.status .ai { color:var(--text); display:flex; align-items:center; gap:6px; }
+
+.rv { flex:1; min-height:0; overflow:hidden; display:flex; flex-direction:column; }
+.rvsum { display:flex; align-items:center; gap:6px; padding:4px 8px 8px; border-bottom:1px solid var(--line); flex:none; }
+.rvsum .t { flex:1; min-width:0; font-size:12px; }
+.rvsum .t b { display:block; font-size:13px; }
+.rvlist { flex:1; min-height:0; overflow:hidden; padding:4px 0; }
+.turn { padding:6px 8px 4px; }
+.turn + .turn { border-top:1px solid var(--line); }
+.th { display:flex; align-items:center; gap:7px; }
+.th .q { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.th .q b { font-weight:700; }
+.th .meta { font-size:11.5px; color:var(--muted); white-space:nowrap; }
+.tsub { display:flex; align-items:center; gap:6px; margin:2px 0 4px 23px; font-size:11.5px; color:var(--muted); }
+.chg-h { display:flex; align-items:center; gap:6px; margin:6px 0 2px 23px; font-size:12px; font-weight:600; }
+.chg-h .n { font-weight:400; color:var(--muted); }
+.chg-h .sp { flex:1; }
+.lr { display:flex; align-items:center; gap:8px; margin-left:23px; padding:0 2px 0 8px; height:26px; border-left:3px solid var(--accent); font-size:12px; }
+.lr.pend { border-left-style:dashed; }
+.lr.ghost { border-left-color:var(--danger); border-left-style:dashed; }
+.lr.sel { background:var(--select); outline:1px solid var(--accent); outline-offset:-1px; }
+.lr .no { width:26px; color:var(--muted); text-align:right; flex:none; }
+.lr .tx { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.lr .acts { display:flex; gap:0; flex:none; }
+.lr.quiet .acts { visibility:hidden; }
+.lr .tag { font-size:11px; color:var(--muted); white-space:nowrap; }
+.lr .tag.warn { color:var(--warning); }
+.who { display:inline-flex; align-items:center; gap:4px; font-size:11px; color:var(--muted); border:1px solid var(--line); border-radius:9px; padding:0 6px; height:18px; white-space:nowrap; }
+.who.full { color:var(--danger); border-color:var(--danger); }
+.fold { display:inline-flex; transform:rotate(0); }
+.fold.c { transform:rotate(-90deg); }
+.also { flex:none; border-top:1px solid var(--line); padding:8px; font-size:12px; }
+.also .row { display:flex; align-items:center; gap:8px; height:28px; }
+.also .row b { font-weight:600; }
+
+.notice { display:flex; gap:8px; align-items:flex-start; border:1px solid var(--line); border-left:3px solid var(--warning); background:var(--raised); padding:6px 8px; font-size:12px; margin:4px 0 2px 23px; }
+.notice svg { margin-top:1px; }
+
+.dlg { background:var(--panel); border:1px solid var(--line); border-radius:4px; box-shadow:0 10px 30px rgba(0,0,0,.35); display:flex; flex-direction:column; overflow:hidden; }
+.title { height:32px; display:flex; align-items:center; gap:8px; padding:0 0 0 12px; font-weight:700; border-bottom:1px solid var(--line); flex:none; }
+.title .x { width:40px; height:32px; display:flex; align-items:center; justify-content:center; margin-left:auto; }
+.dbody { padding:14px 16px 6px; }
+.dbody p { margin:0 0 10px; }
+.dfoot { display:flex; align-items:center; gap:8px; padding:10px 14px 12px; }
+.check { display:flex; align-items:flex-start; gap:8px; min-height:24px; }
+.box { width:16px; height:16px; border:1px solid var(--control); border-radius:2px; background:var(--field); display:inline-flex; align-items:center; justify-content:center; flex:none; margin-top:1px; }
+.box.on { background:var(--accent); border-color:var(--accent); }
+.box.on::after { content:""; width:8px; height:4px; border-left:2px solid var(--onaccent); border-bottom:2px solid var(--onaccent); transform:rotate(-45deg) translate(1px,-1px); }
+.tbl { border:1px solid var(--line); border-radius:2px; margin:0 0 10px; }
+.tbl .r { display:flex; align-items:center; gap:10px; padding:6px 10px; font-size:12.5px; }
+.tbl .r + .r { border-top:1px solid var(--line); }
+.tbl .r .n { margin-left:auto; color:var(--muted); white-space:nowrap; }
+
+.tip { position:absolute; z-index:4; background:var(--raised); border:1px solid var(--line); border-radius:3px; box-shadow:0 8px 24px rgba(0,0,0,.4); padding:6px 9px; font-size:12px; white-space:nowrap; }
+.menu { position:absolute; z-index:3; background:var(--raised); border:1px solid var(--line); border-radius:3px; box-shadow:0 8px 24px rgba(0,0,0,.4); padding:4px 0; width:300px; }
+.menu .mi { height:28px; display:flex; align-items:center; gap:10px; padding:0 12px; white-space:nowrap; }
+.menu .mi.hot { background:var(--select); }
+.menu .mi .k { margin-left:auto; color:var(--muted); font-size:12px; }
+.menu .sepr { height:1px; background:var(--line); margin:4px 0; }
+
+.hist { border:1px solid var(--line); border-radius:2px; background:var(--field); }
+.hist .h { display:flex; align-items:center; gap:8px; height:26px; padding:0 8px; font-size:12.5px; white-space:nowrap; }
+.hist .h.cur { background:var(--select); font-weight:600; }
+.hist .h.cp { color:var(--muted); font-size:11.5px; height:22px; }
+.hist .h.cp::after { content:""; flex:1; border-top:1px dashed var(--line); }
+.hist .h.redo { color:var(--muted); }
+.hist .h .n { width:20px; text-align:right; color:var(--muted); }
+
+.thread { background:var(--panel); border:1px solid var(--line); border-radius:3px; padding:10px; display:flex; flex-direction:column; gap:8px; }
+.msg { align-self:flex-end; max-width:86%; background:var(--raised); border:1px solid var(--line); border-radius:6px; padding:6px 10px; }
+.msgfoot { align-self:flex-end; display:flex; align-items:center; gap:6px; font-size:11.5px; color:var(--muted); margin-top:-4px; }
+.reply { font-size:12.5px; }
+.cplink { display:inline-flex; align-items:center; gap:4px; color:var(--accent); text-decoration:underline; text-underline-offset:2px; }
+.divider { display:flex; align-items:center; gap:8px; color:var(--muted); font-size:11.5px; }
+.divider::before, .divider::after { content:""; flex:1; border-top:1px solid var(--line); }
+
+.legend { grid-column:1 / -1; font-size:12px; color:var(--muted); border-top:1px solid var(--line); padding-top:10px; display:flex; gap:22px; flex-wrap:wrap; }
+.legend b { color:var(--text); }
+.key { display:flex; gap:18px; flex-wrap:wrap; font-size:12px; color:var(--muted); margin-top:8px; align-items:center; }
+.key span { display:inline-flex; align-items:center; gap:6px; }
+.sw { display:inline-block; width:4px; height:16px; background:var(--accent); }
+.sw.p { background:repeating-linear-gradient(to bottom, var(--accent) 0 4px, transparent 4px 7px); }
+.sw.d { background:repeating-linear-gradient(to bottom, var(--danger) 0 4px, transparent 4px 7px); }
+</style>
+</head>
+<body>
+<style>
+.sub { position:absolute; z-index:5; }
+.menu .mi .ic { width:16px; display:inline-flex; }
+.menu .hd2 { height:22px; display:flex; align-items:center; padding:0 12px; font-size:11px; color:var(--muted); }
+.menu .mi.dis { color:var(--disabled); }
+.n1 { display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:10px; background:var(--warning); color:#000; font-weight:700; font-size:11px; flex:none; }
+.pop { position:absolute; z-index:6; background:var(--panel); border:1px solid var(--line); border-radius:4px; box-shadow:0 10px 30px rgba(0,0,0,.45); width:400px; }
+.pop .pt { display:flex; align-items:center; gap:8px; padding:8px 10px 4px; font-weight:700; }
+.pop .pb { padding:4px 10px 8px; font-size:12.5px; }
+.pop .pf { display:flex; align-items:center; gap:8px; padding:8px 10px 10px; border-top:1px solid var(--line); }
+.ta { background:var(--field); border:1px solid var(--accent); box-shadow:inset 0 0 0 1px var(--accent); border-radius:2px; min-height:52px; padding:6px 8px; font-size:13px; }
+.ta .caret { display:inline-block; width:1px; height:15px; background:var(--text); vertical-align:-3px; }
+.chips { display:flex; gap:6px; flex-wrap:wrap; margin:8px 0 4px; }
+.chip { height:22px; display:inline-flex; align-items:center; padding:0 8px; border:1px solid var(--line); border-radius:11px; font-size:12px; color:var(--muted); }
+.meta2 { display:flex; gap:10px; align-items:center; font-size:12px; color:var(--muted); margin-top:6px; }
+.gr.run > span:first-child::before { content:""; position:absolute; left:0; top:0; bottom:0; width:4px; background:repeating-linear-gradient(to bottom, var(--muted) 0 2px, transparent 2px 4px); }
+.gr .spin { display:inline-block; width:10px; height:10px; border:2px solid var(--muted); border-top-color:transparent; border-radius:6px; margin-left:auto; margin-right:3px; }
+.gr .fail { margin-left:auto; padding-right:3px; color:var(--danger); font-weight:700; }
+.prog { height:3px; background:var(--line); margin:0 6px 4px; border-radius:2px; overflow:hidden; }
+.prog i { display:block; height:100%; width:58%; background:var(--accent); }
+.res { border:1px solid var(--line); border-radius:3px; background:var(--panel); }
+.rr { display:grid; grid-template-columns:22px 34px 1fr; gap:6px; align-items:start; padding:6px 8px; font-size:12.5px; border-top:1px solid var(--line); }
+.rr:first-child { border-top:0; }
+.rr .no { color:var(--muted); text-align:right; padding-top:1px; }
+.rr .bef { color:var(--muted); }
+.rr.off { opacity:.75; }
+.rr.bad .tx2 { color:var(--danger); }
+.lbl { font-size:12px; color:var(--muted); margin:10px 0 4px; }
+.lbl:first-child { margin-top:0; }
+.combo { height:26px; display:flex; align-items:center; gap:6px; background:var(--field); border:1px solid var(--control); border-radius:2px; padding:0 4px 0 8px; }
+.combo .sp { flex:1; }
+.lst { border:1px solid var(--line); border-radius:2px; background:var(--field); }
+.lst .r { display:flex; align-items:center; gap:10px; height:30px; padding:0 8px; font-size:12.5px; }
+.lst .r + .r { border-top:1px solid var(--line); }
+.lst .r.cur { background:var(--select); }
+.lst .r .d { color:var(--muted); font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; }
+.pg { display:grid; grid-template-columns:170px 1fr; min-height:0; }
+.nav { border-right:1px solid var(--line); padding:6px 0; font-size:12.5px; }
+.nav div { height:26px; display:flex; align-items:center; padding:0 12px; }
+.nav div.on { background:var(--select); font-weight:600; box-shadow:inset 3px 0 0 var(--accent); }
+.nav div.ind { padding-left:24px; }
+.sec { font-weight:700; margin:0 0 6px; }
+.note { font-size:12px; color:var(--muted); margin:4px 0 0; }
+.spin2 { display:inline-flex; align-items:center; height:24px; border:1px solid var(--control); border-radius:2px; background:var(--field); padding:0 6px; min-width:54px; }
+</style>
+<div class="pick" role="group" aria-label="Theme">
+  <button data-t="light">Light</button><button data-t="dark">Dark</button><button data-t="hcw">High contrast white</button><button data-t="hcb">High contrast black</button>
+</div>
+<div class="sheet">
+  <div class="head"><h1>AI inline actions: one prompt per selected Line</h1><span>#436 design gate · <span id="tn">Dark</span> · the numbered badges match the questions</span></div>
+
+  <div class="full">
+    <p class="cap"><b>1 · The AI submenu in the Grid's menu.</b> Twelve Lines are selected. The submenu sits just after the review entries. Shorten uses your maximum CPS. Translate remembers the last language. Your own saved actions follow, then "Edit actions…". There is one new command, "AI actions…", which opens this submenu, plus "Repeat last AI action".</p>
+    <div class="win" style="height:560px; position:relative">
+      <div class="menubar"><span>File</span><span>Edit</span><span>Automation</span><span>Video</span><span>Audio</span><span>View</span><span>Subtitles</span><span>Help</span></div>
+      <div class="tabbar">
+        <div class="dtab on">Ep03.ass<span class="x">{{i:tab-close}}</span></div>
+        <div class="dtab">Signs.ass<span class="x">{{i:tab-close}}</span></div>
+        <span class="plus">{{i:add}}</span>
+      </div>
+      <div class="body" style="grid-template-columns:1fr;">
+        <div class="dock">
+          <div class="dh">Grid<span class="sp"></span><span class="ib">{{i:menu-more}}</span></div>
+          <div class="grid">
+            <div class="gr hd"><span>#</span><span>L.</span><span>Start</span><span>End</span><span>Style</span><span>Actor</span><span>CPS</span><span>Text</span></div>
+            <div class="gr"><span>30</span><span>0</span><span>0:04:01.10</span><span>0:04:03.00</span><span>Default</span><span>Mio</span><span>12</span><span>So this is the famous Kitamachi bakery.</span></div>
+            <div class="gr sel"><span>31</span><span>0</span><span>0:04:03.20</span><span>0:04:05.10</span><span>Default</span><span>Haru</span><span class="cpsbad">24</span><span>Well, I mean, it's not exactly famous, but people do come from the next town over.</span></div>
+            <div class="gr sel"><span>32</span><span>0</span><span>0:04:05.30</span><span>0:04:07.00</span><span>Default</span><span>Mio</span><span>15</span><span>{\i1}Smells{\i0} amazing though.</span></div>
+            <div class="gr sel"><span>33</span><span>0</span><span>0:04:07.20</span><span>0:04:09.60</span><span>Default</span><span>Haru</span><span class="cpsbad">21</span><span>My aunt has been baking here every morning since before I was born.</span></div>
+            <div class="gr sel"><span>34</span><span>0</span><span>0:04:09.80</span><span>0:04:11.00</span><span>Default</span><span>Mio</span><span>13</span><span>Your aunt runs it?</span></div>
+            <div class="gr sel"><span>35</span><span>0</span><span>0:04:11.20</span><span>0:04:13.90</span><span>Default</span><span>Haru</span><span>16</span><span>Ran. She mostly just yells at my cousin now.</span></div>
+            <div class="gr sel"><span>36</span><span>0</span><span>0:04:14.00</span><span>0:04:15.20</span><span>Default</span><span>Mio</span><span>9</span><span>Wait, recieve what?</span></div>
+            <div class="gr sel"><span>37</span><span>0</span><span>0:04:15.40</span><span>0:04:18.00</span><span>Default</span><span>Haru</span><span class="cpsbad">22</span><span>The melon bread, they're all sold out by eight in the morning every single day.</span></div>
+            <div class="gr sel"><span>38</span><span>0</span><span>0:04:18.10</span><span>0:04:19.90</span><span>Default</span><span>Mio</span><span>11</span><span>Then why are we here at noon?</span></div>
+            <div class="gr sel"><span>39</span><span>0</span><span>0:04:20.00</span><span>0:04:22.00</span><span>Default</span><span>Haru</span><span>14</span><span>Because I know where she hides the extras.</span></div>
+            <div class="gr sel"><span>40</span><span>0</span><span>0:04:22.20</span><span>0:04:23.40</span><span>Default</span><span>Mio</span><span>8</span><span>Genius.</span></div>
+            <div class="gr sel"><span>41</span><span>0</span><span>0:04:23.60</span><span>0:04:25.80</span><span>Default</span><span>Haru</span><span>17</span><span>Don't tell her I said that, she'll kill me.</span></div>
+            <div class="gr sel"><span>42</span><span>5</span><span>0:04:01.10</span><span>0:04:25.80</span><span>Signs</span><span></span><span></span><span>{\an8\pos(960,80)}Kitamachi Bakery</span></div>
+            <div class="gr"><span>43</span><span>0</span><span>0:04:26.00</span><span>0:04:27.50</span><span>Default</span><span>Mio</span><span>10</span><span>My lips are sealed.</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="status"><span>12 lines selected</span><span class="r"><span>00:04:03.20</span><span>23.976 FPS</span><span>Ep03.mkv</span></span></div>
+      <div class="menu" style="left:380px; top:96px; width:290px">
+        <div class="mi">{{i:add}}Insert<span class="k">{{i:chevron-right}}</span></div>
+        <div class="mi">{{i:duplicate}}Duplicate 12 lines</div>
+        <div class="mi">{{i:edit-cut}}Cut<span class="k">Ctrl+X</span></div>
+        <div class="mi">{{i:edit-copy}}Copy<span class="k">Ctrl+C</span></div>
+        <div class="mi">{{i:edit-paste}}Paste<span class="k">Ctrl+V</span></div>
+        <div class="sepr"></div>
+        <div class="mi hot">{{i:ai-assistant}}AI<span class="n1" style="margin-left:6px">1</span><span class="k">{{i:chevron-right}}</span></div>
+        <div class="sepr"></div>
+        <div class="mi">{{i:join-lines}}Join<span class="k">{{i:chevron-right}}</span></div>
+        <div class="mi">Split<span class="k">{{i:chevron-right}}</span></div>
+        <div class="mi">Swap lines</div>
+        <div class="sepr"></div>
+        <div class="mi">{{i:delete}}Delete 12 lines<span class="k">Ctrl+Del</span></div>
+      </div>
+      <div class="menu" style="left:668px; top:250px; width:330px">
+        <div class="mi">{{i:edit}}Rewrite…<span class="n1" style="margin-left:6px">3</span><span class="k">12 lines</span></div>
+        <div class="mi hot">{{i:compact}}Shorten to 17 CPS<span class="n1" style="margin-left:6px">3</span><span class="k">3 lines over</span></div>
+        <div class="mi">{{i:dictionary}}Fix spelling and grammar</div>
+        <div class="mi">{{i:language}}Translate to English<span class="n1" style="margin-left:6px">4</span></div>
+        <div class="mi">{{i:language}}Translate to…</div>
+        <div class="sepr"></div>
+        <div class="hd2">Your actions<span class="n1" style="margin-left:6px; width:16px; height:16px; font-size:10px">5</span></div>
+        <div class="mi">{{i:ai-assistant}}Casual register</div>
+        <div class="mi">{{i:ai-assistant}}Add honorifics</div>
+        <div class="sepr"></div>
+        <div class="mi">{{i:repeat-run}}Repeat last AI action<span class="n1" style="margin-left:6px">9</span><span class="k">Shorten</span></div>
+        <div class="mi">{{i:settings}}Edit actions…</div>
+      </div>
+      <div class="tip" style="left:1000px; top:282px; white-space:normal; width:280px">Rewrites each selected Line over 17 CPS so it reads at 17 CPS or less. 3 of the 12 Lines are over; the rest aren't sent.<br><span class="mut">Model: Chat · claude-sonnet-5-5</span></div>
+    </div>
+  </div>
+
+  <div class="col">
+    <div>
+      <p class="cap"><b>2 · Rewrite…</b> opens a small box over the Grid with the instruction field. Your last five instructions come back as chips. The box shows the model and how many Lines go out. Enter runs and Esc closes. <b>Translate to…</b> is the same box with a language list in place of the field.</p>
+      <div class="win" style="height:330px; position:relative">
+        <div class="body" style="grid-template-columns:1fr">
+          <div class="dock">
+            <div class="dh">Grid<span class="sp"></span><span class="ib">{{i:menu-more}}</span></div>
+            <div class="grid">
+              <div class="gr hd"><span>#</span><span>L.</span><span>Start</span><span>End</span><span>Style</span><span>Actor</span><span>CPS</span><span>Text</span></div>
+              <div class="gr sel"><span>31</span><span>0</span><span>0:04:03.20</span><span>0:04:05.10</span><span>Default</span><span>Haru</span><span>24</span><span>Well, I mean, it's not exactly famous…</span></div>
+              <div class="gr sel"><span>32</span><span>0</span><span>0:04:05.30</span><span>0:04:07.00</span><span>Default</span><span>Mio</span><span>15</span><span>{\i1}Smells{\i0} amazing though.</span></div>
+              <div class="gr sel"><span>33</span><span>0</span><span>0:04:07.20</span><span>0:04:09.60</span><span>Default</span><span>Haru</span><span>21</span><span>My aunt has been baking here every…</span></div>
+              <div class="gr sel"><span>34</span><span>0</span><span>0:04:09.80</span><span>0:04:11.00</span><span>Default</span><span>Mio</span><span>13</span><span>Your aunt runs it?</span></div>
+              <div class="gr sel"><span>35</span><span>0</span><span>0:04:11.20</span><span>0:04:13.90</span><span>Default</span><span>Haru</span><span>16</span><span>Ran. She mostly just yells at my cousin…</span></div>
+              <div class="gr sel"><span>36</span><span>0</span><span>0:04:14.00</span><span>0:04:15.20</span><span>Default</span><span>Mio</span><span>9</span><span>Wait, recieve what?</span></div>
+              <div class="gr sel"><span>37</span><span>0</span><span>0:04:15.40</span><span>0:04:18.00</span><span>Default</span><span>Haru</span><span>22</span><span>The melon bread, they're all sold out…</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="pop" style="left:300px; top:40px; width:470px">
+          <div class="pt">{{i:edit}}Rewrite 12 lines<span class="sp"></span><span class="ib sm">{{i:window-close}}</span></div>
+          <div class="pb">
+            <div class="ta">Make Haru sound more laid-back, keep Mio's lines short<span class="caret"></span></div>
+            <div class="chips"><span class="chip">Less formal</span><span class="chip">Fewer words</span><span class="chip">British spelling</span><span class="chip">Keep the pun in 37</span></div>
+            <div class="meta2">{{i:ai-assistant}}Chat · claude-sonnet-5-5<span class="sp"></span>11 requests · about $0.01<span class="n1">6</span></div>
+            <div class="note">Line 42 is a sign with only tags and isn't sent. Each Line goes in its own request, with two Lines before and after it for context.<span class="n1" style="margin-left:6px; width:16px; height:16px; font-size:10px">7</span></div>
+          </div>
+          <div class="pf"><span class="mut" style="font-size:12px">Changes go into the review: Auto</span><span class="sp"></span><span class="btn">Cancel</span><span class="btn primary ring">{{i:ai-send}}Rewrite</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <p class="cap"><b>3 · Running.</b> A bar over the Grid shows the progress and the cost so far, with Stop (Esc while the bar has the focus). Up to four Lines run at once. A Line that's waiting has a dotted mark and a spinner. A finished Line lands in the review straight away, so you can keep editing other Lines. Editing a Line that's still waiting drops it from the run.<span class="n1" style="margin-left:6px">8</span></p>
+      <div class="win" style="height:300px">
+        <div class="body" style="grid-template-columns:1fr">
+          <div class="dock">
+            <div class="dh">Grid<span class="sp"></span><span class="ib">{{i:menu-more}}</span></div>
+            <div class="rbar">{{i:ai-assistant}}<span><b>Rewriting 11 Lines</b> · 6 of 11 done · $0.004</span><span class="sp"></span><span class="mut">Chat · claude-sonnet-5-5</span><span class="btn sm ring">{{i:media-stop}}Stop</span></div>
+            <div class="prog"><i></i></div>
+            <div class="grid">
+              <div class="gr hd"><span>#</span><span>L.</span><span>Start</span><span>End</span><span>Style</span><span>Actor</span><span>CPS</span><span>Text</span></div>
+              <div class="gr ai"><span>31</span><span>0</span><span>0:04:03.20</span><span>0:04:05.10</span><span>Default</span><span>Haru</span><span>16</span><span><span class="chg">It's not famous famous, but</span> people come from the next town over.</span></div>
+              <div class="gr ai"><span>32</span><span>0</span><span>0:04:05.30</span><span>0:04:07.00</span><span>Default</span><span>Mio</span><span>12</span><span>{\i1}Smells{\i0} <span class="chg">great</span>.</span></div>
+              <div class="gr ai"><span>33</span><span>0</span><span>0:04:07.20</span><span>0:04:09.60</span><span>Default</span><span>Haru</span><span>15</span><span>My aunt's <span class="chg">baked here since before I was born</span>.</span></div>
+              <div class="gr ai"><span>34</span><span>0</span><span>0:04:09.80</span><span>0:04:11.00</span><span>Default</span><span>Mio</span><span>13</span><span>Your aunt runs it?</span></div>
+              <div class="gr run"><span>35<span class="spin"></span></span><span>0</span><span>0:04:11.20</span><span>0:04:13.90</span><span>Default</span><span>Haru</span><span>16</span><span>Ran. She mostly just yells at my cousin now.</span></div>
+              <div class="gr ai"><span>36</span><span>0</span><span>0:04:14.00</span><span>0:04:15.20</span><span>Default</span><span>Mio</span><span>8</span><span>Wait, <span class="chg">receive</span> what?</span></div>
+              <div class="gr run"><span>37<span class="spin"></span></span><span>0</span><span>0:04:15.40</span><span>0:04:18.00</span><span>Default</span><span>Haru</span><span>22</span><span>The melon bread, they're all sold out by eight in the morning every single day.</span></div>
+              <div class="gr run"><span>38<span class="spin"></span></span><span>0</span><span>0:04:18.10</span><span>0:04:19.90</span><span>Default</span><span>Mio</span><span>11</span><span>Then why are we here at noon?</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <p class="cap"><b>7 · Settings › AI › Inline actions.</b> Your saved actions: a name, the instruction, and the model role. Translate's language and the context Lines are set here too. An action with "Ask each time" opens the box from sheet 2 with the instruction already filled in.<span class="n1" style="margin-left:6px">5</span></p>
+      <div class="dlg" style="width:904px; height:390px">
+        <div class="title">{{i:settings}}Settings<span class="x">{{i:window-close}}</span></div>
+        <div class="pg" style="flex:1">
+          <div class="nav"><div>Appearance</div><div>Grid</div><div>Audio</div><div>Video</div><div class="on">AI</div><div class="ind">Providers</div><div class="ind">Models</div><div class="ind">Agent</div><div class="ind" style="font-weight:600">Inline actions</div><div class="ind">Web search</div><div class="ind">Privacy</div></div>
+          <div style="padding:12px 16px">
+            <p class="sec">Inline actions</p>
+            <div class="lst" style="margin-bottom:6px">
+              <div class="r cur">{{i:ai-assistant}}<b>Casual register</b><span class="d">Make it sound like two friends talking. Keep it short.</span><span class="who">Chat</span></div>
+              <div class="r">{{i:ai-assistant}}<b>Add honorifics</b><span class="d">Use -san, -kun, -chan and -senpai where the original Japanese has them.</span><span class="who">Translator</span></div>
+              <div class="r">{{i:ai-assistant}}<b>Plain English for signs</b><span class="d">Ask each time</span><span class="who">Chat</span></div>
+            </div>
+            <div style="display:flex; gap:6px; margin-bottom:12px"><span class="btn sm">{{i:add}}Add action</span><span class="btn sm">{{i:edit}}Edit</span><span class="btn sm">{{i:move-up}}</span><span class="btn sm">{{i:move-down}}</span><span class="btn sm">{{i:delete}}Delete</span></div>
+            <div style="display:grid; grid-template-columns:200px 1fr; gap:8px 12px; align-items:center; font-size:12.5px">
+              <span>Translate to</span><span class="combo" style="width:220px">English<span class="sp"></span>{{i:chevron-down}}</span>
+              <span>Lines of context</span><span style="display:flex; gap:8px; align-items:center"><span class="spin2">2</span><span class="mut">before and after each Line. 0 sends only the Line.</span></span>
+              <span>Shorten aims for</span><span class="mut">Maximum CPS from Settings › Grid (17)</span>
+            </div>
+            <p class="note">Inline actions follow the mode for new threads (Agent: Auto). The Chat and Translator models are set under Models.</p>
+          </div>
+        </div>
+        <div class="dfoot"><span class="sp"></span><span class="btn primary">OK</span><span class="btn">Cancel</span><span class="btn">Apply</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col">
+    <div>
+      <p class="cap"><b>4 · Done, in Auto or Full access.</b> The whole run is one review turn named for the action. Each Line can be kept or undone on its own. Line 37's answer dropped the italic tag, so it isn't written. Line 42 was skipped. Retry runs only the failed Line.<span class="n1" style="margin-left:6px">2</span></p>
+      <div class="dock" style="width:440px; height:520px; float:left">
+        <div class="dh"><span class="tabs"><span>{{i:ai-assistant}}Agent</span><span class="on">{{i:review-keep}}Review</span></span><span class="sp"></span><span class="ib">{{i:menu-more}}</span></div>
+        <div class="rv">
+          <div class="rvsum"><span class="t"><b>Ep03.ass</b>10 Lines to review</span><span class="btn sm">{{i:undo}}Undo all</span><span class="btn sm primary">{{i:review-keep}}Keep all</span></div>
+          <div class="rvlist">
+            <div class="turn">
+              <div class="th"><span class="fold">{{i:chevron-down}}</span>{{i:checkpoint}}<span class="q"><b>Rewrite</b> · Make Haru sound more laid-back…</span><span class="meta">12:41</span></div>
+              <div class="tsub"><span class="who">Inline · Auto</span><span class="mut">$0.008</span><span class="sp"></span><span class="btn sm">{{i:checkpoint}}Restore checkpoint</span></div>
+              <div class="chg-h">Rewrote 10 Lines<span class="sp"></span><span class="ib sm">{{i:undo}}</span><span class="ib sm">{{i:review-keep}}</span></div>
+              <div class="lr sel"><span class="no">31</span><span class="tx">It's not famous famous, but people come from…</span><span class="tag">24 → 16 CPS</span><span class="acts"><span class="ib sm">{{i:undo}}</span><span class="ib sm">{{i:review-keep}}</span></span></div>
+              <div class="lr quiet"><span class="no">32</span><span class="tx">Smells great.</span><span class="acts"><span class="ib sm">{{i:undo}}</span><span class="ib sm">{{i:review-keep}}</span></span></div>
+              <div class="lr quiet"><span class="no">33</span><span class="tx">My aunt's baked here since before I was born.</span><span class="tag">21 → 15 CPS</span><span class="acts"><span class="ib sm">{{i:undo}}</span><span class="ib sm">{{i:review-keep}}</span></span></div>
+              <div class="lr quiet"><span class="no">35</span><span class="tx">Ran. Now she just yells at my cousin.</span><span class="acts"><span class="ib sm">{{i:undo}}</span><span class="ib sm">{{i:review-keep}}</span></span></div>
+              <div class="lr quiet"><span class="no">36</span><span class="tx">Wait, receive what?</span><span class="acts"><span class="ib sm">{{i:undo}}</span><span class="ib sm">{{i:review-keep}}</span></span></div>
+              <div class="lr quiet"><span class="no">38</span><span class="tx">So why are we here at noon?</span><span class="acts"><span class="ib sm">{{i:undo}}</span><span class="ib sm">{{i:review-keep}}</span></span></div>
+              <div class="lr quiet"><span class="no">…</span><span class="tx mut">4 more</span></div>
+              <div class="notice">{{i:notice-warning}}<div><b>Line 37 wasn't changed.</b> The answer dropped a tag from the Line. Line 34 came back the same, and Line 42 has no text to send.<div style="display:flex; gap:6px; margin-top:6px"><span class="btn sm">{{i:refresh}}Retry Line 37</span><span class="btn sm">Dismiss</span></div></div></div>
+            </div>
+          </div>
+          <div class="also"><div class="row mut">Nothing to review in other tabs.</div></div>
+        </div>
+      </div>
+      <div style="margin-left:460px">
+        <p class="cap" style="margin-top:0"><b>The Grid</b> uses AI2's marks: a solid stripe and the changed words underlined.</p>
+        <div class="dock" style="height:200px">
+          <div class="rbar">{{i:review-keep}}<span><b>10 Lines changed by the AI</b> · Rewrite</span><span class="sp"></span><span class="btn sm">{{i:undo}}Undo all</span><span class="btn sm">{{i:review-keep}}Keep all</span></div>
+          <div class="grid">
+            <div class="gr hd" style="grid-template-columns:44px 30px 1fr"><span>#</span><span>CPS</span><span>Text</span></div>
+            <div class="gr ai sel" style="grid-template-columns:44px 30px 1fr"><span>31</span><span>16</span><span><span class="chg">It's not famous famous, but</span> people come…</span></div>
+            <div class="gr ai" style="grid-template-columns:44px 30px 1fr"><span>32</span><span>12</span><span>{\i1}Smells{\i0} <span class="chg">great</span>.</span></div>
+            <div class="gr" style="grid-template-columns:44px 30px 1fr"><span>37<span class="fail">!</span></span><span>22</span><span>The melon bread, they're all sold out…</span></div>
+            <div class="gr ai" style="grid-template-columns:44px 30px 1fr"><span>38</span><span>11</span><span><span class="chg">So</span> why are we here at noon?</span></div>
+          </div>
+        </div>
+        <p class="cap" style="margin-top:12px"><b>History</b> has one step for the run: "AI: Rewrite (10 Lines)". Ctrl+Z undoes it all.</p>
+      </div>
+      <div style="clear:both"></div>
+    </div>
+
+    <div>
+      <p class="cap"><b>5 · Done, in Manual.</b> Nothing is written yet. The results wait in a list over the Grid. Each Line stands alone here, so each one has a tick box, unlike an agent's batch (AI7c). Apply writes the ticked Lines as one review turn, the same as sheet 4. Discard writes nothing. A Line edited while it waits is greyed out as "out of date".<span class="n1" style="margin-left:6px">2</span></p>
+      <div class="pop" style="position:relative; width:640px">
+        <div class="pt">{{i:ai-assistant}}Rewrite · 10 results<span class="who">Manual</span><span class="sp"></span><span class="ib sm">{{i:window-close}}</span></div>
+        <div class="res" style="margin:4px 10px 8px">
+          <div class="rr"><span class="box on"></span><span class="no">31</span><span class="tx2"><del>Well, I mean, it's not exactly famous,</del><ins>It's not famous famous,</ins> but people <del>do </del>come from the next town over.</span></div>
+          <div class="rr"><span class="box on"></span><span class="no">32</span><span class="tx2"><i>Smells</i> <del>amazing though</del><ins>great</ins>.</span></div>
+          <div class="rr"><span class="box"></span><span class="no">33</span><span class="tx2">My aunt<del> has been baking</del><ins>'s baked</ins> here <del>every morning </del>since before I was born.</span></div>
+          <div class="rr off"><span class="box"></span><span class="no">35</span><span class="tx2 mut">Out of date: you edited Line 35 after it was sent.</span></div>
+          <div class="rr"><span class="box on"></span><span class="no">36</span><span class="tx2">Wait, <del>recieve</del><ins>receive</ins> what?</span></div>
+          <div class="rr"><span class="box on"></span><span class="no">…</span><span class="tx2 mut">Show all 10</span></div>
+        </div>
+        <div class="pf"><span class="mut" style="font-size:12px">7 of 10 ticked · click a row to select it in the Grid</span><span class="sp"></span><span class="btn">Discard</span><span class="btn primary ring">{{i:review-keep}}Apply 7</span></div>
+      </div>
+    </div>
+
+    <div>
+      <p class="cap"><b>6 · The Line editor.</b> An AI button at the end of the tag strip (hover: "AI actions") opens the same menu for the active Line. The text field's right-click menu has the same AI submenu. With part of the text selected, the action works on that part only.<span class="n1" style="margin-left:6px">10</span></p>
+      <div class="dock" style="height:250px; position:relative; overflow:visible">
+        <div class="dh">Line editor<span class="sp"></span><span class="ib">{{i:menu-more}}</span></div>
+        <div class="toolrow"><span class="ib">{{i:tag-bold}}</span><span class="ib">{{i:tag-italic}}</span><span class="ib">{{i:tag-underline}}</span><span class="ib">{{i:tag-strikeout}}</span><span class="ib">{{i:tag-font}}</span><span class="ib">{{i:colour-primary}}</span><span class="ib">{{i:colour-secondary}}</span><span class="ib">{{i:colour-outline}}</span><span class="ib">{{i:colour-shadow}}</span><span class="ib">{{i:paste-translation}}</span><span class="ib">{{i:comment-original}}</span><span class="sp"></span><span class="ib box1 ring">{{i:ai-assistant}}</span></div>
+        <div class="letext" style="border-color:var(--control)">The melon bread, they're all sold out by eight in the morning every single day.</div>
+        <div class="menu" style="right:8px; top:62px; width:280px">
+          <div class="mi">{{i:edit}}Rewrite…</div>
+          <div class="mi hot">{{i:compact}}Shorten to 17 CPS</div>
+          <div class="mi">{{i:dictionary}}Fix spelling and grammar</div>
+          <div class="mi">{{i:language}}Translate to English</div>
+          <div class="mi">{{i:language}}Translate to…</div>
+          <div class="sepr"></div>
+          <div class="mi">{{i:ai-assistant}}Casual register</div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <p class="cap"><b>8 · Many Lines, and no model.</b> A run over 50 Lines asks first, with an estimate and what's left of the daily cap. Without a Chat model, the submenu has a single entry that opens Settings › AI.<span class="n1" style="margin-left:6px">6</span></p>
+      <div style="display:flex; gap:18px; align-items:flex-start">
+        <div class="dlg" style="width:470px">
+          <div class="title">{{i:ai-assistant}}Translate 240 lines<span class="x">{{i:window-close}}</span></div>
+          <div class="dbody">
+            <p>This sends <b>240 requests</b> to OpenRouter with the Translator model, <b>deepseek-v4</b>.</p>
+            <div class="tbl"><div class="r">About $0.42<span class="n">$8.10 left of today's $10.00 cap</span></div></div>
+            <p class="mut" style="font-size:12px">The run stops if it reaches the daily cap. Stop also works at any time.</p>
+          </div>
+          <div class="dfoot"><span class="sp"></span><span class="btn primary ring">Translate 240 lines</span><span class="btn">Cancel</span></div>
+        </div>
+        <div class="menu" style="position:relative; width:330px">
+          <div class="mi dis">{{i:edit}}Rewrite…</div>
+          <div class="mi dis">{{i:compact}}Shorten to 17 CPS</div>
+          <div class="sepr"></div>
+          <div class="mi hot">{{i:settings}}Add a model in Settings › AI…</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <span><b>Icons</b> are the app's own set: ai-assistant, edit, compact, dictionary, language, repeat-run, review-keep, checkpoint, media-stop. No new glyph.</span>
+    <span><b>Colours</b> are theme.cpp's roles for this theme, default accent. Marks follow AI2's review.</span>
+    <span><b>Lines, models and prices</b> are examples.</span>
+  </div>
+</div>
+<script>
+(function () {
+  var names = { light: "Light", dark: "Dark", hcw: "High contrast white", hcb: "High contrast black" };
+  var q = new URLSearchParams(location.search);
+  if (q.has("shot")) document.documentElement.classList.add("shot");
+  function set(t) {
+    if (!names[t]) t = "dark";
+    document.documentElement.setAttribute("data-theme", t);
+    document.getElementById("tn").textContent = names[t];
+    document.querySelectorAll(".pick button").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.t === t)); });
+  }
+  document.querySelectorAll(".pick button").forEach(function (b) { b.onclick = function () { set(b.dataset.t); }; });
+  set(q.get("theme") || "dark");
+})();
+</script>
+</body>
+</html>
