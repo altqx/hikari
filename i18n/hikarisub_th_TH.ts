@@ -450,6 +450,10 @@
         <translation>Claude Code</translation>
     </message>
     <message>
+        <source>Codex</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Proposed: %1</source>
         <translation>ข้อเสนอ: %1</translation>
     </message>
@@ -5544,6 +5548,18 @@ Failed to copy %2 fonts.</source>
         <translation>ตามจุดแบ่งบรรทัด</translation>
     </message>
     <message>
+        <source>Interpolate across lines…</source>
+        <translation>ประมาณค่าระหว่างบรรทัด…</translation>
+    </message>
+    <message>
+        <source>Select at least three lines: the first, the last and the lines between them.</source>
+        <translation>เลือกอย่างน้อยสามบรรทัด: บรรทัดแรก บรรทัดสุดท้าย และบรรทัดระหว่างทั้งสอง</translation>
+    </message>
+    <message>
+        <source>Fills the lines between the first and last selected line with the tag values between theirs</source>
+        <translation>เติมบรรทัดระหว่างบรรทัดแรกและบรรทัดสุดท้ายที่เลือกด้วยค่าแท็กที่อยู่ระหว่างค่าของทั้งสอง</translation>
+    </message>
+    <message>
         <source>Swap lines</source>
         <translation>สลับบรรทัด</translation>
     </message>
@@ -6110,8 +6126,24 @@ Failed to copy %2 fonts.</source>
         <translation>ยกเลิก</translation>
     </message>
     <message>
+        <source>Blur and glow layers…</source>
+        <translation>ชั้นเบลอและเรืองแสง…</translation>
+    </message>
+    <message>
+        <source>Build layers with the last values</source>
+        <translation>สร้างชั้นด้วยค่าล่าสุด</translation>
+    </message>
+    <message>
         <source>Shift+click to set a shortcut</source>
         <translation>Shift+คลิกเพื่อกำหนดปุ่มลัด</translation>
+    </message>
+    <message>
+        <source>AI actions…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Repeat last AI action</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>This shortcut already exists for “%1”. What to do?</source>
@@ -7362,6 +7394,14 @@ Failed to copy %2 fonts.</source>
         <translation>ประมาณค่า \move นอกช่วงให้เต็มบรรทัด</translation>
     </message>
     <message>
+        <source>Remove tags…</source>
+        <translation>ลบแท็ก…</translation>
+    </message>
+    <message>
+        <source>Interpolate across lines…</source>
+        <translation>ประมาณค่าระหว่างบรรทัด…</translation>
+    </message>
+    <message>
         <source>Move tab to new window</source>
         <translation>ย้ายแท็บไปหน้าต่างใหม่</translation>
     </message>
@@ -7426,6 +7466,70 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Snap start to the previous keyframe</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Snap start to the next keyframe</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Snap end to the previous keyframe</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Snap end to the next keyframe</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add lead-in to the selected lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove lead-in from the selected lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add lead-out to the selected lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove lead-out from the selected lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move start one frame earlier</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move start one frame later</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move end one frame earlier</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move end one frame later</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Extend the previous line to this start</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Extend the next line to this end</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Timing assistant</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Accept the timing assistant’s suggestion</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Global</source>
         <translation>ส่วนกลาง</translation>
     </message>
@@ -7460,6 +7564,400 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Align to video…</source>
         <translation>จัดให้ตรงกับวิดีโอ…</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.InlineAi</name>
+    <message>
+        <source>Rewrite</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shorten</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fix spelling</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Translate</source>
+        <translation type="unfinished">แปล</translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 (%n line(s))</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>AI actions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>AI</source>
+        <translation type="unfinished">AI</translation>
+    </message>
+    <message>
+        <source>Rewrite…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Shorten to %1 CPS</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rewrites each line over %1 characters per second so it reads at that speed or less</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fix spelling and grammar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Translate to %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Translate to…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit actions…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add a model in Settings › AI…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Chat</source>
+        <translation type="unfinished">แชต</translation>
+    </message>
+    <message>
+        <source>Translator</source>
+        <translation type="unfinished">ผู้แปล</translation>
+    </message>
+    <message>
+        <source>Reviewer</source>
+        <translation type="unfinished">ผู้ตรวจทาน</translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 %n line(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation type="unfinished">ปิด</translation>
+    </message>
+    <message>
+        <source>How to rewrite, for example: less formal, fewer words</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Instruction</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Language</source>
+        <translation type="unfinished">ภาษา</translation>
+    </message>
+    <message>
+        <source>No model for this role</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n request(s) · about %1</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n request(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) aren’t sent: comments, empty lines, tag-only lines, drawings and karaoke.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>%1 left of today’s %2 cap.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>This sends %n request(s) to %1 with the %2 model, %3.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>About %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The model has no price, so the cost is unknown.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The run stops if it reaches the daily cap. Stop also works at any time.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Results wait for you to apply them: Manual</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Changes go into the review: Full access</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Changes go into the review: Auto</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">ยกเลิก</translation>
+    </message>
+    <message numerus="yes">
+        <source>Rewriting %n line(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Shortening %n line(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Fixing spelling in %n line(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Translating %n line(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%1: %n line(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>No model for this action. Add one in Settings › AI.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stopped.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Not changed, because the answer dropped a tag: line %1.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Not changed, because the answer was empty: line %1.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Came back the same: line %1.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>You edited line %1 first, so it was left as it is.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Stopped at today’s cost cap.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Line %1 failed: %2</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) weren’t sent.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>%1 of %2 done</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stop</source>
+        <translation type="unfinished">หยุด</translation>
+    </message>
+    <message>
+        <source>Progress</source>
+        <translation type="unfinished">ความคืบหน้า</translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation type="unfinished">ลองอีกครั้ง</translation>
+    </message>
+    <message>
+        <source>Open Settings › AI</source>
+        <translation type="unfinished">เปิดการตั้งค่า › AI</translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 · %n result(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Manual</source>
+        <translation type="unfinished">ด้วยตนเอง</translation>
+    </message>
+    <message>
+        <source>Discard</source>
+        <translation type="unfinished">ละทิ้ง</translation>
+    </message>
+    <message>
+        <source>Apply line %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Out of date: you edited line %1 after it was sent.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 of %2 ticked · click a row to select it in the Grid</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Apply %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Interpolate</name>
+    <message>
+        <source>Select at least three lines: the first, the last and the lines between them.</source>
+        <translation>เลือกอย่างน้อยสามบรรทัด: บรรทัดแรก บรรทัดสุดท้าย และบรรทัดระหว่างทั้งสอง</translation>
+    </message>
+    <message>
+        <source>The first and last lines have the same tags, so there’s nothing to interpolate.</source>
+        <translation>บรรทัดแรกและบรรทัดสุดท้ายมีแท็กเหมือนกัน จึงไม่มีอะไรให้ประมาณค่า</translation>
+    </message>
+    <message>
+        <source>The clips have different shapes.</source>
+        <translation>คลิปมีรูปร่างต่างกัน</translation>
+    </message>
+    <message>
+        <source>One clip is a rectangle and the other a drawing.</source>
+        <translation>คลิปหนึ่งเป็นสี่เหลี่ยม อีกคลิปเป็นภาพวาด</translation>
+    </message>
+    <message>
+        <source>Only one of the two lines has this clip.</source>
+        <translation>มีเพียงบรรทัดเดียวจากสองบรรทัดที่มีคลิปนี้</translation>
+    </message>
+    <message>
+        <source>The transforms have different shapes.</source>
+        <translation>การแปลงมีโครงสร้างต่างกัน</translation>
+    </message>
+    <message>
+        <source>Nothing would change with these tags.</source>
+        <translation>แท็กเหล่านี้จะไม่ทำให้มีอะไรเปลี่ยน</translation>
+    </message>
+    <message>
+        <source>Interpolate across lines</source>
+        <translation>ประมาณค่าระหว่างบรรทัด</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s), from line %1 to line %2. The video shows the result while this is open.</source>
+        <translation>
+            <numerusform>%n บรรทัด จากบรรทัด %1 ถึงบรรทัด %2 วิดีโอจะแสดงผลลัพธ์ขณะที่หน้าต่างนี้เปิดอยู่</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The first and last lines have different text, so only the start tags are interpolated.</source>
+        <translation>บรรทัดแรกและบรรทัดสุดท้ายมีข้อความต่างกัน จึงประมาณค่าเฉพาะแท็กต้นบรรทัด</translation>
+    </message>
+    <message>
+        <source>Tag</source>
+        <translation>แท็ก</translation>
+    </message>
+    <message>
+        <source>First line</source>
+        <translation>บรรทัดแรก</translation>
+    </message>
+    <message>
+        <source>Last line</source>
+        <translation>บรรทัดสุดท้าย</translation>
+    </message>
+    <message>
+        <source>%1 before “%2”</source>
+        <translation>%1 ก่อน “%2”</translation>
+    </message>
+    <message>
+        <source>%1 → %2</source>
+        <translation>%1 → %2</translation>
+    </message>
+    <message>
+        <source>none</source>
+        <translation>ไม่มี</translation>
+    </message>
+    <message>
+        <source>Acceleration</source>
+        <translation>ความเร่ง</translation>
+    </message>
+    <message>
+        <source>1 is even. Above 1 starts slow and ends fast; below 1 starts fast and ends slow.</source>
+        <translation>1 คือสม่ำเสมอ มากกว่า 1 เริ่มช้าแล้วจบเร็ว น้อยกว่า 1 เริ่มเร็วแล้วจบช้า</translation>
+    </message>
+    <message>
+        <source>Rotate the shortest way</source>
+        <translation>หมุนทางที่สั้นที่สุด</translation>
+    </message>
+    <message>
+        <source>Cascade transforms</source>
+        <translation>ต่อการแปลงเป็นลำดับ</translation>
+    </message>
+    <message>
+        <source>Each line’s %1 tags run one after another over the line</source>
+        <translation>แท็ก %1 ของแต่ละบรรทัดทำงานต่อกันตลอดบรรทัด</translation>
+    </message>
+    <message>
+        <source>Result</source>
+        <translation>ผลลัพธ์</translation>
+    </message>
+    <message>
+        <source>Apply</source>
+        <translation>ใช้</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>ยกเลิก</translation>
     </message>
 </context>
 <context>
@@ -7843,6 +8341,269 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Accept all suggestions</source>
         <translation>ยอมรับคำแนะนำทั้งหมด</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Layers</name>
+    <message>
+        <source>Turn on glow, border or shadow.</source>
+        <translation>เปิดเรืองแสง ขอบ หรือเงา</translation>
+    </message>
+    <message>
+        <source>Select the lines to build layers under.</source>
+        <translation>เลือกบรรทัดที่จะสร้างชั้นไว้ด้านล่าง</translation>
+    </message>
+    <message numerus="yes">
+        <source>At most %n glow layer(s) can be built at once.</source>
+        <translation>
+            <numerusform>สร้างชั้นเรืองแสงได้ไม่เกิน %n ชั้นต่อครั้ง</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>A shadow can have at most %n step(s). Set fewer steps.</source>
+        <translation>
+            <numerusform>เงามีได้ไม่เกิน %n ขั้น ตั้งขั้นให้น้อยลง</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>That builds more than %n line(s). Select fewer lines.</source>
+        <translation>
+            <numerusform>จะสร้างเกิน %n บรรทัด เลือกบรรทัดให้น้อยลง</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Nothing to build for the selected lines.</source>
+        <translation>ไม่มีอะไรให้สร้างสำหรับบรรทัดที่เลือก</translation>
+    </message>
+    <message numerus="yes">
+        <source>Builds %n line(s) under line %1.</source>
+        <translation>
+            <numerusform>สร้าง %n บรรทัดใต้บรรทัด %1</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>It moves up from layer %1 to layer %2.</source>
+        <translation>บรรทัดนี้เลื่อนจากชั้น %1 ขึ้นไปชั้น %2</translation>
+    </message>
+    <message numerus="yes">
+        <source>Builds %n line(s) under the selected lines.</source>
+        <translation>
+            <numerusform>สร้าง %n บรรทัดใต้บรรทัดที่เลือก</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Each moves up by the lines built under it.</source>
+        <translation>แต่ละบรรทัดเลื่อนขึ้นตามจำนวนบรรทัดที่สร้างไว้ด้านล่าง</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) have no border and skip Border.</source>
+        <translation>
+            <numerusform>%n บรรทัดไม่มีขอบ จึงข้ามขอบ</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) have a shadow under 1 px and skip Shadow.</source>
+        <translation>
+            <numerusform>%n บรรทัดมีเงาน้อยกว่า 1 px จึงข้ามเงา</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Line %1 (layer %2) is shown with line %3 and was above it. Once built, line %3’s stack covers it.</source>
+        <translation>บรรทัด %1 (ชั้น %2) แสดงพร้อมบรรทัด %3 และอยู่เหนือบรรทัดนั้น เมื่อสร้างแล้ว ชั้นซ้อนของบรรทัด %3 จะบังบรรทัดนี้</translation>
+    </message>
+    <message>
+        <source>The layers can’t be built here.</source>
+        <translation>สร้างชั้นที่นี่ไม่ได้</translation>
+    </message>
+    <message>
+        <source>Build layers once from Blur and glow layers… to choose the values.</source>
+        <translation>สร้างชั้นหนึ่งครั้งจาก “ชั้นเบลอและเรืองแสง…” เพื่อเลือกค่า</translation>
+    </message>
+    <message numerus="yes">
+        <source>Built %n layer line(s)</source>
+        <translation>
+            <numerusform>สร้างบรรทัดชั้นแล้ว %n บรรทัด</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Blur and glow layers</source>
+        <translation>ชั้นเบลอและเรืองแสง</translation>
+    </message>
+    <message>
+        <source>Line</source>
+        <translation>บรรทัด</translation>
+    </message>
+    <message>
+        <source>Glow</source>
+        <translation>เรืองแสง</translation>
+    </message>
+    <message>
+        <source>Blurred copies under each line</source>
+        <translation>สำเนาเบลอใต้แต่ละบรรทัด</translation>
+    </message>
+    <message>
+        <source>Blur</source>
+        <translation>เบลอ</translation>
+    </message>
+    <message>
+        <source>Border</source>
+        <translation>ขอบ</translation>
+    </message>
+    <message>
+        <source>Colour</source>
+        <translation>สี</translation>
+    </message>
+    <message>
+        <source>Alpha</source>
+        <translation>อัลฟา</translation>
+    </message>
+    <message>
+        <source>Glow %1 blur</source>
+        <translation>เบลอเรืองแสง %1</translation>
+    </message>
+    <message>
+        <source>Glow %1 border, added to the line’s</source>
+        <translation>ขอบเรืองแสง %1 บวกเพิ่มจากขอบของบรรทัด</translation>
+    </message>
+    <message>
+        <source>Glow %1 colour: the line’s border colour</source>
+        <translation>สีเรืองแสง %1: สีเส้นขอบของบรรทัด</translation>
+    </message>
+    <message>
+        <source>Glow %1 colour</source>
+        <translation>สีเรืองแสง %1</translation>
+    </message>
+    <message>
+        <source>Glow %1 alpha, hex</source>
+        <translation>อัลฟาเรืองแสง %1, เลขฐานสิบหก</translation>
+    </message>
+    <message>
+        <source>Remove glow %1</source>
+        <translation>ลบเรืองแสง %1</translation>
+    </message>
+    <message>
+        <source>Add a glow layer</source>
+        <translation>เพิ่มชั้นเรืองแสง</translation>
+    </message>
+    <message>
+        <source>The border on its own layer, blurred apart from the fill</source>
+        <translation>ขอบอยู่บนชั้นของตัวเอง เบลอแยกจากพื้น</translation>
+    </message>
+    <message>
+        <source>Under the border</source>
+        <translation>ใต้ขอบ</translation>
+    </message>
+    <message>
+        <source>Border colour</source>
+        <translation>สีเส้นขอบ</translation>
+    </message>
+    <message>
+        <source>Transparent</source>
+        <translation>โปร่งใส</translation>
+    </message>
+    <message>
+        <source>A thin fill-coloured border closes the gap under the blur</source>
+        <translation>ขอบบางสีเดียวกับพื้นปิดช่องว่างใต้การเบลอ</translation>
+    </message>
+    <message>
+        <source>Border blur</source>
+        <translation>เบลอขอบ</translation>
+    </message>
+    <message>
+        <source>Line’s</source>
+        <translation>ของบรรทัด</translation>
+    </message>
+    <message>
+        <source>The fill keeps the line’s blur.</source>
+        <translation>พื้นยังคงเบลอของบรรทัด</translation>
+    </message>
+    <message>
+        <source>Hide the fill under the border during fades</source>
+        <translation>ซ่อนพื้นใต้ขอบระหว่างเฟด</translation>
+    </message>
+    <message>
+        <source>Fade transition, ms</source>
+        <translation>ช่วงเปลี่ยนของการเฟด, มิลลิวินาที</translation>
+    </message>
+    <message>
+        <source>ms</source>
+        <translation>มิลลิวินาที</translation>
+    </message>
+    <message>
+        <source>Second border</source>
+        <translation>ขอบที่สอง</translation>
+    </message>
+    <message>
+        <source>Second border width</source>
+        <translation>ความหนาขอบที่สอง</translation>
+    </message>
+    <message>
+        <source>Second border colour: the line’s fill colour</source>
+        <translation>สีขอบที่สอง: สีพื้นของบรรทัด</translation>
+    </message>
+    <message>
+        <source>Second border colour</source>
+        <translation>สีขอบที่สอง</translation>
+    </message>
+    <message>
+        <source>Shadow</source>
+        <translation>เงา</translation>
+    </message>
+    <message>
+        <source>A 3D shadow of stacked copies</source>
+        <translation>เงา 3D จากสำเนาที่ซ้อนกัน</translation>
+    </message>
+    <message>
+        <source>Steps</source>
+        <translation>ขั้น</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>อัตโนมัติ</translation>
+    </message>
+    <message>
+        <source>Auto: one a pixel of each line’s shadow offset</source>
+        <translation>อัตโนมัติ: หนึ่งขั้นต่อระยะเงา 1 พิกเซลของแต่ละบรรทัด</translation>
+    </message>
+    <message>
+        <source>Nearest copy: the line’s shadow colour</source>
+        <translation>สำเนาใกล้สุด: สีเงาของบรรทัด</translation>
+    </message>
+    <message>
+        <source>Nearest copy colour</source>
+        <translation>สีของสำเนาใกล้สุด</translation>
+    </message>
+    <message>
+        <source>Farthest copy: the line’s shadow colour</source>
+        <translation>สำเนาไกลสุด: สีเงาของบรรทัด</translation>
+    </message>
+    <message>
+        <source>Farthest copy colour</source>
+        <translation>สีของสำเนาไกลสุด</translation>
+    </message>
+    <message>
+        <source>Nearest copy alpha, hex</source>
+        <translation>อัลฟาของสำเนาใกล้สุด, เลขฐานสิบหก</translation>
+    </message>
+    <message>
+        <source>Farthest copy alpha, hex</source>
+        <translation>อัลฟาของสำเนาไกลสุด, เลขฐานสิบหก</translation>
+    </message>
+    <message>
+        <source>Blur where a line has none</source>
+        <translation>เบลอสำหรับบรรทัดที่ไม่มีเบลอ</translation>
+    </message>
+    <message>
+        <source>Preview on video</source>
+        <translation>แสดงตัวอย่างบนวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Build layers</source>
+        <translation>สร้างชั้น</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>ยกเลิก</translation>
     </message>
 </context>
 <context>
@@ -8374,6 +9135,10 @@ Failed to copy %2 fonts.</source>
         <translation>จัดเรียงตามข้อความที่ไม่มีแท็ก</translation>
     </message>
     <message>
+        <source>No line changed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Open subtitle file</source>
         <translation>เปิดไฟล์คำบรรยาย</translation>
     </message>
@@ -8520,6 +9285,154 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Selects lines by expressions</source>
         <translation>เลือกบรรทัดตามนิพจน์</translation>
+    </message>
+    <message>
+        <source>Timing helpers</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moves the start of each selected line to the keyframe before it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start to previous keyframe</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moves the start of each selected line to the keyframe after it, staying before its end</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start to next keyframe</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moves the end of each selected line to the keyframe before it, staying after its start</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>End to previous keyframe</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moves the end of each selected line to the keyframe after it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>End to next keyframe</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Starts each selected line earlier by the lead-in, no earlier than the line before it ends</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add lead-in</source>
+        <translation type="unfinished">เพิ่มช่วงนำ</translation>
+    </message>
+    <message>
+        <source>Starts each selected line later by the lead-in, keeping at least one frame</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove lead-in</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ends each selected line later by the lead-out, no later than the next line starts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add lead-out</source>
+        <translation type="unfinished">เพิ่มช่วงต่อท้าย</translation>
+    </message>
+    <message>
+        <source>Ends each selected line earlier by the lead-out, keeping at least one frame</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove lead-out</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moves the start of each selected line one frame earlier</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start one frame earlier</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moves the start of each selected line one frame later</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start one frame later</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moves the end of each selected line one frame earlier</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>End one frame earlier</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moves the end of each selected line one frame later</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>End one frame later</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ends the line before the active line where the active line starts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Extend previous line to this start</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Starts the line after the active line where the active line ends</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Extend next line to this end</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Steps through the lines one at a time with a suggested start and end</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Timing assistant</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Applies the timing assistant’s suggestion to the active line and goes to the next one</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Accept assistant suggestion</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Builds glow, border and shadow layers under the selected lines</source>
+        <translation>สร้างชั้นเรืองแสง ขอบ และเงาใต้บรรทัดที่เลือก</translation>
+    </message>
+    <message>
+        <source>&amp;Blur and glow layers…</source>
+        <translation>ชั้น&amp;เบลอและเรืองแสง…</translation>
+    </message>
+    <message>
+        <source>Builds the layers again with the values Blur and glow layers last built with</source>
+        <translation>สร้างชั้นอีกครั้งด้วยค่าที่ “ชั้นเบลอและเรืองแสง” ใช้ครั้งล่าสุด</translation>
+    </message>
+    <message>
+        <source>Build layers with the &amp;last values</source>
+        <translation>สร้างชั้นด้วยค่า&amp;ล่าสุด</translation>
     </message>
     <message>
         <source>Notes from a QC pass, kept in the file, with the lines they mark</source>
@@ -10159,6 +11072,30 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>สำเนาสิบสองชิ้นของแต่ละพยางค์พุ่งออกไปยังตำแหน่งสุ่มรอบตัวมันแล้วจางหายไป</translation>
     </message>
     <message>
+        <source>Audio pulse</source>
+        <translation>จังหวะเสียง</translation>
+    </message>
+    <message>
+        <source>Each syllable grows with how loud the audio is while it is sung. Needs audio open.</source>
+        <translation>แต่ละพยางค์ขยายตามความดังของเสียงขณะที่ถูกร้อง ต้องเปิดเสียงไว้</translation>
+    </message>
+    <message>
+        <source>Highlight flashes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>An outline flashes on each syllable once for every highlight, as the templater’s multi does.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Paint and cloud</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Syllables marked {\-paint} fill from red to white, those marked {\-cloud} rise and blur, and the rest stay in place.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>A graph name can’t be empty, start or end with a space, end with a dot, or hold “karaoke”, a comma, a double quote, a control character or any of / \ : * ? &lt; &gt; |.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -10374,6 +11311,22 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Highlights</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each syllable or character once per highlight, as the templater’s multi gives it: the highlight’s start, end and duration. A furigana or line unit has one, its own.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Inline-fx</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Only the units whose inline-fx ({\-name}, kept until the next one) is `fx`, as the templater’s fx modifier keeps them. Characters have their syllable’s; a line unit has none.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>step times the place: index - 1 from the start, count - index from the end, or the distance from the middle.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -10395,7 +11348,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Fade</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">เฟด</translation>
     </message>
     <message>
         <source>\fad after `before`.</source>
@@ -10415,6 +11368,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>The colour at progress (0 to 1) along evenly spaced stops.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio peaks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The audio’s level over the unit’s span, or from start to end (absolute ms), read as the Hikari API’s audio.peaks reads it. level is the loudest sample from 0 to 1; low and high are the lowest and highest from -1 to 1. Without audio it gives 0 and the graph shows a problem.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -10531,6 +11492,22 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>The area’s height.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The span’s start; null: the unit’s start.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The span’s end; null: the unit’s end.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Leave out highlights with no duration.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The inline-fx name; empty: units without one.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -10736,6 +11713,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Colours</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio</source>
+        <translation type="unfinished">เสียง</translation>
     </message>
     <message>
         <source>Drawings</source>
@@ -12950,6 +13931,50 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>แสดงมาตรวัดค่าใช้จ่าย</translation>
     </message>
     <message>
+        <source>Inline actions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Asks each time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add an action</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Instruction</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>For example: make it sound like a pirate</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Model</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ask each time, starting from this instruction</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save action</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Translate to</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lines of context</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>before and after each line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>AI components</source>
         <translation>คอมโพเนนต์ AI</translation>
     </message>
@@ -13140,6 +14165,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>It is deleted from the keychain. Providers without their own search stop searching until you add a key.</source>
         <translation>คีย์จะถูกลบออกจากพวงกุญแจ ผู้ให้บริการที่ไม่มีการค้นหาของตัวเองจะหยุดค้นหาจนกว่าคุณจะเพิ่มคีย์</translation>
+    </message>
+    <message>
+        <source>Your actions appear in the AI menus. They follow the mode for new threads and change only the text.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Actions save at once. The other settings here save with OK or Apply.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Requests go only to the providers you add and to %1. The AI component runs in a sandbox and reaches the network only through HikariSub.</source>
@@ -13771,6 +14804,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>เริ่มปลั๊กอินไม่ได้: %1</translation>
     </message>
     <message>
+        <source>Its nodes can’t run: %1</source>
+        <translation>โหนดของปลั๊กอินนี้ทำงานไม่ได้: %1</translation>
+    </message>
+    <message>
         <source>The plugin didn’t start.</source>
         <translation>ปลั๊กอินไม่ได้เริ่มทำงาน</translation>
     </message>
@@ -13976,6 +15013,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>โปรเจกต์ตั้งค่า %1 ไม่ได้ จึงไม่ใช้ค่าในไฟล์โปรเจกต์</translation>
     </message>
     <message>
+        <source>The project font folder %1 can’t be opened.</source>
+        <translation>เปิดโฟลเดอร์แบบอักษรของโปรเจกต์ %1 ไม่ได้</translation>
+    </message>
+    <message>
         <source>Open folder</source>
         <translation>เปิดโฟลเดอร์</translation>
     </message>
@@ -13994,6 +15035,54 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Open project</source>
         <translation>เปิดโปรเจกต์</translation>
+    </message>
+    <message>
+        <source>Yours</source>
+        <translation>ของคุณ</translation>
+    </message>
+    <message>
+        <source>Project</source>
+        <translation>โปรเจกต์</translation>
+    </message>
+    <message>
+        <source>Uses yours</source>
+        <translation>ใช้ของคุณ</translation>
+    </message>
+    <message>
+        <source>Set in this project</source>
+        <translation>ตั้งไว้ในโปรเจกต์นี้</translation>
+    </message>
+    <message>
+        <source>Set in project.local.toml</source>
+        <translation>ตั้งไว้ใน project.local.toml</translation>
+    </message>
+    <message>
+        <source>Use yours</source>
+        <translation>ใช้ของคุณ</translation>
+    </message>
+    <message>
+        <source>Overridden in this project</source>
+        <translation>ถูกแทนที่ในโปรเจกต์นี้</translation>
+    </message>
+    <message>
+        <source>project.toml could not be written, so some Project settings were not saved.</source>
+        <translation>เขียน project.toml ไม่ได้ การตั้งค่าโปรเจกต์บางรายการจึงไม่ได้บันทึก</translation>
+    </message>
+    <message>
+        <source>Saving a file writes the switched-on fields into its Script Info.</source>
+        <translation>การบันทึกไฟล์จะเขียนช่องที่เปิดไว้ลงใน Script Info ของไฟล์</translation>
+    </message>
+    <message>
+        <source>Ask before changing them on save</source>
+        <translation>ถามก่อนเปลี่ยนเมื่อบันทึก</translation>
+    </message>
+    <message>
+        <source>This project has its own scripts or plugin settings. Trust “%1” to run them.</source>
+        <translation>โปรเจกต์นี้มีสคริปต์หรือการตั้งค่าปลั๊กอินของตัวเอง เชื่อถือ “%1” เพื่อเรียกใช้</translation>
+    </message>
+    <message>
+        <source>Trust folder</source>
+        <translation>เชื่อถือโฟลเดอร์</translation>
     </message>
 </context>
 <context>
@@ -18013,6 +19102,245 @@ Styles deleted:
     </message>
 </context>
 <context>
+    <name>HikariSub.Tags</name>
+    <message numerus="yes">
+        <source>Changed %n line(s)</source>
+        <translation>
+            <numerusform>เปลี่ยน %n บรรทัด</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>No line changes.</source>
+        <translation>ไม่มีบรรทัดที่เปลี่ยน</translation>
+    </message>
+    <message>
+        <source>Remove tags…</source>
+        <translation>ลบแท็ก…</translation>
+    </message>
+    <message>
+        <source>Remove tags</source>
+        <translation>ลบแท็ก</translation>
+    </message>
+    <message>
+        <source>Colour</source>
+        <translation>สี</translation>
+    </message>
+    <message>
+        <source>Alpha</source>
+        <translation>อัลฟา</translation>
+    </message>
+    <message>
+        <source>Border</source>
+        <translation>ขอบ</translation>
+    </message>
+    <message>
+        <source>Shadow</source>
+        <translation>เงา</translation>
+    </message>
+    <message>
+        <source>Blur</source>
+        <translation>เบลอ</translation>
+    </message>
+    <message>
+        <source>Font</source>
+        <translation>ฟอนต์</translation>
+    </message>
+    <message>
+        <source>Scale</source>
+        <translation>สเกล</translation>
+    </message>
+    <message>
+        <source>Spacing</source>
+        <translation>ระยะห่าง</translation>
+    </message>
+    <message>
+        <source>Rotation</source>
+        <translation>การหมุน</translation>
+    </message>
+    <message>
+        <source>Shear</source>
+        <translation>การเฉือน</translation>
+    </message>
+    <message>
+        <source>Bold, italic, underline, strikeout</source>
+        <translation>ตัวหนา ตัวเอียง ขีดเส้นใต้ ขีดฆ่า</translation>
+    </message>
+    <message>
+        <source>Position</source>
+        <translation>ตำแหน่ง</translation>
+    </message>
+    <message>
+        <source>Origin</source>
+        <translation>จุดหมุน</translation>
+    </message>
+    <message>
+        <source>Alignment</source>
+        <translation>การจัดตำแหน่ง</translation>
+    </message>
+    <message>
+        <source>Clip</source>
+        <translation>คลิป</translation>
+    </message>
+    <message>
+        <source>Fade</source>
+        <translation>เฟด</translation>
+    </message>
+    <message>
+        <source>Transforms</source>
+        <translation>การแปลง</translation>
+    </message>
+    <message>
+        <source>Karaoke</source>
+        <translation>คาราโอเกะ</translation>
+    </message>
+    <message>
+        <source>Reset</source>
+        <translation>รีเซ็ต</translation>
+    </message>
+    <message>
+        <source>Wrap style</source>
+        <translation>รูปแบบการตัดบรรทัด</translation>
+    </message>
+    <message>
+        <source>Drawing</source>
+        <translation>ภาพวาด</translation>
+    </message>
+    <message>
+        <source>Other tags</source>
+        <translation>แท็กอื่น</translation>
+    </message>
+    <message>
+        <source>Any tag not listed</source>
+        <translation>แท็กใดก็ได้ที่ไม่อยู่ในรายการ</translation>
+    </message>
+    <message>
+        <source>Remove comments</source>
+        <translation>ลบความคิดเห็น</translation>
+    </message>
+    <message>
+        <source>Blocks with no tag, such as {note}</source>
+        <translation>บล็อกที่ไม่มีแท็ก เช่น {note}</translation>
+    </message>
+    <message>
+        <source>Merge adjacent tag blocks</source>
+        <translation>รวมบล็อกแท็กที่ติดกัน</translation>
+    </message>
+    <message>
+        <source>%1 becomes %2</source>
+        <translation>%1 กลายเป็น %2</translation>
+    </message>
+    <message>
+        <source>Drop overridden tags</source>
+        <translation>ลบแท็กที่ถูกแทนที่</translation>
+    </message>
+    <message>
+        <source>A tag a later one in its block replaces, and repeats of %1, %2, %3 and %4</source>
+        <translation>แท็กที่แท็กถัดไปในบล็อกเดียวกันแทนที่ และ %1, %2, %3 และ %4 ที่ซ้ำ</translation>
+    </message>
+    <message>
+        <source>Clean Tags rules</source>
+        <translation>กฎของ Clean Tags</translation>
+    </message>
+    <message>
+        <source>What the bundled Clean Tags script does: merges blocks, moves line-wide tags to the start, drops empty blocks</source>
+        <translation>สิ่งที่สคริปต์ Clean Tags ที่มาพร้อมโปรแกรมทำ: รวมบล็อก ย้ายแท็กที่ใช้กับทั้งบรรทัดไปไว้ต้นบรรทัด และลบบล็อกว่าง</translation>
+    </message>
+    <message>
+        <source>Delete lines left empty</source>
+        <translation>ลบบรรทัดที่ว่างเปล่า</translation>
+    </message>
+    <message>
+        <source>Lines</source>
+        <translation>บรรทัด</translation>
+    </message>
+    <message>
+        <source>Selected lines</source>
+        <translation>บรรทัดที่เลือก</translation>
+    </message>
+    <message>
+        <source>Whole file, without comment lines</source>
+        <translation>ทั้งไฟล์ ยกเว้นบรรทัดความคิดเห็น</translation>
+    </message>
+    <message>
+        <source>Blocks</source>
+        <translation>บล็อก</translation>
+    </message>
+    <message>
+        <source>All blocks</source>
+        <translation>ทุกบล็อก</translation>
+    </message>
+    <message>
+        <source>Start block</source>
+        <translation>บล็อกแรก</translation>
+    </message>
+    <message>
+        <source>Inline blocks</source>
+        <translation>บล็อกกลางข้อความ</translation>
+    </message>
+    <message>
+        <source>Tags</source>
+        <translation>แท็ก</translation>
+    </message>
+    <message>
+        <source>Clear</source>
+        <translation>ล้าง</translation>
+    </message>
+    <message>
+        <source>Select all</source>
+        <translation>เลือกทั้งหมด</translation>
+    </message>
+    <message>
+        <source>Clean up</source>
+        <translation>จัดระเบียบ</translation>
+    </message>
+    <message>
+        <source>Preview</source>
+        <translation>ตัวอย่าง</translation>
+    </message>
+    <message>
+        <source>Line %1: %2</source>
+        <translation>บรรทัด %1: %2</translation>
+    </message>
+    <message>
+        <source>deleted</source>
+        <translation>ถูกลบ</translation>
+    </message>
+    <message>
+        <source>Line deleted</source>
+        <translation>ลบบรรทัดแล้ว</translation>
+    </message>
+    <message>
+        <source>No line changes</source>
+        <translation>ไม่มีบรรทัดที่เปลี่ยน</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) change</source>
+        <translation>
+            <numerusform>เปลี่ยน %n บรรทัด</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n deleted</source>
+        <translation>
+            <numerusform>ลบ %n บรรทัด</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>first %n shown</source>
+        <translation>
+            <numerusform>แสดง %n บรรทัดแรก</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>ลบ</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>ยกเลิก</translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.TemplateEditor</name>
     <message>
         <source>Template editor</source>
@@ -19108,6 +20436,10 @@ Styles deleted:
         <translation>%1 มิลลิวินาที</translation>
     </message>
     <message>
+        <source>Rules: lead-in %1 ms, lead-out %2 ms, gaps %3 ms, keyframes %4/%5 and %6/%7 ms</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>The rules need a video.</source>
         <translation>กฎต้องมีวิดีโอ</translation>
     </message>
@@ -19182,6 +20514,14 @@ Styles deleted:
     <message>
         <source>Open keyframes…</source>
         <translation>เปิดคีย์เฟรม…</translation>
+    </message>
+    <message>
+        <source>Assistant</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mode</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Snap to keyframes</source>
@@ -19298,6 +20638,114 @@ Styles deleted:
     <message>
         <source>Times were not centred within frames: no video is open</source>
         <translation>ไม่ได้จัดเวลาให้อยู่กลางเฟรม: ไม่มีวิดีโอที่เปิดอยู่</translation>
+    </message>
+    <message>
+        <source>Already on a keyframe.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Snapped to the keyframe %n frame(s) earlier.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Snapped to the keyframe %n frame(s) later.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Lead-in of %1 ms, linked to the previous line.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lead-in of %1 ms.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lead-out of %1 ms.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No rule applies.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Linked: it ended %1 ms before this start.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Linked: it overlapped this line by %1 ms.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No more lines. Accepted %1, skipped %2.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select a line to time.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Line %1 of %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Now</source>
+        <translation type="unfinished">ปัจจุบัน</translation>
+    </message>
+    <message>
+        <source>Suggested</source>
+        <translation type="unfinished">แนะนำ</translation>
+    </message>
+    <message>
+        <source>Why</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Suggested start</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Suggested end</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Previous end</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Accept</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Accept (Enter)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change</source>
+        <translation type="unfinished">เปลี่ยน</translation>
+    </message>
+    <message>
+        <source>Change the suggested times (Alt+C)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Skip</source>
+        <translation type="unfinished">ข้าม</translation>
+    </message>
+    <message>
+        <source>Skip this line (Alt+S)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Accepted %1, skipped %2. Each accepted line is one undo step.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

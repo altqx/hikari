@@ -1,4 +1,6 @@
 #include "hikari/app/application.h"
+#include "hikari/app/font_catalogs_controller.h"
+#include "hikari/app/font_collector_controller.h"
 #include "hikari/app/forwarded_launches.h"
 #include "hikari/app/project_windows.h"
 #include "hikari/app/session_json.h"
@@ -584,6 +586,122 @@ private slots:
         application->waitForWrites();
         QTRY_VERIFY2(readAll(path).contains("Original Translation: Team\n"), readAll(path));
         QVERIFY(!readAll(path).contains("Title: Show"));
+    }
+
+    void theProjectTabWritesOnlyProjectToml()
+    {
+        start();
+        application->settingsStore()->setValue(QStringLiteral("editor.spellchecker"), true);
+        const QString show = folder("tabbed", true);
+        const QByteArray local = "version = 1\n[grammar]\nlanguage = 2\n";
+        writeAll(show + QStringLiteral("/.hikari/project.toml"), "version = 1\n# Shared by the team.\n[editor]\nspellchecker = false\n");
+        writeAll(show + QStringLiteral("/.hikari/project.local.toml"), local);
+        const int w = openProjectWindow(show);
+        QVERIFY(w >= 0);
+        QVERIFY(!application->projectNeedsTrust(w));
+        QVERIFY(QMetaObject::invokeMethod(shell(w), "openSettings", Q_ARG(QVariant, QStringLiteral("spelling")),
+                                          Q_ARG(QVariant, QVariant())));
+        QTRY_VERIFY(dialog("settingsDialog"));
+        QQuickWindow *settings = dialog("settingsDialog");
+        QQuickItem *content = settings->contentItem();
+        const auto shown = [&](const char *name) {
+            QQuickItem *found = item(content, QLatin1String(name));
+            return found && found->isVisible();
+        };
+        const auto text = [&](const char *name) { return item(content, QLatin1String(name))->property("text").toString(); };
+        QVERIFY(shown("settingsScope"));
+        QTRY_VERIFY(shown("overridden_editor.spellchecker"));
+        QVERIFY(shown("overridden_grammar.language"));
+        QVERIFY(!shown("overridden_editor.dictionaryLanguage"));
+
+        settings->setProperty("projectTab", true);
+        QTRY_VERIFY(shown("projectSettings"));
+        QCOMPARE(text("projectState_editor.spellchecker"), QStringLiteral("Set in this project"));
+        QCOMPARE(text("projectState_grammar.language"), QStringLiteral("Set in project.local.toml"));
+        QVERIFY(!item(content, QStringLiteral("project_grammar.language"))->isEnabled());
+        QCOMPARE(text("projectState_scriptProperties.title"), QStringLiteral("Uses yours"));
+        QQuickItem *pages = item(content, QStringLiteral("projectSettings"));
+        QVERIFY(QMetaObject::invokeMethod(pages, "put", Q_ARG(QVariant, QStringLiteral("scriptProperties.title")),
+                                          Q_ARG(QVariant, QStringLiteral("Show"))));
+        QVERIFY(QMetaObject::invokeMethod(pages, "put", Q_ARG(QVariant, QStringLiteral("scriptProperties.titleOn")),
+                                          Q_ARG(QVariant, true)));
+        QVERIFY(QMetaObject::invokeMethod(pages, "useYours", Q_ARG(QVariant, QStringLiteral("editor.spellchecker"))));
+        QVERIFY(QMetaObject::invokeMethod(settings, "apply"));
+
+        QByteArray shared = readAll(show + QStringLiteral("/.hikari/project.toml"));
+        QVERIFY2(shared.contains("# Shared by the team."), shared);
+        QVERIFY2(!shared.contains("spellchecker"), shared);
+        QVERIFY2(shared.contains("title = \"Show\""), shared);
+        QVERIFY2(shared.contains("titleOn = true"), shared);
+        QCOMPARE(readAll(show + QStringLiteral("/.hikari/project.local.toml")), local);
+        const QStringList overrides = application->projectOverrides(w);
+        QVERIFY(overrides.contains(QStringLiteral("scriptProperties.title")));
+        QVERIFY(overrides.contains(QStringLiteral("grammar.language")));
+        QVERIFY(!overrides.contains(QStringLiteral("editor.spellchecker")));
+        QCOMPARE(text("projectState_scriptProperties.title"), QStringLiteral("Set in this project"));
+
+        QVERIFY(QMetaObject::invokeMethod(pages, "put", Q_ARG(QVariant, QStringLiteral("editor.spellchecker")),
+                                          Q_ARG(QVariant, false)));
+        QVERIFY(QMetaObject::invokeMethod(settings, "apply"));
+        shared = readAll(show + QStringLiteral("/.hikari/project.toml"));
+        QVERIFY2(shared.contains("spellchecker = false"), shared);
+        QVERIFY(application->settingsStore()->value(QStringLiteral("editor.spellchecker")).toBool());
+    }
+
+    void aProjectWithScriptsAsksForTrust()
+    {
+        start();
+        const QString show = folder("scripted", true);
+        QDir().mkpath(show + QStringLiteral("/.hikari/automation"));
+        const int w = openProjectWindow(show);
+        QVERIFY(w >= 0);
+        QObject *bar = named(shell(w), "projectTrustBar");
+        QVERIFY(bar);
+        QTRY_VERIFY(bar->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(named(shell(w), "projectTrustNotNow"), "clicked"));
+        QTRY_VERIFY(!bar->property("visible").toBool());
+        QVERIFY(application->projectNeedsTrust(w));
+        bar->setProperty("dismissed", QString());
+        QTRY_VERIFY(bar->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(named(shell(w), "projectTrust"), "clicked"));
+        QTRY_VERIFY(!bar->property("visible").toBool());
+        QVERIFY(!application->projectNeedsTrust(w));
+        QVERIFY(application->settingsStore()->value(QStringLiteral("trust.folders")).toStringList().contains(
+            QDir::toNativeSeparators(canonical(show))));
+
+        const QString plugged = folder("plugged", true);
+        writeAll(plugged + QStringLiteral("/.hikari/project.toml"), "version = 1\n[plugins]\nsample = true\n");
+        const int other = openProjectWindow(plugged);
+        QVERIFY(other > 0);
+        QVERIFY(application->projectNeedsTrust(other));
+    }
+
+    void projectFontFoldersJoinTheWindowsFonts()
+    {
+        start();
+        const QString show = folder("fonted", true);
+        writeAll(show + QStringLiteral("/.hikari/project.toml"), "version = 1\nfonts = [\"fonts\", \"../missing-fonts\"]\n");
+        QDir().mkpath(show + QStringLiteral("/fonts"));
+        QVERIFY(QFile::copy(QStringLiteral(HIKARI_ATTACHMENT_FIXTURES "/HikariAttachedTest.ttf"),
+                            show + QStringLiteral("/fonts/HikariAttachedTest.ttf")));
+        auto &catalogs = application->fontCatalogs();
+        QSignalSpy answers(&catalogs, &app::FontCatalogsController::resolutionReady);
+        const auto resolved = [&] {
+            catalogs.resolveFamily(QStringLiteral("HikariAttachedTest"), false, false, true, QStringLiteral("Abc"));
+            return catalogs.waitResolved() && !answers.isEmpty() ? answers.takeLast().at(1).toMap() : QVariantMap();
+        };
+        QVERIFY(resolved().value(QStringLiteral("kind")).toString() != QLatin1String("requested"));
+
+        const int w = openProjectWindow(show);
+        QVERIFY(w >= 0);
+        const QVariantMap result = resolved();
+        QCOMPARE(result.value(QStringLiteral("kind")).toString(), QStringLiteral("requested"));
+        QVERIFY2(result.value(QStringLiteral("file")).toString().endsWith(QStringLiteral("HikariAttachedTest.ttf")),
+                 qPrintable(result.value(QStringLiteral("file")).toString()));
+
+        auto &collector = application->fontCollector();
+        collector.open();
+        QCOMPARE(collector.directory(), QDir::toNativeSeparators(canonical(show) + QStringLiteral("/fonts")));
     }
 
     void recentProjectsDropMissingFolders()

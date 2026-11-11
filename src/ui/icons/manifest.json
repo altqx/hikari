@@ -4431,8 +4431,7 @@
    "surfaces": [
     "notices",
     "settings-dialog"
-   ],
-   "pending": "PJ3 #771"
+   ]
   },
   {
    "role": "untrusted",
@@ -4563,9 +4562,9 @@
    "mirror": false,
    "legacy": [],
    "surfaces": [
-    "agent-panel"
-   ],
-   "pending": "AI21 #725"
+    "agent-panel",
+    "grid-menu"
+   ]
   },
   {
    "role": "review-panel",
@@ -4672,8 +4671,7 @@
    "surfaces": [
     "grid-menu",
     "line-editor"
-   ],
-   "pending": "AU4 #839"
+   ]
   },
   {
    "role": "shape-unite",
@@ -5083,9 +5081,9 @@
    "legacy": [],
    "surfaces": [
     "grid-menu",
-    "menu:subtitles"
-   ],
-   "pending": "AU18 #852"
+    "menu:subtitles",
+    "text-field-menu"
+   ]
   },
   {
    "role": "layers-repeat",
@@ -5097,8 +5095,7 @@
    "surfaces": [
     "grid-menu",
     "menu:subtitles"
-   ],
-   "pending": "AU18 #852"
+   ]
   },
   {
    "role": "snap-start-to-previous-keyframe",
@@ -5109,8 +5106,7 @@
    "legacy": [],
    "surfaces": [
     "menu:timing"
-   ],
-   "pending": "AU19 #853"
+   ]
   },
   {
    "role": "snap-start-to-next-keyframe",
@@ -5121,8 +5117,7 @@
    "legacy": [],
    "surfaces": [
     "menu:timing"
-   ],
-   "pending": "AU19 #853"
+   ]
   },
   {
    "role": "snap-end-to-previous-keyframe",
@@ -5133,8 +5128,7 @@
    "legacy": [],
    "surfaces": [
     "menu:timing"
-   ],
-   "pending": "AU19 #853"
+   ]
   },
   {
    "role": "snap-end-to-next-keyframe",
@@ -5145,8 +5139,7 @@
    "legacy": [],
    "surfaces": [
     "menu:timing"
-   ],
-   "pending": "AU19 #853"
+   ]
   },
   {
    "role": "lead-in-remove",
@@ -5157,8 +5150,7 @@
    "legacy": [],
    "surfaces": [
     "menu:timing"
-   ],
-   "pending": "AU19 #853"
+   ]
   },
   {
    "role": "lead-out-remove",
@@ -5169,8 +5161,29 @@
    "legacy": [],
    "surfaces": [
     "menu:timing"
-   ],
-   "pending": "AU19 #853"
+   ]
+  },
+  {
+   "role": "extend-previous-to-start",
+   "file": "extend-previous-to-start.svg",
+   "label": "Extend previous line to this start",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:timing"
+   ]
+  },
+  {
+   "role": "extend-next-to-end",
+   "file": "extend-next-to-end.svg",
+   "label": "Extend next line to this end",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:timing"
+   ]
   },
   {
    "role": "timing-assistant",
@@ -5181,8 +5194,7 @@
    "legacy": [],
    "surfaces": [
     "timing-postprocessor"
-   ],
-   "pending": "AU19 #853"
+   ]
   },
   {
    "role": "line-break-insert",
@@ -5534,8 +5546,7 @@
    "legacy": [],
    "surfaces": [
     "grid-menu"
-   ],
-   "pending": "AU22 #856"
+   ]
   },
   {
    "role": "import-lyrics",

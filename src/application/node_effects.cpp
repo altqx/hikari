@@ -12,6 +12,7 @@
 #include <cctype>
 #include <chrono>
 #include <cmath>
+#include <deque>
 #include <functional>
 #include <map>
 #include <charconv>
@@ -53,19 +54,21 @@ NodeColour nodeColour(karaoke_layout::StyleColour c)
 }
 
 enum class Kind {
-    ForEach, Repeat, Frames, ClipGradient, Array, Particles, Info, Number, Text, Colour, Point, Choose, Calculate, Compare, Progress, Random,
-    Retime, Stagger, Tag, Move, Fade, Transform, Gradient, Shape, Join, Emit, Lua
+    ForEach, Repeat, Frames, ClipGradient, Array, Particles, Highlights, InlineFx, Info, Number, Text, Colour, Point, Choose, Calculate, Compare, Progress, Random,
+    Retime, Stagger, Tag, Move, Fade, Transform, Gradient, Shape, AudioPeaks, Join, Emit, Lua
 };
 
 const std::map<std::string, Kind, std::less<>> kKinds{
     {"units.for_each", Kind::ForEach}, {"units.repeat", Kind::Repeat},     {"units.frames", Kind::Frames},
     {"units.clip_gradient", Kind::ClipGradient}, {"units.array", Kind::Array}, {"units.particles", Kind::Particles},
+    {"units.highlights", Kind::Highlights}, {"units.inline_fx", Kind::InlineFx},
     {"units.info", Kind::Info},        {"values.number", Kind::Number},    {"values.text", Kind::Text},
     {"values.colour", Kind::Colour},   {"values.point", Kind::Point},      {"values.choose", Kind::Choose},
     {"math.calculate", Kind::Calculate}, {"math.compare", Kind::Compare},  {"math.progress", Kind::Progress},
     {"math.random", Kind::Random},     {"time.retime", Kind::Retime},      {"time.stagger", Kind::Stagger},
     {"tags.tag", Kind::Tag},           {"tags.move", Kind::Move},          {"tags.fade", Kind::Fade},
     {"tags.transform", Kind::Transform}, {"colours.gradient", Kind::Gradient}, {"drawings.shape", Kind::Shape},
+    {"audio.peaks", Kind::AudioPeaks},
     {"text.join", Kind::Join},         {"output.emit", Kind::Emit},        {"lua.code", Kind::Lua}};
 
 enum class Level { Constant, Line, Element };
@@ -302,7 +305,7 @@ struct Compiled {
     std::vector<int> emits;
     std::vector<int> lua;
     std::vector<std::vector<int>> emitLua;
-    bool chars = false, furi = false;
+    bool chars = false, furi = false, audio = false;
     std::vector<std::string> emitSignature;
 };
 
@@ -312,6 +315,8 @@ std::string upstreamSignature(const Compiled &c, int node, std::set<int> &seen)
         return {};
     const CNode &n = c.nodes[node];
     std::string out = n.graph->id + '|' + n.graph->type + '|' + n.graph->fields.dump() + '|';
+    if (n.kind == Kind::Lua)
+        out += n.text + '|';
     for (const CNode::Input &in : n.inputs)
         if (in.node != kUnwired)
             out += c.nodes[in.node].graph->id + '.' + std::to_string(in.port) + ';';
@@ -330,7 +335,8 @@ Compiled compile(const NodeGraph &flat)
     for (const GraphNode &g : c.flat.nodes) {
         CNode n;
         n.graph = &g;
-        n.kind = kKinds.at(g.type);
+        const PluginNode *plugin = pluginNode(g.type);
+        n.kind = plugin ? Kind::Lua : kKinds.at(g.type);
         n.ports = *nodePorts(g);
         for (std::size_t i = 0; i < n.ports.inputs.size(); ++i) {
             const PortSpec &p = n.ports.inputs[i];
@@ -357,6 +363,8 @@ Compiled compile(const NodeGraph &flat)
             c.furi = c.furi || n.mode == "furi";
             break;
         case Kind::Frames:
+        case Kind::AudioPeaks:
+            c.audio = c.audio || n.kind == Kind::AudioPeaks;
             if (const Json v = nodeField(g, "start"); v.isNumber())
                 n.start = v.asNumber();
             if (const Json v = nodeField(g, "end"); v.isNumber())
@@ -381,6 +389,12 @@ Compiled compile(const NodeGraph &flat)
         case Kind::Particles:
             n.mode = text("area");
             n.number = nodeField(g, "seed").asNumber();
+            break;
+        case Kind::Highlights:
+            n.flag = nodeField(g, "skip_blank").asBool();
+            break;
+        case Kind::InlineFx:
+            n.text = text("fx");
             break;
         case Kind::Calculate:
         case Kind::Compare:
@@ -418,7 +432,7 @@ Compiled compile(const NodeGraph &flat)
             n.number = nodeField(g, "order").asNumber();
             break;
         case Kind::Lua:
-            n.text = text("code");
+            n.text = plugin ? plugin->code : text("code");
             break;
         default:
             break;
@@ -453,7 +467,10 @@ Compiled compile(const NodeGraph &flat)
         case Kind::ClipGradient:
         case Kind::Array:
         case Kind::Particles:
+        case Kind::Highlights:
+        case Kind::InlineFx:
         case Kind::Info:
+        case Kind::AudioPeaks:
         case Kind::Retime:
         case Kind::Lua:
             l = Level::Element;
@@ -513,6 +530,7 @@ struct Element {
     int syl = 0, ch = -1, furi = -1;
     int index = 1, count = 1;
     std::vector<Loop> loops;
+    const Unit *timed = nullptr;
 };
 
 using Memo = std::vector<std::optional<NodeValue>>;
@@ -537,9 +555,10 @@ struct Generated {
 class Evaluator {
 public:
     Evaluator(const Compiled &c, const karaoke_layout::Line &line, std::u8string_view name, std::int64_t seed,
-              LuaNodePort *lua, std::atomic<bool> &luaStopped, Problems &problems, NodeValueTrace *trace)
-        : m_c(c), m_line(line), m_name(name), m_seed(seed), m_lua(lua), m_luaStopped(luaStopped), m_problems(problems),
-          m_trace(trace),
+              const NodeEffectOptions &options, std::atomic<bool> &luaStopped, Problems &problems,
+              NodeValueTrace *trace)
+        : m_c(c), m_line(line), m_name(name), m_seed(seed), m_lua(options.lua), m_audio(options.audio),
+          m_luaStopped(luaStopped), m_problems(problems), m_trace(trace),
           m_lineMemo(static_cast<std::size_t>(c.slots))
     {
     }
@@ -549,6 +568,8 @@ public:
 private:
     const Unit &unitOf(const Element &e) const
     {
+        if (e.timed)
+            return *e.timed;
         switch (e.kind) {
         case UnitKind::Line:
             return m_line.line;
@@ -596,6 +617,15 @@ private:
         }
         const int parent = n.inputs[n.in("units")].node;
         for (const Element &p : expand(parent)) {
+            if (n.kind == Kind::InlineFx) {
+                if (inlineFxOf(p) == n.text)
+                    out.push_back(p);
+                continue;
+            }
+            if (n.kind == Kind::Highlights) {
+                highlights(node, p, out);
+                continue;
+            }
             Memo memo(static_cast<std::size_t>(m_c.slots));
             if (n.kind == Kind::Repeat) {
                 const double count = number(node, "count", p, memo);
@@ -647,6 +677,49 @@ private:
         l.index = index;
         l.count = count;
         return l;
+    }
+
+    const std::string &inlineFxOf(const Element &e) const
+    {
+        static const std::string kNone;
+        if (e.kind == UnitKind::Furi)
+            return static_cast<std::size_t>(e.furi) < m_line.karaFuri.size() ? m_line.karaFuri[e.furi].inlineFx : kNone;
+        if (e.kind == UnitKind::Line || static_cast<std::size_t>(e.syl) >= m_line.karaSyllables.size())
+            return kNone;
+        return m_line.karaSyllables[e.syl].inlineFx;
+    }
+
+    void highlights(int node, const Element &p, std::vector<Element> &out)
+    {
+        const CNode &n = m_c.nodes[node];
+        const Unit &u = unitOf(p);
+        const bool syllable = p.kind == UnitKind::Syl || p.kind == UnitKind::Char;
+        if (!syllable || static_cast<std::size_t>(p.syl) >= m_line.karaSyllables.size()) {
+            if (n.flag && u.duration <= 0)
+                return;
+            Element e = p;
+            e.loops.push_back(loopAt(node, 1, 1));
+            out.push_back(std::move(e));
+            return;
+        }
+        const std::vector<karaoke_layout::Highlight> &all = m_line.karaSyllables[p.syl].highlights;
+        const int count = static_cast<int>(all.size());
+        for (int k = 0; k < count; ++k) {
+            const karaoke_layout::Highlight &h = all[k];
+            if (n.flag && h.duration <= 0)
+                continue;
+            Unit &t = m_timed.emplace_back(u);
+            t.start = t.relStart = h.start;
+            t.end = t.relEnd = h.end;
+            t.duration = h.duration;
+            t.kdur = h.duration / 10;
+            t.mid = h.start + h.duration / 2;
+            t.blank = u.blank || h.duration <= 0;
+            Element e = p;
+            e.timed = &t;
+            e.loops.push_back(loopAt(node, k + 1, count));
+            out.push_back(std::move(e));
+        }
     }
 
     void strips(int node, const Element &p, Memo &memo, std::vector<Element> &out)
@@ -864,6 +937,7 @@ private:
     NodeValue info(std::string_view port, const Element &e) const;
     NodeValue join(int node, const Element &e);
     NodeValue lua(int node, int port, const Element &e, Memo &memo);
+    NodeValue audioPeak(int node, int port, const Element &e, Memo &memo);
     bool luaBatch(int node, const std::vector<Element> &elements, std::vector<Memo> &memos);
 
     const Compiled &m_c;
@@ -871,10 +945,12 @@ private:
     std::u8string_view m_name;
     std::int64_t m_seed;
     LuaNodePort *m_lua;
+    std::optional<const DisplayAudio *> m_audio;
     std::atomic<bool> &m_luaStopped;
     Problems &m_problems;
     NodeValueTrace *m_trace;
     Memo m_lineMemo;
+    std::deque<Unit> m_timed;
 };
 
 NodeValue Evaluator::info(std::string_view port, const Element &e) const
@@ -1005,7 +1081,8 @@ NodeValue Evaluator::compute(int node, int port, const Element &e, Memo &memo)
     case Kind::Frames:
     case Kind::ClipGradient:
     case Kind::Array:
-    case Kind::Particles: {
+    case Kind::Particles:
+    case Kind::Highlights: {
         const Loop *loop = loopOf(e, node);
         if (!loop) {
             m_problems.add(n.graph->id, "was read outside its units");
@@ -1145,6 +1222,8 @@ NodeValue Evaluator::compute(int node, int port, const Element &e, Memo &memo)
         return gradientAt(n.list, num("progress"));
     case Kind::Shape:
         return NodeDrawing{n.text, static_cast<int>(n.number)};
+    case Kind::AudioPeaks:
+        return audioPeak(node, port, e, memo);
     case Kind::Join:
         return join(node, e);
     case Kind::Lua:
@@ -1153,6 +1232,33 @@ NodeValue Evaluator::compute(int node, int port, const Element &e, Memo &memo)
         break;
     }
     return 0.0;
+}
+
+NodeValue Evaluator::audioPeak(int node, int port, const Element &e, Memo &memo)
+{
+    const CNode &n = m_c.nodes[node];
+    if (!m_audio) {
+        m_problems.add(n.graph->id, "has no audio to read, so it gives 0");
+        return 0.0;
+    }
+    if (!*m_audio || (*m_audio)->sampleRate() <= 0) {
+        m_problems.add(n.graph->id, "waits for the audio to open, so it gives 0");
+        return 0.0;
+    }
+    const Unit &u = unitOf(e);
+    const double lineStart = static_cast<double>(m_line.macro.startMs);
+    const double start = wired(node, "start") || n.start ? number(node, "start", e, memo) : lineStart + u.relStart;
+    const double end = wired(node, "end") || n.end ? number(node, "end", e, memo) : lineStart + u.relEnd;
+    if (!std::isfinite(start) || !std::isfinite(end) || end <= start)
+        return 0.0;
+    const auto peaks = audioPeaks(**m_audio, static_cast<std::int64_t>(std::max(0.0, start)),
+                                  static_cast<std::int64_t>(std::max(1.0, end)), 1);
+    if (!peaks) {
+        m_problems.add(n.graph->id, "reads a span too long while the audio is still loading, so it gives 0");
+        return 0.0;
+    }
+    const double low = peaks->min.front() / 32768.0, high = peaks->max.front() / 32768.0;
+    return port == 0 ? std::max(std::fabs(low), std::fabs(high)) : port == 1 ? low : high;
 }
 
 NodeValue Evaluator::lua(int node, int port, const Element &e, Memo &memo)
@@ -1262,10 +1368,22 @@ struct LineResult {
     std::vector<NodeEffectProblem> problems;
 };
 
-std::string cacheKey(const Compiled &c, int emitRank, const karaoke_layout::Line &line, std::u8string_view name)
+std::string audioState(const std::optional<const DisplayAudio *> &audio)
+{
+    if (!audio)
+        return "none";
+    if (!*audio)
+        return "opening";
+    const DisplayAudio &a = **audio;
+    return std::to_string(reinterpret_cast<std::uintptr_t>(&a)) + ' ' + std::to_string(a.sampleRate()) + ' ' +
+           std::to_string(a.sampleCount()) + ' ' + std::to_string(a.decoded()) + (a.finished() ? " done" : "");
+}
+
+std::string cacheKey(const Compiled &c, int emitRank, const karaoke_layout::Line &line, std::u8string_view name,
+                     const std::string &audio)
 {
     return narrow(name) + '\x1e' + std::to_string(c.flat.seed) + '\x1e' + c.emitSignature[emitRank] + '\x1e' +
-           line.signature;
+           line.signature + '\x1e' + audio;
 }
 
 }
@@ -1292,11 +1410,13 @@ NodeEffectRun runNodeEffect(const core::Document &document, std::u8string_view n
     if (!run.problems.empty())
         return finish();
     const Compiled compiled = compile(*flattenGraph(graph));
-    if (!compiled.lua.empty() && !options.trustLua) {
+    if (!options.trustLua) {
         for (const int lua : compiled.lua)
-            run.problems.push_back({compiled.nodes[lua].graph->id, std::nullopt,
-                                    "runs only once you trust this Document's Lua"});
-        return finish();
+            if (!pluginOfNodeType(compiled.nodes[lua].graph->type))
+                run.problems.push_back({compiled.nodes[lua].graph->id, std::nullopt,
+                                        "runs only once you trust this Document's Lua"});
+        if (!run.problems.empty())
+            return finish();
     }
     run.ran = true;
 
@@ -1331,6 +1451,7 @@ NodeEffectRun runNodeEffect(const core::Document &document, std::u8string_view n
     std::vector<std::atomic<std::int64_t>> nanos(compiled.emits.size());
     std::vector<std::atomic<std::size_t>> counts(compiled.emits.size());
     std::atomic<bool> luaStopped = false;
+    const std::string audio = compiled.audio ? audioState(options.audio) : std::string();
     const auto work = [&](std::size_t i) {
         if (luaStopped)
             return;
@@ -1338,12 +1459,13 @@ NodeEffectRun runNodeEffect(const core::Document &document, std::u8string_view n
         Problems problems{r.problems, core::LineId{lines[i].macro.id}};
         for (const std::string &p : layoutProblems[i])
             problems.add({}, p);
-        Evaluator eval(compiled, lines[i], name, graph.seed, options.lua, luaStopped, problems,
+        Evaluator eval(compiled, lines[i], name, graph.seed, options, luaStopped, problems,
                        i == 0 ? options.trace : nullptr);
         for (std::size_t k = 0; k < compiled.emits.size() && !luaStopped; ++k) {
             const auto t0 = std::chrono::steady_clock::now();
             std::vector<Generated> out;
-            const std::string key = options.cache ? cacheKey(compiled, static_cast<int>(k), lines[i], name) : "";
+            const std::string key =
+                options.cache ? cacheKey(compiled, static_cast<int>(k), lines[i], name, audio) : "";
             bool cached = false;
             if (options.cache) {
                 auto &store = options.cache->store();
@@ -1740,6 +1862,8 @@ private:
         case Kind::Array:
         case Kind::Particles:
             return refuse(i, unitsRefusal(n.kind));
+        case Kind::Highlights:
+            return refuse(i, "gives a highlight's place among the highlights, which has no templater variable");
         case Kind::Retime:
             return refuse(i, "gives times only to an Emit's start and end");
         case Kind::Join:
@@ -1748,6 +1872,8 @@ private:
             return refuse(i, "draws numbers the templater can't draw again");
         case Kind::Lua:
             return refuse(i, "runs in HikariSub's Lua helper, not in the templater");
+        case Kind::AudioPeaks:
+            return refuse(i, "reads the audio, which the templater can't");
         default:
             return refuse(i, "has no template form");
         }
@@ -1945,6 +2071,8 @@ private:
         bool skipBlank = false;
         int loop = kUnwired;
         int count = 1;
+        bool multi = false;
+        std::optional<std::string> fx;
     };
 
     std::optional<Units> unitsOf(int emit)
@@ -1963,11 +2091,41 @@ private:
             if (at == kUnwired)
                 return refuse(u.loop, "has no units");
         }
+        int highlights = kUnwired, inlineFx = kUnwired;
+        while (node(at).kind == Kind::Highlights || node(at).kind == Kind::InlineFx) {
+            int &seen = node(at).kind == Kind::Highlights ? highlights : inlineFx;
+            if (seen != kUnwired)
+                return refuse(at, node(at).kind == Kind::Highlights
+                                      ? "gives highlights of highlights, which a template can't"
+                                      : "keeps units by a second inline-fx, which a template can't");
+            seen = at;
+            at = wire(at, "units").node;
+            if (at == kUnwired)
+                return refuse(seen, "has no units");
+        }
+        if (node(at).kind == Kind::Repeat && (highlights != kUnwired || inlineFx != kUnwired))
+            return refuse(at, "repeats before the highlights or inline-fx after it, which a template can't");
         if (node(at).kind != Kind::ForEach)
             return refuse(at, unitsRefusal(node(at).kind));
         u.forEach = at;
         u.unit = node(at).mode;
         u.skipBlank = node(at).flag;
+        if (u.unit == "line" && highlights != kUnwired)
+            return refuse(highlights, "gives a Line's highlights, which a line template can't");
+        if (u.unit == "line" && inlineFx != kUnwired)
+            return refuse(inlineFx, "keeps Lines by inline-fx, which a line template can't");
+        if (highlights != kUnwired) {
+            if (node(highlights).flag != u.skipBlank)
+                return refuse(highlights, "leaves out blank highlights only when its For each leaves out blank "
+                                          "units, as a template's noblank does both");
+            u.multi = true;
+        }
+        if (inlineFx != kUnwired) {
+            const std::string &name = node(inlineFx).text;
+            if (std::ranges::any_of(name, [](unsigned char c) { return std::isspace(c); }))
+                return refuse(inlineFx, "keeps an inline-fx with a space in its name, which a template can't name");
+            u.fx = name;
+        }
         return u;
     }
 
@@ -2064,6 +2222,11 @@ private:
         }
         if (units->count != 1)
             addModifier("loop " + std::to_string(units->count));
+        if (units->multi)
+            addModifier("multi");
+        const std::string group = templateId(m_name, n.graph->id);
+        if (units->fx)
+            addModifier(units->fx->empty() ? "fxgroup " + group : "fx " + *units->fx);
         if (m_allStyles)
             addModifier("all");
 
@@ -2078,7 +2241,11 @@ private:
             head += " " + m;
         const int layerValue = static_cast<int>(*layer);
         const std::string text = *times + (tags->text.empty() ? std::string() : "{" + tags->text + "}") + body;
-        std::vector<TemplateLine> out{{layerValue, wide("template " + head), wide(text)}};
+        std::vector<TemplateLine> out;
+        if (units->fx && units->fx->empty())
+            out.push_back({0, wide(std::string(units->unit == "furi" ? "code furi" : "code syl") + (m_allStyles ? " all" : "")),
+                           wide("fxgroup[" + luaString(group) + "] = (syl.inline_fx == \"\")")});
+        out.push_back({layerValue, wide("template " + head), wide(text)});
         if (joined)
             out.push_back({layerValue, wide("template line " + templateId(m_name, n.graph->id)), wide(joinText)});
         return out;

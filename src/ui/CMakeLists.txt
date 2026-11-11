@@ -21,7 +21,7 @@ qt_add_qml_module(hikari_ui
     VERSION 1.0
     QML_FILES Main.qml ShellMenu.qml ShellMenuItem.qml MacroMenuEntries.qml AutomationDialog.qml AutomationManager.qml TemplateEditor.qml AutomationFilePicker.qml FontPicker.qml ScriptPropertiesDialog.qml SelectLinesDialog.qml StyleManager.qml HistoryWindow.qml ColumnsWindow.qml TranslationShiftWindow.qml SpellCheckerPanel.qml SettingsDialog.qml SearchTool.qml DockTitleBar.qml DockTabBar.qml
         DocumentTabBar.qml SessionWindows.qml)
-qt_target_qml_sources(hikari_ui QML_FILES ShiftTimesPanel.qml TimingPostprocessorPanel.qml ShiftPresetBar.qml ShiftPreview.qml
+qt_target_qml_sources(hikari_ui QML_FILES ShiftTimesPanel.qml TimingPostprocessorPanel.qml TimingAssistantView.qml ShiftPresetBar.qml ShiftPreview.qml
     ShiftLines.qml ShiftNeed.qml FormSection.qml SegmentedButtons.qml PrimaryButton.qml)
 qt_target_qml_sources(hikari_ui QML_FILES HomePage.qml RecentList.qml)
 qt_target_qml_sources(hikari_ui QML_FILES StylesPanel.qml)
@@ -46,7 +46,7 @@ hikari_module(hikari_ui ALLOW hikari_application hikari_core "Qt6::*" "hikari_ui
 qt_target_qml_sources(hikari_ui QML_FILES AutomationNotices.qml)
 qt_target_qml_sources(hikari_ui QML_FILES FileChooser.qml FolderChooser.qml)
 qt_target_qml_sources(hikari_ui QML_FILES AutomationProgress.qml RunLogLine.qml)
-qt_target_qml_sources(hikari_ui QML_FILES ScriptResolutionDialog.qml ScriptInfoOnSaveDialog.qml)
+qt_target_qml_sources(hikari_ui QML_FILES ScriptResolutionDialog.qml ScriptInfoOnSaveDialog.qml ProjectSettingsPages.qml)
 qt_target_qml_sources(hikari_ui QML_FILES SubtitleComparisonMenu.qml DocumentTabMenu.qml MoveTabMenu.qml)
 qt_target_qml_sources(hikari_ui QML_FILES ReferenceTray.qml)
 qt_target_qml_sources(hikari_ui QML_FILES GridToolTip.qml GridScrollBars.qml)
@@ -66,7 +66,7 @@ qt_target_qml_sources(hikari_ui QML_FILES FontCatalogBar.qml FontCatalogWindow.q
 set_source_files_properties(FontWindows.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 qt_target_qml_sources(hikari_ui QML_FILES FilterChip.qml FontResolutionNote.qml FontWindows.qml)
 qt_target_qml_sources(hikari_ui QML_FILES MatroskaSubtitles.qml)
-qt_target_qml_sources(hikari_ui QML_FILES LineInspector.qml LineCounters.qml LineEditorStrip.qml ReviewStrip.qml ReviewPanel.qml AgentPanel.qml AlignmentChoice.qml TimeField.qml
+qt_target_qml_sources(hikari_ui QML_FILES LineInspector.qml LineCounters.qml LineEditorStrip.qml ReviewStrip.qml ReviewPanel.qml AgentPanel.qml InlineAiMenu.qml InlineAiBox.qml InlineAiBar.qml AlignmentChoice.qml TimeField.qml
     NumberField.qml)
 qt_target_qml_sources(hikari_ui QML_FILES VisualToolRail.qml VisualOverlay.qml VisualToolBar.qml VisualPointerReadout.qml VisualValueField.qml VisualTagPicker.qml VisualLastChange.qml)
 qt_target_qml_sources(hikari_ui QML_FILES VisualToolOption.qml VisualToolDialogs.qml)
@@ -166,8 +166,9 @@ qt_target_qml_sources(hikari_ui QML_FILES HidableQuestion.qml)
 qt_target_qml_sources(hikari_ui QML_FILES SetNewFpsWindow.qml)
 qt_target_qml_sources(hikari_ui QML_FILES LazyMessageBox.qml UnsavedChanges.qml Autosaves.qml StartupOffer.qml)
 qt_target_qml_sources(hikari_ui QML_FILES SpellingAddedWords.qml ResampleWindow.qml)
-qt_target_qml_sources(hikari_ui QML_FILES PerspectiveTrackingWindow.qml TrackingDataField.qml MotionDataWindow.qml
-    ExtendTrackingWindow.qml)
+qt_target_qml_sources(hikari_ui QML_FILES PerspectiveTrackingWindow.qml TrackingDataField.qml MotionDataWindow.qml InterpolateLinesWindow.qml
+    ExtendTrackingWindow.qml BlurAndGlowLayersDialog.qml)
+qt_target_qml_sources(hikari_ui QML_FILES RemoveTagsDialog.qml)
 set(hikari_app_icon "${CMAKE_CURRENT_SOURCE_DIR}/../../packaging/icons/dawn-peek/app.svg")
 set_source_files_properties("${hikari_app_icon}" PROPERTIES QT_RESOURCE_ALIAS "app-icon.svg")
 qt_add_resources(hikari_ui "hikari_app_icon" PREFIX "/hikari/ui" FILES "${hikari_app_icon}")

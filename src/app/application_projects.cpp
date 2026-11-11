@@ -1,5 +1,6 @@
 #include "hikari/app/application.h"
 
+#include "hikari/app/font_catalogs_controller.h"
 #include "hikari/application/project.h"
 #include "log_controller.h"
 #include "project_file.h"
@@ -10,7 +11,9 @@
 #include <QQmlEngine>
 #include <QQuickWindow>
 
+#include <algorithm>
 #include <filesystem>
+#include <iterator>
 #include <string>
 #include <vector>
 
@@ -49,8 +52,10 @@ const application::Settings &Application::windowSettings(int shellWindow) const
 
 void Application::applyWindowProject(int shellWindow)
 {
-    if (shellWindow != 0 && !m_shellWindows.contains(shellWindow))
+    if (shellWindow != 0 && !m_shellWindows.contains(shellWindow)) {
+        m_projectFonts.erase(shellWindow);
         return;
+    }
     auto &v = views(shellWindow);
     const QString root = m_projects->root(shellWindow);
     v.settings->setProject(root, !root.isEmpty() && projectTrusted(root));
@@ -67,19 +72,75 @@ void Application::applyWindowProject(int shellWindow)
                                                             "kept as %2.")
                                     .arg(QString::fromStdString(application::displayPath(problem.file)),
                                          QString::fromStdString(application::displayPath(problem.keptAs))),
-                          QString::fromStdString(problem.failure.message));
+                          QString::fromStdString(problem.failure.message), shellWindow);
         for (const auto &id : project->refused())
             m_log->notice(ui::LogController::Warning, title,
                           QCoreApplication::translate("HikariSub.Project",
                                                       "A Project can’t set %1, so the project file’s value is ignored.")
-                              .arg(QString::fromStdString(id)));
+                              .arg(QString::fromStdString(id)),
+                          {}, shellWindow);
     }
+    loadProjectFonts(shellWindow);
     const bool moveTags = v.settings->settings().boolean("translation.autoMoveTagsFromOriginal");
     v.editor->setMoveTags(moveTags);
     v.shell->setRunMarks(moveTags);
     if (shellWindow == m_workspace.activeWindow())
         applyGrammarSettings();
     spellingRefresh();
+}
+
+void Application::loadProjectFonts(int shellWindow)
+{
+    const auto *project = views(shellWindow).settings->project();
+    std::vector<QString> folders = project ? project->fontFolders() : std::vector<QString>();
+    const auto known = m_projectFonts.find(shellWindow);
+    if (known == m_projectFonts.end() ? folders.empty() : known->second.folders == folders)
+        return;
+    ProjectFonts loaded{folders, {}};
+    for (const QString &folder : folders) {
+        auto fonts = FontCatalogsController::folderFontLeases(folder);
+        if (!fonts) {
+            m_log->notice(ui::LogController::Warning, QCoreApplication::translate("HikariSub.Project", "Project settings"),
+                          QCoreApplication::translate("HikariSub.Project", "The project font folder %1 can’t be opened.")
+                              .arg(QDir::toNativeSeparators(folder)));
+            continue;
+        }
+        std::ranges::move(*fonts, std::back_inserter(loaded.fonts));
+    }
+    if (folders.empty())
+        m_projectFonts.erase(shellWindow);
+    else
+        m_projectFonts[shellWindow] = std::move(loaded);
+    subtitleFontsChanged();
+}
+
+QString Application::projectFontFolder(int shellWindow) const
+{
+    const auto found = m_projectFonts.find(shellWindow);
+    return found == m_projectFonts.end() || found->second.folders.empty() ? QString()
+                                                                           : QDir::toNativeSeparators(found->second.folders.front());
+}
+
+bool Application::projectNeedsTrust(int shellWindow) const
+{
+    const auto &window = *views(shellWindow).settings;
+    const auto *project = window.project();
+    if (!project || window.trusted())
+        return false;
+    return QFileInfo(window.root() + QStringLiteral("/.hikari/automation")).isDir() || project->hasTable("plugins");
+}
+
+void Application::trustProject(int shellWindow)
+{
+    const QString root = views(shellWindow).settings->root();
+    if (root.isEmpty())
+        return;
+    QStringList folders = m_settings->list("trust.folders");
+    const QString folder = QDir::toNativeSeparators(root);
+    if (!folders.contains(folder))
+        m_settings->setValue(QStringLiteral("trust.folders"), folders << folder);
+    m_settings->sync();
+    emit projectsChanged();
 }
 
 bool Application::windowEmpty(int shellWindow) const

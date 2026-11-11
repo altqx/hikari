@@ -6,8 +6,10 @@
 #include <QFileInfo>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QLoggingCategory>
 #include <QNetworkReply>
 #include <QNetworkRequest>
+#include <QProcess>
 #include <QProcessEnvironment>
 #include <QRegularExpression>
 #include <QSaveFile>
@@ -201,9 +203,92 @@ void agentVersion(const QString &path, std::function<void(QString)> done)
     process->start(path, {QStringLiteral("--version")});
 }
 
+namespace {
+
+Q_LOGGING_CATEGORY(lcAgentCli, "hikari.ai.agents")
+
+constexpr int kShimResolveTimeoutMs = 3000;
+
+enum class Manager { None, Mise, Asdf };
+
+Manager shimOf(const QString &path)
+{
+    const QString file = QDir::fromNativeSeparators(path);
+    const QString target = QFileInfo(QFileInfo(path).canonicalFilePath()).completeBaseName();
+    static const QRegularExpression miseDir(QStringLiteral("/mise/(shims|command-wrappers/bin|command-wrappers)/[^/]+$"));
+    static const QRegularExpression asdfDir(QStringLiteral("/\\.asdf/shims/[^/]+$"));
+    if (target == QLatin1String("mise") || target == QLatin1String("rtx") || miseDir.match(file).hasMatch())
+        return Manager::Mise;
+    if (asdfDir.match(file).hasMatch())
+        return Manager::Asdf;
+    return Manager::None;
+}
+
+QString managerProgram(Manager manager, const QString &shim, const QStringList &search)
+{
+    if (manager == Manager::Mise) {
+        const QFileInfo target(QFileInfo(shim).canonicalFilePath());
+        const QString name = target.completeBaseName();
+        if (name == QLatin1String("mise") || name == QLatin1String("rtx"))
+            return target.filePath();
+        return QStandardPaths::findExecutable(QStringLiteral("mise"), search);
+    }
+    return QStandardPaths::findExecutable(QStringLiteral("asdf"), search);
+}
+
+/// `mise which <agent>` or `asdf which <agent>`, run directly, outside any sandbox.
+QString resolveShim(const QString &agent, const QString &shim, const QStringList &search)
+{
+    const Manager manager = shimOf(shim);
+    const QString program = managerProgram(manager, shim, search);
+    if (program.isEmpty())
+        return {};
+    QProcess process;
+    process.setProcessChannelMode(QProcess::SeparateChannels);
+    process.setStandardInputFile(QProcess::nullDevice());
+    process.start(program, {QStringLiteral("which"), agent});
+    if (!process.waitForFinished(kShimResolveTimeoutMs)) {
+        process.kill();
+        process.waitForFinished(1000);
+        return {};
+    }
+    if (process.exitStatus() != QProcess::NormalExit || process.exitCode() != 0)
+        return {};
+    const QString resolved = QString::fromLocal8Bit(process.readAllStandardOutput()).section(QLatin1Char('\n'), 0, 0).trimmed();
+    const QFileInfo info(resolved);
+    if (resolved.isEmpty() || !info.isAbsolute() || !info.isFile() || !info.isExecutable() ||
+        shimOf(resolved) != Manager::None)
+        return {};
+    return resolved;
+}
+
+}
+
+QString findAgentCli(const QString &agent, const QStringList &dirs)
+{
+    const QStringList search =
+        dirs.isEmpty() ? qEnvironmentVariable("PATH").split(QDir::listSeparator(), Qt::SkipEmptyParts) : dirs;
+    QString shim;
+    for (const QString &dir : search) {
+        const QString found = QStandardPaths::findExecutable(agent, {dir});
+        if (found.isEmpty())
+            continue;
+        if (shimOf(found) == Manager::None)
+            return found;
+        if (shim.isEmpty())
+            shim = found;
+    }
+    if (shim.isEmpty())
+        return {};
+    if (const QString resolved = resolveShim(agent, shim, search); !resolved.isEmpty())
+        return resolved;
+    qCWarning(lcAgentCli) << agent << "is a version-manager shim HikariSub couldn't resolve:" << shim;
+    return {};
+}
+
 void probeAgentCli(const QString &agent, std::function<void(std::optional<AgentCli>)> done, const QStringList &dirs)
 {
-    const QString path = QStandardPaths::findExecutable(agent, dirs);
+    const QString path = findAgentCli(agent, dirs);
     if (path.isEmpty()) {
         done(std::nullopt);
         return;

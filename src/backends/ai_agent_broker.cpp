@@ -1,6 +1,9 @@
 #include "hikari/backends/ai_agent_broker.h"
 
+#include "hikari/backends/ai_mcp_bridge.h"
+#include "hikari/backends/ai_mcp_server.h"
 #include "hikari/backends/ai_sidecar_host.h"
+#include "hikari/backends/ai_signin.h"
 
 #include <QDir>
 #include <QFile>
@@ -26,6 +29,7 @@ namespace hikari::backends::ai {
 namespace {
 
 constexpr qsizetype kMaxLineBytes = 64 << 20;
+constexpr int kCodexToolTimeoutSeconds = 24 * 60 * 60;
 
 constexpr std::array kRefusedClaudeFlags = {
     "--dangerously-skip-permissions", "--allow-dangerously-skip-permissions", "--add-dir", "--plugin-dir",
@@ -234,7 +238,8 @@ AgentSpec claudeAgent(const QString &program, const QString &home, const QString
     return spec;
 }
 
-std::optional<AgentSpec> codexAgent(const QString &program, const QString &codexHome, const QString &work)
+std::optional<AgentSpec> codexAgent(const QString &program, const QString &codexHome, const QString &work,
+                                    std::shared_ptr<CodexLease> lease)
 {
     const QString binary = codexBinary(program);
     if (binary.isEmpty())
@@ -254,6 +259,16 @@ std::optional<AgentSpec> codexAgent(const QString &program, const QString &codex
         return arguments.isEmpty() ? QString() : QStringLiteral("Codex takes no arguments from the sidecar");
     };
     spec.guard = codexGuard;
+    spec.channelArguments = [](const QString &url) {
+        return QStringList{QStringLiteral("-c"), QStringLiteral("mcp_servers.hikari.url=\"%1\"").arg(url),
+                           QStringLiteral("-c"),
+                           QStringLiteral("mcp_servers.hikari.bearer_token_env_var=\"%1\"")
+                               .arg(QString::fromLatin1(kMcpTokenVariable)),
+                           QStringLiteral("-c"), QStringLiteral("mcp_servers.hikari.default_tools_approval_mode=\"approve\""),
+                           QStringLiteral("-c"), QStringLiteral("mcp_servers.hikari.tool_timeout_sec=%1").arg(kCodexToolTimeoutSeconds)};
+    };
+    spec.before = [lease](std::function<void(QString)> go) { lease->acquire(std::move(go)); };
+    spec.after = [lease] { lease->release(); };
     return spec;
 }
 
@@ -263,6 +278,8 @@ struct AgentBroker::Running {
     std::unique_ptr<QProcess> process;
     std::unique_ptr<sandbox::Launcher> launcher;
     std::unique_ptr<AgentGuard> guard;
+    std::unique_ptr<McpServer> channel;
+    std::function<void()> after;
     QByteArray fromSidecar;
     QByteArray fromAgent;
     qint64 pid = 0;
@@ -328,6 +345,7 @@ void AgentBroker::add(const std::string &agent, AgentSpec spec)
 
 void AgentBroker::attach(AiSidecarHost &host)
 {
+    m_host = &host;
     for (const char *method : {kAgentStart, kAgentWrite, kAgentCloseInput, kAgentKill})
         host.handle(method, [broker = QPointer(this), method](const api::Json &params,
                                                               std::shared_ptr<SidecarRequest> request) {
@@ -424,11 +442,27 @@ void AgentBroker::start(const api::Json &params, const Answer &answer)
             if (value.isString() && spec->second.sidecarEnvironment.contains(QString::fromStdString(name)))
                 environment.insert(QString::fromStdString(name), QString::fromStdString(value.asString()));
 
+    std::unique_ptr<McpServer> channel;
+    if (spec->second.channelArguments) {
+        const api::Json *session = params.find("session");
+        if (!session || !session->isString() || session->asString().empty())
+            return refuse(rpc::kInvalidParams, "this agent needs the session it serves");
+        channel = std::make_unique<McpServer>([host = m_host] { return host.data(); }, newMcpToken());
+        channel->setChannel(session->asString());
+        QString why;
+        if (!channel->listenHttp(0, &why))
+            return refuse(rpc::kBusy, "Hikari's tools channel didn't open: " + why.toStdString());
+        arguments = spec->second.channelArguments(QStringLiteral("http://127.0.0.1:%1/mcp").arg(channel->httpPort())) +
+                    arguments;
+        environment.insert(QString::fromLatin1(kMcpTokenVariable), QString::fromLatin1(channel->token()));
+    }
+
     auto running = std::make_unique<Running>();
     running->id = id;
     running->agent = spec->first;
     running->process = std::make_unique<QProcess>();
     running->launcher = std::make_unique<sandbox::Launcher>(spec->second.profile);
+    running->channel = std::move(channel);
     if (spec->second.guard)
         running->guard = spec->second.guard();
     QProcess &process = *running->process;
@@ -458,9 +492,33 @@ void AgentBroker::start(const api::Json &params, const Answer &answer)
         if (error == QProcess::FailedToStart)
             exited(id, -1);
     });
+    if (!spec->second.before)
+        running->after = spec->second.after;
     m_running.emplace(id, std::move(running));
-    answer(api::Json::object());
-    process.start();
+    if (!spec->second.before) {
+        answer(api::Json::object());
+        return process.start();
+    }
+    spec->second.before([this, id, answer, after = spec->second.after, alive = QPointer(this)](QString error) {
+        if (!alive)
+            return;
+        const auto it = m_running.find(id);
+        if (it == m_running.end()) {
+            if (error.isEmpty() && after)
+                after();
+            return answer(std::unexpected(std::pair{rpc::kRequestCancelled, std::string("stopped before it started")}));
+        }
+        if (!error.isEmpty()) {
+            std::unique_ptr<Running> running = std::move(it->second);
+            m_running.erase(it);
+            running->process->disconnect(this);
+            running->process.release()->deleteLater();
+            return answer(std::unexpected(std::pair{rpc::kInvalidParams, error.toStdString()}));
+        }
+        it->second->after = after;
+        answer(api::Json::object());
+        it->second->process->start();
+    });
 }
 
 void AgentBroker::write(Running &running, const QByteArray &data)
@@ -520,6 +578,9 @@ void AgentBroker::exited(std::uint64_t id, int code)
     std::unique_ptr<Running> running = std::move(it->second);
     m_running.erase(it);
     running->process->disconnect(this);
+    running->channel.reset();
+    if (running->after)
+        running->after();
     if (m_notify)
         m_notify(kAgentExit, api::Json::object({{"process", id}, {"code", code}}));
     running->process.release()->deleteLater();
@@ -530,6 +591,8 @@ void AgentBroker::killAll()
     auto running = std::exchange(m_running, {});
     for (auto &[id, r] : running) {
         r->kill();
+        if (r->after)
+            r->after();
         r->process.release()->deleteLater();
     }
 }

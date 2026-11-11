@@ -1,0 +1,19 @@
+[Script Info]
+; TH5c: text before the first karaoke tag belongs to syllable 1, so $ci and char.si count from the start of the Line; compared against upstream karaOK f749c4fa64e7
+Title: TH5c corpus karaOK leading text
+ScriptType: v4.00+
+WrapStyle: 0
+PlayResX: 1280
+PlayResY: 720
+ScaledBorderAndShadow: yes
+Karaoke Templater: karaOK
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Romaji,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,8,20,20,20,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Comment: 0,0:00:00.00,0:00:05.00,Romaji,,0,0,0,template char,{\pos($x,$y)}$ci/!char.si!/!syll.text!/
+Comment: 0,0:00:00.00,0:00:05.00,Romaji,,0,0,0,template syl,$ci/
+Dialogue: 0,0:00:01.00,0:00:04.00,Romaji,,0,0,0,,go {\k20}ab{\k30}cd

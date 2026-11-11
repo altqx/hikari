@@ -63,6 +63,19 @@ QString builtinScript()
     return QString::fromUtf8(hikari::application::kBuiltinKaraokeTemplater);
 }
 
+QString karaOKDir()
+{
+    return corpusDir() + QStringLiteral("/karaok");
+}
+
+QString upstreamKaraOK()
+{
+    return karaOKDir() + QStringLiteral("/kara-templater-karaok.lua");
+}
+
+constexpr char kApply[] = "Apply karaoke template";
+constexpr char kUpstreamKaraOKApply[] = "Apply karaoke template (modded with furigana)";
+
 QString oracleScript()
 {
     return QStringLiteral(HIKARI_KARAOKE_TEMPLATER_ORACLE);
@@ -167,18 +180,19 @@ protected:
         return run.outcome;
     }
 
-    std::string templatedBytes(const std::vector<std::byte> &bytes, const QString &script)
+    std::string templatedBytes(const std::vector<std::byte> &bytes, const QString &script,
+                               const std::string &macroName = kApply)
     {
         hikari::application::EditSession session(hikari::core::loadAss(bytes).document);
-        if (!apply(session, script, "Apply karaoke template"))
+        if (!apply(session, script, macroName))
             return {};
         return textOf(hikari::core::encodeAss(hikari::test::withoutKaraokeMarks(session.document())));
     }
 
 
-    std::string templated(const QString &document, const QString &script)
+    std::string templated(const QString &document, const QString &script, const std::string &macroName = kApply)
     {
-        return templatedBytes(readBytes(document), script);
+        return templatedBytes(readBytes(document), script, macroName);
     }
 
     Outcome run;
@@ -187,10 +201,10 @@ protected:
     std::map<HostService, int> asked;
 };
 
-QStringList corpus()
+QStringList corpus(const QString &dir = corpusDir())
 {
     QStringList documents;
-    for (const QString &name : QDir(corpusDir()).entryList({QStringLiteral("*.ass")}, QDir::Files, QDir::Name))
+    for (const QString &name : QDir(dir).entryList({QStringLiteral("*.ass")}, QDir::Files, QDir::Name))
         if (!name.endsWith(QLatin1String(".out.ass")))
             documents << name;
     return documents;
@@ -198,7 +212,17 @@ QStringList corpus()
 
 QString goldenOf(const QString &document)
 {
-    return corpusDir() + QLatin1Char('/') + QFileInfo(document).completeBaseName() + QStringLiteral(".out.ass");
+    const QFileInfo file(document);
+    return file.absolutePath() + QLatin1Char('/') + file.completeBaseName() + QStringLiteral(".out.ass");
+}
+
+void writeGoldenIfAsked(const QString &document, const std::string &text)
+{
+    if (!qEnvironmentVariableIsSet("HIKARI_UPDATE_KARAOKE_GOLDENS"))
+        return;
+    QFile out(goldenOf(document));
+    ASSERT_TRUE(out.open(QIODevice::WriteOnly));
+    out.write(text.data(), static_cast<qint64>(text.size()));
 }
 
 std::vector<std::byte> bytesOf(const std::string &text)
@@ -278,6 +302,52 @@ TEST_F(KaraokeTemplater, BuiltinTemplaterMatchesAegisub322ByteForByte)
     }
 }
 
+
+TEST_F(KaraokeTemplater, KaraOKDocumentsMatchUpstreamKaraOKByteForByte)
+{
+    const QStringList documents = corpus(karaOKDir());
+    ASSERT_EQ(documents.size(), 6);
+    for (const QString &name : documents) {
+        SCOPED_TRACE(name.toStdString());
+        const QString document = karaOKDir() + QLatin1Char('/') + name;
+        const std::string upstream = templated(document, upstreamKaraOK(), kUpstreamKaraOKApply);
+        ASSERT_FALSE(upstream.empty());
+        writeGoldenIfAsked(document, upstream);
+        const std::string golden = textOf(readBytes(goldenOf(document)));
+        EXPECT_EQ(upstream, golden) << "upstream karaOK no longer gives the golden output";
+        EXPECT_EQ(templated(document, builtinScript()), golden);
+    }
+}
+
+TEST_F(KaraokeTemplater, KaraOKDeparturesDifferFromUpstreamKaraOK)
+{
+    const QString dir = karaOKDir() + QStringLiteral("/departures");
+    const QStringList documents = corpus(dir);
+    ASSERT_EQ(documents.size(), 8);
+    for (const QString &name : documents) {
+        SCOPED_TRACE(name.toStdString());
+        const QString document = dir + QLatin1Char('/') + name;
+        const std::string builtin = templated(document, builtinScript());
+        ASSERT_FALSE(builtin.empty());
+        writeGoldenIfAsked(document, builtin);
+        EXPECT_EQ(builtin, textOf(readBytes(goldenOf(document))));
+        EXPECT_NE(templated(document, upstreamKaraOK(), kUpstreamKaraOKApply), builtin);
+    }
+}
+
+TEST_F(KaraokeTemplater, KaraOKOnlySyntaxChoosesKaraOKModeWithoutTheModeLine)
+{
+    const QString document = karaOKDir() + QStringLiteral("/classes.ass");
+    const std::string golden = textOf(readBytes(goldenOf(document)));
+    const auto detected = editedCorpus(QStringLiteral("karaok/classes.ass"), {{"Karaoke Templater: karaOK\n", ""}});
+    EXPECT_EQ(templatedBytes(detected, builtinScript()),
+              std::string(golden).replace(golden.find("Karaoke Templater: karaOK\n"), 26, ""));
+    const auto stock =
+        editedCorpus(QStringLiteral("karaok/classes.ass"), {{"Templater: karaOK", "Templater: Aegisub 3.2.2"}});
+    std::string karaOKGolden = golden;
+    karaOKGolden.replace(golden.find("karaOK\n"), 6, "Aegisub 3.2.2");
+    EXPECT_NE(templatedBytes(stock, builtinScript()), karaOKGolden);
+}
 
 TEST_F(KaraokeTemplater, NativeKaraskelTablesEqualKaraskelLuasFieldForField)
 {
@@ -640,7 +710,7 @@ TEST_F(KaraokeTemplater, SelectingEveryLineGivesTheWholeRun)
             all.push_back(l->id);
         select(session, all);
         ASSERT_TRUE(apply(session, builtinScript(), kSelected));
-        const std::string golden = textOf(readBytes(goldenOf(name)));
+        const std::string golden = textOf(readBytes(goldenOf(corpusDir() + QLatin1Char('/') + name)));
         if (name != QLatin1String("km-minimal.ass")) {
             EXPECT_EQ(saved(session), golden);
             continue;

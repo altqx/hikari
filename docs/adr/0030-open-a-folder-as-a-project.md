@@ -57,7 +57,10 @@ The Explorer is core, not a plugin ([ADR 0022](0022-hikarisub-plugins.md), "Plug
 
 - **Default < User < Project, per key,** for an allowlist of settings.
 - **A Project can never set:** privacy, analytics, updates, AI providers and permissions, plugin network, trusted folders, the theme and UI fonts, or hotkeys. Display preferences stay the user's.
-- **Settings gets two tabs, Yours and Project.**
+- **Settings gets two tabs, Yours and Project,** in a Project window ([#771](https://github.com/altqx/hikari/issues/771)).
+  - The Project tab lists only the pages and rows a Project can set. Each row says "Uses yours", "Set in this project" or "Set in project.local.toml"; a row from project.local.toml is read-only.
+  - "Use yours" removes the key from project.toml. Apply writes only the keys that changed, and only to project.toml.
+  - A Yours row the Project sets says "Overridden in this project".
 - **The allowlist** is the dictionary language and spelling switch, grammar, the Script Info values written on save ([#892](https://github.com/altqx/hikari/issues/892)), and moving tags from the original in translation mode. Lists are replaced, not merged.
 - **A setting that widens** what a Project may do applies only once its folder is trusted. None of today's allowlisted settings widens.
 
@@ -90,13 +93,15 @@ The Explorer is core, not a plugin ([ADR 0022](0022-hikarisub-plugins.md), "Plug
 - Rows offer Copy to and Move to either tier. A name clash goes through the Replace / Rename / Skip review.
 - While a Project is open, New and Save as default to **Save to project**. They are split buttons, and the choice is remembered per list.
 
-**Fonts.** The Project's font folders are searched before system fonts. Fonts attached to the subtitle file keep today's rules.
+**Fonts.** `fonts = ["fonts", "../common/fonts"]` in `project.toml` names folders relative to the Project folder; `project.local.toml`'s list replaces it. Their fonts join that window's Documents after the fonts attached to the subtitle file and before the Fonts folder in Settings, so a Project font wins over a system or Fonts folder font of the same family. Attached fonts keep today's rules. The Font collector starts in the Project's first font folder (#774).
+
+The more specific source wins (attached, then Project, then the Fonts folder, then system), so a Project renders the same for everyone who opens it, whatever is in their own Fonts folder.
 
 ## Trust
 
 - **One Trusted folders list** replaces Automation's Trusted script folders. It sits on the General page and is kept as `trust.folders`; the old `automation.trustedFolders` moves there once (owner, 2026-11-10).
 - **An untrusted Project** still applies its styles, dictionaries, layouts and settings that only restrict. It loads no scripts, changes no plugin on/off, and doesn't widen AI permissions.
-- **The trust question** comes on first open only when `.hikari/` holds scripts or plugin settings.
+- **The trust question** comes on first open only when `.hikari/` holds scripts or plugin settings. It is a bar across the top of that window, with Trust folder (which adds the folder to Trusted folders) and Not now, which isn't remembered ([#771](https://github.com/altqx/hikari/issues/771), owner Q224).
 
 ## Hikari AI in a Project
 

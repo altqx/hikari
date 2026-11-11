@@ -35,6 +35,11 @@ private:
     std::unique_ptr<QLocalSocket> m_socket;
 };
 
+/// The variable a private channel's token travels in, never the command line.
+inline constexpr const char *kMcpTokenVariable = "HIKARI_MCP_TOKEN";
+
+/// `hikarisub --mcp --channel <name>`: relays stdin and stdout to an agent session's channel. Never returns.
+[[noreturn]] void runMcpBridge(const McpEndpoint &endpoint);
 /// `hikarisub --mcp`: relays stdin and stdout to the server `endpointFile` names. Needs a QCoreApplication; never
 /// returns.
 [[noreturn]] void runMcpBridge(const QString &endpointFile);

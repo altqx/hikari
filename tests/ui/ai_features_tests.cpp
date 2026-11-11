@@ -120,7 +120,7 @@ protected:
                 ADD_FAILURE() << "can't write " << flags.toStdString();
             p.localSidecar = backends::ai::SidecarInstall{QStringLiteral("0.0.0-dev"), {}, flags, {}};
         }
-        p.agents = [this](backends::ai::AgentBroker &) { ++counts.agentLists; };
+        p.agents = [this](backends::ai::AgentBroker &, application::ai::KeyStore &) { ++counts.agentLists; };
         return p;
     }
 
@@ -489,5 +489,31 @@ TEST(AiCommands, TheSwitchTakesEveryCommandWithAnAiToken)
                 << line.toStdString();
     }
 }
+
+#ifndef _WIN32
+TEST_F(AiFeaturesTest, ThePanelFindsAnAgentWhereExternalAgentsFindsIt)
+{
+    QTemporaryDir bin;
+    QFile claude(bin.filePath(QStringLiteral("claude")));
+    ASSERT_TRUE(claude.open(QIODevice::WriteOnly));
+    claude.write("#!/bin/sh\necho 2.1.322\n");
+    claude.close();
+    claude.setPermissions(claude.permissions() | QFile::ExeOwner);
+    const QByteArray path = qgetenv("PATH");
+    qputenv("PATH", bin.path().toLocal8Bit());
+    const app::AiFeatures::Ports ports = app::AiFeatures::defaultPorts(bin.path(), nullptr, {});
+    std::optional<std::optional<backends::ai::AgentCli>> found;
+    ports.findAgent(QStringLiteral("claude"), [&](std::optional<backends::ai::AgentCli> cli) { found = std::move(cli); });
+    const bool claudeFound = ports.agentOnPath(QStringLiteral("claude"));
+    const bool codexFound = ports.agentOnPath(QStringLiteral("codex"));
+    qputenv("PATH", path);
+
+    EXPECT_TRUE(claudeFound);
+    EXPECT_FALSE(codexFound);
+    ASSERT_TRUE(waitFor([&] { return found.has_value(); }));
+    ASSERT_TRUE(found->has_value());
+    EXPECT_EQ((*found)->path, claude.fileName());
+}
+#endif
 
 }

@@ -26,6 +26,10 @@ Keep attachment bytes/name/hash and document ownership independent of filesystem
 
 Font installs/removals, attachment edits and provider/configuration changes create new environment generations and invalidate affected resolutions, previews and collection reports. Provide explicit refresh as well as debounced notifications. Qt refresh does not refresh libass's caches. Recreate affected libass contexts through their owner and retain source bytes until all consumers finish. Pinned tools use their own target document's environment.
 
+## Project font folders
+
+A Project's `fonts = [...]` folders ([ADR 0030](adr/0030-open-a-folder-as-a-project.md)) are memory fonts for every Document in its window. The renderer gets the subtitle file's attachments first, then the Project's fonts, then the Fonts folder from Settings, then the platform provider. libass keeps the first face with the best match score, so a Project face beats a system face of the same family and style. A closer style match elsewhere, such as an installed Bold for a bold request, still wins.
+
 ## Required feasibility evidence and UI review
 
 Use licensed fixtures on Windows and Linux for aliases, vertical names, TTC/OTC faces, variable instances, simulated styles, CJK/RTL/combining text, missing glyphs, fallback and conflicting attachments. Record renderer-selected identities against collected hashes/face indices, refresh behavior, concurrent documents and cancellation. Report inconclusive cases. [Prototype renderer-verified font identities and collection diagnostics](https://github.com/altqx/hikari/issues/47) must establish the diagnostic mechanism before the final implementation plan can call this contract proved.

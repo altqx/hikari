@@ -724,4 +724,239 @@ Line Layout::line(const MacroDialogueLine &source, double li, const LineOptions 
     return out;
 }
 
+namespace {
+
+bool luaSpace(char c)
+{
+    return c == ' ' || c == '\t' || c == '\n' || c == '\v' || c == '\f' || c == '\r';
+}
+
+// The override blocks of `text` as Lua's "()(%b{})" finds them, each with the place in the stripped text of the
+// unit it comes before, from 1.
+std::vector<std::pair<std::string, int>> tagsOf(const std::string &text, CharSplit split)
+{
+    std::vector<std::pair<std::string, int>> out;
+    std::string plain;
+    for (std::size_t i = 0; i < text.size();) {
+        if (text[i] == '{') {
+            int depth = 0;
+            std::size_t j = i;
+            for (; j < text.size(); ++j) {
+                if (text[j] == '{')
+                    ++depth;
+                else if (text[j] == '}' && --depth == 0)
+                    break;
+            }
+            if (j < text.size()) {
+                out.emplace_back(text.substr(i, j - i + 1), static_cast<int>(charsOf(plain, split).size()) + 1);
+                i = j + 1;
+                continue;
+            }
+        }
+        plain += text[i++];
+    }
+    return out;
+}
+
+// tag.text:gsub("\\[Kk][of]?%d+", ""):gsub("{}", "")
+std::string withoutKaraokeTags(const std::string &tag)
+{
+    std::string out;
+    for (std::size_t i = 0; i < tag.size();) {
+        if (tag[i] == '\\' && i + 1 < tag.size() && (tag[i + 1] == 'k' || tag[i + 1] == 'K')) {
+            std::size_t j = i + 2;
+            if (j < tag.size() && (tag[j] == 'o' || tag[j] == 'f'))
+                ++j;
+            const std::size_t digits = j;
+            while (j < tag.size() && tag[j] >= '0' && tag[j] <= '9')
+                ++j;
+            if (j > digits) {
+                i = j;
+                continue;
+            }
+        }
+        out += tag[i++];
+    }
+    std::string squeezed;
+    for (std::size_t i = 0; i < out.size(); ++i) {
+        if (out[i] == '{' && i + 1 < out.size() && out[i + 1] == '}') {
+            ++i;
+            continue;
+        }
+        squeezed += out[i];
+    }
+    return squeezed;
+}
+
+}
+
+KaraOKUnits Layout::karaOKUnits(const Line &line, CharSplit split, std::vector<std::string> &problems)
+{
+    KaraOKUnits out;
+    const auto length = [&](const std::string &s) { return static_cast<int>(charsOf(s, split).size()); };
+    const StyleInfo &styleref = *line.style;
+    const auto width = [&](const StyleInfo &style, const std::string &text) {
+        return measure(style, text, problems).width;
+    };
+    const std::vector<KaraSyllable> &kara = line.karaSyllables;
+    const int syln = static_cast<int>(kara.size()) - 1;
+    const auto tags = tagsOf(line.macro.text, split);
+    const std::string &stripped = line.kara.textStripped;
+    out.length = length(stripped);
+
+    out.sylCi.assign(kara.size(), 1);
+    out.sylWord.assign(kara.size(), 0);
+    out.sylChars.assign(kara.size(), {});
+    int ci = 1 + (kara.empty() ? 0 : length(kara[0].stripped));
+    for (int i = 1; i <= syln; ++i) {
+        out.sylCi[i] = ci;
+        ci += length(kara[i].stripped);
+    }
+
+    int lastci = 0, lastpost = 0;
+    double lf = 0;
+    for (std::size_t at = 0; at < stripped.size();) {
+        const std::size_t start = at;
+        while (at < stripped.size() && luaSpace(stripped[at]))
+            ++at;
+        const std::size_t wordAt = at;
+        while (at < stripped.size() && !luaSpace(stripped[at]))
+            ++at;
+        if (at == wordAt)
+            break;
+        const std::size_t postAt = at;
+        while (at < stripped.size() && luaSpace(stripped[at]))
+            ++at;
+        KaraUnit w;
+        w.prespace = stripped.substr(start, wordAt - start);
+        w.spaceStripped = stripped.substr(wordAt, postAt - wordAt);
+        w.postspace = stripped.substr(postAt, at - postAt);
+        w.ci = length(stripped.substr(0, start)) + 1;
+        for (const auto &[text, tagCi] : tags)
+            if (tagCi > lastci && tagCi <= w.ci)
+                w.tags += withoutKaraokeTags(text);
+        w.i = static_cast<int>(out.words.size()) + 1;
+        w.stripped = w.prespace + w.spaceStripped + w.postspace;
+        w.text = w.tags + w.stripped;
+        w.width = width(styleref, w.spaceStripped);
+        w.prespaceWidth = width(styleref, w.prespace);
+        w.postspaceWidth = width(styleref, w.postspace);
+        w.left = lf;
+        w.center = lf + w.width / 2;
+        w.right = lf + w.width;
+        w.length = length(w.stripped);
+        w.start = line.line.start;
+        w.end = line.line.end;
+        w.duration = line.line.duration;
+        const int pre = length(w.prespace), word = length(w.spaceStripped);
+        for (int i = 1; i <= syln; ++i)
+            if (out.sylCi[i] >= w.ci - pre - lastpost && out.sylCi[i] < w.ci + word) {
+                out.sylWord[i] = w.i;
+                w.kara.push_back(i);
+            }
+        if (!w.kara.empty()) {
+            w.timed = true;
+            double hltime = 0;
+            for (const int i : w.kara) {
+                for (const Highlight &h : kara[i].highlights)
+                    w.highlights.push_back({h.start + hltime, h.end + hltime, h.duration});
+                hltime += kara[i].duration;
+            }
+            w.start = kara[w.kara.front()].start;
+            w.end = kara[w.kara.back()].end;
+            w.duration = w.end - w.start;
+            w.inlineFx = kara[w.kara.front()].inlineFx;
+        }
+        lf += w.prespaceWidth + w.width + w.postspaceWidth;
+        lastci = w.ci;
+        lastpost = length(w.postspace);
+        out.words.push_back(std::move(w));
+    }
+
+    lf = 0;
+    int cci = 0;
+    for (const std::string &c : charsOf(stripped, split)) {
+        ++cci;
+        KaraUnit ch;
+        ch.i = ch.ci = cci;
+        for (const auto &[text, tagCi] : tags)
+            if (tagCi == cci)
+                ch.tags += withoutKaraokeTags(text);
+        ch.stripped = ch.spaceStripped = c;
+        ch.text = ch.tags + c;
+        ch.width = width(styleref, c);
+        ch.left = lf;
+        ch.center = lf + ch.width / 2;
+        ch.right = lf + ch.width;
+        ch.length = 1;
+        ch.word = static_cast<int>(out.words.size());
+        for (std::size_t i = 1; i <= out.words.size(); ++i)
+            if (out.words[i - 1].ci > cci) {
+                ch.word = static_cast<int>(i) - 1;
+                break;
+            }
+        ch.syl = std::max(syln, 0);
+        for (int i = 1; i <= syln; ++i)
+            if (out.sylCi[i] > cci) {
+                ch.syl = i - 1;
+                break;
+            }
+        if (!kara.empty()) {
+            const KaraSyllable &s = kara[ch.syl];
+            ch.timed = true;
+            ch.start = s.start;
+            ch.end = s.end;
+            ch.duration = s.duration;
+            ch.inlineFx = s.inlineFx;
+            if (out.sylChars[ch.syl].empty() && lf != s.left) {
+                lf = s.left;
+                ch.left = lf;
+                ch.center = lf + ch.width / 2;
+                ch.right = lf + ch.width;
+            }
+            out.sylChars[ch.syl].push_back(cci);
+        }
+        lf += ch.width;
+        out.chars.push_back(std::move(ch));
+    }
+
+    const StyleInfo *furiStyle = style(line.style->name + u8"-furigana");
+    lf = 0;
+    for (std::size_t fi = 0; fi < line.karaFuri.size(); ++fi) {
+        const KaraFuri &f = line.karaFuri[fi];
+        std::string sylTags;
+        if (f.i >= 0 && static_cast<std::size_t>(f.i) < kara.size())
+            for (const auto &[block, at] : tagsOf(kara[f.i].text, split))
+                sylTags += withoutKaraokeTags(block);
+        int fci = 0;
+        for (const std::string &c : charsOf(f.text, split)) {
+            ++fci;
+            KaraUnit fc;
+            fc.stripped = fc.spaceStripped = c;
+            fc.tags = sylTags;
+            fc.text = sylTags + c;
+            fc.width = furiStyle ? width(*furiStyle, c) : 0;
+            fc.left = lf;
+            fc.center = lf + fc.width / 2;
+            fc.right = lf + fc.width;
+            fc.length = 1;
+            fc.syl = static_cast<int>(fi);
+            fc.timed = true;
+            fc.start = f.start;
+            fc.end = f.end;
+            fc.duration = f.duration;
+            fc.inlineFx = f.inlineFx;
+            if (fci == 1) {
+                lf = f.left;
+                fc.left = lf;
+                fc.center = lf + fc.width / 2;
+                fc.right = lf + fc.width;
+            }
+            lf += fc.width;
+            out.fchars.push_back(std::move(fc));
+        }
+    }
+    return out;
+}
+
 }

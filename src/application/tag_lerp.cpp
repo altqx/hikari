@@ -303,6 +303,70 @@ std::optional<Value> styleDefault(const TagSpec &spec, const core::StyleValues &
     return std::nullopt;
 }
 
+std::optional<Drawing> parseDrawing(std::string_view args)
+{
+    args = trimmed(args);
+    if (args.size() < 2 || args.front() != '(' || args.back() != ')')
+        return std::nullopt;
+    args = trimmed(args.substr(1, args.size() - 2));
+    Drawing out;
+    if (const auto comma = args.find(','); comma != std::string_view::npos) {
+        const auto scale = number(args.substr(0, comma));
+        if (!scale || *scale < 1 || *scale != std::floor(*scale))
+            return std::nullopt;
+        out.scale = static_cast<int>(*scale);
+        args.remove_prefix(comma + 1);
+    }
+    std::size_t i = 0;
+    while (i < args.size()) {
+        const char c = args[i];
+        if (c == ' ' || c == '\t') {
+            ++i;
+        } else if (std::string_view("mnlbspc").find(c) != std::string_view::npos) {
+            out.shape += c;
+            ++i;
+        } else {
+            const char *begin = args.data() + i;
+            if (*begin == '+')
+                ++begin;
+            double v = 0;
+            const auto [end, ec] = std::from_chars(begin, args.data() + args.size(), v);
+            if (ec != std::errc() || end == begin || out.shape.empty())
+                return std::nullopt;
+            out.shape += '#';
+            out.numbers.push_back(v);
+            i = static_cast<std::size_t>(end - args.data());
+        }
+    }
+    if (out.numbers.empty())
+        return std::nullopt;
+    return out;
+}
+
+std::optional<Drawing> lerp(const Drawing &from, const Drawing &to, double t)
+{
+    if (from.shape != to.shape || from.scale != to.scale)
+        return std::nullopt;
+    Drawing out = from;
+    for (std::size_t i = 0; i < out.numbers.size(); ++i)
+        out.numbers[i] = from.numbers[i] + (to.numbers[i] - from.numbers[i]) * t;
+    return out;
+}
+
+std::string format(std::string_view name, const Drawing &drawing)
+{
+    std::string out = "\\" + std::string(name) + "(";
+    if (drawing.scale > 0)
+        out += std::to_string(drawing.scale) + ",";
+    std::size_t n = 0;
+    for (std::size_t i = 0; i < drawing.shape.size(); ++i) {
+        if (i > 0)
+            out += ' ';
+        out += drawing.shape[i] == '#' ? trimmedNumber(drawing.numbers[n++], 0) : std::string(1, drawing.shape[i]);
+    }
+    return out + ")";
+}
+
 double accelerate(double t, double accel)
 {
     t = std::clamp(t, 0.0, 1.0);

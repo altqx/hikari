@@ -37,6 +37,21 @@ The Timing dock's Shift / Post processor switch becomes two panels, **Shift time
 - **Apply** names its effect: "Shift 214 lines", "Apply to 31 lines". It is disabled when nothing would change or the run is refused. The note beside it names the undo step: "One undo step: “Shift times”" or "“Timing postprocessor”".
 - **Keys:** Ctrl+Enter applies from any field. Esc goes back to the Grid.
 
+## Timing assistant
+
+The postprocessor's right side has two tabs: **Preview** (above) and **Assistant**. Subtitles › Timing helpers › Timing assistant opens the panel on the Assistant tab.
+
+- **One line at a time,** from the active line through every uncommented line in document order (with Lines set to styles, only those styles). The Grid follows.
+- **The suggestion** comes from the rules that are on. Start: kept when already on a keyframe; else the keyframe within the start's before/after window; else, when the previous uncommented line ends within "Start back to the previous end" and not on a keyframe, the lead-in start with the previous line ending there; else the lead-in. End: kept on a keyframe; else the keyframe within the end's window; else the lead-out. Times land on frame starts.
+- **Rows** show Start, End and, when linked, the previous line's end: now → suggested → why ("Snapped to the keyframe 3 frames earlier."). A strip shows the keyframes, the line now (outline) and the suggestion (filled).
+- **Keys:** Enter accepts (one undo step, the linked previous line included) and goes to the next line; Alt+C makes the suggested times editable, and Enter then accepts what was typed; Alt+S skips. Esc goes back to the Grid. "Accept the timing assistant’s suggestion" does the same as Enter from anywhere, with the panel closed too.
+- **Narrow:** the reasons wrap under their rows and the rules fold into one summary line.
+- After the last line: "No more lines. Accepted N, skipped M."
+
+## Timing helpers
+
+Subtitles › Timing helpers holds hotkeyable commands for the selected lines, each one undo step, all on frame starts: start or end to the previous or next keyframe; add or remove lead-in or lead-out (Settings › Audio's amounts, never overlapping the neighbour, keeping at least one frame); start or end one frame earlier or later; and Extend previous line to this start / Extend next line to this end. When nothing would change, no step is recorded and a notice says "No line changed". Departures from the scripts they replace are [AU19-timing-helpers](../compatibility-decisions.md#au19-timing-helpers).
+
 ## A choice that can't run
 
 Each says why and offers one command:

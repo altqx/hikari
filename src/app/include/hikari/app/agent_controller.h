@@ -1,5 +1,6 @@
 #pragma once
 
+#include "hikari/application/ai_providers.h"
 #include "hikari/application/workspace.h"
 
 #include <QAbstractListModel>
@@ -115,6 +116,8 @@ public:
     bool costMeter() const;
     bool fullAccessWarned() const;
     double spentToday() const;
+    /// Counts toward the day's cap with the threads' spending; inline actions use it.
+    void spend(double dollars);
     double dailyCap() const;
     double threadCap() const;
     bool webSearchShown() const;
@@ -168,6 +171,9 @@ signals:
 
 private:
     void apply();
+    /// The first installed agent, which a thread falls back to when no provider has a Chat model.
+    std::optional<application::ai::ModelRef> foundAgent() const;
+    void fallBackToAnAgent(const std::string &thread);
     void select(std::string id);
     void refreshThread();
     std::vector<std::string> safeFolders() const;
