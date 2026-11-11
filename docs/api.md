@@ -33,6 +33,7 @@ Schemas use a subset of JSON Schema 2020-12: `type`, `properties`, `required`, `
 | `audio.info` | read | Whether audio is open and loaded; duration, sample rate, channels. |
 | `audio.peaks` | read | The lowest and highest sample in each of `buckets` slices of a time range. |
 | `files.list`, `files.read` | read | The files granted to the caller, and their content as UTF-8 or base64 (16 MiB at most). |
+| `skills.list`, `skills.read` | read | The user's [skills](ai-skills.md#the-hikari-api) and one file of a skill as UTF-8 (256 KiB at most); only with the skills grant. |
 | `nodes.catalogue` | read | The node-effect editor's node types, with ports and parameters. |
 | `nodes.validate` | read | Checks a node-effect graph; each problem names its node and port or field. |
 | `document.apply` | write | One change set to one Document, as one undo step. |
@@ -55,6 +56,8 @@ One write runs at a time; another write meanwhile gets `busy`.
 ## Files
 
 A caller reaches only files the user granted it: `Api::grantFile(caller, path, writable)` gives a handle such as `f1`, and `files.list` shows the handles with a display name, never the path. A file granted for reading refuses `files.write` with `not_granted`. Plugins get handles from pickers, drops and their folders ([Files](plugins.md#files)); the AI cards decide their own grants.
+
+The user's skills are apart from files: `skills.*` need the caller's `skills` grant, which only Hikari AI's callers hold ([AI skills](ai-skills.md#the-hikari-api)).
 
 ## Drawing apart from the video
 
@@ -91,8 +94,8 @@ An error is `{code, message, data}`. The message is English text for developers 
 | `unknown_operation` | No operation has that name. |
 | `invalid_params` | The parameters break the schema; `data.pointer` is the JSON pointer of the first problem. |
 | `not_found` | No such Document, Line or setting; `data` names it. |
-| `not_granted` | The caller lacks the grant. |
-| `unavailable` | The host has no such service: no Documents, commands, panels, settings, video, audio or files, or a frame that cannot be decoded. |
+| `not_granted` | The caller lacks the grant: a Document, a file or the skills. |
+| `unavailable` | The host has no such service: no Documents, commands, panels, settings, video, audio, files or skills, or a frame that cannot be decoded. |
 | `stale_revision` | The Document changed since the given revision; `data.current` is the revision now. |
 | `read_only` | The Document can't be edited (an open Automation macro holds it). |
 | `protected` | The Document is the protected reference. |

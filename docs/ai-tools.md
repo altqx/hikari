@@ -30,6 +30,8 @@ A tool's name is its operation's, with `.` as `_` (`lines.find` is `lines_find`)
 - `files_list`, `files_read`, `files_write`;
 - `search_tools`, `search_commands`, `run_command`.
 
+Hikari AI's threads also get `update_plan` ([AI agent](ai-agent.md)) and `read_skill` ([AI skills](ai-skills.md)), which the sidecar answers itself.
+
 **The searchable groups** are offered once `search_tools` finds them. A group is listed only once it holds a tool:
 
 | Group | Tools now |
@@ -47,9 +49,9 @@ A tool's name is its operation's, with `.` as `_` (`lines.find` is `lines_find`)
 
 **Tool sources.** A `ToolSource` adds tools from outside HA1 as one more group: its `group`, `description`, `tools()` and `call`. `search_tools` lists a source's group, and searches its tools, only while it has tools. The web search is the first source; MCP-server and agent tools plug in the same way ([AI23b #800](https://github.com/altqx/hikari/issues/800)).
 
-**The up-front budget.** The tools offered before any search, with a search service chosen and a provider's own search tools added, must stay within 5,000 tokens (`o200k_base`) on every wire, raised from 3,000 (owner Q123, 2026-11-09). A bun test measures the `tools` each wire sends. It is at 3,011 on Responses.
+**The up-front budget.** The tools offered before any search, with `update_plan`, `read_skill`, a search service chosen and a provider's own search tools added, must stay within 5,000 tokens (`o200k_base`) on every wire, raised from 3,000 (owner Q123, 2026-11-09). A bun test measures the `tools` each wire sends. It is at 3,216 on Responses, the largest.
 
-**Placing operations.** `kPlacements` in `catalogue.ts` places every HA1 operation; only `commands.list` (behind `search_commands`) and `api.version` are left out on purpose. A bun test fails when HA1 gains an operation that isn't placed, so each new operation is a decision. Deprecated operations aren't offered.
+**Placing operations.** `kPlacements` in `catalogue.ts` places every HA1 operation; only `commands.list` (behind `search_commands`), `skills.list` and `skills.read` (behind `read_skill`) and `api.version` are left out on purpose. A bun test fails when HA1 gains an operation that isn't placed, so each new operation is a decision. Deprecated operations aren't offered.
 
 ## Frames
 

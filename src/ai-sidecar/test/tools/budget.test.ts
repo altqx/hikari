@@ -2,7 +2,9 @@ import { expect, test } from "bun:test";
 import { Tiktoken } from "js-tiktoken/lite";
 import o200k from "js-tiktoken/ranks/o200k_base";
 
+import { kPlanTool } from "../../src/agent/session";
 import type { Request, ToolDefinition, Wire } from "../../src/providers/types";
+import { kReadSkillTool, Skills } from "../../src/skills/skills";
 import { kCatalogue } from "../../src/tools/catalogue";
 import { ToolSet, type HikariCalls } from "../../src/tools/toolset";
 import { WebSearch } from "../../src/tools/web";
@@ -22,7 +24,7 @@ const kEnd: Record<Wire, string> = {
 
 function upFront(): ToolDefinition[] {
     const tools = new ToolSet(kNoHa1, kCatalogue, [new WebSearch(new TestRelay(), () => "exa")]);
-    return tools.list().map((t) => ({ name: t.name, description: t.description ?? "", parametersJson: JSON.stringify(t.inputSchema) }));
+    return [...tools.list(), kPlanTool, kReadSkillTool].map((t) => ({ name: t.name, description: t.description ?? "", parametersJson: JSON.stringify(t.inputSchema) }));
 }
 
 test.each(Object.keys(kEnd) as Wire[])("the up-front tool block on %s stays within 5,000 tokens", async (wire) => {
@@ -36,4 +38,10 @@ test.each(Object.keys(kEnd) as Wire[])("the up-front tool block on %s stays with
     const block = JSON.stringify((h.mock.received[0]!.json() as { tools: unknown[] }).tools);
     expect(block.length).toBeGreaterThan(0);
     expect(tokens.encode(block).length).toBeLessThanOrEqual(kBudget);
+});
+
+test("the bundled skills' catalogue stays within 600 tokens", async () => {
+    const catalogue = await new Skills().instructions();
+    expect(catalogue).toContain("## Skills");
+    expect(new Tiktoken(o200k).encode(catalogue).length).toBeLessThanOrEqual(600);
 });

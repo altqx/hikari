@@ -25,6 +25,8 @@ void addDefinitions(Registry &registry)
 {
     registry.define("DocumentId", schema(R"({"type": "integer", "minimum": 1,
         "description": "An open Document, as documents.list gives it."})"));
+    registry.define("SkillName", schema(R"({"type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$", "maxLength": 64,
+        "description": "A skill's name, which is its folder's."})"));
     registry.define("LineId", schema(R"({"type": "integer", "minimum": 1,
         "description": "A Line's stable id: it survives edits, moves and undo, unlike its row."})"));
     registry.define("Revision", schema(R"({"type": "integer", "minimum": 0,

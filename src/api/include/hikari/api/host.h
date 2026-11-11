@@ -74,6 +74,20 @@ public:
     virtual bool write(const std::string &path, std::string_view bytes) = 0;
 };
 
+struct SkillFolder {
+    std::string name;
+    std::vector<std::string> files; // relative to the folder, '/'-separated, SKILL.md among them
+};
+
+// The user's skill folders (docs/ai-skills.md).
+class SkillHost {
+public:
+    virtual ~SkillHost() = default;
+    virtual std::vector<SkillFolder> skills() const = 0;
+    // At most `atMost` bytes of a file listed under `skill`; nullopt: it cannot be read.
+    virtual std::optional<std::string> read(std::string_view skill, std::string_view file, std::size_t atMost) const = 0;
+};
+
 // Draws subtitles as the video does, in a render context apart from the video's.
 class RenderHost {
 public:
@@ -94,6 +108,7 @@ struct Host {
     FileHost *files = nullptr;
     application::AiReview *review = nullptr;
     RenderHost *render = nullptr;
+    SkillHost *skills = nullptr;
 };
 
 }
