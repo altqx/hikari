@@ -53,3 +53,6 @@
 
 # AI14: the skill fixtures are compared byte for byte.
 /tests/api/skills/** -text
+
+# AU23: the lyrics fixtures keep their encodings and line ends byte for byte.
+/tests/fixtures/lyrics/** -text

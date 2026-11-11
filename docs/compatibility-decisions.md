@@ -132,6 +132,17 @@ Video › Tracking does natively what Aegisub-Motion 1.0.9, 0x.DeriveTrack, arch
 - **D12, frame rate.** The two copy commands write the video's frame rate. The scripts write 23.976.
 - **D13, alphas.** With Bake transforms on, the Style's `\1a` `\3a` `\4a` (or `\alpha&H00&`) are added only when the Line has a fade to bake. Aegisub-Motion adds them to every Line.
 
+## AU4-remove-tags
+
+**Remove tags…** (Grid and Line editor menus) does natively what Clean Tags, Strip tags and phos.RemoveTags do, plus the Line cleanup actions of ua.ScriptCleanup and Masquerade's tag merge. "Clean Tags rules" gives byte for byte what the bundled `cleantags.lua` 1.301 gives (`hikari_core_cleantags_parity_tests` runs both on every fixture Line and 20,000 generated ones). The bundled Clean Tags and Strip tags scripts and the Clean Tags export filter still ship unchanged. The action list is in `docs/research/au4-cleanup-actions.md`. [AU4 #839](https://github.com/altqx/hikari/issues/839).
+
+- **D1, Merge adjacent tag blocks.** Masquerade's `tagmerge` within a Line, byte for byte. Masquerade's Merge Tags button, which merges several Lines with the same text, stays in the script.
+- **D2, Drop overridden tags.** In a block, a tag that a later one of the same name replaces goes (a relative `\fs+` keeps the size before it, and `\r` ends the run). Across the Line, a repeat of `\pos`/`\move`, `\org`, `\an`/`\a` or `\fad`/`\fade` goes, because renderers use the first. Script Cleanup's `duplikill` keeps the last `\an` instead, which changes where the Line renders; it also drops tags inside `\t` that a later tag outside replaces, and that is left alone here.
+- **D3, Remove comments.** Drops blocks with no tag, `{\N}` included, as Script Cleanup's "Remove comments from lines" does. It doesn't trim the spaces round them.
+- **D4, Strip tags.** Every family with Remove comments on removes what Strip tags removes, but an empty `{}` goes too.
+- **D5, Whole file.** Changes every Line but Comments, as Clean Tags does. Selected lines changes Comments too, as Strip tags and phos.RemoveTags do.
+- **D6, phos.RemoveTags.** Families replace its per-tag list, which lists only the tags the selection holds. Its "inline except last", "invert" and "from transforms only" choices stay in the script.
+
 ## TH2-unicode-graphemes
 
 `aegisub.unicode` has `graphemes(s)`, an iterator over UAX #29 extended grapheme clusters that returns each cluster and its index, as `chars` returns code points. It matches the app's own cluster splitting (PCRE2 `\X`), so `กิน` gives `กิ` and `น`, and `น้ำ` stays one cluster. Aegisub 3.5.1 has no such function. When the native part is missing, for example with HikariSub's `unicode.moon` in another host, it falls back to joining combining marks, the Thai vowel and tone marks and emoji ZWJ sequences onto the previous character. `aegisub.re`'s `\X` is unchanged. [TH2 #830](https://github.com/altqx/hikari/issues/830), owner decision Q142.
@@ -151,6 +162,30 @@ Grid › "Split lines into characters" and the node-effect `char` units split te
 ## TH1-template-char-graphemes
 
 The karaoke templater's `template char` splits a syllable by grapheme cluster (UAX #29, `unicode.graphemes`). A base character keeps its marks: `กิน` gives `กิ` and `น`, `น้ำ` stays one char, ำ is not decomposed, and a combining accent, an emoji ZWJ sequence or a flag is one char. Karaoke Templater 2.1.7 splits by code point, which puts each Thai mark on a Line of its own. A `code once` Line with `graphemes = false` splits as 2.1.7 does. Text without combining marks, joiners or surrogate pairs gives 2.1.7's output byte for byte, as the corpus shows. [TH1 #829](https://github.com/altqx/hikari/issues/829), owner decisions Q138–Q141.
+
+## TH5b-builtin-templater
+
+The Karaoke Templater is built in. The Lua helper runs it natively. Lua runs only the templates' `code` Lines and `!expressions!`. The Script Manager lists it as built-in: it can be reloaded, but not edited or unloaded. Its macros keep their names, and shortcuts still know them as `kara-templater.lua:0` and `:1`. `kara-templater.lua` is no longer bundled in Autoload; it stays in the tests as the oracle. A loaded script whose macro names are the built-in's is unloaded, and the Runs log says so once. The "Karaoke template" export filter isn't available, because HikariSub has no export filters. To generate the lines, run the "Apply karaoke template" macro. [TH5b #833](https://github.com/altqx/hikari/issues/833), owner decisions Q178 and Q179.
+
+## TH5b-line-template-order
+
+Named line templates run after the unnamed ones, in the order their names first appear. Unnamed line templates run in file order, as before. 3.2.2 took named templates from a Lua table with `pairs`, and LuaJIT seeds its string hash at random, so their order could change from one run to the next. [TH5b #833](https://github.com/altqx/hikari/issues/833).
+
+## TH5b-no-leaked-globals
+
+Evaluating an `!expression!` no longer sets the globals `f` and `err`. 3.2.2 compiled each expression into those two globals, so a template or `code` Line could read the last compiled expression's function or error. [TH5b #833](https://github.com/altqx/hikari/issues/833).
+
+## TH5b-no-trace-lines
+
+The templater no longer writes its level 5 trace lines ("Applying template to one syllable with text: …" and similar), even at trace level 5. Problems are still logged at levels 2 and 3 as before. [TH5b #833](https://github.com/altqx/hikari/issues/833).
+
+## TH5b-unmeasured-text
+
+When the host cannot measure a karaoke Line's text, the templater logs "could not measure text in the Style …" as a problem, counts that text as 0 wide and goes on. 3.2.2 stopped the run with a Lua error. [TH5b #833](https://github.com/altqx/hikari/issues/833).
+
+## TH5b-native-layout
+
+The templater lays karaoke Lines out from the Document's Styles as they were when the run started. A `code` Line that changes a Style table (`line.styleref`, the `styles` table) or replaces `aegisub.text_extents` no longer changes where later Lines' syllables go. `char` templates still measure each character with `aegisub.text_extents`, as 3.2.2 did. [TH5b #833](https://github.com/altqx/hikari/issues/833).
 
 ## 892-script-info-on-save
 

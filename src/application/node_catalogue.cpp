@@ -90,6 +90,44 @@ std::vector<NodeSpec> makeCatalogue()
                  {field("start", FieldKind::Time, Json(), "The first step's start; null: the unit's start."),
                   field("end", FieldKind::Time, Json(), "The last step's end; null: the unit's end."),
                   atLeast(field("step", FieldKind::Time, Json(40), "One step, in ms."), 1)}});
+    c.push_back({"units.clip_gradient", "units",
+                 "Each unit once per strip of its box, side by side across or stacked down: the strip's \\clip "
+                 "rectangle (whole pixels, the edges shared) and its colour along the gradient.",
+                 {port("units", Units), port("strips", Number), port("padding", Number)},
+                 domainPorts({port("index", Number), port("count", Number), port("progress", Number),
+                              port("clip", Tags), port("colour", Colour), port("from", Point), port("to", Point)}),
+                 {atLeast(field("strips", FieldKind::Integer, Json(8), "How many strips."), 1),
+                  choice("direction", {"across", "down"}, "Strips side by side from left to right, or stacked from "
+                                                          "top to bottom."),
+                  field("colours", FieldKind::List, Json::array({Json("#FFFFFF"), Json("#000000")}),
+                        "The gradient's stops, as #RRGGBB, at least one."),
+                  field("padding", FieldKind::Number, Json(0), "Added to the box on every side, in pixels.")}});
+    c.push_back({"units.array", "units",
+                 "Each unit once per copy: on a grid centred on it, on a circle around it, or spread evenly along "
+                 "a path drawn from its position. angle is in degrees, as \\frz takes it.",
+                 {port("units", Units), port("path", Drawing), port("count", Number), port("radius", Number)},
+                 domainPorts({port("index", Number), port("count", Number), port("offset", Point),
+                              port("position", Point), port("angle", Number)}),
+                 {choice("shape", {"grid", "circle", "path"}, "Where the copies go."),
+                  atLeast(field("columns", FieldKind::Integer, Json(3), "Grid: copies in a row."), 1),
+                  atLeast(field("rows", FieldKind::Integer, Json(1), "Grid: rows."), 1),
+                  field("spacing", FieldKind::Point, Json::array({Json(40), Json(40)}),
+                        "Grid: from one copy to the next, as [across, down]."),
+                  atLeast(field("count", FieldKind::Integer, Json(8), "Circle and path: how many copies."), 1),
+                  field("radius", FieldKind::Number, Json(50), "Circle: its radius."),
+                  field("start_angle", FieldKind::Number, Json(90), "Circle: the first copy's angle, in degrees "
+                                                                    "counter-clockwise from the right.")}});
+    c.push_back({"units.particles", "units",
+                 "Each unit once per particle, spread at random over a rectangle or an ellipse centred on it. The "
+                 "same graph seed, node seed and Line give the same particles on every run and platform.",
+                 {port("units", Units), port("count", Number), port("width", Number), port("height", Number)},
+                 domainPorts({port("index", Number), port("count", Number), port("offset", Point),
+                              port("position", Point), port("random", Number)}),
+                 {atLeast(field("count", FieldKind::Integer, Json(20), "How many particles."), 0),
+                  choice("area", {"rectangle", "ellipse"}, "The area they spread over."),
+                  atLeast(field("width", FieldKind::Number, Json(100), "The area's width."), 0),
+                  atLeast(field("height", FieldKind::Number, Json(100), "The area's height."), 0),
+                  field("seed", FieldKind::Integer, Json(0), "Added to the graph's seed.")}});
     c.push_back({"units.info", "units",
                  "What the karaoke templater's $variables give for the current unit and its Line, rounded as the "
                  "templater rounds them. Times of a syllable are from its Line's start.",

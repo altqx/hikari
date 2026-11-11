@@ -4672,8 +4672,7 @@
    "surfaces": [
     "grid-menu",
     "line-editor"
-   ],
-   "pending": "AU4 #839"
+   ]
   },
   {
    "role": "shape-unite",
@@ -5561,8 +5560,7 @@
    "legacy": [],
    "surfaces": [
     "menu:file"
-   ],
-   "pending": "AU23 #857"
+   ]
   },
   {
    "role": "builtin-script",

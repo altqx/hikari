@@ -1782,12 +1782,28 @@ Output device: %2</source>
         <translation>ไม่สามารถเรียกใช้ตัวแก้ไขได้</translation>
     </message>
     <message>
+        <source>Not loaded: its macros %1 are the built-in Karaoke Templater’s, which runs them instead.</source>
+        <translation>ไม่ได้โหลด: แมโคร %1 ของสคริปต์นี้เป็นของ Karaoke Templater ในตัว ซึ่งจะทำงานแทน</translation>
+    </message>
+    <message>
+        <source>Built-in</source>
+        <translation>ในตัว</translation>
+    </message>
+    <message>
         <source>The macro was cancelled; nothing was changed.</source>
         <translation>แมโครถูกยกเลิก จึงไม่มีการเปลี่ยนแปลงใด ๆ</translation>
     </message>
     <message>
         <source>The macro was cancelled; only the script resolution was set.</source>
         <translation>แมโครถูกยกเลิก มีเพียงความละเอียดสคริปต์ที่ถูกกำหนดค่า</translation>
+    </message>
+    <message>
+        <source>“%1” can’t run on this document: it needs %2 MB, and a macro can use at most %3 MB.</source>
+        <translation>เรียกใช้ “%1” กับเอกสารนี้ไม่ได้ ต้องใช้ %2 MB แต่แมโครใช้ได้สูงสุด %3 MB</translation>
+    </message>
+    <message>
+        <source>Run the macro on a smaller file, for example a copy with only the lines it needs.</source>
+        <translation>เรียกใช้แมโครกับไฟล์ที่เล็กลง เช่น สำเนาที่มีเฉพาะบรรทัดที่ต้องใช้</translation>
     </message>
     <message>
         <source>Validation Lua script “%1” failed</source>
@@ -2651,6 +2667,18 @@ Output device: %2</source>
         <translation>บันทึกทับ</translation>
     </message>
     <message>
+        <source>Import lyrics</source>
+        <translation>นำเข้าเนื้อเพลง</translation>
+    </message>
+    <message>
+        <source>Lyrics (*.lrc *.krc *.qrc *.ttml)</source>
+        <translation>เนื้อเพลง (*.lrc *.krc *.qrc *.ttml)</translation>
+    </message>
+    <message>
+        <source>Could not read %1.</source>
+        <translation>อ่าน %1 ไม่ได้</translation>
+    </message>
+    <message>
         <source>Open subtitles</source>
         <translation>เปิดคำบรรยาย</translation>
     </message>
@@ -2659,8 +2687,12 @@ Output device: %2</source>
         <translation>คำบรรยาย (*.ass *.ssa *.srt *.sub *.txt *.mpl)</translation>
     </message>
     <message>
+        <source>Word-timed lyrics (*.lrc *.krc *.qrc *.ttml)</source>
+        <translation>เนื้อเพลงที่จัดเวลารายคำ (*.lrc *.krc *.qrc *.ttml)</translation>
+    </message>
+    <message>
         <source>Word-timed lyrics (*.lrc *.ttml)</source>
-        <translation>เนื้อเพลงที่จัดเวลารายคำ (*.lrc *.ttml)</translation>
+        <translation type="vanished">เนื้อเพลงที่จัดเวลารายคำ (*.lrc *.ttml)</translation>
     </message>
     <message>
         <source>YouTube timed text (*.ytt *.srv3)</source>
@@ -2745,6 +2777,10 @@ Output device: %2</source>
     <message>
         <source>it has no timed lyrics</source>
         <translation>ไม่มีเนื้อเพลงที่จัดเวลาไว้</translation>
+    </message>
+    <message>
+        <source>it is encrypted. Decode it to text with your own tool first</source>
+        <translation>ไฟล์ถูกเข้ารหัส ถอดรหัสเป็นข้อความด้วยเครื่องมือของคุณเองก่อน</translation>
     </message>
     <message>
         <source>Could not import %1: line %2: %3. Nothing was imported.</source>
@@ -2964,6 +3000,130 @@ Output device: %2</source>
     <message>
         <source>Saves %1 · Discards %2</source>
         <translation>บันทึก %1 · ละทิ้ง %2</translation>
+    </message>
+    <message>
+        <source>The file is not text in this encoding.</source>
+        <translation>ไฟล์นี้ไม่ใช่ข้อความในการเข้ารหัสอักขระนี้</translation>
+    </message>
+    <message>
+        <source>LRC</source>
+        <translation>LRC</translation>
+    </message>
+    <message>
+        <source>TTML</source>
+        <translation>TTML</translation>
+    </message>
+    <message>
+        <source>Kugou KRC, decoded</source>
+        <translation>Kugou KRC ที่ถอดรหัสแล้ว</translation>
+    </message>
+    <message>
+        <source>QQ Music QRC, decoded</source>
+        <translation>QQ Music QRC ที่ถอดรหัสแล้ว</translation>
+    </message>
+    <message>
+        <source>word-timed</source>
+        <translation>จัดเวลารายคำ</translation>
+    </message>
+    <message>
+        <source>line-timed</source>
+        <translation>จัดเวลารายบรรทัด</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n lines</source>
+        <translation>
+            <numerusform>%n บรรทัด</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>offset %1 s applied</source>
+        <translation>ใช้ค่าชดเชย %1 วินาทีแล้ว</translation>
+    </message>
+    <message>
+        <source>File</source>
+        <translation>ไฟล์</translation>
+    </message>
+    <message>
+        <source>Format</source>
+        <translation>รูปแบบ</translation>
+    </message>
+    <message>
+        <source>Song</source>
+        <translation>เพลง</translation>
+    </message>
+    <message>
+        <source>Encoding</source>
+        <translation>การเข้ารหัสอักขระ</translation>
+    </message>
+    <message>
+        <source>%1 · detected</source>
+        <translation>%1 · ตรวจพบ</translation>
+    </message>
+    <message>
+        <source>This Kugou lyrics file is encrypted, so HikariSub can’t read it.</source>
+        <translation>ไฟล์เนื้อเพลง Kugou นี้ถูกเข้ารหัส HikariSub จึงอ่านไม่ได้</translation>
+    </message>
+    <message>
+        <source>This QQ Music lyrics file is encrypted, so HikariSub can’t read it.</source>
+        <translation>ไฟล์เนื้อเพลง QQ Music นี้ถูกเข้ารหัส HikariSub จึงอ่านไม่ได้</translation>
+    </message>
+    <message>
+        <source>Decode it to text with your own tool first, then import the decoded file. HikariSub doesn’t decrypt lyric files.</source>
+        <translation>ถอดรหัสเป็นข้อความด้วยเครื่องมือของคุณเองก่อน แล้วจึงนำเข้าไฟล์ที่ถอดรหัสแล้ว HikariSub ไม่ถอดรหัสไฟล์เนื้อเพลง</translation>
+    </message>
+    <message>
+        <source>Preview</source>
+        <translation>ตัวอย่าง</translation>
+    </message>
+    <message numerus="yes">
+        <source>and %n more lines</source>
+        <translation>
+            <numerusform>และอีก %n บรรทัด</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Add the lines to</source>
+        <translation>เพิ่มบรรทัดลงใน</translation>
+    </message>
+    <message>
+        <source>After the last line of the open file</source>
+        <translation>ต่อจากบรรทัดสุดท้ายของไฟล์ที่เปิดอยู่</translation>
+    </message>
+    <message>
+        <source>A new file</source>
+        <translation>ไฟล์ใหม่</translation>
+    </message>
+    <message>
+        <source>Style</source>
+        <translation>สไตล์</translation>
+    </message>
+    <message>
+        <source>End times</source>
+        <translation>เวลาสิ้นสุด</translation>
+    </message>
+    <message>
+        <source>Each line ends when the next one starts</source>
+        <translation>แต่ละบรรทัดสิ้นสุดเมื่อบรรทัดถัดไปเริ่ม</translation>
+    </message>
+    <message>
+        <source>Leave a gap before the next line</source>
+        <translation>เว้นช่วงก่อนบรรทัดถัดไป</translation>
+    </message>
+    <message>
+        <source>Gap (s)</source>
+        <translation>ช่วงเว้น (วินาที)</translation>
+    </message>
+    <message>
+        <source>Last line lasts (s)</source>
+        <translation>ความยาวบรรทัดสุดท้าย (วินาที)</translation>
+    </message>
+    <message>
+        <source>Choose another file…</source>
+        <translation>เลือกไฟล์อื่น…</translation>
+    </message>
+    <message>
+        <source>Import</source>
+        <translation>นำเข้า</translation>
     </message>
 </context>
 <context>
@@ -7202,6 +7362,10 @@ Failed to copy %2 fonts.</source>
         <translation>ประมาณค่า \move นอกช่วงให้เต็มบรรทัด</translation>
     </message>
     <message>
+        <source>Remove tags…</source>
+        <translation>ลบแท็ก…</translation>
+    </message>
+    <message>
         <source>Move tab to new window</source>
         <translation>ย้ายแท็บไปหน้าต่างใหม่</translation>
     </message>
@@ -7212,6 +7376,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Close window</source>
         <translation>ปิดหน้าต่าง</translation>
+    </message>
+    <message>
+        <source>Import lyrics…</source>
+        <translation>นำเข้าเนื้อเพลง…</translation>
     </message>
     <message>
         <source>Keep AI change</source>
@@ -8252,6 +8420,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Import subtitles from MKV…</source>
         <translation>นำเข้าคำบรรยายจาก MKV…</translation>
+    </message>
+    <message>
+        <source>Turns a lyrics file into lines, in the open file or a new one</source>
+        <translation>แปลงไฟล์เนื้อเพลงเป็นบรรทัด ในไฟล์ที่เปิดอยู่หรือไฟล์ใหม่</translation>
+    </message>
+    <message>
+        <source>Import lyrics…</source>
+        <translation>นำเข้าเนื้อเพลง…</translation>
     </message>
     <message>
         <source>Save current file</source>
@@ -9874,6 +10050,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Export as template lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Adds template lines after the graph line that make the same lines in Aegisub’s karaoke templater.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Delete graph</source>
         <translation type="unfinished"></translation>
     </message>
@@ -9891,6 +10075,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Select karaoke lines in “Source lines” first.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>These nodes have no form in a karaoke template, so the graph can’t be exported:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -9949,6 +10137,30 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>That wire would make a loop.</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Gradient strips</source>
+        <translation>แถบไล่สี</translation>
+    </message>
+    <message>
+        <source>Each line cut into eight strips, coloured from pink to blue.</source>
+        <translation>ตัดแต่ละบรรทัดเป็นแปดแถบ ไล่สีจากชมพูไปฟ้า</translation>
+    </message>
+    <message>
+        <source>Ring of copies</source>
+        <translation>วงสำเนา</translation>
+    </message>
+    <message>
+        <source>Eight copies of each syllable on a circle around it, each turned to its place, while it is sung.</source>
+        <translation>สำเนาแปดชิ้นของแต่ละพยางค์บนวงกลมรอบตัวมัน แต่ละชิ้นหมุนตามตำแหน่งของตน ขณะที่พยางค์นั้นถูกร้อง</translation>
+    </message>
+    <message>
+        <source>Particle burst</source>
+        <translation>อนุภาคระเบิด</translation>
+    </message>
+    <message>
+        <source>Twelve copies of each syllable fly out to random places around it and fade.</source>
+        <translation>สำเนาสิบสองชิ้นของแต่ละพยางค์พุ่งออกไปยังตำแหน่งสุ่มรอบตัวมันแล้วจางหายไป</translation>
     </message>
     <message>
         <source>A graph name can’t be empty, start or end with a space, end with a dot, or hold “karaoke”, a comma, a double quote, a control character or any of / \ : * ? &lt; &gt; |.</source>
@@ -10142,6 +10354,30 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Clip gradient</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each unit once per strip of its box, side by side across or stacked down: the strip’s \clip rectangle (whole pixels, the edges shared) and its colour along the gradient.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Array</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each unit once per copy: on a grid centred on it, on a circle around it, or spread evenly along a path drawn from its position. angle is in degrees, as \frz takes it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Particles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each unit once per particle, spread at random over a rectangle or an ellipse centred on it. The same graph seed, node seed and line give the same particles on every run and platform.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>step times the place: index - 1 from the start, count - index from the end, or the distance from the middle.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -10239,6 +10475,66 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>One step, in ms.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How many strips.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Strips side by side from left to right, or stacked from top to bottom.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The gradient’s stops, as #RRGGBB, at least one.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Added to the box on every side, in pixels.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Where the copies go.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Grid: copies in a row.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Grid: rows.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Grid: from one copy to the next, as [across, down].</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Circle and path: how many copies.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Circle: its radius.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Circle: the first copy’s angle, in degrees counter-clockwise from the right.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How many particles.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The area they spread over.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The area’s width.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The area’s height.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -14455,7 +14751,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Deleted</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">ลบแล้ว</translation>
     </message>
     <message>
         <source>New</source>
@@ -17721,6 +18017,245 @@ Styles deleted:
     </message>
 </context>
 <context>
+    <name>HikariSub.Tags</name>
+    <message numerus="yes">
+        <source>Changed %n line(s)</source>
+        <translation>
+            <numerusform>เปลี่ยน %n บรรทัด</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>No line changes.</source>
+        <translation>ไม่มีบรรทัดที่เปลี่ยน</translation>
+    </message>
+    <message>
+        <source>Remove tags…</source>
+        <translation>ลบแท็ก…</translation>
+    </message>
+    <message>
+        <source>Remove tags</source>
+        <translation>ลบแท็ก</translation>
+    </message>
+    <message>
+        <source>Colour</source>
+        <translation>สี</translation>
+    </message>
+    <message>
+        <source>Alpha</source>
+        <translation>อัลฟา</translation>
+    </message>
+    <message>
+        <source>Border</source>
+        <translation>ขอบ</translation>
+    </message>
+    <message>
+        <source>Shadow</source>
+        <translation>เงา</translation>
+    </message>
+    <message>
+        <source>Blur</source>
+        <translation>เบลอ</translation>
+    </message>
+    <message>
+        <source>Font</source>
+        <translation>ฟอนต์</translation>
+    </message>
+    <message>
+        <source>Scale</source>
+        <translation>สเกล</translation>
+    </message>
+    <message>
+        <source>Spacing</source>
+        <translation>ระยะห่าง</translation>
+    </message>
+    <message>
+        <source>Rotation</source>
+        <translation>การหมุน</translation>
+    </message>
+    <message>
+        <source>Shear</source>
+        <translation>การเฉือน</translation>
+    </message>
+    <message>
+        <source>Bold, italic, underline, strikeout</source>
+        <translation>ตัวหนา ตัวเอียง ขีดเส้นใต้ ขีดฆ่า</translation>
+    </message>
+    <message>
+        <source>Position</source>
+        <translation>ตำแหน่ง</translation>
+    </message>
+    <message>
+        <source>Origin</source>
+        <translation>จุดหมุน</translation>
+    </message>
+    <message>
+        <source>Alignment</source>
+        <translation>การจัดตำแหน่ง</translation>
+    </message>
+    <message>
+        <source>Clip</source>
+        <translation>คลิป</translation>
+    </message>
+    <message>
+        <source>Fade</source>
+        <translation>เฟด</translation>
+    </message>
+    <message>
+        <source>Transforms</source>
+        <translation>การแปลง</translation>
+    </message>
+    <message>
+        <source>Karaoke</source>
+        <translation>คาราโอเกะ</translation>
+    </message>
+    <message>
+        <source>Reset</source>
+        <translation>รีเซ็ต</translation>
+    </message>
+    <message>
+        <source>Wrap style</source>
+        <translation>รูปแบบการตัดบรรทัด</translation>
+    </message>
+    <message>
+        <source>Drawing</source>
+        <translation>ภาพวาด</translation>
+    </message>
+    <message>
+        <source>Other tags</source>
+        <translation>แท็กอื่น</translation>
+    </message>
+    <message>
+        <source>Any tag not listed</source>
+        <translation>แท็กใดก็ได้ที่ไม่อยู่ในรายการ</translation>
+    </message>
+    <message>
+        <source>Remove comments</source>
+        <translation>ลบความคิดเห็น</translation>
+    </message>
+    <message>
+        <source>Blocks with no tag, such as {note}</source>
+        <translation>บล็อกที่ไม่มีแท็ก เช่น {note}</translation>
+    </message>
+    <message>
+        <source>Merge adjacent tag blocks</source>
+        <translation>รวมบล็อกแท็กที่ติดกัน</translation>
+    </message>
+    <message>
+        <source>%1 becomes %2</source>
+        <translation>%1 กลายเป็น %2</translation>
+    </message>
+    <message>
+        <source>Drop overridden tags</source>
+        <translation>ลบแท็กที่ถูกแทนที่</translation>
+    </message>
+    <message>
+        <source>A tag a later one in its block replaces, and repeats of %1, %2, %3 and %4</source>
+        <translation>แท็กที่แท็กถัดไปในบล็อกเดียวกันแทนที่ และ %1, %2, %3 และ %4 ที่ซ้ำ</translation>
+    </message>
+    <message>
+        <source>Clean Tags rules</source>
+        <translation>กฎของ Clean Tags</translation>
+    </message>
+    <message>
+        <source>What the bundled Clean Tags script does: merges blocks, moves line-wide tags to the start, drops empty blocks</source>
+        <translation>สิ่งที่สคริปต์ Clean Tags ที่มาพร้อมโปรแกรมทำ: รวมบล็อก ย้ายแท็กที่ใช้กับทั้งบรรทัดไปไว้ต้นบรรทัด และลบบล็อกว่าง</translation>
+    </message>
+    <message>
+        <source>Delete lines left empty</source>
+        <translation>ลบบรรทัดที่ว่างเปล่า</translation>
+    </message>
+    <message>
+        <source>Lines</source>
+        <translation>บรรทัด</translation>
+    </message>
+    <message>
+        <source>Selected lines</source>
+        <translation>บรรทัดที่เลือก</translation>
+    </message>
+    <message>
+        <source>Whole file, without comment lines</source>
+        <translation>ทั้งไฟล์ ยกเว้นบรรทัดความคิดเห็น</translation>
+    </message>
+    <message>
+        <source>Blocks</source>
+        <translation>บล็อก</translation>
+    </message>
+    <message>
+        <source>All blocks</source>
+        <translation>ทุกบล็อก</translation>
+    </message>
+    <message>
+        <source>Start block</source>
+        <translation>บล็อกแรก</translation>
+    </message>
+    <message>
+        <source>Inline blocks</source>
+        <translation>บล็อกกลางข้อความ</translation>
+    </message>
+    <message>
+        <source>Tags</source>
+        <translation>แท็ก</translation>
+    </message>
+    <message>
+        <source>Clear</source>
+        <translation>ล้าง</translation>
+    </message>
+    <message>
+        <source>Select all</source>
+        <translation>เลือกทั้งหมด</translation>
+    </message>
+    <message>
+        <source>Clean up</source>
+        <translation>จัดระเบียบ</translation>
+    </message>
+    <message>
+        <source>Preview</source>
+        <translation>ตัวอย่าง</translation>
+    </message>
+    <message>
+        <source>Line %1: %2</source>
+        <translation>บรรทัด %1: %2</translation>
+    </message>
+    <message>
+        <source>deleted</source>
+        <translation>ถูกลบ</translation>
+    </message>
+    <message>
+        <source>Line deleted</source>
+        <translation>ลบบรรทัดแล้ว</translation>
+    </message>
+    <message>
+        <source>No line changes</source>
+        <translation>ไม่มีบรรทัดที่เปลี่ยน</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) change</source>
+        <translation>
+            <numerusform>เปลี่ยน %n บรรทัด</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n deleted</source>
+        <translation>
+            <numerusform>ลบ %n บรรทัด</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>first %n shown</source>
+        <translation>
+            <numerusform>แสดง %n บรรทัดแรก</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>ลบ</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>ยกเลิก</translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.TemplateEditor</name>
     <message>
         <source>Template editor</source>
@@ -17741,8 +18276,8 @@ Styles deleted:
         <translation>แสดงตัวอย่างบนวิดีโอ</translation>
     </message>
     <message>
-        <source>The karaoke templater runs on an open subtitle file once its script (kara-templater.lua) is loaded.</source>
-        <translation>ตัวประมวลผลเทมเพลตคาราโอเกะทำงานกับไฟล์คำบรรยายที่เปิดอยู่ เมื่อโหลดสคริปต์ของมัน (kara-templater.lua) แล้ว</translation>
+        <source>The karaoke templater runs on an open subtitle file once the built-in Karaoke Templater has loaded.</source>
+        <translation>ตัวประมวลผลเทมเพลตคาราโอเกะทำงานกับไฟล์คำบรรยายที่เปิดอยู่ เมื่อโหลด Karaoke Templater ในตัวแล้ว</translation>
     </message>
     <message>
         <source>Templates</source>

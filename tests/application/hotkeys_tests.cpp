@@ -70,7 +70,7 @@ constexpr ToolCommand kToolCommands[] = {
 TEST(Hotkeys, ActionTableIsLegacyIdsAndTheMigrationMap)
 {
     ASSERT_EQ(ids().size(), 243u);
-    ASSERT_EQ(hotkeyActions().size(), 358u);
+    ASSERT_EQ(hotkeyActions().size(), 360u);
     for (const auto &a : hotkeyActions().first(kLegacyHotkeyActions)) {
         EXPECT_EQ(hotkeyIdOf(a.symbol), a.id);
         EXPECT_EQ(hotkeySymbol(a.id), a.symbol);
@@ -149,6 +149,7 @@ TEST(Hotkeys, ActionTableIsLegacyIdsAndTheMigrationMap)
     EXPECT_EQ(hotkeyIdOf("GLOBAL_MOVE_TAB_TO_NEW_WINDOW"), 5221);
     EXPECT_EQ(hotkeyIdOf("GLOBAL_MOVE_TAB_TO_WINDOW"), 5222);
     EXPECT_EQ(hotkeyIdOf("GLOBAL_CLOSE_WINDOW"), 5263);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_IMPORT_LYRICS"), 5268);
     EXPECT_EQ(hotkeyIdOf("GLOBAL_CENTER_TIMES_IN_FRAMES"), 5229);
     EXPECT_EQ(hotkeyIdOf("GLOBAL_ALIGN_TO_VIDEO"), 5238);
     EXPECT_EQ(hotkeyIdOf("GLOBAL_IMPORT_LEGACY_SETTINGS"), 5223);
@@ -164,6 +165,7 @@ TEST(Hotkeys, ActionTableIsLegacyIdsAndTheMigrationMap)
     EXPECT_EQ(hotkeyIdOf("GLOBAL_COPY_POWER_PIN_TRACK"), 5260);
     EXPECT_EQ(hotkeyIdOf("GLOBAL_EXTEND_TRACKED_LINES"), 5261);
     EXPECT_EQ(hotkeyIdOf("GLOBAL_EXTRAPOLATE_MOVE"), 5262);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_REMOVE_TAGS"), 5266);
     EXPECT_EQ(hotkeyIdOf("GLOBAL_KEEP_AI_CHANGE"), 5245);
     EXPECT_EQ(hotkeyIdOf("GLOBAL_UNDO_AI_CHANGE"), 5246);
     EXPECT_EQ(hotkeyIdOf("GLOBAL_NEXT_AI_CHANGE"), 5247);
@@ -369,7 +371,7 @@ TEST(Hotkeys, ListOrderIsAddHotkeysOnList)
     HotkeyList list(copy);
     auto live = defaultHotkeys();
     list.build(live);
-    ASSERT_EQ(list.rowCount(), 329u);
+    ASSERT_EQ(list.rowCount(), 331u);
     EXPECT_EQ(list.row(0).text, "Global Close current tab");
     EXPECT_EQ(list.row(0).accel, "Ctrl-W");
     EXPECT_EQ(rowNamed(list, "Global Hide tags in the line editor").accel, "");
@@ -441,7 +443,7 @@ TEST(Hotkeys, ListOrderIsAddHotkeysOnList)
     live[HotkeyId{kSave, GridHotkey}] = Hotkey{"Save", "F7"};
     HotkeyList more(copy);
     more.build(live);
-    ASSERT_EQ(more.rowCount(), 331u);
+    ASSERT_EQ(more.rowCount(), 333u);
     const int script = more.find("Global Script a.lua-1");
     const int copied = more.find("Subtitles Save");
     ASSERT_GE(script, 0);
@@ -455,13 +457,13 @@ TEST(Hotkeys, ListOrderIsAddHotkeysOnList)
     fewer.erase(HotkeyId{kAudioCommitAlt, AudioHotkey});
     HotkeyList cut(copy);
     cut.build(fewer);
-    EXPECT_EQ(cut.rowCount(), 328u);
+    EXPECT_EQ(cut.rowCount(), 330u);
     EXPECT_EQ(cut.find("Audio Apply changes alt"), -1);
     auto odd = fewer;
     odd[HotkeyId{5001, -1}] = Hotkey{"", "F1"};
     HotkeyList whole(copy);
     whole.build(odd);
-    EXPECT_EQ(whole.rowCount(), 329u);
+    EXPECT_EQ(whole.rowCount(), 331u);
 }
 
 TEST(Hotkeys, AutomationAndPluginsFiltersSplitTheScriptRows)
@@ -512,7 +514,7 @@ TEST(Hotkeys, FilterModesAndSelection)
     list.filter(1);
     EXPECT_EQ(list.shown().size(), 113u);
     list.filter(0);
-    EXPECT_EQ(list.shown().size(), 329u);
+    EXPECT_EQ(list.shown().size(), 331u);
 }
 
 TEST(Hotkeys, SearchNarrowsTheFilter)
@@ -728,17 +730,17 @@ TEST(Hotkeys, MapToAnotherWindowAddsOrUpdatesItsRow)
     const int save = list.find("Global Save");
     list.map(save, "F7", VideoHotkey, HotkeyAnswer::Cancel, live);
     EXPECT_EQ(list.row(save).accel, "Ctrl-S");
-    ASSERT_EQ(list.rowCount(), 330u);
-    const auto &added = list.row(329);
+    ASSERT_EQ(list.rowCount(), 332u);
+    const auto &added = list.row(331);
     EXPECT_EQ(added.text, "Video Save");
     EXPECT_EQ((added.key), (HotkeyId{kSave, VideoHotkey}));
     EXPECT_EQ(added.accel, "F7");
     EXPECT_EQ(list.selection(), -1);
     EXPECT_EQ(copy.at(HotkeyId{kSave, VideoHotkey}).accel, "F7");
     list.map(save, "F6", VideoHotkey, HotkeyAnswer::Cancel, live);
-    EXPECT_EQ(list.rowCount(), 330u);
-    EXPECT_EQ(list.row(329).accel, "F6");
-    EXPECT_EQ(list.selection(), 329);
+    EXPECT_EQ(list.rowCount(), 332u);
+    EXPECT_EQ(list.row(331).accel, "F6");
+    EXPECT_EQ(list.selection(), 331);
 }
 
 TEST(Hotkeys, ResetDeleteUndoRedo)
@@ -819,7 +821,7 @@ TEST(Hotkeys, TheCopyOutlivesTheDialogAndSetDefault)
     auto reset = defaultHotkeys();
     third.clear();
     third.build(reset);
-    EXPECT_EQ(third.shown().size(), 329u);
+    EXPECT_EQ(third.shown().size(), 331u);
     EXPECT_EQ(third.filterMode(), 2);
     EXPECT_EQ(rowNamed(third, "Global Open subtitles").accel, "Ctrl-O");
     EXPECT_TRUE(third.modified());

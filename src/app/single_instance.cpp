@@ -12,6 +12,7 @@
 #include <QFileInfo>
 #include <QLocalServer>
 #include <QLocalSocket>
+#include <QMap>
 #include <QSaveFile>
 #include <QThread>
 #include <QTimer>
@@ -45,6 +46,10 @@ constexpr char kMagic[] = "HIKARISUB-OPEN\1";
 constexpr qsizetype kMagicSize = sizeof(kMagic) - 1;
 constexpr quint32 kVersion = 1;
 constexpr quint32 kWindowVersion = 2;
+// Version 3 carries named options; a receiver ignores names it doesn't know.
+constexpr quint32 kOptionsVersion = 3;
+const QString kWindowOption = QStringLiteral("window");
+const QString kPickFolderOption = QStringLiteral("pick-folder");
 constexpr quint32 kMaxPayload = 1 << 20;
 constexpr char kAck = '\1';
 // The commit: this byte, then the sender's receipt wait in ms (32-bit big-endian).
@@ -62,7 +67,12 @@ QByteArray encode(const SingleInstance::Request &request)
     QByteArray payload;
     QDataStream out(&payload, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_6_0);
-    if (request.window == application::WindowRequest::Default)
+    if (request.pickFolder) {
+        QMap<QString, QString> options{{kPickFolderOption, QStringLiteral("1")}};
+        if (request.window != application::WindowRequest::Default)
+            options.insert(kWindowOption, QString::number(static_cast<int>(request.window)));
+        out << kOptionsVersion << request.files << request.activationToken << options;
+    } else if (request.window == application::WindowRequest::Default)
         out << kVersion << request.files << request.activationToken;
     else
         out << kWindowVersion << request.files << request.activationToken << static_cast<qint32>(request.window);
@@ -98,14 +108,25 @@ bool decode(const QByteArray &buffer, SingleInstance::Request &request, bool &ba
     in.setVersion(QDataStream::Qt_6_0);
     quint32 version = 0;
     in >> version >> request.files >> request.activationToken;
-    if (version == kWindowVersion) {
-        qint32 window = 0;
+    qint32 window = 0;
+    if (version == kWindowVersion)
         in >> window;
-        if (window < 0 || window > static_cast<qint32>(application::WindowRequest::Reuse))
+    if (version == kOptionsVersion) {
+        QMap<QString, QString> options;
+        in >> options;
+        bool ok = true;
+        if (options.contains(kWindowOption))
+            window = options.value(kWindowOption).toInt(&ok);
+        const QString pick = options.value(kPickFolderOption, QStringLiteral("0"));
+        if (!ok || (pick != QLatin1String("0") && pick != QLatin1String("1")))
             version = 0;
-        request.window = static_cast<application::WindowRequest>(window);
+        request.pickFolder = pick == QLatin1String("1");
     }
-    if (in.status() != QDataStream::Ok || (version != kVersion && version != kWindowVersion) || !in.atEnd()) {
+    if (window < 0 || window > static_cast<qint32>(application::WindowRequest::Reuse))
+        version = 0;
+    request.window = static_cast<application::WindowRequest>(window);
+    if (in.status() != QDataStream::Ok || (version != kVersion && version != kWindowVersion && version != kOptionsVersion) ||
+        !in.atEnd()) {
         bad = true;
         return false;
     }

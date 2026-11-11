@@ -88,11 +88,11 @@ void Application::warnShortTimecodes(TabMedia &media)
                       .arg(video.frameCount()));
 }
 
-void Application::showTabTimecodes(std::optional<application::DocumentId> document)
+void Application::showTabTimecodes(WindowMedia &media, std::optional<application::DocumentId> document)
 {
     const auto it = document ? m_tabMedia.find(document->value) : m_tabMedia.end();
     auto times = it != m_tabMedia.end() ? it->second.frameTimes : std::nullopt;
-    auto &video = activeMedia().video->session();
+    auto &video = media.video->session();
     if (times || video.replacedFrameTimes())
         video.setFrameTimes(std::move(times));
     emit timecodesChanged();
@@ -115,7 +115,7 @@ QString Application::openTimecodesFile(const QString &path)
     TabMedia &media = m_tabMedia[target->value];
     loadTabTimecodes(media, local, *times);
     rememberRecentTimecodes(local);
-    showTabTimecodes(target);
+    showTabTimecodes(activeMedia(), target);
     warnShortTimecodes(media);
     refreshViews();
     return {};
@@ -147,7 +147,7 @@ void Application::closeTimecodes()
     it->second.timecodes.clear();
     it->second.frameTimes.reset();
     it->second.timecodesDropped = true;
-    showTabTimecodes(target);
+    showTabTimecodes(activeMedia(), target);
     refreshViews();
 }
 

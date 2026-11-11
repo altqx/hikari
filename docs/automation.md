@@ -128,6 +128,14 @@ The native library behind ILL's `clipper2` module ships at `Include/clipper2/cli
 - **MoonScript compile cache.** A `.moon` script or module compiles once. The compiled Lua and its line table are kept in the user folder's cache, `MoonScript/`, one entry for each file and compiler (`CompileCache`, `compile_cache.h`). An entry is used only while its file holds exactly the source it was compiled from, and the compiler (`moonscript.lua`) is the same text. So a changed script, or a new MoonScript, compiles again. Error lines map to the `.moon` source as before. The cache is best effort: one that can't be written leaves every load compiling, as before. A script that requires DependencyControl compiles ~46 modules (~0.3 s); from the cache it loads in a fraction of that.
 - **Kara Effector loads on first use.** `utils.lua` (which karaskel includes) binds `ke4`, the `R` family, `interpolate*`, and ke4's `temp` and `recall` to stand-ins (`effector-auto4-lazy.lua`). The first use of any of them requires `effector-auto4` and puts the real ones in their place. A global the script set itself in the meantime keeps the script's value, as when ke4 loaded first. A script holding a stand-in compares unequal to the real function, the only difference from loading it up front.
 
+### Big files (AU15, [#849](https://github.com/altqx/hikari/issues/849))
+
+- **The size limit.** A macro's data for a Document (its snapshot) can be up to 64 MB, the helper protocol's frame limit (`kMaxPayload`). That is roughly a subtitle file of the same size.
+  - A larger Document doesn't run the macro. A message box names the macro and the size, and nothing changes.
+  - A macro whose changes come back over 64 MB fails with an error in the log.
+- **Each Line crosses once.** A Line's raw text (`line.raw`) is sent only when it can't be rebuilt from its fields, for example when the actor carries `[bookmark]` or a group marker. The helper rebuilds the rest, so scripts see the same `line.raw`.
+- **Applying is linear.** A result's removals, edits and placements take one pass each (`Document::editLines`, `Document::arrangeLines`). Editing one Line of a 20k-Line file applies in tens of milliseconds. Measurements are in [au15-macro-cost.md](research/au15-macro-cost.md).
+
 ### Thai support (TH2, 2026-11-09)
 
 Thai support by Jibrill: the fixes from Jibrill's Aegisub scripts, carried over with Jibrill's permission ([TH0 #834](https://github.com/altqx/hikari/issues/834)).

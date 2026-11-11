@@ -1793,12 +1793,28 @@ Output device: %2</source>
         <translation>எடிட்டரைத் தொடங்க முடியாது.</translation>
     </message>
     <message>
+        <source>Not loaded: its macros %1 are the built-in Karaoke Templater’s, which runs them instead.</source>
+        <translation>ஏற்றப்படவில்லை: இதன் குறுநிரல்கள் %1 உள்ளமைந்த Karaoke Templater-இன் குறுநிரல்கள்; அதுவே அவற்றை இயக்கும்.</translation>
+    </message>
+    <message>
+        <source>Built-in</source>
+        <translation>உள்ளமைந்தது</translation>
+    </message>
+    <message>
         <source>The macro was cancelled; nothing was changed.</source>
         <translation>குறுநிரல் ரத்துசெய்யப்பட்டது; எதுவும் மாற்றப்படவில்லை.</translation>
     </message>
     <message>
         <source>The macro was cancelled; only the script resolution was set.</source>
         <translation>குறுநிரல் ரத்துசெய்யப்பட்டது; ச்கிரிப்ட் தெளிவுத்திறன் மட்டுமே அமைக்கப்பட்டது.</translation>
+    </message>
+    <message>
+        <source>“%1” can’t run on this document: it needs %2 MB, and a macro can use at most %3 MB.</source>
+        <translation>“%1” இந்த ஆவணத்தில் இயங்க முடியாது: இதற்கு %2 MB தேவை, ஆனால் ஒரு குறுநிரல் அதிகபட்சம் %3 MB மட்டுமே பயன்படுத்த முடியும்.</translation>
+    </message>
+    <message>
+        <source>Run the macro on a smaller file, for example a copy with only the lines it needs.</source>
+        <translation>குறுநிரலைச் சிறிய கோப்பில் இயக்கவும், எடுத்துக்காட்டாக அதற்குத் தேவையான வரிகள் மட்டும் உள்ள ஒரு நகலில்.</translation>
     </message>
     <message>
         <source>Validation Lua script “%1” failed</source>
@@ -2675,6 +2691,18 @@ Output device: %2</source>
         <translation>அதன் மேல் சேமி</translation>
     </message>
     <message>
+        <source>Import lyrics</source>
+        <translation>பாடல் வரிகளை இறக்குமதி செய்</translation>
+    </message>
+    <message>
+        <source>Lyrics (*.lrc *.krc *.qrc *.ttml)</source>
+        <translation>பாடல் வரிகள் (*.lrc *.krc *.qrc *.ttml)</translation>
+    </message>
+    <message>
+        <source>Could not read %1.</source>
+        <translation>%1 ஐப் படிக்க முடியவில்லை.</translation>
+    </message>
+    <message>
         <source>Open subtitles</source>
         <translation>வசன வரிகளைத் திற</translation>
     </message>
@@ -2683,8 +2711,12 @@ Output device: %2</source>
         <translation>வசன வரிகள் (*.ass *.ssa *.srt *.sub *.txt *.mpl)</translation>
     </message>
     <message>
+        <source>Word-timed lyrics (*.lrc *.krc *.qrc *.ttml)</source>
+        <translation>சொல்வாரியாக நேரமிட்ட பாடல் வரிகள் (*.lrc *.krc *.qrc *.ttml)</translation>
+    </message>
+    <message>
         <source>Word-timed lyrics (*.lrc *.ttml)</source>
-        <translation>சொல்வாரியாக நேரமிட்ட பாடல் வரிகள் (*.lrc *.ttml)</translation>
+        <translation type="vanished">சொல்வாரியாக நேரமிட்ட பாடல் வரிகள் (*.lrc *.ttml)</translation>
     </message>
     <message>
         <source>YouTube timed text (*.ytt *.srv3)</source>
@@ -2769,6 +2801,10 @@ Output device: %2</source>
     <message>
         <source>it has no timed lyrics</source>
         <translation>இதில் நேரமிட்ட பாடல் வரிகள் இல்லை</translation>
+    </message>
+    <message>
+        <source>it is encrypted. Decode it to text with your own tool first</source>
+        <translation>இது மறையாக்கப்பட்டுள்ளது. முதலில் உங்கள் கருவியால் இதை உரையாகக் குறிவிலக்கவும்</translation>
     </message>
     <message>
         <source>Could not import %1: line %2: %3. Nothing was imported.</source>
@@ -2991,6 +3027,132 @@ Output device: %2</source>
     <message>
         <source>Saves %1 · Discards %2</source>
         <translation>%1 சேமிக்கப்படும் · %2 கைவிடப்படும்</translation>
+    </message>
+    <message>
+        <source>The file is not text in this encoding.</source>
+        <translation>இந்தக் குறியாக்கத்தில் கோப்பு உரையாக இல்லை.</translation>
+    </message>
+    <message>
+        <source>LRC</source>
+        <translation>LRC</translation>
+    </message>
+    <message>
+        <source>TTML</source>
+        <translation>TTML</translation>
+    </message>
+    <message>
+        <source>Kugou KRC, decoded</source>
+        <translation>Kugou KRC, குறிவிலக்கப்பட்டது</translation>
+    </message>
+    <message>
+        <source>QQ Music QRC, decoded</source>
+        <translation>QQ Music QRC, குறிவிலக்கப்பட்டது</translation>
+    </message>
+    <message>
+        <source>word-timed</source>
+        <translation>சொல்வாரியாக நேரமிட்டது</translation>
+    </message>
+    <message>
+        <source>line-timed</source>
+        <translation>வரிவாரியாக நேரமிட்டது</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n lines</source>
+        <translation>
+            <numerusform>%n வரி</numerusform>
+            <numerusform>%n வரிகள்</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>offset %1 s applied</source>
+        <translation>%1 வி. இடப்பெயர்ச்சி பயன்படுத்தப்பட்டது</translation>
+    </message>
+    <message>
+        <source>File</source>
+        <translation>கோப்பு</translation>
+    </message>
+    <message>
+        <source>Format</source>
+        <translation>வடிவம்</translation>
+    </message>
+    <message>
+        <source>Song</source>
+        <translation>பாடல்</translation>
+    </message>
+    <message>
+        <source>Encoding</source>
+        <translation>குறியாக்கம்</translation>
+    </message>
+    <message>
+        <source>%1 · detected</source>
+        <translation>%1 · கண்டறியப்பட்டது</translation>
+    </message>
+    <message>
+        <source>This Kugou lyrics file is encrypted, so HikariSub can’t read it.</source>
+        <translation>இந்த Kugou பாடல் வரி கோப்பு மறையாக்கப்பட்டுள்ளதால் HikariSub ஆல் படிக்க முடியாது.</translation>
+    </message>
+    <message>
+        <source>This QQ Music lyrics file is encrypted, so HikariSub can’t read it.</source>
+        <translation>இந்த QQ Music பாடல் வரி கோப்பு மறையாக்கப்பட்டுள்ளதால் HikariSub ஆல் படிக்க முடியாது.</translation>
+    </message>
+    <message>
+        <source>Decode it to text with your own tool first, then import the decoded file. HikariSub doesn’t decrypt lyric files.</source>
+        <translation>முதலில் உங்கள் கருவியால் அதை உரையாகக் குறிவிலக்கி, பின் குறிவிலக்கிய கோப்பை இறக்குமதி செய்யவும். HikariSub பாடல் வரி கோப்புகளை மறைவிலக்குவதில்லை.</translation>
+    </message>
+    <message>
+        <source>Preview</source>
+        <translation>முன்னோட்டம்</translation>
+    </message>
+    <message numerus="yes">
+        <source>and %n more lines</source>
+        <translation>
+            <numerusform>மேலும் %n வரி</numerusform>
+            <numerusform>மேலும் %n வரிகள்</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Add the lines to</source>
+        <translation>வரிகளைச் சேர்க்கும் இடம்</translation>
+    </message>
+    <message>
+        <source>After the last line of the open file</source>
+        <translation>திறந்த கோப்பின் கடைசி வரிக்குப் பின்</translation>
+    </message>
+    <message>
+        <source>A new file</source>
+        <translation>புதிய கோப்பு</translation>
+    </message>
+    <message>
+        <source>Style</source>
+        <translation>பாணி</translation>
+    </message>
+    <message>
+        <source>End times</source>
+        <translation>முடிவு நேரங்கள்</translation>
+    </message>
+    <message>
+        <source>Each line ends when the next one starts</source>
+        <translation>ஒவ்வொரு வரியும் அடுத்தது தொடங்கும்போது முடிகிறது</translation>
+    </message>
+    <message>
+        <source>Leave a gap before the next line</source>
+        <translation>அடுத்த வரிக்கு முன் இடைவெளி விடு</translation>
+    </message>
+    <message>
+        <source>Gap (s)</source>
+        <translation>இடைவெளி (வி.)</translation>
+    </message>
+    <message>
+        <source>Last line lasts (s)</source>
+        <translation>கடைசி வரியின் நீளம் (வி.)</translation>
+    </message>
+    <message>
+        <source>Choose another file…</source>
+        <translation>வேறு கோப்பைத் தேர்வுசெய்…</translation>
+    </message>
+    <message>
+        <source>Import</source>
+        <translation>இறக்குமதி</translation>
     </message>
 </context>
 <context>
@@ -7256,6 +7418,10 @@ Failed to copy %2 fonts.</source>
         <translation>\move ஐ வரி முழுவதற்கும் புறச்செருகு</translation>
     </message>
     <message>
+        <source>Remove tags…</source>
+        <translation>குறிச்சொற்களை நீக்கு…</translation>
+    </message>
+    <message>
         <source>Move tab to new window</source>
         <translation>தாவலை புதிய சாளரத்திற்கு நகர்த்து</translation>
     </message>
@@ -7266,6 +7432,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Close window</source>
         <translation>சாளரத்தை மூடு</translation>
+    </message>
+    <message>
+        <source>Import lyrics…</source>
+        <translation>பாடல் வரிகளை இறக்குமதி செய்…</translation>
     </message>
     <message>
         <source>Keep AI change</source>
@@ -8309,6 +8479,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Import subtitles from MKV…</source>
         <translation>MKV இலிருந்து வசன வரிகளை இறக்குமதி செய்…</translation>
+    </message>
+    <message>
+        <source>Turns a lyrics file into lines, in the open file or a new one</source>
+        <translation>பாடல் வரி கோப்பைத் திறந்த கோப்பிலோ புதிய கோப்பிலோ வரிகளாக மாற்றுகிறது</translation>
+    </message>
+    <message>
+        <source>Import lyrics…</source>
+        <translation>பாடல் வரிகளை இறக்குமதி செய்…</translation>
     </message>
     <message>
         <source>Save current file</source>
@@ -9945,6 +10123,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Export as template lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Adds template lines after the graph line that make the same lines in Aegisub’s karaoke templater.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Delete graph</source>
         <translation type="unfinished"></translation>
     </message>
@@ -9962,6 +10148,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Select karaoke lines in “Source lines” first.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>These nodes have no form in a karaoke template, so the graph can’t be exported:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -10020,6 +10210,30 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>That wire would make a loop.</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Gradient strips</source>
+        <translation>சாய்வு பட்டைகள்</translation>
+    </message>
+    <message>
+        <source>Each line cut into eight strips, coloured from pink to blue.</source>
+        <translation>ஒவ்வொரு வரியும் எட்டு பட்டைகளாக வெட்டப்பட்டு, இளஞ்சிவப்பிலிருந்து நீலம் வரை வண்ணமிடப்படுகிறது.</translation>
+    </message>
+    <message>
+        <source>Ring of copies</source>
+        <translation>நகல்களின் வளையம்</translation>
+    </message>
+    <message>
+        <source>Eight copies of each syllable on a circle around it, each turned to its place, while it is sung.</source>
+        <translation>ஒவ்வொரு அசையும் பாடப்படும்போது, அதைச் சுற்றியுள்ள வட்டத்தில் எட்டு நகல்கள், ஒவ்வொன்றும் தன் இடத்துக்கு ஏற்பத் திரும்பியிருக்கும்.</translation>
+    </message>
+    <message>
+        <source>Particle burst</source>
+        <translation>துகள் வெடிப்பு</translation>
+    </message>
+    <message>
+        <source>Twelve copies of each syllable fly out to random places around it and fade.</source>
+        <translation>ஒவ்வொரு அசையின் பன்னிரண்டு நகல்கள் அதைச் சுற்றியுள்ள சீரற்ற இடங்களுக்குப் பறந்து மங்குகின்றன.</translation>
     </message>
     <message>
         <source>A graph name can’t be empty, start or end with a space, end with a dot, or hold “karaoke”, a comma, a double quote, a control character or any of / \ : * ? &lt; &gt; |.</source>
@@ -10213,6 +10427,30 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Clip gradient</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each unit once per strip of its box, side by side across or stacked down: the strip’s \clip rectangle (whole pixels, the edges shared) and its colour along the gradient.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Array</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each unit once per copy: on a grid centred on it, on a circle around it, or spread evenly along a path drawn from its position. angle is in degrees, as \frz takes it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Particles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each unit once per particle, spread at random over a rectangle or an ellipse centred on it. The same graph seed, node seed and line give the same particles on every run and platform.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>step times the place: index - 1 from the start, count - index from the end, or the distance from the middle.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -10310,6 +10548,66 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>One step, in ms.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How many strips.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Strips side by side from left to right, or stacked from top to bottom.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The gradient’s stops, as #RRGGBB, at least one.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Added to the box on every side, in pixels.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Where the copies go.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Grid: copies in a row.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Grid: rows.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Grid: from one copy to the next, as [across, down].</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Circle and path: how many copies.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Circle: its radius.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Circle: the first copy’s angle, in degrees counter-clockwise from the right.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How many particles.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The area they spread over.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The area’s width.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The area’s height.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -14550,7 +14848,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Deleted</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">நீக்கப்பட்டது</translation>
     </message>
     <message>
         <source>New</source>
@@ -17849,6 +18147,249 @@ Styles deleted:
     </message>
 </context>
 <context>
+    <name>HikariSub.Tags</name>
+    <message numerus="yes">
+        <source>Changed %n line(s)</source>
+        <translation>
+            <numerusform>%n வரி மாற்றப்பட்டது</numerusform>
+            <numerusform>%n வரிகள் மாற்றப்பட்டன</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>No line changes.</source>
+        <translation>எந்த வரியும் மாறவில்லை.</translation>
+    </message>
+    <message>
+        <source>Remove tags…</source>
+        <translation>குறிச்சொற்களை நீக்கு…</translation>
+    </message>
+    <message>
+        <source>Remove tags</source>
+        <translation>குறிச்சொற்களை நீக்கு</translation>
+    </message>
+    <message>
+        <source>Colour</source>
+        <translation>நிறம்</translation>
+    </message>
+    <message>
+        <source>Alpha</source>
+        <translation>ஆல்ஃபா</translation>
+    </message>
+    <message>
+        <source>Border</source>
+        <translation>எல்லை</translation>
+    </message>
+    <message>
+        <source>Shadow</source>
+        <translation>நிழல்</translation>
+    </message>
+    <message>
+        <source>Blur</source>
+        <translation>மங்கல்</translation>
+    </message>
+    <message>
+        <source>Font</source>
+        <translation>எழுத்துரு</translation>
+    </message>
+    <message>
+        <source>Scale</source>
+        <translation>அளவீடு</translation>
+    </message>
+    <message>
+        <source>Spacing</source>
+        <translation>இடைவெளி</translation>
+    </message>
+    <message>
+        <source>Rotation</source>
+        <translation>சுழற்சி</translation>
+    </message>
+    <message>
+        <source>Shear</source>
+        <translation>சாய்வு</translation>
+    </message>
+    <message>
+        <source>Bold, italic, underline, strikeout</source>
+        <translation>தடிமன், சாய்வெழுத்து, அடிக்கோடு, குறுக்குக்கோடு</translation>
+    </message>
+    <message>
+        <source>Position</source>
+        <translation>நிலை</translation>
+    </message>
+    <message>
+        <source>Origin</source>
+        <translation>தொடக்கப்புள்ளி</translation>
+    </message>
+    <message>
+        <source>Alignment</source>
+        <translation>சீரமைப்பு</translation>
+    </message>
+    <message>
+        <source>Clip</source>
+        <translation>கிளிப்</translation>
+    </message>
+    <message>
+        <source>Fade</source>
+        <translation>மங்குதல்</translation>
+    </message>
+    <message>
+        <source>Transforms</source>
+        <translation>உருமாற்றங்கள்</translation>
+    </message>
+    <message>
+        <source>Karaoke</source>
+        <translation>கரோக்கி</translation>
+    </message>
+    <message>
+        <source>Reset</source>
+        <translation>மீட்டமை</translation>
+    </message>
+    <message>
+        <source>Wrap style</source>
+        <translation>மடிப்பு பாணி</translation>
+    </message>
+    <message>
+        <source>Drawing</source>
+        <translation>வரைபடம்</translation>
+    </message>
+    <message>
+        <source>Other tags</source>
+        <translation>பிற குறிச்சொற்கள்</translation>
+    </message>
+    <message>
+        <source>Any tag not listed</source>
+        <translation>பட்டியலில் இல்லாத எந்தக் குறிச்சொல்லும்</translation>
+    </message>
+    <message>
+        <source>Remove comments</source>
+        <translation>கருத்துகளை நீக்கு</translation>
+    </message>
+    <message>
+        <source>Blocks with no tag, such as {note}</source>
+        <translation>{note} போன்ற குறிச்சொல் இல்லாத தொகுதிகள்</translation>
+    </message>
+    <message>
+        <source>Merge adjacent tag blocks</source>
+        <translation>அடுத்தடுத்த குறிச்சொல் தொகுதிகளை இணை</translation>
+    </message>
+    <message>
+        <source>%1 becomes %2</source>
+        <translation>%1 என்பது %2 ஆகும்</translation>
+    </message>
+    <message>
+        <source>Drop overridden tags</source>
+        <translation>மேலெழுதப்பட்ட குறிச்சொற்களை நீக்கு</translation>
+    </message>
+    <message>
+        <source>A tag a later one in its block replaces, and repeats of %1, %2, %3 and %4</source>
+        <translation>அதே தொகுதியில் பின்வரும் குறிச்சொல் மாற்றும் குறிச்சொல், மற்றும் %1, %2, %3, %4 இன் மறுநிகழ்வுகள்</translation>
+    </message>
+    <message>
+        <source>Clean Tags rules</source>
+        <translation>Clean Tags விதிகள்</translation>
+    </message>
+    <message>
+        <source>What the bundled Clean Tags script does: merges blocks, moves line-wide tags to the start, drops empty blocks</source>
+        <translation>உள்ளிணைந்த Clean Tags ஸ்கிரிப்ட் செய்வது: தொகுதிகளை இணைக்கிறது, முழு வரிக் குறிச்சொற்களைத் தொடக்கத்திற்கு நகர்த்துகிறது, வெற்றுத் தொகுதிகளை நீக்குகிறது</translation>
+    </message>
+    <message>
+        <source>Delete lines left empty</source>
+        <translation>வெறுமையான வரிகளை நீக்கு</translation>
+    </message>
+    <message>
+        <source>Lines</source>
+        <translation>வரிகள்</translation>
+    </message>
+    <message>
+        <source>Selected lines</source>
+        <translation>தேர்ந்தெடுத்த வரிகள்</translation>
+    </message>
+    <message>
+        <source>Whole file, without comment lines</source>
+        <translation>முழுக் கோப்பு, கருத்து வரிகள் தவிர</translation>
+    </message>
+    <message>
+        <source>Blocks</source>
+        <translation>தொகுதிகள்</translation>
+    </message>
+    <message>
+        <source>All blocks</source>
+        <translation>அனைத்துத் தொகுதிகளும்</translation>
+    </message>
+    <message>
+        <source>Start block</source>
+        <translation>தொடக்கத் தொகுதி</translation>
+    </message>
+    <message>
+        <source>Inline blocks</source>
+        <translation>உள்வரித் தொகுதிகள்</translation>
+    </message>
+    <message>
+        <source>Tags</source>
+        <translation>குறிச்சொற்கள்</translation>
+    </message>
+    <message>
+        <source>Clear</source>
+        <translation>அழி</translation>
+    </message>
+    <message>
+        <source>Select all</source>
+        <translation>அனைத்தையும் தேர்ந்தெடு</translation>
+    </message>
+    <message>
+        <source>Clean up</source>
+        <translation>சுத்தம் செய்</translation>
+    </message>
+    <message>
+        <source>Preview</source>
+        <translation>முன்னோட்டம்</translation>
+    </message>
+    <message>
+        <source>Line %1: %2</source>
+        <translation>வரி %1: %2</translation>
+    </message>
+    <message>
+        <source>deleted</source>
+        <translation>நீக்கப்பட்டது</translation>
+    </message>
+    <message>
+        <source>Line deleted</source>
+        <translation>வரி நீக்கப்பட்டது</translation>
+    </message>
+    <message>
+        <source>No line changes</source>
+        <translation>எந்த வரியும் மாறவில்லை</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) change</source>
+        <translation>
+            <numerusform>%n வரி மாறுகிறது</numerusform>
+            <numerusform>%n வரிகள் மாறுகின்றன</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n deleted</source>
+        <translation>
+            <numerusform>%n நீக்கப்பட்டது</numerusform>
+            <numerusform>%n நீக்கப்பட்டன</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>first %n shown</source>
+        <translation>
+            <numerusform>முதல் %n காட்டப்படுகிறது</numerusform>
+            <numerusform>முதல் %n காட்டப்படுகின்றன</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>நீக்கு</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>ரத்துசெய்</translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.TemplateEditor</name>
     <message>
         <source>Template editor</source>
@@ -17869,8 +18410,8 @@ Styles deleted:
         <translation>வீடியோவில் முன்னோட்டமிடு</translation>
     </message>
     <message>
-        <source>The karaoke templater runs on an open subtitle file once its script (kara-templater.lua) is loaded.</source>
-        <translation>கரோக்கி வார்ப்புருவாக்கி, அதன் ச்கிரிப்ட் (kara-templater.lua) ஏற்றப்பட்டதும் திறந்த வசனக் கோப்பில் இயங்கும்.</translation>
+        <source>The karaoke templater runs on an open subtitle file once the built-in Karaoke Templater has loaded.</source>
+        <translation>உள்ளமைந்த Karaoke Templater ஏற்றப்பட்டதும், கரோக்கி வார்ப்புருவாக்கி திறந்த வசனக் கோப்பில் இயங்கும்.</translation>
     </message>
     <message>
         <source>Templates</source>

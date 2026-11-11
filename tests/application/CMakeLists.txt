@@ -44,6 +44,8 @@ hikari_add_gtest(hikari_application_grid_commands_tests SOURCES grid_commands_te
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_grid_clipboard_tests SOURCES grid_clipboard_tests.cpp
     LIBRARIES hikari_application LABELS application)
+hikari_add_gtest(hikari_application_lyrics_insert_tests SOURCES lyrics_insert_tests.cpp
+    LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_grid_filtering_tests SOURCES grid_filtering_tests.cpp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_grid_groups_tests SOURCES grid_groups_tests.cpp
@@ -258,4 +260,9 @@ hikari_add_gtest(hikari_application_gradient_tests SOURCES gradient_tests.cpp
 hikari_add_gtest(hikari_application_visual_gradient_tests SOURCES visual_gradient_tests.cpp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_karaoke_layout_tests SOURCES karaoke_layout_tests.cpp
+    LIBRARIES hikari_application LABELS application)
+hikari_add_gtest(hikari_application_karaoke_templates_tests SOURCES karaoke_templates_tests.cpp
+    LIBRARIES hikari_application LABELS application)
+
+hikari_add_gtest(hikari_application_tag_removal_tests SOURCES tag_removal_tests.cpp
     LIBRARIES hikari_application LABELS application)

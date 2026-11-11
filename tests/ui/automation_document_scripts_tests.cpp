@@ -1,4 +1,5 @@
 #include "hikari/app/application.h"
+#include "hikari/application/automation_registry.h"
 #include "desktop_guard.h"
 #include "settings_store.h"
 
@@ -131,6 +132,46 @@ private slots:
     }
     void cleanup() { app.reset(); }
 
+    void aScriptWithTheBuiltinTemplatersMacrosIsUnloadedAndReportedOnce()
+    {
+        const std::string builtin(application::kBuiltinKaraokeTemplater);
+        const QString old = dir.filePath(QStringLiteral("kara-templater.lua"));
+        writeFile(old, "script_name = \"Old templater\"\n"
+                       "aegisub.register_macro(\"Apply karaoke template\", \"\", function() end)\n"
+                       "aegisub.register_macro(\"Mine\", \"\", function() end)\n");
+        app.reset();
+        auto o = options();
+        o.automationDir = QFileInfo(QStringLiteral(HIKARI_LUA_INCLUDE "/../..")).absoluteFilePath();
+        app = std::make_unique<app::Application>(o);
+        trustTheTestFolder();
+        const auto loaded = [&](const std::string &path) {
+            return std::ranges::any_of(app->automation().scripts(), [&](const auto &s) {
+                return s.path == path && s.state == application::ScriptStatus::State::Ready;
+            });
+        };
+        app->automation().load(builtin);
+        QTRY_VERIFY_WITH_TIMEOUT(loaded(builtin), 30'000);
+        auto *runs = app->automation().runs();
+        const int before = runs->count();
+        for (int round = 0; round < 2; ++round) {
+            app->automation().load(old.toStdString());
+            QTRY_VERIFY_WITH_TIMEOUT(settled(), 30'000);
+            QTRY_VERIFY(std::ranges::none_of(app->automation().scripts(),
+                                             [&](const auto &s) { return s.path == old.toStdString(); }));
+            QVERIFY(loaded(builtin));
+            QCOMPARE(runs->count(), before + 1);
+        }
+        const auto *run = runs->run(runs->idAt(0));
+        QVERIFY(run);
+        QCOMPARE(run->state, QStringLiteral("failed"));
+        QCOMPARE(run->script, QStringLiteral("kara-templater.lua"));
+        QVERIFY2(run->message.contains(QStringLiteral("Apply karaoke template")), qPrintable(run->message));
+        QVERIFY(!run->message.contains(QStringLiteral("Mine")));
+        QVERIFY(!app->automation().scripts().empty());
+        app->automation().unload(builtin);
+        QVERIFY(loaded(builtin));
+    }
+
     void autoloadScriptsCanBeTurnedOff()
     {
         QTemporaryDir shipped;
@@ -164,7 +205,8 @@ private slots:
         const auto loaded = [&] {
             QStringList paths;
             for (const auto &s : app->automation().scripts())
-                paths << QString::fromStdString(s.path);
+                if (!application::isBuiltinScript(s.path))
+                    paths << QString::fromStdString(s.path);
             return paths;
         };
         const auto row = [&](const QString &path) {
@@ -267,6 +309,35 @@ private slots:
         QVERIFY(!open("gone.ass", "|nothing.lua").isEmpty());
         app->automation().runLastLoadedScript();
         QCOMPARE(notices.size(), 2);
+    }
+
+    void aDocumentTooLargeForMacrosSaysSoAndChangesNothing()
+    {
+        const QString script = dir.filePath(QStringLiteral("big.lua"));
+        writeFile(script, prefixScript("Big"));
+        const QString path = dir.filePath(QStringLiteral("big.ass"));
+        QByteArray bytes = assWith("|" + QDir::toNativeSeparators(script).toUtf8());
+        const QByteArray body(1000, 'x');
+        for (int i = 0; i < 70'000; ++i)
+            bytes += "Dialogue: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,," + body + "\n";
+        writeFile(path, bytes);
+        QVERIFY(app->openFile(path));
+        QSignalSpy notices(&app->automation(), &app::AutomationShell::notice);
+        const auto steps = session().historySize();
+        app->automation().runLastLoadedScript();
+        QTRY_COMPARE_WITH_TIMEOUT(notices.size(), 1, 60'000);
+        QCOMPARE(notices.first().at(0).toString(), QStringLiteral("error"));
+        QCOMPARE(notices.first().at(1).toString(), QStringLiteral("Run the last loaded script"));
+        const QString text = notices.first().at(2).toString();
+        QVERIFY2(text.startsWith(QStringLiteral("“Prefix Big” can’t run on this document: it needs ")), qPrintable(text));
+        QVERIFY2(text.endsWith(QStringLiteral(" MB, and a macro can use at most 64 MB.")), qPrintable(text));
+        QCOMPARE(notices.first().at(3).toString(),
+                 QStringLiteral("Run the macro on a smaller file, for example a copy with only the lines it needs."));
+        QCOMPARE(app->automation().lastMessage(), text);
+        QCOMPARE(firstText(), std::string("Gate"));
+        QCOMPARE(session().historySize(), steps);
+        QVERIFY(!session().isReadOnly());
+        QVERIFY(!app->automation().busy());
     }
 
     void validationFailureIsReported()

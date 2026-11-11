@@ -94,6 +94,39 @@ TEST(AutomationRegistry, LegacyAliasesResolveOnlyWhenUnambiguous)
     EXPECT_EQ(registry.resolve("tools.lua:1", recorded).problem, AliasProblem::RegistrationChanged);
 }
 
+TEST(AutomationRegistry, TheBuiltinTemplaterKeepsKaraTemplaterLuasAliases)
+{
+    const std::string builtin(hikari::application::kBuiltinKaraokeTemplater);
+    EXPECT_TRUE(hikari::application::isBuiltinScript(builtin));
+    EXPECT_FALSE(hikari::application::isBuiltinScript("/a/kara-templater.lua"));
+    EXPECT_EQ(hikari::application::scriptFileName(builtin), "kara-templater.lua");
+    EXPECT_EQ(hikari::application::scriptFileName("/a/b/tools.lua"), "tools.lua");
+    AutomationRegistry registry;
+    registry.setScript({builtin, "", {"Apply karaoke template", "Apply karaoke template to selected lines"}});
+    const auto selected = registry.resolve("kara-templater.lua:1");
+    ASSERT_TRUE(selected.identity);
+    EXPECT_EQ(selected.identity->scriptPath, builtin);
+    EXPECT_EQ(selected.identity->legacyAlias(), "kara-templater.lua:1");
+}
+
+TEST_F(Manager, TheBuiltinTemplaterLoadsWithoutAFile)
+{
+    const std::string builtin(hikari::application::kBuiltinKaraokeTemplater);
+    manager.load(builtin);
+    ASSERT_TRUE(settled(builtin));
+    const ScriptStatus s = status(builtin);
+    ASSERT_EQ(s.state, ScriptStatus::State::Ready) << s.error;
+    EXPECT_EQ(s.info.name, "Karaoke Templater");
+    ASSERT_EQ(s.info.macros.size(), 2u);
+    EXPECT_EQ(s.info.macros[0].name, "Apply karaoke template");
+    EXPECT_EQ(s.info.macros[1].name, "Apply karaoke template to selected lines");
+    EXPECT_TRUE(s.info.macros[0].hasValidate && s.info.macros[1].hasValidate);
+    EXPECT_FALSE(manager.modifiedSinceLoad(builtin));
+    EXPECT_TRUE(manager.reload(builtin));
+    ASSERT_TRUE(settled(builtin));
+    EXPECT_EQ(status(builtin).state, ScriptStatus::State::Ready);
+}
+
 TEST_F(Manager, ScriptsKeepLoadOrderAndMacrosRegistrationOrder)
 {
     const auto a = fixture("host-fixture.lua");
