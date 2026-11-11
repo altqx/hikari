@@ -67,12 +67,13 @@ void Application::applyWindowProject(int shellWindow)
                                                             "kept as %2.")
                                     .arg(QString::fromStdString(application::displayPath(problem.file)),
                                          QString::fromStdString(application::displayPath(problem.keptAs))),
-                          QString::fromStdString(problem.failure.message));
+                          QString::fromStdString(problem.failure.message), shellWindow);
         for (const auto &id : project->refused())
             m_log->notice(ui::LogController::Warning, title,
                           QCoreApplication::translate("HikariSub.Project",
                                                       "A Project can’t set %1, so the project file’s value is ignored.")
-                              .arg(QString::fromStdString(id)));
+                              .arg(QString::fromStdString(id)),
+                          {}, shellWindow);
     }
     const bool moveTags = v.settings->settings().boolean("translation.autoMoveTagsFromOriginal");
     v.editor->setMoveTags(moveTags);

@@ -9,6 +9,7 @@ Item {
     required property QtObject automation
     property ToastStack toasts: null
     property MessageHost messages: null
+    property bool active: true
 
     property int asking: 0
     property string pendingScript: ""
@@ -28,6 +29,7 @@ Item {
 
     Connections {
         target: notices.automation
+        enabled: notices.active
         function onNotice(severity, title, text, details) {
             if (severity !== "error") {
                 if (notices.toasts)
