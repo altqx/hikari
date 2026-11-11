@@ -9878,7 +9878,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Adds template lines after the graph line that make the same lines in Aegisub&apos;s karaoke templater.</source>
+        <source>Adds template lines after the graph line that make the same lines in Aegisub’s karaoke templater.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -9902,7 +9902,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>These nodes have no form in a karaoke template, so the graph can&apos;t be exported:</source>
+        <source>These nodes have no form in a karaoke template, so the graph can’t be exported:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

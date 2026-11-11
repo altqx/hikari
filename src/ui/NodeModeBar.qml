@@ -289,7 +289,7 @@ Rectangle {
             objectName: "nodeMenuExport"
             iconRole: "export"
             text: qsTr("Export as template lines")
-            help: qsTr("Adds template lines after the graph line that make the same lines in Aegisub's karaoke templater.")
+            help: qsTr("Adds template lines after the graph line that make the same lines in Aegisub’s karaoke templater.")
             enabled: root.controller.hasGraph && root.controller.editable
             onTriggered: {
                 const blockers = root.controller.exportAsTemplate()
@@ -347,7 +347,7 @@ Rectangle {
                 Layout.fillWidth: true
                 wrapMode: Text.Wrap
                 font.bold: true
-                text: qsTr("These nodes have no form in a karaoke template, so the graph can't be exported:")
+                text: qsTr("These nodes have no form in a karaoke template, so the graph can’t be exported:")
             }
             Repeater {
                 model: exportPopup.blockers
