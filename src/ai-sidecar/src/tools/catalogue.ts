@@ -73,6 +73,13 @@ const kPlacements: Partial<Record<OperationName, Placement>> = {
     "video.colours": { group: "typeset" },
     "video.keyframes": { group: "typeset" },
     "audio.peaks": { group: "karaoke" },
+    "automation.run": {
+        group: "automation",
+        description: "Runs a Lua Automation script you write, as one macro on the active tab's selection, after the " +
+            "user reads and approves it; every run asks again. Write a complete script: script_name, then " +
+            "aegisub.register_macro(name, description, fn(subs, sel, active)), changing Lines through subs. " +
+            "DependencyControl modules may be required. Prefer document_apply when no Lua is needed.",
+    },
     "nodes.catalogue": { group: "effects" },
     "nodes.validate": { group: "effects" },
     "panels.list": { group: "app" },

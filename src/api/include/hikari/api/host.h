@@ -9,6 +9,7 @@
 #include "hikari/application/subtitle_render.h"
 #include "hikari/application/workspace.h"
 
+#include <functional>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -98,6 +99,29 @@ public:
                                                             std::int64_t frame, int width, int height) = 0;
 };
 
+struct LuaScript {
+    std::string name; // the file's stem in the AI scripts folder
+    std::string text;
+    std::string macro; // empty: the script's first macro
+};
+
+struct LuaRun {
+    std::string outcome; // "applied", "refused", "failed", "cancelled", "declined", "stopped", "lost" or "invalid"
+    std::string message;
+    std::string log;
+    std::string file;
+};
+
+enum class LuaStart { Started, Busy, NoDocument, NotSaved };
+
+// Runs AI-written Lua the user approved as an ordinary Automation macro on the editing target.
+class AutomationHost {
+public:
+    virtual ~AutomationHost() = default;
+    // `done` runs once, later, only when this answers Started.
+    virtual LuaStart run(const LuaScript &script, std::function<void(LuaRun)> done) = 0;
+};
+
 // A missing port makes its operations answer unavailable.
 struct Host {
     DocumentHost *documents = nullptr;
@@ -109,6 +133,7 @@ struct Host {
     application::AiReview *review = nullptr;
     RenderHost *render = nullptr;
     SkillHost *skills = nullptr;
+    AutomationHost *automation = nullptr;
 };
 
 }
