@@ -940,7 +940,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         hooks.clipboard = [] { return QGuiApplication::clipboard()->text(); };
         m_videoAnalysis = std::make_unique<VideoAnalysisController>(std::move(hooks));
         connect(m_videoAnalysis.get(), &VideoAnalysisController::previewChanged, this, [this] {
-            if (m_videoShowsTemplate || m_videoAnalysis->videoPreview())
+            if (activeMedia().videoShowsTemplate || m_videoAnalysis->videoPreview())
                 showVideoSubtitles();
         });
     }
