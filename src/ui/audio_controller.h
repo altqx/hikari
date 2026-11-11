@@ -169,6 +169,7 @@ public:
     void setPlayer(application::AudioPlayerPort *player);
     void setPlaybackSettings(std::function<int()> markPlayTimeMs);
     void setVideoPlayback(std::function<bool()> playing, std::function<void()> pause);
+    void setBeforePlay(std::function<void()> beforePlay) { m_beforePlay = std::move(beforePlay); }
     bool playing() const { return m_player && m_player->playing(); }
     Q_INVOKABLE void playSelection() { play(application::PlayMode::Selection); }
     void followLine(bool moveToEnd) { update(moveToEnd); }
@@ -420,6 +421,7 @@ private:
     std::function<int()> m_markPlayTime;
     std::function<bool()> m_videoPlaying;
     std::function<void()> m_pauseVideo;
+    std::function<void()> m_beforePlay;
     std::optional<application::PlayRange> m_lastRange;
     QTimer m_playTimer;
     bool m_wasPlaying = false;

@@ -96,39 +96,39 @@ bool Application::isVideoAudio(const QString &audio, const QString &videoPath)
     return QDir::toNativeSeparators(audio) == QDir::toNativeSeparators(videoPath) || audio == dummyVideoAudio(videoPath);
 }
 
-void Application::syncAudioWithVideo()
+void Application::syncAudioWithVideo(WindowMedia &media)
 {
-    const auto &video = activeMedia().video->session();
+    const auto &video = media.video->session();
     const bool ready = video.state() == application::VideoSession::State::Ready;
-    activeMedia().audio->setPlayingVideoTime(ready && video.playing() ? std::optional(video.tellMs()) : std::nullopt);
-    if (!ready || video.playing() || !activeMedia().audio->playing() || !activeMedia().audio->syncVideo()) {
-        m_audioWantsFrame.reset();
+    media.audio->setPlayingVideoTime(ready && video.playing() ? std::optional(video.tellMs()) : std::nullopt);
+    if (!ready || video.playing() || !media.audio->playing() || !media.audio->syncVideo()) {
+        media.audioWantsFrame.reset();
         return;
     }
-    if (m_audioWantsFrame && video.requestedFrame() == video.shownFrame()) {
-        const int frame = *std::exchange(m_audioWantsFrame, std::nullopt);
+    if (media.audioWantsFrame && video.requestedFrame() == video.shownFrame()) {
+        const int frame = *std::exchange(media.audioWantsFrame, std::nullopt);
         if (frame != video.requestedFrame())
-            activeMedia().video->session().showFrame(frame);
+            media.video->session().showFrame(frame);
     }
 }
 
-void Application::showVideoAtAudio(int ms)
+void Application::showVideoAtAudio(WindowMedia &media, int ms)
 {
-    auto &video = activeMedia().video->session();
+    auto &video = media.video->session();
     if (video.state() != application::VideoSession::State::Ready || video.playing() || video.frameCount() <= 0
-        || !m_audioTimebase || m_audioTimebasePath != video.path()
-        || m_audioTimebaseSerial != video.frameTimesSerial())
+        || !media.audioTimebase || media.audioTimebasePath != video.path()
+        || media.audioTimebaseSerial != video.frameTimesSerial())
         return;
-    const int frame = std::clamp(m_audioTimebase->frameShownAt(ms), 0, video.frameCount() - 1);
+    const int frame = std::clamp(media.audioTimebase->frameShownAt(ms), 0, video.frameCount() - 1);
     if (frame == video.requestedFrame()) {
-        m_audioWantsFrame.reset();
+        media.audioWantsFrame.reset();
         return;
     }
     if (video.requestedFrame() != video.shownFrame()) {
-        m_audioWantsFrame = frame;
+        media.audioWantsFrame = frame;
         return;
     }
-    m_audioWantsFrame.reset();
+    media.audioWantsFrame.reset();
     video.showFrame(frame);
 }
 
