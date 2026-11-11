@@ -1,0 +1,27 @@
+[Script Info]
+; TH5c: code word/char/furichar, the unit tables and the template environment; compared against upstream karaOK f749c4fa64e7
+Title: TH5c corpus karaOK code word and char
+ScriptType: v4.00+
+WrapStyle: 0
+PlayResX: 1280
+PlayResY: 720
+ScaledBorderAndShadow: yes
+Karaoke Templater: karaOK
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Romaji,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,8,20,20,20,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Comment: 0,0:00:00.00,0:00:05.00,Romaji,,0,0,0,code once,words, chars = 0, 0
+Comment: 0,0:00:00.00,0:00:05.00,Romaji,,0,0,0,code word,words = words + 1
+Comment: 0,0:00:00.00,0:00:05.00,Romaji,,0,0,0,code char,chars = chars + 1
+Comment: 0,0:00:00.00,0:00:05.00,Romaji,,0,0,0,template word,{\pos($x,$y)}!words!/!word.text!/!#word.chars!/!word.kara.n!/!word.wi or ""!/
+Comment: 0,0:00:00.00,0:00:05.00,Romaji,,0,0,0,template char,{\pos($x,$y)}!chars!/!syll.text!/!char.wi!/!char.si!/!char.word.text!/
+Comment: 0,0:00:00.00,0:00:05.00,Romaji,,0,0,0,template syl,!syll.i!/!syl.word.text!/!#syl.chars!/!line.length!/!orgline.words.n!/!orgline.chars.n!/
+Comment: 0,0:00:00.00,0:00:05.00,Romaji,,0,0,0,template line,!line.text:len()!/!type(subs)!/!table.concat({1,2},"-")!/!tonumber("5")!/!tostring(true)!/
+Comment: 0,0:00:00.00,0:00:05.00,Romaji,,0,0,0,code line,keys = 0 for _ in pairs({a=1, b=2}) do keys = keys + 1 end for _ in ipairs({1}) do keys = keys + 1 end
+Comment: 0,0:00:00.00,0:00:05.00,Romaji,,0,0,0,template lword,!keys!
+Dialogue: 0,0:00:01.00,0:00:04.00,Romaji,,0,0,0,,{\k32}ha{\k28}ru{\k0} {\k41}no{\k0} {\k25}ka{\k30}ze
+Dialogue: 0,0:00:05.00,0:00:06.00,Romaji,,0,0,0,,{\k20}one {\k30}two{\k25}three

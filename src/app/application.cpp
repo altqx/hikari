@@ -317,7 +317,7 @@ public:
                                     ? ui::LogController::Warning
                                     : ui::LogController::Info,
                                 shown.value(QStringLiteral("title")).toString(),
-                                shown.value(QStringLiteral("text")).toString());
+                                shown.value(QStringLiteral("text")).toString(), {}, m_window);
             reply(0);
             return;
         }
@@ -403,7 +403,7 @@ public:
         using K = application::FindLog::Kind;
         const bool error = line.kind == K::InvalidRegex || line.kind == K::ReplaceHidden;
         m_app.m_log->notice(error ? ui::LogController::Error : ui::LogController::Warning,
-                            QCoreApplication::translate("HikariSub.Search", "Find"), logText(line));
+                            QCoreApplication::translate("HikariSub.Search", "Find"), logText(line), {}, m_window);
     }
     static QString logText(const application::FindLog &line)
     {
@@ -487,7 +487,7 @@ public:
             QFile in(name);
             if (!in.open(QIODevice::ReadOnly)) {
                 m_app.m_log->notice(ui::LogController::Error, QCoreApplication::translate("HikariSub.Search", "Replace in files"),
-                                    QCoreApplication::translate("HikariSub.Search", "Cannot open file %1.").arg(name));
+                                    QCoreApplication::translate("HikariSub.Search", "Cannot open file %1.").arg(name), {}, m_window);
                 return false;
             }
             original = in.readAll();
@@ -506,11 +506,13 @@ public:
             return true;
         const QString title = QCoreApplication::translate("HikariSub.Search", "Replace in files");
         m_app.m_log->notice(ui::LogController::Error, title,
-                            QCoreApplication::translate("HikariSub.Search", "Cannot write file %1; it was left as it was.").arg(name));
+                            QCoreApplication::translate("HikariSub.Search", "Cannot write file %1; it was left as it was.").arg(name), {},
+                            m_window);
         if (!write(original))
             m_app.m_log->notice(ui::LogController::Error, title,
                                 QCoreApplication::translate("HikariSub.Search", "%1 could not be restored; its backup is in %2.")
-                                    .arg(name, m_app.m_replaceBackup));
+                                    .arg(name, m_app.m_replaceBackup),
+                                {}, m_window);
         return false;
     }
     void openFile(const std::u8string &path, std::function<void(std::optional<application::DocumentId>)> done) override
@@ -611,6 +613,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         return backends::lyricsUtf8(bytes, backends::detectLyricsEncoding(bytes));
     });
     m_log = std::make_unique<ui::LogController>();
+    m_log->setActiveWindow([this] { return m_workspace.activeWindow(); });
     m_mediaHelper = mediaHelperPath(options.mediaHelper);
     m_playbackAudio = options.playbackAudio;
     m_renderer.setCsriFolder(std::filesystem::path(QCoreApplication::applicationDirPath().toStdU16String()) / u"Csri");
@@ -775,6 +778,12 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_agent = std::make_unique<AgentController>(AgentController::Wiring{
         *m_ai, *m_settings, m_apiHost->api(), m_apiHost->review(), m_workspace, *m_files, m_userFolder, {},
         m_aiScripts.get(), m_automation.get()});
+    m_inlineAi = std::make_unique<InlineAiController>(InlineAiController::Wiring{
+        *m_ai, *m_settings, m_apiHost->api(), m_apiHost->review(), m_workspace, *m_files, *m_agent,
+        [this](application::DocumentId document, core::LineId line) {
+            if (m_workspace.editingTarget() == document)
+                applySelection(application::Selection{line, {line}, line, {}});
+        }});
     const auto hideAiCommands = [this] {
         m_hotkeys->setHidden([this](int id) { return !m_ai->on() && application::aiCommand(id); });
     };
@@ -2329,6 +2338,7 @@ void Application::protectReference()
 void Application::refreshViews()
 {
     noteLastUsedWindow();
+    noteCrashWindows();
     protectReference();
     showTabArrangement(m_workspace.activeWindow());
     for (const int window : sessionWindows())
@@ -2347,6 +2357,8 @@ void Application::refreshViews()
         m_review->refreshed();
     if (m_agent)
         m_agent->refreshed();
+    if (m_inlineAi)
+        m_inlineAi->refreshed();
     shell().setShowOriginal(target && showOriginal(*target), reference && showOriginal(*reference));
     shell().refresh(targetSession ? &targetSession->document() : nullptr,
                      referenceSession ? &referenceSession->document() : nullptr,
@@ -2462,6 +2474,10 @@ bool Application::showVideoSubtitles()
         templated = templateEditor().videoDocument(draft ? *draft : session->document(), ms, video.playing());
         const auto window = templateEditor().videoWindow(ms, video.playing());
         activeMedia().templateWindow = std::pair(window.fromMs, window.toMs);
+    } else if (!m_interpolationPreview.empty()) {
+        templated = draft ? *draft : session->document();
+        for (const auto &[id, text] : m_interpolationPreview)
+            templated->editLine(id, [&](core::LineRecord &l) { l.text = text; });
     }
     if (draft || templated || activeMedia().videoShowsDraft || activeMedia().videoShowsTemplate || session->revision() != activeMedia().videoRevision) {
         if (session->revision() != activeMedia().videoRevision)
@@ -2760,7 +2776,8 @@ void Application::writeFinished(const application::WriteResult &result)
         if (result.outcome == application::WriteOutcome::Failed)
             m_log->notice(ui::LogController::Error, fileTitle(result.destination.value),
                           QCoreApplication::translate("HikariSub.Editor", "Save failed; the file on disk is unchanged"),
-                          QDir::toNativeSeparators(QString::fromStdString(result.destination.value)));
+                          QDir::toNativeSeparators(QString::fromStdString(result.destination.value)),
+                          windowOfTab(result.document.value));
         emit documentWriteFailed(result.document.value);
     }
     if (result.outcome == application::WriteOutcome::Written) {
@@ -3068,7 +3085,8 @@ bool Application::saveDocument(qulonglong id)
     const QString name = title ? QString::fromStdString(*title) : QString();
     if (!plan || !m_files->startSave(std::move(*plan))) {
         m_log->notice(ui::LogController::Error, QCoreApplication::translate("HikariSub.Documents", "Save"),
-                      QCoreApplication::translate("HikariSub.Documents", "%1 could not be saved.").arg(name));
+                      QCoreApplication::translate("HikariSub.Documents", "%1 could not be saved.").arg(name), {},
+                      windowOfTab(id));
         return false;
     }
     refreshViews();
@@ -6486,9 +6504,20 @@ void Application::noteLastUsedWindow()
         emit lastUsedWindowChanged();
 }
 
+void Application::noteCrashWindows()
+{
+    if (!m_crashReports)
+        return;
+    QList<report::Window> windows;
+    for (const int window : sessionWindows())
+        windows << report::Window{static_cast<int>(m_workspace.tabs(window).size()), window == m_workspace.activeWindow()};
+    m_crashReports->setWindows(windows);
+}
+
 void Application::shellWindowClosed(int shellWindow)
 {
     forgetShellWindow(shellWindow);
+    noteCrashWindows();
     saveLastSession();
 }
 
@@ -6565,6 +6594,7 @@ QVariantMap Application::qmlProperties(int shellWindow)
             {QStringLiteral("matroska"), QVariant::fromValue(static_cast<QObject *>(m_matroska.get()))},
             {QStringLiteral("review"), QVariant::fromValue(static_cast<QObject *>(m_review.get()))},
             {QStringLiteral("agent"), QVariant::fromValue(static_cast<QObject *>(m_agent.get()))},
+            {QStringLiteral("inlineAi"), QVariant::fromValue(static_cast<QObject *>(m_inlineAi.get()))},
             {QStringLiteral("app"), QVariant::fromValue(static_cast<QObject *>(this))}};
 }
 

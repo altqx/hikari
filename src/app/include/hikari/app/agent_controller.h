@@ -121,6 +121,8 @@ public:
     bool costMeter() const;
     bool fullAccessWarned() const;
     double spentToday() const;
+    /// Counts toward the day's cap with the threads' spending; inline actions use it.
+    void spend(double dollars);
     double dailyCap() const;
     double threadCap() const;
     bool webSearchShown() const;

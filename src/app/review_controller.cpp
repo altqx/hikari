@@ -73,6 +73,8 @@ absl::flat_hash_map<std::uint64_t, int> rowsOf(const core::Document &document)
     return rows;
 }
 
+}
+
 QString diffHtml(const QString &before, const QString &after)
 {
     const auto view = [](const QString &text) {
@@ -94,8 +96,6 @@ QString diffHtml(const QString &before, const QString &after)
         }
     }
     return html;
-}
-
 }
 
 ReviewController::ReviewController(Wiring wiring, QObject *parent) : QObject(parent), m_wiring(std::move(wiring)) {}

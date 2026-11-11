@@ -414,6 +414,14 @@ double AgentController::spentToday() const
     return m_threads ? m_threads->spentToday() : 0.0;
 }
 
+void AgentController::spend(double dollars)
+{
+    if (!m_store || dollars <= 0)
+        return;
+    m_store->spend(QDate::currentDate(), dollars);
+    emit threadChanged();
+}
+
 double AgentController::dailyCap() const
 {
     return static_cast<double>(m_wiring.settings.integer64(kDailyCapSetting)) / 100.0;
