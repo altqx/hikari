@@ -103,6 +103,10 @@ target_compile_definitions(hikari_ui_automation_manager_tests PRIVATE
     HIKARI_LUA_FIXTURES="${PROJECT_SOURCE_DIR}/tests/backends/lua-fixtures"
     HIKARI_LUA_INCLUDE="${PROJECT_SOURCE_DIR}/Automation/automation/Include")
 add_dependencies(hikari_ui_automation_manager_tests hikari_lua_helper)
+hikari_add_qttest(hikari_ui_split_render_tests SOURCES split_render_tests.cpp
+    LIBRARIES hikari_ui hikari_backends)
+target_compile_definitions(hikari_ui_split_render_tests PRIVATE
+    HIKARI_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-${HIKARI_QT_VERSION}/quickcontrols/wearable/WearableStyle/fonts/TitilliumWeb-Regular.ttf")
 hikari_add_qttest(hikari_ui_automation_services_tests SOURCES automation_services_ui_tests.cpp
     LIBRARIES hikari_ui hikari_uiplugin hikari_backends)
 target_compile_definitions(hikari_ui_automation_services_tests PRIVATE

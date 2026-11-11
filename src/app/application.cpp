@@ -4118,7 +4118,8 @@ bool Application::splitLines(const QString &kind)
     const auto text = kind == QLatin1String("chars")   ? application::SplitText::Characters
                       : kind == QLatin1String("words") ? application::SplitText::Words
                       : kind == QLatin1String("wraps") ? application::SplitText::Wraps
-                                                       : std::optional<application::SplitText>();
+                      : kind == QLatin1String("tagBlocks") ? application::SplitText::TagBlocks
+                                                           : std::optional<application::SplitText>();
     if (!text)
         return false;
     const application::WordSegments words = [](std::u16string_view view) {
@@ -4139,6 +4140,13 @@ bool Application::splitLines(const QString &kind)
     };
     ui::QtTextMeasurePort measure;
     return runFilter([&](application::EditSession &s) { return application::splitByText(s, *text, measure, words, shown); });
+}
+
+bool Application::splitEvery(int count, bool seconds)
+{
+    const auto timebase = activeMedia().video->session().legacyTimebase();
+    const auto unit = seconds ? application::SplitUnit::Seconds : application::SplitUnit::Frames;
+    return runFilter([&](application::EditSession &s) { return application::splitEvery(s, timebase, count, unit, shownLines()); });
 }
 
 bool Application::canPasteTranslation() const
@@ -4439,7 +4447,8 @@ application::SelectLinesSettings selectSettings(const QVariantMap &m, int option
     s.with = m.value(QStringLiteral("with"), s.with).toBool();
     s.matchCase = m.value(QStringLiteral("matchCase"), s.matchCase).toBool();
     s.regex = m.value(QStringLiteral("regex"), s.regex).toBool();
-    s.field = static_cast<S::Field>(std::clamp(m.value(QStringLiteral("field"), int(s.field)).toInt(), 0, 5));
+    s.field = static_cast<S::Field>(std::clamp(m.value(QStringLiteral("field"), int(s.field)).toInt(), 0,
+                                               int(S::Field::Overlaps)));
     s.dialogues = m.value(QStringLiteral("dialogues"), s.dialogues).toBool();
     s.comments = m.value(QStringLiteral("comments"), s.comments).toBool();
     s.mode = static_cast<S::Mode>(std::clamp(m.value(QStringLiteral("mode"), int(s.mode)).toInt(), 0, 2));

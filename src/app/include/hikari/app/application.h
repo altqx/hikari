@@ -447,8 +447,10 @@ public:
     Q_INVOKABLE int removeAutosavesOlderThan(const QDate &date);
     bool autosaveNow();
     bool autosavePending(application::DocumentId document) const;
-    // kind: "videoTime" or "frames".
+    // kind: "videoTime", "frames", "chars", "words", "wraps" or "tagBlocks".
     Q_INVOKABLE bool splitLines(const QString &kind);
+    // Each selected Line in pieces of `count` frames, or seconds; frames need video.
+    Q_INVOKABLE bool splitEvery(int count, bool seconds);
     Q_INVOKABLE bool canPasteTranslation() const;
     Q_INVOKABLE QUrl targetFolder() const;
     Q_INVOKABLE bool pasteTranslationFile(const QUrl &file);

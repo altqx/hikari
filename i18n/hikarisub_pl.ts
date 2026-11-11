@@ -5983,6 +5983,42 @@ Nie udało się skopiować czcionek: %2.</translation>
         <source>Copy</source>
         <translation>Kopiuj</translation>
     </message>
+    <message>
+        <source>At tag blocks</source>
+        <translation>Na blokach tagów</translation>
+    </message>
+    <message>
+        <source>Every N frames or seconds…</source>
+        <translation>Co N klatek lub sekund…</translation>
+    </message>
+    <message>
+        <source>Split every</source>
+        <translation>Dziel co</translation>
+    </message>
+    <message>
+        <source>Every</source>
+        <translation>Co</translation>
+    </message>
+    <message>
+        <source>Piece length</source>
+        <translation>Długość części</translation>
+    </message>
+    <message>
+        <source>Frames</source>
+        <translation>Klatki</translation>
+    </message>
+    <message>
+        <source>Seconds</source>
+        <translation>Sekundy</translation>
+    </message>
+    <message>
+        <source>Unit</source>
+        <translation>Jednostka</translation>
+    </message>
+    <message>
+        <source>Frames need a video.</source>
+        <translation>Klatki wymagają wideo.</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Home</name>
@@ -7576,6 +7612,14 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Align to video…</source>
         <translation>Dopasuj do wideo…</translation>
+    </message>
+    <message>
+        <source>Split lines at tag blocks</source>
+        <translation>Podziel linijki na blokach tagów</translation>
+    </message>
+    <message>
+        <source>Split lines every N frames or seconds…</source>
+        <translation>Dziel linijki co N klatek lub sekund…</translation>
     </message>
 </context>
 <context>
@@ -15831,6 +15875,10 @@ ponieważ została zmieniona.</translation>
     <message>
         <source>%1 lines deselected.</source>
         <translation>Odznaczono linijek: %1.</translation>
+    </message>
+    <message>
+        <source>Overlapping lines</source>
+        <translation>Nakładające się linijki</translation>
     </message>
 </context>
 <context>

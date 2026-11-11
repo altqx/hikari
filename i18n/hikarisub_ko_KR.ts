@@ -5873,6 +5873,42 @@ Failed to copy %2 fonts.</source>
         <source>Copy</source>
         <translation>복사</translation>
     </message>
+    <message>
+        <source>At tag blocks</source>
+        <translation>태그 블록마다</translation>
+    </message>
+    <message>
+        <source>Every N frames or seconds…</source>
+        <translation>N 프레임 또는 N초마다…</translation>
+    </message>
+    <message>
+        <source>Split every</source>
+        <translation>일정 간격으로 나누기</translation>
+    </message>
+    <message>
+        <source>Every</source>
+        <translation>간격</translation>
+    </message>
+    <message>
+        <source>Piece length</source>
+        <translation>조각 길이</translation>
+    </message>
+    <message>
+        <source>Frames</source>
+        <translation>프레임</translation>
+    </message>
+    <message>
+        <source>Seconds</source>
+        <translation>초</translation>
+    </message>
+    <message>
+        <source>Unit</source>
+        <translation>단위</translation>
+    </message>
+    <message>
+        <source>Frames need a video.</source>
+        <translation>프레임 단위는 영상이 있어야 합니다.</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Home</name>
@@ -7464,6 +7500,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Align to video…</source>
         <translation>영상에 맞추기…</translation>
+    </message>
+    <message>
+        <source>Split lines at tag blocks</source>
+        <translation>태그 블록에서 줄 나누기</translation>
+    </message>
+    <message>
+        <source>Split lines every N frames or seconds…</source>
+        <translation>N 프레임 또는 N초마다 줄 나누기…</translation>
     </message>
 </context>
 <context>
@@ -15611,6 +15655,10 @@ because it was edited.</source>
     <message>
         <source>%1 lines deselected.</source>
         <translation>%1개 줄의 선택을 해제했습니다.</translation>
+    </message>
+    <message>
+        <source>Overlapping lines</source>
+        <translation>겹치는 줄</translation>
     </message>
 </context>
 <context>

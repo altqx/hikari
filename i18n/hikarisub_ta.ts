@@ -5928,6 +5928,42 @@ Failed to copy %2 fonts.</source>
         <source>Copy</source>
         <translation>நகலெடு</translation>
     </message>
+    <message>
+        <source>At tag blocks</source>
+        <translation>குறிச்சொல் தொகுதிகளில்</translation>
+    </message>
+    <message>
+        <source>Every N frames or seconds…</source>
+        <translation>ஒவ்வொரு N சட்டகம் அல்லது வினாடிக்கும்…</translation>
+    </message>
+    <message>
+        <source>Split every</source>
+        <translation>இடைவெளியில் பிரி</translation>
+    </message>
+    <message>
+        <source>Every</source>
+        <translation>ஒவ்வொரு</translation>
+    </message>
+    <message>
+        <source>Piece length</source>
+        <translation>துண்டின் நீளம்</translation>
+    </message>
+    <message>
+        <source>Frames</source>
+        <translation>சட்டகங்கள்</translation>
+    </message>
+    <message>
+        <source>Seconds</source>
+        <translation>வினாடிகள்</translation>
+    </message>
+    <message>
+        <source>Unit</source>
+        <translation>அலகு</translation>
+    </message>
+    <message>
+        <source>Frames need a video.</source>
+        <translation>சட்டகங்களுக்கு வீடியோ தேவை.</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Home</name>
@@ -7520,6 +7556,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Align to video…</source>
         <translation>வீடியோவுடன் சீரமை…</translation>
+    </message>
+    <message>
+        <source>Split lines at tag blocks</source>
+        <translation>குறிச்சொல் தொகுதிகளில் வரிகளைப் பிரி</translation>
+    </message>
+    <message>
+        <source>Split lines every N frames or seconds…</source>
+        <translation>ஒவ்வொரு N சட்டகம் அல்லது வினாடிக்கும் வரிகளைப் பிரி…</translation>
     </message>
 </context>
 <context>
@@ -15721,6 +15765,10 @@ because it was edited.</source>
     <message>
         <source>%1 lines deselected.</source>
         <translation>%1 வரிகள் தேர்வுநீக்கப்பட்டன.</translation>
+    </message>
+    <message>
+        <source>Overlapping lines</source>
+        <translation>ஒன்றின்மேல் ஒன்று வரும் வரிகள்</translation>
     </message>
 </context>
 <context>

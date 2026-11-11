@@ -5873,6 +5873,42 @@ Failed to copy %2 fonts.</source>
         <source>Copy</source>
         <translation>คัดลอก</translation>
     </message>
+    <message>
+        <source>At tag blocks</source>
+        <translation>ที่บล็อกแท็ก</translation>
+    </message>
+    <message>
+        <source>Every N frames or seconds…</source>
+        <translation>ทุก N เฟรมหรือวินาที…</translation>
+    </message>
+    <message>
+        <source>Split every</source>
+        <translation>แบ่งทุก</translation>
+    </message>
+    <message>
+        <source>Every</source>
+        <translation>ทุก</translation>
+    </message>
+    <message>
+        <source>Piece length</source>
+        <translation>ความยาวแต่ละส่วน</translation>
+    </message>
+    <message>
+        <source>Frames</source>
+        <translation>เฟรม</translation>
+    </message>
+    <message>
+        <source>Seconds</source>
+        <translation>วินาที</translation>
+    </message>
+    <message>
+        <source>Unit</source>
+        <translation>หน่วย</translation>
+    </message>
+    <message>
+        <source>Frames need a video.</source>
+        <translation>การใช้เฟรมต้องมีวิดีโอ</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Home</name>
@@ -7464,6 +7500,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Align to video…</source>
         <translation>จัดให้ตรงกับวิดีโอ…</translation>
+    </message>
+    <message>
+        <source>Split lines at tag blocks</source>
+        <translation>แบ่งบรรทัดที่บล็อกแท็ก</translation>
+    </message>
+    <message>
+        <source>Split lines every N frames or seconds…</source>
+        <translation>แบ่งบรรทัดทุก N เฟรมหรือวินาที…</translation>
     </message>
 </context>
 <context>
@@ -15611,6 +15655,10 @@ because it was edited.</source>
     <message>
         <source>%1 lines deselected.</source>
         <translation>ยกเลิกการเลือก %1 บรรทัดแล้ว</translation>
+    </message>
+    <message>
+        <source>Overlapping lines</source>
+        <translation>บรรทัดที่ซ้อนกัน</translation>
     </message>
 </context>
 <context>
