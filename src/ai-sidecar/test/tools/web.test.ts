@@ -163,6 +163,7 @@ describe("WebSearch", () => {
         const result = await search.call("web_search", { query: "a" });
         expect(result.isError).toBe(true);
         expect(textOf(result)).toMatch(kind === "rateLimited" ? /no searches left/ : /refused HikariSub's key/);
+        expect(result.searchFailure).toEqual({ service, reason: kind === "rateLimited" ? "usedUp" : "key", httpStatus: status });
         const error = await search.test(service).catch((e: unknown) => e);
         expect(error).toBeInstanceOf(ProviderError);
         expect((error as ProviderError).kind).toBe(kind);
@@ -227,7 +228,7 @@ describe("the sidecar", () => {
         expect(refused.error.data).toEqual({ kind: "rateLimited", httpStatus: 402, detail: "Payment required" });
         for (const params of [{}, { service: "google" }, null])
             expect((await ask(Method.searchTest, params)).error.code).toBe(ErrorCode.invalidParams);
-        expect(relay.sent.map((r) => r.target.id)).toEqual(["tavily", "firecrawl"]);
+        expect(relay.sent.map((r) => r.target)).toEqual([{ kind: "search", id: "tavily" }, { kind: "search", id: "firecrawl" }]);
     });
 
     test("providers.set chooses the service the web tools search with", async () => {

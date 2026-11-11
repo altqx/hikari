@@ -23,6 +23,7 @@ set_source_files_properties(karaoke_layout.cpp node_effects.cpp PROPERTIES COMPI
     "$<$<CXX_COMPILER_ID:GNU,Clang>:-ffp-contract=off>;$<$<CXX_COMPILER_ID:MSVC>:/fp:precise>")
 target_sources(hikari_application PRIVATE guide_links.cpp include/hikari/application/guide_links.h)
 target_sources(hikari_application PRIVATE ai_providers.cpp include/hikari/application/ai_providers.h)
+target_sources(hikari_application PRIVATE search_suggestions.cpp include/hikari/application/search_suggestions.h)
 target_include_directories(hikari_application PUBLIC include)
 target_sources(hikari_application PRIVATE playback_pipeline.cpp yuv_bgra.cpp
     include/hikari/application/playback_pipeline.h include/hikari/application/yuv_bgra.h)

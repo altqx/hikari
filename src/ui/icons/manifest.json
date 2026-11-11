@@ -4591,8 +4591,7 @@
    "surfaces": [
     "agent-panel",
     "settings-dialog"
-   ],
-   "pending": "AI23b #800"
+   ]
   },
   {
    "role": "update",
@@ -5570,8 +5569,7 @@
    "legacy": [],
    "surfaces": [
     "agent-panel"
-   ],
-   "pending": "AI23b #800"
+   ]
   },
   {
    "role": "web-page-read",
@@ -5582,8 +5580,7 @@
    "legacy": [],
    "surfaces": [
     "agent-panel"
-   ],
-   "pending": "AI23b #800"
+   ]
   },
   {
    "role": "motion-apply",

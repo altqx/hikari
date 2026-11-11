@@ -74,8 +74,11 @@ class Inbox implements AsyncIterable<SDKUserMessage> {
     }
 }
 
-function content(parts: Part[]) {
-    return parts.flatMap((part) => {
+type ContentBlock = { type: "text"; text: string }
+    | { type: "image"; source: { type: "base64"; media_type: "image/png"; data: string } };
+
+function content(parts: Part[]): ContentBlock[] {
+    return parts.flatMap((part): ContentBlock[] => {
         if (part.type === "text")
             return [{ type: "text" as const, text: part.text }];
         if (part.type === "image")

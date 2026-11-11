@@ -617,6 +617,25 @@ TEST(SettingsImport, ShortHotkeyFileImportsItsValidBindings)
     EXPECT_FALSE(profile.values.contains(std::string(kAudioHotkeysSetting)));
 }
 
+TEST(SettingsImport, RenamedShortcutsImportByTheirSymbols)
+{
+    const Plan plan = buildPlan({hotkeys("GLOBAL_OPEN_ASS_PROPERTIES G=Ctrl-Alt-F2\r\nGLOBAL_OPEN_AUTO_SAVE G=Ctrl-Alt-F3\r\n"
+                                         "EDITBOX_CHANGE_FONT E=Ctrl-Alt-F4\r\n"),
+                                 audioHotkeys("AUDIO_COMMIT A=Ctrl-Alt-F5\r\nAUDIO_COMMIT_ALT A=Ctrl-Alt-F6\r\n")},
+                                linuxHost(), readBy(ReadBy::Windows));
+    const Profile profile = applyPlan(plan, proposedRows(plan), linuxHost());
+    HotkeyMap map;
+    readHotkeyLines(map, std::get<std::vector<std::string>>(profile.values.at(std::string(kHotkeysSetting))));
+    readHotkeyLines(map, std::get<std::vector<std::string>>(profile.values.at(std::string(kAudioHotkeysSetting))));
+    EXPECT_EQ(map.at(HotkeyId{hotkeyIdOf("GLOBAL_OPEN_ASS_PROPERTIES"), GlobalHotkey}).accel, "Ctrl-Alt-F2");
+    EXPECT_EQ(map.at(HotkeyId{hotkeyIdOf("GLOBAL_OPEN_AUTO_SAVE"), GlobalHotkey}).accel, "Ctrl-Alt-F3");
+    EXPECT_EQ(map.at(HotkeyId{hotkeyIdOf("EDITBOX_CHANGE_FONT"), EditorHotkey}).accel, "Ctrl-Alt-F4");
+    EXPECT_EQ(map.at(HotkeyId{hotkeyIdOf("AUDIO_COMMIT"), AudioHotkey}).accel, "Ctrl-Alt-F5");
+    EXPECT_EQ(map.at(HotkeyId{hotkeyIdOf("AUDIO_COMMIT_ALT"), AudioHotkey}).accel, "Ctrl-Alt-F6");
+    EXPECT_EQ(hotkeyName(hotkeyIdOf("AUDIO_COMMIT")), "Apply changes");
+    EXPECT_EQ(hotkeyName(hotkeyIdOf("EDITBOX_CHANGE_FONT")), "Choose font…");
+}
+
 TEST(SettingsImport, EmptyAndMalformedHotkeyFiles)
 {
     const Plan empty = buildPlan({hotkeys("")}, linuxHost(), readBy(ReadBy::Windows));
