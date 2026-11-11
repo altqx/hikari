@@ -95,6 +95,8 @@ The Explorer is core, not a plugin ([ADR 0022](0022-hikarisub-plugins.md), "Plug
 
 **Fonts.** `fonts = ["fonts", "../common/fonts"]` in `project.toml` names folders relative to the Project folder; `project.local.toml`'s list replaces it. Their fonts join that window's Documents after the fonts attached to the subtitle file and before the Fonts folder in Settings, so a Project font wins over a system or Fonts folder font of the same family. Attached fonts keep today's rules. The Font collector starts in the Project's first font folder (#774).
 
+The more specific source wins (attached, then Project, then the Fonts folder, then system), so a Project renders the same for everyone who opens it, whatever is in their own Fonts folder.
+
 ## Trust
 
 - **One Trusted folders list** replaces Automation's Trusted script folders. It sits on the General page and is kept as `trust.folders`; the old `automation.trustedFolders` moves there once (owner, 2026-11-10).
