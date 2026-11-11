@@ -1095,7 +1095,7 @@ icon("qc-notes", "QC notes", [], [VIEW, SUBS, "qc-notes"],
 icon("qc-done-reset", "Mark all as not done", [], ["qc-notes"], stroke("M1.5 7.5l3 3 6-7") + RELOAD_BADGE)
 icon("node-library", "From the library", [], ["node-editor"],
      stroke(BOOK) + accent(dot(7, 4.5, 1.25), dot(10, 8, 1.25), stroke("M7.75 5.5l1.5 1.5")))
-icon("compact", "Compact conversation", [], ["agent-panel"],
+icon("compact", "Compact conversation", [], ["agent-panel", "grid-menu"],
      stroke("M2.5 1.5h11M2.5 13.5h11M4.5 7.5h7")
      + accent(stroke("M8 3v2.5M6.5 4L8 5.5 9.5 4M8 12V9.5M6.5 11L8 9.5 9.5 11")))
 icon("review-panel", "Review panel", [], [VIEW, EDIT, "review-panel"],
@@ -1412,7 +1412,6 @@ for card, roles in {
     "PJ4 #772": ["explorer", "new-subtitle-file", "show-all-files", "group-by-name"],
     "PJ5 #773": ["mine", "copy-to-tier", "move-to-tier"],
     "PJ8 #776": ["untrusted"],
-    "AI21 #725": ["compact"],
     "AI24 #744": ["update"],
     "PL7 #419": ["plugin-sandbox"],
     "AU6 #845": ["shape-unite", "shape-subtract", "shape-intersect", "shape-exclude", "shape-offset", "clip-to-shape",

@@ -4562,9 +4562,9 @@
    "mirror": false,
    "legacy": [],
    "surfaces": [
-    "agent-panel"
-   ],
-   "pending": "AI21 #725"
+    "agent-panel",
+    "grid-menu"
+   ]
   },
   {
    "role": "review-panel",
