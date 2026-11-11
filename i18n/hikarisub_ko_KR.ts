@@ -2667,6 +2667,18 @@ Output device: %2</source>
         <translation>덮어쓰기</translation>
     </message>
     <message>
+        <source>Import lyrics</source>
+        <translation>가사 가져오기</translation>
+    </message>
+    <message>
+        <source>Lyrics (*.lrc *.krc *.qrc *.ttml)</source>
+        <translation>가사 (*.lrc *.krc *.qrc *.ttml)</translation>
+    </message>
+    <message>
+        <source>Could not read %1.</source>
+        <translation>%1(을)를 읽을 수 없습니다.</translation>
+    </message>
+    <message>
         <source>Open subtitles</source>
         <translation>자막 열기</translation>
     </message>
@@ -2675,8 +2687,12 @@ Output device: %2</source>
         <translation>자막 (*.ass *.ssa *.srt *.sub *.txt *.mpl)</translation>
     </message>
     <message>
+        <source>Word-timed lyrics (*.lrc *.krc *.qrc *.ttml)</source>
+        <translation>단어별 타이밍 가사 (*.lrc *.krc *.qrc *.ttml)</translation>
+    </message>
+    <message>
         <source>Word-timed lyrics (*.lrc *.ttml)</source>
-        <translation>단어별 타이밍 가사 (*.lrc *.ttml)</translation>
+        <translation type="vanished">단어별 타이밍 가사 (*.lrc *.ttml)</translation>
     </message>
     <message>
         <source>YouTube timed text (*.ytt *.srv3)</source>
@@ -2761,6 +2777,10 @@ Output device: %2</source>
     <message>
         <source>it has no timed lyrics</source>
         <translation>타이밍이 있는 가사가 없음</translation>
+    </message>
+    <message>
+        <source>it is encrypted. Decode it to text with your own tool first</source>
+        <translation>암호화되어 있습니다. 먼저 사용하는 도구로 텍스트로 디코딩하세요</translation>
     </message>
     <message>
         <source>Could not import %1: line %2: %3. Nothing was imported.</source>
@@ -2980,6 +3000,130 @@ Output device: %2</source>
     <message>
         <source>Saves %1 · Discards %2</source>
         <translation>%1 저장 · %2 버림</translation>
+    </message>
+    <message>
+        <source>The file is not text in this encoding.</source>
+        <translation>이 인코딩으로는 파일이 텍스트가 아닙니다.</translation>
+    </message>
+    <message>
+        <source>LRC</source>
+        <translation>LRC</translation>
+    </message>
+    <message>
+        <source>TTML</source>
+        <translation>TTML</translation>
+    </message>
+    <message>
+        <source>Kugou KRC, decoded</source>
+        <translation>Kugou KRC, 디코딩됨</translation>
+    </message>
+    <message>
+        <source>QQ Music QRC, decoded</source>
+        <translation>QQ Music QRC, 디코딩됨</translation>
+    </message>
+    <message>
+        <source>word-timed</source>
+        <translation>단어별 타이밍</translation>
+    </message>
+    <message>
+        <source>line-timed</source>
+        <translation>줄별 타이밍</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n lines</source>
+        <translation>
+            <numerusform>%n줄</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>offset %1 s applied</source>
+        <translation>오프셋 %1초 적용됨</translation>
+    </message>
+    <message>
+        <source>File</source>
+        <translation>파일</translation>
+    </message>
+    <message>
+        <source>Format</source>
+        <translation>형식</translation>
+    </message>
+    <message>
+        <source>Song</source>
+        <translation>노래</translation>
+    </message>
+    <message>
+        <source>Encoding</source>
+        <translation>인코딩</translation>
+    </message>
+    <message>
+        <source>%1 · detected</source>
+        <translation>%1 · 감지됨</translation>
+    </message>
+    <message>
+        <source>This Kugou lyrics file is encrypted, so HikariSub can’t read it.</source>
+        <translation>이 Kugou 가사 파일은 암호화되어 있어 HikariSub에서 읽을 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>This QQ Music lyrics file is encrypted, so HikariSub can’t read it.</source>
+        <translation>이 QQ Music 가사 파일은 암호화되어 있어 HikariSub에서 읽을 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>Decode it to text with your own tool first, then import the decoded file. HikariSub doesn’t decrypt lyric files.</source>
+        <translation>먼저 사용하는 도구로 텍스트로 디코딩한 다음 디코딩된 파일을 가져오세요. HikariSub는 가사 파일을 복호화하지 않습니다.</translation>
+    </message>
+    <message>
+        <source>Preview</source>
+        <translation>미리 보기</translation>
+    </message>
+    <message numerus="yes">
+        <source>and %n more lines</source>
+        <translation>
+            <numerusform>외 %n줄</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Add the lines to</source>
+        <translation>줄을 추가할 위치</translation>
+    </message>
+    <message>
+        <source>After the last line of the open file</source>
+        <translation>열린 파일의 마지막 줄 뒤</translation>
+    </message>
+    <message>
+        <source>A new file</source>
+        <translation>새 파일</translation>
+    </message>
+    <message>
+        <source>Style</source>
+        <translation>스타일</translation>
+    </message>
+    <message>
+        <source>End times</source>
+        <translation>끝 시간</translation>
+    </message>
+    <message>
+        <source>Each line ends when the next one starts</source>
+        <translation>각 줄은 다음 줄이 시작할 때 끝남</translation>
+    </message>
+    <message>
+        <source>Leave a gap before the next line</source>
+        <translation>다음 줄 앞에 간격 두기</translation>
+    </message>
+    <message>
+        <source>Gap (s)</source>
+        <translation>간격(초)</translation>
+    </message>
+    <message>
+        <source>Last line lasts (s)</source>
+        <translation>마지막 줄 길이(초)</translation>
+    </message>
+    <message>
+        <source>Choose another file…</source>
+        <translation>다른 파일 선택…</translation>
+    </message>
+    <message>
+        <source>Import</source>
+        <translation>가져오기</translation>
     </message>
 </context>
 <context>
@@ -7230,6 +7374,10 @@ Failed to copy %2 fonts.</source>
         <translation>창 닫기</translation>
     </message>
     <message>
+        <source>Import lyrics…</source>
+        <translation>가사 가져오기…</translation>
+    </message>
+    <message>
         <source>Keep AI change</source>
         <translation type="unfinished"></translation>
     </message>
@@ -8268,6 +8416,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Import subtitles from MKV…</source>
         <translation>MKV에서 자막 가져오기…</translation>
+    </message>
+    <message>
+        <source>Turns a lyrics file into lines, in the open file or a new one</source>
+        <translation>가사 파일을 열린 파일이나 새 파일의 줄로 바꿉니다</translation>
+    </message>
+    <message>
+        <source>Import lyrics…</source>
+        <translation>가사 가져오기…</translation>
     </message>
     <message>
         <source>Save current file</source>
@@ -14591,7 +14747,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Deleted</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">삭제됨</translation>
     </message>
     <message>
         <source>New</source>

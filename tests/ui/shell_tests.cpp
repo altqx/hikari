@@ -21316,7 +21316,7 @@ private slots:
                                      "Video", "Audio", "Conversion", "Script properties", "Automation", "Shortcuts",
                                      "AI", "Updates and privacy"}));
         QVERIFY(dialogItem("settingsDialog", "settingsPageHotkeys"));
-        QCOMPARE(hotkeyRows().size(), 313);
+        QCOMPARE(hotkeyRows().size(), 314);
         QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Global Close current tab"));
         QCOMPARE(application->hotkeys().selected(), 0);
         QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "hotkeyFilter"), "activated", Q_ARG(int, 5)));
@@ -30744,6 +30744,64 @@ private slots:
         QCOMPARE(session->history().back().name, std::string("Centring times"));
         QVERIFY(application->editor().undo());
         QTRY_COMPARE(ms(0), (Ms{410, 1200}));
+    }
+
+    void importLyricsAddsLinesToTheOpenFileInOneStep()
+    {
+        QVERIFY(application->openFile(writeFile(dir, "au23-open.ass",
+                                                "Dialogue: 0,0:00:30.00,0:00:31.00,Default,,0,0,0,,mine\n")));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const auto steps = session->historySize();
+        const QString lyrics = dir.filePath(QStringLiteral("au23-song.krc"));
+        {
+            QFile f(lyrics);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[ti:Song]\r\n[1000,1000]<0,500,0>la<500,500,0>la\r\n[3000,1000]end\r\n");
+        }
+        auto *menuItem = item<QObject>("importLyricsMenuItem");
+        QVERIFY(menuItem);
+        QCOMPARE(menuItem->property("command").toString(), QStringLiteral("GLOBAL_IMPORT_LYRICS"));
+        QVERIFY(QMetaObject::invokeMethod(engine->rootObjects().first(), "openLyricsImport", Q_ARG(QVariant, lyrics)));
+        QObject *dialog = nullptr;
+        QTRY_VERIFY((dialog = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("lyricsImportDialog"))));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        auto *controller = dialog->property("controller").value<QObject *>();
+        QVERIFY(controller->property("canImport").toBool());
+        QVERIFY(controller->property("intoOpenFile").toBool());
+        QCOMPARE(controller->property("style").toString(), QStringLiteral("Default"));
+        QCOMPARE(controller->property("lineCount").toInt(), 2);
+        QCOMPARE(controller->property("preview").toList().size(), 2);
+        auto *importButton = dialogItem("lyricsImportDialog", "lyricsImportImport");
+        QVERIFY(importButton);
+        QVERIFY(QMetaObject::invokeMethod(importButton, "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QCOMPARE(session->document().lines().size(), 3u);
+        QCOMPARE(session->document().lines()[1]->text, std::u8string(u8"{\\k50}la{\\k50}la"));
+        QCOMPARE(session->historySize(), steps + 1);
+        QCOMPARE(session->history().back().name, std::string("Import lyrics"));
+        QVERIFY(application->editor().undo());
+        QTRY_COMPARE(session->document().lines().size(), 1u);
+    }
+
+    void importLyricsRefusesAnEncryptedFile()
+    {
+        const QString lyrics = dir.filePath(QStringLiteral("au23-locked.krc"));
+        {
+            QFile f(lyrics);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write(QByteArray("krc1\x01\x9c\x00\xff", 8));
+        }
+        QVERIFY(QMetaObject::invokeMethod(engine->rootObjects().first(), "openLyricsImport", Q_ARG(QVariant, lyrics)));
+        QObject *dialog = nullptr;
+        QTRY_VERIFY((dialog = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("lyricsImportDialog"))));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        auto *controller = dialog->property("controller").value<QObject *>();
+        QVERIFY(controller->property("encrypted").toBool());
+        QVERIFY(!controller->property("canImport").toBool());
+        QVERIFY(dialogItem("lyricsImportDialog", "lyricsImportEncrypted")->isVisible());
+        QVERIFY(!dialogItem("lyricsImportDialog", "lyricsImportImport")->isEnabled());
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("lyricsImportDialog", "lyricsImportCancel"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
     }
 
     void alignToVideoTimesTheLineToTheKeyPointsFrames()
