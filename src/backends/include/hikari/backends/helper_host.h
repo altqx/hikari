@@ -62,6 +62,8 @@ public:
     // False, dropping the answer, when the call is unknown, answered, or its request ended.
     bool answer(std::uint64_t request, std::uint64_t call, Outcome outcome, std::vector<std::byte> payload = {});
     void stop(); // ends the helper; pending requests resolve as HelperLost
+    // Handles what the helper already wrote; a busy owner may not have been told of it yet.
+    void readPending();
 
     std::size_t rejectedFrames() const { return m_rejected; }
     std::size_t outstanding() const { return m_pending.size(); }

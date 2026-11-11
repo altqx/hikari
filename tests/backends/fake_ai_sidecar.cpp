@@ -273,6 +273,8 @@ int main(int argc, char **argv)
         if (name == "initialize") {
             if (g_mode == "silent")
                 continue;
+            if (g_mode == "slow-initialize")
+                std::this_thread::sleep_for(std::chrono::milliseconds(200));
             g_initialize = params ? *params : Json();
             respond(*id, Json::object({{"protocolVersion", g_mode == "old-protocol" ? 0 : 1},
                                        {"hikariApiVersion", g_apiVersion}, {"requiredApiVersion", g_requiredApi},

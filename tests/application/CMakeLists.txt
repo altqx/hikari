@@ -255,3 +255,5 @@ hikari_add_gtest(hikari_application_gradient_tests SOURCES gradient_tests.cpp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_visual_gradient_tests SOURCES visual_gradient_tests.cpp
     LIBRARIES hikari_application LABELS application)
+hikari_add_gtest(hikari_application_karaoke_layout_tests SOURCES karaoke_layout_tests.cpp
+    LIBRARIES hikari_application LABELS application)
