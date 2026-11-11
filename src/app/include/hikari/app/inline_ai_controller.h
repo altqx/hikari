@@ -42,6 +42,7 @@ class AiFeatures;
 class InlineAiController final : public QObject {
     Q_OBJECT
     Q_PROPERTY(bool on READ on NOTIFY changed)
+    Q_PROPERTY(QVariantMap ready READ ready NOTIFY changed)
     Q_PROPERTY(QVariantList actions READ actions NOTIFY changed)
     Q_PROPERTY(QString translateTo READ translateTo NOTIFY changed)
     Q_PROPERTY(QStringList recentInstructions READ recentInstructions NOTIFY changed)
@@ -74,6 +75,8 @@ public:
     ~InlineAiController() override;
 
     bool on() const;
+    /// {chat, translator, reviewer, any}: a provider model serves the role. An agent CLI doesn't count.
+    QVariantMap ready() const;
     QVariantList actions() const;
     QString translateTo() const;
     QStringList recentInstructions() const;

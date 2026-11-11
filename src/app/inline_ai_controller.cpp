@@ -143,6 +143,7 @@ InlineAiController::InlineAiController(Wiring wiring, QObject *parent) : QObject
         if (id.startsWith(QLatin1String("ai.")))
             emit changed();
     });
+    connect(&m_wiring.agent, &AgentController::modelsChanged, this, &InlineAiController::changed);
 }
 
 InlineAiController::~InlineAiController() = default;
@@ -150,6 +151,20 @@ InlineAiController::~InlineAiController() = default;
 bool InlineAiController::on() const
 {
     return m_wiring.ai.on();
+}
+
+QVariantMap InlineAiController::ready() const
+{
+    const ai::Providers *providers = on() ? m_wiring.ai.providers() : nullptr;
+    QVariantMap out;
+    bool any = false;
+    for (const ai::Role role : {ai::Role::Chat, ai::Role::Translator, ai::Role::Reviewer}) {
+        const bool served = providers && providers->config().modelFor(role).has_value();
+        out[inlineRoleId(role)] = served;
+        any = any || served;
+    }
+    out[QStringLiteral("any")] = any;
+    return out;
 }
 
 QVariantList InlineAiController::actions() const

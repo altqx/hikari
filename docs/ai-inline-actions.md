@@ -16,7 +16,7 @@ One-shot AI actions on the Lines you chose, with no agent thread ([AI8 #436](htt
 - **AI** in the Grid's menu, after Paste special, for the selected Lines.
 - **AI** in the Line editor's text menu and the AI button at the end of its tag strip, for the active Line. With text selected in the field, only that span changes and the rest of the Line goes as context.
 - **AI actions…** (Global 5283) opens the submenu at the active row, or at the Line editor's AI button when its text has focus. **Repeat last AI action** (Global 5284) runs the last action again on the current Lines. Neither has a default key. Both are AI commands, so they hide with AI off.
-- Without a chat model the submenu's last entry is **Add a model in Settings › AI…** and the actions are off.
+- An action is on only when a provider model serves its role (`InlineAiController::ready`); Claude Code or Codex on `PATH` doesn't count, as inline actions don't run agents. With no model at all the submenu's last entry is **Add a model in Settings › AI…**.
 
 ## Actions
 
@@ -69,4 +69,4 @@ No new event; the two commands send `command_used` as every command does.
 
 - `hikari_application_ai_inline_tests`: skip rules, masking and unmasking, the prompt, spans, reading answers.
 - `hikari_backends_ai_inline_run_tests`: one request per Line, dropped tags, failures, Stop, the daily cap, dropping a Line, no model, unknown prices, the request shape.
-- `hikari_ui_inline_ai_tests`: the menus with AI on and off, Auto's one turn and one History step, Manual's Apply with an out-of-date Line, Discard.
+- `hikari_ui_inline_ai_tests`: the menus with AI on and off, and with only an agent CLI found, Auto's one turn and one History step, Manual's Apply with an out-of-date Line, Discard.

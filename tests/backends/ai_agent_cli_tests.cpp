@@ -7,6 +7,7 @@
 #include <QDir>
 #include <QElapsedTimer>
 #include <QFile>
+#include <QFileInfo>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QTemporaryDir>
@@ -339,6 +340,79 @@ TEST_F(AgentCliTest, TheProbeFindsTheCliAndAsksItsVersion)
     ASSERT_TRUE(waitFor([&] { return found.has_value(); }));
     EXPECT_FALSE(found->has_value());
 }
+
+#ifndef Q_OS_WIN
+class AgentShimTest : public AgentCliTest {
+protected:
+    void executable(const QString &path, const QByteArray &text)
+    {
+        QDir().mkpath(QFileInfo(path).absolutePath());
+        QFile file(path);
+        ASSERT_TRUE(file.open(QIODevice::WriteOnly));
+        file.write(text);
+        file.setPermissions(file.permissions() | QFileDevice::ExeOwner);
+    }
+
+    /// A fake `mise` that answers `mise which claude` with `answer`, and the shim dirs that point at it.
+    void mise(const QByteArray &answer)
+    {
+        executable(dir.filePath(QStringLiteral("usr/bin/mise")), "#!/bin/sh\n" + answer + "\n");
+        for (const QString &d : {wrappers, shims, linked}) {
+            QDir().mkpath(d);
+            QFile::remove(d + QStringLiteral("/claude"));
+            ASSERT_TRUE(QFile::link(dir.filePath(QStringLiteral("usr/bin/mise")), d + QStringLiteral("/claude")));
+        }
+    }
+
+    const QString wrappers = dir.filePath(QStringLiteral("mise/command-wrappers/bin"));
+    const QString shims = dir.filePath(QStringLiteral("mise/shims"));
+    const QString linked = dir.filePath(QStringLiteral("linked"));
+    const QString asdfShims = dir.filePath(QStringLiteral(".asdf/shims"));
+    const QString installed = dir.filePath(QStringLiteral("mise/installs/claude/2.1.4/bin/claude"));
+};
+
+TEST_F(AgentShimTest, AShimGivesWayToTheRealCliFurtherOnThePath)
+{
+    mise("exit 1");
+    executable(asdfShims + QStringLiteral("/claude"), "#!/bin/sh\nexec asdf exec claude \"$@\"\n");
+    const QString real = fakeCli(QStringLiteral("claude"), "2.1.4", "same");
+    EXPECT_EQ(findAgentCli(QStringLiteral("claude"), {wrappers, shims, asdfShims, linked, dir.filePath(QStringLiteral("bin"))}),
+              real);
+}
+
+TEST_F(AgentShimTest, AShimAloneIsResolvedByItsVersionManager)
+{
+    executable(installed, "#!/bin/sh\n");
+    mise("[ \"$1 $2\" = \"which claude\" ] && echo " + installed.toLocal8Bit());
+    for (const QString &d : {wrappers, shims, linked})
+        EXPECT_EQ(findAgentCli(QStringLiteral("claude"), {d}), installed) << d.toStdString();
+
+    const QString asdfBin = dir.filePath(QStringLiteral("asdf-bin"));
+    executable(asdfBin + QStringLiteral("/asdf"), "#!/bin/sh\n[ \"$1 $2\" = \"which claude\" ] && echo " + installed.toLocal8Bit() + "\n");
+    executable(asdfShims + QStringLiteral("/claude"), "#!/bin/sh\nexec asdf exec claude \"$@\"\n");
+    EXPECT_EQ(findAgentCli(QStringLiteral("claude"), {asdfShims, asdfBin}), installed);
+}
+
+TEST_F(AgentShimTest, AShimItsManagerCantResolveIsNotFoundAndSaysSo)
+{
+    static QStringList logged;
+    logged.clear();
+    const QtMessageHandler previous = qInstallMessageHandler([](QtMsgType, const QMessageLogContext &, const QString &m) {
+        logged << m;
+    });
+    mise("exit 1");
+    EXPECT_EQ(findAgentCli(QStringLiteral("claude"), {shims}), QString());
+    mise("echo " + shims.toLocal8Bit() + "/claude");
+    EXPECT_EQ(findAgentCli(QStringLiteral("claude"), {shims}), QString());
+    mise("echo " + dir.filePath(QStringLiteral("nowhere/claude")).toLocal8Bit());
+    EXPECT_EQ(findAgentCli(QStringLiteral("claude"), {shims}), QString());
+    mise("sleep 30");
+    EXPECT_EQ(findAgentCli(QStringLiteral("claude"), {shims}), QString());
+    qInstallMessageHandler(previous);
+    ASSERT_EQ(logged.size(), 4);
+    EXPECT_TRUE(logged[0].contains(QStringLiteral("couldn't resolve"))) << logged[0].toStdString();
+}
+#endif
 
 TEST_F(AgentCliTest, AnUpdateCountsOnlyWhenTheVersionChanged)
 {
