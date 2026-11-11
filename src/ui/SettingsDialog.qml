@@ -64,7 +64,7 @@ DialogWindow {
     readonly property string currentPage: pages[Math.max(0, pageList.currentIndex)].id
     function pageIndex(id) { return pages.findIndex(p => p.id === id) }
 
-    function openDialog(page, filter) {
+    function openDialog(page, filter, projectPage) {
         const r = app.openSettingsDialog()
         languages = r.languages
         dictionaries = r.dictionaries
@@ -98,6 +98,10 @@ DialogWindow {
         }
         open()
         rememberPage()
+        if (hasProject && projectPage !== undefined) {
+            projectTab = true
+            projectPages.showPage(projectPage)
+        }
         if (notices)
             for (const warning of r.warnings)
                 notices.post("warning", qsTr("Settings"), warning)
