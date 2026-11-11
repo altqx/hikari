@@ -1,5 +1,6 @@
 #pragma once
 
+#include "hikari/app/ai_scripts.h"
 #include "hikari/app/api_host.h"
 #include "hikari/app/automation_hotkeys_controller.h"
 #include "hikari/app/settings_import_controller.h"
@@ -13,6 +14,7 @@
 #include "hikari/app/whats_new.h"
 #include "hikari/app/style_manager_controller.h"
 #include "hikari/app/align_to_video_controller.h"
+#include "hikari/app/video_analysis_controller.h"
 #include "hikari/app/lyrics_import_controller.h"
 #include "hikari/app/kanji_timer_controller.h"
 #include "hikari/app/qc_notes_controller.h"
@@ -79,6 +81,7 @@
 #include "hikari/app/ai_mcp.h"
 #include "hikari/app/ai_settings.h"
 #include "hikari/app/agent_controller.h"
+#include "hikari/app/inline_ai_controller.h"
 #include "hikari/app/review_controller.h"
 #include "hikari/app/window_settings.h"
 #include "shell_controller.h"
@@ -430,6 +433,11 @@ public:
     Q_INVOKABLE bool duplicateLines();
     Q_INVOKABLE bool deleteLines();
     Q_INVOKABLE bool deleteText();
+    // AU20 text commands on the shown selection, one undo step each. command: "balancedBreak",
+    // "breakLeft", "breakRight", "removeBreaks", "wrapAtBreaksOnly", "lowercase", "uppercase",
+    // "titleCase", "sentenceCase", "fullWidth", "halfWidth", "swapAlternatives".
+    Q_INVOKABLE bool textCommand(const QString &command);
+    Q_INVOKABLE bool selectionWrapsAtBreaksOnly() const;
     Q_INVOKABLE void toggleHideTags();
     // kind: "join", "previous", "next", "first", "last".
     Q_INVOKABLE bool joinLines(const QString &kind);
@@ -803,6 +811,21 @@ public:
     Q_INVOKABLE bool openEditorFromFullScreen();
     Q_INVOKABLE bool selectLinesVisibleOnVideo();
     Q_INVOKABLE bool snapToKeyframe(bool start);
+    // Timing helpers on the selection; false (nothing done) without an exact timebase or when no Line changes.
+    Q_INVOKABLE bool snapToAdjacentKeyframe(bool end, bool next);
+    // The amounts are audio.leadInValue / audio.leadOutValue.
+    Q_INVOKABLE bool changeLead(bool end, bool add);
+    Q_INVOKABLE bool nudgeEdge(bool end, int frames);
+    Q_INVOKABLE bool extendNeighbour(bool next);
+    // The Timing assistant's suggestion for the active Line, from the postprocessor rules:
+    // {ok, line, index, count, style, text, startBefore, endBefore, start, end, startReason,
+    // endReason, startFrames, endFrames, linked, linkedEndBefore, leadIn, leadOut, keyframes, windowStart,
+    // windowEnd}; ok false with "problem".
+    Q_INVOKABLE QVariantMap timingSuggestion(int shellWindow);
+    // Applies the suggestion (startMs/endMs override it when >= 0) in one step, then makes
+    // the next uncommented Line active.
+    Q_INVOKABLE bool acceptTimingSuggestion(int shellWindow, int startMs = -1, int endMs = -1);
+    Q_INVOKABLE bool skipTimingSuggestion(int shellWindow);
     Q_INVOKABLE bool centerTimesInFrames();
     Q_INVOKABLE bool commitAndAdvance();
 
@@ -840,6 +863,7 @@ public:
     StyleManagerController &styleManager() { return *m_styleManager; }
     KanjiTimerController &kanjiTimer() const { return *activeViews().kanjiTimer; }
     AlignToVideoController &alignToVideo() { return *m_alignToVideo; }
+    VideoAnalysisController &videoAnalysis() { return *m_videoAnalysis; }
     LyricsImportController &lyricsImport() { return *m_lyricsImport; }
     QcNotesController &qcNotes() { return *m_qcNotes; }
     FontCollectorController &fontCollector() { return *m_fontCollector; }
@@ -880,6 +904,7 @@ public:
     AiSettings *aiSettings() const { return m_aiSettings.get(); }
     ReviewController *review() const { return m_review.get(); }
     AgentController *agent() const { return m_agent.get(); }
+    InlineAiController *inlineAi() const { return m_inlineAi.get(); }
     Q_PROPERTY(hikari::app::PluginManager *pluginManager READ pluginManager CONSTANT)
     PluginManager *pluginManager() const { return m_pluginManager.get(); }
     Q_PROPERTY(hikari::app::PluginMarketplace *pluginMarketplace READ pluginMarketplace CONSTANT)
@@ -1261,12 +1286,14 @@ private:
     std::unique_ptr<AutomationHotkeysController> m_automationHotkeys;
     // MUST KILL: must be declared after m_automationHotkeys, which it holds a reference to.
     std::unique_ptr<HotkeysController> m_hotkeys;
+    std::unique_ptr<AiScripts> m_aiScripts;
     std::unique_ptr<ApiHost> m_apiHost;
     std::unique_ptr<AiFeatures> m_ai;
     std::unique_ptr<AiMcp> m_aiMcp;
     std::unique_ptr<AiSettings> m_aiSettings;
     std::unique_ptr<ReviewController> m_review;
     std::unique_ptr<AgentController> m_agent;
+    std::unique_ptr<InlineAiController> m_inlineAi;
     std::unique_ptr<PluginManager> m_pluginManager;
     std::unique_ptr<PluginMarketplace> m_pluginMarketplace;
     std::unique_ptr<PluginRuntime> m_pluginRuntime;
@@ -1280,6 +1307,7 @@ private:
     std::unique_ptr<StyleManagerController> m_styleManager;
     std::unique_ptr<FontCollectorController> m_fontCollector;
     std::unique_ptr<AlignToVideoController> m_alignToVideo;
+    std::unique_ptr<VideoAnalysisController> m_videoAnalysis;
     std::unique_ptr<LyricsImportController> m_lyricsImport;
     QString m_readingDictionary;
     std::unique_ptr<QcNotesController> m_qcNotes;
@@ -1395,6 +1423,14 @@ private:
     std::map<std::uint64_t, AttachedFontsEntry> m_attachedFonts;
     std::vector<application::FontLease> attachedFontLeases(std::optional<application::DocumentId> document);
     std::vector<application::FontLease> subtitleFonts(std::optional<application::DocumentId> document);
+    std::vector<application::FontLease> projectFonts(std::optional<application::DocumentId> document) const;
+    struct ProjectFonts {
+        std::vector<QString> folders;
+        std::vector<application::FontLease> fonts;
+    };
+    std::map<int, ProjectFonts> m_projectFonts;
+    void loadProjectFonts(int shellWindow);
+    void subtitleFontsChanged();
     bool setVideoFonts(std::optional<application::DocumentId> document);
     std::vector<std::pair<std::shared_ptr<const std::vector<std::byte>>, std::vector<std::string>>> m_leasedFontNames;
     bool runFilter(const std::function<std::expected<void, application::CommandRefusal>(application::EditSession &)> &command);
@@ -1455,6 +1491,7 @@ private:
     void offerProjectFor(application::DocumentId document, const QString &path);
     bool projectTrusted(const QString &root) const;
     void applyWindowProject(int shellWindow);
+    QString projectFontFolder(int shellWindow) const;
     application::Settings &windowSettings(int shellWindow);
     const application::Settings &windowSettings(int shellWindow) const;
     QString m_settingsFile;

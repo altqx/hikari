@@ -12,6 +12,7 @@ FocusScope {
     property var messages: null
     property bool exact: false
     property bool hasKeyframes: false
+    property bool assistant: false
     property alias message: preview.message
     property alias plan: preview.plan
     signal apply()
@@ -41,14 +42,24 @@ FocusScope {
         exact = app.exactTimebase()
         hasKeyframes = app.hasKeyframes()
         preview.plan = app.shiftPreview("postprocessor", shellWindow)
+        if (assistant)
+            assistantView.refresh()
+    }
+    function focusAssistant() {
+        assistantView.restart()
+        assistantView.forceActiveFocus()
     }
     function ownsKey(event) {
+        if (assistant && assistantView.ownsKey(event))
+            return true
         const enter = event.key === Qt.Key_Return || event.key === Qt.Key_Enter
         const mods = event.modifiers & (Qt.ShiftModifier | Qt.ControlModifier | Qt.AltModifier)
         return (enter && mods === Qt.ControlModifier) || (event.key === Qt.Key_Escape && mods === 0)
     }
     function handleKey(event) {
         if (!ownsKey(event))
+            return
+        if (assistant && assistantView.handleKey(event))
             return
         event.accepted = true
         if (event.key === Qt.Key_Escape) {
@@ -63,6 +74,7 @@ FocusScope {
     Keys.onPressed: event => handleKey(event)
 
     onSettingsChanged: refreshTimer.restart()
+    onAssistantChanged: if (assistant) focusAssistant()
     onVisibleChanged: refreshTimer.restart()
     Timer {
         id: refreshTimer
@@ -117,9 +129,22 @@ FocusScope {
         columnSpacing: 0
         rowSpacing: 0
 
+        Label {
+            objectName: "postprocessorRulesSummary"
+            visible: !panel.wide && panel.assistant
+            text: qsTr("Rules: lead-in %1 ms, lead-out %2 ms, gaps %3 ms, keyframes %4/%5 and %6/%7 ms")
+                      .arg(panel.settings.leadIn).arg(panel.settings.leadOut).arg(panel.settings.thresholdStart)
+                      .arg(panel.settings.keyframeBeforeStart).arg(panel.settings.keyframeAfterStart)
+                      .arg(panel.settings.keyframeBeforeEnd).arg(panel.settings.keyframeAfterEnd)
+            color: Theme.muted
+            wrapMode: Text.WordWrap
+            padding: 8
+            Layout.fillWidth: true
+        }
         ScrollView {
             id: scroll
             objectName: "postprocessorScroll"
+            visible: panel.wide || !panel.assistant
             Layout.fillWidth: !panel.wide
             Layout.preferredWidth: panel.wide ? 340 : -1
             Layout.fillHeight: panel.wide
@@ -257,13 +282,38 @@ FocusScope {
             Layout.preferredWidth: 1
             Layout.fillHeight: true
         }
-        ShiftPreview {
-            id: preview
-            objectName: "postprocessorPreview"
-            tool: "postprocessor"
+        ColumnLayout {
+            spacing: 0
             Layout.fillWidth: true
             Layout.fillHeight: true
-            onApply: panel.apply()
+            SegmentedButtons {
+                objectName: "postprocessorMode"
+                choices: [{ text: qsTr("Preview"), name: "postprocessorModePreview" },
+                          { text: qsTr("Assistant"), name: "postprocessorModeAssistant", iconRole: "timing-assistant" }]
+                currentIndex: panel.assistant ? 1 : 0
+                Accessible.name: qsTr("Mode")
+                Layout.margins: 8
+                onActivated: index => panel.assistant = index === 1
+            }
+            StackLayout {
+                currentIndex: panel.assistant ? 1 : 0
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                ShiftPreview {
+                    id: preview
+                    objectName: "postprocessorPreview"
+                    tool: "postprocessor"
+                    onApply: panel.apply()
+                }
+                TimingAssistantView {
+                    id: assistantView
+                    objectName: "timingAssistant"
+                    app: panel.app
+                    shellWindow: panel.shellWindow
+                    narrow: !panel.wide
+                    Layout.margins: 8
+                }
+            }
         }
     }
 }

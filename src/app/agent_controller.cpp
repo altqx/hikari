@@ -1,5 +1,8 @@
 #include "hikari/app/agent_controller.h"
 
+#include "hikari/app/ai_scripts.h"
+#include "hikari/app/automation_shell.h"
+
 #include "hikari/app/ai_features.h"
 #include "hikari/application/ai_review.h"
 #include "hikari/application/document_files.h"
@@ -205,6 +208,8 @@ void AgentController::apply()
         };
         w.safeFolders = [this] { return safeFolders(); };
         w.now = m_wiring.now;
+        if (m_wiring.scripts)
+            w.scriptNeeds = [scripts = m_wiring.scripts](const std::string &script) { return scripts->needs(script); };
         m_threads = std::make_unique<AgentThreads>(std::move(w), m_store.get());
         connect(m_threads.get(), &AgentThreads::threadsChanged, this, [this] {
             if (!m_current.empty() && !m_threads->thread(m_current))
@@ -409,6 +414,14 @@ double AgentController::spentToday() const
     return m_threads ? m_threads->spentToday() : 0.0;
 }
 
+void AgentController::spend(double dollars)
+{
+    if (!m_store || dollars <= 0)
+        return;
+    m_store->spend(QDate::currentDate(), dollars);
+    emit threadChanged();
+}
+
 double AgentController::dailyCap() const
 {
     return static_cast<double>(m_wiring.settings.integer64(kDailyCapSetting)) / 100.0;
@@ -575,6 +588,17 @@ void AgentController::setModel(const QString &value)
     const auto parts = value.split(QLatin1Char('\t'));
     if (m_threads && parts.size() == 2)
         m_threads->setModel(m_current, {parts[0].toStdString(), parts[1].toStdString()});
+}
+
+void AgentController::openScript(const QString &file)
+{
+    if (m_wiring.scripts && m_wiring.automation && !file.isEmpty() && QFileInfo(file).fileName() == file)
+        m_wiring.automation->editScript(QDir(m_wiring.scripts->folder()).filePath(file));
+}
+
+bool AgentController::forceStopScript()
+{
+    return m_wiring.automation && m_wiring.automation->forceStopRun();
 }
 
 void AgentController::answer(qulonglong ask, const QString &answer, const QString &message)

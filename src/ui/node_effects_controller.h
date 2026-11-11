@@ -140,6 +140,7 @@ public:
     void setPreviewOnVideo(bool on);
     bool videoPreview() const;
     bool hasLua() const;
+    bool hasPluginNodes() const;
     bool trusted() const;
     bool canApply() const;
     bool canApplySelected() const;

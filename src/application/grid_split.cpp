@@ -1169,6 +1169,14 @@ bool rotates(const std::vector<Tag> &tags, const std::string &styleAngle)
 
 }
 
+double taggedTextWidth(TextMeasurePort &measure, const core::StyleValues &style, std::u16string_view text)
+{
+    auto fields = fieldsOf(style);
+    float width = 0, height = 0;
+    taggedExtents(measure, fields, text, width, height);
+    return width;
+}
+
 std::expected<void, CommandRefusal> splitByText(EditSession &session, SplitText kind, TextMeasurePort &measure,
                                                 const WordSegments &words, const LineVisible &visible)
 {

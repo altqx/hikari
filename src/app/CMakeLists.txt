@@ -25,16 +25,20 @@ add_library(hikari_composition STATIC composition.cpp application.cpp include/hi
     style_manager_controller.cpp include/hikari/app/style_manager_controller.h
     kanji_timer_controller.cpp include/hikari/app/kanji_timer_controller.h
     align_to_video_controller.cpp include/hikari/app/align_to_video_controller.h
+    video_analysis_controller.cpp include/hikari/app/video_analysis_controller.h
     lyrics_import_controller.cpp include/hikari/app/lyrics_import_controller.h
     qc_notes_controller.cpp include/hikari/app/qc_notes_controller.h
     local_only_network.cpp include/hikari/app/local_only_network.h
     api_host.cpp include/hikari/app/api_host.h
+    ai_scripts.cpp include/hikari/app/ai_scripts.h
     ai_features.cpp include/hikari/app/ai_features.h ai_mcp.cpp include/hikari/app/ai_mcp.h
     ai_settings.cpp include/hikari/app/ai_settings.h
     review_controller.cpp include/hikari/app/review_controller.h agent_controller.cpp include/hikari/app/agent_controller.h
+    inline_ai_controller.cpp include/hikari/app/inline_ai_controller.h
     plugin_manager.cpp include/hikari/app/plugin_manager.h
     plugin_marketplace.cpp include/hikari/app/plugin_marketplace.h plugin_runtime.cpp include/hikari/app/plugin_runtime.h
     plugin_files.cpp include/hikari/app/plugin_files.h plugin_network.cpp include/hikari/app/plugin_network.h
+    plugin_nodes.cpp include/hikari/app/plugin_nodes.h
     plugin_ui.cpp include/hikari/app/plugin_ui.h plugin_qml_panels.cpp plugin_panel_api.cpp include/hikari/app/plugin_panel_api.h
     plugin_variant.h)
 set_target_properties(hikari_composition PROPERTIES AUTOMOC ON)
@@ -122,7 +126,7 @@ target_sources(hikari_composition PRIVATE font_catalogs_controller.cpp include/h
 target_sources(hikari_composition PRIVATE single_instance.cpp include/hikari/app/single_instance.h
     forwarded_launches.cpp include/hikari/app/forwarded_launches.h)
 target_sources(hikari_composition PRIVATE matroska_controller.cpp include/hikari/app/matroska_controller.h)
-target_sources(hikari_composition PRIVATE application_video_timing.cpp)
+target_sources(hikari_composition PRIVATE application_video_timing.cpp application_timing_helpers.cpp)
 target_sources(hikari_composition PRIVATE application_tracking.cpp application_motion.cpp application_layers.cpp application_tag_removal.cpp application_interpolate.cpp)
 target_sources(hikari_composition PRIVATE application_translation.cpp)
 target_sources(hikari_composition PRIVATE localisation.cpp include/hikari/app/localisation.h application_language.cpp)

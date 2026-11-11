@@ -13,8 +13,35 @@ Line editor text > Delete
 Line editor text > -
 Line editor text > Select all
 Line editor text > -
+Line editor text > Line breaks >
+Line editor text > Line breaks > Insert balanced break [GLOBAL_TEXT_INSERT_BALANCED_BREAK]
+Line editor text > Line breaks > Move break left [GLOBAL_TEXT_MOVE_BREAK_LEFT]
+Line editor text > Line breaks > Move break right [GLOBAL_TEXT_MOVE_BREAK_RIGHT]
+Line editor text > Line breaks > Remove breaks [GLOBAL_TEXT_REMOVE_BREAKS]
+Line editor text > Line breaks > -
+Line editor text > Line breaks > Wrap only at \N (\q2) [GLOBAL_TEXT_WRAP_AT_BREAKS_ONLY]
+Line editor text > Change case >
+Line editor text > Change case > lowercase [GLOBAL_TEXT_LOWERCASE]
+Line editor text > Change case > UPPERCASE [GLOBAL_TEXT_UPPERCASE]
+Line editor text > Change case > Title Case [GLOBAL_TEXT_TITLE_CASE]
+Line editor text > Change case > Sentence case [GLOBAL_TEXT_SENTENCE_CASE]
+Line editor text > Change case > -
+Line editor text > Change case > Full-width [GLOBAL_TEXT_FULL_WIDTH]
+Line editor text > Change case > Half-width [GLOBAL_TEXT_HALF_WIDTH]
+Line editor text > Swap dialogue alternatives [GLOBAL_SWAP_DIALOGUE_ALTERNATIVES]
+Line editor text > -
 Line editor text > Blur and glow layers… [GLOBAL_BLUR_AND_GLOW_LAYERS]
 Line editor text > Remove tags… [GLOBAL_REMOVE_TAGS]
+Line editor text > -
+Line editor text > AI >
+Line editor text > AI > Rewrite…
+Line editor text > AI > Shorten to 15 CPS
+Line editor text > AI > Fix spelling and grammar
+Line editor text > AI > Translate to English
+Line editor text > AI > Translate to…
+Line editor text > AI > -
+Line editor text > AI > Repeat last AI action [GLOBAL_REPEAT_AI_ACTION]
+Line editor text > AI > Add a model in Settings › AI…
 Line editor text > -
 Line editor text > Check spelling
 Text field
@@ -48,6 +75,15 @@ Grid > Paste special > Copy columns [GRID_COPY_COLUMNS]
 Grid > Paste special > Paste columns [GRID_PASTE_COLUMNS]
 Grid > Paste special > -
 Grid > Paste special > Paste translation from a file… [GRID_PASTE_TRANSLATION]
+Grid > AI >
+Grid > AI > Rewrite…
+Grid > AI > Shorten to 15 CPS
+Grid > AI > Fix spelling and grammar
+Grid > AI > Translate to English
+Grid > AI > Translate to…
+Grid > AI > -
+Grid > AI > Repeat last AI action [GLOBAL_REPEAT_AI_ACTION]
+Grid > AI > Add a model in Settings › AI…
 Grid > -
 Grid > Join >
 Grid > Join > Join [GRID_JOIN_LINES]
@@ -69,6 +105,23 @@ Grid > Make times continuous > With the previous line [GRID_MAKE_CONTINOUS_PREVI
 Grid > Make times continuous > With the next line [GRID_MAKE_CONTINOUS_NEXT_LINE]
 Grid > Make line group [GRID_TREE_MAKE]
 Grid > Convert Aegisub folds to line groups [GLOBAL_CONVERT_FOLDS_TO_GROUPS]
+Grid > -
+Grid > Line breaks >
+Grid > Line breaks > Insert balanced break [GLOBAL_TEXT_INSERT_BALANCED_BREAK]
+Grid > Line breaks > Move break left [GLOBAL_TEXT_MOVE_BREAK_LEFT]
+Grid > Line breaks > Move break right [GLOBAL_TEXT_MOVE_BREAK_RIGHT]
+Grid > Line breaks > Remove breaks [GLOBAL_TEXT_REMOVE_BREAKS]
+Grid > Line breaks > -
+Grid > Line breaks > Wrap only at \N (\q2) [GLOBAL_TEXT_WRAP_AT_BREAKS_ONLY]
+Grid > Change case >
+Grid > Change case > lowercase [GLOBAL_TEXT_LOWERCASE]
+Grid > Change case > UPPERCASE [GLOBAL_TEXT_UPPERCASE]
+Grid > Change case > Title Case [GLOBAL_TEXT_TITLE_CASE]
+Grid > Change case > Sentence case [GLOBAL_TEXT_SENTENCE_CASE]
+Grid > Change case > -
+Grid > Change case > Full-width [GLOBAL_TEXT_FULL_WIDTH]
+Grid > Change case > Half-width [GLOBAL_TEXT_HALF_WIDTH]
+Grid > Swap dialogue alternatives [GLOBAL_SWAP_DIALOGUE_ALTERNATIVES]
 Grid > -
 Grid > Select lines visible on video [GRID_SELECT_VISIBLE_LINES]
 Grid > Show subtitles preview [GRID_SHOW_PREVIEW]

@@ -1,5 +1,7 @@
 #include "hikari/application/video_timing.h"
 
+#include "line_retime.h"
+
 #include <algorithm>
 #include <climits>
 #include <cmath>
@@ -10,19 +12,11 @@
 
 namespace hikari::application {
 
+namespace retiming {
+
 namespace {
 
 constexpr std::int64_t kUsPerMs = 1000;
-
-int msOf(core::DocumentTime t)
-{
-    return static_cast<int>(t.microseconds() / kUsPerMs);
-}
-
-int zeroIt(int ms)
-{
-    return (ms / 10) * 10;
-}
 
 // The Document's own MicroDVD rate; nullopt for other formats, 0 without one.
 std::optional<double> microDvdFps(const core::Document &d)
@@ -43,17 +37,19 @@ void newTime(core::TimeField &field, std::optional<std::int64_t> &frame, int ms,
         frame = static_cast<std::int64_t>(std::ceil(static_cast<float>(clamped) * (static_cast<float>(*fps) / 1000.f)));
 }
 
-bool isShown(const ShownLine &shown, core::LineId id)
-{
-    return !shown || shown(id);
 }
 
-struct Retime {
-    std::optional<int> startMs, endMs;
-};
+int msOf(core::DocumentTime t)
+{
+    return static_cast<int>(t.microseconds() / kUsPerMs);
+}
 
-// No change records nothing and still succeeds.
-std::expected<void, CommandRefusal> retime(EditSession &session, const char *name,
+int zeroIt(int ms)
+{
+    return (ms / 10) * 10;
+}
+
+std::expected<bool, CommandRefusal> retime(EditSession &session, const char *name,
                                            const std::map<core::LineId, Retime> &times)
 {
     std::set<core::LineId> touches;
@@ -79,11 +75,30 @@ std::expected<void, CommandRefusal> retime(EditSession &session, const char *nam
                                              return changed;
                                          }});
     if (unchanged)
-        return {};
+        return false;
     if (!ran)
         return std::unexpected(ran.error());
     session.setSelection(selection);
-    return {};
+    return true;
+}
+
+}
+
+namespace {
+
+using retiming::msOf;
+using retiming::Retime;
+using retiming::zeroIt;
+
+std::expected<void, CommandRefusal> retimeLines(EditSession &session, const char *name,
+                                                const std::map<core::LineId, Retime> &times)
+{
+    return retiming::retime(session, name, times).transform([](bool) {});
+}
+
+bool isShown(const ShownLine &shown, core::LineId id)
+{
+    return !shown || shown(id);
 }
 
 }
@@ -145,7 +160,7 @@ std::expected<void, CommandRefusal> setTimesFromVideo(EditSession &session, bool
             }
         }
     }
-    return retime(session, end ? "Setting end time" : "Setting start time", times);
+    return retimeLines(session, end ? "Setting end time" : "Setting start time", times);
 }
 
 std::expected<void, CommandRefusal> joinPreviousToAudioSelection(EditSession &session, int startMs, int endMs)
@@ -167,7 +182,7 @@ std::expected<void, CommandRefusal> joinPreviousToAudioSelection(EditSession &se
         if (msOf(before.start.value) > startMs)
             t.startMs = startMs;
     }
-    return retime(session, "Joining with previous", times);
+    return retimeLines(session, "Joining with previous", times);
 }
 
 std::expected<void, CommandRefusal> shiftFramesToVideo(EditSession &session, const LegacyTimebase &timebase,
@@ -193,7 +208,7 @@ std::expected<void, CommandRefusal> shiftFramesToVideo(EditSession &session, con
         if (moves || l->id == *active)
             times[l->id] = Retime{shifted(l->start.value), shifted(l->end.value)};
     }
-    return retime(session, "Shifting times by frames", times);
+    return retimeLines(session, "Shifting times by frames", times);
 }
 
 std::optional<core::LineId> lineAtVideoTime(const core::Document &document, const ShownLine &shown, int tellMs,

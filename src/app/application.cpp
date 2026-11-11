@@ -4,6 +4,7 @@
 
 #include "hikari/backends/desktop_handoff.h"
 #include "hikari/backends/ffms_matroska.h"
+#include "hikari/backends/icu_text.h"
 #include "hikari/backends/legacy_text_file.h"
 #include "hikari/backends/lyrics_text.h"
 #include "hikari/backends/mecab_readings.h"
@@ -21,6 +22,7 @@
 #include "hikari/application/fold_groups.h"
 #include "hikari/application/grid_groups.h"
 #include "hikari/application/grid_split.h"
+#include "hikari/application/text_commands.h"
 #include "hikari/application/grid_translation.h"
 #include "hikari/application/script_properties.h"
 #include "hikari/application/shift_times.h"
@@ -727,6 +729,9 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
                                                         m_log->notice(warning ? ui::LogController::Warning : ui::LogController::Info,
                                                                       QCoreApplication::translate("HikariSub.Options", "Shortcuts"), message);
                                                     });
+    m_aiScripts = std::make_unique<AiScripts>(
+        *m_automation, m_userFolder.isEmpty() ? QString() : m_userFolder + QStringLiteral("/ai/scripts"),
+        [this] { return m_workspace.editingTarget().has_value(); });
     m_apiHost = std::make_unique<ApiHost>(ApiHost::Wiring{
         m_workspace, *m_files, &m_settings->settings(), &m_automation->media(),
         [this](application::Selection next) { return applySelection(std::move(next)); },
@@ -747,7 +752,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         [this](application::DocumentId document) { return subtitleFonts(document); },
         [this] { return m_settings->text("video.subtitleProvider").toStdString(); },
         m_userFolder.isEmpty() ? std::filesystem::path()
-                               : std::filesystem::path((m_userFolder + QStringLiteral("/ai/skills")).toStdU16String())});
+                               : std::filesystem::path((m_userFolder + QStringLiteral("/ai/skills")).toStdU16String()),
+        m_aiScripts.get()});
     AiFeatures::Ports aiPorts = options.aiPorts ? std::move(*options.aiPorts)
                                                 : AiFeatures::defaultPorts(m_userFolder, &m_apiHost->api(),
                                                                            options.appVersion.isEmpty()
@@ -772,7 +778,14 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         },
         [this] { refreshViews(); }});
     m_agent = std::make_unique<AgentController>(AgentController::Wiring{
-        *m_ai, *m_settings, m_apiHost->api(), m_apiHost->review(), m_workspace, *m_files, m_userFolder, {}});
+        *m_ai, *m_settings, m_apiHost->api(), m_apiHost->review(), m_workspace, *m_files, m_userFolder, {},
+        m_aiScripts.get(), m_automation.get()});
+    m_inlineAi = std::make_unique<InlineAiController>(InlineAiController::Wiring{
+        *m_ai, *m_settings, m_apiHost->api(), m_apiHost->review(), m_workspace, *m_files, *m_agent,
+        [this](application::DocumentId document, core::LineId line) {
+            if (m_workspace.editingTarget() == document)
+                applySelection(application::Selection{line, {line}, line, {}});
+        }});
     const auto hideAiCommands = [this] {
         m_hotkeys->setHidden([this](int id) { return !m_ai->on() && application::aiCommand(id); });
     };
@@ -930,6 +943,25 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         m_alignToVideo = std::make_unique<AlignToVideoController>(*m_settings, std::move(hooks));
     }
     {
+        VideoAnalysisController::Hooks hooks;
+        hooks.video = [this] { return videoState() == application::VideoState::None ? nullptr : &activeMedia().video->session(); };
+        hooks.target = [this] { return targetSession(); };
+        hooks.pause = [this] {
+            if (activeMedia().video->playing())
+                activeMedia().video->pause();
+        };
+        hooks.refresh = [this] {
+            editor().reloadFromSession();
+            refreshViews();
+        };
+        hooks.clipboard = [] { return QGuiApplication::clipboard()->text(); };
+        m_videoAnalysis = std::make_unique<VideoAnalysisController>(std::move(hooks));
+        connect(m_videoAnalysis.get(), &VideoAnalysisController::previewChanged, this, [this] {
+            if (activeMedia().videoShowsTemplate || m_videoAnalysis->videoPreview())
+                showVideoSubtitles();
+        });
+    }
+    {
         LyricsImportController::Hooks hooks;
         hooks.target = [this] { return targetSession(); };
         hooks.refresh = [this] {
@@ -969,6 +1001,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     }
     {
         FontCollectorController::Hooks hooks;
+        hooks.projectFontFolder = [this] { return projectFontFolder(m_workspace.activeWindow()); };
         hooks.tabs = [this] {
             std::vector<FontCollectorController::Tab> out;
             for (const auto id : m_workspace.allTabs()) {
@@ -1060,22 +1093,17 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         hooks.log = [this](const QString &text) {
             m_log->notice(ui::LogController::Warning, QCoreApplication::translate("HikariSub.Fonts", "Font catalogues"), text);
         };
-        hooks.documentFonts = [this] { return attachedFontLeases(m_workspace.editingTarget()); };
+        hooks.documentFonts = [this] {
+            auto fonts = attachedFontLeases(m_workspace.editingTarget());
+            for (auto &font : projectFonts(m_workspace.editingTarget()))
+                fonts.push_back(std::move(font));
+            return fonts;
+        };
         const auto report = listFileReport(*m_log);
         hooks.fileConverted = report.converted;
         hooks.fileProblem = report.problem;
         hooks.fileReplaced = report.replaced;
-        hooks.fontsChanged = [this] {
-            application::reloadSubtitleFonts();
-            if (!m_fontCatalogs)
-                return;
-            setVideoFonts(activeMedia().videoDocument);
-            if (activeMedia().videoDocument) {
-                activeMedia().videoRevision.reset();
-                activeMedia().videoScript.clear();
-                refreshVideo();
-            }
-        };
+        hooks.fontsChanged = [this] { subtitleFontsChanged(); };
         m_fontCatalogs = std::make_unique<FontCatalogsController>(*m_settings, std::filesystem::path(dir.toStdU16String()),
                                                                   std::move(hooks));
         setVideoFonts(std::nullopt);
@@ -2346,6 +2374,8 @@ void Application::refreshViews()
         m_review->refreshed();
     if (m_agent)
         m_agent->refreshed();
+    if (m_inlineAi)
+        m_inlineAi->refreshed();
     shell().setShowOriginal(target && showOriginal(*target), reference && showOriginal(*reference));
     shell().refresh(targetSession ? &targetSession->document() : nullptr,
                      referenceSession ? &referenceSession->document() : nullptr,
@@ -2449,7 +2479,9 @@ bool Application::showVideoSubtitles()
     if (!m_settings->boolean("video.disableLiveEditing") && activeViews().editorDocument == target && activeMedia().video->hasVideo())
         draft = editor().draftDocument();
     std::optional<core::Document> templated;
-    if (m_layerPreview) {
+    if (m_videoAnalysis && m_videoAnalysis->videoPreview()) {
+        templated = m_videoAnalysis->videoDocument(draft ? *draft : session->document());
+    } else if (m_layerPreview) {
         templated = layerPreviewDocument(draft ? *draft : session->document(), session->selection().selected);
     } else if (nodeEffects().videoPreview()) {
         templated = nodeEffects().videoDocument(draft ? *draft : session->document());
@@ -2502,9 +2534,31 @@ std::vector<application::FontLease> Application::attachedFontLeases(std::optiona
     return entry.leases;
 }
 
+void Application::subtitleFontsChanged()
+{
+    application::reloadSubtitleFonts();
+    if (!m_fontCatalogs)
+        return;
+    setVideoFonts(activeMedia().videoDocument);
+    if (activeMedia().videoDocument) {
+        activeMedia().videoRevision.reset();
+        activeMedia().videoScript.clear();
+        refreshVideo();
+    }
+}
+
+std::vector<application::FontLease> Application::projectFonts(std::optional<application::DocumentId> document) const
+{
+    const int window = (document ? m_workspace.window(*document) : std::nullopt).value_or(m_workspace.activeWindow());
+    const auto found = m_projectFonts.find(window);
+    return found == m_projectFonts.end() ? std::vector<application::FontLease>() : found->second.fonts;
+}
+
 std::vector<application::FontLease> Application::subtitleFonts(std::optional<application::DocumentId> document)
 {
     auto fonts = attachedFontLeases(document);
+    for (auto &font : projectFonts(document))
+        fonts.push_back(std::move(font));
     if (m_fontCatalogs)
         for (auto &font : m_fontCatalogs->externalFontLeases())
             fonts.push_back(std::move(font));
@@ -6193,6 +6247,36 @@ bool Application::deleteText()
     return done;
 }
 
+bool Application::textCommand(const QString &command)
+{
+    using application::text_commands::Command;
+    static const std::map<QString, Command> commands{
+        {"balancedBreak", Command::InsertBalancedBreak}, {"breakLeft", Command::MoveBreakLeft},
+        {"breakRight", Command::MoveBreakRight},         {"removeBreaks", Command::RemoveBreaks},
+        {"wrapAtBreaksOnly", Command::ToggleWrapStyle2}, {"lowercase", Command::Lowercase},
+        {"uppercase", Command::Uppercase},               {"titleCase", Command::TitleCase},
+        {"sentenceCase", Command::SentenceCase},         {"fullWidth", Command::FullWidth},
+        {"halfWidth", Command::HalfWidth},               {"swapAlternatives", Command::SwapAlternatives},
+    };
+    auto *session = targetSession();
+    const auto found = commands.find(command);
+    if (!session || found == commands.end())
+        return false;
+    static const auto services = backends::icuTextServices();
+    ui::QtTextMeasurePort measure;
+    const bool done = application::text_commands::run(*session, found->second, services, measure, shownLines()).has_value();
+    editor().reloadFromSession();
+    refreshViews();
+    return done;
+}
+
+bool Application::selectionWrapsAtBreaksOnly() const
+{
+    const auto target = m_workspace.editingTarget();
+    const auto *session = target ? m_files->session(*target) : nullptr;
+    return session && application::text_commands::selectionWrapsAtBreaksOnly(*session, shownLines());
+}
+
 bool Application::joinLines(const QString &kind)
 {
     const auto target = m_workspace.editingTarget();
@@ -6583,6 +6667,7 @@ QVariantMap Application::qmlProperties(int shellWindow)
             {QStringLiteral("styleManager"), QVariant::fromValue(static_cast<QObject *>(m_styleManager.get()))},
             {QStringLiteral("kanjiTimer"), QVariant::fromValue(static_cast<QObject *>(views(shellWindow).kanjiTimer.get()))},
             {QStringLiteral("alignToVideo"), QVariant::fromValue(static_cast<QObject *>(m_alignToVideo.get()))},
+            {QStringLiteral("videoAnalysis"), QVariant::fromValue(static_cast<QObject *>(m_videoAnalysis.get()))},
             {QStringLiteral("lyricsImport"), QVariant::fromValue(static_cast<QObject *>(m_lyricsImport.get()))},
             {QStringLiteral("qcNotes"), QVariant::fromValue(static_cast<QObject *>(m_qcNotes.get()))},
             {QStringLiteral("fontCollector"), QVariant::fromValue(static_cast<QObject *>(m_fontCollector.get()))},
@@ -6590,6 +6675,7 @@ QVariantMap Application::qmlProperties(int shellWindow)
             {QStringLiteral("matroska"), QVariant::fromValue(static_cast<QObject *>(m_matroska.get()))},
             {QStringLiteral("review"), QVariant::fromValue(static_cast<QObject *>(m_review.get()))},
             {QStringLiteral("agent"), QVariant::fromValue(static_cast<QObject *>(m_agent.get()))},
+            {QStringLiteral("inlineAi"), QVariant::fromValue(static_cast<QObject *>(m_inlineAi.get()))},
             {QStringLiteral("app"), QVariant::fromValue(static_cast<QObject *>(this))}};
 }
 

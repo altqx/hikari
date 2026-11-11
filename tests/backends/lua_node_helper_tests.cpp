@@ -182,17 +182,18 @@ TEST(LuaNodeProtocol, APortWithoutALuaFormIsRefused)
     EXPECT_FALSE(backends::lua::decodeNodeCall(in, payload.size()));
 }
 
+const std::string kOnlyTheNodeEnvironment =
+    "io == nil and os == nil and require == nil and load == nil and loadstring == nil and "
+    "dofile == nil and loadfile == nil and debug == nil and ffi == nil and jit == nil and aegisub == nil and "
+    "getfenv == nil and setfenv == nil and collectgarbage == nil and package == nil and coroutine == nil and "
+    "math.random == nil and math.randomseed == nil and string.dump == nil and getmetatable('') == false and "
+    "leftover == nil and string.upper ~= nil and _G.i == i and bit.band(6, 3) == 2 and table.concat({'a', 'b'}) == 'ab' and "
+    "('x'):rep(2) == 'xx' and math.floor(2.5) == 2 and type(pairs) == 'function'";
+
 TEST_F(LuaNodeHelperTest, EachRowRunsInFreshGlobalsWithOnlyTheNodeEnvironment)
 {
     LuaNodeHelper lua(real());
-    const std::string code =
-        "out = io == nil and os == nil and require == nil and load == nil and loadstring == nil and "
-        "dofile == nil and loadfile == nil and debug == nil and ffi == nil and jit == nil and aegisub == nil and "
-        "getfenv == nil and setfenv == nil and collectgarbage == nil and package == nil and coroutine == nil and "
-        "math.random == nil and math.randomseed == nil and string.dump == nil and getmetatable('') == false and "
-        "leftover == nil and string.upper ~= nil and _G.i == i and bit.band(6, 3) == 2 and table.concat({'a', 'b'}) == 'ab' and "
-        "('x'):rep(2) == 'xx' and math.floor(2.5) == 2 and type(pairs) == 'function'\n"
-        "leftover = true\nstring.upper = nil";
+    const std::string code = "out = " + kOnlyTheNodeEnvironment + "\nleftover = true\nstring.upper = nil";
     const auto result = lua.run(callOf(code, kNumberIn, {{"out", PortType::Bool}}, numbers({1, 2, 3})));
     ASSERT_TRUE(result) << result.error().message;
     EXPECT_EQ(*result, (std::vector<std::vector<NodeValue>>{{true}, {true}, {true}}));
@@ -322,6 +323,36 @@ TEST_F(LuaNodeHelperTest, AStuckLineStopsTheWholeGraphRun)
     EXPECT_TRUE(run->lines.empty());
     ASSERT_EQ(run->problems.size(), 1u);
     EXPECT_EQ(run->problems[0].message, "took longer than 0.3 seconds and was stopped");
+    EXPECT_EQ(lua.starts(), 1);
+}
+
+TEST_F(LuaNodeHelperTest, APluginNodeRunsItsOwnCodeInTheSameSandboxWithoutTheDocumentsTrust)
+{
+    PluginNode node;
+    node.plugin = "com.example.check";
+    node.pluginName = "Check";
+    node.title = "Check";
+    node.code = "out = (" + kOnlyTheNodeEnvironment + ") and 1 or 0\nleftover = true\nstring.upper = nil";
+    node.spec.id = pluginNodeType("com.example.check", "env");
+    node.spec.category = "com.example.check";
+    node.spec.inputs = kNumberIn;
+    node.spec.outputs = kNumberOut;
+    setPluginNodes({node}, {});
+    const core::Document doc = documentWithGraph(R"({"format": 1, "nodes": [
+    {"id": "syl", "type": "units.for_each"},
+    {"id": "info", "type": "units.info"},
+    {"id": "check", "type": "plugin:com.example.check/env", "fields": {"code": "out = 7"}},
+    {"id": "layer", "type": "output.emit"}],
+  "wires": [{"from": "info.i", "to": "check.i"}, {"from": "syl.units", "to": "layer.units"},
+            {"from": "check.out", "to": "layer.layer"}]})");
+    LuaNodeHelper lua(real());
+    const auto run = runGraph(doc, lua, false);
+    setPluginNodes({}, {});
+    ASSERT_TRUE(run);
+    EXPECT_TRUE(run->ran);
+    EXPECT_TRUE(run->problems.empty()) << run->problems.front().message;
+    ASSERT_EQ(run->lines.size(), 17u);
+    EXPECT_EQ(layers(*run), std::vector<int>(17, 1)) << "the Document's code is not the node's";
     EXPECT_EQ(lua.starts(), 1);
 }
 

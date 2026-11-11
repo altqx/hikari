@@ -253,24 +253,35 @@ QString interfaceCopy(std::string_view summary)
 
 QString nodeTitle(std::string_view type)
 {
+    if (const application::PluginNode *plugin = application::pluginNode(type))
+        return utf8(plugin->title);
     const NodeText *text = nodeText(type);
     return text ? translated(text->title) : utf8(type);
 }
 
 QString nodeSummary(std::string_view type)
 {
+    if (const application::PluginNode *plugin = application::pluginNode(type))
+        return utf8(plugin->spec.summary);
     const NodeText *text = nodeText(type);
     return text ? translated(text->summary) : QString();
 }
 
 QString nodeFieldSummary(std::string_view type, std::string_view field)
 {
+    if (const application::PluginNode *plugin = application::pluginNode(type)) {
+        const application::FieldSpec *f = application::fieldSpec(plugin->spec, field);
+        return f ? utf8(f->summary) : QString();
+    }
     const FieldText *text = fieldText(type, field);
     return text ? translated(text->summary) : QString();
 }
 
 QString nodeCategoryTitle(std::string_view category)
 {
+    for (const application::PluginNode &plugin : application::pluginNodes())
+        if (plugin.spec.category == category)
+            return utf8(plugin.pluginName);
     const CategoryText *text = categoryText(category);
     return text ? translated(text->title) : utf8(category);
 }

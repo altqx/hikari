@@ -1,9 +1,11 @@
 #include "hikari/app/agent_controller.h"
 #include "hikari/app/ai_features.h"
 #include "hikari/app/application.h"
+#include "hikari/app/automation_shell.h"
 #include "hikari/application/ai_providers.h"
 #include "hikari/application/hotkeys.h"
 #include "hikari/backends/ai_agent_broker.h"
+#include "hikari/backends/ai_agent_cli.h"
 #include "hikari/backends/ai_sidecar_host.h"
 #include "hikari/backends/ai_signin.h"
 #include "hikari/backends/desktop_handoff.h"
@@ -15,6 +17,8 @@
 #include "theme.h"
 
 #include <QFile>
+#include <QFileInfo>
+#include <QPointer>
 #include <QSaveFile>
 #include <QStandardPaths>
 #include <QGuiApplication>
@@ -82,6 +86,7 @@ class AgentPanelTest : public QObject {
     Q_OBJECT
     QTemporaryDir root;
     std::unique_ptr<app::Application> application;
+    QPointer<backends::ai::AiSidecarHost> realHost;
     std::unique_ptr<QQmlApplicationEngine> engine;
 
     QString at(const QString &name) const
@@ -206,6 +211,8 @@ class AgentPanelTest : public QObject {
         return qScopeGuard([this, path = qEnvironmentVariable(variable.toLatin1().constData())] {
             if (QFile file(path); file.open(QIODevice::WriteOnly | QIODevice::Truncate))
                 file.write(agent().markdown(agent().current()).toUtf8());
+            if (QFile file(path + QStringLiteral(".sidecar-stderr.txt")); realHost && file.open(QIODevice::WriteOnly | QIODevice::Truncate))
+                file.write(realHost->diagnostics());
         });
     }
 
@@ -224,14 +231,16 @@ class AgentPanelTest : public QObject {
             o.sandbox = backends::sandbox::Profile{.name = QStringLiteral("HikariSub.AI.Sidecar"),
                                                    .readExecute = {QFileInfo(runtime).absolutePath(), QFileInfo(bundle).absolutePath()},
                                                    .readWrite = {o.workingDirectory, at(QStringLiteral("ai/vendor"))}};
-            return std::make_unique<backends::ai::AiSidecarHost>(std::move(o), &application->apiHost()->api(),
-                                                                 api::Caller{.id = "ai", .label = "AI", .reviewed = true});
+            auto host = std::make_unique<backends::ai::AiSidecarHost>(std::move(o), &application->apiHost()->api(),
+                                                                      api::Caller{.id = "ai", .label = "AI", .reviewed = true});
+            realHost = host.get();
+            return host;
         };
         ports.agents = [this](backends::ai::AgentBroker &broker, application::ai::KeyStore &keys) {
-            broker.add("claude", backends::ai::claudeAgent(QStandardPaths::findExecutable(QStringLiteral("claude")),
+            broker.add("claude", backends::ai::claudeAgent(backends::ai::findAgentCli(QStringLiteral("claude")),
                                                          QDir::homePath(), at(QStringLiteral("ai/agents/claude"))));
             const QString home = at(QStringLiteral("ai/agents/codex/home"));
-            if (auto codex = backends::ai::codexAgent(QStandardPaths::findExecutable(QStringLiteral("codex")), home,
+            if (auto codex = backends::ai::codexAgent(backends::ai::findAgentCli(QStringLiteral("codex")), home,
                                                       at(QStringLiteral("ai/agents/codex/work")),
                                                       std::make_shared<backends::ai::CodexLease>(keys, home)))
                 broker.add("codex", std::move(*codex));
@@ -500,6 +509,59 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(item(QStringLiteral("agentMode_full")), "triggered"));
         QTRY_COMPARE(agent().thread().value(QStringLiteral("mode")).toString(), QStringLiteral("full"));
         QVERIFY(!item(QStringLiteral("messageBoxDontAsk")));
+    }
+
+    void anApprovedLuaScriptRunsAsOneMacroUndoStepAndFullAccessStillAsks()
+    {
+        openPanel();
+        QVERIFY(click(QStringLiteral("agentNewThread")));
+        agent().setFullAccessWarned();
+        agent().setMode(QStringLiteral("full"));
+        QTRY_COMPARE(agent().thread().value(QStringLiteral("mode")).toString(), QStringLiteral("full"));
+        std::string lua = "script_name = \"Shout\"\n";
+        for (int i = 0; i < 10; ++i)
+            lua += "-- padding " + std::to_string(i) + "\n";
+        lua += "aegisub.register_macro(\"Shout\", \"Upper-cases every Line\", function(subs)\n"
+               "    for i = 1, #subs do\n"
+               "        local line = subs[i]\n"
+               "        if line.class == \"dialogue\" then line.text = line.text:upper(); subs[i] = line end\n"
+               "    end\n"
+               "end)\n";
+        const Json run = Json::object({{"operation", "automation.run"},
+                                       {"params", Json::object({{"name", "Shout"}, {"script", lua}})}});
+        const QString script = QString::fromStdString(
+            Json::object({{"say", "I wrote a macro."}, {"calls", Json::array({run, run})}}).dump());
+        const std::size_t steps = session().historySize();
+        type(script);
+        QTRY_COMPARE(kinds().last(), QStringLiteral("script"));
+        QTRY_VERIFY(item(QStringLiteral("agentScriptRun")));
+        QVERIFY(item(QStringLiteral("agentScriptShowAll")));
+        QVERIFY(!item(QStringLiteral("agentAllowInThread")));
+        QCOMPARE(session().document().lines()[0]->text, u8"A rather long first line");
+        QVERIFY(!QFileInfo::exists(at(QStringLiteral("user/ai/scripts/Shout.lua"))));
+        shoot(QStringLiteral("agent-lua-script"), QStringLiteral("Shout every Line"));
+
+        QVERIFY(click(QStringLiteral("agentScriptShowAll")));
+        QTRY_VERIFY(!item(QStringLiteral("agentScriptShowAll")));
+        QVERIFY(click(QStringLiteral("agentScriptRun")));
+        QTRY_COMPARE_WITH_TIMEOUT(session().document().lines()[0]->text, u8"A RATHER LONG FIRST LINE", 20000);
+        QCOMPARE(session().historySize(), steps + 1);
+        QCOMPARE(session().history().back().name, std::string("Automation: Shout"));
+        QVERIFY(QFileInfo::exists(at(QStringLiteral("user/ai/scripts/Shout.lua"))));
+
+        QTRY_VERIFY_WITH_TIMEOUT(item(QStringLiteral("agentScriptRun")), 10000);
+        QVERIFY(click(QStringLiteral("agentScriptDecline")));
+        QTRY_VERIFY(!agent().thread().value(QStringLiteral("running")).toBool());
+        QCOMPARE(session().historySize(), steps + 1);
+        QVERIFY(session().undo());
+        QCOMPARE(session().document().lines()[0]->text, u8"A rather long first line");
+        const auto aiScriptLoaded = [this] {
+            return std::ranges::any_of(application->automation().manager().scripts(), [](const auto &loaded) {
+                return QString::fromStdString(loaded.path).contains(QStringLiteral("ai/scripts"));
+            });
+        };
+        QTRY_VERIFY(!aiScriptLoaded());
+        QVERIFY(application->automation().autoloadScripts().filter(QStringLiteral("Shout")).isEmpty());
     }
 
     void aThreadAtItsCapStopsAndRaiseContinues()

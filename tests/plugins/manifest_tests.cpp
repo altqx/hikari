@@ -244,6 +244,50 @@ TEST(PluginManifest, RepeatedIdsAndBadDefaultsAreRefused)
     EXPECT_EQ(problem(json).kind, Kind::Schema);
 }
 
+TEST(PluginManifest, ANodeReadsItsPortsAndDefaults)
+{
+    Json json = minimal();
+    json["contributes"] = *Json::parse(R"({"nodes": [{"id": "zigzag", "title": "Zigzag", "summary": "Moves up and down",
+        "file": "nodes/zigzag.lua", "inputs": [{"name": "index", "type": "Number"}, {"name": "height", "type": "Number", "default": 10}],
+        "outputs": [{"name": "offset", "type": "Number"}]}]})");
+    const auto m = parse(json);
+    ASSERT_TRUE(m) << m.error().at << " " << m.error().detail;
+    ASSERT_EQ(m->nodes.size(), 1u);
+    const NodeContribution &node = m->nodes[0];
+    EXPECT_EQ(node.id, "zigzag");
+    EXPECT_EQ(node.file, "nodes/zigzag.lua");
+    ASSERT_EQ(node.inputs.size(), 2u);
+    EXPECT_TRUE(node.inputs[0].fallback.isNull());
+    EXPECT_EQ(node.inputs[1].fallback.asNumber(), 10);
+    ASSERT_EQ(node.outputs.size(), 1u);
+    EXPECT_EQ(node.outputs[0].type, "Number");
+}
+
+TEST(PluginManifest, ANodesRepeatedPortsAndBadDefaultsAreRefused)
+{
+    Json json = minimal();
+    json["contributes"] = *Json::parse(R"({"nodes": [{"id": "a", "title": "A", "file": "a.lua",
+        "inputs": [{"name": "x", "type": "Number"}], "outputs": [{"name": "x", "type": "Number"}]}]})");
+    const ManifestProblem repeated = problem(json);
+    EXPECT_EQ(repeated.kind, Kind::DuplicateId);
+    EXPECT_EQ(repeated.at, "/contributes/nodes/0/outputs/0/name");
+
+    json["contributes"] = *Json::parse(R"({"nodes": [{"id": "a", "title": "A", "file": "a.lua",
+        "inputs": [{"name": "tint", "type": "Colour", "default": "red"}], "outputs": [{"name": "y", "type": "Number"}]}]})");
+    const ManifestProblem bad = problem(json);
+    EXPECT_EQ(bad.kind, Kind::BadDefault);
+    EXPECT_EQ(bad.at, "/contributes/nodes/0/inputs/0/default");
+
+    json["contributes"] = *Json::parse(R"({"nodes": [{"id": "a", "title": "A", "file": "a.lua", "outputs": []}]})");
+    EXPECT_EQ(problem(json).kind, Kind::Schema);
+    json["contributes"] = *Json::parse(R"({"nodes": [{"id": "a", "title": "A", "file": "a.lua",
+        "outputs": [{"name": "y", "type": "Vector"}]}]})");
+    EXPECT_EQ(problem(json).kind, Kind::Schema);
+    json["contributes"] = *Json::parse(R"({"nodes": [{"id": "a", "title": "A", "file": "a.lua", "outputs": [{"name": "y", "type": "Number"}]},
+        {"id": "a", "title": "B", "file": "b.lua", "outputs": [{"name": "y", "type": "Number"}]}]})");
+    EXPECT_EQ(problem(json).at, "/contributes/nodes/1/id");
+}
+
 TEST(PluginManifest, AFolderRequestCantTakeTheNameOfThePluginsOwnFolders)
 {
     Json json = minimal();

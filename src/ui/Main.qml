@@ -75,6 +75,7 @@ ApplicationWindow {
     required property var styleManager
     required property var kanjiTimer
     required property var alignToVideo
+    required property var videoAnalysis
     required property var lyricsImport
     required property var qcNotes
     required property var fontCollector
@@ -82,6 +83,7 @@ ApplicationWindow {
     required property var matroska
     required property var review
     required property var agent
+    required property var inlineAi
     required property var hotkeys
     required property var settingsImport
     required property VisualToolsController visualTools
@@ -753,6 +755,36 @@ ApplicationWindow {
         const panel = tool === "postprocessor" ? postprocessorTool : shiftTimesPanel
         panel.message = root.app.applyShift(tool)
         panel.refresh()
+    }
+
+    function runTimingHelper(symbol) {
+        const app = root.app
+        const helpers = {
+            GLOBAL_SNAP_START_TO_PREVIOUS_KEYFRAME: () => app.snapToAdjacentKeyframe(false, false),
+            GLOBAL_SNAP_START_TO_NEXT_KEYFRAME: () => app.snapToAdjacentKeyframe(false, true),
+            GLOBAL_SNAP_END_TO_PREVIOUS_KEYFRAME: () => app.snapToAdjacentKeyframe(true, false),
+            GLOBAL_SNAP_END_TO_NEXT_KEYFRAME: () => app.snapToAdjacentKeyframe(true, true),
+            GLOBAL_ADD_LEAD_IN: () => app.changeLead(false, true),
+            GLOBAL_REMOVE_LEAD_IN: () => app.changeLead(false, false),
+            GLOBAL_ADD_LEAD_OUT: () => app.changeLead(true, true),
+            GLOBAL_REMOVE_LEAD_OUT: () => app.changeLead(true, false),
+            GLOBAL_START_FRAME_EARLIER: () => app.nudgeEdge(false, -1),
+            GLOBAL_START_FRAME_LATER: () => app.nudgeEdge(false, 1),
+            GLOBAL_END_FRAME_EARLIER: () => app.nudgeEdge(true, -1),
+            GLOBAL_END_FRAME_LATER: () => app.nudgeEdge(true, 1),
+            GLOBAL_EXTEND_PREVIOUS_TO_START: () => app.extendNeighbour(false),
+            GLOBAL_EXTEND_NEXT_TO_END: () => app.extendNeighbour(true),
+            GLOBAL_TIMING_ASSISTANT: () => {
+                postprocessorTool.assistant = true
+                root.showPanel(postprocessorDock)
+                postprocessorTool.focusAssistant()
+                return true
+            },
+            GLOBAL_TIMING_ASSISTANT_ACCEPT: () => app.acceptTimingSuggestion(root.shellWindow, -1, -1),
+        }
+        if (!helpers[symbol]())
+            root.notices.post("info", qsTr("No line changed"), "")
+        postprocessorTool.schedule()
     }
 
     function focusedDock() {
@@ -2137,6 +2169,175 @@ ApplicationWindow {
                 text: qsTr("Timing &postprocessor…")
                 onTriggered: if (!root.hotkeyGesture("GLOBAL_SHOW_TIMING_POSTPROCESSOR")) root.showPanel(postprocessorDock)
             }
+            ShellMenu {
+                objectName: "timingHelpersMenu"
+                title: qsTr("Timing helpers")
+                iconRole: "timing-assistant"
+                ShellMenuItem {
+                    command: "GLOBAL_SNAP_START_TO_PREVIOUS_KEYFRAME"
+                    help: qsTr("Moves the start of each selected line to the keyframe before it")
+                    id: snapStartToPreviousKeyframeItem
+                    iconRole: "snap-start-to-previous-keyframe"
+                    objectName: "snapStartToPreviousKeyframeItem"
+                    text: qsTr("Start to previous keyframe")
+                    enabled: root.video.hasVideo && root.shell.hasEditingTarget
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_SNAP_START_TO_PREVIOUS_KEYFRAME")) root.runTimingHelper("GLOBAL_SNAP_START_TO_PREVIOUS_KEYFRAME")
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_SNAP_START_TO_NEXT_KEYFRAME"
+                    help: qsTr("Moves the start of each selected line to the keyframe after it, staying before its end")
+                    id: snapStartToNextKeyframeItem
+                    iconRole: "snap-start-to-next-keyframe"
+                    objectName: "snapStartToNextKeyframeItem"
+                    text: qsTr("Start to next keyframe")
+                    enabled: root.video.hasVideo && root.shell.hasEditingTarget
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_SNAP_START_TO_NEXT_KEYFRAME")) root.runTimingHelper("GLOBAL_SNAP_START_TO_NEXT_KEYFRAME")
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_SNAP_END_TO_PREVIOUS_KEYFRAME"
+                    help: qsTr("Moves the end of each selected line to the keyframe before it, staying after its start")
+                    id: snapEndToPreviousKeyframeItem
+                    iconRole: "snap-end-to-previous-keyframe"
+                    objectName: "snapEndToPreviousKeyframeItem"
+                    text: qsTr("End to previous keyframe")
+                    enabled: root.video.hasVideo && root.shell.hasEditingTarget
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_SNAP_END_TO_PREVIOUS_KEYFRAME")) root.runTimingHelper("GLOBAL_SNAP_END_TO_PREVIOUS_KEYFRAME")
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_SNAP_END_TO_NEXT_KEYFRAME"
+                    help: qsTr("Moves the end of each selected line to the keyframe after it")
+                    id: snapEndToNextKeyframeItem
+                    iconRole: "snap-end-to-next-keyframe"
+                    objectName: "snapEndToNextKeyframeItem"
+                    text: qsTr("End to next keyframe")
+                    enabled: root.video.hasVideo && root.shell.hasEditingTarget
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_SNAP_END_TO_NEXT_KEYFRAME")) root.runTimingHelper("GLOBAL_SNAP_END_TO_NEXT_KEYFRAME")
+                }
+                MenuSeparator {}
+                ShellMenuItem {
+                    command: "GLOBAL_ADD_LEAD_IN"
+                    help: qsTr("Starts each selected line earlier by the lead-in, no earlier than the line before it ends")
+                    id: addLeadInItem
+                    iconRole: "lead-in"
+                    objectName: "addLeadInItem"
+                    text: qsTr("Add lead-in")
+                    enabled: root.video.hasVideo && root.shell.hasEditingTarget
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_ADD_LEAD_IN")) root.runTimingHelper("GLOBAL_ADD_LEAD_IN")
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_REMOVE_LEAD_IN"
+                    help: qsTr("Starts each selected line later by the lead-in, keeping at least one frame")
+                    id: removeLeadInItem
+                    iconRole: "lead-in-remove"
+                    objectName: "removeLeadInItem"
+                    text: qsTr("Remove lead-in")
+                    enabled: root.video.hasVideo && root.shell.hasEditingTarget
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_REMOVE_LEAD_IN")) root.runTimingHelper("GLOBAL_REMOVE_LEAD_IN")
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_ADD_LEAD_OUT"
+                    help: qsTr("Ends each selected line later by the lead-out, no later than the next line starts")
+                    id: addLeadOutItem
+                    iconRole: "lead-out"
+                    objectName: "addLeadOutItem"
+                    text: qsTr("Add lead-out")
+                    enabled: root.video.hasVideo && root.shell.hasEditingTarget
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_ADD_LEAD_OUT")) root.runTimingHelper("GLOBAL_ADD_LEAD_OUT")
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_REMOVE_LEAD_OUT"
+                    help: qsTr("Ends each selected line earlier by the lead-out, keeping at least one frame")
+                    id: removeLeadOutItem
+                    iconRole: "lead-out-remove"
+                    objectName: "removeLeadOutItem"
+                    text: qsTr("Remove lead-out")
+                    enabled: root.video.hasVideo && root.shell.hasEditingTarget
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_REMOVE_LEAD_OUT")) root.runTimingHelper("GLOBAL_REMOVE_LEAD_OUT")
+                }
+                MenuSeparator {}
+                ShellMenuItem {
+                    command: "GLOBAL_START_FRAME_EARLIER"
+                    help: qsTr("Moves the start of each selected line one frame earlier")
+                    id: startFrameEarlierItem
+                    iconRole: "time-offset-start"
+                    objectName: "startFrameEarlierItem"
+                    text: qsTr("Start one frame earlier")
+                    enabled: root.video.hasVideo && root.shell.hasEditingTarget
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_START_FRAME_EARLIER")) root.runTimingHelper("GLOBAL_START_FRAME_EARLIER")
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_START_FRAME_LATER"
+                    help: qsTr("Moves the start of each selected line one frame later")
+                    id: startFrameLaterItem
+                    iconRole: "time-offset-start"
+                    objectName: "startFrameLaterItem"
+                    text: qsTr("Start one frame later")
+                    enabled: root.video.hasVideo && root.shell.hasEditingTarget
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_START_FRAME_LATER")) root.runTimingHelper("GLOBAL_START_FRAME_LATER")
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_END_FRAME_EARLIER"
+                    help: qsTr("Moves the end of each selected line one frame earlier")
+                    id: endFrameEarlierItem
+                    iconRole: "time-offset-end"
+                    objectName: "endFrameEarlierItem"
+                    text: qsTr("End one frame earlier")
+                    enabled: root.video.hasVideo && root.shell.hasEditingTarget
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_END_FRAME_EARLIER")) root.runTimingHelper("GLOBAL_END_FRAME_EARLIER")
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_END_FRAME_LATER"
+                    help: qsTr("Moves the end of each selected line one frame later")
+                    id: endFrameLaterItem
+                    iconRole: "time-offset-end"
+                    objectName: "endFrameLaterItem"
+                    text: qsTr("End one frame later")
+                    enabled: root.video.hasVideo && root.shell.hasEditingTarget
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_END_FRAME_LATER")) root.runTimingHelper("GLOBAL_END_FRAME_LATER")
+                }
+                MenuSeparator {}
+                ShellMenuItem {
+                    command: "GLOBAL_EXTEND_PREVIOUS_TO_START"
+                    help: qsTr("Ends the line before the active line where the active line starts")
+                    id: extendPreviousToStartItem
+                    iconRole: "extend-previous-to-start"
+                    objectName: "extendPreviousToStartItem"
+                    text: qsTr("Extend previous line to this start")
+                    enabled: root.shell.hasEditingTarget
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_EXTEND_PREVIOUS_TO_START")) root.runTimingHelper("GLOBAL_EXTEND_PREVIOUS_TO_START")
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_EXTEND_NEXT_TO_END"
+                    help: qsTr("Starts the line after the active line where the active line ends")
+                    id: extendNextToEndItem
+                    iconRole: "extend-next-to-end"
+                    objectName: "extendNextToEndItem"
+                    text: qsTr("Extend next line to this end")
+                    enabled: root.shell.hasEditingTarget
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_EXTEND_NEXT_TO_END")) root.runTimingHelper("GLOBAL_EXTEND_NEXT_TO_END")
+                }
+                MenuSeparator {}
+                ShellMenuItem {
+                    command: "GLOBAL_TIMING_ASSISTANT"
+                    help: qsTr("Steps through the lines one at a time with a suggested start and end")
+                    id: timingAssistantItem
+                    iconRole: "timing-assistant"
+                    objectName: "timingAssistantItem"
+                    text: qsTr("Timing assistant")
+                    enabled: root.video.hasVideo && root.shell.hasEditingTarget
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_TIMING_ASSISTANT")) root.runTimingHelper("GLOBAL_TIMING_ASSISTANT")
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_TIMING_ASSISTANT_ACCEPT"
+                    help: qsTr("Applies the timing assistant’s suggestion to the active line and goes to the next one")
+                    id: acceptTimingSuggestionItem
+                    iconRole: "commit"
+                    objectName: "acceptTimingSuggestionItem"
+                    text: qsTr("Accept assistant suggestion")
+                    enabled: root.video.hasVideo && root.shell.hasEditingTarget
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_TIMING_ASSISTANT_ACCEPT")) root.runTimingHelper("GLOBAL_TIMING_ASSISTANT_ACCEPT")
+                }
+            }
             ShellMenuItem {
                 command: "GLOBAL_BLUR_AND_GLOW_LAYERS"
                 help: qsTr("Builds glow, border and shadow layers under the selected lines")
@@ -2404,6 +2605,30 @@ ApplicationWindow {
                     text: qsTr("Align to video…")
                     enabled: root.video.hasVideo && root.shell.hasEditingTarget
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_ALIGN_TO_VIDEO")) root.openAlignToVideo()
+                }
+            }
+            ShellMenuItem {
+                command: "GLOBAL_TRACK_COLOUR"
+                help: qsTr("Follows a picked point’s colour across the selected lines’ frames and writes it as colour or alpha tags")
+                iconRole: "track-colour"
+                objectName: "trackColourMenuItem"
+                action: Action {
+                    id: trackColourAction
+                    text: qsTr("Track colour…")
+                    enabled: root.video.hasVideo && root.shell.hasEditingTarget
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_TRACK_COLOUR")) root.openVideoAnalysis("track")
+                }
+            }
+            ShellMenuItem {
+                command: "GLOBAL_FIND_FADE"
+                help: qsTr("Finds where the active line’s sign fades in and out at a picked point and writes %1").arg("\\fad")
+                iconRole: "find-fade"
+                objectName: "findFadeMenuItem"
+                action: Action {
+                    id: findFadeAction
+                    text: qsTr("Find fade…")
+                    enabled: root.video.hasVideo && root.shell.hasEditingTarget
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_FIND_FADE")) root.openVideoAnalysis("fade")
                 }
             }
             ShellMenuItem {
@@ -3638,6 +3863,25 @@ ApplicationWindow {
             TextMenuItem { kind: TextMenuItem.Delete; editor: field }
             MenuSeparator {}
             TextMenuItem { kind: TextMenuItem.SelectAll; editor: field }
+            MenuSeparator { visible: !field.readOnly; height: visible ? implicitHeight : 0 }
+            LineBreaksMenu {
+                shellRoot: root
+                prefix: field.objectName
+                enabled: !field.readOnly && root.editor.hasLine
+            }
+            ChangeCaseMenu {
+                shellRoot: root
+                prefix: field.objectName
+                enabled: !field.readOnly && root.editor.hasLine
+            }
+            ShellMenuItem {
+                command: "GLOBAL_SWAP_DIALOGUE_ALTERNATIVES"
+                iconRole: "dialogue-swap"
+                objectName: field.objectName + "SwapAlternatives"
+                text: qsTranslate("HikariSub.Text", "Swap dialogue alternatives")
+                enabled: !field.readOnly && root.editor.hasLine
+                onTriggered: if (!root.hotkeyGesture(command)) root.app.textCommand("swapAlternatives")
+            }
             MenuSeparator {}
             ShellMenuItem {
                 command: "GLOBAL_BLUR_AND_GLOW_LAYERS"
@@ -3649,6 +3893,17 @@ ApplicationWindow {
                 onTriggered: root.openBlurAndGlowLayers()
             }
             ShellMenuItem { command: "GLOBAL_REMOVE_TAGS"; iconRole: "remove-tags"; objectName: field.objectName + "RemoveTags"; action: removeTagsAction }
+            MenuSeparator { visible: fieldAiMenu.shown; height: visible ? implicitHeight : 0 }
+            InlineAiMenu {
+                id: fieldAiMenu
+                objectName: field.objectName + "AiMenu"
+                controller: root.inlineAi
+                editor: true
+                shown: root.inlineAi.on && field.role === 0 && root.editor.hasLine
+                onChosen: ask => inlineAiBox.begin(ask, true, field)
+                onRepeatRequested: root.repeatInlineAi(true, field)
+                onSettingsRequested: root.openSettings("ai")
+            }
             MenuSeparator { visible: field.spelled; height: visible ? implicitHeight : 0 }
             ShellMenuItem {
                 iconRole: "spellchecker"
@@ -5880,8 +6135,19 @@ ApplicationWindow {
                             original: lineText
                             translated: translationText
                             translationTools: root.editor.translationMode && !root.originalShown
+                            aiShown: root.inlineAi.on && root.editor.hasLine
+                            onAiActionsRequested: anchor => editorAiMenu.popup(anchor, 0, anchor.height)
                             Layout.fillWidth: true
                             Layout.minimumWidth: minimumWidth
+                        }
+                        InlineAiMenu {
+                            id: editorAiMenu
+                            objectName: "editorAiMenu"
+                            controller: root.inlineAi
+                            editor: true
+                            onChosen: ask => inlineAiBox.begin(ask, true, lineText)
+                            onRepeatRequested: root.repeatInlineAi(true, lineText)
+                            onSettingsRequested: root.openSettings("ai")
                         }
 
                         ReviewStrip {
@@ -6017,10 +6283,20 @@ ApplicationWindow {
                 accessibleName: qsTranslate("HikariSub.Grid", "Grid")
                 focus: true
                 keyTarget: grid
+                InlineAiBar {
+                    id: inlineAiBar
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.top: parent.top
+                    z: 1
+                    controller: root.inlineAi
+                    onSettingsRequested: root.openSettings("ai")
+                }
                 HikariGrid {
                     id: grid
                     objectName: "editingGrid"
                     anchors.fill: parent
+                    anchors.topMargin: inlineAiBar.visible ? inlineAiBar.height : 0
                     focus: true
                     // Qt Quick puts only items with an Accessible attachment in the accessibility tree.
                     Accessible.role: Accessible.Table
@@ -6034,7 +6310,24 @@ ApplicationWindow {
                     onLineClicked: (id, modifiers, endColumn, doubleClick) => root.app.clickLine(id, modifiers, endColumn, doubleClick)
                     onLineDragged: id => root.app.dragSelection(id)
                     onSelectAllRequested: root.app.selectAllLines()
-                    onContextMenuRequested: (x, y) => gridMenu.popup(grid, x, y)
+                    property bool aiMenuNext: false
+                    onContextMenuRequested: (x, y) => {
+                        if (aiMenuNext) {
+                            aiMenuNext = false
+                            gridAiHotkeyMenu.popup(grid, x, y)
+                        } else {
+                            gridMenu.popup(grid, x, y)
+                        }
+                    }
+                    InlineAiMenu {
+                        id: gridAiHotkeyMenu
+                        objectName: "gridAiHotkeyMenu"
+                        controller: root.inlineAi
+                        lineCount: Math.max(1, root.shell.selectedCount)
+                        onChosen: ask => inlineAiBox.begin(ask, false, null)
+                        onRepeatRequested: root.repeatInlineAi(false, null)
+                        onSettingsRequested: root.openSettings("ai")
+                    }
                     onHeaderMenuRequested: (x, y) => gridHeaderMenu.popup(grid, x, y)
                     MenuKey.onRequested: grid.requestMenu()
                     GridToolTip { grid: grid }
@@ -6216,6 +6509,14 @@ ApplicationWindow {
                                 }
                             }
                         }
+                        InlineAiMenu {
+                            objectName: "gridAiMenu"
+                            controller: root.inlineAi
+                            lineCount: gridMenu.lineCount
+                            onChosen: ask => inlineAiBox.begin(ask, false, null)
+                            onRepeatRequested: root.repeatInlineAi(false, null)
+                            onSettingsRequested: root.openSettings("ai")
+                        }
                         MenuSeparator {}
                         ShellMenu {
                             objectName: "gridJoinMenu"
@@ -6329,6 +6630,16 @@ ApplicationWindow {
                             text: qsTranslate("HikariSub.Grid", "Convert Aegisub folds to line groups")
                             enabled: gridMenu.visible && root.app.canConvertFolds()
                             onTriggered: if (!root.hotkeyGesture("GLOBAL_CONVERT_FOLDS_TO_GROUPS")) root.app.convertFoldsToGroups()
+                        }
+                        MenuSeparator {}
+                        LineBreaksMenu { shellRoot: root; prefix: "grid" }
+                        ChangeCaseMenu { shellRoot: root; prefix: "grid" }
+                        ShellMenuItem {
+                            command: "GLOBAL_SWAP_DIALOGUE_ALTERNATIVES"
+                            iconRole: "dialogue-swap"
+                            objectName: "gridSwapAlternatives"
+                            text: qsTranslate("HikariSub.Text", "Swap dialogue alternatives")
+                            onTriggered: if (!root.hotkeyGesture(command)) root.app.textCommand("swapAlternatives")
                         }
                         MenuSeparator {}
                         ShellMenuItem {
@@ -8397,6 +8708,7 @@ ApplicationWindow {
                 updates: root.updates
                 crashReports: root.crashReports
                 ai: root.aiSettings
+                inlineAi: root.inlineAi
                 colourPicker: root.colourPicker
                 tagButtons: root.tagButtons
                 importer: root.settingsImport
@@ -8411,6 +8723,24 @@ ApplicationWindow {
         return settingsLoader.item
     }
     function openSettings(page, filter) { settingsWindow().openDialog(page, filter) }
+    function repeatInlineAi(inEditor, field) {
+        if (root.inlineAi.last.action)
+            inlineAiBox.begin(Object.assign({}, root.inlineAi.last, {repeat: true}), inEditor, field)
+    }
+    function openInlineAiMenu() {
+        if (lineText.activeFocus && editorStrip.aiShown) {
+            editorAiMenu.popup(editorStrip.aiButton, 0, editorStrip.aiButton.height)
+            return
+        }
+        grid.aiMenuNext = true
+        grid.requestMenu()
+        grid.aiMenuNext = false
+    }
+    InlineAiBox {
+        id: inlineAiBox
+        parent: Overlay.overlay
+        controller: root.inlineAi
+    }
     function importLegacySettings() {
         if (root.settingsImport.available)
             settingsImportDialog.openDialog()
@@ -8491,6 +8821,29 @@ ApplicationWindow {
         const problem = alignToVideoLoader.item.openDialog()
         if (problem.length > 0)
             root.notices.post("error", qsTr("Align to video"), problem)
+    }
+    Loader {
+        id: trackColourLoader
+        active: false
+        sourceComponent: TrackColourDialog {
+            controller: root.videoAnalysis
+            settings: root.app.settings
+        }
+    }
+    Loader {
+        id: findFadeLoader
+        active: false
+        sourceComponent: FindFadeDialog {
+            controller: root.videoAnalysis
+            settings: root.app.settings
+        }
+    }
+    function openVideoAnalysis(mode) {
+        const loader = mode === "fade" ? findFadeLoader : trackColourLoader
+        loader.active = true
+        const problem = loader.item.openDialog()
+        if (problem.length > 0)
+            root.notices.post("error", mode === "fade" ? qsTr("Find fade") : qsTr("Track colour"), problem)
     }
     ListChooser {
         id: fixSuggestions
@@ -8871,6 +9224,23 @@ ApplicationWindow {
         onTriggered: if (!root.hotkeyGesture("GLOBAL_UNDO_ALL_AI_CHANGES")) root.undoAllAiChanges()
     }
     Action {
+        id: aiActionsAction
+        text: qsTranslate("HikariSub.Hotkeys", "AI actions…")
+        enabled: root.inlineAi.on
+        onTriggered: if (!root.hotkeyGesture("GLOBAL_AI_ACTIONS")) root.openInlineAiMenu()
+    }
+    Action {
+        id: repeatAiActionAction
+        text: qsTranslate("HikariSub.Hotkeys", "Repeat last AI action")
+        enabled: root.inlineAi.on && !!root.inlineAi.ready.any && !!root.inlineAi.last.action
+        onTriggered: {
+            if (root.hotkeyGesture("GLOBAL_REPEAT_AI_ACTION"))
+                return
+            const inEditor = lineText.activeFocus
+            root.repeatInlineAi(inEditor, inEditor ? lineText : null)
+        }
+    }
+    Action {
         id: showAiAgentAction
         text: qsTranslate("HikariSub.Agent", "Agent panel")
         enabled: root.agent.on
@@ -8918,6 +9288,8 @@ ApplicationWindow {
         GLOBAL_JOIN_PREVIOUS_AUDIO_SELECTION: joinPreviousAudioSelectionAction,
         GLOBAL_CENTER_TIMES_IN_FRAMES: centerTimesInFramesAction,
         GLOBAL_ALIGN_TO_VIDEO: alignToVideoAction,
+        GLOBAL_TRACK_COLOUR: trackColourAction,
+        GLOBAL_FIND_FADE: findFadeAction,
         GLOBAL_PERSPECTIVE_TRACKING: perspectiveTrackingAction,
         GLOBAL_APPLY_MOTION_DATA: applyMotionDataAction,
         GLOBAL_BLUR_AND_GLOW_LAYERS: blurAndGlowLayersAction,
@@ -8952,6 +9324,7 @@ ApplicationWindow {
         GLOBAL_KEEP_ALL_AI_CHANGES: keepAllAiChangesAction, GLOBAL_UNDO_ALL_AI_CHANGES: undoAllAiChangesAction,
         GLOBAL_SHOW_AI_REVIEW: showAiReviewAction,
         GLOBAL_SHOW_AI_AGENT: showAiAgentAction, GLOBAL_NEW_AI_THREAD: newAiThreadAction,
+        GLOBAL_AI_ACTIONS: aiActionsAction, GLOBAL_REPEAT_AI_ACTION: repeatAiActionAction,
         GLOBAL_CLOSE_PAGE: closeAction
     }
     }
@@ -8962,6 +9335,22 @@ ApplicationWindow {
         GLOBAL_OPEN_FONT_COLLECTOR: fontCollectorItem,
         GLOBAL_SHOW_SHIFT_TIMES: showShiftTimesItem, GLOBAL_SHOW_TIMING_POSTPROCESSOR: showPostprocessorItem,
         GLOBAL_SHOW_QC_NOTES: showQcNotesItem,
+        GLOBAL_SNAP_START_TO_PREVIOUS_KEYFRAME: snapStartToPreviousKeyframeItem,
+        GLOBAL_SNAP_START_TO_NEXT_KEYFRAME: snapStartToNextKeyframeItem,
+        GLOBAL_SNAP_END_TO_PREVIOUS_KEYFRAME: snapEndToPreviousKeyframeItem,
+        GLOBAL_SNAP_END_TO_NEXT_KEYFRAME: snapEndToNextKeyframeItem,
+        GLOBAL_ADD_LEAD_IN: addLeadInItem,
+        GLOBAL_REMOVE_LEAD_IN: removeLeadInItem,
+        GLOBAL_ADD_LEAD_OUT: addLeadOutItem,
+        GLOBAL_REMOVE_LEAD_OUT: removeLeadOutItem,
+        GLOBAL_START_FRAME_EARLIER: startFrameEarlierItem,
+        GLOBAL_START_FRAME_LATER: startFrameLaterItem,
+        GLOBAL_END_FRAME_EARLIER: endFrameEarlierItem,
+        GLOBAL_END_FRAME_LATER: endFrameLaterItem,
+        GLOBAL_EXTEND_PREVIOUS_TO_START: extendPreviousToStartItem,
+        GLOBAL_EXTEND_NEXT_TO_END: extendNextToEndItem,
+        GLOBAL_TIMING_ASSISTANT: timingAssistantItem,
+        GLOBAL_TIMING_ASSISTANT_ACCEPT: acceptTimingSuggestionItem,
         GLOBAL_LOAD_EXTERNAL_SESSION: loadSessionFileItem, GLOBAL_SAVE_EXTERNAL_SESSION: saveSessionFileItem,
         GLOBAL_LOAD_LAST_SESSION: loadLastSessionItem,
         GLOBAL_CHECK_KARAOKE: checkKaraokeItem,
@@ -9132,6 +9521,18 @@ ApplicationWindow {
         case "GLOBAL_PREVIOUS_LINE": if (editing) root.editor.nextLine(-1); return true
         case "GLOBAL_NEXT_LINE": if (editing) root.editor.nextLine(1); return true
         case "GLOBAL_REMOVE_TEXT": if (editing) root.app.deleteText(); return true
+        case "GLOBAL_TEXT_INSERT_BALANCED_BREAK": if (editing) root.app.textCommand("balancedBreak"); return true
+        case "GLOBAL_TEXT_MOVE_BREAK_LEFT": if (editing) root.app.textCommand("breakLeft"); return true
+        case "GLOBAL_TEXT_MOVE_BREAK_RIGHT": if (editing) root.app.textCommand("breakRight"); return true
+        case "GLOBAL_TEXT_REMOVE_BREAKS": if (editing) root.app.textCommand("removeBreaks"); return true
+        case "GLOBAL_TEXT_WRAP_AT_BREAKS_ONLY": if (editing) root.app.textCommand("wrapAtBreaksOnly"); return true
+        case "GLOBAL_TEXT_LOWERCASE": if (editing) root.app.textCommand("lowercase"); return true
+        case "GLOBAL_TEXT_UPPERCASE": if (editing) root.app.textCommand("uppercase"); return true
+        case "GLOBAL_TEXT_TITLE_CASE": if (editing) root.app.textCommand("titleCase"); return true
+        case "GLOBAL_TEXT_SENTENCE_CASE": if (editing) root.app.textCommand("sentenceCase"); return true
+        case "GLOBAL_TEXT_FULL_WIDTH": if (editing) root.app.textCommand("fullWidth"); return true
+        case "GLOBAL_TEXT_HALF_WIDTH": if (editing) root.app.textCommand("halfWidth"); return true
+        case "GLOBAL_SWAP_DIALOGUE_ALTERNATIVES": if (editing) root.app.textCommand("swapAlternatives"); return true
         case "GLOBAL_ADD_PAGE": root.app.addPage(); return true
         case "GLOBAL_SELECT_FROM_VIDEO": root.app.selectLineFromVideo(); return true
         case "GLOBAL_SNAP_WITH_START": root.app.snapToKeyframe(true); return true

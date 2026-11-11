@@ -14074,6 +14074,95 @@ private slots:
         application->editor().discard();
     }
 
+    void timingAssistantSkipsAcceptsAndChangesFromTheKeyboard()
+    {
+        const QString path = writeFile(dir, "au19-assistant.ass",
+                                       "Dialogue: 0,0:00:00.48,0:00:00.70,Default,,0,0,0,,a\n"
+                                       "Dialogue: 0,0:00:00.90,0:00:01.20,Default,,0,0,0,,b\n"
+                                       "Comment: 0,0:00:01.20,0:00:01.30,Default,,0,0,0,,note\n"
+                                       "Dialogue: 0,0:00:01.60,0:00:01.70,Default,,0,0,0,,c\n");
+        const QString kf = dir.filePath(QStringLiteral("au19-kf.txt"));
+        {
+            QFile f(kf);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("# keyframe format v1\nfps 23.976\n0\n10\n20\n45\n");
+        }
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const auto before = application->shiftTimesSettings().settingsMap();
+        auto restore = qScopeGuard([&] { application->shiftTimesSettings().setSettingsMap(before); });
+        setShift("postprocessor", 1 | 2 | 4 | 8);
+        setShift("leadIn", 80);
+        setShift("leadOut", 200);
+        setShift("thresholdStart", 300);
+        setShift("keyframeBeforeStart", 50);
+        setShift("keyframeAfterStart", 0);
+        setShift("keyframeBeforeEnd", 100);
+        setShift("keyframeAfterEnd", 300);
+        QVERIFY(application->openKeyframes(QUrl::fromLocalFile(kf)).isEmpty());
+        application->setAskForBadResolution(false);
+        application->video().openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().session().keyframes() == (std::vector<int>{0, 10, 20, 45}), 20000);
+        QTRY_VERIFY_WITH_TIMEOUT(application->exactTimebase(), 20000);
+        closeMismatchQuestion();
+        const auto line = [&](int i) { return session->document().lines()[static_cast<std::size_t>(i)]; };
+        const auto timebase = application->video().session().legacyTimebase();
+        const auto frames = [&](int i) {
+            return std::pair(timebase.frameAt(static_cast<int>(line(i)->start.value.microseconds() / 1000)),
+                             timebase.frameAt(static_cast<int>(line(i)->end.value.microseconds() / 1000)));
+        };
+        using Frames = std::pair<int, int>;
+
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QCOMPARE(session->selection().active, line(0)->id);
+        QVariant ran;
+        QVERIFY(QMetaObject::invokeMethod(window, "runGlobalHotkey", Q_RETURN_ARG(QVariant, ran),
+                                          Q_ARG(QVariant, QStringLiteral("GLOBAL_TIMING_ASSISTANT"))));
+        QVERIFY(ran.toBool());
+        QTRY_VERIFY(item("timingAssistant") && item("timingAssistant")->isVisible());
+        QTRY_COMPARE(item("assistantPosition")->property("text").toString(), QStringLiteral("Line 1 of 3"));
+        const auto steps = session->historySize();
+
+        press(Qt::Key_S, Qt::AltModifier);
+        QTRY_COMPARE(session->selection().active, line(1)->id);
+        QCOMPARE(session->historySize(), steps);
+        QTRY_COMPARE(item("assistantPosition")->property("text").toString(), QStringLiteral("Line 2 of 3"));
+        const auto suggestion = item<QObject>("timingAssistant")->property("suggestion").toMap();
+        QCOMPARE(suggestion.value(QStringLiteral("startReason")).toString(), QStringLiteral("linked"));
+        QCOMPARE(suggestion.value(QStringLiteral("endReason")).toString(), QStringLiteral("leadOut"));
+        QCOMPARE(item("assistantStartWhy")->property("text").toString(),
+                 QStringLiteral("Lead-in of 80 ms, linked to the previous line."));
+        QVERIFY(item("assistantLinkWhy")->isVisible());
+
+        press(Qt::Key_Return);
+        QTRY_COMPARE(session->selection().active, line(3)->id);
+        QCOMPARE(session->historySize(), steps + 1);
+        QCOMPARE(session->history().back().name, std::string("Timing assistant"));
+        QCOMPARE(frames(1), (Frames{20, 34}));
+        QCOMPARE(line(0)->end.value, line(1)->start.value);
+        QCOMPARE(frames(2), (Frames{29, 32}));
+
+        QTRY_COMPARE(item("assistantPosition")->property("text").toString(), QStringLiteral("Line 3 of 3"));
+        press(Qt::Key_C, Qt::AltModifier);
+        QTRY_VERIFY(item("assistantStartEdit")->isVisible());
+        item("assistantStartEdit")->setProperty("text", QStringLiteral("0:00:01.52"));
+        press(Qt::Key_Return);
+        QTRY_COMPARE(frames(3).first, 37);
+        QCOMPARE(session->historySize(), steps + 2);
+        QTRY_VERIFY(item("assistantEmpty")->isVisible());
+        QCOMPARE(item("assistantEmpty")->property("text").toString(), QStringLiteral("No more lines. Accepted 2, skipped 1."));
+
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QVERIFY(QMetaObject::invokeMethod(window, "runGlobalHotkey", Q_RETURN_ARG(QVariant, ran),
+                                          Q_ARG(QVariant, QStringLiteral("GLOBAL_SNAP_START_TO_PREVIOUS_KEYFRAME"))));
+        QTRY_COMPARE(frames(0).first, 10);
+        QCOMPARE(session->history().back().name, std::string("Snapping to the adjacent keyframe"));
+        auto *menu = item<QObject>("snapStartToNextKeyframeItem");
+        QVERIFY(menu && menu->property("enabled").toBool());
+    }
+
     void theTimingLayoutOpensThePostprocessorWithItsPreset()
     {
         QVERIFY(application->openFile(episode));
@@ -21678,8 +21767,9 @@ private slots:
                                      "Video", "Audio", "Conversion", "Script properties", "Automation", "Shortcuts",
                                      "AI", "Updates and privacy"}));
         QVERIFY(dialogItem("settingsDialog", "settingsPageHotkeys"));
-        QCOMPARE(hotkeyRows().size(), 320);
-        QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Global Close current tab"));
+        QCOMPARE(hotkeyRows().size(), 352);
+        QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(),
+                 QStringLiteral("Global Accept the timing assistant\u2019s suggestion"));
         QCOMPARE(application->hotkeys().selected(), 0);
         QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "hotkeyFilter"), "activated", Q_ARG(int, 5)));
         QCOMPARE(hotkeyRows().size(), int(std::ranges::count_if(application::hotkeyNames(), [](const auto &n) {
@@ -31231,6 +31321,145 @@ private slots:
         QCOMPARE(application->video().session().shownFrame(), std::optional<int>(15));
         QVERIFY(application->editor().undo());
         QTRY_COMPARE(ms(0), (Ms{0, 200}));
+    }
+
+    QObject *openVideoAnalysis(const char *menuItem, const char *dialogName, const QString &file, int frame)
+    {
+        app::attachVideoAnalysisStill(*engine, application->videoAnalysis());
+        if (!application->openFile(file))
+            return nullptr;
+        auto *menu = item<QObject>(menuItem);
+        if (!menu || menu->property("enabled").toBool())
+            return nullptr;
+        application->setAskForBadResolution(false);
+        application->video().openVideo(nativeFixture("fade.mkv"));
+        if (!QTest::qWaitFor([&] { return application->video().session().shownFrame() == std::optional<int>(0); }, 20000))
+            return nullptr;
+        closeMismatchQuestion();
+        if (!QTest::qWaitFor([&] { return menu->property("enabled").toBool(); }))
+            return nullptr;
+        if (!application->video().session().seekFrame(frame) ||
+            !QTest::qWaitFor([&] { return application->video().session().shownFrame() == std::optional<int>(frame); }, 20000))
+            return nullptr;
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QMetaObject::invokeMethod(menu, "click");
+        QObject *dialog = nullptr;
+        if (!QTest::qWaitFor([&] {
+                dialog = engine->rootObjects().first()->findChild<QObject *>(QLatin1String(dialogName));
+                return dialog && dialog->property("visible").toBool();
+            }))
+            return nullptr;
+        auto *controller = dialog->property("controller").value<QObject *>();
+        if (!QTest::qWaitFor([&] { return controller->property("ready").toBool(); }, 20000))
+            return nullptr;
+        return dialog;
+    }
+
+    void clickOnStill(const char *dialogName, const char *stillName, int x, int y)
+    {
+        auto *still = dialogItem(dialogName, stillName);
+        QVERIFY(still);
+        QTRY_VERIFY(still->property("zoom").toReal() > 0.5);
+        const qreal zoom = still->property("zoom").toReal();
+        const QPoint at = still->mapToScene(QPointF(still->property("imageLeft").toReal() + (x + 0.5) * zoom,
+                                                    still->property("imageTop").toReal() + (y + 0.5) * zoom))
+                              .toPoint();
+        QTest::mouseClick(still->window(), Qt::LeftButton, {}, at);
+    }
+
+    void trackColourWritesThePointsColourOnEachFrame()
+    {
+        const QString path = writeFile(dir, "au11-track.ass",
+                                       "Dialogue: 0,0:00:00.00,0:00:01.50,Default,,0,0,0,,{\\bord2\\c&H0000FF&}sign\n"
+                                       "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,b\n");
+        QObject *dialog = openVideoAnalysis("trackColourMenuItem", "trackColourDialog", path, 20);
+        QVERIFY(dialog);
+        auto *controller = dialog->property("controller").value<QObject *>();
+        QCOMPARE(controller->property("mode").toString(), QStringLiteral("track"));
+        QCOMPARE(controller->property("frameWidth").toInt(), 320);
+        clickOnStill("trackColourDialog", "trackColourStill", 160, 120);
+        QTRY_COMPARE(controller->property("pointX").toInt(), 160);
+        QTRY_VERIFY_WITH_TIMEOUT(!controller->property("reading").toBool() &&
+                                     !controller->property("result").toString().isEmpty(), 30000);
+
+        const auto swatches = controller->property("swatches").toList();
+        QCOMPARE(swatches.size(), controller->property("lineFrames").toInt());
+        QVERIFY(swatches.size() > 30);
+        QVERIFY(swatches.front().value<QColor>().lightness() < 40);
+        QVERIFY(swatches.at(20).value<QColor>().lightness() > 150);
+        int changes = 0;
+        for (qsizetype i = 1; i < swatches.size(); ++i)
+            changes += swatches.at(i).value<QColor>() != swatches.at(i - 1).value<QColor>();
+        const QString first = swatches.front().value<QColor>().name().toUpper();
+        const QString ass = QStringLiteral("&H%1%2%3&").arg(first.mid(5, 2), first.mid(3, 2), first.mid(1, 2));
+        QString result = controller->property("result").toString();
+        QVERIFY2(result.startsWith(QStringLiteral("{\\bord2\\c") + ass + QStringLiteral("\\t(")), qPrintable(result));
+        QVERIFY2(result.endsWith(QStringLiteral(")}sign")), qPrintable(result));
+        QCOMPARE(result.count(QStringLiteral("\\t(")), changes);
+        QVERIFY(application->videoAnalysis().videoPreview());
+
+        controller->setProperty("skipRepeats", false);
+        result = controller->property("result").toString();
+        QCOMPARE(result.count(QStringLiteral("\\t(")), swatches.size() - 1);
+        controller->setProperty("skipRepeats", true);
+        result = controller->property("result").toString();
+
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const auto steps = session->historySize();
+        auto *apply = dialogItem("trackColourDialog", "trackColourApply");
+        QVERIFY(apply);
+        QVERIFY(QMetaObject::invokeMethod(apply, "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QCOMPARE(session->historySize(), steps + 1);
+        QCOMPARE(session->history().back().name, std::string("Track colour"));
+        const auto text = [&](int i) {
+            const auto &t = session->document().lines()[static_cast<std::size_t>(i)]->text;
+            return QString::fromUtf8(reinterpret_cast<const char *>(t.data()), static_cast<qsizetype>(t.size()));
+        };
+        QCOMPARE(text(0), result);
+        QCOMPARE(text(1), QStringLiteral("b"));
+        QVERIFY(!application->videoAnalysis().videoPreview());
+        QVERIFY(application->editor().undo());
+        QTRY_COMPARE(text(0), QStringLiteral("{\\bord2\\c&H0000FF&}sign"));
+    }
+
+    void findFadeWritesTheFadeTheVideoShows()
+    {
+        const QString path = writeFile(dir, "au11-fade.ass",
+                                       "Dialogue: 0,0:00:00.00,0:00:01.80,Default,,0,0,0,,{\\clip(m 160 120)\\bord2}sign\n");
+        QObject *dialog = openVideoAnalysis("findFadeMenuItem", "findFadeDialog", path, 20);
+        QVERIFY(dialog);
+        auto *controller = dialog->property("controller").value<QObject *>();
+        QCOMPARE(controller->property("mode").toString(), QStringLiteral("fade"));
+        QCOMPARE(controller->property("pointX").toInt(), 160);
+        QCOMPARE(controller->property("pointY").toInt(), 120);
+        QTRY_VERIFY_WITH_TIMEOUT(!controller->property("reading").toBool() &&
+                                     !controller->property("result").toString().isEmpty(), 30000);
+        QCOMPARE(controller->property("fadeInIndex").toInt(), 9);
+        QCOMPARE(controller->property("fadeOutIndex").toInt(), 30);
+        QCOMPARE(controller->property("distances").toList().size(), controller->property("lineFrames").toInt() + 1);
+
+        const auto times = *application->video().session().aegisubFrameTimes();
+        const auto middle = [&](int a, int b) { return (times.msFromFrame(a) + times.msFromFrame(b)) / 2; };
+        const auto in = middle(10, 9), out = 1800 - middle(29, 30);
+        const QString expected = QStringLiteral("{\\fad(%1,%2)\\bord2}sign").arg(in).arg(out);
+        QCOMPARE(controller->property("result").toString(), expected);
+
+        controller->setProperty("fadeOut", false);
+        QCOMPARE(controller->property("result").toString(), QStringLiteral("{\\fad(%1,0)\\bord2}sign").arg(in));
+        QCOMPARE(controller->property("fadeOutIndex").toInt(), -1);
+        controller->setProperty("fadeOut", true);
+
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        auto *apply = dialogItem("findFadeDialog", "findFadeApply");
+        QVERIFY(apply);
+        QVERIFY(QMetaObject::invokeMethod(apply, "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QCOMPARE(session->history().back().name, std::string("Find fade"));
+        const auto &t = session->document().lines()[0]->text;
+        QCOMPARE(QString::fromUtf8(reinterpret_cast<const char *>(t.data()), static_cast<qsizetype>(t.size())), expected);
+        QVERIFY(application->editor().undo());
     }
 
     void snapToKeyframeNeedsTheAudioBox()

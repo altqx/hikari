@@ -394,6 +394,11 @@ const std::vector<SettingDefinition> &definitions()
         {"ai.agent.dailyCapCents", "", Int, Profile, Mapped, false, std::int64_t{1000}},
         {"ai.agent.costMeter", "", Bool, Profile, Mapped, false, true},
         {"ai.agent.fullAccessWarned", "", Bool, Profile, Mapped, false, false},
+        // actions: one {"name", "instruction", "role", "ask"} JSON object per row.
+        {"ai.inline.actions", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
+        {"ai.inline.translateTo", "", String, Profile, Mapped, false, std::string("English")},
+        {"ai.inline.contextLines", "", Int, Profile, Mapped, false, std::int64_t{2}},
+        {"ai.inline.recentInstructions", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {"plugins.network", "", Bool, Profile, Mapped, false, true},
         {"grammar.group.properNouns", "", Bool, Profile, Mapped, false, true},
         {"grammar.group.initialisms", "", Bool, Profile, Mapped, false, true},

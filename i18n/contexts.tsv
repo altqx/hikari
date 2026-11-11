@@ -1,6 +1,7 @@
 # Translation contexts by surface; ctest hikari_i18n_contexts_are_semantic fails on a context missing here.
 context	surface
 HikariSub.Agent	AI agent: the Agent panel, its threads, questions, modes and caps, and its commands (AI7)
+HikariSub.InlineAi	AI inline actions: the AI submenu, its box, the run bar and Manual results, and their settings (AI8)
 HikariSub.Audio	The audio panel: waveform and spectrum, playback, audio files and tracks
 HikariSub.Automation	Automation: the manager, script notices and dialogs, macros and their shortcuts
 HikariSub.Colours	The colour pickers and the screen dropper
@@ -40,6 +41,7 @@ HikariSub.Tabs	The Document tab bar, its menu, tab commands and subtitle compari
 HikariSub.TagList	The ASS override tag list and its popup
 HikariSub.Tags	Remove tags: the Remove tags window, its tag families, Clean up and preview (AU4)
 HikariSub.TemplateEditor	The Template editor panel: template and code Lines, their preview on a karaoke Line, Apply
+HikariSub.Text	Text commands on the selected Lines: line breaks, change case, width and dialogue alternatives (AU20)
 HikariSub.TextMenu	The menu of every text field: undo, redo, the clipboard and selection
 HikariSub.TimeShift	The Shift times panel
 HikariSub.Tracking	Perspective tracking: the Power-Pin dialog and its status
