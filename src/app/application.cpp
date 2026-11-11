@@ -729,6 +729,9 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
                                                         m_log->notice(warning ? ui::LogController::Warning : ui::LogController::Info,
                                                                       QCoreApplication::translate("HikariSub.Options", "Shortcuts"), message);
                                                     });
+    m_aiScripts = std::make_unique<AiScripts>(
+        *m_automation, m_userFolder.isEmpty() ? QString() : m_userFolder + QStringLiteral("/ai/scripts"),
+        [this] { return m_workspace.editingTarget().has_value(); });
     m_apiHost = std::make_unique<ApiHost>(ApiHost::Wiring{
         m_workspace, *m_files, &m_settings->settings(), &m_automation->media(),
         [this](application::Selection next) { return applySelection(std::move(next)); },
@@ -749,7 +752,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         [this](application::DocumentId document) { return subtitleFonts(document); },
         [this] { return m_settings->text("video.subtitleProvider").toStdString(); },
         m_userFolder.isEmpty() ? std::filesystem::path()
-                               : std::filesystem::path((m_userFolder + QStringLiteral("/ai/skills")).toStdU16String())});
+                               : std::filesystem::path((m_userFolder + QStringLiteral("/ai/skills")).toStdU16String()),
+        m_aiScripts.get()});
     AiFeatures::Ports aiPorts = options.aiPorts ? std::move(*options.aiPorts)
                                                 : AiFeatures::defaultPorts(m_userFolder, &m_apiHost->api(),
                                                                            options.appVersion.isEmpty()
@@ -774,7 +778,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         },
         [this] { refreshViews(); }});
     m_agent = std::make_unique<AgentController>(AgentController::Wiring{
-        *m_ai, *m_settings, m_apiHost->api(), m_apiHost->review(), m_workspace, *m_files, m_userFolder, {}});
+        *m_ai, *m_settings, m_apiHost->api(), m_apiHost->review(), m_workspace, *m_files, m_userFolder, {},
+        m_aiScripts.get(), m_automation.get()});
     m_inlineAi = std::make_unique<InlineAiController>(InlineAiController::Wiring{
         *m_ai, *m_settings, m_apiHost->api(), m_apiHost->review(), m_workspace, *m_files, *m_agent,
         [this](application::DocumentId document, core::LineId line) {
