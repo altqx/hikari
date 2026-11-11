@@ -6110,6 +6110,14 @@ Failed to copy %2 fonts.</source>
         <translation>취소</translation>
     </message>
     <message>
+        <source>Blur and glow layers…</source>
+        <translation>흐림 및 글로우 레이어…</translation>
+    </message>
+    <message>
+        <source>Build layers with the last values</source>
+        <translation>마지막 값으로 레이어 만들기</translation>
+    </message>
+    <message>
         <source>Shift+click to set a shortcut</source>
         <translation>Shift+클릭으로 단축키를 설정합니다</translation>
     </message>
@@ -7850,6 +7858,269 @@ Failed to copy %2 fonts.</source>
     </message>
 </context>
 <context>
+    <name>HikariSub.Layers</name>
+    <message>
+        <source>Turn on glow, border or shadow.</source>
+        <translation>글로우, 테두리 또는 그림자를 켜세요.</translation>
+    </message>
+    <message>
+        <source>Select the lines to build layers under.</source>
+        <translation>아래에 레이어를 만들 줄을 선택하세요.</translation>
+    </message>
+    <message numerus="yes">
+        <source>At most %n glow layer(s) can be built at once.</source>
+        <translation>
+            <numerusform>글로우 레이어는 한 번에 최대 %n개까지 만들 수 있습니다.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>A shadow can have at most %n step(s). Set fewer steps.</source>
+        <translation>
+            <numerusform>그림자는 최대 %n단계까지 가능합니다. 단계를 줄이세요.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>That builds more than %n line(s). Select fewer lines.</source>
+        <translation>
+            <numerusform>%n줄을 넘게 만들게 됩니다. 줄을 더 적게 선택하세요.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Nothing to build for the selected lines.</source>
+        <translation>선택한 줄에 만들 것이 없습니다.</translation>
+    </message>
+    <message numerus="yes">
+        <source>Builds %n line(s) under line %1.</source>
+        <translation>
+            <numerusform>%1번 줄 아래에 %n줄을 만듭니다.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>It moves up from layer %1 to layer %2.</source>
+        <translation>레이어 %1에서 레이어 %2(으)로 올라갑니다.</translation>
+    </message>
+    <message numerus="yes">
+        <source>Builds %n line(s) under the selected lines.</source>
+        <translation>
+            <numerusform>선택한 줄 아래에 %n줄을 만듭니다.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Each moves up by the lines built under it.</source>
+        <translation>각 줄은 그 아래에 만든 줄 수만큼 위로 올라갑니다.</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) have no border and skip Border.</source>
+        <translation>
+            <numerusform>%n줄은 테두리가 없어 테두리를 건너뜁니다.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) have a shadow under 1 px and skip Shadow.</source>
+        <translation>
+            <numerusform>%n줄은 그림자가 1px 미만이라 그림자를 건너뜁니다.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Line %1 (layer %2) is shown with line %3 and was above it. Once built, line %3’s stack covers it.</source>
+        <translation>%1번 줄(레이어 %2)은 %3번 줄과 함께 표시되며 그 위에 있었습니다. 만들고 나면 %3번 줄의 스택이 이 줄을 덮습니다.</translation>
+    </message>
+    <message>
+        <source>The layers can’t be built here.</source>
+        <translation>여기에서는 레이어를 만들 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>Build layers once from Blur and glow layers… to choose the values.</source>
+        <translation>값을 정하려면 ‘흐림 및 글로우 레이어…’에서 레이어를 한 번 만드세요.</translation>
+    </message>
+    <message numerus="yes">
+        <source>Built %n layer line(s)</source>
+        <translation>
+            <numerusform>레이어 줄 %n개를 만들었습니다</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Blur and glow layers</source>
+        <translation>흐림 및 글로우 레이어</translation>
+    </message>
+    <message>
+        <source>Line</source>
+        <translation>줄</translation>
+    </message>
+    <message>
+        <source>Glow</source>
+        <translation>글로우</translation>
+    </message>
+    <message>
+        <source>Blurred copies under each line</source>
+        <translation>각 줄 아래의 흐린 복사본</translation>
+    </message>
+    <message>
+        <source>Blur</source>
+        <translation>흐림</translation>
+    </message>
+    <message>
+        <source>Border</source>
+        <translation>테두리</translation>
+    </message>
+    <message>
+        <source>Colour</source>
+        <translation>색상</translation>
+    </message>
+    <message>
+        <source>Alpha</source>
+        <translation>알파</translation>
+    </message>
+    <message>
+        <source>Glow %1 blur</source>
+        <translation>글로우 %1 흐림</translation>
+    </message>
+    <message>
+        <source>Glow %1 border, added to the line’s</source>
+        <translation>글로우 %1 테두리, 줄의 테두리에 더함</translation>
+    </message>
+    <message>
+        <source>Glow %1 colour: the line’s border colour</source>
+        <translation>글로우 %1 색상: 줄의 테두리 색상</translation>
+    </message>
+    <message>
+        <source>Glow %1 colour</source>
+        <translation>글로우 %1 색상</translation>
+    </message>
+    <message>
+        <source>Glow %1 alpha, hex</source>
+        <translation>글로우 %1 알파, 16진수</translation>
+    </message>
+    <message>
+        <source>Remove glow %1</source>
+        <translation>글로우 %1 제거</translation>
+    </message>
+    <message>
+        <source>Add a glow layer</source>
+        <translation>글로우 레이어 추가</translation>
+    </message>
+    <message>
+        <source>The border on its own layer, blurred apart from the fill</source>
+        <translation>채우기와 따로 흐리게 한, 별도 레이어의 테두리</translation>
+    </message>
+    <message>
+        <source>Under the border</source>
+        <translation>테두리 아래</translation>
+    </message>
+    <message>
+        <source>Border colour</source>
+        <translation>테두리 색상</translation>
+    </message>
+    <message>
+        <source>Transparent</source>
+        <translation>투명</translation>
+    </message>
+    <message>
+        <source>A thin fill-coloured border closes the gap under the blur</source>
+        <translation>채우기 색의 얇은 테두리가 흐림 아래의 틈을 메웁니다</translation>
+    </message>
+    <message>
+        <source>Border blur</source>
+        <translation>테두리 흐림</translation>
+    </message>
+    <message>
+        <source>Line’s</source>
+        <translation>줄 값</translation>
+    </message>
+    <message>
+        <source>The fill keeps the line’s blur.</source>
+        <translation>채우기는 줄의 흐림을 유지합니다.</translation>
+    </message>
+    <message>
+        <source>Hide the fill under the border during fades</source>
+        <translation>페이드 중에 테두리 아래 채우기 숨기기</translation>
+    </message>
+    <message>
+        <source>Fade transition, ms</source>
+        <translation>페이드 전환, ms</translation>
+    </message>
+    <message>
+        <source>ms</source>
+        <translation>ms</translation>
+    </message>
+    <message>
+        <source>Second border</source>
+        <translation>두 번째 테두리</translation>
+    </message>
+    <message>
+        <source>Second border width</source>
+        <translation>두 번째 테두리 두께</translation>
+    </message>
+    <message>
+        <source>Second border colour: the line’s fill colour</source>
+        <translation>두 번째 테두리 색상: 줄의 채우기 색상</translation>
+    </message>
+    <message>
+        <source>Second border colour</source>
+        <translation>두 번째 테두리 색상</translation>
+    </message>
+    <message>
+        <source>Shadow</source>
+        <translation>그림자</translation>
+    </message>
+    <message>
+        <source>A 3D shadow of stacked copies</source>
+        <translation>복사본을 쌓은 3D 그림자</translation>
+    </message>
+    <message>
+        <source>Steps</source>
+        <translation>단계</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>자동</translation>
+    </message>
+    <message>
+        <source>Auto: one a pixel of each line’s shadow offset</source>
+        <translation>자동: 각 줄의 그림자 오프셋 1픽셀마다 하나</translation>
+    </message>
+    <message>
+        <source>Nearest copy: the line’s shadow colour</source>
+        <translation>가장 가까운 복사본: 줄의 그림자 색상</translation>
+    </message>
+    <message>
+        <source>Nearest copy colour</source>
+        <translation>가장 가까운 복사본 색상</translation>
+    </message>
+    <message>
+        <source>Farthest copy: the line’s shadow colour</source>
+        <translation>가장 먼 복사본: 줄의 그림자 색상</translation>
+    </message>
+    <message>
+        <source>Farthest copy colour</source>
+        <translation>가장 먼 복사본 색상</translation>
+    </message>
+    <message>
+        <source>Nearest copy alpha, hex</source>
+        <translation>가장 가까운 복사본 알파, 16진수</translation>
+    </message>
+    <message>
+        <source>Farthest copy alpha, hex</source>
+        <translation>가장 먼 복사본 알파, 16진수</translation>
+    </message>
+    <message>
+        <source>Blur where a line has none</source>
+        <translation>흐림이 없는 줄의 흐림</translation>
+    </message>
+    <message>
+        <source>Preview on video</source>
+        <translation>영상에서 미리 보기</translation>
+    </message>
+    <message>
+        <source>Build layers</source>
+        <translation>레이어 만들기</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>취소</translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.MainWindow</name>
     <message>
         <source>%1 - HikariSub</source>
@@ -8524,6 +8795,22 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Selects lines by expressions</source>
         <translation>조건식으로 줄을 선택합니다</translation>
+    </message>
+    <message>
+        <source>Builds glow, border and shadow layers under the selected lines</source>
+        <translation>선택한 줄 아래에 글로우, 테두리, 그림자 레이어를 만듭니다</translation>
+    </message>
+    <message>
+        <source>&amp;Blur and glow layers…</source>
+        <translation>흐림 및 글로우 레이어…[&amp;B]</translation>
+    </message>
+    <message>
+        <source>Builds the layers again with the values Blur and glow layers last built with</source>
+        <translation>‘흐림 및 글로우 레이어’가 마지막으로 쓴 값으로 레이어를 다시 만듭니다</translation>
+    </message>
+    <message>
+        <source>Build layers with the &amp;last values</source>
+        <translation>마지막 값으로 레이어 만들기[&amp;L]</translation>
     </message>
     <message>
         <source>Notes from a QC pass, kept in the file, with the lines they mark</source>
