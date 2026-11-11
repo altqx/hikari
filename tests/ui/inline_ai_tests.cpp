@@ -152,7 +152,7 @@ private slots:
                                                                  api::Caller{.id = "ai", .label = "AI", .reviewed = true});
         };
         ports.localSidecar = backends::ai::SidecarInstall{QStringLiteral("0.0.0-dev"), {}, flags, {}};
-        ports.agents = [](backends::ai::AgentBroker &) {};
+        ports.agents = [](backends::ai::AgentBroker &, application::ai::KeyStore &) {};
         ports.agentOnPath = [](const QString &) { return false; };
 
         app::Application::Options options;
