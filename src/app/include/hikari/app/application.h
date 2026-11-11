@@ -1382,6 +1382,14 @@ private:
     std::map<std::uint64_t, AttachedFontsEntry> m_attachedFonts;
     std::vector<application::FontLease> attachedFontLeases(std::optional<application::DocumentId> document);
     std::vector<application::FontLease> subtitleFonts(std::optional<application::DocumentId> document);
+    std::vector<application::FontLease> projectFonts(std::optional<application::DocumentId> document) const;
+    struct ProjectFonts {
+        std::vector<QString> folders;
+        std::vector<application::FontLease> fonts;
+    };
+    std::map<int, ProjectFonts> m_projectFonts;
+    void loadProjectFonts(int shellWindow);
+    void subtitleFontsChanged();
     bool setVideoFonts(std::optional<application::DocumentId> document);
     std::vector<std::pair<std::shared_ptr<const std::vector<std::byte>>, std::vector<std::string>>> m_leasedFontNames;
     bool runFilter(const std::function<std::expected<void, application::CommandRefusal>(application::EditSession &)> &command);
@@ -1442,6 +1450,7 @@ private:
     void offerProjectFor(application::DocumentId document, const QString &path);
     bool projectTrusted(const QString &root) const;
     void applyWindowProject(int shellWindow);
+    QString projectFontFolder(int shellWindow) const;
     application::Settings &windowSettings(int shellWindow);
     const application::Settings &windowSettings(int shellWindow) const;
     QString m_settingsFile;

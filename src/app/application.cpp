@@ -966,6 +966,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     }
     {
         FontCollectorController::Hooks hooks;
+        hooks.projectFontFolder = [this] { return projectFontFolder(m_workspace.activeWindow()); };
         hooks.tabs = [this] {
             std::vector<FontCollectorController::Tab> out;
             for (const auto id : m_workspace.allTabs()) {
@@ -1057,22 +1058,17 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         hooks.log = [this](const QString &text) {
             m_log->notice(ui::LogController::Warning, QCoreApplication::translate("HikariSub.Fonts", "Font catalogues"), text);
         };
-        hooks.documentFonts = [this] { return attachedFontLeases(m_workspace.editingTarget()); };
+        hooks.documentFonts = [this] {
+            auto fonts = attachedFontLeases(m_workspace.editingTarget());
+            for (auto &font : projectFonts(m_workspace.editingTarget()))
+                fonts.push_back(std::move(font));
+            return fonts;
+        };
         const auto report = listFileReport(*m_log);
         hooks.fileConverted = report.converted;
         hooks.fileProblem = report.problem;
         hooks.fileReplaced = report.replaced;
-        hooks.fontsChanged = [this] {
-            application::reloadSubtitleFonts();
-            if (!m_fontCatalogs)
-                return;
-            setVideoFonts(activeMedia().videoDocument);
-            if (activeMedia().videoDocument) {
-                activeMedia().videoRevision.reset();
-                activeMedia().videoScript.clear();
-                refreshVideo();
-            }
-        };
+        hooks.fontsChanged = [this] { subtitleFontsChanged(); };
         m_fontCatalogs = std::make_unique<FontCatalogsController>(*m_settings, std::filesystem::path(dir.toStdU16String()),
                                                                   std::move(hooks));
         setVideoFonts(std::nullopt);
@@ -2494,9 +2490,31 @@ std::vector<application::FontLease> Application::attachedFontLeases(std::optiona
     return entry.leases;
 }
 
+void Application::subtitleFontsChanged()
+{
+    application::reloadSubtitleFonts();
+    if (!m_fontCatalogs)
+        return;
+    setVideoFonts(activeMedia().videoDocument);
+    if (activeMedia().videoDocument) {
+        activeMedia().videoRevision.reset();
+        activeMedia().videoScript.clear();
+        refreshVideo();
+    }
+}
+
+std::vector<application::FontLease> Application::projectFonts(std::optional<application::DocumentId> document) const
+{
+    const int window = (document ? m_workspace.window(*document) : std::nullopt).value_or(m_workspace.activeWindow());
+    const auto found = m_projectFonts.find(window);
+    return found == m_projectFonts.end() ? std::vector<application::FontLease>() : found->second.fonts;
+}
+
 std::vector<application::FontLease> Application::subtitleFonts(std::optional<application::DocumentId> document)
 {
     auto fonts = attachedFontLeases(document);
+    for (auto &font : projectFonts(document))
+        fonts.push_back(std::move(font));
     if (m_fontCatalogs)
         for (auto &font : m_fontCatalogs->externalFontLeases())
             fonts.push_back(std::move(font));

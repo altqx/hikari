@@ -450,6 +450,8 @@ target_compile_definitions(hikari_ui_forwarded_launches_tests PRIVATE
 add_dependencies(hikari_ui_forwarded_launches_tests hikari_media_fixtures hikari_media_helper)
 hikari_add_qttest(hikari_ui_project_windows_tests SOURCES project_windows_tests.cpp LIBRARIES hikari_composition)
 target_include_directories(hikari_ui_project_windows_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
+target_compile_definitions(hikari_ui_project_windows_tests PRIVATE
+    HIKARI_ATTACHMENT_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/attachments")
 hikari_add_qttest(hikari_ui_desktop_handoff_tests SOURCES desktop_handoff_tests.cpp LIBRARIES hikari_composition)
 hikari_add_qttest(hikari_ui_user_guide_tests SOURCES user_guide_tests.cpp LIBRARIES hikari_composition)
 target_compile_definitions(hikari_ui_user_guide_tests PRIVATE HIKARI_UI_SOURCE_DIR="${PROJECT_SOURCE_DIR}/src/ui")
