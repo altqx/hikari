@@ -14318,6 +14318,54 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>Open project</source>
         <translation>프로젝트 열기</translation>
     </message>
+    <message>
+        <source>Yours</source>
+        <translation>내 설정</translation>
+    </message>
+    <message>
+        <source>Project</source>
+        <translation>프로젝트</translation>
+    </message>
+    <message>
+        <source>Uses yours</source>
+        <translation>내 설정 사용 중</translation>
+    </message>
+    <message>
+        <source>Set in this project</source>
+        <translation>이 프로젝트에서 설정됨</translation>
+    </message>
+    <message>
+        <source>Set in project.local.toml</source>
+        <translation>project.local.toml에서 설정됨</translation>
+    </message>
+    <message>
+        <source>Use yours</source>
+        <translation>내 설정 사용</translation>
+    </message>
+    <message>
+        <source>Overridden in this project</source>
+        <translation>이 프로젝트에서 덮어씀</translation>
+    </message>
+    <message>
+        <source>project.toml could not be written, so some Project settings were not saved.</source>
+        <translation>project.toml에 쓸 수 없어 일부 프로젝트 설정이 저장되지 않았습니다.</translation>
+    </message>
+    <message>
+        <source>Saving a file writes the switched-on fields into its Script Info.</source>
+        <translation>파일을 저장하면 켜 둔 항목이 Script Info에 기록됩니다.</translation>
+    </message>
+    <message>
+        <source>Ask before changing them on save</source>
+        <translation>저장할 때 바꾸기 전에 묻기</translation>
+    </message>
+    <message>
+        <source>This project has its own scripts or plugin settings. Trust “%1” to run them.</source>
+        <translation>이 프로젝트에는 자체 스크립트나 플러그인 설정이 있습니다. 실행하려면 “%1”을(를) 신뢰하세요.</translation>
+    </message>
+    <message>
+        <source>Trust folder</source>
+        <translation>폴더 신뢰</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.QcNotes</name>

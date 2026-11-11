@@ -14409,6 +14409,54 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>Open project</source>
         <translation>திட்டப்பணியைத் திற</translation>
     </message>
+    <message>
+        <source>Yours</source>
+        <translation>உங்களுடையவை</translation>
+    </message>
+    <message>
+        <source>Project</source>
+        <translation>திட்டப்பணி</translation>
+    </message>
+    <message>
+        <source>Uses yours</source>
+        <translation>உங்களுடையதைப் பயன்படுத்துகிறது</translation>
+    </message>
+    <message>
+        <source>Set in this project</source>
+        <translation>இந்தத் திட்டப்பணியில் அமைக்கப்பட்டது</translation>
+    </message>
+    <message>
+        <source>Set in project.local.toml</source>
+        <translation>project.local.toml இல் அமைக்கப்பட்டது</translation>
+    </message>
+    <message>
+        <source>Use yours</source>
+        <translation>உங்களுடையதைப் பயன்படுத்து</translation>
+    </message>
+    <message>
+        <source>Overridden in this project</source>
+        <translation>இந்தத் திட்டப்பணியில் மேலெழுதப்பட்டது</translation>
+    </message>
+    <message>
+        <source>project.toml could not be written, so some Project settings were not saved.</source>
+        <translation>project.toml ஐ எழுத முடியவில்லை, எனவே சில திட்டப்பணி அமைப்புகள் சேமிக்கப்படவில்லை.</translation>
+    </message>
+    <message>
+        <source>Saving a file writes the switched-on fields into its Script Info.</source>
+        <translation>ஒரு கோப்பைச் சேமிக்கும்போது இயக்கிய புலங்கள் அதன் Script Info இல் எழுதப்படும்.</translation>
+    </message>
+    <message>
+        <source>Ask before changing them on save</source>
+        <translation>சேமிக்கும்போது அவற்றை மாற்றும் முன் கேள்</translation>
+    </message>
+    <message>
+        <source>This project has its own scripts or plugin settings. Trust “%1” to run them.</source>
+        <translation>இந்தத் திட்டப்பணியில் அதன் சொந்த ஸ்கிரிப்ட்கள் அல்லது செருகுநிரல் அமைப்புகள் உள்ளன. அவற்றை இயக்க “%1” ஐ நம்புங்கள்.</translation>
+    </message>
+    <message>
+        <source>Trust folder</source>
+        <translation>கோப்புறையை நம்பு</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.QcNotes</name>
