@@ -73,7 +73,7 @@ void Application::loadTabTimecodes(TabMedia &media, const QString &path, const a
 
 void Application::warnShortTimecodes(TabMedia &media)
 {
-    const auto &video = m_video->session();
+    const auto &video = activeMedia().video->session();
     if (!media.timecodesListFrames || !media.frameTimes || video.state() != application::VideoSession::State::Ready ||
         video.frameCount() <= 0)
         return;
@@ -92,7 +92,7 @@ void Application::showTabTimecodes(std::optional<application::DocumentId> docume
 {
     const auto it = document ? m_tabMedia.find(document->value) : m_tabMedia.end();
     auto times = it != m_tabMedia.end() ? it->second.frameTimes : std::nullopt;
-    auto &video = m_video->session();
+    auto &video = activeMedia().video->session();
     if (times || video.replacedFrameTimes())
         video.setFrameTimes(std::move(times));
     emit timecodesChanged();
@@ -123,7 +123,7 @@ QString Application::openTimecodesFile(const QString &path)
 
 QString Application::saveTimecodesFile(const QString &path)
 {
-    const auto &video = m_video->session();
+    const auto &video = activeMedia().video->session();
     const auto times = video.aegisubFrameTimes();
     if (!times)
         return QCoreApplication::translate("HikariSub.Video", "There are no frame times to save");
@@ -200,7 +200,7 @@ QUrl Application::timecodesDialogFolder() const
 {
     QString from = timecodesFile();
     if (from.isEmpty())
-        from = QString::fromStdString(m_video->session().path());
+        from = QString::fromStdString(activeMedia().video->session().path());
     if (application::isDummyVideo(from.toStdString()))
         from.clear();
     if (from.isEmpty() && !m_recentTimecodes.entries().empty())

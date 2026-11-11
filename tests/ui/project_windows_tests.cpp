@@ -148,6 +148,45 @@ class ProjectWindowsTests : public QObject {
         QTRY_VERIFY(!opened || !opened->isVisible());
     }
 
+    static QByteArray readAll(const QString &path)
+    {
+        QFile file(path);
+        return file.open(QIODevice::ReadOnly) ? file.readAll() : QByteArray();
+    }
+    static QQuickItem *item(QQuickItem *in, const QString &name)
+    {
+        if (in->objectName() == name)
+            return in;
+        for (QQuickItem *child : in->childItems())
+            if (QQuickItem *found = item(child, name))
+                return found;
+        return nullptr;
+    }
+    static QQuickWindow *dialog(const char *name)
+    {
+        for (QWindow *w : QGuiApplication::topLevelWindows())
+            if (w->objectName() == QLatin1String(name) && w->isVisible())
+                return qobject_cast<QQuickWindow *>(w);
+        return nullptr;
+    }
+    void myScriptInfoDefaults()
+    {
+        auto *store = application->settingsStore();
+        store->setValue(QStringLiteral("scriptProperties.titleOn"), true);
+        store->setValue(QStringLiteral("scriptProperties.title"), QStringLiteral("Show"));
+        store->setValue(QStringLiteral("scriptProperties.translationOn"), true);
+        store->setValue(QStringLiteral("scriptProperties.translation"), QStringLiteral("Mine"));
+        store->setValue(QStringLiteral("scriptProperties.timing"), QStringLiteral("Off"));
+    }
+    int openProjectWindow(const QString &project)
+    {
+        const int opened = application->openFolder(project, 0).value(QStringLiteral("window")).toInt();
+        if (!QTest::qWaitFor([&] { return shell(opened) && shell(opened)->isVisible(); }))
+            return -1;
+        application->activateShellWindow(opened);
+        return QTest::qWaitFor([&] { return application->workspace().activeWindow() == opened; }) ? opened : -1;
+    }
+
 private slots:
     void initTestCase() { QVERIFY(home.isValid() && dir.isValid()); }
     void cleanup()
@@ -471,6 +510,80 @@ private slots:
         QVERIFY(application->openFile(writeAss(show + QStringLiteral("/ep01.ass"), "Hello wrold")));
         QCOMPARE(application->dictionaryLanguage(), QStringLiteral("pl_PL"));
         QVERIFY(application->settingsStore()->boolean("editor.spellchecker"));
+    }
+
+    void saveWritesScriptInfoFromTheWindowsProject()
+    {
+        start();
+        myScriptInfoDefaults();
+        const QString loose = folder("loose");
+        const QString show = folder("show", true);
+        writeAll(show + QStringLiteral("/.hikari/project.toml"), "version = 1\n[scriptProperties]\ntranslation = \"Team\"\n");
+        application->openFolder(loose, 0);
+        const QString mine = writeAss(loose + QStringLiteral("/mine.ass"), "a");
+        QVERIFY(application->openFile(mine));
+        const auto mineId = application->workspace().editingTarget()->value;
+        QVERIFY(openProjectWindow(show) > 0);
+        const QString team = writeAss(show + QStringLiteral("/ep01.ass"), "a");
+        QVERIFY(application->openFile(team));
+
+        QVERIFY(application->saveDocument(application->workspace().editingTarget()->value));
+        QVERIFY(application->saveDocument(mineId));
+        application->waitForWrites();
+        QVERIFY2(readAll(team).contains("Title: Show\n"), readAll(team));
+        QVERIFY2(readAll(team).contains("Original Translation: Team\n"), readAll(team));
+        QVERIFY(!readAll(team).contains("Original Timing"));
+        QVERIFY2(readAll(mine).contains("Original Translation: Mine\n"), readAll(mine));
+    }
+
+    void askForChangeShowsTheChangesBeforeSaving()
+    {
+        start();
+        myScriptInfoDefaults();
+        application->settingsStore()->setValue(QStringLiteral("scriptProperties.askForChange"), true);
+        const QString show = folder("asked", true);
+        writeAll(show + QStringLiteral("/.hikari/project.toml"), "version = 1\n[scriptProperties]\ntranslation = \"Team\"\n");
+        QVERIFY(openProjectWindow(show) >= 0);
+        const QString path = writeAss(show + QStringLiteral("/ep02.ass"), "a");
+        QVERIFY(application->openFile(path));
+        QQuickWindow *from = shell(application->workspace().activeWindow());
+        const auto save = [&] {
+            return QMetaObject::invokeMethod(from, "saveSubtitles", Q_ARG(QVariant, QVariant()), Q_ARG(QVariant, QVariant()));
+        };
+        const auto answer = [&](const char *button) {
+            QQuickWindow *asked = dialog("scriptInfoOnSaveDialog");
+            QObject *b = asked ? asked->findChild<QObject *>(QLatin1String(button)) : nullptr;
+            return b && QMetaObject::invokeMethod(b, "clicked");
+        };
+
+        QVERIFY(save());
+        QTRY_VERIFY(dialog("scriptInfoOnSaveDialog"));
+        QCOMPARE(dialog("scriptInfoOnSaveDialog")->property("rows").toList().size(), 2);
+        QVERIFY(answer("scriptInfoOnSaveCancel"));
+        QTRY_VERIFY(!dialog("scriptInfoOnSaveDialog"));
+        application->waitForWrites();
+        QVERIFY(!readAll(path).contains("Title: Show"));
+
+        QVERIFY(save());
+        QTRY_VERIFY(dialog("scriptInfoOnSaveDialog"));
+        QVERIFY(answer("scriptInfoOnSaveSkip"));
+        QTRY_VERIFY(!dialog("scriptInfoOnSaveDialog"));
+        application->waitForWrites();
+        QTRY_VERIFY(readAll(path).contains("Dialogue"));
+        QVERIFY(!readAll(path).contains("Title: Show"));
+        QVERIFY(application->settingsStore()->value(QStringLiteral("scriptProperties.askForChange")).toBool());
+
+        QVERIFY(save());
+        QTRY_VERIFY(dialog("scriptInfoOnSaveDialog"));
+        QQuickItem *title = item(dialog("scriptInfoOnSaveDialog")->contentItem(), QStringLiteral("scriptInfoOnSaveField0"));
+        QVERIFY(title);
+        title->setProperty("checked", false);
+        QVERIFY(QMetaObject::invokeMethod(title, "toggled"));
+        QVERIFY(answer("scriptInfoOnSaveOk"));
+        QTRY_VERIFY(!dialog("scriptInfoOnSaveDialog"));
+        application->waitForWrites();
+        QTRY_VERIFY2(readAll(path).contains("Original Translation: Team\n"), readAll(path));
+        QVERIFY(!readAll(path).contains("Title: Show"));
     }
 
     void recentProjectsDropMissingFolders()

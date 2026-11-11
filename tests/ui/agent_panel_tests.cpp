@@ -6,6 +6,7 @@
 #include "hikari/backends/ai_agent_broker.h"
 #include "hikari/backends/ai_sidecar_host.h"
 #include "hikari/backends/ai_signin.h"
+#include "hikari/backends/desktop_handoff.h"
 
 #include "docking.h"
 #include "line_table_model.h"
@@ -470,6 +471,81 @@ private slots:
         QTest::keyClick(window(), Qt::Key_Escape);
         QTRY_VERIFY(!agent().thread().value(QStringLiteral("running")).toBool());
         QVERIFY(kinds().contains(QStringLiteral("notice")));
+    }
+
+    void theGlobeSearchesPerThreadAndAnAnswerShowsItsSourcesAndSearches()
+    {
+        QStringList opened;
+        const auto previous = backends::desktop::replaceRoutes({.openUrl = [&](const QUrl &url) {
+            opened << url.toString();
+            return true;
+        }});
+        auto restore = qScopeGuard([&] { backends::desktop::replaceRoutes(previous); });
+        openPanel();
+        QVERIFY(click(QStringLiteral("agentNewThread")));
+        QQuickItem *globe = item(QStringLiteral("agentWebSearch"));
+        QVERIFY(globe);
+        QVERIFY(globe->property("checked").toBool());
+        QCOMPARE(globe->property("tip").toString(), QStringLiteral("Search the web: on for this thread"));
+        QVERIFY(click(QStringLiteral("agentWebSearch")));
+        QVERIFY(!agent().thread().value(QStringLiteral("webSearch")).toBool());
+        QTRY_COMPARE(globe->property("tip").toString(), QStringLiteral("Search the web: off for this thread"));
+        QVERIFY(click(QStringLiteral("agentWebSearch")));
+        QVERIFY(agent().thread().value(QStringLiteral("webSearch")).toBool());
+
+        const std::string say = "Aimer sings it. The single came out in 2011.";
+        Json citations = Json::array();
+        for (int i = 1; i <= 6; ++i) {
+            Json c = Json::object({{"index", i}, {"url", "https://site" + std::to_string(i) + ".example/page"},
+                                   {"title", "Page " + std::to_string(i)}});
+            if (i == 1) {
+                c["quote"] = "Aimer is the singer.";
+                c["start"] = 0;
+                c["end"] = 15;
+            }
+            citations.push(std::move(c));
+        }
+        const Json updates = Json::array(
+            {Json::object({{"sessionUpdate", "sources"}, {"textLength", static_cast<std::int64_t>(say.size())},
+                           {"citations", citations},
+                           {"searches", Json::array({Json::object({{"kind", "search"}, {"query", "aimer single"},
+                                                                   {"urls", Json::array({"https://site1.example/page"})}}),
+                                                     Json::object({{"kind", "read"}, {"url", "https://www.site2.example/page"}})})}}),
+             Json::object({{"sessionUpdate", "search_failed"}, {"service", "brave"}, {"reason", "usedUp"}, {"httpStatus", 402}})});
+        type(QString::fromStdString(Json::object({{"say", say}, {"calls", Json::array()}, {"updates", updates}}).dump()));
+        QTRY_VERIFY(!agent().thread().value(QStringLiteral("running")).toBool());
+        QCOMPARE(kinds(), (QStringList{"user", "search", "text", "notice"}));
+
+        QTRY_VERIFY(item(QStringLiteral("agentSources")));
+        QQuickItem *answer = item(QStringLiteral("agentAnswer"));
+        QVERIFY(answer);
+        QVERIFY(answer->property("text").toString().contains(QLatin1String("href=\"cite:1\"")));
+        QVERIFY(item(QStringLiteral("agentSource_5")));
+        QVERIFY(!item(QStringLiteral("agentSource_6")));
+        QCOMPARE(item(QStringLiteral("agentMoreSources"))->property("text").toString(), QStringLiteral("Show 1 more"));
+        QVERIFY(click(QStringLiteral("agentMoreSources")));
+        QTRY_VERIFY(item(QStringLiteral("agentSource_6")));
+        QVERIFY(click(QStringLiteral("agentSource_2")));
+        QCOMPARE(opened, (QStringList{"https://site2.example/page"}));
+
+        QStringList rows;
+        std::function<void(QQuickItem *)> collect = [&](QQuickItem *at) {
+            if (at->objectName() == QLatin1String("agentSearchRow") && at->isVisible())
+                rows << at->property("text").toString();
+            for (QQuickItem *child : at->childItems())
+                collect(child);
+        };
+        collect(window()->contentItem());
+        QCOMPARE(rows, (QStringList{"Searched the web · aimer single", "Read site2.example"}));
+        QVERIFY(item(QStringLiteral("agentNotice_searchUsedUp")));
+        QCOMPARE(lastItem().value(QStringLiteral("service")).toString(), QStringLiteral("brave"));
+        QVERIFY(!agent().openLink(QStringLiteral("file:///etc/passwd")));
+        QVERIFY(!agent().openLink(QStringLiteral("javascript:alert(1)")));
+        QCOMPARE(opened.size(), 1);
+        shoot(QStringLiteral("agent-web-search"), QStringLiteral("Who sings it?"));
+
+        application->settingsStore()->set(app::AiFeatures::kWebSearchSetting, false);
+        QTRY_VERIFY(!item(QStringLiteral("agentWebSearch")));
     }
 
     void withoutAChatModelThePanelPointsToSettings()

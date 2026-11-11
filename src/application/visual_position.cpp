@@ -76,10 +76,10 @@ core::LineRecord stagedRecord(const Gesture &gesture, core::LineId id)
 const std::array<std::u16string_view, 21> &positionAlignments()
 {
     static const std::array<std::u16string_view, 21> list{
-        u"Bottom-left",  u"Bottom-center",  u"Bottom-right",  u"Middle-left",  u"Center",       u"Middle-right",
-        u"Top-left",     u"Top-center",     u"Top-right",     u"Left-below",   u"Center-below", u"Right-below",
-        u"Left-above",   u"Center-above",   u"Right-above",   u"Before-top",   u"Before-center", u"Before-bottom",
-        u"After-top",    u"After-center",   u"After-bottom"};
+        u"Bottom-left",  u"Bottom-centre",  u"Bottom-right",  u"Middle-left",  u"Centre",       u"Middle-right",
+        u"Top-left",     u"Top-centre",     u"Top-right",     u"Left-below",   u"Centre-below", u"Right-below",
+        u"Left-above",   u"Centre-above",   u"Right-above",   u"Before-top",   u"Before-centre", u"Before-bottom",
+        u"After-top",    u"After-centre",   u"After-bottom"};
     return list;
 }
 
@@ -1033,7 +1033,7 @@ bool MoveTool::setMove(VisualHost &host)
     const int time = static_cast<int>(host.videoTimeMs());
     if (!m_lineToMoveVisibility[1] || time == m_lineStartTime || m_lineStartTime == -1) {
         if (time == m_lineStartTime)
-            host.log(u"Video must be set at least one frame after the line's start time");
+            host.log(u"Video must be set at least one frame after the line’s start time");
         return false;
     }
     // MUST KILL: m_lastVideoTime is set once and never updated

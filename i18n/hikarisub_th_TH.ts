@@ -164,6 +164,26 @@
         <translation>แนบ</translation>
     </message>
     <message>
+        <source>Search the web</source>
+        <translation>ค้นหาเว็บ</translation>
+    </message>
+    <message>
+        <source>This provider can’t search the web on its own. Choose a search service in Settings › AI › Web search.</source>
+        <translation>ผู้ให้บริการนี้ค้นหาเว็บเองไม่ได้ เลือกบริการค้นหาในการตั้งค่า › AI › การค้นหาเว็บ</translation>
+    </message>
+    <message>
+        <source>Search the web: on for this thread</source>
+        <translation>ค้นหาเว็บ: เปิดสำหรับเธรดนี้</translation>
+    </message>
+    <message>
+        <source>Search the web: off for this thread</source>
+        <translation>ค้นหาเว็บ: ปิดสำหรับเธรดนี้</translation>
+    </message>
+    <message>
+        <source>Changing it mid-thread costs one cache miss on Anthropic.</source>
+        <translation>การเปลี่ยนระหว่างเธรดทำให้แคชพลาดหนึ่งครั้งบน Anthropic</translation>
+    </message>
+    <message>
         <source>Stop</source>
         <translation>หยุด</translation>
     </message>
@@ -238,6 +258,36 @@
     <message>
         <source>Restore checkpoint</source>
         <translation>คืนค่าจุดตรวจสอบ</translation>
+    </message>
+    <message>
+        <source>Sources</source>
+        <translation>แหล่งที่มา</translation>
+    </message>
+    <message numerus="yes">
+        <source>Show %n more</source>
+        <translation>
+            <numerusform>แสดงอีก %n รายการ</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Open in browser</source>
+        <translation>เปิดในเบราว์เซอร์</translation>
+    </message>
+    <message>
+        <source>Read %1</source>
+        <translation>อ่าน %1 แล้ว</translation>
+    </message>
+    <message>
+        <source>Searched with Google</source>
+        <translation>ค้นหาด้วย Google แล้ว</translation>
+    </message>
+    <message>
+        <source>Searched the web</source>
+        <translation>ค้นหาเว็บแล้ว</translation>
+    </message>
+    <message>
+        <source>Searched with %1</source>
+        <translation>ค้นหาด้วย %1 แล้ว</translation>
     </message>
     <message>
         <source>judge approved</source>
@@ -348,6 +398,14 @@
         <translation>เลือกโมเดลแชตในการตั้งค่า › AI</translation>
     </message>
     <message>
+        <source>%1 has no searches left</source>
+        <translation>%1 ไม่เหลือจำนวนการค้นหาแล้ว</translation>
+    </message>
+    <message>
+        <source>%1 refused HikariSub’s key</source>
+        <translation>%1 ปฏิเสธคีย์ของ HikariSub</translation>
+    </message>
+    <message>
         <source>AI component isn’t ready</source>
         <translation>คอมโพเนนต์ AI ยังไม่พร้อม</translation>
     </message>
@@ -366,6 +424,10 @@
     <message>
         <source>HikariSub is still getting the AI component, or it couldn’t start.</source>
         <translation>HikariSub ยังดาวน์โหลดคอมโพเนนต์ AI อยู่ หรือเริ่มคอมโพเนนต์ไม่ได้</translation>
+    </message>
+    <message>
+        <source>The search service answered %1. The answer goes on without searching the web.</source>
+        <translation>บริการค้นหาตอบกลับ %1 คำตอบจะดำเนินต่อโดยไม่ค้นหาเว็บ</translation>
     </message>
     <message>
         <source>Raise to %1 and continue</source>
@@ -516,10 +578,6 @@
         <translation>เพิ่มช่วงต่อท้ายบรรทัดปัจจุบัน</translation>
     </message>
     <message>
-        <source>Commit</source>
-        <translation>ยืนยันการแก้ไข</translation>
-    </message>
-    <message>
         <source>Apply changes</source>
         <translation>นำการเปลี่ยนแปลงไปใช้</translation>
     </message>
@@ -601,15 +659,15 @@
         <translation>เล่นหลังเครื่องหมาย</translation>
     </message>
     <message>
-        <source>Commit options</source>
-        <translation>ตัวเลือกการยืนยันการแก้ไข</translation>
+        <source>Options for applying changes</source>
+        <translation>ตัวเลือกการใช้การเปลี่ยนแปลง</translation>
     </message>
     <message>
-        <source>Auto-commit</source>
+        <source>Apply changes automatically</source>
         <translation>ยืนยันการแก้ไขอัตโนมัติ</translation>
     </message>
     <message>
-        <source>Next after commit</source>
+        <source>Go to the next line after applying</source>
         <translation>ไปบรรทัดถัดไปหลังยืนยัน</translation>
     </message>
     <message>
@@ -767,10 +825,6 @@ Output device: %2</source>
     <message>
         <source>Play around button</source>
         <translation>ปุ่มเล่นช่วงรอบ ๆ</translation>
-    </message>
-    <message>
-        <source>Go to the next line after commit</source>
-        <translation>ไปยังบรรทัดถัดไปหลังยืนยันการแก้ไข</translation>
     </message>
     <message>
         <source>Speech spectrum</source>
@@ -2845,7 +2899,7 @@ Output device: %2</source>
         <translation>ล่างซ้าย</translation>
     </message>
     <message>
-        <source>Bottom-center</source>
+        <source>Bottom-centre</source>
         <translation>ล่างกึ่งกลาง</translation>
     </message>
     <message>
@@ -2857,7 +2911,7 @@ Output device: %2</source>
         <translation>กึ่งกลางซ้าย</translation>
     </message>
     <message>
-        <source>Center</source>
+        <source>Centre</source>
         <translation>กลาง</translation>
     </message>
     <message>
@@ -2869,7 +2923,7 @@ Output device: %2</source>
         <translation>บนซ้าย</translation>
     </message>
     <message>
-        <source>Top-center</source>
+        <source>Top-centre</source>
         <translation>บนกึ่งกลาง</translation>
     </message>
     <message>
@@ -5910,12 +5964,8 @@ Failed to copy %2 fonts.</source>
         <translation>%1 ได้ปุ่มนี้ไป</translation>
     </message>
     <message>
-        <source>Commit</source>
-        <translation>ยืนยันการแก้ไข</translation>
-    </message>
-    <message>
-        <source>Commit alt</source>
-        <translation>ยืนยันการแก้ไข (ทางเลือก)</translation>
+        <source>Apply changes alt</source>
+        <translation>นำการเปลี่ยนแปลงไปใช้ (ทางเลือก)</translation>
     </message>
     <message>
         <source>Previous line</source>
@@ -6002,8 +6052,8 @@ Failed to copy %2 fonts.</source>
         <translation>สีเงา</translation>
     </message>
     <message>
-        <source>Font selection</source>
-        <translation>เลือกแบบอักษร</translation>
+        <source>Choose font…</source>
+        <translation>เลือกแบบอักษร…</translation>
     </message>
     <message>
         <source>Strikethrough</source>
@@ -6322,8 +6372,8 @@ Failed to copy %2 fonts.</source>
         <translation>แบ่งบรรทัดตามจุดแบ่งบรรทัด</translation>
     </message>
     <message>
-        <source>ASS file properties</source>
-        <translation>คุณสมบัติไฟล์ ASS</translation>
+        <source>Script properties</source>
+        <translation>คุณสมบัติของสคริปต์</translation>
     </message>
     <message>
         <source>Check for updates</source>
@@ -6394,8 +6444,8 @@ Failed to copy %2 fonts.</source>
         <translation>เปิดคีย์เฟรม</translation>
     </message>
     <message>
-        <source>Open auto save</source>
-        <translation>เปิดไฟล์บันทึกอัตโนมัติ</translation>
+        <source>Open autosave…</source>
+        <translation>เปิดไฟล์บันทึกอัตโนมัติ…</translation>
     </message>
     <message>
         <source>Run the last loaded script</source>
@@ -6550,8 +6600,8 @@ Failed to copy %2 fonts.</source>
         <translation>เปิดวิดีโอ</translation>
     </message>
     <message>
-        <source>Play / Pause</source>
-        <translation>เล่น / หยุดชั่วคราว</translation>
+        <source>Play or pause</source>
+        <translation>เล่นหรือหยุดชั่วคราว</translation>
     </message>
     <message>
         <source>Play active line</source>
@@ -6726,8 +6776,8 @@ Failed to copy %2 fonts.</source>
         <translation>ย้อนกลับ 1 นาที</translation>
     </message>
     <message>
-        <source>Show / hide progress bar</source>
-        <translation>แสดงหรือซ่อนแถบความคืบหน้า</translation>
+        <source>Progress bar</source>
+        <translation>แถบความคืบหน้า</translation>
     </message>
     <message>
         <source>Next chapter</source>
@@ -6782,8 +6832,8 @@ Failed to copy %2 fonts.</source>
         <translation>ซ่อนแท็กในตัวแก้ไขบรรทัด</translation>
     </message>
     <message>
-        <source>Show / hide render cost</source>
-        <translation>แสดง / ซ่อนต้นทุนการเรนเดอร์</translation>
+        <source>Render cost</source>
+        <translation>ต้นทุนการเรนเดอร์</translation>
     </message>
     <message>
         <source>Tap to time</source>
@@ -7760,8 +7810,8 @@ Failed to copy %2 fonts.</source>
         <translation>ไปยังเวลาสิ้นสุดของบรรทัด</translation>
     </message>
     <message>
-        <source>Play / Pause</source>
-        <translation>เล่น / หยุดชั่วคราว</translation>
+        <source>Play or pause</source>
+        <translation>เล่นหรือหยุดชั่วคราว</translation>
     </message>
     <message>
         <source>Go to previous keyframe</source>
@@ -8542,8 +8592,8 @@ Failed to copy %2 fonts.</source>
         <translation>ย้ายวิดีโอไปยังเวลาสิ้นสุดของบรรทัด</translation>
     </message>
     <message>
-        <source>Plays / Pauses video</source>
-        <translation>เล่น / หยุดวิดีโอชั่วคราว</translation>
+        <source>Plays or pauses the video</source>
+        <translation>เล่นหรือหยุดวิดีโอชั่วคราว</translation>
     </message>
     <message>
         <source>Opens audio file</source>
@@ -10303,7 +10353,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Values</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">ค่า</translation>
     </message>
     <message>
         <source>Math</source>
@@ -14649,6 +14699,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Scale border and shadow</source>
         <translation>ปรับขนาดของขอบและเงา</translation>
+    </message>
+    <message>
+        <source>Saving “%1” changes these script properties.</source>
+        <translation>การบันทึก “%1” จะเปลี่ยนคุณสมบัติของสคริปต์ต่อไปนี้</translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation>ตกลง</translation>
+    </message>
+    <message>
+        <source>Skip</source>
+        <translation>ข้าม</translation>
     </message>
 </context>
 <context>
@@ -19729,8 +19791,8 @@ Styles deleted:
         <translation>เฟรมถัดไป</translation>
     </message>
     <message>
-        <source>Play / Pause</source>
-        <translation>เล่น / หยุดชั่วคราว</translation>
+        <source>Play or pause</source>
+        <translation>เล่นหรือหยุดชั่วคราว</translation>
     </message>
     <message>
         <source>Video</source>
@@ -20725,7 +20787,7 @@ or codecs or a splitter may be missing</source>
         <translation>ตำแหน่งที่แท็กอยู่ในข้อความ</translation>
     </message>
     <message>
-        <source>How each line&apos;s number changes the value</source>
+        <source>How each line’s number changes the value</source>
         <translation>หมายเลขของแต่ละบรรทัดเปลี่ยนค่าอย่างไร</translation>
     </message>
     <message>
@@ -21155,7 +21217,7 @@ or codecs or a splitter may be missing</source>
         <translation>ถัดไป ด้านล่าง</translation>
     </message>
     <message>
-        <source>After-center</source>
+        <source>After-centre</source>
         <translation>ถัดไป กึ่งกลาง</translation>
     </message>
     <message>
@@ -21171,7 +21233,7 @@ or codecs or a splitter may be missing</source>
         <translation>ก่อนหน้า ด้านล่าง</translation>
     </message>
     <message>
-        <source>Before-center</source>
+        <source>Before-centre</source>
         <translation>ก่อนหน้า กึ่งกลาง</translation>
     </message>
     <message>
@@ -21179,7 +21241,7 @@ or codecs or a splitter may be missing</source>
         <translation>ก่อนหน้า ด้านบน</translation>
     </message>
     <message>
-        <source>Bottom-center</source>
+        <source>Bottom-centre</source>
         <translation>ล่างกึ่งกลาง</translation>
     </message>
     <message>
@@ -21195,15 +21257,15 @@ or codecs or a splitter may be missing</source>
         <translation>ไม่สามารถอ่านค่าคลิปสี่เหลี่ยมได้</translation>
     </message>
     <message>
-        <source>Center</source>
+        <source>Centre</source>
         <translation>กลาง</translation>
     </message>
     <message>
-        <source>Center-above</source>
+        <source>Centre-above</source>
         <translation>กึ่งกลางด้านบน</translation>
     </message>
     <message>
-        <source>Center-below</source>
+        <source>Centre-below</source>
         <translation>กึ่งกลางด้านล่าง</translation>
     </message>
     <message>
@@ -21239,8 +21301,8 @@ or codecs or a splitter may be missing</source>
         <translation>ลบจุด</translation>
     </message>
     <message>
-        <source>A double &quot;m&quot; was blocked because of a VSFilter bug</source>
-        <translation>ป้องกันการใช้ &quot;m&quot; ซ้ำสองครั้งเนื่องจากข้อบกพร่องของ VSFilter</translation>
+        <source>A double “m” was blocked because of a VSFilter bug</source>
+        <translation>ป้องกันการใช้ “m” ซ้ำสองครั้งเนื่องจากข้อบกพร่องของ VSFilter</translation>
     </message>
     <message>
         <source>List of ASS drawings with an edit option.
@@ -21407,10 +21469,6 @@ increasing or decreasing the value.</source>
     <message>
         <source>Spikes</source>
         <translation>แฉก</translation>
-    </message>
-    <message>
-        <source>Centre</source>
-        <translation>กึ่งกลาง</translation>
     </message>
     <message>
         <source>Hole</source>
@@ -21640,12 +21698,12 @@ in two or one axis.</source>
     </message>
     <message>
         <source>Show surrounding plane
-A rectangle of the text&apos;s plane: match it to one in the shot, then place the text inside it</source>
+A rectangle of the text’s plane: match it to one in the shot, then place the text inside it</source>
         <translation>แสดงระนาบโดยรอบ
 สี่เหลี่ยมของระนาบข้อความ: จัดให้ตรงกับสี่เหลี่ยมในฉาก แล้ววางข้อความไว้ข้างใน</translation>
     </message>
     <message>
-        <source>Top-center</source>
+        <source>Top-centre</source>
         <translation>บนกึ่งกลาง</translation>
     </message>
     <message>
@@ -21657,7 +21715,7 @@ A rectangle of the text&apos;s plane: match it to one in the shot, then place th
         <translation>บนขวา</translation>
     </message>
     <message>
-        <source>Video must be set at least one frame after the line&apos;s start time</source>
+        <source>Video must be set at least one frame after the line’s start time</source>
         <translation>วิดีโอต้องอยู่หลังเวลาเริ่มต้นของบรรทัดอย่างน้อยหนึ่งเฟรม</translation>
     </message>
     <message>
