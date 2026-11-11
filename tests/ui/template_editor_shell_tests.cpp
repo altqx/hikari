@@ -1,3 +1,4 @@
+#include "hikari/application/automation_registry.h"
 #include "hikari/app/application.h"
 #include "hikari/application/generated_runs.h"
 #include "docking.h"
@@ -88,11 +89,11 @@ class TemplateEditorShellTests : public QObject {
 
     bool loadTemplater()
     {
-        application->automation().load(HIKARI_KARAOKE_TEMPLATER);
+        application->automation().load(std::string(hikari::application::kBuiltinKaraokeTemplater));
         QDeadlineTimer deadline(30'000);
         while (!deadline.hasExpired()) {
             const auto scripts = application->automation().scripts();
-            if (std::ranges::any_of(scripts, [](const auto &s) { return s.path == HIKARI_KARAOKE_TEMPLATER; }) &&
+            if (std::ranges::any_of(scripts, [](const auto &s) { return s.path == std::string(hikari::application::kBuiltinKaraokeTemplater); }) &&
                 std::ranges::none_of(scripts, [](const auto &s) {
                     return s.state == application::ScriptStatus::State::Loading;
                 }))
@@ -312,7 +313,7 @@ private slots:
         QTRY_VERIFY_WITH_TIMEOUT(item(QStringLiteral("templateApply"))->isEnabled(), 20'000);
         editor().setText(editor().text() + QStringLiteral("{\\bord7}"));
         QSignalSpy done(&application->automation(), &app::AutomationShell::runCompleted);
-        QVERIFY(application->automation().run(HIKARI_KARAOKE_TEMPLATER, 0, app::AutomationShell::RunOrigin::Hotkey));
+        QVERIFY(application->automation().run(std::string(hikari::application::kBuiltinKaraokeTemplater), 0, app::AutomationShell::RunOrigin::Hotkey));
         QVERIFY(done.wait(30'000));
         QVERIFY(done.first().at(0).toBool());
         QVERIFY(std::ranges::any_of(session()->document().lines(), [](const core::LineRecord *l) {

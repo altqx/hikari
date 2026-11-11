@@ -13,6 +13,7 @@
 #include "hikari/app/whats_new.h"
 #include "hikari/app/style_manager_controller.h"
 #include "hikari/app/align_to_video_controller.h"
+#include "hikari/app/lyrics_import_controller.h"
 #include "hikari/app/kanji_timer_controller.h"
 #include "hikari/app/qc_notes_controller.h"
 #include "hikari/app/font_collector_controller.h"
@@ -691,7 +692,7 @@ public:
     Q_PROPERTY(hikari::ui::SettingsStore *settings READ settingsStore CONSTANT)
     ui::SettingsStore *settingsStore() const { return m_settings.get(); }
     // The subtitles the video overlay was given last (the draft while editing live).
-    const std::vector<std::byte> &videoScript() const { return m_videoScript; }
+    const std::vector<std::byte> &videoScript() const { return activeMedia().videoScript; }
     application::AudioCacheSettings audioSettings() const { return m_audioSettings(); }
     // {values (by setting id), languages, dictionaries, catalogs, styles, warnings}.
     // Opening fixes an FFMS2 seeking value outside 0-3 to 2 and loads the conversion
@@ -789,7 +790,7 @@ public:
     backends::QtGeneralPlayer &generalPlayer() { return *activeMedia().generalPlayer; }
     // The general player, or on Windows DirectShow when video.playbackPlayer is 1 (never
     // a fallback).
-    application::GeneralPlayerPort &activePlayer() { return *m_activePlayer; }
+    application::GeneralPlayerPort &activePlayer() { return *activeMedia().video->session().generalPlayer(); }
     bool directShowPlayback() const;
 #ifdef _WIN32
     backends::DirectShowPlayer *directShowPlayer() { return m_directShow.get(); } // tests
@@ -815,6 +816,7 @@ public:
     StyleManagerController &styleManager() { return *m_styleManager; }
     KanjiTimerController &kanjiTimer() const { return *activeViews().kanjiTimer; }
     AlignToVideoController &alignToVideo() { return *m_alignToVideo; }
+    LyricsImportController &lyricsImport() { return *m_lyricsImport; }
     QcNotesController &qcNotes() { return *m_qcNotes; }
     FontCollectorController &fontCollector() { return *m_fontCollector; }
     FontCatalogsController &fontCatalogs() { return *m_fontCatalogs; }
@@ -841,7 +843,7 @@ public:
     ui::VisualToolsController &visualTools() const { return *activeViews().visualTools; }
     ui::VideoViewController &videoView() const { return *activeViews().videoView; }
     ui::StatusBarController &statusBar() const { return *activeViews().statusBar; }
-    ui::VideoFullscreenController &videoFullscreen() { return *m_videoFullscreen; }
+    ui::VideoFullscreenController &videoFullscreen() { return *activeViews().fullscreen; }
     application::DocumentFiles &files() { return *m_files; }
     application::Workspace &workspace() { return m_workspace; }
     Q_PROPERTY(hikari::app::ApiHost *apiHost READ apiHost CONSTANT)
@@ -1034,6 +1036,7 @@ signals:
     void timecodesChanged();
 
 private:
+    struct WindowMedia;
     std::optional<application::DocumentId> open(const QString &path, bool asReference = false);
     std::optional<application::DocumentId> publish(application::StagedOpen staged, const QString &path, bool asReference);
     static QString openProblem(const QString &path, const application::StageFailure &failure);
@@ -1052,6 +1055,7 @@ private:
     void protectReference();
     void refreshViews();
     void refreshVideo();
+    void switchTabMedia(WindowMedia &media, std::optional<application::DocumentId> tab);
     bool changeResolution(int fromWidth, int fromHeight, int width, int height, bool resample, bool stretch,
                           bool adjustRotations);
     application::visual::perspective::TextMeasure perspectiveMeasure() const;
@@ -1101,6 +1105,7 @@ private:
     application::Workspace m_workspace;
     backends::SubtitleRendererSelection m_renderer;
     struct WindowMedia {
+        int window = 0;
         std::unique_ptr<backends::FfmsIndexedSource> videoHelper;
         std::unique_ptr<application::DummyVideoSource> videoSource;
         std::unique_ptr<ui::VideoController> video;
@@ -1109,9 +1114,42 @@ private:
         std::unique_ptr<ui::AudioController> audio;
         std::unique_ptr<backends::AudioBoxPlayer> audioPlayer;
         QList<QMetaObject::Connection> audioConnections;
+        std::optional<application::DocumentId> videoDocument;
+        std::optional<std::uint64_t> videoRevision;
+        bool videoShowsDraft = false;
+        std::vector<std::byte> videoScript;
+        std::optional<std::pair<std::string, std::uint64_t>> editorTimebaseFor;
+        std::optional<core::LineId> videoLine;
+        bool keepVideoOnEnter = false;
+        QString pendingKeyframes;
+        std::optional<std::pair<QString, int>> pendingTabSeek;
+        bool tabSeekQueued = false;
+        QString keepTabAudio;
+        bool enteringTabMedia = false;
+        QString audioFollowedVideo;
+        std::string pendingIndexHandoff;
+        std::optional<std::tuple<std::uint64_t, std::uint64_t, std::uint64_t>> audioLine;
+        std::optional<application::LegacyTimebase> audioTimebase;
+        std::string audioTimebasePath;
+        std::uint64_t audioTimebaseSerial = 0;
+        std::vector<int> audioKeyframes;
+        std::optional<int> audioWantsFrame;
+        QString resolutionCheckedVideo;
+        QString recentVideoSeen;
+        application::VideoSession::State videoUsageState = application::VideoSession::State::Closed;
+        application::AudioBox::State audioUsageState = application::AudioBox::State::Closed;
+        QElapsedTimer videoOpenClock;
+        QElapsedTimer audioOpenClock;
+        bool videoFailureLogged = false;
+        std::uint64_t playbackFailuresLogged = 0;
+        std::vector<application::FontLease> videoFonts;
+        bool videoShowsTemplate = false;
+        std::optional<std::pair<std::int64_t, std::int64_t>> templateWindow;
     };
     std::unique_ptr<WindowMedia> m_mainMedia;
-    WindowMedia &activeMedia() const { return *m_mainMedia; }
+    WindowMedia &activeMedia() const { return media(m_workspace.activeWindow()); }
+    WindowMedia &media(int shellWindow) const { return *views(shellWindow).media; }
+    std::vector<WindowMedia *> allMedia();
     void makeVideo(WindowMedia &media);
     void makeAudio(WindowMedia &media);
     void trackOffers(WindowMedia &media);
@@ -1123,8 +1161,13 @@ private:
 #ifdef _WIN32
     std::unique_ptr<backends::DirectShowPlayer> m_directShow; // W1, made when chosen
 #endif
-    application::GeneralPlayerPort *m_activePlayer = nullptr;
+    WindowMedia *m_directShowMedia = nullptr;
     void choosePlayer();
+    bool holdsDirectShow(const WindowMedia &media) const;
+    void giveDirectShow(WindowMedia &media);
+    void useOwnPlayer(WindowMedia &media);
+    void takePlayback(WindowMedia &media);
+    void stopMedia(WindowMedia &media);
     // MUST KILL: destruction order: members declared after it may keep a reference to it.
     std::unique_ptr<ui::SettingsStore> m_settings;
     std::unique_ptr<SettingsImportStore> m_importStore;
@@ -1137,6 +1180,7 @@ private:
         WindowViews(const WindowViews &) = delete;
         WindowViews &operator=(const WindowViews &) = delete;
         ~WindowViews();
+        WindowMedia *media = nullptr;
         std::unique_ptr<ui::ShellController> shell;
         std::unique_ptr<ui::LineEditorController> editor;
         std::unique_ptr<ui::VisualToolsController> visualTools;
@@ -1145,6 +1189,7 @@ private:
         std::unique_ptr<ui::TemplateEditorController> templateEditor;
         std::unique_ptr<ui::NodeEffectsController> nodeEffects;
         std::unique_ptr<KanjiTimerController> kanjiTimer;
+        std::unique_ptr<ui::VideoFullscreenController> fullscreen;
         std::unique_ptr<FindHost> findHost;
         std::unique_ptr<application::FindReplace> find;
         std::optional<application::DocumentId> findDocument;
@@ -1175,8 +1220,6 @@ private:
     void refreshInactiveViews(int shellWindow, int left);
     int m_viewsWindow = 0;
     application::EditSession *windowSession(int shellWindow) const;
-    // MUST KILL: hidden until MW3 #631 gives each window its own picture
-    bool pictureShowsWindow(int shellWindow) const;
     void settingChanged(const QString &id);
     QStringList m_dictionaryDirs;
     bool m_resettingSettings = false;
@@ -1185,8 +1228,6 @@ private:
     std::unique_ptr<AutomationShell> m_automation;
     QString m_luaHelper;
     std::unique_ptr<backends::LuaNodeHelper> m_luaNodes;
-    bool m_videoShowsTemplate = false;
-    std::optional<std::pair<std::int64_t, std::int64_t>> m_templateWindow;
     std::unique_ptr<AutomationHotkeysController> m_automationHotkeys;
     // MUST KILL: must be declared after m_automationHotkeys, which it holds a reference to.
     std::unique_ptr<HotkeysController> m_hotkeys;
@@ -1204,15 +1245,12 @@ private:
     std::unique_ptr<CrashReports> m_crashReports;
     std::unique_ptr<DiscordPresence> m_presence;
     std::unique_ptr<StarPrompt> m_starPrompt;
-    application::VideoSession::State m_videoUsageState = application::VideoSession::State::Closed;
-    application::AudioBox::State m_audioUsageState = application::AudioBox::State::Closed;
-    QElapsedTimer m_videoOpenClock;
-    QElapsedTimer m_audioOpenClock;
     QString bundledScriptName(const QString &path) const;
     std::unique_ptr<WhatsNew> m_whatsNew;
     std::unique_ptr<StyleManagerController> m_styleManager;
     std::unique_ptr<FontCollectorController> m_fontCollector;
     std::unique_ptr<AlignToVideoController> m_alignToVideo;
+    std::unique_ptr<LyricsImportController> m_lyricsImport;
     QString m_readingDictionary;
     std::unique_ptr<QcNotesController> m_qcNotes;
     std::unique_ptr<QTemporaryDir> m_fontCatalogTemp;
@@ -1220,7 +1258,6 @@ private:
     std::unique_ptr<MatroskaController> m_matroska;
     std::map<std::uint64_t, QString> m_importPaths;
     std::set<std::uint64_t> m_lyricsImports;
-    bool m_keepVideoOnEnter = false;
     std::optional<application::DocumentId> m_matroskaTarget;
     std::uint64_t m_matroskaRevision = 0;
     QString m_matroskaVideo;
@@ -1237,6 +1274,7 @@ private:
     std::unique_ptr<ui::ColourPickerController> m_colourPicker;
     std::unique_ptr<ui::WorkspaceLayoutController> m_workspaceLayout;
     struct ShellWindow {
+        std::unique_ptr<WindowMedia> media;
         std::unique_ptr<WindowViews> views;
         std::unique_ptr<ui::WorkspaceLayoutController> layout;
         QPointer<QQuickWindow> window;
@@ -1267,7 +1305,6 @@ private:
     std::optional<core::ConversionOptions> assConversionOptions() const;
     std::optional<core::ConversionResult> convertedToAss(const application::EditSession &session) const;
     bool convertToAss(application::DocumentId document);
-    QString m_resolutionCheckedVideo;
     bool m_askVideoProperties = false;
     void checkResolution();
     void checkVideoMatrix();
@@ -1288,7 +1325,6 @@ private:
     void endFindOpen(bool opened);
     void saveFindRecent(int shellWindow, const application::FindReplaceSettings &window);
     void findFinished(int shellWindow);
-    QString m_pendingKeyframes;
     std::unique_ptr<ui::GridFilterController> m_gridFilter;
     application::SubtitleComparison m_comparison;
     std::map<std::uint64_t, std::uint64_t> m_comparedRevisions;
@@ -1309,7 +1345,6 @@ private:
     std::optional<application::DocumentId> comparedPartner() const;
     application::GridSelection referenceGridSelection() const;
     void applyReferenceSelection(application::Selection next);
-    std::unique_ptr<ui::VideoFullscreenController> m_videoFullscreen;
     struct OriginalColumnsEntry {
         std::uint64_t generation = 0;
         application::OriginalColumns columns;
@@ -1330,11 +1365,8 @@ private:
     std::vector<application::FontLease> attachedFontLeases(std::optional<application::DocumentId> document);
     std::vector<application::FontLease> subtitleFonts(std::optional<application::DocumentId> document);
     bool setVideoFonts(std::optional<application::DocumentId> document);
-    std::vector<application::FontLease> m_videoFonts;
     std::vector<std::pair<std::shared_ptr<const std::vector<std::byte>>, std::vector<std::string>>> m_leasedFontNames;
     bool runFilter(const std::function<std::expected<void, application::CommandRefusal>(application::EditSession &)> &command);
-    bool m_videoFailureLogged = false;
-    std::uint64_t m_playbackFailuresLogged = 0;
     std::uint64_t m_seenGroupBreaks = 0;
     std::unique_ptr<application::RecoveryStore> m_recovery;
     std::unique_ptr<QLockFile> m_sessionLock;
@@ -1346,12 +1378,6 @@ private:
     void discardRecovery(application::DocumentId document);
     std::string recoveryKey(application::DocumentId document) const;
     void reportGroupBreak();
-    std::optional<application::DocumentId> m_videoDocument;
-    std::optional<std::uint64_t> m_videoRevision;
-    bool m_videoShowsDraft = false;
-    std::vector<std::byte> m_videoScript;
-    std::optional<std::pair<std::string, std::uint64_t>> m_editorTimebaseFor;
-    std::optional<core::LineId> m_videoLine;
     struct LineChangeOrigin {
         bool gridClick = false;
         bool autoPlay = false;
@@ -1514,14 +1540,7 @@ private:
     QString m_grammarWords;
     QStringList m_grammarOwnWords;
     application::RecentFiles m_recentAudio;
-    QString m_audioFollowedVideo;
-    std::string m_pendingIndexHandoff;
-    void releaseReadIndexHandoff();
-    std::optional<std::tuple<std::uint64_t, std::uint64_t, std::uint64_t>> m_audioLine;
-    std::optional<application::LegacyTimebase> m_audioTimebase;
-    std::string m_audioTimebasePath;
-    std::uint64_t m_audioTimebaseSerial = 0;
-    std::vector<int> m_audioKeyframes;
+    void releaseReadIndexHandoff(WindowMedia &media);
     std::function<application::AudioCacheSettings()> m_audioSettings;
     QString m_indexDir;
     std::unique_ptr<application::AudioOutputPort> m_audioOutput;
@@ -1532,16 +1551,15 @@ private:
     void noticeAudioRoute(const application::OutputRoute &before, const application::OutputRoute &after);
     void noticeOnsets();
     application::OutputRoute m_noticedRoute;
-    void syncAudioWithVideo();
+    void syncAudioWithVideo(WindowMedia &media);
     static QString dummyVideoAudio(const QString &videoPath);
     static bool isVideoAudio(const QString &audio, const QString &videoPath);
-    void showVideoAtAudio(int ms);
-    std::optional<int> m_audioWantsFrame;
+    void showVideoAtAudio(WindowMedia &media, int ms);
     void refreshAudio();
-    void followVideoInAudio();
+    void followVideoInAudio(WindowMedia &media);
     void trackVideoSources(WindowMedia &media);
-    void logVideoFailure();
-    void logPlaybackFailure();
+    void logVideoFailure(WindowMedia &media);
+    void logPlaybackFailure(WindowMedia &media);
     void rememberRecentVideo(const QString &path);
     void rememberRecentKeyframes(const QString &path);
     QVariantList recentRows(application::RecentFiles &list, const char *setting);
@@ -1551,12 +1569,10 @@ private:
     application::RecentFiles m_recentTimecodes;
     void rememberRecentTimecodes(const QString &path);
     std::expected<application::Timecodes, QString> readTimecodes(const QString &path) const;
-    void showTabTimecodes(std::optional<application::DocumentId> document);
+    void showTabTimecodes(WindowMedia &media, std::optional<application::DocumentId> document);
     QString tabTimecodes(std::optional<application::DocumentId> document) const;
-    bool m_enteringTabMedia = false;
     application::NextFileWalker m_nextFile{[](char32_t c) { return QChar::toLower(c); }};
     std::optional<application::NextFileStep> nextVideoStep(application::NextFileWalker &walker, bool next) const;
-    QString m_recentVideoSeen;
     void rememberRecentAudio(const QString &path);
     void trimAudioCache();
     QString indexFile(const QString &path, int track) const;
@@ -1604,9 +1620,6 @@ private:
     std::vector<application::DocumentId> m_closingTabs;
     std::optional<application::DocumentId> m_tabAfterClose;
     std::optional<application::DocumentId> m_closeTarget;
-    QString m_keepTabAudio;
-    std::optional<std::pair<QString, int>> m_pendingTabSeek;
-    bool m_tabSeekQueued = false;
     bool m_scrollRestoring = false;
     bool m_tabDragging = false;
     bool m_startedWithPaths = false;
@@ -1620,14 +1633,15 @@ private:
     // MUST KILL: mutable so the const startupSession() can mark itself pending.
     mutable bool m_startupSessionPending = false;
     int m_tabTextMax = 40;
-    void leaveTabMedia(std::optional<application::DocumentId> document);
-    void enterTabMedia(std::optional<application::DocumentId> previous, std::optional<application::DocumentId> document);
+    void leaveTabMedia(WindowMedia &media, std::optional<application::DocumentId> document);
+    void enterTabMedia(WindowMedia &own, std::optional<application::DocumentId> previous, std::optional<application::DocumentId> document);
+    int videoPosition(const WindowMedia &media) const;
     void closeDocument(application::DocumentId document);
     void replaceTarget(application::DocumentId replacement, bool keepMedia = false);
     void applySession();
     void forgetTab(application::DocumentId document);
     void selectRow(application::DocumentId document, int row);
-    bool keepTabAudio(const QString &videoPath);
+    bool keepTabAudio(WindowMedia &media, const QString &videoPath);
     void trackTabMedia(WindowMedia &media);
     int targetVideoPosition() const;
     std::map<int, application::DocumentId> m_layoutDocuments;

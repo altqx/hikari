@@ -28,8 +28,18 @@ add_test(NAME hikari_i18n_contexts_are_semantic
         -DSOURCE_DIR=${PROJECT_SOURCE_DIR} -P "${CMAKE_CURRENT_SOURCE_DIR}/check_semantic_contexts.cmake")
 set_tests_properties(hikari_i18n_contexts_are_semantic PROPERTIES LABELS "i18n" TIMEOUT 300)
 
+list(JOIN HIKARI_I18N_UI_TS "|" hikari_ui_catalogs)
+add_test(NAME hikari_i18n_catalogs_hold_every_source
+    COMMAND "${CMAKE_COMMAND}" -DPROJECT_IN=${CMAKE_BINARY_DIR}/.lupdate/hikari_lupdate_project.cmake
+        -DPROJECT_JSON=${CMAKE_CURRENT_BINARY_DIR}/hikari_drift_project.json
+        -DGENERATE_PROJECT=${Qt6LinguistTools_DIR}/GenerateLUpdateProject.cmake
+        -DEXTRACTED=${CMAKE_CURRENT_BINARY_DIR}/catalog-drift/extracted.ts
+        -DLUPDATE=$<TARGET_FILE:Qt6::lupdate> -DTOOL=$<TARGET_FILE:hikari_i18n_lint>
+        "-DCATALOGS=${hikari_ui_catalogs}" -P "${CMAKE_CURRENT_SOURCE_DIR}/check_catalog_drift.cmake")
+set_tests_properties(hikari_i18n_catalogs_hold_every_source PROPERTIES LABELS "i18n" TIMEOUT 300)
+
 if(WIN32)
-    set_tests_properties(hikari_i18n_contexts_are_semantic PROPERTIES
+    set_tests_properties(hikari_i18n_contexts_are_semantic hikari_i18n_catalogs_hold_every_source PROPERTIES
         ENVIRONMENT_MODIFICATION "PATH=path_list_prepend:${HIKARI_QT_PREFIX}/bin")
 endif()
 

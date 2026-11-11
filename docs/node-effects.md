@@ -54,7 +54,7 @@ Number, Text, Colour, Alpha, Time, Point, Tags, Drawing, Bool and Units.
 
 | Category | Nodes |
 |---|---|
-| units | `for_each` (the Line, its syllables, their characters or the furigana), `repeat` (each unit `count` times, with `j`), `frames` (one element per frame step across a span), `info` (the templater's variables for the current unit, its Line and its Style) |
+| units | `for_each` (the Line, its syllables, their characters or the furigana), `repeat` (each unit `count` times, with `j`), `frames` (one element per frame step across a span), `clip_gradient` (one element per `\clip` strip, with its colour), `array` (one element per copy on a grid, a circle or a path), `particles` (one element per seeded random particle), `info` (the templater's variables for the current unit, its Line and its Style) |
 | values | `number`, `text`, `colour`, `point`, `choose` (the index-th of a list of values, wrapping) |
 | math | `calculate`, `compare`, `progress` (with easing), `random` (seeded) |
 | time | `retime` (the templater's ten modes), `stagger` |
@@ -73,6 +73,17 @@ Number, Text, Colour, Alpha, Time, Point, Tags, Drawing, Bool and Units.
 - A unit-bound value is read inside its own chain. Examples are `info` read from a unit, a `repeat`'s `j`, and anything computed from them.
 - An Emit writes one Line per element of the units wired into it.
 
+**Strips, copies and particles.** Like `repeat`, each takes units and gives every unit once per strip, copy or particle, with that one's `index` and `count`.
+
+- `clip_gradient` cuts the unit's box, grown by `padding` on every side, into `strips` strips side by side (`across`) or stacked (`down`). Each strip gives its `\clip` rectangle as `clip` (and its corners `from` and `to`), and the colour of the `colours` gradient at its `progress`, 0 for the first strip and 1 for the last. Edges are whole pixels, and neighbouring strips share theirs, so the strips leave no gap and don't overlap. Strips are rectangles only; a gradient clipped to a drawing waits for the clipper nodes (NE5a).
+- `array` places copies around the unit's position and gives each one's `offset`, its `position` (the unit's `x` and `y` plus the offset) and an `angle` in degrees, counter-clockwise as `\frz` takes it:
+  - `grid`: `columns` × `rows` copies, `spacing` apart, centred on the unit, row by row; angle 0.
+  - `circle`: `count` copies `radius` away, the first at `start_angle` (0 is to the right, 90 above), evenly round; the angle is the copy's own.
+  - `path`: `count` copies evenly by length along the drawing wired into `path`, from its start to its end, its origin at the unit's position; the angle is the path's direction there. A path takes `m`, `n`, `l` and `b` commands and honours the drawing's `\p` scale.
+- `particles` spreads `count` particles at random over a `rectangle` or an `ellipse` `width` × `height` centred on the unit. Each gives its `offset`, its `position` and `random`, a number from 0 to 1 of its own. The particles draw from the graph's seed as Random does, with the node's `seed` and the particle's place, so the same graph, seed and Line give the same particles.
+
+Offsets and angles are rounded to thousandths, so Linux and Windows write the same numbers.
+
 **Groups.** A group holds a graph of its own.
 
 - Its `input` and `output` nodes declare its ports.
@@ -89,6 +100,7 @@ Number, Text, Colour, Alpha, Time, Point, Tags, Drawing, Bool and Units.
 - loops;
 - unit-bound values read outside their units;
 - groups that don't resolve;
+- an `array` on a path with no drawing wired in;
 - a graph with no Emit.
 
 The engine runs only a graph without problems.
@@ -186,7 +198,7 @@ NE2 ([#424](https://github.com/altqx/hikari/issues/424)) edits a Document's grap
 
 - **Switching.** View › "Node effects" (`GLOBAL_NODE_EFFECTS`, no default key) or the title bar's node-effects button turns the mode on and off, and the mode bar's "Leave node effects" turns it off. Entering keeps the tab's arrangement and shows the mode's own layout; leaving brings the tab's arrangement back and never asks.
 - **Layout.** Ordinary docks: Video and **Source lines** on the left, **Graph** in the middle, **Node** on the right (panel registry 15, 16, 17). The Grid, the Line editor and the audio close. The user may rearrange the docks; the arrangement is kept in `<layout file>-node-effects.json` beside the layout file, and View › Layout › "Reset this layout" builds the default again.
-- **The mode bar** picks the graph (the Document's `graph <name>` Lines) and has its menu: New graph, From a preset, From the library…, Rename…, Duplicate, Save to the library and Delete graph. Style sets the graph Line's Style or "All styles"; Seed sets the graph's `seed`. It shows the problem count, whose list selects and centres a node, and Apply ▾ ("Apply to every karaoke line", "Apply to the selected lines").
+- **The mode bar** picks the graph (the Document's `graph <name>` Lines) and has its menu: New graph, From a preset, From the library…, Rename…, Duplicate, Save to the library, Export as template lines and Delete graph. Style sets the graph Line's Style or "All styles"; Seed sets the graph's `seed`. It shows the problem count, whose list selects and centres a node, and Apply ▾ ("Apply to every karaoke line", "Apply to the selected lines").
 - **Undo.** Each canvas edit goes into one "Edit graph" step on the graph Line; edits within 800 ms of each other, or one drag, make one step. New graph, Rename graph, Duplicate graph and Delete graph are their own steps, and Delete removes the Lines the graph wrote. Apply is one "Apply node effect" step.
 - **Canvas.** A node shows its title and id, its fields, its inputs on the left and its outputs on the right. A port's shape and colour give its type: Units a diamond, Tags a square, every other type a circle; Number, Time and Alpha share a colour, and high contrast keeps the shapes and drops the colours (`Theme.ports`). An input that reads its field has a hollow port with the constant written in. Unit info shows only its wired outputs and folds the rest. A node the catalogue doesn't know is a dashed placeholder that keeps its fields and wires; a graph whose `format` is newer opens read-only.
 - **Wiring.** Dragging from an output dims the inputs it can't feed. A drop on one is refused with the reason, a drop on a wired input replaces its wire, a wire that would make a loop is refused, and a drop in empty space opens Add node filtered to nodes that take the output. Dragging a wire off an input moves it or, dropped in empty space, removes it.
@@ -196,6 +208,17 @@ NE2 ([#424](https://github.com/altqx/hikari/issues/424)) edits a Document's grap
 - **Preview.** While the mode is shown, the graph runs on the current source Line on every edit, with NE1's cache. The video draws that Line's output in place of its generated Lines, with the badge "Preview · line N · not applied"; Source lines has the eye and Loop the line. A graph with problems keeps the last run that worked, dimmed.
 - **Lua trust** is the Template editor's choice for the open Document: trusting the file's Lua in either one covers both.
 - **Presets.** "From a preset" lists all ten KE3 presets ([karaoke presets](karaoke-presets.md)) as graphs, under their Template-editor names. Each graph writes the same Lines as its template, byte for byte (`hikari_application_node_effects_tests`), and uses only catalogue nodes, without Lua. Colour sweep, Glow and Echo have two emits, one per template Layer.
+- **Examples.** After the presets, "From a preset" lists one example per node that no template can express: "Gradient strips" (`clip_gradient`), "Ring of copies" (`array` on a circle) and "Particle burst" (`particles`). Each validates and gives the same Lines on every run.
+
+## Export as template lines
+
+NE4 ([#426](https://github.com/altqx/hikari/issues/426)). The mode bar menu's "Export as template lines" inserts after the graph Line the `template` Comment Lines that give the same Lines through the stock 2.1.7 karaoke templater, so the effect runs in Aegisub too. It is one undo step, "Export as template lines"; the graph Line stays. `exportTemplateLines` (`node_effects.h`) is the compiler.
+
+- **One template per Emit,** in the engine's order. Its class comes from the Emit's units: `syl`, `syl char`, `furi` or `pre-line`, with `noblank` when blank units are left out and `loop N` for a Repeat with a constant count (`j` and `maxj` read its place and count). An Emit on Line units that takes its text from a Join of the Line's syllables becomes a `pre-line <id>` and `line <id>` pair; the id is the graph name and the Emit's id. The Emit's constant Layer is the template's Layer; "All styles" adds `all`.
+- **Times** come from one Retime node as `!retime(mode, start, end)!`, or are the Line's when unwired.
+- **Values** become constants, the templater's `$variables` (Unit info), `orgline.styleref` fields (Style values) or Lua expressions (`math.*`, a table for Choose).
+- **What blocks it.** A node with no template form refuses the export, and a popup lists each one with the reason; choosing one selects it. Random numbers, Lua nodes, Frames, Clip gradient, Array, Particles, Gradient, Compare, Style colours, a unit's place from For each, a condition on an Emit, a Layer or Repeat count that is not constant, times from anything but one Retime node, a Line timed by a syllable, and text with `!` or `$` all block it, as does every node the compiler does not know yet.
+- **Tests.** `KaraokePresets.ExportedPresetGraphsGiveTheGoldensThroughTheStockTemplater` exports the ten preset graphs and runs them through the unchanged 3.2.2 `kara-templater.lua` and the built-in templater; the generated Lines equal the goldens.
 
 ## On the Hikari API
 

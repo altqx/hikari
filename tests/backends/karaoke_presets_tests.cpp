@@ -1,8 +1,11 @@
 // HIKARI_UPDATE_KARAOKE_GOLDENS=1 rewrites the goldens from the unchanged 3.2.2 script.
+#include "hikari/application/automation_registry.h"
 #include "hikari/application/automation.h"
 #include "hikari/application/edit_session.h"
 #include "hikari/application/karaoke_presets.h"
 #include "hikari/application/macro_transaction.h"
+#include "hikari/application/node_effects.h"
+#include "hikari/application/node_graph_editing.h"
 #include "hikari/backends/lua_script_host.h"
 #include "hikari/core/ass_load.h"
 #include "hikari/core/ass_save.h"
@@ -61,7 +64,7 @@ QString pristineScript()
 
 QString bundledScript()
 {
-    return QStringLiteral(HIKARI_KARAOKE_TEMPLATER);
+    return QString::fromUtf8(hikari::application::kBuiltinKaraokeTemplater);
 }
 
 std::vector<std::byte> readBytes(const QString &path)
@@ -264,6 +267,47 @@ TEST_F(KaraokePresets, EachPresetGeneratesItsGolden)
         }
         EXPECT_GT(generated, 0);
         EXPECT_EQ(report.value(QStringLiteral("generated")).toInt(), generated);
+    }
+}
+
+std::vector<std::string> generatedLines(const std::string &file)
+{
+    std::vector<std::string> out;
+    std::size_t at = 0;
+    while (at < file.size()) {
+        std::size_t end = file.find('\n', at);
+        if (end == std::string::npos)
+            end = file.size();
+        std::string line = file.substr(at, end - at);
+        if (!line.empty() && line.back() == '\r')
+            line.pop_back();
+        if (line.starts_with("Dialogue: ") && line.find(",fx,") != std::string::npos)
+            out.push_back(std::move(line));
+        at = end + 1;
+    }
+    return out;
+}
+
+TEST_F(KaraokePresets, ExportedPresetGraphsGiveTheGoldensThroughTheStockTemplater)
+{
+    const auto all = presets();
+    for (const auto &[file, templatePreset] : all) {
+        SCOPED_TRACE(file.toStdString());
+        const auto graphs = hikari::application::nodeGraphPresets();
+        const auto preset = std::ranges::find(graphs, file.toStdString(), [](const auto &p) { return std::string(p.templateFile); });
+        ASSERT_NE(preset, graphs.end()) << "no graph for this KE3 preset";
+        const auto graph = hikari::application::parseGraph(preset->graph);
+        ASSERT_TRUE(graph.has_value());
+        const auto lines = hikari::application::exportTemplateLines(*graph, u8"preset");
+        ASSERT_TRUE(lines.has_value()) << (lines ? "" : lines.error().front().node + " " + lines.error().front().message);
+        KaraokePreset exported;
+        for (const auto &l : *lines)
+            exported.lines.push_back({l.layer, l.effect, l.text});
+        exported.lines.resize(std::max(exported.lines.size(), templatePreset.lines.size()));
+        const std::vector<std::string> golden = generatedLines(textOf(readBytes(goldenOf(file))));
+        EXPECT_FALSE(golden.empty());
+        EXPECT_EQ(generatedLines(templated(fixtureWith(exported), pristineScript())), golden);
+        EXPECT_EQ(generatedLines(templated(fixtureWith(exported), bundledScript())), golden) << "the built-in templater";
     }
 }
 

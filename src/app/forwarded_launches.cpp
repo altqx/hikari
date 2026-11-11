@@ -104,6 +104,7 @@ void ForwardedLaunches::take(const SingleInstance::Request &request)
     keep(request.files);
     if (m_files.size() != files)
         m_request = request.window;
+    m_pickFolder = m_pickFolder || request.pickFolder;
     QString token = request.activationToken;
     if (m_application.quitting() && !token.isEmpty()) {
         m_quitToken = std::exchange(token, QString());
@@ -153,11 +154,18 @@ void ForwardedLaunches::open()
         m_timer.start(kBusyRetryMs);
         return;
     }
-    if (m_files.isEmpty()) {
+    if (m_files.isEmpty() && !m_link.isEmpty()) {
         QMetaObject::invokeMethod(target(), "openInstallLink", Q_ARG(QVariant, installLinkId(std::exchange(m_link, QString()))));
+        if (m_pickFolder)
+            m_timer.start(kBusyRetryMs);
         return;
     }
-    if (!m_link.isEmpty())
+    if (m_files.isEmpty()) {
+        m_pickFolder = false;
+        QMetaObject::invokeMethod(target(), "showFolderPicker");
+        return;
+    }
+    if (!m_link.isEmpty() || m_pickFolder)
         m_timer.start(kBusyRetryMs);
     const QVariantMap result = m_application.openForwarded(std::exchange(m_files, QStringList()),
                                                            static_cast<int>(std::exchange(m_request, application::WindowRequest::Default)));

@@ -32,7 +32,7 @@ void Application::setUpTranslationControls()
         if (id == QLatin1String(kMoveTags))
             refreshViews();
         if (id == QLatin1String(kHideOriginal))
-            m_videoRevision.reset();
+            activeMedia().videoRevision.reset();
     });
 }
 

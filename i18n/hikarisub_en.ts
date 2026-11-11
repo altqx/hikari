@@ -10,6 +10,27 @@
             <numerusform>Show %n more</numerusform>
         </translation>
     </message>
+    <message numerus="yes">
+        <source>Proposal: %1, %n lines</source>
+        <translation>
+            <numerusform>Proposal: %1, %n line</numerusform>
+            <numerusform>Proposal: %1, %n lines</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n lines</source>
+        <translation>
+            <numerusform>%n line</numerusform>
+            <numerusform>%n lines</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Show all %n lines</source>
+        <translation>
+            <numerusform>Show the %n line</numerusform>
+            <numerusform>Show all %n lines</numerusform>
+        </translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Automation</name>
@@ -181,6 +202,20 @@
         <translation>
             <numerusform>Save the changes to %n document before loading the session?</numerusform>
             <numerusform>Save the changes to %n documents before loading the session?</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n lines</source>
+        <translation>
+            <numerusform>%n line</numerusform>
+            <numerusform>%n lines</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>and %n more lines</source>
+        <translation>
+            <numerusform>and %n more line</numerusform>
+            <numerusform>and %n more lines</numerusform>
         </translation>
     </message>
 </context>

@@ -56,7 +56,8 @@ exec_path=$(printf '%s' "$here/hikarisub" |
 	sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' -e 's/\$/\\$/g' -e 's/`/\\`/g')
 while IFS= read -r line || [ -n "$line" ]; do
 	case "$line" in
-		Exec=*) printf 'Exec="%s" %%u\n' "$exec_path" ;;
+		Exec=*\ *) printf 'Exec="%s" %s\n' "$exec_path" "${line#Exec=* }" ;;
+		Exec=*) printf 'Exec="%s"\n' "$exec_path" ;;
 		*) printf '%s\n' "$line" ;;
 	esac
 done < "$here/share/applications/$app_id.desktop" \

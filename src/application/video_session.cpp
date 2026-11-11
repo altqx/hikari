@@ -399,6 +399,8 @@ bool VideoSession::dummy() const
 
 bool VideoSession::play()
 {
+    if (m_beforePlay && m_state == State::Ready && !m_playing)
+        m_beforePlay();
     // A dummy video has no file for the general player.
     if (!m_player || m_state != State::Ready || m_playing || dummy())
         return false;
@@ -410,6 +412,8 @@ bool VideoSession::play()
 
 bool VideoSession::playLine(int startMs, int endMs, bool loop)
 {
+    if (m_beforePlay && m_state == State::Ready)
+        m_beforePlay();
     if (!m_player || m_state != State::Ready || m_starts.empty())
         return false;
     const LegacyTimebase timebase = legacyTimebase();

@@ -12,12 +12,12 @@ add_library(hikari_lua_legacy_native STATIC
 target_link_libraries(hikari_lua_legacy_native PRIVATE Hikari::luajit)
 set_target_properties(hikari_lua_legacy_native PROPERTIES LINKER_LANGUAGE C)
 
-add_executable(hikari_lua_helper lua_helper.cpp lua_host_cache.cpp lua_host_cache.h lua_native.cpp lua_native.h
-    lua_nodes.cpp lua_nodes.h)
+add_executable(hikari_lua_helper lua_helper.cpp lua_helper_internal.h kara_templater.cpp kara_templater.h karaskel_tables.cpp
+    karaskel_tables.h lua_host_cache.cpp lua_host_cache.h lua_native.cpp lua_native.h lua_nodes.cpp lua_nodes.h)
 set_target_properties(hikari_lua_helper PROPERTIES OUTPUT_NAME hikari-lua-helper)
 # ICU is linked statically: its headers must not declare dllimport.
 target_compile_definitions(hikari_lua_helper PRIVATE BOOST_ALL_NO_LIB U_STATIC_IMPLEMENTATION)
-target_link_libraries(hikari_lua_helper PRIVATE hikari_lua_protocol hikari_lua_legacy_native hikari_regex Hikari::luajit
+target_link_libraries(hikari_lua_helper PRIVATE hikari_application hikari_lua_protocol hikari_lua_legacy_native hikari_regex Hikari::luajit
     Boost::regex Boost::locale ICU::i18n ICU::uc ICU::data)
 # LuaJIT errors unwind C++ frames; MSVC's /EHsc assumes extern "C" never throws.
 if(MSVC)
@@ -48,6 +48,17 @@ foreach(name BadMutex PreciseTimer DownloadManager)
     set_target_properties(hikari_depctrl_${lower} PROPERTIES OUTPUT_NAME ${name} CXX_STANDARD 17)
 endforeach()
 
+# ILL's clipper2 module requireffi-loads clipper2/clipper2/(lib)clipper2.
+find_path(HIKARI_CLIPPER2_INCLUDE_DIR clipper2/clipper.h REQUIRED)
+find_library(HIKARI_CLIPPER2_LIBRARY NAMES Clipper2 REQUIRED)
+add_library(hikari_ill_clipper2 SHARED "${PROJECT_SOURCE_DIR}/Thirdparty/ILL-clipper2/clipper.wrap.cpp")
+target_include_directories(hikari_ill_clipper2 PRIVATE "${HIKARI_CLIPPER2_INCLUDE_DIR}")
+target_link_libraries(hikari_ill_clipper2 PRIVATE "${HIKARI_CLIPPER2_LIBRARY}")
+if(NOT WIN32)
+    target_link_options(hikari_ill_clipper2 PRIVATE "LINKER:--exclude-libs,ALL")
+endif()
+set_target_properties(hikari_ill_clipper2 PROPERTIES OUTPUT_NAME clipper2 CXX_STANDARD 17 CXX_VISIBILITY_PRESET hidden)
+
 # Layout scripts expect: Automation/automation/{Autoload,Include}, log/autosave/temp beside it.
 set(HIKARI_AUTOMATION_ROOT "${CMAKE_BINARY_DIR}/Automation" CACHE INTERNAL "")
 set(HIKARI_AUTOMATION_STAGE "${HIKARI_AUTOMATION_ROOT}/automation" CACHE INTERNAL "")
@@ -70,11 +81,13 @@ add_custom_target(hikari_automation_stage ALL
     COMMAND "${CMAKE_COMMAND}" -E make_directory "${HIKARI_AUTOMATION_ROOT}/log" "${HIKARI_AUTOMATION_ROOT}/autosave"
         "${HIKARI_AUTOMATION_ROOT}/temp" "${HIKARI_AUTOMATION_STAGE}/Include/BM/BadMutex"
         "${HIKARI_AUTOMATION_STAGE}/Include/PT/PreciseTimer" "${HIKARI_AUTOMATION_STAGE}/Include/DM/DownloadManager"
+        "${HIKARI_AUTOMATION_STAGE}/Include/clipper2/clipper2"
     COMMAND "${CMAKE_COMMAND}" -E copy "$<TARGET_FILE:hikari_depctrl_badmutex>" "${HIKARI_AUTOMATION_STAGE}/Include/BM/BadMutex/"
     COMMAND "${CMAKE_COMMAND}" -E copy "$<TARGET_FILE:hikari_depctrl_precisetimer>" "${HIKARI_AUTOMATION_STAGE}/Include/PT/PreciseTimer/"
     COMMAND "${CMAKE_COMMAND}" -E copy "$<TARGET_FILE:hikari_depctrl_downloadmanager>" "${HIKARI_AUTOMATION_STAGE}/Include/DM/DownloadManager/"
+    COMMAND "${CMAKE_COMMAND}" -E copy "$<TARGET_FILE:hikari_ill_clipper2>" "${HIKARI_AUTOMATION_STAGE}/Include/clipper2/clipper2/"
     ${_hikari_subinspector_stage}
     COMMAND "${CMAKE_COMMAND}" -DROOT=${CMAKE_BINARY_DIR} -P "${PROJECT_SOURCE_DIR}/cmake/HikariBundledManifest.cmake"
-    DEPENDS hikari_depctrl_badmutex hikari_depctrl_precisetimer hikari_depctrl_downloadmanager
+    DEPENDS hikari_depctrl_badmutex hikari_depctrl_precisetimer hikari_depctrl_downloadmanager hikari_ill_clipper2
         ${_hikari_subinspector_target}
     COMMENT "Staging the automation tree with DependencyControl's native modules")

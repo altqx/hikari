@@ -37,6 +37,27 @@ QString qstr(std::u8string_view s)
     return QString::fromUtf8(reinterpret_cast<const char *>(s.data()), qsizetype(s.size()));
 }
 
+struct NodeExampleText {
+    const char *example, *title, *description;
+};
+
+constexpr NodeExampleText kExamples[] = {
+    {"gradient-strips", QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Gradient strips"),
+     QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Each line cut into eight strips, coloured from pink to blue.")},
+    {"ring-of-copies", QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Ring of copies"),
+     QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Eight copies of each syllable on a circle around it, each turned to its place, while it is sung.")},
+    {"particle-burst", QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Particle burst"),
+     QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Twelve copies of each syllable fly out to random places around it and fade.")},
+};
+
+const NodeExampleText *exampleText(std::string_view example)
+{
+    if (example.empty())
+        return nullptr;
+    const auto it = std::ranges::find_if(kExamples, [&](const NodeExampleText &e) { return e.example == example; });
+    return it == std::end(kExamples) ? nullptr : &*it;
+}
+
 std::string utf8(const QString &s)
 {
     return s.toStdString();
@@ -604,24 +625,30 @@ QVariantList NodeEffectsController::wires() const
     return out;
 }
 
+QVariantMap NodeEffectsController::problemRow(const std::string &node, const std::string &port,
+                                              const std::string &message) const
+{
+    std::string prefix;
+    for (const std::string &id : m_path)
+        prefix += id + "/";
+    QString viewNode;
+    if (node.starts_with(prefix) && node.size() > prefix.size()) {
+        const std::string rest = node.substr(prefix.size());
+        viewNode = qstr(rest.substr(0, rest.find('/')));
+    }
+    return {{QStringLiteral("node"), qstr(node)},
+            {QStringLiteral("viewNode"), viewNode},
+            {QStringLiteral("port"), qstr(port)},
+            {QStringLiteral("message"), qstr(message)}};
+}
+
 QVariantList NodeEffectsController::problems() const
 {
     QVariantList out;
     if (!m_graph)
         return out;
-    std::string prefix;
-    for (const std::string &id : m_path)
-        prefix += id + "/";
     const auto add = [&](const std::string &node, const std::string &port, const std::string &message) {
-        QString viewNode;
-        if (node.starts_with(prefix) && node.size() > prefix.size()) {
-            const std::string rest = node.substr(prefix.size());
-            viewNode = qstr(rest.substr(0, rest.find('/')));
-        }
-        out << QVariantMap{{QStringLiteral("node"), qstr(node)},
-                           {QStringLiteral("viewNode"), viewNode},
-                           {QStringLiteral("port"), qstr(port)},
-                           {QStringLiteral("message"), qstr(message)}};
+        out << problemRow(node, port, message);
     };
     const std::vector<application::GraphProblem> found = application::validateGraph(*m_graph);
     for (const application::GraphProblem &p : found)
@@ -760,6 +787,14 @@ QVariantList NodeEffectsController::presets()
     const QVariantList templates = TemplateEditorController::presets();
     const auto graphs = application::nodeGraphPresets();
     for (int i = 0; i < int(graphs.size()); ++i) {
+        if (const NodeExampleText *example = exampleText(graphs[std::size_t(i)].example)) {
+            out << QVariantMap{
+                {QStringLiteral("index"), i},
+                {QStringLiteral("title"), QCoreApplication::translate("HikariSub.NodeEffects", example->title)},
+                {QStringLiteral("description"),
+                 QCoreApplication::translate("HikariSub.NodeEffects", example->description)}};
+            continue;
+        }
         const QString file = qstr(graphs[std::size_t(i)].templateFile);
         for (const QVariant &t : templates)
             if (t.toMap().value(QStringLiteral("file")).toString() == file)
@@ -1421,6 +1456,24 @@ bool NodeEffectsController::duplicateGraph()
     if (done)
         setCurrent(added->value);
     return done;
+}
+
+QVariantList NodeEffectsController::exportAsTemplate()
+{
+    if (!m_current)
+        return {};
+    const core::LineId line = *m_current;
+    std::vector<application::NodeEffectProblem> blockers;
+    runGraphCommand([&](application::EditSession &s) {
+        auto exported = application::exportTemplateLines(s, line);
+        if (!exported)
+            blockers = std::move(exported.error());
+        return exported.has_value();
+    });
+    QVariantList out;
+    for (const application::NodeEffectProblem &p : blockers)
+        out << problemRow(p.node, {}, p.message);
+    return out;
 }
 
 bool NodeEffectsController::deleteGraph()
