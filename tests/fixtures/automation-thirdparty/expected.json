@@ -1,5 +1,5 @@
 {
- "note": "Reviewed results of automation_thirdparty_tests on Ubuntu (2026-10-05, LuaJIT with the Lua 5.2 extensions: L6-lua52-linux; SubInspector built for Linux: A33-subinspector-linux): load is ThirdPartyCorpus.ScriptsLoadAsAutoloadDoes per script, runs is ThirdPartyCorpus.MacrosApplyToTheFixtureDocument per run (\"<script> | <macro>\"). Paths read <stage>. Windows results were observed in the Windows VM (2026-10-14, job-a6dfbb66): they match these except where load_windows pins its own (clipper2 is looked for as clipper2.dll, with Windows' loader message). A platform not yet observed would be listed in unobserved_platforms; its results are recorded, not pinned. DependencyControl v0.9.1 with MoonScript 0.5.0 (DC1, 2026-10-27): its messages read [DepCtrl]; myaa.Bounce and arch.ConvertFolds now parse and load; lyger.FbfTransform and lyger.GradientEverything start without their first-run example preset (DC1-depctrl-fresh-config). FA4 (2026-11-02): all 14 arch1t3cht macros scripts have a run; the fixture gained a KFX template comment and a short Sign line whose outer quad is in [Aegisub Extradata], the runs see a 23.976 fps fixture video at frame 96 and the clipboard \"fixture clipboard\", events carry extra when a Line has values, and random_drawings lists runs whose drawings are random. AegisubChain's run is Manage Chains: its Configure fails with DependencyControl's ConfigView (ipairs on a config list), as in Aegisub 3.5.1.",
+ "note": "Reviewed results of automation_thirdparty_tests on Ubuntu (2026-10-05, LuaJIT with the Lua 5.2 extensions: L6-lua52-linux; SubInspector built for Linux: A33-subinspector-linux): load is ThirdPartyCorpus.ScriptsLoadAsAutoloadDoes per script, runs is ThirdPartyCorpus.MacrosApplyToTheFixtureDocument per run (\"<script> | <macro>\"). Paths read <stage>. Windows results were observed in the Windows VM (2026-10-14, job-a6dfbb66): they match these. AU5 (2026-11-11): HikariSub ships ILL's clipper2 wrapper, so ILL.SplitText, ILL.ChangeAlign and phos.RemoveTags load; their Windows results are expected to match and are confirmed by main CI. A platform not yet observed would be listed in unobserved_platforms; its results are recorded, not pinned. DependencyControl v0.9.1 with MoonScript 0.5.0 (DC1, 2026-10-27): its messages read [DepCtrl]; myaa.Bounce and arch.ConvertFolds now parse and load; lyger.FbfTransform and lyger.GradientEverything start without their first-run example preset (DC1-depctrl-fresh-config). FA4 (2026-11-02): all 14 arch1t3cht macros scripts have a run; the fixture gained a KFX template comment and a short Sign line whose outer quad is in [Aegisub Extradata], the runs see a 23.976 fps fixture video at frame 96 and the clipboard \"fixture clipboard\", events carry extra when a Line has values, and random_drawings lists runs whose drawings are random. AegisubChain's run is Manage Chains: its Configure fails with DependencyControl's ConfigView (ipairs on a config list), as in Aegisub 3.5.1.",
  "loaded_only": {
   "myaa.MergeScripts.moon": "DependencyControl tries to install its missing module myaa.pl (Myaamori's Penlight, not in this corpus) from the module's feed while the script loads, even with the updater off, so the reason it gives depends on the network; it fails to load either way."
  },
@@ -12,14 +12,54 @@
  },
  "load": {
   "ILL.ChangeAlign.moon": {
-   "error": "Error initializing Lua script \"ILL.ChangeAlign.moon\":\n\nFile \"<C function>\", line -1 assert?\nError: [DepCtrl] Error in required module ILL.ILL: \n[string \"<chunk>\"]: 32:  FFI could not load \"clipper2.clipper2.clipper2\". Search paths: \n  - \"<stage>/Autoload/clipper2/clipper2/libclipper2.so\" (<stage>/Autoload/clipper2/clipper2/libclipper2.so:  cannot open shared object file:  No such file or directory)\n  - \"<stage>/Include/clipper2/clipper2/libclipper2.so\" (<stage>/Include/clipper2/clipper2/libclipper2.so:  cannot open shared object file:  No such file or directory)\n  - \"<stage>/automation/tests/clipper2/clipper2/libclipper2.so\" (<stage>/automation/tests/clipper2/clipper2/libclipper2.so:  cannot open shared object file:  No such file or directory)\n  - \"clipper2\" (libclipper2.so:  cannot open shared object file:  No such file or directory)",
-   "loaded": false,
-   "project": "ILL-Aegisub-Scripts"
+   "author": "ILLTeam",
+   "description": "Changes the alignment of a text or shape without changing its original position",
+   "loaded": true,
+   "macros": [
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Change Alignment",
+     "validate": false
+    }
+   ],
+   "name": "Change Alignment",
+   "project": "ILL-Aegisub-Scripts",
+   "version": "1.1.2"
   },
   "ILL.SplitText.moon": {
-   "error": "Error initializing Lua script \"ILL.SplitText.moon\":\n\nFile \"<C function>\", line -1 assert?\nError: [DepCtrl] Error in required module ILL.ILL: \n[string \"<chunk>\"]: 32:  FFI could not load \"clipper2.clipper2.clipper2\". Search paths: \n  - \"<stage>/Autoload/clipper2/clipper2/libclipper2.so\" (<stage>/Autoload/clipper2/clipper2/libclipper2.so:  cannot open shared object file:  No such file or directory)\n  - \"<stage>/Include/clipper2/clipper2/libclipper2.so\" (<stage>/Include/clipper2/clipper2/libclipper2.so:  cannot open shared object file:  No such file or directory)\n  - \"<stage>/automation/tests/clipper2/clipper2/libclipper2.so\" (<stage>/automation/tests/clipper2/clipper2/libclipper2.so:  cannot open shared object file:  No such file or directory)\n  - \"clipper2\" (libclipper2.so:  cannot open shared object file:  No such file or directory)",
-   "loaded": false,
-   "project": "ILL-Aegisub-Scripts"
+   "author": "ILLTeam",
+   "description": "Splits the text in several ways",
+   "loaded": true,
+   "macros": [
+    {
+     "description": "",
+     "is_active": false,
+     "name": "ILL - Split Text/By Chars",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "ILL - Split Text/By Words",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "ILL - Split Text/By Tags Blocks",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "ILL - Split Text/By Line Breaks",
+     "validate": false
+    }
+   ],
+   "name": "ILL - Split Text",
+   "project": "ILL-Aegisub-Scripts",
+   "version": "2.1.2"
   },
   "arch.CenterTimes.lua": {
    "author": "arch1t3cht",
@@ -831,9 +871,20 @@
    "version": "1.3.2"
   },
   "phos.RemoveTags.moon": {
-   "error": "Error initializing Lua script \"phos.RemoveTags.moon\":\n\nFile \"<C function>\", line -1 assert?\nError: [DepCtrl] Error in required module phos.AssfPlus: \n[string \"<chunk>\"]: 32:  FFI could not load \"clipper2.clipper2.clipper2\". Search paths: \n  - \"<stage>/Autoload/clipper2/clipper2/libclipper2.so\" (<stage>/Autoload/clipper2/clipper2/libclipper2.so:  cannot open shared object file:  No such file or directory)\n  - \"<stage>/Include/clipper2/clipper2/libclipper2.so\" (<stage>/Include/clipper2/clipper2/libclipper2.so:  cannot open shared object file:  No such file or directory)\n  - \"<stage>/automation/tests/clipper2/clipper2/libclipper2.so\" (<stage>/automation/tests/clipper2/clipper2/libclipper2.so:  cannot open shared object file:  No such file or directory)\n  - \"clipper2\" (libclipper2.so:  cannot open shared object file:  No such file or directory)",
-   "loaded": false,
-   "project": "PhosCity-Aegisub-Scripts"
+   "author": "PhosCity",
+   "description": "Dynamically remove tags based on selection",
+   "loaded": true,
+   "macros": [
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Remove Tags",
+     "validate": false
+    }
+   ],
+   "name": "Remove Tags",
+   "project": "PhosCity-Aegisub-Scripts",
+   "version": "1.0.3"
   },
   "phos.snap.lua": {
    "author": "PhosCity",
@@ -1478,23 +1529,6 @@
    "name": "Timing Shortcuts",
    "project": "arch1t3cht-Aegisub-Scripts",
    "version": "1.1.0"
-  }
- },
- "load_windows": {
-  "ILL.ChangeAlign.moon": {
-   "error": "Error initializing Lua script \"ILL.ChangeAlign.moon\":\n\nFile \"<C function>\", line -1 assert?\nError: [DepCtrl] Error in required module ILL.ILL: \n[string \"<chunk>\"]: 32:  FFI could not load \"clipper2.clipper2.clipper2\". Search paths: \n  - \"<stage>/Autoload/clipper2/clipper2/clipper2.dll\" (cannot load module '<stage>/Autoload/clipper2/clipper2/clipper2.dll':  The specified module could not be found.  )\n  - \"<stage>/Include/clipper2/clipper2/clipper2.dll\" (cannot load module '<stage>/Include/clipper2/clipper2/clipper2.dll':  The specified module could not be found.  )\n  - \"<stage>/automation/tests/clipper2/clipper2/clipper2.dll\" (cannot load module '<stage>/automation/tests/clipper2/clipper2/clipper2.dll':  The specified module could not be found.  )\n  - \"clipper2\" (cannot load module 'clipper2':  The specified module could not be found.  )",
-   "loaded": false,
-   "project": "ILL-Aegisub-Scripts"
-  },
-  "ILL.SplitText.moon": {
-   "error": "Error initializing Lua script \"ILL.SplitText.moon\":\n\nFile \"<C function>\", line -1 assert?\nError: [DepCtrl] Error in required module ILL.ILL: \n[string \"<chunk>\"]: 32:  FFI could not load \"clipper2.clipper2.clipper2\". Search paths: \n  - \"<stage>/Autoload/clipper2/clipper2/clipper2.dll\" (cannot load module '<stage>/Autoload/clipper2/clipper2/clipper2.dll':  The specified module could not be found.  )\n  - \"<stage>/Include/clipper2/clipper2/clipper2.dll\" (cannot load module '<stage>/Include/clipper2/clipper2/clipper2.dll':  The specified module could not be found.  )\n  - \"<stage>/automation/tests/clipper2/clipper2/clipper2.dll\" (cannot load module '<stage>/automation/tests/clipper2/clipper2/clipper2.dll':  The specified module could not be found.  )\n  - \"clipper2\" (cannot load module 'clipper2':  The specified module could not be found.  )",
-   "loaded": false,
-   "project": "ILL-Aegisub-Scripts"
-  },
-  "phos.RemoveTags.moon": {
-   "error": "Error initializing Lua script \"phos.RemoveTags.moon\":\n\nFile \"<C function>\", line -1 assert?\nError: [DepCtrl] Error in required module phos.AssfPlus: \n[string \"<chunk>\"]: 32:  FFI could not load \"clipper2.clipper2.clipper2\". Search paths: \n  - \"<stage>/Autoload/clipper2/clipper2/clipper2.dll\" (cannot load module '<stage>/Autoload/clipper2/clipper2/clipper2.dll':  The specified module could not be found.  )\n  - \"<stage>/Include/clipper2/clipper2/clipper2.dll\" (cannot load module '<stage>/Include/clipper2/clipper2/clipper2.dll':  The specified module could not be found.  )\n  - \"<stage>/automation/tests/clipper2/clipper2/clipper2.dll\" (cannot load module '<stage>/automation/tests/clipper2/clipper2/clipper2.dll':  The specified module could not be found.  )\n  - \"clipper2\" (cannot load module 'clipper2':  The specified module could not be found.  )",
-   "loaded": false,
-   "project": "PhosCity-Aegisub-Scripts"
   }
  },
  "runs": {

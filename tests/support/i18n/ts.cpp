@@ -1,5 +1,6 @@
 #include "hikari/i18n/ts.h"
 
+#include <QSet>
 #include <QXmlStreamReader>
 
 namespace hikari::i18n {
@@ -100,6 +101,24 @@ const TsMessage *TsCatalog::find(const QString &context, const QString &source, 
                 return &m;
     }
     return nullptr;
+}
+
+QList<std::pair<QString, const TsMessage *>> missingFromCatalog(const TsCatalog &extracted, const TsCatalog &catalog)
+{
+    const auto key = [](const QString &context, const TsMessage &m) {
+        return context + QChar(4) + m.source + QChar(4) + m.comment;
+    };
+    QSet<QString> live;
+    for (const TsContext &c : catalog.contexts)
+        for (const TsMessage &m : c.messages)
+            if (m.state != TsState::Vanished && m.state != TsState::Obsolete)
+                live.insert(key(c.name, m));
+    QList<std::pair<QString, const TsMessage *>> missing;
+    for (const TsContext &c : extracted.contexts)
+        for (const TsMessage &m : c.messages)
+            if (!live.contains(key(c.name, m)))
+                missing.append({c.name, &m});
+    return missing;
 }
 
 std::expected<TsCatalog, QString> readTs(const QByteArray &bytes)

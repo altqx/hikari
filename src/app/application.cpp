@@ -739,7 +739,9 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         [this]() -> const application::VideoSession * { return activeMedia().video ? &activeMedia().video->session() : nullptr; },
         [this](const core::Document &document) { return rendererScript(document); },
         [this](application::DocumentId document) { return subtitleFonts(document); },
-        [this] { return m_settings->text("video.subtitleProvider").toStdString(); }});
+        [this] { return m_settings->text("video.subtitleProvider").toStdString(); },
+        m_userFolder.isEmpty() ? std::filesystem::path()
+                               : std::filesystem::path((m_userFolder + QStringLiteral("/ai/skills")).toStdU16String())});
     AiFeatures::Ports aiPorts = options.aiPorts ? std::move(*options.aiPorts)
                                                 : AiFeatures::defaultPorts(m_userFolder, &m_apiHost->api(),
                                                                            options.appVersion.isEmpty()

@@ -318,6 +318,7 @@ FocusScope {
                 width: ListView.view.width - 16
                 sourceComponent: kind === "user" ? userItem : kind === "text" ? textItem : kind === "tool" ? toolItem
                                : kind === "change" ? changeItem : kind === "plan" ? planItem : kind === "ask" ? askItem
+                               : kind === "proposal" ? (item.status === "applied" ? null : proposalItem)
                                : kind === "notice" ? noticeItem : kind === "search" ? searchItem : null
                 readonly property bool last: index === timeline.count - 1
             }
@@ -630,7 +631,7 @@ FocusScope {
         objectName: "agentModeMenu"
         width: 300
         Repeater {
-            model: [{id: "manual", name: qsTr("Manual"), detail: qsTr("Subtitle edits go into the review, where you keep or undo them. Other changes ask.")},
+            model: [{id: "manual", name: qsTr("Manual"), detail: qsTr("You approve each subtitle edit before it’s made, and every other change. Reading never asks.")},
                     {id: "auto", name: qsTr("Auto"), detail: qsTr("The judge model approves each action, or asks you. It sees the action and your messages, never your files.")},
                     {id: "full", name: qsTr("Full access"), detail: qsTr("Nothing asks except the always-ask list. Edits apply at once and stay undoable.")}]
             delegate: ShellMenuItem {
@@ -1036,6 +1037,211 @@ FocusScope {
                     font.strikeout: modelData.status === "completed"
                     font.bold: modelData.status === "in_progress"
                     color: modelData.status === "completed" ? Theme.muted : Theme.text
+                }
+            }
+        }
+    }
+
+    property Item latestProposal: null
+    property bool proposalWantsFocus: false
+
+    function holdsFocus() {
+        const w = panel.Window.window
+        for (let it = w ? w.activeFocusItem : null; it; it = it.parent)
+            if (it === panel)
+                return true
+        return false
+    }
+
+    function focusProposal() {
+        if (!proposalWantsFocus || composer.activeFocus || !latestProposal || !latestProposal.open)
+            return
+        proposalWantsFocus = false
+        latestProposal.focusApply()
+    }
+
+    Connections {
+        target: panel.agent
+        function onAsked() {
+            panel.proposalWantsFocus = !composer.activeFocus && panel.holdsFocus()
+            Qt.callLater(panel.focusProposal)
+        }
+    }
+
+    Component {
+        id: proposalItem
+        Card {
+            id: proposal
+            readonly property var item: parent ? parent.item : ({})
+            readonly property var rows: item.rows ?? []
+            readonly property bool open: item.status === "open"
+            readonly property bool stale: item.status === "stale"
+            property bool replying: false
+            property bool allRows: false
+            function focusApply() { applyButton.forceActiveFocus() }
+            objectName: "agentProposal"
+            edge: stale ? Theme.warning : open ? Theme.accent : Theme.disabled
+            Accessible.role: Accessible.Grouping
+            Accessible.name: qsTr("Proposal: %1, %n lines", "", rows.length).arg(item.name ?? "")
+            Component.onCompleted: {
+                if (!open && !stale)
+                    return
+                panel.latestProposal = proposal
+                panel.focusProposal()
+            }
+            RowLayout {
+                visible: proposal.open || proposal.stale
+                Layout.fillWidth: true
+                CardTitle {
+                    iconRole: proposal.stale ? "notice-warning" : "edit"
+                    text: qsTr("Proposed: %1").arg(proposal.item.name ?? "")
+                          + (proposal.item.title ? " · " + proposal.item.title : "")
+                }
+                Chip {
+                    text: proposal.stale ? qsTr("out of date") : qsTr("%n lines", "", proposal.rows.length)
+                    tint: proposal.stale ? Theme.warning : Theme.muted
+                }
+            }
+            Repeater {
+                model: proposal.open || proposal.stale ? (proposal.allRows ? proposal.rows : proposal.rows.slice(0, 5)) : []
+                delegate: ItemDelegate {
+                    id: change
+                    required property var modelData
+                    required property int index
+                    objectName: "agentProposalRow_" + index
+                    Layout.fillWidth: true
+                    padding: 4
+                    enabled: modelData.line !== undefined && proposal.item.document !== undefined
+                    onClicked: panel.agent.selectLine(proposal.item.document, modelData.line)
+                    background: Rectangle {
+                        color: Theme.field
+                        border.color: change.visualFocus || change.hovered ? Theme.focus : Theme.line
+                        border.width: change.visualFocus ? 2 : 1
+                    }
+                    contentItem: RowLayout {
+                        spacing: 6
+                        Label {
+                            text: change.modelData.row !== undefined ? "#" + change.modelData.row : ""
+                            color: Theme.muted
+                            Layout.preferredWidth: 34
+                            Layout.alignment: Qt.AlignTop
+                        }
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: 1
+                            Label {
+                                visible: (change.modelData.before ?? "").length > 0
+                                Layout.fillWidth: true
+                                wrapMode: Text.Wrap
+                                textFormat: Text.PlainText
+                                font.strikeout: true
+                                color: Theme.danger
+                                text: change.modelData.before ?? ""
+                            }
+                            Label {
+                                visible: (change.modelData.after ?? "").length > 0
+                                Layout.fillWidth: true
+                                wrapMode: Text.Wrap
+                                textFormat: Text.PlainText
+                                color: Theme.success
+                                text: change.modelData.after ?? ""
+                            }
+                            Label {
+                                visible: text.length > 0
+                                Layout.fillWidth: true
+                                wrapMode: Text.Wrap
+                                color: Theme.muted
+                                text: change.modelData.change === "deleted" ? qsTr("Deleted")
+                                      : change.modelData.change === "moved" ? qsTr("Moved")
+                                      : change.modelData.change === "inserted" ? qsTr("Inserted")
+                                      : change.modelData.change === "other" ? (change.modelData.what ?? "")
+                                      : change.modelData.fields ? qsTr("Changes %1").arg(change.modelData.fields) : ""
+                            }
+                        }
+                    }
+                }
+            }
+            LinkButton {
+                objectName: "agentProposalAll"
+                visible: (proposal.open || proposal.stale) && !proposal.allRows && proposal.rows.length > 5
+                iconRole: "chevron-down"
+                text: qsTr("Show all %n lines", "", proposal.rows.length)
+                onClicked: proposal.allRows = true
+            }
+            Label {
+                visible: proposal.open || proposal.stale
+                Layout.fillWidth: true
+                wrapMode: Text.Wrap
+                color: proposal.stale ? Theme.warning : Theme.muted
+                text: proposal.stale ? qsTr("The subtitles changed after the agent read them.")
+                                     : qsTr("Click a row to select its line. Applying adds one undoable step to the review.")
+            }
+            RowLayout {
+                visible: (proposal.open || proposal.stale) && !proposal.replying
+                spacing: 6
+                Button {
+                    id: applyButton
+                    objectName: "agentProposalApply"
+                    text: qsTr("Apply")
+                    enabled: proposal.open
+                    highlighted: proposal.open
+                    onClicked: panel.agent.answer(proposal.item.ask, "apply", "")
+                    Keys.onReturnPressed: clicked()
+                    Keys.onEnterPressed: clicked()
+                }
+                Button {
+                    objectName: "agentProposalAskAgain"
+                    visible: proposal.stale
+                    text: qsTr("Ask again")
+                    highlighted: true
+                    onClicked: panel.agent.answer(proposal.item.ask, "askAgain", "")
+                    Keys.onReturnPressed: clicked()
+                    Keys.onEnterPressed: clicked()
+                }
+                Button {
+                    objectName: "agentProposalDecline"
+                    text: qsTr("Decline")
+                    onClicked: panel.agent.answer(proposal.item.ask, "decline", "")
+                    Keys.onReturnPressed: clicked()
+                    Keys.onEnterPressed: clicked()
+                }
+                Button {
+                    objectName: "agentProposalTell"
+                    visible: proposal.open
+                    text: qsTr("Decline and tell the agent…")
+                    onClicked: {
+                        proposal.replying = true
+                        proposalReply.forceActiveFocus()
+                    }
+                }
+            }
+            RowLayout {
+                visible: (proposal.open || proposal.stale) && proposal.replying
+                Layout.fillWidth: true
+                TextField {
+                    id: proposalReply
+                    objectName: "agentProposalReply"
+                    Layout.fillWidth: true
+                    placeholderText: qsTr("What should it do instead?")
+                    onAccepted: panel.agent.answer(proposal.item.ask, "decline", text)
+                    Keys.onEscapePressed: {
+                        proposal.replying = false
+                        applyButton.forceActiveFocus()
+                    }
+                }
+                Button { text: qsTr("Decline"); onClicked: panel.agent.answer(proposal.item.ask, "decline", proposalReply.text) }
+            }
+            RowLayout {
+                visible: !proposal.open && !proposal.stale
+                spacing: 6
+                Icon { iconRole: "run-cancelled"; size: 14; color: Theme.muted }
+                Label {
+                    Layout.fillWidth: true
+                    wrapMode: Text.Wrap
+                    color: Theme.muted
+                    text: (proposal.item.status === "retried" ? qsTr("Sent back to the agent: %1")
+                           : proposal.item.status === "declined" ? qsTr("Declined: %1 · nothing changed")
+                           : qsTr("Not applied: %1 · nothing changed")).arg(proposal.item.name ?? "")
                 }
             }
         }
