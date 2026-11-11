@@ -48,6 +48,14 @@ foreach(name BadMutex PreciseTimer DownloadManager)
     set_target_properties(hikari_depctrl_${lower} PROPERTIES OUTPUT_NAME ${name} CXX_STANDARD 17)
 endforeach()
 
+# ILL's clipper2 module requireffi-loads clipper2/clipper2/(lib)clipper2.
+find_path(HIKARI_CLIPPER2_INCLUDE_DIR clipper2/clipper.h REQUIRED)
+find_library(HIKARI_CLIPPER2_LIBRARY NAMES Clipper2 REQUIRED)
+add_library(hikari_ill_clipper2 SHARED "${PROJECT_SOURCE_DIR}/Thirdparty/ILL-clipper2/clipper.wrap.cpp")
+target_include_directories(hikari_ill_clipper2 PRIVATE "${HIKARI_CLIPPER2_INCLUDE_DIR}")
+target_link_libraries(hikari_ill_clipper2 PRIVATE "${HIKARI_CLIPPER2_LIBRARY}")
+set_target_properties(hikari_ill_clipper2 PROPERTIES OUTPUT_NAME clipper2 CXX_STANDARD 17 CXX_VISIBILITY_PRESET hidden)
+
 # Layout scripts expect: Automation/automation/{Autoload,Include}, log/autosave/temp beside it.
 set(HIKARI_AUTOMATION_ROOT "${CMAKE_BINARY_DIR}/Automation" CACHE INTERNAL "")
 set(HIKARI_AUTOMATION_STAGE "${HIKARI_AUTOMATION_ROOT}/automation" CACHE INTERNAL "")
@@ -70,11 +78,13 @@ add_custom_target(hikari_automation_stage ALL
     COMMAND "${CMAKE_COMMAND}" -E make_directory "${HIKARI_AUTOMATION_ROOT}/log" "${HIKARI_AUTOMATION_ROOT}/autosave"
         "${HIKARI_AUTOMATION_ROOT}/temp" "${HIKARI_AUTOMATION_STAGE}/Include/BM/BadMutex"
         "${HIKARI_AUTOMATION_STAGE}/Include/PT/PreciseTimer" "${HIKARI_AUTOMATION_STAGE}/Include/DM/DownloadManager"
+        "${HIKARI_AUTOMATION_STAGE}/Include/clipper2/clipper2"
     COMMAND "${CMAKE_COMMAND}" -E copy "$<TARGET_FILE:hikari_depctrl_badmutex>" "${HIKARI_AUTOMATION_STAGE}/Include/BM/BadMutex/"
     COMMAND "${CMAKE_COMMAND}" -E copy "$<TARGET_FILE:hikari_depctrl_precisetimer>" "${HIKARI_AUTOMATION_STAGE}/Include/PT/PreciseTimer/"
     COMMAND "${CMAKE_COMMAND}" -E copy "$<TARGET_FILE:hikari_depctrl_downloadmanager>" "${HIKARI_AUTOMATION_STAGE}/Include/DM/DownloadManager/"
+    COMMAND "${CMAKE_COMMAND}" -E copy "$<TARGET_FILE:hikari_ill_clipper2>" "${HIKARI_AUTOMATION_STAGE}/Include/clipper2/clipper2/"
     ${_hikari_subinspector_stage}
     COMMAND "${CMAKE_COMMAND}" -DROOT=${CMAKE_BINARY_DIR} -P "${PROJECT_SOURCE_DIR}/cmake/HikariBundledManifest.cmake"
-    DEPENDS hikari_depctrl_badmutex hikari_depctrl_precisetimer hikari_depctrl_downloadmanager
+    DEPENDS hikari_depctrl_badmutex hikari_depctrl_precisetimer hikari_depctrl_downloadmanager hikari_ill_clipper2
         ${_hikari_subinspector_target}
     COMMENT "Staging the automation tree with DependencyControl's native modules")
