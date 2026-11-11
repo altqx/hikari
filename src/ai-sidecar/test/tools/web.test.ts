@@ -227,7 +227,7 @@ describe("the sidecar", () => {
         expect(refused.error.data).toEqual({ kind: "rateLimited", httpStatus: 402, detail: "Payment required" });
         for (const params of [{}, { service: "google" }, null])
             expect((await ask(Method.searchTest, params)).error.code).toBe(ErrorCode.invalidParams);
-        expect(relay.sent.map((r) => r.target.id)).toEqual(["tavily", "firecrawl"]);
+        expect(relay.sent.map((r) => r.target)).toEqual([{ kind: "search", id: "tavily" }, { kind: "search", id: "firecrawl" }]);
     });
 
     test("providers.set chooses the service the web tools search with", async () => {
