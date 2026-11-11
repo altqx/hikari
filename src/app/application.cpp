@@ -45,6 +45,7 @@
 #include "automation_services_qt.h"
 #include "dialog_placement.h"
 #include "list_files.h"
+#include "project_file.h"
 #include "theme.h"
 #include "window_frame.h"
 
@@ -1110,8 +1111,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_recent.setOpenedRecords(m_settings->settings().list("recent.subtitlesOpened"));
     m_projects = std::make_unique<ProjectWindows>(
         *m_settings, m_settingsFile.isEmpty() ? QString() : QFileInfo(m_settingsFile).absolutePath());
-    connect(m_projects.get(), &ProjectWindows::changed, this, &Application::projectsChanged);
     connect(m_projects.get(), &ProjectWindows::changed, this, &Application::applyWindowProject);
+    connect(m_projects.get(), &ProjectWindows::changed, this, &Application::projectsChanged);
     connect(m_projects.get(), &ProjectWindows::recentChanged, this, &Application::recentProjectsChanged);
     m_copyColumns = m_settings->integer("grid.copyColumns");
     m_pasteColumns = m_settings->integer("grid.pasteColumns");
@@ -1974,6 +1975,12 @@ void Application::makeNodeEffects(WindowViews &v, int shellWindow)
     });
     effects->shareTrustWith(v.templateEditor.get());
     effects->setLuaNodes([this] { return &luaNodes(); });
+    effects->setAudio([this]() -> std::optional<const application::DisplayAudio *> {
+        ui::AudioController *audio = activeMedia().audio.get();
+        if (!audio || !audio->box().isOpen())
+            return std::nullopt;
+        return audio->box().audio();
+    });
 }
 
 void Application::makeKanjiTimer(WindowViews &v, int shellWindow)
@@ -2446,7 +2453,9 @@ bool Application::showVideoSubtitles()
     if (!m_settings->boolean("video.disableLiveEditing") && activeViews().editorDocument == target && activeMedia().video->hasVideo())
         draft = editor().draftDocument();
     std::optional<core::Document> templated;
-    if (nodeEffects().videoPreview()) {
+    if (m_layerPreview) {
+        templated = layerPreviewDocument(draft ? *draft : session->document(), session->selection().selected);
+    } else if (nodeEffects().videoPreview()) {
         templated = nodeEffects().videoDocument(draft ? *draft : session->document());
     } else if (templateEditor().videoPreview()) {
         const auto &video = activeMedia().video->session();
@@ -2456,6 +2465,10 @@ bool Application::showVideoSubtitles()
         templated = templateEditor().videoDocument(draft ? *draft : session->document(), ms, video.playing());
         const auto window = templateEditor().videoWindow(ms, video.playing());
         activeMedia().templateWindow = std::pair(window.fromMs, window.toMs);
+    } else if (!m_interpolationPreview.empty()) {
+        templated = draft ? *draft : session->document();
+        for (const auto &[id, text] : m_interpolationPreview)
+            templated->editLine(id, [&](core::LineRecord &l) { l.text = text; });
     }
     if (draft || templated || activeMedia().videoShowsDraft || activeMedia().videoShowsTemplate || session->revision() != activeMedia().videoRevision) {
         if (session->revision() != activeMedia().videoRevision)
@@ -6930,6 +6943,71 @@ void Application::applySettings(const QVariantMap &values, bool resetAll)
     if (std::ranges::any_of(written, [](const std::string &id) { return id.starts_with("updater."); }))
         m_updates->reload();
     m_hotkeys->commitOptions();
+}
+
+namespace {
+
+constexpr std::string_view kMoveTags = "translation.autoMoveTagsFromOriginal";
+
+application::OptionsState projectableOnly(application::OptionsState state)
+{
+    std::erase_if(state, [](const auto &entry) {
+        const auto *setting = application::findSetting(entry.first);
+        return !setting || !setting->projectable;
+    });
+    return state;
+}
+
+}
+
+QVariantMap Application::openProjectSettings(int shellWindow)
+{
+    auto &window = *views(shellWindow).settings;
+    const auto *project = window.project();
+    if (!project)
+        return {};
+    auto values = toVariant(projectableOnly(application::openOptionsDialog(window.settings(), m_optionsLists).state));
+    values.insert(qs(kMoveTags), window.settings().boolean(kMoveTags));
+    auto yours = toVariant(projectableOnly(application::openOptionsDialog(m_settings->settings(), m_optionsLists).state));
+    yours.insert(qs(kMoveTags), m_settings->boolean(kMoveTags.data()));
+    QVariantMap sources;
+    for (const auto &setting : application::settingDefinitions())
+        if (const auto file = project->source(setting))
+            sources.insert(qs(setting.id), *file == ui::ProjectFile::Local ? QStringLiteral("local") : QStringLiteral("project"));
+    return {{QStringLiteral("values"), values}, {QStringLiteral("yours"), yours}, {QStringLiteral("sources"), sources}};
+}
+
+QStringList Application::projectOverrides(int shellWindow) const
+{
+    QStringList ids;
+    const auto &window = *views(shellWindow).settings;
+    for (const auto &setting : application::settingDefinitions())
+        if (setting.projectable && window.overridden(setting.id))
+            ids << qs(setting.id);
+    return ids;
+}
+
+bool Application::applyProjectSettings(int shellWindow, const QVariantMap &values, const QStringList &cleared)
+{
+    auto &window = *views(shellWindow).settings;
+    auto *project = window.project();
+    if (!project)
+        return false;
+    window.takeProjectWriteFailure();
+    auto &target = window.projectWrites();
+    for (const QString &id : cleared)
+        if (const auto *setting = application::findSetting(id.toStdString());
+            setting && project->source(*setting) == ui::ProjectFile::Shared)
+            target.remove(*setting);
+    application::Settings writes(target);
+    application::commitOptionsDialog(writes, m_optionsLists, projectableOnly(fromVariant(values)));
+    if (const auto moveTags = values.constFind(qs(kMoveTags));
+        moveTags != values.cend() && moveTags->toBool() != writes.boolean(kMoveTags))
+        writes.set(kMoveTags, moveTags->toBool());
+    const bool failed = window.takeProjectWriteFailure();
+    applyWindowProject(shellWindow);
+    emit projectsChanged();
+    return !failed;
 }
 
 bool Application::gettingStartedDue() const

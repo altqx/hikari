@@ -557,6 +557,16 @@
     </message>
 </context>
 <context>
+    <name>HikariSub.Interpolate</name>
+    <message numerus="yes">
+        <source>%n line(s), from line %1 to line %2. The video shows the result while this is open.</source>
+        <translation>
+            <numerusform>%n line, from line %1 to line %2. The video shows the result while this is open.</numerusform>
+            <numerusform>%n lines, from line %1 to line %2. The video shows the result while this is open.</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.Karaoke</name>
     <message numerus="yes">
         <source>%n more problems not listed; fix these and check again</source>
@@ -570,6 +580,65 @@
         <translation>
             <numerusform>Apply the kanji timing of %n line?</numerusform>
             <numerusform>Apply the kanji timing of %n lines?</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Layers</name>
+    <message numerus="yes">
+        <source>At most %n glow layer(s) can be built at once.</source>
+        <translation>
+            <numerusform>At most %n glow layer can be built at once.</numerusform>
+            <numerusform>At most %n glow layers can be built at once.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>A shadow can have at most %n step(s). Set fewer steps.</source>
+        <translation>
+            <numerusform>A shadow can have at most %n step. Set fewer steps.</numerusform>
+            <numerusform>A shadow can have at most %n steps. Set fewer steps.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>That builds more than %n line(s). Select fewer lines.</source>
+        <translation>
+            <numerusform>That builds more than %n line. Select fewer lines.</numerusform>
+            <numerusform>That builds more than %n lines. Select fewer lines.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Builds %n line(s) under line %1.</source>
+        <translation>
+            <numerusform>Builds %n line under line %1.</numerusform>
+            <numerusform>Builds %n lines under line %1.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Builds %n line(s) under the selected lines.</source>
+        <translation>
+            <numerusform>Builds %n line under the selected lines.</numerusform>
+            <numerusform>Builds %n lines under the selected lines.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) have no border and skip Border.</source>
+        <translation>
+            <numerusform>%n line has no border and skips Border.</numerusform>
+            <numerusform>%n lines have no border and skip Border.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) have a shadow under 1 px and skip Shadow.</source>
+        <translation>
+            <numerusform>%n line has a shadow under 1 px and skips Shadow.</numerusform>
+            <numerusform>%n lines have a shadow under 1 px and skip Shadow.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Built %n layer line(s)</source>
+        <translation>
+            <numerusform>Built %n layer line</numerusform>
+            <numerusform>Built %n layer lines</numerusform>
         </translation>
     </message>
 </context>

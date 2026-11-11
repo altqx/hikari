@@ -73,6 +73,14 @@ std::optional<ProjectFile::File> ProjectFile::source(const SettingDefinition &se
     return std::nullopt;
 }
 
+bool ProjectFile::hasTable(std::string_view name) const
+{
+    for (const auto &table : m_tables)
+        if (const auto *node = table.get(name); node && node->is_table())
+            return true;
+    return false;
+}
+
 std::optional<SettingValue> ProjectFile::read(const SettingDefinition &setting) const
 {
     const auto file = source(setting);

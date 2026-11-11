@@ -218,7 +218,7 @@ DialogWindow {
                     width: ListView.view.width
                     height: rowColumn.implicitHeight + 8
                     Accessible.role: Accessible.ListItem
-                    Accessible.name: qsTr("Line %1: %2").arg(modelData.row).arg(modelData.deleted ? qsTr("deleted") : modelData.after)
+                    Accessible.name: qsTr("Line %1: %2").arg(modelData.row, modelData.deleted ? qsTr("deleted") : modelData.after)
                     Label {
                         id: number
                         x: 8; y: 4

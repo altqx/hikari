@@ -13,6 +13,7 @@ Line editor text > Delete
 Line editor text > -
 Line editor text > Select all
 Line editor text > -
+Line editor text > Blur and glow layers… [GLOBAL_BLUR_AND_GLOW_LAYERS]
 Line editor text > Remove tags… [GLOBAL_REMOVE_TAGS]
 Line editor text > -
 Line editor text > AI >
@@ -47,6 +48,8 @@ Grid > Insert > After, at video time [GRID_INSERT_AFTER_VIDEO]
 Grid > Insert > Before, at video frame time [GRID_INSERT_BEFORE_WITH_VIDEO_FRAME]
 Grid > Insert > After, at video frame time [GRID_INSERT_AFTER_WITH_VIDEO_FRAME]
 Grid > Duplicate 1 line(s) [GRID_DUPLICATE_LINES]
+Grid > Blur and glow layers… [GLOBAL_BLUR_AND_GLOW_LAYERS]
+Grid > Build layers with the last values [GLOBAL_BLUR_AND_GLOW_LAYERS_REPEAT]
 Grid > Cut [GRID_CUT]
 Grid > Copy [GRID_COPY]
 Grid > Paste [GRID_PASTE]
@@ -78,6 +81,7 @@ Grid > Split > Into characters [GRID_SPLIT_BY_CHARS]
 Grid > Split > Into words [GRID_SPLIT_BY_WORDS]
 Grid > Split > By wraps [GRID_SPLIT_BY_WRAPS]
 Grid > Remove tags… [GLOBAL_REMOVE_TAGS]
+Grid > Interpolate across lines… [GLOBAL_INTERPOLATE_LINES]
 Grid > Swap lines [GRID_SWAP_LINES]
 Grid > Make times continuous >
 Grid > Make times continuous > With the previous line [GRID_MAKE_CONTINOUS_PREVIOUS_LINE]
