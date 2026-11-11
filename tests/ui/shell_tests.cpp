@@ -13,6 +13,7 @@
 #include "hikari/core/extradata.h"
 #include "hikari/application/kanji_timer.h"
 #include "hikari/core/tag_transfer.h"
+#include "hikari/core/tag_cleanup.h"
 #include "hikari/application/options_dialog.h"
 #include "hikari/application/hotkeys.h"
 #include "hikari/application/spell_checker.h"
@@ -9479,6 +9480,302 @@ private slots:
         application->editor().discard();
     }
 
+    void interpolateAcrossLinesThroughTheGridMenu()
+    {
+        const QString path = dir.filePath(QStringLiteral("interpolate.ass"));
+        {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[Script Info]\nPlayResX: 640\nPlayResY: 360\n\n[V4+ Styles]\n"
+                    "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, "
+                    "Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, "
+                    "Shadow, Alignment, MarginL, MarginR, MarginV, Encoding\n"
+                    "Style: Default,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,0,"
+                    "0,2,10,10,10,1\n\n[Events]\n"
+                    "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                    "Dialogue: 0,0:00:01.00,0:00:01.04,Default,,0,0,0,,{\\fscx100\\bord1}Sign\n"
+                    "Dialogue: 0,0:00:01.04,0:00:01.08,Default,,0,0,0,,{\\bord1}Sign\n"
+                    "Dialogue: 0,0:00:01.08,0:00:01.12,Default,,0,0,0,,{\\bord1}Sign\n"
+                    "Dialogue: 0,0:00:01.12,0:00:01.16,Default,,0,0,0,,{\\fscx200\\bord1}Sign\n");
+        }
+        application->setAskForBadResolution(false);
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        auto *root = engine->rootObjects().first();
+        const auto text = [&](std::size_t row) {
+            const auto &t = session->document().lines()[row]->text;
+            return QString::fromUtf8(reinterpret_cast<const char *>(t.data()), qsizetype(t.size()));
+        };
+        const auto select = [&](int count) {
+            application->selectLine(session->document().lines().front()->id.value);
+            application->extendSelection(count - 1);
+        };
+        auto *item = named("interpolateLines");
+        QVERIFY(item);
+        select(2);
+        QTRY_VERIFY(!item->property("enabled").toBool());
+        QVERIFY(item->property("help").toString().contains(QStringLiteral("three")));
+        select(4);
+        QTRY_VERIFY(item->property("enabled").toBool());
+
+        QVERIFY(QMetaObject::invokeMethod(item, "triggered"));
+        QObject *dialog = nullptr;
+        QTRY_VERIFY((dialog = root->findChild<QObject *>(QStringLiteral("interpolateLinesDialog"))) &&
+                    dialog->property("visible").toBool());
+        QTRY_COMPARE(dialog->property("changes").toList().size(), 1);
+        QCOMPARE(dialog->property("changes").toList().front().toMap().value(QStringLiteral("tag")).toString(),
+                 QStringLiteral("\\fscx"));
+        QCOMPARE(dialog->property("plan").toMap().value(QStringLiteral("results")).toList().size(), 2);
+        QQuickItem *apply = dialogItem("interpolateLinesDialog", "interpolateLinesApply");
+        QVERIFY(apply->property("enabled").toBool());
+        QQuickItem *tag = dialogItem("interpolateLinesDialog", "interpolateTag_fscx@0");
+        QVERIFY(tag);
+        QVERIFY(QMetaObject::invokeMethod(tag, "toggle"));
+        QVERIFY(QMetaObject::invokeMethod(tag, "toggled"));
+        QTRY_VERIFY(!apply->property("enabled").toBool());
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("interpolateLinesDialog", "interpolateLinesCancel"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QCOMPARE(text(1), QStringLiteral("{\\bord1}Sign"));
+
+        QVERIFY(QMetaObject::invokeMethod(item, "triggered"));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        dialogItem("interpolateLinesDialog", "interpolateLinesAccel")->setProperty("text", QStringLiteral("2"));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("interpolateLinesDialog", "interpolateLinesAccel"), "textEdited"));
+        QTRY_VERIFY(apply->property("enabled").toBool());
+        const auto before = session->historySize();
+        QVERIFY(QMetaObject::invokeMethod(apply, "click"));
+        QTRY_VERIFY2(!dialog->property("visible").toBool(), qPrintable(dialog->property("failure").toString()));
+        QCOMPARE(session->historySize(), before + 1);
+        QCOMPARE(session->history().back().name, std::string("Interpolate across Lines"));
+        QCOMPARE(text(1), QStringLiteral("{\\bord1\\fscx111.11}Sign"));
+        QCOMPARE(text(2), QStringLiteral("{\\bord1\\fscx144.44}Sign"));
+        QCOMPARE(text(3), QStringLiteral("{\\fscx200\\bord1}Sign"));
+        application->editor().discard();
+    }
+
+    void interpolateLinesScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        auto &settings = *application->settingsStore();
+        auto restore = qScopeGuard([&] { settings.setValue(QStringLiteral("appearance.theme"), QStringLiteral("dark")); });
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        QTranslator english;
+        QVERIFY(english.load(QStringLiteral(HIKARI_EN_CATALOG)));
+        QCoreApplication::installTranslator(&english);
+        auto removeEnglish = qScopeGuard([&] { QCoreApplication::removeTranslator(&english); });
+        application->setAskForBadResolution(false);
+        const QString path = dir.filePath(QStringLiteral("interpolate-shots.ass"));
+        {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[Script Info]\nPlayResX: 640\nPlayResY: 360\n\n[V4+ Styles]\n"
+                    "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, "
+                    "Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, "
+                    "Shadow, Alignment, MarginL, MarginR, MarginV, Encoding\n"
+                    "Style: Sign,Arial,48,&H0000E0FF,&H000000FF,&H00202020,&H00000000,-1,0,0,0,100,100,0,0,1,3,"
+                    "0,5,10,10,10,1\n\n[Events]\n"
+                    "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                    "Dialogue: 0,0:00:01.00,0:00:01.04,Sign,,0,0,0,,{\\pos(120,180)\\1c&H0000FF&\\fscx100\\frz0}SIGN\n"
+                    "Dialogue: 0,0:00:01.04,0:00:01.08,Sign,,0,0,0,,SIGN\n"
+                    "Dialogue: 0,0:00:01.08,0:00:01.12,Sign,,0,0,0,,SIGN\n"
+                    "Dialogue: 0,0:00:01.12,0:00:01.16,Sign,,0,0,0,,SIGN\n"
+                    "Dialogue: 0,0:00:01.16,0:00:01.20,Sign,,0,0,0,,{\\pos(520,180)\\1c&HFF8000&\\fscx160\\frz30"
+                    "\\clip(m 0 0 l 640 0 640 360 0 360)}SIGN\n");
+        }
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        auto *root = engine->rootObjects().first();
+        application->selectLine(session->document().lines().front()->id.value);
+        application->extendSelection(4);
+        auto *item = named("interpolateLines");
+        QTRY_VERIFY(item->property("enabled").toBool());
+        for (const auto code : ui::theme::kCodes) {
+            settings.setValue(QStringLiteral("appearance.theme"), ui::theme::codeName(code));
+            auto *controls = root->property("palette").value<QObject *>();
+            QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+            QVERIFY(QMetaObject::invokeMethod(item, "triggered"));
+            QQuickWindow *dialog = nullptr;
+            QTRY_VERIFY((dialog = root->findChild<QQuickWindow *>(QStringLiteral("interpolateLinesDialog"))) &&
+                        dialog->isVisible());
+            QTRY_COMPARE(dialog->property("changes").toList().size(), 5);
+            QTest::qWait(300);
+            QVERIFY(dialog->grabWindow().save(out + QStringLiteral("/au22-interpolate-") + ui::theme::codeName(code) +
+                                              QStringLiteral(".png")));
+            QVERIFY(QMetaObject::invokeMethod(dialog, "close"));
+            QTRY_VERIFY(!dialog->isVisible());
+        }
+        application->editor().discard();
+    }
+
+    void blurAndGlowLayersPreviewsBuildsAndRepeats()
+    {
+        const QString path = dir.filePath(QStringLiteral("layers.ass"));
+        {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[Script Info]\nPlayResX: 640\nPlayResY: 360\n\n[V4+ Styles]\n"
+                    "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, "
+                    "Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, "
+                    "Shadow, Alignment, MarginL, MarginR, MarginV, Encoding\n"
+                    "Style: Default,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,"
+                    "0,2,10,10,10,1\n\n[Events]\n"
+                    "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                    "Dialogue: 0,0:00:00.00,0:00:01.00,Default,,0,0,0,,{\\pos(320,180)}Sign\n");
+        }
+        application->setAskForBadResolution(false);
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        auto *root = engine->rootObjects().first();
+        application->settingsStore()->setValue(QStringLiteral("typesetting.layerOptions"), QString());
+        const auto source = session->document().lines()[0]->id;
+        session->setSelection(application::Selection{source, {source}, source, {}});
+        application->video().openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
+        auto &video = application->video().session();
+        QTRY_VERIFY_WITH_TIMEOUT(video.hasSubtitles(), 20000);
+
+        QCOMPARE(application->repeatLayerBuilders().value(QStringLiteral("ok")).toBool(), false);
+        auto *item = root->findChild<QObject *>(QStringLiteral("blurAndGlowLayersMenuItem"));
+        QVERIFY(item);
+        QVERIFY(QMetaObject::invokeMethod(item->property("action").value<QObject *>(), "trigger"));
+        QObject *dialog = nullptr;
+        QTRY_VERIFY((dialog = root->findChild<QObject *>(QStringLiteral("blurAndGlowLayersDialog"))) &&
+                    dialog->property("visible").toBool());
+        QVERIFY(!dialog->property("modal").toBool());
+        QQuickItem *status = dialogItem("blurAndGlowLayersDialog", "layersStatus");
+        QTRY_VERIFY2(status->property("text").toString().contains(QStringLiteral("under line 1. It moves up from layer 0 to layer 2.")),
+                     qPrintable(status->property("text").toString()));
+        const auto shown = video.subtitleUpdates();
+        QTRY_VERIFY(video.subtitleUpdates() > shown);
+        QCOMPARE(session->document().lines().size(), std::size_t(1));
+
+        dialogItem("blurAndGlowLayersDialog", "layersGlowOn")->setProperty("checked", false);
+        dialogItem("blurAndGlowLayersDialog", "layersBorderOn")->setProperty("checked", false);
+        QTRY_COMPARE(status->property("text").toString(), QStringLiteral("Turn on glow, border or shadow."));
+        QQuickItem *build = dialogItem("blurAndGlowLayersDialog", "layersBuild");
+        QVERIFY(!build->property("enabled").toBool());
+        const auto cleared = video.subtitleUpdates();
+        QTRY_VERIFY(video.subtitleUpdates() > cleared);
+        dialogItem("blurAndGlowLayersDialog", "layersBorderOn")->setProperty("checked", true);
+        QTRY_VERIFY(build->property("enabled").toBool());
+
+        const auto before = session->historySize();
+        QVERIFY(QMetaObject::invokeMethod(build, "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QCOMPARE(session->historySize(), before + 1);
+        QCOMPARE(session->history().back().name, std::string("Blur and glow layers"));
+        QCOMPARE(session->document().lines().size(), std::size_t(2));
+        QCOMPARE(session->document().lines()[1]->id, source);
+        QCOMPARE(session->document().lines()[1]->layer.value, 1);
+        QCOMPARE(session->selection().selected, std::set<core::LineId>{source});
+        QVERIFY(!application->settingsStore()->value(QStringLiteral("typesetting.layerOptions")).toString().isEmpty());
+
+        const auto nothing = application->repeatLayerBuilders();
+        QVERIFY(!nothing.value(QStringLiteral("ok")).toBool());
+        QVERIFY2(nothing.value(QStringLiteral("text")).toString().startsWith(QStringLiteral("Nothing to build")),
+                 qPrintable(nothing.value(QStringLiteral("text")).toString()));
+        QVERIFY(session->undo());
+        QCOMPARE(session->document().lines().size(), std::size_t(1));
+        const auto repeated = application->repeatLayerBuilders();
+        QVERIFY2(repeated.value(QStringLiteral("ok")).toBool(), qPrintable(repeated.value(QStringLiteral("text")).toString()));
+        QCOMPARE(session->document().lines().size(), std::size_t(2));
+        QCOMPARE(session->document().lines()[1]->layer.value, 1);
+        QVERIFY(session->undo());
+        QCOMPARE(session->document().lines().size(), std::size_t(1));
+
+        session->setSelection(application::Selection{source, {source}, source, {}});
+        const auto previewed = video.subtitleUpdates();
+        QVERIFY(QMetaObject::invokeMethod(item->property("action").value<QObject *>(), "trigger"));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QTRY_VERIFY2(build->property("enabled").toBool(), qPrintable(status->property("text").toString()));
+        dialogItem("blurAndGlowLayersDialog", "layersGlowOn")->setProperty("checked", true);
+        QTRY_VERIFY2(status->property("text").toString().contains(QStringLiteral("Builds 2 ")),
+                     qPrintable(status->property("text").toString()));
+        QTRY_VERIFY(video.subtitleUpdates() > previewed);
+        const auto dropped = video.subtitleUpdates();
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("blurAndGlowLayersDialog", "layersCancel"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QTRY_VERIFY(video.subtitleUpdates() > dropped);
+        QCOMPARE(session->document().lines().size(), std::size_t(1));
+        QVERIFY(application->video().unloadVideo());
+        application->settingsStore()->setValue(QStringLiteral("typesetting.layerOptions"), QString());
+    }
+
+    void removeTagsPreviewsThenAppliesInOneStep()
+    {
+        const QString path = dir.filePath(QStringLiteral("remove-tags.ass"));
+        {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[Script Info]\nPlayResX: 640\nPlayResY: 360\n\n[V4+ Styles]\n"
+                    "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, "
+                    "Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, "
+                    "Shadow, Alignment, MarginL, MarginR, MarginV, Encoding\n"
+                    "Style: Default,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,0,"
+                    "0,2,10,10,10,1\n\n[Events]\n"
+                    "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                    "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\blur2\\b1}A\n"
+                    "Dialogue: 0,0:00:02.00,0:00:03.00,Default,,0,0,0,,{\\blur3}B\n"
+                    "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,{\\blur4}C\n");
+        }
+        application->setAskForBadResolution(false);
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        auto *root = engine->rootObjects().first();
+        const auto lines = session->document().lines();
+        application::Selection two;
+        two.active = lines[0]->id;
+        two.selected = {lines[0]->id, lines[1]->id};
+        session->setSelection(two);
+        const auto text = [&](std::size_t row) {
+            const auto &t = session->document().lines()[row]->text;
+            return QString::fromUtf8(reinterpret_cast<const char *>(t.data()), qsizetype(t.size()));
+        };
+        auto *gridItem = root->findChild<QObject *>(QStringLiteral("gridRemoveTags"));
+        auto *editorItem = root->findChild<QObject *>(QStringLiteral("translationTextRemoveTags"));
+        QVERIFY(gridItem && editorItem);
+        QObject *removeTags = gridItem->property("action").value<QObject *>();
+        QCOMPARE(editorItem->property("action").value<QObject *>(), removeTags);
+        QCOMPARE(gridItem->property("iconRole").toString(), QStringLiteral("remove-tags"));
+
+        QVERIFY(QMetaObject::invokeMethod(removeTags, "trigger"));
+        QObject *dialog = nullptr;
+        QTRY_VERIFY((dialog = root->findChild<QObject *>(QStringLiteral("removeTagsDialog"))) &&
+                    dialog->property("visible").toBool());
+        QCOMPARE(dialog->property("familyRows").toList().size(), qsizetype(core::tagcleanup::kFamilyCount));
+        auto *preview = dialogItem("removeTagsDialog", "removeTagsPreview");
+        QCOMPARE(preview->property("count").toInt(), 0);
+        QVERIFY(!dialogItem("removeTagsDialog", "removeTagsApply")->property("enabled").toBool());
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("removeTagsDialog", "removeTagsFamily4"), "click"));
+        QTRY_COMPARE(preview->property("count").toInt(), 2);
+        QCOMPARE(text(0), QStringLiteral("{\\blur2\\b1}A"));
+        dialogItem("removeTagsDialog", "removeTagsLines")->setProperty("currentIndex", 1);
+        QTRY_COMPARE(preview->property("count").toInt(), 3);
+        dialogItem("removeTagsDialog", "removeTagsLines")->setProperty("currentIndex", 0);
+        QTRY_COMPARE(preview->property("count").toInt(), 2);
+
+        const auto before = session->historySize();
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("removeTagsDialog", "removeTagsApply"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QCOMPARE(session->historySize(), before + 1);
+        QCOMPARE(session->history().back().name, std::string("Remove tags"));
+        QCOMPARE(text(0), QStringLiteral("{\\b1}A"));
+        QCOMPARE(text(1), QStringLiteral("B"));
+        QCOMPARE(text(2), QStringLiteral("{\\blur4}C"));
+
+        QVERIFY(QMetaObject::invokeMethod(removeTags, "trigger"));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QVERIFY(dialogItem("removeTagsDialog", "removeTagsFamily4")->property("checked").toBool());
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("removeTagsDialog", "removeTagsAll"), "click"));
+        QVERIFY(dialogItem("removeTagsDialog", "removeTagsFamily0")->property("checked").toBool());
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("removeTagsDialog", "removeTagsAll"), "click"));
+        QVERIFY(!dialogItem("removeTagsDialog", "removeTagsFamily4")->property("checked").toBool());
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("removeTagsDialog", "removeTagsCancel"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+    }
+
     void motionDataScreenshots()
     {
         const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
@@ -13710,6 +14007,95 @@ private slots:
         QTRY_COMPARE(item("postprocessorPreviewStatus")->property("text").toString(), QStringLiteral("No line changes"));
         QVERIFY(!item("postprocessorApply")->property("enabled").toBool());
         application->editor().discard();
+    }
+
+    void timingAssistantSkipsAcceptsAndChangesFromTheKeyboard()
+    {
+        const QString path = writeFile(dir, "au19-assistant.ass",
+                                       "Dialogue: 0,0:00:00.48,0:00:00.70,Default,,0,0,0,,a\n"
+                                       "Dialogue: 0,0:00:00.90,0:00:01.20,Default,,0,0,0,,b\n"
+                                       "Comment: 0,0:00:01.20,0:00:01.30,Default,,0,0,0,,note\n"
+                                       "Dialogue: 0,0:00:01.60,0:00:01.70,Default,,0,0,0,,c\n");
+        const QString kf = dir.filePath(QStringLiteral("au19-kf.txt"));
+        {
+            QFile f(kf);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("# keyframe format v1\nfps 23.976\n0\n10\n20\n45\n");
+        }
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const auto before = application->shiftTimesSettings().settingsMap();
+        auto restore = qScopeGuard([&] { application->shiftTimesSettings().setSettingsMap(before); });
+        setShift("postprocessor", 1 | 2 | 4 | 8);
+        setShift("leadIn", 80);
+        setShift("leadOut", 200);
+        setShift("thresholdStart", 300);
+        setShift("keyframeBeforeStart", 50);
+        setShift("keyframeAfterStart", 0);
+        setShift("keyframeBeforeEnd", 100);
+        setShift("keyframeAfterEnd", 300);
+        QVERIFY(application->openKeyframes(QUrl::fromLocalFile(kf)).isEmpty());
+        application->setAskForBadResolution(false);
+        application->video().openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().session().keyframes() == (std::vector<int>{0, 10, 20, 45}), 20000);
+        QTRY_VERIFY_WITH_TIMEOUT(application->exactTimebase(), 20000);
+        closeMismatchQuestion();
+        const auto line = [&](int i) { return session->document().lines()[static_cast<std::size_t>(i)]; };
+        const auto timebase = application->video().session().legacyTimebase();
+        const auto frames = [&](int i) {
+            return std::pair(timebase.frameAt(static_cast<int>(line(i)->start.value.microseconds() / 1000)),
+                             timebase.frameAt(static_cast<int>(line(i)->end.value.microseconds() / 1000)));
+        };
+        using Frames = std::pair<int, int>;
+
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QCOMPARE(session->selection().active, line(0)->id);
+        QVariant ran;
+        QVERIFY(QMetaObject::invokeMethod(window, "runGlobalHotkey", Q_RETURN_ARG(QVariant, ran),
+                                          Q_ARG(QVariant, QStringLiteral("GLOBAL_TIMING_ASSISTANT"))));
+        QVERIFY(ran.toBool());
+        QTRY_VERIFY(item("timingAssistant") && item("timingAssistant")->isVisible());
+        QTRY_COMPARE(item("assistantPosition")->property("text").toString(), QStringLiteral("Line 1 of 3"));
+        const auto steps = session->historySize();
+
+        press(Qt::Key_S, Qt::AltModifier);
+        QTRY_COMPARE(session->selection().active, line(1)->id);
+        QCOMPARE(session->historySize(), steps);
+        QTRY_COMPARE(item("assistantPosition")->property("text").toString(), QStringLiteral("Line 2 of 3"));
+        const auto suggestion = item<QObject>("timingAssistant")->property("suggestion").toMap();
+        QCOMPARE(suggestion.value(QStringLiteral("startReason")).toString(), QStringLiteral("linked"));
+        QCOMPARE(suggestion.value(QStringLiteral("endReason")).toString(), QStringLiteral("leadOut"));
+        QCOMPARE(item("assistantStartWhy")->property("text").toString(),
+                 QStringLiteral("Lead-in of 80 ms, linked to the previous line."));
+        QVERIFY(item("assistantLinkWhy")->isVisible());
+
+        press(Qt::Key_Return);
+        QTRY_COMPARE(session->selection().active, line(3)->id);
+        QCOMPARE(session->historySize(), steps + 1);
+        QCOMPARE(session->history().back().name, std::string("Timing assistant"));
+        QCOMPARE(frames(1), (Frames{20, 34}));
+        QCOMPARE(line(0)->end.value, line(1)->start.value);
+        QCOMPARE(frames(2), (Frames{29, 32}));
+
+        QTRY_COMPARE(item("assistantPosition")->property("text").toString(), QStringLiteral("Line 3 of 3"));
+        press(Qt::Key_C, Qt::AltModifier);
+        QTRY_VERIFY(item("assistantStartEdit")->isVisible());
+        item("assistantStartEdit")->setProperty("text", QStringLiteral("0:00:01.52"));
+        press(Qt::Key_Return);
+        QTRY_COMPARE(frames(3).first, 37);
+        QCOMPARE(session->historySize(), steps + 2);
+        QTRY_VERIFY(item("assistantEmpty")->isVisible());
+        QCOMPARE(item("assistantEmpty")->property("text").toString(), QStringLiteral("No more lines. Accepted 2, skipped 1."));
+
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QVERIFY(QMetaObject::invokeMethod(window, "runGlobalHotkey", Q_RETURN_ARG(QVariant, ran),
+                                          Q_ARG(QVariant, QStringLiteral("GLOBAL_SNAP_START_TO_PREVIOUS_KEYFRAME"))));
+        QTRY_COMPARE(frames(0).first, 10);
+        QCOMPARE(session->history().back().name, std::string("Snapping to the adjacent keyframe"));
+        auto *menu = item<QObject>("snapStartToNextKeyframeItem");
+        QVERIFY(menu && menu->property("enabled").toBool());
     }
 
     void theTimingLayoutOpensThePostprocessorWithItsPreset()
@@ -21316,8 +21702,9 @@ private slots:
                                      "Video", "Audio", "Conversion", "Script properties", "Automation", "Shortcuts",
                                      "AI", "Updates and privacy"}));
         QVERIFY(dialogItem("settingsDialog", "settingsPageHotkeys"));
-        QCOMPARE(hotkeyRows().size(), 316);
-        QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Global Close current tab"));
+        QCOMPARE(hotkeyRows().size(), 338);
+        QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(),
+                 QStringLiteral("Global Accept the timing assistant\u2019s suggestion"));
         QCOMPARE(application->hotkeys().selected(), 0);
         QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "hotkeyFilter"), "activated", Q_ARG(int, 5)));
         QCOMPARE(hotkeyRows().size(), int(std::ranges::count_if(application::hotkeyNames(), [](const auto &n) {

@@ -97,6 +97,12 @@ std::optional<QByteArray> readSessionBytes(const QString &path)
 
 }
 
+int Application::windowOfTab(qulonglong document) const
+{
+    const auto id = documentOf(document);
+    return (id ? m_workspace.window(*id) : std::nullopt).value_or(m_workspace.activeWindow());
+}
+
 QVariantList Application::windowTabs(int shellWindow) const
 {
     QVariantList rows;

@@ -54,12 +54,13 @@ Number, Text, Colour, Alpha, Time, Point, Tags, Drawing, Bool and Units.
 
 | Category | Nodes |
 |---|---|
-| units | `for_each` (the Line, its syllables, their characters or the furigana), `repeat` (each unit `count` times, with `j`), `frames` (one element per frame step across a span), `clip_gradient` (one element per `\clip` strip, with its colour), `array` (one element per copy on a grid, a circle or a path), `particles` (one element per seeded random particle), `info` (the templater's variables for the current unit, its Line and its Style) |
+| units | `for_each` (the Line, its syllables, their characters or the furigana), `repeat` (each unit `count` times, with `j`), `frames` (one element per frame step across a span), `clip_gradient` (one element per `\clip` strip, with its colour), `array` (one element per copy on a grid, a circle or a path), `particles` (one element per seeded random particle), `highlights` (one element per highlight, as the templater's `multi`), `inline_fx` (only the units with one inline-fx, as the templater's `fx`), `info` (the templater's variables for the current unit, its Line and its Style) |
 | values | `number`, `text`, `colour`, `point`, `choose` (the index-th of a list of values, wrapping) |
 | math | `calculate`, `compare`, `progress` (with easing), `random` (seeded) |
 | time | `retime` (the templater's ten modes), `stagger` |
 | tags | `tag` (one override tag), `move`, `fade`, `transform` |
 | colours | `gradient` |
+| audio | `peaks` (the audio's level over a unit's span) |
 | drawings | `shape` |
 | text | `join` (one piece per unit, e.g. `{\kf$kdur}` and the syllable) |
 | output | `emit` (writes one Line per element) |
@@ -83,6 +84,18 @@ Number, Text, Colour, Alpha, Time, Point, Tags, Drawing, Bool and Units.
 - `particles` spreads `count` particles at random over a `rectangle` or an `ellipse` `width` × `height` centred on the unit. Each gives its `offset`, its `position` and `random`, a number from 0 to 1 of its own. The particles draw from the graph's seed as Random does, with the node's `seed` and the particle's place, so the same graph, seed and Line give the same particles.
 
 Offsets and angles are rounded to thousandths, so Linux and Windows write the same numbers.
+
+**Audio peaks.** `audio.peaks` gives the level of the Document's audio over the unit's span, or from `start` to `end` (absolute ms). It reads the audio as the Hikari API's `audio.peaks` does, through `application::audioPeaks` with one bucket: from the peak table once the audio has loaded, sample by sample before. `level` is the loudest sample from 0 to 1; `low` and `high` are the lowest and highest from -1 to 1.
+
+- With no audio open, or while it opens, it gives 0 and the run has a problem at the node ("has no audio to read, so it gives 0").
+- As with any run that has a problem, Apply refuses it and the preview keeps the last run that worked.
+- The cache keys a graph with this node on the audio too, so other audio runs it again.
+
+**Highlights and inline-fx** (NE5c, [#908](https://github.com/altqx/hikari/issues/908)). Both follow karaskel's parse of the karaoke Line, as the templater does.
+
+- `highlights` gives a syllable once per highlight, with that highlight's `index` and `count`. A syllable whose text starts with `#` (or `＃`) is a further highlight of the one before it, as in `{\k20}空{\k20}#`. For each highlight, Unit info and Retime see the highlight's start, end and duration (and `kdur`, a tenth of it), as the templater's `multi` modifier sets them. A character has its syllable's highlights. A furigana unit and a Line unit have one highlight each, their own. With `skip_blank` (the default), highlights with no duration are left out, as `multi noblank` leaves them out.
+- `inline_fx` keeps only the units whose inline-fx is `fx`, as the templater's `fx` modifier does. An inline-fx is set with `{\-name}` and holds until the next one. Characters have their syllable's inline-fx, and a furigana unit has the one of the syllable it is in. An empty `fx` keeps the units with no inline-fx. A Line unit has none.
+- `KaraokePresets.NodeExamplesGiveTheLinesOfTheirStockTemplates` runs the two examples below and their stock templates (`template syl noblank multi`; `fx paint`, `fx cloud`, and an `fxgroup` for the rest) on Lines with highlights and inline-fx. The graph, and the template Lines it exports, give the same Lines as the unchanged 3.2.2 templater and the built-in templater.
 
 **Groups.** A group holds a graph of its own.
 
@@ -188,6 +201,17 @@ A Lua error fails only its batch, with Lua's message (`code:3: …`), and the he
 
 **Protocol.** `RunNodes` is command 5 of the Lua helper protocol, version 9 ([`lua_protocol.h`](../src/backends/include/hikari/backends/lua_protocol.h)). It needs no `Load`. Version 9 changes nothing else. A version 8 helper is refused at the handshake, so an application and a helper from different releases never run a script together.
 
+## Plugin nodes
+
+A plugin adds Lua nodes in its manifest's `contributes.nodes` (NE5e, [#910](https://github.com/altqx/hikari/issues/910); [the manifest](plugins.md#the-manifest)). Each one names its ports, its Lua file and optional defaults for its inputs. [Zigzag](examples/zigzag/) is a sample plugin with one node.
+
+- **The catalogue.** A plugin's nodes are listed under the plugin's name, with the title and summary from the manifest. A node's type is `plugin:<plugin id>/<node id>`, for example `plugin:com.example.zigzag/zigzag`. An input with a `default` gets a field of its type; an unwired input without one is the type's zero.
+- **Trust.** Installing and turning on the plugin is the trust for its nodes. They never ask for the Document's Lua trust, which stays for the Document's own `lua.code` nodes.
+- **The code comes only from the plugin.** A graph stores only the node's type and its field values. Code text in a graph for a plugin node is ignored, and so are fields its manifest doesn't name, so a crafted file can't run its own code under the plugin's trust. A changed plugin file runs again on the next run, past the cache.
+- **The same sandbox.** Plugin nodes run like `lua.code` nodes: the same `HikariSub.Lua.Nodes` helper, environment, fresh globals per row and 10 s batch limit. The plugin's tier doesn't widen it.
+- **A missing plugin.** When the plugin isn't installed, is turned off, is revoked, or its files are no longer signed by the key pinned at install, the graph keeps the node, shows a problem naming the plugin, for example "comes from the plugin "Zigzag", which is turned off or not trusted", and writes nothing. A node id the plugin no longer has is "not a node of the plugin".
+- **Export.** A plugin node blocks Export as template lines, with the reason "runs in HikariSub's Lua helper, not in the templater".
+
 ## The graph library
 
 `NodeGraphLibrary` keeps the user's graphs for reuse across files: the mode's Save to the library writes one, and From the library… adds one to the Document. Each graph is a file `<name>.json` in the user folder's `node-effects` folder ([distribution](distribution.md)), in the same format, written to a `.partial` file and then renamed into place.
@@ -208,16 +232,16 @@ NE2 ([#424](https://github.com/altqx/hikari/issues/424)) edits a Document's grap
 - **Preview.** While the mode is shown, the graph runs on the current source Line on every edit, with NE1's cache. The video draws that Line's output in place of its generated Lines, with the badge "Preview · line N · not applied"; Source lines has the eye and Loop the line. A graph with problems keeps the last run that worked, dimmed.
 - **Lua trust** is the Template editor's choice for the open Document: trusting the file's Lua in either one covers both.
 - **Presets.** "From a preset" lists all ten KE3 presets ([karaoke presets](karaoke-presets.md)) as graphs, under their Template-editor names. Each graph writes the same Lines as its template, byte for byte (`hikari_application_node_effects_tests`), and uses only catalogue nodes, without Lua. Colour sweep, Glow and Echo have two emits, one per template Layer.
-- **Examples.** After the presets, "From a preset" lists one example per node that no template can express: "Gradient strips" (`clip_gradient`), "Ring of copies" (`array` on a circle) and "Particle burst" (`particles`). Each validates and gives the same Lines on every run.
+- **Examples.** After the presets, "From a preset" lists one example per newer node: "Gradient strips" (`clip_gradient`), "Ring of copies" (`array` on a circle), "Particle burst" (`particles`), "Audio pulse" (`audio.peaks`, which needs audio open), "Highlight flashes" (`highlights`) and "Paint and cloud" (`inline_fx`). Each validates and gives the same Lines on every run. The last two also export as template lines.
 
 ## Export as template lines
 
 NE4 ([#426](https://github.com/altqx/hikari/issues/426)). The mode bar menu's "Export as template lines" inserts after the graph Line the `template` Comment Lines that give the same Lines through the stock 2.1.7 karaoke templater, so the effect runs in Aegisub too. It is one undo step, "Export as template lines"; the graph Line stays. `exportTemplateLines` (`node_effects.h`) is the compiler.
 
-- **One template per Emit,** in the engine's order. Its class comes from the Emit's units: `syl`, `syl char`, `furi` or `pre-line`, with `noblank` when blank units are left out and `loop N` for a Repeat with a constant count (`j` and `maxj` read its place and count). An Emit on Line units that takes its text from a Join of the Line's syllables becomes a `pre-line <id>` and `line <id>` pair; the id is the graph name and the Emit's id. The Emit's constant Layer is the template's Layer; "All styles" adds `all`.
+- **One template per Emit,** in the engine's order. Its class comes from the Emit's units: `syl`, `syl char`, `furi` or `pre-line`, with `noblank` when blank units are left out and `loop N` for a Repeat with a constant count (`j` and `maxj` read its place and count). Highlights becomes `multi`, when it leaves out blank highlights exactly when its For each leaves out blank units, and comes before any Repeat. Inline-fx becomes `fx name`. An empty name becomes a `code syl` (or `code furi`) Line that sets an `fxgroup` for units without an inline-fx, and the template takes `fxgroup`. An Emit on Line units that takes its text from a Join of the Line's syllables becomes a `pre-line <id>` and `line <id>` pair; the id is the graph name and the Emit's id. The Emit's constant Layer is the template's Layer; "All styles" adds `all`.
 - **Times** come from one Retime node as `!retime(mode, start, end)!`, or are the Line's when unwired.
 - **Values** become constants, the templater's `$variables` (Unit info), `orgline.styleref` fields (Style values) or Lua expressions (`math.*`, a table for Choose).
-- **What blocks it.** A node with no template form refuses the export, and a popup lists each one with the reason; choosing one selects it. Random numbers, Lua nodes, Frames, Clip gradient, Array, Particles, Gradient, Compare, Style colours, a unit's place from For each, a condition on an Emit, a Layer or Repeat count that is not constant, times from anything but one Retime node, a Line timed by a syllable, and text with `!` or `$` all block it, as does every node the compiler does not know yet.
+- **What blocks it.** A node with no template form refuses the export, and a popup lists each one with the reason; choosing one selects it. Random numbers, Lua nodes, plugin nodes, Frames, Clip gradient, Array, Particles, Audio peaks, Gradient, Compare, Style colours, a unit's place from For each, a condition on an Emit, a Layer or Repeat count that is not constant, times from anything but one Retime node, a Line timed by a syllable, and text with `!` or `$` all block it, as does every node the compiler does not know yet.
 - **Tests.** `KaraokePresets.ExportedPresetGraphsGiveTheGoldensThroughTheStockTemplater` exports the ten preset graphs and runs them through the unchanged 3.2.2 `kara-templater.lua` and the built-in templater; the generated Lines equal the goldens.
 
 ## On the Hikari API

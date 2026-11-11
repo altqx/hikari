@@ -48,6 +48,12 @@ constexpr NodeExampleText kExamples[] = {
      QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Eight copies of each syllable on a circle around it, each turned to its place, while it is sung.")},
     {"particle-burst", QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Particle burst"),
      QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Twelve copies of each syllable fly out to random places around it and fade.")},
+    {"audio-pulse", QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Audio pulse"),
+     QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Each syllable grows with how loud the audio is while it is sung. Needs audio open.")},
+    {"highlight-flashes", QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Highlight flashes"),
+     QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "An outline flashes on each syllable once for every highlight, as the templater’s multi does.")},
+    {"paint-and-cloud", QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Paint and cloud"),
+     QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Syllables marked {\\-paint} fill from red to white, those marked {\\-cloud} rise and blur, and the rest stay in place.")},
 };
 
 const NodeExampleText *exampleText(std::string_view example)
@@ -751,7 +757,10 @@ QVariantMap NodeEffectsController::inspector() const
 QVariantList NodeEffectsController::catalogue()
 {
     QVariantList out;
-    for (const application::NodeSpec &spec : application::nodeCatalogue())
+    std::vector<application::NodeSpec> specs = application::nodeCatalogue();
+    for (application::PluginNode &plugin : application::pluginNodes())
+        specs.push_back(std::move(plugin.spec));
+    for (const application::NodeSpec &spec : specs)
         out << QVariantMap{{QStringLiteral("type"), qstr(spec.id)},
                            {QStringLiteral("title"), nodeTitle(spec.id)},
                            {QStringLiteral("category"), qstr(spec.category)},
@@ -957,6 +966,16 @@ bool NodeEffectsController::hasLua() const
     return flat && std::ranges::any_of(flat->nodes, [](const GraphNode &n) { return n.type == kLua; });
 }
 
+bool NodeEffectsController::hasPluginNodes() const
+{
+    if (!m_graph)
+        return false;
+    const auto flat = application::flattenGraph(*m_graph);
+    return flat && std::ranges::any_of(flat->nodes, [](const GraphNode &n) {
+               return application::pluginOfNodeType(n.type).has_value();
+           });
+}
+
 bool NodeEffectsController::trusted() const
 {
     return !hasLua() || (m_trustOwner && m_trustOwner->trusted());
@@ -989,9 +1008,11 @@ application::NodeEffectOptions NodeEffectsController::options() const
     application::NodeEffectOptions o;
     o.measure = m_measure;
     o.trustLua = trusted();
-    if (m_luaNodes && o.trustLua && hasLua())
+    if (m_luaNodes && ((o.trustLua && hasLua()) || hasPluginNodes()))
         o.lua = m_luaNodes();
     o.cache = const_cast<application::NodeEffectCache *>(&m_cache);
+    if (m_audio)
+        o.audio = m_audio();
     return o;
 }
 
@@ -1188,7 +1209,10 @@ QStringList NodeEffectsController::nodeTypesTaking(const QString &portType) cons
     const std::optional<application::PortType> from = application::portTypeNamed(utf8(portType));
     if (!from)
         return out;
-    for (const application::NodeSpec &spec : application::nodeCatalogue())
+    std::vector<application::NodeSpec> specs = application::nodeCatalogue();
+    for (application::PluginNode &plugin : application::pluginNodes())
+        specs.push_back(std::move(plugin.spec));
+    for (const application::NodeSpec &spec : specs)
         if (std::ranges::any_of(spec.inputs, [&](const application::PortSpec &p) {
                 return application::portTypesConnect(*from, p.type);
             }))

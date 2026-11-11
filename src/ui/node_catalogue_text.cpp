@@ -34,6 +34,10 @@ constexpr NodeText kNodes[] = {
      QT_TRANSLATE_NOOP("HikariSub.Nodes", "Each unit once per copy: on a grid centred on it, on a circle around it, or spread evenly along a path drawn from its position. angle is in degrees, as \\frz takes it.")},
     {"units.particles", QT_TRANSLATE_NOOP("HikariSub.Nodes", "Particles"),
      QT_TRANSLATE_NOOP("HikariSub.Nodes", "Each unit once per particle, spread at random over a rectangle or an ellipse centred on it. The same graph seed, node seed and line give the same particles on every run and platform.")},
+    {"units.highlights", QT_TRANSLATE_NOOP("HikariSub.Nodes", "Highlights"),
+     QT_TRANSLATE_NOOP("HikariSub.Nodes", "Each syllable or character once per highlight, as the templater’s multi gives it: the highlight’s start, end and duration. A furigana or line unit has one, its own.")},
+    {"units.inline_fx", QT_TRANSLATE_NOOP("HikariSub.Nodes", "Inline-fx"),
+     QT_TRANSLATE_NOOP("HikariSub.Nodes", "Only the units whose inline-fx ({\\-name}, kept until the next one) is `fx`, as the templater’s fx modifier keeps them. Characters have their syllable’s; a line unit has none.")},
     {"units.info", QT_TRANSLATE_NOOP("HikariSub.Nodes", "Unit info"),
      QT_TRANSLATE_NOOP("HikariSub.Nodes", "What the karaoke templater’s $variables give for the current unit and its line, rounded as the templater rounds them. Times of a syllable are from its line’s start.")},
     {"values.number", QT_TRANSLATE_NOOP("HikariSub.Nodes", "Number"),
@@ -68,6 +72,8 @@ constexpr NodeText kNodes[] = {
      QT_TRANSLATE_NOOP("HikariSub.Nodes", "\\t over `tags` after `before`; t1 and t2 when timed, accel when it is not 1.")},
     {"colours.gradient", QT_TRANSLATE_NOOP("HikariSub.Nodes", "Gradient"),
      QT_TRANSLATE_NOOP("HikariSub.Nodes", "The colour at progress (0 to 1) along evenly spaced stops.")},
+    {"audio.peaks", QT_TRANSLATE_NOOP("HikariSub.Nodes", "Audio peaks"),
+     QT_TRANSLATE_NOOP("HikariSub.Nodes", "The audio’s level over the unit’s span, or from start to end (absolute ms), read as the Hikari API’s audio.peaks reads it. level is the loudest sample from 0 to 1; low and high are the lowest and highest from -1 to 1. Without audio it gives 0 and the graph shows a problem.")},
     {"drawings.shape", QT_TRANSLATE_NOOP("HikariSub.Nodes", "Shape"),
      QT_TRANSLATE_NOOP("HikariSub.Nodes", "A vector drawing.")},
     {"text.join", QT_TRANSLATE_NOOP("HikariSub.Nodes", "Join"),
@@ -107,6 +113,10 @@ constexpr FieldText kFields[] = {
     {"units.particles", "width", QT_TRANSLATE_NOOP("HikariSub.Nodes", "The area’s width.")},
     {"units.particles", "height", QT_TRANSLATE_NOOP("HikariSub.Nodes", "The area’s height.")},
     {"units.particles", "seed", QT_TRANSLATE_NOOP("HikariSub.Nodes", "Added to the graph’s seed.")},
+    {"audio.peaks", "start", QT_TRANSLATE_NOOP("HikariSub.Nodes", "The span’s start; null: the unit’s start.")},
+    {"audio.peaks", "end", QT_TRANSLATE_NOOP("HikariSub.Nodes", "The span’s end; null: the unit’s end.")},
+    {"units.highlights", "skip_blank", QT_TRANSLATE_NOOP("HikariSub.Nodes", "Leave out highlights with no duration.")},
+    {"units.inline_fx", "fx", QT_TRANSLATE_NOOP("HikariSub.Nodes", "The inline-fx name; empty: units without one.")},
     {"values.number", "value", QT_TRANSLATE_NOOP("HikariSub.Nodes", "The number.")},
     {"values.text", "value", QT_TRANSLATE_NOOP("HikariSub.Nodes", "The text.")},
     {"values.colour", "value", QT_TRANSLATE_NOOP("HikariSub.Nodes", "The colour, as #RRGGBB.")},
@@ -178,6 +188,7 @@ constexpr CategoryText kCategories[] = {
     {"time", QT_TRANSLATE_NOOP("HikariSub.Nodes", "Time")},
     {"tags", QT_TRANSLATE_NOOP("HikariSub.Nodes", "Tags")},
     {"colours", QT_TRANSLATE_NOOP("HikariSub.Nodes", "Colours")},
+    {"audio", QT_TRANSLATE_NOOP("HikariSub.Nodes", "Audio")},
     {"drawings", QT_TRANSLATE_NOOP("HikariSub.Nodes", "Drawings")},
     {"text", QT_TRANSLATE_NOOP("HikariSub.Nodes", "Text")},
     {"output", QT_TRANSLATE_NOOP("HikariSub.Nodes", "Output")},
@@ -242,24 +253,35 @@ QString interfaceCopy(std::string_view summary)
 
 QString nodeTitle(std::string_view type)
 {
+    if (const application::PluginNode *plugin = application::pluginNode(type))
+        return utf8(plugin->title);
     const NodeText *text = nodeText(type);
     return text ? translated(text->title) : utf8(type);
 }
 
 QString nodeSummary(std::string_view type)
 {
+    if (const application::PluginNode *plugin = application::pluginNode(type))
+        return utf8(plugin->spec.summary);
     const NodeText *text = nodeText(type);
     return text ? translated(text->summary) : QString();
 }
 
 QString nodeFieldSummary(std::string_view type, std::string_view field)
 {
+    if (const application::PluginNode *plugin = application::pluginNode(type)) {
+        const application::FieldSpec *f = application::fieldSpec(plugin->spec, field);
+        return f ? utf8(f->summary) : QString();
+    }
     const FieldText *text = fieldText(type, field);
     return text ? translated(text->summary) : QString();
 }
 
 QString nodeCategoryTitle(std::string_view category)
 {
+    for (const application::PluginNode &plugin : application::pluginNodes())
+        if (plugin.spec.category == category)
+            return utf8(plugin.pluginName);
     const CategoryText *text = categoryText(category);
     return text ? translated(text->title) : utf8(category);
 }

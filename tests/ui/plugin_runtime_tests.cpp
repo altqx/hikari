@@ -3,6 +3,7 @@
 #include "hikari/app/localisation.h"
 #include "hikari/app/plugin_runtime.h"
 #include "hikari/app/plugin_ui.h"
+#include "hikari/application/node_catalogue.h"
 #include "hikari/plugins/registry.h"
 
 #include <QDir>
@@ -71,6 +72,22 @@ class PluginRuntimeTests : public QObject {
                   extra + "}");
         write(folder + QStringLiteral("/main.lua"), main);
         m_registry[id] = QJsonObject{{QStringLiteral("version"), QStringLiteral("1.0.0")}, {QStringLiteral("enabled"), enabled}};
+        write(folders().registry,
+              QJsonDocument(QJsonObject{{QStringLiteral("format"), 1}, {QStringLiteral("plugins"), m_registry}}).toJson());
+    }
+
+    void installZigzag(bool enabled, const QString &pinnedKey = {})
+    {
+        const QString folder = folders().plugins + QStringLiteral("/com.example.zigzag");
+        for (const char *file : {"hikari-plugin.json", "main.lua", "nodes/zigzag.lua"}) {
+            QFile source(QStringLiteral(HIKARI_PLUGIN_EXAMPLES "/zigzag/") + QLatin1String(file));
+            QVERIFY(source.open(QIODevice::ReadOnly));
+            write(folder + QLatin1Char('/') + QLatin1String(file), source.readAll());
+        }
+        QJsonObject entry{{QStringLiteral("version"), QStringLiteral("1.0.0")}, {QStringLiteral("enabled"), enabled}};
+        if (!pinnedKey.isEmpty())
+            entry[QStringLiteral("key")] = pinnedKey;
+        m_registry[QStringLiteral("com.example.zigzag")] = entry;
         write(folders().registry,
               QJsonDocument(QJsonObject{{QStringLiteral("format"), 1}, {QStringLiteral("plugins"), m_registry}}).toJson());
     }
@@ -175,6 +192,7 @@ private slots:
         QVERIFY2(!error, error.message().c_str());
         QDir().mkpath(m_dir.path());
         m_registry = {};
+        application::setPluginNodes({}, {});
     }
 
     void enabledPluginsStartAndListTheirCommands()
@@ -587,6 +605,62 @@ private slots:
         for (const auto &entry : logged)
             QVERIFY2(entry.at(1).value<ui::LogController::Severity>() != ui::LogController::Error,
                      qPrintable(entry.at(3).toString()));
+    }
+
+    void theSamplePluginsNodeJoinsTheCatalogueWithItsOwnCode()
+    {
+        installZigzag(true);
+        auto a = openEpisodes(1);
+        QVERIFY(a);
+        app::PluginRuntime runtime(wiring(*a));
+        runtime.sync();
+        const std::string type = application::pluginNodeType("com.example.zigzag", "zigzag");
+        const application::PluginNode *node = application::pluginNode(type);
+        QVERIFY(node);
+        QCOMPARE(node->pluginName, std::string("Zigzag"));
+        QCOMPARE(node->spec.category, std::string("com.example.zigzag"));
+        QCOMPARE(node->spec.inputs.size(), 2u);
+        QCOMPARE(node->spec.outputs.at(0).type, application::PortType::Number);
+        QCOMPARE(node->spec.fields.size(), 1u);
+        QCOMPARE(node->spec.fields.at(0).fallback.asNumber(), 10.0);
+        QFile code(QStringLiteral(HIKARI_PLUGIN_EXAMPLES "/zigzag/nodes/zigzag.lua"));
+        QVERIFY(code.open(QIODevice::ReadOnly));
+        QCOMPARE(QByteArray::fromStdString(node->code), code.readAll());
+        QVERIFY(application::nodeSpec(type));
+        QVERIFY(!application::pluginNodeProblem(type));
+    }
+
+    void aTurnedOffPluginsNodeIsKeptWithAProblemNamingThePlugin()
+    {
+        installZigzag(false);
+        auto a = openEpisodes(1);
+        QVERIFY(a);
+        app::PluginRuntime runtime(wiring(*a));
+        runtime.sync();
+        const std::string type = application::pluginNodeType("com.example.zigzag", "zigzag");
+        QVERIFY(!application::pluginNode(type));
+        QCOMPARE(application::pluginNodeProblem(type).value_or(""),
+                 std::string(R"(comes from the plugin "Zigzag", which is turned off or not trusted)"));
+
+        installZigzag(true);
+        runtime.sync();
+        QVERIFY(application::pluginNode(type));
+        installZigzag(false);
+        runtime.sync();
+        QVERIFY(!application::pluginNode(type));
+    }
+
+    void aPluginWhoseKeyNoLongerMatchesItsPinIsNotTrusted()
+    {
+        installZigzag(true, QStringLiteral("RWQBI0VniavN7wOhB7/zzhC+HXDdGOdLwJln5NYwm6UNXx3chmQSVTG4"));
+        auto a = openEpisodes(1);
+        QVERIFY(a);
+        app::PluginRuntime runtime(wiring(*a));
+        runtime.sync();
+        const std::string type = application::pluginNodeType("com.example.zigzag", "zigzag");
+        QVERIFY(!application::pluginNode(type));
+        QCOMPARE(application::pluginNodeProblem(type).value_or(""),
+                 std::string(R"(comes from the plugin "Zigzag", which is turned off or not trusted)"));
     }
 
     void theFirstPluginGuideRunsAtEveryStep()

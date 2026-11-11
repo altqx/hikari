@@ -4,6 +4,7 @@
 
 #include <QDateTime>
 #include <QHash>
+#include <QJsonArray>
 #include <QJsonObject>
 #include <QList>
 #include <QString>
@@ -62,6 +63,14 @@ struct Setting {
 // Ids and values from a closed list; any other value is "custom".
 QList<Setting> settingsSummary(const ui::SettingsStore &settings);
 
+struct Window {
+    int tabs = 0;
+    bool active = false;
+    bool operator==(const Window &) const = default;
+};
+QJsonArray windowsJson(const QList<Window> &windows);
+QList<Window> windowsOf(const QJsonArray &json);
+
 constexpr int kLogLines = 200;
 constexpr int kLogChars = 64 * 1024;
 constexpr int kLogLineChars = 1000;
@@ -75,6 +84,7 @@ struct Report {
     QDateTime when;                     // when it crashed or froze
     System system;
     QList<Setting> settings;
+    QList<Window> windows;              // in the order they were opened
     QStringList log;                    // scrubbed, oldest first
     bool exceptionSent = false;         // usage data sent its $exception already
     bool recovered = false;             // a freeze the window came back from

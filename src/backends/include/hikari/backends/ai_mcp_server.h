@@ -58,10 +58,14 @@ public:
     /// A new randomly named socket. False with `error` set when it can't listen.
     bool listenLocal(QString *error = nullptr);
     QString socketName() const;
+    /// A private channel for one agent session, relayed as `channel:<session>`: its calls carry the session and go
+    /// through its thread's gate, not the MCP one. The local socket takes one connection at most.
+    void setChannel(std::string session);
     /// `port` 0 picks a free one.
     bool listenHttp(quint16 port, QString *error = nullptr);
     void closeHttp();
     quint16 httpPort() const;
+    const QByteArray &token() const { return m_token; }
     /// Drops every connected agent; from now on only `token` connects.
     void setToken(QByteArray token);
 
@@ -86,9 +90,12 @@ private:
     void relay(const std::string &connection, QByteArray text, api::Json http,
                std::function<void(std::optional<std::string>, int)> answer);
     AiSidecarHost *host();
+    bool channelTaken() const;
+    std::string httpConnection() const;
 
     SidecarFor m_sidecar;
     QByteArray m_token;
+    std::string m_channel;
     QPointer<AiSidecarHost> m_host;
     std::unique_ptr<QLocalServer> m_localServer;
     std::unique_ptr<QTcpServer> m_httpServer;

@@ -1,3 +1,5 @@
+import type { Readable } from "node:stream";
+
 import type { HookCallbackMatcher, HookInput, Options, Query, SDKMessage, SDKUserMessage, SpawnedProcess,
     SpawnOptions } from "@anthropic-ai/claude-agent-sdk";
 
@@ -9,11 +11,12 @@ import { RpcError } from "../rpc";
 import type { ClaudeAgentSdk } from "./vendor";
 
 export const kServer = "hikari";
+const kStderrTail = 2048;
 const kToolPrefix = `mcp__${kServer}__`;
 
 export interface ClaudeDeps {
     sdk: () => Promise<ClaudeAgentSdk>;
-    spawn: (options: SpawnOptions) => SpawnedProcess;
+    spawn: (options: SpawnOptions) => SpawnedProcess & { readonly stderr?: Readable };
     /** A server of its own, so Qt sees the session as the caller. */
     mcp: McpServer;
     kindOf: (tool: string) => ToolCallKind;
@@ -125,8 +128,14 @@ export class ClaudeSession {
     private turn?: Turn;
     private claudeSession?: string;
     private readonly calls = new Set<string>();
+    private stderr = "";
 
     constructor(readonly id: string, private readonly params: SessionNewParams, private readonly deps: ClaudeDeps) {}
+
+    /** What Claude last wrote on stderr, which the sidecar also logs. */
+    get stderrTail(): string {
+        return this.stderr;
+    }
 
     get running(): boolean {
         return this.turn !== undefined;
@@ -136,7 +145,7 @@ export class ClaudeSession {
         const model = this.params.model.model;
         return {
             pathToClaudeCodeExecutable: "claude",
-            spawnClaudeCodeProcess: this.deps.spawn,
+            spawnClaudeCodeProcess: (options) => this.spawn(options),
             settingSources: [],
             tools: [],
             strictMcpConfig: true,
@@ -237,7 +246,19 @@ export class ClaudeSession {
         this.finish(new Error(("errors" in message && message.errors.join("; ")) || message.subtype));
     }
 
+    private spawn(options: SpawnOptions): SpawnedProcess {
+        const process = this.deps.spawn(options);
+        process.stderr?.on("data", (chunk: Buffer) => {
+            const text = chunk.toString("utf8");
+            console.error(`claude ${this.id}: ${text.trimEnd()}`);
+            this.stderr = (this.stderr + text).slice(-kStderrTail);
+        });
+        return process;
+    }
+
     private finish(stop: SessionStopReason | Error): void {
+        if (stop instanceof Error && this.stderr.trim())
+            stop = new Error(`${stop.message}\nClaude said: ${this.stderr.trim()}`);
         const turn = this.turn;
         this.turn = undefined;
         for (const call of this.calls)

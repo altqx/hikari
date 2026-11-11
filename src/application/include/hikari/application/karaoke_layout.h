@@ -96,6 +96,28 @@ struct KaraLine {
     bool hasFuriStyle = false;
 };
 
+// A word, a character of the whole Line, or a furigana character, as karaOK's additional_proc_line builds
+// them. Places and lengths count the units CharSplit gives; widths are text_extents' own, uncorrected.
+struct KaraUnit {
+    int i = 0, ci = 0, length = 0;
+    std::string tags, text, stripped, spaceStripped, prespace, postspace, inlineFx;
+    double start = 0, end = 0, duration = 0;
+    double width = 0, left = 0, center = 0, right = 0, prespaceWidth = 0, postspaceWidth = 0;
+    bool timed = false;            // false: the Line's own start, end and duration, and no highlights
+    std::vector<Highlight> highlights; // a timed word's
+    int word = 0;                  // a character's word, from 1; 0 for none
+    int syl = -1;                  // a character's index into karaSyllables, a furigana character's into karaFuri
+    std::vector<int> kara;         // a word's syllables
+};
+
+struct KaraOKUnits {
+    std::vector<int> sylCi;   // per karaSyllables entry
+    std::vector<int> sylWord; // the last word that took the syllable, from 1; 0 for none
+    std::vector<std::vector<int>> sylChars;
+    std::vector<KaraUnit> words, chars, fchars;
+    int length = 0; // of the Line's stripped text
+};
+
 struct Line {
     MacroDialogueLine macro;
     const StyleInfo *style = nullptr;
@@ -120,6 +142,8 @@ public:
     // `li`: the Line's number as the templater's subs count it.
     Line line(const MacroDialogueLine &source, double li, const LineOptions &options,
               std::vector<std::string> &problems);
+    // karaOK's words, characters and furigana characters of a Line this Layout laid out.
+    KaraOKUnits karaOKUnits(const Line &line, CharSplit split, std::vector<std::string> &problems);
     // Every Style the templater adds (karaskel's "-furigana" ones), in its order; for $li.
     std::size_t furiganaStylesAdded() const { return m_added; }
     const StyleInfo *style(std::u8string_view name) const;

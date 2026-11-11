@@ -19,6 +19,7 @@
 #include <QSaveFile>
 
 #include <algorithm>
+#include <array>
 
 namespace hikari::app {
 
@@ -35,7 +36,15 @@ QString qs(const std::string &s)
     return QString::fromStdString(s);
 }
 
-const ai::ModelRef kClaudeCode{"agent:claude", ""};
+struct AgentModel {
+    const char *program;
+    const char *name;
+    ai::ModelRef ref() const { return {std::string(backends::ai::kAgentProviderPrefix) + program, ""}; }
+    QString text() const { return QCoreApplication::translate("HikariSub.Agent", name); }
+};
+
+const std::array kAgentModels{AgentModel{"claude", QT_TRANSLATE_NOOP("HikariSub.Agent", "Claude Code")},
+                              AgentModel{"codex", QT_TRANSLATE_NOOP("HikariSub.Agent", "Codex")}};
 
 QString modelValue(const ai::ModelRef &ref)
 {
@@ -240,7 +249,24 @@ void AgentController::refreshThread()
 bool AgentController::ready() const
 {
     const ai::Providers *providers = m_wiring.ai.providers();
-    return providers && providers->config().modelFor(ai::Role::Chat).has_value();
+    return (providers && providers->config().modelFor(ai::Role::Chat).has_value()) || foundAgent().has_value();
+}
+
+std::optional<ai::ModelRef> AgentController::foundAgent() const
+{
+    for (const AgentModel &agent : kAgentModels)
+        if (m_wiring.ai.agentFound(QString::fromLatin1(agent.program)))
+            return agent.ref();
+    return std::nullopt;
+}
+
+void AgentController::fallBackToAnAgent(const std::string &thread)
+{
+    const AgentThread *t = m_threads->thread(thread);
+    if (!t || m_threads->modelOf(*t))
+        return;
+    if (const auto agent = foundAgent())
+        m_threads->setModel(thread, *agent);
 }
 
 bool AgentController::running() const
@@ -296,7 +322,8 @@ QVariantMap AgentController::thread() const
     qint64 window = 0;
     if (const auto ref = m_threads->modelOf(*t)) {
         model = modelValue(*ref);
-        modelText = *ref == kClaudeCode ? QCoreApplication::translate("HikariSub.Agent", "Claude Code") : qs(ref->modelId);
+        const auto agent = std::ranges::find_if(kAgentModels, [&](const AgentModel &a) { return a.ref() == *ref; });
+        modelText = agent != kAgentModels.end() ? agent->text() : qs(ref->modelId);
         if (const ai::Model *m = providers ? modelIn(providers->config(), *ref) : nullptr) {
             modelText = qs(m->name.empty() ? m->id : m->name);
             window = m->contextTokens.value_or(0);
@@ -333,10 +360,11 @@ QVariantMap AgentController::thread() const
 QVariantList AgentController::models() const
 {
     QVariantList out;
-    if (m_wiring.ai.agentFound(QStringLiteral("claude")))
-        out.push_back(QVariantMap{{QStringLiteral("value"), modelValue(kClaudeCode)},
-                                  {QStringLiteral("text"), QCoreApplication::translate("HikariSub.Agent", "Claude Code")},
-                                  {QStringLiteral("provider"), QString()}});
+    for (const AgentModel &agent : kAgentModels)
+        if (m_wiring.ai.agentFound(QString::fromLatin1(agent.program)))
+            out.push_back(QVariantMap{{QStringLiteral("value"), modelValue(agent.ref())},
+                                      {QStringLiteral("text"), agent.text()},
+                                      {QStringLiteral("provider"), QString()}});
     const ai::Providers *providers = m_wiring.ai.providers();
     if (!providers)
         return out;
@@ -381,6 +409,14 @@ double AgentController::spentToday() const
     return m_threads ? m_threads->spentToday() : 0.0;
 }
 
+void AgentController::spend(double dollars)
+{
+    if (!m_store || dollars <= 0)
+        return;
+    m_store->spend(QDate::currentDate(), dollars);
+    emit threadChanged();
+}
+
 double AgentController::dailyCap() const
 {
     return static_cast<double>(m_wiring.settings.integer64(kDailyCapSetting)) / 100.0;
@@ -393,8 +429,11 @@ double AgentController::threadCap() const
 
 void AgentController::newThread()
 {
-    if (m_threads)
-        select(m_threads->create());
+    if (!m_threads)
+        return;
+    const std::string id = m_threads->create();
+    fallBackToAnAgent(id);
+    select(id);
 }
 
 void AgentController::open(const QString &id)
@@ -498,6 +537,7 @@ void AgentController::send(const QString &text)
         return;
     if (m_current.empty() || !m_threads->thread(m_current))
         newThread();
+    fallBackToAnAgent(m_current);
     m_threads->setAttached(m_current, m_attached[m_current]);
     m_threads->send(m_current, trimmed.toStdString());
 }

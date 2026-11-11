@@ -1,0 +1,26 @@
+{
+  "$schema": "../../schemas/hikari-plugin.schema.json",
+  "id": "com.example.zigzag",
+  "name": "Zigzag",
+  "version": "1.0.0",
+  "api": 1,
+  "main": "main.lua",
+  "authors": ["HikariSub"],
+  "description": "Adds a node-effects node that moves every other unit up and the rest down.",
+  "license": "MIT",
+  "contributes": {
+    "nodes": [
+      {
+        "id": "zigzag",
+        "title": "Zigzag",
+        "summary": "Moves even units up and odd units down by the height.",
+        "file": "nodes/zigzag.lua",
+        "inputs": [
+          {"name": "index", "type": "Number"},
+          {"name": "height", "type": "Number", "default": 10}
+        ],
+        "outputs": [{"name": "offset", "type": "Number"}]
+      }
+    ]
+  }
+}
