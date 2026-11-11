@@ -358,6 +358,11 @@ hikari_add_qttest(hikari_ui_agent_panel_tests SOURCES agent_panel_tests.cpp
 target_compile_definitions(hikari_ui_agent_panel_tests PRIVATE
     HIKARI_FAKE_AI_SIDECAR="$<TARGET_FILE:hikari_fake_ai_sidecar>")
 add_dependencies(hikari_ui_agent_panel_tests hikari_fake_ai_sidecar)
+hikari_add_qttest(hikari_ui_inline_ai_tests SOURCES inline_ai_tests.cpp
+    LIBRARIES hikari_composition KDAB::kddockwidgets Qt6::QuickTest)
+target_compile_definitions(hikari_ui_inline_ai_tests PRIVATE
+    HIKARI_FAKE_AI_SIDECAR="$<TARGET_FILE:hikari_fake_ai_sidecar>")
+add_dependencies(hikari_ui_inline_ai_tests hikari_fake_ai_sidecar)
 find_package(Qt6 ${HIKARI_QT_VERSION} EXACT REQUIRED COMPONENTS CorePrivate)
 hikari_add_gtest(hikari_ui_ai_features_tests SOURCES ai_features_tests.cpp
     LIBRARIES hikari_composition Qt6::CorePrivate ZLIB::ZLIB Hikari::sodium LABELS ui)

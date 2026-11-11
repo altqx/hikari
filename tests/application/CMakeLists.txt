@@ -4,6 +4,8 @@ hikari_add_gtest(hikari_application_edit_tests SOURCES edit_session_tests.cpp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_ai_review_tests SOURCES ai_review_tests.cpp
     LIBRARIES hikari_application LABELS application)
+hikari_add_gtest(hikari_application_ai_inline_tests SOURCES ai_inline_tests.cpp
+    LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_word_diff_tests SOURCES word_diff_tests.cpp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_editor_fields_tests SOURCES editor_fields_tests.cpp

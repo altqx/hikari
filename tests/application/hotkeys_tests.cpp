@@ -70,7 +70,7 @@ constexpr ToolCommand kToolCommands[] = {
 TEST(Hotkeys, ActionTableIsLegacyIdsAndTheMigrationMap)
 {
     ASSERT_EQ(ids().size(), 243u);
-    ASSERT_EQ(hotkeyActions().size(), 347u);
+    ASSERT_EQ(hotkeyActions().size(), 349u);
     for (const auto &a : hotkeyActions().first(kLegacyHotkeyActions)) {
         EXPECT_EQ(hotkeyIdOf(a.symbol), a.id);
         EXPECT_EQ(hotkeySymbol(a.id), a.symbol);
@@ -162,8 +162,12 @@ TEST(Hotkeys, ActionTableIsLegacyIdsAndTheMigrationMap)
     EXPECT_EQ(hotkeyIdOf("GLOBAL_SHOW_AI_REVIEW"), 5251);
     EXPECT_EQ(hotkeyIdOf("GLOBAL_SHOW_AI_AGENT"), 5252);
     EXPECT_EQ(hotkeyIdOf("GLOBAL_NEW_AI_THREAD"), 5253);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_AI_ACTIONS"), 5283);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_REPEAT_AI_ACTION"), 5284);
     for (int id = 5245; id <= 5253; ++id)
         EXPECT_TRUE(aiCommand(id)) << id;
+    EXPECT_TRUE(aiCommand(5283));
+    EXPECT_TRUE(aiCommand(5284));
     EXPECT_FALSE(aiCommand(5231));
     EXPECT_FALSE(aiCommand(hotkeyIdOf("GLOBAL_AUTOMATION_RELOAD_AUTOLOAD")));
     std::istringstream csv(readFile(HIKARI_ACTIONS_CSV));
@@ -358,7 +362,7 @@ TEST(Hotkeys, ListOrderIsAddHotkeysOnList)
     HotkeyList list(copy);
     auto live = defaultHotkeys();
     list.build(live);
-    ASSERT_EQ(list.rowCount(), 318u);
+    ASSERT_EQ(list.rowCount(), 320u);
     EXPECT_EQ(list.row(0).text, "Global Close current tab");
     EXPECT_EQ(list.row(0).accel, "Ctrl-W");
     EXPECT_EQ(rowNamed(list, "Global Hide tags in the line editor").accel, "");
@@ -414,7 +418,7 @@ TEST(Hotkeys, ListOrderIsAddHotkeysOnList)
     live[HotkeyId{kSave, GridHotkey}] = Hotkey{"Save", "F7"};
     HotkeyList more(copy);
     more.build(live);
-    ASSERT_EQ(more.rowCount(), 320u);
+    ASSERT_EQ(more.rowCount(), 322u);
     const int script = more.find("Global Script a.lua-1");
     const int copied = more.find("Subtitles Save");
     ASSERT_GE(script, 0);
@@ -428,13 +432,13 @@ TEST(Hotkeys, ListOrderIsAddHotkeysOnList)
     fewer.erase(HotkeyId{kAudioCommitAlt, AudioHotkey});
     HotkeyList cut(copy);
     cut.build(fewer);
-    EXPECT_EQ(cut.rowCount(), 317u);
+    EXPECT_EQ(cut.rowCount(), 319u);
     EXPECT_EQ(cut.find("Audio Apply changes alt"), -1);
     auto odd = fewer;
     odd[HotkeyId{5001, -1}] = Hotkey{"", "F1"};
     HotkeyList whole(copy);
     whole.build(odd);
-    EXPECT_EQ(whole.rowCount(), 318u);
+    EXPECT_EQ(whole.rowCount(), 320u);
 }
 
 TEST(Hotkeys, AutomationAndPluginsFiltersSplitTheScriptRows)
@@ -485,7 +489,7 @@ TEST(Hotkeys, FilterModesAndSelection)
     list.filter(1);
     EXPECT_EQ(list.shown().size(), 113u);
     list.filter(0);
-    EXPECT_EQ(list.shown().size(), 318u);
+    EXPECT_EQ(list.shown().size(), 320u);
 }
 
 TEST(Hotkeys, SearchNarrowsTheFilter)
@@ -701,17 +705,17 @@ TEST(Hotkeys, MapToAnotherWindowAddsOrUpdatesItsRow)
     const int save = list.find("Global Save");
     list.map(save, "F7", VideoHotkey, HotkeyAnswer::Cancel, live);
     EXPECT_EQ(list.row(save).accel, "Ctrl-S");
-    ASSERT_EQ(list.rowCount(), 319u);
-    const auto &added = list.row(318);
+    ASSERT_EQ(list.rowCount(), 321u);
+    const auto &added = list.row(320);
     EXPECT_EQ(added.text, "Video Save");
     EXPECT_EQ((added.key), (HotkeyId{kSave, VideoHotkey}));
     EXPECT_EQ(added.accel, "F7");
     EXPECT_EQ(list.selection(), -1);
     EXPECT_EQ(copy.at(HotkeyId{kSave, VideoHotkey}).accel, "F7");
     list.map(save, "F6", VideoHotkey, HotkeyAnswer::Cancel, live);
-    EXPECT_EQ(list.rowCount(), 319u);
-    EXPECT_EQ(list.row(318).accel, "F6");
-    EXPECT_EQ(list.selection(), 318);
+    EXPECT_EQ(list.rowCount(), 321u);
+    EXPECT_EQ(list.row(320).accel, "F6");
+    EXPECT_EQ(list.selection(), 320);
 }
 
 TEST(Hotkeys, ResetDeleteUndoRedo)
@@ -792,7 +796,7 @@ TEST(Hotkeys, TheCopyOutlivesTheDialogAndSetDefault)
     auto reset = defaultHotkeys();
     third.clear();
     third.build(reset);
-    EXPECT_EQ(third.shown().size(), 318u);
+    EXPECT_EQ(third.shown().size(), 320u);
     EXPECT_EQ(third.filterMode(), 2);
     EXPECT_EQ(rowNamed(third, "Global Open subtitles").accel, "Ctrl-O");
     EXPECT_TRUE(third.modified());
