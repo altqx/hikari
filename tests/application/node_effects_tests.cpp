@@ -632,3 +632,91 @@ TEST(KaraokeSyllables, SplitsAsTheAutomationHelperDoes)
     EXPECT_EQ(plain[1].start, 1000);
     EXPECT_EQ(plain[1].duration, 3000);
 }
+
+namespace {
+
+std::vector<std::string> blockersOf(std::string_view json)
+{
+    std::vector<std::string> out;
+    const auto lines = exportTemplateLines(graphOf(json), u8"g");
+    EXPECT_FALSE(lines.has_value());
+    if (!lines)
+        for (const NodeEffectProblem &p : lines.error())
+            out.push_back(p.node);
+    return out;
+}
+
+}
+
+TEST(NodeEffectExport, ClassicFillBecomesOnePreLineAndLineTemplate)
+{
+    const auto lines = exportTemplateLines(graphOf(kClassicFill), u8"Classic fill");
+    ASSERT_TRUE(lines.has_value());
+    const std::vector<TemplateLine> expected{
+        {0, u8"template pre-line classic_fill_emit", u8"!retime(\"line\", (-300), 300)!{\\fad(300,300)\\k30}"},
+        {0, u8"template line classic_fill_emit", u8"{\\kf$kdur}"}};
+    EXPECT_EQ(*lines, expected);
+}
+
+TEST(NodeEffectExport, SparklesLoopsAndDrawsWithoutText)
+{
+    const auto lines = exportTemplateLines(graphOf(kSparkles), u8"s");
+    ASSERT_TRUE(lines.has_value());
+    ASSERT_EQ(lines->size(), 2u);
+    EXPECT_EQ((*lines)[1].layer, 1);
+    EXPECT_EQ((*lines)[1].effect, u8"template syl noblank notext loop 8");
+    EXPECT_TRUE((*lines)[1].text.ends_with(u8"\\p1}m 0 -5 l 5 0 0 5 -5 0"));
+}
+
+TEST(NodeEffectExport, NodesWithoutATemplateFormBlockTheExportByName)
+{
+    EXPECT_EQ(blockersOf(R"({"format": 1, "nodes": [
+        {"id": "syl", "type": "units.for_each"},
+        {"id": "dice", "type": "math.random", "fields": {"max": 10}},
+        {"id": "blur", "type": "tags.tag", "fields": {"tag": "blur"}},
+        {"id": "emit", "type": "output.emit"}],
+      "wires": [{"from": "dice.value", "to": "blur.value"}, {"from": "blur.tags", "to": "emit.tags"},
+                {"from": "syl.units", "to": "emit.units"}]})"),
+              std::vector<std::string>{"dice"});
+    EXPECT_EQ(blockersOf(R"({"format": 1, "nodes": [
+        {"id": "syl", "type": "units.for_each"},
+        {"id": "info", "type": "units.info"},
+        {"id": "long", "type": "math.compare", "fields": {"op": "greater", "b": 300}},
+        {"id": "later", "type": "math.calculate", "fields": {"op": "add", "b": 100}},
+        {"id": "emit", "type": "output.emit"}],
+      "wires": [{"from": "info.duration", "to": "long.a"}, {"from": "long.result", "to": "emit.when"},
+                {"from": "info.start", "to": "later.a"}, {"from": "later.result", "to": "emit.start"},
+                {"from": "syl.units", "to": "emit.units"}]})"),
+              (std::vector<std::string>{"long", "emit"}));
+    EXPECT_EQ(blockersOf(R"({"format": 1, "nodes": [
+        {"id": "line", "type": "units.for_each", "fields": {"unit": "line", "skip_blank": false}},
+        {"id": "time", "type": "time.retime", "fields": {"mode": "syl"}},
+        {"id": "emit", "type": "output.emit"}],
+      "wires": [{"from": "line.units", "to": "emit.units"}, {"from": "time.start", "to": "emit.start"},
+                {"from": "time.end", "to": "emit.end"}]})"),
+              std::vector<std::string>{"time"});
+}
+
+TEST(NodeEffectExport, ExportAddsTheTemplateLinesAfterTheGraphInOneStep)
+{
+    EditSession session(presetDocument(kPresets[1]));
+    const std::string before = text(core::encodeAss(session.document()));
+    const core::LineId graph = graphLineOf(session.document(), u8"bounce");
+    ASSERT_TRUE(exportTemplateLines(session, graph));
+    std::vector<const core::LineRecord *> added;
+    bool after = false;
+    for (const core::LineRecord *l : session.document().lines()) {
+        if (after && l->effect.starts_with(u8"template "))
+            added.push_back(l);
+        after = after || l->id == graph;
+    }
+    ASSERT_EQ(added.size(), 4u);
+    for (const core::LineRecord *l : added) {
+        EXPECT_TRUE(l->comment);
+        EXPECT_EQ(l->style, u8"Romaji");
+        EXPECT_EQ(l->effect, u8"template syl noblank");
+    }
+    EXPECT_EQ(session.history().back().name, "Export as template Lines");
+    ASSERT_TRUE(session.undo());
+    EXPECT_EQ(text(core::encodeAss(session.document())), before);
+}

@@ -3,6 +3,8 @@
 #include "hikari/application/edit_session.h"
 #include "hikari/application/karaoke_presets.h"
 #include "hikari/application/macro_transaction.h"
+#include "hikari/application/node_effects.h"
+#include "hikari/application/node_graph_editing.h"
 #include "hikari/backends/lua_script_host.h"
 #include "hikari/core/ass_load.h"
 #include "hikari/core/ass_save.h"
@@ -264,6 +266,49 @@ TEST_F(KaraokePresets, EachPresetGeneratesItsGolden)
         }
         EXPECT_GT(generated, 0);
         EXPECT_EQ(report.value(QStringLiteral("generated")).toInt(), generated);
+    }
+}
+
+std::vector<std::string> generatedLines(const std::string &file)
+{
+    std::vector<std::string> out;
+    std::size_t at = 0;
+    while (at < file.size()) {
+        std::size_t end = file.find('\n', at);
+        if (end == std::string::npos)
+            end = file.size();
+        std::string line = file.substr(at, end - at);
+        if (!line.empty() && line.back() == '\r')
+            line.pop_back();
+        if (line.starts_with("Dialogue: ") && line.find(",fx,") != std::string::npos)
+            out.push_back(std::move(line));
+        at = end + 1;
+    }
+    return out;
+}
+
+TEST_F(KaraokePresets, ExportedPresetGraphsGiveTheGoldensThroughTheStockTemplater)
+{
+    const auto graphs = hikari::application::nodeGraphPresets();
+    EXPECT_EQ(graphs.size(), presets().size());
+    for (const auto &preset : graphs) {
+        const QString file = QString::fromUtf8(preset.templateFile.data(), qsizetype(preset.templateFile.size()));
+        SCOPED_TRACE(file.toStdString());
+        const auto graph = hikari::application::parseGraph(preset.graph);
+        ASSERT_TRUE(graph.has_value());
+        const auto lines = hikari::application::exportTemplateLines(*graph, u8"preset");
+        ASSERT_TRUE(lines.has_value()) << (lines ? "" : lines.error().front().node + " " + lines.error().front().message);
+        const auto all = presets();
+        const auto original = std::ranges::find(all, file, &Preset::file);
+        ASSERT_NE(original, all.end());
+        KaraokePreset exported;
+        for (const auto &l : *lines)
+            exported.lines.push_back({l.layer, l.effect, l.text});
+        exported.lines.resize(std::max(exported.lines.size(), original->preset.lines.size()));
+        const std::string out = templated(fixtureWith(exported), pristineScript());
+        const std::vector<std::string> golden = generatedLines(textOf(readBytes(goldenOf(file))));
+        EXPECT_FALSE(golden.empty());
+        EXPECT_EQ(generatedLines(out), golden);
     }
 }
 
