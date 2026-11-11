@@ -14,6 +14,7 @@ HikariSub.GettingStarted	Getting started, the setup of the first start (FR1)
 HikariSub.Grid	The subtitle grid: headings, line states, selection, line groups, copy and paste of columns
 HikariSub.Home	The Home page while no Document is open: New and Open, the last session, the Project, the recent projects and files and their menus
 HikariSub.Hotkeys	Hotkey mapping and shortcut hints
+HikariSub.Interpolate	Interpolate across lines: its window, the tags it changes and why some can't be, and its options (AU22)
 HikariSub.Karaoke	The karaoke check: its window, problems and their details
 HikariSub.MainWindow	The main window: title, its title bar (menus, window buttons, the window menu), menu help, About, Credits, updates, the log and history windows
 HikariSub.Matroska	Subtitles from Matroska files

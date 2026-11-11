@@ -1430,7 +1430,6 @@ for card, roles in {
     "AU21 #855": ["change-alignment", "align-left", "align-center", "align-right", "align-top", "align-middle",
                   "align-bottom", "distribute-horizontal", "distribute-vertical", "pos-to-margins", "margins-to-pos",
                   "phantom", "cycle-values", "shift-by-x", "shift-by-y"],
-    "AU22 #856": ["interpolate-lines"],
     "AU23 #857": ["import-lyrics"],
     "TH5 #833": ["builtin-script"],
     "AI23b #800": ["web-search", "citations", "web-page-read"],

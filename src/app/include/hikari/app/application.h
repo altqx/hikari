@@ -497,6 +497,13 @@ public:
     Q_INVOKABLE QVariantMap copyMotionData();
     Q_INVOKABLE QVariantMap copyPowerPinTrack();
     Q_INVOKABLE QVariantMap extrapolateMoves();
+    // The selected run interpolated with the dialog's {accel, shortestRotation, cascade, excluded}: {count,
+    // firstRow, lastRow, problem, startBlockOnly, changes [{id, tag, before, from, to, fromColour, toColour,
+    // skip}], results [{row, text}]}. The video shows the result until clearInterpolationPreview().
+    Q_INVOKABLE QVariantMap interpolationPlan(const QVariantMap &options);
+    // Empty when done, else why not.
+    Q_INVOKABLE QString applyInterpolation(const QVariantMap &options);
+    Q_INVOKABLE void clearInterpolationPreview();
     // {lines, firstFrame, frames}; empty without frame times or selected lines.
     Q_INVOKABLE QVariantMap extendTrackingValues() const;
     // {state, text, canApply}.
@@ -1153,6 +1160,7 @@ private:
     QString m_luaHelper;
     std::unique_ptr<backends::LuaNodeHelper> m_luaNodes;
     bool m_videoShowsTemplate = false;
+    std::map<core::LineId, std::u8string> m_interpolationPreview;
     std::optional<std::pair<std::int64_t, std::int64_t>> m_templateWindow;
     std::unique_ptr<AutomationHotkeysController> m_automationHotkeys;
     // MUST KILL: must be declared after m_automationHotkeys, which it holds a reference to.

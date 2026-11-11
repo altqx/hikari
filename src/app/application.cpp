@@ -2375,6 +2375,10 @@ bool Application::showVideoSubtitles()
         templated = templateEditor().videoDocument(draft ? *draft : session->document(), ms, video.playing());
         const auto window = templateEditor().videoWindow(ms, video.playing());
         m_templateWindow = std::pair(window.fromMs, window.toMs);
+    } else if (!m_interpolationPreview.empty()) {
+        templated = draft ? *draft : session->document();
+        for (const auto &[id, text] : m_interpolationPreview)
+            templated->editLine(id, [&](core::LineRecord &l) { l.text = text; });
     }
     if (draft || templated || m_videoShowsDraft || m_videoShowsTemplate || session->revision() != m_videoRevision) {
         if (session->revision() != m_videoRevision)

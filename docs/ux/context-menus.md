@@ -44,6 +44,7 @@ Opens on a right press anywhere in the grid viewport except a group description 
 | 9.4 | Split lines into characters | GRID_SPLIT_BY_CHARS | | split-characters |
 | 9.5 | Split lines into words | GRID_SPLIT_BY_WORDS | | split-words |
 | 9.6 | Split lines by wraps | GRID_SPLIT_BY_WRAPS | | split-wraps |
+| 9a | Interpolate across lines… (AU22) | GLOBAL_INTERPOLATE_LINES | 3 or more lines selected; opens a window | interpolate-lines |
 | 10 | Select all lines visible on video | GRID_SELECT_VISIBLE_LINES | | select-visible |
 | 11 | Make line group | GRID_TREE_MAKE | | make-tree |
 | 11.1 | Convert Aegisub folds to line groups (FA5) | GLOBAL_CONVERT_FOLDS_TO_GROUPS | `canConvertFolds()` | convert-folds |

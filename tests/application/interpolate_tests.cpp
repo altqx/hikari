@@ -1,14 +1,17 @@
 #include "hikari/application/interpolate.h"
 #include "hikari/application/tag_lerp.h"
+#include "hikari/core/ass_load.h"
 
 #include <gtest/gtest.h>
 
 #include <algorithm>
+#include <cstring>
 #include <string>
 #include <vector>
 
 using namespace hikari::application;
 using namespace hikari::application::interpolate;
+namespace core = hikari::core;
 
 namespace {
 
@@ -25,6 +28,35 @@ std::vector<std::string> texts(const std::vector<LineIn> &lines, const Options &
     const auto p = plan(lines, options);
     EXPECT_TRUE(p.has_value());
     return p ? p->texts : std::vector<std::string>{};
+}
+
+EditSession sessionWith(std::string_view events)
+{
+    const std::string data = std::string("[Script Info]\nScriptType: v4.00+\nPlayResX: 640\nPlayResY: 360\n\n"
+                                         "[V4+ Styles]\nFormat: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, "
+                                         "OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, "
+                                         "Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, "
+                                         "MarginV, Encoding\nStyle: Sign,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,"
+                                         "&H00000000,0,0,0,0,150,100,0,0,1,2,0,2,10,10,30,1\n\n[Events]\nFormat: "
+                                         "Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n") +
+                             std::string(events);
+    std::vector<std::byte> bytes(data.size());
+    std::memcpy(bytes.data(), data.data(), bytes.size());
+    return EditSession(core::loadAss(bytes).document);
+}
+
+void selectAll(EditSession &session)
+{
+    Selection selection;
+    for (const auto *l : session.document().lines())
+        selection.selected.insert(l->id);
+    selection.active = *selection.selected.begin();
+    session.setSelection(selection);
+}
+
+std::string textOf(const core::LineRecord *l)
+{
+    return std::string(l->text.begin(), l->text.end());
 }
 
 const Change *change(const Plan &p, std::string_view id)
@@ -109,6 +141,9 @@ TEST(Interpolate, MatchesInlineBlocksByCharacters)
 {
     const auto out = texts(run({"{\\fs10}あい{\\fs10}う", "あいう", "{\\fs10}あい{\\fs30}う"}));
     EXPECT_EQ(out[1], "あい{\\fs20}う");
+    const auto p = plan(run({"{\\fs10}あい{\\fs10}うえ", "a", "{\\fs10}あい{\\fs30}うえ"}), {});
+    EXPECT_EQ(change(*p, "fs@2")->before, "うえ");
+    EXPECT_EQ(change(*p, "fs@2")->name, "fs");
 }
 
 TEST(Interpolate, UsesOnlyTheStartBlockWhenTheTextDiffers)
@@ -196,4 +231,53 @@ TEST(Interpolate, CascadesTransformsOverEachLine)
     o.cascade = true;
     const auto out = texts(run({"{\\t(\\fs1)\\t(\\fs2)}x", "{\\t(\\fs1)\\t(\\fs2)}x", "{\\t(\\fs1)\\t(\\fs2)}x"}), o);
     EXPECT_EQ(out[0], "{\\t(0,500,\\fs1)\\t(500,1000,\\fs2)}x");
+}
+
+TEST(InterpolateSession, ReadsTheSelectedRunWithItsStyleAndDefaultPosition)
+{
+    auto session = sessionWith("Dialogue: 0,0:00:01.00,0:00:01.04,Sign,,0,0,0,,{\\an7}a\n"
+                               "Dialogue: 0,0:00:01.04,0:00:01.08,Sign,,0,0,0,,a\n"
+                               "Dialogue: 0,0:00:01.08,0:00:01.12,Sign,,0,0,0,,a\n");
+    selectAll(session);
+    const auto run = selectedRun(session);
+    ASSERT_EQ(run.lines.size(), 3u);
+    EXPECT_EQ(run.lines[0].defaultX, 10);
+    EXPECT_EQ(run.lines[0].defaultY, 30);
+    EXPECT_EQ(run.lines[1].defaultX, 320);
+    EXPECT_EQ(run.lines[1].defaultY, 330);
+    EXPECT_EQ(run.lines[1].durationMs, 40);
+    EXPECT_EQ(lerp::styleDefault(*lerp::tagSpec("fscx"), run.lines[1].style)->v[0], 150);
+}
+
+TEST(InterpolateSession, AppliesThePlanAsOneStep)
+{
+    auto session = sessionWith("Dialogue: 0,0:00:01.00,0:00:01.04,Sign,,0,0,0,,{\\fscx100}a\n"
+                               "Dialogue: 0,0:00:01.04,0:00:01.08,Sign,,0,0,0,,a\n"
+                               "Dialogue: 0,0:00:01.08,0:00:01.12,Sign,,0,0,0,,a\n"
+                               "Dialogue: 0,0:00:01.12,0:00:01.16,Sign,,0,0,0,,{\\fscx200}a\n");
+    selectAll(session);
+    const auto steps = session.historySize();
+    const auto run = selectedRun(session);
+    const auto p = plan(run.lines, {});
+    ASSERT_TRUE(p);
+    ASSERT_TRUE(applyPlan(session, run, *p));
+    EXPECT_EQ(session.historySize(), steps + 1);
+    EXPECT_EQ(session.history().back().name, "Interpolate across Lines");
+    const auto &lines = session.document().lines();
+    EXPECT_EQ(textOf(lines[1]), "{\\fscx133.33}a");
+    EXPECT_EQ(textOf(lines[2]), "{\\fscx166.67}a");
+    EXPECT_EQ(textOf(lines[3]), "{\\fscx200}a");
+}
+
+TEST(InterpolateSession, LeavesHiddenAndUnselectedLinesOut)
+{
+    auto session = sessionWith("Dialogue: 0,0:00:01.00,0:00:01.04,Sign,,0,0,0,,{\\fs10}a\n"
+                               "Dialogue: 0,0:00:01.04,0:00:01.08,Sign,,0,0,0,,a\n"
+                               "Dialogue: 0,0:00:01.08,0:00:01.12,Sign,,0,0,0,,a\n"
+                               "Dialogue: 0,0:00:01.12,0:00:01.16,Sign,,0,0,0,,{\\fs30}a\n");
+    selectAll(session);
+    const auto second = session.document().lines()[1]->id;
+    const auto run = selectedRun(session, [&](core::LineId id) { return id != second; });
+    ASSERT_EQ(run.ids.size(), 3u);
+    EXPECT_EQ(run.ids[1], session.document().lines()[2]->id);
 }

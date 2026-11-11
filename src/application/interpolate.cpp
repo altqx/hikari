@@ -1,11 +1,14 @@
 #include "hikari/application/interpolate.h"
 
+#include "hikari/application/resample.h"
 #include "hikari/application/tag_lerp.h"
+#include "hikari/application/visual_script.h"
 
 #include <algorithm>
 #include <array>
 #include <cmath>
 #include <cstdio>
+#include <cstdlib>
 #include <map>
 #include <optional>
 #include <set>
@@ -156,6 +159,20 @@ std::string numberText(double v, int decimals)
             out.pop_back();
     }
     return out == "-0" ? "0" : out;
+}
+
+std::size_t byteOf(std::string_view s, std::size_t characters)
+{
+    for (std::size_t i = 0, n = 0; i < s.size(); ++i)
+        if ((s[i] & 0xC0) != 0x80 && n++ == characters)
+            return i;
+    return s.size();
+}
+
+std::string textFrom(std::string_view s, std::size_t at, std::size_t count)
+{
+    const auto begin = byteOf(s, at);
+    return std::string(s.substr(begin, byteOf(s, at + count) - begin));
 }
 
 std::string spelled(std::string formatted, std::string_view key, std::string_view name)
@@ -379,7 +396,7 @@ std::vector<Slot> slotChanges(const End &first, const End &last, const std::vect
             const auto toText = spelled(lerp::format(*spec, to), key, name);
             if (fromText == toText)
                 continue;
-            slot.changes.push_back(Change{changeId(key, at), key, at, fromText, toText, Skip::None});
+            slot.changes.push_back(Change{changeId(key, at), key, at, fromText, toText, Skip::None, name, {}});
             slot.values[key] = {from, to};
             slot.names[key] = name;
         }
@@ -388,7 +405,7 @@ std::vector<Slot> slotChanges(const End &first, const End &last, const std::vect
             for (std::size_t i = 0; same && i < a.transforms.size(); ++i)
                 same = sameShape(a.transforms[i], b.transforms[i]);
             slot.changes.push_back(Change{changeId("t", at), "t", at, a.transformsText, b.transformsText,
-                                          same ? Skip::None : Skip::DifferentTransforms});
+                                          same ? Skip::None : Skip::DifferentTransforms, "t", {}});
             slot.fromTransforms = a.transforms;
             slot.toTransforms = b.transforms;
         }
@@ -403,7 +420,7 @@ std::optional<Change> clipChange(const lerp::TagSpec &spec, const std::optional<
     if (!from && !to)
         return std::nullopt;
     const std::string key(spec.key);
-    Change c{key, key, 0, from ? clipText(spec, *from) : "", to ? clipText(spec, *to) : "", Skip::None};
+    Change c{key, key, 0, from ? clipText(spec, *from) : "", to ? clipText(spec, *to) : "", Skip::None, key, {}};
     if (c.from == c.to)
         return std::nullopt;
     if (!from || !to)
@@ -531,13 +548,13 @@ bool included(const Change &c, const Options &options)
     return c.skip == Skip::None && std::ranges::find(options.excluded, c.id) == options.excluded.end();
 }
 
-struct Run {
+struct Ends {
     const End &first, &last;
     std::vector<Change> wide;
     std::vector<Slot> slots;
 };
 
-std::string middleText(const Run &run, const LineIn &line, double t, const Options &options)
+std::string middleText(const Ends &run, const LineIn &line, double t, const Options &options)
 {
     auto pieces = parse(line.text).pieces;
     for (const auto &c : run.wide) {
@@ -638,7 +655,7 @@ std::expected<Plan, Problem> plan(std::span<const LineIn> lines, const Options &
                 if (p.block)
                     offsets.insert(p.at);
 
-    Run run{first, last, {}, {}};
+    Ends run{first, last, {}, {}};
     for (const std::string_view key : {"pos", "org"}) {
         if (key == "org" && !first.ownOrg && !last.ownOrg)
             continue;
@@ -646,7 +663,7 @@ std::expected<Plan, Problem> plan(std::span<const LineIn> lines, const Options &
         const auto from = lerp::format(spec, key == "pos" ? *first.pos : *first.org);
         const auto to = lerp::format(spec, key == "pos" ? *last.pos : *last.org);
         if (from != to)
-            run.wide.push_back(Change{std::string(key), std::string(key), 0, from, to, Skip::None});
+            run.wide.push_back(Change{std::string(key), std::string(key), 0, from, to, Skip::None, std::string(key), {}});
     }
     if (auto c = clipChange(*lerp::tagSpec("clip"), first.clip, last.clip))
         run.wide.push_back(*c);
@@ -656,7 +673,11 @@ std::expected<Plan, Problem> plan(std::span<const LineIn> lines, const Options &
 
     out.changes = run.wide;
     for (const auto &slot : run.slots)
-        out.changes.insert(out.changes.end(), slot.changes.begin(), slot.changes.end());
+        for (auto c : slot.changes) {
+            if (c.at > 0)
+                c.before = textFrom(first.parsed.plain, c.at, 8);
+            out.changes.push_back(std::move(c));
+        }
     if (out.changes.empty() && !options.cascade)
         return std::unexpected(Problem::NothingChanges);
 
@@ -671,6 +692,55 @@ std::expected<Plan, Problem> plan(std::span<const LineIn> lines, const Options &
         out.texts.push_back(std::move(text));
     }
     return out;
+}
+
+Run selectedRun(const EditSession &session, const LineVisible &visible)
+{
+    const auto &doc = session.document();
+    const auto styles = core::decodeStyles(doc);
+    const auto resolution = scriptResolution(doc);
+    Run out;
+    for (const auto *l : doc.lines()) {
+        if (!session.selection().selected.contains(l->id) || l->visibility == core::LineVisibility::Hidden ||
+            (visible && !visible(l->id)))
+            continue;
+        core::StyleValues style;
+        const auto found = std::ranges::find(styles, l->style, &core::StyleValues::name);
+        if (found != styles.end())
+            style = *found;
+        else if (!styles.empty())
+            style = styles.front();
+        const std::string text(l->text.begin(), l->text.end());
+        int an = std::atoi(std::string(style.alignment.begin(), style.alignment.end()).c_str());
+        if (const auto at = text.find("\\an"); at != std::string::npos)
+            an = std::atoi(text.c_str() + at + 3);
+        if (an < 1 || an > 9)
+            an = 2;
+        const auto pos = visual::defaultPosition(*l, style, an, resolution.width, resolution.height);
+        const double duration = static_cast<double>((l->end.value.microseconds() - l->start.value.microseconds()) / 1000);
+        out.ids.push_back(l->id);
+        out.lines.push_back(LineIn{text, style, duration, pos.x, pos.y});
+    }
+    return out;
+}
+
+std::expected<void, CommandRefusal> applyPlan(EditSession &session, const Run &run, const Plan &plan)
+{
+    std::map<core::LineId, std::u8string> changes;
+    for (std::size_t i = 0; i < run.ids.size() && i < plan.texts.size(); ++i)
+        if (plan.texts[i] != run.lines[i].text)
+            changes.emplace(run.ids[i], std::u8string(plan.texts[i].begin(), plan.texts[i].end()));
+    if (changes.empty())
+        return std::unexpected(CommandRefusal::Invalid);
+    std::set<core::LineId> touched;
+    for (const auto &[id, _] : changes)
+        touched.insert(id);
+    return session.run(Command{"Interpolate across Lines", session.revision(), touched, [&](core::Document &d) {
+        for (const auto &[id, text] : changes)
+            if (!d.editLine(id, [&](core::LineRecord &l) { l.text = text; }))
+                return false;
+        return true;
+    }});
 }
 
 }

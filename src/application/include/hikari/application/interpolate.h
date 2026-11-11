@@ -1,5 +1,7 @@
 #pragma once
 
+#include "hikari/application/edit_session.h"
+#include "hikari/application/grid_commands.h"
 #include "hikari/core/style.h"
 
 #include <cstddef>
@@ -36,6 +38,8 @@ struct Change {
     std::size_t at = 0; // characters into the text without tags
     std::string from, to; // as written: "\1c&H0000FF&"
     Skip skip = Skip::None;
+    std::string name; // as the Lines spell it: "c" for key "1c"
+    std::string before; // up to 8 characters of the text the block comes before; empty for the start block
 };
 
 enum class Problem { TooFewLines, NothingChanges };
@@ -49,6 +53,16 @@ struct Plan {
 };
 
 std::expected<Plan, Problem> plan(std::span<const LineIn> lines, const Options &options);
+
+// The shown selected Lines in Grid order, with their Style, length and default position.
+struct Run {
+    std::vector<core::LineId> ids;
+    std::vector<LineIn> lines;
+};
+Run selectedRun(const EditSession &session, const LineVisible &visible = {});
+
+// The plan's texts written to the run's Lines as one "Interpolate across Lines" step.
+std::expected<void, CommandRefusal> applyPlan(EditSession &session, const Run &run, const Plan &plan);
 
 // line0's Cascade Transforms: the Line's \t run back to back over `durationMs`.
 std::string cascadeTransforms(std::string_view text, double durationMs);

@@ -5535,8 +5535,7 @@
    "legacy": [],
    "surfaces": [
     "grid-menu"
-   ],
-   "pending": "AU22 #856"
+   ]
   },
   {
    "role": "import-lyrics",
