@@ -1,0 +1,98 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>AU14 Text on path</title>
+<style>
+:root{--bg:#E5E9EC;--panel:#F9FAFB;--raised:#EDF0F3;--field:#FFFFFF;--text:#202832;--muted:#526170;--line:#AAB5BE;--accent:#1D5BA8;--onAccent:#FFFFFF;--select:#D6DFEB;--warn:#8A5A00;--handle:#C0392B}
+body.dark{--bg:#171B20;--panel:#20262D;--raised:#29313A;--field:#171D24;--text:#E8EDF2;--muted:#A5B1BD;--line:#414B57;--accent:#A6C8F2;--onAccent:#101D2C;--select:#303D4C;--warn:#E0A030;--handle:#E5534B}
+body.highContrastWhite{--bg:#FFFFFF;--panel:#FFFFFF;--raised:#EBEBEB;--field:#FFFFFF;--text:#000000;--muted:#1A1A1A;--line:#000000;--accent:#0037B3;--onAccent:#FFFFFF;--select:#C9DAF8;--warn:#6B4500;--handle:#B00000}
+body.highContrastBlack{--bg:#000000;--panel:#080808;--raised:#151515;--field:#000000;--text:#FFFFFF;--muted:#EEEEEE;--line:#FFFFFF;--accent:#FFFF00;--onAccent:#000000;--select:#253F60;--warn:#FFD54A;--handle:#FF6060}
+*{box-sizing:border-box}
+body{margin:0;padding:24px;background:var(--bg);color:var(--text);font:13px/1.4 "Inter","Noto Sans",sans-serif;display:flex;gap:24px;align-items:flex-start;width:1340px}
+.pane{width:634px;background:var(--panel);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.cap{padding:8px 12px;border-bottom:1px solid var(--line);color:var(--muted)}
+.stage{display:flex}
+.rail{width:36px;background:var(--raised);border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 0}
+.ib{width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:4px;color:var(--text)}
+.ib svg{width:16px;height:16px}
+.ib svg #accent{color:var(--accent)}
+.ib.on{background:var(--select);outline:1px solid var(--accent)}
+.video{position:relative;width:596px;height:336px;background:#0E1116;overflow:hidden}
+.video svg.scene{position:absolute;inset:0}
+.notice{position:absolute;left:12px;right:12px;bottom:10px;background:rgba(0,0,0,.72);color:#FFD54A;border:1px solid #FFD54A;border-radius:4px;padding:5px 9px;font-size:12px}
+.bar{display:flex;align-items:center;gap:4px;padding:6px 6px;white-space:nowrap;border-top:1px solid var(--line);background:var(--raised);flex-wrap:wrap}
+.sep{width:1px;height:20px;background:var(--line);margin:0 2px}
+.lbl{color:var(--muted)}
+.field{background:var(--field);border:1px solid var(--line);border-radius:4px;padding:2px 6px;min-width:44px;font-family:"JetBrains Mono","DejaVu Sans Mono",monospace;font-size:12px}
+.tg{padding:3px 7px;border:1px solid var(--line);border-radius:4px;background:var(--panel)}
+.tg.on{background:var(--accent);color:var(--onAccent);border-color:var(--accent)}
+.cb{width:15px;height:15px;border:1.5px solid var(--line);border-radius:3px;display:inline-block;vertical-align:middle;background:var(--field);position:relative}
+.cb.on{background:var(--accent);border-color:var(--accent)}
+.cb.on::after{content:"";position:absolute;left:4px;top:1px;width:4px;height:8px;border:solid var(--onAccent);border-width:0 2px 2px 0;transform:rotate(45deg)}
+.check{display:inline-flex;gap:5px;align-items:center}
+.btn{padding:3px 12px;border:1px solid var(--line);border-radius:4px;background:var(--panel)}
+.btn.primary{background:var(--accent);color:var(--onAccent);border-color:var(--accent)}
+.grow{flex:1}
+.res{padding:6px 10px;border-top:1px solid var(--line);font-family:"JetBrains Mono","DejaVu Sans Mono",monospace;font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+</style></head>
+<body>
+<div class="pane" id="p1">
+  <div class="cap">Latin, centred on the Line's vector clip. 15 graphemes become 15 Lines; the original is commented.</div>
+  <div class="stage"><div class="rail"></div><div class="video"><svg class="scene" viewBox="0 0 596 336"></svg></div></div>
+  <div class="bar">
+    <span class="ib" title="Left">@align-left</span><span class="ib on" title="Centre">@align-center</span><span class="ib" title="Right">@align-right</span><span class="tg">Spread</span>
+    <span class="sep"></span><span class="lbl">Offset</span><span class="field">0</span>
+    <span class="sep"></span><span class="check"><span class="cb on"></span>Rotate</span>
+    <span class="tg">Reverse</span>
+    <span class="sep"></span><span class="check"><span class="cb"></span>Slide</span>
+    <span class="grow"></span><span class="btn primary">Apply</span>
+  </div>
+  <div class="res">{\an2\pos(131.92,251.36)\frz47.12}I · {\an2\pos(139.6,241.75)\frz43.5}t · {\an2\pos(160.42,221.73)\frz36.94}r …</div>
+</div>
+<div class="pane" id="p2">
+  <div class="cap">Thai on a drawn two-segment path, sliding left to right. Marks stay on their base character.</div>
+  <div class="stage"><div class="rail"></div><div class="video"><svg class="scene" viewBox="0 0 596 336"></svg><div class="notice">The text is 38 px longer than the path. The last graphemes continue along its end.</div></div></div>
+  <div class="bar">
+    <span class="ib" title="Left">@align-left</span><span class="ib" title="Centre">@align-center</span><span class="ib" title="Right">@align-right</span><span class="tg on">Spread</span>
+    <span class="sep"></span><span class="lbl">Offset</span><span class="field">0</span>
+    <span class="sep"></span><span class="check"><span class="cb on"></span>Rotate</span>
+    <span class="tg">Reverse</span>
+    <span class="sep"></span><span class="check"><span class="cb on"></span>Slide</span><span class="field" title="Frames a step">2 fr</span>
+    <span class="grow"></span><span class="btn primary">Apply</span>
+  </div>
+  <div class="res">48 frames × 9 graphemes = 432 Lines · frame 1 of 48 shown</div>
+</div>
+<script>
+const ICONS={"tool-crosshair": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 16 16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"8\" cy=\"8\" r=\"4\"/><path d=\"M8 1.5v3M8 11.5v3M1.5 8h3M11.5 8h3\"/><g id=\"accent\"><circle cx=\"8\" cy=\"8\" r=\"1\" fill=\"currentColor\" stroke=\"none\"/></g></svg>", "tool-move": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 16 16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><g id=\"accent\"><circle cx=\"3.5\" cy=\"8\" r=\"2\"/></g><path d=\"M6.5 8h8M12.5 6l2 2-2 2\"/></svg>", "tool-rotate-z": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 16 16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M13.5 8a5.5 5.5 0 1 1-5.5-5.5\"/><path d=\"M8 1l2.5 1.5L8 4z\" fill=\"currentColor\"/><g id=\"accent\"><circle cx=\"8\" cy=\"8\" r=\"1.5\" fill=\"currentColor\" stroke=\"none\"/></g></svg>", "tool-scale": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 16 16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"1.5\" y=\"8.5\" width=\"6\" height=\"6\" rx=\"1\"/><path d=\"M7.5 8.5l6-6M10 2.5h3.5V6\"/><g id=\"accent\"><path d=\"M1.5 5.5v-3a1 1 0 0 1 1-1h3M14.5 10.5v3a1 1 0 0 1-1 1h-3\"/></g></svg>", "tool-clip-rect": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 16 16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 2.5h8M4 13.5h8M2.5 4v8M13.5 4v8\"/><g id=\"accent\"><rect x=\"1\" y=\"1\" width=\"3\" height=\"3\" fill=\"currentColor\" stroke=\"none\"/><rect x=\"12\" y=\"1\" width=\"3\" height=\"3\" fill=\"currentColor\" stroke=\"none\"/><rect x=\"1\" y=\"12\" width=\"3\" height=\"3\" fill=\"currentColor\" stroke=\"none\"/><rect x=\"12\" y=\"12\" width=\"3\" height=\"3\" fill=\"currentColor\" stroke=\"none\"/></g></svg>", "tool-clip-vector": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 16 16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M3 3.5l9.5 1.5 1 8-9 1.5z\"/><g id=\"accent\"><rect x=\"1.5\" y=\"2\" width=\"3\" height=\"3\" fill=\"currentColor\" stroke=\"none\"/><rect x=\"11\" y=\"3.5\" width=\"3\" height=\"3\" fill=\"currentColor\" stroke=\"none\"/><rect x=\"12\" y=\"11.5\" width=\"3\" height=\"3\" fill=\"currentColor\" stroke=\"none\"/><rect x=\"3\" y=\"12.5\" width=\"3\" height=\"3\" fill=\"currentColor\" stroke=\"none\"/></g></svg>", "tool-drawing": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 16 16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M8 1.5l4.5 6.5-1.5 6.5h-6L3.5 8z\"/><path d=\"M8 1.5v6\"/><g id=\"accent\"><circle cx=\"8\" cy=\"9\" r=\"1.25\" fill=\"currentColor\" stroke=\"none\"/></g></svg>", "tool-gradient": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 16 16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"1.5\" y=\"2.5\" width=\"13\" height=\"11\" rx=\"1\"/><g id=\"accent\"><rect x=\"2\" y=\"3\" width=\"3.5\" height=\"10\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"7\" cy=\"5\" r=\"0.75\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"9\" cy=\"5\" r=\"0.5\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"7\" cy=\"8\" r=\"0.75\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"9\" cy=\"8\" r=\"0.5\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"7\" cy=\"11\" r=\"0.75\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"9\" cy=\"11\" r=\"0.5\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"8\" cy=\"6.5\" r=\"0.75\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"8\" cy=\"9.5\" r=\"0.75\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"11\" cy=\"6.5\" r=\"0.5\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"11\" cy=\"9.5\" r=\"0.5\" fill=\"currentColor\" stroke=\"none\"/></g></svg>", "tool-text-on-path": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 16 16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><g id=\"accent\"><path d=\"M1.5 14C4 14 5 8.5 8 8.5s4 5.5 6.5 5.5\"/></g><path d=\"M5.5 8.5L8 2L10.5 8.5M7.25 6L8.75 6\"/></svg>", "align-left": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 16 16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><g id=\"accent\"><path d=\"M1.5 1v14\"/></g><rect x=\"3.5\" y=\"2.5\" width=\"10\" height=\"4\" rx=\"1\"/><rect x=\"3.5\" y=\"9.5\" width=\"6\" height=\"4\" rx=\"1\"/></svg>", "align-center": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 16 16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><g id=\"accent\"><path d=\"M8 1v14\"/></g><rect x=\"2.5\" y=\"2.5\" width=\"11\" height=\"4\" rx=\"1\"/><rect x=\"4.5\" y=\"9.5\" width=\"7\" height=\"4\" rx=\"1\"/></svg>", "align-right": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 16 16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><g id=\"accent\"><path d=\"M14.5 1v14\"/></g><rect x=\"2.5\" y=\"2.5\" width=\"10\" height=\"4\" rx=\"1\"/><rect x=\"6.5\" y=\"9.5\" width=\"6\" height=\"4\" rx=\"1\"/></svg>"};
+const t=new URLSearchParams(location.search).get('theme');if(t)document.body.className=t;
+document.querySelectorAll('.ib').forEach(e=>{if(e.textContent.startsWith('@'))e.innerHTML=ICONS[e.textContent.slice(1)]});
+const railIcons=["tool-crosshair","tool-move","tool-rotate-z","tool-scale","tool-clip-rect","tool-clip-vector","tool-drawing","tool-gradient","tool-text-on-path"];
+document.querySelectorAll('.rail').forEach(r=>railIcons.forEach(n=>{const d=document.createElement('span');d.className='ib'+(n=="tool-text-on-path"?' on':'');d.innerHTML=ICONS[n];r.appendChild(d)}));
+const NS="http://www.w3.org/2000/svg";
+function el(p,n,a){const e=document.createElementNS(NS,n);for(const k in a)e.setAttribute(k,a[k]);p.appendChild(e);return e}
+function cubic(p,t){const u=1-t;return[u*u*u*p[0]+3*u*u*t*p[2]+3*u*t*t*p[4]+t*t*t*p[6],u*u*u*p[1]+3*u*u*t*p[3]+3*u*t*t*p[5]+t*t*t*p[7]]}
+function table(segs){const pts=[];for(const s of segs)for(let i=(pts.length?1:0);i<=200;i++)pts.push(cubic(s,i/200));const L=[0];for(let i=1;i<pts.length;i++)L.push(L[i-1]+Math.hypot(pts[i][0]-pts[i-1][0],pts[i][1]-pts[i-1][1]));return{pts,L,len:L[L.length-1]}}
+function at(tb,s){const{pts,L,len}=tb;if(s>=len){const a=pts[pts.length-2],b=pts[pts.length-1],ang=Math.atan2(b[1]-a[1],b[0]-a[0]);return[b[0]+(s-len)*Math.cos(ang),b[1]+(s-len)*Math.sin(ang),ang]}let i=1;while(L[i]<s)i++;const f=(s-L[i-1])/(L[i]-L[i-1]),a=pts[i-1],b=pts[i];return[a[0]+f*(b[0]-a[0]),a[1]+f*(b[1]-a[1]),Math.atan2(b[1]-a[1],b[0]-a[0])]}
+function scene(svg,segs,text,font,mode,offset){
+  el(svg,'rect',{x:0,y:0,width:596,height:336,fill:'#1B2330'});el(svg,'rect',{x:0,y:220,width:596,height:116,fill:'#2A2A22'});
+  let d=`M${segs[0][0]} ${segs[0][1]}`;for(const s of segs)d+=` C${s[2]} ${s[3]} ${s[4]} ${s[5]} ${s[6]} ${s[7]}`;
+  el(svg,'path',{d,fill:'none',stroke:'#E5534B','stroke-width':1.5,'stroke-dasharray':'5 4'});
+  for(const s of segs){el(svg,'line',{x1:s[0],y1:s[1],x2:s[2],y2:s[3],stroke:'#E5534B','stroke-width':1,opacity:.6});el(svg,'line',{x1:s[6],y1:s[7],x2:s[4],y2:s[5],stroke:'#E5534B','stroke-width':1,opacity:.6});
+    for(const [x,y] of [[s[0],s[1]],[s[6],s[7]]])el(svg,'rect',{x:x-4,y:y-4,width:8,height:8,fill:'none',stroke:'#E5534B','stroke-width':1.5});
+    for(const [x,y] of [[s[2],s[3]],[s[4],s[5]]])el(svg,'circle',{cx:x,cy:y,r:3.5,fill:'#E5534B'});}
+  const tb=table(segs);
+  const g=[...new Intl.Segmenter('th',{granularity:'grapheme'}).segment(text)].map(x=>x.segment);
+  const m=el(svg,'text',{'font-size':font.size,'font-family':font.family,visibility:'hidden'});
+  const w=g.map(c=>{m.textContent=c;return c==' '?font.size*0.3:m.getComputedTextLength()});
+  const total=w.reduce((a,b)=>a+b,0);
+  let s=mode=='centre'?(tb.len-total)/2+offset:offset, gap=0;
+  if(mode=='spread'){gap=g.length>1?(tb.len-offset-total)/(g.length-1):0;if(gap<0)gap=0}
+  g.forEach((c,i)=>{const mid=s+w[i]/2;if(c!=' '){const[x,y,a]=at(tb,mid);const e=el(svg,'text',{x:0,y:0,'font-size':font.size,'font-family':font.family,'text-anchor':'middle',fill:'#FFFFFF',stroke:'#101010','stroke-width':2.2,'paint-order':'stroke',transform:`translate(${x.toFixed(2)} ${y.toFixed(2)}) rotate(${(a*180/Math.PI).toFixed(2)})`});e.textContent=c;
+      el(svg,'circle',{cx:x,cy:y,r:1.6,fill:'#7FD1FF'});}
+    s+=w[i]+gap});
+  return{n:g.filter(c=>c!=' ').length,over:Math.round(total+offset-tb.len)};
+}
+scene(document.querySelector('#p1 svg.scene'),[[110,270,170,90,420,60,500,250]],"It really works!",{size:30,family:'"Noto Sans",sans-serif'},'centre',0);
+const r2=scene(document.querySelector('#p2 svg.scene'),[[90,215,120,150,190,135,240,165],[240,165,265,180,285,190,305,185]],"สวัสดีครับ ที่นี่",{size:50,family:'"Noto Sans Thai","Noto Sans",sans-serif'},'spread',0);
+if(r2.over>0)document.querySelector('#p2 .notice').textContent=`The text is ${r2.over} px longer than the path. The last graphemes continue straight on from its end.`;else document.querySelector('#p2 .notice').remove();
+document.querySelector('#p2 .res').textContent=`48 frames ÷ 2 = 24 steps × ${r2.n} graphemes = ${24*r2.n} Lines · step 1 of 24 shown`;
+</script>
+</body></html>
