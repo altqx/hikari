@@ -7466,6 +7466,54 @@ Failed to copy %2 fonts.</source>
         <translation>வரிகளுக்கு இடையே இடைக்கணிப்பு…</translation>
     </message>
     <message>
+        <source>Insert balanced break</source>
+        <translation>சமநிலை வரி முறிவைச் செருகு</translation>
+    </message>
+    <message>
+        <source>Move break left</source>
+        <translation>முறிவை இடப்புறம் நகர்த்து</translation>
+    </message>
+    <message>
+        <source>Move break right</source>
+        <translation>முறிவை வலப்புறம் நகர்த்து</translation>
+    </message>
+    <message>
+        <source>Remove breaks</source>
+        <translation>வரி முறிவுகளை நீக்கு</translation>
+    </message>
+    <message>
+        <source>Wrap only at \N (\q2)</source>
+        <translation>\N இல் மட்டும் மடி (\q2)</translation>
+    </message>
+    <message>
+        <source>Change case to lowercase</source>
+        <translation>சிற்றெழுத்துக்கு மாற்று</translation>
+    </message>
+    <message>
+        <source>Change case to UPPERCASE</source>
+        <translation>பேரெழுத்துக்கு மாற்று</translation>
+    </message>
+    <message>
+        <source>Change case to Title Case</source>
+        <translation>தலைப்பு வடிவத்துக்கு மாற்று</translation>
+    </message>
+    <message>
+        <source>Change case to Sentence case</source>
+        <translation>வாக்கிய வடிவத்துக்கு மாற்று</translation>
+    </message>
+    <message>
+        <source>Change text to full-width</source>
+        <translation>உரையை முழு அகலத்துக்கு மாற்று</translation>
+    </message>
+    <message>
+        <source>Change text to half-width</source>
+        <translation>உரையை அரை அகலத்துக்கு மாற்று</translation>
+    </message>
+    <message>
+        <source>Swap dialogue alternatives</source>
+        <translation>உரையாடல் மாற்றுகளை இடமாற்று</translation>
+    </message>
+    <message>
         <source>Move tab to new window</source>
         <translation>தாவலை புதிய சாளரத்திற்கு நகர்த்து</translation>
     </message>
@@ -20309,6 +20357,65 @@ Styles deleted:
     <message>
         <source>The templater stopped before it finished.</source>
         <translation>வார்ப்புரு இயக்கி முடிப்பதற்கு முன்பே நின்றுவிட்டது.</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Text</name>
+    <message>
+        <source>Swap dialogue alternatives</source>
+        <translation>உரையாடல் மாற்றுகளை இடமாற்று</translation>
+    </message>
+    <message>
+        <source>Line breaks</source>
+        <translation>வரி முறிவுகள்</translation>
+    </message>
+    <message>
+        <source>Insert balanced break</source>
+        <translation>சமநிலை வரி முறிவைச் செருகு</translation>
+    </message>
+    <message>
+        <source>Move break left</source>
+        <translation>முறிவை இடப்புறம் நகர்த்து</translation>
+    </message>
+    <message>
+        <source>Move break right</source>
+        <translation>முறிவை வலப்புறம் நகர்த்து</translation>
+    </message>
+    <message>
+        <source>Remove breaks</source>
+        <translation>வரி முறிவுகளை நீக்கு</translation>
+    </message>
+    <message>
+        <source>Wrap only at %1 (%2)</source>
+        <translation>%1 இல் மட்டும் மடி (%2)</translation>
+    </message>
+    <message>
+        <source>Change case</source>
+        <translation>எழுத்து வடிவை மாற்று</translation>
+    </message>
+    <message>
+        <source>lowercase</source>
+        <translation>சிற்றெழுத்து</translation>
+    </message>
+    <message>
+        <source>UPPERCASE</source>
+        <translation>பேரெழுத்து</translation>
+    </message>
+    <message>
+        <source>Title Case</source>
+        <translation>தலைப்பு வடிவம்</translation>
+    </message>
+    <message>
+        <source>Sentence case</source>
+        <translation>வாக்கிய வடிவம்</translation>
+    </message>
+    <message>
+        <source>Full-width</source>
+        <translation>முழு அகலம்</translation>
+    </message>
+    <message>
+        <source>Half-width</source>
+        <translation>அரை அகலம்</translation>
     </message>
 </context>
 <context>

@@ -21702,7 +21702,7 @@ private slots:
                                      "Video", "Audio", "Conversion", "Script properties", "Automation", "Shortcuts",
                                      "AI", "Updates and privacy"}));
         QVERIFY(dialogItem("settingsDialog", "settingsPageHotkeys"));
-        QCOMPARE(hotkeyRows().size(), 338);
+        QCOMPARE(hotkeyRows().size(), 350);
         QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(),
                  QStringLiteral("Global Accept the timing assistant\u2019s suggestion"));
         QCOMPARE(application->hotkeys().selected(), 0);

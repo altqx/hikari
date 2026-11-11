@@ -110,6 +110,7 @@ qt_target_qml_sources(hikari_ui QML_FILES VideoContextMenu.qml AspectRatioDialog
     VideoVolumeSlider.qml)
 qt_target_qml_sources(hikari_ui QML_FILES VideoFollowChoices.qml)
 qt_target_qml_sources(hikari_ui QML_FILES AudioOutputMenu.qml MenuRadioItem.qml MenuHeading.qml)
+qt_target_qml_sources(hikari_ui QML_FILES LineBreaksMenu.qml ChangeCaseMenu.qml)
 qt_target_qml_sources(hikari_ui QML_FILES AudioSliderRow.qml)
 qt_target_qml_sources(hikari_ui QML_FILES AudioTapBar.qml TapCalibrationWindow.qml Keycap.qml KeycapSentence.qml)
 qt_target_qml_sources(hikari_ui QML_FILES TranslationToggles.qml OriginalTextTools.qml RunStrip.qml TranslationModeQuestion.qml
