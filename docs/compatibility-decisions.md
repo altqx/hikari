@@ -155,6 +155,19 @@ Interpolate across lines does natively what lyger.FbfTransform 2.0.1 and l0.Casc
 - **I6, transforms.** `\t` lists of the same shape at both ends are interpolated. FbfTransform only strips its tags from `\t`.
 - **I7, cascade.** Cascade transforms re-times each Line of the run as line0's script does, after the interpolation, with whole milliseconds.
 
+## AU21-position-commands
+
+Change alignment, Align and distribute, Position to margins, Margins to position, Phantom, the Position shifter's X and Y, the Cycle commands and Copy columns' Tags group do natively what these scripts do: ILL.ChangeAlign, chrolo.ChangeAlignment, phos.AlignAndDistribute, petzku.PosToMargin, petzku.Phantom, ua.Relocator's Teleportation, ua.Cycles, aka.Cycles and ua.MultiCopy. The owner approved the behaviour record and the mockups on [AU21 #855](https://github.com/altqx/hikari/issues/855) (Q309–Q316, 2026-11-11).
+
+- **P1, alignment rounding.** Change alignment writes positions to 2 decimals, as Relocator does, rather than ILL's whole pixels, so the render doesn't move by half a pixel.
+- **P2, align targets.** Lines align to the active line or the video frame. phos's last-line, custom-line, clip, PlayRes and LayoutRes targets aren't ported. The box is the Hydra outline's, without border and shadow.
+- **P3, distribute order.** Distribute orders the lines by their position on the axis and keeps the outermost two, not the first and last in Grid order as phos does.
+- **P4, margins to position.** A line that already has `\pos` or `\move` is left as it is. petzku's script adds a second `\pos` in front.
+- **P5, phantom selection.** The text selected in the Line editor stands for the cursor variant's selection, on each `\N` row it covers.
+- **P6, numeric shift.** The shifter's X and Y shift the toggled kinds by the same amount in every target, one step per Enter. Relocator's Warp (a growing shift per line) isn't ported.
+- **P7, cycle lists.** Six tags (`\blur`, `\bord`, `\shad`, `\alpha`, `\an`, `\fsp`) with ua.Cycles' lists as the defaults, edited in Settings > Editing. Cycle back replaces ua's `{switch}` marker and aka's actor flag. aka's other tags and its effective-tag reading aren't ported; `\an` cycles without keeping the position, as in ua. A value off the list goes to the nearest larger value on it (nearest smaller for Cycle back), where ua takes the first larger one in list order.
+- **P8, tag columns.** The Tags group reads and writes the start block only, as MultiCopy does. A line with nothing to copy copies `{}`, so the rows stay in step. MultiCopy's loop paste isn't ported: extra copied rows are ignored, as for the other columns.
+
 ## TH2-unicode-graphemes
 
 `aegisub.unicode` has `graphemes(s)`, an iterator over UAX #29 extended grapheme clusters that returns each cluster and its index, as `chars` returns code points. It matches the app's own cluster splitting (PCRE2 `\X`), so `กิน` gives `กิ` and `น`, and `น้ำ` stays one cluster. Aegisub 3.5.1 has no such function. When the native part is missing, for example with HikariSub's `unicode.moon` in another host, it falls back to joining combining marks, the Thai vowel and tone marks and emoji ZWJ sequences onto the previous character. `aegisub.re`'s `\X` is unchanged. [TH2 #830](https://github.com/altqx/hikari/issues/830), owner decision Q142.

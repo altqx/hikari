@@ -149,6 +149,7 @@ struct ToolValue {
     // value a drag over the video changes.
     std::uint32_t swatch = 0;
     bool marked = false;
+    std::string iconRole;
 };
 
 // A value's text as a number (a plain decimal, spaces around it and a

@@ -62,6 +62,7 @@ set_source_files_properties(visual_view.cpp visual_crosshair.cpp visual_script.c
     "$<$<CXX_COMPILER_ID:GNU,Clang>:-ffp-contract=off>;$<$<CXX_COMPILER_ID:MSVC>:/fp:precise>")
 target_sources(hikari_application PRIVATE settings_import.cpp settings_import_tables.cpp)
 target_sources(hikari_application PRIVATE font_catalogs.cpp font_families.cpp)
+target_sources(hikari_application PRIVATE position_commands.cpp)
 target_sources(hikari_application PRIVATE visual_vector.cpp visual_clip.cpp)
 target_sources(hikari_application PRIVATE visual_perspective.cpp visual_gradient.cpp)
 set_source_files_properties(visual_vector.cpp visual_clip.cpp PROPERTIES COMPILE_OPTIONS

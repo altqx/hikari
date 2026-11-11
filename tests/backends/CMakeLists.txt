@@ -385,6 +385,10 @@ hikari_add_gtest(hikari_backends_visual_drawing_render_tests SOURCES visual_draw
 target_compile_definitions(hikari_backends_visual_drawing_render_tests PRIVATE
     HIKARI_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-${HIKARI_QT_VERSION}/quickcontrols/wearable/WearableStyle/fonts/TitilliumWeb-Regular.ttf")
 
+hikari_add_gtest(hikari_backends_position_commands_render_tests SOURCES position_commands_render_tests.cpp
+    LIBRARIES hikari_backends hikari_application Qt6::Core LABELS backends)
+target_compile_definitions(hikari_backends_position_commands_render_tests PRIVATE
+    HIKARI_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-${HIKARI_QT_VERSION}/quickcontrols/wearable/WearableStyle/fonts/TitilliumWeb-Regular.ttf")
 hikari_add_gtest(hikari_backends_visual_move_render_tests SOURCES visual_move_render_tests.cpp
     LIBRARIES hikari_backends hikari_application Qt6::Gui LABELS backends)
 target_compile_definitions(hikari_backends_visual_move_render_tests PRIVATE

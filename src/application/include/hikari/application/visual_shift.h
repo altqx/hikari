@@ -23,6 +23,10 @@ public:
     Overlay overlay(const VisualHost &host) const override;
     std::vector<ToolOption> options(const VisualHost &host) const override;
     bool setOption(const std::string &name, int value, VisualHost &host) override;
+    // shiftX and shiftY: Enter shifts every toggled kind of every target by both, one step; they keep their values.
+    std::vector<ToolValue> values(const VisualHost &host) const override;
+    bool setValue(const std::string &name, const std::u16string &text, VisualHost &host,
+                  ValueEdit edit = ValueEdit::Commit) override;
 
     // Bit i for the i-th toggle.
     int toggled() const;
@@ -49,6 +53,7 @@ public:
 
 private:
     void changeTool(int tool, VisualHost &host);
+    bool shiftBy(double dx, double dy, VisualHost &host);
     void setCurVisual(VisualHost &host);
     // Moves every toggled element of the targets by the dragged element's offset.
     void changeInLines(bool all, VisualHost &host);
@@ -60,6 +65,7 @@ private:
     void drawShape(Overlay &out, const std::vector<transform::ClipPoint> &points, PointF drawingPos) const;
 
     std::array<bool, 6> m_toggled{true, false, false, false, false, false};
+    double m_shiftX = 0, m_shiftY = 0;
 
     float m_coeffW = 1, m_coeffH = 1;
     PointF m_zoomMove{0.f, 0.f}, m_zoomScale{1.f, 1.f};

@@ -47,5 +47,6 @@ HikariSub.Tracking	Perspective tracking: the Power-Pin dialog and its status
 HikariSub.Translation	Translation mode: its switch and toggles, translation files and matching
 HikariSub.Video	The video panel and full screen: playback, menus, streams, chapters, keyframes, dummy video, indexing, player errors
 HikariSub.VisualTools	The visual tools: rail, options, values, and the tag and shape editing dialogs
+HikariSub.Position	Position and alignment commands: change alignment, align and distribute, margins and position, phantom, and cycle values (AU21)
 HikariSub.Workspace	Panel docking: title bars and tabs, panel options and placement, saved layouts
 QGuiApplication	Qt's QT_LAYOUT_DIRECTION key, which Qt reads in this context (the catalog's layout direction)

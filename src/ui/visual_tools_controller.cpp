@@ -1157,7 +1157,8 @@ QVariantList VisualToolsController::valueMaps(const VisualTool &t) const
                                {QStringLiteral("unit"), visualToolText(v.unit)},
                                {QStringLiteral("step"), v.step},
                                {QStringLiteral("swatch"), v.swatch ? QColor::fromRgba(v.swatch).name() : QString()},
-                               {QStringLiteral("marked"), marks ? QVariant(v.marked) : QVariant()}});
+                               {QStringLiteral("marked"), marks ? QVariant(v.marked) : QVariant()},
+                               {QStringLiteral("iconRole"), QString::fromStdString(v.iconRole)}});
     return out;
 }
 
