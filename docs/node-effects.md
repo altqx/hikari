@@ -195,7 +195,7 @@ NE2 ([#424](https://github.com/altqx/hikari/issues/424)) edits a Document's grap
 - **Node panel.** The node's summary, its id (renamable), typed field editors, "From node › port" with Disconnect for each wired input, its values on the current source Line from the last run (`NodeValueTrace`), its timing and its problems.
 - **Preview.** While the mode is shown, the graph runs on the current source Line on every edit, with NE1's cache. The video draws that Line's output in place of its generated Lines, with the badge "Preview · line N · not applied"; Source lines has the eye and Loop the line. A graph with problems keeps the last run that worked, dimmed.
 - **Lua trust** is the Template editor's choice for the open Document: trusting the file's Lua in either one covers both.
-- **Presets.** "From a preset" lists the KE3 presets that exist as graphs under their Template-editor names: Classic fill, Bounce, Sparkles, Falling letters and Colour per line. NE3 adds the other five.
+- **Presets.** "From a preset" lists all ten KE3 presets ([karaoke presets](karaoke-presets.md)) as graphs, under their Template-editor names. Each graph writes the same Lines as its template, byte for byte (`hikari_application_node_effects_tests`), and uses only catalogue nodes, without Lua. Colour sweep, Glow and Echo have two emits, one per template Layer.
 
 ## On the Hikari API
 

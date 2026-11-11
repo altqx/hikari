@@ -82,7 +82,7 @@ quint64 HarperClient::check(const QString &text)
     if (!running())
         start();
     else
-        openNext();
+        openPending();
     return ticket;
 }
 
@@ -91,11 +91,15 @@ void HarperClient::cancel(quint64 ticket)
     const auto it = m_checks.find(ticket);
     if (it == m_checks.end())
         return;
-    // Closing an open text now could overlap the next didOpen, deadlocking harper-ls 3.0.0.
     if (it->second.opened)
-        it->second.cancelled = true;
-    else
-        m_checks.erase(it);
+        notify(QStringLiteral("textDocument/didClose"),
+               {{QStringLiteral("textDocument"), QJsonObject{{QStringLiteral("uri"), it->second.uri}}}});
+    m_checks.erase(it);
+}
+
+int HarperClient::openTexts() const
+{
+    return int(std::ranges::count_if(m_checks, [](const auto &c) { return c.second.opened; }));
 }
 
 void HarperClient::stop()
@@ -151,22 +155,21 @@ void HarperClient::notify(const QString &method, const QJsonObject &params)
     send({{QStringLiteral("method"), method}, {QStringLiteral("params"), params}});
 }
 
-void HarperClient::openNext()
+void HarperClient::openPending()
 {
-    // One text at a time: overlapping didOpen settings pulls deadlock harper-ls 3.0.0.
-    if (!m_ready || std::ranges::any_of(m_checks, [](const auto &c) { return c.second.opened; }))
+    if (!m_ready)
         return;
-    const auto next = std::ranges::find_if(m_checks, [](const auto &c) { return !c.second.opened; });
-    if (next == m_checks.end())
-        return;
-    auto &check = next->second;
-    check.opened = true;
-    notify(QStringLiteral("textDocument/didOpen"),
-           {{QStringLiteral("textDocument"),
-             QJsonObject{{QStringLiteral("uri"), check.uri},
-                         {QStringLiteral("languageId"), QStringLiteral("plaintext")},
-                         {QStringLiteral("version"), 1},
-                         {QStringLiteral("text"), check.text}}}});
+    for (auto &[ticket, check] : m_checks) {
+        if (check.opened)
+            continue;
+        check.opened = true;
+        notify(QStringLiteral("textDocument/didOpen"),
+               {{QStringLiteral("textDocument"),
+                 QJsonObject{{QStringLiteral("uri"), check.uri},
+                             {QStringLiteral("languageId"), QStringLiteral("plaintext")},
+                             {QStringLiteral("version"), 1},
+                             {QStringLiteral("text"), check.text}}}});
+    }
 }
 
 void HarperClient::readOutput()
@@ -231,7 +234,7 @@ void HarperClient::handle(const QJsonObject &message)
         }
         notify(QStringLiteral("initialized"), {});
         m_ready = true;
-        openNext();
+        openPending();
         return;
     }
     actions(ticket, finding, message.value(QStringLiteral("result")));
@@ -259,7 +262,7 @@ void HarperClient::diagnostics(const QJsonObject &params)
         check.findings.append(
             {start, end, diagnostic.value(QStringLiteral("code")).toVariant().toString(), message, {}, false});
     }
-    if (check.findings.isEmpty() || check.cancelled) {
+    if (check.findings.isEmpty()) {
         finish(ticket);
         return;
     }
@@ -315,13 +318,10 @@ void HarperClient::finish(quint64 ticket)
     if (it == m_checks.end())
         return;
     const QList<GrammarFinding> findings = std::move(it->second.findings);
-    const bool cancelled = it->second.cancelled;
     notify(QStringLiteral("textDocument/didClose"),
            {{QStringLiteral("textDocument"), QJsonObject{{QStringLiteral("uri"), it->second.uri}}}});
     m_checks.erase(it);
-    openNext();
-    if (!cancelled)
-        emit checked(ticket, findings);
+    emit checked(ticket, findings);
 }
 
 void HarperClient::lost(const QString &message)

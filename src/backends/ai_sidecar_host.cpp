@@ -132,8 +132,12 @@ AiSidecarHost::AiSidecarHost(Options options, api::Api *hikari, api::Caller call
     m_handshakeTimer.setSingleShot(true);
     m_startTimer.setSingleShot(true);
     m_killTimer.setSingleShot(true);
-    connect(&m_handshakeTimer, &QTimer::timeout, this,
-            [this] { lose(QStringLiteral("the sidecar didn't answer initialize in time")); });
+    connect(&m_handshakeTimer, &QTimer::timeout, this, [this] {
+        if (m_process && m_process->state() != QProcess::NotRunning)
+            m_process->waitForReadyRead(0);
+        if (m_state == State::Starting)
+            lose(QStringLiteral("the sidecar didn't answer initialize in time"));
+    });
     connect(&m_startTimer, &QTimer::timeout, this, &AiSidecarHost::startProcess);
     connect(&m_killTimer, &QTimer::timeout, this, [this] {
         killTree();

@@ -7964,6 +7964,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Obsługa języka tajskiego w skryptach automatyzacji</translation>
     </message>
     <message>
+        <source>No licence stated</source>
+        <translation>Brak podanej licencji</translation>
+    </message>
+    <message>
         <source>Translation</source>
         <translation>Tłumaczenie</translation>
     </message>

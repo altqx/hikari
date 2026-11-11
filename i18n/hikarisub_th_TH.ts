@@ -7860,6 +7860,10 @@ Failed to copy %2 fonts.</source>
         <translation>การรองรับภาษาไทยในสคริปต์อัตโนมัติ</translation>
     </message>
     <message>
+        <source>No licence stated</source>
+        <translation>ไม่ได้ระบุสัญญาอนุญาต</translation>
+    </message>
+    <message>
         <source>Translation</source>
         <translation>การแปล</translation>
     </message>
