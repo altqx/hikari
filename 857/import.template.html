@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Import lyrics</title>
+<style>
+:root, [data-theme="dark"] {
+  --bg:#171B20; --panel:#20262D; --raised:#29313A; --field:#171D24; --text:#E8EDF2; --muted:#A5B1BD; --line:#414B57;
+  --accent:#9CDBC9; --onaccent:#102C24; --select:#304C47; --focus:#E8EDF2; --danger:#FFADAD; --warning:#E0A030; --success:#4DBA4D; --disabled:#75818D; --control:#7A8691;
+}
+[data-theme="light"] {
+  --bg:#E5E9EC; --panel:#F9FAFB; --raised:#EDF0F3; --field:#FFFFFF; --text:#202832; --muted:#526170; --line:#AAB5BE;
+  --accent:#145C4C; --onaccent:#FFFFFF; --select:#D6EBE4; --focus:#202832; --danger:#A51F31; --warning:#8A5A00; --success:#008000; --disabled:#74808B; --control:#76828D;
+}
+[data-theme="hcw"] {
+  --bg:#FFFFFF; --panel:#FFFFFF; --raised:#EBEBEB; --field:#FFFFFF; --text:#000000; --muted:#1A1A1A; --line:#000000;
+  --accent:#0037B3; --onaccent:#FFFFFF; --select:#C9DAF8; --focus:#000000; --danger:#A00000; --warning:#6B4500; --success:#005A00; --disabled:#6E6E6E; --control:#000000;
+}
+[data-theme="hcb"] {
+  --bg:#000000; --panel:#080808; --raised:#151515; --field:#000000; --text:#FFFFFF; --muted:#EEEEEE; --line:#FFFFFF;
+  --accent:#FFFF00; --onaccent:#000000; --select:#253F60; --focus:#FFFFFF; --danger:#FFADAD; --warning:#FFD54A; --success:#7CFC7C; --disabled:#8C8C8C; --control:#FFFFFF;
+}
+* { box-sizing:border-box; }
+html { background:var(--bg); }
+body { margin:0; background:var(--bg); color:var(--text); font:13px/1.35 "Noto Sans","Noto Sans CJK SC","Segoe UI",system-ui,sans-serif; }
+svg { width:16px; height:16px; flex:none; display:block; }
+svg .acc { stroke:var(--accent); }
+svg .acc path[fill], svg .acc circle { fill:var(--accent); }
+.pick { display:flex; gap:6px; padding:12px 24px 0; }
+.pick button { font:inherit; color:var(--text); background:var(--raised); border:1px solid var(--line); border-radius:2px; padding:3px 10px; cursor:pointer; }
+.pick button[aria-pressed="true"] { background:var(--select); border-color:var(--accent); font-weight:600; }
+.shot .pick { display:none; }
+.sheet { padding:18px 24px 26px; display:grid; grid-template-columns:640px 640px; gap:18px 24px; align-items:start; width:1352px; }
+.col { display:flex; flex-direction:column; gap:18px; }
+.cap { font-size:12px; color:var(--muted); margin:0 0 6px; max-width:640px; }
+.cap b { color:var(--text); font-weight:600; }
+.head { grid-column:1 / -1; display:flex; align-items:baseline; gap:14px; }
+.head h1 { font-size:15px; margin:0; }
+.head span { color:var(--muted); font-size:12px; }
+.dlg { width:640px; background:var(--panel); border:1px solid var(--line); border-radius:4px; box-shadow:0 10px 30px rgba(0,0,0,.35); display:flex; flex-direction:column; overflow:visible; position:relative; }
+.title { height:32px; display:flex; align-items:center; gap:6px; padding:0 0 0 8px; font-weight:700; border-bottom:1px solid var(--line); }
+.title .sp { flex:1; }
+.title .x { width:40px; height:32px; display:flex; align-items:center; justify-content:center; }
+.page { padding:14px 18px 16px; }
+.foot { height:52px; display:flex; align-items:center; gap:8px; padding:0 14px; border-top:1px solid var(--line); }
+.foot .sp { flex:1; }
+.sec { border-top:1px solid var(--line); margin-top:12px; padding-top:12px; }
+.sec.first { border-top:0; margin-top:0; padding-top:0; }
+.sec > h3 { margin:0 0 8px; font-size:13px; }
+.row { display:flex; align-items:center; gap:8px; min-height:28px; }
+.row + .row { margin-top:6px; }
+.row .lab { width:120px; flex:none; }
+.row .ctl { flex:1; display:flex; align-items:center; gap:8px; min-width:0; }
+.note { color:var(--muted); font-size:12px; margin:3px 0 0 128px; }
+.note.flush { margin-left:0; }
+.radio { display:flex; align-items:center; gap:8px; min-height:24px; }
+.rb { width:16px; height:16px; border:1px solid var(--control); border-radius:8px; background:var(--field); display:inline-flex; align-items:center; justify-content:center; flex:none; }
+.rb.on::after { content:""; width:8px; height:8px; border-radius:4px; background:var(--accent); }
+.radio.dis { color:var(--disabled); } .radio.dis .rb { border-color:var(--disabled); }
+.btn { height:28px; padding:0 12px; display:inline-flex; align-items:center; gap:6px; border:1px solid var(--control); border-radius:2px; background:var(--raised); white-space:nowrap; flex:none; }
+.btn.primary { background:var(--accent); color:var(--onaccent); border-color:var(--accent); font-weight:600; }
+.btn.dis { color:var(--disabled); border-color:var(--disabled); background:var(--panel); font-weight:400; }
+.ring { outline:1px solid var(--focus); outline-offset:2px; }
+.field { height:28px; flex:1; min-width:0; display:flex; align-items:center; gap:6px; background:var(--field); border:1px solid var(--control); border-radius:2px; padding:0 8px; white-space:nowrap; overflow:hidden; }
+.mono { font-family:"JetBrains Mono","Cascadia Mono","DejaVu Sans Mono",monospace; font-size:12px; }
+.combo { height:28px; min-width:0; display:flex; align-items:center; gap:6px; background:var(--field); border:1px solid var(--control); border-radius:2px; padding:0 6px 0 8px; white-space:nowrap; }
+.combo .v { flex:1; overflow:hidden; text-overflow:ellipsis; }
+.combo .via { color:var(--muted); }
+.combo.open { border-color:var(--accent); box-shadow:inset 0 0 0 1px var(--accent); }
+.spin { height:28px; width:96px; display:flex; align-items:center; background:var(--field); border:1px solid var(--control); border-radius:2px; padding:0 8px; justify-content:space-between; }
+.spin .u { color:var(--muted); }
+.spin.dis { color:var(--disabled); border-color:var(--disabled); }
+.facts { display:grid; grid-template-columns:120px 1fr; gap:4px 8px; }
+.facts .k { color:var(--text); }
+.facts .vv { color:var(--muted); }
+.ok { color:var(--success); }
+.prev { border:1px solid var(--line); border-radius:2px; background:var(--field); }
+.prev table { border-collapse:collapse; width:100%; }
+.prev th, .prev td { text-align:left; padding:3px 8px; white-space:nowrap; font-size:12px; }
+.prev th { color:var(--muted); font-weight:600; border-bottom:1px solid var(--line); background:var(--raised); }
+.prev td.t { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:380px; }
+.prev td.tm { font-family:"JetBrains Mono","Cascadia Mono","DejaVu Sans Mono",monospace; font-size:11px; }
+.prev tr.more td { color:var(--muted); }
+.k1 { color:var(--muted); }
+.menu { position:absolute; z-index:3; background:var(--raised); border:1px solid var(--line); border-radius:3px; box-shadow:0 8px 24px rgba(0,0,0,.4); padding:4px 0; }
+.menu .mi { height:28px; display:flex; align-items:center; gap:10px; padding:0 12px; white-space:nowrap; }
+.menu .mi.hot { background:var(--select); }
+.menu .mi.on { font-weight:600; }
+.menu .mi .k { margin-left:auto; color:var(--muted); font-size:12px; padding-left:24px; }
+.menu .mi .ph { width:16px; flex:none; }
+.menu .sepr { height:1px; background:var(--line); margin:4px 0; }
+.notice { display:flex; gap:10px; align-items:flex-start; border:1px solid var(--line); border-left:3px solid var(--warning); background:var(--raised); padding:10px 12px; }
+.notice svg { margin-top:1px; color:var(--warning); }
+.notice svg .acc { stroke:var(--warning); } .notice svg .acc circle { fill:var(--warning); }
+.notice p { margin:0; }
+.notice p + p { margin-top:6px; color:var(--muted); font-size:12px; }
+.menubar { display:flex; gap:0; background:var(--panel); border:1px solid var(--line); border-bottom:0; width:640px; height:28px; align-items:center; }
+.menubar span { padding:0 10px; height:28px; display:flex; align-items:center; }
+.menubar span.on { background:var(--select); }
+.legend { grid-column:1 / -1; font-size:12px; color:var(--muted); border-top:1px solid var(--line); padding-top:10px; display:flex; gap:22px; flex-wrap:wrap; }
+.legend b { color:var(--text); }
+</style>
+</head>
+<body>
+<div class="pick" role="group" aria-label="Theme">
+  <button data-t="light">Light</button><button data-t="dark">Dark</button><button data-t="hcw">High contrast white</button><button data-t="hcb">High contrast black</button>
+</div>
+<div class="sheet">
+  <div class="head"><h1>File › Import lyrics…</h1><span>AU23 #857 design gate · <span id="tn">Dark</span> · dialog 640 px wide, opens after the file is chosen</span></div>
+
+  <div class="col">
+    <div>
+      <p class="cap"><b>1 · Word-timed Kugou lyrics, already decoded, into the open file.</b> The file is GB18030 with no BOM, so the encoding is detected. Word times become <code>\k</code> syllables, so the end-time options only touch the last word of each Line when the file leaves it open.</p>
+      <div class="dlg">
+        <div class="title">{{i:import-lyrics}}Import lyrics<span class="sp"></span><span class="x">{{i:window-close}}</span></div>
+        <div class="page">
+          <div class="sec first">
+            <div class="facts">
+              <span class="k">File</span><span class="vv mono" style="color:var(--text)">星の帰り道.krc</span>
+              <span class="k">Format</span><span class="vv">Kugou KRC, decoded · word-timed · 42 lines</span>
+              <span class="k">Song</span><span class="vv">星の帰り道 · Hoshi Band · offset +0.250 s applied</span>
+            </div>
+            <div class="row" style="margin-top:8px"><span class="lab">Encoding</span><span class="ctl"><span class="combo" style="width:260px"><span class="v">GB18030 <span class="via">· detected</span></span>{{i:chevron-down}}</span></span></div>
+          </div>
+          <div class="sec">
+            <h3>Preview</h3>
+            <div class="prev"><table>
+              <tr><th>Start</th><th>End</th><th>Text</th></tr>
+              <tr><td class="tm">0:00:01.25</td><td class="tm">0:00:04.80</td><td class="t mono">{\k35}沈{\k30}む{\k40}よ{\k25}う{\k50}に</td></tr>
+              <tr><td class="tm">0:00:04.80</td><td class="tm">0:00:08.10</td><td class="t mono">{\k45}溶{\k30}け{\k35}て{\k60}ゆ{\k40}く…</td></tr>
+              <tr><td class="tm">0:00:08.10</td><td class="tm">0:00:11.95</td><td class="t mono">{\k38}二{\k30}人{\k42}だ{\k28}け…</td></tr>
+              <tr class="more"><td colspan="3">and 39 more Lines</td></tr>
+            </table></div>
+          </div>
+          <div class="sec">
+            <h3>Add the Lines to</h3>
+            <div class="radio"><span class="rb on"></span>The open file, after its last Line <span class="k1">· one undo step</span></div>
+            <div class="radio"><span class="rb"></span>A new file</div>
+            <div class="row" style="margin-top:6px"><span class="lab" style="padding-left:24px;width:144px">Style</span><span class="ctl"><span class="combo" style="width:220px"><span class="v">Romaji</span>{{i:chevron-down}}</span></span></div>
+          </div>
+          <div class="sec">
+            <h3>End times</h3>
+            <div class="radio"><span class="rb on"></span>Each Line ends when the next one starts</div>
+            <div class="radio"><span class="rb"></span>Leave a gap before the next Line</div>
+            <div class="row"><span class="lab" style="padding-left:24px;width:144px">Gap</span><span class="ctl"><span class="spin dis"><span>0.20</span><span class="u">s</span></span></span></div>
+            <div class="row"><span class="lab" style="width:144px">Last Line lasts</span><span class="ctl"><span class="spin"><span>5.00</span><span class="u">s</span></span></span></div>
+          </div>
+        </div>
+        <div class="foot"><span class="btn">Choose another file…</span><span class="sp"></span><span class="btn primary ring">Import</span><span class="btn">Cancel</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col">
+    <div>
+      <p class="cap"><b>2 · File › Import lyrics… in the File menu,</b> after Import subtitles from MKV…. No default shortcut; the command is bindable.</p>
+      <div style="position:relative;height:244px">
+        <div class="menubar"><span class="on">File</span><span>Edit</span><span>Subtitles</span><span>Timing</span><span>Video</span><span>Audio</span></div>
+        <div class="menu" style="left:0;top:28px;width:330px">
+          <div class="mi"><span class="ph"></span>Open…<span class="k">Ctrl+O</span></div>
+          <div class="mi"><span class="ph"></span>Open folder…</div>
+          <div class="sepr"></div>
+          <div class="mi"><span class="ph"></span>Open video…</div>
+          <div class="mi">{{i:import}}Import subtitles from MKV…</div>
+          <div class="mi hot">{{i:import-lyrics}}Import lyrics…</div>
+          <div class="sepr"></div>
+          <div class="mi"><span class="ph"></span>Save<span class="k">Ctrl+S</span></div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <p class="cap"><b>3 · A plain LRC whose encoding was guessed wrong.</b> The preview shows mojibake, so the user picks another encoding; the preview redraws at once. Plain lines take their end from the End-time options. With no file open, "The open file" is disabled.</p>
+      <div class="dlg">
+        <div class="title">{{i:import-lyrics}}Import lyrics<span class="sp"></span><span class="x">{{i:window-close}}</span></div>
+        <div class="page">
+          <div class="sec first">
+            <div class="facts">
+              <span class="k">File</span><span class="vv mono" style="color:var(--text)">song.lrc</span>
+              <span class="k">Format</span><span class="vv">LRC · line-timed · 28 lines</span>
+            </div>
+            <div class="row" style="margin-top:8px"><span class="lab">Encoding</span><span class="ctl"><span class="combo open" style="width:260px"><span class="v">Big5 <span class="via">· detected</span></span>{{i:chevron-down}}</span></span></div>
+            <div class="menu" style="left:146px;top:131px;width:260px">
+              <div class="mi">UTF-8</div>
+              <div class="mi">UTF-16 LE</div>
+              <div class="mi">UTF-16 BE</div>
+              <div class="mi hot">GB18030 (GBK, GB2312)</div>
+              <div class="mi on">Big5</div>
+              <div class="mi">Shift_JIS</div>
+              <div class="mi">EUC-KR</div>
+            </div>
+          </div>
+          <div class="sec">
+            <h3>Preview</h3>
+            <div class="prev"><table>
+              <tr><th>Start</th><th>End</th><th>Text</th></tr>
+              <tr><td class="tm">0:00:12.30</td><td class="tm">0:00:16.04</td><td class="t">鍦ㄩ偅閬欒繙鐨勫湴鏂</td></tr>
+              <tr><td class="tm">0:00:16.04</td><td class="tm">0:00:19.88</td><td class="t">鏈変綅濂藉鍫</td></tr>
+              <tr class="more"><td colspan="3">and 26 more Lines</td></tr>
+            </table></div>
+          </div>
+          <div class="sec">
+            <h3>Add the Lines to</h3>
+            <div class="radio dis"><span class="rb"></span>The open file, after its last Line</div>
+            <div class="radio"><span class="rb on"></span>A new file</div>
+          </div>
+        </div>
+        <div class="foot"><span class="btn">Choose another file…</span><span class="sp"></span><span class="btn primary">Import</span><span class="btn">Cancel</span></div>
+      </div>
+    </div>
+    <div>
+      <p class="cap"><b>4 · An encrypted file.</b> Recognised by its header (KRC's <code>krc1</code>, QRC's binary header), never decoded. Import is disabled.</p>
+      <div class="dlg">
+        <div class="title">{{i:import-lyrics}}Import lyrics<span class="sp"></span><span class="x">{{i:window-close}}</span></div>
+        <div class="page">
+          <div class="facts" style="margin-bottom:12px">
+            <span class="k">File</span><span class="vv mono" style="color:var(--text)">example.qrc</span>
+          </div>
+          <div class="notice">{{i:notice-warning}}<div><p>This QQ Music lyrics file is encrypted, so HikariSub can't read it.</p><p>Decode it to text with your own tool first, then import the decoded file. HikariSub doesn't decrypt lyric files.</p></div></div>
+        </div>
+        <div class="foot"><span class="btn ring">Choose another file…</span><span class="sp"></span><span class="btn dis">Import</span><span class="btn">Cancel</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="legend"><span><b>Formats:</b> LRC (plain and A2 word times), TTML, decoded KRC and QRC</span><span><b>Encodings:</b> BOM first, then valid UTF-8, then uchardet; the list overrides</span><span><b>Undo:</b> "Import lyrics", one step</span></div>
+</div>
+<script>
+(function () {
+  var names = { light: "Light", dark: "Dark", hcw: "High contrast white", hcb: "High contrast black" };
+  var q = new URLSearchParams(location.search);
+  if (q.has("shot")) document.documentElement.classList.add("shot");
+  function set(t) {
+    if (!names[t]) t = "dark";
+    document.documentElement.setAttribute("data-theme", t);
+    document.getElementById("tn").textContent = names[t];
+    document.querySelectorAll(".pick button").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.t === t)); });
+  }
+  document.querySelectorAll(".pick button").forEach(function (b) { b.onclick = function () { set(b.dataset.t); }; });
+  set(q.get("theme") || "dark");
+})();
+</script>
+</body>
+</html>
