@@ -69,6 +69,10 @@ struct Verdict {
 /// Anything but a clear approval escalates.
 Verdict judgeVerdict(std::string_view answer);
 
+/// A model whose provider is "agent:<name>" runs the thread on that external agent ("claude").
+inline constexpr std::string_view kAgentProviderPrefix = "agent:";
+std::optional<std::string> externalAgentOf(const application::ai::ModelRef &model);
+
 /// One conversation in the agent panel. Qt owns it and saves it in the user folder.
 struct AgentThread {
     std::string id;
@@ -128,6 +132,8 @@ public:
     struct Wiring {
         /// Null with AI off.
         std::function<AiRequests *()> requests;
+        /// The sidecar for a thread on an external agent, which needs no provider.
+        std::function<AiSidecarHost *()> agentHost;
         std::function<const application::ai::Config *()> config;
         api::Api *api = nullptr;
         std::function<Defaults()> defaults;
@@ -196,7 +202,7 @@ signals:
 
 private:
     struct Run;
-    AiSidecarHost *host();
+    AiSidecarHost *host(bool externalAgent = false);
     AgentThread *find(const std::string &id);
     void start(AgentThread &thread, std::string text, api::Json parts);
     void finished(const std::string &id, const SidecarResult &result);

@@ -31,6 +31,8 @@ struct RelayTarget {
     QUrl base;
     /// Empty for a destination that takes no key.
     std::string key;
+    /// Only GET and HEAD reach it.
+    bool readOnly = false;
 };
 
 using RelayTargetResult = std::expected<RelayTarget, application::ai::Error>;
@@ -51,6 +53,11 @@ struct SearchAccess {
 /// nullopt for is refused. Other targets go to `next`. `keys` must outlive the lookup.
 RelayTargets withSearchTargets(RelayTargets next, application::ai::SearchKeys &keys,
                                std::function<std::optional<SearchAccess>(application::ai::SearchService)> access);
+
+inline constexpr const char *kNpmRegistry = "https://registry.npmjs.org";
+/// Adds {"kind": "npm"}: the npm registry, read-only and with no key, for the packages the sidecar fetches on first
+/// use. Other targets go to `next`.
+RelayTargets withRegistryTargets(RelayTargets next, QUrl registry = QUrl(QString::fromLatin1(kNpmRegistry)));
 
 /// How the relay answers one request.
 struct RelayExchange {

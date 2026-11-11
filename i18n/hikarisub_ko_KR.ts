@@ -445,6 +445,10 @@
         <source>Show the log</source>
         <translation>로그 표시</translation>
     </message>
+    <message>
+        <source>Claude Code</source>
+        <translation>Claude Code</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Audio</name>

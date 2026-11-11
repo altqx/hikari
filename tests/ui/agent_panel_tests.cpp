@@ -3,6 +3,7 @@
 #include "hikari/app/application.h"
 #include "hikari/application/ai_providers.h"
 #include "hikari/application/hotkeys.h"
+#include "hikari/backends/ai_agent_broker.h"
 #include "hikari/backends/ai_sidecar_host.h"
 #include "hikari/backends/desktop_handoff.h"
 
@@ -13,6 +14,7 @@
 #include "theme.h"
 
 #include <QFile>
+#include <QStandardPaths>
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QQmlExpression>
@@ -173,6 +175,31 @@ class AgentPanelTest : public QObject {
         }
     }
 
+    void realClaude(app::AiFeatures::Ports &ports)
+    {
+        const QString runtime = qEnvironmentVariable("HIKARI_REAL_AI_RUNTIME");
+        const QString bundle = qEnvironmentVariable("HIKARI_REAL_AI_BUNDLE");
+        if (runtime.isEmpty() || bundle.isEmpty())
+            return;
+        ports.sidecarHost = [this, runtime, bundle](const backends::ai::SidecarInstall &) {
+            backends::ai::AiSidecarHost::Options o;
+            o.program = runtime;
+            o.arguments = {bundle, QStringLiteral("--vendor"), at(QStringLiteral("ai/vendor"))};
+            o.workingDirectory = at(QStringLiteral("ai/work"));
+            QDir().mkpath(at(QStringLiteral("ai/vendor")));
+            o.sandbox = backends::sandbox::Profile{.name = QStringLiteral("HikariSub.AI.Sidecar"),
+                                                   .readExecute = {QFileInfo(runtime).absolutePath(), QFileInfo(bundle).absolutePath()},
+                                                   .readWrite = {o.workingDirectory, at(QStringLiteral("ai/vendor"))}};
+            return std::make_unique<backends::ai::AiSidecarHost>(std::move(o), &application->apiHost()->api(),
+                                                                 api::Caller{.id = "ai", .label = "AI", .reviewed = true});
+        };
+        ports.agents = [this](backends::ai::AgentBroker &broker) {
+            broker.add("claude", backends::ai::claudeAgent(QStandardPaths::findExecutable(QStringLiteral("claude")),
+                                                         QDir::homePath(), at(QStringLiteral("ai/agents/claude"))));
+        };
+        ports.agentOnPath = [](const QString &agent) { return agent == QStringLiteral("claude"); };
+    }
+
 private slots:
     void init()
     {
@@ -205,6 +232,10 @@ private slots:
         };
         ports.localSidecar = backends::ai::SidecarInstall{QStringLiteral("0.0.0-dev"), {}, flags, {}};
         ports.agents = [](backends::ai::AgentBroker &) {};
+        const bool claude = QTest::currentTestFunction() == QByteArrayLiteral("claudeCodeIsAModelOnlyWhenItIsFound");
+        ports.agentOnPath = [claude](const QString &agent) { return claude && agent == QStringLiteral("claude"); };
+        if (QTest::currentTestFunction() == QByteArrayLiteral("theInstalledClaudeEditsIntoTheReview"))
+            realClaude(ports);
 
         app::Application::Options options;
         options.settingsFile = at(QStringLiteral("settings.toml"));
@@ -236,6 +267,45 @@ private slots:
         application.reset();
     }
 
+    void claudeCodeIsAModelOnlyWhenItIsFound()
+    {
+        openPanel();
+        const QVariantList models = agent().models();
+        QCOMPARE(models.size(), 2);
+        QCOMPARE(models.front().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Claude Code"));
+        const QString claude = models.front().toMap().value(QStringLiteral("value")).toString();
+        QCOMPARE(claude, QStringLiteral("agent:claude\t"));
+        agent().newThread();
+        agent().setModel(claude);
+        QTRY_COMPARE(agent().thread().value(QStringLiteral("modelText")).toString(), QStringLiteral("Claude Code"));
+        QCOMPARE(agent().thread().value(QStringLiteral("model")).toString(), claude);
+    }
+    void theInstalledClaudeEditsIntoTheReview()
+    {
+        if (qEnvironmentVariable("HIKARI_REAL_AI_RUNTIME").isEmpty())
+            QSKIP("Evidence only: set HIKARI_REAL_AI_RUNTIME and HIKARI_REAL_AI_BUNDLE to run the installed claude");
+        application->settingsStore()->set(app::AgentController::kModeSetting, QStringLiteral("manual"));
+        openPanel();
+        agent().newThread();
+        agent().setModel(QStringLiteral("agent:claude\t"));
+        type(QStringLiteral("In this subtitle file, line 2 reads \"second\". Use HikariSub's tools to change it to "
+                            "\"Second\". Change nothing else, then say done."));
+        QTRY_VERIFY_WITH_TIMEOUT(kinds().contains(QStringLiteral("change")), 240'000);
+        QTRY_VERIFY_WITH_TIMEOUT(!agent().thread().value(QStringLiteral("running")).toBool(), 120'000);
+        QCOMPARE(session().document().lines()[1]->text, u8"Second");
+        QCOMPARE(session().document().lines()[0]->text, u8"A rather long first line");
+        if (const QString out = qEnvironmentVariable("HIKARI_REAL_CLAUDE_OUT"); !out.isEmpty()) {
+            QFile file(out);
+            QVERIFY(file.open(QIODevice::WriteOnly | QIODevice::Truncate));
+            file.write(agent().markdown(agent().current()).toUtf8());
+        }
+        shoot(QStringLiteral("agent-claude"));
+    }
+    void claudeCodeIsNoModelWhenItIsMissing()
+    {
+        openPanel();
+        QCOMPARE(agent().models().size(), 1);
+    }
     void aTurnStreamsIntoTheTimelineAndItsChangeWaitsInTheReview()
     {
         application->settingsStore()->set(app::AgentController::kModeSetting, QStringLiteral("manual"));

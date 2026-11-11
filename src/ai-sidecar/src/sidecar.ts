@@ -1,11 +1,14 @@
 import { AgentSessions } from "./agent/session";
+import { ClaudeSession } from "./agents/claude";
+import { AgentRelay } from "./agents/relay";
+import { type ClaudeAgentSdk, loadClaudeAgentSdk } from "./agents/vendor";
 import { McpServer } from "./mcp/server";
 import { ErrorCode, kProtocolVersion, kRequiredApiVersion, Method, type ApiCallParams, type InitializeParams,
     type InitializeResult, type McpClosedParams, type McpMessageParams, type McpMessageResult, type McpVia,
     type SessionIdParams, type SessionNewParams, type SessionPromptParams, type SessionSteerParams,
-    type ToolsCallParams, type ToolsListParams } from "./protocol";
+    type ToolCallKind, type ToolsCallParams, type ToolsListParams } from "./protocol";
 import { ProviderError } from "./providers/errors";
-import { LinkRelay } from "./providers/relay";
+import { LinkRelay, relayFetch } from "./providers/relay";
 import { kSchemas } from "./providers/schema";
 import { checked, InvalidParams, ProviderService, type ServiceOptions } from "./providers/service";
 import type { SearchService, UpdateParams } from "./providers/types";
@@ -67,6 +70,8 @@ function checkedNew(params: unknown): SessionNewParams {
         throw new RpcError(ErrorCode.invalidParams, "session/new needs a model with a providerId and a model");
     if (p.history !== undefined && !Array.isArray(p.history))
         throw new RpcError(ErrorCode.invalidParams, "session/new's history is a list of messages");
+    if (p.agent !== undefined && typeof p.agent !== "string")
+        throw new RpcError(ErrorCode.invalidParams, "session/new's agent is a name");
     return p as unknown as SessionNewParams;
 }
 
@@ -93,6 +98,12 @@ async function wire<T>(work: () => T | Promise<T>): Promise<T> {
     }
 }
 
+export interface AgentOptions {
+    /** Where fetched agent SDKs are unpacked. */
+    vendor?: string;
+    claudeSdk?: () => Promise<ClaudeAgentSdk>;
+}
+
 export class Sidecar {
     readonly api: HikariApi;
     readonly providers: ProviderService;
@@ -103,19 +114,32 @@ export class Sidecar {
     readonly sessions: AgentSessions;
     private initialized = false;
 
-    constructor(readonly peer: Peer, private readonly build: Build, providers?: ServiceOptions) {
+    private claudeSdk?: Promise<ClaudeAgentSdk>;
+
+    constructor(readonly peer: Peer, private readonly build: Build, providers?: ServiceOptions, agents: AgentOptions = {}) {
         this.api = new HikariApi(peer);
         const options = providers ?? { relay: new LinkRelay(peer) };
+        const agentRelay = new AgentRelay(peer);
+        const info = { name: "hikarisub", title: "HikariSub", version: build.buildId };
         this.providers = new ProviderService(options);
         this.web = new WebSearch(options.relay, () => this.providers.searchService);
         this.tools = new ToolSet(this.api, this.catalogue, [this.web]);
         this.mcp = new McpServer((connection, client) => new HikariApi(peer, () => ({ connection, client: client() })),
-            { name: "hikarisub", title: "HikariSub", version: build.buildId }, () => this.catalogue);
+            info, () => this.catalogue);
         this.sessions = new AgentSessions((id, webSearch) =>
             new ToolSet(new HikariApi(peer, undefined, id), this.catalogue, [whileOn(this.web, webSearch)]),
             (params, signal, emit) => this.providers.complete(params, signal, emit),
             (method, params) => peer.notify(method, params),
-            (providerId) => this.providers.imageBudget(providerId));
+            (providerId) => this.providers.imageBudget(providerId),
+            { claude: (id, params, send) => new ClaudeSession(id, params, {
+                sdk: agents.claudeSdk ?? (() => this.claudeSdk ??= agents.vendor
+                    ? loadClaudeAgentSdk(relayFetch(options.relay, { kind: "npm" }), agents.vendor)
+                    : Promise.reject(new Error("Qt gave the sidecar no vendor folder"))),
+                spawn: (o) => agentRelay.start("claude", { args: o.args, env: o.env, signal: o.signal }),
+                mcp: new McpServer(() => new HikariApi(peer, undefined, id), info, () => this.catalogue),
+                kindOf: (tool) => this.kindOf(tool),
+                send,
+            }) });
         peer.onRequest(Method.initialize, (params) => this.initialize(params));
         this.handle(Method.sessionNew, (params) => this.sessions.open(checkedNew(params)));
         this.handle(Method.sessionPrompt, (params) =>
@@ -160,6 +184,12 @@ export class Sidecar {
             if (typeof connection === "string")
                 this.mcp.closed(connection);
         });
+    }
+
+    private kindOf(tool: string): ToolCallKind {
+        if (tool === "document_apply")
+            return "edit";
+        return this.tools.list(true).find((t) => t.name === tool)?.annotations.readOnlyHint ? "read" : "other";
     }
 
     /** Registers a Qt request that only runs after `initialize`. */

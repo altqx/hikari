@@ -37,7 +37,7 @@ jobs:
         run: |
           set -euo pipefail
           bun=$(cmake -DDOWNLOADS="$RUNNER_TEMP/bun" -DPLATFORM=linux-x64 -P cmake/HikariBun.cmake 2>&1 | tail -n 1)
-          (cd src/ai-sidecar && "$bun" install --ignore-scripts && "$bun" tools/notices.ts)
+          (cd src/ai-sidecar && "$bun" install --ignore-scripts --omit=optional && "$bun" tools/notices.ts)
           branch="ai-bump/$(date -u +%Y-%m-%d)"
           git switch -c "$branch"
           git config user.name "github-actions[bot]"
