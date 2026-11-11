@@ -14696,6 +14696,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>Scale border and shadow</source>
         <translation>테두리 및 그림자 크기 조정</translation>
     </message>
+    <message>
+        <source>Saving “%1” changes these script properties.</source>
+        <translation>“%1”(을)를 저장하면 다음 스크립트 속성이 바뀝니다.</translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation>확인</translation>
+    </message>
+    <message>
+        <source>Skip</source>
+        <translation>건너뛰기</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Search</name>

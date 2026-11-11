@@ -14795,6 +14795,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>Scale border and shadow</source>
         <translation>எல்லையையும் நிழலையும் அளவிடு</translation>
     </message>
+    <message>
+        <source>Saving “%1” changes these script properties.</source>
+        <translation>“%1” ஐச் சேமித்தால் இந்த ஸ்கிரிப்ட் பண்புகள் மாறும்.</translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation>சரி</translation>
+    </message>
+    <message>
+        <source>Skip</source>
+        <translation>தவிர்</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Search</name>
