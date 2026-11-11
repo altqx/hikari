@@ -30799,6 +30799,145 @@ private slots:
         QTRY_COMPARE(ms(0), (Ms{0, 200}));
     }
 
+    QObject *openVideoAnalysis(const char *menuItem, const char *dialogName, const QString &file, int frame)
+    {
+        app::attachVideoAnalysisStill(*engine, application->videoAnalysis());
+        if (!application->openFile(file))
+            return nullptr;
+        auto *menu = item<QObject>(menuItem);
+        if (!menu || menu->property("enabled").toBool())
+            return nullptr;
+        application->setAskForBadResolution(false);
+        application->video().openVideo(nativeFixture("fade.mkv"));
+        if (!QTest::qWaitFor([&] { return application->video().session().shownFrame() == std::optional<int>(0); }, 20000))
+            return nullptr;
+        closeMismatchQuestion();
+        if (!QTest::qWaitFor([&] { return menu->property("enabled").toBool(); }))
+            return nullptr;
+        if (!application->video().session().seekFrame(frame) ||
+            !QTest::qWaitFor([&] { return application->video().session().shownFrame() == std::optional<int>(frame); }, 20000))
+            return nullptr;
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QMetaObject::invokeMethod(menu, "click");
+        QObject *dialog = nullptr;
+        if (!QTest::qWaitFor([&] {
+                dialog = engine->rootObjects().first()->findChild<QObject *>(QLatin1String(dialogName));
+                return dialog && dialog->property("visible").toBool();
+            }))
+            return nullptr;
+        auto *controller = dialog->property("controller").value<QObject *>();
+        if (!QTest::qWaitFor([&] { return controller->property("ready").toBool(); }, 20000))
+            return nullptr;
+        return dialog;
+    }
+
+    void clickOnStill(const char *dialogName, const char *stillName, int x, int y)
+    {
+        auto *still = dialogItem(dialogName, stillName);
+        QVERIFY(still);
+        QTRY_VERIFY(still->property("zoom").toReal() > 0.5);
+        const qreal zoom = still->property("zoom").toReal();
+        const QPoint at = still->mapToScene(QPointF(still->property("imageLeft").toReal() + (x + 0.5) * zoom,
+                                                    still->property("imageTop").toReal() + (y + 0.5) * zoom))
+                              .toPoint();
+        QTest::mouseClick(still->window(), Qt::LeftButton, {}, at);
+    }
+
+    void trackColourWritesThePointsColourOnEachFrame()
+    {
+        const QString path = writeFile(dir, "au11-track.ass",
+                                       "Dialogue: 0,0:00:00.00,0:00:01.50,Default,,0,0,0,,{\\bord2\\c&H0000FF&}sign\n"
+                                       "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,b\n");
+        QObject *dialog = openVideoAnalysis("trackColourMenuItem", "trackColourDialog", path, 20);
+        QVERIFY(dialog);
+        auto *controller = dialog->property("controller").value<QObject *>();
+        QCOMPARE(controller->property("mode").toString(), QStringLiteral("track"));
+        QCOMPARE(controller->property("frameWidth").toInt(), 320);
+        clickOnStill("trackColourDialog", "trackColourStill", 160, 120);
+        QTRY_COMPARE(controller->property("pointX").toInt(), 160);
+        QTRY_VERIFY_WITH_TIMEOUT(!controller->property("reading").toBool() &&
+                                     !controller->property("result").toString().isEmpty(), 30000);
+
+        const auto swatches = controller->property("swatches").toList();
+        QCOMPARE(swatches.size(), controller->property("lineFrames").toInt());
+        QVERIFY(swatches.size() > 30);
+        QVERIFY(swatches.front().value<QColor>().lightness() < 40);
+        QVERIFY(swatches.at(20).value<QColor>().lightness() > 150);
+        int changes = 0;
+        for (qsizetype i = 1; i < swatches.size(); ++i)
+            changes += swatches.at(i).value<QColor>() != swatches.at(i - 1).value<QColor>();
+        const QString first = swatches.front().value<QColor>().name().toUpper();
+        const QString ass = QStringLiteral("&H%1%2%3&").arg(first.mid(5, 2), first.mid(3, 2), first.mid(1, 2));
+        QString result = controller->property("result").toString();
+        QVERIFY2(result.startsWith(QStringLiteral("{\\bord2\\c") + ass + QStringLiteral("\\t(")), qPrintable(result));
+        QVERIFY2(result.endsWith(QStringLiteral(")}sign")), qPrintable(result));
+        QCOMPARE(result.count(QStringLiteral("\\t(")), changes);
+        QVERIFY(application->videoAnalysis().videoPreview());
+
+        controller->setProperty("skipRepeats", false);
+        result = controller->property("result").toString();
+        QCOMPARE(result.count(QStringLiteral("\\t(")), swatches.size() - 1);
+        controller->setProperty("skipRepeats", true);
+        result = controller->property("result").toString();
+
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const auto steps = session->historySize();
+        auto *apply = dialogItem("trackColourDialog", "trackColourApply");
+        QVERIFY(apply);
+        QVERIFY(QMetaObject::invokeMethod(apply, "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QCOMPARE(session->historySize(), steps + 1);
+        QCOMPARE(session->history().back().name, std::string("Track colour"));
+        const auto text = [&](int i) {
+            const auto &t = session->document().lines()[static_cast<std::size_t>(i)]->text;
+            return QString::fromUtf8(reinterpret_cast<const char *>(t.data()), static_cast<qsizetype>(t.size()));
+        };
+        QCOMPARE(text(0), result);
+        QCOMPARE(text(1), QStringLiteral("b"));
+        QVERIFY(!application->videoAnalysis().videoPreview());
+        QVERIFY(application->editor().undo());
+        QTRY_COMPARE(text(0), QStringLiteral("{\\bord2\\c&H0000FF&}sign"));
+    }
+
+    void findFadeWritesTheFadeTheVideoShows()
+    {
+        const QString path = writeFile(dir, "au11-fade.ass",
+                                       "Dialogue: 0,0:00:00.00,0:00:01.80,Default,,0,0,0,,{\\clip(m 160 120)\\bord2}sign\n");
+        QObject *dialog = openVideoAnalysis("findFadeMenuItem", "findFadeDialog", path, 20);
+        QVERIFY(dialog);
+        auto *controller = dialog->property("controller").value<QObject *>();
+        QCOMPARE(controller->property("mode").toString(), QStringLiteral("fade"));
+        QCOMPARE(controller->property("pointX").toInt(), 160);
+        QCOMPARE(controller->property("pointY").toInt(), 120);
+        QTRY_VERIFY_WITH_TIMEOUT(!controller->property("reading").toBool() &&
+                                     !controller->property("result").toString().isEmpty(), 30000);
+        QCOMPARE(controller->property("fadeInIndex").toInt(), 9);
+        QCOMPARE(controller->property("fadeOutIndex").toInt(), 30);
+        QCOMPARE(controller->property("distances").toList().size(), controller->property("lineFrames").toInt() + 1);
+
+        const auto times = *application->video().session().aegisubFrameTimes();
+        const auto middle = [&](int a, int b) { return (times.msFromFrame(a) + times.msFromFrame(b)) / 2; };
+        const auto in = middle(10, 9), out = 1800 - middle(29, 30);
+        const QString expected = QStringLiteral("{\\fad(%1,%2)\\bord2}sign").arg(in).arg(out);
+        QCOMPARE(controller->property("result").toString(), expected);
+
+        controller->setProperty("fadeOut", false);
+        QCOMPARE(controller->property("result").toString(), QStringLiteral("{\\fad(%1,0)\\bord2}sign").arg(in));
+        QCOMPARE(controller->property("fadeOutIndex").toInt(), -1);
+        controller->setProperty("fadeOut", true);
+
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        auto *apply = dialogItem("findFadeDialog", "findFadeApply");
+        QVERIFY(apply);
+        QVERIFY(QMetaObject::invokeMethod(apply, "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QCOMPARE(session->history().back().name, std::string("Find fade"));
+        const auto &t = session->document().lines()[0]->text;
+        QCOMPARE(QString::fromUtf8(reinterpret_cast<const char *>(t.data()), static_cast<qsizetype>(t.size())), expected);
+        QVERIFY(application->editor().undo());
+    }
+
     void snapToKeyframeNeedsTheAudioBox()
     {
         const QString path = writeFile(dir, "v6-snap.ass",

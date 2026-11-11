@@ -920,6 +920,25 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         m_alignToVideo = std::make_unique<AlignToVideoController>(*m_settings, std::move(hooks));
     }
     {
+        VideoAnalysisController::Hooks hooks;
+        hooks.video = [this] { return videoState() == application::VideoState::None ? nullptr : &activeMedia().video->session(); };
+        hooks.target = [this] { return targetSession(); };
+        hooks.pause = [this] {
+            if (activeMedia().video->playing())
+                activeMedia().video->pause();
+        };
+        hooks.refresh = [this] {
+            editor().reloadFromSession();
+            refreshViews();
+        };
+        hooks.clipboard = [] { return QGuiApplication::clipboard()->text(); };
+        m_videoAnalysis = std::make_unique<VideoAnalysisController>(std::move(hooks));
+        connect(m_videoAnalysis.get(), &VideoAnalysisController::previewChanged, this, [this] {
+            if (m_videoShowsTemplate || m_videoAnalysis->videoPreview())
+                showVideoSubtitles();
+        });
+    }
+    {
         QcNotesController::Hooks hooks;
         hooks.target = [this] { return targetSession(); };
         hooks.editable = [this] {
@@ -2397,7 +2416,9 @@ bool Application::showVideoSubtitles()
     if (!m_settings->boolean("video.disableLiveEditing") && activeViews().editorDocument == target && activeMedia().video->hasVideo())
         draft = editor().draftDocument();
     std::optional<core::Document> templated;
-    if (nodeEffects().videoPreview()) {
+    if (m_videoAnalysis && m_videoAnalysis->videoPreview()) {
+        templated = m_videoAnalysis->videoDocument(draft ? *draft : session->document());
+    } else if (nodeEffects().videoPreview()) {
         templated = nodeEffects().videoDocument(draft ? *draft : session->document());
     } else if (templateEditor().videoPreview()) {
         const auto &video = activeMedia().video->session();
@@ -6489,6 +6510,7 @@ QVariantMap Application::qmlProperties(int shellWindow)
             {QStringLiteral("styleManager"), QVariant::fromValue(static_cast<QObject *>(m_styleManager.get()))},
             {QStringLiteral("kanjiTimer"), QVariant::fromValue(static_cast<QObject *>(views(shellWindow).kanjiTimer.get()))},
             {QStringLiteral("alignToVideo"), QVariant::fromValue(static_cast<QObject *>(m_alignToVideo.get()))},
+            {QStringLiteral("videoAnalysis"), QVariant::fromValue(static_cast<QObject *>(m_videoAnalysis.get()))},
             {QStringLiteral("qcNotes"), QVariant::fromValue(static_cast<QObject *>(m_qcNotes.get()))},
             {QStringLiteral("fontCollector"), QVariant::fromValue(static_cast<QObject *>(m_fontCollector.get()))},
             {QStringLiteral("fontCatalogs"), QVariant::fromValue(static_cast<QObject *>(m_fontCatalogs.get()))},
