@@ -49,6 +49,8 @@ struct Caller {
     std::vector<application::DocumentId> attached;
     // An AI caller: its document.apply changes go to the review, and privacy.* and recent.* settings stay hidden.
     bool reviewed = false;
+    // May read the user's skills (AI callers).
+    bool skills = false;
 };
 
 // A file the user let one caller use; the caller sees the handle and name, never the path.

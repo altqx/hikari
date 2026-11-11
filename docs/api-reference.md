@@ -38,6 +38,8 @@ Version 1 of the Hikari API, generated from HikariSub's own registry: the same r
 | `files.list` | read | 1 | The files the user granted this caller, with read or write access. |
 | `files.read` | read | 1 | A granted file's content, as UTF-8 text or base64; at most 16 MiB. |
 | `files.write` | write | 1 | Replaces a file granted for writing with new content. |
+| `skills.list` | read | 1 | The user's skills: each skill folder's name and its files, SKILL.md among them. |
+| `skills.read` | read | 1 | One file of a user's skill, as UTF-8 text; at most 256 KiB. |
 | `nodes.catalogue` | read | 1 | The node types the node-effect editor offers, with their ports and parameters. |
 | `nodes.validate` | read | 1 | Checks a node-effect graph; each problem names its node and port or field. |
 
@@ -741,6 +743,44 @@ Replaces a file granted for writing with new content.
 | `file` | string | yes |  |
 | `size` | integer | yes | At least 0. |
 
+### `skills.list`
+
+Read. Since version 1.
+
+The user's skills: each skill folder's name and its files, SKILL.md among them.
+
+**Parameters**: none.
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `skills` | array of objects | yes |  |
+| `skills[].skill` | [SkillName](#skillname) | yes |  |
+| `skills[].files` | array of string | yes |  |
+
+### `skills.read`
+
+Read. Since version 1.
+
+One file of a user's skill, as UTF-8 text; at most 256 KiB.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `skill` | [SkillName](#skillname) | yes |  |
+| `file` | string | yes | A path skills.list gives, such as SKILL.md or references/tags.md. 1 to 512 characters. |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `skill` | [SkillName](#skillname) | yes |  |
+| `file` | string | yes |  |
+| `size` | integer | yes | At least 0. |
+| `data` | string | yes |  |
+
 ### `nodes.catalogue`
 
 Read. Since version 1.
@@ -866,6 +906,10 @@ A command ran, from a menu, a key, the API or anywhere else.
 ### DocumentId
 
 Type: integer. An open Document, as documents.list gives it. At least 1.
+
+### SkillName
+
+Type: string. A skill's name, which is its folder's. At most 64 characters. `pattern`: `"^[a-z0-9]+(-[a-z0-9]+)*$"`.
 
 ### LineId
 

@@ -59,7 +59,8 @@ for f in Dictionary/unidic-lite/sys.dic Dictionary/unidic-lite/matrix.bin Dictio
     Dictionary/unidic-lite/unk.dic Dictionary/unidic-lite/dicrc Dictionary/unidic-lite/mecabrc \
     Dictionary/unidic-lite/BSD licenses/mecab/LICENSE licenses/unidic/LICENSE licenses/qtkeychain/LICENSE licenses/dav1d/LICENSE \
     licenses/abseil/LICENSE licenses/harper/LICENSE licenses/harper/THIRD-PARTY.txt licenses/aegisub/LICENSE \
-    licenses/ytsubconverter/LICENSE; do
+    licenses/ytsubconverter/LICENSE licenses/clipper2/LICENSE licenses/ill-clipper2/LICENSE \
+    Automation/automation/Include/clipper2/clipper2/libclipper2.so; do
     [ -f "$tree/$f" ] || { echo "error: the install produced no $f" >&2; exit 1; }
 done
 for name in en_US pl th_TH ko_KR ta_IN; do

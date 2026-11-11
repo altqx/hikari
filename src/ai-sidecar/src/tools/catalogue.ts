@@ -84,8 +84,11 @@ const kPlacements: Partial<Record<OperationName, Placement>> = {
     "settings.set": { group: "app" },
 };
 
-/** Operations no tool offers as they are: search_commands wraps commands.list, and the sidecar knows the version. */
-const kUnoffered: readonly OperationName[] = ["commands.list", "api.version"];
+/**
+ * Operations no tool offers as they are: search_commands wraps commands.list, read_skill the skills, and the sidecar
+ * knows the version.
+ */
+const kUnoffered: readonly OperationName[] = ["commands.list", "skills.list", "skills.read", "api.version"];
 
 /** MCP's Tool, as `tools/list` gives it. */
 export interface Tool {
