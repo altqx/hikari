@@ -1,0 +1,99 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>AU22 Interpolate across Lines</title>
+<style>
+:root{--bg:#E5E9EC;--panel:#F9FAFB;--raised:#EDF0F3;--field:#FFFFFF;--text:#202832;--muted:#526170;--line:#AAB5BE;--accent:#1D5BA8;--onAccent:#FFFFFF;--select:#D6DFEB;--warn:#8A5A00}
+body.dark{--bg:#171B20;--panel:#20262D;--raised:#29313A;--field:#171D24;--text:#E8EDF2;--muted:#A5B1BD;--line:#414B57;--accent:#A6C8F2;--onAccent:#101D2C;--select:#303D4C;--warn:#E0A030}
+body.highContrastWhite{--bg:#FFFFFF;--panel:#FFFFFF;--raised:#EBEBEB;--field:#FFFFFF;--text:#000000;--muted:#1A1A1A;--line:#000000;--accent:#0037B3;--onAccent:#FFFFFF;--select:#C9DAF8;--warn:#6B4500}
+body.highContrastBlack{--bg:#000000;--panel:#080808;--raised:#151515;--field:#000000;--text:#FFFFFF;--muted:#EEEEEE;--line:#FFFFFF;--accent:#FFFF00;--onAccent:#000000;--select:#253F60;--warn:#FFD54A}
+*{box-sizing:border-box}
+body{margin:0;padding:24px;background:var(--bg);color:var(--text);font:13px/1.4 "Inter","Noto Sans",sans-serif;display:flex;gap:24px;align-items:flex-start;width:1240px}
+.dlg{width:580px;background:var(--panel);border:1px solid var(--line);border-radius:8px}
+.title{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--line);font-weight:600}
+.title svg{width:16px;height:16px}
+.title svg #accent{stroke:var(--accent)}
+.body{padding:12px 14px;display:flex;flex-direction:column;gap:12px}
+.sub{color:var(--muted)}
+.notice{border:1px solid var(--warn);background:var(--raised);border-radius:6px;padding:8px 10px;display:flex;gap:8px}
+.notice b{color:var(--warn)}
+table{width:100%;border-collapse:collapse;background:var(--field);border:1px solid var(--line)}
+th{font-weight:600;text-align:left;color:var(--muted);padding:6px 8px;border-bottom:1px solid var(--line)}
+td{padding:5px 8px;border-bottom:1px solid var(--raised);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr.off td{color:var(--muted)}
+.mono{font-family:"JetBrains Mono","DejaVu Sans Mono",monospace;font-size:12px}
+.why{display:block;font-family:"Inter","Noto Sans",sans-serif;font-size:12px;color:var(--muted)}
+.cb{width:15px;height:15px;border:1.5px solid var(--line);border-radius:3px;display:inline-block;vertical-align:middle;background:var(--field);position:relative;flex:none}
+.cb.on{background:var(--accent);border-color:var(--accent)}
+.cb.on::after{content:"";position:absolute;left:4px;top:1px;width:4px;height:8px;border:solid var(--onAccent);border-width:0 2px 2px 0;transform:rotate(45deg)}
+.cb.dis{opacity:.45}
+.sw{display:inline-block;width:12px;height:12px;border:1px solid var(--line);border-radius:2px;vertical-align:-2px;margin-right:4px}
+.opts{display:flex;gap:12px;align-items:center}
+.field{background:var(--field);border:1px solid var(--line);border-radius:4px;padding:3px 8px;width:80px}
+.check{display:flex;gap:8px;align-items:center}
+.list{background:var(--field);border:1px solid var(--line);border-radius:6px}
+.row{display:flex;gap:10px;padding:4px 8px;border-bottom:1px solid var(--raised);white-space:nowrap;overflow:hidden}
+.row:last-child{border-bottom:none}
+.row .n{color:var(--muted);width:24px;text-align:right;flex:none}
+.row.sel{background:var(--select)}
+.label{font-weight:600;margin-bottom:4px}
+.foot{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-top:1px solid var(--line)}
+.btns{display:flex;gap:8px}
+.btn{padding:5px 14px;border:1px solid var(--line);border-radius:4px;background:var(--raised)}
+.btn.primary{background:var(--accent);color:var(--onAccent);border-color:var(--accent)}
+.hint{color:var(--muted);font-size:12px}
+</style></head>
+<body>
+<template id="icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 1.5h4M1.5 13.5h13"/><circle cx="5.5" cy="1.5" r="1" fill="currentColor" stroke="none"/><circle cx="14.5" cy="13.5" r="1" fill="currentColor" stroke="none"/><g id="accent"><path d="M1.5 5.5h7M1.5 9.5h10"/></g></svg></template>
+
+<div class="dlg">
+  <div class="title"><span class="ic"></span>Interpolate across Lines</div>
+  <div class="body">
+    <div class="sub">12 Lines, from Line 41 to Line 52. The video shows the result while this is open.</div>
+    <table>
+      <tr><th style="width:28px"></th><th>Tag</th><th>First Line</th><th>Last Line</th></tr>
+      <tr><td><span class="cb on"></span></td><td class="mono">\pos</td><td class="mono">(640,360)</td><td class="mono">(812,298.5)</td></tr>
+      <tr><td><span class="cb on"></span></td><td class="mono">\1c</td><td class="mono"><span class="sw" style="background:#FFFFFF"></span>&amp;HFFFFFF&amp;</td><td class="mono"><span class="sw" style="background:#3080FF"></span>&amp;HFF8030&amp;</td></tr>
+      <tr><td><span class="cb on"></span></td><td class="mono">\fscx</td><td class="mono">100</td><td class="mono">140</td></tr>
+      <tr><td><span class="cb on"></span></td><td class="mono">\frz</td><td class="mono">350</td><td class="mono">10</td></tr>
+      <tr><td><span class="cb on"></span></td><td class="mono">\bord <span class="hint">before “ra”</span></td><td class="mono">2</td><td class="mono">6</td></tr>
+      <tr><td><span class="cb on"></span></td><td class="mono">\clip</td><td class="mono">(m 0 0 l 300 0 300 80)</td><td class="mono">(m 20 0 l 330 0 330 90)</td></tr>
+    </table>
+    <div class="opts"><span>Acceleration</span><span class="field mono">1</span></div>
+    <div class="check"><span class="cb on"></span>Rotate the shortest way</div>
+    <div class="check"><span class="cb"></span>Cascade transforms</div>
+    <div>
+      <div class="label">Result</div>
+      <div class="list mono">
+        <div class="row"><span class="n">42</span><span>{\pos(655.64,354.41)\1c&amp;HEBE5DD&amp;\fscx103.64\clip(m 2 0 l 303 0 303 81)}ka{\bord2.36}ra</span></div>
+        <div class="row sel"><span class="n">43</span><span>{\pos(671.27,348.82)\1c&amp;HD7CABC&amp;\fscx107.27\clip(m 4 0 l 305 0 305 82)}ka{\bord2.73}ra</span></div>
+        <div class="row"><span class="n">44</span><span>{\pos(686.91,343.23)\1c&amp;HC3B09A&amp;\fscx110.91\clip(m 5 0 l 308 0 308 83)}ka{\bord3.09}ra</span></div>
+        <div class="row"><span class="n">45</span><span>{\pos(702.55,337.64)\1c&amp;HAE9579&amp;\fscx114.55\clip(m 7 0 l 311 0 311 84)}ka{\bord3.45}ra</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span class="hint">Enter applies, Esc cancels</span><div class="btns"><span class="btn">Cancel</span><span class="btn primary">Apply</span></div></div>
+</div>
+
+<div class="dlg">
+  <div class="title"><span class="ic"></span>Interpolate across Lines</div>
+  <div class="body">
+    <div class="sub">6 Lines, from Line 7 to Line 12. The video shows the result while this is open.</div>
+    <div class="notice"><b>!</b><span>The first and last Lines have different text, so only the start tags are interpolated.</span></div>
+    <table>
+      <tr><th style="width:28px"></th><th>Tag</th><th>First Line</th><th>Last Line</th></tr>
+      <tr><td><span class="cb on"></span></td><td class="mono">\fs</td><td class="mono">48</td><td class="mono">64</td></tr>
+      <tr><td><span class="cb on"></span></td><td class="mono">\alpha</td><td class="mono">&amp;H00&amp;</td><td class="mono">&amp;HFF&amp;</td></tr>
+      <tr class="off"><td><span class="cb dis"></span></td><td class="mono">\clip</td><td class="mono" colspan="2">(0,0,640,360) → (m 0 0 l 640 0 640 360)<span class="why">One clip is a rectangle and the other a drawing.</span></td></tr>
+      <tr class="off"><td><span class="cb dis"></span></td><td class="mono">\t</td><td class="mono" colspan="2">\t(0,200,\fscx120) → \t(\frz30)<span class="why">The transforms have different shapes.</span></td></tr>
+    </table>
+    <div class="opts"><span>Acceleration</span><span class="field mono">2</span></div>
+    <div class="check"><span class="cb"></span>Rotate the shortest way</div>
+    <div class="check"><span class="cb on"></span>Cascade transforms</div>
+  </div>
+  <div class="foot"><span class="hint">Enter applies, Esc cancels</span><div class="btns"><span class="btn">Cancel</span><span class="btn primary">Apply</span></div></div>
+</div>
+<script>
+const t=new URLSearchParams(location.search).get('theme');if(t)document.body.className=t;
+document.querySelectorAll('.ic').forEach(e=>e.replaceWith(document.getElementById('icon').content.cloneNode(true)));
+</script>
+</body></html>
