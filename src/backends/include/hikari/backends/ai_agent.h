@@ -32,7 +32,8 @@ std::string_view agentModeId(AgentMode mode);
 std::optional<AgentMode> agentModeFromId(std::string_view id);
 
 /// What Qt does with an agent's call before HA1 runs it.
-enum class Decision { Run, Judge, Ask, AlwaysAsk };
+/// Propose: Manual subtitle edits wait as a proposal the user applies or declines.
+enum class Decision { Run, Judge, Ask, AlwaysAsk, Propose };
 
 /// What makes a call ask in every mode: #410's always-ask categories, and AI settings (ADR 0024). docs/ai-agent.md
 /// maps each to its operations, commands and settings.
@@ -69,6 +70,10 @@ struct Verdict {
 /// Anything but a clear approval escalates.
 Verdict judgeVerdict(std::string_view answer);
 
+/// A model whose provider is "agent:<name>" runs the thread on that external agent ("claude").
+inline constexpr std::string_view kAgentProviderPrefix = "agent:";
+std::optional<std::string> externalAgentOf(const application::ai::ModelRef &model);
+
 /// One conversation in the agent panel. Qt owns it and saves it in the user folder.
 struct AgentThread {
     std::string id;
@@ -91,6 +96,8 @@ struct AgentThread {
     /// The soft cap in US dollars; 0 means none.
     double cap = 0;
     std::set<std::string> allowed;
+    /// The globe; the thread searches only while Settings › AI lets AI search the web too.
+    bool webSearch = true;
 
     api::Json toJson() const;
     static std::optional<AgentThread> fromJson(const api::Json &json);
@@ -126,6 +133,8 @@ public:
     struct Wiring {
         /// Null with AI off.
         std::function<AiRequests *()> requests;
+        /// The sidecar for a thread on an external agent, which needs no provider.
+        std::function<AiSidecarHost *()> agentHost;
         std::function<const application::ai::Config *()> config;
         api::Api *api = nullptr;
         std::function<Defaults()> defaults;
@@ -138,16 +147,19 @@ public:
         std::function<QDate()> today;
     };
 
-    enum class Answer { AllowOnce, AllowInThread, Deny };
+    /// A proposal takes AllowOnce (Apply), Deny (Decline) or AskAgain, once the document changed under it.
+    enum class Answer { AllowOnce, AllowInThread, Deny, AskAgain };
 
     /// An open permission question.
     struct Ask {
         std::uint64_t id = 0;
         std::string thread;
-        Decision kind = Decision::Ask; // Ask, Judge (the judge escalated) or AlwaysAsk
+        Decision kind = Decision::Ask; // Ask, Judge (the judge escalated), AlwaysAsk or Propose
         std::string operation;
         api::Json params;
         std::string reason;
+        std::optional<application::DocumentId> document; // a proposal's
+        bool stale = false;                               // a proposal whose document changed
     };
 
     AgentThreads(Wiring wiring, ThreadStore *store, QObject *parent = nullptr);
@@ -161,6 +173,8 @@ public:
     void remove(const std::string &id);
     void setMode(const std::string &id, AgentMode mode);
     void setModel(const std::string &id, application::ai::ModelRef model);
+    void setWebSearch(const std::string &id, bool on);
+    bool searches(const AgentThread &thread) const;
     /// Tabs the user attached with @, besides the editing target.
     void setAttached(const std::string &id, std::vector<application::DocumentId> documents);
     /// The model a thread's next turn runs on: its own, else the chat model.
@@ -192,7 +206,7 @@ signals:
 
 private:
     struct Run;
-    AiSidecarHost *host();
+    AiSidecarHost *host(bool externalAgent = false);
     AgentThread *find(const std::string &id);
     void start(AgentThread &thread, std::string text, api::Json parts);
     void finished(const std::string &id, const SidecarResult &result);
@@ -203,10 +217,17 @@ private:
                std::function<void(std::function<void()>)> onWithdraw);
     void openAsk(AgentThread &thread, Decision kind, const std::string &operation, const api::Json &params,
                  std::string reason, AiSidecarHost::Admit admit, std::function<void(std::function<void()>)> onWithdraw);
+    void openProposal(AgentThread &thread, const api::Json &params, AiSidecarHost::Admit admit,
+                      std::function<void(std::function<void()>)> onWithdraw);
+    void wait(AgentThread &thread, Ask ask, api::Json item, AiSidecarHost::Admit admit,
+              std::function<void(std::function<void()>)> onWithdraw);
+    void documentChanged(application::DocumentId document, std::int64_t revision);
     void admitCall(AgentThread &thread, const std::string &operation, const api::Json &params, bool judged,
                    AiSidecarHost::Admit admit);
     api::Caller callerOf(const AgentThread &thread) const;
     void addUsage(AgentThread &thread, const api::Json &usage);
+    void addSources(AgentThread &thread, Run *run, const api::Json &update);
+    void searchFailed(AgentThread &thread, Run *run, const api::Json &update);
     void stopFor(AgentThread &thread, const std::string &notice);
     void closeAsks(const std::string &thread, const std::string &why);
     void push(AgentThread &thread, api::Json item);
@@ -224,6 +245,7 @@ private:
     std::map<std::uint64_t, AiSidecarHost::Admit> m_waiting;
     std::map<std::string, std::string> m_queued;
     std::uint64_t m_nextAsk = 1;
+    std::uint64_t m_documentEvents = 0;
     QPointer<AiSidecarHost> m_host;
     std::set<std::string> m_live; // sessions the running sidecar holds
     std::shared_ptr<bool> m_alive = std::make_shared<bool>(true);

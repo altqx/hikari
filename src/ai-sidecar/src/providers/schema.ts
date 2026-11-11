@@ -50,7 +50,8 @@ export const kRequestSchema = object({
     webSearch: boolean,
 }, ["model", "messages"]);
 
-const citation = object({ index: integer, url: string, title: string, quote: string }, ["index", "url", "title"]);
+const citation = object({ index: integer, url: string, title: string, quote: string, start: integer, end: integer },
+    ["index", "url", "title"]);
 
 export const kSchemas = {
     providersSetParams: object({

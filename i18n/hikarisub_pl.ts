@@ -164,6 +164,26 @@
         <translation>Dołącz</translation>
     </message>
     <message>
+        <source>Search the web</source>
+        <translation>Wyszukaj w sieci</translation>
+    </message>
+    <message>
+        <source>This provider can’t search the web on its own. Choose a search service in Settings › AI › Web search.</source>
+        <translation>Ten dostawca nie potrafi sam wyszukiwać w sieci. Wybierz usługę wyszukiwania w Ustawienia › AI › Wyszukiwanie w sieci.</translation>
+    </message>
+    <message>
+        <source>Search the web: on for this thread</source>
+        <translation>Wyszukiwanie w sieci: włączone w tym wątku</translation>
+    </message>
+    <message>
+        <source>Search the web: off for this thread</source>
+        <translation>Wyszukiwanie w sieci: wyłączone w tym wątku</translation>
+    </message>
+    <message>
+        <source>Changing it mid-thread costs one cache miss on Anthropic.</source>
+        <translation>Zmiana w trakcie wątku kosztuje jedno chybienie pamięci podręcznej w Anthropic.</translation>
+    </message>
+    <message>
         <source>Stop</source>
         <translation>Zatrzymaj</translation>
     </message>
@@ -204,8 +224,8 @@
         <translation>Ustawienia › AI…</translation>
     </message>
     <message>
-        <source>You approve every change. Reading never asks.</source>
-        <translation>Zatwierdzasz każdą zmianę. Odczyt nigdy nie pyta.</translation>
+        <source>You approve each subtitle edit before it’s made, and every other change. Reading never asks.</source>
+        <translation>Zatwierdzasz każdą zmianę w napisach, zanim zostanie wprowadzona, i każdą inną zmianę. Odczyt nigdy nie pyta.</translation>
     </message>
     <message>
         <source>The judge model approves each action, or asks you. It sees the action and your messages, never your files.</source>
@@ -238,6 +258,38 @@
     <message>
         <source>Restore checkpoint</source>
         <translation>Przywróć punkt kontrolny</translation>
+    </message>
+    <message>
+        <source>Sources</source>
+        <translation>Źródła</translation>
+    </message>
+    <message numerus="yes">
+        <source>Show %n more</source>
+        <translation>
+            <numerusform>Pokaż jeszcze %n</numerusform>
+            <numerusform>Pokaż jeszcze %n</numerusform>
+            <numerusform>Pokaż jeszcze %n</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Open in browser</source>
+        <translation>Otwórz w przeglądarce</translation>
+    </message>
+    <message>
+        <source>Read %1</source>
+        <translation>Przeczytano %1</translation>
+    </message>
+    <message>
+        <source>Searched with Google</source>
+        <translation>Wyszukano w Google</translation>
+    </message>
+    <message>
+        <source>Searched the web</source>
+        <translation>Wyszukano w sieci</translation>
+    </message>
+    <message>
+        <source>Searched with %1</source>
+        <translation>Wyszukano przez %1</translation>
     </message>
     <message>
         <source>judge approved</source>
@@ -348,6 +400,14 @@
         <translation>Wybierz model czatu w Ustawienia › AI</translation>
     </message>
     <message>
+        <source>%1 has no searches left</source>
+        <translation>W %1 nie zostało już wyszukiwań</translation>
+    </message>
+    <message>
+        <source>%1 refused HikariSub’s key</source>
+        <translation>%1 odrzucił klucz HikariSub</translation>
+    </message>
+    <message>
         <source>AI component isn’t ready</source>
         <translation>Komponent AI nie jest gotowy</translation>
     </message>
@@ -368,6 +428,10 @@
         <translation>HikariSub nadal pobiera komponent AI albo nie udało się go uruchomić.</translation>
     </message>
     <message>
+        <source>The search service answered %1. The answer goes on without searching the web.</source>
+        <translation>Usługa wyszukiwania odpowiedziała kodem %1. Odpowiedź powstaje dalej bez wyszukiwania w sieci.</translation>
+    </message>
+    <message>
         <source>Raise to %1 and continue</source>
         <translation>Podnieś do %1 i kontynuuj</translation>
     </message>
@@ -382,6 +446,94 @@
     <message>
         <source>Show the log</source>
         <translation>Pokaż dziennik</translation>
+    </message>
+    <message>
+        <source>Claude Code</source>
+        <translation>Claude Code</translation>
+    </message>
+    <message>
+        <source>Proposed: %1</source>
+        <translation>Propozycja: %1</translation>
+    </message>
+    <message>
+        <source>out of date</source>
+        <translation>nieaktualna</translation>
+    </message>
+    <message>
+        <source>Deleted</source>
+        <translation>Usunięta</translation>
+    </message>
+    <message>
+        <source>Moved</source>
+        <translation>Przeniesiona</translation>
+    </message>
+    <message>
+        <source>Inserted</source>
+        <translation>Wstawiona</translation>
+    </message>
+    <message>
+        <source>Changes %1</source>
+        <translation>Zmienia: %1</translation>
+    </message>
+    <message>
+        <source>The subtitles changed after the agent read them.</source>
+        <translation>Napisy zmieniły się po tym, jak agent je odczytał.</translation>
+    </message>
+    <message>
+        <source>Click a row to select its line. Applying adds one undoable step to the review.</source>
+        <translation>Kliknij wiersz, aby zaznaczyć jego linijkę. Zastosowanie dodaje do przeglądu jeden krok, który można cofnąć.</translation>
+    </message>
+    <message>
+        <source>Apply</source>
+        <translation>Zastosuj</translation>
+    </message>
+    <message>
+        <source>Ask again</source>
+        <translation>Poproś ponownie</translation>
+    </message>
+    <message>
+        <source>Decline</source>
+        <translation>Odrzuć</translation>
+    </message>
+    <message>
+        <source>Decline and tell the agent…</source>
+        <translation>Odrzuć i powiedz agentowi…</translation>
+    </message>
+    <message>
+        <source>Sent back to the agent: %1</source>
+        <translation>Odesłano do agenta: %1</translation>
+    </message>
+    <message>
+        <source>Declined: %1 · nothing changed</source>
+        <translation>Odrzucono: %1 · nic się nie zmieniło</translation>
+    </message>
+    <message>
+        <source>Not applied: %1 · nothing changed</source>
+        <translation>Nie zastosowano: %1 · nic się nie zmieniło</translation>
+    </message>
+    <message numerus="yes">
+        <source>Proposal: %1, %n lines</source>
+        <translation>
+            <numerusform>Propozycja: %1, %n linijka</numerusform>
+            <numerusform>Propozycja: %1, %n linijki</numerusform>
+            <numerusform>Propozycja: %1, %n linijek</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n lines</source>
+        <translation>
+            <numerusform>%n linijka</numerusform>
+            <numerusform>%n linijki</numerusform>
+            <numerusform>%n linijek</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Show all %n lines</source>
+        <translation>
+            <numerusform>Pokaż %n linijkę</numerusform>
+            <numerusform>Pokaż wszystkie %n linijki</numerusform>
+            <numerusform>Pokaż wszystkie %n linijek</numerusform>
+        </translation>
     </message>
 </context>
 <context>
@@ -508,10 +660,6 @@
         <translation>Dodaj zakończenie do aktywnej linijki</translation>
     </message>
     <message>
-        <source>Commit</source>
-        <translation>Zatwierdź</translation>
-    </message>
-    <message>
         <source>Apply changes</source>
         <translation>Zatwierdź zmiany</translation>
     </message>
@@ -593,15 +741,15 @@
         <translation>Odtwórz po znaczniku</translation>
     </message>
     <message>
-        <source>Commit options</source>
-        <translation>Opcje zatwierdzania</translation>
+        <source>Options for applying changes</source>
+        <translation>Opcje zatwierdzania zmian</translation>
     </message>
     <message>
-        <source>Auto-commit</source>
+        <source>Apply changes automatically</source>
         <translation>Automatyczne zatwierdzanie</translation>
     </message>
     <message>
-        <source>Next after commit</source>
+        <source>Go to the next line after applying</source>
         <translation>Dalej po zatwierdzeniu</translation>
     </message>
     <message>
@@ -759,10 +907,6 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>Play around button</source>
         <translation>Przycisk odtwarzania okolic</translation>
-    </message>
-    <message>
-        <source>Go to the next line after commit</source>
-        <translation>Przechodź do następnej linijki po zatwierdzeniu</translation>
     </message>
     <message>
         <source>Speech spectrum</source>
@@ -953,7 +1097,7 @@ Urządzenie wyjściowe: %2</translation>
     </message>
     <message>
         <source>Changed from the script’s %1.</source>
-        <translation>Zmieniono względem wartości skryptu: %1.</translation>
+        <translation>Zmieniono względem wartości skryptu. %1.</translation>
     </message>
     <message>
         <source>Delete preset</source>
@@ -2883,7 +3027,7 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Lewo-dół</translation>
     </message>
     <message>
-        <source>Bottom-center</source>
+        <source>Bottom-centre</source>
         <translation>Środek-dół</translation>
     </message>
     <message>
@@ -2895,7 +3039,7 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Lewo-środek</translation>
     </message>
     <message>
-        <source>Center</source>
+        <source>Centre</source>
         <translation>Środek</translation>
     </message>
     <message>
@@ -2907,7 +3051,7 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Lewo-góra</translation>
     </message>
     <message>
-        <source>Top-center</source>
+        <source>Top-centre</source>
         <translation>Środek-góra</translation>
     </message>
     <message>
@@ -6002,12 +6146,8 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Przejmuje go: %1</translation>
     </message>
     <message>
-        <source>Commit</source>
-        <translation>Zatwierdź</translation>
-    </message>
-    <message>
-        <source>Commit alt</source>
-        <translation>Zatwierdź (drugi skrót)</translation>
+        <source>Apply changes alt</source>
+        <translation>Zatwierdź zmiany (drugi skrót)</translation>
     </message>
     <message>
         <source>Previous line</source>
@@ -6094,8 +6234,8 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Kolor cienia</translation>
     </message>
     <message>
-        <source>Font selection</source>
-        <translation>Wybór czcionki</translation>
+        <source>Choose font…</source>
+        <translation>Wybierz czcionkę…</translation>
     </message>
     <message>
         <source>Strikethrough</source>
@@ -6414,8 +6554,8 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Podziel linijki według łamań wierszy</translation>
     </message>
     <message>
-        <source>ASS file properties</source>
-        <translation>Właściwości pliku ASS</translation>
+        <source>Script properties</source>
+        <translation>Właściwości skryptu</translation>
     </message>
     <message>
         <source>Check for updates</source>
@@ -6486,8 +6626,8 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Otwórz klatki kluczowe</translation>
     </message>
     <message>
-        <source>Open auto save</source>
-        <translation>Otwórz autozapis</translation>
+        <source>Open autosave…</source>
+        <translation>Otwórz autozapis…</translation>
     </message>
     <message>
         <source>Run the last loaded script</source>
@@ -6642,8 +6782,8 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Otwórz wideo</translation>
     </message>
     <message>
-        <source>Play / Pause</source>
-        <translation>Odtwórz / Pauza</translation>
+        <source>Play or pause</source>
+        <translation>Odtwórz lub wstrzymaj</translation>
     </message>
     <message>
         <source>Play active line</source>
@@ -6818,8 +6958,8 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>1 minuta do tyłu</translation>
     </message>
     <message>
-        <source>Show / hide progress bar</source>
-        <translation>Pokaż / ukryj pasek postępu</translation>
+        <source>Progress bar</source>
+        <translation>Pasek postępu</translation>
     </message>
     <message>
         <source>Next chapter</source>
@@ -6874,8 +7014,8 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Ukryj tagi w edytorze linijki</translation>
     </message>
     <message>
-        <source>Show / hide render cost</source>
-        <translation>Pokaż / ukryj koszt renderowania</translation>
+        <source>Render cost</source>
+        <translation>Koszt renderowania</translation>
     </message>
     <message>
         <source>Tap to time</source>
@@ -7856,8 +7996,8 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Przejdź do czasu końcowego linijki</translation>
     </message>
     <message>
-        <source>Play / Pause</source>
-        <translation>Odtwórz / Pauza</translation>
+        <source>Play or pause</source>
+        <translation>Odtwórz lub wstrzymaj</translation>
     </message>
     <message>
         <source>Go to previous keyframe</source>
@@ -8640,7 +8780,7 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Przesuwa wideo do czasu końcowego linijki</translation>
     </message>
     <message>
-        <source>Plays / Pauses video</source>
+        <source>Plays or pauses the video</source>
         <translation>Odtwarza lub pauzuje wideo</translation>
     </message>
     <message>
@@ -10429,7 +10569,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Values</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Wartości</translation>
     </message>
     <message>
         <source>Math</source>
@@ -14837,6 +14977,18 @@ Linijki [Sekcja] je grupują.</translation>
     <message>
         <source>Scale border and shadow</source>
         <translation>Skalowana obwódka i cień</translation>
+    </message>
+    <message>
+        <source>Saving “%1” changes these script properties.</source>
+        <translation>Zapisanie “%1” zmieni te właściwości skryptu:</translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation>OK</translation>
+    </message>
+    <message>
+        <source>Skip</source>
+        <translation>Pomiń</translation>
     </message>
 </context>
 <context>
@@ -20027,8 +20179,8 @@ Usunięte style:
         <translation>Klatka w przód</translation>
     </message>
     <message>
-        <source>Play / Pause</source>
-        <translation>Odtwórz / Pauza</translation>
+        <source>Play or pause</source>
+        <translation>Odtwórz lub wstrzymaj</translation>
     </message>
     <message>
         <source>Video</source>
@@ -21039,7 +21191,7 @@ bądź brakuje kodeków czy też splittera</translation>
         <translation>Miejsce tagu w tekście</translation>
     </message>
     <message>
-        <source>How each line&apos;s number changes the value</source>
+        <source>How each line’s number changes the value</source>
         <translation>Jak numer linijki zmienia wartość</translation>
     </message>
     <message>
@@ -21471,7 +21623,7 @@ bądź brakuje kodeków czy też splittera</translation>
         <translation>Za-dół</translation>
     </message>
     <message>
-        <source>After-center</source>
+        <source>After-centre</source>
         <translation>Za-środek</translation>
     </message>
     <message>
@@ -21487,7 +21639,7 @@ bądź brakuje kodeków czy też splittera</translation>
         <translation>Przed-dół</translation>
     </message>
     <message>
-        <source>Before-center</source>
+        <source>Before-centre</source>
         <translation>Przed-środek</translation>
     </message>
     <message>
@@ -21495,7 +21647,7 @@ bądź brakuje kodeków czy też splittera</translation>
         <translation>Przed-góra</translation>
     </message>
     <message>
-        <source>Bottom-center</source>
+        <source>Bottom-centre</source>
         <translation>Środek-dół</translation>
     </message>
     <message>
@@ -21511,15 +21663,15 @@ bądź brakuje kodeków czy też splittera</translation>
         <translation>Nie można odczytać wartości wycinka prostokątnego.</translation>
     </message>
     <message>
-        <source>Center</source>
+        <source>Centre</source>
         <translation>Środek</translation>
     </message>
     <message>
-        <source>Center-above</source>
+        <source>Centre-above</source>
         <translation>Środek-ponad</translation>
     </message>
     <message>
-        <source>Center-below</source>
+        <source>Centre-below</source>
         <translation>Środek-poniżej</translation>
     </message>
     <message>
@@ -21555,8 +21707,8 @@ bądź brakuje kodeków czy też splittera</translation>
         <translation>Usuń punkt</translation>
     </message>
     <message>
-        <source>A double &quot;m&quot; was blocked because of a VSFilter bug</source>
-        <translation>Podwójne &quot;m&quot; zostało zablokowane z powodu błędu w VSFilter</translation>
+        <source>A double “m” was blocked because of a VSFilter bug</source>
+        <translation>Podwójne “m” zostało zablokowane z powodu błędu w VSFilter</translation>
     </message>
     <message>
         <source>List of ASS drawings with an edit option.
@@ -21723,10 +21875,6 @@ zwiększając lub zmniejszając wartość.</translation>
     <message>
         <source>Spikes</source>
         <translation>Promienie</translation>
-    </message>
-    <message>
-        <source>Centre</source>
-        <translation>Środek</translation>
     </message>
     <message>
         <source>Hole</source>
@@ -21956,12 +22104,12 @@ przeskalowany w jednej lub dwóch osiach.</translation>
     </message>
     <message>
         <source>Show surrounding plane
-A rectangle of the text&apos;s plane: match it to one in the shot, then place the text inside it</source>
+A rectangle of the text’s plane: match it to one in the shot, then place the text inside it</source>
         <translation>Pokaż otaczającą płaszczyznę
 Prostokąt płaszczyzny tekstu: dopasuj go do prostokąta w kadrze, a potem umieść w nim tekst</translation>
     </message>
     <message>
-        <source>Top-center</source>
+        <source>Top-centre</source>
         <translation>Środek-góra</translation>
     </message>
     <message>
@@ -21973,7 +22121,7 @@ Prostokąt płaszczyzny tekstu: dopasuj go do prostokąta w kadrze, a potem umie
         <translation>Prawo-góra</translation>
     </message>
     <message>
-        <source>Video must be set at least one frame after the line&apos;s start time</source>
+        <source>Video must be set at least one frame after the line’s start time</source>
         <translation>Wideo musi być ustawione co najmniej jedną klatkę po czasie początkowym linijki</translation>
     </message>
     <message>

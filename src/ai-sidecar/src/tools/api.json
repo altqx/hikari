@@ -7,6 +7,12 @@
       "minimum": 1,
       "description": "An open Document, as documents.list gives it."
     },
+    "SkillName": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "maxLength": 64,
+      "description": "A skill's name, which is its folder's."
+    },
     "LineId": {
       "type": "integer",
       "minimum": 1,
@@ -2311,6 +2317,97 @@
         "required": [
           "file",
           "size"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "skills.list",
+      "access": "read",
+      "summary": "The user's skills: each skill folder's name and its files, SKILL.md among them.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "skills": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "skill": {
+                  "$ref": "#/$defs/SkillName"
+                },
+                "files": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "required": [
+                "skill",
+                "files"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "skills"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "skills.read",
+      "access": "read",
+      "summary": "One file of a user's skill, as UTF-8 text; at most 256 KiB.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "skill": {
+            "$ref": "#/$defs/SkillName"
+          },
+          "file": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512,
+            "description": "A path skills.list gives, such as SKILL.md or references/tags.md."
+          }
+        },
+        "required": [
+          "skill",
+          "file"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "skill": {
+            "$ref": "#/$defs/SkillName"
+          },
+          "file": {
+            "type": "string"
+          },
+          "size": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "data": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "skill",
+          "file",
+          "size",
+          "data"
         ],
         "additionalProperties": false
       }

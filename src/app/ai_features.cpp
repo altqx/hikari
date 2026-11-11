@@ -91,16 +91,18 @@ AiFeatures::Ports AiFeatures::defaultPorts(const QString &userFolder, api::Api *
             return nullptr;
         backends::ai::AiSidecarHost::Options options;
         options.program = install.runtime;
-        options.arguments = {install.bundle};
+        const QString vendor = ai + QStringLiteral("/vendor");
+        QDir().mkpath(vendor);
+        options.arguments = {install.bundle, QStringLiteral("--vendor"), QDir::toNativeSeparators(vendor)};
         options.workingDirectory = ai + QStringLiteral("/work");
         options.sandbox = backends::sandbox::Profile{
             .name = QStringLiteral("HikariSub.AI.Sidecar"),
             .readExecute = {QFileInfo(install.runtime).absolutePath(), QFileInfo(install.bundle).absolutePath()},
-            .readWrite = {options.workingDirectory},
+            .readWrite = {options.workingDirectory, vendor},
         };
         options.buildId = HIKARI_AI_BUILD_ID;
         return std::make_unique<backends::ai::AiSidecarHost>(std::move(options), api,
-                                                             api::Caller{.id = "ai", .label = "AI", .reviewed = true});
+                                                             api::Caller{.id = "ai", .label = "AI", .reviewed = true, .skills = true});
     };
 #ifdef HIKARI_AI_LOCAL_RUNTIME
     ports.localSidecar = backends::ai::SidecarInstall{QStringLiteral("0.0.0-dev"), QStringLiteral(HIKARI_AI_LOCAL_RUNTIME),
@@ -125,6 +127,7 @@ AiFeatures::Ports AiFeatures::defaultPorts(const QString &userFolder, api::Api *
                                                      agents + QStringLiteral("/codex/work")))
                 broker.add("codex", std::move(*spec));
     };
+    ports.agentOnPath = [](const QString &agent) { return !QStandardPaths::findExecutable(agent).isEmpty(); };
     ports.signIn = [](application::ai::KeyStore &keys) { return std::make_unique<backends::ai::AiSignIn>(keys); };
     ports.findAgent = [](const QString &agent, std::function<void(std::optional<backends::ai::AgentCli>)> done) {
         backends::ai::probeAgentCli(agent, std::move(done));
@@ -180,7 +183,7 @@ void AiFeatures::apply()
         m_live->searchKeys = std::make_unique<application::ai::SearchKeys>(*m_live->keys);
         applyWebSearch();
         m_live->relay = std::make_unique<backends::ai::HttpRelay>(backends::ai::withSearchTargets(
-            m_live->requests->relayTargets(), *m_live->searchKeys,
+            backends::ai::withRegistryTargets(m_live->requests->relayTargets()), *m_live->searchKeys,
             [requests = m_live->requests.get()](application::ai::SearchService service) {
                 return requests->searchAccess(service);
             }));

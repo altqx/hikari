@@ -3,7 +3,9 @@
 #include "hikari/app/application.h"
 #include "hikari/application/ai_providers.h"
 #include "hikari/application/hotkeys.h"
+#include "hikari/backends/ai_agent_broker.h"
 #include "hikari/backends/ai_sidecar_host.h"
+#include "hikari/backends/desktop_handoff.h"
 
 #include "docking.h"
 #include "line_table_model.h"
@@ -12,6 +14,7 @@
 #include "theme.h"
 
 #include <QFile>
+#include <QStandardPaths>
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QQmlExpression>
@@ -120,6 +123,14 @@ class AgentPanelTest : public QObject {
         auto *items = qobject_cast<QAbstractItemModel *>(agent().items());
         return items->index(items->rowCount() - 1, 0).data(app::AgentItemsModel::ItemRole).toMap();
     }
+    QVariantMap lastProposal() const
+    {
+        auto *items = qobject_cast<QAbstractItemModel *>(agent().items());
+        for (int row = items->rowCount() - 1; row >= 0; --row)
+            if (items->index(row, 0).data(app::AgentItemsModel::KindRole).toString() == QLatin1String("proposal"))
+                return items->index(row, 0).data(app::AgentItemsModel::ItemRole).toMap();
+        return {};
+    }
     QString applyScript(const char *say) const
     {
         const auto line = session().document().lines().front()->id;
@@ -172,6 +183,31 @@ class AgentPanelTest : public QObject {
         }
     }
 
+    void realClaude(app::AiFeatures::Ports &ports)
+    {
+        const QString runtime = qEnvironmentVariable("HIKARI_REAL_AI_RUNTIME");
+        const QString bundle = qEnvironmentVariable("HIKARI_REAL_AI_BUNDLE");
+        if (runtime.isEmpty() || bundle.isEmpty())
+            return;
+        ports.sidecarHost = [this, runtime, bundle](const backends::ai::SidecarInstall &) {
+            backends::ai::AiSidecarHost::Options o;
+            o.program = runtime;
+            o.arguments = {bundle, QStringLiteral("--vendor"), at(QStringLiteral("ai/vendor"))};
+            o.workingDirectory = at(QStringLiteral("ai/work"));
+            QDir().mkpath(at(QStringLiteral("ai/vendor")));
+            o.sandbox = backends::sandbox::Profile{.name = QStringLiteral("HikariSub.AI.Sidecar"),
+                                                   .readExecute = {QFileInfo(runtime).absolutePath(), QFileInfo(bundle).absolutePath()},
+                                                   .readWrite = {o.workingDirectory, at(QStringLiteral("ai/vendor"))}};
+            return std::make_unique<backends::ai::AiSidecarHost>(std::move(o), &application->apiHost()->api(),
+                                                                 api::Caller{.id = "ai", .label = "AI", .reviewed = true});
+        };
+        ports.agents = [this](backends::ai::AgentBroker &broker) {
+            broker.add("claude", backends::ai::claudeAgent(QStandardPaths::findExecutable(QStringLiteral("claude")),
+                                                         QDir::homePath(), at(QStringLiteral("ai/agents/claude"))));
+        };
+        ports.agentOnPath = [](const QString &agent) { return agent == QStringLiteral("claude"); };
+    }
+
 private slots:
     void init()
     {
@@ -204,6 +240,10 @@ private slots:
         };
         ports.localSidecar = backends::ai::SidecarInstall{QStringLiteral("0.0.0-dev"), {}, flags, {}};
         ports.agents = [](backends::ai::AgentBroker &) {};
+        const bool claude = QTest::currentTestFunction() == QByteArrayLiteral("claudeCodeIsAModelOnlyWhenItIsFound");
+        ports.agentOnPath = [claude](const QString &agent) { return claude && agent == QStringLiteral("claude"); };
+        if (QTest::currentTestFunction() == QByteArrayLiteral("theInstalledClaudeEditsIntoTheReview"))
+            realClaude(ports);
 
         app::Application::Options options;
         options.settingsFile = at(QStringLiteral("settings.toml"));
@@ -235,6 +275,45 @@ private slots:
         application.reset();
     }
 
+    void claudeCodeIsAModelOnlyWhenItIsFound()
+    {
+        openPanel();
+        const QVariantList models = agent().models();
+        QCOMPARE(models.size(), 2);
+        QCOMPARE(models.front().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Claude Code"));
+        const QString claude = models.front().toMap().value(QStringLiteral("value")).toString();
+        QCOMPARE(claude, QStringLiteral("agent:claude\t"));
+        agent().newThread();
+        agent().setModel(claude);
+        QTRY_COMPARE(agent().thread().value(QStringLiteral("modelText")).toString(), QStringLiteral("Claude Code"));
+        QCOMPARE(agent().thread().value(QStringLiteral("model")).toString(), claude);
+    }
+    void theInstalledClaudeEditsIntoTheReview()
+    {
+        if (qEnvironmentVariable("HIKARI_REAL_AI_RUNTIME").isEmpty())
+            QSKIP("Evidence only: set HIKARI_REAL_AI_RUNTIME and HIKARI_REAL_AI_BUNDLE to run the installed claude");
+        application->settingsStore()->set(app::AgentController::kModeSetting, QStringLiteral("manual"));
+        openPanel();
+        agent().newThread();
+        agent().setModel(QStringLiteral("agent:claude\t"));
+        type(QStringLiteral("In this subtitle file, line 2 reads \"second\". Use HikariSub's tools to change it to "
+                            "\"Second\". Change nothing else, then say done."));
+        QTRY_VERIFY_WITH_TIMEOUT(kinds().contains(QStringLiteral("change")), 240'000);
+        QTRY_VERIFY_WITH_TIMEOUT(!agent().thread().value(QStringLiteral("running")).toBool(), 120'000);
+        QCOMPARE(session().document().lines()[1]->text, u8"Second");
+        QCOMPARE(session().document().lines()[0]->text, u8"A rather long first line");
+        if (const QString out = qEnvironmentVariable("HIKARI_REAL_CLAUDE_OUT"); !out.isEmpty()) {
+            QFile file(out);
+            QVERIFY(file.open(QIODevice::WriteOnly | QIODevice::Truncate));
+            file.write(agent().markdown(agent().current()).toUtf8());
+        }
+        shoot(QStringLiteral("agent-claude"));
+    }
+    void claudeCodeIsNoModelWhenItIsMissing()
+    {
+        openPanel();
+        QCOMPARE(agent().models().size(), 1);
+    }
     void aTurnStreamsIntoTheTimelineAndItsChangeWaitsInTheReview()
     {
         application->settingsStore()->set(app::AgentController::kModeSetting, QStringLiteral("manual"));
@@ -246,8 +325,16 @@ private slots:
                  QStringLiteral("episode.ass · active tab"));
 
         type(applyScript("I tightened the first line."));
+        QTRY_COMPARE(kinds().last(), QStringLiteral("proposal"));
+        QTRY_VERIFY(item(QStringLiteral("agentProposalApply")));
+        QCOMPARE(session().document().lines().front()->text, u8"A rather long first line");
+        QVERIFY(item(QStringLiteral("agentComposer"))->hasActiveFocus());
+        QVERIFY(!item(QStringLiteral("agentProposalApply"))->hasActiveFocus());
+        shoot(QStringLiteral("agent-proposal"), QStringLiteral("Tighten the long first line"));
+        QVERIFY(click(QStringLiteral("agentProposalApply")));
         QTRY_COMPARE(kinds().last(), QStringLiteral("change"));
-        QCOMPARE(kinds(), (QStringList{"user", "text", "change"}));
+        QCOMPARE(kinds(), (QStringList{"user", "text", "proposal", "change"}));
+        QVERIFY(!item(QStringLiteral("agentProposal")));
         QTRY_VERIFY(!agent().thread().value(QStringLiteral("running")).toBool());
         QCOMPARE(lastItem().value(QStringLiteral("name")).toString(), QStringLiteral("Tightened"));
         QCOMPARE(session().document().lines().front()->text, u8"Shorter.");
@@ -262,6 +349,42 @@ private slots:
         QVERIFY(click(QStringLiteral("agentThreadsButton")));
         QTRY_VERIFY(item(QStringLiteral("agentThreadRow")));
         shoot(QStringLiteral("agent-threads"), QStringLiteral("Tighten the long first line"));
+    }
+
+    void aProposalTakesTheFocusFromThePanelButNotFromTheComposer()
+    {
+        application->settingsStore()->set(app::AgentController::kModeSetting, QStringLiteral("manual"));
+        openPanel();
+        QVERIFY(click(QStringLiteral("agentNewThread")));
+        QTRY_VERIFY(agent().thread().contains(QStringLiteral("id")));
+        QQuickItem *mode = item(QStringLiteral("agentModeButton"));
+        QVERIFY(mode);
+        mode->forceActiveFocus();
+        QTRY_VERIFY(mode->hasActiveFocus());
+        agent().send(applyScript("Tightened."));
+        QTRY_VERIFY(item(QStringLiteral("agentProposalApply")));
+        QTRY_VERIFY(item(QStringLiteral("agentProposalApply"))->hasActiveFocus());
+        QCOMPARE(session().document().lines().front()->text, u8"A rather long first line");
+        QTest::keyClick(window(), Qt::Key_Return);
+        QTRY_COMPARE(kinds().last(), QStringLiteral("change"));
+        QCOMPARE(session().document().lines().front()->text, u8"Shorter.");
+    }
+
+    void aDeclinedProposalWritesNothing()
+    {
+        application->settingsStore()->set(app::AgentController::kModeSetting, QStringLiteral("manual"));
+        openPanel();
+        QVERIFY(click(QStringLiteral("agentNewThread")));
+        type(applyScript("Tightened."));
+        QTRY_VERIFY(item(QStringLiteral("agentProposalTell")));
+        QVERIFY(click(QStringLiteral("agentProposalTell")));
+        QTRY_VERIFY(item(QStringLiteral("agentProposalReply")));
+        item(QStringLiteral("agentProposalReply"))->setProperty("text", QStringLiteral("Keep it long"));
+        QTest::keyClick(window(), Qt::Key_Return);
+        QTRY_COMPARE(lastProposal().value(QStringLiteral("status")).toString(), QStringLiteral("declined"));
+        QTRY_VERIFY(!agent().thread().value(QStringLiteral("running")).toBool());
+        QCOMPARE(session().document().lines().front()->text, u8"A rather long first line");
+        QVERIFY(!kinds().contains(QStringLiteral("change")));
     }
 
     void aThreadIsRenamedInItsOwnWindow()
@@ -352,6 +475,81 @@ private slots:
         QTest::keyClick(window(), Qt::Key_Escape);
         QTRY_VERIFY(!agent().thread().value(QStringLiteral("running")).toBool());
         QVERIFY(kinds().contains(QStringLiteral("notice")));
+    }
+
+    void theGlobeSearchesPerThreadAndAnAnswerShowsItsSourcesAndSearches()
+    {
+        QStringList opened;
+        const auto previous = backends::desktop::replaceRoutes({.openUrl = [&](const QUrl &url) {
+            opened << url.toString();
+            return true;
+        }});
+        auto restore = qScopeGuard([&] { backends::desktop::replaceRoutes(previous); });
+        openPanel();
+        QVERIFY(click(QStringLiteral("agentNewThread")));
+        QQuickItem *globe = item(QStringLiteral("agentWebSearch"));
+        QVERIFY(globe);
+        QVERIFY(globe->property("checked").toBool());
+        QCOMPARE(globe->property("tip").toString(), QStringLiteral("Search the web: on for this thread"));
+        QVERIFY(click(QStringLiteral("agentWebSearch")));
+        QVERIFY(!agent().thread().value(QStringLiteral("webSearch")).toBool());
+        QTRY_COMPARE(globe->property("tip").toString(), QStringLiteral("Search the web: off for this thread"));
+        QVERIFY(click(QStringLiteral("agentWebSearch")));
+        QVERIFY(agent().thread().value(QStringLiteral("webSearch")).toBool());
+
+        const std::string say = "Aimer sings it. The single came out in 2011.";
+        Json citations = Json::array();
+        for (int i = 1; i <= 6; ++i) {
+            Json c = Json::object({{"index", i}, {"url", "https://site" + std::to_string(i) + ".example/page"},
+                                   {"title", "Page " + std::to_string(i)}});
+            if (i == 1) {
+                c["quote"] = "Aimer is the singer.";
+                c["start"] = 0;
+                c["end"] = 15;
+            }
+            citations.push(std::move(c));
+        }
+        const Json updates = Json::array(
+            {Json::object({{"sessionUpdate", "sources"}, {"textLength", static_cast<std::int64_t>(say.size())},
+                           {"citations", citations},
+                           {"searches", Json::array({Json::object({{"kind", "search"}, {"query", "aimer single"},
+                                                                   {"urls", Json::array({"https://site1.example/page"})}}),
+                                                     Json::object({{"kind", "read"}, {"url", "https://www.site2.example/page"}})})}}),
+             Json::object({{"sessionUpdate", "search_failed"}, {"service", "brave"}, {"reason", "usedUp"}, {"httpStatus", 402}})});
+        type(QString::fromStdString(Json::object({{"say", say}, {"calls", Json::array()}, {"updates", updates}}).dump()));
+        QTRY_VERIFY(!agent().thread().value(QStringLiteral("running")).toBool());
+        QCOMPARE(kinds(), (QStringList{"user", "search", "text", "notice"}));
+
+        QTRY_VERIFY(item(QStringLiteral("agentSources")));
+        QQuickItem *answer = item(QStringLiteral("agentAnswer"));
+        QVERIFY(answer);
+        QVERIFY(answer->property("text").toString().contains(QLatin1String("href=\"cite:1\"")));
+        QVERIFY(item(QStringLiteral("agentSource_5")));
+        QVERIFY(!item(QStringLiteral("agentSource_6")));
+        QCOMPARE(item(QStringLiteral("agentMoreSources"))->property("text").toString(), QStringLiteral("Show 1 more"));
+        QVERIFY(click(QStringLiteral("agentMoreSources")));
+        QTRY_VERIFY(item(QStringLiteral("agentSource_6")));
+        QVERIFY(click(QStringLiteral("agentSource_2")));
+        QCOMPARE(opened, (QStringList{"https://site2.example/page"}));
+
+        QStringList rows;
+        std::function<void(QQuickItem *)> collect = [&](QQuickItem *at) {
+            if (at->objectName() == QLatin1String("agentSearchRow") && at->isVisible())
+                rows << at->property("text").toString();
+            for (QQuickItem *child : at->childItems())
+                collect(child);
+        };
+        collect(window()->contentItem());
+        QCOMPARE(rows, (QStringList{"Searched the web · aimer single", "Read site2.example"}));
+        QVERIFY(item(QStringLiteral("agentNotice_searchUsedUp")));
+        QCOMPARE(lastItem().value(QStringLiteral("service")).toString(), QStringLiteral("brave"));
+        QVERIFY(!agent().openLink(QStringLiteral("file:///etc/passwd")));
+        QVERIFY(!agent().openLink(QStringLiteral("javascript:alert(1)")));
+        QCOMPARE(opened.size(), 1);
+        shoot(QStringLiteral("agent-web-search"), QStringLiteral("Who sings it?"));
+
+        application->settingsStore()->set(app::AiFeatures::kWebSearchSetting, false);
+        QTRY_VERIFY(!item(QStringLiteral("agentWebSearch")));
     }
 
     void withoutAChatModelThePanelPointsToSettings()

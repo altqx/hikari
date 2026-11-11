@@ -164,6 +164,26 @@
         <translation>இணை</translation>
     </message>
     <message>
+        <source>Search the web</source>
+        <translation>இணையத்தில் தேடு</translation>
+    </message>
+    <message>
+        <source>This provider can’t search the web on its own. Choose a search service in Settings › AI › Web search.</source>
+        <translation>இந்த வழங்குநரால் தானாக இணையத்தில் தேட முடியாது. அமைப்புகள் › AI › இணையத் தேடல் இல் ஒரு தேடல் சேவையைத் தேர்ந்தெடு.</translation>
+    </message>
+    <message>
+        <source>Search the web: on for this thread</source>
+        <translation>இணையத் தேடல்: இந்த இழையில் இயக்கத்தில்</translation>
+    </message>
+    <message>
+        <source>Search the web: off for this thread</source>
+        <translation>இணையத் தேடல்: இந்த இழையில் அணைக்கப்பட்டது</translation>
+    </message>
+    <message>
+        <source>Changing it mid-thread costs one cache miss on Anthropic.</source>
+        <translation>இழையின் நடுவில் இதை மாற்றினால் Anthropic இல் ஒரு தற்காலிக நினைவக இழப்பு ஏற்படும்.</translation>
+    </message>
+    <message>
         <source>Stop</source>
         <translation>நிறுத்து</translation>
     </message>
@@ -204,8 +224,8 @@
         <translation>அமைப்புகள் › AI…</translation>
     </message>
     <message>
-        <source>You approve every change. Reading never asks.</source>
-        <translation>ஒவ்வொரு மாற்றத்தையும் நீங்கள் ஒப்புதலளிக்கிறீர்கள். படித்தல் ஒருபோதும் கேட்காது.</translation>
+        <source>You approve each subtitle edit before it’s made, and every other change. Reading never asks.</source>
+        <translation>ஒவ்வொரு வசனத் திருத்தமும் செய்யப்படும் முன் நீங்கள் ஒப்புதலளிக்கிறீர்கள், மற்ற ஒவ்வொரு மாற்றத்தையும் கூட. படித்தல் ஒருபோதும் கேட்காது.</translation>
     </message>
     <message>
         <source>The judge model approves each action, or asks you. It sees the action and your messages, never your files.</source>
@@ -238,6 +258,37 @@
     <message>
         <source>Restore checkpoint</source>
         <translation>சோதனைப்புள்ளியை மீட்டமை</translation>
+    </message>
+    <message>
+        <source>Sources</source>
+        <translation>மூலங்கள்</translation>
+    </message>
+    <message numerus="yes">
+        <source>Show %n more</source>
+        <translation>
+            <numerusform>மேலும் %n ஐக் காட்டு</numerusform>
+            <numerusform>மேலும் %n ஐக் காட்டு</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Open in browser</source>
+        <translation>உலாவியில் திற</translation>
+    </message>
+    <message>
+        <source>Read %1</source>
+        <translation>%1 படிக்கப்பட்டது</translation>
+    </message>
+    <message>
+        <source>Searched with Google</source>
+        <translation>Google மூலம் தேடப்பட்டது</translation>
+    </message>
+    <message>
+        <source>Searched the web</source>
+        <translation>இணையத்தில் தேடப்பட்டது</translation>
+    </message>
+    <message>
+        <source>Searched with %1</source>
+        <translation>%1 மூலம் தேடப்பட்டது</translation>
     </message>
     <message>
         <source>judge approved</source>
@@ -348,6 +399,14 @@
         <translation>அமைப்புகள் › AI இல் ஒரு அரட்டை மாதிரியைத் தேர்ந்தெடுக்கவும்</translation>
     </message>
     <message>
+        <source>%1 has no searches left</source>
+        <translation>%1 இல் தேடல்கள் எதுவும் மீதமில்லை</translation>
+    </message>
+    <message>
+        <source>%1 refused HikariSub’s key</source>
+        <translation>%1 HikariSub இன் விசையை மறுத்தது</translation>
+    </message>
+    <message>
         <source>AI component isn’t ready</source>
         <translation>AI கூறு தயாராக இல்லை</translation>
     </message>
@@ -368,6 +427,10 @@
         <translation>HikariSub இன்னும் AI கூறைப் பெற்றுக்கொண்டிருக்கிறது, அல்லது அதைத் தொடங்க முடியவில்லை.</translation>
     </message>
     <message>
+        <source>The search service answered %1. The answer goes on without searching the web.</source>
+        <translation>தேடல் சேவை %1 என பதிலளித்தது. இணையத்தில் தேடாமல் பதில் தொடர்கிறது.</translation>
+    </message>
+    <message>
         <source>Raise to %1 and continue</source>
         <translation>%1 ஆக உயர்த்தித் தொடர்</translation>
     </message>
@@ -382,6 +445,91 @@
     <message>
         <source>Show the log</source>
         <translation>பதிவைக் காட்டு</translation>
+    </message>
+    <message>
+        <source>Claude Code</source>
+        <translation>Claude Code</translation>
+    </message>
+    <message>
+        <source>Proposed: %1</source>
+        <translation>முன்மொழிவு: %1</translation>
+    </message>
+    <message>
+        <source>out of date</source>
+        <translation>காலாவதியானது</translation>
+    </message>
+    <message>
+        <source>Deleted</source>
+        <translation>நீக்கப்பட்டது</translation>
+    </message>
+    <message>
+        <source>Moved</source>
+        <translation>நகர்த்தப்பட்டது</translation>
+    </message>
+    <message>
+        <source>Inserted</source>
+        <translation>செருகப்பட்டது</translation>
+    </message>
+    <message>
+        <source>Changes %1</source>
+        <translation>%1 ஐ மாற்றுகிறது</translation>
+    </message>
+    <message>
+        <source>The subtitles changed after the agent read them.</source>
+        <translation>முகவர் படித்த பிறகு வசன வரிகள் மாறிவிட்டன.</translation>
+    </message>
+    <message>
+        <source>Click a row to select its line. Applying adds one undoable step to the review.</source>
+        <translation>ஒரு வரிசையைக் கிளிக் செய்தால் அதன் வரி தேர்ந்தெடுக்கப்படும். பயன்படுத்தினால் செயல்தவிர்க்கக்கூடிய ஒரு படி மதிப்பாய்வில் சேரும்.</translation>
+    </message>
+    <message>
+        <source>Apply</source>
+        <translation>பயன்படுத்து</translation>
+    </message>
+    <message>
+        <source>Ask again</source>
+        <translation>மீண்டும் கேள்</translation>
+    </message>
+    <message>
+        <source>Decline</source>
+        <translation>நிராகரி</translation>
+    </message>
+    <message>
+        <source>Decline and tell the agent…</source>
+        <translation>நிராகரித்து முகவரிடம் சொல்…</translation>
+    </message>
+    <message>
+        <source>Sent back to the agent: %1</source>
+        <translation>முகவருக்குத் திருப்பி அனுப்பப்பட்டது: %1</translation>
+    </message>
+    <message>
+        <source>Declined: %1 · nothing changed</source>
+        <translation>நிராகரிக்கப்பட்டது: %1 · எதுவும் மாறவில்லை</translation>
+    </message>
+    <message>
+        <source>Not applied: %1 · nothing changed</source>
+        <translation>பயன்படுத்தப்படவில்லை: %1 · எதுவும் மாறவில்லை</translation>
+    </message>
+    <message numerus="yes">
+        <source>Proposal: %1, %n lines</source>
+        <translation>
+            <numerusform>முன்மொழிவு: %1, %n வரி</numerusform>
+            <numerusform>முன்மொழிவு: %1, %n வரிகள்</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n lines</source>
+        <translation>
+            <numerusform>%n வரி</numerusform>
+            <numerusform>%n வரிகள்</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Show all %n lines</source>
+        <translation>
+            <numerusform>அனைத்து %n வரியையும் காட்டு</numerusform>
+            <numerusform>அனைத்து %n வரிகளையும் காட்டு</numerusform>
+        </translation>
     </message>
 </context>
 <context>
@@ -508,10 +656,6 @@
         <translation>செயலில் உள்ள வரியில் லீட்-அவுட் சேர்க்கவும்</translation>
     </message>
     <message>
-        <source>Commit</source>
-        <translation>கமிட்</translation>
-    </message>
-    <message>
         <source>Apply changes</source>
         <translation>மாற்றங்களைப் பயன்படுத்துங்கள்</translation>
     </message>
@@ -593,15 +737,15 @@
         <translation>குறிக்குப் பின் இயக்கு</translation>
     </message>
     <message>
-        <source>Commit options</source>
-        <translation>கமிட் விருப்பங்கள்</translation>
+        <source>Options for applying changes</source>
+        <translation>மாற்றங்களைப் பயன்படுத்துவதற்கான விருப்பங்கள்</translation>
     </message>
     <message>
-        <source>Auto-commit</source>
+        <source>Apply changes automatically</source>
         <translation>தானியங்கு கமிட்</translation>
     </message>
     <message>
-        <source>Next after commit</source>
+        <source>Go to the next line after applying</source>
         <translation>கமிட்டுக்குப் பின் அடுத்தது</translation>
     </message>
     <message>
@@ -759,10 +903,6 @@ Output device: %2</source>
     <message>
         <source>Play around button</source>
         <translation>சுற்றி இயக்கு பொத்தான்</translation>
-    </message>
-    <message>
-        <source>Go to the next line after commit</source>
-        <translation>கமிட்டுக்குப் பின் அடுத்த வரிக்குச் செல்</translation>
     </message>
     <message>
         <source>Speech spectrum</source>
@@ -2860,7 +3000,7 @@ Output device: %2</source>
         <translation>இடது கீழ்</translation>
     </message>
     <message>
-        <source>Bottom-center</source>
+        <source>Bottom-centre</source>
         <translation>மையம்-கீழ்</translation>
     </message>
     <message>
@@ -2872,7 +3012,7 @@ Output device: %2</source>
         <translation>இடது-மையம்</translation>
     </message>
     <message>
-        <source>Center</source>
+        <source>Centre</source>
         <translation>மையம்</translation>
     </message>
     <message>
@@ -2884,7 +3024,7 @@ Output device: %2</source>
         <translation>இடது-மேல்</translation>
     </message>
     <message>
-        <source>Top-center</source>
+        <source>Top-centre</source>
         <translation>மையம்-மேல்</translation>
     </message>
     <message>
@@ -5952,12 +6092,8 @@ Failed to copy %2 fonts.</source>
         <translation>%1 அதைப் பெறுகிறது</translation>
     </message>
     <message>
-        <source>Commit</source>
-        <translation>கமிட்</translation>
-    </message>
-    <message>
-        <source>Commit alt</source>
-        <translation>கமிட் (மாற்று வழி)</translation>
+        <source>Apply changes alt</source>
+        <translation>மாற்றங்களைப் பயன்படுத்து (மாற்று வழி)</translation>
     </message>
     <message>
         <source>Previous line</source>
@@ -6044,8 +6180,8 @@ Failed to copy %2 fonts.</source>
         <translation>நிழல் வண்ணம்</translation>
     </message>
     <message>
-        <source>Font selection</source>
-        <translation>எழுத்துரு தேர்வு</translation>
+        <source>Choose font…</source>
+        <translation>எழுத்துருவைத் தேர்ந்தெடு…</translation>
     </message>
     <message>
         <source>Strikethrough</source>
@@ -6364,8 +6500,8 @@ Failed to copy %2 fonts.</source>
         <translation>வரி மடக்குகளின்படி வரிகளைப் பிரிக்கவும்</translation>
     </message>
     <message>
-        <source>ASS file properties</source>
-        <translation>ASS கோப்பு பண்புகள்</translation>
+        <source>Script properties</source>
+        <translation>ஸ்கிரிப்ட் பண்புகள்</translation>
     </message>
     <message>
         <source>Check for updates</source>
@@ -6436,8 +6572,8 @@ Failed to copy %2 fonts.</source>
         <translation>கீஃப்ரேம்களைத் திறக்கவும்</translation>
     </message>
     <message>
-        <source>Open auto save</source>
-        <translation>தானியங்கு சேமிப்பைத் திற</translation>
+        <source>Open autosave…</source>
+        <translation>தானியங்கு சேமிப்பைத் திற…</translation>
     </message>
     <message>
         <source>Run the last loaded script</source>
@@ -6592,8 +6728,8 @@ Failed to copy %2 fonts.</source>
         <translation>வீடியோவைத் திற</translation>
     </message>
     <message>
-        <source>Play / Pause</source>
-        <translation>இயக்கு / இடைநிறுத்து</translation>
+        <source>Play or pause</source>
+        <translation>இயக்கு அல்லது இடைநிறுத்து</translation>
     </message>
     <message>
         <source>Play active line</source>
@@ -6768,8 +6904,8 @@ Failed to copy %2 fonts.</source>
         <translation>1 நிமிடம் பின்னோக்கி</translation>
     </message>
     <message>
-        <source>Show / hide progress bar</source>
-        <translation>முன்னேற்றப் பட்டியைக் காட்டவும் / மறைக்கவும்</translation>
+        <source>Progress bar</source>
+        <translation>முன்னேற்றப் பட்டி</translation>
     </message>
     <message>
         <source>Next chapter</source>
@@ -6824,8 +6960,8 @@ Failed to copy %2 fonts.</source>
         <translation>வரி திருத்தியில் குறிச்சொற்களை மறை</translation>
     </message>
     <message>
-        <source>Show / hide render cost</source>
-        <translation>ரெண்டர் செலவைக் காட்டு / மறை</translation>
+        <source>Render cost</source>
+        <translation>ரெண்டர் செலவு</translation>
     </message>
     <message>
         <source>Tap to time</source>
@@ -7804,8 +7940,8 @@ Failed to copy %2 fonts.</source>
         <translation>வரியின் இறுதி நேரத்திற்குச் செல்லுங்கள்</translation>
     </message>
     <message>
-        <source>Play / Pause</source>
-        <translation>இயக்கு / இடைநிறுத்து</translation>
+        <source>Play or pause</source>
+        <translation>இயக்கு அல்லது இடைநிறுத்து</translation>
     </message>
     <message>
         <source>Go to previous keyframe</source>
@@ -8587,8 +8723,8 @@ Failed to copy %2 fonts.</source>
         <translation>வீடியோவை இறுதி நேரத்திற்கு நகர்த்துகிறது</translation>
     </message>
     <message>
-        <source>Plays / Pauses video</source>
-        <translation>வீடியோவை இயக்கவும் / இடைநிறுத்தவும்</translation>
+        <source>Plays or pauses the video</source>
+        <translation>வீடியோவை இயக்குகிறது அல்லது இடைநிறுத்துகிறது</translation>
     </message>
     <message>
         <source>Opens audio file</source>
@@ -10362,7 +10498,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Values</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">மதிப்புகள்</translation>
     </message>
     <message>
         <source>Math</source>
@@ -14739,6 +14875,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Scale border and shadow</source>
         <translation>எல்லையையும் நிழலையும் அளவிடு</translation>
+    </message>
+    <message>
+        <source>Saving “%1” changes these script properties.</source>
+        <translation>“%1” ஐச் சேமித்தால் இந்த ஸ்கிரிப்ட் பண்புகள் மாறும்.</translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation>சரி</translation>
+    </message>
+    <message>
+        <source>Skip</source>
+        <translation>தவிர்</translation>
     </message>
 </context>
 <context>
@@ -19874,8 +20022,8 @@ Styles deleted:
         <translation>அடுத்த சட்டகம்</translation>
     </message>
     <message>
-        <source>Play / Pause</source>
-        <translation>இயக்கு / இடைநிறுத்து</translation>
+        <source>Play or pause</source>
+        <translation>இயக்கு அல்லது இடைநிறுத்து</translation>
     </message>
     <message>
         <source>Video</source>
@@ -20878,7 +21026,7 @@ or codecs or a splitter may be missing</source>
         <translation>உரையில் குறிச்சொல் இடம்பெறும் இடம்</translation>
     </message>
     <message>
-        <source>How each line&apos;s number changes the value</source>
+        <source>How each line’s number changes the value</source>
         <translation>ஒவ்வொரு வரியின் எண்ணும் மதிப்பை மாற்றும் விதம்</translation>
     </message>
     <message>
@@ -21309,7 +21457,7 @@ or codecs or a splitter may be missing</source>
         <translation>பின்-கீழ்</translation>
     </message>
     <message>
-        <source>After-center</source>
+        <source>After-centre</source>
         <translation>பின்-மையம்</translation>
     </message>
     <message>
@@ -21325,7 +21473,7 @@ or codecs or a splitter may be missing</source>
         <translation>முன்-கீழ்</translation>
     </message>
     <message>
-        <source>Before-center</source>
+        <source>Before-centre</source>
         <translation>முன்-மையம்</translation>
     </message>
     <message>
@@ -21333,7 +21481,7 @@ or codecs or a splitter may be missing</source>
         <translation>முன்-மேல்</translation>
     </message>
     <message>
-        <source>Bottom-center</source>
+        <source>Bottom-centre</source>
         <translation>மையம்-கீழ்</translation>
     </message>
     <message>
@@ -21349,15 +21497,15 @@ or codecs or a splitter may be missing</source>
         <translation>கிளிப் செவ்வக மதிப்புகளைப் படிக்க முடியவில்லை.</translation>
     </message>
     <message>
-        <source>Center</source>
+        <source>Centre</source>
         <translation>மையம்</translation>
     </message>
     <message>
-        <source>Center-above</source>
+        <source>Centre-above</source>
         <translation>மையம்-மேலே</translation>
     </message>
     <message>
-        <source>Center-below</source>
+        <source>Centre-below</source>
         <translation>மையம்-கீழே</translation>
     </message>
     <message>
@@ -21393,8 +21541,8 @@ or codecs or a splitter may be missing</source>
         <translation>புள்ளியை நீக்கு</translation>
     </message>
     <message>
-        <source>A double &quot;m&quot; was blocked because of a VSFilter bug</source>
-        <translation>VSFilter பிழையால் இரட்டை &quot;m&quot; தடுக்கப்பட்டது</translation>
+        <source>A double “m” was blocked because of a VSFilter bug</source>
+        <translation>VSFilter பிழையால் இரட்டை “m” தடுக்கப்பட்டது</translation>
     </message>
     <message>
         <source>List of ASS drawings with an edit option.
@@ -21561,10 +21709,6 @@ increasing or decreasing the value.</source>
     <message>
         <source>Spikes</source>
         <translation>முனைகள்</translation>
-    </message>
-    <message>
-        <source>Centre</source>
-        <translation>மையம்</translation>
     </message>
     <message>
         <source>Hole</source>
@@ -21794,12 +21938,12 @@ in two or one axis.</source>
     </message>
     <message>
         <source>Show surrounding plane
-A rectangle of the text&apos;s plane: match it to one in the shot, then place the text inside it</source>
+A rectangle of the text’s plane: match it to one in the shot, then place the text inside it</source>
         <translation>சுற்றியுள்ள தளத்தைக் காட்டு
 உரையின் தளத்தின் ஒரு செவ்வகம்: காட்சியில் உள்ள ஒன்றுடன் அதைப் பொருத்தி, பின் உரையை அதனுள் வைக்கவும்</translation>
     </message>
     <message>
-        <source>Top-center</source>
+        <source>Top-centre</source>
         <translation>மையம்-மேல்</translation>
     </message>
     <message>
@@ -21811,7 +21955,7 @@ A rectangle of the text&apos;s plane: match it to one in the shot, then place th
         <translation>வலது மேல்</translation>
     </message>
     <message>
-        <source>Video must be set at least one frame after the line&apos;s start time</source>
+        <source>Video must be set at least one frame after the line’s start time</source>
         <translation>வீடியோ வரியின் தொடக்க நேரத்திலிருந்து குறைந்தது ஒரு சட்டகம் பின்னால் அமைக்கப்பட வேண்டும்</translation>
     </message>
     <message>
