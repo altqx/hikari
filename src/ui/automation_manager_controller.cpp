@@ -1,5 +1,7 @@
 #include "automation_manager_controller.h"
 
+#include "hikari/application/automation_registry.h"
+
 #include <QFileInfo>
 
 namespace hikari::ui {
@@ -35,7 +37,7 @@ void AutomationManagerController::refresh()
     m_busy = false;
     for (const auto &s : m_service.scripts()) {
         const QString path = QString::fromStdString(s.path);
-        const QString fileName = QFileInfo(path).fileName();
+        const QString fileName = QString::fromStdString(application::scriptFileName(s.path));
         QVariantList macros;
         for (std::size_t i = 0; i < s.info.macros.size(); ++i)
             macros << QVariantMap{{QStringLiteral("ordinal"), int(i)},
@@ -51,6 +53,7 @@ void AutomationManagerController::refresh()
                                  {QStringLiteral("generation"), qulonglong(s.generation)},
                                  {QStringLiteral("forceStopOffered"), s.forceStopOffered},
                                  {QStringLiteral("inDocument"), m_isDocumentScript && m_isDocumentScript(s.path)},
+                                 {QStringLiteral("builtIn"), application::isBuiltinScript(s.path)},
                                  {QStringLiteral("enabled"), true},
                                  {QStringLiteral("macros"), macros}};
         m_busy = m_busy || s.state == ScriptStatus::State::Running;
@@ -66,6 +69,7 @@ void AutomationManagerController::refresh()
                                      {QStringLiteral("generation"), qulonglong(0)},
                                      {QStringLiteral("forceStopOffered"), false},
                                      {QStringLiteral("inDocument"), false},
+                                     {QStringLiteral("builtIn"), false},
                                      {QStringLiteral("enabled"), false},
                                      {QStringLiteral("macros"), QVariantList()}};
     emit changed();

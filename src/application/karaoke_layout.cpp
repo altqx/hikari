@@ -101,26 +101,6 @@ std::size_t firstCharBytes(const std::string &s)
     return std::min(n, s.size());
 }
 
-std::vector<std::string> charsOf(const std::string &s, CharSplit split)
-{
-    if (split == CharSplit::CodePoints) {
-        std::vector<std::string> out;
-        for (std::size_t at = 0; at < s.size();) {
-            const std::size_t n = firstCharBytes(s.substr(at, 4));
-            out.push_back(s.substr(at, n));
-            at += n;
-        }
-        return out;
-    }
-    const std::u16string text = core::toUtf16(std::u8string_view(reinterpret_cast<const char8_t *>(s.data()), s.size()));
-    std::vector<std::string> out;
-    for (std::size_t at = 0; at < text.size();) {
-        const std::size_t end = core::graphemeEnd(text, at);
-        out.push_back(narrow(core::toUtf8(std::u16string_view(text).substr(at, end - at))));
-        at = end;
-    }
-    return out;
-}
 
 // syl.text:match("%{.*\\%-([^}\\]+)")
 std::string inlineFx(const std::string &text)
@@ -161,7 +141,8 @@ bool isBlank(const Unit &u, double duration)
 
 struct Work {
     bool hasText = false;
-    std::string text, stripped, spaceStripped, prespace, postspace;
+    std::string text, stripped, spaceStripped, prespace, postspace, tag, inlineFx;
+    std::vector<Highlight> highlights;
     double start = 0, end = 0, duration = 0, kdur = 0;
     int i = 0;
     std::vector<int> furi;
@@ -170,9 +151,10 @@ struct Work {
 };
 
 struct Furi {
-    std::string text;
+    std::string text, tag, inlineFx;
     double start = 0, end = 0, duration = 0, kdur = 0;
     int i = 0;
+    std::size_t highlight = 0;
     bool isBreak = false, spillback = false;
     double width = 0, height = 0, left = 0, center = 0, right = 0;
 };
@@ -289,6 +271,27 @@ void basicLayout(std::vector<Work> &syls)
 
 }
 
+std::vector<std::string> charsOf(const std::string &s, CharSplit split)
+{
+    if (split == CharSplit::CodePoints) {
+        std::vector<std::string> out;
+        for (std::size_t at = 0; at < s.size();) {
+            const std::size_t n = firstCharBytes(s.substr(at, 4));
+            out.push_back(s.substr(at, n));
+            at += n;
+        }
+        return out;
+    }
+    const std::u16string text = core::toUtf16(std::u8string_view(reinterpret_cast<const char8_t *>(s.data()), s.size()));
+    std::vector<std::string> out;
+    for (std::size_t at = 0; at < text.size();) {
+        const std::size_t end = core::graphemeEnd(text, at);
+        out.push_back(narrow(core::toUtf8(std::u16string_view(text).substr(at, end - at))));
+        at = end;
+    }
+    return out;
+}
+
 std::string numberText(double v)
 {
     if (std::isnan(v))
@@ -380,7 +383,7 @@ Layout::Extents Layout::measure(const StyleInfo &style, const std::string &text,
 {
     const ExtentsCache::Result r = m_extents.measure(style.fields, text);
     if (r.extents)
-        return {r.extents->width, r.extents->height};
+        return {r.extents->width, r.extents->height, r.extents->descent, r.extents->externalLeading};
     if (r.measuredNow)
         problems.push_back("could not measure text in the Style \"" + narrow(style.name) + "\"");
     return {};
@@ -418,6 +421,7 @@ Line Layout::line(const MacroDialogueLine &source, double li, const LineOptions 
             syls.push_back(std::move(work));
             work = Work{};
         }
+        work.highlights.push_back({double(syl.start), double(syl.end), double(syl.duration)});
         constexpr std::string_view kWidePipe = "\xEF\xBD\x9C";
         if (text.find('|') != std::string::npos || text.find(kWidePipe) != std::string::npos) {
             for (std::size_t at; (at = text.find(kWidePipe)) != std::string::npos;)
@@ -441,6 +445,9 @@ Line Layout::line(const MacroDialogueLine &source, double li, const LineOptions 
             f.duration = syl.duration;
             f.kdur = syl.duration / 10.0;
             f.i = static_cast<int>(syls.size());
+            f.tag = syl.tag;
+            f.inlineFx = inlineEffect;
+            f.highlight = work.highlights.size() - 1;
             work.furi.push_back(static_cast<int>(furi.size()));
             furi.push_back(std::move(f));
         }
@@ -452,6 +459,8 @@ Line Layout::line(const MacroDialogueLine &source, double li, const LineOptions 
             work.kdur = syl.duration / 10.0;
             work.start = syl.start;
             work.end = syl.end;
+            work.tag = syl.tag;
+            work.inlineFx = inlineEffect;
             work.stripped = prespace + text + postspace;
             work.spaceStripped = text;
             work.prespace = prespace;
@@ -534,6 +543,69 @@ Line Layout::line(const MacroDialogueLine &source, double li, const LineOptions 
         bottom = top + height;
         y = top;
     }
+
+    KaraLine &k = out.kara;
+    k.textStripped = lineStripped;
+    k.duration = static_cast<double>(d.endMs - d.startMs);
+    k.width = width;
+    k.height = height;
+    k.descent = whole.descent;
+    k.extlead = whole.extlead;
+    k.effMarginL = marginL;
+    k.effMarginR = marginR;
+    k.effMarginT = k.effMarginB = k.effMarginV = marginV;
+    k.hasFuriStyle = furiStyle != nullptr;
+    if (styleref->align >= 1 && styleref->align <= 9) {
+        k.left = left;
+        k.center = left + width / 2;
+        k.right = left + width;
+        k.x = x;
+        k.top = top;
+        k.middle = middle;
+        k.bottom = bottom;
+        k.y = y;
+        k.halign = column == 0 ? "left" : column == 1 ? "center" : "right";
+        k.valign = align <= 3 ? "bottom" : align <= 6 ? "middle" : "top";
+    }
+    for (const Work &w : syls)
+        out.karaSyllables.push_back({.text = w.text,
+                                     .stripped = w.stripped,
+                                     .spaceStripped = w.spaceStripped,
+                                     .prespace = w.prespace,
+                                     .postspace = w.postspace,
+                                     .tag = w.tag,
+                                     .inlineFx = w.inlineFx,
+                                     .start = w.start,
+                                     .end = w.end,
+                                     .duration = w.duration,
+                                     .kdur = w.kdur,
+                                     .i = w.i,
+                                     .highlights = w.highlights,
+                                     .furi = w.furi,
+                                     .width = w.width,
+                                     .height = w.height,
+                                     .prespaceWidth = w.preWidth,
+                                     .postspaceWidth = w.postWidth,
+                                     .left = w.left,
+                                     .center = w.center,
+                                     .right = w.right});
+    for (const Furi &f : furi)
+        out.karaFuri.push_back({.text = f.text,
+                                .tag = f.tag,
+                                .inlineFx = f.inlineFx,
+                                .start = f.start,
+                                .end = f.end,
+                                .duration = f.duration,
+                                .kdur = f.kdur,
+                                .i = f.i,
+                                .highlight = f.highlight,
+                                .isBreak = f.isBreak,
+                                .spillback = f.spillback,
+                                .width = f.width,
+                                .height = f.height,
+                                .left = f.left,
+                                .center = f.center,
+                                .right = f.right});
 
     const double lstart = static_cast<double>(d.startMs), lend = static_cast<double>(d.endMs);
     Unit &l = out.line;
