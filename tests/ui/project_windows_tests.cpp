@@ -691,6 +691,8 @@ private slots:
             return catalogs.waitResolved() && !answers.isEmpty() ? answers.takeLast().at(1).toMap() : QVariantMap();
         };
         QVERIFY(resolved().value(QStringLiteral("kind")).toString() != QLatin1String("requested"));
+        const QString family = QStringLiteral("HikariAttachedTest");
+        QVERIFY(!catalogs.allFonts(0).contains(family));
 
         const int w = openProjectWindow(show);
         QVERIFY(w >= 0);
@@ -698,10 +700,22 @@ private slots:
         QCOMPARE(result.value(QStringLiteral("kind")).toString(), QStringLiteral("requested"));
         QVERIFY2(result.value(QStringLiteral("file")).toString().endsWith(QStringLiteral("HikariAttachedTest.ttf")),
                  qPrintable(result.value(QStringLiteral("file")).toString()));
+        QCOMPARE(named(shell(w), "fontPicker")->property("shellWindow").toInt(), w);
+        QVERIFY(catalogs.allFonts(w).contains(family));
+        QVERIFY(catalogs.fontList(0, QString(), false, QString(), w).contains(family));
+        QVERIFY(!catalogs.allFonts().contains(family));
 
+        QVERIFY(application->openFile(writeAss(show + QStringLiteral("/ep01.ass"), "{\\fnHikariAttachedTest}Abc")));
         auto &collector = application->fontCollector();
         collector.open();
         QCOMPARE(collector.directory(), QDir::toNativeSeparators(canonical(show) + QStringLiteral("/fonts")));
+        collector.changeOptions(int(application::CollectorAction::Check), false);
+        collector.start(QString(), false);
+        QVERIFY(collector.waitIdle());
+        QCOMPARE(collector.stage(), int(app::FontCollectorController::Done));
+        const QString log = collector.logText();
+        QVERIFY2(log.contains(QStringLiteral("Found font “HikariAttachedTest”")), qPrintable(log));
+        QVERIFY2(!log.contains(QStringLiteral("Cannot find")), qPrintable(log));
     }
 
     void recentProjectsDropMissingFolders()

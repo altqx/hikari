@@ -408,10 +408,11 @@ Fake fakeFlags(const Variant &v, const std::vector<SystemFace> &faces)
     return out;
 }
 
-FontEnvironment systemEnvironment()
+FontEnvironment collectingEnvironment(std::vector<FontAttachment> folderFonts)
 {
     FontEnvironment env;
     env.systemFonts = true;
+    env.externalFonts = std::move(folderFonts);
     return env;
 }
 
@@ -463,14 +464,15 @@ bool CollectorReview::rendererComplete() const
 }
 
 std::expected<CollectorReview, FontError> FontCollector::prepare(const std::vector<CollectorDocument> &documents,
-                                                                 CollectorAction action, const std::atomic<bool> *cancel)
+                                                                 CollectorAction action, const std::atomic<bool> *cancel,
+                                                                 std::vector<FontAttachment> folderFonts)
 {
     const auto cancelled = [&] { return cancel && cancel->load(); };
     const auto started = std::chrono::steady_clock::now();
     const bool copyFonts = action != CollectorAction::Check;
     CollectorReview review;
     review.action = action;
-    const FontEnvironment env = systemEnvironment();
+    const FontEnvironment env = collectingEnvironment(std::move(folderFonts));
     const std::vector<SystemFace> faces = m_fonts.systemFaces();
 
     if (copyFonts && !m_retrieved) {

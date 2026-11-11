@@ -8658,6 +8658,7 @@ ApplicationWindow {
         id: styleManagerWindow
         styles: root.styleManager
         catalogs: root.fontCatalogs
+        shellWindow: root.shellWindow
         colourPicker: root.colourPicker
         app: root.app
         notices: root.notices
@@ -8851,6 +8852,7 @@ ApplicationWindow {
         id: fontPicker
         editor: root.editor
         catalogs: root.fontCatalogs
+        shellWindow: root.shellWindow
         settings: root.app.settings
     }
     FontCatalogWindow {

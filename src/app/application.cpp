@@ -1002,6 +1002,12 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     {
         FontCollectorController::Hooks hooks;
         hooks.projectFontFolder = [this] { return projectFontFolder(m_workspace.activeWindow()); };
+        hooks.folderFonts = [this] {
+            auto fonts = projectFonts(std::nullopt);
+            if (m_fontCatalogs)
+                std::ranges::move(m_fontCatalogs->externalFontLeases(), std::back_inserter(fonts));
+            return fonts;
+        };
         hooks.tabs = [this] {
             std::vector<FontCollectorController::Tab> out;
             for (const auto id : m_workspace.allTabs()) {
@@ -1098,6 +1104,10 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             for (auto &font : projectFonts(m_workspace.editingTarget()))
                 fonts.push_back(std::move(font));
             return fonts;
+        };
+        hooks.projectFonts = [this](int shellWindow) {
+            const auto found = m_projectFonts.find(shellWindow);
+            return found == m_projectFonts.end() ? std::vector<application::FontLease>() : found->second.fonts;
         };
         const auto report = listFileReport(*m_log);
         hooks.fileConverted = report.converted;
