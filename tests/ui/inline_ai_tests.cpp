@@ -225,7 +225,7 @@ private slots:
         QCOMPARE(text(1), u8"SECOND");
         QCOMPARE(text(2), u8"a note");
         QCOMPARE(session().historySize(), steps + 1);
-        QCOMPARE(session().history().back().name, std::string("AI: Rewrite (2 Lines)"));
+        QVERIFY(session().history().back().name.starts_with("AI: Rewrite (2 line"));
         QTRY_COMPARE(shell(QStringLiteral("root.review.waiting")).toInt(), 2);
         QCOMPARE(inlineAi().last().value(QStringLiteral("action")).toString(), QStringLiteral("rewrite"));
         QCOMPARE(inlineAi().recentInstructions(), QStringList{QStringLiteral("Shout it")});

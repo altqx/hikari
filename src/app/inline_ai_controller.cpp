@@ -562,7 +562,7 @@ bool InlineAiController::write(const std::vector<std::uint64_t> &keys)
     }
     if (written.empty())
         return false;
-    const QString name = QCoreApplication::translate("HikariSub.InlineAi", "%1 (%n Line(s))", nullptr,
+    const QString name = QCoreApplication::translate("HikariSub.InlineAi", "%1 (%n line(s))", nullptr,
                                                    static_cast<int>(written.size())).arg(QString::fromStdString(m_run->label));
     QString turn = QString::fromStdString(m_run->label);
     if (!m_run->parsed.instruction.empty() && m_run->parsed.action != in::Action::Custom)

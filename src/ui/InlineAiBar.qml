@@ -38,7 +38,7 @@ ColumnLayout {
         if (n.end === "noModel")
             parts.push(qsTr("No model for this action. Add one in Settings › AI."))
         else if (n.end === "dailyCap")
-            parts.push(qsTr("Stopped at today's cost cap."))
+            parts.push(qsTr("Stopped at today’s cost cap."))
         else if (n.end === "stopped")
             parts.push(qsTr("Stopped."))
         const failed = n.failed || []
@@ -50,14 +50,14 @@ ColumnLayout {
         if (empty.length > 0)
             parts.push(qsTr("Not changed, because the answer was empty: line %1.", "", empty.length).arg(rows(empty)))
         if (errors.length > 0)
-            parts.push(qsTr("The request failed for line %1: %2", "", errors.length)
+            parts.push(qsTr("Line %1 failed: %2", "", errors.length)
                            .arg(rows(errors.map(f => f.row))).arg(errors[0].detail || ""))
         if ((n.same || []).length > 0)
             parts.push(qsTr("Came back the same: line %1.", "", n.same.length).arg(rows(n.same)))
         if ((n.edited || []).length > 0)
             parts.push(qsTr("You edited line %1 first, so it was left as it is.", "", n.edited.length).arg(rows(n.edited)))
         if ((n.skipped || 0) > 0)
-            parts.push(qsTr("%n line(s) weren't sent.", "", n.skipped))
+            parts.push(qsTr("%n line(s) weren’t sent.", "", n.skipped))
         return parts.join(" ")
     }
 
@@ -160,10 +160,10 @@ ColumnLayout {
             border.color: Theme.line
             radius: 4
         }
-        Accessible.role: Accessible.Dialog
-        Accessible.name: resultsTitle.text
         contentItem: ColumnLayout {
             spacing: 0
+            Accessible.role: Accessible.Dialog
+            Accessible.name: resultsTitle.text
             RowLayout {
                 Layout.fillWidth: true
                 Layout.margins: 10

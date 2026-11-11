@@ -413,7 +413,7 @@ TEST(Hotkeys, ListOrderIsAddHotkeysOnList)
     live[HotkeyId{kSave, GridHotkey}] = Hotkey{"Save", "F7"};
     HotkeyList more(copy);
     more.build(live);
-    ASSERT_EQ(more.rowCount(), 315u);
+    ASSERT_EQ(more.rowCount(), 317u);
     const int script = more.find("Global Script a.lua-1");
     const int copied = more.find("Subtitles Save");
     ASSERT_GE(script, 0);

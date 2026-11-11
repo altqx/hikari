@@ -30,7 +30,7 @@ ShellMenu {
         objectName: "inlineAiShorten"
         iconRole: "compact"
         text: qsTr("Shorten to %1 CPS").arg(menu.controller ? menu.controller.maxCps : 15)
-        help: qsTr("Rewrites each Line over %1 characters per second so it reads at that speed or less").arg(menu.controller ? menu.controller.maxCps : 15)
+        help: qsTr("Rewrites each line over %1 characters per second so it reads at that speed or less").arg(menu.controller ? menu.controller.maxCps : 15)
         enabled: menu.ready
         onTriggered: menu.chosen({action: "shorten"})
     }

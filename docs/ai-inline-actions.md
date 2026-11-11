@@ -41,7 +41,7 @@ An answer must give back every marker exactly once and in order, or the Line is 
 
 Runs follow the mode for new threads (`ai.agent.mode`):
 
-- **Auto and Full access.** The run is written once, when it ends, as one `document.apply` from the caller `{id: "ai:inline", label: "AI", reviewed: true}`: one review turn and one History step, "AI: Rewrite (10 Lines)". There is no judge.
+- **Auto and Full access.** The run is written once, when it ends, as one `document.apply` from the caller `{id: "ai:inline", label: "AI", reviewed: true}`: one review turn and one History step, "AI: Rewrite (10 lines)". There is no judge.
 - **Manual.** The results wait in a list over the Grid with a tick per Line. **Apply N** writes the ticked ones the same way; **Discard** writes nothing. A Line you edit after it was sent shows "out of date" and can't be applied.
 
 Inline runs don't show in the Agent panel.

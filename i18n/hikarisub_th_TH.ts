@@ -7333,7 +7333,7 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished">แปล</translation>
     </message>
     <message numerus="yes">
-        <source>%1 (%n Line(s))</source>
+        <source>%1 (%n line(s))</source>
         <translation type="unfinished">
             <numerusform></numerusform>
         </translation>
@@ -7361,7 +7361,7 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Rewrites each Line over %1 characters per second so it reads at that speed or less</source>
+        <source>Rewrites each line over %1 characters per second so it reads at that speed or less</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -7439,10 +7439,14 @@ Failed to copy %2 fonts.</source>
         </translation>
     </message>
     <message numerus="yes">
-        <source>%n line(s) aren&apos;t sent: comments, empty lines, tag-only lines, drawings and karaoke.</source>
+        <source>%n line(s) aren’t sent: comments, empty lines, tag-only lines, drawings and karaoke.</source>
         <translation type="unfinished">
             <numerusform></numerusform>
         </translation>
+    </message>
+    <message>
+        <source>%1 left of today’s %2 cap.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message numerus="yes">
         <source>This sends %n request(s) to %1 with the %2 model, %3.</source>
@@ -7456,10 +7460,6 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>The model has no price, so the cost is unknown.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>%1 left of today&apos;s %2 cap.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -7517,10 +7517,6 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Stopped at today&apos;s cost cap.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Stopped.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -7537,12 +7533,6 @@ Failed to copy %2 fonts.</source>
         </translation>
     </message>
     <message numerus="yes">
-        <source>The request failed for line %1: %2</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
         <source>Came back the same: line %1.</source>
         <translation type="unfinished">
             <numerusform></numerusform>
@@ -7554,8 +7544,18 @@ Failed to copy %2 fonts.</source>
             <numerusform></numerusform>
         </translation>
     </message>
+    <message>
+        <source>Stopped at today’s cost cap.</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message numerus="yes">
-        <source>%n line(s) weren&apos;t sent.</source>
+        <source>Line %1 failed: %2</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) weren’t sent.</source>
         <translation type="unfinished">
             <numerusform></numerusform>
         </translation>
@@ -13083,10 +13083,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Your actions appear under AI in the Grid’s and the Line editor’s menus. They follow the mode for new threads and change only the text.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Asks each time</source>
         <translation type="unfinished"></translation>
     </message>
@@ -13124,10 +13120,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>before and after each line</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Actions save at once. Translate to and Lines of context save with OK or Apply.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -13321,6 +13313,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>It is deleted from the keychain. Providers without their own search stop searching until you add a key.</source>
         <translation>คีย์จะถูกลบออกจากพวงกุญแจ ผู้ให้บริการที่ไม่มีการค้นหาของตัวเองจะหยุดค้นหาจนกว่าคุณจะเพิ่มคีย์</translation>
+    </message>
+    <message>
+        <source>Your actions appear in the AI menus. They follow the mode for new threads and change only the text.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Actions save at once. The other settings here save with OK or Apply.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Requests go only to the providers you add and to %1. The AI component runs in a sandbox and reaches the network only through HikariSub.</source>
@@ -14928,7 +14928,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Deleted</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">ลบแล้ว</translation>
     </message>
     <message>
         <source>New</source>

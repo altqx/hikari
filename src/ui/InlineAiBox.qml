@@ -97,11 +97,10 @@ Popup {
         border.color: Theme.line
         radius: 4
     }
-    Accessible.role: Accessible.Dialog
-    Accessible.name: title.text
-
     contentItem: ColumnLayout {
         spacing: 0
+        Accessible.role: Accessible.Dialog
+        Accessible.name: title.text
         RowLayout {
             Layout.fillWidth: true
             Layout.margins: 10
@@ -211,7 +210,7 @@ Popup {
                 Layout.fillWidth: true
                 wrapMode: Text.Wrap
                 color: Theme.muted
-                text: qsTr("%n line(s) aren't sent: comments, empty lines, tag-only lines, drawings and karaoke.", "", box.plan.skipped || 0)
+                text: qsTr("%n line(s) aren’t sent: comments, empty lines, tag-only lines, drawings and karaoke.", "", box.plan.skipped || 0)
             }
         }
 
@@ -234,7 +233,7 @@ Popup {
                 Layout.fillWidth: true
                 wrapMode: Text.Wrap
                 text: (box.plan.estimate >= 0 ? qsTr("About %1.").arg(box.money(box.plan.estimate)) : qsTr("The model has no price, so the cost is unknown."))
-                      + ((box.plan.dailyLeft ?? -1) >= 0 ? " " + qsTr("%1 left of today's %2 cap.").arg(box.money(box.plan.dailyLeft)).arg(box.money(box.plan.dailyCap)) : "")
+                      + ((box.plan.dailyLeft ?? -1) >= 0 ? " " + qsTr("%1 left of today’s %2 cap.").arg(box.money(box.plan.dailyLeft)).arg(box.money(box.plan.dailyCap)) : "")
             }
             Label {
                 Layout.fillWidth: true

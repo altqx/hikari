@@ -409,13 +409,6 @@
 <context>
     <name>HikariSub.InlineAi</name>
     <message numerus="yes">
-        <source>%1 (%n Line(s))</source>
-        <translation>
-            <numerusform>%1 (%n Line)</numerusform>
-            <numerusform>%1 (%n Lines)</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
         <source>%n line(s)</source>
         <translation>
             <numerusform>%n line</numerusform>
@@ -444,10 +437,10 @@
         </translation>
     </message>
     <message numerus="yes">
-        <source>%n line(s) aren&apos;t sent: comments, empty lines, tag-only lines, drawings and karaoke.</source>
+        <source>%n line(s) aren’t sent: comments, empty lines, tag-only lines, drawings and karaoke.</source>
         <translation>
-            <numerusform>%n line isn&apos;t sent: comments, empty lines, tag-only lines, drawings and karaoke.</numerusform>
-            <numerusform>%n lines aren&apos;t sent: comments, empty lines, tag-only lines, drawings and karaoke.</numerusform>
+            <numerusform>%n line isn’t sent: comments, empty lines, tag-only lines, drawings and karaoke.</numerusform>
+            <numerusform>%n lines aren’t sent: comments, empty lines, tag-only lines, drawings and karaoke.</numerusform>
         </translation>
     </message>
     <message numerus="yes">
@@ -507,10 +500,17 @@
         </translation>
     </message>
     <message numerus="yes">
-        <source>The request failed for line %1: %2</source>
+        <source>Line %1 failed: %2</source>
         <translation>
-            <numerusform>The request failed for line %1: %2</numerusform>
-            <numerusform>The requests failed for lines %1: %2</numerusform>
+            <numerusform>Line %1 failed: %2</numerusform>
+            <numerusform>Lines %1 failed: %2</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) weren’t sent.</source>
+        <translation>
+            <numerusform>%n line wasn’t sent.</numerusform>
+            <numerusform>%n lines weren’t sent.</numerusform>
         </translation>
     </message>
     <message numerus="yes">
@@ -528,17 +528,17 @@
         </translation>
     </message>
     <message numerus="yes">
-        <source>%n line(s) weren&apos;t sent.</source>
-        <translation>
-            <numerusform>%n line wasn&apos;t sent.</numerusform>
-            <numerusform>%n lines weren&apos;t sent.</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
         <source>%1 · %n result(s)</source>
         <translation>
             <numerusform>%1 · %n result</numerusform>
             <numerusform>%1 · %n results</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 (%n line(s))</source>
+        <translation>
+            <numerusform>%1 (%n line)</numerusform>
+            <numerusform>%1 (%n lines)</numerusform>
         </translation>
     </message>
 </context>

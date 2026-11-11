@@ -1781,7 +1781,7 @@ ScrollView {
                 page.editingAction = -2
             }
             Note {
-                text: qsTr("Your actions appear under AI in the Grid’s and the Line editor’s menus. They follow the mode for new threads and change only the text.")
+                text: qsTr("Your actions appear in the AI menus. They follow the mode for new threads and change only the text.")
                 Layout.leftMargin: 0
                 Layout.topMargin: 0
             }
@@ -1931,7 +1931,7 @@ ScrollView {
                     text: qsTr("before and after each line")
                 }
             }
-            Note { text: qsTr("Actions save at once. Translate to and Lines of context save with OK or Apply.") }
+            Note { text: qsTr("Actions save at once. The other settings here save with OK or Apply.") }
         }
 
         SettingsSection {
