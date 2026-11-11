@@ -1,5 +1,7 @@
 #include "hikari/api/folder_skills.h"
 
+#include "hikari/api/json.h"
+
 #include <algorithm>
 #include <fstream>
 
@@ -57,6 +59,23 @@ void collect(const fs::path &dir, const fs::path &relative, int depth, std::vect
     }
 }
 
+std::size_t countFiles(const fs::path &dir, int depth)
+{
+    std::size_t count = 0;
+    std::error_code error;
+    for (const fs::directory_entry &entry : sortedEntries(dir)) {
+        if (entry.is_symlink(error))
+            continue;
+        if (entry.is_regular_file(error))
+            ++count;
+        else if (entry.is_directory(error) && depth + 1 < FolderSkills::kMaxDepth)
+            count += countFiles(entry.path(), depth + 1);
+    }
+    return count;
+}
+
+constexpr std::size_t kMaxSkillMdBytes = 256 * 1024;
+
 bool realFolder(const fs::path &dir)
 {
     std::error_code error;
@@ -98,9 +117,11 @@ std::optional<SkillFolder> FolderSkills::folder(const fs::path &dir) const
     return skill;
 }
 
-bool FolderSkills::has(std::string_view skill) const
+bool FolderSkills::offers(std::string_view skill) const
 {
-    return isSkillName(skill) && folder(m_root / fromUtf8(skill));
+    const auto text = read(skill, kSkillFile, kMaxSkillMdBytes + 1);
+    return text && text->size() <= kMaxSkillMdBytes && isUtf8(*text) &&
+           checkSkill(skill, *text).problem == SkillProblem::None;
 }
 
 std::vector<SkillFolder> FolderSkills::skills() const
@@ -113,6 +134,36 @@ std::vector<SkillFolder> FolderSkills::skills() const
             found.push_back(std::move(*skill));
     }
     return found;
+}
+
+std::vector<SkillReport> FolderSkills::report() const
+{
+    std::vector<SkillReport> out;
+    std::size_t offered = 0;
+    std::error_code error;
+    for (const fs::directory_entry &entry : sortedEntries(m_root)) {
+        if (offered >= kMaxSkills)
+            break;
+        if (entry.is_symlink(error) || !entry.is_directory(error))
+            continue;
+        SkillReport report{utf8(entry.path().filename()), m_origin, {}, 0, 0};
+        const auto skill = isSkillName(report.folder) ? folder(entry.path()) : std::nullopt;
+        if (!isSkillName(report.folder)) {
+            report.check.problem = SkillProblem::NotASkillName;
+        } else if (!skill) {
+            report.check.problem = SkillProblem::NoSkillFile;
+        } else {
+            const auto text = read(report.folder, kSkillFile, kMaxSkillMdBytes + 1);
+            report.check = !text || text->size() > kMaxSkillMdBytes || !isUtf8(*text)
+                               ? SkillCheck{SkillProblem::NotText, {}, {}}
+                               : checkSkill(report.folder, *text);
+            report.files = skill->files.size();
+            report.found = countFiles(entry.path(), 0);
+            ++offered;
+        }
+        out.push_back(std::move(report));
+    }
+    return out;
 }
 
 std::optional<std::string> FolderSkills::read(std::string_view skill, std::string_view file, std::size_t atMost) const
@@ -143,11 +194,21 @@ std::optional<FolderSkills> SkillTiers::projectSkills(const fs::path &project) c
     return FolderSkills(projectFolder(project), SkillOrigin::Project);
 }
 
+std::vector<SkillReport> SkillTiers::report(const fs::path &project) const
+{
+    const auto tier = projectSkills(project);
+    std::vector<SkillReport> out = tier ? tier->report() : std::vector<SkillReport>();
+    std::vector<SkillReport> mine = m_mine.report();
+    out.insert(out.end(), std::make_move_iterator(mine.begin()), std::make_move_iterator(mine.end()));
+    return out;
+}
+
 std::vector<SkillFolder> SkillTiers::skills(const fs::path &project) const
 {
     std::vector<SkillFolder> found = m_mine.skills();
     if (const auto tier = projectSkills(project)) {
         std::vector<SkillFolder> ours = tier->skills();
+        std::erase_if(ours, [&](const SkillFolder &s) { return !tier->offers(s.name); });
         std::erase_if(found, [&](const SkillFolder &mine) {
             return std::any_of(ours.begin(), ours.end(), [&](const SkillFolder &s) { return s.name == mine.name; });
         });
@@ -160,7 +221,7 @@ std::vector<SkillFolder> SkillTiers::skills(const fs::path &project) const
 std::optional<std::string> SkillTiers::read(const fs::path &project, std::string_view skill, std::string_view file,
                                             std::size_t atMost) const
 {
-    if (const auto tier = projectSkills(project); tier && tier->has(skill))
+    if (const auto tier = projectSkills(project); tier && tier->offers(skill))
         return tier->read(skill, file, atMost);
     return m_mine.read(skill, file, atMost);
 }

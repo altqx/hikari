@@ -4,6 +4,9 @@
 #include "hikari/app/forwarded_launches.h"
 #include "hikari/app/project_windows.h"
 #include "hikari/app/session_json.h"
+#include "hikari/app/skills_settings.h"
+#include "hikari/api/skill_check.h"
+#include "hikari/backends/desktop_handoff.h"
 #include "hikari/application/owned_file.h"
 #include "hikari/application/session_file.h"
 #include "docking.h"
@@ -189,6 +192,27 @@ class ProjectWindowsTests : public QObject {
         return QTest::qWaitFor([&] { return application->workspace().activeWindow() == opened; }) ? opened : -1;
     }
 
+    static QVariantList rowsOf(const QVariantList &groups, const QString &group)
+    {
+        for (const QVariant &g : groups)
+            if (g.toMap().value(QStringLiteral("group")).toString() == group)
+                return g.toMap().value(QStringLiteral("rows")).toList();
+        return {};
+    }
+    static QStringList summary(const QVariantList &rows)
+    {
+        QStringList out;
+        for (const QVariant &r : rows) {
+            const QVariantMap m = r.toMap();
+            const QString state = !m.value(QStringLiteral("problem")).toString().isEmpty() ? QStringLiteral("broken")
+                                  : !m.value(QStringLiteral("hidden")).toString().isEmpty() ? QStringLiteral("hidden")
+                                                                                             : QStringLiteral("offered");
+            out << m.value(QStringLiteral("name")).toString() + u':' + state;
+        }
+        return out;
+    }
+    static QByteArray skillMd(const char *description) { return QByteArray("---\ndescription: ") + description + "\n---\n"; }
+
 private slots:
     void initTestCase() { QVERIFY(home.isValid() && dir.isValid()); }
     void cleanup()
@@ -208,6 +232,73 @@ private slots:
         QDir(home.filePath(QStringLiteral("Dictionary"))).removeRecursively();
         QDir(dir.path()).removeRecursively();
         QDir().mkpath(dir.path());
+    }
+
+    void theSkillsListIsTheWindowsProjectOverMineOverBuiltIn()
+    {
+        start();
+        const QString mine = application->userFolder() + QStringLiteral("/ai/skills");
+        auto cleanMine = qScopeGuard([&] { QDir(mine).removeRecursively(); });
+        writeAll(mine + QStringLiteral("/signs/SKILL.md"), skillMd("Mine."));
+        writeAll(mine + QStringLiteral("/typesetting/SKILL.md"), skillMd("Our way."));
+        writeAll(mine + QStringLiteral("/notes/SKILL.md"), "no frontmatter");
+        const QString show = folder("Show S02", true);
+        writeAll(show + QStringLiteral("/.hikari/skills/signs/SKILL.md"), skillMd("The show's signs."));
+        writeAll(show + QStringLiteral("/.hikari/skills/honorifics/SKILL.md"), skillMd("Honorifics."));
+        app::SkillsSettings &skills = *application->skillsSettings();
+
+        QVariantList groups = skills.groups(0);
+        QCOMPARE(groups.size(), 2);
+        QCOMPARE(summary(rowsOf(groups, QStringLiteral("mine"))),
+                 (QStringList{"notes:broken", "signs:offered", "typesetting:offered"}));
+        QCOMPARE(summary(rowsOf(groups, QStringLiteral("builtin"))),
+                 (QStringList{"karaoke-templater:offered", "translation:offered", "typesetting:hidden"}));
+        QCOMPARE(rowsOf(groups, QStringLiteral("mine")).first().toMap().value(QStringLiteral("problem")).toString(),
+                 QStringLiteral("SKILL.md doesn’t start with frontmatter (---)."));
+
+        QVERIFY(application->openFolder(show, 0).value(QStringLiteral("ok")).toBool());
+        groups = skills.groups(0);
+        QCOMPARE(groups.size(), 3);
+        QCOMPARE(groups.first().toMap().value(QStringLiteral("group")).toString(), QStringLiteral("project"));
+        QCOMPARE(groups.first().toMap().value(QStringLiteral("folder")).toString(),
+                 QDir::toNativeSeparators(QStringLiteral("Show S02/.hikari/skills")));
+        QCOMPARE(summary(rowsOf(groups, QStringLiteral("project"))), (QStringList{"honorifics:offered", "signs:offered"}));
+        QCOMPARE(summary(rowsOf(groups, QStringLiteral("mine"))),
+                 (QStringList{"notes:broken", "signs:hidden", "typesetting:offered"}));
+    }
+
+    void theBuiltInSkillsAreTheSidecarsOwn()
+    {
+        QStringList source;
+        const QDir skills(QStringLiteral(HIKARI_AI_SKILLS_SOURCE));
+        for (const QString &name : skills.entryList(QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name)) {
+            QFile file(skills.filePath(name + QStringLiteral("/SKILL.md")));
+            QVERIFY(file.open(QIODevice::ReadOnly));
+            const QByteArray text = file.readAll();
+            const api::SkillCheck check = api::checkSkill(name.toStdString(), std::string_view(text.data(), text.size()));
+            QCOMPARE(int(check.problem), int(api::SkillProblem::None));
+            source << name + u'=' + QString::fromStdString(check.description);
+        }
+        QStringList compiled;
+        for (const app::BuiltinSkill &skill : app::builtinSkills())
+            compiled << QString::fromStdString(skill.name) + u'=' + QString::fromStdString(skill.description);
+        QVERIFY(!source.isEmpty());
+        QCOMPARE(compiled, source);
+    }
+
+    void openProjectFolderMakesTheProjectsSkillsFolder()
+    {
+        start();
+        QList<QUrl> opened;
+        auto routes = backends::desktop::replaceRoutes({[&](const QUrl &url) { opened << url; return true; }, {}, {}});
+        auto restore = qScopeGuard([&] { backends::desktop::replaceRoutes(routes); });
+        app::SkillsSettings &skills = *application->skillsSettings();
+        QVERIFY(!skills.openProjectFolder(0));
+        const QString show = folder("Show S03", true);
+        QVERIFY(application->openFolder(show, 0).value(QStringLiteral("ok")).toBool());
+        QVERIFY(skills.openProjectFolder(0));
+        QVERIFY(QFileInfo(show + QStringLiteral("/.hikari/skills")).isDir());
+        QCOMPARE(opened, QList<QUrl>{QUrl::fromLocalFile(canonical(show) + QStringLiteral("/.hikari/skills"))});
     }
 
     void aWindowRowKeepsItsProject()

@@ -30,7 +30,7 @@ add_library(hikari_composition STATIC composition.cpp application.cpp include/hi
     local_only_network.cpp include/hikari/app/local_only_network.h
     api_host.cpp include/hikari/app/api_host.h
     ai_features.cpp include/hikari/app/ai_features.h ai_mcp.cpp include/hikari/app/ai_mcp.h
-    ai_settings.cpp include/hikari/app/ai_settings.h
+    ai_settings.cpp include/hikari/app/ai_settings.h skills_settings.cpp include/hikari/app/skills_settings.h
     review_controller.cpp include/hikari/app/review_controller.h agent_controller.cpp include/hikari/app/agent_controller.h
     inline_ai_controller.cpp include/hikari/app/inline_ai_controller.h
     plugin_manager.cpp include/hikari/app/plugin_manager.h
@@ -67,6 +67,12 @@ if(WIN32)
 endif()
 hikari_module(hikari_composition ALLOW hikari_ui hikari_ui_resources_1 hikari_uiplugin hikari_backends hikari_ai
     hikari_plugins hikari_api hikari_application hikari_core "Qt6::*" "hikari_ui*")
+
+file(GLOB_RECURSE _hikari_builtin_skills CONFIGURE_DEPENDS RELATIVE "${PROJECT_SOURCE_DIR}/src/ai-sidecar/skills"
+    "${PROJECT_SOURCE_DIR}/src/ai-sidecar/skills/*")
+list(TRANSFORM _hikari_builtin_skills PREPEND "${PROJECT_SOURCE_DIR}/src/ai-sidecar/skills/")
+qt_add_resources(hikari_composition hikari_builtin_skills PREFIX "/hikari/ai-skills"
+    BASE "${PROJECT_SOURCE_DIR}/src/ai-sidecar/skills" FILES ${_hikari_builtin_skills})
 
 target_sources(hikari_composition PRIVATE startup_look.cpp include/hikari/app/startup_look.h
     include/hikari/app/launcher.h)

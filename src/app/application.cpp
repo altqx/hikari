@@ -774,6 +774,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_agent = std::make_unique<AgentController>(AgentController::Wiring{
         *m_ai, *m_settings, m_apiHost->api(), m_apiHost->review(), m_workspace, *m_files, m_userFolder, {},
         [this] { return m_projects ? m_projects->root(m_workspace.activeWindow()) : QString(); }});
+    m_skillsSettings = std::make_unique<SkillsSettings>(
+        m_userFolder, [this](int window) { return m_projects ? m_projects->root(window) : QString(); });
     m_inlineAi = std::make_unique<InlineAiController>(InlineAiController::Wiring{
         *m_ai, *m_settings, m_apiHost->api(), m_apiHost->review(), m_workspace, *m_files, *m_agent,
         [this](application::DocumentId document, core::LineId line) {
@@ -6609,6 +6611,7 @@ QVariantMap Application::qmlProperties(int shellWindow)
             {QStringLiteral("review"), QVariant::fromValue(static_cast<QObject *>(m_review.get()))},
             {QStringLiteral("agent"), QVariant::fromValue(static_cast<QObject *>(m_agent.get()))},
             {QStringLiteral("inlineAi"), QVariant::fromValue(static_cast<QObject *>(m_inlineAi.get()))},
+            {QStringLiteral("skills"), QVariant::fromValue(static_cast<QObject *>(m_skillsSettings.get()))},
             {QStringLiteral("app"), QVariant::fromValue(static_cast<QObject *>(this))}};
 }
 

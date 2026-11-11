@@ -2,10 +2,12 @@
 #include "script_client.h"
 
 #include "hikari/api/folder_skills.h"
+#include "hikari/api/skill_check.h"
 
 #include <gtest/gtest.h>
 
 #include <fstream>
+#include <map>
 
 using namespace hikari::api;
 using namespace hikari::api::testing;
@@ -250,4 +252,69 @@ TEST(Skills, TheListMarksEachSkillsOriginForTheCallersProject)
     ASSERT_TRUE(read);
     EXPECT_EQ(*read->find("data"), Json("ours"));
     EXPECT_EQ(names(FolderSkills(root.path / "mine")), std::vector<std::string>{"notes"});
+}
+
+TEST(Skills, TheCheckAnswersTheCasesSharedWithTheSidecar)
+{
+    const std::map<std::string, SkillProblem> problems{{"noFrontmatter", SkillProblem::NoFrontmatter},
+                                                       {"nameMismatch", SkillProblem::NameMismatch},
+                                                       {"noDescription", SkillProblem::NoDescription}};
+    std::ifstream in(kScripts / "skill_texts.jsonl", std::ios::binary);
+    int cases = 0;
+    for (std::string line; std::getline(in, line); ++cases) {
+        const auto json = Json::parse(line);
+        ASSERT_TRUE(json) << line;
+        const std::string &folder = json->find("folder")->asString();
+        const SkillCheck check = checkSkill(folder, json->find("text")->asString());
+        if (const Json *description = json->find("description")) {
+            EXPECT_EQ(check.problem, SkillProblem::None) << folder;
+            EXPECT_EQ(check.description, description->asString()) << folder;
+        } else {
+            EXPECT_EQ(check.problem, problems.at(json->find("problem")->asString())) << folder;
+            if (const Json *named = json->find("namedAs"))
+                EXPECT_EQ(check.namedAs, named->asString()) << folder;
+        }
+    }
+    EXPECT_EQ(cases, 15);
+}
+
+TEST(Skills, TheReportSaysWhyEachFolderIsntOffered)
+{
+    TempFolder root;
+    put(root.path / "Kara FX" / "SKILL.md");
+    put(root.path / "glossary" / "README.md");
+    put(root.path / "kfx-style" / "SKILL.md", "---\nname: kfx\ndescription: x\n---\n");
+    put(root.path / "notes" / "SKILL.md", "---\nname: notes\n---\n");
+    put(root.path / "binary" / "SKILL.md", std::string("---\ndescription: \xff\n---\n"));
+    put(root.path / "good" / "SKILL.md", "---\ndescription: Fine.\n---\n");
+    for (int i = 0; i < 120; ++i)
+        put(root.path / "good" / "refs" / ("r" + std::to_string(1000 + i)));
+    put(root.path / "loose.md");
+    const std::vector<SkillReport> report = FolderSkills(root.path).report();
+    std::vector<std::pair<std::string, SkillProblem>> got;
+    for (const SkillReport &r : report)
+        got.emplace_back(r.folder, r.check.problem);
+    using enum SkillProblem;
+    EXPECT_EQ(got, (std::vector<std::pair<std::string, SkillProblem>>{{"Kara FX", NotASkillName},
+                                                                      {"binary", NotText},
+                                                                      {"glossary", NoSkillFile},
+                                                                      {"good", None},
+                                                                      {"kfx-style", NameMismatch},
+                                                                      {"notes", NoDescription}}));
+    EXPECT_EQ(report[3].check.description, "Fine.");
+    EXPECT_EQ(report[3].files, FolderSkills::kMaxFiles);
+    EXPECT_EQ(report[3].found, 121u);
+    EXPECT_EQ(report[4].check.namedAs, "kfx");
+}
+
+TEST(Skills, TheTiersReportTheProjectsFoldersFirst)
+{
+    TempFolder root;
+    put(root.path / "mine" / "a" / "SKILL.md", "---\ndescription: Mine.\n---\n");
+    put(root.path / "show" / ".hikari" / "skills" / "z" / "SKILL.md", "---\ndescription: Ours.\n---\n");
+    const std::vector<SkillReport> report = SkillTiers(root.path / "mine").report(root.path / "show");
+    ASSERT_EQ(report.size(), 2u);
+    EXPECT_EQ(report[0].folder, "z");
+    EXPECT_EQ(report[0].origin, SkillOrigin::Project);
+    EXPECT_EQ(report[1].origin, SkillOrigin::Mine);
 }

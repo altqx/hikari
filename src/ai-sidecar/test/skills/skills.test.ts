@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { readdirSync, statSync } from "node:fs";
+import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 
 import { ErrorCode } from "../../src/protocol";
@@ -11,6 +11,8 @@ import type { OperationName, Operations } from "../../src/tools/api.gen";
 import type { CallToolResult, HikariCalls } from "../../src/tools/toolset";
 
 const kSkillsDir = join(import.meta.dir, "..", "..", "skills");
+/** The cases HikariSub's own check (src/api/skill_check.cpp) must answer the same way. */
+const kSharedCases = join(import.meta.dir, "..", "..", "..", "..", "tests", "api", "scripts", "skill_texts.jsonl");
 
 function skillMd(name: string, description: string, body = "Do it well."): string {
     return `---\nname: ${name}\ndescription: ${description}\n---\n\n${body}\n`;
@@ -102,6 +104,22 @@ describe("the bundled skills", () => {
 
     test("typesetting, the karaoke templater and translation ship", () => {
         expect(kBundledSkills.map((s) => s.folder)).toEqual(["karaoke-templater", "translation", "typesetting"]);
+    });
+});
+
+describe("the cases shared with HikariSub", () => {
+    const cases = readFileSync(kSharedCases, "utf8").trim().split("\n").map((line) => JSON.parse(line) as {
+        folder: string; text: string; description?: string; problem?: string; namedAs?: string;
+    });
+    test.each(cases.map((c) => [c.folder, c] as const))("%s", (_, c) => {
+        const entry = skillEntry(c.folder, c.text);
+        if (c.description !== undefined)
+            return expect(entry).toEqual({ name: c.folder, description: c.description });
+        const problem = typeof entry !== "string" ? "none" : entry.includes("frontmatter") ? "noFrontmatter"
+            : entry.includes("isn't its folder's") ? "nameMismatch" : entry.includes("no description") ? "noDescription" : entry;
+        expect(problem).toBe(c.problem!);
+        if (c.namedAs)
+            expect(entry).toContain(`"${c.namedAs}"`);
     });
 });
 

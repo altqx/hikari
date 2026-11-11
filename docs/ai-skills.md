@@ -54,6 +54,17 @@ The model is told which skills are the Project's and which are yours. Its instru
 
 The folders are read when a thread starts its first turn, so a new or changed skill shows in the next thread. In each folder at most 100 skills are read, and at most 100 files in each skill, 4 folders deep. Folders are walked in name order, and `SKILL.md` is always among the files kept, so which files are kept doesn't depend on the file system ([#969](https://github.com/altqx/hikari/issues/969)). Hidden files and folders (starting with `.`) and symbolic links are skipped, so a skill reaches no file outside its folder.
 
+### In Settings
+
+**Settings › AI › Skills** lists the skills a window's threads get ([#941](https://github.com/altqx/hikari/issues/941), owner Q349). It's on the Yours tab, and sets nothing.
+
+- The groups are **This project** (in a Project window, `.hikari/skills`), **Mine** (`ai/skills`) and **Built in**. Each row has a Project, Mine or Built in chip.
+- A skill another hides stays in the list, struck through: "Hidden by this project's" or "Replaced by yours".
+- A folder that can't be offered stays with a warning and why: a folder name that isn't a skill name, no `SKILL.md`, a `SKILL.md` that isn't UTF-8 text or is over 256 KiB, no frontmatter, a `name` other than the folder's, or no description. A skill past the file limit says how many of its files are offered.
+- **Open folder** makes `ai/skills` when it isn't there and opens it. **Open project folder**, in a Project window, does the same for `.hikari/skills`; only you write there, never the AI. **Read the folders again** refreshes the list, which is read when the page opens.
+
+HikariSub checks the skills itself (`src/api/skill_check.cpp`), with the sidecar's rules; `tests/api/scripts/skill_texts.jsonl` holds the cases both must answer the same way. The built-in skills' names and descriptions come from HikariSub's own copy of `src/ai-sidecar/skills`, compiled in. A released HikariSub refuses a sidecar bundle with files it doesn't know, so the bundle can't carry the list. If a sidecar update adds a built-in skill, Settings lists it after the next HikariSub update; the model always gets the sidecar's set.
+
 ### The built-in skills
 
 | Skill | For | Extended by |
@@ -91,6 +102,8 @@ A file that isn't listed gives `not_found`, one over 256 KiB `refused` with `too
 | --- | --- |
 | `src/api/skill_operations.cpp` | `skills.list` and `skills.read`. |
 | `src/api/folder_skills.cpp` | `FolderSkills`: the folder walk and its limits. `SkillTiers`: the Project over yours. |
+| `src/api/skill_check.cpp` | The format's rules in C++, for Settings. |
+| `src/app/skills_settings.cpp` | Settings › AI › Skills: the groups, Open folder, and the built-in skills compiled in. |
 | `src/ai-sidecar/src/skills/skill.ts` | The frontmatter reader and the format's rules. |
 | `src/ai-sidecar/src/skills/skills.ts` | `Skills`: the catalogue and `read_skill` for one thread. |
 | `src/ai-sidecar/src/skills/bundled.ts` | The built-in skills, compiled into the bundle. |
@@ -99,5 +112,7 @@ A file that isn't listed gives `not_found`, one over 256 KiB `refused` with `too
 ## Tests
 
 - `hikari_api_tests` (`tests/api/skill_tests.cpp`, `scripts/skills.jsonl`): listing and reading the fixture skills, the grant, names, hidden files, symbolic links, paths outside the folder, the depth, file and skill limits, the file cap's order, the size limit, and the Project over yours (origins, hiding, a symlinked `.hikari`).
+- `hikari_api_tests` also runs `scripts/skill_texts.jsonl` through the C++ check, and the folder report's reasons.
+- `hikari_ui_project_windows_tests`: the Settings groups in a window with and without a Project, the built-in skills matching `src/ai-sidecar/skills`, and Open project folder.
 - `hikari_backends_ai_agent_tests`: a thread keeps the Project it started in, saves it, and lists that Project's skills; a thread without one doesn't.
 - `hikari_ai_sidecar_bun_tests` (`src/ai-sidecar/test/skills`): the frontmatter, the built-in skills against the format, the catalogue with the Project's and your skills, replaced and broken skills, the Project's preface, HA1 refusing, one lookup per thread, the catalogue's room, and `read_skill`'s answers and errors. `test/agent` checks the system prompt carries the catalogue, and `test/tools/budget.test.ts` counts `read_skill` in the up-front tools and the catalogue's tokens.
