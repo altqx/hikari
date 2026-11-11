@@ -34,6 +34,8 @@ public:
     bool lastWriteFailed() const { return m_writeFailed; }
     // Either file has a top-level table named `name`.
     bool hasTable(std::string_view name) const;
+    // `fonts = [...]`, resolved against the Project folder; project.local.toml's list replaces project.toml's.
+    std::vector<QString> fontFolders() const;
 
     const std::vector<application::FileProblem> &problems() const { return m_problems; }
     // Settings the files set that a Project may never set; they stay in the file, unused.

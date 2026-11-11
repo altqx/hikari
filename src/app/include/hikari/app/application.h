@@ -802,6 +802,21 @@ public:
     Q_INVOKABLE bool openEditorFromFullScreen();
     Q_INVOKABLE bool selectLinesVisibleOnVideo();
     Q_INVOKABLE bool snapToKeyframe(bool start);
+    // Timing helpers on the selection; false (nothing done) without an exact timebase or when no Line changes.
+    Q_INVOKABLE bool snapToAdjacentKeyframe(bool end, bool next);
+    // The amounts are audio.leadInValue / audio.leadOutValue.
+    Q_INVOKABLE bool changeLead(bool end, bool add);
+    Q_INVOKABLE bool nudgeEdge(bool end, int frames);
+    Q_INVOKABLE bool extendNeighbour(bool next);
+    // The Timing assistant's suggestion for the active Line, from the postprocessor rules:
+    // {ok, line, index, count, style, text, startBefore, endBefore, start, end, startReason,
+    // endReason, startFrames, endFrames, linked, linkedEndBefore, leadIn, leadOut, keyframes, windowStart,
+    // windowEnd}; ok false with "problem".
+    Q_INVOKABLE QVariantMap timingSuggestion(int shellWindow);
+    // Applies the suggestion (startMs/endMs override it when >= 0) in one step, then makes
+    // the next uncommented Line active.
+    Q_INVOKABLE bool acceptTimingSuggestion(int shellWindow, int startMs = -1, int endMs = -1);
+    Q_INVOKABLE bool skipTimingSuggestion(int shellWindow);
     Q_INVOKABLE bool centerTimesInFrames();
     Q_INVOKABLE bool commitAndAdvance();
 
@@ -1396,6 +1411,14 @@ private:
     std::map<std::uint64_t, AttachedFontsEntry> m_attachedFonts;
     std::vector<application::FontLease> attachedFontLeases(std::optional<application::DocumentId> document);
     std::vector<application::FontLease> subtitleFonts(std::optional<application::DocumentId> document);
+    std::vector<application::FontLease> projectFonts(std::optional<application::DocumentId> document) const;
+    struct ProjectFonts {
+        std::vector<QString> folders;
+        std::vector<application::FontLease> fonts;
+    };
+    std::map<int, ProjectFonts> m_projectFonts;
+    void loadProjectFonts(int shellWindow);
+    void subtitleFontsChanged();
     bool setVideoFonts(std::optional<application::DocumentId> document);
     std::vector<std::pair<std::shared_ptr<const std::vector<std::byte>>, std::vector<std::string>>> m_leasedFontNames;
     bool runFilter(const std::function<std::expected<void, application::CommandRefusal>(application::EditSession &)> &command);
@@ -1456,6 +1479,7 @@ private:
     void offerProjectFor(application::DocumentId document, const QString &path);
     bool projectTrusted(const QString &root) const;
     void applyWindowProject(int shellWindow);
+    QString projectFontFolder(int shellWindow) const;
     application::Settings &windowSettings(int shellWindow);
     const application::Settings &windowSettings(int shellWindow) const;
     QString m_settingsFile;

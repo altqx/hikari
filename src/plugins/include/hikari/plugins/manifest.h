@@ -50,6 +50,20 @@ struct Setting {
     api::Json definition; // the manifest's object, with type and default
 };
 
+struct NodePort {
+    std::string name;
+    std::string type;  // a Lua node's port type: Number, Text, Colour, Alpha, Time, Point, Bool or Tags
+    api::Json fallback; // null: none; else the input's value while no wire reaches it
+};
+
+struct NodeContribution {
+    std::string id;
+    std::string title;
+    std::string summary;
+    std::string file; // a package .lua path: the node's code
+    std::vector<NodePort> inputs, outputs;
+};
+
 struct Screenshot {
     std::string path;
     std::string caption;
@@ -74,6 +88,7 @@ struct Manifest {
     std::vector<Contribution> commands;
     std::vector<Panel> panels;
     std::vector<Setting> settings;
+    std::vector<NodeContribution> nodes;
 
     bool hasQmlPanels() const;
 };

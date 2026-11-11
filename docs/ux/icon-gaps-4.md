@@ -40,6 +40,7 @@ Left without an icon, as IC1 to IC3 decided:
 | AU19 #853 | Remove lead-in, Remove lead-out | lead-in-remove, lead-out-remove (new) |
 | AU19 #853 | Add lead-in, Add lead-out | lead-in, lead-out (reused) |
 | AU19 #853 | Join, split at the video frame, snap to the neighbouring Line | join-lines, split-at-video, continuous-previous, continuous-next (reused). A join that changes times only would get its own role |
+| AU19 #853 | Extend previous line to this start, Extend next line to this end (time-only joins) | extend-previous-to-start, extend-next-to-end (new, drawn in AU19 at the owner's gate, Q327) |
 | AU19 #853 | Shift start or end by N frames | time-offset-start, time-offset-end (reused) |
 | AU19 #853 | Timing postprocessor: Assistant mode | timing-assistant (new) |
 | AU19 #853 | Assistant: Accept, Change, Skip | commit, edit, chevron-right (reused) |

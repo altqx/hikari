@@ -93,7 +93,9 @@ The Explorer is core, not a plugin ([ADR 0022](0022-hikarisub-plugins.md), "Plug
 - Rows offer Copy to and Move to either tier. A name clash goes through the Replace / Rename / Skip review.
 - While a Project is open, New and Save as default to **Save to project**. They are split buttons, and the choice is remembered per list.
 
-**Fonts.** The Project's font folders are searched before system fonts. Fonts attached to the subtitle file keep today's rules.
+**Fonts.** `fonts = ["fonts", "../common/fonts"]` in `project.toml` names folders relative to the Project folder; `project.local.toml`'s list replaces it. Their fonts join that window's Documents after the fonts attached to the subtitle file and before the Fonts folder in Settings, so a Project font wins over a system or Fonts folder font of the same family. Attached fonts keep today's rules. The Font collector starts in the Project's first font folder (#774).
+
+The more specific source wins (attached, then Project, then the Fonts folder, then system), so a Project renders the same for everyone who opens it, whatever is in their own Fonts folder.
 
 ## Trust
 
