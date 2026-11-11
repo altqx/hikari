@@ -38,8 +38,12 @@ void Application::setupTabMenu(const Options &options)
     m_revealInFolder = options.revealInFolder ? options.revealInFolder
                                               : [](const QString &path) { backends::desktop::selectInFolder(path); };
     m_legacyAutosaveDir = options.legacyAutosaveDir;
-    connect(m_video.get(), &ui::VideoController::offerAnswered, this, &Application::answerAssociation);
-    connect(m_video.get(), &ui::VideoController::offerWithdrawn, this, [this] {
+}
+
+void Application::trackOffers(WindowMedia &media)
+{
+    connect(media.video.get(), &ui::VideoController::offerAnswered, this, &Application::answerAssociation);
+    connect(media.video.get(), &ui::VideoController::offerWithdrawn, this, [this] {
         if (const auto target = m_workspace.editingTarget())
             m_offers.erase(target->value);
     });
@@ -215,7 +219,7 @@ void Application::showAssociationOffer()
     const auto target = m_workspace.editingTarget();
     const auto it = target ? m_offers.find(target->value) : m_offers.end();
     if (it == m_offers.end()) {
-        m_video->withdrawOffer();
+        activeMedia().video->withdrawOffer();
         return;
     }
     const auto &offer = it->second.offer;
@@ -269,7 +273,7 @@ void Application::showAssociationOffer()
     const QString directory = offer.directoryVideo.empty() ? QString()
                               : both                       ? QCoreApplication::translate("HikariSub.Documents", "Load from directory")
                                                            : yes;
-    m_video->setOffer(prompt, associated, directory);
+    activeMedia().video->setOffer(prompt, associated, directory);
 }
 
 void Application::loadAssociations(application::DocumentId document, const application::AssociationLoad &load)
@@ -282,7 +286,7 @@ void Application::loadAssociations(application::DocumentId document, const appli
         if (shown) {
             if (!load.videoAudio)
                 m_keepTabAudio = media.video;
-            m_video->openVideo(media.video);
+            activeMedia().video->openVideo(media.video);
         }
     }
     if (!load.audio.empty()) {
@@ -291,7 +295,7 @@ void Application::loadAssociations(application::DocumentId document, const appli
         media.audio = path;
         media.audioFromVideo = false;
         if (shown)
-            m_audio->openAudio(path);
+            activeMedia().audio->openAudio(path);
     }
     if (!load.keyframes.empty()) {
         const QString keyframes = QDir::toNativeSeparators(qs(load.keyframes));
@@ -379,7 +383,7 @@ QVariantMap Application::openVideoFile(const QString &path)
 
 void Application::openVideo(const QString &path)
 {
-    m_video->openVideo(path);
+    activeMedia().video->openVideo(path);
 }
 
 QVariantMap Application::reviewOpenWithVideo(const QString &subtitles, const QString &video, bool fullscreen)
@@ -484,7 +488,7 @@ bool Application::targetUntouched() const
 {
     const auto target = m_workspace.editingTarget();
     auto *session = target ? m_files->session(*target) : nullptr;
-    if (!session || !targetUntitled() || session->isDirty() || session->historySize() != 1 || m_audio->hasAudio())
+    if (!session || !targetUntitled() || session->isDirty() || session->historySize() != 1 || activeMedia().audio->hasAudio())
         return false;
     if (const auto it = m_tabMedia.find(target->value); it != m_tabMedia.end() &&
         (!it->second.video.isEmpty() || !it->second.audio.isEmpty() || !it->second.keyframes.isEmpty() ||
@@ -582,7 +586,7 @@ void Application::applyFiles(PendingFiles files, bool skipFirst)
                 media = it->second;
             media.video.clear();
             media.position = 0;
-            media.audio = m_audio->hasAudio() ? QDir::toNativeSeparators(m_audio->path()) : QString();
+            media.audio = activeMedia().audio->hasAudio() ? QDir::toNativeSeparators(activeMedia().audio->path()) : QString();
             discardRecovery(*original);
             m_files->close(*original);
             m_workspace.replace(*original, *id);

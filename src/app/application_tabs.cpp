@@ -252,14 +252,14 @@ void Application::replaceTarget(application::DocumentId replacement, bool keepMe
         media = it->second;
     if (keepMedia) {
         media.scroll = 0;
-        if (QString::fromStdString(m_video->session().path()) == media.video &&
-            m_video->session().state() == application::VideoSession::State::Ready)
+        if (QString::fromStdString(activeMedia().video->session().path()) == media.video &&
+            activeMedia().video->session().state() == application::VideoSession::State::Ready)
             media.position = targetVideoPosition();
     } else {
         media.video.clear();
         media.position = 0;
     }
-    media.audio = m_audio->hasAudio() ? QDir::toNativeSeparators(m_audio->path()) : QString();
+    media.audio = activeMedia().audio->hasAudio() ? QDir::toNativeSeparators(activeMedia().audio->path()) : QString();
     m_keepVideoOnEnter = keepMedia;
     discardRecovery(*old);
     m_files->close(*old);
@@ -366,12 +366,10 @@ void Application::showTabArrangement(int shellWindow)
     layoutOf(shellWindow).showTab(current->value, tabStart(*current));
 }
 
-void Application::trackTabMedia()
+void Application::trackTabMedia(WindowMedia &media)
 {
-    if (const int chars = m_settings->integer("program.tabTextMaxChars"); chars > 19)
-        m_tabTextMax = chars;
-    connect(m_video.get(), &ui::VideoController::changed, this, [this] {
-        const auto &video = m_video->session();
+    connect(media.video.get(), &ui::VideoController::changed, this, [this] {
+        const auto &video = activeMedia().video->session();
         const auto target = m_workspace.editingTarget();
         if (!target || video.state() != application::VideoSession::State::Ready)
             return;
@@ -390,28 +388,28 @@ void Application::trackTabMedia()
                     return;
                 const int ms = std::exchange(m_pendingTabSeek, std::nullopt)->second;
                 m_tabSeekQueued = false;
-                auto &session = m_video->session();
+                auto &session = activeMedia().video->session();
                 if (QString::fromStdString(session.path()) == path &&
                     session.state() == application::VideoSession::State::Ready)
                     session.seekTo(core::DocumentTime(std::int64_t{ms} * 1000));
             }, Qt::QueuedConnection);
         }
     });
-    m_audioConnections << connect(m_audio.get(), &ui::AudioController::opened, this, [this](const QString &path, bool) {
+    media.audioConnections << connect(media.audio.get(), &ui::AudioController::opened, this, [this](const QString &path, bool) {
         const auto target = m_workspace.editingTarget();
         if (!target)
             return;
         const QString native = QDir::toNativeSeparators(path);
-        const QString video = QString::fromStdString(m_video->session().path());
+        const QString video = QString::fromStdString(activeMedia().video->session().path());
         TabMedia &media = m_tabMedia[target->value];
         const bool fromVideo = isVideoAudio(native, video);
         media.audio = fromVideo ? QString() : native;
         if (!fromVideo)
             media.audioFromVideo = false;
     });
-    m_audioConnections << connect(m_audio.get(), &ui::AudioController::changed, this, [this] {
+    media.audioConnections << connect(media.audio.get(), &ui::AudioController::changed, this, [this] {
         const auto target = m_workspace.editingTarget();
-        if (target && !m_audio->hasAudio())
+        if (target && !activeMedia().audio->hasAudio())
             if (const auto it = m_tabMedia.find(target->value); it != m_tabMedia.end()) {
                 it->second.audio.clear();
                 it->second.audioFromVideo = false;
@@ -421,7 +419,7 @@ void Application::trackTabMedia()
 
 int Application::targetVideoPosition() const
 {
-    const auto &video = m_video->session();
+    const auto &video = activeMedia().video->session();
     if (video.state() != application::VideoSession::State::Ready)
         return 0;
     const auto frame = video.reportedFrame();
@@ -435,7 +433,7 @@ void Application::leaveTabMedia(std::optional<application::DocumentId> document)
     const auto it = m_tabMedia.find(document->value);
     if (it == m_tabMedia.end())
         return;
-    const auto &video = m_video->session();
+    const auto &video = activeMedia().video->session();
     if (!m_pendingTabSeek && !it->second.video.isEmpty() && QString::fromStdString(video.path()) == it->second.video &&
         video.state() == application::VideoSession::State::Ready)
         it->second.position = targetVideoPosition();
@@ -452,9 +450,9 @@ void Application::enterTabMedia(std::optional<application::DocumentId> previous,
     if (!known) {
         if (document && !previous)
             m_tabMedia[document->value].audio =
-                m_audio->hasAudio() ? QDir::toNativeSeparators(m_audio->path()) : QString();
-        else if (m_audio->hasAudio())
-            m_audio->closeAudio();
+                activeMedia().audio->hasAudio() ? QDir::toNativeSeparators(activeMedia().audio->path()) : QString();
+        else if (activeMedia().audio->hasAudio())
+            activeMedia().audio->closeAudio();
         if (!document || previous)
             m_pendingKeyframes.clear();
         if (document && previous)
@@ -464,7 +462,7 @@ void Application::enterTabMedia(std::optional<application::DocumentId> previous,
         return;
     }
     const TabMedia media = m_tabMedia[document->value];
-    const auto &shownVideo = m_video->session();
+    const auto &shownVideo = activeMedia().video->session();
     const bool keepVideo = std::exchange(m_keepVideoOnEnter, false) && !media.video.isEmpty() &&
                            QString::fromStdString(shownVideo.path()) == media.video &&
                            shownVideo.state() == application::VideoSession::State::Ready;
@@ -475,15 +473,15 @@ void Application::enterTabMedia(std::optional<application::DocumentId> previous,
         if (!media.audio.isEmpty())
             m_keepTabAudio = media.video;
         const QScopedValueRollback entering(m_enteringTabMedia, true);
-        m_video->openVideo(media.video);
+        activeMedia().video->openVideo(media.video);
     }
     showTabTimecodes(document);
-    const QString shown = m_audio->hasAudio() ? QDir::toNativeSeparators(m_audio->path()) : QString();
+    const QString shown = activeMedia().audio->hasAudio() ? QDir::toNativeSeparators(activeMedia().audio->path()) : QString();
     if (!media.audio.isEmpty()) {
         if (shown != media.audio)
-            m_audio->openAudio(media.audio);
+            activeMedia().audio->openAudio(media.audio);
     } else if (!shown.isEmpty() && !isVideoAudio(shown, media.video)) {
-        m_audio->closeAudio();
+        activeMedia().audio->closeAudio();
     }
     emit tabShown(media.scroll);
 }
@@ -614,8 +612,8 @@ application::Session Application::sessionOf(std::optional<int> shellWindow)
             tab.video = utf8(media.video);
             tab.position = media.position;
             if (id == target && !media.video.isEmpty() && !m_pendingTabSeek &&
-                m_video->session().state() == application::VideoSession::State::Ready &&
-                QString::fromStdString(m_video->session().path()) == media.video)
+                activeMedia().video->session().state() == application::VideoSession::State::Ready &&
+                QString::fromStdString(activeMedia().video->session().path()) == media.video)
                 tab.position = targetVideoPosition();
             if (const auto *u = unresolved("video"); u && media.video.isEmpty()) {
                 tab.video = utf8(u->path);
@@ -1071,12 +1069,12 @@ bool Application::retryRestore(int row)
                 if (!media.audio.isEmpty())
                     m_keepTabAudio = native;
                 const QScopedValueRollback entering(m_enteringTabMedia, true);
-                m_video->openVideo(native);
+                activeMedia().video->openVideo(native);
             }
         } else if (entry.kind == QLatin1String("audio")) {
             media.audio = native;
             if (isTarget())
-                m_audio->openAudio(native);
+                activeMedia().audio->openAudio(native);
         } else if (entry.kind == QLatin1String("keyframes")) {
             media.keyframes = native;
             if (isTarget())
