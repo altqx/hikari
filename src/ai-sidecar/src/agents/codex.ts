@@ -192,6 +192,10 @@ export class CodexSession {
         }
     }
 
+    takesToolCalls(): boolean {
+        return this.turn !== undefined && !this.turn.cancelled;
+    }
+
     cancel(): void {
         if (!this.turn)
             return;

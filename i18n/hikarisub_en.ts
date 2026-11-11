@@ -1345,6 +1345,20 @@
             <numerusform>%n more lines change.</numerusform>
         </translation>
     </message>
+    <message numerus="yes">
+        <source>Snapped to the keyframe %n frame(s) earlier.</source>
+        <translation>
+            <numerusform>Snapped to the keyframe %n frame earlier.</numerusform>
+            <numerusform>Snapped to the keyframe %n frames earlier.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Snapped to the keyframe %n frame(s) later.</source>
+        <translation>
+            <numerusform>Snapped to the keyframe %n frame later.</numerusform>
+            <numerusform>Snapped to the keyframe %n frames later.</numerusform>
+        </translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Tracking</name>

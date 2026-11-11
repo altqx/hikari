@@ -16,7 +16,8 @@ Popup {
     property var plan: ({})
     property bool confirming: false
     readonly property bool translating: ask.action === "translate"
-    readonly property bool typed: ask.action === "rewrite" || ask.action === "custom"
+    readonly property bool rewriting: ask.action === "rewrite"
+    readonly property bool typed: rewriting || ask.action === "custom"
     readonly property string instruction: instructionField.text.trim()
     readonly property string language: languageBox.editText.trim()
     readonly property var languages: ["English", "Japanese", "Korean", "Chinese (Simplified)", "Chinese (Traditional)",
@@ -106,7 +107,7 @@ Popup {
             Layout.margins: 10
             Layout.bottomMargin: 4
             spacing: 8
-            Icon { iconRole: box.translating ? "language" : box.ask.action === "rewrite" ? "edit" : "ai-assistant"; size: 16 }
+            Icon { iconRole: box.translating ? "language" : box.rewriting ? "edit" : "ai-assistant"; size: 16 }
             Label {
                 id: title
                 objectName: "inlineAiBoxTitle"

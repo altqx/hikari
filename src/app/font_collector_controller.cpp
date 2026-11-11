@@ -241,7 +241,8 @@ void FontCollectorController::open()
     if (m_stage == Working)
         return;
     m_action = std::clamp(m_settings.integer("fontCollector.action"), 0, 2);
-    m_directory = m_settings.text("fontCollector.directory");
+    const QString projectFolder = m_hooks.projectFontFolder ? m_hooks.projectFontFolder() : QString();
+    m_directory = projectFolder.isEmpty() ? m_settings.text("fontCollector.directory") : projectFolder;
     m_useSubsDirectory = m_settings.boolean("fontCollector.useSubsDirectory");
     m_fromMkv = m_settings.boolean("fontCollector.fromMkv");
     m_fromMkvEnabled = application::fontsFromMkvEnabled(currentVideo().toStdU16String());

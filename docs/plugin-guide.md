@@ -175,6 +175,7 @@ Every widget that sends events needs an `id`. Each event says which widget sent 
 - **`permissions`.** What the plugin asks for, each with a reason that the install question shows. See below.
 - **`summary`, `icon`, `screenshots`.** What the marketplace shows. A `README.md` in the package is its page.
 - **Translations.** `i18n/<locale>.json` files are read by `hikari.i18n.t`.
+- **`contributes.nodes`.** Lua nodes for node effects. Each names its `file`, its `inputs` and `outputs`, and the node joins the Add node list under your plugin's name. Its code runs in the node sandbox, not in your plugin's helper, so it can't call `hikari`. See [Nodes](plugins.md#nodes) and the [Zigzag](examples/zigzag/) example.
 
 ## Permissions and tiers
 
@@ -222,3 +223,4 @@ The marketplace lists plugins from [altqx/hikari-plugins](https://github.com/alt
 - **[Plugins](plugins.md).** Dialogs, events, files, the network, QML panels and the plugin manager.
 - **[Hikari API reference](api-reference.md).** Every operation, event and type, with its parameters and results. It is generated from HikariSub itself, so it matches the API version that HikariSub reports in `hikari.api_version`.
 - **[Line tools](examples/line-tools/).** A larger example with a chart, a list, a menu and a dialog.
+- **[Zigzag](examples/zigzag/).** A plugin that adds one node-effects node.

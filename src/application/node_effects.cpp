@@ -315,6 +315,8 @@ std::string upstreamSignature(const Compiled &c, int node, std::set<int> &seen)
         return {};
     const CNode &n = c.nodes[node];
     std::string out = n.graph->id + '|' + n.graph->type + '|' + n.graph->fields.dump() + '|';
+    if (n.kind == Kind::Lua)
+        out += n.text + '|';
     for (const CNode::Input &in : n.inputs)
         if (in.node != kUnwired)
             out += c.nodes[in.node].graph->id + '.' + std::to_string(in.port) + ';';
@@ -333,7 +335,8 @@ Compiled compile(const NodeGraph &flat)
     for (const GraphNode &g : c.flat.nodes) {
         CNode n;
         n.graph = &g;
-        n.kind = kKinds.at(g.type);
+        const PluginNode *plugin = pluginNode(g.type);
+        n.kind = plugin ? Kind::Lua : kKinds.at(g.type);
         n.ports = *nodePorts(g);
         for (std::size_t i = 0; i < n.ports.inputs.size(); ++i) {
             const PortSpec &p = n.ports.inputs[i];
@@ -429,7 +432,7 @@ Compiled compile(const NodeGraph &flat)
             n.number = nodeField(g, "order").asNumber();
             break;
         case Kind::Lua:
-            n.text = text("code");
+            n.text = plugin ? plugin->code : text("code");
             break;
         default:
             break;
@@ -1407,11 +1410,13 @@ NodeEffectRun runNodeEffect(const core::Document &document, std::u8string_view n
     if (!run.problems.empty())
         return finish();
     const Compiled compiled = compile(*flattenGraph(graph));
-    if (!compiled.lua.empty() && !options.trustLua) {
+    if (!options.trustLua) {
         for (const int lua : compiled.lua)
-            run.problems.push_back({compiled.nodes[lua].graph->id, std::nullopt,
-                                    "runs only once you trust this Document's Lua"});
-        return finish();
+            if (!pluginOfNodeType(compiled.nodes[lua].graph->type))
+                run.problems.push_back({compiled.nodes[lua].graph->id, std::nullopt,
+                                        "runs only once you trust this Document's Lua"});
+        if (!run.problems.empty())
+            return finish();
     }
     run.ran = true;
 

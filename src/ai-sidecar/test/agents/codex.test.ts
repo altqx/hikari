@@ -4,6 +4,7 @@ import { mkdtempSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
+import { whileTurnRuns } from "../../src/agent/session";
 import { CodexSession } from "../../src/agents/codex";
 import { McpServer } from "../../src/mcp/server";
 import type { SessionUpdate } from "../../src/protocol";
@@ -24,13 +25,14 @@ function harness(answers: Partial<Record<OperationName, unknown>> = {}) {
     const calls: { operation: string; params: unknown }[] = [];
     const updates: SessionUpdate[] = [];
     const spawned: string[] = [];
-    const mcp = new McpServer(() => ({
+    let session: CodexSession | undefined;
+    const mcp = new McpServer(() => whileTurnRuns({
         call: (operation, params) => {
             calls.push({ operation, params });
             const answer = answers[operation];
             return Promise.resolve((typeof answer === "function" ? answer() : answer) as never);
         },
-    }), { name: "hikarisub", title: "HikariSub", version: "test" });
+    }, () => session), { name: "hikarisub", title: "HikariSub", version: "test" });
     const channel = Bun.serve({ port: 0, hostname: "127.0.0.1", fetch: async (request) => {
         if (request.headers.get("authorization") !== `Bearer ${kToken}`)
             return new Response("Unauthorized", { status: 401 });
@@ -38,7 +40,7 @@ function harness(answers: Partial<Record<OperationName, unknown>> = {}) {
         return new Response(answer.reply ?? null, { status: answer.status });
     } });
     servers.push(channel);
-    const session = new CodexSession("t1", { sessionId: "t1", agent: "codex", model: { providerId: "", model: "" },
+    const codex = session = new CodexSession("t1", { sessionId: "t1", agent: "codex", model: { providerId: "", model: "" },
         system: "Be brief." }, {
         spawn: (id) => {
             spawned.push(id);
@@ -53,7 +55,7 @@ function harness(answers: Partial<Record<OperationName, unknown>> = {}) {
     const script = (s: unknown) => [{ type: "text" as const, text: typeof s === "string" ? s : JSON.stringify(s) }];
     const logged = (method: string) => readFileSync(log, "utf8").split("\n").filter((l) => l.startsWith(`${method} `))
         .map((l) => JSON.parse(l.slice(method.length + 1)) as unknown);
-    return { session, calls, updates, spawned, script, logged };
+    return { session: codex, calls, updates, spawned, script, logged };
 }
 
 describe("Codex through its app-server", () => {

@@ -4,6 +4,8 @@ import { appendFileSync } from "node:fs";
 import { createInterface } from "node:readline";
 
 const log = process.env.FAKE_CLAUDE_LOG;
+if (process.env.FAKE_CLAUDE_FAIL_AT_START)
+    process.stderr.write(process.env.FAKE_CLAUDE_FAIL_AT_START + "\n", () => process.exit(1));
 const session = "fake-session";
 const pending = new Map<string, (response: any) => void>();
 let hooks: Record<string, string[]> = {};
@@ -29,8 +31,12 @@ async function hook(event: string, input: Record<string, unknown>): Promise<any>
 
 let interrupted = false;
 
-async function turn(script: { calls?: { name: string; arguments?: unknown }[]; reply?: string }): Promise<void> {
+async function turn(script: { calls?: { name: string; arguments?: unknown }[]; reply?: string; fail?: string }): Promise<void> {
     interrupted = false;
+    if (script.fail) {
+        process.stderr.write(script.fail + "\n", () => process.exit(1));
+        return;
+    }
     send({ type: "system", subtype: "init", session_id: session, tools: [], mcp_servers: [] });
     for (const [i, call] of (script.calls ?? []).entries()) {
         if (interrupted)

@@ -756,6 +756,36 @@ ApplicationWindow {
         panel.refresh()
     }
 
+    function runTimingHelper(symbol) {
+        const app = root.app
+        const helpers = {
+            GLOBAL_SNAP_START_TO_PREVIOUS_KEYFRAME: () => app.snapToAdjacentKeyframe(false, false),
+            GLOBAL_SNAP_START_TO_NEXT_KEYFRAME: () => app.snapToAdjacentKeyframe(false, true),
+            GLOBAL_SNAP_END_TO_PREVIOUS_KEYFRAME: () => app.snapToAdjacentKeyframe(true, false),
+            GLOBAL_SNAP_END_TO_NEXT_KEYFRAME: () => app.snapToAdjacentKeyframe(true, true),
+            GLOBAL_ADD_LEAD_IN: () => app.changeLead(false, true),
+            GLOBAL_REMOVE_LEAD_IN: () => app.changeLead(false, false),
+            GLOBAL_ADD_LEAD_OUT: () => app.changeLead(true, true),
+            GLOBAL_REMOVE_LEAD_OUT: () => app.changeLead(true, false),
+            GLOBAL_START_FRAME_EARLIER: () => app.nudgeEdge(false, -1),
+            GLOBAL_START_FRAME_LATER: () => app.nudgeEdge(false, 1),
+            GLOBAL_END_FRAME_EARLIER: () => app.nudgeEdge(true, -1),
+            GLOBAL_END_FRAME_LATER: () => app.nudgeEdge(true, 1),
+            GLOBAL_EXTEND_PREVIOUS_TO_START: () => app.extendNeighbour(false),
+            GLOBAL_EXTEND_NEXT_TO_END: () => app.extendNeighbour(true),
+            GLOBAL_TIMING_ASSISTANT: () => {
+                postprocessorTool.assistant = true
+                root.showPanel(postprocessorDock)
+                postprocessorTool.focusAssistant()
+                return true
+            },
+            GLOBAL_TIMING_ASSISTANT_ACCEPT: () => app.acceptTimingSuggestion(root.shellWindow, -1, -1),
+        }
+        if (!helpers[symbol]())
+            root.notices.post("info", qsTr("No line changed"), "")
+        postprocessorTool.schedule()
+    }
+
     function focusedDock() {
         const w = root.workspaceLayout.focusWindow
         const i = panels.findIndex(p => p.activeFocus && p.Window.window === w)
@@ -2137,6 +2167,175 @@ ApplicationWindow {
                 objectName: "showTimingPostprocessor"
                 text: qsTr("Timing &postprocessor…")
                 onTriggered: if (!root.hotkeyGesture("GLOBAL_SHOW_TIMING_POSTPROCESSOR")) root.showPanel(postprocessorDock)
+            }
+            ShellMenu {
+                objectName: "timingHelpersMenu"
+                title: qsTr("Timing helpers")
+                iconRole: "timing-assistant"
+                ShellMenuItem {
+                    command: "GLOBAL_SNAP_START_TO_PREVIOUS_KEYFRAME"
+                    help: qsTr("Moves the start of each selected line to the keyframe before it")
+                    id: snapStartToPreviousKeyframeItem
+                    iconRole: "snap-start-to-previous-keyframe"
+                    objectName: "snapStartToPreviousKeyframeItem"
+                    text: qsTr("Start to previous keyframe")
+                    enabled: root.video.hasVideo && root.shell.hasEditingTarget
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_SNAP_START_TO_PREVIOUS_KEYFRAME")) root.runTimingHelper("GLOBAL_SNAP_START_TO_PREVIOUS_KEYFRAME")
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_SNAP_START_TO_NEXT_KEYFRAME"
+                    help: qsTr("Moves the start of each selected line to the keyframe after it, staying before its end")
+                    id: snapStartToNextKeyframeItem
+                    iconRole: "snap-start-to-next-keyframe"
+                    objectName: "snapStartToNextKeyframeItem"
+                    text: qsTr("Start to next keyframe")
+                    enabled: root.video.hasVideo && root.shell.hasEditingTarget
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_SNAP_START_TO_NEXT_KEYFRAME")) root.runTimingHelper("GLOBAL_SNAP_START_TO_NEXT_KEYFRAME")
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_SNAP_END_TO_PREVIOUS_KEYFRAME"
+                    help: qsTr("Moves the end of each selected line to the keyframe before it, staying after its start")
+                    id: snapEndToPreviousKeyframeItem
+                    iconRole: "snap-end-to-previous-keyframe"
+                    objectName: "snapEndToPreviousKeyframeItem"
+                    text: qsTr("End to previous keyframe")
+                    enabled: root.video.hasVideo && root.shell.hasEditingTarget
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_SNAP_END_TO_PREVIOUS_KEYFRAME")) root.runTimingHelper("GLOBAL_SNAP_END_TO_PREVIOUS_KEYFRAME")
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_SNAP_END_TO_NEXT_KEYFRAME"
+                    help: qsTr("Moves the end of each selected line to the keyframe after it")
+                    id: snapEndToNextKeyframeItem
+                    iconRole: "snap-end-to-next-keyframe"
+                    objectName: "snapEndToNextKeyframeItem"
+                    text: qsTr("End to next keyframe")
+                    enabled: root.video.hasVideo && root.shell.hasEditingTarget
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_SNAP_END_TO_NEXT_KEYFRAME")) root.runTimingHelper("GLOBAL_SNAP_END_TO_NEXT_KEYFRAME")
+                }
+                MenuSeparator {}
+                ShellMenuItem {
+                    command: "GLOBAL_ADD_LEAD_IN"
+                    help: qsTr("Starts each selected line earlier by the lead-in, no earlier than the line before it ends")
+                    id: addLeadInItem
+                    iconRole: "lead-in"
+                    objectName: "addLeadInItem"
+                    text: qsTr("Add lead-in")
+                    enabled: root.video.hasVideo && root.shell.hasEditingTarget
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_ADD_LEAD_IN")) root.runTimingHelper("GLOBAL_ADD_LEAD_IN")
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_REMOVE_LEAD_IN"
+                    help: qsTr("Starts each selected line later by the lead-in, keeping at least one frame")
+                    id: removeLeadInItem
+                    iconRole: "lead-in-remove"
+                    objectName: "removeLeadInItem"
+                    text: qsTr("Remove lead-in")
+                    enabled: root.video.hasVideo && root.shell.hasEditingTarget
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_REMOVE_LEAD_IN")) root.runTimingHelper("GLOBAL_REMOVE_LEAD_IN")
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_ADD_LEAD_OUT"
+                    help: qsTr("Ends each selected line later by the lead-out, no later than the next line starts")
+                    id: addLeadOutItem
+                    iconRole: "lead-out"
+                    objectName: "addLeadOutItem"
+                    text: qsTr("Add lead-out")
+                    enabled: root.video.hasVideo && root.shell.hasEditingTarget
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_ADD_LEAD_OUT")) root.runTimingHelper("GLOBAL_ADD_LEAD_OUT")
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_REMOVE_LEAD_OUT"
+                    help: qsTr("Ends each selected line earlier by the lead-out, keeping at least one frame")
+                    id: removeLeadOutItem
+                    iconRole: "lead-out-remove"
+                    objectName: "removeLeadOutItem"
+                    text: qsTr("Remove lead-out")
+                    enabled: root.video.hasVideo && root.shell.hasEditingTarget
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_REMOVE_LEAD_OUT")) root.runTimingHelper("GLOBAL_REMOVE_LEAD_OUT")
+                }
+                MenuSeparator {}
+                ShellMenuItem {
+                    command: "GLOBAL_START_FRAME_EARLIER"
+                    help: qsTr("Moves the start of each selected line one frame earlier")
+                    id: startFrameEarlierItem
+                    iconRole: "time-offset-start"
+                    objectName: "startFrameEarlierItem"
+                    text: qsTr("Start one frame earlier")
+                    enabled: root.video.hasVideo && root.shell.hasEditingTarget
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_START_FRAME_EARLIER")) root.runTimingHelper("GLOBAL_START_FRAME_EARLIER")
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_START_FRAME_LATER"
+                    help: qsTr("Moves the start of each selected line one frame later")
+                    id: startFrameLaterItem
+                    iconRole: "time-offset-start"
+                    objectName: "startFrameLaterItem"
+                    text: qsTr("Start one frame later")
+                    enabled: root.video.hasVideo && root.shell.hasEditingTarget
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_START_FRAME_LATER")) root.runTimingHelper("GLOBAL_START_FRAME_LATER")
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_END_FRAME_EARLIER"
+                    help: qsTr("Moves the end of each selected line one frame earlier")
+                    id: endFrameEarlierItem
+                    iconRole: "time-offset-end"
+                    objectName: "endFrameEarlierItem"
+                    text: qsTr("End one frame earlier")
+                    enabled: root.video.hasVideo && root.shell.hasEditingTarget
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_END_FRAME_EARLIER")) root.runTimingHelper("GLOBAL_END_FRAME_EARLIER")
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_END_FRAME_LATER"
+                    help: qsTr("Moves the end of each selected line one frame later")
+                    id: endFrameLaterItem
+                    iconRole: "time-offset-end"
+                    objectName: "endFrameLaterItem"
+                    text: qsTr("End one frame later")
+                    enabled: root.video.hasVideo && root.shell.hasEditingTarget
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_END_FRAME_LATER")) root.runTimingHelper("GLOBAL_END_FRAME_LATER")
+                }
+                MenuSeparator {}
+                ShellMenuItem {
+                    command: "GLOBAL_EXTEND_PREVIOUS_TO_START"
+                    help: qsTr("Ends the line before the active line where the active line starts")
+                    id: extendPreviousToStartItem
+                    iconRole: "extend-previous-to-start"
+                    objectName: "extendPreviousToStartItem"
+                    text: qsTr("Extend previous line to this start")
+                    enabled: root.shell.hasEditingTarget
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_EXTEND_PREVIOUS_TO_START")) root.runTimingHelper("GLOBAL_EXTEND_PREVIOUS_TO_START")
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_EXTEND_NEXT_TO_END"
+                    help: qsTr("Starts the line after the active line where the active line ends")
+                    id: extendNextToEndItem
+                    iconRole: "extend-next-to-end"
+                    objectName: "extendNextToEndItem"
+                    text: qsTr("Extend next line to this end")
+                    enabled: root.shell.hasEditingTarget
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_EXTEND_NEXT_TO_END")) root.runTimingHelper("GLOBAL_EXTEND_NEXT_TO_END")
+                }
+                MenuSeparator {}
+                ShellMenuItem {
+                    command: "GLOBAL_TIMING_ASSISTANT"
+                    help: qsTr("Steps through the lines one at a time with a suggested start and end")
+                    id: timingAssistantItem
+                    iconRole: "timing-assistant"
+                    objectName: "timingAssistantItem"
+                    text: qsTr("Timing assistant")
+                    enabled: root.video.hasVideo && root.shell.hasEditingTarget
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_TIMING_ASSISTANT")) root.runTimingHelper("GLOBAL_TIMING_ASSISTANT")
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_TIMING_ASSISTANT_ACCEPT"
+                    help: qsTr("Applies the timing assistant’s suggestion to the active line and goes to the next one")
+                    id: acceptTimingSuggestionItem
+                    iconRole: "commit"
+                    objectName: "acceptTimingSuggestionItem"
+                    text: qsTr("Accept assistant suggestion")
+                    enabled: root.video.hasVideo && root.shell.hasEditingTarget
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_TIMING_ASSISTANT_ACCEPT")) root.runTimingHelper("GLOBAL_TIMING_ASSISTANT_ACCEPT")
+                }
             }
             ShellMenuItem {
                 command: "GLOBAL_BLUR_AND_GLOW_LAYERS"
@@ -3655,7 +3854,6 @@ ApplicationWindow {
                 id: fieldAiMenu
                 objectName: field.objectName + "AiMenu"
                 controller: root.inlineAi
-                ready: root.agent.ready
                 editor: true
                 shown: root.inlineAi.on && field.role === 0 && root.editor.hasLine
                 onChosen: ask => inlineAiBox.begin(ask, true, field)
@@ -5902,7 +6100,6 @@ ApplicationWindow {
                             id: editorAiMenu
                             objectName: "editorAiMenu"
                             controller: root.inlineAi
-                            ready: root.agent.ready
                             editor: true
                             onChosen: ask => inlineAiBox.begin(ask, true, lineText)
                             onRepeatRequested: root.repeatInlineAi(true, lineText)
@@ -6082,7 +6279,6 @@ ApplicationWindow {
                         id: gridAiHotkeyMenu
                         objectName: "gridAiHotkeyMenu"
                         controller: root.inlineAi
-                        ready: root.agent.ready
                         lineCount: Math.max(1, root.shell.selectedCount)
                         onChosen: ask => inlineAiBox.begin(ask, false, null)
                         onRepeatRequested: root.repeatInlineAi(false, null)
@@ -6272,7 +6468,6 @@ ApplicationWindow {
                         InlineAiMenu {
                             objectName: "gridAiMenu"
                             controller: root.inlineAi
-                            ready: root.agent.ready
                             lineCount: gridMenu.lineCount
                             onChosen: ask => inlineAiBox.begin(ask, false, null)
                             onRepeatRequested: root.repeatInlineAi(false, null)
@@ -8932,7 +9127,7 @@ ApplicationWindow {
     Action {
         id: repeatAiActionAction
         text: qsTranslate("HikariSub.Hotkeys", "Repeat last AI action")
-        enabled: root.inlineAi.on && root.agent.ready && !!root.inlineAi.last.action
+        enabled: root.inlineAi.on && !!root.inlineAi.ready.any && !!root.inlineAi.last.action
         onTriggered: {
             if (root.hotkeyGesture("GLOBAL_REPEAT_AI_ACTION"))
                 return
@@ -9033,6 +9228,22 @@ ApplicationWindow {
         GLOBAL_OPEN_FONT_COLLECTOR: fontCollectorItem,
         GLOBAL_SHOW_SHIFT_TIMES: showShiftTimesItem, GLOBAL_SHOW_TIMING_POSTPROCESSOR: showPostprocessorItem,
         GLOBAL_SHOW_QC_NOTES: showQcNotesItem,
+        GLOBAL_SNAP_START_TO_PREVIOUS_KEYFRAME: snapStartToPreviousKeyframeItem,
+        GLOBAL_SNAP_START_TO_NEXT_KEYFRAME: snapStartToNextKeyframeItem,
+        GLOBAL_SNAP_END_TO_PREVIOUS_KEYFRAME: snapEndToPreviousKeyframeItem,
+        GLOBAL_SNAP_END_TO_NEXT_KEYFRAME: snapEndToNextKeyframeItem,
+        GLOBAL_ADD_LEAD_IN: addLeadInItem,
+        GLOBAL_REMOVE_LEAD_IN: removeLeadInItem,
+        GLOBAL_ADD_LEAD_OUT: addLeadOutItem,
+        GLOBAL_REMOVE_LEAD_OUT: removeLeadOutItem,
+        GLOBAL_START_FRAME_EARLIER: startFrameEarlierItem,
+        GLOBAL_START_FRAME_LATER: startFrameLaterItem,
+        GLOBAL_END_FRAME_EARLIER: endFrameEarlierItem,
+        GLOBAL_END_FRAME_LATER: endFrameLaterItem,
+        GLOBAL_EXTEND_PREVIOUS_TO_START: extendPreviousToStartItem,
+        GLOBAL_EXTEND_NEXT_TO_END: extendNextToEndItem,
+        GLOBAL_TIMING_ASSISTANT: timingAssistantItem,
+        GLOBAL_TIMING_ASSISTANT_ACCEPT: acceptTimingSuggestionItem,
         GLOBAL_LOAD_EXTERNAL_SESSION: loadSessionFileItem, GLOBAL_SAVE_EXTERNAL_SESSION: saveSessionFileItem,
         GLOBAL_LOAD_LAST_SESSION: loadLastSessionItem,
         GLOBAL_CHECK_KARAOKE: checkKaraokeItem,

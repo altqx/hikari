@@ -5,13 +5,15 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import { ClaudeSession } from "../../src/agents/claude";
+import { AgentRelay } from "../../src/agents/relay";
 import { McpServer } from "../../src/mcp/server";
-import type { SessionUpdate } from "../../src/protocol";
+import { ErrorCode, Method, type SessionUpdate } from "../../src/protocol";
+import { Peer } from "../../src/rpc";
 import type { OperationName } from "../../src/tools/api.gen";
 
 const kFake = join(import.meta.dir, "..", "fixtures", "fake-claude.ts");
 
-function harness(answers: Partial<Record<OperationName, unknown>> = {}) {
+function harness(answers: Partial<Record<OperationName, unknown>> = {}, env: Record<string, string> = {}) {
     const log = join(mkdtempSync(join(tmpdir(), "fake-claude-")), "log");
     const calls: { operation: string; params: unknown }[] = [];
     const updates: SessionUpdate[] = [];
@@ -25,7 +27,7 @@ function harness(answers: Partial<Record<OperationName, unknown>> = {}) {
     const session = new ClaudeSession("t1", { sessionId: "t1", agent: "claude", model: { providerId: "", model: "" } }, {
         sdk: () => import("@anthropic-ai/claude-agent-sdk"),
         spawn: (o) => spawn(process.execPath, [kFake, ...o.args],
-            { env: { ...o.env, FAKE_CLAUDE_LOG: log }, stdio: ["pipe", "pipe", "pipe"] }) as never,
+            { env: { ...o.env, FAKE_CLAUDE_LOG: log, ...env }, stdio: ["pipe", "pipe", "pipe"] }) as never,
         mcp,
         kindOf: (tool) => (tool === "document_apply" ? "edit" : "read"),
         send: (update) => updates.push(update),
@@ -91,5 +93,50 @@ describe("Claude through the Agent SDK", () => {
         h.session.close();
         expect(result.stopReason).toBe("cancelled");
         expect(h.calls.map((c) => c.operation)).toEqual(["lines.find"]);
+    }, 30_000);
+
+    test("when Claude can't start, the turn fails at once with what it wrote on stderr", async () => {
+        const h = harness({}, { FAKE_CLAUDE_FAIL_AT_START: "mise ERROR Permission denied (os error 13)" });
+        await expect(h.session.prompt({ sessionId: "t1", prompt: h.script({ reply: "never" }) }))
+            .rejects.toThrow("Claude said: mise ERROR Permission denied (os error 13)");
+        h.session.close();
+    }, 10_000);
+
+    test("when Qt's agent exits at start, the relayed turn fails at once with what it wrote on stderr", async () => {
+        let peer: Peer;
+        const reply = (message: unknown) => peer.feed(new TextEncoder().encode(JSON.stringify(message) + "\n"));
+        peer = new Peer((line) => {
+            const message = JSON.parse(line) as { id?: number; method?: string; params?: { process: number } };
+            queueMicrotask(() => {
+                if (message.method === Method.agentStart) {
+                    reply({ jsonrpc: "2.0", id: message.id, result: {} });
+                    const process = message.params!.process;
+                    reply({ jsonrpc: "2.0", method: Method.agentOutput, params: { process, stream: "stderr",
+                        data: Buffer.from("mise ERROR Permission denied (os error 13)\n").toString("base64") } });
+                    reply({ jsonrpc: "2.0", method: Method.agentExit, params: { process, code: 1 } });
+                } else if (message.id !== undefined && message.method) {
+                    reply({ jsonrpc: "2.0", id: message.id, error: { code: ErrorCode.invalidParams, message: "that process isn't running" } });
+                }
+            });
+        }, () => {});
+        const relay = new AgentRelay(peer);
+        const session = new ClaudeSession("t1", { sessionId: "t1", agent: "claude", model: { providerId: "", model: "" } }, {
+            sdk: () => import("@anthropic-ai/claude-agent-sdk"),
+            spawn: (o) => relay.start("claude", { args: o.args, env: o.env, signal: o.signal }),
+            mcp: new McpServer(() => ({ call: () => Promise.reject(new Error("no")) }), { name: "hikarisub", title: "HikariSub", version: "test" }),
+            kindOf: () => "read",
+            send: () => {},
+        });
+        await expect(session.prompt({ sessionId: "t1", prompt: [{ type: "text", text: "hi" }] }))
+            .rejects.toThrow("Claude said: mise ERROR Permission denied (os error 13)");
+        session.close();
+    }, 10_000);
+
+    test("when Claude fails, the turn's error ends with what it wrote on stderr", async () => {
+        const h = harness();
+        const failed = h.session.prompt({ sessionId: "t1", prompt: h.script({ fail: "Invalid API key · Please run /login" }) });
+        await expect(failed).rejects.toThrow("Claude said: Invalid API key · Please run /login");
+        expect(h.session.stderrTail).toContain("Please run /login");
+        h.session.close();
     }, 30_000);
 });
