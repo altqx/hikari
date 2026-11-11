@@ -7366,6 +7366,10 @@ Failed to copy %2 fonts.</source>
         <translation>ประมาณค่า \move นอกช่วงให้เต็มบรรทัด</translation>
     </message>
     <message>
+        <source>Remove tags…</source>
+        <translation>ลบแท็ก…</translation>
+    </message>
+    <message>
         <source>Move tab to new window</source>
         <translation>ย้ายแท็บไปหน้าต่างใหม่</translation>
     </message>
@@ -18014,6 +18018,245 @@ Styles deleted:
     <message>
         <source>%1, %2, %3 of %4</source>
         <translation>%1, %2, %3 จาก %4</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Tags</name>
+    <message numerus="yes">
+        <source>Changed %n line(s)</source>
+        <translation>
+            <numerusform>เปลี่ยน %n บรรทัด</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>No line changes.</source>
+        <translation>ไม่มีบรรทัดที่เปลี่ยน</translation>
+    </message>
+    <message>
+        <source>Remove tags…</source>
+        <translation>ลบแท็ก…</translation>
+    </message>
+    <message>
+        <source>Remove tags</source>
+        <translation>ลบแท็ก</translation>
+    </message>
+    <message>
+        <source>Colour</source>
+        <translation>สี</translation>
+    </message>
+    <message>
+        <source>Alpha</source>
+        <translation>อัลฟา</translation>
+    </message>
+    <message>
+        <source>Border</source>
+        <translation>ขอบ</translation>
+    </message>
+    <message>
+        <source>Shadow</source>
+        <translation>เงา</translation>
+    </message>
+    <message>
+        <source>Blur</source>
+        <translation>เบลอ</translation>
+    </message>
+    <message>
+        <source>Font</source>
+        <translation>ฟอนต์</translation>
+    </message>
+    <message>
+        <source>Scale</source>
+        <translation>สเกล</translation>
+    </message>
+    <message>
+        <source>Spacing</source>
+        <translation>ระยะห่าง</translation>
+    </message>
+    <message>
+        <source>Rotation</source>
+        <translation>การหมุน</translation>
+    </message>
+    <message>
+        <source>Shear</source>
+        <translation>การเฉือน</translation>
+    </message>
+    <message>
+        <source>Bold, italic, underline, strikeout</source>
+        <translation>ตัวหนา ตัวเอียง ขีดเส้นใต้ ขีดฆ่า</translation>
+    </message>
+    <message>
+        <source>Position</source>
+        <translation>ตำแหน่ง</translation>
+    </message>
+    <message>
+        <source>Origin</source>
+        <translation>จุดหมุน</translation>
+    </message>
+    <message>
+        <source>Alignment</source>
+        <translation>การจัดตำแหน่ง</translation>
+    </message>
+    <message>
+        <source>Clip</source>
+        <translation>คลิป</translation>
+    </message>
+    <message>
+        <source>Fade</source>
+        <translation>เฟด</translation>
+    </message>
+    <message>
+        <source>Transforms</source>
+        <translation>การแปลง</translation>
+    </message>
+    <message>
+        <source>Karaoke</source>
+        <translation>คาราโอเกะ</translation>
+    </message>
+    <message>
+        <source>Reset</source>
+        <translation>รีเซ็ต</translation>
+    </message>
+    <message>
+        <source>Wrap style</source>
+        <translation>รูปแบบการตัดบรรทัด</translation>
+    </message>
+    <message>
+        <source>Drawing</source>
+        <translation>ภาพวาด</translation>
+    </message>
+    <message>
+        <source>Other tags</source>
+        <translation>แท็กอื่น</translation>
+    </message>
+    <message>
+        <source>Any tag not listed</source>
+        <translation>แท็กใดก็ได้ที่ไม่อยู่ในรายการ</translation>
+    </message>
+    <message>
+        <source>Remove comments</source>
+        <translation>ลบความคิดเห็น</translation>
+    </message>
+    <message>
+        <source>Blocks with no tag, such as {note}</source>
+        <translation>บล็อกที่ไม่มีแท็ก เช่น {note}</translation>
+    </message>
+    <message>
+        <source>Merge adjacent tag blocks</source>
+        <translation>รวมบล็อกแท็กที่ติดกัน</translation>
+    </message>
+    <message>
+        <source>%1 becomes %2</source>
+        <translation>%1 กลายเป็น %2</translation>
+    </message>
+    <message>
+        <source>Drop overridden tags</source>
+        <translation>ลบแท็กที่ถูกแทนที่</translation>
+    </message>
+    <message>
+        <source>A tag a later one in its block replaces, and repeats of %1, %2, %3 and %4</source>
+        <translation>แท็กที่แท็กถัดไปในบล็อกเดียวกันแทนที่ และ %1, %2, %3 และ %4 ที่ซ้ำ</translation>
+    </message>
+    <message>
+        <source>Clean Tags rules</source>
+        <translation>กฎของ Clean Tags</translation>
+    </message>
+    <message>
+        <source>What the bundled Clean Tags script does: merges blocks, moves line-wide tags to the start, drops empty blocks</source>
+        <translation>สิ่งที่สคริปต์ Clean Tags ที่มาพร้อมโปรแกรมทำ: รวมบล็อก ย้ายแท็กที่ใช้กับทั้งบรรทัดไปไว้ต้นบรรทัด และลบบล็อกว่าง</translation>
+    </message>
+    <message>
+        <source>Delete lines left empty</source>
+        <translation>ลบบรรทัดที่ว่างเปล่า</translation>
+    </message>
+    <message>
+        <source>Lines</source>
+        <translation>บรรทัด</translation>
+    </message>
+    <message>
+        <source>Selected lines</source>
+        <translation>บรรทัดที่เลือก</translation>
+    </message>
+    <message>
+        <source>Whole file, without comment lines</source>
+        <translation>ทั้งไฟล์ ยกเว้นบรรทัดความคิดเห็น</translation>
+    </message>
+    <message>
+        <source>Blocks</source>
+        <translation>บล็อก</translation>
+    </message>
+    <message>
+        <source>All blocks</source>
+        <translation>ทุกบล็อก</translation>
+    </message>
+    <message>
+        <source>Start block</source>
+        <translation>บล็อกแรก</translation>
+    </message>
+    <message>
+        <source>Inline blocks</source>
+        <translation>บล็อกกลางข้อความ</translation>
+    </message>
+    <message>
+        <source>Tags</source>
+        <translation>แท็ก</translation>
+    </message>
+    <message>
+        <source>Clear</source>
+        <translation>ล้าง</translation>
+    </message>
+    <message>
+        <source>Select all</source>
+        <translation>เลือกทั้งหมด</translation>
+    </message>
+    <message>
+        <source>Clean up</source>
+        <translation>จัดระเบียบ</translation>
+    </message>
+    <message>
+        <source>Preview</source>
+        <translation>ตัวอย่าง</translation>
+    </message>
+    <message>
+        <source>Line %1: %2</source>
+        <translation>บรรทัด %1: %2</translation>
+    </message>
+    <message>
+        <source>deleted</source>
+        <translation>ถูกลบ</translation>
+    </message>
+    <message>
+        <source>Line deleted</source>
+        <translation>ลบบรรทัดแล้ว</translation>
+    </message>
+    <message>
+        <source>No line changes</source>
+        <translation>ไม่มีบรรทัดที่เปลี่ยน</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) change</source>
+        <translation>
+            <numerusform>เปลี่ยน %n บรรทัด</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n deleted</source>
+        <translation>
+            <numerusform>ลบ %n บรรทัด</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>first %n shown</source>
+        <translation>
+            <numerusform>แสดง %n บรรทัดแรก</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>ลบ</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>ยกเลิก</translation>
     </message>
 </context>
 <context>
