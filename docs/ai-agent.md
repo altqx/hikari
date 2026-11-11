@@ -53,7 +53,7 @@ Each thread has a mode. Qt decides every write a session sends, so a sidecar tha
 | --- | --- |
 | Manual | `document.apply` becomes a [proposal](#proposals) and writes nothing until the user applies it. Other writes ask: Allow once, Allow in this thread, or Deny. |
 | Auto | The judge decides. When it doesn't approve, the user is asked with the judge's reason. |
-| Full access | Everything runs, except the always-ask list. |
+| Full access | Everything runs, except the always-ask list and [AI-written Lua](#ai-written-lua). |
 
 - **Private settings.** `settings_list` and `settings_get` never show a thread or an MCP agent the `privacy.*` settings (the usage data ID among them) or the `recent.*` lists (recent-file paths and times). Folder settings stay readable. Plugins still read them.
 - Reads never ask. Neither do `selection.set`, `panels.open`, `panels.close` and `panels.focus`, which change no content and no setting.
@@ -87,6 +87,16 @@ In Manual mode each `document.apply` waits as a proposal card in the thread's ti
 - **Focus.** A new proposal takes the keyboard focus on Apply only when the focus is in the Agent panel but not in the message box, so Enter in the message box never applies one. Enter presses the focused button; Esc closes the reply field.
 - MCP agents, plugins and AI features are unchanged: their edits go straight into the review.
 
+## AI-written Lua
+
+AI12 ([#440](https://github.com/altqx/hikari/issues/440), ADR 0024). The sidecar only writes the script. `automation_run {name, script, macro?}` (`automation.run`) carries it to Qt, which asks the user on every run, in every mode:
+
+- **Never judged, never allowed for the thread.** `decide` answers `Script` for `automation.run` before anything else. The card offers Run and Don't run only, and a rerun of the same script asks again.
+- **Only an approved call runs.** Run sets `scriptApproved` on that one call's caller. `automation.run` refuses any other caller with `not_granted`, so a plugin, an MCP agent or a thread can't run Lua without the card. MCP agents can't reach it anyway: through MCP only `document.apply` writes.
+- **An ordinary macro.** Qt saves the script to `<user folder>/ai/scripts/<name>.lua`, replacing one of that name, and loads it in the Lua helper ([ADR 0006](adr/0006-isolated-lua-automation-host.md)). It runs one macro, the one named or the first, on the active tab's selection. That is one undo step, "Automation: <macro>" like any macro, and the Automation progress card offers Force stop. The script is unloaded afterwards and is never added to Autoload or to the subtitle's Script Info.
+- **The answer** is `{file, outcome, message, log}`, with the outcome Automation reports: `applied`, `refused`, `failed`, `cancelled`, `declined`, `stopped`, `lost` or `invalid` (no such macro). Another macro running answers `busy`; no open document, `refused`.
+- AI-written Lua never runs in the sidecar.
+
 ## Threads
 
 - **Saved** as `<user folder>/ai/threads/<id>.json`: the title, mode, model, the history, the panel's items, the cost, the cap, what was allowed and the globe (`webSearch`). Images don't stay: a saved thread names where one was.
@@ -103,6 +113,7 @@ In Manual mode each `document.apply` waits as a proposal card in the thread's ti
 | `change` | `document`, `title`, `name`, `judged` |
 | `plan` | `entries` |
 | `ask` | `ask`, `type` (`ask`, `judge`, `always`), `tool`, `operation`, `params`, `reason`, `status` (`open`, `allowed`, `allowedInThread`, `denied`, `withdrawn`) |
+| `script` | `ask`, `name`, `macro`, `script`, `lines`, `title`, `needs`, `status` (`open`, `running`, `ran`, `failed`, `declined`, `withdrawn`), `outcome?`, `result?`, `file?` |
 | `notice` | `notice` (`lost`, `cap`, `dailyCap`, `failed`, `stopped`, `maxTokens`, `refusal`, `maxRequests`, `noModel`, `noSidecar`, `searchUsedUp`, `searchKey`), `detail?`; the search ones have `service` and `status` and show once per turn |
 
 - **Queue and steer.** A message sent while a turn runs waits; it runs when the turn ends, or joins it with Steer now.

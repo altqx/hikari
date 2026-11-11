@@ -20,6 +20,7 @@ void addWriteOperations(Registry &registry);
 void addMediaOperations(Registry &registry);
 void addFileOperations(Registry &registry);
 void addSkillOperations(Registry &registry);
+void addAutomationOperations(Registry &registry);
 void addNodeOperations(Registry &registry);
 void addEvents(Registry &registry);
 

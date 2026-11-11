@@ -364,6 +364,66 @@
         <translation>Już niepotrzebne</translation>
     </message>
     <message>
+        <source>Run this Lua script?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 · macro “%2”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>on %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 isn’t installed, so the script will stop when it loads.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Runs as an Automation macro: one undo step, and Force stop while it runs. Saved in the AI scripts folder, never added to Autoload.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Run</source>
+        <translation type="unfinished">Uruchom</translation>
+    </message>
+    <message>
+        <source>Don’t run</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Don’t run and tell the agent…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Running %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ran %1 · one undo step</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 didn’t finish: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Didn’t run %1 · “%2”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Didn’t run %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Force stop</source>
+        <translation type="unfinished">Wymuś zatrzymanie</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation type="unfinished">Otwórz</translation>
+    </message>
+    <message>
         <source>This thread reached its %1 cap</source>
         <translation>Ten wątek osiągnął limit %1</translation>
     </message>
