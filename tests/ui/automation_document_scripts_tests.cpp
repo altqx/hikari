@@ -269,6 +269,35 @@ private slots:
         QCOMPARE(notices.size(), 2);
     }
 
+    void aDocumentTooLargeForMacrosSaysSoAndChangesNothing()
+    {
+        const QString script = dir.filePath(QStringLiteral("big.lua"));
+        writeFile(script, prefixScript("Big"));
+        const QString path = dir.filePath(QStringLiteral("big.ass"));
+        QByteArray bytes = assWith("|" + QDir::toNativeSeparators(script).toUtf8());
+        const QByteArray body(1000, 'x');
+        for (int i = 0; i < 70'000; ++i)
+            bytes += "Dialogue: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,," + body + "\n";
+        writeFile(path, bytes);
+        QVERIFY(app->openFile(path));
+        QSignalSpy notices(&app->automation(), &app::AutomationShell::notice);
+        const auto steps = session().historySize();
+        app->automation().runLastLoadedScript();
+        QTRY_COMPARE_WITH_TIMEOUT(notices.size(), 1, 60'000);
+        QCOMPARE(notices.first().at(0).toString(), QStringLiteral("error"));
+        QCOMPARE(notices.first().at(1).toString(), QStringLiteral("Run the last loaded script"));
+        const QString text = notices.first().at(2).toString();
+        QVERIFY2(text.startsWith(QStringLiteral("“Prefix Big” can’t run on this document: it needs ")), qPrintable(text));
+        QVERIFY2(text.endsWith(QStringLiteral(" MB, and a macro can use at most 64 MB.")), qPrintable(text));
+        QCOMPARE(notices.first().at(3).toString(),
+                 QStringLiteral("Run the macro on a smaller file, for example a copy with only the lines it needs."));
+        QCOMPARE(app->automation().lastMessage(), text);
+        QCOMPARE(firstText(), std::string("Gate"));
+        QCOMPARE(session().historySize(), steps);
+        QVERIFY(!session().isReadOnly());
+        QVERIFY(!app->automation().busy());
+    }
+
     void validationFailureIsReported()
     {
         const QString script = dir.filePath(QStringLiteral("invalid.lua"));

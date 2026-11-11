@@ -2,12 +2,14 @@
 
 #include "hikari/application/script_resolution.h"
 #include "hikari/backends/desktop_handoff.h"
+#include "hikari/backends/helper_protocol.h"
 #include "hikari/backends/karaoke_preview_runner.h"
 
 #include <QCoreApplication>
 #include <QDir>
 #include <QFileInfo>
 #include <QGuiApplication>
+#include <QLocale>
 #include <QRegularExpression>
 #include <QTimer>
 #include <QUrl>
@@ -1203,6 +1205,7 @@ bool AutomationShell::run(const std::string &path, int ordinal, RunOrigin origin
     m_cardLeft = m_cardDelay;
     if (!startStep(started)) {
         s->setReadOnly(false);
+        reportTooLarge(started);
         return false;
     }
     m_run = std::move(started);
@@ -1241,6 +1244,28 @@ bool AutomationShell::startStep(Run &run)
     }
     run.active = run.path;
     return m_manager.run(run.path, run.ordinal, run.snapshot, true);
+}
+
+bool AutomationShell::reportTooLarge(const Run &run)
+{
+    const auto *host = m_manager.host(run.active);
+    if (!host || !host->refusedSize())
+        return false;
+    const QLocale locale;
+    m_lastMessage =
+        QCoreApplication::translate("HikariSub.Automation",
+                                    "“%1” can’t run on this document: it needs %2 MB, and a macro can use at most %3 MB.")
+            .arg(QString::fromStdString(run.macro), locale.toString(double(*host->refusedSize()) / (1 << 20), 'f', 1),
+                 locale.toString(static_cast<int>(backends::helper::kMaxPayload >> 20)));
+    emit notice(QStringLiteral("error"),
+                run.origin == RunOrigin::LastScript
+                    ? QCoreApplication::translate("HikariSub.MainWindow", "Run the last loaded script")
+                    : QCoreApplication::translate("HikariSub.Automation", "Automation"),
+                m_lastMessage,
+                QCoreApplication::translate("HikariSub.Automation",
+                                            "Run the macro on a smaller file, for example a copy with only the lines it needs."));
+    emit progressChanged();
+    return true;
 }
 
 void AutomationShell::resolveScriptResolution(const application::ScriptResolutionRequest &request,
@@ -1309,7 +1334,7 @@ void AutomationShell::finished(const QString &, backends::LuaScriptHost::RunOutc
             emit progressChanged();
             return;
         }
-        outcome = Outcome::HelperLost;
+        outcome = reportTooLarge(*m_run) ? Outcome::Failed : Outcome::HelperLost;
     }
     Run run = std::move(*m_run);
     m_run.reset();

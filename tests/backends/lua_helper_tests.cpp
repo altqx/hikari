@@ -1,3 +1,4 @@
+#include "hikari/backends/helper_protocol.h"
 #include "hikari/backends/lua_protocol.h"
 #include "hikari/backends/lua_script_host.h"
 #include "hikari/application/automation_services.h"
@@ -2175,4 +2176,106 @@ TEST_F(LuaHelper, StockModulesLoadFromTheShippedInclude)
     ASSERT_EQ(host.state(), LuaScriptHost::State::Ready) << host.lastError().toStdString();
     EXPECT_EQ(host.info().name, "nil,function,function");
     EXPECT_EQ(host.info().description, "user Yutils,user a-mo,new module");
+}
+
+namespace {
+
+hikari::core::Document bigDocument(std::size_t lines, std::size_t textSize)
+{
+    std::string text = "[Script Info]\nScriptType: v4.00+\n\n[Events]\n"
+                       "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n";
+    const std::string body(textSize, 'x');
+    for (std::size_t i = 0; i < lines; ++i)
+        text += "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,," + std::to_string(i) + body + "\n";
+    std::vector<std::byte> bytes(text.size());
+    std::memcpy(bytes.data(), text.data(), bytes.size());
+    return hikari::core::loadAss(bytes).document;
+}
+
+}
+
+TEST_F(LuaHelper, ScriptsSeeEachLinesRawTextUnchanged)
+{
+    using namespace hikari::application;
+    auto doc = bigDocument(4, 3);
+    const auto ids = [&] {
+        std::vector<hikari::core::LineId> out;
+        for (const auto *l : doc.lines())
+            out.push_back(l->id);
+        return out;
+    }();
+    ASSERT_TRUE(doc.editLine(ids[1], [](hikari::core::LineRecord &l) {
+        l.bookmark = true;
+        l.actor = u8"Bob";
+    }));
+    ASSERT_TRUE(doc.editLine(ids[2], [](hikari::core::LineRecord &l) { l.translation = u8"translated"; }));
+    ASSERT_TRUE(doc.editLine(ids[3], [](hikari::core::LineRecord &l) {
+        l.comment = true;
+        l.visibility = hikari::core::LineVisibility::Hidden;
+    }));
+    const auto snapshot = macroSnapshotOf(doc, {});
+    const auto bytes = hikari::backends::lua::encodeSnapshot(snapshot);
+    hikari::backends::helper::Reader reader(bytes);
+    const auto decoded = hikari::backends::lua::decodeSnapshot(reader, bytes.size());
+    ASSERT_TRUE(decoded);
+    ASSERT_EQ(decoded->dialogues.size(), snapshot.dialogues.size());
+    for (std::size_t i = 0; i < snapshot.dialogues.size(); ++i)
+        EXPECT_EQ(decoded->dialogues[i].raw, snapshot.dialogues[i].raw) << i;
+    EXPECT_NE(snapshot.dialogues[1].raw.find("[bookmark]Bob"), std::string::npos);
+
+    auto host = load(fixture("big-file.lua"));
+    ASSERT_EQ(host->state(), LuaScriptHost::State::Ready);
+    ASSERT_TRUE(runMacro(*host, macro(*host, "Raw"), snapshot, run));
+    ASSERT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
+    QStringList expected;
+    for (const auto &d : snapshot.dialogues)
+        expected << QString::fromStdString(d.raw + "\n");
+    EXPECT_EQ(run.log.join(QString()), expected.join(QString()));
+}
+
+TEST_F(LuaHelper, EachLineCrossesOnce)
+{
+    using namespace hikari::application;
+    const auto snapshot = macroSnapshotOf(bigDocument(1000, 300), {});
+    std::size_t text = 0;
+    for (const auto &d : snapshot.dialogues)
+        text += d.text.size();
+    EXPECT_LT(hikari::backends::lua::encodeSnapshot(snapshot).size(), text * 3 / 2);
+}
+
+TEST_F(LuaHelper, AMacroRunsOnADocumentPastTheOldSixteenMegabyteLimit)
+{
+    using namespace hikari::application;
+    constexpr std::size_t kLines = 36'000;
+    EditSession session(bigDocument(kLines, 300));
+    const auto snapshot = snapshotForMacro(session);
+    ASSERT_TRUE(snapshot);
+    std::size_t withRaw = hikari::backends::lua::encodeSnapshot(*snapshot).size();
+    for (const auto &d : snapshot->dialogues)
+        withRaw += 4 + d.raw.size();
+    EXPECT_GT(withRaw, 25u << 20);
+
+    auto host = load(fixture("big-file.lua"));
+    ASSERT_EQ(host->state(), LuaScriptHost::State::Ready);
+    ASSERT_TRUE(host->run(macro(*host, "Edit last"), *snapshot));
+    ASSERT_TRUE(waitFor([&] { return run.outcome.has_value(); }, 120'000));
+    ASSERT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
+    ASSERT_TRUE(applyMacroResult(session, *snapshot, *host->lastResult(), "Edit last"));
+    EXPECT_EQ(session.document().lines().back()->text, u8"edited 36000");
+}
+
+TEST_F(LuaHelper, ADocumentOverTheFrameLimitIsRefusedWithItsSize)
+{
+    using namespace hikari::application;
+    const auto big = macroSnapshotOf(bigDocument(70'000, 1000), {});
+    auto host = load(fixture("big-file.lua"));
+    ASSERT_EQ(host->state(), LuaScriptHost::State::Ready);
+    EXPECT_FALSE(host->run(macro(*host, "Edit last"), big));
+    ASSERT_TRUE(host->refusedSize());
+    EXPECT_GT(*host->refusedSize(), hikari::backends::helper::kMaxPayload);
+    EXPECT_EQ(host->state(), LuaScriptHost::State::Ready);
+
+    ASSERT_TRUE(runMacro(*host, macro(*host, "Edit last"), macroSnapshotOf(bigDocument(2, 3), {}), run));
+    EXPECT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
+    EXPECT_FALSE(host->refusedSize());
 }

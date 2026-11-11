@@ -1790,6 +1790,14 @@ Output device: %2</source>
         <translation>แมโครถูกยกเลิก มีเพียงความละเอียดสคริปต์ที่ถูกกำหนดค่า</translation>
     </message>
     <message>
+        <source>“%1” can’t run on this document: it needs %2 MB, and a macro can use at most %3 MB.</source>
+        <translation>เรียกใช้ “%1” กับเอกสารนี้ไม่ได้ ต้องใช้ %2 MB แต่แมโครใช้ได้สูงสุด %3 MB</translation>
+    </message>
+    <message>
+        <source>Run the macro on a smaller file, for example a copy with only the lines it needs.</source>
+        <translation>เรียกใช้แมโครกับไฟล์ที่เล็กลง เช่น สำเนาที่มีเฉพาะบรรทัดที่ต้องใช้</translation>
+    </message>
+    <message>
         <source>Validation Lua script “%1” failed</source>
         <translation>การตรวจสอบสคริปต์ Lua “%1” ไม่ผ่าน</translation>
     </message>

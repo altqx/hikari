@@ -1812,6 +1812,14 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Makro zostało anulowane; ustawiono tylko rozdzielczość skryptu.</translation>
     </message>
     <message>
+        <source>“%1” can’t run on this document: it needs %2 MB, and a macro can use at most %3 MB.</source>
+        <translation>Nie można uruchomić „%1” na tym dokumencie: potrzebuje %2 MB, a makro może użyć najwyżej %3 MB.</translation>
+    </message>
+    <message>
+        <source>Run the macro on a smaller file, for example a copy with only the lines it needs.</source>
+        <translation>Uruchom makro na mniejszym pliku, na przykład na kopii zawierającej tylko potrzebne linijki.</translation>
+    </message>
+    <message>
         <source>Validation Lua script “%1” failed</source>
         <translation>Warunki skryptu Lua “%1” nie zostały spełnione</translation>
     </message>
