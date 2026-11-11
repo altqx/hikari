@@ -201,6 +201,14 @@ class AgentPanelTest : public QObject {
         }
     }
 
+    auto keepTranscriptIn(const QString &variable)
+    {
+        return qScopeGuard([this, path = qEnvironmentVariable(variable.toLatin1().constData())] {
+            if (QFile file(path); file.open(QIODevice::WriteOnly | QIODevice::Truncate))
+                file.write(agent().markdown(agent().current()).toUtf8());
+        });
+    }
+
     void realAgents(app::AiFeatures::Ports &ports)
     {
         const QString runtime = qEnvironmentVariable("HIKARI_REAL_AI_RUNTIME");
@@ -325,6 +333,7 @@ private slots:
         openPanel();
         agent().newThread();
         agent().setModel(QStringLiteral("agent:claude\t"));
+        auto transcript = keepTranscriptIn(QStringLiteral("HIKARI_REAL_CLAUDE_OUT"));
         type(QStringLiteral("In this subtitle file, line 2 reads \"second\". Use HikariSub's tools to change it to "
                             "\"Second\". Change nothing else, then say done."));
         QTRY_VERIFY_WITH_TIMEOUT(item(QStringLiteral("agentProposalApply")), 240'000);
@@ -335,11 +344,6 @@ private slots:
         QTRY_VERIFY_WITH_TIMEOUT(!agent().thread().value(QStringLiteral("running")).toBool(), 120'000);
         QCOMPARE(session().document().lines()[1]->text, u8"Second");
         QCOMPARE(session().document().lines()[0]->text, u8"A rather long first line");
-        if (const QString out = qEnvironmentVariable("HIKARI_REAL_CLAUDE_OUT"); !out.isEmpty()) {
-            QFile file(out);
-            QVERIFY(file.open(QIODevice::WriteOnly | QIODevice::Truncate));
-            file.write(agent().markdown(agent().current()).toUtf8());
-        }
         shoot(QStringLiteral("agent-claude"));
     }
     void theInstalledCodexEditsIntoTheReview()
@@ -350,10 +354,7 @@ private slots:
         openPanel();
         agent().newThread();
         agent().setModel(QStringLiteral("agent:codex\t"));
-        auto transcript = qScopeGuard([this] {
-            if (QFile file(qEnvironmentVariable("HIKARI_REAL_CODEX_OUT")); file.open(QIODevice::WriteOnly | QIODevice::Truncate))
-                file.write(agent().markdown(agent().current()).toUtf8());
-        });
+        auto transcript = keepTranscriptIn(QStringLiteral("HIKARI_REAL_CODEX_OUT"));
         type(QStringLiteral("In this subtitle file, line 2 reads \"second\". Use HikariSub's tools to change it to "
                             "\"Second\". Change nothing else, then say done."));
         QTRY_VERIFY_WITH_TIMEOUT(item(QStringLiteral("agentProposalApply")), 240'000);
