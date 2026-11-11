@@ -128,6 +128,18 @@ std::vector<NodeSpec> makeCatalogue()
                   atLeast(field("width", FieldKind::Number, Json(100), "The area's width."), 0),
                   atLeast(field("height", FieldKind::Number, Json(100), "The area's height."), 0),
                   field("seed", FieldKind::Integer, Json(0), "Added to the graph's seed.")}});
+    c.push_back({"units.highlights", "units",
+                 "Each syllable or character once per highlight, as the templater's multi gives it: the "
+                 "highlight's start, end and duration. A furigana or Line unit has one, its own.",
+                 {port("units", Units)},
+                 domainPorts({port("index", Number), port("count", Number)}),
+                 {field("skip_blank", FieldKind::Bool, Json(true), "Leave out highlights with no duration.")}});
+    c.push_back({"units.inline_fx", "units",
+                 "Only the units whose inline-fx ({\\-name}, kept until the next one) is `fx`, as the templater's "
+                 "fx modifier keeps them. Characters have their syllable's; a Line unit has none.",
+                 {port("units", Units)},
+                 {port("units", Units)},
+                 {field("fx", FieldKind::Text, Json(""), "The inline-fx name; empty: units without one.")}});
     c.push_back({"units.info", "units",
                  "What the karaoke templater's $variables give for the current unit and its Line, rounded as the "
                  "templater rounds them. Times of a syllable are from its Line's start.",
