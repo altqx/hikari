@@ -1782,6 +1782,14 @@ Output device: %2</source>
         <translation>편집기를 시작할 수 없습니다.</translation>
     </message>
     <message>
+        <source>Not loaded: its macros %1 are the built-in Karaoke Templater’s, which runs them instead.</source>
+        <translation>불러오지 않음: 이 스크립트의 매크로 %1은(는) 내장 Karaoke Templater의 매크로이며, 내장 버전이 대신 실행합니다.</translation>
+    </message>
+    <message>
+        <source>Built-in</source>
+        <translation>기본 제공</translation>
+    </message>
+    <message>
         <source>The macro was cancelled; nothing was changed.</source>
         <translation>매크로가 취소되어 아무것도 변경되지 않았습니다.</translation>
     </message>
@@ -10107,6 +10115,30 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Gradient strips</source>
+        <translation>그라데이션 띠</translation>
+    </message>
+    <message>
+        <source>Each line cut into eight strips, coloured from pink to blue.</source>
+        <translation>각 줄을 여덟 개의 띠로 자르고 분홍에서 파랑으로 색칠합니다.</translation>
+    </message>
+    <message>
+        <source>Ring of copies</source>
+        <translation>복제 고리</translation>
+    </message>
+    <message>
+        <source>Eight copies of each syllable on a circle around it, each turned to its place, while it is sung.</source>
+        <translation>각 음절이 불리는 동안 그 둘레의 원 위에 여덟 개의 복제가 놓이고, 각각 제자리 방향으로 돌아갑니다.</translation>
+    </message>
+    <message>
+        <source>Particle burst</source>
+        <translation>입자 폭발</translation>
+    </message>
+    <message>
+        <source>Twelve copies of each syllable fly out to random places around it and fade.</source>
+        <translation>각 음절의 복제 열두 개가 주변의 무작위 위치로 날아가며 사라집니다.</translation>
+    </message>
+    <message>
         <source>A graph name can’t be empty, start or end with a space, end with a dot, or hold “karaoke”, a comma, a double quote, a control character or any of / \ : * ? &lt; &gt; |.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -10298,6 +10330,30 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Clip gradient</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each unit once per strip of its box, side by side across or stacked down: the strip’s \clip rectangle (whole pixels, the edges shared) and its colour along the gradient.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Array</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each unit once per copy: on a grid centred on it, on a circle around it, or spread evenly along a path drawn from its position. angle is in degrees, as \frz takes it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Particles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each unit once per particle, spread at random over a rectangle or an ellipse centred on it. The same graph seed, node seed and line give the same particles on every run and platform.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>step times the place: index - 1 from the start, count - index from the end, or the distance from the middle.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -10395,6 +10451,66 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>One step, in ms.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How many strips.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Strips side by side from left to right, or stacked from top to bottom.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The gradient’s stops, as #RRGGBB, at least one.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Added to the box on every side, in pixels.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Where the copies go.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Grid: copies in a row.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Grid: rows.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Grid: from one copy to the next, as [across, down].</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Circle and path: how many copies.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Circle: its radius.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Circle: the first copy’s angle, in degrees counter-clockwise from the right.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How many particles.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The area they spread over.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The area’s width.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The area’s height.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -17897,8 +18013,8 @@ Styles deleted:
         <translation>영상에서 미리 보기</translation>
     </message>
     <message>
-        <source>The karaoke templater runs on an open subtitle file once its script (kara-templater.lua) is loaded.</source>
-        <translation>노래방 템플릿 실행기는 스크립트(kara-templater.lua)를 불러온 뒤 열려 있는 자막 파일에서 실행됩니다.</translation>
+        <source>The karaoke templater runs on an open subtitle file once the built-in Karaoke Templater has loaded.</source>
+        <translation>노래방 템플릿 실행기는 내장 Karaoke Templater를 불러온 뒤 열려 있는 자막 파일에서 실행됩니다.</translation>
     </message>
     <message>
         <source>Templates</source>

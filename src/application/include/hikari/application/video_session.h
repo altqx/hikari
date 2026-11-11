@@ -73,6 +73,8 @@ public:
     // nullptr: no playback. A playing video pauses first; the new player opens
     // the video at the next play.
     void setGeneralPlayer(GeneralPlayerPort *player);
+    // Runs before every play and playLine, and may swap the general player.
+    void setBeforePlay(std::function<void()> beforePlay) { m_beforePlay = std::move(beforePlay); }
     GeneralPlayerPort *generalPlayer() const { return m_player; }
     // Opens without playing; nothing when the player has it open or is opening it.
     void preparePlayer();
@@ -245,6 +247,7 @@ private:
     std::optional<PresentResult> m_lastPresent;
     std::shared_ptr<bool> m_alive = std::make_shared<bool>(true);
     GeneralPlayerPort *m_player = nullptr;
+    std::function<void()> m_beforePlay;
     std::string m_playerPath; // what the player has open
     bool m_preparing = false;  // preparePlayer's open is pending
     std::string m_failedPath;  // the player could not open or decode it

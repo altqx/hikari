@@ -5,7 +5,9 @@
 
 #include "docking.h"
 #include "qtest_parts.h"
+#include "audio_controller.h"
 #include "status_bar_controller.h"
+#include "video_controller.h"
 #include "workspace_layout.h"
 
 #include <QAccessible>
@@ -100,6 +102,34 @@ class ShellWindowsTest : public QObject {
     static QStringList statusFields(QQuickWindow *window)
     {
         return controller(window, "statusBar")->property("fields").toStringList();
+    }
+    static ui::VideoController *videoOf(QQuickWindow *window)
+    {
+        return qobject_cast<ui::VideoController *>(controller(window, "video"));
+    }
+    static ui::AudioController *audioOf(QQuickWindow *window)
+    {
+        return qobject_cast<ui::AudioController *>(controller(window, "audio"));
+    }
+    static int shownFrame(QQuickWindow *window) { return videoOf(window)->session().shownFrame().value_or(-1); }
+    static QString videoName(QQuickWindow *window)
+    {
+        return QFileInfo(QString::fromStdString(videoOf(window)->session().path())).fileName();
+    }
+    static bool ready(QQuickWindow *window)
+    {
+        const auto &session = videoOf(window)->session();
+        return session.state() == application::VideoSession::State::Ready && session.frameCount() > 0;
+    }
+    void openVideoIn(int window, const char *file, int frame)
+    {
+        focus(window);
+        ui::VideoController *video = videoOf(shellWindow(window));
+        QCOMPARE(&application->video(), video);
+        video->openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/") + QLatin1String(file));
+        QTRY_VERIFY_WITH_TIMEOUT(ready(shellWindow(window)), 30000);
+        QVERIFY(video->showFrameAt(frame));
+        QTRY_COMPARE_WITH_TIMEOUT(shownFrame(shellWindow(window)), frame, 20000);
     }
     static QVariantList overlay(QQuickWindow *window) { return controller(window, "visualTools")->property("overlay").toList(); }
     QQuickWindow *shellWindow(int window) const { return window == 0 ? first() : second.data(); }
@@ -464,7 +494,7 @@ private slots:
         }
     }
 
-    void eachWindowsStatusBarNamesItsTabsTimecodesAndEveryEditorIsTimed()
+    void eachWindowsStatusBarAndEditorFollowOnlyItsTabsTimecodes()
     {
         const QString timecodes = dir.filePath(QStringLiteral("second-timecodes.txt"));
         {
@@ -484,29 +514,26 @@ private slots:
             QCOMPARE(application->workspace().activeWindow(), active);
             QVERIFY2(fpsTip(second).contains(QStringLiteral("second-timecodes.txt")), qPrintable(fpsTip(second)));
             QVERIFY2(!fpsTip(first()).contains(QStringLiteral("second-timecodes.txt")), qPrintable(fpsTip(first())));
-            QTRY_COMPARE(timed(first()), active == 1);
-            QTRY_COMPARE(timed(second), active == 1);
+            QTRY_VERIFY(timed(second));
+            QVERIFY(!timed(first()));
         }
     }
 
-    void anInactiveWindowsOverlayHidesWhileThePictureShowsAnotherTab()
+    void eachWindowsOverlayDrawsOnItsOwnPicture()
     {
         const QString dummy = QStringLiteral("?dummy:25.000000:250:1280:720:47:163:254:");
         for (const int window : {0, 1}) {
             focus(window);
             application->video().openVideo(dummy);
             QTRY_VERIFY_WITH_TIMEOUT(application->video().hasVideo(), 20000);
+            QVERIFY(application->video().showFrameAt(37));
         }
         for (QQuickWindow *window : {first(), second.data()})
             QVERIFY(QMetaObject::invokeMethod(controller(window, "visualTools"), "selectFamily", Q_ARG(int, 1)));
         for (const int active : {1, 0, 1}) {
             focus(active);
-            QTRY_VERIFY_WITH_TIMEOUT(application->video().hasVideo(), 20000);
-            QVERIFY(application->video().showFrameAt(37));
-            QQuickWindow *shown = shellWindow(active);
-            QQuickWindow *hidden = shellWindow(1 - active);
-            QTRY_VERIFY_WITH_TIMEOUT(!overlay(shown).isEmpty(), 20000);
-            QVERIFY(overlay(hidden).isEmpty());
+            for (QQuickWindow *window : {first(), second.data()})
+                QTRY_VERIFY_WITH_TIMEOUT(!overlay(window).isEmpty(), 20000);
         }
     }
 
@@ -752,6 +779,102 @@ private slots:
         QCOMPARE(hotkeys.accelOf(QStringLiteral("GLOBAL_CLOSE_PAGE"), 0), defaultKeys);
         QTRY_COMPARE(firstClose->property("keysText").toString(), before);
         QCOMPARE(secondClose->property("keysText").toString(), before);
+    }
+
+    void eachWindowShowsItsOwnVideoAndKeepsItWhileAnotherIsActive()
+    {
+        openVideoIn(0, "long.mkv", 30);
+        openVideoIn(1, "longaudio.mkv", 12);
+        QVERIFY(videoOf(first()) != videoOf(second));
+        QVERIFY(audioOf(first()) != audioOf(second));
+        for (const int active : {0, 1, 0, 1}) {
+            focus(active);
+            QCOMPARE(&application->video(), videoOf(shellWindow(active)));
+            QCOMPARE(&application->audio(), audioOf(shellWindow(active)));
+            QVERIFY(ready(first()) && ready(second));
+            QCOMPARE(videoName(first()), QStringLiteral("long.mkv"));
+            QCOMPARE(shownFrame(first()), 30);
+            QCOMPARE(videoName(second), QStringLiteral("longaudio.mkv"));
+            QCOMPARE(shownFrame(second), 12);
+        }
+    }
+
+    void switchingTabsSwapsOnlyThatWindowsVideo()
+    {
+        openVideoIn(0, "long.mkv", 30);
+        openVideoIn(1, "longaudio.mkv", 12);
+        focus(1);
+        application->addPage();
+        QVERIFY(!videoOf(second)->hasVideo());
+        QVERIFY(ready(first()));
+        QCOMPARE(shownFrame(first()), 30);
+        application->selectTab(0);
+        QCOMPARE(*target(), secondTab);
+        QTRY_VERIFY_WITH_TIMEOUT(ready(second), 30000);
+        QCOMPARE(videoName(second), QStringLiteral("longaudio.mkv"));
+        QTRY_COMPARE_WITH_TIMEOUT(shownFrame(second), 12, 20000);
+        QCOMPARE(shownFrame(first()), 30);
+    }
+
+    void playingInOneWindowPausesTheOtherWhichKeepsItsFrame()
+    {
+        openVideoIn(0, "long.mkv", 30);
+        openVideoIn(1, "longaudio.mkv", 12);
+        focus(0);
+        QVERIFY(videoOf(first())->play());
+        QVERIFY(videoOf(first())->playing());
+        focus(1);
+        QVERIFY(videoOf(first())->playing());
+        QVERIFY(videoOf(second)->play());
+        QVERIFY(videoOf(second)->playing());
+        QVERIFY(!videoOf(first())->playing());
+        QVERIFY(ready(first()));
+        QVERIFY(videoOf(first())->session().lastFrame());
+        QVERIFY(shownFrame(first()) >= 30);
+        QVERIFY(videoOf(second)->pause());
+    }
+
+    void playingAudioInOneWindowPausesTheOthersVideoAndTheOtherWay()
+    {
+        openVideoIn(0, "long.mkv", 30);
+        openVideoIn(1, "longaudio.mkv", 12);
+        QTRY_VERIFY_WITH_TIMEOUT(audioOf(second)->ready(), 30000);
+        focus(0);
+        QVERIFY(videoOf(first())->play());
+        focus(1);
+        audioOf(second)->playRange(0, 5000);
+        QVERIFY(!videoOf(first())->playing());
+        QTRY_VERIFY(audioOf(second)->playing());
+        focus(0);
+        QVERIFY(videoOf(first())->play());
+        QVERIFY(!audioOf(second)->playing());
+        QVERIFY(videoOf(first())->pause());
+    }
+
+    void aTabMovedToAnotherWindowKeepsItsVideoPosition()
+    {
+        openVideoIn(1, "longaudio.mkv", 12);
+        QVERIFY(application->moveTab(secondTab.value, 0, -1));
+        QTRY_VERIFY(!second);
+        QCOMPARE(application->workspace().window(secondTab), 0);
+        QTRY_VERIFY_WITH_TIMEOUT(ready(first()), 30000);
+        QCOMPARE(videoName(first()), QStringLiteral("longaudio.mkv"));
+        QTRY_COMPARE_WITH_TIMEOUT(shownFrame(first()), 12, 20000);
+    }
+
+    void closingAPlayingWindowLeavesTheOtherWindowsVideo()
+    {
+        openVideoIn(0, "long.mkv", 30);
+        openVideoIn(1, "longaudio.mkv", 12);
+        QVERIFY(videoOf(second)->play());
+        closeDiscarding(second);
+        QTRY_VERIFY(!second);
+        QCOMPARE(application->workspace().activeWindow(), 0);
+        QCOMPARE(&application->video(), videoOf(first()));
+        QVERIFY(ready(first()));
+        QCOMPARE(shownFrame(first()), 30);
+        QVERIFY(videoOf(first())->play());
+        QVERIFY(videoOf(first())->pause());
     }
 
     void aSessionReopensEachWindowWithItsTabsAndPlace()
