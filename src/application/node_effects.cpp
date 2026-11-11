@@ -12,6 +12,7 @@
 #include <cctype>
 #include <chrono>
 #include <cmath>
+#include <deque>
 #include <functional>
 #include <map>
 #include <charconv>
@@ -53,13 +54,14 @@ NodeColour nodeColour(karaoke_layout::StyleColour c)
 }
 
 enum class Kind {
-    ForEach, Repeat, Frames, ClipGradient, Array, Particles, Info, Number, Text, Colour, Point, Choose, Calculate, Compare, Progress, Random,
+    ForEach, Repeat, Frames, ClipGradient, Array, Particles, Highlights, InlineFx, Info, Number, Text, Colour, Point, Choose, Calculate, Compare, Progress, Random,
     Retime, Stagger, Tag, Move, Fade, Transform, Gradient, Shape, AudioPeaks, Join, Emit, Lua
 };
 
 const std::map<std::string, Kind, std::less<>> kKinds{
     {"units.for_each", Kind::ForEach}, {"units.repeat", Kind::Repeat},     {"units.frames", Kind::Frames},
     {"units.clip_gradient", Kind::ClipGradient}, {"units.array", Kind::Array}, {"units.particles", Kind::Particles},
+    {"units.highlights", Kind::Highlights}, {"units.inline_fx", Kind::InlineFx},
     {"units.info", Kind::Info},        {"values.number", Kind::Number},    {"values.text", Kind::Text},
     {"values.colour", Kind::Colour},   {"values.point", Kind::Point},      {"values.choose", Kind::Choose},
     {"math.calculate", Kind::Calculate}, {"math.compare", Kind::Compare},  {"math.progress", Kind::Progress},
@@ -385,6 +387,12 @@ Compiled compile(const NodeGraph &flat)
             n.mode = text("area");
             n.number = nodeField(g, "seed").asNumber();
             break;
+        case Kind::Highlights:
+            n.flag = nodeField(g, "skip_blank").asBool();
+            break;
+        case Kind::InlineFx:
+            n.text = text("fx");
+            break;
         case Kind::Calculate:
         case Kind::Compare:
             n.mode = text("op");
@@ -456,6 +464,8 @@ Compiled compile(const NodeGraph &flat)
         case Kind::ClipGradient:
         case Kind::Array:
         case Kind::Particles:
+        case Kind::Highlights:
+        case Kind::InlineFx:
         case Kind::Info:
         case Kind::AudioPeaks:
         case Kind::Retime:
@@ -517,6 +527,7 @@ struct Element {
     int syl = 0, ch = -1, furi = -1;
     int index = 1, count = 1;
     std::vector<Loop> loops;
+    const Unit *timed = nullptr;
 };
 
 using Memo = std::vector<std::optional<NodeValue>>;
@@ -554,6 +565,8 @@ public:
 private:
     const Unit &unitOf(const Element &e) const
     {
+        if (e.timed)
+            return *e.timed;
         switch (e.kind) {
         case UnitKind::Line:
             return m_line.line;
@@ -601,6 +614,15 @@ private:
         }
         const int parent = n.inputs[n.in("units")].node;
         for (const Element &p : expand(parent)) {
+            if (n.kind == Kind::InlineFx) {
+                if (inlineFxOf(p) == n.text)
+                    out.push_back(p);
+                continue;
+            }
+            if (n.kind == Kind::Highlights) {
+                highlights(node, p, out);
+                continue;
+            }
             Memo memo(static_cast<std::size_t>(m_c.slots));
             if (n.kind == Kind::Repeat) {
                 const double count = number(node, "count", p, memo);
@@ -652,6 +674,49 @@ private:
         l.index = index;
         l.count = count;
         return l;
+    }
+
+    const std::string &inlineFxOf(const Element &e) const
+    {
+        static const std::string kNone;
+        if (e.kind == UnitKind::Furi)
+            return static_cast<std::size_t>(e.furi) < m_line.karaFuri.size() ? m_line.karaFuri[e.furi].inlineFx : kNone;
+        if (e.kind == UnitKind::Line || static_cast<std::size_t>(e.syl) >= m_line.karaSyllables.size())
+            return kNone;
+        return m_line.karaSyllables[e.syl].inlineFx;
+    }
+
+    void highlights(int node, const Element &p, std::vector<Element> &out)
+    {
+        const CNode &n = m_c.nodes[node];
+        const Unit &u = unitOf(p);
+        const bool syllable = p.kind == UnitKind::Syl || p.kind == UnitKind::Char;
+        if (!syllable || static_cast<std::size_t>(p.syl) >= m_line.karaSyllables.size()) {
+            if (n.flag && u.duration <= 0)
+                return;
+            Element e = p;
+            e.loops.push_back(loopAt(node, 1, 1));
+            out.push_back(std::move(e));
+            return;
+        }
+        const std::vector<karaoke_layout::Highlight> &all = m_line.karaSyllables[p.syl].highlights;
+        const int count = static_cast<int>(all.size());
+        for (int k = 0; k < count; ++k) {
+            const karaoke_layout::Highlight &h = all[k];
+            if (n.flag && h.duration <= 0)
+                continue;
+            Unit &t = m_timed.emplace_back(u);
+            t.start = t.relStart = h.start;
+            t.end = t.relEnd = h.end;
+            t.duration = h.duration;
+            t.kdur = h.duration / 10;
+            t.mid = h.start + h.duration / 2;
+            t.blank = u.blank || h.duration <= 0;
+            Element e = p;
+            e.timed = &t;
+            e.loops.push_back(loopAt(node, k + 1, count));
+            out.push_back(std::move(e));
+        }
     }
 
     void strips(int node, const Element &p, Memo &memo, std::vector<Element> &out)
@@ -882,6 +947,7 @@ private:
     Problems &m_problems;
     NodeValueTrace *m_trace;
     Memo m_lineMemo;
+    std::deque<Unit> m_timed;
 };
 
 NodeValue Evaluator::info(std::string_view port, const Element &e) const
@@ -1012,7 +1078,8 @@ NodeValue Evaluator::compute(int node, int port, const Element &e, Memo &memo)
     case Kind::Frames:
     case Kind::ClipGradient:
     case Kind::Array:
-    case Kind::Particles: {
+    case Kind::Particles:
+    case Kind::Highlights: {
         const Loop *loop = loopOf(e, node);
         if (!loop) {
             m_problems.add(n.graph->id, "was read outside its units");
@@ -1790,6 +1857,8 @@ private:
         case Kind::Array:
         case Kind::Particles:
             return refuse(i, unitsRefusal(n.kind));
+        case Kind::Highlights:
+            return refuse(i, "gives a highlight's place among the highlights, which has no templater variable");
         case Kind::Retime:
             return refuse(i, "gives times only to an Emit's start and end");
         case Kind::Join:
@@ -1997,6 +2066,8 @@ private:
         bool skipBlank = false;
         int loop = kUnwired;
         int count = 1;
+        bool multi = false;
+        std::optional<std::string> fx;
     };
 
     std::optional<Units> unitsOf(int emit)
@@ -2015,11 +2086,41 @@ private:
             if (at == kUnwired)
                 return refuse(u.loop, "has no units");
         }
+        int highlights = kUnwired, inlineFx = kUnwired;
+        while (node(at).kind == Kind::Highlights || node(at).kind == Kind::InlineFx) {
+            int &seen = node(at).kind == Kind::Highlights ? highlights : inlineFx;
+            if (seen != kUnwired)
+                return refuse(at, node(at).kind == Kind::Highlights
+                                      ? "gives highlights of highlights, which a template can't"
+                                      : "keeps units by a second inline-fx, which a template can't");
+            seen = at;
+            at = wire(at, "units").node;
+            if (at == kUnwired)
+                return refuse(seen, "has no units");
+        }
+        if (node(at).kind == Kind::Repeat && (highlights != kUnwired || inlineFx != kUnwired))
+            return refuse(at, "repeats before the highlights or inline-fx after it, which a template can't");
         if (node(at).kind != Kind::ForEach)
             return refuse(at, unitsRefusal(node(at).kind));
         u.forEach = at;
         u.unit = node(at).mode;
         u.skipBlank = node(at).flag;
+        if (u.unit == "line" && highlights != kUnwired)
+            return refuse(highlights, "gives a Line's highlights, which a line template can't");
+        if (u.unit == "line" && inlineFx != kUnwired)
+            return refuse(inlineFx, "keeps Lines by inline-fx, which a line template can't");
+        if (highlights != kUnwired) {
+            if (node(highlights).flag != u.skipBlank)
+                return refuse(highlights, "leaves out blank highlights only when its For each leaves out blank "
+                                          "units, as a template's noblank does both");
+            u.multi = true;
+        }
+        if (inlineFx != kUnwired) {
+            const std::string &name = node(inlineFx).text;
+            if (std::ranges::any_of(name, [](unsigned char c) { return std::isspace(c); }))
+                return refuse(inlineFx, "keeps an inline-fx with a space in its name, which a template can't name");
+            u.fx = name;
+        }
         return u;
     }
 
@@ -2116,6 +2217,11 @@ private:
         }
         if (units->count != 1)
             addModifier("loop " + std::to_string(units->count));
+        if (units->multi)
+            addModifier("multi");
+        const std::string group = templateId(m_name, n.graph->id);
+        if (units->fx)
+            addModifier(units->fx->empty() ? "fxgroup " + group : "fx " + *units->fx);
         if (m_allStyles)
             addModifier("all");
 
@@ -2130,7 +2236,11 @@ private:
             head += " " + m;
         const int layerValue = static_cast<int>(*layer);
         const std::string text = *times + (tags->text.empty() ? std::string() : "{" + tags->text + "}") + body;
-        std::vector<TemplateLine> out{{layerValue, wide("template " + head), wide(text)}};
+        std::vector<TemplateLine> out;
+        if (units->fx && units->fx->empty())
+            out.push_back({0, wide(std::string(units->unit == "furi" ? "code furi" : "code syl") + (m_allStyles ? " all" : "")),
+                           wide("fxgroup[" + luaString(group) + "] = (syl.inline_fx == \"\")")});
+        out.push_back({layerValue, wide("template " + head), wide(text)});
         if (joined)
             out.push_back({layerValue, wide("template line " + templateId(m_name, n.graph->id)), wide(joinText)});
         return out;
