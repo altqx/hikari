@@ -2388,6 +2388,17 @@ bool validate(lua_State *L, int index, std::string &error)
 // validation function only.
 enum class RunMode { Run, RunValidated, Validate };
 
+void sendResult(Responder &r, const MacroResult &result)
+{
+    auto bytes = lua::encodeMacroResult(result);
+    if (bytes.size() > kMaxPayload)
+        return r.terminal(Outcome::Failed,
+                          bytesOf("the macro's changes are " + std::to_string(bytes.size() >> 20) +
+                                  " MB, too large to send back; the limit is " +
+                                  std::to_string(kMaxPayload >> 20) + " MB"));
+    r.terminal(Outcome::Ok, std::move(bytes));
+}
+
 void run(Reader &in, Responder &r, std::size_t payloadSize, RunMode mode)
 {
     const bool validateFirst = mode != RunMode::Run;
@@ -2432,7 +2443,7 @@ void run(Reader &in, Responder &r, std::size_t payloadSize, RunMode mode)
             g_subs = nullptr;
             g_responder = nullptr;
             g_services = nullptr;
-            return r.terminal(Outcome::Ok, lua::encodeMacroResult(result));
+            return sendResult(r, result);
         }
         if (mode == RunMode::Validate) {
             // Valid; what validation staged is dropped, the lists stay empty.
@@ -2440,7 +2451,7 @@ void run(Reader &in, Responder &r, std::size_t payloadSize, RunMode mode)
             g_subs = nullptr;
             g_responder = nullptr;
             g_services = nullptr;
-            return r.terminal(Outcome::Ok, lua::encodeMacroResult(result));
+            return sendResult(r, result);
         }
         installSink(L);
         // The rows shift by what validation added to Script Info and Styles.
@@ -2493,7 +2504,7 @@ void run(Reader &in, Responder &r, std::size_t payloadSize, RunMode mode)
         g_subs = nullptr;
         g_responder = nullptr;
         g_services = nullptr;
-        return r.terminal(Outcome::Ok, lua::encodeMacroResult(result));
+        return sendResult(r, result);
     }
     const bool cancelled = lua_touserdata(L, -1) == &g_cancelTag;
     const std::string message = cancelled ? std::string() : stringOrEmpty(L, -1);

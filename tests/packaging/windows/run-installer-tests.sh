@@ -68,6 +68,7 @@ step inst ACTION=run "$(setup "$v1")" ARGS=/S
 step inst ACTION=check-installed SCOPE=user VERSION="$v1" "ORPHANS=$legacy_orphans" 'KEEP=Config\Config.txt'
 step inst ACTION=icon-ids
 step inst ACTION=open-file SCOPE=user
+step inst ACTION=open-folder SCOPE=user
 step inst ACTION=run "$(setup "$v2")" ARGS=/S
 step inst ACTION=check-installed SCOPE=user VERSION="$v2" 'ORPHANS=orphan-test.txt|OrphanDir' 'KEEP=Config\Config.txt'
 step inst-detach ACTION=start-app SCOPE=user

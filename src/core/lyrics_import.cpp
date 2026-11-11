@@ -6,6 +6,7 @@
 #include "text_util.h"
 
 #include <algorithm>
+#include <initializer_list>
 #include <boost/dynamic_bitset.hpp>
 #include <optional>
 #include <span>
@@ -103,9 +104,13 @@ std::u8string karaokeText(LyricLine &line)
     return text;
 }
 
-LoadResult lyricsDocument(LyricSheet sheet)
+ImportedLyrics lyricsDocument(LyricSheet sheet)
 {
-    std::u8string title = sheet.title ? titleField(*sheet.title) : std::u8string();
+    LyricsFacts facts{sheet.format, false, sheet.lines.size(), sheet.title ? titleField(*sheet.title) : std::u8string(),
+                      titleField(sheet.artist), sheet.offset};
+    for (const LyricLine &line : sheet.lines)
+        facts.wordTimed = facts.wordTimed || !line.words.empty();
+    std::u8string title = facts.title;
     if (title.empty())
         title = u8"HikariSub Ass File";
     std::u8string script =
@@ -135,7 +140,7 @@ LoadResult lyricsDocument(LyricSheet sheet)
                   u8",Default," + field(line.actor, true) + u8",0,0,0,," + text + u8"\r\n";
     }
     sheet.lines = {};
-    return loadAss(std::as_bytes(std::span(script)));
+    return {loadAss(std::as_bytes(std::span(script))), std::move(facts)};
 }
 
 }
@@ -246,12 +251,9 @@ std::optional<std::u8string> voiceMarker(u8sv &rest)
 
 }
 
-bool isLyricsExtension(std::u8string_view extension)
-{
-    return extension == u8"lrc" || extension == u8"ttml";
-}
+namespace {
 
-std::expected<LoadResult, LyricsProblem> importLrc(std::span<const std::byte> bytes)
+std::expected<ImportedLyrics, LyricsProblem> readLrc(std::span<const std::byte> bytes, const LyricsOptions &options)
 {
     using Kind = LyricsProblem::Kind;
     if (bytes.size() > kMaxLyricsFileSize)
@@ -305,6 +307,8 @@ std::expected<LoadResult, LyricsProblem> importLrc(std::span<const std::byte> by
                 const u8sv value = detail::trim(tag.substr(colon + 1));
                 if (entry.times.empty() && key == u8"ti" && !detail::titleField(value).empty())
                     sheet.title = std::u8string(value);
+                if (entry.times.empty() && key == u8"ar")
+                    sheet.artist = std::u8string(value);
                 if (entry.times.empty() && key == u8"offset") {
                     // Signed milliseconds; positive shows the lyrics sooner.
                     u8sv digits = value;
@@ -403,8 +407,6 @@ std::expected<LoadResult, LyricsProblem> importLrc(std::span<const std::byte> by
             placed.push_back({shifted(t), &entry});
     std::stable_sort(placed.begin(), placed.end(), [](const Placed &a, const Placed &b) { return a.start < b.start; });
 
-    // MUST KILL: kLastLine copies a new Line's default duration
-    constexpr std::int64_t kLastLine = 5000;
     std::vector<std::optional<std::int64_t>> nextTimes(placed.size());
     for (std::size_t i = placed.size(); i-- > 1;)
         nextTimes[i - 1] = placed[i].start > placed[i - 1].start ? std::optional(placed[i].start) : nextTimes[i];
@@ -422,7 +424,7 @@ std::expected<LoadResult, LyricsProblem> importLrc(std::span<const std::byte> by
         line.start = placed[i].start;
         line.actor = entry.actor;
         if (entry.words.empty()) {
-            line.end = next.value_or(std::min(line.start + kLastLine, detail::kLatestLyricsTime));
+            line.end = detail::openEnd(line.start, next, options);
             line.text = entry.text;
         } else {
             for (std::size_t k = 0; k < entry.words.size(); ++k) {
@@ -434,8 +436,7 @@ std::expected<LoadResult, LyricsProblem> importLrc(std::span<const std::byte> by
             line.start = std::min(line.start, line.words.front().begin);
             const std::int64_t lastBegin = line.words.back().begin;
             if (line.words.back().end < 0)
-                line.words.back().end =
-                        std::max(lastBegin, next.value_or(std::min(lastBegin + kLastLine, detail::kLatestLyricsTime)));
+                line.words.back().end = detail::openEnd(lastBegin, next, options);
             for (std::size_t k = 0; k + 1 < line.words.size(); ++k)
                 if (line.words[k].end < 0)
                     line.words[k].end = line.words[k + 1].begin;
@@ -448,16 +449,105 @@ std::expected<LoadResult, LyricsProblem> importLrc(std::span<const std::byte> by
     placed = {};
     nextTimes = {};
     entries = {};
+    sheet.offset = offset;
     return detail::lyricsDocument(std::move(sheet));
+}
+
+bool startsWithBytes(std::span<const std::byte> bytes, std::initializer_list<unsigned char> prefix)
+{
+    return bytes.size() >= prefix.size() &&
+           std::equal(prefix.begin(), prefix.end(), bytes.begin(),
+                      [](unsigned char a, std::byte b) { return a == static_cast<unsigned char>(b); });
+}
+
+bool isHexDigit(std::byte b)
+{
+    const auto c = static_cast<unsigned char>(b);
+    return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
+}
+
+}
+
+bool isLyricsExtension(std::u8string_view extension)
+{
+    return lyricsFormatOf(extension).has_value();
+}
+
+std::optional<LyricsFormat> lyricsFormatOf(std::u8string_view extension)
+{
+    if (extension == u8"lrc")
+        return LyricsFormat::Lrc;
+    if (extension == u8"ttml")
+        return LyricsFormat::Ttml;
+    if (extension == u8"krc")
+        return LyricsFormat::Krc;
+    if (extension == u8"qrc")
+        return LyricsFormat::Qrc;
+    return std::nullopt;
+}
+
+std::optional<LyricsEncoding> evidentLyricsEncoding(std::span<const std::byte> bytes)
+{
+    if (startsWithBytes(bytes, {0xEF, 0xBB, 0xBF}))
+        return LyricsEncoding::Utf8;
+    if (startsWithBytes(bytes, {0xFF, 0xFE}))
+        return LyricsEncoding::Utf16Le;
+    if (startsWithBytes(bytes, {0xFE, 0xFF}))
+        return LyricsEncoding::Utf16Be;
+    if (detail::validUtf8(bytes.data(), bytes.size()))
+        return LyricsEncoding::Utf8;
+    return std::nullopt;
+}
+
+bool lyricsEncrypted(std::span<const std::byte> bytes, LyricsFormat format)
+{
+    if (format != LyricsFormat::Krc && format != LyricsFormat::Qrc)
+        return false;
+    if (startsWithBytes(bytes, {'k', 'r', 'c', '1'}) || startsWithBytes(bytes, {0x98, 0x25, 0xB0, 0xAC}))
+        return true;
+    if (startsWithBytes(bytes, {0xFF, 0xFE}) || startsWithBytes(bytes, {0xFE, 0xFF}))
+        return false;
+    std::size_t hex = 0;
+    while (hex < bytes.size() && isHexDigit(bytes[hex]))
+        ++hex;
+    // MUST KILL: 32 hex digits is a guess at the shortest download no lyrics text starts with
+    if (hex >= 32 && std::all_of(bytes.begin() + static_cast<std::ptrdiff_t>(hex), bytes.end(), [](std::byte b) {
+            return detail::isSpace(static_cast<char8_t>(b));
+        }))
+        return true;
+    return std::any_of(bytes.begin(), bytes.end(), [](std::byte b) { return b == std::byte{0}; });
+}
+
+std::expected<ImportedLyrics, LyricsProblem> readLyrics(std::span<const std::byte> bytes, LyricsFormat format,
+                                                        const LyricsOptions &options)
+{
+    switch (format) {
+    case LyricsFormat::Lrc: return readLrc(bytes, options);
+    case LyricsFormat::Ttml: return detail::readTtml(bytes);
+    case LyricsFormat::Krc: return detail::readKrc(bytes);
+    case LyricsFormat::Qrc: return detail::readQrc(bytes);
+    }
+    return std::unexpected(LyricsProblem{LyricsProblem::Kind::NoLyrics, 0, {}});
+}
+
+std::expected<LoadResult, LyricsProblem> importLrc(std::span<const std::byte> bytes)
+{
+    return readLyrics(bytes, LyricsFormat::Lrc).transform([](ImportedLyrics &&l) { return std::move(l.load); });
+}
+
+std::expected<LoadResult, LyricsProblem> importTtml(std::span<const std::byte> bytes)
+{
+    return readLyrics(bytes, LyricsFormat::Ttml).transform([](ImportedLyrics &&l) { return std::move(l.load); });
 }
 
 std::expected<LoadResult, LyricsProblem> importLyrics(std::span<const std::byte> bytes, std::u8string_view extension)
 {
-    if (extension == u8"lrc")
-        return importLrc(bytes);
-    if (extension == u8"ttml")
-        return importTtml(bytes);
-    return std::unexpected(LyricsProblem{LyricsProblem::Kind::NoLyrics, 0, {}});
+    const auto format = lyricsFormatOf(extension);
+    if (!format)
+        return std::unexpected(LyricsProblem{LyricsProblem::Kind::NoLyrics, 0, {}});
+    if (lyricsEncrypted(bytes, *format))
+        return std::unexpected(LyricsProblem{LyricsProblem::Kind::Encrypted, 0, {}});
+    return readLyrics(bytes, *format).transform([](ImportedLyrics &&l) { return std::move(l.load); });
 }
 
 }

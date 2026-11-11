@@ -337,6 +337,7 @@ constexpr HotkeyAction kActions[] = {
         {"GLOBAL_MOVE_TAB_TO_NEW_WINDOW", 5221},
         {"GLOBAL_MOVE_TAB_TO_WINDOW", 5222},
         {"GLOBAL_CLOSE_WINDOW", 5263},
+        {"GLOBAL_IMPORT_LYRICS", 5268},
         {"GLOBAL_KEEP_AI_CHANGE", 5245},
         {"GLOBAL_UNDO_AI_CHANGE", 5246},
         {"GLOBAL_NEXT_AI_CHANGE", 5247},
@@ -354,6 +355,7 @@ constexpr HotkeyAction kActions[] = {
         {"GLOBAL_COPY_POWER_PIN_TRACK", 5260},
         {"GLOBAL_EXTEND_TRACKED_LINES", 5261},
         {"GLOBAL_EXTRAPOLATE_MOVE", 5262},
+        {"GLOBAL_REMOVE_TAGS", 5266},
         {"GLOBAL_NODE_EFFECTS", 5244},
 };
 
@@ -657,6 +659,7 @@ constexpr NameRow kNames[] = {
         {5221, "Move tab to new window"},
         {5222, "Move tab to window"},
         {5263, "Close window"},
+        {5268, "Import lyrics…"},
         {5108, "Exit"},
         {5245, "Keep AI change"},
         {5246, "Undo AI change"},
@@ -675,6 +678,7 @@ constexpr NameRow kNames[] = {
         {5260, "Copy Power-Pin track from lines"},
         {5261, "Extend tracked lines…"},
         {5262, "Extrapolate \\move to the line"},
+        {5266, "Remove tags…"},
         {5244, "Node effects"},
 };
 

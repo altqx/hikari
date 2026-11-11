@@ -42,6 +42,7 @@ public:
         QStringList files;
         QString activationToken; // XDG_ACTIVATION_TOKEN on Wayland
         application::WindowRequest window = application::WindowRequest::Default;
+        bool pickFolder = false;
     };
 
     enum class Role {

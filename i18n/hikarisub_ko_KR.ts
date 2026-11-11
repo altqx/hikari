@@ -1798,6 +1798,14 @@ Output device: %2</source>
         <translation>매크로가 취소되어 스크립트 해상도만 설정되었습니다.</translation>
     </message>
     <message>
+        <source>“%1” can’t run on this document: it needs %2 MB, and a macro can use at most %3 MB.</source>
+        <translation>“%1” 매크로를 이 문서에서 실행할 수 없습니다. %2MB가 필요하지만 매크로는 최대 %3MB까지만 사용할 수 있습니다.</translation>
+    </message>
+    <message>
+        <source>Run the macro on a smaller file, for example a copy with only the lines it needs.</source>
+        <translation>더 작은 파일에서 매크로를 실행하십시오. 예를 들어 필요한 줄만 남긴 사본을 사용하십시오.</translation>
+    </message>
+    <message>
         <source>Validation Lua script “%1” failed</source>
         <translation>Lua 스크립트 “%1”의 유효성 검사 실패</translation>
     </message>
@@ -2659,6 +2667,18 @@ Output device: %2</source>
         <translation>덮어쓰기</translation>
     </message>
     <message>
+        <source>Import lyrics</source>
+        <translation>가사 가져오기</translation>
+    </message>
+    <message>
+        <source>Lyrics (*.lrc *.krc *.qrc *.ttml)</source>
+        <translation>가사 (*.lrc *.krc *.qrc *.ttml)</translation>
+    </message>
+    <message>
+        <source>Could not read %1.</source>
+        <translation>%1(을)를 읽을 수 없습니다.</translation>
+    </message>
+    <message>
         <source>Open subtitles</source>
         <translation>자막 열기</translation>
     </message>
@@ -2667,8 +2687,12 @@ Output device: %2</source>
         <translation>자막 (*.ass *.ssa *.srt *.sub *.txt *.mpl)</translation>
     </message>
     <message>
+        <source>Word-timed lyrics (*.lrc *.krc *.qrc *.ttml)</source>
+        <translation>단어별 타이밍 가사 (*.lrc *.krc *.qrc *.ttml)</translation>
+    </message>
+    <message>
         <source>Word-timed lyrics (*.lrc *.ttml)</source>
-        <translation>단어별 타이밍 가사 (*.lrc *.ttml)</translation>
+        <translation type="vanished">단어별 타이밍 가사 (*.lrc *.ttml)</translation>
     </message>
     <message>
         <source>YouTube timed text (*.ytt *.srv3)</source>
@@ -2753,6 +2777,10 @@ Output device: %2</source>
     <message>
         <source>it has no timed lyrics</source>
         <translation>타이밍이 있는 가사가 없음</translation>
+    </message>
+    <message>
+        <source>it is encrypted. Decode it to text with your own tool first</source>
+        <translation>암호화되어 있습니다. 먼저 사용하는 도구로 텍스트로 디코딩하세요</translation>
     </message>
     <message>
         <source>Could not import %1: line %2: %3. Nothing was imported.</source>
@@ -2972,6 +3000,130 @@ Output device: %2</source>
     <message>
         <source>Saves %1 · Discards %2</source>
         <translation>%1 저장 · %2 버림</translation>
+    </message>
+    <message>
+        <source>The file is not text in this encoding.</source>
+        <translation>이 인코딩으로는 파일이 텍스트가 아닙니다.</translation>
+    </message>
+    <message>
+        <source>LRC</source>
+        <translation>LRC</translation>
+    </message>
+    <message>
+        <source>TTML</source>
+        <translation>TTML</translation>
+    </message>
+    <message>
+        <source>Kugou KRC, decoded</source>
+        <translation>Kugou KRC, 디코딩됨</translation>
+    </message>
+    <message>
+        <source>QQ Music QRC, decoded</source>
+        <translation>QQ Music QRC, 디코딩됨</translation>
+    </message>
+    <message>
+        <source>word-timed</source>
+        <translation>단어별 타이밍</translation>
+    </message>
+    <message>
+        <source>line-timed</source>
+        <translation>줄별 타이밍</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n lines</source>
+        <translation>
+            <numerusform>%n줄</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>offset %1 s applied</source>
+        <translation>오프셋 %1초 적용됨</translation>
+    </message>
+    <message>
+        <source>File</source>
+        <translation>파일</translation>
+    </message>
+    <message>
+        <source>Format</source>
+        <translation>형식</translation>
+    </message>
+    <message>
+        <source>Song</source>
+        <translation>노래</translation>
+    </message>
+    <message>
+        <source>Encoding</source>
+        <translation>인코딩</translation>
+    </message>
+    <message>
+        <source>%1 · detected</source>
+        <translation>%1 · 감지됨</translation>
+    </message>
+    <message>
+        <source>This Kugou lyrics file is encrypted, so HikariSub can’t read it.</source>
+        <translation>이 Kugou 가사 파일은 암호화되어 있어 HikariSub에서 읽을 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>This QQ Music lyrics file is encrypted, so HikariSub can’t read it.</source>
+        <translation>이 QQ Music 가사 파일은 암호화되어 있어 HikariSub에서 읽을 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>Decode it to text with your own tool first, then import the decoded file. HikariSub doesn’t decrypt lyric files.</source>
+        <translation>먼저 사용하는 도구로 텍스트로 디코딩한 다음 디코딩된 파일을 가져오세요. HikariSub는 가사 파일을 복호화하지 않습니다.</translation>
+    </message>
+    <message>
+        <source>Preview</source>
+        <translation>미리 보기</translation>
+    </message>
+    <message numerus="yes">
+        <source>and %n more lines</source>
+        <translation>
+            <numerusform>외 %n줄</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Add the lines to</source>
+        <translation>줄을 추가할 위치</translation>
+    </message>
+    <message>
+        <source>After the last line of the open file</source>
+        <translation>열린 파일의 마지막 줄 뒤</translation>
+    </message>
+    <message>
+        <source>A new file</source>
+        <translation>새 파일</translation>
+    </message>
+    <message>
+        <source>Style</source>
+        <translation>스타일</translation>
+    </message>
+    <message>
+        <source>End times</source>
+        <translation>끝 시간</translation>
+    </message>
+    <message>
+        <source>Each line ends when the next one starts</source>
+        <translation>각 줄은 다음 줄이 시작할 때 끝남</translation>
+    </message>
+    <message>
+        <source>Leave a gap before the next line</source>
+        <translation>다음 줄 앞에 간격 두기</translation>
+    </message>
+    <message>
+        <source>Gap (s)</source>
+        <translation>간격(초)</translation>
+    </message>
+    <message>
+        <source>Last line lasts (s)</source>
+        <translation>마지막 줄 길이(초)</translation>
+    </message>
+    <message>
+        <source>Choose another file…</source>
+        <translation>다른 파일 선택…</translation>
+    </message>
+    <message>
+        <source>Import</source>
+        <translation>가져오기</translation>
     </message>
 </context>
 <context>
@@ -7210,6 +7362,10 @@ Failed to copy %2 fonts.</source>
         <translation>줄 전체로 \move 외삽</translation>
     </message>
     <message>
+        <source>Remove tags…</source>
+        <translation>태그 제거…</translation>
+    </message>
+    <message>
         <source>Move tab to new window</source>
         <translation>탭을 새 창으로 이동</translation>
     </message>
@@ -7220,6 +7376,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Close window</source>
         <translation>창 닫기</translation>
+    </message>
+    <message>
+        <source>Import lyrics…</source>
+        <translation>가사 가져오기…</translation>
     </message>
     <message>
         <source>Keep AI change</source>
@@ -8260,6 +8420,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Import subtitles from MKV…</source>
         <translation>MKV에서 자막 가져오기…</translation>
+    </message>
+    <message>
+        <source>Turns a lyrics file into lines, in the open file or a new one</source>
+        <translation>가사 파일을 열린 파일이나 새 파일의 줄로 바꿉니다</translation>
+    </message>
+    <message>
+        <source>Import lyrics…</source>
+        <translation>가사 가져오기…</translation>
     </message>
     <message>
         <source>Save current file</source>
@@ -9882,6 +10050,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Export as template lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Adds template lines after the graph line that make the same lines in Aegisub’s karaoke templater.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Delete graph</source>
         <translation type="unfinished"></translation>
     </message>
@@ -9899,6 +10075,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Select karaoke lines in “Source lines” first.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>These nodes have no form in a karaoke template, so the graph can’t be exported:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -14571,7 +14751,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Deleted</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">삭제됨</translation>
     </message>
     <message>
         <source>New</source>
@@ -17834,6 +18014,245 @@ Styles deleted:
     <message>
         <source>%1, %2, %3 of %4</source>
         <translation>%1, %2, %3/%4</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Tags</name>
+    <message numerus="yes">
+        <source>Changed %n line(s)</source>
+        <translation>
+            <numerusform>%n줄을 바꿨습니다</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>No line changes.</source>
+        <translation>바뀌는 줄이 없습니다.</translation>
+    </message>
+    <message>
+        <source>Remove tags…</source>
+        <translation>태그 제거…</translation>
+    </message>
+    <message>
+        <source>Remove tags</source>
+        <translation>태그 제거</translation>
+    </message>
+    <message>
+        <source>Colour</source>
+        <translation>색상</translation>
+    </message>
+    <message>
+        <source>Alpha</source>
+        <translation>알파</translation>
+    </message>
+    <message>
+        <source>Border</source>
+        <translation>테두리</translation>
+    </message>
+    <message>
+        <source>Shadow</source>
+        <translation>그림자</translation>
+    </message>
+    <message>
+        <source>Blur</source>
+        <translation>흐림</translation>
+    </message>
+    <message>
+        <source>Font</source>
+        <translation>글꼴</translation>
+    </message>
+    <message>
+        <source>Scale</source>
+        <translation>크기</translation>
+    </message>
+    <message>
+        <source>Spacing</source>
+        <translation>간격</translation>
+    </message>
+    <message>
+        <source>Rotation</source>
+        <translation>회전</translation>
+    </message>
+    <message>
+        <source>Shear</source>
+        <translation>기울이기</translation>
+    </message>
+    <message>
+        <source>Bold, italic, underline, strikeout</source>
+        <translation>굵게, 기울임, 밑줄, 취소선</translation>
+    </message>
+    <message>
+        <source>Position</source>
+        <translation>위치</translation>
+    </message>
+    <message>
+        <source>Origin</source>
+        <translation>원점</translation>
+    </message>
+    <message>
+        <source>Alignment</source>
+        <translation>정렬</translation>
+    </message>
+    <message>
+        <source>Clip</source>
+        <translation>클립</translation>
+    </message>
+    <message>
+        <source>Fade</source>
+        <translation>페이드</translation>
+    </message>
+    <message>
+        <source>Transforms</source>
+        <translation>변환</translation>
+    </message>
+    <message>
+        <source>Karaoke</source>
+        <translation>노래방</translation>
+    </message>
+    <message>
+        <source>Reset</source>
+        <translation>재설정</translation>
+    </message>
+    <message>
+        <source>Wrap style</source>
+        <translation>줄 바꿈 스타일</translation>
+    </message>
+    <message>
+        <source>Drawing</source>
+        <translation>도형</translation>
+    </message>
+    <message>
+        <source>Other tags</source>
+        <translation>기타 태그</translation>
+    </message>
+    <message>
+        <source>Any tag not listed</source>
+        <translation>목록에 없는 모든 태그</translation>
+    </message>
+    <message>
+        <source>Remove comments</source>
+        <translation>주석 제거</translation>
+    </message>
+    <message>
+        <source>Blocks with no tag, such as {note}</source>
+        <translation>{note}처럼 태그가 없는 블록</translation>
+    </message>
+    <message>
+        <source>Merge adjacent tag blocks</source>
+        <translation>인접한 태그 블록 합치기</translation>
+    </message>
+    <message>
+        <source>%1 becomes %2</source>
+        <translation>%1 → %2</translation>
+    </message>
+    <message>
+        <source>Drop overridden tags</source>
+        <translation>덮어쓰인 태그 버리기</translation>
+    </message>
+    <message>
+        <source>A tag a later one in its block replaces, and repeats of %1, %2, %3 and %4</source>
+        <translation>같은 블록에서 뒤의 태그가 대신하는 태그와 %1, %2, %3, %4의 반복</translation>
+    </message>
+    <message>
+        <source>Clean Tags rules</source>
+        <translation>Clean Tags 규칙</translation>
+    </message>
+    <message>
+        <source>What the bundled Clean Tags script does: merges blocks, moves line-wide tags to the start, drops empty blocks</source>
+        <translation>내장 Clean Tags 스크립트와 같습니다: 블록을 합치고, 줄 전체에 적용되는 태그를 앞으로 옮기고, 빈 블록을 버립니다</translation>
+    </message>
+    <message>
+        <source>Delete lines left empty</source>
+        <translation>비게 된 줄 삭제</translation>
+    </message>
+    <message>
+        <source>Lines</source>
+        <translation>줄</translation>
+    </message>
+    <message>
+        <source>Selected lines</source>
+        <translation>선택한 줄</translation>
+    </message>
+    <message>
+        <source>Whole file, without comment lines</source>
+        <translation>파일 전체(주석 줄 제외)</translation>
+    </message>
+    <message>
+        <source>Blocks</source>
+        <translation>블록</translation>
+    </message>
+    <message>
+        <source>All blocks</source>
+        <translation>모든 블록</translation>
+    </message>
+    <message>
+        <source>Start block</source>
+        <translation>시작 블록</translation>
+    </message>
+    <message>
+        <source>Inline blocks</source>
+        <translation>본문 블록</translation>
+    </message>
+    <message>
+        <source>Tags</source>
+        <translation>태그</translation>
+    </message>
+    <message>
+        <source>Clear</source>
+        <translation>지우기</translation>
+    </message>
+    <message>
+        <source>Select all</source>
+        <translation>모두 선택</translation>
+    </message>
+    <message>
+        <source>Clean up</source>
+        <translation>정리</translation>
+    </message>
+    <message>
+        <source>Preview</source>
+        <translation>미리 보기</translation>
+    </message>
+    <message>
+        <source>Line %1: %2</source>
+        <translation>%1번 줄: %2</translation>
+    </message>
+    <message>
+        <source>deleted</source>
+        <translation>삭제됨</translation>
+    </message>
+    <message>
+        <source>Line deleted</source>
+        <translation>줄 삭제됨</translation>
+    </message>
+    <message>
+        <source>No line changes</source>
+        <translation>바뀌는 줄 없음</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) change</source>
+        <translation>
+            <numerusform>%n줄 바뀜</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n deleted</source>
+        <translation>
+            <numerusform>%n줄 삭제</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>first %n shown</source>
+        <translation>
+            <numerusform>처음 %n줄 표시</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>제거</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>취소</translation>
     </message>
 </context>
 <context>

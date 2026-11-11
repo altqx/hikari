@@ -13,6 +13,7 @@
 #include "hikari/core/extradata.h"
 #include "hikari/application/kanji_timer.h"
 #include "hikari/core/tag_transfer.h"
+#include "hikari/core/tag_cleanup.h"
 #include "hikari/application/options_dialog.h"
 #include "hikari/application/hotkeys.h"
 #include "hikari/application/spell_checker.h"
@@ -9477,6 +9478,79 @@ private slots:
         QTRY_VERIFY(!apply->property("enabled").toBool());
         QVERIFY(action("extrapolateMoveMenuItem")->property("enabled").toBool());
         application->editor().discard();
+    }
+
+    void removeTagsPreviewsThenAppliesInOneStep()
+    {
+        const QString path = dir.filePath(QStringLiteral("remove-tags.ass"));
+        {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[Script Info]\nPlayResX: 640\nPlayResY: 360\n\n[V4+ Styles]\n"
+                    "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, "
+                    "Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, "
+                    "Shadow, Alignment, MarginL, MarginR, MarginV, Encoding\n"
+                    "Style: Default,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,0,"
+                    "0,2,10,10,10,1\n\n[Events]\n"
+                    "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                    "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\blur2\\b1}A\n"
+                    "Dialogue: 0,0:00:02.00,0:00:03.00,Default,,0,0,0,,{\\blur3}B\n"
+                    "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,{\\blur4}C\n");
+        }
+        application->setAskForBadResolution(false);
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        auto *root = engine->rootObjects().first();
+        const auto lines = session->document().lines();
+        application::Selection two;
+        two.active = lines[0]->id;
+        two.selected = {lines[0]->id, lines[1]->id};
+        session->setSelection(two);
+        const auto text = [&](std::size_t row) {
+            const auto &t = session->document().lines()[row]->text;
+            return QString::fromUtf8(reinterpret_cast<const char *>(t.data()), qsizetype(t.size()));
+        };
+        auto *gridItem = root->findChild<QObject *>(QStringLiteral("gridRemoveTags"));
+        auto *editorItem = root->findChild<QObject *>(QStringLiteral("translationTextRemoveTags"));
+        QVERIFY(gridItem && editorItem);
+        QObject *removeTags = gridItem->property("action").value<QObject *>();
+        QCOMPARE(editorItem->property("action").value<QObject *>(), removeTags);
+        QCOMPARE(gridItem->property("iconRole").toString(), QStringLiteral("remove-tags"));
+
+        QVERIFY(QMetaObject::invokeMethod(removeTags, "trigger"));
+        QObject *dialog = nullptr;
+        QTRY_VERIFY((dialog = root->findChild<QObject *>(QStringLiteral("removeTagsDialog"))) &&
+                    dialog->property("visible").toBool());
+        QCOMPARE(dialog->property("familyRows").toList().size(), qsizetype(core::tagcleanup::kFamilyCount));
+        auto *preview = dialogItem("removeTagsDialog", "removeTagsPreview");
+        QCOMPARE(preview->property("count").toInt(), 0);
+        QVERIFY(!dialogItem("removeTagsDialog", "removeTagsApply")->property("enabled").toBool());
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("removeTagsDialog", "removeTagsFamily4"), "click"));
+        QTRY_COMPARE(preview->property("count").toInt(), 2);
+        QCOMPARE(text(0), QStringLiteral("{\\blur2\\b1}A"));
+        dialogItem("removeTagsDialog", "removeTagsLines")->setProperty("currentIndex", 1);
+        QTRY_COMPARE(preview->property("count").toInt(), 3);
+        dialogItem("removeTagsDialog", "removeTagsLines")->setProperty("currentIndex", 0);
+        QTRY_COMPARE(preview->property("count").toInt(), 2);
+
+        const auto before = session->historySize();
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("removeTagsDialog", "removeTagsApply"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QCOMPARE(session->historySize(), before + 1);
+        QCOMPARE(session->history().back().name, std::string("Remove tags"));
+        QCOMPARE(text(0), QStringLiteral("{\\b1}A"));
+        QCOMPARE(text(1), QStringLiteral("B"));
+        QCOMPARE(text(2), QStringLiteral("{\\blur4}C"));
+
+        QVERIFY(QMetaObject::invokeMethod(removeTags, "trigger"));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QVERIFY(dialogItem("removeTagsDialog", "removeTagsFamily4")->property("checked").toBool());
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("removeTagsDialog", "removeTagsAll"), "click"));
+        QVERIFY(dialogItem("removeTagsDialog", "removeTagsFamily0")->property("checked").toBool());
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("removeTagsDialog", "removeTagsAll"), "click"));
+        QVERIFY(!dialogItem("removeTagsDialog", "removeTagsFamily4")->property("checked").toBool());
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("removeTagsDialog", "removeTagsCancel"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
     }
 
     void motionDataScreenshots()
@@ -21316,7 +21390,7 @@ private slots:
                                      "Video", "Audio", "Conversion", "Script properties", "Automation", "Shortcuts",
                                      "AI", "Updates and privacy"}));
         QVERIFY(dialogItem("settingsDialog", "settingsPageHotkeys"));
-        QCOMPARE(hotkeyRows().size(), 313);
+        QCOMPARE(hotkeyRows().size(), 315);
         QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Global Close current tab"));
         QCOMPARE(application->hotkeys().selected(), 0);
         QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "hotkeyFilter"), "activated", Q_ARG(int, 5)));
@@ -26167,6 +26241,12 @@ private slots:
         auto &viewController = application->videoView();
         QCOMPARE(tools.activeFamily(), 0);
         QQuickWindow *shown = window;
+        const auto pointerMovesTo = [&](QQuickWindow *next) {
+            // Offscreen sends no Leave to the window the pointer left; its stale hover later sends the overlay one.
+            QEvent leave(QEvent::Leave);
+            QCoreApplication::sendEvent(shown, &leave);
+            shown = next;
+        };
         QQuickItem *overlay = item("visualOverlay");
         QVERIFY(overlay);
         const auto cursorAtScene = [&](QPoint at) {
@@ -26353,7 +26433,7 @@ private slots:
         QTRY_VERIFY(fsWindow->isExposed());
         QVERIFY(fs.pinned());
         QTRY_COMPARE(overlay->window(), fsWindow);
-        shown = fsWindow;
+        pointerMovesTo(fsWindow);
         QTRY_COMPARE(overlay->height(), qreal(fsWindow->height()) - fullscreenItem("videoFullscreenPanel")->height());
         QTRY_VERIFY2(tools.videoRect().top() >= 8, qPrintable(QDebug::toString(tools.videoRect())));
         crosshairOnlyOverThePicture("fullscreen, zoomed");
@@ -26374,7 +26454,7 @@ private slots:
             return;
         QVERIFY(fs.leave());
         QTRY_COMPARE(overlay->window(), window);
-        shown = window;
+        pointerMovesTo(window);
         viewController.setAspectFromSlider(525000);
         QTRY_COMPARE(tools.videoView().aspectRatio(), 0.75f);
         fs.setBarMode(0);
@@ -30738,6 +30818,64 @@ private slots:
         QCOMPARE(session->history().back().name, std::string("Centring times"));
         QVERIFY(application->editor().undo());
         QTRY_COMPARE(ms(0), (Ms{410, 1200}));
+    }
+
+    void importLyricsAddsLinesToTheOpenFileInOneStep()
+    {
+        QVERIFY(application->openFile(writeFile(dir, "au23-open.ass",
+                                                "Dialogue: 0,0:00:30.00,0:00:31.00,Default,,0,0,0,,mine\n")));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const auto steps = session->historySize();
+        const QString lyrics = dir.filePath(QStringLiteral("au23-song.krc"));
+        {
+            QFile f(lyrics);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[ti:Song]\r\n[1000,1000]<0,500,0>la<500,500,0>la\r\n[3000,1000]end\r\n");
+        }
+        auto *menuItem = item<QObject>("importLyricsMenuItem");
+        QVERIFY(menuItem);
+        QCOMPARE(menuItem->property("command").toString(), QStringLiteral("GLOBAL_IMPORT_LYRICS"));
+        QVERIFY(QMetaObject::invokeMethod(engine->rootObjects().first(), "openLyricsImport", Q_ARG(QVariant, lyrics)));
+        QObject *dialog = nullptr;
+        QTRY_VERIFY((dialog = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("lyricsImportDialog"))));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        auto *controller = dialog->property("controller").value<QObject *>();
+        QVERIFY(controller->property("canImport").toBool());
+        QVERIFY(controller->property("intoOpenFile").toBool());
+        QCOMPARE(controller->property("style").toString(), QStringLiteral("Default"));
+        QCOMPARE(controller->property("lineCount").toInt(), 2);
+        QCOMPARE(controller->property("preview").toList().size(), 2);
+        auto *importButton = dialogItem("lyricsImportDialog", "lyricsImportImport");
+        QVERIFY(importButton);
+        QVERIFY(QMetaObject::invokeMethod(importButton, "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QCOMPARE(session->document().lines().size(), 3u);
+        QCOMPARE(session->document().lines()[1]->text, std::u8string(u8"{\\k50}la{\\k50}la"));
+        QCOMPARE(session->historySize(), steps + 1);
+        QCOMPARE(session->history().back().name, std::string("Import lyrics"));
+        QVERIFY(application->editor().undo());
+        QTRY_COMPARE(session->document().lines().size(), 1u);
+    }
+
+    void importLyricsRefusesAnEncryptedFile()
+    {
+        const QString lyrics = dir.filePath(QStringLiteral("au23-locked.krc"));
+        {
+            QFile f(lyrics);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write(QByteArray("krc1\x01\x9c\x00\xff", 8));
+        }
+        QVERIFY(QMetaObject::invokeMethod(engine->rootObjects().first(), "openLyricsImport", Q_ARG(QVariant, lyrics)));
+        QObject *dialog = nullptr;
+        QTRY_VERIFY((dialog = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("lyricsImportDialog"))));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        auto *controller = dialog->property("controller").value<QObject *>();
+        QVERIFY(controller->property("encrypted").toBool());
+        QVERIFY(!controller->property("canImport").toBool());
+        QVERIFY(dialogItem("lyricsImportDialog", "lyricsImportEncrypted")->isVisible());
+        QVERIFY(!dialogItem("lyricsImportDialog", "lyricsImportImport")->isEnabled());
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("lyricsImportDialog", "lyricsImportCancel"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
     }
 
     void alignToVideoTimesTheLineToTheKeyPointsFrames()

@@ -733,8 +733,9 @@ void Run::makeTenv()
     lua_setfield(L, -2, "decorators");
     lua_pushcfunction(L, recallCall);
     lua_setfield(L, -2, "__call");
-    for (const auto &[name, f] : {std::pair{"decorator_line", decorateLine}, {"decorator_syl", decorateSyl},
-                                  {"decorator_basesyl", decorateBasesyl}}) {
+    using Decorator = std::pair<const char *, lua_CFunction>;
+    for (const auto &[name, f] : {Decorator{"decorator_line", decorateLine}, Decorator{"decorator_syl", decorateSyl},
+                                  Decorator{"decorator_basesyl", decorateBasesyl}}) {
         lua_pushvalue(L, tenv);
         lua_pushcclosure(L, f, 1);
         lua_setfield(L, -2, name);
