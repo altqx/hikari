@@ -7,9 +7,19 @@
 #include <QCoreApplication>
 #include <gtest/gtest.h>
 
+#include <chrono>
 #include <cstring>
+#include <filesystem>
 #include <fstream>
 #include <sstream>
+#include <thread>
+
+#ifdef Q_OS_LINUX
+#include <csignal>
+#include <ctime>
+#include <sys/syscall.h>
+#include <unistd.h>
+#endif
 
 using namespace hikari;
 using namespace hikari::application;
@@ -114,6 +124,26 @@ public:
         return out;
     }
 };
+
+#ifdef Q_OS_LINUX
+pid_t threadNamed(const std::string &name)
+{
+    for (const auto &task : std::filesystem::directory_iterator("/proc/self/task")) {
+        std::ifstream comm(task.path() / "comm");
+        std::string line;
+        std::getline(comm, line);
+        if (line == name.substr(0, 15))
+            return static_cast<pid_t>(std::stoi(task.path().filename().string()));
+    }
+    return 0;
+}
+
+void sleepInTheHandler(int)
+{
+    const timespec stall{1, 500'000'000};
+    nanosleep(&stall, nullptr);
+}
+#endif
 
 std::vector<int> layers(const NodeEffectRun &run)
 {
@@ -227,6 +257,32 @@ TEST_F(LuaNodeHelperTest, ABatchPastTheTimeLimitStopsTheHelperAndTheNextStartsAN
     ASSERT_TRUE(next) << next.error().message;
     EXPECT_EQ(*next, numbers({7}));
     EXPECT_EQ(lua.starts(), 2);
+}
+
+TEST_F(LuaNodeHelperTest, ABatchThatAnsweredWhileItsThreadWasStalledIsNotPastTheTimeLimit)
+{
+#ifndef Q_OS_LINUX
+    GTEST_SKIP() << "stalls the helper's thread with a Linux signal";
+#else
+    LuaNodeHelper lua(fake(600));
+    ASSERT_TRUE(lua.run(callOf("echo", kNumberIn, kNumberOut, numbers({1}))));
+    const pid_t worker = threadNamed("hikari.lua.nodes");
+    ASSERT_GT(worker, 0);
+    struct sigaction stall{};
+    struct sigaction previous{};
+    stall.sa_handler = sleepInTheHandler;
+    sigaction(SIGUSR2, &stall, &previous);
+    std::thread staller([worker] {
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        syscall(SYS_tgkill, getpid(), worker, SIGUSR2);
+    });
+    const auto slow = lua.run(callOf("slow", kNumberIn, kNumberOut, numbers({7})));
+    staller.join();
+    sigaction(SIGUSR2, &previous, nullptr);
+    ASSERT_TRUE(slow) << slow.error().message;
+    EXPECT_EQ(*slow, numbers({7}));
+    EXPECT_EQ(lua.starts(), 1);
+#endif
 }
 
 TEST_F(LuaNodeHelperTest, AHelperCrashStopsTheRunAndTheNextBatchStartsANewOne)

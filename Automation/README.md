@@ -3,7 +3,7 @@
 This is HikariSub's copy of the Aegisub automation library, tracked here rather
 than fetched at build time: the upstream repositories do not publish several of
 these files (the karaoke template helpers, the `json/` library, `effector`,
-`karahelper`, Yutils, ASSFoundation's `Common.lua`), and the files they do
+Yutils, ASSFoundation's `Common.lua`), and the files they do
 publish differ from what HikariSub ships.
 
 It was assembled from these revisions, then HikariSub's own files were laid over
@@ -64,8 +64,8 @@ makes to the ones upstream has too, came from that package; the noteworthy ones:
 
 The modules we build ourselves (`BM/BadMutex.dll`, `PT/PreciseTimer.dll`,
 `DM/DownloadManager.dll`) are not tracked here; packaging takes them from the
-build output. `SubInspector.dll` and `packages/karahelper.dll` are, because this
-solution does not build them.
+build output. `SubInspector.dll` is, because this solution builds SubInspector only
+on Linux.
 
 ## Refreshing from upstream
 

@@ -28,7 +28,7 @@ for sdk in anthropic gemini openai; do
 done
 
 cd "$root/src/ai-sidecar"
-"$bun" ci --ignore-scripts
+"$bun" ci --ignore-scripts --omit=optional
 for platform in linux-x64 windows-x64; do
     runtime=$bun exe=
     if [[ $platform == windows-x64 ]]; then

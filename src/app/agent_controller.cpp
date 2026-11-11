@@ -6,6 +6,7 @@
 #include "hikari/backends/ai_agent.h"
 #include "settings_store.h"
 
+#include <QCoreApplication>
 #include <QDateTime>
 #include <QDir>
 #include <QFileInfo>
@@ -29,6 +30,8 @@ QString qs(const std::string &s)
 {
     return QString::fromStdString(s);
 }
+
+const ai::ModelRef kClaudeCode{"agent:claude", ""};
 
 QString modelValue(const ai::ModelRef &ref)
 {
@@ -166,6 +169,7 @@ void AgentController::apply()
         m_store = std::make_unique<backends::ai::ThreadStore>(folder);
         AgentThreads::Wiring w;
         w.requests = [this] { return m_wiring.ai.requests(); };
+        w.agentHost = [this] { return m_wiring.ai.sidecarForMcp(); };
         w.config = [this]() -> const ai::Config * {
             const ai::Providers *providers = m_wiring.ai.providers();
             return providers ? &providers->config() : nullptr;
@@ -286,7 +290,7 @@ QVariantMap AgentController::thread() const
     qint64 window = 0;
     if (const auto ref = m_threads->modelOf(*t)) {
         model = modelValue(*ref);
-        modelText = qs(ref->modelId);
+        modelText = *ref == kClaudeCode ? QCoreApplication::translate("HikariSub.Agent", "Claude Code") : qs(ref->modelId);
         if (const ai::Model *m = providers ? modelIn(providers->config(), *ref) : nullptr) {
             modelText = qs(m->name.empty() ? m->id : m->name);
             window = m->contextTokens.value_or(0);
@@ -315,6 +319,10 @@ QVariantMap AgentController::thread() const
 QVariantList AgentController::models() const
 {
     QVariantList out;
+    if (m_wiring.ai.agentFound(QStringLiteral("claude")))
+        out.push_back(QVariantMap{{QStringLiteral("value"), modelValue(kClaudeCode)},
+                                  {QStringLiteral("text"), QCoreApplication::translate("HikariSub.Agent", "Claude Code")},
+                                  {QStringLiteral("provider"), QString()}});
     const ai::Providers *providers = m_wiring.ai.providers();
     if (!providers)
         return out;

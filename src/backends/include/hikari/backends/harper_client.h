@@ -35,12 +35,14 @@ public:
     QJsonObject settings() const { return m_settings; }
     // checked(ticket, findings) follows, or failed() if the process ends first.
     quint64 check(const QString &text);
-    // Drops the ticket's result; a text harper-ls has open stays open until it is done.
+    // Drops the ticket's result and closes its text.
     void cancel(quint64 ticket);
     // Ends the process and drops every check.
     void stop();
     bool running() const { return m_process.state() != QProcess::NotRunning; }
     int starts() const { return m_starts; }
+    // Texts harper-ls has open now.
+    int openTexts() const;
 
 signals:
     void checked(quint64 ticket, const QList<hikari::backends::GrammarFinding> &findings);
@@ -51,7 +53,6 @@ private:
         QString text;
         QString uri;
         bool opened = false;
-        bool cancelled = false;
         QList<GrammarFinding> findings;
         int actionsPending = 0;
     };
@@ -59,7 +60,7 @@ private:
     void send(const QJsonObject &message);
     void request(const QString &method, const QJsonObject &params, quint64 check, int finding);
     void notify(const QString &method, const QJsonObject &params);
-    void openNext();
+    void openPending();
     void readOutput();
     void handle(const QJsonObject &message);
     void diagnostics(const QJsonObject &params);
