@@ -1086,3 +1086,136 @@ TEST(LyricsImport, LrcTimeForms)
     EXPECT_EQ(r[2].start, 3250);
     EXPECT_EQ(r[3].start, 4750);
 }
+
+namespace {
+
+ImportedLyrics readOk(const std::vector<std::byte> &data, LyricsFormat format, const LyricsOptions &options = {})
+{
+    auto result = readLyrics(data, format, options);
+    EXPECT_TRUE(result.has_value()) << (result ? 0 : int(result.error().kind)) << " line " << (result ? 0 : result.error().line);
+    return result ? std::move(*result) : ImportedLyrics{};
+}
+
+}
+
+TEST(LyricsImport, KrcAndQrcAreLyricsExtensions)
+{
+    EXPECT_EQ(lyricsFormatOf(u8"krc"), LyricsFormat::Krc);
+    EXPECT_EQ(lyricsFormatOf(u8"qrc"), LyricsFormat::Qrc);
+    EXPECT_EQ(lyricsFormatOf(u8"lrc"), LyricsFormat::Lrc);
+    EXPECT_EQ(lyricsFormatOf(u8"ttml"), LyricsFormat::Ttml);
+    EXPECT_EQ(lyricsFormatOf(u8"srt"), std::nullopt);
+    EXPECT_TRUE(isLyricsExtension(u8"krc"));
+    EXPECT_TRUE(isLyricsExtension(u8"qrc"));
+}
+
+TEST(LyricsImport, DecodedKrcBecomesKaraokeLines)
+{
+    const auto lyrics = readOk(fixture("decoded.krc"), LyricsFormat::Krc);
+    const std::vector<Row> expected{
+        {1000, 4000, "", "{\\k50}星{\\k40}の{\\k60}帰{\\k50}り{\\k100}道"},
+        {4000, 6500, "", "{\\k70}Walk {\\k60}with {\\k120}me"},
+        {6500, 8500, "", "夜空を見上げて"},
+        {9000, 12000, "", "{\\k50}｛shine｝{\\k10}{\\k90}a\\⁠Nlight{\\k150}"},
+    };
+    EXPECT_EQ(rows(lyrics.load), expected);
+    expectSyllablesFillTheLines(lyrics.load);
+    EXPECT_EQ(lyrics.facts.format, LyricsFormat::Krc);
+    EXPECT_TRUE(lyrics.facts.wordTimed);
+    EXPECT_EQ(lyrics.facts.lines, 4u);
+    EXPECT_EQ(lyrics.facts.title, u8"星の帰り道");
+    EXPECT_EQ(lyrics.facts.artist, u8"Hoshi Band");
+    EXPECT_EQ(lyrics.facts.offset, 100);
+    EXPECT_EQ(lyrics.load.document.scriptInfo(u8"Title"), u8"星の帰り道");
+}
+
+TEST(LyricsImport, DecodedQrcInItsXmlBecomesKaraokeLines)
+{
+    const auto lyrics = readOk(fixture("decoded.qrc"), LyricsFormat::Qrc);
+    const std::vector<Row> expected{
+        {1000, 4000, "", "{\\k50}夜{\\k50}の{\\k200}歌"},
+        {4000, 6000, "", "{\\k80}\"Sing \"{\\k120}along"},
+        {7000, 9000, "", "{\\k100}Hum{\\k0} {\\k100}hum"},
+    };
+    EXPECT_EQ(rows(lyrics.load), expected);
+    expectSyllablesFillTheLines(lyrics.load);
+    EXPECT_EQ(lyrics.facts.title, u8"Night & Day");
+    EXPECT_EQ(lyrics.facts.artist, u8"Hoshi Band");
+    EXPECT_EQ(lyrics.facts.format, LyricsFormat::Qrc);
+}
+
+TEST(LyricsImport, BareQrcBecomesKaraokeLines)
+{
+    const auto lyrics = readOk(fixture("bare.qrc"), LyricsFormat::Qrc);
+    EXPECT_EQ(rows(lyrics.load), (std::vector<Row>{{1000, 3000, "", "{\\k100}a{\\k100}b"}}));
+    EXPECT_EQ(lyrics.facts.title, u8"Bare");
+}
+
+TEST(LyricsImport, KrcAndQrcProblemsNameTheirFileLine)
+{
+    auto problem = [](std::string_view text, LyricsFormat format) {
+        const auto result = readLyrics(bytes(text), format);
+        EXPECT_FALSE(result.has_value()) << text;
+        return result ? LyricsProblem{} : result.error();
+    };
+    EXPECT_EQ(problem("[ti:x]\n[1000,abc]<0,1,0>x\n", LyricsFormat::Krc),
+              (LyricsProblem{Kind::UnreadableTime, 2, u8"[1000,abc]"}));
+    EXPECT_EQ(problem("[1000,500]x\nloose words\n", LyricsFormat::Krc), (LyricsProblem{Kind::MissingTime, 2, u8"loose words"}));
+    EXPECT_EQ(problem("<a>\n<b LyricContent=\"[ti:x]\n[1000,500]a(1000,500)\n[9x]\"/>\n", LyricsFormat::Qrc),
+              (LyricsProblem{Kind::UnreadableTime, 4, u8"[9x]"}));
+    EXPECT_EQ(problem("[ti:only tags]\n", LyricsFormat::Qrc), (LyricsProblem{Kind::NoLyrics, 0, {}}));
+    EXPECT_EQ(problem("[offset:soon]\n[1000,500]x\n", LyricsFormat::Krc),
+              (LyricsProblem{Kind::UnreadableTime, 1, u8"[offset:soon]"}));
+}
+
+TEST(LyricsImport, EncryptedKrcAndQrcAreRecognisedNotRead)
+{
+    EXPECT_TRUE(lyricsEncrypted(fixture("encrypted.krc"), LyricsFormat::Krc));
+    EXPECT_TRUE(lyricsEncrypted(fixture("encrypted.qrc"), LyricsFormat::Qrc));
+    EXPECT_TRUE(lyricsEncrypted(bytes(std::string(64, 'A') + "\r\n"), LyricsFormat::Qrc));
+    EXPECT_FALSE(lyricsEncrypted(fixture("decoded.krc"), LyricsFormat::Krc));
+    EXPECT_FALSE(lyricsEncrypted(fixture("decoded.qrc"), LyricsFormat::Qrc));
+    EXPECT_FALSE(lyricsEncrypted(fixture("utf16le.lrc"), LyricsFormat::Krc));
+    EXPECT_FALSE(lyricsEncrypted(fixture("encrypted.krc"), LyricsFormat::Lrc));
+    const auto refused = importLyrics(fixture("encrypted.krc"), u8"krc");
+    ASSERT_FALSE(refused.has_value());
+    EXPECT_EQ(refused.error().kind, Kind::Encrypted);
+}
+
+TEST(LyricsImport, EvidentEncodings)
+{
+    EXPECT_EQ(evidentLyricsEncoding(fixture("utf16le.lrc")), LyricsEncoding::Utf16Le);
+    EXPECT_EQ(evidentLyricsEncoding(fixture("utf16be.lrc")), LyricsEncoding::Utf16Be);
+    EXPECT_EQ(evidentLyricsEncoding(fixture("enhanced.lrc")), LyricsEncoding::Utf8);
+    EXPECT_EQ(evidentLyricsEncoding(fixture("decoded.krc")), LyricsEncoding::Utf8);
+    EXPECT_EQ(evidentLyricsEncoding(fixture("gb18030.lrc")), std::nullopt);
+    EXPECT_EQ(evidentLyricsEncoding(fixture("big5.lrc")), std::nullopt);
+}
+
+TEST(LyricsImport, EndTimeOptionsApplyToOpenEnds)
+{
+    const auto plain = bytes("[00:01.00]a\n[00:03.00]b\n[00:03.10]c\n");
+    EXPECT_EQ(rows(readOk(plain, LyricsFormat::Lrc).load),
+              (std::vector<Row>{{1000, 3000, "", "a"}, {3000, 3100, "", "b"}, {3100, 8100, "", "c"}}));
+    const LyricsOptions gapped{200, 2000};
+    EXPECT_EQ(rows(readOk(plain, LyricsFormat::Lrc, gapped).load),
+              (std::vector<Row>{{1000, 2800, "", "a"}, {3000, 3100, "", "b"}, {3100, 5100, "", "c"}}));
+    const auto words = bytes("[00:01.00]<00:01.00>x <00:01.50>y\n[00:03.00]z\n");
+    EXPECT_EQ(rows(readOk(words, LyricsFormat::Lrc, gapped).load),
+              (std::vector<Row>{{1000, 2800, "", "{\\k50}x {\\k130}y"}, {3000, 5000, "", "z"}}));
+    const auto ended = bytes("[00:01.00]<00:01.00>x <00:01.50>y<00:02.00>\n[00:03.00]z\n");
+    EXPECT_EQ(rows(readOk(ended, LyricsFormat::Lrc, gapped).load).front(), (Row{1000, 2000, "", "{\\k50}x {\\k50}y"}));
+}
+
+TEST(LyricsImport, LrcFacts)
+{
+    const auto lyrics = readOk(fixture("line-only.lrc"), LyricsFormat::Lrc);
+    EXPECT_EQ(lyrics.facts.format, LyricsFormat::Lrc);
+    EXPECT_FALSE(lyrics.facts.wordTimed);
+    EXPECT_EQ(lyrics.facts.lines, 7u);
+    EXPECT_EQ(lyrics.facts.title, u8"Sakura");
+    EXPECT_EQ(lyrics.facts.offset, 500);
+    EXPECT_TRUE(readOk(fixture("enhanced.lrc"), LyricsFormat::Lrc).facts.wordTimed);
+    EXPECT_EQ(readOk(fixture("enhanced.lrc"), LyricsFormat::Lrc).facts.artist, u8"Jane Taylor");
+    EXPECT_EQ(readOk(fixture("amll.ttml"), LyricsFormat::Ttml).facts.format, LyricsFormat::Ttml);
+}

@@ -51,8 +51,15 @@ std::expected<StagedOpen, StageFailure> DocumentFiles::stage(const DestinationKe
     if (!bytes)
         return std::unexpected(StageFailure{openError(bytes.error()), std::nullopt});
     const std::u8string extension = extensionOf(destination.value);
-    if (core::isLyricsExtension(extension)) {
-        auto imported = core::importLyrics(*bytes, extension);
+    if (const auto format = core::lyricsFormatOf(extension)) {
+        if (core::lyricsEncrypted(*bytes, *format))
+            return std::unexpected(StageFailure{OpenError::MalformedLyrics, core::LyricsProblem{core::LyricsProblem::Kind::Encrypted}});
+        std::optional<std::vector<std::byte>> text = *bytes;
+        if (m_lyricsDecoder)
+            text = m_lyricsDecoder(*bytes);
+        if (!text)
+            return std::unexpected(StageFailure{OpenError::MalformedLyrics, core::LyricsProblem{core::LyricsProblem::Kind::NotUtf8}});
+        auto imported = core::readLyrics(*text, *format).transform([](core::ImportedLyrics &&l) { return std::move(l.load); });
         if (!imported)
             return std::unexpected(StageFailure{OpenError::MalformedLyrics, imported.error()});
         StagedOpen staged{destination, std::move(*imported), std::nullopt, 0, 0};
