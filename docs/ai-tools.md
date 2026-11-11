@@ -37,7 +37,7 @@ A tool's name is its operation's, with `.` as `_` (`lines.find` is `lines_find`)
 | `typeset` | `video_frame`, `video_ink_bounds`, `video_colours`, `video_keyframes` ([frames](#frames)) |
 | `karaoke` | `audio_peaks` |
 | `effects` | `nodes_catalogue` |
-| `app` | `panels_list`, `panels_open`, `panels_close`, `panels_focus`, `settings_list`, `settings_get`, `settings_set` |
+| `app` | `panels_list`, `panels_open`, `panels_close`, `panels_focus`, `settings_list`, `settings_get`, `settings_set`; the two reads leave out `privacy.*` and `recent.*` ([Agent](ai-agent.md#modes)) |
 | `translate`, `automation`, `plugins` | none yet; the tool cards add them. |
 | `web` | `web_search`, `web_fetch`, while a search service is chosen ([Web search](#web-search)). |
 

@@ -204,8 +204,8 @@
         <translation>설정 › AI…</translation>
     </message>
     <message>
-        <source>You approve every change. Reading never asks.</source>
-        <translation>모든 변경을 직접 승인합니다. 읽기는 묻지 않습니다.</translation>
+        <source>Subtitle edits go into the review, where you keep or undo them. Other changes ask.</source>
+        <translation>자막 수정은 검토로 들어가며, 거기서 유지하거나 실행 취소합니다. 다른 변경은 묻습니다.</translation>
     </message>
     <message>
         <source>The judge model approves each action, or asks you. It sees the action and your messages, never your files.</source>
