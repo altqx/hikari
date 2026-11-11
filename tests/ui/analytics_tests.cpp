@@ -1,6 +1,7 @@
 #include "analytics_endpoint.h"
 
 #include "hikari/app/analytics.h"
+#include "hikari/application/automation_registry.h"
 #include "settings_store.h"
 
 #include <QCryptographicHash>
@@ -341,6 +342,15 @@ private slots:
         write(bundled, "-- edited\n");
         QCOMPARE(Analytics::bundledScript(bundled, manifest), QString());
         QCOMPARE(Analytics::bundledScript(bundled, dir.filePath(QStringLiteral("no-manifest.txt"))), QString());
+    }
+
+    void theBuiltinTemplaterIsSentAsKaraTemplaterLua()
+    {
+        const QString manifest = dir.filePath(QStringLiteral("no-manifest.txt"));
+        QCOMPARE(Analytics::bundledScript(QString::fromUtf8(hikari::application::kBuiltinKaraokeTemplater), manifest),
+                 QStringLiteral("kara-templater.lua"));
+        QCOMPARE(Analytics::bundledScript(dir.filePath(QStringLiteral("missing/kara-templater.lua")), manifest),
+                 QString());
     }
 };
 
