@@ -1793,12 +1793,28 @@ Output device: %2</source>
         <translation>எடிட்டரைத் தொடங்க முடியாது.</translation>
     </message>
     <message>
+        <source>Not loaded: its macros %1 are the built-in Karaoke Templater’s, which runs them instead.</source>
+        <translation>ஏற்றப்படவில்லை: இதன் குறுநிரல்கள் %1 உள்ளமைந்த Karaoke Templater-இன் குறுநிரல்கள்; அதுவே அவற்றை இயக்கும்.</translation>
+    </message>
+    <message>
+        <source>Built-in</source>
+        <translation>உள்ளமைந்தது</translation>
+    </message>
+    <message>
         <source>The macro was cancelled; nothing was changed.</source>
         <translation>குறுநிரல் ரத்துசெய்யப்பட்டது; எதுவும் மாற்றப்படவில்லை.</translation>
     </message>
     <message>
         <source>The macro was cancelled; only the script resolution was set.</source>
         <translation>குறுநிரல் ரத்துசெய்யப்பட்டது; ச்கிரிப்ட் தெளிவுத்திறன் மட்டுமே அமைக்கப்பட்டது.</translation>
+    </message>
+    <message>
+        <source>“%1” can’t run on this document: it needs %2 MB, and a macro can use at most %3 MB.</source>
+        <translation>“%1” இந்த ஆவணத்தில் இயங்க முடியாது: இதற்கு %2 MB தேவை, ஆனால் ஒரு குறுநிரல் அதிகபட்சம் %3 MB மட்டுமே பயன்படுத்த முடியும்.</translation>
+    </message>
+    <message>
+        <source>Run the macro on a smaller file, for example a copy with only the lines it needs.</source>
+        <translation>குறுநிரலைச் சிறிய கோப்பில் இயக்கவும், எடுத்துக்காட்டாக அதற்குத் தேவையான வரிகள் மட்டும் உள்ள ஒரு நகலில்.</translation>
     </message>
     <message>
         <source>Validation Lua script “%1” failed</source>
@@ -9977,6 +9993,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Export as template lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Adds template lines after the graph line that make the same lines in Aegisub’s karaoke templater.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Delete graph</source>
         <translation type="unfinished"></translation>
     </message>
@@ -9994,6 +10018,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Select karaoke lines in “Source lines” first.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>These nodes have no form in a karaoke template, so the graph can’t be exported:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -10052,6 +10080,30 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>That wire would make a loop.</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Gradient strips</source>
+        <translation>சாய்வு பட்டைகள்</translation>
+    </message>
+    <message>
+        <source>Each line cut into eight strips, coloured from pink to blue.</source>
+        <translation>ஒவ்வொரு வரியும் எட்டு பட்டைகளாக வெட்டப்பட்டு, இளஞ்சிவப்பிலிருந்து நீலம் வரை வண்ணமிடப்படுகிறது.</translation>
+    </message>
+    <message>
+        <source>Ring of copies</source>
+        <translation>நகல்களின் வளையம்</translation>
+    </message>
+    <message>
+        <source>Eight copies of each syllable on a circle around it, each turned to its place, while it is sung.</source>
+        <translation>ஒவ்வொரு அசையும் பாடப்படும்போது, அதைச் சுற்றியுள்ள வட்டத்தில் எட்டு நகல்கள், ஒவ்வொன்றும் தன் இடத்துக்கு ஏற்பத் திரும்பியிருக்கும்.</translation>
+    </message>
+    <message>
+        <source>Particle burst</source>
+        <translation>துகள் வெடிப்பு</translation>
+    </message>
+    <message>
+        <source>Twelve copies of each syllable fly out to random places around it and fade.</source>
+        <translation>ஒவ்வொரு அசையின் பன்னிரண்டு நகல்கள் அதைச் சுற்றியுள்ள சீரற்ற இடங்களுக்குப் பறந்து மங்குகின்றன.</translation>
     </message>
     <message>
         <source>A graph name can’t be empty, start or end with a space, end with a dot, or hold “karaoke”, a comma, a double quote, a control character or any of / \ : * ? &lt; &gt; |.</source>
@@ -10245,6 +10297,30 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Clip gradient</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each unit once per strip of its box, side by side across or stacked down: the strip’s \clip rectangle (whole pixels, the edges shared) and its colour along the gradient.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Array</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each unit once per copy: on a grid centred on it, on a circle around it, or spread evenly along a path drawn from its position. angle is in degrees, as \frz takes it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Particles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each unit once per particle, spread at random over a rectangle or an ellipse centred on it. The same graph seed, node seed and line give the same particles on every run and platform.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>step times the place: index - 1 from the start, count - index from the end, or the distance from the middle.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -10342,6 +10418,66 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>One step, in ms.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How many strips.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Strips side by side from left to right, or stacked from top to bottom.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The gradient’s stops, as #RRGGBB, at least one.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Added to the box on every side, in pixels.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Where the copies go.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Grid: copies in a row.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Grid: rows.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Grid: from one copy to the next, as [across, down].</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Circle and path: how many copies.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Circle: its radius.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Circle: the first copy’s angle, in degrees counter-clockwise from the right.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How many particles.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The area they spread over.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The area’s width.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The area’s height.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -17901,8 +18037,8 @@ Styles deleted:
         <translation>வீடியோவில் முன்னோட்டமிடு</translation>
     </message>
     <message>
-        <source>The karaoke templater runs on an open subtitle file once its script (kara-templater.lua) is loaded.</source>
-        <translation>கரோக்கி வார்ப்புருவாக்கி, அதன் ச்கிரிப்ட் (kara-templater.lua) ஏற்றப்பட்டதும் திறந்த வசனக் கோப்பில் இயங்கும்.</translation>
+        <source>The karaoke templater runs on an open subtitle file once the built-in Karaoke Templater has loaded.</source>
+        <translation>உள்ளமைந்த Karaoke Templater ஏற்றப்பட்டதும், கரோக்கி வார்ப்புருவாக்கி திறந்த வசனக் கோப்பில் இயங்கும்.</translation>
     </message>
     <message>
         <source>Templates</source>

@@ -146,4 +146,19 @@ bool applyNodeEffect(core::Document &document, const NodeEffectRun &run, const N
 std::expected<void, CommandRefusal> applyNodeEffect(EditSession &session, const NodeEffectRun &run,
                                                     const NodeEffectRun *owners = nullptr);
 
+// One Comment Line of a karaoke template; it takes the graph's Style.
+struct TemplateLine {
+    int layer = 0;
+    std::u8string effect, text;
+    friend bool operator==(const TemplateLine &, const TemplateLine &) = default;
+};
+
+// The graph `name` as `template` Lines that give its Lines through the stock 2.1.7 karaoke
+// templater, in the engine's order; or each node that has no template form, and why.
+std::expected<std::vector<TemplateLine>, std::vector<NodeEffectProblem>> exportTemplateLines(const NodeGraph &graph,
+                                                                                           std::u8string_view name);
+
+// Inserts the graph Line's template Lines after it, as one undo step "Export as template lines".
+std::expected<void, std::vector<NodeEffectProblem>> exportTemplateLines(EditSession &session, core::LineId graphLine);
+
 }

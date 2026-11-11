@@ -222,6 +222,8 @@ if want appimage; then
     export APPIMAGE_EXTRACT_AND_RUN=1
     check_version appimage "$work/${appimage##*/}"
     grep -q '^Exec=hikarisub %u$' "$work/squashfs-root/io.github.altqx.HikariSub.desktop" || fail "appimage: Exec="
+    grep -q '^Exec=hikarisub --open-folder$' "$work/squashfs-root/io.github.altqx.HikariSub.desktop" ||
+        fail "appimage: no Open Folder action"
     grep -q '^MimeType=.*x-scheme-handler/hikarisub;' "$work/squashfs-root/io.github.altqx.HikariSub.desktop" ||
         fail "appimage: no x-scheme-handler/hikarisub"
     gui_start appimage env APPIMAGE_EXTRACT_AND_RUN=1 "$work/${appimage##*/}"
@@ -245,6 +247,8 @@ if want tar; then
     rm -rf /tmp/xdg-tar && mkdir -p /tmp/xdg-tar/data /tmp/xdg-tar/config && chown -R tester /tmp/xdg-tar
     as_tester env XDG_DATA_HOME=/tmp/xdg-tar/data /tmp/tar/hikarisub-linux-x86_64/install-desktop-integration.sh > /dev/null ||
         fail "tar: install-desktop-integration.sh"
+    grep -qx 'Exec="/tmp/tar/hikarisub-linux-x86_64/hikarisub" --open-folder' \
+        /tmp/xdg-tar/data/applications/io.github.altqx.HikariSub.desktop || fail "tar: Open Folder action Exec="
     link_handler tar XDG_DATA_HOME=/tmp/xdg-tar/data XDG_CONFIG_HOME=/tmp/xdg-tar/config
     host_list_not_bundled tar '/tmp/tar/'
 fi
@@ -304,6 +308,8 @@ native_checks()
     esac
     [ "$homepage" = https://hikarisub.org ] || fail "package homepage $homepage"
     grep -q '^Exec=hikarisub %u$' /usr/share/applications/io.github.altqx.HikariSub.desktop || fail "native: Exec="
+    grep -q '^Exec=hikarisub --open-folder$' /usr/share/applications/io.github.altqx.HikariSub.desktop ||
+        fail "native: no Open Folder action"
     update-desktop-database -q /usr/share/applications
     link_handler native
     pass "native install: version $(installed_version), kind $kind, desktop files valid"

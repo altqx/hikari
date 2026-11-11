@@ -225,6 +225,13 @@ public:
     // the end of the last Events section when `before` is nullopt. False when
     // either Line is unknown or they are the same Line.
     bool moveLine(LineId id, std::optional<LineId> before);
+    // Calls `change` on every Line in order; each Line it returns true for is marked as editLine marks it.
+    std::size_t editLines(const std::function<bool(LineRecord &)> &change);
+    // The Lines become `order`: an id keeps that Line, a record is a new Line. Placed one at a time from
+    // the front, a Line already next stays, another moves before the Line now next, and a new one goes
+    // right after the one before it (or as insertLineBefore the first Line, or appendLine when there is
+    // none). Linear in the record count. False, changing nothing, unless every Line is listed once.
+    bool arrangeLines(std::vector<std::variant<LineId, LineRecord>> order);
 
     // The last value for key.
     std::optional<std::u8string> scriptInfo(std::u8string_view key) const;

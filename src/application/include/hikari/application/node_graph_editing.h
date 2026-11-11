@@ -52,10 +52,12 @@ bool foldsUnwiredOutputs(const GraphNode &node);
 // inputs, top to bottom in graph order. Nodes with a position keep it.
 NodeGraph laidOutGraph(NodeGraph graph);
 
-// The KE3 karaoke presets that exist as graphs; `templateFile` names the preset's template file.
+// The KE3 karaoke presets that exist as graphs, `templateFile` naming the preset's template file,
+// then examples of nodes no template can express, named by `example`.
 struct NodeGraphPreset {
     std::string_view templateFile;
     std::string_view graph;
+    std::string_view example;
 };
 std::span<const NodeGraphPreset> nodeGraphPresets();
 

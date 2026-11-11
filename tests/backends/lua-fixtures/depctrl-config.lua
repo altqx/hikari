@@ -6,6 +6,8 @@
 -- adds a key, and the other's later saves keep it.
 -- Migrate: another helper saves between a handler's first read and its
 -- schema migration; the migrated file keeps what it saved.
+-- Empty: a blank config file loads as a fresh one, and a save replaces it
+-- whole, leaving no partial copy behind (#880).
 script_name = "DependencyControl config"
 script_description = ""
 script_version = "0.0.1"
@@ -69,4 +71,20 @@ aegisub.register_macro("Migrate", "", function()
     assert(check:load())
     local hive = check:getView({"package"}).c
     aegisub.log("%s,%s,%s", tostring(hive.migrated), tostring(hive.theirs), tostring(check.schemaId))
+end)
+
+aegisub.register_macro("Empty", "", function()
+    local path = aegisub.decode_path("?user/config/test.Empty.json")
+    local f = assert(io.open(path, "w"))
+    f:write(" \n")
+    f:close()
+    local handler = ConfigHandler(path)
+    assert(handler:load())
+    local view = handler:getView({"package"})
+    view.c.saved = 1
+    assert(view:save())
+    local check = ConfigHandler(path)
+    assert(check:load())
+    aegisub.log("%s,%s", tostring(check:getView({"package"}).c.saved),
+        tostring(io.open(path .. ".writing") ~= nil))
 end)

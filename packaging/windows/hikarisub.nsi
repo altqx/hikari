@@ -300,6 +300,8 @@ Function ${UN}HsRemoveAssociations
   !insertmacro HS_ASSOC_REMOVE ssa
   !insertmacro HS_ASSOC_REMOVE srt
   !insertmacro HS_ASSOC_REMOVE sub
+  !insertmacro HS_FOLDER_VERB_REMOVE "Directory" "%1"
+  !insertmacro HS_FOLDER_VERB_REMOVE "Directory\Background" "%V"
   DeleteRegKey /ifempty SHCTX "${HS_CLASSES}\Applications\${HS_EXE}\SupportedTypes"
   DeleteRegKey /ifempty SHCTX "${HS_CLASSES}\Applications\${HS_EXE}"
   ReadRegStr $0 SHCTX "${HS_REGAPPS_KEY}" "${HS_NAME}"
@@ -330,6 +332,19 @@ FunctionEnd
   ${EndIf}
   DeleteRegKey /ifempty SHCTX "${HS_CLASSES}\.${EXT}\OpenWithProgids"
   DeleteRegKey /ifempty SHCTX "${HS_CLASSES}\.${EXT}"
+!macroend
+
+!macro HS_FOLDER_VERB_WRITE KIND ARG
+  WriteRegStr SHCTX "${HS_CLASSES}\${KIND}\shell\${HS_NAME}" "" "Open with ${HS_NAME}"
+  WriteRegStr SHCTX "${HS_CLASSES}\${KIND}\shell\${HS_NAME}" "Icon" '"$INSTDIR\${HS_EXE}",0'
+  WriteRegStr SHCTX "${HS_CLASSES}\${KIND}\shell\${HS_NAME}\command" "" '"$INSTDIR\${HS_EXE}" "${ARG}"'
+!macroend
+
+!macro HS_FOLDER_VERB_REMOVE KIND ARG
+  ReadRegStr $0 SHCTX "${HS_CLASSES}\${KIND}\shell\${HS_NAME}\command" ""
+  ${If} $0 == '"$INSTDIR\${HS_EXE}" "${ARG}"'
+    DeleteRegKey SHCTX "${HS_CLASSES}\${KIND}\shell\${HS_NAME}"
+  ${EndIf}
 !macroend
 
 !macro HS_ASSOC_WRITE EXT DESC ICON
@@ -1026,7 +1041,12 @@ Section "-Program files" SecCore
   Call HsSetShortcutAumid
 SectionEnd
 
-Section "Associate subtitle files (.ass, .ssa, .srt, .sub)" SecAssoc
+!if "${HS_CODEBASE}" == "qt"
+  !define HS_ASSOC_SECTION "Associate subtitle files (.ass, .ssa, .srt, .sub) and folders"
+!else
+  !define HS_ASSOC_SECTION "Associate subtitle files (.ass, .ssa, .srt, .sub)"
+!endif
+Section "${HS_ASSOC_SECTION}" SecAssoc
 SectionEnd
 
 Section /o "Desktop shortcut" SecDesktop
@@ -1044,6 +1064,10 @@ Section "-Finish" SecFinish
     !insertmacro HS_ASSOC_WRITE ssa "SSA subtitles" ${HS_ICON_ID_ssa}
     !insertmacro HS_ASSOC_WRITE srt "SRT subtitles" ${HS_ICON_ID_srt}
     !insertmacro HS_ASSOC_WRITE sub "SUB subtitles" ${HS_ICON_ID_sub}
+    !if "${HS_CODEBASE}" == "qt"
+      !insertmacro HS_FOLDER_VERB_WRITE "Directory" "%1"
+      !insertmacro HS_FOLDER_VERB_WRITE "Directory\Background" "%V"
+    !endif
     WriteRegStr SHCTX "${HS_CAPS_KEY}" "ApplicationName" "${HS_NAME}"
     WriteRegStr SHCTX "${HS_CAPS_KEY}" "ApplicationDescription" "Subtitle editor and player"
     WriteRegStr SHCTX "${HS_REGAPPS_KEY}" "${HS_NAME}" "${HS_CAPS_KEY}"
