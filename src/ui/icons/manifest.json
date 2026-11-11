@@ -5545,8 +5545,7 @@
    "legacy": [],
    "surfaces": [
     "menu:file"
-   ],
-   "pending": "AU23 #857"
+   ]
   },
   {
    "role": "builtin-script",

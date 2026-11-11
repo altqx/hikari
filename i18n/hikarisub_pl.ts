@@ -2715,6 +2715,18 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Nadpisz</translation>
     </message>
     <message>
+        <source>Import lyrics</source>
+        <translation>Importuj tekst piosenki</translation>
+    </message>
+    <message>
+        <source>Lyrics (*.lrc *.krc *.qrc *.ttml)</source>
+        <translation>Teksty piosenek (*.lrc *.krc *.qrc *.ttml)</translation>
+    </message>
+    <message>
+        <source>Could not read %1.</source>
+        <translation>Nie można odczytać %1.</translation>
+    </message>
+    <message>
         <source>Open subtitles</source>
         <translation>Otwórz napisy</translation>
     </message>
@@ -2723,8 +2735,12 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Napisy (*.ass *.ssa *.srt *.sub *.txt *.mpl)</translation>
     </message>
     <message>
+        <source>Word-timed lyrics (*.lrc *.krc *.qrc *.ttml)</source>
+        <translation>Teksty piosenek z czasami słów (*.lrc *.krc *.qrc *.ttml)</translation>
+    </message>
+    <message>
         <source>Word-timed lyrics (*.lrc *.ttml)</source>
-        <translation>Teksty piosenek z czasami słów (*.lrc *.ttml)</translation>
+        <translation type="vanished">Teksty piosenek z czasami słów (*.lrc *.ttml)</translation>
     </message>
     <message>
         <source>YouTube timed text (*.ytt *.srv3)</source>
@@ -2809,6 +2825,10 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>it has no timed lyrics</source>
         <translation>nie zawiera tekstu piosenki z czasami</translation>
+    </message>
+    <message>
+        <source>it is encrypted. Decode it to text with your own tool first</source>
+        <translation>jest zaszyfrowany. Najpierw odkoduj go do tekstu własnym narzędziem</translation>
     </message>
     <message>
         <source>Could not import %1: line %2: %3. Nothing was imported.</source>
@@ -3034,6 +3054,134 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>Saves %1 · Discards %2</source>
         <translation>Zapisywane: %1 · Odrzucane: %2</translation>
+    </message>
+    <message>
+        <source>The file is not text in this encoding.</source>
+        <translation>Plik nie jest tekstem w tym kodowaniu.</translation>
+    </message>
+    <message>
+        <source>LRC</source>
+        <translation>LRC</translation>
+    </message>
+    <message>
+        <source>TTML</source>
+        <translation>TTML</translation>
+    </message>
+    <message>
+        <source>Kugou KRC, decoded</source>
+        <translation>Kugou KRC, odkodowany</translation>
+    </message>
+    <message>
+        <source>QQ Music QRC, decoded</source>
+        <translation>QQ Music QRC, odkodowany</translation>
+    </message>
+    <message>
+        <source>word-timed</source>
+        <translation>czasy słów</translation>
+    </message>
+    <message>
+        <source>line-timed</source>
+        <translation>czasy wierszy</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n lines</source>
+        <translation>
+            <numerusform>%n wiersz</numerusform>
+            <numerusform>%n wiersze</numerusform>
+            <numerusform>%n wierszy</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>offset %1 s applied</source>
+        <translation>zastosowano przesunięcie %1 s</translation>
+    </message>
+    <message>
+        <source>File</source>
+        <translation>Plik</translation>
+    </message>
+    <message>
+        <source>Format</source>
+        <translation>Format</translation>
+    </message>
+    <message>
+        <source>Song</source>
+        <translation>Utwór</translation>
+    </message>
+    <message>
+        <source>Encoding</source>
+        <translation>Kodowanie</translation>
+    </message>
+    <message>
+        <source>%1 · detected</source>
+        <translation>%1 · wykryte</translation>
+    </message>
+    <message>
+        <source>This Kugou lyrics file is encrypted, so HikariSub can’t read it.</source>
+        <translation>Ten plik z tekstem piosenki z Kugou jest zaszyfrowany, więc HikariSub nie może go odczytać.</translation>
+    </message>
+    <message>
+        <source>This QQ Music lyrics file is encrypted, so HikariSub can’t read it.</source>
+        <translation>Ten plik z tekstem piosenki z QQ Music jest zaszyfrowany, więc HikariSub nie może go odczytać.</translation>
+    </message>
+    <message>
+        <source>Decode it to text with your own tool first, then import the decoded file. HikariSub doesn’t decrypt lyric files.</source>
+        <translation>Najpierw odkoduj go do tekstu własnym narzędziem, a potem zaimportuj odkodowany plik. HikariSub nie odszyfrowuje plików z tekstami piosenek.</translation>
+    </message>
+    <message>
+        <source>Preview</source>
+        <translation>Podgląd</translation>
+    </message>
+    <message numerus="yes">
+        <source>and %n more lines</source>
+        <translation>
+            <numerusform>i jeszcze %n wiersz</numerusform>
+            <numerusform>i jeszcze %n wiersze</numerusform>
+            <numerusform>i jeszcze %n wierszy</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Add the lines to</source>
+        <translation>Dodaj wiersze do</translation>
+    </message>
+    <message>
+        <source>After the last line of the open file</source>
+        <translation>Za ostatnim wierszem otwartego pliku</translation>
+    </message>
+    <message>
+        <source>A new file</source>
+        <translation>Nowy plik</translation>
+    </message>
+    <message>
+        <source>Style</source>
+        <translation>Styl</translation>
+    </message>
+    <message>
+        <source>End times</source>
+        <translation>Czasy końca</translation>
+    </message>
+    <message>
+        <source>Each line ends when the next one starts</source>
+        <translation>Każdy wiersz kończy się, gdy zaczyna się następny</translation>
+    </message>
+    <message>
+        <source>Leave a gap before the next line</source>
+        <translation>Zostaw przerwę przed następnym wierszem</translation>
+    </message>
+    <message>
+        <source>Gap (s)</source>
+        <translation>Przerwa (s)</translation>
+    </message>
+    <message>
+        <source>Last line lasts (s)</source>
+        <translation>Długość ostatniego wiersza (s)</translation>
+    </message>
+    <message>
+        <source>Choose another file…</source>
+        <translation>Wybierz inny plik…</translation>
+    </message>
+    <message>
+        <source>Import</source>
+        <translation>Importuj</translation>
     </message>
 </context>
 <context>
@@ -7342,6 +7490,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Zamknij okno</translation>
     </message>
     <message>
+        <source>Import lyrics…</source>
+        <translation>Importuj tekst piosenki…</translation>
+    </message>
+    <message>
         <source>Keep AI change</source>
         <translation type="unfinished"></translation>
     </message>
@@ -8386,6 +8538,14 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Import subtitles from MKV…</source>
         <translation>Importuj napisy z MKV…</translation>
+    </message>
+    <message>
+        <source>Turns a lyrics file into lines, in the open file or a new one</source>
+        <translation>Zamienia plik z tekstem piosenki na wiersze w otwartym pliku lub w nowym</translation>
+    </message>
+    <message>
+        <source>Import lyrics…</source>
+        <translation>Importuj tekst piosenki…</translation>
     </message>
     <message>
         <source>Save current file</source>
@@ -14785,7 +14945,7 @@ Linijki [Sekcja] je grupują.</translation>
     </message>
     <message>
         <source>Deleted</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Usunięta</translation>
     </message>
     <message>
         <source>New</source>

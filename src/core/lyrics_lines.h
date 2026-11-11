@@ -5,6 +5,8 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <expected>
+#include <span>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -28,7 +30,10 @@ struct LyricLine {
 };
 
 struct LyricSheet {
+    LyricsFormat format = LyricsFormat::Lrc;
     std::optional<std::u8string> title;
+    std::u8string artist;
+    std::int64_t offset = 0;
     std::vector<LyricLine> lines;
     std::size_t budget = 0; // bytes the Lines may take
     std::size_t spent = 0;
@@ -78,7 +83,20 @@ std::u8string literalText(std::u8string_view text);
 // empty syllables fill pauses within the Line's times. Extends `line.end` to the last word's end.
 std::u8string karaokeText(LyricLine &line);
 
+// Where a Line or word the file leaves open ends: before `next` by the gap, or the last Line's length.
+inline std::int64_t openEnd(std::int64_t begin, std::optional<std::int64_t> next, const LyricsOptions &options)
+{
+    if (!next)
+        return std::min(begin + std::max<std::int64_t>(options.lastLine, 0), kLatestLyricsTime);
+    const std::int64_t gapped = *next - std::max<std::int64_t>(options.gap.value_or(0), 0);
+    return std::max(begin, gapped > begin ? gapped : *next);
+}
+
 // New-Document Script Info and Default Style, then one Dialogue per Line.
-LoadResult lyricsDocument(LyricSheet sheet);
+ImportedLyrics lyricsDocument(LyricSheet sheet);
+
+std::expected<ImportedLyrics, LyricsProblem> readTtml(std::span<const std::byte> bytes);
+std::expected<ImportedLyrics, LyricsProblem> readKrc(std::span<const std::byte> bytes);
+std::expected<ImportedLyrics, LyricsProblem> readQrc(std::span<const std::byte> bytes);
 
 }

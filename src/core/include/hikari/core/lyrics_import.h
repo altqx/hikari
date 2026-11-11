@@ -7,7 +7,9 @@
 #include "hikari/core/document.h"
 
 #include <cstddef>
+#include <cstdint>
 #include <expected>
+#include <optional>
 #include <span>
 #include <string>
 #include <string_view>
@@ -28,6 +30,7 @@ struct LyricsProblem {
         TooLarge,         // larger than a lyrics file: the file, its XML or its Lines
         NoLyrics,         // nothing timed in the whole file
         OutsideParent,    // TTML: a begin after the end an element inherits, or an end before its begin
+        Encrypted,        // a Kugou or QQ Music file as the vendor ships it; HikariSub never decrypts these
     };
     Kind kind = Kind::NoLyrics;
     std::size_t line = 0;  // 1-based line of the file; 0 when no line is at fault
@@ -43,8 +46,47 @@ inline constexpr std::size_t kMaxLyricsFileSize = std::size_t(1) << 20;
 inline constexpr std::size_t kTtmlBytesPerNode = 8;
 inline constexpr std::size_t kMaxLyricsGrowth = 16;
 
-// "lrc" or "ttml", lower-case, without the dot.
+enum class LyricsFormat { Lrc, Ttml, Krc, Qrc };
+
+// End times the file leaves open: a plain LRC line's, or a word-timed line's last word's.
+struct LyricsOptions {
+    // nullopt: the Line ends when the next one starts. Otherwise it ends this many ms
+    // earlier, unless that leaves it no time, when it still ends at the next start.
+    std::optional<std::int64_t> gap;
+    std::int64_t lastLine = 5000; // ms, for the last Line, which has no next one
+    bool operator==(const LyricsOptions &) const = default;
+};
+
+struct LyricsFacts {
+    LyricsFormat format = LyricsFormat::Lrc;
+    bool wordTimed = false;
+    std::size_t lines = 0;
+    std::u8string title;
+    std::u8string artist;
+    std::int64_t offset = 0; // ms, as [offset:] gives it
+};
+
+struct ImportedLyrics {
+    LoadResult load;
+    LyricsFacts facts;
+};
+
+enum class LyricsEncoding { Utf8, Utf16Le, Utf16Be, Gb18030, Big5, ShiftJis, EucKr };
+
+// "lrc", "ttml", "krc" or "qrc", lower-case, without the dot.
 bool isLyricsExtension(std::u8string_view extension);
+std::optional<LyricsFormat> lyricsFormatOf(std::u8string_view extension);
+
+// The file as Kugou or QQ Music ship it, not decoded to text: KRC's "krc1" header,
+// QRC's binary header, QQ Music's hex download, or bytes no text has.
+bool lyricsEncrypted(std::span<const std::byte> bytes, LyricsFormat format);
+
+// The encoding a byte order mark names, or UTF-8 for bytes that are valid UTF-8.
+std::optional<LyricsEncoding> evidentLyricsEncoding(std::span<const std::byte> bytes);
+
+// `bytes` is UTF-8 text; a leading BOM is skipped.
+std::expected<ImportedLyrics, LyricsProblem> readLyrics(std::span<const std::byte> bytes, LyricsFormat format,
+                                                        const LyricsOptions &options = {});
 
 std::expected<LoadResult, LyricsProblem> importLrc(std::span<const std::byte> bytes);
 std::expected<LoadResult, LyricsProblem> importTtml(std::span<const std::byte> bytes);
