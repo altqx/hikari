@@ -2,6 +2,16 @@
 <!DOCTYPE TS>
 <TS version="2.1" language="en">
 <context>
+    <name>HikariSub.Agent</name>
+    <message numerus="yes">
+        <source>Show %n more</source>
+        <translation>
+            <numerusform>Show %n more</numerusform>
+            <numerusform>Show %n more</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.Automation</name>
     <message numerus="yes">
         <source>This file names scripts: %1 and %n more</source>

@@ -2,7 +2,7 @@ import { errorDetail, ProviderError } from "../providers/errors";
 import { kKeyPlaceholder, type Relay, relayFetch } from "../providers/relay";
 import type { SearchService } from "../providers/types";
 import { tool, type Tool } from "./catalogue";
-import type { CallToolResult, ToolSource } from "./toolset";
+import type { CallToolResult, SearchFailure, ToolSource } from "./toolset";
 
 type Json = Record<string, unknown>;
 
@@ -130,6 +130,23 @@ function searchError(error: unknown): unknown {
     return error;
 }
 
+function searchFailure(service: SearchService, error: unknown): { searchFailure?: SearchFailure } {
+    const e = searchError(error);
+    if (!(e instanceof ProviderError) || (e.kind !== "rateLimited" && e.kind !== "unauthorized"))
+        return {};
+    return { searchFailure: { service, reason: e.kind === "rateLimited" ? "usedUp" : "key", httpStatus: e.httpStatus } };
+}
+
+/** `source` while `on` says so, and no tools otherwise. */
+export function whileOn(source: ToolSource, on: () => boolean): ToolSource {
+    return {
+        group: source.group,
+        description: source.description,
+        tools: () => (on() ? source.tools() : []),
+        call: (name, args) => source.call(name, args),
+    };
+}
+
 function worded(error: unknown): string {
     const e = searchError(error);
     if (e instanceof ProviderError && e.kind === "unauthorized")
@@ -213,7 +230,7 @@ export class WebSearch implements ToolSource {
             const page = await read(fetchFn, url);
             return text({ url: page.url, title: page.title, text: clipped(page.text, kPageChars) });
         } catch (error) {
-            return failure(worded(error));
+            return { ...failure(worded(error)), ...searchFailure(service, error) };
         }
     }
 

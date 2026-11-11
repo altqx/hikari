@@ -65,6 +65,8 @@ public:
         /// Adds the agent CLIs the sidecar may ask Qt to start.
         std::function<void(backends::ai::AgentBroker &)> agents;
         std::function<std::unique_ptr<backends::ai::AiSignIn>(application::ai::KeyStore &)> signIn;
+        /// Whether Qt can start `agent` ("claude"); the panel offers only these.
+        std::function<bool(const QString &agent)> agentOnPath;
         /// Finds an agent CLI ("claude" or "codex") and asks it for its version.
         std::function<void(const QString &agent, std::function<void(std::optional<backends::ai::AgentCli>)>)> findAgent;
         std::function<backends::ai::AgentInstall(const backends::ai::AgentCli &)> agentInstall;
@@ -112,6 +114,7 @@ public:
     bool sandboxed() const;
     /// The running sidecar's version and its runtime's and provider libraries', as ai_* event properties.
     QJsonObject versionProperties() const;
+    bool agentFound(const QString &agent) const { return m_ports.agentOnPath && m_ports.agentOnPath(agent); }
     /// How many sessions of `agent` ("claude" or "codex") the sidecar is running.
     std::size_t agentSessions(const std::string &agent) const;
 

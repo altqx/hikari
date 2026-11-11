@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
-import type { Request, ToolDefinition, Wire } from "../../src/providers/types";
+import { loadsToolReferences } from "../../src/providers/anthropic";
+import type { ProviderConfig, Request, ToolDefinition, Wire } from "../../src/providers/types";
 import { Harness, kKey } from "./harness";
 import { data, type Reply, sse } from "./mock";
 
@@ -272,5 +273,76 @@ describe("Gemini explicit caches", () => {
         await h.stream("anthropic-messages", explicit(1));
         await h.stream("gemini", { ...explicit(1), cacheKey: undefined });
         expect(h.mock.received.some((r) => r.path.includes("cachedContents"))).toBe(false);
+    });
+});
+
+function found(names: string[]): Request["messages"] {
+    return [
+        { author: "user", parts: [{ type: "text", text: "Play it" }] },
+        { author: "assistant", parts: [{ type: "toolCall", id: "s1", name: "search_tools", argumentsJson: '{"query":"audio"}' }] },
+        { author: "user", parts: [{ type: "toolResult", callId: "s1", content: JSON.stringify({ tools: names.map((name) => ({ name })) }) }] },
+    ];
+}
+
+function toolNames(wire: Wire, body: Json): string[] {
+    switch (wire) {
+    case "chat-completions":
+        return body.tools.map((t: Json) => t.function.name);
+    case "gemini":
+        return body.tools[0].functionDeclarations.map((t: Json) => t.name);
+    default:
+        return body.tools.map((t: Json) => t.name);
+    }
+}
+
+describe("tools search_tools found", () => {
+    for (const wire of ["chat-completions", "responses", "anthropic-messages", "gemini"] as const) {
+        test(`${wire}: follow the sorted tools, in the order found, so the prefix stays as it was`, async () => {
+            h.mock.replies.push(kDone[wire](), kDone[wire]());
+            const service = h.service(wire);
+            await h.turn(service, conversation(1));
+            await h.turn(service, {
+                ...conversation(1),
+                tools: ["get_line", "video_frame", "add_line", "audio_play"].map(tool),
+                messages: found(["video_frame", "audio_play"]),
+            });
+            const [before, after] = h.mock.received.map((r) => r.json() as Json);
+            expect(toolNames(wire, before!)).toEqual(["add_line", "get_line"]);
+            expect(toolNames(wire, after!)).toEqual(["add_line", "get_line", "video_frame", "audio_play"]);
+            const core = JSON.stringify(before!.tools).replace(/(\]\})?\]$/, "");
+            expect(JSON.stringify(after!.tools).startsWith(core)).toBe(true);
+        });
+    }
+
+    test("Anthropic loads them as tool_reference blocks on models with tool search, and defers them", async () => {
+        h.mock.replies.push(kDone["anthropic-messages"](), kDone["anthropic-messages"]());
+        const service = h.service("anthropic-messages");
+        const asking = (model: string): Request => ({
+            ...conversation(1), model, tools: ["get_line", "search_tools", "audio_play", "gone"].map(tool),
+            messages: found(["audio_play", "unsent"]),
+        });
+        await h.turn(service, asking("claude-opus-5-5"));
+        await h.turn(service, asking("claude-opus-4-1-20250805"));
+        const [loaded, older] = h.mock.received.map((r) => r.json() as Json);
+        expect(loaded!.tools.map((t: Json) => [t.name, t.defer_loading, t.cache_control])).toEqual([
+            ["get_line", undefined, undefined], ["gone", undefined, undefined], ["search_tools", undefined, undefined],
+            ["audio_play", true, undefined],
+        ]);
+        expect(loaded!.messages[2].content[0].content).toEqual([{ type: "tool_reference", tool_name: "audio_play" }]);
+        expect(older!.tools.map((t: Json) => [t.name, t.defer_loading])).toEqual([
+            ["get_line", undefined], ["gone", undefined], ["search_tools", undefined], ["audio_play", undefined],
+        ]);
+        expect(older!.messages[2].content[0].content).toBe(JSON.stringify({ tools: [{ name: "audio_play" }, { name: "unsent" }] }));
+    });
+
+    test("only Anthropic's own API on Claude 4.5 and later takes tool_reference blocks", () => {
+        const anthropic = { id: "a", preset: "anthropic", wire: "anthropic-messages", baseUrl: "" } as const;
+        const loads = (model: string, config: ProviderConfig = anthropic) => loadsToolReferences(config, model);
+        for (const model of ["claude-opus-5-5", "claude-sonnet-5", "claude-fable-5-1", "claude-opus-4-8", "claude-haiku-4-5-20251001",
+            "claude-sonnet-4-5-20250929"])
+            expect(loads(model)).toBe(true);
+        for (const model of ["claude-opus-4-1-20250805", "claude-sonnet-4-20250514", "claude-opus-4-0", "claude-3-7-sonnet-latest", "m"])
+            expect(loads(model)).toBe(false);
+        expect(loads("claude-opus-5-5", { ...anthropic, preset: "custom" })).toBe(false);
     });
 });

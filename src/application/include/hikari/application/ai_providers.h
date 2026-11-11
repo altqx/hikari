@@ -168,12 +168,20 @@ struct ToolCallArguments {
     int index = 0;
     std::string delta;
 };
-/// A source the answer cites; `index` numbers one completion's sources from 1.
+/// The cited part of `Finished::text` as [start, end) in UTF-16 code units, as Qt holds the text.
+struct CitedSpan {
+    int start = 0;
+    int end = 0;
+    bool operator==(const CitedSpan &) const = default;
+};
+/// A source the answer cites; `index` numbers one completion's sources from 1. Without a `span` it shows in Sources
+/// only.
 struct Citation {
     int index = 0;
     std::string url;
     std::string title;
     std::string quote;
+    std::optional<CitedSpan> span;
     bool operator==(const Citation &) const = default;
 };
 struct Finished {
