@@ -1,5 +1,5 @@
 # Every value comes from the environment:
-#   ACTION    run | check-installed | check-removed | user-file | icon-ids | start-app | stop-app | state | dir | open-file | update | cleanup | end-setups
+#   ACTION    run | check-installed | check-removed | user-file | icon-ids | start-app | stop-app | state | dir | open-file | open-folder | update | cleanup | end-setups
 #   SETUP     run: the installer or uninstaller to start
 #   ARGS      run: its command line (NSIS rules: /D= last, unquoted)
 #   EXPECT    run: the exit code it must return (default 0)
@@ -31,6 +31,7 @@ $classes = "$hive\Software\Classes"
 $programs = if ($scope -eq 'machine') { [Environment]::GetFolderPath('CommonPrograms') } else { [Environment]::GetFolderPath('Programs') }
 $desktop = if ($scope -eq 'machine') { [Environment]::GetFolderPath('CommonDesktopDirectory') } else { [Environment]::GetFolderPath('DesktopDirectory') }
 $types = [ordered]@{ '.ass' = 109; '.ssa' = 110; '.srt' = 111; '.sub' = 112 }
+$folderVerbs = [ordered]@{ 'Directory' = '%1'; 'Directory\Background' = '%V' }
 
 function Value($path, $name) {
     try { (Get-ItemProperty -LiteralPath $path -Name $name -ErrorAction Stop).$name } catch { $null }
@@ -159,6 +160,16 @@ switch ($env:ACTION) {
         } else {
             Check (-not (Test-Path "$classes\HikariSub.ass")) 'no association without the component'
         }
+        foreach ($kind in $folderVerbs.Keys) {
+            $verb = "$classes\$kind\shell\HikariSub"
+            if (($components -split ',') -contains 'assoc' -and -not $env:LEGACY) {
+                Check ((Value $verb '(default)') -eq 'Open with HikariSub') "$kind verb named Open with HikariSub"
+                Check ((Value $verb Icon) -eq "`"$exe`",0") "$kind verb icon"
+                Check ((Value "$verb\command" '(default)') -eq "`"$exe`" `"$($folderVerbs[$kind])`"") "$kind verb command"
+            } else {
+                Check (-not (Test-Path $verb)) "no $kind verb"
+            }
+        }
         if (-not $env:LEGACY) {
             Check ((Value "$classes\hikarisub" '(default)') -eq 'URL:HikariSub') 'hikarisub link handler'
             Check ($null -ne (Value "$classes\hikarisub" 'URL Protocol')) 'hikarisub URL Protocol'
@@ -188,6 +199,7 @@ switch ($env:ACTION) {
         }
         Check (-not (Test-Path "$classes\Applications\HikariSub.exe")) 'Applications\HikariSub.exe removed'
         Check (-not (Test-Path "$classes\hikarisub")) 'hikarisub link handler removed'
+        foreach ($kind in $folderVerbs.Keys) { Check (-not (Test-Path "$classes\$kind\shell\HikariSub")) "$kind verb removed" }
         foreach ($k in @($env:KEEP_USER -split '\|' | Where-Object { $_ })) {
             Check (Test-Path -LiteralPath (Join-Path $userFolder $k)) "user folder kept $k"
         }
@@ -243,6 +255,25 @@ switch ($env:ACTION) {
             Check ($found.ExecutablePath -eq $exe) "started $($found.ExecutablePath)"
             Stop-Process -Id $found.ProcessId -Force
         }
+    }
+    'open-folder' {
+        $folder = Join-Path $env:TEMP 'hs-folder-verb-test'
+        New-Item -ItemType Directory -Force -Path $folder | Out-Null
+        Start-Process -FilePath $folder -Verb HikariSub
+        $found = $null
+        $deadline = (Get-Date).AddSeconds(20)
+        while (-not $found -and (Get-Date) -lt $deadline) {
+            Start-Sleep -Milliseconds 500
+            $found = Get-CimInstance Win32_Process -Filter "Name = 'HikariSub.exe'" | Where-Object { $_.CommandLine -like "*hs-folder-verb-test*" } | Select-Object -First 1
+        }
+        Check ($null -ne $found) 'Open with HikariSub on a folder started HikariSub.exe with it'
+        if ($found) {
+            Write-Output "     $($found.CommandLine)"
+            Check ($found.ExecutablePath -eq $exe) "started $($found.ExecutablePath)"
+            Check ($found.CommandLine -eq "`"$exe`" `"$folder`"") 'the folder is the only argument'
+            Stop-Process -Id $found.ProcessId -Force
+        }
+        Remove-Item -Recurse -Force -LiteralPath $folder -ErrorAction SilentlyContinue
     }
     'update' {
         $expect = if ($env:EXPECT) { [int]$env:EXPECT } else { 0 }
