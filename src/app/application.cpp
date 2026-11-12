@@ -789,7 +789,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             o.audio = m_automation->media().peakAudio();
             return o;
         },
-        m_aiPlugins.get()});
+        projectAiExclude, m_aiPlugins.get()});
     AiFeatures::Ports aiPorts = options.aiPorts ? std::move(*options.aiPorts)
                                                 : AiFeatures::defaultPorts(m_userFolder, &m_apiHost->api(),
                                                                            options.appVersion.isEmpty()

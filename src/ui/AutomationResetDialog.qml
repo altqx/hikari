@@ -67,7 +67,7 @@ DialogWindow {
             Label {
                 required property var modelData
                 objectName: "automationResetBuiltIn_" + modelData.nameSpace
-                text: qsTr("%1: use %2").arg(modelData.nameSpace).arg(modelData.command)
+                text: qsTr("%1: use %2").arg(modelData.nameSpace, modelData.command)
                 Layout.fillWidth: true
                 wrapMode: Text.WordWrap
             }
@@ -91,7 +91,7 @@ DialogWindow {
                 }
                 Label {
                     objectName: "automationResetScriptText_" + row.modelData.nameSpace
-                    text: row.modelData.state === "failed" ? qsTr("%1: %2").arg(row.modelData.name).arg(row.modelData.error)
+                    text: row.modelData.state === "failed" ? qsTr("%1: %2").arg(row.modelData.name, row.modelData.error)
                         : row.modelData.state === "installed" ? qsTr("%1 is installed.").arg(row.modelData.name)
                         : row.modelData.name
                     wrapMode: Text.WordWrap

@@ -373,6 +373,7 @@ public:
     Q_INVOKABLE QString projectMoveText(int shellWindow) const;
     QString projectOf(int shellWindow) const { return m_projects->root(shellWindow); }
     std::optional<api::ProjectState> activeProject() const;
+    static std::vector<std::string> projectAiExclude(const std::string &root);
     ProjectWindows &projects() { return *m_projects; }
     // "modified" when the target's file is newer than when last read or written;
     // "removed" once when it is gone (the Document becomes unsaved).
