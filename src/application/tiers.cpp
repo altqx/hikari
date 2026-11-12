@@ -14,6 +14,9 @@ bool has(const std::vector<std::u8string> &names, const std::u8string &name)
 
 constexpr std::array kStores{
     TierStore{"styleCatalogs", TierRule::HiddenByName, ".hikari/catalogs"},
+    TierStore{"dialogPresets", TierRule::HiddenByName, ".hikari/presets.toml"},
+    TierStore{"shiftPresets", TierRule::HiddenByName, ".hikari/presets.toml"},
+    TierStore{"postprocessorPresets", TierRule::HiddenByName, ".hikari/presets.toml"},
     TierStore{"hotkeys", std::nullopt, {}},
     TierStore{"aiProviders", std::nullopt, {}},
     TierStore{"aiThreads", std::nullopt, {}},

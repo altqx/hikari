@@ -14,6 +14,7 @@
 #include "line_table_model.h"
 #include "settings_store.h"
 #include "shell_controller.h"
+#include "shift_times_controller.h"
 #include "spelling/fake_spelling.h"
 
 #include <QDir>
@@ -1069,6 +1070,67 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(field("newCatalog"), "click"));
         QTRY_VERIFY(popover->property("opened").toBool());
         QCOMPARE(create->property("text").toString(), QStringLiteral("Save to mine"));
+    }
+
+    void shiftTimesPresetsHaveAProjectTier()
+    {
+        start();
+        const QString show = folder("presets", true);
+        const QString presets = show + QStringLiteral("/.hikari/presets.toml");
+        writeAll(presets, "version = 1\n[shiftTimes]\npresets = ['{\"name\":\"Late\",\"values\":{\"timeMs\":900}}']\n");
+        auto &shift = application->shiftTimesSettings();
+        auto values = shift.settingsMap();
+        values.insert(QStringLiteral("timeMs"), 100);
+        shift.setSettingsMap(values);
+        QVERIFY(shift.savePreset(QStringLiteral("shift"), QStringLiteral("Late")));
+        QVERIFY(!shift.hasProject());
+
+        const int w = openProjectWindow(show);
+        QVERIFY(w >= 0);
+        QVERIFY(application->openFile(writeAss(show + QStringLiteral("/ep.ass"), "a")));
+        QTRY_VERIFY(shift.hasProject());
+        QCOMPARE(rowKeys(shift.shiftPresetRows()), (QStringList{QStringLiteral("project:Late"), QStringLiteral("mine:Late (hidden)")}));
+        QVERIFY(shift.applyPreset(QStringLiteral("shift"), QStringLiteral("Late")));
+        QCOMPARE(shift.settings().timeMs, 900);
+
+        QVERIFY(QMetaObject::invokeMethod(named(shell(w), "panelShowTiming"), "triggered"));
+        QQuickItem *content = shell(w)->contentItem();
+        const auto field = [&](const char *name) { return item(content, QLatin1String(name)); };
+        QTRY_VERIFY(field("shiftPresetTier") && field("shiftPresetTier")->isVisible());
+        QCOMPARE(field("shiftPresetTier")->property("text").toString(), QStringLiteral("Project"));
+        QVERIFY(named(shell(w), "shiftRenamePreset")->property("enabled").toBool());
+
+        QVERIFY(shift.applyPreset(QStringLiteral("shift"), QStringLiteral("Late"), QStringLiteral("mine")));
+        QCOMPARE(shift.settings().timeMs, 100);
+        QCOMPARE(field("shiftPresetTier")->property("text").toString(), QStringLiteral("Mine"));
+        QTRY_VERIFY(!named(shell(w), "shiftRenamePreset")->property("enabled").toBool());
+        QVERIFY(!named(shell(w), "shiftDeletePreset")->property("enabled").toBool());
+        QCOMPARE(named(shell(w), "shiftCopyPresetToTier")->property("text").toString(), QStringLiteral("Copy to project"));
+
+        QVERIFY(QMetaObject::invokeMethod(field("shiftPresetBar"), "transfer", Q_ARG(QVariant, false)));
+        auto *review = shell(w)->findChild<QObject *>(QStringLiteral("shiftPresetClashReview"));
+        QTRY_VERIFY(review && review->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(review, "setAll", Q_ARG(QVariant, QStringLiteral("rename"))));
+        QVERIFY(QMetaObject::invokeMethod(review, "finish", Q_ARG(QVariant, true)));
+        QTRY_VERIFY(readAll(presets).contains("Late (2)"));
+
+        auto *popover = shell(w)->findChild<QObject *>(QStringLiteral("shiftPresetPopover"));
+        QVERIFY(QMetaObject::invokeMethod(popover, "openFor", Q_ARG(QVariant, QString())));
+        QTRY_VERIFY(popover->property("opened").toBool());
+        auto *popoverContent = popover->property("contentItem").value<QQuickItem *>();
+        QQuickItem *save = item(popoverContent, QStringLiteral("shiftPresetSave"));
+        QCOMPARE(save->property("text").toString(), QStringLiteral("Save to project"));
+        item(popoverContent, QStringLiteral("shiftPresetName"))->setProperty("text", QStringLiteral("House"));
+        QVERIFY(QMetaObject::invokeMethod(save, "click"));
+        QTRY_VERIFY(readAll(presets).contains("House"));
+        QCOMPARE(shift.shiftPresetTier(), QStringLiteral("project"));
+
+        QVERIFY(QMetaObject::invokeMethod(popover, "openFor", Q_ARG(QVariant, QString())));
+        QTRY_VERIFY(popover->property("opened").toBool());
+        QVERIFY(QMetaObject::invokeMethod(popover->findChild<QObject *>(QStringLiteral("shiftPresetSaveTierMine")), "triggered"));
+        QCOMPARE(save->property("text").toString(), QStringLiteral("Save to mine"));
+        QVERIFY(application->settingsStore()->list("workspace.saveTiers").contains(QStringLiteral("shiftPresets\tmine")));
+        QVERIFY(QMetaObject::invokeMethod(popover, "revert"));
     }
 
     void userOnlyStoresIgnoreTheProjectsFiles()

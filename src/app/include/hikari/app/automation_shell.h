@@ -128,6 +128,8 @@ public:
 
     // Each shell window's Project, with native separators.
     void setWindowProjects(std::function<std::map<int, application::WindowProject>()> projects);
+    // The Project folder of the window a run starts in; its script dialogs offer that Project's presets.
+    void setRunProjectRoot(std::function<QString()> root) { m_runProjectRoot = std::move(root); }
     // Loads the autoload scripts a window's new Project brings and unloads those no window shows any more.
     void projectsChanged();
     // False for an autoload script that the window's own tiers hide or don't have.
@@ -256,6 +258,7 @@ private:
         bool cancelledAtDialog = false;
         std::optional<std::vector<AnsweredDialog>> repeat;
         bool replaying = false;
+        QString projectRoot;
     };
     struct RepeatRecord {
         std::string path, macro;
@@ -339,6 +342,7 @@ private:
     std::map<std::string, bool> m_trustDecisions;
     std::function<void(const QString &, LogLine)> m_logLine;
     std::function<std::map<int, application::WindowProject>()> m_windowProjects;
+    std::function<QString()> m_runProjectRoot;
     application::AutoloadPlan m_plan;
     bool m_autoloaded = false;
     ui::SettingsStore *m_settings = nullptr;

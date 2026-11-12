@@ -557,6 +557,7 @@ application::KaraokeTemplaterPort &AutomationShell::templater()
 AutomationShell::~AutomationShell()
 {
     m_windowProjects = nullptr;
+    m_runProjectRoot = nullptr;
     m_manager.shutdown();
 }
 
@@ -1181,6 +1182,7 @@ void AutomationShell::presentDialog(const application::DialogRequest &request, b
     }
     const QString source = QString::fromStdString(m_run->path + '\n' + m_run->macro);
     const QString key = ui::ScriptDialogMemory::keyOf(QString::fromStdString(m_run->active), request);
+    m_dialogMemory.setProjectRoot(m_run->projectRoot);
     auto answered = [this, request, key, reply = std::move(reply)](application::DialogResult result) {
         const bool cancelled = application::cancelAnswer(request, result.pressed);
         if (m_run) {
@@ -1348,6 +1350,8 @@ bool AutomationShell::run(const std::string &path, int ordinal, RunOrigin origin
     Run started{*target, std::move(*snapshot), 0, path, macro, ordinal, origin};
     started.generation = m_files.generation(*target);
     started.validations = application::dependencyValidations(m_manager.scripts(), path);
+    if (m_runProjectRoot)
+        started.projectRoot = m_runProjectRoot();
     m_macroStarted = false;
     m_cardTimer.stop();
     m_cardLeft = m_cardDelay;
