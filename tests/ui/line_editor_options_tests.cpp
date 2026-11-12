@@ -69,6 +69,7 @@ class LineEditorOptionsTest : public QObject {
         engine->setInitialProperties(application->qmlProperties());
         engine->loadFromModule("Hikari.Ui", "Main");
         QVERIFY(!engine->rootObjects().isEmpty());
+        QVERIFY(QMetaObject::invokeMethod(engine->rootObjects().first(), "buildMenus"));
         window = qobject_cast<QQuickWindow *>(engine->rootObjects().first());
         window->requestActivate();
         QVERIFY(QTest::qWaitForWindowExposed(window));
