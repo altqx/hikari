@@ -336,3 +336,47 @@ TEST_F(AiFolder, AnAiCallerCannotChangeAiExclude)
     m_caller.reviewed = false;
     EXPECT_EQ(reason("settings.set", R"({"setting": "ai.exclude", "value": ["*.tmp"]})"), "ok");
 }
+
+TEST_F(AiFolder, AnAiThreadReadsItsProjectWithoutAGrant)
+{
+    m_api.revokeFiles(m_caller.id);
+    m_caller.project = utf8(m_data);
+    const Result held = call("files.list", "{}");
+    ASSERT_TRUE(held);
+    EXPECT_EQ(*held->find("folders"), *Json::parse(R"([{"folder": "project", "name": "data", "access": "read"}])"));
+    const Result read = call("files.read", R"({"folder": "project", "path": "notes/today.txt"})");
+    ASSERT_TRUE(read);
+    EXPECT_EQ(*read->find("data"), Json("today"));
+    EXPECT_EQ(code("files.write", R"({"folder": "project", "path": "notes/today.txt", "data": "x"})"), "not_granted");
+    EXPECT_EQ(*m_files.read(utf8(m_data / "notes/today.txt"), 100), "today");
+}
+
+TEST_F(AiFolder, TheProjectFolderKeepsTheExcludesAndTheMediaRule)
+{
+    m_api.revokeFiles(m_caller.id);
+    m_caller.project = utf8(m_data);
+    m_project.excludes = {"drafts/"};
+    for (const char *path : {".env", "keys/tls.key", ".git/config", ".hikari/credentials.toml", "drafts/x.txt"})
+        EXPECT_EQ(reason("files.read", R"({"folder": "project", "path": ")" + std::string(path) + R"("})"), "excluded")
+            << path;
+    EXPECT_EQ(reason("files.read", R"({"folder": "project", "path": "raw/ep01.mkv"})"), "media");
+}
+
+TEST_F(AiFolder, AnUntrustedProjectIsReadOnlyToo)
+{
+    m_api.revokeFiles(m_caller.id);
+    m_project.state = ProjectState{.name = "data", .root = utf8(m_data), .trusted = false};
+    m_caller.project = utf8(m_data);
+    EXPECT_EQ(code("files.read", R"({"folder": "project", "path": "notes/today.txt"})"), "ok");
+    EXPECT_EQ(code("files.write", R"({"folder": "project", "path": "new.txt", "data": "x"})"), "not_granted");
+    EXPECT_FALSE(fs::exists(m_data / "new.txt"));
+}
+
+TEST_F(AiFolder, OnlyAnAiCallerWithAProjectGetsTheFolder)
+{
+    m_api.revokeFiles(m_caller.id);
+    EXPECT_EQ(code("files.read", R"({"folder": "project", "path": "notes/today.txt"})"), "not_granted");
+    m_caller.project = utf8(m_data);
+    m_caller.reviewed = false;
+    EXPECT_EQ(code("files.read", R"({"folder": "project", "path": "notes/today.txt"})"), "not_granted");
+}
