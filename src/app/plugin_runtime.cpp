@@ -199,9 +199,9 @@ QStringList PluginRuntime::missingIn(int shellWindow) const
 {
     const auto *project = windowProject(shellWindow);
     QStringList out;
-    if (!project || !m_installer)
+    if (!project)
         return out;
-    const auto registry = m_installer->registry();
+    const auto registry = m_installer ? m_installer->registry() : plugins::Registry();
     if (registry)
         for (const auto &id : plugins::missingPlugins(*project, *registry))
             out << qs(id);
