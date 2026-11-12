@@ -6012,6 +6012,42 @@ Failed to copy %2 fonts.</source>
         <source>Copy</source>
         <translation>நகலெடு</translation>
     </message>
+    <message>
+        <source>At tag blocks</source>
+        <translation>குறிச்சொல் தொகுதிகளில்</translation>
+    </message>
+    <message>
+        <source>Every N frames or seconds…</source>
+        <translation>ஒவ்வொரு N சட்டகம் அல்லது வினாடிக்கும்…</translation>
+    </message>
+    <message>
+        <source>Split every</source>
+        <translation>இடைவெளியில் பிரி</translation>
+    </message>
+    <message>
+        <source>Every</source>
+        <translation>ஒவ்வொரு</translation>
+    </message>
+    <message>
+        <source>Piece length</source>
+        <translation>துண்டின் நீளம்</translation>
+    </message>
+    <message>
+        <source>Frames</source>
+        <translation>சட்டகங்கள்</translation>
+    </message>
+    <message>
+        <source>Seconds</source>
+        <translation>வினாடிகள்</translation>
+    </message>
+    <message>
+        <source>Unit</source>
+        <translation>அலகு</translation>
+    </message>
+    <message>
+        <source>Frames need a video.</source>
+        <translation>சட்டகங்களுக்கு வீடியோ தேவை.</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Home</name>
@@ -7744,6 +7780,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Align to video…</source>
         <translation>வீடியோவுடன் சீரமை…</translation>
+    </message>
+    <message>
+        <source>Split lines at tag blocks</source>
+        <translation>குறிச்சொல் தொகுதிகளில் வரிகளைப் பிரி</translation>
+    </message>
+    <message>
+        <source>Split lines every N frames or seconds…</source>
+        <translation>ஒவ்வொரு N சட்டகம் அல்லது வினாடிக்கும் வரிகளைப் பிரி…</translation>
     </message>
 </context>
 <context>
@@ -10684,6 +10728,30 @@ Failed to copy %2 fonts.</source>
         <source>Align to video</source>
         <translation>வீடியோவுடன் சீரமை</translation>
     </message>
+    <message>
+        <source>Project</source>
+        <translation type="unfinished">திட்டப்பணி</translation>
+    </message>
+    <message>
+        <source>Mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation type="unfinished">சேமி</translation>
+    </message>
+    <message>
+        <source>Save to project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save to mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Where to save</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Matroska</name>
@@ -11354,6 +11422,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>%1 copy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>karaOK templates</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Uses karaOK template syntax. Runs in HikariSub; in Aegisub it needs the karaOK templater.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Aegisub 3.2.2 templates</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -14439,6 +14519,153 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>Requests go only to the providers you add and to %1. The AI component isn’t sandboxed on this system.</source>
         <translation>கோரிக்கைகள் நீங்கள் சேர்க்கும் வழங்குநர்களுக்கும் %1-க்கும் மட்டுமே செல்லும். இந்தக் கணினியில் AI கூறு தனிமைப்படுத்தப்படவில்லை.</translation>
     </message>
+    <message>
+        <source>Delete MCP server</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete the MCP server “%1”?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Its secrets are removed from the keychain, and the agent loses its tools.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Starting…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Connected · %n tool(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Failed: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Starts when the agent needs it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add an MCP server</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Runs as</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A command on this computer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A URL (streamable HTTP)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Command</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Environment</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Leave empty to keep the stored variables</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>URL</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bearer token</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Leave empty to keep the stored token</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Optional</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>One NAME=value per line. They go to the keychain, and only to this server.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The token goes to the keychain, and only to this URL.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Trust what this server says about its tools</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A trusted server’s read-only tools run without asking. Without trust, every tool asks as a change would.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Give the server a name.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Type the command that starts the server.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Type the server’s http or https URL.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Write each variable as NAME=value on its own line.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The keychain didn’t take the secrets; nothing was saved.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>MCP servers</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No MCP servers yet. Add one to give the agent its tools.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add server…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Trust what it says about its tools</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Run %1 without asking</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 · only reads, never asks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 · asks every time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Servers run as you, outside the AI component’s sandbox. Tools that may change or delete things ask first in every mode. Changes apply at once.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Plugins</name>
@@ -16999,6 +17226,10 @@ because it was edited.</source>
         <source>%1 lines deselected.</source>
         <translation>%1 வரிகள் தேர்வுநீக்கப்பட்டன.</translation>
     </message>
+    <message>
+        <source>Overlapping lines</source>
+        <translation>ஒன்றின்மேல் ஒன்று வரும் வரிகள்</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Session</name>
@@ -18400,6 +18631,30 @@ because it was edited.</source>
         <translation>பட்டியலில்</translation>
     </message>
     <message>
+        <source>Move catalogue</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy catalogue</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The project already has a catalogue named “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>You already have a catalogue named “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation type="unfinished">நகலெடு</translation>
+    </message>
+    <message>
         <source>Delete catalogue</source>
         <translation>பட்டியலை நீக்கு</translation>
     </message>
@@ -18548,6 +18803,46 @@ because it was edited.</source>
     <message>
         <source>Catalogue</source>
         <translation>பட்டியல்</translation>
+    </message>
+    <message>
+        <source>%1, hidden by the project’s copy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hidden by the project’s copy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Catalogue tiers</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy to project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy to mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hidden by the project’s copy. Copy it to the project to use it there.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Add to file</source>
@@ -18838,6 +19133,10 @@ because it was edited.</source>
     <message>
         <source>The catalogue “%1” no longer exists.</source>
         <translation>“%1” பட்டியல் இப்போது இல்லை.</translation>
+    </message>
+    <message>
+        <source>The project’s copy hides this catalogue. Copy it to edit it.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Style named “%1” already exists.</source>
@@ -19960,6 +20259,10 @@ Styles deleted:
         <translation>ஒவ்வொரு வரிக்குமான குறியீடு</translation>
     </message>
     <message>
+        <source>Uses karaOK template syntax. Switch Template language to karaOK to use it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>The new line goes above the first karaoke line, with that line’s style.</source>
         <translation>புதிய வரி, முதல் கரோக்கி வரியின் பாணியுடன், அதற்கு மேலே சேர்க்கப்படும்.</translation>
     </message>
@@ -20251,6 +20554,86 @@ Styles deleted:
         <translation>கரோக்கி இடமிருந்து வலமாக நிரம்புகிறது; வரியுடன் மங்கித் தோன்றி, அதன் பின் மங்கி மறையும்.</translation>
     </message>
     <message>
+        <source>Word pop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each word swells as it starts and settles back while it is sung.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Word wipe</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The line shows whole, and a second colour wipes across each word while it is sung.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Letter cascade</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Letters appear one after another along the line before it is sung.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Letter shimmer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each letter tilts and brightens as it is sung, then straightens.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Furigana rise</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Furigana rises into place over each syllable as it is sung.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Early lead-in</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each syllable lights up a moment before it is sung.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Wave bounce</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each syllable bobs up and down on a sine wave while it is sung (ln.kara).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shape burst</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Six stars burst out of each syllable as it is sung (ln.kara).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Line gradient</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The line’s letters run through a band of colours from left to right (ln.kara).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Thai fade</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each character cluster fades in as it is sung, so Thai vowels and tone marks stay on their letters.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>syllable duration (ms)</source>
         <translation>அசையின் கால அளவு (ms)</translation>
     </message>
@@ -20441,6 +20824,274 @@ Styles deleted:
     <message>
         <source>The templater stopped before it finished.</source>
         <translation>வார்ப்புரு இயக்கி முடிப்பதற்கு முன்பே நின்றுவிட்டது.</translation>
+    </message>
+    <message>
+        <source>The template language this file sets.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The template language this file’s templates use. Choose one to set it in the file.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Template language</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>binds ln.kara to the template environment and adds its shorthands</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the unit’s start plus this share of its duration (ms)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>this share of the unit’s duration, all of it with no argument (ms)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>sets a template variable to a random whole number, once</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>tags and sizes of the karaoke line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>tags and sizes of the current unit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>builds \pos, \move and \t tags</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>periodic animation as \t steps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>colours from RGB or HSL</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>rounding, ranges and interpolation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>drawings for \p1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the progress bar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the first of each named tag in the karaoke line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>every one of each named tag in the karaoke line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the karaoke line’s colour N, or its style’s</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the karaoke line’s alpha N, or its style’s</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the style’s colour N</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the style’s alpha N</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>lead-in and lead-out, from \fad or empty end syllables (ms)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>characters in the karaoke line without tags</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>characters in the karaoke line’s text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>characters in the karaoke line as written</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the first of each named tag in the unit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>every one of each named tag in the unit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the unit’s colour N, or its style’s</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the unit’s alpha N, or its style’s</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>characters in the unit without tags</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>characters in the unit’s text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>\an and \pos at the unit’s anchor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>\an and \move from offsets to the unit’s anchor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>vertical placement for kanji, in karaOK mode</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>\t with whole-millisecond times</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>reads a \t into a table</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>changes a \t’s times or tags</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>reads a \move into a table</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>a wave: sine, square, triangle, sawtooth or noise</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>\t steps that follow a wave</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>a colour from red, green and blue (0–255)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>a colour from hue, saturation and lightness (0–255)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>a colour from hue, saturation and luma (0–255)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>reads or adds to a colour’s red, green and blue</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>reads or adds to a colour’s hue, saturation and lightness</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>n kept between min and max</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>n wrapped into a range</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>n bounced back and forth in a range</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the logarithm of n to a base</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>-1 for a negative n, else 1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>n rounded to this many decimals</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>n rounded to a whole number</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>a random number, to 4 decimals</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>between two numbers, colours or alphas</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>between two values, with acceleration</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>a drawing moved by x and y</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>a rectangle drawing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>a rectangle drawing with round corners</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>a circle drawing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>an equilateral triangle drawing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>a regular polygon drawing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>a gear drawing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>a ready-made drawing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>sets the progress bar (0–1)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>sets a template variable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>n rounded down</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>karaOK’s ln.kara library</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

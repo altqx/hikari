@@ -108,7 +108,7 @@ PluginRuntime::PluginRuntime(Wiring wiring, QObject *parent) : QObject(parent), 
             qCWarning(lcPluginsSandbox) << "Restricted plugins run without a complete sandbox:" << coverage.missing;
     }
     m_network = new PluginNetwork(*m_wiring.network, m_wiring.networkAllowed, this);
-    m_files = std::make_unique<PluginFiles>(m_wiring.api, m_installer ? &*m_installer : nullptr, *m_ui);
+    m_files = std::make_unique<PluginFiles>(m_wiring.api, m_installer ? &*m_installer : nullptr, *m_ui, m_wiring.project);
     m_ui->setGrantDrop([this](const std::string &plugin, const QString &file) {
         const auto it = m_plugins.find(plugin);
         return it == m_plugins.end() ? api::Json() : m_files->grantDropped(it->second->files, file);

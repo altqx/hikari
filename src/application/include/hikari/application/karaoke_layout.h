@@ -56,6 +56,7 @@ std::vector<std::string> charsOf(const std::string &text, CharSplit split);
 struct LineOptions {
     bool chars = false;
     CharSplit split = CharSplit::Graphemes;
+    bool karaOK = false; // karaOK's rules: places to 0.1 px, and a unit with no duration isn't blank
 };
 
 struct Highlight {
@@ -130,6 +131,7 @@ struct Line {
     std::vector<KaraFuri> karaFuri;
     int syln = 0;
     double li = 0;
+    bool karaOK = false;
     std::string signature;
 };
 
@@ -146,6 +148,12 @@ public:
     KaraOKUnits karaOKUnits(const Line &line, CharSplit split, std::vector<std::string> &problems);
     // Every Style the templater adds (karaskel's "-furigana" ones), in its order; for $li.
     std::size_t furiganaStylesAdded() const { return m_added; }
+    // Lays Lines out as karaskel.collect_head(subs, false) leaves them: without the "-furigana" Styles it adds.
+    void withoutAddedStyles()
+    {
+        m_added_styles.clear();
+        m_added = 0;
+    }
     const StyleInfo *style(std::u8string_view name) const;
     std::optional<std::vector<std::u8string>> addedStyle(std::u8string_view name) const;
 

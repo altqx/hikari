@@ -1008,6 +1008,17 @@ Pane {
                     ToolTip.text: qsTr("Load at start")
                     onToggled: root.controller.setEnabled(scriptItem.script.path, checked)
                 }
+                Icon {
+                    objectName: "builtIn_" + scriptItem.row.index
+                    visible: scriptItem.script.builtIn ?? false
+                    iconRole: "builtin-script"
+                    size: 14
+                    HoverHandler { id: builtInHover }
+                    ToolTip.visible: builtInHover.hovered
+                    ToolTip.text: qsTr("Built-in")
+                    Accessible.role: Accessible.Graphic
+                    Accessible.name: qsTr("Built-in")
+                }
                 Label {
                     Layout.fillWidth: true
                     text: root.scriptTitle(scriptItem.script)
@@ -1018,12 +1029,11 @@ Pane {
                     ToolTip.visible: nameHover.hovered && (truncated || (scriptItem.script.description ?? "") !== "")
                     ToolTip.text: (scriptItem.script.description ?? "") !== "" ? scriptItem.script.description : text
                 }
-                Label {
-                    objectName: "builtIn_" + scriptItem.row.index
-                    visible: scriptItem.script.builtIn ?? false
-                    text: qsTr("Built-in")
-                    color: Theme.muted
-                    font.pixelSize: Math.max(10, Qt.application.font.pixelSize - 2)
+                TierChip {
+                    objectName: "tier_" + scriptItem.row.index
+                    readonly property string scriptTier: root.automation ? root.automation.tierOf(scriptItem.script.path, root.shellWindow) : ""
+                    visible: scriptTier !== ""
+                    tier: scriptTier
                 }
                 Label {
                     objectName: "state_" + scriptItem.row.index
@@ -1288,6 +1298,10 @@ Pane {
                     elide: Text.ElideMiddle
                     color: Theme.muted
                     text: lockedItem.row.fileName
+                }
+                TierChip {
+                    tier: "project"
+                    enabled: false
                 }
                 Button {
                     objectName: "trustLockedScripts"

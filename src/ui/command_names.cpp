@@ -127,6 +127,8 @@ constexpr const char *kHotkeyCommands[] = {
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Split lines into characters"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Split lines into words"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Split lines by wraps"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Split lines at tag blocks"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Split lines every N frames or seconds…"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Script properties"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Check for updates"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "About"),

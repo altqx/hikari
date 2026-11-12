@@ -658,6 +658,21 @@ QStringList AutomationShell::lockedScripts(int shellWindow) const
     return locked == m_plan.locked.end() ? QStringList() : qtList(locked->second);
 }
 
+QString AutomationShell::tierOf(const QString &script, int shellWindow) const
+{
+    const auto projects = m_windowProjects ? m_windowProjects() : std::map<int, application::WindowProject>();
+    const auto project = projects.find(shellWindow);
+    const auto shown = m_plan.shown.find(shellWindow);
+    const std::string path = script.toStdString();
+    if (project == projects.end() || project->second.root.empty() || shown == m_plan.shown.end()
+        || std::ranges::find(shown->second, path) == shown->second.end())
+        return {};
+    return application::scriptInFolder(path, application::projectAutoloadFolder(project->second.root, windowsPaths()),
+                                       windowsPaths())
+               ? QStringLiteral("project")
+               : QStringLiteral("mine");
+}
+
 QString AutomationShell::includesFor(const std::string &script) const
 {
     std::vector<std::string> roots;

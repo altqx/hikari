@@ -500,6 +500,33 @@ void AiSidecarHost::callApi(const api::Json &params, std::shared_ptr<SidecarRequ
                    });
 }
 
+void AiSidecarHost::gateSession(const std::string &session, const std::string &operation, const api::Json &params,
+                                std::shared_ptr<SidecarRequest> request,
+                                std::function<void(SidecarRequest &)> admitted)
+{
+    if (!m_sessionGate)
+        return failApi(*request, {std::string(api::errors::kUnavailable), "No agent thread takes this call", {}});
+    auto withdrawn = std::make_shared<bool>(false);
+    auto admit = [request, withdrawn, admitted = std::move(admitted)](std::expected<Admission, api::Error> result) {
+        if (*withdrawn || !request->open())
+            return;
+        if (!result)
+            return failApi(*request, std::move(result.error()));
+        admitted(*request);
+    };
+    auto onWithdraw = [weak = std::weak_ptr(request), withdrawn](std::function<void()> then) {
+        if (const auto held = weak.lock())
+            held->onCancel([weak, withdrawn, then = std::move(then)] {
+                *withdrawn = true;
+                if (then)
+                    then();
+                if (const auto open = weak.lock(); open && open->open())
+                    open->fail(rpc::kRequestCancelled, "cancelled");
+            });
+    };
+    m_sessionGate(session, operation, params, std::move(admit), std::move(onWithdraw));
+}
+
 void AiSidecarHost::answer(SidecarRequest &request, api::Json body)
 {
     const api::Json id = request.m_id;

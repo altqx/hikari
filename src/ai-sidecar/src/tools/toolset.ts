@@ -122,7 +122,7 @@ export class ToolSet {
     imageBudget: ImageBudget = kDefaultImageBudget;
 
     constructor(private readonly api: HikariCalls, private readonly catalogue: Catalogue = kCatalogue,
-        private readonly sources: readonly ToolSource[] = []) {
+        private readonly sources: readonly ToolSource[] | (() => readonly ToolSource[]) = []) {
         this.entries = catalogue.entries;
         this.offered = new Set(this.entries.filter((e) => e.group === "core").map((e) => e.tool.name));
         this.byName = new Map(this.entries.map((e) => [e.tool.name, e]));
@@ -234,12 +234,16 @@ export class ToolSet {
             ...this.liveSources().map((s) => s.group)];
     }
 
+    private allSources(): readonly ToolSource[] {
+        return typeof this.sources === "function" ? this.sources() : this.sources;
+    }
+
     private liveSources(): ToolSource[] {
-        return this.sources.filter((s) => s.tools().length > 0);
+        return this.allSources().filter((s) => s.tools().length > 0);
     }
 
     private sourceTools(): [Tool, ToolSource][] {
-        return this.sources.flatMap((source) => source.tools().map((tool): [Tool, ToolSource] => [tool, source]));
+        return this.allSources().flatMap((source) => source.tools().map((tool): [Tool, ToolSource] => [tool, source]));
     }
 
     private sourceOf(name: string): ToolSource | undefined {

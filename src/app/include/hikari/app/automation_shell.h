@@ -132,6 +132,8 @@ public:
     Q_INVOKABLE bool shownIn(const QString &script, int shellWindow) const;
     // The window's untrusted Project's autoload scripts, which don't load.
     Q_INVOKABLE QStringList lockedScripts(int shellWindow) const;
+    // "project" or "mine" for an autoload script the window shows while it has a Project; "" otherwise.
+    Q_INVOKABLE QString tierOf(const QString &script, int shellWindow) const;
     // Every .lua and .moon in the autoload folders but those turned off (by file name).
     Q_INVOKABLE void autoload();
     Q_INVOKABLE void reloadAutoload();

@@ -58,6 +58,8 @@ public:
         bool sandbox = false;
         // A QML panel's api.setSetting: the refusal, or "" once kept. Unset: the runtime keeps it itself.
         std::function<QString(const QString &plugin, const QString &setting, const QString &json)> setSetting;
+        // The Project the user works in, for the `project` place.
+        std::function<std::optional<api::ProjectState>()> project;
         // Each shell window, with its trusted Project's [plugins]; nullopt: no Project, or an untrusted one.
         std::function<std::map<int, std::optional<plugins::ProjectPlugins>>()> windowPlugins;
         // The window the user works in.

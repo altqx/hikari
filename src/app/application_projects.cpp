@@ -1,6 +1,7 @@
 #include "hikari/app/application.h"
 
 #include "hikari/app/font_catalogs_controller.h"
+#include "hikari/app/style_manager_controller.h"
 #include "hikari/application/project.h"
 #include "log_controller.h"
 #include "project_file.h"
@@ -50,6 +51,15 @@ const application::Settings &Application::windowSettings(int shellWindow) const
     return views(shellWindow).settings->settings();
 }
 
+std::optional<api::ProjectState> Application::activeProject() const
+{
+    const QString root = m_projects ? m_projects->root(m_workspace.activeWindow()) : QString();
+    if (root.isEmpty())
+        return std::nullopt;
+    return api::ProjectState{m_projects->name(m_workspace.activeWindow()).toStdString(), root.toStdString(),
+                             projectTrusted(root)};
+}
+
 void Application::applyWindowProject(int shellWindow)
 {
     if (shellWindow != 0 && !m_shellWindows.contains(shellWindow)) {
@@ -83,12 +93,16 @@ void Application::applyWindowProject(int shellWindow)
                           {}, shellWindow);
     }
     loadProjectFonts(shellWindow);
+    if (m_styleManager)
+        m_styleManager->projectChanged();
     const bool moveTags = v.settings->settings().boolean("translation.autoMoveTagsFromOriginal");
     v.editor->setMoveTags(moveTags);
     v.shell->setRunMarks(moveTags);
     if (shellWindow == m_workspace.activeWindow())
         applyGrammarSettings();
     spellingRefresh();
+    if (m_apiHost)
+        m_apiHost->observe();
 }
 
 std::map<int, std::optional<plugins::ProjectPlugins>> Application::windowPlugins() const
