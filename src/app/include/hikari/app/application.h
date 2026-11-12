@@ -79,6 +79,7 @@
 #include "settings_store.h"
 #include "hikari/app/ai_features.h"
 #include "hikari/app/ai_mcp.h"
+#include "hikari/app/ai_mcp_servers.h"
 #include "hikari/app/ai_settings.h"
 #include "hikari/app/agent_controller.h"
 #include "hikari/app/inline_ai_controller.h"
@@ -1290,6 +1291,7 @@ private:
     std::unique_ptr<ApiHost> m_apiHost;
     std::unique_ptr<AiFeatures> m_ai;
     std::unique_ptr<AiMcp> m_aiMcp;
+    std::unique_ptr<AiMcpServers> m_aiMcpServers;
     std::unique_ptr<AiSettings> m_aiSettings;
     std::unique_ptr<ReviewController> m_review;
     std::unique_ptr<AgentController> m_agent;

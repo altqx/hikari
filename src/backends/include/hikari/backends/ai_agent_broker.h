@@ -51,7 +51,8 @@ struct AgentSpec {
     QString program;
     /// Go before the sidecar's arguments.
     QStringList arguments;
-    sandbox::Profile profile;
+    /// Nullopt runs it unsandboxed: MCP servers and ACP agents in v1 (ADR 0029).
+    std::optional<sandbox::Profile> profile;
     QString workingDirectory;
     /// Added to the clean environment the sidecar gets.
     QProcessEnvironment environment;

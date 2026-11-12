@@ -508,6 +508,11 @@ hikari_add_gtest(hikari_backends_ai_agent_broker_tests SOURCES ai_agent_broker_t
 target_compile_definitions(hikari_backends_ai_agent_broker_tests PRIVATE
     HIKARI_FAKE_AGENT="$<TARGET_FILE:hikari_fake_agent>")
 add_dependencies(hikari_backends_ai_agent_broker_tests hikari_fake_agent)
+hikari_add_gtest(hikari_backends_ai_mcp_clients_tests SOURCES ai_mcp_clients_tests.cpp
+    LIBRARIES hikari_ai Qt6::Core LABELS backends)
+target_compile_definitions(hikari_backends_ai_mcp_clients_tests PRIVATE
+    HIKARI_FAKE_AGENT="$<TARGET_FILE:hikari_fake_agent>")
+add_dependencies(hikari_backends_ai_mcp_clients_tests hikari_fake_agent)
 hikari_add_gtest(hikari_backends_ai_signin_tests SOURCES ai_signin_tests.cpp
     LIBRARIES hikari_ai Qt6::Core Qt6::Network LABELS backends)
 target_include_directories(hikari_backends_ai_signin_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
