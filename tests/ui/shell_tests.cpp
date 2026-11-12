@@ -4079,7 +4079,10 @@ private slots:
         QCOMPARE(window->property("fonts").toStringList(), all);
         QCOMPARE(window->property("chosen").toString(), QStringLiteral("A"));
         QCOMPARE(window->property("currentFont").toString(), QStringLiteral("Verdana"));
-        QCOMPARE(in("fontCatalogCatalogs")->property("model").toStringList(), (QStringList{"A", "B"}));
+        QStringList listed;
+        for (const QVariant &row : in("fontCatalogCatalogs")->property("model").toList())
+            listed << row.toMap().value(QStringLiteral("name")).toString();
+        QCOMPARE(listed, (QStringList{"A", "B"}));
         QCOMPARE(in("fontCatalogCatalogs")->property("currentIndex").toInt(), 0);
         auto *load = window->findChild<QObject *>(QStringLiteral("fontCatalogLoadDialog"));
         QVERIFY(load);
@@ -4477,7 +4480,7 @@ private slots:
         QVERIFY(catalogs.isFontInCatalog(QStringLiteral("A"), QStringLiteral("Impact")));
         QVERIFY(!catalogs.isFontInCatalog(QStringLiteral("A"), QStringLiteral("Skipped")));
         const QString dirPath = QString::fromStdU16String(catalogs.catalogDir().u16string());
-        QVERIFY(legacyCatalogsOf(dirPath + QStringLiteral("/fonts.toml")).contains("A={\r\n\tArial\r\n\tNot Installed\r\n\tVerdana\r\n\tTahoma\r\n\tImpact\r\n}"));
+        QVERIFY2(legacyCatalogsOf(dirPath + QStringLiteral("/fonts.toml")).contains("A={\r\n\tArial\r\n\tNot Installed\r\n\tVerdana\r\n\tTahoma\r\n\tImpact\r\n}"), legacyCatalogsOf(dirPath + QStringLiteral("/fonts.toml")).constData());
         QVERIFY(lastNotice().startsWith(QStringLiteral("Add fonts from subtitles|Added 2 fonts to “A”|")));
         QCOMPARE(picker->property("choice").toInt(), 2);
         QCOMPARE(picker->property("shown").toStringList(), (QStringList{"Arial", "Impact", "Tahoma", "Verdana"}));

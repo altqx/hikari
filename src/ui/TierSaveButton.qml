@@ -4,8 +4,7 @@ import QtQuick
 import QtQuick.Controls
 import Hikari.Ui
 
-// Save to project or Save to mine, remembered per list in workspace.saveTiers. Without a Project
-// it is a plain button that saves to Mine.
+// A TierSaveMenu split button; without a Project, a plain button that saves to Mine.
 Row {
     id: split
     required property string listId
@@ -13,35 +12,51 @@ Row {
     property bool hasProject: false
     property string plainText: qsTr("Save")
     property string faceName: objectName + "Face"
-    property alias faceEnabled: face.enabled
-    readonly property string tier: hasProject ? remembered : "mine"
-    property string remembered: readTier()
+    property bool faceEnabled: true
+    // Set for the icon-only form of a tool strip; plainText is then its hover name.
+    property string iconRole
+    readonly property bool iconOnly: iconRole.length > 0
+    readonly property string faceText: !hasProject ? plainText
+                                     : tier === "project" ? qsTr("%1 in the project").arg(plainText)
+                                     : qsTr("%1 in mine").arg(plainText)
+    readonly property string tier: tierMenu.tier
     signal save(string tier)
     spacing: 1
 
-    function readTier() {
-        const rows = split.settings ? split.settings.value("workspace.saveTiers") || [] : []
-        const row = rows.find(r => r.startsWith(split.listId + "\t"))
-        return row && row.endsWith("\tmine") ? "mine" : "project"
-    }
-    function choose(tier) {
-        const rows = (split.settings.value("workspace.saveTiers") || []).filter(r => !r.startsWith(split.listId + "\t"))
-        rows.push(split.listId + "\t" + tier)
-        split.settings.setValue("workspace.saveTiers", rows)
-        remembered = tier
-    }
-
     PrimaryButton {
-        id: face
-        objectName: split.faceName
-        text: !split.hasProject ? split.plainText : split.tier === "project" ? qsTr("Save to project") : qsTr("Save to mine")
+        id: textFace
+        objectName: split.iconOnly ? "" : split.faceName
+        visible: !split.iconOnly
+        enabled: split.faceEnabled
+        text: !split.hasProject ? split.plainText : tierMenu.saveText
         onClicked: split.save(split.tier)
+    }
+    IconToolButton {
+        id: iconFace
+        objectName: split.iconOnly ? split.faceName : ""
+        visible: split.iconOnly
+        enabled: split.faceEnabled
+        iconRole: split.iconRole
+        text: split.faceText
+        onClicked: split.save(split.tier)
+    }
+    IconToolButton {
+        id: iconArrow
+        objectName: split.iconOnly ? split.objectName + "Arrow" : ""
+        visible: split.iconOnly && split.hasProject
+        enabled: split.faceEnabled
+        iconRole: "chevron-down"
+        iconSize: 12
+        implicitWidth: 18
+        text: qsTr("Where to save")
+        Accessible.role: Accessible.ButtonMenu
+        onClicked: tierMenu.popup(iconArrow, 0, iconArrow.height)
     }
     PrimaryButton {
         id: arrow
-        objectName: split.objectName + "Arrow"
-        visible: split.hasProject
-        enabled: face.enabled
+        objectName: split.iconOnly ? "" : split.objectName + "Arrow"
+        visible: !split.iconOnly && split.hasProject
+        enabled: split.faceEnabled
         implicitWidth: 26
         leftPadding: 0
         rightPadding: 0
@@ -55,26 +70,12 @@ Row {
         }
         onClicked: tierMenu.popup(arrow, 0, arrow.height)
     }
-    ShellMenu {
+    TierSaveMenu {
         id: tierMenu
         objectName: split.objectName + "Menu"
-        ShellMenuItem {
-            objectName: split.objectName + "Project"
-            iconRole: "project"
-            text: qsTr("Save to project")
-            checkable: true
-            keepsMenuOpen: false
-            checked: split.tier === "project"
-            onTriggered: split.choose("project")
-        }
-        ShellMenuItem {
-            objectName: split.objectName + "Mine"
-            iconRole: "mine"
-            text: qsTr("Save to mine")
-            checkable: true
-            keepsMenuOpen: false
-            checked: split.tier === "mine"
-            onTriggered: split.choose("mine")
-        }
+        itemPrefix: split.objectName
+        listId: split.listId
+        settings: split.settings
+        hasProject: split.hasProject
     }
 }

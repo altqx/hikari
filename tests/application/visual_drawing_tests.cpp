@@ -809,6 +809,59 @@ TEST(ShapesEdition, RestoreDefaultsAndUndoAllAreOneStep)
     EXPECT_FALSE(same.canUndo());
 }
 
+TEST(ShapesEdition, TiersKeepTheirOwnNamesAndTheHiddenOneIsReadOnly)
+{
+    ShapePreset ours{u"Star", u"m 0 0 l 5 5", 0, 0, {Tier::Project, false}};
+    ShapePreset theirs{u"star", u"m 0 0 l 1 1", 0, 0, {Tier::Mine, false}};
+    ShapePreset ring{u"ring", u"m 0 0 l 2 2", 0, 0, {Tier::Mine, false}};
+    ShapesEdition e(combineTiers(std::vector{ours}, std::vector{theirs, ring}, &ShapePreset::name, sameNameIgnoringCase), 1);
+    EXPECT_TRUE(e.readOnly());
+    e.setMode(ShapePreset::OnlyScaleX);
+    e.replaceNamed(u"ring");
+    EXPECT_FALSE(e.canUndo());
+    e.select(2);
+    EXPECT_EQ(e.setName(u"STAR"), ShapesEdition::NameCheck::Taken);
+    e.select(0);
+    EXPECT_EQ(e.setName(u"Ring"), ShapesEdition::NameCheck::Ok);
+    EXPECT_FALSE(e.presets()[1].mark.hidden);
+    EXPECT_TRUE(e.presets()[2].mark.hidden);
+    e.addShape(u"", Tier::Project);
+    EXPECT_EQ(e.selection(), 1);
+    EXPECT_EQ(e.current().mark.tier, Tier::Project);
+    EXPECT_EQ(e.current().name, u"New shape");
+    e.addShape(u"");
+    EXPECT_EQ(e.current().mark.tier, Tier::Mine);
+    EXPECT_EQ(e.current().name, u"New shape");
+    EXPECT_TRUE(e.current().mark.hidden);
+}
+
+TEST(ShapesEdition, CopyAndMoveCrossTiersInOneStepEach)
+{
+    ShapePreset ours{u"star", u"m 0 0 l 5 5", 0, 0, {Tier::Project, false}};
+    ShapePreset theirs{u"Star", u"m 0 0 l 1 1", 0, 0, {Tier::Mine, true}};
+    ShapePreset ring{u"ring", u"m 0 0 l 2 2", 0, 0, {Tier::Mine, false}};
+    ShapesEdition e({ours, theirs, ring}, 2);
+    EXPECT_FALSE(e.tierClash());
+    EXPECT_TRUE(e.sendToOtherTier(false, {}));
+    EXPECT_EQ(e.undoStep(), ShapesEdition::CopyToTier);
+    EXPECT_EQ(e.presets().size(), 4u);
+    EXPECT_EQ(e.current().mark.tier, Tier::Project);
+    EXPECT_EQ(e.current().name, u"ring");
+    EXPECT_TRUE(e.presets()[3].mark.hidden);
+    e.select(2);
+    ASSERT_TRUE(e.tierClash());
+    EXPECT_EQ(*e.tierClash(), u"star");
+    EXPECT_FALSE(e.sendToOtherTier(true, {ClashAction::Skip, {}}));
+    EXPECT_TRUE(e.sendToOtherTier(true, {ClashAction::Rename, {}}, u"star"));
+    EXPECT_EQ(e.undoStep(), ShapesEdition::MoveToTier);
+    EXPECT_EQ(e.current().name, u"star (2)");
+    EXPECT_EQ(e.current().mark.tier, Tier::Project);
+    EXPECT_EQ(itemsIn(e.presets(), Tier::Mine).size(), 1u);
+    e.restoreDefaults(defaultShapePresets());
+    EXPECT_EQ(itemsIn(e.presets(), Tier::Project).size(), 3u);
+    EXPECT_EQ(itemsIn(e.presets(), Tier::Mine).size(), defaultShapePresets().size());
+}
+
 namespace {
 
 constexpr std::string_view kScript = "[Script Info]\nScriptType: v4.00+\nPlayResX: 1920\nPlayResY: 1080\n\n"

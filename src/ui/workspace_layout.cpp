@@ -1,6 +1,7 @@
 #include "workspace_layout.h"
 
 #include "docking.h"
+#include "tier_rows.h"
 
 #include <kddockwidgets/LayoutSaver.h>
 #include <kddockwidgets/core/DockRegistry.h>
@@ -57,6 +58,11 @@ std::optional<QByteArray> readFile(const QString &path, bool *unreadable = nullp
         return std::nullopt;
     }
     return f.read(WorkspaceLayoutController::kMaximumBytes + 1);
+}
+
+bool sameLayoutName(const QString &a, const QString &b)
+{
+    return a.compare(b, Qt::CaseInsensitive) == 0;
 }
 
 bool keepAside(const QString &path, const QString &kept)
@@ -1575,16 +1581,26 @@ void WorkspaceLayoutController::reloadSavedLayouts()
 void WorkspaceLayoutController::readSavedLayouts()
 {
     m_saved.clear();
-    if (m_savedFile.isEmpty())
-        return;
+    m_projectLocked = false;
+    auto project = readLayoutsFile(m_projectSavedFile, m_projectLocked);
+    auto mine = readLayoutsFile(m_savedFile, m_savedLocked);
+    m_saved = application::combineTiers(std::move(project), std::move(mine), &SavedLayout::name, sameLayoutName);
+}
+
+std::vector<WorkspaceLayoutController::SavedLayout> WorkspaceLayoutController::readLayoutsFile(const QString &path,
+                                                                                                bool &locked)
+{
+    std::vector<SavedLayout> out;
+    if (path.isEmpty())
+        return out;
     bool unreadable = false;
-    const auto bytes = readFile(m_savedFile, &unreadable);
+    const auto bytes = readFile(path, &unreadable);
     if (unreadable) {
-        lockSavedLayouts();
-        return;
+        lockSavedLayouts(path, locked);
+        return out;
     }
     if (!bytes)
-        return;
+        return out;
     QJsonParseError error{};
     const QJsonDocument doc = QJsonDocument::fromJson(*bytes, &error);
     const QJsonObject o = doc.object();
@@ -1600,15 +1616,15 @@ void WorkspaceLayoutController::readSavedLayouts()
     else if (!o.value(QStringLiteral("layouts")).isArray())
         problem = QCoreApplication::translate("HikariSub.Workspace", "it is not a layouts file");
     if (!problem.isEmpty()) {
-        const QString kept = m_savedFile + QStringLiteral(".unrestored");
-        if (!keepAside(m_savedFile, kept)) {
-            lockSavedLayouts();
-            return;
+        const QString kept = path + QStringLiteral(".unrestored");
+        if (!keepAside(path, kept)) {
+            lockSavedLayouts(path, locked);
+            return out;
         }
         addSavedNotice(QCoreApplication::translate("HikariSub.Workspace",
                                                    "The saved layouts were not read because %1. The file is kept at %2.")
                            .arg(problem, QDir::toNativeSeparators(kept)));
-        return;
+        return out;
     }
     bool skipped = false;
     for (const auto &value : o.value(QStringLiteral("layouts")).toArray()) {
@@ -1616,7 +1632,8 @@ void WorkspaceLayoutController::readSavedLayouts()
         SavedLayout saved;
         saved.name = record.value(QStringLiteral("name")).toString().trimmed();
         saved.record = record;
-        if (!value.isObject() || !layoutNameProblem(saved.name).isEmpty() || savedLayoutIndex(saved.name) >= 0) {
+        const bool listed = std::ranges::any_of(out, [&](const SavedLayout &s) { return sameLayoutName(s.name, saved.name); });
+        if (!value.isObject() || !layoutNameProblem(saved.name).isEmpty() || listed) {
             skipped = true;
             continue;
         }
@@ -1625,40 +1642,51 @@ void WorkspaceLayoutController::readSavedLayouts()
         saved.arrangement = WorkspaceArrangement::parse(arrangement, &saved.problem);
         if (saved.arrangement)
             saved.arrangement->layout = saved.name;
-        m_saved.push_back(std::move(saved));
+        out.push_back(std::move(saved));
     }
     if (skipped) {
-        const QString kept = m_savedFile + QStringLiteral(".unrestored");
-        if (!keepAside(m_savedFile, kept)) {
-            m_saved.clear();
-            lockSavedLayouts();
-            return;
+        const QString kept = path + QStringLiteral(".unrestored");
+        if (!keepAside(path, kept)) {
+            lockSavedLayouts(path, locked);
+            return {};
         }
         addSavedNotice(QCoreApplication::translate("HikariSub.Workspace",
                                                    "Some saved layouts were not read: their names cannot name a layout, or were listed before. The file as it was is kept at %1.")
                            .arg(QDir::toNativeSeparators(kept)));
     }
+    return out;
 }
 
-void WorkspaceLayoutController::lockSavedLayouts()
+void WorkspaceLayoutController::lockSavedLayouts(const QString &path, bool &locked)
 {
-    m_savedLocked = true;
+    locked = true;
     addSavedNotice(QCoreApplication::translate("HikariSub.Workspace",
                                                "The saved layouts at %1 could not be read or copied: they are not used and not changed.")
-                       .arg(QDir::toNativeSeparators(m_savedFile)));
+                       .arg(QDir::toNativeSeparators(path)));
 }
 
 bool WorkspaceLayoutController::writeSavedLayouts()
 {
-    if (m_savedFile.isEmpty())
+    markHiddenLayouts();
+    const bool any = std::ranges::any_of(m_saved, [](const SavedLayout &s) { return s.mark.tier == application::Tier::Project; });
+    const bool project = m_projectSavedFile.isEmpty() || (!any && !QFileInfo::exists(m_projectSavedFile)) ||
+                         writeLayoutsFile(m_projectSavedFile, application::Tier::Project, m_projectLocked);
+    return writeLayoutsFile(m_savedFile, application::Tier::Mine, m_savedLocked) && project;
+}
+
+bool WorkspaceLayoutController::writeLayoutsFile(const QString &path, application::Tier tier, bool &locked)
+{
+    if (path.isEmpty())
         return true;
-    if (m_savedLocked) {
-        lockSavedLayouts();
+    if (locked) {
+        lockSavedLayouts(path, locked);
         emit changed();
         return false;
     }
     QJsonArray layouts;
     for (const SavedLayout &saved : m_saved) {
+        if (saved.mark.tier != tier)
+            continue;
         if (!saved.arrangement) {
             layouts.append(saved.record);
             continue;
@@ -1674,14 +1702,14 @@ bool WorkspaceLayoutController::writeSavedLayouts()
     const QByteArray bytes = QJsonDocument(o).toJson(QJsonDocument::Indented);
     m_savedNotices.removeAll(m_writeFailure);
     m_writeFailure.clear();
-    if (bytes.size() <= kMaximumBytes && writeAtomically(m_savedFile, bytes))
+    if (bytes.size() <= kMaximumBytes && writeAtomically(path, bytes))
         return true;
     m_writeFailure = bytes.size() > kMaximumBytes
                          ? QCoreApplication::translate("HikariSub.Workspace",
                                                        "The saved layouts were not changed: together they would be larger than %1 bytes. Delete layouts you no longer use first.")
                                .arg(kMaximumBytes)
                          : QCoreApplication::translate("HikariSub.Workspace", "The saved layouts could not be written to %1.")
-                               .arg(QDir::toNativeSeparators(m_savedFile));
+                               .arg(QDir::toNativeSeparators(path));
     addSavedNotice(m_writeFailure);
     emit changed();
     return false;
@@ -1691,9 +1719,95 @@ int WorkspaceLayoutController::savedLayoutIndex(const QString &name) const
 {
     const QString wanted = name.trimmed();
     for (std::size_t i = 0; i < m_saved.size(); ++i)
-        if (m_saved[i].name.compare(wanted, Qt::CaseInsensitive) == 0)
+        if (!m_saved[i].mark.hidden && sameLayoutName(m_saved[i].name, wanted))
             return static_cast<int>(i);
     return -1;
+}
+
+int WorkspaceLayoutController::tierLayoutIndex(const QString &name, application::Tier tier) const
+{
+    const QString wanted = name.trimmed();
+    for (std::size_t i = 0; i < m_saved.size(); ++i)
+        if (m_saved[i].mark.tier == tier && sameLayoutName(m_saved[i].name, wanted))
+            return static_cast<int>(i);
+    return -1;
+}
+
+void WorkspaceLayoutController::markHiddenLayouts()
+{
+    application::markHidden(m_saved, &SavedLayout::name, sameLayoutName);
+}
+
+void WorkspaceLayoutController::setProjectLayoutsFile(const QString &file)
+{
+    if (file == m_projectSavedFile)
+        return;
+    m_projectSavedFile = file;
+    reloadSavedLayouts();
+}
+
+QVariantList WorkspaceLayoutController::layoutClashes(const QString &name, const QString &from) const
+{
+    const auto source = tierNamed(from, hasProject());
+    const int at = tierLayoutIndex(name, application::otherTier(source));
+    if (at < 0 || tierLayoutIndex(name, source) < 0)
+        return {};
+    const QString taken = m_saved[static_cast<std::size_t>(at)].name;
+    QString suggestion;
+    for (int n = 2; suggestion.isEmpty() || tierLayoutIndex(suggestion, application::otherTier(source)) >= 0; ++n)
+        suggestion = QStringLiteral("%1 (%2)").arg(taken).arg(n);
+    return {QVariantMap{{QStringLiteral("name"), taken}, {QStringLiteral("suggestion"), suggestion}}};
+}
+
+QString WorkspaceLayoutController::copyLayout(const QString &name, const QString &from, const QVariantList &choices)
+{
+    return sendLayout(name, from, choices, false);
+}
+
+QString WorkspaceLayoutController::moveLayout(const QString &name, const QString &from, const QVariantList &choices)
+{
+    return sendLayout(name, from, choices, true);
+}
+
+QString WorkspaceLayoutController::sendLayout(const QString &name, const QString &from, const QVariantList &choices,
+                                              bool move)
+{
+    if (!hasProject())
+        return {};
+    const auto source = tierNamed(from, true);
+    const auto target = application::otherTier(source);
+    const int at = tierLayoutIndex(name, source);
+    if (at < 0)
+        return {};
+    SavedLayout sent = m_saved[static_cast<std::size_t>(at)];
+    QString landing = sent.name;
+    if (tierLayoutIndex(landing, target) >= 0) {
+        const auto clash = tierClashOf(choices);
+        if (clash.choice.action == application::ClashAction::Skip)
+            return {};
+        if (clash.choice.action == application::ClashAction::Rename) {
+            const QString base = QString::fromStdU16String(clash.newName).trimmed();
+            landing = base.isEmpty() ? sent.name : base;
+            for (int n = 2; tierLayoutIndex(landing, target) >= 0; ++n)
+                landing = QStringLiteral("%1 (%2)").arg(base.isEmpty() ? sent.name : base).arg(n);
+            if (!layoutNameProblem(landing).isEmpty())
+                return {};
+        }
+    }
+    SavedLayoutsState before = savedLayoutsState();
+    sent.name = landing;
+    sent.mark = {target, false};
+    if (sent.arrangement)
+        sent.arrangement->layout = landing;
+    else
+        sent.record.insert(QStringLiteral("name"), landing);
+    if (move)
+        m_saved.erase(m_saved.begin() + at);
+    if (const int replaced = tierLayoutIndex(landing, target); replaced >= 0)
+        m_saved[static_cast<std::size_t>(replaced)] = std::move(sent);
+    else
+        m_saved.insert(m_saved.begin() + static_cast<std::ptrdiff_t>(application::tierEnd(m_saved, target)), std::move(sent));
+    return commitSavedLayouts(std::move(before)) ? landing : QString();
 }
 
 QString WorkspaceLayoutController::savedLayoutNamed(const QString &name) const
@@ -1708,7 +1822,9 @@ QVariantList WorkspaceLayoutController::savedLayouts() const
     for (const SavedLayout &saved : m_saved)
         rows << QVariantMap{{QStringLiteral("name"), saved.name},
                             {QStringLiteral("usable"), saved.arrangement.has_value()},
-                            {QStringLiteral("problem"), saved.problem}};
+                            {QStringLiteral("problem"), saved.problem},
+                            {QStringLiteral("tier"), tierName(saved.mark.tier)},
+                            {QStringLiteral("hidden"), saved.mark.hidden}};
     return rows;
 }
 
@@ -1788,20 +1904,22 @@ bool WorkspaceLayoutController::commitSavedLayouts(SavedLayoutsState before)
     return written;
 }
 
-bool WorkspaceLayoutController::saveLayoutAs(const QString &name)
+bool WorkspaceLayoutController::saveLayoutAs(const QString &name, const QString &tier)
 {
     const QString trimmed = name.trimmed();
     if (!m_loaded || !layoutNameProblem(trimmed).isEmpty())
         return false;
+    const auto into = tierNamed(tier, hasProject());
     SavedLayoutsState before = savedLayoutsState();
     WorkspaceArrangement arrangement = shownArrangement();
     arrangement.layout = trimmed;
-    if (const int index = savedLayoutIndex(trimmed); index >= 0) {
+    if (const int index = tierLayoutIndex(trimmed, into); index >= 0) {
         SavedLayout &saved = m_saved[static_cast<std::size_t>(index)];
         renameLayoutOrigin(saved.name, trimmed);
-        saved = SavedLayout{trimmed, arrangement, {}, {}};
+        saved = SavedLayout{trimmed, arrangement, {}, {}, {into, false}};
     } else {
-        m_saved.push_back(SavedLayout{trimmed, arrangement, {}, {}});
+        m_saved.insert(m_saved.begin() + static_cast<std::ptrdiff_t>(application::tierEnd(m_saved, into)),
+                       SavedLayout{trimmed, arrangement, {}, {}, {into, false}});
     }
     m_layout = trimmed;
     m_lastSaved.clear();

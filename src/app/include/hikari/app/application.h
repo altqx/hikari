@@ -1505,6 +1505,7 @@ private:
     void reportSettingsFiles();
     void noteRemovedRules();
     void convertListFiles();
+    void applyProjectTierFiles(int shellWindow, const QString &root);
     std::map<std::uint64_t, QDateTime> m_fileTimes;
     std::set<std::uint64_t> m_removedNoticed;
     int m_copyColumns = 0;

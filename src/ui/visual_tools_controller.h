@@ -80,6 +80,8 @@ public:
     void setAllTagsFile(std::shared_ptr<ListFile> file) { m_tagsFile = std::move(file); }
     const std::shared_ptr<ListFile> &allTagsFile() const { return m_tagsFile; }
     AllTagsEditor *tagsEditor() const { return m_tagsEditor; }
+    // The window's Project copies (ADR 0030 tiers); null without a Project. Rereads both lists.
+    void setProjectListFiles(std::shared_ptr<ListFile> shapes, std::shared_ptr<ListFile> tags);
     void setShownLines(std::function<std::function<bool(core::LineId)>()> shown) { m_shownLines = std::move(shown); }
     void setEditorHotkey(std::function<std::string(int)> accel) { m_editorHotkey = std::move(accel); }
     void setTool(application::visual::Family family, std::unique_ptr<application::visual::VisualTool> tool);
@@ -244,9 +246,13 @@ private:
     int m_bells = 0;
     std::u8string m_previewKey;
     std::shared_ptr<ListFile> m_shapesFile;
+    std::shared_ptr<ListFile> m_projectShapesFile;
+    mutable std::vector<application::visual::ShapePreset> m_allShapes;
     mutable std::vector<application::visual::ShapePreset> m_shapes;
     QPointer<ShapeEditor> m_shapeEditor;
     std::shared_ptr<ListFile> m_tagsFile;
+    std::shared_ptr<ListFile> m_projectTagsFile;
+    mutable std::vector<application::visual::AllTagsSetting> m_tieredTags;
     mutable std::vector<application::visual::AllTagsSetting> m_allTags;
     QPointer<AllTagsEditor> m_tagsEditor;
     std::function<std::function<bool(core::LineId)>()> m_shownLines;
