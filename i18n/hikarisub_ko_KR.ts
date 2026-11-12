@@ -14957,6 +14957,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>HTTP로 연결하는 에이전트용입니다. 이 컴퓨터에서만, 토큰이 있어야 연결할 수 있습니다.</translation>
     </message>
     <message>
+        <source>Let them read your skills</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Yours, this project’s and the built-in ones. Skills guide the agent; they grant no permission.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Copy setup</source>
         <translation>설정 복사</translation>
     </message>

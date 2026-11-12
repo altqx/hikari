@@ -1678,6 +1678,35 @@ TEST_F(AgentTasksTest, TwoChildrenOnOtherProvidersEditDisjointLinesIntoTheirOwnC
     EXPECT_NE(at(opened[1], "system").find("you can't hand it to another agent"), std::string::npos);
 }
 
+TEST_F(AgentTasksTest, AChildReadsItsParentsProjectSkillsWithTheSameGrant)
+{
+    const QString show = dir.filePath(QStringLiteral("show"));
+    ASSERT_TRUE(QDir().mkpath(show + QStringLiteral("/.hikari/skills/honorifics")));
+    QFile skill(show + QStringLiteral("/.hikari/skills/honorifics/SKILL.md"));
+    ASSERT_TRUE(skill.open(QIODevice::WriteOnly));
+    skill.write("---\nname: honorifics\ndescription: Honorifics.\n---\n");
+    skill.close();
+    project = show.toStdString();
+    const std::string parent = withMode(AgentMode::FullAccess);
+    project.clear();
+    threads->send(parent, script(Json::array({delegate(kHang, scopeOf(document, {1}))}), Json::object({{"hang", true}})));
+    ASSERT_TRUE(waitFor([&] { return kids(parent).size() == 1u; }));
+    const std::string child = kids(parent)[0]->id;
+    EXPECT_EQ(kids(parent)[0]->project, show.toStdString());
+
+    std::optional<SidecarResult> result;
+    Json request = call("skills.list");
+    request["session"] = child;
+    sidecar()->request("api", request, [&](SidecarResult r) { result = std::move(r); });
+    ASSERT_TRUE(waitFor([&] { return result.has_value(); }));
+    ASSERT_TRUE(*result);
+    const std::string listed = (*result)->dump();
+    EXPECT_NE(listed.find(R"("honorifics")"), std::string::npos) << listed;
+    EXPECT_NE(listed.find(R"("origin":"project")"), std::string::npos) << listed;
+    threads->stop(parent);
+    ASSERT_TRUE(idle(parent));
+}
+
 TEST_F(AgentTasksTest, QtRefusesWhatTheSidecarAsksBeyondTheRules)
 {
     const std::string parent = withMode(AgentMode::Auto);

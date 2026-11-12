@@ -17822,6 +17822,7 @@ private slots:
               {"ai.searchService", nullptr},
               {"ai.mcp.server", "Let agents outside HikariSub edit through MCP"},
               {"ai.mcp.http", nullptr},
+              {"ai.mcp.skills", "Let them read your skills"},
               {"ai.agent.mode", nullptr},
               {"ai.agent.threadCapCents", nullptr},
               {"ai.agent.dailyCapCents", nullptr},
@@ -17886,6 +17887,7 @@ private slots:
         bound.insert("updater.skippedVersion");
         bound.insert("automation.dialogAnswers");
         bound.insert("trust.folders");
+        bound.insert("ai.agents.custom");
 #ifndef HIKARI_WITH_VSFILTERMOD
         bound.erase("video.subtitleProvider");
 #endif

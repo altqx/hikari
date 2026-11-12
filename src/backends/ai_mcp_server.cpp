@@ -318,6 +318,10 @@ std::expected<api::Caller, api::Error> McpServer::callerFor(const api::Json &mcp
     caller.label = client && client->isString() && !client->asString().empty() ? client->asString() : "MCP agent";
     caller.allDocuments = true;
     caller.reviewed = true;
+    if (const std::optional<std::string> project = m_skills ? m_skills() : std::nullopt) {
+        caller.skills = true;
+        caller.project = *project;
+    }
     return caller;
 }
 

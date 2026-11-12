@@ -15197,6 +15197,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Dla agentów łączących się przez HTTP. Dostęp ma tylko ten komputer i tylko z tokenem.</translation>
     </message>
     <message>
+        <source>Let them read your skills</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Yours, this project’s and the built-in ones. Skills guide the agent; they grant no permission.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Copy setup</source>
         <translation>Kopiuj konfigurację</translation>
     </message>
