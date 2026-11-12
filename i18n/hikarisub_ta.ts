@@ -14676,12 +14676,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>ஒவ்வொரு சுழற்சி கட்டளையும் தேர்ந்த வரிகளின் தொடக்கத் தொகுதியில் உள்ள குறிச்சொல்லை அடுத்த மதிப்புக்கு மாற்றும். பின்னோக்கிய சுழற்சி மறுதிசையில் மாற்றும்.</translation>
     </message>
     <message>
+        <source>Values for %1, in order</source>
+        <translation>%1 க்கான மதிப்புகள், வரிசையாக</translation>
+    </message>
+    <message>
         <source>Each Cycle command steps the tag in the selected lines&apos; start block to the next value. Cycle back steps the other way.</source>
         <translation type="vanished">ஒவ்வொரு சுழற்சி கட்டளையும் தேர்ந்த வரிகளின் தொடக்கத் தொகுதியில் உள்ள குறிச்சொல்லை அடுத்த மதிப்புக்கு மாற்றும். பின்னோக்கிய சுழற்சி மறுதிசையில் மாற்றும்.</translation>
     </message>
     <message>
-        <source>Values for %1, in order</source>
-        <translation>%1 க்கான மதிப்புகள், வரிசையாக</translation>
         <source>Delete MCP server</source>
         <translation type="unfinished"></translation>
     </message>
@@ -14710,7 +14712,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Failed</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">தோல்வியடைந்தது</translation>
     </message>
     <message>
         <source>Starts when the agent needs it</source>
@@ -14734,7 +14736,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Command</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">கட்டளை</translation>
     </message>
     <message>
         <source>Environment</source>

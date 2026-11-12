@@ -14567,12 +14567,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>คำสั่งวนรอบแต่ละคำสั่งจะเลื่อนแท็กในบล็อกเริ่มต้นของบรรทัดที่เลือกไปยังค่าถัดไป วนรอบย้อนกลับจะเลื่อนไปอีกทาง</translation>
     </message>
     <message>
+        <source>Values for %1, in order</source>
+        <translation>ค่าของ %1 ตามลำดับ</translation>
+    </message>
+    <message>
         <source>Each Cycle command steps the tag in the selected lines&apos; start block to the next value. Cycle back steps the other way.</source>
         <translation type="vanished">คำสั่งวนรอบแต่ละคำสั่งจะเลื่อนแท็กในบล็อกเริ่มต้นของบรรทัดที่เลือกไปยังค่าถัดไป วนรอบย้อนกลับจะเลื่อนไปอีกทาง</translation>
     </message>
     <message>
-        <source>Values for %1, in order</source>
-        <translation>ค่าของ %1 ตามลำดับ</translation>
         <source>Delete MCP server</source>
         <translation type="unfinished"></translation>
     </message>
@@ -14600,7 +14602,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Failed</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">ล้มเหลว</translation>
     </message>
     <message>
         <source>Starts when the agent needs it</source>
@@ -14624,7 +14626,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Command</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">คำสั่ง</translation>
     </message>
     <message>
         <source>Environment</source>

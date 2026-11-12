@@ -14785,12 +14785,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Każde polecenie cyklu zmienia tag w bloku początkowym zaznaczonych wierszy na następną wartość. Cykl wstecz zmienia go w drugą stronę.</translation>
     </message>
     <message>
+        <source>Values for %1, in order</source>
+        <translation>Wartości dla %1, po kolei</translation>
+    </message>
+    <message>
         <source>Each Cycle command steps the tag in the selected lines&apos; start block to the next value. Cycle back steps the other way.</source>
         <translation type="vanished">Każde polecenie cyklu zmienia tag w bloku początkowym zaznaczonych wierszy na następną wartość. Cykl wstecz zmienia go w drugą stronę.</translation>
     </message>
     <message>
-        <source>Values for %1, in order</source>
-        <translation>Wartości dla %1, po kolei</translation>
         <source>Delete MCP server</source>
         <translation type="unfinished"></translation>
     </message>
@@ -14820,7 +14822,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Failed</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Niepowodzenie</translation>
     </message>
     <message>
         <source>Starts when the agent needs it</source>
@@ -14844,7 +14846,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Command</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Polecenie</translation>
     </message>
     <message>
         <source>Environment</source>

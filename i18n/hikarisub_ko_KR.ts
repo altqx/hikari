@@ -14567,12 +14567,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>각 순환 명령은 선택한 줄의 시작 블록에 있는 태그를 다음 값으로 바꿉니다. 거꾸로 순환은 반대 방향으로 바꿉니다.</translation>
     </message>
     <message>
+        <source>Values for %1, in order</source>
+        <translation>%1 값, 순서대로</translation>
+    </message>
+    <message>
         <source>Each Cycle command steps the tag in the selected lines&apos; start block to the next value. Cycle back steps the other way.</source>
         <translation type="vanished">각 순환 명령은 선택한 줄의 시작 블록에 있는 태그를 다음 값으로 바꿉니다. 거꾸로 순환은 반대 방향으로 바꿉니다.</translation>
     </message>
     <message>
-        <source>Values for %1, in order</source>
-        <translation>%1 값, 순서대로</translation>
         <source>Delete MCP server</source>
         <translation type="unfinished"></translation>
     </message>
@@ -14600,7 +14602,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Failed</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">실패</translation>
     </message>
     <message>
         <source>Starts when the agent needs it</source>
@@ -14624,7 +14626,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Command</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">명령</translation>
     </message>
     <message>
         <source>Environment</source>
