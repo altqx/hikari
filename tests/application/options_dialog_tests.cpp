@@ -367,8 +367,8 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     EXPECT_EQ(std::get<std::int64_t>(findSetting("ai.agent.dailyCapCents")->defaultValue), 1000);
     EXPECT_EQ(findOptionsBinding("ai.agent.fullAccessWarned"), nullptr);
 #ifdef _WIN32
-    ASSERT_EQ(all.size(), std::size(kLegacy) + 67);
-    const auto &hostApi = all[std::size(kLegacy) + 65];
+    ASSERT_EQ(all.size(), std::size(kLegacy) + 68);
+    const auto &hostApi = all[std::size(kLegacy) + 66];
     EXPECT_EQ(hostApi.setting, "audio.outputHostApi");
     EXPECT_EQ(hostApi.control, OptionsControl::IndexChoice);
     EXPECT_EQ(hostApi.page, OptionsPage::Audio);
@@ -379,7 +379,7 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     EXPECT_EQ(all.back().entries, 2);
     const auto bindings = all.first(std::size(kLegacy));
 #else
-    ASSERT_EQ(all.size(), std::size(kLegacy) + 67);
+    ASSERT_EQ(all.size(), std::size(kLegacy) + 68);
     EXPECT_EQ(findOptionsBinding("audio.outputHostApi"), nullptr);
     EXPECT_EQ(findOptionsBinding("video.playbackPlayer"), nullptr);
     const auto bindings = all.first(std::size(kLegacy));

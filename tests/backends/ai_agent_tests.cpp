@@ -1054,7 +1054,7 @@ TEST_F(AgentThreadsTest, AFailedCompactionOffersRetryAndANewThreadFromTheSummary
     EXPECT_EQ(thread(id).history.asArray().size(), 2u);
 
     std::string opened;
-    connect(threads.get(), &AgentThreads::summarised, [&](const QString &, const QString &to) { opened = to.toStdString(); });
+    QObject::connect(threads.get(), &AgentThreads::summarised, [&](const QString &, const QString &to) { opened = to.toStdString(); });
     threads->newThreadFromSummary(id);
     ASSERT_TRUE(waitFor([&] { return !opened.empty(); }));
     EXPECT_EQ(receivedAs("_hikari/session.compact").back().find("apply")->asBool(), false);

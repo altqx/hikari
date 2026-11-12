@@ -406,8 +406,8 @@ void applyCompaction(AgentThread &thread, const Json &update)
             stubs[stringAt(stub, "callId")] = stringAt(stub, "content");
     auto &history = thread.history.asArray();
     for (Json &message : history)
-        if (Json *parts = message.find("parts"); parts && parts->isArray())
-            for (Json &part : parts->asArray())
+        if (const Json *parts = message.find("parts"); parts && parts->isArray())
+            for (Json &part : message["parts"].asArray())
                 if (stringAt(part, "type") == "toolResult")
                     if (const auto stub = stubs.find(stringAt(part, "callId")); stub != stubs.end())
                         part["content"] = stub->second;

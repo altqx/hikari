@@ -17725,6 +17725,8 @@ private slots:
               {"ai.agent.dailyCapCents", nullptr},
               {"ai.agent.costMeter", "Show the cost meter"},
               {"ai.agent.autoCompact", "Compact long conversations automatically"},
+              {"ai.inline.translateTo", nullptr},
+              {"ai.inline.contextLines", nullptr},
               {"ai.autoUpdate", "Update AI components automatically"},
               {"ai.promptCaching", "Use prompt caching"}}},
             {"settingsPageUpdates",
