@@ -14,6 +14,8 @@ inline constexpr int Layer = 1, Start = 2, End = 4, Style = 8, Actor = 16, Margi
                      MarginVertical = 128, Effect = 256, Text = 1024, Translation = 2048;
 // Copy columns uses the translation bit for "Text without tags".
 inline constexpr int TextWithoutTags = Translation;
+// Copy and Paste columns' Tags group: read from and written to the start block, travelling as the Text column.
+inline constexpr int StartBlock = 4096, Clip = 8192, NamedTags = 16384, Tags = StartBlock | Clip | NamedTags;
 }
 
 // In the given order. With `numberSrtCues` SRT numbers each cue by its

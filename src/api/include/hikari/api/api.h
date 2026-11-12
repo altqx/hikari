@@ -51,6 +51,8 @@ struct Caller {
     bool reviewed = false;
     // May read the user's skills (AI callers).
     bool skills = false;
+    // The caller's Project folder, UTF-8; its .hikari/skills join the user's. Empty: no Project.
+    std::string project;
     // The user approved this call's Lua script; automation.run refuses without it.
     bool scriptApproved = false;
 };
