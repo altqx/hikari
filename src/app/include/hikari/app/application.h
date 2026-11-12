@@ -256,6 +256,8 @@ public:
         DiscordPresence::Config presence;
         // Unset: the keychain and <userFolder>/ai.
         std::optional<AiFeatures::Ports> aiPorts;
+        /// False: the default AI ports never look for, ask or start the Claude Code and Codex CLIs.
+        bool externalAgents = true;
         StarPrompt::Config starPrompt;
     };
     explicit Application(QObject *parent = nullptr);

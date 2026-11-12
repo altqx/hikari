@@ -292,9 +292,45 @@ A `code once` Line that sets `furigana_styles = false` adds no "-furigana" Style
 
 Node effects follow the Document's template mode. In a karaOK-mode Document, node-effect places round to 0.1 px as karaOK's `$` variables do, and a syllable with no duration isn't blank, so For each's "skip blank" keeps it as karaOK's `noblank` does. In 3.2.2 mode both stay as before. "Export as template lines" writes karaOK templates (`line`, `lsyl`, `char`, `code char`) or 3.2.2 templates (`pre-line`, `line`, `syl char`, `code syl`). It remembers the last choice, karaOK by default, and a karaOK export sets the Document's mode line to karaOK. [TH5d1 #833](https://github.com/altqx/hikari/issues/833), owner decisions Q154, Q155 and Q162.
 
+## TH5d2-ln-kara
+
+HikariSub ships karaOK's `ln.kara` library, by logarithm with petzku, as `Automation/automation/Include/ln/kara.lua`, from `lost-logarithm/karaOK` f749c4fa64e7 with the fixes below. Upstream states no licence; HikariSub's changes are MIT, and the file's header says so. As for every stock module, `require "ln.kara"` loads the shipped copy before one in the script's folder or the user's Include, so a user who installed upstream's copy gets the fixed one. The Template editor completes `ln.` (docs/karaoke-templater.md). Corpus: `tests/backends/karaoke-corpus/karaok/ln-kara.ass`, compared byte for byte with upstream karaOK running upstream's unchanged `ln/kara.lua` (`karaok/include/`). [TH5d2 #833](https://github.com/altqx/hikari/issues/833), owner decisions Q164 and Q165.
+
+## TH5d2-ln-kara-tags
+
+`ln.line.tags` and `ln.syl.tags` give the tags they find, so `ln.line.c`/`gc` and `ln.line.a`/`ga` give the Line's `\Nc`/`\Na` before the Style's. Upstream's last commit made the found-tag test `ei == -1`, which never holds, so they always gave the defaults and the Style's colour. Corpus: `tests/backends/karaoke-corpus/karaok/departures/ln-kara-tags.ass`. [TH5d2 #833](https://github.com/altqx/hikari/issues/833), owner decision Q164.
+
+## TH5d2-ln-kara-string-defaults
+
+A string default for `ln.line.tag`, `ln.line.tags`, `ln.syl.tag` and `ln.syl.tags` is the first tag's default. Upstream indexed the tag list from 0, so a string default stopped the expression with "table index is nil". Corpus: `tests/backends/karaoke-corpus/karaok/departures/ln-kara-string-defaults.ass`. [TH5d2 #833](https://github.com/altqx/hikari/issues/833), owner decision Q164.
+
+## TH5d2-ln-kara-pos-table
+
+The table forms of `ln.tag.pos` and `ln.tag.kanjipos` read their fields from the table. Upstream replaced the table with its first field and then read the rest from that number, which stopped the expression. Corpus: `tests/backends/karaoke-corpus/karaok/departures/ln-kara-pos-table.ass`. [TH5d2 #833](https://github.com/altqx/hikari/issues/833), owner decision Q164.
+
+## TH5d2-ln-kara-move-offsets
+
+`ln.tag.move` with its start offsets left out (`ln.tag.move(nil, nil, 10, 20)`) starts at the anchor point. Upstream added `nil` to the anchor and stopped the expression. Corpus: `tests/backends/karaoke-corpus/karaok/departures/ln-kara-move-offsets.ass`. [TH5d2 #833](https://github.com/altqx/hikari/issues/833), owner decision Q164.
+
+## TH5d2-ln-kara-syldur
+
+`ln.syldur()` and `sd()` with no argument give the unit's whole duration, as karaOK's README says. Upstream gave 0. Corpus: `tests/backends/karaoke-corpus/karaok/departures/ln-kara-syldur.ass`. [TH5d2 #833](https://github.com/altqx/hikari/issues/833), owner decision Q164.
+
+## TH5d2-ln-kara-shift
+
+`ln.shapes.shift`, and `ln.shapes.circle`, which is built on it, write a pair of whole coordinates as whole numbers. Upstream compared the rounded x with y, so most whole pairs came out with two decimals. Corpus: `tests/backends/karaoke-corpus/karaok/departures/ln-kara-shift.ass`. [TH5d2 #833](https://github.com/altqx/hikari/issues/833), owner decision Q164.
+
+## TH5d2-ln-kara-lerp
+
+`ln.math.lerp` and `ln.math.xerp` between a string and a number stop with "lerp between mismatched variable types". Upstream tested the second value's type twice, so a numeric string as the first value was read as a number. Corpus: `tests/backends/karaoke-corpus/karaok/departures/ln-kara-lerp.ass`. [TH5d2 #833](https://github.com/altqx/hikari/issues/833), owner decision Q164.
+
+## TH5d2-ln-kara-kanjipos
+
+`ln.tag.kanjipos` in a 3.2.2-mode Document is a problem, "ln.tag.kanjipos works only in karaOK mode", on its template Line. It reads karaOK's per-character table, which 3.2.2 mode builds only for char and word templates; upstream stopped with "attempt to index a nil value". [TH5d2 #833](https://github.com/altqx/hikari/issues/833), owner decision Q164.
+
 ## 892-script-info-on-save
 
-Every save but an autosave writes the Script Info values switched on in the `scriptProperties.*` settings (Title, Original Script, Original Translation, Original Editing, Original Timing, Script Updated By) into the file, as legacy's `SubsGrid::SwapAssProperties` does. They come from the window's settings, so a Project's values win over the user's. With `scriptProperties.askForChange` on, a dialog first lists each value that would change, old and new, with a check box. OK writes the checked values, Skip saves without any of them, and Cancel stops the save. In legacy the check boxes are the switches themselves and OK stores them in the settings; here they apply to that one save. Legacy's third button, "Disable confirmation", turned the question off for good and then saved without the values; Skip keeps the question on. The values are one undo step, "Changing the subtitle header", and it stays when the save fails. [#892](https://github.com/altqx/hikari/issues/892), owner decision Q234 2026-11-11, refined the same day.
+Every save but an autosave writes the Script Info values switched on in the `scriptProperties.*` settings (Title, Original Script, Original Translation, Original Editing, Original Timing, Script Updated By) into the file, as legacy's `SubsGrid::SwapAssProperties` does. They come from the window's settings, so a Project's values win over the user's. Both are set on the Script properties page of File › Settings, the user's on the Yours tab ([#966](https://github.com/altqx/hikari/issues/966)), where a value the Project sets says "Overridden in this project". With `scriptProperties.askForChange` on, a dialog first lists each value that would change, old and new, with a check box. OK writes the checked values, Skip saves without any of them, and Cancel stops the save. In legacy the check boxes are the switches themselves and OK stores them in the settings; here they apply to that one save. Legacy's third button, "Disable confirmation", turned the question off for good and then saved without the values; Skip keeps the question on. The values are one undo step, "Changing the subtitle header", and it stays when the save fails. [#892](https://github.com/altqx/hikari/issues/892), owner decision Q234 2026-11-11, refined the same day.
 
 ## AU19-timing-helpers
 

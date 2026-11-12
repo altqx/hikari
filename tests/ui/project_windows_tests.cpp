@@ -639,6 +639,12 @@ private slots:
         QVERIFY(overrides.contains(QStringLiteral("grammar.language")));
         QVERIFY(!overrides.contains(QStringLiteral("editor.spellchecker")));
         QCOMPARE(text("projectState_scriptProperties.title"), QStringLiteral("Set in this project"));
+        QVERIFY(QMetaObject::invokeMethod(shell(w), "openSettings", Q_ARG(QVariant, QStringLiteral("subtitleProperties")),
+                                          Q_ARG(QVariant, QVariant())));
+        QTRY_VERIFY(shown("overridden_scriptProperties.title"));
+        QVERIFY(!shown("overridden_scriptProperties.script"));
+        QVERIFY(!shown("overridden_scriptProperties.askForChange"));
+        settings->setProperty("projectTab", true);
 
         QVERIFY(QMetaObject::invokeMethod(pages, "put", Q_ARG(QVariant, QStringLiteral("editor.spellchecker")),
                                           Q_ARG(QVariant, false)));
