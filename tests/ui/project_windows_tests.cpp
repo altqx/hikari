@@ -698,6 +698,53 @@ private slots:
         QVERIFY(application->projectNeedsTrust(other));
     }
 
+    void projectScriptsLoadOnlyOnceTrustedAndOnlyInTheirWindow()
+    {
+        start();
+        const QString show = folder("autoloaded", true);
+        writeAll(show + QStringLiteral("/.hikari/automation/autoload/fx.lua"), "script_name = 'fx'\n");
+        const int w = openProjectWindow(show);
+        QVERIFY(w >= 0);
+        const QString script =
+            QDir::toNativeSeparators(canonical(show) + QStringLiteral("/.hikari/automation/autoload/fx.lua"));
+        auto &automation = application->automation();
+        QTRY_COMPARE(automation.lockedScripts(w), QStringList{script});
+        QVERIFY(!automation.autoloadScripts().contains(script));
+
+        application->trustProject(w);
+        QTRY_VERIFY(automation.lockedScripts(w).isEmpty());
+        QVERIFY(automation.autoloadScripts().contains(script));
+        QVERIFY(automation.shownIn(script, w));
+        QCOMPARE(automation.tierOf(script, w), QStringLiteral("project"));
+        const int other = openProjectWindow(folder("plain", true));
+        QVERIFY(other >= 0 && other != w);
+        QVERIFY(!automation.shownIn(script, other));
+        QVERIFY(automation.tierOf(script, other).isEmpty());
+
+        QVERIFY(application->reviewCloseProject(w).isEmpty());
+        application->finishClose();
+        QTRY_VERIFY(!automation.autoloadScripts().contains(script));
+    }
+
+    void aTrustedProjectOffersItsMissingPlugins()
+    {
+        start();
+        const QString show = folder("plugins", true);
+        writeAll(show + QStringLiteral("/.hikari/project.toml"),
+                 "version = 1\n[plugins]\nenabled = [\"not-installed\"]\n[plugins.\"kf\"]\nsize = 3\n");
+        const int w = openProjectWindow(show);
+        QVERIFY(w >= 0);
+        QVariantMap plugins = application->projectPlugins(w);
+        QCOMPARE(plugins.value(QStringLiteral("trusted")).toBool(), false);
+        QCOMPARE(plugins.value(QStringLiteral("named")).toStringList(), (QStringList{"not-installed", "kf"}));
+        QVERIFY(plugins.value(QStringLiteral("missing")).toStringList().isEmpty());
+
+        application->trustProject(w);
+        QTRY_VERIFY(application->projectPlugins(w).value(QStringLiteral("trusted")).toBool());
+        plugins = application->projectPlugins(w);
+        QCOMPARE(plugins.value(QStringLiteral("missing")).toStringList(), QStringList{"not-installed"});
+    }
+
     void projectFontFoldersJoinTheWindowsFonts()
     {
         start();
