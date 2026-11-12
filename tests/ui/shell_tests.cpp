@@ -15746,11 +15746,11 @@ private slots:
                 visualItem("translatedCaption")->mapRectToScene(visualItem("translatedCaption")->boundingRect()).center()));
         }
 
-        const QStringList slots{QStringLiteral("startSlot"), QStringLiteral("endSlot"), QStringLiteral("durationSlot"),
+        const QStringList slotNames{QStringLiteral("startSlot"), QStringLiteral("endSlot"), QStringLiteral("durationSlot"),
                                 QStringLiteral("styleSlot"), QStringLiteral("actorSlot"), QStringLiteral("layerSlot"),
                                 QStringLiteral("effectSlot"), QStringLiteral("commentSlot"), QStringLiteral("marginsSlot")};
         std::vector<std::pair<qreal, QString>> placed;
-        for (const QString &name : slots) {
+        for (const QString &name : slotNames) {
             QQuickItem *slot = item(qPrintable(name));
             QVERIFY2(slot && slot->isVisible(), qPrintable(name));
             const QRectF r = slot->mapRectToItem(inspector, slot->boundingRect());
