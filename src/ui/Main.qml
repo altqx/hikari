@@ -6576,6 +6576,21 @@ ApplicationWindow {
                                 text: qsTranslate("HikariSub.Grid", "By wraps")
                                 onTriggered: if (!root.gridGesture(this, "GRID_SPLIT_BY_WRAPS")) root.app.splitLines("wraps")
                             }
+                            ShellMenuItem {
+                                command: "GRID_SPLIT_AT_TAG_BLOCKS"
+                                iconRole: "split-tag-blocks"
+                                objectName: "splitAtTagBlocks"
+                                text: qsTranslate("HikariSub.Grid", "At tag blocks")
+                                onTriggered: if (!root.gridGesture(this, "GRID_SPLIT_AT_TAG_BLOCKS")) root.app.splitLines("tagBlocks")
+                            }
+                            MenuSeparator {}
+                            ShellMenuItem {
+                                command: "GRID_SPLIT_EVERY_N"
+                                iconRole: "split-every-n"
+                                objectName: "splitEveryN"
+                                text: qsTranslate("HikariSub.Grid", "Every N frames or seconds…")
+                                onTriggered: if (!root.gridGesture(this, "GRID_SPLIT_EVERY_N")) root.openSplitEvery()
+                            }
                         }
                         ShellMenuItem { command: "GLOBAL_REMOVE_TAGS"; iconRole: "remove-tags"; objectName: "gridRemoveTags"; action: removeTagsAction }
                         ShellMenuItem {
@@ -9149,6 +9164,19 @@ ApplicationWindow {
         enabled: root.shell.hasEditingTarget
         onTriggered: if (!root.hotkeyGesture("GLOBAL_REMOVE_TAGS")) root.openRemoveTags()
     }
+    function openSplitEvery() {
+        splitEveryLoader.active = true
+        splitEveryLoader.item.openDialog()
+    }
+    Loader {
+        id: splitEveryLoader
+        active: false
+        sourceComponent: SplitEveryDialog {
+            app: root.app
+            settings: root.app.settings
+            hasVideo: root.video.hasVideo
+        }
+    }
     function openRemoveTags() {
         removeTagsLoader.active = true
         removeTagsLoader.item.openDialog()
@@ -9641,6 +9669,8 @@ ApplicationWindow {
         case "GRID_SPLIT_BY_CHARS": root.app.splitLines("chars"); return true
         case "GRID_SPLIT_BY_WORDS": root.app.splitLines("words"); return true
         case "GRID_SPLIT_BY_WRAPS": root.app.splitLines("wraps"); return true
+        case "GRID_SPLIT_AT_TAG_BLOCKS": root.app.splitLines("tagBlocks"); return true
+        case "GRID_SPLIT_EVERY_N": root.openSplitEvery(); return true
         case "GRID_TREE_MAKE": root.app.makeGroups(); return true
         case "GRID_SELECT_VISIBLE_LINES": root.app.selectLinesVisibleOnVideo(); return true
         case "GRID_SHOW_PREVIEW": if (root.app.canShowPreview()) root.app.showPreview(); return true
