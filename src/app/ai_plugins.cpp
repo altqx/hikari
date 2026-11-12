@@ -41,11 +41,6 @@ bool isPluginId(std::string_view id)
            id.find("..") == std::string_view::npos && id.front() != '.';
 }
 
-QString translated(const char *text)
-{
-    return QCoreApplication::translate("HikariSub.AiPlugins", text);
-}
-
 bool textFile(const QString &path)
 {
     return path.endsWith(QStringLiteral(".lua")) || path.endsWith(QStringLiteral(".json")) ||
@@ -62,9 +57,9 @@ std::expected<Package, std::string> readPackage(const QString &path)
 {
     QFile file(path);
     if (QFileInfo(path).size() > kMaxAiPackage)
-        return std::unexpected(utf8(translated("The package is larger than 1 MiB, so an agent can't install it.")));
+        return std::unexpected(utf8(QCoreApplication::translate("HikariSub.Plugins", "The package is larger than 1 MiB, so an agent can’t install it.")));
     if (!file.open(QIODevice::ReadOnly))
-        return std::unexpected(utf8(translated("HikariSub can't read %1.").arg(QDir::toNativeSeparators(path))));
+        return std::unexpected(utf8(QCoreApplication::translate("HikariSub.Plugins", "HikariSub can’t read %1.").arg(QDir::toNativeSeparators(path))));
     Package out;
     out.data = file.readAll();
     QBuffer buffer(&out.data);
@@ -189,14 +184,14 @@ std::expected<api::ScaffoldedPlugin, std::string> AiPlugins::scaffold(std::strin
                                                                       const std::vector<api::PluginFile> &files)
 {
     if (m_wiring.folder.isEmpty())
-        return std::unexpected(utf8(translated("There is no user folder to write the plugin to.")));
+        return std::unexpected(utf8(QCoreApplication::translate("HikariSub.Plugins", "There is no user folder to write the plugin to.")));
     if (!isPluginId(plugin))
-        return std::unexpected(utf8(translated("That is not a plugin id.")));
+        return std::unexpected(utf8(QCoreApplication::translate("HikariSub.Plugins", "That is not a plugin id.")));
     for (const api::PluginFile &f : files)
         if (f.path == plugins::kManifestName) {
             const auto parsed = plugins::parseManifest(f.text, api::kApiVersion);
             if (!parsed)
-                return std::unexpected(utf8(translated("The manifest is not valid: %1").arg(qs(parsed.error().detail))));
+                return std::unexpected(utf8(QCoreApplication::translate("HikariSub.Plugins", "hikari-plugin.json isn’t valid: %1").arg(qs(parsed.error().detail))));
         }
     const QString folder = QDir(m_wiring.folder).filePath(qs(plugin));
     const QString package = folder + QStringLiteral(".hikariplugin");
@@ -210,12 +205,12 @@ std::expected<api::ScaffoldedPlugin, std::string> AiPlugins::scaffold(std::strin
         QDir().mkpath(QFileInfo(path).path());
         QSaveFile out(path);
         if (!out.open(QIODevice::WriteOnly) || out.write(text) != text.size() || !out.commit())
-            return std::unexpected(utf8(translated("HikariSub can't write %1.").arg(QDir::toNativeSeparators(path))));
+            return std::unexpected(utf8(QCoreApplication::translate("HikariSub.Plugins", "HikariSub can’t write %1.").arg(QDir::toNativeSeparators(path))));
         zip.addFile(qs(f.path), text);
     }
     zip.close();
     if (zip.status() != QZipWriter::NoError)
-        return std::unexpected(utf8(translated("HikariSub can't write %1.").arg(QDir::toNativeSeparators(package))));
+        return std::unexpected(utf8(QCoreApplication::translate("HikariSub.Plugins", "HikariSub can’t write %1.").arg(QDir::toNativeSeparators(package))));
     return api::ScaffoldedPlugin{utf8(folder), utf8(package)};
 }
 
@@ -231,7 +226,7 @@ std::expected<api::PluginReview, std::string> AiPlugins::review(const std::strin
 {
     PluginManager *manager = m_wiring.manager ? m_wiring.manager() : nullptr;
     if (!manager)
-        return std::unexpected(utf8(translated("Plugins are not available.")));
+        return std::unexpected(utf8(QCoreApplication::translate("HikariSub.Plugins", "Plugins are not available.")));
     auto read = readPackage(qs(package));
     if (!read)
         return std::unexpected(read.error());
@@ -246,12 +241,12 @@ std::expected<api::PluginReview, std::string> AiPlugins::install(const std::stri
 {
     PluginManager *manager = m_wiring.manager ? m_wiring.manager() : nullptr;
     if (!manager)
-        return std::unexpected(utf8(translated("Plugins are not available.")));
+        return std::unexpected(utf8(QCoreApplication::translate("HikariSub.Plugins", "Plugins are not available.")));
     auto read = readPackage(qs(package));
     if (!read)
         return std::unexpected(read.error());
     if (digestOf(read->data) != digest)
-        return std::unexpected(utf8(translated("The package changed after the user approved it, so it wasn't installed.")));
+        return std::unexpected(utf8(QCoreApplication::translate("HikariSub.Plugins", "The package changed after the user approved it, so it wasn’t installed.")));
     const QVariantMap review = manager->review(QUrl::fromLocalFile(qs(package)));
     if (!review.value(QStringLiteral("ok")).toBool())
         return std::unexpected(utf8(review.value(QStringLiteral("message")).toString()));
