@@ -137,8 +137,11 @@ void Application::applyWindowProject(int shellWindow)
                           {}, shellWindow);
     }
     loadProjectFonts(shellWindow);
+    applyProjectTierFiles(shellWindow, root);
     if (m_styleManager)
         m_styleManager->projectChanged();
+    if (m_fontCatalogs)
+        m_fontCatalogs->projectChanged();
     if (m_shiftTimes)
         m_shiftTimes->setProjectRoot(m_projects->root(m_workspace.activeWindow()));
     const bool moveTags = v.settings->settings().boolean("translation.autoMoveTagsFromOriginal");

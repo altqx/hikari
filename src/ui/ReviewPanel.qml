@@ -201,6 +201,16 @@ FocusScope {
                                 required property var modelData
                                 Layout.fillWidth: true
                                 spacing: 0
+                                Label {
+                                    objectName: "reviewChildChange"
+                                    visible: changeBlock.modelData.child === true
+                                    Layout.fillWidth: true
+                                    Layout.topMargin: 4
+                                    elide: Text.ElideRight
+                                    color: Theme.muted
+                                    textFormat: Text.PlainText
+                                    text: qsTr("Sub-agent %1").arg(changeBlock.modelData.caller)
+                                }
                                 RowLayout {
                                     Layout.fillWidth: true
                                     Label {

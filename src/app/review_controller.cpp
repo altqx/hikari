@@ -6,6 +6,7 @@
 
 #include <QCoreApplication>
 #include <QLocale>
+#include <QStringList>
 
 #include <algorithm>
 #include <set>
@@ -142,7 +143,11 @@ void ReviewController::refreshed()
 {
     m_marks.clear();
     m_waiting.clear();
+    m_byChild.clear();
     m_pending.clear();
+    absl::flat_hash_map<std::uint64_t, bool> childTurn;
+    for (const AiReview::Turn &turn : m_wiring.review.turns())
+        childTurn[turn.id] = turn.parent != 0;
     for (const application::DocumentId document : m_wiring.review.documents()) {
         const auto *session = m_wiring.files.session(document);
         if (!session) {
@@ -153,11 +158,13 @@ void ReviewController::refreshed()
             continue;
         auto &marks = m_marks[document.value];
         int offGrid = 0;
+        std::vector<std::uint64_t> offGridChanges;
         for (const AiReview::Pending &p : m_wiring.review.pending(document, session->document())) {
             m_pending[{p.change, p.item}] = p.editedSince;
             const AiReview::Item &item = m_wiring.review.change(p.change)->items[p.item];
             if (item.kind != AiReview::ItemKind::Line || !item.after) {
                 ++offGrid;
+                offGridChanges.push_back(p.change);
                 continue;
             }
             const auto [mark, fresh] = marks.try_emplace(item.line.value);
@@ -167,6 +174,22 @@ void ReviewController::refreshed()
             mark->second.newest = p.change;
         }
         m_waiting[document.value] = int(marks.size()) + offGrid;
+        auto &byChild = m_byChild[document.value];
+        const auto count = [&](std::uint64_t changeId) {
+            const AiReview::Change *change = m_wiring.review.change(changeId);
+            if (!change || !childTurn[change->turn])
+                return;
+            const auto found = std::ranges::find(byChild, change->caller, &std::pair<std::string, int>::first);
+            if (found == byChild.end())
+                byChild.emplace_back(change->caller, 1);
+            else
+                ++found->second;
+        };
+        for (const auto &[line, mark] : marks)
+            count(mark.newest);
+        for (const std::uint64_t change : offGridChanges)
+            count(change);
+        std::ranges::sort(byChild);
     }
     emit changed();
     emit currentChanged();
@@ -185,6 +208,17 @@ int ReviewController::waitingIn(application::DocumentId document) const
 {
     const auto found = m_waiting.find(document.value);
     return found == m_waiting.end() ? 0 : found->second;
+}
+
+QString ReviewController::waitingByChild(application::DocumentId document) const
+{
+    const auto found = m_byChild.find(document.value);
+    if (found == m_byChild.end())
+        return {};
+    QStringList parts;
+    for (const auto &[child, count] : found->second)
+        parts << QCoreApplication::translate("HikariSub.Review", "%1: %n", nullptr, count).arg(qs(child));
+    return parts.join(QStringLiteral(", "));
 }
 
 int ReviewController::waiting() const
@@ -247,13 +281,27 @@ QVariantList ReviewController::turns() const
         if (const auto *session = m_wiring.files.session(document))
             rows.emplace(document.value, rowsOf(session->document()));
     const auto &turns = m_wiring.review.turns();
+    absl::flat_hash_map<std::uint64_t, std::vector<std::uint64_t>> childTurns;
+    absl::flat_hash_map<std::uint64_t, bool> known;
+    for (const AiReview::Turn &turn : turns)
+        known[turn.id] = true;
+    for (const AiReview::Turn &turn : turns)
+        if (turn.parent != 0 && known.contains(turn.parent))
+            childTurns[turn.parent].push_back(turn.id);
     for (auto turn = turns.rbegin(); turn != turns.rend(); ++turn) {
+        if (turn->parent != 0 && known.contains(turn->parent))
+            continue;
+        absl::flat_hash_map<std::uint64_t, bool> inTurn{{turn->id, false}};
+        if (const auto c = childTurns.find(turn->id); c != childTurns.end())
+            for (const std::uint64_t child : c->second)
+                inTurn[child] = true;
         QVariantList changes;
         bool restorable = false;
         for (const application::DocumentId document : documents) {
             const auto &rowOf = rows[document.value];
             for (const AiReview::Change *change : m_wiring.review.changes(document)) {
-                if (change->turn != turn->id)
+                const auto member = inTurn.find(change->turn);
+                if (member == inTurn.end())
                     continue;
                 QVariantList items;
                 int waitingItems = 0;
@@ -276,6 +324,7 @@ QVariantList ReviewController::turns() const
                 const std::string *title = m_wiring.workspace.title(document);
                 changes << QVariantMap{{QStringLiteral("change"), qulonglong(change->id)},
                                        {QStringLiteral("caller"), qs(change->caller)},
+                                       {QStringLiteral("child"), member->second},
                                        {QStringLiteral("name"), qs(change->name)},
                                        {QStringLiteral("document"), qulonglong(document.value)},
                                        {QStringLiteral("title"), title ? qs(*title) : QString()},

@@ -581,6 +581,8 @@ public:
     Q_INVOKABLE QString applyLayerBuilders(const QVariantMap &options);
     // With the options the dialog last built with; {ok, text}.
     Q_INVOKABLE QVariantMap repeatLayerBuilders();
+    // Hands the selected Lines to the window's node effects as a typesetting graph's targets.
+    Q_INVOKABLE bool targetTypesettingGraph();
     // choice 1 sets the video's value, 2 (missingLayoutRes) the PlayRes; false when the question is stale.
     Q_INVOKABLE bool answerVideoProperty(const QVariantMap &question, int choice);
     // The question's setting then does what `choice` did: 0 leaves things as they are.
@@ -1560,6 +1562,7 @@ private:
     void reportSettingsFiles();
     void noteRemovedRules();
     void convertListFiles();
+    void applyProjectTierFiles(int shellWindow, const QString &root);
     std::map<std::uint64_t, QDateTime> m_fileTimes;
     std::set<std::uint64_t> m_removedNoticed;
     int m_copyColumns = 0;

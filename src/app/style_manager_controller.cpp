@@ -1,6 +1,7 @@
 #include "hikari/app/style_manager_controller.h"
 
 #include "hikari/core/ass_load.h"
+#include "tiered_presets.h"
 
 #include <QColor>
 #include <QCoreApplication>
@@ -252,28 +253,19 @@ QString StyleManagerController::catalog() const
     return qs(m_catalogs.current());
 }
 
-namespace {
-
-QString tierName(application::Tier tier)
-{
-    return tier == application::Tier::Project ? QStringLiteral("project") : QStringLiteral("mine");
-}
-
-}
-
 QVariantList StyleManagerController::catalogRows() const
 {
     QVariantList out;
     for (const auto &row : m_catalogs.rows())
         out << QVariantMap{{QStringLiteral("name"), qs(row.name)},
-                           {QStringLiteral("tier"), tierName(row.tier)},
+                           {QStringLiteral("tier"), ui::tierText(row.tier)},
                            {QStringLiteral("hidden"), row.hidden}};
     return out;
 }
 
 QString StyleManagerController::catalogTier() const
 {
-    return tierName(m_catalogs.currentTier());
+    return ui::tierText(m_catalogs.currentTier());
 }
 
 void StyleManagerController::projectChanged()
@@ -285,15 +277,6 @@ void StyleManagerController::projectChanged()
         return;
     m_catalogs.setProjectDirectory(dir);
     emit changed();
-}
-
-std::optional<application::Tier> StyleManagerController::tierOf(const QString &tier) const
-{
-    if (tier == QLatin1String("project"))
-        return application::Tier::Project;
-    if (tier == QLatin1String("mine"))
-        return application::Tier::Mine;
-    return std::nullopt;
 }
 
 QStringList StyleManagerController::storeStyles() const
@@ -388,7 +371,7 @@ void StyleManagerController::refreshLists()
 
 bool StyleManagerController::chooseCatalog(const QString &name, const QString &tier)
 {
-    const auto chosen = tierOf(tier);
+    const auto chosen = ui::tierFromText(tier);
     const bool ok = chosen ? m_catalogs.choose(u8(name), *chosen) : m_catalogs.choose(u8(name));
     emit changed();
     if (ok)
@@ -405,7 +388,7 @@ bool StyleManagerController::loadCatalog(const QString &name)
 
 bool StyleManagerController::createCatalog(const QString &name, const QString &tier)
 {
-    const bool ok = m_catalogs.create(u8(name), tierOf(tier).value_or(application::Tier::Mine));
+    const bool ok = m_catalogs.create(u8(name), ui::tierFromText(tier).value_or(application::Tier::Mine));
     if (ok)
         catalogChosen();
     emit changed();
@@ -414,7 +397,7 @@ bool StyleManagerController::createCatalog(const QString &name, const QString &t
 
 bool StyleManagerController::deleteCatalog(const QString &name, const QString &tier)
 {
-    const auto from = tierOf(tier);
+    const auto from = ui::tierFromText(tier);
     const bool ok = from ? m_catalogs.remove(u8(name), *from) : m_catalogs.remove(u8(name));
     if (ok)
         catalogChosen();
@@ -424,7 +407,7 @@ bool StyleManagerController::deleteCatalog(const QString &name, const QString &t
 
 QVariantList StyleManagerController::catalogClashes(const QString &name, const QString &tier) const
 {
-    const auto from = tierOf(tier);
+    const auto from = ui::tierFromText(tier);
     if (!from)
         return {};
     const auto to = *from == application::Tier::Project ? application::Tier::Mine : application::Tier::Project;
@@ -438,7 +421,7 @@ QVariantList StyleManagerController::catalogClashes(const QString &name, const Q
 std::optional<QString> StyleManagerController::landed(const QString &name, const QString &tier, const QVariantList &choices,
                                                       bool move)
 {
-    const auto from = tierOf(tier);
+    const auto from = ui::tierFromText(tier);
     if (!from)
         return std::nullopt;
     application::ClashChoice clash;

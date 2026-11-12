@@ -26,6 +26,14 @@ DialogWindow {
     property string resolvedFor: ""
     property bool extending: false
     property string selectedFont: ""
+    property bool chosenHidden: false
+    readonly property string chosenTier: chosenHidden ? "mine" : ""
+    readonly property var catalogRows: { revision; return created ? catalogs.catalogRows : [] }
+    readonly property int chosenRow: catalogRows.findIndex(r => r.name === chosen && r.hidden === chosenHidden)
+    function choose(name, hidden) {
+        chosenHidden = hidden === true
+        chosen = name
+    }
     onChosenChanged: if (created && show === 1) selectFont(selectedFont)
     signal catalogChanged()
 
@@ -33,7 +41,7 @@ DialogWindow {
         revision
         const set = Object.create(null)
         for (const f of fonts)
-            if (chosen.length > 0 && catalogs.isFontInCatalog(chosen, f))
+            if (chosen.length > 0 && catalogs.isFontInCatalog(chosen, f, chosenTier))
                 set[f] = true
         return set
     }
@@ -51,7 +59,7 @@ DialogWindow {
         created = true
         catalogs.windowMade()
         const holding = catalogs.catalogsOf(font || "")
-        chosen = holding.length > 0 ? holding[0] : catalogs.catalogNames.length > 0 ? catalogs.catalogNames[0] : ""
+        choose(holding.length > 0 ? holding[0] : catalogs.catalogNames.length > 0 ? catalogs.catalogNames[0] : "")
         show = 0
         search.text = ""
         selectFont(font)
@@ -106,7 +114,7 @@ DialogWindow {
         resolveRequest = catalogs.resolveFamily(currentFont, true, false, false, resolvedFor)
     }
     function setMembership(names, add) {
-        if (chosen.length === 0 || names.length === 0)
+        if (chosen.length === 0 || names.length === 0 || chosenHidden)
             return
         catalogs.setFontsInCatalog(chosen, names, add)
     }
@@ -152,15 +160,47 @@ DialogWindow {
         return renaming ? "" : qsTr("“%1” already exists.").arg(existing)
     }
     function stepCatalog(by) {
-        const names = catalogs.catalogNames
-        if (names.length === 0)
+        const rows = catalogRows
+        if (rows.length === 0)
             return
-        const at = names.indexOf(chosen)
-        chosen = names[at < 0 ? 0 : Math.max(0, Math.min(names.length - 1, at + by))]
+        const row = rows[chosenRow < 0 ? 0 : Math.max(0, Math.min(rows.length - 1, chosenRow + by))]
+        choose(row.name, row.hidden)
     }
     function createCatalog(name) {
-        catalogs.addCatalog(name, true)
-        chosen = name
+        createCatalogIn(name, "")
+    }
+    function createCatalogIn(name, tier) {
+        catalogs.addCatalog(name, true, tier)
+        choose(name)
+    }
+    function transfer(move) {
+        const row = catalogRows[chosenRow]
+        if (!row)
+            return
+        const run = choices => {
+            const landed = move ? catalogs.moveCatalog(row.name, row.tier, choices) : catalogs.copyCatalog(row.name, row.tier, choices)
+            if (landed.length > 0)
+                choose(landed)
+        }
+        const clashes = catalogs.catalogClashes(row.name, row.tier)
+        if (clashes.length === 0) {
+            run([])
+            return
+        }
+        reviewLoader.active = true
+        reviewLoader.item.review({
+            title: move ? qsTr("Move font catalogue") : qsTr("Copy font catalogue"),
+            text: row.tier === "mine" ? qsTr("The project already has a catalogue named “%1”.").arg(clashes[0].name)
+                                      : qsTr("You already have a catalogue named “%1”.").arg(clashes[0].name),
+            nameHeading: qsTr("Catalogue"),
+            rows: clashes.map(c => ({ name: c.name, difference: "", suggestion: c.suggestion })),
+            namePattern: /.*/,
+            acceptText: count => move ? qsTr("Move") : qsTr("Copy"),
+            nameTaken: n => catalogRows.some(r => r.tier !== row.tier && r.name.toLowerCase() === n.trim().toLowerCase())
+        }, results => {
+            if (results)
+                run(results)
+        })
     }
     function renameCatalog(oldName, newName) {
         const existing = catalogs.existingName(newName)
@@ -183,7 +223,7 @@ DialogWindow {
     }
     function renamed(oldName, newName, answer) {
         if (catalogs.renameCatalog(oldName, newName, answer))
-            chosen = newName
+            choose(newName)
     }
     function askDelete() {
         const name = chosen
@@ -204,7 +244,7 @@ DialogWindow {
             const at = names.indexOf(name)
             catalogs.removeCatalog(name)
             const left = catalogs.catalogNames
-            chosen = left.length > 0 ? left[Math.min(at, left.length - 1)] : ""
+            choose(left.length > 0 ? left[Math.min(at, left.length - 1)] : "")
         })
     }
     function load(file) {
@@ -281,8 +321,8 @@ DialogWindow {
         target: window.catalogs
         function onCatalogsChanged() {
             window.revision++
-            if (window.created && !window.catalogs.catalogExists(window.chosen)) {
-                window.chosen = window.catalogs.catalogNames.length > 0 ? window.catalogs.catalogNames[0] : ""
+            if (window.created && window.chosenRow < 0) {
+                window.choose(window.catalogs.catalogNames.length > 0 ? window.catalogs.catalogNames[0] : "")
                 if (window.chosen.length === 0 && window.show === 1)
                     window.show = 0
             }
@@ -332,15 +372,24 @@ DialogWindow {
                     objectName: "fontCatalogRename"
                     iconRole: "edit"
                     text: qsTr("Rename")
-                    enabled: window.chosen.length > 0
+                    enabled: window.chosen.length > 0 && !window.chosenHidden
                     onClicked: renamePopover.openFor(renameButton)
                 }
                 IconToolButton {
                     objectName: "fontCatalogDelete"
                     iconRole: "delete"
                     text: qsTr("Delete")
-                    enabled: window.chosen.length > 0
+                    enabled: window.chosen.length > 0 && !window.chosenHidden
                     onClicked: window.askDelete()
+                }
+                IconToolButton {
+                    id: tierButton
+                    objectName: "fontCatalogTiers"
+                    visible: window.catalogs.hasProject
+                    iconRole: "panel-menu"
+                    text: qsTr("Catalogue tiers")
+                    enabled: window.chosen.length > 0
+                    onClicked: tierMenu.popup(tierButton, 0, tierButton.height)
                 }
                 Rectangle { width: 1; height: 18; color: Theme.line; Layout.leftMargin: 4; Layout.rightMargin: 4 }
                 IconToolButton {
@@ -353,8 +402,9 @@ DialogWindow {
                     objectName: "fontCatalogFromSubtitles"
                     iconRole: "fonts-from-subtitles"
                     text: qsTr("Add fonts from subtitles")
+                    enabled: !window.chosenHidden
                     onClicked: if (FontWindows.fromSubtitles)
-                                   FontWindows.fromSubtitles.openFor(window.chosen, name => window.chosen = name, window)
+                                   FontWindows.fromSubtitles.openFor(window.chosen, name => window.choose(name), window)
                 }
             }
             Rectangle {
@@ -378,43 +428,84 @@ DialogWindow {
                     anchors.fill: parent
                     anchors.margins: 1
                     clip: true
-                    model: window.created ? window.catalogs.catalogNames : []
-                    currentIndex: model.indexOf(window.chosen)
+                    model: window.catalogRows
+                    currentIndex: window.chosenRow
                     highlightMoveDuration: 0
                     Keys.onUpPressed: window.stepCatalog(-1)
                     Keys.onDownPressed: window.stepCatalog(1)
                     Accessible.name: qsTr("Catalogues")
                     ScrollBar.vertical: ScrollBar {}
-                    delegate: ItemDelegate {
-                        id: catalogRow
-                        required property string modelData
+                    delegate: Column {
+                        id: catalogSlot
+                        required property var modelData
                         required property int index
                         width: ListView.view.width
-                        height: 28
-                        highlighted: ListView.isCurrentItem
-                        Accessible.name: modelData
-                        onClicked: window.chosen = modelData
-                        background: Rectangle {
-                            color: catalogRow.highlighted ? Theme.select : catalogRow.hovered ? Theme.raised : "transparent"
-                            Rectangle { visible: catalogRow.highlighted; width: 3; height: parent.height; color: Theme.accent }
+                        Label {
+                            textFormat: Text.PlainText
+                            visible: window.catalogs.hasProject
+                                     && (catalogSlot.index === 0 || window.catalogRows[catalogSlot.index - 1].tier !== catalogSlot.modelData.tier)
+                            text: catalogSlot.modelData.tier === "project" ? qsTr("This project") : qsTr("Mine")
+                            color: Theme.muted
+                            font: window.fontAt(11)
+                            leftPadding: 8
+                            topPadding: 6
+                            bottomPadding: 2
                         }
-                        contentItem: RowLayout {
-                            Label {
-                                textFormat: Text.PlainText
-                                text: catalogRow.modelData
-                                font.weight: catalogRow.highlighted ? Font.DemiBold : Font.Normal
-                                elide: Text.ElideRight
-                                Layout.fillWidth: true
+                        ItemDelegate {
+                            id: catalogRow
+                            readonly property var modelData: catalogSlot.modelData
+                            objectName: "fontCatalogCatalog" + catalogSlot.index
+                            width: catalogSlot.width
+                            height: 28
+                            highlighted: catalogSlot.ListView.isCurrentItem
+                            Accessible.name: modelData.hidden ? qsTr("%1, hidden by the project’s copy").arg(modelData.name) : modelData.name
+                            onClicked: window.choose(modelData.name, modelData.hidden)
+                            TapHandler {
+                                acceptedButtons: Qt.RightButton
+                                enabled: window.catalogs.hasProject
+                                onTapped: {
+                                    window.choose(catalogRow.modelData.name, catalogRow.modelData.hidden)
+                                    tierMenu.popup()
+                                }
                             }
-                            Label {
-                                textFormat: Text.PlainText
-                                text: window.revision >= 0 ? window.catalogs.catalogSize(catalogRow.modelData) : ""
-                                color: Theme.muted
-                                font: window.fontAt(12)
+                            background: Rectangle {
+                                color: catalogRow.highlighted ? Theme.select : catalogRow.hovered ? Theme.raised : "transparent"
+                                Rectangle { visible: catalogRow.highlighted; width: 3; height: parent.height; color: Theme.accent }
+                            }
+                            contentItem: RowLayout {
+                                Label {
+                                    textFormat: Text.PlainText
+                                    text: catalogRow.modelData.name
+                                    color: catalogRow.modelData.hidden ? Theme.muted : Theme.text
+                                    font.weight: catalogRow.highlighted ? Font.DemiBold : Font.Normal
+                                    elide: Text.ElideRight
+                                    Layout.fillWidth: true
+                                }
+                                TierChip {
+                                    visible: window.catalogs.hasProject
+                                    tier: catalogRow.modelData.tier
+                                    enabled: !catalogRow.modelData.hidden
+                                }
+                                Label {
+                                    textFormat: Text.PlainText
+                                    text: window.revision >= 0
+                                          ? window.catalogs.catalogSize(catalogRow.modelData.name, catalogRow.modelData.hidden ? "mine" : "") : ""
+                                    color: Theme.muted
+                                    font: window.fontAt(12)
+                                }
                             }
                         }
                     }
                 }
+            }
+            Label {
+                textFormat: Text.PlainText
+                objectName: "fontCatalogHidden"
+                visible: window.chosenHidden
+                text: qsTr("Hidden by the project’s copy. Copy it to the project to use it there.")
+                color: Theme.muted
+                wrapMode: Text.Wrap
+                Layout.fillWidth: true
             }
         }
         ColumnLayout {
@@ -556,7 +647,7 @@ DialogWindow {
                             CheckBox {
                                 objectName: "fontCatalogMember"
                                 padding: 0
-                                enabled: window.chosen.length > 0
+                                enabled: window.chosen.length > 0 && !window.chosenHidden
                                 checked: window.members[row.modelData] === true
                                 Accessible.name: qsTr("“%1” in “%2”").arg(row.modelData, window.chosen)
                                 onToggled: window.setMembership([row.modelData], checked)
@@ -651,12 +742,12 @@ DialogWindow {
             newName.text = ""
             openAt(anchorItem)
         }
-        function create() {
+        function create(tier) {
             const name = newName.text.trim()
             if (name.length === 0 || problem !== "")
                 return
             keep()
-            window.createCatalog(name)
+            window.createCatalogIn(name, tier)
         }
         TextField {
             id: newName
@@ -664,7 +755,7 @@ DialogWindow {
             placeholderText: qsTr("Catalogue name")
             Accessible.name: qsTr("Catalogue name")
             Layout.preferredWidth: 240
-            onAccepted: newPopover.create()
+            onAccepted: newPopover.create(newCatalogSave.tier)
         }
         Label {
             textFormat: Text.PlainText
@@ -677,11 +768,16 @@ DialogWindow {
         }
         RowLayout {
             Layout.alignment: Qt.AlignRight
-            PrimaryButton {
-                objectName: "fontCatalogNewCreate"
-                text: qsTr("Create")
-                enabled: newName.text.trim().length > 0 && newPopover.problem === ""
-                onClicked: newPopover.create()
+            TierSaveButton {
+                id: newCatalogSave
+                objectName: "fontCatalogNewSave"
+                faceName: "fontCatalogNewCreate"
+                listId: "fontCatalogs"
+                settings: window.settings
+                hasProject: window.catalogs.hasProject
+                plainText: qsTr("Create")
+                faceEnabled: newName.text.trim().length > 0 && newPopover.problem === ""
+                onSave: tier => newPopover.create(tier)
             }
             Button { text: qsTr("Cancel"); onClicked: newPopover.revert() }
         }
@@ -736,6 +832,23 @@ DialogWindow {
         }
     }
 
+    ShellMenu {
+        id: tierMenu
+        objectName: "fontCatalogTierMenu"
+        readonly property bool fromMine: (window.catalogRows[window.chosenRow]?.tier ?? "mine") === "mine"
+        ShellMenuItem {
+            objectName: "copyFontCatalogToTier"
+            iconRole: "copy-to-tier"
+            text: tierMenu.fromMine ? qsTr("Copy to project") : qsTr("Copy to mine")
+            onTriggered: window.transfer(false)
+        }
+        ShellMenuItem {
+            objectName: "moveFontCatalogToTier"
+            iconRole: "move-to-tier"
+            text: tierMenu.fromMine ? qsTr("Move to project") : qsTr("Move to mine")
+            onTriggered: window.transfer(true)
+        }
+    }
     Loader {
         id: boxLoader
         visible: false

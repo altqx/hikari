@@ -167,7 +167,7 @@ qt_target_qml_sources(hikari_ui QML_FILES MessageBox.qml DangerButton.qml Popove
     ToastStack.qml InlineBar.qml ClashReview.qml ChooseStyles.qml HotkeyCapture.qml ListChooser.qml DatePicker.qml
     MessageHost.qml LogPanel.qml)
 qt_target_qml_sources(hikari_ui QML_FILES HidableQuestion.qml)
-qt_target_qml_sources(hikari_ui QML_FILES TierChip.qml TierSaveButton.qml)
+qt_target_qml_sources(hikari_ui QML_FILES TierChip.qml TierSaveButton.qml TierSaveMenu.qml)
 qt_target_qml_sources(hikari_ui QML_FILES SetNewFpsWindow.qml)
 qt_target_qml_sources(hikari_ui QML_FILES LazyMessageBox.qml UnsavedChanges.qml Autosaves.qml StartupOffer.qml)
 qt_target_qml_sources(hikari_ui QML_FILES SpellingAddedWords.qml ResampleWindow.qml)

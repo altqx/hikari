@@ -22,6 +22,7 @@ This card ships the review of applied changes (Auto and Full access). Manual mod
 - **A turn** groups the changes made for one user message. A caller's write opens a turn when it has none open, or when the user edited that Document since the caller's last step there. AI7 opens one per message with `beginTurn`. Each turn starts with a checkpoint.
 - **Waiting.** An item waits while the Document still differs from its before. Undoing it through History hides it; Redo brings it back. An item is **edited since** when the Document no longer holds what the newest AI change on it left.
 - **A staged file.** A reviewed caller's `files.write` never reaches the disk. It stages in the caller's open turn, and the AI reads its own staged copy back (`files.read`). A later write to the same path replaces the row and keeps the first before. The disk changes only when the user keeps it, in every Project, trusted or not ([#903](https://github.com/altqx/hikari/issues/903), owner, Q473). A write to a file open in a tab is refused (`open_document`); the AI edits it with `document.apply`. A file is **changed on disk** when the disk no longer holds the before.
+- **Sub-agents** (AI22). A sub-agent's turn records its parent's turn. The Review panel shows a child's changes under the parent's turn, each labelled "Sub-agent <title>", and a tab's badge hover splits its count by child.
 
 ## Keep, Undo and checkpoints
 
