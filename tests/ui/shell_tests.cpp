@@ -33579,7 +33579,7 @@ private slots:
         QVERIFY(visualItem("tag_b") && visualItem("tag_b")->isVisible() && visualItem("tag_s")->isVisible());
         QVERIFY(item("charsCounter")->isVisible() && item("cpsCounter")->isVisible());
         QVERIFY(!item("customGroup")->isVisible());
-        QVERIFY2(widest().isEmpty(), qPrintable(widest().join(u", ")));
+        QTRY_VERIFY2(widest().isEmpty(), qPrintable(widest().join(u", ")));
         QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(item("tagStripMore")));
         auto *menu = item<QObject>("tagStripMoreMenu");
         QTRY_VERIFY(menu->property("opened").toBool());
