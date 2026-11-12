@@ -75,6 +75,7 @@ ApplicationWindow {
     required property var styleManager
     required property var kanjiTimer
     required property var alignToVideo
+    required property var videoAnalysis
     required property var lyricsImport
     required property var qcNotes
     required property var fontCollector
@@ -2607,6 +2608,30 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                command: "GLOBAL_TRACK_COLOUR"
+                help: qsTr("Follows a picked point’s colour across the selected lines’ frames and writes it as colour or alpha tags")
+                iconRole: "track-colour"
+                objectName: "trackColourMenuItem"
+                action: Action {
+                    id: trackColourAction
+                    text: qsTr("Track colour…")
+                    enabled: root.video.hasVideo && root.shell.hasEditingTarget
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_TRACK_COLOUR")) root.openVideoAnalysis("track")
+                }
+            }
+            ShellMenuItem {
+                command: "GLOBAL_FIND_FADE"
+                help: qsTr("Finds where the active line’s sign fades in and out at a picked point and writes %1").arg("\\fad")
+                iconRole: "find-fade"
+                objectName: "findFadeMenuItem"
+                action: Action {
+                    id: findFadeAction
+                    text: qsTr("Find fade…")
+                    enabled: root.video.hasVideo && root.shell.hasEditingTarget
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_FIND_FADE")) root.openVideoAnalysis("fade")
+                }
+            }
+            ShellMenuItem {
                 command: "GLOBAL_SET_START_TIME"
                 iconRole: "set-start-time"
                 objectName: "setStartTimeMenuItem"
@@ -3838,6 +3863,25 @@ ApplicationWindow {
             TextMenuItem { kind: TextMenuItem.Delete; editor: field }
             MenuSeparator {}
             TextMenuItem { kind: TextMenuItem.SelectAll; editor: field }
+            MenuSeparator { visible: !field.readOnly; height: visible ? implicitHeight : 0 }
+            LineBreaksMenu {
+                shellRoot: root
+                prefix: field.objectName
+                enabled: !field.readOnly && root.editor.hasLine
+            }
+            ChangeCaseMenu {
+                shellRoot: root
+                prefix: field.objectName
+                enabled: !field.readOnly && root.editor.hasLine
+            }
+            ShellMenuItem {
+                command: "GLOBAL_SWAP_DIALOGUE_ALTERNATIVES"
+                iconRole: "dialogue-swap"
+                objectName: field.objectName + "SwapAlternatives"
+                text: qsTranslate("HikariSub.Text", "Swap dialogue alternatives")
+                enabled: !field.readOnly && root.editor.hasLine
+                onTriggered: if (!root.hotkeyGesture(command)) root.app.textCommand("swapAlternatives")
+            }
             MenuSeparator {}
             ShellMenuItem {
                 command: "GLOBAL_BLUR_AND_GLOW_LAYERS"
@@ -6573,6 +6617,16 @@ ApplicationWindow {
                             onTriggered: if (!root.hotkeyGesture("GLOBAL_CONVERT_FOLDS_TO_GROUPS")) root.app.convertFoldsToGroups()
                         }
                         MenuSeparator {}
+                        LineBreaksMenu { shellRoot: root; prefix: "grid" }
+                        ChangeCaseMenu { shellRoot: root; prefix: "grid" }
+                        ShellMenuItem {
+                            command: "GLOBAL_SWAP_DIALOGUE_ALTERNATIVES"
+                            iconRole: "dialogue-swap"
+                            objectName: "gridSwapAlternatives"
+                            text: qsTranslate("HikariSub.Text", "Swap dialogue alternatives")
+                            onTriggered: if (!root.hotkeyGesture(command)) root.app.textCommand("swapAlternatives")
+                        }
+                        MenuSeparator {}
                         ShellMenuItem {
                             command: "GRID_SELECT_VISIBLE_LINES"
                             iconRole: "select-visible"
@@ -8673,6 +8727,7 @@ ApplicationWindow {
             id: styleManagerWindow
             styles: root.styleManager
             catalogs: root.fontCatalogs
+            shellWindow: root.shellWindow
             colourPicker: root.colourPicker
             app: root.app
             notices: root.notices
@@ -8838,6 +8893,29 @@ ApplicationWindow {
         if (problem.length > 0)
             root.notices.post("error", qsTr("Align to video"), problem)
     }
+    Loader {
+        id: trackColourLoader
+        active: false
+        sourceComponent: TrackColourDialog {
+            controller: root.videoAnalysis
+            settings: root.app.settings
+        }
+    }
+    Loader {
+        id: findFadeLoader
+        active: false
+        sourceComponent: FindFadeDialog {
+            controller: root.videoAnalysis
+            settings: root.app.settings
+        }
+    }
+    function openVideoAnalysis(mode) {
+        const loader = mode === "fade" ? findFadeLoader : trackColourLoader
+        loader.active = true
+        const problem = loader.item.openDialog()
+        if (problem.length > 0)
+            root.notices.post("error", mode === "fade" ? qsTr("Find fade") : qsTr("Track colour"), problem)
+    }
     ListChooser {
         id: fixSuggestions
         objectName: "fixSuggestions"
@@ -8859,6 +8937,7 @@ ApplicationWindow {
         id: fontPicker
         editor: root.editor
         catalogs: root.fontCatalogs
+        shellWindow: root.shellWindow
         settings: root.app.settings
     }
     FontCatalogWindow {
@@ -9268,6 +9347,8 @@ ApplicationWindow {
         GLOBAL_JOIN_PREVIOUS_AUDIO_SELECTION: joinPreviousAudioSelectionAction,
         GLOBAL_CENTER_TIMES_IN_FRAMES: centerTimesInFramesAction,
         GLOBAL_ALIGN_TO_VIDEO: alignToVideoAction,
+        GLOBAL_TRACK_COLOUR: trackColourAction,
+        GLOBAL_FIND_FADE: findFadeAction,
         GLOBAL_PERSPECTIVE_TRACKING: perspectiveTrackingAction,
         GLOBAL_APPLY_MOTION_DATA: applyMotionDataAction,
         GLOBAL_BLUR_AND_GLOW_LAYERS: blurAndGlowLayersAction,
@@ -9499,6 +9580,18 @@ ApplicationWindow {
         case "GLOBAL_PREVIOUS_LINE": if (editing) root.editor.nextLine(-1); return true
         case "GLOBAL_NEXT_LINE": if (editing) root.editor.nextLine(1); return true
         case "GLOBAL_REMOVE_TEXT": if (editing) root.app.deleteText(); return true
+        case "GLOBAL_TEXT_INSERT_BALANCED_BREAK": if (editing) root.app.textCommand("balancedBreak"); return true
+        case "GLOBAL_TEXT_MOVE_BREAK_LEFT": if (editing) root.app.textCommand("breakLeft"); return true
+        case "GLOBAL_TEXT_MOVE_BREAK_RIGHT": if (editing) root.app.textCommand("breakRight"); return true
+        case "GLOBAL_TEXT_REMOVE_BREAKS": if (editing) root.app.textCommand("removeBreaks"); return true
+        case "GLOBAL_TEXT_WRAP_AT_BREAKS_ONLY": if (editing) root.app.textCommand("wrapAtBreaksOnly"); return true
+        case "GLOBAL_TEXT_LOWERCASE": if (editing) root.app.textCommand("lowercase"); return true
+        case "GLOBAL_TEXT_UPPERCASE": if (editing) root.app.textCommand("uppercase"); return true
+        case "GLOBAL_TEXT_TITLE_CASE": if (editing) root.app.textCommand("titleCase"); return true
+        case "GLOBAL_TEXT_SENTENCE_CASE": if (editing) root.app.textCommand("sentenceCase"); return true
+        case "GLOBAL_TEXT_FULL_WIDTH": if (editing) root.app.textCommand("fullWidth"); return true
+        case "GLOBAL_TEXT_HALF_WIDTH": if (editing) root.app.textCommand("halfWidth"); return true
+        case "GLOBAL_SWAP_DIALOGUE_ALTERNATIVES": if (editing) root.app.textCommand("swapAlternatives"); return true
         case "GLOBAL_ADD_PAGE": root.app.addPage(); return true
         case "GLOBAL_SELECT_FROM_VIDEO": root.app.selectLineFromVideo(); return true
         case "GLOBAL_SNAP_WITH_START": root.app.snapToKeyframe(true); return true

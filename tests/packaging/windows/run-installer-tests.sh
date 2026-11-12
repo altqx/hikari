@@ -7,7 +7,9 @@
 # The legacy setup is a legacy payload (for example v0.0.1's zip) built with
 # --codebase legacy; V1 < V2 < V3 are HikariSub test versions (0.1.0-test.N); V1's
 # payload carries the extra files orphan-test.txt and OrphanDir/gone.txt,
-# which V2 must remove. The VM must have no HikariSub install. Take the lease
+# which V2 must remove. HikariSub-<V3>-noshell-windows-x64-setup.exe is V3 built
+# with NSISCONFDIR=tests/packaging/windows/no-shell, so its desktop shell dispatch
+# fails. The VM must have no HikariSub install. Take the lease
 # first (winix lease acquire --owner "$WINIX_OWNER"); every step prints
 # "ok"/"FAIL" lines and the script stops at the first failing step.
 #
@@ -15,8 +17,8 @@
 # Retry prompt, the UAC refusal message, Finish starting the app) are driven
 # with `winix ui` by hand; see tests/packaging/windows/README.md.
 set -euo pipefail
-# MUST KILL: usage prints this file's header lines 2-15 as its help text
-[ $# -eq 5 ] || { sed -n '2,15p' "$0" >&2; exit 2; }
+# MUST KILL: usage prints this file's header lines 2-17 as its help text
+[ $# -eq 5 ] || { sed -n '2,17p' "$0" >&2; exit 2; }
 setups=$1 legacy=$2 v1=$3 v2=$4 v3=$5
 repo=$(cd "$(dirname "$0")/../../.." && pwd)
 config="$repo/tests/packaging/windows/winix.yaml"
@@ -57,6 +59,7 @@ trap end_setups EXIT
 for v in "$legacy" "$v1" "$v2" "$v3"; do
     w push "$setups/HikariSub-$v-windows-x64-setup.exe" "$guest\\HikariSub-$v-windows-x64-setup.exe" > /dev/null
 done
+w push "$setups/HikariSub-$v3-noshell-windows-x64-setup.exe" "$guest\\HikariSub-$v3-noshell-windows-x64-setup.exe" > /dev/null
 setup() { echo "SETUP=$guest\\HikariSub-$1-windows-x64-setup.exe"; }
 
 step inst ACTION=run "$(setup "$legacy")" "ARGS=/S /CURRENTUSER"
@@ -91,6 +94,9 @@ step inst-admin ACTION=run "$(setup "$v2")" ARGS=/S
 step inst-admin ACTION=check-installed SCOPE=machine VERSION="$v2" 'ORPHANS=orphan-test.txt|OrphanDir'
 step inst-detach ACTION=start-app SCOPE=machine
 step inst-admin ACTION=update SCOPE=machine VERSION="$v3" CLOSE_APP=1 "$(setup "$v3")" "ARGS=/RELAUNCH /ALLUSERS /D=$machine"
+step inst ACTION=stop-app
+step inst-detach ACTION=start-app SCOPE=machine
+step inst-admin ACTION=update SCOPE=machine VERSION="$v3" CLOSE_APP=1 "$(setup "$v3-noshell")" "ARGS=/RELAUNCH /ALLUSERS /D=$machine" RELAUNCH=none
 step inst ACTION=stop-app
 step inst ACTION=run "SETUP=$machine\\Uninstall HikariSub.exe" "ARGS=/S _?=$machine" EXPECT=4
 step inst-admin ACTION=user-file FILE=uninstall-keeps-this.txt

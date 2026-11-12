@@ -20,7 +20,9 @@ void addWriteOperations(Registry &registry);
 void addMediaOperations(Registry &registry);
 void addFileOperations(Registry &registry);
 void addSkillOperations(Registry &registry);
+void addAutomationOperations(Registry &registry);
 void addNodeOperations(Registry &registry);
+void addTypesetOperations(Registry &registry);
 void addEvents(Registry &registry);
 
 void addOperation(Registry &registry, Access access, std::string name, std::string summary, std::string_view params,
@@ -41,6 +43,17 @@ bool visible(const Context &context, application::DocumentId document);
 bool sees(const Caller &caller, std::optional<application::DocumentId> editingTarget, application::DocumentId document);
 
 std::string narrow(std::u8string_view s);
+// document.apply: the edits as one undo step, recorded for review when the caller is reviewed.
+Result documentApply(const Context &context, const Json &params);
+std::unexpected<Error> noVideo();
+bool videoOpen(const Context &context);
+const core::LineRecord *findLine(const core::Document &document, core::LineId id);
+std::unexpected<Error> noLine(core::LineId id);
+std::unexpected<Error> cannotDraw();
+std::unexpected<Error> notDrawn(std::int64_t frame);
+// `params`' frame, else the frame shown when it lies in `record`'s span, else the span's first frame.
+std::int64_t frameOf(const application::MacroMediaPort &media, const Json &params, const core::LineRecord *record);
+
 Json selectionJson(const application::EditSession &session);
 Json panelJson(const PanelState &panel);
 
