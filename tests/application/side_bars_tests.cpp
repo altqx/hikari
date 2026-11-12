@@ -244,7 +244,7 @@ TEST(SideBars, MiddleOnlyPanelsNeverGoIn)
         EXPECT_FALSE(sideBarMayHold(panel)) << panel;
         EXPECT_EQ(moved(defaultSideBars({}), panel, SideBarId::First, 0), defaultSideBars({})) << panel;
     }
-    for (const char *panel : kEverything)
+    for (const std::string &panel : kEverything)
         EXPECT_TRUE(sideBarMayHold(panel)) << panel;
     EXPECT_TRUE(sideBarMayHold("plugin:karaoke/main"));
 }
