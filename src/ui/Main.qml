@@ -6944,6 +6944,7 @@ ApplicationWindow {
                         onSettingsRequested: root.openSettings("ai")
                         onLogRequested: root.showPanel(logDock)
                         onExportRequested: id => agentExportDialog.openFor(id)
+                        onPluginRequested: id => pluginManagerDialog.showPlugin(id)
                     }
                 }
                 Connections {

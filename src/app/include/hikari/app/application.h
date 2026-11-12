@@ -1,6 +1,7 @@
 #pragma once
 
 #include "hikari/app/ai_karaoke.h"
+#include "hikari/app/ai_plugins.h"
 #include "hikari/app/ai_scripts.h"
 #include "hikari/app/api_host.h"
 #include "hikari/app/automation_hotkeys_controller.h"
@@ -1341,6 +1342,7 @@ private:
     std::unique_ptr<HotkeysController> m_hotkeys;
     std::unique_ptr<AiScripts> m_aiScripts;
     std::unique_ptr<AiKaraoke> m_aiKaraoke;
+    std::unique_ptr<AiPlugins> m_aiPlugins;
     std::unique_ptr<ApiHost> m_apiHost;
     std::unique_ptr<AiFeatures> m_ai;
     std::unique_ptr<AiMcp> m_aiMcp;

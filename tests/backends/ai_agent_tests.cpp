@@ -139,6 +139,20 @@ TEST(AgentPolicy, AiWrittenLuaAsksOnEveryRunInEveryMode)
             EXPECT_EQ(decide(mode, "automation.run", false, allowed), Decision::Script);
 }
 
+TEST(AgentPolicy, InstallingAPluginAsksOnEveryInstallInEveryMode)
+{
+    for (const AgentMode mode : {AgentMode::Manual, AgentMode::Auto, AgentMode::FullAccess})
+        for (const bool allowed : {false, true})
+            EXPECT_EQ(decide(mode, "plugins.install", false, allowed), Decision::Install);
+}
+
+TEST(AgentPolicy, ScaffoldingAPluginAsksLikeOtherWrites)
+{
+    EXPECT_EQ(riskOf("plugins.scaffold", Json::object({{"plugin", "org.example.a"}})), Risk::None);
+    EXPECT_EQ(decide(AgentMode::Manual, "plugins.scaffold", false, false), Decision::Ask);
+    EXPECT_EQ(decide(AgentMode::Auto, "plugins.scaffold", false, false), Decision::Judge);
+}
+
 TEST(AgentPolicy, FilesOutsideTheSubtitlesFoldersAndTheUserFolderAsk)
 {
     EXPECT_EQ(riskOf("files.write", Json::object({{"file", "inside"}})), Risk::None);
@@ -164,6 +178,7 @@ TEST(AgentPolicy, RunningScriptsOrProgramsAsks)
     for (const char *program : {"whisperx", "mfa"})
         EXPECT_EQ(riskOf("karaoke.align", Json::object({{"program", program}})), Risk::Programs) << program;
     EXPECT_EQ(riskOf("karaoke.apply_template", Json::object({})), Risk::None);
+    EXPECT_EQ(riskOf("plugins.run", Json::object({{"plugin", "org.example.a"}, {"command", "count"}})), Risk::Programs);
 }
 
 TEST(AgentPolicy, InstallingOrTrustingPluginsAndScriptsAsks)
@@ -210,7 +225,8 @@ TEST(AgentPolicy, EveryWriteOperationIsClassified)
     EXPECT_EQ(writes, (std::set<std::string>{"automation.run", "commands.run", "document.apply", "effects.apply",
                                              "effects.save", "files.write",
                                              "karaoke.align", "karaoke.apply_template", "panels.close", "panels.focus",
-                                             "panels.open", "selection.set", "settings.set",
+                                             "panels.open", "plugins.install", "plugins.run",
+                                             "plugins.scaffold", "selection.set", "settings.set",
                                              "translation.project_write", "typeset.apply"}))
         << "Classify the new write in alwaysAsk and docs/ai-agent.md, then add it here.";
 }
@@ -794,6 +810,64 @@ TEST_F(AgentThreadsTest, ALuaScriptShowsInFullAndAsksOnEveryRunInEveryMode)
         ASSERT_GE(answers.size(), 2u);
         EXPECT_NE(answers.back().dump().find("Not now"), std::string::npos);
     }
+}
+
+TEST_F(AgentThreadsTest, APluginInstallShowsItsCodeAndAsksOnEveryInstallInEveryMode)
+{
+    fake.fakePlugins.package = "/user/ai/plugins/org.example.word-count.hikariplugin";
+    const Json install = call("plugins.install", Json::object({{"plugin", "org.example.word-count"}}));
+    for (const AgentMode mode : {AgentMode::Manual, AgentMode::Auto, AgentMode::FullAccess}) {
+        fake.fakePlugins.installs.clear();
+        fake.fakePlugins.fullTrust = mode == AgentMode::FullAccess;
+        const std::string id = withMode(mode);
+        threads->send(id, script(Json::array({install, install})));
+        const std::uint64_t first = openAsk();
+        ASSERT_NE(first, 0u);
+        EXPECT_EQ(threads->asks().at(first).kind, Decision::Install);
+        const Json card = items(id, "install").at(0);
+        EXPECT_EQ(at(card, "name"), "Word count");
+        EXPECT_EQ(at(card, "tier"), mode == AgentMode::FullAccess ? "unrestricted" : "restricted");
+        EXPECT_EQ(at(card.find("files")->asArray().at(0), "path"), "main.lua");
+        threads->answer(first, Answer::AllowInThread);
+        EXPECT_TRUE(threads->asks().contains(first)) << "an install has no Allow in this thread";
+        threads->answer(first, Answer::AllowOnce);
+        ASSERT_TRUE(waitFor([&] { return !threads->asks().empty() && threads->asks().begin()->first != first; }));
+        EXPECT_EQ(threads->asks().begin()->second.kind, Decision::Install) << "a second install asks again";
+        threads->answer(threads->asks().begin()->first, Answer::Deny, "Not this one");
+        ASSERT_TRUE(idle(id));
+        EXPECT_EQ(fake.fakePlugins.installs.size(), 1u);
+        EXPECT_TRUE(thread(id).allowed.empty());
+        const auto cards = items(id, "install");
+        ASSERT_EQ(cards.size(), 2u);
+        EXPECT_EQ(at(cards[0], "status"), "installed");
+        EXPECT_EQ(at(cards[1], "status"), "declined");
+        EXPECT_EQ(at(cards[1], "message"), "Not this one");
+        const auto answers = receivedAs("answer");
+        ASSERT_GE(answers.size(), 2u);
+        EXPECT_NE(answers.back().dump().find("Not this one"), std::string::npos);
+    }
+}
+
+TEST_F(AgentThreadsTest, APluginThatCantBeReviewedIsRefusedWithoutACard)
+{
+    const std::string id = withMode(AgentMode::FullAccess);
+    threads->send(id, script(Json::array({call("plugins.install", Json::object({{"plugin", "org.example.none"}}))})));
+    ASSERT_TRUE(idle(id));
+    EXPECT_TRUE(items(id, "install").empty());
+    EXPECT_TRUE(fake.fakePlugins.installs.empty());
+}
+
+TEST_F(AgentThreadsTest, RunningAPluginCommandAlwaysAsks)
+{
+    const std::string id = withMode(AgentMode::FullAccess);
+    threads->send(id, script(Json::array({call("plugins.run", Json::object({{"plugin", "org.example.word-count"},
+                                                                            {"command", "count"}}))})));
+    const std::uint64_t ask = openAsk();
+    ASSERT_NE(ask, 0u);
+    EXPECT_EQ(threads->asks().at(ask).kind, Decision::AlwaysAsk);
+    threads->answer(ask, Answer::AllowOnce);
+    ASSERT_TRUE(idle(id));
+    EXPECT_EQ(fake.fakePlugins.runs, std::vector<std::string>{"org.example.word-count/count"});
 }
 
 TEST_F(AgentThreadsTest, QtRefusesWritesWithoutAThreadOrAfterTheTurnStopped)

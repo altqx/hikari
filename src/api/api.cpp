@@ -95,6 +95,7 @@ const Registry &Api::registry()
         detail::addTranslationOperations(r);
         detail::addNodeOperations(r);
         detail::addEffectsOperations(r);
+        detail::addPluginOperations(r);
         detail::addTypesetOperations(r);
         detail::addProjectOperations(r);
         detail::addKaraokeOperations(r);
