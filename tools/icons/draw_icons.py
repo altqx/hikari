@@ -1413,7 +1413,6 @@ for card, roles in {
     "AI24 #744": ["update"],
     "PL7 #419": ["plugin-sandbox"],
     "AU6 #845": ["clip-to-shape", "shape-to-clip", "shape-merge"],
-    "AU16 #850": ["reinstall-scripts"],
 }.items():
     for role in roles:
         PENDING[role] = card
