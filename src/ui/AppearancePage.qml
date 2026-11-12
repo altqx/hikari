@@ -306,6 +306,25 @@ ScrollView {
                 Layout.fillWidth: true
                 Accessible.ignored: true
             }
+            SettingsRow {
+                text: qsTr("AI side bar")
+                note: qsTr("The other side bar holds the tools. Swap side bars in the View menu switches them.")
+                labelWidth: 150
+                ComboBox {
+                    objectName: "appearanceAiSideBar"
+                    readonly property string docsSetting: "appearance.aiSideBar"
+                    readonly property string docsControl: "choice"
+                    readonly property var docsValues: [
+                        {value: "start", label: "Left"},
+                        {value: "end", label: "Right"}
+                    ]
+                    readonly property var edges: Qt.application.layoutDirection === Qt.RightToLeft ? ["end", "start"] : ["start", "end"]
+                    model: [qsTr("Left"), qsTr("Right")]
+                    currentIndex: edges.indexOf(page.staged("appearance.aiSideBar") || "start")
+                    onActivated: index => page.dialog.put("appearance.aiSideBar", edges[index])
+                    Accessible.name: qsTr("AI side bar")
+                }
+            }
         }
     }
 }

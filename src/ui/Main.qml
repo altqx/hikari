@@ -457,6 +457,275 @@ ApplicationWindow {
             Docking.resizeInLayout(root.engineName("Grid"), moved, 0, 0, 0)
     }
 
+    property string sideBarsJson: ""
+    readonly property var sideBarsState: SideBarModel.read(root.sideBarsJson)
+    property string aiSideBarEdge: root.app.settings.value("appearance.aiSideBar")
+    readonly property bool firstSideBarOnLeft: SideBarModel.firstOnLeft(root.aiSideBarEdge, Qt.application.layoutDirection === Qt.RightToLeft)
+    readonly property var leftSideBarState: root.firstSideBarOnLeft ? root.sideBarsState.first : root.sideBarsState.second
+    readonly property var rightSideBarState: root.firstSideBarOnLeft ? root.sideBarsState.second : root.sideBarsState.first
+    readonly property var leftSideBarEntries: root.sideBarEntries(root.leftSideBarState)
+    readonly property var rightSideBarEntries: root.sideBarEntries(root.rightSideBarState)
+    readonly property bool leftSideBarShown: root.sideBarShows(root.leftSideBarState, root.leftSideBarEntries)
+    readonly property bool rightSideBarShown: root.sideBarShows(root.rightSideBarState, root.rightSideBarEntries)
+    property var sideBarHomes: ({})
+    property var sideBarOrigins: ({})
+    Connections {
+        target: root.app.settings
+        function onChanged(id) {
+            if (id === "appearance.aiSideBar")
+                root.aiSideBarEdge = root.app.settings.value(id)
+        }
+    }
+    Connections {
+        target: root.app
+        function onSideBarsRestored(shellWindow) {
+            if (shellWindow === root.shellWindow && root.arrangementSettled)
+                root.loadSideBars()
+        }
+    }
+    onSideBarsStateChanged: Qt.callLater(root.placeSideBarPanels)
+    onDockListChanged: Qt.callLater(root.placeSideBarPanels)
+    onLeftSideBarShownChanged: Qt.callLater(root.placeSideBarPanels)
+    onRightSideBarShownChanged: Qt.callLater(root.placeSideBarPanels)
+
+    function sideBarDock(name) {
+        return root.dockList.find(d => root.panelName(d) === name) ?? root.pluginDock(name)
+    }
+    function sideBarEntries(bar) {
+        const entries = []
+        for (const name of bar.panels) {
+            const dock = root.dockList.find(d => root.panelName(d) === name)
+            if (!dock || !root.panelAvailable(dock))
+                continue
+            entries.push({ name: name, title: root.panels[root.dockList.indexOf(dock)].title, iconRole: root.panelIcon(dock),
+                           plugin: root.isPluginDock(dock) })
+        }
+        return entries
+    }
+    function sideBarShows(bar, entries) { return !bar.hidden && (bar.panels.length === 0 || entries.length > 0) }
+    function shownInSideBar(bar, entries) {
+        return entries.some(e => e.name === bar.shown) ? bar.shown : (entries[0]?.name ?? "")
+    }
+    function panelIcon(dock) {
+        const icons = { Agent: "ai-assistant", Review: "review-panel", Search: "search", Timing: "timing-assistant",
+                        Postprocessor: "timing-postprocessor", Styles: "styles", QcNotes: "qc-notes", Explorer: "explorer",
+                        Spellchecker: "spellchecker", Log: "log", Template: "template-editor", Automation: "automation-manager",
+                        NodeGraph: "node-editor", NodeInspector: "node-editor", NodeSources: "node-library",
+                        Reference: "reference", Original: "comment-original" }
+        return root.isPluginDock(dock) ? "plugins" : (icons[root.panelName(dock)] ?? "panels")
+    }
+    function sideBarOf(dock) {
+        const name = root.panelName(dock)
+        if (root.sideBarsState.first.panels.includes(name))
+            return "first"
+        if (root.sideBarsState.second.panels.includes(name))
+            return "second"
+        return ""
+    }
+    function inSideBar(dock) { return !!dock && root.sideBarOf(dock) !== "" }
+    function sideBarOnLeft(side) { return (side === "first") === root.firstSideBarOnLeft }
+    function setSideBars(json) {
+        if (json === root.sideBarsJson)
+            return
+        root.sideBarsJson = json
+        root.app.setSideBars(root.shellWindow, json)
+    }
+    function loadSideBars() {
+        const saved = root.app.sideBars(root.shellWindow)
+        const read = SideBarModel.read(saved)
+        for (const name of read.first.panels.concat(read.second.panels))
+            root.pluginDock(name)
+        if (saved.length > 0) {
+            root.sideBarsJson = saved
+        } else {
+            root.setSideBars(SideBarModel.migrated(root.projectName.length > 0, root.rightOfGridPanels()))
+            root.sideBarsMigrated = true
+        }
+        root.sideBarsLoaded = true
+        root.placeSideBarPanels()
+    }
+    property bool sideBarsMigrated: false
+    function rightOfGridPanels() {
+        const column = root.dockList.find(d => d.uniqueName === Docking.dockRightOf(root.engineName("Grid")))
+        if (!column)
+            return []
+        const place = Docking.placeInLayout(column.uniqueName)
+        const samePlace = r => r.x === place.x && r.y === place.y && r.width === place.width && r.height === place.height
+        return root.dockList.filter(d => d.isOpen && !d.isFloating && samePlace(Docking.placeInLayout(d.uniqueName)))
+                            .map(d => root.panelName(d))
+    }
+    property bool sideBarsLoaded: false
+    function placeSideBarPanels() {
+        if (!root.sideBarsLoaded)
+            return
+        let json = root.sideBarsJson
+        for (const dock of root.dockList)
+            if (dock.isOpen && root.inSideBar(dock))
+                json = SideBarModel.shown(json, root.panelName(dock))
+        if (json !== root.sideBarsJson) {
+            root.setSideBars(json)
+            return
+        }
+        const leftShown = root.leftSideBarShown ? root.shownInSideBar(root.leftSideBarState, root.leftSideBarEntries) : ""
+        const rightShown = root.rightSideBarShown ? root.shownInSideBar(root.rightSideBarState, root.rightSideBarEntries) : ""
+        for (let i = 0; i < root.dockList.length; ++i) {
+            const dock = root.dockList[i]
+            const panel = root.panels[i]
+            const name = root.panelName(dock)
+            if (root.inSideBar(dock)) {
+                if (!root.sideBarHomes[name])
+                    root.sideBarHomes[name] = panel.parent
+                panel.parent = name === leftShown ? leftSideBar.slot : name === rightShown ? rightSideBar.slot : sideBarStash
+                if (dock.isOpen)
+                    dock.close()
+            } else if (root.sideBarHomes[name]) {
+                panel.parent = root.sideBarHomes[name]
+                delete root.sideBarHomes[name]
+            }
+        }
+        Docking.setShrinkableWidth(dockingArea.uniqueName, Math.max(0, root.sideBarsWidth - root.sideBarsLeast))
+    }
+    readonly property int sideBarsWidth: (root.leftSideBarShown ? leftSideBar.width : 0) + (root.rightSideBarShown ? rightSideBar.width : 0)
+    readonly property int sideBarsLeast: ((root.leftSideBarShown ? 1 : 0) + (root.rightSideBarShown ? 1 : 0)) * SideBarModel.minimumWidth
+    onSideBarsWidthChanged: if (root.arrangementSettled) Docking.setShrinkableWidth(dockingArea.uniqueName, Math.max(0, root.sideBarsWidth - root.sideBarsLeast))
+    function sideBarWidth(bar) {
+        const shown = (root.leftSideBarShown ? 1 : 0) + (root.rightSideBarShown ? 1 : 0)
+        // MUST KILL: 480 is a magic width kept for the middle before the side bars shrink
+        const room = Math.max(SideBarModel.minimumWidth, (root.width - 480) / Math.max(1, shown))
+        return Math.round(Math.min(bar.width, room))
+    }
+    function showInSideBar(dock, focus) {
+        root.setSideBars(SideBarModel.shown(root.sideBarsJson, root.panelName(dock)))
+        root.placeSideBarPanels()
+        if (focus)
+            root.focusPanel(root.panels[root.dockList.indexOf(dock)], Qt.OtherFocusReason)
+    }
+    function sideBarIconClicked(name) {
+        const dock = root.sideBarDock(name)
+        root.setSideBars(SideBarModel.iconClicked(root.sideBarsJson, name))
+        root.placeSideBarPanels()
+        const panel = dock ? root.panels[root.dockList.indexOf(dock)] : null
+        if (panel && panel.visible)
+            root.focusPanel(panel, Qt.MouseFocusReason)
+    }
+    function toggleSideBar(left) {
+        const second = left !== root.firstSideBarOnLeft
+        root.setSideBars(SideBarModel.toggled(root.sideBarsJson, second))
+        root.placeSideBarPanels()
+    }
+    function swapSideBars() {
+        root.app.settings.setValue("appearance.aiSideBar", root.aiSideBarEdge === "end" ? "start" : "end")
+    }
+    function resetSideBars() {
+        if (root.layoutLocked)
+            return
+        for (const dock of root.dockList)
+            if (root.inSideBar(dock) && dock.isFloating)
+                dock.isFloating = false
+        root.setSideBars(SideBarModel.defaults(root.projectName.length > 0))
+        root.placeSideBarPanels()
+    }
+    function moveToSideBar(dock, left, index) {
+        if (root.layoutLocked || !SideBarModel.mayHold(root.panelName(dock)))
+            return
+        const second = left !== root.firstSideBarOnLeft
+        if (dock.isFloating)
+            dock.isFloating = false
+        delete root.sideBarOrigins[root.panelName(dock)]
+        const target = (second ? root.sideBarsState.second : root.sideBarsState.first).panels
+        const from = target.indexOf(root.panelName(dock))
+        const at = index === undefined ? target.length : (from >= 0 && from < index ? index - 1 : index)
+        root.setSideBars(SideBarModel.moved(root.sideBarsJson, root.panelName(dock), second, at))
+        root.placeSideBarPanels()
+        root.focusPanel(root.panels[root.dockList.indexOf(dock)], Qt.OtherFocusReason)
+    }
+    function moveOutOfSideBar(dock) {
+        if (root.layoutLocked || !root.inSideBar(dock))
+            return
+        root.setSideBars(SideBarModel.removed(root.sideBarsJson, root.panelName(dock)))
+        root.placeSideBarPanels()
+        root.showPanel(dock)
+    }
+    function stepInSideBar(dock, step) {
+        const side = root.sideBarOf(dock)
+        if (root.layoutLocked || side === "")
+            return
+        const panels = root.sideBarsState[side].panels
+        const index = panels.indexOf(root.panelName(dock)) + step
+        if (index < 0 || index >= panels.length)
+            return
+        root.setSideBars(SideBarModel.moved(root.sideBarsJson, root.panelName(dock), side === "second", index))
+    }
+    function floatFromSideBar(dock) {
+        const side = root.sideBarOf(dock)
+        const name = root.panelName(dock)
+        root.sideBarOrigins[name] = { second: side === "second", index: root.sideBarsState[side].panels.indexOf(name) }
+        root.setSideBars(SideBarModel.removed(root.sideBarsJson, name))
+        root.placeSideBarPanels()
+        root.openAtFirstPlace(dock)
+        dock.isFloating = true
+    }
+    function dockBackIntoSideBar(dock) {
+        const origin = root.sideBarOrigins[root.panelName(dock)]
+        if (!origin)
+            return false
+        delete root.sideBarOrigins[root.panelName(dock)]
+        dock.isFloating = false
+        root.setSideBars(SideBarModel.moved(root.sideBarsJson, root.panelName(dock), origin.second, origin.index))
+        root.placeSideBarPanels()
+        return true
+    }
+    function closeInSideBar(dock) {
+        root.setSideBars(SideBarModel.removed(root.sideBarsJson, root.panelName(dock)))
+        root.placeSideBarPanels()
+    }
+    function resizeSideBar(left, width, done) {
+        const second = left !== root.firstSideBarOnLeft
+        if (!done) {
+            (left ? leftSideBar : rightSideBar).liveWidth = Math.max(0, width)
+            return
+        }
+        (left ? leftSideBar : rightSideBar).liveWidth = -1
+        root.setSideBars(SideBarModel.widened(root.sideBarsJson, second, width))
+    }
+    function sideBarPanelCycle() {
+        const leftPanel = leftSideBar.visible && leftSideBar.slot.children.length > 0 ? leftSideBar.slot.children[0] : null
+        const rightPanel = rightSideBar.visible && rightSideBar.slot.children.length > 0 ? rightSideBar.slot.children[0] : null
+        const middle = root.panels.filter(p => p.visible && p !== leftPanel && p !== rightPanel)
+        return (leftPanel ? [leftPanel] : []).concat(middle).concat(rightPanel ? [rightPanel] : [])
+    }
+    Action {
+        id: toggleLeftSideBarAction
+        text: qsTranslate("HikariSub.Workspace", "Toggle left side bar")
+        checkable: true
+        checked: root.leftSideBarShown
+        onTriggered: {
+            if (!root.hotkeyGesture("GLOBAL_TOGGLE_LEFT_SIDE_BAR"))
+                root.toggleSideBar(true)
+            checked = Qt.binding(() => root.leftSideBarShown)
+        }
+    }
+    Action {
+        id: toggleRightSideBarAction
+        text: qsTranslate("HikariSub.Workspace", "Toggle right side bar")
+        checkable: true
+        checked: root.rightSideBarShown
+        onTriggered: {
+            if (!root.hotkeyGesture("GLOBAL_TOGGLE_RIGHT_SIDE_BAR"))
+                root.toggleSideBar(false)
+            checked = Qt.binding(() => root.rightSideBarShown)
+        }
+    }
+    Action {
+        id: swapSideBarsAction
+        text: qsTranslate("HikariSub.Workspace", "Swap side bars")
+        onTriggered: if (!root.hotkeyGesture("GLOBAL_SWAP_SIDE_BARS")) root.swapSideBars()
+    }
+    Item {
+        id: sideBarStash
+        visible: false
+    }
+
     function openAutomationRun(runId) {
         if (root.videoFullscreen.active)
             root.videoFullscreen.leave()
@@ -495,6 +764,7 @@ ApplicationWindow {
         const dock = pluginDockComponent.createObject(dockingArea, { uniqueName: root.engineName(name), storedName: name })
         dock.openedWithoutPlace.connect(() => root.openAtFirstPlace(dock))
         dock.isOpenChanged.connect(() => root.app.apiHost.panelChanged(name))
+        dock.isOpenChanged.connect(() => { if (dock.isOpen && root.inSideBar(dock)) Qt.callLater(root.placeSideBarPanels) })
         dock.isFloatingChanged.connect(() => root.app.apiHost.panelChanged(name))
         keyRouter.addPanel(dock.panel, null)
         root.pluginDocks = root.pluginDocks.concat([dock])
@@ -508,7 +778,10 @@ ApplicationWindow {
     function addPluginDock(dock) {
         const row = root.pluginUi ? root.pluginUi.panels.find(r => r.dock === dock.storedName) : undefined
         const area = row ? row.area : "right"
-        if (area === "bottom" && logDock.isOpen && !logDock.isFloating)
+        const side = SideBarModel.pluginSideBar(area, root.aiSideBarEdge, Qt.application.layoutDirection === Qt.RightToLeft)
+        if (side !== "" && root.arrangementSettled && !root.layoutLocked)
+            root.moveToSideBar(dock, root.sideBarOnLeft(side))
+        else if (area === "bottom" && logDock.isOpen && !logDock.isFloating)
             logDock.addDockWidgetAsTab(dock)
         else if (area === "bottom")
             dockingArea.addDockWidget(dock, KDDW.KDDockWidgets.Location_OnBottom, null, Qt.size(0, 180))
@@ -518,6 +791,8 @@ ApplicationWindow {
             root.addRightOfGrid(dock, 300)
     }
     function forgetPluginDock(dock) {
+        if (root.inSideBar(dock))
+            root.closeInSideBar(dock)
         dock.forceClose()
         root.pluginDocks = root.pluginDocks.filter(d => d !== dock)
         dock.deleteDockWidgetLater()
@@ -616,6 +891,10 @@ ApplicationWindow {
             required property var modelData
             target: modelData
             function onOpenedWithoutPlace() { root.openAtFirstPlace(modelData) }
+            function onIsOpenChanged() {
+                if (modelData.isOpen && root.inSideBar(modelData))
+                    Qt.callLater(root.placeSideBarPanels)
+            }
         }
     }
     WheelScroll {}
@@ -797,10 +1076,20 @@ ApplicationWindow {
         return i >= 0 ? dockList[i] : gridDock
     }
 
-    // MUST KILL: kind is a magic int (0 tab, 1 left, 2 above, 3 right, 4 below, 5 float)
+    // MUST KILL: kind is a magic int (0 tab, 1 left, 2 above, 3 right, 4 below, 5 float, 6 left side bar, 7 right side bar)
     function placePanel(dock, kind, target) {
         if (!root.panelAvailable(dock))
             return false
+        if (kind === 6 || kind === 7) {
+            if (!SideBarModel.mayHold(root.panelName(dock)))
+                return false
+            root.moveToSideBar(dock, kind === 6)
+            return true
+        }
+        if (root.inSideBar(dock) && kind !== 5) {
+            root.setSideBars(SideBarModel.removed(root.sideBarsJson, root.panelName(dock)))
+            root.placeSideBarPanels()
+        }
         if (kind === 5) {
             if (!dock.isFloating)
                 root.setPanelFloating(dock, true)
@@ -853,6 +1142,12 @@ ApplicationWindow {
         if (!root.panelAvailable(dock))
             return
         root.analytics.panelOpened(root.panelName(dock))
+        if (root.inSideBar(dock)) {
+            root.showInSideBar(dock, true)
+            if (dock === spellDock && !spellTool.checking)
+                spellTool.start()
+            return
+        }
         root.openAtFirstPlace(dock)
         root.workspaceLayout.keepFloatingPanelsOnScreen()
         dock.raise()
@@ -861,7 +1156,9 @@ ApplicationWindow {
         root.focusPanel(panels[dockList.indexOf(dock)], Qt.OtherFocusReason)
     }
     function openAtFirstPlace(dock) {
-        if (dock === originalDock)
+        if (root.inSideBar(dock))
+            root.showInSideBar(dock, false)
+        else if (dock === originalDock)
             root.openOriginal()
         else if (dock === logDock && !Docking.hasPlace(root.engineName("Log")))
             root.addLog()
@@ -1005,6 +1302,8 @@ ApplicationWindow {
         return []
     }
     function closePanel(dock) {
+        if (root.inSideBar(dock))
+            root.closeInSideBar(dock)
         if (dock === referenceDock)
             root.app.closeReference()
         else if (root.isPluginDock(dock) && dock.body.status === "missing")
@@ -1033,6 +1332,12 @@ ApplicationWindow {
                                          && (dock.options & KDDW.KDDockWidgets.DockWidgetOption_NotDockable) === 0
         property int tabIndex: -1
         property int tabCount: 0
+        readonly property string sideBar: dock ? root.sideBarOf(dock) : ""
+        readonly property bool onLeftSideBar: sideBar !== "" && root.sideBarOnLeft(sideBar)
+        readonly property bool onRightSideBar: sideBar !== "" && !root.sideBarOnLeft(sideBar)
+        readonly property bool sideBarHoldable: dock !== null && SideBarModel.mayHold(root.panelName(dock))
+        readonly property var sideBarPanels: sideBar !== "" ? root.sideBarsState[sideBar].panels : []
+        readonly property int sideBarIndex: dock ? sideBarPanels.indexOf(root.panelName(dock)) : -1
         readonly property int leftStep: Qt.application.layoutDirection === Qt.RightToLeft ? 1 : -1
         readonly property var hostedMenus: [gridFilteringMenu, gridColumnsMenu]
         function openFor(target, anchor) {
@@ -1131,6 +1436,51 @@ ApplicationWindow {
             text: qsTranslate("HikariSub.Workspace", "Move panel…")
             enabled: panelOptionsMenu.dockable && !root.layoutLocked
             onTriggered: placementWindow.openFor(panelOptionsMenu.dock)
+        }
+        ShellMenuItem {
+            iconRole: "side-bar-left"
+            objectName: "panelOptionsToLeftSideBar"
+            text: qsTranslate("HikariSub.Workspace", "Move to the left side bar")
+            visible: panelOptionsMenu.sideBarHoldable && !panelOptionsMenu.onLeftSideBar
+            height: visible ? implicitHeight : 0
+            enabled: !root.layoutLocked
+            onTriggered: root.moveToSideBar(panelOptionsMenu.dock, true)
+        }
+        ShellMenuItem {
+            iconRole: "side-bar-right"
+            objectName: "panelOptionsToRightSideBar"
+            text: qsTranslate("HikariSub.Workspace", "Move to the right side bar")
+            visible: panelOptionsMenu.sideBarHoldable && !panelOptionsMenu.onRightSideBar
+            height: visible ? implicitHeight : 0
+            enabled: !root.layoutLocked
+            onTriggered: root.moveToSideBar(panelOptionsMenu.dock, false)
+        }
+        ShellMenuItem {
+            iconRole: "panel-move"
+            objectName: "panelOptionsOutOfSideBar"
+            text: qsTranslate("HikariSub.Workspace", "Move out of the side bar")
+            visible: panelOptionsMenu.sideBar !== ""
+            height: visible ? implicitHeight : 0
+            enabled: !root.layoutLocked
+            onTriggered: root.moveOutOfSideBar(panelOptionsMenu.dock)
+        }
+        ShellMenuItem {
+            iconRole: "tab-move-left"
+            objectName: "panelOptionsSideBarLeft"
+            text: qsTranslate("HikariSub.Workspace", "Move left")
+            visible: panelOptionsMenu.sideBarPanels.length > 1
+            height: visible ? implicitHeight : 0
+            enabled: !root.layoutLocked && panelOptionsMenu.sideBarIndex > 0
+            onTriggered: root.stepInSideBar(panelOptionsMenu.dock, -1)
+        }
+        ShellMenuItem {
+            iconRole: "tab-move-right"
+            objectName: "panelOptionsSideBarRight"
+            text: qsTranslate("HikariSub.Workspace", "Move right")
+            visible: panelOptionsMenu.sideBarPanels.length > 1
+            height: visible ? implicitHeight : 0
+            enabled: !root.layoutLocked && panelOptionsMenu.sideBarIndex < panelOptionsMenu.sideBarPanels.length - 1
+            onTriggered: root.stepInSideBar(panelOptionsMenu.dock, 1)
         }
         ShellMenuItem {
             id: panelOptionsTabLeft
@@ -1366,7 +1716,7 @@ ApplicationWindow {
     function cyclePanels(step) {
         if (homePage.visible)
             return homePage.takeFocus()
-        const shown = panels.filter(p => p.visible)
+        const shown = root.sideBarPanelCycle()
         const card = automationProgress.reachable ? automationProgress : null
         if (card && card.activeFocus) {
             card.leave()
@@ -1467,7 +1817,10 @@ ApplicationWindow {
         if (root.layoutLocked && floating)
             return
         const panel = panels[dockList.indexOf(dock)]
-        dock.isFloating = floating
+        if (floating && root.inSideBar(dock))
+            root.floatFromSideBar(dock)
+        else if (floating || !root.dockBackIntoSideBar(dock))
+            dock.isFloating = floating
         Qt.callLater(() => root.focusPanel(panel, Qt.OtherFocusReason))
     }
 
@@ -1626,6 +1979,28 @@ ApplicationWindow {
             onResetRequested: root.resetLayout()
             onManageRequested: root.lazy(manageLayoutsDialogLoader).show()
         }
+        sideBarTools: [
+            IconToolButton {
+                objectName: "leftSideBarToggle"
+                iconRole: "side-bar-left"
+                action: toggleLeftSideBarAction
+                tip: toggleLeftSideBarAction.text
+                focusPolicy: Qt.NoFocus
+                implicitHeight: 24
+                Accessible.checkable: true
+                Accessible.checked: checked
+            },
+            IconToolButton {
+                objectName: "rightSideBarToggle"
+                iconRole: "side-bar-right"
+                action: toggleRightSideBarAction
+                tip: toggleRightSideBarAction.text
+                focusPolicy: Qt.NoFocus
+                implicitHeight: 24
+                Accessible.checkable: true
+                Accessible.checked: checked
+            }
+        ]
         tools: IconToolButton {
             objectName: "nodeEffectsToggle"
             iconRole: "node-editor"
@@ -3212,6 +3587,32 @@ ApplicationWindow {
                 onManageRequested: root.lazy(manageLayoutsDialogLoader).show()
             }
             MenuSeparator {}
+            ShellMenuItem {
+                objectName: "viewToggleLeftSideBar"
+                command: "GLOBAL_TOGGLE_LEFT_SIDE_BAR"
+                iconRole: "side-bar-left"
+                action: toggleLeftSideBarAction
+            }
+            ShellMenuItem {
+                objectName: "viewToggleRightSideBar"
+                command: "GLOBAL_TOGGLE_RIGHT_SIDE_BAR"
+                iconRole: "side-bar-right"
+                action: toggleRightSideBarAction
+            }
+            ShellMenuItem {
+                objectName: "viewSwapSideBars"
+                command: "GLOBAL_SWAP_SIDE_BARS"
+                iconRole: "side-bars-swap"
+                action: swapSideBarsAction
+            }
+            ShellMenuItem {
+                objectName: "viewResetSideBars"
+                iconRole: "layout-restore"
+                text: qsTranslate("HikariSub.Workspace", "Reset side bars")
+                enabled: !root.layoutLocked
+                onTriggered: root.resetSideBars()
+            }
+            MenuSeparator {}
             ShellMenu {
                 id: panelsMenu
                 iconRole: "panels"
@@ -4189,10 +4590,81 @@ ApplicationWindow {
             root.focusPanel(next, Qt.OtherFocusReason)
     }
 
+    component WindowSideBar: SideBar {
+        id: sideBar
+        property int liveWidth: -1
+        readonly property var state: onLeft ? root.leftSideBarState : root.rightSideBarState
+        readonly property var dockShown: root.dockList.find(d => root.panelName(d) === shown) ?? null
+        anchors { top: parent.top; bottom: parent.bottom }
+        width: liveWidth >= 0 ? Math.max(SideBarModel.minimumWidth, liveWidth) : root.sideBarWidth(state)
+        visible: (onLeft ? root.leftSideBarShown : root.rightSideBarShown) && !root.videoFullscreen.active
+        entries: onLeft ? root.leftSideBarEntries : root.rightSideBarEntries
+        shown: root.shownInSideBar(state, entries)
+        locked: root.layoutLocked
+        panelFocused: dockShown !== null && root.panels[root.dockList.indexOf(dockShown)].activeFocus
+        onIconClicked: panel => root.sideBarIconClicked(panel)
+        onIconMenu: (panel, anchor) => {
+            const dock = root.sideBarDock(panel)
+            if (dock)
+                panelOptionsMenu.openFor(dock, anchor)
+        }
+        onMenuRequested: anchor => { if (dockShown) panelOptionsMenu.openFor(dockShown, anchor) }
+        onResized: (width, done) => root.resizeSideBar(onLeft, width, done)
+        onIconDragged: (panel, at, done) => root.dragSideBarIcon(panel, at, done)
+    }
+    WindowSideBar {
+        id: leftSideBar
+        objectName: "leftSideBar"
+        anchors.left: parent.left
+        onLeft: true
+        dropTarget: root.sideBarDrag.over === "left"
+        dropIndex: root.sideBarDrag.over === "left" ? root.sideBarDrag.index : -1
+        dragging: root.sideBarDrag.panel
+    }
+    WindowSideBar {
+        id: rightSideBar
+        objectName: "rightSideBar"
+        anchors.right: parent.right
+        onLeft: false
+        dropTarget: root.sideBarDrag.over === "right"
+        dropIndex: root.sideBarDrag.over === "right" ? root.sideBarDrag.index : -1
+        dragging: root.sideBarDrag.panel
+    }
+    property var sideBarDrag: ({ panel: "", over: "", index: -1 })
+    function dragSideBarIcon(panel, at, done) {
+        const over = [[leftSideBar, "left"], [rightSideBar, "right"]].find(([bar]) => {
+            if (!bar.visible)
+                return false
+            const p = bar.strip.parent.mapFromItem(null, at.x, at.y)
+            return p.x >= 0 && p.y >= 0 && p.x < bar.strip.parent.width && p.y < bar.strip.parent.height
+        })
+        const index = over ? over[0].dropIndexAt(over[0].strip.parent.mapFromItem(null, at.x, at.y).x) : -1
+        if (!done) {
+            root.sideBarDrag = { panel: panel, over: over ? over[1] : "", index: index }
+            return
+        }
+        root.sideBarDrag = { panel: "", over: "", index: -1 }
+        const dock = root.sideBarDock(panel)
+        if (!dock || root.layoutLocked)
+            return
+        if (over) {
+            root.moveToSideBar(dock, over[1] === "left", index)
+        } else {
+            const inArea = dockingArea.mapFromItem(null, at.x, at.y)
+            if (inArea.x >= 0 && inArea.y >= 0 && inArea.x < dockingArea.width && inArea.y < dockingArea.height)
+                root.moveOutOfSideBar(dock)
+        }
+    }
+
     KDDW.DockingArea {
         id: dockingArea
         objectName: "dockingArea"
-        anchors.fill: parent
+        anchors {
+            left: leftSideBar.visible ? leftSideBar.right : parent.left
+            right: rightSideBar.visible ? rightSideBar.left : parent.right
+            top: parent.top
+            bottom: parent.bottom
+        }
         uniqueName: root.engineName("Classic")
         affinities: root.dockAffinities
         enabled: !homePage.visible
@@ -7211,6 +7683,7 @@ ApplicationWindow {
         root.placeOriginal()
         Docking.guardClose(root, root.admitClose)
         Docking.followLayoutMinimum(dockingArea.uniqueName)
+        root.loadSideBars()
     }
     onFrameSwapped: settleArrangement()
     Timer { // a hidden window swaps no frames
@@ -8209,7 +8682,7 @@ ApplicationWindow {
                 id: placementKind
                 objectName: "placementKind"
                 Layout.preferredWidth: 130
-                model: [qsTranslate("HikariSub.Workspace", "Tab with"), qsTranslate("HikariSub.Workspace", "Left of"), qsTranslate("HikariSub.Workspace", "Above"), qsTranslate("HikariSub.Workspace", "Right of"), qsTranslate("HikariSub.Workspace", "Below"), qsTranslate("HikariSub.Workspace", "Float")]
+                model: [qsTranslate("HikariSub.Workspace", "Tab with"), qsTranslate("HikariSub.Workspace", "Left of"), qsTranslate("HikariSub.Workspace", "Above"), qsTranslate("HikariSub.Workspace", "Right of"), qsTranslate("HikariSub.Workspace", "Below"), qsTranslate("HikariSub.Workspace", "Float"), qsTranslate("HikariSub.Workspace", "Left side bar"), qsTranslate("HikariSub.Workspace", "Right side bar")]
                 Accessible.name: qsTranslate("HikariSub.Workspace", "Placement")
             }
             Label {
@@ -8221,7 +8694,7 @@ ApplicationWindow {
                 id: placementTarget
                 objectName: "placementTarget"
                 Layout.fillWidth: true
-                enabled: placementKind.currentIndex !== 5
+                enabled: placementKind.currentIndex < 5
                 model: root.dockList
                 textRole: "title"
                 displayText: placementWindow.visible && currentIndex >= 0 ? root.dockList[currentIndex].title : ""
@@ -9475,6 +9948,8 @@ ApplicationWindow {
         GLOBAL_ABOUT: aboutAction, GLOBAL_HELPERS: creditsAction, GLOBAL_HELP: userGuideAction,
         GLOBAL_GETTING_STARTED: gettingStartedAction,
         GLOBAL_PLUGINS: pluginsAction, GLOBAL_TOGGLE_LOCK_LAYOUT: lockLayoutAction,
+        GLOBAL_TOGGLE_LEFT_SIDE_BAR: toggleLeftSideBarAction, GLOBAL_TOGGLE_RIGHT_SIDE_BAR: toggleRightSideBarAction,
+        GLOBAL_SWAP_SIDE_BARS: swapSideBarsAction,
         GLOBAL_VIDEO_DETAILS: videoDetailsAction,
         GLOBAL_ANSI: reportIssueAction, GLOBAL_CHECK_FOR_UPDATES: checkForUpdatesAction,
         GLOBAL_EDITOR_HIDE_TAGS: hideEditorTagsAction,
