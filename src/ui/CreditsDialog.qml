@@ -55,7 +55,9 @@ DialogWindow {
         ["Aegisub", "Aegisub contributors", "BSD 3-Clause and ISC"],
         ["Aegisub, arch1t3cht's fork", "arch1t3cht and Aegisub contributors", "BSD 3-Clause and ISC"],
         ["Align to video, from arch1t3cht's fork", "2019 Charlie Jiang", "BSD 3-Clause"],
-        ["arch1t3cht's Aegisub scripts", "arch1t3cht", "MIT"]
+        ["arch1t3cht's Aegisub scripts", "arch1t3cht", "MIT"],
+        ["karaOK", "logarithm", "BSD 3-Clause"],
+        ["ln.kara, from karaOK", "logarithm and petzku", qsTr("No licence stated")]
     ]
 
     component CreditRow: Item {

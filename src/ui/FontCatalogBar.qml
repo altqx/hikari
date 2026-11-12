@@ -8,6 +8,7 @@ RowLayout {
     id: bar
     objectName: "styleEditorCatalogBar"
     required property var catalogs
+    property int shellWindow: -1
     property string fontName: ""
     property var fonts: []
     property var choices: []
@@ -30,7 +31,7 @@ RowLayout {
             catalogs.setFilterOn(filter.checked)
         const value = staleText !== "" ? staleText
                     : choice.currentIndex >= 0 && choice.currentIndex < choices.length ? choices[choice.currentIndex] : ""
-        fonts = catalogs.fontList(choice.currentIndex, value, filter.checked, filterTextAtOpen)
+        fonts = catalogs.fontList(choice.currentIndex, value, filter.checked, filterTextAtOpen, shellWindow)
     }
     function catalogsChangedByWindow() {
         let sel = choice.currentIndex

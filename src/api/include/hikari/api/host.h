@@ -7,6 +7,7 @@
 #include "hikari/application/edit_session.h"
 #include "hikari/application/settings.h"
 #include "hikari/application/subtitle_render.h"
+#include "hikari/application/visual_perspective.h"
 #include "hikari/application/workspace.h"
 
 #include <functional>
@@ -122,6 +123,14 @@ public:
     virtual LuaStart run(const LuaScript &script, std::function<void(LuaRun)> done) = 0;
 };
 
+// What the typesetting solvers measure text with.
+class TypesetHost {
+public:
+    virtual ~TypesetHost() = default;
+    // A measure without a port: text Lines cannot be measured, drawings still can.
+    virtual application::visual::perspective::TextMeasure measure() const = 0;
+};
+
 // A missing port makes its operations answer unavailable.
 struct Host {
     DocumentHost *documents = nullptr;
@@ -134,6 +143,7 @@ struct Host {
     RenderHost *render = nullptr;
     SkillHost *skills = nullptr;
     AutomationHost *automation = nullptr;
+    TypesetHost *typeset = nullptr;
 };
 
 }

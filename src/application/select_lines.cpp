@@ -39,6 +39,7 @@ enum : int {
     kDoMoveOnEnd = 1 << 19,
     kDoSetAssComment = 1 << 20,
     kDoDelete = 1 << 21,
+    kFieldOverlaps = 1 << 22,
 };
 
 std::u8string replaceAll(std::u8string s, std::u8string_view from, std::u8string_view to)
@@ -84,7 +85,8 @@ std::u8string fieldText(const core::LineRecord &line, SelectLinesSettings::Field
     case F::Effect: return line.effect;
     case F::Start: return rawTime(line.start, line.startFrame, format);
     case F::End: return rawTime(line.end, line.endFrame, format);
-    case F::Text: break;
+    case F::Text:
+    case F::Overlaps: break;
     }
     return translationMode && !line.translation.empty() ? line.translation : line.text;
 }
@@ -95,6 +97,24 @@ std::u16string asciiFold(std::u16string_view s)
     for (auto &c : out)
         if (c >= u'A' && c <= u'Z')
             c = static_cast<char16_t>(c - u'A' + u'a');
+    return out;
+}
+
+std::set<core::LineId> overlappingLines(const std::vector<const core::LineRecord *> &lines, const LineVisible &visible)
+{
+    std::vector<const core::LineRecord *> dialogue;
+    for (const auto *l : lines)
+        if (!l->comment && (!visible || visible(l->id)))
+            dialogue.push_back(l);
+    std::ranges::stable_sort(dialogue, {}, [](const auto *l) { return l->start.value.microseconds(); });
+    std::set<core::LineId> out;
+    std::int64_t end = 0;
+    for (const auto *l : dialogue) {
+        if (l->start.value.microseconds() >= end)
+            end = l->end.value.microseconds();
+        else
+            out.insert(l->id);
+    }
     return out;
 }
 
@@ -114,6 +134,7 @@ SelectLinesSettings selectLinesFromOptions(int options)
               : options & kFieldEffect    ? S::Field::Effect
               : options & kFieldStartTime ? S::Field::Start
               : options & kFieldEndTime   ? S::Field::End
+              : options & kFieldOverlaps  ? S::Field::Overlaps
                                           : S::Field::Text;
     s.dialogues = (options & kDialogues) || !(options & kComments);
     s.comments = options & kComments;
@@ -145,6 +166,7 @@ int selectLinesOptions(const SelectLinesSettings &s)
     case F::Effect: options |= kFieldEffect; break;
     case F::Start: options |= kFieldStartTime; break;
     case F::End: options |= kFieldEndTime; break;
+    case F::Overlaps: options |= kFieldOverlaps; break;
     }
     if (s.dialogues)
         options |= kDialogues;
@@ -211,13 +233,18 @@ std::expected<SelectLinesResult, CommandRefusal> selectLines(EditSession &sessio
     }
 
     SelectLinesResult result;
+    const bool byOverlap = settings.field == SelectLinesSettings::Field::Overlaps;
+    const std::set<core::LineId> overlapping = byOverlap ? overlappingLines(lines, visible) : std::set<core::LineId>{};
     std::vector<core::LineId> acted; // selected Lines the walk saw, in order
     for (const auto *line : lines) {
         if (visible && !visible(line->id))
             continue;
-        std::u16string txt = core::toUtf16(fieldText(*line, settings.field, document.format(), translation));
+        std::u16string txt = byOverlap ? std::u16string()
+                                       : core::toUtf16(fieldText(*line, settings.field, document.format(), translation));
         bool found = false;
-        if (!txt.empty() && !find.empty()) {
+        if (byOverlap) {
+            found = overlapping.contains(line->id);
+        } else if (!txt.empty() && !find.empty()) {
             if (re) {
                 found = re->matches(txt);
                 if (const std::u16string error = re->matchError(); !found && !error.empty())

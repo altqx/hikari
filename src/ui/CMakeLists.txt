@@ -171,6 +171,7 @@ qt_target_qml_sources(hikari_ui QML_FILES SpellingAddedWords.qml ResampleWindow.
 qt_target_qml_sources(hikari_ui QML_FILES PerspectiveTrackingWindow.qml TrackingDataField.qml MotionDataWindow.qml InterpolateLinesWindow.qml
     ExtendTrackingWindow.qml BlurAndGlowLayersDialog.qml)
 qt_target_qml_sources(hikari_ui QML_FILES RemoveTagsDialog.qml)
+qt_target_qml_sources(hikari_ui QML_FILES SplitEveryDialog.qml)
 set(hikari_app_icon "${CMAKE_CURRENT_SOURCE_DIR}/../../packaging/icons/dawn-peek/app.svg")
 set_source_files_properties("${hikari_app_icon}" PROPERTIES QT_RESOURCE_ALIAS "app-icon.svg")
 qt_add_resources(hikari_ui "hikari_app_icon" PREFIX "/hikari/ui" FILES "${hikari_app_icon}")
