@@ -1,6 +1,6 @@
 #include "shape_editor.h"
 
-#include "tier_rows.h"
+#include "tiered_presets.h"
 
 #include <QRegularExpression>
 #include <QSet>
@@ -128,7 +128,7 @@ QVariantList ShapeEditor::items() const
                                {QStringLiteral("path"), path},
                                {QStringLiteral("box"), bounds},
                                {QStringLiteral("own"), !defaultNames().contains(qs(p.name))},
-                               {QStringLiteral("tier"), tierName(p.mark.tier)},
+                               {QStringLiteral("tier"), tierText(p.mark.tier)},
                                {QStringLiteral("hidden"), p.mark.hidden}});
     }
     return out;
@@ -221,7 +221,7 @@ void ShapeEditor::addShape()
 void ShapeEditor::addShapeTo(const QString &tier)
 {
     m_edition.addShape(m_hooks.activeLineText ? m_hooks.activeLineText() : std::u16string(),
-                       tierNamed(tier, m_hooks.hasProject));
+                       m_hooks.hasProject ? tierFromText(tier).value_or(application::Tier::Mine) : application::Tier::Mine);
     kept();
 }
 
@@ -236,8 +236,9 @@ QVariantList ShapeEditor::tierClashes() const
 
 bool ShapeEditor::sendToOtherTier(bool move, const QVariantList &choices)
 {
-    const auto clash = tierClashOf(choices);
-    const bool sent = m_edition.sendToOtherTier(move, clash.choice, clash.newName);
+    const auto current = QString::fromStdU16String(m_edition.current().name);
+    const auto clash = clashChoiceFor(current, choices);
+    const bool sent = m_edition.sendToOtherTier(move, clash, newNameOf(clash));
     kept();
     return sent;
 }

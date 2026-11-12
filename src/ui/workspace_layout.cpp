@@ -1,7 +1,7 @@
 #include "workspace_layout.h"
 
 #include "docking.h"
-#include "tier_rows.h"
+#include "tiered_presets.h"
 
 #include <kddockwidgets/LayoutSaver.h>
 #include <kddockwidgets/core/DockRegistry.h>
@@ -1748,7 +1748,7 @@ void WorkspaceLayoutController::setProjectLayoutsFile(const QString &file)
 
 QVariantList WorkspaceLayoutController::layoutClashes(const QString &name, const QString &from) const
 {
-    const auto source = tierNamed(from, hasProject());
+    const auto source = hasProject() ? tierFromText(from).value_or(application::Tier::Mine) : application::Tier::Mine;
     const int at = tierLayoutIndex(name, application::otherTier(source));
     if (at < 0 || tierLayoutIndex(name, source) < 0)
         return {};
@@ -1756,7 +1756,7 @@ QVariantList WorkspaceLayoutController::layoutClashes(const QString &name, const
     QString suggestion;
     for (int n = 2; suggestion.isEmpty() || tierLayoutIndex(suggestion, application::otherTier(source)) >= 0; ++n)
         suggestion = QStringLiteral("%1 (%2)").arg(taken).arg(n);
-    return {QVariantMap{{QStringLiteral("name"), taken}, {QStringLiteral("suggestion"), suggestion}}};
+    return {QVariantMap{{QStringLiteral("name"), name}, {QStringLiteral("suggestion"), suggestion}}};
 }
 
 QString WorkspaceLayoutController::copyLayout(const QString &name, const QString &from, const QVariantList &choices)
@@ -1774,7 +1774,7 @@ QString WorkspaceLayoutController::sendLayout(const QString &name, const QString
 {
     if (!hasProject())
         return {};
-    const auto source = tierNamed(from, true);
+    const auto source = tierFromText(from).value_or(application::Tier::Mine);
     const auto target = application::otherTier(source);
     const int at = tierLayoutIndex(name, source);
     if (at < 0)
@@ -1782,11 +1782,11 @@ QString WorkspaceLayoutController::sendLayout(const QString &name, const QString
     SavedLayout sent = m_saved[static_cast<std::size_t>(at)];
     QString landing = sent.name;
     if (tierLayoutIndex(landing, target) >= 0) {
-        const auto clash = tierClashOf(choices);
-        if (clash.choice.action == application::ClashAction::Skip)
+        const auto clash = clashChoiceFor(name, choices);
+        if (clash.action == application::ClashAction::Skip)
             return {};
-        if (clash.choice.action == application::ClashAction::Rename) {
-            const QString base = QString::fromStdU16String(clash.newName).trimmed();
+        if (clash.action == application::ClashAction::Rename) {
+            const QString base = QString::fromStdU16String(newNameOf(clash));
             landing = base.isEmpty() ? sent.name : base;
             for (int n = 2; tierLayoutIndex(landing, target) >= 0; ++n)
                 landing = QStringLiteral("%1 (%2)").arg(base.isEmpty() ? sent.name : base).arg(n);
@@ -1823,7 +1823,7 @@ QVariantList WorkspaceLayoutController::savedLayouts() const
         rows << QVariantMap{{QStringLiteral("name"), saved.name},
                             {QStringLiteral("usable"), saved.arrangement.has_value()},
                             {QStringLiteral("problem"), saved.problem},
-                            {QStringLiteral("tier"), tierName(saved.mark.tier)},
+                            {QStringLiteral("tier"), tierText(saved.mark.tier)},
                             {QStringLiteral("hidden"), saved.mark.hidden}};
     return rows;
 }
@@ -1909,7 +1909,7 @@ bool WorkspaceLayoutController::saveLayoutAs(const QString &name, const QString 
     const QString trimmed = name.trimmed();
     if (!m_loaded || !layoutNameProblem(trimmed).isEmpty())
         return false;
-    const auto into = tierNamed(tier, hasProject());
+    const auto into = hasProject() ? tierFromText(tier).value_or(application::Tier::Mine) : application::Tier::Mine;
     SavedLayoutsState before = savedLayoutsState();
     WorkspaceArrangement arrangement = shownArrangement();
     arrangement.layout = trimmed;

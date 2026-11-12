@@ -170,7 +170,6 @@ private:
     };
     application::StyleList *list(bool store, std::optional<application::StyleList> &document) const;
     void catalogChosen();
-    std::optional<application::Tier> tierOf(const QString &tier) const;
     std::optional<QString> landed(const QString &name, const QString &tier, const QVariantList &choices, bool move);
     void pin(Edit edit);
     application::EditSession *editSession() const;

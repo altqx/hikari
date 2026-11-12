@@ -6,7 +6,7 @@
 #include "hikari/core/text_projection.h"
 #include "hikari/application/tiers.h"
 #include "list_files.h"
-#include "tier_rows.h"
+#include "tiered_presets.h"
 #include "settings_store.h"
 
 #include <QCoreApplication>
@@ -236,7 +236,7 @@ const application::FontCatalogs &FontCatalogsController::tierCatalogs(const QStr
 {
     if (tier.isEmpty())
         return m_projectFile && m_project.findNoCase(u16(name)) ? m_project : m_catalogs;
-    return ui::tierNamed(tier, hasProject()) == application::Tier::Project ? m_project : m_catalogs;
+    return hasProject() && ui::tierFromText(tier) == application::Tier::Project ? m_project : m_catalogs;
 }
 
 bool FontCatalogsController::hasProject() const
@@ -261,7 +261,7 @@ QVariantList FontCatalogsController::catalogRows() const
 QVariantList FontCatalogsController::catalogClashes(const QString &name, const QString &from) const
 {
     const_cast<FontCatalogsController *>(this)->ensureLoaded();
-    const bool fromProject = ui::tierNamed(from, hasProject()) == application::Tier::Project;
+    const bool fromProject = hasProject() && ui::tierFromText(from) == application::Tier::Project;
     const auto &target = fromProject ? m_catalogs : m_project;
     const auto *clash = target.findNoCase(u16(name));
     if (!clash)
@@ -269,7 +269,7 @@ QVariantList FontCatalogsController::catalogClashes(const QString &name, const Q
     const auto same = [](const std::u16string &a, const std::u16string &b) { return application::sameNoCase(a, b, kLower); };
     const auto free = application::landingNameBy(target.names(), clash->name, {application::ClashAction::Rename, {}},
                                                  std::u16string(), same);
-    return {QVariantMap{{QStringLiteral("name"), qs(clash->name)},
+    return {QVariantMap{{QStringLiteral("name"), name},
                         {QStringLiteral("suggestion"), qs(free.value_or(clash->name))}}};
 }
 
@@ -294,9 +294,9 @@ QString FontCatalogsController::sendCatalog(const QString &name, const QString &
     const auto *catalog = source.find(u16(name));
     if (!catalog)
         return {};
-    const auto clash = ui::tierClashOf(choices);
+    const auto clash = ui::clashChoiceFor(name, choices);
     const auto same = [](const std::u16string &a, const std::u16string &b) { return application::sameNoCase(a, b, kLower); };
-    const auto landing = application::landingNameBy(target.names(), catalog->name, clash.choice, clash.newName, same);
+    const auto landing = application::landingNameBy(target.names(), catalog->name, clash, ui::newNameOf(clash), same);
     if (!landing)
         return {};
     const auto fonts = catalog->fonts;

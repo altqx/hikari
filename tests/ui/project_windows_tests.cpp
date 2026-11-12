@@ -1105,7 +1105,8 @@ private slots:
         const QVariantList clashes = fonts.catalogClashes(QStringLiteral("Signs"), QStringLiteral("mine"));
         QCOMPARE(clashes.size(), 1);
         QCOMPARE(clashes[0].toMap().value(QStringLiteral("suggestion")).toString(), QStringLiteral("signs (2)"));
-        const QVariantList rename{QVariantMap{{QStringLiteral("action"), QStringLiteral("rename")},
+        const QVariantList rename{QVariantMap{{QStringLiteral("name"), QStringLiteral("Signs")},
+                                              {QStringLiteral("action"), QStringLiteral("rename")},
                                               {QStringLiteral("newName"), QString()}}};
         QCOMPARE(fonts.copyCatalog(QStringLiteral("Signs"), QStringLiteral("mine"), rename), QStringLiteral("Signs (2)"));
         QCOMPARE(fonts.moveCatalog(QStringLiteral("Signs (2)"), QStringLiteral("project")), QStringLiteral("Signs (2)"));
@@ -1130,7 +1131,7 @@ private slots:
         QCOMPARE(readAll(projectLayouts), projectBefore);
         QCOMPARE(readAll(mineLayouts), mineBefore);
         QCOMPARE(layouts->layoutClashes(QStringLiteral("review"), QStringLiteral("project")).size(), 1);
-        const QVariantList replace{QVariantMap{{QStringLiteral("action"), QStringLiteral("replace")}}};
+        const QVariantList replace{QVariantMap{{QStringLiteral("name"), QStringLiteral("review")}, {QStringLiteral("action"), QStringLiteral("replace")}}};
         QCOMPARE(layouts->moveLayout(QStringLiteral("review"), QStringLiteral("project"), replace), QStringLiteral("review"));
         QCOMPARE(rowKeys(layouts->savedLayouts()), QStringList{QStringLiteral("mine:review")});
         QVERIFY(!readAll(projectLayouts).contains("review"));

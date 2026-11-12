@@ -7,8 +7,10 @@
 #include <QList>
 #include <QString>
 #include <QVariantList>
+#include <QVariantMap>
 
 #include <optional>
+#include <string>
 #include <vector>
 
 namespace hikari::ui {
@@ -56,10 +58,23 @@ private:
     QList<NamedPreset> m_project, m_mine;
 };
 
-application::Tier otherTierOf(application::Tier tier);
 QString tierText(application::Tier tier);
 std::optional<application::Tier> tierFromText(const QString &text);
 // QML's [{name, action ("replace", "rename", "skip"), newName}]: the choice for `name`, Skip without one.
 application::ClashChoice clashChoiceFor(const QString &name, const QVariantList &choices);
+std::u16string newNameOf(const application::ClashChoice &choice);
+
+// ClashReview's row for `current`, whose name the other tier has, with a free name as the suggestion.
+template <class Item, class Same>
+QVariantList tierClashRows(const std::vector<Item> &all, const Item &current, Same same)
+{
+    std::vector<std::u16string> taken;
+    for (const Item &item : application::itemsIn(all, application::otherTier(current.mark.tier)))
+        taken.push_back(item.name);
+    const auto free = application::landingNameBy(taken, current.name, {application::ClashAction::Rename, {}},
+                                                 std::u16string(), same);
+    return {QVariantMap{{QStringLiteral("name"), QString::fromStdU16String(current.name)},
+                        {QStringLiteral("suggestion"), QString::fromStdU16String(free.value_or(current.name))}}};
+}
 
 }
