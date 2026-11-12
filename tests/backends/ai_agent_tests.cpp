@@ -177,6 +177,16 @@ TEST(AgentPolicy, SendingToTheNetworkAndAiSettingsAsk)
     EXPECT_EQ(settingRisk("video.zoom", 1), Risk::None);
 }
 
+TEST(AgentPolicy, TypesetApplyAsksInManualModeLikeOtherWrites)
+{
+    const Json params = Json::object({{"revision", 1}, {"name", "Typeset the sign"}});
+    ASSERT_EQ(riskOf("typeset.apply", params), Risk::None);
+    EXPECT_EQ(decide(AgentMode::Manual, "typeset.apply", false, false), Decision::Ask);
+    EXPECT_EQ(decide(AgentMode::Manual, "typeset.apply", false, true), Decision::Run);
+    EXPECT_EQ(decide(AgentMode::Auto, "typeset.apply", false, false), Decision::Judge);
+    EXPECT_EQ(decide(AgentMode::FullAccess, "typeset.apply", false, false), Decision::Run);
+}
+
 TEST(AgentPolicy, EveryWriteOperationIsClassified)
 {
     std::set<std::string> writes;
@@ -184,7 +194,8 @@ TEST(AgentPolicy, EveryWriteOperationIsClassified)
         if (op.access == hikari::api::Access::Write)
             writes.insert(op.name);
     EXPECT_EQ(writes, (std::set<std::string>{"automation.run", "commands.run", "document.apply", "files.write", "panels.close",
-                                             "panels.focus", "panels.open", "selection.set", "settings.set"}))
+                                             "panels.focus", "panels.open", "selection.set", "settings.set",
+                                             "typeset.apply"}))
         << "Classify the new write in alwaysAsk and docs/ai-agent.md, then add it here.";
 }
 
