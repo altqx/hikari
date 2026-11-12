@@ -23,7 +23,7 @@ import {
 import { ProviderError } from "../providers/errors";
 import type { CompleteParams, Finished, Message, Part, StopReason, ToolCall, ToolDefinition, Update } from "../providers/types";
 import { RpcError } from "../rpc";
-import { kReadSkillTool, Skills } from "../skills/skills";
+import { kReadSkillTool, Skills, withSkills } from "../skills/skills";
 import type { Tool } from "../tools/catalogue";
 import { type ImageBudget, kDefaultImageBudget } from "../tools/images";
 import type { CallToolResult, HikariCalls, ToolSet } from "../tools/toolset";
@@ -277,9 +277,8 @@ export class AgentSession {
         return results;
     }
 
-    private async instructions(): Promise<string> {
-        const skills = await this.skills.instructions();
-        return [this.params.system, skills].filter(Boolean).join("\n\n");
+    private instructions(): Promise<string> {
+        return withSkills(this.params.system, this.skills);
     }
 
     private sources(finished: Finished): void {

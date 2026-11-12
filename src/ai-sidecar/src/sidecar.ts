@@ -16,7 +16,7 @@ import { checked, InvalidParams, ProviderService, type ServiceOptions } from "./
 import type { SearchService, UpdateParams } from "./providers/types";
 import { Peer, RpcError } from "./rpc";
 import type { OperationName, Operations } from "./tools/api.gen";
-import { Skills } from "./skills/skills";
+import { kReadSkillTool, Skills } from "./skills/skills";
 import { Catalogue, kCatalogue, type Reference } from "./tools/catalogue";
 import { ToolSet, type HikariCalls } from "./tools/toolset";
 import { WebSearch, whileOn } from "./tools/web";
@@ -165,6 +165,7 @@ export class Sidecar {
                     : Promise.reject(new Error("Qt gave the sidecar no vendor folder"))),
                 spawn: (o) => agentRelay.start("claude", { args: o.args, env: o.env, signal: o.signal }),
                 mcp: new McpServer(() => new HikariApi(peer, undefined, id), info, () => this.catalogue),
+                skills: new Skills(new HikariApi(peer, undefined, id)),
                 kindOf: (tool) => this.kindOf(tool),
                 send,
             }),
@@ -173,6 +174,7 @@ export class Sidecar {
                 kindOf: (tool) => this.kindOf(tool),
                 send,
                 version: build.version,
+                skills: new Skills(new HikariApi(peer, undefined, id)),
             }) },
             (id) => new Skills(new HikariApi(peer, undefined, id)));
         peer.onRequest(Method.initialize, (params) => this.initialize(params));
@@ -272,6 +274,8 @@ export class Sidecar {
     private kindOf(tool: string): ToolCallKind {
         if (tool === "document_apply")
             return "edit";
+        if (tool === kReadSkillTool.name)
+            return "read";
         return this.tools.list(true).find((t) => t.name === tool)?.annotations.readOnlyHint ? "read" : "other";
     }
 

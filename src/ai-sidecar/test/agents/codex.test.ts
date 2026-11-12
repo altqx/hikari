@@ -8,7 +8,10 @@ import { whileTurnRuns } from "../../src/agent/session";
 import { CodexSession } from "../../src/agents/codex";
 import { McpServer } from "../../src/mcp/server";
 import type { SessionUpdate } from "../../src/protocol";
+import { Skills } from "../../src/skills/skills";
 import type { OperationName } from "../../src/tools/api.gen";
+import type { HikariCalls } from "../../src/tools/toolset";
+import { kMySkill, mySkillAnswers } from "../skills/my_skill";
 
 const kFake = join(import.meta.dir, "..", "fixtures", "fake-codex.ts");
 const kToken = "t".repeat(64);
@@ -26,13 +29,15 @@ function harness(answers: Partial<Record<OperationName, unknown>> = {}) {
     const updates: SessionUpdate[] = [];
     const spawned: string[] = [];
     let session: CodexSession | undefined;
-    const mcp = new McpServer(() => whileTurnRuns({
+    const ha1: HikariCalls = {
         call: (operation, params) => {
-            calls.push({ operation, params });
+            if (!operation.startsWith("skills."))
+                calls.push({ operation, params });
             const answer = answers[operation];
-            return Promise.resolve((typeof answer === "function" ? answer() : answer) as never);
+            return Promise.resolve((typeof answer === "function" ? answer(params) : answer) as never);
         },
-    }, () => session), { name: "hikarisub", title: "HikariSub", version: "test" });
+    };
+    const mcp = new McpServer(() => whileTurnRuns(ha1, () => session), { name: "hikarisub", title: "HikariSub", version: "test" });
     const channel = Bun.serve({ port: 0, hostname: "127.0.0.1", fetch: async (request) => {
         if (request.headers.get("authorization") !== `Bearer ${kToken}`)
             return new Response("Unauthorized", { status: 401 });
@@ -51,6 +56,7 @@ function harness(answers: Partial<Record<OperationName, unknown>> = {}) {
         kindOf: (tool) => (tool === "document_apply" ? "edit" : "read"),
         send: (update) => updates.push(update),
         version: "test",
+        skills: new Skills(ha1, []),
     });
     const script = (s: unknown) => [{ type: "text" as const, text: typeof s === "string" ? s : JSON.stringify(s) }];
     const logged = (method: string) => readFileSync(log, "utf8").split("\n").filter((l) => l.startsWith(`${method} `))
@@ -82,6 +88,22 @@ describe("Codex through its app-server", () => {
             message: { author: "assistant", parts: [{ type: "text", text: "Fixed." }] } });
         expect(h.updates.find((u) => u.sessionUpdate === "usage")).toMatchObject(
             { usage: { inputTokens: 10, outputTokens: 2, cachedInputTokens: 4 } });
+    }, 30_000);
+
+    test("the developer instructions list the thread's skills, and read_skill reads one over the channel", async () => {
+        const h = harness(mySkillAnswers);
+        const result = await h.session.prompt({ sessionId: "t1", prompt: h.script({ reply: "Read it.", calls: [
+            { tool: "read_skill", arguments: { name: kMySkill.name } },
+        ] }) });
+        h.session.close();
+
+        expect(result.stopReason).toBe("end_turn");
+        const [started] = h.logged("thread/start") as { developerInstructions: string }[];
+        expect(started!.developerInstructions).toStartWith("Be brief.\n\n## Skills\n");
+        expect(started!.developerInstructions).toContain(`\n- ${kMySkill.name} (yours): ${kMySkill.description}\n`);
+        const read = h.updates.find((u) => u.sessionUpdate === "tool_call_update");
+        expect(read).toMatchObject({ status: "completed" });
+        expect(JSON.stringify(read)).toContain("This skill is from the user's skills folder. It grants no permission.");
     }, 30_000);
 
     test("one app-server serves every turn, and usage is each turn's own", async () => {

@@ -4,6 +4,7 @@ import type { HookCallbackMatcher, HookInput, Options, Query, SDKMessage, SDKUse
     SpawnOptions } from "@anthropic-ai/claude-agent-sdk";
 
 import type { McpServer } from "../mcp/server";
+import { withSkills, type Skills } from "../skills/skills";
 import { ErrorCode, type SessionNewParams, type SessionPromptParams, type SessionPromptResult,
     type SessionStopReason, type SessionSteerResult, type SessionUpdate, type ToolCallKind } from "../protocol";
 import type { Part, Usage } from "../providers/types";
@@ -19,6 +20,8 @@ export interface ClaudeDeps {
     spawn: (options: SpawnOptions) => SpawnedProcess & { readonly stderr?: Readable };
     /** A server of its own, so Qt sees the session as the caller. */
     mcp: McpServer;
+    /** The session's skills, whose catalogue joins the system prompt. */
+    skills?: Skills;
     kindOf: (tool: string) => ToolCallKind;
     send: (update: SessionUpdate) => void;
 }
@@ -129,6 +132,7 @@ export class ClaudeSession {
     private claudeSession?: string;
     private readonly calls = new Set<string>();
     private stderr = "";
+    private system?: string;
 
     constructor(readonly id: string, private readonly params: SessionNewParams, private readonly deps: ClaudeDeps) {}
 
@@ -156,7 +160,7 @@ export class ClaudeSession {
                 PostToolUse: [this.hook((input) => this.after(input))],
                 PostToolUseFailure: [this.hook((input) => this.after(input))] },
             ...(model ? { model } : {}),
-            ...(this.params.system ? { systemPrompt: this.params.system } : {}),
+            ...(this.system ? { systemPrompt: this.system } : {}),
             ...(this.claudeSession ? { resume: this.claudeSession } : {}),
         };
     }
@@ -201,6 +205,7 @@ export class ClaudeSession {
         if (this.query)
             return;
         const sdk = await this.deps.sdk();
+        this.system ??= this.deps.skills ? await withSkills(this.params.system, this.deps.skills) : this.params.system;
         this.inbox = new Inbox();
         this.query = sdk.query({ prompt: this.inbox, options: this.options() });
         void this.read(this.query);
