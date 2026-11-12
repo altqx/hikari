@@ -7,6 +7,7 @@
 #   -Action status      ALIVE yes|no, the layout files (layout.json*, layouts.json*)
 #   -Action fullscreen  GATE_FULLSCREEN=on|left|off: the main window borderless over the whole monitor,
 #                       on the left GATE_LEFT_WIDTH pixels of its work area (frame kept), or back
+#   -Action place       GATE_HWND, GATE_RECT (x,y,w,h): one window of the app restored and put there (PLACE_RESULT line)
 #   -Action dpi         GATE_DPI_PERCENT: the display scale of the primary monitor, live (DPI_RESULT line)
 #   -Action theme       GATE_THEME (light|dark|highContrastWhite|highContrastBlack), GATE_FOLLOW (true|false),
 #                       GATE_TITLE_BAR (auto|system|custom; unset: none written):
@@ -15,7 +16,7 @@
 #                       Colors, AppsUseLightTheme), announced as Settings does (WM_SETTINGCHANGE
 #                       "ImmersiveColorSet"); prints APPS_LIGHT=<value before> and APPS_LIGHT_NOW=<value>
 # Qt finds %LOCALAPPDATA% and %APPDATA% through the shell's known folders, so `winix ui launch --fresh-profile` misses the profile.
-param([Parameter(Mandatory)][ValidateSet('prepare', 'fresh', 'restore', 'status', 'fullscreen', 'dpi', 'theme', 'systemtheme')][string]$Action)
+param([Parameter(Mandatory)][ValidateSet('prepare', 'fresh', 'restore', 'status', 'fullscreen', 'place', 'dpi', 'theme', 'systemtheme')][string]$Action)
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
 $root = $PWD.Path
@@ -222,6 +223,17 @@ switch ($Action) {
         $now = [GateWin]::GetWindowLongPtr($h, $GWL_STYLE).ToInt64()
         Write-Output ('FULLSCREEN_RESULT ' + (@{ mode = $env:GATE_FULLSCREEN; x = $r.Left; y = $r.Top; w = $r.Right - $r.Left; h = $r.Bottom - $r.Top
                     caption = [bool]($now -band $WS_CAPTION) } | ConvertTo-Json -Compress))
+    }
+    'place' {
+        Add-Type -TypeDefinition $win32
+        $h = [IntPtr][int64]$env:GATE_HWND
+        $x, $y, $w, $hh = $env:GATE_RECT -split ',' | ForEach-Object { [int]$_ }
+        [void][GateWin]::ShowWindow($h, 9) # SW_RESTORE
+        [void][GateWin]::SetWindowPos($h, [IntPtr]::Zero, $x, $y, $w, $hh, 0x0040)
+        Start-Sleep -Milliseconds 500
+        $r = New-Object GateWin+RECT
+        [void][GateWin]::GetWindowRect($h, [ref]$r)
+        Write-Output ('PLACE_RESULT ' + (@{ x = $r.Left; y = $r.Top; w = $r.Right - $r.Left; h = $r.Bottom - $r.Top } | ConvertTo-Json -Compress))
     }
     'dpi' {
         # SPI_SETLOGICALDPIOVERRIDE takes a step relative to the recommended scale and applies without signing out.
