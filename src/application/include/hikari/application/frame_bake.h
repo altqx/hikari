@@ -20,4 +20,16 @@ struct BakeFrame {
 std::u8string bakeAnimations(std::u8string_view text, const core::StyleValues &style,
                              const std::vector<core::StyleValues> &styles, const BakeFrame &frame);
 
+struct RetimeWindow {
+    double offset = 0;       // ms from the Line's start to the piece's start
+    double duration = 0;     // the piece's length in ms
+    double lineDuration = 0; // the Line's length in ms
+};
+
+// The text for a piece of its Line that starts `offset` ms in, so the piece looks as the Line did then:
+// \move, \t and \fad/\fade times move back by the offset. One that ends by the piece's start becomes its
+// end state, one that starts at or after its end its start state, and a fade the piece sees fully
+// opaque goes.
+std::u8string retimeAnimations(std::u8string_view text, const RetimeWindow &window);
+
 }

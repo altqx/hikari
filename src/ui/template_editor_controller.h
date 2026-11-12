@@ -173,6 +173,11 @@ signals:
     void documentTrusted();
 
 private:
+    struct LnUse {
+        bool loaded = false;
+        bool initialised = false;
+    };
+    LnUse lnUse() const;
     struct Pending {
         core::LineId line;
         std::optional<std::u8string> text, effect, style;

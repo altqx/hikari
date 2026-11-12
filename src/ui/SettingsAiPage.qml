@@ -17,6 +17,9 @@ ScrollView {
     readonly property var providerList: ai ? ai.providers : []
     property string adding: ""
     property string editing: ""
+    readonly property var mcpServers: ai ? ai.mcpServers : null
+    readonly property var mcpServerList: mcpServers ? mcpServers.servers : []
+    property string mcpEditing: ""
     property var stagedRoles: ({})
     readonly property var codex: ai ? ai.codex : ({})
     readonly property var components: ai ? ai.components : ({})
@@ -157,6 +160,24 @@ ScrollView {
             choices: [{ id: "delete", text: qsTr("Delete"), role: "destructive" },
                       { id: "cancel", text: qsTr("Cancel"), role: "reject", isDefault: true }]
         }, answer => { if (answer === "delete") page.ai.remove(row.id) })
+    }
+    function askDeleteMcpServer(row) {
+        dialog.ask({
+            title: qsTr("Delete MCP server"),
+            text: qsTr("Delete the MCP server “%1”?").arg(row.name),
+            detail: qsTr("Its secrets are removed from the keychain, and the agent loses its tools."),
+            severity: "warning",
+            choices: [{ id: "delete", text: qsTr("Delete"), role: "destructive" },
+                      { id: "cancel", text: qsTr("Cancel"), role: "reject", isDefault: true }]
+        }, answer => { if (answer === "delete") page.mcpServers.remove(row.id) })
+    }
+    function mcpStatusText(row) {
+        switch (row.state) {
+        case "connecting": return qsTr("Starting…")
+        case "ready": return qsTr("Connected · %n tool(s)", "", row.toolCount)
+        case "failed": return row.error !== "" ? qsTr("Failed: %1").arg(row.error) : qsTr("Failed")
+        }
+        return qsTr("Starts when the agent needs it")
     }
     function wireName(wire) {
         switch (wire) {
@@ -545,6 +566,163 @@ ScrollView {
         implicitHeight: 8
         radius: 4
         color: status === "ok" ? Theme.success : status === "failed" ? Theme.danger : Theme.muted
+    }
+
+    component McpServerForm: Rectangle {
+        id: serverForm
+        property var existing: ({})
+        readonly property bool editingOne: existing.id !== undefined
+        property string error: ""
+        objectName: "aiMcpServerForm"
+        color: Theme.panel
+        border.color: Theme.accent
+        border.width: 1
+        radius: 2
+        implicitHeight: serverColumn.implicitHeight + 24
+        Layout.fillWidth: true
+        function close() { page.mcpEditing = "" }
+        Component.onCompleted: {
+            serverName.text = existing.name ?? ""
+            serverKind.currentIndex = existing.transport === "http" ? 1 : 0
+            serverCommand.text = existing.command ?? ""
+            serverUrl.text = existing.url ?? ""
+            serverTrusted.checked = existing.trusted === true
+            serverName.forceActiveFocus()
+        }
+        Connections {
+            target: page.mcpServers
+            function onSaved(id, error) {
+                if (error === "")
+                    serverForm.close()
+                else
+                    serverForm.error = error
+            }
+        }
+        ColumnLayout {
+            id: serverColumn
+            x: 12
+            y: 12
+            width: serverForm.width - 24
+            spacing: 8
+            Label {
+                text: serverForm.editingOne ? qsTr("Edit “%1”").arg(serverForm.existing.name) : qsTr("Add an MCP server")
+                font.bold: true
+                Layout.fillWidth: true
+            }
+            SettingsRow {
+                text: qsTr("Name")
+                labelWidth: 150
+                TextField { id: serverName; objectName: "aiMcpServerName"; Layout.fillWidth: true; Accessible.name: qsTr("Name") }
+            }
+            SettingsRow {
+                text: qsTr("Runs as")
+                labelWidth: 150
+                ComboBox {
+                    id: serverKind
+                    objectName: "aiMcpServerKind"
+                    model: [qsTr("A command on this computer"), qsTr("A URL (streamable HTTP)")]
+                    Layout.fillWidth: true
+                    Accessible.name: qsTr("Runs as")
+                }
+            }
+            SettingsRow {
+                visible: serverKind.currentIndex === 0
+                text: qsTr("Command")
+                labelWidth: 150
+                TextField {
+                    id: serverCommand
+                    objectName: "aiMcpServerCommand"
+                    placeholderText: "npx -y @modelcontextprotocol/server-everything"
+                    font.family: page.codeFontFamily
+                    Layout.fillWidth: true
+                    Accessible.name: qsTr("Command")
+                }
+            }
+            SettingsRow {
+                visible: serverKind.currentIndex === 0
+                text: qsTr("Environment")
+                labelWidth: 150
+                TextArea {
+                    id: serverEnvironment
+                    objectName: "aiMcpServerEnvironment"
+                    placeholderText: serverForm.editingOne ? qsTr("Leave empty to keep the stored variables") : "API_KEY=…"
+                    font.family: page.codeFontFamily
+                    Layout.fillWidth: true
+                    Accessible.name: qsTr("Environment")
+                }
+            }
+            SettingsRow {
+                visible: serverKind.currentIndex === 1
+                text: qsTr("URL")
+                labelWidth: 150
+                TextField {
+                    id: serverUrl
+                    objectName: "aiMcpServerUrl"
+                    placeholderText: "https://example.com/mcp"
+                    Layout.fillWidth: true
+                    Accessible.name: qsTr("URL")
+                }
+            }
+            SettingsRow {
+                visible: serverKind.currentIndex === 1
+                text: qsTr("Bearer token")
+                labelWidth: 150
+                TextField {
+                    id: serverBearer
+                    objectName: "aiMcpServerBearer"
+                    echoMode: TextInput.Password
+                    placeholderText: serverForm.editingOne ? qsTr("Leave empty to keep the stored token") : qsTr("Optional")
+                    Layout.fillWidth: true
+                    Accessible.name: qsTr("Bearer token")
+                }
+            }
+            Note {
+                text: serverKind.currentIndex === 0
+                      ? qsTr("One NAME=value per line. They go to the keychain, and only to this server.")
+                      : qsTr("The token goes to the keychain, and only to this URL.")
+            }
+            CheckBox {
+                id: serverTrusted
+                objectName: "aiMcpServerTrusted"
+                text: qsTr("Trust what this server says about its tools")
+            }
+            Note { text: qsTr("A trusted server’s read-only tools run without asking. Without trust, every tool asks as a change would.") }
+            Note {
+                objectName: "aiMcpServerError"
+                visible: serverForm.error !== ""
+                color: Theme.danger
+                text: {
+                    switch (serverForm.error) {
+                    case "name": return qsTr("Give the server a name.")
+                    case "command": return qsTr("Type the command that starts the server.")
+                    case "url": return qsTr("Type the server’s http or https URL.")
+                    case "environment": return qsTr("Write each variable as NAME=value on its own line.")
+                    }
+                    return qsTr("The keychain didn’t take the secrets; nothing was saved.")
+                }
+            }
+            RowLayout {
+                spacing: 8
+                Item { Layout.fillWidth: true }
+                Button {
+                    objectName: "aiMcpServerCancel"
+                    text: qsTr("Cancel")
+                    onClicked: serverForm.close()
+                }
+                PrimaryButton {
+                    objectName: "aiMcpServerSave"
+                    text: serverForm.editingOne ? qsTr("Save") : qsTr("Add")
+                    onClicked: {
+                        serverForm.error = ""
+                        page.mcpServers.save({ id: serverForm.existing.id ?? "", name: serverName.text,
+                                               transport: serverKind.currentIndex === 1 ? "http" : "stdio",
+                                               command: serverCommand.text, url: serverUrl.text,
+                                               environment: serverEnvironment.text, bearer: serverBearer.text,
+                                               trusted: serverTrusted.checked })
+                    }
+                }
+            }
+        }
     }
 
     component ProviderForm: Rectangle {
@@ -1689,6 +1867,129 @@ ScrollView {
                 visible: mcpSection.serverOn && !mcpSection.setup.json
                 text: mcpSection.httpOn ? qsTr("The JSON setup needs the address: press OK or Apply to start listening on 127.0.0.1.")
                                         : qsTr("The JSON setup is for agents that connect over HTTP, so it needs “Also listen on http://127.0.0.1”.")
+            }
+            SettingsRow {
+                objectName: "aiMcpServers"
+                visible: !!page.mcpServers
+                text: qsTr("MCP servers")
+                Layout.topMargin: 8
+                Label {
+                    objectName: "aiNoMcpServers"
+                    visible: page.mcpServerList.length === 0 && page.mcpEditing === ""
+                    text: qsTr("No MCP servers yet. Add one to give the agent its tools.")
+                    color: Theme.muted
+                    elide: Text.ElideRight
+                    Layout.fillWidth: true
+                }
+                Item { visible: page.mcpServerList.length > 0 || page.mcpEditing !== ""; Layout.fillWidth: true }
+                IconTextButton {
+                    objectName: "aiAddMcpServer"
+                    iconRole: "add"
+                    text: qsTr("Add server…")
+                    enabled: page.mcpEditing === ""
+                    onClicked: page.mcpEditing = "new"
+                }
+            }
+            Repeater {
+                model: page.mcpServerList
+                delegate: ColumnLayout {
+                    id: serverRow
+                    required property var modelData
+                    objectName: "aiMcpServer_" + modelData.id
+                    spacing: 2
+                    Layout.fillWidth: true
+                    Loader {
+                        active: page.mcpEditing === serverRow.modelData.id
+                        visible: active
+                        Layout.fillWidth: true
+                        sourceComponent: McpServerForm { existing: serverRow.modelData }
+                    }
+                    RowLayout {
+                        visible: page.mcpEditing !== serverRow.modelData.id
+                        spacing: 8
+                        Layout.fillWidth: true
+                        ColumnLayout {
+                            spacing: 1
+                            Layout.fillWidth: true
+                            Label { text: serverRow.modelData.name; font.bold: true; elide: Text.ElideRight; Layout.fillWidth: true }
+                            Label {
+                                text: serverRow.modelData.transport === "http" ? serverRow.modelData.url : serverRow.modelData.command
+                                font.family: page.codeFontFamily
+                                color: Theme.muted
+                                elide: Text.ElideMiddle
+                                Layout.fillWidth: true
+                            }
+                        }
+                        StatusDot {
+                            status: serverRow.modelData.state === "ready" ? "ok" : serverRow.modelData.state === "failed" ? "failed" : ""
+                        }
+                        Label {
+                            objectName: "aiMcpServerStatus"
+                            text: page.mcpStatusText(serverRow.modelData)
+                            color: serverRow.modelData.state === "failed" ? Theme.danger : Theme.muted
+                            elide: Text.ElideRight
+                            Layout.maximumWidth: 260
+                        }
+                        IconToolButton {
+                            objectName: "aiMcpServerEdit"
+                            iconRole: "edit"
+                            text: qsTr("Edit")
+                            enabled: page.mcpEditing === ""
+                            onClicked: page.mcpEditing = serverRow.modelData.id
+                        }
+                        IconToolButton {
+                            objectName: "aiMcpServerDelete"
+                            iconRole: "delete"
+                            text: qsTr("Delete")
+                            onClicked: page.askDeleteMcpServer(serverRow.modelData)
+                        }
+                    }
+                    CheckBox {
+                        objectName: "aiMcpServerTrust"
+                        visible: page.mcpEditing !== serverRow.modelData.id
+                        checked: serverRow.modelData.trusted
+                        text: qsTr("Trust what it says about its tools")
+                        Layout.leftMargin: 12
+                        onToggled: page.mcpServers.setTrusted(serverRow.modelData.id, checked)
+                    }
+                    Repeater {
+                        model: page.mcpEditing !== serverRow.modelData.id ? serverRow.modelData.tools : []
+                        delegate: Loader {
+                            id: toolRow
+                            required property var modelData
+                            readonly property bool approvable: !modelData.readOnly && !modelData.alwaysAsks
+                            objectName: "aiMcpTool_" + modelData.name
+                            Layout.leftMargin: 36
+                            sourceComponent: approvable ? approveTool : toolNote
+                            Component {
+                                id: approveTool
+                                CheckBox {
+                                    text: qsTr("Run %1 without asking").arg(toolRow.modelData.name)
+                                    checked: serverRow.modelData.approved.indexOf(toolRow.modelData.name) >= 0
+                                    onToggled: page.mcpServers.setApproved(serverRow.modelData.id, toolRow.modelData.name, checked)
+                                }
+                            }
+                            Component {
+                                id: toolNote
+                                Label {
+                                    color: Theme.muted
+                                    text: toolRow.modelData.readOnly ? qsTr("%1 · only reads, never asks").arg(toolRow.modelData.name)
+                                                                     : qsTr("%1 · asks every time").arg(toolRow.modelData.name)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            Loader {
+                active: page.mcpEditing === "new"
+                visible: active
+                Layout.fillWidth: true
+                sourceComponent: McpServerForm {}
+            }
+            Note {
+                visible: !!page.mcpServers
+                text: qsTr("Servers run as you, outside the AI component’s sandbox. Tools that may change or delete things ask first in every mode. Changes apply at once.")
             }
         }
 

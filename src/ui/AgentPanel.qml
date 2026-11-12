@@ -1332,11 +1332,12 @@ FocusScope {
             id: lua
             readonly property var item: parent ? parent.item : ({})
             readonly property bool open: item.status === "open"
+            readonly property bool running: item.status === "running"
             readonly property var lines: (item.script ?? "").replace(/\n$/, "").split("\n")
             property bool allLines: false
             property bool replying: false
             objectName: "agentScript"
-            edge: open ? Theme.danger : item.status === "ran" ? Theme.success : item.status === "running" ? Theme.accent : Theme.line
+            edge: open ? Theme.danger : item.status === "ran" ? Theme.success : running ? Theme.accent : Theme.line
             RowLayout {
                 visible: lua.open
                 Layout.fillWidth: true
@@ -1459,7 +1460,7 @@ FocusScope {
                 visible: !lua.open
                 Layout.fillWidth: true
                 spacing: 6
-                Icon { iconRole: lua.item.status === "running" ? "run-busy" : "run-script"; size: 14 }
+                Icon { iconRole: lua.running ? "run-busy" : "run-script"; size: 14 }
                 Label {
                     Layout.fillWidth: true
                     wrapMode: Text.Wrap

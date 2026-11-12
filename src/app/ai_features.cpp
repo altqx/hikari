@@ -5,6 +5,7 @@
 #include "hikari/backends/ai_config_store.h"
 #include "hikari/backends/ai_http_relay.h"
 #include "hikari/backends/ai_keychain.h"
+#include "hikari/backends/ai_mcp_clients.h"
 #include "hikari/backends/ai_requests.h"
 #include "hikari/backends/ai_sidecar_host.h"
 #include "hikari/backends/ai_signin.h"
@@ -62,6 +63,7 @@ struct AiFeatures::Live {
     std::unique_ptr<backends::ai::HttpRelay> relay;
     std::unique_ptr<backends::ai::AiSidecarHost> host;
     std::unique_ptr<backends::ai::AgentBroker> agents;
+    std::unique_ptr<backends::ai::McpClients> mcp;
     std::unique_ptr<backends::ai::AiSignIn> signIn;
     bool drafting = false;
     std::uint64_t webSearchApplied = 0;
@@ -76,6 +78,15 @@ struct AiFeatures::Live {
 };
 
 namespace {
+
+std::vector<backends::ai::McpServerEntry> mcpServersOf(const ui::SettingsStore &settings)
+{
+    api::Json rows = api::Json::array();
+    for (const QString &row : settings.list(AiFeatures::kMcpServersSetting))
+        if (auto parsed = api::Json::parse(row.toStdString()))
+            rows.push(std::move(*parsed));
+    return backends::ai::mcpServersFromJson(rows);
+}
 
 /// The agents Qt can start here. Codex needs a tools channel its AppContainer can reach on Windows (#931).
 QString agentCli(const QString &agent)
@@ -170,6 +181,8 @@ AiFeatures::AiFeatures(ui::SettingsStore &settings, Ports ports, QObject *parent
             m_live->requests->setCaching(m_settings.boolean(kCachingSetting));
         else if (id == QLatin1String(kWebSearchSetting) || id == QLatin1String(kSearchServiceSetting))
             applyWebSearch();
+        else if (id == QLatin1String(kMcpServersSetting) && m_live)
+            m_live->mcp->setServers(mcpServersOf(m_settings));
         else if (id == QLatin1String(kAutoUpdateSetting) && m_live) {
             emit componentsChanged();
             if (autoUpdate())
@@ -197,8 +210,11 @@ void AiFeatures::apply()
         m_live->requests->setCaching(m_settings.boolean(kCachingSetting));
         m_live->searchKeys = std::make_unique<application::ai::SearchKeys>(*m_live->keys);
         applyWebSearch();
+        m_live->mcp = std::make_unique<backends::ai::McpClients>(*m_live->keys, QDir::homePath());
+        m_live->mcp->setServers(mcpServersOf(m_settings));
         m_live->relay = std::make_unique<backends::ai::HttpRelay>(backends::ai::withSearchTargets(
-            backends::ai::withRegistryTargets(m_live->requests->relayTargets()), *m_live->searchKeys,
+            m_live->mcp->relayTargets(backends::ai::withRegistryTargets(m_live->requests->relayTargets())),
+            *m_live->searchKeys,
             [requests = m_live->requests.get()](application::ai::SearchService service) {
                 return requests->searchAccess(service);
             }));
@@ -211,6 +227,11 @@ void AiFeatures::apply()
         m_live.reset();
     }
     emit switched(wanted);
+}
+
+backends::ai::McpClients *AiFeatures::mcpClients()
+{
+    return m_live ? m_live->mcp.get() : nullptr;
 }
 
 void AiFeatures::applyWebSearch()
@@ -375,6 +396,7 @@ backends::ai::AiSidecarHost *AiFeatures::buildHost()
                 if (m_ports.agents)
                     m_ports.agents(*m_live->agents, *m_live->keys);
                 m_live->agents->attach(*m_live->host);
+                m_live->mcp->attach(*m_live->host, *m_live->agents);
                 watchHost(m_live->host.get(), install->version);
             }
         }

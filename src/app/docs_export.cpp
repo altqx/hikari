@@ -353,6 +353,7 @@ bool exportDocs(const QString &dir, QString *error)
     options.systemUiLanguages = {QStringLiteral("en")};
     options.playbackAudio = false;
     options.spellingBackend = {};
+    options.externalAgents = false;
     Application application(options);
 
     hikari::ui::theme::chooseControlsStyle();

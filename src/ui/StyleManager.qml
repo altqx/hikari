@@ -10,6 +10,7 @@ DialogWindow {
     Component.onCompleted: IconTheme.setWindowIcon(manager, "styles")
     required property var styles
     required property var catalogs
+    property int shellWindow: -1
     required property ColourPickerController colourPicker
     required property var app
     property var notices: null
@@ -1760,6 +1761,7 @@ DialogWindow {
                         Layout.fillWidth: true
                         Layout.preferredWidth: 120
                         catalogs: manager.catalogs
+                        shellWindow: manager.shellWindow
                         fontName: fontField.text
                     }
                     Rectangle {

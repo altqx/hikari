@@ -813,6 +813,13 @@
             <numerusform>Not tested · %n models</numerusform>
         </translation>
     </message>
+    <message numerus="yes">
+        <source>Connected · %n tool(s)</source>
+        <translation>
+            <numerusform>Connected · %n tool</numerusform>
+            <numerusform>Connected · %n tools</numerusform>
+        </translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Plugins</name>

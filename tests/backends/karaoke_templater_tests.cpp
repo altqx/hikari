@@ -20,6 +20,7 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QTemporaryDir>
 #include <gtest/gtest.h>
 
 #include <algorithm>
@@ -73,6 +74,13 @@ QString upstreamKaraOK()
     return karaOKDir() + QStringLiteral("/kara-templater-karaok.lua");
 }
 
+QString includesFor(const QString &script)
+{
+    const QString shipped = QStringLiteral(HIKARI_LUA_INCLUDE);
+    return script == upstreamKaraOK() ? shipped + QLatin1Char('\n') + karaOKDir() + QStringLiteral("/include")
+                                      : shipped;
+}
+
 constexpr char kApply[] = "Apply karaoke template";
 constexpr char kUpstreamKaraOKApply[] = "Apply karaoke template (modded with furigana)";
 constexpr char kUpstreamKaraOKWithoutFurigana[] = "Apply karaoke template (modded)";
@@ -117,8 +125,7 @@ protected:
 
     std::unique_ptr<LuaScriptHost> load(const QString &script)
     {
-        auto host = std::make_unique<LuaScriptHost>(QStringLiteral(HIKARI_LUA_HELPER), script,
-                                                    QStringLiteral(HIKARI_LUA_INCLUDE));
+        auto host = std::make_unique<LuaScriptHost>(QStringLiteral(HIKARI_LUA_HELPER), script, includesFor(script));
         host->setServiceHandler([this](const HostServiceRequest &r, LuaScriptHost::ServiceReply reply) {
             ++asked[r.service];
             reply(answer(r));
@@ -307,7 +314,7 @@ TEST_F(KaraokeTemplater, BuiltinTemplaterMatchesAegisub322ByteForByte)
 TEST_F(KaraokeTemplater, KaraOKDocumentsMatchUpstreamKaraOKByteForByte)
 {
     const QStringList documents = corpus(karaOKDir());
-    ASSERT_EQ(documents.size(), 6);
+    ASSERT_EQ(documents.size(), 7);
     for (const QString &name : documents) {
         SCOPED_TRACE(name.toStdString());
         const QString document = karaOKDir() + QLatin1Char('/') + name;
@@ -324,7 +331,7 @@ TEST_F(KaraokeTemplater, KaraOKDeparturesDifferFromUpstreamKaraOK)
 {
     const QString dir = karaOKDir() + QStringLiteral("/departures");
     const QStringList documents = corpus(dir);
-    ASSERT_EQ(documents.size(), 8);
+    ASSERT_EQ(documents.size(), 15);
     for (const QString &name : documents) {
         SCOPED_TRACE(name.toStdString());
         const QString document = dir + QLatin1Char('/') + name;
@@ -334,6 +341,44 @@ TEST_F(KaraokeTemplater, KaraOKDeparturesDifferFromUpstreamKaraOK)
         EXPECT_EQ(builtin, textOf(readBytes(goldenOf(document))));
         EXPECT_NE(templated(document, upstreamKaraOK(), kUpstreamKaraOKApply), builtin);
     }
+}
+
+TEST_F(KaraokeTemplater, LnKaraKanjiposIn322ModeIsAProblemNamingKaraOKMode)
+{
+    const auto bytes = editedCorpus(QStringLiteral("karaok/ln-kara.ass"),
+                                    {{"Karaoke Templater: karaOK", "Karaoke Templater: Aegisub 3.2.2"}});
+    const std::string builtin = templatedBytes(bytes, builtinScript());
+    ASSERT_FALSE(builtin.empty());
+    EXPECT_TRUE(run.log.join(QString()).contains(QLatin1String("ln.tag.kanjipos works only in karaOK mode")))
+        << run.log.join(QString()).toStdString();
+}
+
+TEST_F(KaraokeTemplater, LnKaraLoadsTheShippedCopyBeforeTheUsersOwn)
+{
+    QTemporaryDir user;
+    ASSERT_TRUE(QDir(user.path()).mkpath(QStringLiteral("ln")));
+    QFile own(user.path() + QStringLiteral("/ln/kara.lua"));
+    ASSERT_TRUE(own.open(QIODevice::WriteOnly));
+    own.write("return { init = function() error('the user copy loaded') end }\n");
+    own.close();
+    auto host = std::make_unique<LuaScriptHost>(QStringLiteral(HIKARI_LUA_HELPER), builtinScript(),
+                                                user.path() + QLatin1Char('\n') + QStringLiteral(HIKARI_LUA_INCLUDE));
+    QStringList log;
+    std::optional<LuaScriptHost::RunOutcome> outcome;
+    host->setServiceHandler(
+        [this](const HostServiceRequest &r, LuaScriptHost::ServiceReply reply) { reply(answer(r)); });
+    QObject::connect(host.get(), &LuaScriptHost::logged, [&](const QString &t) { log << t; });
+    QObject::connect(host.get(), &LuaScriptHost::finished,
+                     [&](LuaScriptHost::RunOutcome o, const QString &) { outcome = o; });
+    host->load();
+    ASSERT_TRUE(waitFor([&] { return host->state() != LuaScriptHost::State::Loading; }));
+    hikari::application::EditSession session(
+        hikari::core::loadAss(readBytes(karaOKDir() + QStringLiteral("/ln-kara.ass"))).document);
+    const auto snapshot = hikari::application::snapshotForMacro(session);
+    ASSERT_TRUE(snapshot);
+    ASSERT_TRUE(host->run(macro(*host, kApply), *snapshot));
+    ASSERT_TRUE(waitFor([&] { return outcome.has_value(); }));
+    EXPECT_FALSE(log.join(QString()).contains(QLatin1String("the user copy loaded"))) << log.join(QString()).toStdString();
 }
 
 TEST_F(KaraokeTemplater, FuriganaStylesFalseAddsNoFuriganaStylesAsUpstreamsFuriganaOffMacro)

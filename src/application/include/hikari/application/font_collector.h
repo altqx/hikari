@@ -193,9 +193,10 @@ public:
     explicit FontCollector(FontServicePort &fonts, FileReader read = {}) : m_fonts(fonts), m_read(std::move(read)) {}
 
     // The copy modes list the provider's font files on the first run only. `cancel` ends it
-    // with Cancelled.
+    // with Cancelled. `folderFonts` (name: the full path) come before the system's, as in rendering.
     std::expected<CollectorReview, FontError> prepare(const std::vector<CollectorDocument> &documents,
-                                                      CollectorAction action, const std::atomic<bool> *cancel = nullptr);
+                                                      CollectorAction action, const std::atomic<bool> *cancel = nullptr,
+                                                      std::vector<FontAttachment> folderFonts = {});
 
     // For the copy modes. An incomplete review writes only with `acknowledgedIncomplete`, and
     // then labels the output; otherwise nothing is written and the result is `refused`.
