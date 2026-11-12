@@ -555,6 +555,7 @@ application::KaraokeTemplaterPort &AutomationShell::templater()
 
 AutomationShell::~AutomationShell()
 {
+    m_windowProjects = nullptr;
     m_manager.shutdown();
 }
 

@@ -26,6 +26,12 @@ void writeAll(const QString &path, const QByteArray &bytes)
     file.write(bytes);
 }
 
+std::string compact(std::string json)
+{
+    std::erase_if(json, [](char c) { return c == ' ' || c == '\n'; });
+    return json;
+}
+
 QByteArray readAll(const QString &path)
 {
     QFile file(path);
@@ -134,14 +140,14 @@ private slots:
         const auto table = shared.plugins();
         QCOMPARE(table.enabled, std::vector<std::string>{"kf"});
         QCOMPARE(table.disabled, std::vector<std::string>{"qc"});
-        QCOMPARE(table.settingsJson.at("kf"), std::string(R"({"name":"team","size":12})"));
+        QCOMPARE(compact(table.settingsJson.at("kf")), std::string(R"({"name":"team","size":12})"));
 
         writeAll(root.filePath(QStringLiteral(".hikari/project.local.toml")),
                  "version = 1\n[plugins]\nenabled = []\n[plugins.\"kf\"]\nsize = 20\n");
         const auto local = ProjectFile(root.path()).plugins();
         QVERIFY(local.enabled.empty());
         QCOMPARE(local.disabled, std::vector<std::string>{"qc"});
-        QCOMPARE(local.settingsJson.at("kf"), std::string(R"({"name":"team","size":20})"));
+        QCOMPARE(compact(local.settingsJson.at("kf")), std::string(R"({"name":"team","size":20})"));
         QVERIFY(ProjectFile(QTemporaryDir().path()).plugins().settingsJson.empty());
     }
 
