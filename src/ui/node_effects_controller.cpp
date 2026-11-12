@@ -897,8 +897,7 @@ QVariantList NodeEffectsController::typesettingPresets()
         out << QVariantMap{{QStringLiteral("index"), i},
                            {QStringLiteral("title"), QCoreApplication::translate("HikariSub.NodeEffects", text->title)},
                            {QStringLiteral("description"),
-                            QCoreApplication::translate("HikariSub.NodeEffects", text->description)},
-                           {QStringLiteral("iconRole"), QStringLiteral("graph-") + qstr(id)}};
+                            QCoreApplication::translate("HikariSub.NodeEffects", text->description)}};
     }
     return out;
 }
