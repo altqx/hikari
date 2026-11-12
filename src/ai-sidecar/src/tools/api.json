@@ -2430,7 +2430,7 @@
     {
       "name": "skills.list",
       "access": "read",
-      "summary": "The user's skills: each skill folder's name and its files, SKILL.md among them.",
+      "summary": "The caller's skills: each skill folder's name, whether it is the Project's or the user's, and its files, SKILL.md among them.",
       "since": 1,
       "params": {
         "type": "object",
@@ -2447,6 +2447,12 @@
                 "skill": {
                   "$ref": "#/$defs/SkillName"
                 },
+                "origin": {
+                  "enum": [
+                    "project",
+                    "yours"
+                  ]
+                },
                 "files": {
                   "type": "array",
                   "items": {
@@ -2456,6 +2462,7 @@
               },
               "required": [
                 "skill",
+                "origin",
                 "files"
               ],
               "additionalProperties": false
@@ -2471,7 +2478,7 @@
     {
       "name": "skills.read",
       "access": "read",
-      "summary": "One file of a user's skill, as UTF-8 text; at most 256 KiB.",
+      "summary": "One file of a skill skills.list gives, as UTF-8 text; at most 256 KiB.",
       "since": 1,
       "params": {
         "type": "object",
@@ -3680,6 +3687,666 @@
         },
         "required": [
           "project"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "karaoke.syllables",
+      "access": "read",
+      "summary": "A Line's karaoke syllables as the templater reads them: text, tag, start and end in ms.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId",
+            "description": "Defaults to the active Document."
+          },
+          "line": {
+            "$ref": "#/$defs/LineId"
+          }
+        },
+        "required": [
+          "line"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "line": {
+            "$ref": "#/$defs/LineId"
+          },
+          "syllables": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "text": {
+                  "type": "string"
+                },
+                "stripped": {
+                  "type": "string"
+                },
+                "tag": {
+                  "type": "string"
+                },
+                "start": {
+                  "type": "integer"
+                },
+                "end": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "text",
+                "stripped",
+                "tag",
+                "start",
+                "end"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "line",
+          "syllables"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "karaoke.split",
+      "access": "read",
+      "summary": "Splits Lines without \\k tags into syllables as the audio editor's karaoke mode does, the time shared by character; Lines that already have \\k tags keep them.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId",
+            "description": "Defaults to the active Document."
+          },
+          "lines": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 1000,
+            "items": {
+              "$ref": "#/$defs/LineId"
+            }
+          },
+          "bySyllable": {
+            "type": "boolean",
+            "description": "Default true: by syllable, with the language rules the user set; false: at spaces."
+          }
+        },
+        "required": [
+          "lines"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "lines": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "line": {
+                  "$ref": "#/$defs/LineId"
+                },
+                "text": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "line",
+                "text"
+              ],
+              "additionalProperties": false
+            },
+            "description": "The Lines that change, with their new text; nothing is applied."
+          }
+        },
+        "required": [
+          "lines"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "karaoke.time",
+      "access": "read",
+      "summary": "Times a Line's existing syllables: each syllable's end in ms, in order; the \\k tags are rewritten.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId",
+            "description": "Defaults to the active Document."
+          },
+          "line": {
+            "$ref": "#/$defs/LineId"
+          },
+          "ends": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 4096,
+            "items": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "description": "One per syllable, ascending, in ms from the video's start."
+          }
+        },
+        "required": [
+          "line",
+          "ends"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "line": {
+            "$ref": "#/$defs/LineId"
+          },
+          "text": {
+            "type": "string",
+            "description": "The Line's text with the \\k tags written; nothing is applied."
+          }
+        },
+        "required": [
+          "line",
+          "text"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "karaoke.onsets",
+      "access": "read",
+      "summary": "Where sung notes start in the open audio, in ms, within a range.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "start": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "end": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "start",
+          "end"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "onsets": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          }
+        },
+        "required": [
+          "onsets"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "karaoke.snap",
+      "access": "read",
+      "summary": "Moves each syllable boundary inside the Lines to the nearest vocal onset within the window, keeping every syllable at least 10 ms long.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId",
+            "description": "Defaults to the active Document."
+          },
+          "lines": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 1000,
+            "items": {
+              "$ref": "#/$defs/LineId"
+            }
+          },
+          "window": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000,
+            "description": "Ms either side; default 100."
+          }
+        },
+        "required": [
+          "lines"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "lines": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "line": {
+                  "$ref": "#/$defs/LineId"
+                },
+                "text": {
+                  "type": "string"
+                },
+                "moved": {
+                  "type": "integer",
+                  "description": "Boundaries moved."
+                }
+              },
+              "required": [
+                "line",
+                "text"
+              ],
+              "additionalProperties": false
+            },
+            "description": "The Lines that change, with their new text; nothing is applied."
+          }
+        },
+        "required": [
+          "lines"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "karaoke.kanji",
+      "access": "read",
+      "summary": "Copies a timed romaji Line's syllables onto its kanji Line as the Kanji timer suggests the groups.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId",
+            "description": "Defaults to the active Document."
+          },
+          "romaji": {
+            "$ref": "#/$defs/LineId"
+          },
+          "kanji": {
+            "$ref": "#/$defs/LineId"
+          },
+          "multi": {
+            "type": "boolean",
+            "description": "Further syllables of a group become # syllables instead of joining the first."
+          }
+        },
+        "required": [
+          "romaji",
+          "kanji"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "line": {
+            "$ref": "#/$defs/LineId"
+          },
+          "text": {
+            "type": "string"
+          },
+          "clean": {
+            "type": "boolean",
+            "description": "False when a group came out blank or the characters ran out: check it."
+          }
+        },
+        "required": [
+          "line",
+          "text",
+          "clean"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "karaoke.furigana",
+      "access": "read",
+      "summary": "The readings the dictionary suggests for a Line's kanji runs, in hiragana.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId",
+            "description": "Defaults to the active Document."
+          },
+          "line": {
+            "$ref": "#/$defs/LineId"
+          }
+        },
+        "required": [
+          "line"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "line": {
+            "$ref": "#/$defs/LineId"
+          },
+          "runs": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "base": {
+                  "type": "string"
+                },
+                "reading": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "base",
+                "reading"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "line",
+          "runs"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "karaoke.check",
+      "access": "read",
+      "summary": "The Karaoke check's problems: unclosed tags, totals that differ from the Line, empty syllables and syllables outside the Line.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId",
+            "description": "Defaults to the active Document."
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "problems": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "line": {
+                  "$ref": "#/$defs/LineId"
+                },
+                "kind": {
+                  "enum": [
+                    "unclosed",
+                    "not_for_audio_editor",
+                    "editor_only",
+                    "total_not_duration",
+                    "zero_length",
+                    "outside_line"
+                  ]
+                },
+                "totalMs": {
+                  "type": "integer"
+                },
+                "durationMs": {
+                  "type": "integer"
+                },
+                "syllables": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer"
+                  },
+                  "description": "Which ones, from 1."
+                }
+              },
+              "required": [
+                "line",
+                "kind"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "unlisted": {
+            "type": "integer",
+            "description": "Problems past the listed ones."
+          }
+        },
+        "required": [
+          "problems",
+          "unlisted"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "karaoke.template_preview",
+      "access": "read",
+      "summary": "The Lines the karaoke templater generates from one karaoke Line, without applying them.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId",
+            "description": "Defaults to the active Document."
+          },
+          "line": {
+            "$ref": "#/$defs/LineId"
+          }
+        },
+        "required": [
+          "line"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "line": {
+            "$ref": "#/$defs/LineId"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "layer": {
+                  "type": "integer"
+                },
+                "start": {
+                  "type": "integer"
+                },
+                "end": {
+                  "type": "integer"
+                },
+                "style": {
+                  "type": "string"
+                },
+                "effect": {
+                  "type": "string"
+                },
+                "text": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "layer",
+                "start",
+                "end",
+                "style",
+                "effect",
+                "text"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "line",
+          "lines"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "karaoke.apply_template",
+      "access": "write",
+      "summary": "Runs the karaoke templater on the karaoke Lines, or the Lines given, and applies what it generates as one undo step: old generated Lines are replaced.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId",
+            "description": "Defaults to the active Document."
+          },
+          "revision": {
+            "$ref": "#/$defs/Revision"
+          },
+          "lines": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 100000,
+            "items": {
+              "$ref": "#/$defs/LineId"
+            },
+            "description": "Default: every karaoke Line."
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "Default \"Apply karaoke template\"."
+          }
+        },
+        "required": [
+          "revision"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "revision": {
+            "$ref": "#/$defs/Revision"
+          },
+          "changed": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "revision",
+          "changed"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "karaoke.align",
+      "access": "write",
+      "summary": "Runs the user's own WhisperX or Montreal Forced Aligner on the audio under the Lines and answers each word with its start and end in ms; the user approves every run, and nothing is applied.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId",
+            "description": "Defaults to the active Document."
+          },
+          "lines": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 1000,
+            "items": {
+              "$ref": "#/$defs/LineId"
+            }
+          },
+          "program": {
+            "enum": [
+              "whisperx",
+              "mfa"
+            ]
+          },
+          "language": {
+            "type": "string",
+            "maxLength": 32,
+            "description": "WhisperX: a language code such as ja; default: it detects."
+          },
+          "dictionary": {
+            "type": "string",
+            "maxLength": 200,
+            "description": "MFA: the pronunciation dictionary, such as english_mfa."
+          },
+          "acousticModel": {
+            "type": "string",
+            "maxLength": 200,
+            "description": "MFA: the acoustic model, such as english_mfa."
+          }
+        },
+        "required": [
+          "lines",
+          "program"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "words": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "text": {
+                  "type": "string"
+                },
+                "start": {
+                  "type": "integer"
+                },
+                "end": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "text",
+                "start",
+                "end"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "words"
         ],
         "additionalProperties": false
       }

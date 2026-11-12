@@ -94,8 +94,9 @@ ApplicationWindow {
     readonly property var macroItems: {
         const out = []
         for (const script of root.automationManager.scripts)
-            for (const macro of script.macros)
-                out.push({ path: script.path, ordinal: macro.ordinal, name: macro.name })
+            if (root.automation.shownIn(script.path, root.shellWindow))
+                for (const macro of script.macros)
+                    out.push({ path: script.path, ordinal: macro.ordinal, name: macro.name })
         return out
     }
 
@@ -477,7 +478,10 @@ ApplicationWindow {
     readonly property var dockList: builtInDocks.concat(pluginDocks)
     readonly property var pluginUi: root.app.pluginRuntime ? root.app.pluginRuntime.ui : null
     readonly property var pluginPanelRows: {
-        const rows = root.pluginUi ? root.pluginUi.panels.slice() : []
+        const runtime = root.app.pluginRuntime
+        if (runtime)
+            runtime.windowsRevision
+        const rows = root.pluginUi ? root.pluginUi.panels.filter(r => !runtime || runtime.onIn(r.plugin, root.shellWindow)) : []
         for (const dock of root.pluginDocks)
             if (!rows.some(r => r.dock === dock.storedName))
                 rows.push({ dock: dock.storedName, title: dock.title, pluginName: dock.pluginName, area: "right" })
@@ -3158,7 +3162,13 @@ ApplicationWindow {
             MacroMenuEntries {
                 menu: automationMenu
                 after: pluginsMenuItem
-                macros: root.app.pluginRuntime ? root.app.pluginRuntime.commands : []
+                macros: {
+                    const runtime = root.app.pluginRuntime
+                    if (!runtime)
+                        return []
+                    runtime.windowsRevision
+                    return runtime.commands.filter(c => runtime.onIn(c.plugin, root.shellWindow))
+                }
                 itemPrefix: "pluginCommand_"
                 menuPrefix: "pluginCommandMenu_"
                 onTriggered: command => root.app.pluginRuntime.run(command.id)
@@ -3893,6 +3903,11 @@ ApplicationWindow {
                 onTriggered: root.openBlurAndGlowLayers()
             }
             ShellMenuItem { command: "GLOBAL_REMOVE_TAGS"; iconRole: "remove-tags"; objectName: field.objectName + "RemoveTags"; action: removeTagsAction }
+            PhantomMenu {
+                shellRoot: root
+                prefix: field.objectName
+                enabled: !field.readOnly && root.editor.hasLine
+            }
             MenuSeparator { visible: fieldAiMenu.shown; height: visible ? implicitHeight : 0 }
             InlineAiMenu {
                 id: fieldAiMenu
@@ -6642,6 +6657,23 @@ ApplicationWindow {
                             onTriggered: if (!root.hotkeyGesture(command)) root.app.textCommand("swapAlternatives")
                         }
                         MenuSeparator {}
+                        ChangeAlignmentMenu { shellRoot: root; prefix: "grid" }
+                        AlignDistributeMenu { shellRoot: root; prefix: "grid" }
+                        ShellMenuItem {
+                            command: "GLOBAL_POSITION_TO_MARGINS"
+                            iconRole: "pos-to-margins"
+                            objectName: "gridPositionToMargins"
+                            text: qsTranslate("HikariSub.Position", "Position to margins")
+                            onTriggered: if (!root.hotkeyGesture(command)) root.app.positionToMargins()
+                        }
+                        ShellMenuItem {
+                            command: "GLOBAL_MARGINS_TO_POSITION"
+                            iconRole: "margins-to-pos"
+                            objectName: "gridMarginsToPosition"
+                            text: qsTranslate("HikariSub.Position", "Margins to position")
+                            onTriggered: if (!root.hotkeyGesture(command)) root.app.marginsToPosition()
+                        }
+                        MenuSeparator {}
                         ShellMenuItem {
                             command: "GRID_SELECT_VISIBLE_LINES"
                             iconRole: "select-visible"
@@ -6948,6 +6980,13 @@ ApplicationWindow {
                     anchors.fill: parent
                     controller: root.automationManager
                     automation: root.automation
+                    shellWindow: root.shellWindow
+                    lockedScripts: {
+                        root.projectRevision
+                        root.automationManager.scripts
+                        return root.automation.lockedScripts(root.shellWindow)
+                    }
+                    onTrustRequested: root.app.trustProject(root.shellWindow)
                     macroHotkeys: root.automationHotkeys
                     hotkeys: root.hotkeys
                     loadAction: loadScriptAction
@@ -7549,7 +7588,14 @@ ApplicationWindow {
         market: root.app.pluginMarketplace
         runtime: root.app.pluginRuntime
         settings: root.app.settings
+        project: {
+            root.projectRevision
+            if (root.app.pluginRuntime)
+                root.app.pluginRuntime.windowsRevision
+            return root.app.projectPlugins(root.shellWindow)
+        }
         onCopyRequested: text => root.app.copyText(text)
+        onTrustRequested: root.app.trustProject(root.shellWindow)
     }
     Connections {
         target: root.app.pluginManager
@@ -9578,6 +9624,39 @@ ApplicationWindow {
         case "GLOBAL_IMPORT_LEGACY_SETTINGS": root.importLegacySettings(); return true
         case "GLOBAL_CONVERT_FOLDS_TO_GROUPS": if (editing) root.app.convertFoldsToGroups(); return true
         case "GLOBAL_INTERPOLATE_LINES": if (editing) root.openInterpolateLines(); return true
+        case "GLOBAL_ALIGNMENT_KEEP_POSITION_AN1": if (editing) root.app.changeAlignment(1); return true
+        case "GLOBAL_ALIGNMENT_KEEP_POSITION_AN2": if (editing) root.app.changeAlignment(2); return true
+        case "GLOBAL_ALIGNMENT_KEEP_POSITION_AN3": if (editing) root.app.changeAlignment(3); return true
+        case "GLOBAL_ALIGNMENT_KEEP_POSITION_AN4": if (editing) root.app.changeAlignment(4); return true
+        case "GLOBAL_ALIGNMENT_KEEP_POSITION_AN5": if (editing) root.app.changeAlignment(5); return true
+        case "GLOBAL_ALIGNMENT_KEEP_POSITION_AN6": if (editing) root.app.changeAlignment(6); return true
+        case "GLOBAL_ALIGNMENT_KEEP_POSITION_AN7": if (editing) root.app.changeAlignment(7); return true
+        case "GLOBAL_ALIGNMENT_KEEP_POSITION_AN8": if (editing) root.app.changeAlignment(8); return true
+        case "GLOBAL_ALIGNMENT_KEEP_POSITION_AN9": if (editing) root.app.changeAlignment(9); return true
+        case "GLOBAL_ALIGN_LEFT_EDGES": if (editing) root.app.alignLines(0); return true
+        case "GLOBAL_ALIGN_CENTRES": if (editing) root.app.alignLines(1); return true
+        case "GLOBAL_ALIGN_RIGHT_EDGES": if (editing) root.app.alignLines(2); return true
+        case "GLOBAL_ALIGN_TOP_EDGES": if (editing) root.app.alignLines(3); return true
+        case "GLOBAL_ALIGN_MIDDLES": if (editing) root.app.alignLines(4); return true
+        case "GLOBAL_ALIGN_BOTTOM_EDGES": if (editing) root.app.alignLines(5); return true
+        case "GLOBAL_DISTRIBUTE_HORIZONTALLY": if (editing) root.app.distributeLines(false); return true
+        case "GLOBAL_DISTRIBUTE_VERTICALLY": if (editing) root.app.distributeLines(true); return true
+        case "GLOBAL_POSITION_TO_MARGINS": if (editing) root.app.positionToMargins(); return true
+        case "GLOBAL_MARGINS_TO_POSITION": if (editing) root.app.marginsToPosition(); return true
+        case "GLOBAL_PHANTOM_KEEP_START": if (editing) root.app.phantom(false); return true
+        case "GLOBAL_PHANTOM_KEEP_END": if (editing) root.app.phantom(true); return true
+        case "GLOBAL_CYCLE_BLUR": if (editing) root.app.cycleTag(0, false); return true
+        case "GLOBAL_CYCLE_BLUR_BACK": if (editing) root.app.cycleTag(0, true); return true
+        case "GLOBAL_CYCLE_BORD": if (editing) root.app.cycleTag(1, false); return true
+        case "GLOBAL_CYCLE_BORD_BACK": if (editing) root.app.cycleTag(1, true); return true
+        case "GLOBAL_CYCLE_SHAD": if (editing) root.app.cycleTag(2, false); return true
+        case "GLOBAL_CYCLE_SHAD_BACK": if (editing) root.app.cycleTag(2, true); return true
+        case "GLOBAL_CYCLE_ALPHA": if (editing) root.app.cycleTag(3, false); return true
+        case "GLOBAL_CYCLE_ALPHA_BACK": if (editing) root.app.cycleTag(3, true); return true
+        case "GLOBAL_CYCLE_AN": if (editing) root.app.cycleTag(4, false); return true
+        case "GLOBAL_CYCLE_AN_BACK": if (editing) root.app.cycleTag(4, true); return true
+        case "GLOBAL_CYCLE_FSP": if (editing) root.app.cycleTag(5, false); return true
+        case "GLOBAL_CYCLE_FSP_BACK": if (editing) root.app.cycleTag(5, true); return true
         case "GLOBAL_PLAY_ACTUAL_LINE":
             if (root.video.hasVideo) {
                 root.focusPanel(lineText, Qt.OtherFocusReason)

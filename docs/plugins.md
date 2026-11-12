@@ -111,6 +111,25 @@ The marketplace website's Install in HikariSub opens `hikarisub://plugin/install
 
 An update keeps the enabled state, the grants whose ids the new manifest still asks for, and the setting values that still fit the new manifest. A `plugins.json` HikariSub can't read stops installs rather than forgetting pinned keys.
 
+### Plugins in a Project (PJ8 [#776](https://github.com/altqx/hikari/issues/776))
+
+Plugins are still installed per user. A trusted Project's `.hikari/project.toml` can turn them on or off and override their settings:
+
+```toml
+[plugins]
+enabled = ["keyframe-generator"]
+disabled = ["qc-pack"]
+
+[plugins."keyframe-generator"]
+threshold = 0.4
+```
+
+- **On and off.** `enabled` and `disabled` override your switch for that id. A revoked plugin stays off. `project.local.toml`'s lists replace `project.toml`'s.
+- **Settings.** `[plugins."<id>"]` values go over yours key by key, and `project.local.toml`'s go over `project.toml`'s. `hikari.settings.get` reads them from the Project of the window you're working in.
+- **Across windows (Q365).** A plugin runs while it is on in at least one window. Its commands, panels and events show only in windows where it is on.
+- **Trust (Q367).** None of `[plugins]` applies in an untrusted Project. The plugin manager then shows a lock on the plugins it names, with **Trust this folder to use them**.
+- **A missing plugin.** When a trusted Project enables a plugin that isn't installed, the plugin manager shows "This project uses <id>, which isn't installed." with **Install from the marketplace**, which opens the marketplace view and searches for the id.
+
 ## The plugin manager
 
 Automation > Plugins… (`GLOBAL_PLUGINS`, 5231) opens one resizable window with two views, Installed and Marketplace: the plugins on the left, the chosen one's details on the right. It also opens at a plugin from About <plugin>… in that plugin's panel menu. Installed counts the updates that wait for the user, and the newer versions that won't install automatically. The tool strip holds Install from file…, Check for updates and Plugin updates, whose popover has "Check for plugin updates" and "Install updates automatically".

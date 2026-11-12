@@ -306,6 +306,10 @@ RiskCheck alwaysAsk(const std::string &operation, const Json &params,
     };
     if (operation == "files.write" && outside(pathOf ? pathOf(stringAt(params, "file")) : std::nullopt))
         return {Risk::Files, "It overwrites a file outside the subtitles' folders and your user folder."};
+    if (operation == "karaoke.align")
+        return {Risk::Programs, "It runs " + std::string(stringAt(params, "program") == "mfa" ? "the Montreal Forced Aligner"
+                                                                                               : "WhisperX") +
+                                    ", a program you installed, on the song's audio."};
     if (operation == "commands.run") {
         const std::string command = stringAt(params, "command");
         if (application::isPluginCommand(command))
@@ -492,6 +496,8 @@ Json AgentThread::toJson() const
                              {"webSearch", webSearch}});
     if (model)
         out["model"] = modelJson(*model);
+    if (!project.empty())
+        out["project"] = project;
     return out;
 }
 
@@ -539,6 +545,7 @@ std::optional<AgentThread> AgentThread::fromJson(const Json &json)
                 t.allowed.insert(key.asString());
     if (const Json *w = json.find("webSearch"); w && w->isBool())
         t.webSearch = w->asBool();
+    t.project = stringAt(json, "project");
     return t;
 }
 
@@ -688,6 +695,8 @@ std::string AgentThreads::create()
     t.created = t.updated = nowMs();
     t.mode = defaults.mode;
     t.cap = defaults.threadCap;
+    if (m_wiring.project)
+        t.project = m_wiring.project();
     const std::string id = t.id;
     m_threads.emplace(id, std::move(t));
     if (m_store)
@@ -1282,6 +1291,7 @@ api::Caller AgentThreads::callerOf(const AgentThread &thread) const
     caller.label = "AI";
     caller.reviewed = true;
     caller.skills = true;
+    caller.project = thread.project;
     if (const auto it = m_attached.find(thread.id); it != m_attached.end())
         caller.attached = it->second;
     return caller;

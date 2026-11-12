@@ -217,13 +217,13 @@ public:
         return id;
     }
 
-    FolderSkills skills{std::filesystem::path()};
+    SkillTiers skills{std::filesystem::path()};
     FakeAutomation automation;
     FakeTranslation translation;
     Host host()
     {
         return Host{this, this, this, &settings, &media, &files, &review, render, &skills, &automation, typeset, nullptr,
-                    &translation};
+                    &translation, karaoke};
     }
 
     const application::Workspace &workspace() const override { return workspace_; }
@@ -324,6 +324,7 @@ public:
     FakeRender fakeRender;
     RenderHost *render = &fakeRender;
     TypesetHost *typeset = nullptr;
+    KaraokeHost *karaoke = nullptr;
     application::AiReview review;
 };
 

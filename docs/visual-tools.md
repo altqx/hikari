@@ -174,6 +174,15 @@ The `legacy_drawing_capture` probe ran the legacy VisualClips.cpp and the Shapes
 
 Four legacy defects are fixed as approved departures ([compatibility-decisions.md](compatibility-decisions.md), 2026-10-06): "Changing scale" moves the drawing's place by what \fscx / \fscy added, so the next sample no longer writes the drawing into the tags (T5-change-scale-garble); "Edit" opens the dialog on the chosen preset, not the one after it (T5-editor-opens-next); a save puts a rename into the dialog's list (T5-dialog-list-stale); the "Save changes" question names the preset, not its drawing (T5-save-question-text). PU5's window has neither a save nor the question: every change reaches the list as it is made.
 
+## Pathfinder and Offset (AU6)
+
+AU6 ([#845](https://github.com/altqx/hikari/issues/845)) puts the shape kernel (`shape_kernel.h`) on the drawing tool's strip, after the shape list, while it draws freely (owner approval Q357–Q360):
+
+- **Pathfinder** (shape-unite) opens a menu of Unite, Subtract, Intersect and Exclude. The second shape is the active Line's vector `\clip` or `\iclip`, and the clip goes once it is used. Without one, the other picked Lines' drawings are the second shape, each at its own `\pos`, combined into the active Line one after another in grid order (the order a pick takes them). The other Lines stay as they were. The entry under the pointer or the keyboard previews its result on the video as a filled outline. Choosing it writes the result as one history step. A result with nothing left is refused with a notice. With neither a clip nor another picked drawing, the button is off.
+- **Offset**: the bar's Offset value grows the filled drawing by that many script pixels, or shrinks it when negative, with Miter, Round or Square corners. While the value is not 0 the result previews on the video. Apply offset (shape-offset) writes it as one history step and sets the value back to 0.
+
+Both fill the drawing nonzero, as libass does, and write it back as `m` and `l` points (curves flattened to a tenth of a unit), keeping the Line's `\pos`, `\an`, scale and `\frz`.
+
 ## The Position shifter and the all-tags tool (T6)
 
 T6 ([#181](https://github.com/altqx/hikari/issues/181)) adds the last two families: `PositionShifterTool` (`visual_shift.h`, legacy MoveAll) and `AllTagsTool` (`visual_all_tags.h`, legacy AllTags with its sliders), with the all-tags tool's definitions and their editor, legacy's "Tag editing" dialog, since PU5 the "Edit tags" window (`all_tags.h`, `src/ui/all_tags_editor.h`, `AllTagsEditionDialog.qml`; [below](#edit-shapes-and-edit-tags-pu5)).

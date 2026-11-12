@@ -11,11 +11,16 @@ namespace hikari::application {
 inline constexpr char kAutomationScriptsKey[] = "Automation Scripts";
 
 // Splits at every '|', '~' and '$', keeping empty tokens; each token loses
-// its leading whitespace.
-std::vector<std::string> scriptInfoScriptPaths(std::string_view value);
+// its leading whitespace. A relative path after '~' joins subtitleFolder, as Aegisub reads it.
+std::vector<std::string> scriptInfoScriptPaths(std::string_view value, std::string_view subtitleFolder = {});
 
 // value + "|" + path, so a first script gives "|<path>".
 std::string scriptInfoWithScript(std::string_view value, std::string_view path);
+
+// "~" and the path from subtitleFolder for a script under the Project's .hikari/automation/, so Aegisub
+// finds it too; otherwise the path itself.
+std::string scriptInfoPathFor(const std::string &script, const std::string &subtitleFolder,
+                              const std::string &projectRoot, bool windows);
 
 class DocumentScripts {
 public:
@@ -30,7 +35,7 @@ public:
     // False (nothing read) when it doesn't read the value; otherwise adds every unlisted token naming an
     // existing file, `added` receiving the new ones.
     bool readScriptInfo(const std::string &value, const std::function<bool(const std::string &)> &isFile,
-                        std::vector<std::string> *added = nullptr);
+                        std::vector<std::string> *added = nullptr, std::string_view subtitleFolder = {});
 
 private:
     std::vector<std::string> m_scripts;

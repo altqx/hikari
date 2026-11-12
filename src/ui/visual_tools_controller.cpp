@@ -616,6 +616,9 @@ QVariantList VisualToolsController::optionMaps(const VisualTool &t) const
         QVariantList sections;
         for (const int section : o.sections)
             sections.append(section);
+        QStringList choiceRoles;
+        for (const auto &r : o.choiceRoles)
+            choiceRoles.append(QString::fromStdString(r));
         const QString kind = o.kind == ToolOption::Kind::Choice   ? QStringLiteral("choice")
                              : o.kind == ToolOption::Kind::Action ? QStringLiteral("action")
                              : o.kind == ToolOption::Kind::Switch ? QStringLiteral("switch")
@@ -634,6 +637,7 @@ QVariantList VisualToolsController::optionMaps(const VisualTool &t) const
                                {QStringLiteral("notes"), notes},
                                {QStringLiteral("sections"), sections},
                                {QStringLiteral("sectionNames"), sectionNames},
+                               {QStringLiteral("choiceRoles"), choiceRoles},
                                {QStringLiteral("afterValues"), o.afterValues}});
     }
     return out;
@@ -684,6 +688,15 @@ bool VisualToolsController::setOption(const QString &name, int value)
     emit overlayChanged();
     refreshOptions();
     return done;
+}
+
+void VisualToolsController::previewOption(const QString &name, int index)
+{
+    auto *t = tool();
+    if (!t || !m_railEnabled || m_gesture)
+        return;
+    t->previewOption(name.toStdString(), index, *this);
+    emit overlayChanged();
 }
 
 bool VisualToolsController::previewDocument(const core::Document &document, core::Document &out) const
@@ -1157,7 +1170,8 @@ QVariantList VisualToolsController::valueMaps(const VisualTool &t) const
                                {QStringLiteral("unit"), visualToolText(v.unit)},
                                {QStringLiteral("step"), v.step},
                                {QStringLiteral("swatch"), v.swatch ? QColor::fromRgba(v.swatch).name() : QString()},
-                               {QStringLiteral("marked"), marks ? QVariant(v.marked) : QVariant()}});
+                               {QStringLiteral("marked"), marks ? QVariant(v.marked) : QVariant()},
+                               {QStringLiteral("iconRole"), QString::fromStdString(v.iconRole)}});
     return out;
 }
 
