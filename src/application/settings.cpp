@@ -399,6 +399,7 @@ const std::vector<SettingDefinition> &definitions()
         {"ai.agent.threadCapCents", "", Int, Profile, Mapped, false, std::int64_t{200}},
         {"ai.agent.dailyCapCents", "", Int, Profile, Mapped, false, std::int64_t{1000}},
         {"ai.agent.costMeter", "", Bool, Profile, Mapped, false, true},
+        {"ai.agent.autoCompact", "", Bool, Profile, Mapped, false, true},
         {"ai.agent.fullAccessWarned", "", Bool, Profile, Mapped, false, false},
         // actions: one {"name", "instruction", "role", "ask"} JSON object per row.
         {"ai.inline.actions", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
