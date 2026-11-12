@@ -44,6 +44,7 @@ target_include_directories(hikari_ui PRIVATE "${hikari_kddw_include}/kddockwidge
 target_link_libraries(hikari_ui PUBLIC Hikari::tomlplusplus)
 hikari_module(hikari_ui ALLOW hikari_application hikari_core "Qt6::*" "hikari_ui*" "KDAB::*" Hikari::tomlplusplus)
 qt_target_qml_sources(hikari_ui QML_FILES AutomationNotices.qml)
+qt_target_qml_sources(hikari_ui QML_FILES AutomationResetDialog.qml)
 qt_target_qml_sources(hikari_ui QML_FILES FileChooser.qml FolderChooser.qml)
 qt_target_qml_sources(hikari_ui QML_FILES AutomationProgress.qml RunLogLine.qml)
 qt_target_qml_sources(hikari_ui QML_FILES ScriptResolutionDialog.qml ScriptInfoOnSaveDialog.qml ProjectSettingsPages.qml)

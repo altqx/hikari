@@ -194,6 +194,13 @@ target_compile_definitions(hikari_ui_automation_packages_tests PRIVATE
     HIKARI_AUTOMATION_ROOT="${HIKARI_AUTOMATION_ROOT}"
     HIKARI_THIRDPARTY_RUNS="${PROJECT_SOURCE_DIR}/tests/fixtures/automation-thirdparty/runs.json")
 add_dependencies(hikari_ui_automation_packages_tests hikari_lua_helper hikari_automation_stage)
+target_include_directories(hikari_ui_automation_packages_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
+hikari_add_qttest(hikari_ui_automation_reset_tests SOURCES automation_reset_tests.cpp LIBRARIES hikari_composition)
+hikari_add_qttest(hikari_ui_automation_reset_ui_tests SOURCES automation_reset_ui_tests.cpp
+    LIBRARIES hikari_composition KDAB::kddockwidgets Qt6::Network)
+target_compile_definitions(hikari_ui_automation_reset_ui_tests PRIVATE HIKARI_AUTOMATION_ROOT="${HIKARI_AUTOMATION_ROOT}")
+target_include_directories(hikari_ui_automation_reset_ui_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
+add_dependencies(hikari_ui_automation_reset_ui_tests hikari_lua_helper hikari_automation_stage)
 hikari_add_qttest(hikari_ui_automation_runs_tests SOURCES automation_runs_tests.cpp LIBRARIES hikari_ui)
 hikari_add_qttest(hikari_ui_automation_document_scripts_tests SOURCES automation_document_scripts_tests.cpp
     LIBRARIES hikari_composition)

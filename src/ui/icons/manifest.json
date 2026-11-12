@@ -5055,8 +5055,7 @@
    "legacy": [],
    "surfaces": [
     "automation-reset"
-   ],
-   "pending": "AU16 #850"
+   ]
   },
   {
    "role": "layers",

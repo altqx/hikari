@@ -68,6 +68,7 @@ ApplicationWindow {
     required property var automationHotkeys
     required property var updates
     required property var whatsNew
+    property var automationReset: null
     required property var analytics
     required property var starPrompt
     required property var crashReports
@@ -8468,6 +8469,15 @@ ApplicationWindow {
         }
     }
     Loader {
+        id: automationResetDialogLoader
+        objectName: "automationResetDialogLoader"
+        active: false
+        sourceComponent: AutomationResetDialog {
+            reset: root.automationReset
+            settings: root.app.settings
+        }
+    }
+    Loader {
         id: whatsNewDialogLoader
         objectName: "whatsNewDialogLoader"
         active: false
@@ -9186,6 +9196,8 @@ ApplicationWindow {
             root.workspaceLayout.resumeMode("Karaoke")
         if (root.app.gettingStartedDue())
             Qt.callLater(() => root.lazy(gettingStartedDialogLoader).openSetup())
+        if (root.shellWindow === 0 && root.automationReset?.due)
+            Qt.callLater(() => root.lazy(automationResetDialogLoader).open())
         if (root.shellWindow === 0 && root.crashReports.pending.length > 0
                 && !(root.crashReports.canSend && root.app.settings.value("privacy.alwaysSendCrashReports") === true))
             Qt.callLater(() => crashReportWindow.showReport("start"))

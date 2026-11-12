@@ -630,6 +630,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         *m_files,
         m_workspace, [this]() -> ui::LineEditorController & { return editor(); }, [this]() -> ui::VideoController & { return video(); },
         [this]() -> ui::ShellController & { return shell(); }, *activeMedia().videoHelper);
+    m_automationReset = std::make_unique<AutomationResetNotice>(
+        options.automationReset, *m_automation, automationPath(options.automationDir) + QStringLiteral("/automation/Autoload"));
     m_automation->setDocumentChanged([this] { refreshViews(); });
     m_automation->setBeforeRun([this] { commitTemplates(); });
     m_files->setBeforeSave([this](application::DocumentId document) {
@@ -6722,6 +6724,7 @@ QVariantMap Application::qmlProperties(int shellWindow)
             {QStringLiteral("hotkeys"), QVariant::fromValue(static_cast<QObject *>(m_hotkeys.get()))},
             {QStringLiteral("updates"), QVariant::fromValue(static_cast<QObject *>(m_updates.get()))},
             {QStringLiteral("whatsNew"), QVariant::fromValue(static_cast<QObject *>(m_whatsNew.get()))},
+            {QStringLiteral("automationReset"), QVariant::fromValue(static_cast<QObject *>(m_automationReset.get()))},
             {QStringLiteral("analytics"), QVariant::fromValue(static_cast<QObject *>(m_analytics.get()))},
             {QStringLiteral("starPrompt"), QVariant::fromValue(static_cast<QObject *>(m_starPrompt.get()))},
             {QStringLiteral("crashReports"), QVariant::fromValue(static_cast<QObject *>(m_crashReports.get()))},
