@@ -71,4 +71,9 @@ private:
     bool m_converted = false;
 };
 
+// `[automation.dialogPresets]`: one "<dialog key>\t<JSON array of presets>" row per table entry.
+std::vector<std::string> dialogPresetRows(const toml::table &table);
+// None when a row has no exact TOML form; such rows are kept as plain strings.
+std::optional<toml::table> dialogPresetTable(const std::vector<std::string> &rows);
+
 }

@@ -6,6 +6,7 @@
 #include "hikari/application/node_catalogue.h"
 #include "hikari/application/node_graph.h"
 #include "hikari/application/node_graph_editing.h"
+#include "hikari/application/typesetting_graphs.h"
 #include "hikari/core/ass_load.h"
 
 #include <QFile>
@@ -299,6 +300,30 @@ private slots:
         controller().trustDocument();
         QTRY_VERIFY(lua.calls > 0);
         QVERIFY(started > 0);
+    }
+
+    void typesettingGraphsRunOnTheTargetLines()
+    {
+        QCOMPARE(controller().typesettingPresets().size(), qsizetype(application::typesettingGraphs().size()));
+        std::vector<core::LineId> dialogue;
+        for (const core::LineRecord *l : m_session->document().lines())
+            dialogue.push_back(l->id);
+        controller().setTargetLines({dialogue[0], dialogue[2]});
+        QVERIFY(controller().addTypesettingGraph(1));
+        QVERIFY(controller().typesetting());
+        QCOMPARE(controller().sources().size(), 2);
+        QCOMPARE(controller().sourceSelection().size(), 2);
+        QVERIFY(controller().problems().isEmpty());
+        QTRY_VERIFY(!controller().previewLines().isEmpty());
+        const std::size_t before = m_session->historySize();
+        QVERIFY(controller().apply(true));
+        QCOMPARE(m_session->historySize(), before + 1);
+        QCOMPARE(historyNames(*m_session).back(), std::string("Apply node effect"));
+        QCOMPARE(controller().lastApply().value(QStringLiteral("sources")).toInt(), 2);
+        const auto lines = m_session->document().lines();
+        const auto at = std::ranges::find_if(lines, [&](const core::LineRecord *l) { return l->id == dialogue[2]; });
+        QVERIFY(at != lines.end() && (*at)->comment);
+        QVERIFY(application::isGeneratedBy(**(at + 1), u8"Typewriter"));
     }
 
     void groupingAndEnteringAGroup()

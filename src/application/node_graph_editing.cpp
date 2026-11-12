@@ -241,6 +241,7 @@ std::optional<NodeGraph> groupedNodes(const NodeGraph &graph, std::span<const st
     outer.format = graph.format;
     outer.seed = graph.seed;
     outer.allStyles = graph.allStyles;
+    outer.target = graph.target;
     double left = 0, right = 0, top = 0, sumX = 0, sumY = 0;
     bool first = true;
     for (const GraphNode &n : graph.nodes) {

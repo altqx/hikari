@@ -76,9 +76,12 @@ public:
                     std::function<void(std::optional<application::ai::Error>)> done);
     /// The chosen search service, or one being tested with the key to use.
     std::optional<SearchAccess> searchAccess(application::ai::SearchService service) const;
-    /// Deletes the explicit provider cache the sidecar keeps for the conversation (the request's `cacheKey`). Call
-    /// when the thread ends.
-    void endConversation(const std::string &providerId, const std::string &cacheKey);
+    /// Deletes the explicit provider cache the sidecar keeps for the conversation (the request's `cacheKey`), under
+    /// the provider id it was sent with for `project`. Call when the thread ends.
+    void endConversation(const std::string &providerId, const std::string &cacheKey, const std::string &project = {});
+    /// The provider id the sidecar is given: `providerId`, or its alias while `project` has a key for it. Call before
+    /// connected(), which tells the sidecar the aliases.
+    std::string wireProvider(const std::string &providerId, const std::string &project);
     /// The stored providers, with the ones being probed in their place.
     RelayTargets relayTargets();
 
@@ -97,8 +100,6 @@ private:
         std::string project;
         std::string providerId;
     };
-    /// The provider id the sidecar is given: `providerId`, or its alias while `project` has a key for it.
-    std::string wireProvider(const std::string &providerId, const std::string &project);
     AiSidecarHost *connect(const application::ai::Config &config);
     AiSidecarHost *connect() { return connect(m_providers.config()); }
     void listModels(const std::string &providerId, std::function<void(std::optional<application::ai::Error>)> done);

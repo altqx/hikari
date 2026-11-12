@@ -9,6 +9,7 @@ set(chained_arg "\\.arg\\(${nested}\\)[ \t\r\n]*\\.arg\\(")
 set(hand_escape "replace\\(/&/g, *[\"']&amp")
 
 file(GLOB_RECURSE sources RELATIVE "${ROOT}" "${ROOT}/src/*.qml" "${ROOT}/src/*.js" "${ROOT}/src/*.mjs")
+list(FILTER sources EXCLUDE REGEX "/node_modules/")
 set(failures "")
 foreach(source IN LISTS sources)
     file(READ "${ROOT}/${source}" text)

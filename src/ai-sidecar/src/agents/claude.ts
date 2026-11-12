@@ -125,6 +125,9 @@ interface Turn {
  * A thread on the user's own `claude`, through the Claude Agent SDK: one long-running query, Claude's built-in tools
  * off, and only Hikari's tools allowed.
  */
+/** Claude's own sub-agent tool, named Task before Claude Code 2.1.63; Hikari's sub-agents replace it. */
+export const kNativeSubagentTools = ["Agent", "Task"];
+
 export class ClaudeSession {
     private query?: Query;
     private inbox?: Inbox;
@@ -155,6 +158,7 @@ export class ClaudeSession {
             strictMcpConfig: true,
             permissionMode: "dontAsk",
             allowedTools: [`mcp__${kServer}`],
+            disallowedTools: kNativeSubagentTools,
             mcpServers: { [kServer]: inProcessServer(this.deps.mcp, `claude:${this.id}`) as never },
             hooks: { PreToolUse: [this.hook((input) => this.before(input))],
                 PostToolUse: [this.hook((input) => this.after(input))],

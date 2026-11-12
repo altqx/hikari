@@ -1,7 +1,7 @@
 import { RpcError } from "../rpc";
 import { kReadSkillTool, Skills } from "../skills/skills";
 import { kCatalogue, type Catalogue } from "../tools/catalogue";
-import { ToolSet, type HikariCalls } from "../tools/toolset";
+import { ToolSet, type HikariCalls, type ToolSource } from "../tools/toolset";
 import { httpStatus, McpError } from "./errors";
 import { Resources } from "./resources";
 
@@ -103,6 +103,7 @@ export class McpServer {
 
     constructor(private readonly callsFor: CallsFor, private readonly info: ServerInfo,
         private readonly catalogue: () => Catalogue = () => kCatalogue,
+        private readonly sources: () => readonly ToolSource[] = () => [],
         private readonly skillsFor: SkillsFor = (calls) => new Skills(calls)) {}
 
     async message(connection: string, text: string, http?: HttpHeaders): Promise<Answer> {
@@ -156,7 +157,7 @@ export class McpServer {
         let state = this.connections.get(name);
         if (!state) {
             const calls = this.callsFor(name, () => state!.client);
-            state = { calls, tools: new ToolSet(calls, this.catalogue()), resources: new Resources(calls), running: new Set(), cancelled: new Set() };
+            state = { calls, tools: new ToolSet(calls, this.catalogue(), this.sources), resources: new Resources(calls), running: new Set(), cancelled: new Set() };
             this.connections.set(name, state);
         }
         return state;

@@ -35,11 +35,15 @@ struct GraphWire {
     GraphEnd from, to;
 };
 
+// Karaoke: the karaoke Lines of the graph Line's Style. Lines: the Lines a run names.
+enum class GraphTarget { Karaoke, Lines };
+
 struct NodeGraph {
     int format = kNodeGraphFormat;
     std::int64_t seed = 0;
     // The karaoke Lines of every Style, not only the graph Line's.
     bool allStyles = false;
+    GraphTarget target = GraphTarget::Karaoke;
     std::vector<GraphNode> nodes;
     std::vector<GraphWire> wires;
 };

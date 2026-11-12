@@ -162,6 +162,8 @@ public:
     virtual ~ProjectHost() = default;
     // nullopt: that window has no Project.
     virtual std::optional<ProjectState> project() const = 0;
+    // ai.exclude as the Project at `root` sets it; empty for a folder that is no Project.
+    virtual std::vector<std::string> aiExclude(const std::string &root) const = 0;
 };
 
 // An external aligner's job: the audio from startMs to endMs and the words sung there.

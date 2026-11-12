@@ -1,0 +1,8 @@
+Dialogue: 2,0:00:01.00,0:00:01.25,Other,,0,0,0,fx lib,{\an8\pos(590.5,100)\fnGrain\bord0\shad0\1c&HFFFFFF&}p
+Dialogue: 2,0:00:01.00,0:00:01.25,Other,,0,0,0,fx lib,{\an8\pos(609.5,100)\fnGrain\bord0\shad0\1c&HFFFFFF&}D
+Dialogue: 2,0:00:01.00,0:00:01.25,Other,,0,0,0,fx lib,{\an8\pos(659.5,100)\fnGrain\bord0\shad0\1c&HFFFFFF&}x
+Dialogue: 2,0:00:01.00,0:00:01.25,Other,,0,0,0,fx lib,{\an8\pos(689.5,100)\fnGrain\bord0\shad0\1c&HFFFFFF&}T
+Dialogue: 2,0:00:01.00,0:00:01.25,Other,,0,0,0,fx lib,{\an8\pos(590.5,100)\fnGrain\bord0\shad0\1c&H000000&}4
+Dialogue: 2,0:00:01.00,0:00:01.25,Other,,0,0,0,fx lib,{\an8\pos(609.5,100)\fnGrain\bord0\shad0\1c&H000000&}o
+Dialogue: 2,0:00:01.00,0:00:01.25,Other,,0,0,0,fx lib,{\an8\pos(659.5,100)\fnGrain\bord0\shad0\1c&H000000&}N
+Dialogue: 2,0:00:01.00,0:00:01.25,Other,,0,0,0,fx lib,{\an8\pos(689.5,100)\fnGrain\bord0\shad0\1c&H000000&}P

@@ -8,10 +8,12 @@ import { whileTurnRuns } from "../../src/agent/session";
 import { CodexSession } from "../../src/agents/codex";
 import { McpServer } from "../../src/mcp/server";
 import type { SessionUpdate } from "../../src/protocol";
+import { HikariApi, sessionCalls } from "../../src/sidecar";
 import { Skills } from "../../src/skills/skills";
 import type { OperationName } from "../../src/tools/api.gen";
 import type { HikariCalls } from "../../src/tools/toolset";
 import { kMySkill, mySkillAnswers } from "../skills/my_skill";
+import { qtLink } from "./qt_link";
 
 const kFake = join(import.meta.dir, "..", "fixtures", "fake-codex.ts");
 const kToken = "t".repeat(64);
@@ -26,21 +28,24 @@ afterEach(() => {
 const kJoined = "You are Hikari AI.\n\nInstructions from the user's AGENTS.md:\n\nUse Oxford commas.\n\n" +
     "Instructions from this Project's AGENTS.md:\n\nKeep honorifics.";
 
-function harness(answers: Partial<Record<OperationName, unknown>> = {}, system = "Be brief.") {
+function harness(answers: Partial<Record<OperationName, unknown>> = {}, system = "Be brief.", child?: ReturnType<typeof qtLink>) {
     const log = join(mkdtempSync(join(tmpdir(), "fake-codex-")), "log");
     const calls: { operation: string; params: unknown }[] = [];
     const updates: SessionUpdate[] = [];
     const spawned: string[] = [];
     let session: CodexSession | undefined;
-    const ha1: HikariCalls = {
-        call: (operation, params) => {
+    const params = { sessionId: "t1", agent: "codex" as const, model: { providerId: "", model: "" }, system,
+        ...(child ? { task: { parent: "p1", taskId: "k1", scope: { document: 1, lines: [1] } } } : {}) };
+    const fake: HikariCalls = {
+        call: (operation, p) => {
             if (!operation.startsWith("skills."))
-                calls.push({ operation, params });
+                calls.push({ operation, params: p });
             const answer = answers[operation];
-            return Promise.resolve((typeof answer === "function" ? answer(params) : answer) as never);
+            return Promise.resolve((typeof answer === "function" ? answer(p) : answer) as never);
         },
     };
-    const mcp = new McpServer(() => whileTurnRuns(ha1, () => session), { name: "hikarisub", title: "HikariSub", version: "test" });
+    const mcp = new McpServer(() => whileTurnRuns(child ? sessionCalls(new HikariApi(child.peer, undefined, "t1"), params) : fake,
+        () => session), { name: "hikarisub", title: "HikariSub", version: "test" });
     const channel = Bun.serve({ port: 0, hostname: "127.0.0.1", fetch: async (request) => {
         if (request.headers.get("authorization") !== `Bearer ${kToken}`)
             return new Response("Unauthorized", { status: 401 });
@@ -48,8 +53,7 @@ function harness(answers: Partial<Record<OperationName, unknown>> = {}, system =
         return new Response(answer.reply ?? null, { status: answer.status });
     } });
     servers.push(channel);
-    const codex = session = new CodexSession("t1", { sessionId: "t1", agent: "codex", model: { providerId: "", model: "" },
-        system }, {
+    const codex = session = new CodexSession("t1", params, {
         spawn: (id) => {
             spawned.push(id);
             return spawn(process.execPath, [kFake, "app-server", "-c", `mcp_servers.hikari.url="${channel.url}mcp"`,
@@ -59,7 +63,7 @@ function harness(answers: Partial<Record<OperationName, unknown>> = {}, system =
         kindOf: (tool) => (tool === "document_apply" ? "edit" : "read"),
         send: (update) => updates.push(update),
         version: "test",
-        skills: new Skills(ha1, []),
+        skills: new Skills(fake, []),
     });
     const script = (s: unknown) => [{ type: "text" as const, text: typeof s === "string" ? s : JSON.stringify(s) }];
     const logged = (method: string) => readFileSync(log, "utf8").split("\n").filter((l) => l.startsWith(`${method} `))
@@ -167,5 +171,22 @@ describe("Codex through its app-server", () => {
         h.session.close();
         expect(h.logged("thread/start")).toEqual([{ developerInstructions: kJoined }]);
         expect(h.logged("thread/resume")).toEqual([{ threadId: "thread-1", developerInstructions: kJoined }]);
+    }, 30_000);
+
+    test("as a sub-agent it completes an edit through _hikari/api.call, as its own session", async () => {
+        const qt = qtLink({
+            "lines.find": [{ revision: 3, total: 1, lines: [{ id: 1, row: 1, text: "Helo" }] }],
+            "document.apply": [{ revision: 4, inserted: [], changed: true }],
+        });
+        const h = harness({}, undefined, qt);
+        const result = await h.session.prompt({ sessionId: "t1", prompt: h.script({ reply: "Fixed.", calls: [
+            { tool: "lines_find", arguments: { document: 1, text: "Helo" } },
+            { tool: "document_apply", arguments: { document: 1, revision: 3, name: "Fix",
+                edits: [{ op: "set_line", line: 1, fields: { text: "Hello" } }] } },
+        ] }) });
+        h.session.close();
+        expect(result.stopReason).toBe("end_turn");
+        expect(qt.calls.map((c) => [c.operation, c.session])).toEqual([["lines.find", "t1"], ["document.apply", "t1"]]);
+        expect(h.calls).toEqual([]);
     }, 30_000);
 });

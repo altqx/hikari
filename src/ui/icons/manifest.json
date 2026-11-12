@@ -4869,8 +4869,7 @@
    "legacy": [],
    "surfaces": [
     "node-library"
-   ],
-   "pending": "AU9 #844"
+   ]
   },
   {
    "role": "graph-wobble",
@@ -4881,8 +4880,7 @@
    "legacy": [],
    "surfaces": [
     "node-library"
-   ],
-   "pending": "AU9 #844"
+   ]
   },
   {
    "role": "graph-bounce",
@@ -4893,8 +4891,7 @@
    "legacy": [],
    "surfaces": [
     "node-library"
-   ],
-   "pending": "AU9 #844"
+   ]
   },
   {
    "role": "graph-typewriter",
@@ -4905,8 +4902,7 @@
    "legacy": [],
    "surfaces": [
     "node-library"
-   ],
-   "pending": "AU9 #844"
+   ]
   },
   {
    "role": "graph-fade-by-letter",
@@ -4917,8 +4913,7 @@
    "legacy": [],
    "surfaces": [
     "node-library"
-   ],
-   "pending": "AU9 #844"
+   ]
   },
   {
    "role": "graph-focus-lines",
@@ -4929,8 +4924,7 @@
    "legacy": [],
    "surfaces": [
     "node-library"
-   ],
-   "pending": "AU9 #844"
+   ]
   },
   {
    "role": "graph-grain",
@@ -4941,8 +4935,7 @@
    "legacy": [],
    "surfaces": [
     "node-library"
-   ],
-   "pending": "AU9 #844"
+   ]
   },
   {
    "role": "graph-chromatic-aberration",
@@ -4953,8 +4946,7 @@
    "legacy": [],
    "surfaces": [
     "node-library"
-   ],
-   "pending": "AU9 #844"
+   ]
   },
   {
    "role": "graph-randomove",
@@ -4965,8 +4957,7 @@
    "legacy": [],
    "surfaces": [
     "node-library"
-   ],
-   "pending": "AU9 #844"
+   ]
   },
   {
    "role": "graph-karaoke-to-alpha",
@@ -4977,8 +4968,7 @@
    "legacy": [],
    "surfaces": [
     "node-library"
-   ],
-   "pending": "AU9 #844"
+   ]
   },
   {
    "role": "select-overlapping",
