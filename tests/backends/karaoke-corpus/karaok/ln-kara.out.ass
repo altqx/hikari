@@ -1,0 +1,42 @@
+[Script Info]
+; TH5d2: ln.kara's functions where the bundled copy and upstream agree; compared against upstream karaOK f749c4fa64e7 with its include/ln/kara.lua
+Title: TH5d2 corpus ln.kara shared
+ScriptType: v4.00+
+WrapStyle: 0
+PlayResX: 1280
+PlayResY: 720
+ScaledBorderAndShadow: yes
+Karaoke Templater: karaOK
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Romaji-furigana,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,1,1,8,20,20,20,1
+Style:  Romaji,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,8,20,20,20,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Comment: 0,0:00:00.00,0:00:05.00,Romaji,,0,0,0,code once,ln = _G.require "ln.kara"; ln.init(tenv)
+Comment: 0,0:00:00.00,0:00:05.00,Romaji,,0,0,0,code once,w = ln.wave.new("sine",1000,10)
+Comment: 0,0:00:00.00,0:00:05.00,Romaji,,0,0,0,template syl,{\an5\pos($x,$y)\t(!st(0.5)!,!st(1)!,\fscx120)\t(0,!sd(0.3)!,\blur2)\1c!rgb(255,128,0)!\3c!hsl($si*20,255,128)!\4c!hsy(170,255,100)!\frz!ln.math.modloop($si*40,-180,180)!}
+Comment: 0,0:00:00.00,0:00:05.00,Romaji,,0,0,0,template syl,{!ln.tag.pos(5)!!ln.tag.t(0,100,"\\fscx120")!}!ln.math.round(2.5)!/!ln.math.lerp(0.5,10,20)!/!ln.math.lerp(0.5,"&H000000&","&HFFFFFF&")!/!ln.syl.len()!
+Comment: 0,0:00:00.00,0:00:05.00,Romaji,,0,0,0,template syl,{!ln.tag.move(0,-20,0,0,0,200,5)!!ln.line.tag({"fad","blur"})!\3c!ln.line.style_c(3)!!ln.wave.transform(w,"frz",0,500,0,2)!}
+Comment: 0,0:00:00.00,0:00:05.00,Romaji,,0,0,0,template line,{!ln.tag.kanjipos(0,0,true)!}!ln.line.len_stripped()!/!ln.line.buffers(300,300)!/!ln.color.byRGB(1,2,3)!
+Comment: 0,0:00:01.00,0:00:04.00,Romaji,,0,0,0,karaoke,{\fad(100,200)\blur1\k30}ki{\k0}ra{\k20}ri
+Comment: 0,0:00:05.00,0:00:06.00,Romaji,,0,0,0,karaoke,{\1c&H0000FF&\k32}ha{\k28}ru
+Dialogue: 0,0:00:01.00,0:00:04.00,Romaji,,0,0,0,fx,{\fn@Arial\frz-90\an5\pos(640.00,86.00)}6/300/&H030201&kirari
+Dialogue: 0,0:00:01.00,0:00:04.00,Romaji,,0,0,0,fx,{\an5\pos(596,20)\t(150,300,\fscx120)\t(0,90,\blur2)\1c&H0080FF&\3c&H0078FF&\4c&HFF0000&\frz40}ki
+Dialogue: 0,0:00:01.00,0:00:04.00,Romaji,,0,0,0,fx,{\an5\pos(596.00,40.00)\t(0,100,\fscx120)}2/15/&H7F7F7F&/23ki
+Dialogue: 0,0:00:01.00,0:00:04.00,Romaji,,0,0,0,fx,{\an5\move(596.00,0.00,596.00,20.00,0,200)\fad(100,200)\blur1\3c&H000000&\t(0,1,1.00,\frz0.00)\t(1,85,0.95,\frz5.00)\t(83,167,0.82,\frz8.67)\t(166,251,0.42,\frz10.00)\t(250,334,1.97,\frz8.65)\t(333,418,1.20,\frz4.98)\t(417,501,1.05,\frz-0.03)}ki
+Dialogue: 0,0:00:01.00,0:00:04.00,Romaji,,0,0,0,fx,{\an5\pos(640,20)\t(300,300,\fscx120)\t(0,0,\blur2)\1c&H0080FF&\3c&H00F0FF&\4c&HFF0000&\frz80}ra
+Dialogue: 0,0:00:01.00,0:00:04.00,Romaji,,0,0,0,fx,{\an5\pos(640.00,40.00)\t(0,100,\fscx120)}2/15/&H7F7F7F&/2ra
+Dialogue: 0,0:00:01.00,0:00:04.00,Romaji,,0,0,0,fx,{\an5\move(640.00,0.00,640.00,20.00,0,200)\fad(100,200)\blur1\3c&H000000&\t(0,1,1.00,\frz0.00)\t(1,85,0.95,\frz5.00)\t(83,167,0.82,\frz8.67)\t(166,251,0.42,\frz10.00)\t(250,334,1.97,\frz8.65)\t(333,418,1.20,\frz4.98)\t(417,501,1.05,\frz-0.03)}ra
+Dialogue: 0,0:00:01.00,0:00:04.00,Romaji,,0,0,0,fx,{\an5\pos(684,20)\t(400,500,\fscx120)\t(0,60,\blur2)\1c&H0080FF&\3c&H00FF96&\4c&HFF0000&\frz120}ri
+Dialogue: 0,0:00:01.00,0:00:04.00,Romaji,,0,0,0,fx,{\an5\pos(684.00,40.00)\t(0,100,\fscx120)}2/15/&H7F7F7F&/2ri
+Dialogue: 0,0:00:01.00,0:00:04.00,Romaji,,0,0,0,fx,{\an5\move(684.00,0.00,684.00,20.00,0,200)\fad(100,200)\blur1\3c&H000000&\t(0,1,1.00,\frz0.00)\t(1,85,0.95,\frz5.00)\t(83,167,0.82,\frz8.67)\t(166,251,0.42,\frz10.00)\t(250,334,1.97,\frz8.65)\t(333,418,1.20,\frz4.98)\t(417,501,1.05,\frz-0.03)}ri
+Dialogue: 0,0:00:05.00,0:00:06.00,Romaji,,0,0,0,fx,{\fn@Arial\frz-90\an5\pos(640.00,64.00)}4/300/&H030201&haru
+Dialogue: 0,0:00:05.00,0:00:06.00,Romaji,,0,0,0,fx,{\an5\pos(618,20)\t(160,320,\fscx120)\t(0,96,\blur2)\1c&H0080FF&\3c&H0078FF&\4c&HFF0000&\frz40}ha
+Dialogue: 0,0:00:05.00,0:00:06.00,Romaji,,0,0,0,fx,{\an5\pos(618.00,40.00)\t(0,100,\fscx120)}2/15/&H7F7F7F&/16ha
+Dialogue: 0,0:00:05.00,0:00:06.00,Romaji,,0,0,0,fx,{\an5\move(618.00,0.00,618.00,20.00,0,200)\3c&H000000&\t(0,1,1.00,\frz0.00)\t(1,85,0.95,\frz5.00)\t(83,167,0.82,\frz8.67)\t(166,251,0.42,\frz10.00)\t(250,334,1.97,\frz8.65)\t(333,418,1.20,\frz4.98)\t(417,501,1.05,\frz-0.03)}ha
+Dialogue: 0,0:00:05.00,0:00:06.00,Romaji,,0,0,0,fx,{\an5\pos(662,20)\t(460,600,\fscx120)\t(0,84,\blur2)\1c&H0080FF&\3c&H00F0FF&\4c&HFF0000&\frz80}ru
+Dialogue: 0,0:00:05.00,0:00:06.00,Romaji,,0,0,0,fx,{\an5\pos(662.00,40.00)\t(0,100,\fscx120)}2/15/&H7F7F7F&/2ru
+Dialogue: 0,0:00:05.00,0:00:06.00,Romaji,,0,0,0,fx,{\an5\move(662.00,0.00,662.00,20.00,0,200)\3c&H000000&\t(0,1,1.00,\frz0.00)\t(1,85,0.95,\frz5.00)\t(83,167,0.82,\frz8.67)\t(166,251,0.42,\frz10.00)\t(250,334,1.97,\frz8.65)\t(333,418,1.20,\frz4.98)\t(417,501,1.05,\frz-0.03)}ru

@@ -65,6 +65,9 @@ class TemplateEditorController : public QObject {
     Q_PROPERTY(QVariantMap lastApply READ lastApply NOTIFY changed)
     Q_PROPERTY(QVariantMap values READ values NOTIFY valuesChanged)
     Q_PROPERTY(QVariantList presets READ presets CONSTANT)
+    Q_PROPERTY(bool karaOKMode READ karaOKMode NOTIFY changed)
+    Q_PROPERTY(bool karaOKPresetsUsable READ karaOKPresetsUsable NOTIFY changed)
+    Q_PROPERTY(bool modeInFile READ modeInFile NOTIFY changed)
 
 public:
     using SessionSource = std::function<application::EditSession *()>;
@@ -139,6 +142,12 @@ public:
     int changedCount() const;
     QVariantMap lastApply() const { return m_lastApply; }
     QVariantMap values() const { return m_values; }
+    bool karaOKMode() const;
+    bool karaOKPresetsUsable() const;
+    // The mode comes from the file's mode line rather than from its template syntax.
+    bool modeInFile() const;
+    // Writes the mode line, one undo step "Set template mode".
+    Q_INVOKABLE bool setKaraOKMode(bool karaOK);
 
     Q_INVOKABLE void setText(const QString &text);
     Q_INVOKABLE void setEffect(const QString &effect);
@@ -151,6 +160,7 @@ public:
     Q_INVOKABLE void requestValues();
     Q_INVOKABLE QVariantList completions(const QString &text, int cursor) const;
     Q_INVOKABLE QVariantList colourRuns(const QString &text) const;
+    Q_INVOKABLE QString effectInMode(const QString &stockEffect) const;
     Q_INVOKABLE QVariantMap effectParts(const QString &effect) const;
     Q_INVOKABLE QString effectWithClass(const QString &effect, const QString &className) const;
     Q_INVOKABLE QString effectWithModifier(const QString &effect, const QString &word, bool on) const;
@@ -166,6 +176,11 @@ signals:
     void documentTrusted();
 
 private:
+    struct LnUse {
+        bool loaded = false;
+        bool initialised = false;
+    };
+    LnUse lnUse() const;
     struct Pending {
         core::LineId line;
         std::optional<std::u8string> text, effect, style;
@@ -183,7 +198,10 @@ private:
         int start = 0, length = 0;
     };
 
-    bool insertLines(const char *commandName, std::vector<application::MacroDialogueLine> made);
+    bool insertLines(const char *commandName, std::vector<application::MacroDialogueLine> made,
+                     bool writeKaraOKMode = false);
+    bool modeUndecided() const;
+    QString stockEffectOf(const QString &effect) const;
     application::EditSession *session() const;
     const core::Document *document() const;
     const core::LineRecord *line(core::LineId id) const;

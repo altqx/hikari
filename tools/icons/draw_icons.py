@@ -1410,20 +1410,14 @@ PENDING = {}
 for card, roles in {
     "AI2 #430": ["review-panel"],
     "PJ4 #772": ["explorer", "new-subtitle-file", "show-all-files", "group-by-name"],
-    "PJ5 #773": ["mine", "copy-to-tier", "move-to-tier"],
     "PJ8 #776": ["untrusted"],
     "AI24 #744": ["update"],
     "PL7 #419": ["plugin-sandbox"],
     "AU6 #845": ["shape-unite", "shape-subtract", "shape-intersect", "shape-exclude", "shape-offset", "clip-to-shape",
                  "shape-to-clip", "shape-merge"],
-    "AU10 #841": ["select-overlapping", "split-tag-blocks", "split-every-n"],
-    "AU11 #846": ["track-colour", "find-fade"],
-    "AU14 #847": ["tool-text-on-path"],
     "AU16 #850": ["reinstall-scripts"],
-    "AU21 #855": ["change-alignment", "align-left", "align-center", "align-right", "align-top", "align-middle",
-                  "align-bottom", "distribute-horizontal", "distribute-vertical", "pos-to-margins", "margins-to-pos",
-                  "phantom", "cycle-values", "shift-by-x", "shift-by-y"],
-    "TH5 #833": ["builtin-script"],
+    "AU21 #855": ["change-alignment", "align-top", "align-middle", "align-bottom", "distribute-vertical",
+                  "pos-to-margins", "margins-to-pos", "phantom", "cycle-values", "shift-by-x", "shift-by-y"],
 }.items():
     for role in roles:
         PENDING[role] = card

@@ -72,7 +72,7 @@ public:
     std::optional<application::AegisubFrameTimes> frameTimes() const override { return std::nullopt; }
     std::optional<VideoSize> videoSize() const override
     {
-        return videoOpen ? std::optional(VideoSize{64, 36, 16, 9}) : std::nullopt;
+        return videoOpen ? std::optional(VideoSize{width, height, 16, 9}) : std::nullopt;
     }
     std::optional<std::vector<std::int64_t>> keyframes() const override
     {
@@ -83,10 +83,10 @@ public:
         lastWithSubtitles = withSubtitles;
         if (!videoOpen || index > 99)
             return reply(std::nullopt);
-        Frame out{64, 36, std::vector<std::byte>(64 * 36 * 4)};
-        for (int y = 0; y < 36; ++y)
-            for (int x = 0; x < 64; ++x) {
-                std::byte *p = out.bgra.data() + (y * 64 + x) * 4;
+        Frame out{width, height, std::vector<std::byte>(std::size_t(width) * height * 4)};
+        for (int y = 0; y < height; ++y)
+            for (int x = 0; x < width; ++x) {
+                std::byte *p = out.bgra.data() + (std::size_t(y) * width + x) * 4;
                 p[0] = std::byte(x);
                 p[2] = std::byte(index);
                 p[3] = std::byte(255);
@@ -103,6 +103,7 @@ public:
         return audioLoading ? nullptr : &audio;
     }
 
+    int width = 64, height = 36;
     bool videoOpen = true;
     bool audioOpen = true;
     bool audioLoading = false;
@@ -177,6 +178,16 @@ public:
     std::function<void(LuaRun)> pending;
 };
 
+class FakeTranslation final : public TranslationHost {
+public:
+    std::optional<std::string> projectFolder(application::DocumentId document) const override
+    {
+        const auto it = folders.find(document.value);
+        return it == folders.end() ? std::nullopt : std::optional(it->second);
+    }
+    std::map<std::uint64_t, std::string> folders;
+};
+
 // Document 1 "a.ass" (the editing target, Lines 1-3, Lines 1 and 3 selected,
 // 3 active) and document 2 "b.ass", never saved.
 class FakeHost final : public DocumentHost, public CommandHost, public PanelHost {
@@ -208,7 +219,12 @@ public:
 
     FolderSkills skills{std::filesystem::path()};
     FakeAutomation automation;
-    Host host() { return Host{this, this, this, &settings, &media, &files, &review, render, &skills, &automation}; }
+    FakeTranslation translation;
+    Host host()
+    {
+        return Host{this, this, this, &settings, &media, &files, &review, render, &skills, &automation, typeset, nullptr,
+                    &translation};
+    }
 
     const application::Workspace &workspace() const override { return workspace_; }
     application::EditSession *session(application::DocumentId document) const override
@@ -307,6 +323,7 @@ public:
     FakeFiles files;
     FakeRender fakeRender;
     RenderHost *render = &fakeRender;
+    TypesetHost *typeset = nullptr;
     application::AiReview review;
 };
 

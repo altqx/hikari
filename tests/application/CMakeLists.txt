@@ -66,7 +66,7 @@ hikari_add_gtest(hikari_application_grid_split_tests SOURCES grid_split_tests.cp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_recent_files_tests SOURCES recent_files_tests.cpp
     LIBRARIES hikari_application LABELS application)
-hikari_add_gtest(hikari_application_project_tests SOURCES project_tests.cpp
+hikari_add_gtest(hikari_application_project_tests SOURCES project_tests.cpp translation_project_tests.cpp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_grid_translation_tests SOURCES grid_translation_tests.cpp
     LIBRARIES hikari_application LABELS application)
@@ -89,6 +89,8 @@ hikari_add_gtest(hikari_application_whats_new_tests SOURCES whats_new_tests.cpp
 hikari_add_gtest(hikari_application_resample_tests SOURCES resample_tests.cpp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_style_manager_tests SOURCES style_manager_tests.cpp
+    LIBRARIES hikari_application LABELS application)
+hikari_add_gtest(hikari_application_tiers_tests SOURCES tiers_tests.cpp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_spell_checker_tests SOURCES spell_checker_tests.cpp
     LIBRARIES hikari_application LABELS application)
@@ -220,6 +222,8 @@ hikari_add_gtest(hikari_application_center_times_tests SOURCES center_times_test
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_align_to_video_tests SOURCES align_to_video_tests.cpp
     LIBRARIES hikari_application LABELS application)
+hikari_add_gtest(hikari_application_video_analysis_tests SOURCES video_analysis_tests.cpp
+    LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_qc_notes_tests SOURCES qc_notes_tests.cpp
     LIBRARIES hikari_application LABELS application)
 target_compile_definitions(hikari_application_qc_notes_tests PRIVATE
@@ -262,6 +266,10 @@ target_include_directories(hikari_application_motion_data_tests PRIVATE "${PROJE
 hikari_add_gtest(hikari_application_gradient_tests SOURCES gradient_tests.cpp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_visual_gradient_tests SOURCES visual_gradient_tests.cpp
+    LIBRARIES hikari_application LABELS application)
+hikari_add_gtest(hikari_application_text_on_path_tests SOURCES text_on_path_tests.cpp
+    LIBRARIES hikari_application LABELS application)
+hikari_add_gtest(hikari_application_visual_text_on_path_tests SOURCES visual_text_on_path_tests.cpp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_interpolate_tests SOURCES interpolate_tests.cpp
     LIBRARIES hikari_application LABELS application)

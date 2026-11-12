@@ -445,49 +445,129 @@ std::string writeCatalog(const StyleList &styles)
     return out;
 }
 
+namespace {
+
+std::vector<std::u8string> scanCatalogs(const std::filesystem::path &dir)
+{
+    std::vector<std::u8string> names;
+    std::error_code ec;
+    for (const auto &entry : std::filesystem::directory_iterator(dir, ec))
+        if (entry.is_regular_file() && entry.path().extension() == ".sty")
+            names.push_back(entry.path().stem().u8string());
+    std::sort(names.begin(), names.end());
+    return names;
+}
+
+StyleList readCatalogFile(const std::filesystem::path &path)
+{
+    std::ifstream in(path, std::ios::binary);
+    std::stringstream text;
+    text << in.rdbuf();
+    return readCatalog(text.str());
+}
+
+bool listed(const std::vector<std::u8string> &names, const std::u8string &name)
+{
+    return std::find(names.begin(), names.end(), name) != names.end();
+}
+
+Tier otherTier(Tier tier)
+{
+    return tier == Tier::Project ? Tier::Mine : Tier::Project;
+}
+
+}
+
 StyleCatalogs::StyleCatalogs(std::filesystem::path directory) : m_dir(std::move(directory))
 {
     std::error_code ec;
     std::filesystem::create_directories(m_dir, ec);
-    for (const auto &entry : std::filesystem::directory_iterator(m_dir, ec))
-        if (entry.is_regular_file() && entry.path().extension() == ".sty")
-            m_names.push_back(entry.path().stem().u8string());
-    std::sort(m_names.begin(), m_names.end());
+    m_names = scanCatalogs(m_dir);
     if (m_names.empty()) {
         std::ofstream(m_dir / "Default.sty", std::ios::binary)
             << "\xEF\xBB\xBFStyle: Default,Garamond,30,&H00FFFFFF,&H000000FF,&H00FF0000,&H00000000,0,0,0,0,100,100,0,0,0,2,2,2,10,10,10,1";
         m_names.push_back(u8"Default");
     }
-    const auto it = std::find(m_names.begin(), m_names.end(), u8"Default");
-    load(it != m_names.end() ? *it : m_names.front());
+    loadDefault();
 }
 
-void StyleCatalogs::load(const std::u8string &name)
+void StyleCatalogs::loadDefault()
+{
+    if (listed(m_projectNames, u8"Default"))
+        load(u8"Default", Tier::Project);
+    else
+        load(listed(m_names, u8"Default") ? std::u8string(u8"Default") : m_names.front(), Tier::Mine);
+}
+
+void StyleCatalogs::setProjectDirectory(std::filesystem::path directory)
+{
+    save();
+    m_projectDir = std::move(directory);
+    m_projectNames = m_projectDir.empty() ? std::vector<std::u8string>() : scanCatalogs(m_projectDir);
+    const std::u8string name = m_current;
+    if (listed(m_projectNames, name) || listed(m_names, name))
+        load(name, resolve(name));
+    else
+        loadDefault();
+}
+
+std::vector<std::u8string> StyleCatalogs::names() const
+{
+    std::vector<std::u8string> out = m_names;
+    for (const auto &name : m_projectNames)
+        if (!listed(out, name))
+            out.push_back(name);
+    std::sort(out.begin(), out.end());
+    return out;
+}
+
+bool StyleCatalogs::readOnly() const
+{
+    return m_currentTier == Tier::Mine && listed(m_projectNames, m_current);
+}
+
+std::filesystem::path StyleCatalogs::file(const std::u8string &name, Tier tier) const
+{
+    return directory(tier) / (name + u8".sty");
+}
+
+Tier StyleCatalogs::resolve(const std::u8string &name) const
+{
+    return listed(m_projectNames, name) ? Tier::Project : Tier::Mine;
+}
+
+void StyleCatalogs::load(const std::u8string &name, Tier tier)
 {
     m_current = name;
-    std::ifstream in(m_dir / (name + u8".sty"), std::ios::binary);
-    std::stringstream text;
-    text << in.rdbuf();
-    m_styles = readCatalog(text.str());
+    m_currentTier = tier;
+    m_styles = readCatalogFile(file(name, tier));
     m_changed = false;
 }
 
 bool StyleCatalogs::choose(const std::u8string &name)
 {
-    if (std::find(m_names.begin(), m_names.end(), name) == m_names.end())
+    return choose(name, resolve(name));
+}
+
+bool StyleCatalogs::choose(const std::u8string &name, Tier tier)
+{
+    if (!listed(names(tier), name))
         return false;
     save();
-    load(name);
+    load(name, tier);
     return true;
 }
 
-bool StyleCatalogs::create(const std::u8string &name)
+bool StyleCatalogs::create(const std::u8string &name, Tier tier)
 {
-    if (name.empty() || std::find(m_names.begin(), m_names.end(), name) != m_names.end())
+    if (name.empty() || listed(names(tier), name) || (tier == Tier::Project && m_projectDir.empty()) ||
+        (tier == Tier::Mine && listed(m_projectNames, name)))
         return false;
     save();
-    m_names.push_back(name);
+    auto &into = namesIn(tier);
+    into.insert(std::upper_bound(into.begin(), into.end(), name), name);
     m_current = name;
+    m_currentTier = tier;
     m_styles.clear();
     m_changed = true;
     return true;
@@ -495,27 +575,86 @@ bool StyleCatalogs::create(const std::u8string &name)
 
 bool StyleCatalogs::remove(const std::u8string &name)
 {
-    const auto it = std::find(m_names.begin(), m_names.end(), name);
-    if (it == m_names.end() || name == u8"Default")
+    return remove(name, resolve(name));
+}
+
+bool StyleCatalogs::remove(const std::u8string &name, Tier tier)
+{
+    auto &from = namesIn(tier);
+    const auto it = std::find(from.begin(), from.end(), name);
+    if (it == from.end() || (tier == Tier::Mine && name == u8"Default"))
         return false;
-    const auto index = static_cast<std::size_t>(it - m_names.begin());
-    m_names.erase(it);
+    const bool shown = name == m_current && tier == m_currentTier;
+    if (!shown)
+        save();
+    const auto index = static_cast<std::size_t>(it - from.begin());
+    from.erase(it);
     std::error_code ec;
-    std::filesystem::remove(m_dir / (name + u8".sty"), ec);
-    load(m_names[index == 0 ? 0 : index - 1]);
+    std::filesystem::remove(file(name, tier), ec);
+    if (!shown) {
+        if (tier == Tier::Project && m_currentTier == Tier::Mine && m_current == name)
+            load(name, Tier::Mine);
+        return true;
+    }
+    if (from.empty())
+        loadDefault();
+    else
+        load(from[index == 0 ? 0 : index - 1], tier);
     return true;
+}
+
+std::optional<std::u8string> StyleCatalogs::copy(const std::u8string &name, Tier from, const ClashChoice &clash)
+{
+    const Tier to = otherTier(from);
+    if ((to == Tier::Project && m_projectDir.empty()) || !listed(names(from), name))
+        return std::nullopt;
+    if (name == m_current && from == m_currentTier)
+        save();
+    const auto landed = landingName(names(to), name, clash);
+    if (!landed)
+        return std::nullopt;
+    std::error_code ec;
+    std::filesystem::create_directories(directory(to), ec);
+    {
+        std::ofstream out(file(*landed, to), std::ios::binary | std::ios::trunc);
+        out << writeCatalog(readCatalogFile(file(name, from)));
+        if (!out.good())
+            return std::nullopt;
+    }
+    auto &into = namesIn(to);
+    if (!listed(into, *landed))
+        into.insert(std::upper_bound(into.begin(), into.end(), *landed), *landed);
+    if (*landed == m_current && to == m_currentTier)
+        load(*landed, to);
+    return landed;
+}
+
+std::optional<std::u8string> StyleCatalogs::move(const std::u8string &name, Tier from, const ClashChoice &clash)
+{
+    const bool wasShown = name == m_current && from == m_currentTier;
+    const auto landed = copy(name, from, clash);
+    if (!landed)
+        return std::nullopt;
+    if (from == Tier::Mine && name == u8"Default")
+        return landed;
+    remove(name, from);
+    if (wasShown)
+        load(*landed, otherTier(from));
+    return landed;
 }
 
 std::optional<StyleList> StyleCatalogs::list(const std::u8string &catalog) const
 {
-    if (catalog == m_current)
+    return list(catalog, resolve(catalog));
+}
+
+std::optional<StyleList> StyleCatalogs::list(const std::u8string &catalog, Tier tier) const
+{
+    if (catalog == m_current && tier == m_currentTier)
         return m_styles;
-    if (std::find(m_names.begin(), m_names.end(), catalog) == m_names.end())
+    if (!listed(names(tier), catalog))
         return std::nullopt;
-    std::ifstream in(m_dir / (catalog + u8".sty"), std::ios::binary);
-    std::stringstream text;
-    text << in.rdbuf();
-    return readCatalog(text.str());
+    return readCatalogFile(file(catalog, tier));
 }
 
 std::optional<core::StyleValues> StyleCatalogs::find(const std::u8string &catalog, const std::u8string &style) const
@@ -530,9 +669,11 @@ std::optional<core::StyleValues> StyleCatalogs::find(const std::u8string &catalo
 
 bool StyleCatalogs::save()
 {
-    if (!m_changed)
+    if (!m_changed || readOnly())
         return true;
-    std::ofstream out(m_dir / (m_current + u8".sty"), std::ios::binary | std::ios::trunc);
+    std::error_code ec;
+    std::filesystem::create_directories(directory(m_currentTier), ec);
+    std::ofstream out(file(m_current, m_currentTier), std::ios::binary | std::ios::trunc);
     out << writeCatalog(m_styles);
     m_changed = !out.good();
     return out.good();

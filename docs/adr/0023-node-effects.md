@@ -31,7 +31,7 @@ The engine, the nodes and the canvas are our own implementation. [Mandholine/Pyx
 
 On 2026-11-09 altqx decided (D6, [AU0 #836](https://github.com/altqx/hikari/issues/836)) that a graph can also target ordinary Lines. This is card [AU9 #844](https://github.com/altqx/hikari/issues/844); the command was approved on 2026-11-12 (Q355–Q356).
 
-- A graph's `target` is `karaoke` (the default) or `lines`. A `lines` graph runs only on the Lines it is given, of any Style, karaoke or not, and uses graph format 2.
+- A graph's `target` is `karaoke` (the default) or `lines`. A `lines` graph runs only on the Lines it is given, of any Style, karaoke or not.
 - A source's \pos (or \move's start) and \an place its units, and a Line without karaoke tags is one syllable that spans the Line.
 - Apply puts each source's Lines right after it and turns the source into a Comment that keeps its Effect.
 - Subtitles › "Typesetting graph…" and the Grid menu open the node effects mode with the selected Lines as its sources.

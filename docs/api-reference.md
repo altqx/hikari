@@ -1,6 +1,6 @@
 # Hikari API reference
 
-Version 1 of the Hikari API, generated from HikariSub's own registry: the same reference `hikarisub --export-docs` writes to `api.json`. A plugin calls these operations with `hikari.call(operation, params)`, or `api.call` in a QML panel, and listens to the events with `hikari.events.on(name, fn)`.
+Version 2 of the Hikari API, generated from HikariSub's own registry: the same reference `hikarisub --export-docs` writes to `api.json`. A plugin calls these operations with `hikari.call(operation, params)`, or `api.call` in a QML panel, and listens to the events with `hikari.events.on(name, fn)`.
 
 ## Operations
 
@@ -35,14 +35,24 @@ Version 1 of the Hikari API, generated from HikariSub's own registry: the same r
 | `video.keyframes` | read | 1 | The keyframes from one time to another, each with its start time. |
 | `audio.info` | read | 1 | Whether audio is open and loaded, its duration and sample rate. |
 | `audio.peaks` | read | 1 | The lowest and highest 16-bit sample in each of `buckets` equal slices of a time range. |
-| `files.list` | read | 1 | The files the user granted this caller, with read or write access. |
+| `files.list` | read | 1 | The files and folders the user granted this caller; with folder, also what that folder holds. |
 | `files.read` | read | 1 | A granted file's content, as UTF-8 text or base64; at most 16 MiB. |
-| `files.write` | write | 1 | Replaces a file granted for writing with new content. |
+| `files.write` | write | 1 | Replaces a file granted for writing with new content; in a writable folder, makes it and its folders. |
 | `skills.list` | read | 1 | The user's skills: each skill folder's name and its files, SKILL.md among them. |
 | `skills.read` | read | 1 | One file of a user's skill, as UTF-8 text; at most 256 KiB. |
 | `automation.run` | write | 1 | Saves a Lua Automation script to the AI scripts folder and runs one of its macros on the active tab's selection, once the user approves the script. The run is one undo step. |
+| `translation.project` | read | 1 | The Document's Honya project files: PROJECT.md, GLOSSARY.md, CHARACTERS.md and STYLE.md, those that exist. folder is null when the Document has no project folder. |
+| `translation.project_write` | write | 1 | Replaces one of the Document's Honya project files, keeping Honya's Markdown and honya:data format. |
 | `nodes.catalogue` | read | 1 | The node types the node-effect editor offers, with their ports and parameters. |
 | `nodes.validate` | read | 1 | Checks a node-effect graph; each problem names its node and port or field. |
+| `typeset.perspective` | read | 1 | The Line's text with the tags that render it on a quad (VT3's perspective solver): \pos, \org, \frx, \fry, \frz, \fax, \fscx and \fscy. |
+| `typeset.clip` | read | 1 | The Line's text with its first clip replaced by a rectangle or a vector clip. |
+| `typeset.drawing` | read | 1 | The Line's text with its first drawing replaced by a shape (\p1), placed at a position with an alignment. |
+| `typeset.shift` | read | 1 | Moves the Lines' positions, \move points, clips, drawings and \org by an offset, as the Position shifter does. |
+| `typeset.hydra` | read | 1 | Changes one tag across the Lines as the Hydra strip does: set it, add to it, multiply it by line number, or run a gradient across characters or Lines. |
+| `typeset.check` | read | 1 | Renders one Line alone, with a proposed text, on its frame and compares its ink with a target. |
+| `typeset.apply` | write | 1 | Applies typeset Lines as one undo step after every one passes the render check; when one misses its target nothing is applied. |
+| `project.info` | read | 2 | The Project of the window the user works in, or null. |
 
 ### `documents.list`
 
@@ -691,15 +701,23 @@ The lowest and highest 16-bit sample in each of `buckets` equal slices of a time
 
 Read. Since version 1.
 
-The files the user granted this caller, with read or write access.
+The files and folders the user granted this caller; with folder, also what that folder holds.
 
-**Parameters**: none.
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `folder` | string |  | A folder handle to list (since version 2). |
+| `path` | string |  | A folder inside it; default the folder itself. |
 
 **Result**
 
 | Field | Type | Always | Meaning |
 | --- | --- | --- | --- |
 | `files` | array of [GrantedFile](#grantedfile) | yes |  |
+| `folders` | array of [GrantedFolder](#grantedfolder) |  |  |
+| `entries` | array of [FolderEntry](#folderentry) |  | With folder: in name order, at most 4096, without links that lead outside it. |
+| `truncated` | boolean |  | Present when the folder holds more than 4096 entries. |
 
 ### `files.read`
 
@@ -711,7 +729,9 @@ A granted file's content, as UTF-8 text or base64; at most 16 MiB.
 
 | Field | Type | Required | Meaning |
 | --- | --- | --- | --- |
-| `file` | string | yes | A handle from files.list. |
+| `file` | string |  | A handle from files.list. |
+| `folder` | string |  | Instead of file, a folder handle from files.list (since version 2). |
+| `path` | string |  | With folder, the file's path inside it, with / between its parts. |
 | `encoding` | one of `utf8` or `base64` |  | Default utf8. |
 
 **Result**
@@ -727,13 +747,15 @@ A granted file's content, as UTF-8 text or base64; at most 16 MiB.
 
 Write. Since version 1.
 
-Replaces a file granted for writing with new content.
+Replaces a file granted for writing with new content; in a writable folder, makes it and its folders.
 
 **Parameters**
 
 | Field | Type | Required | Meaning |
 | --- | --- | --- | --- |
-| `file` | string | yes | A handle from files.list. |
+| `file` | string |  | A handle from files.list. |
+| `folder` | string |  | Instead of file, a folder handle from files.list (since version 2). |
+| `path` | string |  | With folder, the file's path inside it, with / between its parts. |
 | `encoding` | one of `utf8` or `base64` |  | Default utf8. |
 | `data` | string | yes |  |
 
@@ -805,6 +827,48 @@ Saves a Lua Automation script to the AI scripts folder and runs one of its macro
 | `message` | string | yes |  |
 | `log` | string | yes |  |
 
+### `translation.project`
+
+Read. Since version 1.
+
+The Document's Honya project files: PROJECT.md, GLOSSARY.md, CHARACTERS.md and STYLE.md, those that exist. folder is null when the Document has no project folder.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `document` | [DocumentId](#documentid) |  | Defaults to the active Document. |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `folder` | string or null | yes |  |
+| `files` | array of objects | yes |  |
+| `files[].name` | one of `PROJECT.md`, `GLOSSARY.md`, `CHARACTERS.md` or `STYLE.md` | yes |  |
+| `files[].data` | string | yes |  |
+
+### `translation.project_write`
+
+Write. Since version 1.
+
+Replaces one of the Document's Honya project files, keeping Honya's Markdown and honya:data format.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `document` | [DocumentId](#documentid) |  | Defaults to the active Document. |
+| `file` | one of `PROJECT.md`, `GLOSSARY.md`, `CHARACTERS.md` or `STYLE.md` | yes |  |
+| `data` | string | yes |  |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `file` | one of `PROJECT.md`, `GLOSSARY.md`, `CHARACTERS.md` or `STYLE.md` | yes |  |
+| `size` | integer | yes | At least 0. |
+
 ### `nodes.catalogue`
 
 Read. Since version 1.
@@ -852,7 +916,234 @@ Checks a node-effect graph; each problem names its node and port or field.
 | `problems[].port` | string |  |  |
 | `problems[].message` | string | yes |  |
 
+### `typeset.perspective`
+
+Read. Since version 1.
+
+The Line's text with the tags that render it on a quad (VT3's perspective solver): \pos, \org, \frx, \fry, \frz, \fax, \fscx and \fscy.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `document` | [DocumentId](#documentid) |  | Defaults to the active Document. |
+| `line` | [LineId](#lineid) | yes |  |
+| `quad` | array of objects | yes | Script coordinates: top left, top right, bottom right, bottom left. 4 to 4 items. |
+| `quad[].x` | number | yes |  |
+| `quad[].y` | number | yes |  |
+| `origin` | one of `center`, `nofax` or `keep` |  | Where \org goes: the quad's centre (default), the centre without \fax, or where the Line has it. |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `line` | [LineId](#lineid) | yes |  |
+| `text` | string | yes |  |
+| `transform` | object | yes |  |
+
+### `typeset.clip`
+
+Read. Since version 1.
+
+The Line's text with its first clip replaced by a rectangle or a vector clip.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `document` | [DocumentId](#documentid) |  | Defaults to the active Document. |
+| `line` | [LineId](#lineid) | yes |  |
+| `rect` | object |  | Script coordinates, rounded to whole units. |
+| `rect.x1` | number | yes |  |
+| `rect.y1` | number | yes |  |
+| `rect.x2` | number | yes |  |
+| `rect.y2` | number | yes |  |
+| `vector` | string |  | ASS drawing commands such as "m 0 0 l 100 0 100 50 0 50"; empty removes the vector clip. At most 100000 characters. |
+| `inverse` | boolean |  | \iclip: draw outside the clip. |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `line` | [LineId](#lineid) | yes |  |
+| `text` | string | yes | The Line's text with the tags written; nothing is applied. |
+
+### `typeset.drawing`
+
+Read. Since version 1.
+
+The Line's text with its first drawing replaced by a shape (\p1), placed at a position with an alignment.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `document` | [DocumentId](#documentid) |  | Defaults to the active Document. |
+| `line` | [LineId](#lineid) | yes |  |
+| `shape` | string | yes | ASS drawing commands, in script units from the drawing's origin. 1 to 100000 characters. |
+| `position` | object |  |  |
+| `position.x` | number | yes |  |
+| `position.y` | number | yes |  |
+| `alignment` | integer |  | \an; 7 (top left) with position, else the Line's. From 1 to 9. |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `line` | [LineId](#lineid) | yes |  |
+| `text` | string | yes | The Line's text with the tags written; nothing is applied. |
+
+### `typeset.shift`
+
+Read. Since version 1.
+
+Moves the Lines' positions, \move points, clips, drawings and \org by an offset, as the Position shifter does.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `document` | [DocumentId](#documentid) |  | Defaults to the active Document. |
+| `lines` | array of [LineId](#lineid) | yes | 1 to 1000 items. |
+| `dx` | number | yes | Script units. |
+| `dy` | number | yes |  |
+| `kinds` | array of one of `position`, `move_start`, `move_end`, `clip`, `drawing` or `origin` |  | What moves; every kind but drawing when omitted. |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `lines` | array of objects | yes | The Lines the change alters, with their new text; nothing is applied. |
+| `lines[].line` | [LineId](#lineid) | yes |  |
+| `lines[].text` | string | yes |  |
+
+### `typeset.hydra`
+
+Read. Since version 1.
+
+Changes one tag across the Lines as the Hydra strip does: set it, add to it, multiply it by line number, or run a gradient across characters or Lines.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `document` | [DocumentId](#documentid) |  | Defaults to the active Document. |
+| `lines` | array of [LineId](#lineid) | yes | Multiply and the line gradients count them in this order. 1 to 1000 items. |
+| `tag` | string | yes | A Hydra tag without the backslash: blur, bord, be, alpha, 1a, 3a, 4a, 1c (or c), 3c, 4c, fad, fax, fay, fs, fsp, shad, xbord, ybord, xshad, yshad, pos or t. Not empty. |
+| `change` | one of `set`, `add`, `multiply` or `gradient` | yes |  |
+| `values` | array of number | yes | set: the value; add: what to add; multiply: the start; gradient: the first value. Colours are R, G, B. 1 to 4 items. |
+| `perLine` | array of number |  | multiply: added for each Line. At most 4 items. |
+| `byLine` | one of `set` or `add` |  | multiply: set each Line's value, or add to it. Default set. |
+| `to` | array of number |  | gradient: the last value. At most 4 items. |
+| `across` | one of `characters` or `lines` |  | gradient: default characters. |
+| `decreasing` | boolean |  | gradient: run from the end. |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `lines` | array of objects | yes | The Lines the change alters, with their new text; nothing is applied. |
+| `lines[].line` | [LineId](#lineid) | yes |  |
+| `lines[].text` | string | yes |  |
+
+### `typeset.check`
+
+Read. Since version 1.
+
+Renders one Line alone, with a proposed text, on its frame and compares its ink with a target.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `document` | [DocumentId](#documentid) |  | Defaults to the active Document. |
+| `line` | [LineId](#lineid) | yes |  |
+| `text` | string |  | The proposed text; the Line's own when omitted. |
+| `target` | object or object | yes | Where the Line's ink should land, in script coordinates: a quad or a box. |
+| `frame` | integer |  | Default: the frame shown when the Line is on it, else the Line's first. At least 0. |
+| `tolerance` | number |  | Video pixels; default 4. At least 0. |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `line` | [LineId](#lineid) | yes |  |
+| `frame` | integer | yes |  |
+| `pass` | boolean | yes |  |
+| `error` | number or null | yes | The largest distance between an edge of the ink's bounds and the target's, in video pixels; null when nothing is drawn. |
+| `ink` | object or null | yes |  |
+| `target` | object | yes |  |
+| `target.x` | number | yes |  |
+| `target.y` | number | yes |  |
+| `target.width` | number | yes |  |
+| `target.height` | number | yes |  |
+
+### `typeset.apply`
+
+Write. Since version 1.
+
+Applies typeset Lines as one undo step after every one passes the render check; when one misses its target nothing is applied.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `document` | [DocumentId](#documentid) |  | Defaults to the active Document. |
+| `revision` | [Revision](#revision) | yes |  |
+| `name` | string | yes | A few words naming the change, such as "Typeset the shop sign". 1 to 200 characters. |
+| `lines` | array of objects | yes | 1 to 100 items. |
+| `lines[].line` | [LineId](#lineid) | yes |  |
+| `lines[].text` | string | yes |  |
+| `lines[].target` | object or object | yes | Where the Line's ink should land, in script coordinates: a quad or a box. |
+| `lines[].frame` | integer |  | At least 0. |
+| `tolerance` | number |  | Video pixels; default 4. At least 0. |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `revision` | [Revision](#revision) | yes |  |
+| `inserted` | array of [LineId](#lineid) | yes |  |
+| `changed` | boolean | yes |  |
+| `checks` | array of objects | yes |  |
+| `checks[].line` | [LineId](#lineid) | yes |  |
+| `checks[].frame` | integer | yes |  |
+| `checks[].pass` | boolean | yes |  |
+| `checks[].error` | number or null | yes | The largest distance between an edge of the ink's bounds and the target's, in video pixels; null when nothing is drawn. |
+| `checks[].ink` | object or null | yes |  |
+| `checks[].target` | object | yes |  |
+| `checks[].target.x` | number | yes |  |
+| `checks[].target.y` | number | yes |  |
+| `checks[].target.width` | number | yes |  |
+| `checks[].target.height` | number | yes |  |
+
+### `project.info`
+
+Read. Since version 2.
+
+The Project of the window the user works in, or null.
+
+**Parameters**: none.
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `project` | [Project](#project) | yes |  |
+
 ## Events
+
+### `project.changed`
+
+Since version 2.
+
+The window the user works in opened or closed a Project, or the user moved to a window with another one.
+
+**Data**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `project` | [Project](#project) | yes |  |
 
 ### `document.changed`
 
@@ -1135,3 +1426,32 @@ Type: boolean, integer, string or array of string.
 | `file` | string | yes | The handle files.read and files.write take. |
 | `name` | string | yes |  |
 | `access` | one of `read` or `write` | yes |  |
+
+### GrantedFolder
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `folder` | string | yes | The handle files.list, files.read and files.write take with a path. |
+| `name` | string | yes |  |
+| `access` | one of `read` or `write` | yes |  |
+
+### FolderEntry
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `path` | string | yes | Relative to the granted folder, with / between its parts. |
+| `folder` | boolean | yes |  |
+
+### Project
+
+One of:
+
+- null
+- object
+
+*object*
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `name` | string | yes | The Project folder's name. |
+| `trusted` | boolean | yes | Whether the folder is in Trusted folders. |

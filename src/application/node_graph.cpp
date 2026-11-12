@@ -139,11 +139,6 @@ std::u8string wide(std::string_view s)
 
 }
 
-int formatOf(const NodeGraph &graph)
-{
-    return std::max(graph.format, graph.target == GraphTarget::Lines ? 2 : 1);
-}
-
 Json graphJson(const NodeGraph &graph)
 {
     Json nodes = Json::array();
@@ -156,7 +151,7 @@ Json graphJson(const NodeGraph &graph)
     Json wires = Json::array();
     for (const GraphWire &w : graph.wires)
         wires.push(Json::object({{"from", Json(endText(w.from))}, {"to", Json(endText(w.to))}}));
-    Json out = Json::object({{"format", Json(formatOf(graph))}, {"seed", Json(graph.seed)}});
+    Json out = Json::object({{"format", Json(graph.format)}, {"seed", Json(graph.seed)}});
     if (graph.allStyles)
         out["allStyles"] = Json(true);
     if (graph.target == GraphTarget::Lines)
@@ -192,9 +187,8 @@ std::expected<NodeGraph, GraphProblem> graphFromJson(const Json &json)
         graph.allStyles = all->asBool();
     }
     if (const Json *target = json.find("target")) {
-        if (graph.format < 2 || !target->isString() ||
-            (target->asString() != "karaoke" && target->asString() != "lines"))
-            return std::unexpected(problem({}, {}, "target is not \"karaoke\" or \"lines\" in graph format 2"));
+        if (!target->isString() || (target->asString() != "karaoke" && target->asString() != "lines"))
+            return std::unexpected(problem({}, {}, "target is not \"karaoke\" or \"lines\""));
         graph.target = target->asString() == "lines" ? GraphTarget::Lines : GraphTarget::Karaoke;
     }
     const Json *nodes = json.find("nodes");

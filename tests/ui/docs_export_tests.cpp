@@ -6,6 +6,7 @@
 #include "hikari/application/options_dialog.h"
 #include "hikari/application/settings.h"
 #include "settings_store.h"
+#include "stale_temporary_dirs.h"
 
 #include <QFile>
 #include <QJsonArray>
@@ -17,6 +18,8 @@
 #include <QTemporaryDir>
 #include <QtQml/qqmlextensionplugin.h>
 #include <QtTest>
+
+#include <filesystem>
 
 Q_IMPORT_QML_PLUGIN(Hikari_UiPlugin)
 
@@ -62,6 +65,7 @@ class DocsExportTests : public QObject {
 private slots:
     void initTestCase()
     {
+        testing::removeStaleTemporaryDirs();
         QVERIFY(first.isValid() && second.isValid());
         QString error;
         QVERIFY2(app::exportDocs(first.path(), &error), qPrintable(error));
@@ -296,6 +300,16 @@ private slots:
         environment.insert(QStringLiteral("HOME"), out.filePath(QStringLiteral("home")));
         environment.insert(QStringLiteral("XDG_CONFIG_HOME"), out.filePath(QStringLiteral("home/config")));
         environment.insert(QStringLiteral("XDG_DATA_HOME"), out.filePath(QStringLiteral("home/data")));
+        const QString ranAgent = out.filePath(QStringLiteral("ran-claude"));
+#ifndef Q_OS_WIN
+        QVERIFY(QDir().mkpath(out.filePath(QStringLiteral("bin"))));
+        QFile agent(out.filePath(QStringLiteral("bin/claude")));
+        QVERIFY(agent.open(QIODevice::WriteOnly));
+        agent.write("#!/bin/sh\n: > '" + ranAgent.toUtf8() + "'\necho 2.1.0\n");
+        agent.close();
+        QVERIFY(agent.setPermissions(agent.permissions() | QFileDevice::ExeOwner));
+        environment.insert(QStringLiteral("PATH"), out.filePath(QStringLiteral("bin")) + QLatin1Char(':') + environment.value(QStringLiteral("PATH")));
+#endif
         QProcess program;
         program.setProcessEnvironment(environment);
         for (const char *folder : {"docs", "again"}) {
@@ -320,10 +334,24 @@ private slots:
         };
         QCOMPARE(keys(read(out.filePath(QStringLiteral("docs/settings.json")))), keys(read(first.filePath(QStringLiteral("settings.json")))));
         QVERIFY(!QFile::exists(out.filePath(QStringLiteral("home/config/HikariSub/settings.toml"))));
+        QVERIFY2(!QFile::exists(ranAgent), "--export-docs ran the Claude Code CLI");
 
         program.start(QStringLiteral(HIKARI_PROGRAM), {QStringLiteral("--export-docs")});
         QVERIFY(program.waitForFinished(60000));
         QCOMPARE(program.exitCode(), 2);
+    }
+
+    void aKilledRunsFoldersGoAtTheNextStart()
+    {
+        const QString base = QDir::tempPath() + QLatin1Char('/') + QCoreApplication::applicationName();
+        const QString stale = base + QStringLiteral("-stale0"), fresh = base + QStringLiteral("-fresh0");
+        QVERIFY(QDir().mkpath(stale + QStringLiteral("/home")) && QDir().mkpath(fresh));
+        std::filesystem::last_write_time(std::filesystem::path(stale.toStdU16String()),
+                                         std::filesystem::file_time_type::clock::now() - std::chrono::hours(2));
+        QCOMPARE(testing::removeStaleTemporaryDirs(), 1);
+        QVERIFY(!QFileInfo::exists(stale));
+        QVERIFY(QFileInfo::exists(fresh) && QFileInfo::exists(first.path()));
+        QVERIFY(QDir(fresh).removeRecursively());
     }
 };
 

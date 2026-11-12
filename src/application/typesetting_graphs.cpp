@@ -4,7 +4,7 @@ namespace hikari::application {
 
 namespace {
 
-constexpr std::string_view kShake = R"({"format": 2, "target": "lines", "nodes": [
+constexpr std::string_view kShake = R"({"format": 1, "target": "lines", "nodes": [
     {"id": "line", "type": "units.for_each", "fields": {"unit": "line", "skip_blank": false}},
     {"id": "step", "type": "values.number", "fields": {"value": 42}},
     {"id": "frames", "type": "units.frames"},
@@ -31,7 +31,7 @@ constexpr std::string_view kShake = R"({"format": 2, "target": "lines", "nodes":
     {"from": "frames.end", "to": "emit.end"}, {"from": "info.layer", "to": "emit.layer"},
     {"from": "pos.tags", "to": "emit.tags"}]})";
 
-constexpr std::string_view kTypewriter = R"({"format": 2, "target": "lines", "nodes": [
+constexpr std::string_view kTypewriter = R"({"format": 1, "target": "lines", "nodes": [
     {"id": "char", "type": "units.for_each", "fields": {"unit": "char"}},
     {"id": "delay", "type": "values.number", "fields": {"value": 60}},
     {"id": "stagger", "type": "time.stagger"},
@@ -49,7 +49,7 @@ constexpr std::string_view kTypewriter = R"({"format": 2, "target": "lines", "no
     {"from": "char.units", "to": "emit.units"}, {"from": "start.result", "to": "emit.start"},
     {"from": "info.layer", "to": "emit.layer"}, {"from": "pos.tags", "to": "emit.tags"}]})";
 
-constexpr std::string_view kFadeByLetter = R"({"format": 2, "target": "lines", "nodes": [
+constexpr std::string_view kFadeByLetter = R"({"format": 1, "target": "lines", "nodes": [
     {"id": "char", "type": "units.for_each", "fields": {"unit": "char"}},
     {"id": "delay", "type": "values.number", "fields": {"value": 40}},
     {"id": "fade", "type": "values.number", "fields": {"value": 200}},
@@ -74,7 +74,7 @@ constexpr std::string_view kFadeByLetter = R"({"format": 2, "target": "lines", "
     {"from": "char.units", "to": "emit.units"}, {"from": "info.layer", "to": "emit.layer"},
     {"from": "appear.tags", "to": "emit.tags"}]})";
 
-constexpr std::string_view kWobble = R"({"format": 2, "target": "lines", "nodes": [
+constexpr std::string_view kWobble = R"({"format": 1, "target": "lines", "nodes": [
     {"id": "char", "type": "units.for_each", "fields": {"unit": "char"}},
     {"id": "step", "type": "values.number", "fields": {"value": 42}},
     {"id": "frames", "type": "units.frames"},
@@ -109,7 +109,7 @@ constexpr std::string_view kWobble = R"({"format": 2, "target": "lines", "nodes"
     {"from": "frames.start", "to": "emit.start"}, {"from": "frames.end", "to": "emit.end"},
     {"from": "info.layer", "to": "emit.layer"}, {"from": "pos.tags", "to": "emit.tags"}]})";
 
-constexpr std::string_view kBounce = R"({"format": 2, "target": "lines", "nodes": [
+constexpr std::string_view kBounce = R"({"format": 1, "target": "lines", "nodes": [
     {"id": "char", "type": "units.for_each", "fields": {"unit": "char"}},
     {"id": "step", "type": "values.number", "fields": {"value": 42}},
     {"id": "frames", "type": "units.frames"},
@@ -156,7 +156,7 @@ constexpr std::string_view kBounce = R"({"format": 2, "target": "lines", "nodes"
     {"from": "frames.end", "to": "emit.end"}, {"from": "info.layer", "to": "emit.layer"},
     {"from": "pos.tags", "to": "emit.tags"}]})";
 
-constexpr std::string_view kFocusLines = R"({"format": 2, "target": "lines", "nodes": [
+constexpr std::string_view kFocusLines = R"({"format": 1, "target": "lines", "nodes": [
     {"id": "line", "type": "units.for_each", "fields": {"unit": "line", "skip_blank": false}},
     {"id": "step", "type": "values.number", "fields": {"value": 42}},
     {"id": "frames", "type": "units.frames"},
@@ -198,7 +198,7 @@ constexpr std::string_view kFocusLines = R"({"format": 2, "target": "lines", "no
     {"from": "frames.end", "to": "emit.end"}, {"from": "info.layer", "to": "emit.layer"},
     {"from": "shad.tags", "to": "emit.tags"}, {"from": "spike.drawing", "to": "emit.drawing"}]})";
 
-constexpr std::string_view kGrain = R"({"format": 2, "target": "lines", "nodes": [
+constexpr std::string_view kGrain = R"({"format": 1, "target": "lines", "nodes": [
     {"id": "char", "type": "units.for_each", "fields": {"unit": "char"}},
     {"id": "intensity", "type": "values.number", "fields": {"value": 1}},
     {"id": "copies", "type": "units.repeat"},
@@ -233,7 +233,7 @@ constexpr std::string_view kGrain = R"({"format": 2, "target": "lines", "nodes":
     {"from": "copies.units", "to": "emit2.units"}, {"from": "info.layer", "to": "emit2.layer"},
     {"from": "fill2.tags", "to": "emit2.tags"}, {"from": "glyph2.value", "to": "emit2.text"}]})";
 
-constexpr std::string_view kChromaticAberration = R"({"format": 2, "target": "lines", "nodes": [
+constexpr std::string_view kChromaticAberration = R"({"format": 1, "target": "lines", "nodes": [
     {"id": "line", "type": "units.for_each", "fields": {"unit": "line", "skip_blank": false}},
     {"id": "x_offset", "type": "values.number", "fields": {"value": 2}},
     {"id": "y_offset", "type": "values.number", "fields": {"value": 2}},
@@ -272,7 +272,7 @@ constexpr std::string_view kChromaticAberration = R"({"format": 2, "target": "li
     {"from": "line.units", "to": "base.units"}, {"from": "above.result", "to": "base.layer"},
     {"from": "pos0.tags", "to": "base.tags"}]})";
 
-constexpr std::string_view kRandomove = R"({"format": 2, "target": "lines", "nodes": [
+constexpr std::string_view kRandomove = R"({"format": 1, "target": "lines", "nodes": [
     {"id": "line", "type": "units.for_each", "fields": {"unit": "line", "skip_blank": false}},
     {"id": "distance_x", "type": "values.number", "fields": {"value": 20}},
     {"id": "distance_y", "type": "values.number", "fields": {"value": 20}},
@@ -297,7 +297,7 @@ constexpr std::string_view kRandomove = R"({"format": 2, "target": "lines", "nod
     {"from": "line.units", "to": "emit.units"}, {"from": "info.layer", "to": "emit.layer"},
     {"from": "move.tags", "to": "emit.tags"}]})";
 
-constexpr std::string_view kKaraokeToAlpha = R"({"format": 2, "target": "lines", "nodes": [
+constexpr std::string_view kKaraokeToAlpha = R"({"format": 1, "target": "lines", "nodes": [
     {"id": "syl", "type": "units.for_each"},
     {"id": "info", "type": "units.info"},
     {"id": "start", "type": "math.calculate", "fields": {"op": "add"}},

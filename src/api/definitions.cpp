@@ -123,6 +123,18 @@ void addDefinitions(Registry &registry)
         "file": {"type": "string", "description": "The handle files.read and files.write take."},
         "name": {"type": "string"}, "access": {"enum": ["read", "write"]}},
         "required": ["file", "name", "access"], "additionalProperties": false})"));
+    registry.define("GrantedFolder", schema(R"({"type": "object", "properties": {
+        "folder": {"type": "string", "description": "The handle files.list, files.read and files.write take with a path."},
+        "name": {"type": "string"}, "access": {"enum": ["read", "write"]}},
+        "required": ["folder", "name", "access"], "additionalProperties": false})"));
+    registry.define("FolderEntry", schema(R"({"type": "object", "properties": {
+        "path": {"type": "string", "description": "Relative to the granted folder, with / between its parts."},
+        "folder": {"type": "boolean"}}, "required": ["path", "folder"], "additionalProperties": false})"));
+    registry.define("Project", schema(R"({"anyOf": [{"type": "null"}, {"type": "object", "properties": {
+        "name": {"type": "string", "description": "The Project folder's name."},
+        "trusted": {"type": "boolean", "description": "Whether the folder is in Trusted folders."}},
+        "required": ["name", "trusted"], "additionalProperties": false}],
+        "description": "The Project of the window the user works in; null without one."})"));
 }
 
 }

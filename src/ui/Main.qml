@@ -75,6 +75,7 @@ ApplicationWindow {
     required property var styleManager
     required property var kanjiTimer
     required property var alignToVideo
+    required property var videoAnalysis
     required property var lyricsImport
     required property var qcNotes
     required property var fontCollector
@@ -1617,9 +1618,9 @@ ApplicationWindow {
             Layout.leftMargin: titleBar.switcherGap
             onPresetChosen: name => root.applyPreset(name)
             onSavedLayoutChosen: name => root.applySavedLayout(name)
-            onSaveRequested: saveLayoutDialog.show()
+            onSaveRequested: root.lazy(saveLayoutDialogLoader).show()
             onResetRequested: root.resetLayout()
-            onManageRequested: manageLayoutsDialog.show()
+            onManageRequested: root.lazy(manageLayoutsDialogLoader).show()
         }
         tools: IconToolButton {
             objectName: "nodeEffectsToggle"
@@ -2045,7 +2046,7 @@ ApplicationWindow {
                     id: historyAction
                     text: qsTr("&History")
                     enabled: root.editor.hasLine
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_HISTORY")) historyWindow.open()
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_HISTORY")) root.lazy(historyWindowLoader).open()
                 }
             }
             Instantiator {
@@ -2076,7 +2077,7 @@ ApplicationWindow {
                     id: selectLinesAction
                     text: qsTr("Select &lines")
                     enabled: root.editor.hasLine
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_SELECT_LINES")) selectLinesDialog.openDialog()
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_SELECT_LINES")) root.lazy(selectLinesDialogLoader).openDialog()
                 }
             }
             ShellMenuItem {
@@ -2387,7 +2388,7 @@ ApplicationWindow {
                 objectName: "styleManagerMenuItem"
                 text: qsTr("Style &manager")
                 enabled: root.shell.hasEditingTarget
-                onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_STYLE_MANAGER")) styleManagerWindow.showFor(root.app.activeLineStyle())
+                onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_STYLE_MANAGER")) root.lazy(styleManagerWindowLoader).showFor(root.app.activeLineStyle())
             }
             ShellMenuItem {
                 command: "GLOBAL_OPEN_ASS_PROPERTIES"
@@ -2616,6 +2617,30 @@ ApplicationWindow {
                     text: qsTr("Align to video…")
                     enabled: root.video.hasVideo && root.shell.hasEditingTarget
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_ALIGN_TO_VIDEO")) root.openAlignToVideo()
+                }
+            }
+            ShellMenuItem {
+                command: "GLOBAL_TRACK_COLOUR"
+                help: qsTr("Follows a picked point’s colour across the selected lines’ frames and writes it as colour or alpha tags")
+                iconRole: "track-colour"
+                objectName: "trackColourMenuItem"
+                action: Action {
+                    id: trackColourAction
+                    text: qsTr("Track colour…")
+                    enabled: root.video.hasVideo && root.shell.hasEditingTarget
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_TRACK_COLOUR")) root.openVideoAnalysis("track")
+                }
+            }
+            ShellMenuItem {
+                command: "GLOBAL_FIND_FADE"
+                help: qsTr("Finds where the active line’s sign fades in and out at a picked point and writes %1").arg("\\fad")
+                iconRole: "find-fade"
+                objectName: "findFadeMenuItem"
+                action: Action {
+                    id: findFadeAction
+                    text: qsTr("Find fade…")
+                    enabled: root.video.hasVideo && root.shell.hasEditingTarget
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_FIND_FADE")) root.openVideoAnalysis("fade")
                 }
             }
             ShellMenuItem {
@@ -3184,9 +3209,9 @@ ApplicationWindow {
                 lockReason: root.lockReason
                 onPresetChosen: name => root.applyPreset(name)
                 onSavedLayoutChosen: name => root.applySavedLayout(name)
-                onSaveRequested: saveLayoutDialog.show()
+                onSaveRequested: root.lazy(saveLayoutDialogLoader).show()
                 onResetRequested: root.resetLayout()
-                onManageRequested: manageLayoutsDialog.show()
+                onManageRequested: root.lazy(manageLayoutsDialogLoader).show()
             }
             MenuSeparator {}
             ShellMenu {
@@ -3360,7 +3385,7 @@ ApplicationWindow {
                 action: Action {
                     id: gettingStartedAction
                     text: qsTr("&Getting started")
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_GETTING_STARTED")) gettingStartedDialog.openSetup()
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_GETTING_STARTED")) root.lazy(gettingStartedDialogLoader).openSetup()
                 }
             }
             ShellMenuItem {
@@ -3382,7 +3407,7 @@ ApplicationWindow {
                 action: Action {
                     id: reportIssueAction
                     text: qsTr("&Report an issue")
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_ANSI")) reportIssueWindow.openForm()
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_ANSI")) root.lazy(reportIssueWindowLoader).openForm()
                 }
             }
             ShellMenuItem {
@@ -3416,7 +3441,7 @@ ApplicationWindow {
                 action: Action {
                     id: whatsNewAction
                     text: qsTr("What’s &new")
-                    onTriggered: whatsNewDialog.open()
+                    onTriggered: root.lazy(whatsNewDialogLoader).open()
                 }
             }
             ShellMenuItem {
@@ -3427,7 +3452,7 @@ ApplicationWindow {
                 action: Action {
                     id: aboutAction
                     text: qsTr("&About")
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_ABOUT")) aboutDialog.open()
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_ABOUT")) root.lazy(aboutDialogLoader).open()
                 }
             }
             ShellMenuItem {
@@ -3438,7 +3463,7 @@ ApplicationWindow {
                 action: Action {
                     id: creditsAction
                     text: qsTr("&Credits")
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_HELPERS")) creditsDialog.open()
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_HELPERS")) root.lazy(creditsDialogLoader).open()
                 }
             }
         }
@@ -4314,7 +4339,7 @@ ApplicationWindow {
                     }
                     onOpenVideoRequested: videoDialog.show()
                     onOpenSubtitlesRequested: openDialog.show()
-                    onAspectRatioRequested: aspectRatioDialog.openAtCursor(visualOverlay)
+                    onAspectRatioRequested: root.lazy(aspectRatioDialogLoader).openAtCursor(visualOverlay)
                 }
                 Label {
                     anchors.centerIn: videoStageDock
@@ -5089,7 +5114,7 @@ ApplicationWindow {
                             //: The Tap menu's item; the tap latency follows it
                             text: qsTranslate("HikariSub.Audio", "Calibrate latency…")
                             detailText: qsTranslate("HikariSub.Audio", "%1 ms").arg(root.audio.tapLatency)
-                            onTriggered: tapCalibrationWindow.openWindow()
+                            onTriggered: root.lazy(tapCalibrationWindowLoader).openWindow()
                         }
                     }
                     component PlayAroundItem: ShellMenuItem {
@@ -6247,7 +6272,7 @@ ApplicationWindow {
                             editor: root.editor
                             hotkeys: root.hotkeys
                             Layout.fillWidth: true
-                            onStyleEditRequested: style => styleManagerWindow.editStyle(style)
+                            onStyleEditRequested: style => root.lazy(styleManagerWindowLoader).editStyle(style)
                         }
                     }
                 }
@@ -6486,8 +6511,8 @@ ApplicationWindow {
                             objectName: "gridPasteSpecialMenu"
                             iconRole: "paste-special"
                             title: qsTranslate("HikariSub.Grid", "Paste special")
-                            ShellMenuItem { command: "GRID_COPY_COLUMNS"; iconRole: "columns-copy"; objectName: "copyColumns"; text: qsTranslate("HikariSub.Grid", "Copy columns"); onTriggered: if (!root.gridGesture(this, "GRID_COPY_COLUMNS")) columnsWindow.choose(false) }
-                            ShellMenuItem { command: "GRID_PASTE_COLUMNS"; iconRole: "columns-paste"; objectName: "pasteColumns"; text: qsTranslate("HikariSub.Grid", "Paste columns"); onTriggered: if (!root.gridGesture(this, "GRID_PASTE_COLUMNS")) columnsWindow.choose(true) }
+                            ShellMenuItem { command: "GRID_COPY_COLUMNS"; iconRole: "columns-copy"; objectName: "copyColumns"; text: qsTranslate("HikariSub.Grid", "Copy columns"); onTriggered: if (!root.gridGesture(this, "GRID_COPY_COLUMNS")) root.chooseColumns(false) }
+                            ShellMenuItem { command: "GRID_PASTE_COLUMNS"; iconRole: "columns-paste"; objectName: "pasteColumns"; text: qsTranslate("HikariSub.Grid", "Paste columns"); onTriggered: if (!root.gridGesture(this, "GRID_PASTE_COLUMNS")) root.chooseColumns(true) }
                             MenuSeparator {}
                             ShellMenuItem {
                                 command: "GRID_PASTE_TRANSLATION"
@@ -6571,6 +6596,21 @@ ApplicationWindow {
                                 text: qsTranslate("HikariSub.Grid", "By wraps")
                                 onTriggered: if (!root.gridGesture(this, "GRID_SPLIT_BY_WRAPS")) root.app.splitLines("wraps")
                             }
+                            ShellMenuItem {
+                                command: "GRID_SPLIT_AT_TAG_BLOCKS"
+                                iconRole: "split-tag-blocks"
+                                objectName: "splitAtTagBlocks"
+                                text: qsTranslate("HikariSub.Grid", "At tag blocks")
+                                onTriggered: if (!root.gridGesture(this, "GRID_SPLIT_AT_TAG_BLOCKS")) root.app.splitLines("tagBlocks")
+                            }
+                            MenuSeparator {}
+                            ShellMenuItem {
+                                command: "GRID_SPLIT_EVERY_N"
+                                iconRole: "split-every-n"
+                                objectName: "splitEveryN"
+                                text: qsTranslate("HikariSub.Grid", "Every N frames or seconds…")
+                                onTriggered: if (!root.gridGesture(this, "GRID_SPLIT_EVERY_N")) root.openSplitEvery()
+                            }
                         }
                         ShellMenuItem { command: "GLOBAL_REMOVE_TAGS"; iconRole: "remove-tags"; objectName: "gridRemoveTags"; action: removeTagsAction }
                         ShellMenuItem {
@@ -6642,7 +6682,7 @@ ApplicationWindow {
                             objectName: "translationDialog"
                             text: qsTranslate("HikariSub.Grid", "Translation matching…")
                             enabled: gridMenu.canShiftTranslation
-                            onTriggered: if (!root.gridGesture(this, "GRID_TRANSLATION_DIALOG")) translationShiftWindow.open()
+                            onTriggered: if (!root.gridGesture(this, "GRID_TRANSLATION_DIALOG")) root.lazy(translationShiftWindowLoader).open()
                         }
                         MenuSeparator {}
                         ShellMenuItem { command: "GLOBAL_REMOVE_TEXT"; iconRole: "clear"; objectName: "deleteText"; text: qsTranslate("HikariSub.Grid", "Delete text"); onTriggered: if (!root.gridGesture(this, "GLOBAL_REMOVE_TEXT")) root.app.deleteText() }
@@ -6992,7 +7032,7 @@ ApplicationWindow {
                     shellWindow: root.shellWindow
                     editor: root.editor
                     app: root.app
-                    manager: styleManagerWindow
+                    managerLoader: styleManagerWindowLoader
                     catalogs: root.fontCatalogs
                     live: stylesDock.isOpen
                 }
@@ -7503,15 +7543,25 @@ ApplicationWindow {
         settings: root.app.settings
     }
     readonly property alias messages: messages
-    SaveLayoutDialog {
-        id: saveLayoutDialog
-        layouts: root.workspaceLayout
-        settings: root.app.settings
+    Loader {
+        id: saveLayoutDialogLoader
+        objectName: "saveLayoutDialogLoader"
+        active: false
+        sourceComponent: SaveLayoutDialog {
+            id: saveLayoutDialog
+            layouts: root.workspaceLayout
+            settings: root.app.settings
+        }
     }
-    ManageLayoutsDialog {
-        id: manageLayoutsDialog
-        layouts: root.workspaceLayout
-        settings: root.app.settings
+    Loader {
+        id: manageLayoutsDialogLoader
+        objectName: "manageLayoutsDialogLoader"
+        active: false
+        sourceComponent: ManageLayoutsDialog {
+            id: manageLayoutsDialog
+            layouts: root.workspaceLayout
+            settings: root.app.settings
+        }
     }
     PluginManagerDialog {
         id: pluginManagerDialog
@@ -7540,21 +7590,31 @@ ApplicationWindow {
         }
     }
 
-    TapCalibrationWindow {
-        id: tapCalibrationWindow
-        audio: root.audio
+    Loader {
+        id: tapCalibrationWindowLoader
+        objectName: "tapCalibrationWindowLoader"
+        active: false
+        sourceComponent: TapCalibrationWindow {
+            id: tapCalibrationWindow
+            audio: root.audio
+        }
     }
 
-    HistoryWindow {
-        id: historyWindow
-        editor: root.editor
-        review: root.review
-        documentName: root.shell.editingTitle
-        target: {
-            const tab = root.app.tabs[root.app.currentTab]
-            return tab ? tab.id : null
+    Loader {
+        id: historyWindowLoader
+        objectName: "historyWindowLoader"
+        active: false
+        sourceComponent: HistoryWindow {
+            id: historyWindow
+            editor: root.editor
+            review: root.review
+            documentName: root.shell.editingTitle
+            target: {
+                const tab = root.app.tabs[root.app.currentTab]
+                return tab ? tab.id : null
+            }
+            settings: root.app.settings
         }
-        settings: root.app.settings
     }
 
     function saveSubtitles(id, overDisk) {
@@ -7929,11 +7989,16 @@ ApplicationWindow {
         app: root.app
     }
 
-    AspectRatioDialog {
-        id: aspectRatioDialog
-        view: root.videoView
-        video: root.video
-        settings: root.app.settings
+    Loader {
+        id: aspectRatioDialogLoader
+        objectName: "aspectRatioDialogLoader"
+        active: false
+        sourceComponent: AspectRatioDialog {
+            id: aspectRatioDialog
+            view: root.videoView
+            video: root.video
+            settings: root.app.settings
+        }
     }
 
     VideoFullscreen {
@@ -7942,7 +8007,7 @@ ApplicationWindow {
         controller: root.videoFullscreen
         onOpenVideoRequested: videoDialog.show()
         onOpenSubtitlesRequested: openDialog.show()
-        onAspectRatioRequested: aspectRatioDialog.openAtCursor(videoFullscreenWindow.contentItem)
+        onAspectRatioRequested: root.lazy(aspectRatioDialogLoader).openAtCursor(videoFullscreenWindow.contentItem)
         onFileQuestionRequested: next => videoFileQuestion.ask(next, videoFullscreenWindow)
         onAudioSettingsRequested: {
             root.videoFullscreen.leave()
@@ -8033,10 +8098,15 @@ ApplicationWindow {
         setNewFpsLoader.item.show()
     }
 
-    ColumnsWindow {
-        id: columnsWindow
-        app: root.app
-        settings: root.app.settings
+    Loader {
+        id: columnsWindowLoader
+        objectName: "columnsWindowLoader"
+        active: false
+        sourceComponent: ColumnsWindow {
+            id: columnsWindow
+            app: root.app
+            settings: root.app.settings
+        }
     }
 
     DialogWindow {
@@ -8350,17 +8420,22 @@ ApplicationWindow {
         nameFilters: [qsTranslate("HikariSub.Translation", "Subtitle files (*.ass *.srt *.sub *.txt)")]
         onAccepted: root.app.pasteTranslationFile(selectedFile)
     }
-    TranslationShiftWindow {
-        id: translationShiftWindow
-        app: root.app
-        settings: root.app.settings
+    Loader {
+        id: translationShiftWindowLoader
+        objectName: "translationShiftWindowLoader"
+        active: false
+        sourceComponent: TranslationShiftWindow {
+            id: translationShiftWindow
+            app: root.app
+            settings: root.app.settings
+        }
     }
     Connections {
         target: root.updates
         enabled: notices.activeWindow
         function onFinished(outcome, release, interactive) {
             if (outcome === "available") {
-                updateAvailable.showRelease(release, !interactive)
+                root.lazy(updateAvailableLoader).showRelease(release, !interactive)
             } else if (outcome === "current") {
                 root.notices.post("info", qsTr("Check for updates"), qsTr("You already have the latest version"))
             } else {
@@ -8374,26 +8449,41 @@ ApplicationWindow {
     }
     Connections {
         target: root.updates.installer
-        function onReady() { updateAvailable.close() }
+        function onReady() { updateAvailableLoader.item?.close() }
     }
-    UpdateAvailable {
-        id: updateAvailable
-        updates: root.updates
-        app: root.app
-        whatsNew: root.whatsNew
-        settings: root.app.settings
+    Loader {
+        id: updateAvailableLoader
+        objectName: "updateAvailableLoader"
+        active: false
+        sourceComponent: UpdateAvailable {
+            id: updateAvailable
+            updates: root.updates
+            app: root.app
+            whatsNew: root.whatsNew
+            settings: root.app.settings
+        }
     }
-    WhatsNewDialog {
-        id: whatsNewDialog
-        whatsNew: root.whatsNew
-        settings: root.app.settings
+    Loader {
+        id: whatsNewDialogLoader
+        objectName: "whatsNewDialogLoader"
+        active: false
+        sourceComponent: WhatsNewDialog {
+            id: whatsNewDialog
+            whatsNew: root.whatsNew
+            settings: root.app.settings
+        }
     }
-    AboutDialog {
-        id: aboutDialog
-        app: root.app
-        updates: root.updates
-        settings: root.app.settings
-        onReportIssueRequested: reportIssueWindow.openForm()
+    Loader {
+        id: aboutDialogLoader
+        objectName: "aboutDialogLoader"
+        active: false
+        sourceComponent: AboutDialog {
+            id: aboutDialog
+            app: root.app
+            updates: root.updates
+            settings: root.app.settings
+            onReportIssueRequested: root.lazy(reportIssueWindowLoader).openForm()
+        }
     }
     CrashReportWindow {
         id: crashReportWindow
@@ -8406,13 +8496,18 @@ ApplicationWindow {
                                          qsTranslate("HikariSub.Reports", "The report is too long for a link, so it is on the clipboard. Paste it into the form."))
         onBrowserFailed: root.issueBrowserFailed()
     }
-    ReportIssueWindow {
-        id: reportIssueWindow
-        reports: root.crashReports
-        app: root.app
-        mainWindow: root
-        settings: root.app.settings
-        onBrowserFailed: root.issueBrowserFailed()
+    Loader {
+        id: reportIssueWindowLoader
+        objectName: "reportIssueLoader"
+        active: false
+        sourceComponent: ReportIssueWindow {
+            id: reportIssueWindow
+            reports: root.crashReports
+            app: root.app
+            mainWindow: root
+            settings: root.app.settings
+            onBrowserFailed: root.issueBrowserFailed()
+        }
     }
     function issueBrowserFailed() {
         root.notices.post("warning", qsTranslate("HikariSub.Reports", "Open GitHub issue"),
@@ -8453,10 +8548,15 @@ ApplicationWindow {
                                           { text: qsTranslate("HikariSub.Reports", "Settings"), run: () => root.openSettings("updates") }] })
         }
     }
-    CreditsDialog {
-        id: creditsDialog
-        app: root.app
-        settings: root.app.settings
+    Loader {
+        id: creditsDialogLoader
+        objectName: "creditsDialogLoader"
+        active: false
+        sourceComponent: CreditsDialog {
+            id: creditsDialog
+            app: root.app
+            settings: root.app.settings
+        }
     }
     function openResample() {
         resampleLoader.active = true
@@ -8470,6 +8570,11 @@ ApplicationWindow {
             settings: root.app.settings
             video: root.video
         }
+    }
+    function chooseColumns(paste) { root.lazy(columnsWindowLoader).choose(paste) }
+    function lazy(loader) {
+        loader.active = true
+        return loader.item
     }
     function openMotionData() {
         motionDataLoader.active = true
@@ -8656,31 +8761,47 @@ ApplicationWindow {
         function onResolutionMismatch(sizes) { root.askResolutionMismatch(sizes) }
         function onVideoPropertyQuestion(question) { root.askVideoProperty(question) }
     }
-    StyleManager {
-        id: styleManagerWindow
-        styles: root.styleManager
-        catalogs: root.fontCatalogs
-        colourPicker: root.colourPicker
-        app: root.app
-        notices: root.notices
-    }
-    SettingsImportDialog {
-        id: settingsImportDialog
-        importer: root.settingsImport
-        settings: root.app.settings
-    }
-    GettingStartedDialog {
-        id: gettingStartedDialog
-        app: root.app
-        importer: root.settingsImport
-        updates: root.updates
-        layouts: root.workspaceLayout.presets
-        onFinished: layout => {
-            if (layout.length > 0)
-                root.applyPreset(layout)
+    Loader {
+        id: styleManagerWindowLoader
+        objectName: "styleManagerLoader"
+        active: false
+        sourceComponent: StyleManager {
+            id: styleManagerWindow
+            styles: root.styleManager
+            catalogs: root.fontCatalogs
+            shellWindow: root.shellWindow
+            colourPicker: root.colourPicker
+            app: root.app
+            notices: root.notices
         }
-        onSkipped: if (gettingStartedDialog.due) root.notices.post("info", qsTranslate("HikariSub.GettingStarted", "Default settings in use"),
-                                                                  qsTranslate("HikariSub.GettingStarted", "Help › Getting started opens the setup again."))
+    }
+    Loader {
+        id: settingsImportDialogLoader
+        objectName: "settingsImportDialogLoader"
+        active: false
+        sourceComponent: SettingsImportDialog {
+            id: settingsImportDialog
+            importer: root.settingsImport
+            settings: root.app.settings
+        }
+    }
+    Loader {
+        id: gettingStartedDialogLoader
+        objectName: "gettingStartedDialogLoader"
+        active: false
+        sourceComponent: GettingStartedDialog {
+            id: gettingStartedDialog
+            app: root.app
+            importer: root.settingsImport
+            updates: root.updates
+            layouts: root.workspaceLayout.presets
+            onFinished: layout => {
+                if (layout.length > 0)
+                    root.applyPreset(layout)
+            }
+            onSkipped: if (gettingStartedDialog.due) root.notices.post("info", qsTranslate("HikariSub.GettingStarted", "Default settings in use"),
+                                                                      qsTranslate("HikariSub.GettingStarted", "Help › Getting started opens the setup again."))
+        }
     }
     Loader {
         id: settingsLoader
@@ -8699,9 +8820,9 @@ ApplicationWindow {
                 colourPicker: root.colourPicker
                 tagButtons: root.tagButtons
                 importer: root.settingsImport
-                onCreditsRequested: creditsDialog.open()
+                onCreditsRequested: root.lazy(creditsDialogLoader).open()
                 onLegacyImportRequested: root.importLegacySettings()
-                onLegacyRollBackRequested: settingsImportDialog.openRollBack()
+                onLegacyRollBackRequested: root.lazy(settingsImportDialogLoader).openRollBack()
             }
         }
     }
@@ -8730,7 +8851,7 @@ ApplicationWindow {
     }
     function importLegacySettings() {
         if (root.settingsImport.available)
-            settingsImportDialog.openDialog()
+            root.lazy(settingsImportDialogLoader).openDialog()
     }
     Loader {
         id: fontCollectorLoader
@@ -8747,18 +8868,23 @@ ApplicationWindow {
     Connections {
         target: root.fontCollector
         function onStyleRequested(style) {
-            styleManagerWindow.showFor(style)
+            root.lazy(styleManagerWindowLoader).showFor(style)
         }
     }
-    SelectLinesDialog {
-        id: selectLinesDialog
-        app: root.app
-        notices: root.notices
-        Connections {
-            target: root.app
-            function onSelectLinesDestroyed() {
-                if (selectLinesDialog.visible)
-                    selectLinesDialog.close()
+    Loader {
+        id: selectLinesDialogLoader
+        objectName: "selectLinesDialogLoader"
+        active: false
+        sourceComponent: SelectLinesDialog {
+            id: selectLinesDialog
+            app: root.app
+            notices: root.notices
+            Connections {
+                target: root.app
+                function onSelectLinesDestroyed() {
+                    if (selectLinesDialog.visible)
+                        selectLinesDialog.close()
+                }
             }
         }
     }
@@ -8809,6 +8935,29 @@ ApplicationWindow {
         if (problem.length > 0)
             root.notices.post("error", qsTr("Align to video"), problem)
     }
+    Loader {
+        id: trackColourLoader
+        active: false
+        sourceComponent: TrackColourDialog {
+            controller: root.videoAnalysis
+            settings: root.app.settings
+        }
+    }
+    Loader {
+        id: findFadeLoader
+        active: false
+        sourceComponent: FindFadeDialog {
+            controller: root.videoAnalysis
+            settings: root.app.settings
+        }
+    }
+    function openVideoAnalysis(mode) {
+        const loader = mode === "fade" ? findFadeLoader : trackColourLoader
+        loader.active = true
+        const problem = loader.item.openDialog()
+        if (problem.length > 0)
+            root.notices.post("error", mode === "fade" ? qsTr("Find fade") : qsTr("Track colour"), problem)
+    }
     ListChooser {
         id: fixSuggestions
         objectName: "fixSuggestions"
@@ -8830,6 +8979,7 @@ ApplicationWindow {
         id: fontPicker
         editor: root.editor
         catalogs: root.fontCatalogs
+        shellWindow: root.shellWindow
         settings: root.app.settings
     }
     FontCatalogWindow {
@@ -9038,7 +9188,7 @@ ApplicationWindow {
         if (root.karaokeTurnedOn || root.foldTurnedOn)
             root.workspaceLayout.resumeMode("Karaoke")
         if (root.app.gettingStartedDue())
-            Qt.callLater(() => gettingStartedDialog.openSetup())
+            Qt.callLater(() => root.lazy(gettingStartedDialogLoader).openSetup())
         if (root.shellWindow === 0 && root.crashReports.pending.length > 0
                 && !(root.crashReports.canSend && root.app.settings.value("privacy.alwaysSendCrashReports") === true))
             Qt.callLater(() => crashReportWindow.showReport("start"))
@@ -9125,6 +9275,19 @@ ApplicationWindow {
         text: qsTranslate("HikariSub.Tags", "Remove tags…")
         enabled: root.shell.hasEditingTarget
         onTriggered: if (!root.hotkeyGesture("GLOBAL_REMOVE_TAGS")) root.openRemoveTags()
+    }
+    function openSplitEvery() {
+        splitEveryLoader.active = true
+        splitEveryLoader.item.openDialog()
+    }
+    Loader {
+        id: splitEveryLoader
+        active: false
+        sourceComponent: SplitEveryDialog {
+            app: root.app
+            settings: root.app.settings
+            hasVideo: root.video.hasVideo
+        }
     }
     function openRemoveTags() {
         removeTagsLoader.active = true
@@ -9239,6 +9402,8 @@ ApplicationWindow {
         GLOBAL_JOIN_PREVIOUS_AUDIO_SELECTION: joinPreviousAudioSelectionAction,
         GLOBAL_CENTER_TIMES_IN_FRAMES: centerTimesInFramesAction,
         GLOBAL_ALIGN_TO_VIDEO: alignToVideoAction,
+        GLOBAL_TRACK_COLOUR: trackColourAction,
+        GLOBAL_FIND_FADE: findFadeAction,
         GLOBAL_PERSPECTIVE_TRACKING: perspectiveTrackingAction,
         GLOBAL_APPLY_MOTION_DATA: applyMotionDataAction,
         GLOBAL_BLUR_AND_GLOW_LAYERS: blurAndGlowLayersAction,
@@ -9449,7 +9614,7 @@ ApplicationWindow {
             return true
         case "GLOBAL_STYLE_MANAGER_CLEAN_STYLE":
             if (editing)
-                styleManagerWindow.deleteUnused()
+                root.lazy(styleManagerWindowLoader).deleteUnused()
             return true
         case "GLOBAL_SHIFT_TIMES": if (editing) root.applyShift("shift"); return true
         case "GLOBAL_TIMING_POSTPROCESSOR": if (editing) root.applyShift("postprocessor"); return true
@@ -9563,7 +9728,7 @@ ApplicationWindow {
         case "VIDEO_HIDE_PROGRESS_BAR": root.videoView.toggleProgressBar(); return true
         case "VIDEO_FULL_SCREEN": root.videoFullscreen.toggle(0); return true
         case "VIDEO_FULLSCREEN_BAR": root.videoFullscreen.cycleBarMode(); return true
-        case "VIDEO_ASPECT_RATIO": aspectRatioDialog.openWindow(root.videoFullscreen.active ? videoFullscreenWindow : null); return true
+        case "VIDEO_ASPECT_RATIO": root.lazy(aspectRatioDialogLoader).openWindow(root.videoFullscreen.active ? videoFullscreenWindow : null); return true
         case "VIDEO_SAVE_FRAME_TO_PNG":
         case "VIDEO_COPY_FRAME_TO_CLIPBOARD":
         case "VIDEO_SAVE_SUBBED_FRAME_TO_PNG":
@@ -9617,6 +9782,8 @@ ApplicationWindow {
         case "GRID_SPLIT_BY_CHARS": root.app.splitLines("chars"); return true
         case "GRID_SPLIT_BY_WORDS": root.app.splitLines("words"); return true
         case "GRID_SPLIT_BY_WRAPS": root.app.splitLines("wraps"); return true
+        case "GRID_SPLIT_AT_TAG_BLOCKS": root.app.splitLines("tagBlocks"); return true
+        case "GRID_SPLIT_EVERY_N": root.openSplitEvery(); return true
         case "GRID_TREE_MAKE": root.app.makeGroups(); return true
         case "GRID_SELECT_VISIBLE_LINES": root.app.selectLinesVisibleOnVideo(); return true
         case "GRID_SHOW_PREVIEW": if (root.app.canShowPreview()) root.app.showPreview(); return true
@@ -9630,8 +9797,8 @@ ApplicationWindow {
         case "GRID_FILTER_IGNORE_IN_ACTIONS":
             root.gridFilter.ignoreInActions = root.hotkeys.ignoreFilteringFromOption()
             return true
-        case "GRID_COPY_COLUMNS": columnsWindow.choose(false); return true
-        case "GRID_PASTE_COLUMNS": columnsWindow.choose(true); return true
+        case "GRID_COPY_COLUMNS": root.chooseColumns(false); return true
+        case "GRID_PASTE_COLUMNS": root.chooseColumns(true); return true
         case "GRID_SET_NEW_FPS": root.openSetNewFps(); return true
         case "GRID_SET_FPS_FROM_VIDEO": if (video) root.app.setFpsFromVideo(); return true
         case "GRID_PASTE_TRANSLATION":
@@ -9640,7 +9807,7 @@ ApplicationWindow {
                 translationFileDialog.open()
             }
             return true
-        case "GRID_TRANSLATION_DIALOG": if (root.app.canShiftTranslation()) translationShiftWindow.open(); return true
+        case "GRID_TRANSLATION_DIALOG": if (root.app.canShiftTranslation()) root.lazy(translationShiftWindowLoader).open(); return true
         }
         if (action.startsWith("EDITBOX_"))
             return root.runEditorHotkey(action, root.editedField())

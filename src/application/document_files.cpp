@@ -156,6 +156,7 @@ DocumentId DocumentFiles::createNew()
     Entry entry;
     entry.session = std::make_unique<EditSession>(core::loadAss(bytes).document);
     entry.session->markSaved(entry.session->contentId());
+    entry.session->markNewDocument();
     if (const auto lines = entry.session->document().lines(); !lines.empty())
         entry.session->setSelection(Selection{lines.front()->id, {lines.front()->id}, lines.front()->id, {}});
     m_documents.emplace(id, std::move(entry));

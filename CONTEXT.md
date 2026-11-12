@@ -86,6 +86,10 @@ _Avoid_: Scene cut or ASS animation point as an equivalent term.
 The smallest rectangle, in video pixels, that holds every pixel the subtitle renderer draws for one Line, or for every Line, on a frame.
 _Avoid_: A Line's box, which is where its layout places it whether or not anything is drawn.
 
+**Render check**:
+Drawing a typeset Line alone on its frame and comparing its ink bounds with where the sign is, before an AI's typesetting reaches the review.
+_Avoid_: Render compare or preview as separate terms.
+
 **Time shift**:
 An offset or alignment of chosen Line start or end times.
 _Avoid_: Timing postprocessor as a synonym.

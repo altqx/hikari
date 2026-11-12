@@ -15,6 +15,12 @@ Rectangle {
     color: Theme.panel
     readonly property bool editable: controller.editable && !controller.newerFormat
 
+    function exportAs(karaOK, item) {
+        item.checked = Qt.binding(() => root.controller.exportKaraOK === karaOK)
+        const blockers = root.controller.exportAsTemplate(karaOK)
+        if (blockers.length > 0)
+            exportPopup.openWith(blockers)
+    }
     function milliseconds(ms) {
         return qsTr("%1 ms").arg(ms < 10 ? ms.toFixed(1) : Math.round(ms))
     }
@@ -293,16 +299,29 @@ Rectangle {
             enabled: root.controller.hasGraph
             onTriggered: root.controller.saveToLibrary()
         }
-        ShellMenuItem {
+        ShellMenu {
             objectName: "nodeMenuExport"
             iconRole: "export"
-            text: qsTr("Export as template lines")
-            help: qsTr("Adds template lines after the graph line that make the same lines in Aegisub’s karaoke templater.")
+            title: qsTr("Export as template lines")
             enabled: root.controller.hasGraph && root.controller.editable
-            onTriggered: {
-                const blockers = root.controller.exportAsTemplate()
-                if (blockers.length > 0)
-                    exportPopup.openWith(blockers)
+            ShellMenuItem {
+                objectName: "nodeExportKaraOK"
+                iconRole: "notice-info"
+                text: qsTr("karaOK templates")
+                help: qsTr("Uses karaOK template syntax. Runs in HikariSub; in Aegisub it needs the karaOK templater.")
+                checkable: true
+                keepsMenuOpen: false
+                checked: root.controller.exportKaraOK
+                onTriggered: root.exportAs(true, this)
+            }
+            ShellMenuItem {
+                objectName: "nodeExportStock"
+                text: qsTr("Aegisub 3.2.2 templates")
+                help: qsTr("Adds template lines after the graph line that make the same lines in Aegisub’s karaoke templater.")
+                checkable: true
+                keepsMenuOpen: false
+                checked: !root.controller.exportKaraOK
+                onTriggered: root.exportAs(false, this)
             }
         }
         MenuSeparator {}

@@ -14,6 +14,7 @@
 #include "hikari/app/whats_new.h"
 #include "hikari/app/style_manager_controller.h"
 #include "hikari/app/align_to_video_controller.h"
+#include "hikari/app/video_analysis_controller.h"
 #include "hikari/app/lyrics_import_controller.h"
 #include "hikari/app/kanji_timer_controller.h"
 #include "hikari/app/qc_notes_controller.h"
@@ -78,6 +79,7 @@
 #include "settings_store.h"
 #include "hikari/app/ai_features.h"
 #include "hikari/app/ai_mcp.h"
+#include "hikari/app/ai_mcp_servers.h"
 #include "hikari/app/ai_settings.h"
 #include "hikari/app/agent_controller.h"
 #include "hikari/app/inline_ai_controller.h"
@@ -255,6 +257,8 @@ public:
         DiscordPresence::Config presence;
         // Unset: the keychain and <userFolder>/ai.
         std::optional<AiFeatures::Ports> aiPorts;
+        /// False: the default AI ports never look for, ask or start the Claude Code and Codex CLIs.
+        bool externalAgents = true;
         StarPrompt::Config starPrompt;
     };
     explicit Application(QObject *parent = nullptr);
@@ -341,6 +345,7 @@ public:
     // The toast for a tab moved into `shellWindow`; "" when that window has no Project.
     Q_INVOKABLE QString projectMoveText(int shellWindow) const;
     QString projectOf(int shellWindow) const { return m_projects->root(shellWindow); }
+    std::optional<api::ProjectState> activeProject() const;
     ProjectWindows &projects() { return *m_projects; }
     // "modified" when the target's file is newer than when last read or written;
     // "removed" once when it is gone (the Document becomes unsaved).
@@ -464,8 +469,10 @@ public:
     Q_INVOKABLE int removeAutosavesOlderThan(const QDate &date);
     bool autosaveNow();
     bool autosavePending(application::DocumentId document) const;
-    // kind: "videoTime" or "frames".
+    // kind: "videoTime", "frames", "chars", "words", "wraps" or "tagBlocks".
     Q_INVOKABLE bool splitLines(const QString &kind);
+    // Each selected Line in pieces of `count` frames, or seconds; frames need video.
+    Q_INVOKABLE bool splitEvery(int count, bool seconds);
     Q_INVOKABLE bool canPasteTranslation() const;
     Q_INVOKABLE QUrl targetFolder() const;
     Q_INVOKABLE bool pasteTranslationFile(const QUrl &file);
@@ -862,6 +869,7 @@ public:
     StyleManagerController &styleManager() { return *m_styleManager; }
     KanjiTimerController &kanjiTimer() const { return *activeViews().kanjiTimer; }
     AlignToVideoController &alignToVideo() { return *m_alignToVideo; }
+    VideoAnalysisController &videoAnalysis() { return *m_videoAnalysis; }
     LyricsImportController &lyricsImport() { return *m_lyricsImport; }
     QcNotesController &qcNotes() { return *m_qcNotes; }
     FontCollectorController &fontCollector() { return *m_fontCollector; }
@@ -870,10 +878,14 @@ public:
     backends::SubtitleRendererSelection &subtitleRenderer() { return m_renderer; }
     static QString subtitleRendererLabel(const std::string &name);
     static QString outputDeviceLabel(const application::OutputDeviceChoice &choice);
-    application::OutputRoute audioRoute() const { return m_audioRouting->route(); }
+    application::OutputRoute audioRoute()
+    {
+        ensureAudioRoute();
+        return m_audioRouting->route();
+    }
     // {label, checked, id, name} entries, the stored choice checked; choosing one stores
     // it as Settings' OK does.
-    Q_INVOKABLE QVariantList audioOutputMenu() const;
+    Q_INVOKABLE QVariantList audioOutputMenu();
     Q_INVOKABLE void chooseAudioOutput(const QString &id, const QString &name);
     Q_PROPERTY(QString audioOutputName READ audioOutputName NOTIFY audioOutputChanged)
     QString audioOutputName() const;
@@ -1288,6 +1300,7 @@ private:
     std::unique_ptr<ApiHost> m_apiHost;
     std::unique_ptr<AiFeatures> m_ai;
     std::unique_ptr<AiMcp> m_aiMcp;
+    std::unique_ptr<AiMcpServers> m_aiMcpServers;
     std::unique_ptr<AiSettings> m_aiSettings;
     std::unique_ptr<ReviewController> m_review;
     std::unique_ptr<AgentController> m_agent;
@@ -1305,6 +1318,7 @@ private:
     std::unique_ptr<StyleManagerController> m_styleManager;
     std::unique_ptr<FontCollectorController> m_fontCollector;
     std::unique_ptr<AlignToVideoController> m_alignToVideo;
+    std::unique_ptr<VideoAnalysisController> m_videoAnalysis;
     std::unique_ptr<LyricsImportController> m_lyricsImport;
     QString m_readingDictionary;
     std::unique_ptr<QcNotesController> m_qcNotes;
@@ -1489,6 +1503,7 @@ private:
     bool projectTrusted(const QString &root) const;
     void applyWindowProject(int shellWindow);
     QString projectFontFolder(int shellWindow) const;
+    std::optional<std::filesystem::path> honyaFolderOf(application::DocumentId document) const;
     application::Settings &windowSettings(int shellWindow);
     const application::Settings &windowSettings(int shellWindow) const;
     QString m_settingsFile;
@@ -1611,7 +1626,9 @@ private:
     std::unique_ptr<application::AudioOutputPort> m_audioOutput;
     std::string m_audioOutputHostApi;
     std::unique_ptr<application::AudioDevicesPort> m_audioDevices;
+    // Made on the first media open, playback or device list: listing devices loads Qt Multimedia's backend.
     std::unique_ptr<application::AudioOutputRouting> m_audioRouting;
+    void ensureAudioRoute();
     void routeAudio(const application::OutputRoute &route, bool move);
     void noticeAudioRoute(const application::OutputRoute &before, const application::OutputRoute &after);
     void noticeOnsets();
