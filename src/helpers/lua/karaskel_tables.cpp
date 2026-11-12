@@ -689,7 +689,17 @@ int prepareLine(lua_State *L)
     std::vector<std::string> problems;
     Prepared prepared;
     lua_helper::raiseOnHostFailure(L, "text_extents", [&] {
-        prepared.layout = layout.line(lua_helper::karaokeSource(*dialogue), 0, {}, problems);
+        const auto source = lua_helper::karaokeSource(*dialogue);
+        kl::Layout::Measures measures;
+        std::vector<std::string> unused;
+        layout.listMeasures(&measures);
+        layout.line(source, 0, {}, unused);
+        layout.listMeasures(nullptr);
+        for (const auto &[style, texts] : measures)
+            for (const auto &r : lua_host::runExtents().measureMany(style, texts))
+                if (!r.extents)
+                    problems.push_back("could not measure text");
+        prepared.layout = layout.line(source, 0, {}, problems);
     });
     if (!problems.empty())
         return luaL_error(L, "%s", problems.front().c_str());

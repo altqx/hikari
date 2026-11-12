@@ -6,6 +6,7 @@
 #include "hikari/core/graphemes.h"
 #include "hikari/core/text_projection.h"
 
+#include <algorithm>
 #include <charconv>
 #include <cmath>
 #include <cstdlib>
@@ -392,6 +393,13 @@ std::optional<std::vector<std::u8string>> Layout::addedStyle(std::u8string_view 
 
 Layout::Extents Layout::measure(const StyleInfo &style, const std::string &text, std::vector<std::string> &problems)
 {
+    if (m_listed) {
+        auto it = std::ranges::find(*m_listed, style.fields, &Measures::value_type::first);
+        if (it == m_listed->end())
+            it = m_listed->insert(m_listed->end(), {style.fields, {}});
+        it->second.push_back(text);
+        return {};
+    }
     const ExtentsCache::Result r = m_extents.measure(style.fields, text);
     if (r.extents)
         return {r.extents->width, r.extents->height, r.extents->descent, r.extents->externalLeading};

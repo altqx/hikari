@@ -160,6 +160,9 @@ public:
     }
     const StyleInfo *style(std::u8string_view name) const;
     std::optional<std::vector<std::u8string>> addedStyle(std::u8string_view name) const;
+    // While set, line() measures nothing and lists each Style's texts it would measure, in order.
+    using Measures = std::vector<std::pair<std::vector<std::string>, std::vector<std::string>>>;
+    void listMeasures(Measures *into) { m_listed = into; }
 
 private:
     struct Extents {
@@ -175,6 +178,7 @@ private:
     const StyleInfo *m_first = nullptr;
     std::size_t m_added = 0;
     double m_resX = 0, m_resY = 0, m_factor = 1;
+    Measures *m_listed = nullptr;
 };
 
 }
