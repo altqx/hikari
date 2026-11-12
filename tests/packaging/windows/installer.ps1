@@ -286,6 +286,7 @@ switch ($env:ACTION) {
         Remove-Item -LiteralPath $result -ErrorAction SilentlyContinue
         $setupLog = Join-Path $setupUpdates "setup-$copy.log"
         Remove-Item -LiteralPath $setupLog -ErrorAction SilentlyContinue
+        $before = Value $uninstallKey DisplayVersion
         $a = "/S /UPDATE /WAITPID=$($app.Id) $env:ARGS".Trim()
         Write-Output "run: `"$env:SETUP`" $a"
         $sw = [Diagnostics.Stopwatch]::StartNew()
@@ -306,7 +307,7 @@ switch ($env:ACTION) {
         $null = $p.Handle
         Start-Sleep -Seconds 5
         Check (-not $p.HasExited) 'the installer waits while the app runs'
-        Check ((Value $uninstallKey DisplayVersion) -ne $env:VERSION) 'nothing installed yet'
+        if ($before -ne $env:VERSION) { Check ((Value $uninstallKey DisplayVersion) -eq $before) 'nothing installed yet' }
         if ($env:CLOSE_APP -eq '1') {
             $null = $app.CloseMainWindow()
             if (-not $app.WaitForExit(15000)) { $app.Kill() }
