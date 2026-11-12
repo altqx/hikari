@@ -5,6 +5,7 @@
 #include "hikari/backends/ai_http_relay.h"
 
 #include <cstdint>
+#include <expected>
 #include <functional>
 #include <map>
 #include <memory>
@@ -32,7 +33,15 @@ public:
 
     /// `request` is the protocol's Request without its model; the role's model fills it in.
     application::ai::StreamId complete(application::ai::Role role, api::Json request, application::ai::EventSink sink);
-    /// The sink still gets Failed{Cancelled}, once.
+    struct TranslateSink {
+        /// A `_hikari/translate.progress` notification's params.
+        std::function<void(const api::Json &)> progress;
+        /// The TranslateResult, or why the run failed.
+        std::function<void(std::expected<api::Json, application::ai::Error>)> done;
+    };
+    /// One Honya pipeline run: `params` is the protocol's TranslateParams without its stream, models included.
+    application::ai::StreamId requestTranslation(api::Json params, TranslateSink sink);
+    /// The sink still gets Failed{Cancelled}, once; a translation's done gets Cancelled.
     void cancel(application::ai::StreamId id);
     /// Replaces the provider's catalogue with the provider's own list. A provider whose key is missing fails with Key
     /// before the sidecar is asked.
@@ -87,6 +96,8 @@ private:
     application::ai::Providers &m_providers;
     HostFor m_host;
     std::map<application::ai::StreamId, std::shared_ptr<Pending>> m_pending;
+    struct Translation;
+    std::map<application::ai::StreamId, std::shared_ptr<Translation>> m_translations;
     application::ai::StreamId m_nextId = 1;
     bool m_caching = true;
     bool m_webSearch = false;

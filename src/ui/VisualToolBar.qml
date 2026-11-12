@@ -36,7 +36,8 @@ Control {
         "To": qsTr("To"),
         "Stops": qsTr("Stops"),
         "Blend": qsTr("Blend"),
-        "Steps": qsTr("Steps")
+        "Steps": qsTr("Steps"),
+        "Layout": qsTr("Layout")
     })
     readonly property var valueLabels: ({
         "Value": qsTr("Value"),
@@ -47,7 +48,11 @@ Control {
         "To": qsTr("To"),
         "In": qsTr("In"),
         "Out": qsTr("Out"),
-        "End": qsTr("End")
+        "End": qsTr("End"),
+        "Offset": qsTr("Offset"),
+        "Frames a step": qsTr("Frames a step"),
+        "Past the end": qsTr("Past the end"),
+        "Lines": qsTr("Lines")
     })
     function groupName(group) {
         return bar.groupNames[group] ?? group

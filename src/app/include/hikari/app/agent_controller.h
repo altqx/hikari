@@ -79,6 +79,7 @@ class AgentController final : public QObject {
     Q_PROPERTY(QVariantList attachable READ attachable NOTIFY threadChanged FINAL)
     Q_PROPERTY(QString activeTitle READ activeTitle NOTIFY threadChanged FINAL)
     Q_PROPERTY(bool costMeter READ costMeter NOTIFY settingsChanged FINAL)
+    Q_PROPERTY(bool autoCompact READ autoCompact NOTIFY settingsChanged FINAL)
     Q_PROPERTY(bool fullAccessWarned READ fullAccessWarned NOTIFY settingsChanged FINAL)
     Q_PROPERTY(double spentToday READ spentToday NOTIFY threadChanged FINAL)
     Q_PROPERTY(double dailyCap READ dailyCap NOTIFY settingsChanged FINAL)
@@ -106,6 +107,7 @@ public:
     static constexpr const char *kThreadCapSetting = "ai.agent.threadCapCents";
     static constexpr const char *kDailyCapSetting = "ai.agent.dailyCapCents";
     static constexpr const char *kCostMeterSetting = "ai.agent.costMeter";
+    static constexpr const char *kAutoCompactSetting = "ai.agent.autoCompact";
     static constexpr const char *kFullAccessWarnedSetting = "ai.agent.fullAccessWarned";
 
     explicit AgentController(Wiring wiring, QObject *parent = nullptr);
@@ -121,6 +123,7 @@ public:
     QVariantList attachable() const;
     QString activeTitle() const;
     bool costMeter() const;
+    bool autoCompact() const;
     bool fullAccessWarned() const;
     double spentToday() const;
     /// Counts toward the day's cap with the threads' spending; inline actions use it.
@@ -146,6 +149,9 @@ public:
     Q_INVOKABLE void setQueued(const QString &text);
     Q_INVOKABLE void retry();
     Q_INVOKABLE void raiseCap();
+    /// Compacts the open thread now, or once its turn ends.
+    Q_INVOKABLE void compact(const QString &instruction = {});
+    Q_INVOKABLE void newThreadFromSummary();
     /// "manual", "auto" or "full".
     Q_INVOKABLE void setMode(const QString &mode);
     /// A value from `models`.

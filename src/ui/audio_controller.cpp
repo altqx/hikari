@@ -311,7 +311,7 @@ std::pair<int, int> AudioController::timesSelection(bool rangeEnd, bool ignoreKa
 }
 
 // Hyphenation patterns: LibreOffice's hyph_en_US.dic (BSD-style, src/ui/hyphenation/README_hyph_en_US.txt).
-static const application::Hyphenation &karaokeHyphenation()
+const application::Hyphenation &karaokeHyphenation()
 {
     static const application::Hyphenation patterns = [] {
         QFile file(QStringLiteral(":/hikari/ui/hyphenation/hyph_en_US.dic"));

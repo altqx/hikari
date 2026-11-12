@@ -5,6 +5,8 @@
 
 #include <toml++/toml.hpp>
 
+#include <map>
+
 #include <QString>
 
 #include <optional>
@@ -36,10 +38,18 @@ public:
     bool hasTable(std::string_view name) const;
     // `fonts = [...]`, resolved against the Project folder; project.local.toml's list replaces project.toml's.
     std::vector<QString> fontFolders() const;
+    struct PluginTable {
+        std::vector<std::string> enabled, disabled;
+        std::map<std::string, std::string> settingsJson; // [plugins."<id>"] as a JSON object, by plugin id
+    };
+    // project.local.toml's lists replace project.toml's, and its plugin settings go over them key by key.
+    PluginTable plugins() const;
 
     const std::vector<application::FileProblem> &problems() const { return m_problems; }
     // Settings the files set that a Project may never set; they stay in the file, unused.
     const std::vector<std::string> &refused() const { return m_refused; }
+    // `[translation]` entries that look like a key, token, address or other credential; never read or written.
+    const std::vector<std::string> &credentials() const { return m_credentials; }
 
 private:
     void load(File file);
@@ -51,6 +61,7 @@ private:
     bool m_writeFailed = false;
     std::vector<application::FileProblem> m_problems;
     std::vector<std::string> m_refused;
+    std::vector<std::string> m_credentials;
 };
 
 }

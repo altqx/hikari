@@ -245,7 +245,12 @@ class LineEditorOptionsTest : public QObject {
         }
         return names;
     }
-    QQuickWindow *styleWindow() const { return root()->findChild<QQuickWindow *>(QStringLiteral("styleManager")); }
+    QQuickWindow *styleWindow() const
+    {
+        if (auto *loader = root()->findChild<QObject *>(QStringLiteral("styleManagerLoader")))
+            loader->setProperty("active", true);
+        return root()->findChild<QQuickWindow *>(QStringLiteral("styleManager"));
+    }
 
 private slots:
     void initTestCase()

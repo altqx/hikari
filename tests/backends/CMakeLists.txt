@@ -348,6 +348,8 @@ target_compile_definitions(hikari_backends_harper_client_tests PRIVATE HIKARI_HA
 hikari_add_gtest(hikari_backends_mecab_readings_tests SOURCES mecab_readings_tests.cpp
     LIBRARIES hikari_backends LABELS backends)
 target_compile_definitions(hikari_backends_mecab_readings_tests PRIVATE HIKARI_UNIDIC_DIR="${HIKARI_UNIDIC_DIR}")
+hikari_add_gtest(hikari_backends_external_aligner_tests SOURCES external_aligner_tests.cpp
+    LIBRARIES hikari_backends LABELS backends)
 
 find_package(ZLIB REQUIRED)
 hikari_add_gtest(hikari_backends_font_collector_tests SOURCES font_collector_tests.cpp
@@ -552,3 +554,10 @@ add_dependencies(hikari_backends_ai_agent_cli_tests hikari_fake_agent_cli)
 
 hikari_add_gtest(hikari_backends_icu_text_tests SOURCES icu_text_tests.cpp
     LIBRARIES hikari_backends LABELS backends)
+hikari_add_gtest(hikari_backends_yutils_route_tests SOURCES yutils_route_tests.cpp
+    "${PROJECT_SOURCE_DIR}/src/helpers/lua/shape_tables.cpp" LIBRARIES hikari_application Hikari::luajit LABELS backends)
+target_include_directories(hikari_backends_yutils_route_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/helpers/lua")
+target_compile_definitions(hikari_backends_yutils_route_tests PRIVATE
+    HIKARI_YUTILS_INCLUDE="${PROJECT_SOURCE_DIR}/Automation/automation/Include"
+    HIKARI_SHAPE_GOLDEN_SCRIPT="${PROJECT_SOURCE_DIR}/tests/fixtures/shape-kernel/make_goldens.lua"
+    HIKARI_SHAPE_GOLDENS="${PROJECT_SOURCE_DIR}/tests/fixtures/shape-kernel/yutils-goldens.txt")

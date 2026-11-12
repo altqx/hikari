@@ -733,6 +733,33 @@ export type AutomationRunResult = {
     log: string;
 };
 
+/** The Document's Honya project files: PROJECT.md, GLOSSARY.md, CHARACTERS.md and STYLE.md, those that exist. folder is null when the Document has no project folder. */
+export type TranslationProjectParams = {
+    /** Defaults to the active Document. */
+    document?: DocumentId;
+};
+
+export type TranslationProjectResult = {
+    folder: string | null;
+    files: ({
+        name: "PROJECT.md" | "GLOSSARY.md" | "CHARACTERS.md" | "STYLE.md";
+        data: string;
+    })[];
+};
+
+/** Replaces one of the Document's Honya project files, keeping Honya's Markdown and honya:data format. */
+export type TranslationProjectWriteParams = {
+    /** Defaults to the active Document. */
+    document?: DocumentId;
+    file: "PROJECT.md" | "GLOSSARY.md" | "CHARACTERS.md" | "STYLE.md";
+    data: string;
+};
+
+export type TranslationProjectWriteResult = {
+    file: "PROJECT.md" | "GLOSSARY.md" | "CHARACTERS.md" | "STYLE.md";
+    size: number;
+};
+
 /** The node types the node-effect editor offers, with their ports and parameters. */
 export type NodesCatalogueParams = {
     category?: string;
@@ -991,6 +1018,193 @@ export type ProjectInfoResult = {
     project: Project;
 };
 
+/** A Line's karaoke syllables as the templater reads them: text, tag, start and end in ms. */
+export type KaraokeSyllablesParams = {
+    /** Defaults to the active Document. */
+    document?: DocumentId;
+    line: LineId;
+};
+
+export type KaraokeSyllablesResult = {
+    line: LineId;
+    syllables: ({
+        text: string;
+        stripped: string;
+        tag: string;
+        start: number;
+        end: number;
+    })[];
+};
+
+/** Splits Lines without \k tags into syllables as the audio editor's karaoke mode does, the time shared by character; Lines that already have \k tags keep them. */
+export type KaraokeSplitParams = {
+    /** Defaults to the active Document. */
+    document?: DocumentId;
+    lines: LineId[];
+    /** Default true: by syllable, with the language rules the user set; false: at spaces. */
+    bySyllable?: boolean;
+};
+
+export type KaraokeSplitResult = {
+    /** The Lines that change, with their new text; nothing is applied. */
+    lines: ({
+        line: LineId;
+        text: string;
+    })[];
+};
+
+/** Times a Line's existing syllables: each syllable's end in ms, in order; the \k tags are rewritten. */
+export type KaraokeTimeParams = {
+    /** Defaults to the active Document. */
+    document?: DocumentId;
+    line: LineId;
+    /** One per syllable, ascending, in ms from the video's start. */
+    ends: number[];
+};
+
+export type KaraokeTimeResult = {
+    line: LineId;
+    /** The Line's text with the \k tags written; nothing is applied. */
+    text: string;
+};
+
+/** Where sung notes start in the open audio, in ms, within a range. */
+export type KaraokeOnsetsParams = {
+    start: number;
+    end: number;
+};
+
+export type KaraokeOnsetsResult = {
+    onsets: number[];
+};
+
+/** Moves each syllable boundary inside the Lines to the nearest vocal onset within the window, keeping every syllable at least 10 ms long. */
+export type KaraokeSnapParams = {
+    /** Defaults to the active Document. */
+    document?: DocumentId;
+    lines: LineId[];
+    /** Ms either side; default 100. */
+    window?: number;
+};
+
+export type KaraokeSnapResult = {
+    /** The Lines that change, with their new text; nothing is applied. */
+    lines: ({
+        line: LineId;
+        text: string;
+        /** Boundaries moved. */
+        moved?: number;
+    })[];
+};
+
+/** Copies a timed romaji Line's syllables onto its kanji Line as the Kanji timer suggests the groups. */
+export type KaraokeKanjiParams = {
+    /** Defaults to the active Document. */
+    document?: DocumentId;
+    romaji: LineId;
+    kanji: LineId;
+    /** Further syllables of a group become # syllables instead of joining the first. */
+    multi?: boolean;
+};
+
+export type KaraokeKanjiResult = {
+    line: LineId;
+    text: string;
+    /** False when a group came out blank or the characters ran out: check it. */
+    clean: boolean;
+};
+
+/** The readings the dictionary suggests for a Line's kanji runs, in hiragana. */
+export type KaraokeFuriganaParams = {
+    /** Defaults to the active Document. */
+    document?: DocumentId;
+    line: LineId;
+};
+
+export type KaraokeFuriganaResult = {
+    line: LineId;
+    runs: ({
+        base: string;
+        reading: string;
+    })[];
+};
+
+/** The Karaoke check's problems: unclosed tags, totals that differ from the Line, empty syllables and syllables outside the Line. */
+export type KaraokeCheckParams = {
+    /** Defaults to the active Document. */
+    document?: DocumentId;
+};
+
+export type KaraokeCheckResult = {
+    problems: ({
+        line: LineId;
+        kind: "unclosed" | "not_for_audio_editor" | "editor_only" | "total_not_duration" | "zero_length" | "outside_line";
+        totalMs?: number;
+        durationMs?: number;
+        /** Which ones, from 1. */
+        syllables?: number[];
+    })[];
+    /** Problems past the listed ones. */
+    unlisted: number;
+};
+
+/** The Lines the karaoke templater generates from one karaoke Line, without applying them. */
+export type KaraokeTemplatePreviewParams = {
+    /** Defaults to the active Document. */
+    document?: DocumentId;
+    line: LineId;
+};
+
+export type KaraokeTemplatePreviewResult = {
+    line: LineId;
+    lines: ({
+        layer: number;
+        start: number;
+        end: number;
+        style: string;
+        effect: string;
+        text: string;
+    })[];
+};
+
+/** Runs the karaoke templater on the karaoke Lines, or the Lines given, and applies what it generates as one undo step: old generated Lines are replaced. */
+export type KaraokeApplyTemplateParams = {
+    /** Defaults to the active Document. */
+    document?: DocumentId;
+    revision: Revision;
+    /** Default: every karaoke Line. */
+    lines?: LineId[];
+    /** Default "Apply karaoke template". */
+    name?: string;
+};
+
+export type KaraokeApplyTemplateResult = {
+    revision: Revision;
+    changed: boolean;
+};
+
+/** Runs the user's own WhisperX or Montreal Forced Aligner on the audio under the Lines and answers each word with its start and end in ms; the user approves every run, and nothing is applied. */
+export type KaraokeAlignParams = {
+    /** Defaults to the active Document. */
+    document?: DocumentId;
+    lines: LineId[];
+    program: "whisperx" | "mfa";
+    /** WhisperX: a language code such as ja; default: it detects. */
+    language?: string;
+    /** MFA: the pronunciation dictionary, such as english_mfa. */
+    dictionary?: string;
+    /** MFA: the acoustic model, such as english_mfa. */
+    acousticModel?: string;
+};
+
+export type KaraokeAlignResult = {
+    words: ({
+        text: string;
+        start: number;
+        end: number;
+    })[];
+};
+
 /** The window the user works in opened or closed a Project, or the user moved to a window with another one. */
 export type ProjectChangedEvent = {
     project: Project;
@@ -1070,6 +1284,8 @@ export interface Operations {
     "skills.list": { access: "read"; params: SkillsListParams; result: SkillsListResult };
     "skills.read": { access: "read"; params: SkillsReadParams; result: SkillsReadResult };
     "automation.run": { access: "write"; params: AutomationRunParams; result: AutomationRunResult };
+    "translation.project": { access: "read"; params: TranslationProjectParams; result: TranslationProjectResult };
+    "translation.project_write": { access: "write"; params: TranslationProjectWriteParams; result: TranslationProjectWriteResult };
     "nodes.catalogue": { access: "read"; params: NodesCatalogueParams; result: NodesCatalogueResult };
     "nodes.validate": { access: "read"; params: NodesValidateParams; result: NodesValidateResult };
     "typeset.perspective": { access: "read"; params: TypesetPerspectiveParams; result: TypesetPerspectiveResult };
@@ -1080,6 +1296,17 @@ export interface Operations {
     "typeset.check": { access: "read"; params: TypesetCheckParams; result: TypesetCheckResult };
     "typeset.apply": { access: "write"; params: TypesetApplyParams; result: TypesetApplyResult };
     "project.info": { access: "read"; params: ProjectInfoParams; result: ProjectInfoResult };
+    "karaoke.syllables": { access: "read"; params: KaraokeSyllablesParams; result: KaraokeSyllablesResult };
+    "karaoke.split": { access: "read"; params: KaraokeSplitParams; result: KaraokeSplitResult };
+    "karaoke.time": { access: "read"; params: KaraokeTimeParams; result: KaraokeTimeResult };
+    "karaoke.onsets": { access: "read"; params: KaraokeOnsetsParams; result: KaraokeOnsetsResult };
+    "karaoke.snap": { access: "read"; params: KaraokeSnapParams; result: KaraokeSnapResult };
+    "karaoke.kanji": { access: "read"; params: KaraokeKanjiParams; result: KaraokeKanjiResult };
+    "karaoke.furigana": { access: "read"; params: KaraokeFuriganaParams; result: KaraokeFuriganaResult };
+    "karaoke.check": { access: "read"; params: KaraokeCheckParams; result: KaraokeCheckResult };
+    "karaoke.template_preview": { access: "read"; params: KaraokeTemplatePreviewParams; result: KaraokeTemplatePreviewResult };
+    "karaoke.apply_template": { access: "write"; params: KaraokeApplyTemplateParams; result: KaraokeApplyTemplateResult };
+    "karaoke.align": { access: "write"; params: KaraokeAlignParams; result: KaraokeAlignResult };
 }
 
 export type OperationName = keyof Operations;

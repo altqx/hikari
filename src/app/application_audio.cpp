@@ -10,8 +10,9 @@
 
 namespace hikari::app {
 
-QVariantList Application::audioOutputMenu() const
+QVariantList Application::audioOutputMenu()
 {
+    ensureAudioRoute();
     const auto &settings = m_settings->settings();
     const std::string chosen = settings.text("audio.outputDevice");
     QVariantList rows;
@@ -33,8 +34,12 @@ void Application::chooseAudioOutput(const QString &id, const QString &name)
 
 QString Application::audioOutputName() const
 {
-    const auto route = m_audioRouting->route();
-    return QString::fromStdString(route.name);
+    if (m_audioRouting)
+        return QString::fromStdString(m_audioRouting->route().name);
+    const auto &settings = m_settings->settings();
+    if (settings.text("audio.outputDevice").empty())
+        return outputDeviceLabel({});
+    return QString::fromStdString(settings.text("audio.outputDeviceName"));
 }
 
 void Application::noticeAudioRoute(const application::OutputRoute &before, const application::OutputRoute &after)

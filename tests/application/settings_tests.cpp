@@ -5,6 +5,8 @@
 #include <cctype>
 #include <map>
 #include <set>
+#include <string>
+#include <vector>
 
 using namespace hikari::application;
 
@@ -362,8 +364,11 @@ TEST(ProjectSettings, TheAllowlistCoversTheProjectDataSettings)
                            "trust.folders", "program.theme", "program.font", "shortcuts.hotkeys",
                            "scriptProperties.linkResolutions", "translation.showOriginal"})
         EXPECT_FALSE(findSetting(id)->projectable) << id;
+    std::vector<std::string> widening;
     for (const auto &setting : settingDefinitions())
-        EXPECT_FALSE(setting.widens) << setting.id;
+        if (setting.widens)
+            widening.emplace_back(setting.id);
+    EXPECT_EQ(widening, (std::vector<std::string>{"translation.translator", "translation.reviewer"}));
 }
 
 TEST(ProjectSettings, AProjectOverridesTheUserPerKey)

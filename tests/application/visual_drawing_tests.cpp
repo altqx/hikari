@@ -922,7 +922,10 @@ TEST(DrawingOptions, SixModesAndTheShapeList)
     DrawingTool tool;
     tool.reset(host);
     auto options = tool.options(host);
-    ASSERT_EQ(options.size(), 7u);
+    ASSERT_EQ(options.size(), 10u);
+    EXPECT_EQ(options[7].name, "pathfinder");
+    EXPECT_EQ(options[8].name, "join");
+    EXPECT_EQ(options[9].name, "offset");
     const char *roles[] = {"vector-drag", "vector-line", "vector-bezier", "vector-bspline", "vector-point", "vector-delete"};
     for (int i = 0; i < 6; ++i) {
         EXPECT_EQ(options[i].iconRole, roles[i]);
@@ -935,6 +938,7 @@ TEST(DrawingOptions, SixModesAndTheShapeList)
     EXPECT_EQ(options[6].index, 0);
     EXPECT_TRUE(tool.setOption("shape", 2, host));
     options = tool.options(host);
+    EXPECT_EQ(options.size(), 7u);
     for (int i = 0; i < 6; ++i) {
         EXPECT_FALSE(options[i].enabled);
         EXPECT_FALSE(options[i].checked);
@@ -1087,4 +1091,145 @@ TEST(DrawingPointer, TheDrawingsPointsSetNoShape)
     EXPECT_EQ(host.pointerShape(), PointerShape::Arrow);
     tool.pointer(at(Pointer::Kind::Release, 160, 60, false, Pointer::Button::Left), host);
     EXPECT_EQ(host.pointerShape(), PointerShape::Arrow);
+}
+
+namespace {
+
+constexpr std::string_view kShapesScript =
+    "[Script Info]\nScriptType: v4.00+\nPlayResX: 1920\nPlayResY: 1080\n\n[Events]\n"
+    "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\an7\\pos(0,0)\\p1\\clip(m 50 0 l 150 0 150 100 50 100)}"
+    "m 0 0 l 100 0 100 100 0 100\n"
+    "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\an7\\pos(0,0)\\p1}m 0 0 l 100 0 100 100 0 100\n"
+    "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\an7\\pos(50,0)\\p1}m 0 0 l 100 0 100 100 0 100\n"
+    "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\an7\\pos(0,0)\\p1\\clip(m 500 500 l 600 500 600 600)}"
+    "m 0 0 l 100 0 100 100 0 100\n";
+
+void setUpShapes(TestHost &host, std::size_t active)
+{
+    host.s = std::make_unique<EditSession>(load(kShapesScript), false);
+    const auto id = ids(*host.s)[active];
+    host.s->setSelection({id, {id}, id, std::nullopt});
+    host.v.setClient(640, 360, 0);
+    host.v.setScript(1920, 1080);
+    host.v.open({1280, 720, 0, 1});
+}
+
+shape::Contours drawingOf(const std::u8string &text)
+{
+    const auto start = text.find(u8"\\p1");
+    const auto open = text.find(u8'}', start);
+    const auto close = text.find(u8'{', open);
+    const std::u8string body = text.substr(open + 1, close == std::u8string::npos ? close : close - open - 1);
+    return shape::readDrawing(std::string(body.begin(), body.end()));
+}
+
+double area(const shape::Contours &contours)
+{
+    double a = 0;
+    for (const auto &c : contours)
+        for (std::size_t i = 0; i < c.size(); ++i)
+            a += c[i].x * c[(i + 1) % c.size()].y - c[(i + 1) % c.size()].x * c[i].y;
+    return std::abs(a) / 2;
+}
+
+const ToolOption *option(const std::vector<ToolOption> &options, const std::string &name)
+{
+    for (const auto &o : options)
+        if (o.name == name)
+            return &o;
+    return nullptr;
+}
+
+}
+
+TEST(DrawingPathfinder, CombinesWithTheClipInOneStepAndDropsIt)
+{
+    TestHost host;
+    setUpShapes(host, 0);
+    DrawingTool tool;
+    host.tool = &tool;
+    tool.reset(host);
+    const auto id = ids(*host.s)[0];
+    const auto *pathfinder = option(tool.options(host), "pathfinder");
+    ASSERT_TRUE(pathfinder);
+    EXPECT_TRUE(pathfinder->enabled);
+    EXPECT_EQ(pathfinder->choices.size(), 4u);
+    EXPECT_EQ(pathfinder->choiceRoles[3], "shape-exclude");
+
+    tool.previewOption("pathfinder", 0, host);
+    EXPECT_NEAR(area(tool.preview()), 15000, 1);
+    EXPECT_FALSE(tool.overlay(host).polygons.empty());
+    tool.previewOption("pathfinder", -1, host);
+    EXPECT_TRUE(tool.preview().empty());
+
+    const std::size_t steps = host.s->historySize();
+    EXPECT_TRUE(tool.setOption("pathfinder", 2, host));
+    EXPECT_EQ(host.s->historySize(), steps + 1);
+    const std::u8string text = line(*host.s, id)->text;
+    EXPECT_EQ(text.find(u8"\\clip"), std::u8string::npos) << std::string(text.begin(), text.end());
+    EXPECT_NEAR(area(drawingOf(text)), 5000, 1) << std::string(text.begin(), text.end());
+    EXPECT_TRUE(host.s->undo());
+    EXPECT_NE(line(*host.s, id)->text.find(u8"\\clip"), std::u8string::npos);
+}
+
+TEST(DrawingPathfinder, CombinesThePickedLinesIntoTheActiveOne)
+{
+    TestHost host;
+    setUpShapes(host, 1);
+    DrawingTool tool;
+    host.tool = &tool;
+    const auto all = ids(*host.s);
+    host.picker.pick({all[1], all[2]});
+    tool.reset(host);
+    const std::u8string other = line(*host.s, all[2])->text;
+    EXPECT_TRUE(tool.setOption("pathfinder", 1, host));
+    EXPECT_NEAR(area(drawingOf(line(*host.s, all[1])->text)), 5000, 1);
+    EXPECT_EQ(line(*host.s, all[2])->text, other);
+}
+
+TEST(DrawingPathfinder, IsOffWithoutASecondShapeAndRefusesAnEmptyResult)
+{
+    TestHost host;
+    setUpShapes(host, 1);
+    DrawingTool tool;
+    host.tool = &tool;
+    tool.reset(host);
+    EXPECT_FALSE(option(tool.options(host), "pathfinder")->enabled);
+    EXPECT_FALSE(tool.setOption("pathfinder", 0, host));
+
+    TestHost apart;
+    setUpShapes(apart, 3);
+    DrawingTool second;
+    apart.tool = &second;
+    second.reset(apart);
+    const auto id = ids(*apart.s)[3];
+    const std::u8string before = line(*apart.s, id)->text;
+    EXPECT_FALSE(second.setOption("pathfinder", 2, apart));
+    EXPECT_EQ(apart.bells, 1);
+    ASSERT_EQ(apart.notices.size(), 1u);
+    EXPECT_EQ(line(*apart.s, id)->text, before);
+}
+
+TEST(DrawingOffset, PreviewsTheWidthAndAppliesItInOneStep)
+{
+    TestHost host;
+    setUpShapes(host, 1);
+    DrawingTool tool;
+    host.tool = &tool;
+    tool.reset(host);
+    const auto id = ids(*host.s)[1];
+    EXPECT_FALSE(option(tool.options(host), "offset")->enabled);
+    EXPECT_TRUE(tool.setValue("offset", u"10", host));
+    EXPECT_TRUE(tool.setOption("join", 0, host));
+    EXPECT_EQ(tool.offsetJoin(), shape::Join::Miter);
+    EXPECT_NEAR(area(tool.preview()), 14400, 1);
+    EXPECT_TRUE(option(tool.options(host), "offset")->enabled);
+    const std::size_t steps = host.s->historySize();
+    EXPECT_TRUE(tool.setOption("offset", 1, host));
+    EXPECT_EQ(host.s->historySize(), steps + 1);
+    EXPECT_NEAR(area(drawingOf(line(*host.s, id)->text)), 14400, 1);
+    EXPECT_EQ(tool.offsetWidth(), 0);
+    EXPECT_TRUE(tool.preview().empty());
+    EXPECT_TRUE(tool.setValue("offset", u"-20", host));
+    EXPECT_NEAR(area(tool.preview()), 80 * 80, 1);
 }

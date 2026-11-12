@@ -6,6 +6,8 @@
 #include <QTemporaryDir>
 #include <QtTest>
 
+#include <algorithm>
+
 using namespace hikari;
 using application::SettingValue;
 using hikari::ui::ProjectFile;
@@ -24,6 +26,12 @@ void writeAll(const QString &path, const QByteArray &bytes)
     QFile file(path);
     QVERIFY(file.open(QIODevice::WriteOnly));
     file.write(bytes);
+}
+
+std::string compact(std::string json)
+{
+    std::erase_if(json, [](char c) { return c == ' ' || c == '\n'; });
+    return json;
 }
 
 QByteArray readAll(const QString &path)
@@ -119,6 +127,52 @@ private slots:
         QCOMPARE(project.read(setting("grammar.language")), SettingValue(std::int64_t{2}));
         QCOMPARE(project.source(setting("grammar.language")), ProjectFile::Shared);
         QVERIFY(!project.read(setting("translation.autoMoveTagsFromOriginal")));
+    }
+
+    void pluginsLocalListsReplaceAndSettingsGoOverKeyByKey()
+    {
+        QTemporaryDir root;
+        writeAll(root.filePath(QStringLiteral(".hikari/project.toml")),
+                 "version = 1\n[plugins]\nenabled = [\"kf\", \"\"]\ndisabled = [\"qc\"]\n"
+                 "[plugins.\"kf\"]\nsize = 12\nname = \"team\"\n");
+        const ProjectFile shared(root.path());
+        QVERIFY(shared.problems().empty());
+        QVERIFY(shared.refused().empty());
+        QVERIFY(shared.hasTable("plugins"));
+        const auto table = shared.plugins();
+        QCOMPARE(table.enabled, std::vector<std::string>{"kf"});
+        QCOMPARE(table.disabled, std::vector<std::string>{"qc"});
+        QCOMPARE(compact(table.settingsJson.at("kf")), std::string(R"({"name":"team","size":12})"));
+
+        writeAll(root.filePath(QStringLiteral(".hikari/project.local.toml")),
+                 "version = 1\n[plugins]\nenabled = []\n[plugins.\"kf\"]\nsize = 20\n");
+        const auto local = ProjectFile(root.path()).plugins();
+        QVERIFY(local.enabled.empty());
+        QCOMPARE(local.disabled, std::vector<std::string>{"qc"});
+        QCOMPARE(compact(local.settingsJson.at("kf")), std::string(R"({"name":"team","size":20})"));
+        QVERIFY(ProjectFile(QTemporaryDir().path()).plugins().settingsJson.empty());
+    }
+
+    void translationModelsAreReadButKeysTokensAndAddressesNeverAre()
+    {
+        QTemporaryDir root;
+        writeAll(root.filePath(QStringLiteral(".hikari/project.toml")),
+                 "version = 1\n[translation]\nglossary = \"honya\"\ntranslator = \"or/google/gemini-3-flash\"\n"
+                 "reviewer = \"https://evil.example/v1\"\napiKey = \"sk-or-v1-secret\"\nbaseUrl = \"http://x\"\n"
+                 "token = \"t\"\n");
+        ProjectFile project(root.path());
+        QVERIFY(project.problems().empty());
+        QCOMPARE(project.read(setting("translation.glossary")), SettingValue(std::string("honya")));
+        QCOMPARE(project.read(setting("translation.translator")), SettingValue(std::string("or/google/gemini-3-flash")));
+        QVERIFY(!project.read(setting("translation.reviewer")));
+        std::vector<std::string> credentials = project.credentials();
+        std::ranges::sort(credentials);
+        QCOMPARE(credentials, (std::vector<std::string>{"translation.apiKey", "translation.baseUrl", "translation.reviewer",
+                                                         "translation.token"}));
+
+        project.write(setting("translation.translator"), SettingValue(std::string("sk-or-v1-other")));
+        QVERIFY(project.lastWriteFailed());
+        QVERIFY(!readAll(project.path(ProjectFile::Shared)).contains("sk-or-v1-other"));
     }
 
     void fontFoldersAreRelativeToTheProjectFolder()
