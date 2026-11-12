@@ -17736,6 +17736,8 @@ private slots:
               {"ai.agent.threadCapCents", nullptr},
               {"ai.agent.dailyCapCents", nullptr},
               {"ai.agent.costMeter", "Show the cost meter"},
+              {"ai.inline.translateTo", nullptr},
+              {"ai.inline.contextLines", nullptr},
               {"ai.autoUpdate", "Update AI components automatically"},
               {"ai.promptCaching", "Use prompt caching"}}},
             {"settingsPageUpdates",
@@ -17814,6 +17816,7 @@ private slots:
         QVERIFY(!dialogItem("settingsDialog", "overridden_scriptProperties.translation")->isVisible());
         QVERIFY(QMetaObject::invokeMethod(on, "click"));
         field->forceActiveFocus();
+        QTRY_VERIFY(field->hasActiveFocus());
         typeText(qobject_cast<QWindow *>(dialog), QStringLiteral("Kei"));
         QCOMPARE(field->property("text").toString(), QStringLiteral("Kei"));
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsApply"), "click"));

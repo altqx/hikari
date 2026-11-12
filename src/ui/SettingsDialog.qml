@@ -337,26 +337,27 @@ DialogWindow {
     component CreditRow: ColumnLayout {
         id: creditRow
         required property var modelData
-        readonly property string setting: "scriptProperties." + modelData.id
+        readonly property string key: "scriptProperties." + modelData.id
         spacing: 0
         Layout.fillWidth: true
         RowLayout {
             Layout.fillWidth: true
             SettingCheck {
-                setting: creditRow.setting + "On"
+                setting: creditRow.key + "On"
                 text: creditRow.modelData.name
                 Layout.fillWidth: false
                 Layout.preferredWidth: 160
             }
             SettingText {
-                setting: creditRow.setting
+                readonly property string docsLabel: creditRow.modelData.name
+                setting: creditRow.key
                 Accessible.name: creditRow.modelData.name
                 Layout.fillWidth: true
             }
         }
         SettingNote {
-            objectName: "overridden_" + creditRow.setting
-            visible: dialog.overrides.includes(creditRow.setting) || dialog.overrides.includes(creditRow.setting + "On")
+            objectName: "overridden_" + creditRow.key
+            visible: dialog.overrides.includes(creditRow.key) || dialog.overrides.includes(creditRow.key + "On")
             text: qsTranslate("HikariSub.Project", "Overridden in this project")
             Layout.topMargin: 2
         }
