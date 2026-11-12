@@ -186,6 +186,24 @@ Pane {
                                                   qsTr("%n code lines", "", root.controller.codeCount)),
                                      root.karaokeLineCount(root.controller.karaokeCount)].join(" · ")
                         }
+                        ComboBox {
+                            id: modeBox
+                            objectName: "templateMode"
+                            enabled: root.controller.editable
+                            model: ["karaOK", "Aegisub 3.2.2"]
+                            currentIndex: root.controller.karaOKMode ? 0 : 1
+                            onActivated: index => {
+                                root.controller.setKaraOKMode(index === 0)
+                                currentIndex = Qt.binding(() => root.controller.karaOKMode ? 0 : 1)
+                            }
+                            ToolTip.visible: hovered
+                            ToolTip.delay: 600
+                            ToolTip.text: root.controller.modeInFile
+                                          ? qsTr("The template language this file sets.")
+                                          : qsTr("The template language this file’s templates use. Choose one to set it in the file.")
+                            Accessible.name: qsTr("Template language")
+                            Accessible.description: ToolTip.text
+                        }
                         Button {
                             id: newButton
                             objectName: "templateNew"
@@ -893,7 +911,7 @@ Pane {
                 objectName: "templateNew_" + index
                 iconRole: modelData.code ? "run-script" : "template-editor"
                 text: modelData.text
-                detailText: modelData.effect
+                detailText: root.controller.karaOKMode ? root.controller.effectInMode(modelData.effect) : modelData.effect
                 onTriggered: root.controller.insertTemplate(modelData.effect)
             }
             onObjectAdded: (index, object) => newMenu.insertItem(index, object)
@@ -911,9 +929,12 @@ Pane {
                     required property var modelData
                     required property int index
                     objectName: "templatePreset_" + index
-                    iconRole: "template-editor"
+                    readonly property bool usable: !modelData.karaOK || root.controller.karaOKPresetsUsable
+                    iconRole: modelData.karaOK ? "notice-info" : "template-editor"
                     text: modelData.title
+                    enabled: usable
                     help: modelData.description
+                    reason: usable ? "" : qsTr("Uses karaOK template syntax. Switch Template language to karaOK to use it.")
                     ToolTip.visible: hovered
                     ToolTip.text: modelData.description
                     onTriggered: root.controller.insertPreset(index)
@@ -1025,7 +1046,8 @@ Pane {
                     width: effectPicker.width
                     radio: true
                     text: modelData.text
-                    keyword: modelData.name
+                    keyword: !effectPicker.code && root.controller.karaOKMode
+                        ? ({ "pre-line": "line", "line": "lsyl" })[modelData.name] ?? modelData.name : modelData.name
                     on: effectPicker.className === modelData.name
                     onClicked: root.controller.setEffect(root.controller.effectWithClass(root.controller.effect, modelData.name))
                 }

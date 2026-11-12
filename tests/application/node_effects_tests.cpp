@@ -11,6 +11,8 @@
 
 #include <gtest/gtest.h>
 
+#include <algorithm>
+#include <cctype>
 #include <cmath>
 #include <cstring>
 #include <filesystem>
@@ -20,6 +22,7 @@
 #include <set>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <vector>
 
 using namespace hikari;
@@ -1261,6 +1264,46 @@ std::vector<std::string> blockersOf(std::string_view json)
 
 }
 
+TEST(NodeEffectDocument, PlacesInAKaraOKDocumentRoundToTenthsAsKaraOKDoes)
+{
+    const auto example = std::ranges::find(nodeGraphPresets(), std::string_view("highlight-flashes"),
+                                           &NodeGraphPreset::example);
+    ASSERT_NE(example, nodeGraphPresets().end());
+    core::Document stock = fixtureWith(commentLine("graph g", graphText(graphOf(example->graph))));
+    core::Document karaOK = stock;
+    ASSERT_TRUE(karaOK.setScriptInfo(u8"Karaoke Templater", u8"karaOK"));
+    const auto places = [&](const core::Document &doc) {
+        std::vector<std::string> out;
+        for (const std::string &line : linesOf(runGraph(doc, u8"g")))
+            for (auto at = line.find("\\pos("); at != std::string::npos; at = line.find("\\pos(", at + 1)) {
+                const auto from = at + 5, to = line.find(')', from);
+                if (to != std::string::npos)
+                    out.push_back(line.substr(from, to - from));
+            }
+        return out;
+    };
+    const auto whole = places(stock), tenths = places(karaOK);
+    ASSERT_FALSE(whole.empty());
+    ASSERT_FALSE(tenths.empty());
+    EXPECT_TRUE(std::ranges::none_of(whole, [](const std::string &p) { return p.contains('.'); }));
+    EXPECT_TRUE(std::ranges::any_of(tenths, [](const std::string &p) { return p.contains('.'); }));
+    const auto atMostATenth = [](std::string_view n) {
+        if (n.starts_with('-'))
+            n.remove_prefix(1);
+        const auto dot = n.find('.');
+        const auto digits = [](std::string_view d) { return !d.empty() && std::ranges::all_of(d, [](unsigned char c) { return std::isdigit(c) != 0; }); };
+        return dot == std::string_view::npos ? digits(n) : digits(n.substr(0, dot)) && n.size() - dot == 2 &&
+                                                               digits(n.substr(dot + 1));
+    };
+    for (const std::string &p : tenths) {
+        const auto comma = p.find(',');
+        ASSERT_NE(comma, std::string::npos) << p;
+        EXPECT_TRUE(atMostATenth(std::string_view(p).substr(0, comma)) &&
+                    atMostATenth(std::string_view(p).substr(comma + 1)))
+            << p;
+    }
+}
+
 TEST(NodeEffectExport, ClassicFillBecomesOnePreLineAndLineTemplate)
 {
     const auto lines = exportTemplateLines(graphOf(kClassicFill), u8"Classic fill");
@@ -1269,6 +1312,26 @@ TEST(NodeEffectExport, ClassicFillBecomesOnePreLineAndLineTemplate)
         {0, u8"template pre-line classic_fill_emit", u8"!retime(\"line\", (-300), 300)!{\\fad(300,300)\\k30}"},
         {0, u8"template line classic_fill_emit", u8"{\\kf$kdur}"}};
     EXPECT_EQ(*lines, expected);
+}
+
+TEST(NodeEffectExport, ClassicFillInKaraOKBecomesOneLineAndLsylTemplate)
+{
+    const auto lines = exportTemplateLines(graphOf(kClassicFill), u8"Classic fill", TemplateFormat::KaraOK);
+    ASSERT_TRUE(lines.has_value());
+    const std::vector<TemplateLine> expected{
+        {0, u8"template line classic_fill_emit", u8"!retime(\"line\", (-300), 300)!{\\fad(300,300)\\k30}"},
+        {0, u8"template lsyl classic_fill_emit", u8"{\\kf$kdur}"}};
+    EXPECT_EQ(*lines, expected);
+}
+
+TEST(NodeEffectExport, KaraOKExportSetsTheModeLineInTheSameStep)
+{
+    EditSession session(presetDocument(kPresets[1]));
+    const std::string before = text(core::encodeAss(session.document()));
+    ASSERT_TRUE(exportTemplateLines(session, graphLineOf(session.document(), u8"bounce"), TemplateFormat::KaraOK));
+    EXPECT_EQ(session.document().scriptInfo(u8"Karaoke Templater"), u8"karaOK");
+    ASSERT_TRUE(session.undo());
+    EXPECT_EQ(text(core::encodeAss(session.document())), before);
 }
 
 TEST(NodeEffectExport, SparklesLoopsAndDrawsWithoutText)

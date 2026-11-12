@@ -36,18 +36,19 @@ Hikari AI's threads also get `update_plan` ([AI agent](ai-agent.md)) and `read_s
 
 | Group | Tools now |
 | --- | --- |
-| `typeset` | `video_frame`, `video_ink_bounds`, `video_colours`, `video_keyframes` ([frames](#frames)) |
+| `typeset` | `video_frame`, `video_ink_bounds`, `video_colours`, `video_keyframes` ([frames](#frames)); `typeset_perspective`, `typeset_clip`, `typeset_drawing`, `typeset_shift`, `typeset_hydra`, `typeset_check`, `typeset_apply` ([typesetting](#typesetting)) |
 | `karaoke` | `audio_peaks` |
 | `effects` | `nodes_catalogue` |
 | `app` | `panels_list`, `panels_open`, `panels_close`, `panels_focus`, `settings_list`, `settings_get`, `settings_set`; the two reads leave out `privacy.*` and `recent.*` ([Agent](ai-agent.md#modes)) |
-| `translate`, `automation`, `plugins` | none yet; the tool cards add them. |
+| `automation` | `automation_run`, which asks the user on every run ([AI-written Lua](ai-agent.md#ai-written-lua)) |
+| `translate`, `plugins` | none yet; the tool cards add them. |
 | `web` | `web_search`, `web_fetch`, while a search service is chosen ([Web search](#web-search)). |
 
 - **`search_tools {query?, group?}`** matches words against names, descriptions and groups, ranking words in a name first. It answers up to ten tools with their schemas and offers them from then on. Found tools are sent after the tools offered from the start, in the order found, so the cached prefix stays the same. On Anthropic's own API with Claude 4.5 or later they go as `defer_loading` tools, and the search's result goes back as `tool_reference` blocks, which keeps the cache ([tool search](https://platform.claude.com/docs/en/agents-and-tools/tool-use/tool-search-tool#custom-tool-search-implementation)).
 - **`search_commands {query, window?, limit?}`** reads `commands.list` and keeps the commands whose id or name holds every word.
 - **`run_command`** is `commands.run`.
 
-**Tool sources.** A `ToolSource` adds tools from outside HA1 as one more group: its `group`, `description`, `tools()` and `call`. `search_tools` lists a source's group, and searches its tools, only while it has tools. The web search is the first source; MCP-server and agent tools plug in the same way ([AI23b #800](https://github.com/altqx/hikari/issues/800)).
+**Tool sources.** A `ToolSource` adds tools from outside HA1 as one more group: its `group`, `description`, `tools()` and `call`. `search_tools` lists a source's group, and searches its tools, only while it has tools. The web search is the first source; each [MCP server](ai-mcp-clients.md) the user added is one more, and agent tools plug in the same way ([AI23b #800](https://github.com/altqx/hikari/issues/800)).
 
 **The up-front budget.** The tools offered before any search, with `update_plan`, `read_skill`, a search service chosen and a provider's own search tools added, must stay within 5,000 tokens (`o200k_base`) on every wire, raised from 3,000 (owner Q123, 2026-11-09). A bun test measures the `tools` each wire sends. It is at 3,216 on Responses, the largest.
 
@@ -77,6 +78,17 @@ The frame tools are HA1's `video.*` operations ([AI4 #432](https://github.com/al
 The Gemini and Chat Completions rows are HikariSub's own caps, derived from each vendor's tiling rules. The vendors don't state them as limits.
 
 The agent sets the budget from the provider's wire. A caller whose provider isn't known, such as an external agent over MCP, gets the smallest of each.
+
+## Typesetting
+
+The typesetting tools are HA1's `typeset.*` operations ([AI9 #437](https://github.com/altqx/hikari/issues/437), [ADR 0024](adr/0024-hikari-ai.md#typesetting)). The model proposes where a sign is; the visual tools' own solvers, in C++, write the tags; a render check runs before anything reaches the review. The bundled `typesetting` skill walks the model through it.
+
+- **The solvers** are reads: each answers the Lines' new text and changes nothing.
+  - `typeset_perspective` takes a Line and four corners in script coordinates and writes the transform VT3's Perspective tool writes for that quad (`quadToTransform`, `writeTransform`; `origin` is the tool's \org mode). A text Line needs the app's text measure, so without it (no video panel yet) it answers `refused` with reason `unmeasured`; a drawing never does.
+  - `typeset_clip` writes a rectangle clip (`clip::putRectangle`) or a vector clip (`clip::putVector`), `inverse` for `\iclip`; `typeset_drawing` puts a shape with `drawing::putDrawing`.
+  - `typeset_shift` and `typeset_hydra` run the Position shifter and the Hydra engine (`PositionShifterTool`, `AllTagsTool`) on a copy of the Document, through a host whose view puts one device pixel at a hundredth of a script unit. Hydra knows its 22 default tags (tags.toml's defaults, not the user's own).
+- **`typeset_check`** draws one Line alone, with a proposed text, on its frame (the Line's first unless the frame shown is in it) and compares the [ink bounds](../CONTEXT.md) with the bounds of the target quad or box, scaled to video pixels. `error` is the largest distance between their edges; it passes at `tolerance` (4 video pixels by default) or less.
+- **`typeset_apply`** is the write: up to 100 Lines, each with its text and target. Every Line is checked first; when one misses, nothing is applied and the answer is `refused` with reason `check_failed` and each failing Line's check. Otherwise it applies the texts as `document_apply` would (one undo step, into the review) and answers the checks too.
 
 ## Documents
 

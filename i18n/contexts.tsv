@@ -41,6 +41,7 @@ HikariSub.Tabs	The Document tab bar, its menu, tab commands and subtitle compari
 HikariSub.TagList	The ASS override tag list and its popup
 HikariSub.Tags	Remove tags: the Remove tags window, its tag families, Clean up and preview (AU4)
 HikariSub.TemplateEditor	The Template editor panel: template and code Lines, their preview on a karaoke Line, Apply
+HikariSub.Text	Text commands on the selected Lines: line breaks, change case, width and dialogue alternatives (AU20)
 HikariSub.TextMenu	The menu of every text field: undo, redo, the clipboard and selection
 HikariSub.TimeShift	The Shift times panel
 HikariSub.Tracking	Perspective tracking: the Power-Pin dialog and its status

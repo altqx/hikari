@@ -26,6 +26,7 @@ add_library(hikari_backends STATIC module.cpp libass_renderer.cpp overlay_blend.
     include/hikari/backends/helper_host.h
     legacy_spelling.cpp include/hikari/backends/legacy_spelling.h
     mecab_readings.cpp include/hikari/backends/mecab_readings.h
+    icu_text.cpp include/hikari/backends/icu_text.h
     harper_client.cpp include/hikari/backends/harper_client.h
     plugin_process.cpp include/hikari/backends/plugin_process.h
     lua_node_helper.cpp include/hikari/backends/lua_node_helper.h
@@ -86,7 +87,7 @@ add_library(hikari_ai STATIC ai_config_store.cpp include/hikari/backends/ai_conf
     include/hikari/backends/ai_channel.h ai_sidecar_updater.cpp include/hikari/backends/ai_sidecar_updater.h
     ai_http_relay.cpp include/hikari/backends/ai_http_relay.h ai_agent.cpp include/hikari/backends/ai_agent.h ai_agent_broker.cpp
     include/hikari/backends/ai_agent_broker.h ai_agent_cli.cpp include/hikari/backends/ai_agent_cli.h
-    ai_mcp_server.cpp include/hikari/backends/ai_mcp_server.h ai_mcp_bridge.cpp include/hikari/backends/ai_mcp_bridge.h
+    ai_mcp_server.cpp include/hikari/backends/ai_mcp_server.h ai_mcp_clients.cpp include/hikari/backends/ai_mcp_clients.h ai_mcp_bridge.cpp include/hikari/backends/ai_mcp_bridge.h
     ai_inline_run.cpp include/hikari/backends/ai_inline_run.h)
 find_package(ZLIB REQUIRED)
 target_include_directories(hikari_ai PUBLIC include)

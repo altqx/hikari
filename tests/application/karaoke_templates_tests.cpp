@@ -1,8 +1,12 @@
 #include "hikari/application/karaoke_templates.h"
+#include "hikari/core/ass_load.h"
+#include "hikari/core/document.h"
 
 #include <gtest/gtest.h>
 
 #include <charconv>
+#include <span>
+#include <string>
 
 using namespace hikari::application::karaoke_templates;
 
@@ -239,4 +243,42 @@ TEST(KaraokeTemplates, StockModeKeepsCharAsAModifierAndLineAsTheText)
     ASSERT_EQ(p.templates.line.size(), 2u);
     EXPECT_EQ(p.templates.line[0]->text, "l");
     EXPECT_EQ(p.templates.line[1]->unit, Unit::Word);
+}
+
+TEST(KaraokeTemplates, StockEffectsTranslateToKaraOKAndBack)
+{
+    const std::pair<std::string_view, std::string_view> pairs[] = {
+        {"template syl noblank", "template syl noblank"},
+        {"template line keeptags", "template lsyl keeptags"},
+        {"template pre-line notext", "template line notext"},
+        {"template pre-line fade loop 2", "template line fade loop 2"},
+        {"template char", "template char"},
+        {"template furi", "template furi"},
+        {"code line", "code line"},
+        {"code once", "code once"},
+    };
+    for (const auto &[stock, karaOK] : pairs) {
+        EXPECT_EQ(karaOKEffect(stock), karaOK) << stock;
+        EXPECT_EQ(stockEffect(karaOK), stock) << karaOK;
+    }
+    EXPECT_EQ(karaOKEffect("template syl char noblank"), "template char noblank");
+    EXPECT_EQ(karaOKEffect("template char syl"), "template char");
+}
+
+TEST(KaraokeTemplates, ADocumentWithoutTemplatesTakesTheGivenMode)
+{
+    const auto load = [](std::string_view info, std::string_view events) {
+        const std::string text = "[Script Info]\n" + std::string(info) +
+                                 "\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, "
+                                 "Effect, Text\n" + std::string(events);
+        return hikari::core::loadAss(std::as_bytes(std::span(text))).document;
+    };
+    const std::string_view karaoke = "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\k50}ka\n";
+    const auto plain = load("Title: t", karaoke);
+    EXPECT_EQ(documentMode(plain), Mode::Stock);
+    EXPECT_EQ(documentMode(plain, Mode::KaraOK), Mode::KaraOK);
+    const auto stock = load("Title: t", std::string("Comment: 0,0:00:00.00,0:00:00.00,Default,,0,0,0,template pre-line,x\n") +
+                                            std::string(karaoke));
+    EXPECT_EQ(documentMode(stock, Mode::KaraOK), Mode::Stock);
+    EXPECT_EQ(documentMode(load("Karaoke Templater: Aegisub 3.2.2", karaoke), Mode::KaraOK), Mode::Stock);
 }

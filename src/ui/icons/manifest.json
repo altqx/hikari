@@ -4405,8 +4405,7 @@
    "legacy": [],
    "surfaces": [
     "tier-chips"
-   ],
-   "pending": "PJ5 #773"
+   ]
   },
   {
    "role": "move-to-tier",
@@ -4417,8 +4416,7 @@
    "legacy": [],
    "surfaces": [
     "tier-chips"
-   ],
-   "pending": "PJ5 #773"
+   ]
   },
   {
    "role": "trust",
@@ -4996,8 +4994,7 @@
    "legacy": [],
    "surfaces": [
     "select-lines"
-   ],
-   "pending": "AU10 #841"
+   ]
   },
   {
    "role": "split-tag-blocks",
@@ -5008,8 +5005,7 @@
    "legacy": [],
    "surfaces": [
     "grid-menu"
-   ],
-   "pending": "AU10 #841"
+   ]
   },
   {
    "role": "split-every-n",
@@ -5020,8 +5016,7 @@
    "legacy": [],
    "surfaces": [
     "grid-menu"
-   ],
-   "pending": "AU10 #841"
+   ]
   },
   {
    "role": "track-colour",
@@ -5032,8 +5027,7 @@
    "legacy": [],
    "surfaces": [
     "menu:video"
-   ],
-   "pending": "AU11 #846"
+   ]
   },
   {
    "role": "find-fade",
@@ -5044,8 +5038,7 @@
    "legacy": [],
    "surfaces": [
     "menu:video"
-   ],
-   "pending": "AU11 #846"
+   ]
   },
   {
    "role": "tool-text-on-path",
@@ -5205,8 +5198,7 @@
    "surfaces": [
     "line-editor",
     "grid-menu"
-   ],
-   "pending": "AU20 #854"
+   ]
   },
   {
    "role": "line-break-left",
@@ -5218,8 +5210,7 @@
    "surfaces": [
     "line-editor",
     "grid-menu"
-   ],
-   "pending": "AU20 #854"
+   ]
   },
   {
    "role": "line-break-right",
@@ -5231,8 +5222,7 @@
    "surfaces": [
     "line-editor",
     "grid-menu"
-   ],
-   "pending": "AU20 #854"
+   ]
   },
   {
    "role": "line-break-remove",
@@ -5244,8 +5234,7 @@
    "surfaces": [
     "line-editor",
     "grid-menu"
-   ],
-   "pending": "AU20 #854"
+   ]
   },
   {
    "role": "change-case",
@@ -5257,8 +5246,7 @@
    "surfaces": [
     "line-editor",
     "grid-menu"
-   ],
-   "pending": "AU20 #854"
+   ]
   },
   {
    "role": "case-upper",
@@ -5270,8 +5258,7 @@
    "surfaces": [
     "line-editor",
     "grid-menu"
-   ],
-   "pending": "AU20 #854"
+   ]
   },
   {
    "role": "case-lower",
@@ -5283,8 +5270,7 @@
    "surfaces": [
     "line-editor",
     "grid-menu"
-   ],
-   "pending": "AU20 #854"
+   ]
   },
   {
    "role": "case-title",
@@ -5296,8 +5282,7 @@
    "surfaces": [
     "line-editor",
     "grid-menu"
-   ],
-   "pending": "AU20 #854"
+   ]
   },
   {
    "role": "case-sentence",
@@ -5309,8 +5294,7 @@
    "surfaces": [
     "line-editor",
     "grid-menu"
-   ],
-   "pending": "AU20 #854"
+   ]
   },
   {
    "role": "fullwidth",
@@ -5322,8 +5306,7 @@
    "surfaces": [
     "line-editor",
     "grid-menu"
-   ],
-   "pending": "AU20 #854"
+   ]
   },
   {
    "role": "halfwidth",
@@ -5335,8 +5318,7 @@
    "surfaces": [
     "line-editor",
     "grid-menu"
-   ],
-   "pending": "AU20 #854"
+   ]
   },
   {
    "role": "dialogue-swap",
@@ -5348,8 +5330,7 @@
    "surfaces": [
     "line-editor",
     "grid-menu"
-   ],
-   "pending": "AU20 #854"
+   ]
   },
   {
    "role": "change-alignment",
@@ -5567,8 +5548,7 @@
    "legacy": [],
    "surfaces": [
     "automation-manager"
-   ],
-   "pending": "TH5 #833"
+   ]
   },
   {
    "role": "citations",

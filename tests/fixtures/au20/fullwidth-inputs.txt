@@ -1,0 +1,8 @@
+Hello, World! 123
+It's `quoted` "text" ~|^_@#$%&*+-=<>?/[]
+{\b1}Bold{\b0} and {\i1}italic{\i0}.
+日本語 and ASCII: (a+b)=c;
+back\slash and \q stay
+   spaces   kept   
+Ｆｕｌｌ already, ｈａｌｆ mixed
+Thai ภาษาไทย 42

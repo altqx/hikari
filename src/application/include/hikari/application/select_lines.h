@@ -14,7 +14,9 @@
 namespace hikari::application {
 
 struct SelectLinesSettings {
-    enum class Field { Text, Style, Actor, Effect, Start, End };
+    // Overlaps: Lines that start while an earlier non-comment Line is still on, as select-overlaps.moon
+    // finds them; the find text is not used.
+    enum class Field { Text, Style, Actor, Effect, Start, End, Overlaps };
     enum class Mode { Select, AddToSelection, Deselect };
     enum class Action { None, Copy, Cut, MoveToBeginning, MoveToEnd, SetAsComment, Delete };
 
