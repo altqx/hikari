@@ -1802,6 +1802,7 @@ def mw_start(restore=0):
     """Three saved documents a.ass, b.ass, c.ass as tabs of one window, with the move and quit commands bound."""
     wins = mw_start_once(restore)
     if not wins:
+        B.snap("start-no-window")
         log(f"start: no window (alive {app('alive').strip()}); app log:\n{mw_app_log()}")
         wins = mw_start_once(restore)
     return wins
