@@ -4997,8 +4997,7 @@
    "legacy": [],
    "surfaces": [
     "select-lines"
-   ],
-   "pending": "AU10 #841"
+   ]
   },
   {
    "role": "split-tag-blocks",
@@ -5009,8 +5008,7 @@
    "legacy": [],
    "surfaces": [
     "grid-menu"
-   ],
-   "pending": "AU10 #841"
+   ]
   },
   {
    "role": "split-every-n",
@@ -5021,8 +5019,7 @@
    "legacy": [],
    "surfaces": [
     "grid-menu"
-   ],
-   "pending": "AU10 #841"
+   ]
   },
   {
    "role": "track-colour",

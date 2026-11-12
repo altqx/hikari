@@ -1011,6 +1011,8 @@ application::NodeEffectOptions NodeEffectsController::options() const
     if (m_luaNodes && ((o.trustLua && hasLua()) || hasPluginNodes()))
         o.lua = m_luaNodes();
     o.cache = const_cast<application::NodeEffectCache *>(&m_cache);
+    if (const auto *s = session())
+        o.newDocument = s->isNewDocument();
     if (m_audio)
         o.audio = m_audio();
     return o;

@@ -61,6 +61,9 @@ export const Method = {
     toolsCall: "_hikari/tools.call",
     mcpMessage: "_hikari/mcp.message",
     mcpClosed: "_hikari/mcp.closed",
+    mcpServersSet: "_hikari/mcpServers.set",
+    mcpServerStatus: "_hikari/mcpServers.status",
+    mcpAdmit: "_hikari/mcpServers.admit",
 } as const;
 
 export interface InitializeParams {
@@ -237,7 +240,13 @@ export interface CancelRequestParams {
 }
 
 /** Where a relayed request goes; Qt knows its base URL and key. */
-export type RelayTarget = ProviderTarget | { kind: "npm" };
+export type RelayTarget = ProviderTarget | { kind: "npm" } | McpTarget;
+
+/** A user-added MCP server over HTTP. Qt sends to its URL, whatever the request's URL says, and adds its secrets. */
+export interface McpTarget {
+    kind: "mcp";
+    id: string;
+}
 
 export interface ProviderTarget {
     /** A provider by its id, or the chosen search service by its SearchService id. */
@@ -297,4 +306,32 @@ export interface AgentOutputParams extends AgentProcessParams {
 export interface AgentExitParams extends AgentProcessParams {
     /** -1 when it crashed or was killed. */
     code: number;
+}
+
+/** A user-added MCP server, as Qt tells the sidecar: no command, URL or secret, which stay in Qt. */
+export interface McpServerConfig {
+    id: string;
+    name: string;
+    transport: "stdio" | "http";
+    /** Changes whenever the server's settings or secrets do, so the sidecar connects again. */
+    revision: number;
+}
+
+export interface McpServersSetParams {
+    servers: McpServerConfig[];
+}
+
+export interface McpServerStatusParams {
+    server: string;
+    state: "connecting" | "ready" | "failed";
+    tools?: number;
+    error?: string;
+}
+
+/** Asks Qt to let a session call one MCP tool once, with these arguments; Qt refuses with `hikariApi` `refused`. */
+export interface McpAdmitParams {
+    sessionId: string;
+    server: string;
+    tool: string;
+    arguments: Record<string, unknown>;
 }

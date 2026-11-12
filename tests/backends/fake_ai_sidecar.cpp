@@ -194,6 +194,12 @@ int main(int argc, char **argv)
             const std::int64_t mine = nextId++;
             sessionCalls.emplace(mine, session);
             turn.calling = true;
+            if (const Json *method = call.find("method"); method && method->isString()) {
+                Json p = params ? *params : Json::object();
+                p["sessionId"] = session;
+                send(Json::object({{"jsonrpc", "2.0"}, {"id", mine}, {"method", *method}, {"params", std::move(p)}}));
+                return;
+            }
             send(Json::object({{"jsonrpc", "2.0"}, {"id", mine}, {"method", "_hikari/api.call"},
                                {"params", Json::object({{"operation", name},
                                                         {"params", params ? *params : Json::object()},

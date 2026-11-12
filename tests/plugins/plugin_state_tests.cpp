@@ -1,5 +1,7 @@
 #include "plugin_state.h"
 
+#include "hikari/api/api.h"
+
 extern "C" {
 #include <lauxlib.h>
 #include <lua.h>
@@ -439,7 +441,7 @@ TEST_F(PluginStateTest, TranslationsFallBackFromRegionToLanguageToEnglish)
 TEST_F(PluginStateTest, TheHikariGlobalNamesThePlugin)
 {
     EXPECT_EQ(evaluate("hikari.plugin.id .. ' ' .. hikari.plugin.version .. ' ' .. hikari.api_version"),
-              "com.example.test 1.0.0 1");
+              "com.example.test 1.0.0 " + std::to_string(hikari::api::kApiVersion));
     EXPECT_EQ(evaluate("hikari.i18n.locale"), "en");
 }
 

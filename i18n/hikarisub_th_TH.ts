@@ -5949,6 +5949,42 @@ Failed to copy %2 fonts.</source>
         <source>Copy</source>
         <translation>คัดลอก</translation>
     </message>
+    <message>
+        <source>At tag blocks</source>
+        <translation>ที่บล็อกแท็ก</translation>
+    </message>
+    <message>
+        <source>Every N frames or seconds…</source>
+        <translation>ทุก N เฟรมหรือวินาที…</translation>
+    </message>
+    <message>
+        <source>Split every</source>
+        <translation>แบ่งทุก</translation>
+    </message>
+    <message>
+        <source>Every</source>
+        <translation>ทุก</translation>
+    </message>
+    <message>
+        <source>Piece length</source>
+        <translation>ความยาวแต่ละส่วน</translation>
+    </message>
+    <message>
+        <source>Frames</source>
+        <translation>เฟรม</translation>
+    </message>
+    <message>
+        <source>Seconds</source>
+        <translation>วินาที</translation>
+    </message>
+    <message>
+        <source>Unit</source>
+        <translation>หน่วย</translation>
+    </message>
+    <message>
+        <source>Frames need a video.</source>
+        <translation>การใช้เฟรมต้องมีวิดีโอ</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Home</name>
@@ -7680,6 +7716,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Align to video…</source>
         <translation>จัดให้ตรงกับวิดีโอ…</translation>
+    </message>
+    <message>
+        <source>Split lines at tag blocks</source>
+        <translation>แบ่งบรรทัดที่บล็อกแท็ก</translation>
+    </message>
+    <message>
+        <source>Split lines every N frames or seconds…</source>
+        <translation>แบ่งบรรทัดทุก N เฟรมหรือวินาที…</translation>
     </message>
 </context>
 <context>
@@ -14354,6 +14398,152 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>Requests go only to the providers you add and to %1. The AI component isn’t sandboxed on this system.</source>
         <translation>คำขอจะส่งไปยังผู้ให้บริการที่คุณเพิ่มและ %1 เท่านั้น ระบบนี้ไม่ได้รันคอมโพเนนต์ AI ในแซนด์บ็อกซ์</translation>
     </message>
+    <message>
+        <source>Delete MCP server</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete the MCP server “%1”?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Its secrets are removed from the keychain, and the agent loses its tools.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Starting…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Connected · %n tool(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Failed: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed</source>
+        <translation type="unfinished">ล้มเหลว</translation>
+    </message>
+    <message>
+        <source>Starts when the agent needs it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add an MCP server</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Runs as</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A command on this computer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A URL (streamable HTTP)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Command</source>
+        <translation type="unfinished">คำสั่ง</translation>
+    </message>
+    <message>
+        <source>Environment</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Leave empty to keep the stored variables</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>URL</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bearer token</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Leave empty to keep the stored token</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Optional</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>One NAME=value per line. They go to the keychain, and only to this server.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The token goes to the keychain, and only to this URL.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Trust what this server says about its tools</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A trusted server’s read-only tools run without asking. Without trust, every tool asks as a change would.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Give the server a name.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Type the command that starts the server.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Type the server’s http or https URL.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Write each variable as NAME=value on its own line.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The keychain didn’t take the secrets; nothing was saved.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>MCP servers</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No MCP servers yet. Add one to give the agent its tools.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add server…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Trust what it says about its tools</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Run %1 without asking</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 · only reads, never asks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 · asks every time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Servers run as you, outside the AI component’s sandbox. Tools that may change or delete things ask first in every mode. Changes apply at once.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Plugins</name>
@@ -16872,6 +17062,10 @@ because it was edited.</source>
     <message>
         <source>%1 lines deselected.</source>
         <translation>ยกเลิกการเลือก %1 บรรทัดแล้ว</translation>
+    </message>
+    <message>
+        <source>Overlapping lines</source>
+        <translation>บรรทัดที่ซ้อนกัน</translation>
     </message>
 </context>
 <context>
@@ -19803,6 +19997,10 @@ Styles deleted:
         <translation>โค้ดสำหรับแต่ละบรรทัด</translation>
     </message>
     <message>
+        <source>Uses karaOK template syntax. Switch Template language to karaOK to use it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>The new line goes above the first karaoke line, with that line’s style.</source>
         <translation>บรรทัดใหม่จะอยู่เหนือบรรทัดคาราโอเกะแรก โดยใช้สไตล์ของบรรทัดนั้น</translation>
     </message>
@@ -20092,6 +20290,86 @@ Styles deleted:
     <message>
         <source>The karaoke fills from left to right, fading in with the line and out after it.</source>
         <translation>คาราโอเกะเติมสีจากซ้ายไปขวา ค่อยๆ ปรากฏพร้อมบรรทัดและค่อยๆ จางหายหลังบรรทัด</translation>
+    </message>
+    <message>
+        <source>Word pop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each word swells as it starts and settles back while it is sung.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Word wipe</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The line shows whole, and a second colour wipes across each word while it is sung.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Letter cascade</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Letters appear one after another along the line before it is sung.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Letter shimmer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each letter tilts and brightens as it is sung, then straightens.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Furigana rise</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Furigana rises into place over each syllable as it is sung.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Early lead-in</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each syllable lights up a moment before it is sung.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Wave bounce</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each syllable bobs up and down on a sine wave while it is sung (ln.kara).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shape burst</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Six stars burst out of each syllable as it is sung (ln.kara).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Line gradient</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The line’s letters run through a band of colours from left to right (ln.kara).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Thai fade</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each character cluster fades in as it is sung, so Thai vowels and tone marks stay on their letters.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>syllable duration (ms)</source>

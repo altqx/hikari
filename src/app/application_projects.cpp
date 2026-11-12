@@ -64,6 +64,15 @@ const application::Settings &Application::windowSettings(int shellWindow) const
     return views(shellWindow).settings->settings();
 }
 
+std::optional<api::ProjectState> Application::activeProject() const
+{
+    const QString root = m_projects ? m_projects->root(m_workspace.activeWindow()) : QString();
+    if (root.isEmpty())
+        return std::nullopt;
+    return api::ProjectState{m_projects->name(m_workspace.activeWindow()).toStdString(), root.toStdString(),
+                             projectTrusted(root)};
+}
+
 void Application::applyWindowProject(int shellWindow)
 {
     if (shellWindow != 0 && !m_shellWindows.contains(shellWindow)) {
@@ -105,6 +114,8 @@ void Application::applyWindowProject(int shellWindow)
     if (shellWindow == m_workspace.activeWindow())
         applyGrammarSettings();
     spellingRefresh();
+    if (m_apiHost)
+        m_apiHost->observe();
 }
 
 void Application::loadProjectFonts(int shellWindow)

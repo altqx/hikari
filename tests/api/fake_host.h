@@ -222,7 +222,8 @@ public:
     FakeTranslation translation;
     Host host()
     {
-        return Host{this, this, this, &settings, &media, &files, &review, render, &skills, &automation, typeset, &translation};
+        return Host{this, this, this, &settings, &media, &files, &review, render, &skills, &automation, typeset, nullptr,
+                    &translation};
     }
 
     const application::Workspace &workspace() const override { return workspace_; }

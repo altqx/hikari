@@ -94,6 +94,8 @@ struct NodeEffectOptions {
     // Only these karaoke Lines; all of them when unset.
     std::optional<std::set<core::LineId>> sources;
     NodeEffectCache *cache = nullptr;
+    // EditSession::isNewDocument: places follow karaOK until a mode line or a template or code Line decides.
+    bool newDocument = false;
     unsigned threads = 0; // 0: one per hardware thread
     // Filled by a run that evaluates; cached Lines are not evaluated, so pass no cache with it.
     NodeValueTrace *trace = nullptr;

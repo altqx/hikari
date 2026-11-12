@@ -31,6 +31,7 @@ class ApiHost final : public QObject,
                       public api::FileHost,
                       public api::RenderHost,
                       public api::TypesetHost,
+                      public api::ProjectHost,
                       public api::TranslationHost {
     Q_OBJECT
     // (command, run) => null for a command the shell cannot run; else
@@ -59,6 +60,8 @@ public:
         std::filesystem::path skills;
         api::AutomationHost *automation = nullptr;
         std::function<application::visual::perspective::TextMeasure()> measure;
+        // The Project of the window the user works in.
+        std::function<std::optional<api::ProjectState>()> project;
         std::function<std::optional<std::filesystem::path>(application::DocumentId)> translationFolder;
     };
     explicit ApiHost(Wiring wiring, QObject *parent = nullptr);
@@ -96,6 +99,8 @@ public:
                                                     std::int64_t frame, int width, int height) override;
     application::visual::perspective::TextMeasure measure() const override;
 
+    std::optional<api::ProjectState> project() const override;
+
 private:
     struct Seen {
         std::uint64_t revision = 0;
@@ -112,6 +117,7 @@ private:
     std::map<std::uint64_t, Seen> m_seen;
     std::vector<application::DocumentId> m_seenDocuments;
     std::optional<application::DocumentId> m_seenTarget;
+    std::optional<api::ProjectState> m_seenProject;
     bool m_observing = false;
     std::unique_ptr<backends::SubtitleRendererSelection> m_renderer;
     std::unique_ptr<application::DocumentOverlay> m_overlay;

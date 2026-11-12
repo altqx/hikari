@@ -102,9 +102,10 @@ const kPlacements: Partial<Record<OperationName, Placement>> = {
 
 /**
  * Operations no tool offers as they are: search_commands wraps commands.list, read_skill the skills, the sidecar
- * knows the version, and only a translation run Qt approved writes the project files.
+ * knows the version, project.info answers for the window the user works in, not the thread's, and only a
+ * translation run Qt approved writes the project files.
  */
-const kUnoffered: readonly OperationName[] = ["commands.list", "skills.list", "skills.read", "api.version",
+const kUnoffered: readonly OperationName[] = ["commands.list", "skills.list", "skills.read", "api.version", "project.info",
     "translation.project_write"];
 
 /** MCP's Tool, as `tools/list` gives it. */

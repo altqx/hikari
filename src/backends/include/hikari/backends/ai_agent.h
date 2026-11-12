@@ -57,7 +57,11 @@ bool asksPermission(const std::string &operation);
 /// `allowed` holds what the user allowed for the whole thread (see allowanceKey).
 Decision decide(AgentMode mode, const std::string &operation, bool alwaysAsk, bool allowed);
 
-/// What "Allow in this thread" covers: the operation, or the one command for commands.run.
+/// An MCP tool call, from its hints after trust: reads run, destructive tools ask in every mode, tools the user
+/// approved run, and the mode decides the rest. `allowed` is "Allow in this thread".
+Decision decideMcp(AgentMode mode, bool readOnly, bool destructive, bool approved, bool allowed);
+
+/// What "Allow in this thread" covers: the operation, the one command for commands.run, or the one MCP tool.
 std::string allowanceKey(const std::string &operation, const api::Json &params);
 
 /// The judge's request without its model: the action and the user's messages, never file content or tool output.
@@ -221,6 +225,8 @@ private:
     void sessionUpdate(const api::Json &params);
     void gate(const std::string &session, const std::string &operation, const api::Json &params,
               AiSidecarHost::Admit admit, std::function<void(std::function<void()>)> onWithdraw);
+    void gateMcp(AgentThread &thread, const api::Json &params, AiSidecarHost::Admit admit,
+                 std::function<void(std::function<void()>)> onWithdraw);
     void judge(AgentThread &thread, const std::string &operation, const api::Json &params, AiSidecarHost::Admit admit,
                std::function<void(std::function<void()>)> onWithdraw);
     void openAsk(AgentThread &thread, Decision kind, const std::string &operation, const api::Json &params,

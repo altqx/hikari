@@ -79,6 +79,7 @@
 #include "settings_store.h"
 #include "hikari/app/ai_features.h"
 #include "hikari/app/ai_mcp.h"
+#include "hikari/app/ai_mcp_servers.h"
 #include "hikari/app/ai_settings.h"
 #include "hikari/app/agent_controller.h"
 #include "hikari/app/inline_ai_controller.h"
@@ -344,6 +345,7 @@ public:
     // The toast for a tab moved into `shellWindow`; "" when that window has no Project.
     Q_INVOKABLE QString projectMoveText(int shellWindow) const;
     QString projectOf(int shellWindow) const { return m_projects->root(shellWindow); }
+    std::optional<api::ProjectState> activeProject() const;
     ProjectWindows &projects() { return *m_projects; }
     // "modified" when the target's file is newer than when last read or written;
     // "removed" once when it is gone (the Document becomes unsaved).
@@ -467,8 +469,10 @@ public:
     Q_INVOKABLE int removeAutosavesOlderThan(const QDate &date);
     bool autosaveNow();
     bool autosavePending(application::DocumentId document) const;
-    // kind: "videoTime" or "frames".
+    // kind: "videoTime", "frames", "chars", "words", "wraps" or "tagBlocks".
     Q_INVOKABLE bool splitLines(const QString &kind);
+    // Each selected Line in pieces of `count` frames, or seconds; frames need video.
+    Q_INVOKABLE bool splitEvery(int count, bool seconds);
     Q_INVOKABLE bool canPasteTranslation() const;
     Q_INVOKABLE QUrl targetFolder() const;
     Q_INVOKABLE bool pasteTranslationFile(const QUrl &file);
@@ -1290,6 +1294,7 @@ private:
     std::unique_ptr<ApiHost> m_apiHost;
     std::unique_ptr<AiFeatures> m_ai;
     std::unique_ptr<AiMcp> m_aiMcp;
+    std::unique_ptr<AiMcpServers> m_aiMcpServers;
     std::unique_ptr<AiSettings> m_aiSettings;
     std::unique_ptr<ReviewController> m_review;
     std::unique_ptr<AgentController> m_agent;

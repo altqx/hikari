@@ -9776,6 +9776,71 @@ private slots:
         QTRY_VERIFY(!dialog->property("visible").toBool());
     }
 
+    void splitAtTagBlocksAndEveryNFromTheGridMenu()
+    {
+        const QString path = dir.filePath(QStringLiteral("split-every.ass"));
+        {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[Script Info]\nPlayResX: 640\nPlayResY: 360\n\n[V4+ Styles]\n"
+                    "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, "
+                    "Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, "
+                    "Shadow, Alignment, MarginL, MarginR, MarginV, Encoding\n"
+                    "Style: Default,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,0,"
+                    "0,2,10,10,10,1\n\n[Events]\n"
+                    "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                    "Dialogue: 0,0:00:00.00,0:00:05.00,Default,,0,0,0,,{\\b1}ab{\\i1}cd\n"
+                    "Dialogue: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,,{\\b1}ef{\\i1}gh\n");
+        }
+        application->setAskForBadResolution(false);
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        auto *root = engine->rootObjects().first();
+        const auto select = [&](std::size_t row) {
+            const auto id = session->document().lines()[row]->id;
+            session->setSelection(application::Selection{id, {id}, id, {}});
+        };
+        auto *tagBlocks = root->findChild<QObject *>(QStringLiteral("splitAtTagBlocks"));
+        auto *everyN = root->findChild<QObject *>(QStringLiteral("splitEveryN"));
+        QVERIFY(tagBlocks && everyN);
+        QCOMPARE(tagBlocks->property("iconRole").toString(), QStringLiteral("split-tag-blocks"));
+        QCOMPARE(everyN->property("iconRole").toString(), QStringLiteral("split-every-n"));
+
+        select(1);
+        auto before = session->historySize();
+        QVERIFY(QMetaObject::invokeMethod(tagBlocks, "triggered"));
+        QTRY_COMPARE(session->document().lines().size(), std::size_t(3));
+        QCOMPARE(session->historySize(), before + 1);
+        const auto &piece = session->document().lines()[2]->text;
+        QVERIFY(std::u8string_view(piece).find(u8"\\i1}gh") != std::u8string_view::npos);
+
+        select(0);
+        QVERIFY(QMetaObject::invokeMethod(everyN, "triggered"));
+        QObject *dialog = nullptr;
+        QTRY_VERIFY((dialog = root->findChild<QObject *>(QStringLiteral("splitEveryDialog"))) &&
+                    dialog->property("visible").toBool());
+        auto *apply = dialogItem("splitEveryDialog", "splitEveryApply");
+        QVERIFY(!apply->property("enabled").toBool());
+        QVERIFY(dialogItem("splitEveryDialog", "splitEveryHint")->property("visible").toBool());
+        dialogItem("splitEveryDialog", "splitEveryUnit")->setProperty("currentIndex", 1);
+        dialogItem("splitEveryDialog", "splitEveryCount")->setProperty("value", 2);
+        QTRY_VERIFY(apply->property("enabled").toBool());
+        before = session->historySize();
+        QVERIFY(QMetaObject::invokeMethod(apply, "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QCOMPARE(session->historySize(), before + 1);
+        QCOMPARE(session->history().back().name, std::string("Splitting lines"));
+        QCOMPARE(session->document().lines().size(), std::size_t(5));
+        QCOMPARE(session->document().lines()[1]->start.value.microseconds(), std::int64_t{2'000'000});
+
+        QVERIFY(QMetaObject::invokeMethod(everyN, "triggered"));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QCOMPARE(dialogItem("splitEveryDialog", "splitEveryCount")->property("value").toInt(), 2);
+        QCOMPARE(dialogItem("splitEveryDialog", "splitEveryUnit")->property("currentIndex").toInt(), 1);
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("splitEveryDialog", "splitEveryCancel"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+    }
+
     void motionDataScreenshots()
     {
         const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
@@ -18091,6 +18156,40 @@ private slots:
         QVERIFY(!mcp->server());
     }
 
+    void settingsAiMcpServersAreAddedInPlaceWithTheirSecretsInTheKeychain()
+    {
+        auto stored = std::make_shared<MemoryAi>();
+        app::AiFeatures::Ports ports;
+        ports.keyStore = [stored] { return std::make_unique<MemoryAiKeys>(stored); };
+        ports.configStore = [stored] { return std::make_unique<MemoryAiConfigs>(stored); };
+        app::Application::Options options;
+        options.settingsFile = dir.filePath(QStringLiteral("ai-mcp-servers/hikari.ini"));
+        options.playbackAudio = false;
+        options.aiPorts = std::move(ports);
+        restartWith(options);
+        auto restart = qScopeGuard([&] { restartWith(app::Application::Options()); });
+        auto *dialog = openSettings();
+        QTRY_VERIFY(dialog && dialog->property("visible").toBool());
+        showSettingsPage("ai");
+        QTRY_VERIFY(dialogItem("settingsDialog", "aiMcpServers")->isVisible());
+        QVERIFY(dialogItem("settingsDialog", "aiNoMcpServers")->isVisible());
+
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "aiAddMcpServer"), "click"));
+        QTRY_VERIFY(dialogItem("settingsDialog", "aiMcpServerForm"));
+        QVERIFY(!dialogItem("settingsDialog", "aiNoMcpServers")->isVisible());
+        dialogItem("settingsDialog", "aiMcpServerName")->setProperty("text", QStringLiteral("Notes"));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "aiMcpServerSave"), "click"));
+        QTRY_VERIFY(dialogItem("settingsDialog", "aiMcpServerError")->isVisible());
+        dialogItem("settingsDialog", "aiMcpServerCommand")->setProperty("text", QStringLiteral("notes-mcp --stdio"));
+        dialogItem("settingsDialog", "aiMcpServerEnvironment")->setProperty("text", QStringLiteral("NOTES_TOKEN=t0k"));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "aiMcpServerSave"), "click"));
+        QTRY_VERIFY(dialogItem("settingsDialog", "aiMcpServer_notes"));
+        QTRY_VERIFY(!dialogItem("settingsDialog", "aiMcpServerForm"));
+        QCOMPARE(dialogItem("settingsDialog", "aiMcpServerStatus")->property("text").toString(),
+                 QStringLiteral("Starts when the agent needs it"));
+        QVERIFY(stored->keys["mcp-server:notes"].find("t0k") != std::string::npos);
+    }
+
     void settingsAiMcpOffersTheAiComponentWithoutAProvider()
     {
         test::LocalRelease release;
@@ -21743,7 +21842,7 @@ private slots:
                                      "Video", "Audio", "Conversion", "Script properties", "Automation", "Shortcuts",
                                      "AI", "Updates and privacy"}));
         QVERIFY(dialogItem("settingsDialog", "settingsPageHotkeys"));
-        QCOMPARE(hotkeyRows().size(), 350);
+        QCOMPARE(hotkeyRows().size(), 352);
         QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(),
                  QStringLiteral("Global Accept the timing assistant\u2019s suggestion"));
         QCOMPARE(application->hotkeys().selected(), 0);

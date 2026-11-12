@@ -1,4 +1,4 @@
-hikari_add_gtest(hikari_api_tests SOURCES json_tests.cpp schema_tests.cpp api_tests.cpp media_file_tests.cpp
+hikari_add_gtest(hikari_api_tests SOURCES json_tests.cpp schema_tests.cpp api_tests.cpp media_file_tests.cpp folder_tests.cpp
     reference_tests.cpp reference_markdown_tests.cpp skill_tests.cpp automation_tests.cpp typeset_tests.cpp
     translation_tests.cpp script_client.cpp
     LIBRARIES hikari_api hikari_regex LABELS api)

@@ -5,7 +5,7 @@
 #include <string>
 #include <string_view>
 
-namespace hikari::plugins {
+namespace hikari::api {
 
 inline std::string lowered(std::string_view s)
 {
