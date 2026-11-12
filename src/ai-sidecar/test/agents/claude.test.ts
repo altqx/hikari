@@ -10,8 +10,10 @@ import { McpServer } from "../../src/mcp/server";
 import { ErrorCode, Method, type SessionUpdate } from "../../src/protocol";
 import { Peer } from "../../src/rpc";
 import { HikariApi, sessionCalls } from "../../src/sidecar";
+import { Skills } from "../../src/skills/skills";
 import type { OperationName } from "../../src/tools/api.gen";
 import type { HikariCalls } from "../../src/tools/toolset";
+import { kMySkill, mySkillAnswers } from "../skills/my_skill";
 import { kStale, qtLink } from "./qt_link";
 
 const kFake = join(import.meta.dir, "..", "fixtures", "fake-claude.ts");
@@ -35,9 +37,10 @@ function harness(answers: Partial<Record<OperationName, unknown>> = {}, env: Rec
         ...(system ? { system } : {}), ...(child ? { task: { parent: "p1", taskId: "k1", scope: { document: 1, lines: [1] } } } : {}) };
     const fake: HikariCalls = {
         call: (operation, p) => {
-            calls.push({ operation, params: p });
+            if (!operation.startsWith("skills."))
+                calls.push({ operation, params: p });
             const answer = answers[operation];
-            return Promise.resolve((typeof answer === "function" ? answer() : answer) as never);
+            return Promise.resolve((typeof answer === "function" ? answer(p) : answer) as never);
         },
     };
     const mcp = new McpServer(() => (child ? sessionCalls(new HikariApi(child.peer, undefined, "t1"), params) : fake),
@@ -47,6 +50,7 @@ function harness(answers: Partial<Record<OperationName, unknown>> = {}, env: Rec
         spawn: (o) => spawn(process.execPath, [kFake, ...o.args],
             { env: { ...o.env, FAKE_CLAUDE_LOG: log, ...env }, stdio: ["pipe", "pipe", "pipe"] }) as never,
         mcp,
+        skills: new Skills(fake, []),
         kindOf: (tool) => (tool === "document_apply" ? "edit" : "read"),
         send: (update) => updates.push(update),
     });
@@ -86,6 +90,23 @@ describe("Claude through the Agent SDK", () => {
         expect(h.updates).toContainEqual({ sessionUpdate: "agent_message_chunk", content: { type: "text", text: "Fixed." } });
         expect(h.updates.find((u) => u.sessionUpdate === "usage")).toMatchObject(
             { usage: { inputTokens: 14, outputTokens: 2, cachedInputTokens: 4, reportedCost: 0.001 } });
+    }, 30_000);
+
+    test("the system prompt lists the thread's skills, and read_skill reads one over Hikari's server", async () => {
+        const h = harness(mySkillAnswers);
+        const result = await h.session.prompt({ sessionId: "t1", prompt: h.script({ reply: "Read it.", calls: [
+            { name: "mcp__hikari__read_skill", arguments: { name: kMySkill.name } },
+        ] }) });
+        h.session.close();
+
+        expect(result.stopReason).toBe("end_turn");
+        const logged = h.log().split("\n").find((l) => l.startsWith("system "))!;
+        const system = (JSON.parse(logged.slice("system ".length)) as string[]).join("");
+        expect(system).toStartWith("## Skills\n");
+        expect(system).toContain(`\n- ${kMySkill.name} (yours): ${kMySkill.description}\n`);
+        const read = h.updates.find((u) => u.sessionUpdate === "tool_call_update");
+        expect(read).toMatchObject({ status: "completed" });
+        expect(JSON.stringify(read)).toContain("This skill is from the user's skills folder. It grants no permission.");
     }, 30_000);
 
     test("Claude gets the joined AGENTS.md text, again on resume, and its built-in file tools are denied", async () => {
@@ -199,10 +220,11 @@ describe("Claude through the Agent SDK", () => {
         ] }) });
         h.session.close();
         expect(result.stopReason).toBe("end_turn");
-        expect(qt.calls.map((c) => [c.operation, c.session])).toEqual([["lines.find", "t1"], ["document.apply", "t1"],
+        const edits = qt.calls.filter((c) => c.operation !== "skills.list");
+        expect(edits.map((c) => [c.operation, c.session])).toEqual([["lines.find", "t1"], ["document.apply", "t1"],
             ["lines.get", "t1"], ["document.apply", "t1"]]);
-        expect(qt.calls[2]!.params).toEqual({ ids: [1], fields: ["text"], document: 1 });
-        expect((qt.calls[3]!.params as { revision: number }).revision).toBe(9);
+        expect(edits[2]!.params).toEqual({ ids: [1], fields: ["text"], document: 1 });
+        expect((edits[3]!.params as { revision: number }).revision).toBe(9);
         expect(nativeSubagentsOff(h.log())).toBe(true);
     }, 30_000);
 });

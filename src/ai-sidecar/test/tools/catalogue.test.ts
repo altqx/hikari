@@ -79,6 +79,14 @@ describe("the tool catalogue", () => {
         expect(apply.properties.edits.items.oneOf[0].properties.op).toEqual({ enum: ["set_line"] });
     });
 
+    test("offers the plugin tools in plugins, with scaffold, install and run writing", () => {
+        const plugins = kOwn.entries.filter((e) => e.group === "plugins");
+        expect(plugins.map((e) => e.tool.name).sort()).toEqual(["plugins_install", "plugins_list", "plugins_manifest",
+            "plugins_review", "plugins_run", "plugins_scaffold"]);
+        expect(plugins.filter((e) => !e.tool.annotations.readOnlyHint).map((e) => e.tool.name).sort())
+            .toEqual(["plugins_install", "plugins_run", "plugins_scaffold"]);
+    });
+
     test("offers the graph tools in effects, with only save and apply writing", () => {
         const effects = kOwn.entries.filter((e) => e.group === "effects");
         expect(effects.map((e) => e.tool.name).sort()).toEqual(["effects_apply", "effects_edit", "effects_graph",

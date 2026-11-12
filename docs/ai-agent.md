@@ -105,13 +105,14 @@ Each thread has a mode. Qt decides every write a session sends, so a sidecar tha
 | --- | --- |
 | Manual | `document.apply` becomes a [proposal](#proposals) and writes nothing until the user applies it. Other writes ask: Allow once, Allow in this thread, or Deny. |
 | Auto | The judge decides. When it doesn't approve, the user is asked with the judge's reason. |
-| Full access | Everything runs, except the always-ask list and [AI-written Lua](#ai-written-lua). |
+| Full access | Everything runs, except the always-ask list, [AI-written Lua](#ai-written-lua) and [plugin installs](#ai-written-plugins). |
 
 - **Private settings.** `settings_list` and `settings_get` never show a thread or an MCP agent the `privacy.*` settings (the usage data ID among them) or the `recent.*` lists (recent-file paths and times). Folder settings stay readable. Plugins still read them.
 - Reads never ask. Neither do `selection.set`, `panels.open`, `panels.close` and `panels.focus`, which change no content and no setting.
 - `typeset.apply` isn't on the always-ask list: it changes the Document only after its render check passes, and asks as other writes do ([#1002](https://github.com/altqx/hikari/issues/1002)). Through MCP it is refused like every write but `document.apply`.
 - `karaoke.apply_template` changes the Document like `typeset.apply` and asks as other writes do.
 - `translation.project_write` follows the thread mode and isn't on the always-ask list: it writes only Honya's four project files in the document's own project folder ([AI translation](ai-translation.md)). No agent tool offers it; a translation run uses it after its Lines are written.
+- `plugins.scaffold` asks as other writes do: it writes only the AI plugins folder and installs nothing ([AI-written plugins](#ai-written-plugins)). `plugins.install` asks on every install in every mode, and `plugins.run` is on the always-ask list. Through MCP all three are refused.
 - `effects.save` and `effects.apply` ask as other writes do: the first writes a graph Line, the second a graph's generated Lines, each one undo step. Neither runs a Lua node, so an AI-built graph never runs code the user hasn't seen ([#444](https://github.com/altqx/hikari/issues/444)). Through MCP both are refused.
 - **MCP servers' tools** go through the modes by their hints: a trusted server's read-only tools never ask, destructive ones ask in every mode, and the mode decides the rest ([MCP servers](ai-mcp-clients.md#what-qt-enforces)).
 - **Web search** isn't under the thread modes or the always-ask list: the `web` tools go out through the HTTP relay, not `_hikari/api.call`. The per-thread globe (AI23b) controls it instead. It is on only while Let AI search the web is on, and a search sends only its query, never a file.
@@ -121,8 +122,8 @@ Each thread has a mode. Qt decides every write a session sends, so a sidecar tha
 | Category | Asks for | Doesn't ask, and why |
 | --- | --- | --- |
 | Deleting or overwriting files outside the subtitles' folders and the user folder | `files.write` to a file outside them (checked by the granted file's path); `commands.run` `GLOBAL_DELETE_TEMPORARY_FILES`; `settings.set` `fontCollector.directory` to a folder outside them | The Save commands write only the subtitle's own file and open a file dialog for any other path. Save as, Export, Save timecodes and Save session open a file dialog, so the user picks the path. Video snapshots make new files and never overwrite. `VIDEO_DELETE_FILE` only closes the video. |
-| Running external programs | `commands.run` `GLOBAL_AUTOMATION_LOAD_SCRIPT`, `GLOBAL_AUTOMATION_LOAD_LAST_SCRIPT`, `GLOBAL_AUTOMATION_REPEAT_LAST_RUN`, `GLOBAL_AUTOMATION_RELOAD_AUTOLOAD` and any `plugin.` command; `settings.set` `automation.scriptEditor`, `automation.lastScript`, `automation.disabledAutoload`, `updater.autoInstall`; every `karaoke.align`, which runs the user's WhisperX or `mfa` | `commands.run` reaches only built-in commands today; plugin commands ask in case that changes. |
-| Installing a plugin or granting full trust | `settings.set` `plugins.autoUpdate`, `plugins.network`, `automation.trustedFolders` | The Plugins window (`GLOBAL_PLUGINS`) installs and trusts only when the user clicks. |
+| Running external programs | `commands.run` `GLOBAL_AUTOMATION_LOAD_SCRIPT`, `GLOBAL_AUTOMATION_LOAD_LAST_SCRIPT`, `GLOBAL_AUTOMATION_REPEAT_LAST_RUN`, `GLOBAL_AUTOMATION_RELOAD_AUTOLOAD` and any `plugin.` command; every `plugins.run`; `settings.set` `automation.scriptEditor`, `automation.lastScript`, `automation.disabledAutoload`, `updater.autoInstall`; every `karaoke.align`, which runs the user's WhisperX or `mfa` | `commands.run` reaches only built-in commands today; plugin commands ask in case that changes. |
+| Installing a plugin or granting full trust | `settings.set` `plugins.autoUpdate`, `plugins.network`, `automation.trustedFolders`; `plugins.install` has its own card ([AI-written plugins](#ai-written-plugins)) | The Plugins window (`GLOBAL_PLUGINS`) installs and trusts only when the user clicks. |
 | Sending local files to the network | `settings.set` of any `privacy.` setting (crash reports, usage data, Discord) | Crash and issue reports send only from their own dialogs. |
 | AI settings | `settings.set` of any `ai.` setting | |
 
@@ -153,6 +154,18 @@ AI12 ([#440](https://github.com/altqx/hikari/issues/440), ADR 0024). The sidecar
 - **An ordinary macro.** Qt saves the script to `<user folder>/ai/scripts/<name>.lua`, replacing one of that name, and loads it in the Lua helper ([ADR 0006](adr/0006-isolated-lua-automation-host.md)). It runs one macro, the one named or the first, on the active tab's selection. That is one undo step, "Automation: <macro>" like any macro, and the Automation progress card offers Force stop. The script is unloaded afterwards and is never added to Autoload or to the subtitle's Script Info.
 - **The answer** is `{file, outcome, message, log}`, with the outcome Automation reports: `applied`, `refused`, `failed`, `cancelled`, `declined`, `stopped`, `lost` or `invalid` (no such macro). Another macro running answers `busy`; no open document, `refused`.
 - AI-written Lua never runs in the sidecar.
+
+## AI-written plugins
+
+AI17 ([#445](https://github.com/altqx/hikari/issues/445), owner Q406–Q412). An agent writes a plugin with `plugins_scaffold` and asks to install it with `plugins_install`:
+
+- **Scaffold.** `plugins.scaffold {plugin, name, commands, code?, files?, tier?, permissions?}` writes `<user folder>/ai/plugins/<id>/` from the [plugin guide's](plugin-guide.md) template and packs it as `<id>.hikariplugin` beside it, replacing an earlier one. The manifest is restricted unless `tier` is `unrestricted`; without `code`, `main.lua` registers each command. It asks as other writes do and installs nothing.
+- **What installs.** Only a package `plugins.scaffold` made or a `.hikariplugin` the user attached or granted (`file`). Never a marketplace package. A package over 1 MiB is refused before any card.
+- **Every install asks, in every mode.** `decide` answers `Install` for `plugins.install` before anything else; the judge never sees it and there's no Allow in this thread. The card, "Install this plugin?", shows what the Plugins window's install question shows: the tier, Unverified or the signing key, the permissions and the commands it adds, then the first 12 lines of `main.lua` and Show all N files. It offers Install, Don't install and Don't install and tell the agent….
+- **Full trust.** A manifest with `tier: unrestricted` turns the card red: "Install with full access?", with the button named so and never the default. A package signed by another key than the installed copy shows the key warning and Trust and install.
+- **Only the approved package installs.** `plugins.review` gives the package's SHA-256; Install sets `approvedPackage` to it on that one call's caller. `plugins.install` refuses any other caller with `not_granted`, and a package that changed since the card with `refused`. Qt installs through the same path as Install from file…, so the plugin turns on and Plugins can turn it off or uninstall it.
+- **One row per install** stays in the thread: "Installed X 0.1.0 · restricted" with Open in Plugins, or "Didn't install X" with the user's words. A declined install answers the agent `refused` with reason `declined` and those words.
+- **Running a command.** `plugins.run {plugin, command}` runs an installed plugin's command as its menu item would. It is on the always-ask list.
 
 ## Threads
 

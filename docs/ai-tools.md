@@ -42,7 +42,7 @@ Hikari AI's threads also get `update_plan` ([AI agent](ai-agent.md)) and `read_s
 | `app` | `panels_list`, `panels_open`, `panels_close`, `panels_focus`, `settings_list`, `settings_get`, `settings_set`; the two reads leave out `privacy.*` and `recent.*` ([Agent](ai-agent.md#modes)) |
 | `automation` | `automation_run`, which asks the user on every run ([AI-written Lua](ai-agent.md#ai-written-lua)) |
 | `translate` | `translation_project`: the Document's Honya project files ([AI translation pipeline](ai-translation.md)). |
-| `plugins` | none yet; the tool cards add them. |
+| `plugins` | `plugins_list`, `plugins_manifest`, `plugins_review`, `plugins_scaffold`, `plugins_install`, which asks the user on every install, and `plugins_run` ([AI-written plugins](ai-agent.md#ai-written-plugins)) |
 | `web` | `web_search`, `web_fetch`, while a search service is chosen ([Web search](#web-search)). |
 | `mcp_<id>` | one group per [MCP server](ai-mcp-clients.md) you added, with its tools. |
 | `agent` | in a root thread: the [sub-agent tools](ai-agent.md), offered from the start. |
