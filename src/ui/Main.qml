@@ -7278,7 +7278,7 @@ ApplicationWindow {
             Button {
                 objectName: "projectKeyValuesSettings"
                 text: qsTranslate("HikariSub.Project", "Project settings…")
-                onClicked: root.openSettings(undefined, undefined, "ai")
+                onClicked: root.openProjectSettingsPage("ai")
             }
         }
         InlineBar {
@@ -8710,7 +8710,8 @@ ApplicationWindow {
         settingsLoader.active = true
         return settingsLoader.item
     }
-    function openSettings(page, filter, projectPage) { settingsWindow().openDialog(page, filter, projectPage) }
+    function openSettings(page, filter) { settingsWindow().openDialog(page, filter) }
+    function openProjectSettingsPage(page) { settingsWindow().openDialog(undefined, undefined, page) }
     function repeatInlineAi(inEditor, field) {
         if (root.inlineAi.last.action)
             inlineAiBox.begin(Object.assign({}, root.inlineAi.last, {repeat: true}), inEditor, field)

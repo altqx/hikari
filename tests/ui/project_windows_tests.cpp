@@ -676,6 +676,103 @@ private slots:
         QVERIFY(application->projectNeedsTrust(other));
     }
 
+    void aProjectsOwnAiKeysWaitForTrust()
+    {
+        qputenv("HIKARI_PJ10_TEST_KEY", "sk-from-env");
+        start();
+        const QString show = folder("keyed", true);
+        writeAll(show + QStringLiteral("/.hikari/project.toml"),
+                 "version = 1\n[ai.keys]\nopenai = { env = \"HIKARI_PJ10_TEST_KEY\", entry = \"openai\" }\n");
+        const int w = openProjectWindow(show);
+        QVERIFY(w >= 0);
+        const QString root = application->projectRoot(w);
+        QCOMPARE(application->projectTrustReasons(w), QStringList{QStringLiteral("keys")});
+        QObject *bar = named(shell(w), "projectTrustBar");
+        QTRY_VERIFY(bar->property("visible").toBool());
+        QVERIFY(bar->property("text").toString().contains(QStringLiteral("AI keys")));
+        QVERIFY(!application->projectAiKey(root, "openai"));
+        auto row = application->projectAiKeys(w).value(QStringLiteral("rows")).toList().value(0).toMap();
+        QCOMPARE(row.value(QStringLiteral("id")).toString(), QStringLiteral("openai"));
+        QCOMPARE(row.value(QStringLiteral("used")).toString(), QStringLiteral("untrusted"));
+
+        QVERIFY(QMetaObject::invokeMethod(named(shell(w), "projectTrust"), "clicked"));
+        QTRY_VERIFY(!bar->property("visible").toBool());
+        QCOMPARE(application->projectAiKey(root, "openai"), std::optional<std::string>("sk-from-env"));
+        QVERIFY(!application->projectAiKey(root, "anthropic"));
+        row = application->projectAiKeys(w).value(QStringLiteral("rows")).toList().value(0).toMap();
+        QCOMPARE(row.value(QStringLiteral("used")).toString(), QStringLiteral("env"));
+        QCOMPARE(row.value(QStringLiteral("from")).toString(), QStringLiteral("HIKARI_PJ10_TEST_KEY"));
+        for (const QVariant &value : row)
+            QVERIFY(!value.toString().contains(QStringLiteral("sk-from-env")));
+
+        qunsetenv("HIKARI_PJ10_TEST_KEY");
+        writeAll(show + QStringLiteral("/.hikari/credentials.toml"), "version = 1\n[keys]\nopenai = \"sk-from-file\"\n");
+        QCOMPARE(application->projectAiKey(root, "openai"), std::optional<std::string>("sk-from-file"));
+    }
+
+    void aNamedKeyNobodyHasAsksNoTrust()
+    {
+        start();
+        const QString show = folder("unkeyed", true);
+        writeAll(show + QStringLiteral("/.hikari/project.toml"), "version = 1\n[ai.keys]\nopenai = { entry = \"openai\" }\n");
+        const int w = openProjectWindow(show);
+        QVERIFY(w >= 0);
+        QVERIFY(!application->projectNeedsTrust(w));
+        QVERIFY(!named(shell(w), "projectTrustBar")->property("visible").toBool());
+        QCOMPARE(application->projectAiKeys(w).value(QStringLiteral("rows")).toList().value(0).toMap()
+                     .value(QStringLiteral("used")).toString(), QStringLiteral("untrusted"));
+    }
+
+    void aKeyInProjectTomlIsIgnoredAndMovesToTheCredentialsFile()
+    {
+        start();
+        const QString show = folder("leaky", true);
+        const QString shared = show + QStringLiteral("/.hikari/project.toml");
+        writeAll(shared, "version = 1\n# Shared by the team.\n[ai.keys]\nopenrouter = \"sk-or-leaked\"\n");
+        application->settingsStore()->setValue(QStringLiteral("trust.folders"),
+                                               QStringList{QDir::toNativeSeparators(canonical(show))});
+        const int w = openProjectWindow(show);
+        QVERIFY(w >= 0);
+        const QString root = application->projectRoot(w);
+        QCOMPARE(application->projectKeyValuesFound(w), QStringList{QStringLiteral("openrouter")});
+        QVERIFY(!application->projectAiKey(root, "openrouter"));
+        QObject *bar = named(shell(w), "projectKeyValuesBar");
+        QTRY_VERIFY(bar->property("visible").toBool());
+        QVERIFY(!bar->property("text").toString().contains(QStringLiteral("sk-or")));
+
+        QVERIFY(application->moveProjectKeysToCredentials(w));
+        const QByteArray after = readAll(shared);
+        QVERIFY2(!after.contains("sk-or-leaked"), after);
+        QVERIFY2(after.contains("# Shared by the team."), after);
+        QVERIFY2(after.contains("openrouter = { entry = \"openrouter\" }"), after);
+        QVERIFY(readAll(show + QStringLiteral("/.hikari/credentials.toml")).contains("openrouter = \"sk-or-leaked\""));
+        QVERIFY(readAll(show + QStringLiteral("/.hikari/.gitignore")).contains("credentials.toml"));
+        QVERIFY(application->projectKeyValuesFound(w).isEmpty());
+        QTRY_VERIFY(!bar->property("visible").toBool());
+        QCOMPARE(application->projectAiKey(root, "openrouter"), std::optional<std::string>("sk-or-leaked"));
+    }
+
+    void createCredentialsFileFromTheProjectAiPage()
+    {
+        start();
+        const QString show = folder("fresh", true);
+        writeAll(show + QStringLiteral("/.hikari/project.toml"), "version = 1\n[ai.keys]\nanthropic = { entry = \"anthropic\" }\n");
+        const int w = openProjectWindow(show);
+        QVERIFY(w >= 0);
+        QVERIFY(QMetaObject::invokeMethod(shell(w), "openProjectSettingsPage", Q_ARG(QVariant, QStringLiteral("ai"))));
+        QTRY_VERIFY(dialog("settingsDialog"));
+        QQuickItem *content = dialog("settingsDialog")->contentItem();
+        QTRY_VERIFY(item(content, QStringLiteral("projectAiKeys")) && item(content, QStringLiteral("projectAiKeys"))->isVisible());
+        QQuickItem *create = item(content, QStringLiteral("projectCredentialsCreate"));
+        QVERIFY(create && create->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(create, "clicked"));
+        QTRY_VERIFY(!create->isVisible());
+        QVERIFY(readAll(show + QStringLiteral("/.hikari/credentials.toml")).contains("anthropic = \"\""));
+        QCOMPARE(readAll(show + QStringLiteral("/.hikari/.gitignore")), QByteArray("credentials.toml\nproject.local.toml\n"));
+        QVERIFY(!QFileInfo::exists(show + QStringLiteral("/.gitignore")));
+        QVERIFY(item(content, QStringLiteral("projectCredentialsOpen"))->isVisible());
+    }
+
     void projectFontFoldersJoinTheWindowsFonts()
     {
         start();
