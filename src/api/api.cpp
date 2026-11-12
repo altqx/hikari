@@ -83,6 +83,7 @@ const Registry &Api::registry()
         detail::addSkillOperations(r);
         detail::addAutomationOperations(r);
         detail::addNodeOperations(r);
+        detail::addEffectsOperations(r);
         detail::addEvents(r);
         return r;
     }();

@@ -37,7 +37,10 @@ NodeCatalogue engineNodes()
     return catalogue;
 }
 
-Json problemsJson(const std::vector<application::GraphProblem> &problems)
+
+}
+
+Json detail::problemsJson(const std::vector<application::GraphProblem> &problems)
 {
     Json out = Json::array();
     for (const application::GraphProblem &p : problems) {
@@ -50,8 +53,6 @@ Json problemsJson(const std::vector<application::GraphProblem> &problems)
         out.push(std::move(entry));
     }
     return out;
-}
-
 }
 
 NodeCatalogue &nodeCatalogue()
