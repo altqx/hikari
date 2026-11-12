@@ -17969,6 +17969,7 @@ private slots:
         QQuickItem *key = nullptr;
         QTRY_VERIFY((key = dialogItem("settingsDialog", "aiProviderKey")));
         QCOMPARE(dialogItem("settingsDialog", "aiProviderName")->property("text").toString(), QStringLiteral("Google Gemini"));
+        QCOMPARE(dialogItem("settingsDialog", "aiProviderId")->property("text").toString(), QStringLiteral("gemini"));
         QCOMPARE(dialogItem("settingsDialog", "aiProviderKeyRow")->property("text").toString(), QStringLiteral("Gemini API key"));
         QVERIFY(dialogItem("settingsDialog", "aiGeminiKeys")->isVisible());
         QVERIFY(!dialogItem("settingsDialog", "aiDownloadNotice")->isVisible());
@@ -17982,6 +17983,12 @@ private slots:
         QVERIFY(!dialogItem("settingsDialog", "aiProviderForm"));
         QTRY_COMPARE(dialogItem("settingsDialog", "aiRole_chat")->property("currentText").toString(),
                      QStringLiteral("B · Google Gemini"));
+        QVERIFY(QMetaObject::invokeMethod(page, "openForm", Q_ARG(QVariant, QStringLiteral("gemini")), Q_ARG(QVariant, QVariant())));
+        QTRY_VERIFY(dialogItem("settingsDialog", "aiProviderId"));
+        QCOMPARE(dialogItem("settingsDialog", "aiProviderId")->property("text").toString(), QStringLiteral("gemini-2"));
+        QVERIFY(dialogItem("settingsDialog", "aiProviderId")->property("readOnly").toBool());
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "aiDraftCancel"), "click"));
+        QTRY_VERIFY(!dialogItem("settingsDialog", "aiProviderForm"));
 
         QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "aiRole_judge"), "activated", Q_ARG(int, 1)));
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
