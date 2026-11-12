@@ -70,6 +70,7 @@ class ProjectWindowsTests : public QObject {
     app::ForwardedLaunches *forwarded = nullptr;
     QQmlApplicationEngine *engine = nullptr;
     QQuickWindow *window = nullptr;
+    QString userFolder;
 
     void start(application::SpellingBackendLoader spelling = {})
     {
@@ -77,6 +78,7 @@ class ProjectWindowsTests : public QObject {
         o.settingsFile = home.filePath(QStringLiteral("settings.toml"));
         o.playbackAudio = false;
         o.spellingBackend = std::move(spelling);
+        o.userFolder = userFolder;
         application = new app::Application(o);
         forwarded = new app::ForwardedLaunches(*application);
         engine = new QQmlApplicationEngine;
@@ -232,13 +234,17 @@ private slots:
         QDir(home.filePath(QStringLiteral("Dictionary"))).removeRecursively();
         QDir(dir.path()).removeRecursively();
         QDir().mkpath(dir.path());
+        if (!userFolder.isEmpty())
+            QDir(userFolder).removeRecursively();
+        userFolder.clear();
     }
 
     void theSkillsListIsTheWindowsProjectOverMineOverBuiltIn()
     {
+        userFolder = home.filePath(QStringLiteral("user"));
         start();
-        const QString mine = application->userFolder() + QStringLiteral("/ai/skills");
-        auto cleanMine = qScopeGuard([&] { QDir(mine).removeRecursively(); });
+        QCOMPARE(application->userFolder(), userFolder);
+        const QString mine = userFolder + QStringLiteral("/ai/skills");
         writeAll(mine + QStringLiteral("/signs/SKILL.md"), skillMd("Mine."));
         writeAll(mine + QStringLiteral("/typesetting/SKILL.md"), skillMd("Our way."));
         writeAll(mine + QStringLiteral("/notes/SKILL.md"), "no frontmatter");
