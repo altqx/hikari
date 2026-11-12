@@ -8,6 +8,7 @@
 #include <QMediaMetaData>
 #include <QUrl>
 #include <QVideoFrame>
+#include <QVideoSink>
 
 #include <chrono>
 #include <cstdlib>
@@ -68,29 +69,50 @@ bool nearSeek(const QVideoFrame &frame, std::int64_t requestedUs)
 
 }
 
+struct QtGeneralPlayer::Engine {
+    QMediaPlayer player;
+    QVideoSink sink;
+    std::unique_ptr<QAudioOutput> audio;
+};
+
 QtGeneralPlayer::QtGeneralPlayer(bool useAudioOutput, QObject *parent) : QObject(parent), m_useAudioOutput(useAudioOutput)
 {
-    m_player.setVideoSink(&m_sink);
     // Qt's FFmpeg reports no error for a video stream it cannot decode (AV1 without a hardware decoder).
     m_frameDeadline.setSingleShot(true);
     m_frameDeadline.setInterval(std::chrono::seconds(5));
     connect(&m_frameDeadline, &QTimer::timeout, this, &QtGeneralPlayer::missFrameDeadline);
-    setOutputDevice({});
-    connect(&m_player, &QMediaPlayer::mediaStatusChanged, this, &QtGeneralPlayer::onStatus);
-    connect(&m_player, &QMediaPlayer::playbackStateChanged, this, [this] {
+    m_seekFallback.setSingleShot(true);
+    m_seekFallback.setInterval(kSeekFallback);
+    connect(&m_seekFallback, &QTimer::timeout, this, [this] {
+        if (m_pendingSeek && m_heldBack.isValid())
+            deliver(std::exchange(m_heldBack, QVideoFrame()));
+    });
+}
+
+QtGeneralPlayer::Engine &QtGeneralPlayer::engine()
+{
+    if (m_engine)
+        return *m_engine;
+    m_engine = std::make_unique<Engine>();
+    QMediaPlayer &player = m_engine->player;
+    QVideoSink &sink = m_engine->sink;
+    player.setVideoSink(&sink);
+    applyOutputDevice();
+    connect(&player, &QMediaPlayer::mediaStatusChanged, this, &QtGeneralPlayer::onStatus);
+    connect(&player, &QMediaPlayer::playbackStateChanged, this, [this] {
         ++m_epoch;
         m_clock.valid = false;
         emit stateChanged();
     });
-    connect(&m_player, &QMediaPlayer::playbackRateChanged, this, [this] {
+    connect(&player, &QMediaPlayer::playbackRateChanged, this, [this] {
         ++m_epoch;
         m_clock.valid = false;
     });
-    connect(&m_player, &QMediaPlayer::errorOccurred, this, [this](QMediaPlayer::Error e, const QString &) {
+    connect(&player, &QMediaPlayer::errorOccurred, this, [this](QMediaPlayer::Error e, const QString &) {
         if (m_pendingOpen)
             failOpen(errorOf(e));
     });
-    connect(&m_sink, &QVideoSink::videoFrameChanged, this, [this, slot = m_slot](const QVideoFrame &frame) {
+    connect(&sink, &QVideoSink::videoFrameChanged, this, [this, slot = m_slot](const QVideoFrame &frame) {
         if (!frame.isValid())
             return;
         std::lock_guard lock(slot->mutex);
@@ -103,44 +125,46 @@ QtGeneralPlayer::QtGeneralPlayer(bool useAudioOutput, QObject *parent) : QObject
         if (!std::exchange(slot->queued, true))
             QMetaObject::invokeMethod(this, &QtGeneralPlayer::takeFrame, Qt::QueuedConnection);
     }, Qt::DirectConnection);
-    connect(&m_sink, &QVideoSink::subtitleTextChanged, this, &QtGeneralPlayer::subtitleTextChanged);
-    m_seekFallback.setSingleShot(true);
-    m_seekFallback.setInterval(kSeekFallback);
-    connect(&m_seekFallback, &QTimer::timeout, this, [this] {
-        if (m_pendingSeek && m_heldBack.isValid())
-            deliver(std::exchange(m_heldBack, QVideoFrame()));
-    });
+    connect(&sink, &QVideoSink::subtitleTextChanged, this, &QtGeneralPlayer::subtitleTextChanged);
+    return *m_engine;
 }
 
 void QtGeneralPlayer::setOutputDevice(const std::string &id)
 {
     m_outputRequest = id;
+    if (m_engine)
+        applyOutputDevice();
+}
+
+void QtGeneralPlayer::applyOutputDevice()
+{
     if (!m_useAudioOutput)
         return;
     const QList<QAudioDevice> outputs = QMediaDevices::audioOutputs();
     if (outputs.isEmpty())
         return;
     QAudioDevice device = QMediaDevices::defaultAudioOutput();
-    if (!id.empty()) {
-        const QByteArray wanted = QByteArray::fromStdString(id);
+    if (!m_outputRequest.empty()) {
+        const QByteArray wanted = QByteArray::fromStdString(m_outputRequest);
         for (const QAudioDevice &candidate : outputs)
             if (candidate.id() == wanted)
                 device = candidate;
     }
     if (device.isNull())
         device = outputs.front();
-    if (!m_audio) {
-        m_audio = std::make_unique<QAudioOutput>(device);
-        m_audio->setVolume(static_cast<float>(m_volume));
-        m_player.setAudioOutput(m_audio.get());
+    auto &audio = m_engine->audio;
+    if (!audio) {
+        audio = std::make_unique<QAudioOutput>(device);
+        audio->setVolume(static_cast<float>(m_volume));
+        m_engine->player.setAudioOutput(audio.get());
         return;
     }
-    m_audio->setDevice(device);
+    audio->setDevice(device);
 }
 
 std::string QtGeneralPlayer::outputDeviceId() const
 {
-    return m_audio ? m_audio->device().id().toStdString() : std::string();
+    return m_engine && m_engine->audio ? m_engine->audio->device().id().toStdString() : std::string();
 }
 
 QtGeneralPlayer::~QtGeneralPlayer()
@@ -150,7 +174,8 @@ QtGeneralPlayer::~QtGeneralPlayer()
         m_slot->alive = false;
         m_slot->frame = {};
     }
-    m_player.stop();
+    if (m_engine)
+        m_engine->player.stop();
 }
 
 void QtGeneralPlayer::takeFrame()
@@ -197,7 +222,7 @@ void QtGeneralPlayer::open(const std::string &path, Opened done)
     forgetSeek();
     m_pendingOpen = std::move(done);
     dropWaitingFrame();
-    m_player.setSource(QUrl::fromLocalFile(QString::fromStdString(path)));
+    engine().player.setSource(QUrl::fromLocalFile(QString::fromStdString(path)));
 }
 
 void QtGeneralPlayer::failOpen(PlayerError error)
@@ -212,7 +237,7 @@ void QtGeneralPlayer::onStatus(QMediaPlayer::MediaStatus status)
     if (!m_pendingOpen)
         return;
     if (status == QMediaPlayer::InvalidMedia)
-        return failOpen(errorOf(m_player.error()));
+        return failOpen(errorOf(m_engine->player.error()));
     if (status == QMediaPlayer::LoadedMedia || status == QMediaPlayer::BufferedMedia) {
         auto done = std::exchange(m_pendingOpen, nullptr);
         done(describe());
@@ -223,16 +248,19 @@ MediaDescription QtGeneralPlayer::describe() const
 {
     MediaDescription d;
     d.generation = m_generation;
-    if (m_player.duration() > 0)
-        d.durationUs = m_player.duration() * 1000;
-    d.seekable = m_player.isSeekable();
-    d.audioOutput = m_audio != nullptr;
-    d.videoTracks = tracksOf(m_player.videoTracks(), true);
-    d.audioTracks = tracksOf(m_player.audioTracks(), false);
-    d.subtitleTracks = tracksOf(m_player.subtitleTracks(), false);
-    d.activeVideo = m_player.activeVideoTrack();
-    d.activeAudio = m_player.activeAudioTrack();
-    d.activeSubtitle = m_player.activeSubtitleTrack();
+    if (!m_engine)
+        return d;
+    const QMediaPlayer &player = m_engine->player;
+    if (player.duration() > 0)
+        d.durationUs = player.duration() * 1000;
+    d.seekable = player.isSeekable();
+    d.audioOutput = m_engine->audio != nullptr;
+    d.videoTracks = tracksOf(player.videoTracks(), true);
+    d.audioTracks = tracksOf(player.audioTracks(), false);
+    d.subtitleTracks = tracksOf(player.subtitleTracks(), false);
+    d.activeVideo = player.activeVideoTrack();
+    d.activeAudio = player.activeAudioTrack();
+    d.activeSubtitle = player.activeSubtitleTrack();
     return d;
 }
 
@@ -243,9 +271,10 @@ MediaDescription QtGeneralPlayer::description() const
 
 void QtGeneralPlayer::seek(std::int64_t us, Seeked done)
 {
-    if (m_player.source().isEmpty() || m_pendingOpen)
+    if (!m_engine || m_engine->player.source().isEmpty() || m_pendingOpen)
         return done(std::unexpected(PlayerError::NotOpen));
-    if (!m_player.isSeekable())
+    QMediaPlayer &player = m_engine->player;
+    if (!player.isSeekable())
         return done(std::unexpected(PlayerError::Unsupported));
     if (us < 0)
         return done(std::unexpected(PlayerError::InvalidInput));
@@ -257,16 +286,16 @@ void QtGeneralPlayer::seek(std::int64_t us, Seeked done)
     if (m_mediaFrames == 0)
         m_frameDeadline.start();
     dropWaitingFrame();
-    const bool stopped = m_player.playbackState() == QMediaPlayer::StoppedState;
-    m_player.setPosition(us / 1000); // QMediaPlayer positions are milliseconds
+    const bool stopped = player.playbackState() == QMediaPlayer::StoppedState;
+    player.setPosition(us / 1000); // QMediaPlayer positions are milliseconds
     // A stopped QMediaPlayer delivers no frame for a seek.
     if (stopped)
-        m_player.pause();
+        player.pause();
 }
 
 void QtGeneralPlayer::missFrameDeadline()
 {
-    if (m_mediaFrames > 0 || !m_player.hasVideo())
+    if (m_mediaFrames > 0 || !m_engine || !m_engine->player.hasVideo())
         return;
     m_seekFallback.stop();
     if (auto seek = std::exchange(m_pendingSeek, std::nullopt))
@@ -296,9 +325,9 @@ void QtGeneralPlayer::deliver(const QVideoFrame &frame)
         m_clock.epoch = m_epoch;
         m_clock.mediaUs = start;
         m_clock.monotonicSeconds = monotonicSeconds();
-        m_clock.rate = m_player.playbackRate();
+        m_clock.rate = m_engine->player.playbackRate();
         m_clock.uncertaintyUs = end > start ? end - start : 0;
-        m_clock.valid = m_player.playbackState() == QMediaPlayer::PlayingState;
+        m_clock.valid = m_engine->player.playbackState() == QMediaPlayer::PlayingState;
     }
     if (m_pendingSeek && start >= 0) {
         auto pending = std::move(*m_pendingSeek);
@@ -318,17 +347,19 @@ void QtGeneralPlayer::deliver(const QVideoFrame &frame)
 
 void QtGeneralPlayer::play()
 {
-    m_player.play();
+    engine().player.play();
 }
 
 void QtGeneralPlayer::pause()
 {
-    m_player.pause();
+    if (m_engine)
+        m_engine->player.pause();
 }
 
 void QtGeneralPlayer::stop()
 {
-    m_player.stop();
+    if (m_engine)
+        m_engine->player.stop();
     forgetSeek();
 }
 
@@ -343,23 +374,29 @@ void QtGeneralPlayer::forgetSeek()
 
 bool QtGeneralPlayer::selectAudioTrack(int index)
 {
-    if (index < -1 || index >= m_player.audioTracks().size())
+    if (!m_engine)
+        return index == -1;
+    if (index < -1 || index >= m_engine->player.audioTracks().size())
         return false;
-    m_player.setActiveAudioTrack(index);
+    m_engine->player.setActiveAudioTrack(index);
     return true;
 }
 
 bool QtGeneralPlayer::selectSubtitleTrack(int index)
 {
-    if (index < -1 || index >= m_player.subtitleTracks().size())
+    if (!m_engine)
+        return index == -1;
+    if (index < -1 || index >= m_engine->player.subtitleTracks().size())
         return false;
-    m_player.setActiveSubtitleTrack(index);
+    m_engine->player.setActiveSubtitleTrack(index);
     return true;
 }
 
 PlaybackState QtGeneralPlayer::playbackState() const
 {
-    switch (m_player.playbackState()) {
+    if (!m_engine)
+        return PlaybackState::Stopped;
+    switch (m_engine->player.playbackState()) {
     case QMediaPlayer::PlayingState: return PlaybackState::Playing;
     case QMediaPlayer::PausedState: return PlaybackState::Paused;
     default: return PlaybackState::Stopped;
@@ -368,7 +405,9 @@ PlaybackState QtGeneralPlayer::playbackState() const
 
 MediaStatus QtGeneralPlayer::mediaStatus() const
 {
-    switch (m_player.mediaStatus()) {
+    if (!m_engine)
+        return MediaStatus::NoMedia;
+    switch (m_engine->player.mediaStatus()) {
     case QMediaPlayer::NoMedia: return MediaStatus::NoMedia;
     case QMediaPlayer::LoadingMedia: return MediaStatus::Loading;
     case QMediaPlayer::LoadedMedia: return MediaStatus::Loaded;
@@ -383,21 +422,21 @@ MediaStatus QtGeneralPlayer::mediaStatus() const
 
 double QtGeneralPlayer::bufferProgress() const
 {
-    return m_player.bufferProgress();
+    return m_engine ? m_engine->player.bufferProgress() : 0.0;
 }
 
 PlayerClock QtGeneralPlayer::clock() const
 {
     PlayerClock c = m_clock;
-    c.valid = c.valid && c.epoch == m_epoch && m_player.playbackState() == QMediaPlayer::PlayingState;
+    c.valid = c.valid && c.epoch == m_epoch && m_engine && m_engine->player.playbackState() == QMediaPlayer::PlayingState;
     return c;
 }
 
 void QtGeneralPlayer::setVolume(double linear)
 {
     m_volume = linear;
-    if (m_audio)
-        m_audio->setVolume(static_cast<float>(linear)); // QAudioOutput's volume is linear
+    if (m_engine && m_engine->audio)
+        m_engine->audio->setVolume(static_cast<float>(linear)); // QAudioOutput's volume is linear
 }
 
 }

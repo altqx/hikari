@@ -1215,18 +1215,12 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         };
     }
     makeAudio(*m_mainMedia);
-    {
-        if (options.makeAudioDevices)
-            m_audioDevices = options.makeAudioDevices();
-        else if (options.playbackAudio)
-            m_audioDevices = std::make_unique<backends::QtAudioDevices>();
-        else
-            m_audioDevices = std::make_unique<application::NoAudioDevices>();
-        m_audioRouting = std::make_unique<application::AudioOutputRouting>(
-            *m_audioDevices, [this] { return m_settings->settings().text("audio.outputDevice"); },
-            [this](const application::OutputRoute &route) { routeAudio(route, true); });
-        routeAudio(m_audioRouting->route(), false);
-    }
+    if (options.makeAudioDevices)
+        m_audioDevices = options.makeAudioDevices();
+    else if (options.playbackAudio)
+        m_audioDevices = std::make_unique<backends::QtAudioDevices>();
+    else
+        m_audioDevices = std::make_unique<application::NoAudioDevices>();
     m_recentAudio.set(m_settings->settings().list("recent.audio"));
     if (const int chars = m_settings->integer("program.tabTextMaxChars"); chars > 19)
         m_tabTextMax = chars;
@@ -1298,6 +1292,14 @@ void Application::makeAudio(WindowMedia &media)
 
 void Application::wireMedia(WindowMedia &media)
 {
+    connect(media.video.get(), &ui::VideoController::changed, this, [this, &media] {
+        if (!m_audioRouting && !media.video->dummy() && media.video->session().state() != application::VideoSession::State::Closed)
+            ensureAudioRoute();
+    });
+    media.audioConnections << connect(media.audio.get(), &ui::AudioController::changed, this, [this, &media] {
+        if (!m_audioRouting && media.audio->box().state() != application::AudioBox::State::Closed)
+            ensureAudioRoute();
+    });
     connect(media.video.get(), &ui::VideoController::changed, this, [this, &media] {
         if (directShowPlayback() && holdsDirectShow(media))
             media.video->session().preparePlayer();
@@ -1557,6 +1559,16 @@ void Application::reportSettingsFiles()
         m_log->log(QCoreApplication::translate("HikariSub.MainWindow", "hotkeys.toml: %1")
                        .arg(QString::fromStdString(ignored)),
                    ui::LogController::Info, title);
+}
+
+void Application::ensureAudioRoute()
+{
+    if (m_audioRouting)
+        return;
+    m_audioRouting = std::make_unique<application::AudioOutputRouting>(
+        *m_audioDevices, [this] { return m_settings->settings().text("audio.outputDevice"); },
+        [this](const application::OutputRoute &route) { routeAudio(route, true); });
+    routeAudio(m_audioRouting->route(), false);
 }
 
 void Application::routeAudio(const application::OutputRoute &route, bool move)
@@ -6931,6 +6943,7 @@ QVariantMap Application::openSettingsDialog()
     }
     lists.styles = stdList(m_styleManager->storeStyles());
     lists.renderers = m_renderer.providers();
+    ensureAudioRoute();
     lists.outputDevices = application::outputDeviceChoices(m_audioDevices->outputs(),
                                                            m_settings->settings().text("audio.outputDevice"),
                                                            m_settings->settings().text("audio.outputDeviceName"));
