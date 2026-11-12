@@ -52,17 +52,15 @@ const application::Settings &Application::windowSettings(int shellWindow) const
 
 void Application::applyWindowProject(int shellWindow)
 {
-    if (m_automation)
-        m_automation->projectsChanged();
-    if (m_pluginRuntime)
-        m_pluginRuntime->projectsChanged();
     if (shellWindow != 0 && !m_shellWindows.contains(shellWindow)) {
         m_projectFonts.erase(shellWindow);
+        projectScriptsAndPluginsChanged();
         return;
     }
     auto &v = views(shellWindow);
     const QString root = m_projects->root(shellWindow);
     v.settings->setProject(root, !root.isEmpty() && projectTrusted(root));
+    projectScriptsAndPluginsChanged();
     if (const auto *project = v.settings->project()) {
         const QString title = QCoreApplication::translate("HikariSub.Project", "Project settings");
         for (const auto &problem : project->problems())
@@ -110,6 +108,14 @@ std::map<int, std::optional<plugins::ProjectPlugins>> Application::windowPlugins
         entry = std::move(plugins);
     }
     return windows;
+}
+
+void Application::projectScriptsAndPluginsChanged()
+{
+    if (m_automation)
+        m_automation->projectsChanged();
+    if (m_pluginRuntime)
+        m_pluginRuntime->projectsChanged();
 }
 
 void Application::loadProjectFonts(int shellWindow)

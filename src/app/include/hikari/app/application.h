@@ -1432,6 +1432,7 @@ private:
     std::map<int, ProjectFonts> m_projectFonts;
     void loadProjectFonts(int shellWindow);
     std::map<int, std::optional<plugins::ProjectPlugins>> windowPlugins() const;
+    void projectScriptsAndPluginsChanged();
     void subtitleFontsChanged();
     bool setVideoFonts(std::optional<application::DocumentId> document);
     std::vector<std::pair<std::shared_ptr<const std::vector<std::byte>>, std::vector<std::string>>> m_leasedFontNames;
