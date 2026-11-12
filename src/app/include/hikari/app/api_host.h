@@ -66,6 +66,7 @@ public:
         std::function<std::optional<std::filesystem::path>(application::DocumentId)> translationFolder;
         api::KaraokeHost *karaoke = nullptr;
         std::function<application::NodeEffectOptions()> effects;
+        std::function<std::vector<std::string>(const std::string &root)> aiExclude;
     };
     explicit ApiHost(Wiring wiring, QObject *parent = nullptr);
     ~ApiHost() override;
@@ -104,6 +105,7 @@ public:
     application::NodeEffectOptions options() override;
 
     std::optional<api::ProjectState> project() const override;
+    std::vector<std::string> aiExclude(const std::string &root) const override;
 
 private:
     struct Seen {

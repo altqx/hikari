@@ -1,4 +1,5 @@
 #include "hikari/app/plugin_manager.h"
+#include "hikari/api/api.h"
 #include "hikari/backends/desktop_handoff.h"
 
 #include <QDir>
@@ -163,7 +164,7 @@ private slots:
         PluginManager manager(folders());
         QVERIFY(refusal(manager, "hello-tampered.hikariplugin").contains(QStringLiteral("changed after signing")));
         QCOMPARE(refusal(manager, "needs-api-99.hikariplugin"),
-                 QStringLiteral("This plugin needs Hikari API 99, and this HikariSub has API 1. Update HikariSub to install it."));
+                 QStringLiteral("This plugin needs Hikari API 99, and this HikariSub has API %1. Update HikariSub to install it.").arg(hikari::api::kApiVersion));
         QVERIFY(refusal(manager, "bad-schema.hikariplugin").startsWith(QStringLiteral("hikari-plugin.json fails the plugin schema at /id: ")));
         QVERIFY(refusal(manager, "not-a-zip.hikariplugin").contains(QStringLiteral("not a plugin package")));
         QCOMPARE(refusal(manager, "bad-icon.hikariplugin"),

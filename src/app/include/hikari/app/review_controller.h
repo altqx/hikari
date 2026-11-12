@@ -62,6 +62,8 @@ public:
     void refreshed();
     const Mark *mark(application::DocumentId document, core::LineId line) const;
     int waitingIn(application::DocumentId document) const;
+    /// "<child>: <count>" for the sub-agents' Lines still to review in a Document.
+    QString waitingByChild(application::DocumentId document) const;
 
     // change 0: every change in the target; item -1: the whole change.
     Q_INVOKABLE void keep(qulonglong change, int item);
@@ -93,6 +95,7 @@ private:
     Wiring m_wiring;
     absl::flat_hash_map<std::uint64_t, absl::flat_hash_map<std::uint64_t, Mark>> m_marks;
     absl::flat_hash_map<std::uint64_t, int> m_waiting;
+    absl::flat_hash_map<std::uint64_t, std::vector<std::pair<std::string, int>>> m_byChild;
     std::map<std::pair<std::uint64_t, std::size_t>, bool> m_pending; // (change, item) -> edited since
 };
 

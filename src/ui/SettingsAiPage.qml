@@ -417,7 +417,7 @@ ScrollView {
             objectName: "aiSkillDetail"
             text: skillRow.broken ? skillRow.modelData.problem
                 : skillRow.hidden ? skillRow.modelData.hidden
-                : skillRow.capped ? qsTr("Only the first %1 of its %2 files are offered.").arg(skillRow.modelData.files).arg(skillRow.modelData.found)
+                : skillRow.capped ? qsTr("Only the first %1 of its %2 files are offered.").arg(skillRow.modelData.files, skillRow.modelData.found)
                 : skillRow.modelData.description
             color: skillRow.broken ? Theme.danger : skillRow.capped && !skillRow.hidden ? Theme.warning : Theme.muted
             elide: Text.ElideRight
@@ -912,6 +912,20 @@ ScrollView {
                 text: qsTr("Name")
                 labelWidth: 150
                 TextField { id: nameField; objectName: "aiProviderName"; Layout.fillWidth: true; Accessible.name: qsTr("Name") }
+            }
+            SettingsRow {
+                text: qsTr("Id")
+                labelWidth: 150
+                TextEdit {
+                    objectName: "aiProviderId"
+                    text: form.editingOne ? form.providerId : page.ai.newProviderId(form.preset)
+                    readOnly: true
+                    selectByMouse: true
+                    color: Theme.muted
+                    font.family: "monospace"
+                    Layout.fillWidth: true
+                    Accessible.name: qsTr("Id")
+                }
             }
             SettingsRow {
                 visible: form.custom

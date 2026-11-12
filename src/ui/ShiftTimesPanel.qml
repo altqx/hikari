@@ -138,6 +138,7 @@ FocusScope {
                     shiftTimes: panel.shiftTimes
                     tool: "shift"
                     messages: panel.messages
+                    appSettings: panel.app ? panel.app.settings : null
                 }
                 GridLayout {
                     columns: 2

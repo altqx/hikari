@@ -52,6 +52,7 @@ public:
         std::uint64_t number = 0; // 1-based, in the order turns began
         std::string caller;       // the caller's id
         std::string label;        // the user's message, or the caller's label
+        std::uint64_t parent = 0; // a sub-agent's turn: the turn of the thread that started it
     };
 
     // A change still waiting: its item differs from what it was before the change.
@@ -62,7 +63,7 @@ public:
     };
 
     // A turn per user message; a write with no open turn for its caller opens one.
-    std::uint64_t beginTurn(const std::string &caller, std::string label);
+    std::uint64_t beginTurn(const std::string &caller, std::string label, std::uint64_t parent = 0);
 
     // `previous` is the history step before the change, `before` its Document.
     void record(DocumentId document, const std::string &callerId, const std::string &callerLabel, std::string name,
@@ -116,6 +117,7 @@ public:
 private:
     struct Open {
         std::uint64_t turn = 0;
+        std::uint64_t parent = 0;
         std::vector<std::pair<DocumentId, ContentId>> last; // the turn's newest step per Document
     };
 

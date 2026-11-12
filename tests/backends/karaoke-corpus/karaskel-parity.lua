@@ -1,5 +1,5 @@
--- Reports what karaskel's collect_head and preproc_line leave in their tables, from karaskel.lua or from
--- the helper's native builder, as text that is equal when the two are equal field for field.
+-- Reports what karaskel's collect_head and preproc_line leave in their tables, from karaskel.lua's own Lua or
+-- routed to the helper's native builder, as text that is equal when the two are equal field for field.
 script_name = "karaskel parity"
 
 include("karaskel.lua")
@@ -50,17 +50,35 @@ end
 
 local function run(native)
 	return function(subs)
-		local impl = native and aegisub.__karaskel_impl or karaskel
-		local meta, styles = impl.collect_head(subs, true)
+		local impl = aegisub.__karaskel_impl
+		local own_head, own_line = impl.collect_head, impl.preproc_line
+		local ran = { head = false, line = 0 }
+		impl.collect_head = function(...)
+			local meta, styles = own_head(...)
+			ran.head = meta ~= nil
+			return meta, styles
+		end
+		impl.preproc_line = function(...)
+			local done = own_line(...)
+			ran.line = ran.line + (done and 1 or 0)
+			return done
+		end
+		if not native then
+			aegisub.__karaskel_impl = nil
+		end
+		local meta, styles = karaskel.collect_head(subs, true)
 		local parts = { dump({ meta = meta, styles = styles }) }
 		for i = 1, #subs do
 			local line = subs[i]
 			if line.class == "dialogue" then
-				impl.preproc_line(subs, meta, styles, line)
+				karaskel.preproc_line(subs, meta, styles, line)
 				table.insert(parts, dump(line))
 			end
 		end
-		aegisub.hikari.report('{"dump":' .. json_string(table.concat(parts, "\n--\n")) .. "}")
+		aegisub.__karaskel_impl = impl
+		impl.collect_head, impl.preproc_line = own_head, own_line
+		aegisub.hikari.report('{"dump":' .. json_string(table.concat(parts, "\n--\n")) .. ',"native_head":'
+			.. tostring(ran.head) .. ',"native_lines":' .. ran.line .. "}")
 	end
 end
 

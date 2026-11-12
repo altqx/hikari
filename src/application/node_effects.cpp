@@ -4,6 +4,7 @@
 #include "hikari/application/karaoke_templates.h"
 #include "hikari/application/macro_transaction.h"
 #include "hikari/application/template_preview.h"
+#include "hikari/application/typesetting_line.h"
 
 #include <boost/dynamic_bitset.hpp>
 
@@ -53,6 +54,14 @@ namespace {
 NodeColour nodeColour(karaoke_layout::StyleColour c)
 {
     return {c.r, c.g, c.b};
+}
+
+int lineAlignment(const karaoke_layout::Line &line, const karaoke_layout::StyleInfo &style)
+{
+    const std::string &h = line.kara.halign, &v = line.kara.valign;
+    if (h.empty() || v.empty())
+        return style.align;
+    return (h == "left" ? 1 : h == "center" ? 2 : 3) + (v == "bottom" ? 0 : v == "middle" ? 3 : 6);
 }
 
 enum class Kind {
@@ -1017,6 +1026,7 @@ NodeValue Evaluator::info(std::string_view port, const Element &e) const
             {"style_outline_colour",
              [](auto &, auto &, auto &s, auto &) { return NodeValue(nodeColour(s.outlineColour)); }},
             {"style_back", [](auto &, auto &, auto &s, auto &) { return NodeValue(nodeColour(s.back)); }},
+            {"line_alignment", [](auto &, auto &, auto &s, auto &line) { return NodeValue(double(lineAlignment(line, s))); }},
         };
     return kFields.at(port)(u, l, s, m_line);
 }
@@ -1064,6 +1074,10 @@ double calculated(std::string_view op, double a, double b)
         return std::floor(a + 0.5);
     if (op == "absolute")
         return std::fabs(a);
+    if (op == "sine" || op == "cosine") {
+        const double radians = a * std::numbers::pi / 180;
+        return std::floor((op == "sine" ? std::sin(radians) : std::cos(radians)) * 1e6 + 0.5) / 1e6;
+    }
     return -a;
 }
 
@@ -1468,6 +1482,11 @@ std::string cacheKey(const Compiled &c, int emitRank, const karaoke_layout::Line
 
 }
 
+bool isTypesettingSource(const core::LineRecord &line)
+{
+    return !graphNameOf(line) && !templateKindOf(line) && !isGeneratedLine(line) && !line.effect.starts_with(u8"fx ");
+}
+
 NodeEffectRun runNodeEffect(const core::Document &document, std::u8string_view name, std::u8string_view style,
                             const NodeGraph &graph, const NodeEffectOptions &options)
 {
@@ -1475,6 +1494,7 @@ NodeEffectRun runNodeEffect(const core::Document &document, std::u8string_view n
     NodeEffectRun run;
     run.name = std::u8string(name);
     run.complete = !options.sources.has_value();
+    run.typesetting = graph.target == GraphTarget::Lines;
     const auto finish = [&]() -> NodeEffectRun {
         run.seconds = std::chrono::duration<double>(std::chrono::steady_clock::now() - began).count();
         return std::move(run);
@@ -1487,6 +1507,9 @@ NodeEffectRun runNodeEffect(const core::Document &document, std::u8string_view n
         run.problems.push_back({p.node, std::nullopt, p.port.empty() ? p.message : p.port + " " + p.message});
     if (!options.measure)
         run.problems.push_back({{}, std::nullopt, "no text measurement is available"});
+    const bool typesetting = graph.target == GraphTarget::Lines;
+    if (typesetting && !options.sources)
+        run.problems.push_back({{}, std::nullopt, "targets the Lines you choose, and none were chosen"});
     if (!run.problems.empty())
         return finish();
     const Compiled compiled = compile(*flattenGraph(graph));
@@ -1520,12 +1543,15 @@ NodeEffectRun runNodeEffect(const core::Document &document, std::u8string_view n
         if (isGeneratedBy(*l, name))
             continue;
         li += 1;
-        if (!isKaraokeLine(*l) || (!graph.allStyles && l->style != style))
+        if (typesetting ? !isTypesettingSource(*l)
+                        : !isKaraokeLine(*l) || (!graph.allStyles && l->style != style))
             continue;
         if (options.sources && !options.sources->contains(l->id))
             continue;
         std::vector<std::string> problems;
         lines.push_back(layout.line(macroLineOf(*l), li, {.chars = compiled.chars, .karaOK = karaOK}, problems));
+        if (typesetting)
+            placeTypesettingLine(lines.back());
         layoutProblems.push_back(std::move(problems));
         run.sources.push_back(l->id);
     }
@@ -1548,7 +1574,8 @@ NodeEffectRun runNodeEffect(const core::Document &document, std::u8string_view n
             const auto t0 = std::chrono::steady_clock::now();
             std::vector<Generated> out;
             const std::string key =
-                options.cache ? cacheKey(compiled, static_cast<int>(k), lines[i], name, audio) : "";
+                options.cache ? cacheKey(compiled, static_cast<int>(k), lines[i], name, audio) + (typesetting ? "\x1eL" : "")
+                              : "";
             bool cached = false;
             if (options.cache) {
                 auto &store = options.cache->store();
@@ -1647,12 +1674,48 @@ bool sameOutput(const core::LineRecord &a, const core::LineRecord &b)
            a.text == b.text;
 }
 
+bool applyTypesetting(core::Document &document, const NodeEffectRun &run)
+{
+    const std::set<core::LineId> sources(run.sources.begin(), run.sources.end());
+    std::set<core::LineId> old;
+    std::optional<core::LineId> following;
+    for (const core::LineRecord *l : document.lines()) {
+        if (!isGeneratedBy(*l, run.name)) {
+            following = sources.contains(l->id) ? std::optional(l->id) : std::nullopt;
+            continue;
+        }
+        const std::optional<core::LineId> owner =
+            l->generatedFrom.value != 0 ? std::optional(l->generatedFrom) : following;
+        if (owner && sources.contains(*owner))
+            old.insert(l->id);
+    }
+    if (old.empty() && run.lines.empty())
+        return false;
+    for (const auto &fields : run.styles)
+        document.appendStyle(fields);
+    std::map<core::LineId, core::LineId> lastOf;
+    for (const core::LineRecord &line : run.lines) {
+        const auto at = lastOf.find(line.generatedFrom);
+        const core::LineId after = at != lastOf.end() ? at->second : line.generatedFrom;
+        const auto id = document.insertLineAfter(after, line);
+        if (!id)
+            return false;
+        lastOf[line.generatedFrom] = *id;
+    }
+    document.removeLinesIf([&](const core::LineRecord &l) { return old.contains(l.id); });
+    for (const core::LineId id : run.applied)
+        document.editLine(id, [](core::LineRecord &line) { line.comment = true; });
+    return true;
+}
+
 }
 
 bool applyNodeEffect(core::Document &document, const NodeEffectRun &run, const NodeEffectRun *owners)
 {
     if (!run.ran)
         return false;
+    if (run.typesetting)
+        return applyTypesetting(document, run);
     std::map<core::LineId, core::LineId> ownerOf;
     if (owners) {
         boost::dynamic_bitset<> used(owners->lines.size());
@@ -2037,6 +2100,9 @@ private:
             return luaScalar(std::string(call->second) + "(" + x + (binary ? ", " + y : std::string()) + ")");
         if (op == "round")
             return luaScalar("math.floor(" + x + " + 0.5)");
+        if (op == "sine" || op == "cosine")
+            return luaScalar("(math.floor(math." + std::string(op == "sine" ? "sin" : "cos") + "(" + x +
+                             " * math.pi / 180) * 1e6 + 0.5) / 1e6)");
         return luaScalar("(-" + x + ")");
     }
 

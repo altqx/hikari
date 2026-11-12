@@ -61,7 +61,7 @@ The Explorer is core, not a plugin ([ADR 0022](0022-hikarisub-plugins.md), "Plug
   - The Project tab lists only the pages and rows a Project can set. Each row says "Uses yours", "Set in this project" or "Set in project.local.toml"; a row from project.local.toml is read-only.
   - "Use yours" removes the key from project.toml. Apply writes only the keys that changed, and only to project.toml.
   - A Yours row the Project sets says "Overridden in this project".
-- **The allowlist** is the dictionary language and spelling switch, grammar, the Script Info values written on save ([#892](https://github.com/altqx/hikari/issues/892)), and moving tags from the original in translation mode. Lists are replaced, not merged.
+- **The allowlist** is the dictionary language and spelling switch, grammar, the Script Info values written on save ([#892](https://github.com/altqx/hikari/issues/892)), and moving tags from the original in translation mode, plus `ai.exclude`. Lists are replaced, not merged, except `ai.exclude`: the paths never sent to AI are the built-in defaults, the user's list and the Project's list together, so neither list can drop a default and widen what is sent (coordinator, 2026-11-12, [PJ7b #902](https://github.com/altqx/hikari/issues/902)).
 - **A setting that widens** what a Project may do applies only once its folder is trusted. None of today's allowlisted settings widens.
 
 ## Shared things with a Project tier

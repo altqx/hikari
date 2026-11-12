@@ -9,22 +9,40 @@ import { AgentRelay } from "../../src/agents/relay";
 import { McpServer } from "../../src/mcp/server";
 import { ErrorCode, Method, type SessionUpdate } from "../../src/protocol";
 import { Peer } from "../../src/rpc";
+import { HikariApi, sessionCalls } from "../../src/sidecar";
 import type { OperationName } from "../../src/tools/api.gen";
+import type { HikariCalls } from "../../src/tools/toolset";
+import { kStale, qtLink } from "./qt_link";
 
 const kFake = join(import.meta.dir, "..", "fixtures", "fake-claude.ts");
 
-function harness(answers: Partial<Record<OperationName, unknown>> = {}, env: Record<string, string> = {}) {
+const kJoined = "You are Hikari AI.\n\nInstructions from the user's AGENTS.md:\n\nUse Oxford commas.\n\n" +
+    "Instructions from this Project's AGENTS.md:\n\nKeep honorifics.";
+
+function nativeSubagentsOff(log: string) {
+    const args = JSON.parse(log.split("\n")[0]!.slice("args ".length)) as string[];
+    const flag = args.indexOf("--disallowedTools");
+    const value = flag >= 0 ? args[flag + 1] ?? "" : args.find((a) => a.startsWith("--disallowedTools="))?.slice(18) ?? "";
+    return ["Agent", "Task"].every((tool) => value.split(/[ ,]/).includes(tool));
+}
+
+function harness(answers: Partial<Record<OperationName, unknown>> = {}, env: Record<string, string> = {}, system?: string,
+    child?: ReturnType<typeof qtLink>) {
     const log = join(mkdtempSync(join(tmpdir(), "fake-claude-")), "log");
     const calls: { operation: string; params: unknown }[] = [];
     const updates: SessionUpdate[] = [];
-    const mcp = new McpServer(() => ({
-        call: (operation, params) => {
-            calls.push({ operation, params });
+    const params = { sessionId: "t1", agent: "claude" as const, model: { providerId: "", model: "" },
+        ...(system ? { system } : {}), ...(child ? { task: { parent: "p1", taskId: "k1", scope: { document: 1, lines: [1] } } } : {}) };
+    const fake: HikariCalls = {
+        call: (operation, p) => {
+            calls.push({ operation, params: p });
             const answer = answers[operation];
             return Promise.resolve((typeof answer === "function" ? answer() : answer) as never);
         },
-    }), { name: "hikarisub", title: "HikariSub", version: "test" });
-    const session = new ClaudeSession("t1", { sessionId: "t1", agent: "claude", model: { providerId: "", model: "" } }, {
+    };
+    const mcp = new McpServer(() => (child ? sessionCalls(new HikariApi(child.peer, undefined, "t1"), params) : fake),
+        { name: "hikarisub", title: "HikariSub", version: "test" });
+    const session = new ClaudeSession("t1", params, {
         sdk: () => import("@anthropic-ai/claude-agent-sdk"),
         spawn: (o) => spawn(process.execPath, [kFake, ...o.args],
             { env: { ...o.env, FAKE_CLAUDE_LOG: log, ...env }, stdio: ["pipe", "pipe", "pipe"] }) as never,
@@ -58,6 +76,7 @@ describe("Claude through the Agent SDK", () => {
         expect(args).toContain("--permission-mode=dontAsk");
         expect(args).not.toContain("--bare");
         expect(args.some((a) => a.startsWith("--dangerously"))).toBe(false);
+        expect(nativeSubagentsOff(h.log())).toBe(true);
 
         const tools = h.updates.filter((u) => u.sessionUpdate === "tool_call");
         expect(tools.map((u) => u.sessionUpdate === "tool_call" && [u.title, u.kind]))
@@ -67,6 +86,32 @@ describe("Claude through the Agent SDK", () => {
         expect(h.updates).toContainEqual({ sessionUpdate: "agent_message_chunk", content: { type: "text", text: "Fixed." } });
         expect(h.updates.find((u) => u.sessionUpdate === "usage")).toMatchObject(
             { usage: { inputTokens: 14, outputTokens: 2, cachedInputTokens: 4, reportedCost: 0.001 } });
+    }, 30_000);
+
+    test("Claude gets the joined AGENTS.md text, again on resume, and its built-in file tools are denied", async () => {
+        const h = harness({}, {}, kJoined);
+        const result = await h.session.prompt({ sessionId: "t1", prompt: h.script({ reply: "No.", calls: [
+            { name: "Read", arguments: { file_path: "/show/.env" } },
+            { name: "Edit", arguments: { file_path: "/show/ep01.ass", old_string: "a", new_string: "b" } },
+            { name: "Write", arguments: { file_path: "/show/notes.md", content: "x" } },
+        ] }) });
+        expect(result.stopReason).toBe("end_turn");
+        expect(h.log()).toContain("denied Read");
+        expect(h.log()).toContain("denied Edit");
+        expect(h.log()).toContain("denied Write");
+        expect(h.log()).not.toContain("ran built-in");
+        expect(h.calls).toEqual([]);
+
+        await expect(h.session.prompt({ sessionId: "t1", prompt: h.script({ fail: "gone" }) })).rejects.toThrow();
+        expect((await h.session.prompt({ sessionId: "t1", prompt: h.script({ reply: "back" }) })).stopReason).toBe("end_turn");
+        h.session.close();
+        const lines = h.log().split("\n");
+        expect(lines.filter((l) => l.startsWith("system ")).map((l) => JSON.parse(l.slice("system ".length))))
+            .toEqual([[kJoined], [kJoined]]);
+        const runs = lines.filter((l) => l.startsWith("args ")).map((l) => JSON.parse(l.slice("args ".length)) as string[]);
+        expect(runs).toHaveLength(2);
+        expect(runs[0]!.some((a) => a.startsWith("--resume"))).toBe(false);
+        expect(runs[1]).toContain("--resume=fake-session");
     }, 30_000);
 
     test("one query serves every turn of the thread", async () => {
@@ -138,5 +183,26 @@ describe("Claude through the Agent SDK", () => {
         await expect(failed).rejects.toThrow("Claude said: Invalid API key · Please run /login");
         expect(h.session.stderrTail).toContain("Please run /login");
         h.session.close();
+    }, 30_000);
+
+    test("as a sub-agent it edits through _hikari/api.call, and a stale write in its scope runs again once", async () => {
+        const qt = qtLink({
+            "lines.find": [{ revision: 3, total: 1, lines: [{ id: 1, row: 1, text: "Helo" }] }],
+            "document.apply": [kStale, { revision: 10, inserted: [], changed: true }],
+            "lines.get": [{ revision: 9, lines: [{ id: 1, row: 2, text: "Helo" }] }],
+        });
+        const h = harness({}, {}, undefined, qt);
+        const result = await h.session.prompt({ sessionId: "t1", prompt: h.script({ reply: "Fixed.", calls: [
+            { name: "mcp__hikari__lines_find", arguments: { document: 1, text: "Helo" } },
+            { name: "mcp__hikari__document_apply", arguments: { document: 1, revision: 3, name: "Fix",
+                edits: [{ op: "set_line", line: 1, fields: { text: "Hello" } }] } },
+        ] }) });
+        h.session.close();
+        expect(result.stopReason).toBe("end_turn");
+        expect(qt.calls.map((c) => [c.operation, c.session])).toEqual([["lines.find", "t1"], ["document.apply", "t1"],
+            ["lines.get", "t1"], ["document.apply", "t1"]]);
+        expect(qt.calls[2]!.params).toEqual({ ids: [1], fields: ["text"], document: 1 });
+        expect((qt.calls[3]!.params as { revision: number }).revision).toBe(9);
+        expect(nativeSubagentsOff(h.log())).toBe(true);
     }, 30_000);
 });

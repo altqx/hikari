@@ -2,7 +2,9 @@
 
 #include "hikari/api/folder.h"
 
+#include <algorithm>
 #include <filesystem>
+#include <iterator>
 
 namespace hikari::api::detail {
 
@@ -54,6 +56,46 @@ std::expected<fs::path, Error> inside(const GrantedFolder &folder, const std::st
     return *real;
 }
 
+std::vector<std::string> aiExcludes(const Context &context, const GrantedFolder &folder)
+{
+    if (!context.caller.reviewed)
+        return {};
+    std::vector<std::string> globs(std::begin(kAiExcludeDefaults), std::end(kAiExcludeDefaults));
+    if (context.host.settings)
+        std::ranges::move(context.host.settings->list("ai.exclude"), std::back_inserter(globs));
+    if (context.host.project)
+        std::ranges::move(context.host.project->aiExclude(folder.path), std::back_inserter(globs));
+    return globs;
+}
+
+std::optional<Error> excluded(const Context &context, const GrantedFolder &folder, const std::string &path,
+                              const fs::path &real, bool isFolder)
+{
+    const std::vector<std::string> globs = aiExcludes(context, folder);
+    if (globs.empty())
+        return std::nullopt;
+    std::error_code error;
+    const std::u8string generic = real.lexically_relative(fs::canonical(pathOf(folder.path), error)).generic_u8string();
+    const std::string resolved(generic.begin(), generic.end());
+    if (!excludedPath(path, isFolder, globs) && !excludedPath(resolved == "." ? std::string() : resolved, isFolder, globs))
+        return std::nullopt;
+    return Error{std::string(errors::kRefused), "\"" + path + "\" matches ai.exclude, so it is never sent to AI.",
+                 Json::object({{"path", Json(path)}, {"reason", Json("excluded")}})};
+}
+
+bool mediaFile(const std::string &path)
+{
+    static constexpr std::string_view kMedia[] = {
+        "avi", "mp4", "mkv",  "ogm", "wmv", "asf", "rmvb", "rm",  "3gp", "ts",   "m2ts", "m4v", "flv",  "webm", "mpg",
+        "mpeg", "mov", "wav", "mp3", "flac", "ogg", "opus", "m4a", "aac", "ac3", "eac3", "dts", "wma", "mka", "aiff"};
+    const std::size_t dot = path.find_last_of("./\\");
+    if (dot == std::string::npos || path[dot] != '.')
+        return false;
+    std::string extension = path.substr(dot + 1);
+    std::ranges::transform(extension, extension.begin(), [](char c) { return c >= 'A' && c <= 'Z' ? char(c - 'A' + 'a') : c; });
+    return std::ranges::find(kMedia, extension) != std::end(kMedia);
+}
+
 // The file a call names: a granted `file`, or a `path` inside a granted `folder`, which grants it.
 std::expected<GrantedFile, Error> named(const Context &context, const Json &params)
 {
@@ -81,6 +123,8 @@ std::expected<GrantedFile, Error> named(const Context &context, const Json &para
     std::error_code error;
     if (fs::is_directory(*real, error))
         return fail(errors::kRefused, "\"" + path->asString() + "\" is a folder.", Json::object({{"reason", Json("folder")}}));
+    if (auto refused = excluded(context, **folder, path->asString(), *real, false))
+        return std::unexpected(std::move(*refused));
     const std::string resolved = utf8(*real);
     return GrantedFile{context.grantFile(resolved, (*folder)->writable), path->asString(), resolved, (*folder)->writable};
 }
@@ -99,13 +143,18 @@ Result folderList(const Context &context, const std::string &handle, const std::
     const auto real = inside(**folder, path);
     if (!real)
         return std::unexpected(real.error());
+    if (auto refused = excluded(context, **folder, path, *real, true))
+        return std::unexpected(std::move(*refused));
     const auto listed = folderEntries(pathOf((*folder)->path), *real);
     if (!listed)
         return fail(errors::kNotFound, "\"" + path + "\" isn't a folder.", Json::object({{"path", Json(path)}}));
+    const std::vector<std::string> globs = aiExcludes(context, **folder);
     Json entries = Json::array();
-    for (const FolderEntry &entry : listed->entries)
-        entries.push(Json::object({{"path", Json(path.empty() ? entry.name : path + "/" + entry.name)},
-                                   {"folder", Json(entry.folder)}}));
+    for (const FolderEntry &entry : listed->entries) {
+        const std::string inner = path.empty() ? entry.name : path + "/" + entry.name;
+        if (!excludedPath(inner, entry.folder, globs))
+            entries.push(Json::object({{"path", Json(inner)}, {"folder", Json(entry.folder)}}));
+    }
     out["entries"] = std::move(entries);
     if (listed->truncated)
         out["truncated"] = Json(true);
@@ -137,6 +186,9 @@ Result filesRead(const Context &context, const Json &params)
     const auto file = named(context, params);
     if (!file)
         return std::unexpected(file.error());
+    if (context.caller.reviewed && mediaFile(file->path))
+        return fail(errors::kRefused, "\"" + file->name + "\" is a media file; read it through video.frame or audio.peaks.",
+                    Json::object({{"reason", Json("media")}}));
     const auto bytes = context.host.files->read(file->path, kMaxFileBytes + 1);
     if (!bytes)
         return fail(errors::kNotFound, "\"" + file->name + "\" cannot be read.", Json::object({{"file", Json(file->handle)}}));
@@ -181,7 +233,7 @@ Result filesWrite(const Context &context, const Json &params)
 
 constexpr std::string_view kNamed =
     R"("file": {"type": "string", "description": "A handle from files.list."},
-       "folder": {"type": "string", "description": "Instead of file, a folder handle from files.list (since version 2)."},
+       "folder": {"type": "string", "description": "Instead of file, a folder handle from files.list."},
        "path": {"type": "string", "description": "With folder, the file's path inside it, with / between its parts."})";
 constexpr std::string_view kEncoding = R"("encoding": {"enum": ["utf8", "base64"], "description": "Default utf8."})";
 
@@ -192,7 +244,7 @@ void addFileOperations(Registry &registry)
     addOperation(registry, Access::Read, "files.list",
                  "The files and folders the user granted this caller; with folder, also what that folder holds.",
                  R"({"type": "object", "properties": {
-                     "folder": {"type": "string", "description": "A folder handle to list (since version 2)."},
+                     "folder": {"type": "string", "description": "A folder handle to list."},
                      "path": {"type": "string", "description": "A folder inside it; default the folder itself."}},
                      "additionalProperties": false})",
                  R"({"type": "object", "properties": {"files": {"type": "array", "items": {"$ref": "#/$defs/GrantedFile"}},

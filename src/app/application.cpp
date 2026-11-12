@@ -35,6 +35,7 @@
 #include "hikari/application/video_matrix.h"
 #include "hikari/application/script_resolution.h"
 #include "hikari/application/video_properties.h"
+#include "hikari/application/tiers.h"
 #include "hikari/core/spelling.h"
 #include "hikari/core/text_projection.h"
 #include "hikari/core/conversion.h"
@@ -632,6 +633,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         *m_files,
         m_workspace, [this]() -> ui::LineEditorController & { return editor(); }, [this]() -> ui::VideoController & { return video(); },
         [this]() -> ui::ShellController & { return shell(); }, *activeMedia().videoHelper);
+    m_automationReset = std::make_unique<AutomationResetNotice>(
+        options.automationReset, *m_automation, automationPath(options.automationDir) + QStringLiteral("/automation/Autoload"));
     m_automation->setDocumentChanged([this] { refreshViews(); });
     m_automation->setBeforeRun([this] { commitTemplates(); });
     m_files->setBeforeSave([this](application::DocumentId document) {
@@ -697,6 +700,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     connect(m_settings.get(), &ui::SettingsStore::changed, this, &Application::settingChanged);
     m_automation->manager().setTraceLevel(m_settings->integer("automation.traceLevel"));
     m_automation->setSettings(m_settings.get());
+    m_automation->setRunProjectRoot([this] { return m_projects ? m_projects->root(m_workspace.activeWindow()) : QString(); });
     m_automation->setWindowProjects([this] {
         std::map<int, application::WindowProject> projects;
         if (m_projects)
@@ -782,7 +786,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             o.lua = &luaNodes();
             o.audio = m_automation->media().peakAudio();
             return o;
-        }});
+        },
+        projectAiExclude});
     AiFeatures::Ports aiPorts = options.aiPorts ? std::move(*options.aiPorts)
                                                 : AiFeatures::defaultPorts(m_userFolder, &m_apiHost->api(),
                                                                            options.appVersion.isEmpty()
@@ -1171,6 +1176,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         hooks.fileProblem = report.problem;
         hooks.fileReplaced = report.replaced;
         hooks.fontsChanged = [this] { subtitleFontsChanged(); };
+        hooks.projectRoot = [this] { return m_projects ? m_projects->root(m_workspace.activeWindow()) : QString(); };
         m_fontCatalogs = std::make_unique<FontCatalogsController>(*m_settings, std::filesystem::path(dir.toStdU16String()),
                                                                   std::move(hooks));
         setVideoFonts(std::nullopt);
@@ -1932,7 +1938,10 @@ void Application::makeViews(WindowViews &v, int shellWindow)
     v.shell->setReview(
         [this, shellWindow, reviewOf](core::LineId line) { return reviewOf(m_workspace.currentTab(shellWindow))(line); },
         [this, reviewOf](core::LineId line) { return reviewOf(m_workspace.reference())(line); });
-    connect(v.editor.get(), &ui::LineEditorController::changed, m_review.get(), &ReviewController::currentChanged);
+    connect(v.editor.get(), &ui::LineEditorController::changed, this, [this] {
+        if (m_review)
+            Q_EMIT m_review->currentChanged();
+    });
     v.shell->setHideTags(m_settings->boolean("grid.hideTags"), m_settings->text("grid.tagsSwapCharacter"));
     v.editor->tagList()->setOptionsStore([this] { return m_settings->integer("textEditor.tagListOptions"); },
                                          [this](int options) { m_settings->set("textEditor.tagListOptions", options); });
@@ -2456,6 +2465,10 @@ void Application::refreshViews()
     scheduleAutosave();
     if (m_styleManager)
         m_styleManager->targetRefreshed();
+    if (m_fontCatalogs)
+        m_fontCatalogs->projectChanged();
+    if (m_shiftTimes)
+        m_shiftTimes->setProjectRoot(m_projects ? m_projects->root(m_workspace.activeWindow()) : QString());
     const auto target = m_workspace.editingTarget();
     const auto reference = m_workspace.reference();
     auto *targetSession = target ? m_files->session(*target) : nullptr;
@@ -5075,6 +5088,20 @@ void Application::convertListFiles()
     }
 }
 
+void Application::applyProjectTierFiles(int shellWindow, const QString &root)
+{
+    const auto file = [&](std::string_view store, const ui::ListFormat &format) -> std::shared_ptr<ui::ListFile> {
+        const auto path = application::projectPathOf(store, root.toStdU16String());
+        if (!path)
+            return nullptr;
+        return ui::ListFile::make(QString::fromStdU16String(path->u16string()), QString(), format, {},
+                                  listFileReport(*m_log));
+    };
+    views(shellWindow).visualTools->setProjectListFiles(file("shapes", ui::kShapesFormat), file("tags", ui::kTagsFormat));
+    const auto layouts = application::projectPathOf("layouts", root.toStdU16String());
+    layoutOf(shellWindow).setProjectLayoutsFile(layouts ? QString::fromStdU16String(layouts->u16string()) : QString());
+}
+
 Application::SpellSlot *Application::spellSlot(const QString &language)
 {
     if (m_spellingFolders.empty() || !m_spellingLoader)
@@ -6898,6 +6925,7 @@ QVariantMap Application::qmlProperties(int shellWindow)
             {QStringLiteral("hotkeys"), QVariant::fromValue(static_cast<QObject *>(m_hotkeys.get()))},
             {QStringLiteral("updates"), QVariant::fromValue(static_cast<QObject *>(m_updates.get()))},
             {QStringLiteral("whatsNew"), QVariant::fromValue(static_cast<QObject *>(m_whatsNew.get()))},
+            {QStringLiteral("automationReset"), QVariant::fromValue(static_cast<QObject *>(m_automationReset.get()))},
             {QStringLiteral("analytics"), QVariant::fromValue(static_cast<QObject *>(m_analytics.get()))},
             {QStringLiteral("starPrompt"), QVariant::fromValue(static_cast<QObject *>(m_starPrompt.get()))},
             {QStringLiteral("crashReports"), QVariant::fromValue(static_cast<QObject *>(m_crashReports.get()))},

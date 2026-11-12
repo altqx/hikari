@@ -48,6 +48,8 @@ ass_style_color = (r, g, b, a) -> sformat "&H%02X%02X%02X%02X", a, b, g, r
 
 -- Extract colour components of an ASS colour
 extract_color = (s) ->
+  impl = aegisub and aegisub.__util_impl
+  return impl.extract_color s if impl and type(s) == 'string'
   local a, b, g, r
 
   -- Try a style first
@@ -131,6 +133,8 @@ HSV_to_RGB = (H, S, V) ->
 -- Convert HSL (Hue, Saturation, Luminance) to RGB
 -- Contributed by Gundamn
 HSL_to_RGB = (H, S, L) ->
+  impl = aegisub and aegisub.__util_impl
+  return impl.HSL_to_RGB H, S, L if impl and type(H) == 'number' and type(S) == 'number' and type(L) == 'number'
   local r, g, b
 
   -- Make sure input is in range
@@ -184,10 +188,15 @@ HSL_to_RGB = (H, S, L) ->
   return math.floor(r*255+0.5), math.floor(g*255+0.5), math.floor(b*255+0.5)
 
 -- Removes spaces at the start and end of string
-trim = (s) -> s\gsub '^%s*(.-)%s*$', '%1'
+trim = (s) ->
+  impl = aegisub and aegisub.__util_impl
+  return impl.trim s if impl and type(s) == 'string'
+  s\gsub '^%s*(.-)%s*$', '%1'
 
 -- Get the 'head' and 'tail' of a string, treating it as a sequence of words separated by one or more space-characters
 headtail = (s) ->
+  impl = aegisub and aegisub.__util_impl
+  return impl.headtail s if impl and type(s) == 'string'
   a, b, head, tail = s\find '(.-)%s+(.*)'
   if a then head, tail else s, ''
 
