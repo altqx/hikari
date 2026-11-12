@@ -2,6 +2,7 @@
 
 #include "hikari/application/font_collector.h"
 #include "hikari/application/matroska.h"
+#include "hikari/application/subtitle_render.h"
 
 #include <QDir>
 #include <QElapsedTimer>
@@ -58,6 +59,8 @@ public:
         std::function<void(const QString &path)> reveal;
         // The window's first Project font folder, the folder the collector starts in; empty for none.
         std::function<QString()> projectFontFolder;
+        // The window's Project fonts, then the Fonts folder's, as rendering orders them.
+        std::function<std::vector<application::FontLease>()> folderFonts;
     };
 
     FontCollectorController(ui::SettingsStore &settings, Hooks hooks, QObject *parent = nullptr);

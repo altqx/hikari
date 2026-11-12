@@ -35,6 +35,9 @@ class SettingsStore;
 
 namespace hikari::app {
 
+class AiScripts;
+class AutomationShell;
+
 class AiFeatures;
 
 /// The open thread's timeline. Rows change in place.
@@ -93,6 +96,8 @@ public:
         application::DocumentFiles &files;
         QString userFolder;
         std::function<std::int64_t()> now; // ms since the epoch; the clock when null
+        AiScripts *scripts = nullptr;
+        AutomationShell *automation = nullptr;
     };
 
     static constexpr const char *kModeSetting = "ai.agent.mode";
@@ -146,6 +151,9 @@ public:
     /// "allowOnce", "allowInThread" or "deny".
     /// `answer`: allowOnce, allowInThread, deny; for a proposal apply, decline or askAgain.
     Q_INVOKABLE void answer(qulonglong ask, const QString &answer, const QString &message);
+    // A script item's saved file, in the user's script editor.
+    Q_INVOKABLE void openScript(const QString &file);
+    Q_INVOKABLE bool forceStopScript();
     Q_INVOKABLE void selectLine(qulonglong document, qulonglong line);
     Q_INVOKABLE void attach(qulonglong document);
     Q_INVOKABLE void detach(qulonglong document);

@@ -9,6 +9,10 @@
 #include <variant>
 #include <vector>
 
+namespace hikari::core {
+class Document;
+}
+
 // The karaoke templater's template language as Karaoke Templater 2.1.7 (Aegisub 3.2.2) or karaOK's
 // "Karaoke Templater mod" 2.1.7c reads and expands it, with HikariSub's KE1 problem placement. Lua stays behind
 // callbacks.
@@ -92,9 +96,12 @@ struct Parsed {
 
 using ToNumber = std::function<std::optional<double>(std::string_view)>;
 
+// The mode a mode line's value names, ignoring case and surrounding spaces.
+std::optional<Mode> modeOfLine(std::string_view value);
 // The mode line's value when it names a mode; otherwise karaOK when a template or code Line uses karaOK-only
 // syntax, and Stock when none does.
 Mode modeOf(std::optional<std::string_view> modeLine, const std::vector<SubsEntry> &subs);
+Mode documentMode(const core::Document &document);
 
 // parse_templates, parse_code and parse_template; `keepFx` leaves the generated Lines in place.
 Parsed parseTemplates(const std::vector<SubsEntry> &subs, bool keepFx, const ToNumber &toNumber,

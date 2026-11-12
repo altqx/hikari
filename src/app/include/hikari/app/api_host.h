@@ -30,6 +30,7 @@ class ApiHost final : public QObject,
                       public api::PanelHost,
                       public api::FileHost,
                       public api::RenderHost,
+                      public api::TypesetHost,
                       public api::TranslationHost {
     Q_OBJECT
     // (command, run) => null for a command the shell cannot run; else
@@ -56,6 +57,8 @@ public:
         std::function<std::string()> renderer;
         // Empty: the user has no skills.
         std::filesystem::path skills;
+        api::AutomationHost *automation = nullptr;
+        std::function<application::visual::perspective::TextMeasure()> measure;
         std::function<std::optional<std::filesystem::path>(application::DocumentId)> translationFolder;
     };
     explicit ApiHost(Wiring wiring, QObject *parent = nullptr);
@@ -91,6 +94,7 @@ public:
     std::optional<std::string> projectFolder(application::DocumentId document) const override;
     std::optional<application::OverlayFrame> render(application::DocumentId id, const core::Document &document,
                                                     std::int64_t frame, int width, int height) override;
+    application::visual::perspective::TextMeasure measure() const override;
 
 private:
     struct Seen {

@@ -1,0 +1,66 @@
+[Script Info]
+; TH5d1-stock-additions: karaOK's non-clashing additions run in 3.2.2 mode
+Title: TH5d1 corpus 3.2.2 mode with karaOK additions
+ScriptType: v4.00+
+WrapStyle: 0
+PlayResX: 1280
+PlayResY: 720
+ScaledBorderAndShadow: yes
+Karaoke Templater: Aegisub 3.2.2
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Other-furigana,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,1,1,8,20,20,20,1
+Style: Default-furigana,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,1,1,8,20,20,20,1
+Style:  Default,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,8,20,20,20,1
+Style:  Other,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,8,20,20,20,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Comment: 0,0:00:00.00,0:00:05.00,Default,,0,0,0,code once,t = {} table.insert(t, tostring(type(tonumber("3")))) for _, v in ipairs(t) do kind = v end for k in pairs(t) do first = k end
+Comment: 0,0:00:00.00,0:00:05.00,Default,,0,0,0,code word all,words = (words or 0) + 1
+Comment: 0,0:00:00.00,0:00:05.00,Default,,0,0,0,code char all,chars = (chars or 0) + 1
+Comment: 0,0:00:00.00,0:00:05.00,Default,,0,0,0,code furichar all,furichars = (furichars or 0) + 1
+Comment: 0,0:00:00.00,0:00:05.00,Default,,0,0,0,template syl all style Oth,{\1c&H0000FF&}
+Comment: 0,0:00:00.00,0:00:05.00,Default,,0,0,0,template lsyl all,{\kf$kdur}
+Comment: 0,0:00:00.00,0:00:05.00,Default,,0,0,0,template lword all,{\b1}
+Comment: 0,0:00:00.00,0:00:05.00,Default,,0,0,0,template lchar all,{\i1}
+Comment: 0,0:00:00.00,0:00:05.00,Default,,0,0,0,template word all notext,!word.text_stripped!
+Comment: 0,0:00:00.00,0:00:05.00,Default,,0,0,0,template furichar all,{\fs20}
+Comment: 0,0:00:00.00,0:00:05.00,Default,,0,0,0,template syl all loop 2,!k_retime("syl",-100,0)!!syl.start_time!/!j!/
+Comment: 0,0:00:00.00,0:00:05.00,Default,,0,0,0,template pre-line all notext,!kind!/!first!/!words or 0!/!chars or 0!/!furichars or 0!
+Comment: 0,0:00:01.00,0:00:03.00,Default,,0,0,0,karaoke,{\k50}ka{\k50}ra {\k40}o{\k60}ke
+Comment: 0,0:00:04.00,0:00:06.00,Other,,0,0,0,karaoke,{\k40}漢|かん{\k30}字|じ
+Dialogue: 0,0:00:01.00,0:00:03.00,Default,,0,0,0,fx,{\kf50}ka{\kf50}ra {\kf40}o{\kf60}ke
+Dialogue: 0,0:00:01.00,0:00:03.00,Default,,0,0,0,fx,{\b1}kara {\b1}oke
+Dialogue: 0,0:00:01.00,0:00:03.00,Default,,0,0,0,fx,{\i1}k{\i1}a{\i1}r{\i1}a{\i1} {\i1}o{\i1}k{\i1}e
+Dialogue: 0,0:00:01.00,0:00:03.00,Default,,0,0,0,fx,number/1/0/0/0kara oke
+Dialogue: 0,0:00:00.90,0:00:01.00,Default,,0,0,0,fx,100/1/
+Dialogue: 0,0:00:00.90,0:00:01.00,Default,,0,0,0,fx,100/2/
+Dialogue: 0,0:00:00.90,0:00:01.50,Default,,0,0,0,fx,100/1/ka
+Dialogue: 0,0:00:00.90,0:00:01.50,Default,,0,0,0,fx,100/2/ka
+Dialogue: 0,0:00:01.40,0:00:02.00,Default,,0,0,0,fx,100/1/ra 
+Dialogue: 0,0:00:01.40,0:00:02.00,Default,,0,0,0,fx,100/2/ra 
+Dialogue: 0,0:00:01.90,0:00:02.40,Default,,0,0,0,fx,100/1/o
+Dialogue: 0,0:00:01.90,0:00:02.40,Default,,0,0,0,fx,100/2/o
+Dialogue: 0,0:00:02.30,0:00:03.00,Default,,0,0,0,fx,100/1/ke
+Dialogue: 0,0:00:02.30,0:00:03.00,Default,,0,0,0,fx,100/2/ke
+Dialogue: 0,0:00:01.00,0:00:03.00,Default,,0,0,0,fx,kara 
+Dialogue: 0,0:00:01.00,0:00:03.00,Default,,0,0,0,fx,oke
+Dialogue: 0,0:00:04.00,0:00:06.00,Other,,0,0,0,fx,{\kf40}漢{\kf30}字
+Dialogue: 0,0:00:04.00,0:00:06.00,Other,,0,0,0,fx,{\b1}漢字
+Dialogue: 0,0:00:04.00,0:00:06.00,Other,,0,0,0,fx,{\i1}漢{\i1}字
+Dialogue: 0,0:00:04.00,0:00:06.00,Other,,0,0,0,fx,number/1/2/8/0漢字
+Dialogue: 0,0:00:04.00,0:00:06.00,Other,,0,0,0,fx,{\1c&H0000FF&}
+Dialogue: 0,0:00:03.90,0:00:04.00,Other,,0,0,0,fx,100/1/
+Dialogue: 0,0:00:03.90,0:00:04.00,Other,,0,0,0,fx,100/2/
+Dialogue: 0,0:00:04.00,0:00:06.00,Other,,0,0,0,fx,{\1c&H0000FF&}漢
+Dialogue: 0,0:00:03.90,0:00:04.40,Other,,0,0,0,fx,100/1/漢
+Dialogue: 0,0:00:03.90,0:00:04.40,Other,,0,0,0,fx,100/2/漢
+Dialogue: 0,0:00:04.00,0:00:06.00,Other,,0,0,0,fx,{\1c&H0000FF&}字
+Dialogue: 0,0:00:04.30,0:00:04.70,Other,,0,0,0,fx,100/1/字
+Dialogue: 0,0:00:04.30,0:00:04.70,Other,,0,0,0,fx,100/2/字
+Dialogue: 0,0:00:04.00,0:00:06.00,Other-furigana,,0,0,0,fx,{\fs20}か
+Dialogue: 0,0:00:04.00,0:00:06.00,Other-furigana,,0,0,0,fx,{\fs20}ん
+Dialogue: 0,0:00:04.00,0:00:06.00,Other-furigana,,0,0,0,fx,{\fs20}じ
+Dialogue: 0,0:00:04.00,0:00:06.00,Other,,0,0,0,fx,漢字

@@ -364,6 +364,66 @@
         <translation>Już niepotrzebne</translation>
     </message>
     <message>
+        <source>Run this Lua script?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 · macro “%2”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>on %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 isn’t installed, so the script will stop when it loads.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Runs as an Automation macro: one undo step, and Force stop while it runs. Saved in the AI scripts folder, never added to Autoload.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Run</source>
+        <translation type="unfinished">Uruchom</translation>
+    </message>
+    <message>
+        <source>Don’t run</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Don’t run and tell the agent…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Running %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ran %1 · one undo step</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 didn’t finish: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Didn’t run %1 · “%2”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Didn’t run %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Force stop</source>
+        <translation type="unfinished">Wymuś zatrzymanie</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation type="unfinished">Otwórz</translation>
+    </message>
+    <message>
         <source>This thread reached its %1 cap</source>
         <translation>Ten wątek osiągnął limit %1</translation>
     </message>
@@ -7434,6 +7494,14 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Wyśrodkuj czasy w klatkach</translation>
     </message>
     <message>
+        <source>Track colour…</source>
+        <translation>Śledź kolor…</translation>
+    </message>
+    <message>
+        <source>Find fade…</source>
+        <translation>Znajdź pojawianie i zanikanie…</translation>
+    </message>
+    <message>
         <source>Import legacy settings…</source>
         <translation>Importuj ustawienia starej wersji…</translation>
     </message>
@@ -7512,6 +7580,54 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Interpolate across lines…</source>
         <translation>Interpoluj między wierszami…</translation>
+    </message>
+    <message>
+        <source>Insert balanced break</source>
+        <translation>Wstaw zrównoważony podział wiersza</translation>
+    </message>
+    <message>
+        <source>Move break left</source>
+        <translation>Przesuń podział w lewo</translation>
+    </message>
+    <message>
+        <source>Move break right</source>
+        <translation>Przesuń podział w prawo</translation>
+    </message>
+    <message>
+        <source>Remove breaks</source>
+        <translation>Usuń podziały wierszy</translation>
+    </message>
+    <message>
+        <source>Wrap only at \N (\q2)</source>
+        <translation>Zawijaj tylko przy \N (\q2)</translation>
+    </message>
+    <message>
+        <source>Change case to lowercase</source>
+        <translation>Zmień na małe litery</translation>
+    </message>
+    <message>
+        <source>Change case to UPPERCASE</source>
+        <translation>Zmień na wielkie litery</translation>
+    </message>
+    <message>
+        <source>Change case to Title Case</source>
+        <translation>Zmień na wielkie pierwsze litery wyrazów</translation>
+    </message>
+    <message>
+        <source>Change case to Sentence case</source>
+        <translation>Zmień na wielką literę na początku zdania</translation>
+    </message>
+    <message>
+        <source>Change text to full-width</source>
+        <translation>Zmień tekst na pełną szerokość</translation>
+    </message>
+    <message>
+        <source>Change text to half-width</source>
+        <translation>Zmień tekst na połowę szerokości</translation>
+    </message>
+    <message>
+        <source>Swap dialogue alternatives</source>
+        <translation>Zamień warianty dialogu</translation>
     </message>
     <message>
         <source>Move tab to new window</source>
@@ -9685,6 +9801,22 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Zamknij kody czasowe</translation>
     </message>
     <message>
+        <source>Follows a picked point’s colour across the selected lines’ frames and writes it as colour or alpha tags</source>
+        <translation>Śledzi kolor wybranego punktu w klatkach zaznaczonych linijek i wpisuje go jako tagi koloru lub alfy</translation>
+    </message>
+    <message>
+        <source>Track colour…</source>
+        <translation>Śledź kolor…</translation>
+    </message>
+    <message>
+        <source>Finds where the active line’s sign fades in and out at a picked point and writes %1</source>
+        <translation>Znajduje, gdzie napis aktywnej linijki pojawia się i zanika w wybranym punkcie, i wpisuje %1</translation>
+    </message>
+    <message>
+        <source>Find fade…</source>
+        <translation>Znajdź pojawianie i zanikanie…</translation>
+    </message>
+    <message>
         <source>Shift by frames to video</source>
         <translation>Przesuń o klatki do wideo</translation>
     </message>
@@ -9735,6 +9867,14 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Applies Power-Pin tracking data to the selected lines, one line a frame</source>
         <translation>Stosuje dane śledzenia Power-Pin do zaznaczonych linijek, jedna linijka na klatkę</translation>
+    </message>
+    <message>
+        <source>Find fade</source>
+        <translation>Znajdź pojawianie i zanikanie</translation>
+    </message>
+    <message>
+        <source>Track colour</source>
+        <translation>Śledź kolor</translation>
     </message>
     <message>
         <source>Open a video first: tracking data is per frame.</source>
@@ -10847,7 +10987,7 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Point</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Punkt</translation>
     </message>
     <message>
         <source>Tags</source>
@@ -11333,6 +11473,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>%1 copy</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>karaOK templates</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Uses karaOK template syntax. Runs in HikariSub; in Aegisub it needs the karaOK templater.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Aegisub 3.2.2 templates</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Nodes</name>
@@ -11394,7 +11546,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Point</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Punkt</translation>
     </message>
     <message>
         <source>A point from its coordinates.</source>
@@ -20475,6 +20627,333 @@ Usunięte style:
         <source>The templater stopped before it finished.</source>
         <translation>Templater zatrzymał się przed zakończeniem.</translation>
     </message>
+    <message>
+        <source>The template language this file sets.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The template language this file’s templates use. Choose one to set it in the file.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Template language</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>binds ln.kara to the template environment and adds its shorthands</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the unit’s start plus this share of its duration (ms)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>this share of the unit’s duration, all of it with no argument (ms)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>sets a template variable to a random whole number, once</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>tags and sizes of the karaoke line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>tags and sizes of the current unit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>builds \pos, \move and \t tags</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>periodic animation as \t steps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>colours from RGB or HSL</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>rounding, ranges and interpolation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>drawings for \p1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the progress bar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the first of each named tag in the karaoke line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>every one of each named tag in the karaoke line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the karaoke line’s colour N, or its style’s</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the karaoke line’s alpha N, or its style’s</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the style’s colour N</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the style’s alpha N</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>lead-in and lead-out, from \fad or empty end syllables (ms)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>characters in the karaoke line without tags</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>characters in the karaoke line’s text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>characters in the karaoke line as written</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the first of each named tag in the unit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>every one of each named tag in the unit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the unit’s colour N, or its style’s</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the unit’s alpha N, or its style’s</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>characters in the unit without tags</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>characters in the unit’s text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>\an and \pos at the unit’s anchor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>\an and \move from offsets to the unit’s anchor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>vertical placement for kanji, in karaOK mode</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>\t with whole-millisecond times</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>reads a \t into a table</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>changes a \t’s times or tags</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>reads a \move into a table</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>a wave: sine, square, triangle, sawtooth or noise</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>\t steps that follow a wave</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>a colour from red, green and blue (0–255)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>a colour from hue, saturation and lightness (0–255)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>a colour from hue, saturation and luma (0–255)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>reads or adds to a colour’s red, green and blue</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>reads or adds to a colour’s hue, saturation and lightness</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>n kept between min and max</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>n wrapped into a range</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>n bounced back and forth in a range</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the logarithm of n to a base</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>-1 for a negative n, else 1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>n rounded to this many decimals</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>n rounded to a whole number</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>a random number, to 4 decimals</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>between two numbers, colours or alphas</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>between two values, with acceleration</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>a drawing moved by x and y</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>a rectangle drawing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>a rectangle drawing with round corners</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>a circle drawing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>an equilateral triangle drawing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>a regular polygon drawing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>a gear drawing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>a ready-made drawing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>sets the progress bar (0–1)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>sets a template variable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>n rounded down</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>karaOK’s ln.kara library</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Text</name>
+    <message>
+        <source>Swap dialogue alternatives</source>
+        <translation>Zamień warianty dialogu</translation>
+    </message>
+    <message>
+        <source>Line breaks</source>
+        <translation>Podziały wierszy</translation>
+    </message>
+    <message>
+        <source>Insert balanced break</source>
+        <translation>Wstaw zrównoważony podział wiersza</translation>
+    </message>
+    <message>
+        <source>Move break left</source>
+        <translation>Przesuń podział w lewo</translation>
+    </message>
+    <message>
+        <source>Move break right</source>
+        <translation>Przesuń podział w prawo</translation>
+    </message>
+    <message>
+        <source>Remove breaks</source>
+        <translation>Usuń podziały wierszy</translation>
+    </message>
+    <message>
+        <source>Wrap only at %1 (%2)</source>
+        <translation>Zawijaj tylko przy %1 (%2)</translation>
+    </message>
+    <message>
+        <source>Change case</source>
+        <translation>Zmień wielkość liter</translation>
+    </message>
+    <message>
+        <source>lowercase</source>
+        <translation>małe litery</translation>
+    </message>
+    <message>
+        <source>UPPERCASE</source>
+        <translation>WIELKIE LITERY</translation>
+    </message>
+    <message>
+        <source>Title Case</source>
+        <translation>Wielkie Pierwsze Litery</translation>
+    </message>
+    <message>
+        <source>Sentence case</source>
+        <translation>Jak w zdaniu</translation>
+    </message>
+    <message>
+        <source>Full-width</source>
+        <translation>Pełna szerokość</translation>
+    </message>
+    <message>
+        <source>Half-width</source>
+        <translation>Połowa szerokości</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.TextMenu</name>
@@ -22718,6 +23197,162 @@ bądź brakuje kodeków czy też splittera</translation>
     <message>
         <source>Close</source>
         <translation>Zamknij</translation>
+    </message>
+    <message>
+        <source>Track colour</source>
+        <translation>Śledź kolor</translation>
+    </message>
+    <message>
+        <source>Select the lines to track first.</source>
+        <translation>Najpierw zaznacz linijki do śledzenia.</translation>
+    </message>
+    <message>
+        <source>The clipboard holds no After Effects tracking data.</source>
+        <translation>Schowek nie zawiera danych śledzenia After Effects.</translation>
+    </message>
+    <message>
+        <source>The tracking data doesn’t have one row for each frame of the active line.</source>
+        <translation>Dane śledzenia nie mają po jednym wierszu na każdą klatkę aktywnej linijki.</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n selected lines, %1 to %2, %3 frames. Frames are read without subtitles.</source>
+        <translation>
+            <numerusform>%n zaznaczona linijka, od %1 do %2, klatek: %3. Klatki są odczytywane bez napisów.</numerusform>
+            <numerusform>%n zaznaczone linijki, od %1 do %2, klatek: %3. Klatki są odczytywane bez napisów.</numerusform>
+            <numerusform>%n zaznaczonych linijek, od %1 do %2, klatek: %3. Klatki są odczytywane bez napisów.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Follow tracking data</source>
+        <translation>Podążaj za danymi śledzenia</translation>
+    </message>
+    <message>
+        <source>Moves the point with After Effects tracking data from the clipboard, one row for each frame of the active line</source>
+        <translation>Przesuwa punkt według danych śledzenia After Effects ze schowka, po jednym wierszu na każdą klatkę aktywnej linijki</translation>
+    </message>
+    <message numerus="yes">
+        <source>After Effects data, %n frames, from the clipboard</source>
+        <translation>
+            <numerusform>Dane After Effects ze schowka, %n klatka</numerusform>
+            <numerusform>Dane After Effects ze schowka, %n klatki</numerusform>
+            <numerusform>Dane After Effects ze schowka, %n klatek</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Alpha</source>
+        <translation>Alfa</translation>
+    </message>
+    <message>
+        <source>Skip repeated colours</source>
+        <translation>Pomijaj powtórzone kolory</translation>
+    </message>
+    <message>
+        <source>A frame whose value is the same as the frame before writes no %1</source>
+        <translation>Klatka o tej samej wartości co poprzednia nie dostaje %1</translation>
+    </message>
+    <message>
+        <source>Sign colour</source>
+        <translation>Kolor napisu</translation>
+    </message>
+    <message>
+        <source>Background colour</source>
+        <translation>Kolor tła</translation>
+    </message>
+    <message>
+        <source>Use the point’s colour</source>
+        <translation>Użyj koloru punktu</translation>
+    </message>
+    <message>
+        <source>Colour on each frame</source>
+        <translation>Kolor w każdej klatce</translation>
+    </message>
+    <message>
+        <source>Result</source>
+        <translation>Wynik</translation>
+    </message>
+    <message>
+        <source>Reading frame %1 of %2…</source>
+        <translation>Odczytywanie klatki %1 z %2…</translation>
+    </message>
+    <message>
+        <source>Read %1 of %2 frames</source>
+        <translation>Odczytano %1 z %2 klatek</translation>
+    </message>
+    <message>
+        <source>Apply</source>
+        <translation>Zastosuj</translation>
+    </message>
+    <message>
+        <source>Find fade</source>
+        <translation>Znajdź pojawianie i zanikanie</translation>
+    </message>
+    <message>
+        <source>Select a line first.</source>
+        <translation>Najpierw zaznacz linijkę.</translation>
+    </message>
+    <message>
+        <source>Move the video to a frame of the line where the sign is fully shown.</source>
+        <translation>Przewiń wideo do klatki linijki, w której napis jest w pełni widoczny.</translation>
+    </message>
+    <message>
+        <source>The tracking data doesn’t have one row for each frame of the line.</source>
+        <translation>Dane śledzenia nie mają po jednym wierszu na każdą klatkę linijki.</translation>
+    </message>
+    <message>
+        <source>No frame up to this one has the point’s colour, so the fade in can’t be found.</source>
+        <translation>Żadna klatka do tej włącznie nie ma koloru punktu, więc nie da się znaleźć pojawiania.</translation>
+    </message>
+    <message>
+        <source>The point keeps its colour to the end of the line, so the fade out can’t be found.</source>
+        <translation>Punkt zachowuje kolor do końca linijki, więc nie da się znaleźć zanikania.</translation>
+    </message>
+    <message numerus="yes">
+        <source>Line %1, %2 to %3, %n frames. The point’s colour on this frame is the fully shown colour.</source>
+        <translation>
+            <numerusform>Linijka %1, od %2 do %3, %n klatka. Kolor punktu w tej klatce to kolor w pełni widocznego napisu.</numerusform>
+            <numerusform>Linijka %1, od %2 do %3, %n klatki. Kolor punktu w tej klatce to kolor w pełni widocznego napisu.</numerusform>
+            <numerusform>Linijka %1, od %2 do %3, %n klatek. Kolor punktu w tej klatce to kolor w pełni widocznego napisu.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Point</source>
+        <translation>Punkt</translation>
+    </message>
+    <message>
+        <source>Moves the point with After Effects tracking data from the clipboard, one row for each frame of the line</source>
+        <translation>Przesuwa punkt według danych śledzenia After Effects ze schowka, po jednym wierszu na każdą klatkę linijki</translation>
+    </message>
+    <message>
+        <source>Find</source>
+        <translation>Znajdź</translation>
+    </message>
+    <message>
+        <source>Fade in</source>
+        <translation>Pojawianie</translation>
+    </message>
+    <message>
+        <source>Fade out</source>
+        <translation>Zanikanie</translation>
+    </message>
+    <message>
+        <source>How far, in RGB, a frame’s colour may be from the point’s and still count as shown</source>
+        <translation>Jak daleko, w RGB, kolor klatki może odbiegać od koloru punktu, by nadal liczyć się jako widoczny</translation>
+    </message>
+    <message>
+        <source>Distance from the colour on each frame</source>
+        <translation>Odległość od koloru w każdej klatce</translation>
+    </message>
+    <message>
+        <source>fade in ends, frame %1</source>
+        <translation>koniec pojawiania, klatka %1</translation>
+    </message>
+    <message>
+        <source>fade out starts, frame %1</source>
+        <translation>początek zanikania, klatka %1</translation>
+    </message>
+    <message>
+        <source>Arrow keys move the point; Enter applies</source>
+        <translation>Strzałki przesuwają punkt; Enter stosuje</translation>
     </message>
 </context>
 <context>

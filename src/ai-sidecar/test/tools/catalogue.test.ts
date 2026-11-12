@@ -56,6 +56,15 @@ describe("the tool catalogue", () => {
         expect(kOwn.entries.find((e) => e.tool.name === "search_tools")!.tool.annotations.readOnlyHint).toBe(true);
     });
 
+    test("offers AI-written Lua as a searchable write that carries the whole script", () => {
+        const run = kOwn.entries.find((e) => e.tool.name === "automation_run")!;
+        expect(run.operation).toBe("automation.run");
+        expect(run.group).toBe("automation");
+        expect(run.tool.annotations.readOnlyHint).toBe(false);
+        expect(run.tool.description).toContain("approves");
+        expect((run.tool.inputSchema as any).required).toEqual(["name", "script"]);
+    });
+
     test("gives self-contained object schemas without const, which Gemini refuses", () => {
         for (const { tool } of kOwn.entries) {
             expect(tool.inputSchema.type).toBe("object");
@@ -70,9 +79,12 @@ describe("the tool catalogue", () => {
         expect(apply.properties.edits.items.oneOf[0].properties.op).toEqual({ enum: ["set_line"] });
     });
 
-    test("offers the frame tools in typeset, with full instead of maxPixels on video_frame", () => {
+    test("offers the frame tools and the solvers in typeset, with full instead of maxPixels on video_frame", () => {
         const typeset = kOwn.entries.filter((e) => e.group === "typeset").map((e) => e.tool.name).sort();
-        expect(typeset).toEqual(["video_colours", "video_frame", "video_ink_bounds", "video_keyframes"]);
+        expect(typeset).toEqual(["typeset_apply", "typeset_check", "typeset_clip", "typeset_drawing", "typeset_hydra",
+            "typeset_perspective", "typeset_shift", "video_colours", "video_frame", "video_ink_bounds", "video_keyframes"]);
+        expect(kOwn.entries.find((e) => e.tool.name === "typeset_apply")!.tool.annotations.readOnlyHint).toBe(false);
+        expect(kOwn.entries.find((e) => e.tool.name === "typeset_perspective")!.tool.annotations.readOnlyHint).toBe(true);
         const frame = kOwn.entries.find((e) => e.tool.name === "video_frame")!.tool.inputSchema as any;
         expect(Object.keys(frame.properties).sort()).toEqual(["crop", "document", "frame", "full", "line", "maxEdge", "subtitles"]);
         expect(frame.properties.full.type).toBe("boolean");

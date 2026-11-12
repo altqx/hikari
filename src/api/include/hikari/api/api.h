@@ -51,6 +51,8 @@ struct Caller {
     bool reviewed = false;
     // May read the user's skills (AI callers).
     bool skills = false;
+    // The user approved this call's Lua script; automation.run refuses without it.
+    bool scriptApproved = false;
 };
 
 // A file the user let one caller use; the caller sees the handle and name, never the path.

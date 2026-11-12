@@ -378,6 +378,8 @@ const std::vector<SettingDefinition> &definitions()
         {"automation.fillLastAnswers", "", Bool, Profile, Mapped, false, false},
         {"automation.dialogAnswers", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {"automation.dialogPresets", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
+        // "karaOK" or "stock" (Aegisub 3.2.2): the format "Export as template lines" last wrote.
+        {"nodeEffects.exportFormat", "", String, Profile, Mapped, false, std::string("karaOK")},
         // 0 off, 1 English (US), 2 (UK), 3 (Canada), 4 (Australia).
         {"grammar.language", "", Int, Profile, Mapped, false, std::int64_t{0}},
         // Native absolute folders whose scripts and Projects HikariSub trusts, subfolders included.

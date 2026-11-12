@@ -191,7 +191,7 @@ private slots:
     {
         QVERIFY(controller().addPreset(presetIndex(QStringLiteral("10-palette.ass"))));
         const std::size_t before = m_session->historySize();
-        QVERIFY(controller().exportAsTemplate().isEmpty());
+        QVERIFY(controller().exportAsTemplate(false).isEmpty());
         QCOMPARE(m_session->historySize(), before + 1);
         QCOMPARE(historyNames(*m_session).back(), std::string("Export as template lines"));
         const auto templates = std::ranges::count_if(m_session->document().lines(), [](const core::LineRecord *l) {
@@ -202,12 +202,29 @@ private slots:
         const QString random = controller().addNode(QStringLiteral("math.random"), 40, 40);
         QVERIFY(controller().connectPorts(random, QStringLiteral("value"), QStringLiteral("place"), QStringLiteral("b")).isEmpty());
         const std::size_t edited = m_session->historySize();
-        const QVariantList blockers = controller().exportAsTemplate();
+        const QVariantList blockers = controller().exportAsTemplate(false);
         QCOMPARE(blockers.size(), 1);
         QCOMPARE(blockers.front().toMap().value(QStringLiteral("node")).toString(), random);
         QCOMPARE(blockers.front().toMap().value(QStringLiteral("viewNode")).toString(), random);
         QCOMPARE(m_session->historySize(), edited + 1);
         QCOMPARE(historyNames(*m_session).back(), std::string("Edit graph"));
+    }
+
+    void exportRemembersItsFormatAndAKaraOKExportSetsTheModeLine()
+    {
+        application::MemorySettingsStorage storage;
+        application::Settings settings(storage);
+        controller().setSettings(&settings);
+        QVERIFY(controller().exportKaraOK());
+        QVERIFY(controller().addPreset(presetIndex(QStringLiteral("10-palette.ass"))));
+        QVERIFY(controller().exportAsTemplate(false).isEmpty());
+        QVERIFY(!controller().exportKaraOK());
+        QCOMPARE(settings.text("nodeEffects.exportFormat"), std::string("stock"));
+        QVERIFY(!m_session->document().scriptInfo(u8"Karaoke Templater"));
+        QVERIFY(controller().exportAsTemplate(true).isEmpty());
+        QVERIFY(controller().exportKaraOK());
+        QCOMPARE(m_session->document().scriptInfo(u8"Karaoke Templater"), std::optional<std::u8string>(u8"karaOK"));
+        controller().setSettings(nullptr);
     }
 
     void presetNamesAreGraphNames()

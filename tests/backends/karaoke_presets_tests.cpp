@@ -390,6 +390,59 @@ TEST_F(KaraokePresets, NodeExamplesGiveTheLinesOfTheirStockTemplates)
     }
 }
 
+std::string inKaraOKMode(std::string file)
+{
+    const auto at = file.find("[Script Info]");
+    EXPECT_NE(at, std::string::npos);
+    file.insert(file.find('\n', at) + 1, "Karaoke Templater: karaOK\n");
+    return file;
+}
+
+TEST_F(KaraokePresets, KaraOKExportsGiveTheNodeEngineLinesOfAKaraOKFile)
+{
+    const std::string karaoke =
+        R"(Dialogue: 0,0:00:13.00,0:00:16.00,Romaji,,0,0,0,,{\k40}ha{\k20}#{\k0}#{\k30}na{\k25\-paint}bi{\k15}#{\k35}ga{\k0} {\k30\-cloud}ru{\k20}#{\k10}yo)"
+        "\n";
+    int compared = 0;
+    for (const auto &preset : hikari::application::nodeGraphPresets()) {
+        SCOPED_TRACE(std::string(preset.templateFile.empty() ? preset.example : preset.templateFile));
+        const auto graph = hikari::application::parseGraph(preset.graph);
+        ASSERT_TRUE(graph.has_value());
+        const auto exported =
+            hikari::application::exportTemplateLines(*graph, u8"preset", hikari::application::TemplateFormat::KaraOK);
+        if (!exported)
+            continue;
+        KaraokePreset graphLine;
+        const std::string json = hikari::application::graphText(*graph);
+        graphLine.lines.push_back({0, u8"graph preset", std::u8string(json.begin(), json.end())});
+        graphLine.lines.resize(std::max(graphLine.lines.size(), exported->size()));
+        const auto doc =
+            hikari::core::loadAss(bytesOf(inKaraOKMode(textOf(fixtureWith(graphLine))) + karaoke)).document;
+        FakeMeasure measure;
+        hikari::application::NodeEffectOptions options;
+        options.measure = &measure;
+        const auto run = hikari::application::runDocumentGraph(doc, hikari::application::documentGraphs(doc).front().line,
+                                                               options);
+        ASSERT_TRUE(run.has_value());
+        EXPECT_TRUE(run->problems.empty());
+        std::vector<std::string> lines;
+        for (const auto &line : run->lines) {
+            std::string text = narrow(hikari::core::legacy::assLineText(line));
+            text.replace(text.find(",fx preset,"), 11, ",fx,");
+            lines.push_back(std::move(text));
+        }
+        ASSERT_FALSE(lines.empty());
+
+        KaraokePreset round;
+        for (const auto &l : *exported)
+            round.lines.push_back({l.layer, l.effect, l.text});
+        const std::string input = inKaraOKMode(textOf(fixtureWith(round))) + karaoke;
+        EXPECT_EQ(generatedLines(templated(bytesOf(input), bundledScript())), lines);
+        ++compared;
+    }
+    EXPECT_GE(compared, 10);
+}
+
 TEST_F(KaraokePresets, ScaledStylesKeepTheirScale)
 {
     const struct {
