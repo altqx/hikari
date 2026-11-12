@@ -7346,6 +7346,10 @@ Failed to copy %2 fonts.</source>
         <translation>சாய்வு</translation>
     </message>
     <message>
+        <source>Text on path</source>
+        <translation>பாதையில் உரை</translation>
+    </message>
+    <message>
         <source>Vector clip: move points</source>
         <translation>திசையன் கிளிப்: புள்ளிகளை நகர்த்து</translation>
     </message>
@@ -22920,12 +22924,32 @@ or codecs or a splitter may be missing</source>
         <translation>படிகள்</translation>
     </message>
     <message>
+        <source>Layout</source>
+        <translation>தளவமைப்பு</translation>
+    </message>
+    <message>
         <source>In</source>
         <translation>தோன்றல்</translation>
     </message>
     <message>
         <source>Out</source>
         <translation>மறைதல்</translation>
+    </message>
+    <message>
+        <source>Offset</source>
+        <translation>இடப்பெயர்ச்சி</translation>
+    </message>
+    <message>
+        <source>Frames a step</source>
+        <translation>ஒரு படிக்குச் சட்டகங்கள்</translation>
+    </message>
+    <message>
+        <source>Past the end</source>
+        <translation>முடிவுக்கு அப்பால்</translation>
+    </message>
+    <message>
+        <source>Lines</source>
+        <translation>வரிகள்</translation>
     </message>
     <message numerus="yes">
         <source>Changes %n lines</source>
@@ -23561,6 +23585,10 @@ or codecs or a splitter may be missing</source>
         <translation>பார்வைக்கோணம்</translation>
     </message>
     <message>
+        <source>Text on path</source>
+        <translation>பாதையில் உரை</translation>
+    </message>
+    <message>
         <source>\org mode</source>
         <translation>\org பயன்முறை</translation>
     </message>
@@ -23897,6 +23925,54 @@ increasing or decreasing the value.</source>
     <message>
         <source>No characters on the line</source>
         <translation>வரியில் எழுத்துகள் இல்லை</translation>
+    </message>
+    <message>
+        <source>Apply</source>
+        <translation>பயன்படுத்து</translation>
+    </message>
+    <message>
+        <source>Draw a path, or give the line a vector clip</source>
+        <translation>பாதையை வரையவும் அல்லது வரிக்குத் திசையன் கிளிப் கொடுக்கவும்</translation>
+    </message>
+    <message>
+        <source>Left</source>
+        <translation>இடது</translation>
+    </message>
+    <message>
+        <source>Reverse</source>
+        <translation>தலைகீழாக்கு</translation>
+    </message>
+    <message>
+        <source>Right</source>
+        <translation>வலது</translation>
+    </message>
+    <message>
+        <source>Rotate</source>
+        <translation>சுழற்று</translation>
+    </message>
+    <message>
+        <source>Slide</source>
+        <translation>நகர்வு</translation>
+    </message>
+    <message>
+        <source>Slide needs the video’s frames</source>
+        <translation>நகர்வுக்கு வீடியோவின் சட்டகங்கள் தேவை</translation>
+    </message>
+    <message>
+        <source>Spread</source>
+        <translation>பரப்பு</translation>
+    </message>
+    <message>
+        <source>Text can’t be measured here</source>
+        <translation>இங்கே உரையை அளவிட முடியாது</translation>
+    </message>
+    <message>
+        <source>No text to place</source>
+        <translation>வைக்க உரை இல்லை</translation>
+    </message>
+    <message>
+        <source>The text is longer than the path. The last graphemes continue along its end.</source>
+        <translation>உரை பாதையை விட நீளமானது. கடைசி எழுத்துகள் அதன் முடிவிலிருந்து தொடர்கின்றன.</translation>
     </message>
     <message>
         <source>Edit</source>

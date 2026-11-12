@@ -63,6 +63,7 @@ VT2 ([#270](https://github.com/altqx/hikari/issues/270), owner-approved audit [i
 | Hydra | VIDEO_TOOL_HYDRA (2032) | H | free | Audio Stop |
 | Perspective (VT3) | VIDEO_TOOL_PERSPECTIVE (2033) | Q | free | Audio Play 500 ms before |
 | Gradient (AU7) | VIDEO_TOOL_GRADIENT (2043) | W | free | Audio Play 500 ms after |
+| Text on path (AU14) | VIDEO_TOOL_TEXT_ON_PATH (2044) | none | – | – |
 
 The Audio bindings act over the Audio panel (and from the Grid, legacy's TabPanel::SetAccels), not over the video, so they keep their keys.
 
@@ -255,6 +256,16 @@ The UI-free parts are shared with AU22 and NE5:
 **Stops.** Values: From and To for each tag in the gradient (the picker adds a tag, Remove drops the shown one), From seeded from the active Line. Picked lines (strip modes): every picked Line is a stop in Grid order, and tags that differ between them are interpolated block by block. Strip, Overlap, Accel, Blend and Merge equal strips (on by default) shape the strips.
 
 **Preview and commit.** After the drag (at once in the modes without one) the new Lines show over the video through `previewLines`, and `hiddenLines` leaves the originals out of the preview. Handles, values and options still change it. Apply or Enter commits one "Gradient" step through `Gesture::stageReplacement`: each target is commented and its strips follow it (the stops are all commented, and the strips follow the last), or its text is changed in the other modes. The new Lines are selected. Esc drops the preview. A gradient that can't be made says why over the video, and Apply rings the bell.
+
+## Text on path (AU14)
+
+AU14 ([#847](https://github.com/altqx/hikari/issues/847), owner gate Q287–Q295 on 2026-11-11) adds a fourteenth family, `TextOnPathTool` (`visual_text_on_path.h`), after Gradient on the rail. Its command is VIDEO_TOOL_TEXT_ON_PATH (2044), with no default key. It does natively what BezierToText and zf.textInClip do. BezierToText stays bundled and credited. Departures are [AU14-text-on-path](compatibility-decisions.md#au14-text-on-path).
+
+- `text_on_path.h` is UI-free. A `Path` holds lines and cubic Béziers measured by exact arc length (Gauss–Legendre, inverted by Newton), and past either end it goes straight on along the end tangent. `units` splits a Line's text into grapheme clusters, each with every earlier override tag except positioning, so Thai marks stay on their base. `place` gives each cluster's bottom centre and angle.
+- **The path** is the active Line's vector `\clip` (every segment, its scale) or one drawn with the vector clip's point editor: Move points, Add line, Add Bézier curve and Delete point.
+- **Placement**: one Line per cluster, `{carried\an2\pos(x,y)\frz…}cluster`, measured with its Style and tags through `taggedTextWidth`. Spaces, `\h`, `\N` and `\n` only advance. Left, Centre, Right and Spread (gaps widened to fill the path), an Offset along the path, Reverse (the path the other way) and Rotate (off: no `\frz`, and the Line's own `\frz` is carried).
+- **Slide**: every N frames ("Frames a step") the text moves on, from the path's start to where its end meets the path's end, or the other way with Reverse. Each step makes one Line per cluster timed to its frames, the first and last keeping the Line's start and end. The bar's Lines value counts them before Apply.
+- **Preview and commit** work as in Gradient. The new Lines show over the video and the original is hidden. Apply or Enter makes one "Text on path" step through `Gesture::stageReplacement`, whose `Replacement` copies can carry their own times. The original is commented and kept, and the new Lines follow it and are selected. Esc drops the preview and the path. Text longer than the path continues straight on, a notice over the video says so, and Past the end gives the pixels.
 
 ## Blur and glow layers (AU18)
 

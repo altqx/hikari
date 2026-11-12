@@ -7402,6 +7402,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Gradient</translation>
     </message>
     <message>
+        <source>Text on path</source>
+        <translation>Tekst na ścieżce</translation>
+    </message>
+    <message>
         <source>Vector clip: move points</source>
         <translation>Wycinek wektorowy: przesuń punkty</translation>
     </message>
@@ -23118,12 +23122,32 @@ bądź brakuje kodeków czy też splittera</translation>
         <translation>Kroki</translation>
     </message>
     <message>
+        <source>Layout</source>
+        <translation>Układ</translation>
+    </message>
+    <message>
         <source>In</source>
         <translation>Wejście</translation>
     </message>
     <message>
         <source>Out</source>
         <translation>Wyjście</translation>
+    </message>
+    <message>
+        <source>Offset</source>
+        <translation>Przesunięcie</translation>
+    </message>
+    <message>
+        <source>Frames a step</source>
+        <translation>Klatki na krok</translation>
+    </message>
+    <message>
+        <source>Past the end</source>
+        <translation>Poza końcem</translation>
+    </message>
+    <message>
+        <source>Lines</source>
+        <translation>Linijki</translation>
     </message>
     <message numerus="yes">
         <source>Changes %n lines</source>
@@ -23766,6 +23790,10 @@ bądź brakuje kodeków czy też splittera</translation>
         <translation>Perspektywa</translation>
     </message>
     <message>
+        <source>Text on path</source>
+        <translation>Tekst na ścieżce</translation>
+    </message>
+    <message>
         <source>\org mode</source>
         <translation>Tryb \org</translation>
     </message>
@@ -24102,6 +24130,54 @@ zwiększając lub zmniejszając wartość.</translation>
     <message>
         <source>No characters on the line</source>
         <translation>Linia nie ma znaków</translation>
+    </message>
+    <message>
+        <source>Apply</source>
+        <translation>Zastosuj</translation>
+    </message>
+    <message>
+        <source>Draw a path, or give the line a vector clip</source>
+        <translation>Narysuj ścieżkę albo dodaj linijce wycinek wektorowy</translation>
+    </message>
+    <message>
+        <source>Left</source>
+        <translation>Do lewej</translation>
+    </message>
+    <message>
+        <source>Reverse</source>
+        <translation>Odwróć</translation>
+    </message>
+    <message>
+        <source>Right</source>
+        <translation>Do prawej</translation>
+    </message>
+    <message>
+        <source>Rotate</source>
+        <translation>Obracaj</translation>
+    </message>
+    <message>
+        <source>Slide</source>
+        <translation>Przesuwanie</translation>
+    </message>
+    <message>
+        <source>Slide needs the video’s frames</source>
+        <translation>Przesuwanie wymaga klatek wideo</translation>
+    </message>
+    <message>
+        <source>Spread</source>
+        <translation>Rozłóż</translation>
+    </message>
+    <message>
+        <source>Text can’t be measured here</source>
+        <translation>Tutaj nie można zmierzyć tekstu</translation>
+    </message>
+    <message>
+        <source>No text to place</source>
+        <translation>Brak tekstu do rozmieszczenia</translation>
+    </message>
+    <message>
+        <source>The text is longer than the path. The last graphemes continue along its end.</source>
+        <translation>Tekst jest dłuższy niż ścieżka. Ostatnie grafemy biegną dalej od jej końca.</translation>
     </message>
     <message>
         <source>Edit</source>

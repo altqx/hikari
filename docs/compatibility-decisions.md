@@ -125,6 +125,19 @@ Video › "Track colour…" and "Find fade…" do natively what zah.aegi-color-t
 - **V5, every frame.** Find fade checks every frame after the video's frame for the fade out. AutoFade first halves the distance to the end while the colour holds, so it can step over a flicker.
 - **V6, unread frames.** A frame where the point is outside the picture counts as neither shown nor gone. AutoFade stops with an error.
 
+## AU14-text-on-path
+
+The Text on path visual tool does natively what BezierToText 1.1 (bundled) and zf.textInClip 2.1.2 do (records in [AU14 #847](https://github.com/altqx/hikari/issues/847)). With Left and offset 0 it places Latin text where BezierToText 1.0 does, to within 0.15 px and 0.05°. The departures below were accepted at the owner's gate on 2026-11-11 (Q287–Q295).
+
+- **P1, arc length.** Distances along the curve are exact. BezierToText adds chords at steps of 0.0001 in t and places each grapheme at the first step past its centre.
+- **P2, clip numbers.** Decimals, minus signs and the clip's scale are read as written. BezierToText keeps only the digits.
+- **P3, every segment.** Lines and Béziers are all used, end to end. BezierToText takes the first cubic only.
+- **P4, measuring.** Each grapheme is measured with the tags before it (`\fn \fs \fscx \fscy \fsp \b \i`). BezierToText measures with the Style only.
+- **P5, carried tags.** The new Lines carry every earlier override tag except `\pos \move \an \a \org \clip \iclip` (and `\frz \fr` while Rotate is on), in one block before the new position. BezierToText keeps them all, so a Line's own `\an` or `\pos` came first and won.
+- **P6, longer text.** Text longer than the path goes straight on from the path's end and a notice says so. BezierToText stops with an error.
+- **P7, numbers.** `\pos` and `\frz` have up to three decimals with trailing zeros dropped. BezierToText writes `%5.5f` and `%5.3f`.
+- **P8, Slide.** zf.textInClip's Animated modes are one Slide toggle. Reverse slides right to left, and each step's Lines take its frames' times. zf's "Enable shape" waits for AU6 (#845).
+
 ## AU20-text-commands
 
 Line breaks, Change case and Swap dialogue alternatives do natively what these scripts do: ua.LineBreaker, petzku.Autowrapper, l0.InsertLineBreaks, ua.ChangeCase, Flux.TitleCase, zf.allCharsTo and Flux.DialogSwapper. The bundled "Make text fullwidth" demo still ships unchanged. The behaviour record and the owner's answers are on [AU20 #854](https://github.com/altqx/hikari/issues/854) (Q279–Q286, 2026-11-11).

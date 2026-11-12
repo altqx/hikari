@@ -5055,8 +5055,7 @@
    "legacy": [],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "AU14 #847"
+   ]
   },
   {
    "role": "reinstall-scripts",
