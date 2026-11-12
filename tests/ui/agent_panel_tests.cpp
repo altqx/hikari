@@ -367,6 +367,10 @@ private slots:
         ports.agentOnPath = [found, onlyClaude](const QString &agent) {
             return found || (onlyClaude && agent == QStringLiteral("claude"));
         };
+        if (test == "withoutFileSandboxingThePanelOffersOnlyClaude") {
+            ports.agentOnPath = [](const QString &) { return true; };
+            ports.filesConfined = [] { return false; };
+        }
         if (test == "theInstalledClaudeEditsIntoTheReview" || test == "theInstalledCodexEditsIntoTheReview")
             realAgents(ports);
         if (test == "theInstalledAntigravityRepliesAndItsSignInGoesOnSignOut")
@@ -416,6 +420,15 @@ private slots:
         agent().setModel(codex);
         QTRY_COMPARE(agent().thread().value(QStringLiteral("modelText")).toString(), QStringLiteral("Codex"));
         QCOMPARE(agent().thread().value(QStringLiteral("model")).toString(), codex);
+    }
+    void withoutFileSandboxingThePanelOffersOnlyClaude()
+    {
+        openPanel();
+        QStringList offered;
+        for (const QVariant &model : agent().models())
+            if (model.toMap().value(QStringLiteral("value")).toString().startsWith(QLatin1String("agent:")))
+                offered << model.toMap().value(QStringLiteral("text")).toString();
+        QCOMPARE(offered, QStringList{QStringLiteral("Claude Code")});
     }
     void theInstalledClaudeEditsIntoTheReview()
     {

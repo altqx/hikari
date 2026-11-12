@@ -2,6 +2,7 @@
 #include "hikari/app/ai_mcp.h"
 
 #include "hikari/application/hotkeys.h"
+#include "hikari/backends/ai_agent_broker.h"
 #include "hikari/backends/ai_sidecar_host.h"
 #include "hikari/backends/ai_sidecar_updater.h"
 #include "hikari/backends/sandbox.h"
@@ -13,6 +14,7 @@
 #include <QDir>
 #include <QElapsedTimer>
 #include <QFile>
+#include <QFileInfo>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QRegularExpression>
@@ -268,6 +270,95 @@ TEST_F(AiFeaturesTest, TheAcpAgentsFoundAndTheUsersOwnAreAddedAgainWhenTheirList
     added.clear();
     features.setCustomAgents({});
     EXPECT_EQ(added, (std::vector<QString>{QStringLiteral("opencode=/opt/opencode ")}));
+}
+#endif
+
+#ifndef Q_OS_WIN
+TEST_F(AiFeaturesTest, WithoutFileSandboxingOnlyClaudeIsOfferedAndCodexCantStart)
+{
+    app::AiFeatures::Ports p = ports(false);
+    p.agentOnPath = [](const QString &) { return true; };
+    p.acpCli = [](const QString &command) { return QStringLiteral("/opt/") + command; };
+    std::vector<QString> added;
+    p.acpSpec = [&](const app::AiFeatures::AcpAgent &agent, std::shared_ptr<backends::ai::TokenFileLease>) {
+        added.push_back(agent.id);
+        return std::optional<backends::ai::AgentSpec>(backends::ai::AgentSpec{.program = agent.program});
+    };
+    backends::ai::AgentBroker *broker = nullptr;
+    p.agents = [&](backends::ai::AgentBroker &b, application::ai::KeyStore &) {
+        broker = &b;
+        b.add("claude", backends::ai::AgentSpec{.program = QStringLiteral("/opt/claude")});
+        b.add("codex", backends::ai::AgentSpec{.program = QStringLiteral("/opt/codex")});
+    };
+    p.filesConfined = [] { return false; };
+    app::AiFeatures features(settings, std::move(p));
+    features.setCustomAgents({{.id = QStringLiteral("custom-1"), .name = QStringLiteral("Mine"), .command = QStringLiteral("mine")}});
+
+    EXPECT_TRUE(features.offersAgent(QStringLiteral("claude")));
+    EXPECT_FALSE(features.offersAgent(QStringLiteral("codex")));
+    EXPECT_EQ(features.refusal(QStringLiteral("codex")), QStringLiteral("sandbox"));
+    EXPECT_EQ(features.refusal(QStringLiteral("opencode")), QStringLiteral("sandbox"));
+    EXPECT_EQ(features.refusal(QStringLiteral("claude")), QString());
+    EXPECT_EQ(features.acpRefusal(QStringLiteral("/opt/mine")), QStringLiteral("sandbox"));
+    EXPECT_TRUE(features.acpAgents().empty());
+
+    ASSERT_NE(features.sidecarForMcp(), nullptr);
+    EXPECT_TRUE(added.empty());
+    ASSERT_NE(broker, nullptr);
+    const auto start = [&](const char *agent) {
+        std::optional<std::string> refused;
+        broker->call("_hikari/agent.start", api::Json::object({{"process", 1}, {"agent", agent}}),
+                     [&](auto result) { refused = result ? std::string() : result.error().second; });
+        return refused.value_or("no answer");
+    };
+    EXPECT_EQ(start("codex"), "Hikari doesn't know that agent");
+    EXPECT_NE(start("claude"), "Hikari doesn't know that agent");
+}
+
+TEST_F(AiFeaturesTest, ACustomAcpAgentInsideAnOpenProjectIsRefused)
+{
+    QTemporaryDir root;
+    const QString show = root.filePath(QStringLiteral("Show S02"));
+    const QString outside = root.filePath(QStringLiteral("tools"));
+    for (const QString &folder : {show + QStringLiteral("/bin"), outside})
+        ASSERT_TRUE(QDir().mkpath(folder));
+    for (const QString &file : {show + QStringLiteral("/bin/agent"), outside + QStringLiteral("/agent")}) {
+        QFile program(file);
+        ASSERT_TRUE(program.open(QIODevice::WriteOnly));
+    }
+    app::AiFeatures::Ports p = ports(false);
+    p.acpCli = [](const QString &command) { return QFileInfo(command).isAbsolute() ? command : QString(); };
+    std::vector<QString> added;
+    p.acpSpec = [&](const app::AiFeatures::AcpAgent &agent, std::shared_ptr<backends::ai::TokenFileLease>) {
+        added.push_back(agent.id);
+        return std::optional<backends::ai::AgentSpec>(backends::ai::AgentSpec{.program = agent.program});
+    };
+    p.filesConfined = [] { return true; };
+    QStringList open;
+    app::AiFeatures features(settings, std::move(p));
+    features.setProjectRoots([&] { return open; });
+    features.setCustomAgents({{.id = QStringLiteral("custom-in"), .name = QStringLiteral("In"), .command = show + QStringLiteral("/bin/agent")},
+                              {.id = QStringLiteral("custom-out"), .name = QStringLiteral("Out"), .command = outside + QStringLiteral("/agent")}});
+    const auto listed = [&] {
+        QStringList out;
+        for (const auto &agent : features.acpAgents())
+            out << agent.id;
+        return out;
+    };
+    EXPECT_EQ(listed(), (QStringList{"custom-in", "custom-out"}));
+    ASSERT_NE(features.sidecarForMcp(), nullptr);
+
+    open = {QDir::toNativeSeparators(show)};
+    added.clear();
+    features.projectsChanged();
+    EXPECT_EQ(features.acpRefusal(show + QStringLiteral("/bin/agent")), QStringLiteral("project"));
+    EXPECT_EQ(features.acpRefusal(outside + QStringLiteral("/agent")), QString());
+    EXPECT_EQ(listed(), QStringList{"custom-out"});
+    EXPECT_EQ(added, std::vector<QString>{QStringLiteral("custom-out")});
+
+    open.clear();
+    features.projectsChanged();
+    EXPECT_EQ(listed(), (QStringList{"custom-in", "custom-out"}));
 }
 #endif
 

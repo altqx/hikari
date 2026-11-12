@@ -274,7 +274,7 @@ bool AgentController::ready() const
 std::optional<ai::ModelRef> AgentController::foundAgent() const
 {
     for (const AgentModel &agent : kAgentModels)
-        if (m_wiring.ai.agentFound(QString::fromLatin1(agent.program)))
+        if (m_wiring.ai.offersAgent(QString::fromLatin1(agent.program)))
             return agent.ref();
     if (const auto acp = m_wiring.ai.acpAgents(); !acp.empty())
         return acpRef(acp.front());
@@ -411,13 +411,14 @@ void AgentController::projectChanged()
 {
     emit threadsChanged();
     emit threadChanged();
+    emit modelsChanged();
 }
 
 QVariantList AgentController::models() const
 {
     QVariantList out;
     for (const AgentModel &agent : kAgentModels)
-        if (m_wiring.ai.agentFound(QString::fromLatin1(agent.program)))
+        if (m_wiring.ai.offersAgent(QString::fromLatin1(agent.program)))
             out.push_back(QVariantMap{{QStringLiteral("value"), modelValue(agent.ref())},
                                       {QStringLiteral("text"), agent.text()},
                                       {QStringLiteral("provider"), QString()}});
