@@ -349,3 +349,27 @@ TEST(SelectLinesOptions, RecentListAndStylesPattern)
     EXPECT_EQ(stylesPattern({u8"Default", u8"Sign (top).1", u8"a|b?"}),
               u8"^Default|Sign \\(top\\)\\.1|a\\|b?$");
 }
+
+TEST(SelectOverlaps, LinesStartingWhileAnEarlierDialogueIsOn)
+{
+    EditSession session{load(std::string(kHeader) +
+                             "Dialogue: 0,0:00:00.00,0:00:05.00,Default,,0,0,0,,a\n"
+                             "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,b\n"
+                             "Dialogue: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,,c\n"
+                             "Comment: 0,0:00:05.50,0:00:07.00,Default,,0,0,0,,d\n"
+                             "Dialogue: 0,0:00:05.50,0:00:06.50,Default,,0,0,0,,e\n"
+                             "Dialogue: 0,0:00:00.50,0:00:00.80,Default,,0,0,0,,f\n")};
+    const auto lines = session.document().lines();
+    S s;
+    s.field = S::Field::Overlaps;
+    s.find = u8"ignored";
+    auto r = selectLines(session, s);
+    ASSERT_TRUE(r);
+    EXPECT_EQ(r->count, 3);
+    EXPECT_EQ(session.selection().selected, (std::set<core::LineId>{lines[1]->id, lines[4]->id, lines[5]->id}));
+    s.with = false;
+    s.comments = true;
+    ASSERT_TRUE(selectLines(session, s));
+    EXPECT_EQ(session.selection().selected, (std::set<core::LineId>{lines[0]->id, lines[2]->id, lines[3]->id}));
+    EXPECT_EQ(selectLinesFromOptions(selectLinesOptions(s)).field, S::Field::Overlaps);
+}

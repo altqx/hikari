@@ -357,6 +357,7 @@ hikari_add_gtest(hikari_backends_font_collector_tests SOURCES font_collector_tes
     PROPERTIES ENVIRONMENT "FONTCONFIG_FILE=${CMAKE_CURRENT_BINARY_DIR}/font-fixtures.conf" RUN_SERIAL TRUE)
 target_compile_definitions(hikari_backends_font_collector_tests PRIVATE
     HIKARI_FONT_FIXTURES="${HIKARI_FONT_FIXTURE_DIR}"
+    HIKARI_ATTACHMENT_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/attachments"
     HIKARI_FONTCONFIG_FILE="${CMAKE_CURRENT_BINARY_DIR}/font-fixtures.conf")
 add_dependencies(hikari_backends_font_collector_tests hikari_font_fixtures)
 target_include_directories(hikari_backends_font_collector_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
@@ -509,6 +510,11 @@ hikari_add_gtest(hikari_backends_ai_agent_broker_tests SOURCES ai_agent_broker_t
 target_compile_definitions(hikari_backends_ai_agent_broker_tests PRIVATE
     HIKARI_FAKE_AGENT="$<TARGET_FILE:hikari_fake_agent>")
 add_dependencies(hikari_backends_ai_agent_broker_tests hikari_fake_agent)
+hikari_add_gtest(hikari_backends_ai_mcp_clients_tests SOURCES ai_mcp_clients_tests.cpp
+    LIBRARIES hikari_ai Qt6::Core LABELS backends)
+target_compile_definitions(hikari_backends_ai_mcp_clients_tests PRIVATE
+    HIKARI_FAKE_AGENT="$<TARGET_FILE:hikari_fake_agent>")
+add_dependencies(hikari_backends_ai_mcp_clients_tests hikari_fake_agent)
 hikari_add_gtest(hikari_backends_ai_signin_tests SOURCES ai_signin_tests.cpp
     LIBRARIES hikari_ai Qt6::Core Qt6::Network LABELS backends)
 target_include_directories(hikari_backends_ai_signin_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")

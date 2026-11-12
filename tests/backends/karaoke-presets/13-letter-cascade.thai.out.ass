@@ -1,0 +1,25 @@
+[Script Info]
+; TH5d3: Thai karaoke Lines for the karaOK presets (phrases authored for the test)
+Title: TH5d3 karaOK Thai fixture
+ScriptType: v4.00+
+WrapStyle: 0
+PlayResX: 1280
+PlayResY: 720
+ScaledBorderAndShadow: yes
+Karaoke Templater: karaOK
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Other-furigana,Arial,18,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,1,1,2,20,20,20,1
+Style: Romaji,Arial,48,&H00FFFFFF,&H00FF8C3C,&H00202020,&H80000000,0,0,0,0,100,100,0,0,1,2,1,8,20,20,30,1
+Style: Romaji-furigana,Arial,24,&H00FFFFFF,&H00FF8C3C,&H00202020,&H80000000,0,0,0,0,100,100,0,0,1,2,1,8,20,20,30,1
+Style:  Other,Arial,36,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,2,20,20,20,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Comment: 0,0:00:00.00,0:00:00.00,Romaji,,0,0,0,template line cascade,!retime("line",-600,300)!{\fad(0,300)}
+Comment: 0,0:00:00.00,0:00:00.00,Romaji,,0,0,0,template lchar cascade,{\alpha&HFF&\t(!$ci*30!,!$ci*30+200!,\alpha&H00&)}
+Comment: 0,0:00:01.00,0:00:04.00,Romaji,,0,0,0,karaoke,{\k40}กิน{\k60}น้ำ{\k0} {\k50}ขึ้น{\k45}ฟ้า
+Comment: 0,0:00:05.00,0:00:07.00,Romaji,,0,0,0,karaoke,{\k50}ใจ{\k40}ดี{\k0} {\k60}ที่{\k50}นี่
+Dialogue: 0,0:00:00.40,0:00:04.30,Romaji,,0,0,0,fx,{\fad(0,300)}{\alpha&HFF&\t(30,230,\alpha&H00&)}กิ{\alpha&HFF&\t(60,260,\alpha&H00&)}น{\alpha&HFF&\t(90,290,\alpha&H00&)}น้ำ{\alpha&HFF&\t(120,320,\alpha&H00&)} {\alpha&HFF&\t(150,350,\alpha&H00&)}ขึ้{\alpha&HFF&\t(180,380,\alpha&H00&)}น{\alpha&HFF&\t(210,410,\alpha&H00&)}ฟ้{\alpha&HFF&\t(240,440,\alpha&H00&)}า
+Dialogue: 0,0:00:04.40,0:00:07.30,Romaji,,0,0,0,fx,{\fad(0,300)}{\alpha&HFF&\t(30,230,\alpha&H00&)}ใ{\alpha&HFF&\t(60,260,\alpha&H00&)}จ{\alpha&HFF&\t(90,290,\alpha&H00&)}ดี{\alpha&HFF&\t(120,320,\alpha&H00&)} {\alpha&HFF&\t(150,350,\alpha&H00&)}ที่{\alpha&HFF&\t(180,380,\alpha&H00&)}นี่

@@ -1433,7 +1433,9 @@ NodeEffectRun runNodeEffect(const core::Document &document, std::u8string_view n
                 ++styles;
         }
     double li = static_cast<double>(info + styles + layout.furiganaStylesAdded());
-    const bool karaOK = karaoke_templates::documentMode(document) == karaoke_templates::Mode::KaraOK;
+    const bool karaOK = karaoke_templates::documentMode(document, options.newDocument ? karaoke_templates::Mode::KaraOK
+                                                                                      : karaoke_templates::Mode::Stock) ==
+                        karaoke_templates::Mode::KaraOK;
     std::vector<karaoke_layout::Line> lines;
     std::vector<std::vector<std::string>> layoutProblems;
     for (const core::LineRecord *l : document.lines()) {

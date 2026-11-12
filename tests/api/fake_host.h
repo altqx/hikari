@@ -178,6 +178,16 @@ public:
     std::function<void(LuaRun)> pending;
 };
 
+class FakeTranslation final : public TranslationHost {
+public:
+    std::optional<std::string> projectFolder(application::DocumentId document) const override
+    {
+        const auto it = folders.find(document.value);
+        return it == folders.end() ? std::nullopt : std::optional(it->second);
+    }
+    std::map<std::uint64_t, std::string> folders;
+};
+
 // Document 1 "a.ass" (the editing target, Lines 1-3, Lines 1 and 3 selected,
 // 3 active) and document 2 "b.ass", never saved.
 class FakeHost final : public DocumentHost, public CommandHost, public PanelHost {
@@ -209,7 +219,12 @@ public:
 
     FolderSkills skills{std::filesystem::path()};
     FakeAutomation automation;
-    Host host() { return Host{this, this, this, &settings, &media, &files, &review, render, &skills, &automation, typeset, karaoke}; }
+    FakeTranslation translation;
+    Host host()
+    {
+        return Host{this, this, this, &settings, &media, &files, &review, render, &skills, &automation, typeset, nullptr,
+                    &translation, karaoke};
+    }
 
     const application::Workspace &workspace() const override { return workspace_; }
     application::EditSession *session(application::DocumentId document) const override

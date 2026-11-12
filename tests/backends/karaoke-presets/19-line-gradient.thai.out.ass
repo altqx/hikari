@@ -1,0 +1,26 @@
+[Script Info]
+; TH5d3: Thai karaoke Lines for the karaOK presets (phrases authored for the test)
+Title: TH5d3 karaOK Thai fixture
+ScriptType: v4.00+
+WrapStyle: 0
+PlayResX: 1280
+PlayResY: 720
+ScaledBorderAndShadow: yes
+Karaoke Templater: karaOK
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Other-furigana,Arial,18,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,1,1,2,20,20,20,1
+Style: Romaji,Arial,48,&H00FFFFFF,&H00FF8C3C,&H00202020,&H80000000,0,0,0,0,100,100,0,0,1,2,1,8,20,20,30,1
+Style: Romaji-furigana,Arial,24,&H00FFFFFF,&H00FF8C3C,&H00202020,&H80000000,0,0,0,0,100,100,0,0,1,2,1,8,20,20,30,1
+Style:  Other,Arial,36,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,2,20,20,20,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Comment: 0,0:00:00.00,0:00:00.00,Romaji,,0,0,0,code once,ln = _G.require "ln.kara"; ln.init(tenv)
+Comment: 0,0:00:00.00,0:00:00.00,Romaji,,0,0,0,template line gradient,!retime("line",-300,300)!{\fad(300,300)}
+Comment: 0,0:00:00.00,0:00:00.00,Romaji,,0,0,0,template lchar gradient,{\1c!ln.color.byHSL(math.floor($ci*170/$llen),200,160)!}
+Comment: 0,0:00:01.00,0:00:04.00,Romaji,,0,0,0,karaoke,{\k40}กิน{\k60}น้ำ{\k0} {\k50}ขึ้น{\k45}ฟ้า
+Comment: 0,0:00:05.00,0:00:07.00,Romaji,,0,0,0,karaoke,{\k50}ใจ{\k40}ดี{\k0} {\k60}ที่{\k50}นี่
+Dialogue: 0,0:00:00.70,0:00:04.30,Romaji,,0,0,0,fx,{\fad(300,300)}{\1c&H559FEA&}กิ{\1c&H55E8EA&}น{\1c&H55EAA2&}น้ำ{\1c&H55EA55&} {\1c&H9FEA55&}ขึ้{\1c&HE8EA55&}น{\1c&HEAA255&}ฟ้{\1c&HEA5555&}า
+Dialogue: 0,0:00:04.70,0:00:07.30,Romaji,,0,0,0,fx,{\fad(300,300)}{\1c&H55B7EA&}ใ{\1c&H55EABB&}จ{\1c&H55EA55&}ดี{\1c&HB7EA55&} {\1c&HEABB55&}ที่{\1c&HEA5555&}นี่

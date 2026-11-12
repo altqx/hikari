@@ -117,6 +117,7 @@ struct HttpRelay::Exchange {
     RelayTarget destination;
     QPointer<QNetworkReply> reply;
     Redactor redactor;
+    std::function<void(const QByteArray &)> observe;
     bool started = false;
     bool answered = false;
 
@@ -377,7 +378,7 @@ std::function<void()> HttpRelay::request(const api::Json &params, RelayExchange 
 void HttpRelay::route(const std::shared_ptr<Exchange> &exchange)
 {
     const QUrl &base = exchange->destination.base;
-    QUrl url = exchange->url.adjusted(QUrl::NormalizePathSegments);
+    QUrl url = exchange->destination.exactUrl ? base : exchange->url.adjusted(QUrl::NormalizePathSegments);
     const bool web = url.scheme() == QLatin1String("https") || url.scheme() == QLatin1String("http");
     if (!web || !withinBase(url, base)) {
         exchange->fail(app::ErrorKind::Rejected, "invalid endpoint");
@@ -387,6 +388,13 @@ void HttpRelay::route(const std::shared_ptr<Exchange> &exchange)
         exchange->fail(app::ErrorKind::Rejected, "read-only target");
         return finish(exchange->id);
     }
+    if (exchange->destination.guardBody && !exchange->body.isEmpty())
+        if (const auto refused = exchange->destination.guardBody(exchange->body)) {
+            exchange->fail(app::ErrorKind::Rejected, *refused);
+            return finish(exchange->id);
+        }
+    if (exchange->destination.observer)
+        exchange->observe = exchange->destination.observer();
     const QString host = url.host();
     if (exchange->destination.key.empty() || url.scheme() == QLatin1String("https") ||
         host.compare(QLatin1String("localhost"), Qt::CaseInsensitive) == 0)
@@ -428,7 +436,9 @@ void HttpRelay::send(const std::shared_ptr<Exchange> &exchange, QUrl url, const 
     request.setAttribute(QNetworkRequest::CookieLoadControlAttribute, QNetworkRequest::Manual);
     request.setAttribute(QNetworkRequest::CookieSaveControlAttribute, QNetworkRequest::Manual);
     const QByteArray key = QByteArray::fromStdString(exchange->destination.key);
-    for (auto [name, value] : exchange->headers) {
+    auto headers = exchange->headers;
+    headers.insert(headers.end(), exchange->destination.headers.begin(), exchange->destination.headers.end());
+    for (auto [name, value] : headers) {
         if (value.contains(kKeyPlaceholder)) {
             if (key.isEmpty())
                 continue;
@@ -464,15 +474,21 @@ void HttpRelay::send(const std::shared_ptr<Exchange> &exchange, QUrl url, const 
                                                     {"data", bytes.mid(at, kChunkBytes).toBase64().toStdString()}}));
     };
     connect(reply, &QNetworkReply::metaDataChanged, this, start);
-    connect(reply, &QNetworkReply::readyRead, this, [exchange, start, data] {
+    const auto read = [exchange] {
+        const QByteArray bytes = exchange->reply->readAll();
+        if (exchange->observe)
+            exchange->observe(bytes);
+        return exchange->redactor.push(bytes);
+    };
+    connect(reply, &QNetworkReply::readyRead, this, [exchange, start, data, read] {
         start();
         if (exchange->started)
-            data(exchange->redactor.push(exchange->reply->readAll()));
+            data(read());
     });
-    connect(reply, &QNetworkReply::finished, this, [this, exchange, start, data, id] {
+    connect(reply, &QNetworkReply::finished, this, [this, exchange, start, data, read, id] {
         start();
         if (exchange->started) {
-            data(exchange->redactor.push(exchange->reply->readAll()));
+            data(read());
             data(exchange->redactor.flush());
             exchange->answer([&] { exchange->out.respond(api::Json::object()); });
         } else {

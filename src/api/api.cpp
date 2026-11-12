@@ -82,8 +82,10 @@ const Registry &Api::registry()
         detail::addFileOperations(r);
         detail::addSkillOperations(r);
         detail::addAutomationOperations(r);
+        detail::addTranslationOperations(r);
         detail::addNodeOperations(r);
         detail::addTypesetOperations(r);
+        detail::addProjectOperations(r);
         detail::addKaraokeOperations(r);
         detail::addEvents(r);
         return r;
@@ -111,7 +113,12 @@ void Api::call(const Caller &caller, std::string_view name, const Json &params, 
     for (const auto &[callerId, file] : m_grants)
         if (callerId == caller.id)
             files.push_back(file);
-    const Context context{m_host, caller, std::move(files)};
+    std::vector<GrantedFolder> folders;
+    for (const auto &[callerId, folder] : m_folders)
+        if (callerId == caller.id)
+            folders.push_back(folder);
+    const Context context{m_host, caller, std::move(files), std::move(folders),
+                          [this, id = caller.id](const std::string &path, bool writable) { return grantFile(id, path, writable); }};
     if (operation->access == Access::Read) {
         operation->handler(context, given, std::move(reply));
         return;
@@ -141,9 +148,24 @@ std::string Api::grantFile(const std::string &callerId, const std::string &path,
     return file.handle;
 }
 
+std::string Api::grantFolder(const std::string &callerId, const std::string &path, bool writable)
+{
+    for (auto &[id, folder] : m_folders)
+        if (id == callerId && folder.path == path) {
+            folder.writable = writable;
+            return folder.handle;
+        }
+    const std::size_t slash = path.find_last_of("/\\");
+    GrantedFolder folder{"d" + std::to_string(m_nextGrant++), slash == std::string::npos ? path : path.substr(slash + 1),
+                         path, writable};
+    m_folders.emplace_back(callerId, folder);
+    return folder.handle;
+}
+
 void Api::revokeFiles(const std::string &callerId)
 {
     std::erase_if(m_grants, [&](const auto &grant) { return grant.first == callerId; });
+    std::erase_if(m_folders, [&](const auto &grant) { return grant.first == callerId; });
 }
 
 std::optional<std::string> Api::grantedPath(const std::string &callerId, std::string_view handle) const

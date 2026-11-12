@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <iterator>
 #include <map>
 #include <optional>
 #include <string>
@@ -287,6 +288,147 @@ std::u8string bakeAnimations(std::u8string_view text, const core::StyleValues &s
     bakeMove(pieces, frame);
     bakeTransforms(pieces, style, styles, frame);
     bakeFade(pieces, style, frame);
+    return serialize(pieces);
+}
+
+namespace {
+
+u8s whole(double v)
+{
+    return wide(std::to_string(std::llround(v)));
+}
+
+u8s joined(const std::vector<u8s> &parts)
+{
+    u8s out = u8"(";
+    for (std::size_t i = 0; i < parts.size(); ++i)
+        out += (i ? u8"," : u8"") + parts[i];
+    return out + u8")";
+}
+
+std::vector<Item> retimeMove(const Tag &move, const RetimeWindow &w)
+{
+    const auto args = arguments(move.value);
+    if (args.size() < 4)
+        return {Item{move, {}}};
+    double t1 = args.size() >= 6 ? number(args[4]) : 0, t2 = args.size() >= 6 ? number(args[5]) : 0;
+    if (t1 > t2)
+        std::swap(t1, t2);
+    if (t1 <= 0 && t2 <= 0) {
+        t1 = 0;
+        t2 = w.lineDuration;
+    }
+    t1 -= w.offset;
+    t2 -= w.offset;
+    if (t2 <= 0)
+        return {Item{Tag{u8"pos", joined({args[2], args[3]})}, {}}};
+    if (t1 >= w.duration)
+        return {Item{Tag{u8"pos", joined({args[0], args[1]})}, {}}};
+    return {Item{Tag{u8"move", joined({args[0], args[1], args[2], args[3], whole(t1), whole(t2)})}, {}}};
+}
+
+std::vector<Item> retimeTransform(const Tag &transform, const RetimeWindow &w)
+{
+    const std::size_t open = transform.value.find(u8'(');
+    const std::size_t close = transform.value.rfind(u8')');
+    if (open == u8s::npos)
+        return {Item{transform, {}}};
+    const u8v inside = u8v(transform.value).substr(open + 1, close == u8s::npos || close < open ? u8v::npos
+                                                                                               : close - open - 1);
+    const std::size_t tagsAt = inside.find(u8'\\');
+    if (tagsAt == u8v::npos)
+        return {Item{transform, {}}};
+    std::vector<u8s> numbers;
+    for (const auto &a : arguments(u8"(" + u8s(inside.substr(0, tagsAt)) + u8")"))
+        if (a.find_first_not_of(u8" ") != u8s::npos)
+            numbers.push_back(a);
+    double t1 = 0, t2 = 0;
+    std::optional<u8s> accel;
+    if (numbers.size() == 1)
+        accel = numbers[0];
+    else if (numbers.size() >= 2) {
+        t1 = number(numbers[0]);
+        t2 = number(numbers[1]);
+        if (numbers.size() >= 3)
+            accel = numbers[2];
+    }
+    if (t2 == 0)
+        t2 = w.lineDuration;
+    t1 -= w.offset;
+    t2 -= w.offset;
+    const u8v tags = inside.substr(tagsAt);
+    if (t2 <= 0) {
+        std::vector<Item> ended;
+        for (auto &item : parseTags(tags))
+            if (item.tag)
+                ended.push_back(std::move(item));
+        return ended;
+    }
+    if (t1 >= w.duration)
+        return {};
+    std::vector<u8s> parts{whole(t1), whole(t2)};
+    if (accel)
+        parts.push_back(*accel);
+    parts.emplace_back(tags);
+    return {Item{Tag{u8"t", joined(parts)}, {}}};
+}
+
+std::vector<Item> retimeFade(const Tag &fade, const RetimeWindow &w)
+{
+    const auto args = arguments(fade.value);
+    std::vector<u8s> alphas;
+    double t[4];
+    if (fade.name == u8"fad") {
+        if (args.size() < 2)
+            return {Item{fade, {}}};
+        alphas = {u8"255", u8"0", u8"255"};
+        t[0] = 0;
+        t[1] = number(args[0]);
+        t[2] = w.lineDuration - number(args[1]);
+        t[3] = w.lineDuration;
+    } else {
+        if (args.size() < 7)
+            return {Item{fade, {}}};
+        alphas = {args[0], args[1], args[2]};
+        for (int i = 0; i < 4; ++i)
+            t[i] = number(args[std::size_t(3 + i)]);
+    }
+    for (double &v : t)
+        v -= w.offset;
+    if (t[1] <= 0 && t[2] >= w.duration && number(alphas[1]) == 0)
+        return {};
+    return {Item{Tag{u8"fade", joined({alphas[0], alphas[1], alphas[2], whole(t[0]), whole(t[1]), whole(t[2]),
+                                       whole(t[3])})},
+                 {}}};
+}
+
+}
+
+std::u8string retimeAnimations(std::u8string_view text, const RetimeWindow &window)
+{
+    auto pieces = parse(text);
+    if (!animates(pieces))
+        return u8s(text);
+    for (auto &p : pieces) {
+        if (!p.block)
+            continue;
+        std::vector<Item> items;
+        for (auto &item : p.items) {
+            if (!item.tag) {
+                items.push_back(std::move(item));
+                continue;
+            }
+            const auto &name = item.tag->name;
+            std::vector<Item> now = name == u8"move"                     ? retimeMove(*item.tag, window)
+                                    : name == u8"t"                      ? retimeTransform(*item.tag, window)
+                                    : name == u8"fad" || name == u8"fade" ? retimeFade(*item.tag, window)
+                                                                         : std::vector<Item>{std::move(item)};
+            std::ranges::move(now, std::back_inserter(items));
+        }
+        if (!p.items.empty() && items.empty())
+            p.emptied = true;
+        p.items = std::move(items);
+    }
     return serialize(pieces);
 }
 

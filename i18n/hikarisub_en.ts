@@ -521,6 +521,20 @@
         </translation>
     </message>
     <message numerus="yes">
+        <source>The reviewer didn’t approve line %1, so it’s marked Unconfirmed.</source>
+        <translation>
+            <numerusform>The reviewer didn’t approve line %1, so it’s marked Unconfirmed.</numerusform>
+            <numerusform>The reviewer didn’t approve lines %1, so they’re marked Unconfirmed.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>The reviewer didn’t approve line %1. Check it before you use it.</source>
+        <translation>
+            <numerusform>The reviewer didn’t approve line %1. Check it before you use it.</numerusform>
+            <numerusform>The reviewer didn’t approve lines %1. Check them before you use them.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
         <source>%n line(s) weren’t sent.</source>
         <translation>
             <numerusform>%n line wasn’t sent.</numerusform>
@@ -811,6 +825,13 @@
         <translation>
             <numerusform>Not tested · %n model</numerusform>
             <numerusform>Not tested · %n models</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Connected · %n tool(s)</source>
+        <translation>
+            <numerusform>Connected · %n tool</numerusform>
+            <numerusform>Connected · %n tools</numerusform>
         </translation>
     </message>
 </context>

@@ -127,6 +127,8 @@ constexpr const char *kHotkeyCommands[] = {
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Split lines into characters"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Split lines into words"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Split lines by wraps"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Split lines at tag blocks"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Split lines every N frames or seconds…"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Script properties"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Check for updates"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "About"),
@@ -264,6 +266,7 @@ constexpr const char *kHotkeyCommands[] = {
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Hydra"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Perspective"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Gradient"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Text on path"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Vector clip: move points"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Vector clip: add line"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Vector clip: add Bézier curve"),
@@ -389,6 +392,7 @@ constexpr const char *kVisualTools[] = {
     QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Hydra"),
     QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Perspective"),
     QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Gradient"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Text on path"),
 };
 
 constexpr const char *kVisualToolTexts[] = {
@@ -539,6 +543,22 @@ constexpr const char *kVisualToolTexts[] = {
     QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Strips along the clip need a clip on the line"),
     QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Gradients do not work on an inverse clip"),
     QT_TRANSLATE_NOOP("HikariSub.VisualTools", "No characters on the line"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Apply"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Draw a path, or give the line a vector clip"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Frames a step"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Left"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Lines"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Offset"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Past the end"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Reverse"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Right"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Rotate"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Slide"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Slide needs the video’s frames"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Spread"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Text can’t be measured here"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "No text to place"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "The text is longer than the path. The last graphemes continue along its end."),
 };
 
 QString translated(const char *context, std::string_view english)

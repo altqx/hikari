@@ -1,8 +1,10 @@
-// HIKARI_UPDATE_KARAOKE_GOLDENS=1 rewrites the goldens from the unchanged 3.2.2 script.
+// HIKARI_UPDATE_KARAOKE_GOLDENS=1 rewrites the goldens from the unchanged 3.2.2 script and upstream karaOK,
+// and the departures' goldens from the built-in.
 #include "hikari/application/automation_registry.h"
 #include "hikari/application/automation.h"
 #include "hikari/application/edit_session.h"
 #include "hikari/application/karaoke_presets.h"
+#include "hikari/application/karaoke_templates.h"
 #include "hikari/application/macro_transaction.h"
 #include "hikari/application/node_effects.h"
 #include "hikari/application/node_graph_editing.h"
@@ -62,6 +64,16 @@ QString pristineScript()
     return QStringLiteral(HIKARI_KARAOKE_CORPUS) + QStringLiteral("/kara-templater-aegisub-3.2.2.lua");
 }
 
+QString karaOKDir()
+{
+    return QStringLiteral(HIKARI_KARAOKE_CORPUS) + QStringLiteral("/karaok");
+}
+
+QString upstreamKaraOK()
+{
+    return karaOKDir() + QStringLiteral("/kara-templater-karaok.lua");
+}
+
 QString bundledScript()
 {
     return QString::fromUtf8(hikari::application::kBuiltinKaraokeTemplater);
@@ -112,9 +124,16 @@ std::vector<Preset> presets()
     return out;
 }
 
-std::vector<std::byte> fixtureWith(const KaraokePreset &preset)
+std::vector<Preset> presets(bool karaOK)
 {
-    std::string text = textOf(readBytes(fixtureDir() + QStringLiteral("/fixture.ass")));
+    std::vector<Preset> out;
+    std::ranges::copy_if(presets(), std::back_inserter(out), [&](const Preset &p) { return p.preset.karaOK == karaOK; });
+    return out;
+}
+
+std::vector<std::byte> fixtureWith(const KaraokePreset &preset, const QString &fixture = QStringLiteral("fixture.ass"))
+{
+    std::string text = textOf(readBytes(fixtureDir() + QLatin1Char('/') + fixture));
     std::string lines;
     for (const auto &l : preset.lines)
         lines += "Comment: " + std::to_string(l.layer) + ",0:00:00.00,0:00:00.00,Romaji,,0,0,0," + narrow(l.effect) +
@@ -125,12 +144,13 @@ std::vector<std::byte> fixtureWith(const KaraokePreset &preset)
     return bytesOf(text);
 }
 
-QString goldenOf(const QString &preset)
+QString goldenOf(const QString &preset, const QString &suffix = QStringLiteral(".out.ass"))
 {
-    return fixtureDir() + QLatin1Char('/') + QFileInfo(preset).completeBaseName() + QStringLiteral(".out.ass");
+    return fixtureDir() + QLatin1Char('/') + QFileInfo(preset).completeBaseName() + suffix;
 }
 
 constexpr char kAll[] = "Apply karaoke template";
+constexpr char kUpstreamKaraOKApply[] = "Apply karaoke template (modded with furigana)";
 constexpr char kSelected[] = "Apply karaoke template to selected lines";
 
 class KaraokePresets : public ::testing::Test {
@@ -146,8 +166,10 @@ protected:
 
     std::unique_ptr<LuaScriptHost> load(const QString &script)
     {
-        auto host = std::make_unique<LuaScriptHost>(QStringLiteral(HIKARI_LUA_HELPER), script,
-                                                    QStringLiteral(HIKARI_LUA_INCLUDE));
+        const QString shipped = QStringLiteral(HIKARI_LUA_INCLUDE);
+        const QString includes =
+            script == upstreamKaraOK() ? shipped + QLatin1Char('\n') + karaOKDir() + QStringLiteral("/include") : shipped;
+        auto host = std::make_unique<LuaScriptHost>(QStringLiteral(HIKARI_LUA_HELPER), script, includes);
         host->setServiceHandler([](const HostServiceRequest &r, LuaScriptHost::ServiceReply reply) {
             reply(hikari::test::fakeMeasureReply(r));
         });
@@ -187,7 +209,7 @@ protected:
     std::string templated(const std::vector<std::byte> &bytes, const QString &script)
     {
         hikari::application::EditSession session(hikari::core::loadAss(bytes).document);
-        if (!apply(session, script, kAll))
+        if (!apply(session, script, script == upstreamKaraOK() ? kUpstreamKaraOKApply : kAll))
             return {};
         return textOf(hikari::core::encodeAss(hikari::test::withoutKaraokeMarks(session.document())));
     }
@@ -236,10 +258,10 @@ TEST_F(KaraokePresets, OnlyTemplateAndCodeCommentsMakeAPreset)
                 "MarginV, Effect, Text\nComment: 0,0:00:00.00,0:00:00.00,Default,,0,0,0,template syl,x\n")));
 }
 
-TEST_F(KaraokePresets, EachPresetGeneratesItsGolden)
+TEST_F(KaraokePresets, EachStockPresetGeneratesItsGolden)
 {
     const bool update = qEnvironmentVariableIsSet("HIKARI_UPDATE_KARAOKE_GOLDENS");
-    for (const auto &[file, preset] : presets()) {
+    for (const auto &[file, preset] : presets(false)) {
         SCOPED_TRACE(file.toStdString());
         const auto input = fixtureWith(preset);
         const std::string reference = templated(input, pristineScript());
@@ -290,7 +312,7 @@ std::vector<std::string> generatedLines(const std::string &file)
 
 TEST_F(KaraokePresets, ExportedPresetGraphsGiveTheGoldensThroughTheStockTemplater)
 {
-    const auto all = presets();
+    const auto all = presets(false);
     for (const auto &[file, templatePreset] : all) {
         SCOPED_TRACE(file.toStdString());
         const auto graphs = hikari::application::nodeGraphPresets();
@@ -479,18 +501,92 @@ TEST_F(KaraokePresets, ScaledStylesKeepTheirScale)
     }
 }
 
+QString fixtureFor(const KaraokePreset &preset)
+{
+    return preset.karaOK ? QStringLiteral("fixture-karaok.ass") : QStringLiteral("fixture.ass");
+}
+
+const std::set<std::pair<QString, QString>> kKaraOKDepartures = {
+    {QStringLiteral("11-word-pop.ass"), QStringLiteral("fixture-karaok.ass")},
+    {QStringLiteral("11-word-pop.ass"), QStringLiteral("fixture-thai.ass")},
+    {QStringLiteral("12-word-wipe.ass"), QStringLiteral("fixture-karaok.ass")},
+    {QStringLiteral("12-word-wipe.ass"), QStringLiteral("fixture-thai.ass")},
+    {QStringLiteral("13-letter-cascade.ass"), QStringLiteral("fixture-thai.ass")},
+    {QStringLiteral("14-letter-shimmer.ass"), QStringLiteral("fixture-thai.ass")},
+    {QStringLiteral("19-line-gradient.ass"), QStringLiteral("fixture-thai.ass")},
+    {QStringLiteral("20-thai-fade.ass"), QStringLiteral("fixture-thai.ass")},
+};
+
+TEST_F(KaraokePresets, KaraOKPresetsGiveUpstreamKaraOKsLinesOrADeparture)
+{
+    const bool update = qEnvironmentVariableIsSet("HIKARI_UPDATE_KARAOKE_GOLDENS");
+    const auto all = presets(true);
+    EXPECT_EQ(all.size(), 10u);
+    for (const auto &[file, preset] : all)
+        for (const QString fixture : {QStringLiteral("fixture-karaok.ass"), QStringLiteral("fixture-thai.ass")}) {
+            SCOPED_TRACE(file.toStdString() + " on " + fixture.toStdString());
+            const auto input = fixtureWith(preset, fixture);
+            const QString golden = goldenOf(file, fixture == u"fixture-thai.ass" ? QStringLiteral(".thai.out.ass")
+                                                                                 : QStringLiteral(".out.ass"));
+            const bool departure = kKaraOKDepartures.contains({file, fixture});
+            const std::string upstream = templated(input, upstreamKaraOK());
+            ASSERT_FALSE(upstream.empty());
+            hikari::application::EditSession session(hikari::core::loadAss(input).document);
+            ASSERT_TRUE(apply(session, bundledScript(), kAll));
+            EXPECT_EQ(report.value(QStringLiteral("problems")).toInt(-1), 0) << log.join(QString()).toStdString();
+            const std::string builtIn =
+                textOf(hikari::core::encodeAss(hikari::test::withoutKaraokeMarks(session.document())));
+            if (update) {
+                QFile out(golden);
+                ASSERT_TRUE(out.open(QIODevice::WriteOnly));
+                const std::string &bytes = departure ? builtIn : upstream;
+                out.write(bytes.data(), static_cast<qint64>(bytes.size()));
+            }
+            EXPECT_EQ(builtIn, textOf(readBytes(golden)));
+            if (departure)
+                EXPECT_NE(upstream, builtIn) << "upstream karaOK no longer differs; drop the departure";
+            else
+                EXPECT_EQ(upstream, builtIn) << "upstream karaOK with upstream ln.kara";
+            EXPECT_FALSE(generatedLines(builtIn).empty());
+        }
+}
+
+KaraokePreset translatedToKaraOK(KaraokePreset preset)
+{
+    for (auto &l : preset.lines) {
+        const std::string effect = hikari::application::karaoke_templates::karaOKEffect(narrow(l.effect));
+        l.effect.assign(effect.begin(), effect.end());
+    }
+    return preset;
+}
+
+TEST_F(KaraokePresets, StockPresetsTranslatedToKaraOKGiveUpstreamKaraOKsLines)
+{
+    for (const auto &[file, preset] : presets(false)) {
+        SCOPED_TRACE(file.toStdString());
+        const auto input = bytesOf(inKaraOKMode(textOf(fixtureWith(translatedToKaraOK(preset)))));
+        const std::string upstream = templated(input, upstreamKaraOK());
+        ASSERT_FALSE(upstream.empty());
+        hikari::application::EditSession session(hikari::core::loadAss(input).document);
+        ASSERT_TRUE(apply(session, bundledScript(), kAll));
+        EXPECT_EQ(report.value(QStringLiteral("problems")).toInt(-1), 0) << log.join(QString()).toStdString();
+        EXPECT_EQ(textOf(hikari::core::encodeAss(hikari::test::withoutKaraokeMarks(session.document()))), upstream);
+        EXPECT_FALSE(generatedLines(upstream).empty());
+    }
+}
+
 TEST_F(KaraokePresets, RegeneratingOneLineChangesNothing)
 {
     for (const auto &[file, preset] : presets()) {
         SCOPED_TRACE(file.toStdString());
-        hikari::application::EditSession session(hikari::core::loadAss(fixtureWith(preset)).document);
+        hikari::application::EditSession session(hikari::core::loadAss(fixtureWith(preset, fixtureFor(preset))).document);
         ASSERT_TRUE(apply(session, bundledScript(), kAll));
         const std::string whole = textOf(hikari::core::encodeAss(hikari::test::withoutKaraokeMarks(session.document())));
         std::vector<hikari::core::LineId> karaoke;
         for (const auto *l : session.document().lines())
             if (l->effect == u8"karaoke" && l->style == u8"Romaji")
                 karaoke.push_back(l->id);
-        ASSERT_EQ(karaoke.size(), 3u);
+        ASSERT_EQ(karaoke.size(), preset.karaOK ? 4u : 3u);
         for (const auto id : karaoke) {
             session.setSelection(hikari::application::Selection{id, {id}});
             ASSERT_TRUE(apply(session, bundledScript(), kSelected));

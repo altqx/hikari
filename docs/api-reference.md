@@ -1,6 +1,6 @@
 # Hikari API reference
 
-Version 1 of the Hikari API, generated from HikariSub's own registry: the same reference `hikarisub --export-docs` writes to `api.json`. A plugin calls these operations with `hikari.call(operation, params)`, or `api.call` in a QML panel, and listens to the events with `hikari.events.on(name, fn)`.
+Version 2 of the Hikari API, generated from HikariSub's own registry: the same reference `hikarisub --export-docs` writes to `api.json`. A plugin calls these operations with `hikari.call(operation, params)`, or `api.call` in a QML panel, and listens to the events with `hikari.events.on(name, fn)`.
 
 ## Operations
 
@@ -35,12 +35,14 @@ Version 1 of the Hikari API, generated from HikariSub's own registry: the same r
 | `video.keyframes` | read | 1 | The keyframes from one time to another, each with its start time. |
 | `audio.info` | read | 1 | Whether audio is open and loaded, its duration and sample rate. |
 | `audio.peaks` | read | 1 | The lowest and highest 16-bit sample in each of `buckets` equal slices of a time range. |
-| `files.list` | read | 1 | The files the user granted this caller, with read or write access. |
+| `files.list` | read | 1 | The files and folders the user granted this caller; with folder, also what that folder holds. |
 | `files.read` | read | 1 | A granted file's content, as UTF-8 text or base64; at most 16 MiB. |
-| `files.write` | write | 1 | Replaces a file granted for writing with new content. |
+| `files.write` | write | 1 | Replaces a file granted for writing with new content; in a writable folder, makes it and its folders. |
 | `skills.list` | read | 1 | The user's skills: each skill folder's name and its files, SKILL.md among them. |
 | `skills.read` | read | 1 | One file of a user's skill, as UTF-8 text; at most 256 KiB. |
 | `automation.run` | write | 1 | Saves a Lua Automation script to the AI scripts folder and runs one of its macros on the active tab's selection, once the user approves the script. The run is one undo step. |
+| `translation.project` | read | 1 | The Document's Honya project files: PROJECT.md, GLOSSARY.md, CHARACTERS.md and STYLE.md, those that exist. folder is null when the Document has no project folder. |
+| `translation.project_write` | write | 1 | Replaces one of the Document's Honya project files, keeping Honya's Markdown and honya:data format. |
 | `nodes.catalogue` | read | 1 | The node types the node-effect editor offers, with their ports and parameters. |
 | `nodes.validate` | read | 1 | Checks a node-effect graph; each problem names its node and port or field. |
 | `typeset.perspective` | read | 1 | The Line's text with the tags that render it on a quad (VT3's perspective solver): \pos, \org, \frx, \fry, \frz, \fax, \fscx and \fscy. |
@@ -50,17 +52,18 @@ Version 1 of the Hikari API, generated from HikariSub's own registry: the same r
 | `typeset.hydra` | read | 1 | Changes one tag across the Lines as the Hydra strip does: set it, add to it, multiply it by line number, or run a gradient across characters or Lines. |
 | `typeset.check` | read | 1 | Renders one Line alone, with a proposed text, on its frame and compares its ink with a target. |
 | `typeset.apply` | write | 1 | Applies typeset Lines as one undo step after every one passes the render check; when one misses its target nothing is applied. |
-| `karaoke.syllables` | read | 1 | A Line's karaoke syllables as the templater reads them: text, tag, start and end in ms. |
-| `karaoke.split` | read | 1 | Splits Lines without \k tags into syllables as the audio editor's karaoke mode does, the time shared by character; Lines that already have \k tags keep them. |
-| `karaoke.time` | read | 1 | Times a Line's existing syllables: each syllable's end in ms, in order; the \k tags are rewritten. |
-| `karaoke.onsets` | read | 1 | Where sung notes start in the open audio, in ms, within a range. |
-| `karaoke.snap` | read | 1 | Moves each syllable boundary inside the Lines to the nearest vocal onset within the window, keeping every syllable at least 10 ms long. |
-| `karaoke.kanji` | read | 1 | Copies a timed romaji Line's syllables onto its kanji Line as the Kanji timer suggests the groups. |
-| `karaoke.furigana` | read | 1 | The readings the dictionary suggests for a Line's kanji runs, in hiragana. |
-| `karaoke.check` | read | 1 | The Karaoke check's problems: unclosed tags, totals that differ from the Line, empty syllables and syllables outside the Line. |
-| `karaoke.template_preview` | read | 1 | The Lines the karaoke templater generates from one karaoke Line, without applying them. |
-| `karaoke.apply_template` | write | 1 | Runs the karaoke templater on the karaoke Lines, or the Lines given, and applies what it generates as one undo step: old generated Lines are replaced. |
-| `karaoke.align` | write | 1 | Runs the user's own WhisperX or Montreal Forced Aligner on the audio under the Lines and answers each word with its start and end in ms; the user approves every run, and nothing is applied. |
+| `project.info` | read | 2 | The Project of the window the user works in, or null. |
+| `karaoke.syllables` | read | 2 | A Line's karaoke syllables as the templater reads them: text, tag, start and end in ms. |
+| `karaoke.split` | read | 2 | Splits Lines without \k tags into syllables as the audio editor's karaoke mode does, the time shared by character; Lines that already have \k tags keep them. |
+| `karaoke.time` | read | 2 | Times a Line's existing syllables: each syllable's end in ms, in order; the \k tags are rewritten. |
+| `karaoke.onsets` | read | 2 | Where sung notes start in the open audio, in ms, within a range. |
+| `karaoke.snap` | read | 2 | Moves each syllable boundary inside the Lines to the nearest vocal onset within the window, keeping every syllable at least 10 ms long. |
+| `karaoke.kanji` | read | 2 | Copies a timed romaji Line's syllables onto its kanji Line as the Kanji timer suggests the groups. |
+| `karaoke.furigana` | read | 2 | The readings the dictionary suggests for a Line's kanji runs, in hiragana. |
+| `karaoke.check` | read | 2 | The Karaoke check's problems: unclosed tags, totals that differ from the Line, empty syllables and syllables outside the Line. |
+| `karaoke.template_preview` | read | 2 | The Lines the karaoke templater generates from one karaoke Line, without applying them. |
+| `karaoke.apply_template` | write | 2 | Runs the karaoke templater on the karaoke Lines, or the Lines given, and applies what it generates as one undo step: old generated Lines are replaced. |
+| `karaoke.align` | write | 2 | Runs the user's own WhisperX or Montreal Forced Aligner on the audio under the Lines and answers each word with its start and end in ms; the user approves every run, and nothing is applied. |
 
 ### `documents.list`
 
@@ -709,15 +712,23 @@ The lowest and highest 16-bit sample in each of `buckets` equal slices of a time
 
 Read. Since version 1.
 
-The files the user granted this caller, with read or write access.
+The files and folders the user granted this caller; with folder, also what that folder holds.
 
-**Parameters**: none.
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `folder` | string |  | A folder handle to list (since version 2). |
+| `path` | string |  | A folder inside it; default the folder itself. |
 
 **Result**
 
 | Field | Type | Always | Meaning |
 | --- | --- | --- | --- |
 | `files` | array of [GrantedFile](#grantedfile) | yes |  |
+| `folders` | array of [GrantedFolder](#grantedfolder) |  |  |
+| `entries` | array of [FolderEntry](#folderentry) |  | With folder: in name order, at most 4096, without links that lead outside it. |
+| `truncated` | boolean |  | Present when the folder holds more than 4096 entries. |
 
 ### `files.read`
 
@@ -729,7 +740,9 @@ A granted file's content, as UTF-8 text or base64; at most 16 MiB.
 
 | Field | Type | Required | Meaning |
 | --- | --- | --- | --- |
-| `file` | string | yes | A handle from files.list. |
+| `file` | string |  | A handle from files.list. |
+| `folder` | string |  | Instead of file, a folder handle from files.list (since version 2). |
+| `path` | string |  | With folder, the file's path inside it, with / between its parts. |
 | `encoding` | one of `utf8` or `base64` |  | Default utf8. |
 
 **Result**
@@ -745,13 +758,15 @@ A granted file's content, as UTF-8 text or base64; at most 16 MiB.
 
 Write. Since version 1.
 
-Replaces a file granted for writing with new content.
+Replaces a file granted for writing with new content; in a writable folder, makes it and its folders.
 
 **Parameters**
 
 | Field | Type | Required | Meaning |
 | --- | --- | --- | --- |
-| `file` | string | yes | A handle from files.list. |
+| `file` | string |  | A handle from files.list. |
+| `folder` | string |  | Instead of file, a folder handle from files.list (since version 2). |
+| `path` | string |  | With folder, the file's path inside it, with / between its parts. |
 | `encoding` | one of `utf8` or `base64` |  | Default utf8. |
 | `data` | string | yes |  |
 
@@ -822,6 +837,48 @@ Saves a Lua Automation script to the AI scripts folder and runs one of its macro
 | `outcome` | one of `applied`, `refused`, `failed`, `cancelled`, `declined`, `stopped`, `lost` or `invalid` | yes |  |
 | `message` | string | yes |  |
 | `log` | string | yes |  |
+
+### `translation.project`
+
+Read. Since version 1.
+
+The Document's Honya project files: PROJECT.md, GLOSSARY.md, CHARACTERS.md and STYLE.md, those that exist. folder is null when the Document has no project folder.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `document` | [DocumentId](#documentid) |  | Defaults to the active Document. |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `folder` | string or null | yes |  |
+| `files` | array of objects | yes |  |
+| `files[].name` | one of `PROJECT.md`, `GLOSSARY.md`, `CHARACTERS.md` or `STYLE.md` | yes |  |
+| `files[].data` | string | yes |  |
+
+### `translation.project_write`
+
+Write. Since version 1.
+
+Replaces one of the Document's Honya project files, keeping Honya's Markdown and honya:data format.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `document` | [DocumentId](#documentid) |  | Defaults to the active Document. |
+| `file` | one of `PROJECT.md`, `GLOSSARY.md`, `CHARACTERS.md` or `STYLE.md` | yes |  |
+| `data` | string | yes |  |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `file` | one of `PROJECT.md`, `GLOSSARY.md`, `CHARACTERS.md` or `STYLE.md` | yes |  |
+| `size` | integer | yes | At least 0. |
 
 ### `nodes.catalogue`
 
@@ -1071,9 +1128,23 @@ Applies typeset Lines as one undo step after every one passes the render check; 
 | `checks[].target.width` | number | yes |  |
 | `checks[].target.height` | number | yes |  |
 
+### `project.info`
+
+Read. Since version 2.
+
+The Project of the window the user works in, or null.
+
+**Parameters**: none.
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `project` | [Project](#project) | yes |  |
+
 ### `karaoke.syllables`
 
-Read. Since version 1.
+Read. Since version 2.
 
 A Line's karaoke syllables as the templater reads them: text, tag, start and end in ms.
 
@@ -1098,7 +1169,7 @@ A Line's karaoke syllables as the templater reads them: text, tag, start and end
 
 ### `karaoke.split`
 
-Read. Since version 1.
+Read. Since version 2.
 
 Splits Lines without \k tags into syllables as the audio editor's karaoke mode does, the time shared by character; Lines that already have \k tags keep them.
 
@@ -1120,7 +1191,7 @@ Splits Lines without \k tags into syllables as the audio editor's karaoke mode d
 
 ### `karaoke.time`
 
-Read. Since version 1.
+Read. Since version 2.
 
 Times a Line's existing syllables: each syllable's end in ms, in order; the \k tags are rewritten.
 
@@ -1141,7 +1212,7 @@ Times a Line's existing syllables: each syllable's end in ms, in order; the \k t
 
 ### `karaoke.onsets`
 
-Read. Since version 1.
+Read. Since version 2.
 
 Where sung notes start in the open audio, in ms, within a range.
 
@@ -1160,7 +1231,7 @@ Where sung notes start in the open audio, in ms, within a range.
 
 ### `karaoke.snap`
 
-Read. Since version 1.
+Read. Since version 2.
 
 Moves each syllable boundary inside the Lines to the nearest vocal onset within the window, keeping every syllable at least 10 ms long.
 
@@ -1183,7 +1254,7 @@ Moves each syllable boundary inside the Lines to the nearest vocal onset within 
 
 ### `karaoke.kanji`
 
-Read. Since version 1.
+Read. Since version 2.
 
 Copies a timed romaji Line's syllables onto its kanji Line as the Kanji timer suggests the groups.
 
@@ -1206,7 +1277,7 @@ Copies a timed romaji Line's syllables onto its kanji Line as the Kanji timer su
 
 ### `karaoke.furigana`
 
-Read. Since version 1.
+Read. Since version 2.
 
 The readings the dictionary suggests for a Line's kanji runs, in hiragana.
 
@@ -1228,7 +1299,7 @@ The readings the dictionary suggests for a Line's kanji runs, in hiragana.
 
 ### `karaoke.check`
 
-Read. Since version 1.
+Read. Since version 2.
 
 The Karaoke check's problems: unclosed tags, totals that differ from the Line, empty syllables and syllables outside the Line.
 
@@ -1252,7 +1323,7 @@ The Karaoke check's problems: unclosed tags, totals that differ from the Line, e
 
 ### `karaoke.template_preview`
 
-Read. Since version 1.
+Read. Since version 2.
 
 The Lines the karaoke templater generates from one karaoke Line, without applying them.
 
@@ -1278,7 +1349,7 @@ The Lines the karaoke templater generates from one karaoke Line, without applyin
 
 ### `karaoke.apply_template`
 
-Write. Since version 1.
+Write. Since version 2.
 
 Runs the karaoke templater on the karaoke Lines, or the Lines given, and applies what it generates as one undo step: old generated Lines are replaced.
 
@@ -1300,7 +1371,7 @@ Runs the karaoke templater on the karaoke Lines, or the Lines given, and applies
 
 ### `karaoke.align`
 
-Write. Since version 1.
+Write. Since version 2.
 
 Runs the user's own WhisperX or Montreal Forced Aligner on the audio under the Lines and answers each word with its start and end in ms; the user approves every run, and nothing is applied.
 
@@ -1325,6 +1396,18 @@ Runs the user's own WhisperX or Montreal Forced Aligner on the audio under the L
 | `words[].end` | integer | yes |  |
 
 ## Events
+
+### `project.changed`
+
+Since version 2.
+
+The window the user works in opened or closed a Project, or the user moved to a window with another one.
+
+**Data**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `project` | [Project](#project) | yes |  |
 
 ### `document.changed`
 
@@ -1607,3 +1690,32 @@ Type: boolean, integer, string or array of string.
 | `file` | string | yes | The handle files.read and files.write take. |
 | `name` | string | yes |  |
 | `access` | one of `read` or `write` | yes |  |
+
+### GrantedFolder
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `folder` | string | yes | The handle files.list, files.read and files.write take with a path. |
+| `name` | string | yes |  |
+| `access` | one of `read` or `write` | yes |  |
+
+### FolderEntry
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `path` | string | yes | Relative to the granted folder, with / between its parts. |
+| `folder` | boolean | yes |  |
+
+### Project
+
+One of:
+
+- null
+- object
+
+*object*
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `name` | string | yes | The Project folder's name. |
+| `trusted` | boolean | yes | Whether the folder is in Trusted folders. |

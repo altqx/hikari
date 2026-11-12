@@ -69,6 +69,10 @@ class UserGuideTests : public QObject {
         for (QObject *o : root()->findChildren<QObject *>())
             if (o->objectName() == name)
                 return o;
+        if (auto *loader = root()->findChild<QObject *>(name + QLatin1String("Loader"))) {
+            loader->setProperty("active", true);
+            return named(name);
+        }
         return nullptr;
     }
     QUrl openedAfter(qsizetype before) const
