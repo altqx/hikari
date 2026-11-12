@@ -45,12 +45,12 @@ Version 2 of the Hikari API, generated from HikariSub's own registry: the same r
 | `translation.project_write` | write | 1 | Replaces one of the Document's Honya project files, keeping Honya's Markdown and honya:data format. |
 | `nodes.catalogue` | read | 1 | The node types the node-effect editor offers, with their ports and parameters. |
 | `nodes.validate` | read | 1 | Checks a node-effect graph; each problem names its node and port or field. |
-| `effects.graphs` | read | 2 | The Document's node-effect graphs, one per graph Line. |
-| `effects.graph` | read | 2 | One graph Line's graph, with what keeps it from running. |
-| `effects.edit` | read | 2 | Edits a graph in steps (add, connect, disconnect, remove, set) and gives the new graph with its problems; nothing in the Document changes. |
-| `effects.preview` | read | 2 | Runs a graph on the Document's karaoke Lines and gives the Lines it would write; nothing is applied. Lua nodes don't run. |
-| `effects.save` | write | 2 | Writes a graph to the Document as one undo step: into a new graph Line, or in place of a graph Line's. |
-| `effects.apply` | write | 2 | Runs a graph Line and writes its Lines as one undo step, replacing those it wrote before; the karaoke Lines it ran on become Comments. Lua nodes don't run, so a graph with one applies from the node-effect editor. |
+| `effects.graphs` | read | 1 | The Document's node-effect graphs, one per graph Line. |
+| `effects.graph` | read | 1 | One graph Line's graph, with what keeps it from running. |
+| `effects.edit` | read | 1 | Edits a graph in steps (add, connect, disconnect, remove, set) and gives the new graph with its problems; nothing in the Document changes. |
+| `effects.preview` | read | 1 | Runs a graph on the Document's karaoke Lines and gives the Lines it would write; nothing is applied. Lua nodes don't run. |
+| `effects.save` | write | 1 | Writes a graph to the Document as one undo step: into a new graph Line, or in place of a graph Line's. |
+| `effects.apply` | write | 1 | Runs a graph Line and writes its Lines as one undo step, replacing those it wrote before; the karaoke Lines it ran on become Comments. Lua nodes don't run, so a graph with one applies from the node-effect editor. |
 | `typeset.perspective` | read | 1 | The Line's text with the tags that render it on a quad (VT3's perspective solver): \pos, \org, \frx, \fry, \frz, \fax, \fscx and \fscy. |
 | `typeset.clip` | read | 1 | The Line's text with its first clip replaced by a rectangle or a vector clip. |
 | `typeset.drawing` | read | 1 | The Line's text with its first drawing replaced by a shape (\p1), placed at a position with an alignment. |
@@ -935,7 +935,7 @@ Checks a node-effect graph; each problem names its node and port or field.
 
 ### `effects.graphs`
 
-Read. Since version 2.
+Read. Since version 1.
 
 The Document's node-effect graphs, one per graph Line.
 
@@ -959,7 +959,7 @@ The Document's node-effect graphs, one per graph Line.
 
 ### `effects.graph`
 
-Read. Since version 2.
+Read. Since version 1.
 
 One graph Line's graph, with what keeps it from running.
 
@@ -987,7 +987,7 @@ One graph Line's graph, with what keeps it from running.
 
 ### `effects.edit`
 
-Read. Since version 2.
+Read. Since version 1.
 
 Edits a graph in steps (add, connect, disconnect, remove, set) and gives the new graph with its problems; nothing in the Document changes.
 
@@ -1020,7 +1020,7 @@ Edits a graph in steps (add, connect, disconnect, remove, set) and gives the new
 
 ### `effects.preview`
 
-Read. Since version 2.
+Read. Since version 1.
 
 Runs a graph on the Document's karaoke Lines and gives the Lines it would write; nothing is applied. Lua nodes don't run.
 
@@ -1052,7 +1052,7 @@ Runs a graph on the Document's karaoke Lines and gives the Lines it would write;
 
 ### `effects.save`
 
-Write. Since version 2.
+Write. Since version 1.
 
 Writes a graph to the Document as one undo step: into a new graph Line, or in place of a graph Line's.
 
@@ -1081,7 +1081,7 @@ Writes a graph to the Document as one undo step: into a new graph Line, or in pl
 
 ### `effects.apply`
 
-Write. Since version 2.
+Write. Since version 1.
 
 Runs a graph Line and writes its Lines as one undo step, replacing those it wrote before; the karaoke Lines it ran on become Comments. Lua nodes don't run, so a graph with one applies from the node-effect editor.
 

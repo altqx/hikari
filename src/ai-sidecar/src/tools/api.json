@@ -2820,7 +2820,7 @@
       "name": "effects.graphs",
       "access": "read",
       "summary": "The Document's node-effect graphs, one per graph Line.",
-      "since": 2,
+      "since": 1,
       "params": {
         "type": "object",
         "properties": {
@@ -2881,7 +2881,7 @@
       "name": "effects.graph",
       "access": "read",
       "summary": "One graph Line's graph, with what keeps it from running.",
-      "since": 2,
+      "since": 1,
       "params": {
         "type": "object",
         "properties": {
@@ -2961,7 +2961,7 @@
       "name": "effects.edit",
       "access": "read",
       "summary": "Edits a graph in steps (add, connect, disconnect, remove, set) and gives the new graph with its problems; nothing in the Document changes.",
-      "since": 2,
+      "since": 1,
       "params": {
         "type": "object",
         "properties": {
@@ -3078,7 +3078,7 @@
       "name": "effects.preview",
       "access": "read",
       "summary": "Runs a graph on the Document's karaoke Lines and gives the Lines it would write; nothing is applied. Lua nodes don't run.",
-      "since": 2,
+      "since": 1,
       "params": {
         "type": "object",
         "properties": {
@@ -3182,7 +3182,7 @@
       "name": "effects.save",
       "access": "write",
       "summary": "Writes a graph to the Document as one undo step: into a new graph Line, or in place of a graph Line's.",
-      "since": 2,
+      "since": 1,
       "params": {
         "type": "object",
         "properties": {
@@ -3265,7 +3265,7 @@
       "name": "effects.apply",
       "access": "write",
       "summary": "Runs a graph Line and writes its Lines as one undo step, replacing those it wrote before; the karaoke Lines it ran on become Comments. Lua nodes don't run, so a graph with one applies from the node-effect editor.",
-      "since": 2,
+      "since": 1,
       "params": {
         "type": "object",
         "properties": {
