@@ -562,6 +562,30 @@ private slots:
         QCOMPARE(bytesOf(session->document()), before);
     }
 
+    void theModeSwitchWritesTheModeLineAsOneStep()
+    {
+        open(QStringLiteral("stock-tutorials.ass"));
+        showPanel();
+        QVERIFY(!editor->karaOKMode());
+        QVERIFY(!editor->modeInFile());
+        QCOMPARE(object(QStringLiteral("templateMode"))->property("currentIndex").toInt(), 1);
+        const std::string before = bytesOf(session->document());
+        QVERIFY(editor->setKaraOKMode(true));
+        QVERIFY(editor->karaOKMode());
+        QVERIFY(editor->modeInFile());
+        QCOMPARE(session->document().scriptInfo(u8"Karaoke Templater"), std::optional<std::u8string>(u8"karaOK"));
+        QCOMPARE(object(QStringLiteral("templateMode"))->property("currentIndex").toInt(), 0);
+        QVERIFY(!editor->setKaraOKMode(true));
+        QVERIFY(editor->setKaraOKMode(false));
+        QCOMPARE(session->document().scriptInfo(u8"Karaoke Templater"),
+                 std::optional<std::u8string>(u8"Aegisub 3.2.2"));
+        QVERIFY(session->undo());
+        QVERIFY(session->undo());
+        editor->refresh();
+        QCOMPARE(bytesOf(session->document()), before);
+        QVERIFY(!editor->modeInFile());
+    }
+
     void aScriptInfoChangePreviewsAgain()
     {
         openDocument(withoutLua(loadFile(QStringLiteral("stock-tutorials.ass"))), true);
@@ -1141,6 +1165,42 @@ private slots:
                                      QStringLiteral("recall")}));
         const QString closed = QStringLiteral("{\\fscx!1!re");
         QVERIFY(editor->completions(closed, static_cast<int>(closed.size())).isEmpty());
+    }
+
+    void lnCompletesItsLibraryOnceACodeLineLoadsIt()
+    {
+        open(QStringLiteral("karaok/ln-kara.ass"));
+        activate(*firstKaraoke());
+        editor->setShown(true);
+        const auto names = [&](const QString &text) {
+            QStringList out;
+            for (const QVariant &v : editor->completions(text, static_cast<int>(text.size())))
+                out << v.toMap().value(QStringLiteral("name")).toString();
+            return out;
+        };
+        const auto lineWith = [&](std::u8string_view effect) {
+            for (const auto *l : session->document().lines())
+                if (l->effect.starts_with(effect))
+                    return l->id;
+            return core::LineId{};
+        };
+        editor->setCurrent(lineWith(u8"template syl").value);
+        QCOMPARE(names(QStringLiteral("{!ln.tag.p")),
+                 (QStringList{QStringLiteral("pos"), QStringLiteral("parse_transform"), QStringLiteral("parse_move")}));
+        QVERIFY(names(QStringLiteral("{!l")).contains(QStringLiteral("ln")));
+        QCOMPARE(names(QStringLiteral("{!s")).filter(QRegularExpression(QStringLiteral("^s[dt]$"))),
+                 (QStringList{QStringLiteral("st"), QStringLiteral("sd")}));
+        QVERIFY(names(QStringLiteral("{!ln.line.tag(1)!ln.")).isEmpty());
+        editor->setCurrent(lineWith(u8"code once").value);
+        QVERIFY(editor->currentIsCode());
+        QVERIFY(names(QStringLiteral("ln = _G.require \"ln.kara\"; ln.")).contains(QStringLiteral("init")));
+        QVERIFY(names(QStringLiteral("x = re")).isEmpty());
+
+        open(QStringLiteral("stock-tutorials.ass"));
+        activate(*firstKaraoke());
+        const QStringList plain = names(QStringLiteral("{!"));
+        QVERIFY(!plain.contains(QStringLiteral("ln")));
+        QVERIFY(!plain.contains(QStringLiteral("st")));
     }
 
     void theEffectPickerWritesStockSyntax()

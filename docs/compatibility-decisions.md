@@ -114,6 +114,29 @@ The Gradient visual tool does natively what the gradient scripts do (records in 
 - **G8, wedge thickness.** Thickness is limited to 0–1. phos declares a minimum of 1 and a maximum of 0.
 - **G9, inline tags.** In the strip modes, inline instances of an interpolated tag are replaced, so no older `\1c` overrides a strip. Gradient Factory removes only the last channel's.
 
+## AU11-video-analysis
+
+Video › "Track colour…" and "Find fade…" do natively what zah.aegi-color-track 2.1.1 and phos.AutoFade 1.1.2 do (records in [AU11 #846](https://github.com/altqx/hikari/issues/846)). Both read one pixel a frame, decoded without subtitles. The departures below were accepted at the owner's gate on 2026-11-11 (Q271–Q278).
+
+- **V1, repeated colours.** Skip repeated colours, on by default, writes no `\t` for a frame whose value is the same as the last one written. With it off, the tags are byte for byte color-track's.
+- **V2, alpha hex.** A colour equal to the sign or background colour writes `&H00&` or `&HFF&`. color-track writes the decimal `&H0&` and `&H255&`.
+- **V3, tracking data.** Tracking data moves the picked point by the data's offset from the video's frame. color-track reads the rows as absolute positions, which is the same when the picked point is the tracked point.
+- **V4, each Line's own frames.** Each selected Line gets the colours of its own frames. color-track tracks over the first selected Line's frames and writes that to every Line.
+- **V5, every frame.** Find fade checks every frame after the video's frame for the fade out. AutoFade first halves the distance to the end while the colour holds, so it can step over a flicker.
+- **V6, unread frames.** A frame where the point is outside the picture counts as neither shown nor gone. AutoFade stops with an error.
+
+## AU20-text-commands
+
+Line breaks, Change case and Swap dialogue alternatives do natively what these scripts do: ua.LineBreaker, petzku.Autowrapper, l0.InsertLineBreaks, ua.ChangeCase, Flux.TitleCase, zf.allCharsTo and Flux.DialogSwapper. The bundled "Make text fullwidth" demo still ships unchanged. The behaviour record and the owner's answers are on [AU20 #854](https://github.com/altqx/hikari/issues/854) (Q279–Q286, 2026-11-11).
+
+- **T1, balanced break.** The break goes where the two rendered halves are closest in width, measured with the Line's style and tags. The break points are ICU's, so Thai and CJK break between words and never inside a grapheme cluster. A point right after `. , ? ! : ;` wins when it is within 10% of the Line's width of the best one. Line Breaker's English word lists aren't ported.
+- **T2, removing a break.** A `\N` becomes one space, or nothing where the script needs no space (CJK, Thai).
+- **T3, `\q2`.** "Wrap only at \N" sets or clears `\q2` in the start block of the selected Lines. Autowrapper's file-wide pass and its Effect notes aren't ported.
+- **T4, Sentence case.** Other letters are lowered only when the whole Line is in capitals. ua.ChangeCase's lists of months, weekdays, languages and honorifics aren't ported.
+- **T5, Full-width.** The output is the demo's byte for byte (`tests/fixtures/au20/fullwidth-golden.tsv`, made by running the demo), except that `\N`, `\n`, `\h` and drawings stay as they are. The demo turns `\N` into `＼Ｎ`, so the break is lost, and it converts drawing commands.
+- **T6, Half-width.** `｛`, `｝` and `＼` stay full-width, so the result never gains a tag or an escape.
+- **T7, Dialog Swapper.** It works on the selection with the `*` delimiter. The script's style-name filter and its delimiter setting aren't ported. A Line whose Effect is `***` still has its comment state toggled.
+
 ## AU8-motion-data
 
 Video › Tracking does natively what Aegisub-Motion 1.0.9, 0x.DeriveTrack, arch.DerivePerspTrack, petzku.ExtrapolateMove and phos.ExtrapolateTracking do. On the 35-case corpus it matches Aegisub-Motion's output where that output is stable (`docs/research/motion-data-parity.md`). The bundled scripts still ship unchanged. The departures below were accepted by the owner on 2026-11-09 (Q201–Q206). [AU8 #842](https://github.com/altqx/hikari/issues/842).
@@ -237,9 +260,64 @@ In karaOK mode, `char`, `lchar`, `$ci`, `$slen`, `$llen` and `$len` count graphe
 
 Q161's seventh defect, text before the first `\k` shifting the character-to-syllable map, can't happen in HikariSub: that text belongs to syllable 1 for upstream and the built-in alike (corpus `karaok/leading-text.ass`), so it is not a departure.
 
+## TH5d1-stock-additions
+
+In 3.2.2 mode, karaOK's additions that don't clash with 3.2.2's syntax still work. Each one replaces a 3.2.2 warning or error:
+
+- `style X` on a template runs it only on Lines whose Style name contains X as plain text. 3.2.2 logged "Unknown modifier in template: style" and ran the template on every Line of its Style.
+- The `lsyl`, `lword`, `lchar`, `word` and `furichar` template classes run as they do in karaOK mode. 3.2.2 logged "Unknown modifier in template: lsyl" (and so on) and made the template a `syl` template.
+- `code word`, `code char` and `code furichar` run once per word, character and furigana character. 3.2.2 logged "Unknown modifier in code template: word" (and so on) and ran the Line once, before the first karaoke Line.
+- The template environment has `k_retime`, `table`, `pairs`, `ipairs`, `tonumber`, `tostring` and `type`. In 3.2.2 a call to one of them failed with "Runtime error in template code" or "Runtime error in template expression".
+
+The one exception is karaOK's `$ci`, `$slen`, `$llen` and `$len`: in 3.2.2 mode they stay as text and log "Unknown variable name", as in 3.2.2 (owner decision Q346). `subs` and the kept `line.text` stay karaOK-only too (TH5c-karaok-mode). Without a mode line, every addition here except `style` and the environment names picks karaOK mode (TH5c-karaok-mode), so these apply as listed to a file whose mode line says `Aegisub 3.2.2`. Corpus: `tests/backends/karaoke-corpus/departures/stock-additions.ass`. [TH5d1 #833](https://github.com/altqx/hikari/issues/833), owner decisions Q159 and Q346.
+
+## TH5d1-furigana-styles-false
+
+A `code once` Line that sets `furigana_styles = false` adds no "-furigana" Styles to the file: the built-in drops the ones it made for the run, and the output equals upstream's. Upstream karaOK has a second macro, "Apply karaoke template (modded)", that does the same; the built-in has no extra macro. [TH5d1 #833](https://github.com/altqx/hikari/issues/833), owner decision Q163.
+
+## TH5d1-node-effects-mode
+
+Node effects follow the Document's template mode. In a karaOK-mode Document, node-effect places round to 0.1 px as karaOK's `$` variables do, and a syllable with no duration isn't blank, so For each's "skip blank" keeps it as karaOK's `noblank` does. In 3.2.2 mode both stay as before. "Export as template lines" writes karaOK templates (`line`, `lsyl`, `char`, `code char`) or 3.2.2 templates (`pre-line`, `line`, `syl char`, `code syl`). It remembers the last choice, karaOK by default, and a karaOK export sets the Document's mode line to karaOK. [TH5d1 #833](https://github.com/altqx/hikari/issues/833), owner decisions Q154, Q155 and Q162.
+
+## TH5d2-ln-kara
+
+HikariSub ships karaOK's `ln.kara` library, by logarithm with petzku, as `Automation/automation/Include/ln/kara.lua`, from `lost-logarithm/karaOK` f749c4fa64e7 with the fixes below. Upstream states no licence; HikariSub's changes are MIT, and the file's header says so. As for every stock module, `require "ln.kara"` loads the shipped copy before one in the script's folder or the user's Include, so a user who installed upstream's copy gets the fixed one. The Template editor completes `ln.` (docs/karaoke-templater.md). Corpus: `tests/backends/karaoke-corpus/karaok/ln-kara.ass`, compared byte for byte with upstream karaOK running upstream's unchanged `ln/kara.lua` (`karaok/include/`). [TH5d2 #833](https://github.com/altqx/hikari/issues/833), owner decisions Q164 and Q165.
+
+## TH5d2-ln-kara-tags
+
+`ln.line.tags` and `ln.syl.tags` give the tags they find, so `ln.line.c`/`gc` and `ln.line.a`/`ga` give the Line's `\Nc`/`\Na` before the Style's. Upstream's last commit made the found-tag test `ei == -1`, which never holds, so they always gave the defaults and the Style's colour. Corpus: `tests/backends/karaoke-corpus/karaok/departures/ln-kara-tags.ass`. [TH5d2 #833](https://github.com/altqx/hikari/issues/833), owner decision Q164.
+
+## TH5d2-ln-kara-string-defaults
+
+A string default for `ln.line.tag`, `ln.line.tags`, `ln.syl.tag` and `ln.syl.tags` is the first tag's default. Upstream indexed the tag list from 0, so a string default stopped the expression with "table index is nil". Corpus: `tests/backends/karaoke-corpus/karaok/departures/ln-kara-string-defaults.ass`. [TH5d2 #833](https://github.com/altqx/hikari/issues/833), owner decision Q164.
+
+## TH5d2-ln-kara-pos-table
+
+The table forms of `ln.tag.pos` and `ln.tag.kanjipos` read their fields from the table. Upstream replaced the table with its first field and then read the rest from that number, which stopped the expression. Corpus: `tests/backends/karaoke-corpus/karaok/departures/ln-kara-pos-table.ass`. [TH5d2 #833](https://github.com/altqx/hikari/issues/833), owner decision Q164.
+
+## TH5d2-ln-kara-move-offsets
+
+`ln.tag.move` with its start offsets left out (`ln.tag.move(nil, nil, 10, 20)`) starts at the anchor point. Upstream added `nil` to the anchor and stopped the expression. Corpus: `tests/backends/karaoke-corpus/karaok/departures/ln-kara-move-offsets.ass`. [TH5d2 #833](https://github.com/altqx/hikari/issues/833), owner decision Q164.
+
+## TH5d2-ln-kara-syldur
+
+`ln.syldur()` and `sd()` with no argument give the unit's whole duration, as karaOK's README says. Upstream gave 0. Corpus: `tests/backends/karaoke-corpus/karaok/departures/ln-kara-syldur.ass`. [TH5d2 #833](https://github.com/altqx/hikari/issues/833), owner decision Q164.
+
+## TH5d2-ln-kara-shift
+
+`ln.shapes.shift`, and `ln.shapes.circle`, which is built on it, write a pair of whole coordinates as whole numbers. Upstream compared the rounded x with y, so most whole pairs came out with two decimals. Corpus: `tests/backends/karaoke-corpus/karaok/departures/ln-kara-shift.ass`. [TH5d2 #833](https://github.com/altqx/hikari/issues/833), owner decision Q164.
+
+## TH5d2-ln-kara-lerp
+
+`ln.math.lerp` and `ln.math.xerp` between a string and a number stop with "lerp between mismatched variable types". Upstream tested the second value's type twice, so a numeric string as the first value was read as a number. Corpus: `tests/backends/karaoke-corpus/karaok/departures/ln-kara-lerp.ass`. [TH5d2 #833](https://github.com/altqx/hikari/issues/833), owner decision Q164.
+
+## TH5d2-ln-kara-kanjipos
+
+`ln.tag.kanjipos` in a 3.2.2-mode Document is a problem, "ln.tag.kanjipos works only in karaOK mode", on its template Line. It reads karaOK's per-character table, which 3.2.2 mode builds only for char and word templates; upstream stopped with "attempt to index a nil value". [TH5d2 #833](https://github.com/altqx/hikari/issues/833), owner decision Q164.
+
 ## 892-script-info-on-save
 
-Every save but an autosave writes the Script Info values switched on in the `scriptProperties.*` settings (Title, Original Script, Original Translation, Original Editing, Original Timing, Script Updated By) into the file, as legacy's `SubsGrid::SwapAssProperties` does. They come from the window's settings, so a Project's values win over the user's. With `scriptProperties.askForChange` on, a dialog first lists each value that would change, old and new, with a check box. OK writes the checked values, Skip saves without any of them, and Cancel stops the save. In legacy the check boxes are the switches themselves and OK stores them in the settings; here they apply to that one save. Legacy's third button, "Disable confirmation", turned the question off for good and then saved without the values; Skip keeps the question on. The values are one undo step, "Changing the subtitle header", and it stays when the save fails. [#892](https://github.com/altqx/hikari/issues/892), owner decision Q234 2026-11-11, refined the same day.
+Every save but an autosave writes the Script Info values switched on in the `scriptProperties.*` settings (Title, Original Script, Original Translation, Original Editing, Original Timing, Script Updated By) into the file, as legacy's `SubsGrid::SwapAssProperties` does. They come from the window's settings, so a Project's values win over the user's. Both are set on the Script properties page of File › Settings, the user's on the Yours tab ([#966](https://github.com/altqx/hikari/issues/966)), where a value the Project sets says "Overridden in this project". With `scriptProperties.askForChange` on, a dialog first lists each value that would change, old and new, with a check box. OK writes the checked values, Skip saves without any of them, and Cancel stops the save. In legacy the check boxes are the switches themselves and OK stores them in the settings; here they apply to that one save. Legacy's third button, "Disable confirmation", turned the question off for good and then saved without the values; Skip keeps the question on. The values are one undo step, "Changing the subtitle header", and it stays when the save fails. [#892](https://github.com/altqx/hikari/issues/892), owner decision Q234 2026-11-11, refined the same day.
 
 ## AU19-timing-helpers
 

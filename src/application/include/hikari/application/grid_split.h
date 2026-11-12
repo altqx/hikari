@@ -39,6 +39,8 @@ enum class SplitText { Characters, Words, Wraps };
 using WordSegments = std::function<std::vector<std::pair<std::size_t, bool>>(std::u16string_view)>;
 std::expected<void, CommandRefusal> splitByText(EditSession &session, SplitText kind, TextMeasurePort &measure,
                                                 const WordSegments &words, const LineVisible &visible = {});
+// The width splitByText measures for raw `text` in `style`, inline \fscx \fscy \fsp \fs \fn \b \i applied.
+double taggedTextWidth(TextMeasurePort &measure, const core::StyleValues &style, std::u16string_view text);
 
 namespace legacy {
 // On UTF-16 code units.

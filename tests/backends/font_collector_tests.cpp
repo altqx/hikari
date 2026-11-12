@@ -232,6 +232,30 @@ TEST(FontCollectorRenderer, ZipHoldsTheSelectedBytesAndReimportsIdentically)
     EXPECT_TRUE(reimportsIdentically(service, doc, entries));
 }
 
+TEST(FontCollectorRenderer, FolderFontsAreCollectedBeforeTheSystems)
+{
+    const QString path = QStringLiteral(HIKARI_ATTACHMENT_FIXTURES "/HikariAttachedTest.ttf");
+    const QByteArray bytes = readAll(path);
+    ASSERT_FALSE(bytes.isEmpty());
+    const auto doc = document(0, {"A,HikariAttachedTest,0,0"}, {"A,Abc"});
+    LibassFontService service;
+    FontCollector collector(service);
+    const auto alone = collector.prepare({doc}, CollectorAction::Check);
+    ASSERT_TRUE(alone);
+    EXPECT_TRUE(alone->notFound.contains(u"HikariAttachedTest"));
+
+    const auto review = collector.prepare({doc}, CollectorAction::CopyToFolder, nullptr,
+                                          {{path.toStdString(), shared(bytes)}});
+    ASSERT_TRUE(review);
+    EXPECT_TRUE(review->found.contains(u"HikariAttachedTest"));
+    EXPECT_EQ(review->notFoundCount, 0);
+    const auto *collected = file(*review, u"HikariAttachedTest.ttf");
+    ASSERT_NE(collected, nullptr);
+    EXPECT_EQ(collected->sha256, sha256(bytes));
+    ASSERT_TRUE(collected->bytes);
+    EXPECT_EQ(collected->bytes->size(), std::size_t(bytes.size()));
+}
+
 TEST(FontCollectorRenderer, AFamilyWithACommaIsAskedForWhole)
 {
     const auto doc = document(0, {"A,HikariProbeBase,0,0"}, {"A,Plain", "A,{\\fnHikariProbeBase,Bold}Comma"});

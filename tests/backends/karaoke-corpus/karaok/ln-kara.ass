@@ -1,0 +1,24 @@
+[Script Info]
+; TH5d2: ln.kara's functions where the bundled copy and upstream agree; compared against upstream karaOK f749c4fa64e7 with its include/ln/kara.lua
+Title: TH5d2 corpus ln.kara shared
+ScriptType: v4.00+
+WrapStyle: 0
+PlayResX: 1280
+PlayResY: 720
+ScaledBorderAndShadow: yes
+Karaoke Templater: karaOK
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Romaji,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,8,20,20,20,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Comment: 0,0:00:00.00,0:00:05.00,Romaji,,0,0,0,code once,ln = _G.require "ln.kara"; ln.init(tenv)
+Comment: 0,0:00:00.00,0:00:05.00,Romaji,,0,0,0,code once,w = ln.wave.new("sine",1000,10)
+Comment: 0,0:00:00.00,0:00:05.00,Romaji,,0,0,0,template syl,{\an5\pos($x,$y)\t(!st(0.5)!,!st(1)!,\fscx120)\t(0,!sd(0.3)!,\blur2)\1c!rgb(255,128,0)!\3c!hsl($si*20,255,128)!\4c!hsy(170,255,100)!\frz!ln.math.modloop($si*40,-180,180)!}
+Comment: 0,0:00:00.00,0:00:05.00,Romaji,,0,0,0,template syl,{!ln.tag.pos(5)!!ln.tag.t(0,100,"\\fscx120")!}!ln.math.round(2.5)!/!ln.math.lerp(0.5,10,20)!/!ln.math.lerp(0.5,"&H000000&","&HFFFFFF&")!/!ln.syl.len()!
+Comment: 0,0:00:00.00,0:00:05.00,Romaji,,0,0,0,template syl,{!ln.tag.move(0,-20,0,0,0,200,5)!!ln.line.tag({"fad","blur"})!\3c!ln.line.style_c(3)!!ln.wave.transform(w,"frz",0,500,0,2)!}
+Comment: 0,0:00:00.00,0:00:05.00,Romaji,,0,0,0,template line,{!ln.tag.kanjipos(0,0,true)!}!ln.line.len_stripped()!/!ln.line.buffers(300,300)!/!ln.color.byRGB(1,2,3)!
+Dialogue: 0,0:00:01.00,0:00:04.00,Romaji,,0,0,0,,{\fad(100,200)\blur1\k30}ki{\k0}ra{\k20}ri
+Dialogue: 0,0:00:05.00,0:00:06.00,Romaji,,0,0,0,,{\1c&H0000FF&\k32}ha{\k28}ru

@@ -5,7 +5,8 @@ import { inline, type JsonSchema } from "./schema";
 /** The core tools are always offered; the others come through search_tools. */
 export const kGroups = {
     core: "Documents, Lines, Styles, the selection, video and audio facts, granted files and commands.",
-    typeset: "Typesetting: video frames as images, ink bounds, colours and keyframes.",
+    typeset: "Typesetting: video frames as images, ink bounds, colours and keyframes; solvers that write the tags for " +
+        "a quad, clip, drawing, shift or Hydra change; a render check before applying.",
     translate: "Translation passes, the glossary, characters and tag rules.",
     karaoke: "Karaoke timing: audio peaks, syllables and onsets.",
     automation: "Automation macros and AI-written Lua.",
@@ -72,7 +73,21 @@ const kPlacements: Partial<Record<OperationName, Placement>> = {
     "video.ink_bounds": { group: "typeset" },
     "video.colours": { group: "typeset" },
     "video.keyframes": { group: "typeset" },
+    "typeset.perspective": { group: "typeset" },
+    "typeset.clip": { group: "typeset" },
+    "typeset.drawing": { group: "typeset" },
+    "typeset.shift": { group: "typeset" },
+    "typeset.hydra": { group: "typeset" },
+    "typeset.check": { group: "typeset" },
+    "typeset.apply": { group: "typeset" },
     "audio.peaks": { group: "karaoke" },
+    "automation.run": {
+        group: "automation",
+        description: "Runs a Lua Automation script you write, as one macro on the active tab's selection, after the " +
+            "user reads and approves it; every run asks again. Write a complete script: script_name, then " +
+            "aegisub.register_macro(name, description, fn(subs, sel, active)), changing Lines through subs. " +
+            "DependencyControl modules may be required. Prefer document_apply when no Lua is needed.",
+    },
     "nodes.catalogue": { group: "effects" },
     "nodes.validate": { group: "effects" },
     "panels.list": { group: "app" },

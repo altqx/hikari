@@ -3,6 +3,7 @@
 #include "hikari/application/hotkeys.h"
 #include "hikari/application/settings.h"
 #include "hikari/backends/ai_agent.h"
+#include "hikari/backends/ai_mcp_clients.h"
 #include "hikari/backends/ai_requests.h"
 #include "hikari/backends/ai_sidecar_host.h"
 
@@ -130,6 +131,13 @@ Risk settingRisk(std::string_view setting, Json value = true)
     return riskOf("settings.set", Json::object({{"setting", std::string(setting)}, {"value", std::move(value)}}));
 }
 
+TEST(AgentPolicy, AiWrittenLuaAsksOnEveryRunInEveryMode)
+{
+    for (const AgentMode mode : {AgentMode::Manual, AgentMode::Auto, AgentMode::FullAccess})
+        for (const bool allowed : {false, true})
+            EXPECT_EQ(decide(mode, "automation.run", false, allowed), Decision::Script);
+}
+
 TEST(AgentPolicy, FilesOutsideTheSubtitlesFoldersAndTheUserFolderAsk)
 {
     EXPECT_EQ(riskOf("files.write", Json::object({{"file", "inside"}})), Risk::None);
@@ -175,7 +183,7 @@ TEST(AgentPolicy, EveryWriteOperationIsClassified)
     for (const hikari::api::Operation &op : hikari::api::Api::registry().operations())
         if (op.access == hikari::api::Access::Write)
             writes.insert(op.name);
-    EXPECT_EQ(writes, (std::set<std::string>{"commands.run", "document.apply", "files.write", "panels.close",
+    EXPECT_EQ(writes, (std::set<std::string>{"automation.run", "commands.run", "document.apply", "files.write", "panels.close",
                                              "panels.focus", "panels.open", "selection.set", "settings.set"}))
         << "Classify the new write in alwaysAsk and docs/ai-agent.md, then add it here.";
 }
@@ -218,6 +226,34 @@ TEST(AgentPolicy, AllowingInAThreadCoversTheOperationOrTheOneCommand)
 {
     EXPECT_EQ(allowanceKey("settings.set", Json::object({{"setting", "a"}})), "settings.set");
     EXPECT_EQ(allowanceKey("commands.run", Json::object({{"command", "GLOBAL_UNDO"}})), "commands.run:GLOBAL_UNDO");
+    EXPECT_EQ(allowanceKey(std::string(kMcpCallOperation), Json::object({{"server", "notes"}, {"tool", "add"}})),
+              "mcp.call:notes/add");
+}
+
+TEST(AgentPolicy, OnlyATrustedServersHintsLoosenAnything)
+{
+    const McpToolHints read{.readOnly = true, .destructive = false};
+    const McpToolHints gentle{.readOnly = false, .destructive = false};
+    EXPECT_TRUE(effectiveHints(read, true).readOnly);
+    EXPECT_FALSE(effectiveHints(gentle, true).destructive);
+    for (const McpToolHints &listed : {read, gentle}) {
+        EXPECT_FALSE(effectiveHints(listed, false).readOnly);
+        EXPECT_TRUE(effectiveHints(listed, false).destructive);
+    }
+    EXPECT_TRUE(effectiveHints(McpToolHints{}, true).destructive);
+}
+
+TEST(AgentPolicy, McpReadsRunDestructiveToolsAlwaysAskAndTheModeDecidesTheRest)
+{
+    for (AgentMode mode : {AgentMode::Manual, AgentMode::Auto, AgentMode::FullAccess}) {
+        EXPECT_EQ(decideMcp(mode, true, false, false, false), Decision::Run);
+        EXPECT_EQ(decideMcp(mode, false, true, true, true), Decision::AlwaysAsk);
+        EXPECT_EQ(decideMcp(mode, false, false, true, false), Decision::Run);
+    }
+    EXPECT_EQ(decideMcp(AgentMode::Manual, false, false, false, false), Decision::Ask);
+    EXPECT_EQ(decideMcp(AgentMode::Manual, false, false, false, true), Decision::Run);
+    EXPECT_EQ(decideMcp(AgentMode::Auto, false, false, false, false), Decision::Judge);
+    EXPECT_EQ(decideMcp(AgentMode::FullAccess, false, false, false, false), Decision::Run);
 }
 
 TEST(AgentPolicy, TheJudgeSeesTheActionAndTheUsersMessagesOnly)
@@ -645,6 +681,85 @@ TEST_F(AgentThreadsTest, TheAlwaysAskListAsksEvenInFullAccessAndCantBeAllowedFor
     EXPECT_TRUE(thread(id).allowed.empty());
     threads->answer(threads->asks().begin()->first, Answer::Deny);
     ASSERT_TRUE(idle(id));
+}
+
+TEST_F(AgentThreadsTest, AnMcpToolRunsAsksOrAlwaysAsksAsItsHintsAndTheThreadsModeSay)
+{
+    McpServerEntry notes{.id = "notes", .name = "Notes", .command = QStringLiteral("notes-server")};
+    std::vector<std::string> admitted;
+    sidecar()->handle(kMcpServersAdmit, [&](const Json &params, std::shared_ptr<SidecarRequest> request) {
+        const std::string tool = params.find("tool")->asString();
+        const McpToolHints hints{.readOnly = tool == "read", .destructive = tool == "wipe"};
+        sidecar()->gateSession(params.find("sessionId")->asString(), std::string(kMcpCallOperation),
+                               mcpCallParams(notes, tool, *params.find("arguments"), hints), request,
+                               [&admitted, tool](SidecarRequest &r) {
+                                   admitted.push_back(tool);
+                                   r.respond(Json::object());
+                               });
+    });
+    const auto mcp = [](std::string tool) {
+        return Json::object({{"method", kMcpServersAdmit},
+                             {"params", Json::object({{"server", "notes"}, {"tool", std::move(tool)},
+                                                      {"arguments", Json::object({{"id", 1}})}})}});
+    };
+    const std::string id = withMode(AgentMode::Manual);
+    threads->send(id, script(Json::array({mcp("read"), mcp("add"), mcp("add"), mcp("wipe")})));
+    std::uint64_t ask = openAsk();
+    EXPECT_EQ(admitted, std::vector<std::string>{"read"});
+    EXPECT_EQ(threads->asks().at(ask).kind, Decision::Ask);
+    threads->answer(ask, Answer::AllowInThread);
+    ASSERT_TRUE(waitFor([&] { return !threads->asks().empty() && threads->asks().begin()->first != ask; }));
+    ask = threads->asks().begin()->first;
+    EXPECT_EQ(threads->asks().at(ask).kind, Decision::AlwaysAsk);
+    EXPECT_EQ(admitted, (std::vector<std::string>{"read", "add", "add"}));
+    EXPECT_TRUE(thread(id).allowed.contains("mcp.call:notes/add"));
+    threads->answer(ask, Answer::Deny);
+    ASSERT_TRUE(idle(id));
+    EXPECT_EQ(admitted.size(), 3u);
+    const auto asks = items(id, "ask");
+    ASSERT_EQ(asks.size(), 2u);
+    EXPECT_EQ(at(asks[0], "tool"), "Notes: add");
+    EXPECT_EQ(at(asks[1], "type"), "always");
+    const auto answers = receivedAs("answer");
+    ASSERT_EQ(answers.size(), 4u);
+    EXPECT_NE(answers[3].dump().find(hikari::api::errors::kRefused), std::string::npos) << answers[3].dump();
+}
+
+TEST_F(AgentThreadsTest, ALuaScriptShowsInFullAndAsksOnEveryRunInEveryMode)
+{
+    const std::string lua = "script_name = 'Fade'\naegisub.register_macro('Fade', '', function() end)\n";
+    const Json run = call("automation.run", Json::object({{"name", "Fade"}, {"script", lua}}));
+    for (const AgentMode mode : {AgentMode::Manual, AgentMode::Auto, AgentMode::FullAccess}) {
+        fake.automation.runs.clear();
+        const std::string id = withMode(mode);
+        threads->send(id, script(Json::array({run, run})));
+        const std::uint64_t first = openAsk();
+        ASSERT_NE(first, 0u);
+        EXPECT_EQ(threads->asks().at(first).kind, Decision::Script);
+        const Json card = items(id, "script").at(0);
+        EXPECT_EQ(at(card, "script"), lua);
+        EXPECT_EQ(*card.find("lines"), Json(2));
+        EXPECT_EQ(at(card, "title"), "a.ass");
+        threads->answer(first, Answer::AllowInThread);
+        EXPECT_TRUE(threads->asks().contains(first)) << "a script has no Allow in this thread";
+        threads->answer(first, Answer::AllowOnce);
+        ASSERT_TRUE(waitFor([&] { return bool(fake.automation.pending); }));
+        EXPECT_EQ(at(items(id, "script").at(0), "status"), "running");
+        fake.automation.finish();
+        ASSERT_TRUE(waitFor([&] { return !threads->asks().empty() && threads->asks().begin()->first != first; }));
+        EXPECT_EQ(threads->asks().begin()->second.kind, Decision::Script) << "a rerun asks again";
+        threads->answer(threads->asks().begin()->first, Answer::Deny, "Not now");
+        ASSERT_TRUE(idle(id));
+        EXPECT_EQ(fake.automation.runs.size(), 1u);
+        EXPECT_TRUE(thread(id).allowed.empty());
+        const auto cards = items(id, "script");
+        ASSERT_EQ(cards.size(), 2u);
+        EXPECT_EQ(at(cards[0], "status"), "ran");
+        EXPECT_EQ(at(cards[1], "status"), "declined");
+        const auto answers = receivedAs("answer");
+        ASSERT_GE(answers.size(), 2u);
+        EXPECT_NE(answers.back().dump().find("Not now"), std::string::npos);
+    }
 }
 
 TEST_F(AgentThreadsTest, QtRefusesWritesWithoutAThreadOrAfterTheTurnStopped)

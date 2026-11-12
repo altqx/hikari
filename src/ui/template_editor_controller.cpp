@@ -1,6 +1,7 @@
 #include "template_editor_controller.h"
 
 #include "hikari/application/karaoke_presets.h"
+#include "hikari/application/karaoke_templates.h"
 #include "hikari/application/macro_transaction.h"
 #include "hikari/application/node_graph.h"
 #include "hikari/core/ass_save.h"
@@ -199,6 +200,122 @@ const std::vector<Function> &functions()
 }
 
 constexpr char kValueSeparator = '\x1e';
+
+struct LnMember {
+    const char *parent;
+    const char *name;
+    const char *insert;
+    const char *help;
+};
+
+const std::vector<LnMember> &lnMembers()
+{
+    static const std::vector<LnMember> list = {
+        {"ln", "init", "init(tenv)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "binds ln.kara to the template environment and adds its shorthands")},
+        {"ln", "syltime", "syltime(0.5)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "the unit’s start plus this share of its duration (ms)")},
+        {"ln", "syldur", "syldur(0.5)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "this share of the unit’s duration, all of it with no argument (ms)")},
+        {"ln", "randomize", "randomize(\"name\", 0, 10)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "sets a template variable to a random whole number, once")},
+        {"ln", "line", "line.", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "tags and sizes of the karaoke line")},
+        {"ln", "syl", "syl.", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "tags and sizes of the current unit")},
+        {"ln", "tag", "tag.", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "builds \\pos, \\move and \\t tags")},
+        {"ln", "wave", "wave.", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "periodic animation as \\t steps")},
+        {"ln", "color", "color.", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "colours from RGB or HSL")},
+        {"ln", "math", "math.", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "rounding, ranges and interpolation")},
+        {"ln", "shapes", "shapes.", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "drawings for \\p1")},
+        {"ln", "debug", "debug.", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "the progress bar")},
+        {"ln.line", "tag", "tag(\"blur\")", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "the first of each named tag in the karaoke line")},
+        {"ln.line", "tags", "tags(\"t\")", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "every one of each named tag in the karaoke line")},
+        {"ln.line", "c", "c(1)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "the karaoke line’s colour N, or its style’s")},
+        {"ln.line", "a", "a(1)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "the karaoke line’s alpha N, or its style’s")},
+        {"ln.line", "style_c", "style_c(1)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "the style’s colour N")},
+        {"ln.line", "style_a", "style_a(1)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "the style’s alpha N")},
+        {"ln.line", "buffers", "buffers(300, 300)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "lead-in and lead-out, from \\fad or empty end syllables (ms)")},
+        {"ln.line", "len_stripped", "len_stripped()", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "characters in the karaoke line without tags")},
+        {"ln.line", "len", "len()", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "characters in the karaoke line’s text")},
+        {"ln.line", "len_raw", "len_raw()", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "characters in the karaoke line as written")},
+        {"ln.syl", "tag", "tag(\"blur\")", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "the first of each named tag in the unit")},
+        {"ln.syl", "tags", "tags(\"t\")", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "every one of each named tag in the unit")},
+        {"ln.syl", "c", "c(1)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "the unit’s colour N, or its style’s")},
+        {"ln.syl", "a", "a(1)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "the unit’s alpha N, or its style’s")},
+        {"ln.syl", "len_stripped", "len_stripped()", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "characters in the unit without tags")},
+        {"ln.syl", "len", "len()", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "characters in the unit’s text")},
+        {"ln.tag", "pos", "pos(5)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "\\an and \\pos at the unit’s anchor")},
+        {"ln.tag", "move", "move(0, 0, 0, 0)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "\\an and \\move from offsets to the unit’s anchor")},
+        {"ln.tag", "kanjipos", "kanjipos()", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "vertical placement for kanji, in karaOK mode")},
+        {"ln.tag", "t", "t(0, 100, \"\")", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "\\t with whole-millisecond times")},
+        {"ln.tag", "parse_transform", "parse_transform(\"\")", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "reads a \\t into a table")},
+        {"ln.tag", "mod_transform", "mod_transform(\"\", \"+0\")", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "changes a \\t’s times or tags")},
+        {"ln.tag", "parse_move", "parse_move(\"\")", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "reads a \\move into a table")},
+        {"ln.wave", "new", "new(\"sine\", 1000, 10)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "a wave: sine, square, triangle, sawtooth or noise")},
+        {"ln.wave", "transform", "transform(w, \"frz\")", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "\\t steps that follow a wave")},
+        {"ln.color", "byRGB", "byRGB(255, 255, 255)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "a colour from red, green and blue (0–255)")},
+        {"ln.color", "byHSL", "byHSL(0, 255, 128)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "a colour from hue, saturation and lightness (0–255)")},
+        {"ln.color", "lumaHSL", "lumaHSL(0, 255, 128)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "a colour from hue, saturation and luma (0–255)")},
+        {"ln.color", "rgb", "rgb.", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "reads or adds to a colour’s red, green and blue")},
+        {"ln.color", "hsl", "hsl.", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "reads or adds to a colour’s hue, saturation and lightness")},
+        {"ln.math", "clamp", "clamp(n, 0, 1)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "n kept between min and max")},
+        {"ln.math", "modloop", "modloop(n, 0, 360)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "n wrapped into a range")},
+        {"ln.math", "modbounce", "modbounce(n, 0, 1)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "n bounced back and forth in a range")},
+        {"ln.math", "log", "log(10, n)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "the logarithm of n to a base")},
+        {"ln.math", "sgn", "sgn(n)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "-1 for a negative n, else 1")},
+        {"ln.math", "round", "round(n, 2)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "n rounded to this many decimals")},
+        {"ln.math", "round_fast", "round_fast(n)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "n rounded to a whole number")},
+        {"ln.math", "random", "random(0, 1)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "a random number, to 4 decimals")},
+        {"ln.math", "lerp", "lerp(0.5, 0, 1)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "between two numbers, colours or alphas")},
+        {"ln.math", "xerp", "xerp(0.5, 0, 1, 2)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "between two values, with acceleration")},
+        {"ln.shapes", "shift", "shift(\"\", 0, 0)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "a drawing moved by x and y")},
+        {"ln.shapes", "rectangle", "rectangle(20, 10)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "a rectangle drawing")},
+        {"ln.shapes", "roundedRectangle", "roundedRectangle(20, 10, 3)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "a rectangle drawing with round corners")},
+        {"ln.shapes", "circle", "circle(10)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "a circle drawing")},
+        {"ln.shapes", "triangle", "triangle(10)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "an equilateral triangle drawing")},
+        {"ln.shapes", "polygon", "polygon(6, 10)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "a regular polygon drawing")},
+        {"ln.shapes", "gear", "gear(10, 15, 20, 8, 0.5, 0.5, 0.5)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "a gear drawing")},
+        {"ln.shapes", "star", "star", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "a ready-made drawing")},
+        {"ln.shapes", "heart", "heart", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "a ready-made drawing")},
+        {"ln.shapes", "twinkle1", "twinkle1", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "a ready-made drawing")},
+        {"ln.shapes", "twinkle2", "twinkle2", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "a ready-made drawing")},
+        {"ln.shapes", "twinkle3", "twinkle3", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "a ready-made drawing")},
+        {"ln.shapes", "snowflake", "snowflake", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "a ready-made drawing")},
+        {"ln.shapes", "stolengleam", "stolengleam", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "a ready-made drawing")},
+        {"ln.debug", "prog", "prog(0.5)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "sets the progress bar (0–1)")},
+    };
+    return list;
+}
+
+const std::vector<Function> &lnShorthands()
+{
+    static const std::vector<Function> list = {
+        {"st", "st(0.5)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "the unit’s start plus this share of its duration (ms)")},
+        {"sd", "sd(0.5)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "this share of the unit’s duration, all of it with no argument (ms)")},
+        {"gc", "gc(1)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "the karaoke line’s colour N, or its style’s")},
+        {"ga", "ga(1)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "the karaoke line’s alpha N, or its style’s")},
+        {"rgb", "rgb(255, 255, 255)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "a colour from red, green and blue (0–255)")},
+        {"hsl", "hsl(0, 255, 128)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "a colour from hue, saturation and lightness (0–255)")},
+        {"hsy", "hsy(0, 255, 128)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "a colour from hue, saturation and luma (0–255)")},
+        {"rnd", "rnd(0, 1)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "a random number, to 4 decimals")},
+        {"set", "set(\"name\", 0)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "sets a template variable")},
+        {"rset", "rset(\"name\", 0, 10)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "sets a template variable to a random whole number, once")},
+        {"clamp", "clamp(n, 0, 1)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "n kept between min and max")},
+        {"fl", "fl(n)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "n rounded down")},
+    };
+    return list;
+}
+
+const Function kLn = {"ln", "ln.", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "karaOK’s ln.kara library")};
+
+QString qualifierBefore(const QString &text, int from)
+{
+    int at = from;
+    while (at > 0 && text[at - 1] == QLatin1Char('.')) {
+        int start = at - 1;
+        while (start > 0 && (text[start - 1].isLetterOrNumber() || text[start - 1] == QLatin1Char('_')))
+            --start;
+        if (start == at - 1)
+            break;
+        at = start;
+    }
+    return at == from ? QString() : text.mid(at, from - 1 - at);
+}
 
 const QStringList &templateClasses()
 {
@@ -1306,6 +1423,50 @@ void TemplateEditorController::applied(const std::string &report, std::optional<
     emit changed();
 }
 
+namespace {
+std::u8string u8(std::string_view s)
+{
+    return {s.begin(), s.end()};
+}
+}
+
+bool TemplateEditorController::karaOKMode() const
+{
+    const auto *doc = document();
+    return doc && application::karaoke_templates::documentMode(*doc) == application::karaoke_templates::Mode::KaraOK;
+}
+
+bool TemplateEditorController::modeInFile() const
+{
+    const auto *doc = document();
+    const auto line = doc ? doc->scriptInfo(u8(application::karaoke_templates::kModeKey)) : std::nullopt;
+    return line && application::karaoke_templates::modeOfLine(std::string(line->begin(), line->end()));
+}
+
+bool TemplateEditorController::setKaraOKMode(bool karaOK)
+{
+    commit();
+    auto *s = session();
+    if (!s || !m_editable || (modeInFile() && karaOKMode() == karaOK))
+        return false;
+    namespace kt = application::karaoke_templates;
+    const std::u8string value = u8(karaOK ? kt::kModeKaraOK : kt::kModeStock);
+    application::Command command;
+    command.name = "Set template mode";
+    command.expectedRevision = s->revision();
+    command.apply = [&](core::Document &doc) { return doc.setScriptInfo(u8(kt::kModeKey), value); };
+    const bool chosen = trusted();
+    if (!s->run(command))
+        return false;
+    if (chosen)
+        trust();
+    m_seenRevision = s->revision();
+    emit documentEdited();
+    emit changed();
+    schedulePreview();
+    return true;
+}
+
 bool TemplateEditorController::insertTemplate(const QString &effect)
 {
     application::MacroDialogueLine d;
@@ -1688,19 +1849,50 @@ QVariantList TemplateEditorController::completions(const QString &text, int curs
         }
         return out;
     }
-    if (text.left(from).count(QLatin1Char('!')) % 2 == 1) {
-        for (const auto &f : functions()) {
-            const QString name = QString::fromLatin1(f.name);
-            if (!name.startsWith(prefix))
-                continue;
-            out.append(QVariantMap{{QStringLiteral("name"), name},
-                                   {QStringLiteral("insert"), QString::fromLatin1(f.insert)},
-                                   {QStringLiteral("from"), from},
-                                   {QStringLiteral("help"), translated(f.help)},
-                                   {QStringLiteral("value"), QString()}});
-        }
+    const bool code = currentIsCode();
+    if (!code && text.left(from).count(QLatin1Char('!')) % 2 == 0)
+        return out;
+    const auto add = [&](const char *name, const char *insert, const char *help) {
+        if (!QString::fromLatin1(name).startsWith(prefix))
+            return;
+        out.append(QVariantMap{{QStringLiteral("name"), QString::fromLatin1(name)},
+                               {QStringLiteral("insert"), QString::fromUtf8(insert)},
+                               {QStringLiteral("from"), from},
+                               {QStringLiteral("help"), translated(help)},
+                               {QStringLiteral("value"), QString()}});
+    };
+    const QString qualifier = qualifierBefore(text, from);
+    if (qualifier == QLatin1String("ln") || qualifier.startsWith(QLatin1String("ln."))) {
+        for (const auto &m : lnMembers())
+            if (qualifier == QLatin1String(m.parent))
+                add(m.name, m.insert, m.help);
+        return out;
     }
+    if (code)
+        return out;
+    for (const auto &f : functions())
+        add(f.name, f.insert, f.help);
+    const LnUse ln = lnUse();
+    if (ln.loaded)
+        add(kLn.name, kLn.insert, kLn.help);
+    if (ln.initialised)
+        for (const auto &f : lnShorthands())
+            add(f.name, f.insert, f.help);
     return out;
+}
+
+TemplateEditorController::LnUse TemplateEditorController::lnUse() const
+{
+    LnUse use;
+    if (const auto *doc = document())
+        for (const auto *l : doc->lines()) {
+            if (application::templateKindOf(*l) != application::TemplateKind::Code)
+                continue;
+            const auto text = std::u8string_view(l->text);
+            use.loaded |= text.find(u8"ln.kara") != std::u8string_view::npos;
+            use.initialised |= text.find(u8"ln.init(") != std::u8string_view::npos;
+        }
+    return use;
 }
 
 QVariantList TemplateEditorController::colourRuns(const QString &text) const

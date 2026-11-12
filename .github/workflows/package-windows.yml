@@ -264,7 +264,6 @@ jobs:
           while IFS= read -r f; do
             cmp "payload/HikariSub/$f" "nsis-check/$f"
           done < payload.txt
-          test -f 'nsis-check/$PLUGINSDIR/StdUtils.dll'
           echo "$(wc -l < payload.txt) payload files in the installer"
 
       - name: Make the portable zip

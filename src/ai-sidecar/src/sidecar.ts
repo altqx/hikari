@@ -3,9 +3,10 @@ import { ClaudeSession } from "./agents/claude";
 import { CodexSession } from "./agents/codex";
 import { AgentRelay } from "./agents/relay";
 import { type ClaudeAgentSdk, loadClaudeAgentSdk } from "./agents/vendor";
+import { connector, mcpAgent, McpClients } from "./mcp/client";
 import { McpServer, type ServerInfo } from "./mcp/server";
 import { ErrorCode, kProtocolVersion, kRequiredApiVersion, Method, type ApiCallParams, type InitializeParams,
-    type InitializeResult, type McpClosedParams, type McpMessageParams, type McpMessageResult, type McpVia,
+    type InitializeResult, type McpClosedParams, type McpMessageParams, type McpServerConfig, type McpServersSetParams, type McpMessageResult, type McpVia,
     type SessionCompactParams, type SessionIdParams, type SessionNewParams, type SessionPromptParams, type SessionSteerParams,
     type ToolCallKind, type ToolsCallParams, type ToolsListParams } from "./protocol";
 import { ProviderError } from "./providers/errors";
@@ -102,6 +103,20 @@ async function wire<T>(work: () => T | Promise<T>): Promise<T> {
     }
 }
 
+/** How long a new session waits for the user's MCP servers before it starts without the slow ones. */
+const kMcpConnectWaitMs = 5000;
+
+function checkedServers(params: unknown): McpServerConfig[] {
+    const servers = (params as Partial<McpServersSetParams> | null)?.servers;
+    const valid = Array.isArray(servers) && servers.every((s: Partial<McpServerConfig>) =>
+        typeof s === "object" && s !== null && typeof s.id === "string" && /^[a-z0-9-]{1,32}$/.test(s.id)
+        && typeof s.name === "string" && (s.transport === "stdio" || s.transport === "http")
+        && typeof s.revision === "number");
+    if (!valid)
+        throw new RpcError(ErrorCode.invalidParams, `${Method.mcpServersSet} needs servers with an id, a name, a transport and a revision`);
+    return servers as McpServerConfig[];
+}
+
 export interface AgentOptions {
     /** Where fetched agent SDKs are unpacked. */
     vendor?: string;
@@ -116,9 +131,12 @@ export class Sidecar {
     catalogue: Catalogue = kCatalogue;
     readonly mcp: McpServer;
     readonly sessions: AgentSessions;
+    readonly mcpClients: McpClients;
     /** Each agent session's private tools channel, by connection. */
     private readonly channels = new Map<string, McpServer>();
     private initialized = false;
+    /** Some session asked for tools, so a server added now connects at once. */
+    private toolsWanted = false;
 
     private claudeSdk?: Promise<ClaudeAgentSdk>;
 
@@ -130,10 +148,13 @@ export class Sidecar {
         this.providers = new ProviderService(options);
         this.web = new WebSearch(options.relay, () => this.providers.searchService);
         this.tools = new ToolSet(this.api, this.catalogue, [this.web]);
+        this.mcpClients = new McpClients(connector(peer,
+            (server) => agentRelay.start(mcpAgent(server), { args: [], env: {} }), options.relay, info));
         this.mcp = new McpServer((connection, client) => new HikariApi(peer, () => ({ connection, client: client() })),
             info, () => this.catalogue);
         this.sessions = new AgentSessions((id, webSearch) =>
-            new ToolSet(new HikariApi(peer, undefined, id), this.catalogue, [whileOn(this.web, webSearch)]),
+            new ToolSet(new HikariApi(peer, undefined, id), this.catalogue,
+                () => [whileOn(this.web, webSearch), ...this.mcpClients.sources(id)]),
             (params, signal, emit) => this.providers.complete(params, signal, emit),
             (method, params) => peer.notify(method, params),
             (providerId) => this.providers.imageBudget(providerId),
@@ -154,7 +175,19 @@ export class Sidecar {
             }) },
             (id) => new Skills(new HikariApi(peer, undefined, id)));
         peer.onRequest(Method.initialize, (params) => this.initialize(params));
-        this.handle(Method.sessionNew, (params) => this.sessions.open(checkedNew(params)));
+        this.handle(Method.sessionNew, (params) => {
+            const opened = this.sessions.open(checkedNew(params));
+            this.toolsWanted = true;
+            if (this.mcpClients.size === 0)
+                return opened;
+            return Promise.race([this.mcpClients.ensure(), Bun.sleep(kMcpConnectWaitMs)]).then(() => opened);
+        });
+        this.handle(Method.mcpServersSet, (params) =>
+            this.mcpClients.set(checkedServers(params)).then(() => {
+                if (this.toolsWanted)
+                    void this.mcpClients.ensure();
+                return null;
+            }));
         this.handle(Method.sessionPrompt, (params) =>
             wire(() => this.sessions.prompt(checkedPrompt<SessionPromptParams>(Method.sessionPrompt, params))));
         this.handle(Method.sessionSteer, (params) =>

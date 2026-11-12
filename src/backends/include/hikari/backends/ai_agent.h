@@ -33,7 +33,8 @@ std::optional<AgentMode> agentModeFromId(std::string_view id);
 
 /// What Qt does with an agent's call before HA1 runs it.
 /// Propose: Manual subtitle edits wait as a proposal the user applies or declines.
-enum class Decision { Run, Judge, Ask, AlwaysAsk, Propose };
+/// Script: AI-written Lua, which the user approves on every run in every mode (ADR 0024).
+enum class Decision { Run, Judge, Ask, AlwaysAsk, Propose, Script };
 
 /// What makes a call ask in every mode: #410's always-ask categories, and AI settings (ADR 0024). docs/ai-agent.md
 /// maps each to its operations, commands and settings.
@@ -56,7 +57,11 @@ bool asksPermission(const std::string &operation);
 /// `allowed` holds what the user allowed for the whole thread (see allowanceKey).
 Decision decide(AgentMode mode, const std::string &operation, bool alwaysAsk, bool allowed);
 
-/// What "Allow in this thread" covers: the operation, or the one command for commands.run.
+/// An MCP tool call, from its hints after trust: reads run, destructive tools ask in every mode, tools the user
+/// approved run, and the mode decides the rest. `allowed` is "Allow in this thread".
+Decision decideMcp(AgentMode mode, bool readOnly, bool destructive, bool approved, bool allowed);
+
+/// What "Allow in this thread" covers: the operation, the one command for commands.run, or the one MCP tool.
 std::string allowanceKey(const std::string &operation, const api::Json &params);
 
 /// The judge's request without its model: the action and the user's messages, never file content or tool output.
@@ -158,9 +163,12 @@ public:
         std::function<std::vector<std::string>()> safeFolders;
         std::function<std::int64_t()> now; // ms since the epoch
         std::function<QDate()> today;
+        /// The DependencyControl modules a Lua script asks for: [{module, version?, installed?}].
+        std::function<api::Json(const std::string &script)> scriptNeeds;
     };
 
-    /// A proposal takes AllowOnce (Apply), Deny (Decline) or AskAgain, once the document changed under it.
+    /// A proposal takes AllowOnce (Apply), Deny (Decline) or AskAgain, once the document changed under it; a script
+    /// takes AllowOnce (Run) or Deny.
     enum class Answer { AllowOnce, AllowInThread, Deny, AskAgain };
 
     /// An open permission question.
@@ -237,12 +245,17 @@ private:
     void sessionUpdate(const api::Json &params);
     void gate(const std::string &session, const std::string &operation, const api::Json &params,
               AiSidecarHost::Admit admit, std::function<void(std::function<void()>)> onWithdraw);
+    void gateMcp(AgentThread &thread, const api::Json &params, AiSidecarHost::Admit admit,
+                 std::function<void(std::function<void()>)> onWithdraw);
     void judge(AgentThread &thread, const std::string &operation, const api::Json &params, AiSidecarHost::Admit admit,
                std::function<void(std::function<void()>)> onWithdraw);
     void openAsk(AgentThread &thread, Decision kind, const std::string &operation, const api::Json &params,
                  std::string reason, AiSidecarHost::Admit admit, std::function<void(std::function<void()>)> onWithdraw);
     void openProposal(AgentThread &thread, const api::Json &params, AiSidecarHost::Admit admit,
                       std::function<void(std::function<void()>)> onWithdraw);
+    void openScript(AgentThread &thread, const api::Json &params, AiSidecarHost::Admit admit,
+                    std::function<void(std::function<void()>)> onWithdraw);
+    void runScript(AgentThread &thread, std::uint64_t ask, AiSidecarHost::Admit admit);
     void wait(AgentThread &thread, Ask ask, api::Json item, AiSidecarHost::Admit admit,
               std::function<void(std::function<void()>)> onWithdraw);
     void documentChanged(application::DocumentId document, std::int64_t revision);

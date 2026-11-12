@@ -601,6 +601,7 @@ private:
     void parse(bool keepFx);
     void makeTenv();
     void applyTemplates(const std::vector<int> *sources, const std::set<int> *chosen);
+    void deleteAddedFurigana();
     bool applyLine(int line);
     bool applySyllableTemplates(int syl, int line, const std::vector<kt::TemplateRef> &list, kt::Variables &vars);
     int applyOne(int syl, int line, const kt::Template &t, kt::Variables &vars, bool skipPerchar, bool skipMulti);
@@ -636,6 +637,7 @@ private:
     int m_currentSource = 0;
     bool m_collecting = false;
     karaskel_tables::Head m_head;
+    bool m_furiganaOff = false;
     std::optional<application::karaoke_layout::Layout> m_layout;
     std::map<int, std::vector<int>> m_collected; // newline table refs per karaoke Line
     absl::flat_hash_map<std::string, Chunk> m_chunks;
@@ -1001,8 +1003,10 @@ void sylVariables(lua_State *L, kt::Variables &v, int line, int syl, kt::Mode mo
         put("sy", get("smiddle"));
     else if (valign == "bottom")
         put("sy", get("sbottom"));
-    put("ci", value(L, syl, "ci"));
-    put("slen", value(L, syl, "length"));
+    if (mode == kt::Mode::KaraOK) {
+        put("ci", value(L, syl, "ci"));
+        put("slen", value(L, syl, "length"));
+    }
     put("left", get("sleft"));
     put("center", get("scenter"));
     put("right", get("sright"));
@@ -1013,7 +1017,8 @@ void sylVariables(lua_State *L, kt::Variables &v, int line, int syl, kt::Mode mo
     put("height", get("sheight"));
     put("x", get("sx"));
     put("y", get("sy"));
-    put("len", get("slen"));
+    if (mode == kt::Mode::KaraOK)
+        put("len", get("slen"));
 }
 
 void setTenvField(lua_State *L, int tenv, const char *name, int value)
@@ -1086,7 +1091,8 @@ bool Run::applyLine(int line)
         put("lx", std::floor(number(L, line, "x") + 0.5));
         put("ly", std::floor(number(L, line, "y") + 0.5));
     }
-    put("llen", value(L, line, "length"));
+    if (m_mode == kt::Mode::KaraOK)
+        put("llen", value(L, line, "length"));
 
     pushRef(m_tenv);
     const int tenv = lua_gettop(L);
@@ -1128,7 +1134,8 @@ bool Run::applyLine(int line)
         copy("lheight", "height");
         copy("lx", "x");
         copy("ly", "y");
-        copy("llen", "len");
+        if (m_mode == kt::Mode::KaraOK)
+            copy("llen", "len");
 
         const double since = clockNow();
         int generated = 0;
@@ -1217,6 +1224,15 @@ bool Run::applyLine(int line)
         name(tenv, "baseword", lua_gettop(L));
         lua_pop(L, 1);
     };
+    const auto charOf = [&](int tenv, int unit) {
+        wordOf(tenv, unit);
+        lua_getfield(L, unit, "syll");
+        name(tenv, "syll", lua_gettop(L));
+        name(tenv, "basesyll", lua_gettop(L));
+        lua_pop(L, 1);
+        name(tenv, "char", unit);
+        name(tenv, "basechar", unit);
+    };
     if (karaOK) {
         if (applyUnits(line, "furi", m_templates.furi, v, 1, nullptr))
             applied = true;
@@ -1233,15 +1249,7 @@ bool Run::applyLine(int line)
                 name(tenv, "basesyll", unit);
             }))
             applied = true;
-        if (applyUnits(line, "chars", m_templates.chr, v, 1, [&](int tenv, int unit) {
-                wordOf(tenv, unit);
-                lua_getfield(L, unit, "syll");
-                name(tenv, "syll", lua_gettop(L));
-                name(tenv, "basesyll", lua_gettop(L));
-                lua_pop(L, 1);
-                name(tenv, "char", unit);
-                name(tenv, "basechar", unit);
-            }))
+        if (applyUnits(line, "chars", m_templates.chr, v, 1, charOf))
             applied = true;
     } else {
         if (applyUnits(line, "kara", m_templates.syl, v, 0, nullptr))
@@ -1254,6 +1262,8 @@ bool Run::applyLine(int line)
                 name(tenv, "word", unit);
                 name(tenv, "baseword", unit);
             }))
+            applied = true;
+        if (applyUnits(line, "chars", m_templates.chr, v, 1, charOf))
             applied = true;
     }
     lua_settop(L, line);
@@ -1637,6 +1647,17 @@ void Run::applyTemplates(const std::vector<int> *sources, const std::set<int> *c
         runCode(*t);
         spend(*t, since);
     }
+    pushRef(m_tenv);
+    lua_getfield(L, -1, "furigana_styles");
+    m_furiganaOff = lua_isboolean(L, -1) && !lua_toboolean(L, -1) && !m_head.furiganaAdded.empty();
+    lua_pop(L, 2);
+    if (m_furiganaOff) {
+        pushRef(m_styles);
+        karaskel_tables::dropAddedFurigana(L, -1, m_head);
+        lua_pop(L, 1);
+        m_layout->withoutAddedStyles();
+    }
+    const int liShift = m_furiganaOff ? static_cast<int>(m_head.furiganaAdded.size()) : 0;
     const int n = sources ? static_cast<int>(sources->size()) : size();
     for (int k = 1; k <= n; ++k) {
         progressSet(L, double(k - 1) / n * 100);
@@ -1652,7 +1673,7 @@ void Run::applyTemplates(const std::vector<int> *sources, const std::set<int> *c
         lua_setfield(L, l, "comment");
         const double since = clockNow();
         std::vector<std::string> unmeasured;
-        const auto layout = karaskel_tables::layLine(L, *m_layout, *dialogueAt(i), i, unmeasured);
+        const auto layout = karaskel_tables::layLine(L, *m_layout, *dialogueAt(i), i - liShift, unmeasured);
         pushRef(m_styles);
         karaskel_tables::pushKaraskelLine(L, -1, l, layout);
         lua_settop(L, l);
@@ -1794,8 +1815,24 @@ int Run::wholeRun()
         if (isGeneratedAt(i))
             ++generated;
     reportRun("all", generated, [](const kt::Where &w) { return w.number; });
+    deleteAddedFurigana();
     setUndoPoint(L);
     return problemSelection();
+}
+
+void Run::deleteAddedFurigana()
+{
+    if (!m_furiganaOff)
+        return;
+    const int k = static_cast<int>(m_head.furiganaAdded.size());
+    pushSubsMethod("delete");
+    for (int j = 0; j < k; ++j)
+        lua_pushinteger(L, m_head.firstStyle + j);
+    lua_call(L, k, 0);
+    std::set<int> moved;
+    for (const int index : m_problemLines)
+        moved.insert(index >= m_head.firstStyle + k ? index - k : index);
+    m_problemLines = std::move(moved);
 }
 
 std::string trimmed(const std::string &s)
@@ -2078,6 +2115,7 @@ int Run::selectedRun(int selection)
             generated += static_cast<int>(it->second.size());
     reportRun("selected", generated,
               [&](const kt::Where &w) { return now(w.index) - (w.index - w.number); });
+    deleteAddedFurigana();
     setUndoPoint(L);
     return problemSelection();
 }

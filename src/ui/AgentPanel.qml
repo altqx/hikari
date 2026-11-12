@@ -324,6 +324,7 @@ FocusScope {
                                : kind === "change" ? changeItem : kind === "plan" ? planItem : kind === "ask" ? askItem
                                : kind === "proposal" ? (item.status === "applied" ? null : proposalItem)
                                : kind === "notice" ? noticeItem : kind === "search" ? searchItem
+                               : kind === "script" ? scriptItem
                                : kind === "compaction" ? compactionItem : null
                 readonly property bool last: index === timeline.count - 1
             }
@@ -1397,6 +1398,169 @@ FocusScope {
                 text: ask.item.status === "allowed" ? qsTr("Allowed")
                       : ask.item.status === "allowedInThread" ? qsTr("Allowed in this thread")
                       : ask.item.status === "denied" ? qsTr("Denied") : qsTr("No longer needed")
+            }
+        }
+    }
+
+    Component {
+        id: scriptItem
+        Card {
+            id: lua
+            readonly property var item: parent ? parent.item : ({})
+            readonly property bool open: item.status === "open"
+            readonly property var lines: (item.script ?? "").replace(/\n$/, "").split("\n")
+            property bool allLines: false
+            property bool replying: false
+            objectName: "agentScript"
+            edge: open ? Theme.danger : item.status === "ran" ? Theme.success : item.status === "running" ? Theme.accent : Theme.line
+            RowLayout {
+                visible: lua.open
+                Layout.fillWidth: true
+                CardTitle { iconRole: "run-script"; text: qsTr("Run this Lua script?") }
+                Chip { text: qsTr("asks in every mode"); tint: Theme.danger }
+            }
+            Label {
+                visible: lua.open
+                Layout.fillWidth: true
+                wrapMode: Text.Wrap
+                color: Theme.muted
+                textFormat: Text.PlainText
+                text: [lua.item.macro ? qsTr("%1 · macro “%2”").arg(lua.item.name).arg(lua.item.macro) : (lua.item.name ?? ""),
+                       lua.item.title ? qsTr("on %1").arg(lua.item.title) : ""].filter(t => t.length > 0).join("   ")
+            }
+            Rectangle {
+                visible: lua.open
+                Layout.fillWidth: true
+                implicitHeight: codeColumn.implicitHeight + 8
+                color: Theme.field
+                border.color: Theme.line
+                radius: 2
+                ColumnLayout {
+                    id: codeColumn
+                    x: 4
+                    y: 4
+                    width: parent.width - 8
+                    spacing: 0
+                    Repeater {
+                        model: lua.open ? (lua.allLines ? lua.lines : lua.lines.slice(0, 12)) : []
+                        delegate: RowLayout {
+                            required property int index
+                            required property string modelData
+                            Layout.fillWidth: true
+                            spacing: 8
+                            Label {
+                                Layout.preferredWidth: 24
+                                horizontalAlignment: Text.AlignRight
+                                font.family: "monospace"
+                                color: Theme.muted
+                                text: index + 1
+                            }
+                            Label {
+                                Layout.fillWidth: true
+                                font.family: "monospace"
+                                textFormat: Text.PlainText
+                                elide: Text.ElideRight
+                                text: modelData
+                            }
+                        }
+                    }
+                }
+            }
+            LinkButton {
+                objectName: "agentScriptShowAll"
+                iconRole: "chevron-down"
+                visible: lua.open && !lua.allLines && lua.lines.length > 12
+                text: qsTr("Show all %n lines", "", lua.lines.length)
+                onClicked: lua.allLines = true
+            }
+            Repeater {
+                model: lua.open ? (lua.item.needs ?? []) : []
+                delegate: RowLayout {
+                    required property var modelData
+                    readonly property bool installed: modelData.installed !== undefined
+                    Layout.fillWidth: true
+                    spacing: 6
+                    Icon { iconRole: parent.installed ? "karaoke-check" : "notice-warning"; size: 13 }
+                    Label {
+                        Layout.fillWidth: true
+                        wrapMode: Text.Wrap
+                        textFormat: Text.PlainText
+                        color: parent.installed ? Theme.success : Theme.warning
+                        text: parent.installed ? [parent.modelData.module, parent.modelData.installed].filter(t => t.length > 0).join(" ")
+                                               : qsTr("%1 isn’t installed, so the script will stop when it loads.").arg(parent.modelData.module)
+                    }
+                }
+            }
+            Label {
+                visible: lua.open
+                Layout.fillWidth: true
+                wrapMode: Text.Wrap
+                color: Theme.muted
+                text: qsTr("Runs as an Automation macro: one undo step, and Force stop while it runs. Saved in the AI scripts folder, never added to Autoload.")
+            }
+            RowLayout {
+                visible: lua.open && !lua.replying
+                spacing: 6
+                Button {
+                    objectName: "agentScriptRun"
+                    text: qsTr("Run")
+                    highlighted: true
+                    onClicked: panel.agent.answer(lua.item.ask, "allowOnce", "")
+                }
+                Button {
+                    objectName: "agentScriptDecline"
+                    text: qsTr("Don’t run")
+                    onClicked: panel.agent.answer(lua.item.ask, "deny", "")
+                }
+                Button {
+                    text: qsTr("Don’t run and tell the agent…")
+                    onClicked: {
+                        lua.replying = true
+                        scriptReply.forceActiveFocus()
+                    }
+                }
+            }
+            RowLayout {
+                visible: lua.open && lua.replying
+                Layout.fillWidth: true
+                TextField {
+                    id: scriptReply
+                    Layout.fillWidth: true
+                    placeholderText: qsTr("What should it do instead?")
+                    onAccepted: panel.agent.answer(lua.item.ask, "deny", text)
+                }
+                Button { text: qsTr("Don’t run"); onClicked: panel.agent.answer(lua.item.ask, "deny", scriptReply.text) }
+            }
+            RowLayout {
+                visible: !lua.open
+                Layout.fillWidth: true
+                spacing: 6
+                Icon { iconRole: lua.item.status === "running" ? "run-busy" : "run-script"; size: 14 }
+                Label {
+                    Layout.fillWidth: true
+                    wrapMode: Text.Wrap
+                    textFormat: Text.PlainText
+                    color: lua.item.status === "ran" || lua.item.status === "running" ? Theme.text : Theme.muted
+                    text: lua.item.status === "running" ? qsTr("Running %1").arg(lua.item.name ?? "")
+                          : lua.item.status === "ran" ? qsTr("Ran %1 · one undo step").arg(lua.item.name ?? "")
+                          : lua.item.status === "failed" ? qsTr("%1 didn’t finish: %2").arg(lua.item.name ?? "").arg(lua.item.result ?? "")
+                          : lua.item.status === "declined" ? (lua.item.message ? qsTr("Didn’t run %1 · “%2”").arg(lua.item.name ?? "").arg(lua.item.message)
+                                                                               : qsTr("Didn’t run %1").arg(lua.item.name ?? ""))
+                          : qsTr("No longer needed")
+                }
+                Button {
+                    objectName: "agentScriptForceStop"
+                    visible: lua.item.status === "running"
+                    text: qsTr("Force stop")
+                    onClicked: panel.agent.forceStopScript()
+                }
+                LinkButton {
+                    objectName: "agentScriptOpen"
+                    iconRole: "edit"
+                    visible: (lua.item.file ?? "").length > 0
+                    text: qsTr("Open")
+                    onClicked: panel.agent.openScript(lua.item.file)
+                }
             }
         }
     }

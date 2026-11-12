@@ -20,6 +20,7 @@
 #include <condition_variable>
 #include <filesystem>
 #include <functional>
+#include <map>
 #include <memory>
 #include <mutex>
 #include <optional>
@@ -59,6 +60,8 @@ public:
         std::function<void()> fontsChanged;
         // The editing target's attached fonts.
         std::function<std::vector<application::FontLease>()> documentFonts;
+        // The shell window's Project fonts; empty outside a Project.
+        std::function<std::vector<application::FontLease>(int shellWindow)> projectFonts;
         // The catalog files' ui::ListFile::Report.
         std::function<void(const std::filesystem::path &legacy, const std::filesystem::path &file)> fileConverted;
         std::function<void(const application::FileProblem &)> fileProblem;
@@ -86,14 +89,15 @@ public:
     // "All fonts" and "Without catalogue" at 0 and 1, then the catalogs.
     Q_INVOKABLE QStringList catalogChoices() const;
     // `selection` and `value` from catalogChoices(); filtered when `filterOn` and `filterText` is
-    // not empty.
-    Q_INVOKABLE QStringList fontList(int selection, const QString &value, bool filterOn, const QString &filterText);
+    // not empty. A `shellWindow` in a Project lists its Project fonts too.
+    Q_INVOKABLE QStringList fontList(int selection, const QString &value, bool filterOn, const QString &filterText,
+                                     int shellWindow = -1);
     Q_INVOKABLE void setFilterOn(bool on);
     Q_INVOKABLE void setPreviewText(const QString &text);
     Q_INVOKABLE void saveFilterText(const QString &text);
     Q_INVOKABLE void applyFilterText(const QString &text);
     // Sorted.
-    Q_INVOKABLE QStringList allFonts();
+    Q_INVOKABLE QStringList allFonts(int shellWindow = -1);
 
     Q_INVOKABLE int nameIndex(const QStringList &fonts, const QString &name) const;
     Q_INVOKABLE int partialIndex(const QStringList &fonts, const QString &partial) const;
@@ -200,6 +204,11 @@ private:
     };
     void resolverLoop();
     void stopResolver();
+    application::FontFamilies &familiesFor(int shellWindow);
+    struct WindowFamilies {
+        std::vector<std::shared_ptr<const std::vector<std::byte>>> projectFonts;
+        std::unique_ptr<application::FontFamilies> families;
+    };
 
     ui::SettingsStore &m_settings;
     std::filesystem::path m_dir;
@@ -208,6 +217,7 @@ private:
     bool m_loaded = false;
     std::shared_ptr<application::FontServicePort> m_service;
     std::unique_ptr<application::FontFamilies> m_families;
+    std::map<int, WindowFamilies> m_windowFamilies;
     std::uint64_t m_generation = 1;
     QTimer m_autosave, m_autosaveLabel, m_watchDelay;
     int m_autosaveIndex = 0;
