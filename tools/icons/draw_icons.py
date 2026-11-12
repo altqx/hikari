@@ -1419,14 +1419,11 @@ for card, roles in {
     "AU9 #844": ["graph-shake", "graph-wobble", "graph-bounce", "graph-typewriter", "graph-fade-by-letter",
                  "graph-focus-lines", "graph-grain", "graph-chromatic-aberration", "graph-randomove",
                  "graph-karaoke-to-alpha"],
-    "AU10 #841": ["select-overlapping", "split-tag-blocks", "split-every-n"],
-    "AU11 #846": ["track-colour", "find-fade"],
     "AU14 #847": ["tool-text-on-path"],
     "AU16 #850": ["reinstall-scripts"],
     "AU21 #855": ["change-alignment", "align-left", "align-center", "align-right", "align-top", "align-middle",
                   "align-bottom", "distribute-horizontal", "distribute-vertical", "pos-to-margins", "margins-to-pos",
                   "phantom", "cycle-values", "shift-by-x", "shift-by-y"],
-    "TH5 #833": ["builtin-script"],
 }.items():
     for role in roles:
         PENDING[role] = card

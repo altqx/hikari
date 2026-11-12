@@ -16,17 +16,35 @@ QString qs(std::string_view s)
     return QString::fromUtf8(s.data(), qsizetype(s.size()));
 }
 
+bool sameProject(const std::optional<api::ProjectState> &a, const std::optional<api::ProjectState> &b)
+{
+    if (!a || !b)
+        return a.has_value() == b.has_value();
+    return a->name == b->name && a->root == b->root && a->trusted == b->trusted;
+}
+
 }
 
 ApiHost::ApiHost(Wiring wiring, QObject *parent)
     : QObject(parent), m_wiring(std::move(wiring)),
       m_skills(m_wiring.skills.empty() ? nullptr : std::make_unique<api::FolderSkills>(m_wiring.skills)),
       m_api(api::Host{this, this, this, m_wiring.settings, m_wiring.media, this, &m_review, this, m_skills.get(),
-                     m_wiring.automation})
+                     m_wiring.automation, this, this}),
+      m_seenProject(project())
 {
 }
 
 ApiHost::~ApiHost() = default;
+
+application::visual::perspective::TextMeasure ApiHost::measure() const
+{
+    return m_wiring.measure ? m_wiring.measure() : application::visual::perspective::TextMeasure{};
+}
+
+std::optional<api::ProjectState> ApiHost::project() const
+{
+    return m_wiring.project ? m_wiring.project() : std::nullopt;
+}
 
 application::EditSession *ApiHost::session(application::DocumentId document) const
 {
@@ -74,6 +92,10 @@ void ApiHost::observe()
     });
     if (documentsMoved)
         m_api.documentsChanged();
+    if (auto now = project(); !sameProject(now, m_seenProject)) {
+        m_seenProject = std::move(now);
+        m_api.projectChanged();
+    }
     for (const application::DocumentId id : documents) {
         const application::EditSession *s = session(id);
         if (!s)

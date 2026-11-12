@@ -251,17 +251,9 @@ std::string externalFontsPath(std::string path, const OptionsLists &lists)
 }
 
 constexpr std::string_view kNotShown[] = {
-    "scriptProperties.title",        "scriptProperties.titleOn",
-    "scriptProperties.script",       "scriptProperties.scriptOn",
-    "scriptProperties.translation",  "scriptProperties.translationOn",
-    "scriptProperties.editing",      "scriptProperties.editingOn",
-    "scriptProperties.timing",       "scriptProperties.timingOn",
-    "scriptProperties.update",       "scriptProperties.updateOn",
-    "scriptProperties.askForChange", "grid.loadSortedSubs",
-    "grid.autoSelectLinesFromLastTab", "grid.dontCenterActiveLine",
-    "grid.font",                     "editor.saveAfterCharacterCount",
-    "automation.loadingMethod",      "automation.oldScriptsCompatibility",
-    "convert.showSettings",
+    "grid.loadSortedSubs",           "grid.autoSelectLinesFromLastTab", "grid.dontCenterActiveLine",
+    "grid.font",                     "editor.saveAfterCharacterCount",  "automation.loadingMethod",
+    "automation.oldScriptsCompatibility", "convert.showSettings",
 };
 
 }

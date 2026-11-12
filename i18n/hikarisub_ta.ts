@@ -6004,6 +6004,42 @@ Failed to copy %2 fonts.</source>
         <source>Copy</source>
         <translation>நகலெடு</translation>
     </message>
+    <message>
+        <source>At tag blocks</source>
+        <translation>குறிச்சொல் தொகுதிகளில்</translation>
+    </message>
+    <message>
+        <source>Every N frames or seconds…</source>
+        <translation>ஒவ்வொரு N சட்டகம் அல்லது வினாடிக்கும்…</translation>
+    </message>
+    <message>
+        <source>Split every</source>
+        <translation>இடைவெளியில் பிரி</translation>
+    </message>
+    <message>
+        <source>Every</source>
+        <translation>ஒவ்வொரு</translation>
+    </message>
+    <message>
+        <source>Piece length</source>
+        <translation>துண்டின் நீளம்</translation>
+    </message>
+    <message>
+        <source>Frames</source>
+        <translation>சட்டகங்கள்</translation>
+    </message>
+    <message>
+        <source>Seconds</source>
+        <translation>வினாடிகள்</translation>
+    </message>
+    <message>
+        <source>Unit</source>
+        <translation>அலகு</translation>
+    </message>
+    <message>
+        <source>Frames need a video.</source>
+        <translation>சட்டகங்களுக்கு வீடியோ தேவை.</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Home</name>
@@ -7438,6 +7474,14 @@ Failed to copy %2 fonts.</source>
         <translation>நேரங்களைச் சட்டகங்களுக்குள் மையப்படுத்து</translation>
     </message>
     <message>
+        <source>Track colour…</source>
+        <translation>வண்ணத்தைக் கண்காணி…</translation>
+    </message>
+    <message>
+        <source>Find fade…</source>
+        <translation>மங்கலைக் கண்டறி…</translation>
+    </message>
+    <message>
         <source>Import legacy settings…</source>
         <translation>பழைய பதிப்பின் அமைப்புகளை இறக்குமதி செய்…</translation>
     </message>
@@ -7728,6 +7772,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Align to video…</source>
         <translation>வீடியோவுடன் சீரமை…</translation>
+    </message>
+    <message>
+        <source>Split lines at tag blocks</source>
+        <translation>குறிச்சொல் தொகுதிகளில் வரிகளைப் பிரி</translation>
+    </message>
+    <message>
+        <source>Split lines every N frames or seconds…</source>
+        <translation>ஒவ்வொரு N சட்டகம் அல்லது வினாடிக்கும் வரிகளைப் பிரி…</translation>
     </message>
 </context>
 <context>
@@ -9682,6 +9734,22 @@ Failed to copy %2 fonts.</source>
         <translation>நேரக்குறியீடுகளை மூடு</translation>
     </message>
     <message>
+        <source>Follows a picked point’s colour across the selected lines’ frames and writes it as colour or alpha tags</source>
+        <translation>தேர்ந்த புள்ளியின் வண்ணத்தைத் தேர்ந்த வரிகளின் சட்டகங்கள் தோறும் பின்தொடர்ந்து, வண்ண அல்லது ஆல்ஃபா குறிச்சொற்களாக எழுதும்</translation>
+    </message>
+    <message>
+        <source>Track colour…</source>
+        <translation>வண்ணத்தைக் கண்காணி…</translation>
+    </message>
+    <message>
+        <source>Finds where the active line’s sign fades in and out at a picked point and writes %1</source>
+        <translation>தேர்ந்த புள்ளியில் செயலில் உள்ள வரியின் அடையாளம் எங்கே உள்மங்கி வெளிமங்குகிறது என்று கண்டறிந்து %1 ஐ எழுதும்</translation>
+    </message>
+    <message>
+        <source>Find fade…</source>
+        <translation>மங்கலைக் கண்டறி…</translation>
+    </message>
+    <message>
         <source>Shift by frames to video</source>
         <translation>சட்டகங்களாக வீடியோவுக்கு நகர்த்து</translation>
     </message>
@@ -9732,6 +9800,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Applies Power-Pin tracking data to the selected lines, one line a frame</source>
         <translation>தேர்ந்தெடுத்த வரிகளுக்கு Power-Pin கண்காணிப்புத் தரவைப் பயன்படுத்தும், ஒரு சட்டகத்துக்கு ஒரு வரி</translation>
+    </message>
+    <message>
+        <source>Find fade</source>
+        <translation>மங்கலைக் கண்டறி</translation>
+    </message>
+    <message>
+        <source>Track colour</source>
+        <translation>வண்ணத்தைக் கண்காணி</translation>
     </message>
     <message>
         <source>Open a video first: tracking data is per frame.</source>
@@ -11314,6 +11390,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>%1 copy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>karaOK templates</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Uses karaOK template syntax. Runs in HikariSub; in Aegisub it needs the karaOK templater.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Aegisub 3.2.2 templates</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -14399,6 +14487,153 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>Requests go only to the providers you add and to %1. The AI component isn’t sandboxed on this system.</source>
         <translation>கோரிக்கைகள் நீங்கள் சேர்க்கும் வழங்குநர்களுக்கும் %1-க்கும் மட்டுமே செல்லும். இந்தக் கணினியில் AI கூறு தனிமைப்படுத்தப்படவில்லை.</translation>
     </message>
+    <message>
+        <source>Delete MCP server</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete the MCP server “%1”?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Its secrets are removed from the keychain, and the agent loses its tools.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Starting…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Connected · %n tool(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Failed: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Starts when the agent needs it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add an MCP server</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Runs as</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A command on this computer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A URL (streamable HTTP)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Command</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Environment</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Leave empty to keep the stored variables</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>URL</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bearer token</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Leave empty to keep the stored token</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Optional</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>One NAME=value per line. They go to the keychain, and only to this server.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The token goes to the keychain, and only to this URL.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Trust what this server says about its tools</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A trusted server’s read-only tools run without asking. Without trust, every tool asks as a change would.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Give the server a name.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Type the command that starts the server.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Type the server’s http or https URL.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Write each variable as NAME=value on its own line.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The keychain didn’t take the secrets; nothing was saved.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>MCP servers</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No MCP servers yet. Add one to give the agent its tools.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add server…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Trust what it says about its tools</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Run %1 without asking</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 · only reads, never asks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 · asks every time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Servers run as you, outside the AI component’s sandbox. Tools that may change or delete things ask first in every mode. Changes apply at once.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Plugins</name>
@@ -16942,6 +17177,10 @@ because it was edited.</source>
     <message>
         <source>%1 lines deselected.</source>
         <translation>%1 வரிகள் தேர்வுநீக்கப்பட்டன.</translation>
+    </message>
+    <message>
+        <source>Overlapping lines</source>
+        <translation>ஒன்றின்மேல் ஒன்று வரும் வரிகள்</translation>
     </message>
 </context>
 <context>
@@ -19904,6 +20143,10 @@ Styles deleted:
         <translation>ஒவ்வொரு வரிக்குமான குறியீடு</translation>
     </message>
     <message>
+        <source>Uses karaOK template syntax. Switch Template language to karaOK to use it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>The new line goes above the first karaoke line, with that line’s style.</source>
         <translation>புதிய வரி, முதல் கரோக்கி வரியின் பாணியுடன், அதற்கு மேலே சேர்க்கப்படும்.</translation>
     </message>
@@ -20195,6 +20438,86 @@ Styles deleted:
         <translation>கரோக்கி இடமிருந்து வலமாக நிரம்புகிறது; வரியுடன் மங்கித் தோன்றி, அதன் பின் மங்கி மறையும்.</translation>
     </message>
     <message>
+        <source>Word pop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each word swells as it starts and settles back while it is sung.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Word wipe</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The line shows whole, and a second colour wipes across each word while it is sung.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Letter cascade</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Letters appear one after another along the line before it is sung.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Letter shimmer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each letter tilts and brightens as it is sung, then straightens.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Furigana rise</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Furigana rises into place over each syllable as it is sung.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Early lead-in</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each syllable lights up a moment before it is sung.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Wave bounce</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each syllable bobs up and down on a sine wave while it is sung (ln.kara).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shape burst</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Six stars burst out of each syllable as it is sung (ln.kara).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Line gradient</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The line’s letters run through a band of colours from left to right (ln.kara).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Thai fade</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each character cluster fades in as it is sung, so Thai vowels and tone marks stay on their letters.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>syllable duration (ms)</source>
         <translation>அசையின் கால அளவு (ms)</translation>
     </message>
@@ -20385,6 +20708,274 @@ Styles deleted:
     <message>
         <source>The templater stopped before it finished.</source>
         <translation>வார்ப்புரு இயக்கி முடிப்பதற்கு முன்பே நின்றுவிட்டது.</translation>
+    </message>
+    <message>
+        <source>The template language this file sets.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The template language this file’s templates use. Choose one to set it in the file.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Template language</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>binds ln.kara to the template environment and adds its shorthands</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the unit’s start plus this share of its duration (ms)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>this share of the unit’s duration, all of it with no argument (ms)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>sets a template variable to a random whole number, once</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>tags and sizes of the karaoke line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>tags and sizes of the current unit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>builds \pos, \move and \t tags</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>periodic animation as \t steps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>colours from RGB or HSL</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>rounding, ranges and interpolation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>drawings for \p1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the progress bar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the first of each named tag in the karaoke line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>every one of each named tag in the karaoke line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the karaoke line’s colour N, or its style’s</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the karaoke line’s alpha N, or its style’s</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the style’s colour N</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the style’s alpha N</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>lead-in and lead-out, from \fad or empty end syllables (ms)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>characters in the karaoke line without tags</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>characters in the karaoke line’s text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>characters in the karaoke line as written</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the first of each named tag in the unit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>every one of each named tag in the unit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the unit’s colour N, or its style’s</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the unit’s alpha N, or its style’s</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>characters in the unit without tags</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>characters in the unit’s text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>\an and \pos at the unit’s anchor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>\an and \move from offsets to the unit’s anchor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>vertical placement for kanji, in karaOK mode</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>\t with whole-millisecond times</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>reads a \t into a table</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>changes a \t’s times or tags</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>reads a \move into a table</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>a wave: sine, square, triangle, sawtooth or noise</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>\t steps that follow a wave</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>a colour from red, green and blue (0–255)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>a colour from hue, saturation and lightness (0–255)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>a colour from hue, saturation and luma (0–255)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>reads or adds to a colour’s red, green and blue</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>reads or adds to a colour’s hue, saturation and lightness</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>n kept between min and max</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>n wrapped into a range</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>n bounced back and forth in a range</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the logarithm of n to a base</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>-1 for a negative n, else 1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>n rounded to this many decimals</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>n rounded to a whole number</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>a random number, to 4 decimals</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>between two numbers, colours or alphas</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>between two values, with acceleration</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>a drawing moved by x and y</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>a rectangle drawing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>a rectangle drawing with round corners</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>a circle drawing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>an equilateral triangle drawing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>a regular polygon drawing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>a gear drawing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>a ready-made drawing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>sets the progress bar (0–1)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>sets a template variable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>n rounded down</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>karaOK’s ln.kara library</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -22662,6 +23253,159 @@ or codecs or a splitter may be missing</source>
     <message>
         <source>Close</source>
         <translation>மூடு</translation>
+    </message>
+    <message>
+        <source>Track colour</source>
+        <translation>வண்ணத்தைக் கண்காணி</translation>
+    </message>
+    <message>
+        <source>Select the lines to track first.</source>
+        <translation>முதலில் கண்காணிக்க வேண்டிய வரிகளைத் தேர்ந்தெடுக்கவும்.</translation>
+    </message>
+    <message>
+        <source>The clipboard holds no After Effects tracking data.</source>
+        <translation>இடைநிலைப்பலகையில் After Effects கண்காணிப்புத் தரவு இல்லை.</translation>
+    </message>
+    <message>
+        <source>The tracking data doesn’t have one row for each frame of the active line.</source>
+        <translation>கண்காணிப்புத் தரவில் செயலில் உள்ள வரியின் ஒவ்வொரு சட்டகத்துக்கும் ஒரு நிரை இல்லை.</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n selected lines, %1 to %2, %3 frames. Frames are read without subtitles.</source>
+        <translation>
+            <numerusform>%n தேர்ந்த வரி, %1 முதல் %2 வரை, %3 சட்டகங்கள். சட்டகங்கள் வசனங்கள் இல்லாமல் படிக்கப்படும்.</numerusform>
+            <numerusform>%n தேர்ந்த வரிகள், %1 முதல் %2 வரை, %3 சட்டகங்கள். சட்டகங்கள் வசனங்கள் இல்லாமல் படிக்கப்படும்.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Follow tracking data</source>
+        <translation>கண்காணிப்புத் தரவைப் பின்தொடர்</translation>
+    </message>
+    <message>
+        <source>Moves the point with After Effects tracking data from the clipboard, one row for each frame of the active line</source>
+        <translation>இடைநிலைப்பலகையில் உள்ள After Effects கண்காணிப்புத் தரவின்படி புள்ளியை நகர்த்தும், செயலில் உள்ள வரியின் ஒவ்வொரு சட்டகத்துக்கும் ஒரு நிரை</translation>
+    </message>
+    <message numerus="yes">
+        <source>After Effects data, %n frames, from the clipboard</source>
+        <translation>
+            <numerusform>இடைநிலைப்பலகையிலிருந்து After Effects தரவு, %n சட்டகம்</numerusform>
+            <numerusform>இடைநிலைப்பலகையிலிருந்து After Effects தரவு, %n சட்டகங்கள்</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Alpha</source>
+        <translation>ஆல்ஃபா</translation>
+    </message>
+    <message>
+        <source>Skip repeated colours</source>
+        <translation>மீண்டும் வரும் வண்ணங்களைத் தவிர்</translation>
+    </message>
+    <message>
+        <source>A frame whose value is the same as the frame before writes no %1</source>
+        <translation>முந்தைய சட்டகத்தின் அதே மதிப்புள்ள சட்டகம் %1 ஐ எழுதாது</translation>
+    </message>
+    <message>
+        <source>Sign colour</source>
+        <translation>அடையாள வண்ணம்</translation>
+    </message>
+    <message>
+        <source>Background colour</source>
+        <translation>பின்னணி வண்ணம்</translation>
+    </message>
+    <message>
+        <source>Use the point’s colour</source>
+        <translation>புள்ளியின் வண்ணத்தைப் பயன்படுத்து</translation>
+    </message>
+    <message>
+        <source>Colour on each frame</source>
+        <translation>ஒவ்வொரு சட்டகத்திலும் வண்ணம்</translation>
+    </message>
+    <message>
+        <source>Result</source>
+        <translation>முடிவு</translation>
+    </message>
+    <message>
+        <source>Reading frame %1 of %2…</source>
+        <translation>%2 இல் %1 ஆம் சட்டகம் படிக்கப்படுகிறது…</translation>
+    </message>
+    <message>
+        <source>Read %1 of %2 frames</source>
+        <translation>%2 சட்டகங்களில் %1 படிக்கப்பட்டன</translation>
+    </message>
+    <message>
+        <source>Apply</source>
+        <translation>பயன்படுத்து</translation>
+    </message>
+    <message>
+        <source>Find fade</source>
+        <translation>மங்கலைக் கண்டறி</translation>
+    </message>
+    <message>
+        <source>Select a line first.</source>
+        <translation>முதலில் ஒரு வரியைத் தேர்ந்தெடுக்கவும்.</translation>
+    </message>
+    <message>
+        <source>Move the video to a frame of the line where the sign is fully shown.</source>
+        <translation>அடையாளம் முழுமையாகக் காட்டப்படும் வரியின் ஒரு சட்டகத்துக்கு வீடியோவை நகர்த்தவும்.</translation>
+    </message>
+    <message>
+        <source>The tracking data doesn’t have one row for each frame of the line.</source>
+        <translation>கண்காணிப்புத் தரவில் வரியின் ஒவ்வொரு சட்டகத்துக்கும் ஒரு நிரை இல்லை.</translation>
+    </message>
+    <message>
+        <source>No frame up to this one has the point’s colour, so the fade in can’t be found.</source>
+        <translation>இதுவரையிலான எந்தச் சட்டகத்திலும் புள்ளியின் வண்ணம் இல்லை, எனவே உள்மங்கலைக் கண்டறிய முடியாது.</translation>
+    </message>
+    <message>
+        <source>The point keeps its colour to the end of the line, so the fade out can’t be found.</source>
+        <translation>வரியின் இறுதிவரை புள்ளி தன் வண்ணத்தை வைத்திருக்கிறது, எனவே வெளிமங்கலைக் கண்டறிய முடியாது.</translation>
+    </message>
+    <message numerus="yes">
+        <source>Line %1, %2 to %3, %n frames. The point’s colour on this frame is the fully shown colour.</source>
+        <translation>
+            <numerusform>வரி %1, %2 முதல் %3 வரை, %n சட்டகம். இந்தச் சட்டகத்தில் புள்ளியின் வண்ணமே முழுமையாகக் காட்டப்படும் வண்ணம்.</numerusform>
+            <numerusform>வரி %1, %2 முதல் %3 வரை, %n சட்டகங்கள். இந்தச் சட்டகத்தில் புள்ளியின் வண்ணமே முழுமையாகக் காட்டப்படும் வண்ணம்.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Point</source>
+        <translation>புள்ளி</translation>
+    </message>
+    <message>
+        <source>Moves the point with After Effects tracking data from the clipboard, one row for each frame of the line</source>
+        <translation>இடைநிலைப்பலகையில் உள்ள After Effects கண்காணிப்புத் தரவின்படி புள்ளியை நகர்த்தும், வரியின் ஒவ்வொரு சட்டகத்துக்கும் ஒரு நிரை</translation>
+    </message>
+    <message>
+        <source>Find</source>
+        <translation>கண்டறி</translation>
+    </message>
+    <message>
+        <source>Fade in</source>
+        <translation>உள்மங்கல்</translation>
+    </message>
+    <message>
+        <source>Fade out</source>
+        <translation>வெளிமங்கல்</translation>
+    </message>
+    <message>
+        <source>How far, in RGB, a frame’s colour may be from the point’s and still count as shown</source>
+        <translation>ஒரு சட்டகத்தின் வண்ணம் புள்ளியின் வண்ணத்திலிருந்து RGB இல் எவ்வளவு விலகியும் காட்டப்பட்டதாகக் கணக்கிடப்படலாம்</translation>
+    </message>
+    <message>
+        <source>Distance from the colour on each frame</source>
+        <translation>ஒவ்வொரு சட்டகத்திலும் வண்ணத்திலிருந்து தொலைவு</translation>
+    </message>
+    <message>
+        <source>fade in ends, frame %1</source>
+        <translation>உள்மங்கல் முடிவு, சட்டகம் %1</translation>
+    </message>
+    <message>
+        <source>fade out starts, frame %1</source>
+        <translation>வெளிமங்கல் தொடக்கம், சட்டகம் %1</translation>
+    </message>
+    <message>
+        <source>Arrow keys move the point; Enter applies</source>
+        <translation>அம்பு விசைகள் புள்ளியை நகர்த்தும்; Enter பயன்படுத்தும்</translation>
     </message>
 </context>
 <context>

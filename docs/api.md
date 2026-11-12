@@ -2,7 +2,7 @@
 
 The Hikari API is one typed, versioned set of operations over the running application. Plugins, the AI tools, the MCP server and node-editor nodes all call it ([#411](https://github.com/altqx/hikari/issues/411), wave 8 [#410](https://github.com/altqx/hikari/issues/410)). It lives in `src/api` (`hikari_api`), next to the application layer and like it free of Qt; the composition root implements its host ports.
 
-The current version is **1**.
+The current version is **2**. Version 1 never shipped in a release; version 2 adds folder grants, `project.info` and `project.changed` (2026-11-12).
 
 ## Operations
 
@@ -32,16 +32,20 @@ Schemas use a subset of JSON Schema 2020-12: `type`, `properties`, `required`, `
 | `video.keyframes` | read | The keyframes from one time to another, each with its start time; 500 at most, with the `total`. |
 | `audio.info` | read | Whether audio is open and loaded; duration, sample rate, channels. |
 | `audio.peaks` | read | The lowest and highest sample in each of `buckets` slices of a time range. |
-| `files.list`, `files.read` | read | The files granted to the caller, and their content as UTF-8 or base64 (16 MiB at most). |
+| `files.list`, `files.read` | read | The files and folders granted to the caller, what a granted folder holds, and a file's content as UTF-8 or base64 (16 MiB at most). |
+| `project.info` | read | The Project of the shell window used last: its name and whether its folder is trusted, or null. |
 | `skills.list`, `skills.read` | read | The user's [skills](ai-skills.md#the-hikari-api) and one file of a skill as UTF-8 (256 KiB at most); only with the skills grant. |
 | `nodes.catalogue` | read | The node-effect editor's node types, with ports and parameters. |
 | `nodes.validate` | read | Checks a node-effect graph; each problem names its node and port or field. |
+| `typeset.perspective`, `typeset.clip`, `typeset.drawing`, `typeset.shift`, `typeset.hydra` | read | The [typesetting solvers](ai-tools.md#typesetting): a Line's text with a quad's transform, a clip, a drawing, an offset or a Hydra change written; nothing is applied. |
+| `typeset.check` | read | Draws one Line alone with a proposed text and compares its ink bounds with a target quad or box. |
 | `document.apply` | write | One change set to one Document, as one undo step. |
+| `typeset.apply` | write | Typeset Lines as one undo step, only when every one passes `typeset.check`. |
 | `selection.set` | write | The selected Lines and the active Line; the Grid follows. |
 | `commands.run` | write | Runs a command as its menu item or toolbar button would. |
 | `panels.open`, `panels.close`, `panels.focus` | write | Shows, closes or focuses a panel where the layout keeps it. |
 | `settings.set` | write | One setting, type-checked. |
-| `files.write` | write | Replaces a file granted for writing. |
+| `files.write` | write | Replaces a file granted for writing, or makes one in a writable folder. |
 
 Commands and panels are those of the shell window used last (ADR 0025), never a closed window's.
 
@@ -56,6 +60,8 @@ One write runs at a time; another write meanwhile gets `busy`.
 ## Files
 
 A caller reaches only files the user granted it: `Api::grantFile(caller, path, writable)` gives a handle such as `f1`, and `files.list` shows the handles with a display name, never the path. A file granted for reading refuses `files.write` with `not_granted`. Plugins get handles from pickers, drops and their folders ([Files](plugins.md#files)); the AI cards decide their own grants.
+
+Since version 2 a caller can also hold a folder: `Api::grantFolder(caller, path, writable)` gives a handle such as `d2`, which `files.list` shows under `folders`. `files.list` with `folder` (and a `path` inside it) adds that folder's `entries`, each with its `path` relative to the folder, in name order and at most 4096. `files.read` and `files.write` take `folder` and `path` instead of `file`; the answer's `file` is a handle for that file from then on. A path goes through the same checks as a plugin's ([Files](plugins.md#files)): `..`, absolute paths, names Windows can't hold, and links that lead outside the folder are refused with `not_granted`, and a list leaves such links out. A write in a writable folder makes the missing folders on the way. `Api::revokeFiles` ends a caller's folders with its files.
 
 The user's skills are apart from files: `skills.*` need the caller's `skills` grant, which only Hikari AI's callers hold ([AI skills](ai-skills.md#the-hikari-api)).
 

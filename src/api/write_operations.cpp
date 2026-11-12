@@ -374,49 +374,6 @@ bool writable(const Context &context, const Target &t)
 
 namespace {
 
-Result documentApply(const Context &context, const Json &params)
-{
-    auto t = target(context, params);
-    if (!t)
-        return std::unexpected(t.error());
-    if (!writable(context, *t))
-        return unwritable(context, *t);
-    EditSession &session = *t->session;
-    const Json &edits = *params.find("edits");
-    ChangeSet changes(edits);
-    const std::string &name = params.find("name")->asString();
-    application::Command command;
-    command.name = context.caller.label.empty() ? name : context.caller.label + ": " + name;
-    command.expectedRevision = std::uint64_t(params.find("revision")->asInt());
-    command.touches = changes.touches();
-    command.apply = [&](core::Document &doc) { return changes.apply(doc); };
-    application::AiReview *review = context.caller.reviewed ? context.host.review : nullptr;
-    std::optional<core::Document> before;
-    if (review)
-        before = session.document();
-    const application::ContentId previous = session.contentId();
-    if (auto ran = session.run(command); !ran) {
-        if (changes.problem())
-            return std::unexpected(*changes.problem());
-        if (ran.error() == CommandRefusal::Invalid && !changes.changed())
-            return Json::object({{"revision", Json(session.revision())}, {"inserted", Json::array()}, {"changed", Json(false)}});
-        const auto lines = session.document().lines();
-        if (ran.error() == CommandRefusal::UnknownLine)
-            for (const core::LineId id : command.touches)
-                if (std::none_of(lines.begin(), lines.end(), [&](auto *l) { return l->id == id; }))
-                    return fail(errors::kNotFound, "No Line has id " + std::to_string(id.value) + ".",
-                                Json::object({{"line", Json(id.value)}}));
-        return refusal(ran.error(), session);
-    }
-    Json inserted = Json::array();
-    for (const core::LineId id : changes.inserted())
-        inserted.push(Json(id.value));
-    if (review)
-        review->record(t->id, context.caller.id, context.caller.label, name, *before, previous, session);
-    context.host.documents->committed(t->id);
-    return Json::object({{"revision", Json(session.revision())}, {"inserted", inserted}, {"changed", Json(true)}});
-}
-
 Result selectionSet(const Context &context, const Json &params)
 {
     auto t = target(context, params);
@@ -459,6 +416,49 @@ void write(Registry &registry, std::string name, std::string summary, std::strin
                            std::nullopt, now(std::move(handler))});
 }
 
+}
+
+Result documentApply(const Context &context, const Json &params)
+{
+    auto t = target(context, params);
+    if (!t)
+        return std::unexpected(t.error());
+    if (!writable(context, *t))
+        return unwritable(context, *t);
+    EditSession &session = *t->session;
+    const Json &edits = *params.find("edits");
+    ChangeSet changes(edits);
+    const std::string &name = params.find("name")->asString();
+    application::Command command;
+    command.name = context.caller.label.empty() ? name : context.caller.label + ": " + name;
+    command.expectedRevision = std::uint64_t(params.find("revision")->asInt());
+    command.touches = changes.touches();
+    command.apply = [&](core::Document &doc) { return changes.apply(doc); };
+    application::AiReview *review = context.caller.reviewed ? context.host.review : nullptr;
+    std::optional<core::Document> before;
+    if (review)
+        before = session.document();
+    const application::ContentId previous = session.contentId();
+    if (auto ran = session.run(command); !ran) {
+        if (changes.problem())
+            return std::unexpected(*changes.problem());
+        if (ran.error() == CommandRefusal::Invalid && !changes.changed())
+            return Json::object({{"revision", Json(session.revision())}, {"inserted", Json::array()}, {"changed", Json(false)}});
+        const auto lines = session.document().lines();
+        if (ran.error() == CommandRefusal::UnknownLine)
+            for (const core::LineId id : command.touches)
+                if (std::none_of(lines.begin(), lines.end(), [&](auto *l) { return l->id == id; }))
+                    return fail(errors::kNotFound, "No Line has id " + std::to_string(id.value) + ".",
+                                Json::object({{"line", Json(id.value)}}));
+        return refusal(ran.error(), session);
+    }
+    Json inserted = Json::array();
+    for (const core::LineId id : changes.inserted())
+        inserted.push(Json(id.value));
+    if (review)
+        review->record(t->id, context.caller.id, context.caller.label, name, *before, previous, session);
+    context.host.documents->committed(t->id);
+    return Json::object({{"revision", Json(session.revision())}, {"inserted", inserted}, {"changed", Json(true)}});
 }
 
 void addWriteOperations(Registry &registry)

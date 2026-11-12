@@ -353,6 +353,7 @@ const std::vector<SettingDefinition> &definitions()
         // JSON: {"gapOn", "gap", "lastLine"}, the Import lyrics end-time choices.
         {"lyrics.importOptions", "", String, Profile, Mapped, false, std::string()},
         {"tags.removeOptions", "", String, Profile, Mapped, false, std::string()},
+        {"grid.splitEvery", "", String, Profile, Mapped, false, std::string()},
         {"automation.scriptResolutionFromVideo", "", Bool, Profile, Mapped, false, false},
         {"automation.runLogTimes", "", Bool, Profile, Mapped, false, false},
         {"automation.disabledAutoload", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
@@ -377,12 +378,16 @@ const std::vector<SettingDefinition> &definitions()
         {"automation.fillLastAnswers", "", Bool, Profile, Mapped, false, false},
         {"automation.dialogAnswers", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {"automation.dialogPresets", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
+        // "karaOK" or "stock" (Aegisub 3.2.2): the format "Export as template lines" last wrote.
+        {"nodeEffects.exportFormat", "", String, Profile, Mapped, false, std::string("karaOK")},
         // 0 off, 1 English (US), 2 (UK), 3 (Canada), 4 (Australia).
         {"grammar.language", "", Int, Profile, Mapped, false, std::int64_t{0}},
         // Native absolute folders whose scripts and Projects HikariSub trusts, subfolders included.
         {"trust.folders", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {"ai.mcp.server", "", Bool, Profile, Mapped, false, false},
         {"ai.mcp.http", "", Bool, Profile, Mapped, false, false},
+        // servers: one McpServerEntry JSON object per row; their secrets are in the keychain.
+        {"ai.mcp.servers", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {"ai.off", "", Bool, Profile, Mapped, false, false},
         {"ai.autoUpdate", "", Bool, Profile, Mapped, false, true},
         {"ai.promptCaching", "", Bool, Profile, Mapped, false, true},

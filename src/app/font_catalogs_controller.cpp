@@ -157,6 +157,7 @@ void FontCatalogsController::setFontService(std::unique_ptr<application::FontSer
     m_service = std::shared_ptr<application::FontServicePort>(std::move(service));
     m_families = std::make_unique<application::FontFamilies>(*m_service, kLower);
     m_families->setEnvironment(std::move(environment));
+    m_windowFamilies.clear();
     watchFolders();
     emit fontsChanged();
 }
@@ -208,12 +209,40 @@ QStringList FontCatalogsController::catalogChoices() const
                                             u16(QCoreApplication::translate("HikariSub.Fonts", "Without catalogue"))));
 }
 
-QStringList FontCatalogsController::fontList(int selection, const QString &value, bool filterOn, const QString &filterText)
+QStringList FontCatalogsController::fontList(int selection, const QString &value, bool filterOn, const QString &filterText,
+                                             int shellWindow)
 {
     ensureLoaded();
+    auto &families = familiesFor(shellWindow);
     const std::vector<std::u16string> fonts =
-        filterText.isEmpty() || !filterOn ? m_families->fonts() : m_families->filteredFonts(u16(filterText));
+        filterText.isEmpty() || !filterOn ? families.fonts() : families.filteredFonts(u16(filterText));
     return list(application::catalogView(selection, u16(value), fonts, m_catalogs));
+}
+
+application::FontFamilies &FontCatalogsController::familiesFor(int shellWindow)
+{
+    auto project = shellWindow >= 0 && m_hooks.projectFonts ? m_hooks.projectFonts(shellWindow)
+                                                            : std::vector<application::FontLease>();
+    if (project.empty()) {
+        m_windowFamilies.erase(shellWindow);
+        return *m_families;
+    }
+    std::vector<std::shared_ptr<const std::vector<std::byte>>> bytes;
+    for (const auto &font : project)
+        bytes.push_back(font.bytes);
+    auto &window = m_windowFamilies[shellWindow];
+    if (!window.families || window.projectFonts != bytes) {
+        application::FontEnvironment environment = m_families->environment();
+        std::vector<application::FontAttachment> fonts;
+        for (auto &font : project)
+            fonts.push_back({std::move(font.family), std::move(font.bytes)});
+        std::ranges::move(environment.externalFonts, std::back_inserter(fonts));
+        environment.externalFonts = std::move(fonts);
+        window.families = std::make_unique<application::FontFamilies>(*m_service, kLower);
+        window.families->setEnvironment(std::move(environment));
+        window.projectFonts = std::move(bytes);
+    }
+    return *window.families;
 }
 
 void FontCatalogsController::setFilterOn(bool on)
@@ -237,11 +266,13 @@ void FontCatalogsController::applyFilterText(const QString &text)
     ensureLoaded();
     saveFilterText(text);
     m_families->refilter(u16(text));
+    for (auto &[window, families] : m_windowFamilies)
+        families.families->refilter(u16(text));
 }
 
-QStringList FontCatalogsController::allFonts()
+QStringList FontCatalogsController::allFonts(int shellWindow)
 {
-    return list(m_families->fonts());
+    return list(familiesFor(shellWindow).fonts());
 }
 
 int FontCatalogsController::nameIndex(const QStringList &fonts, const QString &name) const
@@ -667,6 +698,7 @@ void FontCatalogsController::loadExternalFonts()
         }
     }
     m_families->setEnvironment(std::move(environment));
+    m_windowFamilies.clear();
     for (const auto &file : m_families->unreadableExternalFonts())
         if (m_hooks.log)
             m_hooks.log(QCoreApplication::translate("HikariSub.Fonts", "Cannot add external font file %1.")
@@ -682,6 +714,7 @@ void FontCatalogsController::relist()
     environment.generation = ++m_generation;
     m_families->setEnvironment(std::move(environment));
     m_families->enumerate();
+    m_windowFamilies.clear();
     watchFolders();
     emit fontsChanged();
 }

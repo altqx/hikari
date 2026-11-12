@@ -1,6 +1,7 @@
 #include "hikari/backends/ai_agent.h"
 
 #include "hikari/application/hotkeys.h"
+#include "hikari/backends/ai_mcp_clients.h"
 #include "hikari/backends/ai_requests.h"
 
 #include <QDateTime>
@@ -348,10 +349,21 @@ Decision decide(AgentMode mode, const std::string &operation, bool alwaysAsk, bo
     return Decision::Judge;
 }
 
+Decision decideMcp(AgentMode mode, bool readOnly, bool destructive, bool approved, bool allowed)
+{
+    if (readOnly)
+        return Decision::Run;
+    if (destructive)
+        return Decision::AlwaysAsk;
+    return decide(mode, std::string(kMcpCallOperation), false, approved || allowed);
+}
+
 std::string allowanceKey(const std::string &operation, const Json &params)
 {
     if (operation == "commands.run")
         return operation + ":" + stringAt(params, "command");
+    if (operation == kMcpCallOperation)
+        return operation + ":" + stringAt(params, "server") + "/" + stringAt(params, "tool");
     return operation;
 }
 
@@ -1079,6 +1091,8 @@ void AgentThreads::gate(const std::string &session, const std::string &operation
     AgentThread *t = find(session);
     if (!t)
         return admit(std::unexpected(api::Error{std::string(api::errors::kNotGranted), "No agent thread has that id.", {}}));
+    if (operation == kMcpCallOperation)
+        return gateMcp(*t, params, std::move(admit), std::move(onWithdraw));
     const api::Operation *op = api::Api::registry().find(operation);
     if (!op || op->access != api::Access::Write)
         return admitCall(*t, operation, params, false, std::move(admit));
@@ -1107,6 +1121,36 @@ void AgentThreads::gate(const std::string &session, const std::string &operation
         return openProposal(*t, params, std::move(admit), std::move(onWithdraw));
     case Decision::Script:
         return openScript(*t, params, std::move(admit), std::move(onWithdraw));
+    }
+}
+
+void AgentThreads::gateMcp(AgentThread &thread, const Json &params, AiSidecarHost::Admit admit,
+                           std::function<void(std::function<void()>)> onWithdraw)
+{
+    const auto flag = [&](std::string_view key) {
+        const Json *value = params.find(key);
+        return value && value->isBool() && value->asBool();
+    };
+    const std::string operation(kMcpCallOperation);
+    const Decision decision = decideMcp(thread.mode, flag("readOnly"), flag("destructive"), flag("approved"),
+                                        thread.allowed.contains(allowanceKey(operation, params)));
+    const auto run = m_runs.find(thread.id);
+    if (!flag("readOnly") && (run == m_runs.end() || !run->second->stoppedFor.empty()))
+        return admit(std::unexpected(api::Error{std::string(api::errors::kRefused),
+                                                    "This turn has stopped; make no more changes.", {}}));
+    switch (decision) {
+    case Decision::Run:
+        return admitCall(thread, operation, params, false, std::move(admit));
+    case Decision::Judge:
+        return judge(thread, operation, params, std::move(admit), std::move(onWithdraw));
+    case Decision::Ask:
+        return openAsk(thread, Decision::Ask, operation, params, {}, std::move(admit), std::move(onWithdraw));
+    case Decision::AlwaysAsk:
+    case Decision::Propose:
+    case Decision::Script:
+        return openAsk(thread, Decision::AlwaysAsk, operation, params,
+                       "Its MCP server doesn't promise that it only reads or changes nothing it can't undo.",
+                       std::move(admit), std::move(onWithdraw));
     }
 }
 
@@ -1181,7 +1225,9 @@ void AgentThreads::openAsk(AgentThread &thread, Decision kind, const std::string
     const std::string_view type = kind == Decision::AlwaysAsk ? "always" : kind == Decision::Judge ? "judge" : "ask";
     Json item = Json::object({{"kind", "ask"},
                               {"type", std::string(type)},
-                              {"tool", toolName(operation)},
+                              {"tool", operation == kMcpCallOperation
+                                           ? stringAt(params, "serverName") + ": " + stringAt(params, "tool")
+                                           : toolName(operation)},
                               {"operation", operation},
                               {"params", Json(clipped(params.dump(), kOutputChars))},
                               {"reason", reason},

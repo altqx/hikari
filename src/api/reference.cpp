@@ -119,9 +119,9 @@ Json apiReference()
 namespace detail {
 
 void addOperation(Registry &registry, Access access, std::string name, std::string summary, std::string_view params,
-                  std::string_view result, Handler handler)
+                  std::string_view result, Handler handler, int since)
 {
-    registry.add(Operation{std::move(name), access, std::move(summary), schema(params), schema(result), 1, std::nullopt,
+    registry.add(Operation{std::move(name), access, std::move(summary), schema(params), schema(result), since, std::nullopt,
                            std::move(handler)});
 }
 

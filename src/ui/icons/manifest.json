@@ -4997,8 +4997,7 @@
    "legacy": [],
    "surfaces": [
     "select-lines"
-   ],
-   "pending": "AU10 #841"
+   ]
   },
   {
    "role": "split-tag-blocks",
@@ -5009,8 +5008,7 @@
    "legacy": [],
    "surfaces": [
     "grid-menu"
-   ],
-   "pending": "AU10 #841"
+   ]
   },
   {
    "role": "split-every-n",
@@ -5021,8 +5019,7 @@
    "legacy": [],
    "surfaces": [
     "grid-menu"
-   ],
-   "pending": "AU10 #841"
+   ]
   },
   {
    "role": "track-colour",
@@ -5033,8 +5030,7 @@
    "legacy": [],
    "surfaces": [
     "menu:video"
-   ],
-   "pending": "AU11 #846"
+   ]
   },
   {
    "role": "find-fade",
@@ -5045,8 +5041,7 @@
    "legacy": [],
    "surfaces": [
     "menu:video"
-   ],
-   "pending": "AU11 #846"
+   ]
   },
   {
    "role": "tool-text-on-path",
@@ -5556,8 +5551,7 @@
    "legacy": [],
    "surfaces": [
     "automation-manager"
-   ],
-   "pending": "TH5 #833"
+   ]
   },
   {
    "role": "citations",

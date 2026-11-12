@@ -103,6 +103,10 @@ target_compile_definitions(hikari_ui_automation_manager_tests PRIVATE
     HIKARI_LUA_FIXTURES="${PROJECT_SOURCE_DIR}/tests/backends/lua-fixtures"
     HIKARI_LUA_INCLUDE="${PROJECT_SOURCE_DIR}/Automation/automation/Include")
 add_dependencies(hikari_ui_automation_manager_tests hikari_lua_helper)
+hikari_add_qttest(hikari_ui_split_render_tests SOURCES split_render_tests.cpp
+    LIBRARIES hikari_ui hikari_backends)
+target_compile_definitions(hikari_ui_split_render_tests PRIVATE
+    HIKARI_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-${HIKARI_QT_VERSION}/quickcontrols/wearable/WearableStyle/fonts/TitilliumWeb-Regular.ttf")
 hikari_add_qttest(hikari_ui_automation_services_tests SOURCES automation_services_ui_tests.cpp
     LIBRARIES hikari_ui hikari_uiplugin hikari_backends)
 target_compile_definitions(hikari_ui_automation_services_tests PRIVATE
@@ -358,6 +362,7 @@ hikari_add_qttest(hikari_ui_agent_panel_tests SOURCES agent_panel_tests.cpp
 target_compile_definitions(hikari_ui_agent_panel_tests PRIVATE
     HIKARI_FAKE_AI_SIDECAR="$<TARGET_FILE:hikari_fake_ai_sidecar>")
 add_dependencies(hikari_ui_agent_panel_tests hikari_fake_ai_sidecar)
+target_include_directories(hikari_ui_agent_panel_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
 hikari_add_qttest(hikari_ui_inline_ai_tests SOURCES inline_ai_tests.cpp
     LIBRARIES hikari_composition KDAB::kddockwidgets Qt6::QuickTest)
 target_compile_definitions(hikari_ui_inline_ai_tests PRIVATE
@@ -465,6 +470,7 @@ hikari_add_qttest(hikari_ui_docs_export_tests SOURCES docs_export_tests.cpp LIBR
 target_compile_definitions(hikari_ui_docs_export_tests PRIVATE HIKARI_PROGRAM="$<TARGET_FILE:hikarisub>"
     HIKARI_VERSION="${HIKARI_VERSION}")
 add_dependencies(hikari_ui_docs_export_tests hikarisub)
+target_include_directories(hikari_ui_docs_export_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
 hikari_add_qttest(hikari_ui_comparison_tests SOURCES comparison_tests.cpp LIBRARIES hikari_composition)
 hikari_add_qttest(hikari_ui_reference_tests SOURCES reference_tests.cpp LIBRARIES hikari_composition)
 hikari_add_spix_test(hikari_ui_reference_workflow SOURCES reference_workflow.cpp LIBRARIES hikari_composition)

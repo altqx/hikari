@@ -13,7 +13,7 @@ end
 
 local function inPlace(what, place, path)
     if type(place) ~= "string" or place == "" then
-        error(what .. " needs a place: \"data\", \"cache\" or a folder id", 3)
+        error(what .. " needs a place: \"data\", \"cache\", \"project\" or a folder id", 3)
     end
     if path ~= nil and type(path) ~= "string" then
         error(what .. " needs the path as text", 3)
@@ -70,6 +70,12 @@ hikari.files = {
             return nil, err
         end
         return true
+    end,
+}
+
+hikari.project = {
+    info = function()
+        return field("project", call("project.info", {}))
     end,
 }
 

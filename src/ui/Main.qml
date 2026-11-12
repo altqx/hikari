@@ -75,6 +75,7 @@ ApplicationWindow {
     required property var styleManager
     required property var kanjiTimer
     required property var alignToVideo
+    required property var videoAnalysis
     required property var lyricsImport
     required property var qcNotes
     required property var fontCollector
@@ -2604,6 +2605,30 @@ ApplicationWindow {
                     text: qsTr("Align to video…")
                     enabled: root.video.hasVideo && root.shell.hasEditingTarget
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_ALIGN_TO_VIDEO")) root.openAlignToVideo()
+                }
+            }
+            ShellMenuItem {
+                command: "GLOBAL_TRACK_COLOUR"
+                help: qsTr("Follows a picked point’s colour across the selected lines’ frames and writes it as colour or alpha tags")
+                iconRole: "track-colour"
+                objectName: "trackColourMenuItem"
+                action: Action {
+                    id: trackColourAction
+                    text: qsTr("Track colour…")
+                    enabled: root.video.hasVideo && root.shell.hasEditingTarget
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_TRACK_COLOUR")) root.openVideoAnalysis("track")
+                }
+            }
+            ShellMenuItem {
+                command: "GLOBAL_FIND_FADE"
+                help: qsTr("Finds where the active line’s sign fades in and out at a picked point and writes %1").arg("\\fad")
+                iconRole: "find-fade"
+                objectName: "findFadeMenuItem"
+                action: Action {
+                    id: findFadeAction
+                    text: qsTr("Find fade…")
+                    enabled: root.video.hasVideo && root.shell.hasEditingTarget
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_FIND_FADE")) root.openVideoAnalysis("fade")
                 }
             }
             ShellMenuItem {
@@ -6551,6 +6576,21 @@ ApplicationWindow {
                                 text: qsTranslate("HikariSub.Grid", "By wraps")
                                 onTriggered: if (!root.gridGesture(this, "GRID_SPLIT_BY_WRAPS")) root.app.splitLines("wraps")
                             }
+                            ShellMenuItem {
+                                command: "GRID_SPLIT_AT_TAG_BLOCKS"
+                                iconRole: "split-tag-blocks"
+                                objectName: "splitAtTagBlocks"
+                                text: qsTranslate("HikariSub.Grid", "At tag blocks")
+                                onTriggered: if (!root.gridGesture(this, "GRID_SPLIT_AT_TAG_BLOCKS")) root.app.splitLines("tagBlocks")
+                            }
+                            MenuSeparator {}
+                            ShellMenuItem {
+                                command: "GRID_SPLIT_EVERY_N"
+                                iconRole: "split-every-n"
+                                objectName: "splitEveryN"
+                                text: qsTranslate("HikariSub.Grid", "Every N frames or seconds…")
+                                onTriggered: if (!root.gridGesture(this, "GRID_SPLIT_EVERY_N")) root.openSplitEvery()
+                            }
                         }
                         ShellMenuItem { command: "GLOBAL_REMOVE_TAGS"; iconRole: "remove-tags"; objectName: "gridRemoveTags"; action: removeTagsAction }
                         ShellMenuItem {
@@ -8633,6 +8673,7 @@ ApplicationWindow {
         id: styleManagerWindow
         styles: root.styleManager
         catalogs: root.fontCatalogs
+        shellWindow: root.shellWindow
         colourPicker: root.colourPicker
         app: root.app
         notices: root.notices
@@ -8782,6 +8823,29 @@ ApplicationWindow {
         if (problem.length > 0)
             root.notices.post("error", qsTr("Align to video"), problem)
     }
+    Loader {
+        id: trackColourLoader
+        active: false
+        sourceComponent: TrackColourDialog {
+            controller: root.videoAnalysis
+            settings: root.app.settings
+        }
+    }
+    Loader {
+        id: findFadeLoader
+        active: false
+        sourceComponent: FindFadeDialog {
+            controller: root.videoAnalysis
+            settings: root.app.settings
+        }
+    }
+    function openVideoAnalysis(mode) {
+        const loader = mode === "fade" ? findFadeLoader : trackColourLoader
+        loader.active = true
+        const problem = loader.item.openDialog()
+        if (problem.length > 0)
+            root.notices.post("error", mode === "fade" ? qsTr("Find fade") : qsTr("Track colour"), problem)
+    }
     ListChooser {
         id: fixSuggestions
         objectName: "fixSuggestions"
@@ -8803,6 +8867,7 @@ ApplicationWindow {
         id: fontPicker
         editor: root.editor
         catalogs: root.fontCatalogs
+        shellWindow: root.shellWindow
         settings: root.app.settings
     }
     FontCatalogWindow {
@@ -9099,6 +9164,19 @@ ApplicationWindow {
         enabled: root.shell.hasEditingTarget
         onTriggered: if (!root.hotkeyGesture("GLOBAL_REMOVE_TAGS")) root.openRemoveTags()
     }
+    function openSplitEvery() {
+        splitEveryLoader.active = true
+        splitEveryLoader.item.openDialog()
+    }
+    Loader {
+        id: splitEveryLoader
+        active: false
+        sourceComponent: SplitEveryDialog {
+            app: root.app
+            settings: root.app.settings
+            hasVideo: root.video.hasVideo
+        }
+    }
     function openRemoveTags() {
         removeTagsLoader.active = true
         removeTagsLoader.item.openDialog()
@@ -9212,6 +9290,8 @@ ApplicationWindow {
         GLOBAL_JOIN_PREVIOUS_AUDIO_SELECTION: joinPreviousAudioSelectionAction,
         GLOBAL_CENTER_TIMES_IN_FRAMES: centerTimesInFramesAction,
         GLOBAL_ALIGN_TO_VIDEO: alignToVideoAction,
+        GLOBAL_TRACK_COLOUR: trackColourAction,
+        GLOBAL_FIND_FADE: findFadeAction,
         GLOBAL_PERSPECTIVE_TRACKING: perspectiveTrackingAction,
         GLOBAL_APPLY_MOTION_DATA: applyMotionDataAction,
         GLOBAL_BLUR_AND_GLOW_LAYERS: blurAndGlowLayersAction,
@@ -9589,6 +9669,8 @@ ApplicationWindow {
         case "GRID_SPLIT_BY_CHARS": root.app.splitLines("chars"); return true
         case "GRID_SPLIT_BY_WORDS": root.app.splitLines("words"); return true
         case "GRID_SPLIT_BY_WRAPS": root.app.splitLines("wraps"); return true
+        case "GRID_SPLIT_AT_TAG_BLOCKS": root.app.splitLines("tagBlocks"); return true
+        case "GRID_SPLIT_EVERY_N": root.openSplitEvery(); return true
         case "GRID_TREE_MAKE": root.app.makeGroups(); return true
         case "GRID_SELECT_VISIBLE_LINES": root.app.selectLinesVisibleOnVideo(); return true
         case "GRID_SHOW_PREVIEW": if (root.app.canShowPreview()) root.app.showPreview(); return true
