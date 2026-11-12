@@ -152,8 +152,6 @@ std::expected<std::string, Error> packageOf(const Context &context, const Json &
 {
     const Json *plugin = params.find("plugin");
     const Json *file = params.find("file");
-    if (bool(plugin) == bool(file))
-        return fail(errors::kInvalidParams, "Give plugin (a scaffolded plugin) or file (a granted .hikariplugin), not both.");
     if (file) {
         for (const GrantedFile &granted : context.files)
             if (granted.handle == file->asString())
@@ -308,11 +306,13 @@ void addPluginOperations(Registry &registry)
         scaffold);
     add(registry, Access::Read, "plugins.review",
         "What installing a package would do, as the install question shows it: its trust tier, signing, permissions, commands and files.",
-        withPackage(R"({"type": "object", "properties": {@package}, "additionalProperties": false})"),
+        withPackage(R"({"type": "object", "properties": {@package}, "additionalProperties": false,
+            "oneOf": [{"required": ["plugin"]}, {"required": ["file"]}]})"),
         reviewSchema("", ""), review);
     add(registry, Access::Write, "plugins.install",
         "Installs a scaffolded or granted plugin package and turns it on, once the user approves it in HikariSub; it asks every time.",
-        withPackage(R"({"type": "object", "properties": {@package}, "additionalProperties": false})"),
+        withPackage(R"({"type": "object", "properties": {@package}, "additionalProperties": false,
+            "oneOf": [{"required": ["plugin"]}, {"required": ["file"]}]})"),
         reviewSchema(R"(, "installed": {"const": true})", R"(, "installed")"), install);
     add(registry, Access::Write, "plugins.run", "Runs an installed plugin's command as its menu item would.",
         R"({"type": "object", "properties": {"plugin": {"type": "string"},

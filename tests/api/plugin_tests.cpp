@@ -71,26 +71,29 @@ TEST_F(Plugins, ScaffoldWritesTheGuideTemplateRestrictedByDefault)
     EXPECT_TRUE(plugins.installs.empty());
 }
 
-TEST_F(Plugins, ScaffoldRefusesADuplicateFileAndPathsOutsideThePlugin)
+TEST_F(Plugins, ScaffoldRefusesADuplicateFileAPathOutsideThePluginAndNoCommands)
 {
-    EXPECT_EQ(code(call("plugins.scaffold", R"({"plugin": "org.example.a", "name": "A", "commands": [],
+    EXPECT_EQ(code(call("plugins.scaffold", R"({"plugin": "org.example.a", "name": "A", "commands": []})")),
+              errors::kInvalidParams);
+    EXPECT_EQ(code(call("plugins.scaffold", R"({"plugin": "org.example.a", "name": "A", "commands": [{"id": "count", "title": "Count"}],
         "files": [{"path": "main.lua", "text": ""}]})")),
               errors::kInvalidParams);
-    EXPECT_EQ(code(call("plugins.scaffold", R"({"plugin": "org.example.a", "name": "A", "commands": [],
+    EXPECT_EQ(code(call("plugins.scaffold", R"({"plugin": "org.example.a", "name": "A", "commands": [{"id": "count", "title": "Count"}],
         "files": [{"path": "../evil.lua", "text": ""}]})")),
               errors::kInvalidParams);
-    EXPECT_EQ(code(call("plugins.scaffold", R"({"plugin": "../a", "name": "A", "commands": []})")), errors::kInvalidParams);
+    EXPECT_EQ(code(call("plugins.scaffold", R"({"plugin": "../a", "name": "A", "commands": [{"id": "count", "title": "Count"}]})")), errors::kInvalidParams);
 }
 
 TEST_F(Plugins, ReviewTakesAScaffoldedPluginOrAGrantedFile)
 {
     EXPECT_EQ(code(call("plugins.review", R"({"plugin": "org.example.word-count"})")), errors::kNotFound);
-    ASSERT_TRUE(call("plugins.scaffold", R"({"plugin": "org.example.word-count", "name": "Word count", "commands": []})"));
+    ASSERT_TRUE(call("plugins.scaffold", R"({"plugin": "org.example.word-count", "name": "Word count", "commands": [{"id": "count", "title": "Count"}]})"));
     const Result scaffolded = call("plugins.review", R"({"plugin": "org.example.word-count"})");
     ASSERT_TRUE(scaffolded) << scaffolded.error().message;
     EXPECT_EQ(scaffolded->find("digest")->asString(), FakePlugins::kDigest);
     EXPECT_EQ(scaffolded->find("files")->asArray().at(0).find("path")->asString(), "main.lua");
 
+    EXPECT_EQ(code(call("plugins.review", R"({"plugin": "org.example.word-count", "file": "f1"})")), errors::kInvalidParams);
     EXPECT_EQ(code(call("plugins.review", R"({"file": "f9"})")), errors::kNotGranted);
     const std::string handle = api.grantFile(aiCaller().id, "/downloads/word-count.hikariplugin", false);
     ASSERT_TRUE(call("plugins.review", R"({"file": ")" + handle + R"("})"));
@@ -99,7 +102,7 @@ TEST_F(Plugins, ReviewTakesAScaffoldedPluginOrAGrantedFile)
 
 TEST_F(Plugins, InstallRefusesWithoutTheUsersApproval)
 {
-    ASSERT_TRUE(call("plugins.scaffold", R"({"plugin": "org.example.word-count", "name": "Word count", "commands": []})"));
+    ASSERT_TRUE(call("plugins.scaffold", R"({"plugin": "org.example.word-count", "name": "Word count", "commands": [{"id": "count", "title": "Count"}]})"));
     EXPECT_EQ(code(call("plugins.install", R"({"plugin": "org.example.word-count"})")), errors::kNotGranted);
     EXPECT_EQ(code(call("plugins.install", R"({"plugin": "org.example.word-count"})", pluginCaller())), errors::kNotGranted);
     EXPECT_TRUE(plugins.installs.empty());
@@ -107,7 +110,7 @@ TEST_F(Plugins, InstallRefusesWithoutTheUsersApproval)
 
 TEST_F(Plugins, InstallRefusesAPackageThatChangedSinceTheUserApprovedIt)
 {
-    ASSERT_TRUE(call("plugins.scaffold", R"({"plugin": "org.example.word-count", "name": "Word count", "commands": []})"));
+    ASSERT_TRUE(call("plugins.scaffold", R"({"plugin": "org.example.word-count", "name": "Word count", "commands": [{"id": "count", "title": "Count"}]})"));
     EXPECT_EQ(code(call("plugins.install", R"({"plugin": "org.example.word-count"})", approved("ff"))), errors::kRefused);
     EXPECT_TRUE(plugins.installs.empty());
 

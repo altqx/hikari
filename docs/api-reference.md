@@ -51,6 +51,12 @@ Version 2 of the Hikari API, generated from HikariSub's own registry: the same r
 | `effects.preview` | read | 1 | Runs a graph on the Document's karaoke Lines and gives the Lines it would write; nothing is applied. Lua nodes don't run. |
 | `effects.save` | write | 1 | Writes a graph to the Document as one undo step: into a new graph Line, or in place of a graph Line's. |
 | `effects.apply` | write | 1 | Runs a graph Line and writes its Lines as one undo step, replacing those it wrote before; the karaoke Lines it ran on become Comments. Lua nodes don't run, so a graph with one applies from the node-effect editor. |
+| `plugins.list` | read | 1 | The installed plugins with their state, trust tier and commands. |
+| `plugins.manifest` | read | 1 | An installed plugin's hikari-plugin.json. |
+| `plugins.scaffold` | write | 1 | Writes a plugin from the authoring guide's template into the AI plugins folder and packs it; nothing is installed. |
+| `plugins.review` | read | 1 | What installing a package would do, as the install question shows it: its trust tier, signing, permissions, commands and files. |
+| `plugins.install` | write | 1 | Installs a scaffolded or granted plugin package and turns it on, once the user approves it in HikariSub; it asks every time. |
+| `plugins.run` | write | 1 | Runs an installed plugin's command as its menu item would. |
 | `typeset.perspective` | read | 1 | The Line's text with the tags that render it on a quad (VT3's perspective solver): \pos, \org, \frx, \fry, \frz, \fax, \fscx and \fscy. |
 | `typeset.clip` | read | 1 | The Line's text with its first clip replaced by a rectangle or a vector clip. |
 | `typeset.drawing` | read | 1 | The Line's text with its first drawing replaced by a shape (\p1), placed at a position with an alignment. |
@@ -1102,6 +1108,171 @@ Runs a graph Line and writes its Lines as one undo step, replacing those it wrot
 | `generated` | integer | yes |  |
 | `sources` | integer | yes | How many karaoke Lines got Lines. |
 | `changed` | boolean | yes |  |
+
+### `plugins.list`
+
+Read. Since version 1.
+
+The installed plugins with their state, trust tier and commands.
+
+**Parameters**: none.
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `plugins` | array of objects | yes |  |
+| `plugins[].id` | string | yes |  |
+| `plugins[].name` | string | yes |  |
+| `plugins[].version` | string | yes |  |
+| `plugins[].description` | string | yes |  |
+| `plugins[].source` | one of `file` or `marketplace` | yes |  |
+| `plugins[].signed` | boolean | yes |  |
+| `plugins[].enabled` | boolean | yes |  |
+| `plugins[].tier` | one of `restricted` or `unrestricted` | yes |  |
+| `plugins[].revoked` | boolean | yes |  |
+| `plugins[].commands` | array of objects | yes | While the plugin runs. |
+| `plugins[].commands[].command` | string | yes | plugin.<plugin id>.<command id> |
+| `plugins[].commands[].title` | string | yes |  |
+
+### `plugins.manifest`
+
+Read. Since version 1.
+
+An installed plugin's hikari-plugin.json.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `plugin` | string | yes |  |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `plugin` | string | yes |  |
+| `manifest` | object | yes |  |
+
+### `plugins.scaffold`
+
+Write. Since version 1.
+
+Writes a plugin from the authoring guide's template into the AI plugins folder and packs it; nothing is installed.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `plugin` | string | yes | Reverse-DNS, lowercase: com.example.sign-counter. An earlier scaffold of that id is replaced. At most 100 characters. `pattern`: `"^[a-z0-9]+(-[a-z0-9]+)*(\\.[a-z0-9]+(-[a-z0-9]+)*)+$"`. |
+| `name` | string | yes | 1 to 80 characters. |
+| `version` | string |  | Semantic version; default 0.1.0. At most 64 characters. |
+| `description` | string |  | At most 1000 characters. |
+| `tier` | one of `restricted` or `unrestricted` |  | restricted (default) runs in the sandbox without ffi, io, os and debug; unrestricted needs the user's full trust at install. |
+| `permissions` | object |  | The manifest's permissions: documents.all, network {hosts, reason}, files. |
+| `commands` | array of objects | yes | 1 to 256 items. |
+| `commands[].id` | string | yes | `pattern`: `"^[a-z0-9]+(-[a-z0-9]+)*$"`. |
+| `commands[].title` | string | yes | 1 to 80 characters. |
+| `code` | string |  | main.lua, registering each command with hikari.commands.register; the guide's first plugin when omitted. At most 1048576 characters. |
+| `files` | array of objects |  | More files beside main.lua and hikari-plugin.json. At most 64 items. |
+| `files[].path` | string | yes | At most 200 characters. `pattern`: `"^([A-Za-z0-9_][A-Za-z0-9_.-]*/)*[A-Za-z0-9_][A-Za-z0-9_.-]*\\.(lua\|json\|md\|txt)$"`. |
+| `files[].text` | string | yes |  |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `plugin` | string | yes |  |
+| `folder` | string | yes |  |
+| `package` | string | yes | The packed .hikariplugin. |
+| `files` | array of string | yes |  |
+| `manifest` | object | yes |  |
+
+### `plugins.review`
+
+Read. Since version 1.
+
+What installing a package would do, as the install question shows it: its trust tier, signing, permissions, commands and files.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `plugin` | string |  | A plugin plugins.scaffold made. |
+| `file` | string |  | A .hikariplugin the user granted, by its files.list handle. |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `plugin` | string | yes |  |
+| `name` | string | yes |  |
+| `version` | string | yes |  |
+| `change` | one of `install`, `update`, `reinstall` or `downgrade` | yes |  |
+| `installedVersion` | string | yes |  |
+| `tier` | one of `restricted` or `unrestricted` | yes | unrestricted runs outside the sandbox and needs the user's full trust. |
+| `needsRetrust` | boolean | yes | The signing key changed, or an unsigned package replaces a signed one. |
+| `keyId` | string | yes | The signing key; empty when unsigned. |
+| `pinnedKeyId` | string | yes |  |
+| `permissions` | array of string | yes |  |
+| `commands` | array of string | yes | The titles of the commands it adds. |
+| `files` | array of objects | yes |  |
+| `files[].path` | string | yes |  |
+| `files[].text` | string | yes |  |
+| `digest` | string | yes |  |
+
+### `plugins.install`
+
+Write. Since version 1.
+
+Installs a scaffolded or granted plugin package and turns it on, once the user approves it in HikariSub; it asks every time.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `plugin` | string |  | A plugin plugins.scaffold made. |
+| `file` | string |  | A .hikariplugin the user granted, by its files.list handle. |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `plugin` | string | yes |  |
+| `name` | string | yes |  |
+| `version` | string | yes |  |
+| `change` | one of `install`, `update`, `reinstall` or `downgrade` | yes |  |
+| `installedVersion` | string | yes |  |
+| `tier` | one of `restricted` or `unrestricted` | yes | unrestricted runs outside the sandbox and needs the user's full trust. |
+| `needsRetrust` | boolean | yes | The signing key changed, or an unsigned package replaces a signed one. |
+| `keyId` | string | yes | The signing key; empty when unsigned. |
+| `pinnedKeyId` | string | yes |  |
+| `permissions` | array of string | yes |  |
+| `commands` | array of string | yes | The titles of the commands it adds. |
+| `files` | array of objects | yes |  |
+| `files[].path` | string | yes |  |
+| `files[].text` | string | yes |  |
+| `digest` | string | yes |  |
+| `installed` | `true` | yes |  |
+
+### `plugins.run`
+
+Write. Since version 1.
+
+Runs an installed plugin's command as its menu item would.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `plugin` | string | yes |  |
+| `command` | string | yes | The command's id within the plugin, as in its manifest. |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `ran` | `true` | yes |  |
 
 ### `typeset.perspective`
 
