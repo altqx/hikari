@@ -358,11 +358,13 @@ TEST(ProjectSettings, TheAllowlistCoversTheProjectDataSettings)
 {
     for (const char *id : {"editor.dictionaryLanguage", "editor.spellchecker", "grammar.language",
                            "grammar.group.properNouns", "scriptProperties.title", "scriptProperties.updateOn",
-                           "scriptProperties.askForChange", "translation.autoMoveTagsFromOriginal"})
+                           "scriptProperties.askForChange", "translation.autoMoveTagsFromOriginal",
+                           "translation.sourceLanguage", "translation.targetLanguage", "export.format"})
         EXPECT_TRUE(findSetting(id)->projectable) << id;
     for (const char *id : {"privacy.usageData", "updater.autoInstall", "ai.off", "ai.webSearch", "plugins.network",
                            "trust.folders", "program.theme", "program.font", "shortcuts.hotkeys",
-                           "scriptProperties.linkResolutions", "translation.showOriginal"})
+                           "scriptProperties.linkResolutions", "translation.showOriginal", "export.choices",
+                           "ai.inline.translateTo"})
         EXPECT_FALSE(findSetting(id)->projectable) << id;
     std::vector<std::string> widening;
     for (const auto &setting : settingDefinitions())

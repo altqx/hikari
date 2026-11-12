@@ -120,6 +120,8 @@ void Application::applyWindowProject(int shellWindow)
     if (shellWindow == m_workspace.activeWindow())
         applyGrammarSettings();
     spellingRefresh();
+    if (m_inlineAi)
+        m_inlineAi->projectChanged();
     if (m_apiHost)
         m_apiHost->observe();
 }

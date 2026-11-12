@@ -2,6 +2,7 @@ Line editor text
 Line editor text > -
 Line editor text > Ignore this rule
 Line editor text > Add “” to dictionary
+Line editor text > Add to my dictionary
 Line editor text > -
 Line editor text > Undo
 Line editor text > Redo

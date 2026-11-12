@@ -133,11 +133,18 @@ FocusScope {
                                 {text: qsTr("Grammar settings…"), run: () => panel.settingsRequested()}]})
     }
     function ignoreAll() { show(app.spellCheckerIgnoreAll(current.word, options())) }
+    function addsToProject() {
+        if (app.projectName(shellWindow).length === 0)
+            return false
+        const row = (app.settings.value("workspace.saveTiers") || []).find(r => r.startsWith("dictionary\t"))
+        return !(row && row.endsWith("\tmine"))
+    }
     function addWord() {
+        const project = addsToProject()
         if (grammarMode)
-            showGrammar(app.grammarWalkAddWord(), qsTr("Add to dictionary"))
+            showGrammar(app.grammarWalkAddWord(project), qsTr("Add to dictionary"))
         else
-            show(app.spellCheckerAddWord(current.word, options()))
+            show(app.spellCheckerAddWord(current.word, Object.assign(options(), {project: project})))
     }
     function openAddedWords() {
         addedWordsLoader.active = true

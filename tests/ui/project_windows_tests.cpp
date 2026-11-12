@@ -615,6 +615,101 @@ private slots:
         QCOMPARE(marks(other), (QVariantList{6, 9}));
     }
 
+    void aProjectsWordsSpellOnlyInItsWindowsAndAddToDictionaryGoesThere()
+    {
+        writeAll(home.filePath(QStringLiteral("Dictionary/en_US.aff")), {});
+        writeAll(home.filePath(QStringLiteral("Dictionary/en_US.dic")), "1\nHello\n");
+        start(fakes::FakeSpelling::loader());
+        const QString plain = folder("plain");
+        const QString show = folder("show", true);
+        const QString words = show + QStringLiteral("/.hikari/dictionary.txt");
+        writeAll(words, "Haruhi\n");
+        QCOMPARE(application->openFolder(plain, 0).value(QStringLiteral("window")).toInt(), 0);
+        QVERIFY(application->openFile(writeAss(plain + QStringLiteral("/mine.ass"), "Hello Haruhi Kyon")));
+        QTRY_COMPARE(marks(0).size(), 4);
+        const int w = openProjectWindow(show);
+        QVERIFY(w > 0);
+        QVERIFY(application->openFile(writeAss(show + QStringLiteral("/ep01.ass"), "Hello Haruhi Kyon")));
+        QTRY_COMPARE(marks(w).size(), 2);
+
+        QVERIFY(application->addEditorWord(QStringLiteral("Kyon"), true));
+        QCOMPARE(readAll(words), QByteArray("Haruhi\nKyon\n"));
+        QVERIFY(!application->addedDictionaryWords().contains(QStringLiteral("Kyon")));
+        QTRY_VERIFY(marks(w).isEmpty());
+        QCOMPARE(marks(0).size(), 4);
+
+        auto *menu = shell(w)->findChild<QObject *>(QStringLiteral("lineTextMenu"));
+        QVERIFY(menu);
+        QVERIFY(QMetaObject::invokeMethod(menu, "aboutToShow"));
+        QCOMPARE(menu->property("dictionaryTier").toString(), QStringLiteral("project"));
+        QVERIFY(QMetaObject::invokeMethod(menu, "addWord", Q_ARG(QVariant, QStringLiteral("Itsuki")),
+                                          Q_ARG(QVariant, QStringLiteral("mine"))));
+        QVERIFY(application->addedDictionaryWords().contains(QStringLiteral("Itsuki")));
+        QVERIFY(!readAll(words).contains("Itsuki"));
+        QVERIFY(application->settingsStore()->list("workspace.saveTiers").contains(QStringLiteral("dictionary\tmine")));
+        QVERIFY(QMetaObject::invokeMethod(menu, "aboutToShow"));
+        QCOMPARE(menu->property("dictionaryTier").toString(), QStringLiteral("mine"));
+    }
+
+    void theExportDefaultComesAfterTheFilesOwnChoiceAndBeforeTheLastExport()
+    {
+        start();
+        const QString plain = folder("plain");
+        const QString show = folder("show", true);
+        writeAll(show + QStringLiteral("/.hikari/project.toml"),
+                 "version = 1\n[export]\nformat = \"vtt\"\nmergeOverlaps = true\n");
+        const QString exported = show + QStringLiteral("/done.ass");
+        application->settingsStore()->setValue(
+            QStringLiteral("export.choices"),
+            QStringList{QFileInfo(exported).absoluteFilePath() + QStringLiteral("\t{\"format\":\"mdvd\",\"fps\":25}"),
+                        QStringLiteral("\t{\"format\":\"sbv\",\"lines\":\"selected\"}")});
+        const auto setup = [&] { return application->exportSetup(); };
+        const auto format = [&] { return setup().value(QStringLiteral("format")).toString(); };
+        const auto option = [&](const char *name) {
+            return setup().value(QStringLiteral("options")).toMap().value(QLatin1String(name));
+        };
+
+        QCOMPARE(application->openFolder(plain, 0).value(QStringLiteral("window")).toInt(), 0);
+        QVERIFY(application->openFile(writeAss(plain + QStringLiteral("/new.ass"), "one")));
+        QCOMPARE(format(), QStringLiteral("sbv"));
+
+        const int w = openProjectWindow(show);
+        QVERIFY(w > 0);
+        QVERIFY(application->openFile(writeAss(show + QStringLiteral("/ep01.ass"), "one")));
+        QCOMPARE(format(), QStringLiteral("vtt"));
+        QVERIFY(option("mergeOverlaps").toBool());
+        QCOMPARE(option("lines").toString(), QStringLiteral("selected"));
+        QVERIFY(application->openFile(writeAss(exported, "one")));
+        const QVariantList tabs = application->tabs();
+        for (int i = 0; i < tabs.size(); ++i)
+            if (tabs[i].toMap().value(QStringLiteral("title")).toString().contains(QStringLiteral("done.ass")))
+                application->selectTab(i);
+        QTRY_COMPARE(setup().value(QStringLiteral("name")).toString(), QStringLiteral("done"));
+        QCOMPARE(format(), QStringLiteral("mdvd"));
+        QCOMPARE(option("fps").toDouble(), 25.0);
+        QVERIFY(!readAll(show + QStringLiteral("/.hikari/project.toml")).contains("mdvd"));
+    }
+
+    void theProjectsTargetLanguageIsInlineTranslatesDefault()
+    {
+        start();
+        application->settingsStore()->setValue(QStringLiteral("ai.inline.translateTo"), QStringLiteral("German"));
+        const QString show = folder("show", true);
+        writeAll(show + QStringLiteral("/.hikari/project.toml"),
+                 "version = 1\n[translation]\nsourceLanguage = \"Japanese\"\ntargetLanguage = \"Polish\"\n");
+        const QString plain = folder("plain");
+        QCOMPARE(application->openFolder(plain, 0).value(QStringLiteral("window")).toInt(), 0);
+        QVERIFY(application->openFile(writeAss(plain + QStringLiteral("/mine.ass"), "one")));
+        QCOMPARE(application->inlineAi()->translateTo(), QStringLiteral("German"));
+        const int w = openProjectWindow(show);
+        QVERIFY(w > 0);
+        QCOMPARE(application->inlineAi()->translateTo(), QStringLiteral("Polish"));
+        QVERIFY(application->projectOverrides(w).contains(QStringLiteral("translation.sourceLanguage")));
+        application->activateShellWindow(0);
+        QTRY_COMPARE(application->workspace().activeWindow(), 0);
+        QCOMPARE(application->inlineAi()->translateTo(), QStringLiteral("German"));
+    }
+
     void aProjectsMissingDictionaryLeavesMySpellingOn()
     {
         writeAll(home.filePath(QStringLiteral("Dictionary/en_US.aff")), {});

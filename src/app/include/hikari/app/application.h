@@ -617,8 +617,9 @@ public:
     // {word, start, end, suggestions}; empty when none.
     Q_INVOKABLE QVariantMap editorMisspellAt(int role, int position);
     Q_INVOKABLE bool replaceEditorMisspell(int role, int position, const QString &replacement);
-    Q_INVOKABLE bool addEditorWord(const QString &word);
-    // options: {ignoreComments, ignoreUpperCase}. Each returns {found, available, line,
+    // `project`: into the window's Project dictionary.txt instead of the user's.
+    Q_INVOKABLE bool addEditorWord(const QString &word, bool project = false);
+    // options: {ignoreComments, ignoreUpperCase, project (Add to dictionary's tier)}. Each returns {found, available, line,
     // before, after, word, suggestions, replacement, changed, problem, unchanged,
     // restarted}: found false: no errors; available false: no dictionary; line: the
     // Grid's number; unchanged: the action did nothing; restarted: the Line changed since
@@ -653,7 +654,7 @@ public:
     Q_INVOKABLE void setGrammarGroup(int group, bool on);
     // {id, name, description, rules}.
     Q_INVOKABLE QVariantList grammarGroups() const;
-    Q_INVOKABLE bool addGrammarWord(const QString &word);
+    Q_INVOKABLE bool addGrammarWord(const QString &word, bool project = false);
     // Each returns {on, walking, done, checked, total, count, index (1-based among
     // count), found, line, groupName, message, before, text, after, suggestions,
     // replacement, word, problem}; found false with done: no findings.
@@ -664,7 +665,7 @@ public:
     Q_INVOKABLE QVariantMap grammarWalkReplace(const QString &replacement);
     Q_INVOKABLE QVariantMap grammarWalkIgnore();
     Q_INVOKABLE QVariantMap grammarWalkIgnoreRule();
-    Q_INVOKABLE QVariantMap grammarWalkAddWord();
+    Q_INVOKABLE QVariantMap grammarWalkAddWord(bool project = false);
     Q_INVOKABLE void closeGrammarWalk(int shellWindow);
     // {rows, unlisted}: a row for each of the first core::kListedProblems ({document,
     // line (ids), number (the Grid's 1-based row), check, detail}), unlisted the rest.
@@ -1566,6 +1567,8 @@ private:
     application::SpellChecker *startedSpellChecker(int shellWindow);
     application::SpellChecker *anySpellChecker() const;
     void userWordsChanged(const application::SpellChecker *by);
+    void projectWordsChanged(const std::filesystem::path &file, const application::SpellChecker *by);
+    QString projectDictionary(int shellWindow) const;
     void restartSpellChecker();
     void spellingRefresh();
     std::optional<std::u16string> editorRaw(int role) const;
@@ -1578,10 +1581,10 @@ private:
         // MUST KILL: set on first use even with spelling off; turning spelling on doesn't reset it.
         bool started = false;
     };
-    // By dictionary language; windows on one language share a checker.
+    // By dictionary language and Project folder; windows on both the same share a checker.
     std::map<QString, SpellSlot> m_spellCheckers;
     std::vector<std::filesystem::path> m_spellingFolders;
-    SpellSlot *spellSlot(const QString &language);
+    SpellSlot *spellSlot(const QString &language, const QString &projectRoot = {});
     // MUST KILL: the editor keeps the toggle's value after a failed start unless the Project sets it
     bool editorSpellingOn() const;
     application::SpellingText m_spellingText;
@@ -1635,6 +1638,7 @@ private:
     void grammarChecked(quint64 ticket, const QList<backends::GrammarFinding> &findings);
     void grammarFailed(const QString &message);
     void syncGrammarWords();
+    void recheckGrammar();
     const GrammarCheck *editorGrammarCheck(int role) const;
     core::SubtitleFormat editorFormat() const;
     std::optional<std::pair<int, int>> fieldSpan(int role, const core::grammar::CheckedText &text, int start,
