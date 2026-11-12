@@ -97,6 +97,9 @@ Grid > Split > -
 Grid > Split > Into characters [GRID_SPLIT_BY_CHARS]
 Grid > Split > Into words [GRID_SPLIT_BY_WORDS]
 Grid > Split > By wraps [GRID_SPLIT_BY_WRAPS]
+Grid > Split > At tag blocks [GRID_SPLIT_AT_TAG_BLOCKS]
+Grid > Split > -
+Grid > Split > Every N frames or seconds… [GRID_SPLIT_EVERY_N]
 Grid > Remove tags… [GLOBAL_REMOVE_TAGS]
 Grid > Interpolate across lines… [GLOBAL_INTERPOLATE_LINES]
 Grid > Swap lines [GRID_SWAP_LINES]
