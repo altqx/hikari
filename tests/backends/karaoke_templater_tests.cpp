@@ -601,6 +601,16 @@ TEST_F(KaraokeTemplater, KaraskelPreprocLineFallsBackToLuaWhereTheTablesOrHostWe
     EXPECT_EQ(stringsOf(report[QStringLiteral("runs")]).join(u'\n').toStdString(), expected.join(u'\n').toStdString());
 }
 
+TEST_F(KaraokeTemplater, AegisubUtilGivesTheLuasResultsWithTheHelpersFunctions)
+{
+    hikari::application::EditSession session(
+        hikari::core::loadAss(readBytes(corpusDir() + QStringLiteral("/ke4.ass"))).document);
+    ASSERT_TRUE(apply(session, karaskelDir() + QStringLiteral("/util-parity.lua"), "Compare"));
+    EXPECT_TRUE(report[QStringLiteral("native")].toBool());
+    EXPECT_GT(report[QStringLiteral("compared")].toInt(), 30000);
+    EXPECT_EQ(stringsOf(report[QStringLiteral("mismatches")]).join(u'\n').toStdString(), "");
+}
+
 TEST_F(KaraokeTemplater, KaraskelTimings)
 {
     if (!qEnvironmentVariableIsSet("HIKARI_KARASKEL_BENCH"))
@@ -612,6 +622,15 @@ TEST_F(KaraokeTemplater, KaraskelTimings)
         std::cout << name.toStdString() << ' ' << QJsonDocument(report).toJson(QJsonDocument::Compact).toStdString()
                   << '\n';
     }
+}
+TEST_F(KaraokeTemplater, UtilTimings)
+{
+    if (!qEnvironmentVariableIsSet("HIKARI_KARASKEL_BENCH"))
+        GTEST_SKIP() << "set HIKARI_KARASKEL_BENCH to time aegisub.util";
+    hikari::application::EditSession session(
+        hikari::core::loadAss(readBytes(corpusDir() + QStringLiteral("/ke4.ass"))).document);
+    ASSERT_TRUE(apply(session, karaskelDir() + QStringLiteral("/bench.lua"), "Time util"));
+    std::cout << QJsonDocument(report).toJson(QJsonDocument::Indented).toStdString() << '\n';
 }
 
 TEST_F(KaraokeTemplater, NamedLineTemplatesRunAfterUnnamedOnesInTheOrderTheirNamesFirstAppear)

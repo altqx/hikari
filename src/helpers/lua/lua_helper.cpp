@@ -9,6 +9,7 @@
 #include "hikari/regex/regex.h"
 #include "kara_templater.h"
 #include "karaskel_tables.h"
+#include "util_impl.h"
 #include "lua_helper_internal.h"
 #include "lua_host_cache.h"
 #include "lua_native.h"
@@ -827,6 +828,7 @@ void installAegisub(lua_State *L)
     installHostServices(L);
     installHikari(L);
     hikari::karaskel_tables::install(L);
+    hikari::util_impl::install(L);
     lua_setglobal(L, "aegisub");
 }
 

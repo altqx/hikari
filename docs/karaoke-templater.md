@@ -127,6 +127,8 @@ karaskel's own Lua runs instead when the helper could give a different result:
 
 So an error a script catches with `pcall` has karaskel's own message.
 
+`aegisub.util`'s `extract_color`, `trim` and `headtail` run in the helper when given a string, and `HSL_to_RGB` when given three numbers (`aegisub.__util_impl`). LuaJIT cannot compile their pattern captures, `gsub` or per-call closure, so the helper's versions are several times faster, and `words`, `alpha_from_style`, `color_from_style` and `interpolate_color`/`interpolate_alpha` gain through them. Any other argument goes to the Lua, which raises its own errors. The other functions stay Lua: compiled by the JIT, they are already faster than a call into the helper.
+
 ## The template editor
 
 KE2 ([#284](https://github.com/altqx/hikari/issues/284)) adds the Template editor, a panel tabbed with the Line editor (View › Panels › Template editor; closed by default). It lists the Document's template and code Lines in Grid order and edits one at a time: its Effect, Style, Layer and text. The text is coloured as the Line editor colours a template or code Line.
