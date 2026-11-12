@@ -333,6 +333,17 @@ Layout::Layout(const std::vector<MacroInfoLine> &info, const std::vector<MacroSt
     addStyles(named, writtenScriptResolution(info), video);
 }
 
+Layout::Layout(const std::vector<std::pair<std::u8string, std::vector<std::string>>> &styles, double resX, double resY,
+               double xFactor, ExtentsCache &extents)
+    : m_extents(extents), m_resX(resX), m_resY(resY), m_factor(xFactor)
+{
+    for (const auto &[name, fields] : styles) {
+        const StyleInfo &info = m_styles[name] = styleOf(name, fields);
+        if (!m_first)
+            m_first = &info;
+    }
+}
+
 void Layout::addStyles(const std::vector<std::pair<std::u8string, std::vector<std::string>>> &styles,
                        Resolution written, std::optional<Resolution> video)
 {

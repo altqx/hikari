@@ -140,6 +140,10 @@ public:
     Layout(const core::Document &document, ExtentsCache &extents, std::optional<Resolution> video);
     Layout(const std::vector<MacroInfoLine> &info, const std::vector<MacroStyleLine> &styles, ExtentsCache &extents,
            std::optional<Resolution> video);
+    // As karaskel.preproc_line lays a Line out from its own tables: exactly `styles`, no "-furigana" Style added,
+    // meta's res_x and res_y and its video_x_correct_factor.
+    Layout(const std::vector<std::pair<std::u8string, std::vector<std::string>>> &styles, double resX, double resY,
+           double xFactor, ExtentsCache &extents);
 
     // `li`: the Line's number as the templater's subs count it.
     Line line(const MacroDialogueLine &source, double li, const LineOptions &options,
