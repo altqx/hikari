@@ -1993,6 +1993,7 @@ void Application::makeNodeEffects(WindowViews &v, int shellWindow)
     auto *effects = v.nodeEffects.get();
     effects->setSessionSource([this, shellWindow] { return windowSession(shellWindow); });
     effects->setLibraryFolder(std::filesystem::path(m_userFolder.toStdU16String()) / u"node-effects");
+    effects->setSettings(&m_settings->settings());
     connect(effects, &ui::NodeEffectsController::documentEdited, this, [this] { refreshViews(); });
     connect(effects, &ui::NodeEffectsController::videoChanged, this, [this, active, effects] {
         if (active() && (activeMedia().videoShowsTemplate || effects->videoPreview()))
@@ -7368,7 +7369,8 @@ void Application::resetAllSettings()
                                        application::kAutomationHotkeysSetting, application::kHotkeysSetting,
                                        application::kAudioHotkeysSetting,
                                        "workspace.settingsPage",
-                                       "automation.dialogAnswers", "automation.dialogPresets"};
+                                       "automation.dialogAnswers", "automation.dialogPresets",
+                                       "nodeEffects.exportFormat"};
     const auto appearance = appearanceSettings();
     keep.insert(keep.end(), appearance.begin(), appearance.end());
     for (const std::string_view id : keep)

@@ -11392,6 +11392,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>%1 copy</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>karaOK templates</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Uses karaOK template syntax. Runs in HikariSub; in Aegisub it needs the karaOK templater.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Aegisub 3.2.2 templates</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Nodes</name>
@@ -20465,6 +20477,274 @@ Styles deleted:
     <message>
         <source>The templater stopped before it finished.</source>
         <translation>வார்ப்புரு இயக்கி முடிப்பதற்கு முன்பே நின்றுவிட்டது.</translation>
+    </message>
+    <message>
+        <source>The template language this file sets.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The template language this file’s templates use. Choose one to set it in the file.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Template language</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>binds ln.kara to the template environment and adds its shorthands</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the unit’s start plus this share of its duration (ms)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>this share of the unit’s duration, all of it with no argument (ms)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>sets a template variable to a random whole number, once</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>tags and sizes of the karaoke line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>tags and sizes of the current unit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>builds \pos, \move and \t tags</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>periodic animation as \t steps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>colours from RGB or HSL</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>rounding, ranges and interpolation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>drawings for \p1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the progress bar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the first of each named tag in the karaoke line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>every one of each named tag in the karaoke line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the karaoke line’s colour N, or its style’s</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the karaoke line’s alpha N, or its style’s</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the style’s colour N</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the style’s alpha N</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>lead-in and lead-out, from \fad or empty end syllables (ms)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>characters in the karaoke line without tags</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>characters in the karaoke line’s text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>characters in the karaoke line as written</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the first of each named tag in the unit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>every one of each named tag in the unit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the unit’s colour N, or its style’s</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the unit’s alpha N, or its style’s</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>characters in the unit without tags</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>characters in the unit’s text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>\an and \pos at the unit’s anchor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>\an and \move from offsets to the unit’s anchor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>vertical placement for kanji, in karaOK mode</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>\t with whole-millisecond times</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>reads a \t into a table</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>changes a \t’s times or tags</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>reads a \move into a table</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>a wave: sine, square, triangle, sawtooth or noise</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>\t steps that follow a wave</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>a colour from red, green and blue (0–255)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>a colour from hue, saturation and lightness (0–255)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>a colour from hue, saturation and luma (0–255)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>reads or adds to a colour’s red, green and blue</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>reads or adds to a colour’s hue, saturation and lightness</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>n kept between min and max</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>n wrapped into a range</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>n bounced back and forth in a range</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the logarithm of n to a base</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>-1 for a negative n, else 1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>n rounded to this many decimals</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>n rounded to a whole number</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>a random number, to 4 decimals</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>between two numbers, colours or alphas</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>between two values, with acceleration</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>a drawing moved by x and y</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>a rectangle drawing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>a rectangle drawing with round corners</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>a circle drawing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>an equilateral triangle drawing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>a regular polygon drawing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>a gear drawing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>a ready-made drawing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>sets the progress bar (0–1)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>sets a template variable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>n rounded down</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>karaOK’s ln.kara library</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
