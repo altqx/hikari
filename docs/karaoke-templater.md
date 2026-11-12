@@ -116,6 +116,19 @@ The helper adds a table to `aegisub`. Stock scripts never see it unless they loo
 
 The Lua protocol carries these as version 6: `MacroDialogueLine::generatedFrom` and `MacroResult::report`.
 
+## karaskel in scripts
+
+Since AU17 ([#851](https://github.com/altqx/hikari/issues/851)), the bundled `karaskel.lua` hands `karaskel.collect_head` and `karaskel.preproc_line` to the helper (`aegisub.__karaskel_impl`). The helper builds the same tables as karaskel's Lua, field for field and in the same `pairs()` order, and logs the same lines. `preproc_line` lays the Line out from the meta, styles and line tables the script passes, not from the Document. The sub-stages (`preproc_line_text`, `preproc_line_size`, `preproc_line_pos`, `do_basic_layout`, `do_furigana_layout`) stay Lua.
+
+karaskel's own Lua runs instead when the helper could give a different result:
+
+- `collect_head`: `subs` is not the host's, `table.copy` or `aegisub.debug.out` was replaced, `karaskel.furigana_scale` is not a number, there is no Style, or a Style or info line would make the Lua raise;
+- `preproc_line`: a sub-stage or `unicode.charwidth` was replaced; `aegisub.text_extents`, `aegisub.parse_karaoke_data` or `aegisub.debug.out` is not the host's at the call; the trace level is 4 or more; the line already has `kara` or `styleref`; a table has a metatable; or a field karaskel reads is missing, has another type, or disagrees with the layout (margins apart from `margin_v`, an alignment outside 1 to 9, fractional times).
+
+So an error a script catches with `pcall` has karaskel's own message.
+
+`aegisub.util`'s `extract_color`, `trim` and `headtail` run in the helper when given a string, and `HSL_to_RGB` when given three numbers (`aegisub.__util_impl`). LuaJIT cannot compile their pattern captures, `gsub` or per-call closure, so the helper's versions are several times faster, and `words`, `alpha_from_style`, `color_from_style` and `interpolate_color`/`interpolate_alpha` gain through them. Any other argument goes to the Lua, which raises its own errors. The other functions stay Lua: compiled by the JIT, they are already faster than a call into the helper.
+
 ## The template editor
 
 KE2 ([#284](https://github.com/altqx/hikari/issues/284)) adds the Template editor, a panel tabbed with the Line editor (View › Panels › Template editor; closed by default). It lists the Document's template and code Lines in Grid order and edits one at a time: its Effect, Style, Layer and text. The text is coloured as the Line editor colours a template or code Line.

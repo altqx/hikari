@@ -1,4 +1,5 @@
 #include "hikari/backends/ai_agent_broker.h"
+#include "hikari/backends/ai_mcp_bridge.h"
 #include "hikari/backends/ai_sidecar_host.h"
 #include "hikari/backends/ai_signin.h"
 
@@ -8,6 +9,7 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QHostAddress>
+#include <QLibraryInfo>
 #include <QTcpSocket>
 #include <QTemporaryDir>
 #include <QUrl>
@@ -21,6 +23,14 @@ using namespace hikari::backends::ai;
 using hikari::api::Json;
 
 namespace {
+
+void ensureApp()
+{
+    static int argc = 1;
+    static char name[] = "hikari_backends_ai_agent_broker_tests";
+    static char *argv[] = {name, nullptr};
+    static QCoreApplication app(argc, argv);
+}
 
 bool waitFor(const std::function<bool()> &done, int ms = 10'000)
 {
@@ -144,15 +154,183 @@ TEST(AgentSpecs, CodexRunsTheNativeBinaryBehindNpmsLauncherWithHikarisOwnHome)
     EXPECT_FALSE(codexAgent(launcher, dir.path(), dir.path(), lease));
 }
 
+TEST(AgentSpecs, AnAcpAgentWritesOnlyItsOwnStateAndTakesNoArgumentsFromTheSidecar)
+{
+    QTemporaryDir dir;
+    const QString program = dir.filePath(QStringLiteral("bin/opencode"));
+    writeFile(program, "ELF", true);
+    const QString bridge = dir.filePath(QStringLiteral("app/bin/hikarisub"));
+    const QString work = dir.filePath(QStringLiteral("work"));
+    const QString state = dir.filePath(QStringLiteral("state"));
+    const AgentSpec spec = acpAgent(program, strings({"acp"}), {state}, work, bridge);
+    EXPECT_EQ(spec.program, QFileInfo(program).canonicalFilePath());
+    EXPECT_EQ(spec.arguments, strings({"acp"}));
+    EXPECT_EQ(spec.profile->readExecute, (QStringList{QFileInfo(program).canonicalPath(), dir.filePath(QStringLiteral("app/bin")),
+                                                     dir.filePath(QStringLiteral("app/lib"))}));
+    EXPECT_EQ(spec.profile->readWrite, (QStringList{state, work}));
+    EXPECT_TRUE(spec.profile->read.isEmpty());
+    EXPECT_EQ(spec.profile->network, hikari::backends::sandbox::Network::Any);
+    EXPECT_EQ(spec.workingDirectory, work);
+    EXPECT_TRUE(QFileInfo(state).isDir());
+    EXPECT_TRUE(QFileInfo(work + QStringLiteral("/tmp")).isDir());
+    EXPECT_FALSE(spec.refuse(strings({"--dangerously-skip-permissions"})).isEmpty());
+    EXPECT_TRUE(spec.refuse({}).isEmpty());
+    EXPECT_TRUE(spec.channelGuard);
+    EXPECT_FALSE(spec.guard);
+    EXPECT_FALSE(spec.channelArguments);
+}
+
+class AcpGuardTest : public ::testing::Test {
+protected:
+    std::vector<Json> parse(const std::vector<QByteArray> &lines)
+    {
+        std::vector<Json> out;
+        for (const QByteArray &l : lines)
+            out.push_back(*Json::parse(l.toStdString()));
+        return out;
+    }
+
+    AgentGuard::Lines fromSidecar(const std::string &text) { return guard->fromSidecar(QByteArray::fromStdString(text)); }
+    AgentGuard::Lines fromAgent(const std::string &text) { return guard->fromAgent(QByteArray::fromStdString(text)); }
+
+    Json server(const std::string &newSession)
+    {
+        const auto out = parse(fromSidecar(newSession).toAgent);
+        EXPECT_EQ(out.size(), 1u);
+        return out[0].find("params")->find("mcpServers")->asArray().at(0);
+    }
+
+    std::unique_ptr<AgentGuard> guard = acpGuard({.url = QStringLiteral("http://127.0.0.1:9/mcp"), .token = "tok",
+                                                  .bridge = QStringLiteral("/app/hikarisub"), .work = QStringLiteral("/w")});
+};
+
+TEST_F(AcpGuardTest, OnlyASessionsMethodsPassAndTheAgentGetsNoFilesOrTerminal)
+{
+    const auto init = parse(fromSidecar(
+        R"({"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":1,"clientCapabilities":{"terminal":true,"fs":{"readTextFile":true}}}})")
+                                .toAgent);
+    ASSERT_EQ(init.size(), 1u);
+    EXPECT_EQ(*init[0].find("params")->find("clientCapabilities"),
+              Json::object({{"fs", Json::object({{"readTextFile", false}, {"writeTextFile", false}})}, {"terminal", false}}));
+    const auto refused = fromSidecar(R"({"jsonrpc":"2.0","id":2,"method":"session/set_mode","params":{"modeId":"yolo"}})");
+    EXPECT_TRUE(refused.toAgent.empty());
+    EXPECT_EQ(parse(refused.toSidecar),
+              std::vector<Json>{Json::object({{"id", 2}, {"error", Json::object({{"code", rpc::kMethodNotFound},
+                                                                                 {"message", "Hikari doesn't let the AI use session/set_mode"}})},
+                                              {"jsonrpc", "2.0"}})});
+    EXPECT_TRUE(fromSidecar(R"({"jsonrpc":"2.0","id":7,"result":{"outcome":{"outcome":"selected","optionId":"yes"}}})").toAgent.empty());
+    for (const char *passes : {"session/prompt", "session/cancel"})
+        EXPECT_EQ(fromSidecar(std::string(R"({"jsonrpc":"2.0","id":3,"method":")") + passes + R"(","params":{}})").toAgent.size(), 1u);
+
+    const auto fs = fromAgent(R"({"jsonrpc":"2.0","id":"f","method":"fs/write_text_file","params":{"path":"/etc/passwd"}})");
+    EXPECT_TRUE(fs.toSidecar.empty());
+    EXPECT_EQ(*parse(fs.toAgent).at(0).find("error")->find("message"), Json("HikariSub doesn't offer fs/write_text_file"));
+    EXPECT_TRUE(parse(fromAgent(R"({"jsonrpc":"2.0","id":"t","method":"terminal/create","params":{}})").toAgent).at(0).find("error"));
+    const std::string update = R"({"jsonrpc":"2.0","method":"session/update","params":{"sessionId":"s"}})";
+    EXPECT_EQ(fromAgent(update).toSidecar, std::vector{QByteArray::fromStdString(update)});
+}
+
+TEST_F(AcpGuardTest, TheSessionRunsInItsWorkFolderWithHikarisToolsOverHttpWhenTheAgentTakesIt)
+{
+    const std::string newSession =
+        R"({"jsonrpc":"2.0","id":2,"method":"session/new","params":{"cwd":"/","additionalDirectories":["/home"],"mcpServers":[{"name":"evil","command":"sh"}]}})";
+    fromSidecar(R"({"jsonrpc":"2.0","id":1,"method":"initialize","params":{}})");
+    EXPECT_EQ(server(newSession),
+              Json::object({{"name", "hikari"}, {"command", QDir::toNativeSeparators(QStringLiteral("/app/hikarisub")).toStdString()},
+                            {"args", Json::array({"--mcp", "--channel-url", "http://127.0.0.1:9/mcp"})},
+                            {"env", Json::array({Json::object({{"name", "HIKARI_MCP_TOKEN"}, {"value", "tok"}})})}}));
+    const auto params = *parse(fromSidecar(newSession).toAgent).at(0).find("params");
+    EXPECT_EQ(*params.find("cwd"), Json(QDir::toNativeSeparators(QStringLiteral("/w")).toStdString()));
+    EXPECT_FALSE(params.find("additionalDirectories"));
+
+    fromAgent(R"({"jsonrpc":"2.0","id":99,"result":{"agentCapabilities":{"mcpCapabilities":{"http":true}}}})");
+    EXPECT_EQ(server(newSession)["command"], Json(QDir::toNativeSeparators(QStringLiteral("/app/hikarisub")).toStdString()));
+    fromAgent(R"({"jsonrpc":"2.0","id":1,"result":{"agentCapabilities":{"mcpCapabilities":{"http":true}}}})");
+    const std::string load = R"({"jsonrpc":"2.0","id":3,"method":"session/load","params":{"sessionId":"s","cwd":"/","mcpServers":[]}})";
+    EXPECT_EQ(server(load), Json::object({{"type", "http"}, {"name", "hikari"}, {"url", "http://127.0.0.1:9/mcp"},
+                                          {"headers", Json::array({Json::object({{"name", "Authorization"},
+                                                                                 {"value", "Bearer tok"}})})}}));
+}
+
+TEST_F(AcpGuardTest, QtAllowsOnceOnlyHikarisToolsAndRejectsEveryOtherPermission)
+{
+    const auto ask = [&](const std::string &toolCall, const std::string &options) {
+        const auto lines = fromAgent(R"({"jsonrpc":"2.0","id":5,"method":"session/request_permission","params":{"sessionId":"s","toolCall":)" +
+                                     toolCall + R"(,"options":)" + options + "}}");
+        EXPECT_TRUE(lines.toSidecar.empty());
+        return *parse(lines.toAgent).at(0).find("result")->find("outcome");
+    };
+    const std::string all =
+        R"([{"optionId":"always","kind":"allow_always"},{"optionId":"once","kind":"allow_once"},{"optionId":"no","kind":"reject_once"},{"optionId":"never","kind":"reject_always"}])";
+    EXPECT_EQ(ask(R"({"toolCallId":"1","title":"hikari_document_apply"})", all),
+              Json::object({{"outcome", "selected"}, {"optionId", "once"}}));
+    EXPECT_EQ(ask(R"({"toolCallId":"1","title":"lines_find","_meta":{"agy":{"serverName":"hikari"}}})", all),
+              Json::object({{"outcome", "selected"}, {"optionId", "once"}}));
+    EXPECT_EQ(ask(R"({"toolCallId":"2","title":"Shell: rm -rf ~","kind":"execute"})", all),
+              Json::object({{"outcome", "selected"}, {"optionId", "no"}}));
+    EXPECT_EQ(ask(R"({"toolCallId":"3","title":"lines_find","_meta":{"serverName":"other"}})",
+                  R"([{"optionId":"always","kind":"allow_always"},{"optionId":"never","kind":"reject_always"}])"),
+              Json::object({{"outcome", "selected"}, {"optionId", "never"}}));
+    EXPECT_EQ(ask(R"({"toolCallId":"4","title":"Edit ~/.bashrc"})", R"([{"optionId":"yes","kind":"allow_once"}])"),
+              Json::object({{"outcome", "cancelled"}}));
+}
+
+TEST(AcpTools, AToolCallIsHikarisByItsMcpNameOrItsServer)
+{
+    EXPECT_EQ(acpHikariTool(Json::object({{"title", "mcp__hikari__lines_find"}})), "lines_find");
+    EXPECT_EQ(acpHikariTool(Json::object({{"title", "  hikari.document_apply {\"revision\":1}"}})), "document_apply");
+    EXPECT_EQ(acpHikariTool(Json::object({{"title", "hikari:lines_find"}})), "lines_find");
+    EXPECT_EQ(acpHikariTool(Json::object({{"title", "hikari_"}})), std::nullopt);
+    EXPECT_EQ(acpHikariTool(Json::object({{"title", "hikarix_lines_find"}})), std::nullopt);
+    EXPECT_EQ(acpHikariTool(Json::object({{"title", "read_file"}, {"_meta", Json::object({{"server_name", "fs"}})}})), std::nullopt);
+    EXPECT_EQ(acpHikariTool(Json::object()), std::nullopt);
+}
+
+TEST(McpHttpBridge, RelaysEachLineToTheChannelAndFinishesWhenTheAgentClosesOrTheChannelGoes)
+{
+    ensureApp();
+    auto channel = std::make_unique<McpServer>([] { return nullptr; }, QByteArray(64, 'k'));
+    channel->setChannel("t1");
+    ASSERT_TRUE(channel->listenHttp(0));
+    const QString url = QStringLiteral("http://127.0.0.1:%1/mcp").arg(channel->httpPort());
+
+    QByteArray out;
+    std::optional<QString> finished;
+    McpHttpBridge bridge(url, QByteArray(64, 'k'), [&](const QByteArray &bytes) { out += bytes; });
+    QObject::connect(&bridge, &McpHttpBridge::finished, [&](const QString &error) { finished = error; });
+    bridge.fromAgent(R"({"jsonrpc":"2.0","id":1,"method":"tools/list"})"
+                     "\n"
+                     R"({"jsonrpc":"2.0","id":2,)");
+    bridge.fromAgent(R"("method":"tools/list"})"
+                     "\n");
+    ASSERT_TRUE(waitFor([&] { return out.count('\n') == 2; }));
+    for (const QByteArray &l : out.trimmed().split('\n'))
+        EXPECT_TRUE(Json::parse(l.toStdString())->find("error")) << l.toStdString();
+    bridge.agentClosed();
+    ASSERT_TRUE(waitFor([&] { return finished.has_value(); }));
+    EXPECT_TRUE(finished->isEmpty());
+
+    std::optional<QString> wrongToken;
+    McpHttpBridge stranger(url, "nope", [](const QByteArray &) {});
+    QObject::connect(&stranger, &McpHttpBridge::finished, [&](const QString &error) { wrongToken = error; });
+    stranger.fromAgent(R"({"jsonrpc":"2.0","id":1,"method":"tools/list"})"
+                       "\n");
+    ASSERT_TRUE(waitFor([&] { return wrongToken.has_value(); }));
+    EXPECT_FALSE(wrongToken->isEmpty());
+
+    channel.reset();
+    std::optional<QString> gone;
+    McpHttpBridge late(url, QByteArray(64, 'k'), [](const QByteArray &) {});
+    QObject::connect(&late, &McpHttpBridge::finished, [&](const QString &error) { gone = error; });
+    late.fromAgent(R"({"jsonrpc":"2.0","id":1,"method":"tools/list"})"
+                   "\n");
+    ASSERT_TRUE(waitFor([&] { return gone.has_value(); }));
+    EXPECT_FALSE(gone->isEmpty());
+}
+
 class AgentBrokerTest : public ::testing::Test {
 protected:
-    static void SetUpTestSuite()
-    {
-        static int argc = 1;
-        static char name[] = "hikari_backends_ai_agent_broker_tests";
-        static char *argv[] = {name, nullptr};
-        static QCoreApplication app(argc, argv);
-    }
+    static void SetUpTestSuite() { ensureApp(); }
 
     AgentSpec spec(bool guarded = false)
     {
@@ -343,6 +521,18 @@ TEST_F(AgentBrokerTest, QtDeclinesCodexApprovalsAndPassesOnlyAnswersToForwardedR
     EXPECT_EQ(out[5], Json::object({{"id", "d"}, {"result", Json::object({{"ok", true}})}}));
 }
 
+TEST_F(AgentBrokerTest, QtDeclinesCodexsBuiltInFileChanges)
+{
+    broker.add("codex", spec(true));
+    const std::uint64_t process = startReady("codex");
+    send(process, R"({"id":1,"method":"turn/interrupt","params":{"emit":{"id":"f","method":"item/fileChange/requestApproval","params":{"itemId":"p"}}}})");
+    send(process, R"({"id":2,"method":"turn/interrupt","params":{"emit":{"id":"g","method":"applyPatchApproval","params":{}}}})");
+    ASSERT_TRUE(waitFor([&] { return withId(process, "f").has_value() && withId(process, "g").has_value(); }));
+    EXPECT_EQ(withId(process, "f"), Json::object({{"id", "f"}, {"result", Json::object({{"decision", "decline"}})}}));
+    EXPECT_EQ(*withId(process, "g")->find("result")->find("decision")->find("denied")->find("rejection"),
+              Json("Hikari's AI can't run commands or change files."));
+}
+
 TEST_F(AgentBrokerTest, AChannelAgentGetsItsOwnToolsChannelForTheSessionUntilItExits)
 {
     AgentSpec s = spec();
@@ -406,6 +596,40 @@ TEST_F(AgentBrokerTest, AnAgentStartsOnlyAfterItsBeforeHookAndItsAfterHookRunsOn
     ASSERT_TRUE(*call(kAgentCloseInput, Json::object({{"process", 3}})));
     ASSERT_TRUE(waitFor([&] { return exitCode(3).has_value(); }));
     EXPECT_EQ(afters, 2);
+}
+
+TEST_F(AgentBrokerTest, AStdioOnlyAcpAgentReachesTheSessionsChannelThroughTheBridgeThatEndsWithIt)
+{
+    const QString work = dir.filePath(QStringLiteral("work"));
+    AgentSpec s = acpAgent(QStringLiteral(HIKARI_FAKE_ACP_AGENT), {}, {}, work, QStringLiteral(HIKARI_TEST_MCP_HTTP_BRIDGE));
+    s.profile->readExecute << QLibraryInfo::path(QLibraryInfo::LibrariesPath) << QLibraryInfo::path(QLibraryInfo::PluginsPath);
+    broker.add("acp:fake", s);
+    ASSERT_FALSE(*call(kAgentStart, Json::object({{"process", 1}, {"agent", "acp:fake"}, {"args", Json::array({"--yolo"})},
+                                                  {"session", "t1"}})));
+    ASSERT_TRUE(*call(kAgentStart, Json::object({{"process", 2}, {"agent", "acp:fake"}, {"session", "t1"}})));
+    send(2, R"({"jsonrpc":"2.0","id":1,"method":"initialize","params":{}})");
+    send(2, R"({"jsonrpc":"2.0","id":2,"method":"session/new","params":{"cwd":".","mcpServers":[]}})");
+    ASSERT_TRUE(waitFor([&] { return withId(2, 2).has_value(); }));
+    const auto said = [&](const std::string &prompt, int id) {
+        send(2, R"({"jsonrpc":"2.0","id":)" + std::to_string(id) + R"(,"method":"session/prompt","params":{"sessionId":"s1","prompt":[{"type":"text","text":")" + prompt + R"("}]}})");
+        EXPECT_TRUE(waitFor([&] { return withId(2, id).has_value(); }, 30'000));
+        for (const Json &l : lines(2))
+            if (const Json *p = l.find("params"); p && p->find("update") && l.find("method")->asString() == "session/update")
+                if (const Json *t = p->find("update")->find("content")->find("text"); t && t->asString().find(prompt == "close" ? "exit" : "jsonrpc") != std::string::npos)
+                    return t->asString();
+        return std::string();
+    };
+    const std::vector<Json> out = lines(2);
+    const auto noted = std::ranges::find_if(out, [](const Json &l) { return l.find("method") && *l.find("method") == Json("fake/session"); });
+    ASSERT_NE(noted, out.end());
+    const Json session = *noted->find("params");
+    EXPECT_EQ(*session.find("cwd"), Json(QDir::toNativeSeparators(work).toStdString()));
+    EXPECT_EQ(session.find("server")->find("args")->asArray().at(1), Json("--channel-url"));
+    const std::string tools = said("tools", 3);
+    ASSERT_FALSE(tools.empty());
+    EXPECT_NE(tools.find("AI sidecar isn't installed"), std::string::npos) << tools;
+    EXPECT_EQ(said("close", 4), "exited 0");
+    ASSERT_TRUE(*call(kAgentKill, Json::object({{"process", 2}})));
 }
 
 #ifndef _WIN32

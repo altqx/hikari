@@ -1,17 +1,15 @@
 #include "hikari/app/application.h"
 
-#include <QCryptographicHash>
+#include "fake_feed_server.h"
+
 #include <QDeadlineTimer>
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
 #include <QGuiApplication>
-#include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QSignalSpy>
-#include <QTcpServer>
-#include <QTcpSocket>
 #include <QTemporaryDir>
 #include <QtQml/qqmlextensionplugin.h>
 #include <QtTest>
@@ -25,45 +23,6 @@ Q_IMPORT_QML_PLUGIN(Hikari_UiPlugin)
 using namespace hikari;
 
 namespace {
-
-class FeedServer : public QObject {
-public:
-    FeedServer()
-    {
-        m_server.listen(QHostAddress::LocalHost);
-        connect(&m_server, &QTcpServer::newConnection, this, [this] {
-            while (QTcpSocket *socket = m_server.nextPendingConnection()) {
-                connect(socket, &QTcpSocket::readyRead, this, [this, socket] { answer(socket); });
-                connect(socket, &QTcpSocket::disconnected, socket, &QObject::deleteLater);
-            }
-        });
-    }
-
-    bool listening() const { return m_server.isListening(); }
-    QString url(const QString &path) const
-    {
-        return QStringLiteral("http://127.0.0.1:%1%2").arg(m_server.serverPort()).arg(path);
-    }
-
-    std::map<QString, QByteArray> files;
-
-private:
-    void answer(QTcpSocket *socket)
-    {
-        const QByteArray request = socket->property("request").toByteArray() + socket->readAll();
-        socket->setProperty("request", request);
-        if (!request.contains("\r\n\r\n"))
-            return;
-        const auto it = files.find(QString::fromLatin1(request.split(' ').value(1)));
-        const QByteArray body = it == files.end() ? QByteArray("not found") : it->second;
-        socket->write(QByteArray(it == files.end() ? "HTTP/1.1 404 Not Found" : "HTTP/1.1 200 OK") +
-                      "\r\nContent-Length: " + QByteArray::number(body.size()) + "\r\nConnection: close\r\n\r\n" +
-                      body);
-        socket->disconnectFromHost();
-    }
-
-    QTcpServer m_server;
-};
 
 const QByteArray kHello = "script_name = \"Hello\"\n"
                           "aegisub.register_macro(\"Hello\", \"\", function() end)\n";
@@ -87,7 +46,7 @@ class AutomationPackagesTests : public QObject {
     Q_OBJECT
 
     QTemporaryDir dir;
-    FeedServer server;
+    testing::FakeFeedServer server;
     std::unique_ptr<app::Application> application;
 
     app::AutomationShell &automation() { return application->automation(); }
@@ -118,26 +77,7 @@ class AutomationPackagesTests : public QObject {
         return run ? run->message : QString();
     }
 
-    void publishHello()
-    {
-        server.files[QStringLiteral("/test.Hello.lua")] = kHello;
-        const QJsonObject file{{QStringLiteral("name"), QStringLiteral(".lua")},
-                               {QStringLiteral("url"), server.url(QStringLiteral("/test.Hello.lua"))},
-                               {QStringLiteral("sha1"),
-                                QString::fromLatin1(QCryptographicHash::hash(kHello, QCryptographicHash::Sha1).toHex())}};
-        const QJsonObject channel{{QStringLiteral("version"), QStringLiteral("1.0.0")},
-                                  {QStringLiteral("released"), QStringLiteral("2026-11-04")},
-                                  {QStringLiteral("default"), true},
-                                  {QStringLiteral("files"), QJsonArray{file}}};
-        const QJsonObject hello{{QStringLiteral("name"), QStringLiteral("Hello")},
-                                {QStringLiteral("author"), QStringLiteral("test")},
-                                {QStringLiteral("channels"), QJsonObject{{QStringLiteral("stable"), channel}}}};
-        server.files[QStringLiteral("/feed.json")] =
-            QJsonDocument(QJsonObject{{QStringLiteral("dependencyControlFeedFormatVersion"), QStringLiteral("0.4.0")},
-                                      {QStringLiteral("name"), QStringLiteral("test feed")},
-                                      {QStringLiteral("macros"), QJsonObject{{QStringLiteral("test.Hello"), hello}}}})
-                .toJson();
-    }
+    void publishHello() { server.publishMacro(QStringLiteral("test.Hello"), QStringLiteral("Hello"), kHello); }
 
     app::RecommendedScript script(const char *nameSpace, const char *name) const
     {
@@ -155,17 +95,7 @@ private slots:
         QVERIFY(QDir().mkpath(user() + QStringLiteral("/config")));
         QFile config(user() + QStringLiteral("/config/l0.DependencyControl.json"));
         QVERIFY(config.open(QIODevice::WriteOnly));
-        // DependencyControl refuses loopback feeds unless private hosts are allowed.
-        config.write(QJsonDocument(QJsonObject{
-                                       {QStringLiteral("config"),
-                                        QJsonObject{{QStringLiteral("updates"),
-                                                     QJsonObject{{QStringLiteral("blockPrivateHosts"), false}}},
-                                                    {QStringLiteral("feeds"),
-                                                     QJsonObject{{QStringLiteral("trustedFeeds"),
-                                                                  QJsonArray{server.url(QStringLiteral("/feed.json"))}},
-                                                                 {QStringLiteral("cacheMaxAge"), 0},
-                                                                 {QStringLiteral("feedFetchTimeout"), 5}}}}}})
-                         .toJson());
+        config.write(server.trustingConfig());
         config.close();
         app::Application::Options o;
         o.settingsFile = dir.filePath(QStringLiteral("settings.toml"));

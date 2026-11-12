@@ -1,5 +1,6 @@
 #pragma once
 
+#include "hikari/application/ai_project_keys.h"
 #include "hikari/application/owned_file.h"
 #include "hikari/application/settings.h"
 
@@ -45,6 +46,19 @@ public:
     // project.local.toml's lists replace project.toml's, and its plugin settings go over them key by key.
     PluginTable plugins() const;
 
+    application::ai::ProjectKeyNames aiKeyNames() const;
+    // A key project.toml holds instead of naming one: an `[ai.keys]` provider's, or a `[keys]` entry's.
+    struct KeyValue {
+        std::string provider;
+        bool inKeysTable = false;
+        std::string key;
+    };
+    std::vector<KeyValue> aiKeyValues() const;
+    // Sets project.toml's `[ai.keys]` entry for `providerId`; an empty name removes it.
+    bool setAiKeyName(const std::string &providerId, const application::ai::KeyName &name);
+    // Removes project.toml's `[keys]` entry.
+    bool removeKeysEntry(const std::string &entry);
+
     const std::vector<application::FileProblem> &problems() const { return m_problems; }
     // Settings the files set that a Project may never set; they stay in the file, unused.
     const std::vector<std::string> &refused() const { return m_refused; }
@@ -54,6 +68,7 @@ public:
 private:
     void load(File file);
     void store(const application::SettingDefinition &setting, const std::optional<application::SettingValue> &value);
+    bool storeNode(std::string_view id, const toml::table *value);
 
     QString m_root;
     toml::table m_tables[2];

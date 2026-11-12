@@ -252,7 +252,8 @@ FocusScope {
                     topPadding: 8
                     bottomPadding: 2
                     color: Theme.muted
-                    text: section === "today" ? qsTr("Today") : section === "yesterday" ? qsTr("Yesterday")
+                    text: section === "project" ? qsTr("This project")
+                          : section === "today" ? qsTr("Today") : section === "yesterday" ? qsTr("Yesterday")
                                               : Qt.formatDate(Date.fromLocaleDateString(Qt.locale(), section, "yyyy-MM-dd"),
                                                               Locale.ShortFormat)
                 }
@@ -296,6 +297,30 @@ FocusScope {
                         }
                     }
                 }
+            }
+        }
+
+        RowLayout {
+            objectName: "agentProjectInstructions"
+            visible: panel.agent.ready && !panel.showingThreads && panel.hasThread
+                     && (panel.thread.projectInstructions ?? false)
+            Layout.fillWidth: true
+            Layout.leftMargin: 8
+            Layout.rightMargin: 8
+            Layout.topMargin: 4
+            spacing: 6
+            Icon { iconRole: "notice-info"; size: 13 }
+            Label {
+                Layout.fillWidth: true
+                elide: Text.ElideRight
+                color: Theme.muted
+                text: qsTr("This project’s AGENTS.md instructions are on")
+            }
+            Button {
+                objectName: "agentOpenProjectInstructions"
+                flat: true
+                text: qsTr("Open")
+                onClicked: panel.agent.openProjectInstructions()
             }
         }
 

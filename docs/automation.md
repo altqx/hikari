@@ -90,6 +90,15 @@ The panel's third view, **Recommended** ([FA6 #563](https://github.com/altqx/hik
 
 Nothing here adds a command or a hotkey.
 
+### The automation folder reset (AU16 [#850](https://github.com/altqx/hikari/issues/850))
+
+The release that ships the native karaoke templater resets the user automation folder once (owner Q184, Q185, Q188, Q401 and Q402; ledger `AU16-automation-folder-reset`).
+
+- **When.** At the first start of 0.1.0-beta.4 or later (`kAutomationResetVersion` in `src/app/automation_reset.h`), before the bundled files are seeded. Only builds configured with `HIKARI_AUTOMATION_RESET=ON` run it: the package workflows turn it on, and source builds leave it off. `HIKARISUB_AUTOMATION_RESET=1` turns it on in any build. `.automation-reset` in the user folder records that it ran, so a reinstall or a settings reset doesn't repeat it.
+- **What moves.** `automation/` and `config/` move into `automation-backup-<yyyy-MM-dd>` in the user folder, then `-2`, `-3`… if that name is taken, and an empty `automation/` is left. Each move is one rename, and a failed `config/` move puts `automation/` back. A missing or empty automation folder does nothing. A folder holding only seeded files still as bundled (`.bundled-files`) loses them with no backup and no popup, and seeding brings back the current ones. Settings and the shipped Autoload and Include are never touched.
+- **The popup.** Once the main window opens, it says why, lists what moved and shows the backup's path, with **Open backup folder** and **OK**. If the move failed, it says so and why, and the reset is tried at the next start.
+- **Reinstall N scripts.** The backup's `config/l0.DependencyControl.json` names the scripts DependencyControl installed. Its managed `macros` are queued, except those the shipped Autoload holds and those now built in, which the popup lists under **Now built in** with the native command (`nativeScripts()`). Libraries come back as the scripts' dependencies. Each is an "Install <name>" run, as under Recommended scripts above, at the feed's current release. A row per script shows its progress; a failed one keeps its reason and has **Try again**. Scripts copied in by hand stay in the backup.
+
 ### Scripts a subtitle file names (2026-10-31)
 
 Legacy and Aegisub load every script a file's `Automation Scripts` names when the Automation menu opens. HikariSub asks first. The Automation menu, Run the last loaded script, Load script and the panel's "This file names scripts" offer all go through one question that lists the scripts' full paths: **Load** (for this file, this session), **Don't load** (remembered for this file for the session; Escape too) or **Always trust scripts in this folder** (Load, and the folders join Settings › General › Trusted folders, where they can be removed). The panel's offer keeps the declined scripts and asks again. Scripts in the shipped Autoload and Include and in the user's autoload folders never ask. Load script still loads the file picked.
