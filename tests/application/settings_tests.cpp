@@ -358,7 +358,7 @@ TEST(ProjectSettings, TheAllowlistCoversTheProjectDataSettings)
 {
     for (const char *id : {"editor.dictionaryLanguage", "editor.spellchecker", "grammar.language",
                            "grammar.group.properNouns", "scriptProperties.title", "scriptProperties.updateOn",
-                           "scriptProperties.askForChange", "translation.autoMoveTagsFromOriginal"})
+                           "scriptProperties.askForChange", "translation.autoMoveTagsFromOriginal", "ai.exclude"})
         EXPECT_TRUE(findSetting(id)->projectable) << id;
     for (const char *id : {"privacy.usageData", "updater.autoInstall", "ai.off", "ai.webSearch", "plugins.network",
                            "trust.folders", "program.theme", "program.font", "shortcuts.hotkeys",
@@ -369,6 +369,17 @@ TEST(ProjectSettings, TheAllowlistCoversTheProjectDataSettings)
         if (setting.widens)
             widening.emplace_back(setting.id);
     EXPECT_EQ(widening, (std::vector<std::string>{"translation.translator", "translation.reviewer"}));
+}
+
+TEST(ProjectSettings, NoProjectValueWidensWhatTheAiMayDo)
+{
+    for (const auto &setting : settingDefinitions()) {
+        if (!setting.id.starts_with("ai.") && !setting.id.starts_with("trust.") && !setting.id.starts_with("privacy."))
+            continue;
+        const bool exclude = setting.id == "ai.exclude";
+        EXPECT_EQ(projectMaySet(setting, false), exclude) << setting.id;
+        EXPECT_EQ(projectMaySet(setting, true), exclude) << setting.id;
+    }
 }
 
 TEST(ProjectSettings, AProjectOverridesTheUserPerKey)

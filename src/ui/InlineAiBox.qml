@@ -227,14 +227,14 @@ Popup {
                 wrapMode: Text.Wrap
                 textFormat: Text.PlainText
                 text: qsTr("This sends %n request(s) to %1 with the %2 model, %3.", "", box.plan.send || 0)
-                          .arg(box.plan.provider || "").arg(box.roleName).arg(box.plan.model || "")
+                          .arg(box.plan.provider || "", box.roleName, box.plan.model || "")
             }
             Label {
                 objectName: "inlineAiConfirmCost"
                 Layout.fillWidth: true
                 wrapMode: Text.Wrap
                 text: (box.plan.estimate >= 0 ? qsTr("About %1.").arg(box.money(box.plan.estimate)) : qsTr("The model has no price, so the cost is unknown."))
-                      + ((box.plan.dailyLeft ?? -1) >= 0 ? " " + qsTr("%1 left of today’s %2 cap.").arg(box.money(box.plan.dailyLeft)).arg(box.money(box.plan.dailyCap)) : "")
+                      + ((box.plan.dailyLeft ?? -1) >= 0 ? " " + qsTr("%1 left of today’s %2 cap.").arg(box.money(box.plan.dailyLeft), box.money(box.plan.dailyCap)) : "")
             }
             Label {
                 Layout.fillWidth: true

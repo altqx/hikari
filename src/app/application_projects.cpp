@@ -64,6 +64,14 @@ const application::Settings &Application::windowSettings(int shellWindow) const
     return views(shellWindow).settings->settings();
 }
 
+std::vector<std::string> Application::projectAiExclude(const std::string &root)
+{
+    const ui::ProjectFile file(QString::fromStdString(root));
+    const auto value = file.read(*application::findSetting("ai.exclude"));
+    const auto *globs = value ? std::get_if<std::vector<std::string>>(&*value) : nullptr;
+    return globs ? *globs : std::vector<std::string>();
+}
+
 std::optional<api::ProjectState> Application::activeProject() const
 {
     const QString root = m_projects ? m_projects->root(m_workspace.activeWindow()) : QString();
