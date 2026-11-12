@@ -1,5 +1,5 @@
-{"call": "files.list", "exact": {"files": [{"file": "f1", "name": "notes.txt", "access": "read"}, {"file": "f2", "name": "out.ass", "access": "write"}, {"file": "f3", "name": "missing.txt", "access": "read"}, {"file": "f4", "name": "blob", "access": "read"}, {"file": "f5", "name": "x.txt", "access": "write"}]}}
-{"call": "files.list", "as": "plugin", "exact": {"files": []}}
+{"call": "files.list", "exact": {"files": [{"file": "f1", "name": "notes.txt", "access": "read"}, {"file": "f2", "name": "out.ass", "access": "write"}, {"file": "f3", "name": "missing.txt", "access": "read"}, {"file": "f4", "name": "blob", "access": "read"}, {"file": "f5", "name": "x.txt", "access": "write"}], "folders": []}}
+{"call": "files.list", "as": "plugin", "exact": {"files": [], "folders": []}}
 {"call": "files.read", "params": {"file": "f1"}, "exact": {"file": "f1", "size": 6, "encoding": "utf8", "data": "héllo"}}
 {"call": "files.read", "params": {"file": "f1", "encoding": "base64"}, "exact": {"file": "f1", "size": 6, "encoding": "base64", "data": "aMOpbGxv"}}
 {"call": "files.read", "params": {"file": "f1"}, "as": "plugin", "error": "not_granted", "errorData": {"file": "f1"}}

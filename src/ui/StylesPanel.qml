@@ -9,7 +9,12 @@ Item {
     required property var styles
     required property var editor
     required property var app
-    required property var manager
+    required property Loader managerLoader
+    readonly property var manager: managerLoader.item
+    function loadManager() {
+        managerLoader.active = true
+        return managerLoader.item
+    }
     required property var catalogs
     required property int shellWindow
     readonly property Item toolbar: tools
@@ -30,7 +35,7 @@ Item {
             chosenAt = rows.findIndex(r => r.name === chosen)
     }
     readonly property bool canApply: chosenRow !== null && chosen.length > 0 && editor.editable && editor.assFields
-    readonly property bool canChange: !manager.editing
+    readonly property bool canChange: !(manager?.editing ?? false)
     readonly property bool canChangeChosen: chosenRow !== null && canChange
     readonly property int smallSize: Math.max(9, Math.round(Qt.application.font.pointSize * 0.9))
 
@@ -350,7 +355,7 @@ Item {
                 text: qsTr("New style")
                 focusPolicy: Qt.NoFocus
                 enabled: panel.available && panel.canChange
-                onClicked: panel.manager.newDocumentStyle()
+                onClicked: panel.loadManager().newDocumentStyle()
             }
             IconToolButton {
                 objectName: "stylesEdit"
@@ -358,7 +363,7 @@ Item {
                 text: qsTr("Edit style")
                 focusPolicy: Qt.NoFocus
                 enabled: panel.canChangeChosen
-                onClicked: panel.manager.editStyleAt(panel.chosenAt)
+                onClicked: panel.loadManager().editStyleAt(panel.chosenAt)
             }
             IconToolButton {
                 objectName: "stylesDuplicate"
@@ -366,7 +371,7 @@ Item {
                 text: qsTr("Duplicate")
                 focusPolicy: Qt.NoFocus
                 enabled: panel.canChangeChosen
-                onClicked: panel.manager.duplicateDocumentStyle(panel.chosenAt)
+                onClicked: panel.loadManager().duplicateDocumentStyle(panel.chosenAt)
             }
             IconToolButton {
                 objectName: "stylesDelete"
@@ -382,7 +387,7 @@ Item {
                 iconRole: "styles"
                 text: qsTr("Style manager")
                 focusPolicy: Qt.NoFocus
-                onClicked: panel.manager.showAt(panel.chosenRow ? panel.chosenAt : -1)
+                onClicked: panel.loadManager().showAt(panel.chosenRow ? panel.chosenAt : -1)
             }
         }
         IconToolButton {
@@ -413,28 +418,28 @@ Item {
             iconRole: "add"
             text: qsTr("New style…")
             enabled: panel.available && panel.canChange
-            onTriggered: panel.manager.newDocumentStyle()
+            onTriggered: panel.loadManager().newDocumentStyle()
         }
         ShellMenuItem {
             objectName: "stylesMoreEdit"
             iconRole: "edit"
             text: qsTr("Edit style…")
             enabled: panel.canChangeChosen
-            onTriggered: panel.manager.editStyleAt(panel.chosenAt)
+            onTriggered: panel.loadManager().editStyleAt(panel.chosenAt)
         }
         ShellMenuItem {
             objectName: "stylesMoreDuplicate"
             iconRole: "duplicate"
             text: qsTr("Duplicate")
             enabled: panel.canChangeChosen
-            onTriggered: panel.manager.duplicateDocumentStyle(panel.chosenAt)
+            onTriggered: panel.loadManager().duplicateDocumentStyle(panel.chosenAt)
         }
         MenuSeparator {}
         ShellMenuItem {
             objectName: "stylesMoreManager"
             iconRole: "styles"
             text: qsTr("Style manager")
-            onTriggered: panel.manager.showAt(panel.chosenRow ? panel.chosenAt : -1)
+            onTriggered: panel.loadManager().showAt(panel.chosenRow ? panel.chosenAt : -1)
         }
         MenuSeparator {}
         ShellMenuItem {
@@ -476,35 +481,35 @@ Item {
             iconRole: "add"
             text: qsTr("New style…")
             enabled: panel.available && panel.canChange
-            onTriggered: panel.manager.newDocumentStyle()
+            onTriggered: panel.loadManager().newDocumentStyle()
         }
         ShellMenuItem {
             objectName: "stylesMenuEdit"
             enabled: panel.canChange
             iconRole: "edit"
             text: qsTr("Edit style…")
-            onTriggered: panel.manager.editStyleAt(rowMenu.row)
+            onTriggered: panel.loadManager().editStyleAt(rowMenu.row)
         }
         ShellMenuItem {
             objectName: "stylesMenuDuplicate"
             enabled: panel.canChange
             iconRole: "duplicate"
             text: qsTr("Duplicate")
-            onTriggered: panel.manager.duplicateDocumentStyle(rowMenu.row)
+            onTriggered: panel.loadManager().duplicateDocumentStyle(rowMenu.row)
         }
         ShellMenuItem {
             objectName: "stylesMenuCopyToCatalog"
             enabled: panel.canChange
             iconRole: "copy-to-storage"
             text: qsTr("Copy to the catalogue…")
-            onTriggered: panel.manager.copyStyleToCatalog(rowMenu.row)
+            onTriggered: panel.loadManager().copyStyleToCatalog(rowMenu.row)
         }
         MenuSeparator {}
         ShellMenuItem {
             objectName: "stylesMenuManager"
             iconRole: "styles"
             text: qsTr("Style manager")
-            onTriggered: panel.manager.showAt(rowMenu.row)
+            onTriggered: panel.loadManager().showAt(rowMenu.row)
         }
         MenuSeparator {}
         ShellMenuItem {

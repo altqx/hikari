@@ -90,6 +90,14 @@ public:
     virtual std::optional<std::string> read(std::string_view skill, std::string_view file, std::size_t atMost) const = 0;
 };
 
+// Where a Document's Honya project folder is: the glossary, characters and style its translation shares with Honya.
+class TranslationHost {
+public:
+    virtual ~TranslationHost() = default;
+    // nullopt: the Document has no project folder.
+    virtual std::optional<std::string> projectFolder(application::DocumentId document) const = 0;
+};
+
 // Draws subtitles as the video does, in a render context apart from the video's.
 class RenderHost {
 public:
@@ -131,6 +139,20 @@ public:
     virtual application::visual::perspective::TextMeasure measure() const = 0;
 };
 
+struct ProjectState {
+    std::string name;
+    std::string root;
+    bool trusted = false;
+};
+
+// The Project of the window the user works in (ADR 0030).
+class ProjectHost {
+public:
+    virtual ~ProjectHost() = default;
+    // nullopt: that window has no Project.
+    virtual std::optional<ProjectState> project() const = 0;
+};
+
 // A missing port makes its operations answer unavailable.
 struct Host {
     DocumentHost *documents = nullptr;
@@ -144,6 +166,8 @@ struct Host {
     SkillHost *skills = nullptr;
     AutomationHost *automation = nullptr;
     TypesetHost *typeset = nullptr;
+    ProjectHost *project = nullptr;
+    TranslationHost *translation = nullptr;
 };
 
 }

@@ -21,6 +21,12 @@ bool WindowSettings::overridden(std::string_view id) const
     return setting && m_storage.fromProject(*setting);
 }
 
+bool WindowSettings::waitsForTrust(std::string_view id) const
+{
+    const auto *setting = application::findSetting(id);
+    return setting && m_storage.waitsForTrust(*setting);
+}
+
 std::optional<application::SettingValue> WindowSettings::ProjectWrites::read(const application::SettingDefinition &setting) const
 {
     return m_window.m_storage.read(setting);

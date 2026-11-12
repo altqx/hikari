@@ -3,6 +3,7 @@
 #include "hikari/application/automation_registry.h"
 #include "hikari/application/edit_session.h"
 #include "hikari/application/karaoke_presets.h"
+#include "hikari/application/karaoke_templates.h"
 #include "hikari/application/macro_transaction.h"
 #include "hikari/application/node_graph.h"
 #include "hikari/application/script_resolution.h"
@@ -3247,7 +3248,7 @@ private slots:
     void presetsAreTheirFilesInOrder()
     {
         const QVariantList presets = TemplateEditorController::presets();
-        QCOMPARE(presets.size(), 10);
+        QCOMPARE(presets.size(), 20);
         QStringList files;
         for (const QVariant &v : presets) {
             const QVariantMap p = v.toMap();
@@ -3257,6 +3258,7 @@ private slots:
             QVERIFY2(preset.has_value(), qPrintable(file));
             QCOMPARE(p.value(QStringLiteral("title")).toString(), qs(preset->title));
             QCOMPARE(p.value(QStringLiteral("description")).toString(), qs(preset->description));
+            QCOMPARE(p.value(QStringLiteral("karaOK")).toBool(), preset->karaOK);
         }
         QStringList shipped = QDir(QStringLiteral(":/hikari/ui/karaoke-presets")).entryList(QDir::Files, QDir::Name);
         QCOMPARE(files, shipped);
@@ -3264,6 +3266,126 @@ private slots:
         QVERIFY(!editor->insertPreset(-1));
         QVERIFY(!editor->insertPreset(static_cast<int>(presets.size())));
         QCOMPARE(editor->templateCount() + editor->codeCount(), 0);
+    }
+
+    static int presetIndex(const QString &file)
+    {
+        const QVariantList presets = TemplateEditorController::presets();
+        const auto at = std::ranges::find_if(
+            presets, [&](const QVariant &p) { return p.toMap().value(QStringLiteral("file")).toString() == file; });
+        return at == presets.end() ? -1 : static_cast<int>(at - presets.begin());
+    }
+
+    std::optional<std::u8string> modeLine() const { return session->document().scriptInfo(u8"Karaoke Templater"); }
+
+    std::vector<std::u8string> effects() const
+    {
+        std::vector<std::u8string> out;
+        for (const auto *l : session->document().lines())
+            if (application::templateKindOf(*l))
+                out.push_back(l->effect);
+        return out;
+    }
+
+    void aNewDocumentsFirstTemplateIsKaraOKAndWritesTheModeLineInTheSameStep()
+    {
+        openDocument(presetFixture(), true);
+        session->markNewDocument();
+        editor->refresh();
+        QVERIFY(editor->karaOKMode());
+        QVERIFY(!editor->modeInFile());
+        const std::string before = bytesOf(session->document());
+        QVERIFY(editor->insertTemplate(QStringLiteral("template line")));
+        QCOMPARE(effects(), std::vector<std::u8string>{u8"template lsyl"});
+        QCOMPARE(modeLine(), std::optional<std::u8string>(u8"karaOK"));
+        QVERIFY(session->undo());
+        QCOMPARE(bytesOf(session->document()), before);
+    }
+
+    void aNewDocumentWithAPastedStockTemplateFollowsDetection()
+    {
+        openDocument(presetFixture(), true);
+        session->markNewDocument();
+        core::LineRecord pasted = *lineAt(0);
+        pasted.comment = true;
+        pasted.effect = u8"template pre-line";
+        pasted.text = u8"{\\fad(100,100)}";
+        QVERIFY(change([&](core::Document &doc) { return doc.insertLineBefore(lineAt(0)->id, pasted).has_value(); }));
+        editor->refresh();
+        QVERIFY(!editor->karaOKMode());
+        QVERIFY(editor->insertTemplate(QStringLiteral("template line")));
+        QCOMPARE(effects(), (std::vector<std::u8string>{u8"template pre-line", u8"template line"}));
+        QVERIFY(!modeLine());
+    }
+
+    void anOpenedFileWithoutTemplatesStaysStockAndWritesNoModeLine()
+    {
+        openDocument(presetFixture(), true);
+        QVERIFY(!editor->karaOKMode());
+        QVERIFY(editor->karaOKPresetsUsable());
+        QVERIFY(editor->insertTemplate(QStringLiteral("template line")));
+        QCOMPARE(effects(), std::vector<std::u8string>{u8"template line"});
+        QVERIFY(!modeLine());
+        QVERIFY(!editor->karaOKPresetsUsable());
+        QVERIFY(!editor->insertPreset(presetIndex(QStringLiteral("11-word-pop.ass"))));
+    }
+
+    void aKaraOKPresetInATemplatesFreeFileWritesTheModeLineInTheSameStep()
+    {
+        const QString file = QStringLiteral("12-word-wipe.ass");
+        const auto preset = presetFile(file);
+        QVERIFY(preset && preset->karaOK);
+        openDocument(presetFixture(), true);
+        const std::string before = bytesOf(session->document());
+        QVERIFY(editor->insertPreset(presetIndex(file)));
+        QCOMPARE(modeLine(), std::optional<std::u8string>(u8"karaOK"));
+        QVERIFY(editor->karaOKMode());
+        std::vector<std::u8string> expected;
+        for (const auto &l : preset->lines)
+            expected.push_back(l.effect);
+        QCOMPARE(effects(), expected);
+        QVERIFY(session->undo());
+        QCOMPARE(bytesOf(session->document()), before);
+    }
+
+    void aStockPresetInAKaraOKDocumentIsTranslated()
+    {
+        const QString file = QStringLiteral("09-falling-letters.ass");
+        const auto preset = presetFile(file);
+        QVERIFY(preset && !preset->karaOK);
+        openDocument(presetFixture(), true);
+        session->markNewDocument();
+        QVERIFY(editor->insertPreset(presetIndex(file)));
+        QCOMPARE(modeLine(), std::optional<std::u8string>(u8"karaOK"));
+        std::vector<std::u8string> expected;
+        for (const auto &l : preset->lines) {
+            const std::string e = application::karaoke_templates::karaOKEffect(std::string(l.effect.begin(), l.effect.end()));
+            expected.emplace_back(e.begin(), e.end());
+        }
+        QCOMPARE(effects(), expected);
+        QVERIFY(expected != std::vector<std::u8string>{});
+    }
+
+    void theEffectPickerWorksInTheDocumentsMode()
+    {
+        openDocument(presetFixture(), true);
+        QCOMPARE(editor->effectWithClass(QStringLiteral("template syl"), QStringLiteral("line")), QStringLiteral("template line"));
+        QCOMPARE(editor->effectInMode(QStringLiteral("template line")), QStringLiteral("template line"));
+        QVERIFY(editor->setKaraOKMode(true));
+        const QString line = QStringLiteral("template line fade");
+        const QVariantMap parts = editor->effectParts(line);
+        QCOMPARE(parts.value(QStringLiteral("className")).toString(), QStringLiteral("pre-line"));
+        QCOMPARE(parts.value(QStringLiteral("name")).toString(), QStringLiteral("fade"));
+        QCOMPARE(editor->effectWithClass(line, QStringLiteral("pre-line")), line);
+        QCOMPARE(editor->effectWithModifier(editor->effectWithModifier(line, QStringLiteral("noblank"), true),
+                                            QStringLiteral("noblank"), false),
+                 line);
+        QCOMPARE(editor->effectWithClass(QStringLiteral("template syl"), QStringLiteral("line")), QStringLiteral("template lsyl"));
+        QCOMPARE(editor->effectParts(QStringLiteral("template lsyl")).value(QStringLiteral("className")).toString(),
+                 QStringLiteral("line"));
+        QCOMPARE(editor->effectInMode(QStringLiteral("template line")), QStringLiteral("template lsyl"));
+        QVERIFY(editor->insertTemplate(QStringLiteral("template line")));
+        QCOMPARE(effects(), std::vector<std::u8string>{u8"template lsyl"});
     }
 
     void aPresetInsertsPreviewsAndApplies()

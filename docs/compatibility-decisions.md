@@ -125,6 +125,19 @@ Video › "Track colour…" and "Find fade…" do natively what zah.aegi-color-t
 - **V5, every frame.** Find fade checks every frame after the video's frame for the fade out. AutoFade first halves the distance to the end while the colour holds, so it can step over a flicker.
 - **V6, unread frames.** A frame where the point is outside the picture counts as neither shown nor gone. AutoFade stops with an error.
 
+## AU14-text-on-path
+
+The Text on path visual tool does natively what BezierToText 1.1 (bundled) and zf.textInClip 2.1.2 do (records in [AU14 #847](https://github.com/altqx/hikari/issues/847)). With Left and offset 0 it places Latin text where BezierToText 1.0 does, to within 0.15 px and 0.05°. The departures below were accepted at the owner's gate on 2026-11-11 (Q287–Q295).
+
+- **P1, arc length.** Distances along the curve are exact. BezierToText adds chords at steps of 0.0001 in t and places each grapheme at the first step past its centre.
+- **P2, clip numbers.** Decimals, minus signs and the clip's scale are read as written. BezierToText keeps only the digits.
+- **P3, every segment.** Lines and Béziers are all used, end to end. BezierToText takes the first cubic only.
+- **P4, measuring.** Each grapheme is measured with the tags before it (`\fn \fs \fscx \fscy \fsp \b \i`). BezierToText measures with the Style only.
+- **P5, carried tags.** The new Lines carry every earlier override tag except `\pos \move \an \a \org \clip \iclip` (and `\frz \fr` while Rotate is on), in one block before the new position. BezierToText keeps them all, so a Line's own `\an` or `\pos` came first and won.
+- **P6, longer text.** Text longer than the path goes straight on from the path's end and a notice says so. BezierToText stops with an error.
+- **P7, numbers.** `\pos` and `\frz` have up to three decimals with trailing zeros dropped. BezierToText writes `%5.5f` and `%5.3f`.
+- **P8, Slide.** zf.textInClip's Animated modes are one Slide toggle. Reverse slides right to left, and each step's Lines take its frames' times. zf's "Enable shape" waits for AU6 (#845).
+
 ## AU20-text-commands
 
 Line breaks, Change case and Swap dialogue alternatives do natively what these scripts do: ua.LineBreaker, petzku.Autowrapper, l0.InsertLineBreaks, ua.ChangeCase, Flux.TitleCase, zf.allCharsTo and Flux.DialogSwapper. The bundled "Make text fullwidth" demo still ships unchanged. The behaviour record and the owner's answers are on [AU20 #854](https://github.com/altqx/hikari/issues/854) (Q279–Q286, 2026-11-11).
@@ -177,6 +190,16 @@ Interpolate across lines does natively what lyger.FbfTransform 2.0.1 and l0.Casc
 - **I5, rounding.** Numbers keep two decimals, colours and alphas round half up (tag_lerp). FbfTransform writes three decimals.
 - **I6, transforms.** `\t` lists of the same shape at both ends are interpolated. FbfTransform only strips its tags from `\t`.
 - **I7, cascade.** Cascade transforms re-times each Line of the run as line0's script does, after the interpolation, with whole milliseconds.
+
+## AU10-splits-and-overlaps
+
+AU10 [#841](https://github.com/altqx/hikari/issues/841) adds two Grid splits and a Select lines field. They do what Split Tag Sections, ILL.SplitText's By Tags Blocks, l0.SplitLines' Split at Tags, petzku.SplitTimer and the bundled Select overlaps do. Select overlaps still ships unchanged.
+
+- **D1, Overlapping lines.** This Select lines field finds the Lines that start while an earlier non-comment Line is still on, the same set as `select-overlaps.moon` (`SelectOverlapsFindsWhatTheOverlappingLinesFieldFinds` runs the script on 40 generated files). With several Lines selected, the script looks only at those. The field looks at every Line the Grid shows; use Deselect or Add to selection to narrow it.
+- **D2, Split at tag blocks.** Each run of text and the blocks before it becomes one Line, placed with `\pos` (or `\move`) where it was in the Line, measured as the other text splits measure. Each piece carries the tags in effect for it. A `\r` drops the tags before it, and `\k` syllables before the piece become one `\k` delay. The positions come from the app's font metrics, not the renderer's. A Line without tag blocks is left as it is.
+- **D3, `\org` on rotated splits (departure).** Character, word, wrap and tag block splits now add `\org` at the Line's position when the Line rotates (`\frx`, `\fry`, `\frz` or the Style's angle) and has no `\org`, so the pieces turn about the Line's point as ILL.SplitText's do. Before this, each piece turned about its own position. With a `\move`, the origin stays at the move's start.
+- **D4, Split every N frames or seconds.** Pieces of N frames (cut on frame starts, CFR or VFR) or N seconds (on the next frame start when there is video). The first piece keeps the Line's start and the last its end. Each piece's `\move`, `\t` and `\fad`/`\fade` times move back by its offset, so each piece's animation is worked out for that piece (Q339) and the pieces render as the Line did: `split_render_tests` renders both with libass at nine times across a Line with a timed `\move`, a `\t` and a `\fad`, and the frames are pixel-identical. One that is over by the piece's start becomes its end state. One that starts after the piece is dropped, and so is a fade the piece only sees fully opaque. `\k` timing isn't moved.
+- **D5, What stays in the scripts.** l0.SplitLines' Split at Even Interval, Split at Custom Interval and Split at Indexes stay in the script. ILL.SplitText's By Chars, By Words and By Line Breaks are the Grid's Into characters, Into words and By wraps.
 
 ## TH2-unicode-graphemes
 
@@ -314,6 +337,22 @@ The table forms of `ln.tag.pos` and `ln.tag.kanjipos` read their fields from the
 ## TH5d2-ln-kara-kanjipos
 
 `ln.tag.kanjipos` in a 3.2.2-mode Document is a problem, "ln.tag.kanjipos works only in karaOK mode", on its template Line. It reads karaOK's per-character table, which 3.2.2 mode builds only for char and word templates; upstream stopped with "attempt to index a nil value". [TH5d2 #833](https://github.com/altqx/hikari/issues/833), owner decision Q164.
+
+## TH5d3-new-documents-karaok
+
+A Document made with File › New is in karaOK mode until a `Karaoke Templater` line or a template or code Line decides; then detection decides as for any file. The mode line is written only where templates come in: the Template editor's New and presets, and a node graph's export, each in the same undo step as the Lines. Saving writes nothing, so a new file with no templates saves as before. A file opened without a mode line or templates stays in 3.2.2 mode. Aegisub has no karaOK mode. [TH5d3 #833](https://github.com/altqx/hikari/issues/833), owner decision Q167.
+
+## TH5d3-stock-presets-translated
+
+A stock KE3 preset inserted into a karaOK Document has its Effects translated: `pre-line` becomes `line`, `line` becomes `lsyl`, and `syl` with `char` becomes `char`; code Lines stay as they are. The translated Lines give upstream karaOK's bytes. A karaOK preset is off in a 3.2.2 Document that has templates. [TH5d3 #833](https://github.com/altqx/hikari/issues/833), owner decision Q158.
+
+## TH5d3-karaok-preset-departures
+
+The karaOK presets give upstream karaOK's bytes (with upstream's `ln/kara.lua`) except where they reach a defect HikariSub already fixed. Word pop and Word wipe on Lines with non-ASCII text reach TH5c-karaok-word-positions: upstream found the word's syllables by bytes and gave the last word the Line's absolute times. Letter cascade, Letter shimmer, Line gradient and Thai fade on Thai Lines reach TH5c-karaok-graphemes: upstream split `กิ` and `น้ำ` into code points. Their goldens come from the built-in. [TH5d3 #833](https://github.com/altqx/hikari/issues/833). Thai support by Jibrill.
+
+## TH5d3-editor-follows-mode
+
+In a karaOK Document, the Template editor's New inserts the karaOK form of each entry and shows it, and the Effect picker reads and writes karaOK's class words (`lsyl`, `line`) through the same translation. 3.2.2 mode is unchanged. [TH5d3 #833](https://github.com/altqx/hikari/issues/833).
 
 ## 892-script-info-on-save
 

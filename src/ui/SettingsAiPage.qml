@@ -2044,6 +2044,8 @@ ScrollView {
             }
             Note { text: qsTr("At a cap the turn stops after its current change. The agent never raises a cap; only you can.") }
             AiCheck { setting: "ai.agent.costMeter"; text: qsTr("Show the cost meter") }
+            AiCheck { setting: "ai.agent.autoCompact"; text: qsTr("Compact long conversations automatically") }
+            Note { text: qsTr("At 90% of the model’s context window, old tool results are cleared, then older turns are summarised. Your history stays in the panel.") }
         }
 
         SettingsSection {

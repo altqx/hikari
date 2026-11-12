@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "version": 1,
+  "version": 2,
   "$defs": {
     "DocumentId": {
       "type": "integer",
@@ -530,6 +530,73 @@
         "access"
       ],
       "additionalProperties": false
+    },
+    "GrantedFolder": {
+      "type": "object",
+      "properties": {
+        "folder": {
+          "type": "string",
+          "description": "The handle files.list, files.read and files.write take with a path."
+        },
+        "name": {
+          "type": "string"
+        },
+        "access": {
+          "enum": [
+            "read",
+            "write"
+          ]
+        }
+      },
+      "required": [
+        "folder",
+        "name",
+        "access"
+      ],
+      "additionalProperties": false
+    },
+    "FolderEntry": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "Relative to the granted folder, with / between its parts."
+        },
+        "folder": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "path",
+        "folder"
+      ],
+      "additionalProperties": false
+    },
+    "Project": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "The Project folder's name."
+            },
+            "trusted": {
+              "type": "boolean",
+              "description": "Whether the folder is in Trusted folders."
+            }
+          },
+          "required": [
+            "name",
+            "trusted"
+          ],
+          "additionalProperties": false
+        }
+      ],
+      "description": "The Project of the window the user works in; null without one."
     }
   },
   "operations": [
@@ -2198,10 +2265,20 @@
     {
       "name": "files.list",
       "access": "read",
-      "summary": "The files the user granted this caller, with read or write access.",
+      "summary": "The files and folders the user granted this caller; with folder, also what that folder holds.",
       "since": 1,
       "params": {
         "type": "object",
+        "properties": {
+          "folder": {
+            "type": "string",
+            "description": "A folder handle to list (since version 2)."
+          },
+          "path": {
+            "type": "string",
+            "description": "A folder inside it; default the folder itself."
+          }
+        },
         "additionalProperties": false
       },
       "result": {
@@ -2212,6 +2289,23 @@
             "items": {
               "$ref": "#/$defs/GrantedFile"
             }
+          },
+          "folders": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/GrantedFolder"
+            }
+          },
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/FolderEntry"
+            },
+            "description": "With folder: in name order, at most 4096, without links that lead outside it."
+          },
+          "truncated": {
+            "type": "boolean",
+            "description": "Present when the folder holds more than 4096 entries."
           }
         },
         "required": [
@@ -2232,6 +2326,14 @@
             "type": "string",
             "description": "A handle from files.list."
           },
+          "folder": {
+            "type": "string",
+            "description": "Instead of file, a folder handle from files.list (since version 2)."
+          },
+          "path": {
+            "type": "string",
+            "description": "With folder, the file's path inside it, with / between its parts."
+          },
           "encoding": {
             "enum": [
               "utf8",
@@ -2240,9 +2342,6 @@
             "description": "Default utf8."
           }
         },
-        "required": [
-          "file"
-        ],
         "additionalProperties": false
       },
       "result": {
@@ -2277,7 +2376,7 @@
     {
       "name": "files.write",
       "access": "write",
-      "summary": "Replaces a file granted for writing with new content.",
+      "summary": "Replaces a file granted for writing with new content; in a writable folder, makes it and its folders.",
       "since": 1,
       "params": {
         "type": "object",
@@ -2285,6 +2384,14 @@
           "file": {
             "type": "string",
             "description": "A handle from files.list."
+          },
+          "folder": {
+            "type": "string",
+            "description": "Instead of file, a folder handle from files.list (since version 2)."
+          },
+          "path": {
+            "type": "string",
+            "description": "With folder, the file's path inside it, with / between its parts."
           },
           "encoding": {
             "enum": [
@@ -2298,7 +2405,6 @@
           }
         },
         "required": [
-          "file",
           "data"
         ],
         "additionalProperties": false
@@ -2475,6 +2581,115 @@
           "outcome",
           "message",
           "log"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "translation.project",
+      "access": "read",
+      "summary": "The Document's Honya project files: PROJECT.md, GLOSSARY.md, CHARACTERS.md and STYLE.md, those that exist. folder is null when the Document has no project folder.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId",
+            "description": "Defaults to the active Document."
+          }
+        },
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "folder": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "enum": [
+                    "PROJECT.md",
+                    "GLOSSARY.md",
+                    "CHARACTERS.md",
+                    "STYLE.md"
+                  ]
+                },
+                "data": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "name",
+                "data"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "folder",
+          "files"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "translation.project_write",
+      "access": "write",
+      "summary": "Replaces one of the Document's Honya project files, keeping Honya's Markdown and honya:data format.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId",
+            "description": "Defaults to the active Document."
+          },
+          "file": {
+            "enum": [
+              "PROJECT.md",
+              "GLOSSARY.md",
+              "CHARACTERS.md",
+              "STYLE.md"
+            ]
+          },
+          "data": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "file",
+          "data"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "file": {
+            "enum": [
+              "PROJECT.md",
+              "GLOSSARY.md",
+              "CHARACTERS.md",
+              "STYLE.md"
+            ]
+          },
+          "size": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "file",
+          "size"
         ],
         "additionalProperties": false
       }
@@ -3446,9 +3661,48 @@
         ],
         "additionalProperties": false
       }
+    },
+    {
+      "name": "project.info",
+      "access": "read",
+      "summary": "The Project of the window the user works in, or null.",
+      "since": 2,
+      "params": {
+        "type": "object",
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "project": {
+            "$ref": "#/$defs/Project"
+          }
+        },
+        "required": [
+          "project"
+        ],
+        "additionalProperties": false
+      }
     }
   ],
   "events": [
+    {
+      "name": "project.changed",
+      "summary": "The window the user works in opened or closed a Project, or the user moved to a window with another one.",
+      "since": 2,
+      "data": {
+        "type": "object",
+        "properties": {
+          "project": {
+            "$ref": "#/$defs/Project"
+          }
+        },
+        "required": [
+          "project"
+        ],
+        "additionalProperties": false
+      }
+    },
     {
       "name": "document.changed",
       "summary": "A Document's content changed: a commit, Undo or Redo.",

@@ -21,12 +21,15 @@ void addMediaOperations(Registry &registry);
 void addFileOperations(Registry &registry);
 void addSkillOperations(Registry &registry);
 void addAutomationOperations(Registry &registry);
+void addTranslationOperations(Registry &registry);
 void addNodeOperations(Registry &registry);
 void addTypesetOperations(Registry &registry);
+void addProjectOperations(Registry &registry);
 void addEvents(Registry &registry);
+Json projectJson(const Host &host);
 
 void addOperation(Registry &registry, Access access, std::string name, std::string summary, std::string_view params,
-                  std::string_view result, Handler handler);
+                  std::string_view result, Handler handler, int since = 1);
 
 std::string base64(std::string_view bytes);
 // nullopt: not base64.

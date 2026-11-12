@@ -167,6 +167,7 @@ int main(int argc, char **argv)
     Json received = Json::array();
     std::int64_t nextId = 1;
     std::map<std::string, FakeTurn> turns;
+    std::map<std::string, std::vector<Json>> compactions; // scripted answers to _hikari/session.compact, by session
     std::map<std::int64_t, std::string> sessionCalls;
     const auto finish = [&](const std::string &session, const std::string &reason) {
         FakeTurn &turn = turns.at(session);
@@ -328,6 +329,9 @@ int main(int argc, char **argv)
                 if (const Json *reason = script->find("reason"))
                     turn.reason = reason->asString();
                 turn.hang = script->find("hang") != nullptr;
+                if (const Json *compact = script->find("compact"); compact && compact->isArray())
+                    for (const Json &answer : compact->asArray())
+                        compactions[session].push_back(answer);
                 if (const Json *usage = script->find("usage"))
                     sessionUpdate(session, Json::object({{"sessionUpdate", "usage"}, {"usage", *usage}}));
             } else {
@@ -347,9 +351,53 @@ int main(int argc, char **argv)
             const bool taken = it != turns.end() && !it->second.cancelled &&
                                (it->second.calling || it->second.next < it->second.calls.size());
             respond(*id, Json::object({{"taken", taken}}));
+        } else if (name == "_hikari/session.compact") {
+            const std::string session = arg.find("sessionId")->asString();
+            auto &answers = compactions[session];
+            const Json answer = answers.empty() ? Json::object({{"result", Json::object({{"compacted", false}})}})
+                                                : answers.front();
+            if (!answers.empty())
+                answers.erase(answers.begin());
+            if (const Json *updates = answer.find("updates"); updates && updates->isArray())
+                for (const Json &update : updates->asArray())
+                    sessionUpdate(session, update);
+            if (const Json *error = answer.find("error"))
+                send(Json::object({{"jsonrpc", "2.0"}, {"id", *id}, {"error", *error}}));
+            else
+                respond(*id, answer.find("result") ? *answer.find("result") : Json());
         } else if (name == "_hikari/session.close") {
             turns.erase(arg.find("sessionId")->asString());
             respond(*id, nullptr);
+        } else if (name == "_hikari/translate") {
+            // Upper-cases each Line, markers kept; a Line with "?" needs review. Translator "hang" never answers.
+            const Json *models = arg.find("models");
+            const std::string translator = models->find("translator")->find("model")->asString();
+            if (translator == "hang") {
+                hanging.push_back(*id);
+                continue;
+            }
+            const Json stream = *arg.find("stream");
+            send(Json::object({{"jsonrpc", "2.0"}, {"method", "_hikari/translate.progress"},
+                               {"params", Json::object({{"stream", stream}, {"role", "translator"},
+                                                        {"usage", Json::object({{"inputTokens", 1000000}, {"outputTokens", 0}})}})}}));
+            Json lines = Json::array();
+            for (const Json &line : arg.find("lines")->asArray()) {
+                std::string text = line.find("text")->asString();
+                for (char &c : text)
+                    c = static_cast<char>(std::toupper(static_cast<unsigned char>(c)));
+                const bool doubt = text.find('?') != std::string::npos;
+                lines.push(Json::object({{"key", *line.find("key")}, {"text", text},
+                                         {"review", doubt ? "needsReview" : "approved"},
+                                         {"issues", doubt ? Json::array({Json("Is this a question?")}) : Json::array()}}));
+            }
+            send(Json::object({{"jsonrpc", "2.0"}, {"method", "_hikari/translate.progress"},
+                               {"params", Json::object({{"stream", stream}, {"stage", "translate"},
+                                                        {"done", static_cast<std::int64_t>(lines.asArray().size())},
+                                                        {"total", static_cast<std::int64_t>(lines.asArray().size())}})}}));
+            Json files = Json::array();
+            if (arg.find("document"))
+                files.push(Json::object({{"name", "GLOSSARY.md"}, {"data", "# Glossary\n"}}));
+            respond(*id, Json::object({{"lines", std::move(lines)}, {"files", std::move(files)}}));
         } else if (name == "_hikari/complete") {
             const Json *request = arg.find("request");
             const Json *model = request ? request->find("model") : nullptr;

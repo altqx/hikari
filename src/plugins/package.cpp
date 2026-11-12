@@ -1,7 +1,7 @@
 #include "hikari/plugins/package.h"
 
 #include "media.h"
-#include "names.h"
+#include "hikari/api/file_names.h"
 
 #include "hikari/plugins/qml_imports.h"
 
@@ -22,7 +22,7 @@ bool goodPart(std::string_view part)
 {
     return !part.empty() && part != "." && part != ".." && part.size() <= 255 &&
            std::all_of(part.begin(), part.end(), allowedChar) && !part.ends_with('.') && !part.ends_with(' ') &&
-           !reservedOnWindows(part);
+           !api::reservedOnWindows(part);
 }
 
 bool goodPath(std::string_view path)
@@ -68,7 +68,7 @@ std::expected<Package, PackageProblem> openPackage(std::vector<PackageFile> file
         total += file.data.size();
         if (total > kMaxPackageBytes)
             return std::unexpected(PackageProblem{Kind::TooLarge, {}, {}});
-        if (!goodPath(file.path) || !seen.insert(lowered(file.path)).second)
+        if (!goodPath(file.path) || !seen.insert(api::lowered(file.path)).second)
             return std::unexpected(PackageProblem{Kind::BadPath, file.path, {}});
         if (file.path == kManifestName)
             manifestFile = &file;

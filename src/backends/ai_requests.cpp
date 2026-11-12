@@ -163,6 +163,12 @@ struct AiRequests::Pending {
     bool sent = false;
 };
 
+struct AiRequests::Translation {
+    TranslateSink sink;
+    QPointer<AiSidecarHost> host;
+    std::uint64_t request = 0;
+};
+
 AiRequests::AiRequests(app::Providers &providers, HostFor host) : m_providers(providers), m_host(std::move(host)) {}
 
 AiRequests::~AiRequests()
@@ -171,6 +177,9 @@ AiRequests::~AiRequests()
     for (const auto &[id, pending] : m_pending)
         if (pending->sent && pending->host)
             pending->host->cancel(pending->request);
+    for (const auto &[id, translation] : m_translations)
+        if (translation->host)
+            translation->host->cancel(translation->request);
 }
 
 AiSidecarHost *AiRequests::connect(const app::Config &config)
@@ -226,6 +235,42 @@ app::StreamId AiRequests::complete(app::Role role, Json request, app::EventSink 
     return id;
 }
 
+app::StreamId AiRequests::requestTranslation(Json params, TranslateSink sink)
+{
+    const app::StreamId id = m_nextId++;
+    if (!m_providers.enabled()) {
+        sink.done(std::unexpected(app::Error{.kind = app::ErrorKind::NoProvider}));
+        return id;
+    }
+    if (!m_caching)
+        params["caching"] = false;
+    AiSidecarHost *host = connect();
+    if (!host) {
+        sink.done(std::unexpected(app::Error{.kind = app::ErrorKind::Network, .detail = "the AI sidecar is not installed"}));
+        return id;
+    }
+    auto translation = std::make_shared<Translation>();
+    translation->sink = std::move(sink);
+    translation->host = host;
+    m_translations[id] = translation;
+    params["stream"] = id;
+    translation->request = host->request("_hikari/translate", std::move(params),
+                                         [this, alive = std::weak_ptr(m_alive), id](SidecarResult result) {
+                                             if (!alive.lock())
+                                                 return;
+                                             const auto it = m_translations.find(id);
+                                             if (it == m_translations.end())
+                                                 return;
+                                             const std::shared_ptr<Translation> done = it->second;
+                                             m_translations.erase(it);
+                                             if (result)
+                                                 done->sink.done(std::move(*result));
+                                             else
+                                                 done->sink.done(std::unexpected(requestError(result.error())));
+                                         });
+    return id;
+}
+
 void AiRequests::setWebSearch(bool on, std::optional<app::SearchService> service)
 {
     m_webSearch = on;
@@ -264,6 +309,11 @@ std::optional<SearchAccess> AiRequests::searchAccess(app::SearchService service)
 
 void AiRequests::cancel(app::StreamId id)
 {
+    if (const auto t = m_translations.find(id); t != m_translations.end()) {
+        if (t->second->host)
+            t->second->host->cancel(t->second->request);
+        return;
+    }
     const auto it = m_pending.find(id);
     if (it == m_pending.end())
         return;
@@ -370,6 +420,15 @@ void AiRequests::endConversation(const std::string &providerId, const std::strin
 
 void AiRequests::receive(const std::string &method, const Json &params)
 {
+    if (method == "_hikari/translate.progress") {
+        const Json *stream = params.find("stream");
+        if (!stream || !stream->isInt())
+            return;
+        if (const auto it = m_translations.find(static_cast<app::StreamId>(stream->asInt()));
+            it != m_translations.end() && it->second->sink.progress)
+            it->second->sink.progress(params);
+        return;
+    }
     if (method != "session/update")
         return;
     const Json *stream = params.find("stream");

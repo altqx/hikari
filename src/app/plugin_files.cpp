@@ -1,7 +1,7 @@
 #include "hikari/app/plugin_files.h"
 
 #include "hikari/app/plugin_ui.h"
-#include "hikari/plugins/places.h"
+#include "hikari/api/folder.h"
 
 #include <algorithm>
 
@@ -13,7 +13,6 @@ namespace fs = std::filesystem;
 using api::Json;
 namespace errors = api::errors;
 
-constexpr std::size_t kMaxEntries = 4096;
 constexpr std::size_t kMaxTitle = 120;
 constexpr std::size_t kMaxFilters = 16;
 
@@ -109,6 +108,13 @@ std::expected<PluginUi::FileAsk, api::Error> pickRequest(const Json &params)
     return ask;
 }
 
+std::optional<fs::path> projectPlace(const std::optional<api::ProjectState> &project)
+{
+    if (!project || !project->trusted)
+        return std::nullopt;
+    return pathOf(project->root);
+}
+
 const std::string *stringParam(const Json &params, std::string_view key)
 {
     const Json *value = params.find(key);
@@ -117,8 +123,9 @@ const std::string *stringParam(const Json &params, std::string_view key)
 
 }
 
-PluginFiles::PluginFiles(api::Api *api, plugins::Installer *installer, PluginUi &ui)
-    : m_api(api), m_installer(installer), m_ui(ui)
+PluginFiles::PluginFiles(api::Api *api, plugins::Installer *installer, PluginUi &ui,
+                         std::function<std::optional<api::ProjectState>()> project)
+    : m_api(api), m_installer(installer), m_ui(ui), m_project(std::move(project))
 {
 }
 
@@ -232,6 +239,13 @@ void PluginFiles::folder(const Plugin &plugin, const std::string &id, std::funct
 
 void PluginFiles::place(const Plugin &plugin, const std::string &name, std::function<void(std::expected<Place, api::Error>)> done)
 {
+    if (name == "project") {
+        if (const auto root = projectPlace(m_project ? m_project() : std::nullopt))
+            done(Place{*root, true});
+        else
+            done(api::fail(errors::kNotFound, "no trusted project is open", Json::object({{"place", "project"}})));
+        return;
+    }
     if (name != "data" && name != "cache") {
         folder(plugin, name, std::move(done));
         return;
@@ -258,7 +272,7 @@ void PluginFiles::open(const Plugin &plugin, const Place &place, const std::stri
         reply(badParam("/path", "name a file inside the folder"));
         return;
     }
-    const auto real = plugins::pathInside(place.root, path);
+    const auto real = api::pathInside(place.root, path);
     if (!real) {
         reply(api::fail(errors::kNotGranted, real.error(), Json::object({{"path", path}})));
         return;
@@ -276,37 +290,21 @@ void PluginFiles::open(const Plugin &plugin, const Place &place, const std::stri
 
 void PluginFiles::entries(const Place &place, const std::string &path, api::Reply reply)
 {
-    const auto real = plugins::pathInside(place.root, path);
+    const auto real = api::pathInside(place.root, path);
     if (!real) {
         reply(api::fail(errors::kNotGranted, real.error(), Json::object({{"path", path}})));
         return;
     }
-    std::error_code error;
-    fs::directory_iterator it(*real, fs::directory_options::skip_permission_denied, error);
-    if (error) {
+    const auto listed = api::folderEntries(place.root, *real);
+    if (!listed) {
         reply(api::fail(errors::kNotFound, inQuotes(path) + " isn't a folder", Json::object({{"path", path}})));
         return;
     }
-    std::vector<std::pair<std::string, bool>> found;
-    bool truncated = false;
-    for (; it != fs::directory_iterator(); it.increment(error)) {
-        if (error)
-            break;
-        std::string name = utf8(it->path().filename());
-        if (!api::isUtf8(name))
-            continue;
-        if (found.size() == kMaxEntries) {
-            truncated = true;
-            break;
-        }
-        found.emplace_back(std::move(name), it->is_directory(error));
-    }
-    std::ranges::sort(found);
     Json list = Json::array();
-    for (const auto &[name, isFolder] : found)
-        list.push(Json::object({{"name", name}, {"folder", isFolder}}));
+    for (const api::FolderEntry &entry : listed->entries)
+        list.push(Json::object({{"name", entry.name}, {"folder", entry.folder}}));
     Json out = Json::object({{"entries", std::move(list)}});
-    if (truncated)
+    if (listed->truncated)
         out["truncated"] = true;
     reply(std::move(out));
 }

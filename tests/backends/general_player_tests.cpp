@@ -512,6 +512,10 @@ private slots:
         QtGeneralPlayer player(true);
         player.setOutputDevice("no-such-device");
         QCOMPARE(player.outputDeviceRequest(), std::string("no-such-device"));
+        QVERIFY(!player.backendLoaded());
+        QCOMPARE(player.outputDeviceId(), std::string());
+        player.play();
+        QVERIFY(player.backendLoaded());
         const auto outputs = QMediaDevices::audioOutputs();
         if (outputs.isEmpty()) {
             QCOMPARE(player.outputDeviceId(), std::string());

@@ -4394,8 +4394,7 @@
    "legacy": [],
    "surfaces": [
     "tier-chips"
-   ],
-   "pending": "PJ5 #773"
+   ]
   },
   {
    "role": "copy-to-tier",
@@ -4406,8 +4405,7 @@
    "legacy": [],
    "surfaces": [
     "tier-chips"
-   ],
-   "pending": "PJ5 #773"
+   ]
   },
   {
    "role": "move-to-tier",
@@ -4418,8 +4416,7 @@
    "legacy": [],
    "surfaces": [
     "tier-chips"
-   ],
-   "pending": "PJ5 #773"
+   ]
   },
   {
    "role": "trust",
@@ -4992,8 +4989,7 @@
    "legacy": [],
    "surfaces": [
     "select-lines"
-   ],
-   "pending": "AU10 #841"
+   ]
   },
   {
    "role": "split-tag-blocks",
@@ -5004,8 +5000,7 @@
    "legacy": [],
    "surfaces": [
     "grid-menu"
-   ],
-   "pending": "AU10 #841"
+   ]
   },
   {
    "role": "split-every-n",
@@ -5016,8 +5011,7 @@
    "legacy": [],
    "surfaces": [
     "grid-menu"
-   ],
-   "pending": "AU10 #841"
+   ]
   },
   {
    "role": "track-colour",
@@ -5050,8 +5044,7 @@
    "legacy": [],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "AU14 #847"
+   ]
   },
   {
    "role": "reinstall-scripts",
@@ -5355,8 +5348,7 @@
    "legacy": [],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "AU21 #855"
+   ]
   },
   {
    "role": "align-center",
@@ -5367,8 +5359,7 @@
    "legacy": [],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "AU21 #855"
+   ]
   },
   {
    "role": "align-right",
@@ -5379,8 +5370,7 @@
    "legacy": [],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "AU21 #855"
+   ]
   },
   {
    "role": "align-top",
@@ -5427,8 +5417,7 @@
    "legacy": [],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "AU21 #855"
+   ]
   },
   {
    "role": "distribute-vertical",
