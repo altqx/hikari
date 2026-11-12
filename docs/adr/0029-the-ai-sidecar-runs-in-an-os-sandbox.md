@@ -14,6 +14,8 @@ This amends [ADR 0026](0026-hikari-ai-runs-in-a-typescript-sidecar-on-bun.md). I
 
 It adds to ADR 0026's Agents and Tests sections. The rest of ADR 0026 stands.
 
+Amended by [AI15c #443](https://github.com/altqx/hikari/issues/443) on 2026-11-12: ACP agents run in a profile of their own instead of unsandboxed. MCP servers stay unsandboxed in v1.
+
 ## The sandbox
 
 - **One shared module.** `hikari_sandbox` in `src/backends` starts a process under a `sandbox::Profile`: the paths it may read and execute, read, or read and write, and whether it gets the network. Plugins ([PL7 #419](https://github.com/altqx/hikari/issues/419)) reuse it.
@@ -71,7 +73,8 @@ It adds to ADR 0026's Agents and Tests sections. The rest of ADR 0026 stands.
   - a response from the sidecar passes only for a request the agent sent.
 
   Codex's own bubblewrap sandbox can't start inside Landlock. That affects only commands, and Hikari declines all of them.
-- **MCP servers and ACP agents run unsandboxed in v1.** They are user commands (`npx …`, `gemini --acp`) that need their own config, caches and hosts, so Qt starts them without a profile. The AI guide says so.
+- **MCP servers run unsandboxed in v1.** They are user commands (`npx …`) that need their own config, caches and hosts, so Qt starts them without a profile. The AI guide says so.
+- **ACP agents run in a profile.** Each one has the network, but it can write only to its own state folders and a private work folder under `ai/agents/`: OpenCode's four XDG `opencode` folders, Antigravity's profile, and `ai/agents/custom/<id>` for the user's own agents, which is their home too.
 
 ## Tests
 

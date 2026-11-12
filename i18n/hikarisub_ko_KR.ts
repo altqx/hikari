@@ -637,7 +637,7 @@
     </message>
     <message>
         <source>Retry</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">다시 시도</translation>
     </message>
     <message>
         <source>Carried on from the summary of “%1”</source>
@@ -14285,6 +14285,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>복사</translation>
     </message>
     <message>
+        <source>%1 is older than the oldest HikariSub supports (%2). Run this in a terminal:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Command</source>
+        <translation type="unfinished">명령</translation>
+    </message>
+    <message>
+        <source>Arguments</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Open auth.openai.com</source>
         <translation>auth.openai.com 열기</translation>
     </message>
@@ -14315,6 +14327,46 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Try again</source>
         <translation>다시 시도</translation>
+    </message>
+    <message>
+        <source>Sign in with Google…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Signed in with Google</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Google’s sign-in page is open in your browser. Sign in there, then paste the code the page shows.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Checking the code…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Starting Antigravity’s sign-in…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Code from Google’s page</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Continue</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>HikariSub keeps its own Google sign-in for Antigravity and never reads ~/.gemini.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add agent</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Any agent that speaks ACP over stdio. It runs with its own folder as its home and can write nowhere else.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>MCP</source>
@@ -14817,10 +14869,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Command</source>
-        <translation type="unfinished">명령</translation>
-    </message>
-    <message>
         <source>Environment</source>
         <translation type="unfinished"></translation>
     </message>
@@ -14918,6 +14966,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>At 90% of the model’s context window, old tool results are cleared, then older turns are summarised. Your history stays in the panel.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Found an asdf shim that asdf couldn’t resolve: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Found a mise shim that mise couldn’t resolve: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Antigravity isn’t on PATH.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -15906,6 +15966,22 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>이 탭은 이제 %1 프로젝트를 사용합니다.</translation>
     </message>
     <message>
+        <source>This project has its own scripts, plugin settings or AI keys. Trust “%1” to use them.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This project has its own AI keys. Trust “%1” to use them; until then Hikari AI uses yours.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>project.toml holds an AI key for %1. HikariSub ignores it: keys go in .hikari/credentials.toml, which git doesn’t share.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Project settings…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>This file is in the project %1.</source>
         <translation>이 파일은 %1 프로젝트에 있습니다.</translation>
     </message>
@@ -15960,6 +16036,102 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Trust folder</source>
         <translation>폴더 신뢰</translation>
+    </message>
+    <message>
+        <source>From %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>From the credentials file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Yours. Project not trusted</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No credentials file. Uses yours</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not found. Uses yours</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Needs no key</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>project.toml holds an AI key for %1, which is ignored. Keys go in the credentials file. If project.toml was committed or shared, replace the key at the provider too.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to credentials file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>“%1” isn’t trusted, so its keys aren’t used. Hikari AI uses yours in this window.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A key from this machine’s environment or from this Project’s credentials file replaces yours, only in this Project’s windows. The environment comes first. Base URLs, budgets and on/off stay yours.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Provider</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Environment variable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Credentials entry</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Key used</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>None</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Environment variable for %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Credentials entry for %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Credentials file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 · git ignores it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 · not created</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Create credentials file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show in folder</source>
+        <translation type="unfinished">폴더에서 보기</translation>
+    </message>
+    <message>
+        <source>Creates the file and .hikari/.gitignore, which keeps it and project.local.toml out of git. Keys never reach Hikari AI or the model.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
