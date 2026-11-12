@@ -26,6 +26,7 @@ class AiReview;
 class DocumentFiles;
 }
 namespace hikari::backends::ai {
+struct AgentThread;
 class AgentThreads;
 class ThreadStore;
 }
@@ -174,6 +175,10 @@ public:
     Q_INVOKABLE bool openLink(const QString &url) const;
     /// SearchSuggestions.qml's properties for Google's snippet.
     Q_INVOKABLE QVariantMap suggestions(const QString &html) const;
+    /// Opens the open thread's Project AGENTS.md in the system editor.
+    Q_INVOKABLE void openProjectInstructions() const;
+    /// The active window or its Project changed: the thread list puts that Project's threads first.
+    void projectChanged();
 
 signals:
     void switched();
@@ -194,6 +199,7 @@ private:
     void refreshThread();
     std::vector<std::string> safeFolders() const;
     std::optional<std::string> pathOf(application::DocumentId document) const;
+    QString projectInstructionsFile(const backends::ai::AgentThread &thread) const;
 
     Wiring m_wiring;
     std::unique_ptr<backends::ai::ThreadStore> m_store;

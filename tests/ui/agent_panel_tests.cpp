@@ -4,6 +4,7 @@
 #include "hikari/app/automation_shell.h"
 #include "hikari/application/ai_providers.h"
 #include "hikari/application/hotkeys.h"
+#include "hikari/application/project.h"
 #include "hikari/backends/ai_agent_broker.h"
 #include "hikari/backends/ai_agent_cli.h"
 #include "hikari/backends/ai_sidecar_host.h"
@@ -419,6 +420,54 @@ private slots:
         QVERIFY(click(QStringLiteral("agentThreadsButton")));
         QTRY_VERIFY(item(QStringLiteral("agentThreadRow")));
         shoot(QStringLiteral("agent-threads"), QStringLiteral("Tighten the long first line"));
+    }
+
+    void aProjectListsItsThreadsFirstAndShowsWhenItsAgentsFileIsOn()
+    {
+        QStringList opened;
+        const auto previous = backends::desktop::replaceRoutes({.openUrl = [&](const QUrl &url) {
+            opened << url.toLocalFile();
+            return true;
+        }});
+        auto restore = qScopeGuard([&] { backends::desktop::replaceRoutes(previous); });
+        const QString show = at(QStringLiteral("Show S02"));
+        QVERIFY(QDir().mkpath(show));
+        QFile agents(show + QStringLiteral("/AGENTS.md"));
+        QVERIFY(agents.open(QIODevice::WriteOnly));
+        agents.write("Keep honorifics.");
+        agents.close();
+
+        openPanel();
+        QVERIFY(click(QStringLiteral("agentNewThread")));
+        QTRY_VERIFY(agent().thread().contains(QStringLiteral("id")));
+        const QString outside = agent().thread().value(QStringLiteral("id")).toString();
+        QVERIFY(!agent().thread().value(QStringLiteral("projectInstructions")).toBool());
+        QVERIFY(!item(QStringLiteral("agentProjectInstructions")));
+
+        QVERIFY(application->openFolder(show, 0, int(application::WindowRequest::Reuse)).value(QStringLiteral("ok")).toBool());
+        QVERIFY(click(QStringLiteral("agentNewThread")));
+        QTRY_VERIFY(agent().thread().value(QStringLiteral("id")).toString() != outside);
+        const QString inProject = agent().thread().value(QStringLiteral("id")).toString();
+        QVERIFY(agent().thread().value(QStringLiteral("projectInstructions")).toBool());
+        QTRY_VERIFY(item(QStringLiteral("agentProjectInstructions")));
+        QVERIFY(click(QStringLiteral("agentOpenProjectInstructions")));
+        QCOMPARE(opened, QStringList{QFileInfo(agents).absoluteFilePath()});
+
+        agent().open(outside);
+        QTest::qWait(5);
+        agent().rename(outside, QStringLiteral("Newest, outside the Project"));
+        const auto ids = [&] {
+            QStringList out;
+            for (const QVariant &t : agent().threads())
+                out << t.toMap().value(QStringLiteral("id")).toString() + QLatin1Char(':')
+                           + t.toMap().value(QStringLiteral("day")).toString();
+            return out;
+        };
+        QCOMPARE(ids(), (QStringList{inProject + QStringLiteral(":project"), outside + QStringLiteral(":today")}));
+        QTRY_VERIFY(!item(QStringLiteral("agentProjectInstructions")));
+        QVERIFY(click(QStringLiteral("agentThreadsButton")));
+        QTRY_VERIFY(item(QStringLiteral("agentThreadRow")));
+        shoot(QStringLiteral("agent-project-threads"), QStringLiteral("Show S02"));
     }
 
     void aProposalTakesTheFocusFromThePanelButNotFromTheComposer()
