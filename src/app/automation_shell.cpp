@@ -280,6 +280,7 @@ AutomationShell::AutomationShell(Paths paths, application::DocumentFiles &files,
     m_router.setEditor(m_editorPort.get());
     m_router.setClipboard(&m_clipboard);
     m_router.setTextMeasure(&m_measure);
+    m_router.setGlyphOutlines(&m_glyphs);
     m_router.setFilePicker(&m_picker);
     m_resolutionPort = std::make_unique<ResolutionAdapter>(
         [this](const application::ScriptResolutionRequest &request, ResolutionAdapter::Reply reply) {

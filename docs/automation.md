@@ -125,6 +125,16 @@ The helper asks the app as little as it can while a run lasts, and the answers a
 - `get_frame` asks only for the frame's size. `getPixel` and `getPixelFormatted` ask for one pixel, until a frame object has read 64. Then, or on `frame:data()`, the frame is copied once. The app keeps a run's last two decoded frames and forgets them when the run ends.
 - On Windows the text measure keeps its device context and up to 64 GDI fonts.
 
+### The shape kernel (AU6, [#845](https://github.com/altqx/hikari/issues/845))
+
+`aegisub.__shape_impl` is the native shape kernel (`shape_kernel.h`, `src/helpers/lua/shape_tables.h`). The bundled `Yutils.lua` ends with a short, documented patch that sends `Yutils.shape.bounding`, `flatten`, `move`, `transform`, `to_outline` and `to_pixels` to it.
+- Each kernel function gives the Lua's bytes and numbers: `FP_PRECISION` rounding to 3 places, LuaJIT's `%.14g` numbers, `SUPERSAMPLING` coverage, and even the order Lua's `table.sort` leaves equal row stops in. `tests/fixtures/shape-kernel/make_goldens.lua` writes the goldens from the shipped Yutils, and `hikari_shape_goldens_are_the_shipped_yutils` checks that they still match it.
+- `hikari_application_shape_kernel_tests` pins the kernel to the goldens, and `hikari_backends_yutils_route_tests` runs the generator through the patched Yutils, which must give the same file.
+- The kernel answers false for anything it does not reproduce: a hex, exponent, `inf`, `nan` or `-0` number, or a call Yutils rejects. The Lua then runs, with its own errors. `transform` routes only matrices made by `Yutils.math.create_matrix`.
+- `text_to_shape` stays on pango (or GDI) because its output cannot be pinned. Where pangocairo does not load, `create_font` gives a font whose `metrics`, `text_extents` and `text_to_shape` come from the app's fonts through FreeType (`TextOutline`, `FreetypeGlyphOutlines`), sized as libass sizes them.
+- The kernel also offers `combine(a, b, op)` and `offset(shape, delta[, join])` (clipper2, filled nonzero). These are not part of Yutils.
+- A user's own Yutils (DependencyControl installs it in their Include, which wins) has no patch and runs the Lua.
+
 The third-party corpus (`tests/fixtures/automation-thirdparty`) runs all 14 of arch1t3cht's macros scripts on a fixture with folds and a perspective plane in its extradata, a 23.976 fps fixture video and a clipboard. `expected.json` pins each run.
 - FocusLines draws at random angles, so its drawings are masked (`random_drawings`).
 - AegisubChain's run is Manage Chains. Its Configure fails with the bundled DependencyControl, because `ipairs` over a config list raises "numerically indexed config hive keys are not supported". It fails the same way in Aegisub 3.5.1, whose LuaJIT also honours `__ipairs`.

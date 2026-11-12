@@ -24,6 +24,10 @@ target_sources(hikari_application PRIVATE node_catalogue.cpp node_graph.cpp node
 # Generated Lines must be byte-identical on every platform.
 set_source_files_properties(karaoke_layout.cpp node_effects.cpp PROPERTIES COMPILE_OPTIONS
     "$<$<CXX_COMPILER_ID:GNU,Clang>:-ffp-contract=off>;$<$<CXX_COMPILER_ID:MSVC>:/fp:precise>")
+target_sources(hikari_application PRIVATE shape_yutils.cpp shape_geometry.cpp include/hikari/application/shape_kernel.h)
+target_link_libraries(hikari_application PRIVATE Hikari::clipper2)
+set_source_files_properties(shape_yutils.cpp PROPERTIES COMPILE_OPTIONS
+    "$<$<CXX_COMPILER_ID:GNU,Clang>:-ffp-contract=off>;$<$<CXX_COMPILER_ID:MSVC>:/fp:precise>")
 target_sources(hikari_application PRIVATE guide_links.cpp include/hikari/application/guide_links.h)
 target_sources(hikari_application PRIVATE ai_providers.cpp include/hikari/application/ai_providers.h)
 target_sources(hikari_application PRIVATE search_suggestions.cpp include/hikari/application/search_suggestions.h)
@@ -45,7 +49,7 @@ if(WIN32)
 endif()
 target_sources(hikari_application PRIVATE update_signature.cpp include/hikari/application/update_signature.h)
 target_link_libraries(hikari_application PUBLIC hikari_core hikari_json hikari_minisign)
-hikari_module(hikari_application ALLOW hikari_core hikari_json hikari_minisign)
+hikari_module(hikari_application ALLOW hikari_core hikari_json hikari_minisign Hikari::clipper2)
 target_sources(hikari_application PRIVATE session_file.cpp)
 target_sources(hikari_application PRIVATE document_scripts.cpp)
 target_sources(hikari_application PRIVATE macro_validation.cpp)
