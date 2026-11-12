@@ -1728,7 +1728,7 @@ FocusScope {
                 wrapMode: Text.Wrap
                 color: Theme.muted
                 textFormat: Text.PlainText
-                text: qsTr("%1 %2 · %3").arg(install.item.name ?? "").arg(install.item.version ?? "").arg(install.item.plugin ?? "")
+                text: qsTr("%1 %2 · %3").arg(install.item.name ?? "", install.item.version ?? "", install.item.plugin ?? "")
             }
             Repeater {
                 model: install.open ? [
@@ -1886,9 +1886,9 @@ FocusScope {
                     text: install.item.status === "running" ? qsTr("Installing %1").arg(install.item.name ?? "")
                           : install.item.status === "installed"
                             ? (install.fullTrust ? qsTr("Installed %1 %2 · full trust") : qsTr("Installed %1 %2 · restricted"))
-                                  .arg(install.item.name ?? "").arg(install.item.version ?? "")
-                          : install.item.status === "failed" ? qsTr("%1 didn’t install: %2").arg(install.item.name ?? "").arg(install.item.result ?? "")
-                          : install.item.status === "declined" ? (install.item.message ? qsTr("Didn’t install %1 · “%2”").arg(install.item.name ?? "").arg(install.item.message)
+                                  .arg(install.item.name ?? "", install.item.version ?? "")
+                          : install.item.status === "failed" ? qsTr("%1 didn’t install: %2").arg(install.item.name ?? "", install.item.result ?? "")
+                          : install.item.status === "declined" ? (install.item.message ? qsTr("Didn’t install %1 · “%2”").arg(install.item.name ?? "", install.item.message)
                                                                                        : qsTr("Didn’t install %1").arg(install.item.name ?? ""))
                           : qsTr("No longer needed")
                 }
