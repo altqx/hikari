@@ -1,4 +1,5 @@
 import { AgentSessions, whileTurnRuns } from "./agent/session";
+import { AcpSession } from "./agents/acp";
 import { ClaudeSession } from "./agents/claude";
 import { CodexSession } from "./agents/codex";
 import { AgentRelay } from "./agents/relay";
@@ -148,6 +149,12 @@ export class Sidecar {
             }),
             codex: (id, params, send) => new CodexSession(id, params, {
                 spawn: (session) => agentRelay.start("codex", { args: [], env: {}, session }),
+                kindOf: (tool) => this.kindOf(tool),
+                send,
+                version: build.version,
+            }),
+            acp: (id, params, send) => new AcpSession(id, params, {
+                spawn: (session) => agentRelay.start(params.agent!, { args: [], env: {}, session }),
                 kindOf: (tool) => this.kindOf(tool),
                 send,
                 version: build.version,

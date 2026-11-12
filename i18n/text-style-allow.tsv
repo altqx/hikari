@@ -48,3 +48,7 @@ HikariSub.Agent	Turn on Full access	title-case	Full access is the agent mode’s
 HikariSub.Agent	Searched with Google	title-case	Google is the product name
 HikariSub.Documents	QQ Music QRC, decoded	title-case	QQ Music is the service’s name
 HikariSub.Tags	Clean Tags rules	title-case	the bundled Clean Tags script's name
+HikariSub.Options	Sign in with Google…	title-case	Google is the product’s name
+HikariSub.Options	Signed in with Google	title-case	Google is the product’s name
+HikariSub.Options	Starting Antigravity’s sign-in…	title-case	Antigravity is the product’s name
+HikariSub.Options	Code from Google’s page	title-case	Google is the product’s name

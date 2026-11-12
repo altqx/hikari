@@ -498,11 +498,19 @@ hikari_add_gtest(hikari_backends_ai_http_relay_tests SOURCES ai_http_relay_tests
     LIBRARIES hikari_ai Qt6::Core Qt6::Network LABELS backends)
 add_executable(hikari_fake_agent fake_agent.cpp)
 target_link_libraries(hikari_fake_agent PRIVATE hikari_api)
+add_executable(hikari_fake_acp_agent fake_acp_agent.cpp)
+target_link_libraries(hikari_fake_acp_agent PRIVATE hikari_api Qt6::Core)
+add_executable(hikari_test_mcp_http_bridge test_mcp_http_bridge.cpp)
+target_link_libraries(hikari_test_mcp_http_bridge PRIVATE hikari_ai Qt6::Core)
 hikari_add_gtest(hikari_backends_ai_agent_broker_tests SOURCES ai_agent_broker_tests.cpp
-    LIBRARIES hikari_ai Qt6::Core LABELS backends)
+    LIBRARIES hikari_ai Qt6::Core Qt6::Network LABELS backends)
 target_compile_definitions(hikari_backends_ai_agent_broker_tests PRIVATE
-    HIKARI_FAKE_AGENT="$<TARGET_FILE:hikari_fake_agent>")
-add_dependencies(hikari_backends_ai_agent_broker_tests hikari_fake_agent)
+    HIKARI_FAKE_AGENT="$<TARGET_FILE:hikari_fake_agent>"
+    HIKARI_FAKE_ACP_AGENT="$<TARGET_FILE:hikari_fake_acp_agent>"
+    HIKARI_TEST_MCP_HTTP_BRIDGE="$<TARGET_FILE:hikari_test_mcp_http_bridge>")
+add_dependencies(hikari_backends_ai_agent_broker_tests hikari_fake_agent hikari_fake_acp_agent hikari_test_mcp_http_bridge)
+hikari_add_gtest(hikari_backends_ai_antigravity_tests SOURCES ai_antigravity_tests.cpp
+    LIBRARIES hikari_ai Qt6::Core Qt6::Network Qt6::Test LABELS backends)
 hikari_add_gtest(hikari_backends_ai_signin_tests SOURCES ai_signin_tests.cpp
     LIBRARIES hikari_ai Qt6::Core Qt6::Network LABELS backends)
 target_include_directories(hikari_backends_ai_signin_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")

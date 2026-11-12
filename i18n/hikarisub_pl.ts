@@ -13981,6 +13981,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Kopiuj</translation>
     </message>
     <message>
+        <source>%1 is older than the oldest HikariSub supports (%2). Run this in a terminal:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Command</source>
+        <translation type="unfinished">Polecenie</translation>
+    </message>
+    <message>
+        <source>Arguments</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Open auth.openai.com</source>
         <translation>Otwórz auth.openai.com</translation>
     </message>
@@ -14011,6 +14023,46 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Try again</source>
         <translation>Spróbuj ponownie</translation>
+    </message>
+    <message>
+        <source>Sign in with Google…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Signed in with Google</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Google’s sign-in page is open in your browser. Sign in there, then paste the code the page shows.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Checking the code…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Starting Antigravity’s sign-in…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Code from Google’s page</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Continue</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>HikariSub keeps its own Google sign-in for Antigravity and never reads ~/.gemini.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add agent</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Any agent that speaks ACP over stdio. It runs with its own folder as its home and can write nowhere else.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>MCP</source>
@@ -14399,6 +14451,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Requests go only to the providers you add and to %1. The AI component isn’t sandboxed on this system.</source>
         <translation>Żądania trafiają tylko do dodanych dostawców i do %1. W tym systemie komponent AI nie jest izolowany w piaskownicy.</translation>
+    </message>
+    <message>
+        <source>Found an asdf shim that asdf couldn’t resolve: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Found a mise shim that mise couldn’t resolve: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Antigravity isn’t on PATH.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

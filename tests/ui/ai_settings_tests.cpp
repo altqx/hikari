@@ -123,9 +123,9 @@ protected:
         p.signIn = [this](ai::KeyStore &keys) {
             return std::make_unique<backends::ai::AiSignIn>(keys, auth.endpoints(browserPort), time.clock());
         };
-        p.findAgent = [this](const QString &agent, std::function<void(std::optional<backends::ai::AgentCli>)> done) {
+        p.findAgent = [this](const QString &agent, std::function<void(std::optional<backends::ai::AgentCli>, QString)> done) {
             const auto it = agentClis.find(agent);
-            done(it == agentClis.end() ? std::nullopt : std::optional(it->second));
+            done(it == agentClis.end() ? std::nullopt : std::optional(it->second), agentMissing.value(agent));
         };
         p.agentInstall = [this](const backends::ai::AgentCli &cli) {
             const auto it = installs.find(cli.agent);
@@ -210,6 +210,7 @@ protected:
     test::MinisignSigner signer;
     int hostsBuilt = 0;
     std::map<QString, backends::ai::AgentCli> agentClis;
+    QHash<QString, QString> agentMissing;
     std::map<QString, backends::ai::AgentInstall> installs;
     QHash<QString, QString> latest;
     int latestAsked = 0;
@@ -531,6 +532,23 @@ TEST_F(AiSettingsTest, CodexIsFoundOnPathWithItsVersion)
     EXPECT_EQ(agent(page, "codex", "method").toString(), QStringLiteral("unknown"));
     EXPECT_FALSE(agent(page, "codex", "canUpdate").toBool());
     EXPECT_EQ(hostsBuilt, 0);
+}
+
+TEST_F(AiSettingsTest, AnAgentThatWasFoundButCantBeUsedSaysWhy)
+{
+    app::AiFeatures features(settings, ports());
+    app::AiSettings page(features);
+    agentMissing[QStringLiteral("claude")] = QStringLiteral("/home/u/.local/share/mise/shims/claude");
+    agentMissing[QStringLiteral("codex")] = QStringLiteral("/home/u/.asdf/shims/codex");
+    page.checkAgents();
+    EXPECT_FALSE(agent(page, "claude", "found").toBool());
+    EXPECT_EQ(agent(page, "claude", "missing").toString(),
+              QStringLiteral("Found a mise shim that mise couldn’t resolve: /home/u/.local/share/mise/shims/claude"));
+    EXPECT_EQ(agent(page, "codex", "missing").toString(),
+              QStringLiteral("Found an asdf shim that asdf couldn’t resolve: /home/u/.asdf/shims/codex"));
+    agentMissing.clear();
+    page.checkAgents();
+    EXPECT_EQ(agent(page, "codex", "missing").toString(), QString());
 }
 
 TEST_F(AiSettingsTest, AgentBadgesCompareEachCliWithItsSourcesLatestVersion)

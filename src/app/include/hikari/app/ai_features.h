@@ -1,6 +1,7 @@
 #pragma once
 
 #include "hikari/application/ai_providers.h"
+#include "hikari/backends/ai_agent_broker.h"
 #include "hikari/backends/ai_agent_cli.h"
 #include "hikari/backends/ai_sidecar_updater.h"
 
@@ -15,6 +16,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <vector>
 
 namespace hikari::api {
 class Api;
@@ -24,6 +26,8 @@ class AgentBroker;
 class AiRequests;
 class AiSignIn;
 class AiSidecarHost;
+class AntigravitySignIn;
+class TokenFileLease;
 }
 namespace hikari::ui {
 class SettingsStore;
@@ -45,6 +49,21 @@ public:
     static constexpr const char *kWebSearchSetting = "ai.webSearch";
     static constexpr const char *kSearchServiceSetting = "ai.searchService";
     static constexpr const char *kAutoUpdateSetting = "ai.autoUpdate";
+    static constexpr const char *kCustomAgentsSetting = "ai.agents.custom";
+    static constexpr const char *kOpenCode = "opencode";
+    static constexpr const char *kAntigravity = "antigravity";
+
+    /// An agent Qt talks to over ACP: OpenCode, Antigravity, or one of the user's own.
+    struct AcpAgent {
+        QString id;
+        QString name;
+        /// What starts it: a path, or a name looked up on PATH.
+        QString command;
+        QString arguments;
+        /// The CLI Qt starts; empty when it isn't found.
+        QString program;
+        bool operator==(const AcpAgent &) const = default;
+    };
 
     struct Timing {
         int checkMs = 60 * 60 * 1000;
@@ -64,12 +83,20 @@ public:
         std::function<bool()> autoUpdateOffByPolicy;
         /// Adds the agent CLIs the sidecar may ask Qt to start.
         std::function<void(backends::ai::AgentBroker &, application::ai::KeyStore &)> agents;
+        /// Where an agent's CLI is, found as findAgentCli finds it; empty when it isn't there.
+        std::function<QString(const QString &command)> acpCli;
+        /// How Qt starts an ACP agent; Antigravity borrows its sign-in from `antigravity`.
+        std::function<std::optional<backends::ai::AgentSpec>(const AcpAgent &,
+                                                             std::shared_ptr<backends::ai::TokenFileLease> antigravity)>
+            acpSpec;
+        /// Where agy reads its sign-in in Hikari's Antigravity profile.
+        QString antigravityTokenFile;
         std::function<std::unique_ptr<backends::ai::AiSignIn>(application::ai::KeyStore &)> signIn;
         /// Whether Qt can start `agent` ("claude" or "codex"), found as Settings › AI › External agents finds it; the
         /// panel offers only these.
         std::function<bool(const QString &agent)> agentOnPath;
         /// Finds an agent CLI ("claude" or "codex") and asks it for its version.
-        std::function<void(const QString &agent, std::function<void(std::optional<backends::ai::AgentCli>)>)> findAgent;
+        std::function<void(const QString &agent, std::function<void(std::optional<backends::ai::AgentCli>, QString unresolvedShim)>)> findAgent;
         std::function<backends::ai::AgentInstall(const backends::ai::AgentCli &)> agentInstall;
         /// The latest version an install's own source offers; empty when it couldn't be read.
         std::function<void(const backends::ai::AgentInstall &, std::function<void(QString)>)> agentLatest;
@@ -118,6 +145,13 @@ public:
     bool agentFound(const QString &agent) const { return m_ports.agentOnPath && m_ports.agentOnPath(agent); }
     /// How many sessions of `agent` ("claude" or "codex") the sidecar is running.
     std::size_t agentSessions(const std::string &agent) const;
+    /// The user's own ACP agents, found or not.
+    std::vector<AcpAgent> customAgents() const;
+    void setCustomAgents(const std::vector<AcpAgent> &agents);
+    /// OpenCode and Antigravity when found, then the user's own agents that are. None on Windows (#931).
+    std::vector<AcpAgent> acpAgents() const;
+    /// `agy acp --login` in Hikari's Antigravity profile. Null with AI off or without agy.
+    std::unique_ptr<backends::ai::AntigravitySignIn> antigravitySignIn();
 
     bool autoUpdate() const;
     bool autoUpdateOffByPolicy() const;
@@ -147,6 +181,7 @@ private:
     void poll();
     bool busy() const;
     void replaceHost();
+    void addAcpAgents();
     std::optional<backends::ai::SidecarInstall> runnable() const;
     backends::ai::AiSidecarHost *buildHost();
     void watchHost(backends::ai::AiSidecarHost *host, const QString &version);

@@ -21,6 +21,7 @@ ScrollView {
     readonly property var codex: ai ? ai.codex : ({})
     readonly property var components: ai ? ai.components : ({})
     readonly property var agents: ai ? ai.agents : ({})
+    readonly property var acp: ai ? ai.acp : ({ available: false, antigravity: ({}) })
     readonly property bool autoUpdate: dialog.values["ai.autoUpdate"] === true && components.policyOff !== true
     readonly property bool webSearchOn: dialog.values["ai.webSearch"] === true
     readonly property string stagedService: dialog.values["ai.searchService"] ?? ""
@@ -280,7 +281,11 @@ ScrollView {
     function agentNeedsUpdate(row) { return row.badge === "update" || row.badge === "unsupported" || row.badge === "broken" }
     function agentLine(row, name) {
         if (!row.found)
-            return qsTr("Not found on PATH.")
+            return row.missing ? row.missing : qsTr("Not found on PATH.")
+        if (row.acp)
+            return row.badge === "unsupported"
+                   ? qsTr("%1 is older than the oldest HikariSub supports (%2). Run this in a terminal:").arg(row.version, row.minimum)
+                   : row.version ? row.version : qsTr("Found on PATH.")
         if (row.state === "updating")
             return qsTr("Running %1. New sessions use the new version.").arg(row.command)
         if (row.outcome === "unchanged")
@@ -481,6 +486,59 @@ ScrollView {
                 visible: program.updating
                 text: qsTr("Cancel")
                 onClicked: page.ai.cancelAgentUpdate(program.agent)
+            }
+        }
+    }
+    component CustomAgentForm: GridLayout {
+        id: agentForm
+        required property var agent
+        required property Item list
+        objectName: "aiCustomAgentForm"
+        columns: 2
+        columnSpacing: 10
+        rowSpacing: 6
+        Label { text: qsTr("Name") }
+        TextField {
+            id: agentName
+            objectName: "aiCustomAgentName"
+            text: agentForm.agent.name
+            Accessible.name: qsTr("Name")
+            Layout.fillWidth: true
+        }
+        Label { text: qsTr("Command") }
+        TextField {
+            id: agentCommand
+            objectName: "aiCustomAgentCommand"
+            text: agentForm.agent.command
+            placeholderText: "my-agent"
+            font.family: page.codeFontFamily
+            Accessible.name: qsTr("Command")
+            Layout.fillWidth: true
+        }
+        Label { text: qsTr("Arguments") }
+        TextField {
+            id: agentArguments
+            objectName: "aiCustomAgentArguments"
+            text: agentForm.agent.arguments
+            placeholderText: "--acp"
+            font.family: page.codeFontFamily
+            Accessible.name: qsTr("Arguments")
+            Layout.fillWidth: true
+        }
+        RowLayout {
+            spacing: 8
+            Layout.columnSpan: 2
+            Item { Layout.fillWidth: true }
+            Button {
+                text: qsTr("Cancel")
+                onClicked: agentForm.list.editing = ""
+            }
+            PrimaryButton {
+                objectName: "aiCustomAgentSave"
+                enabled: agentName.text.trim() !== "" && agentCommand.text.trim() !== ""
+                text: qsTr("Save")
+                onClicked: agentForm.list.save(agentForm.agent.id || page.acp.newId(), agentName.text, agentCommand.text,
+                                             agentArguments.text)
             }
         }
     }
@@ -1521,6 +1579,241 @@ ScrollView {
                             }
                         }
                     }
+                }
+            }
+            Rectangle {
+                visible: page.acp.available
+                color: "transparent"
+                border.color: Theme.line
+                radius: 2
+                implicitHeight: openCodeProgram.implicitHeight + 20
+                Layout.fillWidth: true
+                AgentProgram {
+                    id: openCodeProgram
+                    agent: "opencode"
+                    name: "OpenCode"
+                    x: 10
+                    y: 10
+                    width: parent.width - 20
+                }
+            }
+            Rectangle {
+                visible: page.acp.available
+                color: "transparent"
+                border.color: Theme.line
+                radius: 2
+                implicitHeight: antigravityColumn.implicitHeight + 20
+                Layout.fillWidth: true
+                ColumnLayout {
+                    id: antigravityColumn
+                    objectName: "aiAntigravity"
+                    readonly property var sign: page.acp.antigravity
+                    readonly property bool found: (page.agents.agy ?? {}).found === true
+                    x: 10
+                    y: 10
+                    width: parent.width - 20
+                    spacing: 6
+                    AgentProgram { agent: "agy"; name: "Antigravity" }
+                    RowLayout {
+                        objectName: "aiAntigravitySignedOut"
+                        visible: antigravityColumn.found && antigravityColumn.sign.state === "" && !antigravityColumn.sign.signedIn
+                        spacing: 8
+                        Label { text: qsTr("Not signed in") }
+                        Button {
+                            objectName: "aiAntigravitySignIn"
+                            text: qsTr("Sign in with Google…")
+                            onClicked: page.acp.signIn()
+                        }
+                    }
+                    RowLayout {
+                        objectName: "aiAntigravitySignedIn"
+                        visible: antigravityColumn.sign.state === "" && antigravityColumn.sign.signedIn === true
+                        spacing: 6
+                        Label { text: qsTr("Signed in with Google") }
+                        Button {
+                            objectName: "aiAntigravitySignOut"
+                            text: qsTr("Sign out")
+                            onClicked: page.acp.signOut()
+                        }
+                    }
+                    ColumnLayout {
+                        objectName: "aiAntigravityPanel"
+                        visible: antigravityColumn.sign.state !== ""
+                        spacing: 6
+                        Layout.fillWidth: true
+                        Label {
+                            text: antigravityColumn.sign.state === "code"
+                                  ? qsTr("Google’s sign-in page is open in your browser. Sign in there, then paste the code the page shows.")
+                                  : antigravityColumn.sign.state === "checking"
+                                    ? qsTr("Checking the code…")
+                                    : qsTr("Starting Antigravity’s sign-in…")
+                            wrapMode: Text.Wrap
+                            Layout.fillWidth: true
+                        }
+                        RowLayout {
+                            visible: antigravityColumn.sign.state === "code"
+                            spacing: 8
+                            Layout.fillWidth: true
+                            TextField {
+                                id: antigravityCode
+                                objectName: "aiAntigravityCode"
+                                placeholderText: qsTr("Code from Google’s page")
+                                Accessible.name: placeholderText
+                                Layout.fillWidth: true
+                                onAccepted: antigravityContinue.clicked()
+                            }
+                            PrimaryButton {
+                                id: antigravityContinue
+                                objectName: "aiAntigravityContinue"
+                                enabled: antigravityCode.text.trim() !== ""
+                                text: qsTr("Continue")
+                                onClicked: {
+                                    page.acp.enterCode(antigravityCode.text)
+                                    antigravityCode.clear()
+                                }
+                            }
+                        }
+                        RowLayout {
+                            spacing: 8
+                            BusyIcon {}
+                            Item { Layout.fillWidth: true }
+                            Button {
+                                visible: antigravityColumn.sign.state === "code"
+                                text: qsTr("Open the page again")
+                                onClicked: page.acp.openPage()
+                            }
+                            Button {
+                                objectName: "aiAntigravityCancel"
+                                text: qsTr("Cancel")
+                                onClicked: page.acp.cancel()
+                            }
+                        }
+                    }
+                    RowLayout {
+                        visible: (antigravityColumn.sign.error ?? "") !== ""
+                        spacing: 8
+                        Icon { iconRole: "notice-error"; Layout.alignment: Qt.AlignTop }
+                        Label {
+                            objectName: "aiAntigravityError"
+                            text: antigravityColumn.sign.error ?? ""
+                            textFormat: Text.PlainText
+                            wrapMode: Text.Wrap
+                            Layout.fillWidth: true
+                        }
+                    }
+                    Note {
+                        visible: antigravityColumn.found
+                        text: qsTr("HikariSub keeps its own Google sign-in for Antigravity and never reads ~/.gemini.")
+                        Layout.leftMargin: 0
+                        Layout.topMargin: 0
+                    }
+                }
+            }
+            ColumnLayout {
+                id: customAgents
+                objectName: "aiCustomAgents"
+                visible: page.acp.available
+                readonly property var rows: (page.dialog.values["ai.agents.custom"] ?? []).map(entry => {
+                    try { return JSON.parse(entry) } catch (e) { return null }
+                }).filter(row => row !== null && typeof row.id === "string")
+                property string editing: ""
+                function save(id, name, command, args) {
+                    const row = { id: id, name: name.trim(), command: command.trim(), arguments: args.trim() }
+                    const kept = rows.filter(r => r.id !== id)
+                    const at = rows.findIndex(r => r.id === id)
+                    kept.splice(at < 0 ? kept.length : at, 0, row)
+                    page.dialog.put("ai.agents.custom", kept.map(r => JSON.stringify(r)))
+                    editing = ""
+                }
+                function remove(id) {
+                    page.dialog.put("ai.agents.custom", rows.filter(r => r.id !== id).map(r => JSON.stringify(r)))
+                }
+                spacing: 6
+                Layout.fillWidth: true
+                Repeater {
+                    model: customAgents.rows
+                    delegate: Rectangle {
+                        id: customRow
+                        required property var modelData
+                        readonly property var found: page.ai ? page.acp.find(modelData.command) : ({})
+                        objectName: "aiCustomAgent_" + modelData.id
+                        color: "transparent"
+                        border.color: Theme.line
+                        radius: 2
+                        implicitHeight: customColumn.implicitHeight + 20
+                        Layout.fillWidth: true
+                        ColumnLayout {
+                            id: customColumn
+                            x: 10
+                            y: 10
+                            width: parent.width - 20
+                            spacing: 6
+                            RowLayout {
+                                visible: customAgents.editing !== customRow.modelData.id
+                                spacing: 8
+                                Layout.fillWidth: true
+                                Label { text: customRow.modelData.name; textFormat: Text.PlainText; font.bold: true }
+                                Label {
+                                    text: [customRow.modelData.command, customRow.modelData.arguments].join(" ").trim()
+                                    textFormat: Text.PlainText
+                                    font.family: page.codeFontFamily
+                                    color: Theme.muted
+                                    elide: Text.ElideMiddle
+                                    Layout.fillWidth: true
+                                }
+                                IconToolButton {
+                                    objectName: "aiCustomAgentEdit"
+                                    iconRole: "edit"
+                                    text: qsTr("Edit")
+                                    onClicked: customAgents.editing = customRow.modelData.id
+                                }
+                                IconToolButton {
+                                    objectName: "aiCustomAgentDelete"
+                                    iconRole: "delete"
+                                    text: qsTr("Delete")
+                                    onClicked: customAgents.remove(customRow.modelData.id)
+                                }
+                            }
+                            Label {
+                                visible: customAgents.editing !== customRow.modelData.id
+                                objectName: "aiCustomAgentLine"
+                                text: customRow.found.found ? customRow.found.path : qsTr("Not found on PATH.")
+                                textFormat: Text.PlainText
+                                color: Theme.muted
+                                elide: Text.ElideMiddle
+                                Layout.fillWidth: true
+                            }
+                            Loader {
+                                active: customAgents.editing === customRow.modelData.id
+                                visible: active
+                                Layout.fillWidth: true
+                                sourceComponent: CustomAgentForm { agent: customRow.modelData; list: customAgents }
+                            }
+                        }
+                    }
+                }
+                Loader {
+                    active: customAgents.editing === "new"
+                    visible: active
+                    Layout.fillWidth: true
+                    sourceComponent: CustomAgentForm { agent: ({ id: "", name: "", command: "", arguments: "" }); list: customAgents }
+                }
+                RowLayout {
+                    spacing: 8
+                    Layout.fillWidth: true
+                    IconTextButton {
+                        objectName: "aiAddCustomAgent"
+                        iconRole: "add"
+                        text: qsTr("Add agent")
+                        enabled: customAgents.editing === ""
+                        onClicked: customAgents.editing = "new"
+                    }
+                    Item { Layout.fillWidth: true }
+                }
+                Note {
+                    text: qsTr("Any agent that speaks ACP over stdio. It runs with its own folder as its home and can write nowhere else.")
+                    Layout.leftMargin: 0
+                    Layout.topMargin: 0
                 }
             }
         }

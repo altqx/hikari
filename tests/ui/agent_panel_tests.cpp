@@ -1,9 +1,11 @@
 #include "hikari/app/agent_controller.h"
 #include "hikari/app/ai_features.h"
+#include "hikari/app/ai_settings.h"
 #include "hikari/app/application.h"
 #include "hikari/application/ai_providers.h"
 #include "hikari/application/hotkeys.h"
 #include "hikari/backends/ai_agent_broker.h"
+#include "hikari/backends/ai_antigravity.h"
 #include "hikari/backends/ai_agent_cli.h"
 #include "hikari/backends/ai_sidecar_host.h"
 #include "hikari/backends/ai_signin.h"
@@ -16,6 +18,7 @@
 #include "theme.h"
 
 #include <QFile>
+#include <QProcess>
 #include <QPointer>
 #include <QSaveFile>
 #include <QStandardPaths>
@@ -37,11 +40,53 @@ namespace {
 
 constexpr int kPastCodexsDefaultToolTimeoutMs = 75'000;
 
-/// Every key is "key", except that HIKARI_REAL_CODEX_SESSION, if set, holds HikariSub's Codex sign-in.
+/// HikariSub's keychain item for `id` in the user's own Secret Service at HIKARI_REAL_AGY_BUS, which vx11's private
+/// bus hides; only secret-tool gets that bus, and the secret moves over its pipes only.
+class RealKeychain {
+public:
+    static bool reaches(const std::string &id)
+    {
+        return id == backends::ai::kAntigravitySecret && !qEnvironmentVariable("HIKARI_REAL_AGY_BUS").isEmpty();
+    }
+    static int run(const QStringList &arguments, const QByteArray &input = {}, QByteArray *output = nullptr)
+    {
+        QProcess tool;
+        QProcessEnvironment environment = QProcessEnvironment::systemEnvironment();
+        environment.insert(QStringLiteral("DBUS_SESSION_BUS_ADDRESS"), qEnvironmentVariable("HIKARI_REAL_AGY_BUS"));
+        tool.setProcessEnvironment(environment);
+        tool.setProcessChannelMode(QProcess::SeparateChannels);
+        tool.start(QStringLiteral("secret-tool"), arguments);
+        tool.write(input);
+        tool.closeWriteChannel();
+        if (!tool.waitForFinished(30'000))
+            return -1;
+        if (output)
+            *output = tool.readAllStandardOutput();
+        return tool.exitStatus() == QProcess::NormalExit ? tool.exitCode() : -1;
+    }
+    static QStringList item(const std::string &id, bool typed = true)
+    {
+        QStringList attributes{QStringLiteral("server"), QStringLiteral("HikariSub"), QStringLiteral("user"),
+                               QStringLiteral("ai-provider/") + QString::fromStdString(id)};
+        if (typed)
+            attributes << QStringLiteral("type") << QStringLiteral("plaintext");
+        return attributes;
+    }
+};
+
+/// Every key is "key", except that HIKARI_REAL_CODEX_SESSION, if set, holds HikariSub's Codex sign-in, and
+/// Antigravity's comes from RealKeychain when HIKARI_REAL_AGY_BUS is set.
 class Keys final : public ai::KeyStore {
 public:
     void read(const std::string &id, std::function<void(ai::KeyResult)> done) override
     {
+        if (RealKeychain::reaches(id)) {
+            QByteArray secret;
+            if (RealKeychain::run(QStringList{QStringLiteral("lookup")} + RealKeychain::item(id), {}, &secret) != 0 ||
+                secret.isEmpty())
+                return done(ai::KeyError::NotFound);
+            return done(ai::KeyResult(secret.toStdString()));
+        }
         QFile file(qEnvironmentVariable("HIKARI_REAL_CODEX_SESSION"));
         if (id == backends::ai::kCodexSecret && file.open(QIODevice::ReadOnly))
             return done(ai::KeyResult(file.readAll().toStdString()));
@@ -49,6 +94,13 @@ public:
     }
     void write(const std::string &id, const std::string &key, std::function<void(std::optional<ai::KeyError>)> done) override
     {
+        if (RealKeychain::reaches(id)) {
+            const QStringList store{QStringLiteral("store"),
+                                    QStringLiteral("--label=ai-provider/%1@HikariSub").arg(QString::fromStdString(id))};
+            return done(RealKeychain::run(store + RealKeychain::item(id), QByteArray::fromStdString(key)) == 0
+                            ? std::nullopt
+                            : std::optional(ai::KeyError::Other));
+        }
         if (const QString path = qEnvironmentVariable("HIKARI_REAL_CODEX_SESSION");
             id == backends::ai::kCodexSecret && !path.isEmpty()) {
             QSaveFile file(path);
@@ -58,8 +110,12 @@ public:
         }
         done(std::nullopt);
     }
-    void remove(const std::string &, std::function<void(std::optional<ai::KeyError>)> done) override
+    void remove(const std::string &id, std::function<void(std::optional<ai::KeyError>)> done) override
     {
+        if (RealKeychain::reaches(id))
+            return done(RealKeychain::run(QStringList{QStringLiteral("clear")} + RealKeychain::item(id, false)) == 0
+                            ? std::nullopt
+                            : std::optional(ai::KeyError::Other));
         done(std::nullopt);
     }
 };
@@ -209,7 +265,8 @@ class AgentPanelTest : public QObject {
         return qScopeGuard([this, path = qEnvironmentVariable(variable.toLatin1().constData())] {
             if (QFile file(path); file.open(QIODevice::WriteOnly | QIODevice::Truncate))
                 file.write(agent().markdown(agent().current()).toUtf8());
-            if (QFile file(path + QStringLiteral(".sidecar-stderr.txt")); realHost && file.open(QIODevice::WriteOnly | QIODevice::Truncate))
+            if (QFile file(path + QStringLiteral(".sidecar-stderr.txt"));
+                realHost && qEnvironmentVariableIsSet("HIKARI_REAL_SIDECAR_STDERR") && file.open(QIODevice::WriteOnly | QIODevice::Truncate))
                 file.write(realHost->diagnostics());
         });
     }
@@ -244,6 +301,26 @@ class AgentPanelTest : public QObject {
                 broker.add("codex", std::move(*codex));
         };
         ports.agentOnPath = [](const QString &) { return true; };
+    }
+
+    QString antigravityProfile() const { return at(QStringLiteral("user/ai/agents/antigravity")); }
+    void realAntigravity(app::AiFeatures::Ports &ports)
+    {
+        const QString agy = qEnvironmentVariable("HIKARI_REAL_AGY");
+        const QString bridge = qEnvironmentVariable("HIKARI_REAL_HIKARISUB");
+        if (agy.isEmpty() || bridge.isEmpty())
+            return;
+        realAgents(ports);
+        ports.agents = [](backends::ai::AgentBroker &, application::ai::KeyStore &) {};
+        ports.agentOnPath = [](const QString &) { return false; };
+        ports.acpCli = [agy](const QString &command) { return command == QLatin1String("agy") ? agy : QString(); };
+        ports.acpSpec = [this, bridge](const app::AiFeatures::AcpAgent &agent,
+                                       std::shared_ptr<backends::ai::TokenFileLease> lease) -> std::optional<backends::ai::AgentSpec> {
+            if (agent.id != QLatin1String(app::AiFeatures::kAntigravity))
+                return std::nullopt;
+            return backends::ai::antigravityAgent(agent.program, antigravityProfile(), bridge, std::move(lease));
+        };
+        ports.antigravityTokenFile = antigravityProfile() + u'/' + QLatin1String(backends::ai::kAntigravityTokenFile);
     }
 
 private slots:
@@ -286,6 +363,8 @@ private slots:
         };
         if (test == "theInstalledClaudeEditsIntoTheReview" || test == "theInstalledCodexEditsIntoTheReview")
             realAgents(ports);
+        if (test == "theInstalledAntigravityRepliesAndItsSignInGoesOnSignOut")
+            realAntigravity(ports);
 
         app::Application::Options options;
         options.settingsFile = at(QStringLiteral("settings.toml"));
@@ -373,6 +452,39 @@ private slots:
         QCOMPARE(session().document().lines()[1]->text, u8"Second");
         QCOMPARE(session().document().lines()[0]->text, u8"A rather long first line");
         shoot(QStringLiteral("agent-codex"));
+    }
+    void theInstalledAntigravityRepliesAndItsSignInGoesOnSignOut()
+    {
+        for (const char *variable : {"HIKARI_REAL_AI_RUNTIME", "HIKARI_REAL_AGY", "HIKARI_REAL_AGY_BUS", "HIKARI_REAL_HIKARISUB"})
+            if (qEnvironmentVariable(variable).isEmpty())
+                QSKIP("Evidence only: set HIKARI_REAL_AI_RUNTIME, HIKARI_REAL_AI_BUNDLE, HIKARI_REAL_AGY, HIKARI_REAL_AGY_BUS and "
+                      "HIKARI_REAL_HIKARISUB to run the installed agy on HikariSub's own Google sign-in");
+        const QStringList lookup = QStringList{QStringLiteral("lookup")} + RealKeychain::item(backends::ai::kAntigravitySecret);
+        QCOMPARE(RealKeychain::run(lookup), 0);
+        openPanel();
+        agent().newThread();
+        agent().setModel(QStringLiteral("agent:acp:antigravity\t"));
+        QTRY_COMPARE(agent().thread().value(QStringLiteral("modelText")).toString(), QStringLiteral("Antigravity"));
+        QElapsedTimer took;
+        took.start();
+        type(QStringLiteral("Reply with the word ready"));
+        QTRY_VERIFY_WITH_TIMEOUT(kinds().contains(QStringLiteral("text")) && !agent().thread().value(QStringLiteral("running")).toBool(),
+                                 900'000);
+        const QString reply = lastItem().value(QStringLiteral("text")).toString();
+        qInfo().noquote() << "agy replied in" << took.elapsed() << "ms:" << reply.left(200);
+        if (QFile out(qEnvironmentVariable("HIKARI_REAL_AGY_OUT")); out.open(QIODevice::WriteOnly | QIODevice::Truncate))
+            out.write(reply.toUtf8());
+        QVERIFY2(reply.contains(QStringLiteral("ready"), Qt::CaseInsensitive), qPrintable(reply.left(200)));
+
+        QObject *acp = application->aiSettings()->property("acp").value<QObject *>();
+        QVERIFY(acp);
+        QVERIFY(QMetaObject::invokeMethod(acp, "signOut"));
+        QTRY_COMPARE(RealKeychain::run(lookup), 1);
+        const QString tokenFile = antigravityProfile() + u'/' + QLatin1String(backends::ai::kAntigravityTokenFile);
+        engine.reset();
+        application.reset();
+        QTRY_VERIFY(!QFileInfo::exists(tokenFile));
+        QCOMPARE(RealKeychain::run(lookup), 1);
     }
     void agentsAreNoModelsWhenTheyAreMissing()
     {

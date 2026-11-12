@@ -443,6 +443,9 @@ int run(int argc, char **argv, StartupMode mode, const std::function<void()> &wi
     if (startup.mcp) {
         QCoreApplication core(argc, argv);
         const UserFolder userFolder = UserFolder::locate(folderEnvironmentOf(UpdateEnvironment::current()));
+        if (!startup.mcpChannelUrl.empty())
+            backends::ai::runMcpHttpBridge(QString::fromStdString(startup.mcpChannelUrl),
+                                           qgetenv(backends::ai::kMcpTokenVariable));
         if (!startup.mcpChannel.empty())
             backends::ai::runMcpBridge(backends::ai::McpEndpoint{QString::fromStdString(startup.mcpChannel),
                                                                  qgetenv(backends::ai::kMcpTokenVariable), 0});
