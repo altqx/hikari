@@ -1,6 +1,6 @@
 ---
 name: karaoke-templater
-description: Writing, explaining and fixing karaoke templates for the karaoke templater. Use it for template and code Lines (Effect "template syl", "code once" and the like), their modifiers, $variables, !expressions!, and for applying templates to timed karaoke Lines with \k tags.
+description: Writing, explaining and fixing karaoke templates for the karaoke templater, and timing the karaoke Lines they run on. Use it for template and code Lines (Effect "template syl", "code once" and the like), their modifiers, $variables, !expressions!, for applying templates to timed karaoke Lines with \k tags, and for splitting and timing syllables.
 ---
 
 # Karaoke templater
@@ -9,10 +9,19 @@ The karaoke templater turns timed karaoke Lines into effect Lines. Template and 
 
 ## Steps
 
-1. **Read the karaoke.** Find the karaoke Lines and their Styles with `lines_find`, and check that their syllables are timed with `\k`, `\kf` or `\ko`.
-2. **Write the template** as a Comment Line with the karaoke Lines' Style. Start from the simplest template that does what the user wants, such as one `template syl` Line, and add `code` Lines only for values used more than once.
-3. **Have it applied.** Ask the user to run "Apply karaoke template" from the Automation menu, since no tool runs Automation macros yet.
-4. **Check the result.** Read a few generated Lines and look at a frame in the middle of a syllable. The templater logs each problem with a `Template Line: N` or `Code Line: N` note; ask the user for the log when the result is wrong, fix that Line and have it applied again.
+1. **Read the karaoke.** Find the karaoke Lines and their Styles with `lines_find`. Run `karaoke_check`; when Lines aren't timed yet, time them first (below).
+2. **Write the template** as a Comment Line with the karaoke Lines' Style, using `document_apply`. Start from the simplest template that does what the user wants, such as one `template syl` Line, and add `code` Lines only for values used more than once.
+3. **Preview it.** `karaoke_template_preview` on one karaoke Line answers the Lines the templater would generate from it, without changing anything. A `templater_failed` error carries the templater's message, with the `Template Line: N` or `Code Line: N` to fix.
+4. **Apply it.** `karaoke_apply_template` with the Document's revision runs the templater on every karaoke Line, or the Lines you name, as one undo step that waits in the user's review.
+5. **Check the result.** Read a few generated Lines and look at a frame in the middle of a syllable with `video_frame`. Fix the template, not the generated Lines, and apply again.
+
+## Timing
+
+1. **Split.** `karaoke_split` answers each Line split into syllables with the user's language rules, the Line's time shared by character; `bySyllable: false` splits at spaces. Write the texts with `document_apply`. Lines that already have `\k` tags keep them.
+2. **Time.** `karaoke_onsets` lists where sung notes start in the audio. `karaoke_snap` moves each syllable boundary to the nearest onset; `karaoke_time` sets each syllable's end in ms yourself. Both answer texts to write with `document_apply`.
+3. **Align, only when asked.** `karaoke_align` runs WhisperX or the Montreal Forced Aligner, if the user installed one, on the Lines' audio and answers each word's start and end. The user approves every run. A `missing` error means the program isn't installed: tell the user, don't retry.
+4. **Kanji.** With a timed romaji Line, `karaoke_kanji` copies its syllables onto the kanji Line; check any answer whose `clean` is false. `karaoke_furigana` suggests readings for a Line's kanji when a dictionary is installed.
+5. Run `karaoke_check` again before the templates.
 
 ## Rules
 

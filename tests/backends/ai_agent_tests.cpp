@@ -159,6 +159,9 @@ TEST(AgentPolicy, RunningScriptsOrProgramsAsks)
     for (const char *setting : {"automation.scriptEditor", "automation.lastScript", "automation.disabledAutoload",
                                 "updater.autoInstall"})
         EXPECT_EQ(settingRisk(setting), Risk::Programs) << setting;
+    for (const char *program : {"whisperx", "mfa"})
+        EXPECT_EQ(riskOf("karaoke.align", Json::object({{"program", program}})), Risk::Programs) << program;
+    EXPECT_EQ(riskOf("karaoke.apply_template", Json::object({})), Risk::None);
 }
 
 TEST(AgentPolicy, InstallingOrTrustingPluginsAndScriptsAsks)
@@ -182,8 +185,9 @@ TEST(AgentPolicy, EveryWriteOperationIsClassified)
     for (const hikari::api::Operation &op : hikari::api::Api::registry().operations())
         if (op.access == hikari::api::Access::Write)
             writes.insert(op.name);
-    EXPECT_EQ(writes, (std::set<std::string>{"automation.run", "commands.run", "document.apply", "files.write", "panels.close",
-                                             "panels.focus", "panels.open", "selection.set", "settings.set"}))
+    EXPECT_EQ(writes, (std::set<std::string>{"automation.run", "commands.run", "document.apply", "files.write",
+                                             "karaoke.align", "karaoke.apply_template", "panels.close", "panels.focus",
+                                             "panels.open", "selection.set", "settings.set", "typeset.apply"}))
         << "Classify the new write in alwaysAsk and docs/ai-agent.md, then add it here.";
 }
 

@@ -57,6 +57,7 @@ Each thread has a mode. Qt decides every write a session sends, so a sidecar tha
 
 - **Private settings.** `settings_list` and `settings_get` never show a thread or an MCP agent the `privacy.*` settings (the usage data ID among them) or the `recent.*` lists (recent-file paths and times). Folder settings stay readable. Plugins still read them.
 - Reads never ask. Neither do `selection.set`, `panels.open`, `panels.close` and `panels.focus`, which change no content and no setting.
+- `typeset.apply` and `karaoke.apply_template` change the Document like `document.apply` and ask as other writes do.
 - **Web search** isn't under the thread modes or the always-ask list: the `web` tools go out through the HTTP relay, not `_hikari/api.call`. The per-thread globe (AI23b) controls it instead. It is on only while Let AI search the web is on, and a search sends only its query, never a file.
 - **Allow in this thread** covers the operation, or for `commands.run` the one command, until the thread is deleted.
 - **The always-ask list** ([#410](https://github.com/altqx/hikari/issues/410)) asks in every mode, with Allow once and Deny only. `alwaysAsk` holds it:
@@ -64,7 +65,7 @@ Each thread has a mode. Qt decides every write a session sends, so a sidecar tha
 | Category | Asks for | Doesn't ask, and why |
 | --- | --- | --- |
 | Deleting or overwriting files outside the subtitles' folders and the user folder | `files.write` to a file outside them (checked by the granted file's path); `commands.run` `GLOBAL_DELETE_TEMPORARY_FILES`; `settings.set` `fontCollector.directory` to a folder outside them | The Save commands write only the subtitle's own file and open a file dialog for any other path. Save as, Export, Save timecodes and Save session open a file dialog, so the user picks the path. Video snapshots make new files and never overwrite. `VIDEO_DELETE_FILE` only closes the video. |
-| Running external programs | `commands.run` `GLOBAL_AUTOMATION_LOAD_SCRIPT`, `GLOBAL_AUTOMATION_LOAD_LAST_SCRIPT`, `GLOBAL_AUTOMATION_REPEAT_LAST_RUN`, `GLOBAL_AUTOMATION_RELOAD_AUTOLOAD` and any `plugin.` command; `settings.set` `automation.scriptEditor`, `automation.lastScript`, `automation.disabledAutoload`, `updater.autoInstall` | `commands.run` reaches only built-in commands today; plugin commands ask in case that changes. |
+| Running external programs | `commands.run` `GLOBAL_AUTOMATION_LOAD_SCRIPT`, `GLOBAL_AUTOMATION_LOAD_LAST_SCRIPT`, `GLOBAL_AUTOMATION_REPEAT_LAST_RUN`, `GLOBAL_AUTOMATION_RELOAD_AUTOLOAD` and any `plugin.` command; `settings.set` `automation.scriptEditor`, `automation.lastScript`, `automation.disabledAutoload`, `updater.autoInstall`; every `karaoke.align`, which runs the user's WhisperX or `mfa` | `commands.run` reaches only built-in commands today; plugin commands ask in case that changes. |
 | Installing a plugin or granting full trust | `settings.set` `plugins.autoUpdate`, `plugins.network`, `automation.trustedFolders` | The Plugins window (`GLOBAL_PLUGINS`) installs and trusts only when the user clicks. |
 | Sending local files to the network | `settings.set` of any `privacy.` setting (crash reports, usage data, Discord) | Crash and issue reports send only from their own dialogs. |
 | AI settings | `settings.set` of any `ai.` setting | |

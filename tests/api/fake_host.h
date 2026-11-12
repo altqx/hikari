@@ -209,7 +209,7 @@ public:
 
     FolderSkills skills{std::filesystem::path()};
     FakeAutomation automation;
-    Host host() { return Host{this, this, this, &settings, &media, &files, &review, render, &skills, &automation, typeset}; }
+    Host host() { return Host{this, this, this, &settings, &media, &files, &review, render, &skills, &automation, typeset, karaoke}; }
 
     const application::Workspace &workspace() const override { return workspace_; }
     application::EditSession *session(application::DocumentId document) const override
@@ -309,6 +309,7 @@ public:
     FakeRender fakeRender;
     RenderHost *render = &fakeRender;
     TypesetHost *typeset = nullptr;
+    KaraokeHost *karaoke = nullptr;
     application::AiReview review;
 };
 

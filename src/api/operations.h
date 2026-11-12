@@ -23,6 +23,7 @@ void addSkillOperations(Registry &registry);
 void addAutomationOperations(Registry &registry);
 void addNodeOperations(Registry &registry);
 void addTypesetOperations(Registry &registry);
+void addKaraokeOperations(Registry &registry);
 void addEvents(Registry &registry);
 
 void addOperation(Registry &registry, Access access, std::string name, std::string summary, std::string_view params,

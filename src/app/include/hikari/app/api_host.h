@@ -58,6 +58,7 @@ public:
         std::filesystem::path skills;
         api::AutomationHost *automation = nullptr;
         std::function<application::visual::perspective::TextMeasure()> measure;
+        api::KaraokeHost *karaoke = nullptr;
     };
     explicit ApiHost(Wiring wiring, QObject *parent = nullptr);
     ~ApiHost() override;

@@ -22,7 +22,7 @@ ApiHost::ApiHost(Wiring wiring, QObject *parent)
     : QObject(parent), m_wiring(std::move(wiring)),
       m_skills(m_wiring.skills.empty() ? nullptr : std::make_unique<api::FolderSkills>(m_wiring.skills)),
       m_api(api::Host{this, this, this, m_wiring.settings, m_wiring.media, this, &m_review, this, m_skills.get(),
-                     m_wiring.automation, this})
+                     m_wiring.automation, this, m_wiring.karaoke})
 {
 }
 
