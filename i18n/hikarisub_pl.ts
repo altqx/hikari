@@ -12496,6 +12496,22 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Domyślnie wyłączone w systemie Windows, KDE Plasma i GNOME; domyślnie włączone w kafelkowych menedżerach okien.</translation>
     </message>
     <message>
+        <source>AI side bar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The other side bar holds the tools. Swap side bars in the View menu switches them.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Left</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Right</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>UI colours</source>
         <translation>Kolory interfejsu</translation>
     </message>
@@ -25855,6 +25871,18 @@ nie działają na komentarzach</translation>
         <translation>Panel</translation>
     </message>
     <message>
+        <source>Toggle left side bar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Toggle right side bar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Swap side bars</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Dock floating panels to lock the layout</source>
         <translation type="unfinished"></translation>
     </message>
@@ -25872,6 +25900,30 @@ nie działają na komentarzach</translation>
     </message>
     <message>
         <source>Unlock</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to the left side bar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to the right side bar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move out of the side bar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move left</source>
+        <translation type="unfinished">Przesuń w lewo</translation>
+    </message>
+    <message>
+        <source>Move right</source>
+        <translation type="unfinished">Przesuń w prawo</translation>
+    </message>
+    <message>
+        <source>Reset side bars</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -25893,6 +25945,14 @@ nie działają na komentarzach</translation>
     <message>
         <source>Below</source>
         <translation>Pod</translation>
+    </message>
+    <message>
+        <source>Left side bar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Right side bar</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Placement</source>
@@ -26149,6 +26209,14 @@ nie działają na komentarzach</translation>
     <message>
         <source>Karaoke</source>
         <translation>Karaoke</translation>
+    </message>
+    <message>
+        <source>%1 (plugin)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drag a panel here</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
