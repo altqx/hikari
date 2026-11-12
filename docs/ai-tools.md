@@ -36,7 +36,7 @@ Hikari AI's threads also get `update_plan` ([AI agent](ai-agent.md)) and `read_s
 
 | Group | Tools now |
 | --- | --- |
-| `typeset` | `video_frame`, `video_ink_bounds`, `video_colours`, `video_keyframes` ([frames](#frames)) |
+| `typeset` | `video_frame`, `video_ink_bounds`, `video_colours`, `video_keyframes` ([frames](#frames)); `typeset_perspective`, `typeset_clip`, `typeset_drawing`, `typeset_shift`, `typeset_hydra`, `typeset_check`, `typeset_apply` ([typesetting](#typesetting)) |
 | `karaoke` | `audio_peaks` |
 | `effects` | `nodes_catalogue` |
 | `app` | `panels_list`, `panels_open`, `panels_close`, `panels_focus`, `settings_list`, `settings_get`, `settings_set`; the two reads leave out `privacy.*` and `recent.*` ([Agent](ai-agent.md#modes)) |
@@ -78,6 +78,17 @@ The frame tools are HA1's `video.*` operations ([AI4 #432](https://github.com/al
 The Gemini and Chat Completions rows are HikariSub's own caps, derived from each vendor's tiling rules. The vendors don't state them as limits.
 
 The agent sets the budget from the provider's wire. A caller whose provider isn't known, such as an external agent over MCP, gets the smallest of each.
+
+## Typesetting
+
+The typesetting tools are HA1's `typeset.*` operations ([AI9 #437](https://github.com/altqx/hikari/issues/437), [ADR 0024](adr/0024-hikari-ai.md#typesetting)). The model proposes where a sign is; the visual tools' own solvers, in C++, write the tags; a render check runs before anything reaches the review. The bundled `typesetting` skill walks the model through it.
+
+- **The solvers** are reads: each answers the Lines' new text and changes nothing.
+  - `typeset_perspective` takes a Line and four corners in script coordinates and writes the transform VT3's Perspective tool writes for that quad (`quadToTransform`, `writeTransform`; `origin` is the tool's \org mode). A text Line needs the app's text measure, so without it (no video panel yet) it answers `refused` with reason `unmeasured`; a drawing never does.
+  - `typeset_clip` writes a rectangle clip (`clip::putRectangle`) or a vector clip (`clip::putVector`), `inverse` for `\iclip`; `typeset_drawing` puts a shape with `drawing::putDrawing`.
+  - `typeset_shift` and `typeset_hydra` run the Position shifter and the Hydra engine (`PositionShifterTool`, `AllTagsTool`) on a copy of the Document, through a host whose view puts one device pixel at a hundredth of a script unit. Hydra knows its 22 default tags (tags.toml's defaults, not the user's own).
+- **`typeset_check`** draws one Line alone, with a proposed text, on its frame (the Line's first unless the frame shown is in it) and compares the [ink bounds](../CONTEXT.md) with the bounds of the target quad or box, scaled to video pixels. `error` is the largest distance between their edges; it passes at `tolerance` (4 video pixels by default) or less.
+- **`typeset_apply`** is the write: up to 100 Lines, each with its text and target. Every Line is checked first; when one misses, nothing is applied and the answer is `refused` with reason `check_failed` and each failing Line's check. Otherwise it applies the texts as `document_apply` would (one undo step, into the review) and answers the checks too.
 
 ## Documents
 
