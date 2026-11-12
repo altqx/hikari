@@ -27,6 +27,7 @@
 #include <cstring>
 #include <filesystem>
 #include <functional>
+#include <iostream>
 #include <map>
 #include <optional>
 #include <set>
@@ -598,6 +599,19 @@ TEST_F(KaraokeTemplater, KaraskelPreprocLineFallsBackToLuaWhereTheTablesOrHostWe
         QStringLiteral("stage replaced:replaced stage ran"),
     };
     EXPECT_EQ(stringsOf(report[QStringLiteral("runs")]).join(u'\n').toStdString(), expected.join(u'\n').toStdString());
+}
+
+TEST_F(KaraokeTemplater, KaraskelTimings)
+{
+    if (!qEnvironmentVariableIsSet("HIKARI_KARASKEL_BENCH"))
+        GTEST_SKIP() << "set HIKARI_KARASKEL_BENCH to time karaskel";
+    for (const QString &name : {corpusDir() + QStringLiteral("/ke4.ass"), corpusDir() + QStringLiteral("/departures/thai.ass"),
+                                karaskelDir() + QStringLiteral("/routing.ass")}) {
+        hikari::application::EditSession session(hikari::core::loadAss(readBytes(name)).document);
+        ASSERT_TRUE(apply(session, karaskelDir() + QStringLiteral("/bench.lua"), "Time karaskel"));
+        std::cout << name.toStdString() << ' ' << QJsonDocument(report).toJson(QJsonDocument::Compact).toStdString()
+                  << '\n';
+    }
 }
 
 TEST_F(KaraokeTemplater, NamedLineTemplatesRunAfterUnnamedOnesInTheOrderTheirNamesFirstAppear)
