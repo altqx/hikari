@@ -266,6 +266,54 @@ private slots:
         QVERIFY(!titles().contains(QStringLiteral("ep01.ass")));
     }
 
+    void openInTabOpensANewCurrentTabOrReplacesAnUntouchedUntitled()
+    {
+        openProject();
+        application->addPage();
+        QTRY_COMPARE(int(titles().size()), 1);
+        QVERIFY(application->targetUntitled());
+        QVERIFY(application->openInTab(at("ep01.ass")));
+        QTRY_COMPARE(titles(), QStringList{QStringLiteral("ep01.ass")});
+        QVERIFY(application->openInTab(at("ep02.ass")));
+        QTRY_COMPARE(currentTitle(), QStringLiteral("ep02.ass"));
+        QCOMPARE(titles(), (QStringList{QStringLiteral("ep01.ass"), QStringLiteral("ep02.ass")}));
+    }
+
+    void rightStepsAFrameUnlessTheExplorerHasFocus()
+    {
+        QVERIFY(QFile::copy(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"), at("raw.mkv")));
+        openProject();
+        doubleClick(QStringLiteral("raw.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().hasVideo(), 20000);
+        QQuickItem *video = nullptr;
+        QTRY_VERIFY((video = shown("videoPanel")));
+        video->forceActiveFocus();
+        const int frame = application->video().frame();
+        QTest::keyClick(window, Qt::Key_Right);
+        QTRY_COMPARE(application->video().frame(), frame + 1);
+        QTRY_VERIFY(row(QStringLiteral("ep01.ass")));
+        click(row(QStringLiteral("ep01.ass")));
+        QTRY_VERIFY(shown("explorerList")->hasActiveFocus());
+        QTest::keyClick(window, Qt::Key_Right);
+        QTest::qWait(200);
+        QCOMPARE(application->video().frame(), frame + 1);
+    }
+
+    void homeBesideTheExplorerScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        openProject();
+        QTRY_VERIFY(row(QStringLiteral("ep01.ass")));
+        QTest::qWait(300);
+        QVERIFY(window->grabWindow().save(QDir(out).filePath(QStringLiteral("explorer-home-after.png"))));
+        QVERIFY(window->setProperty("homeInset", 0));
+        QTest::qWait(300);
+        QVERIFY(window->grabWindow().save(QDir(out).filePath(QStringLiteral("explorer-home-before.png"))));
+    }
+
     void mediaFilesBecomeTheTabsMedia()
     {
         QVERIFY(QFile::copy(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"), at("raw.mkv")));
