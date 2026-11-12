@@ -372,6 +372,19 @@ TEST_F(AiFolder, AnUntrustedProjectIsReadOnlyToo)
     EXPECT_FALSE(fs::exists(m_data / "new.txt"));
 }
 
+TEST_F(AiFolder, AnUntrustedProjectsExcludeOnlyAdds)
+{
+    m_api.revokeFiles(m_caller.id);
+    m_project.state = ProjectState{.name = "data", .root = utf8(m_data), .trusted = false};
+    m_caller.project = utf8(m_data);
+    m_settings.set("ai.exclude", std::vector<std::string>{"*.bak"});
+    m_project.excludes = {"!.env*", "!*.bak", "!.git/", "drafts/"};
+    for (const char *path : {".env", ".git/config", "old.bak", "drafts/x.txt"})
+        EXPECT_EQ(reason("files.read", R"({"folder": "project", "path": ")" + std::string(path) + R"("})"), "excluded")
+            << path;
+    EXPECT_EQ(reason("files.read", R"({"folder": "project", "path": ".hikari/project.toml"})"), "ok");
+}
+
 TEST_F(AiFolder, OnlyAnAiCallerWithAProjectGetsTheFolder)
 {
     m_api.revokeFiles(m_caller.id);
