@@ -194,6 +194,13 @@ target_compile_definitions(hikari_ui_automation_packages_tests PRIVATE
     HIKARI_AUTOMATION_ROOT="${HIKARI_AUTOMATION_ROOT}"
     HIKARI_THIRDPARTY_RUNS="${PROJECT_SOURCE_DIR}/tests/fixtures/automation-thirdparty/runs.json")
 add_dependencies(hikari_ui_automation_packages_tests hikari_lua_helper hikari_automation_stage)
+target_include_directories(hikari_ui_automation_packages_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
+hikari_add_qttest(hikari_ui_automation_reset_tests SOURCES automation_reset_tests.cpp LIBRARIES hikari_composition)
+hikari_add_qttest(hikari_ui_automation_reset_ui_tests SOURCES automation_reset_ui_tests.cpp
+    LIBRARIES hikari_composition KDAB::kddockwidgets Qt6::Network)
+target_compile_definitions(hikari_ui_automation_reset_ui_tests PRIVATE HIKARI_AUTOMATION_ROOT="${HIKARI_AUTOMATION_ROOT}")
+target_include_directories(hikari_ui_automation_reset_ui_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
+add_dependencies(hikari_ui_automation_reset_ui_tests hikari_lua_helper hikari_automation_stage)
 hikari_add_qttest(hikari_ui_automation_runs_tests SOURCES automation_runs_tests.cpp LIBRARIES hikari_ui)
 hikari_add_qttest(hikari_ui_automation_document_scripts_tests SOURCES automation_document_scripts_tests.cpp
     LIBRARIES hikari_composition)
@@ -426,6 +433,7 @@ hikari_add_qttest(hikari_ui_spelling_tests SOURCES spelling_ui_tests.cpp LIBRARI
 target_include_directories(hikari_ui_spelling_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
 target_include_directories(hikari_ui_shell_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
 hikari_add_qttest(hikari_ui_settings_store_tests SOURCES settings_store_tests.cpp LIBRARIES hikari_ui)
+hikari_add_qttest(hikari_ui_preset_tiers_tests SOURCES preset_tiers_tests.cpp LIBRARIES hikari_ui)
 hikari_add_qttest(hikari_ui_project_file_tests SOURCES project_file_tests.cpp LIBRARIES hikari_ui)
 hikari_add_qttest(hikari_ui_list_files_tests SOURCES list_files_tests.cpp LIBRARIES hikari_composition)
 target_compile_definitions(hikari_ui_list_files_tests PRIVATE
@@ -463,7 +471,8 @@ add_dependencies(hikari_ui_forwarded_launches_tests hikari_media_fixtures hikari
 hikari_add_qttest(hikari_ui_project_windows_tests SOURCES project_windows_tests.cpp LIBRARIES hikari_composition)
 target_include_directories(hikari_ui_project_windows_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
 target_compile_definitions(hikari_ui_project_windows_tests PRIVATE
-    HIKARI_ATTACHMENT_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/attachments")
+    HIKARI_ATTACHMENT_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/attachments"
+    HIKARI_AI_SKILLS_SOURCE="${PROJECT_SOURCE_DIR}/src/ai-sidecar/skills")
 hikari_add_qttest(hikari_ui_desktop_handoff_tests SOURCES desktop_handoff_tests.cpp LIBRARIES hikari_composition)
 hikari_add_qttest(hikari_ui_user_guide_tests SOURCES user_guide_tests.cpp LIBRARIES hikari_composition)
 target_compile_definitions(hikari_ui_user_guide_tests PRIVATE HIKARI_UI_SOURCE_DIR="${PROJECT_SOURCE_DIR}/src/ui")

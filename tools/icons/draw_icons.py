@@ -1416,9 +1416,6 @@ for card, roles in {
     "AU9 #844": ["graph-shake", "graph-wobble", "graph-bounce", "graph-typewriter", "graph-fade-by-letter",
                  "graph-focus-lines", "graph-grain", "graph-chromatic-aberration", "graph-randomove",
                  "graph-karaoke-to-alpha"],
-    "AU16 #850": ["reinstall-scripts"],
-    "AU21 #855": ["change-alignment", "align-top", "align-middle", "align-bottom", "distribute-vertical",
-                  "pos-to-margins", "margins-to-pos", "phantom", "cycle-values", "shift-by-x", "shift-by-y"],
 }.items():
     for role in roles:
         PENDING[role] = card

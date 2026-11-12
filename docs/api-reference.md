@@ -1,6 +1,6 @@
 # Hikari API reference
 
-Version 2 of the Hikari API, generated from HikariSub's own registry: the same reference `hikarisub --export-docs` writes to `api.json`. A plugin calls these operations with `hikari.call(operation, params)`, or `api.call` in a QML panel, and listens to the events with `hikari.events.on(name, fn)`.
+Version 1 of the Hikari API, generated from HikariSub's own registry: the same reference `hikarisub --export-docs` writes to `api.json`. A plugin calls these operations with `hikari.call(operation, params)`, or `api.call` in a QML panel, and listens to the events with `hikari.events.on(name, fn)`.
 
 ## Operations
 
@@ -38,13 +38,19 @@ Version 2 of the Hikari API, generated from HikariSub's own registry: the same r
 | `files.list` | read | 1 | The files and folders the user granted this caller; with folder, also what that folder holds. |
 | `files.read` | read | 1 | A granted file's content, as UTF-8 text or base64; at most 16 MiB. |
 | `files.write` | write | 1 | Replaces a file granted for writing with new content; in a writable folder, makes it and its folders. |
-| `skills.list` | read | 1 | The user's skills: each skill folder's name and its files, SKILL.md among them. |
-| `skills.read` | read | 1 | One file of a user's skill, as UTF-8 text; at most 256 KiB. |
+| `skills.list` | read | 1 | The caller's skills: each skill folder's name, whether it is the Project's or the user's, and its files, SKILL.md among them. |
+| `skills.read` | read | 1 | One file of a skill skills.list gives, as UTF-8 text; at most 256 KiB. |
 | `automation.run` | write | 1 | Saves a Lua Automation script to the AI scripts folder and runs one of its macros on the active tab's selection, once the user approves the script. The run is one undo step. |
 | `translation.project` | read | 1 | The Document's Honya project files: PROJECT.md, GLOSSARY.md, CHARACTERS.md and STYLE.md, those that exist. folder is null when the Document has no project folder. |
 | `translation.project_write` | write | 1 | Replaces one of the Document's Honya project files, keeping Honya's Markdown and honya:data format. |
 | `nodes.catalogue` | read | 1 | The node types the node-effect editor offers, with their ports and parameters. |
 | `nodes.validate` | read | 1 | Checks a node-effect graph; each problem names its node and port or field. |
+| `effects.graphs` | read | 1 | The Document's node-effect graphs, one per graph Line. |
+| `effects.graph` | read | 1 | One graph Line's graph, with what keeps it from running. |
+| `effects.edit` | read | 1 | Edits a graph in steps (add, connect, disconnect, remove, set) and gives the new graph with its problems; nothing in the Document changes. |
+| `effects.preview` | read | 1 | Runs a graph on the Document's karaoke Lines and gives the Lines it would write; nothing is applied. Lua nodes don't run. |
+| `effects.save` | write | 1 | Writes a graph to the Document as one undo step: into a new graph Line, or in place of a graph Line's. |
+| `effects.apply` | write | 1 | Runs a graph Line and writes its Lines as one undo step, replacing those it wrote before; the karaoke Lines it ran on become Comments. Lua nodes don't run, so a graph with one applies from the node-effect editor. |
 | `typeset.perspective` | read | 1 | The Line's text with the tags that render it on a quad (VT3's perspective solver): \pos, \org, \frx, \fry, \frz, \fax, \fscx and \fscy. |
 | `typeset.clip` | read | 1 | The Line's text with its first clip replaced by a rectangle or a vector clip. |
 | `typeset.drawing` | read | 1 | The Line's text with its first drawing replaced by a shape (\p1), placed at a position with an alignment. |
@@ -52,7 +58,7 @@ Version 2 of the Hikari API, generated from HikariSub's own registry: the same r
 | `typeset.hydra` | read | 1 | Changes one tag across the Lines as the Hydra strip does: set it, add to it, multiply it by line number, or run a gradient across characters or Lines. |
 | `typeset.check` | read | 1 | Renders one Line alone, with a proposed text, on its frame and compares its ink with a target. |
 | `typeset.apply` | write | 1 | Applies typeset Lines as one undo step after every one passes the render check; when one misses its target nothing is applied. |
-| `project.info` | read | 2 | The Project of the window the user works in, or null. |
+| `project.info` | read | 1 | The Project of the window the user works in, or null. |
 | `karaoke.syllables` | read | 1 | A Line's karaoke syllables as the templater reads them: text, tag, start and end in ms. |
 | `karaoke.split` | read | 1 | Splits Lines without \k tags into syllables as the audio editor's karaoke mode does, the time shared by character; Lines that already have \k tags keep them. |
 | `karaoke.time` | read | 1 | Times a Line's existing syllables: each syllable's end in ms, in order; the \k tags are rewritten. |
@@ -718,7 +724,7 @@ The files and folders the user granted this caller; with folder, also what that 
 
 | Field | Type | Required | Meaning |
 | --- | --- | --- | --- |
-| `folder` | string |  | A folder handle to list (since version 2). |
+| `folder` | string |  | A folder handle to list. |
 | `path` | string |  | A folder inside it; default the folder itself. |
 
 **Result**
@@ -741,7 +747,7 @@ A granted file's content, as UTF-8 text or base64; at most 16 MiB.
 | Field | Type | Required | Meaning |
 | --- | --- | --- | --- |
 | `file` | string |  | A handle from files.list. |
-| `folder` | string |  | Instead of file, a folder handle from files.list (since version 2). |
+| `folder` | string |  | Instead of file, a folder handle from files.list. |
 | `path` | string |  | With folder, the file's path inside it, with / between its parts. |
 | `encoding` | one of `utf8` or `base64` |  | Default utf8. |
 
@@ -765,7 +771,7 @@ Replaces a file granted for writing with new content; in a writable folder, make
 | Field | Type | Required | Meaning |
 | --- | --- | --- | --- |
 | `file` | string |  | A handle from files.list. |
-| `folder` | string |  | Instead of file, a folder handle from files.list (since version 2). |
+| `folder` | string |  | Instead of file, a folder handle from files.list. |
 | `path` | string |  | With folder, the file's path inside it, with / between its parts. |
 | `encoding` | one of `utf8` or `base64` |  | Default utf8. |
 | `data` | string | yes |  |
@@ -781,7 +787,7 @@ Replaces a file granted for writing with new content; in a writable folder, make
 
 Read. Since version 1.
 
-The user's skills: each skill folder's name and its files, SKILL.md among them.
+The caller's skills: each skill folder's name, whether it is the Project's or the user's, and its files, SKILL.md among them.
 
 **Parameters**: none.
 
@@ -791,13 +797,14 @@ The user's skills: each skill folder's name and its files, SKILL.md among them.
 | --- | --- | --- | --- |
 | `skills` | array of objects | yes |  |
 | `skills[].skill` | [SkillName](#skillname) | yes |  |
+| `skills[].origin` | one of `project` or `yours` | yes |  |
 | `skills[].files` | array of string | yes |  |
 
 ### `skills.read`
 
 Read. Since version 1.
 
-One file of a user's skill, as UTF-8 text; at most 256 KiB.
+One file of a skill skills.list gives, as UTF-8 text; at most 256 KiB.
 
 **Parameters**
 
@@ -926,6 +933,175 @@ Checks a node-effect graph; each problem names its node and port or field.
 | `problems[].node` | string |  |  |
 | `problems[].port` | string |  |  |
 | `problems[].message` | string | yes |  |
+
+### `effects.graphs`
+
+Read. Since version 1.
+
+The Document's node-effect graphs, one per graph Line.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `document` | [DocumentId](#documentid) |  | Defaults to the active Document. |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `document` | [DocumentId](#documentid) | yes |  |
+| `revision` | [Revision](#revision) | yes |  |
+| `graphs` | array of objects | yes |  |
+| `graphs[].line` | [LineId](#lineid) | yes |  |
+| `graphs[].name` | string | yes |  |
+| `graphs[].style` | string | yes | The Style whose karaoke Lines it runs on. |
+| `graphs[].valid` | boolean | yes |  |
+
+### `effects.graph`
+
+Read. Since version 1.
+
+One graph Line's graph, with what keeps it from running.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `document` | [DocumentId](#documentid) |  | Defaults to the active Document. |
+| `line` | [LineId](#lineid) | yes |  |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `line` | [LineId](#lineid) | yes |  |
+| `name` | string | yes |  |
+| `style` | string | yes |  |
+| `revision` | [Revision](#revision) | yes |  |
+| `graph` | object or null | yes | Null when the Line's text is no graph. |
+| `valid` | boolean | yes |  |
+| `problems` | array of objects | yes |  |
+| `problems[].node` | string |  |  |
+| `problems[].port` | string |  |  |
+| `problems[].message` | string | yes |  |
+
+### `effects.edit`
+
+Read. Since version 1.
+
+Edits a graph in steps (add, connect, disconnect, remove, set) and gives the new graph with its problems; nothing in the Document changes.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `graph` | object | yes | A graph as effects.graph gives it; {"format": 1, "nodes": [], "wires": []} starts an empty one. |
+| `steps` | array of objects | yes | Applied in order; a refused step changes nothing. 1 to 500 items. |
+| `steps[].op` | one of `add`, `connect`, `disconnect`, `remove` or `set` | yes |  |
+| `steps[].type` | string |  | add: a node type from nodes.catalogue. |
+| `steps[].node` | string |  | add: the new node's id, made from its type when omitted; remove, set: the node. |
+| `steps[].fields` | object |  | add: the node's fields. |
+| `steps[].from` | string |  | connect: an output, "node.port". |
+| `steps[].to` | string |  | connect, disconnect: an input, "node.port"; connect replaces a wire already there. |
+| `steps[].field` | string |  | set: the field. |
+| `steps[].value` | any |  | set: the field's value; null restores its default. |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `graph` | object | yes |  |
+| `added` | array of string | yes | The ids of the nodes added, in step order. |
+| `valid` | boolean | yes |  |
+| `problems` | array of objects | yes |  |
+| `problems[].node` | string |  |  |
+| `problems[].port` | string |  |  |
+| `problems[].message` | string | yes |  |
+
+### `effects.preview`
+
+Read. Since version 1.
+
+Runs a graph on the Document's karaoke Lines and gives the Lines it would write; nothing is applied. Lua nodes don't run.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `document` | [DocumentId](#documentid) |  | Defaults to the active Document. |
+| `line` | [LineId](#lineid) |  | A graph Line: its graph, name and Style. |
+| `graph` | object |  | A graph to run in place of the Line's. |
+| `style` | string |  | The Style whose karaoke Lines it runs on; needed without line. |
+| `name` | string |  | The graph's name, which the Lines' Effect "fx <name>" carries. |
+| `sources` | array of [LineId](#lineid) |  | Only these karaoke Lines; all of them when omitted. 1 to 100000 items. |
+| `limit` | integer |  | How many generated Lines to give; default 20. From 0 to 500. |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `ran` | boolean | yes | False when a problem stopped the run; applying it would change nothing. |
+| `complete` | boolean | yes |  |
+| `sources` | integer | yes | How many karaoke Lines ran. |
+| `generated` | integer | yes | How many Lines the run made. |
+| `lines` | array of string | yes | The first generated Lines, as ASS Dialogue lines. |
+| `problems` | array of objects | yes |  |
+| `problems[].node` | string |  |  |
+| `problems[].line` | [LineId](#lineid) |  |  |
+| `problems[].message` | string | yes |  |
+
+### `effects.save`
+
+Write. Since version 1.
+
+Writes a graph to the Document as one undo step: into a new graph Line, or in place of a graph Line's.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `document` | [DocumentId](#documentid) |  | Defaults to the active Document. |
+| `graph` | object | yes |  |
+| `line` | [LineId](#lineid) |  | The graph Line to replace; omit it to add a graph. |
+| `name` | string |  | A new graph's name. 1 to 200 characters. |
+| `style` | string |  | A new graph's Style: whose karaoke Lines it runs on. Not empty. |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `line` | [LineId](#lineid) | yes |  |
+| `revision` | [Revision](#revision) | yes |  |
+| `graph` | object | yes |  |
+| `valid` | boolean | yes |  |
+| `problems` | array of objects | yes |  |
+| `problems[].node` | string |  |  |
+| `problems[].port` | string |  |  |
+| `problems[].message` | string | yes |  |
+
+### `effects.apply`
+
+Write. Since version 1.
+
+Runs a graph Line and writes its Lines as one undo step, replacing those it wrote before; the karaoke Lines it ran on become Comments. Lua nodes don't run, so a graph with one applies from the node-effect editor.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `document` | [DocumentId](#documentid) |  | Defaults to the active Document. |
+| `line` | [LineId](#lineid) | yes | The graph Line. |
+| `sources` | array of [LineId](#lineid) |  | Only these karaoke Lines; all of them when omitted. 1 to 100000 items. |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `revision` | [Revision](#revision) | yes |  |
+| `generated` | integer | yes |  |
+| `sources` | integer | yes | How many karaoke Lines got Lines. |
+| `changed` | boolean | yes |  |
 
 ### `typeset.perspective`
 
@@ -1130,7 +1306,7 @@ Applies typeset Lines as one undo step after every one passes the render check; 
 
 ### `project.info`
 
-Read. Since version 2.
+Read. Since version 1.
 
 The Project of the window the user works in, or null.
 
@@ -1399,7 +1575,7 @@ Runs the user's own WhisperX or Montreal Forced Aligner on the audio under the L
 
 ### `project.changed`
 
-Since version 2.
+Since version 1.
 
 The window the user works in opened or closed a Project, or the user moved to a window with another one.
 

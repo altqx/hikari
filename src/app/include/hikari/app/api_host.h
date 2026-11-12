@@ -32,7 +32,8 @@ class ApiHost final : public QObject,
                       public api::RenderHost,
                       public api::TypesetHost,
                       public api::ProjectHost,
-                      public api::TranslationHost {
+                      public api::TranslationHost,
+                      public api::EffectsHost {
     Q_OBJECT
     // (command, run) => null for a command the shell cannot run; else
     // {enabled, reason} without run, or whether it ran.
@@ -64,6 +65,7 @@ public:
         std::function<std::optional<api::ProjectState>()> project;
         std::function<std::optional<std::filesystem::path>(application::DocumentId)> translationFolder;
         api::KaraokeHost *karaoke = nullptr;
+        std::function<application::NodeEffectOptions()> effects;
     };
     explicit ApiHost(Wiring wiring, QObject *parent = nullptr);
     ~ApiHost() override;
@@ -99,6 +101,7 @@ public:
     std::optional<application::OverlayFrame> render(application::DocumentId id, const core::Document &document,
                                                     std::int64_t frame, int width, int height) override;
     application::visual::perspective::TextMeasure measure() const override;
+    application::NodeEffectOptions options() override;
 
     std::optional<api::ProjectState> project() const override;
 
@@ -111,7 +114,7 @@ private:
 
     Wiring m_wiring;
     application::AiReview m_review;
-    std::unique_ptr<api::FolderSkills> m_skills;
+    std::unique_ptr<api::SkillTiers> m_skills;
     api::Api m_api;
     QJSValue m_commandHandler;
     QJSValue m_panelHandler;

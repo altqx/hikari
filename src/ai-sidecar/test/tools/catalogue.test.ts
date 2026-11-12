@@ -79,6 +79,14 @@ describe("the tool catalogue", () => {
         expect(apply.properties.edits.items.oneOf[0].properties.op).toEqual({ enum: ["set_line"] });
     });
 
+    test("offers the graph tools in effects, with only save and apply writing", () => {
+        const effects = kOwn.entries.filter((e) => e.group === "effects");
+        expect(effects.map((e) => e.tool.name).sort()).toEqual(["effects_apply", "effects_edit", "effects_graph",
+            "effects_graphs", "effects_preview", "effects_save", "nodes_catalogue", "nodes_validate"]);
+        expect(effects.filter((e) => !e.tool.annotations.readOnlyHint).map((e) => e.tool.name).sort())
+            .toEqual(["effects_apply", "effects_save"]);
+    });
+
     test("offers the karaoke tools in karaoke, with the templater's apply and the aligner as writes", () => {
         const karaoke = kOwn.entries.filter((e) => e.group === "karaoke").map((e) => e.tool.name).sort();
         expect(karaoke).toEqual(["audio_peaks", "karaoke_align", "karaoke_apply_template", "karaoke_check",

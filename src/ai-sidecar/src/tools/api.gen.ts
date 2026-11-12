@@ -638,7 +638,7 @@ export type AudioPeaksResult = {
 
 /** The files and folders the user granted this caller; with folder, also what that folder holds. */
 export type FilesListParams = {
-    /** A folder handle to list (since version 2). */
+    /** A folder handle to list. */
     folder?: string;
     /** A folder inside it; default the folder itself. */
     path?: string;
@@ -657,7 +657,7 @@ export type FilesListResult = {
 export type FilesReadParams = {
     /** A handle from files.list. */
     file?: string;
-    /** Instead of file, a folder handle from files.list (since version 2). */
+    /** Instead of file, a folder handle from files.list. */
     folder?: string;
     /** With folder, the file's path inside it, with / between its parts. */
     path?: string;
@@ -676,7 +676,7 @@ export type FilesReadResult = {
 export type FilesWriteParams = {
     /** A handle from files.list. */
     file?: string;
-    /** Instead of file, a folder handle from files.list (since version 2). */
+    /** Instead of file, a folder handle from files.list. */
     folder?: string;
     /** With folder, the file's path inside it, with / between its parts. */
     path?: string;
@@ -690,17 +690,18 @@ export type FilesWriteResult = {
     size: number;
 };
 
-/** The user's skills: each skill folder's name and its files, SKILL.md among them. */
+/** The caller's skills: each skill folder's name, whether it is the Project's or the user's, and its files, SKILL.md among them. */
 export type SkillsListParams = Record<string, never>;
 
 export type SkillsListResult = {
     skills: ({
         skill: SkillName;
+        origin: "project" | "yours";
         files: string[];
     })[];
 };
 
-/** One file of a user's skill, as UTF-8 text; at most 256 KiB. */
+/** One file of a skill skills.list gives, as UTF-8 text; at most 256 KiB. */
 export type SkillsReadParams = {
     skill: SkillName;
     /** A path skills.list gives, such as SKILL.md or references/tags.md. */
@@ -788,6 +789,160 @@ export type NodesValidateResult = {
         port?: string;
         message: string;
     })[];
+};
+
+/** The Document's node-effect graphs, one per graph Line. */
+export type EffectsGraphsParams = {
+    /** Defaults to the active Document. */
+    document?: DocumentId;
+};
+
+export type EffectsGraphsResult = {
+    document: DocumentId;
+    revision: Revision;
+    graphs: ({
+        line: LineId;
+        name: string;
+        /** The Style whose karaoke Lines it runs on. */
+        style: string;
+        valid: boolean;
+    })[];
+};
+
+/** One graph Line's graph, with what keeps it from running. */
+export type EffectsGraphParams = {
+    /** Defaults to the active Document. */
+    document?: DocumentId;
+    line: LineId;
+};
+
+export type EffectsGraphResult = {
+    line: LineId;
+    name: string;
+    style: string;
+    revision: Revision;
+    /** Null when the Line's text is no graph. */
+    graph: Record<string, unknown> | null;
+    valid: boolean;
+    problems: ({
+        node?: string;
+        port?: string;
+        message: string;
+    })[];
+};
+
+/** Edits a graph in steps (add, connect, disconnect, remove, set) and gives the new graph with its problems; nothing in the Document changes. */
+export type EffectsEditParams = {
+    /** A graph as effects.graph gives it; {"format": 1, "nodes": [], "wires": []} starts an empty one. */
+    graph: Record<string, unknown>;
+    /** Applied in order; a refused step changes nothing. */
+    steps: ({
+        op: "add" | "connect" | "disconnect" | "remove" | "set";
+        /** add: a node type from nodes.catalogue. */
+        type?: string;
+        /** add: the new node's id, made from its type when omitted; remove, set: the node. */
+        node?: string;
+        /** add: the node's fields. */
+        fields?: Record<string, unknown>;
+        /** connect: an output, "node.port". */
+        from?: string;
+        /** connect, disconnect: an input, "node.port"; connect replaces a wire already there. */
+        to?: string;
+        /** set: the field. */
+        field?: string;
+        /** set: the field's value; null restores its default. */
+        value?: unknown;
+    })[];
+};
+
+export type EffectsEditResult = {
+    graph: Record<string, unknown>;
+    /** The ids of the nodes added, in step order. */
+    added: string[];
+    valid: boolean;
+    problems: ({
+        node?: string;
+        port?: string;
+        message: string;
+    })[];
+};
+
+/** Runs a graph on the Document's karaoke Lines and gives the Lines it would write; nothing is applied. Lua nodes don't run. */
+export type EffectsPreviewParams = {
+    /** Defaults to the active Document. */
+    document?: DocumentId;
+    /** A graph Line: its graph, name and Style. */
+    line?: LineId;
+    /** A graph to run in place of the Line's. */
+    graph?: Record<string, unknown>;
+    /** The Style whose karaoke Lines it runs on; needed without line. */
+    style?: string;
+    /** The graph's name, which the Lines' Effect "fx <name>" carries. */
+    name?: string;
+    /** Only these karaoke Lines; all of them when omitted. */
+    sources?: LineId[];
+    /** How many generated Lines to give; default 20. */
+    limit?: number;
+};
+
+export type EffectsPreviewResult = {
+    /** False when a problem stopped the run; applying it would change nothing. */
+    ran: boolean;
+    complete: boolean;
+    /** How many karaoke Lines ran. */
+    sources: number;
+    /** How many Lines the run made. */
+    generated: number;
+    /** The first generated Lines, as ASS Dialogue lines. */
+    lines: string[];
+    problems: ({
+        node?: string;
+        line?: LineId;
+        message: string;
+    })[];
+};
+
+/** Writes a graph to the Document as one undo step: into a new graph Line, or in place of a graph Line's. */
+export type EffectsSaveParams = {
+    /** Defaults to the active Document. */
+    document?: DocumentId;
+    graph: Record<string, unknown>;
+    /** The graph Line to replace; omit it to add a graph. */
+    line?: LineId;
+    /** A new graph's name. */
+    name?: string;
+    /** A new graph's Style: whose karaoke Lines it runs on. */
+    style?: string;
+};
+
+export type EffectsSaveResult = {
+    line: LineId;
+    revision: Revision;
+    graph: Record<string, unknown>;
+    valid: boolean;
+    problems: ({
+        node?: string;
+        port?: string;
+        message: string;
+    })[];
+};
+
+/** Runs a graph Line and writes its Lines as one undo step, replacing those it wrote before; the karaoke Lines it ran on become Comments. Lua nodes don't run, so a graph with one applies from the node-effect editor. */
+export type EffectsApplyParams = {
+    /** Defaults to the active Document. */
+    document?: DocumentId;
+    /** The graph Line. */
+    line: LineId;
+    /** Only these karaoke Lines; all of them when omitted. */
+    sources?: LineId[];
+};
+
+export type EffectsApplyResult = {
+    revision: Revision;
+    generated: number;
+    /** How many karaoke Lines got Lines. */
+    sources: number;
+    changed: boolean;
 };
 
 /** The Line's text with the tags that render it on a quad (VT3's perspective solver): \pos, \org, \frx, \fry, \frz, \fax, \fscx and \fscy. */
@@ -1287,6 +1442,12 @@ export interface Operations {
     "translation.project_write": { access: "write"; params: TranslationProjectWriteParams; result: TranslationProjectWriteResult };
     "nodes.catalogue": { access: "read"; params: NodesCatalogueParams; result: NodesCatalogueResult };
     "nodes.validate": { access: "read"; params: NodesValidateParams; result: NodesValidateResult };
+    "effects.graphs": { access: "read"; params: EffectsGraphsParams; result: EffectsGraphsResult };
+    "effects.graph": { access: "read"; params: EffectsGraphParams; result: EffectsGraphResult };
+    "effects.edit": { access: "read"; params: EffectsEditParams; result: EffectsEditResult };
+    "effects.preview": { access: "read"; params: EffectsPreviewParams; result: EffectsPreviewResult };
+    "effects.save": { access: "write"; params: EffectsSaveParams; result: EffectsSaveResult };
+    "effects.apply": { access: "write"; params: EffectsApplyParams; result: EffectsApplyResult };
     "typeset.perspective": { access: "read"; params: TypesetPerspectiveParams; result: TypesetPerspectiveResult };
     "typeset.clip": { access: "read"; params: TypesetClipParams; result: TypesetClipResult };
     "typeset.drawing": { access: "read"; params: TypesetDrawingParams; result: TypesetDrawingResult };

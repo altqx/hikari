@@ -77,6 +77,7 @@ Each thread has a mode. Qt decides every write a session sends, so a sidecar tha
 - `typeset.apply` isn't on the always-ask list: it changes the Document only after its render check passes, and asks as other writes do ([#1002](https://github.com/altqx/hikari/issues/1002)). Through MCP it is refused like every write but `document.apply`.
 - `karaoke.apply_template` changes the Document like `typeset.apply` and asks as other writes do.
 - `translation.project_write` follows the thread mode and isn't on the always-ask list: it writes only Honya's four project files in the document's own project folder ([AI translation](ai-translation.md)). No agent tool offers it; a translation run uses it after its Lines are written.
+- `effects.save` and `effects.apply` ask as other writes do: the first writes a graph Line, the second a graph's generated Lines, each one undo step. Neither runs a Lua node, so an AI-built graph never runs code the user hasn't seen ([#444](https://github.com/altqx/hikari/issues/444)). Through MCP both are refused.
 - **MCP servers' tools** go through the modes by their hints: a trusted server's read-only tools never ask, destructive ones ask in every mode, and the mode decides the rest ([MCP servers](ai-mcp-clients.md#what-qt-enforces)).
 - **Web search** isn't under the thread modes or the always-ask list: the `web` tools go out through the HTTP relay, not `_hikari/api.call`. The per-thread globe (AI23b) controls it instead. It is on only while Let AI search the web is on, and a search sends only its query, never a file.
 - **Allow in this thread** covers the operation, or for `commands.run` the one command, until the thread is deleted.
@@ -122,6 +123,8 @@ AI12 ([#440](https://github.com/altqx/hikari/issues/440), ADR 0024). The sidecar
 
 - **Saved** as `<user folder>/ai/threads/<id>.json`: the title, mode, model, the history, the panel's items, the cost, the cap, what was allowed and the globe (`webSearch`). Images don't stay: a saved thread names where one was.
 - **Search results don't stay** (owner Q200): when a turn ends, each `web_search` and `web_fetch` result in the history becomes "The search results aren't kept after the turn." Their rows keep only the query and the pages' URLs. The citations and Google's suggestions are saved with the answer. Anthropic's own search results stay in the history as Anthropic sends them, encrypted, because the answer's citations refer to them.
+- **The Project tag.** A thread started in a window with a Project keeps that Project's folder (`project`). The tag stays in the thread file and is never sent to the sidecar or a provider.
+- **Instructions** ([ADR 0030](adr/0030-open-a-folder-as-a-project.md)). `session/new`'s `system` is Hikari's prompt, then `<user folder>/AGENTS.md`, then `AGENTS.md` at the root of the thread's Project, each under its own heading. The Project's comes last, so it wins. Each file is read up to 32 KiB, cut at a character boundary. A missing, empty or unreadable file is skipped quietly. It loads in an untrusted Project too. Claude Code and Codex threads get the same `system`.
 - **The caller** of a thread's calls is `{id: "ai:<thread>", label: "AI", reviewed: true}` with the Documents the user attached, so each thread's changes land in review turns of their own.
 - **Items** the panel shows, by `kind`:
 
@@ -152,6 +155,8 @@ AI12 ([#440](https://github.com/altqx/hikari/issues/440), ADR 0024). The sidecar
 The Agent panel is panel 14. With AI off it isn't built, and its commands, Show Agent panel (5252) and New agent thread (5253), are gone. Neither has a default key. It opens as a tab beside the Review panel, or right of the Grid.
 
 - **Header:** the threads list, the thread's title, a Full access badge, the thread menu (Compact conversation, New thread from summary, Rename, Export as Markdown, Delete) and New thread.
+- **The threads list** shows the active window's Project threads first, under "This project", and then the others by day.
+- **A banner** above the timeline says "This project’s AGENTS.md instructions are on" when the open thread's Project has a non-empty `AGENTS.md`. Its Open button opens the file in the system editor.
 - **Without a chat model** it says so and opens Settings › AI. Nothing starts until a provider is added.
 - **The timeline** shows the items above. Ask cards offer Allow once, Allow in this thread, Deny and Deny with a message; an always-ask card has a red edge, says it asks in every mode, and offers Allow once and Deny only. A `cap` notice offers Raise and continue; `lost` and `failed` offer Retry the turn.
 - **Web search** (AI23b, design gate [#800](https://github.com/altqx/hikari/issues/800#issuecomment-6737834934), Q192–Q200):
@@ -180,7 +185,9 @@ Settings › AI › Agent holds the mode for new threads (`ai.agent.mode`, Auto)
   - a crash mid-turn, then Retry on the earlier history;
   - Steer now and a queued message;
   - a thread saved, reopened and replayed into a new session, then deleted;
+  - `AGENTS.md`: the user's before the Project's after Hikari's prompt, empty ones dropped, the 32 KiB cut on a character boundary, and each thread reading its own Project's;
+  - a thread in a Project with a key for its provider opening, prompting and ending under the alias, a thread outside it under the user's id, and no key sent;
   - compaction: the stubs and the summary applied to the saved history with user items following, `/compact` held until the turn ends with its instruction and the queued message after it, the summary's cost, a failed compaction and New thread from summary, an automatic failure, and the window and setting sent to the session;
   - `webSearch` following Settings and the globe, which is saved; an answer's citations placed on its text and its searches in a row before it; service rows keeping only their pages, the finished turn dropping the results, and one used-up notice per turn.
-- `hikari_ui_agent_panel_tests`, the panel over the whole app and the fake sidecar: a turn's text and change in the timeline and the review, the threads list, the Full access warning, an always-ask card in Full access, the cap with Raise and continue, a queued message and Esc, the panel without a chat model, and AI off; the globe per thread and its hover, citation chips, Sources with Show 1 more and a link opened, the search rows, the used-up notice, only web links opening, and the globe hidden with Let AI search the web off.
+- `hikari_ui_agent_panel_tests`, the panel over the whole app and the fake sidecar: a turn's text and change in the timeline and the review, the threads list, the Full access warning, an always-ask card in Full access, the cap with Raise and continue, a queued message and Esc, the panel without a chat model, and AI off; the globe per thread and its hover, citation chips, Sources with Show 1 more and a link opened, the search rows, the used-up notice, only web links opening, and the globe hidden with Let AI search the web off; the Project's threads listed first, and the `AGENTS.md` banner with Open.
 - `hikari_ui_cited_answer_tests`: chips after their spans in order, escaped text, spans off the text or inside a surrogate pair dropped, and the site of a URL.

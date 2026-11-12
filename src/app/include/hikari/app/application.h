@@ -28,6 +28,7 @@
 #include "hikari/app/plugin_marketplace.h"
 #include "hikari/app/plugin_runtime.h"
 #include "hikari/app/user_folder.h"
+#include "hikari/app/automation_reset_notice.h"
 #include "hikari/app/project_windows.h"
 #include "hikari/core/ass_attachments.h"
 #include "hikari/core/conversion.h"
@@ -57,6 +58,8 @@
 #include "hikari/backends/harper_client.h"
 #include "hikari/backends/legacy_spelling.h"
 #include "hikari/backends/lua_node_helper.h"
+#include "hikari/backends/freetype_glyph_outlines.h"
+#include "hikari/backends/libass_font_service.h"
 #include "hikari/backends/libass_renderer.h"
 #include "hikari/backends/subtitle_renderer_selection.h"
 #include "hikari/backends/qt_general_player.h"
@@ -85,6 +88,7 @@
 #include "hikari/app/agent_controller.h"
 #include "hikari/app/inline_ai_controller.h"
 #include "hikari/app/review_controller.h"
+#include "hikari/app/skills_settings.h"
 #include "hikari/app/window_settings.h"
 #include "shell_controller.h"
 #include "video_controller.h"
@@ -243,6 +247,7 @@ public:
         QString userFolder;
         UserFolder::MoveReport userFolderMove;
         UserFolder::SeedReport userFolderSeed;
+        AutomationReset automationReset;
         // Empty: no plugins can be installed.
         PluginManager::Folders plugins;
         // Empty: no marketplace.
@@ -331,8 +336,25 @@ public:
     Q_INVOKABLE QStringList projectOverrides(int shellWindow) const;
     // Writes each value that differs from the window's to project.toml and removes `cleared` from it; false when a write failed.
     Q_INVOKABLE bool applyProjectSettings(int shellWindow, const QVariantMap &values, const QStringList &cleared);
-    // The Project is untrusted and holds scripts (.hikari/automation/) or a [plugins] table.
+    // The Project is untrusted and holds scripts (.hikari/automation/), a [plugins] table or AI keys it names.
     Q_INVOKABLE bool projectNeedsTrust(int shellWindow) const;
+    // Why projectNeedsTrust: "scripts" (scripts or plugin settings) and "keys".
+    Q_INVOKABLE QStringList projectTrustReasons(int shellWindow) const;
+    // Settings › Project › AI: {trusted, rows, valuesFound, credentialsExists, credentialsPath}. A row is {id, name,
+    // needsKey, known, env, entry, used, from}; used is "yours", "env", "file", "untrusted", "noFile", "notFound" or
+    // "noKey". No key is ever in it.
+    Q_INVOKABLE QVariantMap projectAiKeys(int shellWindow) const;
+    // `names` maps provider ids to {env, entry}; an empty pair removes the entry. False when a write failed.
+    Q_INVOKABLE bool applyProjectAiKeys(int shellWindow, const QVariantMap &names);
+    // .hikari/credentials.toml with an empty entry for each named one, and .hikari/.gitignore.
+    Q_INVOKABLE bool createProjectCredentials(int shellWindow);
+    Q_INVOKABLE void openProjectCredentials(int shellWindow);
+    // Providers (or "keys") whose key project.toml holds; the values are ignored.
+    Q_INVOKABLE QStringList projectKeyValuesFound(int shellWindow) const;
+    // Moves the keys project.toml holds into the credentials file, naming them there instead.
+    Q_INVOKABLE bool moveProjectKeysToCredentials(int shellWindow);
+    // The key the trusted Project open at `root` names for `providerId`.
+    std::optional<std::string> projectAiKey(const QString &root, std::string_view providerId) const;
     // Adds the window's Project folder to trust.folders, which applies the Project again.
     Q_INVOKABLE void trustProject(int shellWindow);
     // {trusted, named: the ids its [plugins] table names, missing: those a trusted one enables that
@@ -703,6 +725,15 @@ public:
     // The keys the next save of `id` writes while askForChange is on; none skips them.
     Q_INVOKABLE void approveScriptInfo(qulonglong id, const QStringList &keys);
     Q_INVOKABLE bool shiftTranslation(int mode);
+    Q_INVOKABLE bool changeAlignment(int an);
+    // edge: 0 left, 1 centre, 2 right, 3 top, 4 middle, 5 bottom; grid.alignToVideoFrame picks the reference.
+    Q_INVOKABLE bool alignLines(int edge);
+    Q_INVOKABLE bool distributeLines(bool vertical);
+    Q_INVOKABLE bool positionToMargins();
+    Q_INVOKABLE bool marginsToPosition();
+    Q_INVOKABLE bool phantom(bool keepEnd);
+    // tag: 0 blur, 1 bord, 2 shad, 3 alpha, 4 an, 5 fsp.
+    Q_INVOKABLE bool cycleTag(int tag, bool back);
     Q_INVOKABLE bool makeGroups();
     // description: the id of the group's description Line.
     Q_INVOKABLE bool toggleGroup(qulonglong description);
@@ -725,8 +756,10 @@ public:
     // shownOnly: only those the filter shows.
     Q_INVOKABLE int selectedLineCount(bool shownOnly = false) const;
     // columns: bits OR'ed; the choice is remembered.
-    Q_INVOKABLE bool copyColumns(int columns);
-    Q_INVOKABLE bool pasteColumns(int columns);
+    // tagNames: the comma list of the NamedTags bit ("\blur, \3c").
+    Q_INVOKABLE bool copyColumns(int columns, const QString &tagNames = {});
+    Q_INVOKABLE bool pasteColumns(int columns, const QString &tagNames = {});
+    Q_INVOKABLE QString columnTagNames() const;
     void setChangeActiveOnSelection(bool on) { m_settings->set("grid.changeActiveOnSelection", on); }
 
     Q_PROPERTY(hikari::ui::SettingsStore *settings READ settingsStore CONSTANT)
@@ -859,6 +892,7 @@ public:
     AutomationShell &automation() { return *m_automation; }
     // Runs node effects' Lua nodes in their own sandboxed helper, started on first use.
     application::LuaNodePort &luaNodes();
+    application::shape::GlyphOutlinePort &glyphOutlines();
     AutomationHotkeysController &automationHotkeys() { return *m_automationHotkeys; }
     SettingsImportController &settingsImport() { return *m_settingsImport; }
     HotkeysController &hotkeys() { return *m_hotkeys; }
@@ -866,6 +900,7 @@ public:
     Analytics &analytics() { return *m_analytics; }
     DiscordPresence &presence() { return *m_presence; }
     StarPrompt &starPrompt() { return *m_starPrompt; }
+    AutomationResetNotice &automationReset() { return *m_automationReset; }
     CrashReports &crashReports() { return *m_crashReports; }
     WhatsNew &whatsNew() { return *m_whatsNew; }
     StyleManagerController &styleManager() { return *m_styleManager; }
@@ -916,6 +951,7 @@ public:
     AiSettings *aiSettings() const { return m_aiSettings.get(); }
     ReviewController *review() const { return m_review.get(); }
     AgentController *agent() const { return m_agent.get(); }
+    SkillsSettings *skillsSettings() const { return m_skillsSettings.get(); }
     InlineAiController *inlineAi() const { return m_inlineAi.get(); }
     Q_PROPERTY(hikari::app::PluginManager *pluginManager READ pluginManager CONSTANT)
     PluginManager *pluginManager() const { return m_pluginManager.get(); }
@@ -1116,7 +1152,7 @@ private:
     application::LineVisible actionLines(const application::EditSession &session) const;
     application::ShiftContext shiftContext(application::LegacyTimebase &timebase) const;
     application::ShiftTimesSettings shiftRunSettings(const QString &tool) const;
-    void rememberColumns(bool paste, int columns);
+    void rememberColumns(bool paste, int columns, const QString &tagNames);
     void protectReference();
     void refreshViews();
     void refreshVideo();
@@ -1293,6 +1329,8 @@ private:
     std::unique_ptr<AutomationShell> m_automation;
     QString m_luaHelper;
     std::unique_ptr<backends::LuaNodeHelper> m_luaNodes;
+    std::unique_ptr<backends::LibassFontService> m_glyphFonts;
+    std::unique_ptr<backends::FreetypeGlyphOutlines> m_glyphOutlines;
     std::optional<QVariantMap> m_layerPreview;
     std::map<core::LineId, std::u8string> m_interpolationPreview;
     std::unique_ptr<AutomationHotkeysController> m_automationHotkeys;
@@ -1307,6 +1345,7 @@ private:
     std::unique_ptr<AiSettings> m_aiSettings;
     std::unique_ptr<ReviewController> m_review;
     std::unique_ptr<AgentController> m_agent;
+    std::unique_ptr<SkillsSettings> m_skillsSettings;
     std::unique_ptr<InlineAiController> m_inlineAi;
     std::unique_ptr<PluginManager> m_pluginManager;
     std::unique_ptr<PluginMarketplace> m_pluginMarketplace;
@@ -1318,6 +1357,7 @@ private:
     std::unique_ptr<StarPrompt> m_starPrompt;
     QString bundledScriptName(const QString &path) const;
     std::unique_ptr<WhatsNew> m_whatsNew;
+    std::unique_ptr<AutomationResetNotice> m_automationReset;
     std::unique_ptr<StyleManagerController> m_styleManager;
     std::unique_ptr<FontCollectorController> m_fontCollector;
     std::unique_ptr<AlignToVideoController> m_alignToVideo;

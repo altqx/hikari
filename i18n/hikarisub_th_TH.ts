@@ -104,6 +104,14 @@
         <translation>เมื่อวาน</translation>
     </message>
     <message>
+        <source>This project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This project’s AGENTS.md instructions are on</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>cost not reported</source>
         <translation>ไม่ได้รายงานค่าใช้จ่าย</translation>
     </message>
@@ -629,7 +637,7 @@
     </message>
     <message>
         <source>Retry</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">ลองอีกครั้ง</translation>
     </message>
     <message>
         <source>Carried on from the summary of “%1”</source>
@@ -1204,6 +1212,26 @@ Output device: %2</source>
         <translation>เปลี่ยนจากค่าของสคริปต์ (%1)</translation>
     </message>
     <message>
+        <source>Move preset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy preset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The project already has a preset named “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>You already have a preset named “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Delete preset</source>
         <translation>ลบพรีเซ็ต</translation>
     </message>
@@ -1232,6 +1260,18 @@ Output device: %2</source>
         <translation>พรีเซ็ต</translation>
     </message>
     <message>
+        <source>Project</source>
+        <translation type="unfinished">โปรเจกต์</translation>
+    </message>
+    <message>
+        <source>Mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hidden by the project’s copy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Save as preset…</source>
         <translation>บันทึกเป็นพรีเซ็ต…</translation>
     </message>
@@ -1258,6 +1298,22 @@ Output device: %2</source>
     <message>
         <source>Save</source>
         <translation>บันทึก</translation>
+    </message>
+    <message>
+        <source>Copy to project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy to mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to mine</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Changed from the script’s %1. Click the bar to put it back.</source>
@@ -2265,6 +2321,56 @@ Output device: %2</source>
     <message>
         <source>Some of its files couldn’t be deleted. Close what uses them and try again.</source>
         <translation>ลบไฟล์บางไฟล์ไม่ได้ ปิดสิ่งที่ใช้ไฟล์เหล่านั้นอยู่แล้วลองอีกครั้ง</translation>
+    </message>
+    <message>
+        <source>Automation folder reset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Automation folder not reset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The karaoke templater and several scripts are now built into HikariSub. Old copies could replace or break them, so your automation folder was reset.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Your automation folder wasn’t reset: %1. Nothing was moved or deleted. HikariSub tries again at the next start.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moved</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Backup</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Now built in</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1: use %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1: %2</source>
+        <translation type="unfinished">%1: %2</translation>
+    </message>
+    <message>
+        <source>Scripts you copied in by hand aren’t reinstalled. They’re still in the backup folder.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Reinstall %n script(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Open backup folder</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -5866,6 +5972,22 @@ Failed to copy %2 fonts.</source>
         <translation>ข้อความลงในคำแปล</translation>
     </message>
     <message>
+        <source>Start tag block</source>
+        <translation>บล็อกแท็กเริ่มต้น</translation>
+    </message>
+    <message>
+        <source>Clip (\clip or \iclip)</source>
+        <translation>คลิป (\clip หรือ \iclip)</translation>
+    </message>
+    <message>
+        <source>Only these tags</source>
+        <translation>เฉพาะแท็กเหล่านี้</translation>
+    </message>
+    <message>
+        <source>These tags:</source>
+        <translation type="vanished">แท็กเหล่านี้:</translation>
+    </message>
+    <message>
         <source>changed</source>
         <translation>เปลี่ยนแล้ว</translation>
     </message>
@@ -5988,6 +6110,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Columns to copy from the %1 selected lines</source>
         <translation>คอลัมน์ที่จะคัดลอกจากบรรทัดที่เลือก %1 บรรทัด</translation>
+    </message>
+    <message>
+        <source>Tags</source>
+        <translation>แท็ก</translation>
+    </message>
+    <message>
+        <source>Paste puts each tag into the start block, replacing the same tag.</source>
+        <translation>การวางจะใส่แต่ละแท็กลงในบล็อกเริ่มต้น แทนที่แท็กเดียวกัน</translation>
     </message>
     <message>
         <source>Select all</source>
@@ -7612,6 +7742,138 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Swap dialogue alternatives</source>
         <translation>สลับบทพูดทางเลือก</translation>
+    </message>
+    <message>
+        <source>Change alignment to bottom left (\an1), keep position</source>
+        <translation>เปลี่ยนการจัดแนวเป็นล่างซ้าย (\an1) โดยคงตำแหน่ง</translation>
+    </message>
+    <message>
+        <source>Change alignment to bottom centre (\an2), keep position</source>
+        <translation>เปลี่ยนการจัดแนวเป็นล่างกลาง (\an2) โดยคงตำแหน่ง</translation>
+    </message>
+    <message>
+        <source>Change alignment to bottom right (\an3), keep position</source>
+        <translation>เปลี่ยนการจัดแนวเป็นล่างขวา (\an3) โดยคงตำแหน่ง</translation>
+    </message>
+    <message>
+        <source>Change alignment to middle left (\an4), keep position</source>
+        <translation>เปลี่ยนการจัดแนวเป็นกลางซ้าย (\an4) โดยคงตำแหน่ง</translation>
+    </message>
+    <message>
+        <source>Change alignment to middle centre (\an5), keep position</source>
+        <translation>เปลี่ยนการจัดแนวเป็นกึ่งกลาง (\an5) โดยคงตำแหน่ง</translation>
+    </message>
+    <message>
+        <source>Change alignment to middle right (\an6), keep position</source>
+        <translation>เปลี่ยนการจัดแนวเป็นกลางขวา (\an6) โดยคงตำแหน่ง</translation>
+    </message>
+    <message>
+        <source>Change alignment to top left (\an7), keep position</source>
+        <translation>เปลี่ยนการจัดแนวเป็นบนซ้าย (\an7) โดยคงตำแหน่ง</translation>
+    </message>
+    <message>
+        <source>Change alignment to top centre (\an8), keep position</source>
+        <translation>เปลี่ยนการจัดแนวเป็นบนกลาง (\an8) โดยคงตำแหน่ง</translation>
+    </message>
+    <message>
+        <source>Change alignment to top right (\an9), keep position</source>
+        <translation>เปลี่ยนการจัดแนวเป็นบนขวา (\an9) โดยคงตำแหน่ง</translation>
+    </message>
+    <message>
+        <source>Align left edges</source>
+        <translation>จัดขอบซ้าย</translation>
+    </message>
+    <message>
+        <source>Align centres</source>
+        <translation>จัดกึ่งกลางแนวนอน</translation>
+    </message>
+    <message>
+        <source>Align right edges</source>
+        <translation>จัดขอบขวา</translation>
+    </message>
+    <message>
+        <source>Align top edges</source>
+        <translation>จัดขอบบน</translation>
+    </message>
+    <message>
+        <source>Align middles</source>
+        <translation>จัดกึ่งกลางแนวตั้ง</translation>
+    </message>
+    <message>
+        <source>Align bottom edges</source>
+        <translation>จัดขอบล่าง</translation>
+    </message>
+    <message>
+        <source>Distribute horizontally</source>
+        <translation>กระจายแนวนอน</translation>
+    </message>
+    <message>
+        <source>Distribute vertically</source>
+        <translation>กระจายแนวตั้ง</translation>
+    </message>
+    <message>
+        <source>Position to margins</source>
+        <translation>ตำแหน่งเป็นระยะขอบ</translation>
+    </message>
+    <message>
+        <source>Margins to position</source>
+        <translation>ระยะขอบเป็นตำแหน่ง</translation>
+    </message>
+    <message>
+        <source>Phantom: keep the start aligned</source>
+        <translation>แฟนทอม: คงการจัดแนวส่วนต้น</translation>
+    </message>
+    <message>
+        <source>Phantom: keep the end aligned</source>
+        <translation>แฟนทอม: คงการจัดแนวส่วนท้าย</translation>
+    </message>
+    <message>
+        <source>Cycle \blur</source>
+        <translation>วนรอบ \blur</translation>
+    </message>
+    <message>
+        <source>Cycle \blur back</source>
+        <translation>วนรอบ \blur ย้อนกลับ</translation>
+    </message>
+    <message>
+        <source>Cycle \bord</source>
+        <translation>วนรอบ \bord</translation>
+    </message>
+    <message>
+        <source>Cycle \bord back</source>
+        <translation>วนรอบ \bord ย้อนกลับ</translation>
+    </message>
+    <message>
+        <source>Cycle \shad</source>
+        <translation>วนรอบ \shad</translation>
+    </message>
+    <message>
+        <source>Cycle \shad back</source>
+        <translation>วนรอบ \shad ย้อนกลับ</translation>
+    </message>
+    <message>
+        <source>Cycle \alpha</source>
+        <translation>วนรอบ \alpha</translation>
+    </message>
+    <message>
+        <source>Cycle \alpha back</source>
+        <translation>วนรอบ \alpha ย้อนกลับ</translation>
+    </message>
+    <message>
+        <source>Cycle \an</source>
+        <translation>วนรอบ \an</translation>
+    </message>
+    <message>
+        <source>Cycle \an back</source>
+        <translation>วนรอบ \an ย้อนกลับ</translation>
+    </message>
+    <message>
+        <source>Cycle \fsp</source>
+        <translation>วนรอบ \fsp</translation>
+    </message>
+    <message>
+        <source>Cycle \fsp back</source>
+        <translation>วนรอบ \fsp ย้อนกลับ</translation>
     </message>
     <message>
         <source>Move tab to new window</source>
@@ -10925,7 +11187,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Tags</source>
-        <translation type="unfinished">แท็ก</translation>
+        <translation>แท็ก</translation>
     </message>
     <message>
         <source>Drawing</source>
@@ -11405,6 +11667,22 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Aegisub 3.2.2 templates</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text outlines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each syllable is drawn as a hollow drawing in its style’s font, and its outline thickens while it is sung.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Striped letters</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each syllable’s letters are cut into thin horizontal stripes, which fade in as it is sung.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -12008,7 +12286,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Tags</source>
-        <translation type="unfinished">แท็ก</translation>
+        <translation>แท็ก</translation>
     </message>
     <message>
         <source>Colours</source>
@@ -12029,6 +12307,26 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Groups</source>
         <translation type="unfinished">กลุ่ม</translation>
+    </message>
+    <message>
+        <source>Text to drawing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The text (unwired, the unit’s own) drawn in its line’s Style font, at \p1 from the text’s top left, as Yutils’ text_to_shape draws it. width and height are the text’s.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Combine drawings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>a and b combined, each filled as libass fills it: unite, subtract (b taken away from a), intersect, or exclude (what only one of them covers). Each one’s \p scale is kept; the result is at \p1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How to combine them.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -13731,6 +14029,28 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>เวอร์ชันที่ทราบว่ามีปัญหา</translation>
     </message>
     <message>
+        <source>Only the first %1 of its %2 files are offered.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n file(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Project</source>
+        <translation type="unfinished">โปรเจกต์</translation>
+    </message>
+    <message>
+        <source>Mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Built in</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Update now</source>
         <translation>อัปเดตเลย</translation>
     </message>
@@ -14063,6 +14383,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>คัดลอก</translation>
     </message>
     <message>
+        <source>%1 is older than the oldest HikariSub supports (%2). Run this in a terminal:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Command</source>
+        <translation type="unfinished">คำสั่ง</translation>
+    </message>
+    <message>
+        <source>Arguments</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Open auth.openai.com</source>
         <translation>เปิด auth.openai.com</translation>
     </message>
@@ -14093,6 +14425,46 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Try again</source>
         <translation>ลองอีกครั้ง</translation>
+    </message>
+    <message>
+        <source>Sign in with Google…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Signed in with Google</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Google’s sign-in page is open in your browser. Sign in there, then paste the code the page shows.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Checking the code…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Starting Antigravity’s sign-in…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Code from Google’s page</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Continue</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>HikariSub keeps its own Google sign-in for Antigravity and never reads ~/.gemini.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add agent</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Any agent that speaks ACP over stdio. It runs with its own folder as its home and can write nowhere else.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>MCP</source>
@@ -14229,6 +14601,52 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Show the cost meter</source>
         <translation>แสดงมาตรวัดค่าใช้จ่าย</translation>
+    </message>
+    <message>
+        <source>Skills</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>About skills</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No skills in this project yet. A skill is a folder with a SKILL.md in it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No skills of yours yet. A skill is a folder with a SKILL.md in it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open folder</source>
+        <translation type="unfinished">เปิดโฟลเดอร์</translation>
+    </message>
+    <message>
+        <source>Open project folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Read the folders again</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n skill(s) can’t be offered. Fix them in their folders, then read the folders again.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Threads started in this window use this project’s skills. A new or changed skill shows in the next thread.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hikari AI reads a skill when the work matches its description. Skills are instructions and give no permission. A new or changed skill shows in the next thread.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Inline actions</source>
@@ -14483,6 +14901,22 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>คำขอจะส่งไปยังผู้ให้บริการที่คุณเพิ่มและ %1 เท่านั้น ระบบนี้ไม่ได้รันคอมโพเนนต์ AI ในแซนด์บ็อกซ์</translation>
     </message>
     <message>
+        <source>Cycle values</source>
+        <translation>ค่าวนรอบ</translation>
+    </message>
+    <message>
+        <source>Each Cycle command steps the tag in the start block of the selected lines to the next value. Cycle back steps the other way.</source>
+        <translation>คำสั่งวนรอบแต่ละคำสั่งจะเลื่อนแท็กในบล็อกเริ่มต้นของบรรทัดที่เลือกไปยังค่าถัดไป วนรอบย้อนกลับจะเลื่อนไปอีกทาง</translation>
+    </message>
+    <message>
+        <source>Values for %1, in order</source>
+        <translation>ค่าของ %1 ตามลำดับ</translation>
+    </message>
+    <message>
+        <source>Each Cycle command steps the tag in the selected lines&apos; start block to the next value. Cycle back steps the other way.</source>
+        <translation type="vanished">คำสั่งวนรอบแต่ละคำสั่งจะเลื่อนแท็กในบล็อกเริ่มต้นของบรรทัดที่เลือกไปยังค่าถัดไป วนรอบย้อนกลับจะเลื่อนไปอีกทาง</translation>
+    </message>
+    <message>
         <source>Delete MCP server</source>
         <translation type="unfinished"></translation>
     </message>
@@ -14531,10 +14965,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>A URL (streamable HTTP)</source>
         <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Command</source>
-        <translation type="unfinished">คำสั่ง</translation>
     </message>
     <message>
         <source>Environment</source>
@@ -14634,6 +15064,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>At 90% of the model’s context window, old tool results are cleared, then older turns are summarised. Your history stays in the panel.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Found an asdf shim that asdf couldn’t resolve: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Found a mise shim that mise couldn’t resolve: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Antigravity isn’t on PATH.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -15465,6 +15907,125 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
 </context>
 <context>
+    <name>HikariSub.Position</name>
+    <message>
+        <source>Position to margins</source>
+        <translation>ตำแหน่งเป็นระยะขอบ</translation>
+    </message>
+    <message>
+        <source>Margins to position</source>
+        <translation>ระยะขอบเป็นตำแหน่ง</translation>
+    </message>
+    <message>
+        <source>Top left (%1)</source>
+        <translation>บนซ้าย (%1)</translation>
+    </message>
+    <message>
+        <source>Top centre (%1)</source>
+        <translation>บนกลาง (%1)</translation>
+    </message>
+    <message>
+        <source>Top right (%1)</source>
+        <translation>บนขวา (%1)</translation>
+    </message>
+    <message>
+        <source>Middle left (%1)</source>
+        <translation>กลางซ้าย (%1)</translation>
+    </message>
+    <message>
+        <source>Middle centre (%1)</source>
+        <translation>กึ่งกลาง (%1)</translation>
+    </message>
+    <message>
+        <source>Middle right (%1)</source>
+        <translation>กลางขวา (%1)</translation>
+    </message>
+    <message>
+        <source>Bottom left (%1)</source>
+        <translation>ล่างซ้าย (%1)</translation>
+    </message>
+    <message>
+        <source>Bottom centre (%1)</source>
+        <translation>ล่างกลาง (%1)</translation>
+    </message>
+    <message>
+        <source>Bottom right (%1)</source>
+        <translation>ล่างขวา (%1)</translation>
+    </message>
+    <message>
+        <source>Change alignment, keep position</source>
+        <translation>เปลี่ยนการจัดแนวโดยคงตำแหน่ง</translation>
+    </message>
+    <message>
+        <source>Align and distribute</source>
+        <translation>จัดแนวและกระจาย</translation>
+    </message>
+    <message>
+        <source>Relative to</source>
+        <translation>อ้างอิงกับ</translation>
+    </message>
+    <message>
+        <source>The active line</source>
+        <translation type="vanished">บรรทัดที่ใช้งาน</translation>
+    </message>
+    <message>
+        <source>The video frame</source>
+        <translation type="vanished">เฟรมวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Active line</source>
+        <translation>บรรทัดที่ใช้งาน</translation>
+    </message>
+    <message>
+        <source>Video frame</source>
+        <translation>เฟรมวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Align left edges</source>
+        <translation>จัดขอบซ้าย</translation>
+    </message>
+    <message>
+        <source>Align centres</source>
+        <translation>จัดกึ่งกลางแนวนอน</translation>
+    </message>
+    <message>
+        <source>Align right edges</source>
+        <translation>จัดขอบขวา</translation>
+    </message>
+    <message>
+        <source>Align top edges</source>
+        <translation>จัดขอบบน</translation>
+    </message>
+    <message>
+        <source>Align middles</source>
+        <translation>จัดกึ่งกลางแนวตั้ง</translation>
+    </message>
+    <message>
+        <source>Align bottom edges</source>
+        <translation>จัดขอบล่าง</translation>
+    </message>
+    <message>
+        <source>Distribute horizontally</source>
+        <translation>กระจายแนวนอน</translation>
+    </message>
+    <message>
+        <source>Distribute vertically</source>
+        <translation>กระจายแนวตั้ง</translation>
+    </message>
+    <message>
+        <source>Phantom</source>
+        <translation>แฟนทอม</translation>
+    </message>
+    <message>
+        <source>Keep the start aligned</source>
+        <translation>คงการจัดแนวส่วนต้น</translation>
+    </message>
+    <message>
+        <source>Keep the end aligned</source>
+        <translation>คงการจัดแนวส่วนท้าย</translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.Project</name>
     <message>
         <source>%1 in project.toml looks like a credential, so it is ignored. Keys go in this Project’s credentials file (.hikari/credentials.toml) or this machine’s environment, never in project.toml.</source>
@@ -15501,6 +16062,22 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>This tab now uses the project %1.</source>
         <translation>แท็บนี้ใช้โปรเจกต์ %1 แล้ว</translation>
+    </message>
+    <message>
+        <source>This project has its own scripts, plugin settings or AI keys. Trust “%1” to use them.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This project has its own AI keys. Trust “%1” to use them; until then Hikari AI uses yours.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>project.toml holds an AI key for %1. HikariSub ignores it: keys go in .hikari/credentials.toml, which git doesn’t share.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Project settings…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>This file is in the project %1.</source>
@@ -15557,6 +16134,102 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Trust folder</source>
         <translation>เชื่อถือโฟลเดอร์</translation>
+    </message>
+    <message>
+        <source>From %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>From the credentials file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Yours. Project not trusted</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No credentials file. Uses yours</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not found. Uses yours</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Needs no key</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>project.toml holds an AI key for %1, which is ignored. Keys go in the credentials file. If project.toml was committed or shared, replace the key at the provider too.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to credentials file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>“%1” isn’t trusted, so its keys aren’t used. Hikari AI uses yours in this window.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A key from this machine’s environment or from this Project’s credentials file replaces yours, only in this Project’s windows. The environment comes first. Base URLs, budgets and on/off stay yours.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Provider</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Environment variable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Credentials entry</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Key used</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>None</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Environment variable for %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Credentials entry for %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Credentials file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 · git ignores it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 · not created</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Create credentials file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show in folder</source>
+        <translation type="unfinished">แสดงในโฟลเดอร์</translation>
+    </message>
+    <message>
+        <source>Creates the file and .hikari/.gitignore, which keeps it and project.local.toml out of git. Keys never reach Hikari AI or the model.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -17886,6 +18559,41 @@ because it was edited.</source>
     <message>
         <source>The settings before the import take effect when HikariSub starts again.</source>
         <translation>การตั้งค่าก่อนการนำเข้าจะมีผลเมื่อเริ่ม HikariSub อีกครั้ง</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Skills</name>
+    <message>
+        <source>The folder’s name isn’t a skill name: use a–z, 0–9 and single hyphens.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The folder has no SKILL.md.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>SKILL.md isn’t UTF-8 text, or is over 256 KiB.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>SKILL.md doesn’t start with frontmatter (---).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>SKILL.md says name: %1, but the folder is %2.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>SKILL.md has no description.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hidden by this project’s.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Replaced by yours.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -21513,6 +22221,26 @@ Styles deleted:
         <translation>%1 (ค่าเริ่มต้นของการจัดเวลา)</translation>
     </message>
     <message>
+        <source>Move preset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy preset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The project already has a preset named “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>You already have a preset named “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation type="unfinished">คัดลอก</translation>
+    </message>
+    <message>
         <source>Delete preset</source>
         <translation>ลบพรีเซ็ต</translation>
     </message>
@@ -21541,6 +22269,22 @@ Styles deleted:
         <translation>ใช้ล่าสุด</translation>
     </message>
     <message>
+        <source>%1, hidden by the project’s copy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hidden by the project’s copy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Preset commands</source>
         <translation>คำสั่งพรีเซ็ต</translation>
     </message>
@@ -21555,6 +22299,22 @@ Styles deleted:
     <message>
         <source>Delete preset…</source>
         <translation>ลบพรีเซ็ต…</translation>
+    </message>
+    <message>
+        <source>Copy to project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy to mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to mine</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Use in the Timing layout</source>
@@ -24718,7 +25478,7 @@ do not work on comments</source>
 ใช้กับความคิดเห็นไม่ได้</translation>
     </message>
     <message>
-        <source>Pathfinder: combine the drawing with the line’s clip, or with the other picked lines in the order they were picked</source>
+        <source>Pathfinder: combine the drawing with the line’s clip, or with the other picked lines in Grid order</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

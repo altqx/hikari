@@ -264,7 +264,7 @@ QString resolveShim(const QString &agent, const QString &shim, const QStringList
 
 }
 
-QString findAgentCli(const QString &agent, const QStringList &dirs)
+QString findAgentCli(const QString &agent, const QStringList &dirs, QString *unresolvedShim)
 {
     const QStringList search =
         dirs.isEmpty() ? qEnvironmentVariable("PATH").split(QDir::listSeparator(), Qt::SkipEmptyParts) : dirs;
@@ -283,19 +283,36 @@ QString findAgentCli(const QString &agent, const QStringList &dirs)
     if (const QString resolved = resolveShim(agent, shim, search); !resolved.isEmpty())
         return resolved;
     qCWarning(lcAgentCli) << agent << "is a version-manager shim HikariSub couldn't resolve:" << shim;
+    if (unresolvedShim)
+        *unresolvedShim = shim;
     return {};
 }
 
-void probeAgentCli(const QString &agent, std::function<void(std::optional<AgentCli>)> done, const QStringList &dirs)
+QString agentShimManager(const QString &path)
 {
-    const QString path = findAgentCli(agent, dirs);
+    switch (shimOf(path)) {
+    case Manager::Mise:
+        return QStringLiteral("mise");
+    case Manager::Asdf:
+        return QStringLiteral("asdf");
+    case Manager::None:
+        break;
+    }
+    return {};
+}
+
+void probeAgentCli(const QString &agent, std::function<void(std::optional<AgentCli>, QString unresolvedShim)> done,
+                   const QStringList &dirs)
+{
+    QString shim;
+    const QString path = findAgentCli(agent, dirs, &shim);
     if (path.isEmpty()) {
-        done(std::nullopt);
+        done(std::nullopt, shim);
         return;
     }
     const QString realPath = QFileInfo(path).canonicalFilePath();
     agentVersion(path, [agent, path, realPath, done = std::move(done)](QString version) {
-        done(AgentCli{.agent = agent, .path = path, .realPath = realPath, .version = std::move(version)});
+        done(AgentCli{.agent = agent, .path = path, .realPath = realPath, .version = std::move(version)}, {});
     });
 }
 

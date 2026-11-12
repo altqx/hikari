@@ -191,6 +191,19 @@ Interpolate across lines does natively what lyger.FbfTransform 2.0.1 and l0.Casc
 - **I6, transforms.** `\t` lists of the same shape at both ends are interpolated. FbfTransform only strips its tags from `\t`.
 - **I7, cascade.** Cascade transforms re-times each Line of the run as line0's script does, after the interpolation, with whole milliseconds.
 
+## AU21-position-commands
+
+Change alignment, Align and distribute, Position to margins, Margins to position, Phantom, the Position shifter's X and Y, the Cycle commands and Copy columns' Tags group do natively what these scripts do: ILL.ChangeAlign, chrolo.ChangeAlignment, phos.AlignAndDistribute, petzku.PosToMargin, petzku.Phantom, ua.Relocator's Teleportation, ua.Cycles, aka.Cycles and ua.MultiCopy. The owner approved the behaviour record and the mockups on [AU21 #855](https://github.com/altqx/hikari/issues/855) (Q309–Q316, 2026-11-11).
+
+- **P1, alignment rounding.** Change alignment writes positions to 2 decimals, as Relocator does, rather than ILL's whole pixels, so the render doesn't move by half a pixel.
+- **P2, align targets.** Lines align to the active line or the video frame. phos's last-line, custom-line, clip, PlayRes and LayoutRes targets aren't ported. The box is the Hydra outline's, without border and shadow.
+- **P3, distribute order.** Distribute orders the lines by their position on the axis and keeps the outermost two, not the first and last in Grid order as phos does.
+- **P4, margins to position.** A line that already has `\pos` or `\move` is left as it is. petzku's script adds a second `\pos` in front.
+- **P5, phantom selection.** The text selected in the Line editor stands for the cursor variant's selection, on each `\N` row it covers.
+- **P6, numeric shift.** The shifter's X and Y shift the toggled kinds by the same amount in every target, one step per Enter. Relocator's Warp (a growing shift per line) isn't ported.
+- **P7, cycle lists.** Six tags (`\blur`, `\bord`, `\shad`, `\alpha`, `\an`, `\fsp`) with ua.Cycles' lists as the defaults, edited in Settings > Editing. Cycle back replaces ua's `{switch}` marker and aka's actor flag. aka's other tags and its effective-tag reading aren't ported; `\an` cycles without keeping the position, as in ua. A value off the list goes to the nearest larger value on it (nearest smaller for Cycle back), where ua takes the first larger one in list order.
+- **P8, tag columns.** The Tags group reads and writes the start block only, as MultiCopy does. A line with nothing to copy copies `{}`, so the rows stay in step. MultiCopy's loop paste isn't ported: extra copied rows are ignored, as for the other columns.
+
 ## AU10-splits-and-overlaps
 
 AU10 [#841](https://github.com/altqx/hikari/issues/841) adds two Grid splits and a Select lines field. They do what Split Tag Sections, ILL.SplitText's By Tags Blocks, l0.SplitLines' Split at Tags, petzku.SplitTimer and the bundled Select overlaps do. Select overlaps still ships unchanged.
@@ -370,3 +383,7 @@ Subtitles › Timing helpers and the Timing postprocessor's Assistant tab do nat
 - **L6, frame shifts.** One frame per press. ShiftCut's "by frames per lines" isn't copied; whole-Line shifts stay in Shift times.
 - **L7, linking and snapping in batch.** These stay the Timing postprocessor's close-gaps and snap rules, with windows in ms rather than frames and no CPS or 450 ms guard.
 - **L8, assistant.** The thresholds are the postprocessor's rules and presets; a rule that is off isn't used. There is no CPS special case for a keyframe 850 ms or more away. A start already on a keyframe doesn't stop the end being timed. Leads are rounded to frame starts, and nothing is inserted after the last Line.
+
+## AU16-automation-folder-reset
+
+The release that ships the native karaoke templater (0.1.0-beta.4) resets the user automation folder once per user folder. Legacy and Aegisub never move a user's scripts. Old copies could register the native templater's macro names, hide the shipped Include libraries or clash with native features, so the whole folder moves rather than the parts we know about. `<user folder>/automation` and `<user folder>/config` (where DependencyControl and scripts keep their records) move to `automation-backup-<yyyy-MM-dd>` beside them, with `-2`, `-3`… when that name is taken. An empty automation folder is left in their place. Settings, the trusted folders and the shipped Autoload and Include are never touched. A folder holding only seeded files still as bundled is emptied without a backup or popup, since the bundle has them all. A failed move changes nothing and is tried again at the next start. `.automation-reset` in the user folder records that it ran. The popup can reinstall the scripts DependencyControl had installed, at their feeds' current releases, and lists those now built in. [AU16 #850](https://github.com/altqx/hikari/issues/850), owner decisions Q184, Q185, Q188, Q401 and Q402.

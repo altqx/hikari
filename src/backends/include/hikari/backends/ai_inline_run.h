@@ -61,6 +61,8 @@ public:
         std::function<void(const Result &)> lineDone;
         std::function<void(End)> finished;
         std::size_t parallel = 4;
+        /// The Project folder of the Document's window, UTF-8; its keys replace the user's. Empty: none.
+        std::string project;
     };
 
     InlineRun(application::ai::Role role, std::vector<Job> jobs, Wiring wiring);

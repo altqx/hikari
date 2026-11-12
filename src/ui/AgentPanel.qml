@@ -252,7 +252,8 @@ FocusScope {
                     topPadding: 8
                     bottomPadding: 2
                     color: Theme.muted
-                    text: section === "today" ? qsTr("Today") : section === "yesterday" ? qsTr("Yesterday")
+                    text: section === "project" ? qsTr("This project")
+                          : section === "today" ? qsTr("Today") : section === "yesterday" ? qsTr("Yesterday")
                                               : Qt.formatDate(Date.fromLocaleDateString(Qt.locale(), section, "yyyy-MM-dd"),
                                                               Locale.ShortFormat)
                 }
@@ -296,6 +297,30 @@ FocusScope {
                         }
                     }
                 }
+            }
+        }
+
+        RowLayout {
+            objectName: "agentProjectInstructions"
+            visible: panel.agent.ready && !panel.showingThreads && panel.hasThread
+                     && (panel.thread.projectInstructions ?? false)
+            Layout.fillWidth: true
+            Layout.leftMargin: 8
+            Layout.rightMargin: 8
+            Layout.topMargin: 4
+            spacing: 6
+            Icon { iconRole: "notice-info"; size: 13 }
+            Label {
+                Layout.fillWidth: true
+                elide: Text.ElideRight
+                color: Theme.muted
+                text: qsTr("This project’s AGENTS.md instructions are on")
+            }
+            Button {
+                objectName: "agentOpenProjectInstructions"
+                flat: true
+                text: qsTr("Open")
+                onClicked: panel.agent.openProjectInstructions()
             }
         }
 
@@ -1426,7 +1451,7 @@ FocusScope {
                 wrapMode: Text.Wrap
                 color: Theme.muted
                 textFormat: Text.PlainText
-                text: [lua.item.macro ? qsTr("%1 · macro “%2”").arg(lua.item.name).arg(lua.item.macro) : (lua.item.name ?? ""),
+                text: [lua.item.macro ? qsTr("%1 · macro “%2”").arg(lua.item.name, lua.item.macro) : (lua.item.name ?? ""),
                        lua.item.title ? qsTr("on %1").arg(lua.item.title) : ""].filter(t => t.length > 0).join("   ")
             }
             Rectangle {
@@ -1544,8 +1569,8 @@ FocusScope {
                     color: lua.item.status === "ran" || lua.item.status === "running" ? Theme.text : Theme.muted
                     text: lua.item.status === "running" ? qsTr("Running %1").arg(lua.item.name ?? "")
                           : lua.item.status === "ran" ? qsTr("Ran %1 · one undo step").arg(lua.item.name ?? "")
-                          : lua.item.status === "failed" ? qsTr("%1 didn’t finish: %2").arg(lua.item.name ?? "").arg(lua.item.result ?? "")
-                          : lua.item.status === "declined" ? (lua.item.message ? qsTr("Didn’t run %1 · “%2”").arg(lua.item.name ?? "").arg(lua.item.message)
+                          : lua.item.status === "failed" ? qsTr("%1 didn’t finish: %2").arg(lua.item.name ?? "", lua.item.result ?? "")
+                          : lua.item.status === "declined" ? (lua.item.message ? qsTr("Didn’t run %1 · “%2”").arg(lua.item.name ?? "", lua.item.message)
                                                                                : qsTr("Didn’t run %1").arg(lua.item.name ?? ""))
                           : qsTr("No longer needed")
                 }

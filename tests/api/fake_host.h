@@ -178,6 +178,26 @@ public:
     std::function<void(LuaRun)> pending;
 };
 
+class FakeEffects final : public EffectsHost {
+public:
+    class Measure final : public application::TextMeasurePort {
+    public:
+        std::optional<application::TextExtents> measure(const std::vector<std::string> &style,
+                                                        const std::string &text) override
+        {
+            const double size = style.size() > 2 ? std::stod(style[2]) : 0;
+            return application::TextExtents{double(text.size()) * size * 0.5, size, size * 0.2, 0};
+        }
+    };
+    application::NodeEffectOptions options() override
+    {
+        application::NodeEffectOptions o;
+        o.measure = &measure;
+        return o;
+    }
+    Measure measure;
+};
+
 class FakeTranslation final : public TranslationHost {
 public:
     std::optional<std::string> projectFolder(application::DocumentId document) const override
@@ -217,13 +237,27 @@ public:
         return id;
     }
 
-    FolderSkills skills{std::filesystem::path()};
+    SkillTiers skills{std::filesystem::path()};
     FakeAutomation automation;
     FakeTranslation translation;
     Host host()
     {
-        return Host{this, this, this, &settings, &media, &files, &review, render, &skills, &automation, typeset, nullptr,
-                    &translation, karaoke};
+        return Host{
+            .documents = this,
+            .commands = this,
+            .panels = this,
+            .settings = &settings,
+            .media = &media,
+            .files = &files,
+            .review = &review,
+            .render = render,
+            .skills = &skills,
+            .automation = &automation,
+            .typeset = typeset,
+            .translation = &translation,
+            .karaoke = karaoke,
+            .effects = effects,
+        };
     }
 
     const application::Workspace &workspace() const override { return workspace_; }
@@ -325,6 +359,8 @@ public:
     RenderHost *render = &fakeRender;
     TypesetHost *typeset = nullptr;
     KaraokeHost *karaoke = nullptr;
+    FakeEffects fakeEffects;
+    EffectsHost *effects = &fakeEffects;
     application::AiReview review;
 };
 

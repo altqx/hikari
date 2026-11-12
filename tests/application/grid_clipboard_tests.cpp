@@ -191,3 +191,59 @@ TEST(GridClipboardExtradata, PastedRowsTakeTheCopiedValuesIntoAnotherDocument)
     ASSERT_EQ(pasted.size(), 3u);
     EXPECT_TRUE(pasted[0]->extra.empty());
 }
+
+TEST(GridClipboardTags, CopyTakesTheStartBlockOrItsNamedTagsAsTheText)
+{
+    EditSession session{load("[Events]\n"
+                             "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\blur1\\clip(0,0,5,5)\\bord2\\i1}a\n"
+                             "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,b\n"
+                             "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\t(\\blur9)\\3c&H00FF00&}c\n")};
+    std::set<core::LineId> all;
+    for (const auto *l : session.document().lines())
+        all.insert(l->id);
+    session.setSelection(Selection{*all.begin(), all, *all.begin(), {}});
+    EXPECT_EQ(copyColumns(session, core::column::StartBlock),
+              u8"{\\blur1\\clip(0,0,5,5)\\bord2\\i1}\r\n{}\r\n{\\t(\\blur9)\\3c&H00FF00&}\r\n");
+    const std::vector<std::u8string> names{u8"blur", u8"3c"};
+    EXPECT_EQ(copyColumns(session, core::column::Clip | core::column::NamedTags, names),
+              u8"{\\clip(0,0,5,5)\\blur1}\r\n{}\r\n{\\3c&H00FF00&}\r\n");
+    EXPECT_EQ(copyColumns(session, core::column::Text | core::column::StartBlock), u8"{\\blur1\\clip(0,0,5,5)\\bord2\\i1}a\r\nb\r\n{\\t(\\blur9)\\3c&H00FF00&}c\r\n");
+}
+
+TEST(GridClipboardTags, PasteReplacesTheStartBlockOrTheSameTags)
+{
+    constexpr std::string_view targets = "[Events]\n"
+                                         "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\blur3\\fs20}x\n"
+                                         "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\i1}y\n"
+                                         "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\an8}z\n";
+    constexpr std::u8string_view copied = u8"{\\clip(0,0,5,5)\\blur1}\r\n{}\r\n{\\3c&H00FF00&}\r\n";
+    const auto texts = [](const EditSession &s) {
+        std::vector<std::u8string> out;
+        for (const auto *l : s.document().lines())
+            out.push_back(l->text);
+        return out;
+    };
+    const auto selectAll = [](EditSession &s) {
+        std::set<core::LineId> all;
+        for (const auto *l : s.document().lines())
+            all.insert(l->id);
+        s.setSelection(Selection{*all.begin(), all, *all.begin(), {}});
+    };
+    {
+        EditSession session{load(targets)};
+        selectAll(session);
+        const std::vector<std::u8string> names{u8"blur", u8"3c"};
+        const auto steps = session.historySize();
+        ASSERT_TRUE(pasteColumns(session, copied, core::column::Clip | core::column::NamedTags, {}, {}, names));
+        EXPECT_EQ(texts(session), (std::vector<std::u8string>{u8"{\\blur1\\fs20\\clip(0,0,5,5)}x", u8"{\\i1}y",
+                                                              u8"{\\an8\\3c&H00FF00&}z"}));
+        EXPECT_EQ(session.historySize(), steps + 1);
+    }
+    {
+        EditSession session{load(targets)};
+        selectAll(session);
+        ASSERT_TRUE(pasteColumns(session, copied, core::column::StartBlock));
+        EXPECT_EQ(texts(session), (std::vector<std::u8string>{u8"{\\clip(0,0,5,5)\\blur1}x", u8"y",
+                                                              u8"{\\3c&H00FF00&}z"}));
+    }
+}

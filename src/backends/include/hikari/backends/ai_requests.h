@@ -31,8 +31,14 @@ public:
     AiRequests(const AiRequests &) = delete;
     AiRequests &operator=(const AiRequests &) = delete;
 
-    /// `request` is the protocol's Request without its model; the role's model fills it in.
-    application::ai::StreamId complete(application::ai::Role role, api::Json request, application::ai::EventSink sink);
+    /// The key a trusted Project folder names for one of the user's providers (ADR 0030, Project AI keys).
+    using ProjectKeys = std::function<std::optional<std::string>(const std::string &project, const std::string &providerId)>;
+    void setProjectKeys(ProjectKeys keys) { m_projectKeys = std::move(keys); }
+
+    /// `request` is the protocol's Request without its model; the role's model fills it in. With `project`, a
+    /// provider the Project has a key for reaches the sidecar as an alias whose relay target carries that key.
+    application::ai::StreamId complete(application::ai::Role role, api::Json request, application::ai::EventSink sink,
+                                       const std::string &project = {});
     struct TranslateSink {
         /// A `_hikari/translate.progress` notification's params.
         std::function<void(const api::Json &)> progress;
@@ -40,7 +46,7 @@ public:
         std::function<void(std::expected<api::Json, application::ai::Error>)> done;
     };
     /// One Honya pipeline run: `params` is the protocol's TranslateParams without its stream, models included.
-    application::ai::StreamId requestTranslation(api::Json params, TranslateSink sink);
+    application::ai::StreamId requestTranslation(api::Json params, TranslateSink sink, const std::string &project = {});
     /// The sink still gets Failed{Cancelled}, once; a translation's done gets Cancelled.
     void cancel(application::ai::StreamId id);
     /// Replaces the provider's catalogue with the provider's own list. A provider whose key is missing fails with Key
@@ -70,9 +76,12 @@ public:
                     std::function<void(std::optional<application::ai::Error>)> done);
     /// The chosen search service, or one being tested with the key to use.
     std::optional<SearchAccess> searchAccess(application::ai::SearchService service) const;
-    /// Deletes the explicit provider cache the sidecar keeps for the conversation (the request's `cacheKey`). Call
-    /// when the thread ends.
-    void endConversation(const std::string &providerId, const std::string &cacheKey);
+    /// Deletes the explicit provider cache the sidecar keeps for the conversation (the request's `cacheKey`), under
+    /// the provider id it was sent with for `project`. Call when the thread ends.
+    void endConversation(const std::string &providerId, const std::string &cacheKey, const std::string &project = {});
+    /// The provider id the sidecar is given: `providerId`, or its alias while `project` has a key for it. Call before
+    /// connected(), which tells the sidecar the aliases.
+    std::string wireProvider(const std::string &providerId, const std::string &project);
     /// The stored providers, with the ones being probed in their place.
     RelayTargets relayTargets();
 
@@ -86,6 +95,10 @@ private:
     struct SearchTest {
         std::optional<std::string> typedKey;
         std::uint64_t generation = 0;
+    };
+    struct Alias {
+        std::string project;
+        std::string providerId;
     };
     AiSidecarHost *connect(const application::ai::Config &config);
     AiSidecarHost *connect() { return connect(m_providers.config()); }
@@ -104,6 +117,9 @@ private:
     std::optional<application::ai::SearchService> m_searchService;
     std::map<application::ai::SearchService, SearchTest> m_searchTests;
     std::map<std::string, Draft> m_drafts;
+    ProjectKeys m_projectKeys;
+    std::vector<std::string> m_aliasProjects;
+    std::map<std::string, Alias, std::less<>> m_aliases;
     std::uint64_t m_lastAttempt = 0;
     std::shared_ptr<bool> m_alive = std::make_shared<bool>(true);
 };

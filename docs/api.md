@@ -2,7 +2,7 @@
 
 The Hikari API is one typed, versioned set of operations over the running application. Plugins, the AI tools, the MCP server and node-editor nodes all call it ([#411](https://github.com/altqx/hikari/issues/411), wave 8 [#410](https://github.com/altqx/hikari/issues/410)). It lives in `src/api` (`hikari_api`), next to the application layer and like it free of Qt; the composition root implements its host ports.
 
-The current version is **2**. Version 1 never shipped in a release; version 2 adds folder grants, `project.info` and `project.changed` (2026-11-12).
+The current version is **1**, and it stays 1 until the first public release.
 
 ## Operations
 
@@ -37,6 +37,11 @@ Schemas use a subset of JSON Schema 2020-12: `type`, `properties`, `required`, `
 | `skills.list`, `skills.read` | read | The user's [skills](ai-skills.md#the-hikari-api) and one file of a skill as UTF-8 (256 KiB at most); only with the skills grant. |
 | `nodes.catalogue` | read | The node-effect editor's node types, with ports and parameters. |
 | `nodes.validate` | read | Checks a node-effect graph; each problem names its node and port or field. |
+| `effects.graphs`, `effects.graph` | read | The Document's graph Lines, and one graph with its problems. |
+| `effects.edit` | read | Edits a graph in steps (`add`, `connect`, `disconnect`, `remove`, `set`) and gives the new graph with its problems; the Document doesn't change. |
+| `effects.preview` | read | Runs a graph on the karaoke Lines and gives the Lines it would write; Lua nodes don't run. |
+| `effects.save` | write | A graph into a new graph Line, or in place of one, as one undo step. |
+| `effects.apply` | write | A graph Line's generated Lines, as the editor's Apply writes them, as one undo step; Lua nodes don't run. |
 | `typeset.perspective`, `typeset.clip`, `typeset.drawing`, `typeset.shift`, `typeset.hydra` | read | The [typesetting solvers](ai-tools.md#typesetting): a Line's text with a quad's transform, a clip, a drawing, an offset or a Hydra change written; nothing is applied. |
 | `typeset.check` | read | Draws one Line alone with a proposed text and compares its ink bounds with a target quad or box. |
 | `karaoke.syllables`, `karaoke.split`, `karaoke.time`, `karaoke.snap`, `karaoke.kanji` | read | The [karaoke tools](ai-tools.md#karaoke): a Line's syllables, or Lines' texts split, timed, snapped to onsets or copied from a romaji Line; nothing is applied. |
@@ -66,7 +71,7 @@ One write runs at a time; another write meanwhile gets `busy`.
 
 A caller reaches only files the user granted it: `Api::grantFile(caller, path, writable)` gives a handle such as `f1`, and `files.list` shows the handles with a display name, never the path. A file granted for reading refuses `files.write` with `not_granted`. Plugins get handles from pickers, drops and their folders ([Files](plugins.md#files)); the AI cards decide their own grants.
 
-Since version 2 a caller can also hold a folder: `Api::grantFolder(caller, path, writable)` gives a handle such as `d2`, which `files.list` shows under `folders`. `files.list` with `folder` (and a `path` inside it) adds that folder's `entries`, each with its `path` relative to the folder, in name order and at most 4096. `files.read` and `files.write` take `folder` and `path` instead of `file`; the answer's `file` is a handle for that file from then on. A path goes through the same checks as a plugin's ([Files](plugins.md#files)): `..`, absolute paths, names Windows can't hold, and links that lead outside the folder are refused with `not_granted`, and a list leaves such links out. A write in a writable folder makes the missing folders on the way. `Api::revokeFiles` ends a caller's folders with its files.
+A caller can also hold a folder: `Api::grantFolder(caller, path, writable)` gives a handle such as `d2`, which `files.list` shows under `folders`. `files.list` with `folder` (and a `path` inside it) adds that folder's `entries`, each with its `path` relative to the folder, in name order and at most 4096. `files.read` and `files.write` take `folder` and `path` instead of `file`; the answer's `file` is a handle for that file from then on. A path goes through the same checks as a plugin's ([Files](plugins.md#files)): `..`, absolute paths, names Windows can't hold, and links that lead outside the folder are refused with `not_granted`, and a list leaves such links out. A write in a writable folder makes the missing folders on the way. `Api::revokeFiles` ends a caller's folders with its files.
 
 The user's skills are apart from files: `skills.*` need the caller's `skills` grant, which only Hikari AI's callers hold ([AI skills](ai-skills.md#the-hikari-api)).
 

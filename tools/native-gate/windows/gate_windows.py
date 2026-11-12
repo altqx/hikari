@@ -286,7 +286,10 @@ def uia(do=None, settle_ms=None, dpi=False):
     for t in res[2:]:
         if t.get("ok"):
             node = t["result"]
+            first = len(els)
             flatten(node, -1, 0, node["element"].get("name") or "", els)
+            for e in els[first:]:
+                e["root"] = node["element"].get("hwnd") or 0
     st["elements"] = els
     st["frames"] = [{"name": w["title"], "type": "Window", "x": w["bounds"]["x"], "y": w["bounds"]["y"],
                      "w": w["bounds"]["width"], "h": w["bounds"]["height"], "hwnd": w["hwnd"], "dpi": dpis.get(w["hwnd"]),
@@ -395,7 +398,8 @@ def main_window():
 
 
 def app_start(doc=None, env=None):
-    r = W.ui("launch", exe=LAYOUT["app"], arguments=[doc] if doc else [], cwd=LAYOUT["docs"], noConsole=True,
+    docs = doc if isinstance(doc, list) else [doc] if doc else []
+    r = W.ui("launch", exe=LAYOUT["app"], arguments=docs, cwd=LAYOUT["docs"], noConsole=True,
              env={"PATH": LAYOUT["qt_bin"] + ";" + LAYOUT["path"], "QT_FORCE_STDERR_LOGGING": "1",
                   "HIKARISUB_USER_DIR": LAYOUT["profile"]["user"], **(env or {})})
     APP["pid"], APP["log"] = r.get("pid"), r.get("log")
@@ -2923,6 +2927,460 @@ def step_grid_speech():
             ["grid.json"] + nev + ev)
 
 
+MW_DOCS = ("a.ass", "b.ass", "c.ass")
+MW_KEYS = {"new": "ctrl+alt+shift+n", "move": "ctrl+alt+shift+m", "quit": "ctrl+alt+shift+q"}
+MW_HOTKEYS = ('version = 1\n\n[global]\nGLOBAL_MOVE_TAB_TO_NEW_WINDOW = "Ctrl+Alt+Shift+N"\n'
+              'GLOBAL_MOVE_TAB_TO_WINDOW = "Ctrl+Alt+Shift+M"\nGLOBAL_QUIT = "Ctrl+Alt+Shift+Q"\n')
+# The tablet reaches the primary monitor only, so both windows share it: the second overlaps the first's right part.
+MW_PLACES = ((0, 0, 640, 720), (384, 40, 640, 720))
+
+
+def mw_windows(st=None):
+    """Each shell window: its title, hwnd, rectangle, and its document tabs in screen coordinates."""
+    st = st or uia()
+    els = st.get("elements") or []
+    out = []
+    for f in st["frames"]:
+        if f["id"] != MAIN:
+            continue
+        tabs = [e for e in els if e["t"] == "TabItem" and e["root"] == f["hwnd"] and not e["off"]
+                and any(a["t"] == "Tab" and a["n"] == "Open documents" for a in ancestors(els, e))]
+        bar = next((e for e in els if e["t"] == "Tab" and e["n"] == "Open documents" and e["root"] == f["hwnd"]), None)
+        out.append({"title": f["name"], "hwnd": f["hwnd"], "active": f["active"],
+                    "x": f["x"], "y": f["y"], "w": f["w"], "h": f["h"], "bar": bar,
+                    "tabs": [{"name": t["n"], "x": t["x"], "y": t["y"], "w": t["w"], "h": t["h"]} for t in tabs]})
+    return out
+
+
+def mw_tabs(wins):
+    return {w["title"]: [t["name"] for t in w["tabs"]] for w in wins}
+
+
+def mw_holding(wins, doc):
+    return next((w for w in wins if any(t["name"] == doc for t in w["tabs"])), None)
+
+
+def mw_docs(w):
+    return frozenset(t["name"] for t in w["tabs"])
+
+
+def mw_wait(pred, timeout=10.0):
+    end = time.time() + timeout
+    while True:
+        wins = mw_windows()
+        if pred(wins) or time.time() > end:
+            return wins
+        time.sleep(0.5)
+
+
+def mw_settings_text(restore):
+    return f"version = 1\n\n[session]\nrestore = {restore}\n"
+
+
+def mw_profile_writes(files):
+    user = LAYOUT["profile"]["user"]
+    return "; ".join(f"[IO.File]::WriteAllText('{user}\\{name}', [Text.Encoding]::UTF8.GetString("
+                     f"[Convert]::FromBase64String('{base64.b64encode(text.encode()).decode()}')))"
+                     for name, text in files.items())
+
+
+def mw_settings(restore):
+    W.task("cmd", env={"CMD": mw_profile_writes({"settings.toml": mw_settings_text(restore)})})
+
+
+def mw_start(restore=0):
+    """a.ass, b.ass, c.ass as tabs of one window, the move and quit commands bound, session.restore = RESTORE."""
+    app_kill()
+    job, lines = W.task("gate-win-fresh")
+    for l in lines:
+        if l.startswith("set aside") and not PROFILE["original"]:
+            PROFILE["original"] = l.split(" -> ", 1)[1].rsplit("\\", 1)[0]
+    user, docs = LAYOUT["profile"]["user"], LAYOUT["scratch"]
+    paths = [f"{docs}\\{d}" for d in MW_DOCS]
+    copies = "; ".join(f"Copy-Item -Force '{LAYOUT['episode']}' '{p}'" for p in paths)
+    W.task("cmd", env={"CMD": f"New-Item -ItemType Directory -Force '{user}' | Out-Null; {copies}; "
+                              + mw_profile_writes({"settings.toml": mw_settings_text(restore), "hotkeys.toml": MW_HOTKEYS})})
+    app_start(paths)
+    dismiss_notices()
+    return mw_wait(lambda ws: len(ws) == 1 and len(ws[0]["tabs"]) == 3, timeout=60)
+
+
+def mw_place(win, rect):
+    if win is None:
+        return {"error": "no window"}
+    _, lines = W.task("gate-win-place", env={"GATE_HWND": str(win["hwnd"]), "GATE_RECT": ",".join(map(str, rect))})
+    raw = line_value(lines, "PLACE_RESULT ")
+    return json.loads(raw) if raw else {"error": lines[-6:]}
+
+
+def mw_layout():
+    """The window holding a.ass at the first place, the other at the second."""
+    wins = sorted(mw_windows(), key=lambda w: not mw_holding([w], "a.ass"))
+    for w, rect in zip(wins, MW_PLACES):
+        mw_place(w, rect)
+    time.sleep(1)
+    return mw_windows()
+
+
+def mw_focus(win):
+    if win is None:
+        return
+    W.ui("focus", pid=APP["pid"], window=f"hwnd:{win['hwnd']}")
+    time.sleep(0.8)
+
+
+def mw_tab_point(win, doc):
+    t = next((t for t in win["tabs"] if t["name"] == doc), None)
+    return (t["x"] + t["w"] // 2, t["y"] + t["h"] // 2) if t else None
+
+
+def mw_bar_point(win, wins):
+    """On WIN's tab bar past its last tab, outside every other window (one of them may be on top)."""
+    bar = win["bar"]
+    if not bar:
+        return None
+    last = max((t["x"] + t["w"] for t in win["tabs"]), default=bar["x"])
+    y = bar["y"] + bar["h"] // 2
+    others = [w for w in wins if w["hwnd"] != win["hwnd"]]
+    for x in range(last + 60, bar["x"] + bar["w"] - 20, 20):
+        if not any(o["x"] <= x < o["x"] + o["w"] and o["y"] <= y < o["y"] + o["h"] for o in others):
+            return x, y
+    return None
+
+
+def mw_path(a, b, n=12):
+    return [(round(a[0] + (b[0] - a[0]) * i / n), round(a[1] + (b[1] - a[1]) * i / n)) for i in range(1, n + 1)]
+
+
+def mw_drag(start, end, low=None):
+    """Down off the source bar first (a sideways move along it reorders), across, then onto the target."""
+    low = low if low is not None else max(start[1], end[1]) + 120
+    path = [start] + mw_path(start, (start[0], low)) + mw_path((start[0], low), (end[0], low)) \
+        + mw_path((end[0], low), end)
+    pointer(path)
+    time.sleep(1.5)
+
+
+def mw_drag_onto(doc, target_hwnd, tag):
+    wins = mw_windows()
+    src = mw_holding(wins, doc)
+    if src:
+        mw_focus(src)
+        wins = mw_windows()
+        src = mw_holding(wins, doc)
+    dst = next((w for w in wins if w["hwnd"] == target_hwnd), None)
+    start = mw_tab_point(src, doc) if src else None
+    end = mw_bar_point(dst, wins) if dst else None
+    log(f"{tag}: drag {doc} from {start} onto {dst and dst['title']!r}'s bar at {end}")
+    if start and end:
+        mw_drag(start, end)
+    return mw_windows(), "" if start and end else f"no drag: tab at {start}, bar point {end}"
+
+
+def mw_evidence(name, wins=None):
+    wins = wins if wins is not None else mw_windows()
+    ev, _ = snap(name, extra="# shell windows\n" + json.dumps(wins, indent=1, ensure_ascii=False))
+    return ev
+
+
+def mw_merged(wins):
+    holder = mw_holding(wins, "b.ass")
+    return len(wins) == 2 and holder is not None and sorted(t["name"] for t in holder["tabs"]) == ["b.ass", "c.ass"]
+
+
+def step_windows():
+    """ADR 0025 (MW7 #633): tabs dragged out, between and back with the tablet; 5221 and 5222."""
+    wins = mw_start()
+    ev = mw_evidence("windows-0-start", wins)
+    if len(wins) != 1:
+        for item in ("windows-drag-out", "windows-drag-between", "windows-drag-back"):
+            verdict(item, "failed", f"the three documents did not open as tabs of one window: {mw_tabs(wins)}", ev)
+        return
+    mw_place(wins[0], MW_PLACES[0])
+    wins = mw_windows()
+    start = mw_tab_point(wins[0], "c.ass")
+    drop = (900, 600)
+    log(f"drag-out: drag c.ass from {start} to {drop}")
+    if start:
+        mw_drag(start, drop, low=drop[1])
+    wins = mw_wait(lambda ws: len(ws) == 2 and all(w["tabs"] for w in ws), timeout=20)
+    ev1 = mw_evidence("windows-1-drag-out", wins)
+    new = mw_holding(wins, "c.ass")
+    out_ok = len(wins) == 2 and new is not None and [t["name"] for t in new["tabs"]] == ["c.ass"]
+    under = new is not None and new["x"] <= drop[0] < new["x"] + new["w"] and new["y"] <= drop[1] < new["y"] + new["h"]
+    verdict("windows-drag-out", "observed" if out_ok and under else "failed",
+            f"c.ass's tab dragged off the window to {drop} and released: windows {mw_tabs(wins)}; the new window at "
+            f"{new and (new['x'], new['y'], new['w'], new['h'])}, the drop point inside it: {under}", ev + ev1)
+    if not out_ok:
+        for item in ("windows-drag-between", "windows-drag-back"):
+            verdict(item, "failed", "not reached: the drag out did not open a window", ev1)
+        return
+    wins = mw_layout()
+    second = mw_holding(wins, "c.ass")
+    wins, why = mw_drag_onto("b.ass", second["hwnd"], "drag-between")
+    ev2 = mw_evidence("windows-2-drag-between", wins)
+    between = mw_merged(wins)
+    verdict("windows-drag-between", "observed" if between else "failed",
+            f"b.ass's tab dragged from the first window onto the second's tab bar: windows {mw_tabs(wins)} {why}", ev2)
+    first = mw_holding(wins, "a.ass")
+    if not between or not first:
+        verdict("windows-drag-back", "failed", f"not reached: windows {mw_tabs(wins)}", ev2)
+        return
+    wins, why = mw_drag_onto("c.ass", first["hwnd"], "drag-back")
+    ev3 = mw_evidence("windows-3-drag-back", wins)
+    back = mw_holding(wins, "c.ass")
+    ok = back is not None and back is mw_holding(wins, "a.ass") and len(wins) == 2
+    verdict("windows-drag-back", "observed" if ok else "failed",
+            f"c.ass's tab dragged back onto the first window's tab bar: windows {mw_tabs(wins)} {why}", ev3)
+
+
+def mw_current(win):
+    """The current tab: the window's title names it."""
+    return win["title"][:-len(" - " + MAIN)] if win["title"].endswith(" - " + MAIN) else None
+
+
+def mw_split(doc):
+    """5221 on DOC: select its tab, then the key; the two windows laid out."""
+    wins = mw_windows()
+    holder = mw_holding(wins, doc)
+    if holder:
+        mw_focus(holder)
+        point = mw_tab_point(holder, doc)
+        if point:
+            pointer([point])
+            time.sleep(0.8)
+    keys(MW_KEYS["new"], 1.5)
+    mw_wait(lambda ws: len(ws) == 2 and all(w["tabs"] for w in ws), timeout=20)
+    return mw_layout()
+
+
+def step_windows_keys():
+    """5221 opens a window with the current tab; 5222's menu names the other windows and moves the tab to one."""
+    wins = mw_start()
+    if len(wins) != 1:
+        verdict("windows-key-new-window", "failed", f"start: {mw_tabs(wins)}")
+        verdict("windows-key-move-to-window", "failed", "not reached")
+        return
+    current = mw_current(wins[0])
+    mw_focus(wins[0])
+    keys(MW_KEYS["new"], 1.5)
+    wins = mw_wait(lambda ws: len(ws) == 2 and all(w["tabs"] for w in ws), timeout=20)
+    ev0 = mw_evidence("windows-4-key-new", wins)
+    new = mw_holding(wins, current) if current else None
+    ok = len(wins) == 2 and new is not None and len(new["tabs"]) == 1
+    verdict("windows-key-new-window", "observed" if ok else "failed",
+            f"Move tab to new window (5221, bound to Ctrl+Alt+Shift+N) on the current tab {current!r}: "
+            f"windows {mw_tabs(wins)}", ev0)
+    if not ok:
+        verdict("windows-key-move-to-window", "failed", "not reached")
+        return
+    wins = mw_layout()
+    first = next(w for w in wins if w is not mw_holding(wins, current))
+    moving = mw_current(first)
+    target = mw_current(mw_holding(wins, current))
+    mw_focus(first)
+    keys(MW_KEYS["move"], 1.2)
+    ev1, st = snap("windows-5-key-move-menu")
+    menu = st["popupMenuItems"]
+    keys("down", 0.4)
+    keys("return", 1.5)
+    wins = mw_windows()
+    ev2 = mw_evidence("windows-6-key-moved", wins)
+    holder = mw_holding(wins, moving) if moving else None
+    ok = holder is not None and holder is mw_holding(wins, current) and any(target in (n or "") for n in menu)
+    verdict("windows-key-move-to-window", "observed" if ok else "failed",
+            f"Move tab to window (5222, Ctrl+Alt+Shift+M) on {moving!r}: its menu lists {menu} (the other window's "
+            f"current tab {target!r}); chosen with Down and Return: windows {mw_tabs(wins)}", ev1 + ev2)
+
+
+def mw_two_windows(restore=2):
+    wins = mw_start(restore)
+    if len(wins) != 1:
+        return wins
+    return mw_split("c.ass")
+
+
+def mw_geometry(wins):
+    return {tuple(sorted(mw_docs(w))): (w["x"], w["y"], w["w"], w["h"]) for w in wins}
+
+
+def mw_restore_diff(before, after, tolerance=2):
+    diffs = []
+    for key, r in before.items():
+        a = after.get(key)
+        if a is None:
+            diffs.append(f"no window with tabs {list(key)}")
+        elif any(abs(p - q) > tolerance for p, q in zip(r, a)):
+            diffs.append(f"{list(key)}: {r} -> {a}")
+    if len(after) != len(before):
+        diffs.append(f"{len(before)} windows before, {len(after)} after")
+    return diffs
+
+
+def mw_ended(timeout=40.0):
+    end = time.time() + timeout
+    while time.time() < end:
+        if not app_status()["alive"]:
+            return True
+        time.sleep(1)
+    return False
+
+
+def step_windows_restore():
+    """Restore after quitting and after a crash: every window with its tabs, place and size (Windows lets a client place)."""
+    wins = mw_two_windows()
+    ev0 = mw_evidence("windows-7-before-quit", wins)
+    if len(wins) != 2:
+        for item in ("windows-restart-restore", "windows-crash-restore"):
+            verdict(item, "failed", f"two windows did not open: {mw_tabs(wins)}", ev0)
+        return
+    before = mw_geometry(wins)
+    mw_focus(wins[0])
+    keys(MW_KEYS["quit"], 1.0)
+    ended = mw_ended()
+    APP["pid"] = None
+    app_start()
+    after_w = mw_wait(lambda ws: len(ws) == 2 and all(w["tabs"] for w in ws), timeout=60)
+    ev1 = mw_evidence("windows-8-after-restart", after_w)
+    diffs = mw_restore_diff(before, mw_geometry(after_w))
+    verdict("windows-restart-restore", "observed" if ended and not diffs else "failed",
+            f"Quit (Ctrl+Alt+Shift+Q) ended the app: {ended}; restarted with session.restore = 2: windows "
+            f"{mw_tabs(after_w)}; places and sizes compared" + (f"; differences: {diffs}" if diffs else ""), ev0 + ev1)
+    mw_settings(0)
+    before = mw_geometry(after_w)
+    app_kill()
+    app_start()
+    st = wait_for(lambda s: bool(find(s, "Button", "Restore session")), timeout=60)
+    offered = bool(find(st, "Button", "Restore session"))
+    ev2, _ = snap("windows-9-crash-offer")
+    uia(do=[{"action": "invoke", "name": "Restore session", "type": "Button"}], settle_ms=1500)
+    after_w = mw_wait(lambda ws: len(ws) == 2 and all(w["tabs"] for w in ws), timeout=60)
+    ev3 = mw_evidence("windows-10-after-crash", after_w)
+    diffs = mw_restore_diff(before, mw_geometry(after_w))
+    verdict("windows-crash-restore", "observed" if offered and not diffs else "failed",
+            f"ended (TerminateProcess) with two windows, restart: the crash offer's Restore session shown: {offered}; "
+            f"pressed: windows {mw_tabs(after_w)}; places and sizes compared" + (f"; differences: {diffs}" if diffs else ""),
+            ev2 + ev3)
+
+
+def mw_modify(doc):
+    """Duplicate DOC's first line from the grid (GRID_DUPLICATE_LINES, Ctrl+D) in the window holding it."""
+    win = mw_holding(mw_windows(), doc)
+    if not win:
+        return False
+    mw_focus(win)
+    point = mw_tab_point(win, doc)
+    if point:
+        pointer([point])
+        time.sleep(0.6)
+    st = uia()
+    holder = mw_holding(mw_windows(st), doc)
+    grid = next((e for e in find(st, "Table", "Subtitle lines") if holder and e["root"] == holder["hwnd"]), None)
+    if not grid:
+        return False
+    pointer([(grid["x"] + 200, grid["y"] + 36)])
+    time.sleep(0.6)
+    combo("ctrl", "d")
+    time.sleep(0.8)
+    return True
+
+
+def mw_dialog_text(st=None):
+    st = st or uia()
+    return [e["n"] for e in st.get("elements") or [] if e["t"] == "Text" and not e["off"]
+            and ("Save the changes" in e["n"] or "before quitting" in e["n"] or "before closing" in e["n"])]
+
+
+def step_windows_close():
+    """Close one window and quit with unsaved tabs in two windows."""
+    wins = mw_two_windows()
+    if len(wins) != 2:
+        for item in ("windows-close-one", "windows-quit-unsaved"):
+            verdict(item, "failed", f"two windows did not open: {mw_tabs(wins)}")
+        return
+    dirty = mw_modify("c.ass")
+    ev0 = mw_evidence("windows-11-second-modified")
+    mw_focus(mw_holding(mw_windows(), "c.ass"))
+    keys("alt+f4", 1.5)
+    st = uia()
+    asked = mw_dialog_text(st)
+    ev1, _ = snap("windows-12-close-question", extra="# dialog\n" + "\n".join(asked))
+    uia(do=[{"action": "invoke", "name": "Don’t save", "type": "Button"}], settle_ms=1500)
+    wins = mw_windows()
+    ev2 = mw_evidence("windows-13-after-close", wins)
+    names = sorted(t["name"] for w in wins for t in w["tabs"])
+    only_c = any("c.ass" in l for l in asked) and not any("a.ass" in l or "b.ass" in l for l in asked)
+    alive = app_status()["alive"]
+    ok = dirty and only_c and len(wins) == 1 and names == ["a.ass", "b.ass"] and alive
+    verdict("windows-close-one", "observed" if ok else "failed",
+            f"the second window (c.ass modified: {dirty}) closed with Alt+F4: the question {asked}; Don't save: "
+            f"windows {mw_tabs(wins)}, the app still running: {alive}", ev0 + ev1 + ev2)
+
+    # MUST KILL: 5221 after a window closed crashes the app in Qt6Quick.dll on Windows, so the quit starts afresh.
+    mw_two_windows()
+    a_dirty, c_dirty = mw_modify("a.ass"), mw_modify("c.ass")
+    two = len(mw_windows()) == 2
+    ev3 = mw_evidence("windows-14-two-modified")
+    keys(MW_KEYS["quit"], 2.0)
+    st = uia()
+    asked = mw_dialog_text(st)
+    ev4, _ = snap("windows-15-quit-review", extra="# dialog\n" + "\n".join(asked))
+    uia(do=[{"action": "invoke", "name": "Quit without saving", "type": "Button"}], settle_ms=1500)
+    gone = mw_ended()
+    if gone:
+        APP["pid"] = None
+    ok = two and a_dirty and c_dirty and any("2 documents" in l for l in asked) and gone
+    verdict("windows-quit-unsaved", "observed" if ok else "failed",
+            f"a.ass and c.ass modified in two windows ({two}, {a_dirty}, {c_dirty}); Quit: {asked}; "
+            f"Quit without saving ended the app: {gone}", ev3 + ev4)
+
+
+def step_windows_output():
+    """A window on a monitor that is detached comes back whole on the remaining one, live and after a restart."""
+    d = displays("extend")
+    mons = d.get("monitors") or []
+    if len(mons) < 2:
+        verdict("windows-monitor-removal", "not-observable",
+                f"only {len(mons)} monitor(s) on the guest desktop after extending ({d.get('steps')})")
+        return
+    try:
+        wins = mw_two_windows()
+        if len(wins) != 2:
+            verdict("windows-monitor-removal", "failed", f"two windows did not open: {mw_tabs(wins)}")
+            return
+        sec = next(m for m in mons if not m["primary"])
+        prim = next(m for m in mons if m["primary"])
+        second = mw_holding(wins, "c.ass")
+        mw_place(second, (sec["x"] + 100, sec["y"] + 40, 800, 640))
+        wins = mw_windows()
+        on2 = mw_holding(wins, "c.ass")
+        ev0 = mw_evidence("windows-16-on-second-monitor", wins)
+        displays("detach")
+        time.sleep(3)
+        wins = mw_windows()
+        live = mw_holding(wins, "c.ass")
+        ev1 = mw_evidence("windows-17-monitor-detached", wins)
+        keys(MW_KEYS["quit"], 1.0)
+        mw_ended()
+        APP["pid"] = None
+        app_start()
+        wins = mw_wait(lambda ws: len(ws) == 2 and all(w["tabs"] for w in ws), timeout=20)
+        again = mw_holding(wins, "c.ass")
+        ev2 = mw_evidence("windows-18-restarted-after-detach", wins)
+
+        def whole(w):
+            return w is not None and prim["x"] <= w["x"] and prim["y"] <= w["y"] and \
+                w["x"] + w["w"] <= prim["x"] + prim["w"] and w["y"] + w["h"] <= prim["y"] + prim["h"]
+
+        def at(w):
+            return w and (w["x"], w["y"], w["w"], w["h"])
+        verdict("windows-monitor-removal", "observed" if whole(live) and whole(again) else "failed",
+                f"c.ass's window on the second monitor at {at(on2)}; that monitor detached: the window at {at(live)}; "
+                f"after a restart at {at(again)}; whole on the primary {prim['w']}x{prim['h']}", ev0 + ev1 + ev2)
+    finally:
+        displays("extend")
+
+
 STEPS = {"default": step_default, "kbd": step_keyboard_float_dock, "f6": step_f6_floating, "move": step_move_panel,
          "pointer": step_pointer, "video": step_video, "persist": step_persistence, "fullscreen": step_fullscreen,
          "outputs": step_outputs, "nvda": step_nvda, "menutext": step_menu_from_text,
@@ -2930,7 +3388,9 @@ STEPS = {"default": step_default, "kbd": step_keyboard_float_dock, "f6": step_f6
          "layouts": step_layouts, "tabs": step_tabs, "videofs": step_video_fullscreen,
          "snap": step_snap, "tags": step_tags, "statusbar": step_statusbar, "dialogs": step_dialogs,
          "reference": step_reference, "titlebar": step_title_bar,
-         "dialogframe": step_dialog_frame, "gridspeech": step_grid_speech}
+         "dialogframe": step_dialog_frame, "gridspeech": step_grid_speech, "windows": step_windows,
+         "windowskeys": step_windows_keys, "windowsrestore": step_windows_restore, "windowsclose": step_windows_close,
+         "windowsout": step_windows_output}
 
 
 def main():

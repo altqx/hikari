@@ -38,7 +38,7 @@ Hikari AI's threads also get `update_plan` ([AI agent](ai-agent.md)) and `read_s
 | --- | --- |
 | `typeset` | `video_frame`, `video_ink_bounds`, `video_colours`, `video_keyframes` ([frames](#frames)); `typeset_perspective`, `typeset_clip`, `typeset_drawing`, `typeset_shift`, `typeset_hydra`, `typeset_check`, `typeset_apply` ([typesetting](#typesetting)) |
 | `karaoke` | `audio_peaks`; `karaoke_syllables`, `karaoke_split`, `karaoke_time`, `karaoke_onsets`, `karaoke_snap`, `karaoke_kanji`, `karaoke_furigana`, `karaoke_check`, `karaoke_template_preview`, `karaoke_apply_template`, `karaoke_align` ([karaoke](#karaoke)) |
-| `effects` | `nodes_catalogue` |
+| `effects` | `nodes_catalogue`, `nodes_validate`, `effects_graphs`, `effects_graph`, `effects_edit`, `effects_preview`, `effects_save`, `effects_apply` |
 | `app` | `panels_list`, `panels_open`, `panels_close`, `panels_focus`, `settings_list`, `settings_get`, `settings_set`; the two reads leave out `privacy.*` and `recent.*` ([Agent](ai-agent.md#modes)) |
 | `automation` | `automation_run`, which asks the user on every run ([AI-written Lua](ai-agent.md#ai-written-lua)) |
 | `translate` | `translation_project`: the Document's Honya project files ([AI translation pipeline](ai-translation.md)). |
