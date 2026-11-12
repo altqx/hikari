@@ -178,6 +178,26 @@ public:
     std::function<void(LuaRun)> pending;
 };
 
+class FakeEffects final : public EffectsHost {
+public:
+    class Measure final : public application::TextMeasurePort {
+    public:
+        std::optional<application::TextExtents> measure(const std::vector<std::string> &style,
+                                                        const std::string &text) override
+        {
+            const double size = style.size() > 2 ? std::stod(style[2]) : 0;
+            return application::TextExtents{double(text.size()) * size * 0.5, size, size * 0.2, 0};
+        }
+    };
+    application::NodeEffectOptions options() override
+    {
+        application::NodeEffectOptions o;
+        o.measure = &measure;
+        return o;
+    }
+    Measure measure;
+};
+
 // Document 1 "a.ass" (the editing target, Lines 1-3, Lines 1 and 3 selected,
 // 3 active) and document 2 "b.ass", never saved.
 class FakeHost final : public DocumentHost, public CommandHost, public PanelHost {
@@ -209,7 +229,7 @@ public:
 
     FolderSkills skills{std::filesystem::path()};
     FakeAutomation automation;
-    Host host() { return Host{this, this, this, &settings, &media, &files, &review, render, &skills, &automation, typeset}; }
+    Host host() { return Host{this, this, this, &settings, &media, &files, &review, render, &skills, &automation, typeset, nullptr, effects}; }
 
     const application::Workspace &workspace() const override { return workspace_; }
     application::EditSession *session(application::DocumentId document) const override
@@ -309,6 +329,8 @@ public:
     FakeRender fakeRender;
     RenderHost *render = &fakeRender;
     TypesetHost *typeset = nullptr;
+    FakeEffects fakeEffects;
+    EffectsHost *effects = &fakeEffects;
     application::AiReview review;
 };
 

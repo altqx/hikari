@@ -254,3 +254,5 @@ NE4 ([#426](https://github.com/altqx/hikari/issues/426)). The mode bar menu's "E
 - `nodes.validate` checks a graph and returns `{valid, problems}`. Each problem has its `node`, `port` and `message`.
 
 Both are read operations of API version 1 ([Hikari API](api.md)).
+
+The `effects.*` operations of API version 2 ([#444](https://github.com/altqx/hikari/issues/444)) let an AI agent build a graph and run it. `effects.edit` changes a graph it is given, step by step, and `effects.preview` runs one without writing. `effects.save` and `effects.apply` write the graph Line and its Lines, each as one undo step. They run with the editor's text measurement and plugin nodes but never trust the Document's Lua, so a graph with a `lua.code` node previews and applies only from the editor.

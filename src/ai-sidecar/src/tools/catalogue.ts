@@ -90,6 +90,17 @@ const kPlacements: Partial<Record<OperationName, Placement>> = {
     },
     "nodes.catalogue": { group: "effects" },
     "nodes.validate": { group: "effects" },
+    "effects.graphs": { group: "effects" },
+    "effects.graph": { group: "effects" },
+    "effects.edit": {
+        group: "effects",
+        description: "Edits a node-effect graph in steps and answers the new graph with its problems; the Document " +
+            "doesn't change. Build from an empty graph with nodes from nodes_catalogue, check it with " +
+            "effects_preview, then write it with effects_save and effects_apply.",
+    },
+    "effects.preview": { group: "effects" },
+    "effects.save": { group: "effects" },
+    "effects.apply": { group: "effects" },
     "panels.list": { group: "app" },
     "panels.open": { group: "app" },
     "panels.close": { group: "app" },

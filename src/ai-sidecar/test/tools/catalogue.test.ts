@@ -79,6 +79,14 @@ describe("the tool catalogue", () => {
         expect(apply.properties.edits.items.oneOf[0].properties.op).toEqual({ enum: ["set_line"] });
     });
 
+    test("offers the graph tools in effects, with only save and apply writing", () => {
+        const effects = kOwn.entries.filter((e) => e.group === "effects");
+        expect(effects.map((e) => e.tool.name).sort()).toEqual(["effects_apply", "effects_edit", "effects_graph",
+            "effects_graphs", "effects_preview", "effects_save", "nodes_catalogue", "nodes_validate"]);
+        expect(effects.filter((e) => !e.tool.annotations.readOnlyHint).map((e) => e.tool.name).sort())
+            .toEqual(["effects_apply", "effects_save"]);
+    });
+
     test("offers the frame tools and the solvers in typeset, with full instead of maxPixels on video_frame", () => {
         const typeset = kOwn.entries.filter((e) => e.group === "typeset").map((e) => e.tool.name).sort();
         expect(typeset).toEqual(["typeset_apply", "typeset_check", "typeset_clip", "typeset_drawing", "typeset_hydra",

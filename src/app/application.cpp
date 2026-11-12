@@ -754,7 +754,14 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         m_userFolder.isEmpty() ? std::filesystem::path()
                                : std::filesystem::path((m_userFolder + QStringLiteral("/ai/skills")).toStdU16String()),
         m_aiScripts.get(),
-        [this] { return perspectiveMeasure(); }, [this] { return activeProject(); }});
+        [this] { return perspectiveMeasure(); }, [this] { return activeProject(); },
+        [this] {
+            application::NodeEffectOptions o;
+            o.measure = perspectiveMeasure().port;
+            o.lua = &luaNodes();
+            o.audio = m_automation->media().peakAudio();
+            return o;
+        }});
     AiFeatures::Ports aiPorts = options.aiPorts ? std::move(*options.aiPorts)
                                                 : AiFeatures::defaultPorts(m_userFolder, &m_apiHost->api(),
                                                                            options.appVersion.isEmpty()
