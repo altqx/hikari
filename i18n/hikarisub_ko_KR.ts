@@ -14334,6 +14334,152 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>Requests go only to the providers you add and to %1. The AI component isn’t sandboxed on this system.</source>
         <translation>요청은 추가한 공급자와 %1에만 갑니다. 이 시스템에서는 AI 구성 요소가 샌드박스에서 실행되지 않습니다.</translation>
     </message>
+    <message>
+        <source>Delete MCP server</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete the MCP server “%1”?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Its secrets are removed from the keychain, and the agent loses its tools.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Starting…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Connected · %n tool(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Failed: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Starts when the agent needs it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add an MCP server</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Runs as</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A command on this computer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A URL (streamable HTTP)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Command</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Environment</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Leave empty to keep the stored variables</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>URL</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bearer token</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Leave empty to keep the stored token</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Optional</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>One NAME=value per line. They go to the keychain, and only to this server.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The token goes to the keychain, and only to this URL.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Trust what this server says about its tools</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A trusted server’s read-only tools run without asking. Without trust, every tool asks as a change would.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Give the server a name.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Type the command that starts the server.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Type the server’s http or https URL.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Write each variable as NAME=value on its own line.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The keychain didn’t take the secrets; nothing was saved.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>MCP servers</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No MCP servers yet. Add one to give the agent its tools.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add server…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Trust what it says about its tools</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Run %1 without asking</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 · only reads, never asks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 · asks every time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Servers run as you, outside the AI component’s sandbox. Tools that may change or delete things ask first in every mode. Changes apply at once.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Plugins</name>

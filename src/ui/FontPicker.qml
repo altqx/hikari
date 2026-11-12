@@ -9,6 +9,7 @@ DialogWindow {
     id: picker
     objectName: "fontPicker"
     required property var catalogs
+    property int shellWindow: -1
     property LineEditorController editor: null
     title: qsTr("Choose font")
     dialogId: "fontPicker"
@@ -106,8 +107,8 @@ DialogWindow {
     }
     function relist() {
         const value = choice >= 0 && choice < choices.length ? choices[choice] : ""
-        listed = catalogs.fontList(choice, value, catalogs.filterOn, catalogs.filterText)
-        installed = catalogs.allFonts()
+        listed = catalogs.fontList(choice, value, catalogs.filterOn, catalogs.filterText, shellWindow)
+        installed = catalogs.allFonts(shellWindow)
     }
     function chooseCatalog(index) {
         choice = index
@@ -459,7 +460,7 @@ DialogWindow {
             const n = picker.choices.length
             const out = []
             for (let i = 0; i < n; ++i)
-                out.push(i < 2 ? picker.catalogs.fontList(i, picker.choices[i], false, "").length
+                out.push(i < 2 ? picker.catalogs.fontList(i, picker.choices[i], false, "", picker.shellWindow).length
                                : picker.catalogs.catalogSize(picker.choices[i]))
             counts = out
             popup(anchor, 0, anchor.height)

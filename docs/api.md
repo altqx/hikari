@@ -36,7 +36,10 @@ Schemas use a subset of JSON Schema 2020-12: `type`, `properties`, `required`, `
 | `skills.list`, `skills.read` | read | The user's [skills](ai-skills.md#the-hikari-api) and one file of a skill as UTF-8 (256 KiB at most); only with the skills grant. |
 | `nodes.catalogue` | read | The node-effect editor's node types, with ports and parameters. |
 | `nodes.validate` | read | Checks a node-effect graph; each problem names its node and port or field. |
+| `typeset.perspective`, `typeset.clip`, `typeset.drawing`, `typeset.shift`, `typeset.hydra` | read | The [typesetting solvers](ai-tools.md#typesetting): a Line's text with a quad's transform, a clip, a drawing, an offset or a Hydra change written; nothing is applied. |
+| `typeset.check` | read | Draws one Line alone with a proposed text and compares its ink bounds with a target quad or box. |
 | `document.apply` | write | One change set to one Document, as one undo step. |
+| `typeset.apply` | write | Typeset Lines as one undo step, only when every one passes `typeset.check`. |
 | `selection.set` | write | The selected Lines and the active Line; the Grid follows. |
 | `commands.run` | write | Runs a command as its menu item or toolbar button would. |
 | `panels.open`, `panels.close`, `panels.focus` | write | Shows, closes or focuses a panel where the layout keeps it. |

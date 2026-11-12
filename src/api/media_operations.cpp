@@ -9,8 +9,6 @@
 
 namespace hikari::api::detail {
 
-namespace {
-
 using application::MacroMediaPort;
 
 std::unexpected<Error> noVideo()
@@ -18,15 +16,21 @@ std::unexpected<Error> noVideo()
     return fail(errors::kUnavailable, "No video is open.");
 }
 
+namespace {
+
 std::unexpected<Error> noAudio()
 {
     return fail(errors::kUnavailable, "No audio is open.");
+}
+
 }
 
 bool videoOpen(const Context &context)
 {
     return context.host.media && context.host.media->videoSize();
 }
+
+namespace {
 
 Result videoInfo(const Context &context, const Json &)
 {
@@ -99,6 +103,8 @@ std::string scaled(const MacroMediaPort::Frame &frame, Rect crop, int outWidth, 
     return out;
 }
 
+}
+
 const core::LineRecord *findLine(const core::Document &document, core::LineId id)
 {
     for (const core::LineRecord *line : document.lines())
@@ -124,6 +130,8 @@ std::unexpected<Error> notDrawn(std::int64_t frame)
                 Json::object({{"frame", Json(frame)}}));
 }
 
+namespace {
+
 struct Drawn {
     Target document;
     std::optional<core::LineId> line;
@@ -143,6 +151,8 @@ std::expected<Drawn, Error> drawn(const Context &context, const Json &params)
     return Drawn{*document, id};
 }
 
+}
+
 std::int64_t frameOf(const MacroMediaPort &media, const Json &params, const core::LineRecord *record)
 {
     if (const Json *frame = params.find("frame"))
@@ -159,6 +169,8 @@ std::int64_t frameOf(const MacroMediaPort &media, const Json &params, const core
         ++first;
     return first;
 }
+
+namespace {
 
 std::optional<application::OverlayFrame> drawLines(const Host &host, application::DocumentId document,
                                                    std::optional<core::LineId> line, std::int64_t frame, int width,

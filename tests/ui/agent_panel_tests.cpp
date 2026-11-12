@@ -14,6 +14,7 @@
 #include "line_table_model.h"
 #include "settings_store.h"
 #include "shell_controller.h"
+#include "stale_temporary_dirs.h"
 #include "theme.h"
 
 #include <QFile>
@@ -249,6 +250,8 @@ class AgentPanelTest : public QObject {
     }
 
 private slots:
+    void initTestCase() { testing::removeStaleTemporaryDirs(); }
+
     void init()
     {
         const QByteArray test(QTest::currentTestFunction());

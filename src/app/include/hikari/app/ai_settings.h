@@ -27,6 +27,7 @@ namespace hikari::app {
 
 class AiFeatures;
 class AiMcp;
+class AiMcpServers;
 
 /// Settings › AI: the providers, their keys and catalogues, and the role models. Providers and keys are saved at
 /// once; role models wait for OK or Apply (applyRoles).
@@ -63,9 +64,12 @@ class AiSettings final : public QObject {
     Q_PROPERTY(QVariantMap agents READ agents NOTIFY agentsChanged)
     /// The MCP server's AiMcp, for its Copy setup; null without one.
     Q_PROPERTY(QObject *mcp READ mcp CONSTANT FINAL)
+    /// The MCP servers the agent uses, an AiMcpServers; null without one.
+    Q_PROPERTY(QObject *mcpServers READ mcpServers CONSTANT FINAL)
 
 public:
-    explicit AiSettings(AiFeatures &features, AiMcp *mcp = nullptr, QObject *parent = nullptr);
+    explicit AiSettings(AiFeatures &features, AiMcp *mcp = nullptr, AiMcpServers *mcpServers = nullptr,
+                        QObject *parent = nullptr);
     ~AiSettings() override;
 
     bool on() const;
@@ -80,6 +84,7 @@ public:
     QVariantMap components() const;
     QVariantMap agents() const;
     QObject *mcp() const;
+    QObject *mcpServers() const;
 
     /// {id, preset, name, baseUrl, wire, needsKey} of an added provider, for its edit form.
     Q_INVOKABLE QVariantMap form(const QString &providerId) const;
@@ -188,6 +193,7 @@ private:
 
     AiFeatures &m_features;
     AiMcp *m_mcp = nullptr;
+    AiMcpServers *m_mcpServers = nullptr;
     std::map<std::string, Status, std::less<>> m_status;
     QVariantMap m_draft;
     struct Probed {
