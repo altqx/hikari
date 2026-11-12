@@ -27,7 +27,7 @@ ShellMenu {
         onObjectRemoved: (index, object) => presetMenu.removeItem(object)
     }
     MenuSeparator {}
-    MenuItem {
+    ShellMenuItem {
         objectName: "nodeTypesettingHeading"
         text: qsTr("For selected lines")
         enabled: false
