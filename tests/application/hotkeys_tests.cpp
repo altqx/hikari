@@ -70,7 +70,7 @@ constexpr ToolCommand kToolCommands[] = {
 TEST(Hotkeys, ActionTableIsLegacyIdsAndTheMigrationMap)
 {
     ASSERT_EQ(ids().size(), 243u);
-    ASSERT_EQ(hotkeyActions().size(), 377u);
+    ASSERT_EQ(hotkeyActions().size(), 378u);
     for (const auto &a : hotkeyActions().first(kLegacyHotkeyActions)) {
         EXPECT_EQ(hotkeyIdOf(a.symbol), a.id);
         EXPECT_EQ(hotkeySymbol(a.id), a.symbol);
@@ -392,7 +392,8 @@ TEST(Hotkeys, ListOrderIsAddHotkeysOnList)
     auto live = defaultHotkeys();
     list.build(live);
     ASSERT_EQ(list.rowCount(), 349u);
-    EXPECT_EQ(list.row(0).text, "Global Accept the timing assistant’s suggestion");
+    EXPECT_EQ(list.row(0).text, "Global Typesetting graph…");
+    EXPECT_EQ(list.row(1).text, "Global Accept the timing assistant’s suggestion");
     EXPECT_EQ(list.row(0).accel, "");
     EXPECT_EQ(rowNamed(list, "Global Close current tab").accel, "Ctrl-W");
     EXPECT_EQ(rowNamed(list, "Global Hide tags in the line editor").accel, "");
@@ -464,7 +465,7 @@ TEST(Hotkeys, ListOrderIsAddHotkeysOnList)
     live[HotkeyId{kSave, GridHotkey}] = Hotkey{"Save", "F7"};
     HotkeyList more(copy);
     more.build(live);
-    ASSERT_EQ(more.rowCount(), 350u);
+    ASSERT_EQ(more.rowCount(), 351u);
     const int script = more.find("Global Script a.lua-1");
     const int copied = more.find("Subtitles Save");
     ASSERT_GE(script, 0);
@@ -976,7 +977,7 @@ TEST(Hotkeys, FilteredListShowsAndHidesBlocks)
     list.filter(1);
     ASSERT_TRUE(list.filtered());
     const auto shown = list.shown();
-    ASSERT_EQ(shown.front(), 16);
+    ASSERT_EQ(shown.front(), 17);
     EXPECT_EQ(list.hiddenBlock(-1), 1);
     int position = -1;
     for (int i = 0; i + 1 < int(shown.size()); ++i)

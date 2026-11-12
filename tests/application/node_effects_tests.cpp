@@ -692,8 +692,8 @@ TEST(NodeGraphValidation, NamesTheNodeThatIsWrong)
               (std::vector<GraphProblem>{{"e", "layer", "reads twice.j outside its units"}}));
     EXPECT_EQ(problemsOf(R"({"format": 1, "nodes": [{"id": "n", "type": "values.number"}]})"),
               (std::vector<GraphProblem>{{"", "", "the graph has no Emit node, so it writes no Line"}}));
-    EXPECT_EQ(problemsOf(R"({"format": 2, "nodes": []})").front().message,
-              "the graph needs a newer HikariSub (graph format 2)");
+    EXPECT_EQ(problemsOf(R"({"format": 3, "nodes": []})").front().message,
+              "the graph needs a newer HikariSub (graph format 3)");
     EXPECT_EQ(problemsOf(R"({"format": 1, "nodes": [{"id": "g", "type": "groups.group", "fields": {"graph": {
         "nodes": [{"id": "x", "type": "math.calculate", "fields": {"op": "cube"}}]}}}]})"),
               (std::vector<GraphProblem>{{"g/x", "op", "is not one of its choices"}}));

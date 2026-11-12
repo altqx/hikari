@@ -250,6 +250,7 @@ private:
     std::optional<core::LineId> m_source;
     std::set<core::LineId> m_sourceSelection;
     std::set<core::LineId> m_targets;
+    bool m_selectEveryTarget = false;
 
     QTimer m_previewTimer, m_commitTimer;
     std::optional<application::NodeEffectRun> m_preview;

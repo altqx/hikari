@@ -515,12 +515,17 @@ void NodeEffectsController::updateSources()
     if (!m_source || std::ranges::find(m_sources, *m_source) == m_sources.end())
         m_source = m_sources.empty() ? std::nullopt : std::optional(m_sources.front());
     std::erase_if(m_sourceSelection, [&](core::LineId id) { return std::ranges::find(m_sources, id) == m_sources.end(); });
+    if (m_selectEveryTarget && typesetting() && !m_sources.empty()) {
+        m_selectEveryTarget = false;
+        if (m_sourceSelection.empty())
+            m_sourceSelection.insert(m_sources.begin(), m_sources.end());
+    }
 }
 
 void NodeEffectsController::selectEveryTarget()
 {
-    if (typesetting() && m_sourceSelection.empty())
-        m_sourceSelection.insert(m_sources.begin(), m_sources.end());
+    m_selectEveryTarget = true;
+    updateSources();
 }
 
 void NodeEffectsController::setTargetLines(std::set<core::LineId> lines)
