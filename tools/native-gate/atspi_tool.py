@@ -6,11 +6,14 @@
   atspi_tool.py windows                                top-level frames/windows with states
   atspi_tool.py find ROLE NAME                         objects with that role and name
   atspi_tool.py do ROLE NAME [ACTION]                  run an action (default the first)
+  atspi_tool.py do-in TITLE ROLE NAME [ACTION]         the same inside the window titled TITLE
   atspi_tool.py listen SECONDS                         focus, window and expanded-state events, one per line
   atspi_tool.py text ROLE NAME                         the text of that object (Text interface)
   atspi_tool.py json                                   frames, panels, focus and texts as JSON
   atspi_tool.py press-showing NAME                     press every showing button with that name
   atspi_tool.py where ROLE NAME                        showing objects with that role and name, window coordinates (JSON)
+  atspi_tool.py tabs                                   each shell window by full title, its document tab bar and
+                                                       tabs, window coordinates (JSON)
   atspi_tool.py menu                                   the showing popup menus' items, in order, with
                                                        whether each is enabled and focused (JSON)
   atspi_tool.py fsjson                                 each showing frame, whether it holds the
@@ -349,8 +352,48 @@ def main():
                     e = o.get_extents(Atspi.CoordType.WINDOW)
                 except GLib.Error:
                     continue
-                out.append({"frame": frame_id(f.get_name()), "x": e.x, "y": e.y, "w": e.width, "h": e.height,
-                            "states": states(o)})
+                out.append({"frame": frame_id(f.get_name()), "title": f.get_name(),
+                            "x": e.x, "y": e.y, "w": e.width, "h": e.height, "states": states(o)})
+        print(json.dumps(out))
+    elif cmd == "tabs":
+        # Every showing shell window by its full title, with its document tab bar and tabs in window coordinates.
+        import json
+        out = []
+        for i in range(a.get_child_count()):
+            f = a.get_child_at_index(i)
+            try:
+                fst = f.get_state_set()
+                title = f.get_name() or ""
+            except GLib.Error:
+                continue
+            if frame_id(title) != "HikariSub" or not fst.contains(Atspi.StateType.SHOWING):
+                continue
+            e = f.get_extents(Atspi.CoordType.SCREEN)
+            win = {"title": title, "active": fst.contains(Atspi.StateType.ACTIVE),
+                   "x": e.x, "y": e.y, "w": e.width, "h": e.height, "bar": None, "tabs": []}
+            for bar in all_objects(f):
+                try:
+                    if bar.get_role_name() != "page tab list" or bar.get_name() != "Open documents" or \
+                            not bar.get_state_set().contains(Atspi.StateType.SHOWING):
+                        continue
+                    be = bar.get_extents(Atspi.CoordType.WINDOW)
+                except GLib.Error:
+                    continue
+                win["bar"] = {"x": be.x, "y": be.y, "w": be.width, "h": be.height}
+                for o in all_objects(bar):
+                    try:
+                        ost = o.get_state_set()
+                        if o.get_role_name() != "page tab" or not ost.contains(Atspi.StateType.SHOWING):
+                            continue
+                        te = o.get_extents(Atspi.CoordType.WINDOW)
+                        win["tabs"].append({"name": o.get_name(), "desc": o.get_description() or "",
+                                            "selected": ost.contains(Atspi.StateType.SELECTED),
+                                            "x": te.x, "y": te.y, "w": te.width, "h": te.height})
+                    except GLib.Error:
+                        continue
+                break
+            win["tabs"].sort(key=lambda t: t["x"])
+            out.append(win)
         print(json.dumps(out))
     elif cmd == "menu":
         # The keyboard skips disabled items and AT-SPI does not follow the highlight: count the enabled ones.
@@ -471,9 +514,17 @@ def main():
                     print(describe(o), "->", o.get_action_iface().do_action(0))
             except GLib.Error:
                 pass
-    elif cmd in ("find", "do"):
+    elif cmd in ("find", "do", "do-in"):
+        root = a
+        if cmd == "do-in":
+            title = sys.argv.pop(2)
+            root = next((a.get_child_at_index(i) for i in range(a.get_child_count())
+                         if a.get_child_at_index(i).get_name() == title), None)
+            if root is None:
+                return 1
+            cmd = "do"
         role, name = sys.argv[2], sys.argv[3]
-        hits = [o for o in all_objects(a) if o.get_role_name() == role and (o.get_name() or "") == name]
+        hits = [o for o in all_objects(root) if o.get_role_name() == role and (o.get_name() or "") == name]
         # Showing objects first: a menu bar keeps hidden items of the same name.
         hits.sort(key=lambda o: not o.get_state_set().contains(Atspi.StateType.SHOWING))
         for o in hits:
