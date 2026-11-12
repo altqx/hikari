@@ -20,6 +20,7 @@ them; `git log` on this directory is the history from there on:
 | `TypesettingTools/SubInspector` | `a346959b24ec` |
 | `TypesettingTools/lyger-Aegisub-Scripts` (`modules/LibLyger.moon`) | `f07033106376` |
 | `torque/ffi-experiments` (`DMv0.4.0-rqffiv0.1.2`: BadMutex, PreciseTimer, DownloadManager, requireffi) | `691b128703ba` |
+| `lost-logarithm/karaOK` (`include/ln/kara.lua`) | `f749c4fa64e7` |
 
 Files the released HikariSub package carries over upstream, and the changes it
 makes to the ones upstream has too, came from that package; the noteworthy ones:
@@ -57,6 +58,10 @@ makes to the ones upstream has too, came from that package; the noteworthy ones:
   The released package's 0.3.0 cannot compile DependencyControl 0.9's
   Toolbox; 0.7.0, at the revision above, rejects Aegisub-Motion's
   `TrimHandler` (DC1-moonscript).
+- `automation/include/ln/kara.lua` is karaOK's `ln.kara`, by logarithm with
+  petzku. Upstream states no licence; HikariSub's eight fixes, marked
+  `HikariSub (TH5d2)`, are MIT (TH5d2-ln-kara in
+  `docs/compatibility-decisions.md`).
 - `BM/`, `DM/`, `PT/` are HikariSub's DependencyControl modules; their `.lua` is
   what the released package ships and their DLLs are built from this repository
   (`Thirdparty/DependencyControl/`) and installed into those directories by
