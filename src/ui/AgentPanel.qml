@@ -1548,7 +1548,7 @@ FocusScope {
                 wrapMode: Text.Wrap
                 color: Theme.muted
                 textFormat: Text.PlainText
-                text: [lua.item.macro ? qsTr("%1 · macro “%2”").arg(lua.item.name).arg(lua.item.macro) : (lua.item.name ?? ""),
+                text: [lua.item.macro ? qsTr("%1 · macro “%2”").arg(lua.item.name, lua.item.macro) : (lua.item.name ?? ""),
                        lua.item.title ? qsTr("on %1").arg(lua.item.title) : ""].filter(t => t.length > 0).join("   ")
             }
             Rectangle {
@@ -1666,8 +1666,8 @@ FocusScope {
                     color: lua.item.status === "ran" || lua.item.status === "running" ? Theme.text : Theme.muted
                     text: lua.item.status === "running" ? qsTr("Running %1").arg(lua.item.name ?? "")
                           : lua.item.status === "ran" ? qsTr("Ran %1 · one undo step").arg(lua.item.name ?? "")
-                          : lua.item.status === "failed" ? qsTr("%1 didn’t finish: %2").arg(lua.item.name ?? "").arg(lua.item.result ?? "")
-                          : lua.item.status === "declined" ? (lua.item.message ? qsTr("Didn’t run %1 · “%2”").arg(lua.item.name ?? "").arg(lua.item.message)
+                          : lua.item.status === "failed" ? qsTr("%1 didn’t finish: %2").arg(lua.item.name ?? "", lua.item.result ?? "")
+                          : lua.item.status === "declined" ? (lua.item.message ? qsTr("Didn’t run %1 · “%2”").arg(lua.item.name ?? "", lua.item.message)
                                                                                : qsTr("Didn’t run %1").arg(lua.item.name ?? ""))
                           : qsTr("No longer needed")
                 }

@@ -22404,8 +22404,11 @@ private slots:
         const int script = hotkeyPosition(QStringLiteral("Global Script a.lua-1"));
         QVERIFY(script > 0);
         QCOMPARE(hotkeyRows()[script].toMap().value(QStringLiteral("accel")).toString(), QStringLiteral("Ctrl-K"));
-        QCOMPARE(hotkeyRows()[script + 1].toMap().value(QStringLiteral("text")).toString(),
-                 QStringLiteral("Subtitles Set new FPS"));
+        const auto rows = hotkeyRows();
+        const auto firstSubtitles = std::ranges::find_if(rows, [](const QVariant &row) {
+            return row.toMap().value(QStringLiteral("text")).toString().startsWith(QStringLiteral("Subtitles "));
+        });
+        QCOMPARE(static_cast<int>(std::distance(rows.begin(), firstSubtitles)), script + 1);
         h.select(script);
         QCOMPARE(h.mapTarget().value(QStringLiteral("windows")).toBool(), false);
         h.select(hotkeyPosition(QStringLiteral("Global History")));
@@ -29794,17 +29797,24 @@ private slots:
 
         visualItem("videoPanel")->forceActiveFocus();
         QStringList keys;
+        QStringList keyless;
         for (const auto &f : application::visual::families()) {
             const QString symbol = QString::fromLatin1(f.hotkey.data(), f.hotkey.size());
             const QString name = QString::fromLatin1(f.tooltip.data(), f.tooltip.size());
             const QString accel = hotkeys.accelOf(symbol, 3);
+            auto *button = visualItem(qPrintable(QStringLiteral("visualTool%1").arg(int(f.family))));
+            QVERIFY(button);
+            const QString tooltip = QQmlProperty(button, QStringLiteral("ToolTip.text"), qmlContext(button)).read().toString();
+            if (accel.isEmpty()) {
+                keyless.append(symbol);
+                QCOMPARE(tooltip, name);
+                continue;
+            }
             QCOMPARE(accel.size(), 1);
             keys.append(accel);
             const Qt::Key key = keyOf(accel);
             QCOMPARE(hotkeys.actionFor(3, key, Qt::NoModifier), symbol);
-            auto *button = visualItem(qPrintable(QStringLiteral("visualTool%1").arg(int(f.family))));
-            QCOMPARE(QQmlProperty(button, QStringLiteral("ToolTip.text"), qmlContext(button)).read().toString(),
-                     QStringLiteral("%1 (%2)").arg(name, accel));
+            QCOMPARE(tooltip, QStringLiteral("%1 (%2)").arg(name, accel));
             QTest::keyClick(window, key);
             QTRY_COMPARE(tools.activeFamily(), int(f.family));
             QVERIFY(button->property("checked").toBool());
@@ -29812,6 +29822,7 @@ private slots:
             QTRY_COMPARE(tools.activeFamily(), 0);
         }
         QCOMPARE(keys, (QStringList{"X", "P", "G", "S", "R", "T", "C", "V", "D", "A", "H", "Q", "W"}));
+        QCOMPARE(keyless, (QStringList{"VIDEO_TOOL_TEXT_ON_PATH"}));
         QCOMPARE(QQmlProperty(visualItem("visualTool0"), QStringLiteral("ToolTip.text"), qmlContext(visualItem("visualTool0")))
                          .read()
                          .toString(),
