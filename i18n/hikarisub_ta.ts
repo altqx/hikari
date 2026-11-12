@@ -633,7 +633,7 @@
     </message>
     <message>
         <source>Retry</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">மீண்டும் முயல்</translation>
     </message>
     <message>
         <source>Carried on from the summary of “%1”</source>
@@ -14689,10 +14689,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Command</source>
-        <translation type="unfinished">கட்டளை</translation>
-    </message>
-    <message>
         <source>Environment</source>
         <translation type="unfinished"></translation>
     </message>
@@ -14790,6 +14786,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>At 90% of the model’s context window, old tool results are cleared, then older turns are summarised. Your history stays in the panel.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Found an asdf shim that asdf couldn’t resolve: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Found a mise shim that mise couldn’t resolve: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Antigravity isn’t on PATH.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
