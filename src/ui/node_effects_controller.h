@@ -81,6 +81,7 @@ class NodeEffectsController : public QObject {
 public:
     using SessionSource = std::function<application::EditSession *()>;
     using LuaNodesSource = std::function<application::LuaNodePort *()>;
+    using GlyphsSource = std::function<application::shape::GlyphOutlinePort *()>;
     using AudioSource = std::function<std::optional<const application::DisplayAudio *>()>;
 
     explicit NodeEffectsController(QObject *parent = nullptr);
@@ -92,6 +93,7 @@ public:
     // Called only when a graph with a Lua node runs, so the helper starts then.
     void setLuaNodes(LuaNodesSource source);
     void setAudio(AudioSource source) { m_audio = std::move(source); }
+    void setGlyphs(GlyphsSource source) { m_glyphs = std::move(source); }
     void setLibraryFolder(std::filesystem::path folder);
     void setSettings(application::Settings *settings);
     void setEditable(bool editable);
@@ -151,6 +153,7 @@ public:
     bool videoPreview() const;
     bool hasLua() const;
     bool hasPluginNodes() const;
+    bool drawsText() const;
     bool trusted() const;
     bool canApply() const;
     bool canApplySelected() const;
@@ -233,6 +236,7 @@ private:
     QPointer<TemplateEditorController> m_trustOwner;
     LuaNodesSource m_luaNodes;
     AudioSource m_audio;
+    GlyphsSource m_glyphs;
     QtTextMeasurePort m_qtMeasure;
     application::TextMeasurePort *m_measure = &m_qtMeasure;
     application::Settings *m_settings = nullptr;

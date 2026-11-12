@@ -14,6 +14,7 @@
 #include <cctype>
 #include <chrono>
 #include <cmath>
+#include <cstdlib>
 #include <deque>
 #include <functional>
 #include <map>
@@ -65,7 +66,7 @@ int lineAlignment(const karaoke_layout::Line &line, const karaoke_layout::StyleI
 
 enum class Kind {
     ForEach, Repeat, Frames, ClipGradient, Array, Particles, Highlights, InlineFx, Info, Number, Text, Colour, Point, Choose, Calculate, Compare, Progress, Random,
-    Retime, Stagger, Tag, Move, Fade, Transform, Gradient, Shape, AudioPeaks, Join, Emit, Lua
+    Retime, Stagger, Tag, Move, Fade, Transform, Gradient, Shape, TextShape, CombineShapes, AudioPeaks, Join, Emit, Lua
 };
 
 const std::map<std::string, Kind, std::less<>> kKinds{
@@ -78,6 +79,7 @@ const std::map<std::string, Kind, std::less<>> kKinds{
     {"math.random", Kind::Random},     {"time.retime", Kind::Retime},      {"time.stagger", Kind::Stagger},
     {"tags.tag", Kind::Tag},           {"tags.move", Kind::Move},          {"tags.fade", Kind::Fade},
     {"tags.transform", Kind::Transform}, {"colours.gradient", Kind::Gradient}, {"drawings.shape", Kind::Shape},
+    {"drawings.text", Kind::TextShape}, {"drawings.combine", Kind::CombineShapes},
     {"audio.peaks", Kind::AudioPeaks},
     {"text.join", Kind::Join},         {"output.emit", Kind::Emit},        {"lua.code", Kind::Lua}};
 
@@ -408,6 +410,7 @@ Compiled compile(const NodeGraph &flat)
             break;
         case Kind::Calculate:
         case Kind::Compare:
+        case Kind::CombineShapes:
             n.mode = text("op");
             break;
         case Kind::Progress:
@@ -483,6 +486,7 @@ Compiled compile(const NodeGraph &flat)
         case Kind::AudioPeaks:
         case Kind::Retime:
         case Kind::Lua:
+        case Kind::TextShape:
             l = Level::Element;
             break;
         case Kind::Random:
@@ -568,6 +572,7 @@ public:
               const NodeEffectOptions &options, std::atomic<bool> &luaStopped, Problems &problems,
               NodeValueTrace *trace)
         : m_c(c), m_line(line), m_name(name), m_seed(seed), m_lua(options.lua), m_audio(options.audio),
+          m_glyphs(options.glyphs),
           m_luaStopped(luaStopped), m_problems(problems), m_trace(trace),
           m_lineMemo(static_cast<std::size_t>(c.slots))
     {
@@ -949,6 +954,7 @@ private:
     NodeValue join(int node, const Element &e);
     NodeValue lua(int node, int port, const Element &e, Memo &memo);
     NodeValue audioPeak(int node, int port, const Element &e, Memo &memo);
+    NodeValue textShape(int node, int port, const Element &e, Memo &memo);
     bool luaBatch(int node, const std::vector<Element> &elements, std::vector<Memo> &memos);
 
     const Compiled &m_c;
@@ -957,6 +963,8 @@ private:
     std::int64_t m_seed;
     LuaNodePort *m_lua;
     std::optional<const DisplayAudio *> m_audio;
+    shape::GlyphOutlinePort *m_glyphs;
+    std::map<std::string, shape::TextOutline, std::less<>> m_outlines;
     std::atomic<bool> &m_luaStopped;
     Problems &m_problems;
     NodeValueTrace *m_trace;
@@ -1071,6 +1079,50 @@ double calculated(std::string_view op, double a, double b)
         return std::floor((op == "sine" ? std::sin(radians) : std::cos(radians)) * 1e6 + 0.5) / 1e6;
     }
     return -a;
+}
+
+shape::Contours contoursAt(const NodeDrawing &d)
+{
+    shape::Contours contours = shape::readDrawing(d.commands);
+    if (d.scale > 1) {
+        const double unit = std::ldexp(1.0, 1 - d.scale);
+        for (shape::Contour &c : contours)
+            for (shape::Point &p : c)
+                p = {p.x * unit, p.y * unit};
+    }
+    return contours;
+}
+
+NodeDrawing combinedShape(std::string_view op, const NodeDrawing &a, const NodeDrawing &b)
+{
+    const shape::Combine how = op == "subtract"    ? shape::Combine::Subtract
+                               : op == "intersect" ? shape::Combine::Intersect
+                               : op == "exclude"   ? shape::Combine::Exclude
+                                                   : shape::Combine::Unite;
+    return {shape::writeDrawing(shape::combine(contoursAt(a), contoursAt(b), how)), 1};
+}
+
+bool styleFlag(const std::vector<std::string> &fields, std::size_t at)
+{
+    if (at >= fields.size())
+        return false;
+    const double v = std::strtod(fields[at].c_str(), nullptr);
+    return v == -1 || v == 1 || v >= 700;
+}
+
+shape::GlyphStyle glyphStyleOf(const karaoke_layout::StyleInfo &s)
+{
+    shape::GlyphStyle g;
+    g.family = s.fields.size() > 1 ? s.fields[1] : std::string();
+    g.size = s.fontsize;
+    g.bold = styleFlag(s.fields, 7);
+    g.italic = styleFlag(s.fields, 8);
+    g.underline = styleFlag(s.fields, 9);
+    g.strikeOut = styleFlag(s.fields, 10);
+    g.scaleX = s.scaleX;
+    g.scaleY = s.scaleY;
+    g.spacing = s.spacing;
+    return g;
 }
 
 double eased(double t, std::string_view ease)
@@ -1238,6 +1290,10 @@ NodeValue Evaluator::compute(int node, int port, const Element &e, Memo &memo)
         return gradientAt(n.list, num("progress"));
     case Kind::Shape:
         return NodeDrawing{n.text, static_cast<int>(n.number)};
+    case Kind::TextShape:
+        return textShape(node, port, e, memo);
+    case Kind::CombineShapes:
+        return combinedShape(n.mode, get<NodeDrawing>(node, "a", e, memo), get<NodeDrawing>(node, "b", e, memo));
     case Kind::AudioPeaks:
         return audioPeak(node, port, e, memo);
     case Kind::Join:
@@ -1275,6 +1331,28 @@ NodeValue Evaluator::audioPeak(int node, int port, const Element &e, Memo &memo)
     }
     const double low = peaks->min.front() / 32768.0, high = peaks->max.front() / 32768.0;
     return port == 0 ? std::max(std::fabs(low), std::fabs(high)) : port == 1 ? low : high;
+}
+
+NodeValue Evaluator::textShape(int node, int port, const Element &e, Memo &memo)
+{
+    const CNode &n = m_c.nodes[node];
+    const std::string text = wired(node, "text") ? get<std::string>(node, "text", e, memo) : unitOf(e).text;
+    auto found = m_outlines.find(text);
+    if (found == m_outlines.end()) {
+        std::optional<shape::TextOutline> outline;
+        if (!m_glyphs)
+            m_problems.add(n.graph->id, "has no fonts to draw with, so it gives an empty drawing");
+        else if (outline = m_glyphs->outline(glyphStyleOf(*m_line.style), text); !outline)
+            m_problems.add(n.graph->id, "can't read the Style's font \"" + glyphStyleOf(*m_line.style).family +
+                                            "\", so it gives an empty drawing");
+        found = m_outlines.emplace(text, outline.value_or(shape::TextOutline{})).first;
+    }
+    const shape::TextOutline &o = found->second;
+    if (port == 1)
+        return o.width;
+    if (port == 2)
+        return o.height;
+    return NodeDrawing{o.drawing, 1};
 }
 
 NodeValue Evaluator::lua(int node, int port, const Element &e, Memo &memo)
@@ -1942,6 +2020,10 @@ private:
             return refuse(i, "runs in HikariSub's Lua helper, not in the templater");
         case Kind::AudioPeaks:
             return refuse(i, "reads the audio, which the templater can't");
+        case Kind::TextShape:
+            return refuse(i, "draws text with HikariSub's fonts, which the templater can't");
+        case Kind::CombineShapes:
+            return refuse(i, "combines drawings, which the templater can't");
         default:
             return refuse(i, "has no template form");
         }

@@ -8,6 +8,7 @@
 #include "hikari/backends/ai_sidecar_host.h"
 
 #include <QCoreApplication>
+#include <QDir>
 #include <QElapsedTimer>
 #include <QFile>
 #include <QTemporaryDir>
@@ -160,6 +161,9 @@ TEST(AgentPolicy, RunningScriptsOrProgramsAsks)
     for (const char *setting : {"automation.scriptEditor", "automation.lastScript", "automation.disabledAutoload",
                                 "updater.autoInstall"})
         EXPECT_EQ(settingRisk(setting), Risk::Programs) << setting;
+    for (const char *program : {"whisperx", "mfa"})
+        EXPECT_EQ(riskOf("karaoke.align", Json::object({{"program", program}})), Risk::Programs) << program;
+    EXPECT_EQ(riskOf("karaoke.apply_template", Json::object({})), Risk::None);
 }
 
 TEST(AgentPolicy, InstallingOrTrustingPluginsAndScriptsAsks)
@@ -193,8 +197,9 @@ TEST(AgentPolicy, EveryWriteOperationIsClassified)
     for (const hikari::api::Operation &op : hikari::api::Api::registry().operations())
         if (op.access == hikari::api::Access::Write)
             writes.insert(op.name);
-    EXPECT_EQ(writes, (std::set<std::string>{"automation.run", "commands.run", "document.apply", "files.write", "panels.close",
-                                             "panels.focus", "panels.open", "selection.set", "settings.set",
+    EXPECT_EQ(writes, (std::set<std::string>{"automation.run", "commands.run", "document.apply", "files.write",
+                                             "karaoke.align", "karaoke.apply_template", "panels.close", "panels.focus",
+                                             "panels.open", "selection.set", "settings.set",
                                              "translation.project_write", "typeset.apply"}))
         << "Classify the new write in alwaysAsk and docs/ai-agent.md, then add it here.";
 }
@@ -303,6 +308,7 @@ TEST(AgentThreadStore, AThreadAndTheDaysSpendingSurviveARestart)
     thread.cost = 0.25;
     thread.cap = 2;
     thread.allowed = {"commands.run:GLOBAL_UNDO"};
+    thread.project = "/work/Frieren S2";
     const QDate day(2026, 11, 9);
     {
         ThreadStore store(folder);
@@ -368,6 +374,7 @@ protected:
         w.editingTarget = [this] { return fake.workspace().editingTarget(); };
         w.documentTitle = [](hikari::application::DocumentId) { return std::string("a.ass"); };
         w.safeFolders = [] { return std::vector<std::string>{"/subs"}; };
+        w.project = [this] { return project; };
         w.now = [this] { return ++clock; };
         w.today = [] { return QDate(2026, 11, 9); };
         return std::make_unique<AgentThreads>(std::move(w), store.get());
@@ -462,6 +469,7 @@ protected:
     AgentThreads::Defaults defaults;
     std::int64_t clock = 0;
     QString sidecarMode = QStringLiteral("ok");
+    std::string project;
     std::unique_ptr<AgentThreads> threads;
 };
 
@@ -813,6 +821,35 @@ TEST_F(AgentThreadsTest, AThreadMayReadTheUsersSkillsAndACallWithoutOneMayNot)
     sidecar()->request("api", call("skills.list"), [&](SidecarResult r) { result = std::move(r); });
     ASSERT_TRUE(waitFor([&] { return result.has_value(); }));
     EXPECT_NE((*result)->dump().find(hikari::api::errors::kNotGranted), std::string::npos);
+}
+
+TEST_F(AgentThreadsTest, AThreadKeepsTheProjectItStartedInAndReadsItsSkills)
+{
+    const QString show = dir.filePath(QStringLiteral("show"));
+    ASSERT_TRUE(QDir().mkpath(show + QStringLiteral("/.hikari/skills/honorifics")));
+    QFile skill(show + QStringLiteral("/.hikari/skills/honorifics/SKILL.md"));
+    ASSERT_TRUE(skill.open(QIODevice::WriteOnly));
+    skill.write("---\nname: honorifics\ndescription: Honorifics.\n---\n");
+    skill.close();
+    project = show.toStdString();
+    const std::string inProject = threads->create();
+    project.clear();
+    const std::string outside = threads->create();
+    EXPECT_EQ(thread(inProject).project, show.toStdString());
+    const auto list = [&](const std::string &id) {
+        threads->send(id, "Hi");
+        EXPECT_TRUE(idle(id));
+        std::optional<SidecarResult> result;
+        Json request = call("skills.list");
+        request["session"] = id;
+        sidecar()->request("api", request, [&](SidecarResult r) { result = std::move(r); });
+        EXPECT_TRUE(waitFor([&] { return result.has_value(); }));
+        return result && *result ? (*result)->dump() : std::string();
+    };
+    const std::string listed = list(inProject);
+    EXPECT_NE(listed.find(R"("honorifics")"), std::string::npos) << listed;
+    EXPECT_NE(listed.find(R"("origin":"project")"), std::string::npos) << listed;
+    EXPECT_EQ(list(outside).find("honorifics"), std::string::npos);
 }
 
 TEST_F(AgentThreadsTest, StopWithdrawsTheOpenAskAndEndsTheTurn)

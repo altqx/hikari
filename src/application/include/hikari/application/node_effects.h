@@ -5,6 +5,7 @@
 #include "hikari/application/edit_session.h"
 #include "hikari/application/node_graph.h"
 #include "hikari/application/resample.h"
+#include "hikari/application/shape_kernel.h"
 #include "hikari/core/document.h"
 
 #include <cstdint>
@@ -91,6 +92,8 @@ struct NodeEffectOptions {
     LuaNodePort *lua = nullptr;
     // As MacroMediaPort::peakAudio gives it: nullopt without audio, null while it opens.
     std::optional<const DisplayAudio *> audio;
+    // Fonts for Text to drawing; without them it gives an empty drawing and a problem.
+    shape::GlyphOutlinePort *glyphs = nullptr;
     // Only these karaoke Lines; all of them when unset.
     std::optional<std::set<core::LineId>> sources;
     NodeEffectCache *cache = nullptr;

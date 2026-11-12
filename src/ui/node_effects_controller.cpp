@@ -55,6 +55,10 @@ constexpr NodeExampleText kExamples[] = {
      QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "An outline flashes on each syllable once for every highlight, as the templater’s multi does.")},
     {"paint-and-cloud", QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Paint and cloud"),
      QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Syllables marked {\\-paint} fill from red to white, those marked {\\-cloud} rise and blur, and the rest stay in place.")},
+    {"text-outlines", QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Text outlines"),
+     QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Each syllable is drawn as a hollow drawing in its style’s font, and its outline thickens while it is sung.")},
+    {"striped-letters", QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Striped letters"),
+     QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Each syllable’s letters are cut into thin horizontal stripes, which fade in as it is sung.")},
 };
 
 constexpr NodeExampleText kTypesettingTexts[] = {
@@ -1064,6 +1068,14 @@ bool NodeEffectsController::hasPluginNodes() const
            });
 }
 
+bool NodeEffectsController::drawsText() const
+{
+    if (!m_graph)
+        return false;
+    const auto flat = application::flattenGraph(*m_graph);
+    return flat && std::ranges::any_of(flat->nodes, [](const GraphNode &n) { return n.type == "drawings.text"; });
+}
+
 bool NodeEffectsController::trusted() const
 {
     return !hasLua() || (m_trustOwner && m_trustOwner->trusted());
@@ -1103,6 +1115,8 @@ application::NodeEffectOptions NodeEffectsController::options() const
         o.newDocument = s->isNewDocument();
     if (m_audio)
         o.audio = m_audio();
+    if (m_glyphs && drawsText())
+        o.glyphs = m_glyphs();
     return o;
 }
 

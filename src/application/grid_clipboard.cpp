@@ -1,5 +1,7 @@
 #include "hikari/application/grid_clipboard.h"
 
+#include "hikari/application/position_commands.h"
+
 #include "hikari/core/extradata.h"
 #include "hikari/core/line_groups.h"
 
@@ -48,13 +50,75 @@ std::u8string copyRowsExtradata(const EditSession &session)
     return any ? core::extradataClipboard(rows) : std::u8string{};
 }
 
-std::u8string copyColumns(const EditSession &session, int columns)
+namespace {
+
+bool copiesTags(int columns)
+{
+    using namespace core::column;
+    return (columns & Tags) != 0 && (columns & (Text | Translation)) == 0;
+}
+
+std::u8string copiedTags(std::u8string_view text, int columns, std::span<const std::u8string> tagNames)
+{
+    if (columns & core::column::StartBlock) {
+        const auto block = position::startBlock(text);
+        return block.empty() ? u8"{}" : block;
+    }
+    std::u8string tags;
+    if (columns & core::column::Clip) {
+        tags = position::startTag(text, u8"clip");
+        if (tags.empty())
+            tags = position::startTag(text, u8"iclip");
+    }
+    if (columns & core::column::NamedTags)
+        for (const auto &name : tagNames)
+            tags += position::startTag(text, name);
+    return u8"{" + tags + u8"}";
+}
+
+std::u8string pastedTags(std::u8string_view text, std::u8string_view pasted, int columns,
+                         std::span<const std::u8string> tagNames)
+{
+    if (columns & core::column::StartBlock) {
+        const auto block = position::startBlock(pasted);
+        return position::withStartBlock(text, block == u8"{}" ? std::u8string() : block);
+    }
+    std::u8string out(text);
+    if (columns & core::column::Clip)
+        for (const std::u8string_view name : {std::u8string_view(u8"clip"), std::u8string_view(u8"iclip")})
+            if (const auto clip = position::startTag(pasted, name); !clip.empty()) {
+                const auto other = name == u8"clip" ? std::u8string_view(u8"iclip") : std::u8string_view(u8"clip");
+                if (const auto old = position::startTag(out, other); !old.empty())
+                    out = position::withStartTag(out, other, clip);
+                else
+                    out = position::withStartTag(out, name, clip);
+                break;
+            }
+    if (columns & core::column::NamedTags)
+        for (const auto &name : tagNames)
+            if (const auto tag = position::startTag(pasted, name); !tag.empty())
+                out = position::withStartTag(out, name, tag);
+    return out;
+}
+
+}
+
+std::u8string copyColumns(const EditSession &session, int columns, std::span<const std::u8string> tagNames)
 {
     std::vector<core::LineId> ids;
     for (const auto *line : session.document().lines())
         if (session.selection().selected.contains(line->id))
             ids.push_back(line->id);
-    return core::clipboardColumns(session.document(), ids, columns, translationMode(session));
+    if (!copiesTags(columns))
+        return core::clipboardColumns(session.document(), ids, columns & ~core::column::Tags, translationMode(session));
+    core::Document tagged = session.document();
+    const bool tl = translationMode(session);
+    for (const auto id : ids)
+        tagged.editLine(id, [&](core::LineRecord &l) {
+            auto &text = tl && !l.translation.empty() ? l.translation : l.text;
+            text = copiedTags(text, columns, tagNames);
+        });
+    return core::clipboardColumns(tagged, ids, (columns & ~core::column::Tags) | core::column::Text, tl);
 }
 
 std::expected<void, CommandRefusal> pasteRows(EditSession &session, std::u8string_view text, const LineVisible &visible,
@@ -112,8 +176,12 @@ std::expected<void, CommandRefusal> pasteRows(EditSession &session, std::u8strin
 }
 
 std::expected<void, CommandRefusal> pasteColumns(EditSession &session, std::u8string_view text, int columns,
-                                                 const LineVisible &visible, const core::PasteConversion &conversion)
+                                                 const LineVisible &visible, const core::PasteConversion &conversion,
+                                                 std::span<const std::u8string> tagNames)
 {
+    const int tags = copiesTags(columns) ? columns & core::column::Tags : 0;
+    const bool tl = translationMode(session);
+    columns &= ~core::column::Tags;
     const auto selected = shownSelected(session, visible);
     if (selected.empty())
         return std::unexpected(CommandRefusal::Invalid);
@@ -122,8 +190,12 @@ std::expected<void, CommandRefusal> pasteColumns(EditSession &session, std::u8st
     std::vector<std::pair<core::LineId, const core::LineRecord *>> changes;
     for (std::size_t i = 0; i < pasted.size() && i < selected.size(); ++i)
         changes.emplace_back(selected[i]->id, &pasted[i]);
-    auto apply = [columns](core::LineRecord &l, const core::LineRecord &from) {
+    auto apply = [&](core::LineRecord &l, const core::LineRecord &from) {
         using namespace core::column;
+        if (tags) {
+            auto &target = tl && !l.translation.empty() ? l.translation : l.text;
+            target = pastedTags(target, from.text, tags, tagNames);
+        }
         if (columns & Layer)
             l.layer.value = from.layer.value;
         if (columns & Start) {

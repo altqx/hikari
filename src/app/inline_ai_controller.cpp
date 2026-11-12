@@ -553,6 +553,8 @@ bool InlineAiController::launch(const QVariantMap &askMap, Picked picked,
         emit finished(why);
     };
     w.parallel = kParallel;
+    if (m_wiring.projectFolder)
+        w.project = m_wiring.projectFolder(m_run->document).toStdString();
     if (translating)
         m_run->engine = translationRun(std::move(pipelineJobs), std::move(w), *ask);
     else

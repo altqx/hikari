@@ -11,6 +11,7 @@ ScrollView {
     required property var dialog
     readonly property var ai: dialog.ai
     readonly property var inlineAi: dialog.inlineAi
+    readonly property var skills: dialog.skills
     property int editingAction: -2
     readonly property bool stagedOff: dialog.values["ai.off"] === true
     readonly property bool live: !stagedOff && !!ai && ai.on
@@ -379,6 +380,82 @@ ScrollView {
             }
         }
     }
+    component SkillRow: RowLayout {
+        id: skillRow
+        required property var modelData
+        readonly property bool hidden: modelData.hidden !== ""
+        readonly property bool broken: modelData.problem !== ""
+        readonly property bool capped: modelData.files < modelData.found
+        objectName: "aiSkill_" + modelData.origin + "_" + modelData.name
+        spacing: 8
+        Layout.fillWidth: true
+        Layout.leftMargin: 10
+        Layout.rightMargin: 10
+        Layout.topMargin: 4
+        Layout.bottomMargin: 4
+        Icon {
+            iconRole: "notice-warning"
+            opacity: skillRow.broken ? 1 : 0
+            Accessible.ignored: true
+        }
+        Label {
+            text: skillRow.modelData.name
+            font.bold: !skillRow.hidden
+            font.strikeout: skillRow.hidden
+            color: skillRow.hidden ? Theme.disabled : Theme.text
+            elide: Text.ElideRight
+            Layout.preferredWidth: 150
+        }
+        TierChip { id: chip; origin: skillRow.modelData.origin; enabled: !skillRow.hidden }
+        Label {
+            id: detail
+            objectName: "aiSkillDetail"
+            text: skillRow.broken ? skillRow.modelData.problem
+                : skillRow.hidden ? skillRow.modelData.hidden
+                : skillRow.capped ? qsTr("Only the first %1 of its %2 files are offered.").arg(skillRow.modelData.files).arg(skillRow.modelData.found)
+                : skillRow.modelData.description
+            color: skillRow.broken ? Theme.danger : skillRow.capped && !skillRow.hidden ? Theme.warning : Theme.muted
+            elide: Text.ElideRight
+            Layout.fillWidth: true
+        }
+        Label {
+            visible: !skillRow.hidden && !skillRow.broken
+            text: qsTr("%n file(s)", "", skillRow.modelData.files)
+            color: Theme.muted
+        }
+        Accessible.role: Accessible.ListItem
+        Accessible.name: skillRow.modelData.name
+        Accessible.description: [chip.text, detail.text].join(" · ")
+    }
+
+    component TierChip: Rectangle {
+        id: chipItem
+        property string origin
+        readonly property string text: origin === "project" ? qsTr("Project") : origin === "mine" ? qsTr("Mine") : qsTr("Built in")
+        implicitWidth: 86
+        implicitHeight: 20
+        radius: 10
+        color: "transparent"
+        border.color: !enabled ? Theme.disabled : origin === "project" ? Theme.accent : Theme.line
+        RowLayout {
+            anchors.fill: parent
+            anchors.leftMargin: 5
+            anchors.rightMargin: 7
+            spacing: 4
+            Icon {
+                iconRole: chipItem.origin === "project" ? "project" : chipItem.origin === "mine" ? "mine" : "builtin-script"
+                size: 14
+                enabled: chipItem.enabled
+            }
+            Label {
+                text: chipItem.text
+                font.pixelSize: 11
+                color: !chipItem.enabled ? Theme.disabled : chipItem.origin === "project" ? Theme.accent : Theme.text
+                Layout.fillWidth: true
+            }
+        }
+    }
+
     component Note: Label {
         color: Theme.muted
         wrapMode: Text.Wrap
@@ -2046,6 +2123,129 @@ ScrollView {
             AiCheck { setting: "ai.agent.costMeter"; text: qsTr("Show the cost meter") }
             AiCheck { setting: "ai.agent.autoCompact"; text: qsTr("Compact long conversations automatically") }
             Note { text: qsTr("At 90% of the model’s context window, old tool results are cleared, then older turns are summarised. Your history stays in the panel.") }
+        }
+
+        SettingsSection {
+            id: skillsSection
+            objectName: "aiSkills"
+            visible: page.live && !!page.skills
+            title: qsTr("Skills")
+            property var groups: []
+            function read() { groups = page.skills ? page.skills.groups(page.dialog.shellWindow) : [] }
+            Component.onCompleted: read()
+            onVisibleChanged: if (visible) read()
+            readonly property int broken: groups.reduce((n, g) => n + g.rows.filter(r => r.problem !== "").length, 0)
+            trailing: LinkButton {
+                objectName: "aiSkillsGuide"
+                iconRole: "help"
+                text: qsTr("About skills")
+                onClicked: page.skills.openGuide()
+            }
+            Rectangle {
+                color: "transparent"
+                border.color: Theme.line
+                radius: 2
+                implicitHeight: skillColumn.implicitHeight + 2
+                Layout.fillWidth: true
+                ColumnLayout {
+                    id: skillColumn
+                    x: 1
+                    y: 1
+                    width: parent.width - 2
+                    spacing: 0
+                    Repeater {
+                        model: skillsSection.groups
+                        delegate: ColumnLayout {
+                            id: group
+                            required property var modelData
+                            required property int index
+                            objectName: "aiSkillGroup_" + modelData.group
+                            spacing: 0
+                            Layout.fillWidth: true
+                            Rectangle { visible: group.index > 0; color: Theme.line; implicitHeight: 1; Layout.fillWidth: true }
+                            Rectangle {
+                                color: Theme.raised
+                                implicitHeight: groupHeader.implicitHeight + 8
+                                Layout.fillWidth: true
+                                RowLayout {
+                                    id: groupHeader
+                                    anchors.fill: parent
+                                    anchors.leftMargin: 10
+                                    anchors.rightMargin: 10
+                                    Label {
+                                        text: group.modelData.group === "project" ? qsTr("This project")
+                                            : group.modelData.group === "mine" ? qsTr("Mine") : qsTr("Built in")
+                                        font.bold: true
+                                        font.pixelSize: 11
+                                        color: Theme.muted
+                                    }
+                                    Label {
+                                        text: group.modelData.folder
+                                        font.family: page.codeFontFamily
+                                        font.pixelSize: 11
+                                        color: Theme.muted
+                                        elide: Text.ElideMiddle
+                                        horizontalAlignment: Text.AlignRight
+                                        Layout.fillWidth: true
+                                    }
+                                }
+                            }
+                            Label {
+                                objectName: "aiSkillsEmpty_" + group.modelData.group
+                                visible: group.modelData.rows.length === 0
+                                text: group.modelData.group === "project"
+                                      ? qsTr("No skills in this project yet. A skill is a folder with a SKILL.md in it.")
+                                      : qsTr("No skills of yours yet. A skill is a folder with a SKILL.md in it.")
+                                color: Theme.muted
+                                wrapMode: Text.Wrap
+                                leftPadding: 34
+                                topPadding: 6
+                                bottomPadding: 6
+                                Layout.fillWidth: true
+                            }
+                            Repeater {
+                                model: group.modelData.rows
+                                delegate: SkillRow {}
+                            }
+                        }
+                    }
+                }
+            }
+            RowLayout {
+                spacing: 8
+                Layout.fillWidth: true
+                IconTextButton {
+                    objectName: "aiSkillsOpenFolder"
+                    iconRole: "folder-open"
+                    text: qsTr("Open folder")
+                    onClicked: if (page.skills.openFolder()) skillsSection.read()
+                }
+                IconTextButton {
+                    objectName: "aiSkillsOpenProjectFolder"
+                    visible: page.dialog.hasProject
+                    iconRole: "project"
+                    text: qsTr("Open project folder")
+                    onClicked: if (page.skills.openProjectFolder(page.dialog.shellWindow)) skillsSection.read()
+                }
+                IconToolButton {
+                    objectName: "aiSkillsRefresh"
+                    iconRole: "refresh"
+                    text: qsTr("Read the folders again")
+                    onClicked: skillsSection.read()
+                }
+                Item { Layout.fillWidth: true }
+            }
+            Label {
+                objectName: "aiSkillsNote"
+                color: Theme.muted
+                wrapMode: Text.Wrap
+                Layout.fillWidth: true
+                text: skillsSection.broken > 0
+                      ? qsTr("%n skill(s) can’t be offered. Fix them in their folders, then read the folders again.", "", skillsSection.broken)
+                      : page.dialog.hasProject
+                        ? qsTr("Threads started in this window use this project’s skills. A new or changed skill shows in the next thread.")
+                        : qsTr("Hikari AI reads a skill when the work matches its description. Skills are instructions and give no permission. A new or changed skill shows in the next thread.")
+            }
         }
 
         SettingsSection {

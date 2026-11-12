@@ -17688,6 +17688,13 @@ private slots:
               {"editor.softLineBreak", "Shift+Enter inserts a soft line break (\\n)"},
               {"translation.showOriginal", "Show the original"},
               {"translation.hideOriginalOnVideo", "Hide the original on the video"}}},
+            {"settingsPageEditing",
+             {{"editing.cycleValues.blur", nullptr},
+              {"editing.cycleValues.bord", nullptr},
+              {"editing.cycleValues.shad", nullptr},
+              {"editing.cycleValues.alpha", nullptr},
+              {"editing.cycleValues.an", nullptr},
+              {"editing.cycleValues.fsp", nullptr}}},
             {"settingsPageSpelling",
              {{"editor.spellchecker", "Check spelling"},
               {"editor.dictionaryLanguage", nullptr},
@@ -21850,11 +21857,11 @@ private slots:
         QStringList names;
         for (const auto &p : model)
             names << p.toMap().value(QStringLiteral("name")).toString();
-        QCOMPARE(names, (QStringList{"General", "Appearance", "Line editor", "Spelling and grammar", "Grid",
+        QCOMPARE(names, (QStringList{"General", "Appearance", "Line editor", "Editing", "Spelling and grammar", "Grid",
                                      "Video", "Audio", "Conversion", "Script properties", "Automation", "Shortcuts",
                                      "AI", "Updates and privacy"}));
         QVERIFY(dialogItem("settingsDialog", "settingsPageHotkeys"));
-        QCOMPARE(hotkeyRows().size(), 354);
+        QCOMPARE(hotkeyRows().size(), 387);
         QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(),
                  QStringLiteral("Global Typesetting graph\u2026"));
         QCOMPARE(application->hotkeys().selected(), 0);
@@ -22551,7 +22558,7 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "hotkeyFilter"), "activated", Q_ARG(int, 1)));
         QVERIFY(h.listFiltered());
         const int count = int(hotkeyRows().size());
-        QCOMPARE(h.topBlock(), 0);
+        QCOMPARE(h.topBlock(), 1);
         int gap = -1;
         for (int i = 0; i < count && gap < 0; ++i)
             if (hotkeyRows()[i].toMap().value(QStringLiteral("block")).toInt() == 1)
@@ -26464,7 +26471,7 @@ private slots:
         QCOMPARE(application->shell().statusText(), QString());
         QVERIFY(QMetaObject::invokeMethod(named("audioOutputSettings"), "triggered"));
         QTRY_VERIFY((dialog = settingsWindow()) && dialog->property("visible").toBool());
-        QCOMPARE(dialogItem("settingsDialog", "settingsPages")->property("currentIndex").toInt(), 6);
+        QCOMPARE(dialogItem("settingsDialog", "settingsPages")->property("currentIndex").toInt(), 7);
         QCOMPARE(settings.text("workspace.settingsPage"), QStringLiteral("audio"));
         QCOMPARE(dialogItem("settingsDialog", "setting_audio.outputDevice")->property("currentIndex").toInt(), 0);
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));

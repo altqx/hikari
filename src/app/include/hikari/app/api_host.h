@@ -63,6 +63,7 @@ public:
         // The Project of the window the user works in.
         std::function<std::optional<api::ProjectState>()> project;
         std::function<std::optional<std::filesystem::path>(application::DocumentId)> translationFolder;
+        api::KaraokeHost *karaoke = nullptr;
     };
     explicit ApiHost(Wiring wiring, QObject *parent = nullptr);
     ~ApiHost() override;
@@ -110,7 +111,7 @@ private:
 
     Wiring m_wiring;
     application::AiReview m_review;
-    std::unique_ptr<api::FolderSkills> m_skills;
+    std::unique_ptr<api::SkillTiers> m_skills;
     api::Api m_api;
     QJSValue m_commandHandler;
     QJSValue m_panelHandler;
