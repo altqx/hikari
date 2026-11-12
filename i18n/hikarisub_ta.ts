@@ -108,7 +108,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>This Project’s AGENTS.md instructions are on</source>
+        <source>This project’s AGENTS.md instructions are on</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

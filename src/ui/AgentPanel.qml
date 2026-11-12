@@ -314,7 +314,7 @@ FocusScope {
                 Layout.fillWidth: true
                 elide: Text.ElideRight
                 color: Theme.muted
-                text: qsTr("This Project’s AGENTS.md instructions are on")
+                text: qsTr("This project’s AGENTS.md instructions are on")
             }
             Button {
                 objectName: "agentOpenProjectInstructions"

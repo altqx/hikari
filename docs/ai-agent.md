@@ -155,7 +155,7 @@ The Agent panel is panel 14. With AI off it isn't built, and its commands, Show 
 
 - **Header:** the threads list, the thread's title, a Full access badge, the thread menu (Compact conversation, New thread from summary, Rename, Export as Markdown, Delete) and New thread.
 - **The threads list** shows the active window's Project threads first, under "This project", and then the others by day.
-- **A banner** above the timeline says "This Project’s AGENTS.md instructions are on" when the open thread's Project has a non-empty `AGENTS.md`. Its Open button opens the file in the system editor.
+- **A banner** above the timeline says "This project’s AGENTS.md instructions are on" when the open thread's Project has a non-empty `AGENTS.md`. Its Open button opens the file in the system editor.
 - **Without a chat model** it says so and opens Settings › AI. Nothing starts until a provider is added.
 - **The timeline** shows the items above. Ask cards offer Allow once, Allow in this thread, Deny and Deny with a message; an always-ask card has a red edge, says it asks in every mode, and offers Allow once and Deny only. A `cap` notice offers Raise and continue; `lost` and `failed` offer Retry the turn.
 - **Web search** (AI23b, design gate [#800](https://github.com/altqx/hikari/issues/800#issuecomment-6737834934), Q192–Q200):
