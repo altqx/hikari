@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "version": 2,
+  "version": 1,
   "$defs": {
     "DocumentId": {
       "type": "integer",
@@ -2272,7 +2272,7 @@
         "properties": {
           "folder": {
             "type": "string",
-            "description": "A folder handle to list (since version 2)."
+            "description": "A folder handle to list."
           },
           "path": {
             "type": "string",
@@ -2328,7 +2328,7 @@
           },
           "folder": {
             "type": "string",
-            "description": "Instead of file, a folder handle from files.list (since version 2)."
+            "description": "Instead of file, a folder handle from files.list."
           },
           "path": {
             "type": "string",
@@ -2387,7 +2387,7 @@
           },
           "folder": {
             "type": "string",
-            "description": "Instead of file, a folder handle from files.list (since version 2)."
+            "description": "Instead of file, a folder handle from files.list."
           },
           "path": {
             "type": "string",
@@ -3557,7 +3557,7 @@
       "name": "project.info",
       "access": "read",
       "summary": "The Project of the window the user works in, or null.",
-      "since": 2,
+      "since": 1,
       "params": {
         "type": "object",
         "additionalProperties": false
@@ -3580,7 +3580,7 @@
     {
       "name": "project.changed",
       "summary": "The window the user works in opened or closed a Project, or the user moved to a window with another one.",
-      "since": 2,
+      "since": 1,
       "data": {
         "type": "object",
         "properties": {

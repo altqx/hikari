@@ -199,7 +199,7 @@ A Lua error fails only its batch, with Lua's message (`code:3: …`), and the he
 
 **The sandbox.** The helper starts under `hikari_sandbox` ([ADR 0029](adr/0029-the-ai-sidecar-runs-in-an-os-sandbox.md)) with the profile `HikariSub.Lua.Nodes`: the helper's folder to read and execute, nothing else, and network `none`. Where the sandbox can't apply, Lua nodes still run, and the host logs what is missing under `hikari.nodes.sandbox`.
 
-**Protocol.** `RunNodes` is command 5 of the Lua helper protocol, version 9 ([`lua_protocol.h`](../src/backends/include/hikari/backends/lua_protocol.h)). It needs no `Load`. Version 9 changes nothing else. A version 8 helper is refused at the handshake, so an application and a helper from different releases never run a script together.
+**Protocol.** `RunNodes` is command 5 of the Lua helper protocol ([`lua_protocol.h`](../src/backends/include/hikari/backends/lua_protocol.h)). It needs no `Load`. A helper with another protocol version is refused at the handshake, so an application and a helper from different releases never run a script together.
 
 ## Plugin nodes
 

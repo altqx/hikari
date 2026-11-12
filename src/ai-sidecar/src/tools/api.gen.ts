@@ -638,7 +638,7 @@ export type AudioPeaksResult = {
 
 /** The files and folders the user granted this caller; with folder, also what that folder holds. */
 export type FilesListParams = {
-    /** A folder handle to list (since version 2). */
+    /** A folder handle to list. */
     folder?: string;
     /** A folder inside it; default the folder itself. */
     path?: string;
@@ -657,7 +657,7 @@ export type FilesListResult = {
 export type FilesReadParams = {
     /** A handle from files.list. */
     file?: string;
-    /** Instead of file, a folder handle from files.list (since version 2). */
+    /** Instead of file, a folder handle from files.list. */
     folder?: string;
     /** With folder, the file's path inside it, with / between its parts. */
     path?: string;
@@ -676,7 +676,7 @@ export type FilesReadResult = {
 export type FilesWriteParams = {
     /** A handle from files.list. */
     file?: string;
-    /** Instead of file, a folder handle from files.list (since version 2). */
+    /** Instead of file, a folder handle from files.list. */
     folder?: string;
     /** With folder, the file's path inside it, with / between its parts. */
     path?: string;
