@@ -30,6 +30,12 @@ void writeAll(const QString &path, const QByteArray &bytes)
     file.write(bytes);
 }
 
+std::string compact(std::string json)
+{
+    std::erase_if(json, [](char c) { return c == ' ' || c == '\n'; });
+    return json;
+}
+
 QByteArray readAll(const QString &path)
 {
     QFile file(path);
@@ -123,6 +129,30 @@ private slots:
         QCOMPARE(project.read(setting("grammar.language")), SettingValue(std::int64_t{2}));
         QCOMPARE(project.source(setting("grammar.language")), ProjectFile::Shared);
         QVERIFY(!project.read(setting("translation.autoMoveTagsFromOriginal")));
+    }
+
+    void pluginsLocalListsReplaceAndSettingsGoOverKeyByKey()
+    {
+        QTemporaryDir root;
+        writeAll(root.filePath(QStringLiteral(".hikari/project.toml")),
+                 "version = 1\n[plugins]\nenabled = [\"kf\", \"\"]\ndisabled = [\"qc\"]\n"
+                 "[plugins.\"kf\"]\nsize = 12\nname = \"team\"\n");
+        const ProjectFile shared(root.path());
+        QVERIFY(shared.problems().empty());
+        QVERIFY(shared.refused().empty());
+        QVERIFY(shared.hasTable("plugins"));
+        const auto table = shared.plugins();
+        QCOMPARE(table.enabled, std::vector<std::string>{"kf"});
+        QCOMPARE(table.disabled, std::vector<std::string>{"qc"});
+        QCOMPARE(compact(table.settingsJson.at("kf")), std::string(R"({"name":"team","size":12})"));
+
+        writeAll(root.filePath(QStringLiteral(".hikari/project.local.toml")),
+                 "version = 1\n[plugins]\nenabled = []\n[plugins.\"kf\"]\nsize = 20\n");
+        const auto local = ProjectFile(root.path()).plugins();
+        QVERIFY(local.enabled.empty());
+        QCOMPARE(local.disabled, std::vector<std::string>{"qc"});
+        QCOMPARE(compact(local.settingsJson.at("kf")), std::string(R"({"name":"team","size":20})"));
+        QVERIFY(ProjectFile(QTemporaryDir().path()).plugins().settingsJson.empty());
     }
 
     void translationModelsAreReadButKeysTokensAndAddressesNeverAre()

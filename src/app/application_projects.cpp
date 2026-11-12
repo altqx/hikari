@@ -77,11 +77,13 @@ void Application::applyWindowProject(int shellWindow)
 {
     if (shellWindow != 0 && !m_shellWindows.contains(shellWindow)) {
         m_projectFonts.erase(shellWindow);
+        projectScriptsAndPluginsChanged();
         return;
     }
     auto &v = views(shellWindow);
     const QString root = m_projects->root(shellWindow);
     v.settings->setProject(root, !root.isEmpty() && projectTrusted(root));
+    projectScriptsAndPluginsChanged();
     if (const auto *project = v.settings->project()) {
         const QString title = QCoreApplication::translate("HikariSub.Project", "Project settings");
         for (const auto &problem : project->problems())
@@ -118,6 +120,33 @@ void Application::applyWindowProject(int shellWindow)
     spellingRefresh();
     if (m_apiHost)
         m_apiHost->observe();
+}
+
+std::map<int, std::optional<plugins::ProjectPlugins>> Application::windowPlugins() const
+{
+    std::map<int, std::optional<plugins::ProjectPlugins>> windows;
+    for (const int window : sessionWindows()) {
+        const auto &settings = *views(window).settings;
+        const auto *project = settings.trusted() ? settings.project() : nullptr;
+        auto &entry = windows[window];
+        if (!project || !project->hasTable("plugins"))
+            continue;
+        const auto table = project->plugins();
+        plugins::ProjectPlugins plugins{table.enabled, table.disabled, {}};
+        for (const auto &[id, json] : table.settingsJson)
+            if (auto parsed = api::Json::parse(json))
+                plugins.settings.emplace(id, std::move(*parsed));
+        entry = std::move(plugins);
+    }
+    return windows;
+}
+
+void Application::projectScriptsAndPluginsChanged()
+{
+    if (m_automation)
+        m_automation->projectsChanged();
+    if (m_pluginRuntime)
+        m_pluginRuntime->projectsChanged();
 }
 
 void Application::loadProjectFonts(int shellWindow)
@@ -168,6 +197,27 @@ void Application::trustProject(int shellWindow)
         m_settings->setValue(QStringLiteral("trust.folders"), folders << folder);
     m_settings->sync();
     emit projectsChanged();
+}
+
+QVariantMap Application::projectPlugins(int shellWindow) const
+{
+    const auto &settings = *views(shellWindow).settings;
+    const auto *project = settings.project();
+    if (!project)
+        return {};
+    const auto table = project->plugins();
+    QStringList named;
+    const auto name = [&](const std::string &id) {
+        if (!named.contains(QString::fromStdString(id)))
+            named << QString::fromStdString(id);
+    };
+    std::ranges::for_each(table.enabled, name);
+    std::ranges::for_each(table.disabled, name);
+    for (const auto &[id, json] : table.settingsJson)
+        name(id);
+    return {{QStringLiteral("trusted"), settings.trusted()},
+            {QStringLiteral("named"), named},
+            {QStringLiteral("missing"), m_pluginRuntime ? m_pluginRuntime->missingIn(shellWindow) : QStringList()}};
 }
 
 bool Application::windowEmpty(int shellWindow) const

@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <cctype>
 #include <cstddef>
+#include <cstdlib>
 #include <initializer_list>
 #include <memory>
 #include <string_view>
@@ -269,6 +270,27 @@ void AutomationServiceRouter::handle(const HostServiceRequest &r, Reply reply)
             const TextExtents e = v.value_or(TextExtents{});
             out.numbers.insert(out.numbers.end(), {e.width, e.height, e.descent, e.externalLeading});
         }
+        return reply(std::move(out));
+    }
+    case HostService::TextOutline: {
+        if (!m_glyphs || r.style.size() < 5)
+            return unavailable();
+        const auto number = [&](std::size_t i) { return std::strtod(r.style[i].c_str(), nullptr); };
+        shape::GlyphStyle style;
+        style.family = r.style[0];
+        style.size = number(1);
+        style.scaleX = number(2) * 100;
+        style.scaleY = number(3) * 100;
+        style.spacing = number(4);
+        style.bold = integer(r, 0) != 0;
+        style.italic = integer(r, 1) != 0;
+        style.underline = integer(r, 2) != 0;
+        style.strikeOut = integer(r, 3) != 0;
+        const auto outline = m_glyphs->outline(style, string(r, 0));
+        if (!outline)
+            return unavailable();
+        HostServiceReply out = strings({outline->drawing});
+        out.numbers = {outline->width, outline->height, outline->ascent, outline->descent};
         return reply(std::move(out));
     }
     case HostService::ClipboardGet:

@@ -1499,6 +1499,10 @@ Output device: %2</source>
         <translation>காட்டு</translation>
     </message>
     <message>
+        <source>This project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Scripts</source>
         <translation>ச்கிரிப்ட்கள்</translation>
     </message>
@@ -1728,6 +1732,10 @@ Output device: %2</source>
     <message>
         <source>%1 also uses %2 and takes it.</source>
         <translation>%1 உம் %2 ஐப் பயன்படுத்துகிறது; அதுவே அதைப் பெறுகிறது.</translation>
+    </message>
+    <message>
+        <source>Trust this folder to use them</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Remove shortcut</source>
@@ -5909,6 +5917,22 @@ Failed to copy %2 fonts.</source>
         <translation>மொழிபெயர்ப்பில் உரை</translation>
     </message>
     <message>
+        <source>Start tag block</source>
+        <translation>தொடக்க குறிச்சொல் தொகுதி</translation>
+    </message>
+    <message>
+        <source>Clip (\clip or \iclip)</source>
+        <translation>கிளிப் (\clip அல்லது \iclip)</translation>
+    </message>
+    <message>
+        <source>Only these tags</source>
+        <translation>இந்தக் குறிச்சொற்கள் மட்டும்</translation>
+    </message>
+    <message>
+        <source>These tags:</source>
+        <translation type="vanished">இந்தக் குறிச்சொற்கள்:</translation>
+    </message>
+    <message>
         <source>changed</source>
         <translation>மாற்றப்பட்டது</translation>
     </message>
@@ -6035,6 +6059,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Columns to copy from the %1 selected lines</source>
         <translation>தேர்ந்தெடுத்த %1 வரிகளிலிருந்து நகலெடுக்க வேண்டிய நெடுவரிசைகள்</translation>
+    </message>
+    <message>
+        <source>Tags</source>
+        <translation>குறிச்சொற்கள்</translation>
+    </message>
+    <message>
+        <source>Paste puts each tag into the start block, replacing the same tag.</source>
+        <translation>ஒட்டுதல் ஒவ்வொரு குறிச்சொல்லையும் தொடக்கத் தொகுதியில் இடும், அதே குறிச்சொல்லை மாற்றும்.</translation>
     </message>
     <message>
         <source>Select all</source>
@@ -7660,6 +7692,138 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Swap dialogue alternatives</source>
         <translation>உரையாடல் மாற்றுகளை இடமாற்று</translation>
+    </message>
+    <message>
+        <source>Change alignment to bottom left (\an1), keep position</source>
+        <translation>சீரமைப்பை கீழ் இடது (\an1) ஆக மாற்று, நிலையை வை</translation>
+    </message>
+    <message>
+        <source>Change alignment to bottom centre (\an2), keep position</source>
+        <translation>சீரமைப்பை கீழ் நடு (\an2) ஆக மாற்று, நிலையை வை</translation>
+    </message>
+    <message>
+        <source>Change alignment to bottom right (\an3), keep position</source>
+        <translation>சீரமைப்பை கீழ் வலது (\an3) ஆக மாற்று, நிலையை வை</translation>
+    </message>
+    <message>
+        <source>Change alignment to middle left (\an4), keep position</source>
+        <translation>சீரமைப்பை நடு இடது (\an4) ஆக மாற்று, நிலையை வை</translation>
+    </message>
+    <message>
+        <source>Change alignment to middle centre (\an5), keep position</source>
+        <translation>சீரமைப்பை நடு மையம் (\an5) ஆக மாற்று, நிலையை வை</translation>
+    </message>
+    <message>
+        <source>Change alignment to middle right (\an6), keep position</source>
+        <translation>சீரமைப்பை நடு வலது (\an6) ஆக மாற்று, நிலையை வை</translation>
+    </message>
+    <message>
+        <source>Change alignment to top left (\an7), keep position</source>
+        <translation>சீரமைப்பை மேல் இடது (\an7) ஆக மாற்று, நிலையை வை</translation>
+    </message>
+    <message>
+        <source>Change alignment to top centre (\an8), keep position</source>
+        <translation>சீரமைப்பை மேல் நடு (\an8) ஆக மாற்று, நிலையை வை</translation>
+    </message>
+    <message>
+        <source>Change alignment to top right (\an9), keep position</source>
+        <translation>சீரமைப்பை மேல் வலது (\an9) ஆக மாற்று, நிலையை வை</translation>
+    </message>
+    <message>
+        <source>Align left edges</source>
+        <translation>இடது விளிம்புகளை சீரமை</translation>
+    </message>
+    <message>
+        <source>Align centres</source>
+        <translation>மையங்களை சீரமை</translation>
+    </message>
+    <message>
+        <source>Align right edges</source>
+        <translation>வலது விளிம்புகளை சீரமை</translation>
+    </message>
+    <message>
+        <source>Align top edges</source>
+        <translation>மேல் விளிம்புகளை சீரமை</translation>
+    </message>
+    <message>
+        <source>Align middles</source>
+        <translation>செங்குத்து மையங்களை சீரமை</translation>
+    </message>
+    <message>
+        <source>Align bottom edges</source>
+        <translation>கீழ் விளிம்புகளை சீரமை</translation>
+    </message>
+    <message>
+        <source>Distribute horizontally</source>
+        <translation>கிடைமட்டமாகப் பரப்பு</translation>
+    </message>
+    <message>
+        <source>Distribute vertically</source>
+        <translation>செங்குத்தாகப் பரப்பு</translation>
+    </message>
+    <message>
+        <source>Position to margins</source>
+        <translation>நிலையை ஓரங்களாக மாற்று</translation>
+    </message>
+    <message>
+        <source>Margins to position</source>
+        <translation>ஓரங்களை நிலையாக மாற்று</translation>
+    </message>
+    <message>
+        <source>Phantom: keep the start aligned</source>
+        <translation>மறைநகல்: தொடக்கத்தை சீராக வை</translation>
+    </message>
+    <message>
+        <source>Phantom: keep the end aligned</source>
+        <translation>மறைநகல்: முடிவை சீராக வை</translation>
+    </message>
+    <message>
+        <source>Cycle \blur</source>
+        <translation>\blur சுழற்சி</translation>
+    </message>
+    <message>
+        <source>Cycle \blur back</source>
+        <translation>\blur பின்னோக்கிச் சுழற்சி</translation>
+    </message>
+    <message>
+        <source>Cycle \bord</source>
+        <translation>\bord சுழற்சி</translation>
+    </message>
+    <message>
+        <source>Cycle \bord back</source>
+        <translation>\bord பின்னோக்கிச் சுழற்சி</translation>
+    </message>
+    <message>
+        <source>Cycle \shad</source>
+        <translation>\shad சுழற்சி</translation>
+    </message>
+    <message>
+        <source>Cycle \shad back</source>
+        <translation>\shad பின்னோக்கிச் சுழற்சி</translation>
+    </message>
+    <message>
+        <source>Cycle \alpha</source>
+        <translation>\alpha சுழற்சி</translation>
+    </message>
+    <message>
+        <source>Cycle \alpha back</source>
+        <translation>\alpha பின்னோக்கிச் சுழற்சி</translation>
+    </message>
+    <message>
+        <source>Cycle \an</source>
+        <translation>\an சுழற்சி</translation>
+    </message>
+    <message>
+        <source>Cycle \an back</source>
+        <translation>\an பின்னோக்கிச் சுழற்சி</translation>
+    </message>
+    <message>
+        <source>Cycle \fsp</source>
+        <translation>\fsp சுழற்சி</translation>
+    </message>
+    <message>
+        <source>Cycle \fsp back</source>
+        <translation>\fsp பின்னோக்கிச் சுழற்சி</translation>
     </message>
     <message>
         <source>Move tab to new window</source>
@@ -11014,7 +11178,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Tags</source>
-        <translation type="unfinished">குறிச்சொற்கள்</translation>
+        <translation>குறிச்சொற்கள்</translation>
     </message>
     <message>
         <source>Drawing</source>
@@ -12103,7 +12267,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Tags</source>
-        <translation type="unfinished">குறிச்சொற்கள்</translation>
+        <translation>குறிச்சொற்கள்</translation>
     </message>
     <message>
         <source>Colours</source>
@@ -14586,6 +14750,22 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>கோரிக்கைகள் நீங்கள் சேர்க்கும் வழங்குநர்களுக்கும் %1-க்கும் மட்டுமே செல்லும். இந்தக் கணினியில் AI கூறு தனிமைப்படுத்தப்படவில்லை.</translation>
     </message>
     <message>
+        <source>Cycle values</source>
+        <translation>சுழற்சி மதிப்புகள்</translation>
+    </message>
+    <message>
+        <source>Each Cycle command steps the tag in the start block of the selected lines to the next value. Cycle back steps the other way.</source>
+        <translation>ஒவ்வொரு சுழற்சி கட்டளையும் தேர்ந்த வரிகளின் தொடக்கத் தொகுதியில் உள்ள குறிச்சொல்லை அடுத்த மதிப்புக்கு மாற்றும். பின்னோக்கிய சுழற்சி மறுதிசையில் மாற்றும்.</translation>
+    </message>
+    <message>
+        <source>Values for %1, in order</source>
+        <translation>%1 க்கான மதிப்புகள், வரிசையாக</translation>
+    </message>
+    <message>
+        <source>Each Cycle command steps the tag in the selected lines&apos; start block to the next value. Cycle back steps the other way.</source>
+        <translation type="vanished">ஒவ்வொரு சுழற்சி கட்டளையும் தேர்ந்த வரிகளின் தொடக்கத் தொகுதியில் உள்ள குறிச்சொல்லை அடுத்த மதிப்புக்கு மாற்றும். பின்னோக்கிய சுழற்சி மறுதிசையில் மாற்றும்.</translation>
+    </message>
+    <message>
         <source>Delete MCP server</source>
         <translation type="unfinished"></translation>
     </message>
@@ -15120,6 +15300,22 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>%1 ஐ வைத்திரு</translation>
     </message>
     <message>
+        <source>This project turns plugins on or off, or changes their settings.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Trust this folder to use them</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This project uses %1, which isn’t installed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Install from the marketplace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Search plugins</source>
         <translation>செருகுநிரல்களைத் தேடு</translation>
     </message>
@@ -15552,6 +15748,125 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Its panel “%1” couldn’t load: %2</source>
         <translation>இதன் பலகம் “%1” ஐ ஏற்ற முடியவில்லை: %2</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Position</name>
+    <message>
+        <source>Position to margins</source>
+        <translation>நிலையை ஓரங்களாக மாற்று</translation>
+    </message>
+    <message>
+        <source>Margins to position</source>
+        <translation>ஓரங்களை நிலையாக மாற்று</translation>
+    </message>
+    <message>
+        <source>Top left (%1)</source>
+        <translation>மேல் இடது (%1)</translation>
+    </message>
+    <message>
+        <source>Top centre (%1)</source>
+        <translation>மேல் நடு (%1)</translation>
+    </message>
+    <message>
+        <source>Top right (%1)</source>
+        <translation>மேல் வலது (%1)</translation>
+    </message>
+    <message>
+        <source>Middle left (%1)</source>
+        <translation>நடு இடது (%1)</translation>
+    </message>
+    <message>
+        <source>Middle centre (%1)</source>
+        <translation>நடு மையம் (%1)</translation>
+    </message>
+    <message>
+        <source>Middle right (%1)</source>
+        <translation>நடு வலது (%1)</translation>
+    </message>
+    <message>
+        <source>Bottom left (%1)</source>
+        <translation>கீழ் இடது (%1)</translation>
+    </message>
+    <message>
+        <source>Bottom centre (%1)</source>
+        <translation>கீழ் நடு (%1)</translation>
+    </message>
+    <message>
+        <source>Bottom right (%1)</source>
+        <translation>கீழ் வலது (%1)</translation>
+    </message>
+    <message>
+        <source>Change alignment, keep position</source>
+        <translation>நிலையை வைத்து சீரமைப்பை மாற்று</translation>
+    </message>
+    <message>
+        <source>Align and distribute</source>
+        <translation>சீரமைத்துப் பரப்பு</translation>
+    </message>
+    <message>
+        <source>Relative to</source>
+        <translation>எதைப் பொறுத்து</translation>
+    </message>
+    <message>
+        <source>The active line</source>
+        <translation type="vanished">செயலில் உள்ள வரி</translation>
+    </message>
+    <message>
+        <source>The video frame</source>
+        <translation type="vanished">காணொளிச் சட்டகம்</translation>
+    </message>
+    <message>
+        <source>Active line</source>
+        <translation>செயலில் உள்ள வரி</translation>
+    </message>
+    <message>
+        <source>Video frame</source>
+        <translation>காணொளிச் சட்டகம்</translation>
+    </message>
+    <message>
+        <source>Align left edges</source>
+        <translation>இடது விளிம்புகளை சீரமை</translation>
+    </message>
+    <message>
+        <source>Align centres</source>
+        <translation>மையங்களை சீரமை</translation>
+    </message>
+    <message>
+        <source>Align right edges</source>
+        <translation>வலது விளிம்புகளை சீரமை</translation>
+    </message>
+    <message>
+        <source>Align top edges</source>
+        <translation>மேல் விளிம்புகளை சீரமை</translation>
+    </message>
+    <message>
+        <source>Align middles</source>
+        <translation>செங்குத்து மையங்களை சீரமை</translation>
+    </message>
+    <message>
+        <source>Align bottom edges</source>
+        <translation>கீழ் விளிம்புகளை சீரமை</translation>
+    </message>
+    <message>
+        <source>Distribute horizontally</source>
+        <translation>கிடைமட்டமாகப் பரப்பு</translation>
+    </message>
+    <message>
+        <source>Distribute vertically</source>
+        <translation>செங்குத்தாகப் பரப்பு</translation>
+    </message>
+    <message>
+        <source>Phantom</source>
+        <translation>மறைநகல்</translation>
+    </message>
+    <message>
+        <source>Keep the start aligned</source>
+        <translation>தொடக்கத்தை சீராக வை</translation>
+    </message>
+    <message>
+        <source>Keep the end aligned</source>
+        <translation>முடிவை சீராக வை</translation>
     </message>
 </context>
 <context>
@@ -25012,6 +25327,50 @@ A rectangle of the text’s plane: match it to one in the shot, then place the t
 do not work on comments</source>
         <translation>காட்சித் திருத்தக் கருவிகள்
 கருத்துகளில் செயல்படாது</translation>
+    </message>
+    <message>
+        <source>Pathfinder: combine the drawing with the line’s clip, or with the other picked lines in the order they were picked</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unite</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Subtract</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Intersect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Exclude</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Offset corners</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Miter</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Round</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Square</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Apply offset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing would be left of the drawing</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

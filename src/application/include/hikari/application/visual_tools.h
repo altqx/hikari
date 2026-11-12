@@ -150,6 +150,7 @@ struct ToolValue {
     // value a drag over the video changes.
     std::uint32_t swatch = 0;
     bool marked = false;
+    std::string iconRole;
 };
 
 // A value's text as a number (a plain decimal, spaces around it and a
@@ -185,6 +186,7 @@ struct ToolOption {
     std::vector<std::u16string> notes;
     std::vector<int> sections;
     std::vector<std::u16string> sectionNames;
+    std::vector<std::string> choiceRoles; // a choice's entries' icons, by index
     bool afterValues = false; // shown after the tool's values
 };
 
@@ -444,6 +446,13 @@ public:
     // The family became active: the tool's own state starts over; the rail's
     // options stay.
     virtual void selected(VisualHost &host) { (void)host; }
+    // A choice's menu entry under the pointer or keyboard (-1: none), for a preview of what it does.
+    virtual void previewOption(const std::string &name, int index, VisualHost &host)
+    {
+        (void)name;
+        (void)index;
+        (void)host;
+    }
     // The rail's second row for the family.
     virtual std::vector<ToolOption> options(const VisualHost &host) const
     {

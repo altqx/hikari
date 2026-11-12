@@ -6,6 +6,8 @@
 
 #include <toml++/toml.hpp>
 
+#include <map>
+
 #include <QString>
 
 #include <optional>
@@ -37,6 +39,12 @@ public:
     bool hasTable(std::string_view name) const;
     // `fonts = [...]`, resolved against the Project folder; project.local.toml's list replaces project.toml's.
     std::vector<QString> fontFolders() const;
+    struct PluginTable {
+        std::vector<std::string> enabled, disabled;
+        std::map<std::string, std::string> settingsJson; // [plugins."<id>"] as a JSON object, by plugin id
+    };
+    // project.local.toml's lists replace project.toml's, and its plugin settings go over them key by key.
+    PluginTable plugins() const;
 
     application::ai::ProjectKeyNames aiKeyNames() const;
     // A key project.toml holds instead of naming one: an `[ai.keys]` provider's, or a `[keys]` entry's.

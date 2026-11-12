@@ -165,6 +165,12 @@ constexpr OptionsBinding kBindings[] = {
     {"ai.agent.autoCompact", Check, Ai},
     {"ai.inline.translateTo", Text, Ai},
     {"ai.inline.contextLines", Number, Ai, 0, 5},
+    {"editing.cycleValues.blur", Text, Editing},
+    {"editing.cycleValues.bord", Text, Editing},
+    {"editing.cycleValues.shad", Text, Editing},
+    {"editing.cycleValues.alpha", Text, Editing},
+    {"editing.cycleValues.an", Text, Editing},
+    {"editing.cycleValues.fsp", Text, Editing},
 #ifdef _WIN32
     {"audio.outputHostApi", IndexChoice, Audio, 0, 0, 2},  // 0 WASAPI, 1 DirectSound
     {"video.playbackPlayer", IndexChoice, Video, 0, 0, 2}, // 0 built-in, 1 DirectShow
@@ -175,7 +181,7 @@ constexpr std::pair<OptionsPage, std::string_view> kPageIds[] = {
     {General, "general"},   {Appearance, "appearance"}, {LineEditor, "lineEditor"}, {Spelling, "spelling"},
     {Grid, "grid"},         {Video, "video"},           {Audio, "audio"},
     {Conversion, "conversion"}, {SubtitleProperties, "subtitleProperties"}, {Automation, "automation"},
-    {Updates, "updates"},   {Ai, "ai"},
+    {Updates, "updates"},   {Ai, "ai"},     {Editing, "editing"},
 };
 
 constexpr std::string_view kFps[] = {"23.976", "24", "25", "29.97", "30", "60"};

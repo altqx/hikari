@@ -7,6 +7,7 @@
 #include <QDateTime>
 #include <QObject>
 
+#include <functional>
 #include <map>
 #include <memory>
 
@@ -17,6 +18,8 @@ class AutomationManager : public QObject, public application::AutomationServiceP
 public:
     AutomationManager(QString helperPath, QString sharedInclude, QObject *parent = nullptr);
     ~AutomationManager() override;
+    // The include folders, one per line, a script loaded from now on searches; unset: sharedInclude.
+    void setIncludesFor(std::function<QString(const std::string &path)> includes) { m_includesFor = std::move(includes); }
 
     std::vector<application::ScriptStatus> scripts() const override;
     void load(const std::string &path) override;
@@ -72,6 +75,7 @@ private:
     void notify();
 
     QString m_helperPath, m_sharedInclude, m_compileCache;
+    std::function<QString(const std::string &)> m_includesFor;
     std::vector<std::string> m_order;
     std::map<std::string, Entry> m_entries;
     application::AutomationRegistry m_registry;

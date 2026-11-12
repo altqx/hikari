@@ -1,5 +1,6 @@
 #pragma once
 
+#include "hikari/app/ai_karaoke.h"
 #include "hikari/app/ai_scripts.h"
 #include "hikari/app/api_host.h"
 #include "hikari/app/automation_hotkeys_controller.h"
@@ -351,6 +352,9 @@ public:
     std::optional<std::string> projectAiKey(const QString &root, std::string_view providerId) const;
     // Adds the window's Project folder to trust.folders, which applies the Project again.
     Q_INVOKABLE void trustProject(int shellWindow);
+    // {trusted, named: the ids its [plugins] table names, missing: those a trusted one enables that
+    // aren't installed}; empty without a Project.
+    Q_INVOKABLE QVariantMap projectPlugins(int shellWindow) const;
     Q_INVOKABLE void removeRecentProject(const QString &path) { m_projects->remove(path); }
     Q_INVOKABLE void removeMissingRecentProjects() { m_projects->removeMissing(); }
     // Close project: the rows to review before the window's tabs close; finishClose then closes
@@ -716,6 +720,15 @@ public:
     // The keys the next save of `id` writes while askForChange is on; none skips them.
     Q_INVOKABLE void approveScriptInfo(qulonglong id, const QStringList &keys);
     Q_INVOKABLE bool shiftTranslation(int mode);
+    Q_INVOKABLE bool changeAlignment(int an);
+    // edge: 0 left, 1 centre, 2 right, 3 top, 4 middle, 5 bottom; grid.alignToVideoFrame picks the reference.
+    Q_INVOKABLE bool alignLines(int edge);
+    Q_INVOKABLE bool distributeLines(bool vertical);
+    Q_INVOKABLE bool positionToMargins();
+    Q_INVOKABLE bool marginsToPosition();
+    Q_INVOKABLE bool phantom(bool keepEnd);
+    // tag: 0 blur, 1 bord, 2 shad, 3 alpha, 4 an, 5 fsp.
+    Q_INVOKABLE bool cycleTag(int tag, bool back);
     Q_INVOKABLE bool makeGroups();
     // description: the id of the group's description Line.
     Q_INVOKABLE bool toggleGroup(qulonglong description);
@@ -738,8 +751,10 @@ public:
     // shownOnly: only those the filter shows.
     Q_INVOKABLE int selectedLineCount(bool shownOnly = false) const;
     // columns: bits OR'ed; the choice is remembered.
-    Q_INVOKABLE bool copyColumns(int columns);
-    Q_INVOKABLE bool pasteColumns(int columns);
+    // tagNames: the comma list of the NamedTags bit ("\blur, \3c").
+    Q_INVOKABLE bool copyColumns(int columns, const QString &tagNames = {});
+    Q_INVOKABLE bool pasteColumns(int columns, const QString &tagNames = {});
+    Q_INVOKABLE QString columnTagNames() const;
     void setChangeActiveOnSelection(bool on) { m_settings->set("grid.changeActiveOnSelection", on); }
 
     Q_PROPERTY(hikari::ui::SettingsStore *settings READ settingsStore CONSTANT)
@@ -1129,7 +1144,7 @@ private:
     application::LineVisible actionLines(const application::EditSession &session) const;
     application::ShiftContext shiftContext(application::LegacyTimebase &timebase) const;
     application::ShiftTimesSettings shiftRunSettings(const QString &tool) const;
-    void rememberColumns(bool paste, int columns);
+    void rememberColumns(bool paste, int columns, const QString &tagNames);
     void protectReference();
     void refreshViews();
     void refreshVideo();
@@ -1312,6 +1327,7 @@ private:
     // MUST KILL: must be declared after m_automationHotkeys, which it holds a reference to.
     std::unique_ptr<HotkeysController> m_hotkeys;
     std::unique_ptr<AiScripts> m_aiScripts;
+    std::unique_ptr<AiKaraoke> m_aiKaraoke;
     std::unique_ptr<ApiHost> m_apiHost;
     std::unique_ptr<AiFeatures> m_ai;
     std::unique_ptr<AiMcp> m_aiMcp;
@@ -1456,6 +1472,8 @@ private:
     };
     std::map<int, ProjectFonts> m_projectFonts;
     void loadProjectFonts(int shellWindow);
+    std::map<int, std::optional<plugins::ProjectPlugins>> windowPlugins() const;
+    void projectScriptsAndPluginsChanged();
     void subtitleFontsChanged();
     bool setVideoFonts(std::optional<application::DocumentId> document);
     std::vector<std::pair<std::shared_ptr<const std::vector<std::byte>>, std::vector<std::string>>> m_leasedFontNames;

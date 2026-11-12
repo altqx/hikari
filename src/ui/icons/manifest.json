@@ -4438,10 +4438,10 @@
    "mirror": false,
    "legacy": [],
    "surfaces": [
+    "automation",
     "settings-dialog",
     "plugin-manager"
-   ],
-   "pending": "PJ8 #776"
+   ]
   },
   {
    "role": "explorer",
@@ -4679,8 +4679,7 @@
    "legacy": [],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "AU6 #845"
+   ]
   },
   {
    "role": "shape-subtract",
@@ -4691,8 +4690,7 @@
    "legacy": [],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "AU6 #845"
+   ]
   },
   {
    "role": "shape-intersect",
@@ -4703,8 +4701,7 @@
    "legacy": [],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "AU6 #845"
+   ]
   },
   {
    "role": "shape-exclude",
@@ -4715,8 +4712,7 @@
    "legacy": [],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "AU6 #845"
+   ]
   },
   {
    "role": "shape-offset",
@@ -4727,8 +4723,7 @@
    "legacy": [],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "AU6 #845"
+   ]
   },
   {
    "role": "clip-to-shape",
@@ -5341,8 +5336,7 @@
    "surfaces": [
     "line-editor",
     "grid-menu"
-   ],
-   "pending": "AU21 #855"
+   ]
   },
   {
    "role": "align-left",
@@ -5386,8 +5380,7 @@
    "legacy": [],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "AU21 #855"
+   ]
   },
   {
    "role": "align-middle",
@@ -5398,8 +5391,7 @@
    "legacy": [],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "AU21 #855"
+   ]
   },
   {
    "role": "align-bottom",
@@ -5410,8 +5402,7 @@
    "legacy": [],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "AU21 #855"
+   ]
   },
   {
    "role": "distribute-horizontal",
@@ -5433,8 +5424,7 @@
    "legacy": [],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "AU21 #855"
+   ]
   },
   {
    "role": "pos-to-margins",
@@ -5446,8 +5436,7 @@
    "surfaces": [
     "line-editor",
     "grid-menu"
-   ],
-   "pending": "AU21 #855"
+   ]
   },
   {
    "role": "margins-to-pos",
@@ -5459,8 +5448,7 @@
    "surfaces": [
     "line-editor",
     "grid-menu"
-   ],
-   "pending": "AU21 #855"
+   ]
   },
   {
    "role": "phantom",
@@ -5472,8 +5460,7 @@
    "surfaces": [
     "line-editor",
     "grid-menu"
-   ],
-   "pending": "AU21 #855"
+   ]
   },
   {
    "role": "cycle-values",
@@ -5485,8 +5472,7 @@
    "surfaces": [
     "line-editor",
     "settings-dialog"
-   ],
-   "pending": "AU21 #855"
+   ]
   },
   {
    "role": "shift-by-x",
@@ -5497,8 +5483,7 @@
    "legacy": [],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "AU21 #855"
+   ]
   },
   {
    "role": "shift-by-y",
@@ -5509,8 +5494,7 @@
    "legacy": [],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "AU21 #855"
+   ]
   },
   {
    "role": "interpolate-lines",

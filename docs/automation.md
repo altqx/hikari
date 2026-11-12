@@ -94,6 +94,16 @@ Nothing here adds a command or a hotkey.
 
 Legacy and Aegisub load every script a file's `Automation Scripts` names when the Automation menu opens. HikariSub asks first. The Automation menu, Run the last loaded script, Load script and the panel's "This file names scripts" offer all go through one question that lists the scripts' full paths: **Load** (for this file, this session), **Don't load** (remembered for this file for the session; Escape too) or **Always trust scripts in this folder** (Load, and the folders join Settings › General › Trusted folders, where they can be removed). The panel's offer keeps the declined scripts and asks again. Scripts in the shipped Autoload and Include and in the user's autoload folders never ask. Load script still loads the file picked.
 
+### Project scripts (PJ8 [#776](https://github.com/altqx/hikari/issues/776), 2026-11-12)
+
+A [Project](adr/0030-open-a-folder-as-a-project.md) adds a third autoload tier: `.hikari/automation/autoload/` and `.hikari/automation/include/`. The owner settled how it works across windows in Q364–Q367.
+
+- **Order and hiding.** Autoload scripts load shipped, then user, then Project. A script of the same file name (compared without case on Windows) hides an earlier tier's.
+- **Per window.** Every open trusted Project's autoload scripts load. Each window's Automation menu and Automation panel list its own Project's scripts beside the user's. A Project script hides your script of the same name only in its own window.
+- **Include.** A script inside a trusted Project's folder (its autoload scripts and the per-file scripts in its subtree) has the Project's `include/` first in its include path, then the user's, then the shipped one. Other scripts never see a Project's `include/`. A module HikariSub ships, such as `ln.kara`, still loads from the shipped Include, so a Project or user copy of it never replaces the fixed one. Only the DependencyControl packages (`l0`, `a-mo`, `BM`, `DM`, `PT`, `requireffi`, `SubInspector`, `json`, `Yutils`, `lyger`) can be replaced, as before. DependencyControl and the scripts it installs stay in the user folder.
+- **Trust.** Project scripts load only in a trusted Project. In an untrusted one, the Automation panel lists them under **This project** with a lock and **Trust this folder to use them**. A trusted Project trusts its own subtree, so scripts its files name stop asking.
+- **`~` paths.** A script under `.hikari/automation/` that a file names is written to `Automation Scripts` as `~` plus the path from the subtitle file's folder, for example `~../.hikari/automation/fx.lua`, so Aegisub finds it too. When a file is read, a relative path after `~` resolves against the subtitle file's folder.
+
 Each dialogue line's `line.extra` is the Line's extradata ([document model](document-model.md), FA3 [#560](https://github.com/altqx/hikari/issues/560)) as Aegisub 3.5 gives it: a table of string keys and values, a later entry winning over an earlier one with the same key. A script writes it as Aegisub reads it. Only string keys count, a number value becomes its string, any other value becomes `<not a string>`, and a value that is neither a table nor nil fails the run with Aegisub's "dialogue extradata must be a table". A changed table replaces the Line's values in the macro's one undo step, and the save writes them; an unchanged one keeps the Line's entries as they were, repeated keys included. `line.raw` carries no `{=id}` block.
 
 ### Aegisub 3.5.1 and fork API (FA4, 2026-11-02)
@@ -114,6 +124,16 @@ The helper asks the app as little as it can while a run lasts, and the answers a
 - `text_extents` asks once a run for each style and text, through `karaoke_layout::ExtentsCache` (`extents_cache.h`), which caches any `TextMeasurePort`, failures included. The bundled karaskel measures a Line, its syllables and its furigana with `aegisub.__karaskel_impl.measure_many(style, texts[, count])`, one `TextExtentsMany` request for the texts not yet measured. It returns four numbers a text in one flat table, nil where `text_extents` returns nothing, and raises `text_extents`' errors.
 - `get_frame` asks only for the frame's size. `getPixel` and `getPixelFormatted` ask for one pixel, until a frame object has read 64. Then, or on `frame:data()`, the frame is copied once. The app keeps a run's last two decoded frames and forgets them when the run ends.
 - On Windows the text measure keeps its device context and up to 64 GDI fonts.
+
+### The shape kernel (AU6, [#845](https://github.com/altqx/hikari/issues/845))
+
+`aegisub.__shape_impl` is the native shape kernel (`shape_kernel.h`, `src/helpers/lua/shape_tables.h`). The bundled `Yutils.lua` ends with a short, documented patch that sends `Yutils.shape.bounding`, `flatten`, `move`, `transform`, `to_outline` and `to_pixels` to it.
+- Each kernel function gives the Lua's bytes and numbers: `FP_PRECISION` rounding to 3 places, LuaJIT's `%.14g` numbers, `SUPERSAMPLING` coverage, and even the order Lua's `table.sort` leaves equal row stops in. `tests/fixtures/shape-kernel/make_goldens.lua` writes the goldens from the shipped Yutils, and `hikari_shape_goldens_are_the_shipped_yutils` checks that they still match it.
+- `hikari_application_shape_kernel_tests` pins the kernel to the goldens, and `hikari_backends_yutils_route_tests` runs the generator through the patched Yutils, which must give the same file.
+- The kernel answers false for anything it does not reproduce: a hex, exponent, `inf`, `nan` or `-0` number, or a call Yutils rejects. The Lua then runs, with its own errors. `transform` routes only matrices made by `Yutils.math.create_matrix`.
+- `text_to_shape` stays on pango (or GDI) because its output cannot be pinned. Where pangocairo does not load, `create_font` gives a font whose `metrics`, `text_extents` and `text_to_shape` come from the app's fonts through FreeType (`TextOutline`, `FreetypeGlyphOutlines`), sized as libass sizes them.
+- The kernel also offers `combine(a, b, op)` and `offset(shape, delta[, join])` (clipper2, filled nonzero). These are not part of Yutils.
+- A user's own Yutils (DependencyControl installs it in their Include, which wins) has no patch and runs the Lua.
 
 The third-party corpus (`tests/fixtures/automation-thirdparty`) runs all 14 of arch1t3cht's macros scripts on a fixture with folds and a perspective plane in its extradata, a 23.976 fps fixture video and a clipboard. `expected.json` pins each run.
 - FocusLines draws at random angles, so its drawings are masked (`random_drawings`).
