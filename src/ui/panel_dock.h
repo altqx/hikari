@@ -14,6 +14,8 @@ class PanelDock : public KDDockWidgets::DockWidgetInstantiator {
 
 public:
     using DockWidgetInstantiator::DockWidgetInstantiator;
+    /// Deletes a closed dock: KDDW leaves it unparented, so it would outlive its window. An open one goes with its group.
+    ~PanelDock() override;
 
     Q_INVOKABLE void open();
     Q_INVOKABLE void show();

@@ -2430,7 +2430,7 @@
     {
       "name": "skills.list",
       "access": "read",
-      "summary": "The user's skills: each skill folder's name and its files, SKILL.md among them.",
+      "summary": "The caller's skills: each skill folder's name, whether it is the Project's or the user's, and its files, SKILL.md among them.",
       "since": 1,
       "params": {
         "type": "object",
@@ -2447,6 +2447,12 @@
                 "skill": {
                   "$ref": "#/$defs/SkillName"
                 },
+                "origin": {
+                  "enum": [
+                    "project",
+                    "yours"
+                  ]
+                },
                 "files": {
                   "type": "array",
                   "items": {
@@ -2456,6 +2462,7 @@
               },
               "required": [
                 "skill",
+                "origin",
                 "files"
               ],
               "additionalProperties": false
@@ -2471,7 +2478,7 @@
     {
       "name": "skills.read",
       "access": "read",
-      "summary": "One file of a user's skill, as UTF-8 text; at most 256 KiB.",
+      "summary": "One file of a skill skills.list gives, as UTF-8 text; at most 256 KiB.",
       "since": 1,
       "params": {
         "type": "object",
@@ -2812,6 +2819,508 @@
         "required": [
           "valid",
           "problems"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "effects.graphs",
+      "access": "read",
+      "summary": "The Document's node-effect graphs, one per graph Line.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId",
+            "description": "Defaults to the active Document."
+          }
+        },
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId"
+          },
+          "revision": {
+            "$ref": "#/$defs/Revision"
+          },
+          "graphs": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "line": {
+                  "$ref": "#/$defs/LineId"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "style": {
+                  "type": "string",
+                  "description": "The Style whose karaoke Lines it runs on."
+                },
+                "valid": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "line",
+                "name",
+                "style",
+                "valid"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "document",
+          "revision",
+          "graphs"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "effects.graph",
+      "access": "read",
+      "summary": "One graph Line's graph, with what keeps it from running.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId",
+            "description": "Defaults to the active Document."
+          },
+          "line": {
+            "$ref": "#/$defs/LineId"
+          }
+        },
+        "required": [
+          "line"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "line": {
+            "$ref": "#/$defs/LineId"
+          },
+          "name": {
+            "type": "string"
+          },
+          "style": {
+            "type": "string"
+          },
+          "revision": {
+            "$ref": "#/$defs/Revision"
+          },
+          "graph": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "Null when the Line's text is no graph."
+          },
+          "valid": {
+            "type": "boolean"
+          },
+          "problems": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "node": {
+                  "type": "string"
+                },
+                "port": {
+                  "type": "string"
+                },
+                "message": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "message"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "line",
+          "name",
+          "style",
+          "revision",
+          "graph",
+          "valid",
+          "problems"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "effects.edit",
+      "access": "read",
+      "summary": "Edits a graph in steps (add, connect, disconnect, remove, set) and gives the new graph with its problems; nothing in the Document changes.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "graph": {
+            "type": "object",
+            "description": "A graph as effects.graph gives it; {\"format\": 1, \"nodes\": [], \"wires\": []} starts an empty one."
+          },
+          "steps": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 500,
+            "description": "Applied in order; a refused step changes nothing.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "op": {
+                  "enum": [
+                    "add",
+                    "connect",
+                    "disconnect",
+                    "remove",
+                    "set"
+                  ]
+                },
+                "type": {
+                  "type": "string",
+                  "description": "add: a node type from nodes.catalogue."
+                },
+                "node": {
+                  "type": "string",
+                  "description": "add: the new node's id, made from its type when omitted; remove, set: the node."
+                },
+                "fields": {
+                  "type": "object",
+                  "description": "add: the node's fields."
+                },
+                "from": {
+                  "type": "string",
+                  "description": "connect: an output, \"node.port\"."
+                },
+                "to": {
+                  "type": "string",
+                  "description": "connect, disconnect: an input, \"node.port\"; connect replaces a wire already there."
+                },
+                "field": {
+                  "type": "string",
+                  "description": "set: the field."
+                },
+                "value": {
+                  "description": "set: the field's value; null restores its default."
+                }
+              },
+              "required": [
+                "op"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "graph",
+          "steps"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "graph": {
+            "type": "object"
+          },
+          "added": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The ids of the nodes added, in step order."
+          },
+          "valid": {
+            "type": "boolean"
+          },
+          "problems": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "node": {
+                  "type": "string"
+                },
+                "port": {
+                  "type": "string"
+                },
+                "message": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "message"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "graph",
+          "added",
+          "valid",
+          "problems"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "effects.preview",
+      "access": "read",
+      "summary": "Runs a graph on the Document's karaoke Lines and gives the Lines it would write; nothing is applied. Lua nodes don't run.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId",
+            "description": "Defaults to the active Document."
+          },
+          "line": {
+            "$ref": "#/$defs/LineId",
+            "description": "A graph Line: its graph, name and Style."
+          },
+          "graph": {
+            "type": "object",
+            "description": "A graph to run in place of the Line's."
+          },
+          "style": {
+            "type": "string",
+            "description": "The Style whose karaoke Lines it runs on; needed without line."
+          },
+          "name": {
+            "type": "string",
+            "description": "The graph's name, which the Lines' Effect \"fx <name>\" carries."
+          },
+          "sources": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 100000,
+            "items": {
+              "$ref": "#/$defs/LineId"
+            },
+            "description": "Only these karaoke Lines; all of them when omitted."
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 500,
+            "description": "How many generated Lines to give; default 20."
+          }
+        },
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "ran": {
+            "type": "boolean",
+            "description": "False when a problem stopped the run; applying it would change nothing."
+          },
+          "complete": {
+            "type": "boolean"
+          },
+          "sources": {
+            "type": "integer",
+            "description": "How many karaoke Lines ran."
+          },
+          "generated": {
+            "type": "integer",
+            "description": "How many Lines the run made."
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The first generated Lines, as ASS Dialogue lines."
+          },
+          "problems": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "node": {
+                  "type": "string"
+                },
+                "line": {
+                  "$ref": "#/$defs/LineId"
+                },
+                "message": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "message"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "ran",
+          "complete",
+          "sources",
+          "generated",
+          "lines",
+          "problems"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "effects.save",
+      "access": "write",
+      "summary": "Writes a graph to the Document as one undo step: into a new graph Line, or in place of a graph Line's.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId",
+            "description": "Defaults to the active Document."
+          },
+          "graph": {
+            "type": "object"
+          },
+          "line": {
+            "$ref": "#/$defs/LineId",
+            "description": "The graph Line to replace; omit it to add a graph."
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "A new graph's name."
+          },
+          "style": {
+            "type": "string",
+            "minLength": 1,
+            "description": "A new graph's Style: whose karaoke Lines it runs on."
+          }
+        },
+        "required": [
+          "graph"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "line": {
+            "$ref": "#/$defs/LineId"
+          },
+          "revision": {
+            "$ref": "#/$defs/Revision"
+          },
+          "graph": {
+            "type": "object"
+          },
+          "valid": {
+            "type": "boolean"
+          },
+          "problems": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "node": {
+                  "type": "string"
+                },
+                "port": {
+                  "type": "string"
+                },
+                "message": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "message"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "line",
+          "revision",
+          "graph",
+          "valid",
+          "problems"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "effects.apply",
+      "access": "write",
+      "summary": "Runs a graph Line and writes its Lines as one undo step, replacing those it wrote before; the karaoke Lines it ran on become Comments. Lua nodes don't run, so a graph with one applies from the node-effect editor.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId",
+            "description": "Defaults to the active Document."
+          },
+          "line": {
+            "$ref": "#/$defs/LineId",
+            "description": "The graph Line."
+          },
+          "sources": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 100000,
+            "items": {
+              "$ref": "#/$defs/LineId"
+            },
+            "description": "Only these karaoke Lines; all of them when omitted."
+          }
+        },
+        "required": [
+          "line"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "revision": {
+            "$ref": "#/$defs/Revision"
+          },
+          "generated": {
+            "type": "integer"
+          },
+          "sources": {
+            "type": "integer",
+            "description": "How many karaoke Lines got Lines."
+          },
+          "changed": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "revision",
+          "generated",
+          "sources",
+          "changed"
         ],
         "additionalProperties": false
       }

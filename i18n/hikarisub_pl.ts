@@ -104,6 +104,14 @@
         <translation>Wczoraj</translation>
     </message>
     <message>
+        <source>This project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This project’s AGENTS.md instructions are on</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>cost not reported</source>
         <translation>koszt nieznany</translation>
     </message>
@@ -637,7 +645,7 @@
     </message>
     <message>
         <source>Retry</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Ponów próbę</translation>
     </message>
     <message>
         <source>Carried on from the summary of “%1”</source>
@@ -6020,6 +6028,22 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Tekst do tłumaczenia</translation>
     </message>
     <message>
+        <source>Start tag block</source>
+        <translation>Początkowy blok tagów</translation>
+    </message>
+    <message>
+        <source>Clip (\clip or \iclip)</source>
+        <translation>Przycięcie (\clip lub \iclip)</translation>
+    </message>
+    <message>
+        <source>Only these tags</source>
+        <translation>Tylko te tagi</translation>
+    </message>
+    <message>
+        <source>These tags:</source>
+        <translation type="vanished">Te tagi:</translation>
+    </message>
+    <message>
         <source>changed</source>
         <translation>zmieniona</translation>
     </message>
@@ -6150,6 +6174,14 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Columns to copy from the %1 selected lines</source>
         <translation>Kolumny do skopiowania z zaznaczonych linijek (%1)</translation>
+    </message>
+    <message>
+        <source>Tags</source>
+        <translation>Tagi</translation>
+    </message>
+    <message>
+        <source>Paste puts each tag into the start block, replacing the same tag.</source>
+        <translation>Wklejanie umieszcza każdy tag w bloku początkowym, zastępując ten sam tag.</translation>
     </message>
     <message>
         <source>Select all</source>
@@ -7776,6 +7808,138 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Swap dialogue alternatives</source>
         <translation>Zamień warianty dialogu</translation>
+    </message>
+    <message>
+        <source>Change alignment to bottom left (\an1), keep position</source>
+        <translation>Zmień wyrównanie: na dole po lewej (\an1), zachowaj pozycję</translation>
+    </message>
+    <message>
+        <source>Change alignment to bottom centre (\an2), keep position</source>
+        <translation>Zmień wyrównanie: na dole pośrodku (\an2), zachowaj pozycję</translation>
+    </message>
+    <message>
+        <source>Change alignment to bottom right (\an3), keep position</source>
+        <translation>Zmień wyrównanie: na dole po prawej (\an3), zachowaj pozycję</translation>
+    </message>
+    <message>
+        <source>Change alignment to middle left (\an4), keep position</source>
+        <translation>Zmień wyrównanie: pośrodku po lewej (\an4), zachowaj pozycję</translation>
+    </message>
+    <message>
+        <source>Change alignment to middle centre (\an5), keep position</source>
+        <translation>Zmień wyrównanie: na środku (\an5), zachowaj pozycję</translation>
+    </message>
+    <message>
+        <source>Change alignment to middle right (\an6), keep position</source>
+        <translation>Zmień wyrównanie: pośrodku po prawej (\an6), zachowaj pozycję</translation>
+    </message>
+    <message>
+        <source>Change alignment to top left (\an7), keep position</source>
+        <translation>Zmień wyrównanie: u góry po lewej (\an7), zachowaj pozycję</translation>
+    </message>
+    <message>
+        <source>Change alignment to top centre (\an8), keep position</source>
+        <translation>Zmień wyrównanie: u góry pośrodku (\an8), zachowaj pozycję</translation>
+    </message>
+    <message>
+        <source>Change alignment to top right (\an9), keep position</source>
+        <translation>Zmień wyrównanie: u góry po prawej (\an9), zachowaj pozycję</translation>
+    </message>
+    <message>
+        <source>Align left edges</source>
+        <translation>Wyrównaj lewe krawędzie</translation>
+    </message>
+    <message>
+        <source>Align centres</source>
+        <translation>Wyrównaj środki</translation>
+    </message>
+    <message>
+        <source>Align right edges</source>
+        <translation>Wyrównaj prawe krawędzie</translation>
+    </message>
+    <message>
+        <source>Align top edges</source>
+        <translation>Wyrównaj górne krawędzie</translation>
+    </message>
+    <message>
+        <source>Align middles</source>
+        <translation>Wyrównaj środki w pionie</translation>
+    </message>
+    <message>
+        <source>Align bottom edges</source>
+        <translation>Wyrównaj dolne krawędzie</translation>
+    </message>
+    <message>
+        <source>Distribute horizontally</source>
+        <translation>Rozłóż poziomo</translation>
+    </message>
+    <message>
+        <source>Distribute vertically</source>
+        <translation>Rozłóż pionowo</translation>
+    </message>
+    <message>
+        <source>Position to margins</source>
+        <translation>Pozycja na marginesy</translation>
+    </message>
+    <message>
+        <source>Margins to position</source>
+        <translation>Marginesy na pozycję</translation>
+    </message>
+    <message>
+        <source>Phantom: keep the start aligned</source>
+        <translation>Fantom: zachowaj wyrównanie początku</translation>
+    </message>
+    <message>
+        <source>Phantom: keep the end aligned</source>
+        <translation>Fantom: zachowaj wyrównanie końca</translation>
+    </message>
+    <message>
+        <source>Cycle \blur</source>
+        <translation>Cykl \blur</translation>
+    </message>
+    <message>
+        <source>Cycle \blur back</source>
+        <translation>Cykl \blur wstecz</translation>
+    </message>
+    <message>
+        <source>Cycle \bord</source>
+        <translation>Cykl \bord</translation>
+    </message>
+    <message>
+        <source>Cycle \bord back</source>
+        <translation>Cykl \bord wstecz</translation>
+    </message>
+    <message>
+        <source>Cycle \shad</source>
+        <translation>Cykl \shad</translation>
+    </message>
+    <message>
+        <source>Cycle \shad back</source>
+        <translation>Cykl \shad wstecz</translation>
+    </message>
+    <message>
+        <source>Cycle \alpha</source>
+        <translation>Cykl \alpha</translation>
+    </message>
+    <message>
+        <source>Cycle \alpha back</source>
+        <translation>Cykl \alpha wstecz</translation>
+    </message>
+    <message>
+        <source>Cycle \an</source>
+        <translation>Cykl \an</translation>
+    </message>
+    <message>
+        <source>Cycle \an back</source>
+        <translation>Cykl \an wstecz</translation>
+    </message>
+    <message>
+        <source>Cycle \fsp</source>
+        <translation>Cykl \fsp</translation>
+    </message>
+    <message>
+        <source>Cycle \fsp back</source>
+        <translation>Cykl \fsp wstecz</translation>
     </message>
     <message>
         <source>Move tab to new window</source>
@@ -11171,7 +11335,7 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Tags</source>
-        <translation type="unfinished">Tagi</translation>
+        <translation>Tagi</translation>
     </message>
     <message>
         <source>Drawing</source>
@@ -11663,6 +11827,22 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Aegisub 3.2.2 templates</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text outlines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each syllable is drawn as a hollow drawing in its style’s font, and its outline thickens while it is sung.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Striped letters</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each syllable’s letters are cut into thin horizontal stripes, which fade in as it is sung.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -12266,7 +12446,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Tags</source>
-        <translation type="unfinished">Tagi</translation>
+        <translation>Tagi</translation>
     </message>
     <message>
         <source>Colours</source>
@@ -12287,6 +12467,26 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Groups</source>
         <translation type="unfinished">Grupy</translation>
+    </message>
+    <message>
+        <source>Text to drawing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The text (unwired, the unit’s own) drawn in its line’s Style font, at \p1 from the text’s top left, as Yutils’ text_to_shape draws it. width and height are the text’s.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Combine drawings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>a and b combined, each filled as libass fills it: unite, subtract (b taken away from a), intersect, or exclude (what only one of them covers). Each one’s \p scale is kept; the result is at \p1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How to combine them.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -14001,6 +14201,30 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Wersja ze znanym błędem</translation>
     </message>
     <message>
+        <source>Only the first %1 of its %2 files are offered.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n file(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Project</source>
+        <translation type="unfinished">Projekt</translation>
+    </message>
+    <message>
+        <source>Mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Built in</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Update now</source>
         <translation>Zaktualizuj teraz</translation>
     </message>
@@ -14337,6 +14561,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Kopiuj</translation>
     </message>
     <message>
+        <source>%1 is older than the oldest HikariSub supports (%2). Run this in a terminal:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Command</source>
+        <translation type="unfinished">Polecenie</translation>
+    </message>
+    <message>
+        <source>Arguments</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Open auth.openai.com</source>
         <translation>Otwórz auth.openai.com</translation>
     </message>
@@ -14367,6 +14603,46 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Try again</source>
         <translation>Spróbuj ponownie</translation>
+    </message>
+    <message>
+        <source>Sign in with Google…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Signed in with Google</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Google’s sign-in page is open in your browser. Sign in there, then paste the code the page shows.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Checking the code…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Starting Antigravity’s sign-in…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Code from Google’s page</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Continue</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>HikariSub keeps its own Google sign-in for Antigravity and never reads ~/.gemini.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add agent</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Any agent that speaks ACP over stdio. It runs with its own folder as its home and can write nowhere else.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>MCP</source>
@@ -14503,6 +14779,54 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Show the cost meter</source>
         <translation>Pokazuj licznik kosztu</translation>
+    </message>
+    <message>
+        <source>Skills</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>About skills</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No skills in this project yet. A skill is a folder with a SKILL.md in it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No skills of yours yet. A skill is a folder with a SKILL.md in it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open folder</source>
+        <translation type="unfinished">Otwórz folder</translation>
+    </message>
+    <message>
+        <source>Open project folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Read the folders again</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n skill(s) can’t be offered. Fix them in their folders, then read the folders again.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Threads started in this window use this project’s skills. A new or changed skill shows in the next thread.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hikari AI reads a skill when the work matches its description. Skills are instructions and give no permission. A new or changed skill shows in the next thread.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Inline actions</source>
@@ -14757,6 +15081,22 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Żądania trafiają tylko do dodanych dostawców i do %1. W tym systemie komponent AI nie jest izolowany w piaskownicy.</translation>
     </message>
     <message>
+        <source>Cycle values</source>
+        <translation>Wartości cykliczne</translation>
+    </message>
+    <message>
+        <source>Each Cycle command steps the tag in the start block of the selected lines to the next value. Cycle back steps the other way.</source>
+        <translation>Każde polecenie cyklu zmienia tag w bloku początkowym zaznaczonych wierszy na następną wartość. Cykl wstecz zmienia go w drugą stronę.</translation>
+    </message>
+    <message>
+        <source>Values for %1, in order</source>
+        <translation>Wartości dla %1, po kolei</translation>
+    </message>
+    <message>
+        <source>Each Cycle command steps the tag in the selected lines&apos; start block to the next value. Cycle back steps the other way.</source>
+        <translation type="vanished">Każde polecenie cyklu zmienia tag w bloku początkowym zaznaczonych wierszy na następną wartość. Cykl wstecz zmienia go w drugą stronę.</translation>
+    </message>
+    <message>
         <source>Delete MCP server</source>
         <translation type="unfinished"></translation>
     </message>
@@ -14807,10 +15147,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>A URL (streamable HTTP)</source>
         <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Command</source>
-        <translation type="unfinished">Polecenie</translation>
     </message>
     <message>
         <source>Environment</source>
@@ -14910,6 +15246,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>At 90% of the model’s context window, old tool results are cleared, then older turns are summarised. Your history stays in the panel.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Found an asdf shim that asdf couldn’t resolve: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Found a mise shim that mise couldn’t resolve: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Antigravity isn’t on PATH.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -15745,6 +16093,125 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
 </context>
 <context>
+    <name>HikariSub.Position</name>
+    <message>
+        <source>Position to margins</source>
+        <translation>Pozycja na marginesy</translation>
+    </message>
+    <message>
+        <source>Margins to position</source>
+        <translation>Marginesy na pozycję</translation>
+    </message>
+    <message>
+        <source>Top left (%1)</source>
+        <translation>U góry po lewej (%1)</translation>
+    </message>
+    <message>
+        <source>Top centre (%1)</source>
+        <translation>U góry pośrodku (%1)</translation>
+    </message>
+    <message>
+        <source>Top right (%1)</source>
+        <translation>U góry po prawej (%1)</translation>
+    </message>
+    <message>
+        <source>Middle left (%1)</source>
+        <translation>Pośrodku po lewej (%1)</translation>
+    </message>
+    <message>
+        <source>Middle centre (%1)</source>
+        <translation>Na środku (%1)</translation>
+    </message>
+    <message>
+        <source>Middle right (%1)</source>
+        <translation>Pośrodku po prawej (%1)</translation>
+    </message>
+    <message>
+        <source>Bottom left (%1)</source>
+        <translation>Na dole po lewej (%1)</translation>
+    </message>
+    <message>
+        <source>Bottom centre (%1)</source>
+        <translation>Na dole pośrodku (%1)</translation>
+    </message>
+    <message>
+        <source>Bottom right (%1)</source>
+        <translation>Na dole po prawej (%1)</translation>
+    </message>
+    <message>
+        <source>Change alignment, keep position</source>
+        <translation>Zmień wyrównanie, zachowaj pozycję</translation>
+    </message>
+    <message>
+        <source>Align and distribute</source>
+        <translation>Wyrównaj i rozłóż</translation>
+    </message>
+    <message>
+        <source>Relative to</source>
+        <translation>Względem</translation>
+    </message>
+    <message>
+        <source>The active line</source>
+        <translation type="vanished">Aktywnego wiersza</translation>
+    </message>
+    <message>
+        <source>The video frame</source>
+        <translation type="vanished">Klatki wideo</translation>
+    </message>
+    <message>
+        <source>Active line</source>
+        <translation>Aktywnego wiersza</translation>
+    </message>
+    <message>
+        <source>Video frame</source>
+        <translation>Klatki wideo</translation>
+    </message>
+    <message>
+        <source>Align left edges</source>
+        <translation>Wyrównaj lewe krawędzie</translation>
+    </message>
+    <message>
+        <source>Align centres</source>
+        <translation>Wyrównaj środki</translation>
+    </message>
+    <message>
+        <source>Align right edges</source>
+        <translation>Wyrównaj prawe krawędzie</translation>
+    </message>
+    <message>
+        <source>Align top edges</source>
+        <translation>Wyrównaj górne krawędzie</translation>
+    </message>
+    <message>
+        <source>Align middles</source>
+        <translation>Wyrównaj środki w pionie</translation>
+    </message>
+    <message>
+        <source>Align bottom edges</source>
+        <translation>Wyrównaj dolne krawędzie</translation>
+    </message>
+    <message>
+        <source>Distribute horizontally</source>
+        <translation>Rozłóż poziomo</translation>
+    </message>
+    <message>
+        <source>Distribute vertically</source>
+        <translation>Rozłóż pionowo</translation>
+    </message>
+    <message>
+        <source>Phantom</source>
+        <translation>Fantom</translation>
+    </message>
+    <message>
+        <source>Keep the start aligned</source>
+        <translation>Zachowaj wyrównanie początku</translation>
+    </message>
+    <message>
+        <source>Keep the end aligned</source>
+        <translation>Zachowaj wyrównanie końca</translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.Project</name>
     <message>
         <source>%1 in project.toml looks like a credential, so it is ignored. Keys go in this Project’s credentials file (.hikari/credentials.toml) or this machine’s environment, never in project.toml.</source>
@@ -15781,6 +16248,22 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>This tab now uses the project %1.</source>
         <translation>Ta zakładka używa teraz projektu %1.</translation>
+    </message>
+    <message>
+        <source>This project has its own scripts, plugin settings or AI keys. Trust “%1” to use them.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This project has its own AI keys. Trust “%1” to use them; until then Hikari AI uses yours.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>project.toml holds an AI key for %1. HikariSub ignores it: keys go in .hikari/credentials.toml, which git doesn’t share.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Project settings…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>This file is in the project %1.</source>
@@ -15837,6 +16320,102 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Trust folder</source>
         <translation>Zaufaj folderowi</translation>
+    </message>
+    <message>
+        <source>From %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>From the credentials file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Yours. Project not trusted</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No credentials file. Uses yours</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not found. Uses yours</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Needs no key</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>project.toml holds an AI key for %1, which is ignored. Keys go in the credentials file. If project.toml was committed or shared, replace the key at the provider too.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to credentials file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>“%1” isn’t trusted, so its keys aren’t used. Hikari AI uses yours in this window.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A key from this machine’s environment or from this Project’s credentials file replaces yours, only in this Project’s windows. The environment comes first. Base URLs, budgets and on/off stay yours.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Provider</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Environment variable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Credentials entry</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Key used</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>None</source>
+        <translation type="unfinished">Brak</translation>
+    </message>
+    <message>
+        <source>Environment variable for %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Credentials entry for %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Credentials file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 · git ignores it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 · not created</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Create credentials file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show in folder</source>
+        <translation type="unfinished">Pokaż w folderze</translation>
+    </message>
+    <message>
+        <source>Creates the file and .hikari/.gitignore, which keeps it and project.local.toml out of git. Keys never reach Hikari AI or the model.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -18234,6 +18813,41 @@ ponieważ została zmieniona.</translation>
     <message>
         <source>The settings before the import take effect when HikariSub starts again.</source>
         <translation>Ustawienia sprzed importu zaczną obowiązywać po ponownym uruchomieniu HikariSub.</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Skills</name>
+    <message>
+        <source>The folder’s name isn’t a skill name: use a–z, 0–9 and single hyphens.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The folder has no SKILL.md.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>SKILL.md isn’t UTF-8 text, or is over 256 KiB.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>SKILL.md doesn’t start with frontmatter (---).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>SKILL.md says name: %1, but the folder is %2.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>SKILL.md has no description.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hidden by this project’s.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Replaced by yours.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -25186,7 +25800,7 @@ do not work on comments</source>
 nie działają na komentarzach</translation>
     </message>
     <message>
-        <source>Pathfinder: combine the drawing with the line’s clip, or with the other picked lines in the order they were picked</source>
+        <source>Pathfinder: combine the drawing with the line’s clip, or with the other picked lines in Grid order</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

@@ -92,7 +92,7 @@ void TranslationRun::start()
         if (alive.lock())
             answered(std::move(result));
     };
-    const app::StreamId stream = requests->requestTranslation(translateParams(m_jobs, m_wiring), std::move(sink));
+    const app::StreamId stream = requests->requestTranslation(translateParams(m_jobs, m_wiring), std::move(sink), m_wiring.lines.project);
     if (alive.lock() && m_running)
         m_stream = stream;
 }

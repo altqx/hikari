@@ -31,7 +31,7 @@ enum class OptionsControl {
 };
 
 enum class OptionsPage { General, Appearance, LineEditor, Spelling, Grid, Video, Audio, Conversion, SubtitleProperties,
-                         Automation, Updates, Ai };
+                         Automation, Updates, Ai, Editing };
 // Settings window page ids ("general", "lineEditor", ...).
 std::string_view optionsPageId(OptionsPage page);
 std::optional<OptionsPage> optionsPageOfId(std::string_view id);

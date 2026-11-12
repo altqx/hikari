@@ -65,10 +65,14 @@ void agentVersion(const QString &path, std::function<void(QString)> done);
 
 /// Where `agent` ("claude" or "codex") is: on `dirs`, or on PATH when `dirs` is empty. A mise or asdf shim can't run
 /// in the agent's sandbox, so a real CLI further on wins, then the one `mise which` or `asdf which` names. Empty when
-/// none is found.
-QString findAgentCli(const QString &agent, const QStringList &dirs = {});
-/// Finds `agent` with findAgentCli and asks it for its version. Nullopt when it isn't there.
-void probeAgentCli(const QString &agent, std::function<void(std::optional<AgentCli>)> done, const QStringList &dirs = {});
+/// none is found, with `unresolvedShim` set to the shim that was found but couldn't be resolved.
+QString findAgentCli(const QString &agent, const QStringList &dirs = {}, QString *unresolvedShim = nullptr);
+/// "mise" or "asdf" for a version manager's shim, else empty.
+QString agentShimManager(const QString &path);
+/// Finds `agent` with findAgentCli and asks it for its version. Nullopt when it isn't there, with findAgentCli's
+/// `unresolvedShim`.
+void probeAgentCli(const QString &agent, std::function<void(std::optional<AgentCli>, QString unresolvedShim)> done,
+                   const QStringList &dirs = {});
 
 enum class AgentBadge { Current, UpdateAvailable, Unsupported, KnownBroken, Unknown };
 AgentBadge agentBadge(const QString &installed, const QString &latest, const AgentCompat &compat);

@@ -496,6 +496,8 @@ Json AgentThread::toJson() const
                              {"webSearch", webSearch}});
     if (model)
         out["model"] = modelJson(*model);
+    if (!project.empty())
+        out["project"] = project;
     return out;
 }
 
@@ -543,6 +545,7 @@ std::optional<AgentThread> AgentThread::fromJson(const Json &json)
                 t.allowed.insert(key.asString());
     if (const Json *w = json.find("webSearch"); w && w->isBool())
         t.webSearch = w->asBool();
+    t.project = stringAt(json, "project");
     return t;
 }
 
@@ -692,6 +695,8 @@ std::string AgentThreads::create()
     t.created = t.updated = nowMs();
     t.mode = defaults.mode;
     t.cap = defaults.threadCap;
+    if (m_wiring.project)
+        t.project = m_wiring.project();
     const std::string id = t.id;
     m_threads.emplace(id, std::move(t));
     if (m_store)
@@ -771,6 +776,43 @@ std::optional<std::string> externalAgentOf(const app::ModelRef &model)
     if (!model.providerId.starts_with(kAgentProviderPrefix))
         return std::nullopt;
     return model.providerId.substr(kAgentProviderPrefix.size());
+}
+
+std::string agentsFileText(const QString &folder)
+{
+    if (folder.isEmpty())
+        return {};
+    QFile file(QDir(folder).filePath(QStringLiteral("AGENTS.md")));
+    if (!file.open(QIODevice::ReadOnly))
+        return {};
+    std::string text = file.read(qint64(kInstructionsCap)).toStdString();
+    if (file.atEnd())
+        return text;
+    std::size_t lead = text.size();
+    while (lead > 0 && (static_cast<unsigned char>(text[lead - 1]) & 0xC0) == 0x80)
+        --lead;
+    if (lead == 0)
+        return text;
+    const auto first = static_cast<unsigned char>(text[lead - 1]);
+    const std::size_t length = first >= 0xF0 ? 4 : first >= 0xE0 ? 3 : first >= 0xC0 ? 2 : 1;
+    if (text.size() - (lead - 1) < length)
+        text.resize(lead - 1);
+    return text;
+}
+
+std::string joinInstructions(std::string_view user, std::string_view project)
+{
+    std::string out;
+    const auto add = [&out](std::string_view heading, std::string_view text) {
+        if (text.empty())
+            return;
+        if (!out.empty())
+            out += "\n\n";
+        out.append(heading).append("\n\n").append(text);
+    };
+    add("Instructions from the user's AGENTS.md:", user);
+    add("Instructions from this Project's AGENTS.md:", project);
+    return out;
 }
 
 std::optional<app::ModelRef> AgentThreads::modelOf(const AgentThread &thread) const
@@ -911,9 +953,13 @@ void AgentThreads::openSession(AgentThread &thread, AiSidecarHost &host, const a
         return;
     AiRequests *requests = m_wiring.requests ? m_wiring.requests() : nullptr;
     const Defaults defaults = m_wiring.defaults ? m_wiring.defaults() : Defaults{};
+    std::string system(kSystemPrompt);
+    if (const std::string joined = m_wiring.instructions ? m_wiring.instructions(thread.project) : std::string();
+        !joined.empty())
+        system.append("\n\n").append(joined);
     Json open = Json::object({{"sessionId", thread.id},
                               {"model", modelJson(model)},
-                              {"system", std::string(kSystemPrompt)},
+                              {"system", std::move(system)},
                               {"history", thread.history},
                               {"cacheKey", thread.id},
                               {"caching", requests && requests->caching()},
@@ -1286,6 +1332,7 @@ api::Caller AgentThreads::callerOf(const AgentThread &thread) const
     caller.label = "AI";
     caller.reviewed = true;
     caller.skills = true;
+    caller.project = thread.project;
     if (const auto it = m_attached.find(thread.id); it != m_attached.end())
         caller.attached = it->second;
     return caller;

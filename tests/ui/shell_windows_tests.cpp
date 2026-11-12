@@ -13,6 +13,8 @@
 #include "video_controller.h"
 #include "workspace_layout.h"
 
+#include <kddockwidgets/core/DockRegistry.h>
+
 #include <QAccessible>
 #include <QDir>
 #include <QFile>
@@ -1105,6 +1107,23 @@ private slots:
         QCOMPARE(application->workspace().allTabs(), (std::vector{firstTab}));
         QCOMPARE(application->workspace().activeWindow(), 0);
         QVERIFY(modified(firstTab));
+    }
+
+    void aClosedWindowLeavesNoneOfItsPanels()
+    {
+        const QString suffix = QStringLiteral("~%1").arg(shellId(second));
+        const auto panelsOfSecond = [&] {
+            QStringList out;
+            for (const auto *dock : KDDockWidgets::DockRegistry::self()->dockwidgets())
+                if (dock->uniqueName().endsWith(suffix))
+                    out << dock->uniqueName();
+            return out;
+        };
+        QVERIFY(panelsOfSecond().contains(QStringLiteral("Editor") + suffix));
+        QPointer<QQuickWindow> closing = second;
+        closeDiscarding(closing);
+        QTRY_VERIFY(!closing);
+        QTRY_COMPARE(panelsOfSecond(), QStringList());
     }
 
     void aClosedWindowLeavesTheCrashSession()

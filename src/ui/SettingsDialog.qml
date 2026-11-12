@@ -14,6 +14,7 @@ DialogWindow {
     property var crashReports: null
     property var ai: null
     property var inlineAi: null
+    property var skills: null
     property TagButtonsController tagButtons: null
     property var importer: null
     property string legacyNotFound: ""
@@ -50,6 +51,7 @@ DialogWindow {
         {id: "general", name: qsTr("General"), iconRole: "settings"},
         {id: "appearance", name: qsTr("Appearance"), iconRole: "appearance"},
         {id: "lineEditor", name: qsTr("Line editor"), iconRole: "editor"},
+        {id: "editing", name: qsTr("Editing"), iconRole: "cycle-values"},
         {id: "spelling", name: qsTr("Spelling and grammar"), iconRole: "spellchecker"},
         {id: "grid", name: qsTr("Grid"), iconRole: "settings-grid"},
         {id: "video", name: qsTr("Video"), iconRole: "settings-video"},
@@ -64,7 +66,7 @@ DialogWindow {
     readonly property string currentPage: pages[Math.max(0, pageList.currentIndex)].id
     function pageIndex(id) { return pages.findIndex(p => p.id === id) }
 
-    function openDialog(page, filter) {
+    function openDialog(page, filter, projectPage) {
         const r = app.openSettingsDialog()
         languages = r.languages
         dictionaries = r.dictionaries
@@ -98,6 +100,10 @@ DialogWindow {
         }
         open()
         rememberPage()
+        if (hasProject && projectPage !== undefined) {
+            projectTab = true
+            projectPages.showPage(projectPage)
+        }
         if (notices)
             for (const warning of r.warnings)
                 notices.post("warning", qsTr("Settings"), warning)
@@ -907,6 +913,8 @@ DialogWindow {
                         }
                     }
                 }
+
+                CycleValuesPage { dialog: dialog }
 
                 SettingsPage {
                     id: spellingPage

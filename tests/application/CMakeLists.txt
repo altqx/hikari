@@ -183,6 +183,8 @@ hikari_add_gtest(hikari_application_visual_position_tests SOURCES visual_positio
 target_compile_definitions(hikari_application_visual_position_tests PRIVATE
     HIKARI_POSITION_CASES="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-cases/inputs/position-cases.txt"
     HIKARI_POSITION_OBSERVATIONS="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-observations/local-t2-position-20261005/observations.jsonl")
+hikari_add_gtest(hikari_application_position_commands_tests SOURCES position_commands_tests.cpp
+    LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_visual_transform_tests SOURCES visual_transform_tests.cpp
     LIBRARIES hikari_application Qt6::Core LABELS application)
 target_compile_definitions(hikari_application_visual_transform_tests PRIVATE
@@ -242,6 +244,8 @@ hikari_add_gtest(hikari_application_associated_files_tests SOURCES associated_fi
 target_compile_definitions(hikari_application_associated_files_tests PRIVATE
     HIKARI_ASSOCIATION_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/associations")
 hikari_add_gtest(hikari_application_ai_providers_tests SOURCES ai_providers_tests.cpp
+    LIBRARIES hikari_application LABELS application)
+hikari_add_gtest(hikari_application_ai_project_keys_tests SOURCES ai_project_keys_tests.cpp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_search_suggestions_tests SOURCES search_suggestions_tests.cpp
     LIBRARIES hikari_application LABELS application)

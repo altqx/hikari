@@ -4,6 +4,9 @@
 #include "hikari/app/forwarded_launches.h"
 #include "hikari/app/project_windows.h"
 #include "hikari/app/session_json.h"
+#include "hikari/app/skills_settings.h"
+#include "hikari/api/skill_check.h"
+#include "hikari/backends/desktop_handoff.h"
 #include "hikari/app/style_manager_controller.h"
 #include "hikari/application/owned_file.h"
 #include "hikari/application/session_file.h"
@@ -82,6 +85,7 @@ class ProjectWindowsTests : public QObject {
     app::ForwardedLaunches *forwarded = nullptr;
     QQmlApplicationEngine *engine = nullptr;
     QQuickWindow *window = nullptr;
+    QString userFolder;
 
     void start(application::SpellingBackendLoader spelling = {})
     {
@@ -89,6 +93,7 @@ class ProjectWindowsTests : public QObject {
         o.settingsFile = home.filePath(QStringLiteral("settings.toml"));
         o.playbackAudio = false;
         o.spellingBackend = std::move(spelling);
+        o.userFolder = userFolder;
         application = new app::Application(o);
         forwarded = new app::ForwardedLaunches(*application);
         engine = new QQmlApplicationEngine;
@@ -204,6 +209,27 @@ class ProjectWindowsTests : public QObject {
         return QTest::qWaitFor([&] { return application->workspace().activeWindow() == opened; }) ? opened : -1;
     }
 
+    static QVariantList rowsOf(const QVariantList &groups, const QString &group)
+    {
+        for (const QVariant &g : groups)
+            if (g.toMap().value(QStringLiteral("group")).toString() == group)
+                return g.toMap().value(QStringLiteral("rows")).toList();
+        return {};
+    }
+    static QStringList summary(const QVariantList &rows)
+    {
+        QStringList out;
+        for (const QVariant &r : rows) {
+            const QVariantMap m = r.toMap();
+            const QString state = !m.value(QStringLiteral("problem")).toString().isEmpty() ? QStringLiteral("broken")
+                                  : !m.value(QStringLiteral("hidden")).toString().isEmpty() ? QStringLiteral("hidden")
+                                                                                             : QStringLiteral("offered");
+            out << m.value(QStringLiteral("name")).toString() + u':' + state;
+        }
+        return out;
+    }
+    static QByteArray skillMd(const char *description) { return QByteArray("---\ndescription: ") + description + "\n---\n"; }
+
 private slots:
     void initTestCase() { QVERIFY(home.isValid() && dir.isValid()); }
     void cleanup()
@@ -224,6 +250,77 @@ private slots:
         QDir(home.filePath(QStringLiteral("Catalog"))).removeRecursively();
         QDir(dir.path()).removeRecursively();
         QDir().mkpath(dir.path());
+        if (!userFolder.isEmpty())
+            QDir(userFolder).removeRecursively();
+        userFolder.clear();
+    }
+
+    void theSkillsListIsTheWindowsProjectOverMineOverBuiltIn()
+    {
+        userFolder = home.filePath(QStringLiteral("user"));
+        start();
+        QCOMPARE(application->userFolder(), userFolder);
+        const QString mine = userFolder + QStringLiteral("/ai/skills");
+        writeAll(mine + QStringLiteral("/signs/SKILL.md"), skillMd("Mine."));
+        writeAll(mine + QStringLiteral("/typesetting/SKILL.md"), skillMd("Our way."));
+        writeAll(mine + QStringLiteral("/notes/SKILL.md"), "no frontmatter");
+        const QString show = folder("Show S02", true);
+        writeAll(show + QStringLiteral("/.hikari/skills/signs/SKILL.md"), skillMd("The show's signs."));
+        writeAll(show + QStringLiteral("/.hikari/skills/honorifics/SKILL.md"), skillMd("Honorifics."));
+        app::SkillsSettings &skills = *application->skillsSettings();
+
+        QVariantList groups = skills.groups(0);
+        QCOMPARE(groups.size(), 2);
+        QCOMPARE(summary(rowsOf(groups, QStringLiteral("mine"))),
+                 (QStringList{"notes:broken", "signs:offered", "typesetting:offered"}));
+        QCOMPARE(summary(rowsOf(groups, QStringLiteral("builtin"))),
+                 (QStringList{"karaoke-templater:offered", "translation:offered", "typesetting:hidden"}));
+        QCOMPARE(rowsOf(groups, QStringLiteral("mine")).first().toMap().value(QStringLiteral("problem")).toString(),
+                 QStringLiteral("SKILL.md doesn’t start with frontmatter (---)."));
+
+        QVERIFY(application->openFolder(show, 0).value(QStringLiteral("ok")).toBool());
+        groups = skills.groups(0);
+        QCOMPARE(groups.size(), 3);
+        QCOMPARE(groups.first().toMap().value(QStringLiteral("group")).toString(), QStringLiteral("project"));
+        QCOMPARE(groups.first().toMap().value(QStringLiteral("folder")).toString(),
+                 QDir::toNativeSeparators(QStringLiteral("Show S02/.hikari/skills")));
+        QCOMPARE(summary(rowsOf(groups, QStringLiteral("project"))), (QStringList{"honorifics:offered", "signs:offered"}));
+        QCOMPARE(summary(rowsOf(groups, QStringLiteral("mine"))),
+                 (QStringList{"notes:broken", "signs:hidden", "typesetting:offered"}));
+    }
+
+    void theBuiltInSkillsAreTheSidecarsOwn()
+    {
+        QStringList source;
+        const QDir skills(QStringLiteral(HIKARI_AI_SKILLS_SOURCE));
+        for (const QString &name : skills.entryList(QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name)) {
+            QFile file(skills.filePath(name + QStringLiteral("/SKILL.md")));
+            QVERIFY(file.open(QIODevice::ReadOnly));
+            const QByteArray text = file.readAll();
+            const api::SkillCheck check = api::checkSkill(name.toStdString(), std::string_view(text.data(), text.size()));
+            QCOMPARE(int(check.problem), int(api::SkillProblem::None));
+            source << name + u'=' + QString::fromStdString(check.description);
+        }
+        QStringList compiled;
+        for (const app::BuiltinSkill &skill : app::builtinSkills())
+            compiled << QString::fromStdString(skill.name) + u'=' + QString::fromStdString(skill.description);
+        QVERIFY(!source.isEmpty());
+        QCOMPARE(compiled, source);
+    }
+
+    void openProjectFolderMakesTheProjectsSkillsFolder()
+    {
+        start();
+        QList<QUrl> opened;
+        auto routes = backends::desktop::replaceRoutes({[&](const QUrl &url) { opened << url; return true; }, {}, {}});
+        auto restore = qScopeGuard([&] { backends::desktop::replaceRoutes(routes); });
+        app::SkillsSettings &skills = *application->skillsSettings();
+        QVERIFY(!skills.openProjectFolder(0));
+        const QString show = folder("Show S03", true);
+        QVERIFY(application->openFolder(show, 0).value(QStringLiteral("ok")).toBool());
+        QVERIFY(skills.openProjectFolder(0));
+        QVERIFY(QFileInfo(show + QStringLiteral("/.hikari/skills")).isDir());
+        QCOMPARE(opened, QList<QUrl>{QUrl::fromLocalFile(canonical(show) + QStringLiteral("/.hikari/skills"))});
     }
 
     void aWindowRowKeepsItsProject()
@@ -696,6 +793,103 @@ private slots:
         const int other = openProjectWindow(plugged);
         QVERIFY(other > 0);
         QVERIFY(application->projectNeedsTrust(other));
+    }
+
+    void aProjectsOwnAiKeysWaitForTrust()
+    {
+        qputenv("HIKARI_PJ10_TEST_KEY", "sk-from-env");
+        start();
+        const QString show = folder("keyed", true);
+        writeAll(show + QStringLiteral("/.hikari/project.toml"),
+                 "version = 1\n[ai.keys]\nopenai = { env = \"HIKARI_PJ10_TEST_KEY\", entry = \"openai\" }\n");
+        const int w = openProjectWindow(show);
+        QVERIFY(w >= 0);
+        const QString root = application->projectRoot(w);
+        QCOMPARE(application->projectTrustReasons(w), QStringList{QStringLiteral("keys")});
+        QObject *bar = named(shell(w), "projectTrustBar");
+        QTRY_VERIFY(bar->property("visible").toBool());
+        QVERIFY(bar->property("text").toString().contains(QStringLiteral("AI keys")));
+        QVERIFY(!application->projectAiKey(root, "openai"));
+        auto row = application->projectAiKeys(w).value(QStringLiteral("rows")).toList().value(0).toMap();
+        QCOMPARE(row.value(QStringLiteral("id")).toString(), QStringLiteral("openai"));
+        QCOMPARE(row.value(QStringLiteral("used")).toString(), QStringLiteral("untrusted"));
+
+        QVERIFY(QMetaObject::invokeMethod(named(shell(w), "projectTrust"), "clicked"));
+        QTRY_VERIFY(!bar->property("visible").toBool());
+        QCOMPARE(application->projectAiKey(root, "openai"), std::optional<std::string>("sk-from-env"));
+        QVERIFY(!application->projectAiKey(root, "anthropic"));
+        row = application->projectAiKeys(w).value(QStringLiteral("rows")).toList().value(0).toMap();
+        QCOMPARE(row.value(QStringLiteral("used")).toString(), QStringLiteral("env"));
+        QCOMPARE(row.value(QStringLiteral("from")).toString(), QStringLiteral("HIKARI_PJ10_TEST_KEY"));
+        for (const QVariant &value : row)
+            QVERIFY(!value.toString().contains(QStringLiteral("sk-from-env")));
+
+        qunsetenv("HIKARI_PJ10_TEST_KEY");
+        writeAll(show + QStringLiteral("/.hikari/credentials.toml"), "version = 1\n[keys]\nopenai = \"sk-from-file\"\n");
+        QCOMPARE(application->projectAiKey(root, "openai"), std::optional<std::string>("sk-from-file"));
+    }
+
+    void aNamedKeyNobodyHasAsksNoTrust()
+    {
+        start();
+        const QString show = folder("unkeyed", true);
+        writeAll(show + QStringLiteral("/.hikari/project.toml"), "version = 1\n[ai.keys]\nopenai = { entry = \"openai\" }\n");
+        const int w = openProjectWindow(show);
+        QVERIFY(w >= 0);
+        QVERIFY(!application->projectNeedsTrust(w));
+        QVERIFY(!named(shell(w), "projectTrustBar")->property("visible").toBool());
+        QCOMPARE(application->projectAiKeys(w).value(QStringLiteral("rows")).toList().value(0).toMap()
+                     .value(QStringLiteral("used")).toString(), QStringLiteral("untrusted"));
+    }
+
+    void aKeyInProjectTomlIsIgnoredAndMovesToTheCredentialsFile()
+    {
+        start();
+        const QString show = folder("leaky", true);
+        const QString shared = show + QStringLiteral("/.hikari/project.toml");
+        writeAll(shared, "version = 1\n# Shared by the team.\n[ai.keys]\nopenrouter = \"sk-or-leaked\"\n");
+        application->settingsStore()->setValue(QStringLiteral("trust.folders"),
+                                               QStringList{QDir::toNativeSeparators(canonical(show))});
+        const int w = openProjectWindow(show);
+        QVERIFY(w >= 0);
+        const QString root = application->projectRoot(w);
+        QCOMPARE(application->projectKeyValuesFound(w), QStringList{QStringLiteral("openrouter")});
+        QVERIFY(!application->projectAiKey(root, "openrouter"));
+        QObject *bar = named(shell(w), "projectKeyValuesBar");
+        QTRY_VERIFY(bar->property("visible").toBool());
+        QVERIFY(!bar->property("text").toString().contains(QStringLiteral("sk-or")));
+
+        QVERIFY(application->moveProjectKeysToCredentials(w));
+        const QByteArray after = readAll(shared);
+        QVERIFY2(!after.contains("sk-or-leaked"), after);
+        QVERIFY2(after.contains("# Shared by the team."), after);
+        QVERIFY2(after.contains("openrouter = { entry = \"openrouter\" }"), after);
+        QVERIFY(readAll(show + QStringLiteral("/.hikari/credentials.toml")).contains("openrouter = \"sk-or-leaked\""));
+        QVERIFY(readAll(show + QStringLiteral("/.hikari/.gitignore")).contains("credentials.toml"));
+        QVERIFY(application->projectKeyValuesFound(w).isEmpty());
+        QTRY_VERIFY(!bar->property("visible").toBool());
+        QCOMPARE(application->projectAiKey(root, "openrouter"), std::optional<std::string>("sk-or-leaked"));
+    }
+
+    void createCredentialsFileFromTheProjectAiPage()
+    {
+        start();
+        const QString show = folder("fresh", true);
+        writeAll(show + QStringLiteral("/.hikari/project.toml"), "version = 1\n[ai.keys]\nanthropic = { entry = \"anthropic\" }\n");
+        const int w = openProjectWindow(show);
+        QVERIFY(w >= 0);
+        QVERIFY(QMetaObject::invokeMethod(shell(w), "openProjectSettingsPage", Q_ARG(QVariant, QStringLiteral("ai"))));
+        QTRY_VERIFY(dialog("settingsDialog"));
+        QQuickItem *content = dialog("settingsDialog")->contentItem();
+        QTRY_VERIFY(item(content, QStringLiteral("projectAiKeys")) && item(content, QStringLiteral("projectAiKeys"))->isVisible());
+        QQuickItem *create = item(content, QStringLiteral("projectCredentialsCreate"));
+        QVERIFY(create && create->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(create, "clicked"));
+        QTRY_VERIFY(!create->isVisible());
+        QVERIFY(readAll(show + QStringLiteral("/.hikari/credentials.toml")).contains("anthropic = \"\""));
+        QCOMPARE(readAll(show + QStringLiteral("/.hikari/.gitignore")), QByteArray("credentials.toml\nproject.local.toml\n"));
+        QVERIFY(!QFileInfo::exists(show + QStringLiteral("/.gitignore")));
+        QVERIFY(item(content, QStringLiteral("projectCredentialsOpen"))->isVisible());
     }
 
     void projectScriptsLoadOnlyOnceTrustedAndOnlyInTheirWindow()

@@ -30,6 +30,7 @@ set_source_files_properties(shape_yutils.cpp PROPERTIES COMPILE_OPTIONS
     "$<$<CXX_COMPILER_ID:GNU,Clang>:-ffp-contract=off>;$<$<CXX_COMPILER_ID:MSVC>:/fp:precise>")
 target_sources(hikari_application PRIVATE guide_links.cpp include/hikari/application/guide_links.h)
 target_sources(hikari_application PRIVATE ai_providers.cpp include/hikari/application/ai_providers.h)
+target_sources(hikari_application PRIVATE ai_project_keys.cpp include/hikari/application/ai_project_keys.h)
 target_sources(hikari_application PRIVATE search_suggestions.cpp include/hikari/application/search_suggestions.h)
 target_include_directories(hikari_application PUBLIC include)
 target_sources(hikari_application PRIVATE playback_pipeline.cpp yuv_bgra.cpp
@@ -67,6 +68,7 @@ set_source_files_properties(visual_view.cpp visual_crosshair.cpp visual_script.c
     "$<$<CXX_COMPILER_ID:GNU,Clang>:-ffp-contract=off>;$<$<CXX_COMPILER_ID:MSVC>:/fp:precise>")
 target_sources(hikari_application PRIVATE settings_import.cpp settings_import_tables.cpp)
 target_sources(hikari_application PRIVATE font_catalogs.cpp font_families.cpp)
+target_sources(hikari_application PRIVATE position_commands.cpp)
 target_sources(hikari_application PRIVATE visual_vector.cpp visual_clip.cpp)
 target_sources(hikari_application PRIVATE visual_perspective.cpp visual_gradient.cpp visual_text_on_path.cpp)
 set_source_files_properties(visual_vector.cpp visual_clip.cpp PROPERTIES COMPILE_OPTIONS

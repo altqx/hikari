@@ -821,6 +821,13 @@
         </translation>
     </message>
     <message numerus="yes">
+        <source>%n file(s)</source>
+        <translation>
+            <numerusform>%n file</numerusform>
+            <numerusform>%n files</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
         <source>Connected · %n model(s)</source>
         <translation>
             <numerusform>Connected · %n model</numerusform>
@@ -832,6 +839,13 @@
         <translation>
             <numerusform>Not tested · %n model</numerusform>
             <numerusform>Not tested · %n models</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n skill(s) can’t be offered. Fix them in their folders, then read the folders again.</source>
+        <translation>
+            <numerusform>%n skill can’t be offered. Fix it in its folder, then read the folders again.</numerusform>
+            <numerusform>%n skills can’t be offered. Fix them in their folders, then read the folders again.</numerusform>
         </translation>
     </message>
     <message numerus="yes">

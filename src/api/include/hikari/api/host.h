@@ -9,11 +9,13 @@
 #include "hikari/application/karaoke_split.h"
 #include "hikari/application/template_preview.h"
 #include "hikari/application/edit_session.h"
+#include "hikari/application/node_effects.h"
 #include "hikari/application/settings.h"
 #include "hikari/application/subtitle_render.h"
 #include "hikari/application/visual_perspective.h"
 #include "hikari/application/workspace.h"
 
+#include <filesystem>
 #include <functional>
 #include <optional>
 #include <string>
@@ -80,18 +82,23 @@ public:
     virtual bool write(const std::string &path, std::string_view bytes) = 0;
 };
 
+enum class SkillOrigin { Project, Mine };
+
 struct SkillFolder {
     std::string name;
     std::vector<std::string> files; // relative to the folder, '/'-separated, SKILL.md among them
+    SkillOrigin origin = SkillOrigin::Mine;
 };
 
-// The user's skill folders (docs/ai-skills.md).
+// The skill folders a caller sees (docs/ai-skills.md). `project` is the caller's Project folder, empty for none;
+// its skills hide the user's of the same name.
 class SkillHost {
 public:
     virtual ~SkillHost() = default;
-    virtual std::vector<SkillFolder> skills() const = 0;
+    virtual std::vector<SkillFolder> skills(const std::filesystem::path &project) const = 0;
     // At most `atMost` bytes of a file listed under `skill`; nullopt: it cannot be read.
-    virtual std::optional<std::string> read(std::string_view skill, std::string_view file, std::size_t atMost) const = 0;
+    virtual std::optional<std::string> read(const std::filesystem::path &project, std::string_view skill,
+                                            std::string_view file, std::size_t atMost) const = 0;
 };
 
 // Where a Document's Honya project folder is: the glossary, characters and style its translation shares with Honya.
@@ -194,6 +201,13 @@ public:
     virtual void align(const AlignRequest &request, std::function<void(AlignResult)> done) = 0;
 };
 
+// Runs node-effect graphs as the node-effect editor does, but never trusts a Document's Lua.
+class EffectsHost {
+public:
+    virtual ~EffectsHost() = default;
+    virtual application::NodeEffectOptions options() = 0;
+};
+
 // A missing port makes its operations answer unavailable.
 struct Host {
     DocumentHost *documents = nullptr;
@@ -210,6 +224,7 @@ struct Host {
     ProjectHost *project = nullptr;
     TranslationHost *translation = nullptr;
     KaraokeHost *karaoke = nullptr;
+    EffectsHost *effects = nullptr;
 };
 
 }

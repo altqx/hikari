@@ -1,5 +1,7 @@
 #include "hikari/application/settings.h"
 
+#include "hikari/application/position_commands.h"
+
 #include <algorithm>
 #include <cctype>
 #include <charconv>
@@ -7,6 +9,14 @@
 namespace hikari::application {
 
 namespace {
+
+std::string cycleDefaults(position::CycleTag tag)
+{
+    std::string out;
+    for (const auto &v : position::defaultCycleValues(tag))
+        out += (out.empty() ? "" : ", ") + std::string(v.begin(), v.end());
+    return out;
+}
 
 using enum SettingType;
 using enum SettingScope;
@@ -313,6 +323,17 @@ const std::vector<SettingDefinition> &definitions()
         {"audio.kanjiTimerSuggest", "", Bool, Profile, Mapped, false, true},
         {"editor.softLineBreak", "", Bool, Profile, Mapped, false, false},
         {"grid.splitFramesBakeAnimations", "", Bool, Profile, Mapped, false, true},
+        {"grid.alignToVideoFrame", "", Bool, Profile, Mapped, false, false},
+        // core::column Tags bits, kept apart from the legacy column choices.
+        {"grid.copyColumnTags", "", Int, Profile, Mapped, false, std::int64_t{0}},
+        {"grid.pasteColumnTags", "", Int, Profile, Mapped, false, std::int64_t{0}},
+        {"grid.columnTagNames", "", String, Profile, Mapped, false, std::string()},
+        {"editing.cycleValues.blur", "", String, Profile, Mapped, false, cycleDefaults(position::CycleTag::Blur)},
+        {"editing.cycleValues.bord", "", String, Profile, Mapped, false, cycleDefaults(position::CycleTag::Bord)},
+        {"editing.cycleValues.shad", "", String, Profile, Mapped, false, cycleDefaults(position::CycleTag::Shad)},
+        {"editing.cycleValues.alpha", "", String, Profile, Mapped, false, cycleDefaults(position::CycleTag::Alpha)},
+        {"editing.cycleValues.an", "", String, Profile, Mapped, false, cycleDefaults(position::CycleTag::An)},
+        {"editing.cycleValues.fsp", "", String, Profile, Mapped, false, cycleDefaults(position::CycleTag::Fsp)},
         // usageDataId: random, made at the first send, cleared when usage data is turned off.
         {"privacy.usageData", "", Bool, Profile, Mapped, false, true},
         {"privacy.usageDataId", "", String, Profile, Mapped, false, std::string()},
@@ -403,6 +424,7 @@ const std::vector<SettingDefinition> &definitions()
         {"ai.agent.autoCompact", "", Bool, Profile, Mapped, false, true},
         {"ai.agent.fullAccessWarned", "", Bool, Profile, Mapped, false, false},
         // actions: one {"name", "instruction", "role", "ask"} JSON object per row.
+        {"ai.agents.custom", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {"ai.inline.actions", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {"ai.inline.translateTo", "", String, Profile, Mapped, false, std::string("English")},
         {"translation.glossary", "", String, Profile, Mapped, false, std::string()},

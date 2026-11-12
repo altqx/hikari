@@ -108,11 +108,22 @@ The more specific source wins (attached, then Project, then the Fonts folder, th
 - **The window's Project folder is granted to its AI** through Hikari's file tools, as a Hikari API folder grant.
   - Reads need no prompt.
   - Writes to anything but open Documents stage in the review. Writes into `.hikari/` always ask.
-- **Never sent:** paths matching `[ai] exclude` (by default `.env*`, `*.key`, `.git/` and `project.local.toml`), the bytes of media files, and anything a symlink reaches outside the Project.
+- **Never sent:** paths matching `[ai] exclude` (by default `.env*`, `*.key`, `.git/`, `project.local.toml` and `.hikari/credentials.toml`), the bytes of media files, and anything a symlink reaches outside the Project.
 - **Claude's and Codex's built-in file tools stay off.** The sidecar's working directory stays its private folder ([ADR 0026](0026-hikari-ai-runs-in-a-typescript-sidecar-on-bun.md)).
 - **Instructions.** The user's `AGENTS.md` and then the Project root's are joined in that order and given to every agent.
 - **In an untrusted Project** the AI still runs. A banner shows when the Project's `AGENTS.md` is loaded.
 - **Honya's project folder is the Project** ([ADR 0024](0024-hikari-ai.md), "Translation"): `PROJECT.md` and `GLOSSARY.md` at its root, or the subfolder `[translation] glossary` names. The Script Info pointer stays only for files outside a Project.
+
+## Project AI keys
+
+Amended on 2026-11-12 by [PJ10 #982](https://github.com/altqx/hikari/issues/982) (owner, Q347 and Q350–Q354). A Project still never sets AI providers: base URLs, budgets and on/off stay the user's. A trusted Project may name the keys its windows use, but it never holds them, because a Project is often committed to git.
+
+- **Where a key comes from,** first match wins: the machine's environment, then `.hikari/credentials.toml`. With neither, the user's keychain key is used.
+- **`.hikari/credentials.toml`** is `version = 1` and a `[keys]` table of entry names to keys. Settings › Project › AI creates it, with `.hikari/.gitignore` listing it and `project.local.toml`; it never touches a `.gitignore` at the Project root. On Linux the file is private to the user.
+- **`project.toml` only names keys:** `[ai.keys] openai = { env = "OPENAI_API_KEY", entry = "openai" }`, keyed by the user's provider id, with either field or both. `project.local.toml`'s entries replace project.toml's per provider. A key value found in project.toml (a string or any other field under `[ai.keys]`, or a `[keys]` table) is ignored, and the window says so and offers to move it into the credentials file.
+- **Only in that Project's windows,** and only once its folder is trusted. An untrusted Project uses the user's keys, and its trust bar names the keys when one is found.
+- **Provider keys only.** Search service keys, sign-ins and the agent CLIs' logins stay the user's.
+- **Keys stay in Qt** ([ADR 0029](0029-the-ai-sidecar-runs-in-an-os-sandbox.md#keys)). The relay adds a Project key as it adds a keychain key; the sidecar and the model never see it, and Hikari AI never reads the credentials file.
 
 ## Core and plugins
 
