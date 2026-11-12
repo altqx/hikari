@@ -104,6 +104,18 @@
         <translation>Wczoraj</translation>
     </message>
     <message>
+        <source>This agent can’t start here</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not offered: its command is inside an open project, which it could read.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not offered: this system can’t keep it to its own folders.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>This project</source>
         <translation type="unfinished"></translation>
     </message>

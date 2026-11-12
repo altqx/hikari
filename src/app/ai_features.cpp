@@ -641,6 +641,17 @@ QString AiFeatures::refusal(const QString &agent) const
     return agent == QLatin1String("claude") || confinesFiles() ? QString() : QStringLiteral("sandbox");
 }
 
+QString AiFeatures::agentRefusal(const QString &agent) const
+{
+    if (!agent.startsWith(QLatin1String("acp:")))
+        return refusal(agent);
+    const QString id = agent.mid(4);
+    for (const AcpAgent &custom : customAgents())
+        if (custom.id == id)
+            return custom.program.isEmpty() ? QString() : acpRefusal(custom.program);
+    return refusal(id);
+}
+
 QString AiFeatures::acpRefusal(const QString &program) const
 {
     if (!confinesFiles())

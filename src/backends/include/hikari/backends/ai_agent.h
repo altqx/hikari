@@ -174,6 +174,8 @@ public:
         std::function<std::vector<std::string>()> safeFolders;
         /// The active window's Project folder, UTF-8, which a new thread keeps; empty without one.
         std::function<std::string()> project;
+        /// Why an external agent ("codex", "acp:<id>") can't start here; a turn on it ends in a `notOffered` notice.
+        std::function<std::string(const std::string &agent)> agentRefusal;
         /// The joined AGENTS.md text for a thread's Project folder (empty: none), added to its system prompt.
         std::function<std::string(const std::string &project)> instructions;
         std::function<std::int64_t()> now; // ms since the epoch

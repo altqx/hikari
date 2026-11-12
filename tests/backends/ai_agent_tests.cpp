@@ -386,6 +386,7 @@ protected:
         w.documentTitle = [](hikari::application::DocumentId) { return std::string("a.ass"); };
         w.safeFolders = [] { return std::vector<std::string>{"/subs"}; };
         w.project = [this] { return project; };
+        w.agentRefusal = [this](const std::string &agent) { return agent == refusedAgent ? std::string("sandbox") : std::string(); };
         w.instructions = [this](const std::string &folder) {
             return joinInstructions(agentsFileText(dir.filePath(QStringLiteral("user"))),
                                     agentsFileText(QString::fromStdString(folder)));
@@ -485,6 +486,7 @@ protected:
     std::int64_t clock = 0;
     QString sidecarMode = QStringLiteral("ok");
     std::string project;
+    std::string refusedAgent;
     std::unique_ptr<AgentThreads> threads;
 };
 
@@ -526,6 +528,27 @@ TEST_F(AgentThreadsTest, AThreadOnClaudeOpensItsSessionOnTheAgentWithoutAProvide
     const std::string plain = threads->create();
     threads->send(plain, "Hello");
     EXPECT_EQ(notice(plain), "noSidecar");
+}
+
+TEST_F(AgentThreadsTest, AThreadOnAnAgentThisSystemWontStartSaysWhyAndOpensNoSession)
+{
+    threads = makeThreads(true);
+    refusedAgent = "codex";
+    const std::string id = threads->create();
+    threads->setModel(id, {"agent:codex", ""});
+    threads->send(id, "Fix the typo");
+    EXPECT_FALSE(threads->running(id));
+    EXPECT_EQ(notice(id), "notOffered");
+    const auto notices = items(id, "notice");
+    ASSERT_EQ(notices.size(), 1u);
+    EXPECT_EQ(at(notices[0], "detail"), "sandbox");
+    EXPECT_TRUE(items(id, "user").empty());
+    EXPECT_TRUE(receivedAs("session/new").empty());
+
+    threads->setModel(id, {"agent:claude", ""});
+    threads->send(id, "Fix the typo");
+    ASSERT_TRUE(idle(id));
+    EXPECT_EQ(receivedAs("session/new").size(), 1u);
 }
 
 TEST_F(AgentThreadsTest, FullAccessRunsAWriteIntoTheReviewAndShowsTheChange)

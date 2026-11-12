@@ -135,6 +135,8 @@ public:
     QString refusal(const QString &agent) const;
     /// Why the ACP agent at `program` isn't offered: "sandbox", "project" when it lies inside an open Project, or empty.
     QString acpRefusal(const QString &program) const;
+    /// Why a thread's external agent (`claude`, `codex` or `acp:<id>`, as in its `agent:` provider) can't start here.
+    QString agentRefusal(const QString &agent) const;
     /// Found and not refused.
     bool offersAgent(const QString &agent) const { return agentFound(agent) && refusal(agent).isEmpty(); }
     /// Null with AI off, or in builds that run their own sidecar.

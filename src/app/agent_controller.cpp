@@ -213,6 +213,9 @@ void AgentController::apply()
         };
         w.safeFolders = [this] { return safeFolders(); };
         w.project = [this] { return m_wiring.project ? m_wiring.project().toStdString() : std::string(); };
+        w.agentRefusal = [this](const std::string &agent) {
+            return m_wiring.ai.agentRefusal(QString::fromStdString(agent)).toStdString();
+        };
         w.instructions = [this](const std::string &project) {
             return backends::ai::joinInstructions(backends::ai::agentsFileText(m_wiring.userFolder),
                                                   backends::ai::agentsFileText(qs(project)));

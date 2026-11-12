@@ -301,6 +301,10 @@ TEST_F(AiFeaturesTest, WithoutFileSandboxingOnlyClaudeIsOfferedAndCodexCantStart
     EXPECT_EQ(features.refusal(QStringLiteral("claude")), QString());
     EXPECT_EQ(features.acpRefusal(QStringLiteral("/opt/mine")), QStringLiteral("sandbox"));
     EXPECT_TRUE(features.acpAgents().empty());
+    EXPECT_EQ(features.agentRefusal(QStringLiteral("codex")), QStringLiteral("sandbox"));
+    EXPECT_EQ(features.agentRefusal(QStringLiteral("acp:custom-1")), QStringLiteral("sandbox"));
+    EXPECT_EQ(features.agentRefusal(QStringLiteral("acp:opencode")), QStringLiteral("sandbox"));
+    EXPECT_EQ(features.agentRefusal(QStringLiteral("claude")), QString());
 
     ASSERT_NE(features.sidecarForMcp(), nullptr);
     EXPECT_TRUE(added.empty());
@@ -354,6 +358,8 @@ TEST_F(AiFeaturesTest, ACustomAcpAgentInsideAnOpenProjectIsRefused)
     EXPECT_EQ(features.acpRefusal(show + QStringLiteral("/bin/agent")), QStringLiteral("project"));
     EXPECT_EQ(features.acpRefusal(outside + QStringLiteral("/agent")), QString());
     EXPECT_EQ(listed(), QStringList{"custom-out"});
+    EXPECT_EQ(features.agentRefusal(QStringLiteral("acp:custom-in")), QStringLiteral("project"));
+    EXPECT_EQ(features.agentRefusal(QStringLiteral("acp:custom-out")), QString());
     EXPECT_EQ(added, std::vector<QString>{QStringLiteral("custom-out")});
 
     open.clear();

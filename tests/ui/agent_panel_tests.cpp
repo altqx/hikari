@@ -429,6 +429,14 @@ private slots:
             if (model.toMap().value(QStringLiteral("value")).toString().startsWith(QLatin1String("agent:")))
                 offered << model.toMap().value(QStringLiteral("text")).toString();
         QCOMPARE(offered, QStringList{QStringLiteral("Claude Code")});
+
+        agent().newThread();
+        agent().setModel(QStringLiteral("agent:codex\t"));
+        agent().send(QStringLiteral("Fix the typo"));
+        QTRY_COMPARE(lastItem().value(QStringLiteral("notice")).toString(), QStringLiteral("notOffered"));
+        QTRY_VERIFY(item(QStringLiteral("agentNotice_notOffered")));
+        QVERIFY(!agent().thread().value(QStringLiteral("running")).toBool());
+        shoot(QStringLiteral("agent-not-offered"), QStringLiteral("Fix the typo"));
     }
     void theInstalledClaudeEditsIntoTheReview()
     {

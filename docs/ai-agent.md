@@ -138,7 +138,7 @@ AI12 ([#440](https://github.com/altqx/hikari/issues/440), ADR 0024). The sidecar
 | `plan` | `entries` |
 | `ask` | `ask`, `type` (`ask`, `judge`, `always`), `tool`, `operation`, `params`, `reason`, `status` (`open`, `allowed`, `allowedInThread`, `denied`, `withdrawn`) |
 | `script` | `ask`, `name`, `macro`, `script`, `lines`, `title`, `needs`, `status` (`open`, `running`, `ran`, `failed`, `declined`, `withdrawn`), `outcome?`, `result?`, `file?` |
-| `notice` | `notice` (`lost`, `cap`, `dailyCap`, `failed`, `stopped`, `maxTokens`, `refusal`, `maxRequests`, `noModel`, `noSidecar`, `searchUsedUp`, `searchKey`, `compactFailed`, `nothingToCompact`), `detail?`; the search ones have `service` and `status` and show once per turn |
+| `notice` | `notice` (`lost`, `cap`, `dailyCap`, `failed`, `stopped`, `maxTokens`, `refusal`, `maxRequests`, `noModel`, `notOffered` (an external agent this system won’t start, with `detail` `sandbox` or `project`), `noSidecar`, `searchUsedUp`, `searchKey`, `compactFailed`, `nothingToCompact`), `detail?`; the search ones have `service` and `status` and show once per turn |
 | `compaction` | `before`, `after` (tokens), `summary?`; or `from` (the earlier thread's title) and `summary` in a thread made from a summary |
 
 - **Queue and steer.** A message sent while a turn runs waits; it runs when the turn ends, or joins it with Steer now.
