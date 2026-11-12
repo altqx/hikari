@@ -1,5 +1,6 @@
 #include "hikari/application/all_tags.h"
 #include "hikari/application/automation_services.h"
+#include "hikari/application/shape_presets.h"
 #include "hikari/application/visual_all_tags.h"
 #include "hikari/application/visual_shift.h"
 #include "hikari/application/visual_tools.h"
@@ -602,6 +603,36 @@ TEST(AllTagsEdition, AValueTheToolCannotUseIsRefusedAndTheLastKept)
     EXPECT_FALSE(e.canUndo());
     EXPECT_EQ(e.setNumber(Number::Digits, u"2"), Check::Ok);
     EXPECT_EQ(e.setNumber(Number::Step, u"127.5"), Check::Ok);
+}
+
+TEST(AllTagsEdition, TiersKeepTheirOwnNamesAndCopyOrMoveInOneStep)
+{
+    auto ours = AllTagsSetting::named(u"Blur");
+    ours.mark = {Tier::Project, false};
+    std::vector<AllTagsSetting> mine = defaultAllTags();
+    AllTagsEdition e(combineTiers(std::vector{ours}, mine, &AllTagsSetting::name, sameNameIgnoringCase), 1);
+    EXPECT_EQ(e.current().name, u"blur");
+    EXPECT_TRUE(e.readOnly());
+    EXPECT_EQ(e.setTag(u"be"), AllTagsEdition::Check::Ok);
+    EXPECT_FALSE(e.canUndo());
+    ASSERT_TRUE(e.tierClash());
+    EXPECT_TRUE(e.sendToOtherTier(false, {ClashAction::Replace, {}}));
+    EXPECT_EQ(e.undoStep(), AllTagsEdition::CopyToTier);
+    EXPECT_EQ(e.selection(), 0);
+    EXPECT_EQ(e.current().tag, u"blur");
+    EXPECT_EQ(itemsIn(e.tags(), Tier::Project).size(), 1u);
+    e.addTag(Tier::Project);
+    EXPECT_EQ(e.selection(), 1);
+    EXPECT_EQ(e.current().mark.tier, Tier::Project);
+    e.select(5);
+    EXPECT_FALSE(e.tierClash());
+    EXPECT_TRUE(e.sendToOtherTier(true, {}));
+    EXPECT_EQ(e.undoStep(), AllTagsEdition::MoveToTier);
+    EXPECT_EQ(e.current().mark.tier, Tier::Project);
+    EXPECT_EQ(itemsIn(e.tags(), Tier::Mine).size(), mine.size() - 1);
+    e.restoreDefaults();
+    EXPECT_EQ(itemsIn(e.tags(), Tier::Project).size(), 3u);
+    EXPECT_EQ(itemsIn(e.tags(), Tier::Mine).size(), mine.size());
 }
 
 TEST(AllTagsEdition, NewDuplicateDeleteReplaceAndRestore)

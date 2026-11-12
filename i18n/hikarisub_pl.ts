@@ -196,6 +196,54 @@
         <translation>Zatrzymaj</translation>
     </message>
     <message>
+        <source>needs you</source>
+        <translation>czeka na Ciebie</translation>
+    </message>
+    <message>
+        <source>done</source>
+        <translation>gotowe</translation>
+    </message>
+    <message>
+        <source>failed</source>
+        <translation>nieudane</translation>
+    </message>
+    <message>
+        <source>interrupted</source>
+        <translation>przerwane</translation>
+    </message>
+    <message>
+        <source>stopped · cap</source>
+        <translation>zatrzymane · limit</translation>
+    </message>
+    <message>
+        <source>stopped</source>
+        <translation>zatrzymane</translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 · %n line(s)</source>
+        <translation>
+            <numerusform>%1 · %n linijka</numerusform>
+            <numerusform>%1 · %n linijki</numerusform>
+            <numerusform>%1 · %n linijek</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Back to the parent thread</source>
+        <translation>Wróć do wątku nadrzędnego</translation>
+    </message>
+    <message>
+        <source>Sub-agent of “%1”. Read-only; talk to it through the parent.</source>
+        <translation>Podagent wątku „%1”. Tylko do odczytu; rozmawiaj z nim przez wątek nadrzędny.</translation>
+    </message>
+    <message>
+        <source>%1 · capped by the parent</source>
+        <translation>%1 · ograniczony przez wątek nadrzędny</translation>
+    </message>
+    <message>
+        <source>scope: %1</source>
+        <translation>zakres: %1</translation>
+    </message>
+    <message>
         <source>Send</source>
         <translation>Wyślij</translation>
     </message>
@@ -260,6 +308,14 @@
         <translation>Zmień nazwę</translation>
     </message>
     <message>
+        <source>Brief, written by the agent</source>
+        <translation>Zadanie napisane przez agenta</translation>
+    </message>
+    <message>
+        <source>Results from your sub-agents</source>
+        <translation>Wyniki Twoich podagentów</translation>
+    </message>
+    <message>
         <source>steered</source>
         <translation>pokierowano</translation>
     </message>
@@ -312,6 +368,14 @@
         <translation>Plan</translation>
     </message>
     <message>
+        <source>%1 proposes: %2</source>
+        <translation>%1 proponuje: %2</translation>
+    </message>
+    <message>
+        <source>%1 asks you</source>
+        <translation>%1 pyta Ciebie</translation>
+    </message>
+    <message>
         <source>Judge asks you</source>
         <translation>Sędzia pyta Ciebie</translation>
     </message>
@@ -326,6 +390,18 @@
     <message>
         <source>asks in every mode</source>
         <translation>pyta w każdym trybie</translation>
+    </message>
+    <message>
+        <source>sub-agent · asks in every mode</source>
+        <translation>podagent · pyta w każdym trybie</translation>
+    </message>
+    <message>
+        <source>sub-agent</source>
+        <translation>podagent</translation>
+    </message>
+    <message>
+        <source>Only you can answer; the parent agent can’t.</source>
+        <translation>Odpowiedzieć możesz tylko Ty; agent nadrzędny nie może.</translation>
     </message>
     <message>
         <source>Why: %1</source>
@@ -350,6 +426,62 @@
     <message>
         <source>Deny and tell the agent…</source>
         <translation>Odmów i powiedz agentowi…</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n sub-agent(s)</source>
+        <translation>
+            <numerusform>%n podagent</numerusform>
+            <numerusform>%n podagentów</numerusform>
+            <numerusform>%n podagentów</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n running</source>
+        <translation>
+            <numerusform>%n działa</numerusform>
+            <numerusform>%n działają</numerusform>
+            <numerusform>%n działa</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n need(s) you</source>
+        <translation>
+            <numerusform>%n czeka na Ciebie</numerusform>
+            <numerusform>%n czekają na Ciebie</numerusform>
+            <numerusform>%n czeka na Ciebie</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Stop all</source>
+        <translation>Zatrzymaj wszystkie</translation>
+    </message>
+    <message>
+        <source>Sub-agent %1, %2</source>
+        <translation>Podagent %1, %2</translation>
+    </message>
+    <message numerus="yes">
+        <source>Estimate for %n sub-agent(s)</source>
+        <translation>
+            <numerusform>Szacunek dla %n podagenta</numerusform>
+            <numerusform>Szacunek dla %n podagentów</numerusform>
+            <numerusform>Szacunek dla %n podagentów</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>About %1 tokens, %2.</source>
+        <translation>Około %1 tokenów, %2.</translation>
+    </message>
+    <message>
+        <source>About %1 tokens. This agent doesn’t report cost.</source>
+        <translation>Około %1 tokenów. Ten agent nie podaje kosztu.</translation>
+    </message>
+    <message>
+        <source>Started</source>
+        <translation>Uruchomiono</translation>
+    </message>
+    <message>
+        <source>Cancelled. No more sub-agents start this turn.</source>
+        <translation>Anulowano. W tej turze nie uruchomi się już żaden podagent.</translation>
     </message>
     <message>
         <source>What should it do instead?</source>
@@ -432,6 +564,10 @@
         <translation type="unfinished">Otwórz</translation>
     </message>
     <message>
+        <source>%1 asks to run this Lua script</source>
+        <translation>%1 prosi o uruchomienie tego skryptu Lua</translation>
+    </message>
+    <message>
         <source>This thread reached its %1 cap</source>
         <translation>Ten wątek osiągnął limit %1</translation>
     </message>
@@ -450,6 +586,10 @@
     <message>
         <source>You stopped the turn.</source>
         <translation>Zatrzymano turę.</translation>
+    </message>
+    <message>
+        <source>The parent thread stopped this sub-agent.</source>
+        <translation>Wątek nadrzędny zatrzymał tego podagenta.</translation>
     </message>
     <message>
         <source>The answer reached the model’s length limit.</source>
@@ -482,6 +622,14 @@
     <message>
         <source>The turn stopped after its last change. Raise the cap for this thread to go on.</source>
         <translation>Tura zatrzymała się po ostatniej zmianie. Aby kontynuować, podnieś limit tego wątku.</translation>
+    </message>
+    <message>
+        <source>The parent’s cost cap stopped this sub-agent. Its changes stay in the review.</source>
+        <translation>Limit kosztów wątku nadrzędnego zatrzymał tego podagenta. Jego zmiany zostają w przeglądzie.</translation>
+    </message>
+    <message>
+        <source>The sub-agent was interrupted and won’t rerun. The parent got its partial result. Changes it made stay in the review.</source>
+        <translation>Podagent został przerwany i nie uruchomi się ponownie. Wątek nadrzędny dostał jego częściowy wynik. Wprowadzone zmiany zostają w przeglądzie.</translation>
     </message>
     <message>
         <source>Every thread stops until tomorrow, or until you raise the cap in Settings › AI.</source>
@@ -2368,7 +2516,7 @@ Urządzenie wyjściowe: %2</translation>
     </message>
     <message>
         <source>Moved</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Przeniesiona</translation>
     </message>
     <message>
         <source>Backup</source>
@@ -4421,6 +4569,30 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Katalog</translation>
     </message>
     <message>
+        <source>Move font catalogue</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy font catalogue</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The project already has a catalogue named “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>You already have a catalogue named “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation type="unfinished">Kopiuj</translation>
+    </message>
+    <message>
         <source>%1 here, +%2 new</source>
         <translation>tutaj: %1, nowe: +%2</translation>
     </message>
@@ -4501,8 +4673,28 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Zmień nazwę</translation>
     </message>
     <message>
+        <source>Catalogue tiers</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Load from a file</source>
         <translation>Wczytaj z pliku</translation>
+    </message>
+    <message>
+        <source>This project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1, hidden by the project’s copy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hidden by the project’s copy. Copy it to the project to use it there.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Show</source>
@@ -4575,6 +4767,22 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>Merge</source>
         <translation>Scal</translation>
+    </message>
+    <message>
+        <source>Copy to project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy to mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to mine</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Choose font catalogue file</source>
@@ -6528,6 +6736,10 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Build layers with the last values</source>
         <translation>Zbuduj warstwy z ostatnimi wartościami</translation>
+    </message>
+    <message>
+        <source>Typesetting graph…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Shift+click to set a shortcut</source>
@@ -10117,6 +10329,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Zbuduj warstwy z &amp;ostatnimi wartościami</translation>
     </message>
     <message>
+        <source>T&amp;ypesetting graph…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Notes from a QC pass, kept in the file, with the lines they mark</source>
         <translation>Notatki z kontroli jakości, zapisane w pliku, z linijkami, które oznaczają</translation>
     </message>
@@ -11173,6 +11389,14 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation type="unfinished">Zapisz</translation>
     </message>
     <message>
+        <source>%1 in the project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 in mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Save to project</source>
         <translation type="unfinished"></translation>
     </message>
@@ -11243,6 +11467,10 @@ Nie udało się skopiować czcionek: %2.</translation>
 <context>
     <name>HikariSub.NodeEffects</name>
     <message>
+        <source>Opens node effects with the selected lines as the sources of a typesetting graph</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Edits this file’s node effects on a canvas, with a preview on the video</source>
         <translation type="unfinished"></translation>
     </message>
@@ -11264,6 +11492,10 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Source lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select the lines a typesetting graph should run on.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -11587,6 +11819,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished">Z ostatniego udanego uruchomienia</translation>
     </message>
     <message>
+        <source>No lines to preview on. Select lines in the grid, then choose Subtitles › Typesetting graph….</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>No karaoke line of this graph’s style to preview on.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -11620,6 +11856,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>1 selected line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n selected lines</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
         <source>Line %1, %2</source>
         <translation type="unfinished">Linijka %1, %2</translation>
     </message>
@@ -11633,6 +11881,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Graph menu</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Target: selected lines</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -11738,6 +11990,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Only the lines selected in “Source lines” are regenerated; the others keep their output.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select lines in “Source lines” first.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -11854,6 +12110,86 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Shake</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>One line per frame step, each moved a random distance up to the amplitude from the line’s position.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Typewriter</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each character appears after the one before it, by grapheme cluster, and stays to the line’s end.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fade by letter</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each character fades in after the one before it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Wobble</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The characters rise and fall in a wave, one line per character and frame step.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bounce</source>
+        <translation type="unfinished">Podskok</translation>
+    </message>
+    <message>
+        <source>Each character jumps up after the one before it and comes part of the way back down, as myaa.Bounce does.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Focus lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Spikes at random angles around the line’s position, drawn again on every frame step.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Grain</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Random characters in the Grain font over each character, in two colours. Needs the Grain font.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Chromatic aberration</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Two coloured copies offset either side of the line, under the line itself.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Random move</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The line moves from its position to a random point within the distance.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Karaoke to alpha</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each syllable appears at its karaoke time and stays to the line’s end.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>A graph name can’t be empty, start or end with a space, end with a dot, or hold “karaoke”, a comma, a double quote, a control character or any of / \ : * ? &lt; &gt; |.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -11893,6 +12229,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>Each syllable’s letters are cut into thin horizontal stripes, which fade in as it is sung.</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>For selected lines</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Nodes</name>
@@ -11922,10 +12262,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Each unit once per step of time from `start` to `end` (absolute ms); without them, the unit’s own span.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>What the karaoke templater’s $variables give for the current unit and its line, rounded as the templater rounds them. Times of a syllable are from its line’s start.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -11970,10 +12306,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Calculate</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Arithmetic in doubles, as Lua does it. modulo is a - floor(a/b)*b; round is floor(a + 0.5). One-input operations use a.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -12110,6 +12442,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Only the units whose inline-fx ({\-name}, kept until the next one) is `fx`, as the templater’s fx modifier keeps them. Characters have their syllable’s; a line unit has none.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>What the karaoke templater’s $variables give for the current unit and its line, rounded as the templater rounds them. Times of a syllable are from its line’s start. line_alignment is the line’s first \an, or its Style’s alignment.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Arithmetic in doubles, as Lua does it. modulo is a - floor(a/b)*b; round is floor(a + 0.5); sine and cosine take a in degrees and round to millionths. One-input operations use a.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -14618,6 +14958,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Arguments</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Id</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -17255,6 +17599,14 @@ Linijki [Sekcja] je grupują.</translation>
         <source>Removed</source>
         <translation type="unfinished"></translation>
     </message>
+    <message numerus="yes">
+        <source>%1: %n</source>
+        <translation>
+            <numerusform>%1: %n</numerusform>
+            <numerusform>%1: %n</numerusform>
+            <numerusform>%1: %n</numerusform>
+        </translation>
+    </message>
     <message>
         <source>Re&amp;view</source>
         <translation type="unfinished"></translation>
@@ -17396,6 +17748,10 @@ Linijki [Sekcja] je grupują.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Sub-agent %1</source>
+        <translation>Podagent %1</translation>
+    </message>
+    <message>
         <source>By %1</source>
         <translation type="unfinished"></translation>
     </message>
@@ -17454,6 +17810,10 @@ Linijki [Sekcja] je grupują.</translation>
     <message>
         <source>Show the Review panel</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sub-agents: %1</source>
+        <translation>Podagenci: %1</translation>
     </message>
 </context>
 <context>
@@ -24792,6 +25152,22 @@ bądź brakuje kodeków czy też splittera</translation>
         <translation>Przywróć domyślne tagi</translation>
     </message>
     <message>
+        <source>Copy tag</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move tag</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The project already has a tag named “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>You already have a tag named “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Type the tag, without the backslash.</source>
         <translation>Wpisz tag bez ukośnika odwrotnego.</translation>
     </message>
@@ -24968,6 +25344,26 @@ bądź brakuje kodeków czy też splittera</translation>
         <translation>Cofnij wszystkie zmiany</translation>
     </message>
     <message>
+        <source>Copy shape</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move shape</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The project already has a shape named “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>You already have a shape named “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation type="unfinished">Kopiuj</translation>
+    </message>
+    <message>
         <source>Type a name.</source>
         <translation>Wpisz nazwę.</translation>
     </message>
@@ -25016,6 +25412,18 @@ bądź brakuje kodeków czy też splittera</translation>
         <translation>Przywróć domyślne</translation>
     </message>
     <message>
+        <source>%1, hidden by the project’s copy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>yours</source>
         <translation>własny</translation>
     </message>
@@ -25030,6 +25438,10 @@ bądź brakuje kodeków czy też splittera</translation>
     <message>
         <source>The list keeps at least one shape.</source>
         <translation>Lista musi zawierać co najmniej jeden kształt.</translation>
+    </message>
+    <message>
+        <source>Hidden by the project’s copy. Copy it to the project to use it there.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Name</source>
@@ -25102,6 +25514,22 @@ bądź brakuje kodeków czy też splittera</translation>
     <message>
         <source>Redo “%1”</source>
         <translation>Ponów “%1”</translation>
+    </message>
+    <message>
+        <source>Copy to project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy to mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to mine</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Restore default shapes…</source>
@@ -26087,6 +26515,10 @@ nie działają na komentarzach</translation>
         <translation>Typesetting</translation>
     </message>
     <message>
+        <source>Hidden by the project’s copy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>the file is larger than %1 bytes</source>
         <translation>plik jest większy niż %1 B</translation>
     </message>
@@ -26247,6 +26679,22 @@ nie działają na komentarzach</translation>
         <translation>Nazwa</translation>
     </message>
     <message>
+        <source>Save to</source>
+        <translation type="unfinished">Zapisz w</translation>
+    </message>
+    <message>
+        <source>This project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Where to save</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Saving replaces the layout %1.</source>
         <translation>Zapisanie zastąpi układ %1.</translation>
     </message>
@@ -26279,8 +26727,48 @@ nie działają na komentarzach</translation>
         <translation>Zakładki, które go używają, zachowają swoje rozmieszczenie pod nazwą presetu, z którego powstał.</translation>
     </message>
     <message>
+        <source>Move layout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy layout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The project already has a layout named “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>You already have a layout named “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation type="unfinished">Kopiuj</translation>
+    </message>
+    <message>
+        <source>Copy to project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy to mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Saved layouts</source>
         <translation>Zapisane układy</translation>
+    </message>
+    <message>
+        <source>%1, hidden by the project’s copy</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>%1, cannot be used</source>
@@ -26289,6 +26777,10 @@ nie działają na komentarzach</translation>
     <message>
         <source>Cannot be used: %1</source>
         <translation>Nie można użyć: %1</translation>
+    </message>
+    <message>
+        <source>Layout tiers</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Rename (F2)</source>

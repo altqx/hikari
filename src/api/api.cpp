@@ -7,6 +7,16 @@
 
 namespace hikari::api {
 
+namespace {
+
+GrantedFolder projectFolder(const std::string &root)
+{
+    const std::size_t slash = root.find_last_of("/\\");
+    return {std::string(kProjectFolder), slash == std::string::npos ? root : root.substr(slash + 1), root, false};
+}
+
+}
+
 std::string_view accessName(Access access)
 {
     return access == Access::Read ? "read" : "write";
@@ -118,6 +128,8 @@ void Api::call(const Caller &caller, std::string_view name, const Json &params, 
     for (const auto &[callerId, folder] : m_folders)
         if (callerId == caller.id)
             folders.push_back(folder);
+    if (caller.reviewed && !caller.project.empty())
+        folders.push_back(projectFolder(caller.project));
     const Context context{m_host, caller, std::move(files), std::move(folders),
                           [this, id = caller.id](const std::string &path, bool writable) { return grantFile(id, path, writable); }};
     if (operation->access == Access::Read) {

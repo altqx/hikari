@@ -200,6 +200,15 @@ QString Application::applyLayerBuilders(const QVariantMap &options)
     return failure.isEmpty() ? QCoreApplication::translate("HikariSub.Layers", "The layers can’t be built here.") : failure;
 }
 
+bool Application::targetTypesettingGraph()
+{
+    const auto *session = targetSession();
+    if (!session || session->selection().selected.empty())
+        return false;
+    nodeEffects().setTargetLines(session->selection().selected);
+    return true;
+}
+
 QVariantMap Application::repeatLayerBuilders()
 {
     const auto toast = [](bool ok, const QString &text) {

@@ -4085,7 +4085,10 @@ private slots:
         QCOMPARE(window->property("fonts").toStringList(), all);
         QCOMPARE(window->property("chosen").toString(), QStringLiteral("A"));
         QCOMPARE(window->property("currentFont").toString(), QStringLiteral("Verdana"));
-        QCOMPARE(in("fontCatalogCatalogs")->property("model").toStringList(), (QStringList{"A", "B"}));
+        QStringList listed;
+        for (const QVariant &row : in("fontCatalogCatalogs")->property("model").toList())
+            listed << row.toMap().value(QStringLiteral("name")).toString();
+        QCOMPARE(listed, (QStringList{"A", "B"}));
         QCOMPARE(in("fontCatalogCatalogs")->property("currentIndex").toInt(), 0);
         auto *load = window->findChild<QObject *>(QStringLiteral("fontCatalogLoadDialog"));
         QVERIFY(load);
@@ -4483,7 +4486,7 @@ private slots:
         QVERIFY(catalogs.isFontInCatalog(QStringLiteral("A"), QStringLiteral("Impact")));
         QVERIFY(!catalogs.isFontInCatalog(QStringLiteral("A"), QStringLiteral("Skipped")));
         const QString dirPath = QString::fromStdU16String(catalogs.catalogDir().u16string());
-        QVERIFY(legacyCatalogsOf(dirPath + QStringLiteral("/fonts.toml")).contains("A={\r\n\tArial\r\n\tNot Installed\r\n\tVerdana\r\n\tTahoma\r\n\tImpact\r\n}"));
+        QVERIFY2(legacyCatalogsOf(dirPath + QStringLiteral("/fonts.toml")).contains("A={\r\n\tArial\r\n\tNot Installed\r\n\tVerdana\r\n\tTahoma\r\n\tImpact\r\n}"), legacyCatalogsOf(dirPath + QStringLiteral("/fonts.toml")).constData());
         QVERIFY(lastNotice().startsWith(QStringLiteral("Add fonts from subtitles|Added 2 fonts to “A”|")));
         QCOMPARE(picker->property("choice").toInt(), 2);
         QCOMPARE(picker->property("shown").toStringList(), (QStringList{"Arial", "Impact", "Tahoma", "Verdana"}));
@@ -17969,6 +17972,7 @@ private slots:
         QQuickItem *key = nullptr;
         QTRY_VERIFY((key = dialogItem("settingsDialog", "aiProviderKey")));
         QCOMPARE(dialogItem("settingsDialog", "aiProviderName")->property("text").toString(), QStringLiteral("Google Gemini"));
+        QCOMPARE(dialogItem("settingsDialog", "aiProviderId")->property("text").toString(), QStringLiteral("gemini"));
         QCOMPARE(dialogItem("settingsDialog", "aiProviderKeyRow")->property("text").toString(), QStringLiteral("Gemini API key"));
         QVERIFY(dialogItem("settingsDialog", "aiGeminiKeys")->isVisible());
         QVERIFY(!dialogItem("settingsDialog", "aiDownloadNotice")->isVisible());
@@ -17982,6 +17986,12 @@ private slots:
         QVERIFY(!dialogItem("settingsDialog", "aiProviderForm"));
         QTRY_COMPARE(dialogItem("settingsDialog", "aiRole_chat")->property("currentText").toString(),
                      QStringLiteral("B · Google Gemini"));
+        QVERIFY(QMetaObject::invokeMethod(page, "openForm", Q_ARG(QVariant, QStringLiteral("gemini")), Q_ARG(QVariant, QVariant())));
+        QTRY_VERIFY(dialogItem("settingsDialog", "aiProviderId"));
+        QCOMPARE(dialogItem("settingsDialog", "aiProviderId")->property("text").toString(), QStringLiteral("gemini-2"));
+        QVERIFY(dialogItem("settingsDialog", "aiProviderId")->property("readOnly").toBool());
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "aiDraftCancel"), "click"));
+        QTRY_VERIFY(!dialogItem("settingsDialog", "aiProviderForm"));
 
         QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "aiRole_judge"), "activated", Q_ARG(int, 1)));
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
@@ -21978,8 +21988,9 @@ private slots:
                                      "Video", "Audio", "Conversion", "Script properties", "Automation", "Shortcuts",
                                      "AI", "Updates and privacy"}));
         QVERIFY(dialogItem("settingsDialog", "settingsPageHotkeys"));
-        QCOMPARE(hotkeyRows().size(), 386);
-        QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Global Position to margins"));
+        QCOMPARE(hotkeyRows().size(), 387);
+        QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(),
+                 QStringLiteral("Global Typesetting graph\u2026"));
         QCOMPARE(application->hotkeys().selected(), 0);
         QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "hotkeyFilter"), "activated", Q_ARG(int, 5)));
         QCOMPARE(hotkeyRows().size(), int(std::ranges::count_if(application::hotkeyNames(), [](const auto &n) {
@@ -22404,8 +22415,11 @@ private slots:
         const int script = hotkeyPosition(QStringLiteral("Global Script a.lua-1"));
         QVERIFY(script > 0);
         QCOMPARE(hotkeyRows()[script].toMap().value(QStringLiteral("accel")).toString(), QStringLiteral("Ctrl-K"));
-        QCOMPARE(hotkeyRows()[script + 1].toMap().value(QStringLiteral("text")).toString(),
-                 QStringLiteral("Subtitles Set new FPS"));
+        const auto rows = hotkeyRows();
+        const auto firstSubtitles = std::ranges::find_if(rows, [](const QVariant &row) {
+            return row.toMap().value(QStringLiteral("text")).toString().startsWith(QStringLiteral("Subtitles "));
+        });
+        QCOMPARE(static_cast<int>(std::distance(rows.begin(), firstSubtitles)), script + 1);
         h.select(script);
         QCOMPARE(h.mapTarget().value(QStringLiteral("windows")).toBool(), false);
         h.select(hotkeyPosition(QStringLiteral("Global History")));
@@ -29794,17 +29808,24 @@ private slots:
 
         visualItem("videoPanel")->forceActiveFocus();
         QStringList keys;
+        QStringList keyless;
         for (const auto &f : application::visual::families()) {
             const QString symbol = QString::fromLatin1(f.hotkey.data(), f.hotkey.size());
             const QString name = QString::fromLatin1(f.tooltip.data(), f.tooltip.size());
             const QString accel = hotkeys.accelOf(symbol, 3);
+            auto *button = visualItem(qPrintable(QStringLiteral("visualTool%1").arg(int(f.family))));
+            QVERIFY(button);
+            const QString tooltip = QQmlProperty(button, QStringLiteral("ToolTip.text"), qmlContext(button)).read().toString();
+            if (accel.isEmpty()) {
+                keyless.append(symbol);
+                QCOMPARE(tooltip, name);
+                continue;
+            }
             QCOMPARE(accel.size(), 1);
             keys.append(accel);
             const Qt::Key key = keyOf(accel);
             QCOMPARE(hotkeys.actionFor(3, key, Qt::NoModifier), symbol);
-            auto *button = visualItem(qPrintable(QStringLiteral("visualTool%1").arg(int(f.family))));
-            QCOMPARE(QQmlProperty(button, QStringLiteral("ToolTip.text"), qmlContext(button)).read().toString(),
-                     QStringLiteral("%1 (%2)").arg(name, accel));
+            QCOMPARE(tooltip, QStringLiteral("%1 (%2)").arg(name, accel));
             QTest::keyClick(window, key);
             QTRY_COMPARE(tools.activeFamily(), int(f.family));
             QVERIFY(button->property("checked").toBool());
@@ -29812,6 +29833,7 @@ private slots:
             QTRY_COMPARE(tools.activeFamily(), 0);
         }
         QCOMPARE(keys, (QStringList{"X", "P", "G", "S", "R", "T", "C", "V", "D", "A", "H", "Q", "W"}));
+        QCOMPARE(keyless, (QStringList{"VIDEO_TOOL_TEXT_ON_PATH"}));
         QCOMPARE(QQmlProperty(visualItem("visualTool0"), QStringLiteral("ToolTip.text"), qmlContext(visualItem("visualTool0")))
                          .read()
                          .toString(),

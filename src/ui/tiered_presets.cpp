@@ -118,7 +118,7 @@ bool TieredPresets::remove(Tier tier, const QString &name)
 
 std::optional<QString> TieredPresets::clash(const QString &name, Tier from) const
 {
-    const auto &taken = of(otherTierOf(from));
+    const auto &taken = of(application::otherTier(from));
     if (!std::ranges::any_of(taken, named(name)))
         return std::nullopt;
     const auto suggestion = application::landingName(namesOf(taken), u8(name), {application::ClashAction::Rename, {}});
@@ -131,7 +131,7 @@ std::optional<QString> TieredPresets::send(const QString &name, Tier from, const
     const NamedPreset *source = preset(name, from);
     if (!source)
         return std::nullopt;
-    const Tier to = otherTierOf(from);
+    const Tier to = application::otherTier(from);
     const auto landed = application::landingName(namesOf(of(to)), u8(name), choice);
     if (!landed)
         return std::nullopt;
@@ -140,11 +140,6 @@ std::optional<QString> TieredPresets::send(const QString &name, Tier from, const
         remove(from, name);
     save(to, copy);
     return copy.name;
-}
-
-Tier otherTierOf(Tier tier)
-{
-    return tier == Tier::Project ? Tier::Mine : Tier::Project;
 }
 
 QString tierText(Tier tier)
@@ -175,6 +170,11 @@ application::ClashChoice clashChoiceFor(const QString &name, const QVariantList 
         clash.newName = u8(choice.value(QStringLiteral("newName")).toString().trimmed());
     }
     return clash;
+}
+
+std::u16string newNameOf(const application::ClashChoice &choice)
+{
+    return qs(choice.newName).toStdU16String();
 }
 
 }

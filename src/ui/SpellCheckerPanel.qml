@@ -133,14 +133,9 @@ FocusScope {
                                 {text: qsTr("Grammar settings…"), run: () => panel.settingsRequested()}]})
     }
     function ignoreAll() { show(app.spellCheckerIgnoreAll(current.word, options())) }
-    function addsToProject() {
-        if (app.projectName(shellWindow).length === 0)
-            return false
-        const row = (app.settings.value("workspace.saveTiers") || []).find(r => r.startsWith("dictionary\t"))
-        return !(row && row.endsWith("\tmine"))
-    }
     function addWord() {
-        const project = addsToProject()
+        dictionaryTier.remembered = dictionaryTier.readTier()
+        const project = dictionaryTier.tier === "project"
         if (grammarMode)
             showGrammar(app.grammarWalkAddWord(project), qsTr("Add to dictionary"))
         else
@@ -484,15 +479,41 @@ FocusScope {
                 Layout.preferredWidth: 140
                 onClicked: panel.ignoreRule()
             }
-            IconTextButton {
-                id: addWordButton
-                objectName: "spellAddWord"
-                iconRole: "dictionary-add"
-                text: qsTr("Add to dictionary")
-                enabled: !panel.grammarMode || panel.grammar.word === true
+            RowLayout {
+                spacing: 1
                 Layout.columnSpan: panel.grammarMode ? 1 : 2
                 Layout.fillWidth: true
-                onClicked: panel.addWord()
+                IconTextButton {
+                    id: addWordButton
+                    objectName: "spellAddWord"
+                    iconRole: "dictionary-add"
+                    text: !dictionaryTier.hasProject ? qsTr("Add to dictionary") : dictionaryTier.saveText
+                    enabled: !panel.grammarMode || panel.grammar.word === true
+                    Layout.fillWidth: true
+                    onClicked: panel.addWord()
+                }
+                IconToolButton {
+                    id: addWordArrow
+                    objectName: "spellAddWordArrow"
+                    visible: dictionaryTier.hasProject
+                    enabled: addWordButton.enabled
+                    iconRole: "chevron-down"
+                    iconSize: 12
+                    implicitWidth: 18
+                    text: qsTr("Where to add")
+                    Accessible.role: Accessible.ButtonMenu
+                    onClicked: dictionaryTier.popup(addWordArrow, 0, addWordArrow.height)
+                }
+                TierSaveMenu {
+                    id: dictionaryTier
+                    objectName: "spellAddWordMenu"
+                    itemPrefix: "spellAddWord"
+                    listId: "dictionary"
+                    settings: panel.app.settings
+                    hasProject: panel.app.projectName(panel.shellWindow).length > 0
+                    projectText: qsTr("Add to project dictionary")
+                    mineText: qsTr("Add to my dictionary")
+                }
             }
         }
     }

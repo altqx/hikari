@@ -30,6 +30,9 @@ class AllTagsEditor : public QObject {
     Q_PROPERTY(QVariantMap preview READ preview NOTIFY previewChanged)
     Q_PROPERTY(int ownCount READ ownCount NOTIFY changed)
     Q_PROPERTY(bool canRemove READ canRemove NOTIFY changed)
+    // The selected definition is a Mine one the Project's hides.
+    Q_PROPERTY(bool readOnly READ readOnly NOTIFY changed)
+    Q_PROPERTY(bool hasProject READ hasProject CONSTANT)
     Q_PROPERTY(bool canUndo READ canUndo NOTIFY changed)
     Q_PROPERTY(bool canRedo READ canRedo NOTIFY changed)
     // MUST KILL: undoStep and redoStep are AllTagsEdition::Step as ints, -1 for none
@@ -57,6 +60,7 @@ public:
         std::function<std::u16string()> activeLineText;
         std::function<void(const std::vector<application::visual::AllTagsSetting> &, const Renames &)> changed;
         std::function<void()> finished;
+        bool hasProject = false;
     };
     AllTagsEditor(std::vector<application::visual::AllTagsSetting> tags, int curTag, Hooks hooks,
                   QObject *parent = nullptr);
@@ -77,6 +81,8 @@ public:
     QVariantMap preview() const;
     int ownCount() const;
     bool canRemove() const { return m_edition.canRemove(); }
+    bool readOnly() const { return m_edition.readOnly(); }
+    bool hasProject() const { return m_hooks.hasProject; }
     bool canUndo() const { return m_edition.canUndo(); }
     bool canRedo() const { return m_edition.canRedo(); }
     int undoStep() const { return m_edition.undoStep(); }
@@ -90,6 +96,12 @@ public:
     Q_INVOKABLE QString limit() const { return m_limit; }
     Q_INVOKABLE void endTyping() { m_edition.endTyping(); }
     Q_INVOKABLE void addTag();
+    // `tier` "project" or "mine".
+    Q_INVOKABLE void addTagTo(const QString &tier);
+    // [{name, suggestion}] when the other tier has the selected definition's name, else [].
+    Q_INVOKABLE QVariantList tierClashes() const;
+    // `choices` from the clash review; false when skipped.
+    Q_INVOKABLE bool sendToOtherTier(bool move, const QVariantList &choices = {});
     Q_INVOKABLE void duplicate();
     Q_INVOKABLE bool remove();
     Q_INVOKABLE void replaceNamed(const QString &name);

@@ -1,6 +1,8 @@
 #include "all_tags_editor.h"
 
 #include "hikari/application/visual_all_tags.h"
+#include "hikari/application/shape_presets.h"
+#include "tiered_presets.h"
 
 #include <QHash>
 #include <QSet>
@@ -51,7 +53,9 @@ QVariantList AllTagsEditor::items() const
         const AllTagsSetting &t = m_edition.tags()[i];
         out.append(QVariantMap{{QStringLiteral("name"), qs(t.name)},
                                {QStringLiteral("tag"), qs(t.tag)},
-                               {QStringLiteral("section"), sections[i]}});
+                               {QStringLiteral("section"), sections[i]},
+                               {QStringLiteral("tier"), tierText(t.mark.tier)},
+                               {QStringLiteral("hidden"), t.mark.hidden}});
     }
     return out;
 }
@@ -200,6 +204,30 @@ void AllTagsEditor::addTag()
 {
     m_edition.addTag();
     kept();
+}
+
+void AllTagsEditor::addTagTo(const QString &tier)
+{
+    m_edition.addTag(m_hooks.hasProject ? tierFromText(tier).value_or(application::Tier::Mine) : application::Tier::Mine);
+    kept();
+}
+
+QVariantList AllTagsEditor::tierClashes() const
+{
+    if (!m_edition.tierClash())
+        return {};
+    return tierClashRows(m_edition.tags(), m_edition.current(), [](const std::u16string &a, const std::u16string &b) {
+        return application::visual::sameNameIgnoringCase(a, b);
+    });
+}
+
+bool AllTagsEditor::sendToOtherTier(bool move, const QVariantList &choices)
+{
+    const auto current = QString::fromStdU16String(m_edition.current().name);
+    const auto clash = clashChoiceFor(current, choices);
+    const bool sent = m_edition.sendToOtherTier(move, clash, newNameOf(clash));
+    kept();
+    return sent;
 }
 
 void AllTagsEditor::duplicate()

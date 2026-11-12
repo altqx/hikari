@@ -490,6 +490,21 @@ MacroDialogueLine fresh(std::string text)
     return d;
 }
 
+std::chrono::nanoseconds fastestMiddleEdit(std::size_t lines)
+{
+    auto fastest = std::chrono::nanoseconds::max();
+    for (int run = 0; run < 5; ++run) {
+        EditSession session{load(bigScript(lines))};
+        const MacroSnapshot s = *snapshotForMacro(session);
+        MacroResult r = unchanged(s);
+        r.dialogues[lines / 2].text = "edited";
+        const auto start = std::chrono::steady_clock::now();
+        EXPECT_TRUE(applyMacroResult(session, s, r, "Edit"));
+        fastest = std::min(fastest, std::chrono::nanoseconds(std::chrono::steady_clock::now() - start));
+    }
+    return fastest;
+}
+
 struct BigMacroTest : ::testing::Test {
     static constexpr std::size_t kLines = 20'000;
     EditSession session{load(bigScript(kLines))};
@@ -502,10 +517,12 @@ struct BigMacroTest : ::testing::Test {
 
 TEST_F(BigMacroTest, OneEditAppliesInLinearTime)
 {
+    const auto small = fastestMiddleEdit(kLines / 4);
+    const auto large = fastestMiddleEdit(kLines);
+    EXPECT_LT(large, small * 8) << "4x the lines took " << double(large.count()) / double(small.count())
+                                << "x as long; linear is about 4x, quadratic 16x";
     r.dialogues[kLines / 2].text = "edited";
-    const auto start = std::chrono::steady_clock::now();
     ASSERT_TRUE(applyMacroResult(session, s, r, "Edit"));
-    EXPECT_LT(std::chrono::steady_clock::now() - start, std::chrono::milliseconds(100));
     const auto after = texts(session);
     EXPECT_EQ(after[kLines / 2], "edited");
     EXPECT_EQ(after[kLines / 2 + 1], "line " + std::to_string(kLines / 2 + 1));

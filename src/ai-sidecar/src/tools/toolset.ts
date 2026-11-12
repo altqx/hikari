@@ -28,6 +28,8 @@ export interface CallToolResult {
  */
 export interface ToolSource {
     readonly group: string;
+    /** Its tools are offered from the start, not only once search_tools finds them. */
+    readonly offered?: boolean;
     readonly description: string;
     tools(): Tool[];
     call(name: string, args: Record<string, unknown>): Promise<CallToolResult>;
@@ -135,7 +137,8 @@ export class ToolSet {
         return [
             ...this.entries.filter((e) => all || this.offered.has(e.tool.name))
                 .map((e) => (e.tool.name === "search_tools" ? search : e.tool)),
-            ...this.sourceTools().filter(([tool]) => all || this.offered.has(tool.name)).map(([tool]) => tool),
+            ...this.sourceTools().filter(([tool, source]) => all || source.offered || this.offered.has(tool.name))
+                .map(([tool]) => tool),
         ];
     }
 
@@ -199,7 +202,8 @@ export class ToolSet {
         const wanted = words((query as string | undefined) ?? "");
         const candidates: [Tool, string][] = [
             ...this.entries.filter((e) => e.group !== "core").map((e): [Tool, string] => [e.tool, e.group]),
-            ...this.sourceTools().map(([tool, source]): [Tool, string] => [tool, source.group]),
+            ...this.sourceTools().filter(([, source]) => !source.offered)
+                .map(([tool, source]): [Tool, string] => [tool, source.group]),
         ];
         const found = candidates
             .filter(([, g]) => group === undefined || g === group)
@@ -239,7 +243,7 @@ export class ToolSet {
     }
 
     private liveSources(): ToolSource[] {
-        return this.allSources().filter((s) => s.tools().length > 0);
+        return this.allSources().filter((s) => !s.offered && s.tools().length > 0);
     }
 
     private sourceTools(): [Tool, ToolSource][] {

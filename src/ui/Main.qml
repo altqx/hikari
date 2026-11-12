@@ -2365,6 +2365,18 @@ ApplicationWindow {
                 onTriggered: if (!root.hotkeyGesture("GLOBAL_BLUR_AND_GLOW_LAYERS_REPEAT")) root.repeatBlurAndGlowLayers()
             }
             ShellMenuItem {
+                command: "GLOBAL_TYPESETTING_GRAPH"
+                help: qsTranslate("HikariSub.NodeEffects", "Opens node effects with the selected lines as the sources of a typesetting graph")
+                iconRole: "node-editor"
+                objectName: "typesettingGraphMenuItem"
+                action: Action {
+                    id: typesettingGraphAction
+                    text: qsTr("T&ypesetting graph…")
+                    enabled: root.shell.hasEditingTarget && !root.layoutLocked
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_TYPESETTING_GRAPH")) root.openTypesettingGraph()
+                }
+            }
+            ShellMenuItem {
                 command: "GLOBAL_SHOW_QC_NOTES"
                 help: qsTr("Notes from a QC pass, kept in the file, with the lines they mark")
                 id: showQcNotesItem
@@ -3873,7 +3885,7 @@ ApplicationWindow {
                 readonly property string other: editMenu.dictionaryTier === "project" ? "mine" : "project"
                 iconRole: other
                 objectName: field.objectName + "AddWordOther"
-                text: other === "project" ? qsTranslate("HikariSub.Spelling", "Add to the project’s dictionary")
+                text: other === "project" ? qsTranslate("HikariSub.Spelling", "Add to project dictionary")
                                           : qsTranslate("HikariSub.Spelling", "Add to my dictionary")
                 visible: editMenu.tiered && addWordItem.visible
                 height: visible ? implicitHeight : 0
@@ -6526,6 +6538,14 @@ ApplicationWindow {
                             text: qsTranslate("HikariSub.Hotkeys", "Build layers with the last values")
                             onTriggered: if (!root.gridGesture(this, "GLOBAL_BLUR_AND_GLOW_LAYERS_REPEAT")) root.repeatBlurAndGlowLayers()
                         }
+                        ShellMenuItem {
+                            command: "GLOBAL_TYPESETTING_GRAPH"
+                            objectName: "gridTypesettingGraph"
+                            iconRole: "node-editor"
+                            text: qsTranslate("HikariSub.Hotkeys", "Typesetting graph…")
+                            enabled: !root.layoutLocked
+                            onTriggered: if (!root.gridGesture(this, "GLOBAL_TYPESETTING_GRAPH")) root.openTypesettingGraph()
+                        }
                         ShellMenuItem { command: "GRID_CUT"; iconRole: "edit-cut"; objectName: "cutLines"; standardKey: StandardKey.Cut; text: qsTranslate("HikariSub.Grid", "Cut"); onTriggered: if (!root.gridGesture(this, "GRID_CUT")) root.app.cutLines() }
                         ShellMenuItem { command: "GRID_COPY"; iconRole: "edit-copy"; objectName: "copyLines"; standardKey: StandardKey.Copy; text: qsTranslate("HikariSub.Grid", "Copy"); onTriggered: if (!root.gridGesture(this, "GRID_COPY")) root.app.copyLines() }
                         ShellMenuItem { command: "GRID_PASTE"; iconRole: "edit-paste"; objectName: "pasteLines"; standardKey: StandardKey.Paste; text: qsTranslate("HikariSub.Grid", "Paste"); onTriggered: if (!root.gridGesture(this, "GRID_PASTE")) root.app.pasteLines() }
@@ -8715,6 +8735,13 @@ ApplicationWindow {
         blurAndGlowLayersLoader.active = true
         blurAndGlowLayersLoader.item.openDialog()
     }
+    function openTypesettingGraph() {
+        if (!root.app.targetTypesettingGraph()) {
+            root.notify("info", qsTranslate("HikariSub.NodeEffects", "Select the lines a typesetting graph should run on."), "")
+            return
+        }
+        root.setNodeEffects(true)
+    }
     function repeatBlurAndGlowLayers() {
         const result = root.app.repeatLayerBuilders()
         root.notify(result.ok ? "info" : "warning", result.text, "")
@@ -9493,6 +9520,7 @@ ApplicationWindow {
         GLOBAL_PERSPECTIVE_TRACKING: perspectiveTrackingAction,
         GLOBAL_APPLY_MOTION_DATA: applyMotionDataAction,
         GLOBAL_BLUR_AND_GLOW_LAYERS: blurAndGlowLayersAction,
+        GLOBAL_TYPESETTING_GRAPH: typesettingGraphAction,
         GLOBAL_REVERT_MOTION_DATA: revertMotionDataAction,
         GLOBAL_COPY_MOTION_DATA: copyMotionDataAction,
         GLOBAL_COPY_POWER_PIN_TRACK: copyPowerPinTrackAction,

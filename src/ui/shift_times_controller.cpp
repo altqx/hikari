@@ -432,7 +432,7 @@ QString ShiftTimesController::sendPreset(const QString &tool, const QString &nam
         return {};
     if (move && *currentOf(tool) == name && *currentTierOf(tool) == *from) {
         *currentOf(tool) = *landed;
-        *currentTierOf(tool) = otherTierOf(*from);
+        *currentTierOf(tool) = application::otherTier(*from);
     }
     savePresets();
     emit presetsChanged();

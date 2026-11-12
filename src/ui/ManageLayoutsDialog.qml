@@ -27,7 +27,7 @@ DialogWindow {
         list.forceActiveFocus()
     }
     function startRename() {
-        if (!current)
+        if (!current || current.hidden)
             return
         newName = current.name
         renaming = true
@@ -46,7 +46,7 @@ DialogWindow {
             list.currentIndex = rows.findIndex(r => r.name === name)
     }
     function askDelete() {
-        if (!current)
+        if (!current || current.hidden)
             return
         const name = current.name
         messages.ask({
@@ -73,6 +73,60 @@ DialogWindow {
             dialog.close()
     }
     onCurrentChanged: renaming = false
+    function transfer(move) {
+        const row = current
+        if (!row)
+            return
+        const run = choices => {
+            const landed = move ? layouts.moveLayout(row.name, row.tier, choices) : layouts.copyLayout(row.name, row.tier, choices)
+            if (landed.length > 0)
+                list.currentIndex = rows.findIndex(r => r.name === landed && r.tier !== row.tier)
+        }
+        const clashes = layouts.layoutClashes(row.name, row.tier)
+        if (clashes.length === 0) {
+            run([])
+            return
+        }
+        clashReviewLoader.active = true
+        clashReviewLoader.item.review({
+            title: move ? qsTr("Move layout") : qsTr("Copy layout"),
+            text: row.tier === "mine" ? qsTr("The project already has a layout named “%1”.").arg(clashes[0].name)
+                                      : qsTr("You already have a layout named “%1”.").arg(clashes[0].name),
+            rows: clashes.map(c => ({ name: c.name, difference: "", suggestion: c.suggestion })),
+            namePattern: /.*/,
+            acceptText: count => move ? qsTr("Move") : qsTr("Copy"),
+            nameTaken: n => rows.some(r => r.tier !== row.tier && r.name.toLowerCase() === n.trim().toLowerCase())
+        }, results => {
+            if (results)
+                run(results)
+        })
+    }
+    Loader {
+        id: clashReviewLoader
+        active: false
+        sourceComponent: ClashReview {
+            objectName: "layoutClashReview"
+            dialogId: "layoutClashes"
+            settings: dialog.settings
+        }
+    }
+    ShellMenu {
+        id: tierMenu
+        objectName: "layoutTierMenu"
+        readonly property bool fromMine: (dialog.current?.tier ?? "mine") === "mine"
+        ShellMenuItem {
+            objectName: "copyLayoutToTier"
+            iconRole: "copy-to-tier"
+            text: tierMenu.fromMine ? qsTr("Copy to project") : qsTr("Copy to mine")
+            onTriggered: dialog.transfer(false)
+        }
+        ShellMenuItem {
+            objectName: "moveLayoutToTier"
+            iconRole: "move-to-tier"
+            text: tierMenu.fromMine ? qsTr("Move to project") : qsTr("Move to mine")
+            onTriggered: dialog.transfer(true)
+        }
+    }
 
     MessageHost {
         id: messages
@@ -107,80 +161,120 @@ DialogWindow {
                     event.accepted = true
                 }
             }
-            delegate: ItemDelegate {
-                id: row
+            delegate: Column {
+                id: slot
                 required property var modelData
                 required property int index
-                readonly property bool editing: highlighted && dialog.renaming
-                onEditingChanged: if (!editing) nameField.focus = false
                 width: ListView.view.width
-                height: modelData.usable ? 32 : 44
-                highlighted: ListView.isCurrentItem
-                text: modelData.name
-                focusPolicy: Qt.NoFocus
-                onClicked: list.currentIndex = index
-                onDoubleClicked: dialog.startRename()
-                Accessible.role: Accessible.ListItem
-                Accessible.name: modelData.usable ? modelData.name
-                                                  : qsTr("%1, cannot be used").arg(modelData.name)
-                Accessible.description: modelData.problem
-                Accessible.selected: highlighted
-                background: Rectangle {
-                    color: row.highlighted ? Theme.select : "transparent"
-                    Rectangle { visible: row.highlighted; width: 3; height: parent.height; color: Theme.accent }
+                Label {
+                    visible: dialog.layouts.hasProject
+                             && (slot.index === 0 || dialog.rows[slot.index - 1].tier !== slot.modelData.tier)
+                    text: slot.modelData.tier === "project" ? qsTr("This project") : qsTr("Mine")
+                    color: Theme.muted
+                    font: dialog.fontAt(11)
+                    leftPadding: 8
+                    topPadding: 6
+                    bottomPadding: 2
                 }
-                contentItem: RowLayout {
-                    spacing: 4
-                    ColumnLayout {
-                        visible: !row.editing
-                        spacing: 0
-                        Layout.fillWidth: true
-                        Label {
-                            text: row.modelData.name
-                            elide: Text.ElideRight
-                            color: row.modelData.usable ? Theme.text : Theme.muted
-                            Layout.fillWidth: true
+                ItemDelegate {
+                    id: row
+                    readonly property var modelData: slot.modelData
+                    readonly property int index: slot.index
+                    readonly property bool editing: highlighted && dialog.renaming
+                    onEditingChanged: if (!editing) nameField.focus = false
+                    width: slot.width
+                    height: modelData.usable && !modelData.hidden ? 32 : 44
+                    highlighted: slot.ListView.isCurrentItem
+                    text: modelData.name
+                    focusPolicy: Qt.NoFocus
+                    onClicked: list.currentIndex = index
+                    onDoubleClicked: dialog.startRename()
+                    TapHandler {
+                        acceptedButtons: Qt.RightButton
+                        enabled: dialog.layouts.hasProject
+                        onTapped: {
+                            list.currentIndex = row.index
+                            tierMenu.popup()
                         }
-                        Label {
-                            visible: !row.modelData.usable
-                            text: qsTr("Cannot be used: %1").arg(row.modelData.problem)
-                            elide: Text.ElideRight
-                            font: dialog.fontAt(12)
-                            color: Theme.muted
+                    }
+                    Accessible.role: Accessible.ListItem
+                    Accessible.name: row.modelData.hidden ? qsTr("%1, hidden by the project’s copy").arg(row.modelData.name)
+                                   : row.modelData.usable ? row.modelData.name
+                                   : qsTr("%1, cannot be used").arg(row.modelData.name)
+                    Accessible.description: modelData.problem
+                    Accessible.selected: highlighted
+                    background: Rectangle {
+                        color: row.highlighted ? Theme.select : "transparent"
+                        Rectangle { visible: row.highlighted; width: 3; height: parent.height; color: Theme.accent }
+                    }
+                    contentItem: RowLayout {
+                        spacing: 4
+                        ColumnLayout {
+                            visible: !row.editing
+                            spacing: 0
                             Layout.fillWidth: true
+                            Label {
+                                text: row.modelData.name
+                                elide: Text.ElideRight
+                                color: row.modelData.usable && !row.modelData.hidden ? Theme.text : Theme.muted
+                                Layout.fillWidth: true
+                            }
+                            Label {
+                                visible: !row.modelData.usable || row.modelData.hidden
+                                text: row.modelData.hidden ? qsTr("Hidden by the project’s copy")
+                                                           : qsTr("Cannot be used: %1").arg(row.modelData.problem)
+                                elide: Text.ElideRight
+                                font: dialog.fontAt(12)
+                                color: Theme.muted
+                                Layout.fillWidth: true
+                            }
                         }
-                    }
-                    TextField {
-                        id: nameField
-                        objectName: row.editing ? "manageLayoutsName" : ""
-                        visible: row.editing
-                        text: dialog.newName
-                        // MUST KILL: 64 duplicates WorkspaceLayoutController::kMaximumNameLength
-                        maximumLength: 64
-                        Layout.fillWidth: true
-                        Accessible.name: qsTr("Name")
-                        Accessible.description: dialog.problem
-                        onVisibleChanged: if (visible) { forceActiveFocus(); selectAll() }
-                        onTextEdited: dialog.newName = text
-                        Keys.onReturnPressed: event => { event.accepted = true; dialog.rename() }
-                        Keys.onEnterPressed: event => { event.accepted = true; dialog.rename() }
-                        Keys.onEscapePressed: event => { event.accepted = true; dialog.endRename() }
-                    }
-                    IconToolButton {
-                        objectName: row.highlighted ? "manageLayoutsRename" : ""
-                        visible: row.highlighted && !row.editing
-                        iconRole: "edit"
-                        text: qsTr("Rename (F2)")
-                        focusPolicy: Qt.NoFocus
-                        onClicked: dialog.startRename()
-                    }
-                    IconToolButton {
-                        objectName: row.highlighted ? "manageLayoutsDelete" : ""
-                        visible: row.highlighted && !row.editing
-                        iconRole: "delete"
-                        text: qsTr("Delete")
-                        focusPolicy: Qt.NoFocus
-                        onClicked: dialog.askDelete()
+                        TextField {
+                            id: nameField
+                            objectName: row.editing ? "manageLayoutsName" : ""
+                            visible: row.editing
+                            text: dialog.newName
+                            // MUST KILL: 64 duplicates WorkspaceLayoutController::kMaximumNameLength
+                            maximumLength: 64
+                            Layout.fillWidth: true
+                            Accessible.name: qsTr("Name")
+                            Accessible.description: dialog.problem
+                            onVisibleChanged: if (visible) { forceActiveFocus(); selectAll() }
+                            onTextEdited: dialog.newName = text
+                            Keys.onReturnPressed: event => { event.accepted = true; dialog.rename() }
+                            Keys.onEnterPressed: event => { event.accepted = true; dialog.rename() }
+                            Keys.onEscapePressed: event => { event.accepted = true; dialog.endRename() }
+                        }
+                        TierChip {
+                            visible: dialog.layouts.hasProject && !row.editing
+                            tier: row.modelData.tier
+                            enabled: !row.modelData.hidden
+                        }
+                        IconToolButton {
+                            id: tierButton
+                            objectName: row.highlighted ? "manageLayoutsTiers" : ""
+                            visible: row.highlighted && !row.editing && dialog.layouts.hasProject
+                            iconRole: "panel-menu"
+                            text: qsTr("Layout tiers")
+                            focusPolicy: Qt.NoFocus
+                            onClicked: tierMenu.popup(tierButton, 0, tierButton.height)
+                        }
+                        IconToolButton {
+                            objectName: row.highlighted ? "manageLayoutsRename" : ""
+                            visible: row.highlighted && !row.editing && !row.modelData.hidden
+                            iconRole: "edit"
+                            text: qsTr("Rename (F2)")
+                            focusPolicy: Qt.NoFocus
+                            onClicked: dialog.startRename()
+                        }
+                        IconToolButton {
+                            objectName: row.highlighted ? "manageLayoutsDelete" : ""
+                            visible: row.highlighted && !row.editing && !row.modelData.hidden
+                            iconRole: "delete"
+                            text: qsTr("Delete")
+                            focusPolicy: Qt.NoFocus
+                            onClicked: dialog.askDelete()
+                        }
                     }
                 }
             }

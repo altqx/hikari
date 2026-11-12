@@ -210,7 +210,7 @@ std::optional<QString> ScriptDialogMemory::sendPreset(const QString &key, const 
     const auto landed = presets.send(name, from, choice, move);
     if (!landed)
         return std::nullopt;
-    store(key, presets, otherTierOf(from));
+    store(key, presets, application::otherTier(from));
     if (move)
         store(key, presets, from);
     return landed;

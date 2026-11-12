@@ -1,7 +1,9 @@
 #pragma once
 
 #include "hikari/application/edit_history.h"
+#include "hikari/application/tiers.h"
 
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -18,6 +20,7 @@ struct ShapePreset {
     std::u16string shape;
     int mode = 0;        // read values wrap at 256
     int scalingMode = 0; // read values wrap at 256
+    TierMark mark;
     bool operator==(const ShapePreset &) const = default;
 };
 
@@ -48,7 +51,9 @@ public:
         TakeFromLine,
         ReplaceShape,
         RestoreDefaults,
-        UndoAll
+        UndoAll,
+        CopyToTier,
+        MoveToTier
     };
     enum class NameCheck { Ok, Empty, Taken, Separator };
 
@@ -73,9 +78,16 @@ public:
     // The next change starts a new history step.
     void endTyping() { m_history.endMerge(); }
 
-    // Appends and selects "New shape" (numbered when taken) with the last
-    // drawing in `lineText`, else a 100 x 100 square.
-    void addShape(std::u16string_view lineText);
+    // Names are unique within a tier. A Mine preset the Project's hides is read-only: only
+    // remove, Copy and Move change it.
+    bool readOnly() const { return current().mark.hidden; }
+    // Appends "New shape" (numbered when taken) to `tier` and selects it, with the last drawing in
+    // `lineText`, else a 100 x 100 square.
+    void addShape(std::u16string_view lineText, Tier tier = Tier::Mine);
+    // The other tier's preset named as the selected one, when there is one.
+    std::optional<std::u16string> tierClash() const;
+    // Copies or moves the selected preset to the other tier, one step; false when the clash is skipped.
+    bool sendToOtherTier(bool move, const ClashChoice &clash, std::u16string_view newName = {});
     // Inserts "<name> copy" (cut to fit 20 characters) after the selected one
     // and selects it.
     void duplicate();
@@ -87,7 +99,7 @@ public:
     bool takeFromLine(std::u16string_view lineText);
     // Drops the preset named `name` and renames the selected one to it, one step.
     void replaceNamed(std::u16string_view name);
-    // Keeps the selected name selected when `defaults` have it, one step.
+    // Replaces the Mine presets; keeps the selected name selected when `defaults` have it, one step.
     void restoreDefaults(std::vector<ShapePreset> defaults);
     // Back to the presets it opened with, one step.
     bool undoAll() { return m_history.undoAll(UndoAll); }
@@ -104,7 +116,9 @@ public:
 
 private:
     void edit(ShapePreset preset, Step step, std::string mergeKey = {}, Renames renamed = {});
-    std::u16string freeName(std::u16string base, bool copy) const;
+    void change(std::vector<ShapePreset> items, int selection, Step step, std::string mergeKey = {}, Renames renamed = {});
+    bool takenInTier(std::u16string_view name, Tier tier, int except) const;
+    std::u16string freeName(std::u16string base, bool copy, Tier tier) const;
     EditHistory<ShapePreset> m_history;
 };
 

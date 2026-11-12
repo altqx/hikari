@@ -35,6 +35,7 @@
 #include "hikari/application/video_matrix.h"
 #include "hikari/application/script_resolution.h"
 #include "hikari/application/video_properties.h"
+#include "hikari/application/tiers.h"
 #include "hikari/core/spelling.h"
 #include "hikari/core/text_projection.h"
 #include "hikari/core/conversion.h"
@@ -785,7 +786,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             o.lua = &luaNodes();
             o.audio = m_automation->media().peakAudio();
             return o;
-        }});
+        },
+        projectAiExclude});
     AiFeatures::Ports aiPorts = options.aiPorts ? std::move(*options.aiPorts)
                                                 : AiFeatures::defaultPorts(m_userFolder, &m_apiHost->api(),
                                                                            options.appVersion.isEmpty()
@@ -1177,6 +1179,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         hooks.fileProblem = report.problem;
         hooks.fileReplaced = report.replaced;
         hooks.fontsChanged = [this] { subtitleFontsChanged(); };
+        hooks.projectRoot = [this] { return m_projects ? m_projects->root(m_workspace.activeWindow()) : QString(); };
         m_fontCatalogs = std::make_unique<FontCatalogsController>(*m_settings, std::filesystem::path(dir.toStdU16String()),
                                                                   std::move(hooks));
         setVideoFonts(std::nullopt);
@@ -2465,6 +2468,8 @@ void Application::refreshViews()
     scheduleAutosave();
     if (m_styleManager)
         m_styleManager->targetRefreshed();
+    if (m_fontCatalogs)
+        m_fontCatalogs->projectChanged();
     if (m_shiftTimes)
         m_shiftTimes->setProjectRoot(m_projects ? m_projects->root(m_workspace.activeWindow()) : QString());
     const auto target = m_workspace.editingTarget();
@@ -5086,6 +5091,20 @@ void Application::convertListFiles()
         views->visualTools->setShapesFile(shapes);
         views->visualTools->setAllTagsFile(tags);
     }
+}
+
+void Application::applyProjectTierFiles(int shellWindow, const QString &root)
+{
+    const auto file = [&](std::string_view store, const ui::ListFormat &format) -> std::shared_ptr<ui::ListFile> {
+        const auto path = application::projectPathOf(store, root.toStdU16String());
+        if (!path)
+            return nullptr;
+        return ui::ListFile::make(QString::fromStdU16String(path->u16string()), QString(), format, {},
+                                  listFileReport(*m_log));
+    };
+    views(shellWindow).visualTools->setProjectListFiles(file("shapes", ui::kShapesFormat), file("tags", ui::kTagsFormat));
+    const auto layouts = application::projectPathOf("layouts", root.toStdU16String());
+    layoutOf(shellWindow).setProjectLayoutsFile(layouts ? QString::fromStdU16String(layouts->u16string()) : QString());
 }
 
 Application::SpellSlot *Application::spellSlot(const QString &language, const QString &projectRoot)
