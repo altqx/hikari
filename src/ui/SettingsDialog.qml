@@ -14,6 +14,7 @@ DialogWindow {
     property var crashReports: null
     property var ai: null
     property var inlineAi: null
+    property var skills: null
     property TagButtonsController tagButtons: null
     property var importer: null
     property string legacyNotFound: ""
