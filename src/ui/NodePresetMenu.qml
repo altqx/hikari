@@ -27,10 +27,9 @@ ShellMenu {
         onObjectRemoved: (index, object) => presetMenu.removeItem(object)
     }
     MenuSeparator {}
-    ShellMenuItem {
+    MenuHeading {
         objectName: "nodeTypesettingHeading"
         text: qsTr("For selected lines")
-        enabled: false
     }
     Instantiator {
         model: presetMenu.controller.typesettingPresets
