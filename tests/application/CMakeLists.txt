@@ -277,3 +277,16 @@ hikari_add_gtest(hikari_application_tag_removal_tests SOURCES tag_removal_tests.
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_dependency_control_tests SOURCES dependency_control_tests.cpp
     LIBRARIES hikari_application LABELS application)
+hikari_add_gtest(hikari_application_shape_kernel_tests SOURCES shape_kernel_tests.cpp
+    LIBRARIES hikari_application LABELS application)
+target_compile_definitions(hikari_application_shape_kernel_tests PRIVATE
+    HIKARI_SHAPE_GOLDENS="${PROJECT_SOURCE_DIR}/tests/fixtures/shape-kernel/yutils-goldens.txt")
+find_program(HIKARI_LUAJIT luajit HINTS "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/tools/luajit" NO_DEFAULT_PATH)
+if(HIKARI_LUAJIT)
+    add_test(NAME hikari_shape_goldens_are_the_shipped_yutils COMMAND "${CMAKE_COMMAND}"
+        -DLUAJIT=${HIKARI_LUAJIT} -DINCLUDE_DIR=${PROJECT_SOURCE_DIR}/Automation/automation/Include
+        -DSCRIPT=${PROJECT_SOURCE_DIR}/tests/fixtures/shape-kernel/make_goldens.lua
+        -DGOLDENS=${PROJECT_SOURCE_DIR}/tests/fixtures/shape-kernel/yutils-goldens.txt
+        -DOUT=${CMAKE_CURRENT_BINARY_DIR}/yutils-goldens.txt -P "${PROJECT_SOURCE_DIR}/tests/fixtures/shape-kernel/check_goldens.cmake")
+    set_tests_properties(hikari_shape_goldens_are_the_shipped_yutils PROPERTIES LABELS application)
+endif()

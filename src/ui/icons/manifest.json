@@ -4682,8 +4682,7 @@
    "legacy": [],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "AU6 #845"
+   ]
   },
   {
    "role": "shape-subtract",
@@ -4694,8 +4693,7 @@
    "legacy": [],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "AU6 #845"
+   ]
   },
   {
    "role": "shape-intersect",
@@ -4706,8 +4704,7 @@
    "legacy": [],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "AU6 #845"
+   ]
   },
   {
    "role": "shape-exclude",
@@ -4718,8 +4715,7 @@
    "legacy": [],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "AU6 #845"
+   ]
   },
   {
    "role": "shape-offset",
@@ -4730,8 +4726,7 @@
    "legacy": [],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "AU6 #845"
+   ]
   },
   {
    "role": "clip-to-shape",

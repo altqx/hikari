@@ -58,6 +58,14 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
 endif()
 add_library(Hikari::media_deps ALIAS hikari_media_deps)
 
+find_path(HIKARI_CLIPPER2_INCLUDE_DIR clipper2/clipper.h REQUIRED)
+find_library(HIKARI_CLIPPER2_LIBRARY NAMES Clipper2 REQUIRED)
+if(NOT TARGET Hikari::clipper2)
+    add_library(Hikari::clipper2 UNKNOWN IMPORTED)
+    set_target_properties(Hikari::clipper2 PROPERTIES IMPORTED_LOCATION "${HIKARI_CLIPPER2_LIBRARY}"
+        INTERFACE_INCLUDE_DIRECTORIES "${HIKARI_CLIPPER2_INCLUDE_DIR}")
+endif()
+
 # ALSA is the system library on Linux.
 find_package(portaudio CONFIG REQUIRED)
 find_package(PCRE2 CONFIG REQUIRED COMPONENTS 8BIT 16BIT)
