@@ -516,10 +516,36 @@ DialogWindow {
         settings: manager.app.settings
     }
 
-    function chooseCatalog(name) {
+    function chooseCatalog(name) { chooseCatalogIn(name, "") }
+    function chooseCatalogIn(name, tier) {
         guard(() => {
-            if (manager.own(() => styles.chooseCatalog(name)))
+            if (manager.own(() => styles.chooseCatalog(name, tier)))
                 manager.catalogShown()
+        })
+    }
+    function transferCatalog(move) {
+        const name = styles.catalog
+        const from = styles.catalogTier
+        const run = choices => guard(() => {
+            if (manager.own(() => move ? styles.moveCatalog(name, from, choices) : styles.copyCatalog(name, from, choices)) !== "")
+                manager.catalogShown()
+        })
+        const clashes = styles.catalogClashes(name, from)
+        if (clashes.length === 0) {
+            run([])
+            return
+        }
+        clashReviewLoader.active = true
+        clashReviewLoader.item.review({
+            title: move ? qsTr("Move catalogue") : qsTr("Copy catalogue"),
+            text: from === "mine" ? qsTr("The project already has a catalogue named “%1”.").arg(name)
+                                  : qsTr("You already have a catalogue named “%1”.").arg(name),
+            rows: clashes.map(c => ({ name: c.name, difference: "", suggestion: c.suggestion })),
+            acceptText: count => move ? qsTr("Move") : qsTr("Copy"),
+            nameTaken: n => styles.catalogRows.some(r => r.name === n && r.tier !== from)
+        }, results => {
+            if (results)
+                run(results)
         })
     }
     function catalogShown() {
@@ -528,14 +554,15 @@ DialogWindow {
         else
             storeSelected = []
     }
-    function createCatalog(name) {
+    function createCatalog(name, tier) {
         guard(() => {
-            if (manager.own(() => styles.createCatalog(name)))
+            if (manager.own(() => styles.createCatalog(name, tier || "")))
                 manager.catalogShown()
         })
     }
     function askDeleteCatalog() {
         const name = styles.catalog
+        const tier = styles.catalogTier
         ask({
             title: qsTr("Delete catalogue"),
             text: qsTr("Delete the catalogue “%1”?").arg(name),
@@ -550,7 +577,7 @@ DialogWindow {
                 return
             if (manager.editing && manager.editingStore)
                 manager.endEditing()
-            if (manager.own(() => manager.styles.deleteCatalog(name)))
+            if (manager.own(() => manager.styles.deleteCatalog(name, tier)))
                 manager.catalogShown()
         })
     }
@@ -1319,16 +1346,67 @@ DialogWindow {
                         id: catalogBox
                         objectName: "styleCatalog"
                         Layout.fillWidth: true
-                        model: manager.styles.catalogs
-                        currentIndex: manager.styles.catalogs.indexOf(manager.styles.catalog)
+                        readonly property bool tiered: manager.styles.hasProject
+                        function shownIndex() {
+                            return manager.styles.catalogRows.findIndex(r => r.name === manager.styles.catalog
+                                                                             && r.tier === manager.styles.catalogTier)
+                        }
+                        model: manager.styles.catalogRows
+                        textRole: "name"
+                        currentIndex: shownIndex()
                         ToolTip.visible: hovered
                         ToolTip.text: qsTr("Style catalogue")
                         Accessible.name: qsTr("Style catalogue")
                         onActivated: i => {
-                            const name = model[i]
-                            currentIndex = Qt.binding(() => manager.styles.catalogs.indexOf(manager.styles.catalog))
-                            manager.chooseCatalog(name)
+                            const row = model[i]
+                            currentIndex = Qt.binding(() => catalogBox.shownIndex())
+                            manager.chooseCatalogIn(row.name, row.tier)
                         }
+                        delegate: ItemDelegate {
+                            id: catalogRow
+                            required property var modelData
+                            required property int index
+                            readonly property bool heading: catalogBox.tiered
+                                && (index === 0 || catalogBox.model[index - 1].tier !== modelData.tier)
+                            objectName: "styleCatalogRow_" + modelData.tier + "_" + modelData.name
+                            width: ListView.view ? ListView.view.width : catalogBox.width
+                            highlighted: catalogBox.highlightedIndex === index
+                            topPadding: heading ? 26 : 4
+                            Accessible.name: modelData.hidden ? qsTr("%1, hidden by the project’s copy").arg(modelData.name)
+                                                              : modelData.name
+                            ToolTip.visible: hovered && modelData.hidden
+                            ToolTip.text: qsTr("Hidden by the project’s copy")
+                            Label {
+                                visible: catalogRow.heading
+                                x: 10
+                                y: 6
+                                text: catalogRow.modelData.tier === "project" ? qsTr("This project") : qsTr("Mine")
+                                font.bold: true
+                                font.pixelSize: 11
+                                color: Theme.muted
+                            }
+                            contentItem: RowLayout {
+                                spacing: 8
+                                Label {
+                                    text: catalogRow.modelData.name
+                                    color: catalogRow.modelData.hidden ? Theme.muted : Theme.text
+                                    font.italic: catalogRow.modelData.hidden
+                                    elide: Text.ElideRight
+                                    Layout.fillWidth: true
+                                }
+                                TierChip {
+                                    visible: catalogBox.tiered
+                                    tier: catalogRow.modelData.tier
+                                    enabled: !catalogRow.modelData.hidden
+                                }
+                            }
+                        }
+                    }
+                    TierChip {
+                        objectName: "styleCatalogTier"
+                        visible: manager.styles.hasProject
+                        tier: manager.styles.catalogTier
+                        enabled: !manager.styles.catalogReadOnly
                     }
                     IconToolButton {
                         id: newCatalogButton
@@ -1341,11 +1419,46 @@ DialogWindow {
                         objectName: "deleteCatalog"
                         iconRole: "delete"
                         text: qsTr("Delete catalogue")
-                        enabled: manager.styles.catalog !== "Default"
+                        enabled: manager.styles.catalog !== "Default" || manager.styles.catalogTier === "project"
                         onClicked: manager.askDeleteCatalog()
                     }
+                    IconToolButton {
+                        id: catalogTierButton
+                        objectName: "catalogTierMenuButton"
+                        visible: manager.styles.hasProject
+                        iconRole: "panel-menu"
+                        text: qsTr("Catalogue tiers")
+                        onClicked: catalogTierMenu.popup(catalogTierButton, catalogTierButton.width - catalogTierMenu.implicitWidth,
+                                                         catalogTierButton.height)
+                    }
+                    ShellMenu {
+                        id: catalogTierMenu
+                        objectName: "catalogTierMenu"
+                        readonly property bool fromMine: manager.styles.catalogTier === "mine"
+                        ShellMenuItem {
+                            objectName: "copyCatalogToTier"
+                            iconRole: "copy-to-tier"
+                            text: catalogTierMenu.fromMine ? qsTr("Copy to project") : qsTr("Copy to mine")
+                            onTriggered: manager.transferCatalog(false)
+                        }
+                        ShellMenuItem {
+                            objectName: "moveCatalogToTier"
+                            iconRole: "move-to-tier"
+                            text: catalogTierMenu.fromMine ? qsTr("Move to project") : qsTr("Move to mine")
+                            enabled: !(catalogTierMenu.fromMine && manager.styles.catalog === "Default")
+                            onTriggered: manager.transferCatalog(true)
+                        }
+                    }
                 }
-                ListTools { id: storeTools; objectName: "storeCommands"; store: true; Layout.fillWidth: true }
+                Label {
+                    objectName: "styleCatalogHidden"
+                    visible: manager.styles.catalogReadOnly
+                    text: qsTr("Hidden by the project’s copy. Copy it to the project to use it there.")
+                    color: Theme.muted
+                    wrapMode: Text.Wrap
+                    Layout.fillWidth: true
+                }
+                ListTools { id: storeTools; objectName: "storeCommands"; store: true; enabled: !manager.styles.catalogReadOnly; Layout.fillWidth: true }
                 Frame {
                     padding: 1
                     Layout.fillWidth: true
@@ -1378,7 +1491,7 @@ DialogWindow {
                         iconRole: "copy-to-storage"
                         text: qsTr("Add to catalogue")
                         tip: qsTr("Copy the selected file styles into the catalogue")
-                        enabled: manager.assSelected.length > 0
+                        enabled: manager.assSelected.length > 0 && !manager.styles.catalogReadOnly
                         onClicked: manager.copyToCatalog()
                     }
                     IconToolButton {
@@ -1949,18 +2062,20 @@ DialogWindow {
             const name = catalogName.text.trim()
             if (name.length === 0)
                 return ""
-            return manager.styles.catalogs.indexOf(name) >= 0 ? qsTr("A catalogue named “%1” already exists.").arg(name) : ""
+            const tier = manager.styles.hasProject ? newCatalogSave.tier : "mine"
+            const taken = manager.styles.catalogRows.some(r => r.name === name && (r.tier === tier || r.tier === "project"))
+            return taken ? qsTr("A catalogue named “%1” already exists.").arg(name) : ""
         }
         function openFor(anchorItem) {
             catalogName.text = ""
             openAt(anchorItem)
         }
-        function create() {
+        function create(tier) {
             const name = catalogName.text.trim()
             if (name.length === 0 || problem !== "")
                 return
             keep()
-            manager.createCatalog(name)
+            manager.createCatalog(name, manager.styles.hasProject ? tier : "mine")
         }
         TextField {
             id: catalogName
@@ -1968,7 +2083,7 @@ DialogWindow {
             placeholderText: qsTr("Catalogue name")
             Accessible.name: qsTr("Catalogue name")
             Layout.preferredWidth: 240
-            onAccepted: newCatalogPopover.create()
+            onAccepted: newCatalogPopover.create(newCatalogSave.tier)
         }
         Label {
             visible: newCatalogPopover.problem !== ""
@@ -1977,12 +2092,17 @@ DialogWindow {
             wrapMode: Text.Wrap
             Layout.preferredWidth: 240
         }
-        PrimaryButton {
-            objectName: "newCatalogCreate"
-            text: qsTr("Create")
-            enabled: catalogName.text.trim().length > 0 && newCatalogPopover.problem === ""
+        TierSaveButton {
+            id: newCatalogSave
+            objectName: "newCatalogSave"
+            faceName: "newCatalogCreate"
+            listId: "styleCatalogs"
+            settings: manager.app ? manager.app.settings : null
+            hasProject: manager.styles.hasProject
+            plainText: qsTr("Create")
+            faceEnabled: catalogName.text.trim().length > 0 && newCatalogPopover.problem === ""
             Layout.alignment: Qt.AlignRight
-            onClicked: newCatalogPopover.create()
+            onSave: tier => newCatalogPopover.create(tier)
         }
     }
     FileChooser {

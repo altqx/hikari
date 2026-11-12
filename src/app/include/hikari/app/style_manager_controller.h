@@ -21,6 +21,12 @@ class StyleManagerController : public QObject {
     Q_OBJECT
     Q_PROPERTY(QStringList catalogs READ catalogs NOTIFY changed)
     Q_PROPERTY(QString catalog READ catalog NOTIFY changed)
+    // [{name, tier ("project", "mine"), hidden}]: the Project's catalogs, then the user's.
+    Q_PROPERTY(QVariantList catalogRows READ catalogRows NOTIFY changed)
+    Q_PROPERTY(QString catalogTier READ catalogTier NOTIFY changed)
+    // A Mine catalog the Project's copy hides.
+    Q_PROPERTY(bool catalogReadOnly READ catalogReadOnly NOTIFY changed)
+    Q_PROPERTY(bool hasProject READ hasProject NOTIFY changed)
     Q_PROPERTY(QStringList storeStyles READ storeStyles NOTIFY changed)
     Q_PROPERTY(QStringList documentStyles READ documentStyles NOTIFY changed)
     Q_PROPERTY(bool available READ available NOTIFY changed) // the editing target has ASS Styles
@@ -41,11 +47,19 @@ public:
         // styles.lastCatalog: read once at the start, written on each choice.
         std::function<QString()> lastCatalog;
         std::function<void(const QString &)> catalogChosen;
+        // The editing target's window's Project folder; empty without one.
+        std::function<QString()> projectRoot;
     };
     StyleManagerController(std::filesystem::path catalogDir, Hooks hooks, QObject *parent = nullptr);
 
     QStringList catalogs() const;
     QString catalog() const;
+    QVariantList catalogRows() const;
+    QString catalogTier() const;
+    bool catalogReadOnly() const { return m_catalogs.readOnly(); }
+    bool hasProject() const { return !m_catalogs.projectDirectory().empty(); }
+    // Follows the editing target's window's Project.
+    void projectChanged();
     QStringList storeStyles() const;
     QStringList documentStyles() const;
     bool available() const;
@@ -64,11 +78,17 @@ public:
     // The catalog refreshLists would make current for the target now.
     Q_INVOKABLE QString followedCatalog() const;
     // The Style manager's choice, kept as styles.lastCatalog.
-    Q_INVOKABLE bool chooseCatalog(const QString &name);
+    // `tier` "project" or "mine"; empty for the Project's copy first.
+    Q_INVOKABLE bool chooseCatalog(const QString &name, const QString &tier = {});
     // Not kept as styles.lastCatalog.
     bool loadCatalog(const QString &name);
-    Q_INVOKABLE bool createCatalog(const QString &name);
-    Q_INVOKABLE bool deleteCatalog(const QString &name);
+    Q_INVOKABLE bool createCatalog(const QString &name, const QString &tier = {});
+    Q_INVOKABLE bool deleteCatalog(const QString &name, const QString &tier = {});
+    // [{name, suggestion}] when the other tier already has `name`, else [].
+    Q_INVOKABLE QVariantList catalogClashes(const QString &name, const QString &tier) const;
+    // `choices` as for addToStore. Returns the name the catalog landed under, "" when skipped.
+    Q_INVOKABLE QString copyCatalog(const QString &name, const QString &tier, const QVariantList &choices = {});
+    Q_INVOKABLE QString moveCatalog(const QString &name, const QString &tier, const QVariantList &choices = {});
     Q_INVOKABLE void saveCatalog();
     // Emits targetEdited; `switched` when the target is another Document.
     void targetRefreshed();
@@ -145,10 +165,13 @@ private:
         core::StyleValues opened;
         std::optional<application::DocumentId> document;
         std::u8string catalog;
+        application::Tier catalogTier = application::Tier::Mine;
         std::u8string copyOf;
     };
     application::StyleList *list(bool store, std::optional<application::StyleList> &document) const;
     void catalogChosen();
+    std::optional<application::Tier> tierOf(const QString &tier) const;
+    std::optional<QString> landed(const QString &name, const QString &tier, const QVariantList &choices, bool move);
     void pin(Edit edit);
     application::EditSession *editSession() const;
     bool applyDocument(application::EditSession &session, const application::StyleList &styles,

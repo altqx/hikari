@@ -4394,8 +4394,7 @@
    "legacy": [],
    "surfaces": [
     "tier-chips"
-   ],
-   "pending": "PJ5 #773"
+   ]
   },
   {
    "role": "copy-to-tier",
@@ -4406,8 +4405,7 @@
    "legacy": [],
    "surfaces": [
     "tier-chips"
-   ],
-   "pending": "PJ5 #773"
+   ]
   },
   {
    "role": "move-to-tier",
@@ -4418,8 +4416,7 @@
    "legacy": [],
    "surfaces": [
     "tier-chips"
-   ],
-   "pending": "PJ5 #773"
+   ]
   },
   {
    "role": "trust",

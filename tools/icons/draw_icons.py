@@ -1410,7 +1410,6 @@ PENDING = {}
 for card, roles in {
     "AI2 #430": ["review-panel"],
     "PJ4 #772": ["explorer", "new-subtitle-file", "show-all-files", "group-by-name"],
-    "PJ5 #773": ["mine", "copy-to-tier", "move-to-tier"],
     "PJ8 #776": ["untrusted"],
     "AI24 #744": ["update"],
     "PL7 #419": ["plugin-sandbox"],
