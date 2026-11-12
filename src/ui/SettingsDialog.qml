@@ -50,6 +50,7 @@ DialogWindow {
         {id: "general", name: qsTr("General"), iconRole: "settings"},
         {id: "appearance", name: qsTr("Appearance"), iconRole: "appearance"},
         {id: "lineEditor", name: qsTr("Line editor"), iconRole: "editor"},
+        {id: "editing", name: qsTr("Editing"), iconRole: "cycle-values"},
         {id: "spelling", name: qsTr("Spelling and grammar"), iconRole: "spellchecker"},
         {id: "grid", name: qsTr("Grid"), iconRole: "settings-grid"},
         {id: "video", name: qsTr("Video"), iconRole: "settings-video"},
@@ -907,6 +908,8 @@ DialogWindow {
                         }
                     }
                 }
+
+                CycleValuesPage { dialog: dialog }
 
                 SettingsPage {
                     id: spellingPage
