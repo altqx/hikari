@@ -66,7 +66,7 @@ hikari_add_gtest(hikari_application_grid_split_tests SOURCES grid_split_tests.cp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_recent_files_tests SOURCES recent_files_tests.cpp
     LIBRARIES hikari_application LABELS application)
-hikari_add_gtest(hikari_application_project_tests SOURCES project_tests.cpp
+hikari_add_gtest(hikari_application_project_tests SOURCES project_tests.cpp translation_project_tests.cpp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_grid_translation_tests SOURCES grid_translation_tests.cpp
     LIBRARIES hikari_application LABELS application)
@@ -265,6 +265,10 @@ target_include_directories(hikari_application_motion_data_tests PRIVATE "${PROJE
 hikari_add_gtest(hikari_application_gradient_tests SOURCES gradient_tests.cpp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_visual_gradient_tests SOURCES visual_gradient_tests.cpp
+    LIBRARIES hikari_application LABELS application)
+hikari_add_gtest(hikari_application_text_on_path_tests SOURCES text_on_path_tests.cpp
+    LIBRARIES hikari_application LABELS application)
+hikari_add_gtest(hikari_application_visual_text_on_path_tests SOURCES visual_text_on_path_tests.cpp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_interpolate_tests SOURCES interpolate_tests.cpp
     LIBRARIES hikari_application LABELS application)

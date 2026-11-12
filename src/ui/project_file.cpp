@@ -4,6 +4,9 @@
 
 #include <QDir>
 
+#include <algorithm>
+#include <array>
+#include <cctype>
 #include <filesystem>
 #include <utility>
 #include <variant>
@@ -18,6 +21,49 @@ using application::SettingValue;
 std::filesystem::path pathOf(const QString &path)
 {
     return std::filesystem::path(path.toStdU16String());
+}
+
+constexpr std::array<std::string_view, 13> kCredentialWords{"key", "token", "secret", "password", "passwd",
+                                                             "credential", "auth", "bearer", "cookie", "session",
+                                                             "url", "endpoint", "base"};
+constexpr std::array<std::string_view, 7> kSecretPrefixes{"sk-", "sk_", "AIza", "ghp_", "gho_", "xox", "Bearer "};
+
+std::string lower(std::string_view text)
+{
+    std::string out(text);
+    std::ranges::transform(out, out.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+    return out;
+}
+
+// A model is "<provider id>/<model>"; an address, whitespace or a known key prefix is a credential, never a model.
+bool credentialValue(std::string_view value)
+{
+    return value.find("://") != std::string_view::npos ||
+           std::ranges::any_of(value, [](unsigned char c) { return std::isspace(c); }) ||
+           std::ranges::any_of(kSecretPrefixes, [value](std::string_view p) { return value.starts_with(p); });
+}
+
+bool modelSetting(std::string_view id)
+{
+    return id == "translation.translator" || id == "translation.reviewer";
+}
+
+// `[translation]` entries that hold or name a secret: a Project may be in git, so it never carries one.
+void collectCredentials(const toml::table &table, std::vector<std::string> &out)
+{
+    const auto *translation = table["translation"].as_table();
+    if (!translation)
+        return;
+    for (const auto &[key, node] : *translation) {
+        const std::string id = "translation." + std::string(key.str());
+        const auto *text = node.as_string();
+        if (modelSetting(id) ? text && credentialValue(text->get())
+                             : !application::findSetting(id) &&
+                                   std::ranges::any_of(kCredentialWords, [name = lower(key.str())](std::string_view word) {
+                                       return name.find(word) != std::string::npos;
+                                   }))
+            out.push_back(id);
+    }
 }
 
 void collectRefused(const toml::table &table, const std::string &prefix, std::vector<std::string> &out)
@@ -61,11 +107,12 @@ void ProjectFile::load(File file)
         m_problems.push_back(std::move(*loaded.problem));
     }
     collectRefused(m_tables[file], {}, m_refused);
+    collectCredentials(m_tables[file], m_credentials);
 }
 
 std::optional<ProjectFile::File> ProjectFile::source(const SettingDefinition &setting) const
 {
-    if (!setting.projectable)
+    if (!setting.projectable || std::ranges::find(m_credentials, setting.id) != m_credentials.end())
         return std::nullopt;
     for (const File file : {Local, Shared})
         if (const auto *node = tomlNode(m_tables[file], setting.id); node && fromToml(*node))
@@ -119,6 +166,9 @@ void ProjectFile::store(const SettingDefinition &setting, const std::optional<Se
 {
     m_writeFailed = true;
     if (!setting.projectable || !m_writable)
+        return;
+    if (const auto *text = value ? std::get_if<std::string>(&*value) : nullptr;
+        text && modelSetting(setting.id) && credentialValue(*text))
         return;
     const auto file = pathOf(path(Shared));
     const auto bytes = application::readOwnedFile(file);

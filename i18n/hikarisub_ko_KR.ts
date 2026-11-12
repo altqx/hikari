@@ -591,6 +591,54 @@
             <numerusform>%n줄 모두 보기</numerusform>
         </translation>
     </message>
+    <message>
+        <source>This conversation is nearly full</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 of %2 tokens. Automatic compaction is off in Settings › AI.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Compact conversation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New thread from summary</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>compacting…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>compacts at the next tool call</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Couldn’t compact the conversation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>There’s nothing to compact yet.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The summary request failed twice (%1). Nothing was removed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Carried on from the summary of “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Context compacted %1 → %2 tokens</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Audio</name>
@@ -7326,6 +7374,10 @@ Failed to copy %2 fonts.</source>
         <translation>그라데이션</translation>
     </message>
     <message>
+        <source>Text on path</source>
+        <translation>경로 따라 텍스트</translation>
+    </message>
+    <message>
         <source>Vector clip: move points</source>
         <translation>벡터 클립: 점 이동</translation>
     </message>
@@ -7963,6 +8015,22 @@ Failed to copy %2 fonts.</source>
         </translation>
     </message>
     <message numerus="yes">
+        <source>The reviewer didn’t approve line %1, so it’s marked Unconfirmed.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>The reviewer didn’t approve line %1. Check it before you use it.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>This project’s translator and reviewer models are used once you trust its folder; your own ran instead.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
         <source>%n line(s) weren’t sent.</source>
         <translation type="unfinished">
             <numerusform></numerusform>
@@ -8008,6 +8076,10 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Out of date: you edited line %1 after it was sent.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not approved by the reviewer: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -10841,7 +10913,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Point</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">지점</translation>
     </message>
     <message>
         <source>Tags</source>
@@ -11388,7 +11460,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Point</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">지점</translation>
     </message>
     <message>
         <source>A point from its coordinates.</source>
@@ -14430,7 +14502,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Failed</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">실패</translation>
     </message>
     <message>
         <source>Starts when the agent needs it</source>
@@ -14454,7 +14526,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Command</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">명령</translation>
     </message>
     <message>
         <source>Environment</source>
@@ -14546,6 +14618,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Servers run as you, outside the AI component’s sandbox. Tools that may change or delete things ask first in every mode. Changes apply at once.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Compact long conversations automatically</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>At 90% of the model’s context window, old tool results are cleared, then older turns are summarised. Your history stays in the panel.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -15362,6 +15442,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
 </context>
 <context>
     <name>HikariSub.Project</name>
+    <message>
+        <source>%1 in project.toml looks like a credential, so it is ignored. Keys go in this Project’s credentials file (.hikari/credentials.toml) or this machine’s environment, never in project.toml.</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message>
         <source>Project settings</source>
         <translation>프로젝트 설정</translation>
@@ -23372,12 +23456,32 @@ or codecs or a splitter may be missing</source>
         <translation>단계</translation>
     </message>
     <message>
+        <source>Layout</source>
+        <translation>레이아웃</translation>
+    </message>
+    <message>
         <source>In</source>
         <translation>페이드 인</translation>
     </message>
     <message>
         <source>Out</source>
         <translation>페이드 아웃</translation>
+    </message>
+    <message>
+        <source>Offset</source>
+        <translation>오프셋</translation>
+    </message>
+    <message>
+        <source>Frames a step</source>
+        <translation>단계당 프레임</translation>
+    </message>
+    <message>
+        <source>Past the end</source>
+        <translation>끝을 넘은 길이</translation>
+    </message>
+    <message>
+        <source>Lines</source>
+        <translation>줄</translation>
     </message>
     <message numerus="yes">
         <source>Changes %n lines</source>
@@ -24006,6 +24110,10 @@ or codecs or a splitter may be missing</source>
         <translation>원근</translation>
     </message>
     <message>
+        <source>Text on path</source>
+        <translation>경로 따라 텍스트</translation>
+    </message>
+    <message>
         <source>\org mode</source>
         <translation>\org 모드</translation>
     </message>
@@ -24342,6 +24450,54 @@ increasing or decreasing the value.</source>
     <message>
         <source>No characters on the line</source>
         <translation>줄에 글자가 없습니다</translation>
+    </message>
+    <message>
+        <source>Apply</source>
+        <translation>적용</translation>
+    </message>
+    <message>
+        <source>Draw a path, or give the line a vector clip</source>
+        <translation>경로를 그리거나 줄에 벡터 클립을 지정하십시오</translation>
+    </message>
+    <message>
+        <source>Left</source>
+        <translation>좌측</translation>
+    </message>
+    <message>
+        <source>Reverse</source>
+        <translation>반대 방향</translation>
+    </message>
+    <message>
+        <source>Right</source>
+        <translation>우측</translation>
+    </message>
+    <message>
+        <source>Rotate</source>
+        <translation>회전</translation>
+    </message>
+    <message>
+        <source>Slide</source>
+        <translation>슬라이드</translation>
+    </message>
+    <message>
+        <source>Slide needs the video’s frames</source>
+        <translation>슬라이드에는 영상 프레임이 필요합니다</translation>
+    </message>
+    <message>
+        <source>Spread</source>
+        <translation>균등 배치</translation>
+    </message>
+    <message>
+        <source>Text can’t be measured here</source>
+        <translation>여기서는 텍스트를 측정할 수 없습니다</translation>
+    </message>
+    <message>
+        <source>No text to place</source>
+        <translation>배치할 텍스트 없음</translation>
+    </message>
+    <message>
+        <source>The text is longer than the path. The last graphemes continue along its end.</source>
+        <translation>텍스트가 경로보다 깁니다. 마지막 글자들은 경로 끝에서 그대로 이어집니다.</translation>
     </message>
     <message>
         <source>Edit</source>

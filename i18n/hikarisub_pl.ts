@@ -599,6 +599,54 @@
             <numerusform>Pokaż wszystkie %n linijek</numerusform>
         </translation>
     </message>
+    <message>
+        <source>This conversation is nearly full</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 of %2 tokens. Automatic compaction is off in Settings › AI.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Compact conversation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New thread from summary</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>compacting…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>compacts at the next tool call</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Couldn’t compact the conversation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>There’s nothing to compact yet.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The summary request failed twice (%1). Nothing was removed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Carried on from the summary of “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Context compacted %1 → %2 tokens</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Audio</name>
@@ -7438,6 +7486,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Gradient</translation>
     </message>
     <message>
+        <source>Text on path</source>
+        <translation>Tekst na ścieżce</translation>
+    </message>
+    <message>
         <source>Vector clip: move points</source>
         <translation>Wycinek wektorowy: przesuń punkty</translation>
     </message>
@@ -8109,6 +8161,26 @@ Nie udało się skopiować czcionek: %2.</translation>
         </translation>
     </message>
     <message numerus="yes">
+        <source>The reviewer didn’t approve line %1, so it’s marked Unconfirmed.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>The reviewer didn’t approve line %1. Check it before you use it.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>This project’s translator and reviewer models are used once you trust its folder; your own ran instead.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
         <source>%n line(s) weren’t sent.</source>
         <translation type="unfinished">
             <numerusform></numerusform>
@@ -8158,6 +8230,10 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Out of date: you edited line %1 after it was sent.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not approved by the reviewer: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -11031,7 +11107,7 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Point</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Punkt</translation>
     </message>
     <message>
         <source>Tags</source>
@@ -11590,7 +11666,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Point</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Punkt</translation>
     </message>
     <message>
         <source>A point from its coordinates.</source>
@@ -14650,7 +14726,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Failed</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Niepowodzenie</translation>
     </message>
     <message>
         <source>Starts when the agent needs it</source>
@@ -14674,7 +14750,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Command</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Polecenie</translation>
     </message>
     <message>
         <source>Environment</source>
@@ -14766,6 +14842,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Servers run as you, outside the AI component’s sandbox. Tools that may change or delete things ask first in every mode. Changes apply at once.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Compact long conversations automatically</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>At 90% of the model’s context window, old tool results are cleared, then older turns are summarised. Your history stays in the panel.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -15586,6 +15670,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
 </context>
 <context>
     <name>HikariSub.Project</name>
+    <message>
+        <source>%1 in project.toml looks like a credential, so it is ignored. Keys go in this Project’s credentials file (.hikari/credentials.toml) or this machine’s environment, never in project.toml.</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message>
         <source>Project settings</source>
         <translation>Ustawienia projektu</translation>
@@ -23770,12 +23858,32 @@ bądź brakuje kodeków czy też splittera</translation>
         <translation>Kroki</translation>
     </message>
     <message>
+        <source>Layout</source>
+        <translation>Układ</translation>
+    </message>
+    <message>
         <source>In</source>
         <translation>Wejście</translation>
     </message>
     <message>
         <source>Out</source>
         <translation>Wyjście</translation>
+    </message>
+    <message>
+        <source>Offset</source>
+        <translation>Przesunięcie</translation>
+    </message>
+    <message>
+        <source>Frames a step</source>
+        <translation>Klatki na krok</translation>
+    </message>
+    <message>
+        <source>Past the end</source>
+        <translation>Poza końcem</translation>
+    </message>
+    <message>
+        <source>Lines</source>
+        <translation>Linijki</translation>
     </message>
     <message numerus="yes">
         <source>Changes %n lines</source>
@@ -24418,6 +24526,10 @@ bądź brakuje kodeków czy też splittera</translation>
         <translation>Perspektywa</translation>
     </message>
     <message>
+        <source>Text on path</source>
+        <translation>Tekst na ścieżce</translation>
+    </message>
+    <message>
         <source>\org mode</source>
         <translation>Tryb \org</translation>
     </message>
@@ -24754,6 +24866,54 @@ zwiększając lub zmniejszając wartość.</translation>
     <message>
         <source>No characters on the line</source>
         <translation>Linia nie ma znaków</translation>
+    </message>
+    <message>
+        <source>Apply</source>
+        <translation>Zastosuj</translation>
+    </message>
+    <message>
+        <source>Draw a path, or give the line a vector clip</source>
+        <translation>Narysuj ścieżkę albo dodaj linijce wycinek wektorowy</translation>
+    </message>
+    <message>
+        <source>Left</source>
+        <translation>Do lewej</translation>
+    </message>
+    <message>
+        <source>Reverse</source>
+        <translation>Odwróć</translation>
+    </message>
+    <message>
+        <source>Right</source>
+        <translation>Do prawej</translation>
+    </message>
+    <message>
+        <source>Rotate</source>
+        <translation>Obracaj</translation>
+    </message>
+    <message>
+        <source>Slide</source>
+        <translation>Przesuwanie</translation>
+    </message>
+    <message>
+        <source>Slide needs the video’s frames</source>
+        <translation>Przesuwanie wymaga klatek wideo</translation>
+    </message>
+    <message>
+        <source>Spread</source>
+        <translation>Rozłóż</translation>
+    </message>
+    <message>
+        <source>Text can’t be measured here</source>
+        <translation>Tutaj nie można zmierzyć tekstu</translation>
+    </message>
+    <message>
+        <source>No text to place</source>
+        <translation>Brak tekstu do rozmieszczenia</translation>
+    </message>
+    <message>
+        <source>The text is longer than the path. The last graphemes continue along its end.</source>
+        <translation>Tekst jest dłuższy niż ścieżka. Ostatnie grafemy biegną dalej od jej końca.</translation>
     </message>
     <message>
         <source>Edit</source>

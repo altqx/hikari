@@ -17,6 +17,8 @@ FocusScope {
     readonly property bool hasThread: thread.id !== undefined
     readonly property bool running: hasThread && thread.running
     readonly property string mode: hasThread ? thread.mode : "auto"
+    readonly property bool canCompact: hasThread && thread.external !== true
+    readonly property real contextUsed: hasThread && thread.compactWindow > 0 ? thread.contextTokens / thread.compactWindow : 0
     property bool showingThreads: false
     objectName: "agentView"
 
@@ -60,7 +62,9 @@ FocusScope {
         const text = composer.text.trim()
         if (text.length === 0)
             return
-        if (text === "/new") {
+        if (text === "/compact" || text.startsWith("/compact ")) {
+            panel.agent.compact(text.slice("/compact".length).trim())
+        } else if (text === "/new") {
             panel.agent.newThread()
         } else if (text === "/mode") {
             modeMenu.popup(modeButton, 0, -modeMenu.implicitHeight)
@@ -320,8 +324,41 @@ FocusScope {
                                : kind === "change" ? changeItem : kind === "plan" ? planItem : kind === "ask" ? askItem
                                : kind === "proposal" ? (item.status === "applied" ? null : proposalItem)
                                : kind === "notice" ? noticeItem : kind === "search" ? searchItem
-                               : kind === "script" ? scriptItem : null
+                               : kind === "script" ? scriptItem
+                               : kind === "compaction" ? compactionItem : null
                 readonly property bool last: index === timeline.count - 1
+            }
+        }
+
+        Card {
+            objectName: "agentCompactOffer"
+            visible: panel.agent.ready && !panel.showingThreads && panel.canCompact && !panel.agent.autoCompact
+                     && !panel.running && panel.contextUsed >= 0.97
+            Layout.leftMargin: 8
+            Layout.rightMargin: 8
+            Layout.bottomMargin: 4
+            edge: Theme.warning
+            CardTitle { iconRole: "notice-warning"; text: qsTr("This conversation is nearly full") }
+            Label {
+                Layout.fillWidth: true
+                wrapMode: Text.Wrap
+                color: Theme.muted
+                text: qsTr("%1 of %2 tokens. Automatic compaction is off in Settings › AI.")
+                      .arg(panel.tokens(panel.thread.contextTokens ?? 0), panel.tokens(panel.thread.compactWindow ?? 0))
+            }
+            RowLayout {
+                spacing: 6
+                IconTextButton {
+                    objectName: "agentOfferCompact"
+                    iconRole: "compact"
+                    highlighted: true
+                    text: qsTr("Compact conversation")
+                    onClicked: panel.agent.compact("")
+                }
+                Button {
+                    text: qsTr("New thread from summary")
+                    onClicked: panel.agent.newThreadFromSummary()
+                }
             }
         }
 
@@ -379,18 +416,32 @@ FocusScope {
             spacing: 8
             readonly property real used: panel.hasThread && panel.thread.contextWindow > 0
                                          ? Math.min(1, panel.thread.contextTokens / panel.thread.contextWindow) : 0
+            readonly property bool hot: panel.canCompact && panel.contextUsed >= 0.9
             ProgressBar {
                 visible: panel.hasThread && panel.thread.contextWindow > 0
                 from: 0
                 to: 1
                 value: parent.used
+                palette.highlight: parent.hot ? Theme.warning : Theme.accent
                 Layout.preferredWidth: 48
             }
+            Icon {
+                visible: parent.hot
+                iconRole: "notice-warning"
+                size: 14
+                color: Theme.warning
+            }
             Label {
+                objectName: "agentTokens"
                 Layout.fillWidth: true
-                color: Theme.muted
+                color: parent.hot ? Theme.warning : Theme.muted
+                font.bold: parent.hot
                 elide: Text.ElideRight
-                text: !panel.hasThread ? ""
+                readonly property string note: !panel.hasThread ? ""
+                    : panel.thread.compacting ? qsTr("compacting…")
+                    : parent.hot && panel.running && panel.agent.autoCompact ? qsTr("compacts at the next tool call") : ""
+                text: (note.length > 0 ? "%1 · " + note : "%1").arg(tokenText)
+                readonly property string tokenText: !panel.hasThread ? ""
                       : panel.thread.contextWindow > 0
                         ? qsTr("%1 of %2 tokens").arg(panel.tokens(panel.thread.contextTokens), panel.tokens(panel.thread.contextWindow))
                         : qsTr("%1 tokens").arg(panel.tokens(panel.thread.contextTokens))
@@ -536,6 +587,20 @@ FocusScope {
     ShellMenu {
         id: threadMenu
         ShellMenuItem {
+            objectName: "agentCompactThread"
+            iconRole: "compact"
+            text: qsTr("Compact conversation")
+            enabled: panel.canCompact && !(panel.thread.compacting ?? false)
+            onTriggered: panel.agent.compact("")
+        }
+        ShellMenuItem {
+            objectName: "agentThreadFromSummary"
+            iconRole: "add"
+            text: qsTr("New thread from summary")
+            enabled: panel.canCompact && !panel.running
+            onTriggered: panel.agent.newThreadFromSummary()
+        }
+        ShellMenuItem {
             objectName: "agentRenameThread"
             iconRole: "edit"
             text: qsTr("Rename thread…")
@@ -583,6 +648,17 @@ FocusScope {
 
     ShellMenu {
         id: slashMenu
+        ShellMenuItem {
+            iconRole: "compact"
+            text: qsTr("Compact conversation")
+            detailText: "/compact"
+            enabled: panel.canCompact
+            onTriggered: {
+                composer.text = "/compact "
+                composer.cursorPosition = composer.length
+                composer.forceActiveFocus()
+            }
+        }
         ShellMenuItem {
             iconRole: "add"
             text: qsTr("New thread")
@@ -1491,6 +1567,65 @@ FocusScope {
     }
 
     Component {
+        id: compactionItem
+        ColumnLayout {
+            id: compaction
+            readonly property var item: parent ? parent.item : ({})
+            readonly property bool hasSummary: (item.summary ?? "").length > 0
+            property bool open: false
+            objectName: "agentCompaction"
+            spacing: 4
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 6
+                Rectangle { Layout.fillWidth: true; implicitHeight: 1; color: Theme.line }
+                ItemDelegate {
+                    objectName: "agentCompactionToggle"
+                    padding: 2
+                    enabled: compaction.hasSummary
+                    onClicked: compaction.open = !compaction.open
+                    Accessible.name: divider.text
+                    contentItem: RowLayout {
+                        spacing: 4
+                        Icon {
+                            size: 12
+                            visible: compaction.hasSummary
+                            iconRole: compaction.open ? "chevron-down" : "chevron-right"
+                        }
+                        Label {
+                            id: divider
+                            color: Theme.muted
+                            text: compaction.item.from !== undefined
+                                  ? qsTr("Carried on from the summary of “%1”").arg(compaction.item.from)
+                                  : qsTr("Context compacted %1 → %2 tokens")
+                                    .arg(panel.tokens(compaction.item.before ?? 0), panel.tokens(compaction.item.after ?? 0))
+                        }
+                    }
+                }
+                Rectangle { Layout.fillWidth: true; implicitHeight: 1; color: Theme.line }
+            }
+            Rectangle {
+                objectName: "agentCompactionSummary"
+                visible: compaction.open
+                Layout.fillWidth: true
+                implicitHeight: summaryText.implicitHeight + 16
+                radius: 4
+                color: Theme.field
+                border.color: Theme.line
+                Label {
+                    id: summaryText
+                    x: 8
+                    y: 8
+                    width: parent.width - 16
+                    wrapMode: Text.Wrap
+                    textFormat: Text.PlainText
+                    text: (compaction.item.summary ?? "").replace(/^#+[ \t]*/gm, "")
+                }
+            }
+        }
+    }
+
+    Component {
         id: noticeItem
         Card {
             id: notice
@@ -1498,6 +1633,7 @@ FocusScope {
             readonly property bool last: parent ? parent.last : false
             readonly property string kind: item.notice ?? ""
             readonly property bool quiet: kind === "stopped" || kind === "maxTokens" || kind === "refusal" || kind === "maxRequests"
+                                          || kind === "nothingToCompact"
             objectName: "agentNotice_" + kind
             readonly property bool searchFailed: kind === "searchUsedUp" || kind === "searchKey"
             edge: quiet ? Theme.line : kind === "cap" || kind === "dailyCap" || searchFailed ? Theme.warning : Theme.danger
@@ -1512,6 +1648,8 @@ FocusScope {
                       : notice.kind === "refusal" ? qsTr("The model declined to answer.")
                       : notice.kind === "maxRequests" ? qsTr("The turn stopped after its most model requests.")
                       : notice.kind === "noModel" ? qsTr("Choose a chat model in Settings › AI")
+                      : notice.kind === "compactFailed" ? qsTr("Couldn’t compact the conversation")
+                      : notice.kind === "nothingToCompact" ? qsTr("There’s nothing to compact yet.")
                       : notice.kind === "searchUsedUp" ? qsTr("%1 has no searches left").arg(panel.serviceName(notice.item.service ?? ""))
                       : notice.kind === "searchKey" ? qsTr("%1 refused HikariSub’s key").arg(panel.serviceName(notice.item.service ?? ""))
                       : qsTr("AI component isn’t ready")
@@ -1525,6 +1663,7 @@ FocusScope {
                       : notice.kind === "dailyCap" ? qsTr("Every thread stops until tomorrow, or until you raise the cap in Settings › AI.")
                       : notice.kind === "lost" ? qsTr("The turn was interrupted and won’t rerun by itself. Changes it made stay in the review.")
                       : notice.kind === "failed" ? (notice.item.detail ?? "")
+                      : notice.kind === "compactFailed" ? qsTr("The summary request failed twice (%1). Nothing was removed.").arg(notice.item.detail ?? "")
                       : notice.kind === "noSidecar" ? qsTr("HikariSub is still getting the AI component, or it couldn’t start.")
                       : notice.searchFailed ? qsTr("The search service answered %1. The answer goes on without searching the web.").arg(notice.item.status ?? 0)
                       : ""
@@ -1548,6 +1687,19 @@ FocusScope {
                     highlighted: true
                     text: qsTr("Retry the turn")
                     onClicked: panel.agent.retry()
+                }
+                Button {
+                    objectName: "agentRetryCompact"
+                    visible: notice.kind === "compactFailed"
+                    highlighted: true
+                    text: qsTr("Retry")
+                    onClicked: panel.agent.compact("")
+                }
+                Button {
+                    objectName: "agentSummaryThread"
+                    visible: notice.kind === "compactFailed"
+                    text: qsTr("New thread from summary")
+                    onClicked: panel.agent.newThreadFromSummary()
                 }
                 Button {
                     visible: notice.kind === "lost"
