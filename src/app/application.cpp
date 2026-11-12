@@ -731,6 +731,9 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
                                                         m_log->notice(warning ? ui::LogController::Warning : ui::LogController::Info,
                                                                       QCoreApplication::translate("HikariSub.Options", "Shortcuts"), message);
                                                     });
+    m_aiScripts = std::make_unique<AiScripts>(
+        *m_automation, m_userFolder.isEmpty() ? QString() : m_userFolder + QStringLiteral("/ai/scripts"),
+        [this] { return m_workspace.editingTarget().has_value(); });
     m_apiHost = std::make_unique<ApiHost>(ApiHost::Wiring{
         m_workspace, *m_files, &m_settings->settings(), &m_automation->media(),
         [this](application::Selection next) { return applySelection(std::move(next)); },
@@ -751,7 +754,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         [this](application::DocumentId document) { return subtitleFonts(document); },
         [this] { return m_settings->text("video.subtitleProvider").toStdString(); },
         m_userFolder.isEmpty() ? std::filesystem::path()
-                               : std::filesystem::path((m_userFolder + QStringLiteral("/ai/skills")).toStdU16String())});
+                               : std::filesystem::path((m_userFolder + QStringLiteral("/ai/skills")).toStdU16String()),
+        m_aiScripts.get()});
     AiFeatures::Ports aiPorts = options.aiPorts ? std::move(*options.aiPorts)
                                                 : AiFeatures::defaultPorts(m_userFolder, &m_apiHost->api(),
                                                                            options.appVersion.isEmpty()
@@ -776,7 +780,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         },
         [this] { refreshViews(); }});
     m_agent = std::make_unique<AgentController>(AgentController::Wiring{
-        *m_ai, *m_settings, m_apiHost->api(), m_apiHost->review(), m_workspace, *m_files, m_userFolder, {}});
+        *m_ai, *m_settings, m_apiHost->api(), m_apiHost->review(), m_workspace, *m_files, m_userFolder, {},
+        m_aiScripts.get(), m_automation.get()});
     m_inlineAi = std::make_unique<InlineAiController>(InlineAiController::Wiring{
         *m_ai, *m_settings, m_apiHost->api(), m_apiHost->review(), m_workspace, *m_files, *m_agent,
         [this](application::DocumentId document, core::LineId line) {
@@ -938,6 +943,25 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             refreshViews();
         };
         m_alignToVideo = std::make_unique<AlignToVideoController>(*m_settings, std::move(hooks));
+    }
+    {
+        VideoAnalysisController::Hooks hooks;
+        hooks.video = [this] { return videoState() == application::VideoState::None ? nullptr : &activeMedia().video->session(); };
+        hooks.target = [this] { return targetSession(); };
+        hooks.pause = [this] {
+            if (activeMedia().video->playing())
+                activeMedia().video->pause();
+        };
+        hooks.refresh = [this] {
+            editor().reloadFromSession();
+            refreshViews();
+        };
+        hooks.clipboard = [] { return QGuiApplication::clipboard()->text(); };
+        m_videoAnalysis = std::make_unique<VideoAnalysisController>(std::move(hooks));
+        connect(m_videoAnalysis.get(), &VideoAnalysisController::previewChanged, this, [this] {
+            if (activeMedia().videoShowsTemplate || m_videoAnalysis->videoPreview())
+                showVideoSubtitles();
+        });
     }
     {
         LyricsImportController::Hooks hooks;
@@ -1971,6 +1995,7 @@ void Application::makeNodeEffects(WindowViews &v, int shellWindow)
     auto *effects = v.nodeEffects.get();
     effects->setSessionSource([this, shellWindow] { return windowSession(shellWindow); });
     effects->setLibraryFolder(std::filesystem::path(m_userFolder.toStdU16String()) / u"node-effects");
+    effects->setSettings(&m_settings->settings());
     connect(effects, &ui::NodeEffectsController::documentEdited, this, [this] { refreshViews(); });
     connect(effects, &ui::NodeEffectsController::videoChanged, this, [this, active, effects] {
         if (active() && (activeMedia().videoShowsTemplate || effects->videoPreview()))
@@ -2457,7 +2482,9 @@ bool Application::showVideoSubtitles()
     if (!m_settings->boolean("video.disableLiveEditing") && activeViews().editorDocument == target && activeMedia().video->hasVideo())
         draft = editor().draftDocument();
     std::optional<core::Document> templated;
-    if (m_layerPreview) {
+    if (m_videoAnalysis && m_videoAnalysis->videoPreview()) {
+        templated = m_videoAnalysis->videoDocument(draft ? *draft : session->document());
+    } else if (m_layerPreview) {
         templated = layerPreviewDocument(draft ? *draft : session->document(), session->selection().selected);
     } else if (nodeEffects().videoPreview()) {
         templated = nodeEffects().videoDocument(draft ? *draft : session->document());
@@ -6781,6 +6808,7 @@ QVariantMap Application::qmlProperties(int shellWindow)
             {QStringLiteral("styleManager"), QVariant::fromValue(static_cast<QObject *>(m_styleManager.get()))},
             {QStringLiteral("kanjiTimer"), QVariant::fromValue(static_cast<QObject *>(views(shellWindow).kanjiTimer.get()))},
             {QStringLiteral("alignToVideo"), QVariant::fromValue(static_cast<QObject *>(m_alignToVideo.get()))},
+            {QStringLiteral("videoAnalysis"), QVariant::fromValue(static_cast<QObject *>(m_videoAnalysis.get()))},
             {QStringLiteral("lyricsImport"), QVariant::fromValue(static_cast<QObject *>(m_lyricsImport.get()))},
             {QStringLiteral("qcNotes"), QVariant::fromValue(static_cast<QObject *>(m_qcNotes.get()))},
             {QStringLiteral("fontCollector"), QVariant::fromValue(static_cast<QObject *>(m_fontCollector.get()))},
@@ -7481,7 +7509,8 @@ void Application::resetAllSettings()
                                        application::kAutomationHotkeysSetting, application::kHotkeysSetting,
                                        application::kAudioHotkeysSetting,
                                        "workspace.settingsPage",
-                                       "automation.dialogAnswers", "automation.dialogPresets"};
+                                       "automation.dialogAnswers", "automation.dialogPresets",
+                                       "nodeEffects.exportFormat"};
     const auto appearance = appearanceSettings();
     keep.insert(keep.end(), appearance.begin(), appearance.end());
     for (const std::string_view id : keep)

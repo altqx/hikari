@@ -222,6 +222,8 @@ hikari_add_gtest(hikari_application_center_times_tests SOURCES center_times_test
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_align_to_video_tests SOURCES align_to_video_tests.cpp
     LIBRARIES hikari_application LABELS application)
+hikari_add_gtest(hikari_application_video_analysis_tests SOURCES video_analysis_tests.cpp
+    LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_qc_notes_tests SOURCES qc_notes_tests.cpp
     LIBRARIES hikari_application LABELS application)
 target_compile_definitions(hikari_application_qc_notes_tests PRIVATE
@@ -276,4 +278,6 @@ hikari_add_gtest(hikari_application_karaoke_templates_tests SOURCES karaoke_temp
     LIBRARIES hikari_application LABELS application)
 
 hikari_add_gtest(hikari_application_tag_removal_tests SOURCES tag_removal_tests.cpp
+    LIBRARIES hikari_application LABELS application)
+hikari_add_gtest(hikari_application_dependency_control_tests SOURCES dependency_control_tests.cpp
     LIBRARIES hikari_application LABELS application)

@@ -186,6 +186,24 @@ Pane {
                                                   qsTr("%n code lines", "", root.controller.codeCount)),
                                      root.karaokeLineCount(root.controller.karaokeCount)].join(" · ")
                         }
+                        ComboBox {
+                            id: modeBox
+                            objectName: "templateMode"
+                            enabled: root.controller.editable
+                            model: ["karaOK", "Aegisub 3.2.2"]
+                            currentIndex: root.controller.karaOKMode ? 0 : 1
+                            onActivated: index => {
+                                root.controller.setKaraOKMode(index === 0)
+                                currentIndex = Qt.binding(() => root.controller.karaOKMode ? 0 : 1)
+                            }
+                            ToolTip.visible: hovered
+                            ToolTip.delay: 600
+                            ToolTip.text: root.controller.modeInFile
+                                          ? qsTr("The template language this file sets.")
+                                          : qsTr("The template language this file’s templates use. Choose one to set it in the file.")
+                            Accessible.name: qsTr("Template language")
+                            Accessible.description: ToolTip.text
+                        }
                         Button {
                             id: newButton
                             objectName: "templateNew"
