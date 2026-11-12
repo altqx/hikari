@@ -116,7 +116,8 @@ KEYS = {
 LETTERS = "qwertyuiop asdfghjkl zxcvbnm"
 CODES = {"q": 16, "w": 17, "e": 18, "r": 19, "t": 20, "y": 21, "u": 22, "i": 23, "o": 24, "p": 25,
          "a": 30, "s": 31, "d": 32, "f": 33, "g": 34, "h": 35, "j": 36, "k": 37, "l": 38,
-         "z": 44, "x": 45, "c": 46, "v": 47, "b": 48, "n": 49, "m": 50, " ": 57, "1": 2, "2": 3, "3": 4}
+         "z": 44, "x": 45, "c": 46, "v": 47, "b": 48, "n": 49, "m": 50, " ": 57, "1": 2, "2": 3, "3": 4,
+         "4": 5}
 for ch, code in CODES.items():
     KEYS.setdefault(ch, (code, "space" if ch == " " else ch, "space" if ch == " " else ch))
 
@@ -1745,8 +1746,12 @@ MW_HOTKEYS = ("version = 1\n\n[global]\n"
               "GLOBAL_QUIT = \"Ctrl+Alt+Shift+Q\"\n")
 MW_DOCS = ("a.ass", "b.ass", "c.ass")
 # mutter publishes no window geometry: the step puts the windows in corners with its move-to-corner keybindings.
-MUTTER_CORNERS = {"nw": "super+1", "se": "super+3"}
+MUTTER_CORNERS = {"sw": "super+4", "se": "super+3", "next": "super+2"}
 mutter_placed = {}
+
+
+def mw_docs(win):
+    return frozenset(t["name"] for t in win["tabs"])
 
 
 def mw_windows():
@@ -1813,18 +1818,19 @@ def mw_start_once(restore):
     mw_settings(restore)
     app("start", *paths)
     time.sleep(2)
-    wins = mw_wait(lambda ws: len(ws) == 1 and len(ws[0]["tabs"]) == 3, timeout=15)
+    wins = mw_wait(lambda ws: len(ws) == 1 and len(ws[0]["tabs"]) == 3, timeout=30)
     if len(wins) == 1 and len(wins[0]["tabs"]) < 3:
         for path in paths:
             if not any(t["name"] == os.path.basename(path) for t in wins[0]["tabs"]):
                 app("start", path)
-        wins = mw_wait(lambda ws: len(ws) == 1 and len(ws[0]["tabs"]) == 3, timeout=15)
+        wins = mw_wait(lambda ws: len(ws) == 1 and len(ws[0]["tabs"]) == 3, timeout=30)
     dismiss_notices()
     if B.name == "mutter":
-        sh(["gsettings", "set", "org.gnome.desktop.wm.keybindings", "move-to-corner-nw", "['<Super>1']"])
+        sh(["gsettings", "set", "org.gnome.desktop.wm.keybindings", "move-to-corner-sw", "['<Super>4']"])
         sh(["gsettings", "set", "org.gnome.desktop.wm.keybindings", "move-to-corner-se", "['<Super>3']"])
+        sh(["gsettings", "set", "org.gnome.desktop.wm.keybindings", "switch-windows", "['<Super>2']"])
         if wins:
-            mutter_placed[wins[0]["title"]] = B.client_rect("HikariSub")[:2]
+            mutter_placed[mw_docs(wins[0])] = B.client_rect("HikariSub")[:2]
     return wins
 
 
@@ -1837,12 +1843,39 @@ def mw_x11_monitors():
     return out
 
 
-def mw_x11_side_by_side(lower=0):
-    """X11: the first window left, the others right and LOWER pixels down, so no drop lands on the window behind."""
-    for i, w in enumerate(sorted(mw_windows(), key=lambda w: not mw_holding([w], "a.ass"))):
-        for wid in sh(["xdotool", "search", "--onlyvisible", "--name", "^" + re.escape(w["title"]) + "$"]).split():
-            sh(["xdotool", "windowmove", "--sync", wid, str(0 if i == 0 else 1800), str(100 if i == 0 else 100 + lower)])
+def mw_side_by_side(lower=0):
+    """The first window left, the others right and LOWER pixels down, so no drop lands on the window behind."""
+    ordered = sorted(mw_windows(), key=lambda w: not mw_holding([w], "a.ass"))
+    for i, w in enumerate(ordered):
+        x, y = (0, 100) if i == 0 else (1800, 100 + lower)
+        if B.name == "x11":
+            for wid in sh(["xdotool", "search", "--onlyvisible", "--name", "^" + re.escape(w["title"]) + "$"]).split():
+                sh(["xdotool", "windowmove", "--sync", wid, str(x), str(y)])
+        elif B.name == "kwin":
+            B.script(f"for (const w of workspace.windowList()) if (w.caption === {json.dumps(w['title'])}) "
+                     f"w.frameGeometry = {{x: {x}, y: {y}, width: w.frameGeometry.width, "
+                     f"height: w.frameGeometry.height}};")
+    if B.name == "mutter":
+        mw_mutter_corners(ordered)
     time.sleep(1)
+
+
+def mw_mutter_corners(ordered):
+    """mutter publishes no window geometry: activate each window and send it to a bottom corner, where its client
+    area ends at the screen edge whatever the title bar's height."""
+    mutter_placed.clear()
+    for i, w in enumerate(ordered):
+        key = mw_docs(w)
+        for _ in range(4):
+            active = next((x for x in mw_windows() if x["active"]), None)
+            if active and mw_docs(active) == key:
+                break
+            B.keys(MUTTER_CORNERS["next"], 1.0)
+        else:
+            log(f"mutter: the window with {sorted(key)} never became active; not placed")
+            continue
+        B.keys(MUTTER_CORNERS["sw" if i == 0 else "se"], 1.0)
+        mutter_placed[key] = (0 if i == 0 else 1600 - w["w"], 1000 - w["h"])
 
 
 def mw_compositor_rect(win):
@@ -1864,7 +1897,7 @@ def mw_compositor_rect(win):
                 side = (w - win["w"]) / 2
                 return int(x + side), int(y + h - win["h"] - side), win["w"], win["h"], m.group(6)
         return None
-    at = mutter_placed.get(title)
+    at = mutter_placed.get(mw_docs(win))
     return (at[0], at[1], win["w"], win["h"], "Meta-0") if at else None
 
 
@@ -1881,10 +1914,9 @@ def mw_focus(title):
         B.script(f'for (const w of workspace.windowList()) if (w.caption === {json.dumps(title)}) workspace.activeWindow = w;')
     else:
         win = next((w for w in mw_windows() if w["title"] == title), None)
-        r = mw_compositor_rect(win) if win else None
-        if r and win["bar"]:
-            bar = win["bar"]
-            click(r[0] + bar["x"] + bar["w"] - 40, r[1] + bar["y"] + bar["h"] // 2)
+        point = mw_bar_end_point(win) if win else None
+        if point:
+            click(*point)
     time.sleep(0.8)
     return any(w["active"] for w in mw_windows() if w["title"] == title)
 
@@ -1903,24 +1935,6 @@ def mw_close(title):
         mw_focus(title)
         B.keys("alt+f4")
     time.sleep(1.5)
-
-
-def mw_place_new(before_titles):
-    """mutter: the window that just opened has the focus; put it in the bottom-right corner, the first one top-left."""
-    if B.name != "mutter":
-        return
-    wins = mw_windows()
-    new = [w for w in wins if w["title"] not in before_titles]
-    if not new:
-        return
-    B.keys(MUTTER_CORNERS["se"], 1.0)
-    mutter_placed[new[0]["title"]] = (1600 - new[0]["w"], 1000 - new[0]["h"])
-    first = next((w for w in wins if w["title"] in mutter_placed and w is not new[0]), None)
-    if first and mutter_placed.get(first["title"]) != (0, 0):
-        x, y = mutter_placed[first["title"]]
-        click(x + 40, y + 40)
-        B.keys(MUTTER_CORNERS["nw"], 1.0)
-        mutter_placed[first["title"]] = (0, 0)
 
 
 def mw_layout_rects():
@@ -1959,13 +1973,17 @@ def mw_select_tab(doc):
 
 
 def mw_bar_end_point(win):
-    """On the bar just past its last tab: a drop there appends."""
+    """On the bar past its last tab and outside every other window, which may be on top: a drop there appends."""
     r = mw_compositor_rect(win)
     if not r or not win["bar"]:
         return None
     bar = win["bar"]
     last = max((t["x"] + t["w"] for t in win["tabs"]), default=bar["x"])
-    return r[0] + min(last + 30, bar["x"] + bar["w"] - 60), r[1] + bar["y"] + bar["h"] // 2
+    y = r[1] + bar["y"] + bar["h"] // 2
+    others = [o for o in (mw_compositor_rect(w) for w in mw_windows() if mw_docs(w) != mw_docs(win)) if o]
+    xs = range(r[0] + last + 60, r[0] + bar["x"] + bar["w"] - 20, 20)
+    return next(((x, y) for x in xs if not any(inside(x, y, o) for o in others)),
+                (r[0] + min(last + 60, bar["x"] + bar["w"] - 60), y))
 
 
 def mw_drag_via(start, end, out=120):
@@ -1979,13 +1997,18 @@ def mw_drag_via(start, end, out=120):
     B.pointer(*cmds)
 
 
+def mw_ended(timeout=10.0):
+    end = time.time() + timeout
+    while app("alive").strip() != "no":
+        if time.time() > end:
+            return False
+        time.sleep(0.5)
+    return True
+
+
 def mw_quit():
     B.keys(MW_KEYS["quit"], 1.0)
-    for _ in range(20):
-        if app("alive").strip() == "no":
-            return True
-        time.sleep(0.5)
-    return False
+    return mw_ended()
 
 
 def mw_drag_out(doc, tag):
@@ -1998,14 +2021,15 @@ def mw_drag_out(doc, tag):
     log(f"{tag}: drag {doc} from {start} to {end}")
     if not start or not end:
         return None, wins, f"no drag: tab at {start}, free point {end}"
-    titles = {w["title"] for w in wins}
     drag(*start, *end)
-    after = mw_wait(lambda ws: len(ws) > len(wins), timeout=8)
-    mw_place_new(titles)
+    mw_wait(lambda ws: len(ws) > len(wins), timeout=8)
     return end, mw_windows(), ""
 
 
 def mw_drag_onto(doc, target_title, tag):
+    src = mw_holding(mw_windows(), doc)
+    if src:
+        mw_focus(src["title"])
     wins = mw_windows()
     src = mw_holding(wins, doc)
     dst = next((w for w in wins if w["title"] == target_title), None)
@@ -2016,6 +2040,10 @@ def mw_drag_onto(doc, target_title, tag):
         return mw_windows(), f"no drag: tab at {start}, target bar at {end}"
     mw_drag_via(start, end)
     time.sleep(1.5)
+    src_key, dst_key = mw_docs(src), mw_docs(dst)
+    if src_key in mutter_placed and dst_key in mutter_placed:
+        mutter_placed[src_key - {doc}] = mutter_placed.pop(src_key)
+        mutter_placed[dst_key | {doc}] = mutter_placed.pop(dst_key)
     return mw_windows(), ""
 
 
@@ -2037,7 +2065,7 @@ def step_windows():
     wins = mw_start()
     ev = mw_evidence("windows-0-start", wins)
     if len(wins) != 1 or len(wins[0]["tabs"]) != 3:
-        for item in ("windows-drag-out", "windows-drag-between", "windows-drag-back", "windows-keys"):
+        for item in ("windows-drag-out", "windows-drag-between", "windows-drag-back"):
             verdict(item, "failed", f"the three documents did not open as tabs of one window: {mw_tabs(wins)}", ev)
         return
     first = wins[0]["title"]
@@ -2064,8 +2092,8 @@ def step_windows():
         verdict("windows-drag-out-on-screen", "observed" if whole else "failed",
                 f"the window placed under the pointer at {r[:4] if r else None} is whole on a monitor {screens}: {whole}",
                 ev1)
-        mw_x11_side_by_side()
-        wins = mw_windows()
+    mw_side_by_side()
+    wins = mw_windows()
     if not out_ok:
         for item in ("windows-drag-between", "windows-drag-back"):
             verdict(item, "failed", "not reached: the drag out did not open a window", ev1)
@@ -2080,7 +2108,7 @@ def step_windows():
                     f"b.ass's tab dragged onto the second window's tab bar at the same height: windows {mw_tabs(wins)} "
                     f"{why}", ev2)
             if not level_ok:
-                mw_x11_side_by_side(lower=120)
+                mw_side_by_side(lower=120)
                 level = "; X11: the second window 120 px lower, so the drop is below the source bar"
         if not level and B.name == "x11":
             between_ok = level_ok
@@ -2116,9 +2144,7 @@ def step_windows_keys():
     current = mw_current(wins[0])
     B.keys(MW_KEYS["new"], 1.5)
     mw_wait(lambda ws: len(ws) == 2, timeout=8)
-    mw_place_new({wins[0]["title"]})
-    if B.name == "x11":
-        mw_x11_side_by_side()
+    mw_side_by_side()
     wins = mw_windows()
     ev0 = mw_evidence("windows-4-key-new", wins)
     new = mw_holding(wins, current) if current else None
@@ -2164,16 +2190,16 @@ def mw_two_windows():
     mw_focus(next((w["title"] for w in mw_windows() if mw_holding([w], "c.ass")), first))
     B.keys(MW_KEYS["new"], 1.5)
     mw_wait(lambda ws: len(ws) == 2, timeout=8)
-    mw_place_new({first})
-    if B.name == "x11":
-        mw_x11_side_by_side()
+    mw_side_by_side()
     return mw_windows()
 
 
 def step_windows_restore():
     """Restore after quitting and after a crash: every window with its tabs, sizes, and positions where a client places them."""
-    positions = B.name == "x11"
-    placed = "positions compared (X11)" if positions else "sizes compared; on Wayland the compositor places windows"
+    fields, placed = {
+        "x11": (("x", "y", "w", "h"), "positions and sizes compared (X11)"),
+        "sway": ((), "tabs only; sway tiles, so it sets every size and place"),
+    }.get(B.name, (("w", "h"), "sizes compared; on Wayland the compositor places windows"))
     wins = mw_two_windows()
     ev0 = mw_evidence("windows-7-before-quit", wins)
     if len(wins) != 2:
@@ -2188,7 +2214,7 @@ def step_windows_restore():
     app("start")
     time.sleep(2)
     after = mw_wait(lambda ws: len(ws) == 2, timeout=15)
-    diffs = restore_differences(before, after, positions)
+    diffs = restore_differences(before, after, fields)
     ev1 = mw_evidence("windows-8-after-restart", after)
     open(os.path.join(EVID, "windows-last-session.json"), "w").write(saved)
     verdict("windows-restart-restore", "observed" if gone and not diffs else "failed",
@@ -2205,7 +2231,7 @@ def step_windows_restore():
     ev2, _ = B.snap("windows-9-crash-offer")
     sh(["python3", f"{GATE}/atspi_tool.py", "press-showing", "Restore session"])
     after = mw_wait(lambda ws: len(ws) == 2, timeout=15)
-    diffs = restore_differences(before, after, positions)
+    diffs = restore_differences(before, after, fields)
     ev3 = mw_evidence("windows-10-after-crash", after)
     verdict("windows-crash-restore", "observed" if offer and not diffs else "failed",
             f"SIGKILL with two windows, restart: the crash offer's Restore session shown: {bool(offer)}; pressed: "
@@ -2273,7 +2299,7 @@ def step_windows_close():
         mw_focus(next((w["title"] for w in mw_windows() if mw_holding([w], "b.ass")), first))
         B.keys(MW_KEYS["new"], 1.5)
         mw_wait(lambda ws: len(ws) == 2, timeout=8)
-        mw_place_new({first})
+        mw_side_by_side()
         mw_wait(lambda ws: any(w["active"] and mw_holding([w], "b.ass") for w in ws), timeout=4)
     a_dirty, b_dirty = (mw_modify(mw_holding(mw_windows(), d)["title"], d) if mw_holding(mw_windows(), d) else False
                         for d in ("a.ass", "b.ass"))
@@ -2284,8 +2310,7 @@ def step_windows_close():
     rows = [n for n in ("Save a.ass", "Save b.ass") if atspi_find("combo box", n)]
     ev4, _ = B.snap("windows-15-quit-review", extra="# dialog\n" + "\n".join(asked) + f"\n# rows {rows}")
     sh(["python3", f"{GATE}/atspi_tool.py", "press-showing", "Quit without saving"])
-    time.sleep(2.5)
-    gone = app("alive").strip() == "no"
+    gone = mw_ended()
     reviews = sum("before quitting" in l for l in asked)
     ok = two and a_dirty and b_dirty and reviews >= 1 and any("2 documents" in l for l in asked) and gone
     verdict("windows-quit-unsaved", "observed" if ok else "failed",

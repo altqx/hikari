@@ -168,17 +168,17 @@ class Windows(unittest.TestCase):
     def test_a_restore_matches_windows_by_their_tabs(self):
         before = [win(["a.ass"], 10, 20), win(["b.ass"], 500, 300)]
         after = [win(["b.ass"], 501, 301), win(["a.ass"], 10, 20)]
-        self.assertEqual(gatelib.restore_differences(before, after, positions=True), [])
+        self.assertEqual(gatelib.restore_differences(before, after, fields=("x", "y", "w", "h")), [])
 
     def test_positions_count_only_where_a_client_places_its_windows(self):
         before = [win(["a.ass"], 10, 20)]
         after = [win(["a.ass"], 400, 300)]
-        self.assertEqual(gatelib.restore_differences(before, after, positions=False), [])
-        self.assertEqual(len(gatelib.restore_differences(before, after, positions=True)), 1)
+        self.assertEqual(gatelib.restore_differences(before, after, fields=("w", "h")), [])
+        self.assertEqual(len(gatelib.restore_differences(before, after, fields=("x", "y", "w", "h"))), 1)
 
     def test_a_lost_window_or_another_size_is_a_difference(self):
         before = [win(["a.ass"]), win(["b.ass"])]
-        self.assertEqual(len(gatelib.restore_differences(before, [win(["a.ass"], w=700)], positions=False)), 3)
+        self.assertEqual(len(gatelib.restore_differences(before, [win(["a.ass"], w=700)], fields=("w", "h"))), 3)
 
     def test_whole_on_the_screen(self):
         self.assertTrue(gatelib.whole_on((0, 0, 1600, 1000), (0, 0, 1600, 1000)))
