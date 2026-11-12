@@ -207,6 +207,11 @@ QStringList AutomationDialogController::presets() const
     return remembers() ? m_memory->presets(m_memoryKey) : QStringList();
 }
 
+QVariantList AutomationDialogController::presetRows() const
+{
+    return remembers() ? m_memory->presetRows(m_memoryKey) : QVariantList();
+}
+
 QVariantList AutomationDialogController::shownValues(const application::NamedDialogValues &values) const
 {
     QVariantList out;
@@ -224,9 +229,9 @@ QVariantList AutomationDialogController::lastUsedValues() const
     return last ? shownValues(last->answered) : QVariantList();
 }
 
-QVariantList AutomationDialogController::presetValues(const QString &name) const
+QVariantList AutomationDialogController::presetValues(const QString &name, const QString &tier) const
 {
-    const auto preset = remembers() ? m_memory->preset(m_memoryKey, name) : std::nullopt;
+    const auto preset = remembers() ? m_memory->preset(m_memoryKey, name, tierFromText(tier)) : std::nullopt;
     return preset ? shownValues(*preset) : QVariantList();
 }
 
@@ -268,20 +273,51 @@ QString AutomationDialogController::scriptValueText(int index) const
     return {};
 }
 
-void AutomationDialogController::savePreset(const QString &name, const QVariantList &values)
+void AutomationDialogController::savePreset(const QString &name, const QVariantList &values, const QString &tier)
 {
     if (!remembers() || name.trimmed().isEmpty())
         return;
-    m_memory->savePreset(m_memoryKey, name.trimmed(), application::namedDialogValues(m_request, resultOf(-1, values)));
+    m_memory->savePreset(m_memoryKey, name.trimmed(), application::namedDialogValues(m_request, resultOf(-1, values)),
+                         tierFromText(tier).value_or(application::Tier::Mine));
     emit memoryChanged();
 }
 
-void AutomationDialogController::deletePreset(const QString &name)
+void AutomationDialogController::deletePreset(const QString &name, const QString &tier)
 {
     if (!remembers())
         return;
-    m_memory->deletePreset(m_memoryKey, name);
+    m_memory->deletePreset(m_memoryKey, name, tierFromText(tier));
     emit memoryChanged();
+}
+
+QVariantList AutomationDialogController::presetClashes(const QString &name, const QString &tier) const
+{
+    const auto from = tierFromText(tier);
+    const auto suggestion = remembers() && from ? m_memory->presetClash(m_memoryKey, name, *from) : std::nullopt;
+    if (!suggestion)
+        return {};
+    return {QVariantMap{{QStringLiteral("name"), name}, {QStringLiteral("suggestion"), *suggestion}}};
+}
+
+QString AutomationDialogController::copyPreset(const QString &name, const QString &tier, const QVariantList &choices)
+{
+    return sendPreset(name, tier, choices, false);
+}
+
+QString AutomationDialogController::movePreset(const QString &name, const QString &tier, const QVariantList &choices)
+{
+    return sendPreset(name, tier, choices, true);
+}
+
+QString AutomationDialogController::sendPreset(const QString &name, const QString &tier, const QVariantList &choices,
+                                               bool move)
+{
+    const auto from = tierFromText(tier);
+    if (!remembers() || !from)
+        return {};
+    const auto landed = m_memory->sendPreset(m_memoryKey, name, *from, clashChoiceFor(name, choices), move);
+    emit memoryChanged();
+    return landed.value_or(QString());
 }
 
 }

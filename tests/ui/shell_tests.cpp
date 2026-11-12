@@ -7069,10 +7069,10 @@ private slots:
              QStringLiteral("a macro of the loaded scripts, or a plugin's command")},
             {main, QStringLiteral(R"("panelMenu" + modelData.uniqueName)"), QStringLiteral("a panel, under Panels")},
             {main, QStringLiteral("root.app.replaceEditorMisspell"), QStringLiteral("a spelling suggestion")},
-            {QStringLiteral("AutomationDialog.qml"), QStringLiteral(R"("dialogPreset_" + modelData)"),
-             QStringLiteral("a script dialog's preset, under Presets")},
-            {QStringLiteral("AutomationDialog.qml"), QStringLiteral(R"("dialogDeletePreset_" + modelData)"),
+            {QStringLiteral("AutomationDialog.qml"), QStringLiteral(R"("dialogDeletePreset_" + window.presetKey(modelData))"),
              QStringLiteral("a script dialog's preset, under Delete preset")},
+            {QStringLiteral("AutomationDialog.qml"), QStringLiteral(R"(tierMenu.name + "_" + modelData.name)"),
+             QStringLiteral("a script dialog's preset, under Copy to or Move to")},
             {QStringLiteral("MainTitleBar.qml"), QStringLiteral("bar.foldFrom + index"),
              QStringLiteral("a menu of the title bar folded into More (the menus have no icons)")},
             {QStringLiteral("FontPicker.qml"), QStringLiteral(R"(text: qsTr("No catalogues yet"))"),
@@ -19022,7 +19022,7 @@ private slots:
 
         QVERIFY(QMetaObject::invokeMethod(dialog, "reviewFile", Q_ARG(QVariant, fixture("needs-api-99.hikariplugin"))));
         answerMessage("pluginManagerMessages", QStringLiteral("Plugin not installed"),
-                      QStringLiteral("This plugin needs Hikari API 99, and this HikariSub has API 1. Update HikariSub to install it."));
+                      QStringLiteral("This plugin needs Hikari API 99, and this HikariSub has API %1. Update HikariSub to install it.").arg(api::kApiVersion));
 
         QVERIFY(QMetaObject::invokeMethod(dialogItem("pluginManagerDialog", "pluginUninstall_com.example.hello"), "click"));
         answerMessage("pluginManagerMessages", QStringLiteral("Uninstall plugin"), QStringLiteral("Uninstall “Hello”?"),

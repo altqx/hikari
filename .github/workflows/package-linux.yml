@@ -125,7 +125,7 @@ jobs:
           . /etc/profile.d/hikari-floor.sh
           test ! -e "$HOME/.local/share/Qt/qtaccount.ini"
           test ! -e out/sdk/qt-install-private
-          set -- --preset linux-floor-x64-release -DHIKARI_INSTALL_DICTIONARY_DIR=/usr/share/myspell -DHIKARI_DEBUG_SYMBOLS=ON
+          set -- --preset linux-floor-x64-release -DHIKARI_INSTALL_DICTIONARY_DIR=/usr/share/myspell -DHIKARI_DEBUG_SYMBOLS=ON -DHIKARI_AUTOMATION_RESET=ON
           [ -z "$SUFFIX" ] || set -- "$@" "-DHIKARI_VERSION_SUFFIX=$SUFFIX"
           [ -z "$POSTHOG_KEY" ] || set -- "$@" "-DHIKARI_POSTHOG_KEY=$POSTHOG_KEY"
           cmake "$@"

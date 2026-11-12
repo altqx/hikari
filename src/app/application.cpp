@@ -633,6 +633,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         *m_files,
         m_workspace, [this]() -> ui::LineEditorController & { return editor(); }, [this]() -> ui::VideoController & { return video(); },
         [this]() -> ui::ShellController & { return shell(); }, *activeMedia().videoHelper);
+    m_automationReset = std::make_unique<AutomationResetNotice>(
+        options.automationReset, *m_automation, automationPath(options.automationDir) + QStringLiteral("/automation/Autoload"));
     m_automation->setDocumentChanged([this] { refreshViews(); });
     m_automation->setBeforeRun([this] { commitTemplates(); });
     m_files->setBeforeSave([this](application::DocumentId document) {
@@ -698,6 +700,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     connect(m_settings.get(), &ui::SettingsStore::changed, this, &Application::settingChanged);
     m_automation->manager().setTraceLevel(m_settings->integer("automation.traceLevel"));
     m_automation->setSettings(m_settings.get());
+    m_automation->setRunProjectRoot([this] { return m_projects ? m_projects->root(m_workspace.activeWindow()) : QString(); });
     m_automation->setWindowProjects([this] {
         std::map<int, application::WindowProject> projects;
         if (m_projects)
@@ -2463,6 +2466,8 @@ void Application::refreshViews()
         m_styleManager->targetRefreshed();
     if (m_fontCatalogs)
         m_fontCatalogs->projectChanged();
+    if (m_shiftTimes)
+        m_shiftTimes->setProjectRoot(m_projects ? m_projects->root(m_workspace.activeWindow()) : QString());
     const auto target = m_workspace.editingTarget();
     const auto reference = m_workspace.reference();
     auto *targetSession = target ? m_files->session(*target) : nullptr;
@@ -6919,6 +6924,7 @@ QVariantMap Application::qmlProperties(int shellWindow)
             {QStringLiteral("hotkeys"), QVariant::fromValue(static_cast<QObject *>(m_hotkeys.get()))},
             {QStringLiteral("updates"), QVariant::fromValue(static_cast<QObject *>(m_updates.get()))},
             {QStringLiteral("whatsNew"), QVariant::fromValue(static_cast<QObject *>(m_whatsNew.get()))},
+            {QStringLiteral("automationReset"), QVariant::fromValue(static_cast<QObject *>(m_automationReset.get()))},
             {QStringLiteral("analytics"), QVariant::fromValue(static_cast<QObject *>(m_analytics.get()))},
             {QStringLiteral("starPrompt"), QVariant::fromValue(static_cast<QObject *>(m_starPrompt.get()))},
             {QStringLiteral("crashReports"), QVariant::fromValue(static_cast<QObject *>(m_crashReports.get()))},
