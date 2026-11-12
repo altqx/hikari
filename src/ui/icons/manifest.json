@@ -5356,8 +5356,7 @@
    "legacy": [],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "AU21 #855"
+   ]
   },
   {
    "role": "align-center",
@@ -5368,8 +5367,7 @@
    "legacy": [],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "AU21 #855"
+   ]
   },
   {
    "role": "align-right",
@@ -5380,8 +5378,7 @@
    "legacy": [],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "AU21 #855"
+   ]
   },
   {
    "role": "align-top",
@@ -5428,8 +5425,7 @@
    "legacy": [],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "AU21 #855"
+   ]
   },
   {
    "role": "distribute-vertical",
