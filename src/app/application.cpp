@@ -789,6 +789,9 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_agent = std::make_unique<AgentController>(AgentController::Wiring{
         *m_ai, *m_settings, m_apiHost->api(), m_apiHost->review(), m_workspace, *m_files, m_userFolder, {},
         m_aiScripts.get(), m_automation.get()});
+    m_ai->setProjectKeys([this](const std::string &project, const std::string &providerId) {
+        return projectAiKey(QString::fromStdString(project), providerId);
+    });
     m_inlineAi = std::make_unique<InlineAiController>(InlineAiController::Wiring{
         *m_ai, *m_settings, m_apiHost->api(), m_apiHost->review(), m_workspace, *m_files, *m_agent,
         [this](application::DocumentId document, core::LineId line) {
@@ -802,6 +805,9 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
                 QString::fromStdString(window.settings().text("translation.translator")),
                 QString::fromStdString(window.settings().text("translation.reviewer")),
                 window.waitsForTrust("translation.translator") || window.waitsForTrust("translation.reviewer")};
+        },
+        [this](application::DocumentId document) {
+            return views(m_workspace.window(document).value_or(m_workspace.activeWindow())).settings->root();
         }});
     const auto hideAiCommands = [this] {
         m_hotkeys->setHidden([this](int id) { return !m_ai->on() && application::aiCommand(id); });
