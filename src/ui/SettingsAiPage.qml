@@ -914,6 +914,20 @@ ScrollView {
                 TextField { id: nameField; objectName: "aiProviderName"; Layout.fillWidth: true; Accessible.name: qsTr("Name") }
             }
             SettingsRow {
+                text: qsTr("Id")
+                labelWidth: 150
+                TextEdit {
+                    objectName: "aiProviderId"
+                    text: form.editingOne ? form.providerId : page.ai.newProviderId(form.preset)
+                    readOnly: true
+                    selectByMouse: true
+                    color: Theme.muted
+                    font.family: "monospace"
+                    Layout.fillWidth: true
+                    Accessible.name: qsTr("Id")
+                }
+            }
+            SettingsRow {
                 visible: form.custom
                 text: qsTr("Base URL")
                 labelWidth: 150
