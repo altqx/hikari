@@ -808,7 +808,10 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         [this] { refreshViews(); }});
     m_agent = std::make_unique<AgentController>(AgentController::Wiring{
         *m_ai, *m_settings, m_apiHost->api(), m_apiHost->review(), m_workspace, *m_files, m_userFolder, {},
-        m_aiScripts.get(), m_automation.get()});
+        m_aiScripts.get(), m_automation.get(),
+        [this] { return m_projects ? m_projects->root(m_workspace.activeWindow()) : QString(); }});
+    m_skillsSettings = std::make_unique<SkillsSettings>(
+        m_userFolder, [this](int window) { return m_projects ? m_projects->root(window) : QString(); });
     m_ai->setProjectKeys([this](const std::string &project, const std::string &providerId) {
         return projectAiKey(QString::fromStdString(project), providerId);
     });
@@ -2070,6 +2073,7 @@ void Application::makeNodeEffects(WindowViews &v, int shellWindow)
     });
     effects->shareTrustWith(v.templateEditor.get());
     effects->setLuaNodes([this] { return &luaNodes(); });
+    effects->setGlyphs([this] { return &glyphOutlines(); });
     effects->setAudio([this]() -> std::optional<const application::DisplayAudio *> {
         ui::AudioController *audio = activeMedia().audio.get();
         if (!audio || !audio->box().isOpen())
@@ -2201,6 +2205,15 @@ application::LuaNodePort &Application::luaNodes()
         m_luaNodes = std::make_unique<backends::LuaNodeHelper>(
             backends::LuaNodeHelper::Options{m_luaHelper, 10'000, backends::luaNodeProfile(m_luaHelper)});
     return *m_luaNodes;
+}
+
+application::shape::GlyphOutlinePort &Application::glyphOutlines()
+{
+    if (!m_glyphOutlines) {
+        m_glyphFonts = std::make_unique<backends::LibassFontService>();
+        m_glyphOutlines = std::make_unique<backends::FreetypeGlyphOutlines>(*m_glyphFonts);
+    }
+    return *m_glyphOutlines;
 }
 
 namespace {
@@ -6893,6 +6906,7 @@ QVariantMap Application::qmlProperties(int shellWindow)
             {QStringLiteral("review"), QVariant::fromValue(static_cast<QObject *>(m_review.get()))},
             {QStringLiteral("agent"), QVariant::fromValue(static_cast<QObject *>(m_agent.get()))},
             {QStringLiteral("inlineAi"), QVariant::fromValue(static_cast<QObject *>(m_inlineAi.get()))},
+            {QStringLiteral("skills"), QVariant::fromValue(static_cast<QObject *>(m_skillsSettings.get()))},
             {QStringLiteral("app"), QVariant::fromValue(static_cast<QObject *>(this))}};
 }
 

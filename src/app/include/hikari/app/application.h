@@ -57,6 +57,8 @@
 #include "hikari/backends/harper_client.h"
 #include "hikari/backends/legacy_spelling.h"
 #include "hikari/backends/lua_node_helper.h"
+#include "hikari/backends/freetype_glyph_outlines.h"
+#include "hikari/backends/libass_font_service.h"
 #include "hikari/backends/libass_renderer.h"
 #include "hikari/backends/subtitle_renderer_selection.h"
 #include "hikari/backends/qt_general_player.h"
@@ -85,6 +87,7 @@
 #include "hikari/app/agent_controller.h"
 #include "hikari/app/inline_ai_controller.h"
 #include "hikari/app/review_controller.h"
+#include "hikari/app/skills_settings.h"
 #include "hikari/app/window_settings.h"
 #include "shell_controller.h"
 #include "video_controller.h"
@@ -887,6 +890,7 @@ public:
     AutomationShell &automation() { return *m_automation; }
     // Runs node effects' Lua nodes in their own sandboxed helper, started on first use.
     application::LuaNodePort &luaNodes();
+    application::shape::GlyphOutlinePort &glyphOutlines();
     AutomationHotkeysController &automationHotkeys() { return *m_automationHotkeys; }
     SettingsImportController &settingsImport() { return *m_settingsImport; }
     HotkeysController &hotkeys() { return *m_hotkeys; }
@@ -944,6 +948,7 @@ public:
     AiSettings *aiSettings() const { return m_aiSettings.get(); }
     ReviewController *review() const { return m_review.get(); }
     AgentController *agent() const { return m_agent.get(); }
+    SkillsSettings *skillsSettings() const { return m_skillsSettings.get(); }
     InlineAiController *inlineAi() const { return m_inlineAi.get(); }
     Q_PROPERTY(hikari::app::PluginManager *pluginManager READ pluginManager CONSTANT)
     PluginManager *pluginManager() const { return m_pluginManager.get(); }
@@ -1321,6 +1326,8 @@ private:
     std::unique_ptr<AutomationShell> m_automation;
     QString m_luaHelper;
     std::unique_ptr<backends::LuaNodeHelper> m_luaNodes;
+    std::unique_ptr<backends::LibassFontService> m_glyphFonts;
+    std::unique_ptr<backends::FreetypeGlyphOutlines> m_glyphOutlines;
     std::optional<QVariantMap> m_layerPreview;
     std::map<core::LineId, std::u8string> m_interpolationPreview;
     std::unique_ptr<AutomationHotkeysController> m_automationHotkeys;
@@ -1335,6 +1342,7 @@ private:
     std::unique_ptr<AiSettings> m_aiSettings;
     std::unique_ptr<ReviewController> m_review;
     std::unique_ptr<AgentController> m_agent;
+    std::unique_ptr<SkillsSettings> m_skillsSettings;
     std::unique_ptr<InlineAiController> m_inlineAi;
     std::unique_ptr<PluginManager> m_pluginManager;
     std::unique_ptr<PluginMarketplace> m_pluginMarketplace;

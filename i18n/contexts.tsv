@@ -51,3 +51,4 @@ HikariSub.VisualTools	The visual tools: rail, options, values, and the tag and s
 HikariSub.Position	Position and alignment commands: change alignment, align and distribute, margins and position, phantom, and cycle values (AU21)
 HikariSub.Workspace	Panel docking: title bars and tabs, panel options and placement, saved layouts
 QGuiApplication	Qt's QT_LAYOUT_DIRECTION key, which Qt reads in this context (the catalog's layout direction)
+HikariSub.Skills	AI skills: Settings › AI › Skills, the skill folders and why a skill isn’t offered (AI14b)
