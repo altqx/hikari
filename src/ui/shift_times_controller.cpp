@@ -17,6 +17,11 @@ std::u8string u8(const QString &s)
     return std::u8string(reinterpret_cast<const char8_t *>(b.constData()), static_cast<std::size_t>(b.size()));
 }
 
+using application::Tier;
+
+constexpr const char *kShiftPresets = "shiftTimes.presets";
+constexpr const char *kPostprocessorPresets = "postprocessor.presets";
+
 constexpr int kRuleBits = 15;
 constexpr int kLegacyPanelBit = 16;
 
@@ -147,18 +152,19 @@ void ShiftTimesController::load()
         for (const QString &profile : m_store->list("shiftTimes.profiles")) {
             const auto text = profile.toStdString();
             const auto values = application::applyShiftProfile(text, application::ShiftTimesSettings{});
-            m_shiftPresets << Preset{QString::fromStdString(application::shiftProfileName(text)),
-                                     pick(mapOf(values, 0, {}), kShiftKeys)};
+            m_shiftPresets.of(Tier::Mine) << NamedPreset{QString::fromStdString(application::shiftProfileName(text)),
+                                                         pick(mapOf(values, 0, {}), kShiftKeys)};
         }
         savePresets();
         m_store->reset(QStringLiteral("shiftTimes.profiles"));
     } else {
-        m_shiftPresets = readPresets(m_store->list("shiftTimes.presets"));
+        m_shiftPresets.of(Tier::Mine) = readPresets(m_store->list(kShiftPresets));
     }
-    m_postprocessorPresets = readPresets(m_store->list("postprocessor.presets"));
+    m_postprocessorPresets.of(Tier::Mine) = readPresets(m_store->list(kPostprocessorPresets));
     m_shiftPreset = m_store->text("shiftTimes.preset");
     m_postprocessorPreset = m_store->text("postprocessor.preset");
     m_timingPreset = m_store->text("postprocessor.timingPreset");
+    loadProjectPresets();
     emit changed();
     emit presetsChanged();
 }
@@ -251,38 +257,32 @@ void ShiftTimesController::assign(const QVariantMap &map)
         m_ppStyles = map.value(QStringLiteral("ppStyles")).toString();
 }
 
-QStringList ShiftTimesController::names(const QList<Preset> &presets)
+QStringList ShiftTimesController::names(const TieredPresets &presets)
 {
     QStringList out;
-    for (const auto &p : presets)
-        out << p.name;
+    for (const auto &row : presets.rows())
+        if (!row.hidden)
+            out << q(row.name);
     return out;
 }
 
-QList<ShiftTimesController::Preset> ShiftTimesController::readPresets(const QStringList &stored)
+QList<NamedPreset> ShiftTimesController::readPresets(const QStringList &stored)
 {
-    QList<Preset> out;
-    for (const QString &s : stored) {
-        const auto o = QJsonDocument::fromJson(s.toUtf8()).object();
-        const QString name = o.value(QStringLiteral("name")).toString();
-        if (name.isEmpty())
-            continue;
-        out << Preset{name, o.value(QStringLiteral("values")).toObject()};
-    }
-    return out;
+    QJsonArray presets;
+    for (const QString &s : stored)
+        presets.append(QJsonDocument::fromJson(s.toUtf8()).object());
+    return ui::presetsOf(presets);
 }
 
-QStringList ShiftTimesController::writePresets(const QList<Preset> &presets)
+QStringList ShiftTimesController::writePresets(const QList<NamedPreset> &presets)
 {
     QStringList out;
-    for (const auto &p : presets)
-        out << QString::fromUtf8(QJsonDocument(QJsonObject{{QStringLiteral("name"), p.name},
-                                                           {QStringLiteral("values"), p.values}})
-                                     .toJson(QJsonDocument::Compact));
+    for (const auto &p : jsonOf(presets))
+        out << QString::fromUtf8(QJsonDocument(p.toObject()).toJson(QJsonDocument::Compact));
     return out;
 }
 
-QList<ShiftTimesController::Preset> *ShiftTimesController::presetsOf(const QString &tool)
+TieredPresets *ShiftTimesController::presetsOf(const QString &tool)
 {
     return tool == QLatin1String("postprocessor") ? &m_postprocessorPresets : &m_shiftPresets;
 }
@@ -292,43 +292,68 @@ QString *ShiftTimesController::currentOf(const QString &tool)
     return tool == QLatin1String("postprocessor") ? &m_postprocessorPreset : &m_shiftPreset;
 }
 
+Tier *ShiftTimesController::currentTierOf(const QString &tool)
+{
+    return tool == QLatin1String("postprocessor") ? &m_postprocessorPresetTier : &m_shiftPresetTier;
+}
+
+std::optional<Tier> ShiftTimesController::tierFor(const QString &tool, const QString &name, const QString &tier) const
+{
+    const auto &presets = tool == QLatin1String("postprocessor") ? m_postprocessorPresets : m_shiftPresets;
+    return presets.find(name, tierFromText(tier));
+}
+
+void ShiftTimesController::setProjectRoot(const QString &root)
+{
+    if (root == m_projectFile.root())
+        return;
+    m_projectFile = PresetsFile(root);
+    loadProjectPresets();
+    emit presetsChanged();
+}
+
+void ShiftTimesController::loadProjectPresets()
+{
+    m_shiftPresets.of(Tier::Project) = readPresets(m_projectFile.list(kShiftPresets));
+    m_postprocessorPresets.of(Tier::Project) = readPresets(m_projectFile.list(kPostprocessorPresets));
+    m_shiftPresetTier = m_shiftPresets.find(m_shiftPreset).value_or(Tier::Mine);
+    m_postprocessorPresetTier = m_postprocessorPresets.find(m_postprocessorPreset).value_or(Tier::Mine);
+}
+
 QJsonObject ShiftTimesController::valuesOf(const QString &tool) const
 {
     return pick(settingsMap(), keysOf(tool));
 }
 
-bool ShiftTimesController::savePreset(const QString &tool, const QString &name)
+bool ShiftTimesController::savePreset(const QString &tool, const QString &name, const QString &tier)
 {
     const QString trimmed = name.trimmed();
     if (!known(tool) || trimmed.isEmpty())
         return false;
-    auto &presets = *presetsOf(tool);
-    const Preset preset{trimmed, valuesOf(tool)};
-    auto it = std::find_if(presets.begin(), presets.end(), [&](const Preset &p) { return p.name == trimmed; });
-    if (it != presets.end())
-        *it = preset;
-    else
-        presets << preset;
+    const Tier to = hasProject() ? tierFromText(tier).value_or(Tier::Mine) : Tier::Mine;
+    presetsOf(tool)->save(to, {trimmed, valuesOf(tool)});
     *currentOf(tool) = trimmed;
+    *currentTierOf(tool) = to;
     savePresets();
     emit presetsChanged();
     return true;
 }
 
-bool ShiftTimesController::applyPreset(const QString &tool, const QString &name)
+bool ShiftTimesController::applyPreset(const QString &tool, const QString &name, const QString &tier)
 {
     if (!known(tool))
         return false;
-    const auto &presets = *presetsOf(tool);
-    const auto it = std::find_if(presets.begin(), presets.end(), [&](const Preset &p) { return p.name == name; });
-    if (it == presets.end())
+    const auto from = tierFor(tool, name, tier);
+    const NamedPreset *preset = from ? presetsOf(tool)->preset(name, from) : nullptr;
+    if (!preset)
         return false;
-    QVariantMap values = it->values.toVariantMap();
+    QVariantMap values = preset->values.toVariantMap();
     for (auto v = values.begin(); v != values.end();)
         v = keysOf(tool).contains(v.key()) ? std::next(v) : values.erase(v);
     assign(values);
     m_settings.postprocessor &= kRuleBits;
     *currentOf(tool) = name;
+    *currentTierOf(tool) = *from;
     save();
     savePresets();
     emit changed();
@@ -336,50 +361,88 @@ bool ShiftTimesController::applyPreset(const QString &tool, const QString &name)
     return true;
 }
 
-bool ShiftTimesController::renamePreset(const QString &tool, const QString &from, const QString &to)
+bool ShiftTimesController::renamePreset(const QString &tool, const QString &from, const QString &to, const QString &tier)
 {
     const QString trimmed = to.trimmed();
     if (!known(tool) || trimmed.isEmpty())
         return false;
     auto &presets = *presetsOf(tool);
-    auto it = std::find_if(presets.begin(), presets.end(), [&](const Preset &p) { return p.name == from; });
-    if (it == presets.end())
+    const auto at = tierFor(tool, from, tier);
+    if (!at || presets.hidden(from, *at))
         return false;
-    if (trimmed != from &&
-        std::any_of(presets.begin(), presets.end(), [&](const Preset &p) { return p.name == trimmed; }))
+    const bool timing = tool == QLatin1String("postprocessor") && m_timingPreset == from && presets.find(from) == at;
+    if (!presets.rename(*at, from, trimmed))
         return false;
-    it->name = trimmed;
-    if (*currentOf(tool) == from)
+    if (*currentOf(tool) == from && *currentTierOf(tool) == *at)
         *currentOf(tool) = trimmed;
-    if (tool == QLatin1String("postprocessor") && m_timingPreset == from)
+    if (timing)
         m_timingPreset = trimmed;
     savePresets();
     emit presetsChanged();
     return true;
 }
 
-bool ShiftTimesController::deletePreset(const QString &tool, const QString &name)
+bool ShiftTimesController::deletePreset(const QString &tool, const QString &name, const QString &tier)
 {
     if (!known(tool))
         return false;
     auto &presets = *presetsOf(tool);
-    const auto before = presets.size();
-    presets.removeIf([&](const Preset &p) { return p.name == name; });
-    if (presets.size() == before)
+    const auto at = tierFor(tool, name, tier);
+    if (!at || presets.hidden(name, *at) || !presets.remove(*at, name))
         return false;
-    if (*currentOf(tool) == name)
+    if (*currentOf(tool) == name && *currentTierOf(tool) == *at)
         currentOf(tool)->clear();
-    if (tool == QLatin1String("postprocessor") && m_timingPreset == name)
+    if (tool == QLatin1String("postprocessor") && m_timingPreset == name && !presets.find(name))
         m_timingPreset.clear();
     savePresets();
     emit presetsChanged();
     return true;
 }
 
+QVariantList ShiftTimesController::presetClashes(const QString &tool, const QString &name, const QString &tier) const
+{
+    const auto from = tierFromText(tier);
+    const auto &presets = tool == QLatin1String("postprocessor") ? m_postprocessorPresets : m_shiftPresets;
+    const auto suggestion = known(tool) && from ? presets.clash(name, *from) : std::nullopt;
+    if (!suggestion)
+        return {};
+    return {QVariantMap{{QStringLiteral("name"), name}, {QStringLiteral("suggestion"), *suggestion}}};
+}
+
+QString ShiftTimesController::copyPreset(const QString &tool, const QString &name, const QString &tier,
+                                         const QVariantList &choices)
+{
+    return sendPreset(tool, name, tier, choices, false);
+}
+
+QString ShiftTimesController::movePreset(const QString &tool, const QString &name, const QString &tier,
+                                         const QVariantList &choices)
+{
+    return sendPreset(tool, name, tier, choices, true);
+}
+
+QString ShiftTimesController::sendPreset(const QString &tool, const QString &name, const QString &tier,
+                                         const QVariantList &choices, bool move)
+{
+    const auto from = tierFromText(tier);
+    if (!known(tool) || !from || !hasProject())
+        return {};
+    const auto landed = presetsOf(tool)->send(name, *from, clashChoiceFor(name, choices), move);
+    if (!landed)
+        return {};
+    if (move && *currentOf(tool) == name && *currentTierOf(tool) == *from) {
+        *currentOf(tool) = *landed;
+        *currentTierOf(tool) = otherTierOf(*from);
+    }
+    savePresets();
+    emit presetsChanged();
+    return *landed;
+}
+
 void ShiftTimesController::setTimingPreset(const QString &name)
 {
-    if (name == m_timingPreset || (!name.isEmpty() && !m_postprocessorPresets.isEmpty() &&
-                                   !names(m_postprocessorPresets).contains(name)))
+    if (name == m_timingPreset || (!name.isEmpty() && !m_postprocessorPresets.rows().empty() &&
+                                   !m_postprocessorPresets.find(name)))
         return;
     m_timingPreset = name;
     savePresets();
@@ -398,13 +461,21 @@ void ShiftTimesController::save() const
     m_store->set("shiftTimes.options", options);
 }
 
-void ShiftTimesController::savePresets() const
+void ShiftTimesController::savePresets()
 {
-    m_store->set("shiftTimes.presets", writePresets(m_shiftPresets));
-    m_store->set("postprocessor.presets", writePresets(m_postprocessorPresets));
+    m_store->set(kShiftPresets, writePresets(m_shiftPresets.of(Tier::Mine)));
+    m_store->set(kPostprocessorPresets, writePresets(m_postprocessorPresets.of(Tier::Mine)));
     m_store->set("shiftTimes.preset", m_shiftPreset);
     m_store->set("postprocessor.preset", m_postprocessorPreset);
     m_store->set("postprocessor.timingPreset", m_timingPreset);
+    if (!hasProject())
+        return;
+    const auto project = [this](const char *id, const TieredPresets &presets) {
+        if (const QStringList rows = writePresets(presets.of(Tier::Project)); rows != m_projectFile.list(id))
+            m_projectFile.set(id, rows);
+    };
+    project(kShiftPresets, m_shiftPresets);
+    project(kPostprocessorPresets, m_postprocessorPresets);
 }
 
 }

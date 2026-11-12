@@ -167,6 +167,7 @@ FocusScope {
                     shiftTimes: panel.shiftTimes
                     tool: "postprocessor"
                     messages: panel.messages
+                    appSettings: panel.app ? panel.app.settings : null
                 }
                 ShiftNeed {
                     objectName: "postprocessorVideoNeed"
