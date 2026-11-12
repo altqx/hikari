@@ -674,7 +674,7 @@ class ShellTest : public QObject {
         QTRY_VERIFY(dock->property("isOpen").toBool());
         QVERIFY(QMetaObject::invokeMethod(dock, "close"));
         QTRY_VERIFY(item("lineTextSlot")->isVisible());
-        QTRY_COMPARE(item("lineText")->parentItem(), item("lineTextSlot"));
+        QTRY_VERIFY(item("lineTextSlot")->isAncestorOf(item("lineText")));
         auto *audio = item("audioPanel");
         const int deficit = qRound(170 - audio->property("bodyHeight").toReal());
         if (deficit != 0)
@@ -15255,23 +15255,9 @@ private slots:
     }
     bool inTheEditorView(QQuickItem *control)
     {
-        auto *view = item("editorScroll");
-        return view->mapRectToScene(view->boundingRect()).contains(control->mapRectToScene(control->boundingRect()));
-    }
-    void scrollTheEditorTo(QQuickItem *control)
-    {
-        static quint64 time = 0;
-        auto *view = item("editorScroll");
-        const QPoint over = view->mapToScene(QPointF(view->width() / 2, view->height() / 2)).toPoint();
-        for (int notch = 0; notch < 20 && !QTest::qWaitFor([&] { return inTheEditorView(control); }, 300); ++notch) {
-            const int up = control->mapToItem(view, QPointF(0, 0)).y() < 0 ? 1 : -1;
-            QWheelEvent wheel(over, window->mapToGlobal(over), QPoint(), QPoint(0, 120 * up), Qt::NoButton,
-                              Qt::NoModifier, Qt::NoScrollPhase, false);
-            // Flickable takes the wheel scroll's speed from the event timestamps.
-            wheel.setTimestamp(time += 1000);
-            QCoreApplication::sendEvent(window, &wheel);
-        }
-        QVERIFY2(inTheEditorView(control), qPrintable(control->objectName()));
+        auto *panel = item("editorPanel");
+        return panel->mapRectToScene(panel->boundingRect()).adjusted(-0.5, -0.5, 0.5, 0.5)
+            .contains(control->mapRectToScene(control->boundingRect()));
     }
     static QString q8(const std::u8string &s)
     {
@@ -15576,7 +15562,7 @@ private slots:
         QCOMPARE(session->document().lines().size(), showOriginalSetting ? lines + 1 : lines);
     }
 
-    void lineEditorScrollsWhatItsDockCannotShow()
+    void lineEditorTabsThroughEveryFieldWithoutScrolling()
     {
         QCOMPARE(window->size(), QSize(1280, 800));
         QVERIFY(application->openFile(writeTranslationFile("e5-overflow.ass")));
@@ -15585,21 +15571,18 @@ private slots:
         closeTheOriginalTextPanel();
         foldTheLineEditor();
         auto *panel = item("editorPanel");
-        auto *view = item("editorScroll");
         auto *content = item("editorContent");
-        QTRY_VERIFY(view->property("overflows").toBool());
-        QVERIFY(item("editorScrollBar")->isVisible());
-        QVERIFY(panel->mapRectToScene(panel->boundingRect()).contains(view->mapRectToScene(view->boundingRect())));
-        QCOMPARE(view->property("contentY").toReal(), 0.0);
-        QTRY_VERIFY(!inTheEditorView(item("startField")));
+        QVERIFY(!visualItem("editorScroll") && !visualItem("editorScrollBar"));
 
         QList<QQuickItem *> controls;
         std::function<void(QQuickItem *)> collect = [&](QQuickItem *parent) {
             for (QQuickItem *child : parent->childItems()) {
                 if (!child->isVisible())
                     continue;
-                if (child->inherits("QQuickControl") || child->inherits("QQuickTextEdit"))
+                if (child->inherits("QQuickControl") && !child->inherits("QQuickScrollView") && !child->inherits("QQuickScrollBar"))
                     controls << child;
+                else if (child->inherits("QQuickTextEdit"))
+                    controls << child->parentItem();
                 else
                     collect(child);
             }
@@ -15607,8 +15590,7 @@ private slots:
         collect(content);
         QVERIFY2(controls.size() >= 16, qPrintable(QString::number(controls.size())));
         for (QQuickItem *control : std::as_const(controls))
-            scrollTheEditorTo(control);
-        scrollTheEditorTo(controls.first());
+            QVERIFY2(inTheEditorView(control), qPrintable(control->objectName()));
 
         const auto inEditor = [&](QQuickItem *it) {
             for (; it; it = it->parentItem())
@@ -15620,24 +15602,20 @@ private slots:
             QQuickItem *it = window->activeFocusItem();
             // an editable ComboBox gives the focus to its inner TextField: report the box
             for (QQuickItem *p = it; p && p != content; p = p->parentItem())
-                if (p->hasActiveFocus() && p->inherits("QQuickControl"))
+                if (p->hasActiveFocus() && p->inherits("QQuickControl") && !p->inherits("QQuickScrollView"))
                     it = p;
             return it;
         };
         auto *first = item("startField");
-        view->setProperty("contentY", 0);
-        QTRY_VERIFY(!inTheEditorView(first));
         first->forceActiveFocus(Qt::TabFocusReason);
-        QTRY_VERIFY(inTheEditorView(first));
         QStringList reached{first->objectName()};
         for (int step = 0; step < 30; ++step) {
-            view->setProperty("contentY", 0);
             press(Qt::Key_Tab);
             QQuickItem *focused = focusedControl();
             if (!inEditor(focused) || focused == first)
                 break;
             reached << focused->objectName();
-            QTRY_VERIFY2(inTheEditorView(focused), qPrintable(focused->objectName()));
+            QVERIFY2(inTheEditorView(focused), qPrintable(focused->objectName()));
         }
         for (const char *name : {"layerField", "endField", "durationField", "styleChoice", "styleEditButton", "commentBox",
                                  "actorBox", "marginLeftField", "marginRightField", "marginVerticalField", "effectBox"})
@@ -15646,18 +15624,19 @@ private slots:
         auto *translated = item("translationText");
         press(Qt::Key_Backtab);
         QTRY_VERIFY(translated->hasActiveFocus());
-        QTRY_VERIFY(inTheEditorView(translated));
 
         const int minimum = int(std::ceil(panel->property("minimumSize").toSizeF().height()));
         const qreal before = panel->height();
-        QVERIFY2(minimum > 90 && minimum < before, qPrintable(QString::number(minimum)));
-        ui::Docking docking;
-        // KDDW: a resize past a dock's minimum pushes the next separator out instead
-        QVERIFY(docking.resizeInLayout(QStringLiteral("Editor"), 0, minimum - int(before), 0, 0));
-        QTRY_VERIFY(panel->height() < before);
-        QVERIFY2(panel->height() >= minimum, qPrintable(QStringLiteral("%1 < %2").arg(panel->height()).arg(minimum)));
-        view->setProperty("contentY", 0);
-        QVERIFY(inTheEditorView(controls.first()));
+        QVERIFY2(minimum > 90 && minimum <= before + 0.5, qPrintable(QStringLiteral("%1 > %2").arg(minimum).arg(before)));
+        if (minimum < before) {
+            ui::Docking docking;
+            // KDDW: a resize past a dock's minimum pushes the next separator out instead
+            QVERIFY(docking.resizeInLayout(QStringLiteral("Editor"), 0, minimum - int(before), 0, 0));
+            QTRY_VERIFY(panel->height() < before);
+        }
+        QVERIFY2(panel->height() >= minimum - 0.5, qPrintable(QStringLiteral("%1 < %2").arg(panel->height()).arg(minimum)));
+        for (QQuickItem *control : std::as_const(controls))
+            QVERIFY2(inTheEditorView(control), qPrintable(control->objectName()));
     }
 
     QString writeLongLineFile(const char *name, bool tlMode)
@@ -15857,7 +15836,6 @@ private slots:
         auto *original = item("lineText");
         auto *translated = item("translationText");
         auto *first = item("startField");
-        auto *view = item("editorScroll");
         QTRY_VERIFY(translated->isVisible());
         const QString originalText = original->property("text").toString();
         const QString translatedText = translated->property("text").toString();
@@ -15872,8 +15850,6 @@ private slots:
         press(Qt::Key_Tab);
         QTRY_VERIFY(translated->hasActiveFocus());
         QCOMPARE(translated->property("focusReason").toInt(), int(Qt::TabFocusReason));
-        view->setProperty("contentY", 0);
-        QTRY_VERIFY(!inTheEditorView(first));
         press(Qt::Key_Tab);
         QTRY_VERIFY(first->hasActiveFocus());
         QTRY_VERIFY(inTheEditorView(first));
@@ -15927,8 +15903,6 @@ private slots:
         press(Qt::Key_Home);
         press(Qt::Key_Down);
         QTRY_COMPARE(item("lineText")->property("text").toString(), QStringLiteral("Tower"));
-        auto *view = item("editorScroll");
-        QTRY_VERIFY(view->property("overflows").toBool());
         auto &settings = *application->settingsStore();
         settings.setValue(QStringLiteral("appearance.followSystem"), false);
         auto *root = engine->rootObjects().first();
@@ -15938,7 +15912,6 @@ private slots:
             QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
             const QString suffix = QLatin1Char('-') + ui::theme::codeName(code) + QStringLiteral(".png");
             item("editingGrid")->forceActiveFocus(Qt::TabFocusReason);
-            view->setProperty("contentY", 0);
             QTest::qWait(300);
             QVERIFY(window->grabWindow().save(out + QStringLiteral("/translation-mode") + suffix));
             item("startField")->forceActiveFocus(Qt::TabFocusReason);
@@ -33003,15 +32976,9 @@ private slots:
         QVERIFY(layer->hasActiveFocus());
         QTest::mouseMove(window, layerAt + QPoint(0, -8));
         QCOMPARE(text(layer), QStringLiteral("1"));
-        auto *editorView = item("editorScroll");
-        const qreal scrolledFrom = editorView->property("contentY").toReal();
-        const qreal layerTop = layer->mapToScene(QPointF()).y();
-        editorView->setProperty("contentY", scrolledFrom + 20);
-        QCOMPARE(layer->mapToScene(QPointF()).y(), layerTop - 20);
         QTest::mouseMove(window, layerAt + QPoint(10, -8));
         QCOMPARE(text(layer), QStringLiteral("11"));
         QTest::mouseRelease(window, Qt::RightButton, {}, layerAt + QPoint(10, -8));
-        editorView->setProperty("contentY", scrolledFrom);
         QCoreApplication::processEvents();
         int menus = 0;
         for (auto *popup : layer->findChildren<QObject *>())
@@ -33552,19 +33519,21 @@ private slots:
         QTRY_VERIFY(item("marginLeftFieldHint")->isVisible());
 
         squeezeTheLineEditor();
-        QTRY_VERIFY(!inspector->property("wide").toBool());
+        QTRY_COMPARE(inspector->property("step").toString(), QStringLiteral("narrow"));
         for (const auto &[slot, field] : named) {
             auto *label = item(qPrintable(QLatin1String(slot) + QLatin1String("Label")));
             auto *control = item(field);
-            QTRY_VERIFY2(label->mapToScene(QPointF(0, label->height())).y() <= control->mapToScene(QPointF(0, 0)).y() + 0.5, slot);
-            QTRY_VERIFY2(std::abs(label->mapToScene(QPointF(0, 0)).x() - control->mapToScene(QPointF(0, 0)).x()) <= 1, slot);
+            QTRY_VERIFY2(std::abs(centreY(label) - centreY(control)) <= 2, slot);
+            QVERIFY2(label->mapToScene(QPointF(label->width(), 0)).x() <= control->mapToScene(QPointF(0, 0)).x(), slot);
         }
-        QVERIFY(std::abs(centreY(item("startField")) - centreY(item("endField"))) <= 1);
-        QVERIFY(std::abs(centreY(item("durationField")) - centreY(item("layerField"))) <= 1);
-        QVERIFY(centreY(item("durationField")) > centreY(item("startField")) + 10);
-        QVERIFY(centreY(item("styleChoice")) > centreY(item("durationField")) + 10);
-        QVERIFY(std::abs(centreY(item("actorBox")) - centreY(item("effectBox"))) <= 1);
-        QVERIFY(item("styleChoice")->width() > 1.5 * item("startField")->width());
+        QVERIFY(std::abs(centreY(item("startField")) - centreY(item("durationField"))) <= 1);
+        QVERIFY(std::abs(centreY(item("styleChoice")) - centreY(item("actorBox"))) <= 1);
+        QVERIFY(std::abs(centreY(item("layerField")) - centreY(item("effectBox"))) <= 1);
+        QVERIFY(std::abs(centreY(item("layerField")) - centreY(item("commentBox"))) <= 2);
+        QVERIFY(centreY(item("styleChoice")) > centreY(item("startField")) + 10);
+        QVERIFY(centreY(item("layerField")) > centreY(item("styleChoice")) + 10);
+        QVERIFY(centreY(item("marginLeftField")) > centreY(item("layerField")) + 10);
+        QVERIFY(item("styleChoice")->width() > item("actorBox")->width());
         application->workspaceLayout().resetLayout();
         QTRY_VERIFY(inspector->property("wide").toBool());
     }
@@ -33588,7 +33557,7 @@ private slots:
             QVERIFY2(item(group)->isVisible(), group);
 
         const auto widest = [&] {
-            auto *view = item("editorScroll");
+            auto *view = item("editorContent");
             const qreal right = view->mapToScene(QPointF(view->width(), 0)).x() + 0.5;
             const qreal left = view->mapToScene(QPointF(0, 0)).x() - 0.5;
             QStringList out;

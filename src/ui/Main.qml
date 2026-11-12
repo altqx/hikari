@@ -3467,6 +3467,45 @@ ApplicationWindow {
         }
     }
 
+    component RoleScroll: ScrollView {
+        id: scroll
+        padding: 0
+        readonly property int barWidth: 6
+        ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
+        ScrollBar.vertical: ScrollBar {
+            parent: scroll
+            x: scroll.mirrored ? 2 : scroll.width - width - 2
+            y: 2
+            height: scroll.height - 4
+            width: scroll.barWidth
+            padding: 0
+            policy: scroll.contentHeight > scroll.height + 0.5 ? ScrollBar.AlwaysOn : ScrollBar.AlwaysOff
+            focusPolicy: Qt.NoFocus
+            background: Rectangle {
+                implicitWidth: scroll.barWidth
+                radius: scroll.barWidth / 2
+                color: Theme.field
+                border.color: Theme.line
+            }
+            contentItem: Rectangle {
+                implicitWidth: scroll.barWidth
+                implicitHeight: 12
+                radius: scroll.barWidth / 2
+                color: parent.pressed ? Theme.text : Theme.muted
+                opacity: parent.pressed || parent.hovered ? 0.9 : 0.6
+            }
+        }
+    }
+    component RoleCaption: Label {
+        anchors.left: parent.left
+        anchors.leftMargin: 6
+        leftPadding: 4
+        rightPadding: 4
+        color: Theme.muted
+        background: Rectangle {
+            color: palette.base
+        }
+    }
     component RoleField: TextArea {
         id: field
         // MUST KILL: role is a magic int (0 Original, 1 Translated)
@@ -3480,7 +3519,7 @@ ApplicationWindow {
         persistentSelection: true
         Layout.fillWidth: true
         Layout.fillHeight: true
-        Layout.minimumHeight: topPadding + bottomPadding + cursorRectangle.height
+        Layout.minimumHeight: topPadding + bottomPadding + 2 * cursorRectangle.height
 
         property bool syncing: false
         function carriedPrefix(outer, inner) {
@@ -6029,12 +6068,8 @@ ApplicationWindow {
                 objectName: "editorPanel"
                 dockName: root.engineName("Editor")
                 minimumBodySize: Qt.size(Math.max(editorStrip.minimumWidth, editorInspector.minimumWidth)
-                                         + 2 * (editorColumn.x - 4),
-                                         editorStrip.implicitHeight
-                                         + (reviewStrip.visible ? editorColumn.spacing + reviewStrip.implicitHeight : 0)
-                                         + (lineTextSlot.visible ? editorColumn.spacing + lineText.Layout.minimumHeight : 0)
-                                         + (translationText.visible ? editorColumn.spacing
-                                            + translationText.Layout.minimumHeight : 0))
+                                         + editorColumn.anchors.leftMargin + editorColumn.anchors.rightMargin,
+                                         editorColumn.implicitHeight)
                 title: shell.hasEditingTarget ? qsTranslate("HikariSub.Editor", "Line editor: %1").arg(shell.editingTitle)
                                               : qsTranslate("HikariSub.Editor", "Line editor")
                 function panelAction(event) {
@@ -6051,232 +6086,170 @@ ApplicationWindow {
                     root.runEditorHotkey(action, root.editedField())
                     event.accepted = true
                 }
-                Flickable {
-                    id: editorScroll
-                    objectName: "editorScroll"
+                ColumnLayout {
+                    id: editorColumn
+                    objectName: "editorContent"
                     anchors {
                         fill: parent
-                        margins: -4
+                        leftMargin: 8
+                        rightMargin: 8
                     }
-                    clip: true
-                    boundsBehavior: Flickable.StopAtBounds
-                    flickableDirection: Flickable.VerticalFlick
-                    acceptedButtons: Qt.NoButton
-                    readonly property int barWidth: 6
-                    readonly property bool overflows: editorColumn.implicitHeight + 8 > height + 0.5
-                    contentWidth: width - (overflows ? barWidth : 0)
-                    contentHeight: editorColumn.height + 8
-                    readonly property Item focusItem: Window.activeFocusItem
-                    onFocusItemChanged: Qt.callLater(revealFocus)
-                    function inEditor(item) {
-                        for (let p = item; p; p = p.parent) {
-                            if (p === editorColumn)
-                                return true
-                        }
-                        return false
+                    spacing: 6
+
+                    LineEditorStrip {
+                        id: editorStrip
+                        shellRoot: root
+                        editor: root.editor
+                        app: root.app
+                        tagButtons: root.tagButtons
+                        fontPicker: fontPicker
+                        original: lineText
+                        translated: translationText
+                        translationTools: root.editor.translationMode && !root.originalShown
+                        aiShown: root.inlineAi.on && root.editor.hasLine
+                        onAiActionsRequested: anchor => editorAiMenu.popup(anchor, 0, anchor.height)
+                        Layout.fillWidth: true
+                        Layout.minimumWidth: minimumWidth
                     }
-                    function reveal(item, rect) {
-                        const r = item.mapToItem(contentItem, rect)
-                        const room = 1
-                        let y = contentY
-                        if (r.y + r.height + room > y + height)
-                            y = r.y + r.height + room - height
-                        if (r.y - room < y)
-                            y = r.y - room
-                        contentY = Math.max(0, Math.min(y, contentHeight - height))
-                    }
-                    function revealFocus() {
-                        let item = focusItem
-                        if (!item || !inEditor(item))
-                            return
-                        for (let p = item.parent; p && p !== editorColumn; p = p.parent) {
-                            if (p.activeFocus && p.height <= height)
-                                item = p
-                        }
-                        if ((item === lineText || item === translationText) && item.height + 6 > height)
-                            reveal(item, item.cursorRectangle)
-                        else
-                            reveal(item, Qt.rect(0, 0, item.width, item.height))
-                    }
-                    Connections {
-                        target: lineText
-                        function onCursorRectangleChanged() { if (lineText.activeFocus) Qt.callLater(editorScroll.revealFocus) }
-                    }
-                    Connections {
-                        target: translationText
-                        function onCursorRectangleChanged() { if (translationText.activeFocus) Qt.callLater(editorScroll.revealFocus) }
-                    }
-                    ScrollBar.vertical: ScrollBar {
-                        objectName: "editorScrollBar"
-                        parent: editorScroll
-                        x: editorScroll.width - width - 2
-                        y: 2
-                        height: editorScroll.height - 4
-                        width: editorScroll.barWidth
-                        padding: 0
-                        policy: editorScroll.overflows ? ScrollBar.AlwaysOn : ScrollBar.AlwaysOff
-                        focusPolicy: Qt.NoFocus
-                        background: Rectangle {
-                            implicitWidth: editorScroll.barWidth
-                            radius: editorScroll.barWidth / 2
-                            color: Theme.field
-                            border.color: Theme.line
-                        }
-                        contentItem: Rectangle {
-                            implicitWidth: editorScroll.barWidth
-                            implicitHeight: 12
-                            radius: editorScroll.barWidth / 2
-                            color: parent.pressed ? Theme.text : Theme.muted
-                            opacity: parent.pressed || parent.hovered ? 0.9 : 0.6
-                        }
+                    InlineAiMenu {
+                        id: editorAiMenu
+                        objectName: "editorAiMenu"
+                        controller: root.inlineAi
+                        editor: true
+                        onChosen: ask => inlineAiBox.begin(ask, true, lineText)
+                        onRepeatRequested: root.repeatInlineAi(true, lineText)
+                        onSettingsRequested: root.openSettings("ai")
                     }
 
-                    ColumnLayout {
-                        id: editorColumn
-                        objectName: "editorContent"
-                        x: 12
-                        y: 4
-                        width: editorScroll.contentWidth - 2 * x
-                        spacing: 6
-                        height: Math.max(editorScroll.height - 8, implicitHeight)
+                    ReviewStrip {
+                        id: reviewStrip
+                        review: root.review
+                        Layout.fillWidth: true
+                        onUndoRequested: root.undoAiLine()
+                        onKeepRequested: root.review.keepLine()
+                    }
 
-                        LineEditorStrip {
-                            id: editorStrip
-                            shellRoot: root
-                            editor: root.editor
-                            app: root.app
-                            tagButtons: root.tagButtons
-                            fontPicker: fontPicker
-                            original: lineText
-                            translated: translationText
-                            translationTools: root.editor.translationMode && !root.originalShown
-                            aiShown: root.inlineAi.on && root.editor.hasLine
-                            onAiActionsRequested: anchor => editorAiMenu.popup(anchor, 0, anchor.height)
-                            Layout.fillWidth: true
-                            Layout.minimumWidth: minimumWidth
-                        }
-                        InlineAiMenu {
-                            id: editorAiMenu
-                            objectName: "editorAiMenu"
-                            controller: root.inlineAi
-                            editor: true
-                            onChosen: ask => inlineAiBox.begin(ask, true, lineText)
-                            onRepeatRequested: root.repeatInlineAi(true, lineText)
-                            onSettingsRequested: root.openSettings("ai")
-                        }
-
-                        ReviewStrip {
-                            id: reviewStrip
-                            review: root.review
-                            Layout.fillWidth: true
-                            onUndoRequested: root.undoAiLine()
-                            onKeepRequested: root.review.keepLine()
-                        }
-
-                        Label {
-                            objectName: "originalCaption"
-                            visible: lineTextSlot.visible && root.editor.translationMode
-                            text: qsTranslate("HikariSub.Editor", "Original text")
-                            color: Theme.muted
-                            Layout.bottomMargin: -4
-                        }
-
-                        Item {
-                            id: lineTextSlot
-                            objectName: "lineTextSlot"
-                            visible: !root.originalShown
-                            Layout.fillWidth: true
-                            Layout.fillHeight: true
-                            Layout.minimumHeight: lineText.Layout.minimumHeight
-                            implicitWidth: lineText.implicitWidth
-                            implicitHeight: lineText.implicitHeight
+                    Item {
+                        id: lineTextSlot
+                        objectName: "lineTextSlot"
+                        visible: !root.originalShown
+                        readonly property real captionShift: originalCaption.visible ? Math.round(originalCaption.height / 2) : 0
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        Layout.minimumHeight: captionShift + lineText.Layout.minimumHeight
+                        implicitWidth: lineText.implicitWidth
+                        implicitHeight: Layout.minimumHeight
+                        RoleScroll {
+                            objectName: "lineTextScroll"
+                            parent: root.originalShown ? originalSlot : lineTextSlot
+                            anchors.fill: parent
+                            anchors.topMargin: parent === lineTextSlot ? lineTextSlot.captionShift : 0
+                            focus: true
                             RoleField {
                                 id: lineText
                                 objectName: "lineText"
-                                parent: root.originalShown ? originalSlot : lineTextSlot
-                                anchors.fill: parent
                                 role: 0
                                 focus: true
                                 tabNext: root.originalShown ? translationText : null
                                 Accessible.name: root.editor.translationMode ? qsTranslate("HikariSub.Editor", "Original text") : qsTranslate("HikariSub.Editor", "Line text")
                             }
                         }
-                        Label {
-                            objectName: "translatedCaption"
-                            visible: lineTextSlot.visible && root.editor.translationMode
-                            text: qsTranslate("HikariSub.Editor", "Translated text")
-                            color: Theme.muted
-                            Layout.bottomMargin: -4
-                        }
-                        RoleField {
-                            id: translationText
-                            objectName: "translationText"
-                            role: 1
+                        RoleCaption {
+                            id: originalCaption
+                            objectName: "originalCaption"
                             visible: root.editor.translationMode
-                            tabPrevious: root.originalShown ? lineText : null
-                            Accessible.name: qsTranslate("HikariSub.Editor", "Translated text")
+                            text: qsTranslate("HikariSub.Editor", "Original text")
                         }
-                        RunStrip {
-                            editor: root.editor
-                            shellRoot: root
-                            translated: translationText
-                            Layout.fillWidth: true
+                    }
+                    Item {
+                        id: translationTextSlot
+                        objectName: "translationTextSlot"
+                        visible: root.editor.translationMode
+                        readonly property real captionShift: translatedCaption.visible ? Math.round(translatedCaption.height / 2) : 0
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        Layout.minimumHeight: captionShift + translationText.Layout.minimumHeight
+                        implicitWidth: translationText.implicitWidth
+                        implicitHeight: Layout.minimumHeight
+                        RoleScroll {
+                            objectName: "translationTextScroll"
+                            anchors.fill: parent
+                            anchors.topMargin: translationTextSlot.captionShift
+                            RoleField {
+                                id: translationText
+                                objectName: "translationText"
+                                role: 1
+                                tabPrevious: root.originalShown ? lineText : null
+                                Accessible.name: qsTranslate("HikariSub.Editor", "Translated text")
+                            }
                         }
-                        Label {
-                            objectName: "karaokeCarryNotice"
-                            visible: root.editor.translationMode && root.editor.karaokeCarried
-                            text: qsTranslate("HikariSub.Translation", "Karaoke line: the tags before its text are carried, the karaoke timing is not.")
-                            color: Theme.muted
-                            wrapMode: Text.Wrap
-                            Layout.fillWidth: true
+                        RoleCaption {
+                            id: translatedCaption
+                            objectName: "translatedCaption"
+                            visible: lineTextSlot.visible
+                            text: qsTranslate("HikariSub.Editor", "Translated text")
                         }
+                    }
+                    RunStrip {
+                        editor: root.editor
+                        shellRoot: root
+                        translated: translationText
+                        Layout.fillWidth: true
+                    }
+                    Label {
+                        objectName: "karaokeCarryNotice"
+                        visible: root.editor.translationMode && root.editor.karaokeCarried
+                        text: qsTranslate("HikariSub.Translation", "Karaoke line: the tags before its text are carried, the karaoke timing is not.")
+                        color: Theme.muted
+                        wrapMode: Text.Wrap
+                        Layout.fillWidth: true
+                    }
 
-                        RowLayout {
-                            objectName: "editorMessages"
-                            visible: root.editor.problem.length > 0 || root.editor.attempted.length > 0
-                            spacing: 6
+                    RowLayout {
+                        objectName: "editorMessages"
+                        visible: root.editor.problem.length > 0 || root.editor.attempted.length > 0
+                        spacing: 6
+                        Layout.fillWidth: true
+                        Icon {
+                            iconRole: "notice-error"
+                            size: 12
+                            color: Theme.danger
+                            accentColor: Theme.danger
+                            Layout.alignment: Qt.AlignTop
+                            Layout.topMargin: 3
+                        }
+                        ColumnLayout {
+                            spacing: 2
                             Layout.fillWidth: true
-                            Icon {
-                                iconRole: "notice-error"
-                                size: 12
+                            Label {
+                                id: editorProblem
+                                objectName: "editorProblem"
+                                visible: text.length > 0
+                                text: root.editor.problem
                                 color: Theme.danger
-                                accentColor: Theme.danger
-                                Layout.alignment: Qt.AlignTop
-                                Layout.topMargin: 3
-                            }
-                            ColumnLayout {
-                                spacing: 2
+                                wrapMode: Text.Wrap
                                 Layout.fillWidth: true
-                                Label {
-                                    id: editorProblem
-                                    objectName: "editorProblem"
-                                    visible: text.length > 0
-                                    text: root.editor.problem
-                                    color: Theme.danger
-                                    wrapMode: Text.Wrap
-                                    Layout.fillWidth: true
-                                    Accessible.role: Accessible.AlertMessage
-                                }
-                                Label {
-                                    id: editorAttempted
-                                    objectName: "editorAttempted"
-                                    visible: root.editor.attempted.length > 0
-                                    text: qsTranslate("HikariSub.Editor", "Not applied: %1").arg(root.editor.attempted)
-                                    color: Theme.danger
-                                    elide: Text.ElideRight
-                                    Layout.fillWidth: true
-                                }
+                                Accessible.role: Accessible.AlertMessage
+                            }
+                            Label {
+                                id: editorAttempted
+                                objectName: "editorAttempted"
+                                visible: root.editor.attempted.length > 0
+                                text: qsTranslate("HikariSub.Editor", "Not applied: %1").arg(root.editor.attempted)
+                                color: Theme.danger
+                                elide: Text.ElideRight
+                                Layout.fillWidth: true
                             }
                         }
+                    }
 
-                        LineInspector {
-                            id: editorInspector
-                            objectName: "lineInspector"
-                            editor: root.editor
-                            hotkeys: root.hotkeys
-                            Layout.fillWidth: true
-                            onStyleEditRequested: style => root.lazy(styleManagerWindowLoader).editStyle(style)
-                        }
+                    LineInspector {
+                        id: editorInspector
+                        objectName: "lineInspector"
+                        editor: root.editor
+                        hotkeys: root.hotkeys
+                        Layout.fillWidth: true
+                        onStyleEditRequested: style => root.lazy(styleManagerWindowLoader).editStyle(style)
                     }
                 }
             }
