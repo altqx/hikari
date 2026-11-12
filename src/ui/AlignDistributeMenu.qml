@@ -23,13 +23,13 @@ ShellMenu {
     MenuHeading { text: qsTr("Relative to") }
     MenuRadioItem {
         objectName: menu.prefix + "AlignToActiveLine"
-        text: qsTr("The active line")
+        text: qsTr("Active line")
         checked: !menu.toVideoFrame
         onTriggered: menu.relativeTo(false)
     }
     MenuRadioItem {
         objectName: menu.prefix + "AlignToVideoFrame"
-        text: qsTr("The video frame")
+        text: qsTr("Video frame")
         checked: menu.toVideoFrame
         onTriggered: menu.relativeTo(true)
     }

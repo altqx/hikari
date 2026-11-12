@@ -3677,7 +3677,7 @@ QVariantList Application::columnChoices(bool paste)
         }
         rows.push_back({QT_TRANSLATE_NOOP("HikariSub.Grid", "Start tag block"), StartBlock});
         rows.push_back({QT_TRANSLATE_NOOP("HikariSub.Grid", "Clip (\\clip or \\iclip)"), Clip});
-        rows.push_back({QT_TRANSLATE_NOOP("HikariSub.Grid", "These tags:"), NamedTags});
+        rows.push_back({QT_TRANSLATE_NOOP("HikariSub.Grid", "Only these tags"), NamedTags});
     } else if (format == core::SubtitleFormat::TMPlayer) {
         rows = {{QT_TRANSLATE_NOOP("HikariSub.Grid", "Start time"), Start},
                 {QT_TRANSLATE_NOOP("HikariSub.Grid", "Text"), Text}};

@@ -23,7 +23,7 @@ ScrollView {
             Layout.rightMargin: 24
             Layout.topMargin: 20
             Label {
-                text: qsTr("Each Cycle command steps the tag in the selected lines' start block to the next value. Cycle back steps the other way.")
+                text: qsTr("Each Cycle command steps the tag in the start block of the selected lines to the next value. Cycle back steps the other way.")
                 color: Theme.muted
                 wrapMode: Text.Wrap
                 Layout.fillWidth: true
