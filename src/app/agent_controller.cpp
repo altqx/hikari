@@ -49,6 +49,11 @@ struct AgentModel {
 const std::array kAgentModels{AgentModel{"claude", QT_TRANSLATE_NOOP("HikariSub.Agent", "Claude Code")},
                               AgentModel{"codex", QT_TRANSLATE_NOOP("HikariSub.Agent", "Codex")}};
 
+ai::ModelRef acpRef(const AiFeatures::AcpAgent &agent)
+{
+    return {std::string(backends::ai::kAgentProviderPrefix) + "acp:" + agent.id.toStdString(), ""};
+}
+
 QString modelValue(const ai::ModelRef &ref)
 {
     return qs(ref.providerId) + QLatin1Char('\t') + qs(ref.modelId);
@@ -271,6 +276,8 @@ std::optional<ai::ModelRef> AgentController::foundAgent() const
     for (const AgentModel &agent : kAgentModels)
         if (m_wiring.ai.agentFound(QString::fromLatin1(agent.program)))
             return agent.ref();
+    if (const auto acp = m_wiring.ai.acpAgents(); !acp.empty())
+        return acpRef(acp.front());
     return std::nullopt;
 }
 
@@ -343,6 +350,9 @@ QVariantMap AgentController::thread() const
         model = modelValue(*ref);
         const auto agent = std::ranges::find_if(kAgentModels, [&](const AgentModel &a) { return a.ref() == *ref; });
         modelText = agent != kAgentModels.end() ? agent->text() : qs(ref->modelId);
+        for (const AiFeatures::AcpAgent &acp : m_wiring.ai.acpAgents())
+            if (acpRef(acp) == *ref)
+                modelText = acp.name;
         if (const ai::Model *m = providers ? modelIn(providers->config(), *ref) : nullptr) {
             modelText = qs(m->name.empty() ? m->id : m->name);
             window = m->contextTokens.value_or(0);
@@ -411,6 +421,10 @@ QVariantList AgentController::models() const
             out.push_back(QVariantMap{{QStringLiteral("value"), modelValue(agent.ref())},
                                       {QStringLiteral("text"), agent.text()},
                                       {QStringLiteral("provider"), QString()}});
+    for (const AiFeatures::AcpAgent &acp : m_wiring.ai.acpAgents())
+        out.push_back(QVariantMap{{QStringLiteral("value"), modelValue(acpRef(acp))},
+                                  {QStringLiteral("text"), acp.name},
+                                  {QStringLiteral("provider"), QString()}});
     const ai::Providers *providers = m_wiring.ai.providers();
     if (!providers)
         return out;

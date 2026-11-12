@@ -327,7 +327,7 @@ TEST_F(AgentCliTest, TheProbeFindsTheCliAndAsksItsVersion)
 {
     fakeCli(QStringLiteral("claude"), "2.1.4", "same");
     std::optional<std::optional<AgentCli>> found;
-    probeAgentCli(QStringLiteral("claude"), [&](std::optional<AgentCli> cli) { found = cli; },
+    probeAgentCli(QStringLiteral("claude"), [&](std::optional<AgentCli> cli, QString) { found = cli; },
                   {dir.filePath(QStringLiteral("bin"))});
     ASSERT_TRUE(waitFor([&] { return found.has_value(); }));
     ASSERT_TRUE(found->has_value());
@@ -335,7 +335,7 @@ TEST_F(AgentCliTest, TheProbeFindsTheCliAndAsksItsVersion)
     EXPECT_EQ((*found)->agent, QStringLiteral("claude"));
 
     found.reset();
-    probeAgentCli(QStringLiteral("codex"), [&](std::optional<AgentCli> cli) { found = cli; },
+    probeAgentCli(QStringLiteral("codex"), [&](std::optional<AgentCli> cli, QString) { found = cli; },
                   {dir.filePath(QStringLiteral("bin"))});
     ASSERT_TRUE(waitFor([&] { return found.has_value(); }));
     EXPECT_FALSE(found->has_value());
@@ -401,7 +401,13 @@ TEST_F(AgentShimTest, AShimItsManagerCantResolveIsNotFoundAndSaysSo)
         logged << m;
     });
     mise("exit 1");
-    EXPECT_EQ(findAgentCli(QStringLiteral("claude"), {shims}), QString());
+    QString shim;
+    EXPECT_EQ(findAgentCli(QStringLiteral("claude"), {shims}, &shim), QString());
+    EXPECT_EQ(shim, shims + QStringLiteral("/claude"));
+    EXPECT_EQ(agentShimManager(shim), QStringLiteral("mise"));
+    shim.clear();
+    EXPECT_EQ(findAgentCli(QStringLiteral("codex"), {shims}, &shim), QString());
+    EXPECT_TRUE(shim.isEmpty());
     mise("echo " + shims.toLocal8Bit() + "/claude");
     EXPECT_EQ(findAgentCli(QStringLiteral("claude"), {shims}), QString());
     mise("echo " + dir.filePath(QStringLiteral("nowhere/claude")).toLocal8Bit());

@@ -33,7 +33,8 @@ add_library(hikari_composition STATIC composition.cpp application.cpp include/hi
     ai_karaoke.cpp include/hikari/app/ai_karaoke.h
     ai_scripts.cpp include/hikari/app/ai_scripts.h
     ai_features.cpp include/hikari/app/ai_features.h ai_mcp.cpp include/hikari/app/ai_mcp.h ai_mcp_servers.cpp include/hikari/app/ai_mcp_servers.h
-    ai_settings.cpp include/hikari/app/ai_settings.h skills_settings.cpp include/hikari/app/skills_settings.h
+    ai_settings.cpp include/hikari/app/ai_settings.h ai_acp_settings.cpp include/hikari/app/ai_acp_settings.h
+    skills_settings.cpp include/hikari/app/skills_settings.h
     review_controller.cpp include/hikari/app/review_controller.h agent_controller.cpp include/hikari/app/agent_controller.h
     inline_ai_controller.cpp include/hikari/app/inline_ai_controller.h
     plugin_manager.cpp include/hikari/app/plugin_manager.h

@@ -7165,6 +7165,7 @@ QVariantMap Application::openSettingsDialog()
     values.insert(QStringLiteral("notices.hiddenQuestions"), m_settings->list("notices.hiddenQuestions"));
     values.insert(QStringLiteral("automation.dialogAnswers"), m_settings->list("automation.dialogAnswers"));
     values.insert(QStringLiteral("trust.folders"), m_settings->list("trust.folders"));
+    values.insert(QLatin1String(AiFeatures::kCustomAgentsSetting), m_settings->list(AiFeatures::kCustomAgentsSetting));
     QStringList rendererLabels;
     for (const auto &name : lists.renderers)
         rendererLabels << subtitleRendererLabel(name);
@@ -7264,6 +7265,11 @@ void Application::applySettings(const QVariantMap &values, bool resetAll)
         list.removeIf([&](const QString &folder) { return !kept.contains(folder); });
         if (list != kept)
             m_settings->setValue(QStringLiteral("trust.folders"), list);
+    }
+    if (const auto custom = values.constFind(QLatin1String(AiFeatures::kCustomAgentsSetting)); custom != values.cend()) {
+        const QStringList list = custom->toStringList();
+        if (list != m_settings->list(AiFeatures::kCustomAgentsSetting))
+            m_settings->set(AiFeatures::kCustomAgentsSetting, list);
     }
     const auto written = application::commitOptionsDialog(m_settings->settings(), m_optionsLists, fromVariant(values));
     const auto wrote = [&](std::string_view id) { return std::ranges::find(written, id) != written.end(); };
@@ -7562,6 +7568,7 @@ QVariantMap Application::resetSettings(const QVariantMap &values)
         }
     refreshed.insert(QStringLiteral("notices.hiddenQuestions"), QStringList());
     refreshed.insert(QStringLiteral("trust.folders"), QStringList());
+    refreshed.insert(QLatin1String(AiFeatures::kCustomAgentsSetting), QStringList());
     keep("automation.dialogAnswers");
     return refreshed;
 }
