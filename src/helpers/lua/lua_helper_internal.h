@@ -33,6 +33,16 @@ void fillKaraokeData(lua_State *L, int line, const application::MacroDialogueLin
 // The dialogue line with the text parse_karaoke_data reads in its text.
 application::MacroDialogueLine karaokeSource(application::MacroDialogueLine dialogue);
 
+enum class HostFunction { TextExtents, ParseKaraokeData, DebugOut };
+// Whether the value at `index` is still the host's own function, not one a script put in its place.
+bool isHost(lua_State *L, int index, HostFunction function);
+// Whether the value at `index` is the running macro's subtitles object.
+bool isSubtitles(lua_State *L, int index);
+// The level above which aegisub.debug.out writes nothing.
+int traceLevel();
+// The style table on the stack top as aegisub.text_extents sends it; std::nullopt for another class. Raises as
+// text_extents does for a table it cannot read.
+std::optional<std::vector<std::string>> styleFields(lua_State *L);
 // Adds a macro whose run and validate functions are C functions, as aegisub.register_macro would.
 void registerMacro(lua_State *L, const std::string &name, const std::string &description, lua_CFunction run,
                    lua_CFunction validate);

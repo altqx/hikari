@@ -9,6 +9,7 @@
 #include "hikari/application/karaoke_split.h"
 #include "hikari/application/template_preview.h"
 #include "hikari/application/edit_session.h"
+#include "hikari/application/node_effects.h"
 #include "hikari/application/settings.h"
 #include "hikari/application/subtitle_render.h"
 #include "hikari/application/visual_perspective.h"
@@ -200,6 +201,13 @@ public:
     virtual void align(const AlignRequest &request, std::function<void(AlignResult)> done) = 0;
 };
 
+// Runs node-effect graphs as the node-effect editor does, but never trusts a Document's Lua.
+class EffectsHost {
+public:
+    virtual ~EffectsHost() = default;
+    virtual application::NodeEffectOptions options() = 0;
+};
+
 // A missing port makes its operations answer unavailable.
 struct Host {
     DocumentHost *documents = nullptr;
@@ -216,6 +224,7 @@ struct Host {
     ProjectHost *project = nullptr;
     TranslationHost *translation = nullptr;
     KaraokeHost *karaoke = nullptr;
+    EffectsHost *effects = nullptr;
 };
 
 }

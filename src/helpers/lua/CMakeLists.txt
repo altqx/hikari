@@ -13,8 +13,13 @@ target_link_libraries(hikari_lua_legacy_native PRIVATE Hikari::luajit)
 set_target_properties(hikari_lua_legacy_native PROPERTIES LINKER_LANGUAGE C)
 
 add_executable(hikari_lua_helper lua_helper.cpp lua_helper_internal.h kara_templater.cpp kara_templater.h karaskel_tables.cpp
-    karaskel_tables.h shape_tables.cpp shape_tables.h lua_host_cache.cpp lua_host_cache.h lua_native.cpp lua_native.h lua_nodes.cpp lua_nodes.h)
+    karaskel_tables.h shape_tables.cpp shape_tables.h lua_host_cache.cpp lua_host_cache.h lua_native.cpp lua_native.h lua_nodes.cpp lua_nodes.h
+    util_impl.cpp util_impl.h)
 set_target_properties(hikari_lua_helper PROPERTIES OUTPUT_NAME hikari-lua-helper)
+# HSL_to_RGB rounds as LuaJIT's interpreter does only without fused multiply-adds.
+if(NOT MSVC)
+    set_source_files_properties(util_impl.cpp PROPERTIES COMPILE_OPTIONS -ffp-contract=off)
+endif()
 # ICU is linked statically: its headers must not declare dllimport.
 target_compile_definitions(hikari_lua_helper PRIVATE BOOST_ALL_NO_LIB U_STATIC_IMPLEMENTATION)
 target_link_libraries(hikari_lua_helper PRIVATE hikari_application hikari_lua_protocol hikari_lua_legacy_native hikari_regex Hikari::luajit

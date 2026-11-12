@@ -62,7 +62,10 @@ Item {
              : qsTr("%1: choose a file").arg(owner.pluginName)
         fileMode: saving ? Dialogs.FileDialog.SaveFile : Dialogs.FileDialog.OpenFile
         nameFilters: owner ? owner.nameFilters.concat([qsTr("All files (*)")]) : []
-        selectedFile: owner ? owner.file : ""
+        Binding on selectedFile {
+            when: files.owner !== null && String(files.owner.file).length > 0
+            value: files.owner ? files.owner.file : ""
+        }
         onAccepted: if (owner) owner.accept(selectedFile, false)
         onRejected: if (owner) owner.reject()
     }

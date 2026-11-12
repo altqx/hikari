@@ -775,7 +775,14 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         m_aiScripts.get(),
         [this] { return perspectiveMeasure(); }, [this] { return activeProject(); },
         [this](application::DocumentId document) { return honyaFolderOf(document); },
-        m_aiKaraoke.get()});
+        m_aiKaraoke.get(),
+        [this] {
+            application::NodeEffectOptions o;
+            o.measure = perspectiveMeasure().port;
+            o.lua = &luaNodes();
+            o.audio = m_automation->media().peakAudio();
+            return o;
+        }});
     AiFeatures::Ports aiPorts = options.aiPorts ? std::move(*options.aiPorts)
                                                 : AiFeatures::defaultPorts(m_userFolder, &m_apiHost->api(),
                                                                            options.appVersion.isEmpty()
@@ -1198,6 +1205,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         *m_settings, m_settingsFile.isEmpty() ? QString() : QFileInfo(m_settingsFile).absolutePath());
     connect(m_projects.get(), &ProjectWindows::changed, this, &Application::applyWindowProject);
     connect(m_projects.get(), &ProjectWindows::changed, this, &Application::projectsChanged);
+    connect(m_projects.get(), &ProjectWindows::changed, m_agent.get(), &AgentController::projectChanged);
     connect(m_projects.get(), &ProjectWindows::recentChanged, this, &Application::recentProjectsChanged);
     m_copyColumns = int(m_settings->integer("grid.copyColumns") | (m_settings->integer("grid.copyColumnTags") & core::column::Tags));
     m_pasteColumns = int(m_settings->integer("grid.pasteColumns") | (m_settings->integer("grid.pasteColumnTags") & core::column::Tags));
@@ -1924,7 +1932,10 @@ void Application::makeViews(WindowViews &v, int shellWindow)
     v.shell->setReview(
         [this, shellWindow, reviewOf](core::LineId line) { return reviewOf(m_workspace.currentTab(shellWindow))(line); },
         [this, reviewOf](core::LineId line) { return reviewOf(m_workspace.reference())(line); });
-    connect(v.editor.get(), &ui::LineEditorController::changed, m_review.get(), &ReviewController::currentChanged);
+    connect(v.editor.get(), &ui::LineEditorController::changed, this, [this] {
+        if (m_review)
+            Q_EMIT m_review->currentChanged();
+    });
     v.shell->setHideTags(m_settings->boolean("grid.hideTags"), m_settings->text("grid.tagsSwapCharacter"));
     v.editor->tagList()->setOptionsStore([this] { return m_settings->integer("textEditor.tagListOptions"); },
                                          [this](int options) { m_settings->set("textEditor.tagListOptions", options); });
@@ -7163,6 +7174,7 @@ QVariantMap Application::openSettingsDialog()
     values.insert(QStringLiteral("notices.hiddenQuestions"), m_settings->list("notices.hiddenQuestions"));
     values.insert(QStringLiteral("automation.dialogAnswers"), m_settings->list("automation.dialogAnswers"));
     values.insert(QStringLiteral("trust.folders"), m_settings->list("trust.folders"));
+    values.insert(QLatin1String(AiFeatures::kCustomAgentsSetting), m_settings->list(AiFeatures::kCustomAgentsSetting));
     QStringList rendererLabels;
     for (const auto &name : lists.renderers)
         rendererLabels << subtitleRendererLabel(name);
@@ -7262,6 +7274,11 @@ void Application::applySettings(const QVariantMap &values, bool resetAll)
         list.removeIf([&](const QString &folder) { return !kept.contains(folder); });
         if (list != kept)
             m_settings->setValue(QStringLiteral("trust.folders"), list);
+    }
+    if (const auto custom = values.constFind(QLatin1String(AiFeatures::kCustomAgentsSetting)); custom != values.cend()) {
+        const QStringList list = custom->toStringList();
+        if (list != m_settings->list(AiFeatures::kCustomAgentsSetting))
+            m_settings->set(AiFeatures::kCustomAgentsSetting, list);
     }
     const auto written = application::commitOptionsDialog(m_settings->settings(), m_optionsLists, fromVariant(values));
     const auto wrote = [&](std::string_view id) { return std::ranges::find(written, id) != written.end(); };
@@ -7560,6 +7577,7 @@ QVariantMap Application::resetSettings(const QVariantMap &values)
         }
     refreshed.insert(QStringLiteral("notices.hiddenQuestions"), QStringList());
     refreshed.insert(QStringLiteral("trust.folders"), QStringList());
+    refreshed.insert(QLatin1String(AiFeatures::kCustomAgentsSetting), QStringList());
     keep("automation.dialogAnswers");
     return refreshed;
 }

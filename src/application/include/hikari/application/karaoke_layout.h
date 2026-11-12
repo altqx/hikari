@@ -140,6 +140,10 @@ public:
     Layout(const core::Document &document, ExtentsCache &extents, std::optional<Resolution> video);
     Layout(const std::vector<MacroInfoLine> &info, const std::vector<MacroStyleLine> &styles, ExtentsCache &extents,
            std::optional<Resolution> video);
+    // As karaskel.preproc_line lays a Line out from its own tables: exactly `styles`, no "-furigana" Style added,
+    // meta's res_x and res_y and its video_x_correct_factor.
+    Layout(const std::vector<std::pair<std::u8string, std::vector<std::string>>> &styles, double resX, double resY,
+           double xFactor, ExtentsCache &extents);
 
     // `li`: the Line's number as the templater's subs count it.
     Line line(const MacroDialogueLine &source, double li, const LineOptions &options,
@@ -156,6 +160,9 @@ public:
     }
     const StyleInfo *style(std::u8string_view name) const;
     std::optional<std::vector<std::u8string>> addedStyle(std::u8string_view name) const;
+    // While set, line() measures nothing and lists each Style's texts it would measure, in order.
+    using Measures = std::vector<std::pair<std::vector<std::string>, std::vector<std::string>>>;
+    void listMeasures(Measures *into) { m_listed = into; }
 
 private:
     struct Extents {
@@ -171,6 +178,7 @@ private:
     const StyleInfo *m_first = nullptr;
     std::size_t m_added = 0;
     double m_resX = 0, m_resY = 0, m_factor = 1;
+    Measures *m_listed = nullptr;
 };
 
 }
