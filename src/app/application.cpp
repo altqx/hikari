@@ -2062,6 +2062,7 @@ void Application::makeNodeEffects(WindowViews &v, int shellWindow)
     });
     effects->shareTrustWith(v.templateEditor.get());
     effects->setLuaNodes([this] { return &luaNodes(); });
+    effects->setGlyphs([this] { return &glyphOutlines(); });
     effects->setAudio([this]() -> std::optional<const application::DisplayAudio *> {
         ui::AudioController *audio = activeMedia().audio.get();
         if (!audio || !audio->box().isOpen())
@@ -2193,6 +2194,15 @@ application::LuaNodePort &Application::luaNodes()
         m_luaNodes = std::make_unique<backends::LuaNodeHelper>(
             backends::LuaNodeHelper::Options{m_luaHelper, 10'000, backends::luaNodeProfile(m_luaHelper)});
     return *m_luaNodes;
+}
+
+application::shape::GlyphOutlinePort &Application::glyphOutlines()
+{
+    if (!m_glyphOutlines) {
+        m_glyphFonts = std::make_unique<backends::LibassFontService>();
+        m_glyphOutlines = std::make_unique<backends::FreetypeGlyphOutlines>(*m_glyphFonts);
+    }
+    return *m_glyphOutlines;
 }
 
 namespace {

@@ -1244,7 +1244,7 @@ std::vector<ToolOption> DrawingTool::options(const VisualHost &host) const
     pathfinder.kind = ToolOption::Kind::Choice;
     pathfinder.iconRole = "shape-unite";
     pathfinder.tooltip = u"Pathfinder: combine the drawing with the line’s clip, or with the other picked lines in "
-                         u"the order they were picked";
+                         u"Grid order";
     pathfinder.choices = {u"Unite", u"Subtract", u"Intersect", u"Exclude"};
     pathfinder.choiceRoles = {"shape-unite", "shape-subtract", "shape-intersect", "shape-exclude"};
     pathfinder.index = -1;

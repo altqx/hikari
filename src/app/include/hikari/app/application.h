@@ -57,6 +57,8 @@
 #include "hikari/backends/harper_client.h"
 #include "hikari/backends/legacy_spelling.h"
 #include "hikari/backends/lua_node_helper.h"
+#include "hikari/backends/freetype_glyph_outlines.h"
+#include "hikari/backends/libass_font_service.h"
 #include "hikari/backends/libass_renderer.h"
 #include "hikari/backends/subtitle_renderer_selection.h"
 #include "hikari/backends/qt_general_player.h"
@@ -859,6 +861,7 @@ public:
     AutomationShell &automation() { return *m_automation; }
     // Runs node effects' Lua nodes in their own sandboxed helper, started on first use.
     application::LuaNodePort &luaNodes();
+    application::shape::GlyphOutlinePort &glyphOutlines();
     AutomationHotkeysController &automationHotkeys() { return *m_automationHotkeys; }
     SettingsImportController &settingsImport() { return *m_settingsImport; }
     HotkeysController &hotkeys() { return *m_hotkeys; }
@@ -1293,6 +1296,8 @@ private:
     std::unique_ptr<AutomationShell> m_automation;
     QString m_luaHelper;
     std::unique_ptr<backends::LuaNodeHelper> m_luaNodes;
+    std::unique_ptr<backends::LibassFontService> m_glyphFonts;
+    std::unique_ptr<backends::FreetypeGlyphOutlines> m_glyphOutlines;
     std::optional<QVariantMap> m_layerPreview;
     std::map<core::LineId, std::u8string> m_interpolationPreview;
     std::unique_ptr<AutomationHotkeysController> m_automationHotkeys;
