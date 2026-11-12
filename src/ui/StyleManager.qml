@@ -515,9 +515,10 @@ DialogWindow {
         settings: manager.app.settings
     }
 
-    function chooseCatalog(name, tier) {
+    function chooseCatalog(name) { chooseCatalogIn(name, "") }
+    function chooseCatalogIn(name, tier) {
         guard(() => {
-            if (manager.own(() => styles.chooseCatalog(name, tier || "")))
+            if (manager.own(() => styles.chooseCatalog(name, tier)))
                 manager.catalogShown()
         })
     }
@@ -1358,7 +1359,7 @@ DialogWindow {
                         onActivated: i => {
                             const row = model[i]
                             currentIndex = Qt.binding(() => catalogBox.shownIndex())
-                            manager.chooseCatalog(row.name, row.tier)
+                            manager.chooseCatalogIn(row.name, row.tier)
                         }
                         delegate: ItemDelegate {
                             id: catalogRow

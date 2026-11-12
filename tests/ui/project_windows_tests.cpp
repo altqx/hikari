@@ -751,7 +751,7 @@ private slots:
         QTRY_VERIFY(field("styleCatalogTier") && field("styleCatalogTier")->isVisible());
         QCOMPARE(field("styleCatalogTier")->property("text").toString(), QStringLiteral("Project"));
 
-        QVERIFY(QMetaObject::invokeMethod(manager, "chooseCatalog", Q_ARG(QVariant, QStringLiteral("Show")),
+        QVERIFY(QMetaObject::invokeMethod(manager, "chooseCatalogIn", Q_ARG(QVariant, QStringLiteral("Show")),
                                           Q_ARG(QVariant, QStringLiteral("mine"))));
         QTRY_VERIFY(styles.catalogReadOnly());
         QCOMPARE(styles.storeStyles(), QStringList{QStringLiteral("Mine show")});
