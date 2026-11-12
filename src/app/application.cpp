@@ -753,12 +753,19 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         [this] { return m_settings->text("video.subtitleProvider").toStdString(); },
         m_userFolder.isEmpty() ? std::filesystem::path()
                                : std::filesystem::path((m_userFolder + QStringLiteral("/ai/skills")).toStdU16String()),
-        m_aiScripts.get()});
+        m_aiScripts.get(),
+        [this] { return perspectiveMeasure(); }});
     AiFeatures::Ports aiPorts = options.aiPorts ? std::move(*options.aiPorts)
                                                 : AiFeatures::defaultPorts(m_userFolder, &m_apiHost->api(),
                                                                            options.appVersion.isEmpty()
                                                                                ? QStringLiteral(HIKARI_VERSION)
                                                                                : options.appVersion);
+    if (!options.externalAgents) {
+        aiPorts.agents = {};
+        aiPorts.agentOnPath = {};
+        aiPorts.findAgent = {};
+        aiPorts.agentLatest = {};
+    }
     aiPorts.reportRollback = [this](const QString &version, const QString &reason) {
         if (m_analytics)
             m_analytics->aiComponentRolledBack(version, reason, m_ai->versionProperties());
@@ -767,7 +774,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_ai = std::make_unique<AiFeatures>(*m_settings, std::move(aiPorts));
     m_aiMcp = std::make_unique<AiMcp>(*m_settings, *m_ai,
                                       m_userFolder.isEmpty() ? QString() : backends::ai::mcpEndpointFile(m_userFolder));
-    m_aiSettings = std::make_unique<AiSettings>(*m_ai, m_aiMcp.get());
+    m_aiMcpServers = std::make_unique<AiMcpServers>(*m_settings, *m_ai);
+    m_aiSettings = std::make_unique<AiSettings>(*m_ai, m_aiMcp.get(), m_aiMcpServers.get());
     m_review = std::make_unique<ReviewController>(ReviewController::Wiring{
         m_apiHost->review(), *m_files, m_workspace, [this] { return m_ai->on(); },
         [this](application::Selection next) { return applySelection(std::move(next)); },
@@ -943,6 +951,25 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         m_alignToVideo = std::make_unique<AlignToVideoController>(*m_settings, std::move(hooks));
     }
     {
+        VideoAnalysisController::Hooks hooks;
+        hooks.video = [this] { return videoState() == application::VideoState::None ? nullptr : &activeMedia().video->session(); };
+        hooks.target = [this] { return targetSession(); };
+        hooks.pause = [this] {
+            if (activeMedia().video->playing())
+                activeMedia().video->pause();
+        };
+        hooks.refresh = [this] {
+            editor().reloadFromSession();
+            refreshViews();
+        };
+        hooks.clipboard = [] { return QGuiApplication::clipboard()->text(); };
+        m_videoAnalysis = std::make_unique<VideoAnalysisController>(std::move(hooks));
+        connect(m_videoAnalysis.get(), &VideoAnalysisController::previewChanged, this, [this] {
+            if (activeMedia().videoShowsTemplate || m_videoAnalysis->videoPreview())
+                showVideoSubtitles();
+        });
+    }
+    {
         LyricsImportController::Hooks hooks;
         hooks.target = [this] { return targetSession(); };
         hooks.refresh = [this] {
@@ -983,6 +1010,12 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     {
         FontCollectorController::Hooks hooks;
         hooks.projectFontFolder = [this] { return projectFontFolder(m_workspace.activeWindow()); };
+        hooks.folderFonts = [this] {
+            auto fonts = projectFonts(std::nullopt);
+            if (m_fontCatalogs)
+                std::ranges::move(m_fontCatalogs->externalFontLeases(), std::back_inserter(fonts));
+            return fonts;
+        };
         hooks.tabs = [this] {
             std::vector<FontCollectorController::Tab> out;
             for (const auto id : m_workspace.allTabs()) {
@@ -1079,6 +1112,10 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             for (auto &font : projectFonts(m_workspace.editingTarget()))
                 fonts.push_back(std::move(font));
             return fonts;
+        };
+        hooks.projectFonts = [this](int shellWindow) {
+            const auto found = m_projectFonts.find(shellWindow);
+            return found == m_projectFonts.end() ? std::vector<application::FontLease>() : found->second.fonts;
         };
         const auto report = listFileReport(*m_log);
         hooks.fileConverted = report.converted;
@@ -1974,6 +2011,7 @@ void Application::makeNodeEffects(WindowViews &v, int shellWindow)
     auto *effects = v.nodeEffects.get();
     effects->setSessionSource([this, shellWindow] { return windowSession(shellWindow); });
     effects->setLibraryFolder(std::filesystem::path(m_userFolder.toStdU16String()) / u"node-effects");
+    effects->setSettings(&m_settings->settings());
     connect(effects, &ui::NodeEffectsController::documentEdited, this, [this] { refreshViews(); });
     connect(effects, &ui::NodeEffectsController::videoChanged, this, [this, active, effects] {
         if (active() && (activeMedia().videoShowsTemplate || effects->videoPreview()))
@@ -2460,7 +2498,9 @@ bool Application::showVideoSubtitles()
     if (!m_settings->boolean("video.disableLiveEditing") && activeViews().editorDocument == target && activeMedia().video->hasVideo())
         draft = editor().draftDocument();
     std::optional<core::Document> templated;
-    if (m_layerPreview) {
+    if (m_videoAnalysis && m_videoAnalysis->videoPreview()) {
+        templated = m_videoAnalysis->videoDocument(draft ? *draft : session->document());
+    } else if (m_layerPreview) {
         templated = layerPreviewDocument(draft ? *draft : session->document(), session->selection().selected);
     } else if (nodeEffects().videoPreview()) {
         templated = nodeEffects().videoDocument(draft ? *draft : session->document());
@@ -6637,6 +6677,7 @@ QVariantMap Application::qmlProperties(int shellWindow)
             {QStringLiteral("styleManager"), QVariant::fromValue(static_cast<QObject *>(m_styleManager.get()))},
             {QStringLiteral("kanjiTimer"), QVariant::fromValue(static_cast<QObject *>(views(shellWindow).kanjiTimer.get()))},
             {QStringLiteral("alignToVideo"), QVariant::fromValue(static_cast<QObject *>(m_alignToVideo.get()))},
+            {QStringLiteral("videoAnalysis"), QVariant::fromValue(static_cast<QObject *>(m_videoAnalysis.get()))},
             {QStringLiteral("lyricsImport"), QVariant::fromValue(static_cast<QObject *>(m_lyricsImport.get()))},
             {QStringLiteral("qcNotes"), QVariant::fromValue(static_cast<QObject *>(m_qcNotes.get()))},
             {QStringLiteral("fontCollector"), QVariant::fromValue(static_cast<QObject *>(m_fontCollector.get()))},
@@ -7337,7 +7378,8 @@ void Application::resetAllSettings()
                                        application::kAutomationHotkeysSetting, application::kHotkeysSetting,
                                        application::kAudioHotkeysSetting,
                                        "workspace.settingsPage",
-                                       "automation.dialogAnswers", "automation.dialogPresets"};
+                                       "automation.dialogAnswers", "automation.dialogPresets",
+                                       "nodeEffects.exportFormat"};
     const auto appearance = appearanceSettings();
     keep.insert(keep.end(), appearance.begin(), appearance.end());
     for (const std::string_view id : keep)

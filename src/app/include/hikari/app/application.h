@@ -14,6 +14,7 @@
 #include "hikari/app/whats_new.h"
 #include "hikari/app/style_manager_controller.h"
 #include "hikari/app/align_to_video_controller.h"
+#include "hikari/app/video_analysis_controller.h"
 #include "hikari/app/lyrics_import_controller.h"
 #include "hikari/app/kanji_timer_controller.h"
 #include "hikari/app/qc_notes_controller.h"
@@ -78,6 +79,7 @@
 #include "settings_store.h"
 #include "hikari/app/ai_features.h"
 #include "hikari/app/ai_mcp.h"
+#include "hikari/app/ai_mcp_servers.h"
 #include "hikari/app/ai_settings.h"
 #include "hikari/app/agent_controller.h"
 #include "hikari/app/inline_ai_controller.h"
@@ -255,6 +257,8 @@ public:
         DiscordPresence::Config presence;
         // Unset: the keychain and <userFolder>/ai.
         std::optional<AiFeatures::Ports> aiPorts;
+        /// False: the default AI ports never look for, ask or start the Claude Code and Codex CLIs.
+        bool externalAgents = true;
         StarPrompt::Config starPrompt;
     };
     explicit Application(QObject *parent = nullptr);
@@ -860,6 +864,7 @@ public:
     StyleManagerController &styleManager() { return *m_styleManager; }
     KanjiTimerController &kanjiTimer() const { return *activeViews().kanjiTimer; }
     AlignToVideoController &alignToVideo() { return *m_alignToVideo; }
+    VideoAnalysisController &videoAnalysis() { return *m_videoAnalysis; }
     LyricsImportController &lyricsImport() { return *m_lyricsImport; }
     QcNotesController &qcNotes() { return *m_qcNotes; }
     FontCollectorController &fontCollector() { return *m_fontCollector; }
@@ -1286,6 +1291,7 @@ private:
     std::unique_ptr<ApiHost> m_apiHost;
     std::unique_ptr<AiFeatures> m_ai;
     std::unique_ptr<AiMcp> m_aiMcp;
+    std::unique_ptr<AiMcpServers> m_aiMcpServers;
     std::unique_ptr<AiSettings> m_aiSettings;
     std::unique_ptr<ReviewController> m_review;
     std::unique_ptr<AgentController> m_agent;
@@ -1303,6 +1309,7 @@ private:
     std::unique_ptr<StyleManagerController> m_styleManager;
     std::unique_ptr<FontCollectorController> m_fontCollector;
     std::unique_ptr<AlignToVideoController> m_alignToVideo;
+    std::unique_ptr<VideoAnalysisController> m_videoAnalysis;
     std::unique_ptr<LyricsImportController> m_lyricsImport;
     QString m_readingDictionary;
     std::unique_ptr<QcNotesController> m_qcNotes;

@@ -1,8 +1,7 @@
 ; HikariSub installer and uninstaller (NSIS 3.13, built by build-makensis.sh). Per-codebase parts come from
 ; payload.nsh, which make-payload-nsh.py writes.
 ;
-; makensis -DHS_PAYLOAD_NSH=<payload.nsh> -DHS_STDUTILS=<StdUtils folder>
-;          -DHS_OUTFILE=<setup.exe> hikarisub.nsi
+; makensis -DHS_PAYLOAD_NSH=<payload.nsh> -DHS_OUTFILE=<setup.exe> hikarisub.nsi
 ;
 ; Installer switches (case-insensitive):
 ;   /S                         silent
@@ -26,14 +25,11 @@ RequestExecutionLevel user
 SetCompressor /SOLID /FINAL lzma
 SetCompressorDictSize 64
 
-!ifndef HS_PAYLOAD_NSH | HS_STDUTILS | HS_OUTFILE
-  !error "define HS_PAYLOAD_NSH, HS_STDUTILS and HS_OUTFILE (see the header)"
+!ifndef HS_PAYLOAD_NSH | HS_OUTFILE
+  !error "define HS_PAYLOAD_NSH and HS_OUTFILE (see the header)"
 !endif
 
 !include "${HS_PAYLOAD_NSH}"
-
-!addplugindir /x86-unicode "${HS_STDUTILS}/Plugins/Unicode"
-!addincludedir "${HS_STDUTILS}/Include"
 
 !include MUI2.nsh
 !include LogicLib.nsh
@@ -43,7 +39,6 @@ SetCompressorDictSize 64
 !include x64.nsh
 !include WinVer.nsh
 !include "${__FILEDIR__}/protected.nsh"
-!include StdUtils.nsh
 
 !define HS_NAME          "HikariSub"
 !define HS_PUBLISHER     "altqx"
@@ -367,25 +362,154 @@ FunctionEnd
 !insertmacro HS_PROTECTED_FUNCTIONS "un."
 !insertmacro HS_PAYLOAD_PATH_FUNCTION ""
 
-; Starts HikariSub from $INSTDIR unelevated, through the desktop user's shell.
+!if ${NSIS_PTR_SIZE} != 4
+  !error "HsShellStart passes VARIANTs as 32-bit stdcall DWORDs and HsMakeStartEvent lays out a 32-bit SECURITY_ATTRIBUTES"
+!endif
+
+; $0 = the copy key the app reads results under: nsis-machine or nsis-user.
+Function HsCopyKey
+  StrCpy $0 $HsScope
+  ${If} $0 == ""
+    StrCpy $0 $HsCmdScope
+  ${EndIf}
+  ${If} $0 == "machine"
+    StrCpy $0 "nsis-machine"
+  ${Else}
+    StrCpy $0 "nsis-user"
+  ${EndIf}
+FunctionEnd
+
+; Appends $R6 to the setup log, Updates\setup-<copy key>.log.
+Function HsLog
+  Push $0
+  Push $1
+  Call HsCopyKey
+  CreateDirectory "$HsUserLocalAppData\HikariSub\Updates"
+  ClearErrors
+  FileOpen $1 "$HsUserLocalAppData\HikariSub\Updates\setup-$0.log" a
+  ${IfNot} ${Errors}
+    FileSeek $1 0 END
+    FileWrite $1 "${HS_VERSION}: $R6$\r$\n"
+    FileClose $1
+  ${EndIf}
+  DetailPrint $R6
+  Pop $1
+  Pop $0
+FunctionEnd
+
+!ifndef HS_SHELL_WINDOWS_CLSID
+  !define HS_SHELL_WINDOWS_CLSID "{9BA05972-F6A8-11CF-A442-00A0C90A8F39}"
+!endif
+!define HS_IID_SHELL_WINDOWS     "{85CB6900-4D95-11CF-960C-0080C7F4EE85}"
+!define HS_IID_SERVICE_PROVIDER  "{6D5140C1-7436-11CE-8034-00AA006009FA}"
+!define HS_SID_TOP_LEVEL_BROWSER "{4C96BE40-915C-11CF-99D3-00AA004AE837}"
+!define HS_IID_SHELL_BROWSER     "{000214E2-0000-0000-C000-000000000046}"
+!define HS_IID_DISPATCH          "{00020400-0000-0000-C000-000000000046}"
+!define HS_IID_FOLDER_VIEW_DUAL  "{E7A1AF80-4D96-11CF-960C-0080C7F4EE85}"
+!define HS_IID_SHELL_DISPATCH2   "{A4C6892C-3BA9-11D2-9DEA-00C04FB16162}"
+
+; One step of HsShellStart: CALL reads the object in $1 and writes the next one to $2 and the HRESULT to $3.
+!macro HS_SHELL_STEP NAME CALL
+  StrCpy $0 "${NAME}"
+  StrCpy $2 0
+  StrCpy $3 -1
+  System::Call `${CALL}`
+  ${If} $3 <> 0
+  ${OrIf} $2 = 0
+    Goto hs_shell_done
+  ${EndIf}
+  System::Call "$1->2()"
+  StrCpy $1 $2
+!macroend
+
+; Starts $INSTDIR\HikariSub.exe through the desktop's own shell, so it runs as the desktop user, unelevated.
+; $0 = "" when it started, else the step that failed. Unlike StdUtils ExecShellAsUser, a failure starts nothing (#918).
+Function HsShellStart
+  Push $1
+  Push $2
+  Push $3
+  Push $4
+  Push $5
+  Push $6
+  StrCpy $6 0
+  StrCpy $0 "ShellWindows"
+  StrCpy $1 0
+  StrCpy $3 -1
+  System::Call 'ole32::CoCreateInstance(g "${HS_SHELL_WINDOWS_CLSID}", p 0, i 4, g "${HS_IID_SHELL_WINDOWS}", *p .r1) i .r3'
+  ${If} $3 <> 0
+  ${OrIf} $1 = 0
+    StrCpy $1 0
+    Goto hs_shell_done
+  ${EndIf}
+  System::Alloc 16
+  Pop $6
+  StrCpy $5 0
+  !insertmacro HS_SHELL_STEP "FindWindowSW" '$1->15(p r6, p r6, i 8, *i .r5, i 1, *p .r2) i .r3'
+  System::Call 'user32::GetWindowThreadProcessId(p r5, *i .r4)'
+  System::Call 'user32::AllowSetForegroundWindow(i r4)'
+  !insertmacro HS_SHELL_STEP "IServiceProvider" '$1->0(g "${HS_IID_SERVICE_PROVIDER}", *p .r2) i .r3'
+  !insertmacro HS_SHELL_STEP "STopLevelBrowser" '$1->3(g "${HS_SID_TOP_LEVEL_BROWSER}", g "${HS_IID_SHELL_BROWSER}", *p .r2) i .r3'
+  !insertmacro HS_SHELL_STEP "QueryActiveShellView" '$1->15(*p .r2) i .r3'
+  !insertmacro HS_SHELL_STEP "GetItemObject" '$1->15(i 0, g "${HS_IID_DISPATCH}", *p .r2) i .r3'
+  !insertmacro HS_SHELL_STEP "IShellFolderViewDual" '$1->0(g "${HS_IID_FOLDER_VIEW_DUAL}", *p .r2) i .r3'
+  !insertmacro HS_SHELL_STEP "Application" '$1->7(*p .r2) i .r3'
+  !insertmacro HS_SHELL_STEP "IShellDispatch2" '$1->0(g "${HS_IID_SHELL_DISPATCH2}", *p .r2) i .r3'
+  StrCpy $0 "ShellExecute"
+  System::Call 'oleaut32::SysAllocString(w "$INSTDIR\${HS_EXE}") p .r4'
+  System::Call 'oleaut32::SysAllocString(w "open") p .r5'
+  StrCpy $3 -1
+  ; Four VARIANTs by value (args, dir, operation, show), each four DWORDs: VT_EMPTY, VT_EMPTY, VT_BSTR "open", VT_I4 SW_SHOWNORMAL.
+  System::Call '$1->31(p r4, i 0, i 0, i 0, i 0, i 0, i 0, i 0, i 0, i 8, i 0, p r5, i 0, i 3, i 0, i 1, i 0) i .r3'
+  System::Call 'oleaut32::SysFreeString(p r4)'
+  System::Call 'oleaut32::SysFreeString(p r5)'
+  ${If} $3 = 0
+    StrCpy $0 ""
+  ${EndIf}
+hs_shell_done:
+  ${If} $0 != ""
+    IntFmt $3 "0x%08X" $3
+    StrCpy $0 "$0 (HRESULT $3)"
+  ${EndIf}
+  ${If} $1 <> 0
+    System::Call "$1->2()"
+  ${EndIf}
+  ${If} $6 <> 0
+    System::Free $6
+  ${EndIf}
+  Pop $6
+  Pop $5
+  Pop $4
+  Pop $3
+  Pop $2
+  Pop $1
+FunctionEnd
+
+; Starts HikariSub from $INSTDIR unelevated. An elevated setup that can't reach the desktop's shell starts nothing.
 Function HsLaunchApp
   Push $0
+  Push $R6
   ${If} ${FileExists} "$INSTDIR\${HS_EXE}"
     SetOutPath "$INSTDIR"
     ${If} $HsIsAdmin = 1
-      ${StdUtils.ExecShellAsUser} $0 "$INSTDIR\${HS_EXE}" "open" ""
+      Call HsShellStart
+      ${If} $0 == ""
+        StrCpy $R6 "relaunch: started HikariSub through the desktop shell"
+        Call HsLog
+      ${Else}
+        StrCpy $R6 "relaunch: skipped, the desktop shell could not start HikariSub: $0"
+        Call HsLog
+        MessageBox MB_OK|MB_ICONINFORMATION "HikariSub is installed. Start it from the Start menu." /SD IDOK
+      ${EndIf}
     ${Else}
       Exec '"$INSTDIR\${HS_EXE}"'
     ${EndIf}
   ${EndIf}
+  Pop $R6
   Pop $0
 FunctionEnd
 
 ; HS_START_EVENT: a manual-reset event any signed-in user may set, held until exit. Not a file: an all-users
 ; setup that another administrator approved runs in that account's profile.
-!if ${NSIS_PTR_SIZE} != 4
-  !error "HsMakeStartEvent lays out a 32-bit SECURITY_ATTRIBUTES"
-!endif
 Function HsMakeStartEvent
   Push $0
   Push $1
@@ -422,15 +546,7 @@ Function HsFail
   Push $0
   ${If} $HsUpdate = 1
     ; Under the app's CopyKey, so another copy sharing this cache doesn't take the result for its own.
-    StrCpy $0 $HsScope
-    ${If} $0 == ""
-      StrCpy $0 $HsCmdScope
-    ${EndIf}
-    ${If} $0 == "machine"
-      StrCpy $0 "nsis-machine"
-    ${Else}
-      StrCpy $0 "nsis-user"
-    ${EndIf}
+    Call HsCopyKey
     CreateDirectory "$HsUserLocalAppData\HikariSub\Updates"
     ClearErrors
     FileOpen $0 "$HsUserLocalAppData\HikariSub\Updates\last-result-$0.json" w

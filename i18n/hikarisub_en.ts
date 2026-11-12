@@ -813,6 +813,13 @@
             <numerusform>Not tested · %n models</numerusform>
         </translation>
     </message>
+    <message numerus="yes">
+        <source>Connected · %n tool(s)</source>
+        <translation>
+            <numerusform>Connected · %n tool</numerusform>
+            <numerusform>Connected · %n tools</numerusform>
+        </translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Plugins</name>
@@ -1461,6 +1468,27 @@
         <translation>
             <numerusform>Searching… %n frame checked</numerusform>
             <numerusform>Searching… %n frames checked</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n selected lines, %1 to %2, %3 frames. Frames are read without subtitles.</source>
+        <translation>
+            <numerusform>%n selected line, %1 to %2, %3 frames. Frames are read without subtitles.</numerusform>
+            <numerusform>%n selected lines, %1 to %2, %3 frames. Frames are read without subtitles.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>After Effects data, %n frames, from the clipboard</source>
+        <translation>
+            <numerusform>After Effects data, %n frame, from the clipboard</numerusform>
+            <numerusform>After Effects data, %n frames, from the clipboard</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Line %1, %2 to %3, %n frames. The point’s colour on this frame is the fully shown colour.</source>
+        <translation>
+            <numerusform>Line %1, %2 to %3, %n frame. The point’s colour on this frame is the fully shown colour.</numerusform>
+            <numerusform>Line %1, %2 to %3, %n frames. The point’s colour on this frame is the fully shown colour.</numerusform>
         </translation>
     </message>
 </context>

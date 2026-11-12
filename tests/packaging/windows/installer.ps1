@@ -22,6 +22,8 @@ function Check([bool]$cond, [string]$what) { if ($cond) { Pass $what } else { Fa
 $scope = if ($env:SCOPE) { $env:SCOPE } else { 'user' }
 $hive = if ($scope -eq 'machine') { 'HKLM:' } else { 'HKCU:' }
 $defaultDir = if ($scope -eq 'machine') { Join-Path $env:ProgramW6432 'HikariSub' } else { Join-Path $env:LOCALAPPDATA 'Programs\HikariSub' }
+# The setup is 32-bit: run as SYSTEM, its profile under System32 is redirected to SysWOW64.
+$setupUpdates = Join-Path ($env:LOCALAPPDATA -replace '(?i)\\System32\\', '\SysWOW64\') 'HikariSub\Updates'
 $instDir = if ($env:INSTDIR) { $env:INSTDIR.TrimEnd('\') } else { $defaultDir }
 $exe = Join-Path $instDir 'HikariSub.exe'
 $uninstallKey = "$hive\Software\Microsoft\Windows\CurrentVersion\Uninstall\HikariSub"
@@ -235,7 +237,7 @@ switch ($env:ACTION) {
             $k = "$h\Software\Microsoft\Windows\CurrentVersion\Uninstall\HikariSub"
             if (Test-Path $k) { "$k = $(Value $k DisplayVersion) at $(Value $k InstallLocation)" }
         }
-        Get-ChildItem -LiteralPath (Join-Path $env:LOCALAPPDATA 'HikariSub\Updates') -Filter 'last-result-*.json' -ErrorAction SilentlyContinue |
+        Get-ChildItem -LiteralPath $setupUpdates -Filter 'last-result-*.json' -ErrorAction SilentlyContinue |
             ForEach-Object { "$($_.Name): $(Get-Content -Raw -LiteralPath $_.FullName)" }
     }
     'open-file' {
@@ -280,8 +282,11 @@ switch ($env:ACTION) {
         $app = Get-Process -Name HikariSub -ErrorAction SilentlyContinue | Select-Object -First 1
         if (-not $app) { Fail 'no running HikariSub to update'; break }
         $copy = if ("$env:ARGS" -match '/ALLUSERS') { 'nsis-machine' } else { 'nsis-user' }
-        $result = Join-Path $env:LOCALAPPDATA "HikariSub\Updates\last-result-$copy.json"
+        $result = Join-Path $setupUpdates "last-result-$copy.json"
         Remove-Item -LiteralPath $result -ErrorAction SilentlyContinue
+        $setupLog = Join-Path $setupUpdates "setup-$copy.log"
+        Remove-Item -LiteralPath $setupLog -ErrorAction SilentlyContinue
+        $before = Value $uninstallKey DisplayVersion
         $a = "/S /UPDATE /WAITPID=$($app.Id) $env:ARGS".Trim()
         Write-Output "run: `"$env:SETUP`" $a"
         $sw = [Diagnostics.Stopwatch]::StartNew()
@@ -302,7 +307,7 @@ switch ($env:ACTION) {
         $null = $p.Handle
         Start-Sleep -Seconds 5
         Check (-not $p.HasExited) 'the installer waits while the app runs'
-        Check ((Value $uninstallKey DisplayVersion) -ne $env:VERSION) 'nothing installed yet'
+        if ($before -ne $env:VERSION) { Check ((Value $uninstallKey DisplayVersion) -eq $before) 'nothing installed yet' }
         if ($env:CLOSE_APP -eq '1') {
             $null = $app.CloseMainWindow()
             if (-not $app.WaitForExit(15000)) { $app.Kill() }
@@ -321,7 +326,17 @@ switch ($env:ACTION) {
             if (Test-Path -LiteralPath $result) { Write-Output "     $(Get-Content -Raw -LiteralPath $result)" }
             Remove-Item -LiteralPath $result -ErrorAction SilentlyContinue
         }
-        if ($env:ARGS -match '/RELAUNCH') {
+        $logged = if (Test-Path -LiteralPath $setupLog) { Get-Content -Raw -LiteralPath $setupLog } else { '' }
+        if ($logged) { Write-Output "     setup log: $($logged.Trim())" }
+        if ($env:RELAUNCH -eq 'none') {
+            Start-Sleep -Seconds 20
+            $new = @(Get-Process -Name HikariSub -ErrorAction SilentlyContinue | Where-Object { $_.Id -ne $app.Id })
+            foreach ($extra in $new) { Write-Output "     unexpected pid $($extra.Id), elevated: $([HsRes]::IsElevated($extra.Id))" }
+            Check ($new.Count -eq 0) 'the installer started no HikariSub'
+            Check ($logged -match 'relaunch: skipped') 'the setup log says the relaunch was skipped'
+            $new | ForEach-Object { Stop-Process -Id $_.Id -Force -ErrorAction SilentlyContinue }
+        } elseif ($env:ARGS -match '/RELAUNCH') {
+            if ($copy -eq 'nsis-machine') { Check ($logged -match 'relaunch: started') 'the setup log says the desktop shell started HikariSub' }
             $new = $null
             $deadline = (Get-Date).AddSeconds(20)
             while (-not $new -and (Get-Date) -lt $deadline) {

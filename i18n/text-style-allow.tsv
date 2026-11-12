@@ -51,3 +51,5 @@ HikariSub.Tags	Clean Tags rules	title-case	the bundled Clean Tags script's name
 HikariSub.Hotkeys	Change case to Title Case	title-case	Title Case is the case style’s name, shown in it
 HikariSub.Hotkeys	Change case to Sentence case	title-case	Sentence case is the case style’s name
 HikariSub.Text	Title Case	title-case	the Change case menu shows each case style in that style
+HikariSub.Video	The clipboard holds no After Effects tracking data.	title-case	After Effects is the product’s name
+HikariSub.Video	After Effects data, %n frames, from the clipboard	title-case	After Effects is the product’s name

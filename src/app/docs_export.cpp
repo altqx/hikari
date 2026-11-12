@@ -353,6 +353,7 @@ bool exportDocs(const QString &dir, QString *error)
     options.systemUiLanguages = {QStringLiteral("en")};
     options.playbackAudio = false;
     options.spellingBackend = {};
+    options.externalAgents = false;
     Application application(options);
 
     hikari::ui::theme::chooseControlsStyle();
@@ -362,6 +363,7 @@ bool exportDocs(const QString &dir, QString *error)
     attachStylePreview(engine, application.styleManager());
     attachFontCatalogPreview(engine, application.fontCatalogs());
     attachAlignToVideoStill(engine, application.alignToVideo());
+    attachVideoAnalysisStill(engine, application.videoAnalysis());
     attachMarketplaceImages(engine, *application.pluginMarketplace());
     engine.setInitialProperties(application.qmlProperties());
     engine.loadFromModule("Hikari.Ui", "Main");
