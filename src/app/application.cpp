@@ -732,6 +732,14 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_aiScripts = std::make_unique<AiScripts>(
         *m_automation, m_userFolder.isEmpty() ? QString() : m_userFolder + QStringLiteral("/ai/scripts"),
         [this] { return m_workspace.editingTarget().has_value(); });
+    m_aiKaraoke = std::make_unique<AiKaraoke>(AiKaraoke::Wiring{
+        [this] { return activeMedia().audio ? activeMedia().audio->box().sharedAudio() : nullptr; },
+        [folder = m_readingDictionary]() -> application::ReadingAnalyzer {
+            std::shared_ptr<const backends::MecabReadings> readings =
+                backends::MecabReadings::open(std::filesystem::path(folder.toStdU16String()));
+            return readings ? backends::MecabReadings::analyzer(std::move(readings)) : application::ReadingAnalyzer{};
+        },
+        [this] { return &m_automation->templater(); }, QDir::tempPath()});
     m_apiHost = std::make_unique<ApiHost>(ApiHost::Wiring{
         m_workspace, *m_files, &m_settings->settings(), &m_automation->media(),
         [this](application::Selection next) { return applySelection(std::move(next)); },
@@ -755,7 +763,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
                                : std::filesystem::path((m_userFolder + QStringLiteral("/ai/skills")).toStdU16String()),
         m_aiScripts.get(),
         [this] { return perspectiveMeasure(); }, [this] { return activeProject(); },
-        [this](application::DocumentId document) { return honyaFolderOf(document); }});
+        [this](application::DocumentId document) { return honyaFolderOf(document); },
+        m_aiKaraoke.get()});
     AiFeatures::Ports aiPorts = options.aiPorts ? std::move(*options.aiPorts)
                                                 : AiFeatures::defaultPorts(m_userFolder, &m_apiHost->api(),
                                                                            options.appVersion.isEmpty()

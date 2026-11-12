@@ -306,6 +306,10 @@ RiskCheck alwaysAsk(const std::string &operation, const Json &params,
     };
     if (operation == "files.write" && outside(pathOf ? pathOf(stringAt(params, "file")) : std::nullopt))
         return {Risk::Files, "It overwrites a file outside the subtitles' folders and your user folder."};
+    if (operation == "karaoke.align")
+        return {Risk::Programs, "It runs " + std::string(stringAt(params, "program") == "mfa" ? "the Montreal Forced Aligner"
+                                                                                               : "WhisperX") +
+                                    ", a program you installed, on the song's audio."};
     if (operation == "commands.run") {
         const std::string command = stringAt(params, "command");
         if (application::isPluginCommand(command))

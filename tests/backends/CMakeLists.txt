@@ -348,6 +348,8 @@ target_compile_definitions(hikari_backends_harper_client_tests PRIVATE HIKARI_HA
 hikari_add_gtest(hikari_backends_mecab_readings_tests SOURCES mecab_readings_tests.cpp
     LIBRARIES hikari_backends LABELS backends)
 target_compile_definitions(hikari_backends_mecab_readings_tests PRIVATE HIKARI_UNIDIC_DIR="${HIKARI_UNIDIC_DIR}")
+hikari_add_gtest(hikari_backends_external_aligner_tests SOURCES external_aligner_tests.cpp
+    LIBRARIES hikari_backends LABELS backends)
 
 find_package(ZLIB REQUIRED)
 hikari_add_gtest(hikari_backends_font_collector_tests SOURCES font_collector_tests.cpp
