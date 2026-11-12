@@ -753,12 +753,19 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         [this] { return m_settings->text("video.subtitleProvider").toStdString(); },
         m_userFolder.isEmpty() ? std::filesystem::path()
                                : std::filesystem::path((m_userFolder + QStringLiteral("/ai/skills")).toStdU16String()),
-        m_aiScripts.get(), [this] { return activeProject(); }});
+        m_aiScripts.get(),
+        [this] { return perspectiveMeasure(); }, [this] { return activeProject(); }});
     AiFeatures::Ports aiPorts = options.aiPorts ? std::move(*options.aiPorts)
                                                 : AiFeatures::defaultPorts(m_userFolder, &m_apiHost->api(),
                                                                            options.appVersion.isEmpty()
                                                                                ? QStringLiteral(HIKARI_VERSION)
                                                                                : options.appVersion);
+    if (!options.externalAgents) {
+        aiPorts.agents = {};
+        aiPorts.agentOnPath = {};
+        aiPorts.findAgent = {};
+        aiPorts.agentLatest = {};
+    }
     aiPorts.reportRollback = [this](const QString &version, const QString &reason) {
         if (m_analytics)
             m_analytics->aiComponentRolledBack(version, reason, m_ai->versionProperties());

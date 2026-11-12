@@ -83,6 +83,7 @@ const Registry &Api::registry()
         detail::addSkillOperations(r);
         detail::addAutomationOperations(r);
         detail::addNodeOperations(r);
+        detail::addTypesetOperations(r);
         detail::addProjectOperations(r);
         detail::addEvents(r);
         return r;

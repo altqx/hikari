@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "version": 2,
+  "version": 1,
   "$defs": {
     "DocumentId": {
       "type": "integer",
@@ -530,73 +530,6 @@
         "access"
       ],
       "additionalProperties": false
-    },
-    "GrantedFolder": {
-      "type": "object",
-      "properties": {
-        "folder": {
-          "type": "string",
-          "description": "The handle files.list, files.read and files.write take with a path."
-        },
-        "name": {
-          "type": "string"
-        },
-        "access": {
-          "enum": [
-            "read",
-            "write"
-          ]
-        }
-      },
-      "required": [
-        "folder",
-        "name",
-        "access"
-      ],
-      "additionalProperties": false
-    },
-    "FolderEntry": {
-      "type": "object",
-      "properties": {
-        "path": {
-          "type": "string",
-          "description": "Relative to the granted folder, with / between its parts."
-        },
-        "folder": {
-          "type": "boolean"
-        }
-      },
-      "required": [
-        "path",
-        "folder"
-      ],
-      "additionalProperties": false
-    },
-    "Project": {
-      "anyOf": [
-        {
-          "type": "null"
-        },
-        {
-          "type": "object",
-          "properties": {
-            "name": {
-              "type": "string",
-              "description": "The Project folder's name."
-            },
-            "trusted": {
-              "type": "boolean",
-              "description": "Whether the folder is in Trusted folders."
-            }
-          },
-          "required": [
-            "name",
-            "trusted"
-          ],
-          "additionalProperties": false
-        }
-      ],
-      "description": "The Project of the window the user works in; null without one."
     }
   },
   "operations": [
@@ -2265,20 +2198,10 @@
     {
       "name": "files.list",
       "access": "read",
-      "summary": "The files and folders the user granted this caller; with folder, also what that folder holds.",
+      "summary": "The files the user granted this caller, with read or write access.",
       "since": 1,
       "params": {
         "type": "object",
-        "properties": {
-          "folder": {
-            "type": "string",
-            "description": "A folder handle to list (since version 2)."
-          },
-          "path": {
-            "type": "string",
-            "description": "A folder inside it; default the folder itself."
-          }
-        },
         "additionalProperties": false
       },
       "result": {
@@ -2289,23 +2212,6 @@
             "items": {
               "$ref": "#/$defs/GrantedFile"
             }
-          },
-          "folders": {
-            "type": "array",
-            "items": {
-              "$ref": "#/$defs/GrantedFolder"
-            }
-          },
-          "entries": {
-            "type": "array",
-            "items": {
-              "$ref": "#/$defs/FolderEntry"
-            },
-            "description": "With folder: in name order, at most 4096, without links that lead outside it."
-          },
-          "truncated": {
-            "type": "boolean",
-            "description": "Present when the folder holds more than 4096 entries."
           }
         },
         "required": [
@@ -2326,14 +2232,6 @@
             "type": "string",
             "description": "A handle from files.list."
           },
-          "folder": {
-            "type": "string",
-            "description": "Instead of file, a folder handle from files.list (since version 2)."
-          },
-          "path": {
-            "type": "string",
-            "description": "With folder, the file's path inside it, with / between its parts."
-          },
           "encoding": {
             "enum": [
               "utf8",
@@ -2342,6 +2240,9 @@
             "description": "Default utf8."
           }
         },
+        "required": [
+          "file"
+        ],
         "additionalProperties": false
       },
       "result": {
@@ -2376,7 +2277,7 @@
     {
       "name": "files.write",
       "access": "write",
-      "summary": "Replaces a file granted for writing with new content; in a writable folder, makes it and its folders.",
+      "summary": "Replaces a file granted for writing with new content.",
       "since": 1,
       "params": {
         "type": "object",
@@ -2384,14 +2285,6 @@
           "file": {
             "type": "string",
             "description": "A handle from files.list."
-          },
-          "folder": {
-            "type": "string",
-            "description": "Instead of file, a folder handle from files.list (since version 2)."
-          },
-          "path": {
-            "type": "string",
-            "description": "With folder, the file's path inside it, with / between its parts."
           },
           "encoding": {
             "enum": [
@@ -2405,6 +2298,7 @@
           }
         },
         "required": [
+          "file",
           "data"
         ],
         "additionalProperties": false
@@ -2708,46 +2602,853 @@
       }
     },
     {
-      "name": "project.info",
+      "name": "typeset.perspective",
       "access": "read",
-      "summary": "The Project of the window the user works in, or null.",
-      "since": 2,
+      "summary": "The Line's text with the tags that render it on a quad (VT3's perspective solver): \\pos, \\org, \\frx, \\fry, \\frz, \\fax, \\fscx and \\fscy.",
+      "since": 1,
       "params": {
         "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId",
+            "description": "Defaults to the active Document."
+          },
+          "line": {
+            "$ref": "#/$defs/LineId"
+          },
+          "quad": {
+            "type": "array",
+            "minItems": 4,
+            "maxItems": 4,
+            "items": {
+              "type": "object",
+              "properties": {
+                "x": {
+                  "type": "number"
+                },
+                "y": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "x",
+                "y"
+              ],
+              "additionalProperties": false
+            },
+            "description": "Script coordinates: top left, top right, bottom right, bottom left."
+          },
+          "origin": {
+            "enum": [
+              "center",
+              "nofax",
+              "keep"
+            ],
+            "description": "Where \\org goes: the quad's centre (default), the centre without \\fax, or where the Line has it."
+          }
+        },
+        "required": [
+          "line",
+          "quad"
+        ],
         "additionalProperties": false
       },
       "result": {
         "type": "object",
         "properties": {
-          "project": {
-            "$ref": "#/$defs/Project"
+          "line": {
+            "$ref": "#/$defs/LineId"
+          },
+          "text": {
+            "type": "string"
+          },
+          "transform": {
+            "type": "object"
           }
         },
         "required": [
-          "project"
+          "line",
+          "text",
+          "transform"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "typeset.clip",
+      "access": "read",
+      "summary": "The Line's text with its first clip replaced by a rectangle or a vector clip.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId",
+            "description": "Defaults to the active Document."
+          },
+          "line": {
+            "$ref": "#/$defs/LineId"
+          },
+          "rect": {
+            "type": "object",
+            "properties": {
+              "x1": {
+                "type": "number"
+              },
+              "y1": {
+                "type": "number"
+              },
+              "x2": {
+                "type": "number"
+              },
+              "y2": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "x1",
+              "y1",
+              "x2",
+              "y2"
+            ],
+            "additionalProperties": false,
+            "description": "Script coordinates, rounded to whole units."
+          },
+          "vector": {
+            "type": "string",
+            "maxLength": 100000,
+            "description": "ASS drawing commands such as \"m 0 0 l 100 0 100 50 0 50\"; empty removes the vector clip."
+          },
+          "inverse": {
+            "type": "boolean",
+            "description": "\\iclip: draw outside the clip."
+          }
+        },
+        "required": [
+          "line"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "line": {
+            "$ref": "#/$defs/LineId"
+          },
+          "text": {
+            "type": "string",
+            "description": "The Line's text with the tags written; nothing is applied."
+          }
+        },
+        "required": [
+          "line",
+          "text"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "typeset.drawing",
+      "access": "read",
+      "summary": "The Line's text with its first drawing replaced by a shape (\\p1), placed at a position with an alignment.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId",
+            "description": "Defaults to the active Document."
+          },
+          "line": {
+            "$ref": "#/$defs/LineId"
+          },
+          "shape": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100000,
+            "description": "ASS drawing commands, in script units from the drawing's origin."
+          },
+          "position": {
+            "type": "object",
+            "properties": {
+              "x": {
+                "type": "number"
+              },
+              "y": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "x",
+              "y"
+            ],
+            "additionalProperties": false
+          },
+          "alignment": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9,
+            "description": "\\an; 7 (top left) with position, else the Line's."
+          }
+        },
+        "required": [
+          "line",
+          "shape"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "line": {
+            "$ref": "#/$defs/LineId"
+          },
+          "text": {
+            "type": "string",
+            "description": "The Line's text with the tags written; nothing is applied."
+          }
+        },
+        "required": [
+          "line",
+          "text"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "typeset.shift",
+      "access": "read",
+      "summary": "Moves the Lines' positions, \\move points, clips, drawings and \\org by an offset, as the Position shifter does.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId",
+            "description": "Defaults to the active Document."
+          },
+          "lines": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 1000,
+            "items": {
+              "$ref": "#/$defs/LineId"
+            }
+          },
+          "dx": {
+            "type": "number",
+            "description": "Script units."
+          },
+          "dy": {
+            "type": "number"
+          },
+          "kinds": {
+            "type": "array",
+            "items": {
+              "enum": [
+                "position",
+                "move_start",
+                "move_end",
+                "clip",
+                "drawing",
+                "origin"
+              ]
+            },
+            "description": "What moves; every kind but drawing when omitted."
+          }
+        },
+        "required": [
+          "lines",
+          "dx",
+          "dy"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "lines": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "line": {
+                  "$ref": "#/$defs/LineId"
+                },
+                "text": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "line",
+                "text"
+              ],
+              "additionalProperties": false
+            },
+            "description": "The Lines the change alters, with their new text; nothing is applied."
+          }
+        },
+        "required": [
+          "lines"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "typeset.hydra",
+      "access": "read",
+      "summary": "Changes one tag across the Lines as the Hydra strip does: set it, add to it, multiply it by line number, or run a gradient across characters or Lines.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId",
+            "description": "Defaults to the active Document."
+          },
+          "lines": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 1000,
+            "items": {
+              "$ref": "#/$defs/LineId"
+            },
+            "description": "Multiply and the line gradients count them in this order."
+          },
+          "tag": {
+            "type": "string",
+            "minLength": 1,
+            "description": "A Hydra tag without the backslash: blur, bord, be, alpha, 1a, 3a, 4a, 1c (or c), 3c, 4c, fad, fax, fay, fs, fsp, shad, xbord, ybord, xshad, yshad, pos or t."
+          },
+          "change": {
+            "enum": [
+              "set",
+              "add",
+              "multiply",
+              "gradient"
+            ]
+          },
+          "values": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 4,
+            "items": {
+              "type": "number"
+            },
+            "description": "set: the value; add: what to add; multiply: the start; gradient: the first value. Colours are R, G, B."
+          },
+          "perLine": {
+            "type": "array",
+            "maxItems": 4,
+            "items": {
+              "type": "number"
+            },
+            "description": "multiply: added for each Line."
+          },
+          "byLine": {
+            "enum": [
+              "set",
+              "add"
+            ],
+            "description": "multiply: set each Line's value, or add to it. Default set."
+          },
+          "to": {
+            "type": "array",
+            "maxItems": 4,
+            "items": {
+              "type": "number"
+            },
+            "description": "gradient: the last value."
+          },
+          "across": {
+            "enum": [
+              "characters",
+              "lines"
+            ],
+            "description": "gradient: default characters."
+          },
+          "decreasing": {
+            "type": "boolean",
+            "description": "gradient: run from the end."
+          }
+        },
+        "required": [
+          "lines",
+          "tag",
+          "change",
+          "values"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "lines": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "line": {
+                  "$ref": "#/$defs/LineId"
+                },
+                "text": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "line",
+                "text"
+              ],
+              "additionalProperties": false
+            },
+            "description": "The Lines the change alters, with their new text; nothing is applied."
+          }
+        },
+        "required": [
+          "lines"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "typeset.check",
+      "access": "read",
+      "summary": "Renders one Line alone, with a proposed text, on its frame and compares its ink with a target.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId",
+            "description": "Defaults to the active Document."
+          },
+          "line": {
+            "$ref": "#/$defs/LineId"
+          },
+          "text": {
+            "type": "string",
+            "description": "The proposed text; the Line's own when omitted."
+          },
+          "target": {
+            "description": "Where the Line's ink should land, in script coordinates: a quad or a box.",
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "quad": {
+                    "type": "array",
+                    "minItems": 4,
+                    "maxItems": 4,
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "x": {
+                          "type": "number"
+                        },
+                        "y": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "x",
+                        "y"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "description": "Script coordinates: top left, top right, bottom right, bottom left."
+                  }
+                },
+                "required": [
+                  "quad"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "box": {
+                    "type": "object",
+                    "properties": {
+                      "x": {
+                        "type": "number"
+                      },
+                      "y": {
+                        "type": "number"
+                      },
+                      "width": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "height": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "x",
+                      "y",
+                      "width",
+                      "height"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "box"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          },
+          "frame": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Default: the frame shown when the Line is on it, else the Line's first."
+          },
+          "tolerance": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Video pixels; default 4."
+          }
+        },
+        "required": [
+          "line",
+          "target"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "line": {
+            "$ref": "#/$defs/LineId"
+          },
+          "frame": {
+            "type": "integer"
+          },
+          "pass": {
+            "type": "boolean"
+          },
+          "error": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "The largest distance between an edge of the ink's bounds and the target's, in video pixels; null when nothing is drawn."
+          },
+          "ink": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "x": {
+                    "type": "number"
+                  },
+                  "y": {
+                    "type": "number"
+                  },
+                  "width": {
+                    "type": "number"
+                  },
+                  "height": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "x",
+                  "y",
+                  "width",
+                  "height"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "target": {
+            "type": "object",
+            "properties": {
+              "x": {
+                "type": "number"
+              },
+              "y": {
+                "type": "number"
+              },
+              "width": {
+                "type": "number"
+              },
+              "height": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "x",
+              "y",
+              "width",
+              "height"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "line",
+          "frame",
+          "pass",
+          "error",
+          "ink",
+          "target"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "typeset.apply",
+      "access": "write",
+      "summary": "Applies typeset Lines as one undo step after every one passes the render check; when one misses its target nothing is applied.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId",
+            "description": "Defaults to the active Document."
+          },
+          "revision": {
+            "$ref": "#/$defs/Revision"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "A few words naming the change, such as \"Typeset the shop sign\"."
+          },
+          "lines": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 100,
+            "items": {
+              "type": "object",
+              "properties": {
+                "line": {
+                  "$ref": "#/$defs/LineId"
+                },
+                "text": {
+                  "type": "string"
+                },
+                "target": {
+                  "description": "Where the Line's ink should land, in script coordinates: a quad or a box.",
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "quad": {
+                          "type": "array",
+                          "minItems": 4,
+                          "maxItems": 4,
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "x": {
+                                "type": "number"
+                              },
+                              "y": {
+                                "type": "number"
+                              }
+                            },
+                            "required": [
+                              "x",
+                              "y"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "description": "Script coordinates: top left, top right, bottom right, bottom left."
+                        }
+                      },
+                      "required": [
+                        "quad"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "box": {
+                          "type": "object",
+                          "properties": {
+                            "x": {
+                              "type": "number"
+                            },
+                            "y": {
+                              "type": "number"
+                            },
+                            "width": {
+                              "type": "number",
+                              "minimum": 0
+                            },
+                            "height": {
+                              "type": "number",
+                              "minimum": 0
+                            }
+                          },
+                          "required": [
+                            "x",
+                            "y",
+                            "width",
+                            "height"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "box"
+                      ],
+                      "additionalProperties": false
+                    }
+                  ]
+                },
+                "frame": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "line",
+                "text",
+                "target"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "tolerance": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Video pixels; default 4."
+          }
+        },
+        "required": [
+          "revision",
+          "name",
+          "lines"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "revision": {
+            "$ref": "#/$defs/Revision"
+          },
+          "inserted": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/LineId"
+            }
+          },
+          "changed": {
+            "type": "boolean"
+          },
+          "checks": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "line": {
+                  "$ref": "#/$defs/LineId"
+                },
+                "frame": {
+                  "type": "integer"
+                },
+                "pass": {
+                  "type": "boolean"
+                },
+                "error": {
+                  "type": [
+                    "number",
+                    "null"
+                  ],
+                  "description": "The largest distance between an edge of the ink's bounds and the target's, in video pixels; null when nothing is drawn."
+                },
+                "ink": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "x": {
+                          "type": "number"
+                        },
+                        "y": {
+                          "type": "number"
+                        },
+                        "width": {
+                          "type": "number"
+                        },
+                        "height": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "x",
+                        "y",
+                        "width",
+                        "height"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "target": {
+                  "type": "object",
+                  "properties": {
+                    "x": {
+                      "type": "number"
+                    },
+                    "y": {
+                      "type": "number"
+                    },
+                    "width": {
+                      "type": "number"
+                    },
+                    "height": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "x",
+                    "y",
+                    "width",
+                    "height"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "line",
+                "frame",
+                "pass",
+                "error",
+                "ink",
+                "target"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "revision",
+          "inserted",
+          "changed",
+          "checks"
         ],
         "additionalProperties": false
       }
     }
   ],
   "events": [
-    {
-      "name": "project.changed",
-      "summary": "The window the user works in opened or closed a Project, or the user moved to a window with another one.",
-      "since": 2,
-      "data": {
-        "type": "object",
-        "properties": {
-          "project": {
-            "$ref": "#/$defs/Project"
-          }
-        },
-        "required": [
-          "project"
-        ],
-        "additionalProperties": false
-      }
-    },
     {
       "name": "document.changed",
       "summary": "A Document's content changed: a commit, Undo or Redo.",

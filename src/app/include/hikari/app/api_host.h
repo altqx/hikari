@@ -30,6 +30,7 @@ class ApiHost final : public QObject,
                       public api::PanelHost,
                       public api::FileHost,
                       public api::RenderHost,
+                      public api::TypesetHost,
                       public api::ProjectHost {
     Q_OBJECT
     // (command, run) => null for a command the shell cannot run; else
@@ -57,6 +58,7 @@ public:
         // Empty: the user has no skills.
         std::filesystem::path skills;
         api::AutomationHost *automation = nullptr;
+        std::function<application::visual::perspective::TextMeasure()> measure;
         // The Project of the window the user works in.
         std::function<std::optional<api::ProjectState>()> project;
     };
@@ -92,6 +94,7 @@ public:
 
     std::optional<application::OverlayFrame> render(application::DocumentId id, const core::Document &document,
                                                     std::int64_t frame, int width, int height) override;
+    application::visual::perspective::TextMeasure measure() const override;
 
     std::optional<api::ProjectState> project() const override;
 
