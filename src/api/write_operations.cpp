@@ -332,6 +332,8 @@ private:
     std::vector<core::LineId> m_inserted;
 };
 
+}
+
 std::unexpected<Error> refusal(CommandRefusal refusal, const EditSession &session)
 {
     switch (refusal) {
@@ -369,6 +371,8 @@ bool writable(const Context &context, const Target &t)
     return !t.session->isProtected() && !t.session->isReadOnly() &&
            context.host.documents->workspace().reference() != t.id;
 }
+
+namespace {
 
 Result selectionSet(const Context &context, const Json &params)
 {

@@ -40,6 +40,17 @@ Codex runs as `codex app-server`, on the user's own `codex` and a ChatGPT sign-i
 - **One app-server per thread.** The first turn starts the process and a thread. Later turns go to the same thread. `session/steer` uses `turn/steer`, and Stop sends `turn/interrupt`. If Codex exits, the next turn starts a new process and resumes the thread. The `usage` update after each turn carries that turn's tokens.
 - **Linux only for now.** Windows' AppContainer blocks loopback, so Qt neither offers nor starts Codex there until it has a channel the container can reach ([#931](https://github.com/altqx/hikari/issues/931)).
 
+## ACP agents
+
+Any agent that speaks the [Agent Client Protocol](https://agentclientprotocol.com) over stdio can run Hikari's agent loop: OpenCode (`opencode acp`), Antigravity (`agy acp`) and the user's own agents from Settings › AI › External agents.
+
+- **Picking one.** The model menu lists each ACP agent Qt finds after Claude Code and Codex. A thread on one has the model `agent:acp:<id>`: `opencode`, `antigravity`, or `custom-…` for the user's own agents.
+- **Hikari's tools only.** Qt's guard puts Hikari's tools in every `session/new` and `session/load` as the agent's only MCP server. The guard also sets the session's folder and drops extra folders. It tells the agent the client has no file system and no terminal, and refuses any call for them. When the agent says it takes HTTP MCP servers (`mcpCapabilities.http`), it gets the channel itself: `http://127.0.0.1:<port>/mcp` with the token as a `Bearer` header. Otherwise it gets the bridge: `hikarisub --mcp --channel-url <url>` over stdio, with the token in `HIKARI_MCP_TOKEN`. The bridge only relays to `127.0.0.1` and exits when its stdin closes or the channel goes away. Permission requests are allowed for Hikari's own tools only. Every other request is rejected.
+- **A sandbox of its own.** The agent has the network, but it can write only to its own state folders and a private work folder under `ai/agents/`. OpenCode writes to its XDG folders (`~/.config/opencode`, `~/.local/share/opencode`, `~/.cache/opencode`, `~/.local/state/opencode`). A custom agent gets `ai/agents/custom/<id>` and nothing else, and that folder is its home too.
+- **Antigravity's own profile.** Qt runs `agy acp --gemini-dir ai/agents/antigravity/gemini --app-data-dir app-data --disable-telemetry --include-default-customizations=false`, with `HOME` set inside the same profile, so agy never reads `~/.gemini`. Qt never passes `--dangerously-skip-permissions` or `--ide-mcp-port`. Settings › AI asks for agy 1.5.0 or newer (`agy update`).
+- **Antigravity's sign-in.** **Sign in with Google…** runs `agy acp --login` in the profile. HikariSub opens the link agy prints. The user signs in to Google and pastes the code the page shows. agy then writes its token to `gemini/app-data/antigravity-oauth-token` in the profile, because its sandbox gives it no keychain. As soon as that file holds a whole token, Qt moves it into the keychain (`antigravity-google`), deletes it and stops agy. It doesn't wait for agy to exit. Before the first agy process starts, Qt writes the file back, readable only by the user. After the last agy process exits, Qt puts a refreshed token back in the keychain and deletes the file, as it does for Codex. A sign-out while agy runs stays signed out, and a file a crash leaves behind is deleted when HikariSub next starts its AI. API-key and Enterprise sign-ins aren't offered.
+- **Linux only for now.** ACP agents need the same loopback channel as Codex, so Windows offers none yet ([#931](https://github.com/altqx/hikari/issues/931)).
+
 ## Tests
 
 `test/fixtures/fake-claude.ts` stands in for `claude`. It speaks the SDK's control protocol as recorded from Claude Code 2.1.322: initialize, hook callbacks, `mcp_message` and interrupt. Each user message it gets is a script of tool calls. The sidecar tests drive the real SDK against it. They check that:
@@ -57,3 +68,5 @@ Codex runs as `codex app-server`, on the user's own `codex` and a ChatGPT sign-i
 - resuming the thread after Codex exits.
 
 In Qt, the broker tests cover the channel (its token, its arguments and its end) and the hooks around each process. The sign-in tests cover handing the sign-in to Codex and back.
+
+`test/fixtures/fake-acp.ts` stands in for an ACP agent in the sidecar tests, and `tests/backends/fake_acp_agent.cpp` stands in for a stdio-only one in Qt. That fake starts the bridge from its `session/new` and makes an edit through it. The Antigravity tests check that every path agy gets stays inside its profile, that the token file goes back and forth between the keychain and the profile, and that the sign-in takes the code from Google's page.

@@ -191,13 +191,24 @@ TEST(AgentPolicy, TypesetApplyAsksInManualModeLikeOtherWrites)
     EXPECT_EQ(decide(AgentMode::FullAccess, "typeset.apply", false, false), Decision::Run);
 }
 
+TEST(AgentPolicy, EffectsWritesAskInManualModeLikeOtherWrites)
+{
+    for (const std::string operation : {"effects.save", "effects.apply"}) {
+        ASSERT_EQ(riskOf(operation, Json::object({{"line", 4}})), Risk::None) << operation;
+        EXPECT_EQ(decide(AgentMode::Manual, operation, false, false), Decision::Ask) << operation;
+        EXPECT_EQ(decide(AgentMode::Auto, operation, false, false), Decision::Judge) << operation;
+        EXPECT_EQ(decide(AgentMode::FullAccess, operation, false, false), Decision::Run) << operation;
+    }
+}
+
 TEST(AgentPolicy, EveryWriteOperationIsClassified)
 {
     std::set<std::string> writes;
     for (const hikari::api::Operation &op : hikari::api::Api::registry().operations())
         if (op.access == hikari::api::Access::Write)
             writes.insert(op.name);
-    EXPECT_EQ(writes, (std::set<std::string>{"automation.run", "commands.run", "document.apply", "files.write",
+    EXPECT_EQ(writes, (std::set<std::string>{"automation.run", "commands.run", "document.apply", "effects.apply",
+                                             "effects.save", "files.write",
                                              "karaoke.align", "karaoke.apply_template", "panels.close", "panels.focus",
                                              "panels.open", "selection.set", "settings.set",
                                              "translation.project_write", "typeset.apply"}))
@@ -375,6 +386,10 @@ protected:
         w.documentTitle = [](hikari::application::DocumentId) { return std::string("a.ass"); };
         w.safeFolders = [] { return std::vector<std::string>{"/subs"}; };
         w.project = [this] { return project; };
+        w.instructions = [this](const std::string &folder) {
+            return joinInstructions(agentsFileText(dir.filePath(QStringLiteral("user"))),
+                                    agentsFileText(QString::fromStdString(folder)));
+        };
         w.now = [this] { return ++clock; };
         w.today = [] { return QDate(2026, 11, 9); };
         return std::make_unique<AgentThreads>(std::move(w), store.get());
@@ -850,6 +865,71 @@ TEST_F(AgentThreadsTest, AThreadKeepsTheProjectItStartedInAndReadsItsSkills)
     EXPECT_NE(listed.find(R"("honorifics")"), std::string::npos) << listed;
     EXPECT_NE(listed.find(R"("origin":"project")"), std::string::npos) << listed;
     EXPECT_EQ(list(outside).find("honorifics"), std::string::npos);
+}
+
+namespace {
+
+void writeAgentsFile(const QString &folder, const QByteArray &text)
+{
+    ASSERT_TRUE(QDir().mkpath(folder));
+    QFile file(folder + QStringLiteral("/AGENTS.md"));
+    ASSERT_TRUE(file.open(QIODevice::WriteOnly));
+    file.write(text);
+}
+
+}
+
+TEST(AgentInstructions, TheUsersAgentsFileComesBeforeTheProjectsAndEmptyOnesDropOut)
+{
+    EXPECT_EQ(joinInstructions("Use Oxford commas.", "Keep honorifics."),
+              "Instructions from the user's AGENTS.md:\n\nUse Oxford commas.\n\n"
+              "Instructions from this Project's AGENTS.md:\n\nKeep honorifics.");
+    EXPECT_EQ(joinInstructions("", "Keep honorifics."), "Instructions from this Project's AGENTS.md:\n\nKeep honorifics.");
+    EXPECT_EQ(joinInstructions("Use Oxford commas.", ""), "Instructions from the user's AGENTS.md:\n\nUse Oxford commas.");
+    EXPECT_EQ(joinInstructions("", ""), "");
+}
+
+TEST(AgentInstructions, AnAgentsFileStopsAtItsCapWithoutSplittingACharacter)
+{
+    QTemporaryDir dir;
+    EXPECT_EQ(agentsFileText(dir.path()), "");
+    EXPECT_EQ(agentsFileText(QString()), "");
+
+    const QByteArray cut = QByteArray(qsizetype(kInstructionsCap - 1), 'a') + "\xE3\x81\x82tail";
+    writeAgentsFile(dir.filePath(QStringLiteral("cut")), cut);
+    EXPECT_EQ(agentsFileText(dir.filePath(QStringLiteral("cut"))), std::string(kInstructionsCap - 1, 'a'));
+
+    const QByteArray whole = QByteArray(qsizetype(kInstructionsCap - 3), 'a') + "\xE3\x81\x82tail";
+    writeAgentsFile(dir.filePath(QStringLiteral("whole")), whole);
+    EXPECT_EQ(agentsFileText(dir.filePath(QStringLiteral("whole"))), whole.first(qsizetype(kInstructionsCap)).toStdString());
+
+    writeAgentsFile(dir.filePath(QStringLiteral("short")), "Keep honorifics.");
+    EXPECT_EQ(agentsFileText(dir.filePath(QStringLiteral("short"))), "Keep honorifics.");
+}
+
+TEST_F(AgentThreadsTest, ASessionGetsTheUsersThenItsProjectsAgentsFileAfterHikarisPrompt)
+{
+    writeAgentsFile(dir.filePath(QStringLiteral("user")), "Use Oxford commas.");
+    const QString show = dir.filePath(QStringLiteral("show"));
+    writeAgentsFile(show, "Keep honorifics.");
+    project = show.toStdString();
+    const std::string inProject = threads->create();
+    project.clear();
+    const std::string outside = threads->create();
+    project = dir.filePath(QStringLiteral("other")).toStdString();
+
+    threads->send(inProject, "Hi");
+    ASSERT_TRUE(idle(inProject));
+    threads->send(outside, "Hi");
+    ASSERT_TRUE(idle(outside));
+    const auto opened = receivedAs("session/new");
+    ASSERT_EQ(opened.size(), 2u);
+    const std::string system = at(opened[0], "system");
+    EXPECT_TRUE(system.starts_with("You are Hikari AI")) << system;
+    EXPECT_TRUE(system.ends_with("\n\nInstructions from the user's AGENTS.md:\n\nUse Oxford commas.\n\n"
+                                 "Instructions from this Project's AGENTS.md:\n\nKeep honorifics."))
+        << system;
+    EXPECT_TRUE(at(opened[1], "system").ends_with("Use Oxford commas.")) << at(opened[1], "system");
 }
 
 TEST_F(AgentThreadsTest, StopWithdrawsTheOpenAskAndEndsTheTurn)

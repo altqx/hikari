@@ -446,7 +446,7 @@ export class AgentSessions {
         private readonly complete: Complete,
         private readonly notify: (method: string, params: SessionUpdateParams) => void,
         private readonly imageBudget: (providerId: string) => ImageBudget = () => kDefaultImageBudget,
-        private readonly agents: Partial<Record<NonNullable<SessionNewParams["agent"]>, ExternalAgent>> = {},
+        private readonly agents: Partial<Record<"claude" | "codex" | "acp", ExternalAgent>> = {},
         private readonly skills: (sessionId: string) => Skills = () => new Skills(),
     ) {}
 
@@ -455,7 +455,8 @@ export class AgentSessions {
         const id = params.sessionId;
         const send = (update: SessionUpdate) => this.notify(Method.sessionUpdate, { sessionId: id, update });
         if (params.agent !== undefined) {
-            const agent = this.agents[params.agent];
+            const agent = params.agent.startsWith("acp:") ? this.agents.acp
+                : this.agents[params.agent as "claude" | "codex"];
             if (!agent)
                 throw new RpcError(ErrorCode.invalidParams, `This sidecar can't run ${params.agent}`);
             this.sessions.set(id, agent(id, params, send));

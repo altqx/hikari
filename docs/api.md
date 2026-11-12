@@ -37,6 +37,11 @@ Schemas use a subset of JSON Schema 2020-12: `type`, `properties`, `required`, `
 | `skills.list`, `skills.read` | read | The user's [skills](ai-skills.md#the-hikari-api) and one file of a skill as UTF-8 (256 KiB at most); only with the skills grant. |
 | `nodes.catalogue` | read | The node-effect editor's node types, with ports and parameters. |
 | `nodes.validate` | read | Checks a node-effect graph; each problem names its node and port or field. |
+| `effects.graphs`, `effects.graph` | read | The Document's graph Lines, and one graph with its problems. |
+| `effects.edit` | read | Edits a graph in steps (`add`, `connect`, `disconnect`, `remove`, `set`) and gives the new graph with its problems; the Document doesn't change. |
+| `effects.preview` | read | Runs a graph on the karaoke Lines and gives the Lines it would write; Lua nodes don't run. |
+| `effects.save` | write | A graph into a new graph Line, or in place of one, as one undo step. |
+| `effects.apply` | write | A graph Line's generated Lines, as the editor's Apply writes them, as one undo step; Lua nodes don't run. |
 | `typeset.perspective`, `typeset.clip`, `typeset.drawing`, `typeset.shift`, `typeset.hydra` | read | The [typesetting solvers](ai-tools.md#typesetting): a Line's text with a quad's transform, a clip, a drawing, an offset or a Hydra change written; nothing is applied. |
 | `typeset.check` | read | Draws one Line alone with a proposed text and compares its ink bounds with a target quad or box. |
 | `karaoke.syllables`, `karaoke.split`, `karaoke.time`, `karaoke.snap`, `karaoke.kanji` | read | The [karaoke tools](ai-tools.md#karaoke): a Line's syllables, or Lines' texts split, timed, snapped to onsets or copied from a romaji Line; nothing is applied. |

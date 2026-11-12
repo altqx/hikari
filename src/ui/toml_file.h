@@ -33,5 +33,7 @@ void eraseToml(toml::table &root, std::string_view id);
 // included. nullopt when the file's layout can't take the change in place.
 std::optional<std::string> patchTomlSetting(std::string_view text, std::string_view id,
                                             const std::optional<application::SettingValue> &value);
+// patchTomlSetting for any node, such as an inline table.
+std::optional<std::string> patchTomlNode(std::string_view text, std::string_view id, const toml::node *value);
 
 }

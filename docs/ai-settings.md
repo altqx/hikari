@@ -36,6 +36,21 @@ With AI off, `AiSettings` lists no providers and refuses every action, and nothi
 - **OpenRouter can sign in** ([AI6 #434](https://github.com/altqx/hikari/issues/434)): "Sign in with OpenRouter…" sits next to the key field, "or paste a key". It opens openrouter.ai in the browser, which makes a key for HikariSub; the key goes to the keychain like a pasted one, and the provider is added and tested at once. The row then says "Signed in (OpenRouter)", and a rejected key says "Sign in again with Edit". Edit offers Sign out, which deletes the key from this computer and leaves the provider without one; the key stays in the user's OpenRouter keys until they delete it there. Pasting a key over a signed-in one makes it a pasted key.
 - **Test connection** in the form lists the provider's catalogue with the typed key through `AiRequests::probe`, and saves nothing. Add then stores the provider with that catalogue. A provider added without a test fetches its catalogue right after. The first catalogue fills the chat role while it is empty.
 
+## Project keys
+
+In a Project window, Settings › Project › AI lists the user's providers ([ADR 0030](adr/0030-open-a-folder-as-a-project.md#project-ai-keys), [PJ10 #982](https://github.com/altqx/hikari/issues/982)). Each row names an environment variable and a credentials entry for that provider's key, both optional, which Apply writes to `project.toml` as `[ai.keys] <provider id> = { env = "…", entry = "…" }`. Key used says where the key comes from: the variable, the credentials file, or the user's own, with the reason. No part of a key is shown. Use yours removes the row's names. Providers that need no key are greyed, and a provider id the user doesn't have is listed greyed by its id.
+
+- **Create credentials file** writes `.hikari/credentials.toml`, with an empty entry for each name, and `.hikari/.gitignore` listing it and `project.local.toml`. An existing `.gitignore` there only gains the lines it lacks. Once the file exists, Open file and Show in folder take its place.
+- **An untrusted Project** uses the user's keys. The page says so and offers Trust folder, and the window's trust bar names the keys when one is found in the environment or the file.
+- **A key value in `project.toml`** is ignored. A warning bar in the window and a notice on the page say so, in trusted and untrusted Projects alike, and Move to credentials file writes the value to the credentials file and names it there instead.
+- **Environment variables** are read from HikariSub's own environment. A launch from the desktop doesn't see a variable set only in a shell profile, and a changed variable needs a restart.
+
+What is sent:
+
+- A Project key goes only to that provider, in the request's key header, from Qt's relay, exactly like a keychain key. The sidecar sees the placeholder `hikari-key`; the model never sees a key.
+- `.hikari/credentials.toml` is never sent. Hikari AI never reads it.
+- Environment variables reach no one but the provider they are named for. Hikari AI isn't told their values.
+
 ## Web search
 
 - **The switch.** **Let AI search the web** is on at first. With it off, `AiRequests` drops `webSearch` from every request and tells the sidecar no search service ([AI providers](ai-providers.md#web-search)). Nothing searches while AI is off.

@@ -425,6 +425,7 @@ const std::vector<SettingDefinition> &definitions()
         {"ai.agent.autoCompact", "", Bool, Profile, Mapped, false, true},
         {"ai.agent.fullAccessWarned", "", Bool, Profile, Mapped, false, false},
         // actions: one {"name", "instruction", "role", "ask"} JSON object per row.
+        {"ai.agents.custom", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {"ai.inline.actions", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {"ai.inline.translateTo", "", String, Profile, Mapped, false, std::string("English")},
         {"translation.glossary", "", String, Profile, Mapped, false, std::string()},

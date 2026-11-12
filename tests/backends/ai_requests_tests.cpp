@@ -237,6 +237,118 @@ TEST_F(AiRequestsTest, RequestsCarryTheRolesModelButNeverAKeyAndStreamTheAnswer)
     EXPECT_EQ(keys.reads, 0);
 }
 
+TEST_F(AiRequestsTest, AProjectKeyReachesTheSidecarOnlyAsAnAliasAndNeverAsAKey)
+{
+    configure({{app::Role::Chat, "a/model"}});
+    app::Providers providers(configs, keys);
+    AiRequests requests(providers, [this] { return sidecar(); });
+    std::map<std::pair<std::string, std::string>, std::string> projectKeys{{{"/show", "or"}, "sk-project"},
+                                                                          {{"/other", "or"}, "sk-other"}};
+    requests.setProjectKeys([&](const std::string &project, const std::string &providerId) -> std::optional<std::string> {
+        const auto found = projectKeys.find({project, providerId});
+        return found == projectKeys.end() ? std::nullopt : std::optional(found->second);
+    });
+    const app::Config before = providers.config();
+    Stream run;
+    requests.complete(app::Role::Chat, chat(), run.sink(), "/show");
+    ASSERT_TRUE(waitFor([&] { return run.done(); }));
+
+    const Json sent = received();
+    ASSERT_EQ(sent.asArray().size(), 2u);
+    const Json alias = Json::object({{"id", "or@p1"}, {"preset", "openrouter"}, {"wire", "chat-completions"},
+                                     {"baseUrl", openRouter.baseUrl}});
+    EXPECT_EQ(*sent.asArray()[0].find("params")->find("providers"),
+              Json::array({Json::object({{"id", "or"}, {"preset", "openrouter"}, {"wire", "chat-completions"},
+                                         {"baseUrl", openRouter.baseUrl}}),
+                           alias}));
+    EXPECT_EQ(*sent.asArray()[1].find("params")->find("providerId"), Json("or@p1"));
+    EXPECT_EQ(sent.dump().find("sk-project"), std::string::npos);
+    EXPECT_EQ(sent.dump().find(kKey), std::string::npos);
+
+    EXPECT_EQ(providers.config(), before);
+    EXPECT_EQ(providers.config().modelFor(app::Role::Chat)->providerId, "or");
+    for (const app::Provider &provider : providers.config().providers)
+        EXPECT_EQ(provider.id.find('@'), std::string::npos);
+
+    const auto lookUp = [&](const char *id) {
+        std::optional<RelayTargetResult> found;
+        requests.relayTargets()(Json::object({{"kind", "provider"}, {"id", id}}),
+                                [&](RelayTargetResult r) { found = std::move(r); });
+        EXPECT_TRUE(waitFor([&] { return found.has_value(); }));
+        return found.value_or(std::unexpected(app::Error{}));
+    };
+    auto target = lookUp("or@p1");
+    ASSERT_TRUE(target);
+    EXPECT_EQ(target->base, QUrl(QString::fromStdString(openRouter.baseUrl)));
+    EXPECT_EQ(target->key, "sk-project");
+    EXPECT_EQ(keys.reads, 0);
+
+    Stream other;
+    requests.complete(app::Role::Chat, chat(), other.sink(), "/other");
+    ASSERT_TRUE(waitFor([&] { return other.done(); }));
+    EXPECT_EQ(*received().asArray()[3].find("params")->find("providerId"), Json("or@p2"));
+    EXPECT_EQ(lookUp("or@p2")->key, "sk-other");
+
+    projectKeys.clear();
+    target = lookUp("or@p1");
+    ASSERT_TRUE(target);
+    EXPECT_EQ(target->key, kKey);
+    EXPECT_EQ(keys.reads, 1);
+}
+
+TEST_F(AiRequestsTest, AProviderWithoutAProjectKeyResolvesAsBefore)
+{
+    configure({{app::Role::Chat, "a/model"}});
+    app::Providers providers(configs, keys);
+    AiRequests requests(providers, [this] { return sidecar(); });
+    requests.setProjectKeys([](const std::string &, const std::string &) { return std::optional<std::string>(); });
+    Stream run;
+    requests.complete(app::Role::Chat, chat(), run.sink(), "/show");
+    ASSERT_TRUE(waitFor([&] { return run.done(); }));
+    const Json sent = received();
+    EXPECT_EQ(sent.asArray()[0], Json::object({{"method", "_hikari/providers.set"},
+                                               {"params", Json::object({{"providers", Json::array({Json::object({
+                                                   {"id", "or"},
+                                                   {"preset", "openrouter"},
+                                                   {"wire", "chat-completions"},
+                                                   {"baseUrl", openRouter.baseUrl},
+                                               })})}})}}));
+    EXPECT_EQ(*sent.asArray()[1].find("params")->find("providerId"), Json("or"));
+    std::optional<RelayTargetResult> found;
+    requests.relayTargets()(Json::object({{"kind", "provider"}, {"id", "or"}}),
+                            [&](RelayTargetResult r) { found = std::move(r); });
+    ASSERT_TRUE(waitFor([&] { return found.has_value(); }));
+    ASSERT_TRUE(*found);
+    EXPECT_EQ((*found)->key, kKey);
+    std::optional<RelayTargetResult> unknown;
+    requests.relayTargets()(Json::object({{"kind", "provider"}, {"id", "or@p1"}}),
+                            [&](RelayTargetResult r) { unknown = std::move(r); });
+    ASSERT_TRUE(waitFor([&] { return unknown.has_value(); }));
+    EXPECT_EQ(unknown->error().kind, app::ErrorKind::NoProvider);
+}
+
+TEST_F(AiRequestsTest, ATranslationRunsTheProjectsKeysToo)
+{
+    configure({{app::Role::Chat, "a/model"}});
+    app::Providers providers(configs, keys);
+    AiRequests requests(providers, [this] { return sidecar(); });
+    requests.setProjectKeys([](const std::string &project, const std::string &providerId) {
+        return project == "/show" && providerId == "or" ? std::optional<std::string>("sk-project") : std::nullopt;
+    });
+    const Json model = Json::object({{"providerId", "or"}, {"model", "a/model"}});
+    std::optional<std::expected<Json, app::Error>> done;
+    requests.requestTranslation(Json::object({{"models", Json::object({{"translator", model}, {"reviewer", model}})},
+                                              {"lines", Json::array()}}),
+                                {[](const Json &) {}, [&](std::expected<Json, app::Error> r) { done = std::move(r); }},
+                                "/show");
+    ASSERT_TRUE(waitFor([&] { return done.has_value(); }));
+    const Json sent = received();
+    const Json &models = *sent.asArray()[1].find("params")->find("models");
+    EXPECT_EQ(*models.find("translator")->find("providerId"), Json("or@p1"));
+    EXPECT_EQ(*models.find("reviewer")->find("providerId"), Json("or@p1"));
+    EXPECT_EQ(sent.dump().find("sk-project"), std::string::npos);
+}
+
 TEST_F(AiRequestsTest, AProviderFailureKeepsItsKindStatusAndMessage)
 {
     configure({{app::Role::Chat, "fail"}});

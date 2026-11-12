@@ -143,6 +143,10 @@ tasks:
     visualStudio: false
     timeoutSeconds: 120
     environment: {GATE_FULLSCREEN: 'off'}
+  gate-win-place:
+    script: ./tools/native-gate/windows/gate.ps1 -Action place
+    visualStudio: false
+    timeoutSeconds: 120
   gate-win-dpi:
     script: ./tools/native-gate/windows/gate.ps1 -Action dpi
     visualStudio: false

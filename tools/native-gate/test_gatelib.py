@@ -143,6 +143,48 @@ class Order(unittest.TestCase):
                          ["default", "tests", "tagspeech", "edgetile", "videofs", "outputs"])
 
 
+    def test_windowsout_runs_before_outputs(self):
+        steps = {"default": 0, "windowsout": 0, "outputs": 0, "videofs": 0}
+        self.assertEqual(gatelib.default_order(steps, {}), ["default", "videofs", "windowsout", "outputs"])
+
+
+def win(tabs, x=0, y=0, w=800, h=600):
+    return {"title": f"{tabs[0]} - HikariSub", "x": x, "y": y, "w": w, "h": h, "tabs": [{"name": t} for t in tabs]}
+
+
+class Windows(unittest.TestCase):
+    def test_the_free_point_skips_covered_and_offscreen_candidates(self):
+        rects = [(0, 0, 1280, 800), (1300, 0, 300, 300)]
+        self.assertEqual(gatelib.free_point(rects, (1600, 1000), [(100, 100), (3000, 10), (1550, 960)]), (1550, 960))
+
+    def test_a_point_near_a_window_edge_is_not_free(self):
+        self.assertIsNone(gatelib.free_point([(0, 0, 1280, 800)], (1600, 1000), [(1300, 820)]))
+
+    def test_tab_sets_ignore_window_order_and_titles(self):
+        a = [win(["b.ass", "a.ass"]), win(["c.ass"])]
+        b = [win(["c.ass"]), win(["a.ass", "b.ass"])]
+        self.assertEqual(gatelib.tab_sets(a), gatelib.tab_sets(b))
+
+    def test_a_restore_matches_windows_by_their_tabs(self):
+        before = [win(["a.ass"], 10, 20), win(["b.ass"], 500, 300)]
+        after = [win(["b.ass"], 501, 301), win(["a.ass"], 10, 20)]
+        self.assertEqual(gatelib.restore_differences(before, after, fields=("x", "y", "w", "h")), [])
+
+    def test_positions_count_only_where_a_client_places_its_windows(self):
+        before = [win(["a.ass"], 10, 20)]
+        after = [win(["a.ass"], 400, 300)]
+        self.assertEqual(gatelib.restore_differences(before, after, fields=("w", "h")), [])
+        self.assertEqual(len(gatelib.restore_differences(before, after, fields=("x", "y", "w", "h"))), 1)
+
+    def test_a_lost_window_or_another_size_is_a_difference(self):
+        before = [win(["a.ass"]), win(["b.ass"])]
+        self.assertEqual(len(gatelib.restore_differences(before, [win(["a.ass"], w=700)], fields=("w", "h"))), 3)
+
+    def test_whole_on_the_screen(self):
+        self.assertTrue(gatelib.whole_on((0, 0, 1600, 1000), (0, 0, 1600, 1000)))
+        self.assertFalse(gatelib.whole_on((1500, 0, 200, 100), (0, 0, 1600, 1000)))
+
+
 class Session(unittest.TestCase):
     def read(self, name):
         with open(os.path.join(HERE, name), encoding="utf-8") as f:

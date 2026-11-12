@@ -106,7 +106,8 @@ export interface SessionModel {
 export interface SessionNewParams {
     sessionId: string;
     /** An external agent runs the thread instead of Hikari's loop; `model.model` is then the agent's model, if any. */
-    agent?: "claude" | "codex";
+    /** `acp:<name>` is an ACP agent Qt knows by that name. */
+    agent?: "claude" | "codex" | `acp:${string}`;
     model: SessionModel;
     system?: string;
     history?: Message[];

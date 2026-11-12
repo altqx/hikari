@@ -17935,8 +17935,8 @@ private slots:
             return std::make_unique<backends::ai::AiSidecarHost>(std::move(o), nullptr, api::Caller{"ai", "AI"});
         };
         ports.localSidecar = backends::ai::SidecarInstall{QStringLiteral("0.0.0-dev"), {}, {}, {}};
-        ports.findAgent = [](const QString &, std::function<void(std::optional<backends::ai::AgentCli>)> done) {
-            done(std::nullopt);
+        ports.findAgent = [](const QString &, std::function<void(std::optional<backends::ai::AgentCli>, QString)> done) {
+            done(std::nullopt, {});
         };
         app::Application::Options options;
         options.settingsFile = dir.filePath(QStringLiteral("ai-page/hikari.ini"));
@@ -18176,6 +18176,123 @@ private slots:
         QVERIFY(!mcp->server());
     }
 
+    void settingsAiPageListsTheAcpAgentsAndTheUsersOwn()
+    {
+#ifdef Q_OS_WIN
+        QSKIP("Hikari runs no ACP agents on Windows (#931)");
+#else
+        auto stored = std::make_shared<MemoryAi>();
+        const QString realAgy = qEnvironmentVariable("HIKARI_REAL_AGY");
+        const QString folder = dir.filePath(QStringLiteral("acp-page"));
+        const app::AiFeatures::Ports real = app::AiFeatures::defaultPorts(folder, nullptr, {});
+        app::AiFeatures::Ports ports;
+        ports.keyStore = [stored] { return std::make_unique<MemoryAiKeys>(stored); };
+        ports.configStore = [stored] { return std::make_unique<MemoryAiConfigs>(stored); };
+        ports.localSidecar = backends::ai::SidecarInstall{QStringLiteral("0.0.0-dev"), {}, {}, {}};
+        ports.findAgent = [realAgy](const QString &agent, std::function<void(std::optional<backends::ai::AgentCli>, QString)> done) {
+            if (agent == QLatin1String("opencode"))
+                return done(backends::ai::AgentCli{.agent = agent, .path = QStringLiteral("/opt/opencode/bin/opencode"),
+                                                   .version = QStringLiteral("2.2.6")}, {});
+            if (agent == QLatin1String("agy"))
+                return done(backends::ai::AgentCli{.agent = agent, .path = realAgy.isEmpty() ? QStringLiteral("/opt/agy/bin/agy") : realAgy,
+                                                   .version = QStringLiteral("1.4.2")}, {});
+            done(std::nullopt, {});
+        };
+        ports.acpCli = [realAgy](const QString &command) {
+            if (command == QLatin1String("agy"))
+                return realAgy.isEmpty() ? QStringLiteral("/opt/agy/bin/agy") : realAgy;
+            return command == QLatin1String("opencode") || command == QLatin1String("my-agent")
+                       ? QStringLiteral("/opt/") + command + QStringLiteral("/bin/") + command
+                       : QString();
+        };
+        ports.acpSpec = real.acpSpec;
+        ports.antigravityTokenFile = real.antigravityTokenFile;
+        app::Application::Options options;
+        options.settingsFile = folder + QStringLiteral("/hikari.ini");
+        options.playbackAudio = false;
+        options.aiPorts = std::move(ports);
+        restartWith(options);
+        auto restart = qScopeGuard([&] { restartWith(app::Application::Options()); });
+        std::vector<QUrl> opened;
+        const auto routes = backends::desktop::replaceRoutes({.openUrl = [&](const QUrl &url) {
+            opened.push_back(url);
+            return true;
+        }});
+        auto restoreRoutes = qScopeGuard([&] { backends::desktop::replaceRoutes(routes); });
+
+        auto *dialog = openSettings();
+        QVERIFY(dialog);
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        showSettingsPage("ai");
+        QTRY_VERIFY(dialogItem("settingsDialog", "aiExternalAgents")->isVisible());
+        QTRY_COMPARE(dialogItem("settingsDialog", "aiAgentLine_opencode")->property("text").toString(), QStringLiteral("2.2.6"));
+        QTRY_VERIFY(dialogItem("settingsDialog", "aiAgentLine_agy")->property("text").toString().startsWith(
+            QStringLiteral("1.4.2 is older than the oldest HikariSub supports (1.5.0).")));
+        QCOMPARE(dialogItem("settingsDialog", "aiAgentCommand_agy")->property("text").toString(), QStringLiteral("agy update"));
+        QVERIFY(dialogItem("settingsDialog", "aiAntigravitySignedOut")->isVisible());
+
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "aiAddCustomAgent"), "click"));
+        QQuickItem *name = nullptr;
+        QTRY_VERIFY((name = dialogItem("settingsDialog", "aiCustomAgentName")));
+        name->setProperty("text", QStringLiteral("My agent"));
+        dialogItem("settingsDialog", "aiCustomAgentCommand")->setProperty("text", QStringLiteral("my-agent"));
+        dialogItem("settingsDialog", "aiCustomAgentArguments")->setProperty("text", QStringLiteral("--acp"));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "aiCustomAgentSave"), "click"));
+        QQuickItem *line = nullptr;
+        QTRY_VERIFY((line = dialogItem("settingsDialog", "aiCustomAgentLine")));
+        QCOMPARE(line->property("text").toString(), QStringLiteral("/opt/my-agent/bin/my-agent"));
+        QVERIFY(!dialogItem("settingsDialog", "aiCustomAgentForm"));
+
+        auto *window = qobject_cast<QQuickWindow *>(settingsWindow());
+        QVERIFY(window);
+        const auto shoot = [&](const QString &file, const char *bottom = nullptr) {
+            const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+            if (out.isEmpty())
+                return;
+            QQuickItem *section = dialogItem("settingsDialog", "aiExternalAgents");
+            QQuickItem *flick = section->parentItem();
+            while (flick && !flick->inherits("QQuickFlickable"))
+                flick = flick->parentItem();
+            QVERIFY(flick);
+            auto *content = flick->property("contentItem").value<QQuickItem *>();
+            QVERIFY(content);
+            const auto scrolled = [&] {
+                const qreal most = std::max(0.0, content->height() - flick->height());
+                QQuickItem *last = bottom ? dialogItem("settingsDialog", bottom) : nullptr;
+                const qreal top = last ? last->mapToItem(content, QPointF(0, last->height())).y() + 20 - flick->height()
+                                       : section->mapToItem(content, QPointF()).y() - 20;
+                const qreal target = std::clamp(top, 0.0, most);
+                flick->setProperty("contentY", target);
+                QTest::qWait(200);
+                return std::abs(flick->property("contentY").toReal() - target) < 1 && target > 0;
+            };
+            QTRY_VERIFY(scrolled());
+            QVERIFY(QDir().mkpath(out));
+            QVERIFY(window->grabWindow().save(out + u'/' + file));
+        };
+        shoot(QStringLiteral("settings-external-agents.png"), "aiCustomAgents");
+
+        if (!realAgy.isEmpty()) {
+            QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "aiAntigravitySignIn"), "click"));
+            QQuickItem *code = nullptr;
+            QTRY_VERIFY_WITH_TIMEOUT((code = dialogItem("settingsDialog", "aiAntigravityCode")) && code->isVisible(), 30000);
+            QCOMPARE(opened.size(), 1u);
+            QCOMPARE(opened.front().host(), QStringLiteral("accounts.google.com"));
+            shoot(QStringLiteral("settings-antigravity-sign-in.png"));
+            QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "aiAntigravityCancel"), "click"));
+            QTRY_VERIFY(dialogItem("settingsDialog", "aiAntigravitySignedOut")->isVisible());
+            QVERIFY(stored->keys.empty());
+        }
+
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        const auto custom = application->ai()->customAgents();
+        QCOMPARE(custom.size(), 1u);
+        QCOMPARE(custom.front().name, QStringLiteral("My agent"));
+        QCOMPARE(custom.front().arguments, QStringLiteral("--acp"));
+#endif
+    }
+
     void settingsAiMcpServersAreAddedInPlaceWithTheirSecretsInTheKeychain()
     {
         auto stored = std::make_shared<MemoryAi>();
@@ -18362,8 +18479,8 @@ private slots:
                 store, bai::SidecarCompat{1, api::kApiVersion},
                 bai::SidecarSource::local(QUrl(QStringLiteral("http://127.0.0.1:%1/").arg(port))));
         };
-        ports.findAgent = [clis](const QString &agent, std::function<void(std::optional<bai::AgentCli>)> done) {
-            done(clis.at(agent));
+        ports.findAgent = [clis](const QString &agent, std::function<void(std::optional<bai::AgentCli>, QString)> done) {
+            done(clis.at(agent), {});
         };
         ports.agentInstall = [](const bai::AgentCli &cli) {
             if (cli.agent == QLatin1String("claude"))
