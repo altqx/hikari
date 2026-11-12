@@ -220,11 +220,11 @@ Pane {
                 color: Theme.muted
                 elide: Text.ElideRight
                 textFormat: Text.PlainText
-                //: Which karaoke lines the graph applies to: "24 karaoke lines, Default" or "24 karaoke lines, all styles"
-                text: root.controller.typesetting
-                      ? (root.controller.sources.length === 1 ? qsTr("1 selected line") : qsTr("%n selected lines", "", root.controller.sources.length))
-                      : (root.controller.sources.length === 1 ? qsTr("1 karaoke line") : qsTr("%n karaoke lines", "", root.controller.sources.length))
+                text: !root.controller.typesetting
+                      //: Which karaoke lines the graph applies to: "24 karaoke lines, Default" or "24 karaoke lines, all styles"
+                      ? (root.controller.sources.length === 1 ? qsTr("1 karaoke line") : qsTr("%n karaoke lines", "", root.controller.sources.length))
                         + ", " + (root.controller.allStyles ? qsTr("all styles") : root.controller.style)
+                      : (root.controller.sources.length === 1 ? qsTr("1 selected line") : qsTr("%n selected lines", "", root.controller.sources.length))
             }
         }
 

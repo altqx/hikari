@@ -51,7 +51,7 @@ constexpr NodeText kNodes[] = {
     {"values.choose", QT_TRANSLATE_NOOP("HikariSub.Nodes", "Choose"),
      QT_TRANSLATE_NOOP("HikariSub.Nodes", "One of a list of values by its place (from 1); places past the end wrap around.")},
     {"math.calculate", QT_TRANSLATE_NOOP("HikariSub.Nodes", "Calculate"),
-     QT_TRANSLATE_NOOP("HikariSub.Nodes", "Arithmetic in doubles, as Lua does it. modulo is a - floor(a/b)*b; round is floor(a + 0.5). One-input operations use a.")},
+     QT_TRANSLATE_NOOP("HikariSub.Nodes", "Arithmetic in doubles, as Lua does it. modulo is a - floor(a/b)*b; round is floor(a + 0.5); sine and cosine take a in degrees and round to millionths. One-input operations use a.")},
     {"math.compare", QT_TRANSLATE_NOOP("HikariSub.Nodes", "Compare"),
      QT_TRANSLATE_NOOP("HikariSub.Nodes", "Whether a stands in that relation to b.")},
     {"math.progress", QT_TRANSLATE_NOOP("HikariSub.Nodes", "Progress"),
