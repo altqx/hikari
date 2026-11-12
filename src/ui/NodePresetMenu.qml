@@ -38,7 +38,7 @@ ShellMenu {
             required property var modelData
             required property int index
             objectName: "nodeTypesettingPreset_" + index
-            iconRole: ["graph-shake", "graph-typewriter", "graph-fade-by-letter", "graph-wobble", "graph-bounce", "graph-focus-lines", "graph-grain", "graph-chromatic-aberration", "graph-randomove", "graph-karaoke-to-alpha"]][modelData.index] || "node-editor"
+            iconRole: ["graph-shake", "graph-typewriter", "graph-fade-by-letter", "graph-wobble", "graph-bounce", "graph-focus-lines", "graph-grain", "graph-chromatic-aberration", "graph-randomove", "graph-karaoke-to-alpha"][modelData.index] || "node-editor"
             text: modelData.title
             help: modelData.description
             ToolTip.visible: hovered
