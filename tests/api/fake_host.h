@@ -208,6 +208,70 @@ public:
     std::map<std::uint64_t, std::string> folders;
 };
 
+// One installed restricted plugin, org.example.word-count with command count; the approved digest is kDigest.
+class FakePlugins final : public PluginHost {
+public:
+    std::vector<PluginState> plugins() const override { return installed; }
+    std::optional<std::string> manifest(std::string_view plugin) const override
+    {
+        if (plugin != "org.example.word-count")
+            return std::nullopt;
+        return std::string(R"({"id": "org.example.word-count"})");
+    }
+    PluginRun run(std::string_view plugin, std::string_view command) override
+    {
+        runs.emplace_back(std::string(plugin) + "/" + std::string(command));
+        return nextRun;
+    }
+    std::expected<ScaffoldedPlugin, std::string> scaffold(std::string_view plugin,
+                                                          const std::vector<PluginFile> &files) override
+    {
+        scaffolded = files;
+        package = "/user/ai/plugins/" + std::string(plugin) + ".hikariplugin";
+        return ScaffoldedPlugin{"/user/ai/plugins/" + std::string(plugin), package};
+    }
+    std::optional<std::string> scaffoldedPackage(std::string_view plugin) const override
+    {
+        return package.empty() || !package.contains(plugin) ? std::nullopt : std::optional(package);
+    }
+    std::expected<PluginReview, std::string> review(const std::string &path) override
+    {
+        reviewed.push_back(path);
+        return reviewOf();
+    }
+    std::expected<PluginReview, std::string> install(const std::string &path, const std::string &digest) override
+    {
+        if (digest != kDigest)
+            return std::unexpected(std::string("The package changed after the user approved it, so it wasn't installed."));
+        installs.push_back(path);
+        return reviewOf();
+    }
+
+    PluginReview reviewOf() const
+    {
+        PluginReview r;
+        r.id = "org.example.word-count";
+        r.name = "Word count";
+        r.version = "0.1.0";
+        r.change = "install";
+        r.fullTrust = fullTrust;
+        r.commands = {"Count words"};
+        r.files = {{"main.lua", "hikari.commands.register(\"count\", function() end)\n"}};
+        r.digest = kDigest;
+        return r;
+    }
+
+    static constexpr std::string_view kDigest = "ab12";
+    std::vector<PluginState> installed{PluginState{
+        "org.example.word-count", "Word count", "0.1.0", "Counts words.", "file", false, true, false, false,
+        {PluginCommand{"plugin.org.example.word-count.count", "Count words"}}}};
+    PluginRun nextRun = PluginRun::Ran;
+    bool fullTrust = false;
+    std::vector<std::string> runs, reviewed, installs;
+    std::vector<PluginFile> scaffolded;
+    std::string package;
+};
+
 // Document 1 "a.ass" (the editing target, Lines 1-3, Lines 1 and 3 selected,
 // 3 active) and document 2 "b.ass", never saved.
 class FakeHost final : public DocumentHost, public CommandHost, public PanelHost {
@@ -257,6 +321,7 @@ public:
             .translation = &translation,
             .karaoke = karaoke,
             .effects = effects,
+            .plugins = plugins,
         };
     }
 
@@ -361,6 +426,8 @@ public:
     KaraokeHost *karaoke = nullptr;
     FakeEffects fakeEffects;
     EffectsHost *effects = &fakeEffects;
+    FakePlugins fakePlugins;
+    PluginHost *plugins = &fakePlugins;
     application::AiReview review;
 };
 

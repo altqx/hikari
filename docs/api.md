@@ -42,6 +42,11 @@ Schemas use a subset of JSON Schema 2020-12: `type`, `properties`, `required`, `
 | `effects.preview` | read | Runs a graph on the karaoke Lines and gives the Lines it would write; Lua nodes don't run. |
 | `effects.save` | write | A graph into a new graph Line, or in place of one, as one undo step. |
 | `effects.apply` | write | A graph Line's generated Lines, as the editor's Apply writes them, as one undo step; Lua nodes don't run. |
+| `plugins.list`, `plugins.manifest` | read | The installed plugins with their tier and commands, and one plugin's `hikari-plugin.json`. |
+| `plugins.review` | read | A scaffolded or granted package as the install question shows it, with its text files and SHA-256. |
+| `plugins.scaffold` | write | A new plugin from the guide's template in the AI plugins folder, packed as a `.hikariplugin`; nothing installs. |
+| `plugins.install` | write | Installs the package the user approved in the agent's card; any other caller gets `not_granted` ([AI-written plugins](ai-agent.md#ai-written-plugins)). |
+| `plugins.run` | write | Runs an installed plugin's command. |
 | `typeset.perspective`, `typeset.clip`, `typeset.drawing`, `typeset.shift`, `typeset.hydra` | read | The [typesetting solvers](ai-tools.md#typesetting): a Line's text with a quad's transform, a clip, a drawing, an offset or a Hydra change written; nothing is applied. |
 | `typeset.check` | read | Draws one Line alone with a proposed text and compares its ink bounds with a target quad or box. |
 | `karaoke.syllables`, `karaoke.split`, `karaoke.time`, `karaoke.snap`, `karaoke.kanji` | read | The [karaoke tools](ai-tools.md#karaoke): a Line's syllables, or Lines' texts split, timed, snapped to onsets or copied from a romaji Line; nothing is applied. |

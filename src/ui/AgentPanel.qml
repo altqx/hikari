@@ -12,6 +12,7 @@ FocusScope {
     signal settingsRequested()
     signal logRequested()
     signal exportRequested(string id)
+    signal pluginRequested(string id)
 
     readonly property var thread: agent ? agent.thread : ({})
     readonly property bool hasThread: thread.id !== undefined
@@ -325,6 +326,7 @@ FocusScope {
                                : kind === "proposal" ? (item.status === "applied" ? null : proposalItem)
                                : kind === "notice" ? noticeItem : kind === "search" ? searchItem
                                : kind === "script" ? scriptItem
+                               : kind === "install" ? installItem
                                : kind === "compaction" ? compactionItem : null
                 readonly property bool last: index === timeline.count - 1
             }
@@ -1561,6 +1563,220 @@ FocusScope {
                     visible: (lua.item.file ?? "").length > 0
                     text: qsTr("Open")
                     onClicked: panel.agent.openScript(lua.item.file)
+                }
+            }
+        }
+    }
+
+    Component {
+        id: installItem
+        Card {
+            id: install
+            readonly property var item: parent ? parent.item : ({})
+            readonly property bool open: item.status === "open"
+            readonly property bool fullTrust: item.tier === "unrestricted"
+            readonly property var files: item.files ?? []
+            readonly property var mainLines: files.length > 0 ? files[0].text.replace(/\n$/, "").split("\n") : []
+            property bool allFiles: false
+            property bool replying: false
+            objectName: "agentInstall"
+            edge: open ? Theme.danger : item.status === "installed" ? Theme.success : item.status === "running" ? Theme.accent : Theme.line
+            function trust() {
+                if (item.needsRetrust && (item.keyId ?? "").length > 0)
+                    return qsTr("The signing key changed. The installed copy was signed by key %1, and this one by key %2. Install it only if you trust that the author changed keys.")
+                        .arg(item.pinnedKeyId, item.keyId)
+                if (item.needsRetrust)
+                    return qsTr("This package isn’t signed, but the installed copy was signed by key %1. Install it only if you trust where it came from.")
+                        .arg(item.pinnedKeyId)
+                if ((item.keyId ?? "").length > 0)
+                    return qsTr("Unverified source, signed by key %1. Updates must be signed by the same key.").arg(item.keyId)
+                return qsTr("Unverified: the package isn’t signed, so HikariSub can’t tell who made it.")
+            }
+            RowLayout {
+                visible: install.open
+                Layout.fillWidth: true
+                CardTitle {
+                    iconRole: install.fullTrust ? "plugin-full-access" : "plugin-install"
+                    text: install.fullTrust ? qsTr("Install with full access?") : qsTr("Install this plugin?")
+                }
+                Chip { text: qsTr("asks in every mode"); tint: Theme.danger }
+            }
+            Label {
+                visible: install.open
+                Layout.fillWidth: true
+                wrapMode: Text.Wrap
+                color: Theme.muted
+                textFormat: Text.PlainText
+                text: qsTr("%1 %2 · %3").arg(install.item.name ?? "").arg(install.item.version ?? "").arg(install.item.plugin ?? "")
+            }
+            Repeater {
+                model: install.open ? [
+                    { icon: install.fullTrust ? "plugin-full-access" : "plugin-sandbox", danger: install.fullTrust,
+                      text: install.fullTrust ? qsTr("Full trust: it runs outside the sandbox and gets full access to your computer.")
+                                              : qsTr("Restricted: it runs in the sandbox.") },
+                    { icon: "notice-warning", danger: install.item.needsRetrust === true, text: install.trust() }
+                ] : []
+                delegate: RowLayout {
+                    required property var modelData
+                    Layout.fillWidth: true
+                    spacing: 6
+                    Icon { iconRole: parent.modelData.icon; size: 13 }
+                    Label {
+                        Layout.fillWidth: true
+                        wrapMode: Text.Wrap
+                        textFormat: Text.PlainText
+                        color: parent.modelData.danger ? Theme.danger : Theme.warning
+                        text: parent.modelData.text
+                    }
+                }
+            }
+            Label {
+                visible: install.open
+                Layout.fillWidth: true
+                wrapMode: Text.Wrap
+                textFormat: Text.PlainText
+                text: (install.item.permissions ?? []).length === 0
+                      ? qsTr("It asks for no permissions beyond the active subtitle file.")
+                      : qsTr("It asks for these permissions") + "\n• " + install.item.permissions.join("\n• ")
+            }
+            Label {
+                visible: install.open && (install.item.commands ?? []).length > 0
+                Layout.fillWidth: true
+                wrapMode: Text.Wrap
+                textFormat: Text.PlainText
+                text: ((install.item.commands ?? []).length === 1 ? qsTr("Adds the command %1.") : qsTr("Adds the commands %1."))
+                      .arg((install.item.commands ?? []).map(c => "“" + c + "”").join(", "))
+            }
+            Repeater {
+                model: install.open ? (install.allFiles ? install.files : install.files.slice(0, 1)) : []
+                delegate: ColumnLayout {
+                    id: file
+                    required property int index
+                    required property var modelData
+                    readonly property var lines: modelData.text.replace(/\n$/, "").split("\n")
+                    Layout.fillWidth: true
+                    spacing: 2
+                    Label { font.family: "monospace"; color: Theme.muted; textFormat: Text.PlainText; text: file.modelData.path }
+                    Rectangle {
+                        Layout.fillWidth: true
+                        implicitHeight: fileLines.implicitHeight + 8
+                        color: Theme.field
+                        border.color: Theme.line
+                        radius: 2
+                        ColumnLayout {
+                            id: fileLines
+                            x: 4
+                            y: 4
+                            width: parent.width - 8
+                            spacing: 0
+                            Repeater {
+                                model: install.allFiles ? file.lines : file.lines.slice(0, 12)
+                                delegate: RowLayout {
+                                    required property int index
+                                    required property string modelData
+                                    Layout.fillWidth: true
+                                    spacing: 8
+                                    Label {
+                                        Layout.preferredWidth: 24
+                                        horizontalAlignment: Text.AlignRight
+                                        font.family: "monospace"
+                                        color: Theme.muted
+                                        text: index + 1
+                                    }
+                                    Label {
+                                        Layout.fillWidth: true
+                                        font.family: "monospace"
+                                        textFormat: Text.PlainText
+                                        elide: Text.ElideRight
+                                        text: modelData
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            LinkButton {
+                objectName: "agentInstallShowAll"
+                iconRole: "chevron-down"
+                visible: install.open && !install.allFiles && (install.files.length > 1 || install.mainLines.length > 12)
+                text: qsTr("Show all %n files", "", install.files.length)
+                onClicked: install.allFiles = true
+            }
+            Label {
+                visible: install.open
+                Layout.fillWidth: true
+                wrapMode: Text.Wrap
+                color: Theme.muted
+                text: qsTr("Installs as Install from file… would: it turns on, and Plugins can turn it off or uninstall it.")
+            }
+            RowLayout {
+                visible: install.open && !install.replying
+                spacing: 6
+                Button {
+                    objectName: "agentInstallAccept"
+                    visible: !install.fullTrust && !install.item.needsRetrust
+                    text: qsTr("Install")
+                    highlighted: true
+                    onClicked: panel.agent.answer(install.item.ask, "allowOnce", "")
+                }
+                DangerButton {
+                    objectName: "agentInstallRisky"
+                    visible: install.fullTrust || install.item.needsRetrust === true
+                    text: install.item.needsRetrust ? qsTr("Trust and install") : qsTr("Install with full access")
+                    onClicked: panel.agent.answer(install.item.ask, "allowOnce", "")
+                }
+                Button {
+                    objectName: "agentInstallDecline"
+                    text: qsTr("Don’t install")
+                    onClicked: panel.agent.answer(install.item.ask, "deny", "")
+                }
+                Button {
+                    text: qsTr("Don’t install and tell the agent…")
+                    onClicked: {
+                        install.replying = true
+                        installReply.forceActiveFocus()
+                    }
+                }
+            }
+            RowLayout {
+                visible: install.open && install.replying
+                Layout.fillWidth: true
+                TextField {
+                    id: installReply
+                    objectName: "agentInstallReply"
+                    Layout.fillWidth: true
+                    placeholderText: qsTr("What should it do instead?")
+                    onAccepted: panel.agent.answer(install.item.ask, "deny", text)
+                }
+                Button { text: qsTr("Don’t install"); onClicked: panel.agent.answer(install.item.ask, "deny", installReply.text) }
+            }
+            RowLayout {
+                visible: !install.open
+                Layout.fillWidth: true
+                spacing: 6
+                Icon { iconRole: install.item.status === "installed" ? "plugin-installed" : "plugin-install"; size: 14 }
+                Label {
+                    objectName: "agentInstallStatus"
+                    Layout.fillWidth: true
+                    wrapMode: Text.Wrap
+                    textFormat: Text.PlainText
+                    color: install.item.status === "installed" || install.item.status === "running" ? Theme.text : Theme.muted
+                    text: install.item.status === "running" ? qsTr("Installing %1").arg(install.item.name ?? "")
+                          : install.item.status === "installed"
+                            ? (install.fullTrust ? qsTr("Installed %1 %2 · full trust") : qsTr("Installed %1 %2 · restricted"))
+                                  .arg(install.item.name ?? "").arg(install.item.version ?? "")
+                          : install.item.status === "failed" ? qsTr("%1 didn’t install: %2").arg(install.item.name ?? "").arg(install.item.result ?? "")
+                          : install.item.status === "declined" ? (install.item.message ? qsTr("Didn’t install %1 · “%2”").arg(install.item.name ?? "").arg(install.item.message)
+                                                                                       : qsTr("Didn’t install %1").arg(install.item.name ?? ""))
+                          : qsTr("No longer needed")
+                }
+                LinkButton {
+                    objectName: "agentInstallOpen"
+                    iconRole: "plugins"
+                    visible: install.item.status === "installed"
+                    text: qsTr("Open in Plugins")
+                    onClicked: panel.pluginRequested(install.item.plugin)
                 }
             }
         }
