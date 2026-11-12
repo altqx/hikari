@@ -55,8 +55,7 @@ DialogWindow {
 
     Label {
         text: qsTr("%n selected lines, %1 to %2, %3 frames. Frames are read without subtitles.", "", dialog.controller.lineCount)
-            .arg(dialog.timeText(dialog.controller.startMs)).arg(dialog.timeText(dialog.controller.endMs))
-            .arg(dialog.controller.lineFrames)
+            .arg(dialog.timeText(dialog.controller.startMs), dialog.timeText(dialog.controller.endMs), dialog.controller.lineFrames)
         color: Theme.muted
         wrapMode: Text.Wrap
         Layout.fillWidth: true
@@ -250,8 +249,8 @@ DialogWindow {
         objectName: "trackColourProgress"
         color: Theme.muted
         text: dialog.controller.reading
-              ? qsTr("Reading frame %1 of %2…").arg(dialog.controller.framesRead + 1).arg(dialog.controller.framesToRead)
-              : qsTr("Read %1 of %2 frames").arg(dialog.controller.framesRead).arg(dialog.controller.framesToRead)
+              ? qsTr("Reading frame %1 of %2…").arg(dialog.controller.framesRead + 1, dialog.controller.framesToRead)
+              : qsTr("Read %1 of %2 frames").arg(dialog.controller.framesRead, dialog.controller.framesToRead)
     }
     buttons: [
         PrimaryButton {

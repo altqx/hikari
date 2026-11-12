@@ -56,8 +56,7 @@ DialogWindow {
     Label {
         text: qsTr("Line %1, %2 to %3, %n frames. The point’s colour on this frame is the fully shown colour.", "",
                    dialog.controller.lineFrames)
-            .arg(dialog.controller.lineNumber).arg(dialog.timeText(dialog.controller.startMs))
-            .arg(dialog.timeText(dialog.controller.endMs))
+            .arg(dialog.controller.lineNumber, dialog.timeText(dialog.controller.startMs), dialog.timeText(dialog.controller.endMs))
         color: Theme.muted
         wrapMode: Text.Wrap
         Layout.fillWidth: true
@@ -256,8 +255,8 @@ DialogWindow {
         objectName: "findFadeProgress"
         color: Theme.muted
         text: dialog.controller.reading
-              ? qsTr("Reading frame %1 of %2…").arg(dialog.controller.framesRead + 1).arg(dialog.controller.framesToRead)
-              : qsTr("Read %1 of %2 frames").arg(dialog.controller.framesRead).arg(dialog.controller.framesToRead)
+              ? qsTr("Reading frame %1 of %2…").arg(dialog.controller.framesRead + 1, dialog.controller.framesToRead)
+              : qsTr("Read %1 of %2 frames").arg(dialog.controller.framesRead, dialog.controller.framesToRead)
     }
     buttons: [
         PrimaryButton {
