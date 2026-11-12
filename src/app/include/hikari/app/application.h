@@ -124,6 +124,7 @@ namespace hikari::app {
 class Application : public QObject {
     Q_OBJECT
 signals:
+    void sideBarsRestored(int shellWindow);
     void closeFinished(bool done, const QString &problem);
     // A changed program font closed the Select dialog.
     void selectLinesDestroyed();
@@ -983,6 +984,11 @@ public:
     Q_INVOKABLE int windowOfTab(qulonglong document) const;
     Q_INVOKABLE int windowCurrentTab(int shellWindow) const;
     Q_INVOKABLE bool windowHome(int shellWindow) const;
+    // The window's side bars as side_bars.h JSON: its Session's, else the ones changed last in any window;
+    // empty on a first start of this version (ADR 0032).
+    Q_INVOKABLE QString sideBars(int shellWindow) const;
+    // Saved at once in the Session and as workspace.sideBars.
+    Q_INVOKABLE void setSideBars(int shellWindow, const QString &json);
     // Waits for running writes and delivers their results.
     void waitForWrites();
 

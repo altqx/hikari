@@ -762,6 +762,58 @@ private slots:
         QCOMPARE(windows.first().toObject().value(QStringLiteral("explorer")).toString(), QStringLiteral("/p"));
     }
 
+    void aWindowKeepsItsSideBars()
+    {
+        application::Session session{"HikariSub", true, {application::SessionTab{}}, {}};
+        application::SideBars bars = application::defaultSideBars({.project = true});
+        bars = application::moved(bars, "Agent", application::SideBarId::Second, 1);
+        bars = application::toggled(bars, application::SideBarId::First);
+        session.windows.push_back(application::SessionWindow{});
+        session.windows.back().sideBars = bars;
+        const QByteArray written = app::writeSessionJson(session);
+        const QJsonObject window = QJsonDocument::fromJson(written).object().value(QStringLiteral("windows")).toArray().first().toObject();
+        QCOMPARE(window.value(QStringLiteral("sideBars")).toObject().value(QStringLiteral("second")).toObject()
+                     .value(QStringLiteral("shown")).toString(), QStringLiteral("Agent"));
+        const auto again = app::readSession(std::string_view(written.constData(), written.size()));
+        QVERIFY(again);
+        QCOMPARE(again->windows.at(0).sideBars, std::optional(bars));
+        QVERIFY(again->windows.at(0).unknown.empty());
+
+        const auto broken = app::readSession(
+            R"({"version": 1, "windows": [{"width": 300, "sideBars": {"first": {"panels": "Agent"}}}], "tabs": [{"subtitles": "a.ass"}]})");
+        QVERIFY(broken);
+        QVERIFY(!broken->windows.at(0).sideBars);
+        QCOMPARE(broken->tabs.size(), std::size_t(1));
+        const auto none = app::readSession(R"({"version": 1, "windows": [{}], "tabs": []})");
+        QVERIFY(none);
+        QVERIFY(!none->windows.at(0).sideBars);
+    }
+
+    void sideBarsAreSavedAtOnceAndComeBack()
+    {
+        QTemporaryDir home;
+        auto bars = application::moved(application::defaultSideBars({}), "Agent", application::SideBarId::Second, 0);
+        const QString json = QString::fromStdString(application::sideBarsJson(bars));
+        auto a = std::make_unique<app::Application>(options(home));
+        QCOMPARE(a->sideBars(0), QString());
+        QVERIFY(a->openFile(writeSubtitles(dir.filePath(QStringLiteral("s1.ass")), "s1")));
+        a->setSideBars(0, json);
+        QCOMPARE(a->sideBars(0), json);
+        QCOMPARE(readSession(a->lastSessionPath()).windows.at(0).sideBars, std::optional(bars));
+        QCOMPARE(a->settingsStore()->text("workspace.sideBars"), json);
+        a->setSideBars(0, QStringLiteral("not json"));
+        QCOMPARE(a->sideBars(0), json);
+        a->endSession();
+        a.reset();
+
+        app::Application b(options(home));
+        QCOMPARE(b.sideBars(0), json);
+        const auto other = application::toggled(bars, application::SideBarId::First);
+        QFile::remove(b.lastSessionPath());
+        b.setSideBars(3, QString::fromStdString(application::sideBarsJson(other)));
+        QCOMPARE(b.sideBars(7), QString::fromStdString(application::sideBarsJson(other)));
+    }
+
     void brokenWindowsAreNamed()
     {
         const std::pair<const char *, const char *> cases[] = {

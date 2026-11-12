@@ -684,7 +684,7 @@ bool Application::saveLastSession(bool closing, const QString &path)
     application::Session session = sessionOf(std::nullopt);
     if (const auto &only = session.windows.front();
         session.windows.size() == 1 && !only.geometry && !only.maximized && only.unknown.empty() &&
-        only.project.empty())
+        only.project.empty() && !only.sideBars)
         session.windows.clear();
     const QByteArray bytes = writeSessionJson(session, path.isEmpty() ? std::optional<bool>(closing) : std::nullopt);
     QDir().mkpath(QFileInfo(file).absolutePath());
@@ -978,6 +978,8 @@ void Application::applySession()
         for (std::size_t k = 0; k < windows.size(); ++k) {
             const auto *saved = k < pending.windows.size() ? &pending.windows[k] : nullptr;
             m_windowPlaces[windows[k]].unknown = saved ? saved->unknown : std::string();
+            m_windowPlaces[windows[k]].sideBars = saved ? saved->sideBars : std::nullopt;
+            emit sideBarsRestored(windows[k]);
             m_projects->set(windows[k], saved ? ProjectWindows::canonicalFolder(qs(saved->project)) : QString());
         }
     for (std::size_t k = 0; k < windows.size() && k < pending.windows.size(); ++k) {

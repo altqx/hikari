@@ -1,5 +1,5 @@
 ---
-status: proposed
+status: accepted
 amends: 0020, 0025, 0030
 ---
 
@@ -25,7 +25,12 @@ This amends [ADR 0020](0020-per-document-tab-layouts.md). A Document tab's arran
 
 This amends [ADR 0025](0025-multiple-windows.md)'s table: the side bars join the per-window column, and the Session stores them with each window's geometry and Project. Each window shows the side bars on Home too (Q431).
 
-**Always saved** (the owner's follow-up on #1040). Every side bar change is saved at once, into the window's Session entry and into `sidebars.json` beside `layout.json`, which keeps the side bars changed last. A new window, and a start without a Session or with a Session written before this record (or legacy's), takes that file's side bars; only a first start with neither gets the defaults below. The AI side bar's edge is a setting and is saved with the settings.
+**Always saved** (the owner's follow-up on #1040, amended after the lgtm: no new file). Every side bar change is saved at once in two places that already exist:
+
+- **The window's Session entry** (`"sideBars"` in its `windows` object). The Session's version stays 1; a reader that skips the key opens the defaults.
+- **The settings file**, as `workspace.sideBars`: the side bars changed last, in any window. A new window takes them, and so does a start without a Session or with a Session written before this record (or legacy's). Only a first start with neither gets the defaults below.
+
+`layout.json` is not used for them: it holds one tab's arrangement in the envelope that saved layouts and the `[Hikari]` section share, and a layout that fails to restore is set aside whole, which would take the side bars with it. The settings file already keeps such window state (`workspace.dialogGeometry`), next to `appearance.aiSideBar` (`start` or `end`), the AI side bar's edge.
 
 ## Defaults and the Explorer
 
@@ -38,7 +43,7 @@ This amends [ADR 0030](0030-open-a-folder-as-a-project.md): the Explorer starts 
 
 ## Migration and commands
 
-- **Migration** (Q441): on the first start of this version, panels that a saved arrangement docks in the column right of the Grid move into the side bars once, the AI panels left and the tools right, with a What's new line. Arrangements are not rewritten otherwise.
+- **Migration** (Q441): on the first start of this version (no `workspace.sideBars` in the settings yet), panels that a saved arrangement docks in the column right of the Grid move into the side bars once, the AI panels left and the tools right, with a What's new line. Arrangements are not rewritten otherwise.
 - **Commands** (Q438): 5339 Toggle left side bar (Ctrl+Alt+B), 5340 Toggle right side bar and 5341 Swap side bars, no default keys for the last two. Ctrl+B stays Add bold.
 
 ## Native gate
@@ -53,4 +58,4 @@ The new frame reruns the ADR 0017 native gate on sway, KWin and mutter, and on W
 - ADR 0030: "It docks left of the Grid in the Editing preset" reads "It starts in the tools side bar".
 - `CONTEXT.md` gains **Side bar**.
 
-The open points from the design gate (DK3-Q1–Q14 on #1040) are settled in this record once the owner answers them.
+The owner approved the mockup and every recommended answer to DK3-Q1–Q14 (Q451–Q464) on 2026-11-12 ([#1040](https://github.com/altqx/hikari/issues/1040#issuecomment-6826953073)). Among them: the AI side bar's edge is one app-wide setting that Swap side bars flips; clicking the shown panel's icon hides its side bar, and two title bar toggles bring it back; a 240 px minimum; icons that don't fit go under a "More panels" chevron; no drag between a side bar and the middle docking yet.

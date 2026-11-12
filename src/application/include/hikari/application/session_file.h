@@ -4,6 +4,8 @@
 // A tab ends at the next "Tab: " line other than "Tab: 0" or at the last line;
 // unknown lines (FFMS2:, Editor:) are skipped. Each tab has only its own audio.
 
+#include "hikari/application/side_bars.h"
+
 #include <cstddef>
 #include <optional>
 #include <string>
@@ -42,6 +44,7 @@ struct SessionWindow {
     // An index into Session::tabs.
     std::optional<std::size_t> currentTab;
     std::string project; // the window's Project folder; "" for none
+    std::optional<SideBars> sideBars; // nullopt: none saved, or not readable
     // The keys this build doesn't know, as a compact JSON object, written back as they were.
     std::string unknown;
     bool operator==(const SessionWindow &) const = default;

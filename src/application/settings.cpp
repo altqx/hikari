@@ -283,6 +283,8 @@ const std::vector<SettingDefinition> &definitions()
         {"appearance.highContrastBlack.border", "", String, Profile, Mapped, false, std::string("#FFFFFF")},
         // "system", "custom" or "auto" (the system's on tiling window managers).
         {"appearance.titleBar", "", String, Profile, Mapped, false, std::string("auto")},
+        // "start" or "end": the first side bar's edge in reading order (ADR 0032).
+        {"appearance.aiSideBar", "", String, Profile, Mapped, false, std::string("start")},
         // One "<id>\t<x>,<y>,<width>,<height>" row per dialog.
         {"workspace.dialogGeometry", "", StringList, Workspace, Mapped, false, std::vector<std::string>()},
         // One "<picker>\t<folder URL>" row per picker.
@@ -292,6 +294,8 @@ const std::vector<SettingDefinition> &definitions()
         {"workspace.settingsPage", "", String, Workspace, Mapped, false, std::string("general")},
         // "due" until Getting started is closed, then "done"; empty: a profile older than it.
         {"workspace.gettingStarted", "", String, Workspace, Mapped, false, std::string()},
+        // The side bars changed last (side_bars.h JSON); empty: a profile older than them.
+        {"workspace.sideBars", "", String, Workspace, Mapped, false, std::string()},
         {"notices.toasts", "", Bool, Profile, Mapped, false, true},
         {"notices.hiddenQuestions", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {"styles.lastCatalog", "", String, Profile, Mapped, false, std::string()},
