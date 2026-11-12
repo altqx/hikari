@@ -491,6 +491,7 @@ ApplicationWindow {
     onLeftSideBarShownChanged: Qt.callLater(root.placeSideBarPanels)
     onRightSideBarShownChanged: Qt.callLater(root.placeSideBarPanels)
 
+    function dockPanel(dock) { return root.panels.find(p => p.dockName === dock.uniqueName) ?? null }
     function sideBarDock(name) {
         return root.dockList.find(d => root.panelName(d) === name) ?? root.pluginDock(name)
     }
@@ -500,7 +501,7 @@ ApplicationWindow {
             const dock = root.dockList.find(d => root.panelName(d) === name)
             if (!dock || !root.panelAvailable(dock))
                 continue
-            entries.push({ name: name, title: root.panels[root.dockList.indexOf(dock)].title, iconRole: root.panelIcon(dock),
+            entries.push({ name: name, title: root.dockPanel(dock).title, iconRole: root.panelIcon(dock),
                            plugin: root.isPluginDock(dock) })
         }
         return entries
@@ -571,9 +572,8 @@ ApplicationWindow {
         }
         const leftShown = root.leftSideBarShown ? root.shownInSideBar(root.leftSideBarState, root.leftSideBarEntries) : ""
         const rightShown = root.rightSideBarShown ? root.shownInSideBar(root.rightSideBarState, root.rightSideBarEntries) : ""
-        for (let i = 0; i < root.dockList.length; ++i) {
-            const dock = root.dockList[i]
-            const panel = root.panels[i]
+        for (const dock of root.dockList) {
+            const panel = root.dockPanel(dock)
             const name = root.panelName(dock)
             if (root.inSideBar(dock)) {
                 if (!root.sideBarHomes[name])
@@ -601,13 +601,13 @@ ApplicationWindow {
         root.setSideBars(SideBarModel.shown(root.sideBarsJson, root.panelName(dock)))
         root.placeSideBarPanels()
         if (focus)
-            root.focusPanel(root.panels[root.dockList.indexOf(dock)], Qt.OtherFocusReason)
+            root.focusPanel(root.dockPanel(dock), Qt.OtherFocusReason)
     }
     function sideBarIconClicked(name) {
         const dock = root.sideBarDock(name)
         root.setSideBars(SideBarModel.iconClicked(root.sideBarsJson, name))
         root.placeSideBarPanels()
-        const panel = dock ? root.panels[root.dockList.indexOf(dock)] : null
+        const panel = dock ? root.dockPanel(dock) : null
         if (panel && panel.visible)
             root.focusPanel(panel, Qt.MouseFocusReason)
     }
@@ -640,7 +640,7 @@ ApplicationWindow {
         const at = index === undefined ? target.length : (from >= 0 && from < index ? index - 1 : index)
         root.setSideBars(SideBarModel.moved(root.sideBarsJson, root.panelName(dock), second, at))
         root.placeSideBarPanels()
-        root.focusPanel(root.panels[root.dockList.indexOf(dock)], Qt.OtherFocusReason)
+        root.focusPanel(root.dockPanel(dock), Qt.OtherFocusReason)
     }
     function moveOutOfSideBar(dock) {
         if (root.layoutLocked || !root.inSideBar(dock))
@@ -4604,7 +4604,7 @@ ApplicationWindow {
         entries: onLeft ? root.leftSideBarEntries : root.rightSideBarEntries
         shown: root.shownInSideBar(state, entries)
         locked: root.layoutLocked
-        panelFocused: dockShown !== null && root.panels[root.dockList.indexOf(dockShown)].activeFocus
+        panelFocused: dockShown !== null && root.dockPanel(dockShown).activeFocus
         onIconClicked: panel => root.sideBarIconClicked(panel)
         onIconMenu: (panel, anchor) => {
             const dock = root.sideBarDock(panel)
