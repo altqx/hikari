@@ -785,7 +785,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             o.lua = &luaNodes();
             o.audio = m_automation->media().peakAudio();
             return o;
-        }});
+        },
+        projectAiExclude});
     AiFeatures::Ports aiPorts = options.aiPorts ? std::move(*options.aiPorts)
                                                 : AiFeatures::defaultPorts(m_userFolder, &m_apiHost->api(),
                                                                            options.appVersion.isEmpty()

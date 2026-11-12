@@ -35,7 +35,7 @@ constexpr std::string_view kProjectable[] = {
     "scriptProperties.editing",      "scriptProperties.editingOn",   "scriptProperties.timing",
     "scriptProperties.timingOn",     "scriptProperties.update",      "scriptProperties.updateOn",
     "scriptProperties.askForChange", "translation.autoMoveTagsFromOriginal", "translation.glossary",
-    "translation.translator",        "translation.reviewer",
+    "translation.translator",        "translation.reviewer",           "ai.exclude",
 };
 // Projectable ids whose Project value waits for trust.
 constexpr std::string_view kWidening[] = {"translation.translator", "translation.reviewer"};
@@ -412,6 +412,7 @@ const std::vector<SettingDefinition> &definitions()
         {"ai.mcp.http", "", Bool, Profile, Mapped, false, false},
         // servers: one McpServerEntry JSON object per row; their secrets are in the keychain.
         {"ai.mcp.servers", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
+        {"ai.exclude", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {"ai.off", "", Bool, Profile, Mapped, false, false},
         {"ai.autoUpdate", "", Bool, Profile, Mapped, false, true},
         {"ai.promptCaching", "", Bool, Profile, Mapped, false, true},

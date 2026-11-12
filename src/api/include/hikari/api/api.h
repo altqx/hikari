@@ -73,6 +73,9 @@ struct GrantedFolder {
     bool writable = false;
 };
 
+// The handle of an AI caller's Project folder, read-only, from Caller::project.
+inline constexpr std::string_view kProjectFolder = "project";
+
 struct Context {
     const Host &host;
     const Caller &caller;
