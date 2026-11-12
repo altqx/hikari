@@ -135,10 +135,7 @@ void PluginRuntime::wireQmlPanels()
             const auto it = m_plugins.find(plugin);
             if (it == m_plugins.end() || !m_installer)
                 return api::Json::object();
-            api::Json stored = api::Json::object();
-            if (const auto registry = m_installer->registry(); registry && registry->contains(plugin))
-                stored = registry->at(plugin).settings;
-            return plugins::settingValues(it->second->manifest, stored);
+            return plugins::settingValues(it->second->manifest, storedSettings(plugin));
         },
         [this] { return m_wiring.language ? m_wiring.language() : QString(); },
         [this](const QString &pluginName, const QString &text, bool error) {
@@ -175,8 +172,69 @@ PluginRuntime::~PluginRuntime()
     delete m_network;
 }
 
+const plugins::ProjectPlugins *PluginRuntime::windowProject(int shellWindow) const
+{
+    const auto found = m_windows.find(shellWindow);
+    return found == m_windows.end() || !found->second ? nullptr : &*found->second;
+}
+
+api::Json PluginRuntime::storedSettings(const std::string &plugin) const
+{
+    api::Json stored = api::Json::object();
+    if (!m_installer)
+        return stored;
+    if (const auto registry = m_installer->registry(); registry && registry->contains(plugin))
+        stored = registry->at(plugin).settings;
+    return plugins::projectSettings(plugin, stored, windowProject(m_wiring.activeWindow ? m_wiring.activeWindow() : 0));
+}
+
+bool PluginRuntime::onIn(const QString &pluginId, int shellWindow) const
+{
+    const auto found = m_onIn.find(shellWindow);
+    const auto &on = found == m_onIn.end() ? m_userOn : found->second;
+    return on.contains(pluginId.toStdString());
+}
+
+QStringList PluginRuntime::missingIn(int shellWindow) const
+{
+    const auto *project = windowProject(shellWindow);
+    QStringList out;
+    if (!project)
+        return out;
+    const auto registry = m_installer ? m_installer->registry() : plugins::Registry();
+    if (registry)
+        for (const auto &id : plugins::missingPlugins(*project, *registry))
+            out << qs(id);
+    return out;
+}
+
+void PluginRuntime::projectsChanged()
+{
+    auto windows = m_wiring.windowPlugins ? m_wiring.windowPlugins() : decltype(m_windows)();
+    const bool same = windows.size() == m_windows.size()
+                      && std::ranges::equal(windows, m_windows, [](const auto &a, const auto &b) {
+                             return a.first == b.first && a.second.has_value() == b.second.has_value()
+                                    && (!a.second
+                                        || (a.second->enabled == b.second->enabled && a.second->disabled == b.second->disabled
+                                            && a.second->settings == b.second->settings));
+                         });
+    if (same)
+        return;
+    m_windows = std::move(windows);
+    ++m_windowsRevision;
+    sync();
+    emit windowsChanged();
+}
+
 void PluginRuntime::sync()
 {
+    std::vector<const plugins::ProjectPlugins *> windows;
+    for (const auto &[window, project] : m_windows)
+        windows.push_back(project ? &*project : nullptr);
+    std::set<std::string> userOn;
+    std::map<int, std::set<std::string>> onIn;
+    for (const auto &[window, project] : m_windows)
+        onIn[window];
     std::map<std::string, plugins::Manifest> wanted;
     std::vector<PluginUi::Plugin> installed;
     std::vector<application::PluginNode> nodes;
@@ -192,7 +250,13 @@ void PluginRuntime::sync()
                     continue;
                 }
                 const fs::path root = m_installer->folders().plugins / fs::path(std::u8string(id.begin(), id.end()));
-                installed.push_back({id, manifest->name, entry.enabled, manifest->panels,
+                const bool runs = plugins::pluginRunsAnywhere(id, entry, windows);
+                if (plugins::pluginOn(id, entry, nullptr))
+                    userOn.insert(id);
+                for (const auto &[window, project] : m_windows)
+                    if (plugins::pluginOn(id, entry, project ? &*project : nullptr))
+                        onIn[window].insert(id);
+                installed.push_back({id, manifest->name, runs, manifest->panels,
                                      QUrl::fromLocalFile(QString::fromStdU16String(root.u16string())),
                                      manifest->tier == plugins::Tier::Unrestricted, manifest->version});
                 if (!manifest->nodes.empty()) {
@@ -207,7 +271,7 @@ void PluginRuntime::sync()
                         m_wiring.log->log(QCoreApplication::translate("HikariSub.Plugins", "Its nodes can’t run: %1").arg(qs(own.error())),
                                           ui::LogController::Error, qs(manifest->name));
                 }
-                if (entry.enabled)
+                if (runs)
                     wanted.emplace(id, std::move(*manifest));
             }
     }
@@ -228,6 +292,8 @@ void PluginRuntime::sync()
     for (auto &[id, manifest] : wanted)
         if (!m_plugins.contains(id))
             m_plugins.emplace(id, launch(id, std::move(manifest)));
+    m_userOn = std::move(userOn);
+    m_onIn = std::move(onIn);
     application::setPluginNodes(std::move(nodes), std::move(unavailable));
     m_ui->setPlugins(std::move(installed));
     relist();
@@ -251,10 +317,7 @@ std::unique_ptr<PluginRuntime::Running> PluginRuntime::launch(const std::string 
         request.tier = m.tier == plugins::Tier::Unrestricted ? protocol::Tier::Unrestricted : protocol::Tier::Restricted;
         request.memoryLimit = static_cast<std::int64_t>(m_wiring.memoryLimit);
         request.locale = m_wiring.language ? m_wiring.language().toStdString() : std::string();
-        api::Json stored = api::Json::object();
-        if (const auto registry = m_installer->registry(); registry && registry->contains(raw->id))
-            stored = registry->at(raw->id).settings;
-        request.settings = plugins::settingValues(m, stored).dump();
+        request.settings = plugins::settingValues(m, storedSettings(raw->id)).dump();
         for (const auto &command : m.commands)
             request.commands.push_back(command.id);
         return request;
@@ -367,8 +430,9 @@ void PluginRuntime::serve(Running &plugin, const PluginProcess::ServiceRequest &
         }
         PluginProcess *process = plugin.process.get();
         const std::uint64_t subscription =
-            m_wiring.api->subscribe(plugin.caller, {request.name}, [process](const api::Event &event) {
-                process->push(event.name, event.data.dump());
+            m_wiring.api->subscribe(plugin.caller, {request.name}, [this, process, id = plugin.id](const api::Event &event) {
+                if (onIn(qs(id), m_wiring.activeWindow ? m_wiring.activeWindow() : 0))
+                    process->push(event.name, event.data.dump());
             });
         if (subscription == 0) {
             reply("there is no event \xE2\x80\x9C" + request.name + "\xE2\x80\x9D");

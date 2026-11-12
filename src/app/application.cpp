@@ -28,6 +28,8 @@
 #include "hikari/application/shift_times.h"
 #include "hikari/application/select_lines.h"
 #include "hikari/application/resample.h"
+#include "hikari/application/position_commands.h"
+#include "hikari/application/visual_transform.h"
 #include "hikari/application/spell_checker.h"
 #include "hikari/application/legacy_dir.h"
 #include "hikari/application/video_matrix.h"
@@ -695,6 +697,15 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     connect(m_settings.get(), &ui::SettingsStore::changed, this, &Application::settingChanged);
     m_automation->manager().setTraceLevel(m_settings->integer("automation.traceLevel"));
     m_automation->setSettings(m_settings.get());
+    m_automation->setWindowProjects([this] {
+        std::map<int, application::WindowProject> projects;
+        if (m_projects)
+            for (const int window : sessionWindows()) {
+                const QString root = m_projects->root(window);
+                projects[window] = {QDir::toNativeSeparators(root).toStdString(), !root.isEmpty() && projectTrusted(root)};
+            }
+        return projects;
+    });
     if (options.autoload)
         m_automation->autoload();
     m_renderer.select(m_settings->text("video.subtitleProvider").toStdString());
@@ -797,7 +808,10 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         [this] { refreshViews(); }});
     m_agent = std::make_unique<AgentController>(AgentController::Wiring{
         *m_ai, *m_settings, m_apiHost->api(), m_apiHost->review(), m_workspace, *m_files, m_userFolder, {},
-        m_aiScripts.get(), m_automation.get()});
+        m_aiScripts.get(), m_automation.get(),
+        [this] { return m_projects ? m_projects->root(m_workspace.activeWindow()) : QString(); }});
+    m_skillsSettings = std::make_unique<SkillsSettings>(
+        m_userFolder, [this](int window) { return m_projects ? m_projects->root(window) : QString(); });
     m_inlineAi = std::make_unique<InlineAiController>(InlineAiController::Wiring{
         *m_ai, *m_settings, m_apiHost->api(), m_apiHost->review(), m_workspace, *m_files, *m_agent,
         [this](application::DocumentId document, core::LineId line) {
@@ -834,6 +848,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     pluginWiring.setSetting = [this](const QString &id, const QString &setting, const QString &json) {
         return m_pluginManager->setSetting(id, setting, json);
     };
+    pluginWiring.windowPlugins = [this] { return windowPlugins(); };
+    pluginWiring.activeWindow = [this] { return m_workspace.activeWindow(); };
     m_pluginRuntime = std::make_unique<PluginRuntime>(std::move(pluginWiring));
     connect(m_pluginManager.get(), &PluginManager::folderForgotten, m_pluginRuntime.get(), &PluginRuntime::endFileAccess);
     connect(m_pluginManager.get(), &PluginManager::pluginsChanged, m_pluginRuntime.get(), &PluginRuntime::sync);
@@ -1177,8 +1193,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     connect(m_projects.get(), &ProjectWindows::changed, this, &Application::applyWindowProject);
     connect(m_projects.get(), &ProjectWindows::changed, this, &Application::projectsChanged);
     connect(m_projects.get(), &ProjectWindows::recentChanged, this, &Application::recentProjectsChanged);
-    m_copyColumns = m_settings->integer("grid.copyColumns");
-    m_pasteColumns = m_settings->integer("grid.pasteColumns");
+    m_copyColumns = int(m_settings->integer("grid.copyColumns") | (m_settings->integer("grid.copyColumnTags") & core::column::Tags));
+    m_pasteColumns = int(m_settings->integer("grid.pasteColumns") | (m_settings->integer("grid.pasteColumnTags") & core::column::Tags));
     m_editRefresh = new QTimer(this);
     m_editRefresh->setSingleShot(true);
     m_editRefresh->setInterval(0);
@@ -2051,6 +2067,7 @@ void Application::makeNodeEffects(WindowViews &v, int shellWindow)
     });
     effects->shareTrustWith(v.templateEditor.get());
     effects->setLuaNodes([this] { return &luaNodes(); });
+    effects->setGlyphs([this] { return &glyphOutlines(); });
     effects->setAudio([this]() -> std::optional<const application::DisplayAudio *> {
         ui::AudioController *audio = activeMedia().audio.get();
         if (!audio || !audio->box().isOpen())
@@ -2182,6 +2199,15 @@ application::LuaNodePort &Application::luaNodes()
         m_luaNodes = std::make_unique<backends::LuaNodeHelper>(
             backends::LuaNodeHelper::Options{m_luaHelper, 10'000, backends::luaNodeProfile(m_luaHelper)});
     return *m_luaNodes;
+}
+
+application::shape::GlyphOutlinePort &Application::glyphOutlines()
+{
+    if (!m_glyphOutlines) {
+        m_glyphFonts = std::make_unique<backends::LibassFontService>();
+        m_glyphOutlines = std::make_unique<backends::FreetypeGlyphOutlines>(*m_glyphFonts);
+    }
+    return *m_glyphOutlines;
 }
 
 namespace {
@@ -3723,6 +3749,9 @@ QVariantList Application::columnChoices(bool paste)
         } else {
             rows.push_back({QT_TRANSLATE_NOOP("HikariSub.Grid", "Text"), Text});
         }
+        rows.push_back({QT_TRANSLATE_NOOP("HikariSub.Grid", "Start tag block"), StartBlock});
+        rows.push_back({QT_TRANSLATE_NOOP("HikariSub.Grid", "Clip (\\clip or \\iclip)"), Clip});
+        rows.push_back({QT_TRANSLATE_NOOP("HikariSub.Grid", "Only these tags"), NamedTags});
     } else if (format == core::SubtitleFormat::TMPlayer) {
         rows = {{QT_TRANSLATE_NOOP("HikariSub.Grid", "Start time"), Start},
                 {QT_TRANSLATE_NOOP("HikariSub.Grid", "Text"), Text}};
@@ -3737,34 +3766,62 @@ QVariantList Application::columnChoices(bool paste)
     for (const auto &[label, bit] : rows)
         out << QVariantMap{{QStringLiteral("label"), QCoreApplication::translate("HikariSub.Grid", label)},
                            {QStringLiteral("bit"), bit},
-                           {QStringLiteral("checked"), (chosen & bit) != 0}};
+                           {QStringLiteral("checked"), (chosen & bit) != 0},
+                           {QStringLiteral("tags"), (bit & Tags) != 0},
+                           {QStringLiteral("named"), bit == NamedTags}};
     return out;
 }
 
-void Application::rememberColumns(bool paste, int columns)
+QString Application::columnTagNames() const
 {
-    (paste ? m_pasteColumns : m_copyColumns) = columns;
-    m_settings->set(paste ? "grid.pasteColumns" : "grid.copyColumns", columns);
+    return m_settings->text("grid.columnTagNames");
 }
 
-bool Application::copyColumns(int columns)
+void Application::rememberColumns(bool paste, int columns, const QString &tagNames)
+{
+    (paste ? m_pasteColumns : m_copyColumns) = columns;
+    m_settings->set(paste ? "grid.pasteColumns" : "grid.copyColumns", columns & ~core::column::Tags);
+    m_settings->set(paste ? "grid.pasteColumnTags" : "grid.copyColumnTags", columns & core::column::Tags);
+    if (columns & core::column::NamedTags)
+        m_settings->set("grid.columnTagNames", tagNames);
+}
+
+namespace {
+
+std::vector<std::u8string> tagNameList(const QString &names)
+{
+    std::vector<std::u8string> out;
+    for (const QString &name : names.split(QLatin1Char(','), Qt::SkipEmptyParts)) {
+        QString n = name.trimmed();
+        while (n.startsWith(QLatin1Char('\\')))
+            n.remove(0, 1);
+        if (!n.isEmpty())
+            out.push_back(toU8(n));
+    }
+    return out;
+}
+
+}
+
+bool Application::copyColumns(int columns, const QString &tagNames)
 {
     auto *session = targetSession();
     if (!session || session->selection().selected.empty())
         return false;
-    rememberColumns(false, columns);
-    setClipboardText(application::copyColumns(*session, columns));
+    rememberColumns(false, columns, tagNames);
+    setClipboardText(application::copyColumns(*session, columns, tagNameList(tagNames)));
     return true;
 }
 
-bool Application::pasteColumns(int columns)
+bool Application::pasteColumns(int columns, const QString &tagNames)
 {
     auto *session = targetSession();
     if (!session)
         return false;
-    rememberColumns(true, columns);
-    const bool done =
-        application::pasteColumns(*session, toU8(clipboardText()), columns, shownLines()).has_value();
+    rememberColumns(true, columns, tagNames);
+    const bool done = application::pasteColumns(*session, toU8(clipboardText()), columns, shownLines(), {},
+                                                tagNameList(tagNames))
+                          .has_value();
     editor().reloadFromSession();
     refreshViews();
     return done;
@@ -4320,6 +4377,122 @@ bool Application::canShiftTranslation() const
     const auto target = m_workspace.editingTarget();
     const auto *session = target ? m_files->session(*target) : nullptr;
     return session && session->document().scriptInfo(u8"TLMode Showtl") == u8"Yes";
+}
+
+namespace {
+
+using PositionCommand = std::function<std::expected<void, application::CommandRefusal>(const application::position::Geometry &)>;
+
+std::expected<void, application::CommandRefusal> withGeometry(const application::EditSession &session,
+                                                              const PositionCommand &command)
+{
+    namespace transform = application::visual::transform;
+    ui::QtTextMeasurePort measure;
+    const auto resolution = application::scriptResolution(session.document());
+    transform::Context context;
+    context.document = &session.document();
+    context.styles = core::decodeStyles(session.document());
+    context.width = resolution.width;
+    context.height = resolution.height;
+    context.measure = &measure;
+    application::position::Geometry geometry;
+    geometry.width = resolution.width;
+    geometry.height = resolution.height;
+    geometry.style = [&](const core::LineRecord &line) { return transform::lineStyle(context, line.style); };
+    geometry.size = [&](const core::LineRecord &line) -> std::optional<application::position::Size> {
+        const auto style = transform::lineStyle(context, line.style);
+        const auto size = transform::textSize(context, line, &style, false).size;
+        if (size.x <= 0 && size.y <= 0)
+            return std::nullopt;
+        return application::position::Size{size.x, size.y};
+    };
+    return command(geometry);
+}
+
+}
+
+bool Application::changeAlignment(int an)
+{
+    const auto shown = shownLines();
+    return runFilter([&](application::EditSession &s) {
+        return withGeometry(s, [&](const auto &g) { return application::position::changeAlignment(s, an, g, shown); });
+    });
+}
+
+bool Application::alignLines(int edge)
+{
+    if (edge < 0 || edge > 5)
+        return false;
+    const auto to = m_settings->boolean("grid.alignToVideoFrame") ? application::position::RelativeTo::VideoFrame
+                                                                  : application::position::RelativeTo::ActiveLine;
+    const auto shown = shownLines();
+    return runFilter([&](application::EditSession &s) {
+        return withGeometry(s, [&](const auto &g) {
+            return application::position::align(s, static_cast<application::position::Edge>(edge), to, g, shown);
+        });
+    });
+}
+
+bool Application::distributeLines(bool vertical)
+{
+    const auto axis = vertical ? application::position::Axis::Vertical : application::position::Axis::Horizontal;
+    const auto shown = shownLines();
+    return runFilter([&](application::EditSession &s) {
+        return withGeometry(s, [&](const auto &g) { return application::position::distribute(s, axis, g, shown); });
+    });
+}
+
+bool Application::positionToMargins()
+{
+    const auto shown = shownLines();
+    return runFilter([&](application::EditSession &s) {
+        return withGeometry(s, [&](const auto &g) { return application::position::positionToMargins(s, g, shown); });
+    });
+}
+
+bool Application::marginsToPosition()
+{
+    const auto shown = shownLines();
+    return runFilter([&](application::EditSession &s) {
+        return withGeometry(s, [&](const auto &g) { return application::position::marginsToPosition(s, g, shown); });
+    });
+}
+
+bool Application::phantom(bool keepEnd)
+{
+    auto *session = targetSession();
+    if (!session || !session->selection().active)
+        return false;
+    std::optional<std::pair<std::size_t, std::size_t>> selection;
+    for (const auto *line : session->document().lines()) {
+        if (line->id != *session->selection().active)
+            continue;
+        const bool editsTranslation = !line->translation.empty();
+        if (editsTranslation == application::translationMode(*session)) {
+            const auto [from, to] = editor().rawFieldSelection(editsTranslation ? 1 : 0);
+            if (from >= 0 && to > from)
+                selection = std::pair{static_cast<std::size_t>(from), static_cast<std::size_t>(to)};
+        }
+    }
+    const auto keep = keepEnd ? application::position::Keep::End : application::position::Keep::Start;
+    return runFilter([&](application::EditSession &s) { return application::position::phantom(s, keep, selection); });
+}
+
+bool Application::cycleTag(int tag, bool back)
+{
+    if (tag < 0 || tag > 5)
+        return false;
+    const auto which = static_cast<application::position::CycleTag>(tag);
+    const auto name = application::position::cycleTagName(which);
+    std::vector<std::u8string> values;
+    const std::string setting = "editing.cycleValues." + std::string(name.begin(), name.end());
+    for (const QString &v : m_settings->text(setting.c_str()).split(QLatin1Char(','), Qt::SkipEmptyParts))
+        if (const QString trimmed = v.trimmed(); !trimmed.isEmpty())
+            values.push_back(toU8(trimmed));
+    if (values.empty())
+        values = application::position::defaultCycleValues(which);
+    const auto shown = shownLines();
+    return runFilter([&](application::EditSession &s) { return application::position::cycle(s, which, values, back, shown); });
 }
 
 bool Application::shiftTranslation(int mode)
@@ -6727,6 +6900,7 @@ QVariantMap Application::qmlProperties(int shellWindow)
             {QStringLiteral("review"), QVariant::fromValue(static_cast<QObject *>(m_review.get()))},
             {QStringLiteral("agent"), QVariant::fromValue(static_cast<QObject *>(m_agent.get()))},
             {QStringLiteral("inlineAi"), QVariant::fromValue(static_cast<QObject *>(m_inlineAi.get()))},
+            {QStringLiteral("skills"), QVariant::fromValue(static_cast<QObject *>(m_skillsSettings.get()))},
             {QStringLiteral("app"), QVariant::fromValue(static_cast<QObject *>(this))}};
 }
 
@@ -7439,8 +7613,8 @@ void Application::resetAllSettings()
     for (const auto &[id, value] : kept)
         store.set(id, value);
     m_resettingSettings = false;
-    m_copyColumns = m_settings->integer("grid.copyColumns");
-    m_pasteColumns = m_settings->integer("grid.pasteColumns");
+    m_copyColumns = int(m_settings->integer("grid.copyColumns") | (m_settings->integer("grid.copyColumnTags") & core::column::Tags));
+    m_pasteColumns = int(m_settings->integer("grid.pasteColumns") | (m_settings->integer("grid.pasteColumnTags") & core::column::Tags));
     m_gridFilter->settingsReset();
     m_updates->reload();
     for (auto *views : allViews()) {

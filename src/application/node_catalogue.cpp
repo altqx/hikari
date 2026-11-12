@@ -289,6 +289,18 @@ std::vector<NodeSpec> makeCatalogue()
     c.push_back({"drawings.shape", "drawings", "A vector drawing.", {}, {port("drawing", Drawing)},
                  {field("shape", FieldKind::Text, Json("m 0 0 l 10 0 10 10 0 10"), "The drawing commands."),
                   atLeast(field("scale", FieldKind::Integer, Json(1), "The \\p scale."), 1)}});
+    c.push_back({"drawings.text", "drawings",
+                 "The text (unwired, the unit's own) drawn in its Line's Style font, at \\p1 from the text's top "
+                 "left, as Yutils' text_to_shape draws it. width and height are the text's.",
+                 {port("text", Text)},
+                 {port("drawing", Drawing), port("width", Number), port("height", Number)},
+                 {}});
+    c.push_back({"drawings.combine", "drawings",
+                 "a and b combined, each filled as libass fills it: unite, subtract (b taken away from a), intersect, "
+                 "or exclude (what only one of them covers). Each one's \\p scale is kept; the result is at \\p1.",
+                 {port("a", Drawing), port("b", Drawing)},
+                 {port("drawing", Drawing)},
+                 {choice("op", {"unite", "subtract", "intersect", "exclude"}, "How to combine them.")}});
 
     c.push_back({"text.join", "text",
                  "The units of the current Line joined: each one's tags as an override block, then its text "

@@ -212,6 +212,7 @@ void AgentController::apply()
             return title ? *title : std::string();
         };
         w.safeFolders = [this] { return safeFolders(); };
+        w.project = [this] { return m_wiring.project ? m_wiring.project().toStdString() : std::string(); };
         w.now = m_wiring.now;
         if (m_wiring.scripts)
             w.scriptNeeds = [scripts = m_wiring.scripts](const std::string &script) { return scripts->needs(script); };
