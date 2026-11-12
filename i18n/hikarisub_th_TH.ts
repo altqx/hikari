@@ -104,6 +104,14 @@
         <translation>เมื่อวาน</translation>
     </message>
     <message>
+        <source>This project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This Project’s AGENTS.md instructions are on</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>cost not reported</source>
         <translation>ไม่ได้รายงานค่าใช้จ่าย</translation>
     </message>

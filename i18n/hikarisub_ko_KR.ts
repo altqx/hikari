@@ -104,6 +104,14 @@
         <translation>어제</translation>
     </message>
     <message>
+        <source>This project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This Project’s AGENTS.md instructions are on</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>cost not reported</source>
         <translation>비용 보고 안 됨</translation>
     </message>

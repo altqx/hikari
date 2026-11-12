@@ -1190,6 +1190,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         *m_settings, m_settingsFile.isEmpty() ? QString() : QFileInfo(m_settingsFile).absolutePath());
     connect(m_projects.get(), &ProjectWindows::changed, this, &Application::applyWindowProject);
     connect(m_projects.get(), &ProjectWindows::changed, this, &Application::projectsChanged);
+    connect(m_projects.get(), &ProjectWindows::changed, m_agent.get(), &AgentController::projectChanged);
     connect(m_projects.get(), &ProjectWindows::recentChanged, this, &Application::recentProjectsChanged);
     m_copyColumns = m_settings->integer("grid.copyColumns");
     m_pasteColumns = m_settings->integer("grid.pasteColumns");

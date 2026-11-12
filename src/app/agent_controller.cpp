@@ -208,6 +208,10 @@ void AgentController::apply()
         };
         w.safeFolders = [this] { return safeFolders(); };
         w.project = [this] { return m_wiring.project ? m_wiring.project().toStdString() : std::string(); };
+        w.instructions = [this](const std::string &project) {
+            return backends::ai::joinInstructions(backends::ai::agentsFileText(m_wiring.userFolder),
+                                                  backends::ai::agentsFileText(qs(project)));
+        };
         w.now = m_wiring.now;
         if (m_wiring.scripts)
             w.scriptNeeds = [scripts = m_wiring.scripts](const std::string &script) { return scripts->needs(script); };
@@ -294,7 +298,10 @@ QVariantList AgentController::threads() const
         return out;
     const ai::Providers *providers = m_wiring.ai.providers();
     const QDate today = QDate::currentDate();
-    for (const AgentThread *t : m_threads->threads()) {
+    const std::string project = m_wiring.project ? m_wiring.project().toStdString() : std::string();
+    std::vector<const AgentThread *> listed = m_threads->threads();
+    std::ranges::stable_partition(listed, [&](const AgentThread *t) { return !project.empty() && t->project == project; });
+    for (const AgentThread *t : listed) {
         QString model;
         if (const auto ref = m_threads->modelOf(*t); ref && providers)
             if (const ai::Model *m = modelIn(providers->config(), *ref))
@@ -316,7 +323,9 @@ QVariantList AgentController::threads() const
                                   {QStringLiteral("cost"), t->cost},
                                   {QStringLiteral("costUnknown"), t->costUnknown},
                                   {QStringLiteral("state"), state},
-                                  {QStringLiteral("day"), dayOf(t->updated, today)}});
+                                  {QStringLiteral("day"), !project.empty() && t->project == project
+                                                              ? QStringLiteral("project")
+                                                              : dayOf(t->updated, today)}});
     }
     return out;
 }
@@ -369,7 +378,29 @@ QVariantMap AgentController::thread() const
             {QStringLiteral("attached"), attached},
             {QStringLiteral("webSearch"), t->webSearch},
             {QStringLiteral("webSearchReady"), searchReady},
-            {QStringLiteral("webSearchCacheMiss"), provider && provider->preset == ai::Preset::Anthropic}};
+            {QStringLiteral("webSearchCacheMiss"), provider && provider->preset == ai::Preset::Anthropic},
+            {QStringLiteral("projectInstructions"), !projectInstructionsFile(*t).isEmpty()}};
+}
+
+QString AgentController::projectInstructionsFile(const AgentThread &thread) const
+{
+    if (thread.project.empty())
+        return {};
+    const QFileInfo file(QDir(qs(thread.project)).filePath(QStringLiteral("AGENTS.md")));
+    return file.isFile() && file.size() > 0 ? file.absoluteFilePath() : QString();
+}
+
+void AgentController::openProjectInstructions() const
+{
+    const AgentThread *t = m_threads && !m_current.empty() ? m_threads->thread(m_current) : nullptr;
+    if (const QString file = t ? projectInstructionsFile(*t) : QString(); !file.isEmpty())
+        backends::desktop::openUrl(QUrl::fromLocalFile(file));
+}
+
+void AgentController::projectChanged()
+{
+    emit threadsChanged();
+    emit threadChanged();
 }
 
 QVariantList AgentController::models() const

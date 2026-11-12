@@ -104,6 +104,14 @@
         <translation>நேற்று</translation>
     </message>
     <message>
+        <source>This project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This Project’s AGENTS.md instructions are on</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>cost not reported</source>
         <translation>செலவு தெரிவிக்கப்படவில்லை</translation>
     </message>
