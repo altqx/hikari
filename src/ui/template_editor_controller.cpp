@@ -40,6 +40,7 @@ QString translated(const char *text)
 
 struct PresetEntry {
     const char *file, *title, *description;
+    bool karaOK = false;
 };
 constexpr PresetEntry kPresets[] = {
     {"01-classic-fill.ass", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "Classic fill"),
@@ -68,6 +69,36 @@ constexpr PresetEntry kPresets[] = {
     {"10-palette.ass", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "Colour per line"),
      QT_TRANSLATE_NOOP("HikariSub.TemplateEditor",
                        "Lines take turns through a short palette of fill colours, by their place in the file.")},
+    {"11-word-pop.ass", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "Word pop"),
+     QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "Each word swells as it starts and settles back while it is sung."), true},
+    {"12-word-wipe.ass", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "Word wipe"),
+     QT_TRANSLATE_NOOP("HikariSub.TemplateEditor",
+                       "The line shows whole, and a second colour wipes across each word while it is sung."),
+     true},
+    {"13-letter-cascade.ass", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "Letter cascade"),
+     QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "Letters appear one after another along the line before it is sung."),
+     true},
+    {"14-letter-shimmer.ass", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "Letter shimmer"),
+     QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "Each letter tilts and brightens as it is sung, then straightens."),
+     true},
+    {"15-furigana-rise.ass", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "Furigana rise"),
+     QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "Furigana rises into place over each syllable as it is sung."), true},
+    {"16-early-lead-in.ass", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "Early lead-in"),
+     QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "Each syllable lights up a moment before it is sung."), true},
+    {"17-wave-bounce.ass", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "Wave bounce"),
+     QT_TRANSLATE_NOOP("HikariSub.TemplateEditor",
+                       "Each syllable bobs up and down on a sine wave while it is sung (ln.kara)."),
+     true},
+    {"18-shape-burst.ass", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "Shape burst"),
+     QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "Six stars burst out of each syllable as it is sung (ln.kara)."), true},
+    {"19-line-gradient.ass", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "Line gradient"),
+     QT_TRANSLATE_NOOP("HikariSub.TemplateEditor",
+                       "The line’s letters run through a band of colours from left to right (ln.kara)."),
+     true},
+    {"20-thai-fade.ass", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "Thai fade"),
+     QT_TRANSLATE_NOOP("HikariSub.TemplateEditor",
+                       "Each character cluster fades in as it is sung, so Thai vowels and tone marks stay on their letters."),
+     true},
 };
 
 QString withoutTags(const std::u8string &text)
@@ -1432,8 +1463,31 @@ std::u8string u8(std::string_view s)
 
 bool TemplateEditorController::karaOKMode() const
 {
+    const auto *s = session();
+    return s && application::karaoke_templates::documentMode(*s) == application::karaoke_templates::Mode::KaraOK;
+}
+
+bool TemplateEditorController::modeUndecided() const
+{
+    namespace kt = application::karaoke_templates;
     const auto *doc = document();
-    return doc && application::karaoke_templates::documentMode(*doc) == application::karaoke_templates::Mode::KaraOK;
+    return doc && kt::documentMode(*doc, kt::Mode::Stock) != kt::documentMode(*doc, kt::Mode::KaraOK);
+}
+
+bool TemplateEditorController::karaOKPresetsUsable() const
+{
+    return karaOKMode() || modeUndecided();
+}
+
+QString TemplateEditorController::effectInMode(const QString &stockEffect) const
+{
+    return karaOKMode() ? QString::fromStdString(application::karaoke_templates::karaOKEffect(stockEffect.toStdString()))
+                        : stockEffect;
+}
+
+QString TemplateEditorController::stockEffectOf(const QString &effect) const
+{
+    return karaOKMode() ? QString::fromStdString(application::karaoke_templates::stockEffect(effect.toStdString())) : effect;
 }
 
 bool TemplateEditorController::modeInFile() const
@@ -1470,8 +1524,8 @@ bool TemplateEditorController::setKaraOKMode(bool karaOK)
 bool TemplateEditorController::insertTemplate(const QString &effect)
 {
     application::MacroDialogueLine d;
-    d.effect = effect.toStdString();
-    return insertLines("New template", {d});
+    d.effect = effectInMode(effect).toStdString();
+    return insertLines("New template", {d}, karaOKMode() && modeUndecided());
 }
 
 QVariantList TemplateEditorController::presets()
@@ -1480,7 +1534,8 @@ QVariantList TemplateEditorController::presets()
     for (const auto &p : kPresets)
         out << QVariantMap{{QStringLiteral("title"), translated(p.title)},
                            {QStringLiteral("description"), translated(p.description)},
-                           {QStringLiteral("file"), QLatin1String(p.file)}};
+                           {QStringLiteral("file"), QLatin1String(p.file)},
+                           {QStringLiteral("karaOK"), p.karaOK}};
     return out;
 }
 
@@ -1493,20 +1548,25 @@ bool TemplateEditorController::insertPreset(int index)
         return false;
     const QByteArray bytes = file.readAll();
     const auto preset = application::readKaraokePreset(std::as_bytes(std::span(bytes.constData(), static_cast<std::size_t>(bytes.size()))));
-    if (!preset)
+    if (!preset || (preset->karaOK && !karaOKPresetsUsable()))
         return false;
+    const bool translate = karaOKMode() && !preset->karaOK;
     std::vector<application::MacroDialogueLine> lines;
     for (const auto &l : preset->lines) {
         application::MacroDialogueLine d;
         d.layer = static_cast<int>(l.layer);
         d.effect = std::string(l.effect.begin(), l.effect.end());
+        if (translate)
+            d.effect = application::karaoke_templates::karaOKEffect(d.effect);
         d.text = std::string(l.text.begin(), l.text.end());
         lines.push_back(std::move(d));
     }
-    return insertLines("New template from preset", std::move(lines));
+    return insertLines("New template from preset", std::move(lines),
+                       (karaOKMode() || preset->karaOK) && modeUndecided());
 }
 
-bool TemplateEditorController::insertLines(const char *commandName, std::vector<application::MacroDialogueLine> made)
+bool TemplateEditorController::insertLines(const char *commandName, std::vector<application::MacroDialogueLine> made,
+                                           bool writeKaraOKMode)
 {
     commit();
     auto *s = session();
@@ -1539,6 +1599,9 @@ bool TemplateEditorController::insertLines(const char *commandName, std::vector<
         command.touches = {(*first)->id};
     const std::optional<core::LineId> before = first != all.end() ? std::optional((*first)->id) : std::nullopt;
     command.apply = [&](core::Document &doc) {
+        namespace kt = application::karaoke_templates;
+        if (writeKaraOKMode && !doc.setScriptInfo(u8(kt::kModeKey), u8(kt::kModeKaraOK)))
+            return false;
         for (const auto &l : fresh) {
             const auto id = before ? doc.insertLineBefore(*before, l) : doc.appendLine(l);
             if (!id)
@@ -1908,7 +1971,7 @@ QVariantList TemplateEditorController::colourRuns(const QString &text) const
 
 QVariantMap TemplateEditorController::effectParts(const QString &effect) const
 {
-    const EffectWords w = splitEffect(effect);
+    const EffectWords w = splitEffect(stockEffectOf(effect));
     return {{QStringLiteral("kind"), w.kind.toLower()},
             {QStringLiteral("className"), w.classWords.isEmpty() ? QString() : w.classWords.front().toLower()},
             {QStringLiteral("name"), w.classWords.size() > 1 ? w.classWords[1] : QString()},
@@ -1917,7 +1980,7 @@ QVariantMap TemplateEditorController::effectParts(const QString &effect) const
 
 QString TemplateEditorController::effectWithClass(const QString &effect, const QString &className) const
 {
-    EffectWords w = splitEffect(effect);
+    EffectWords w = splitEffect(stockEffectOf(effect));
     if (w.kind.isEmpty())
         w.kind = QStringLiteral("template");
     const QString name = w.classWords.size() > 1 ? w.classWords[1] : QString();
@@ -1927,12 +1990,12 @@ QString TemplateEditorController::effectWithClass(const QString &effect, const Q
         w.classWords << className;
     if (!name.isEmpty() && (className == QLatin1String("line") || className == QLatin1String("pre-line")))
         w.classWords << name;
-    return joinEffect(w);
+    return effectInMode(joinEffect(w));
 }
 
 QString TemplateEditorController::effectWithModifier(const QString &effect, const QString &word, bool on) const
 {
-    EffectWords w = splitEffect(effect);
+    EffectWords w = splitEffect(stockEffectOf(effect));
     const QStringList given = word.split(QLatin1Char(' '), Qt::SkipEmptyParts);
     if (given.isEmpty())
         return effect;
@@ -1950,7 +2013,7 @@ QString TemplateEditorController::effectWithModifier(const QString &effect, cons
     w.modifiers = kept;
     if (on)
         w.modifiers << given;
-    return joinEffect(w);
+    return effectInMode(joinEffect(w));
 }
 
 bool TemplateEditorController::hasModifier(const QString &effect, const QString &word) const

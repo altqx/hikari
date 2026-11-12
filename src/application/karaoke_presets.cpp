@@ -1,5 +1,6 @@
 #include "hikari/application/karaoke_presets.h"
 
+#include "hikari/application/karaoke_templates.h"
 #include "hikari/application/template_preview.h"
 #include "hikari/core/ass_load.h"
 
@@ -20,6 +21,7 @@ std::optional<KaraokePreset> readKaraokePreset(std::span<const std::byte> bytes)
     }
     if (preset.lines.empty())
         return std::nullopt;
+    preset.karaOK = karaoke_templates::documentMode(doc) == karaoke_templates::Mode::KaraOK;
     return preset;
 }
 
