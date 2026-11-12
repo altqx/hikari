@@ -83,11 +83,19 @@ To add one, put its folder under `src/ai-sidecar/skills/` and its files in `kBun
 
 `read_skill` is always offered, like `update_plan`, and asks no permission: it only reads. Errors come back as text for the model: an unknown skill lists the skills, and an unknown file lists the skill's files.
 
-External agents over [MCP](ai-mcp.md) don't get `read_skill` or the catalogue; they have their own skills.
+## Outside Hikari AI's own threads
+
+[AI14c #944](https://github.com/altqx/hikari/issues/944):
+
+- **External agent threads.** A Claude or Codex thread in the Agent panel ([AI15](ai-external-agents.md)) gets the same catalogue, with its thread's Project: after Claude's system prompt, and in Codex's developer instructions. `read_skill` is one of the tools on its private channel, so Claude sees it as `mcp__hikari__read_skill`.
+- **MCP clients.** Agents outside HikariSub get skills only with **Settings › AI › MCP › Let them read your skills** (`ai.mcp.skills`), off by default. With it on, an MCP connection may call `skills.*`, and sees the Project of the active window. `tools/list` then offers `read_skill`, with the catalogue in its description, since an MCP client has no system prompt for the server to add to. Each read carries the same preface. With it off, `read_skill` isn't listed, and calling it fails as an unknown tool. The server's instructions name `read_skill` in one line; there are no skill resources or prompts.
+- Built-in skills are offered both ways, and so are an untrusted Project's, as in a thread.
+
+**What is sent › AI (Skills)** (the Site's page; [#944](https://github.com/altqx/hikari/issues/944), owner Q405): "Skills: when an agent reads a skill, its SKILL.md and the files it asks for go to that agent's provider. That's this Project's .hikari/skills, your skills folder, or HikariSub's built-in skills. Agents outside HikariSub get skills only when Settings › AI › MCP › Let them read your skills is on."
 
 ## The Hikari API
 
-The sidecar reads no files itself ([ADR 0026](adr/0026-hikari-ai-runs-in-a-typescript-sidecar-on-bun.md)), so the Project's skills and yours come through two [Hikari API](api.md) operations. Only a caller with the skills grant may call them: Hikari AI's threads and its tool calls have it; plugins and MCP clients don't.
+The sidecar reads no files itself ([ADR 0026](adr/0026-hikari-ai-runs-in-a-typescript-sidecar-on-bun.md)), so the Project's skills and yours come through two [Hikari API](api.md) operations. Only a caller with the skills grant may call them: Hikari AI's threads, external agent threads and their tool calls have it, MCP clients only while `ai.mcp.skills` is on, and plugins never.
 
 | Operation | Gives |
 | --- | --- |
@@ -105,7 +113,9 @@ A file that isn't listed gives `not_found`, one over 256 KiB `refused` with `too
 | `src/api/skill_check.cpp` | The format's rules in C++, for Settings. |
 | `src/app/skills_settings.cpp` | Settings › AI › Skills: the groups, Open folder, and the built-in skills compiled in. |
 | `src/ai-sidecar/src/skills/skill.ts` | The frontmatter reader and the format's rules. |
-| `src/ai-sidecar/src/skills/skills.ts` | `Skills`: the catalogue and `read_skill` for one thread. |
+| `src/ai-sidecar/src/skills/skills.ts` | `Skills`: the catalogue and `read_skill` for one thread, and the MCP form of `read_skill`. |
+| `src/ai-sidecar/src/mcp/server.ts` | `read_skill` over MCP, for callers that may read skills. |
+| `src/backends/ai_mcp_server.cpp`, `src/app/ai_mcp.cpp` | The `ai.mcp.skills` grant on MCP connections, with the active window's Project. |
 | `src/ai-sidecar/src/skills/bundled.ts` | The built-in skills, compiled into the bundle. |
 | `src/ai-sidecar/skills/` | The built-in skills' files. |
 
@@ -114,5 +124,6 @@ A file that isn't listed gives `not_found`, one over 256 KiB `refused` with `too
 - `hikari_api_tests` (`tests/api/skill_tests.cpp`, `scripts/skills.jsonl`): listing and reading the fixture skills, the grant, names, hidden files, symbolic links, paths outside the folder, the depth, file and skill limits, the file cap's order, the size limit, and the Project over yours (origins, hiding, a symlinked `.hikari`).
 - `hikari_api_tests` also runs `scripts/skill_texts.jsonl` through the C++ check, and the folder report's reasons.
 - `hikari_ui_project_windows_tests`: the Settings groups in a window with and without a Project, the built-in skills matching `src/ai-sidecar/skills`, and Open project folder.
+- `hikari_backends_ai_mcp_tests` and `hikari_ui_ai_features_tests`: an MCP connection reads skills only with the grant, from the active window's Project.
 - `hikari_backends_ai_agent_tests`: a thread keeps the Project it started in, saves it, and lists that Project's skills; a thread without one doesn't.
-- `hikari_ai_sidecar_bun_tests` (`src/ai-sidecar/test/skills`): the frontmatter, the built-in skills against the format, the catalogue with the Project's and your skills, replaced and broken skills, the Project's preface, HA1 refusing, one lookup per thread, the catalogue's room, and `read_skill`'s answers and errors. `test/agent` checks the system prompt carries the catalogue, and `test/tools/budget.test.ts` counts `read_skill` in the up-front tools and the catalogue's tokens.
+- `hikari_ai_sidecar_bun_tests` (`src/ai-sidecar/test/skills`): the frontmatter, the built-in skills against the format, the catalogue with the Project's and your skills, replaced and broken skills, the Project's preface, HA1 refusing, one lookup per thread, the catalogue's room, and `read_skill`'s answers and errors. `test/agent` checks the system prompt carries the catalogue, `test/agents` that Claude's system prompt and Codex's developer instructions carry it and that each reads a skill over its channel, `test/mcp/server.test.ts` that `read_skill` is listed and reads only while HA1 lets the connection read skills, and `test/tools/budget.test.ts` counts `read_skill` in the up-front tools and the catalogue's tokens.

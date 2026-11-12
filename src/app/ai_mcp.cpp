@@ -11,8 +11,9 @@
 
 namespace hikari::app {
 
-AiMcp::AiMcp(ui::SettingsStore &settings, AiFeatures &ai, QString endpointFile, QObject *parent)
-    : QObject(parent), m_settings(settings), m_ai(ai), m_endpointFile(std::move(endpointFile))
+AiMcp::AiMcp(ui::SettingsStore &settings, AiFeatures &ai, QString endpointFile, std::function<QString()> project,
+             QObject *parent)
+    : QObject(parent), m_settings(settings), m_ai(ai), m_endpointFile(std::move(endpointFile)), m_project(std::move(project))
 {
     m_endpoint = (m_endpointFile.isEmpty() ? std::nullopt : backends::ai::readMcpEndpoint(m_endpointFile))
                      .value_or(backends::ai::McpEndpoint{});
@@ -57,6 +58,11 @@ void AiMcp::apply()
             return;
         }
         m_endpoint.socket = m_server->socketName();
+        m_server->setSkills([this]() -> std::optional<std::string> {
+            if (!m_settings.boolean(kSkillsSetting))
+                return std::nullopt;
+            return m_project ? m_project().toStdString() : std::string();
+        });
     }
     const bool http = m_settings.boolean(kHttpSetting);
     if (http && m_server->httpPort() == 0) {

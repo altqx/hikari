@@ -17819,6 +17819,7 @@ private slots:
               {"ai.searchService", nullptr},
               {"ai.mcp.server", "Let agents outside HikariSub edit through MCP"},
               {"ai.mcp.http", nullptr},
+              {"ai.mcp.skills", "Let them read your skills"},
               {"ai.agent.mode", nullptr},
               {"ai.agent.threadCapCents", nullptr},
               {"ai.agent.dailyCapCents", nullptr},
