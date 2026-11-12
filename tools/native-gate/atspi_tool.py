@@ -387,7 +387,7 @@ def main():
                             continue
                         te = o.get_extents(Atspi.CoordType.WINDOW)
                         win["tabs"].append({"name": o.get_name(), "desc": o.get_description() or "",
-                                            "selected": ost.contains(Atspi.StateType.SELECTED),
+                                            "current": ost.contains(Atspi.StateType.CHECKED),
                                             "x": te.x, "y": te.y, "w": te.width, "h": te.height})
                     except GLib.Error:
                         continue
