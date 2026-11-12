@@ -85,7 +85,7 @@ protected:
                 },
                 Qt::BlockingQueuedConnection);
             (void)getStringProperty("mainWindow/selectionStatus", "text");
-            invokeMethod("columnsWindow", "choose", {true});
+            invokeMethod("mainWindow", "chooseColumns", {true});
             observed.push_back(waitForItem("columnsWindow/column9", 5s) ? "columns" : "no columns");
             // Spix clicks wherever the item is when the click runs, and posts press and release apart.
             const auto placed = [this] {

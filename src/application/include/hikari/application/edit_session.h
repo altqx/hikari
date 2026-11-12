@@ -208,6 +208,9 @@ public:
     // The same for the [Hikari] section.
     bool amendHikariProperty(std::u8string_view key, std::u8string value);
     bool isDirty() const; // committed content differs from the save point, or a draft is pending
+    // File › New made this Document in this run of the app; never saved with it.
+    void markNewDocument() { m_newDocument = true; }
+    bool isNewDocument() const { return m_newDocument; }
 
 private:
     struct State {
@@ -238,6 +241,7 @@ private:
     std::uint64_t m_nextContent = 1;
     bool m_protected = false;
     bool m_readOnly = false;
+    bool m_newDocument = false;
     std::vector<core::LineId> m_lastGroupBreak;
     std::uint64_t m_groupBreakCount = 0;
     InvalidCommitPolicy m_policy = InvalidCommitPolicy::Block;

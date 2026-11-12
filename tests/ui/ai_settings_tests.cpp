@@ -2,6 +2,7 @@
 
 #include "hikari/app/ai_features.h"
 #include "hikari/app/ai_mcp.h"
+#include "hikari/app/ai_mcp_servers.h"
 #include "hikari/backends/ai_requests.h"
 #include "hikari/backends/ai_sidecar_updater.h"
 #include "hikari/backends/ai_sidecar_host.h"
@@ -455,6 +456,80 @@ TEST_F(AiSettingsTest, AManifestSignedByAnotherKeyFailsTheTestAndInstallsNothing
     EXPECT_EQ(hostsBuilt, 0);
     for (const QByteArray &path : release.requested)
         EXPECT_FALSE(path.endsWith(".gz")) << path.constData();
+}
+
+TEST_F(AiSettingsTest, AnMcpServerIsSavedWithoutItsSecretsWhichGoToTheKeychain)
+{
+    app::AiFeatures features(settings, ports());
+    app::AiMcpServers servers(settings, features);
+    QSignalSpy saved(&servers, &app::AiMcpServers::saved);
+    servers.save({{QStringLiteral("name"), QStringLiteral("My Notes")},
+                  {QStringLiteral("transport"), QStringLiteral("stdio")},
+                  {QStringLiteral("command"), QStringLiteral("npx -y \"notes server\"")},
+                  {QStringLiteral("environment"), QStringLiteral("NOTES_TOKEN=s3cret\n")}});
+    ASSERT_EQ(saved.count(), 1);
+    EXPECT_EQ(saved[0][1].toString(), QString());
+    const QVariantList rows = servers.servers();
+    ASSERT_EQ(rows.size(), 1);
+    const QVariantMap row = rows[0].toMap();
+    EXPECT_EQ(row[QStringLiteral("id")].toString(), QStringLiteral("my-notes"));
+    EXPECT_EQ(row[QStringLiteral("command")].toString(), QStringLiteral("npx -y \"notes server\""));
+    EXPECT_EQ(row[QStringLiteral("trusted")].toBool(), false);
+    const QString stored = settings.list(app::AiFeatures::kMcpServersSetting).join(QLatin1Char('\n'));
+    EXPECT_FALSE(stored.contains(QStringLiteral("s3cret")));
+    ASSERT_TRUE(chain.keys.contains("mcp-server:my-notes"));
+    EXPECT_NE(chain.keys["mcp-server:my-notes"].find("s3cret"), std::string::npos);
+
+    servers.save({{QStringLiteral("id"), QStringLiteral("my-notes")}, {QStringLiteral("name"), QStringLiteral("Notes")},
+                  {QStringLiteral("transport"), QStringLiteral("stdio")}, {QStringLiteral("command"), QStringLiteral("notes")},
+                  {QStringLiteral("trusted"), true}});
+    EXPECT_EQ(saved.count(), 2);
+    EXPECT_NE(chain.keys["mcp-server:my-notes"].find("s3cret"), std::string::npos);
+    servers.setApproved(QStringLiteral("my-notes"), QStringLiteral("tidy"), true);
+    const QVariantMap edited = servers.servers()[0].toMap();
+    EXPECT_EQ(edited[QStringLiteral("name")].toString(), QStringLiteral("Notes"));
+    EXPECT_TRUE(edited[QStringLiteral("trusted")].toBool());
+    EXPECT_EQ(edited[QStringLiteral("approved")].toStringList(), QStringList{QStringLiteral("tidy")});
+    ASSERT_EQ(features.mcpClients()->servers().size(), 1u);
+    EXPECT_EQ(features.mcpClients()->servers()[0].revision, 2);
+
+    servers.remove(QStringLiteral("my-notes"));
+    EXPECT_TRUE(servers.servers().isEmpty());
+    EXPECT_FALSE(chain.keys.contains("mcp-server:my-notes"));
+}
+
+TEST_F(AiSettingsTest, AnMcpServerNeedsANameACommandOrAUrlAndWellFormedVariables)
+{
+    app::AiFeatures features(settings, ports());
+    app::AiMcpServers servers(settings, features);
+    QSignalSpy saved(&servers, &app::AiMcpServers::saved);
+    const auto error = [&](QVariantMap form) {
+        servers.save(form);
+        return saved.isEmpty() ? QStringLiteral("none") : saved.takeLast()[1].toString();
+    };
+    const QString stdio = QStringLiteral("stdio"), http = QStringLiteral("http");
+    EXPECT_EQ(error({{QStringLiteral("name"), QString()}, {QStringLiteral("command"), QStringLiteral("x")}}), QStringLiteral("name"));
+    EXPECT_EQ(error({{QStringLiteral("name"), QStringLiteral("A")}, {QStringLiteral("transport"), stdio}}), QStringLiteral("command"));
+    EXPECT_EQ(error({{QStringLiteral("name"), QStringLiteral("A")}, {QStringLiteral("transport"), http},
+                     {QStringLiteral("url"), QStringLiteral("ftp://x")}}), QStringLiteral("url"));
+    EXPECT_EQ(error({{QStringLiteral("name"), QStringLiteral("A")}, {QStringLiteral("transport"), stdio},
+                     {QStringLiteral("command"), QStringLiteral("x")}, {QStringLiteral("environment"), QStringLiteral("no equals")}}),
+              QStringLiteral("environment"));
+    chain.failWith = ai::KeyError::Denied;
+    EXPECT_EQ(error({{QStringLiteral("name"), QStringLiteral("A")}, {QStringLiteral("transport"), http},
+                     {QStringLiteral("url"), QStringLiteral("https://mcp.example.com/mcp")}, {QStringLiteral("bearer"), QStringLiteral("t")}}),
+              QStringLiteral("keychain"));
+    EXPECT_TRUE(servers.servers().isEmpty());
+}
+
+TEST_F(AiSettingsTest, WithAiOffNoMcpServerIsBuiltOrStarted)
+{
+    settings.set(app::AiFeatures::kOffSetting, true);
+    app::AiFeatures features(settings, ports());
+    EXPECT_EQ(features.mcpClients(), nullptr);
+    settings.set(app::AiFeatures::kOffSetting, false);
+    ASSERT_NE(features.mcpClients(), nullptr);
+    EXPECT_EQ(hostsBuilt, 0);
 }
 
 TEST_F(AiSettingsTest, TurningAiOffEmptiesThePageAndBuildsNothing)

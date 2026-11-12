@@ -24,10 +24,11 @@ constexpr std::string_view kProjectable[] = {
     "scriptProperties.scriptOn",     "scriptProperties.translation", "scriptProperties.translationOn",
     "scriptProperties.editing",      "scriptProperties.editingOn",   "scriptProperties.timing",
     "scriptProperties.timingOn",     "scriptProperties.update",      "scriptProperties.updateOn",
-    "scriptProperties.askForChange", "translation.autoMoveTagsFromOriginal",
+    "scriptProperties.askForChange", "translation.autoMoveTagsFromOriginal", "translation.glossary",
+    "translation.translator",        "translation.reviewer",
 };
 // Projectable ids whose Project value waits for trust.
-constexpr std::span<const std::string_view> kWidening;
+constexpr std::string_view kWidening[] = {"translation.translator", "translation.reviewer"};
 
 bool listed(std::span<const std::string_view> rules, std::string_view id)
 {
@@ -276,6 +277,8 @@ const std::vector<SettingDefinition> &definitions()
         {"workspace.dialogGeometry", "", StringList, Workspace, Mapped, false, std::vector<std::string>()},
         // One "<picker>\t<folder URL>" row per picker.
         {"workspace.pickerFolders", "", StringList, Workspace, Mapped, false, std::vector<std::string>()},
+        // One "<list>\t<project|mine>" row per tiered list: where New and Save as save.
+        {"workspace.saveTiers", "", StringList, Workspace, Mapped, false, std::vector<std::string>()},
         {"workspace.settingsPage", "", String, Workspace, Mapped, false, std::string("general")},
         // "due" until Getting started is closed, then "done"; empty: a profile older than it.
         {"workspace.gettingStarted", "", String, Workspace, Mapped, false, std::string()},
@@ -353,6 +356,7 @@ const std::vector<SettingDefinition> &definitions()
         // JSON: {"gapOn", "gap", "lastLine"}, the Import lyrics end-time choices.
         {"lyrics.importOptions", "", String, Profile, Mapped, false, std::string()},
         {"tags.removeOptions", "", String, Profile, Mapped, false, std::string()},
+        {"grid.splitEvery", "", String, Profile, Mapped, false, std::string()},
         {"automation.scriptResolutionFromVideo", "", Bool, Profile, Mapped, false, false},
         {"automation.runLogTimes", "", Bool, Profile, Mapped, false, false},
         {"automation.disabledAutoload", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
@@ -377,12 +381,16 @@ const std::vector<SettingDefinition> &definitions()
         {"automation.fillLastAnswers", "", Bool, Profile, Mapped, false, false},
         {"automation.dialogAnswers", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {"automation.dialogPresets", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
+        // "karaOK" or "stock" (Aegisub 3.2.2): the format "Export as template lines" last wrote.
+        {"nodeEffects.exportFormat", "", String, Profile, Mapped, false, std::string("karaOK")},
         // 0 off, 1 English (US), 2 (UK), 3 (Canada), 4 (Australia).
         {"grammar.language", "", Int, Profile, Mapped, false, std::int64_t{0}},
         // Native absolute folders whose scripts and Projects HikariSub trusts, subfolders included.
         {"trust.folders", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {"ai.mcp.server", "", Bool, Profile, Mapped, false, false},
         {"ai.mcp.http", "", Bool, Profile, Mapped, false, false},
+        // servers: one McpServerEntry JSON object per row; their secrets are in the keychain.
+        {"ai.mcp.servers", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {"ai.off", "", Bool, Profile, Mapped, false, false},
         {"ai.autoUpdate", "", Bool, Profile, Mapped, false, true},
         {"ai.promptCaching", "", Bool, Profile, Mapped, false, true},
@@ -392,11 +400,15 @@ const std::vector<SettingDefinition> &definitions()
         {"ai.agent.threadCapCents", "", Int, Profile, Mapped, false, std::int64_t{200}},
         {"ai.agent.dailyCapCents", "", Int, Profile, Mapped, false, std::int64_t{1000}},
         {"ai.agent.costMeter", "", Bool, Profile, Mapped, false, true},
+        {"ai.agent.autoCompact", "", Bool, Profile, Mapped, false, true},
         {"ai.agent.fullAccessWarned", "", Bool, Profile, Mapped, false, false},
         // actions: one {"name", "instruction", "role", "ask"} JSON object per row.
         {"ai.agents.custom", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {"ai.inline.actions", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {"ai.inline.translateTo", "", String, Profile, Mapped, false, std::string("English")},
+        {"translation.glossary", "", String, Profile, Mapped, false, std::string()},
+        {"translation.translator", "", String, Profile, Mapped, false, std::string()},
+        {"translation.reviewer", "", String, Profile, Mapped, false, std::string()},
         {"ai.inline.contextLines", "", Int, Profile, Mapped, false, std::int64_t{2}},
         {"ai.inline.recentInstructions", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {"plugins.network", "", Bool, Profile, Mapped, false, true},
@@ -588,6 +600,11 @@ void LayeredSettingsStorage::setProject(std::shared_ptr<const SettingsStorage> p
 bool LayeredSettingsStorage::fromProject(const SettingDefinition &setting) const
 {
     return m_project && projectMaySet(setting, m_trusted) && m_project->read(setting).has_value();
+}
+
+bool LayeredSettingsStorage::waitsForTrust(const SettingDefinition &setting) const
+{
+    return m_project && setting.projectable && !projectMaySet(setting, m_trusted) && m_project->read(setting).has_value();
 }
 
 std::optional<SettingValue> LayeredSettingsStorage::read(const SettingDefinition &setting) const

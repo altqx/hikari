@@ -1,5 +1,8 @@
 #include "hikari/app/agent_controller.h"
 
+#include "hikari/app/ai_scripts.h"
+#include "hikari/app/automation_shell.h"
+
 #include "hikari/app/ai_features.h"
 #include "hikari/application/ai_review.h"
 #include "hikari/application/document_files.h"
@@ -198,7 +201,7 @@ void AgentController::apply()
         w.defaults = [this] {
             return AgentThreads::Defaults{
                 backends::ai::agentModeFromId(m_wiring.settings.text(kModeSetting).toStdString()).value_or(AgentMode::Auto),
-                threadCap(), dailyCap()};
+                threadCap(), dailyCap(), autoCompact()};
         };
         w.beginTurn = [this](const std::string &caller, const std::string &label) {
             return m_wiring.review.beginTurn(caller, label);
@@ -210,6 +213,8 @@ void AgentController::apply()
         };
         w.safeFolders = [this] { return safeFolders(); };
         w.now = m_wiring.now;
+        if (m_wiring.scripts)
+            w.scriptNeeds = [scripts = m_wiring.scripts](const std::string &script) { return scripts->needs(script); };
         m_threads = std::make_unique<AgentThreads>(std::move(w), m_store.get());
         connect(m_threads.get(), &AgentThreads::threadsChanged, this, [this] {
             if (!m_current.empty() && !m_threads->thread(m_current))
@@ -220,6 +225,10 @@ void AgentController::apply()
             emit threadsChanged();
             if (id.toStdString() == m_current)
                 refreshThread();
+        });
+        connect(m_threads.get(), &AgentThreads::summarised, this, [this](const QString &from, const QString &to) {
+            if (from.toStdString() == m_current)
+                select(to.toStdString());
         });
         connect(m_threads.get(), &AgentThreads::asked, this, [this](quint64 ask) {
             if (const auto it = m_threads->asks().find(ask); it != m_threads->asks().end())
@@ -353,12 +362,17 @@ QVariantMap AgentController::thread() const
             {QStringLiteral("title"), qs(t->title)},
             {QStringLiteral("mode"), qs(std::string(backends::ai::agentModeId(t->mode)))},
             {QStringLiteral("running"), m_threads->running(t->id)},
+            {QStringLiteral("compacting"), m_threads->compacting(t->id)},
+            {QStringLiteral("external"), m_threads->modelOf(*t) && backends::ai::externalAgentOf(*m_threads->modelOf(*t))},
             {QStringLiteral("queued"), qs(m_threads->queued(t->id))},
             {QStringLiteral("cost"), t->cost},
             {QStringLiteral("cap"), t->cap},
             {QStringLiteral("costUnknown"), t->costUnknown},
             {QStringLiteral("contextTokens"), qint64(t->contextTokens)},
             {QStringLiteral("contextWindow"), window},
+            {QStringLiteral("compactWindow"),
+             qint64(backends::ai::contextWindowOf(providers ? &providers->config() : nullptr,
+                                                  m_threads->modelOf(*t).value_or(ai::ModelRef{})))},
             {QStringLiteral("model"), model},
             {QStringLiteral("modelText"), modelText},
             {QStringLiteral("attached"), attached},
@@ -411,6 +425,23 @@ QString AgentController::activeTitle() const
 bool AgentController::costMeter() const
 {
     return m_wiring.settings.boolean(kCostMeterSetting);
+}
+
+bool AgentController::autoCompact() const
+{
+    return m_wiring.settings.boolean(kAutoCompactSetting);
+}
+
+void AgentController::compact(const QString &instruction)
+{
+    if (m_threads && !m_current.empty())
+        m_threads->compact(m_current, instruction.trimmed().toStdString());
+}
+
+void AgentController::newThreadFromSummary()
+{
+    if (m_threads && !m_current.empty())
+        m_threads->newThreadFromSummary(m_current);
 }
 
 bool AgentController::fullAccessWarned() const
@@ -597,6 +628,17 @@ void AgentController::setModel(const QString &value)
     const auto parts = value.split(QLatin1Char('\t'));
     if (m_threads && parts.size() == 2)
         m_threads->setModel(m_current, {parts[0].toStdString(), parts[1].toStdString()});
+}
+
+void AgentController::openScript(const QString &file)
+{
+    if (m_wiring.scripts && m_wiring.automation && !file.isEmpty() && QFileInfo(file).fileName() == file)
+        m_wiring.automation->editScript(QDir(m_wiring.scripts->folder()).filePath(file));
+}
+
+bool AgentController::forceStopScript()
+{
+    return m_wiring.automation && m_wiring.automation->forceStopRun();
 }
 
 void AgentController::answer(qulonglong ask, const QString &answer, const QString &message)

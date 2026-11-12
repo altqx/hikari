@@ -15,7 +15,7 @@ add_library(hikari_backends STATIC module.cpp libass_renderer.cpp overlay_blend.
     include/hikari/backends/overlay_blend.h helper_host.cpp ffms_indexed_source.cpp
     audio_ring.cpp audio_output_engine.cpp portaudio_output.cpp lua_script_host.cpp qt_general_player.cpp
     video_frame_bgra.cpp include/hikari/backends/video_frame_bgra.h
-    libass_font_service.cpp line_audition.cpp include/hikari/backends/line_audition.h
+    libass_font_service.cpp freetype_glyph_outlines.cpp include/hikari/backends/freetype_glyph_outlines.h line_audition.cpp include/hikari/backends/line_audition.h
     transport_coordinator.cpp include/hikari/backends/transport_coordinator.h
     automation_manager.cpp include/hikari/backends/automation_manager.h karaoke_preview_runner.cpp include/hikari/backends/karaoke_preview_runner.h process_metrics.cpp
     legacy_text_file.cpp include/hikari/backends/legacy_text_file.h
@@ -26,6 +26,7 @@ add_library(hikari_backends STATIC module.cpp libass_renderer.cpp overlay_blend.
     include/hikari/backends/helper_host.h
     legacy_spelling.cpp include/hikari/backends/legacy_spelling.h
     mecab_readings.cpp include/hikari/backends/mecab_readings.h
+    icu_text.cpp include/hikari/backends/icu_text.h
     harper_client.cpp include/hikari/backends/harper_client.h
     plugin_process.cpp include/hikari/backends/plugin_process.h
     lua_node_helper.cpp include/hikari/backends/lua_node_helper.h
@@ -87,8 +88,9 @@ add_library(hikari_ai STATIC ai_config_store.cpp include/hikari/backends/ai_conf
     ai_http_relay.cpp include/hikari/backends/ai_http_relay.h ai_agent.cpp include/hikari/backends/ai_agent.h ai_agent_broker.cpp
     include/hikari/backends/ai_agent_broker.h ai_agent_cli.cpp include/hikari/backends/ai_agent_cli.h ai_antigravity.cpp
     include/hikari/backends/ai_antigravity.h
-    ai_mcp_server.cpp include/hikari/backends/ai_mcp_server.h ai_mcp_bridge.cpp include/hikari/backends/ai_mcp_bridge.h
-    ai_inline_run.cpp include/hikari/backends/ai_inline_run.h)
+    ai_mcp_server.cpp include/hikari/backends/ai_mcp_server.h ai_mcp_clients.cpp include/hikari/backends/ai_mcp_clients.h ai_mcp_bridge.cpp include/hikari/backends/ai_mcp_bridge.h
+    ai_inline_run.cpp ai_translation_run.cpp include/hikari/backends/ai_inline_run.h)
+target_sources(hikari_backends PRIVATE external_aligner.cpp include/hikari/backends/external_aligner.h)
 find_package(ZLIB REQUIRED)
 target_include_directories(hikari_ai PUBLIC include)
 target_link_libraries(hikari_ai PUBLIC hikari_application hikari_api hikari_sandbox Qt6::Core Qt6::Network

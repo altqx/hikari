@@ -3,6 +3,7 @@
 #include "hikari/app/ai_acp_settings.h"
 #include "hikari/app/ai_features.h"
 #include "hikari/app/ai_mcp.h"
+#include "hikari/app/ai_mcp_servers.h"
 #include "hikari/backends/ai_agent_cli.h"
 #include "hikari/backends/ai_antigravity.h"
 #include "hikari/backends/ai_requests.h"
@@ -197,8 +198,8 @@ struct AiSettings::Agent {
     QString lastLine;
 };
 
-AiSettings::AiSettings(AiFeatures &features, AiMcp *mcp, QObject *parent)
-    : QObject(parent), m_features(features), m_mcp(mcp)
+AiSettings::AiSettings(AiFeatures &features, AiMcp *mcp, AiMcpServers *mcpServers, QObject *parent)
+    : QObject(parent), m_features(features), m_mcp(mcp), m_mcpServers(mcpServers)
 {
     for (const char *name : backends::ai::kAgentClis)
         m_agents.emplace(QLatin1String(name), std::make_unique<Agent>());
@@ -235,6 +236,11 @@ QObject *AiSettings::mcp() const
 QObject *AiSettings::acp() const
 {
     return m_acp;
+}
+
+QObject *AiSettings::mcpServers() const
+{
+    return m_mcpServers;
 }
 
 bool AiSettings::on() const

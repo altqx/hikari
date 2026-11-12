@@ -14,7 +14,10 @@
 #include <functional>
 #include <map>
 #include <memory>
+#include <optional>
 #include <string>
+#include <utility>
+#include <vector>
 
 namespace hikari::backends::ai {
 
@@ -33,6 +36,14 @@ struct RelayTarget {
     std::string key;
     /// Only GET and HEAD reach it.
     bool readOnly = false;
+    /// Every request goes to `base` itself, whatever URL the sidecar named.
+    bool exactUrl = false;
+    /// Added to every request, after the sidecar's; the key placeholder works here too.
+    std::vector<std::pair<QByteArray, QByteArray>> headers;
+    /// Why a request body may not go out; nullopt when it may.
+    std::function<std::optional<std::string>(const QByteArray &body)> guardBody;
+    /// Makes a reader for one response's body, which sees the bytes before the key is masked.
+    std::function<std::function<void(const QByteArray &bytes)>()> observer;
 };
 
 using RelayTargetResult = std::expected<RelayTarget, application::ai::Error>;

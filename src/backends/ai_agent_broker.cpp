@@ -373,9 +373,9 @@ AgentSpec claudeAgent(const QString &program, const QString &home, const QString
     AgentSpec spec;
     spec.program = installed;
     spec.profile = sandbox::Profile{.name = QStringLiteral("HikariSub.AI.Claude"),
-                    .readExecute = {QFileInfo(installed).absolutePath()},
-                    .readWrite = {home + QStringLiteral("/.claude"), home + QStringLiteral("/.claude.json"), work},
-                    .network = sandbox::Network::Any};
+                                    .readExecute = {QFileInfo(installed).absolutePath()},
+                                    .readWrite = {home + QStringLiteral("/.claude"), home + QStringLiteral("/.claude.json"), work},
+                                    .network = sandbox::Network::Any};
     spec.workingDirectory = work;
     spec.environment = privateTemporary(work);
     spec.environment.insert(QStringLiteral("CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC"), QStringLiteral("1"));
@@ -397,9 +397,9 @@ std::optional<AgentSpec> codexAgent(const QString &program, const QString &codex
     spec.program = binary;
     spec.arguments = {QStringLiteral("app-server")};
     spec.profile = sandbox::Profile{.name = QStringLiteral("HikariSub.AI.Codex"),
-                    .readExecute = {QFileInfo(binary).absolutePath()},
-                    .readWrite = {codexHome, work},
-                    .network = sandbox::Network::Any};
+                                    .readExecute = {QFileInfo(binary).absolutePath()},
+                                    .readWrite = {codexHome, work},
+                                    .network = sandbox::Network::Any};
     spec.workingDirectory = work;
     spec.environment = privateTemporary(work);
     spec.environment.insert(QStringLiteral("CODEX_HOME"), QDir::toNativeSeparators(codexHome));

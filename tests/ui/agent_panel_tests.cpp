@@ -2,6 +2,7 @@
 #include "hikari/app/ai_features.h"
 #include "hikari/app/ai_settings.h"
 #include "hikari/app/application.h"
+#include "hikari/app/automation_shell.h"
 #include "hikari/application/ai_providers.h"
 #include "hikari/application/hotkeys.h"
 #include "hikari/backends/ai_agent_broker.h"
@@ -15,9 +16,11 @@
 #include "line_table_model.h"
 #include "settings_store.h"
 #include "shell_controller.h"
+#include "stale_temporary_dirs.h"
 #include "theme.h"
 
 #include <QFile>
+#include <QFileInfo>
 #include <QProcess>
 #include <QPointer>
 #include <QSaveFile>
@@ -324,6 +327,8 @@ class AgentPanelTest : public QObject {
     }
 
 private slots:
+    void initTestCase() { testing::removeStaleTemporaryDirs(); }
+
     void init()
     {
         const QByteArray test(QTest::currentTestFunction());
@@ -621,6 +626,59 @@ private slots:
         QVERIFY(!item(QStringLiteral("messageBoxDontAsk")));
     }
 
+    void anApprovedLuaScriptRunsAsOneMacroUndoStepAndFullAccessStillAsks()
+    {
+        openPanel();
+        QVERIFY(click(QStringLiteral("agentNewThread")));
+        agent().setFullAccessWarned();
+        agent().setMode(QStringLiteral("full"));
+        QTRY_COMPARE(agent().thread().value(QStringLiteral("mode")).toString(), QStringLiteral("full"));
+        std::string lua = "script_name = \"Shout\"\n";
+        for (int i = 0; i < 10; ++i)
+            lua += "-- padding " + std::to_string(i) + "\n";
+        lua += "aegisub.register_macro(\"Shout\", \"Upper-cases every Line\", function(subs)\n"
+               "    for i = 1, #subs do\n"
+               "        local line = subs[i]\n"
+               "        if line.class == \"dialogue\" then line.text = line.text:upper(); subs[i] = line end\n"
+               "    end\n"
+               "end)\n";
+        const Json run = Json::object({{"operation", "automation.run"},
+                                       {"params", Json::object({{"name", "Shout"}, {"script", lua}})}});
+        const QString script = QString::fromStdString(
+            Json::object({{"say", "I wrote a macro."}, {"calls", Json::array({run, run})}}).dump());
+        const std::size_t steps = session().historySize();
+        type(script);
+        QTRY_COMPARE(kinds().last(), QStringLiteral("script"));
+        QTRY_VERIFY(item(QStringLiteral("agentScriptRun")));
+        QVERIFY(item(QStringLiteral("agentScriptShowAll")));
+        QVERIFY(!item(QStringLiteral("agentAllowInThread")));
+        QCOMPARE(session().document().lines()[0]->text, u8"A rather long first line");
+        QVERIFY(!QFileInfo::exists(at(QStringLiteral("user/ai/scripts/Shout.lua"))));
+        shoot(QStringLiteral("agent-lua-script"), QStringLiteral("Shout every Line"));
+
+        QVERIFY(click(QStringLiteral("agentScriptShowAll")));
+        QTRY_VERIFY(!item(QStringLiteral("agentScriptShowAll")));
+        QVERIFY(click(QStringLiteral("agentScriptRun")));
+        QTRY_COMPARE_WITH_TIMEOUT(session().document().lines()[0]->text, u8"A RATHER LONG FIRST LINE", 20000);
+        QCOMPARE(session().historySize(), steps + 1);
+        QCOMPARE(session().history().back().name, std::string("Automation: Shout"));
+        QVERIFY(QFileInfo::exists(at(QStringLiteral("user/ai/scripts/Shout.lua"))));
+
+        QTRY_VERIFY_WITH_TIMEOUT(item(QStringLiteral("agentScriptRun")), 10000);
+        QVERIFY(click(QStringLiteral("agentScriptDecline")));
+        QTRY_VERIFY(!agent().thread().value(QStringLiteral("running")).toBool());
+        QCOMPARE(session().historySize(), steps + 1);
+        QVERIFY(session().undo());
+        QCOMPARE(session().document().lines()[0]->text, u8"A rather long first line");
+        const auto aiScriptLoaded = [this] {
+            return std::ranges::any_of(application->automation().manager().scripts(), [](const auto &loaded) {
+                return QString::fromStdString(loaded.path).contains(QStringLiteral("ai/scripts"));
+            });
+        };
+        QTRY_VERIFY(!aiScriptLoaded());
+        QVERIFY(application->automation().autoloadScripts().filter(QStringLiteral("Shout")).isEmpty());
+    }
+
     void aThreadAtItsCapStopsAndRaiseContinues()
     {
         openPanel();
@@ -652,6 +710,52 @@ private slots:
         QTest::keyClick(window(), Qt::Key_Escape);
         QTRY_VERIFY(!agent().thread().value(QStringLiteral("running")).toBool());
         QVERIFY(kinds().contains(QStringLiteral("notice")));
+    }
+
+    void compactionShowsTheMeterTheDividerTheOfferAndAFailure()
+    {
+        openPanel();
+        const std::string summary = "## Goal\n- QC Ep01–Ep12\n## Open work\n- Ep06 Lines 201–388";
+        const Json compacted = Json::object({{"sessionUpdate", "compacted"}, {"stage", 2}, {"before", 313000},
+            {"after", 21200}, {"stubs", Json::array()}, {"summary", summary},
+            {"message", Json::object({{"author", "assistant"},
+                                      {"parts", Json::array({Json::object({{"type", "text"}, {"text", summary}})})}})},
+            {"headEnd", 1}, {"keptFrom", 1}});
+        const Json failed = Json::object({{"error", Json::object({{"code", -32010}, {"message", "timeout"},
+            {"data", Json::object({{"kind", "timeout"}, {"httpStatus", 0}, {"detail", "provider timeout"}})}})}});
+        type(QString::fromStdString(Json::object({{"say", "Working."}, {"hang", true},
+            {"usage", Json::object({{"inputTokens", 117000}, {"outputTokens", 1000}})},
+            {"compact", Json::array({Json::object({{"updates", Json::array({compacted})},
+                                                   {"result", Json::object({{"compacted", true}, {"summary", summary}})}}),
+                                     failed})}}).dump()));
+        QTRY_VERIFY(agent().thread().value(QStringLiteral("running")).toBool());
+        QTRY_VERIFY(item(QStringLiteral("agentTokens")));
+        QTRY_VERIFY(item(QStringLiteral("agentTokens"))->property("text").toString()
+                        .endsWith(QStringLiteral(" · compacts at the next tool call")));
+        shoot(QStringLiteral("agent-meter-hot"), QStringLiteral("QC Ep01–Ep12"));
+
+        QTest::keyClick(window(), Qt::Key_Escape);
+        QTRY_VERIFY(!agent().thread().value(QStringLiteral("running")).toBool());
+        type(QStringLiteral("/compact keep the glossary decisions"));
+        QTRY_COMPARE(kinds().last(), QStringLiteral("compaction"));
+        QCOMPARE(agent().thread().value(QStringLiteral("contextTokens")).toLongLong(), 21200);
+        QTRY_VERIFY(item(QStringLiteral("agentCompactionToggle")));
+        QVERIFY(!item(QStringLiteral("agentCompactionSummary")));
+        QVERIFY(click(QStringLiteral("agentCompactionToggle")));
+        QTRY_VERIFY(item(QStringLiteral("agentCompactionSummary")));
+        shoot(QStringLiteral("agent-compacted"), QStringLiteral("QC Ep01–Ep12"));
+
+        application->settingsStore()->set(app::AgentController::kAutoCompactSetting, false);
+        QVERIFY(!item(QStringLiteral("agentCompactOffer")));
+        type(QString::fromStdString(Json::object({{"say", "Ep08 done."},
+            {"usage", Json::object({{"inputTokens", 125000}, {"outputTokens", 0}})}}).dump()));
+        QTRY_VERIFY(item(QStringLiteral("agentCompactOffer")));
+        shoot(QStringLiteral("agent-compact-offer"), QStringLiteral("QC Ep01–Ep12"));
+        QVERIFY(click(QStringLiteral("agentOfferCompact")));
+        QTRY_COMPARE(lastItem().value(QStringLiteral("notice")).toString(), QStringLiteral("compactFailed"));
+        QTRY_VERIFY(item(QStringLiteral("agentRetryCompact")));
+        QVERIFY(item(QStringLiteral("agentSummaryThread")));
+        shoot(QStringLiteral("agent-compact-failed"), QStringLiteral("QC Ep01–Ep12"));
     }
 
     void theGlobeSearchesPerThreadAndAnAnswerShowsItsSourcesAndSearches()

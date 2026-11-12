@@ -23,6 +23,7 @@ class Api;
 }
 namespace hikari::backends::ai {
 class AgentBroker;
+class McpClients;
 class AiRequests;
 class AiSignIn;
 class AiSidecarHost;
@@ -47,6 +48,7 @@ public:
     static constexpr const char *kOffSetting = "ai.off";
     static constexpr const char *kCachingSetting = "ai.promptCaching";
     static constexpr const char *kWebSearchSetting = "ai.webSearch";
+    static constexpr const char *kMcpServersSetting = "ai.mcp.servers";
     static constexpr const char *kSearchServiceSetting = "ai.searchService";
     static constexpr const char *kAutoUpdateSetting = "ai.autoUpdate";
     static constexpr const char *kCustomAgentsSetting = "ai.agents.custom";
@@ -131,6 +133,8 @@ public:
     /// Applies the web search settings. The sidecar gets the search service only once its key is in the keychain, so
     /// call this after a search key is stored or removed.
     void applyWebSearch();
+    /// The MCP servers the user added; null with AI off.
+    backends::ai::McpClients *mcpClients();
     /// While the user adds their first provider, its Test connection may start the sidecar too.
     void setDrafting(bool drafting);
     /// The host if one was built; never builds it.

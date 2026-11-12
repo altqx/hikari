@@ -3,6 +3,7 @@
 #include "hikari/application/hotkeys.h"
 #include "hikari/application/settings.h"
 #include "hikari/backends/ai_agent.h"
+#include "hikari/backends/ai_mcp_clients.h"
 #include "hikari/backends/ai_requests.h"
 #include "hikari/backends/ai_sidecar_host.h"
 
@@ -130,6 +131,13 @@ Risk settingRisk(std::string_view setting, Json value = true)
     return riskOf("settings.set", Json::object({{"setting", std::string(setting)}, {"value", std::move(value)}}));
 }
 
+TEST(AgentPolicy, AiWrittenLuaAsksOnEveryRunInEveryMode)
+{
+    for (const AgentMode mode : {AgentMode::Manual, AgentMode::Auto, AgentMode::FullAccess})
+        for (const bool allowed : {false, true})
+            EXPECT_EQ(decide(mode, "automation.run", false, allowed), Decision::Script);
+}
+
 TEST(AgentPolicy, FilesOutsideTheSubtitlesFoldersAndTheUserFolderAsk)
 {
     EXPECT_EQ(riskOf("files.write", Json::object({{"file", "inside"}})), Risk::None);
@@ -152,6 +160,9 @@ TEST(AgentPolicy, RunningScriptsOrProgramsAsks)
     for (const char *setting : {"automation.scriptEditor", "automation.lastScript", "automation.disabledAutoload",
                                 "updater.autoInstall"})
         EXPECT_EQ(settingRisk(setting), Risk::Programs) << setting;
+    for (const char *program : {"whisperx", "mfa"})
+        EXPECT_EQ(riskOf("karaoke.align", Json::object({{"program", program}})), Risk::Programs) << program;
+    EXPECT_EQ(riskOf("karaoke.apply_template", Json::object({})), Risk::None);
 }
 
 TEST(AgentPolicy, InstallingOrTrustingPluginsAndScriptsAsks)
@@ -169,14 +180,26 @@ TEST(AgentPolicy, SendingToTheNetworkAndAiSettingsAsk)
     EXPECT_EQ(settingRisk("video.zoom", 1), Risk::None);
 }
 
+TEST(AgentPolicy, TypesetApplyAsksInManualModeLikeOtherWrites)
+{
+    const Json params = Json::object({{"revision", 1}, {"name", "Typeset the sign"}});
+    ASSERT_EQ(riskOf("typeset.apply", params), Risk::None);
+    EXPECT_EQ(decide(AgentMode::Manual, "typeset.apply", false, false), Decision::Ask);
+    EXPECT_EQ(decide(AgentMode::Manual, "typeset.apply", false, true), Decision::Run);
+    EXPECT_EQ(decide(AgentMode::Auto, "typeset.apply", false, false), Decision::Judge);
+    EXPECT_EQ(decide(AgentMode::FullAccess, "typeset.apply", false, false), Decision::Run);
+}
+
 TEST(AgentPolicy, EveryWriteOperationIsClassified)
 {
     std::set<std::string> writes;
     for (const hikari::api::Operation &op : hikari::api::Api::registry().operations())
         if (op.access == hikari::api::Access::Write)
             writes.insert(op.name);
-    EXPECT_EQ(writes, (std::set<std::string>{"commands.run", "document.apply", "files.write", "panels.close",
-                                             "panels.focus", "panels.open", "selection.set", "settings.set"}))
+    EXPECT_EQ(writes, (std::set<std::string>{"automation.run", "commands.run", "document.apply", "files.write",
+                                             "karaoke.align", "karaoke.apply_template", "panels.close", "panels.focus",
+                                             "panels.open", "selection.set", "settings.set",
+                                             "translation.project_write", "typeset.apply"}))
         << "Classify the new write in alwaysAsk and docs/ai-agent.md, then add it here.";
 }
 
@@ -218,6 +241,34 @@ TEST(AgentPolicy, AllowingInAThreadCoversTheOperationOrTheOneCommand)
 {
     EXPECT_EQ(allowanceKey("settings.set", Json::object({{"setting", "a"}})), "settings.set");
     EXPECT_EQ(allowanceKey("commands.run", Json::object({{"command", "GLOBAL_UNDO"}})), "commands.run:GLOBAL_UNDO");
+    EXPECT_EQ(allowanceKey(std::string(kMcpCallOperation), Json::object({{"server", "notes"}, {"tool", "add"}})),
+              "mcp.call:notes/add");
+}
+
+TEST(AgentPolicy, OnlyATrustedServersHintsLoosenAnything)
+{
+    const McpToolHints read{.readOnly = true, .destructive = false};
+    const McpToolHints gentle{.readOnly = false, .destructive = false};
+    EXPECT_TRUE(effectiveHints(read, true).readOnly);
+    EXPECT_FALSE(effectiveHints(gentle, true).destructive);
+    for (const McpToolHints &listed : {read, gentle}) {
+        EXPECT_FALSE(effectiveHints(listed, false).readOnly);
+        EXPECT_TRUE(effectiveHints(listed, false).destructive);
+    }
+    EXPECT_TRUE(effectiveHints(McpToolHints{}, true).destructive);
+}
+
+TEST(AgentPolicy, McpReadsRunDestructiveToolsAlwaysAskAndTheModeDecidesTheRest)
+{
+    for (AgentMode mode : {AgentMode::Manual, AgentMode::Auto, AgentMode::FullAccess}) {
+        EXPECT_EQ(decideMcp(mode, true, false, false, false), Decision::Run);
+        EXPECT_EQ(decideMcp(mode, false, true, true, true), Decision::AlwaysAsk);
+        EXPECT_EQ(decideMcp(mode, false, false, true, false), Decision::Run);
+    }
+    EXPECT_EQ(decideMcp(AgentMode::Manual, false, false, false, false), Decision::Ask);
+    EXPECT_EQ(decideMcp(AgentMode::Manual, false, false, false, true), Decision::Run);
+    EXPECT_EQ(decideMcp(AgentMode::Auto, false, false, false, false), Decision::Judge);
+    EXPECT_EQ(decideMcp(AgentMode::FullAccess, false, false, false, false), Decision::Run);
 }
 
 TEST(AgentPolicy, TheJudgeSeesTheActionAndTheUsersMessagesOnly)
@@ -647,6 +698,85 @@ TEST_F(AgentThreadsTest, TheAlwaysAskListAsksEvenInFullAccessAndCantBeAllowedFor
     ASSERT_TRUE(idle(id));
 }
 
+TEST_F(AgentThreadsTest, AnMcpToolRunsAsksOrAlwaysAsksAsItsHintsAndTheThreadsModeSay)
+{
+    McpServerEntry notes{.id = "notes", .name = "Notes", .command = QStringLiteral("notes-server")};
+    std::vector<std::string> admitted;
+    sidecar()->handle(kMcpServersAdmit, [&](const Json &params, std::shared_ptr<SidecarRequest> request) {
+        const std::string tool = params.find("tool")->asString();
+        const McpToolHints hints{.readOnly = tool == "read", .destructive = tool == "wipe"};
+        sidecar()->gateSession(params.find("sessionId")->asString(), std::string(kMcpCallOperation),
+                               mcpCallParams(notes, tool, *params.find("arguments"), hints), request,
+                               [&admitted, tool](SidecarRequest &r) {
+                                   admitted.push_back(tool);
+                                   r.respond(Json::object());
+                               });
+    });
+    const auto mcp = [](std::string tool) {
+        return Json::object({{"method", kMcpServersAdmit},
+                             {"params", Json::object({{"server", "notes"}, {"tool", std::move(tool)},
+                                                      {"arguments", Json::object({{"id", 1}})}})}});
+    };
+    const std::string id = withMode(AgentMode::Manual);
+    threads->send(id, script(Json::array({mcp("read"), mcp("add"), mcp("add"), mcp("wipe")})));
+    std::uint64_t ask = openAsk();
+    EXPECT_EQ(admitted, std::vector<std::string>{"read"});
+    EXPECT_EQ(threads->asks().at(ask).kind, Decision::Ask);
+    threads->answer(ask, Answer::AllowInThread);
+    ASSERT_TRUE(waitFor([&] { return !threads->asks().empty() && threads->asks().begin()->first != ask; }));
+    ask = threads->asks().begin()->first;
+    EXPECT_EQ(threads->asks().at(ask).kind, Decision::AlwaysAsk);
+    EXPECT_EQ(admitted, (std::vector<std::string>{"read", "add", "add"}));
+    EXPECT_TRUE(thread(id).allowed.contains("mcp.call:notes/add"));
+    threads->answer(ask, Answer::Deny);
+    ASSERT_TRUE(idle(id));
+    EXPECT_EQ(admitted.size(), 3u);
+    const auto asks = items(id, "ask");
+    ASSERT_EQ(asks.size(), 2u);
+    EXPECT_EQ(at(asks[0], "tool"), "Notes: add");
+    EXPECT_EQ(at(asks[1], "type"), "always");
+    const auto answers = receivedAs("answer");
+    ASSERT_EQ(answers.size(), 4u);
+    EXPECT_NE(answers[3].dump().find(hikari::api::errors::kRefused), std::string::npos) << answers[3].dump();
+}
+
+TEST_F(AgentThreadsTest, ALuaScriptShowsInFullAndAsksOnEveryRunInEveryMode)
+{
+    const std::string lua = "script_name = 'Fade'\naegisub.register_macro('Fade', '', function() end)\n";
+    const Json run = call("automation.run", Json::object({{"name", "Fade"}, {"script", lua}}));
+    for (const AgentMode mode : {AgentMode::Manual, AgentMode::Auto, AgentMode::FullAccess}) {
+        fake.automation.runs.clear();
+        const std::string id = withMode(mode);
+        threads->send(id, script(Json::array({run, run})));
+        const std::uint64_t first = openAsk();
+        ASSERT_NE(first, 0u);
+        EXPECT_EQ(threads->asks().at(first).kind, Decision::Script);
+        const Json card = items(id, "script").at(0);
+        EXPECT_EQ(at(card, "script"), lua);
+        EXPECT_EQ(*card.find("lines"), Json(2));
+        EXPECT_EQ(at(card, "title"), "a.ass");
+        threads->answer(first, Answer::AllowInThread);
+        EXPECT_TRUE(threads->asks().contains(first)) << "a script has no Allow in this thread";
+        threads->answer(first, Answer::AllowOnce);
+        ASSERT_TRUE(waitFor([&] { return bool(fake.automation.pending); }));
+        EXPECT_EQ(at(items(id, "script").at(0), "status"), "running");
+        fake.automation.finish();
+        ASSERT_TRUE(waitFor([&] { return !threads->asks().empty() && threads->asks().begin()->first != first; }));
+        EXPECT_EQ(threads->asks().begin()->second.kind, Decision::Script) << "a rerun asks again";
+        threads->answer(threads->asks().begin()->first, Answer::Deny, "Not now");
+        ASSERT_TRUE(idle(id));
+        EXPECT_EQ(fake.automation.runs.size(), 1u);
+        EXPECT_TRUE(thread(id).allowed.empty());
+        const auto cards = items(id, "script");
+        ASSERT_EQ(cards.size(), 2u);
+        EXPECT_EQ(at(cards[0], "status"), "ran");
+        EXPECT_EQ(at(cards[1], "status"), "declined");
+        const auto answers = receivedAs("answer");
+        ASSERT_GE(answers.size(), 2u);
+        EXPECT_NE(answers.back().dump().find("Not now"), std::string::npos);
+    }
+}
+
 TEST_F(AgentThreadsTest, QtRefusesWritesWithoutAThreadOrAfterTheTurnStopped)
 {
     const std::string id = threads->create();
@@ -910,4 +1040,188 @@ TEST_F(AgentThreadsTest, SearchServiceRowsKeepTheirPagesAndTheFinishedTurnDropsT
     EXPECT_EQ(at(items(id, "text").back(), "text"), "I couldn't search.");
 }
 
+}
+
+namespace {
+
+Json textMessage(std::string author, std::string text)
+{
+    return Json::object({{"author", std::move(author)},
+                         {"parts", Json::array({Json::object({{"type", "text"}, {"text", std::move(text)}})})}});
+}
+
+Json readCall(std::string id)
+{
+    return Json::object({{"author", "assistant"},
+                         {"parts", Json::array({Json::object({{"type", "toolCall"},
+                                                              {"id", id},
+                                                              {"name", "lines_find"},
+                                                              {"argumentsJson", "{}"}})})}});
+}
+
+Json readResult(std::string id, std::string content)
+{
+    return Json::object({{"author", "user"},
+                         {"parts", Json::array({Json::object({{"type", "toolResult"},
+                                                              {"callId", std::move(id)},
+                                                              {"content", std::move(content)}})})}});
+}
+
+Json userItem(std::int64_t history)
+{
+    return Json::object({{"kind", "user"}, {"text", "x"}, {"history", history}});
+}
+
+Json compactedUpdate(std::string summary, std::int64_t headEnd, std::int64_t keptFrom, Json stubs = Json::array())
+{
+    return Json::object({{"sessionUpdate", "compacted"},
+                         {"stage", 2},
+                         {"before", 1000},
+                         {"after", 100},
+                         {"stubs", std::move(stubs)},
+                         {"summary", summary},
+                         {"message", textMessage("assistant", "Summary of the conversation so far\n\n" + summary)},
+                         {"headEnd", headEnd},
+                         {"keptFrom", keptFrom}});
+}
+
+}
+
+TEST(AgentCompaction, StubsAndTheSummaryReplaceOnlyTheMiddleAndUserItemsFollowTheirMessages)
+{
+    AgentThread t;
+    t.history = Json::array({textMessage("user", "first"), readCall("c1"), readResult("c1", "a long read"),
+                             textMessage("assistant", "one"), textMessage("user", "second"), readCall("c2"),
+                             readResult("c2", "kept read"), textMessage("user", "third"), textMessage("assistant", "three")});
+    t.items = Json::array({userItem(0), userItem(4), userItem(7), Json::object({{"kind", "text"}, {"text", "one"}})});
+    const Json original = t.history;
+
+    applyCompaction(t, Json::object({{"sessionUpdate", "compacted"},
+                                     {"stage", 1},
+                                     {"stubs", Json::array({Json::object({{"callId", "c1"}, {"content", "[Cleared]"}})})}}));
+    ASSERT_EQ(t.history.asArray().size(), 9u);
+    EXPECT_EQ(t.history.asArray()[2].find("parts")->asArray()[0].find("content")->asString(), "[Cleared]");
+    EXPECT_EQ(t.history.asArray()[6].dump(), original.asArray()[6].dump());
+
+    applyCompaction(t, compactedUpdate("## Goal\n- QC", 1, 4));
+    const auto &history = t.history.asArray();
+    ASSERT_EQ(history.size(), 7u);
+    EXPECT_EQ(history[0].dump(), original.asArray()[0].dump());
+    EXPECT_EQ(history[1].dump(), textMessage("assistant", "Summary of the conversation so far\n\n## Goal\n- QC").dump());
+    for (std::size_t i = 4; i < original.asArray().size(); ++i)
+        EXPECT_EQ(history[i - 2].dump(), original.asArray()[i].dump());
+    const auto &items = t.items.asArray();
+    ASSERT_EQ(items.size(), 4u);
+    EXPECT_EQ(items[0].find("history")->asInt(), 0);
+    EXPECT_EQ(items[1].find("history")->asInt(), 2);
+    EXPECT_EQ(items[2].find("history")->asInt(), 5);
+
+    applyCompaction(t, compactedUpdate("second", 1, 5));
+    ASSERT_EQ(t.history.asArray().size(), 4u);
+    EXPECT_EQ(items[1].find("history"), nullptr);
+    EXPECT_EQ(items[2].find("history")->asInt(), 2);
+    EXPECT_EQ(at(items[3], "text"), "one");
+}
+
+TEST_F(AgentThreadsTest, CompactWaitsForTheRunningTurnThenPassesTheInstructionAndChargesTheThread)
+{
+    const std::string id = withMode(AgentMode::Manual);
+    const Json usage = Json::object({{"sessionUpdate", "usage"},
+                                     {"compaction", true},
+                                     {"usage", Json::object({{"inputTokens", 5000}, {"outputTokens", 200}, {"reportedCost", 0.25}})}});
+    const Json answer = Json::object({{"updates", Json::array({compactedUpdate("## Goal\n- QC", 1, 1), usage})},
+                                      {"result", Json::object({{"compacted", true}, {"summary", "## Goal\n- QC"}})}});
+    threads->send(id, script(Json::array({call("commands.run", Json::object({{"command", "GLOBAL_SAVE_SUBS"}}))}),
+                             Json::object({{"compact", Json::array({answer})}})));
+    const std::uint64_t ask = openAsk();
+    threads->compact(id, "keep the glossary decisions");
+    threads->setQueued(id, "Carry on");
+    EXPECT_TRUE(threads->compacting(id));
+    EXPECT_TRUE(receivedAs("_hikari/session.compact").empty());
+
+    threads->answer(ask, Answer::AllowOnce);
+    ASSERT_TRUE(waitFor([&] { return items(id, "user").size() == 2 && !threads->running(id); }));
+    EXPECT_FALSE(threads->compacting(id));
+    const auto compactions = receivedAs("_hikari/session.compact");
+    ASSERT_EQ(compactions.size(), 1u);
+    EXPECT_EQ(at(compactions[0], "instruction"), "keep the glossary decisions");
+    const auto all = received().asArray();
+    const auto position = [&](std::string_view method, std::size_t nth) {
+        std::size_t seen = 0;
+        for (std::size_t i = 0; i < all.size(); ++i)
+            if (at(all[i], "method") == method && seen++ == nth)
+                return i;
+        return all.size();
+    };
+    EXPECT_LT(position("_hikari/session.compact", 0), position("session/prompt", 1));
+
+    const auto divider = items(id, "compaction");
+    ASSERT_EQ(divider.size(), 1u);
+    EXPECT_EQ(divider[0].find("before")->asInt(), 1000);
+    EXPECT_EQ(divider[0].find("after")->asInt(), 100);
+    EXPECT_EQ(at(divider[0], "summary"), "## Goal\n- QC");
+    EXPECT_EQ(thread(id).history.asArray()[1].dump(),
+              textMessage("assistant", "Summary of the conversation so far\n\n## Goal\n- QC").dump());
+    EXPECT_DOUBLE_EQ(thread(id).cost, 0.25);
+    ASSERT_EQ(items(id, "text").size(), 1u);
+    EXPECT_EQ(at(items(id, "text")[0], "text"), "ok: Carry on");
+}
+
+TEST_F(AgentThreadsTest, AFailedCompactionOffersRetryAndANewThreadFromTheSummary)
+{
+    const Json failed = Json::object({{"error", Json::object({{"code", -32010},
+                                                              {"message", "provider timeout"},
+                                                              {"data", Json::object({{"kind", "timeout"},
+                                                                                     {"httpStatus", 0},
+                                                                                     {"detail", "provider timeout"}})}})}});
+    const Json summary = Json::object({{"result", Json::object({{"compacted", false}, {"summary", "## Goal\n- QC"}})}});
+    const std::string id = threads->create();
+    threads->send(id, script(Json::array(), Json::object({{"say", "ok"}, {"compact", Json::array({failed, summary})}})));
+    ASSERT_TRUE(idle(id));
+    threads->compact(id);
+    ASSERT_TRUE(waitFor([&] { return notice(id) == "compactFailed"; }));
+    EXPECT_EQ(at(items(id, "notice").back(), "detail"), "provider timeout");
+    EXPECT_EQ(thread(id).history.asArray().size(), 2u);
+
+    std::string opened;
+    QObject::connect(threads.get(), &AgentThreads::summarised, [&](const QString &, const QString &to) { opened = to.toStdString(); });
+    threads->newThreadFromSummary(id);
+    ASSERT_TRUE(waitFor([&] { return !opened.empty(); }));
+    EXPECT_EQ(receivedAs("_hikari/session.compact").back().find("apply")->asBool(), false);
+    const AgentThread &next = thread(opened);
+    EXPECT_EQ(next.title, thread(id).title);
+    ASSERT_EQ(next.history.asArray().size(), 2u);
+    EXPECT_EQ(at(next.history.asArray()[1], "author"), "assistant");
+    EXPECT_EQ(next.history.asArray()[1].find("parts")->asArray()[0].find("text")->asString(), "## Goal\n- QC");
+    ASSERT_EQ(items(opened, "compaction").size(), 1u);
+    EXPECT_EQ(at(items(opened, "compaction")[0], "from"), thread(id).title);
+}
+
+TEST_F(AgentThreadsTest, AnAutomaticCompactionThatFailsTwiceStopsTheTurnWithItsReason)
+{
+    const std::string id = threads->create();
+    threads->send(id, script(Json::array(),
+                             Json::object({{"reason", "compaction_failed"},
+                                           {"updates", Json::array({Json::object({{"sessionUpdate", "compaction_failed"},
+                                                                                  {"reason", "provider timeout"}})})}})));
+    ASSERT_TRUE(idle(id));
+    EXPECT_EQ(notice(id), "compactFailed");
+    EXPECT_EQ(at(items(id, "notice").back(), "detail"), "provider timeout");
+}
+
+TEST_F(AgentThreadsTest, TheSessionLearnsTheContextWindowAndWhetherToCompactByItself)
+{
+    defaults.autoCompact = false;
+    const std::string id = threads->create();
+    threads->send(id, "Hello");
+    ASSERT_TRUE(idle(id));
+    const auto opened = receivedAs("session/new");
+    ASSERT_EQ(opened.size(), 1u);
+    EXPECT_EQ(opened[0].find("contextTokens")->asInt(), kDefaultContextTokens);
+    EXPECT_FALSE(opened[0].find("autoCompact")->asBool());
+
+    defaults.autoCompact = true;
+    threads->send(id, "Again");
+    ASSERT_TRUE(idle(id));
+    EXPECT_TRUE(receivedAs("session/prompt").back().find("autoCompact")->asBool());
 }

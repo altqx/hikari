@@ -339,9 +339,9 @@ protected:
         s.arguments = {QStringLiteral("app-server")};
         s.workingDirectory = dir.path();
         s.profile = hikari::backends::sandbox::Profile{.name = QStringLiteral("HikariSub.Test.Agent"),
-                     .readExecute = {QFileInfo(s.program).absolutePath()},
-                     .readWrite = {dir.path()},
-                     .network = hikari::backends::sandbox::Network::Any};
+                                                      .readExecute = {QFileInfo(s.program).absolutePath()},
+                                                      .readWrite = {dir.path()},
+                                                      .network = hikari::backends::sandbox::Network::Any};
         s.sidecarEnvironment = {QStringLiteral("CLAUDE_CODE_ENTRYPOINT")};
         if (guarded)
             s.guard = codexGuard;

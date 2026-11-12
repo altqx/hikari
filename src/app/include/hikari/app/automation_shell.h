@@ -11,6 +11,8 @@
 #include "hikari/application/template_preview.h"
 #include "hikari/application/workspace.h"
 #include "hikari/backends/automation_manager.h"
+#include "hikari/backends/freetype_glyph_outlines.h"
+#include "hikari/backends/libass_font_service.h"
 
 #include "automation_dialog_controller.h"
 #include "automation_manager_controller.h"
@@ -200,6 +202,7 @@ public:
     ui::ScriptResolutionPromptController *resolutionPrompt() { return &m_resolutionPrompt; }
     backends::AutomationManager &manager() { return m_manager; }
     QString includeDir() const;
+    QStringList includeFolders() const;
     QString autoloadDir() const;
     // A user script replaces a shipped one of the same name.
     QStringList autoloadScripts() const;
@@ -300,6 +303,8 @@ private:
     std::unique_ptr<application::ScriptResolutionPort> m_resolutionPort;
     ui::QtClipboardPort m_clipboard;
     ui::QtTextMeasurePort m_measure;
+    backends::LibassFontService m_fonts;
+    backends::FreetypeGlyphOutlines m_glyphs{m_fonts};
     std::unique_ptr<application::MacroMediaPort> m_media;
     std::unique_ptr<application::EditorPort> m_editorPort;
     std::unique_ptr<ui::AutomationManagerController> m_managerController;

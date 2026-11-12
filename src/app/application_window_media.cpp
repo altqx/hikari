@@ -4,6 +4,7 @@ namespace hikari::app {
 
 void Application::takePlayback(WindowMedia &media)
 {
+    ensureAudioRoute();
     for (auto *other : allMedia()) {
         if (other == &media)
             continue;

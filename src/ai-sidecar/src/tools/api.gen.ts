@@ -150,6 +150,27 @@ export type GrantedFile = {
     access: "read" | "write";
 };
 
+export type GrantedFolder = {
+    /** The handle files.list, files.read and files.write take with a path. */
+    folder: string;
+    name: string;
+    access: "read" | "write";
+};
+
+export type FolderEntry = {
+    /** Relative to the granted folder, with / between its parts. */
+    path: string;
+    folder: boolean;
+};
+
+/** The Project of the window the user works in; null without one. */
+export type Project = null | {
+    /** The Project folder's name. */
+    name: string;
+    /** Whether the folder is in Trusted folders. */
+    trusted: boolean;
+};
+
 /** The open Documents, in tab order, with the protected reference last. */
 export type DocumentsListParams = Record<string, never>;
 
@@ -615,17 +636,31 @@ export type AudioPeaksResult = {
     max: number[];
 };
 
-/** The files the user granted this caller, with read or write access. */
-export type FilesListParams = Record<string, never>;
+/** The files and folders the user granted this caller; with folder, also what that folder holds. */
+export type FilesListParams = {
+    /** A folder handle to list (since version 2). */
+    folder?: string;
+    /** A folder inside it; default the folder itself. */
+    path?: string;
+};
 
 export type FilesListResult = {
     files: GrantedFile[];
+    folders?: GrantedFolder[];
+    /** With folder: in name order, at most 4096, without links that lead outside it. */
+    entries?: FolderEntry[];
+    /** Present when the folder holds more than 4096 entries. */
+    truncated?: boolean;
 };
 
 /** A granted file's content, as UTF-8 text or base64; at most 16 MiB. */
 export type FilesReadParams = {
     /** A handle from files.list. */
-    file: string;
+    file?: string;
+    /** Instead of file, a folder handle from files.list (since version 2). */
+    folder?: string;
+    /** With folder, the file's path inside it, with / between its parts. */
+    path?: string;
     /** Default utf8. */
     encoding?: "utf8" | "base64";
 };
@@ -637,10 +672,14 @@ export type FilesReadResult = {
     data: string;
 };
 
-/** Replaces a file granted for writing with new content. */
+/** Replaces a file granted for writing with new content; in a writable folder, makes it and its folders. */
 export type FilesWriteParams = {
     /** A handle from files.list. */
-    file: string;
+    file?: string;
+    /** Instead of file, a folder handle from files.list (since version 2). */
+    folder?: string;
+    /** With folder, the file's path inside it, with / between its parts. */
+    path?: string;
     /** Default utf8. */
     encoding?: "utf8" | "base64";
     data: string;
@@ -675,6 +714,51 @@ export type SkillsReadResult = {
     data: string;
 };
 
+/** Saves a Lua Automation script to the AI scripts folder and runs one of its macros on the active tab's selection, once the user approves the script. The run is one undo step. */
+export type AutomationRunParams = {
+    /** The script's file name without .lua; an earlier script of that name is replaced. */
+    name: string;
+    /** The whole Lua script, registering its macro with aegisub.register_macro. */
+    script: string;
+    /** The macro to run, by its registered name; default the first. */
+    macro?: string;
+};
+
+export type AutomationRunResult = {
+    /** The saved script's file name. */
+    file: string;
+    outcome: "applied" | "refused" | "failed" | "cancelled" | "declined" | "stopped" | "lost" | "invalid";
+    message: string;
+    log: string;
+};
+
+/** The Document's Honya project files: PROJECT.md, GLOSSARY.md, CHARACTERS.md and STYLE.md, those that exist. folder is null when the Document has no project folder. */
+export type TranslationProjectParams = {
+    /** Defaults to the active Document. */
+    document?: DocumentId;
+};
+
+export type TranslationProjectResult = {
+    folder: string | null;
+    files: ({
+        name: "PROJECT.md" | "GLOSSARY.md" | "CHARACTERS.md" | "STYLE.md";
+        data: string;
+    })[];
+};
+
+/** Replaces one of the Document's Honya project files, keeping Honya's Markdown and honya:data format. */
+export type TranslationProjectWriteParams = {
+    /** Defaults to the active Document. */
+    document?: DocumentId;
+    file: "PROJECT.md" | "GLOSSARY.md" | "CHARACTERS.md" | "STYLE.md";
+    data: string;
+};
+
+export type TranslationProjectWriteResult = {
+    file: "PROJECT.md" | "GLOSSARY.md" | "CHARACTERS.md" | "STYLE.md";
+    size: number;
+};
+
 /** The node types the node-effect editor offers, with their ports and parameters. */
 export type NodesCatalogueParams = {
     category?: string;
@@ -704,6 +788,425 @@ export type NodesValidateResult = {
         port?: string;
         message: string;
     })[];
+};
+
+/** The Line's text with the tags that render it on a quad (VT3's perspective solver): \pos, \org, \frx, \fry, \frz, \fax, \fscx and \fscy. */
+export type TypesetPerspectiveParams = {
+    /** Defaults to the active Document. */
+    document?: DocumentId;
+    line: LineId;
+    /** Script coordinates: top left, top right, bottom right, bottom left. */
+    quad: ({
+        x: number;
+        y: number;
+    })[];
+    /** Where \org goes: the quad's centre (default), the centre without \fax, or where the Line has it. */
+    origin?: "center" | "nofax" | "keep";
+};
+
+export type TypesetPerspectiveResult = {
+    line: LineId;
+    text: string;
+    transform: Record<string, unknown>;
+};
+
+/** The Line's text with its first clip replaced by a rectangle or a vector clip. */
+export type TypesetClipParams = {
+    /** Defaults to the active Document. */
+    document?: DocumentId;
+    line: LineId;
+    /** Script coordinates, rounded to whole units. */
+    rect?: {
+        x1: number;
+        y1: number;
+        x2: number;
+        y2: number;
+    };
+    /** ASS drawing commands such as "m 0 0 l 100 0 100 50 0 50"; empty removes the vector clip. */
+    vector?: string;
+    /** \iclip: draw outside the clip. */
+    inverse?: boolean;
+};
+
+export type TypesetClipResult = {
+    line: LineId;
+    /** The Line's text with the tags written; nothing is applied. */
+    text: string;
+};
+
+/** The Line's text with its first drawing replaced by a shape (\p1), placed at a position with an alignment. */
+export type TypesetDrawingParams = {
+    /** Defaults to the active Document. */
+    document?: DocumentId;
+    line: LineId;
+    /** ASS drawing commands, in script units from the drawing's origin. */
+    shape: string;
+    position?: {
+        x: number;
+        y: number;
+    };
+    /** \an; 7 (top left) with position, else the Line's. */
+    alignment?: number;
+};
+
+export type TypesetDrawingResult = {
+    line: LineId;
+    /** The Line's text with the tags written; nothing is applied. */
+    text: string;
+};
+
+/** Moves the Lines' positions, \move points, clips, drawings and \org by an offset, as the Position shifter does. */
+export type TypesetShiftParams = {
+    /** Defaults to the active Document. */
+    document?: DocumentId;
+    lines: LineId[];
+    /** Script units. */
+    dx: number;
+    dy: number;
+    /** What moves; every kind but drawing when omitted. */
+    kinds?: ("position" | "move_start" | "move_end" | "clip" | "drawing" | "origin")[];
+};
+
+export type TypesetShiftResult = {
+    /** The Lines the change alters, with their new text; nothing is applied. */
+    lines: ({
+        line: LineId;
+        text: string;
+    })[];
+};
+
+/** Changes one tag across the Lines as the Hydra strip does: set it, add to it, multiply it by line number, or run a gradient across characters or Lines. */
+export type TypesetHydraParams = {
+    /** Defaults to the active Document. */
+    document?: DocumentId;
+    /** Multiply and the line gradients count them in this order. */
+    lines: LineId[];
+    /** A Hydra tag without the backslash: blur, bord, be, alpha, 1a, 3a, 4a, 1c (or c), 3c, 4c, fad, fax, fay, fs, fsp, shad, xbord, ybord, xshad, yshad, pos or t. */
+    tag: string;
+    change: "set" | "add" | "multiply" | "gradient";
+    /** set: the value; add: what to add; multiply: the start; gradient: the first value. Colours are R, G, B. */
+    values: number[];
+    /** multiply: added for each Line. */
+    perLine?: number[];
+    /** multiply: set each Line's value, or add to it. Default set. */
+    byLine?: "set" | "add";
+    /** gradient: the last value. */
+    to?: number[];
+    /** gradient: default characters. */
+    across?: "characters" | "lines";
+    /** gradient: run from the end. */
+    decreasing?: boolean;
+};
+
+export type TypesetHydraResult = {
+    /** The Lines the change alters, with their new text; nothing is applied. */
+    lines: ({
+        line: LineId;
+        text: string;
+    })[];
+};
+
+/** Renders one Line alone, with a proposed text, on its frame and compares its ink with a target. */
+export type TypesetCheckParams = {
+    /** Defaults to the active Document. */
+    document?: DocumentId;
+    line: LineId;
+    /** The proposed text; the Line's own when omitted. */
+    text?: string;
+    /** Where the Line's ink should land, in script coordinates: a quad or a box. */
+    target: {
+        /** Script coordinates: top left, top right, bottom right, bottom left. */
+        quad: ({
+            x: number;
+            y: number;
+        })[];
+    } | {
+        box: {
+            x: number;
+            y: number;
+            width: number;
+            height: number;
+        };
+    };
+    /** Default: the frame shown when the Line is on it, else the Line's first. */
+    frame?: number;
+    /** Video pixels; default 4. */
+    tolerance?: number;
+};
+
+export type TypesetCheckResult = {
+    line: LineId;
+    frame: number;
+    pass: boolean;
+    /** The largest distance between an edge of the ink's bounds and the target's, in video pixels; null when nothing is drawn. */
+    error: number | null;
+    ink: {
+        x: number;
+        y: number;
+        width: number;
+        height: number;
+    } | null;
+    target: {
+        x: number;
+        y: number;
+        width: number;
+        height: number;
+    };
+};
+
+/** Applies typeset Lines as one undo step after every one passes the render check; when one misses its target nothing is applied. */
+export type TypesetApplyParams = {
+    /** Defaults to the active Document. */
+    document?: DocumentId;
+    revision: Revision;
+    /** A few words naming the change, such as "Typeset the shop sign". */
+    name: string;
+    lines: ({
+        line: LineId;
+        text: string;
+        /** Where the Line's ink should land, in script coordinates: a quad or a box. */
+        target: {
+            /** Script coordinates: top left, top right, bottom right, bottom left. */
+            quad: ({
+                x: number;
+                y: number;
+            })[];
+        } | {
+            box: {
+                x: number;
+                y: number;
+                width: number;
+                height: number;
+            };
+        };
+        frame?: number;
+    })[];
+    /** Video pixels; default 4. */
+    tolerance?: number;
+};
+
+export type TypesetApplyResult = {
+    revision: Revision;
+    inserted: LineId[];
+    changed: boolean;
+    checks: ({
+        line: LineId;
+        frame: number;
+        pass: boolean;
+        /** The largest distance between an edge of the ink's bounds and the target's, in video pixels; null when nothing is drawn. */
+        error: number | null;
+        ink: {
+            x: number;
+            y: number;
+            width: number;
+            height: number;
+        } | null;
+        target: {
+            x: number;
+            y: number;
+            width: number;
+            height: number;
+        };
+    })[];
+};
+
+/** The Project of the window the user works in, or null. */
+export type ProjectInfoParams = Record<string, never>;
+
+export type ProjectInfoResult = {
+    project: Project;
+};
+
+/** A Line's karaoke syllables as the templater reads them: text, tag, start and end in ms. */
+export type KaraokeSyllablesParams = {
+    /** Defaults to the active Document. */
+    document?: DocumentId;
+    line: LineId;
+};
+
+export type KaraokeSyllablesResult = {
+    line: LineId;
+    syllables: ({
+        text: string;
+        stripped: string;
+        tag: string;
+        start: number;
+        end: number;
+    })[];
+};
+
+/** Splits Lines without \k tags into syllables as the audio editor's karaoke mode does, the time shared by character; Lines that already have \k tags keep them. */
+export type KaraokeSplitParams = {
+    /** Defaults to the active Document. */
+    document?: DocumentId;
+    lines: LineId[];
+    /** Default true: by syllable, with the language rules the user set; false: at spaces. */
+    bySyllable?: boolean;
+};
+
+export type KaraokeSplitResult = {
+    /** The Lines that change, with their new text; nothing is applied. */
+    lines: ({
+        line: LineId;
+        text: string;
+    })[];
+};
+
+/** Times a Line's existing syllables: each syllable's end in ms, in order; the \k tags are rewritten. */
+export type KaraokeTimeParams = {
+    /** Defaults to the active Document. */
+    document?: DocumentId;
+    line: LineId;
+    /** One per syllable, ascending, in ms from the video's start. */
+    ends: number[];
+};
+
+export type KaraokeTimeResult = {
+    line: LineId;
+    /** The Line's text with the \k tags written; nothing is applied. */
+    text: string;
+};
+
+/** Where sung notes start in the open audio, in ms, within a range. */
+export type KaraokeOnsetsParams = {
+    start: number;
+    end: number;
+};
+
+export type KaraokeOnsetsResult = {
+    onsets: number[];
+};
+
+/** Moves each syllable boundary inside the Lines to the nearest vocal onset within the window, keeping every syllable at least 10 ms long. */
+export type KaraokeSnapParams = {
+    /** Defaults to the active Document. */
+    document?: DocumentId;
+    lines: LineId[];
+    /** Ms either side; default 100. */
+    window?: number;
+};
+
+export type KaraokeSnapResult = {
+    /** The Lines that change, with their new text; nothing is applied. */
+    lines: ({
+        line: LineId;
+        text: string;
+        /** Boundaries moved. */
+        moved?: number;
+    })[];
+};
+
+/** Copies a timed romaji Line's syllables onto its kanji Line as the Kanji timer suggests the groups. */
+export type KaraokeKanjiParams = {
+    /** Defaults to the active Document. */
+    document?: DocumentId;
+    romaji: LineId;
+    kanji: LineId;
+    /** Further syllables of a group become # syllables instead of joining the first. */
+    multi?: boolean;
+};
+
+export type KaraokeKanjiResult = {
+    line: LineId;
+    text: string;
+    /** False when a group came out blank or the characters ran out: check it. */
+    clean: boolean;
+};
+
+/** The readings the dictionary suggests for a Line's kanji runs, in hiragana. */
+export type KaraokeFuriganaParams = {
+    /** Defaults to the active Document. */
+    document?: DocumentId;
+    line: LineId;
+};
+
+export type KaraokeFuriganaResult = {
+    line: LineId;
+    runs: ({
+        base: string;
+        reading: string;
+    })[];
+};
+
+/** The Karaoke check's problems: unclosed tags, totals that differ from the Line, empty syllables and syllables outside the Line. */
+export type KaraokeCheckParams = {
+    /** Defaults to the active Document. */
+    document?: DocumentId;
+};
+
+export type KaraokeCheckResult = {
+    problems: ({
+        line: LineId;
+        kind: "unclosed" | "not_for_audio_editor" | "editor_only" | "total_not_duration" | "zero_length" | "outside_line";
+        totalMs?: number;
+        durationMs?: number;
+        /** Which ones, from 1. */
+        syllables?: number[];
+    })[];
+    /** Problems past the listed ones. */
+    unlisted: number;
+};
+
+/** The Lines the karaoke templater generates from one karaoke Line, without applying them. */
+export type KaraokeTemplatePreviewParams = {
+    /** Defaults to the active Document. */
+    document?: DocumentId;
+    line: LineId;
+};
+
+export type KaraokeTemplatePreviewResult = {
+    line: LineId;
+    lines: ({
+        layer: number;
+        start: number;
+        end: number;
+        style: string;
+        effect: string;
+        text: string;
+    })[];
+};
+
+/** Runs the karaoke templater on the karaoke Lines, or the Lines given, and applies what it generates as one undo step: old generated Lines are replaced. */
+export type KaraokeApplyTemplateParams = {
+    /** Defaults to the active Document. */
+    document?: DocumentId;
+    revision: Revision;
+    /** Default: every karaoke Line. */
+    lines?: LineId[];
+    /** Default "Apply karaoke template". */
+    name?: string;
+};
+
+export type KaraokeApplyTemplateResult = {
+    revision: Revision;
+    changed: boolean;
+};
+
+/** Runs the user's own WhisperX or Montreal Forced Aligner on the audio under the Lines and answers each word with its start and end in ms; the user approves every run, and nothing is applied. */
+export type KaraokeAlignParams = {
+    /** Defaults to the active Document. */
+    document?: DocumentId;
+    lines: LineId[];
+    program: "whisperx" | "mfa";
+    /** WhisperX: a language code such as ja; default: it detects. */
+    language?: string;
+    /** MFA: the pronunciation dictionary, such as english_mfa. */
+    dictionary?: string;
+    /** MFA: the acoustic model, such as english_mfa. */
+    acousticModel?: string;
+};
+
+export type KaraokeAlignResult = {
+    words: ({
+        text: string;
+        start: number;
+        end: number;
+    })[];
+};
+
+/** The window the user works in opened or closed a Project, or the user moved to a window with another one. */
+export type ProjectChangedEvent = {
+    project: Project;
 };
 
 /** A Document's content changed: a commit, Undo or Redo. */
@@ -779,13 +1282,36 @@ export interface Operations {
     "files.write": { access: "write"; params: FilesWriteParams; result: FilesWriteResult };
     "skills.list": { access: "read"; params: SkillsListParams; result: SkillsListResult };
     "skills.read": { access: "read"; params: SkillsReadParams; result: SkillsReadResult };
+    "automation.run": { access: "write"; params: AutomationRunParams; result: AutomationRunResult };
+    "translation.project": { access: "read"; params: TranslationProjectParams; result: TranslationProjectResult };
+    "translation.project_write": { access: "write"; params: TranslationProjectWriteParams; result: TranslationProjectWriteResult };
     "nodes.catalogue": { access: "read"; params: NodesCatalogueParams; result: NodesCatalogueResult };
     "nodes.validate": { access: "read"; params: NodesValidateParams; result: NodesValidateResult };
+    "typeset.perspective": { access: "read"; params: TypesetPerspectiveParams; result: TypesetPerspectiveResult };
+    "typeset.clip": { access: "read"; params: TypesetClipParams; result: TypesetClipResult };
+    "typeset.drawing": { access: "read"; params: TypesetDrawingParams; result: TypesetDrawingResult };
+    "typeset.shift": { access: "read"; params: TypesetShiftParams; result: TypesetShiftResult };
+    "typeset.hydra": { access: "read"; params: TypesetHydraParams; result: TypesetHydraResult };
+    "typeset.check": { access: "read"; params: TypesetCheckParams; result: TypesetCheckResult };
+    "typeset.apply": { access: "write"; params: TypesetApplyParams; result: TypesetApplyResult };
+    "project.info": { access: "read"; params: ProjectInfoParams; result: ProjectInfoResult };
+    "karaoke.syllables": { access: "read"; params: KaraokeSyllablesParams; result: KaraokeSyllablesResult };
+    "karaoke.split": { access: "read"; params: KaraokeSplitParams; result: KaraokeSplitResult };
+    "karaoke.time": { access: "read"; params: KaraokeTimeParams; result: KaraokeTimeResult };
+    "karaoke.onsets": { access: "read"; params: KaraokeOnsetsParams; result: KaraokeOnsetsResult };
+    "karaoke.snap": { access: "read"; params: KaraokeSnapParams; result: KaraokeSnapResult };
+    "karaoke.kanji": { access: "read"; params: KaraokeKanjiParams; result: KaraokeKanjiResult };
+    "karaoke.furigana": { access: "read"; params: KaraokeFuriganaParams; result: KaraokeFuriganaResult };
+    "karaoke.check": { access: "read"; params: KaraokeCheckParams; result: KaraokeCheckResult };
+    "karaoke.template_preview": { access: "read"; params: KaraokeTemplatePreviewParams; result: KaraokeTemplatePreviewResult };
+    "karaoke.apply_template": { access: "write"; params: KaraokeApplyTemplateParams; result: KaraokeApplyTemplateResult };
+    "karaoke.align": { access: "write"; params: KaraokeAlignParams; result: KaraokeAlignResult };
 }
 
 export type OperationName = keyof Operations;
 
 export interface Events {
+    "project.changed": ProjectChangedEvent;
     "document.changed": DocumentChangedEvent;
     "selection.changed": SelectionChangedEvent;
     "documents.changed": DocumentsChangedEvent;

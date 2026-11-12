@@ -46,6 +46,7 @@ The pieces in C++:
   - `handle(method, handler)` lets other objects answer the sidecar's requests.
 - **`HttpRelay`** (`src/backends/ai_http_relay.*`) answers `_hikari/http.request`. It sends the request only to a known target (today a provider's base URL), puts the keychain key where the request has the `hikari-key` placeholder, and streams the answer back with the key masked.
 - **`AgentBroker`** (`src/backends/ai_agent_broker.*`) answers `_hikari/agent.*`. It starts the `claude` or `codex` Qt found on `PATH`, each in its own sandbox, checks Claude's arguments, guards Codex's JSON-RPC, and relays their stdio.
+- **`McpClients`** (`src/backends/ai_mcp_clients.*`) runs the [MCP servers the user added](ai-mcp-clients.md) for the agent: it starts stdio servers unsandboxed, relays HTTP ones with their secrets, reads their hints from the servers' own answers, and admits each tool call through the thread's gate.
 - **`AiMcp`** (`src/app/ai_mcp.*`) runs the [MCP server](ai-mcp.md) while AI is on and `ai.mcp.server` is on. It starts the sidecar on the first MCP message, with or without a provider.
 - **`AiSidecarUpdater`** (`src/backends/ai_sidecar_updater.*`) keeps `<user folder>/ai/sidecar/`: the runtimes, the bundles and `state.json`. It reads the signed `ai-channel` manifest (`ai_channel.*`), picks the newest release this app runs, and downloads it in Qt, never in the sidecar. It checks each file's size and SHA-256 and deletes one that fails. `AiFeatures` checks hourly, switches a staged sidecar in once nothing has been busy for 2 minutes, and rolls back one that fails `initialize` or crashes twice in 10 minutes.
 
@@ -58,6 +59,7 @@ The pieces in C++:
 - `_hikari/http.request {stream, target, method, url, headers, body}` is every request the sidecar sends out. Qt answers with `_hikari/http.response` and `_hikari/http.data` notifications, then `{}`. A target is a provider, the chosen search service, or `npm`, the read-only registry the [Claude Agent SDK](ai-external-agents.md) is fetched from.
 - `_hikari/agent.start {process, agent, args, env}`, `.write`, `.closeInput` and `.kill` run an agent CLI through Qt, which sends `_hikari/agent.output` and `_hikari/agent.exit` back. A `session/new` with `agent` runs the thread on that agent ([External agents](ai-external-agents.md)).
 - `_hikari/mcp.message` and `_hikari/mcp.closed` relay HikariSub's MCP server: Qt listens, the sidecar speaks MCP, and an `_hikari/api.call` marked `mcp` runs as that connection's caller ([MCP server](ai-mcp.md)).
+- `_hikari/mcpServers.set`, `.status` and `.admit` run the user's MCP servers for the agent ([MCP servers](ai-mcp-clients.md#the-link)).
 - The limits are `HelperHost`'s: 64 outstanding requests, 16 MiB outstanding and 64 MiB per message.
 
 The ACP session methods and the other `_hikari/*` methods in the ADR are declared in `src/ai-sidecar/src/protocol.ts`. Until their cards land they answer "not implemented".

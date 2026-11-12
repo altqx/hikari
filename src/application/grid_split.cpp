@@ -4,6 +4,7 @@
 #include "hikari/application/resample.h"
 
 #include "hikari/core/graphemes.h"
+#include "hikari/core/tag_cleanup.h"
 #include "hikari/core/style.h"
 #include "hikari/core/text_projection.h"
 
@@ -234,6 +235,93 @@ std::expected<void, CommandRefusal> splitIntoFrames(EditSession &session, const 
     return {};
 }
 
+std::vector<core::LineRecord> linePieces(const core::LineRecord &line, const LegacyTimebase &timebase, int count,
+                                         SplitUnit unit)
+{
+    const int startMs = msOf(line.start.value), endMs = msOf(line.end.value);
+    if (count < 1 || endMs <= startMs || (unit == SplitUnit::Frames && timebase.empty()))
+        return {line};
+    std::vector<int> cuts;
+    const auto cutAt = [&](int ms) {
+        if (ms > (cuts.empty() ? startMs : cuts.back()) && ms < endMs)
+            cuts.push_back(ms);
+    };
+    if (unit == SplitUnit::Frames) {
+        for (int f = timebase.frameAt(startMs) + count, last = timebase.frameAt(endMs); f < last; f += count)
+            cutAt(zeroIt(timebase.startTimeFor(f)));
+    } else {
+        const std::int64_t step = std::int64_t{count} * 1000;
+        for (std::int64_t at = startMs + step; at < endMs; at += step) {
+            const int ms = static_cast<int>(at);
+            if (timebase.empty())
+                cutAt(zeroIt(ms));
+            else if (const int f = timebase.frameAt(ms); f < timebase.frameAt(endMs))
+                cutAt(zeroIt(timebase.startTimeFor(f)));
+        }
+    }
+    if (cuts.empty())
+        return {line};
+    std::vector<core::LineRecord> out;
+    const double lineDuration = endMs - startMs;
+    int from = startMs;
+    cuts.push_back(endMs);
+    for (std::size_t k = 0; k < cuts.size(); ++k) {
+        const int to = cuts[k];
+        core::LineRecord piece = line;
+        if (k > 0)
+            piece.start.value = core::DocumentTime(std::int64_t{from} * kUsPerMs);
+        if (k + 1 < cuts.size())
+            piece.end.value = core::DocumentTime(std::int64_t{to} * kUsPerMs);
+        const RetimeWindow window{double(from - startMs), double(to - from), lineDuration};
+        piece.text = retimeAnimations(line.text, window);
+        if (!line.translation.empty())
+            piece.translation = retimeAnimations(line.translation, window);
+        out.push_back(std::move(piece));
+        from = to;
+    }
+    return out;
+}
+
+std::expected<void, CommandRefusal> splitEvery(EditSession &session, const LegacyTimebase &timebase, int count,
+                                               SplitUnit unit, const LineVisible &visible)
+{
+    if (count < 1 || (unit == SplitUnit::Frames && timebase.empty()))
+        return std::unexpected(CommandRefusal::Invalid);
+    const auto selected = shownSelected(session, visible);
+    if (selected.empty())
+        return std::unexpected(CommandRefusal::Invalid);
+    struct Plan {
+        core::LineId id;
+        std::vector<core::LineRecord> pieces;
+    };
+    std::vector<Plan> plans;
+    std::set<core::LineId> touched;
+    for (const auto *l : selected)
+        if (auto pieces = linePieces(*l, timebase, count, unit); pieces.size() > 1) {
+            touched.insert(l->id);
+            plans.push_back(Plan{l->id, std::move(pieces)});
+        }
+    if (plans.empty())
+        return {};
+    const auto ran = session.run(Command{"Splitting lines", session.revision(), touched, [&](core::Document &d) {
+                                             for (const auto &p : plans) {
+                                                 if (!d.editLine(p.id, [&](core::LineRecord &l) { l = p.pieces.front(); }))
+                                                     return false;
+                                                 core::LineId previous = p.id;
+                                                 for (std::size_t k = 1; k < p.pieces.size(); ++k) {
+                                                     const auto id = d.insertLineAfter(previous, p.pieces[k]);
+                                                     if (!id)
+                                                         return false;
+                                                     previous = *id;
+                                                 }
+                                             }
+                                             return true;
+                                         }});
+    if (!ran)
+        return std::unexpected(ran.error());
+    return {};
+}
+
 
 namespace legacy {
 
@@ -425,6 +513,34 @@ std::vector<u16> splitByWrap(u16v txt)
             inBrackets = false;
         ++i;
     }
+    return out;
+}
+
+std::vector<u16> splitByTagBlocks(u16v txt)
+{
+    std::vector<u16> out;
+    u16 piece;
+    bool hasText = false;
+    for (std::size_t i = 0; i < txt.size();) {
+        if (txt[i] != u'{') {
+            piece += txt[i++];
+            hasText = true;
+            continue;
+        }
+        const auto close = txt.find(u'}', i);
+        const std::size_t end = close == u16v::npos ? txt.size() : close + 1;
+        if (hasText) {
+            out.push_back(std::move(piece));
+            piece.clear();
+            hasText = false;
+        }
+        piece += txt.substr(i, end - i);
+        i = end;
+    }
+    if (!hasText && !out.empty())
+        out.back() += piece;
+    else if (!piece.empty())
+        out.push_back(std::move(piece));
     return out;
 }
 
@@ -962,6 +1078,103 @@ u16 numberText(float v)
     return core::toUtf16(t);
 }
 
+std::size_t karaokeEnd(u16v body, std::size_t at)
+{
+    if (at + 2 > body.size() || body[at] != u'\\' || (body[at + 1] != u'k' && body[at + 1] != u'K'))
+        return 0;
+    std::size_t end = at + 2;
+    if (end < body.size() && (body[end] == u'f' || body[end] == u'o'))
+        ++end;
+    if (end >= body.size() || body[end] < u'0' || body[end] > u'9')
+        return 0;
+    while (end < body.size() && ((body[end] >= u'0' && body[end] <= u'9') || body[end] == u'.'))
+        ++end;
+    return end;
+}
+
+struct BlockTags {
+    u16 tags;
+    u16 karaoke;
+    long centiseconds = 0;
+};
+
+BlockTags leadingTags(u16v piece)
+{
+    BlockTags out;
+    std::size_t i = 0;
+    while (i < piece.size() && piece[i] == u'{') {
+        const auto close = piece.find(u'}', i);
+        const u16v body = piece.substr(i + 1, close == u16v::npos ? u16v::npos : close - i - 1);
+        for (std::size_t j = 0; j < body.size();) {
+            if (const std::size_t end = karaokeEnd(body, j)) {
+                const u16v tag = body.substr(j, end - j);
+                out.karaoke += tag;
+                out.centiseconds += std::lround(std::strtod(toU8(tag.substr(tag.find_first_of(u"0123456789"))).c_str(), nullptr));
+                j = end;
+                continue;
+            }
+            const auto next = body.find(u'\\', j + 1);
+            out.tags += body.substr(j, next == u16v::npos ? u16v::npos : next - j);
+            j = next == u16v::npos ? body.size() : next;
+        }
+        if (close == u16v::npos)
+            break;
+        i = close + 1;
+    }
+    return out;
+}
+
+u16 withoutKaraoke(u16v block)
+{
+    u16 out;
+    for (std::size_t i = 0; i < block.size();) {
+        if (const std::size_t end = karaokeEnd(block, i)) {
+            i = end;
+            continue;
+        }
+        out += block[i++];
+    }
+    return out;
+}
+
+void absorb(u16 &effective, u16v tags)
+{
+    const auto reset = tags.rfind(u"\\r");
+    if (reset == u16v::npos)
+        effective += tags;
+    else
+        effective = u16(tags.substr(reset));
+}
+
+std::u8string effectiveText(u16v firstBlock, u16v effective, long karaokeBefore, u16v ownKaraoke, u16v text)
+{
+    u16 block = u"{" + u16(effective);
+    if (karaokeBefore > 0)
+        block += u"\\k" + core::toUtf16(std::u8string(reinterpret_cast<const char8_t *>(std::to_string(karaokeBefore).c_str())));
+    block += ownKaraoke;
+    block += u"}";
+    const std::u8string merged = core::tagcleanup::mergeBlocks(core::toUtf8(u16(firstBlock) + (block.size() > 2 ? block : u16())));
+    return core::tagcleanup::dropRedundant(merged) + core::toUtf8(u16(text));
+}
+
+bool rotates(const std::vector<Tag> &tags, const std::string &styleAngle)
+{
+    if (std::strtod(styleAngle.c_str(), nullptr) != 0)
+        return true;
+    return std::ranges::any_of(tags, [](const Tag &t) {
+        return (t.name == u"frx" || t.name == u"fry" || t.name == u"frz" || t.name == u"fr") &&
+               std::strtod(toU8(t.value).c_str(), nullptr) != 0;
+    });
+}
+
+}
+
+double taggedTextWidth(TextMeasurePort &measure, const core::StyleValues &style, std::u16string_view text)
+{
+    auto fields = fieldsOf(style);
+    float width = 0, height = 0;
+    taggedExtents(measure, fields, text, width, height);
+    return width;
 }
 
 std::expected<void, CommandRefusal> splitByText(EditSession &session, SplitText kind, TextMeasurePort &measure,
@@ -1008,7 +1221,8 @@ std::expected<void, CommandRefusal> splitByText(EditSession &session, SplitText 
         if (!found && !styles.empty())
             style = styles.front();
         const auto fields = fieldsOf(style);
-        static const std::vector<u16v> posNames{u"pos", u"move", u"an", u"fscx", u"fscy", u"fsp", u"fs", u"fn", u"b", u"i"};
+        static const std::vector<u16v> posNames{u"pos",  u"move", u"an", u"org", u"fscx", u"fscy", u"fsp",
+                                                u"frx", u"fry",  u"frz", u"fr",  u"fs",   u"fn",   u"b",   u"i"};
         const auto tags = parseTags(text, posNames, false);
         int an = 0;
         if (const auto v = findTag(tags, u"an"))
@@ -1071,6 +1285,11 @@ std::expected<void, CommandRefusal> splitByText(EditSession &session, SplitText 
                 posy = static_cast<float>(marginV);
         }
         setTag(firstBlock, u"an", u"\\an" + core::toUtf16(std::u8string(reinterpret_cast<const char8_t *>(std::to_string(an).c_str()))));
+        if (!findTag(tags, u"org") && rotates(tags, fields[Angle]))
+            setTag(firstBlock, u"org", u"\\org(" + numberText(posx) + u"," + numberText(posy) + u")");
+        const bool byBlocks = kind == SplitText::TagBlocks;
+        u16 effective;
+        long karaokeBefore = 0;
         const auto wrapsTable = legacy::splitByWrap(text);
         const int wraps = static_cast<int>(wrapsTable.size()) - 1;
         float y = posy;
@@ -1099,6 +1318,8 @@ std::expected<void, CommandRefusal> splitByText(EditSession &session, SplitText 
                 pieces = legacy::splitByChar(wrapText, true);
             else if (kind == SplitText::Words)
                 pieces = legacy::splitByWord(wrapText, words);
+            else if (byBlocks)
+                pieces = legacy::splitByTagBlocks(wrapText);
             else
                 pieces.push_back(wrapText);
             float x = posx;
@@ -1122,37 +1343,72 @@ std::expected<void, CommandRefusal> splitByText(EditSession &session, SplitText 
                 // MUST KILL: an empty piece reads its tags and size from the Line's last-set text
                 const u16 &piece = pieces[j].empty() ? current : pieces[j];
                 u16 txt = afterFirstBlock(pieces[j]);
-                if (k > 0)
+                if (k > 0 && !byBlocks)
                     mergeTagBlocks(firstBlock, firstTagsBlock(piece));
+                const bool lineStart = k == 0 && j == 0;
+                const BlockTags own = leadingTags(pieces[j]);
+                if (byBlocks && !lineStart)
+                    absorb(effective, own.tags);
                 if (j == 0 && k > 0)
                     hasWrap = true;
+                const auto styleBefore = stylec;
                 taggedExtents(measure, stylec, piece, w, h);
                 while (!txt.empty() && isSpace16(txt.back()))
                     txt.pop_back();
+                float anchor = x;
+                if (byBlocks) {
+                    const u16 tagsOnly = firstTagsBlock(pieces[j]);
+                    const u16 shown = stripped(pieces[j]);
+                    std::size_t lead = 0;
+                    while (lead < shown.size() && isSpace16(shown[lead]))
+                        ++lead;
+                    std::size_t end = shown.size();
+                    while (end > lead && isSpace16(shown[end - 1]))
+                        --end;
+                    float visible = w, leading = 0, unused = 0;
+                    if (lead > 0 || end < shown.size()) {
+                        auto measured = styleBefore;
+                        taggedExtents(measure, measured, tagsOnly + shown.substr(lead, end - lead), visible, unused);
+                    }
+                    if (lead > 0) {
+                        auto measured = styleBefore;
+                        taggedExtents(measure, measured, tagsOnly + shown.substr(0, lead), leading, unused);
+                    }
+                    const std::size_t textStart = txt.find_first_not_of(u" \t\u3000\u00A0");
+                    txt = textStart == u16::npos ? u16() : txt.substr(textStart);
+                    anchor = x + leading + visible * (an % 3 == 2 ? 0.5f : an % 3 == 0 ? 1.f : 0.f);
+                }
                 if (hasWrap) {
                     y += h;
                     if (!byWraps)
                         hasWrap = false;
                 }
-                if (!byWraps) {
+                if (!byWraps && !byBlocks) {
                     if (an % 3 == 2)
                         x += w / 2;
                     else if (an % 3 == 0)
                         x += w;
                 }
+                const float at = byBlocks ? anchor : x;
                 if (!txt.empty()) {
                     if (first)
                         first = false;
                     if (hasMove)
-                        setTag(firstBlock, u"move", u"\\move(" + numberText(x) + u"," + numberText(y) + u"," +
-                                                        numberText(x + distx) + u"," + numberText(y + disty) + u"," +
+                        setTag(firstBlock, u"move", u"\\move(" + numberText(at) + u"," + numberText(y) + u"," +
+                                                        numberText(at + distx) + u"," + numberText(y + disty) + u"," +
                                                         times + u")");
                     else
-                        setTag(firstBlock, u"pos", u"\\pos(" + numberText(x) + u"," + numberText(y) + u")");
+                        setTag(firstBlock, u"pos", u"\\pos(" + numberText(at) + u"," + numberText(y) + u")");
                     current = firstBlock + txt;
-                    plan.texts.push_back(core::toUtf8(current));
+                    plan.texts.push_back(byBlocks && !lineStart
+                                             ? effectiveText(withoutKaraoke(firstBlock), effective, karaokeBefore,
+                                                             own.karaoke, txt)
+                                             : core::toUtf8(current));
                 }
-                if (!byWraps) {
+                if (byBlocks) {
+                    karaokeBefore += own.centiseconds;
+                    x += w;
+                } else if (!byWraps) {
                     if (an % 3 == 2)
                         x += w / 2;
                     else if (an % 3 == 1)
@@ -1160,7 +1416,7 @@ std::expected<void, CommandRefusal> splitByText(EditSession &session, SplitText 
                 }
             }
         }
-        if (!plan.texts.empty())
+        if (plan.texts.size() > (byBlocks ? 1u : 0u))
             plans.push_back(std::move(plan));
     }
     if (plans.empty())

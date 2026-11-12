@@ -28,6 +28,7 @@ namespace hikari::app {
 class AiAcpSettings;
 class AiFeatures;
 class AiMcp;
+class AiMcpServers;
 
 /// Settings › AI: the providers, their keys and catalogues, and the role models. Providers and keys are saved at
 /// once; role models wait for OK or Apply (applyRoles).
@@ -66,9 +67,12 @@ class AiSettings final : public QObject {
     Q_PROPERTY(QObject *mcp READ mcp CONSTANT FINAL)
     /// Antigravity's sign-in and the user's own ACP agents.
     Q_PROPERTY(QObject *acp READ acp CONSTANT FINAL)
+    /// The MCP servers the agent uses, an AiMcpServers; null without one.
+    Q_PROPERTY(QObject *mcpServers READ mcpServers CONSTANT FINAL)
 
 public:
-    explicit AiSettings(AiFeatures &features, AiMcp *mcp = nullptr, QObject *parent = nullptr);
+    explicit AiSettings(AiFeatures &features, AiMcp *mcp = nullptr, AiMcpServers *mcpServers = nullptr,
+                        QObject *parent = nullptr);
     ~AiSettings() override;
 
     bool on() const;
@@ -84,6 +88,7 @@ public:
     QVariantMap agents() const;
     QObject *mcp() const;
     QObject *acp() const;
+    QObject *mcpServers() const;
 
     /// {id, preset, name, baseUrl, wire, needsKey} of an added provider, for its edit form.
     Q_INVOKABLE QVariantMap form(const QString &providerId) const;
@@ -193,6 +198,7 @@ private:
     AiFeatures &m_features;
     AiMcp *m_mcp = nullptr;
     AiAcpSettings *m_acp = nullptr;
+    AiMcpServers *m_mcpServers = nullptr;
     std::map<std::string, Status, std::less<>> m_status;
     QVariantMap m_draft;
     struct Probed {

@@ -346,6 +346,7 @@ private slots:
             store.set("workspace.dialogGeometry",
                       QStringList{QStringLiteral("settings\t120,80,900,640"), QStringLiteral("find\t-5,7,400,300")});
             store.set("workspace.pickerFolders", QStringList{QStringLiteral("openSubtitles\tfile:///home/me/subs")});
+            store.set("workspace.saveTiers", QStringList{QStringLiteral("styleCatalogs\tmine")});
             store.set("automation.dialogAnswers", answers);
             store.set("automation.dialogPresets", presets);
         }
@@ -366,6 +367,8 @@ private slots:
                  (QJsonArray{-5, 7, 400, 300}));
         QCOMPARE(workspace.value(QLatin1String("pickerFolders")).toObject().value(QLatin1String("openSubtitles")),
                  QJsonValue(QStringLiteral("file:///home/me/subs")));
+        QCOMPARE(workspace.value(QLatin1String("saveTiers")).toObject().value(QLatin1String("styleCatalogs")),
+                 QJsonValue(QStringLiteral("mine")));
         const QJsonArray answerList =
             state.value(QLatin1String("automation")).toObject().value(QLatin1String("dialogAnswers")).toArray();
         QCOMPARE(answerList.at(0).toObject().value(QLatin1String("key")).toString(), QStringLiteral("k2"));
@@ -376,6 +379,7 @@ private slots:
         QVERIFY(!again.contains("editor.tagButton2"));
         QCOMPARE(again.text("editor.tagButton3"), odd);
         QCOMPARE(again.text("editor.tagButton5"), QStringLiteral("{\n\t\\i1\n\t1\n\tItalic\n}"));
+        QCOMPARE(again.list("workspace.saveTiers"), QStringList{QStringLiteral("styleCatalogs\tmine")});
         QCOMPARE(again.list("workspace.dialogGeometry"),
                  (QStringList{QStringLiteral("find\t-5,7,400,300"), QStringLiteral("settings\t120,80,900,640")}));
         QCOMPARE(again.list("automation.dialogAnswers"), answers);
