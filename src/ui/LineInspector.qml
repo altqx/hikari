@@ -270,7 +270,7 @@ ColumnLayout {
             for (const item of slots)
                 item.parent = holder
         const rows = [firstRow, secondRow, thirdRow, fourthRow]
-        const shown = wide ? wideRows : step === "medium" ? mediumRows : narrowRows
+        const shown = step === "wide" ? wideRows : step === "medium" ? mediumRows : narrowRows
         shown.forEach((slots, i) => {
             for (const item of slots)
                 item.parent = rows[i]

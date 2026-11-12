@@ -3497,6 +3497,7 @@ ApplicationWindow {
         }
     }
     component RoleCaption: Label {
+        z: 1
         anchors.left: parent.left
         anchors.leftMargin: 6
         leftPadding: 4

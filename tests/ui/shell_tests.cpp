@@ -15659,9 +15659,8 @@ private slots:
     }
     void squeezeTheLineEditorTo(int width)
     {
-        auto *dock = item<QObject>("editorDock");
         auto *panel = item("editorPanel");
-        QVERIFY(application->workspaceLayout().resizePanel(dock, width, int(panel->height())));
+        QVERIFY(ui::Docking().resizeInLayout(QStringLiteral("Editor"), width - int(panel->width()), 0, 0, 0));
         QTRY_VERIFY2(std::abs(panel->width() - width) <= 1, qPrintable(QString::number(panel->width())));
         const int minimum = int(std::ceil(panel->property("minimumSize").toSizeF().height()));
         if (panel->height() > minimum)
@@ -15705,8 +15704,7 @@ private slots:
 
         QQuickItem *bar = visualItem("editorScrollBar");
         QVERIFY(!bar || !bar->isVisible());
-        const QStringList clipped = clippedIn(panel);
-        QVERIFY2(clipped.isEmpty(), qPrintable(QStringLiteral("%1x%2: %3").arg(panel->width()).arg(panel->height()).arg(clipped.join(u"; "))));
+        QTRY_VERIFY2(clippedIn(panel).isEmpty(), qPrintable(QStringLiteral("%1x%2: %3").arg(panel->width()).arg(panel->height()).arg(clippedIn(panel).join(u"; "))));
 
         const QRectF bounds = panel->mapRectToScene(panel->boundingRect());
         const char *const fields[] = {"startField", "endField", "durationField", "styleChoice", "styleEditButton",
@@ -15823,7 +15821,7 @@ private slots:
                  qPrintable(step));
         QQuickItem *bar = visualItem("editorScrollBar");
         QVERIFY(!bar || !bar->isVisible());
-        QVERIFY2(clippedIn(panel).isEmpty(), qPrintable(clippedIn(panel).join(u"; ")));
+        QTRY_VERIFY2(clippedIn(panel).isEmpty(), qPrintable(clippedIn(panel).join(u"; ")));
     }
 
     void tabMovesOutOfTheLineEditorTextFields()
