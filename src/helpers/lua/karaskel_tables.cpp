@@ -7,6 +7,7 @@ extern "C" {
 #include <lauxlib.h>
 }
 
+#include <algorithm>
 #include <cstdio>
 #include <string>
 #include <vector>
@@ -178,6 +179,7 @@ kl::Line layLine(lua_State *L, kl::Layout &layout, const application::MacroDialo
 Head pushKaraskelHead(lua_State *L, int subs, bool generateFurigana)
 {
     subs = absolute(L, subs);
+    Head head;
     const double scale = furiganaScale(L);
     lua_createtable(L, 0, 3);
     const int meta = lua_gettop(L);
@@ -243,6 +245,7 @@ Head pushKaraskelHead(lua_State *L, int subs, bool generateFurigana)
         const bool known = lua_toboolean(L, -1) != 0;
         lua_pop(L, 1);
         if (!known) {
+            head.furiganaAdded.push_back(stringField(L, fs, "name"));
             lua_pushvalue(L, fs);
             lua_rawseti(L, styles, ++count);
             setNumber(L, styles, "n", count);
@@ -262,7 +265,8 @@ Head pushKaraskelHead(lua_State *L, int subs, bool generateFurigana)
     const double resX = lua_tonumber(L, -2), resY = lua_tonumber(L, -1);
     lua_setfield(L, meta, "res_y");
     lua_setfield(L, meta, "res_x");
-    Head head;
+    head.firstStyle = *firstStyle;
+    std::ranges::reverse(head.furiganaAdded);
     lua_getglobal(L, "aegisub");
     lua_getfield(L, -1, "video_size");
     lua_remove(L, -2);
@@ -277,6 +281,19 @@ Head pushKaraskelHead(lua_State *L, int subs, bool generateFurigana)
     debugOut(L, 4, formatted("Karaskel: Video X correction factor = %f\n\n", lua_tonumber(L, -1)));
     lua_pop(L, 1);
     return head;
+}
+
+void dropAddedFurigana(lua_State *L, int styles, const Head &head)
+{
+    styles = absolute(L, styles);
+    int n = static_cast<int>(numberField(L, styles, "n"));
+    for (const std::string &name : head.furiganaAdded) {
+        lua_pushnil(L);
+        lua_setfield(L, styles, name.c_str());
+        lua_pushnil(L);
+        lua_rawseti(L, styles, n--);
+    }
+    setNumber(L, styles, "n", n);
 }
 
 void pushKaraskelLine(lua_State *L, int styles, int line, const kl::Line &layout)

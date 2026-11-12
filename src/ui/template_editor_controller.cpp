@@ -1,6 +1,7 @@
 #include "template_editor_controller.h"
 
 #include "hikari/application/karaoke_presets.h"
+#include "hikari/application/karaoke_templates.h"
 #include "hikari/application/macro_transaction.h"
 #include "hikari/application/node_graph.h"
 #include "hikari/core/ass_save.h"
@@ -39,6 +40,7 @@ QString translated(const char *text)
 
 struct PresetEntry {
     const char *file, *title, *description;
+    bool karaOK = false;
 };
 constexpr PresetEntry kPresets[] = {
     {"01-classic-fill.ass", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "Classic fill"),
@@ -67,6 +69,36 @@ constexpr PresetEntry kPresets[] = {
     {"10-palette.ass", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "Colour per line"),
      QT_TRANSLATE_NOOP("HikariSub.TemplateEditor",
                        "Lines take turns through a short palette of fill colours, by their place in the file.")},
+    {"11-word-pop.ass", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "Word pop"),
+     QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "Each word swells as it starts and settles back while it is sung."), true},
+    {"12-word-wipe.ass", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "Word wipe"),
+     QT_TRANSLATE_NOOP("HikariSub.TemplateEditor",
+                       "The line shows whole, and a second colour wipes across each word while it is sung."),
+     true},
+    {"13-letter-cascade.ass", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "Letter cascade"),
+     QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "Letters appear one after another along the line before it is sung."),
+     true},
+    {"14-letter-shimmer.ass", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "Letter shimmer"),
+     QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "Each letter tilts and brightens as it is sung, then straightens."),
+     true},
+    {"15-furigana-rise.ass", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "Furigana rise"),
+     QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "Furigana rises into place over each syllable as it is sung."), true},
+    {"16-early-lead-in.ass", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "Early lead-in"),
+     QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "Each syllable lights up a moment before it is sung."), true},
+    {"17-wave-bounce.ass", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "Wave bounce"),
+     QT_TRANSLATE_NOOP("HikariSub.TemplateEditor",
+                       "Each syllable bobs up and down on a sine wave while it is sung (ln.kara)."),
+     true},
+    {"18-shape-burst.ass", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "Shape burst"),
+     QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "Six stars burst out of each syllable as it is sung (ln.kara)."), true},
+    {"19-line-gradient.ass", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "Line gradient"),
+     QT_TRANSLATE_NOOP("HikariSub.TemplateEditor",
+                       "The line’s letters run through a band of colours from left to right (ln.kara)."),
+     true},
+    {"20-thai-fade.ass", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "Thai fade"),
+     QT_TRANSLATE_NOOP("HikariSub.TemplateEditor",
+                       "Each character cluster fades in as it is sung, so Thai vowels and tone marks stay on their letters."),
+     true},
 };
 
 QString withoutTags(const std::u8string &text)
@@ -199,6 +231,122 @@ const std::vector<Function> &functions()
 }
 
 constexpr char kValueSeparator = '\x1e';
+
+struct LnMember {
+    const char *parent;
+    const char *name;
+    const char *insert;
+    const char *help;
+};
+
+const std::vector<LnMember> &lnMembers()
+{
+    static const std::vector<LnMember> list = {
+        {"ln", "init", "init(tenv)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "binds ln.kara to the template environment and adds its shorthands")},
+        {"ln", "syltime", "syltime(0.5)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "the unit’s start plus this share of its duration (ms)")},
+        {"ln", "syldur", "syldur(0.5)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "this share of the unit’s duration, all of it with no argument (ms)")},
+        {"ln", "randomize", "randomize(\"name\", 0, 10)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "sets a template variable to a random whole number, once")},
+        {"ln", "line", "line.", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "tags and sizes of the karaoke line")},
+        {"ln", "syl", "syl.", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "tags and sizes of the current unit")},
+        {"ln", "tag", "tag.", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "builds \\pos, \\move and \\t tags")},
+        {"ln", "wave", "wave.", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "periodic animation as \\t steps")},
+        {"ln", "color", "color.", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "colours from RGB or HSL")},
+        {"ln", "math", "math.", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "rounding, ranges and interpolation")},
+        {"ln", "shapes", "shapes.", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "drawings for \\p1")},
+        {"ln", "debug", "debug.", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "the progress bar")},
+        {"ln.line", "tag", "tag(\"blur\")", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "the first of each named tag in the karaoke line")},
+        {"ln.line", "tags", "tags(\"t\")", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "every one of each named tag in the karaoke line")},
+        {"ln.line", "c", "c(1)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "the karaoke line’s colour N, or its style’s")},
+        {"ln.line", "a", "a(1)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "the karaoke line’s alpha N, or its style’s")},
+        {"ln.line", "style_c", "style_c(1)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "the style’s colour N")},
+        {"ln.line", "style_a", "style_a(1)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "the style’s alpha N")},
+        {"ln.line", "buffers", "buffers(300, 300)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "lead-in and lead-out, from \\fad or empty end syllables (ms)")},
+        {"ln.line", "len_stripped", "len_stripped()", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "characters in the karaoke line without tags")},
+        {"ln.line", "len", "len()", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "characters in the karaoke line’s text")},
+        {"ln.line", "len_raw", "len_raw()", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "characters in the karaoke line as written")},
+        {"ln.syl", "tag", "tag(\"blur\")", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "the first of each named tag in the unit")},
+        {"ln.syl", "tags", "tags(\"t\")", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "every one of each named tag in the unit")},
+        {"ln.syl", "c", "c(1)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "the unit’s colour N, or its style’s")},
+        {"ln.syl", "a", "a(1)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "the unit’s alpha N, or its style’s")},
+        {"ln.syl", "len_stripped", "len_stripped()", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "characters in the unit without tags")},
+        {"ln.syl", "len", "len()", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "characters in the unit’s text")},
+        {"ln.tag", "pos", "pos(5)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "\\an and \\pos at the unit’s anchor")},
+        {"ln.tag", "move", "move(0, 0, 0, 0)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "\\an and \\move from offsets to the unit’s anchor")},
+        {"ln.tag", "kanjipos", "kanjipos()", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "vertical placement for kanji, in karaOK mode")},
+        {"ln.tag", "t", "t(0, 100, \"\")", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "\\t with whole-millisecond times")},
+        {"ln.tag", "parse_transform", "parse_transform(\"\")", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "reads a \\t into a table")},
+        {"ln.tag", "mod_transform", "mod_transform(\"\", \"+0\")", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "changes a \\t’s times or tags")},
+        {"ln.tag", "parse_move", "parse_move(\"\")", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "reads a \\move into a table")},
+        {"ln.wave", "new", "new(\"sine\", 1000, 10)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "a wave: sine, square, triangle, sawtooth or noise")},
+        {"ln.wave", "transform", "transform(w, \"frz\")", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "\\t steps that follow a wave")},
+        {"ln.color", "byRGB", "byRGB(255, 255, 255)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "a colour from red, green and blue (0–255)")},
+        {"ln.color", "byHSL", "byHSL(0, 255, 128)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "a colour from hue, saturation and lightness (0–255)")},
+        {"ln.color", "lumaHSL", "lumaHSL(0, 255, 128)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "a colour from hue, saturation and luma (0–255)")},
+        {"ln.color", "rgb", "rgb.", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "reads or adds to a colour’s red, green and blue")},
+        {"ln.color", "hsl", "hsl.", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "reads or adds to a colour’s hue, saturation and lightness")},
+        {"ln.math", "clamp", "clamp(n, 0, 1)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "n kept between min and max")},
+        {"ln.math", "modloop", "modloop(n, 0, 360)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "n wrapped into a range")},
+        {"ln.math", "modbounce", "modbounce(n, 0, 1)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "n bounced back and forth in a range")},
+        {"ln.math", "log", "log(10, n)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "the logarithm of n to a base")},
+        {"ln.math", "sgn", "sgn(n)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "-1 for a negative n, else 1")},
+        {"ln.math", "round", "round(n, 2)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "n rounded to this many decimals")},
+        {"ln.math", "round_fast", "round_fast(n)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "n rounded to a whole number")},
+        {"ln.math", "random", "random(0, 1)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "a random number, to 4 decimals")},
+        {"ln.math", "lerp", "lerp(0.5, 0, 1)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "between two numbers, colours or alphas")},
+        {"ln.math", "xerp", "xerp(0.5, 0, 1, 2)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "between two values, with acceleration")},
+        {"ln.shapes", "shift", "shift(\"\", 0, 0)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "a drawing moved by x and y")},
+        {"ln.shapes", "rectangle", "rectangle(20, 10)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "a rectangle drawing")},
+        {"ln.shapes", "roundedRectangle", "roundedRectangle(20, 10, 3)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "a rectangle drawing with round corners")},
+        {"ln.shapes", "circle", "circle(10)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "a circle drawing")},
+        {"ln.shapes", "triangle", "triangle(10)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "an equilateral triangle drawing")},
+        {"ln.shapes", "polygon", "polygon(6, 10)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "a regular polygon drawing")},
+        {"ln.shapes", "gear", "gear(10, 15, 20, 8, 0.5, 0.5, 0.5)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "a gear drawing")},
+        {"ln.shapes", "star", "star", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "a ready-made drawing")},
+        {"ln.shapes", "heart", "heart", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "a ready-made drawing")},
+        {"ln.shapes", "twinkle1", "twinkle1", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "a ready-made drawing")},
+        {"ln.shapes", "twinkle2", "twinkle2", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "a ready-made drawing")},
+        {"ln.shapes", "twinkle3", "twinkle3", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "a ready-made drawing")},
+        {"ln.shapes", "snowflake", "snowflake", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "a ready-made drawing")},
+        {"ln.shapes", "stolengleam", "stolengleam", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "a ready-made drawing")},
+        {"ln.debug", "prog", "prog(0.5)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "sets the progress bar (0–1)")},
+    };
+    return list;
+}
+
+const std::vector<Function> &lnShorthands()
+{
+    static const std::vector<Function> list = {
+        {"st", "st(0.5)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "the unit’s start plus this share of its duration (ms)")},
+        {"sd", "sd(0.5)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "this share of the unit’s duration, all of it with no argument (ms)")},
+        {"gc", "gc(1)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "the karaoke line’s colour N, or its style’s")},
+        {"ga", "ga(1)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "the karaoke line’s alpha N, or its style’s")},
+        {"rgb", "rgb(255, 255, 255)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "a colour from red, green and blue (0–255)")},
+        {"hsl", "hsl(0, 255, 128)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "a colour from hue, saturation and lightness (0–255)")},
+        {"hsy", "hsy(0, 255, 128)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "a colour from hue, saturation and luma (0–255)")},
+        {"rnd", "rnd(0, 1)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "a random number, to 4 decimals")},
+        {"set", "set(\"name\", 0)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "sets a template variable")},
+        {"rset", "rset(\"name\", 0, 10)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "sets a template variable to a random whole number, once")},
+        {"clamp", "clamp(n, 0, 1)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "n kept between min and max")},
+        {"fl", "fl(n)", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "n rounded down")},
+    };
+    return list;
+}
+
+const Function kLn = {"ln", "ln.", QT_TRANSLATE_NOOP("HikariSub.TemplateEditor", "karaOK’s ln.kara library")};
+
+QString qualifierBefore(const QString &text, int from)
+{
+    int at = from;
+    while (at > 0 && text[at - 1] == QLatin1Char('.')) {
+        int start = at - 1;
+        while (start > 0 && (text[start - 1].isLetterOrNumber() || text[start - 1] == QLatin1Char('_')))
+            --start;
+        if (start == at - 1)
+            break;
+        at = start;
+    }
+    return at == from ? QString() : text.mid(at, from - 1 - at);
+}
 
 const QStringList &templateClasses()
 {
@@ -1306,11 +1454,78 @@ void TemplateEditorController::applied(const std::string &report, std::optional<
     emit changed();
 }
 
+namespace {
+std::u8string u8(std::string_view s)
+{
+    return {s.begin(), s.end()};
+}
+}
+
+bool TemplateEditorController::karaOKMode() const
+{
+    const auto *s = session();
+    return s && application::karaoke_templates::documentMode(*s) == application::karaoke_templates::Mode::KaraOK;
+}
+
+bool TemplateEditorController::modeUndecided() const
+{
+    namespace kt = application::karaoke_templates;
+    const auto *doc = document();
+    return doc && kt::documentMode(*doc, kt::Mode::Stock) != kt::documentMode(*doc, kt::Mode::KaraOK);
+}
+
+bool TemplateEditorController::karaOKPresetsUsable() const
+{
+    return karaOKMode() || modeUndecided();
+}
+
+QString TemplateEditorController::effectInMode(const QString &stockEffect) const
+{
+    return karaOKMode() ? QString::fromStdString(application::karaoke_templates::karaOKEffect(stockEffect.toStdString()))
+                        : stockEffect;
+}
+
+QString TemplateEditorController::stockEffectOf(const QString &effect) const
+{
+    return karaOKMode() ? QString::fromStdString(application::karaoke_templates::stockEffect(effect.toStdString())) : effect;
+}
+
+bool TemplateEditorController::modeInFile() const
+{
+    const auto *doc = document();
+    const auto line = doc ? doc->scriptInfo(u8(application::karaoke_templates::kModeKey)) : std::nullopt;
+    return line && application::karaoke_templates::modeOfLine(std::string(line->begin(), line->end()));
+}
+
+bool TemplateEditorController::setKaraOKMode(bool karaOK)
+{
+    commit();
+    auto *s = session();
+    if (!s || !m_editable || (modeInFile() && karaOKMode() == karaOK))
+        return false;
+    namespace kt = application::karaoke_templates;
+    const std::u8string value = u8(karaOK ? kt::kModeKaraOK : kt::kModeStock);
+    application::Command command;
+    command.name = "Set template mode";
+    command.expectedRevision = s->revision();
+    command.apply = [&](core::Document &doc) { return doc.setScriptInfo(u8(kt::kModeKey), value); };
+    const bool chosen = trusted();
+    if (!s->run(command))
+        return false;
+    if (chosen)
+        trust();
+    m_seenRevision = s->revision();
+    emit documentEdited();
+    emit changed();
+    schedulePreview();
+    return true;
+}
+
 bool TemplateEditorController::insertTemplate(const QString &effect)
 {
     application::MacroDialogueLine d;
-    d.effect = effect.toStdString();
-    return insertLines("New template", {d});
+    d.effect = effectInMode(effect).toStdString();
+    return insertLines("New template", {d}, karaOKMode() && modeUndecided());
 }
 
 QVariantList TemplateEditorController::presets()
@@ -1319,7 +1534,8 @@ QVariantList TemplateEditorController::presets()
     for (const auto &p : kPresets)
         out << QVariantMap{{QStringLiteral("title"), translated(p.title)},
                            {QStringLiteral("description"), translated(p.description)},
-                           {QStringLiteral("file"), QLatin1String(p.file)}};
+                           {QStringLiteral("file"), QLatin1String(p.file)},
+                           {QStringLiteral("karaOK"), p.karaOK}};
     return out;
 }
 
@@ -1332,20 +1548,25 @@ bool TemplateEditorController::insertPreset(int index)
         return false;
     const QByteArray bytes = file.readAll();
     const auto preset = application::readKaraokePreset(std::as_bytes(std::span(bytes.constData(), static_cast<std::size_t>(bytes.size()))));
-    if (!preset)
+    if (!preset || (preset->karaOK && !karaOKPresetsUsable()))
         return false;
+    const bool translate = karaOKMode() && !preset->karaOK;
     std::vector<application::MacroDialogueLine> lines;
     for (const auto &l : preset->lines) {
         application::MacroDialogueLine d;
         d.layer = static_cast<int>(l.layer);
         d.effect = std::string(l.effect.begin(), l.effect.end());
+        if (translate)
+            d.effect = application::karaoke_templates::karaOKEffect(d.effect);
         d.text = std::string(l.text.begin(), l.text.end());
         lines.push_back(std::move(d));
     }
-    return insertLines("New template from preset", std::move(lines));
+    return insertLines("New template from preset", std::move(lines),
+                       (karaOKMode() || preset->karaOK) && modeUndecided());
 }
 
-bool TemplateEditorController::insertLines(const char *commandName, std::vector<application::MacroDialogueLine> made)
+bool TemplateEditorController::insertLines(const char *commandName, std::vector<application::MacroDialogueLine> made,
+                                           bool writeKaraOKMode)
 {
     commit();
     auto *s = session();
@@ -1378,6 +1599,9 @@ bool TemplateEditorController::insertLines(const char *commandName, std::vector<
         command.touches = {(*first)->id};
     const std::optional<core::LineId> before = first != all.end() ? std::optional((*first)->id) : std::nullopt;
     command.apply = [&](core::Document &doc) {
+        namespace kt = application::karaoke_templates;
+        if (writeKaraOKMode && !doc.setScriptInfo(u8(kt::kModeKey), u8(kt::kModeKaraOK)))
+            return false;
         for (const auto &l : fresh) {
             const auto id = before ? doc.insertLineBefore(*before, l) : doc.appendLine(l);
             if (!id)
@@ -1688,19 +1912,50 @@ QVariantList TemplateEditorController::completions(const QString &text, int curs
         }
         return out;
     }
-    if (text.left(from).count(QLatin1Char('!')) % 2 == 1) {
-        for (const auto &f : functions()) {
-            const QString name = QString::fromLatin1(f.name);
-            if (!name.startsWith(prefix))
-                continue;
-            out.append(QVariantMap{{QStringLiteral("name"), name},
-                                   {QStringLiteral("insert"), QString::fromLatin1(f.insert)},
-                                   {QStringLiteral("from"), from},
-                                   {QStringLiteral("help"), translated(f.help)},
-                                   {QStringLiteral("value"), QString()}});
-        }
+    const bool code = currentIsCode();
+    if (!code && text.left(from).count(QLatin1Char('!')) % 2 == 0)
+        return out;
+    const auto add = [&](const char *name, const char *insert, const char *help) {
+        if (!QString::fromLatin1(name).startsWith(prefix))
+            return;
+        out.append(QVariantMap{{QStringLiteral("name"), QString::fromLatin1(name)},
+                               {QStringLiteral("insert"), QString::fromUtf8(insert)},
+                               {QStringLiteral("from"), from},
+                               {QStringLiteral("help"), translated(help)},
+                               {QStringLiteral("value"), QString()}});
+    };
+    const QString qualifier = qualifierBefore(text, from);
+    if (qualifier == QLatin1String("ln") || qualifier.startsWith(QLatin1String("ln."))) {
+        for (const auto &m : lnMembers())
+            if (qualifier == QLatin1String(m.parent))
+                add(m.name, m.insert, m.help);
+        return out;
     }
+    if (code)
+        return out;
+    for (const auto &f : functions())
+        add(f.name, f.insert, f.help);
+    const LnUse ln = lnUse();
+    if (ln.loaded)
+        add(kLn.name, kLn.insert, kLn.help);
+    if (ln.initialised)
+        for (const auto &f : lnShorthands())
+            add(f.name, f.insert, f.help);
     return out;
+}
+
+TemplateEditorController::LnUse TemplateEditorController::lnUse() const
+{
+    LnUse use;
+    if (const auto *doc = document())
+        for (const auto *l : doc->lines()) {
+            if (application::templateKindOf(*l) != application::TemplateKind::Code)
+                continue;
+            const auto text = std::u8string_view(l->text);
+            use.loaded |= text.find(u8"ln.kara") != std::u8string_view::npos;
+            use.initialised |= text.find(u8"ln.init(") != std::u8string_view::npos;
+        }
+    return use;
 }
 
 QVariantList TemplateEditorController::colourRuns(const QString &text) const
@@ -1716,7 +1971,7 @@ QVariantList TemplateEditorController::colourRuns(const QString &text) const
 
 QVariantMap TemplateEditorController::effectParts(const QString &effect) const
 {
-    const EffectWords w = splitEffect(effect);
+    const EffectWords w = splitEffect(stockEffectOf(effect));
     return {{QStringLiteral("kind"), w.kind.toLower()},
             {QStringLiteral("className"), w.classWords.isEmpty() ? QString() : w.classWords.front().toLower()},
             {QStringLiteral("name"), w.classWords.size() > 1 ? w.classWords[1] : QString()},
@@ -1725,7 +1980,7 @@ QVariantMap TemplateEditorController::effectParts(const QString &effect) const
 
 QString TemplateEditorController::effectWithClass(const QString &effect, const QString &className) const
 {
-    EffectWords w = splitEffect(effect);
+    EffectWords w = splitEffect(stockEffectOf(effect));
     if (w.kind.isEmpty())
         w.kind = QStringLiteral("template");
     const QString name = w.classWords.size() > 1 ? w.classWords[1] : QString();
@@ -1735,12 +1990,12 @@ QString TemplateEditorController::effectWithClass(const QString &effect, const Q
         w.classWords << className;
     if (!name.isEmpty() && (className == QLatin1String("line") || className == QLatin1String("pre-line")))
         w.classWords << name;
-    return joinEffect(w);
+    return effectInMode(joinEffect(w));
 }
 
 QString TemplateEditorController::effectWithModifier(const QString &effect, const QString &word, bool on) const
 {
-    EffectWords w = splitEffect(effect);
+    EffectWords w = splitEffect(stockEffectOf(effect));
     const QStringList given = word.split(QLatin1Char(' '), Qt::SkipEmptyParts);
     if (given.isEmpty())
         return effect;
@@ -1758,7 +2013,7 @@ QString TemplateEditorController::effectWithModifier(const QString &effect, cons
     w.modifiers = kept;
     if (on)
         w.modifiers << given;
-    return joinEffect(w);
+    return effectInMode(joinEffect(w));
 }
 
 bool TemplateEditorController::hasModifier(const QString &effect, const QString &word) const

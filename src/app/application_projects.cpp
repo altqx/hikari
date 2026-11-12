@@ -1,6 +1,7 @@
 #include "hikari/app/application.h"
 
 #include "hikari/app/font_catalogs_controller.h"
+#include "hikari/app/style_manager_controller.h"
 #include "hikari/application/project.h"
 #include "log_controller.h"
 #include "project_file.h"
@@ -18,6 +19,19 @@
 #include <vector>
 
 namespace hikari::app {
+
+namespace {
+
+QString projectCredentialNotice(const std::string &id)
+{
+    return QCoreApplication::translate("HikariSub.Project",
+                                       "%1 in project.toml looks like a credential, so it is ignored. Keys go in this "
+                                       "Project’s credentials file (.hikari/credentials.toml) or this machine’s "
+                                       "environment, never in project.toml.")
+        .arg(QString::fromStdString(id));
+}
+
+}
 
 std::optional<int> Application::openWindowBeside(int shellWindow)
 {
@@ -50,6 +64,15 @@ const application::Settings &Application::windowSettings(int shellWindow) const
     return views(shellWindow).settings->settings();
 }
 
+std::optional<api::ProjectState> Application::activeProject() const
+{
+    const QString root = m_projects ? m_projects->root(m_workspace.activeWindow()) : QString();
+    if (root.isEmpty())
+        return std::nullopt;
+    return api::ProjectState{m_projects->name(m_workspace.activeWindow()).toStdString(), root.toStdString(),
+                             projectTrusted(root)};
+}
+
 void Application::applyWindowProject(int shellWindow)
 {
     if (shellWindow != 0 && !m_shellWindows.contains(shellWindow)) {
@@ -79,14 +102,22 @@ void Application::applyWindowProject(int shellWindow)
                                                       "A Project can’t set %1, so the project file’s value is ignored.")
                               .arg(QString::fromStdString(id)),
                           {}, shellWindow);
+        for (const auto &id : project->credentials())
+            m_log->notice(ui::LogController::Warning, title,
+                          projectCredentialNotice(id),
+                          {}, shellWindow);
     }
     loadProjectFonts(shellWindow);
+    if (m_styleManager)
+        m_styleManager->projectChanged();
     const bool moveTags = v.settings->settings().boolean("translation.autoMoveTagsFromOriginal");
     v.editor->setMoveTags(moveTags);
     v.shell->setRunMarks(moveTags);
     if (shellWindow == m_workspace.activeWindow())
         applyGrammarSettings();
     spellingRefresh();
+    if (m_apiHost)
+        m_apiHost->observe();
 }
 
 void Application::loadProjectFonts(int shellWindow)

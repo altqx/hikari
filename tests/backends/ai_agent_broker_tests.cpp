@@ -96,10 +96,10 @@ TEST(AgentSpecs, ClaudeMayWriteOnlyItsOwnStateAndTheSidecarSetsOnlyItsMarkers)
     writeFile(program, "ELF", true);
     const AgentSpec spec = claudeAgent(program, QStringLiteral("/h"), dir.filePath(QStringLiteral("work")));
     EXPECT_EQ(spec.program, QFileInfo(program).canonicalFilePath());
-    EXPECT_EQ(spec.profile.readExecute, QStringList{QFileInfo(program).canonicalPath()});
-    EXPECT_EQ(spec.profile.readWrite,
+    EXPECT_EQ(spec.profile->readExecute, QStringList{QFileInfo(program).canonicalPath()});
+    EXPECT_EQ(spec.profile->readWrite,
               (QStringList{QStringLiteral("/h/.claude"), QStringLiteral("/h/.claude.json"), dir.filePath(QStringLiteral("work"))}));
-    EXPECT_EQ(spec.profile.network, hikari::backends::sandbox::Network::Any);
+    EXPECT_EQ(spec.profile->network, hikari::backends::sandbox::Network::Any);
     EXPECT_TRUE(QFileInfo(dir.filePath(QStringLiteral("work/tmp"))).isDir());
     EXPECT_EQ(spec.environment.value(QStringLiteral("CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC")), QStringLiteral("1"));
     EXPECT_TRUE(spec.sidecarEnvironment.contains(QStringLiteral("CLAUDE_CODE_ENTRYPOINT")));
@@ -160,10 +160,10 @@ protected:
         s.program = QStringLiteral(HIKARI_FAKE_AGENT);
         s.arguments = {QStringLiteral("app-server")};
         s.workingDirectory = dir.path();
-        s.profile = {.name = QStringLiteral("HikariSub.Test.Agent"),
-                     .readExecute = {QFileInfo(s.program).absolutePath()},
-                     .readWrite = {dir.path()},
-                     .network = hikari::backends::sandbox::Network::Any};
+        s.profile = hikari::backends::sandbox::Profile{.name = QStringLiteral("HikariSub.Test.Agent"),
+                                                      .readExecute = {QFileInfo(s.program).absolutePath()},
+                                                      .readWrite = {dir.path()},
+                                                      .network = hikari::backends::sandbox::Network::Any};
         s.sidecarEnvironment = {QStringLiteral("CLAUDE_CODE_ENTRYPOINT")};
         if (guarded)
             s.guard = codexGuard;
@@ -412,7 +412,7 @@ TEST_F(AgentBrokerTest, AnAgentStartsOnlyAfterItsBeforeHookAndItsAfterHookRunsOn
 TEST_F(AgentBrokerTest, AnAgentRunsInItsOwnSandbox)
 {
     AgentSpec s = spec();
-    s.profile.readExecute = {dir.path()};
+    s.profile->readExecute = {dir.path()};
     broker.add("fake", s);
     const std::uint64_t process = start("fake");
     ASSERT_TRUE(waitFor([&] { return exitCode(process).has_value(); }));

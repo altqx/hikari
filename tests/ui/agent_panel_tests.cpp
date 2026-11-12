@@ -14,6 +14,7 @@
 #include "line_table_model.h"
 #include "settings_store.h"
 #include "shell_controller.h"
+#include "stale_temporary_dirs.h"
 #include "theme.h"
 
 #include <QFile>
@@ -249,6 +250,8 @@ class AgentPanelTest : public QObject {
     }
 
 private slots:
+    void initTestCase() { testing::removeStaleTemporaryDirs(); }
+
     void init()
     {
         const QByteArray test(QTest::currentTestFunction());
@@ -595,6 +598,52 @@ private slots:
         QTest::keyClick(window(), Qt::Key_Escape);
         QTRY_VERIFY(!agent().thread().value(QStringLiteral("running")).toBool());
         QVERIFY(kinds().contains(QStringLiteral("notice")));
+    }
+
+    void compactionShowsTheMeterTheDividerTheOfferAndAFailure()
+    {
+        openPanel();
+        const std::string summary = "## Goal\n- QC Ep01–Ep12\n## Open work\n- Ep06 Lines 201–388";
+        const Json compacted = Json::object({{"sessionUpdate", "compacted"}, {"stage", 2}, {"before", 313000},
+            {"after", 21200}, {"stubs", Json::array()}, {"summary", summary},
+            {"message", Json::object({{"author", "assistant"},
+                                      {"parts", Json::array({Json::object({{"type", "text"}, {"text", summary}})})}})},
+            {"headEnd", 1}, {"keptFrom", 1}});
+        const Json failed = Json::object({{"error", Json::object({{"code", -32010}, {"message", "timeout"},
+            {"data", Json::object({{"kind", "timeout"}, {"httpStatus", 0}, {"detail", "provider timeout"}})}})}});
+        type(QString::fromStdString(Json::object({{"say", "Working."}, {"hang", true},
+            {"usage", Json::object({{"inputTokens", 117000}, {"outputTokens", 1000}})},
+            {"compact", Json::array({Json::object({{"updates", Json::array({compacted})},
+                                                   {"result", Json::object({{"compacted", true}, {"summary", summary}})}}),
+                                     failed})}}).dump()));
+        QTRY_VERIFY(agent().thread().value(QStringLiteral("running")).toBool());
+        QTRY_VERIFY(item(QStringLiteral("agentTokens")));
+        QTRY_VERIFY(item(QStringLiteral("agentTokens"))->property("text").toString()
+                        .endsWith(QStringLiteral(" · compacts at the next tool call")));
+        shoot(QStringLiteral("agent-meter-hot"), QStringLiteral("QC Ep01–Ep12"));
+
+        QTest::keyClick(window(), Qt::Key_Escape);
+        QTRY_VERIFY(!agent().thread().value(QStringLiteral("running")).toBool());
+        type(QStringLiteral("/compact keep the glossary decisions"));
+        QTRY_COMPARE(kinds().last(), QStringLiteral("compaction"));
+        QCOMPARE(agent().thread().value(QStringLiteral("contextTokens")).toLongLong(), 21200);
+        QTRY_VERIFY(item(QStringLiteral("agentCompactionToggle")));
+        QVERIFY(!item(QStringLiteral("agentCompactionSummary")));
+        QVERIFY(click(QStringLiteral("agentCompactionToggle")));
+        QTRY_VERIFY(item(QStringLiteral("agentCompactionSummary")));
+        shoot(QStringLiteral("agent-compacted"), QStringLiteral("QC Ep01–Ep12"));
+
+        application->settingsStore()->set(app::AgentController::kAutoCompactSetting, false);
+        QVERIFY(!item(QStringLiteral("agentCompactOffer")));
+        type(QString::fromStdString(Json::object({{"say", "Ep08 done."},
+            {"usage", Json::object({{"inputTokens", 125000}, {"outputTokens", 0}})}}).dump()));
+        QTRY_VERIFY(item(QStringLiteral("agentCompactOffer")));
+        shoot(QStringLiteral("agent-compact-offer"), QStringLiteral("QC Ep01–Ep12"));
+        QVERIFY(click(QStringLiteral("agentOfferCompact")));
+        QTRY_COMPARE(lastItem().value(QStringLiteral("notice")).toString(), QStringLiteral("compactFailed"));
+        QTRY_VERIFY(item(QStringLiteral("agentRetryCompact")));
+        QVERIFY(item(QStringLiteral("agentSummaryThread")));
+        shoot(QStringLiteral("agent-compact-failed"), QStringLiteral("QC Ep01–Ep12"));
     }
 
     void theGlobeSearchesPerThreadAndAnAnswerShowsItsSourcesAndSearches()

@@ -3,6 +3,7 @@
 #include "hikari/app/localisation.h"
 #include "hikari/app/plugin_runtime.h"
 #include "hikari/app/plugin_ui.h"
+#include "hikari/app/project_windows.h"
 #include "hikari/application/node_catalogue.h"
 #include "hikari/plugins/registry.h"
 
@@ -882,6 +883,74 @@ private slots:
         QFile secret(m_dir.filePath(QStringLiteral("secret/key.txt")));
         QVERIFY(secret.open(QIODevice::ReadOnly));
         QCOMPARE(secret.readAll(), QByteArray("secret"));
+    }
+
+    void aPluginReachesATrustedProjectsPlaceAndHearsTheProjectChange()
+    {
+        write(m_dir.filePath(QStringLiteral("show/notes.txt")), "notes");
+        write(m_dir.filePath(QStringLiteral("secret/key.txt")), "secret");
+        std::error_code linkError;
+        std::filesystem::create_symlink(m_dir.filePath(QStringLiteral("secret/key.txt")).toStdU16String(),
+                                        m_dir.filePath(QStringLiteral("show/key.txt")).toStdU16String(), linkError);
+        install(QStringLiteral("com.example.tidy"), QStringLiteral("Tidy"), R"~(
+            hikari.events.on('project.changed', function(data)
+                hikari.notify('changed ' .. (data.project == hikari.null and 'none' or data.project.name))
+            end)
+            hikari.commands.register('greet', function()
+                local project = hikari.project.info()
+                if project == hikari.null then
+                    local _, err = hikari.files.open('project', 'notes.txt')
+                    hikari.notify('no project ' .. err.code)
+                    return
+                end
+                hikari.notify('project ' .. project.name .. ' ' .. tostring(project.trusted))
+                if not project.trusted then
+                    local _, err = hikari.files.open('project', 'notes.txt')
+                    hikari.notify('untrusted ' .. err.code)
+                    return
+                end
+                local notes = hikari.files.open('project', 'notes.txt')
+                hikari.notify('read ' .. notes.access .. ' ' .. hikari.files.read(notes))
+                hikari.files.write(hikari.files.open('project', 'out/made.txt'), 'made')
+                local names = {}
+                for _, entry in ipairs(hikari.files.entries('project', '')) do
+                    names[#names + 1] = entry.name
+                end
+                hikari.notify('entries ' .. table.concat(names, ' '))
+                local _, err = hikari.files.open('project', 'key.txt')
+                hikari.notify('link ' .. (err and err.code or 'granted'))
+            end)
+        )~");
+        auto a = openEpisodes(1);
+        QVERIFY(a);
+        QSignalSpy noticed(&a->log(), &ui::LogController::noticed);
+        app::PluginRuntime::Wiring w = wiring(*a);
+        w.project = [&a] { return a->activeProject(); };
+        app::PluginRuntime runtime(std::move(w));
+        runtime.sync();
+        QTRY_VERIFY(runtime.process(QStringLiteral("com.example.tidy"))->state() == PluginProcess::State::Ready);
+        QVERIFY(runtime.run(kTidyGreet));
+        QTRY_VERIFY(texts(noticed).contains(QStringLiteral("Tidy: no project not_found")));
+        const QString show = app::ProjectWindows::canonicalFolder(m_dir.filePath(QStringLiteral("show")));
+        a->projects().set(a->lastUsedWindow(), show);
+        QTRY_VERIFY(texts(noticed).contains(QStringLiteral("Tidy: changed show")));
+        QVERIFY(runtime.run(kTidyGreet));
+        QTRY_VERIFY(texts(noticed).contains(QStringLiteral("Tidy: untrusted not_found")));
+        QVERIFY(texts(noticed).contains(QStringLiteral("Tidy: project show false")));
+        a->settingsStore()->set("trust.folders", QStringList{show});
+        QVERIFY(runtime.run(kTidyGreet));
+        QStringList wanted{QStringLiteral("Tidy: project show true"), QStringLiteral("Tidy: read write notes"),
+                           QStringLiteral("Tidy: entries notes.txt out")};
+        if (!linkError)
+            wanted << QStringLiteral("Tidy: link not_granted");
+        QTRY_VERIFY(texts(noticed).contains(wanted.last()));
+        for (const QString &line : wanted)
+            QVERIFY2(texts(noticed).contains(line), qPrintable(texts(noticed).join(u'|')));
+        QFile made(m_dir.filePath(QStringLiteral("show/out/made.txt")));
+        QVERIFY(made.open(QIODevice::ReadOnly));
+        QCOMPARE(made.readAll(), QByteArray("made"));
+        a->projects().set(a->lastUsedWindow(), QString());
+        QTRY_VERIFY(texts(noticed).contains(QStringLiteral("Tidy: changed none")));
     }
 
     void aJunctionOutOfItsFolderIsRefused()

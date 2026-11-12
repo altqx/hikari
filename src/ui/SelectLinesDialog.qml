@@ -19,7 +19,8 @@ DialogWindow {
     Component.onCompleted: IconTheme.setWindowIcon(dialog, "select-lines")
 
     readonly property var fieldNames: [qsTr("Text"), qsTr("Style"), qsTr("Actor"), qsTr("Effect"), qsTr("Start time"),
-                                       qsTr("End time")]
+                                       qsTr("End time"), qsTr("Overlapping lines")]
+    readonly property bool byOverlap: fields.currentIndex === fieldNames.length - 1
     function openDialog() {
         const s = app.openSelectLines()
         withChoice.currentIndex = s.with ? 0 : 1
@@ -75,6 +76,7 @@ DialogWindow {
                 id: findText
                 objectName: "selectFindText"
                 editable: true
+                enabled: !dialog.byOverlap
                 model: dialog.recent
                 Layout.fillWidth: true
                 Layout.minimumWidth: 214
@@ -98,15 +100,16 @@ DialogWindow {
         Item { implicitWidth: 1 }
         RowLayout {
             spacing: 18
-            CheckBox { id: matchCase; objectName: "selectMatchCase"; text: qsTr("Match case") }
-            CheckBox { id: regex; objectName: "selectRegex"; text: qsTr("Regular expressions") }
+            CheckBox { id: matchCase; objectName: "selectMatchCase"; text: qsTr("Match case"); enabled: !dialog.byOverlap }
+            CheckBox { id: regex; objectName: "selectRegex"; text: qsTr("Regular expressions"); enabled: !dialog.byOverlap }
         }
 
         RowLabel { text: qsTr("In") }
         SegmentedButtons {
             id: fields
             objectName: "selectField"
-            choices: dialog.fieldNames.map((t, i) => ({ text: t, name: "selectField" + i }))
+            choices: dialog.fieldNames.map((t, i) => ({ text: t, name: "selectField" + i,
+                                                        iconRole: i === dialog.fieldNames.length - 1 ? "select-overlapping" : "" }))
             Accessible.name: qsTr("In field")
             onActivated: index => currentIndex = index
         }

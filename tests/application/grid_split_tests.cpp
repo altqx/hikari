@@ -7,6 +7,7 @@
 #include <cstring>
 #include <optional>
 #include <string_view>
+#include <tuple>
 
 using namespace hikari;
 using namespace hikari::application;
@@ -297,4 +298,129 @@ TEST(SplitLines, BothPiecesKeepTheLinesExtradata)
     ASSERT_EQ(lines.size(), 2u);
     for (const auto *line : lines)
         EXPECT_EQ(line->extra, (std::vector<core::Extradata>{{u8"k", u8"v"}}));
+}
+
+TEST(SplitLines, TagBlocksCarryTheTagsInEffect)
+{
+    EXPECT_EQ(splitTexts("Dialogue: 0,0:00:00.00,0:00:01.00,Default,,0,0,0,,{\\b1}ab{\\i1}cd\n", SplitText::TagBlocks),
+              (std::vector<std::u8string>{u8"{\\pos(310,470)\\an2\\b1}ab", u8"{\\pos(330,470)\\an2\\b1\\i1}cd"}));
+    EXPECT_EQ(splitTexts("Dialogue: 0,0:00:00.00,0:00:01.00,Default,,0,0,0,,{\\b1}ab{\\r\\i1}cd{\\u1}ef\n",
+                         SplitText::TagBlocks),
+              (std::vector<std::u8string>{u8"{\\pos(300,470)\\an2\\b1}ab", u8"{\\pos(320,470)\\an2\\b1\\r\\i1}cd",
+                                          u8"{\\pos(340,470)\\an2\\b1\\r\\i1\\u1}ef"}));
+    EXPECT_EQ(splitTexts("Dialogue: 0,0:00:00.00,0:00:01.00,Default,,0,0,0,,abcd\n", SplitText::TagBlocks),
+              (std::vector<std::u8string>{u8"abcd"}));
+}
+
+TEST(SplitLines, TagBlocksDelayKaraokeByTheSyllablesBefore)
+{
+    EXPECT_EQ(splitTexts("Dialogue: 0,0:00:00.00,0:00:01.00,Default,,0,0,0,,{\\k20}ab{\\kf30}cd{\\k5}ef\n",
+                         SplitText::TagBlocks),
+              (std::vector<std::u8string>{u8"{\\pos(300,470)\\an2\\k20}ab", u8"{\\pos(320,470)\\an2\\k20\\kf30}cd",
+                                          u8"{\\pos(340,470)\\an2\\k50\\k5}ef"}));
+}
+
+TEST(SplitLines, TagBlockPiecesFollowTheirWrap)
+{
+    EXPECT_EQ(splitTexts("Dialogue: 0,0:00:00.00,0:00:01.00,Default,,0,0,0,,{\\an7\\pos(100,50)}ab{\\i1}cd\\Nef\n",
+                         SplitText::TagBlocks),
+              (std::vector<std::u8string>{u8"{\\an7\\pos(100,50)}ab", u8"{\\an7\\pos(120,50)\\i1}cd",
+                                          u8"{\\an7\\pos(100,70)\\i1}ef"}));
+}
+
+TEST(SplitLines, RotatedPiecesTurnAboutTheLinesOrigin)
+{
+    const auto pieces = splitTexts("Dialogue: 0,0:00:00.00,0:00:01.00,Default,,0,0,0,,{\\frz10}ab\n", SplitText::Characters);
+    ASSERT_EQ(pieces.size(), 2u);
+    for (const auto &p : pieces)
+        EXPECT_NE(p.find(u8"\\org(320,470)"), std::u8string::npos) << std::string(p.begin(), p.end());
+    EXPECT_EQ(splitTexts("Dialogue: 0,0:00:00.00,0:00:01.00,Default,,0,0,0,,{\\frz10\\org(1,2)}ab\n",
+                         SplitText::Characters)[1]
+                  .find(u8"\\org(320"),
+              std::u8string::npos);
+    EXPECT_EQ(splitTexts("Dialogue: 0,0:00:00.00,0:00:01.00,Default,,0,0,0,,{\\frz0}ab\n", SplitText::Characters)[0]
+                  .find(u8"\\org"),
+              std::u8string::npos);
+}
+
+namespace {
+
+core::LineRecord lineOf(std::string_view dialogue)
+{
+    const auto document = load(std::string(kTextScript) + std::string(dialogue));
+    return *document.lines()[0];
+}
+
+std::vector<std::tuple<std::int64_t, std::int64_t, std::u8string>> pieces(std::string_view dialogue,
+                                                                          const LegacyTimebase &tb, int count,
+                                                                          SplitUnit unit)
+{
+    std::vector<std::tuple<std::int64_t, std::int64_t, std::u8string>> out;
+    for (const auto &p : linePieces(lineOf(dialogue), tb, count, unit))
+        out.emplace_back(ms(p.start.value), ms(p.end.value), p.text);
+    return out;
+}
+
+using Pieces = std::vector<std::tuple<std::int64_t, std::int64_t, std::u8string>>;
+
+}
+
+TEST(SplitEvery, SecondsRetimeMovesTransformsAndFades)
+{
+    EXPECT_EQ(pieces("Dialogue: 0,0:00:00.00,0:00:05.00,Default,,0,0,0,,{\\move(0,0,100,0)\\t(\\frz90)}a\n", {}, 2,
+                     SplitUnit::Seconds),
+              (Pieces{{0, 2000, u8"{\\move(0,0,100,0,0,5000)\\t(0,5000,\\frz90)}a"},
+                      {2000, 4000, u8"{\\move(0,0,100,0,-2000,3000)\\t(-2000,3000,\\frz90)}a"},
+                      {4000, 5000, u8"{\\move(0,0,100,0,-4000,1000)\\t(-4000,1000,\\frz90)}a"}}));
+    EXPECT_EQ(pieces("Dialogue: 0,0:00:00.00,0:00:05.00,Default,,0,0,0,,{\\t(0,1000,2,\\frz90)\\t(3000,4000,\\bord5)}a\n",
+                     {}, 2, SplitUnit::Seconds),
+              (Pieces{{0, 2000, u8"{\\t(0,1000,2,\\frz90)}a"},
+                      {2000, 4000, u8"{\\frz90\\t(1000,2000,\\bord5)}a"},
+                      {4000, 5000, u8"{\\frz90\\bord5}a"}}));
+    EXPECT_EQ(pieces("Dialogue: 0,0:00:00.00,0:00:05.00,Default,,0,0,0,,{\\fad(500,500)}a\n", {}, 2, SplitUnit::Seconds),
+              (Pieces{{0, 2000, u8"{\\fade(255,0,255,0,500,4500,5000)}a"},
+                      {2000, 4000, u8"a"},
+                      {4000, 5000, u8"{\\fade(255,0,255,-4000,-3500,500,1000)}a"}}));
+    EXPECT_EQ(pieces("Dialogue: 0,0:00:00.00,0:00:05.00,Default,,0,0,0,,{\\move(0,0,100,0,500,1000)}a\n", {}, 2,
+                     SplitUnit::Seconds)[1],
+              (std::tuple<std::int64_t, std::int64_t, std::u8string>{2000, 4000, u8"{\\pos(100,0)}a"}));
+}
+
+TEST(SplitEvery, FramesCutOnFrameStartsOnConstantAndVariableTimebases)
+{
+    EXPECT_EQ(pieces("Dialogue: 0,0:00:00.00,0:00:01.00,Default,,0,0,0,,a\n", LegacyTimebase({}, 25.0), 10,
+                     SplitUnit::Frames),
+              (Pieces{{0, 380, u8"a"}, {380, 780, u8"a"}, {780, 1000, u8"a"}}));
+    const LegacyTimebase vfr({0, 40, 90, 100, 150, 200, 260, 300, 340}, 25.0);
+    const auto split = pieces("Dialogue: 0,0:00:00.00,0:00:00.30,Default,,0,0,0,,a\n", vfr, 3, SplitUnit::Frames);
+    EXPECT_EQ(split, (Pieces{{0, 100, u8"a"}, {100, 230, u8"a"}, {230, 300, u8"a"}}));
+    for (std::size_t k = 0; k < split.size(); ++k) {
+        const int first = vfr.frameAt(int(std::get<0>(split[k]))), end = vfr.frameAt(int(std::get<1>(split[k])));
+        EXPECT_EQ(first, int(3 * k));
+        EXPECT_EQ(end - first, k + 1 < split.size() ? 3 : 1);
+    }
+    EXPECT_EQ(pieces("Dialogue: 0,0:00:00.00,0:00:05.00,Default,,0,0,0,,a\n", LegacyTimebase({}, 25.0), 2,
+                     SplitUnit::Seconds),
+              (Pieces{{0, 1980, u8"a"}, {1980, 3980, u8"a"}, {3980, 5000, u8"a"}}));
+}
+
+TEST(SplitEvery, OneUndoStepAndFramesNeedATimebase)
+{
+    EditSession session{load(std::string(kTextScript) + "Dialogue: 0,0:00:00.00,0:00:05.00,Default,,0,0,0,,ab\n"
+                                                        "Dialogue: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,,cd\n")};
+    const auto lines = session.document().lines();
+    session.setSelection(Selection{lines[0]->id, {lines[0]->id, lines[1]->id}, lines[0]->id, {}});
+    EXPECT_FALSE(splitEvery(session, {}, 10, SplitUnit::Frames));
+    EXPECT_FALSE(splitEvery(session, {}, 0, SplitUnit::Seconds));
+    const auto steps = session.historySize();
+    ASSERT_TRUE(splitEvery(session, {}, 2, SplitUnit::Seconds));
+    EXPECT_EQ(session.historySize(), steps + 1);
+    EXPECT_EQ(session.history().back().name, "Splitting lines");
+    const auto after = session.document().lines();
+    ASSERT_EQ(after.size(), 4u);
+    EXPECT_EQ(after[0]->id, lines[0]->id);
+    EXPECT_EQ(ms(after[2]->end.value), 5000);
+    EXPECT_EQ(after[3]->text, u8"cd");
+    ASSERT_TRUE(session.undo());
+    EXPECT_EQ(session.document().lines().size(), 2u);
 }
