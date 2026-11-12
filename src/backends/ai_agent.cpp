@@ -336,6 +336,8 @@ bool asksPermission(const std::string &operation)
 
 Decision decide(AgentMode mode, const std::string &operation, bool alwaysAsk, bool allowed)
 {
+    if (operation == "automation.run")
+        return Decision::Script;
     if (alwaysAsk)
         return Decision::AlwaysAsk;
     if (mode == AgentMode::Manual && operation == "document.apply")
@@ -466,6 +468,11 @@ std::optional<AgentThread> AgentThread::fromJson(const Json &json)
         t.history = *h;
     if (const Json *i = json.find("items"); i && i->isArray())
         t.items = *i;
+    if (t.items.isArray())
+        for (Json &item : t.items.asArray())
+            if (stringAt(item, "kind") == "script" &&
+                (stringAt(item, "status") == "open" || stringAt(item, "status") == "running"))
+                item["status"] = "withdrawn";
     if (const Json *f = json.find("files"); f && f->isArray())
         for (const Json &file : f->asArray())
             if (file.isString())
@@ -1112,6 +1119,8 @@ void AgentThreads::gate(const std::string &session, const std::string &operation
         return openAsk(*t, Decision::AlwaysAsk, operation, params, risk.reason, std::move(admit), std::move(onWithdraw));
     case Decision::Propose:
         return openProposal(*t, params, std::move(admit), std::move(onWithdraw));
+    case Decision::Script:
+        return openScript(*t, params, std::move(admit), std::move(onWithdraw));
     }
 }
 
@@ -1131,13 +1140,14 @@ void AgentThreads::gateMcp(AgentThread &thread, const Json &params, AiSidecarHos
                                                     "This turn has stopped; make no more changes.", {}}));
     switch (decision) {
     case Decision::Run:
-    case Decision::Propose:
         return admitCall(thread, operation, params, false, std::move(admit));
     case Decision::Judge:
         return judge(thread, operation, params, std::move(admit), std::move(onWithdraw));
     case Decision::Ask:
         return openAsk(thread, Decision::Ask, operation, params, {}, std::move(admit), std::move(onWithdraw));
     case Decision::AlwaysAsk:
+    case Decision::Propose:
+    case Decision::Script:
         return openAsk(thread, Decision::AlwaysAsk, operation, params,
                        "Its MCP server doesn't promise that it only reads or changes nothing it can't undo.",
                        std::move(admit), std::move(onWithdraw));
@@ -1281,6 +1291,49 @@ void AgentThreads::openProposal(AgentThread &thread, const Json &params, AiSidec
     wait(thread, std::move(ask), std::move(item), std::move(admit), std::move(onWithdraw));
 }
 
+void AgentThreads::openScript(AgentThread &thread, const Json &params, AiSidecarHost::Admit admit,
+                              std::function<void(std::function<void()>)> onWithdraw)
+{
+    const std::string script = stringAt(params, "script");
+    const auto document = m_wiring.editingTarget ? m_wiring.editingTarget() : std::nullopt;
+    Json item = Json::object({{"kind", "script"},
+                              {"name", stringAt(params, "name")},
+                              {"macro", stringAt(params, "macro")},
+                              {"script", script},
+                              {"lines", static_cast<std::int64_t>(std::count(script.begin(), script.end(), '\n') +
+                                                                  (script.ends_with('\n') ? 0 : 1))},
+                              {"title", document && m_wiring.documentTitle ? m_wiring.documentTitle(*document) : std::string()},
+                              {"needs", m_wiring.scriptNeeds ? m_wiring.scriptNeeds(script) : Json::array()},
+                              {"status", "open"}});
+    wait(thread, Ask{0, thread.id, Decision::Script, "automation.run", params, {}}, std::move(item), std::move(admit),
+         std::move(onWithdraw));
+}
+
+void AgentThreads::runScript(AgentThread &thread, std::uint64_t ask, AiSidecarHost::Admit admit)
+{
+    AiSidecarHost::Admission admission{callerOf(thread), {}};
+    admission.caller.scriptApproved = true;
+    admission.ran = [this, alive = std::weak_ptr(m_alive), id = thread.id, ask](const api::Result &result) {
+        if (!alive.lock())
+            return;
+        AgentThread *t = find(id);
+        Json *item = t ? itemWith(*t, "ask", Json(ask)) : nullptr;
+        if (!item)
+            return;
+        if (result) {
+            (*item)["status"] = stringAt(*result, "outcome") == "applied" ? "ran" : "failed";
+            (*item)["outcome"] = stringAt(*result, "outcome");
+            (*item)["result"] = stringAt(*result, "message");
+            (*item)["file"] = stringAt(*result, "file");
+        } else {
+            (*item)["status"] = "failed";
+            (*item)["result"] = result.error().message;
+        }
+        touch(*t);
+    };
+    admit(std::move(admission));
+}
+
 void AgentThreads::wait(AgentThread &thread, Ask ask, Json item, AiSidecarHost::Admit admit,
                         std::function<void(std::function<void()>)> onWithdraw)
 {
@@ -1315,9 +1368,12 @@ void AgentThreads::answer(std::uint64_t askId, Answer answer, const std::string 
     if (it == m_asks.end())
         return;
     const bool proposal = it->second.kind == Decision::Propose;
+    const bool script = it->second.kind == Decision::Script;
     if (proposal && (answer == Answer::AskAgain) != it->second.stale && answer != Answer::Deny)
         return;
     if (!proposal && answer == Answer::AskAgain)
+        return;
+    if (script && answer == Answer::AllowInThread)
         return;
     Ask ask = std::move(it->second);
     m_asks.erase(it);
@@ -1327,7 +1383,19 @@ void AgentThreads::answer(std::uint64_t askId, Answer answer, const std::string 
     if (!t)
         return admit(std::unexpected(api::Error{std::string(api::errors::kRefused), "The thread is gone.", {}}));
     std::string status = "allowed";
-    if (proposal && answer == Answer::Deny) {
+    if (script && answer == Answer::Deny) {
+        status = "declined";
+        std::string text = "The user didn't run the script; nothing changed.";
+        if (!message.empty())
+            text += " The user said: " + message;
+        admit(std::unexpected(
+            api::Error{std::string(api::errors::kRefused), std::move(text), Json::object({{"reason", "declined"}})}));
+    } else if (script) {
+        if (Json *item = itemWith(*t, "ask", Json(askId)))
+            (*item)["status"] = "running";
+        runScript(*t, askId, std::move(admit));
+        return touch(*t);
+    } else if (proposal && answer == Answer::Deny) {
         status = "declined";
         std::string text = "The user declined these subtitle edits; nothing changed. Don't propose them again unless they ask.";
         if (!message.empty())

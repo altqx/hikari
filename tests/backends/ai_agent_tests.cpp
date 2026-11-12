@@ -131,6 +131,13 @@ Risk settingRisk(std::string_view setting, Json value = true)
     return riskOf("settings.set", Json::object({{"setting", std::string(setting)}, {"value", std::move(value)}}));
 }
 
+TEST(AgentPolicy, AiWrittenLuaAsksOnEveryRunInEveryMode)
+{
+    for (const AgentMode mode : {AgentMode::Manual, AgentMode::Auto, AgentMode::FullAccess})
+        for (const bool allowed : {false, true})
+            EXPECT_EQ(decide(mode, "automation.run", false, allowed), Decision::Script);
+}
+
 TEST(AgentPolicy, FilesOutsideTheSubtitlesFoldersAndTheUserFolderAsk)
 {
     EXPECT_EQ(riskOf("files.write", Json::object({{"file", "inside"}})), Risk::None);
@@ -176,7 +183,7 @@ TEST(AgentPolicy, EveryWriteOperationIsClassified)
     for (const hikari::api::Operation &op : hikari::api::Api::registry().operations())
         if (op.access == hikari::api::Access::Write)
             writes.insert(op.name);
-    EXPECT_EQ(writes, (std::set<std::string>{"commands.run", "document.apply", "files.write", "panels.close",
+    EXPECT_EQ(writes, (std::set<std::string>{"automation.run", "commands.run", "document.apply", "files.write", "panels.close",
                                              "panels.focus", "panels.open", "selection.set", "settings.set"}))
         << "Classify the new write in alwaysAsk and docs/ai-agent.md, then add it here.";
 }
@@ -716,6 +723,43 @@ TEST_F(AgentThreadsTest, AnMcpToolRunsAsksOrAlwaysAsksAsItsHintsAndTheThreadsMod
     const auto answers = receivedAs("answer");
     ASSERT_EQ(answers.size(), 4u);
     EXPECT_NE(answers[3].dump().find(hikari::api::errors::kRefused), std::string::npos) << answers[3].dump();
+}
+
+TEST_F(AgentThreadsTest, ALuaScriptShowsInFullAndAsksOnEveryRunInEveryMode)
+{
+    const std::string lua = "script_name = 'Fade'\naegisub.register_macro('Fade', '', function() end)\n";
+    const Json run = call("automation.run", Json::object({{"name", "Fade"}, {"script", lua}}));
+    for (const AgentMode mode : {AgentMode::Manual, AgentMode::Auto, AgentMode::FullAccess}) {
+        fake.automation.runs.clear();
+        const std::string id = withMode(mode);
+        threads->send(id, script(Json::array({run, run})));
+        const std::uint64_t first = openAsk();
+        ASSERT_NE(first, 0u);
+        EXPECT_EQ(threads->asks().at(first).kind, Decision::Script);
+        const Json card = items(id, "script").at(0);
+        EXPECT_EQ(at(card, "script"), lua);
+        EXPECT_EQ(*card.find("lines"), Json(2));
+        EXPECT_EQ(at(card, "title"), "a.ass");
+        threads->answer(first, Answer::AllowInThread);
+        EXPECT_TRUE(threads->asks().contains(first)) << "a script has no Allow in this thread";
+        threads->answer(first, Answer::AllowOnce);
+        ASSERT_TRUE(waitFor([&] { return bool(fake.automation.pending); }));
+        EXPECT_EQ(at(items(id, "script").at(0), "status"), "running");
+        fake.automation.finish();
+        ASSERT_TRUE(waitFor([&] { return !threads->asks().empty() && threads->asks().begin()->first != first; }));
+        EXPECT_EQ(threads->asks().begin()->second.kind, Decision::Script) << "a rerun asks again";
+        threads->answer(threads->asks().begin()->first, Answer::Deny, "Not now");
+        ASSERT_TRUE(idle(id));
+        EXPECT_EQ(fake.automation.runs.size(), 1u);
+        EXPECT_TRUE(thread(id).allowed.empty());
+        const auto cards = items(id, "script");
+        ASSERT_EQ(cards.size(), 2u);
+        EXPECT_EQ(at(cards[0], "status"), "ran");
+        EXPECT_EQ(at(cards[1], "status"), "declined");
+        const auto answers = receivedAs("answer");
+        ASSERT_GE(answers.size(), 2u);
+        EXPECT_NE(answers.back().dump().find("Not now"), std::string::npos);
+    }
 }
 
 TEST_F(AgentThreadsTest, QtRefusesWritesWithoutAThreadOrAfterTheTurnStopped)

@@ -362,6 +362,66 @@
         <translation>더 이상 필요 없음</translation>
     </message>
     <message>
+        <source>Run this Lua script?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 · macro “%2”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>on %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 isn’t installed, so the script will stop when it loads.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Runs as an Automation macro: one undo step, and Force stop while it runs. Saved in the AI scripts folder, never added to Autoload.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Run</source>
+        <translation type="unfinished">실행</translation>
+    </message>
+    <message>
+        <source>Don’t run</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Don’t run and tell the agent…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Running %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ran %1 · one undo step</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 didn’t finish: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Didn’t run %1 · “%2”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Didn’t run %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Force stop</source>
+        <translation type="unfinished">강제 중지</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation type="unfinished">열기</translation>
+    </message>
+    <message>
         <source>This thread reached its %1 cap</source>
         <translation>이 스레드가 %1 한도에 도달했습니다</translation>
     </message>
@@ -7322,6 +7382,14 @@ Failed to copy %2 fonts.</source>
         <translation>프레임 안에서 시간 가운데 맞추기</translation>
     </message>
     <message>
+        <source>Track colour…</source>
+        <translation>색상 추적…</translation>
+    </message>
+    <message>
+        <source>Find fade…</source>
+        <translation>페이드 찾기…</translation>
+    </message>
+    <message>
         <source>Import legacy settings…</source>
         <translation>이전 버전 설정 가져오기…</translation>
     </message>
@@ -7400,6 +7468,54 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Interpolate across lines…</source>
         <translation>여러 줄에 걸쳐 보간…</translation>
+    </message>
+    <message>
+        <source>Insert balanced break</source>
+        <translation>균형 잡힌 줄바꿈 삽입</translation>
+    </message>
+    <message>
+        <source>Move break left</source>
+        <translation>줄바꿈을 왼쪽으로 이동</translation>
+    </message>
+    <message>
+        <source>Move break right</source>
+        <translation>줄바꿈을 오른쪽으로 이동</translation>
+    </message>
+    <message>
+        <source>Remove breaks</source>
+        <translation>줄바꿈 제거</translation>
+    </message>
+    <message>
+        <source>Wrap only at \N (\q2)</source>
+        <translation>\N에서만 줄바꿈 (\q2)</translation>
+    </message>
+    <message>
+        <source>Change case to lowercase</source>
+        <translation>소문자로 바꾸기</translation>
+    </message>
+    <message>
+        <source>Change case to UPPERCASE</source>
+        <translation>대문자로 바꾸기</translation>
+    </message>
+    <message>
+        <source>Change case to Title Case</source>
+        <translation>단어 첫 글자를 대문자로 바꾸기</translation>
+    </message>
+    <message>
+        <source>Change case to Sentence case</source>
+        <translation>문장 첫 글자를 대문자로 바꾸기</translation>
+    </message>
+    <message>
+        <source>Change text to full-width</source>
+        <translation>전각 문자로 바꾸기</translation>
+    </message>
+    <message>
+        <source>Change text to half-width</source>
+        <translation>반각 문자로 바꾸기</translation>
+    </message>
+    <message>
+        <source>Swap dialogue alternatives</source>
+        <translation>대사 대안 맞바꾸기</translation>
     </message>
     <message>
         <source>Move tab to new window</source>
@@ -9487,6 +9603,22 @@ Failed to copy %2 fonts.</source>
         <translation>타임코드 닫기</translation>
     </message>
     <message>
+        <source>Follows a picked point’s colour across the selected lines’ frames and writes it as colour or alpha tags</source>
+        <translation>선택한 지점의 색상을 선택한 줄의 프레임마다 따라가 색상 또는 알파 태그로 씁니다</translation>
+    </message>
+    <message>
+        <source>Track colour…</source>
+        <translation>색상 추적…</translation>
+    </message>
+    <message>
+        <source>Finds where the active line’s sign fades in and out at a picked point and writes %1</source>
+        <translation>선택한 지점에서 활성 줄의 간판이 나타나고 사라지는 곳을 찾아 %1을(를) 씁니다</translation>
+    </message>
+    <message>
+        <source>Find fade…</source>
+        <translation>페이드 찾기…</translation>
+    </message>
+    <message>
         <source>Shift by frames to video</source>
         <translation>영상 위치로 프레임 단위 이동</translation>
     </message>
@@ -9537,6 +9669,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Applies Power-Pin tracking data to the selected lines, one line a frame</source>
         <translation>선택한 줄에 Power-Pin 추적 데이터를 적용하여 프레임마다 줄을 하나씩 만듭니다</translation>
+    </message>
+    <message>
+        <source>Find fade</source>
+        <translation>페이드 찾기</translation>
+    </message>
+    <message>
+        <source>Track colour</source>
+        <translation>색상 추적</translation>
     </message>
     <message>
         <source>Open a video first: tracking data is per frame.</source>
@@ -11105,6 +11245,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>%1 copy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>karaOK templates</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Uses karaOK template syntax. Runs in HikariSub; in Aegisub it needs the karaOK templater.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Aegisub 3.2.2 templates</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -20255,6 +20407,333 @@ Styles deleted:
         <source>The templater stopped before it finished.</source>
         <translation>템플릿 실행기가 완료되기 전에 중단되었습니다.</translation>
     </message>
+    <message>
+        <source>The template language this file sets.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The template language this file’s templates use. Choose one to set it in the file.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Template language</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>binds ln.kara to the template environment and adds its shorthands</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the unit’s start plus this share of its duration (ms)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>this share of the unit’s duration, all of it with no argument (ms)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>sets a template variable to a random whole number, once</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>tags and sizes of the karaoke line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>tags and sizes of the current unit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>builds \pos, \move and \t tags</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>periodic animation as \t steps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>colours from RGB or HSL</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>rounding, ranges and interpolation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>drawings for \p1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the progress bar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the first of each named tag in the karaoke line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>every one of each named tag in the karaoke line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the karaoke line’s colour N, or its style’s</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the karaoke line’s alpha N, or its style’s</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the style’s colour N</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the style’s alpha N</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>lead-in and lead-out, from \fad or empty end syllables (ms)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>characters in the karaoke line without tags</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>characters in the karaoke line’s text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>characters in the karaoke line as written</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the first of each named tag in the unit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>every one of each named tag in the unit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the unit’s colour N, or its style’s</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the unit’s alpha N, or its style’s</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>characters in the unit without tags</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>characters in the unit’s text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>\an and \pos at the unit’s anchor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>\an and \move from offsets to the unit’s anchor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>vertical placement for kanji, in karaOK mode</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>\t with whole-millisecond times</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>reads a \t into a table</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>changes a \t’s times or tags</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>reads a \move into a table</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>a wave: sine, square, triangle, sawtooth or noise</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>\t steps that follow a wave</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>a colour from red, green and blue (0–255)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>a colour from hue, saturation and lightness (0–255)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>a colour from hue, saturation and luma (0–255)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>reads or adds to a colour’s red, green and blue</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>reads or adds to a colour’s hue, saturation and lightness</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>n kept between min and max</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>n wrapped into a range</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>n bounced back and forth in a range</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the logarithm of n to a base</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>-1 for a negative n, else 1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>n rounded to this many decimals</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>n rounded to a whole number</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>a random number, to 4 decimals</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>between two numbers, colours or alphas</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>between two values, with acceleration</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>a drawing moved by x and y</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>a rectangle drawing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>a rectangle drawing with round corners</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>a circle drawing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>an equilateral triangle drawing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>a regular polygon drawing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>a gear drawing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>a ready-made drawing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>sets the progress bar (0–1)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>sets a template variable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>n rounded down</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>karaOK’s ln.kara library</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Text</name>
+    <message>
+        <source>Swap dialogue alternatives</source>
+        <translation>대사 대안 맞바꾸기</translation>
+    </message>
+    <message>
+        <source>Line breaks</source>
+        <translation>줄바꿈</translation>
+    </message>
+    <message>
+        <source>Insert balanced break</source>
+        <translation>균형 잡힌 줄바꿈 삽입</translation>
+    </message>
+    <message>
+        <source>Move break left</source>
+        <translation>줄바꿈을 왼쪽으로 이동</translation>
+    </message>
+    <message>
+        <source>Move break right</source>
+        <translation>줄바꿈을 오른쪽으로 이동</translation>
+    </message>
+    <message>
+        <source>Remove breaks</source>
+        <translation>줄바꿈 제거</translation>
+    </message>
+    <message>
+        <source>Wrap only at %1 (%2)</source>
+        <translation>%1에서만 줄바꿈 (%2)</translation>
+    </message>
+    <message>
+        <source>Change case</source>
+        <translation>대소문자 바꾸기</translation>
+    </message>
+    <message>
+        <source>lowercase</source>
+        <translation>소문자</translation>
+    </message>
+    <message>
+        <source>UPPERCASE</source>
+        <translation>대문자</translation>
+    </message>
+    <message>
+        <source>Title Case</source>
+        <translation>단어 첫 글자 대문자</translation>
+    </message>
+    <message>
+        <source>Sentence case</source>
+        <translation>문장 첫 글자 대문자</translation>
+    </message>
+    <message>
+        <source>Full-width</source>
+        <translation>전각</translation>
+    </message>
+    <message>
+        <source>Half-width</source>
+        <translation>반각</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.TextMenu</name>
@@ -22446,6 +22925,156 @@ or codecs or a splitter may be missing</source>
     <message>
         <source>Close</source>
         <translation>닫기</translation>
+    </message>
+    <message>
+        <source>Track colour</source>
+        <translation>색상 추적</translation>
+    </message>
+    <message>
+        <source>Select the lines to track first.</source>
+        <translation>먼저 추적할 줄을 선택하세요.</translation>
+    </message>
+    <message>
+        <source>The clipboard holds no After Effects tracking data.</source>
+        <translation>클립보드에 After Effects 추적 데이터가 없습니다.</translation>
+    </message>
+    <message>
+        <source>The tracking data doesn’t have one row for each frame of the active line.</source>
+        <translation>추적 데이터에 활성 줄의 프레임마다 한 행씩 있지 않습니다.</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n selected lines, %1 to %2, %3 frames. Frames are read without subtitles.</source>
+        <translation>
+            <numerusform>선택한 줄 %n개, %1부터 %2까지, %3프레임. 프레임은 자막 없이 읽습니다.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Follow tracking data</source>
+        <translation>추적 데이터 따라가기</translation>
+    </message>
+    <message>
+        <source>Moves the point with After Effects tracking data from the clipboard, one row for each frame of the active line</source>
+        <translation>클립보드의 After Effects 추적 데이터로 지점을 옮깁니다. 활성 줄의 프레임마다 한 행씩입니다</translation>
+    </message>
+    <message numerus="yes">
+        <source>After Effects data, %n frames, from the clipboard</source>
+        <translation>
+            <numerusform>클립보드의 After Effects 데이터, %n프레임</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Alpha</source>
+        <translation>알파</translation>
+    </message>
+    <message>
+        <source>Skip repeated colours</source>
+        <translation>반복되는 색상 건너뛰기</translation>
+    </message>
+    <message>
+        <source>A frame whose value is the same as the frame before writes no %1</source>
+        <translation>앞 프레임과 값이 같은 프레임은 %1을(를) 쓰지 않습니다</translation>
+    </message>
+    <message>
+        <source>Sign colour</source>
+        <translation>간판 색상</translation>
+    </message>
+    <message>
+        <source>Background colour</source>
+        <translation>배경 색상</translation>
+    </message>
+    <message>
+        <source>Use the point’s colour</source>
+        <translation>지점의 색상 사용</translation>
+    </message>
+    <message>
+        <source>Colour on each frame</source>
+        <translation>프레임별 색상</translation>
+    </message>
+    <message>
+        <source>Result</source>
+        <translation>결과</translation>
+    </message>
+    <message>
+        <source>Reading frame %1 of %2…</source>
+        <translation>%2프레임 중 %1번째 읽는 중…</translation>
+    </message>
+    <message>
+        <source>Read %1 of %2 frames</source>
+        <translation>%2프레임 중 %1프레임 읽음</translation>
+    </message>
+    <message>
+        <source>Apply</source>
+        <translation>적용</translation>
+    </message>
+    <message>
+        <source>Find fade</source>
+        <translation>페이드 찾기</translation>
+    </message>
+    <message>
+        <source>Select a line first.</source>
+        <translation>먼저 줄을 선택하세요.</translation>
+    </message>
+    <message>
+        <source>Move the video to a frame of the line where the sign is fully shown.</source>
+        <translation>영상을 간판이 완전히 보이는 줄의 프레임으로 옮기세요.</translation>
+    </message>
+    <message>
+        <source>The tracking data doesn’t have one row for each frame of the line.</source>
+        <translation>추적 데이터에 줄의 프레임마다 한 행씩 있지 않습니다.</translation>
+    </message>
+    <message>
+        <source>No frame up to this one has the point’s colour, so the fade in can’t be found.</source>
+        <translation>이 프레임까지 지점의 색상을 가진 프레임이 없어 페이드 인을 찾을 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>The point keeps its colour to the end of the line, so the fade out can’t be found.</source>
+        <translation>지점이 줄 끝까지 색상을 유지해 페이드 아웃을 찾을 수 없습니다.</translation>
+    </message>
+    <message numerus="yes">
+        <source>Line %1, %2 to %3, %n frames. The point’s colour on this frame is the fully shown colour.</source>
+        <translation>
+            <numerusform>줄 %1, %2부터 %3까지, %n프레임. 이 프레임에서 지점의 색상이 완전히 보이는 색상입니다.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Point</source>
+        <translation>지점</translation>
+    </message>
+    <message>
+        <source>Moves the point with After Effects tracking data from the clipboard, one row for each frame of the line</source>
+        <translation>클립보드의 After Effects 추적 데이터로 지점을 옮깁니다. 줄의 프레임마다 한 행씩입니다</translation>
+    </message>
+    <message>
+        <source>Find</source>
+        <translation>찾기</translation>
+    </message>
+    <message>
+        <source>Fade in</source>
+        <translation>페이드 인</translation>
+    </message>
+    <message>
+        <source>Fade out</source>
+        <translation>페이드 아웃</translation>
+    </message>
+    <message>
+        <source>How far, in RGB, a frame’s colour may be from the point’s and still count as shown</source>
+        <translation>프레임의 색상이 지점의 색상에서 RGB로 얼마나 떨어져도 보이는 것으로 칠지</translation>
+    </message>
+    <message>
+        <source>Distance from the colour on each frame</source>
+        <translation>프레임별 색상과의 거리</translation>
+    </message>
+    <message>
+        <source>fade in ends, frame %1</source>
+        <translation>페이드 인 끝, 프레임 %1</translation>
+    </message>
+    <message>
+        <source>fade out starts, frame %1</source>
+        <translation>페이드 아웃 시작, 프레임 %1</translation>
+    </message>
+    <message>
+        <source>Arrow keys move the point; Enter applies</source>
+        <translation>화살표 키로 지점을 옮기고, Enter로 적용합니다</translation>
     </message>
 </context>
 <context>
