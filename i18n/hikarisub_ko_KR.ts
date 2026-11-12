@@ -5818,8 +5818,12 @@ Failed to copy %2 fonts.</source>
         <translation>클립 (\clip 또는 \iclip)</translation>
     </message>
     <message>
+        <source>Only these tags</source>
+        <translation>이 태그만</translation>
+    </message>
+    <message>
         <source>These tags:</source>
-        <translation>다음 태그:</translation>
+        <translation type="vanished">다음 태그:</translation>
     </message>
     <message>
         <source>changed</source>
@@ -10925,7 +10929,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Point</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">지점</translation>
     </message>
     <message>
         <source>Tags</source>
@@ -11472,7 +11476,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Point</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">지점</translation>
     </message>
     <message>
         <source>A point from its coordinates.</source>
@@ -14491,8 +14495,12 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>순환 값</translation>
     </message>
     <message>
-        <source>Each Cycle command steps the tag in the selected lines&apos; start block to the next value. Cycle back steps the other way.</source>
+        <source>Each Cycle command steps the tag in the start block of the selected lines to the next value. Cycle back steps the other way.</source>
         <translation>각 순환 명령은 선택한 줄의 시작 블록에 있는 태그를 다음 값으로 바꿉니다. 거꾸로 순환은 반대 방향으로 바꿉니다.</translation>
+    </message>
+    <message>
+        <source>Each Cycle command steps the tag in the selected lines&apos; start block to the next value. Cycle back steps the other way.</source>
+        <translation type="vanished">각 순환 명령은 선택한 줄의 시작 블록에 있는 태그를 다음 값으로 바꿉니다. 거꾸로 순환은 반대 방향으로 바꿉니다.</translation>
     </message>
     <message>
         <source>Values for %1, in order</source>
@@ -15370,10 +15378,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>The active line</source>
-        <translation>활성 줄</translation>
+        <translation type="vanished">활성 줄</translation>
     </message>
     <message>
         <source>The video frame</source>
+        <translation type="vanished">비디오 프레임</translation>
+    </message>
+    <message>
+        <source>Active line</source>
+        <translation>활성 줄</translation>
+    </message>
+    <message>
+        <source>Video frame</source>
         <translation>비디오 프레임</translation>
     </message>
     <message>

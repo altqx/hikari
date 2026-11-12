@@ -5869,8 +5869,12 @@ Failed to copy %2 fonts.</source>
         <translation>கிளிப் (\clip அல்லது \iclip)</translation>
     </message>
     <message>
+        <source>Only these tags</source>
+        <translation>இந்தக் குறிச்சொற்கள் மட்டும்</translation>
+    </message>
+    <message>
         <source>These tags:</source>
-        <translation>இந்தக் குறிச்சொற்கள்:</translation>
+        <translation type="vanished">இந்தக் குறிச்சொற்கள்:</translation>
     </message>
     <message>
         <source>changed</source>
@@ -11020,7 +11024,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Point</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">புள்ளி</translation>
     </message>
     <message>
         <source>Tags</source>
@@ -11573,7 +11577,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Point</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">புள்ளி</translation>
     </message>
     <message>
         <source>A point from its coordinates.</source>
@@ -14600,8 +14604,12 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>சுழற்சி மதிப்புகள்</translation>
     </message>
     <message>
-        <source>Each Cycle command steps the tag in the selected lines&apos; start block to the next value. Cycle back steps the other way.</source>
+        <source>Each Cycle command steps the tag in the start block of the selected lines to the next value. Cycle back steps the other way.</source>
         <translation>ஒவ்வொரு சுழற்சி கட்டளையும் தேர்ந்த வரிகளின் தொடக்கத் தொகுதியில் உள்ள குறிச்சொல்லை அடுத்த மதிப்புக்கு மாற்றும். பின்னோக்கிய சுழற்சி மறுதிசையில் மாற்றும்.</translation>
+    </message>
+    <message>
+        <source>Each Cycle command steps the tag in the selected lines&apos; start block to the next value. Cycle back steps the other way.</source>
+        <translation type="vanished">ஒவ்வொரு சுழற்சி கட்டளையும் தேர்ந்த வரிகளின் தொடக்கத் தொகுதியில் உள்ள குறிச்சொல்லை அடுத்த மதிப்புக்கு மாற்றும். பின்னோக்கிய சுழற்சி மறுதிசையில் மாற்றும்.</translation>
     </message>
     <message>
         <source>Values for %1, in order</source>
@@ -15481,10 +15489,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>The active line</source>
-        <translation>செயலில் உள்ள வரி</translation>
+        <translation type="vanished">செயலில் உள்ள வரி</translation>
     </message>
     <message>
         <source>The video frame</source>
+        <translation type="vanished">காணொளிச் சட்டகம்</translation>
+    </message>
+    <message>
+        <source>Active line</source>
+        <translation>செயலில் உள்ள வரி</translation>
+    </message>
+    <message>
+        <source>Video frame</source>
         <translation>காணொளிச் சட்டகம்</translation>
     </message>
     <message>

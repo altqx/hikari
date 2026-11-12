@@ -5920,8 +5920,12 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Przycięcie (\clip lub \iclip)</translation>
     </message>
     <message>
+        <source>Only these tags</source>
+        <translation>Tylko te tagi</translation>
+    </message>
+    <message>
         <source>These tags:</source>
-        <translation>Te tagi:</translation>
+        <translation type="vanished">Te tagi:</translation>
     </message>
     <message>
         <source>changed</source>
@@ -11115,7 +11119,7 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Point</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Punkt</translation>
     </message>
     <message>
         <source>Tags</source>
@@ -11674,7 +11678,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Point</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Punkt</translation>
     </message>
     <message>
         <source>A point from its coordinates.</source>
@@ -14709,8 +14713,12 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Wartości cykliczne</translation>
     </message>
     <message>
-        <source>Each Cycle command steps the tag in the selected lines&apos; start block to the next value. Cycle back steps the other way.</source>
+        <source>Each Cycle command steps the tag in the start block of the selected lines to the next value. Cycle back steps the other way.</source>
         <translation>Każde polecenie cyklu zmienia tag w bloku początkowym zaznaczonych wierszy na następną wartość. Cykl wstecz zmienia go w drugą stronę.</translation>
+    </message>
+    <message>
+        <source>Each Cycle command steps the tag in the selected lines&apos; start block to the next value. Cycle back steps the other way.</source>
+        <translation type="vanished">Każde polecenie cyklu zmienia tag w bloku początkowym zaznaczonych wierszy na następną wartość. Cykl wstecz zmienia go w drugą stronę.</translation>
     </message>
     <message>
         <source>Values for %1, in order</source>
@@ -15592,10 +15600,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>The active line</source>
-        <translation>Aktywnego wiersza</translation>
+        <translation type="vanished">Aktywnego wiersza</translation>
     </message>
     <message>
         <source>The video frame</source>
+        <translation type="vanished">Klatki wideo</translation>
+    </message>
+    <message>
+        <source>Active line</source>
+        <translation>Aktywnego wiersza</translation>
+    </message>
+    <message>
+        <source>Video frame</source>
         <translation>Klatki wideo</translation>
     </message>
     <message>

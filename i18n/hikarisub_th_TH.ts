@@ -5818,8 +5818,12 @@ Failed to copy %2 fonts.</source>
         <translation>คลิป (\clip หรือ \iclip)</translation>
     </message>
     <message>
+        <source>Only these tags</source>
+        <translation>เฉพาะแท็กเหล่านี้</translation>
+    </message>
+    <message>
         <source>These tags:</source>
-        <translation>แท็กเหล่านี้:</translation>
+        <translation type="vanished">แท็กเหล่านี้:</translation>
     </message>
     <message>
         <source>changed</source>
@@ -10925,7 +10929,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Point</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">จุด</translation>
     </message>
     <message>
         <source>Tags</source>
@@ -11472,7 +11476,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Point</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">จุด</translation>
     </message>
     <message>
         <source>A point from its coordinates.</source>
@@ -14491,8 +14495,12 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>ค่าวนรอบ</translation>
     </message>
     <message>
-        <source>Each Cycle command steps the tag in the selected lines&apos; start block to the next value. Cycle back steps the other way.</source>
+        <source>Each Cycle command steps the tag in the start block of the selected lines to the next value. Cycle back steps the other way.</source>
         <translation>คำสั่งวนรอบแต่ละคำสั่งจะเลื่อนแท็กในบล็อกเริ่มต้นของบรรทัดที่เลือกไปยังค่าถัดไป วนรอบย้อนกลับจะเลื่อนไปอีกทาง</translation>
+    </message>
+    <message>
+        <source>Each Cycle command steps the tag in the selected lines&apos; start block to the next value. Cycle back steps the other way.</source>
+        <translation type="vanished">คำสั่งวนรอบแต่ละคำสั่งจะเลื่อนแท็กในบล็อกเริ่มต้นของบรรทัดที่เลือกไปยังค่าถัดไป วนรอบย้อนกลับจะเลื่อนไปอีกทาง</translation>
     </message>
     <message>
         <source>Values for %1, in order</source>
@@ -15370,10 +15378,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>The active line</source>
-        <translation>บรรทัดที่ใช้งาน</translation>
+        <translation type="vanished">บรรทัดที่ใช้งาน</translation>
     </message>
     <message>
         <source>The video frame</source>
+        <translation type="vanished">เฟรมวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Active line</source>
+        <translation>บรรทัดที่ใช้งาน</translation>
+    </message>
+    <message>
+        <source>Video frame</source>
         <translation>เฟรมวิดีโอ</translation>
     </message>
     <message>
