@@ -19,6 +19,13 @@ const kFake = join(import.meta.dir, "..", "fixtures", "fake-claude.ts");
 const kJoined = "You are Hikari AI.\n\nInstructions from the user's AGENTS.md:\n\nUse Oxford commas.\n\n" +
     "Instructions from this Project's AGENTS.md:\n\nKeep honorifics.";
 
+function nativeSubagentsOff(log: string) {
+    const args = JSON.parse(log.split("\n")[0]!.slice("args ".length)) as string[];
+    const flag = args.indexOf("--disallowedTools");
+    const value = flag >= 0 ? args[flag + 1] ?? "" : args.find((a) => a.startsWith("--disallowedTools="))?.slice(18) ?? "";
+    return ["Agent", "Task"].every((tool) => value.split(/[ ,]/).includes(tool));
+}
+
 function harness(answers: Partial<Record<OperationName, unknown>> = {}, env: Record<string, string> = {}, system?: string,
     child?: ReturnType<typeof qtLink>) {
     const log = join(mkdtempSync(join(tmpdir(), "fake-claude-")), "log");
@@ -69,7 +76,7 @@ describe("Claude through the Agent SDK", () => {
         expect(args).toContain("--permission-mode=dontAsk");
         expect(args).not.toContain("--bare");
         expect(args.some((a) => a.startsWith("--dangerously"))).toBe(false);
-        expect(args.find((a) => a.startsWith("--disallowedTools"))).toContain("Agent");
+        expect(nativeSubagentsOff(h.log())).toBe(true);
 
         const tools = h.updates.filter((u) => u.sessionUpdate === "tool_call");
         expect(tools.map((u) => u.sessionUpdate === "tool_call" && [u.title, u.kind]))
@@ -196,5 +203,6 @@ describe("Claude through the Agent SDK", () => {
             ["lines.get", "t1"], ["document.apply", "t1"]]);
         expect(qt.calls[2]!.params).toEqual({ ids: [1], fields: ["text"], document: 1 });
         expect((qt.calls[3]!.params as { revision: number }).revision).toBe(9);
+        expect(nativeSubagentsOff(h.log())).toBe(true);
     }, 30_000);
 });
