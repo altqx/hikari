@@ -819,6 +819,9 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         [this] { return m_projects ? m_projects->root(m_workspace.activeWindow()) : QString(); }});
     m_skillsSettings = std::make_unique<SkillsSettings>(
         m_userFolder, [this](int window) { return m_projects ? m_projects->root(window) : QString(); });
+    m_ai->setProjectKeys([this](const std::string &project, const std::string &providerId) {
+        return projectAiKey(QString::fromStdString(project), providerId);
+    });
     m_inlineAi = std::make_unique<InlineAiController>(InlineAiController::Wiring{
         *m_ai, *m_settings, m_apiHost->api(), m_apiHost->review(), m_workspace, *m_files, *m_agent,
         [this](application::DocumentId document, core::LineId line) {
@@ -832,6 +835,9 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
                 QString::fromStdString(window.settings().text("translation.translator")),
                 QString::fromStdString(window.settings().text("translation.reviewer")),
                 window.waitsForTrust("translation.translator") || window.waitsForTrust("translation.reviewer")};
+        },
+        [this](application::DocumentId document) {
+            return views(m_workspace.window(document).value_or(m_workspace.activeWindow())).settings->root();
         }});
     const auto hideAiCommands = [this] {
         m_hotkeys->setHidden([this](int id) { return !m_ai->on() && application::aiCommand(id); });

@@ -121,6 +121,8 @@ public:
     application::ai::Providers *providers() const;
     application::ai::SearchKeys *searchKeys() const;
     backends::ai::AiRequests *requests() const;
+    /// Kept across AI being switched off and on.
+    void setProjectKeys(std::function<std::optional<std::string>(const std::string &project, const std::string &providerId)> keys);
     /// Null with AI off, or in builds that run their own sidecar.
     backends::ai::AiSidecarUpdater *updater() const;
     backends::ai::AiSignIn *signIn() const;
@@ -179,6 +181,7 @@ signals:
     void rolledBack(QString version, QString reason);
 
 private:
+    std::function<std::optional<std::string>(const std::string &, const std::string &)> m_projectKeys;
     void apply();
     void startUpdates();
     void stage();

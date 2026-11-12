@@ -246,6 +246,7 @@ void AiFeatures::apply()
         m_live->requests =
             std::make_unique<backends::ai::AiRequests>(*m_live->providers, [this] { return sidecarForAction(); });
         m_live->requests->setCaching(m_settings.boolean(kCachingSetting));
+        m_live->requests->setProjectKeys(m_projectKeys);
         m_live->searchKeys = std::make_unique<application::ai::SearchKeys>(*m_live->keys);
         applyWebSearch();
         m_live->mcp = std::make_unique<backends::ai::McpClients>(*m_live->keys, QDir::homePath());
@@ -509,6 +510,14 @@ application::ai::Providers *AiFeatures::providers() const
 application::ai::SearchKeys *AiFeatures::searchKeys() const
 {
     return m_live ? m_live->searchKeys.get() : nullptr;
+}
+
+void AiFeatures::setProjectKeys(
+    std::function<std::optional<std::string>(const std::string &project, const std::string &providerId)> keys)
+{
+    m_projectKeys = std::move(keys);
+    if (m_live)
+        m_live->requests->setProjectKeys(m_projectKeys);
 }
 
 backends::ai::AiRequests *AiFeatures::requests() const
