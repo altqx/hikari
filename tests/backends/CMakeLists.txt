@@ -355,6 +355,7 @@ hikari_add_gtest(hikari_backends_font_collector_tests SOURCES font_collector_tes
     PROPERTIES ENVIRONMENT "FONTCONFIG_FILE=${CMAKE_CURRENT_BINARY_DIR}/font-fixtures.conf" RUN_SERIAL TRUE)
 target_compile_definitions(hikari_backends_font_collector_tests PRIVATE
     HIKARI_FONT_FIXTURES="${HIKARI_FONT_FIXTURE_DIR}"
+    HIKARI_ATTACHMENT_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/attachments"
     HIKARI_FONTCONFIG_FILE="${CMAKE_CURRENT_BINARY_DIR}/font-fixtures.conf")
 add_dependencies(hikari_backends_font_collector_tests hikari_font_fixtures)
 target_include_directories(hikari_backends_font_collector_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
