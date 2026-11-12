@@ -761,6 +761,13 @@
         </translation>
     </message>
     <message numerus="yes">
+        <source>%n selected lines</source>
+        <translation>
+            <numerusform>%n selected line</numerusform>
+            <numerusform>%n selected lines</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
         <source>%n problems</source>
         <translation>
             <numerusform>%n problem</numerusform>

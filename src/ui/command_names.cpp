@@ -379,6 +379,7 @@ constexpr const char *kHotkeyCommands[] = {
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Node effects"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Blur and glow layers…"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Build layers with the last values"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Typesetting graph…"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Snap start to the previous keyframe"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Snap start to the next keyframe"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Snap end to the previous keyframe"),
