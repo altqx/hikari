@@ -191,13 +191,24 @@ TEST(AgentPolicy, TypesetApplyAsksInManualModeLikeOtherWrites)
     EXPECT_EQ(decide(AgentMode::FullAccess, "typeset.apply", false, false), Decision::Run);
 }
 
+TEST(AgentPolicy, EffectsWritesAskInManualModeLikeOtherWrites)
+{
+    for (const std::string operation : {"effects.save", "effects.apply"}) {
+        ASSERT_EQ(riskOf(operation, Json::object({{"line", 4}})), Risk::None) << operation;
+        EXPECT_EQ(decide(AgentMode::Manual, operation, false, false), Decision::Ask) << operation;
+        EXPECT_EQ(decide(AgentMode::Auto, operation, false, false), Decision::Judge) << operation;
+        EXPECT_EQ(decide(AgentMode::FullAccess, operation, false, false), Decision::Run) << operation;
+    }
+}
+
 TEST(AgentPolicy, EveryWriteOperationIsClassified)
 {
     std::set<std::string> writes;
     for (const hikari::api::Operation &op : hikari::api::Api::registry().operations())
         if (op.access == hikari::api::Access::Write)
             writes.insert(op.name);
-    EXPECT_EQ(writes, (std::set<std::string>{"automation.run", "commands.run", "document.apply", "files.write",
+    EXPECT_EQ(writes, (std::set<std::string>{"automation.run", "commands.run", "document.apply", "effects.apply",
+                                             "effects.save", "files.write",
                                              "karaoke.align", "karaoke.apply_template", "panels.close", "panels.focus",
                                              "panels.open", "selection.set", "settings.set",
                                              "translation.project_write", "typeset.apply"}))

@@ -775,7 +775,14 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         m_aiScripts.get(),
         [this] { return perspectiveMeasure(); }, [this] { return activeProject(); },
         [this](application::DocumentId document) { return honyaFolderOf(document); },
-        m_aiKaraoke.get()});
+        m_aiKaraoke.get(),
+        [this] {
+            application::NodeEffectOptions o;
+            o.measure = perspectiveMeasure().port;
+            o.lua = &luaNodes();
+            o.audio = m_automation->media().peakAudio();
+            return o;
+        }});
     AiFeatures::Ports aiPorts = options.aiPorts ? std::move(*options.aiPorts)
                                                 : AiFeatures::defaultPorts(m_userFolder, &m_apiHost->api(),
                                                                            options.appVersion.isEmpty()
