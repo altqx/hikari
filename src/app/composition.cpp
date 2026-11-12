@@ -25,6 +25,7 @@
 #include <QElapsedTimer>
 #include <QFile>
 #include <QFileInfo>
+#include <QDate>
 #include <QGuiApplication>
 #include <QLocale>
 #include <QProcess>
@@ -73,6 +74,15 @@ void openStartVideo(QObject *mainWindow, const QString &path)
 }
 
 namespace {
+
+constexpr bool automationResetBuild()
+{
+#ifdef HIKARI_AUTOMATION_RESET
+    return true;
+#else
+    return false;
+#endif
+}
 
 int crashTestSink = 0;
 
@@ -242,6 +252,9 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
     Application::Options options;
     if (folderEnvironment.userDirOverride.isEmpty())
         options.userFolderMove = userFolder.moveIn(oldFolders, folderEnvironment.portable);
+    if (automationResetDue(automationResetBuild() || qEnvironmentVariableIntValue("HIKARISUB_AUTOMATION_RESET") == 1,
+                           QStringLiteral(HIKARI_VERSION)))
+        options.automationReset = resetAutomationFolder(userFolder.root(), QDate::currentDate());
     options.userFolderSeed = userFolder.seed(bundledFolder());
     options.userFolder = userFolder.root();
     options.plugins = {userFolder.plugins(), userFolder.pluginData(), userFolder.pluginCache(), userFolder.pluginRegistry()};
@@ -444,6 +457,9 @@ int run(int argc, char **argv, StartupMode mode, const std::function<void()> &wi
     if (startup.mcp) {
         QCoreApplication core(argc, argv);
         const UserFolder userFolder = UserFolder::locate(folderEnvironmentOf(UpdateEnvironment::current()));
+        if (!startup.mcpChannelUrl.empty())
+            backends::ai::runMcpHttpBridge(QString::fromStdString(startup.mcpChannelUrl),
+                                           qgetenv(backends::ai::kMcpTokenVariable));
         if (!startup.mcpChannel.empty())
             backends::ai::runMcpBridge(backends::ai::McpEndpoint{QString::fromStdString(startup.mcpChannel),
                                                                  qgetenv(backends::ai::kMcpTokenVariable), 0});

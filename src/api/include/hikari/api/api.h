@@ -13,7 +13,7 @@
 namespace hikari::api {
 
 // Grows by one with each release that adds to the API.
-inline constexpr int kApiVersion = 2;
+inline constexpr int kApiVersion = 1;
 
 enum class Access { Read, Write };
 std::string_view accessName(Access access);

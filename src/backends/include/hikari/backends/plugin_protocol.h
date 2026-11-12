@@ -28,7 +28,7 @@
 
 namespace hikari::backends::plugin {
 
-inline constexpr std::uint32_t kProtocolVersion = 4;
+inline constexpr std::uint32_t kProtocolVersion = 1;
 inline constexpr char kHelperName[] = "hikari-plugin-helper";
 
 enum class Command : std::int32_t { Load = 1, Run = 2 };

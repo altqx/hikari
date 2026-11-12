@@ -620,7 +620,7 @@ Item {
                 Layout.preferredHeight: search.wide || !search.resultsVisible ? -1
                                         : Math.min(optionsGrid.implicitHeight, search.height * 0.45)
                 Layout.leftMargin: foldButton.width + rowsGrid.columnSpacing
-                contentWidth: Math.max(availableWidth, search.optionsFixedWidth)
+                contentWidth: search.optionsFixedWidth
                 leftPadding: mirrored ? effectiveScrollBarWidth : 0
                 rightPadding: mirrored ? 0 : effectiveScrollBarWidth
                 clip: true
@@ -633,7 +633,7 @@ Item {
 
                 GridLayout {
                     id: optionsGrid
-                    width: optionsScroll.contentWidth
+                    width: Math.max(optionsScroll.availableWidth, optionsScroll.contentWidth)
                     columns: search.wide ? 2 : 1
                     columnSpacing: 8
                     rowSpacing: search.wide ? 6 : 2

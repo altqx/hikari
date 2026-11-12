@@ -114,6 +114,13 @@
             <numerusform>This subtitle file wants to run %n scripts on your computer.</numerusform>
         </translation>
     </message>
+    <message numerus="yes">
+        <source>Reinstall %n script(s)</source>
+        <translation>
+            <numerusform>Reinstall %n script</numerusform>
+            <numerusform>Reinstall %n scripts</numerusform>
+        </translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Conversion</name>

@@ -40,3 +40,13 @@ TEST(Tiers, UserOnlyStoresHaveNoProjectPath)
     EXPECT_EQ(projectPathOf("styleCatalogs", root), root / ".hikari" / "catalogs");
     EXPECT_FALSE(projectPathOf("styleCatalogs", {}));
 }
+
+TEST(Tiers, PresetStoresShareTheProjectsPresetsFile)
+{
+    const std::filesystem::path root = "/show";
+    for (const char *id : {"dialogPresets", "shiftPresets", "postprocessorPresets"}) {
+        ASSERT_NE(tierStore(id), nullptr) << id;
+        EXPECT_EQ(tierStore(id)->rule, TierRule::HiddenByName) << id;
+        EXPECT_EQ(projectPathOf(id, root), root / ".hikari" / "presets.toml") << id;
+    }
+}

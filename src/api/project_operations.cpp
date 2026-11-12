@@ -27,11 +27,11 @@ Result projectInfo(const Context &context, const Json &)
 void addProjectOperations(Registry &registry)
 {
     addOperation(registry, Access::Read, "project.info", "The Project of the window the user works in, or null.",
-                 R"({"type": "object", "additionalProperties": false})", kProjectResult, now(projectInfo), 2);
+                 R"({"type": "object", "additionalProperties": false})", kProjectResult, now(projectInfo));
     registry.addEvent(EventType{"project.changed",
                                 "The window the user works in opened or closed a Project, or the user moved to a window "
                                 "with another one.",
-                                schema(kProjectResult), 2});
+                                schema(kProjectResult)});
 }
 
 }

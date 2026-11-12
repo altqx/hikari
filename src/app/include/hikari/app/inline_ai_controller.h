@@ -69,6 +69,8 @@ public:
         AgentController &agent;
         std::function<void(application::DocumentId, core::LineId)> select;
         std::function<ProjectModels(application::DocumentId)> projectModels = {};
+        /// The Project folder of the Document's window; empty without one.
+        std::function<QString(application::DocumentId)> projectFolder = {};
     };
 
     static constexpr const char *kActionsSetting = "ai.inline.actions";

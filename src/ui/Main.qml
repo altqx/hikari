@@ -68,6 +68,7 @@ ApplicationWindow {
     required property var automationHotkeys
     required property var updates
     required property var whatsNew
+    property var automationReset: null
     required property var analytics
     required property var starPrompt
     required property var crashReports
@@ -7311,14 +7312,18 @@ ApplicationWindow {
                 root.projectRevision
                 return root.app.projectRoot(root.shellWindow)
             }
-            readonly property bool needed: {
+            readonly property var reasons: {
                 root.projectRevision
-                return root.app.projectNeedsTrust(root.shellWindow)
+                return root.app.projectTrustReasons(root.shellWindow)
             }
-            visible: needed && dismissed !== folder
+            visible: reasons.length > 0 && dismissed !== folder
             iconRole: "trust"
             closable: false
-            text: qsTranslate("HikariSub.Project", "This project has its own scripts or plugin settings. Trust “%1” to run them.")
+            text: (reasons.length > 1
+                   ? qsTranslate("HikariSub.Project", "This project has its own scripts, plugin settings or AI keys. Trust “%1” to use them.")
+                   : reasons[0] === "keys"
+                   ? qsTranslate("HikariSub.Project", "This project has its own AI keys. Trust “%1” to use them; until then Hikari AI uses yours.")
+                   : qsTranslate("HikariSub.Project", "This project has its own scripts or plugin settings. Trust “%1” to run them."))
                   .arg(root.projectName)
             Layout.fillWidth: true
             IconTextButton {
@@ -7331,6 +7336,30 @@ ApplicationWindow {
                 objectName: "projectTrustNotNow"
                 text: qsTranslate("HikariSub.MainWindow", "Not now")
                 onClicked: projectTrustBar.dismissed = projectTrustBar.folder
+            }
+        }
+        InlineBar {
+            id: projectKeyValuesBar
+            objectName: "projectKeyValuesBar"
+            property string dismissed: ""
+            readonly property string folder: {
+                root.projectRevision
+                return root.app.projectRoot(root.shellWindow)
+            }
+            readonly property var found: {
+                root.projectRevision
+                return root.app.projectKeyValuesFound(root.shellWindow)
+            }
+            visible: found.length > 0 && dismissed !== folder
+            severity: "warning"
+            text: qsTranslate("HikariSub.Project", "project.toml holds an AI key for %1. HikariSub ignores it: keys go in .hikari/credentials.toml, which git doesn’t share.")
+                  .arg(found.join(", "))
+            Layout.fillWidth: true
+            onClosed: dismissed = folder
+            Button {
+                objectName: "projectKeyValuesSettings"
+                text: qsTranslate("HikariSub.Project", "Project settings…")
+                onClicked: root.openProjectSettingsPage("ai")
             }
         }
         InlineBar {
@@ -8491,6 +8520,15 @@ ApplicationWindow {
         }
     }
     Loader {
+        id: automationResetDialogLoader
+        objectName: "automationResetDialogLoader"
+        active: false
+        sourceComponent: AutomationResetDialog {
+            reset: root.automationReset
+            settings: root.app.settings
+        }
+    }
+    Loader {
         id: whatsNewDialogLoader
         objectName: "whatsNewDialogLoader"
         active: false
@@ -8851,6 +8889,7 @@ ApplicationWindow {
         return settingsLoader.item
     }
     function openSettings(page, filter) { settingsWindow().openDialog(page, filter) }
+    function openProjectSettingsPage(page) { settingsWindow().openDialog(undefined, undefined, page) }
     function repeatInlineAi(inEditor, field) {
         if (root.inlineAi.last.action)
             inlineAiBox.begin(Object.assign({}, root.inlineAi.last, {repeat: true}), inEditor, field)
@@ -9209,6 +9248,8 @@ ApplicationWindow {
             root.workspaceLayout.resumeMode("Karaoke")
         if (root.app.gettingStartedDue())
             Qt.callLater(() => root.lazy(gettingStartedDialogLoader).openSetup())
+        if (root.shellWindow === 0 && root.automationReset?.due)
+            Qt.callLater(() => root.lazy(automationResetDialogLoader).open())
         if (root.shellWindow === 0 && root.crashReports.pending.length > 0
                 && !(root.crashReports.canSend && root.app.settings.value("privacy.alwaysSendCrashReports") === true))
             Qt.callLater(() => crashReportWindow.showReport("start"))

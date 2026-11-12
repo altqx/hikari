@@ -29,6 +29,7 @@
 #include "hikari/app/plugin_marketplace.h"
 #include "hikari/app/plugin_runtime.h"
 #include "hikari/app/user_folder.h"
+#include "hikari/app/automation_reset_notice.h"
 #include "hikari/app/project_windows.h"
 #include "hikari/core/ass_attachments.h"
 #include "hikari/core/conversion.h"
@@ -247,6 +248,7 @@ public:
         QString userFolder;
         UserFolder::MoveReport userFolderMove;
         UserFolder::SeedReport userFolderSeed;
+        AutomationReset automationReset;
         // Empty: no plugins can be installed.
         PluginManager::Folders plugins;
         // Empty: no marketplace.
@@ -335,8 +337,25 @@ public:
     Q_INVOKABLE QStringList projectOverrides(int shellWindow) const;
     // Writes each value that differs from the window's to project.toml and removes `cleared` from it; false when a write failed.
     Q_INVOKABLE bool applyProjectSettings(int shellWindow, const QVariantMap &values, const QStringList &cleared);
-    // The Project is untrusted and holds scripts (.hikari/automation/) or a [plugins] table.
+    // The Project is untrusted and holds scripts (.hikari/automation/), a [plugins] table or AI keys it names.
     Q_INVOKABLE bool projectNeedsTrust(int shellWindow) const;
+    // Why projectNeedsTrust: "scripts" (scripts or plugin settings) and "keys".
+    Q_INVOKABLE QStringList projectTrustReasons(int shellWindow) const;
+    // Settings › Project › AI: {trusted, rows, valuesFound, credentialsExists, credentialsPath}. A row is {id, name,
+    // needsKey, known, env, entry, used, from}; used is "yours", "env", "file", "untrusted", "noFile", "notFound" or
+    // "noKey". No key is ever in it.
+    Q_INVOKABLE QVariantMap projectAiKeys(int shellWindow) const;
+    // `names` maps provider ids to {env, entry}; an empty pair removes the entry. False when a write failed.
+    Q_INVOKABLE bool applyProjectAiKeys(int shellWindow, const QVariantMap &names);
+    // .hikari/credentials.toml with an empty entry for each named one, and .hikari/.gitignore.
+    Q_INVOKABLE bool createProjectCredentials(int shellWindow);
+    Q_INVOKABLE void openProjectCredentials(int shellWindow);
+    // Providers (or "keys") whose key project.toml holds; the values are ignored.
+    Q_INVOKABLE QStringList projectKeyValuesFound(int shellWindow) const;
+    // Moves the keys project.toml holds into the credentials file, naming them there instead.
+    Q_INVOKABLE bool moveProjectKeysToCredentials(int shellWindow);
+    // The key the trusted Project open at `root` names for `providerId`.
+    std::optional<std::string> projectAiKey(const QString &root, std::string_view providerId) const;
     // Adds the window's Project folder to trust.folders, which applies the Project again.
     Q_INVOKABLE void trustProject(int shellWindow);
     // {trusted, named: the ids its [plugins] table names, missing: those a trusted one enables that
@@ -882,6 +901,7 @@ public:
     Analytics &analytics() { return *m_analytics; }
     DiscordPresence &presence() { return *m_presence; }
     StarPrompt &starPrompt() { return *m_starPrompt; }
+    AutomationResetNotice &automationReset() { return *m_automationReset; }
     CrashReports &crashReports() { return *m_crashReports; }
     WhatsNew &whatsNew() { return *m_whatsNew; }
     StyleManagerController &styleManager() { return *m_styleManager; }
@@ -1339,6 +1359,7 @@ private:
     std::unique_ptr<StarPrompt> m_starPrompt;
     QString bundledScriptName(const QString &path) const;
     std::unique_ptr<WhatsNew> m_whatsNew;
+    std::unique_ptr<AutomationResetNotice> m_automationReset;
     std::unique_ptr<StyleManagerController> m_styleManager;
     std::unique_ptr<FontCollectorController> m_fontCollector;
     std::unique_ptr<AlignToVideoController> m_alignToVideo;

@@ -1,4 +1,5 @@
 #include "hikari/app/application.h"
+#include "hikari/app/composition.h"
 
 #include <QDateTime>
 #include <QFile>
@@ -105,6 +106,42 @@ private slots:
         const auto values = a.saveDialogValues();
         QCOMPARE(values.value(QStringLiteral("file")).toUrl().toLocalFile(), dir.filePath(QStringLiteral("enhanced")));
         QCOMPARE(values.value(QStringLiteral("extension")).toString(), QStringLiteral("ass"));
+    }
+
+    void importedFormatsOpenAsSubtitlesFromTheCommandLineADropAndRecentlyOpened()
+    {
+        QStringList files;
+        for (const char *name : {"decoded.krc", "decoded.qrc"}) {
+            files << dir.filePath(QStringLiteral("cli-%1").arg(QLatin1String(name)));
+            QFile::remove(files.back());
+            QVERIFY(QFile::copy(QStringLiteral(HIKARI_LYRICS_FIXTURES "/") + QLatin1String(name), files.back()));
+        }
+        for (const char *name : {"cli-clip.ytt", "cli-clip.srv3"}) {
+            files << dir.filePath(QLatin1String(name));
+            QFile f(files.back());
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write(R"(<timedtext format="3"><body><p t="1000" d="2000">Hello</p></body></timedtext>)");
+        }
+        for (const QString &lyrics : files) {
+            const std::string title = QFileInfo(lyrics).completeBaseName().toStdString() + ".ass";
+
+            app::Application a;
+            QVERIFY(!app::openStartFile(a, lyrics));
+            QCOMPARE(targetTitle(a), title);
+            QVERIFY(a.targetUntitled());
+
+            const QVariantMap dropped = a.openDropped({QUrl::fromLocalFile(lyrics)});
+            QCOMPARE(dropped.value(QStringLiteral("kind")).toString(), QStringLiteral("subtitles"));
+
+            const QVariantList recent = a.recentSubtitles();
+            QVERIFY(!recent.isEmpty());
+            const QString remembered = recent.front().toMap().value(QStringLiteral("path")).toString();
+            QCOMPARE(QFileInfo(remembered).fileName(), QFileInfo(lyrics).fileName());
+            const int tabs = static_cast<int>(a.tabs().size());
+            QVERIFY(a.openForwarded({remembered}).value(QStringLiteral("kind")).toString().isEmpty());
+            QCOMPARE(static_cast<int>(a.tabs().size()), tabs + 1);
+            QCOMPARE(targetTitle(a), title);
+        }
     }
 
     void youTubeTimedTextOpensAsAnUntitledAssDocument()

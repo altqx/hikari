@@ -236,6 +236,41 @@ TEST_F(AiFeaturesTest, ASidecarStartedForMcpServesAiActionsWithItsRelayAndAgents
     EXPECT_EQ(counts.agentLists, 1);
 }
 
+#ifndef Q_OS_WIN
+TEST_F(AiFeaturesTest, TheAcpAgentsFoundAndTheUsersOwnAreAddedAgainWhenTheirListChanges)
+{
+    app::AiFeatures::Ports p = ports(false);
+    p.acpCli = [](const QString &command) {
+        return command == QLatin1String("agy") ? QString() : QStringLiteral("/opt/") + command;
+    };
+    std::vector<QString> added;
+    p.acpSpec = [&](const app::AiFeatures::AcpAgent &agent, std::shared_ptr<backends::ai::TokenFileLease>) {
+        added.push_back(agent.id + u'=' + agent.program + u' ' + agent.arguments);
+        return std::optional<backends::ai::AgentSpec>(backends::ai::AgentSpec{.program = agent.program});
+    };
+    app::AiFeatures features(settings, std::move(p));
+    features.setCustomAgents({{.id = QStringLiteral("custom-1"), .name = QStringLiteral("Mine"),
+                               .command = QStringLiteral("mine"), .arguments = QStringLiteral("--acp")}});
+    settings.set(app::AiFeatures::kCustomAgentsSetting,
+                 settings.list(app::AiFeatures::kCustomAgentsSetting) << QStringLiteral(R"({"id":"../x","command":"evil"})"));
+
+    const std::vector<app::AiFeatures::AcpAgent> custom = features.customAgents();
+    ASSERT_EQ(custom.size(), 1u);
+    EXPECT_EQ(custom.front().name, QStringLiteral("Mine"));
+    EXPECT_EQ(custom.front().program, QStringLiteral("/opt/mine"));
+    std::vector<QString> listed;
+    for (const auto &agent : features.acpAgents())
+        listed.push_back(agent.id);
+    EXPECT_EQ(listed, (std::vector<QString>{QStringLiteral("opencode"), QStringLiteral("custom-1")}));
+
+    ASSERT_NE(features.sidecarForMcp(), nullptr);
+    EXPECT_EQ(added, (std::vector<QString>{QStringLiteral("opencode=/opt/opencode "), QStringLiteral("custom-1=/opt/mine --acp")}));
+    added.clear();
+    features.setCustomAgents({});
+    EXPECT_EQ(added, (std::vector<QString>{QStringLiteral("opencode=/opt/opencode ")}));
+}
+#endif
+
 TEST_F(AiFeaturesTest, NoMcpListenerUnlessTheUserTurnsItOnAndNeverWithAiOff)
 {
     const QString file = backends::ai::mcpEndpointFile(dir.path());
@@ -503,7 +538,7 @@ TEST_F(AiFeaturesTest, ThePanelFindsAnAgentWhereExternalAgentsFindsIt)
     qputenv("PATH", bin.path().toLocal8Bit());
     const app::AiFeatures::Ports ports = app::AiFeatures::defaultPorts(bin.path(), nullptr, {});
     std::optional<std::optional<backends::ai::AgentCli>> found;
-    ports.findAgent(QStringLiteral("claude"), [&](std::optional<backends::ai::AgentCli> cli) { found = std::move(cli); });
+    ports.findAgent(QStringLiteral("claude"), [&](std::optional<backends::ai::AgentCli> cli, QString) { found = std::move(cli); });
     const bool claudeFound = ports.agentOnPath(QStringLiteral("claude"));
     const bool codexFound = ports.agentOnPath(QStringLiteral("codex"));
     qputenv("PATH", path);

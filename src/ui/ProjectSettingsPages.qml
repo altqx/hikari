@@ -23,7 +23,8 @@ RowLayout {
     readonly property var pages: [
         {id: "spelling", name: qsTranslate("HikariSub.Options", "Spelling and grammar"), iconRole: "spellchecker"},
         {id: "subtitleProperties", name: qsTranslate("HikariSub.Options", "Script properties"), iconRole: "script-properties"},
-        {id: "translation", name: qsTranslate("HikariSub.Translation", "Translation"), iconRole: "translation-mode"}
+        {id: "translation", name: qsTranslate("HikariSub.Translation", "Translation"), iconRole: "translation-mode"},
+        {id: "ai", name: qsTranslate("HikariSub.Options", "AI"), iconRole: "ai-assistant"}
     ]
     readonly property var scriptFields: [
         {id: "title", name: qsTranslate("HikariSub.ScriptProperties", "Title")},
@@ -41,12 +42,18 @@ RowLayout {
         sources = r.sources ?? {}
         edited = {}
         cleared = []
+        aiKeys.load()
         reloaded()
     }
     function put(id, value) {
         values = Object.assign({}, values, {[id]: value})
         edited = Object.assign({}, edited, {[id]: true})
         cleared = cleared.filter(c => c !== id)
+    }
+    function showPage(id) {
+        const i = pages.findIndex(p => p.id === id)
+        if (i >= 0)
+            pageList.currentIndex = i
     }
     function useYours(id) {
         values = Object.assign({}, values, {[id]: yours[id]})
@@ -68,7 +75,8 @@ RowLayout {
         const changed = {}
         for (const id in edited)
             changed[id] = values[id]
-        const ok = app.applyProjectSettings(shellWindow, changed, cleared)
+        const keysOk = aiKeys.apply()
+        const ok = app.applyProjectSettings(shellWindow, changed, cleared) && keysOk
         problem = ok ? "" : qsTr("project.toml could not be written, so some Project settings were not saved.")
         load()
         return ok
@@ -325,6 +333,11 @@ RowLayout {
                         text: qsTranslate("HikariSub.Translation", "Tags from original")
                     }
                 }
+            }
+            ProjectAiKeysPage {
+                id: aiKeys
+                app: project.app
+                shellWindow: project.shellWindow
             }
         }
     }

@@ -6,6 +6,7 @@
 #include "hikari/core/graphemes.h"
 #include "hikari/core/text_projection.h"
 
+#include <algorithm>
 #include <charconv>
 #include <cmath>
 #include <cstdlib>
@@ -333,6 +334,17 @@ Layout::Layout(const std::vector<MacroInfoLine> &info, const std::vector<MacroSt
     addStyles(named, writtenScriptResolution(info), video);
 }
 
+Layout::Layout(const std::vector<std::pair<std::u8string, std::vector<std::string>>> &styles, double resX, double resY,
+               double xFactor, ExtentsCache &extents)
+    : m_extents(extents), m_resX(resX), m_resY(resY), m_factor(xFactor)
+{
+    for (const auto &[name, fields] : styles) {
+        const StyleInfo &info = m_styles[name] = styleOf(name, fields);
+        if (!m_first)
+            m_first = &info;
+    }
+}
+
 void Layout::addStyles(const std::vector<std::pair<std::u8string, std::vector<std::string>>> &styles,
                        Resolution written, std::optional<Resolution> video)
 {
@@ -381,6 +393,13 @@ std::optional<std::vector<std::u8string>> Layout::addedStyle(std::u8string_view 
 
 Layout::Extents Layout::measure(const StyleInfo &style, const std::string &text, std::vector<std::string> &problems)
 {
+    if (m_listed) {
+        auto it = std::ranges::find(*m_listed, style.fields, &Measures::value_type::first);
+        if (it == m_listed->end())
+            it = m_listed->insert(m_listed->end(), {style.fields, {}});
+        it->second.push_back(text);
+        return {};
+    }
     const ExtentsCache::Result r = m_extents.measure(style.fields, text);
     if (r.extents)
         return {r.extents->width, r.extents->height, r.extents->descent, r.extents->externalLeading};

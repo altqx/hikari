@@ -84,6 +84,7 @@ for await (const line of createInterface({ input: process.stdin })) {
         pending.get(message.response.request_id)?.(message.response.response);
         pending.delete(message.response.request_id);
     } else if (message.type === "control_request" && message.request.subtype === "initialize") {
+        log && appendFileSync(log, `system ${JSON.stringify(message.request.systemPrompt ?? null)}\n`);
         hooks = Object.fromEntries(Object.entries(message.request.hooks ?? {}).map(([event, matchers]) =>
             [event, (matchers as { hookCallbackIds: string[] }[]).flatMap((m) => m.hookCallbackIds)]));
         send({ type: "control_response", response: { subtype: "success", request_id: message.request_id, response: {} } });

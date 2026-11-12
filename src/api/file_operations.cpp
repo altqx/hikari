@@ -181,7 +181,7 @@ Result filesWrite(const Context &context, const Json &params)
 
 constexpr std::string_view kNamed =
     R"("file": {"type": "string", "description": "A handle from files.list."},
-       "folder": {"type": "string", "description": "Instead of file, a folder handle from files.list (since version 2)."},
+       "folder": {"type": "string", "description": "Instead of file, a folder handle from files.list."},
        "path": {"type": "string", "description": "With folder, the file's path inside it, with / between its parts."})";
 constexpr std::string_view kEncoding = R"("encoding": {"enum": ["utf8", "base64"], "description": "Default utf8."})";
 
@@ -192,7 +192,7 @@ void addFileOperations(Registry &registry)
     addOperation(registry, Access::Read, "files.list",
                  "The files and folders the user granted this caller; with folder, also what that folder holds.",
                  R"({"type": "object", "properties": {
-                     "folder": {"type": "string", "description": "A folder handle to list (since version 2)."},
+                     "folder": {"type": "string", "description": "A folder handle to list."},
                      "path": {"type": "string", "description": "A folder inside it; default the folder itself."}},
                      "additionalProperties": false})",
                  R"({"type": "object", "properties": {"files": {"type": "array", "items": {"$ref": "#/$defs/GrantedFile"}},
