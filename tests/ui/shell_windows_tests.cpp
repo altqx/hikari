@@ -11,6 +11,7 @@
 #include "audio_controller.h"
 #include "status_bar_controller.h"
 #include "video_controller.h"
+#include "wiring_warnings.h"
 #include "workspace_layout.h"
 
 #include <QAccessible>
@@ -34,6 +35,7 @@
 
 #include <functional>
 #include <memory>
+#include <optional>
 #include <string_view>
 
 using namespace hikari;
@@ -430,9 +432,12 @@ class ShellWindowsTest : public QObject {
         QTRY_VERIFY(second->property("arrangementSettled").toBool());
     }
 
+    std::optional<testing::WiringWarnings> wiring;
+
 private slots:
     void init()
     {
+        wiring.emplace();
         QVERIFY(QDir(dir.path()).mkpath(QStringLiteral("Dictionary")));
         for (const char *file : {"Dictionary/en_US.aff", "Dictionary/en_US.dic"}) {
             QFile f(dir.filePath(QLatin1String(file)));
@@ -459,6 +464,7 @@ private slots:
         QVERIFY(application->openFile(writeSubtitles(dir.filePath(QStringLiteral("second.ass")), "second", 1280)));
         secondTab = *target();
         QVERIFY(secondTab != firstTab);
+        QCOMPARE(wiring->take(), QStringList());
     }
     void cleanup()
     {
@@ -470,6 +476,7 @@ private slots:
         application->endSession();
         engine.reset();
         application.reset();
+        wiring.reset();
     }
 
     void theSecondWindowIsAFullShell()

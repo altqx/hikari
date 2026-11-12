@@ -1893,7 +1893,10 @@ void Application::makeViews(WindowViews &v, int shellWindow)
     v.shell->setReview(
         [this, shellWindow, reviewOf](core::LineId line) { return reviewOf(m_workspace.currentTab(shellWindow))(line); },
         [this, reviewOf](core::LineId line) { return reviewOf(m_workspace.reference())(line); });
-    connect(v.editor.get(), &ui::LineEditorController::changed, m_review.get(), &ReviewController::currentChanged);
+    connect(v.editor.get(), &ui::LineEditorController::changed, this, [this] {
+        if (m_review)
+            Q_EMIT m_review->currentChanged();
+    });
     v.shell->setHideTags(m_settings->boolean("grid.hideTags"), m_settings->text("grid.tagsSwapCharacter"));
     v.editor->tagList()->setOptionsStore([this] { return m_settings->integer("textEditor.tagListOptions"); },
                                          [this](int options) { m_settings->set("textEditor.tagListOptions", options); });

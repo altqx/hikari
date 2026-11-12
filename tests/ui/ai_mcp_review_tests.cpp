@@ -179,6 +179,13 @@ private slots:
         QTRY_COMPARE(shell(QStringLiteral("reviewLoader.item.here[0].changes[0].waiting")).toInt(), 0);
     }
 
+    void theMainWindowsLineEditorTellsTheReviewItsLineChanged()
+    {
+        QSignalSpy current(application->review(), &app::ReviewController::currentChanged);
+        Q_EMIT application->editor().changed();
+        QCOMPARE(current.count(), 1);
+    }
+
     void undoInTheReviewPanelPutsTheLineBackAsOneStep()
     {
         QVERIFY(agentWrites("changed by Claude Code"));
