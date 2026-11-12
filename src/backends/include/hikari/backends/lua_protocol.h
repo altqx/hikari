@@ -5,7 +5,7 @@
 //
 // Requests start with an i32 Command:
 //   Load: str script path, str shared include directory, i32 trace level (aegisub.debug.out
-//         levels above it are dropped), str compile cache directory (version 10; empty: none, so
+//         levels above it are dropped), str compile cache directory (empty: none, so
 //         MoonScript compiles every load). Terminal Ok carries the ScriptInfo; Failed carries the
 //         error text. A helper loads one script once.
 //   Run:  i32 macro index, then a MacroSnapshot. Progress events and Service calls while it runs;
@@ -15,9 +15,8 @@
 //         run: Terminal Ok carries a MacroResult with valid false (and the error text, if any).
 //   Validate: as RunValidated, but the macro never runs: Terminal Ok carries a MacroResult with
 //         no lists, valid true or false (and the error text). What validation staged is dropped.
-//   RunNodes (version 9): a Lua node's batch, a NodeCall. It needs no Load. Terminal Ok carries
-//         NodeRows, Failed the error text. A version 8 helper is refused at the handshake, so it
-//         never sees this command.
+//   RunNodes: a Lua node's batch, a NodeCall. It needs no Load. Terminal Ok carries NodeRows,
+//         Failed the error text.
 // The ScriptInfo lists the files the script's top level loaded as Lua code (require and include).
 // Progress payloads start with an i32 ProgressEvent: Log (i32 level, -1 when aegisub.debug.out
 // was given none; str), Set (f64 percent), Task (str), Title (str).
@@ -36,7 +35,7 @@
 
 namespace hikari::backends::lua {
 
-inline constexpr std::uint32_t kProtocolVersion = 11;
+inline constexpr std::uint32_t kProtocolVersion = 1;
 inline constexpr char kHelperName[] = "hikari-lua-helper";
 
 enum class Command : std::int32_t { Load = 1, Run = 2, RunValidated = 3, Validate = 4, RunNodes = 5 };

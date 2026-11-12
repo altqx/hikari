@@ -1,4 +1,4 @@
-{"call": "api.version", "exact": {"version": 2}}
+{"call": "api.version", "exact": {"version": 1}}
 {"call": "documents.list", "result": {"documents": [{"document": 1, "title": "a.ass", "path": "/subs/a.ass", "format": "ass", "editingTarget": true, "reference": false, "dirty": false, "readOnly": false}, {"document": 2, "title": "b.ass", "path": null, "editingTarget": false}]}}
 {"call": "documents.get", "result": {"document": 1, "lineCount": 3, "styleCount": 2, "draftLine": null}, "save": {"rev": "/revision"}}
 {"call": "lines.list", "result": {"revision": "$rev", "total": 3, "lines": [{"id": 1, "row": 1, "comment": false, "layer": 0, "start": 1000, "end": 2000, "style": "Default", "actor": "Ann", "marginL": 0, "marginR": 0, "marginV": 0, "effect": "", "text": "Hello there", "translation": "", "unconfirmed": false, "generatedFrom": null}, {"id": 2, "comment": true, "style": "Sign", "effect": "note"}, {"id": 3, "layer": 1, "end": 6500, "marginL": 10, "marginR": 20, "marginV": 30, "text": "General Kenobi"}]}}
