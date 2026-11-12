@@ -16,7 +16,11 @@ DialogWindow {
     defaultButton: saveButton
     // Invokable results are not tracked: reading savedLayouts re-evaluates these when the layouts change.
     readonly property string problem: layouts.savedLayouts && layouts.layoutNameProblem(nameField.text)
-    readonly property string existing: layouts.savedLayouts && layouts.savedLayoutNamed(nameField.text)
+    readonly property string existing: {
+        const name = nameField.text.trim().toLowerCase()
+        const row = layouts.savedLayouts.find(r => r.tier === saveTier.tier && r.name.toLowerCase() === name)
+        return row ? row.name : ""
+    }
 
     function show() {
         nameField.text = layouts.layout
@@ -24,7 +28,7 @@ DialogWindow {
         nameField.selectAll()
         nameField.forceActiveFocus()
     }
-    onAccepted: layouts.saveLayoutAs(nameField.text)
+    onAccepted: layouts.saveLayoutAs(nameField.text, saveTier.tier)
 
     RowLayout {
         spacing: 8
@@ -40,6 +44,31 @@ DialogWindow {
             maximumLength: 64
             Accessible.name: qsTr("Name")
             Accessible.description: dialog.problem
+        }
+    }
+    RowLayout {
+        visible: dialog.layouts.hasProject
+        spacing: 8
+        Label {
+            text: qsTr("Save to")
+            Layout.preferredWidth: 56
+        }
+        IconTextButton {
+            id: tierButton
+            objectName: "saveLayoutTier"
+            iconRole: saveTier.tier === "project" ? "project" : "mine"
+            text: saveTier.tier === "project" ? qsTr("This project") : qsTr("Mine")
+            tip: qsTr("Where to save")
+            Accessible.role: Accessible.ButtonMenu
+            onClicked: saveTier.popup(tierButton, 0, tierButton.height)
+        }
+        TierSaveMenu {
+            id: saveTier
+            objectName: "saveLayoutTierMenu"
+            itemPrefix: "saveLayoutTier"
+            listId: "layouts"
+            settings: dialog.settings
+            hasProject: dialog.layouts.hasProject
         }
     }
     RowLayout {

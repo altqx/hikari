@@ -9,6 +9,7 @@ DialogWindow {
     id: dialog
     objectName: "tagsEditionDialog"
     property AllTagsEditor editor
+    readonly property bool tiered: editor ? editor.hasProject : false
     title: qsTr("Edit tags")
     dialogId: "allTagsEdition"
     resizable: true
@@ -45,7 +46,29 @@ DialogWindow {
                 qsTr("Edit decimal places"), qsTr("Change count"), qsTr("Edit starting value"),
                 qsTr("Change change option"), qsTr("Change placing"), qsTr("New tag"), qsTr("Duplicate tag"),
                 qsTr("Delete tag"), qsTr("Replace tag"), qsTr("Restore default tags"),
-                qsTr("Undo all changes")][step] ?? ""
+                qsTr("Undo all changes"), qsTr("Copy tag"), qsTr("Move tag")][step] ?? ""
+    }
+    function transfer(move) {
+        const run = choices => { dialog.editor.sendToOtherTier(move, choices); dialog.showFields() }
+        const clashes = dialog.editor.tierClashes()
+        if (clashes.length === 0) {
+            run([])
+            return
+        }
+        const fromMine = dialog.editor.items[dialog.editor.selection].tier === "mine"
+        clashReviewLoader.active = true
+        clashReviewLoader.item.review({
+            title: move ? qsTr("Move tag") : qsTr("Copy tag"),
+            text: fromMine ? qsTr("The project already has a tag named “%1”.").arg(clashes[0].name)
+                           : qsTr("You already have a tag named “%1”.").arg(clashes[0].name),
+            rows: clashes.map(c => ({ name: c.name, difference: "", suggestion: c.suggestion })),
+            acceptText: count => move ? qsTr("Move") : qsTr("Copy"),
+            nameTaken: n => dialog.editor.items.some(r => r.tier !== (fromMine ? "mine" : "project")
+                                                          && r.name.toLowerCase() === n.trim().toLowerCase())
+        }, results => {
+            if (results)
+                run(results)
+        })
     }
     function checkText(code, field) {
         switch (code) {
@@ -258,15 +281,15 @@ DialogWindow {
                         if (query.length > 0) {
                             items.forEach((t, i) => {
                                 if (t.name.toLowerCase().includes(query) || t.tag.toLowerCase().includes(query))
-                                    rows.push({ header: false, index: i, name: t.name, tag: t.tag })
+                                    rows.push({ header: false, index: i, name: t.name, tag: t.tag, tier: t.tier, hidden: t.hidden })
                             })
                             return rows
                         }
-                        for (let section = 0; section < 3; ++section) {
+                                                for (const section of dialog.tiered ? [3, 0, 1, 2] : [0, 1, 2]) {
                             const inSection = []
                             items.forEach((t, i) => {
-                                if (t.section === section)
-                                    inSection.push({ header: false, index: i, name: t.name, tag: t.tag })
+                                if (section === 3 ? t.tier === "project" : t.section === section && t.tier === "mine")
+                                    inSection.push({ header: false, index: i, name: t.name, tag: t.tag, tier: t.tier, hidden: t.hidden })
                             })
                             if (inSection.length === 0)
                                 continue
@@ -326,8 +349,18 @@ DialogWindow {
                         focusPolicy: Qt.NoFocus
                         highlighted: !modelData.header && ListView.isCurrentItem
                         Accessible.role: modelData.header ? Accessible.Button : Accessible.ListItem
-                        Accessible.name: modelData.header ? dialog.sectionName(modelData.section) : modelData.name
+                        Accessible.name: modelData.header ? dialog.sectionName(modelData.section)
+                                       : modelData.hidden ? qsTr("%1, hidden by the project’s copy").arg(modelData.name)
+                                       : modelData.name
                         Accessible.selected: highlighted
+                        TapHandler {
+                            acceptedButtons: Qt.RightButton
+                            enabled: !row.modelData.header && dialog.tiered
+                            onTapped: {
+                                tagList.selectRow(row.index)
+                                tierMenu.popup()
+                            }
+                        }
                         onClicked: {
                             if (modelData.header) {
                                 if (modelData.section === 1)
@@ -355,9 +388,14 @@ DialogWindow {
                             Label {
                                 text: row.modelData.header ? dialog.sectionName(row.modelData.section) : row.modelData.name
                                 font.weight: row.modelData.header || row.highlighted ? Font.DemiBold : Font.Normal
-                                color: row.modelData.header ? Theme.muted : Theme.text
+                                color: row.modelData.header || row.modelData.hidden ? Theme.muted : Theme.text
                                 elide: Text.ElideRight
                                 Layout.fillWidth: true
+                            }
+                            TierChip {
+                                visible: !row.modelData.header && dialog.tiered
+                                tier: row.modelData.tier ?? "mine"
+                                enabled: !row.modelData.hidden
                             }
                             Label {
                                 visible: row.modelData.header ? row.modelData.section === 1 : true
@@ -373,13 +411,17 @@ DialogWindow {
                 RowLayout {
                     Layout.margins: 4
                     spacing: 2
-                    IconToolButton {
-                        objectName: "addTag"
+                    TierSaveButton {
+                        objectName: "addTagSave"
+                        faceName: "addTag"
+                        listId: "tags"
+                        settings: dialog.settings
+                        hasProject: dialog.tiered
                         iconRole: "add"
-                        text: qsTr("New tag")
-                        onClicked: {
+                        plainText: qsTr("New tag")
+                        onSave: tier => {
                             search.text = ""
-                            dialog.editor.addTag()
+                            dialog.editor.addTagTo(tier)
                             dialog.showFields()
                             tagCode.forceActiveFocus()
                         }
@@ -421,6 +463,15 @@ DialogWindow {
                 width: detailScroll.availableWidth - 40
                 x: 20
                 spacing: 8
+                enabled: !(dialog.editor && dialog.editor.readOnly)
+                Label {
+                    objectName: "tagHidden"
+                    visible: dialog.editor ? dialog.editor.readOnly : false
+                    text: qsTr("Hidden by the project’s copy. Copy it to the project to use it there.")
+                    color: Theme.muted
+                    wrapMode: Text.Wrap
+                    Layout.fillWidth: true
+                }
 
                 GridLayout {
                     columns: 2
@@ -619,7 +670,7 @@ DialogWindow {
     }
 
     function sectionName(section) {
-        return [qsTr("Common"), qsTr("More"), qsTr("Your tags")][section] ?? ""
+        return [qsTr("Common"), qsTr("More"), qsTr("Your tags"), qsTr("This project")][section] ?? ""
     }
 
     leadingActions: [
@@ -650,8 +701,50 @@ DialogWindow {
     defaultButton: closeButton
 
     ShellMenu {
+        id: tierMenu
+        objectName: "tagTierMenu"
+        readonly property bool fromMine: dialog.editor && dialog.editor.selection >= 0
+                                         && dialog.editor.items[dialog.editor.selection]?.tier === "mine"
+        ShellMenuItem {
+            objectName: "copyTagToTier"
+            iconRole: "copy-to-tier"
+            text: tierMenu.fromMine ? qsTr("Copy to project") : qsTr("Copy to mine")
+            onTriggered: dialog.transfer(false)
+        }
+        ShellMenuItem {
+            objectName: "moveTagToTier"
+            iconRole: "move-to-tier"
+            text: tierMenu.fromMine ? qsTr("Move to project") : qsTr("Move to mine")
+            onTriggered: dialog.transfer(true)
+        }
+    }
+    Loader {
+        id: clashReviewLoader
+        active: false
+        sourceComponent: ClashReview {
+            objectName: "tagClashReview"
+            dialogId: "tagClashes"
+            settings: dialog.settings
+        }
+    }
+    ShellMenu {
         id: moreMenu
         objectName: "tagsMoreMenu"
+        ShellMenuItem {
+            objectName: "tagsCopyToTier"
+            visible: dialog.tiered
+            iconRole: "copy-to-tier"
+            text: tierMenu.fromMine ? qsTr("Copy to project") : qsTr("Copy to mine")
+            onTriggered: dialog.transfer(false)
+        }
+        ShellMenuItem {
+            objectName: "tagsMoveToTier"
+            visible: dialog.tiered
+            iconRole: "move-to-tier"
+            text: tierMenu.fromMine ? qsTr("Move to project") : qsTr("Move to mine")
+            onTriggered: dialog.transfer(true)
+        }
+        MenuSeparator { visible: dialog.tiered }
         ShellMenuItem {
             objectName: "tagsRestoreDefault"
             iconRole: "restore-default"

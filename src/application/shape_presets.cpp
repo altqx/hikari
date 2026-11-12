@@ -204,16 +204,30 @@ void ShapesEdition::select(int index)
         m_history.select(index);
 }
 
+void ShapesEdition::change(std::vector<ShapePreset> items, int selection, Step step, std::string mergeKey, Renames renamed)
+{
+    markHidden(items, &ShapePreset::name, sameNameIgnoringCase);
+    m_history.change(std::move(items), selection, step, std::move(mergeKey), std::move(renamed));
+}
+
+bool ShapesEdition::takenInTier(u16v name, Tier tier, int except) const
+{
+    for (std::size_t i = 0; i < presets().size(); ++i)
+        if (static_cast<int>(i) != except && presets()[i].mark.tier == tier && sameNameIgnoringCase(presets()[i].name, name))
+            return true;
+    return false;
+}
+
 void ShapesEdition::edit(ShapePreset preset, Step step, std::string mergeKey, Renames renamed)
 {
     const int i = selection();
-    if (i < 0 || i >= static_cast<int>(presets().size()) || presets()[static_cast<std::size_t>(i)] == preset)
+    if (i < 0 || i >= static_cast<int>(presets().size()) || presets()[static_cast<std::size_t>(i)] == preset || readOnly())
         return;
     std::vector<ShapePreset> items = presets();
     items[static_cast<std::size_t>(i)] = std::move(preset);
     if (!mergeKey.empty())
         mergeKey += ':' + std::to_string(i);
-    m_history.change(std::move(items), i, step, std::move(mergeKey), std::move(renamed));
+    change(std::move(items), i, step, std::move(mergeKey), std::move(renamed));
 }
 
 ShapesEdition::NameCheck ShapesEdition::setName(u16v name, u16 *taken)
@@ -223,7 +237,8 @@ ShapesEdition::NameCheck ShapesEdition::setName(u16v name, u16 *taken)
     if (name.find_first_of(u";\r\n") != u16v::npos)
         return NameCheck::Separator;
     for (std::size_t i = 0; i < presets().size(); ++i) {
-        if (static_cast<int>(i) != selection() && sameNameIgnoringCase(presets()[i].name, name)) {
+        if (static_cast<int>(i) != selection() && presets()[i].mark.tier == current().mark.tier &&
+            sameNameIgnoringCase(presets()[i].name, name)) {
             if (taken)
                 *taken = presets()[i].name;
             return NameCheck::Taken;
@@ -258,11 +273,9 @@ void ShapesEdition::setMode(int mode)
     edit(std::move(p), ChangeScaling);
 }
 
-u16 ShapesEdition::freeName(u16 base, bool copy) const
+u16 ShapesEdition::freeName(u16 base, bool copy, Tier tier) const
 {
-    const auto taken = [this](u16v name) {
-        return std::ranges::any_of(presets(), [&](const ShapePreset &p) { return sameNameIgnoringCase(p.name, name); });
-    };
+    const auto taken = [&](u16v name) { return takenInTier(name, tier, -1); };
     for (int n = 1;; ++n) {
         u16 suffix = copy ? u16(u" copy") : u16();
         if (n > 1)
@@ -280,15 +293,38 @@ u16 ShapesEdition::freeName(u16 base, bool copy) const
     }
 }
 
-void ShapesEdition::addShape(u16v lineText)
+void ShapesEdition::addShape(u16v lineText, Tier tier)
 {
     ShapePreset p;
-    p.name = freeName(u"New shape", false);
+    p.name = freeName(u"New shape", false, tier);
     p.shape = lastDrawing(lineText).value_or(u"m 0 0 l 100 0 100 100 0 100");
+    p.mark.tier = tier;
     std::vector<ShapePreset> items = presets();
-    items.push_back(std::move(p));
-    const int at = static_cast<int>(items.size()) - 1;
-    m_history.change(std::move(items), at, NewShape);
+    const auto at = tierEnd(items, tier);
+    items.insert(items.begin() + static_cast<std::ptrdiff_t>(at), std::move(p));
+    change(std::move(items), static_cast<int>(at), NewShape);
+}
+
+std::optional<u16> ShapesEdition::tierClash() const
+{
+    const auto at = otherTierClash(presets(), static_cast<std::size_t>(std::max(selection(), 0)), &ShapePreset::name,
+                                   sameNameIgnoringCase);
+    return at ? std::optional(presets()[*at].name) : std::nullopt;
+}
+
+bool ShapesEdition::sendToOtherTier(bool move, const ClashChoice &clash, u16v newName)
+{
+    if (selection() < 0 || selection() >= static_cast<int>(presets().size()))
+        return false;
+    std::vector<ShapePreset> items = presets();
+    const auto at = application::sendToOtherTier(
+        items, static_cast<std::size_t>(selection()), clash, u16(newName), move, &ShapePreset::name,
+        [](ShapePreset &p, const u16 &name) { p.name = name; },
+        [](const u16 &a, const u16 &b) { return sameNameIgnoringCase(a, b); });
+    if (!at)
+        return false;
+    change(std::move(items), static_cast<int>(*at), move ? MoveToTier : CopyToTier);
+    return true;
 }
 
 void ShapesEdition::duplicate()
@@ -296,11 +332,12 @@ void ShapesEdition::duplicate()
     if (presets().empty())
         return;
     ShapePreset p = current();
-    p.name = freeName(p.name, true);
+    p.name = freeName(p.name, true, p.mark.tier);
+    p.mark.hidden = false;
     std::vector<ShapePreset> items = presets();
     const int at = selection() + 1;
     items.insert(items.begin() + at, std::move(p));
-    m_history.change(std::move(items), at, DuplicateShape);
+    change(std::move(items), at, DuplicateShape);
 }
 
 bool ShapesEdition::remove()
@@ -312,7 +349,7 @@ bool ShapesEdition::remove()
     items.erase(items.begin() + at);
     // Before the move below: argument evaluation order is unspecified.
     const int next = std::min(at, static_cast<int>(items.size()) - 1);
-    m_history.change(std::move(items), next, DeleteShape);
+    change(std::move(items), next, DeleteShape);
     return true;
 }
 
@@ -331,10 +368,11 @@ void ShapesEdition::replaceNamed(u16v name)
 {
     std::vector<ShapePreset> items = presets();
     int at = selection();
-    if (at < 0 || at >= static_cast<int>(items.size()) || name.empty())
+    if (at < 0 || at >= static_cast<int>(items.size()) || name.empty() || readOnly())
         return;
     for (std::size_t i = 0; i < items.size(); ++i) {
-        if (static_cast<int>(i) != at && sameNameIgnoringCase(items[i].name, name)) {
+        if (static_cast<int>(i) != at && items[i].mark.tier == items[static_cast<std::size_t>(at)].mark.tier &&
+            sameNameIgnoringCase(items[i].name, name)) {
             items.erase(items.begin() + static_cast<std::ptrdiff_t>(i));
             if (static_cast<int>(i) < at)
                 --at;
@@ -343,11 +381,16 @@ void ShapesEdition::replaceNamed(u16v name)
     }
     Renames renamed{{items[static_cast<std::size_t>(at)].name, u16(name)}};
     items[static_cast<std::size_t>(at)].name = u16(name);
-    m_history.change(std::move(items), at, ReplaceShape, {}, std::move(renamed));
+    change(std::move(items), at, ReplaceShape, {}, std::move(renamed));
 }
 
-void ShapesEdition::restoreDefaults(std::vector<ShapePreset> defaults)
+void ShapesEdition::restoreDefaults(std::vector<ShapePreset> mine)
 {
+    std::vector<ShapePreset> defaults = itemsIn(presets(), Tier::Project);
+    for (auto &p : mine)
+        p.mark = {};
+    defaults.insert(defaults.end(), mine.begin(), mine.end());
+    markHidden(defaults, &ShapePreset::name, sameNameIgnoringCase);
     const u16 name = current().name;
     int choice = selection() < static_cast<int>(defaults.size()) ? selection() : 0;
     if (!defaults.empty() && defaults[static_cast<std::size_t>(choice)].name != name) {
@@ -360,7 +403,7 @@ void ShapesEdition::restoreDefaults(std::vector<ShapePreset> defaults)
     }
     if (defaults == presets())
         return;
-    m_history.change(std::move(defaults), choice, RestoreDefaults);
+    change(std::move(defaults), choice, RestoreDefaults);
 }
 
 }
