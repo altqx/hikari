@@ -17884,6 +17884,7 @@ private slots:
         bound.insert("updater.skippedVersion");
         bound.insert("automation.dialogAnswers");
         bound.insert("trust.folders");
+        bound.insert("ai.agents.custom");
 #ifndef HIKARI_WITH_VSFILTERMOD
         bound.erase("video.subtitleProvider");
 #endif
