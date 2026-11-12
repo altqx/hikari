@@ -345,6 +345,7 @@ constexpr const char *kHotkeyCommands[] = {
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Extend the next line to this end"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Timing assistant"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Accept the timing assistant’s suggestion"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Explorer panel"),
 };
 
 constexpr const char *kHotkeyWindows[] = {

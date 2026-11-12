@@ -356,11 +356,12 @@ TEST(ProjectSettings, TheAllowlistCoversTheProjectDataSettings)
 {
     for (const char *id : {"editor.dictionaryLanguage", "editor.spellchecker", "grammar.language",
                            "grammar.group.properNouns", "scriptProperties.title", "scriptProperties.updateOn",
-                           "scriptProperties.askForChange", "translation.autoMoveTagsFromOriginal"})
+                           "scriptProperties.askForChange", "translation.autoMoveTagsFromOriginal", "explorer.exclude"})
         EXPECT_TRUE(findSetting(id)->projectable) << id;
     for (const char *id : {"privacy.usageData", "updater.autoInstall", "ai.off", "ai.webSearch", "plugins.network",
                            "trust.folders", "program.theme", "program.font", "shortcuts.hotkeys",
-                           "scriptProperties.linkResolutions", "translation.showOriginal"})
+                           "scriptProperties.linkResolutions", "translation.showOriginal", "explorer.allFiles",
+                           "explorer.groupByName"})
         EXPECT_FALSE(findSetting(id)->projectable) << id;
     for (const auto &setting : settingDefinitions())
         EXPECT_FALSE(setting.widens) << setting.id;

@@ -378,6 +378,7 @@ constexpr HotkeyAction kActions[] = {
         {"GLOBAL_EXTEND_NEXT_TO_END", 5331},
         {"GLOBAL_TIMING_ASSISTANT", 5332},
         {"GLOBAL_TIMING_ASSISTANT_ACCEPT", 5333},
+        {"GLOBAL_SHOW_EXPLORER", 5337},
 };
 
 struct NameRow {
@@ -722,6 +723,7 @@ constexpr NameRow kNames[] = {
         {5331, "Extend the next line to this end"},
         {5332, "Timing assistant"},
         {5333, "Accept the timing assistant’s suggestion"},
+        {5337, "Explorer panel"},
 };
 
 struct DefaultRow {

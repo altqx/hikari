@@ -309,3 +309,13 @@ Tag list
 Tag list > Show description
 Tag list > Show all tags
 Tag list > Show VSFilterMod tags
+Explorer row
+Explorer row > Open in a new tab
+Explorer row > Open in this tab
+Explorer row > -
+Explorer row > New subtitle file here
+Explorer row > Rename
+Explorer row > Move to the trash
+Explorer row > -
+Explorer row > Show in folder
+Explorer row > Copy path

@@ -278,7 +278,8 @@ public:
     Q_INVOKABLE void cancelClose();
     // A failed open changes nothing. Returns {ok, problem, rows}: rows as reviewClose's;
     // ok without rows: call finishClose().
-    Q_INVOKABLE QVariantMap reviewOpen(const QString &path);
+    // here: open in the current tab even when subtitles.openInNewTab is on.
+    Q_INVOKABLE QVariantMap reviewOpen(const QString &path, bool here = false);
     Q_INVOKABLE QVariantMap reviewOpenUrl(const QUrl &url) { return reviewOpen(url.toLocalFile()); }
     // One file: {kind: "subtitles" (reviewOpen it), "video" (openVideoFile it),
     // "session", or "" when handled}. Several: {kind: "files", rows}, rows as
@@ -339,6 +340,12 @@ public:
     Q_INVOKABLE bool reopenProjectTabs(int shellWindow);
     // The toast for a tab moved into `shellWindow`; "" when that window has no Project.
     Q_INVOKABLE QString projectMoveText(int shellWindow) const;
+    // [explorer] exclude as the window's Project and the user set it.
+    Q_INVOKABLE QStringList explorerExcludes(int shellWindow) const;
+    // The index in windowTabs(shellWindow) of the tab saved at `path`; -1 when none is.
+    Q_INVOKABLE int tabOfFile(int shellWindow, const QString &path) const;
+    // Opens `path` in a new current tab, or in the current tab while it is an untouched Untitled one.
+    Q_INVOKABLE bool openInTab(const QString &path);
     QString projectOf(int shellWindow) const { return m_projects->root(shellWindow); }
     ProjectWindows &projects() { return *m_projects; }
     // "modified" when the target's file is newer than when last read or written;
@@ -1135,6 +1142,7 @@ private:
     std::optional<PendingFiles> m_pendingFiles;
     void applyFiles(PendingFiles files, bool skipFirst);
     bool openInNewTab(application::StagedOpen staged, const QString &path);
+    bool targetUntouchedUntitled() const;
     PendingFiles stageFiles(const QStringList &files);
     bool targetUntouched() const;
     application::GridSelection gridSelection() const;

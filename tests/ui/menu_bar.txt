@@ -210,12 +210,14 @@ View > Panels > Agent >
 View > Panels > Graph >
 View > Panels > Node >
 View > Panels > Source lines >
+View > Panels > Explorer >
 View > Panels > -
 View > Move panel…
 View > Restore the previous layout
 View > -
 View > Node effects [GLOBAL_NODE_EFFECTS]
 View > -
+View > Explorer [GLOBAL_SHOW_EXPLORER]
 View > Log
 View > Hide tags [GLOBAL_HIDE_TAGS]
 View > Hide tags in the line editor [GLOBAL_EDITOR_HIDE_TAGS]
