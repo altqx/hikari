@@ -15660,6 +15660,193 @@ private slots:
         QVERIFY(inTheEditorView(controls.first()));
     }
 
+    QString writeLongLineFile(const char *name, bool tlMode)
+    {
+        const QString path = writeTranslationFile(name, tlMode);
+        QFile f(path);
+        if (!f.open(QIODevice::Append))
+            return {};
+        f.write("Dialogue: 0,0:01:12.48,0:01:16.02,Default,Mika,0,0,0,,{\\an8}The last train leaves at noon, so if we "
+                "want to catch it we should go now and run. Mika, grab the bags and the tickets; I will meet you by the "
+                "gate at platform four before the doors close and the whistle blows.\n");
+        return path;
+    }
+    static QQuickItem *innerFlickable(QQuickItem *field, QQuickItem *slot)
+    {
+        for (QQuickItem *p = field; p && p != slot; p = p->parentItem())
+            if (p->inherits("QQuickFlickable"))
+                return p;
+        return nullptr;
+    }
+    void squeezeTheLineEditorTo(int width)
+    {
+        auto *dock = item<QObject>("editorDock");
+        auto *panel = item("editorPanel");
+        QVERIFY(application->workspaceLayout().resizePanel(dock, width, int(panel->height())));
+        QTRY_VERIFY2(std::abs(panel->width() - width) <= 1, qPrintable(QString::number(panel->width())));
+        const int minimum = int(std::ceil(panel->property("minimumSize").toSizeF().height()));
+        if (panel->height() > minimum)
+            QVERIFY(ui::Docking().resizeInLayout(QStringLiteral("Editor"), 0, minimum - int(panel->height()), 0, 0));
+        QTRY_VERIFY2(panel->height() <= minimum + 1, qPrintable(QStringLiteral("%1 > %2").arg(panel->height()).arg(minimum)));
+    }
+
+    void lineEditorShowsEveryFieldAtEachStepsMinimum_data()
+    {
+        QTest::addColumn<QString>("step");
+        QTest::addColumn<bool>("translation");
+        for (const char *step : {"wide", "medium", "narrow"}) {
+            QTest::newRow(step) << QString::fromLatin1(step) << false;
+            QTest::newRow(qPrintable(QLatin1String(step) + QStringLiteral("-translation"))) << QString::fromLatin1(step) << true;
+        }
+    }
+    void lineEditorShowsEveryFieldAtEachStepsMinimum()
+    {
+        QFETCH(QString, step);
+        QFETCH(bool, translation);
+        QCOMPARE(window->size(), QSize(1280, 800));
+        QVERIFY(application->openFile(writeLongLineFile("le7-steps.ass", translation)));
+        QTRY_COMPARE(application->editor().translationMode(), translation);
+        QVERIFY(QMetaObject::invokeMethod(window, "applyPreset", Q_ARG(QVariant, QStringLiteral("Editing"))));
+        if (translation)
+            closeTheOriginalTextPanel();
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_End);
+        QTRY_VERIFY(application->editor().text().contains(QLatin1String("platform four")));
+
+        auto *panel = item("editorPanel");
+        auto *inspector = item("lineInspector");
+        const QString minimumName = step == QLatin1String("narrow") ? QStringLiteral("minimumWidth") : step + QStringLiteral("Minimum");
+        const QVariant stepMinimum = inspector->property(qPrintable(minimumName));
+        QVERIFY2(stepMinimum.isValid(), qPrintable(minimumName));
+        const qreal chrome = panel->width() - inspector->width();
+        const int width = int(std::ceil(stepMinimum.toReal() + chrome));
+        QVERIFY2(width >= int(std::ceil(panel->property("minimumSize").toSizeF().width())), qPrintable(QString::number(width)));
+        squeezeTheLineEditorTo(width);
+        QTRY_COMPARE(inspector->property("step").toString(), step);
+
+        QQuickItem *bar = visualItem("editorScrollBar");
+        QVERIFY(!bar || !bar->isVisible());
+        const QStringList clipped = clippedIn(panel);
+        QVERIFY2(clipped.isEmpty(), qPrintable(QStringLiteral("%1x%2: %3").arg(panel->width()).arg(panel->height()).arg(clipped.join(u"; "))));
+
+        const QRectF bounds = panel->mapRectToScene(panel->boundingRect());
+        const char *const fields[] = {"startField", "endField", "durationField", "styleChoice", "styleEditButton",
+                                      "commentBox", "layerField", "actorBox", "effectBox", "marginLeftField",
+                                      "marginRightField", "marginVerticalField", "tagStrip", "lineTextSlot"};
+        for (const char *name : fields) {
+            QQuickItem *field = item(name);
+            QVERIFY2(field && field->isVisible(), name);
+            QVERIFY2(bounds.adjusted(-0.5, -0.5, 0.5, 0.5).contains(field->mapRectToScene(field->boundingRect())), name);
+            if (field->inherits("QQuickControl") && !field->inherits("QQuickTextArea"))
+                QVERIFY2(field->height() >= field->implicitHeight() - 0.5, name);
+        }
+
+        const auto twoLines = [](QQuickItem *field) {
+            return field->property("topPadding").toReal() + field->property("bottomPadding").toReal()
+                   + 2 * field->property("cursorRectangle").toRectF().height();
+        };
+        auto *lineText = item("lineText");
+        auto *lineSlot = item("lineTextSlot");
+        QVERIFY2(lineSlot->height() >= twoLines(lineText) - 0.5, qPrintable(QString::number(lineSlot->height())));
+        QQuickItem *scroller = innerFlickable(lineText, lineSlot);
+        QVERIFY(scroller);
+        QTRY_VERIFY(scroller->property("contentHeight").toReal() > scroller->height());
+        if (translation) {
+            auto *translated = item("translationText");
+            auto *translatedSlot = item("translationTextSlot");
+            QVERIFY(translatedSlot && translated->isVisible());
+            QVERIFY2(translatedSlot->height() >= twoLines(translated) - 0.5, qPrintable(QString::number(translatedSlot->height())));
+            QVERIFY(innerFlickable(translated, translatedSlot));
+            for (const char *caption : {"originalCaption", "translatedCaption"}) {
+                QQuickItem *label = visualItem(caption);
+                QVERIFY2(label && label->isVisible(), caption);
+            }
+            QVERIFY(lineSlot->mapRectToScene(lineSlot->boundingRect()).contains(
+                visualItem("originalCaption")->mapRectToScene(visualItem("originalCaption")->boundingRect()).center()));
+            QVERIFY(translatedSlot->mapRectToScene(translatedSlot->boundingRect()).contains(
+                visualItem("translatedCaption")->mapRectToScene(visualItem("translatedCaption")->boundingRect()).center()));
+        }
+
+        const QStringList slots{QStringLiteral("startSlot"), QStringLiteral("endSlot"), QStringLiteral("durationSlot"),
+                                QStringLiteral("styleSlot"), QStringLiteral("actorSlot"), QStringLiteral("layerSlot"),
+                                QStringLiteral("effectSlot"), QStringLiteral("commentSlot"), QStringLiteral("marginsSlot")};
+        std::vector<std::pair<qreal, QString>> placed;
+        for (const QString &name : slots) {
+            QQuickItem *slot = item(qPrintable(name));
+            QVERIFY2(slot && slot->isVisible(), qPrintable(name));
+            const QRectF r = slot->mapRectToItem(inspector, slot->boundingRect());
+            placed.emplace_back(r.center().y(), name);
+            if (QQuickItem *label = visualItem(qPrintable(name + QStringLiteral("Label"))); label && label->isVisible()) {
+                const QRectF l = label->mapRectToItem(inspector, label->boundingRect());
+                QVERIFY2(std::abs(l.center().y() - r.center().y()) <= 2, qPrintable(name));
+                QVERIFY2(l.right() <= r.right() + 0.5 && l.left() >= r.left() - 0.5, qPrintable(name));
+            }
+        }
+        std::sort(placed.begin(), placed.end());
+        std::vector<QStringList> rows;
+        for (qreal last = -100; const auto &[y, name] : placed) {
+            if (y - last > 6)
+                rows.emplace_back();
+            rows.back() << name;
+            last = y;
+        }
+        QStringList order;
+        for (QStringList &names : rows) {
+            std::sort(names.begin(), names.end(), [&](const QString &a, const QString &b) {
+                return item(qPrintable(a))->mapToScene(QPointF()).x() < item(qPrintable(b))->mapToScene(QPointF()).x();
+            });
+            for (QString &name : names)
+                name.chop(4);
+            order << names.join(u',');
+        }
+        const std::map<QString, int> rowCounts{{QStringLiteral("wide"), 2}, {QStringLiteral("medium"), 3},
+                                               {QStringLiteral("narrow"), 4}};
+        QCOMPARE(int(order.size()), rowCounts.at(step));
+        if (step == QLatin1String("wide"))
+            QCOMPARE(order, (QStringList{QStringLiteral("start,end,duration,style"),
+                                         QStringLiteral("comment,layer,actor,effect,margins")}));
+        if (step == QLatin1String("narrow"))
+            QCOMPARE(order, (QStringList{QStringLiteral("start,end,duration"), QStringLiteral("style,actor"),
+                                         QStringLiteral("layer,effect,comment"), QStringLiteral("margins")}));
+    }
+
+    void lineEditorMinimumFitsEveryPreset_data()
+    {
+        QTest::addColumn<QString>("preset");
+        QTest::addColumn<bool>("translation");
+        for (const char *preset : {"Editing", "Timing", "Translation", "Typesetting", "Karaoke"}) {
+            QTest::newRow(preset) << QString::fromLatin1(preset) << false;
+            QTest::newRow(qPrintable(QLatin1String(preset) + QStringLiteral("-translation"))) << QString::fromLatin1(preset) << true;
+        }
+    }
+    void lineEditorMinimumFitsEveryPreset()
+    {
+        QFETCH(QString, preset);
+        QFETCH(bool, translation);
+        QCOMPARE(window->size(), QSize(1280, 800));
+        QVERIFY(application->openFile(writeLongLineFile("le7-presets.ass", translation)));
+        QTRY_COMPARE(application->editor().translationMode(), translation);
+        QVERIFY(QMetaObject::invokeMethod(window, "applyPreset", Q_ARG(QVariant, preset)));
+        auto *dock = item<QObject>("editorDock");
+        if (!dock->property("isOpen").toBool())
+            return;
+        auto *panel = item("editorPanel");
+        auto *docking = engine->singletonInstance<ui::Docking *>("Hikari.Ui", "Docking");
+        const QSizeF minimum = panel->property("minimumSize").toSizeF();
+        QTRY_VERIFY2(panel->width() >= minimum.width() - 0.5 && panel->height() >= minimum.height() - 0.5,
+                     qPrintable(QStringLiteral("%1x%2 < %3x%4").arg(panel->width()).arg(panel->height())
+                                    .arg(minimum.width()).arg(minimum.height())));
+        const QSize engineMinimum = docking->minimumSize(panel->property("dockName").toString());
+        QVERIFY2(engineMinimum.width() >= minimum.width() - 0.5 && engineMinimum.height() >= minimum.height() - 0.5,
+                 qPrintable(QStringLiteral("%1x%2").arg(engineMinimum.width()).arg(engineMinimum.height())));
+        const QString step = item("lineInspector")->property("step").toString();
+        QVERIFY2(QStringList({QStringLiteral("wide"), QStringLiteral("medium"), QStringLiteral("narrow")}).contains(step),
+                 qPrintable(step));
+        QQuickItem *bar = visualItem("editorScrollBar");
+        QVERIFY(!bar || !bar->isVisible());
+        QVERIFY2(clippedIn(panel).isEmpty(), qPrintable(clippedIn(panel).join(u"; ")));
+    }
+
     void tabMovesOutOfTheLineEditorTextFields()
     {
         QVERIFY(application->openFile(writeTranslationFile("tab-out.ass")));
