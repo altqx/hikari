@@ -543,7 +543,7 @@ constexpr const char *kVisualToolTexts[] = {
     QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Strips along the clip need a clip on the line"),
     QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Gradients do not work on an inverse clip"),
     QT_TRANSLATE_NOOP("HikariSub.VisualTools", "No characters on the line"),
-    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Pathfinder: combine the drawing with the line’s clip, or with the other picked lines in the order they were picked"),
+    QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Pathfinder: combine the drawing with the line’s clip, or with the other picked lines in Grid order"),
     QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Unite"),
     QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Subtract"),
     QT_TRANSLATE_NOOP("HikariSub.VisualTools", "Intersect"),
