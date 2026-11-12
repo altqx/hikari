@@ -725,7 +725,7 @@ void AgentThreads::remove(const std::string &id)
     if (AiSidecarHost *h = m_host) {
         h->request("_hikari/session.close", Json::object({{"sessionId", id}}), [](SidecarResult) {});
         if (const auto model = modelOf(*t); model && m_wiring.requests && m_wiring.requests())
-            m_wiring.requests()->endConversation(model->providerId, id);
+            m_wiring.requests()->endConversation(model->providerId, id, t->project);
     }
     m_live.erase(id);
     m_attached.erase(id);
@@ -900,6 +900,7 @@ void AgentThreads::start(AgentThread &thread, std::string text, Json parts)
     const Defaults defaults = m_wiring.defaults ? m_wiring.defaults() : Defaults{};
     const auto model = modelOf(thread);
     const std::optional<std::string> agent = model ? externalAgentOf(*model) : std::nullopt;
+    const Json wire = model ? wireModel(thread, *model) : Json();
     AiSidecarHost *h = model ? host(agent.has_value()) : nullptr;
     const auto notice = [&](std::string_view kind) {
         push(thread, Json::object({{"kind", "notice"}, {"notice", std::string(kind)}}));
@@ -929,12 +930,12 @@ void AgentThreads::start(AgentThread &thread, std::string text, Json parts)
     AiRequests *requests = m_wiring.requests ? m_wiring.requests() : nullptr;
     const bool caching = requests && requests->caching();
     const bool search = searches(thread);
-    openSession(thread, *h, *model);
+    openSession(thread, *h, *model, wire);
     auto run = std::make_unique<Run>();
     run->request = h->request("session/prompt",
                               Json::object({{"sessionId", id},
                                             {"prompt", std::move(prompt)},
-                                            {"model", modelJson(*model)},
+                                            {"model", wire},
                                             {"caching", caching},
                                             {"webSearch", search},
                                             {"contextTokens", contextWindowOf(m_wiring.config ? m_wiring.config() : nullptr, *model)},
@@ -947,7 +948,14 @@ void AgentThreads::start(AgentThread &thread, std::string text, Json parts)
     touch(thread);
 }
 
-void AgentThreads::openSession(AgentThread &thread, AiSidecarHost &host, const app::ModelRef &model)
+Json AgentThreads::wireModel(const AgentThread &thread, const app::ModelRef &model) const
+{
+    AiRequests *requests = m_wiring.requests ? m_wiring.requests() : nullptr;
+    return modelJson({requests ? requests->wireProvider(model.providerId, thread.project) : model.providerId,
+                      model.modelId});
+}
+
+void AgentThreads::openSession(AgentThread &thread, AiSidecarHost &host, const app::ModelRef &model, const Json &wire)
 {
     if (m_live.contains(thread.id))
         return;
@@ -958,7 +966,7 @@ void AgentThreads::openSession(AgentThread &thread, AiSidecarHost &host, const a
         !joined.empty())
         system.append("\n\n").append(joined);
     Json open = Json::object({{"sessionId", thread.id},
-                              {"model", modelJson(model)},
+                              {"model", wire},
                               {"system", std::move(system)},
                               {"history", thread.history},
                               {"cacheKey", thread.id},
@@ -1003,10 +1011,11 @@ void AgentThreads::startCompaction(AgentThread &thread, std::string instruction,
         return push(thread, Json::object({{"kind", "notice"}, {"notice", "noModel"}})), touch(thread);
     if (externalAgentOf(*model))
         return;
+    const Json wire = wireModel(thread, *model);
     AiSidecarHost *h = host(false);
     if (!h)
         return push(thread, Json::object({{"kind", "notice"}, {"notice", "noSidecar"}})), touch(thread);
-    openSession(thread, *h, *model);
+    openSession(thread, *h, *model, wire);
     Json params = Json::object({{"sessionId", thread.id}});
     if (!instruction.empty())
         params["instruction"] = std::move(instruction);
