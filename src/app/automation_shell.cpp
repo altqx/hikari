@@ -625,10 +625,12 @@ void AutomationShell::setWindowProjects(std::function<std::map<int, application:
 
 void AutomationShell::projectsChanged()
 {
-    if (!m_autoloaded)
-        return;
     const auto before = m_plan.load;
     m_plan = autoloadPlan();
+    if (!m_autoloaded) {
+        emit windowScriptsChanged();
+        return;
+    }
     for (const auto &script : before)
         if (std::ranges::find(m_plan.load, script) == m_plan.load.end() && m_manager.host(script)
             && !(m_run && m_run->active == script))
