@@ -451,12 +451,16 @@ RelayTargets AiRequests::relayTargets()
     };
 }
 
-void AiRequests::endConversation(const std::string &providerId, const std::string &cacheKey)
+void AiRequests::endConversation(const std::string &providerId, const std::string &cacheKey, const std::string &project)
 {
     if (!m_providers.config().provider(providerId) || cacheKey.empty())
         return;
+    std::string sent = providerId;
+    for (const auto &[alias, target] : m_aliases)
+        if (target.project == project && target.providerId == providerId)
+            sent = alias;
     if (AiSidecarHost *host = connect())
-        host->request("_hikari/conversation.end", Json::object({{"providerId", providerId}, {"cacheKey", cacheKey}}),
+        host->request("_hikari/conversation.end", Json::object({{"providerId", sent}, {"cacheKey", cacheKey}}),
                       [](SidecarResult) {});
 }
 
