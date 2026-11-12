@@ -1,3 +1,4 @@
+#include "project_credentials.h"
 #include "project_file.h"
 #include "toml_file.h"
 
@@ -10,6 +11,7 @@
 
 using namespace hikari;
 using application::SettingValue;
+using hikari::ui::ProjectCredentials;
 using hikari::ui::ProjectFile;
 using hikari::ui::patchTomlSetting;
 
@@ -272,6 +274,119 @@ private slots:
         const ProjectFile project(root.path());
         QCOMPARE(project.problems().size(), std::size_t{1});
         QVERIFY(QFile::exists(root.filePath(QStringLiteral(".hikari/project.local.toml.broken"))));
+    }
+
+    void aiKeysNameTheirKeysAndTheLocalFileWins()
+    {
+        QTemporaryDir root;
+        writeAll(root.path() + "/.hikari/project.toml", "version = 1\n[ai.keys]\n"
+                                                         "openai = { env = \"OPENAI_API_KEY\", entry = \"openai\" }\n"
+                                                         "anthropic = { entry = \"anthropic\" }\n");
+        writeAll(root.path() + "/.hikari/project.local.toml", "version = 1\n[ai.keys]\n"
+                                                               "anthropic = { env = \"MY_ANTHROPIC\" }\n");
+        const auto names = ProjectFile(root.path()).aiKeyNames();
+        QCOMPARE(names.byProvider.size(), std::size_t(2));
+        QVERIFY((names.byProvider.at("openai") == application::ai::KeyName{"OPENAI_API_KEY", "openai"}));
+        QVERIFY((names.byProvider.at("anthropic") == application::ai::KeyName{"MY_ANTHROPIC", ""}));
+        QVERIFY(names.valuesFound.empty());
+    }
+
+    void aKeyValueInProjectTomlIsIgnoredAndReported()
+    {
+        QTemporaryDir root;
+        writeAll(root.path() + "/.hikari/project.toml", "version = 1\n[ai.keys]\n"
+                                                         "openrouter = \"sk-or-secret\"\n"
+                                                         "openai = { key = \"sk-secret\" }\n"
+                                                         "[keys]\nanthropic = \"sk-ant-secret\"\n");
+        const ProjectFile project(root.path());
+        const auto names = project.aiKeyNames();
+        QVERIFY(names.byProvider.empty());
+        QCOMPARE(names.valuesFound, (std::vector<std::string>{"openai", "openrouter", "keys"}));
+        const auto values = project.aiKeyValues();
+        QCOMPARE(values.size(), std::size_t(3));
+        QCOMPARE(values[0].key, std::string("sk-secret"));
+        QCOMPARE(values[1].key, std::string("sk-or-secret"));
+        QVERIFY(values[2].inKeysTable);
+        QVERIFY(project.refused().empty());
+    }
+
+    void settingAKeyNameKeepsTheRestOfTheFile()
+    {
+        QTemporaryDir root;
+        const QString path = root.path() + "/.hikari/project.toml";
+        writeAll(path, kHandWritten);
+        ProjectFile project(root.path());
+        QVERIFY(project.setAiKeyName("openai", {"OPENAI_API_KEY", ""}));
+        const QByteArray written = readAll(path);
+        QVERIFY(written.startsWith(kHandWritten));
+        QVERIFY(written.contains("openai = { env = \"OPENAI_API_KEY\" }"));
+        QVERIFY((ProjectFile(root.path()).aiKeyNames().byProvider.at("openai").env == "OPENAI_API_KEY"));
+        QVERIFY(project.setAiKeyName("openai", {}));
+        QVERIFY(ProjectFile(root.path()).aiKeyNames().byProvider.empty());
+        QVERIFY(readAll(path).contains("# the show is British"));
+    }
+
+    void creatingCredentialsWritesTheFileAndTheGitignore()
+    {
+        QTemporaryDir root;
+        const ProjectCredentials credentials(root.path());
+        QVERIFY(!credentials.exists());
+        QVERIFY(credentials.create({"anthropic"}));
+        QVERIFY(credentials.exists());
+        QCOMPARE(readAll(credentials.gitignorePath()), QByteArray("credentials.toml\nproject.local.toml\n"));
+        const auto keys = credentials.keys();
+        QCOMPARE(keys.size(), std::size_t(1));
+        QCOMPARE(keys.at("anthropic"), std::string());
+        QVERIFY(!QFileInfo::exists(root.path() + "/.gitignore"));
+#ifndef Q_OS_WIN
+        QCOMPARE(QFile::permissions(credentials.path()) & (QFileDevice::ReadGroup | QFileDevice::ReadOther),
+                 QFileDevice::Permissions());
+#endif
+    }
+
+    void anExistingGitignoreGainsOnlyTheMissingLines()
+    {
+        QTemporaryDir root;
+        const ProjectCredentials credentials(root.path());
+        writeAll(credentials.gitignorePath(), "layouts.json\r\n/project.local.toml");
+        QVERIFY(credentials.create({}));
+        QCOMPARE(readAll(credentials.gitignorePath()), QByteArray("layouts.json\r\n/project.local.toml\ncredentials.toml\n"));
+        QVERIFY(credentials.create({}));
+        QCOMPARE(readAll(credentials.gitignorePath()), QByteArray("layouts.json\r\n/project.local.toml\ncredentials.toml\n"));
+    }
+
+    void creatingKeepsAnExistingCredentialsFile()
+    {
+        QTemporaryDir root;
+        const ProjectCredentials credentials(root.path());
+        writeAll(credentials.path(), "version = 1\n[keys]\nopenai = \"kept\"\n");
+        QVERIFY(credentials.create({"anthropic"}));
+        QCOMPARE(credentials.keys(), (ProjectCredentials::Keys{{"openai", "kept"}}));
+    }
+
+    void puttingAKeyCreatesTheFileAndKeepsItPrivate()
+    {
+        QTemporaryDir root;
+        const ProjectCredentials credentials(root.path());
+        QVERIFY(credentials.put("openrouter", "sk-or-moved"));
+        QVERIFY(credentials.put("openai", "sk-new"));
+        QVERIFY(credentials.put("openrouter", "sk-or-again"));
+        QCOMPARE(credentials.keys(), (ProjectCredentials::Keys{{"openai", "sk-new"}, {"openrouter", "sk-or-again"}}));
+        QVERIFY(readAll(credentials.path()).startsWith("# AI keys for this project."));
+#ifndef Q_OS_WIN
+        QCOMPARE(QFile::permissions(credentials.path()) & (QFileDevice::ReadGroup | QFileDevice::ReadOther),
+                 QFileDevice::Permissions());
+#endif
+    }
+
+    void aBrokenCredentialsFileHasNoKeys()
+    {
+        QTemporaryDir root;
+        const ProjectCredentials credentials(root.path());
+        writeAll(credentials.path(), "version = 1\n[keys\n");
+        std::optional<application::ParseFailure> problem;
+        QVERIFY(credentials.keys(&problem).empty());
+        QVERIFY(problem);
     }
 };
 

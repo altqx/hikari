@@ -523,6 +523,18 @@ TEST_F(AgentBrokerTest, QtDeclinesCodexApprovalsAndPassesOnlyAnswersToForwardedR
     EXPECT_EQ(out[5], Json::object({{"id", "d"}, {"result", Json::object({{"ok", true}})}}));
 }
 
+TEST_F(AgentBrokerTest, QtDeclinesCodexsBuiltInFileChanges)
+{
+    broker.add("codex", spec(true));
+    const std::uint64_t process = startReady("codex");
+    send(process, R"({"id":1,"method":"turn/interrupt","params":{"emit":{"id":"f","method":"item/fileChange/requestApproval","params":{"itemId":"p"}}}})");
+    send(process, R"({"id":2,"method":"turn/interrupt","params":{"emit":{"id":"g","method":"applyPatchApproval","params":{}}}})");
+    ASSERT_TRUE(waitFor([&] { return withId(process, "f").has_value() && withId(process, "g").has_value(); }));
+    EXPECT_EQ(withId(process, "f"), Json::object({{"id", "f"}, {"result", Json::object({{"decision", "decline"}})}}));
+    EXPECT_EQ(*withId(process, "g")->find("result")->find("decision")->find("denied")->find("rejection"),
+              Json("Hikari's AI can't run commands or change files."));
+}
+
 TEST_F(AgentBrokerTest, AChannelAgentGetsItsOwnToolsChannelForTheSessionUntilItExits)
 {
     AgentSpec s = spec();

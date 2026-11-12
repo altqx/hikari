@@ -354,7 +354,9 @@ private:
     void chargeParent(AgentThread &child, double cost);
     AgentThread *find(const std::string &id);
     void start(AgentThread &thread, std::string text, api::Json parts);
-    void openSession(AgentThread &thread, AiSidecarHost &host, const application::ai::ModelRef &model);
+    api::Json wireModel(const AgentThread &thread, const application::ai::ModelRef &model) const;
+    void openSession(AgentThread &thread, AiSidecarHost &host, const application::ai::ModelRef &model,
+                     const api::Json &wire);
     void startCompaction(AgentThread &thread, std::string instruction, bool apply);
     void compactionDone(const std::string &id, const SidecarResult &result, bool apply);
     void runQueued(AgentThread &thread);

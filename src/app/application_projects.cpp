@@ -22,7 +22,6 @@ namespace hikari::app {
 
 namespace {
 
-// MUST KILL: names the Project's credentials file before PJ10 #982 adds it; PJ10 owns this wording.
 QString projectCredentialNotice(const std::string &id)
 {
     return QCoreApplication::translate("HikariSub.Project",
@@ -113,6 +112,8 @@ void Application::applyWindowProject(int shellWindow)
     loadProjectFonts(shellWindow);
     if (m_styleManager)
         m_styleManager->projectChanged();
+    if (m_shiftTimes)
+        m_shiftTimes->setProjectRoot(m_projects->root(m_workspace.activeWindow()));
     const bool moveTags = v.settings->settings().boolean("translation.autoMoveTagsFromOriginal");
     v.editor->setMoveTags(moveTags);
     v.shell->setRunMarks(moveTags);
@@ -184,11 +185,7 @@ QString Application::projectFontFolder(int shellWindow) const
 
 bool Application::projectNeedsTrust(int shellWindow) const
 {
-    const auto &window = *views(shellWindow).settings;
-    const auto *project = window.project();
-    if (!project || window.trusted())
-        return false;
-    return QFileInfo(window.root() + QStringLiteral("/.hikari/automation")).isDir() || project->hasTable("plugins");
+    return !projectTrustReasons(shellWindow).isEmpty();
 }
 
 void Application::trustProject(int shellWindow)

@@ -932,6 +932,46 @@ TEST_F(AgentThreadsTest, ASessionGetsTheUsersThenItsProjectsAgentsFileAfterHikar
     EXPECT_TRUE(at(opened[1], "system").ends_with("Use Oxford commas.")) << at(opened[1], "system");
 }
 
+TEST_F(AgentThreadsTest, AThreadInAProjectWithAKeyTalksToItsAliasAndKeepsTheUsersProvider)
+{
+    requests->setProjectKeys([](const std::string &folder, const std::string &providerId) -> std::optional<std::string> {
+        if (folder == "/show" && providerId == "or")
+            return "sk-project";
+        return std::nullopt;
+    });
+    project = "/show";
+    const std::string inProject = threads->create();
+    project.clear();
+    const std::string outside = threads->create();
+
+    threads->send(inProject, "Hi");
+    ASSERT_TRUE(idle(inProject));
+    threads->send(outside, "Hi");
+    ASSERT_TRUE(idle(outside));
+    threads->remove(inProject);
+    threads->remove(outside);
+
+    const Json alias = Json::object({{"providerId", "or@p1"}, {"model", "m"}});
+    const Json own = Json::object({{"providerId", "or"}, {"model", "m"}});
+    const auto opened = receivedAs("session/new");
+    ASSERT_EQ(opened.size(), 2u);
+    EXPECT_EQ(*opened[0].find("model"), alias);
+    EXPECT_EQ(*opened[1].find("model"), own);
+    const auto prompts = receivedAs("session/prompt");
+    ASSERT_EQ(prompts.size(), 2u);
+    EXPECT_EQ(*prompts[0].find("model"), alias);
+    EXPECT_EQ(*prompts[1].find("model"), own);
+    const auto told = receivedAs("_hikari/providers.set");
+    ASSERT_FALSE(told.empty());
+    EXPECT_NE(told.front().dump().find(R"("id":"or@p1")"), std::string::npos) << told.front().dump();
+    const auto ended = receivedAs("_hikari/conversation.end");
+    ASSERT_EQ(ended.size(), 2u);
+    EXPECT_EQ(*ended[0].find("providerId"), Json("or@p1"));
+    EXPECT_EQ(*ended[1].find("providerId"), Json("or"));
+    EXPECT_EQ(received().dump().find("sk-project"), std::string::npos);
+    EXPECT_FALSE(threads->thread(inProject));
+}
+
 TEST_F(AgentThreadsTest, StopWithdrawsTheOpenAskAndEndsTheTurn)
 {
     const std::string id = withMode(AgentMode::Manual);

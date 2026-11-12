@@ -22,13 +22,16 @@ afterEach(() => {
 });
 
 /** Qt's side: a tools channel for the session, and `codex app-server` pointed at it. */
-function harness(answers: Partial<Record<OperationName, unknown>> = {}, child?: ReturnType<typeof qtLink>) {
+const kJoined = "You are Hikari AI.\n\nInstructions from the user's AGENTS.md:\n\nUse Oxford commas.\n\n" +
+    "Instructions from this Project's AGENTS.md:\n\nKeep honorifics.";
+
+function harness(answers: Partial<Record<OperationName, unknown>> = {}, system = "Be brief.", child?: ReturnType<typeof qtLink>) {
     const log = join(mkdtempSync(join(tmpdir(), "fake-codex-")), "log");
     const calls: { operation: string; params: unknown }[] = [];
     const updates: SessionUpdate[] = [];
     const spawned: string[] = [];
     let session: CodexSession | undefined;
-    const params = { sessionId: "t1", agent: "codex" as const, model: { providerId: "", model: "" }, system: "Be brief.",
+    const params = { sessionId: "t1", agent: "codex" as const, model: { providerId: "", model: "" }, system,
         ...(child ? { task: { parent: "p1", taskId: "k1", scope: { document: 1, lines: [1] } } } : {}) };
     const mcp = new McpServer(() => whileTurnRuns(child ? sessionCalls(new HikariApi(child.peer, undefined, "t1"), params) : {
         call: (operation, p) => {
@@ -58,7 +61,7 @@ function harness(answers: Partial<Record<OperationName, unknown>> = {}, child?: 
     const script = (s: unknown) => [{ type: "text" as const, text: typeof s === "string" ? s : JSON.stringify(s) }];
     const logged = (method: string) => readFileSync(log, "utf8").split("\n").filter((l) => l.startsWith(`${method} `))
         .map((l) => JSON.parse(l.slice(method.length + 1)) as unknown);
-    return { session: codex, calls, updates, spawned, script, logged };
+    return { session: codex, calls, updates, spawned, script, logged, log };
 }
 
 describe("Codex through its app-server", () => {
@@ -123,7 +126,24 @@ describe("Codex through its app-server", () => {
         expect((await h.session.prompt({ sessionId: "t1", prompt: h.script({ reply: "back" }) })).stopReason).toBe("end_turn");
         h.session.close();
         expect(h.spawned).toHaveLength(2);
-        expect(h.logged("thread/resume")).toEqual([{ threadId: "thread-1" }]);
+        expect(h.logged("thread/resume")).toEqual([{ threadId: "thread-1", developerInstructions: "Be brief." }]);
+    }, 30_000);
+
+    test("a built-in file change is refused, and the thread keeps its AGENTS.md text after Codex restarts", async () => {
+        const h = harness({}, kJoined);
+        const result = await h.session.prompt({ sessionId: "t1", prompt: h.script({ fileChange: "/show/ep01.ass", reply: "No." }) });
+        expect(result.stopReason).toBe("end_turn");
+        const log = readFileSync(h.log, "utf8");
+        expect(log).toContain("fileChange refused");
+        expect(log).not.toContain("fileChange applied");
+        expect(h.updates.filter((u) => u.sessionUpdate === "tool_call_update").map((u) =>
+            u.sessionUpdate === "tool_call_update" && u.status)).toEqual(["failed"]);
+
+        await expect(h.session.prompt({ sessionId: "t1", prompt: h.script("exit") })).rejects.toThrow("Codex ended");
+        expect((await h.session.prompt({ sessionId: "t1", prompt: h.script({ reply: "back" }) })).stopReason).toBe("end_turn");
+        h.session.close();
+        expect(h.logged("thread/start")).toEqual([{ developerInstructions: kJoined }]);
+        expect(h.logged("thread/resume")).toEqual([{ threadId: "thread-1", developerInstructions: kJoined }]);
     }, 30_000);
 
     test("as a sub-agent it completes an edit through _hikari/api.call, as its own session", async () => {
@@ -131,7 +151,7 @@ describe("Codex through its app-server", () => {
             "lines.find": [{ revision: 3, total: 1, lines: [{ id: 1, row: 1, text: "Helo" }] }],
             "document.apply": [{ revision: 4, inserted: [], changed: true }],
         });
-        const h = harness({}, qt);
+        const h = harness({}, undefined, qt);
         const result = await h.session.prompt({ sessionId: "t1", prompt: h.script({ reply: "Fixed.", calls: [
             { tool: "lines_find", arguments: { document: 1, text: "Helo" } },
             { tool: "document_apply", arguments: { document: 1, revision: 3, name: "Fix",

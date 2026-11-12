@@ -23,13 +23,14 @@ afterEach(() => {
 });
 
 /** Qt's side: a tools channel for the session, and a guard that names it in `session/new`. */
-function harness(answers: Partial<Record<OperationName, unknown>> = {}, env: Record<string, string> = {}, child?: ReturnType<typeof qtLink>) {
+function harness(answers: Partial<Record<OperationName, unknown>> = {}, env: Record<string, string> = {},
+    system = "Be brief.", child?: ReturnType<typeof qtLink>) {
     const log = join(mkdtempSync(join(tmpdir(), "fake-acp-")), "log");
     const calls: { operation: string; params: unknown }[] = [];
     const updates: SessionUpdate[] = [];
     const spawned: string[] = [];
     let session: AcpSession | undefined;
-    const params = { sessionId: "t1", agent: "acp:fake" as const, model: { providerId: "", model: "" }, system: "Be brief.",
+    const params = { sessionId: "t1", agent: "acp:fake" as const, model: { providerId: "", model: "" }, system,
         ...(child ? { task: { parent: "p1", taskId: "k1", scope: { document: 1, lines: [1] } } } : {}) };
     const mcp = new McpServer(() => whileTurnRuns(child ? sessionCalls(new HikariApi(child.peer, undefined, "t1"), params) : {
         call: (operation, p) => {
@@ -160,6 +161,29 @@ describe("an ACP agent", () => {
         expect(h.logged("session/new")).toHaveLength(2);
     }, 30_000);
 
+    test("the joined AGENTS.md text comes before the first prompt of each new session, not after session/load", async () => {
+        const joined = "You are Hikari AI.\n\nInstructions from this Project's AGENTS.md:\n\nKeep honorifics.";
+        const intros = (h: ReturnType<typeof harness>) => (h.logged("session/prompt") as { prompt: { text?: string }[] }[])
+            .map((p) => p.prompt.length > 1 && p.prompt[0]!.text === joined);
+
+        const loads = harness({}, {}, joined);
+        await loads.session.prompt({ sessionId: "t1", prompt: loads.script({ reply: "one" }) });
+        await loads.session.prompt({ sessionId: "t1", prompt: loads.script({ reply: "two" }) });
+        await expect(loads.session.prompt({ sessionId: "t1", prompt: loads.script("exit") })).rejects.toThrow("ended");
+        await loads.session.prompt({ sessionId: "t1", prompt: loads.script({ reply: "back" }) });
+        loads.session.close();
+        expect(loads.logged("session/load")).toHaveLength(1);
+        expect(intros(loads)).toEqual([true, false, false, false]);
+
+        const fresh = harness({}, { FAKE_ACP_LOAD: "0" }, joined);
+        await fresh.session.prompt({ sessionId: "t1", prompt: fresh.script({ reply: "one" }) });
+        await expect(fresh.session.prompt({ sessionId: "t1", prompt: fresh.script("exit") })).rejects.toThrow("ended");
+        await fresh.session.prompt({ sessionId: "t1", prompt: fresh.script({ reply: "back" }) });
+        fresh.session.close();
+        expect(fresh.logged("session/new")).toHaveLength(2);
+        expect(intros(fresh)).toEqual([true, false, true]);
+    }, 30_000);
+
     test("the sidecar grants no permission itself", async () => {
         const h = harness();
         await h.session.prompt({ sessionId: "t1", prompt: h.script({ askFor: "rm -rf /", reply: "ok" }) });
@@ -183,7 +207,7 @@ describe("which tool calls are Hikari's", () => {
             "lines.find": [{ revision: 3, total: 1, lines: [{ id: 1, row: 1, text: "Helo" }] }],
             "document.apply": [{ revision: 4, inserted: [], changed: true }],
         });
-        const h = harness({}, {}, qt);
+        const h = harness({}, {}, undefined, qt);
         const result = await h.session.prompt({ sessionId: "t1", prompt: h.script({ reply: "Fixed.", calls: [
             { tool: "lines_find", arguments: { document: 1, text: "Helo" } },
             { tool: "document_apply", arguments: { document: 1, revision: 3, name: "Fix",

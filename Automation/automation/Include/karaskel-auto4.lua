@@ -35,8 +35,18 @@ if not karaskel then
 	karaskel = {}
 end
 
+local function check_cancelled() if aegisub.progress.is_cancelled() then error("User cancelled") end end
+local own_copy = table.copy
+
 -- Collect styles and metadata from the subs
 function karaskel.collect_head(subs, generate_furigana)
+	local impl = aegisub.__karaskel_impl
+	if impl and impl.collect_head and table.copy == own_copy then
+		local meta, styles = impl.collect_head(subs, generate_furigana, check_cancelled)
+		if meta then
+			return meta, styles
+		end
+	end
 	local meta = {
 		-- X and Y script resolution
 		res_x = 0, res_y = 0,
@@ -53,7 +63,7 @@ function karaskel.collect_head(subs, generate_furigana)
 	
 	-- First pass: collect all existing styles and get resolution info
 	for i, l in ipairs(subs) do
-		if aegisub.progress.is_cancelled() then error("User cancelled") end
+		check_cancelled()
 		
 		if l.class == "style" then
 			if not first_style_line then
@@ -562,10 +572,35 @@ end
 
 -- Precalc some info on a line
 -- Modifies the line parameter
+local own_stages = {
+	preproc_line_text = karaskel.preproc_line_text,
+	preproc_line_size = karaskel.preproc_line_size,
+	preproc_line_pos = karaskel.preproc_line_pos,
+	do_basic_layout = karaskel.do_basic_layout,
+	do_furigana_layout = karaskel.do_furigana_layout,
+}
+local own_charwidth = unicode.charwidth
+
+local function native_preproc_line(subs, meta, styles, line)
+	local impl = aegisub.__karaskel_impl
+	if not (impl and impl.preproc_line) or unicode.charwidth ~= own_charwidth then
+		return false
+	end
+	for name, stage in pairs(own_stages) do
+		if karaskel[name] ~= stage then
+			return false
+		end
+	end
+	return impl.preproc_line(subs, meta, styles, line)
+end
+
 function karaskel.preproc_line(subs, meta, styles, line)
 	-- subs parameter is never used and probably won't ever be
 	-- (it wouldn't be fun if some lines suddenly changed index here)
 	-- pass whatever you want, but be careful calling preproc_line_pos directly, that interface might change
+	if native_preproc_line(subs, meta, styles, line) then
+		return
+	end
 	karaskel.preproc_line_pos(meta, styles, line)
 end
 
