@@ -28,6 +28,7 @@
 #include "hikari/app/plugin_marketplace.h"
 #include "hikari/app/plugin_runtime.h"
 #include "hikari/app/user_folder.h"
+#include "hikari/app/automation_reset_notice.h"
 #include "hikari/app/project_windows.h"
 #include "hikari/core/ass_attachments.h"
 #include "hikari/core/conversion.h"
@@ -246,6 +247,7 @@ public:
         QString userFolder;
         UserFolder::MoveReport userFolderMove;
         UserFolder::SeedReport userFolderSeed;
+        AutomationReset automationReset;
         // Empty: no plugins can be installed.
         PluginManager::Folders plugins;
         // Empty: no marketplace.
@@ -898,6 +900,7 @@ public:
     Analytics &analytics() { return *m_analytics; }
     DiscordPresence &presence() { return *m_presence; }
     StarPrompt &starPrompt() { return *m_starPrompt; }
+    AutomationResetNotice &automationReset() { return *m_automationReset; }
     CrashReports &crashReports() { return *m_crashReports; }
     WhatsNew &whatsNew() { return *m_whatsNew; }
     StyleManagerController &styleManager() { return *m_styleManager; }
@@ -1354,6 +1357,7 @@ private:
     std::unique_ptr<StarPrompt> m_starPrompt;
     QString bundledScriptName(const QString &path) const;
     std::unique_ptr<WhatsNew> m_whatsNew;
+    std::unique_ptr<AutomationResetNotice> m_automationReset;
     std::unique_ptr<StyleManagerController> m_styleManager;
     std::unique_ptr<FontCollectorController> m_fontCollector;
     std::unique_ptr<AlignToVideoController> m_alignToVideo;
