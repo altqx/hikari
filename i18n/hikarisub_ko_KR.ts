@@ -15137,6 +15137,22 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>이 탭은 이제 %1 프로젝트를 사용합니다.</translation>
     </message>
     <message>
+        <source>This project has its own scripts, plugin settings or AI keys. Trust “%1” to use them.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This project has its own AI keys. Trust “%1” to use them; until then Hikari AI uses yours.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>project.toml holds an AI key for %1. HikariSub ignores it: keys go in .hikari/credentials.toml, which git doesn’t share.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Project settings…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>This file is in the project %1.</source>
         <translation>이 파일은 %1 프로젝트에 있습니다.</translation>
     </message>
@@ -15191,6 +15207,102 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Trust folder</source>
         <translation>폴더 신뢰</translation>
+    </message>
+    <message>
+        <source>From %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>From the credentials file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Yours. Project not trusted</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No credentials file. Uses yours</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not found. Uses yours</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Needs no key</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>project.toml holds an AI key for %1, which is ignored. Keys go in the credentials file. If project.toml was committed or shared, replace the key at the provider too.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to credentials file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>“%1” isn’t trusted, so its keys aren’t used. Hikari AI uses yours in this window.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A key from this machine’s environment or from this Project’s credentials file replaces yours, only in this Project’s windows. The environment comes first. Base URLs, budgets and on/off stay yours.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Provider</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Environment variable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Credentials entry</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Key used</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>None</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Environment variable for %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Credentials entry for %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Credentials file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 · git ignores it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 · not created</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Create credentials file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show in folder</source>
+        <translation type="unfinished">폴더에서 보기</translation>
+    </message>
+    <message>
+        <source>Creates the file and .hikari/.gitignore, which keeps it and project.local.toml out of git. Keys never reach Hikari AI or the model.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
