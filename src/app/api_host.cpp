@@ -28,8 +28,23 @@ bool sameProject(const std::optional<api::ProjectState> &a, const std::optional<
 ApiHost::ApiHost(Wiring wiring, QObject *parent)
     : QObject(parent), m_wiring(std::move(wiring)),
       m_skills(m_wiring.skills.empty() ? nullptr : std::make_unique<api::FolderSkills>(m_wiring.skills)),
-      m_api(api::Host{this, this, this, m_wiring.settings, m_wiring.media, this, &m_review, this, m_skills.get(),
-                     m_wiring.automation, this, this, this, m_wiring.karaoke, this}),
+      m_api(api::Host{
+          .documents = this,
+          .commands = this,
+          .panels = this,
+          .settings = m_wiring.settings,
+          .media = m_wiring.media,
+          .files = this,
+          .review = &m_review,
+          .render = this,
+          .skills = m_skills.get(),
+          .automation = m_wiring.automation,
+          .typeset = this,
+          .project = this,
+          .translation = this,
+          .karaoke = m_wiring.karaoke,
+          .effects = this,
+      }),
       m_seenProject(project())
 {
 }

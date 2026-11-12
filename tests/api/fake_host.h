@@ -242,8 +242,22 @@ public:
     FakeTranslation translation;
     Host host()
     {
-        return Host{this, this, this, &settings, &media, &files, &review, render, &skills, &automation, typeset, nullptr,
-                    &translation, karaoke, effects};
+        return Host{
+            .documents = this,
+            .commands = this,
+            .panels = this,
+            .settings = &settings,
+            .media = &media,
+            .files = &files,
+            .review = &review,
+            .render = render,
+            .skills = &skills,
+            .automation = &automation,
+            .typeset = typeset,
+            .translation = &translation,
+            .karaoke = karaoke,
+            .effects = effects,
+        };
     }
 
     const application::Workspace &workspace() const override { return workspace_; }
