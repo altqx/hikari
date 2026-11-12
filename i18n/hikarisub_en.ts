@@ -31,6 +31,13 @@
             <numerusform>Show all %n lines</numerusform>
         </translation>
     </message>
+    <message numerus="yes">
+        <source>Show all %n files</source>
+        <translation>
+            <numerusform>Show the whole file</numerusform>
+            <numerusform>Show all %n files</numerusform>
+        </translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Automation</name>
