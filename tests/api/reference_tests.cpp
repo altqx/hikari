@@ -221,6 +221,9 @@ TEST(ApiReference, TheGuardCatchesABreak)
     const Json firstOptional = *Json::parse(R"({"type": "object", "properties": {"c": {"type": "string"}},
         "additionalProperties": false})");
     EXPECT_TRUE(breaks(bare, firstOptional, Side::Params, "x").empty());
+    const Json firstRequired = *Json::parse(R"({"type": "object", "properties": {"c": {"type": "string"}},
+        "required": ["c"], "additionalProperties": false})");
+    EXPECT_EQ(breaks(bare, firstRequired, Side::Params, "x"), std::vector<std::string>{"x/c became required"});
     EXPECT_EQ(breaks(then, *Json::parse(R"({"type": "object", "required": ["a"]})"), Side::Params, "x"),
               (std::vector<std::string>{"x/a removed", "x/b removed"}));
     const Json two = *Json::parse(R"({"enum": ["p", "q"]})"), three = *Json::parse(R"({"enum": ["p", "q", "r"]})");
