@@ -519,7 +519,7 @@ constexpr std::string_view kLines = R"("lines": {"type": "array", "minItems": 1,
 void add(Registry &registry, Access access, std::string name, std::string summary, const std::string &paramSchema,
          const std::string &result, Handler handler)
 {
-    addOperation(registry, access, std::move(name), std::move(summary), paramSchema, result, std::move(handler), 2);
+    addOperation(registry, access, std::move(name), std::move(summary), paramSchema, result, std::move(handler));
 }
 
 }

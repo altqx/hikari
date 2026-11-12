@@ -3688,7 +3688,7 @@
       "name": "karaoke.syllables",
       "access": "read",
       "summary": "A Line's karaoke syllables as the templater reads them: text, tag, start and end in ms.",
-      "since": 2,
+      "since": 1,
       "params": {
         "type": "object",
         "properties": {
@@ -3754,7 +3754,7 @@
       "name": "karaoke.split",
       "access": "read",
       "summary": "Splits Lines without \\k tags into syllables as the audio editor's karaoke mode does, the time shared by character; Lines that already have \\k tags keep them.",
-      "since": 2,
+      "since": 1,
       "params": {
         "type": "object",
         "properties": {
@@ -3814,7 +3814,7 @@
       "name": "karaoke.time",
       "access": "read",
       "summary": "Times a Line's existing syllables: each syllable's end in ms, in order; the \\k tags are rewritten.",
-      "since": 2,
+      "since": 1,
       "params": {
         "type": "object",
         "properties": {
@@ -3864,7 +3864,7 @@
       "name": "karaoke.onsets",
       "access": "read",
       "summary": "Where sung notes start in the open audio, in ms, within a range.",
-      "since": 2,
+      "since": 1,
       "params": {
         "type": "object",
         "properties": {
@@ -3903,7 +3903,7 @@
       "name": "karaoke.snap",
       "access": "read",
       "summary": "Moves each syllable boundary inside the Lines to the nearest vocal onset within the window, keeping every syllable at least 10 ms long.",
-      "since": 2,
+      "since": 1,
       "params": {
         "type": "object",
         "properties": {
@@ -3969,7 +3969,7 @@
       "name": "karaoke.kanji",
       "access": "read",
       "summary": "Copies a timed romaji Line's syllables onto its kanji Line as the Kanji timer suggests the groups.",
-      "since": 2,
+      "since": 1,
       "params": {
         "type": "object",
         "properties": {
@@ -4020,7 +4020,7 @@
       "name": "karaoke.furigana",
       "access": "read",
       "summary": "The readings the dictionary suggests for a Line's kanji runs, in hiragana.",
-      "since": 2,
+      "since": 1,
       "params": {
         "type": "object",
         "properties": {
@@ -4074,7 +4074,7 @@
       "name": "karaoke.check",
       "access": "read",
       "summary": "The Karaoke check's problems: unclosed tags, totals that differ from the Line, empty syllables and syllables outside the Line.",
-      "since": 2,
+      "since": 1,
       "params": {
         "type": "object",
         "properties": {
@@ -4144,7 +4144,7 @@
       "name": "karaoke.template_preview",
       "access": "read",
       "summary": "The Lines the karaoke templater generates from one karaoke Line, without applying them.",
-      "since": 2,
+      "since": 1,
       "params": {
         "type": "object",
         "properties": {
@@ -4214,7 +4214,7 @@
       "name": "karaoke.apply_template",
       "access": "write",
       "summary": "Runs the karaoke templater on the karaoke Lines, or the Lines given, and applies what it generates as one undo step: old generated Lines are replaced.",
-      "since": 2,
+      "since": 1,
       "params": {
         "type": "object",
         "properties": {
@@ -4267,7 +4267,7 @@
       "name": "karaoke.align",
       "access": "write",
       "summary": "Runs the user's own WhisperX or Montreal Forced Aligner on the audio under the Lines and answers each word with its start and end in ms; the user approves every run, and nothing is applied.",
-      "since": 2,
+      "since": 1,
       "params": {
         "type": "object",
         "properties": {

@@ -53,17 +53,17 @@ Version 2 of the Hikari API, generated from HikariSub's own registry: the same r
 | `typeset.check` | read | 1 | Renders one Line alone, with a proposed text, on its frame and compares its ink with a target. |
 | `typeset.apply` | write | 1 | Applies typeset Lines as one undo step after every one passes the render check; when one misses its target nothing is applied. |
 | `project.info` | read | 2 | The Project of the window the user works in, or null. |
-| `karaoke.syllables` | read | 2 | A Line's karaoke syllables as the templater reads them: text, tag, start and end in ms. |
-| `karaoke.split` | read | 2 | Splits Lines without \k tags into syllables as the audio editor's karaoke mode does, the time shared by character; Lines that already have \k tags keep them. |
-| `karaoke.time` | read | 2 | Times a Line's existing syllables: each syllable's end in ms, in order; the \k tags are rewritten. |
-| `karaoke.onsets` | read | 2 | Where sung notes start in the open audio, in ms, within a range. |
-| `karaoke.snap` | read | 2 | Moves each syllable boundary inside the Lines to the nearest vocal onset within the window, keeping every syllable at least 10 ms long. |
-| `karaoke.kanji` | read | 2 | Copies a timed romaji Line's syllables onto its kanji Line as the Kanji timer suggests the groups. |
-| `karaoke.furigana` | read | 2 | The readings the dictionary suggests for a Line's kanji runs, in hiragana. |
-| `karaoke.check` | read | 2 | The Karaoke check's problems: unclosed tags, totals that differ from the Line, empty syllables and syllables outside the Line. |
-| `karaoke.template_preview` | read | 2 | The Lines the karaoke templater generates from one karaoke Line, without applying them. |
-| `karaoke.apply_template` | write | 2 | Runs the karaoke templater on the karaoke Lines, or the Lines given, and applies what it generates as one undo step: old generated Lines are replaced. |
-| `karaoke.align` | write | 2 | Runs the user's own WhisperX or Montreal Forced Aligner on the audio under the Lines and answers each word with its start and end in ms; the user approves every run, and nothing is applied. |
+| `karaoke.syllables` | read | 1 | A Line's karaoke syllables as the templater reads them: text, tag, start and end in ms. |
+| `karaoke.split` | read | 1 | Splits Lines without \k tags into syllables as the audio editor's karaoke mode does, the time shared by character; Lines that already have \k tags keep them. |
+| `karaoke.time` | read | 1 | Times a Line's existing syllables: each syllable's end in ms, in order; the \k tags are rewritten. |
+| `karaoke.onsets` | read | 1 | Where sung notes start in the open audio, in ms, within a range. |
+| `karaoke.snap` | read | 1 | Moves each syllable boundary inside the Lines to the nearest vocal onset within the window, keeping every syllable at least 10 ms long. |
+| `karaoke.kanji` | read | 1 | Copies a timed romaji Line's syllables onto its kanji Line as the Kanji timer suggests the groups. |
+| `karaoke.furigana` | read | 1 | The readings the dictionary suggests for a Line's kanji runs, in hiragana. |
+| `karaoke.check` | read | 1 | The Karaoke check's problems: unclosed tags, totals that differ from the Line, empty syllables and syllables outside the Line. |
+| `karaoke.template_preview` | read | 1 | The Lines the karaoke templater generates from one karaoke Line, without applying them. |
+| `karaoke.apply_template` | write | 1 | Runs the karaoke templater on the karaoke Lines, or the Lines given, and applies what it generates as one undo step: old generated Lines are replaced. |
+| `karaoke.align` | write | 1 | Runs the user's own WhisperX or Montreal Forced Aligner on the audio under the Lines and answers each word with its start and end in ms; the user approves every run, and nothing is applied. |
 
 ### `documents.list`
 
@@ -1144,7 +1144,7 @@ The Project of the window the user works in, or null.
 
 ### `karaoke.syllables`
 
-Read. Since version 2.
+Read. Since version 1.
 
 A Line's karaoke syllables as the templater reads them: text, tag, start and end in ms.
 
@@ -1169,7 +1169,7 @@ A Line's karaoke syllables as the templater reads them: text, tag, start and end
 
 ### `karaoke.split`
 
-Read. Since version 2.
+Read. Since version 1.
 
 Splits Lines without \k tags into syllables as the audio editor's karaoke mode does, the time shared by character; Lines that already have \k tags keep them.
 
@@ -1191,7 +1191,7 @@ Splits Lines without \k tags into syllables as the audio editor's karaoke mode d
 
 ### `karaoke.time`
 
-Read. Since version 2.
+Read. Since version 1.
 
 Times a Line's existing syllables: each syllable's end in ms, in order; the \k tags are rewritten.
 
@@ -1212,7 +1212,7 @@ Times a Line's existing syllables: each syllable's end in ms, in order; the \k t
 
 ### `karaoke.onsets`
 
-Read. Since version 2.
+Read. Since version 1.
 
 Where sung notes start in the open audio, in ms, within a range.
 
@@ -1231,7 +1231,7 @@ Where sung notes start in the open audio, in ms, within a range.
 
 ### `karaoke.snap`
 
-Read. Since version 2.
+Read. Since version 1.
 
 Moves each syllable boundary inside the Lines to the nearest vocal onset within the window, keeping every syllable at least 10 ms long.
 
@@ -1254,7 +1254,7 @@ Moves each syllable boundary inside the Lines to the nearest vocal onset within 
 
 ### `karaoke.kanji`
 
-Read. Since version 2.
+Read. Since version 1.
 
 Copies a timed romaji Line's syllables onto its kanji Line as the Kanji timer suggests the groups.
 
@@ -1277,7 +1277,7 @@ Copies a timed romaji Line's syllables onto its kanji Line as the Kanji timer su
 
 ### `karaoke.furigana`
 
-Read. Since version 2.
+Read. Since version 1.
 
 The readings the dictionary suggests for a Line's kanji runs, in hiragana.
 
@@ -1299,7 +1299,7 @@ The readings the dictionary suggests for a Line's kanji runs, in hiragana.
 
 ### `karaoke.check`
 
-Read. Since version 2.
+Read. Since version 1.
 
 The Karaoke check's problems: unclosed tags, totals that differ from the Line, empty syllables and syllables outside the Line.
 
@@ -1323,7 +1323,7 @@ The Karaoke check's problems: unclosed tags, totals that differ from the Line, e
 
 ### `karaoke.template_preview`
 
-Read. Since version 2.
+Read. Since version 1.
 
 The Lines the karaoke templater generates from one karaoke Line, without applying them.
 
@@ -1349,7 +1349,7 @@ The Lines the karaoke templater generates from one karaoke Line, without applyin
 
 ### `karaoke.apply_template`
 
-Write. Since version 2.
+Write. Since version 1.
 
 Runs the karaoke templater on the karaoke Lines, or the Lines given, and applies what it generates as one undo step: old generated Lines are replaced.
 
@@ -1371,7 +1371,7 @@ Runs the karaoke templater on the karaoke Lines, or the Lines given, and applies
 
 ### `karaoke.align`
 
-Write. Since version 2.
+Write. Since version 1.
 
 Runs the user's own WhisperX or Montreal Forced Aligner on the audio under the Lines and answers each word with its start and end in ms; the user approves every run, and nothing is applied.
 
