@@ -1,0 +1,32 @@
+[Script Info]
+; TH5d3: Thai karaoke Lines for the karaOK presets (phrases authored for the test)
+Title: TH5d3 karaOK Thai fixture
+ScriptType: v4.00+
+WrapStyle: 0
+PlayResX: 1280
+PlayResY: 720
+ScaledBorderAndShadow: yes
+Karaoke Templater: karaOK
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Other-furigana,Arial,18,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,1,1,2,20,20,20,1
+Style: Romaji,Arial,48,&H00FFFFFF,&H00FF8C3C,&H00202020,&H80000000,0,0,0,0,100,100,0,0,1,2,1,8,20,20,30,1
+Style: Romaji-furigana,Arial,24,&H00FFFFFF,&H00FF8C3C,&H00202020,&H80000000,0,0,0,0,100,100,0,0,1,2,1,8,20,20,30,1
+Style:  Other,Arial,36,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,2,20,20,20,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Comment: 0,0:00:00.00,0:00:00.00,Romaji,,0,0,0,code once,ln = _G.require "ln.kara"; ln.init(tenv)
+Comment: 0,0:00:00.00,0:00:00.00,Romaji,,0,0,0,code once,bounce = ln.wave.new("sine",400,12); lift = {{"fscy", function(v) return math.floor(100+v) end}}
+Comment: 0,0:00:00.00,0:00:00.00,Romaji,,0,0,0,template syl noblank,!retime("line",-300,300)!{\an5\pos($center,$middle)\fad(300,300)!ln.wave.transform(bounce,lift,$start+300,$end+300,0,2)!}
+Comment: 0,0:00:01.00,0:00:04.00,Romaji,,0,0,0,karaoke,{\k40}กิน{\k60}น้ำ{\k0} {\k50}ขึ้น{\k45}ฟ้า
+Comment: 0,0:00:05.00,0:00:07.00,Romaji,,0,0,0,karaoke,{\k50}ใจ{\k40}ดี{\k0} {\k60}ที่{\k50}นี่
+Dialogue: 0,0:00:00.70,0:00:04.30,Romaji,,0,0,0,fx,{\an5\pos(494.8,54)\fad(300,300)\t(300,301,1.00,\fscy88.00)\t(301,385,1.84,\fscy96.00)\t(383,467,0.81,\fscy110.00)\t(466,551,0.40,\fscy108.00)\t(550,634,1.06,\fscy93.00)\t(633,718,0.12,\fscy88.00)}กิน
+Dialogue: 0,0:00:00.70,0:00:04.30,Romaji,,0,0,0,fx,{\an5\pos(574,54)\fad(300,300)\t(700,701,1.00,\fscy88.00)\t(701,785,1.84,\fscy96.00)\t(783,867,0.81,\fscy110.00)\t(866,951,0.40,\fscy108.00)\t(950,1034,1.06,\fscy93.00)\t(1033,1118,0.12,\fscy88.00)\t(1117,1201,1.43,\fscy100.00)\t(1200,1284,0.66,\fscy111.00)\t(1283,1368,3.31,\fscy105.00)}น้ำ
+Dialogue: 0,0:00:00.70,0:00:04.30,Romaji,,0,0,0,fx,{\an5\pos(692.8,54)\fad(300,300)\t(1300,1301,1.00,\fscy112.00)\t(1301,1385,1.84,\fscy103.00)\t(1383,1467,0.81,\fscy89.00)\t(1466,1551,0.40,\fscy91.00)\t(1550,1634,1.06,\fscy106.00)\t(1633,1718,0.12,\fscy111.00)\t(1717,1801,1.43,\fscy99.00)}ขึ้น
+Dialogue: 0,0:00:00.70,0:00:04.30,Romaji,,0,0,0,fx,{\an5\pos(785.2,54)\fad(300,300)\t(1800,1801,1.00,\fscy100.00)\t(1801,1885,0.67,\fscy88.00)\t(1883,1967,3.44,\fscy94.00)\t(1966,2051,0.94,\fscy108.00)\t(2050,2134,0.01,\fscy110.00)\t(2133,2218,1.21,\fscy96.00)\t(2217,2301,0.46,\fscy88.00)}ฟ้า
+Dialogue: 0,0:00:04.70,0:00:07.30,Romaji,,0,0,0,fx,{\an5\pos(521.2,54)\fad(300,300)\t(300,301,1.00,\fscy88.00)\t(301,385,1.84,\fscy96.00)\t(383,467,0.81,\fscy110.00)\t(466,551,0.40,\fscy108.00)\t(550,634,1.06,\fscy93.00)\t(633,718,0.12,\fscy88.00)\t(717,801,1.43,\fscy100.00)}ใจ
+Dialogue: 0,0:00:04.70,0:00:07.30,Romaji,,0,0,0,fx,{\an5\pos(574,54)\fad(300,300)\t(800,801,1.00,\fscy100.00)\t(801,885,0.67,\fscy111.00)\t(883,967,3.44,\fscy105.00)\t(966,1051,0.94,\fscy91.00)\t(1050,1134,0.01,\fscy89.00)\t(1133,1218,1.21,\fscy103.00)}ดี
+Dialogue: 0,0:00:04.70,0:00:07.30,Romaji,,0,0,0,fx,{\an5\pos(666.4,54)\fad(300,300)\t(1200,1201,1.00,\fscy99.00)\t(1201,1285,0.67,\fscy111.00)\t(1283,1367,3.44,\fscy105.00)\t(1366,1451,0.94,\fscy91.00)\t(1450,1534,0.01,\fscy89.00)\t(1533,1618,1.21,\fscy103.00)\t(1617,1701,0.46,\fscy111.00)\t(1700,1784,1.82,\fscy102.00)\t(1783,1868,0.81,\fscy89.00)}ที่
+Dialogue: 0,0:00:04.70,0:00:07.30,Romaji,,0,0,0,fx,{\an5\pos(745.6,54)\fad(300,300)\t(1800,1801,1.00,\fscy100.00)\t(1801,1885,0.67,\fscy88.00)\t(1883,1967,3.44,\fscy94.00)\t(1966,2051,0.94,\fscy108.00)\t(2050,2134,0.01,\fscy110.00)\t(2133,2218,1.21,\fscy96.00)\t(2217,2301,0.46,\fscy88.00)}นี่

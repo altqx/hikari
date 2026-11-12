@@ -1,0 +1,41 @@
+[Script Info]
+; TH5d3: the karaoke Lines each karaOK preset is applied to (romaji and furigana phrases authored for the test)
+Title: TH5d3 karaOK preset fixture
+ScriptType: v4.00+
+WrapStyle: 0
+PlayResX: 1280
+PlayResY: 720
+ScaledBorderAndShadow: yes
+Karaoke Templater: karaOK
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Other-furigana,Arial,18,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,1,1,2,20,20,20,1
+Style: Romaji,Arial,48,&H00FFFFFF,&H00FF8C3C,&H00202020,&H80000000,0,0,0,0,100,100,0,0,1,2,1,8,20,20,30,1
+Style: Romaji-furigana,Arial,24,&H00FFFFFF,&H00FF8C3C,&H00202020,&H80000000,0,0,0,0,100,100,0,0,1,2,1,8,20,20,30,1
+Style:  Other,Arial,36,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,2,20,20,20,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Comment: 0,0:00:00.00,0:00:00.00,Romaji,,0,0,0,template line wipe,!retime("line",-300,300)!{\fad(300,300)}
+Comment: 0,0:00:00.00,0:00:00.00,Romaji,,0,0,0,template lword wipe,{\3c&H10306A&}
+Comment: 1,0:00:00.00,0:00:00.00,Romaji,,0,0,0,template word noblank,!retime("line",-300,300)!{\an5\pos($center,$middle)\fad(300,300)\1c&H40A0FF&\clip($left,!$top-20!,$left,!$bottom+20!)\t(!$start+300!,!$end+300!,\clip($left,!$top-20!,$right,!$bottom+20!))}
+Comment: 0,0:00:01.00,0:00:04.00,Romaji,,0,0,0,karaoke,{\k40}ki{\k35}ra{\k0} {\k45}ki{\k30}ra {\k60}hi{\k50}ka{\k40}ru
+Comment: 0,0:00:05.00,0:00:07.50,Romaji,,0,0,0,karaoke,{\k50}yo{\k25}ru{\k25}no {\k80}so{\k70}ra
+Dialogue: 0,0:00:08.00,0:00:09.00,Other,,0,0,0,,{\k50}ho{\k50}ka
+Comment: 0,0:00:10.00,0:00:12.00,Romaji,,0,0,0,karaoke,{\k30}ta{\k30}bi{\k0} {\k40}no{\k0} {\k50}to{\k50}chu{\k0}u
+Comment: 0,0:00:13.00,0:00:16.00,Romaji,,0,0,0,karaoke,{\k40}夜|よ{\k40}空|ぞら{\k30}に{\k0} {\k50}星|ほし{\k40}を
+Dialogue: 0,0:00:00.70,0:00:04.30,Romaji,,0,0,0,fx,{\fad(300,300)}{\3c&H10306A&}kira {\3c&H10306A&}kira {\3c&H10306A&}hikaru
+Dialogue: 1,0:00:00.70,0:00:04.30,Romaji,,0,0,0,fx,{\an5\pos(481.6,54)\fad(300,300)\1c&H40A0FF&\clip(428.8,10,428.8,98)\t(300,1050,\clip(428.8,10,534.4,98))}kira 
+Dialogue: 1,0:00:00.70,0:00:04.30,Romaji,,0,0,0,fx,{\an5\pos(613.6,54)\fad(300,300)\1c&H40A0FF&\clip(560.8,10,560.8,98)\t(1050,1800,\clip(560.8,10,666.4,98))}kira 
+Dialogue: 1,0:00:00.70,0:00:04.30,Romaji,,0,0,0,fx,{\an5\pos(772,54)\fad(300,300)\1c&H40A0FF&\clip(692.8,10,692.8,98)\t(1800,3300,\clip(692.8,10,851.2,98))}hikaru
+Dialogue: 0,0:00:04.70,0:00:07.80,Romaji,,0,0,0,fx,{\fad(300,300)}{\3c&H10306A&}yoruno {\3c&H10306A&}sora
+Dialogue: 1,0:00:04.70,0:00:07.80,Romaji,,0,0,0,fx,{\an5\pos(574,54)\fad(300,300)\1c&H40A0FF&\clip(494.8,10,494.8,98)\t(300,1300,\clip(494.8,10,653.2,98))}yoruno 
+Dialogue: 1,0:00:04.70,0:00:07.80,Romaji,,0,0,0,fx,{\an5\pos(732.4,54)\fad(300,300)\1c&H40A0FF&\clip(679.6,10,679.6,98)\t(1300,2800,\clip(679.6,10,785.2,98))}sora
+Dialogue: 0,0:00:09.70,0:00:12.30,Romaji,,0,0,0,fx,{\fad(300,300)}{\3c&H10306A&}tabi {\3c&H10306A&}no {\3c&H10306A&}tochuu
+Dialogue: 1,0:00:09.70,0:00:12.30,Romaji,,0,0,0,fx,{\an5\pos(508,54)\fad(300,300)\1c&H40A0FF&\clip(455.2,10,455.2,98)\t(300,900,\clip(455.2,10,560.8,98))}tabi 
+Dialogue: 1,0:00:09.70,0:00:12.30,Romaji,,0,0,0,fx,{\an5\pos(613.6,54)\fad(300,300)\1c&H40A0FF&\clip(587.2,10,587.2,98)\t(900,1300,\clip(587.2,10,640,98))}no 
+Dialogue: 1,0:00:09.70,0:00:12.30,Romaji,,0,0,0,fx,{\an5\pos(745.6,54)\fad(300,300)\1c&H40A0FF&\clip(666.4,10,666.4,98)\t(1300,2300,\clip(666.4,10,824.8,98))}tochuu
+Dialogue: 0,0:00:12.70,0:00:16.30,Romaji,,0,0,0,fx,{\fad(300,300)}{\3c&H10306A&}夜空に {\3c&H10306A&}星を
+Dialogue: 1,0:00:12.70,0:00:16.30,Romaji,,0,0,0,fx,{\an5\pos(578.8,54)\fad(300,300)\1c&H40A0FF&\clip(506.8,10,506.8,98)\t(300,1400,\clip(506.8,10,650.8,98))}夜空に 
+Dialogue: 1,0:00:12.70,0:00:16.30,Romaji,,0,0,0,fx,{\an5\pos(725.2,54)\fad(300,300)\1c&H40A0FF&\clip(677.2,10,677.2,98)\t(1400,2300,\clip(677.2,10,773.2,98))}星を
