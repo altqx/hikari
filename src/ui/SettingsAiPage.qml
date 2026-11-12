@@ -1938,7 +1938,7 @@ ScrollView {
                 wrapMode: Text.Wrap
                 Layout.fillWidth: true
                 text: skillsSection.broken > 0
-                      ? qsTr("%n skill(s) can’t be offered. Fix them in the folder, then press Refresh.", "", skillsSection.broken)
+                      ? qsTr("%n skill(s) can’t be offered. Fix them in their folders, then read the folders again.", "", skillsSection.broken)
                       : page.dialog.hasProject
                         ? qsTr("Threads started in this window use this project’s skills. A new or changed skill shows in the next thread.")
                         : qsTr("Hikari AI reads a skill when the work matches its description. Skills are instructions and give no permission. A new or changed skill shows in the next thread.")
