@@ -22,6 +22,8 @@ function Check([bool]$cond, [string]$what) { if ($cond) { Pass $what } else { Fa
 $scope = if ($env:SCOPE) { $env:SCOPE } else { 'user' }
 $hive = if ($scope -eq 'machine') { 'HKLM:' } else { 'HKCU:' }
 $defaultDir = if ($scope -eq 'machine') { Join-Path $env:ProgramW6432 'HikariSub' } else { Join-Path $env:LOCALAPPDATA 'Programs\HikariSub' }
+# The setup is 32-bit: run as SYSTEM, its profile under System32 is redirected to SysWOW64.
+$setupUpdates = Join-Path ($env:LOCALAPPDATA -replace '(?i)\\System32\\', '\SysWOW64\') 'HikariSub\Updates'
 $instDir = if ($env:INSTDIR) { $env:INSTDIR.TrimEnd('\') } else { $defaultDir }
 $exe = Join-Path $instDir 'HikariSub.exe'
 $uninstallKey = "$hive\Software\Microsoft\Windows\CurrentVersion\Uninstall\HikariSub"
@@ -235,7 +237,7 @@ switch ($env:ACTION) {
             $k = "$h\Software\Microsoft\Windows\CurrentVersion\Uninstall\HikariSub"
             if (Test-Path $k) { "$k = $(Value $k DisplayVersion) at $(Value $k InstallLocation)" }
         }
-        Get-ChildItem -LiteralPath (Join-Path $env:LOCALAPPDATA 'HikariSub\Updates') -Filter 'last-result-*.json' -ErrorAction SilentlyContinue |
+        Get-ChildItem -LiteralPath $setupUpdates -Filter 'last-result-*.json' -ErrorAction SilentlyContinue |
             ForEach-Object { "$($_.Name): $(Get-Content -Raw -LiteralPath $_.FullName)" }
     }
     'open-file' {
@@ -280,9 +282,9 @@ switch ($env:ACTION) {
         $app = Get-Process -Name HikariSub -ErrorAction SilentlyContinue | Select-Object -First 1
         if (-not $app) { Fail 'no running HikariSub to update'; break }
         $copy = if ("$env:ARGS" -match '/ALLUSERS') { 'nsis-machine' } else { 'nsis-user' }
-        $result = Join-Path $env:LOCALAPPDATA "HikariSub\Updates\last-result-$copy.json"
+        $result = Join-Path $setupUpdates "last-result-$copy.json"
         Remove-Item -LiteralPath $result -ErrorAction SilentlyContinue
-        $setupLog = Join-Path $env:LOCALAPPDATA "HikariSub\Updates\setup-$copy.log"
+        $setupLog = Join-Path $setupUpdates "setup-$copy.log"
         Remove-Item -LiteralPath $setupLog -ErrorAction SilentlyContinue
         $a = "/S /UPDATE /WAITPID=$($app.Id) $env:ARGS".Trim()
         Write-Output "run: `"$env:SETUP`" $a"
