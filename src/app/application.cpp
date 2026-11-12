@@ -695,6 +695,15 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     connect(m_settings.get(), &ui::SettingsStore::changed, this, &Application::settingChanged);
     m_automation->manager().setTraceLevel(m_settings->integer("automation.traceLevel"));
     m_automation->setSettings(m_settings.get());
+    m_automation->setWindowProjects([this] {
+        std::map<int, application::WindowProject> projects;
+        if (m_projects)
+            for (const int window : sessionWindows()) {
+                const QString root = m_projects->root(window);
+                projects[window] = {QDir::toNativeSeparators(root).toStdString(), !root.isEmpty() && projectTrusted(root)};
+            }
+        return projects;
+    });
     if (options.autoload)
         m_automation->autoload();
     m_renderer.select(m_settings->text("video.subtitleProvider").toStdString());
@@ -834,6 +843,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     pluginWiring.setSetting = [this](const QString &id, const QString &setting, const QString &json) {
         return m_pluginManager->setSetting(id, setting, json);
     };
+    pluginWiring.windowPlugins = [this] { return windowPlugins(); };
+    pluginWiring.activeWindow = [this] { return m_workspace.activeWindow(); };
     m_pluginRuntime = std::make_unique<PluginRuntime>(std::move(pluginWiring));
     connect(m_pluginManager.get(), &PluginManager::folderForgotten, m_pluginRuntime.get(), &PluginRuntime::endFileAccess);
     connect(m_pluginManager.get(), &PluginManager::pluginsChanged, m_pluginRuntime.get(), &PluginRuntime::sync);
