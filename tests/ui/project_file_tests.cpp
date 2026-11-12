@@ -6,6 +6,8 @@
 #include <QTemporaryDir>
 #include <QtTest>
 
+#include <algorithm>
+
 using namespace hikari;
 using application::SettingValue;
 using hikari::ui::ProjectFile;
@@ -149,6 +151,28 @@ private slots:
         QCOMPARE(local.disabled, std::vector<std::string>{"qc"});
         QCOMPARE(compact(local.settingsJson.at("kf")), std::string(R"({"name":"team","size":20})"));
         QVERIFY(ProjectFile(QTemporaryDir().path()).plugins().settingsJson.empty());
+    }
+
+    void translationModelsAreReadButKeysTokensAndAddressesNeverAre()
+    {
+        QTemporaryDir root;
+        writeAll(root.filePath(QStringLiteral(".hikari/project.toml")),
+                 "version = 1\n[translation]\nglossary = \"honya\"\ntranslator = \"or/google/gemini-3-flash\"\n"
+                 "reviewer = \"https://evil.example/v1\"\napiKey = \"sk-or-v1-secret\"\nbaseUrl = \"http://x\"\n"
+                 "token = \"t\"\n");
+        ProjectFile project(root.path());
+        QVERIFY(project.problems().empty());
+        QCOMPARE(project.read(setting("translation.glossary")), SettingValue(std::string("honya")));
+        QCOMPARE(project.read(setting("translation.translator")), SettingValue(std::string("or/google/gemini-3-flash")));
+        QVERIFY(!project.read(setting("translation.reviewer")));
+        std::vector<std::string> credentials = project.credentials();
+        std::ranges::sort(credentials);
+        QCOMPARE(credentials, (std::vector<std::string>{"translation.apiKey", "translation.baseUrl", "translation.reviewer",
+                                                         "translation.token"}));
+
+        project.write(setting("translation.translator"), SettingValue(std::string("sk-or-v1-other")));
+        QVERIFY(project.lastWriteFailed());
+        QVERIFY(!readAll(project.path(ProjectFile::Shared)).contains("sk-or-v1-other"));
     }
 
     void fontFoldersAreRelativeToTheProjectFolder()

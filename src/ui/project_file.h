@@ -48,6 +48,8 @@ public:
     const std::vector<application::FileProblem> &problems() const { return m_problems; }
     // Settings the files set that a Project may never set; they stay in the file, unused.
     const std::vector<std::string> &refused() const { return m_refused; }
+    // `[translation]` entries that look like a key, token, address or other credential; never read or written.
+    const std::vector<std::string> &credentials() const { return m_credentials; }
 
 private:
     void load(File file);
@@ -59,6 +61,7 @@ private:
     bool m_writeFailed = false;
     std::vector<application::FileProblem> m_problems;
     std::vector<std::string> m_refused;
+    std::vector<std::string> m_credentials;
 };
 
 }

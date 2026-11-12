@@ -41,6 +41,8 @@ Version 2 of the Hikari API, generated from HikariSub's own registry: the same r
 | `skills.list` | read | 1 | The user's skills: each skill folder's name and its files, SKILL.md among them. |
 | `skills.read` | read | 1 | One file of a user's skill, as UTF-8 text; at most 256 KiB. |
 | `automation.run` | write | 1 | Saves a Lua Automation script to the AI scripts folder and runs one of its macros on the active tab's selection, once the user approves the script. The run is one undo step. |
+| `translation.project` | read | 1 | The Document's Honya project files: PROJECT.md, GLOSSARY.md, CHARACTERS.md and STYLE.md, those that exist. folder is null when the Document has no project folder. |
+| `translation.project_write` | write | 1 | Replaces one of the Document's Honya project files, keeping Honya's Markdown and honya:data format. |
 | `nodes.catalogue` | read | 1 | The node types the node-effect editor offers, with their ports and parameters. |
 | `nodes.validate` | read | 1 | Checks a node-effect graph; each problem names its node and port or field. |
 | `typeset.perspective` | read | 1 | The Line's text with the tags that render it on a quad (VT3's perspective solver): \pos, \org, \frx, \fry, \frz, \fax, \fscx and \fscy. |
@@ -824,6 +826,48 @@ Saves a Lua Automation script to the AI scripts folder and runs one of its macro
 | `outcome` | one of `applied`, `refused`, `failed`, `cancelled`, `declined`, `stopped`, `lost` or `invalid` | yes |  |
 | `message` | string | yes |  |
 | `log` | string | yes |  |
+
+### `translation.project`
+
+Read. Since version 1.
+
+The Document's Honya project files: PROJECT.md, GLOSSARY.md, CHARACTERS.md and STYLE.md, those that exist. folder is null when the Document has no project folder.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `document` | [DocumentId](#documentid) |  | Defaults to the active Document. |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `folder` | string or null | yes |  |
+| `files` | array of objects | yes |  |
+| `files[].name` | one of `PROJECT.md`, `GLOSSARY.md`, `CHARACTERS.md` or `STYLE.md` | yes |  |
+| `files[].data` | string | yes |  |
+
+### `translation.project_write`
+
+Write. Since version 1.
+
+Replaces one of the Document's Honya project files, keeping Honya's Markdown and honya:data format.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `document` | [DocumentId](#documentid) |  | Defaults to the active Document. |
+| `file` | one of `PROJECT.md`, `GLOSSARY.md`, `CHARACTERS.md` or `STYLE.md` | yes |  |
+| `data` | string | yes |  |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `file` | one of `PROJECT.md`, `GLOSSARY.md`, `CHARACTERS.md` or `STYLE.md` | yes |  |
+| `size` | integer | yes | At least 0. |
 
 ### `nodes.catalogue`
 

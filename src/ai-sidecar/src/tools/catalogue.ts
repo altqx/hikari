@@ -88,6 +88,7 @@ const kPlacements: Partial<Record<OperationName, Placement>> = {
             "aegisub.register_macro(name, description, fn(subs, sel, active)), changing Lines through subs. " +
             "DependencyControl modules may be required. Prefer document_apply when no Lua is needed.",
     },
+    "translation.project": { group: "translate" },
     "nodes.catalogue": { group: "effects" },
     "nodes.validate": { group: "effects" },
     "panels.list": { group: "app" },
@@ -101,9 +102,11 @@ const kPlacements: Partial<Record<OperationName, Placement>> = {
 
 /**
  * Operations no tool offers as they are: search_commands wraps commands.list, read_skill the skills, the sidecar
- * knows the version, and project.info answers for the window the user works in, not the thread's.
+ * knows the version, project.info answers for the window the user works in, not the thread's, and only a
+ * translation run Qt approved writes the project files.
  */
-const kUnoffered: readonly OperationName[] = ["commands.list", "skills.list", "skills.read", "api.version", "project.info"];
+const kUnoffered: readonly OperationName[] = ["commands.list", "skills.list", "skills.read", "api.version", "project.info",
+    "translation.project_write"];
 
 /** MCP's Tool, as `tools/list` gives it. */
 export interface Tool {

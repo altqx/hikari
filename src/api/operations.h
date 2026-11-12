@@ -21,6 +21,7 @@ void addMediaOperations(Registry &registry);
 void addFileOperations(Registry &registry);
 void addSkillOperations(Registry &registry);
 void addAutomationOperations(Registry &registry);
+void addTranslationOperations(Registry &registry);
 void addNodeOperations(Registry &registry);
 void addTypesetOperations(Registry &registry);
 void addProjectOperations(Registry &registry);

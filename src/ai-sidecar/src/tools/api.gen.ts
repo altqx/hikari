@@ -732,6 +732,33 @@ export type AutomationRunResult = {
     log: string;
 };
 
+/** The Document's Honya project files: PROJECT.md, GLOSSARY.md, CHARACTERS.md and STYLE.md, those that exist. folder is null when the Document has no project folder. */
+export type TranslationProjectParams = {
+    /** Defaults to the active Document. */
+    document?: DocumentId;
+};
+
+export type TranslationProjectResult = {
+    folder: string | null;
+    files: ({
+        name: "PROJECT.md" | "GLOSSARY.md" | "CHARACTERS.md" | "STYLE.md";
+        data: string;
+    })[];
+};
+
+/** Replaces one of the Document's Honya project files, keeping Honya's Markdown and honya:data format. */
+export type TranslationProjectWriteParams = {
+    /** Defaults to the active Document. */
+    document?: DocumentId;
+    file: "PROJECT.md" | "GLOSSARY.md" | "CHARACTERS.md" | "STYLE.md";
+    data: string;
+};
+
+export type TranslationProjectWriteResult = {
+    file: "PROJECT.md" | "GLOSSARY.md" | "CHARACTERS.md" | "STYLE.md";
+    size: number;
+};
+
 /** The node types the node-effect editor offers, with their ports and parameters. */
 export type NodesCatalogueParams = {
     category?: string;
@@ -1069,6 +1096,8 @@ export interface Operations {
     "skills.list": { access: "read"; params: SkillsListParams; result: SkillsListResult };
     "skills.read": { access: "read"; params: SkillsReadParams; result: SkillsReadResult };
     "automation.run": { access: "write"; params: AutomationRunParams; result: AutomationRunResult };
+    "translation.project": { access: "read"; params: TranslationProjectParams; result: TranslationProjectResult };
+    "translation.project_write": { access: "write"; params: TranslationProjectWriteParams; result: TranslationProjectWriteResult };
     "nodes.catalogue": { access: "read"; params: NodesCatalogueParams; result: NodesCatalogueResult };
     "nodes.validate": { access: "read"; params: NodesValidateParams; result: NodesValidateResult };
     "typeset.perspective": { access: "read"; params: TypesetPerspectiveParams; result: TypesetPerspectiveResult };
