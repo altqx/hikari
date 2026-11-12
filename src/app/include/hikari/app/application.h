@@ -28,6 +28,7 @@
 #include "hikari/app/plugin_marketplace.h"
 #include "hikari/app/plugin_runtime.h"
 #include "hikari/app/user_folder.h"
+#include "hikari/app/automation_reset_notice.h"
 #include "hikari/app/project_windows.h"
 #include "hikari/core/ass_attachments.h"
 #include "hikari/core/conversion.h"
@@ -246,6 +247,7 @@ public:
         QString userFolder;
         UserFolder::MoveReport userFolderMove;
         UserFolder::SeedReport userFolderSeed;
+        AutomationReset automationReset;
         // Empty: no plugins can be installed.
         PluginManager::Folders plugins;
         // Empty: no marketplace.
@@ -370,6 +372,7 @@ public:
     Q_INVOKABLE QString projectMoveText(int shellWindow) const;
     QString projectOf(int shellWindow) const { return m_projects->root(shellWindow); }
     std::optional<api::ProjectState> activeProject() const;
+    static std::vector<std::string> projectAiExclude(const std::string &root);
     ProjectWindows &projects() { return *m_projects; }
     // "modified" when the target's file is newer than when last read or written;
     // "removed" once when it is gone (the Document becomes unsaved).
@@ -576,6 +579,8 @@ public:
     Q_INVOKABLE QString applyLayerBuilders(const QVariantMap &options);
     // With the options the dialog last built with; {ok, text}.
     Q_INVOKABLE QVariantMap repeatLayerBuilders();
+    // Hands the selected Lines to the window's node effects as a typesetting graph's targets.
+    Q_INVOKABLE bool targetTypesettingGraph();
     // choice 1 sets the video's value, 2 (missingLayoutRes) the PlayRes; false when the question is stale.
     Q_INVOKABLE bool answerVideoProperty(const QVariantMap &question, int choice);
     // The question's setting then does what `choice` did: 0 leaves things as they are.
@@ -898,6 +903,7 @@ public:
     Analytics &analytics() { return *m_analytics; }
     DiscordPresence &presence() { return *m_presence; }
     StarPrompt &starPrompt() { return *m_starPrompt; }
+    AutomationResetNotice &automationReset() { return *m_automationReset; }
     CrashReports &crashReports() { return *m_crashReports; }
     WhatsNew &whatsNew() { return *m_whatsNew; }
     StyleManagerController &styleManager() { return *m_styleManager; }
@@ -1354,6 +1360,7 @@ private:
     std::unique_ptr<StarPrompt> m_starPrompt;
     QString bundledScriptName(const QString &path) const;
     std::unique_ptr<WhatsNew> m_whatsNew;
+    std::unique_ptr<AutomationResetNotice> m_automationReset;
     std::unique_ptr<StyleManagerController> m_styleManager;
     std::unique_ptr<FontCollectorController> m_fontCollector;
     std::unique_ptr<AlignToVideoController> m_alignToVideo;
@@ -1553,6 +1560,7 @@ private:
     void reportSettingsFiles();
     void noteRemovedRules();
     void convertListFiles();
+    void applyProjectTierFiles(int shellWindow, const QString &root);
     std::map<std::uint64_t, QDateTime> m_fileTimes;
     std::set<std::uint64_t> m_removedNoticed;
     int m_copyColumns = 0;

@@ -15,6 +15,7 @@
 #include <QStringList>
 #include <QTimer>
 #include <QUrl>
+#include <QVariantList>
 #include <QVariantMap>
 
 #include <condition_variable>
@@ -38,6 +39,10 @@ class FontCatalogsController : public QObject {
     Q_OBJECT
     // In the order the catalogs were added.
     Q_PROPERTY(QStringList catalogNames READ catalogNames NOTIFY catalogsChanged)
+    // Both tiers (ADR 0030), the Project's first: [{name, tier: "project" | "mine", hidden}].
+    // catalogNames and every name lookup leave out the hidden ones.
+    Q_PROPERTY(QVariantList catalogRows READ catalogRows NOTIFY catalogsChanged)
+    Q_PROPERTY(bool hasProject READ hasProject NOTIFY catalogsChanged)
     Q_PROPERTY(QString filterText READ filterText NOTIFY filterChanged)
     Q_PROPERTY(bool filterOn READ filterOn NOTIFY filterChanged)
     Q_PROPERTY(QString previewText READ previewText NOTIFY filterChanged)
@@ -66,6 +71,8 @@ public:
         std::function<void(const std::filesystem::path &legacy, const std::filesystem::path &file)> fileConverted;
         std::function<void(const application::FileProblem &)> fileProblem;
         std::function<void(const application::FileProblem &)> fileReplaced;
+        // The active shell window's Project folder; empty outside a Project.
+        std::function<QString()> projectRoot;
     };
 
     FontCatalogsController(ui::SettingsStore &settings, std::filesystem::path catalogDir, Hooks hooks,
@@ -73,6 +80,10 @@ public:
     ~FontCatalogsController() override;
 
     QStringList catalogNames() const;
+    QVariantList catalogRows() const;
+    bool hasProject() const;
+    // When the active window's Project changed: writes the last Project's catalogs and reads the new one's.
+    void projectChanged();
     QString filterText() const;
     bool filterOn() const;
     QString previewText() const;
@@ -106,20 +117,28 @@ public:
     Q_INVOKABLE int styleFontIndex(const QStringList &fonts, const QString &font) const;
 
     Q_INVOKABLE QString catalogOf(const QString &font) const;
-    Q_INVOKABLE bool isFontInCatalog(const QString &catalog, const QString &font) const;
+    // A `tier` of "project" or "mine" reaches that tier's catalog, hidden or not; empty resolves the
+    // Project first.
+    Q_INVOKABLE bool isFontInCatalog(const QString &catalog, const QString &font, const QString &tier = QString()) const;
     Q_INVOKABLE bool catalogExists(const QString &name) const;
     // catalogsOf in map order; existingName matches ignoring case and returns "" for none.
     Q_INVOKABLE QStringList catalogsOf(const QString &font) const;
-    Q_INVOKABLE int catalogSize(const QString &name) const;
+    Q_INVOKABLE int catalogSize(const QString &name, const QString &tier = QString()) const;
     Q_INVOKABLE QString existingName(const QString &name) const;
     // Ignoring case; -1 for none.
     Q_INVOKABLE int sameNameIndex(const QStringList &names, const QString &name) const;
 
-    // False when it exists.
-    Q_INVOKABLE bool addCatalog(const QString &name, bool autosave = true);
-    // `answer` when `newName` exists: 0 merge, 1 delete, 2 cancel.
-    Q_INVOKABLE bool renameCatalog(const QString &oldName, const QString &newName, int answer);
-    Q_INVOKABLE void removeCatalog(const QString &name);
+    // False when `tier` has it; an empty `tier` is Mine.
+    Q_INVOKABLE bool addCatalog(const QString &name, bool autosave = true, const QString &tier = QString());
+    // `answer` when `newName` exists in the tier: 0 merge, 1 delete, 2 cancel.
+    Q_INVOKABLE bool renameCatalog(const QString &oldName, const QString &newName, int answer,
+                                   const QString &tier = QString());
+    Q_INVOKABLE void removeCatalog(const QString &name, const QString &tier = QString());
+    // [{name, suggestion}] when the other tier has `name`, else [].
+    Q_INVOKABLE QVariantList catalogClashes(const QString &name, const QString &from) const;
+    // `choices` from the clash review. The name it landed under; empty when skipped.
+    Q_INVOKABLE QString copyCatalog(const QString &name, const QString &from, const QVariantList &choices = {});
+    Q_INVOKABLE QString moveCatalog(const QString &name, const QString &from, const QVariantList &choices = {});
     Q_INVOKABLE void setFontsInCatalog(const QString &catalog, const QStringList &fonts, bool add);
     Q_INVOKABLE void toggleFontInCatalog(const QString &catalog, const QString &font, bool add);
     // Reads `file`'s catalogs, kept until loadReviewed(): {ok, file (its name), total, rows:
@@ -190,6 +209,12 @@ signals:
 
 private:
     void ensureLoaded();
+    void loadProject();
+    void rebuildVisible();
+    bool writeProject();
+    application::FontCatalogs &tierCatalogs(const QString &name, const QString &tier);
+    const application::FontCatalogs &tierCatalogs(const QString &name, const QString &tier) const;
+    QString sendCatalog(const QString &name, const QString &from, const QVariantList &choices, bool move);
     void startAutosave();
     void autosaveNow();
     void loadExternalFonts();
@@ -214,6 +239,10 @@ private:
     std::filesystem::path m_dir;
     Hooks m_hooks;
     application::FontCatalogs m_catalogs;
+    application::FontCatalogs m_project;
+    application::FontCatalogs m_visible;
+    std::shared_ptr<ui::ListFile> m_projectFile;
+    QString m_projectRoot;
     bool m_loaded = false;
     std::shared_ptr<application::FontServicePort> m_service;
     std::unique_ptr<application::FontFamilies> m_families;

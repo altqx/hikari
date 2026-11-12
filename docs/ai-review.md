@@ -20,6 +20,7 @@ This card ships the review of applied changes (Auto and Full access). Manual mod
 - **Callers.** The sidecar's caller is `{id: "ai", label: "AI", reviewed: true}`. An MCP connection's caller (`McpServer::callerFor`) is `{id: "mcp:<connection>", label: <client name>, reviewed: true}`, so its changes land in the review too, in a turn of their own. [Inline actions](ai-inline-actions.md) write as `{id: "ai:inline", label: "AI", reviewed: true}`, one turn per run. Plugins don't set it.
 - **A turn** groups the changes made for one user message. A caller's write opens a turn when it has none open, or when the user edited that Document since the caller's last step there. AI7 opens one per message with `beginTurn`. Each turn starts with a checkpoint.
 - **Waiting.** An item waits while the Document still differs from its before. Undoing it through History hides it; Redo brings it back. An item is **edited since** when the Document no longer holds what the newest AI change on it left.
+- **Sub-agents** (AI22). A sub-agent's turn records its parent's turn. The Review panel shows a child's changes under the parent's turn, each labelled "Sub-agent <title>", and a tab's badge hover splits its count by child.
 
 ## Keep, Undo and checkpoints
 

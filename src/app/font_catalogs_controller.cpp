@@ -4,7 +4,9 @@
 #include "hikari/backends/libass_font_service.h"
 #include "hikari/core/style.h"
 #include "hikari/core/text_projection.h"
+#include "hikari/application/tiers.h"
 #include "list_files.h"
+#include "tiered_presets.h"
 #include "settings_store.h"
 
 #include <QCoreApplication>
@@ -93,7 +95,7 @@ QString defaultPreviewText()
 FontCatalogsController::FontCatalogsController(ui::SettingsStore &settings, std::filesystem::path catalogDir, Hooks hooks,
                                                QObject *parent)
     : QObject(parent), m_settings(settings), m_dir(std::move(catalogDir)), m_hooks(std::move(hooks)),
-      m_catalogs(kLower), m_service(std::make_shared<backends::LibassFontService>()),
+      m_catalogs(kLower), m_project(kLower), m_visible(kLower), m_service(std::make_shared<backends::LibassFontService>()),
       m_families(std::make_unique<application::FontFamilies>(*m_service, kLower))
 {
     const ui::ListFile::Report report{m_hooks.fileConverted, m_hooks.fileProblem, m_hooks.fileReplaced};
@@ -171,6 +173,144 @@ void FontCatalogsController::ensureLoaded()
         m_catalogs.load(std::get<std::vector<application::FontCatalogs::Catalog>>(ui::fontCatalogsFromToml(*items)));
     if (m_catalogs.find(u""))
         m_catalogs.remove(u"");
+    loadProject();
+}
+
+void FontCatalogsController::loadProject()
+{
+    m_project = application::FontCatalogs(kLower);
+    m_projectFile.reset();
+    const QString root = m_hooks.projectRoot ? m_hooks.projectRoot() : QString();
+    m_projectRoot = root;
+    if (const auto path = application::projectPathOf("fontCatalogs", root.toStdU16String())) {
+        const ui::ListFile::Report report{m_hooks.fileConverted, m_hooks.fileProblem, m_hooks.fileReplaced};
+        m_projectFile = ui::ListFile::make(QString::fromStdU16String(path->u16string()), QString(),
+                                           ui::kFontCatalogsFormat, {}, report);
+        if (const auto items = m_projectFile->read())
+            m_project.load(std::get<std::vector<application::FontCatalogs::Catalog>>(ui::fontCatalogsFromToml(*items)));
+        if (m_project.find(u""))
+            m_project.remove(u"");
+    }
+    rebuildVisible();
+}
+
+void FontCatalogsController::rebuildVisible()
+{
+    m_visible = application::FontCatalogs(kLower);
+    const auto take = [this](const application::FontCatalogs &from, bool skipHidden) {
+        for (const auto &name : from.names()) {
+            if (skipHidden && m_project.findNoCase(name))
+                continue;
+            m_visible.addCatalog(name);
+            if (const auto *c = from.find(name))
+                for (const auto &font : c->fonts)
+                    m_visible.addFont(name, font);
+        }
+    };
+    take(m_project, false);
+    take(m_catalogs, true);
+}
+
+void FontCatalogsController::projectChanged()
+{
+    if (!m_loaded || (m_hooks.projectRoot ? m_hooks.projectRoot() : QString()) == m_projectRoot)
+        return;
+    writeProject();
+    loadProject();
+    emit catalogsChanged();
+}
+
+bool FontCatalogsController::writeProject()
+{
+    if (!m_projectFile || (m_project.names().empty() && !QFileInfo::exists(m_projectFile->path())))
+        return true;
+    return m_projectFile->write(ui::fontCatalogsToToml(m_project.catalogs())) != ui::ListFile::Write::Failed;
+}
+
+application::FontCatalogs &FontCatalogsController::tierCatalogs(const QString &name, const QString &tier)
+{
+    return const_cast<application::FontCatalogs &>(std::as_const(*this).tierCatalogs(name, tier));
+}
+
+const application::FontCatalogs &FontCatalogsController::tierCatalogs(const QString &name, const QString &tier) const
+{
+    if (tier.isEmpty())
+        return m_projectFile && m_project.findNoCase(u16(name)) ? m_project : m_catalogs;
+    return hasProject() && ui::tierFromText(tier) == application::Tier::Project ? m_project : m_catalogs;
+}
+
+bool FontCatalogsController::hasProject() const
+{
+    const QString root = m_hooks.projectRoot ? m_hooks.projectRoot() : QString();
+    return application::projectPathOf("fontCatalogs", root.toStdU16String()).has_value();
+}
+
+QVariantList FontCatalogsController::catalogRows() const
+{
+    const_cast<FontCatalogsController *>(this)->ensureLoaded();
+    QVariantList out;
+    for (const auto &name : m_project.names())
+        out.append(QVariantMap{{QStringLiteral("name"), qs(name)}, {QStringLiteral("tier"), QStringLiteral("project")},
+                               {QStringLiteral("hidden"), false}});
+    for (const auto &name : m_catalogs.names())
+        out.append(QVariantMap{{QStringLiteral("name"), qs(name)}, {QStringLiteral("tier"), QStringLiteral("mine")},
+                               {QStringLiteral("hidden"), m_project.findNoCase(name) != nullptr}});
+    return out;
+}
+
+QVariantList FontCatalogsController::catalogClashes(const QString &name, const QString &from) const
+{
+    const_cast<FontCatalogsController *>(this)->ensureLoaded();
+    const bool fromProject = hasProject() && ui::tierFromText(from) == application::Tier::Project;
+    const auto &target = fromProject ? m_catalogs : m_project;
+    const auto *clash = target.findNoCase(u16(name));
+    if (!clash)
+        return {};
+    const auto same = [](const std::u16string &a, const std::u16string &b) { return application::sameNoCase(a, b, kLower); };
+    const auto free = application::landingNameBy(target.names(), clash->name, {application::ClashAction::Rename, {}},
+                                                 std::u16string(), same);
+    return {QVariantMap{{QStringLiteral("name"), name},
+                        {QStringLiteral("suggestion"), qs(free.value_or(clash->name))}}};
+}
+
+QString FontCatalogsController::copyCatalog(const QString &name, const QString &from, const QVariantList &choices)
+{
+    return sendCatalog(name, from, choices, false);
+}
+
+QString FontCatalogsController::moveCatalog(const QString &name, const QString &from, const QVariantList &choices)
+{
+    return sendCatalog(name, from, choices, true);
+}
+
+QString FontCatalogsController::sendCatalog(const QString &name, const QString &from, const QVariantList &choices,
+                                            bool move)
+{
+    ensureLoaded();
+    if (!hasProject())
+        return {};
+    auto &source = tierCatalogs(name, from.isEmpty() ? QStringLiteral("mine") : from);
+    auto &target = &source == &m_project ? m_catalogs : m_project;
+    const auto *catalog = source.find(u16(name));
+    if (!catalog)
+        return {};
+    const auto clash = ui::clashChoiceFor(name, choices);
+    const auto same = [](const std::u16string &a, const std::u16string &b) { return application::sameNoCase(a, b, kLower); };
+    const auto landing = application::landingNameBy(target.names(), catalog->name, clash, ui::newNameOf(clash), same);
+    if (!landing)
+        return {};
+    const auto fonts = catalog->fonts;
+    if (const auto *taken = target.findNoCase(*landing))
+        target.remove(std::u16string(taken->name));
+    target.addCatalog(*landing);
+    for (const auto &font : fonts)
+        target.addFont(*landing, font);
+    if (move)
+        source.remove(u16(name));
+    save();
+    rebuildVisible();
+    emit catalogsChanged();
+    return qs(*landing);
 }
 
 void FontCatalogsController::convertFiles()
@@ -183,7 +323,7 @@ void FontCatalogsController::convertFiles()
 QStringList FontCatalogsController::catalogNames() const
 {
     const_cast<FontCatalogsController *>(this)->ensureLoaded();
-    return list(m_catalogs.names());
+    return list(m_visible.names());
 }
 
 QString FontCatalogsController::filterText() const
@@ -205,7 +345,7 @@ QString FontCatalogsController::previewText() const
 QStringList FontCatalogsController::catalogChoices() const
 {
     const_cast<FontCatalogsController *>(this)->ensureLoaded();
-    return list(application::catalogChoices(m_catalogs.names(), u16(QCoreApplication::translate("HikariSub.Fonts", "All fonts")),
+    return list(application::catalogChoices(m_visible.names(), u16(QCoreApplication::translate("HikariSub.Fonts", "All fonts")),
                                             u16(QCoreApplication::translate("HikariSub.Fonts", "Without catalogue"))));
 }
 
@@ -216,7 +356,8 @@ QStringList FontCatalogsController::fontList(int selection, const QString &value
     auto &families = familiesFor(shellWindow);
     const std::vector<std::u16string> fonts =
         filterText.isEmpty() || !filterOn ? families.fonts() : families.filteredFonts(u16(filterText));
-    return list(application::catalogView(selection, u16(value), fonts, m_catalogs));
+    auto &from = selection == 1 ? m_visible : tierCatalogs(value, QString());
+    return list(application::catalogView(selection, u16(value), fonts, from));
 }
 
 application::FontFamilies &FontCatalogsController::familiesFor(int shellWindow)
@@ -302,36 +443,36 @@ int FontCatalogsController::styleFontIndex(const QStringList &fonts, const QStri
 QString FontCatalogsController::catalogOf(const QString &font) const
 {
     const_cast<FontCatalogsController *>(this)->ensureLoaded();
-    return qs(m_catalogs.catalogOf(u16(font)));
+    return qs(m_visible.catalogOf(u16(font)));
 }
 
-bool FontCatalogsController::isFontInCatalog(const QString &catalog, const QString &font) const
+bool FontCatalogsController::isFontInCatalog(const QString &catalog, const QString &font, const QString &tier) const
 {
     const_cast<FontCatalogsController *>(this)->ensureLoaded();
-    return m_catalogs.contains(u16(catalog), u16(font));
+    return tierCatalogs(catalog, tier).contains(u16(catalog), u16(font));
 }
 
 QStringList FontCatalogsController::catalogsOf(const QString &font) const
 {
     const_cast<FontCatalogsController *>(this)->ensureLoaded();
     QStringList out;
-    for (const auto &c : m_catalogs.catalogs())
+    for (const auto &c : m_visible.catalogs())
         if (std::find(c.fonts.begin(), c.fonts.end(), u16(font)) != c.fonts.end())
             out << qs(c.name);
     return out;
 }
 
-int FontCatalogsController::catalogSize(const QString &name) const
+int FontCatalogsController::catalogSize(const QString &name, const QString &tier) const
 {
     const_cast<FontCatalogsController *>(this)->ensureLoaded();
-    const auto *c = m_catalogs.find(u16(name));
+    const auto *c = tierCatalogs(name, tier).find(u16(name));
     return c ? int(c->fonts.size()) : 0;
 }
 
 QString FontCatalogsController::existingName(const QString &name) const
 {
     const_cast<FontCatalogsController *>(this)->ensureLoaded();
-    const auto *c = m_catalogs.findNoCase(u16(name));
+    const auto *c = m_visible.findNoCase(u16(name));
     return c ? qs(c->name) : QString();
 }
 
@@ -347,62 +488,70 @@ int FontCatalogsController::sameNameIndex(const QStringList &names, const QStrin
 bool FontCatalogsController::catalogExists(const QString &name) const
 {
     const_cast<FontCatalogsController *>(this)->ensureLoaded();
-    return m_catalogs.find(u16(name)) != nullptr;
+    return m_visible.find(u16(name)) != nullptr;
 }
 
-bool FontCatalogsController::addCatalog(const QString &name, bool autosave)
+bool FontCatalogsController::addCatalog(const QString &name, bool autosave, const QString &tier)
 {
     ensureLoaded();
-    const bool added = m_catalogs.addCatalog(u16(name));
+    const bool added = tierCatalogs(name, tier.isEmpty() ? QStringLiteral("mine") : tier).addCatalog(u16(name));
     if (autosave)
         startAutosave();
+    rebuildVisible();
     emit catalogsChanged();
     return added;
 }
 
-bool FontCatalogsController::renameCatalog(const QString &oldName, const QString &newName, int answer)
+bool FontCatalogsController::renameCatalog(const QString &oldName, const QString &newName, int answer,
+                                           const QString &tier)
 {
     ensureLoaded();
     using Clash = application::FontCatalogs::Clash;
-    const bool done = m_catalogs.rename(u16(oldName), u16(newName), [answer] {
+    const bool done = tierCatalogs(oldName, tier).rename(u16(oldName), u16(newName), [answer] {
         return answer == 0 ? Clash::Merge : answer == 1 ? Clash::Delete : Clash::Cancel;
     });
     if (done) {
         startAutosave();
+        rebuildVisible();
         emit catalogsChanged();
     }
     return done;
 }
 
-void FontCatalogsController::removeCatalog(const QString &name)
+void FontCatalogsController::removeCatalog(const QString &name, const QString &tier)
 {
     ensureLoaded();
-    m_catalogs.remove(u16(name));
+    tierCatalogs(name, tier).remove(u16(name));
     startAutosave();
+    rebuildVisible();
     emit catalogsChanged();
 }
 
 void FontCatalogsController::setFontsInCatalog(const QString &catalog, const QStringList &fonts, bool add)
 {
     ensureLoaded();
+    auto &owner = tierCatalogs(catalog, QString());
     for (const auto &font : fonts) {
         if (add)
-            m_catalogs.addFont(u16(catalog), u16(font));
+            owner.addFont(u16(catalog), u16(font));
         else
-            m_catalogs.removeFont(u16(catalog), u16(font));
+            owner.removeFont(u16(catalog), u16(font));
         startAutosave();
     }
+    rebuildVisible();
     emit catalogsChanged();
 }
 
 void FontCatalogsController::toggleFontInCatalog(const QString &catalog, const QString &font, bool add)
 {
     ensureLoaded();
+    auto &owner = tierCatalogs(catalog, QString());
     if (add)
-        m_catalogs.addFont(u16(catalog), u16(font));
+        owner.addFont(u16(catalog), u16(font));
     else
-        m_catalogs.removeFont(u16(catalog), u16(font));
+        owner.removeFont(u16(catalog), u16(font));
     save();
+    rebuildVisible();
     emit catalogsChanged();
 }
 
@@ -507,6 +656,7 @@ QVariantMap FontCatalogsController::loadReviewed(const QVariantList &choices)
     m_catalogs.apply(m_reviewed, chosen);
     const int loaded = int(m_reviewed.size()) - skipped - same;
     m_reviewed.clear();
+    rebuildVisible();
     emit catalogsChanged();
     return {{QStringLiteral("loaded"), loaded}, {QStringLiteral("added"), added}, {QStringLiteral("merged"), merged},
             {QStringLiteral("replaced"), replaced}, {QStringLiteral("renamed"), renamed}, {QStringLiteral("skipped"), skipped}};
@@ -515,7 +665,8 @@ QVariantMap FontCatalogsController::loadReviewed(const QVariantList &choices)
 bool FontCatalogsController::save()
 {
     ensureLoaded();
-    const bool written = m_file->write(ui::fontCatalogsToToml(m_catalogs.catalogs())) != ui::ListFile::Write::Failed;
+    const bool mine = m_file->write(ui::fontCatalogsToToml(m_catalogs.catalogs())) != ui::ListFile::Write::Failed;
+    const bool written = writeProject() && mine;
     m_unsaved = !written;
     return written;
 }
@@ -529,8 +680,9 @@ QVariantMap FontCatalogsController::collectFromSubtitles(const QString &catalog,
     std::vector<const core::Document *> raw;
     for (const auto &d : documents)
         raw.push_back(d.get());
-    const bool done = m_catalogs.collect(u16(catalog), clear, raw);
+    const bool done = tierCatalogs(catalog, QString()).collect(u16(catalog), clear, raw);
     const bool saved = done && save();
+    rebuildVisible();
     emit catalogsChanged();
     return {{QStringLiteral("done"), done}, {QStringLiteral("saved"), saved}};
 }

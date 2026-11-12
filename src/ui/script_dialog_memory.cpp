@@ -10,6 +10,7 @@ namespace hikari::ui {
 using application::DialogValue;
 using application::LastDialogAnswer;
 using application::NamedDialogValues;
+using application::Tier;
 
 namespace {
 
@@ -111,69 +112,108 @@ void ScriptDialogMemory::remember(const QString &key, const LastDialogAnswer &an
     m_settings->sync();
 }
 
+void ScriptDialogMemory::setProjectRoot(const QString &root)
+{
+    if (root != m_project.root())
+        m_project = PresetsFile(root);
+}
+
+TieredPresets ScriptDialogMemory::tiered(const QString &key) const
+{
+    TieredPresets out;
+    const auto arrayIn = [&key](const QStringList &rows) {
+        const auto row = findRow(rows, key);
+        return row ? row->second.array() : QJsonArray();
+    };
+    if (m_settings)
+        out.of(Tier::Mine) = presetsOf(arrayIn(m_settings->list(kPresets)));
+    out.of(Tier::Project) = presetsOf(arrayIn(m_project.list(kPresets)));
+    return out;
+}
+
+void ScriptDialogMemory::store(const QString &key, const TieredPresets &presets, Tier tier)
+{
+    const auto withRow = [&](QStringList rows) {
+        const QJsonArray list = jsonOf(presets.of(tier));
+        const auto row = findRow(rows, key);
+        if (list.isEmpty() && row)
+            rows.removeAt(row->first);
+        else if (row)
+            rows[row->first] = rowOf(key, QJsonDocument(list));
+        else if (!list.isEmpty())
+            rows << rowOf(key, QJsonDocument(list));
+        return rows;
+    };
+    if (tier == Tier::Project) {
+        if (const QStringList before = m_project.list(kPresets), after = withRow(before); after != before)
+            m_project.set(kPresets, after);
+        return;
+    }
+    if (!m_settings)
+        return;
+    m_settings->set(kPresets, withRow(m_settings->list(kPresets)));
+    m_settings->sync();
+}
+
 QStringList ScriptDialogMemory::presets(const QString &key) const
 {
     QStringList names;
-    if (!m_settings)
-        return names;
-    if (const auto row = findRow(m_settings->list(kPresets), key))
-        for (const auto &p : row->second.array())
-            names << p.toObject().value(QLatin1String("name")).toString();
+    for (const auto &row : tiered(key).rows())
+        if (!row.hidden)
+            names << QString::fromUtf8(reinterpret_cast<const char *>(row.name.data()), qsizetype(row.name.size()));
     return names;
 }
 
-std::optional<NamedDialogValues> ScriptDialogMemory::preset(const QString &key, const QString &name) const
+QVariantList ScriptDialogMemory::presetRows(const QString &key) const
 {
-    if (!m_settings)
-        return std::nullopt;
-    if (const auto row = findRow(m_settings->list(kPresets), key))
-        for (const auto &p : row->second.array())
-            if (p.toObject().value(QLatin1String("name")).toString() == name)
-                return fromJson(p.toObject().value(QLatin1String("values")).toObject());
+    return tiered(key).rowMaps();
+}
+
+std::optional<NamedDialogValues> ScriptDialogMemory::preset(const QString &key, const QString &name,
+                                                            std::optional<Tier> tier) const
+{
+    const auto presets = tiered(key);
+    if (const auto *p = presets.preset(name, tier))
+        return fromJson(p->values);
     return std::nullopt;
 }
 
-void ScriptDialogMemory::savePreset(const QString &key, const QString &name, const NamedDialogValues &values)
+void ScriptDialogMemory::savePreset(const QString &key, const QString &name, const NamedDialogValues &values, Tier tier)
 {
-    if (!m_settings || name.isEmpty())
+    if (name.isEmpty() || (tier == Tier::Project && !hasProject()) || (tier == Tier::Mine && !m_settings))
         return;
-    QStringList rows = m_settings->list(kPresets);
-    const auto row = findRow(rows, key);
-    QJsonArray list = row ? row->second.array() : QJsonArray();
-    const QJsonObject preset{{QLatin1String("name"), name}, {QLatin1String("values"), toJson(values)}};
-    qsizetype at = 0;
-    while (at < list.size() && list[at].toObject().value(QLatin1String("name")).toString() != name)
-        ++at;
-    if (at < list.size())
-        list[at] = preset;
-    else
-        list.append(preset);
-    if (row)
-        rows[row->first] = rowOf(key, QJsonDocument(list));
-    else
-        rows << rowOf(key, QJsonDocument(list));
-    m_settings->set(kPresets, rows);
-    m_settings->sync();
+    auto presets = tiered(key);
+    presets.save(tier, {name, toJson(values)});
+    store(key, presets, tier);
 }
 
-void ScriptDialogMemory::deletePreset(const QString &key, const QString &name)
+void ScriptDialogMemory::deletePreset(const QString &key, const QString &name, std::optional<Tier> tier)
 {
-    if (!m_settings)
+    auto presets = tiered(key);
+    const auto at = presets.find(name, tier);
+    if (!at || presets.hidden(name, *at) || !presets.remove(*at, name))
         return;
-    QStringList rows = m_settings->list(kPresets);
-    const auto row = findRow(rows, key);
-    if (!row)
-        return;
-    QJsonArray list = row->second.array();
-    for (qsizetype i = list.size() - 1; i >= 0; --i)
-        if (list[i].toObject().value(QLatin1String("name")).toString() == name)
-            list.removeAt(i);
-    if (list.isEmpty())
-        rows.removeAt(row->first);
-    else
-        rows[row->first] = rowOf(key, QJsonDocument(list));
-    m_settings->set(kPresets, rows);
-    m_settings->sync();
+    store(key, presets, *at);
+}
+
+std::optional<QString> ScriptDialogMemory::presetClash(const QString &key, const QString &name, Tier from) const
+{
+    return tiered(key).clash(name, from);
+}
+
+std::optional<QString> ScriptDialogMemory::sendPreset(const QString &key, const QString &name, Tier from,
+                                                      const application::ClashChoice &choice, bool move)
+{
+    if (!hasProject() || !m_settings)
+        return std::nullopt;
+    auto presets = tiered(key);
+    const auto landed = presets.send(name, from, choice, move);
+    if (!landed)
+        return std::nullopt;
+    store(key, presets, application::otherTier(from));
+    if (move)
+        store(key, presets, from);
+    return landed;
 }
 
 }

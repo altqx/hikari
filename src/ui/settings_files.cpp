@@ -854,12 +854,8 @@ std::optional<SettingValue> SettingsFiles::read(const SettingDefinition &setting
         const auto *node = tomlNode(m_settings, setting.id);
         if (!node)
             return std::nullopt;
-        if (setting.id == "automation.dialogPresets" && node->is_table()) {
-            StringList rows;
-            for (const auto &[key, presets] : *node->as_table())
-                rows.push_back(rowText(qs(key.str()), compactJson(jsonOf(presets))).toStdString());
-            return rows;
-        }
+        if (setting.id == "automation.dialogPresets" && node->is_table())
+            return dialogPresetRows(*node->as_table());
         return fromToml(*node);
     }
     }
@@ -948,22 +944,9 @@ void SettingsFiles::put(const SettingDefinition &setting, const SettingValue &v)
         auto *parent = tomlParent(m_settings, setting.id, true);
         const auto leaf = idSegments(setting.id).back();
         if (list && setting.id == "automation.dialogPresets")
-            if (const auto rows = keyedRows(*list)) {
-                toml::table presets;
-                bool all = true;
-                for (const auto &row : *rows) {
-                    const QJsonDocument json = QJsonDocument::fromJson(row.rest.toUtf8());
-                    auto array = json.isArray() ? tomlArrayOf(json.array()) : std::nullopt;
-                    if (!array || rowText(row.key, compactJson(jsonOf(*array))) != rowText(row.key, row.rest)) {
-                        all = false;
-                        break;
-                    }
-                    presets.insert_or_assign(row.key.toStdString(), std::move(*array));
-                }
-                if (all) {
-                    parent->insert_or_assign(leaf, std::move(presets));
-                    break;
-                }
+            if (auto presets = dialogPresetTable(*list)) {
+                parent->insert_or_assign(leaf, std::move(*presets));
+                break;
             }
         putToml(*parent, leaf, v);
         break;
@@ -1103,6 +1086,30 @@ void SettingsFiles::mergeFromDisk(File file)
             put(*setting, *value);
         else
             erase(*setting);
+}
+
+StringList dialogPresetRows(const toml::table &table)
+{
+    StringList rows;
+    for (const auto &[key, presets] : table)
+        rows.push_back(rowText(qs(key.str()), compactJson(jsonOf(presets))).toStdString());
+    return rows;
+}
+
+std::optional<toml::table> dialogPresetTable(const StringList &list)
+{
+    const auto rows = keyedRows(list);
+    if (!rows)
+        return std::nullopt;
+    toml::table presets;
+    for (const auto &row : *rows) {
+        const QJsonDocument json = QJsonDocument::fromJson(row.rest.toUtf8());
+        auto array = json.isArray() ? tomlArrayOf(json.array()) : std::nullopt;
+        if (!array || rowText(row.key, compactJson(jsonOf(*array))) != rowText(row.key, row.rest))
+            return std::nullopt;
+        presets.insert_or_assign(row.key.toStdString(), std::move(*array));
+    }
+    return presets;
 }
 
 }

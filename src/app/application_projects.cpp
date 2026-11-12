@@ -64,6 +64,14 @@ const application::Settings &Application::windowSettings(int shellWindow) const
     return views(shellWindow).settings->settings();
 }
 
+std::vector<std::string> Application::projectAiExclude(const std::string &root)
+{
+    const ui::ProjectFile file(QString::fromStdString(root));
+    const auto value = file.read(*application::findSetting("ai.exclude"));
+    const auto *globs = value ? std::get_if<std::vector<std::string>>(&*value) : nullptr;
+    return globs ? *globs : std::vector<std::string>();
+}
+
 std::optional<api::ProjectState> Application::activeProject() const
 {
     const QString root = m_projects ? m_projects->root(m_workspace.activeWindow()) : QString();
@@ -110,8 +118,13 @@ void Application::applyWindowProject(int shellWindow)
                           {}, shellWindow);
     }
     loadProjectFonts(shellWindow);
+    applyProjectTierFiles(shellWindow, root);
     if (m_styleManager)
         m_styleManager->projectChanged();
+    if (m_fontCatalogs)
+        m_fontCatalogs->projectChanged();
+    if (m_shiftTimes)
+        m_shiftTimes->setProjectRoot(m_projects->root(m_workspace.activeWindow()));
     const bool moveTags = v.settings->settings().boolean("translation.autoMoveTagsFromOriginal");
     v.editor->setMoveTags(moveTags);
     v.shell->setRunMarks(moveTags);

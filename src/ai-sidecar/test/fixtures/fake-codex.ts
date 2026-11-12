@@ -5,6 +5,8 @@ import { appendFileSync } from "node:fs";
 interface Script {
     reply?: string;
     calls?: { tool: string; arguments: unknown }[];
+    /** A built-in file change, which Codex asks the client to approve first. */
+    fileChange?: string;
 }
 
 const log = (line: string) => process.env.FAKE_CODEX_LOG && appendFileSync(process.env.FAKE_CODEX_LOG, line + "\n");
@@ -27,6 +29,12 @@ let usage = { inputTokens: 0, cachedInputTokens: 0, cacheWriteInputTokens: 0, ou
     reasoningOutputTokens: 0 };
 
 const send = (message: unknown) => process.stdout.write(JSON.stringify(message) + "\n");
+let requestId = 0;
+const asked = new Map<number, (answer: unknown) => void>();
+const ask = (method: string, params: unknown) => new Promise<unknown>((resolve) => {
+    asked.set(++requestId, resolve);
+    send({ id: requestId, method, params });
+});
 const notify = (method: string, params: unknown) => send({ method, params });
 
 async function mcp(method: string, params: unknown): Promise<{ result?: unknown; error?: { message: string } }> {
@@ -37,6 +45,15 @@ async function mcp(method: string, params: unknown): Promise<{ result?: unknown;
 
 async function run(threadId: string, turnId: string, script: Script): Promise<void> {
     await mcp("initialize", { protocolVersion: "2025-06-18", capabilities: {}, clientInfo: { name: "codex-mcp-client" } });
+    if (script.fileChange) {
+        const item = { type: "fileChange", id: `patch-${turnId}`, changes: [{ path: script.fileChange, kind: "update" }],
+            status: "inProgress" };
+        notify("item/started", { threadId, turnId, item });
+        const answer = await ask("item/fileChange/requestApproval", { threadId, turnId, itemId: item.id });
+        const accepted = (answer as { result?: { decision?: string } }).result?.decision === "accept";
+        log(`fileChange ${accepted ? "applied" : "refused"} ${JSON.stringify(answer)}`);
+        notify("item/completed", { threadId, turnId, item: { ...item, status: accepted ? "completed" : "declined" } });
+    }
     for (const [n, call] of (script.calls ?? []).entries()) {
         if (interrupted)
             break;
@@ -67,6 +84,11 @@ process.stdin.on("data", (chunk: Buffer) => {
         const line = buffered.slice(0, newline);
         buffered = buffered.slice(newline + 1);
         const message = JSON.parse(line) as { id?: number; method?: string; params?: Record<string, unknown> };
+        if (!message.method && message.id !== undefined && asked.has(message.id)) {
+            asked.get(message.id)!(message);
+            asked.delete(message.id);
+            continue;
+        }
         if (message.method)
             log(`${message.method} ${JSON.stringify(message.params ?? null)}`);
         const answer = (result: unknown) => send({ id: message.id, result });
