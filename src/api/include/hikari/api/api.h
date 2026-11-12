@@ -164,6 +164,8 @@ public:
     void revokeFiles(const std::string &callerId);
     // The path behind a caller's handle, if the caller holds it.
     std::optional<std::string> grantedPath(const std::string &callerId, std::string_view handle) const;
+    // The file a files.write would change, from its file handle or its folder and path; nullopt: neither is granted.
+    std::optional<std::string> writeTarget(const Caller &caller, const Json &params) const;
 
 private:
     struct Subscription {

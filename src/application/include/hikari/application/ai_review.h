@@ -9,6 +9,7 @@
 #include <functional>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace hikari::application {
@@ -113,6 +114,59 @@ public:
     // The Document closed: its changes go.
     void forget(DocumentId document);
 
+    // A Project file an AI caller wrote. It waits here, not on the disk, until the user keeps it.
+    struct FileChange {
+        std::uint64_t id = 0;
+        std::uint64_t turn = 0;
+        std::string caller;                // the caller's label
+        std::string path;                  // absolute, UTF-8
+        std::string shown;                 // relative to the Project, '/'-separated
+        std::optional<std::string> before; // the file on disk when first staged; absent: a new file
+        std::string after;
+        std::uint64_t replacedBy = 0;      // a later write to the same path in this review
+        bool settled = false;              // kept or undone
+        bool undone = false;
+    };
+    // Whole-file reads and writes for Keep and Restore checkpoint.
+    struct Disk {
+        std::function<std::optional<std::string>(const std::string &path)> read;
+        std::function<bool(const std::string &path, std::string_view bytes)> write;
+        std::function<bool(const std::string &path)> remove;
+    };
+
+    std::uint64_t stageFile(const std::string &callerId, const std::string &callerLabel, std::string path,
+                            std::string shown, std::optional<std::string> before, std::string after);
+    const FileChange *file(std::uint64_t id) const;
+    // The staged files still waiting, oldest first: one per path.
+    std::vector<const FileChange *> pendingFiles() const;
+    // What a read of `path` sees while a write to it waits.
+    const std::string *staged(const std::string &path) const;
+    // The file on disk is no longer what it was when the AI first staged it.
+    bool changedOnDisk(const FileChange &change, const Disk &disk) const;
+
+    enum class KeepFile { Kept, ChangedOnDisk, WriteFailed, NotWaiting };
+    // Unless `force`, a file changed on disk since is left waiting.
+    KeepFile keepFile(std::uint64_t id, const Disk &disk, bool force);
+    // Drops the staged copy; the disk is never touched.
+    bool undoFile(std::uint64_t id);
+    // Every waiting file; answers the paths that changed on disk and stayed (without `force`) or failed.
+    std::vector<std::string> keepAllFiles(const Disk &disk, bool force);
+    void undoAllFiles();
+
+    // What restoring the checkpoint before `turn` does to files: staged ones from that turn on go, and kept ones
+    // get their content from before the turn back.
+    struct CheckpointFiles {
+        std::size_t staged = 0;
+        std::size_t kept = 0;
+        std::vector<std::string> changedSince; // kept files that changed on disk after they were kept
+    };
+    CheckpointFiles checkpointFiles(std::uint64_t turn, const Disk &disk) const;
+    // Kept files that changed since stay unless `force`. Answers the paths it couldn't write back.
+    std::vector<std::string> restoreFiles(std::uint64_t turn, const Disk &disk, bool force);
+
+    // Runs after a file is staged, kept, undone or restored.
+    std::function<void()> filesChanged;
+
 private:
     struct Open {
         std::uint64_t turn = 0;
@@ -120,11 +174,14 @@ private:
     };
 
     Change *find(std::uint64_t id);
+    FileChange *findFile(std::uint64_t id);
+    std::uint64_t openTurn(const std::string &callerId, const std::string &callerLabel);
     std::vector<std::pair<Change *, std::size_t>> waiting(DocumentId document, const core::Document &current,
                                                           Target target);
 
     std::vector<Turn> m_turns;
     std::vector<Change> m_changes;
+    std::vector<FileChange> m_files;
     std::vector<std::pair<std::string, Open>> m_open; // by caller id
     std::uint64_t m_nextId = 1;
 };

@@ -1,3 +1,4 @@
+#include "fake_host.h"
 #include "hikari/api/api.h"
 #include "hikari/api/folder.h"
 
@@ -151,7 +152,10 @@ protected:
     hikari::application::Settings m_settings{m_storage};
     DiskFiles m_files;
     FakeProject m_project;
-    Api m_api{Host{.settings = &m_settings, .files = &m_files, .project = &m_project}};
+    hikari::api::testing::FakeHost m_documents;
+    hikari::application::AiReview m_review;
+    Api m_api{Host{.documents = &m_documents, .settings = &m_settings, .files = &m_files, .review = &m_review,
+                   .project = &m_project}};
     Caller m_caller{.id = "test.plugin", .label = "Test"};
 };
 
@@ -392,4 +396,56 @@ TEST_F(AiFolder, OnlyAnAiCallerWithAProjectGetsTheFolder)
     m_caller.project = utf8(m_data);
     m_caller.reviewed = false;
     EXPECT_EQ(code("files.read", R"({"folder": "project", "path": "notes/today.txt"})"), "not_granted");
+}
+
+class AiWrites : public AiFolder {
+protected:
+    void SetUp() override
+    {
+        AiFolder::SetUp();
+        m_api.revokeFiles(m_caller.id);
+        m_caller.label = "AI";
+        grant(true);
+    }
+};
+
+TEST_F(AiWrites, AnAiWriteStagesAndTheDiskStaysUntilKept)
+{
+    const Result wrote = call("files.write", R"({"folder": "d2", "path": "notes/today.txt", "data": "tomorrow"})");
+    ASSERT_TRUE(wrote);
+    EXPECT_EQ(*wrote->find("staged"), Json(true));
+    EXPECT_EQ(*m_files.read(utf8(m_data / "notes/today.txt"), 100), "today");
+    ASSERT_EQ(m_review.pendingFiles().size(), 1u);
+    const auto *staged = m_review.pendingFiles().front();
+    EXPECT_EQ(staged->shown, "notes/today.txt");
+    EXPECT_EQ(staged->before, std::optional<std::string>("today"));
+    EXPECT_EQ(staged->after, "tomorrow");
+    EXPECT_EQ(code("files.write", R"({"folder": "d2", "path": "new/later.txt", "data": "later"})"), "ok");
+    EXPECT_FALSE(fs::exists(m_data / "new"));
+}
+
+TEST_F(AiWrites, TheAiReadsWhatItStagedAndUndoBringsTheDiskBack)
+{
+    call("files.write", R"({"folder": "d2", "path": "notes/today.txt", "data": "tomorrow"})");
+    EXPECT_EQ(call("files.read", R"({"folder": "d2", "path": "notes/today.txt"})")->find("data")->asString(),
+              "tomorrow");
+    m_review.undoFile(m_review.pendingFiles().front()->id);
+    EXPECT_EQ(call("files.read", R"({"folder": "d2", "path": "notes/today.txt"})")->find("data")->asString(), "today");
+    m_caller.reviewed = false;
+    call("files.write", R"({"folder": "d2", "path": "notes/today.txt", "data": "plugin"})");
+    EXPECT_EQ(*m_files.read(utf8(m_data / "notes/today.txt"), 100), "plugin");
+}
+
+TEST_F(AiWrites, AWriteToAnOpenDocumentIsRefused)
+{
+    std::ofstream(m_data / "ep01.ass") << "x";
+    m_documents.open("ep01.ass", hikari::api::testing::kAlpha, utf8(m_data / "ep01.ass"));
+    EXPECT_EQ(reason("files.write", R"({"folder": "d2", "path": "ep01.ass", "data": "y"})"), "open_document");
+    EXPECT_TRUE(m_review.pendingFiles().empty());
+}
+
+TEST_F(AiWrites, ExcludedPathsAreNeverStaged)
+{
+    EXPECT_EQ(reason("files.write", R"({"folder": "d2", "path": ".env", "data": "y"})"), "excluded");
+    EXPECT_TRUE(m_review.pendingFiles().empty());
 }

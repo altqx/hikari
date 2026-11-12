@@ -3,6 +3,7 @@
 #include "hikari/api/schema.h"
 
 #include <cstdio>
+#include <filesystem>
 #include <cstdlib>
 
 namespace hikari::api {
@@ -179,6 +180,26 @@ void Api::revokeFiles(const std::string &callerId)
 {
     std::erase_if(m_grants, [&](const auto &grant) { return grant.first == callerId; });
     std::erase_if(m_folders, [&](const auto &grant) { return grant.first == callerId; });
+}
+
+std::optional<std::string> Api::writeTarget(const Caller &caller, const Json &params) const
+{
+    if (const Json *file = params.find("file"); file && file->isString())
+        return grantedPath(caller.id, file->asString());
+    const Json *folder = params.find("folder"), *path = params.find("path");
+    if (!folder || !folder->isString() || !path || !path->isString())
+        return std::nullopt;
+    std::optional<std::string> root;
+    if (caller.reviewed && !caller.project.empty() && folder->asString() == kProjectFolder)
+        root = caller.project;
+    for (const auto &[id, granted] : m_folders)
+        if (id == caller.id && granted.handle == folder->asString())
+            root = granted.path;
+    if (!root)
+        return std::nullopt;
+    const auto u8 = [](const std::string &s) { return std::filesystem::path(std::u8string(s.begin(), s.end())); };
+    const std::u8string joined = (u8(*root) / u8(path->asString())).lexically_normal().u8string();
+    return std::string(joined.begin(), joined.end());
 }
 
 std::optional<std::string> Api::grantedPath(const std::string &callerId, std::string_view handle) const
