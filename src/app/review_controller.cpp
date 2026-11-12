@@ -1,9 +1,11 @@
 #include "hikari/app/review_controller.h"
 
+#include "hikari/application/file_diff.h"
 #include "hikari/application/word_diff.h"
 #include "theme.h"
 
 #include <QCoreApplication>
+#include <QLocale>
 
 #include <algorithm>
 #include <set>
@@ -60,6 +62,30 @@ QString itemDetail(const AiReview::Item &item)
         return item.styleBefore ? QString() : QCoreApplication::translate("HikariSub.Review", "New");
     case AiReview::ItemKind::Info:
         return item.infoAfter ? shortText(*item.infoAfter) : QCoreApplication::translate("HikariSub.Review", "Removed");
+    }
+    return {};
+}
+
+QString fileDetail(const AiReview::FileChange &file, const application::FileDiff &diff)
+{
+    if (!diff.text) {
+        const QString size = QLocale().formattedDataSize(qint64(diff.afterBytes));
+        return (file.before ? QCoreApplication::translate("HikariSub.Review", "Changed, %1")
+                            : QCoreApplication::translate("HikariSub.Review", "New file, %1"))
+            .arg(size);
+    }
+    if (!file.before)
+        return QCoreApplication::translate("HikariSub.Review", "New file, %n line(s)", nullptr, int(diff.lines));
+    return QCoreApplication::translate("HikariSub.Review", "Changed, +%1 −%2 lines").arg(diff.added).arg(diff.removed);
+}
+
+QString diffKind(application::FileDiffLine::Kind kind)
+{
+    switch (kind) {
+    case application::FileDiffLine::Kind::Same: return QStringLiteral("same");
+    case application::FileDiffLine::Kind::Removed: return QStringLiteral("removed");
+    case application::FileDiffLine::Kind::Added: return QStringLiteral("added");
+    case application::FileDiffLine::Kind::Gap: return QStringLiteral("gap");
     }
     return {};
 }
@@ -164,7 +190,49 @@ int ReviewController::waitingIn(application::DocumentId document) const
 int ReviewController::waiting() const
 {
     const auto document = target();
-    return document ? waitingIn(*document) : 0;
+    return (document ? waitingIn(*document) : 0) + (on() ? int(m_wiring.review.pendingFiles().size()) : 0);
+}
+
+QStringList ReviewController::waitingFiles() const
+{
+    QStringList out;
+    if (on())
+        for (const AiReview::FileChange *file : m_wiring.review.pendingFiles())
+            out << qs(file->shown);
+    return out;
+}
+
+int ReviewController::keepFile(qulonglong file, bool force)
+{
+    const AiReview::KeepFile kept = m_wiring.review.keepFile(file, m_wiring.disk, force);
+    return kept == AiReview::KeepFile::Kept ? 0 : kept == AiReview::KeepFile::ChangedOnDisk ? 1 : 2;
+}
+
+void ReviewController::undoFile(qulonglong file)
+{
+    m_wiring.review.undoFile(file);
+}
+
+QVariantMap ReviewController::fileDiff(qulonglong file) const
+{
+    const AiReview::FileChange *change = m_wiring.review.file(file);
+    if (!change)
+        return {};
+    const application::FileDiff diff = application::fileDiff(change->before, change->after);
+    QVariantList lines;
+    for (const application::FileDiffLine &line : diff.shown)
+        lines << QVariantMap{{QStringLiteral("kind"), diffKind(line.kind)}, {QStringLiteral("text"), qs(line.text)}};
+    return {{QStringLiteral("text"), diff.text}, {QStringLiteral("lines"), lines}};
+}
+
+bool ReviewController::keepAllFiles()
+{
+    return m_wiring.review.keepAllFiles(m_wiring.disk, false).empty();
+}
+
+void ReviewController::discardAllFiles()
+{
+    m_wiring.review.undoAllFiles();
 }
 
 QVariantList ReviewController::turns() const
@@ -216,13 +284,27 @@ QVariantList ReviewController::turns() const
                                        {QStringLiteral("items"), items}};
             }
         }
-        if (changes.isEmpty())
+        QVariantList files;
+        for (const AiReview::FileChange *file : m_wiring.review.pendingFiles()) {
+            if (file->turn != turn->id)
+                continue;
+            files << QVariantMap{
+                {QStringLiteral("file"), qulonglong(file->id)},
+                {QStringLiteral("caller"), qs(file->caller)},
+                {QStringLiteral("path"), qs(file->shown)},
+                {QStringLiteral("isNew"), !file->before},
+                {QStringLiteral("detail"), fileDetail(*file, application::fileDiff(file->before, file->after))},
+                {QStringLiteral("changedOnDisk"), m_wiring.review.changedOnDisk(*file, m_wiring.disk)}};
+        }
+        restorable = restorable || !files.isEmpty() || m_wiring.review.checkpointFiles(turn->id, m_wiring.disk).kept > 0;
+        if (changes.isEmpty() && files.isEmpty())
             continue;
         out << QVariantMap{{QStringLiteral("turn"), qulonglong(turn->id)},
                            {QStringLiteral("number"), qulonglong(turn->number)},
                            {QStringLiteral("label"), qs(turn->label)},
                            {QStringLiteral("restorable"), restorable},
-                           {QStringLiteral("changes"), changes}};
+                           {QStringLiteral("changes"), changes},
+                           {QStringLiteral("files"), files}};
     }
     return out;
 }
@@ -274,6 +356,8 @@ void ReviewController::keep(qulonglong change, int item)
         return;
     m_wiring.review.keep(*document, session->document(),
                          Target{change, item < 0 ? std::nullopt : std::optional<std::size_t>(item)});
+    if (!change && item < 0)
+        m_wiring.review.keepAllFiles(m_wiring.disk, false);
     m_wiring.refresh();
 }
 
@@ -309,8 +393,12 @@ bool ReviewController::undo(qulonglong change, int item, bool force)
 {
     const AiReview::Change *picked = change ? m_wiring.review.change(change) : nullptr;
     const auto document = picked ? std::optional(picked->document) : target();
-    return document &&
-           undoIn(*document, Target{change, item < 0 ? std::nullopt : std::optional<std::size_t>(item)}, force);
+    const bool files = !change && item < 0 && !m_wiring.review.pendingFiles().empty();
+    if (files)
+        m_wiring.review.undoAllFiles();
+    return (document &&
+            undoIn(*document, Target{change, item < 0 ? std::nullopt : std::optional<std::size_t>(item)}, force)) ||
+           files;
 }
 
 void ReviewController::keepLine()
@@ -388,11 +476,18 @@ QVariantList ReviewController::checkpoint(qulonglong turn) const
                            {QStringLiteral("others"), int(doc.others)},
                            {QStringLiteral("editedSince"), int(doc.editedSince.size())}};
     }
+    const AiReview::CheckpointFiles files = m_wiring.review.checkpointFiles(turn, m_wiring.disk);
+    if (files.staged + files.kept > 0)
+        out << QVariantMap{{QStringLiteral("files"), int(files.staged + files.kept)},
+                           {QStringLiteral("filesChangedSince"), int(files.changedSince.size())}};
     return out;
 }
 
-bool ReviewController::restore(qulonglong turn, bool force)
+bool ReviewController::restore(qulonglong turn, bool force, bool forceFiles)
 {
+    const AiReview::CheckpointFiles files = m_wiring.review.checkpointFiles(turn, m_wiring.disk);
+    if (files.staged + files.kept > 0)
+        m_wiring.review.restoreFiles(turn, m_wiring.disk, forceFiles);
     std::vector<application::DocumentId> touched;
     const auto sessions = [&](application::DocumentId document) {
         touched.push_back(document);
@@ -408,7 +503,7 @@ bool ReviewController::restore(qulonglong turn, bool force)
     touched.erase(first, last);
     for (const application::DocumentId document : touched)
         m_wiring.committed(document);
-    return *restored > 0;
+    return *restored > 0 || files.staged + files.kept > 0;
 }
 
 bool ReviewController::isAiStep(int step) const

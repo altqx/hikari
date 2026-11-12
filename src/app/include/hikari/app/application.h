@@ -33,6 +33,7 @@
 #include "hikari/core/ass_attachments.h"
 #include "hikari/core/conversion.h"
 #include "hikari/core/grammar.h"
+#include "hikari/application/ai_review.h"
 #include "hikari/application/aegisub_frame_times.h"
 #include "hikari/application/timecodes_file.h"
 #include "hikari/application/associated_files.h"
@@ -373,6 +374,7 @@ public:
     QString projectOf(int shellWindow) const { return m_projects->root(shellWindow); }
     std::optional<api::ProjectState> activeProject() const;
     static std::vector<std::string> projectAiExclude(const std::string &root);
+    static application::AiReview::Disk reviewDisk();
     ProjectWindows &projects() { return *m_projects; }
     // "modified" when the target's file is newer than when last read or written;
     // "removed" once when it is gone (the Document becomes unsaved).

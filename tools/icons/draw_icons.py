@@ -1041,6 +1041,8 @@ icon("review-keep", "Keep", [], ["agent-panel", "grid", EDITOR],
      stroke("M1.5 4.5h9M1.5 8h6") + accent(stroke("M8.5 12l2 2 4-4.5")), mirror=True)
 icon("checkpoint", "Checkpoint", [], ["agent-panel"],
      stroke("M1.5 8h4M10.5 8h4") + accent(circle(8, 8, 2.5)))
+icon("review-file", "Changed file", [], ["agent-panel"], page() + accent(stroke("M5.5 8.5h5M5.5 11h3")))
+icon("review-new-file", "New file", [], ["agent-panel"], page(True) + plus_badge())
 
 UP_BADGE = accent(stroke("M12 14.5v-5M10 11.5l2-2 2 2"))
 TABBED_WINDOW = (stroke("M8.5 13.5h-6a1 1 0 0 1-1-1v-10a1 1 0 0 1 1-1h11a1 1 0 0 1 1 1v6") + stroke("M1.5 4.5h13")

@@ -73,7 +73,7 @@ struct GrantedFolder {
     bool writable = false;
 };
 
-// The handle of an AI caller's Project folder, read-only, from Caller::project.
+// The handle of an AI caller's Project folder, from Caller::project. Its writes stage in the review (Q473).
 inline constexpr std::string_view kProjectFolder = "project";
 
 struct Context {

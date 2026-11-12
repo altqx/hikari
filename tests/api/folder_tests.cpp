@@ -341,17 +341,32 @@ TEST_F(AiFolder, AnAiCallerCannotChangeAiExclude)
     EXPECT_EQ(reason("settings.set", R"({"setting": "ai.exclude", "value": ["*.tmp"]})"), "ok");
 }
 
-TEST_F(AiFolder, AnAiThreadReadsItsProjectWithoutAGrant)
+TEST_F(AiFolder, AnAiThreadUsesItsProjectWithoutAGrantAndItsWritesStage)
 {
     m_api.revokeFiles(m_caller.id);
     m_caller.project = utf8(m_data);
     const Result held = call("files.list", "{}");
     ASSERT_TRUE(held);
-    EXPECT_EQ(*held->find("folders"), *Json::parse(R"([{"folder": "project", "name": "data", "access": "read"}])"));
+    EXPECT_EQ(*held->find("folders"), *Json::parse(R"([{"folder": "project", "name": "data", "access": "write"}])"));
     const Result read = call("files.read", R"({"folder": "project", "path": "notes/today.txt"})");
     ASSERT_TRUE(read);
     EXPECT_EQ(*read->find("data"), Json("today"));
-    EXPECT_EQ(code("files.write", R"({"folder": "project", "path": "notes/today.txt", "data": "x"})"), "not_granted");
+    const Result wrote = call("files.write", R"({"folder": "project", "path": "notes/today.txt", "data": "x"})");
+    ASSERT_TRUE(wrote);
+    EXPECT_EQ(*wrote->find("staged"), Json(true));
+    EXPECT_EQ(*m_files.read(utf8(m_data / "notes/today.txt"), 100), "today");
+}
+
+TEST_F(AiFolder, WithoutAReviewTheProjectIsReadOnly)
+{
+    hikari::api::testing::FakeHost documents;
+    Api api{Host{.documents = &documents, .settings = &m_settings, .files = &m_files, .project = &m_project}};
+    m_caller.project = utf8(m_data);
+    Result out = fail("unanswered", "");
+    api.call(m_caller, "files.write", *Json::parse(R"({"folder": "project", "path": "notes/today.txt", "data": "x"})"),
+             [&](Result r) { out = std::move(r); });
+    ASSERT_FALSE(out);
+    EXPECT_EQ(out.error().code, "not_granted");
     EXPECT_EQ(*m_files.read(utf8(m_data / "notes/today.txt"), 100), "today");
 }
 
@@ -366,13 +381,25 @@ TEST_F(AiFolder, TheProjectFolderKeepsTheExcludesAndTheMediaRule)
     EXPECT_EQ(reason("files.read", R"({"folder": "project", "path": "raw/ep01.mkv"})"), "media");
 }
 
-TEST_F(AiFolder, AnUntrustedProjectIsReadOnlyToo)
+TEST_F(AiFolder, AnUntrustedProjectsWritesOnlyStage)
 {
     m_api.revokeFiles(m_caller.id);
     m_project.state = ProjectState{.name = "data", .root = utf8(m_data), .trusted = false};
     m_caller.project = utf8(m_data);
     EXPECT_EQ(code("files.read", R"({"folder": "project", "path": "notes/today.txt"})"), "ok");
-    EXPECT_EQ(code("files.write", R"({"folder": "project", "path": "new.txt", "data": "x"})"), "not_granted");
+    EXPECT_EQ(code("files.write", R"({"folder": "project", "path": "new.txt", "data": "x"})"), "ok");
+    EXPECT_EQ(code("files.write", R"({"folder": "project", "path": "notes/today.txt", "data": "ai"})"), "ok");
+    EXPECT_FALSE(fs::exists(m_data / "new.txt"));
+    EXPECT_EQ(*m_files.read(utf8(m_data / "notes/today.txt"), 100), "today");
+    ASSERT_EQ(m_review.pendingFiles().size(), 2u);
+    const hikari::application::AiReview::Disk disk{
+        [&](const std::string &p) { return m_files.read(p, 100); },
+        [&](const std::string &p, std::string_view b) { return m_files.write(p, b); },
+        [](const std::string &) { return false; }};
+    for (const auto *staged : m_review.pendingFiles())
+        if (staged->shown == "notes/today.txt")
+            EXPECT_EQ(m_review.keepFile(staged->id, disk, false), hikari::application::AiReview::KeepFile::Kept);
+    EXPECT_EQ(*m_files.read(utf8(m_data / "notes/today.txt"), 100), "ai");
     EXPECT_FALSE(fs::exists(m_data / "new.txt"));
 }
 
@@ -426,13 +453,13 @@ TEST_F(AiWrites, AnAiWriteStagesAndTheDiskStaysUntilKept)
 
 TEST_F(AiWrites, TheAiReadsWhatItStagedAndUndoBringsTheDiskBack)
 {
-    call("files.write", R"({"folder": "d2", "path": "notes/today.txt", "data": "tomorrow"})");
+    ASSERT_TRUE(call("files.write", R"({"folder": "d2", "path": "notes/today.txt", "data": "tomorrow"})"));
     EXPECT_EQ(call("files.read", R"({"folder": "d2", "path": "notes/today.txt"})")->find("data")->asString(),
               "tomorrow");
     m_review.undoFile(m_review.pendingFiles().front()->id);
     EXPECT_EQ(call("files.read", R"({"folder": "d2", "path": "notes/today.txt"})")->find("data")->asString(), "today");
     m_caller.reviewed = false;
-    call("files.write", R"({"folder": "d2", "path": "notes/today.txt", "data": "plugin"})");
+    ASSERT_TRUE(call("files.write", R"({"folder": "d2", "path": "notes/today.txt", "data": "plugin"})"));
     EXPECT_EQ(*m_files.read(utf8(m_data / "notes/today.txt"), 100), "plugin");
 }
 
