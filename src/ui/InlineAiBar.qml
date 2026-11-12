@@ -51,7 +51,7 @@ ColumnLayout {
             parts.push(qsTr("Not changed, because the answer was empty: line %1.", "", empty.length).arg(rows(empty)))
         if (errors.length > 0)
             parts.push(qsTr("Line %1 failed: %2", "", errors.length)
-                           .arg(rows(errors.map(f => f.row))).arg(errors[0].detail || ""))
+                           .arg(rows(errors.map(f => f.row)), errors[0].detail || ""))
         if ((n.same || []).length > 0)
             parts.push(qsTr("Came back the same: line %1.", "", n.same.length).arg(rows(n.same)))
         if ((n.edited || []).length > 0)
@@ -88,7 +88,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     elide: Text.ElideRight
                     textFormat: Text.PlainText
-                    text: bar.doing(bar.progress) + " · " + qsTr("%1 of %2 done").arg(bar.progress.done || 0).arg(bar.progress.total || 0)
+                    text: bar.doing(bar.progress) + " · " + qsTr("%1 of %2 done").arg(bar.progress.done || 0, bar.progress.total || 0)
                           + (bar.progress.costKnown ? " · " + bar.money(bar.progress.cost || 0) : "")
                 }
                 Label {
@@ -272,7 +272,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     color: Theme.muted
                     elide: Text.ElideRight
-                    text: qsTr("%1 of %2 ticked · click a row to select it in the Grid").arg(resultsPopup.tickedCount).arg(bar.results.length)
+                    text: qsTr("%1 of %2 ticked · click a row to select it in the Grid").arg(resultsPopup.tickedCount, bar.results.length)
                 }
                 Button {
                     objectName: "inlineAiDiscard"
