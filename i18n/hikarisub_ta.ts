@@ -2354,7 +2354,7 @@ Output device: %2</source>
     </message>
     <message>
         <source>Moved</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">நகர்த்தப்பட்டது</translation>
     </message>
     <message>
         <source>Backup</source>
@@ -4387,6 +4387,30 @@ Output device: %2</source>
         <translation>பட்டியல்</translation>
     </message>
     <message>
+        <source>Move font catalogue</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy font catalogue</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The project already has a catalogue named “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>You already have a catalogue named “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation type="unfinished">நகலெடு</translation>
+    </message>
+    <message>
         <source>%1 here, +%2 new</source>
         <translation>இங்கே %1, +%2 புதியவை</translation>
     </message>
@@ -4461,8 +4485,28 @@ Output device: %2</source>
         <translation>மறுபெயரிடு</translation>
     </message>
     <message>
+        <source>Catalogue tiers</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Load from a file</source>
         <translation>கோப்பிலிருந்து ஏற்று</translation>
+    </message>
+    <message>
+        <source>This project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1, hidden by the project’s copy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hidden by the project’s copy. Copy it to the project to use it there.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Show</source>
@@ -4535,6 +4579,22 @@ Output device: %2</source>
     <message>
         <source>Merge</source>
         <translation>ஒன்றிணை</translation>
+    </message>
+    <message>
+        <source>Copy to project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy to mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to mine</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Choose font catalogue file</source>
@@ -11076,6 +11136,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Save</source>
         <translation type="unfinished">சேமி</translation>
+    </message>
+    <message>
+        <source>%1 in the project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 in mine</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Save to project</source>
@@ -24584,6 +24652,22 @@ or codecs or a splitter may be missing</source>
         <translation>இயல்புநிலை குறிச்சொற்களை மீட்டமை</translation>
     </message>
     <message>
+        <source>Copy tag</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move tag</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The project already has a tag named “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>You already have a tag named “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Type the tag, without the backslash.</source>
         <translation>பின்சாய்வுக்கோடு இல்லாமல் குறிச்சொல்லைத் தட்டச்சு செய்யவும்.</translation>
     </message>
@@ -24758,6 +24842,26 @@ or codecs or a splitter may be missing</source>
         <translation>எல்லா மாற்றங்களையும் செயல்தவிர்</translation>
     </message>
     <message>
+        <source>Copy shape</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move shape</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The project already has a shape named “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>You already have a shape named “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation type="unfinished">நகலெடு</translation>
+    </message>
+    <message>
         <source>Type a name.</source>
         <translation>ஒரு பெயரைத் தட்டச்சு செய்யவும்.</translation>
     </message>
@@ -24805,6 +24909,18 @@ or codecs or a splitter may be missing</source>
         <translation>இயல்புநிலைகளை மீட்டமை</translation>
     </message>
     <message>
+        <source>%1, hidden by the project’s copy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>yours</source>
         <translation>உங்களுடையது</translation>
     </message>
@@ -24819,6 +24935,10 @@ or codecs or a splitter may be missing</source>
     <message>
         <source>The list keeps at least one shape.</source>
         <translation>பட்டியலில் குறைந்தது ஒரு வடிவம் இருக்கும்.</translation>
+    </message>
+    <message>
+        <source>Hidden by the project’s copy. Copy it to the project to use it there.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Name</source>
@@ -24891,6 +25011,22 @@ or codecs or a splitter may be missing</source>
     <message>
         <source>Redo “%1”</source>
         <translation>“%1” மீண்டும்செய்</translation>
+    </message>
+    <message>
+        <source>Copy to project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy to mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to mine</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Restore default shapes…</source>
@@ -25876,6 +26012,10 @@ do not work on comments</source>
         <translation>டைப்செட்டிங்</translation>
     </message>
     <message>
+        <source>Hidden by the project’s copy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>the file is larger than %1 bytes</source>
         <translation>கோப்பு %1 பைட்டுகளை விடப் பெரியது</translation>
     </message>
@@ -26036,6 +26176,22 @@ do not work on comments</source>
         <translation>பெயர்</translation>
     </message>
     <message>
+        <source>Save to</source>
+        <translation type="unfinished">சேமிக்கும் இடம்</translation>
+    </message>
+    <message>
+        <source>This project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Where to save</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Saving replaces the layout %1.</source>
         <translation>சேமித்தால் %1 தளவமைப்பு மாற்றப்படும்.</translation>
     </message>
@@ -26068,8 +26224,48 @@ do not work on comments</source>
         <translation>இதைப் பயன்படுத்தும் தாவல்கள், இது தொடங்கிய முன்னமைவின் கீழ் தங்கள் அமைப்பை வைத்திருக்கும்.</translation>
     </message>
     <message>
+        <source>Move layout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy layout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The project already has a layout named “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>You already have a layout named “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation type="unfinished">நகலெடு</translation>
+    </message>
+    <message>
+        <source>Copy to project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy to mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Saved layouts</source>
         <translation>சேமித்த தளவமைப்புகள்</translation>
+    </message>
+    <message>
+        <source>%1, hidden by the project’s copy</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>%1, cannot be used</source>
@@ -26078,6 +26274,10 @@ do not work on comments</source>
     <message>
         <source>Cannot be used: %1</source>
         <translation>பயன்படுத்த முடியாது: %1</translation>
+    </message>
+    <message>
+        <source>Layout tiers</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Rename (F2)</source>

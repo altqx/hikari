@@ -2368,7 +2368,7 @@ Urządzenie wyjściowe: %2</translation>
     </message>
     <message>
         <source>Moved</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Przeniesiona</translation>
     </message>
     <message>
         <source>Backup</source>
@@ -4421,6 +4421,30 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Katalog</translation>
     </message>
     <message>
+        <source>Move font catalogue</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy font catalogue</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The project already has a catalogue named “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>You already have a catalogue named “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation type="unfinished">Kopiuj</translation>
+    </message>
+    <message>
         <source>%1 here, +%2 new</source>
         <translation>tutaj: %1, nowe: +%2</translation>
     </message>
@@ -4501,8 +4525,28 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Zmień nazwę</translation>
     </message>
     <message>
+        <source>Catalogue tiers</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Load from a file</source>
         <translation>Wczytaj z pliku</translation>
+    </message>
+    <message>
+        <source>This project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1, hidden by the project’s copy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hidden by the project’s copy. Copy it to the project to use it there.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Show</source>
@@ -4575,6 +4619,22 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>Merge</source>
         <translation>Scal</translation>
+    </message>
+    <message>
+        <source>Copy to project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy to mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to mine</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Choose font catalogue file</source>
@@ -11171,6 +11231,14 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Save</source>
         <translation type="unfinished">Zapisz</translation>
+    </message>
+    <message>
+        <source>%1 in the project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 in mine</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Save to project</source>
@@ -24792,6 +24860,22 @@ bądź brakuje kodeków czy też splittera</translation>
         <translation>Przywróć domyślne tagi</translation>
     </message>
     <message>
+        <source>Copy tag</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move tag</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The project already has a tag named “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>You already have a tag named “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Type the tag, without the backslash.</source>
         <translation>Wpisz tag bez ukośnika odwrotnego.</translation>
     </message>
@@ -24968,6 +25052,26 @@ bądź brakuje kodeków czy też splittera</translation>
         <translation>Cofnij wszystkie zmiany</translation>
     </message>
     <message>
+        <source>Copy shape</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move shape</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The project already has a shape named “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>You already have a shape named “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation type="unfinished">Kopiuj</translation>
+    </message>
+    <message>
         <source>Type a name.</source>
         <translation>Wpisz nazwę.</translation>
     </message>
@@ -25016,6 +25120,18 @@ bądź brakuje kodeków czy też splittera</translation>
         <translation>Przywróć domyślne</translation>
     </message>
     <message>
+        <source>%1, hidden by the project’s copy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>yours</source>
         <translation>własny</translation>
     </message>
@@ -25030,6 +25146,10 @@ bądź brakuje kodeków czy też splittera</translation>
     <message>
         <source>The list keeps at least one shape.</source>
         <translation>Lista musi zawierać co najmniej jeden kształt.</translation>
+    </message>
+    <message>
+        <source>Hidden by the project’s copy. Copy it to the project to use it there.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Name</source>
@@ -25102,6 +25222,22 @@ bądź brakuje kodeków czy też splittera</translation>
     <message>
         <source>Redo “%1”</source>
         <translation>Ponów “%1”</translation>
+    </message>
+    <message>
+        <source>Copy to project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy to mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to mine</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Restore default shapes…</source>
@@ -26087,6 +26223,10 @@ nie działają na komentarzach</translation>
         <translation>Typesetting</translation>
     </message>
     <message>
+        <source>Hidden by the project’s copy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>the file is larger than %1 bytes</source>
         <translation>plik jest większy niż %1 B</translation>
     </message>
@@ -26247,6 +26387,22 @@ nie działają na komentarzach</translation>
         <translation>Nazwa</translation>
     </message>
     <message>
+        <source>Save to</source>
+        <translation type="unfinished">Zapisz w</translation>
+    </message>
+    <message>
+        <source>This project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Where to save</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Saving replaces the layout %1.</source>
         <translation>Zapisanie zastąpi układ %1.</translation>
     </message>
@@ -26279,8 +26435,48 @@ nie działają na komentarzach</translation>
         <translation>Zakładki, które go używają, zachowają swoje rozmieszczenie pod nazwą presetu, z którego powstał.</translation>
     </message>
     <message>
+        <source>Move layout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy layout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The project already has a layout named “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>You already have a layout named “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation type="unfinished">Kopiuj</translation>
+    </message>
+    <message>
+        <source>Copy to project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy to mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Saved layouts</source>
         <translation>Zapisane układy</translation>
+    </message>
+    <message>
+        <source>%1, hidden by the project’s copy</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>%1, cannot be used</source>
@@ -26289,6 +26485,10 @@ nie działają na komentarzach</translation>
     <message>
         <source>Cannot be used: %1</source>
         <translation>Nie można użyć: %1</translation>
+    </message>
+    <message>
+        <source>Layout tiers</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Rename (F2)</source>
