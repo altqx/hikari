@@ -329,12 +329,14 @@ ApplicationWindow {
         audioDock.close()
         if (!original)
             originalDock.close()
-        dockingArea.addDockWidget(stylesDock, KDDW.KDDockWidgets.Location_OnRight, videoDock,
-                                  Qt.size(Math.round(area * 0.24), 0))
-        const tools = stylesTool.toolbar
-        const short = Math.ceil(tools.implicitWidth + 12 - tools.width)
-        if (tools.visible && short > 0)
-            Docking.resizeInLayout(root.engineName("Styles"), short, 0, 0, 0)
+        if (!root.inSideBar(stylesDock)) {
+            dockingArea.addDockWidget(stylesDock, KDDW.KDDockWidgets.Location_OnRight, videoDock,
+                                      Qt.size(Math.round(area * 0.24), 0))
+            const tools = stylesTool.toolbar
+            const short = Math.ceil(tools.implicitWidth + 12 - tools.width)
+            if (tools.visible && short > 0)
+                Docking.resizeInLayout(root.engineName("Styles"), short, 0, 0, 0)
+        }
         // KDDW doesn't move the closed Audio/Original places' edge, so the Video panel's bottom edge moves instead.
         editorColumn.ensurePolished()
         const lower = root.workspaceLayout.panelSize(editorDock).height
@@ -344,7 +346,8 @@ ApplicationWindow {
     }
     function timingLayout() {
         videoDock.close()
-        postprocessorDock.open()
+        if (!root.inSideBar(postprocessorDock))
+            postprocessorDock.open()
     }
     function karaokeLayout() {
         dockingArea.addDockWidget(audioDock, KDDW.KDDockWidgets.Location_OnTop, gridDock,
