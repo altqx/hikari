@@ -7940,7 +7940,8 @@ private slots:
             return QSize(window->width() - qCeil(area->width()), window->height() - qCeil(area->height()));
         };
         const auto expected = [&] {
-            return (docking->layoutMinimumSize(mainName) + outside()).boundedTo(window->screen()->availableGeometry().size());
+            return (docking->layoutMinimumSize(mainName) + outside())
+                .boundedTo(window->screen()->availableGeometry().size().shrunkBy(window->frameMargins()));
         };
         const auto describe = [&] {
             const QRect screen = window->screen()->availableGeometry();
