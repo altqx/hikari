@@ -695,6 +695,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     connect(m_settings.get(), &ui::SettingsStore::changed, this, &Application::settingChanged);
     m_automation->manager().setTraceLevel(m_settings->integer("automation.traceLevel"));
     m_automation->setSettings(m_settings.get());
+    m_automation->setRunProjectRoot([this] { return m_projects ? m_projects->root(m_workspace.activeWindow()) : QString(); });
     m_automation->setWindowProjects([this] {
         std::map<int, application::WindowProject> projects;
         if (m_projects)
@@ -2427,6 +2428,8 @@ void Application::refreshViews()
     scheduleAutosave();
     if (m_styleManager)
         m_styleManager->targetRefreshed();
+    if (m_shiftTimes)
+        m_shiftTimes->setProjectRoot(m_projects ? m_projects->root(m_workspace.activeWindow()) : QString());
     const auto target = m_workspace.editingTarget();
     const auto reference = m_workspace.reference();
     auto *targetSession = target ? m_files->session(*target) : nullptr;
