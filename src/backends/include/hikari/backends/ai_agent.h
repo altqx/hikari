@@ -34,7 +34,8 @@ std::optional<AgentMode> agentModeFromId(std::string_view id);
 /// What Qt does with an agent's call before HA1 runs it.
 /// Propose: Manual subtitle edits wait as a proposal the user applies or declines.
 /// Script: AI-written Lua, which the user approves on every run in every mode (ADR 0024).
-enum class Decision { Run, Judge, Ask, AlwaysAsk, Propose, Script };
+/// Install: a plugin package, which the user approves on every install in every mode.
+enum class Decision { Run, Judge, Ask, AlwaysAsk, Propose, Script, Install };
 
 /// What makes a call ask in every mode: #410's always-ask categories, and AI settings (ADR 0024). docs/ai-agent.md
 /// maps each to its operations, commands and settings.
@@ -260,6 +261,9 @@ private:
     void openScript(AgentThread &thread, const api::Json &params, AiSidecarHost::Admit admit,
                     std::function<void(std::function<void()>)> onWithdraw);
     void runScript(AgentThread &thread, std::uint64_t ask, AiSidecarHost::Admit admit);
+    void openInstall(AgentThread &thread, const api::Json &params, AiSidecarHost::Admit admit,
+                     std::function<void(std::function<void()>)> onWithdraw);
+    void runInstall(AgentThread &thread, std::uint64_t ask, const std::string &digest, AiSidecarHost::Admit admit);
     void wait(AgentThread &thread, Ask ask, api::Json item, AiSidecarHost::Admit admit,
               std::function<void(std::function<void()>)> onWithdraw);
     void documentChanged(application::DocumentId document, std::int64_t revision);

@@ -25,6 +25,7 @@ void addAutomationOperations(Registry &registry);
 void addTranslationOperations(Registry &registry);
 void addNodeOperations(Registry &registry);
 void addEffectsOperations(Registry &registry);
+void addPluginOperations(Registry &registry);
 void addTypesetOperations(Registry &registry);
 void addProjectOperations(Registry &registry);
 void addKaraokeOperations(Registry &registry);

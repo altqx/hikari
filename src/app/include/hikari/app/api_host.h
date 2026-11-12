@@ -66,6 +66,7 @@ public:
         std::function<std::optional<std::filesystem::path>(application::DocumentId)> translationFolder;
         api::KaraokeHost *karaoke = nullptr;
         std::function<application::NodeEffectOptions()> effects;
+        api::PluginHost *plugins = nullptr;
     };
     explicit ApiHost(Wiring wiring, QObject *parent = nullptr);
     ~ApiHost() override;
