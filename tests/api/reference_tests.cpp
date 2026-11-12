@@ -71,13 +71,12 @@ std::vector<std::string> breaks(const Json &then, const Json &now, Side side, co
         for (std::string &b : more)
             out.push_back(std::move(b));
     };
+    static const Json kNone = Json::object();
     const Json *thenProps = then.find("properties");
     const Json *nowProps = now.find("properties");
-    if ((thenProps == nullptr) != (nowProps == nullptr))
-        out.push_back(at + " properties changed");
-    else if (thenProps)
+    if (thenProps)
         for (const Json::Member &m : thenProps->asObject()) {
-            const Json *kept = nowProps->find(m.key);
+            const Json *kept = (nowProps ? *nowProps : kNone).find(m.key);
             if (kept)
                 append(breaks(m.value, *kept, side, at + "/" + m.key));
             else
@@ -218,6 +217,12 @@ TEST(ApiReference, TheGuardCatchesABreak)
     EXPECT_TRUE(breaks(then, required, Side::Result, "x").empty());
     const Json optional = *Json::parse(R"({"type": "object", "properties": {"a": {"type": "integer"}, "b": {"type": "string"}}})");
     EXPECT_EQ(breaks(then, optional, Side::Result, "x"), std::vector<std::string>{"x/a no longer always given"});
+    const Json bare = *Json::parse(R"({"type": "object", "additionalProperties": false})");
+    const Json firstOptional = *Json::parse(R"({"type": "object", "properties": {"c": {"type": "string"}},
+        "additionalProperties": false})");
+    EXPECT_TRUE(breaks(bare, firstOptional, Side::Params, "x").empty());
+    EXPECT_EQ(breaks(then, *Json::parse(R"({"type": "object", "required": ["a"]})"), Side::Params, "x"),
+              (std::vector<std::string>{"x/a removed", "x/b removed"}));
     const Json two = *Json::parse(R"({"enum": ["p", "q"]})"), three = *Json::parse(R"({"enum": ["p", "q", "r"]})");
     EXPECT_TRUE(breaks(two, three, Side::Params, "x").empty());
     EXPECT_TRUE(breaks(two, three, Side::Defs, "x").empty());

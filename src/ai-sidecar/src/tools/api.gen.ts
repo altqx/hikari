@@ -150,6 +150,27 @@ export type GrantedFile = {
     access: "read" | "write";
 };
 
+export type GrantedFolder = {
+    /** The handle files.list, files.read and files.write take with a path. */
+    folder: string;
+    name: string;
+    access: "read" | "write";
+};
+
+export type FolderEntry = {
+    /** Relative to the granted folder, with / between its parts. */
+    path: string;
+    folder: boolean;
+};
+
+/** The Project of the window the user works in; null without one. */
+export type Project = null | {
+    /** The Project folder's name. */
+    name: string;
+    /** Whether the folder is in Trusted folders. */
+    trusted: boolean;
+};
+
 /** The open Documents, in tab order, with the protected reference last. */
 export type DocumentsListParams = Record<string, never>;
 
@@ -615,17 +636,31 @@ export type AudioPeaksResult = {
     max: number[];
 };
 
-/** The files the user granted this caller, with read or write access. */
-export type FilesListParams = Record<string, never>;
+/** The files and folders the user granted this caller; with folder, also what that folder holds. */
+export type FilesListParams = {
+    /** A folder handle to list (since version 2). */
+    folder?: string;
+    /** A folder inside it; default the folder itself. */
+    path?: string;
+};
 
 export type FilesListResult = {
     files: GrantedFile[];
+    folders?: GrantedFolder[];
+    /** With folder: in name order, at most 4096, without links that lead outside it. */
+    entries?: FolderEntry[];
+    /** Present when the folder holds more than 4096 entries. */
+    truncated?: boolean;
 };
 
 /** A granted file's content, as UTF-8 text or base64; at most 16 MiB. */
 export type FilesReadParams = {
     /** A handle from files.list. */
-    file: string;
+    file?: string;
+    /** Instead of file, a folder handle from files.list (since version 2). */
+    folder?: string;
+    /** With folder, the file's path inside it, with / between its parts. */
+    path?: string;
     /** Default utf8. */
     encoding?: "utf8" | "base64";
 };
@@ -637,10 +672,14 @@ export type FilesReadResult = {
     data: string;
 };
 
-/** Replaces a file granted for writing with new content. */
+/** Replaces a file granted for writing with new content; in a writable folder, makes it and its folders. */
 export type FilesWriteParams = {
     /** A handle from files.list. */
-    file: string;
+    file?: string;
+    /** Instead of file, a folder handle from files.list (since version 2). */
+    folder?: string;
+    /** With folder, the file's path inside it, with / between its parts. */
+    path?: string;
     /** Default utf8. */
     encoding?: "utf8" | "base64";
     data: string;
@@ -724,6 +763,18 @@ export type NodesValidateResult = {
     })[];
 };
 
+/** The Project of the window the user works in, or null. */
+export type ProjectInfoParams = Record<string, never>;
+
+export type ProjectInfoResult = {
+    project: Project;
+};
+
+/** The window the user works in opened or closed a Project, or the user moved to a window with another one. */
+export type ProjectChangedEvent = {
+    project: Project;
+};
+
 /** A Document's content changed: a commit, Undo or Redo. */
 export type DocumentChangedEvent = {
     document: DocumentId;
@@ -800,11 +851,13 @@ export interface Operations {
     "automation.run": { access: "write"; params: AutomationRunParams; result: AutomationRunResult };
     "nodes.catalogue": { access: "read"; params: NodesCatalogueParams; result: NodesCatalogueResult };
     "nodes.validate": { access: "read"; params: NodesValidateParams; result: NodesValidateResult };
+    "project.info": { access: "read"; params: ProjectInfoParams; result: ProjectInfoResult };
 }
 
 export type OperationName = keyof Operations;
 
 export interface Events {
+    "project.changed": ProjectChangedEvent;
     "document.changed": DocumentChangedEvent;
     "selection.changed": SelectionChangedEvent;
     "documents.changed": DocumentsChangedEvent;
