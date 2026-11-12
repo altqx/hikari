@@ -426,7 +426,7 @@ Window {
                         id: toolsButton
                         objectName: "fullscreenToolsButton"
                         // MUST KILL: iconRole list mirrors application::visual::Family order and must stay on one line for icon_tests
-                        iconRole: ["tool-crosshair", "tool-position", "tool-move", "tool-scale", "tool-rotate-z", "tool-rotate-xy", "tool-clip-rect", "tool-clip-vector", "tool-drawing", "tool-move-all", "tool-all-tags", "tool-perspective"][Math.max(0, fs.shell.visualTools.activeFamily)] ?? ""
+                        iconRole: ["tool-crosshair", "tool-position", "tool-move", "tool-scale", "tool-rotate-z", "tool-rotate-xy", "tool-clip-rect", "tool-clip-vector", "tool-drawing", "tool-move-all", "tool-all-tags", "tool-perspective", "tool-gradient", "tool-text-on-path"][Math.max(0, fs.shell.visualTools.activeFamily)] ?? ""
                         text: qsTr("Visual tools")
                         enabled: fs.shell.visualTools.railEnabled
                         down: toolsMenu.visible
@@ -527,7 +527,7 @@ Window {
                     readonly property int family: modelData
                     objectName: "fullscreenTool" + family
                     // MUST KILL: iconRole list mirrors application::visual::Family order and must stay on one line for icon_tests
-                    iconRole: ["tool-crosshair", "tool-position", "tool-move", "tool-scale", "tool-rotate-z", "tool-rotate-xy", "tool-clip-rect", "tool-clip-vector", "tool-drawing", "tool-move-all", "tool-all-tags", "tool-perspective"][family] ?? ""
+                    iconRole: ["tool-crosshair", "tool-position", "tool-move", "tool-scale", "tool-rotate-z", "tool-rotate-xy", "tool-clip-rect", "tool-clip-vector", "tool-drawing", "tool-move-all", "tool-all-tags", "tool-perspective", "tool-gradient", "tool-text-on-path"][family] ?? ""
                     text: fs.shell.visualTools.families[family]?.name ?? ""
                     checkable: true
                     checked: fs.shell.visualTools.activeFamily === family

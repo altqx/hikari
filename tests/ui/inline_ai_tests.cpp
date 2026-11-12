@@ -174,10 +174,11 @@ private slots:
         const QString path = at(QStringLiteral("episode.ass"));
         QFile file(path);
         QVERIFY(file.open(QIODevice::WriteOnly | QIODevice::Truncate));
-        file.write("[Script Info]\nScriptType: v4.00+\n\n[Events]\n"
+        QVERIFY(QDir().mkpath(at(QStringLiteral("honya"))));
+        file.write("[Script Info]\nScriptType: v4.00+\nHonya Project: honya\n\n[Events]\n"
                    "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
                    "Dialogue: 0,0:00:00.00,0:00:01.00,Default,,0,0,0,,{\\i1}hello{\\i0} there\n"
-                   "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,second\n"
+                   "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,second?\n"
                    "Comment: 0,0:00:02.00,0:00:03.00,Default,,0,0,0,,a note\n");
         file.close();
         QVERIFY(application->openFile(path));
@@ -245,7 +246,7 @@ private slots:
         QVERIFY(click(QStringLiteral("inlineAiRun")));
 
         QTRY_COMPARE(text(0), u8"{\\i1}HELLO{\\i0} THERE");
-        QCOMPARE(text(1), u8"SECOND");
+        QCOMPARE(text(1), u8"SECOND?");
         QCOMPARE(text(2), u8"a note");
         QCOMPARE(session().historySize(), steps + 1);
         QVERIFY(session().history().back().name.starts_with("AI: Rewrite (2 line"));
@@ -262,7 +263,7 @@ private slots:
         const std::size_t steps = session().historySize();
         QVERIFY(inlineAi().start({{QStringLiteral("action"), QStringLiteral("spelling")}}, false));
         QTRY_COMPARE(inlineAi().results().size(), 2);
-        QCOMPARE(text(1), u8"second");
+        QCOMPARE(text(1), u8"second?");
         QCOMPARE(session().historySize(), steps);
         QTRY_VERIFY(item(QStringLiteral("inlineAiApply")));
         QCOMPARE(item(QStringLiteral("inlineAiApply"))->property("text").toString(), QStringLiteral("Apply 2"));
@@ -272,7 +273,7 @@ private slots:
         QTRY_COMPARE(item(QStringLiteral("inlineAiApply"))->property("text").toString(), QStringLiteral("Apply 1"));
 
         QVERIFY(click(QStringLiteral("inlineAiApply")));
-        QTRY_COMPARE(text(1), u8"SECOND");
+        QTRY_COMPARE(text(1), u8"SECOND?");
         QCOMPARE(text(0), u8"edited by hand");
         QVERIFY(inlineAi().results().isEmpty());
         QTRY_VERIFY(!item(QStringLiteral("inlineAiResults")));
@@ -291,7 +292,31 @@ private slots:
         QVERIFY(click(QStringLiteral("inlineAiDiscard")));
         QVERIFY(inlineAi().results().isEmpty());
         QCOMPARE(session().historySize(), steps);
-        QCOMPARE(text(1), u8"second");
+        QCOMPARE(text(1), u8"second?");
+        QVERIFY(!QFile::exists(at(QStringLiteral("honya/GLOSSARY.md"))));
+    }
+
+    void translateInTranslationModeWritesTheTranslationAndMarksLinesThatNeedReview()
+    {
+        setMode("auto");
+        QVERIFY(application->turnOnTranslationMode());
+        selectAll();
+        const std::size_t steps = session().historySize();
+        QVERIFY(inlineAi().start({{QStringLiteral("action"), QStringLiteral("translate")},
+                                  {QStringLiteral("language"), QStringLiteral("French")}},
+                                 false));
+        QTRY_COMPARE(session().historySize(), steps + 1);
+        const auto lines = session().document().lines();
+        QCOMPARE(lines[0]->text, u8"{\\i1}hello{\\i0} there");
+        QCOMPARE(lines[0]->translation, u8"{\\i1}HELLO{\\i0} THERE");
+        QVERIFY(!lines[0]->unconfirmed);
+        QCOMPARE(lines[1]->translation, u8"SECOND?");
+        QVERIFY(lines[1]->unconfirmed);
+        QCOMPARE(lines[2]->translation, u8"");
+        QTRY_COMPARE(inlineAi().notice().value(QStringLiteral("review")).toList(), QVariantList{2});
+        QFile glossary(at(QStringLiteral("honya/GLOSSARY.md")));
+        QVERIFY(glossary.open(QIODevice::ReadOnly));
+        QCOMPARE(glossary.readAll(), QByteArray("# Glossary\n"));
     }
 };
 

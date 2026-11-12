@@ -1,6 +1,8 @@
 #pragma once
 
+#include "hikari/application/clash_choice.h"
 #include "hikari/application/edit_session.h"
+#include "hikari/application/tiers.h"
 #include "hikari/core/style.h"
 
 #include <cstddef>
@@ -41,11 +43,6 @@ using AskReplace = std::function<Replace(const std::u8string &name)>;
 std::vector<std::size_t> transferStyles(StyleList &into, const StyleList &styles, const AskReplace &ask,
                                         bool cancelStops = true);
 
-enum class ClashAction { Replace, Rename, Skip };
-struct ClashChoice {
-    ClashAction action = ClashAction::Skip;
-    std::u8string newName;
-};
 // Name and its 0-based occurrence among the incoming Styles, clash or not.
 using ClashKey = std::pair<std::u8string, int>;
 using ClashChoices = std::map<ClashKey, ClashChoice>;
@@ -101,28 +98,55 @@ std::string writeCatalog(const StyleList &styles);
 class StyleCatalogs {
 public:
     explicit StyleCatalogs(std::filesystem::path directory);
-    // A Default catalog is created when there is none.
-    const std::vector<std::u8string> &names() const { return m_names; }
+    // The Project's catalogs folder, made on its first write; empty for none. Saves the current
+    // catalog first, then shows the same name, the Project's copy first.
+    void setProjectDirectory(std::filesystem::path directory);
+    const std::filesystem::path &projectDirectory() const { return m_projectDir; }
+    const std::filesystem::path &directory(Tier tier) const { return tier == Tier::Project ? m_projectDir : m_dir; }
+    // Mine always has a Default catalog.
+    const std::vector<std::u8string> &names(Tier tier) const { return tier == Tier::Project ? m_projectNames : m_names; }
+    // Every name once, sorted.
+    std::vector<std::u8string> names() const;
+    std::vector<TieredName> rows() const { return hideByName(m_projectNames, m_names); }
     const std::u8string &current() const { return m_current; }
+    Tier currentTier() const { return m_currentTier; }
+    // A Mine catalog that the Project's hides: shown, never written.
+    bool readOnly() const;
     StyleList &styles() { return m_styles; }
     const StyleList &styles() const { return m_styles; }
-    // Saves the current catalog first when changed, then loads another.
+    // Saves the current catalog first when changed, then loads another; the Project's copy first
+    // without a tier.
     bool choose(const std::u8string &name);
-    // Made current; written on the next save.
-    bool create(const std::u8string &name);
-    // Deletes a catalog other than Default; the one before it becomes current.
+    bool choose(const std::u8string &name, Tier tier);
+    // Made current; written on the next save. Refused for a name the tier has, or a Mine name the
+    // Project hides.
+    bool create(const std::u8string &name, Tier tier = Tier::Mine);
+    // Deletes a catalog other than Mine's Default; the one before it becomes current.
     bool remove(const std::u8string &name);
+    bool remove(const std::u8string &name, Tier tier);
+    // Writes the catalog into the other tier; returns the name it landed under, none when skipped.
+    std::optional<std::u8string> copy(const std::u8string &name, Tier from, const ClashChoice &clash = {});
+    // Copy, then remove the source; Mine's Default only copies.
+    std::optional<std::u8string> move(const std::u8string &name, Tier from, const ClashChoice &clash = {});
     void markChanged() { m_changed = true; }
     // Reads another catalog from its file without making it current; nullopt when either is missing.
     std::optional<core::StyleValues> find(const std::u8string &catalog, const std::u8string &style) const;
     std::optional<StyleList> list(const std::u8string &catalog) const;
+    std::optional<StyleList> list(const std::u8string &catalog, Tier tier) const;
     bool save();
 
 private:
-    void load(const std::u8string &name);
+    std::filesystem::path file(const std::u8string &name, Tier tier) const;
+    std::vector<std::u8string> &namesIn(Tier tier) { return tier == Tier::Project ? m_projectNames : m_names; }
+    Tier resolve(const std::u8string &name) const;
+    void load(const std::u8string &name, Tier tier);
+    void loadDefault();
     std::filesystem::path m_dir;
+    std::filesystem::path m_projectDir;
     std::vector<std::u8string> m_names;
+    std::vector<std::u8string> m_projectNames;
     std::u8string m_current;
+    Tier m_currentTier = Tier::Mine;
     StyleList m_styles;
     bool m_changed = false;
 };

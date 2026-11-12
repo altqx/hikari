@@ -252,6 +252,50 @@ QString StyleManagerController::catalog() const
     return qs(m_catalogs.current());
 }
 
+namespace {
+
+QString tierName(application::Tier tier)
+{
+    return tier == application::Tier::Project ? QStringLiteral("project") : QStringLiteral("mine");
+}
+
+}
+
+QVariantList StyleManagerController::catalogRows() const
+{
+    QVariantList out;
+    for (const auto &row : m_catalogs.rows())
+        out << QVariantMap{{QStringLiteral("name"), qs(row.name)},
+                           {QStringLiteral("tier"), tierName(row.tier)},
+                           {QStringLiteral("hidden"), row.hidden}};
+    return out;
+}
+
+QString StyleManagerController::catalogTier() const
+{
+    return tierName(m_catalogs.currentTier());
+}
+
+void StyleManagerController::projectChanged()
+{
+    const QString root = m_hooks.projectRoot ? m_hooks.projectRoot() : QString();
+    const auto dir = application::projectPathOf("styleCatalogs", std::filesystem::path(root.toStdU16String()))
+                         .value_or(std::filesystem::path());
+    if (dir == m_catalogs.projectDirectory())
+        return;
+    m_catalogs.setProjectDirectory(dir);
+    emit changed();
+}
+
+std::optional<application::Tier> StyleManagerController::tierOf(const QString &tier) const
+{
+    if (tier == QLatin1String("project"))
+        return application::Tier::Project;
+    if (tier == QLatin1String("mine"))
+        return application::Tier::Mine;
+    return std::nullopt;
+}
+
 QStringList StyleManagerController::storeStyles() const
 {
     QStringList out;
@@ -336,14 +380,17 @@ QString StyleManagerController::followedCatalog() const
 
 void StyleManagerController::refreshLists()
 {
+    projectChanged();
     if (const QString name = followedCatalog(); name != catalog() && m_catalogs.choose(u8(name)))
         catalogChosen();
     emit changed();
 }
 
-bool StyleManagerController::chooseCatalog(const QString &name)
+bool StyleManagerController::chooseCatalog(const QString &name, const QString &tier)
 {
-    const bool ok = loadCatalog(name);
+    const auto chosen = tierOf(tier);
+    const bool ok = chosen ? m_catalogs.choose(u8(name), *chosen) : m_catalogs.choose(u8(name));
+    emit changed();
     if (ok)
         catalogChosen();
     return ok;
@@ -356,22 +403,71 @@ bool StyleManagerController::loadCatalog(const QString &name)
     return ok;
 }
 
-bool StyleManagerController::createCatalog(const QString &name)
+bool StyleManagerController::createCatalog(const QString &name, const QString &tier)
 {
-    const bool ok = m_catalogs.create(u8(name));
+    const bool ok = m_catalogs.create(u8(name), tierOf(tier).value_or(application::Tier::Mine));
     if (ok)
         catalogChosen();
     emit changed();
     return ok;
 }
 
-bool StyleManagerController::deleteCatalog(const QString &name)
+bool StyleManagerController::deleteCatalog(const QString &name, const QString &tier)
 {
-    const bool ok = m_catalogs.remove(u8(name));
+    const auto from = tierOf(tier);
+    const bool ok = from ? m_catalogs.remove(u8(name), *from) : m_catalogs.remove(u8(name));
     if (ok)
         catalogChosen();
     emit changed();
     return ok;
+}
+
+QVariantList StyleManagerController::catalogClashes(const QString &name, const QString &tier) const
+{
+    const auto from = tierOf(tier);
+    if (!from)
+        return {};
+    const auto to = *from == application::Tier::Project ? application::Tier::Mine : application::Tier::Project;
+    const auto &taken = m_catalogs.names(to);
+    if (std::ranges::find(taken, u8(name)) == taken.end())
+        return {};
+    const auto suggestion = application::landingName(taken, u8(name), {application::ClashAction::Rename, {}});
+    return {QVariantMap{{QStringLiteral("name"), name}, {QStringLiteral("suggestion"), qs(suggestion.value_or(u8(name)))}}};
+}
+
+std::optional<QString> StyleManagerController::landed(const QString &name, const QString &tier, const QVariantList &choices,
+                                                      bool move)
+{
+    const auto from = tierOf(tier);
+    if (!from)
+        return std::nullopt;
+    application::ClashChoice clash;
+    for (const auto &c : choices) {
+        const auto choice = c.toMap();
+        if (choice.value(QStringLiteral("name")).toString() != name)
+            continue;
+        const QString action = choice.value(QStringLiteral("action")).toString();
+        clash.action = action == QLatin1String("replace") ? application::ClashAction::Replace
+                       : action == QLatin1String("rename") ? application::ClashAction::Rename
+                                                           : application::ClashAction::Skip;
+        clash.newName = u8(choice.value(QStringLiteral("newName")).toString());
+    }
+    const auto result = move ? m_catalogs.move(u8(name), *from, clash) : m_catalogs.copy(u8(name), *from, clash);
+    emit changed();
+    if (!result)
+        return std::nullopt;
+    catalogChosen();
+    return qs(*result);
+}
+
+QString StyleManagerController::copyCatalog(const QString &name, const QString &tier, const QVariantList &choices)
+{
+    return landed(name, tier, choices, false).value_or(QString());
+}
+
+QString StyleManagerController::moveCatalog(const QString &name, const QString &tier, const QVariantList &choices)
+{
+    return landed(name, tier, choices, true).value_or(QString());
 }
 
 void StyleManagerController::catalogChosen()
@@ -432,6 +528,7 @@ void StyleManagerController::saveCatalog()
 
 void StyleManagerController::targetRefreshed()
 {
+    projectChanged();
     const auto now = m_hooks.targetDocument ? m_hooks.targetDocument() : std::nullopt;
     const bool switched = now != m_lastTarget;
     m_lastTarget = now;
@@ -527,9 +624,15 @@ QString StyleManagerController::commitEdit(const QVariantMap &values, const QVar
     if (!styles)
         return QCoreApplication::translate("HikariSub.Styles", "The document has no styles to edit.");
     const std::u8string shown = m_catalogs.current();
-    const bool away = m_edit->store && m_edit->catalog != shown;
-    if (away && !m_catalogs.choose(m_edit->catalog))
+    const auto shownTier = m_catalogs.currentTier();
+    const bool away = m_edit->store && (m_edit->catalog != shown || m_edit->catalogTier != shownTier);
+    if (away && !m_catalogs.choose(m_edit->catalog, m_edit->catalogTier))
         return QCoreApplication::translate("HikariSub.Styles", "The catalogue “%1” no longer exists.").arg(qs(m_edit->catalog));
+    if (m_edit->store && m_catalogs.readOnly()) {
+        if (away)
+            m_catalogs.choose(shown, shownTier);
+        return QCoreApplication::translate("HikariSub.Styles", "The project’s copy hides this catalogue. Copy it to edit it.");
+    }
     application::StyleEdit edit;
     edit.row = m_edit->row;
     edit.style = styleOf(values, m_edit->opened);
@@ -540,7 +643,7 @@ QString StyleManagerController::commitEdit(const QVariantMap &values, const QVar
     const auto row = application::commitStyle(*styles, edit);
     if (!row) {
         if (away)
-            m_catalogs.choose(shown);
+            m_catalogs.choose(shown, shownTier);
         return QCoreApplication::translate("HikariSub.Styles", "Style named “%1” already exists.").arg(qs(row.error()));
     }
     const bool store = m_edit->store;
@@ -554,7 +657,7 @@ QString StyleManagerController::commitEdit(const QVariantMap &values, const QVar
         m_catalogs.markChanged();
         // MUST KILL: choosing the shown catalog back is what saves the edited one.
         if (away)
-            m_catalogs.choose(shown);
+            m_catalogs.choose(shown, shownTier);
         emit changed();
     } else {
         std::vector<std::optional<std::size_t>> origin;
@@ -614,8 +717,10 @@ void StyleManagerController::pin(Edit edit)
 {
     if (!edit.store && m_hooks.targetDocument)
         edit.document = m_hooks.targetDocument();
-    if (edit.store)
+    if (edit.store) {
         edit.catalog = m_catalogs.current();
+        edit.catalogTier = m_catalogs.currentTier();
+    }
     m_edit = std::move(edit);
 }
 
@@ -645,7 +750,7 @@ QVariantList StyleManagerController::addToStore(const QVariantList &rows, const 
 {
     std::optional<StyleList> doc;
     const auto *from = list(false, doc);
-    if (!from)
+    if (!from || m_catalogs.readOnly())
         return {};
     StyleList chosen;
     for (const auto r : rowsOf(rows))
@@ -720,6 +825,8 @@ QVariantList StyleManagerController::fileClashes(bool toStore, const QUrl &file,
 void StyleManagerController::loadFromFile(bool toStore, const QUrl &file, const QStringList &names, const QVariantList &choices)
 {
     const StyleList chosen = chosenInFile(file, names);
+    if (toStore && m_catalogs.readOnly())
+        return;
     if (toStore) {
         application::transferStyles(m_catalogs.styles(), chosen, choicesOf(choices));
         m_catalogs.markChanged();
@@ -741,6 +848,8 @@ void StyleManagerController::loadFromFile(bool toStore, const QUrl &file, const 
 QVariantList StyleManagerController::removeStyles(bool store, const QVariantList &rows)
 {
     const auto chosen = rowsOf(rows);
+    if (store && m_catalogs.readOnly())
+        return {};
     if (store) {
         auto &styles = m_catalogs.styles();
         for (auto it = chosen.rbegin(); it != chosen.rend(); ++it)
@@ -771,6 +880,8 @@ void StyleManagerController::sortStyles(bool store)
     const application::NameCompare compare = [&](std::u8string_view a, std::u8string_view b) {
         return collator.compare(qs(std::u8string(a)), qs(std::u8string(b)));
     };
+    if (store && m_catalogs.readOnly())
+        return;
     if (store) {
         application::sortStyles(m_catalogs.styles(), compare);
         m_catalogs.markChanged();
@@ -798,6 +909,8 @@ void StyleManagerController::sortStyles(bool store)
 QVariantList StyleManagerController::moveStyles(bool store, const QVariantList &rows, int kind)
 {
     const auto move = static_cast<application::StyleMove>(std::clamp(kind, 0, 3));
+    if (store && m_catalogs.readOnly())
+        return {};
     if (store) {
         const auto moved = application::moveStyles(m_catalogs.styles(), rowsOf(rows), move);
         m_catalogs.markChanged();

@@ -1,6 +1,7 @@
 #include "hikari/app/application.h"
 
 #include "hikari/application/grid_clipboard.h"
+#include "hikari/application/translation_project.h"
 #include "hikari/core/ass_save.h"
 
 #include <QCoreApplication>
@@ -110,6 +111,23 @@ void Application::declineTranslationMode()
 void Application::setMoveTags(bool on)
 {
     m_settings->set(kMoveTags, on);
+}
+
+std::optional<std::filesystem::path> Application::honyaFolderOf(application::DocumentId document) const
+{
+    const application::EditSession *session = m_files->session(document);
+    if (!session)
+        return std::nullopt;
+    const int window = m_workspace.window(document).value_or(m_workspace.activeWindow());
+    const QString root = projectOf(window);
+    const auto destination = m_files->destination(document);
+    const std::string glossary = windowSettings(window).text("translation.glossary");
+    return application::honyaFolder(
+        root.isEmpty() ? std::nullopt : std::optional(std::filesystem::path(root.toStdU16String())),
+        std::u8string(glossary.begin(), glossary.end()),
+        destination ? std::optional(std::filesystem::path(std::u8string(destination->value.begin(), destination->value.end())))
+                    : std::nullopt,
+        session->document().scriptInfo(application::kHonyaProjectKey).value_or(u8""));
 }
 
 }

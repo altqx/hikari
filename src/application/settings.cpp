@@ -24,10 +24,11 @@ constexpr std::string_view kProjectable[] = {
     "scriptProperties.scriptOn",     "scriptProperties.translation", "scriptProperties.translationOn",
     "scriptProperties.editing",      "scriptProperties.editingOn",   "scriptProperties.timing",
     "scriptProperties.timingOn",     "scriptProperties.update",      "scriptProperties.updateOn",
-    "scriptProperties.askForChange", "translation.autoMoveTagsFromOriginal",
+    "scriptProperties.askForChange", "translation.autoMoveTagsFromOriginal", "translation.glossary",
+    "translation.translator",        "translation.reviewer",
 };
 // Projectable ids whose Project value waits for trust.
-constexpr std::span<const std::string_view> kWidening;
+constexpr std::string_view kWidening[] = {"translation.translator", "translation.reviewer"};
 
 bool listed(std::span<const std::string_view> rules, std::string_view id)
 {
@@ -276,6 +277,8 @@ const std::vector<SettingDefinition> &definitions()
         {"workspace.dialogGeometry", "", StringList, Workspace, Mapped, false, std::vector<std::string>()},
         // One "<picker>\t<folder URL>" row per picker.
         {"workspace.pickerFolders", "", StringList, Workspace, Mapped, false, std::vector<std::string>()},
+        // One "<list>\t<project|mine>" row per tiered list: where New and Save as save.
+        {"workspace.saveTiers", "", StringList, Workspace, Mapped, false, std::vector<std::string>()},
         {"workspace.settingsPage", "", String, Workspace, Mapped, false, std::string("general")},
         // "due" until Getting started is closed, then "done"; empty: a profile older than it.
         {"workspace.gettingStarted", "", String, Workspace, Mapped, false, std::string()},
@@ -397,10 +400,14 @@ const std::vector<SettingDefinition> &definitions()
         {"ai.agent.threadCapCents", "", Int, Profile, Mapped, false, std::int64_t{200}},
         {"ai.agent.dailyCapCents", "", Int, Profile, Mapped, false, std::int64_t{1000}},
         {"ai.agent.costMeter", "", Bool, Profile, Mapped, false, true},
+        {"ai.agent.autoCompact", "", Bool, Profile, Mapped, false, true},
         {"ai.agent.fullAccessWarned", "", Bool, Profile, Mapped, false, false},
         // actions: one {"name", "instruction", "role", "ask"} JSON object per row.
         {"ai.inline.actions", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {"ai.inline.translateTo", "", String, Profile, Mapped, false, std::string("English")},
+        {"translation.glossary", "", String, Profile, Mapped, false, std::string()},
+        {"translation.translator", "", String, Profile, Mapped, false, std::string()},
+        {"translation.reviewer", "", String, Profile, Mapped, false, std::string()},
         {"ai.inline.contextLines", "", Int, Profile, Mapped, false, std::int64_t{2}},
         {"ai.inline.recentInstructions", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {"plugins.network", "", Bool, Profile, Mapped, false, true},
@@ -592,6 +599,11 @@ void LayeredSettingsStorage::setProject(std::shared_ptr<const SettingsStorage> p
 bool LayeredSettingsStorage::fromProject(const SettingDefinition &setting) const
 {
     return m_project && projectMaySet(setting, m_trusted) && m_project->read(setting).has_value();
+}
+
+bool LayeredSettingsStorage::waitsForTrust(const SettingDefinition &setting) const
+{
+    return m_project && setting.projectable && !projectMaySet(setting, m_trusted) && m_project->read(setting).has_value();
 }
 
 std::optional<SettingValue> LayeredSettingsStorage::read(const SettingDefinition &setting) const

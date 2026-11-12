@@ -91,6 +91,14 @@ public:
     virtual std::optional<std::string> read(std::string_view skill, std::string_view file, std::size_t atMost) const = 0;
 };
 
+// Where a Document's Honya project folder is: the glossary, characters and style its translation shares with Honya.
+class TranslationHost {
+public:
+    virtual ~TranslationHost() = default;
+    // nullopt: the Document has no project folder.
+    virtual std::optional<std::string> projectFolder(application::DocumentId document) const = 0;
+};
+
 // Draws subtitles as the video does, in a render context apart from the video's.
 class RenderHost {
 public:
@@ -167,6 +175,7 @@ struct Host {
     AutomationHost *automation = nullptr;
     TypesetHost *typeset = nullptr;
     ProjectHost *project = nullptr;
+    TranslationHost *translation = nullptr;
     EffectsHost *effects = nullptr;
 };
 

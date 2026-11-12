@@ -6,17 +6,15 @@
 #include <QObject>
 #include <QTimer>
 #include <QVideoFrame>
-#include <QVideoSink>
 
 #include <chrono>
 #include <memory>
 #include <mutex>
 #include <optional>
 
-class QAudioOutput;
-
 namespace hikari::backends {
 
+// Loads Qt Multimedia's backend on the first open, seek or play, not before.
 class QtGeneralPlayer : public QObject, public application::GeneralPlayerPort {
     Q_OBJECT
 public:
@@ -43,11 +41,10 @@ public:
     // device list changes, since Qt stays on a removed device.
     void setOutputDevice(const std::string &id);
     const std::string &outputDeviceRequest() const { return m_outputRequest; }
-    // Empty without an audio output.
+    // Empty without an audio output, which is made with the backend.
     std::string outputDeviceId() const;
+    bool backendLoaded() const { return m_engine != nullptr; }
 
-    QVideoSink *videoSink() { return &m_sink; }
-    QString subtitleText() const { return m_sink.subtitleText(); }
     std::uint64_t deliveredFrames() const { return m_delivered; }
     void setFrameDeadline(std::chrono::milliseconds deadline) { m_frameDeadline.setInterval(deadline); }
     std::uint64_t receivedFrames() const;
@@ -69,10 +66,11 @@ private:
     void failOpen(application::PlayerError error);
     void missFrameDeadline();
     application::MediaDescription describe() const;
+    struct Engine;
+    Engine &engine();
+    void applyOutputDevice();
 
-    QMediaPlayer m_player;
-    QVideoSink m_sink;
-    std::unique_ptr<QAudioOutput> m_audio;
+    std::unique_ptr<Engine> m_engine;
     bool m_useAudioOutput = true;
     std::string m_outputRequest;
     std::uint64_t m_generation = 0;
