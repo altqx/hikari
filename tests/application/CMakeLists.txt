@@ -66,7 +66,7 @@ hikari_add_gtest(hikari_application_grid_split_tests SOURCES grid_split_tests.cp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_recent_files_tests SOURCES recent_files_tests.cpp
     LIBRARIES hikari_application LABELS application)
-hikari_add_gtest(hikari_application_project_tests SOURCES project_tests.cpp
+hikari_add_gtest(hikari_application_project_tests SOURCES project_tests.cpp translation_project_tests.cpp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_grid_translation_tests SOURCES grid_translation_tests.cpp
     LIBRARIES hikari_application LABELS application)

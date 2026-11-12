@@ -20,6 +20,7 @@ import { Skills } from "./skills/skills";
 import { Catalogue, kCatalogue, type Reference } from "./tools/catalogue";
 import { ToolSet, type HikariCalls } from "./tools/toolset";
 import { WebSearch, whileOn } from "./tools/web";
+import { checkedTranslate, translate } from "./translate/run";
 
 const kChannelPrefix = "channel:";
 
@@ -216,6 +217,18 @@ export class Sidecar {
         this.handle(Method.conversationEnd, (params, signal) => wire(() => this.providers.endConversation(params, signal)));
         this.handle(Method.complete, (params, signal) => wire(() => this.providers.complete(params, signal,
             (stream, update) => peer.notify(Method.sessionUpdate, { stream, update } satisfies UpdateParams))));
+        this.handle(Method.translate, (params, signal) => {
+            const p = checkedTranslate(params);
+            return wire(() => translate(p, signal, {
+                complete: (providerId, request, s) => this.providers.complete({ stream: p.stream, providerId, request }, s,
+                    () => {}),
+                project: async (document) => {
+                    const found = await this.api.call("translation.project", { document });
+                    return found.folder === null ? undefined : found.files;
+                },
+                notify: (progress) => peer.notify(Method.translateProgress, progress),
+            }));
+        });
         this.handle(Method.searchTest, (params) => wire(() =>
             this.web.test(checked<{ service: SearchService }>(kSchemas.searchTestParams, params).service)));
         this.handle(Method.toolsList, (params) => ({ tools: this.tools.list((params as ToolsListParams | null)?.all === true) }));

@@ -44,6 +44,8 @@ export const Method = {
     modelsList: "_hikari/models.list",
     conversationEnd: "_hikari/conversation.end",
     complete: "_hikari/complete",
+    translate: "_hikari/translate",
+    translateProgress: "_hikari/translate.progress",
     searchTest: "_hikari/search.test",
     apiCall: "_hikari/api.call",
     apiSubscribe: "_hikari/api.subscribe",
@@ -211,6 +213,33 @@ export interface SessionUpdateParams {
     sessionId: string;
     update: SessionUpdate;
 }
+
+/** One Honya pipeline run over Lines whose override blocks Qt turned into ⟦n⟧ markers. */
+export interface TranslateParams {
+    /** Names the run's `_hikari/translate.progress` notifications. */
+    stream: number;
+    /** The Document whose project folder holds the glossary, characters and style, read through HA1. */
+    document?: number;
+    language: string;
+    models: { translator: SessionModel; reviewer: SessionModel };
+    lines: { key: number; text: string; speaker?: string; start: number; end: number }[];
+    /** The translated Lines just before the run, oldest first. */
+    before?: string[];
+    retries?: number;
+    caching?: boolean;
+    /** Smaller chunks than Honya's 1,000 tokens. */
+    chunkTokens?: number;
+}
+
+export interface TranslateResult {
+    lines: { key: number; text: string; review: "approved" | "needsReview"; issues: string[] }[];
+    /** Project files to write with `translation.project_write`, only after the Lines are written. */
+    files: { name: string; data: string }[];
+}
+
+export type TranslateProgressParams =
+    | { stream: number; stage: "prepass" | "translate" | "coherence"; done: number; total: number }
+    | { stream: number; role: "translator" | "reviewer"; usage: Usage };
 
 export interface McpVia {
     connection: string;

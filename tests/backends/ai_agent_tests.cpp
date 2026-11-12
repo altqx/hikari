@@ -195,7 +195,7 @@ TEST(AgentPolicy, EveryWriteOperationIsClassified)
             writes.insert(op.name);
     EXPECT_EQ(writes, (std::set<std::string>{"automation.run", "commands.run", "document.apply", "files.write", "panels.close",
                                              "panels.focus", "panels.open", "selection.set", "settings.set",
-                                             "typeset.apply"}))
+                                             "translation.project_write", "typeset.apply"}))
         << "Classify the new write in alwaysAsk and docs/ai-agent.md, then add it here.";
 }
 

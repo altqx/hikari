@@ -1501,6 +1501,7 @@ private:
     bool projectTrusted(const QString &root) const;
     void applyWindowProject(int shellWindow);
     QString projectFontFolder(int shellWindow) const;
+    std::optional<std::filesystem::path> honyaFolderOf(application::DocumentId document) const;
     application::Settings &windowSettings(int shellWindow);
     const application::Settings &windowSettings(int shellWindow) const;
     QString m_settingsFile;
