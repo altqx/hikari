@@ -747,7 +747,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         [this](application::DocumentId document) { return subtitleFonts(document); },
         [this] { return m_settings->text("video.subtitleProvider").toStdString(); },
         m_userFolder.isEmpty() ? std::filesystem::path()
-                               : std::filesystem::path((m_userFolder + QStringLiteral("/ai/skills")).toStdU16String())});
+                               : std::filesystem::path((m_userFolder + QStringLiteral("/ai/skills")).toStdU16String()),
+        [this] { return perspectiveMeasure(); }});
     AiFeatures::Ports aiPorts = options.aiPorts ? std::move(*options.aiPorts)
                                                 : AiFeatures::defaultPorts(m_userFolder, &m_apiHost->api(),
                                                                            options.appVersion.isEmpty()

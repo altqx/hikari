@@ -706,6 +706,226 @@ export type NodesValidateResult = {
     })[];
 };
 
+/** The Line's text with the tags that render it on a quad (VT3's perspective solver): \pos, \org, \frx, \fry, \frz, \fax, \fscx and \fscy. */
+export type TypesetPerspectiveParams = {
+    /** Defaults to the active Document. */
+    document?: DocumentId;
+    line: LineId;
+    /** Script coordinates: top left, top right, bottom right, bottom left. */
+    quad: ({
+        x: number;
+        y: number;
+    })[];
+    /** Where \org goes: the quad's centre (default), the centre without \fax, or where the Line has it. */
+    origin?: "center" | "nofax" | "keep";
+};
+
+export type TypesetPerspectiveResult = {
+    line: LineId;
+    text: string;
+    transform: Record<string, unknown>;
+};
+
+/** The Line's text with its first clip replaced by a rectangle or a vector clip. */
+export type TypesetClipParams = {
+    /** Defaults to the active Document. */
+    document?: DocumentId;
+    line: LineId;
+    /** Script coordinates, rounded to whole units. */
+    rect?: {
+        x1: number;
+        y1: number;
+        x2: number;
+        y2: number;
+    };
+    /** ASS drawing commands such as "m 0 0 l 100 0 100 50 0 50"; empty removes the vector clip. */
+    vector?: string;
+    /** \iclip: draw outside the clip. */
+    inverse?: boolean;
+};
+
+export type TypesetClipResult = {
+    line: LineId;
+    /** The Line's text with the tags written; nothing is applied. */
+    text: string;
+};
+
+/** The Line's text with its first drawing replaced by a shape (\p1), placed at a position with an alignment. */
+export type TypesetDrawingParams = {
+    /** Defaults to the active Document. */
+    document?: DocumentId;
+    line: LineId;
+    /** ASS drawing commands, in script units from the drawing's origin. */
+    shape: string;
+    position?: {
+        x: number;
+        y: number;
+    };
+    /** \an; 7 (top left) with position, else the Line's. */
+    alignment?: number;
+};
+
+export type TypesetDrawingResult = {
+    line: LineId;
+    /** The Line's text with the tags written; nothing is applied. */
+    text: string;
+};
+
+/** Moves the Lines' positions, \move points, clips, drawings and \org by an offset, as the Position shifter does. */
+export type TypesetShiftParams = {
+    /** Defaults to the active Document. */
+    document?: DocumentId;
+    lines: LineId[];
+    /** Script units. */
+    dx: number;
+    dy: number;
+    /** What moves; every kind but drawing when omitted. */
+    kinds?: ("position" | "move_start" | "move_end" | "clip" | "drawing" | "origin")[];
+};
+
+export type TypesetShiftResult = {
+    /** The Lines the change alters, with their new text; nothing is applied. */
+    lines: ({
+        line: LineId;
+        text: string;
+    })[];
+};
+
+/** Changes one tag across the Lines as the Hydra strip does: set it, add to it, multiply it by line number, or run a gradient across characters or Lines. */
+export type TypesetHydraParams = {
+    /** Defaults to the active Document. */
+    document?: DocumentId;
+    /** Multiply and the line gradients count them in this order. */
+    lines: LineId[];
+    /** A Hydra tag without the backslash: blur, bord, be, alpha, 1a, 3a, 4a, 1c (or c), 3c, 4c, fad, fax, fay, fs, fsp, shad, xbord, ybord, xshad, yshad, pos or t. */
+    tag: string;
+    change: "set" | "add" | "multiply" | "gradient";
+    /** set: the value; add: what to add; multiply: the start; gradient: the first value. Colours are R, G, B. */
+    values: number[];
+    /** multiply: added for each Line. */
+    perLine?: number[];
+    /** multiply: set each Line's value, or add to it. Default set. */
+    byLine?: "set" | "add";
+    /** gradient: the last value. */
+    to?: number[];
+    /** gradient: default characters. */
+    across?: "characters" | "lines";
+    /** gradient: run from the end. */
+    decreasing?: boolean;
+};
+
+export type TypesetHydraResult = {
+    /** The Lines the change alters, with their new text; nothing is applied. */
+    lines: ({
+        line: LineId;
+        text: string;
+    })[];
+};
+
+/** Renders one Line alone, with a proposed text, on its frame and compares its ink with a target. */
+export type TypesetCheckParams = {
+    /** Defaults to the active Document. */
+    document?: DocumentId;
+    line: LineId;
+    /** The proposed text; the Line's own when omitted. */
+    text?: string;
+    /** Where the Line's ink should land, in script coordinates: a quad or a box. */
+    target: {
+        /** Script coordinates: top left, top right, bottom right, bottom left. */
+        quad: ({
+            x: number;
+            y: number;
+        })[];
+    } | {
+        box: {
+            x: number;
+            y: number;
+            width: number;
+            height: number;
+        };
+    };
+    /** Default: the frame shown when the Line is on it, else the Line's first. */
+    frame?: number;
+    /** Video pixels; default 4. */
+    tolerance?: number;
+};
+
+export type TypesetCheckResult = {
+    line: LineId;
+    frame: number;
+    pass: boolean;
+    /** The largest distance between an edge of the ink's bounds and the target's, in video pixels; null when nothing is drawn. */
+    error: number | null;
+    ink: {
+        x: number;
+        y: number;
+        width: number;
+        height: number;
+    } | null;
+    target: {
+        x: number;
+        y: number;
+        width: number;
+        height: number;
+    };
+};
+
+/** Applies typeset Lines as one undo step after every one passes the render check; when one misses its target nothing is applied. */
+export type TypesetApplyParams = {
+    /** Defaults to the active Document. */
+    document?: DocumentId;
+    revision: Revision;
+    /** A few words naming the change, such as "Typeset the shop sign". */
+    name: string;
+    lines: ({
+        line: LineId;
+        text: string;
+        /** Where the Line's ink should land, in script coordinates: a quad or a box. */
+        target: {
+            /** Script coordinates: top left, top right, bottom right, bottom left. */
+            quad: ({
+                x: number;
+                y: number;
+            })[];
+        } | {
+            box: {
+                x: number;
+                y: number;
+                width: number;
+                height: number;
+            };
+        };
+        frame?: number;
+    })[];
+    /** Video pixels; default 4. */
+    tolerance?: number;
+};
+
+export type TypesetApplyResult = {
+    revision: Revision;
+    inserted: LineId[];
+    changed: boolean;
+    checks: ({
+        line: LineId;
+        frame: number;
+        pass: boolean;
+        /** The largest distance between an edge of the ink's bounds and the target's, in video pixels; null when nothing is drawn. */
+        error: number | null;
+        ink: {
+            x: number;
+            y: number;
+            width: number;
+            height: number;
+        } | null;
+        target: {
+            x: number;
+            y: number;
+            width: number;
+            height: number;
+        };
+    })[];
+};
+
 /** A Document's content changed: a commit, Undo or Redo. */
 export type DocumentChangedEvent = {
     document: DocumentId;
@@ -781,6 +1001,13 @@ export interface Operations {
     "skills.read": { access: "read"; params: SkillsReadParams; result: SkillsReadResult };
     "nodes.catalogue": { access: "read"; params: NodesCatalogueParams; result: NodesCatalogueResult };
     "nodes.validate": { access: "read"; params: NodesValidateParams; result: NodesValidateResult };
+    "typeset.perspective": { access: "read"; params: TypesetPerspectiveParams; result: TypesetPerspectiveResult };
+    "typeset.clip": { access: "read"; params: TypesetClipParams; result: TypesetClipResult };
+    "typeset.drawing": { access: "read"; params: TypesetDrawingParams; result: TypesetDrawingResult };
+    "typeset.shift": { access: "read"; params: TypesetShiftParams; result: TypesetShiftResult };
+    "typeset.hydra": { access: "read"; params: TypesetHydraParams; result: TypesetHydraResult };
+    "typeset.check": { access: "read"; params: TypesetCheckParams; result: TypesetCheckResult };
+    "typeset.apply": { access: "write"; params: TypesetApplyParams; result: TypesetApplyResult };
 }
 
 export type OperationName = keyof Operations;
