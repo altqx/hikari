@@ -19,7 +19,7 @@ namespace {
 const fs::path kScripts = HIKARI_API_SCRIPTS_DIR;
 const fs::path kSkills = HIKARI_API_SKILLS_DIR;
 
-void put(const fs::path &file, std::string_view text = "---\nname: x\ndescription: x\n---\n")
+void put(const fs::path &file, std::string_view text = "---\ndescription: x\n---\n")
 {
     fs::create_directories(file.parent_path());
     std::ofstream(file, std::ios::binary) << text;
@@ -197,22 +197,28 @@ TEST(Skills, AProjectSkillHidesTheUsersOfTheSameName)
     TempFolder root;
     const fs::path mine = root.path / "mine";
     const fs::path project = root.path / "show";
-    put(mine / "shared" / "SKILL.md", "mine");
+    const std::string ours = "---\ndescription: Ours.\n---\n";
+    const std::string theirs = "---\ndescription: Mine.\n---\n";
+    put(mine / "shared" / "SKILL.md", theirs);
     put(mine / "only-mine" / "SKILL.md");
-    put(mine / "broken-there" / "SKILL.md", "mine");
-    put(project / ".hikari" / "skills" / "shared" / "SKILL.md", "project");
+    put(mine / "broken-there" / "SKILL.md", theirs);
+    put(mine / "no-frontmatter-there" / "SKILL.md", theirs);
+    put(project / ".hikari" / "skills" / "shared" / "SKILL.md", ours);
     put(project / ".hikari" / "skills" / "honorifics" / "SKILL.md");
     put(project / ".hikari" / "skills" / "broken-there" / "README.md");
+    put(project / ".hikari" / "skills" / "no-frontmatter-there" / "SKILL.md", "just text");
     const SkillTiers skills(mine);
     using enum SkillOrigin;
     EXPECT_EQ(tiers(skills, project), (std::vector<std::pair<std::string, SkillOrigin>>{
-                                          {"broken-there", Mine}, {"honorifics", Project}, {"only-mine", Mine}, {"shared", Project}}));
-    EXPECT_EQ(skills.read(project, "shared", "SKILL.md", 100), "project");
-    EXPECT_EQ(skills.read(project, "broken-there", "SKILL.md", 100), "mine");
-    EXPECT_EQ(skills.read({}, "shared", "SKILL.md", 100), "mine");
+                                          {"broken-there", Mine}, {"honorifics", Project}, {"no-frontmatter-there", Mine},
+                                          {"only-mine", Mine}, {"shared", Project}}));
+    EXPECT_EQ(skills.read(project, "shared", "SKILL.md", 100), ours);
+    EXPECT_EQ(skills.read(project, "broken-there", "SKILL.md", 100), theirs);
+    EXPECT_EQ(skills.read(project, "no-frontmatter-there", "SKILL.md", 100), theirs);
+    EXPECT_EQ(skills.read({}, "shared", "SKILL.md", 100), theirs);
     EXPECT_FALSE(skills.read({}, "honorifics", "SKILL.md", 100));
     EXPECT_EQ(tiers(skills, {}), (std::vector<std::pair<std::string, SkillOrigin>>{
-                                     {"broken-there", Mine}, {"only-mine", Mine}, {"shared", Mine}}));
+                                     {"broken-there", Mine}, {"no-frontmatter-there", Mine}, {"only-mine", Mine}, {"shared", Mine}}));
 }
 
 #ifndef _WIN32
@@ -235,7 +241,7 @@ TEST(Skills, TheListMarksEachSkillsOriginForTheCallersProject)
 {
     TempFolder root;
     put(root.path / "mine" / "notes" / "SKILL.md");
-    put(root.path / "show" / ".hikari" / "skills" / "honorifics" / "SKILL.md", "ours");
+    put(root.path / "show" / ".hikari" / "skills" / "honorifics" / "SKILL.md", "---\ndescription: Ours.\n---\n");
     FakeHost fake;
     SkillTiers skills(root.path / "mine");
     Host host = fake.host();
@@ -250,7 +256,7 @@ TEST(Skills, TheListMarksEachSkillsOriginForTheCallersProject)
                                                   {"skill": "notes", "origin": "yours", "files": ["SKILL.md"]}]})"));
     const Result read = client.call(caller, "skills.read", *Json::parse(R"({"skill": "honorifics", "file": "SKILL.md"})"));
     ASSERT_TRUE(read);
-    EXPECT_EQ(*read->find("data"), Json("ours"));
+    EXPECT_EQ(*read->find("data"), Json("---\ndescription: Ours.\n---\n"));
     EXPECT_EQ(names(FolderSkills(root.path / "mine")), std::vector<std::string>{"notes"});
 }
 

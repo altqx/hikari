@@ -651,17 +651,18 @@ export type FilesWriteResult = {
     size: number;
 };
 
-/** The user's skills: each skill folder's name and its files, SKILL.md among them. */
+/** The caller's skills: each skill folder's name, whether it is the Project's or the user's, and its files, SKILL.md among them. */
 export type SkillsListParams = Record<string, never>;
 
 export type SkillsListResult = {
     skills: ({
         skill: SkillName;
+        origin: "project" | "yours";
         files: string[];
     })[];
 };
 
-/** One file of a user's skill, as UTF-8 text; at most 256 KiB. */
+/** One file of a skill skills.list gives, as UTF-8 text; at most 256 KiB. */
 export type SkillsReadParams = {
     skill: SkillName;
     /** A path skills.list gives, such as SKILL.md or references/tags.md. */

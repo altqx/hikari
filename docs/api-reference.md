@@ -38,8 +38,8 @@ Version 1 of the Hikari API, generated from HikariSub's own registry: the same r
 | `files.list` | read | 1 | The files the user granted this caller, with read or write access. |
 | `files.read` | read | 1 | A granted file's content, as UTF-8 text or base64; at most 16 MiB. |
 | `files.write` | write | 1 | Replaces a file granted for writing with new content. |
-| `skills.list` | read | 1 | The user's skills: each skill folder's name and its files, SKILL.md among them. |
-| `skills.read` | read | 1 | One file of a user's skill, as UTF-8 text; at most 256 KiB. |
+| `skills.list` | read | 1 | The caller's skills: each skill folder's name, whether it is the Project's or the user's, and its files, SKILL.md among them. |
+| `skills.read` | read | 1 | One file of a skill skills.list gives, as UTF-8 text; at most 256 KiB. |
 | `nodes.catalogue` | read | 1 | The node types the node-effect editor offers, with their ports and parameters. |
 | `nodes.validate` | read | 1 | Checks a node-effect graph; each problem names its node and port or field. |
 
@@ -747,7 +747,7 @@ Replaces a file granted for writing with new content.
 
 Read. Since version 1.
 
-The user's skills: each skill folder's name and its files, SKILL.md among them.
+The caller's skills: each skill folder's name, whether it is the Project's or the user's, and its files, SKILL.md among them.
 
 **Parameters**: none.
 
@@ -757,13 +757,14 @@ The user's skills: each skill folder's name and its files, SKILL.md among them.
 | --- | --- | --- | --- |
 | `skills` | array of objects | yes |  |
 | `skills[].skill` | [SkillName](#skillname) | yes |  |
+| `skills[].origin` | one of `project` or `yours` | yes |  |
 | `skills[].files` | array of string | yes |  |
 
 ### `skills.read`
 
 Read. Since version 1.
 
-One file of a user's skill, as UTF-8 text; at most 256 KiB.
+One file of a skill skills.list gives, as UTF-8 text; at most 256 KiB.
 
 **Parameters**
 

@@ -65,7 +65,7 @@ endif()
 if(WIN32)
     target_link_libraries(hikari_composition PRIVATE shell32 winhttp bcrypt crypt32 advapi32)
 endif()
-hikari_module(hikari_composition ALLOW hikari_ui hikari_ui_resources_1 hikari_uiplugin hikari_backends hikari_ai
+hikari_module(hikari_composition ALLOW hikari_ui hikari_ui_resources_1 hikari_composition_resources_1 hikari_uiplugin hikari_backends hikari_ai
     hikari_plugins hikari_api hikari_application hikari_core "Qt6::*" "hikari_ui*")
 
 file(GLOB_RECURSE _hikari_builtin_skills CONFIGURE_DEPENDS RELATIVE "${PROJECT_SOURCE_DIR}/src/ai-sidecar/skills"

@@ -2324,7 +2324,7 @@
     {
       "name": "skills.list",
       "access": "read",
-      "summary": "The user's skills: each skill folder's name and its files, SKILL.md among them.",
+      "summary": "The caller's skills: each skill folder's name, whether it is the Project's or the user's, and its files, SKILL.md among them.",
       "since": 1,
       "params": {
         "type": "object",
@@ -2341,6 +2341,12 @@
                 "skill": {
                   "$ref": "#/$defs/SkillName"
                 },
+                "origin": {
+                  "enum": [
+                    "project",
+                    "yours"
+                  ]
+                },
                 "files": {
                   "type": "array",
                   "items": {
@@ -2350,6 +2356,7 @@
               },
               "required": [
                 "skill",
+                "origin",
                 "files"
               ],
               "additionalProperties": false
@@ -2365,7 +2372,7 @@
     {
       "name": "skills.read",
       "access": "read",
-      "summary": "One file of a user's skill, as UTF-8 text; at most 256 KiB.",
+      "summary": "One file of a skill skills.list gives, as UTF-8 text; at most 256 KiB.",
       "since": 1,
       "params": {
         "type": "object",
