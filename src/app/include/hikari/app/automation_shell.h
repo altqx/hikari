@@ -8,9 +8,12 @@
 #include "hikari/application/document_files.h"
 #include "hikari/application/macro_validation.h"
 #include "hikari/application/macro_transaction.h"
+#include "hikari/application/project_automation.h"
 #include "hikari/application/template_preview.h"
 #include "hikari/application/workspace.h"
 #include "hikari/backends/automation_manager.h"
+#include "hikari/backends/freetype_glyph_outlines.h"
+#include "hikari/backends/libass_font_service.h"
 
 #include "automation_dialog_controller.h"
 #include "automation_manager_controller.h"
@@ -123,7 +126,17 @@ public:
     bool forceStop(const std::string &path) override { return m_manager.forceStop(path); }
     void setObserver(std::function<void()> changed) override { m_manager.setObserver(std::move(changed)); }
 
-    // Every .lua and .moon in the autoload folder but those turned off (by file name).
+    // Each shell window's Project, with native separators.
+    void setWindowProjects(std::function<std::map<int, application::WindowProject>()> projects);
+    // Loads the autoload scripts a window's new Project brings and unloads those no window shows any more.
+    void projectsChanged();
+    // False for an autoload script that the window's own tiers hide or don't have.
+    Q_INVOKABLE bool shownIn(const QString &script, int shellWindow) const;
+    // The window's untrusted Project's autoload scripts, which don't load.
+    Q_INVOKABLE QStringList lockedScripts(int shellWindow) const;
+    // "project" or "mine" for an autoload script the window shows while it has a Project; "" otherwise.
+    Q_INVOKABLE QString tierOf(const QString &script, int shellWindow) const;
+    // Every .lua and .moon in the autoload folders but those turned off (by file name).
     Q_INVOKABLE void autoload();
     Q_INVOKABLE void reloadAutoload();
     bool autoloadEnabled(const QString &script) const;
@@ -202,11 +215,13 @@ public:
     QString includeDir() const;
     QStringList includeFolders() const;
     QString autoloadDir() const;
-    // A user script replaces a shipped one of the same name.
+    // What any window shows: a user script replaces a shipped one of the same name, and a Project
+    // script the user's in its window.
     QStringList autoloadScripts() const;
 
 signals:
     void progressChanged();
+    void windowScriptsChanged();
     // `message`: why, when the macro changed nothing.
     void runCompleted(bool ok, const QString &message);
     // severity: "info" (a toast) or "error" (a message box).
@@ -270,6 +285,8 @@ private:
         std::vector<std::string> scripts;
         std::vector<std::function<void()>> then;
     };
+    application::AutoloadPlan autoloadPlan() const;
+    QString includesFor(const std::string &script) const;
     void addFromDocument(std::function<void()> then, bool askAgain);
     void readDocumentScripts(application::DocumentId document);
     std::string trustKey(application::DocumentId document, const std::string &script) const;
@@ -301,6 +318,8 @@ private:
     std::unique_ptr<application::ScriptResolutionPort> m_resolutionPort;
     ui::QtClipboardPort m_clipboard;
     ui::QtTextMeasurePort m_measure;
+    backends::LibassFontService m_fonts;
+    backends::FreetypeGlyphOutlines m_glyphs{m_fonts};
     std::unique_ptr<application::MacroMediaPort> m_media;
     std::unique_ptr<application::EditorPort> m_editorPort;
     std::unique_ptr<ui::AutomationManagerController> m_managerController;
@@ -319,6 +338,9 @@ private:
     int m_trustSerial = 0;
     std::map<std::string, bool> m_trustDecisions;
     std::function<void(const QString &, LogLine)> m_logLine;
+    std::function<std::map<int, application::WindowProject>()> m_windowProjects;
+    application::AutoloadPlan m_plan;
+    bool m_autoloaded = false;
     ui::SettingsStore *m_settings = nullptr;
     QString m_title, m_taskText, m_log, m_lastMessage, m_lastOutcome;
     double m_progress = 0;

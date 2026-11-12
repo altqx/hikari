@@ -13,7 +13,7 @@ target_link_libraries(hikari_lua_legacy_native PRIVATE Hikari::luajit)
 set_target_properties(hikari_lua_legacy_native PROPERTIES LINKER_LANGUAGE C)
 
 add_executable(hikari_lua_helper lua_helper.cpp lua_helper_internal.h kara_templater.cpp kara_templater.h karaskel_tables.cpp
-    karaskel_tables.h lua_host_cache.cpp lua_host_cache.h lua_native.cpp lua_native.h lua_nodes.cpp lua_nodes.h
+    karaskel_tables.h shape_tables.cpp shape_tables.h lua_host_cache.cpp lua_host_cache.h lua_native.cpp lua_native.h lua_nodes.cpp lua_nodes.h
     util_impl.cpp util_impl.h)
 set_target_properties(hikari_lua_helper PROPERTIES OUTPUT_NAME hikari-lua-helper)
 # HSL_to_RGB rounds as LuaJIT's interpreter does only without fused multiply-adds.
@@ -54,11 +54,8 @@ foreach(name BadMutex PreciseTimer DownloadManager)
 endforeach()
 
 # ILL's clipper2 module requireffi-loads clipper2/clipper2/(lib)clipper2.
-find_path(HIKARI_CLIPPER2_INCLUDE_DIR clipper2/clipper.h REQUIRED)
-find_library(HIKARI_CLIPPER2_LIBRARY NAMES Clipper2 REQUIRED)
 add_library(hikari_ill_clipper2 SHARED "${PROJECT_SOURCE_DIR}/Thirdparty/ILL-clipper2/clipper.wrap.cpp")
-target_include_directories(hikari_ill_clipper2 PRIVATE "${HIKARI_CLIPPER2_INCLUDE_DIR}")
-target_link_libraries(hikari_ill_clipper2 PRIVATE "${HIKARI_CLIPPER2_LIBRARY}")
+target_link_libraries(hikari_ill_clipper2 PRIVATE Hikari::clipper2)
 if(NOT WIN32)
     target_link_options(hikari_ill_clipper2 PRIVATE "LINKER:--exclude-libs,ALL")
 endif()

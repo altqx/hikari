@@ -599,6 +599,54 @@
             <numerusform>Pokaż wszystkie %n linijek</numerusform>
         </translation>
     </message>
+    <message>
+        <source>This conversation is nearly full</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 of %2 tokens. Automatic compaction is off in Settings › AI.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Compact conversation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New thread from summary</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>compacting…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>compacts at the next tool call</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Couldn’t compact the conversation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>There’s nothing to compact yet.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The summary request failed twice (%1). Nothing was removed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Carried on from the summary of “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Context compacted %1 → %2 tokens</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Audio</name>
@@ -1460,6 +1508,10 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Pokaż</translation>
     </message>
     <message>
+        <source>This project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Scripts</source>
         <translation>Skrypty</translation>
     </message>
@@ -1690,6 +1742,10 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>%1 also uses %2 and takes it.</source>
         <translation>%1 również używa skrótu %2 i ma pierwszeństwo.</translation>
+    </message>
+    <message>
+        <source>Trust this folder to use them</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Remove shortcut</source>
@@ -5912,6 +5968,22 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Tekst do tłumaczenia</translation>
     </message>
     <message>
+        <source>Start tag block</source>
+        <translation>Początkowy blok tagów</translation>
+    </message>
+    <message>
+        <source>Clip (\clip or \iclip)</source>
+        <translation>Przycięcie (\clip lub \iclip)</translation>
+    </message>
+    <message>
+        <source>Only these tags</source>
+        <translation>Tylko te tagi</translation>
+    </message>
+    <message>
+        <source>These tags:</source>
+        <translation type="vanished">Te tagi:</translation>
+    </message>
+    <message>
         <source>changed</source>
         <translation>zmieniona</translation>
     </message>
@@ -6042,6 +6114,14 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Columns to copy from the %1 selected lines</source>
         <translation>Kolumny do skopiowania z zaznaczonych linijek (%1)</translation>
+    </message>
+    <message>
+        <source>Tags</source>
+        <translation>Tagi</translation>
+    </message>
+    <message>
+        <source>Paste puts each tag into the start block, replacing the same tag.</source>
+        <translation>Wklejanie umieszcza każdy tag w bloku początkowym, zastępując ten sam tag.</translation>
     </message>
     <message>
         <source>Select all</source>
@@ -7438,6 +7518,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Gradient</translation>
     </message>
     <message>
+        <source>Text on path</source>
+        <translation>Tekst na ścieżce</translation>
+    </message>
+    <message>
         <source>Vector clip: move points</source>
         <translation>Wycinek wektorowy: przesuń punkty</translation>
     </message>
@@ -7664,6 +7748,138 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Swap dialogue alternatives</source>
         <translation>Zamień warianty dialogu</translation>
+    </message>
+    <message>
+        <source>Change alignment to bottom left (\an1), keep position</source>
+        <translation>Zmień wyrównanie: na dole po lewej (\an1), zachowaj pozycję</translation>
+    </message>
+    <message>
+        <source>Change alignment to bottom centre (\an2), keep position</source>
+        <translation>Zmień wyrównanie: na dole pośrodku (\an2), zachowaj pozycję</translation>
+    </message>
+    <message>
+        <source>Change alignment to bottom right (\an3), keep position</source>
+        <translation>Zmień wyrównanie: na dole po prawej (\an3), zachowaj pozycję</translation>
+    </message>
+    <message>
+        <source>Change alignment to middle left (\an4), keep position</source>
+        <translation>Zmień wyrównanie: pośrodku po lewej (\an4), zachowaj pozycję</translation>
+    </message>
+    <message>
+        <source>Change alignment to middle centre (\an5), keep position</source>
+        <translation>Zmień wyrównanie: na środku (\an5), zachowaj pozycję</translation>
+    </message>
+    <message>
+        <source>Change alignment to middle right (\an6), keep position</source>
+        <translation>Zmień wyrównanie: pośrodku po prawej (\an6), zachowaj pozycję</translation>
+    </message>
+    <message>
+        <source>Change alignment to top left (\an7), keep position</source>
+        <translation>Zmień wyrównanie: u góry po lewej (\an7), zachowaj pozycję</translation>
+    </message>
+    <message>
+        <source>Change alignment to top centre (\an8), keep position</source>
+        <translation>Zmień wyrównanie: u góry pośrodku (\an8), zachowaj pozycję</translation>
+    </message>
+    <message>
+        <source>Change alignment to top right (\an9), keep position</source>
+        <translation>Zmień wyrównanie: u góry po prawej (\an9), zachowaj pozycję</translation>
+    </message>
+    <message>
+        <source>Align left edges</source>
+        <translation>Wyrównaj lewe krawędzie</translation>
+    </message>
+    <message>
+        <source>Align centres</source>
+        <translation>Wyrównaj środki</translation>
+    </message>
+    <message>
+        <source>Align right edges</source>
+        <translation>Wyrównaj prawe krawędzie</translation>
+    </message>
+    <message>
+        <source>Align top edges</source>
+        <translation>Wyrównaj górne krawędzie</translation>
+    </message>
+    <message>
+        <source>Align middles</source>
+        <translation>Wyrównaj środki w pionie</translation>
+    </message>
+    <message>
+        <source>Align bottom edges</source>
+        <translation>Wyrównaj dolne krawędzie</translation>
+    </message>
+    <message>
+        <source>Distribute horizontally</source>
+        <translation>Rozłóż poziomo</translation>
+    </message>
+    <message>
+        <source>Distribute vertically</source>
+        <translation>Rozłóż pionowo</translation>
+    </message>
+    <message>
+        <source>Position to margins</source>
+        <translation>Pozycja na marginesy</translation>
+    </message>
+    <message>
+        <source>Margins to position</source>
+        <translation>Marginesy na pozycję</translation>
+    </message>
+    <message>
+        <source>Phantom: keep the start aligned</source>
+        <translation>Fantom: zachowaj wyrównanie początku</translation>
+    </message>
+    <message>
+        <source>Phantom: keep the end aligned</source>
+        <translation>Fantom: zachowaj wyrównanie końca</translation>
+    </message>
+    <message>
+        <source>Cycle \blur</source>
+        <translation>Cykl \blur</translation>
+    </message>
+    <message>
+        <source>Cycle \blur back</source>
+        <translation>Cykl \blur wstecz</translation>
+    </message>
+    <message>
+        <source>Cycle \bord</source>
+        <translation>Cykl \bord</translation>
+    </message>
+    <message>
+        <source>Cycle \bord back</source>
+        <translation>Cykl \bord wstecz</translation>
+    </message>
+    <message>
+        <source>Cycle \shad</source>
+        <translation>Cykl \shad</translation>
+    </message>
+    <message>
+        <source>Cycle \shad back</source>
+        <translation>Cykl \shad wstecz</translation>
+    </message>
+    <message>
+        <source>Cycle \alpha</source>
+        <translation>Cykl \alpha</translation>
+    </message>
+    <message>
+        <source>Cycle \alpha back</source>
+        <translation>Cykl \alpha wstecz</translation>
+    </message>
+    <message>
+        <source>Cycle \an</source>
+        <translation>Cykl \an</translation>
+    </message>
+    <message>
+        <source>Cycle \an back</source>
+        <translation>Cykl \an wstecz</translation>
+    </message>
+    <message>
+        <source>Cycle \fsp</source>
+        <translation>Cykl \fsp</translation>
+    </message>
+    <message>
+        <source>Cycle \fsp back</source>
+        <translation>Cykl \fsp wstecz</translation>
     </message>
     <message>
         <source>Move tab to new window</source>
@@ -8109,6 +8325,26 @@ Nie udało się skopiować czcionek: %2.</translation>
         </translation>
     </message>
     <message numerus="yes">
+        <source>The reviewer didn’t approve line %1, so it’s marked Unconfirmed.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>The reviewer didn’t approve line %1. Check it before you use it.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>This project’s translator and reviewer models are used once you trust its folder; your own ran instead.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
         <source>%n line(s) weren’t sent.</source>
         <translation type="unfinished">
             <numerusform></numerusform>
@@ -8158,6 +8394,10 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Out of date: you edited line %1 after it was sent.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not approved by the reviewer: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -10812,6 +11052,30 @@ Nie udało się skopiować czcionek: %2.</translation>
         <source>Align to video</source>
         <translation>Dopasuj do wideo</translation>
     </message>
+    <message>
+        <source>Project</source>
+        <translation type="unfinished">Projekt</translation>
+    </message>
+    <message>
+        <source>Mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation type="unfinished">Zapisz</translation>
+    </message>
+    <message>
+        <source>Save to project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save to mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Where to save</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Matroska</name>
@@ -11007,11 +11271,11 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Point</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Punkt</translation>
     </message>
     <message>
         <source>Tags</source>
-        <translation type="unfinished">Tagi</translation>
+        <translation>Tagi</translation>
     </message>
     <message>
         <source>Drawing</source>
@@ -11505,6 +11769,22 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>Aegisub 3.2.2 templates</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Text outlines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each syllable is drawn as a hollow drawing in its style’s font, and its outline thickens while it is sung.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Striped letters</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each syllable’s letters are cut into thin horizontal stripes, which fade in as it is sung.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Nodes</name>
@@ -11566,7 +11846,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Point</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Punkt</translation>
     </message>
     <message>
         <source>A point from its coordinates.</source>
@@ -12106,7 +12386,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Tags</source>
-        <translation type="unfinished">Tagi</translation>
+        <translation>Tagi</translation>
     </message>
     <message>
         <source>Colours</source>
@@ -12127,6 +12407,26 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Groups</source>
         <translation type="unfinished">Grupy</translation>
+    </message>
+    <message>
+        <source>Text to drawing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The text (unwired, the unit’s own) drawn in its line’s Style font, at \p1 from the text’s top left, as Yutils’ text_to_shape draws it. width and height are the text’s.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Combine drawings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>a and b combined, each filled as libass fills it: unite, subtract (b taken away from a), intersect, or exclude (what only one of them covers). Each one’s \p scale is kept; the result is at \p1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How to combine them.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -13841,6 +14141,30 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Wersja ze znanym błędem</translation>
     </message>
     <message>
+        <source>Only the first %1 of its %2 files are offered.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n file(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Project</source>
+        <translation type="unfinished">Projekt</translation>
+    </message>
+    <message>
+        <source>Mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Built in</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Update now</source>
         <translation>Zaktualizuj teraz</translation>
     </message>
@@ -14345,6 +14669,54 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Pokazuj licznik kosztu</translation>
     </message>
     <message>
+        <source>Skills</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>About skills</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No skills in this project yet. A skill is a folder with a SKILL.md in it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No skills of yours yet. A skill is a folder with a SKILL.md in it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open folder</source>
+        <translation type="unfinished">Otwórz folder</translation>
+    </message>
+    <message>
+        <source>Open project folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Read the folders again</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n skill(s) can’t be offered. Fix them in their folders, then read the folders again.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Threads started in this window use this project’s skills. A new or changed skill shows in the next thread.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hikari AI reads a skill when the work matches its description. Skills are instructions and give no permission. A new or changed skill shows in the next thread.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Inline actions</source>
         <translation type="unfinished"></translation>
     </message>
@@ -14597,6 +14969,22 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Żądania trafiają tylko do dodanych dostawców i do %1. W tym systemie komponent AI nie jest izolowany w piaskownicy.</translation>
     </message>
     <message>
+        <source>Cycle values</source>
+        <translation>Wartości cykliczne</translation>
+    </message>
+    <message>
+        <source>Each Cycle command steps the tag in the start block of the selected lines to the next value. Cycle back steps the other way.</source>
+        <translation>Każde polecenie cyklu zmienia tag w bloku początkowym zaznaczonych wierszy na następną wartość. Cykl wstecz zmienia go w drugą stronę.</translation>
+    </message>
+    <message>
+        <source>Values for %1, in order</source>
+        <translation>Wartości dla %1, po kolei</translation>
+    </message>
+    <message>
+        <source>Each Cycle command steps the tag in the selected lines&apos; start block to the next value. Cycle back steps the other way.</source>
+        <translation type="vanished">Każde polecenie cyklu zmienia tag w bloku początkowym zaznaczonych wierszy na następną wartość. Cykl wstecz zmienia go w drugą stronę.</translation>
+    </message>
+    <message>
         <source>Delete MCP server</source>
         <translation type="unfinished"></translation>
     </message>
@@ -14626,7 +15014,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Failed</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Niepowodzenie</translation>
     </message>
     <message>
         <source>Starts when the agent needs it</source>
@@ -14650,7 +15038,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Command</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Polecenie</translation>
     </message>
     <message>
         <source>Environment</source>
@@ -14742,6 +15130,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Servers run as you, outside the AI component’s sandbox. Tools that may change or delete things ask first in every mode. Changes apply at once.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Compact long conversations automatically</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>At 90% of the model’s context window, old tool results are cleared, then older turns are summarised. Your history stays in the panel.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -15122,6 +15518,22 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Keep %1</source>
         <translation>Zachowaj %1</translation>
+    </message>
+    <message>
+        <source>This project turns plugins on or off, or changes their settings.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Trust this folder to use them</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This project uses %1, which isn’t installed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Install from the marketplace</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Search plugins</source>
@@ -15561,7 +15973,130 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
 </context>
 <context>
+    <name>HikariSub.Position</name>
+    <message>
+        <source>Position to margins</source>
+        <translation>Pozycja na marginesy</translation>
+    </message>
+    <message>
+        <source>Margins to position</source>
+        <translation>Marginesy na pozycję</translation>
+    </message>
+    <message>
+        <source>Top left (%1)</source>
+        <translation>U góry po lewej (%1)</translation>
+    </message>
+    <message>
+        <source>Top centre (%1)</source>
+        <translation>U góry pośrodku (%1)</translation>
+    </message>
+    <message>
+        <source>Top right (%1)</source>
+        <translation>U góry po prawej (%1)</translation>
+    </message>
+    <message>
+        <source>Middle left (%1)</source>
+        <translation>Pośrodku po lewej (%1)</translation>
+    </message>
+    <message>
+        <source>Middle centre (%1)</source>
+        <translation>Na środku (%1)</translation>
+    </message>
+    <message>
+        <source>Middle right (%1)</source>
+        <translation>Pośrodku po prawej (%1)</translation>
+    </message>
+    <message>
+        <source>Bottom left (%1)</source>
+        <translation>Na dole po lewej (%1)</translation>
+    </message>
+    <message>
+        <source>Bottom centre (%1)</source>
+        <translation>Na dole pośrodku (%1)</translation>
+    </message>
+    <message>
+        <source>Bottom right (%1)</source>
+        <translation>Na dole po prawej (%1)</translation>
+    </message>
+    <message>
+        <source>Change alignment, keep position</source>
+        <translation>Zmień wyrównanie, zachowaj pozycję</translation>
+    </message>
+    <message>
+        <source>Align and distribute</source>
+        <translation>Wyrównaj i rozłóż</translation>
+    </message>
+    <message>
+        <source>Relative to</source>
+        <translation>Względem</translation>
+    </message>
+    <message>
+        <source>The active line</source>
+        <translation type="vanished">Aktywnego wiersza</translation>
+    </message>
+    <message>
+        <source>The video frame</source>
+        <translation type="vanished">Klatki wideo</translation>
+    </message>
+    <message>
+        <source>Active line</source>
+        <translation>Aktywnego wiersza</translation>
+    </message>
+    <message>
+        <source>Video frame</source>
+        <translation>Klatki wideo</translation>
+    </message>
+    <message>
+        <source>Align left edges</source>
+        <translation>Wyrównaj lewe krawędzie</translation>
+    </message>
+    <message>
+        <source>Align centres</source>
+        <translation>Wyrównaj środki</translation>
+    </message>
+    <message>
+        <source>Align right edges</source>
+        <translation>Wyrównaj prawe krawędzie</translation>
+    </message>
+    <message>
+        <source>Align top edges</source>
+        <translation>Wyrównaj górne krawędzie</translation>
+    </message>
+    <message>
+        <source>Align middles</source>
+        <translation>Wyrównaj środki w pionie</translation>
+    </message>
+    <message>
+        <source>Align bottom edges</source>
+        <translation>Wyrównaj dolne krawędzie</translation>
+    </message>
+    <message>
+        <source>Distribute horizontally</source>
+        <translation>Rozłóż poziomo</translation>
+    </message>
+    <message>
+        <source>Distribute vertically</source>
+        <translation>Rozłóż pionowo</translation>
+    </message>
+    <message>
+        <source>Phantom</source>
+        <translation>Fantom</translation>
+    </message>
+    <message>
+        <source>Keep the start aligned</source>
+        <translation>Zachowaj wyrównanie początku</translation>
+    </message>
+    <message>
+        <source>Keep the end aligned</source>
+        <translation>Zachowaj wyrównanie końca</translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.Project</name>
+    <message>
+        <source>%1 in project.toml looks like a credential, so it is ignored. Keys go in this Project’s credentials file (.hikari/credentials.toml) or this machine’s environment, never in project.toml.</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message>
         <source>Project settings</source>
         <translation>Ustawienia projektu</translation>
@@ -18049,6 +18584,41 @@ ponieważ została zmieniona.</translation>
     </message>
 </context>
 <context>
+    <name>HikariSub.Skills</name>
+    <message>
+        <source>The folder’s name isn’t a skill name: use a–z, 0–9 and single hyphens.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The folder has no SKILL.md.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>SKILL.md isn’t UTF-8 text, or is over 256 KiB.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>SKILL.md doesn’t start with frontmatter (---).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>SKILL.md says name: %1, but the folder is %2.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>SKILL.md has no description.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hidden by this project’s.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Replaced by yours.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.Spelling</name>
     <message>
         <source>Ignore words in capitals</source>
@@ -18737,6 +19307,30 @@ ponieważ została zmieniona.</translation>
         <translation>katalog</translation>
     </message>
     <message>
+        <source>Move catalogue</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy catalogue</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The project already has a catalogue named “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>You already have a catalogue named “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation type="unfinished">Kopiuj</translation>
+    </message>
+    <message>
         <source>Delete catalogue</source>
         <translation>Usuń katalog</translation>
     </message>
@@ -18887,6 +19481,46 @@ ponieważ została zmieniona.</translation>
     <message>
         <source>Catalogue</source>
         <translation>Katalog</translation>
+    </message>
+    <message>
+        <source>%1, hidden by the project’s copy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hidden by the project’s copy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Catalogue tiers</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy to project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy to mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hidden by the project’s copy. Copy it to the project to use it there.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Add to file</source>
@@ -19179,6 +19813,10 @@ ponieważ została zmieniona.</translation>
     <message>
         <source>The catalogue “%1” no longer exists.</source>
         <translation>Katalog “%1” już nie istnieje.</translation>
+    </message>
+    <message>
+        <source>The project’s copy hides this catalogue. Copy it to edit it.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Style named “%1” already exists.</source>
@@ -23678,12 +24316,32 @@ bądź brakuje kodeków czy też splittera</translation>
         <translation>Kroki</translation>
     </message>
     <message>
+        <source>Layout</source>
+        <translation>Układ</translation>
+    </message>
+    <message>
         <source>In</source>
         <translation>Wejście</translation>
     </message>
     <message>
         <source>Out</source>
         <translation>Wyjście</translation>
+    </message>
+    <message>
+        <source>Offset</source>
+        <translation>Przesunięcie</translation>
+    </message>
+    <message>
+        <source>Frames a step</source>
+        <translation>Klatki na krok</translation>
+    </message>
+    <message>
+        <source>Past the end</source>
+        <translation>Poza końcem</translation>
+    </message>
+    <message>
+        <source>Lines</source>
+        <translation>Linijki</translation>
     </message>
     <message numerus="yes">
         <source>Changes %n lines</source>
@@ -24326,6 +24984,10 @@ bądź brakuje kodeków czy też splittera</translation>
         <translation>Perspektywa</translation>
     </message>
     <message>
+        <source>Text on path</source>
+        <translation>Tekst na ścieżce</translation>
+    </message>
+    <message>
         <source>\org mode</source>
         <translation>Tryb \org</translation>
     </message>
@@ -24664,6 +25326,54 @@ zwiększając lub zmniejszając wartość.</translation>
         <translation>Linia nie ma znaków</translation>
     </message>
     <message>
+        <source>Apply</source>
+        <translation>Zastosuj</translation>
+    </message>
+    <message>
+        <source>Draw a path, or give the line a vector clip</source>
+        <translation>Narysuj ścieżkę albo dodaj linijce wycinek wektorowy</translation>
+    </message>
+    <message>
+        <source>Left</source>
+        <translation>Do lewej</translation>
+    </message>
+    <message>
+        <source>Reverse</source>
+        <translation>Odwróć</translation>
+    </message>
+    <message>
+        <source>Right</source>
+        <translation>Do prawej</translation>
+    </message>
+    <message>
+        <source>Rotate</source>
+        <translation>Obracaj</translation>
+    </message>
+    <message>
+        <source>Slide</source>
+        <translation>Przesuwanie</translation>
+    </message>
+    <message>
+        <source>Slide needs the video’s frames</source>
+        <translation>Przesuwanie wymaga klatek wideo</translation>
+    </message>
+    <message>
+        <source>Spread</source>
+        <translation>Rozłóż</translation>
+    </message>
+    <message>
+        <source>Text can’t be measured here</source>
+        <translation>Tutaj nie można zmierzyć tekstu</translation>
+    </message>
+    <message>
+        <source>No text to place</source>
+        <translation>Brak tekstu do rozmieszczenia</translation>
+    </message>
+    <message>
+        <source>The text is longer than the path. The last graphemes continue along its end.</source>
+        <translation>Tekst jest dłuższy niż ścieżka. Ostatnie grafemy biegną dalej od jej końca.</translation>
+    </message>
+    <message>
         <source>Edit</source>
         <translation>Edytuj</translation>
     </message>
@@ -24856,6 +25566,50 @@ Prostokąt płaszczyzny tekstu: dopasuj go do prostokąta w kadrze, a potem umie
 do not work on comments</source>
         <translation>Narzędzia edycji wizualnej
 nie działają na komentarzach</translation>
+    </message>
+    <message>
+        <source>Pathfinder: combine the drawing with the line’s clip, or with the other picked lines in Grid order</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unite</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Subtract</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Intersect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Exclude</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Offset corners</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Miter</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Round</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Square</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Apply offset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing would be left of the drawing</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

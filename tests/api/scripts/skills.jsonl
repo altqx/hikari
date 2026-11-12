@@ -1,4 +1,4 @@
-{"call": "skills.list", "exact": {"skills": [{"skill": "subtitle-notes", "files": ["SKILL.md", "references/terms.md"]}]}}
+{"call": "skills.list", "exact": {"skills": [{"skill": "subtitle-notes", "origin": "yours", "files": ["SKILL.md", "references/terms.md"]}]}}
 {"call": "skills.list", "as": "plugin", "error": "not_granted"}
 {"call": "skills.read", "params": {"skill": "subtitle-notes", "file": "references/terms.md"}, "exact": {"skill": "subtitle-notes", "file": "references/terms.md", "size": 26, "data": "Karaoke: timed syllables.\n"}}
 {"call": "skills.read", "params": {"skill": "subtitle-notes", "file": "SKILL.md"}, "result": {"skill": "subtitle-notes", "size": 100}}

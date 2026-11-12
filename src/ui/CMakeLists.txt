@@ -25,6 +25,7 @@ qt_target_qml_sources(hikari_ui QML_FILES ShiftTimesPanel.qml TimingPostprocesso
     ShiftLines.qml ShiftNeed.qml FormSection.qml SegmentedButtons.qml PrimaryButton.qml)
 qt_target_qml_sources(hikari_ui QML_FILES HomePage.qml RecentList.qml)
 qt_target_qml_sources(hikari_ui QML_FILES StylesPanel.qml)
+qt_target_qml_sources(hikari_ui QML_FILES ChangeAlignmentMenu.qml AlignDistributeMenu.qml PhantomMenu.qml CycleValuesPage.qml)
 qt_target_qml_sources(hikari_ui QML_FILES TagListPopup.qml EditorTagList.qml)
 qt_target_qml_sources(hikari_ui QML_FILES TagButton.qml TagButtonEditor.qml)
 qt_target_qml_sources(hikari_ui QML_FILES NodeGraphCanvas.qml NodePort.qml NodeAddPopup.qml NodeInspector.qml
@@ -165,6 +166,7 @@ qt_target_qml_sources(hikari_ui QML_FILES MessageBox.qml DangerButton.qml Popove
     ToastStack.qml InlineBar.qml ClashReview.qml ChooseStyles.qml HotkeyCapture.qml ListChooser.qml DatePicker.qml
     MessageHost.qml LogPanel.qml)
 qt_target_qml_sources(hikari_ui QML_FILES HidableQuestion.qml)
+qt_target_qml_sources(hikari_ui QML_FILES TierChip.qml TierSaveButton.qml)
 qt_target_qml_sources(hikari_ui QML_FILES SetNewFpsWindow.qml)
 qt_target_qml_sources(hikari_ui QML_FILES LazyMessageBox.qml UnsavedChanges.qml Autosaves.qml StartupOffer.qml)
 qt_target_qml_sources(hikari_ui QML_FILES SpellingAddedWords.qml ResampleWindow.qml)

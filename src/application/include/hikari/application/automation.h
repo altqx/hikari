@@ -174,14 +174,17 @@ struct MacroResult {
 //   ScriptResolution          integers {PlayResX, PlayResY as staged, 0 missing} -> integers {width, height}
 //                             (asked only while one is missing; the answer goes into the staged
 //                             Script Info; Unavailable: nothing written)
+//   TextOutline               strings {text}, style {family, size, xscale, yscale, hspace},
+//                             integers {bold, italic, underline, strikeout} -> strings {drawing},
+//                             numbers {width, height, ascent, descent} (Unavailable: no such font)
 // Unavailable reaches the script as nil: no video, no Document, a cancelled picker.
 enum class HostService : std::int32_t {
     FrameFromMs = 1, MsFromFrame, VideoSize, Keyframes, Frame, AudioSelection, ProjectProperties, TextExtents,
     ClipboardGet, ClipboardSet, OpenFiles, SaveFile, StatusText, DecodePath, FileName,
     EditorCursor, SetEditorCursor, EditorSelection, SetEditorSelection, EditorModified,
-    FrequencyPeaks, Gettext, ScriptResolution, FrameTimes, TextExtentsMany, FrameSize, FramePixel,
+    FrequencyPeaks, Gettext, ScriptResolution, FrameTimes, TextExtentsMany, FrameSize, FramePixel, TextOutline,
 };
-inline constexpr std::int32_t kLastHostService = static_cast<std::int32_t>(HostService::FramePixel);
+inline constexpr std::int32_t kLastHostService = static_cast<std::int32_t>(HostService::TextOutline);
 
 struct HostServiceRequest {
     HostService service = HostService::FrameFromMs;

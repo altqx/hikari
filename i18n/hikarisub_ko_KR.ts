@@ -591,6 +591,54 @@
             <numerusform>%n줄 모두 보기</numerusform>
         </translation>
     </message>
+    <message>
+        <source>This conversation is nearly full</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 of %2 tokens. Automatic compaction is off in Settings › AI.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Compact conversation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New thread from summary</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>compacting…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>compacts at the next tool call</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Couldn’t compact the conversation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>There’s nothing to compact yet.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The summary request failed twice (%1). Nothing was removed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Carried on from the summary of “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Context compacted %1 → %2 tokens</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Audio</name>
@@ -1442,6 +1490,10 @@ Output device: %2</source>
         <translation>표시</translation>
     </message>
     <message>
+        <source>This project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Scripts</source>
         <translation>스크립트</translation>
     </message>
@@ -1670,6 +1722,10 @@ Output device: %2</source>
     <message>
         <source>%1 also uses %2 and takes it.</source>
         <translation>%1도 %2(을)를 사용하며 그쪽이 우선합니다.</translation>
+    </message>
+    <message>
+        <source>Trust this folder to use them</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Remove shortcut</source>
@@ -5810,6 +5866,22 @@ Failed to copy %2 fonts.</source>
         <translation>번역문에 넣을 글자</translation>
     </message>
     <message>
+        <source>Start tag block</source>
+        <translation>시작 태그 블록</translation>
+    </message>
+    <message>
+        <source>Clip (\clip or \iclip)</source>
+        <translation>클립 (\clip 또는 \iclip)</translation>
+    </message>
+    <message>
+        <source>Only these tags</source>
+        <translation>이 태그만</translation>
+    </message>
+    <message>
+        <source>These tags:</source>
+        <translation type="vanished">다음 태그:</translation>
+    </message>
+    <message>
         <source>changed</source>
         <translation>변경됨</translation>
     </message>
@@ -5932,6 +6004,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Columns to copy from the %1 selected lines</source>
         <translation>선택한 줄 %1개에서 복사할 열</translation>
+    </message>
+    <message>
+        <source>Tags</source>
+        <translation>태그</translation>
+    </message>
+    <message>
+        <source>Paste puts each tag into the start block, replacing the same tag.</source>
+        <translation>붙여넣기는 각 태그를 시작 블록에 넣고 같은 태그를 대체합니다.</translation>
     </message>
     <message>
         <source>Select all</source>
@@ -7326,6 +7406,10 @@ Failed to copy %2 fonts.</source>
         <translation>그라데이션</translation>
     </message>
     <message>
+        <source>Text on path</source>
+        <translation>경로 따라 텍스트</translation>
+    </message>
+    <message>
         <source>Vector clip: move points</source>
         <translation>벡터 클립: 점 이동</translation>
     </message>
@@ -7552,6 +7636,138 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Swap dialogue alternatives</source>
         <translation>대사 대안 맞바꾸기</translation>
+    </message>
+    <message>
+        <source>Change alignment to bottom left (\an1), keep position</source>
+        <translation>정렬을 왼쪽 아래(\an1)으로 변경, 위치 유지</translation>
+    </message>
+    <message>
+        <source>Change alignment to bottom centre (\an2), keep position</source>
+        <translation>정렬을 가운데 아래(\an2)으로 변경, 위치 유지</translation>
+    </message>
+    <message>
+        <source>Change alignment to bottom right (\an3), keep position</source>
+        <translation>정렬을 오른쪽 아래(\an3)으로 변경, 위치 유지</translation>
+    </message>
+    <message>
+        <source>Change alignment to middle left (\an4), keep position</source>
+        <translation>정렬을 왼쪽 가운데(\an4)으로 변경, 위치 유지</translation>
+    </message>
+    <message>
+        <source>Change alignment to middle centre (\an5), keep position</source>
+        <translation>정렬을 정가운데(\an5)으로 변경, 위치 유지</translation>
+    </message>
+    <message>
+        <source>Change alignment to middle right (\an6), keep position</source>
+        <translation>정렬을 오른쪽 가운데(\an6)으로 변경, 위치 유지</translation>
+    </message>
+    <message>
+        <source>Change alignment to top left (\an7), keep position</source>
+        <translation>정렬을 왼쪽 위(\an7)으로 변경, 위치 유지</translation>
+    </message>
+    <message>
+        <source>Change alignment to top centre (\an8), keep position</source>
+        <translation>정렬을 가운데 위(\an8)으로 변경, 위치 유지</translation>
+    </message>
+    <message>
+        <source>Change alignment to top right (\an9), keep position</source>
+        <translation>정렬을 오른쪽 위(\an9)으로 변경, 위치 유지</translation>
+    </message>
+    <message>
+        <source>Align left edges</source>
+        <translation>왼쪽 가장자리 맞추기</translation>
+    </message>
+    <message>
+        <source>Align centres</source>
+        <translation>가로 가운데 맞추기</translation>
+    </message>
+    <message>
+        <source>Align right edges</source>
+        <translation>오른쪽 가장자리 맞추기</translation>
+    </message>
+    <message>
+        <source>Align top edges</source>
+        <translation>위쪽 가장자리 맞추기</translation>
+    </message>
+    <message>
+        <source>Align middles</source>
+        <translation>세로 가운데 맞추기</translation>
+    </message>
+    <message>
+        <source>Align bottom edges</source>
+        <translation>아래쪽 가장자리 맞추기</translation>
+    </message>
+    <message>
+        <source>Distribute horizontally</source>
+        <translation>가로로 균등 분배</translation>
+    </message>
+    <message>
+        <source>Distribute vertically</source>
+        <translation>세로로 균등 분배</translation>
+    </message>
+    <message>
+        <source>Position to margins</source>
+        <translation>위치를 여백으로</translation>
+    </message>
+    <message>
+        <source>Margins to position</source>
+        <translation>여백을 위치로</translation>
+    </message>
+    <message>
+        <source>Phantom: keep the start aligned</source>
+        <translation>팬텀: 시작 부분 맞춤 유지</translation>
+    </message>
+    <message>
+        <source>Phantom: keep the end aligned</source>
+        <translation>팬텀: 끝부분 맞춤 유지</translation>
+    </message>
+    <message>
+        <source>Cycle \blur</source>
+        <translation>\blur 순환</translation>
+    </message>
+    <message>
+        <source>Cycle \blur back</source>
+        <translation>\blur 거꾸로 순환</translation>
+    </message>
+    <message>
+        <source>Cycle \bord</source>
+        <translation>\bord 순환</translation>
+    </message>
+    <message>
+        <source>Cycle \bord back</source>
+        <translation>\bord 거꾸로 순환</translation>
+    </message>
+    <message>
+        <source>Cycle \shad</source>
+        <translation>\shad 순환</translation>
+    </message>
+    <message>
+        <source>Cycle \shad back</source>
+        <translation>\shad 거꾸로 순환</translation>
+    </message>
+    <message>
+        <source>Cycle \alpha</source>
+        <translation>\alpha 순환</translation>
+    </message>
+    <message>
+        <source>Cycle \alpha back</source>
+        <translation>\alpha 거꾸로 순환</translation>
+    </message>
+    <message>
+        <source>Cycle \an</source>
+        <translation>\an 순환</translation>
+    </message>
+    <message>
+        <source>Cycle \an back</source>
+        <translation>\an 거꾸로 순환</translation>
+    </message>
+    <message>
+        <source>Cycle \fsp</source>
+        <translation>\fsp 순환</translation>
+    </message>
+    <message>
+        <source>Cycle \fsp back</source>
+        <translation>\fsp 거꾸로 순환</translation>
     </message>
     <message>
         <source>Move tab to new window</source>
@@ -7963,6 +8179,22 @@ Failed to copy %2 fonts.</source>
         </translation>
     </message>
     <message numerus="yes">
+        <source>The reviewer didn’t approve line %1, so it’s marked Unconfirmed.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>The reviewer didn’t approve line %1. Check it before you use it.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>This project’s translator and reviewer models are used once you trust its folder; your own ran instead.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
         <source>%n line(s) weren’t sent.</source>
         <translation type="unfinished">
             <numerusform></numerusform>
@@ -8008,6 +8240,10 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Out of date: you edited line %1 after it was sent.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not approved by the reviewer: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -10628,6 +10864,30 @@ Failed to copy %2 fonts.</source>
         <source>Align to video</source>
         <translation>영상에 맞추기</translation>
     </message>
+    <message>
+        <source>Project</source>
+        <translation type="unfinished">프로젝트</translation>
+    </message>
+    <message>
+        <source>Mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation type="unfinished">저장</translation>
+    </message>
+    <message>
+        <source>Save to project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save to mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Where to save</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Matroska</name>
@@ -10817,11 +11077,11 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Point</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">지점</translation>
     </message>
     <message>
         <source>Tags</source>
-        <translation type="unfinished">태그</translation>
+        <translation>태그</translation>
     </message>
     <message>
         <source>Drawing</source>
@@ -11303,6 +11563,22 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>Aegisub 3.2.2 templates</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Text outlines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each syllable is drawn as a hollow drawing in its style’s font, and its outline thickens while it is sung.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Striped letters</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each syllable’s letters are cut into thin horizontal stripes, which fade in as it is sung.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Nodes</name>
@@ -11364,7 +11640,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Point</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">지점</translation>
     </message>
     <message>
         <source>A point from its coordinates.</source>
@@ -11904,7 +12180,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Tags</source>
-        <translation type="unfinished">태그</translation>
+        <translation>태그</translation>
     </message>
     <message>
         <source>Colours</source>
@@ -11925,6 +12201,26 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Groups</source>
         <translation type="unfinished">그룹</translation>
+    </message>
+    <message>
+        <source>Text to drawing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The text (unwired, the unit’s own) drawn in its line’s Style font, at \p1 from the text’s top left, as Yutils’ text_to_shape draws it. width and height are the text’s.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Combine drawings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>a and b combined, each filled as libass fills it: unite, subtract (b taken away from a), intersect, or exclude (what only one of them covers). Each one’s \p scale is kept; the result is at \p1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How to combine them.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -13627,6 +13923,28 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>알려진 결함 버전</translation>
     </message>
     <message>
+        <source>Only the first %1 of its %2 files are offered.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n file(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Project</source>
+        <translation type="unfinished">프로젝트</translation>
+    </message>
+    <message>
+        <source>Mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Built in</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Update now</source>
         <translation>지금 업데이트</translation>
     </message>
@@ -14127,6 +14445,52 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>비용 미터 표시</translation>
     </message>
     <message>
+        <source>Skills</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>About skills</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No skills in this project yet. A skill is a folder with a SKILL.md in it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No skills of yours yet. A skill is a folder with a SKILL.md in it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open folder</source>
+        <translation type="unfinished">폴더 열기</translation>
+    </message>
+    <message>
+        <source>Open project folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Read the folders again</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n skill(s) can’t be offered. Fix them in their folders, then read the folders again.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Threads started in this window use this project’s skills. A new or changed skill shows in the next thread.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hikari AI reads a skill when the work matches its description. Skills are instructions and give no permission. A new or changed skill shows in the next thread.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Inline actions</source>
         <translation type="unfinished"></translation>
     </message>
@@ -14379,6 +14743,22 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>요청은 추가한 공급자와 %1에만 갑니다. 이 시스템에서는 AI 구성 요소가 샌드박스에서 실행되지 않습니다.</translation>
     </message>
     <message>
+        <source>Cycle values</source>
+        <translation>순환 값</translation>
+    </message>
+    <message>
+        <source>Each Cycle command steps the tag in the start block of the selected lines to the next value. Cycle back steps the other way.</source>
+        <translation>각 순환 명령은 선택한 줄의 시작 블록에 있는 태그를 다음 값으로 바꿉니다. 거꾸로 순환은 반대 방향으로 바꿉니다.</translation>
+    </message>
+    <message>
+        <source>Values for %1, in order</source>
+        <translation>%1 값, 순서대로</translation>
+    </message>
+    <message>
+        <source>Each Cycle command steps the tag in the selected lines&apos; start block to the next value. Cycle back steps the other way.</source>
+        <translation type="vanished">각 순환 명령은 선택한 줄의 시작 블록에 있는 태그를 다음 값으로 바꿉니다. 거꾸로 순환은 반대 방향으로 바꿉니다.</translation>
+    </message>
+    <message>
         <source>Delete MCP server</source>
         <translation type="unfinished"></translation>
     </message>
@@ -14406,7 +14786,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Failed</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">실패</translation>
     </message>
     <message>
         <source>Starts when the agent needs it</source>
@@ -14430,7 +14810,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Command</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">명령</translation>
     </message>
     <message>
         <source>Environment</source>
@@ -14522,6 +14902,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Servers run as you, outside the AI component’s sandbox. Tools that may change or delete things ask first in every mode. Changes apply at once.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Compact long conversations automatically</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>At 90% of the model’s context window, old tool results are cleared, then older turns are summarised. Your history stays in the panel.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -14902,6 +15290,22 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Keep %1</source>
         <translation>%1 유지</translation>
+    </message>
+    <message>
+        <source>This project turns plugins on or off, or changes their settings.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Trust this folder to use them</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This project uses %1, which isn’t installed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Install from the marketplace</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Search plugins</source>
@@ -15337,7 +15741,130 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
 </context>
 <context>
+    <name>HikariSub.Position</name>
+    <message>
+        <source>Position to margins</source>
+        <translation>위치를 여백으로</translation>
+    </message>
+    <message>
+        <source>Margins to position</source>
+        <translation>여백을 위치로</translation>
+    </message>
+    <message>
+        <source>Top left (%1)</source>
+        <translation>왼쪽 위 (%1)</translation>
+    </message>
+    <message>
+        <source>Top centre (%1)</source>
+        <translation>가운데 위 (%1)</translation>
+    </message>
+    <message>
+        <source>Top right (%1)</source>
+        <translation>오른쪽 위 (%1)</translation>
+    </message>
+    <message>
+        <source>Middle left (%1)</source>
+        <translation>왼쪽 가운데 (%1)</translation>
+    </message>
+    <message>
+        <source>Middle centre (%1)</source>
+        <translation>정가운데 (%1)</translation>
+    </message>
+    <message>
+        <source>Middle right (%1)</source>
+        <translation>오른쪽 가운데 (%1)</translation>
+    </message>
+    <message>
+        <source>Bottom left (%1)</source>
+        <translation>왼쪽 아래 (%1)</translation>
+    </message>
+    <message>
+        <source>Bottom centre (%1)</source>
+        <translation>가운데 아래 (%1)</translation>
+    </message>
+    <message>
+        <source>Bottom right (%1)</source>
+        <translation>오른쪽 아래 (%1)</translation>
+    </message>
+    <message>
+        <source>Change alignment, keep position</source>
+        <translation>위치 유지하며 정렬 변경</translation>
+    </message>
+    <message>
+        <source>Align and distribute</source>
+        <translation>맞춤 및 분배</translation>
+    </message>
+    <message>
+        <source>Relative to</source>
+        <translation>기준</translation>
+    </message>
+    <message>
+        <source>The active line</source>
+        <translation type="vanished">활성 줄</translation>
+    </message>
+    <message>
+        <source>The video frame</source>
+        <translation type="vanished">비디오 프레임</translation>
+    </message>
+    <message>
+        <source>Active line</source>
+        <translation>활성 줄</translation>
+    </message>
+    <message>
+        <source>Video frame</source>
+        <translation>비디오 프레임</translation>
+    </message>
+    <message>
+        <source>Align left edges</source>
+        <translation>왼쪽 가장자리 맞추기</translation>
+    </message>
+    <message>
+        <source>Align centres</source>
+        <translation>가로 가운데 맞추기</translation>
+    </message>
+    <message>
+        <source>Align right edges</source>
+        <translation>오른쪽 가장자리 맞추기</translation>
+    </message>
+    <message>
+        <source>Align top edges</source>
+        <translation>위쪽 가장자리 맞추기</translation>
+    </message>
+    <message>
+        <source>Align middles</source>
+        <translation>세로 가운데 맞추기</translation>
+    </message>
+    <message>
+        <source>Align bottom edges</source>
+        <translation>아래쪽 가장자리 맞추기</translation>
+    </message>
+    <message>
+        <source>Distribute horizontally</source>
+        <translation>가로로 균등 분배</translation>
+    </message>
+    <message>
+        <source>Distribute vertically</source>
+        <translation>세로로 균등 분배</translation>
+    </message>
+    <message>
+        <source>Phantom</source>
+        <translation>팬텀</translation>
+    </message>
+    <message>
+        <source>Keep the start aligned</source>
+        <translation>시작 부분 맞춤 유지</translation>
+    </message>
+    <message>
+        <source>Keep the end aligned</source>
+        <translation>끝부분 맞춤 유지</translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.Project</name>
+    <message>
+        <source>%1 in project.toml looks like a credential, so it is ignored. Keys go in this Project’s credentials file (.hikari/credentials.toml) or this machine’s environment, never in project.toml.</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message>
         <source>Project settings</source>
         <translation>프로젝트 설정</translation>
@@ -17757,6 +18284,41 @@ because it was edited.</source>
     </message>
 </context>
 <context>
+    <name>HikariSub.Skills</name>
+    <message>
+        <source>The folder’s name isn’t a skill name: use a–z, 0–9 and single hyphens.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The folder has no SKILL.md.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>SKILL.md isn’t UTF-8 text, or is over 256 KiB.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>SKILL.md doesn’t start with frontmatter (---).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>SKILL.md says name: %1, but the folder is %2.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>SKILL.md has no description.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hidden by this project’s.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Replaced by yours.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.Spelling</name>
     <message>
         <source>Ignore words in capitals</source>
@@ -18429,6 +18991,30 @@ because it was edited.</source>
         <translation>목록</translation>
     </message>
     <message>
+        <source>Move catalogue</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy catalogue</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The project already has a catalogue named “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>You already have a catalogue named “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move</source>
+        <translation type="unfinished">이동</translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation type="unfinished">복사</translation>
+    </message>
+    <message>
         <source>Delete catalogue</source>
         <translation>목록 삭제</translation>
     </message>
@@ -18575,6 +19161,46 @@ because it was edited.</source>
     <message>
         <source>Catalogue</source>
         <translation>목록</translation>
+    </message>
+    <message>
+        <source>%1, hidden by the project’s copy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hidden by the project’s copy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Catalogue tiers</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy to project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy to mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hidden by the project’s copy. Copy it to the project to use it there.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Add to file</source>
@@ -18863,6 +19489,10 @@ because it was edited.</source>
     <message>
         <source>The catalogue “%1” no longer exists.</source>
         <translation>“%1” 목록이 더 이상 없습니다.</translation>
+    </message>
+    <message>
+        <source>The project’s copy hides this catalogue. Copy it to edit it.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Style named “%1” already exists.</source>
@@ -23280,12 +23910,32 @@ or codecs or a splitter may be missing</source>
         <translation>단계</translation>
     </message>
     <message>
+        <source>Layout</source>
+        <translation>레이아웃</translation>
+    </message>
+    <message>
         <source>In</source>
         <translation>페이드 인</translation>
     </message>
     <message>
         <source>Out</source>
         <translation>페이드 아웃</translation>
+    </message>
+    <message>
+        <source>Offset</source>
+        <translation>오프셋</translation>
+    </message>
+    <message>
+        <source>Frames a step</source>
+        <translation>단계당 프레임</translation>
+    </message>
+    <message>
+        <source>Past the end</source>
+        <translation>끝을 넘은 길이</translation>
+    </message>
+    <message>
+        <source>Lines</source>
+        <translation>줄</translation>
     </message>
     <message numerus="yes">
         <source>Changes %n lines</source>
@@ -23914,6 +24564,10 @@ or codecs or a splitter may be missing</source>
         <translation>원근</translation>
     </message>
     <message>
+        <source>Text on path</source>
+        <translation>경로 따라 텍스트</translation>
+    </message>
+    <message>
         <source>\org mode</source>
         <translation>\org 모드</translation>
     </message>
@@ -24252,6 +24906,54 @@ increasing or decreasing the value.</source>
         <translation>줄에 글자가 없습니다</translation>
     </message>
     <message>
+        <source>Apply</source>
+        <translation>적용</translation>
+    </message>
+    <message>
+        <source>Draw a path, or give the line a vector clip</source>
+        <translation>경로를 그리거나 줄에 벡터 클립을 지정하십시오</translation>
+    </message>
+    <message>
+        <source>Left</source>
+        <translation>좌측</translation>
+    </message>
+    <message>
+        <source>Reverse</source>
+        <translation>반대 방향</translation>
+    </message>
+    <message>
+        <source>Right</source>
+        <translation>우측</translation>
+    </message>
+    <message>
+        <source>Rotate</source>
+        <translation>회전</translation>
+    </message>
+    <message>
+        <source>Slide</source>
+        <translation>슬라이드</translation>
+    </message>
+    <message>
+        <source>Slide needs the video’s frames</source>
+        <translation>슬라이드에는 영상 프레임이 필요합니다</translation>
+    </message>
+    <message>
+        <source>Spread</source>
+        <translation>균등 배치</translation>
+    </message>
+    <message>
+        <source>Text can’t be measured here</source>
+        <translation>여기서는 텍스트를 측정할 수 없습니다</translation>
+    </message>
+    <message>
+        <source>No text to place</source>
+        <translation>배치할 텍스트 없음</translation>
+    </message>
+    <message>
+        <source>The text is longer than the path. The last graphemes continue along its end.</source>
+        <translation>텍스트가 경로보다 깁니다. 마지막 글자들은 경로 끝에서 그대로 이어집니다.</translation>
+    </message>
+    <message>
         <source>Edit</source>
         <translation>편집</translation>
     </message>
@@ -24444,6 +25146,50 @@ A rectangle of the text’s plane: match it to one in the shot, then place the t
 do not work on comments</source>
         <translation>시각 편집 도구는
 주석에서 작동하지 않습니다</translation>
+    </message>
+    <message>
+        <source>Pathfinder: combine the drawing with the line’s clip, or with the other picked lines in Grid order</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unite</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Subtract</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Intersect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Exclude</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Offset corners</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Miter</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Round</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Square</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Apply offset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing would be left of the drawing</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

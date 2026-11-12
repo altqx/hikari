@@ -1,7 +1,14 @@
 import {
+    applyCompaction, clearedResults, kClearedTarget, kCompactAt, kDefaultContextTokens, keptRanges, messageChars,
+    prefixChars, summaryMessage, summaryRequest, TokenCount, withStubs,
+} from "./compaction";
+import {
+    type CompactedUpdate,
     ErrorCode,
     Method,
     type PlanStatus,
+    type SessionCompactParams,
+    type SessionCompactResult,
     type SessionModel,
     type SessionNewParams,
     type SessionPromptParams,
@@ -79,6 +86,12 @@ function resultText(result: CallToolResult): string {
     return result.content.map((c) => c.type === "text" ? c.text : `[${c.mimeType} image]`).join("\n");
 }
 
+function reasonOf(error: unknown): string {
+    if (error instanceof ProviderError)
+        return error.detail || error.kind;
+    return error instanceof Error ? error.message : String(error);
+}
+
 function isPlanStatus(value: unknown): value is PlanStatus {
     return value === "pending" || value === "in_progress" || value === "completed";
 }
@@ -103,6 +116,11 @@ export class AgentSession {
     private pendingText = "";
     private flushTimer?: ReturnType<typeof setTimeout>;
     private system?: string;
+    private contextTokens: number;
+    private autoCompact: boolean;
+    private readonly count = new TokenCount();
+    private compactedTo?: number;
+    private compacting?: AbortController;
 
     constructor(
         readonly id: string,
@@ -117,20 +135,26 @@ export class AgentSession {
         this.history = [...(params.history ?? [])];
         this.model = params.model;
         this.webSearch = params.webSearch === true;
+        this.contextTokens = params.contextTokens || kDefaultContextTokens;
+        this.autoCompact = params.autoCompact === true;
         this.tools = tools(() => this.webSearch);
     }
 
     get running(): boolean {
-        return this.turn !== undefined;
+        return this.turn !== undefined || this.compacting !== undefined;
     }
 
     async prompt(params: SessionPromptParams): Promise<SessionPromptResult> {
-        if (this.turn)
+        if (this.running)
             throw new RpcError(ErrorCode.busy, "A turn is already running in this session");
         if (params.model)
             this.model = params.model;
         if (params.webSearch !== undefined)
             this.webSearch = params.webSearch;
+        if (params.contextTokens)
+            this.contextTokens = params.contextTokens;
+        if (params.autoCompact !== undefined)
+            this.autoCompact = params.autoCompact;
         this.tools.imageBudget = this.imageBudget(this.model.providerId);
         const turn: Turn = { controller: new AbortController(), steers: [] };
         this.turn = turn;
@@ -148,6 +172,30 @@ export class AgentSession {
 
     cancel(): void {
         this.turn?.controller.abort();
+        this.compacting?.abort();
+    }
+
+    async compact(params: SessionCompactParams): Promise<SessionCompactResult> {
+        if (this.running)
+            throw new RpcError(ErrorCode.busy, "A turn is running in this session; compact it once the turn ends");
+        const controller = new AbortController();
+        this.compacting = controller;
+        try {
+            this.system ??= await this.instructions();
+            if (params.apply === false)
+                return { compacted: false, summary: await this.summarise(this.history, params.instruction, controller.signal) };
+            const update = await this.compaction(controller.signal, params.instruction, true);
+            if (!update)
+                return { compacted: false };
+            this.apply(update);
+            return { compacted: true, ...(update.summary === undefined ? {} : { summary: update.summary }) };
+        } catch (error) {
+            if (controller.signal.aborted)
+                throw new RpcError(ErrorCode.requestCancelled, "The user stopped the compaction");
+            throw error;
+        } finally {
+            this.compacting = undefined;
+        }
     }
 
     steer(params: SessionSteerParams): Promise<SessionSteerResult> {
@@ -160,7 +208,21 @@ export class AgentSession {
     private async run(turn: Turn, caching: boolean | undefined): Promise<SessionStopReason> {
         const signal = turn.controller.signal;
         for (let request = 0; request < kMaxTurnRequests; ++request) {
+            if (this.dueForCompaction()) {
+                try {
+                    const update = await this.compaction(signal, undefined, false);
+                    if (update)
+                        this.apply(update);
+                    this.compactedTo = this.estimate();
+                } catch (error) {
+                    if (signal.aborted)
+                        return "cancelled";
+                    this.send({ sessionUpdate: "compaction_failed", reason: reasonOf(error) });
+                    return "compaction_failed";
+                }
+            }
             let finished: Finished;
+            const chars = this.chars();
             try {
                 finished = await this.complete(this.request(caching), signal, (_stream, update) => this.streamed(update));
             } catch (error) {
@@ -171,6 +233,8 @@ export class AgentSession {
             this.flush();
             this.sources(finished);
             this.send({ sessionUpdate: "usage", usage: finished.usage });
+            if (finished.usage.inputTokens > 0)
+                this.count.measure(finished.usage.inputTokens, chars);
             const parts: Part[] = finished.text ? [{ type: "text", text: finished.text }] : [];
             parts.push(...finished.toolCalls);
             if (parts.length > 0)
@@ -244,8 +308,74 @@ export class AgentSession {
         return this.tools.list(true).find((t) => t.name === name)?.annotations.readOnlyHint ? "read" : "other";
     }
 
+    private definitions(): ToolDefinition[] {
+        return [...this.tools.list(), kPlanTool, kReadSkillTool].map(definition);
+    }
+
+    private chars(messages: readonly Message[] = this.history): number {
+        return prefixChars(this.system, this.definitions()) + messageChars(messages);
+    }
+
+    private estimate(messages: readonly Message[] = this.history): number {
+        return this.count.estimate(this.chars(messages));
+    }
+
+    private dueForCompaction(): boolean {
+        const estimate = this.estimate();
+        if (!this.autoCompact || estimate < kCompactAt * this.contextTokens)
+            return false;
+        return this.compactedTo === undefined || estimate - this.compactedTo >= (1 - kCompactAt) * this.contextTokens;
+    }
+
+    /**
+     * Stage 1 clears old read-tool results; stage 2, when that leaves 60% or more or the user asked, summarises what
+     * lies between the first user message and the last two. Nothing changes until the update is applied.
+     */
+    private async compaction(signal: AbortSignal, instruction: string | undefined, manual: boolean)
+        : Promise<CompactedUpdate | undefined> {
+        const before = this.estimate();
+        const { headEnd, tailStart } = keptRanges(this.history);
+        const stubs = clearedResults(this.history, tailStart, (tool) => this.kindOf(tool) === "read");
+        const cleared = withStubs(this.history, stubs);
+        const clearedTokens = this.estimate(cleared);
+        const stageOne: CompactedUpdate = { sessionUpdate: "compacted", stage: 1, before, after: clearedTokens, stubs };
+        if (tailStart <= headEnd || (!manual && clearedTokens < kClearedTarget * this.contextTokens))
+            return stubs.length > 0 ? stageOne : undefined;
+        const summary = await this.summarise(cleared.slice(0, tailStart), instruction, signal);
+        const update: CompactedUpdate = { ...stageOne, stage: 2, summary, message: summaryMessage(summary), headEnd,
+            keptFrom: tailStart };
+        update.after = this.estimate(applyCompaction(this.history, update));
+        return update;
+    }
+
+    /** The thread's own model writes the summary; a failed request is retried once. */
+    private async summarise(messages: readonly Message[], instruction: string | undefined, signal: AbortSignal)
+        : Promise<string> {
+        let failure: unknown;
+        for (let attempt = 0; attempt < 2; ++attempt) {
+            try {
+                const finished = await this.complete(summaryRequest(messages, instruction, this.model, this.nextStream()),
+                    signal, () => {});
+                this.send({ sessionUpdate: "usage", usage: finished.usage, compaction: true });
+                if (finished.text.trim())
+                    return finished.text.trim();
+                failure = new ProviderError("malformed", "The summary came back empty");
+            } catch (error) {
+                if (signal.aborted)
+                    throw error;
+                failure = error;
+            }
+        }
+        throw failure;
+    }
+
+    private apply(update: CompactedUpdate): void {
+        this.history.splice(0, this.history.length, ...applyCompaction(this.history, update));
+        this.send(update);
+    }
+
     private request(caching: boolean | undefined): CompleteParams {
-        const tools = [...this.tools.list(), kPlanTool, kReadSkillTool].map(definition);
+        const tools = this.definitions();
         return {
             stream: this.nextStream(),
             providerId: this.model.providerId,
@@ -291,6 +421,7 @@ export interface Session {
     steer(params: SessionSteerParams): Promise<SessionSteerResult>;
     cancel(): void;
     close?(): void;
+    compact?(params: SessionCompactParams): Promise<SessionCompactResult>;
     /** False once the user stopped the turn, or when none runs: an agent's late calls then change nothing. */
     takesToolCalls?(): boolean;
 }
@@ -343,6 +474,13 @@ export class AgentSessions {
 
     steer(params: SessionSteerParams): Promise<SessionSteerResult> {
         return this.session(params.sessionId).steer(params);
+    }
+
+    compact(params: SessionCompactParams): Promise<SessionCompactResult> {
+        const session = this.session(params.sessionId);
+        if (!session.compact)
+            throw new RpcError(ErrorCode.invalidParams, "This agent compacts its own conversation");
+        return session.compact(params);
     }
 
     cancel(sessionId: string): void {

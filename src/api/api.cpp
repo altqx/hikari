@@ -82,9 +82,11 @@ const Registry &Api::registry()
         detail::addFileOperations(r);
         detail::addSkillOperations(r);
         detail::addAutomationOperations(r);
+        detail::addTranslationOperations(r);
         detail::addNodeOperations(r);
         detail::addTypesetOperations(r);
         detail::addProjectOperations(r);
+        detail::addKaraokeOperations(r);
         detail::addEvents(r);
         return r;
     }();

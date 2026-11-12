@@ -9,6 +9,7 @@
 #include "hikari/regex/regex.h"
 #include "kara_templater.h"
 #include "karaskel_tables.h"
+#include "shape_tables.h"
 #include "util_impl.h"
 #include "lua_helper_internal.h"
 #include "lua_host_cache.h"
@@ -369,6 +370,7 @@ int cancelScript(lua_State *L)
 }
 
 int gettext(lua_State *L); // through the host's catalog
+int textOutline(lua_State *L);
 
 // DependencyControl updates these in the user's Include, so a user copy wins over the shipped one.
 bool userMayReplace(std::string_view name)
@@ -828,6 +830,7 @@ void installAegisub(lua_State *L)
     installHostServices(L);
     installHikari(L);
     hikari::karaskel_tables::install(L);
+    hikari::shape_tables::install(L, textOutline);
     hikari::util_impl::install(L);
     lua_setglobal(L, "aegisub");
 }
@@ -1780,6 +1783,12 @@ int pushNil(lua_State *L)
     return 1;
 }
 
+int pushFalse(lua_State *L)
+{
+    lua_pushboolean(L, 0);
+    return 1;
+}
+
 int subsScriptResolutionAsked(lua_State *L)
 {
     using hikari::application::Resolution;
@@ -2104,6 +2113,33 @@ int textExtents(lua_State *L)
     for (const double v : {extents->width, extents->height, extents->descent, extents->externalLeading})
         lua_pushnumber(L, v);
     return 4;
+}
+
+int textOutline(lua_State *L)
+{
+    for (int i = 2; i <= 5; ++i)
+        if (lua_type(L, i) != LUA_TBOOLEAN)
+            return pushFalse(L);
+    if (lua_type(L, 1) != LUA_TSTRING || lua_type(L, 10) != LUA_TSTRING)
+        return pushFalse(L);
+    std::vector<std::string> style{lua_tostring(L, 1)};
+    for (int i = 6; i <= 9; ++i) {
+        if (lua_type(L, i) != LUA_TNUMBER)
+            return pushFalse(L);
+        char number[32];
+        std::snprintf(number, sizeof number, "%.17g", lua_tonumber(L, i));
+        style.emplace_back(number);
+    }
+    const auto reply = callHost(L, "text_to_shape", HostService::TextOutline,
+                                {lua_toboolean(L, 2), lua_toboolean(L, 3), lua_toboolean(L, 4), lua_toboolean(L, 5)},
+                                {lua_tostring(L, 10)}, std::move(style));
+    if (!reply || reply->strings.empty() || reply->numbers.size() != 4)
+        return pushFalse(L);
+    lua_pushboolean(L, 1);
+    lua_pushstring(L, reply->strings.front().c_str());
+    for (const double v : reply->numbers)
+        lua_pushnumber(L, v);
+    return 6;
 }
 
 // aegisub.__karaskel_impl.measure_many(style, texts[, count]): text_extents of each text, flat, four numbers a

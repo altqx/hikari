@@ -154,9 +154,9 @@ constexpr const char *kSign = "{\\pos(320,180)\\clip(100,100,300,200)}Sign";
 
 }
 
-TEST(VisualGradient, IsTheLastFamilyOnTheRailAndChosenByB)
+TEST(VisualGradient, ComesBeforeTextOnPathOnTheRailAndIsChosenByItsCommand)
 {
-    EXPECT_EQ(railOrder().back(), Family::Gradient);
+    EXPECT_EQ(railOrder()[kFamilyCount - 2], Family::Gradient);
     EXPECT_EQ(familyOfHotkey("VIDEO_TOOL_GRADIENT"), Family::Gradient);
     EXPECT_EQ(makeVisualTool(Family::Gradient)->family(), Family::Gradient);
 }

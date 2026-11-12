@@ -6,6 +6,7 @@
 
 #include <expected>
 #include <string>
+#include <span>
 #include <string_view>
 
 namespace hikari::application {
@@ -17,8 +18,9 @@ bool translationMode(const EditSession &session);
 std::u8string copyRows(const EditSession &session);
 // The copied Lines' extradata (core::extradataClipboard), empty when none has any.
 std::u8string copyRowsExtradata(const EditSession &session);
-// `columns`: core::column bits.
-std::u8string copyColumns(const EditSession &session, int columns);
+// `columns`: core::column bits. Without Text, the Tags bits copy each Line's start block, or its clip
+// and the `tagNames` tags ("blur", "3c") of the start block, as the Text column; "{}" when there are none.
+std::u8string copyColumns(const EditSession &session, int columns, std::span<const std::u8string> tagNames = {});
 
 // Pasted Lines go before the first shown selected Line and become the
 // selection; inside a group they join its innermost group there, and a hidden next Line hides them.
@@ -30,8 +32,11 @@ std::expected<void, CommandRefusal> pasteRows(EditSession &session, std::u8strin
                                               std::u8string_view extradata = {});
 // The n-th pasted line's fields go into the n-th shown selected Line; extra
 // pasted lines are ignored.
+// Without Text, the Tags bits put the pasted start block in place of the Line's, or the pasted clip and
+// `tagNames` tags in place of the same tags of the Line's start block.
 std::expected<void, CommandRefusal> pasteColumns(EditSession &session, std::u8string_view text, int columns,
                                                  const LineVisible &visible = {},
-                                                 const core::PasteConversion &conversion = {});
+                                                 const core::PasteConversion &conversion = {},
+                                                 std::span<const std::u8string> tagNames = {});
 
 }

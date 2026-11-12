@@ -27,9 +27,9 @@ bool sameProject(const std::optional<api::ProjectState> &a, const std::optional<
 
 ApiHost::ApiHost(Wiring wiring, QObject *parent)
     : QObject(parent), m_wiring(std::move(wiring)),
-      m_skills(m_wiring.skills.empty() ? nullptr : std::make_unique<api::FolderSkills>(m_wiring.skills)),
+      m_skills(m_wiring.skills.empty() ? nullptr : std::make_unique<api::SkillTiers>(m_wiring.skills)),
       m_api(api::Host{this, this, this, m_wiring.settings, m_wiring.media, this, &m_review, this, m_skills.get(),
-                     m_wiring.automation, this, this}),
+                     m_wiring.automation, this, this, this, m_wiring.karaoke}),
       m_seenProject(project())
 {
 }
@@ -195,6 +195,15 @@ bool ApiHost::write(const std::string &path, std::string_view bytes)
     QSaveFile file(QString::fromStdString(path));
     return file.open(QIODevice::WriteOnly) && file.write(bytes.data(), qint64(bytes.size())) == qint64(bytes.size()) &&
            file.commit();
+}
+
+std::optional<std::string> ApiHost::projectFolder(application::DocumentId document) const
+{
+    const auto folder = m_wiring.translationFolder ? m_wiring.translationFolder(document) : std::nullopt;
+    if (!folder)
+        return std::nullopt;
+    const std::u8string path = folder->u8string();
+    return std::string(reinterpret_cast<const char *>(path.data()), path.size());
 }
 
 std::optional<application::OverlayFrame> ApiHost::render(application::DocumentId id, const core::Document &document,

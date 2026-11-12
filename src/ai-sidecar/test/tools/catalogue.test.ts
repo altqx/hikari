@@ -79,6 +79,15 @@ describe("the tool catalogue", () => {
         expect(apply.properties.edits.items.oneOf[0].properties.op).toEqual({ enum: ["set_line"] });
     });
 
+    test("offers the karaoke tools in karaoke, with the templater's apply and the aligner as writes", () => {
+        const karaoke = kOwn.entries.filter((e) => e.group === "karaoke").map((e) => e.tool.name).sort();
+        expect(karaoke).toEqual(["audio_peaks", "karaoke_align", "karaoke_apply_template", "karaoke_check",
+            "karaoke_furigana", "karaoke_kanji", "karaoke_onsets", "karaoke_snap", "karaoke_split", "karaoke_syllables",
+            "karaoke_template_preview", "karaoke_time"]);
+        expect(kOwn.entries.find((e) => e.tool.name === "karaoke_apply_template")!.tool.annotations.readOnlyHint).toBe(false);
+        expect(kOwn.entries.find((e) => e.tool.name === "karaoke_snap")!.tool.annotations.readOnlyHint).toBe(true);
+    });
+
     test("offers the frame tools and the solvers in typeset, with full instead of maxPixels on video_frame", () => {
         const typeset = kOwn.entries.filter((e) => e.group === "typeset").map((e) => e.tool.name).sort();
         expect(typeset).toEqual(["typeset_apply", "typeset_check", "typeset_clip", "typeset_drawing", "typeset_hydra",

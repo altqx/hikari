@@ -46,6 +46,7 @@
 #include "hikari/application/grid_split.h"
 #include "hikari/application/motion_data.h"
 #include "hikari/application/visual_gradient.h"
+#include "hikari/application/visual_text_on_path.h"
 #include "hikari/application/visual_perspective.h"
 #include "hikari/application/visual_position.h"
 #include "hikari/application/visual_rotation.h"
@@ -773,8 +774,13 @@ class ShellTest : public QObject {
         for (QObject *o : root->findChildren<QObject *>())
             if (o->objectName() == QLatin1String(name))
                 return o;
+        if (auto *loader = root->findChild<QObject *>(QLatin1String(name) + QLatin1String("Loader"))) {
+            loader->setProperty("active", true);
+            return named(name);
+        }
         return nullptr;
     }
+    QQuickWindow *lazyWindow(const char *name) const { return qobject_cast<QQuickWindow *>(named(name)); }
     QQuickItem *stylesFilter()
     {
         if (!QMetaObject::invokeMethod(named("panelShowStyles"), "triggered"))
@@ -2883,7 +2889,7 @@ private slots:
         QVERIFY(editor.canUndoToLastSave());
 
         press(Qt::Key_H, Qt::ControlModifier | Qt::ShiftModifier);
-        auto *history = engine->rootObjects().first()->findChild<QQuickWindow *>(QStringLiteral("historyWindow"));
+        auto *history = lazyWindow("historyWindow");
         QVERIFY(history);
         QTRY_VERIFY(history->isVisible());
         auto *list = history->findChild<QQuickItem *>(QStringLiteral("historyList"));
@@ -4006,7 +4012,7 @@ private slots:
         QTRY_VERIFY(!picker->isVisible());
         application->fontCatalogs().waitResolved();
 
-        auto *manager = root->findChild<QQuickWindow *>(QStringLiteral("styleManager"));
+        auto *manager = lazyWindow("styleManager");
         QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("styleManagerMenuItem")), "triggered"));
         QTRY_VERIFY(manager->isVisible());
         QVERIFY(!manager->findChild<QObject *>(QStringLiteral("fontCatalogWindow")));
@@ -4595,7 +4601,7 @@ private slots:
         usePickerFonts();
         QVERIFY(application->openFile(fontAss("style-editor.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n")));
         auto *root = engine->rootObjects().first();
-        auto *window = root->findChild<QQuickWindow *>(QStringLiteral("styleManager"));
+        auto *window = lazyWindow("styleManager");
         QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("styleManagerMenuItem")), "triggered"));
         QTRY_VERIFY(window->isVisible());
         const auto more = [&](const QString &prefix) {
@@ -4689,7 +4695,7 @@ private slots:
         usePickerFonts();
         QVERIFY(application->openFile(fontAss("style-type.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n")));
         auto *root = engine->rootObjects().first();
-        auto *manager = root->findChild<QQuickWindow *>(QStringLiteral("styleManager"));
+        auto *manager = lazyWindow("styleManager");
         QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("styleManagerMenuItem")), "triggered"));
         QTRY_VERIFY(manager->isVisible());
         QVERIFY(QTest::qWaitForWindowExposed(manager));
@@ -4776,7 +4782,7 @@ private slots:
             auto *controls = root->property("palette").value<QObject *>();
             QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
 
-            auto *manager = root->findChild<QQuickWindow *>(QStringLiteral("styleManager"));
+            auto *manager = lazyWindow("styleManager");
             QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("styleManagerMenuItem")), "triggered"));
             QTRY_VERIFY(manager->isVisible());
             const QVariantMap values = application->styleManager().beginEdit(false, 0);
@@ -4810,7 +4816,7 @@ private slots:
     {
         QVERIFY(application->openFile(fontAss("style-fit.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n")));
         auto *root = engine->rootObjects().first();
-        auto *manager = root->findChild<QQuickWindow *>(QStringLiteral("styleManager"));
+        auto *manager = lazyWindow("styleManager");
         QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("styleManagerMenuItem")), "triggered"));
         QTRY_VERIFY(manager->isVisible());
         QVERIFY(QTest::qWaitForWindowExposed(manager));
@@ -4959,7 +4965,7 @@ private slots:
         usePickerFonts();
         QVERIFY(application->openFile(fontAss("style-choice.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n")));
         auto *root = engine->rootObjects().first();
-        auto *editor = root->findChild<QQuickWindow *>(QStringLiteral("styleManager"));
+        auto *editor = lazyWindow("styleManager");
         QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("styleManagerMenuItem")), "triggered"));
         QTRY_VERIFY(editor->isVisible());
         const QVariantMap values = application->styleManager().beginEdit(false, 0);
@@ -5006,7 +5012,7 @@ private slots:
         f.close();
         QVERIFY(application->openFile(path));
         auto *root = engine->rootObjects().first();
-        auto *editor = root->findChild<QQuickWindow *>(QStringLiteral("styleManager"));
+        auto *editor = lazyWindow("styleManager");
         QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("styleManagerMenuItem")), "triggered"));
         QTRY_VERIFY(editor->isVisible());
         const QVariantMap values = application->styleManager().beginEdit(false, 0);
@@ -5042,7 +5048,7 @@ private slots:
         }
         QVERIFY(application->openFile(path));
         auto *root = engine->rootObjects().first();
-        auto *manager = root->findChild<QQuickWindow *>(QStringLiteral("styleManager"));
+        auto *manager = lazyWindow("styleManager");
         QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("styleManagerMenuItem")), "triggered"));
         QTRY_VERIFY(manager->isVisible());
         const QVariantMap values = application->styleManager().beginEdit(false, 0);
@@ -5178,7 +5184,7 @@ private slots:
         }
         QVERIFY(application->openFile(path));
         auto *root = engine->rootObjects().first();
-        auto *manager = root->findChild<QQuickWindow *>(QStringLiteral("styleManager"));
+        auto *manager = lazyWindow("styleManager");
         QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("styleManagerMenuItem")), "triggered"));
         QTRY_VERIFY(manager->isVisible());
         const QVariantMap values = application->styleManager().beginEdit(false, 0);
@@ -5838,7 +5844,7 @@ private slots:
                     "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n");
         }
         QVERIFY(application->openFile(path));
-        auto *manager = root->findChild<QQuickWindow *>(QStringLiteral("styleManager"));
+        auto *manager = lazyWindow("styleManager");
         QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("styleManagerMenuItem")), "triggered"));
         QTRY_VERIFY(manager->isVisible());
         const QVariantMap values = application->styleManager().beginEdit(false, 0);
@@ -6224,7 +6230,7 @@ private slots:
         press(Qt::Key_Home);
         press(Qt::Key_Down);
         QTRY_COMPARE(session->selection().active, session->document().lines()[1]->id);
-        auto *window = engine->rootObjects().first()->findChild<QQuickWindow *>(QStringLiteral("translationShiftWindow"));
+        auto *window = lazyWindow("translationShiftWindow");
         QVERIFY(window);
         QVERIFY(QMetaObject::invokeMethod(window, "open"));
         QCOMPARE(window->modality(), Qt::NonModal);
@@ -6355,7 +6361,7 @@ private slots:
                                               : QStringLiteral("nothing"))));
         }
         QTRY_VERIFY(root->property("floatingPanelActive").toBool());
-        auto *history = root->findChild<QQuickWindow *>(QStringLiteral("historyWindow"));
+        auto *history = lazyWindow("historyWindow");
         QVERIFY(history && !history->isVisible());
         QTest::keyClick(floating, Qt::Key_H, Qt::ControlModifier | Qt::ShiftModifier);
         QTRY_VERIFY(history->isVisible());
@@ -8138,7 +8144,7 @@ private slots:
         auto *session = application->files().session(*application->workspace().editingTarget());
         auto &styles = application->styleManager();
         auto *root = engine->rootObjects().first();
-        auto *window = root->findChild<QQuickWindow *>(QStringLiteral("styleManager"));
+        auto *window = lazyWindow("styleManager");
         QVERIFY(window);
         const bool wasActive = QAccessible::isActive();
         QAccessible::setActive(true);
@@ -8208,7 +8214,7 @@ private slots:
         item("editingGrid")->forceActiveFocus();
         press(Qt::Key_Home);
         QTRY_VERIFY(application->editor().hasLine());
-        auto *manager = engine->rootObjects().first()->findChild<QQuickWindow *>(QStringLiteral("styleManager"));
+        auto *manager = lazyWindow("styleManager");
         QVERIFY(QMetaObject::invokeMethod(named("styleManagerMenuItem"), "triggered"));
         QTRY_VERIFY(manager->isVisible());
         auto *content = manager->contentItem();
@@ -8375,7 +8381,7 @@ private slots:
         press(Qt::Key_Home);
         QTRY_VERIFY(application->editor().hasLine());
         auto &styles = application->styleManager();
-        auto *manager = engine->rootObjects().first()->findChild<QQuickWindow *>(QStringLiteral("styleManager"));
+        auto *manager = lazyWindow("styleManager");
         QVERIFY(QMetaObject::invokeMethod(named("styleManagerMenuItem"), "triggered"));
         QTRY_VERIFY(manager->isVisible());
         auto *content = manager->contentItem();
@@ -8559,7 +8565,7 @@ private slots:
         press(Qt::Key_Home);
         QTRY_VERIFY(application->editor().hasLine());
         auto &styles = application->styleManager();
-        auto *manager = engine->rootObjects().first()->findChild<QQuickWindow *>(QStringLiteral("styleManager"));
+        auto *manager = lazyWindow("styleManager");
         QVERIFY(QMetaObject::invokeMethod(named("styleManagerMenuItem"), "triggered"));
         QTRY_VERIFY(manager->isVisible());
         auto *content = manager->contentItem();
@@ -8763,7 +8769,7 @@ private slots:
         for (int i = 0; i < tabs.size(); ++i)
             if (tabs[i].toMap().value(QStringLiteral("title")).toString() == QLatin1String("repeated.ass"))
                 application->selectTab(i);
-        auto *manager = engine->rootObjects().first()->findChild<QQuickWindow *>(QStringLiteral("styleManager"));
+        auto *manager = lazyWindow("styleManager");
         QVERIFY(QMetaObject::invokeMethod(named("styleManagerMenuItem"), "triggered"));
         QTRY_VERIFY(manager->isVisible());
         auto *content = manager->contentItem();
@@ -8840,7 +8846,7 @@ private slots:
         auto *first = targetSession();
         QVERIFY(first != second);
         auto &styles = application->styleManager();
-        auto *manager = engine->rootObjects().first()->findChild<QQuickWindow *>(QStringLiteral("styleManager"));
+        auto *manager = lazyWindow("styleManager");
         QVERIFY(QMetaObject::invokeMethod(named("styleManagerMenuItem"), "triggered"));
         QTRY_VERIFY(manager->isVisible());
         auto *content = manager->contentItem();
@@ -9969,7 +9975,7 @@ private slots:
     void aboutAndCreditsShowTheNotices()
     {
         auto *root = engine->rootObjects().first();
-        auto *about = root->findChild<QQuickWindow *>(QStringLiteral("aboutDialog"));
+        auto *about = lazyWindow("aboutDialog");
         QVERIFY(about);
         QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("aboutMenuItem"))->property("action").value<QObject *>(), "trigger"));
         QTRY_VERIFY(about->isVisible());
@@ -9989,7 +9995,7 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(about, "close"));
         QTRY_VERIFY(!about->isVisible());
 
-        auto *credits = root->findChild<QQuickWindow *>(QStringLiteral("creditsDialog"));
+        auto *credits = lazyWindow("creditsDialog");
         QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("creditsMenuItem"))->property("action").value<QObject *>(), "trigger"));
         QTRY_VERIFY(credits->isVisible());
         QCOMPARE(credits->modality(), Qt::NonModal);
@@ -10086,7 +10092,7 @@ private slots:
         QVERIFY(item("homePage")->isVisible());
         QVERIFY(!item("homeWhatsNew")->isVisible());
         QVERIFY(!window->findChild<QObject *>(QStringLiteral("whatsNewCard")));
-        auto *dialog = top->findChild<QQuickWindow *>(QStringLiteral("whatsNewDialog"));
+        auto *dialog = lazyWindow("whatsNewDialog");
         QVERIFY(dialog);
         auto *menuItem = top->findChild<QObject *>(QStringLiteral("whatsNewMenuItem"));
         QVERIFY(menuItem);
@@ -10272,7 +10278,7 @@ private slots:
                                           Q_ARG(bool, true)));
         toasts(ui::LogController::Error, QStringLiteral("Install update"), QStringLiteral("The update was put back."));
 
-        auto *available = root->findChild<QQuickWindow *>(QStringLiteral("updateAvailable"));
+        auto *available = lazyWindow("updateAvailable");
         const QVariantMap release{{QStringLiteral("name"), QStringLiteral("HikariSub 9.0.0")},
                                   {QStringLiteral("tag"), QStringLiteral("v9.0.0")},
                                   {QStringLiteral("version"), QStringLiteral("9.0.0")},
@@ -11478,7 +11484,7 @@ private slots:
         QVERIFY(application->openFile(path));
         auto *session = application->files().session(*application->workspace().editingTarget());
         auto *root = engine->rootObjects().first();
-        auto *dialog = root->findChild<QObject *>(QStringLiteral("selectLinesDialog"));
+        auto *dialog = named("selectLinesDialog");
         QVERIFY(dialog);
         auto *menuItem = root->findChild<QObject *>(QStringLiteral("selectLinesMenuItem"));
         QVERIFY(QMetaObject::invokeMethod(menuItem->property("action").value<QObject *>(), "trigger"));
@@ -12673,6 +12679,7 @@ private slots:
             {"findFolderDialog", QStringLiteral("Choose folder")},
             {"aspectRatioPopover", QStringLiteral("Change aspect ratio")},
         };
+        QVERIFY(named("aspectRatioDialog"));
         for (const auto &[name, title] : titles) {
             QObject *popup = find(name);
             QVERIFY2(popup, name);
@@ -14647,6 +14654,10 @@ private slots:
         };
         for (const char *name : pu6Windows)
             QVERIFY2(pu6Window(name), name);
+        for (const char *lazy : {"historyWindow", "tapCalibrationWindow", "selectLinesDialog", "columnsWindow",
+                                 "translationShiftWindow", "saveLayoutDialog", "manageLayoutsDialog", "aboutDialog",
+                                 "creditsDialog", "whatsNewDialog", "reportIssue", "updateAvailable", "styleManager"})
+            named(lazy);
         for (const Buttons &buttons : footers) {
             const char *first = buttons.front().first;
             QObject *found = named(first);
@@ -15106,7 +15117,7 @@ private slots:
         session->setSelection(application::Selection{lines[0]->id, all, lines[0]->id, {}});
         QCOMPARE(application->selectedLineCount(), 4);
         QCOMPARE(application->selectedLineCount(true), 2);
-        auto *columns = qobject_cast<QQuickWindow *>(engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("columnsWindow")));
+        auto *columns = qobject_cast<QQuickWindow *>(named("columnsWindow"));
         QVERIFY(columns);
         QVERIFY(QMetaObject::invokeMethod(columns, "choose", Q_ARG(QVariant, true)));
         QTRY_VERIFY(columns->isVisible());
@@ -17483,7 +17494,7 @@ private slots:
     }
     QObject *importWizard() const
     {
-        return engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("settingsImportDialog"));
+        return named("settingsImportDialog");
     }
     bool importLegacySettingsByHotkey()
     {
@@ -17677,6 +17688,13 @@ private slots:
               {"editor.softLineBreak", "Shift+Enter inserts a soft line break (\\n)"},
               {"translation.showOriginal", "Show the original"},
               {"translation.hideOriginalOnVideo", "Hide the original on the video"}}},
+            {"settingsPageEditing",
+             {{"editing.cycleValues.blur", nullptr},
+              {"editing.cycleValues.bord", nullptr},
+              {"editing.cycleValues.shad", nullptr},
+              {"editing.cycleValues.alpha", nullptr},
+              {"editing.cycleValues.an", nullptr},
+              {"editing.cycleValues.fsp", nullptr}}},
             {"settingsPageSpelling",
              {{"editor.spellchecker", "Check spelling"},
               {"editor.dictionaryLanguage", nullptr},
@@ -17805,6 +17823,7 @@ private slots:
               {"ai.agent.threadCapCents", nullptr},
               {"ai.agent.dailyCapCents", nullptr},
               {"ai.agent.costMeter", "Show the cost meter"},
+              {"ai.agent.autoCompact", "Compact long conversations automatically"},
               {"ai.inline.translateTo", nullptr},
               {"ai.inline.contextLines", nullptr},
               {"ai.autoUpdate", "Update AI components automatically"},
@@ -18803,7 +18822,7 @@ private slots:
 private:
     QObject *gettingStarted() const
     {
-        return engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("gettingStartedDialog"));
+        return named("gettingStartedDialog");
     }
     QQuickItem *setupItem(const char *name) const { return dialogItem("gettingStartedDialog", name); }
     QVariantMap setupValues() const { return gettingStarted()->property("values").toMap(); }
@@ -21838,13 +21857,12 @@ private slots:
         QStringList names;
         for (const auto &p : model)
             names << p.toMap().value(QStringLiteral("name")).toString();
-        QCOMPARE(names, (QStringList{"General", "Appearance", "Line editor", "Spelling and grammar", "Grid",
+        QCOMPARE(names, (QStringList{"General", "Appearance", "Line editor", "Editing", "Spelling and grammar", "Grid",
                                      "Video", "Audio", "Conversion", "Script properties", "Automation", "Shortcuts",
                                      "AI", "Updates and privacy"}));
         QVERIFY(dialogItem("settingsDialog", "settingsPageHotkeys"));
-        QCOMPARE(hotkeyRows().size(), 352);
-        QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(),
-                 QStringLiteral("Global Accept the timing assistant\u2019s suggestion"));
+        QCOMPARE(hotkeyRows().size(), 386);
+        QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Global Position to margins"));
         QCOMPARE(application->hotkeys().selected(), 0);
         QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "hotkeyFilter"), "activated", Q_ARG(int, 5)));
         QCOMPARE(hotkeyRows().size(), int(std::ranges::count_if(application::hotkeyNames(), [](const auto &n) {
@@ -21877,7 +21895,7 @@ private slots:
         QCOMPARE(installedKeys("global").value(QStringLiteral("GLOBAL_HISTORY")).toString(), QStringLiteral("Ctrl+Shift+K"));
         QVERIFY(application->hotkeys().globalShortcuts().contains(
             QVariantMap{{QStringLiteral("symbol"), QStringLiteral("GLOBAL_HISTORY")}, {QStringLiteral("keys"), QStringLiteral("Ctrl+Shift+K")}}));
-        auto *history = engine->rootObjects().first()->findChild<QQuickWindow *>(QStringLiteral("historyWindow"));
+        auto *history = lazyWindow("historyWindow");
         QVERIFY(history);
         item<QQuickItem>("editingGrid")->forceActiveFocus();
         press(Qt::Key_Home);
@@ -22353,7 +22371,7 @@ private slots:
         press(Qt::Key_I, Qt::ControlModifier);
         QVERIFY(!timingDock->property("isOpen").toBool());
         application->editor().discard();
-        auto *history = engine->rootObjects().first()->findChild<QQuickWindow *>(QStringLiteral("historyWindow"));
+        auto *history = lazyWindow("historyWindow");
         QVERIFY(history);
         item("startField")->forceActiveFocus();
         press(Qt::Key_H, Qt::ControlModifier | Qt::AltModifier);
@@ -22364,7 +22382,7 @@ private slots:
         history->close();
         window->requestActivate();
         QTRY_VERIFY(window->isActive());
-        auto *styles = engine->rootObjects().first()->findChild<QQuickWindow *>(QStringLiteral("styleManager"));
+        auto *styles = lazyWindow("styleManager");
         QVERIFY(styles);
         item("editingGrid")->forceActiveFocus();
         press(Qt::Key_M, Qt::ControlModifier);
@@ -22438,7 +22456,7 @@ private slots:
         QTRY_COMPARE(lines(), 5);
         press(Qt::Key_5);
         QCOMPARE(lines(), 5);
-        auto *history = engine->rootObjects().first()->findChild<QQuickWindow *>(QStringLiteral("historyWindow"));
+        auto *history = lazyWindow("historyWindow");
         press(Qt::Key_Slash);
         QVERIFY(!history->isVisible());
         press(Qt::Key_Slash, Qt::KeypadModifier);
@@ -22463,7 +22481,7 @@ private slots:
         QTRY_VERIFY(mapping->isVisible());
         QCOMPARE(mapping->title(), QStringLiteral("Keys for “Style manager”"));
         QVERIFY(in(mapping, "hotkeyWindowChoice")->isVisible());
-        auto *styles = root->findChild<QQuickWindow *>(QStringLiteral("styleManager"));
+        auto *styles = lazyWindow("styleManager");
         QVERIFY(!styles->isVisible());
         keyTo(in(mapping, "hotkeyMappingKeys"), Qt::Key_K, Qt::ControlModifier | Qt::AltModifier);
         QTRY_VERIFY(!mapping->isVisible());
@@ -22539,7 +22557,7 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "hotkeyFilter"), "activated", Q_ARG(int, 1)));
         QVERIFY(h.listFiltered());
         const int count = int(hotkeyRows().size());
-        QCOMPARE(h.topBlock(), 0);
+        QCOMPARE(h.topBlock(), 1);
         int gap = -1;
         for (int i = 0; i < count && gap < 0; ++i)
             if (hotkeyRows()[i].toMap().value(QStringLiteral("block")).toInt() == 1)
@@ -26452,7 +26470,7 @@ private slots:
         QCOMPARE(application->shell().statusText(), QString());
         QVERIFY(QMetaObject::invokeMethod(named("audioOutputSettings"), "triggered"));
         QTRY_VERIFY((dialog = settingsWindow()) && dialog->property("visible").toBool());
-        QCOMPARE(dialogItem("settingsDialog", "settingsPages")->property("currentIndex").toInt(), 6);
+        QCOMPARE(dialogItem("settingsDialog", "settingsPages")->property("currentIndex").toInt(), 7);
         QCOMPARE(settings.text("workspace.settingsPage"), QStringLiteral("audio"));
         QCOMPARE(dialogItem("settingsDialog", "setting_audio.outputDevice")->property("currentIndex").toInt(), 0);
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
@@ -29109,6 +29127,96 @@ private slots:
         QVERIFY(!session->document().lines()[2]->comment);
     }
 
+    void visualTextOnPathThroughThePanel()
+    {
+        widenForTheInspectorBar();
+        using namespace application::visual;
+        QVERIFY(application->openFile(visualDocument(
+            "text-on-path.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\clip(m 40 200 b 80 80 240 80 280 200)}Sign\n")));
+        auto &tools = application->visualTools();
+        application->settingsStore()->set("video.openAtActiveLine", true);
+        application->video().openVideo(nativeFixture("cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(!tools.videoRect().isEmpty(), 20000);
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().frame() == 24, 20000);
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const core::LineId third = session->document().lines()[2]->id;
+        application->selectLine(third.value);
+        QTRY_VERIFY(session->selection().active == third);
+
+        QVERIFY(QMetaObject::invokeMethod(visualItem("visualTool13"), "click"));
+        QCOMPARE(tools.activeFamily(), int(Family::TextOnPath));
+        settleVisualBar();
+        QQuickItem *more = visualItem("visualToolMore");
+        auto *popover = visualItem("visualToolBar")->findChild<QObject *>(QStringLiteral("visualToolMorePopover"));
+        QVERIFY(more && popover);
+        if (more->isVisible()) {
+            QVERIFY(QMetaObject::invokeMethod(more, "click"));
+            QTRY_VERIFY(popover->property("opened").toBool());
+        }
+        const auto option = [&](const QString &name) { return visualItem(qPrintable(QStringLiteral("visualOption_") + name)); };
+        const QList<std::pair<QString, QString>> icons{
+            {QStringLiteral("mode0"), QStringLiteral("vector-drag")},   {QStringLiteral("mode1"), QStringLiteral("vector-line")},
+            {QStringLiteral("mode2"), QStringLiteral("vector-bezier")}, {QStringLiteral("mode3"), QStringLiteral("vector-delete")},
+            {QStringLiteral("align0"), QStringLiteral("align-left")},   {QStringLiteral("align1"), QStringLiteral("align-center")},
+            {QStringLiteral("align2"), QStringLiteral("align-right")},
+            {QStringLiteral("align3"), QStringLiteral("distribute-horizontal")},
+            {QStringLiteral("rotate"), QStringLiteral("tool-rotate-z")}, {QStringLiteral("reverse"), QStringLiteral("swap-lines")},
+            {QStringLiteral("slide"), QStringLiteral("media-play")},     {QStringLiteral("apply"), QStringLiteral("commit")}};
+        for (const auto &[name, icon] : icons) {
+            QTRY_VERIFY2(option(name), qPrintable(name));
+            QCOMPARE(option(name)->property("iconRole").toString(), icon);
+        }
+        QVERIFY(option(QStringLiteral("align0"))->property("checked").toBool());
+        QVERIFY(option(QStringLiteral("rotate"))->property("checked").toBool());
+        for (const char *value : {"offset", "lines"})
+            QVERIFY2(visualItem(qPrintable(QStringLiteral("visualValue_") + QLatin1String(value))), value);
+        if (popover->property("opened").toBool()) {
+            QVERIFY(QMetaObject::invokeMethod(popover, "revert"));
+            QTRY_VERIFY(!popover->property("visible").toBool());
+        }
+
+        auto *tool = dynamic_cast<TextOnPathTool *>(tools.tool());
+        QVERIFY(tool);
+        QTRY_VERIFY(tool->hasPending());
+        QCOMPARE(tool->previewLines(tools).size(), std::size_t(4));
+        QVERIFY(tool->hiddenLines(tools) == std::vector<core::LineId>{third});
+        const QString before = text(session->document().lines()[2]);
+        const std::size_t steps = session->historySize();
+        const std::size_t lines = session->document().lines().size();
+
+        visualItem("videoPanel")->forceActiveFocus();
+        QTest::keyClick(window, Qt::Key_Return);
+        QTRY_COMPARE(session->historySize(), steps + 1);
+        QCOMPARE(session->history().back().name, std::string("Text on path"));
+        QCOMPARE(session->document().lines().size(), lines + 4);
+        QVERIFY(session->document().lines()[2]->comment);
+        QCOMPARE(text(session->document().lines()[2]), before);
+        const QStringList clusters{QStringLiteral("S"), QStringLiteral("i"), QStringLiteral("g"), QStringLiteral("n")};
+        for (std::size_t i = 3; i < 7; ++i) {
+            const QString glyph = text(session->document().lines()[i]);
+            QVERIFY2(glyph.startsWith(QLatin1String("{\\an2\\pos(")) && glyph.contains(QLatin1String("\\frz")), qPrintable(glyph));
+            QVERIFY2(glyph.endsWith(QLatin1Char('}') + clusters[int(i - 3)]), qPrintable(glyph));
+            QVERIFY(session->selection().selected.contains(session->document().lines()[i]->id));
+        }
+        QVERIFY(session->undo());
+        QCOMPARE(session->document().lines().size(), lines);
+        QVERIFY(!session->document().lines()[2]->comment);
+
+        application->selectLine(third.value);
+        QTRY_VERIFY(session->selection().active == third);
+        QVERIFY(QMetaObject::invokeMethod(visualItem("visualTool0"), "click"));
+        QVERIFY(QMetaObject::invokeMethod(visualItem("visualTool13"), "click"));
+        tool = dynamic_cast<TextOnPathTool *>(tools.tool());
+        QVERIFY(tool);
+        QTRY_VERIFY(tool->hasPending());
+        const std::size_t beforeEscape = session->historySize();
+        visualItem("videoPanel")->forceActiveFocus();
+        QTest::keyClick(window, Qt::Key_Escape);
+        QTRY_VERIFY(!tool->hasPending());
+        QCOMPARE(session->historySize(), beforeEscape);
+        QCOMPARE(session->document().lines().size(), lines);
+    }
+
     void visualGradientScreenshots()
     {
         const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
@@ -30437,7 +30545,7 @@ private slots:
         QCOMPARE(pageIcon->property("iconRole").toString(), QStringLiteral("settings"));
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
         for (const char *w : {"historyWindow", "styleManager"}) {
-            auto *shown = root->findChild<QQuickWindow *>(QLatin1String(w));
+            auto *shown = lazyWindow(w);
             QVERIFY2(shown && !shown->icon().isNull(), w);
         }
     }
@@ -30695,7 +30803,7 @@ private slots:
         QVERIFY(application->openFile(path));
         app::attachStylePreview(*engine, application->styleManager());
         auto *root = engine->rootObjects().first();
-        auto *manager = root->findChild<QQuickWindow *>(QStringLiteral("styleManager"));
+        auto *manager = lazyWindow("styleManager");
         QVERIFY(QMetaObject::invokeMethod(manager, "showFor", Q_ARG(QVariant, QStringLiteral("Sign - Station"))));
         QTRY_VERIFY(manager->isVisible());
         QVERIFY(QTest::qWaitForWindowExposed(manager));
@@ -30816,7 +30924,7 @@ private slots:
             QVERIFY(QMetaObject::invokeMethod(popover, "reject"));
             QTRY_VERIFY(!popover->property("visible").toBool());
 
-            auto *manager = root->findChild<QQuickWindow *>(QStringLiteral("styleManager"));
+            auto *manager = lazyWindow("styleManager");
             QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("styleManagerMenuItem")), "triggered"));
             QTRY_VERIFY(manager->isVisible());
             const QVariantMap values = application->styleManager().beginEdit(false, 0);
@@ -33371,7 +33479,7 @@ private slots:
         item("editingGrid")->forceActiveFocus();
         press(Qt::Key_Home);
         QTRY_VERIFY(application->editor().hasLine());
-        auto *styles = engine->rootObjects().first()->findChild<QQuickWindow *>(QStringLiteral("styleManager"));
+        auto *styles = lazyWindow("styleManager");
         QVERIFY(styles);
         QVERIFY(QMetaObject::invokeMethod(item("styleEditButton"), "click"));
         QTRY_VERIFY(styles->isVisible());
@@ -33634,7 +33742,7 @@ private slots:
         }
         QVERIFY(QMetaObject::invokeMethod(dialog, "reject"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
-        auto *about = root->findChild<QObject *>(QStringLiteral("aboutDialog"));
+        auto *about = named("aboutDialog");
         QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("aboutMenuItem"))->property("action").value<QObject *>(), "trigger"));
         QTRY_VERIFY(about->property("visible").toBool());
         for (const char *code : {"light", "dark"}) {
@@ -33733,8 +33841,8 @@ private slots:
                                                                            "- The update notice remembers its size.")},
                                   {QStringLiteral("offer"), QStringLiteral("page")}};
         const std::vector<std::pair<QString, std::function<void()>>> dialogs{
-            {QStringLiteral("aboutDialog"), [&] { QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("aboutDialog")), "open"); }},
-            {QStringLiteral("creditsDialog"), [&] { QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("creditsDialog")), "open"); }},
+            {QStringLiteral("aboutDialog"), [&] { QMetaObject::invokeMethod(named("aboutDialog"), "open"); }},
+            {QStringLiteral("creditsDialog"), [&] { QMetaObject::invokeMethod(named("creditsDialog"), "open"); }},
             {QStringLiteral("updateAvailable"), [&] {
                  QMetaObject::invokeMethod(&updates, "finished", Q_ARG(QString, QStringLiteral("available")), Q_ARG(QVariantMap, release), Q_ARG(bool, true));
              }},
