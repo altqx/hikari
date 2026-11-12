@@ -38,11 +38,14 @@ export const Method = {
     sessionUpdate: "session/update",
     sessionSteer: "_hikari/session.steer",
     sessionClose: "_hikari/session.close",
+    sessionCompact: "_hikari/session.compact",
     requestPermission: "session/request_permission",
     providersSet: "_hikari/providers.set",
     modelsList: "_hikari/models.list",
     conversationEnd: "_hikari/conversation.end",
     complete: "_hikari/complete",
+    translate: "_hikari/translate",
+    translateProgress: "_hikari/translate.progress",
     searchTest: "_hikari/search.test",
     apiCall: "_hikari/api.call",
     apiSubscribe: "_hikari/api.subscribe",
@@ -59,6 +62,9 @@ export const Method = {
     toolsCall: "_hikari/tools.call",
     mcpMessage: "_hikari/mcp.message",
     mcpClosed: "_hikari/mcp.closed",
+    mcpServersSet: "_hikari/mcpServers.set",
+    mcpServerStatus: "_hikari/mcpServers.status",
+    mcpAdmit: "_hikari/mcpServers.admit",
 } as const;
 
 export interface InitializeParams {
@@ -100,7 +106,8 @@ export interface SessionModel {
 export interface SessionNewParams {
     sessionId: string;
     /** An external agent runs the thread instead of Hikari's loop; `model.model` is then the agent's model, if any. */
-    agent?: "claude" | "codex";
+    /** `acp:<name>` is an ACP agent Qt knows by that name. */
+    agent?: "claude" | "codex" | `acp:${string}`;
     model: SessionModel;
     system?: string;
     history?: Message[];
@@ -110,6 +117,10 @@ export interface SessionNewParams {
     maxOutputTokens?: number;
     /** Lets the session search the web, with the provider's own search or the user's service. */
     webSearch?: boolean;
+    /** The model's context window; 128k when unknown. */
+    contextTokens?: number;
+    /** Compacts the conversation by itself at 90% of the context window. */
+    autoCompact?: boolean;
 }
 
 export interface SessionPromptParams {
@@ -120,10 +131,13 @@ export interface SessionPromptParams {
     caching?: boolean;
     /** Switches web search for the session from this turn on. */
     webSearch?: boolean;
+    contextTokens?: number;
+    autoCompact?: boolean;
 }
 
 /** ACP's stop reasons. */
-export type SessionStopReason = "end_turn" | "max_tokens" | "max_turn_requests" | "refusal" | "cancelled";
+export type SessionStopReason = "end_turn" | "max_tokens" | "max_turn_requests" | "refusal" | "cancelled"
+    | "compaction_failed";
 
 export interface SessionPromptResult {
     stopReason: SessionStopReason;
@@ -144,6 +158,35 @@ export interface SessionSteerResult {
     taken: boolean;
 }
 
+/** Compacts the session's history now; refused while a turn runs. `apply: false` only summarises the whole thread. */
+export interface SessionCompactParams {
+    sessionId: string;
+    instruction?: string;
+    apply?: boolean;
+}
+
+export interface SessionCompactResult {
+    compacted: boolean;
+    summary?: string;
+}
+
+/**
+ * The session replaced the history it replays. Each `stubs` result's content becomes the stub; with a `summary`,
+ * the messages from `headEnd` up to `keptFrom` become `message`, one assistant message holding it. Token counts are estimates.
+ */
+export interface CompactedUpdate {
+    sessionUpdate: "compacted";
+    stage: 1 | 2;
+    before: number;
+    after: number;
+    stubs: { callId: string; content: string }[];
+    summary?: string;
+    /** The message that replaces them, which Qt replays as it is. */
+    message?: Message;
+    headEnd?: number;
+    keptFrom?: number;
+}
+
 export type ToolCallKind = "read" | "edit" | "other";
 export type ToolCallStatus = "in_progress" | "completed" | "failed";
 export type PlanStatus = "pending" | "in_progress" | "completed";
@@ -156,7 +199,11 @@ export type SessionUpdate =
     | { sessionUpdate: "tool_call_update"; toolCallId: string; status: ToolCallStatus;
         content: { type: "content"; content: { type: "text"; text: string } }[] }
     | { sessionUpdate: "plan"; entries: { content: string; priority: "medium"; status: PlanStatus }[] }
-    | { sessionUpdate: "usage"; usage: Usage }
+    /** `compaction` marks a summary request's usage: it counts toward the cost, not the context. */
+    | { sessionUpdate: "usage"; usage: Usage; compaction?: true }
+    | CompactedUpdate
+    /** Compaction failed twice and nothing was removed; `reason` is the provider's error. */
+    | { sessionUpdate: "compaction_failed"; reason: string }
     | { sessionUpdate: "history"; message: Message }
     /** After a completion that cited, searched or sent search suggestions; `textLength` is its text's in UTF-16. */
     | { sessionUpdate: "sources"; textLength: number; citations?: Citation[]; searchSuggestions?: string;
@@ -167,6 +214,33 @@ export interface SessionUpdateParams {
     sessionId: string;
     update: SessionUpdate;
 }
+
+/** One Honya pipeline run over Lines whose override blocks Qt turned into ⟦n⟧ markers. */
+export interface TranslateParams {
+    /** Names the run's `_hikari/translate.progress` notifications. */
+    stream: number;
+    /** The Document whose project folder holds the glossary, characters and style, read through HA1. */
+    document?: number;
+    language: string;
+    models: { translator: SessionModel; reviewer: SessionModel };
+    lines: { key: number; text: string; speaker?: string; start: number; end: number }[];
+    /** The translated Lines just before the run, oldest first. */
+    before?: string[];
+    retries?: number;
+    caching?: boolean;
+    /** Smaller chunks than Honya's 1,000 tokens. */
+    chunkTokens?: number;
+}
+
+export interface TranslateResult {
+    lines: { key: number; text: string; review: "approved" | "needsReview"; issues: string[] }[];
+    /** Project files to write with `translation.project_write`, only after the Lines are written. */
+    files: { name: string; data: string }[];
+}
+
+export type TranslateProgressParams =
+    | { stream: number; stage: "prepass" | "translate" | "coherence"; done: number; total: number }
+    | { stream: number; role: "translator" | "reviewer"; usage: Usage };
 
 export interface McpVia {
     connection: string;
@@ -208,7 +282,13 @@ export interface CancelRequestParams {
 }
 
 /** Where a relayed request goes; Qt knows its base URL and key. */
-export type RelayTarget = ProviderTarget | { kind: "npm" };
+export type RelayTarget = ProviderTarget | { kind: "npm" } | McpTarget;
+
+/** A user-added MCP server over HTTP. Qt sends to its URL, whatever the request's URL says, and adds its secrets. */
+export interface McpTarget {
+    kind: "mcp";
+    id: string;
+}
 
 export interface ProviderTarget {
     /** A provider by its id, or the chosen search service by its SearchService id. */
@@ -268,4 +348,32 @@ export interface AgentOutputParams extends AgentProcessParams {
 export interface AgentExitParams extends AgentProcessParams {
     /** -1 when it crashed or was killed. */
     code: number;
+}
+
+/** A user-added MCP server, as Qt tells the sidecar: no command, URL or secret, which stay in Qt. */
+export interface McpServerConfig {
+    id: string;
+    name: string;
+    transport: "stdio" | "http";
+    /** Changes whenever the server's settings or secrets do, so the sidecar connects again. */
+    revision: number;
+}
+
+export interface McpServersSetParams {
+    servers: McpServerConfig[];
+}
+
+export interface McpServerStatusParams {
+    server: string;
+    state: "connecting" | "ready" | "failed";
+    tools?: number;
+    error?: string;
+}
+
+/** Asks Qt to let a session call one MCP tool once, with these arguments; Qt refuses with `hikariApi` `refused`. */
+export interface McpAdmitParams {
+    sessionId: string;
+    server: string;
+    tool: string;
+    arguments: Record<string, unknown>;
 }

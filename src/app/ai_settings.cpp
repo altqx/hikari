@@ -1,13 +1,17 @@
 #include "hikari/app/ai_settings.h"
 
+#include "hikari/app/ai_acp_settings.h"
 #include "hikari/app/ai_features.h"
 #include "hikari/app/ai_mcp.h"
+#include "hikari/app/ai_mcp_servers.h"
 #include "hikari/backends/ai_agent_cli.h"
+#include "hikari/backends/ai_antigravity.h"
 #include "hikari/backends/ai_requests.h"
 #include "hikari/backends/ai_sidecar_updater.h"
 #include "hikari/backends/ai_signin.h"
 #include "hikari/backends/desktop_handoff.h"
 
+#include <QCoreApplication>
 #include <QDateTime>
 #include <QDir>
 #include <QFileInfo>
@@ -16,6 +20,7 @@
 #include <QUrl>
 
 #include <algorithm>
+#include <array>
 
 namespace hikari::app {
 
@@ -156,8 +161,35 @@ bool sameEndpoint(const ai::Provider &a, const ai::Provider &b)
 
 }
 
+namespace {
+
+constexpr std::array kAcpClis{"opencode", "agy"};
+
+bool isAcpCli(const QString &name)
+{
+    return std::ranges::any_of(kAcpClis, [&](const char *cli) { return name == QLatin1String(cli); });
+}
+
+QString unresolvedShimText(const QString &shim)
+{
+    if (shim.isEmpty())
+        return {};
+    const QString shown = QDir::toNativeSeparators(shim);
+    return backends::ai::agentShimManager(shim) == QLatin1String("asdf")
+               ? QCoreApplication::translate("HikariSub.Options", "Found an asdf shim that asdf couldn’t resolve: %1").arg(shown)
+               : QCoreApplication::translate("HikariSub.Options", "Found a mise shim that mise couldn’t resolve: %1").arg(shown);
+}
+
+backends::ai::AgentInstall acpInstall(const QString &name)
+{
+    return {.manualCommand = name == QLatin1String("agy") ? QStringLiteral("agy update") : QString()};
+}
+
+}
+
 struct AiSettings::Agent {
     std::optional<backends::ai::AgentCli> cli;
+    QString missing;
     backends::ai::AgentInstall install;
     QString latest;
     bool session = false;
@@ -166,11 +198,15 @@ struct AiSettings::Agent {
     QString lastLine;
 };
 
-AiSettings::AiSettings(AiFeatures &features, AiMcp *mcp, QObject *parent)
-    : QObject(parent), m_features(features), m_mcp(mcp)
+AiSettings::AiSettings(AiFeatures &features, AiMcp *mcp, AiMcpServers *mcpServers, QObject *parent)
+    : QObject(parent), m_features(features), m_mcp(mcp), m_mcpServers(mcpServers)
 {
     for (const char *name : backends::ai::kAgentClis)
         m_agents.emplace(QLatin1String(name), std::make_unique<Agent>());
+    if (AiAcpSettings::available())
+        for (const char *name : kAcpClis)
+            m_agents.emplace(QLatin1String(name), std::make_unique<Agent>());
+    m_acp = new AiAcpSettings(m_features, this);
     connect(&m_features, &AiFeatures::switched, this, [this] {
         reset();
         watchUpdater();
@@ -195,6 +231,16 @@ bool AiSettings::sandboxed() const
 QObject *AiSettings::mcp() const
 {
     return m_mcp;
+}
+
+QObject *AiSettings::acp() const
+{
+    return m_acp;
+}
+
+QObject *AiSettings::mcpServers() const
+{
+    return m_mcpServers;
 }
 
 bool AiSettings::on() const
@@ -1135,11 +1181,13 @@ QVariantMap AiSettings::agentRow(const QString &name) const
 {
     const Agent &a = *m_agents.at(name);
     if (!a.cli)
-        return {{QStringLiteral("found"), false}};
+        return {{QStringLiteral("found"), false}, {QStringLiteral("missing"), a.missing}};
     backends::ai::AgentCompat compat;
     if (const backends::ai::AiSidecarUpdater *updater = m_features.updater())
         if (const auto it = updater->agentCompat().find(name); it != updater->agentCompat().end())
             compat = it->second;
+    if (name == QLatin1String("agy"))
+        compat.minimum = QLatin1String(backends::ai::kAntigravityMinimumVersion);
     const bool updating = a.update && a.update->running();
     return {{QStringLiteral("found"), true},
             {QStringLiteral("path"), shownPath(a.cli->path)},
@@ -1153,23 +1201,31 @@ QVariantMap AiSettings::agentRow(const QString &name) const
             {QStringLiteral("session"), a.session},
             {QStringLiteral("state"), updating ? QStringLiteral("updating") : QString()},
             {QStringLiteral("outcome"), a.outcome},
-            {QStringLiteral("lastLine"), a.lastLine}};
+            {QStringLiteral("lastLine"), a.lastLine},
+            {QStringLiteral("acp"), isAcpCli(name)}};
 }
 
 void AiSettings::checkAgents()
 {
     const AiFeatures::Ports &ports = m_features.ports();
     refreshAgentSessions();
+    m_acp->check();
     if (!ports.findAgent)
         return;
     for (const auto &[name, agent] : m_agents) {
         if (agent->update && agent->update->running())
             continue;
-        ports.findAgent(name, [this, alive = std::weak_ptr(m_alive), name](std::optional<backends::ai::AgentCli> cli) {
+        ports.findAgent(name, [this, alive = std::weak_ptr(m_alive), name](std::optional<backends::ai::AgentCli> cli,
+                                                                           QString unresolvedShim) {
             if (!alive.lock())
                 return;
             Agent &a = *m_agents.at(name);
             a.cli = std::move(cli);
+            a.missing = unresolvedShimText(unresolvedShim);
+            if (isAcpCli(name)) {
+                a.install = acpInstall(name);
+                return emit agentsChanged();
+            }
             a.install = a.cli && m_features.ports().agentInstall ? m_features.ports().agentInstall(*a.cli)
                                                                   : backends::ai::AgentInstall{};
             if (name == QLatin1String("codex")) {

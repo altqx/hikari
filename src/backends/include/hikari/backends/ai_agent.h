@@ -33,7 +33,8 @@ std::optional<AgentMode> agentModeFromId(std::string_view id);
 
 /// What Qt does with an agent's call before HA1 runs it.
 /// Propose: Manual subtitle edits wait as a proposal the user applies or declines.
-enum class Decision { Run, Judge, Ask, AlwaysAsk, Propose };
+/// Script: AI-written Lua, which the user approves on every run in every mode (ADR 0024).
+enum class Decision { Run, Judge, Ask, AlwaysAsk, Propose, Script };
 
 /// What makes a call ask in every mode: #410's always-ask categories, and AI settings (ADR 0024). docs/ai-agent.md
 /// maps each to its operations, commands and settings.
@@ -56,7 +57,11 @@ bool asksPermission(const std::string &operation);
 /// `allowed` holds what the user allowed for the whole thread (see allowanceKey).
 Decision decide(AgentMode mode, const std::string &operation, bool alwaysAsk, bool allowed);
 
-/// What "Allow in this thread" covers: the operation, or the one command for commands.run.
+/// An MCP tool call, from its hints after trust: reads run, destructive tools ask in every mode, tools the user
+/// approved run, and the mode decides the rest. `allowed` is "Allow in this thread".
+Decision decideMcp(AgentMode mode, bool readOnly, bool destructive, bool approved, bool allowed);
+
+/// What "Allow in this thread" covers: the operation, the one command for commands.run, or the one MCP tool.
 std::string allowanceKey(const std::string &operation, const api::Json &params);
 
 /// The judge's request without its model: the action and the user's messages, never file content or tool output.
@@ -74,9 +79,22 @@ Verdict judgeVerdict(std::string_view answer);
 std::optional<application::ai::Price> priceOf(const application::ai::Config *config,
                                               const application::ai::ModelRef &ref);
 
+/// The context window the sidecar assumes when the catalogue doesn't say.
+inline constexpr std::int64_t kDefaultContextTokens = 128'000;
+std::int64_t contextWindowOf(const application::ai::Config *config, const application::ai::ModelRef &ref);
+
 /// A model whose provider is "agent:<name>" runs the thread on that external agent ("claude").
 inline constexpr std::string_view kAgentProviderPrefix = "agent:";
 std::optional<std::string> externalAgentOf(const application::ai::ModelRef &model);
+
+/// The most of one AGENTS.md that reaches the model, in bytes.
+inline constexpr std::size_t kInstructionsCap = 32 * 1024;
+
+/// `<folder>/AGENTS.md`, cut to kInstructionsCap at a UTF-8 boundary; empty when it is missing or unreadable.
+std::string agentsFileText(const QString &folder);
+
+/// The user's AGENTS.md, then the Project's, each under its heading (ADR 0030); empty texts drop out.
+std::string joinInstructions(std::string_view user, std::string_view project);
 
 /// One conversation in the agent panel. Qt owns it and saves it in the user folder.
 struct AgentThread {
@@ -102,10 +120,16 @@ struct AgentThread {
     std::set<std::string> allowed;
     /// The globe; the thread searches only while Settings › AI lets AI search the web too.
     bool webSearch = true;
+    /// The Project folder of the window it was started in, UTF-8; its skills join the user's. Empty: none.
+    std::string project;
 
     api::Json toJson() const;
     static std::optional<AgentThread> fromJson(const api::Json &json);
 };
+
+/// Applies the sidecar's `compacted` update (docs/ai-agent.md) to what the thread replays. Its items keep the whole
+/// conversation; a user item's `history` follows its message, and goes when the summary replaced it.
+void applyCompaction(AgentThread &thread, const api::Json &update);
 
 /// Saves threads as <folder>/<id>.json, and the spending per day as <folder>/spend.json.
 class ThreadStore {
@@ -132,6 +156,7 @@ public:
         AgentMode mode = AgentMode::Auto;
         double threadCap = 2.0;
         double dailyCap = 10.0;
+        bool autoCompact = true;
     };
 
     struct Wiring {
@@ -147,11 +172,18 @@ public:
         std::function<std::optional<application::DocumentId>()> editingTarget;
         std::function<std::string(application::DocumentId)> documentTitle;
         std::function<std::vector<std::string>()> safeFolders;
+        /// The active window's Project folder, UTF-8, which a new thread keeps; empty without one.
+        std::function<std::string()> project;
+        /// The joined AGENTS.md text for a thread's Project folder (empty: none), added to its system prompt.
+        std::function<std::string(const std::string &project)> instructions;
         std::function<std::int64_t()> now; // ms since the epoch
         std::function<QDate()> today;
+        /// The DependencyControl modules a Lua script asks for: [{module, version?, installed?}].
+        std::function<api::Json(const std::string &script)> scriptNeeds;
     };
 
-    /// A proposal takes AllowOnce (Apply), Deny (Decline) or AskAgain, once the document changed under it.
+    /// A proposal takes AllowOnce (Apply), Deny (Decline) or AskAgain, once the document changed under it; a script
+    /// takes AllowOnce (Run) or Deny.
     enum class Answer { AllowOnce, AllowInThread, Deny, AskAgain };
 
     /// An open permission question.
@@ -195,6 +227,12 @@ public:
     void stop(const std::string &id);
     /// Sends the interrupted turn's message again.
     void retry(const std::string &id);
+    /// Compacts what the thread replays to the model; while a turn runs, it waits for the turn to end.
+    void compact(const std::string &id, std::string instruction = {});
+    /// A compaction runs or waits for the turn.
+    bool compacting(const std::string &id) const;
+    /// Summarises the thread into a new one; `summarised` names it when the summary arrives.
+    void newThreadFromSummary(const std::string &id);
     /// Raises the thread's cap by one more default cap.
     void raiseCap(const std::string &id);
     double spentToday() const;
@@ -207,29 +245,41 @@ signals:
     void threadsChanged();
     void threadChanged(QString id);
     void asked(quint64 ask);
+    void summarised(QString from, QString to);
 
 private:
     struct Run;
     AiSidecarHost *host(bool externalAgent = false);
     AgentThread *find(const std::string &id);
     void start(AgentThread &thread, std::string text, api::Json parts);
+    api::Json wireModel(const AgentThread &thread, const application::ai::ModelRef &model) const;
+    void openSession(AgentThread &thread, AiSidecarHost &host, const application::ai::ModelRef &model,
+                     const api::Json &wire);
+    void startCompaction(AgentThread &thread, std::string instruction, bool apply);
+    void compactionDone(const std::string &id, const SidecarResult &result, bool apply);
+    void runQueued(AgentThread &thread);
     void finished(const std::string &id, const SidecarResult &result);
     void sessionUpdate(const api::Json &params);
     void gate(const std::string &session, const std::string &operation, const api::Json &params,
               AiSidecarHost::Admit admit, std::function<void(std::function<void()>)> onWithdraw);
+    void gateMcp(AgentThread &thread, const api::Json &params, AiSidecarHost::Admit admit,
+                 std::function<void(std::function<void()>)> onWithdraw);
     void judge(AgentThread &thread, const std::string &operation, const api::Json &params, AiSidecarHost::Admit admit,
                std::function<void(std::function<void()>)> onWithdraw);
     void openAsk(AgentThread &thread, Decision kind, const std::string &operation, const api::Json &params,
                  std::string reason, AiSidecarHost::Admit admit, std::function<void(std::function<void()>)> onWithdraw);
     void openProposal(AgentThread &thread, const api::Json &params, AiSidecarHost::Admit admit,
                       std::function<void(std::function<void()>)> onWithdraw);
+    void openScript(AgentThread &thread, const api::Json &params, AiSidecarHost::Admit admit,
+                    std::function<void(std::function<void()>)> onWithdraw);
+    void runScript(AgentThread &thread, std::uint64_t ask, AiSidecarHost::Admit admit);
     void wait(AgentThread &thread, Ask ask, api::Json item, AiSidecarHost::Admit admit,
               std::function<void(std::function<void()>)> onWithdraw);
     void documentChanged(application::DocumentId document, std::int64_t revision);
     void admitCall(AgentThread &thread, const std::string &operation, const api::Json &params, bool judged,
                    AiSidecarHost::Admit admit);
     api::Caller callerOf(const AgentThread &thread) const;
-    void addUsage(AgentThread &thread, const api::Json &usage);
+    void addUsage(AgentThread &thread, const api::Json &usage, bool context = true);
     void addSources(AgentThread &thread, Run *run, const api::Json &update);
     void searchFailed(AgentThread &thread, Run *run, const api::Json &update);
     void stopFor(AgentThread &thread, const std::string &notice);
@@ -248,6 +298,7 @@ private:
     std::map<std::uint64_t, Ask> m_asks;
     std::map<std::uint64_t, AiSidecarHost::Admit> m_waiting;
     std::map<std::string, std::string> m_queued;
+    std::map<std::string, std::string> m_compactAfter; // the instruction, by thread
     std::uint64_t m_nextAsk = 1;
     std::uint64_t m_documentEvents = 0;
     QPointer<AiSidecarHost> m_host;

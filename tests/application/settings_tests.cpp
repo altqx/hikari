@@ -5,6 +5,8 @@
 #include <cctype>
 #include <map>
 #include <set>
+#include <string>
+#include <vector>
 
 using namespace hikari::application;
 
@@ -356,15 +358,29 @@ TEST(ProjectSettings, TheAllowlistCoversTheProjectDataSettings)
 {
     for (const char *id : {"editor.dictionaryLanguage", "editor.spellchecker", "grammar.language",
                            "grammar.group.properNouns", "scriptProperties.title", "scriptProperties.updateOn",
-                           "scriptProperties.askForChange", "translation.autoMoveTagsFromOriginal", "explorer.exclude"})
+                           "scriptProperties.askForChange", "translation.autoMoveTagsFromOriginal", "ai.exclude", "explorer.exclude"})
         EXPECT_TRUE(findSetting(id)->projectable) << id;
     for (const char *id : {"privacy.usageData", "updater.autoInstall", "ai.off", "ai.webSearch", "plugins.network",
                            "trust.folders", "program.theme", "program.font", "shortcuts.hotkeys",
                            "scriptProperties.linkResolutions", "translation.showOriginal", "explorer.allFiles",
                            "explorer.groupByName"})
         EXPECT_FALSE(findSetting(id)->projectable) << id;
+    std::vector<std::string> widening;
     for (const auto &setting : settingDefinitions())
-        EXPECT_FALSE(setting.widens) << setting.id;
+        if (setting.widens)
+            widening.emplace_back(setting.id);
+    EXPECT_EQ(widening, (std::vector<std::string>{"translation.translator", "translation.reviewer"}));
+}
+
+TEST(ProjectSettings, NoProjectValueWidensWhatTheAiMayDo)
+{
+    for (const auto &setting : settingDefinitions()) {
+        if (!setting.id.starts_with("ai.") && !setting.id.starts_with("trust.") && !setting.id.starts_with("privacy."))
+            continue;
+        const bool exclude = setting.id == "ai.exclude";
+        EXPECT_EQ(projectMaySet(setting, false), exclude) << setting.id;
+        EXPECT_EQ(projectMaySet(setting, true), exclude) << setting.id;
+    }
 }
 
 TEST(ProjectSettings, AProjectOverridesTheUserPerKey)

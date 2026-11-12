@@ -54,6 +54,10 @@ constexpr NodeExampleText kExamples[] = {
      QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "An outline flashes on each syllable once for every highlight, as the templater’s multi does.")},
     {"paint-and-cloud", QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Paint and cloud"),
      QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Syllables marked {\\-paint} fill from red to white, those marked {\\-cloud} rise and blur, and the rest stay in place.")},
+    {"text-outlines", QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Text outlines"),
+     QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Each syllable is drawn as a hollow drawing in its style’s font, and its outline thickens while it is sung.")},
+    {"striped-letters", QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Striped letters"),
+     QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Each syllable’s letters are cut into thin horizontal stripes, which fade in as it is sung.")},
 };
 
 const NodeExampleText *exampleText(std::string_view example)
@@ -976,6 +980,14 @@ bool NodeEffectsController::hasPluginNodes() const
            });
 }
 
+bool NodeEffectsController::drawsText() const
+{
+    if (!m_graph)
+        return false;
+    const auto flat = application::flattenGraph(*m_graph);
+    return flat && std::ranges::any_of(flat->nodes, [](const GraphNode &n) { return n.type == "drawings.text"; });
+}
+
 bool NodeEffectsController::trusted() const
 {
     return !hasLua() || (m_trustOwner && m_trustOwner->trusted());
@@ -1011,8 +1023,12 @@ application::NodeEffectOptions NodeEffectsController::options() const
     if (m_luaNodes && ((o.trustLua && hasLua()) || hasPluginNodes()))
         o.lua = m_luaNodes();
     o.cache = const_cast<application::NodeEffectCache *>(&m_cache);
+    if (const auto *s = session())
+        o.newDocument = s->isNewDocument();
     if (m_audio)
         o.audio = m_audio();
+    if (m_glyphs && drawsText())
+        o.glyphs = m_glyphs();
     return o;
 }
 
@@ -1482,14 +1498,34 @@ bool NodeEffectsController::duplicateGraph()
     return done;
 }
 
-QVariantList NodeEffectsController::exportAsTemplate()
+namespace {
+constexpr std::string_view kExportFormat = "nodeEffects.exportFormat";
+}
+
+void NodeEffectsController::setSettings(application::Settings *settings)
+{
+    m_settings = settings;
+    emit exportFormatChanged();
+}
+
+bool NodeEffectsController::exportKaraOK() const
+{
+    return !m_settings || m_settings->text(kExportFormat) != "stock";
+}
+
+QVariantList NodeEffectsController::exportAsTemplate(bool karaOK)
 {
     if (!m_current)
         return {};
+    if (m_settings && karaOK != exportKaraOK()) {
+        m_settings->set(kExportFormat, std::string(karaOK ? "karaOK" : "stock"));
+        emit exportFormatChanged();
+    }
     const core::LineId line = *m_current;
+    const auto format = karaOK ? application::TemplateFormat::KaraOK : application::TemplateFormat::Stock;
     std::vector<application::NodeEffectProblem> blockers;
     runGraphCommand([&](application::EditSession &s) {
-        auto exported = application::exportTemplateLines(s, line);
+        auto exported = application::exportTemplateLines(s, line, format);
         if (!exported)
             blockers = std::move(exported.error());
         return exported.has_value();

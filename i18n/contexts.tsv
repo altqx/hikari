@@ -42,11 +42,14 @@ HikariSub.Tabs	The Document tab bar, its menu, tab commands and subtitle compari
 HikariSub.TagList	The ASS override tag list and its popup
 HikariSub.Tags	Remove tags: the Remove tags window, its tag families, Clean up and preview (AU4)
 HikariSub.TemplateEditor	The Template editor panel: template and code Lines, their preview on a karaoke Line, Apply
+HikariSub.Text	Text commands on the selected Lines: line breaks, change case, width and dialogue alternatives (AU20)
 HikariSub.TextMenu	The menu of every text field: undo, redo, the clipboard and selection
 HikariSub.TimeShift	The Shift times panel
 HikariSub.Tracking	Perspective tracking: the Power-Pin dialog and its status
 HikariSub.Translation	Translation mode: its switch and toggles, translation files and matching
 HikariSub.Video	The video panel and full screen: playback, menus, streams, chapters, keyframes, dummy video, indexing, player errors
 HikariSub.VisualTools	The visual tools: rail, options, values, and the tag and shape editing dialogs
+HikariSub.Position	Position and alignment commands: change alignment, align and distribute, margins and position, phantom, and cycle values (AU21)
 HikariSub.Workspace	Panel docking: title bars and tabs, panel options and placement, saved layouts
 QGuiApplication	Qt's QT_LAYOUT_DIRECTION key, which Qt reads in this context (the catalog's layout direction)
+HikariSub.Skills	AI skills: Settings › AI › Skills, the skill folders and why a skill isn’t offered (AI14b)

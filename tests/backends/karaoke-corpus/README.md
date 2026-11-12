@@ -60,6 +60,10 @@ karaOK's templater unchanged: `lost-logarithm/karaOK` commit `f749c4fa64e7`,
 `autoload/ln.kara-templater-mod.lua`, under its BSD-3 header ("Karaoke
 Templater mod by logarithm"). It is the oracle, run with its "Apply karaoke
 template (modded with furigana)" macro.
+`include/ln/kara.lua` is upstream's `ln.kara` at the same commit, unchanged
+(by logarithm with petzku; upstream states no licence, and owner decision
+Q165 lets HikariSub bundle it). Upstream's runs load it in place of the
+fixed copy HikariSub ships.
 
 | Document | Covers |
 |---|---|
@@ -69,6 +73,7 @@ template (modded with furigana)" macro.
 | `style` | The `style` modifier over Style names without pattern characters |
 | `furigana` | `furi`, `furichar` and `code furichar` |
 | `leading-text` | Text before the first karaoke tag, which belongs to syllable 1 |
+| `ln-kara` | `ln.kara` where the shipped copy and upstream's agree: `st`, `sd(p)`, the colour builders, `ln.line.tag`, `ln.tag.pos`/`move`/`t`/`kanjipos`, `ln.math`, `ln.wave`, `ln.line.buffers` |
 
 The built-in and upstream karaOK must both give the golden. To rewrite these
 goldens from upstream, run the test with `HIKARI_UPDATE_KARAOKE_GOLDENS=1`.

@@ -152,8 +152,11 @@ void Application::activateShellWindow(int shellWindow)
         return;
     if (const auto found = m_shellWindows.find(shellWindow); found != m_shellWindows.end() && found->second.closing)
         return;
-    if (m_workspace.activateWindow(shellWindow))
+    if (m_workspace.activateWindow(shellWindow)) {
         refreshViews();
+        if (m_agent)
+            m_agent->projectChanged();
+    }
 }
 
 qulonglong Application::editingDocument() const

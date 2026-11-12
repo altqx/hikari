@@ -315,3 +315,139 @@ TEST(StyleCatalogFiles, LegacyFormatAndCatalogs)
     EXPECT_FALSE(std::filesystem::exists(dir / "Show.sty"));
     std::filesystem::remove_all(dir);
 }
+
+namespace {
+
+struct TierDirs {
+    std::filesystem::path root = std::filesystem::temp_directory_path() / "hikari-style-tiers-test";
+    std::filesystem::path mine = root / "user" / "catalogs";
+    std::filesystem::path project = root / "show" / ".hikari" / "catalogs";
+    TierDirs()
+    {
+        std::filesystem::remove_all(root);
+        std::filesystem::create_directories(mine);
+    }
+    ~TierDirs() { std::filesystem::remove_all(root); }
+    void write(const std::filesystem::path &dir, const char *name, const StyleList &styles) const
+    {
+        std::filesystem::create_directories(dir);
+        std::ofstream(dir / (std::string(name) + ".sty"), std::ios::binary) << writeCatalog(styles);
+    }
+};
+
+}
+
+TEST(StyleCatalogTiers, TheProjectsCopyHidesMineByName)
+{
+    TierDirs dirs;
+    dirs.write(dirs.mine, "Default", {named(u8"Mine default")});
+    dirs.write(dirs.mine, "Show", {named(u8"Mine show")});
+    dirs.write(dirs.mine, "Solo", {named(u8"Mine solo")});
+    dirs.write(dirs.project, "Show", {named(u8"Project show")});
+    StyleCatalogs catalogs(dirs.mine);
+    EXPECT_TRUE(catalogs.rows() == (std::vector<TieredName>{{u8"Default", Tier::Mine, false},
+                                                            {u8"Show", Tier::Mine, false},
+                                                            {u8"Solo", Tier::Mine, false}}));
+    catalogs.setProjectDirectory(dirs.project);
+    EXPECT_TRUE(catalogs.rows() == (std::vector<TieredName>{{u8"Show", Tier::Project, false},
+                                                            {u8"Default", Tier::Mine, false},
+                                                            {u8"Show", Tier::Mine, true},
+                                                            {u8"Solo", Tier::Mine, false}}));
+    EXPECT_EQ(catalogs.names(), (std::vector<std::u8string>{u8"Default", u8"Show", u8"Solo"}));
+    EXPECT_EQ(catalogs.find(u8"Show", u8"Project show")->name, u8"Project show");
+    EXPECT_FALSE(catalogs.find(u8"Show", u8"Mine show"));
+    ASSERT_TRUE(catalogs.choose(u8"Show"));
+    EXPECT_EQ(catalogs.currentTier(), Tier::Project);
+    EXPECT_FALSE(catalogs.readOnly());
+
+    ASSERT_TRUE(catalogs.choose(u8"Show", Tier::Mine));
+    EXPECT_TRUE(catalogs.readOnly());
+    EXPECT_EQ(names(catalogs.styles()), (std::vector<std::u8string>{u8"Mine show"}));
+    catalogs.styles().push_back(named(u8"Never written"));
+    catalogs.markChanged();
+    ASSERT_TRUE(catalogs.choose(u8"Default"));
+    EXPECT_EQ(names(*catalogs.list(u8"Show", Tier::Mine)), (std::vector<std::u8string>{u8"Mine show"}));
+    EXPECT_FALSE(catalogs.create(u8"Show", Tier::Mine));
+
+    catalogs.setProjectDirectory({});
+    EXPECT_EQ(catalogs.find(u8"Show", u8"Mine show")->name, u8"Mine show");
+}
+
+TEST(StyleCatalogTiers, OpeningAProjectAddsNoFilesAndSavingMakesTheFolder)
+{
+    TierDirs dirs;
+    StyleCatalogs catalogs(dirs.mine);
+    catalogs.setProjectDirectory(dirs.project);
+    EXPECT_FALSE(std::filesystem::exists(dirs.project));
+    EXPECT_TRUE(catalogs.names(Tier::Project).empty());
+    ASSERT_TRUE(catalogs.create(u8"Signs", Tier::Project));
+    catalogs.styles().push_back(named(u8"Sign"));
+    ASSERT_TRUE(catalogs.save());
+    EXPECT_TRUE(std::filesystem::exists(dirs.project / "Signs.sty"));
+    EXPECT_FALSE(std::filesystem::exists(dirs.mine / "Signs.sty"));
+
+    StyleCatalogs none(dirs.mine);
+    EXPECT_FALSE(none.create(u8"Signs", Tier::Project));
+}
+
+TEST(StyleCatalogTiers, CopyAndMoveGoBothWays)
+{
+    TierDirs dirs;
+    dirs.write(dirs.mine, "Default", {named(u8"D")});
+    dirs.write(dirs.mine, "Show", {named(u8"Mine show")});
+    StyleCatalogs catalogs(dirs.mine);
+    catalogs.setProjectDirectory(dirs.project);
+
+    EXPECT_EQ(catalogs.copy(u8"Show", Tier::Mine), u8"Show");
+    EXPECT_EQ(catalogs.find(u8"Show", u8"Mine show")->name, u8"Mine show");
+    EXPECT_TRUE(std::filesystem::exists(dirs.mine / "Show.sty"));
+    EXPECT_TRUE(std::filesystem::exists(dirs.project / "Show.sty"));
+
+    ASSERT_TRUE(catalogs.create(u8"Typeset", Tier::Project));
+    catalogs.styles().push_back(named(u8"Logo"));
+    EXPECT_EQ(catalogs.move(u8"Typeset", Tier::Project), u8"Typeset");
+    EXPECT_FALSE(std::filesystem::exists(dirs.project / "Typeset.sty"));
+    EXPECT_EQ(catalogs.current(), u8"Typeset");
+    EXPECT_EQ(catalogs.currentTier(), Tier::Mine);
+    EXPECT_EQ(names(catalogs.styles()), (std::vector<std::u8string>{u8"Logo"}));
+
+    EXPECT_EQ(catalogs.move(u8"Typeset", Tier::Mine), u8"Typeset");
+    EXPECT_FALSE(std::filesystem::exists(dirs.mine / "Typeset.sty"));
+    EXPECT_EQ(catalogs.currentTier(), Tier::Project);
+
+    EXPECT_EQ(catalogs.move(u8"Default", Tier::Mine), u8"Default");
+    EXPECT_TRUE(std::filesystem::exists(dirs.mine / "Default.sty"));
+}
+
+TEST(StyleCatalogTiers, ClashesReplaceRenameOrSkip)
+{
+    TierDirs dirs;
+    dirs.write(dirs.mine, "Default", {named(u8"D")});
+    dirs.write(dirs.mine, "Show", {named(u8"Mine show")});
+    dirs.write(dirs.project, "Show", {named(u8"Project show")});
+    dirs.write(dirs.project, "Show copy", {named(u8"Taken")});
+    StyleCatalogs catalogs(dirs.mine);
+    catalogs.setProjectDirectory(dirs.project);
+
+    EXPECT_FALSE(catalogs.copy(u8"Show", Tier::Mine, {ClashAction::Skip, {}}));
+    EXPECT_EQ(catalogs.find(u8"Show", u8"Project show")->name, u8"Project show");
+    EXPECT_EQ(catalogs.copy(u8"Show", Tier::Mine, {ClashAction::Rename, u8"Show copy"}), u8"Show copy (2)");
+    EXPECT_EQ(names(*catalogs.list(u8"Show copy (2)", Tier::Project)), (std::vector<std::u8string>{u8"Mine show"}));
+    EXPECT_EQ(catalogs.copy(u8"Show", Tier::Mine, {ClashAction::Replace, {}}), u8"Show");
+    EXPECT_EQ(names(*catalogs.list(u8"Show", Tier::Project)), (std::vector<std::u8string>{u8"Mine show"}));
+}
+
+TEST(StyleCatalogTiers, RemovingTheProjectsCopyShowsMineAgain)
+{
+    TierDirs dirs;
+    dirs.write(dirs.mine, "Default", {named(u8"Mine default")});
+    dirs.write(dirs.project, "Default", {named(u8"Project default")});
+    StyleCatalogs catalogs(dirs.mine);
+    catalogs.setProjectDirectory(dirs.project);
+    EXPECT_EQ(catalogs.currentTier(), Tier::Project);
+    EXPECT_FALSE(catalogs.remove(u8"Default", Tier::Mine));
+    ASSERT_TRUE(catalogs.remove(u8"Default", Tier::Project));
+    EXPECT_EQ(catalogs.current(), u8"Default");
+    EXPECT_EQ(catalogs.currentTier(), Tier::Mine);
+    EXPECT_EQ(names(catalogs.styles()), (std::vector<std::u8string>{u8"Mine default"}));
+}

@@ -56,6 +56,15 @@ describe("the tool catalogue", () => {
         expect(kOwn.entries.find((e) => e.tool.name === "search_tools")!.tool.annotations.readOnlyHint).toBe(true);
     });
 
+    test("offers AI-written Lua as a searchable write that carries the whole script", () => {
+        const run = kOwn.entries.find((e) => e.tool.name === "automation_run")!;
+        expect(run.operation).toBe("automation.run");
+        expect(run.group).toBe("automation");
+        expect(run.tool.annotations.readOnlyHint).toBe(false);
+        expect(run.tool.description).toContain("approves");
+        expect((run.tool.inputSchema as any).required).toEqual(["name", "script"]);
+    });
+
     test("gives self-contained object schemas without const, which Gemini refuses", () => {
         for (const { tool } of kOwn.entries) {
             expect(tool.inputSchema.type).toBe("object");
@@ -70,9 +79,29 @@ describe("the tool catalogue", () => {
         expect(apply.properties.edits.items.oneOf[0].properties.op).toEqual({ enum: ["set_line"] });
     });
 
-    test("offers the frame tools in typeset, with full instead of maxPixels on video_frame", () => {
+    test("offers the graph tools in effects, with only save and apply writing", () => {
+        const effects = kOwn.entries.filter((e) => e.group === "effects");
+        expect(effects.map((e) => e.tool.name).sort()).toEqual(["effects_apply", "effects_edit", "effects_graph",
+            "effects_graphs", "effects_preview", "effects_save", "nodes_catalogue", "nodes_validate"]);
+        expect(effects.filter((e) => !e.tool.annotations.readOnlyHint).map((e) => e.tool.name).sort())
+            .toEqual(["effects_apply", "effects_save"]);
+    });
+
+    test("offers the karaoke tools in karaoke, with the templater's apply and the aligner as writes", () => {
+        const karaoke = kOwn.entries.filter((e) => e.group === "karaoke").map((e) => e.tool.name).sort();
+        expect(karaoke).toEqual(["audio_peaks", "karaoke_align", "karaoke_apply_template", "karaoke_check",
+            "karaoke_furigana", "karaoke_kanji", "karaoke_onsets", "karaoke_snap", "karaoke_split", "karaoke_syllables",
+            "karaoke_template_preview", "karaoke_time"]);
+        expect(kOwn.entries.find((e) => e.tool.name === "karaoke_apply_template")!.tool.annotations.readOnlyHint).toBe(false);
+        expect(kOwn.entries.find((e) => e.tool.name === "karaoke_snap")!.tool.annotations.readOnlyHint).toBe(true);
+    });
+
+    test("offers the frame tools and the solvers in typeset, with full instead of maxPixels on video_frame", () => {
         const typeset = kOwn.entries.filter((e) => e.group === "typeset").map((e) => e.tool.name).sort();
-        expect(typeset).toEqual(["video_colours", "video_frame", "video_ink_bounds", "video_keyframes"]);
+        expect(typeset).toEqual(["typeset_apply", "typeset_check", "typeset_clip", "typeset_drawing", "typeset_hydra",
+            "typeset_perspective", "typeset_shift", "video_colours", "video_frame", "video_ink_bounds", "video_keyframes"]);
+        expect(kOwn.entries.find((e) => e.tool.name === "typeset_apply")!.tool.annotations.readOnlyHint).toBe(false);
+        expect(kOwn.entries.find((e) => e.tool.name === "typeset_perspective")!.tool.annotations.readOnlyHint).toBe(true);
         const frame = kOwn.entries.find((e) => e.tool.name === "video_frame")!.tool.inputSchema as any;
         expect(Object.keys(frame.properties).sort()).toEqual(["crop", "document", "frame", "full", "line", "maxEdge", "subtitles"]);
         expect(frame.properties.full.type).toBe("boolean");

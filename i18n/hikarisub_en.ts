@@ -107,6 +107,13 @@
             <numerusform>This subtitle file wants to run %n scripts on your computer.</numerusform>
         </translation>
     </message>
+    <message numerus="yes">
+        <source>Reinstall %n script(s)</source>
+        <translation>
+            <numerusform>Reinstall %n script</numerusform>
+            <numerusform>Reinstall %n scripts</numerusform>
+        </translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Conversion</name>
@@ -521,6 +528,20 @@
         </translation>
     </message>
     <message numerus="yes">
+        <source>The reviewer didn’t approve line %1, so it’s marked Unconfirmed.</source>
+        <translation>
+            <numerusform>The reviewer didn’t approve line %1, so it’s marked Unconfirmed.</numerusform>
+            <numerusform>The reviewer didn’t approve lines %1, so they’re marked Unconfirmed.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>The reviewer didn’t approve line %1. Check it before you use it.</source>
+        <translation>
+            <numerusform>The reviewer didn’t approve line %1. Check it before you use it.</numerusform>
+            <numerusform>The reviewer didn’t approve lines %1. Check them before you use them.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
         <source>%n line(s) weren’t sent.</source>
         <translation>
             <numerusform>%n line wasn’t sent.</numerusform>
@@ -800,6 +821,13 @@
         </translation>
     </message>
     <message numerus="yes">
+        <source>%n file(s)</source>
+        <translation>
+            <numerusform>%n file</numerusform>
+            <numerusform>%n files</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
         <source>Connected · %n model(s)</source>
         <translation>
             <numerusform>Connected · %n model</numerusform>
@@ -811,6 +839,20 @@
         <translation>
             <numerusform>Not tested · %n model</numerusform>
             <numerusform>Not tested · %n models</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n skill(s) can’t be offered. Fix them in their folders, then read the folders again.</source>
+        <translation>
+            <numerusform>%n skill can’t be offered. Fix it in its folder, then read the folders again.</numerusform>
+            <numerusform>%n skills can’t be offered. Fix them in their folders, then read the folders again.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Connected · %n tool(s)</source>
+        <translation>
+            <numerusform>Connected · %n tool</numerusform>
+            <numerusform>Connected · %n tools</numerusform>
         </translation>
     </message>
 </context>
@@ -1461,6 +1503,27 @@
         <translation>
             <numerusform>Searching… %n frame checked</numerusform>
             <numerusform>Searching… %n frames checked</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n selected lines, %1 to %2, %3 frames. Frames are read without subtitles.</source>
+        <translation>
+            <numerusform>%n selected line, %1 to %2, %3 frames. Frames are read without subtitles.</numerusform>
+            <numerusform>%n selected lines, %1 to %2, %3 frames. Frames are read without subtitles.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>After Effects data, %n frames, from the clipboard</source>
+        <translation>
+            <numerusform>After Effects data, %n frame, from the clipboard</numerusform>
+            <numerusform>After Effects data, %n frames, from the clipboard</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Line %1, %2 to %3, %n frames. The point’s colour on this frame is the fully shown colour.</source>
+        <translation>
+            <numerusform>Line %1, %2 to %3, %n frame. The point’s colour on this frame is the fully shown colour.</numerusform>
+            <numerusform>Line %1, %2 to %3, %n frames. The point’s colour on this frame is the fully shown colour.</numerusform>
         </translation>
     </message>
 </context>

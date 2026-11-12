@@ -35,13 +35,41 @@ Version 1 of the Hikari API, generated from HikariSub's own registry: the same r
 | `video.keyframes` | read | 1 | The keyframes from one time to another, each with its start time. |
 | `audio.info` | read | 1 | Whether audio is open and loaded, its duration and sample rate. |
 | `audio.peaks` | read | 1 | The lowest and highest 16-bit sample in each of `buckets` equal slices of a time range. |
-| `files.list` | read | 1 | The files the user granted this caller, with read or write access. |
+| `files.list` | read | 1 | The files and folders the user granted this caller; with folder, also what that folder holds. |
 | `files.read` | read | 1 | A granted file's content, as UTF-8 text or base64; at most 16 MiB. |
-| `files.write` | write | 1 | Replaces a file granted for writing with new content. |
-| `skills.list` | read | 1 | The user's skills: each skill folder's name and its files, SKILL.md among them. |
-| `skills.read` | read | 1 | One file of a user's skill, as UTF-8 text; at most 256 KiB. |
+| `files.write` | write | 1 | Replaces a file granted for writing with new content; in a writable folder, makes it and its folders. |
+| `skills.list` | read | 1 | The caller's skills: each skill folder's name, whether it is the Project's or the user's, and its files, SKILL.md among them. |
+| `skills.read` | read | 1 | One file of a skill skills.list gives, as UTF-8 text; at most 256 KiB. |
+| `automation.run` | write | 1 | Saves a Lua Automation script to the AI scripts folder and runs one of its macros on the active tab's selection, once the user approves the script. The run is one undo step. |
+| `translation.project` | read | 1 | The Document's Honya project files: PROJECT.md, GLOSSARY.md, CHARACTERS.md and STYLE.md, those that exist. folder is null when the Document has no project folder. |
+| `translation.project_write` | write | 1 | Replaces one of the Document's Honya project files, keeping Honya's Markdown and honya:data format. |
 | `nodes.catalogue` | read | 1 | The node types the node-effect editor offers, with their ports and parameters. |
 | `nodes.validate` | read | 1 | Checks a node-effect graph; each problem names its node and port or field. |
+| `effects.graphs` | read | 1 | The Document's node-effect graphs, one per graph Line. |
+| `effects.graph` | read | 1 | One graph Line's graph, with what keeps it from running. |
+| `effects.edit` | read | 1 | Edits a graph in steps (add, connect, disconnect, remove, set) and gives the new graph with its problems; nothing in the Document changes. |
+| `effects.preview` | read | 1 | Runs a graph on the Document's karaoke Lines and gives the Lines it would write; nothing is applied. Lua nodes don't run. |
+| `effects.save` | write | 1 | Writes a graph to the Document as one undo step: into a new graph Line, or in place of a graph Line's. |
+| `effects.apply` | write | 1 | Runs a graph Line and writes its Lines as one undo step, replacing those it wrote before; the karaoke Lines it ran on become Comments. Lua nodes don't run, so a graph with one applies from the node-effect editor. |
+| `typeset.perspective` | read | 1 | The Line's text with the tags that render it on a quad (VT3's perspective solver): \pos, \org, \frx, \fry, \frz, \fax, \fscx and \fscy. |
+| `typeset.clip` | read | 1 | The Line's text with its first clip replaced by a rectangle or a vector clip. |
+| `typeset.drawing` | read | 1 | The Line's text with its first drawing replaced by a shape (\p1), placed at a position with an alignment. |
+| `typeset.shift` | read | 1 | Moves the Lines' positions, \move points, clips, drawings and \org by an offset, as the Position shifter does. |
+| `typeset.hydra` | read | 1 | Changes one tag across the Lines as the Hydra strip does: set it, add to it, multiply it by line number, or run a gradient across characters or Lines. |
+| `typeset.check` | read | 1 | Renders one Line alone, with a proposed text, on its frame and compares its ink with a target. |
+| `typeset.apply` | write | 1 | Applies typeset Lines as one undo step after every one passes the render check; when one misses its target nothing is applied. |
+| `project.info` | read | 1 | The Project of the window the user works in, or null. |
+| `karaoke.syllables` | read | 1 | A Line's karaoke syllables as the templater reads them: text, tag, start and end in ms. |
+| `karaoke.split` | read | 1 | Splits Lines without \k tags into syllables as the audio editor's karaoke mode does, the time shared by character; Lines that already have \k tags keep them. |
+| `karaoke.time` | read | 1 | Times a Line's existing syllables: each syllable's end in ms, in order; the \k tags are rewritten. |
+| `karaoke.onsets` | read | 1 | Where sung notes start in the open audio, in ms, within a range. |
+| `karaoke.snap` | read | 1 | Moves each syllable boundary inside the Lines to the nearest vocal onset within the window, keeping every syllable at least 10 ms long. |
+| `karaoke.kanji` | read | 1 | Copies a timed romaji Line's syllables onto its kanji Line as the Kanji timer suggests the groups. |
+| `karaoke.furigana` | read | 1 | The readings the dictionary suggests for a Line's kanji runs, in hiragana. |
+| `karaoke.check` | read | 1 | The Karaoke check's problems: unclosed tags, totals that differ from the Line, empty syllables and syllables outside the Line. |
+| `karaoke.template_preview` | read | 1 | The Lines the karaoke templater generates from one karaoke Line, without applying them. |
+| `karaoke.apply_template` | write | 1 | Runs the karaoke templater on the karaoke Lines, or the Lines given, and applies what it generates as one undo step: old generated Lines are replaced. |
+| `karaoke.align` | write | 1 | Runs the user's own WhisperX or Montreal Forced Aligner on the audio under the Lines and answers each word with its start and end in ms; the user approves every run, and nothing is applied. |
 
 ### `documents.list`
 
@@ -690,15 +718,23 @@ The lowest and highest 16-bit sample in each of `buckets` equal slices of a time
 
 Read. Since version 1.
 
-The files the user granted this caller, with read or write access.
+The files and folders the user granted this caller; with folder, also what that folder holds.
 
-**Parameters**: none.
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `folder` | string |  | A folder handle to list. |
+| `path` | string |  | A folder inside it; default the folder itself. |
 
 **Result**
 
 | Field | Type | Always | Meaning |
 | --- | --- | --- | --- |
 | `files` | array of [GrantedFile](#grantedfile) | yes |  |
+| `folders` | array of [GrantedFolder](#grantedfolder) |  |  |
+| `entries` | array of [FolderEntry](#folderentry) |  | With folder: in name order, at most 4096, without links that lead outside it. |
+| `truncated` | boolean |  | Present when the folder holds more than 4096 entries. |
 
 ### `files.read`
 
@@ -710,7 +746,9 @@ A granted file's content, as UTF-8 text or base64; at most 16 MiB.
 
 | Field | Type | Required | Meaning |
 | --- | --- | --- | --- |
-| `file` | string | yes | A handle from files.list. |
+| `file` | string |  | A handle from files.list. |
+| `folder` | string |  | Instead of file, a folder handle from files.list. |
+| `path` | string |  | With folder, the file's path inside it, with / between its parts. |
 | `encoding` | one of `utf8` or `base64` |  | Default utf8. |
 
 **Result**
@@ -726,13 +764,15 @@ A granted file's content, as UTF-8 text or base64; at most 16 MiB.
 
 Write. Since version 1.
 
-Replaces a file granted for writing with new content.
+Replaces a file granted for writing with new content; in a writable folder, makes it and its folders.
 
 **Parameters**
 
 | Field | Type | Required | Meaning |
 | --- | --- | --- | --- |
-| `file` | string | yes | A handle from files.list. |
+| `file` | string |  | A handle from files.list. |
+| `folder` | string |  | Instead of file, a folder handle from files.list. |
+| `path` | string |  | With folder, the file's path inside it, with / between its parts. |
 | `encoding` | one of `utf8` or `base64` |  | Default utf8. |
 | `data` | string | yes |  |
 
@@ -747,7 +787,7 @@ Replaces a file granted for writing with new content.
 
 Read. Since version 1.
 
-The user's skills: each skill folder's name and its files, SKILL.md among them.
+The caller's skills: each skill folder's name, whether it is the Project's or the user's, and its files, SKILL.md among them.
 
 **Parameters**: none.
 
@@ -757,13 +797,14 @@ The user's skills: each skill folder's name and its files, SKILL.md among them.
 | --- | --- | --- | --- |
 | `skills` | array of objects | yes |  |
 | `skills[].skill` | [SkillName](#skillname) | yes |  |
+| `skills[].origin` | one of `project` or `yours` | yes |  |
 | `skills[].files` | array of string | yes |  |
 
 ### `skills.read`
 
 Read. Since version 1.
 
-One file of a user's skill, as UTF-8 text; at most 256 KiB.
+One file of a skill skills.list gives, as UTF-8 text; at most 256 KiB.
 
 **Parameters**
 
@@ -780,6 +821,71 @@ One file of a user's skill, as UTF-8 text; at most 256 KiB.
 | `file` | string | yes |  |
 | `size` | integer | yes | At least 0. |
 | `data` | string | yes |  |
+
+### `automation.run`
+
+Write. Since version 1.
+
+Saves a Lua Automation script to the AI scripts folder and runs one of its macros on the active tab's selection, once the user approves the script. The run is one undo step.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `name` | string | yes | The script's file name without .lua; an earlier script of that name is replaced. At most 64 characters. `pattern`: `"^[A-Za-z0-9][A-Za-z0-9 _.-]*$"`. |
+| `script` | string | yes | The whole Lua script, registering its macro with aegisub.register_macro. 1 to 262144 characters. |
+| `macro` | string |  | The macro to run, by its registered name; default the first. Not empty. |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `file` | string | yes | The saved script's file name. |
+| `outcome` | one of `applied`, `refused`, `failed`, `cancelled`, `declined`, `stopped`, `lost` or `invalid` | yes |  |
+| `message` | string | yes |  |
+| `log` | string | yes |  |
+
+### `translation.project`
+
+Read. Since version 1.
+
+The Document's Honya project files: PROJECT.md, GLOSSARY.md, CHARACTERS.md and STYLE.md, those that exist. folder is null when the Document has no project folder.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `document` | [DocumentId](#documentid) |  | Defaults to the active Document. |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `folder` | string or null | yes |  |
+| `files` | array of objects | yes |  |
+| `files[].name` | one of `PROJECT.md`, `GLOSSARY.md`, `CHARACTERS.md` or `STYLE.md` | yes |  |
+| `files[].data` | string | yes |  |
+
+### `translation.project_write`
+
+Write. Since version 1.
+
+Replaces one of the Document's Honya project files, keeping Honya's Markdown and honya:data format.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `document` | [DocumentId](#documentid) |  | Defaults to the active Document. |
+| `file` | one of `PROJECT.md`, `GLOSSARY.md`, `CHARACTERS.md` or `STYLE.md` | yes |  |
+| `data` | string | yes |  |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `file` | one of `PROJECT.md`, `GLOSSARY.md`, `CHARACTERS.md` or `STYLE.md` | yes |  |
+| `size` | integer | yes | At least 0. |
 
 ### `nodes.catalogue`
 
@@ -828,7 +934,656 @@ Checks a node-effect graph; each problem names its node and port or field.
 | `problems[].port` | string |  |  |
 | `problems[].message` | string | yes |  |
 
+### `effects.graphs`
+
+Read. Since version 1.
+
+The Document's node-effect graphs, one per graph Line.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `document` | [DocumentId](#documentid) |  | Defaults to the active Document. |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `document` | [DocumentId](#documentid) | yes |  |
+| `revision` | [Revision](#revision) | yes |  |
+| `graphs` | array of objects | yes |  |
+| `graphs[].line` | [LineId](#lineid) | yes |  |
+| `graphs[].name` | string | yes |  |
+| `graphs[].style` | string | yes | The Style whose karaoke Lines it runs on. |
+| `graphs[].valid` | boolean | yes |  |
+
+### `effects.graph`
+
+Read. Since version 1.
+
+One graph Line's graph, with what keeps it from running.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `document` | [DocumentId](#documentid) |  | Defaults to the active Document. |
+| `line` | [LineId](#lineid) | yes |  |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `line` | [LineId](#lineid) | yes |  |
+| `name` | string | yes |  |
+| `style` | string | yes |  |
+| `revision` | [Revision](#revision) | yes |  |
+| `graph` | object or null | yes | Null when the Line's text is no graph. |
+| `valid` | boolean | yes |  |
+| `problems` | array of objects | yes |  |
+| `problems[].node` | string |  |  |
+| `problems[].port` | string |  |  |
+| `problems[].message` | string | yes |  |
+
+### `effects.edit`
+
+Read. Since version 1.
+
+Edits a graph in steps (add, connect, disconnect, remove, set) and gives the new graph with its problems; nothing in the Document changes.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `graph` | object | yes | A graph as effects.graph gives it; {"format": 1, "nodes": [], "wires": []} starts an empty one. |
+| `steps` | array of objects | yes | Applied in order; a refused step changes nothing. 1 to 500 items. |
+| `steps[].op` | one of `add`, `connect`, `disconnect`, `remove` or `set` | yes |  |
+| `steps[].type` | string |  | add: a node type from nodes.catalogue. |
+| `steps[].node` | string |  | add: the new node's id, made from its type when omitted; remove, set: the node. |
+| `steps[].fields` | object |  | add: the node's fields. |
+| `steps[].from` | string |  | connect: an output, "node.port". |
+| `steps[].to` | string |  | connect, disconnect: an input, "node.port"; connect replaces a wire already there. |
+| `steps[].field` | string |  | set: the field. |
+| `steps[].value` | any |  | set: the field's value; null restores its default. |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `graph` | object | yes |  |
+| `added` | array of string | yes | The ids of the nodes added, in step order. |
+| `valid` | boolean | yes |  |
+| `problems` | array of objects | yes |  |
+| `problems[].node` | string |  |  |
+| `problems[].port` | string |  |  |
+| `problems[].message` | string | yes |  |
+
+### `effects.preview`
+
+Read. Since version 1.
+
+Runs a graph on the Document's karaoke Lines and gives the Lines it would write; nothing is applied. Lua nodes don't run.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `document` | [DocumentId](#documentid) |  | Defaults to the active Document. |
+| `line` | [LineId](#lineid) |  | A graph Line: its graph, name and Style. |
+| `graph` | object |  | A graph to run in place of the Line's. |
+| `style` | string |  | The Style whose karaoke Lines it runs on; needed without line. |
+| `name` | string |  | The graph's name, which the Lines' Effect "fx <name>" carries. |
+| `sources` | array of [LineId](#lineid) |  | Only these karaoke Lines; all of them when omitted. 1 to 100000 items. |
+| `limit` | integer |  | How many generated Lines to give; default 20. From 0 to 500. |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `ran` | boolean | yes | False when a problem stopped the run; applying it would change nothing. |
+| `complete` | boolean | yes |  |
+| `sources` | integer | yes | How many karaoke Lines ran. |
+| `generated` | integer | yes | How many Lines the run made. |
+| `lines` | array of string | yes | The first generated Lines, as ASS Dialogue lines. |
+| `problems` | array of objects | yes |  |
+| `problems[].node` | string |  |  |
+| `problems[].line` | [LineId](#lineid) |  |  |
+| `problems[].message` | string | yes |  |
+
+### `effects.save`
+
+Write. Since version 1.
+
+Writes a graph to the Document as one undo step: into a new graph Line, or in place of a graph Line's.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `document` | [DocumentId](#documentid) |  | Defaults to the active Document. |
+| `graph` | object | yes |  |
+| `line` | [LineId](#lineid) |  | The graph Line to replace; omit it to add a graph. |
+| `name` | string |  | A new graph's name. 1 to 200 characters. |
+| `style` | string |  | A new graph's Style: whose karaoke Lines it runs on. Not empty. |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `line` | [LineId](#lineid) | yes |  |
+| `revision` | [Revision](#revision) | yes |  |
+| `graph` | object | yes |  |
+| `valid` | boolean | yes |  |
+| `problems` | array of objects | yes |  |
+| `problems[].node` | string |  |  |
+| `problems[].port` | string |  |  |
+| `problems[].message` | string | yes |  |
+
+### `effects.apply`
+
+Write. Since version 1.
+
+Runs a graph Line and writes its Lines as one undo step, replacing those it wrote before; the karaoke Lines it ran on become Comments. Lua nodes don't run, so a graph with one applies from the node-effect editor.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `document` | [DocumentId](#documentid) |  | Defaults to the active Document. |
+| `line` | [LineId](#lineid) | yes | The graph Line. |
+| `sources` | array of [LineId](#lineid) |  | Only these karaoke Lines; all of them when omitted. 1 to 100000 items. |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `revision` | [Revision](#revision) | yes |  |
+| `generated` | integer | yes |  |
+| `sources` | integer | yes | How many karaoke Lines got Lines. |
+| `changed` | boolean | yes |  |
+
+### `typeset.perspective`
+
+Read. Since version 1.
+
+The Line's text with the tags that render it on a quad (VT3's perspective solver): \pos, \org, \frx, \fry, \frz, \fax, \fscx and \fscy.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `document` | [DocumentId](#documentid) |  | Defaults to the active Document. |
+| `line` | [LineId](#lineid) | yes |  |
+| `quad` | array of objects | yes | Script coordinates: top left, top right, bottom right, bottom left. 4 to 4 items. |
+| `quad[].x` | number | yes |  |
+| `quad[].y` | number | yes |  |
+| `origin` | one of `center`, `nofax` or `keep` |  | Where \org goes: the quad's centre (default), the centre without \fax, or where the Line has it. |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `line` | [LineId](#lineid) | yes |  |
+| `text` | string | yes |  |
+| `transform` | object | yes |  |
+
+### `typeset.clip`
+
+Read. Since version 1.
+
+The Line's text with its first clip replaced by a rectangle or a vector clip.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `document` | [DocumentId](#documentid) |  | Defaults to the active Document. |
+| `line` | [LineId](#lineid) | yes |  |
+| `rect` | object |  | Script coordinates, rounded to whole units. |
+| `rect.x1` | number | yes |  |
+| `rect.y1` | number | yes |  |
+| `rect.x2` | number | yes |  |
+| `rect.y2` | number | yes |  |
+| `vector` | string |  | ASS drawing commands such as "m 0 0 l 100 0 100 50 0 50"; empty removes the vector clip. At most 100000 characters. |
+| `inverse` | boolean |  | \iclip: draw outside the clip. |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `line` | [LineId](#lineid) | yes |  |
+| `text` | string | yes | The Line's text with the tags written; nothing is applied. |
+
+### `typeset.drawing`
+
+Read. Since version 1.
+
+The Line's text with its first drawing replaced by a shape (\p1), placed at a position with an alignment.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `document` | [DocumentId](#documentid) |  | Defaults to the active Document. |
+| `line` | [LineId](#lineid) | yes |  |
+| `shape` | string | yes | ASS drawing commands, in script units from the drawing's origin. 1 to 100000 characters. |
+| `position` | object |  |  |
+| `position.x` | number | yes |  |
+| `position.y` | number | yes |  |
+| `alignment` | integer |  | \an; 7 (top left) with position, else the Line's. From 1 to 9. |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `line` | [LineId](#lineid) | yes |  |
+| `text` | string | yes | The Line's text with the tags written; nothing is applied. |
+
+### `typeset.shift`
+
+Read. Since version 1.
+
+Moves the Lines' positions, \move points, clips, drawings and \org by an offset, as the Position shifter does.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `document` | [DocumentId](#documentid) |  | Defaults to the active Document. |
+| `lines` | array of [LineId](#lineid) | yes | 1 to 1000 items. |
+| `dx` | number | yes | Script units. |
+| `dy` | number | yes |  |
+| `kinds` | array of one of `position`, `move_start`, `move_end`, `clip`, `drawing` or `origin` |  | What moves; every kind but drawing when omitted. |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `lines` | array of objects | yes | The Lines the change alters, with their new text; nothing is applied. |
+| `lines[].line` | [LineId](#lineid) | yes |  |
+| `lines[].text` | string | yes |  |
+
+### `typeset.hydra`
+
+Read. Since version 1.
+
+Changes one tag across the Lines as the Hydra strip does: set it, add to it, multiply it by line number, or run a gradient across characters or Lines.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `document` | [DocumentId](#documentid) |  | Defaults to the active Document. |
+| `lines` | array of [LineId](#lineid) | yes | Multiply and the line gradients count them in this order. 1 to 1000 items. |
+| `tag` | string | yes | A Hydra tag without the backslash: blur, bord, be, alpha, 1a, 3a, 4a, 1c (or c), 3c, 4c, fad, fax, fay, fs, fsp, shad, xbord, ybord, xshad, yshad, pos or t. Not empty. |
+| `change` | one of `set`, `add`, `multiply` or `gradient` | yes |  |
+| `values` | array of number | yes | set: the value; add: what to add; multiply: the start; gradient: the first value. Colours are R, G, B. 1 to 4 items. |
+| `perLine` | array of number |  | multiply: added for each Line. At most 4 items. |
+| `byLine` | one of `set` or `add` |  | multiply: set each Line's value, or add to it. Default set. |
+| `to` | array of number |  | gradient: the last value. At most 4 items. |
+| `across` | one of `characters` or `lines` |  | gradient: default characters. |
+| `decreasing` | boolean |  | gradient: run from the end. |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `lines` | array of objects | yes | The Lines the change alters, with their new text; nothing is applied. |
+| `lines[].line` | [LineId](#lineid) | yes |  |
+| `lines[].text` | string | yes |  |
+
+### `typeset.check`
+
+Read. Since version 1.
+
+Renders one Line alone, with a proposed text, on its frame and compares its ink with a target.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `document` | [DocumentId](#documentid) |  | Defaults to the active Document. |
+| `line` | [LineId](#lineid) | yes |  |
+| `text` | string |  | The proposed text; the Line's own when omitted. |
+| `target` | object or object | yes | Where the Line's ink should land, in script coordinates: a quad or a box. |
+| `frame` | integer |  | Default: the frame shown when the Line is on it, else the Line's first. At least 0. |
+| `tolerance` | number |  | Video pixels; default 4. At least 0. |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `line` | [LineId](#lineid) | yes |  |
+| `frame` | integer | yes |  |
+| `pass` | boolean | yes |  |
+| `error` | number or null | yes | The largest distance between an edge of the ink's bounds and the target's, in video pixels; null when nothing is drawn. |
+| `ink` | object or null | yes |  |
+| `target` | object | yes |  |
+| `target.x` | number | yes |  |
+| `target.y` | number | yes |  |
+| `target.width` | number | yes |  |
+| `target.height` | number | yes |  |
+
+### `typeset.apply`
+
+Write. Since version 1.
+
+Applies typeset Lines as one undo step after every one passes the render check; when one misses its target nothing is applied.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `document` | [DocumentId](#documentid) |  | Defaults to the active Document. |
+| `revision` | [Revision](#revision) | yes |  |
+| `name` | string | yes | A few words naming the change, such as "Typeset the shop sign". 1 to 200 characters. |
+| `lines` | array of objects | yes | 1 to 100 items. |
+| `lines[].line` | [LineId](#lineid) | yes |  |
+| `lines[].text` | string | yes |  |
+| `lines[].target` | object or object | yes | Where the Line's ink should land, in script coordinates: a quad or a box. |
+| `lines[].frame` | integer |  | At least 0. |
+| `tolerance` | number |  | Video pixels; default 4. At least 0. |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `revision` | [Revision](#revision) | yes |  |
+| `inserted` | array of [LineId](#lineid) | yes |  |
+| `changed` | boolean | yes |  |
+| `checks` | array of objects | yes |  |
+| `checks[].line` | [LineId](#lineid) | yes |  |
+| `checks[].frame` | integer | yes |  |
+| `checks[].pass` | boolean | yes |  |
+| `checks[].error` | number or null | yes | The largest distance between an edge of the ink's bounds and the target's, in video pixels; null when nothing is drawn. |
+| `checks[].ink` | object or null | yes |  |
+| `checks[].target` | object | yes |  |
+| `checks[].target.x` | number | yes |  |
+| `checks[].target.y` | number | yes |  |
+| `checks[].target.width` | number | yes |  |
+| `checks[].target.height` | number | yes |  |
+
+### `project.info`
+
+Read. Since version 1.
+
+The Project of the window the user works in, or null.
+
+**Parameters**: none.
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `project` | [Project](#project) | yes |  |
+
+### `karaoke.syllables`
+
+Read. Since version 1.
+
+A Line's karaoke syllables as the templater reads them: text, tag, start and end in ms.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `document` | [DocumentId](#documentid) |  | Defaults to the active Document. |
+| `line` | [LineId](#lineid) | yes |  |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `line` | [LineId](#lineid) | yes |  |
+| `syllables` | array of objects | yes |  |
+| `syllables[].text` | string | yes |  |
+| `syllables[].stripped` | string | yes |  |
+| `syllables[].tag` | string | yes |  |
+| `syllables[].start` | integer | yes |  |
+| `syllables[].end` | integer | yes |  |
+
+### `karaoke.split`
+
+Read. Since version 1.
+
+Splits Lines without \k tags into syllables as the audio editor's karaoke mode does, the time shared by character; Lines that already have \k tags keep them.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `document` | [DocumentId](#documentid) |  | Defaults to the active Document. |
+| `lines` | array of [LineId](#lineid) | yes | 1 to 1000 items. |
+| `bySyllable` | boolean |  | Default true: by syllable, with the language rules the user set; false: at spaces. |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `lines` | array of objects | yes | The Lines that change, with their new text; nothing is applied. |
+| `lines[].line` | [LineId](#lineid) | yes |  |
+| `lines[].text` | string | yes |  |
+
+### `karaoke.time`
+
+Read. Since version 1.
+
+Times a Line's existing syllables: each syllable's end in ms, in order; the \k tags are rewritten.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `document` | [DocumentId](#documentid) |  | Defaults to the active Document. |
+| `line` | [LineId](#lineid) | yes |  |
+| `ends` | array of integer | yes | One per syllable, ascending, in ms from the video's start. 1 to 4096 items. |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `line` | [LineId](#lineid) | yes |  |
+| `text` | string | yes | The Line's text with the \k tags written; nothing is applied. |
+
+### `karaoke.onsets`
+
+Read. Since version 1.
+
+Where sung notes start in the open audio, in ms, within a range.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `start` | integer | yes | At least 0. |
+| `end` | integer | yes | At least 0. |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `onsets` | array of integer | yes |  |
+
+### `karaoke.snap`
+
+Read. Since version 1.
+
+Moves each syllable boundary inside the Lines to the nearest vocal onset within the window, keeping every syllable at least 10 ms long.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `document` | [DocumentId](#documentid) |  | Defaults to the active Document. |
+| `lines` | array of [LineId](#lineid) | yes | 1 to 1000 items. |
+| `window` | integer |  | Ms either side; default 100. From 1 to 1000. |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `lines` | array of objects | yes | The Lines that change, with their new text; nothing is applied. |
+| `lines[].line` | [LineId](#lineid) | yes |  |
+| `lines[].text` | string | yes |  |
+| `lines[].moved` | integer |  | Boundaries moved. |
+
+### `karaoke.kanji`
+
+Read. Since version 1.
+
+Copies a timed romaji Line's syllables onto its kanji Line as the Kanji timer suggests the groups.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `document` | [DocumentId](#documentid) |  | Defaults to the active Document. |
+| `romaji` | [LineId](#lineid) | yes |  |
+| `kanji` | [LineId](#lineid) | yes |  |
+| `multi` | boolean |  | Further syllables of a group become # syllables instead of joining the first. |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `line` | [LineId](#lineid) | yes |  |
+| `text` | string | yes |  |
+| `clean` | boolean | yes | False when a group came out blank or the characters ran out: check it. |
+
+### `karaoke.furigana`
+
+Read. Since version 1.
+
+The readings the dictionary suggests for a Line's kanji runs, in hiragana.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `document` | [DocumentId](#documentid) |  | Defaults to the active Document. |
+| `line` | [LineId](#lineid) | yes |  |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `line` | [LineId](#lineid) | yes |  |
+| `runs` | array of objects | yes |  |
+| `runs[].base` | string | yes |  |
+| `runs[].reading` | string | yes |  |
+
+### `karaoke.check`
+
+Read. Since version 1.
+
+The Karaoke check's problems: unclosed tags, totals that differ from the Line, empty syllables and syllables outside the Line.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `document` | [DocumentId](#documentid) |  | Defaults to the active Document. |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `problems` | array of objects | yes |  |
+| `problems[].line` | [LineId](#lineid) | yes |  |
+| `problems[].kind` | one of `unclosed`, `not_for_audio_editor`, `editor_only`, `total_not_duration`, `zero_length` or `outside_line` | yes |  |
+| `problems[].totalMs` | integer |  |  |
+| `problems[].durationMs` | integer |  |  |
+| `problems[].syllables` | array of integer |  | Which ones, from 1. |
+| `unlisted` | integer | yes | Problems past the listed ones. |
+
+### `karaoke.template_preview`
+
+Read. Since version 1.
+
+The Lines the karaoke templater generates from one karaoke Line, without applying them.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `document` | [DocumentId](#documentid) |  | Defaults to the active Document. |
+| `line` | [LineId](#lineid) | yes |  |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `line` | [LineId](#lineid) | yes |  |
+| `lines` | array of objects | yes |  |
+| `lines[].layer` | integer | yes |  |
+| `lines[].start` | integer | yes |  |
+| `lines[].end` | integer | yes |  |
+| `lines[].style` | string | yes |  |
+| `lines[].effect` | string | yes |  |
+| `lines[].text` | string | yes |  |
+
+### `karaoke.apply_template`
+
+Write. Since version 1.
+
+Runs the karaoke templater on the karaoke Lines, or the Lines given, and applies what it generates as one undo step: old generated Lines are replaced.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `document` | [DocumentId](#documentid) |  | Defaults to the active Document. |
+| `revision` | [Revision](#revision) | yes |  |
+| `lines` | array of [LineId](#lineid) |  | Default: every karaoke Line. 1 to 100000 items. |
+| `name` | string |  | Default "Apply karaoke template". 1 to 200 characters. |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `revision` | [Revision](#revision) | yes |  |
+| `changed` | boolean | yes |  |
+
+### `karaoke.align`
+
+Write. Since version 1.
+
+Runs the user's own WhisperX or Montreal Forced Aligner on the audio under the Lines and answers each word with its start and end in ms; the user approves every run, and nothing is applied.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `document` | [DocumentId](#documentid) |  | Defaults to the active Document. |
+| `lines` | array of [LineId](#lineid) | yes | 1 to 1000 items. |
+| `program` | one of `whisperx` or `mfa` | yes |  |
+| `language` | string |  | WhisperX: a language code such as ja; default: it detects. At most 32 characters. |
+| `dictionary` | string |  | MFA: the pronunciation dictionary, such as english_mfa. At most 200 characters. |
+| `acousticModel` | string |  | MFA: the acoustic model, such as english_mfa. At most 200 characters. |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `words` | array of objects | yes |  |
+| `words[].text` | string | yes |  |
+| `words[].start` | integer | yes |  |
+| `words[].end` | integer | yes |  |
+
 ## Events
+
+### `project.changed`
+
+Since version 1.
+
+The window the user works in opened or closed a Project, or the user moved to a window with another one.
+
+**Data**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `project` | [Project](#project) | yes |  |
 
 ### `document.changed`
 
@@ -1111,3 +1866,32 @@ Type: boolean, integer, string or array of string.
 | `file` | string | yes | The handle files.read and files.write take. |
 | `name` | string | yes |  |
 | `access` | one of `read` or `write` | yes |  |
+
+### GrantedFolder
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `folder` | string | yes | The handle files.list, files.read and files.write take with a path. |
+| `name` | string | yes |  |
+| `access` | one of `read` or `write` | yes |  |
+
+### FolderEntry
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `path` | string | yes | Relative to the granted folder, with / between its parts. |
+| `folder` | boolean | yes |  |
+
+### Project
+
+One of:
+
+- null
+- object
+
+*object*
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `name` | string | yes | The Project folder's name. |
+| `trusted` | boolean | yes | Whether the folder is in Trusted folders. |

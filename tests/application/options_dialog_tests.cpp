@@ -354,7 +354,8 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     for (std::size_t i = 0; const auto &[id, control] : {std::pair{"ai.agent.mode", OptionsControl::Text},
                                                          std::pair{"ai.agent.threadCapCents", OptionsControl::Number},
                                                          std::pair{"ai.agent.dailyCapCents", OptionsControl::Number},
-                                                         std::pair{"ai.agent.costMeter", OptionsControl::Check}}) {
+                                                         std::pair{"ai.agent.costMeter", OptionsControl::Check},
+                                                         std::pair{"ai.agent.autoCompact", OptionsControl::Check}}) {
         const auto &agent = all[std::size(kLegacy) + 61 + i++];
         EXPECT_EQ(agent.setting, id);
         EXPECT_EQ(agent.control, control) << id;
@@ -365,9 +366,17 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     EXPECT_EQ(std::get<std::int64_t>(findSetting("ai.agent.threadCapCents")->defaultValue), 200);
     EXPECT_EQ(std::get<std::int64_t>(findSetting("ai.agent.dailyCapCents")->defaultValue), 1000);
     EXPECT_EQ(findOptionsBinding("ai.agent.fullAccessWarned"), nullptr);
+    for (std::size_t i = 0; const char *tag : {"blur", "bord", "shad", "alpha", "an", "fsp"}) {
+        const auto &cycle = all[std::size(kLegacy) + 68 + i++];
+        EXPECT_EQ(cycle.setting, std::string("editing.cycleValues.") + tag);
+        EXPECT_EQ(cycle.control, OptionsControl::Text) << tag;
+        EXPECT_EQ(cycle.page, OptionsPage::Editing) << tag;
+        ASSERT_NE(findSetting(cycle.setting), nullptr) << tag;
+    }
+    EXPECT_EQ(std::get<std::string>(findSetting("editing.cycleValues.an")->defaultValue), "1, 2, 3, 4, 5, 6, 7, 8, 9");
 #ifdef _WIN32
-    ASSERT_EQ(all.size(), std::size(kLegacy) + 67);
-    const auto &hostApi = all[std::size(kLegacy) + 65];
+    ASSERT_EQ(all.size(), std::size(kLegacy) + 76);
+    const auto &hostApi = all[std::size(kLegacy) + 74];
     EXPECT_EQ(hostApi.setting, "audio.outputHostApi");
     EXPECT_EQ(hostApi.control, OptionsControl::IndexChoice);
     EXPECT_EQ(hostApi.page, OptionsPage::Audio);
@@ -378,7 +387,7 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     EXPECT_EQ(all.back().entries, 2);
     const auto bindings = all.first(std::size(kLegacy));
 #else
-    ASSERT_EQ(all.size(), std::size(kLegacy) + 67);
+    ASSERT_EQ(all.size(), std::size(kLegacy) + 74);
     EXPECT_EQ(findOptionsBinding("audio.outputHostApi"), nullptr);
     EXPECT_EQ(findOptionsBinding("video.playbackPlayer"), nullptr);
     const auto bindings = all.first(std::size(kLegacy));
@@ -765,9 +774,10 @@ TEST(OptionsDialog, PagesHaveIdsAndAPageResetsAlone)
                             OptionsPage::Spelling, OptionsPage::Grid,
                             OptionsPage::Video, OptionsPage::Audio, OptionsPage::Conversion,
                             OptionsPage::SubtitleProperties, OptionsPage::Automation, OptionsPage::Updates,
-                            OptionsPage::Ai})
+                            OptionsPage::Ai, OptionsPage::Editing})
         EXPECT_EQ(optionsPageOfId(optionsPageId(page)), page);
     EXPECT_EQ(optionsPageId(OptionsPage::LineEditor), "lineEditor");
+    EXPECT_EQ(optionsPageId(OptionsPage::Editing), "editing");
     EXPECT_EQ(optionsPageId(OptionsPage::Updates), "updates");
     EXPECT_EQ(optionsPageId(OptionsPage::Spelling), "spelling");
     EXPECT_EQ(optionsPageId(OptionsPage::Ai), "ai");

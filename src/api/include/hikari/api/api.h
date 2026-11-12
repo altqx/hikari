@@ -51,6 +51,10 @@ struct Caller {
     bool reviewed = false;
     // May read the user's skills (AI callers).
     bool skills = false;
+    // The caller's Project folder, UTF-8; its .hikari/skills join the user's. Empty: no Project.
+    std::string project;
+    // The user approved this call's Lua script; automation.run refuses without it.
+    bool scriptApproved = false;
 };
 
 // A file the user let one caller use; the caller sees the handle and name, never the path.
@@ -61,10 +65,24 @@ struct GrantedFile {
     bool writable = false;
 };
 
+// A folder one caller may use by relative paths; links that lead outside it are refused.
+struct GrantedFolder {
+    std::string handle;
+    std::string name;
+    std::string path;
+    bool writable = false;
+};
+
+// The handle of an AI caller's Project folder, read-only, from Caller::project.
+inline constexpr std::string_view kProjectFolder = "project";
+
 struct Context {
     const Host &host;
     const Caller &caller;
     std::vector<GrantedFile> files; // the caller's grants
+    std::vector<GrantedFolder> folders;
+    // Grants the caller a file inside one of its folders and answers the handle.
+    std::function<std::string(const std::string &path, bool writable)> grantFile;
 };
 
 // A handler replies exactly once, now or later, on the GUI thread.
@@ -136,9 +154,13 @@ public:
     void documentsChanged(); // a tab opened or closed, or the editing target moved
     void panelChanged(std::string_view panel);
     void commandRan(std::string_view command, bool ok);
+    void projectChanged(); // the Project that project.info answers changed
 
     // The handle files.* use for `path`; granting a path again updates `writable`.
     std::string grantFile(const std::string &callerId, const std::string &path, bool writable);
+    // The same for a folder, which files.* reach by `folder` and a relative `path`.
+    std::string grantFolder(const std::string &callerId, const std::string &path, bool writable);
+    // Its files and its folders.
     void revokeFiles(const std::string &callerId);
     // The path behind a caller's handle, if the caller holds it.
     std::optional<std::string> grantedPath(const std::string &callerId, std::string_view handle) const;
@@ -160,6 +182,7 @@ private:
     std::vector<Subscription> m_subscriptions;
     std::uint64_t m_nextSubscription = 1;
     std::vector<std::pair<std::string, GrantedFile>> m_grants; // by caller id
+    std::vector<std::pair<std::string, GrantedFolder>> m_folders; // by caller id
     std::uint64_t m_nextGrant = 1;
 };
 

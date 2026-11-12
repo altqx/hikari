@@ -51,7 +51,8 @@ struct AgentSpec {
     QString program;
     /// Go before the sidecar's arguments.
     QStringList arguments;
-    sandbox::Profile profile;
+    /// Unsandboxed when empty.
+    std::optional<sandbox::Profile> profile;
     QString workingDirectory;
     /// Added to the clean environment the sidecar gets.
     QProcessEnvironment environment;
@@ -63,6 +64,9 @@ struct AgentSpec {
     /// Gives each process a private MCP channel for the session the sidecar names: the arguments that point the
     /// agent at `url`. The token goes in HIKARI_MCP_TOKEN.
     std::function<QStringList(const QString &url)> channelArguments;
+    /// Gives each process a private MCP channel for the session the sidecar names, through a guard that names the
+    /// channel at `url` with `token` in the agent's own protocol.
+    std::function<std::unique_ptr<AgentGuard>(const QString &url, const QByteArray &token)> channelGuard;
     /// Runs before the process starts, which it does once `go` gets no error.
     std::function<void(std::function<void(QString error)> go)> before;
     /// Runs after the process exits.
@@ -75,6 +79,34 @@ QString refusedClaudeArguments(const QStringList &arguments);
 /// Codex app-server under Hikari: only a conversation's methods pass, every thread is read-only with no config
 /// overrides, and Qt itself declines every command, file change and permission the agent asks for.
 std::unique_ptr<AgentGuard> codexGuard();
+
+/// Where an ACP agent finds Hikari's tools: the channel itself when the agent takes HTTP MCP servers, otherwise
+/// `bridge --mcp --channel-url <url>` over stdio, which reads the token from HIKARI_MCP_TOKEN.
+struct AcpChannel {
+    QString url;
+    QByteArray token;
+    QString bridge;
+    QString work;
+};
+
+/// An ACP agent under Hikari: only a conversation's methods pass, every session runs in `work` with Hikari's tools
+/// as its only MCP server, the agent gets no file or terminal access through the client, and Qt allows only the
+/// permission requests for Hikari's own tools.
+std::unique_ptr<AgentGuard> acpGuard(AcpChannel channel);
+/// The Hikari tool an ACP tool call runs, if it is one: agents name MCP tools their own way.
+std::optional<std::string> acpHikariTool(const api::Json &toolCall);
+
+/// An ACP agent: `program arguments`, writing only to `state` and `work`, reaching Hikari's tools through `bridge`
+/// when it has no HTTP MCP.
+AgentSpec acpAgent(const QString &program, const QStringList &arguments, const QStringList &state, const QString &work,
+                   const QString &bridge);
+
+/// OpenCode's `opencode acp`, writing only to its own XDG folders under `home` and to `work`.
+AgentSpec openCodeAgent(const QString &program, const QString &home, const QString &work, const QString &bridge);
+
+/// One of the user's own ACP agents, writing only to its private `folder`, which is its home too.
+AgentSpec customAcpAgent(const QString &program, const QStringList &arguments, const QString &folder,
+                         const QString &bridge);
 
 /// Claude Code at `program` with only its own state writable: `<home>/.claude`, `<home>/.claude.json` and `work`.
 AgentSpec claudeAgent(const QString &program, const QString &home, const QString &work);
@@ -96,6 +128,8 @@ public:
     ~AgentBroker() override;
 
     void add(const std::string &agent, AgentSpec spec);
+    /// Starts no more of `agent`; those running go on.
+    void remove(const std::string &agent);
     void attach(AiSidecarHost &host);
     void call(const std::string &method, const api::Json &params, const Answer &answer);
     void setNotify(Notify notify) { m_notify = std::move(notify); }

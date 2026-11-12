@@ -6,6 +6,7 @@
 #include "hikari/core/graphemes.h"
 #include "hikari/core/text_projection.h"
 
+#include <algorithm>
 #include <charconv>
 #include <cmath>
 #include <cstdlib>
@@ -87,9 +88,9 @@ StyleInfo furiganaOf(const StyleInfo &base)
     return styleOf(base.name + u8"-furigana", std::move(fields));
 }
 
-double rounded(double v)
+double rounded(double v, bool tenths)
 {
-    return std::floor(v + 0.5);
+    return tenths ? std::floor(v * 10 + 0.5) / 10 : std::floor(v + 0.5);
 }
 
 std::size_t firstCharBytes(const std::string &s)
@@ -121,9 +122,9 @@ std::string inlineFx(const std::string &text)
     return {};
 }
 
-bool isBlank(const Unit &u, double duration)
+bool isBlank(const Unit &u, double duration, bool karaOK)
 {
-    if (duration <= 0)
+    if (duration <= 0 && !karaOK)
         return true;
     std::string t = u.text;
     std::string out;
@@ -333,6 +334,17 @@ Layout::Layout(const std::vector<MacroInfoLine> &info, const std::vector<MacroSt
     addStyles(named, writtenScriptResolution(info), video);
 }
 
+Layout::Layout(const std::vector<std::pair<std::u8string, std::vector<std::string>>> &styles, double resX, double resY,
+               double xFactor, ExtentsCache &extents)
+    : m_extents(extents), m_resX(resX), m_resY(resY), m_factor(xFactor)
+{
+    for (const auto &[name, fields] : styles) {
+        const StyleInfo &info = m_styles[name] = styleOf(name, fields);
+        if (!m_first)
+            m_first = &info;
+    }
+}
+
 void Layout::addStyles(const std::vector<std::pair<std::u8string, std::vector<std::string>>> &styles,
                        Resolution written, std::optional<Resolution> video)
 {
@@ -381,6 +393,13 @@ std::optional<std::vector<std::u8string>> Layout::addedStyle(std::u8string_view 
 
 Layout::Extents Layout::measure(const StyleInfo &style, const std::string &text, std::vector<std::string> &problems)
 {
+    if (m_listed) {
+        auto it = std::ranges::find(*m_listed, style.fields, &Measures::value_type::first);
+        if (it == m_listed->end())
+            it = m_listed->insert(m_listed->end(), {style.fields, {}});
+        it->second.push_back(text);
+        return {};
+    }
     const ExtentsCache::Result r = m_extents.measure(style.fields, text);
     if (r.extents)
         return {r.extents->width, r.extents->height, r.extents->descent, r.extents->externalLeading};
@@ -395,8 +414,10 @@ Line Layout::line(const MacroDialogueLine &source, double li, const LineOptions 
     Line out;
     out.macro = source;
     out.li = li;
+    out.karaOK = options.karaOK;
     const std::u8string styleName(source.style.begin(), source.style.end());
     const bool chars = options.chars;
+    const bool tenths = options.karaOK;
     const MacroDialogueLine &d = out.macro;
     const auto kara = karaokeSyllables(d.text, d.startMs, d.endMs);
 
@@ -619,35 +640,35 @@ Line Layout::line(const MacroDialogueLine &source, double li, const LineOptions 
     l.relStart = 0;
     l.relEnd = l.duration;
     l.i = li;
-    l.left = rounded(left);
-    l.center = rounded(left + width / 2);
-    l.right = rounded(left + width);
-    l.width = rounded(width);
-    l.top = rounded(top);
-    l.middle = rounded(middle);
-    l.bottom = rounded(bottom);
-    l.height = rounded(height);
-    l.x = rounded(x);
-    l.y = rounded(y);
+    l.left = rounded(left, tenths);
+    l.center = rounded(left + width / 2, tenths);
+    l.right = rounded(left + width, tenths);
+    l.width = rounded(width, tenths);
+    l.top = rounded(top, tenths);
+    l.middle = rounded(middle, tenths);
+    l.bottom = rounded(bottom, tenths);
+    l.height = rounded(height, tenths);
+    l.x = rounded(x, tenths);
+    l.y = rounded(y, tenths);
     l.style = styleName;
 
     const auto place = [&](Unit &u, double sylLeft, double sylCenter, double sylRight, double sylWidth,
                            double sylHeight, bool isFuri) {
-        u.left = rounded(left + sylLeft);
-        u.center = rounded(left + sylCenter);
-        u.right = rounded(left + sylRight);
-        u.width = rounded(sylWidth);
+        u.left = rounded(left + sylLeft, tenths);
+        u.center = rounded(left + sylCenter, tenths);
+        u.right = rounded(left + sylRight, tenths);
+        u.width = rounded(sylWidth, tenths);
         if (isFuri) {
             u.bottom = l.top;
-            u.top = rounded(l.top - sylHeight);
-            u.middle = rounded(l.top - sylHeight / 2);
+            u.top = rounded(l.top - sylHeight, tenths);
+            u.middle = rounded(l.top - sylHeight / 2, tenths);
         } else {
             u.top = l.top;
             u.middle = l.middle;
             u.bottom = l.bottom;
         }
         u.height = sylHeight;
-        u.x = column == 0 ? rounded(left + sylLeft) : column == 1 ? rounded(left + sylCenter) : rounded(left + sylRight);
+        u.x = column == 0 ? rounded(left + sylLeft, tenths) : column == 1 ? rounded(left + sylCenter, tenths) : rounded(left + sylRight, tenths);
         u.y = align >= 7 ? u.top : align >= 4 ? u.middle : u.bottom;
     };
     const auto timed = [](Unit &u, double start, double end, double duration, double kdur) {
@@ -673,7 +694,7 @@ Line Layout::line(const MacroDialogueLine &source, double li, const LineOptions 
         u.i = s.i;
         u.style = styleName;
         place(u, s.left, s.center, s.right, s.width, s.height, false);
-        u.blank = isBlank(u, s.duration);
+        u.blank = isBlank(u, s.duration, options.karaOK);
         out.syls.push_back(std::move(u));
     }
     if (chars)
@@ -690,7 +711,7 @@ Line Layout::line(const MacroDialogueLine &source, double li, const LineOptions 
                 u.i = syls[s].i;
                 u.style = styleName;
                 place(u, at, at + w / 2, at + w, w, syls[s].height, false);
-                u.blank = isBlank(u, syls[s].duration);
+                u.blank = isBlank(u, syls[s].duration, options.karaOK);
                 at += w;
                 list.push_back(std::move(u));
             }
@@ -705,7 +726,7 @@ Line Layout::line(const MacroDialogueLine &source, double li, const LineOptions 
             u.i = f.i;
             u.style = furiStyle->name;
             place(u, f.left, f.center, f.right, f.width, f.height, true);
-            u.blank = isBlank(u, f.duration);
+            u.blank = isBlank(u, f.duration, options.karaOK);
             out.furi.push_back(std::move(u));
         }
 
@@ -713,7 +734,7 @@ Line Layout::line(const MacroDialogueLine &source, double li, const LineOptions 
                       std::to_string(d.layer) + '\x1f' + d.style + '\x1f' + d.actor + '\x1f' +
                       std::to_string(d.marginL) + ',' + std::to_string(d.marginR) + ',' + std::to_string(d.marginV) +
                       '\x1f' + d.effect + '\x1f' + numberText(li) + '\x1f' + numberText(m_resX) + 'x' +
-                      numberText(m_resY) + '\x1f' + numberText(m_factor) + (chars ? (options.split == CharSplit::Graphemes ? "g" : "c") : "") + '\x1f';
+                      numberText(m_resY) + '\x1f' + numberText(m_factor) + (options.karaOK ? "k" : "") + (chars ? (options.split == CharSplit::Graphemes ? "g" : "c") : "") + '\x1f';
     for (const StyleInfo *s : {styleref, furiStyle})
         if (s)
             for (const std::string &f : s->fields)

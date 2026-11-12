@@ -11,16 +11,21 @@ ScrollView {
     required property var dialog
     readonly property var ai: dialog.ai
     readonly property var inlineAi: dialog.inlineAi
+    readonly property var skills: dialog.skills
     property int editingAction: -2
     readonly property bool stagedOff: dialog.values["ai.off"] === true
     readonly property bool live: !stagedOff && !!ai && ai.on
     readonly property var providerList: ai ? ai.providers : []
     property string adding: ""
     property string editing: ""
+    readonly property var mcpServers: ai ? ai.mcpServers : null
+    readonly property var mcpServerList: mcpServers ? mcpServers.servers : []
+    property string mcpEditing: ""
     property var stagedRoles: ({})
     readonly property var codex: ai ? ai.codex : ({})
     readonly property var components: ai ? ai.components : ({})
     readonly property var agents: ai ? ai.agents : ({})
+    readonly property var acp: ai ? ai.acp : ({ available: false, antigravity: ({}) })
     readonly property bool autoUpdate: dialog.values["ai.autoUpdate"] === true && components.policyOff !== true
     readonly property bool webSearchOn: dialog.values["ai.webSearch"] === true
     readonly property string stagedService: dialog.values["ai.searchService"] ?? ""
@@ -158,6 +163,24 @@ ScrollView {
                       { id: "cancel", text: qsTr("Cancel"), role: "reject", isDefault: true }]
         }, answer => { if (answer === "delete") page.ai.remove(row.id) })
     }
+    function askDeleteMcpServer(row) {
+        dialog.ask({
+            title: qsTr("Delete MCP server"),
+            text: qsTr("Delete the MCP server “%1”?").arg(row.name),
+            detail: qsTr("Its secrets are removed from the keychain, and the agent loses its tools."),
+            severity: "warning",
+            choices: [{ id: "delete", text: qsTr("Delete"), role: "destructive" },
+                      { id: "cancel", text: qsTr("Cancel"), role: "reject", isDefault: true }]
+        }, answer => { if (answer === "delete") page.mcpServers.remove(row.id) })
+    }
+    function mcpStatusText(row) {
+        switch (row.state) {
+        case "connecting": return qsTr("Starting…")
+        case "ready": return qsTr("Connected · %n tool(s)", "", row.toolCount)
+        case "failed": return row.error !== "" ? qsTr("Failed: %1").arg(row.error) : qsTr("Failed")
+        }
+        return qsTr("Starts when the agent needs it")
+    }
     function wireName(wire) {
         switch (wire) {
         case "chat-completions": return qsTr("Chat Completions")
@@ -280,7 +303,11 @@ ScrollView {
     function agentNeedsUpdate(row) { return row.badge === "update" || row.badge === "unsupported" || row.badge === "broken" }
     function agentLine(row, name) {
         if (!row.found)
-            return qsTr("Not found on PATH.")
+            return row.missing ? row.missing : qsTr("Not found on PATH.")
+        if (row.acp)
+            return row.badge === "unsupported"
+                   ? qsTr("%1 is older than the oldest HikariSub supports (%2). Run this in a terminal:").arg(row.version, row.minimum)
+                   : row.version ? row.version : qsTr("Found on PATH.")
         if (row.state === "updating")
             return qsTr("Running %1. New sessions use the new version.").arg(row.command)
         if (row.outcome === "unchanged")
@@ -358,6 +385,82 @@ ScrollView {
             }
         }
     }
+    component SkillRow: RowLayout {
+        id: skillRow
+        required property var modelData
+        readonly property bool hidden: modelData.hidden !== ""
+        readonly property bool broken: modelData.problem !== ""
+        readonly property bool capped: modelData.files < modelData.found
+        objectName: "aiSkill_" + modelData.origin + "_" + modelData.name
+        spacing: 8
+        Layout.fillWidth: true
+        Layout.leftMargin: 10
+        Layout.rightMargin: 10
+        Layout.topMargin: 4
+        Layout.bottomMargin: 4
+        Icon {
+            iconRole: "notice-warning"
+            opacity: skillRow.broken ? 1 : 0
+            Accessible.ignored: true
+        }
+        Label {
+            text: skillRow.modelData.name
+            font.bold: !skillRow.hidden
+            font.strikeout: skillRow.hidden
+            color: skillRow.hidden ? Theme.disabled : Theme.text
+            elide: Text.ElideRight
+            Layout.preferredWidth: 150
+        }
+        TierChip { id: chip; origin: skillRow.modelData.origin; enabled: !skillRow.hidden }
+        Label {
+            id: detail
+            objectName: "aiSkillDetail"
+            text: skillRow.broken ? skillRow.modelData.problem
+                : skillRow.hidden ? skillRow.modelData.hidden
+                : skillRow.capped ? qsTr("Only the first %1 of its %2 files are offered.").arg(skillRow.modelData.files, skillRow.modelData.found)
+                : skillRow.modelData.description
+            color: skillRow.broken ? Theme.danger : skillRow.capped && !skillRow.hidden ? Theme.warning : Theme.muted
+            elide: Text.ElideRight
+            Layout.fillWidth: true
+        }
+        Label {
+            visible: !skillRow.hidden && !skillRow.broken
+            text: qsTr("%n file(s)", "", skillRow.modelData.files)
+            color: Theme.muted
+        }
+        Accessible.role: Accessible.ListItem
+        Accessible.name: skillRow.modelData.name
+        Accessible.description: [chip.text, detail.text].join(" · ")
+    }
+
+    component TierChip: Rectangle {
+        id: chipItem
+        property string origin
+        readonly property string text: origin === "project" ? qsTr("Project") : origin === "mine" ? qsTr("Mine") : qsTr("Built in")
+        implicitWidth: 86
+        implicitHeight: 20
+        radius: 10
+        color: "transparent"
+        border.color: !enabled ? Theme.disabled : origin === "project" ? Theme.accent : Theme.line
+        RowLayout {
+            anchors.fill: parent
+            anchors.leftMargin: 5
+            anchors.rightMargin: 7
+            spacing: 4
+            Icon {
+                iconRole: chipItem.origin === "project" ? "project" : chipItem.origin === "mine" ? "mine" : "builtin-script"
+                size: 14
+                enabled: chipItem.enabled
+            }
+            Label {
+                text: chipItem.text
+                font.pixelSize: 11
+                color: !chipItem.enabled ? Theme.disabled : chipItem.origin === "project" ? Theme.accent : Theme.text
+                Layout.fillWidth: true
+            }
+        }
+    }
+
     component Note: Label {
         color: Theme.muted
         wrapMode: Text.Wrap
@@ -484,6 +587,59 @@ ScrollView {
             }
         }
     }
+    component CustomAgentForm: GridLayout {
+        id: agentForm
+        required property var agent
+        required property Item list
+        objectName: "aiCustomAgentForm"
+        columns: 2
+        columnSpacing: 10
+        rowSpacing: 6
+        Label { text: qsTr("Name") }
+        TextField {
+            id: agentName
+            objectName: "aiCustomAgentName"
+            text: agentForm.agent.name
+            Accessible.name: qsTr("Name")
+            Layout.fillWidth: true
+        }
+        Label { text: qsTr("Command") }
+        TextField {
+            id: agentCommand
+            objectName: "aiCustomAgentCommand"
+            text: agentForm.agent.command
+            placeholderText: "my-agent"
+            font.family: page.codeFontFamily
+            Accessible.name: qsTr("Command")
+            Layout.fillWidth: true
+        }
+        Label { text: qsTr("Arguments") }
+        TextField {
+            id: agentArguments
+            objectName: "aiCustomAgentArguments"
+            text: agentForm.agent.arguments
+            placeholderText: "--acp"
+            font.family: page.codeFontFamily
+            Accessible.name: qsTr("Arguments")
+            Layout.fillWidth: true
+        }
+        RowLayout {
+            spacing: 8
+            Layout.columnSpan: 2
+            Item { Layout.fillWidth: true }
+            Button {
+                text: qsTr("Cancel")
+                onClicked: agentForm.list.editing = ""
+            }
+            PrimaryButton {
+                objectName: "aiCustomAgentSave"
+                enabled: agentName.text.trim() !== "" && agentCommand.text.trim() !== ""
+                text: qsTr("Save")
+                onClicked: agentForm.list.save(agentForm.agent.id || page.acp.newId(), agentName.text, agentCommand.text,
+                                             agentArguments.text)
+            }
+        }
+    }
     component DownloadNotice: Rectangle {
         id: notice
         property string title
@@ -545,6 +701,163 @@ ScrollView {
         implicitHeight: 8
         radius: 4
         color: status === "ok" ? Theme.success : status === "failed" ? Theme.danger : Theme.muted
+    }
+
+    component McpServerForm: Rectangle {
+        id: serverForm
+        property var existing: ({})
+        readonly property bool editingOne: existing.id !== undefined
+        property string error: ""
+        objectName: "aiMcpServerForm"
+        color: Theme.panel
+        border.color: Theme.accent
+        border.width: 1
+        radius: 2
+        implicitHeight: serverColumn.implicitHeight + 24
+        Layout.fillWidth: true
+        function close() { page.mcpEditing = "" }
+        Component.onCompleted: {
+            serverName.text = existing.name ?? ""
+            serverKind.currentIndex = existing.transport === "http" ? 1 : 0
+            serverCommand.text = existing.command ?? ""
+            serverUrl.text = existing.url ?? ""
+            serverTrusted.checked = existing.trusted === true
+            serverName.forceActiveFocus()
+        }
+        Connections {
+            target: page.mcpServers
+            function onSaved(id, error) {
+                if (error === "")
+                    serverForm.close()
+                else
+                    serverForm.error = error
+            }
+        }
+        ColumnLayout {
+            id: serverColumn
+            x: 12
+            y: 12
+            width: serverForm.width - 24
+            spacing: 8
+            Label {
+                text: serverForm.editingOne ? qsTr("Edit “%1”").arg(serverForm.existing.name) : qsTr("Add an MCP server")
+                font.bold: true
+                Layout.fillWidth: true
+            }
+            SettingsRow {
+                text: qsTr("Name")
+                labelWidth: 150
+                TextField { id: serverName; objectName: "aiMcpServerName"; Layout.fillWidth: true; Accessible.name: qsTr("Name") }
+            }
+            SettingsRow {
+                text: qsTr("Runs as")
+                labelWidth: 150
+                ComboBox {
+                    id: serverKind
+                    objectName: "aiMcpServerKind"
+                    model: [qsTr("A command on this computer"), qsTr("A URL (streamable HTTP)")]
+                    Layout.fillWidth: true
+                    Accessible.name: qsTr("Runs as")
+                }
+            }
+            SettingsRow {
+                visible: serverKind.currentIndex === 0
+                text: qsTr("Command")
+                labelWidth: 150
+                TextField {
+                    id: serverCommand
+                    objectName: "aiMcpServerCommand"
+                    placeholderText: "npx -y @modelcontextprotocol/server-everything"
+                    font.family: page.codeFontFamily
+                    Layout.fillWidth: true
+                    Accessible.name: qsTr("Command")
+                }
+            }
+            SettingsRow {
+                visible: serverKind.currentIndex === 0
+                text: qsTr("Environment")
+                labelWidth: 150
+                TextArea {
+                    id: serverEnvironment
+                    objectName: "aiMcpServerEnvironment"
+                    placeholderText: serverForm.editingOne ? qsTr("Leave empty to keep the stored variables") : "API_KEY=…"
+                    font.family: page.codeFontFamily
+                    Layout.fillWidth: true
+                    Accessible.name: qsTr("Environment")
+                }
+            }
+            SettingsRow {
+                visible: serverKind.currentIndex === 1
+                text: qsTr("URL")
+                labelWidth: 150
+                TextField {
+                    id: serverUrl
+                    objectName: "aiMcpServerUrl"
+                    placeholderText: "https://example.com/mcp"
+                    Layout.fillWidth: true
+                    Accessible.name: qsTr("URL")
+                }
+            }
+            SettingsRow {
+                visible: serverKind.currentIndex === 1
+                text: qsTr("Bearer token")
+                labelWidth: 150
+                TextField {
+                    id: serverBearer
+                    objectName: "aiMcpServerBearer"
+                    echoMode: TextInput.Password
+                    placeholderText: serverForm.editingOne ? qsTr("Leave empty to keep the stored token") : qsTr("Optional")
+                    Layout.fillWidth: true
+                    Accessible.name: qsTr("Bearer token")
+                }
+            }
+            Note {
+                text: serverKind.currentIndex === 0
+                      ? qsTr("One NAME=value per line. They go to the keychain, and only to this server.")
+                      : qsTr("The token goes to the keychain, and only to this URL.")
+            }
+            CheckBox {
+                id: serverTrusted
+                objectName: "aiMcpServerTrusted"
+                text: qsTr("Trust what this server says about its tools")
+            }
+            Note { text: qsTr("A trusted server’s read-only tools run without asking. Without trust, every tool asks as a change would.") }
+            Note {
+                objectName: "aiMcpServerError"
+                visible: serverForm.error !== ""
+                color: Theme.danger
+                text: {
+                    switch (serverForm.error) {
+                    case "name": return qsTr("Give the server a name.")
+                    case "command": return qsTr("Type the command that starts the server.")
+                    case "url": return qsTr("Type the server’s http or https URL.")
+                    case "environment": return qsTr("Write each variable as NAME=value on its own line.")
+                    }
+                    return qsTr("The keychain didn’t take the secrets; nothing was saved.")
+                }
+            }
+            RowLayout {
+                spacing: 8
+                Item { Layout.fillWidth: true }
+                Button {
+                    objectName: "aiMcpServerCancel"
+                    text: qsTr("Cancel")
+                    onClicked: serverForm.close()
+                }
+                PrimaryButton {
+                    objectName: "aiMcpServerSave"
+                    text: serverForm.editingOne ? qsTr("Save") : qsTr("Add")
+                    onClicked: {
+                        serverForm.error = ""
+                        page.mcpServers.save({ id: serverForm.existing.id ?? "", name: serverName.text,
+                                               transport: serverKind.currentIndex === 1 ? "http" : "stdio",
+                                               command: serverCommand.text, url: serverUrl.text,
+                                               environment: serverEnvironment.text, bearer: serverBearer.text,
+                                               trusted: serverTrusted.checked })
+                    }
+                }
+            }
+        }
     }
 
     component ProviderForm: Rectangle {
@@ -1523,6 +1836,241 @@ ScrollView {
                     }
                 }
             }
+            Rectangle {
+                visible: page.acp.available
+                color: "transparent"
+                border.color: Theme.line
+                radius: 2
+                implicitHeight: openCodeProgram.implicitHeight + 20
+                Layout.fillWidth: true
+                AgentProgram {
+                    id: openCodeProgram
+                    agent: "opencode"
+                    name: "OpenCode"
+                    x: 10
+                    y: 10
+                    width: parent.width - 20
+                }
+            }
+            Rectangle {
+                visible: page.acp.available
+                color: "transparent"
+                border.color: Theme.line
+                radius: 2
+                implicitHeight: antigravityColumn.implicitHeight + 20
+                Layout.fillWidth: true
+                ColumnLayout {
+                    id: antigravityColumn
+                    objectName: "aiAntigravity"
+                    readonly property var sign: page.acp.antigravity
+                    readonly property bool found: (page.agents.agy ?? {}).found === true
+                    x: 10
+                    y: 10
+                    width: parent.width - 20
+                    spacing: 6
+                    AgentProgram { agent: "agy"; name: "Antigravity" }
+                    RowLayout {
+                        objectName: "aiAntigravitySignedOut"
+                        visible: antigravityColumn.found && antigravityColumn.sign.state === "" && !antigravityColumn.sign.signedIn
+                        spacing: 8
+                        Label { text: qsTr("Not signed in") }
+                        Button {
+                            objectName: "aiAntigravitySignIn"
+                            text: qsTr("Sign in with Google…")
+                            onClicked: page.acp.signIn()
+                        }
+                    }
+                    RowLayout {
+                        objectName: "aiAntigravitySignedIn"
+                        visible: antigravityColumn.sign.state === "" && antigravityColumn.sign.signedIn === true
+                        spacing: 6
+                        Label { text: qsTr("Signed in with Google") }
+                        Button {
+                            objectName: "aiAntigravitySignOut"
+                            text: qsTr("Sign out")
+                            onClicked: page.acp.signOut()
+                        }
+                    }
+                    ColumnLayout {
+                        objectName: "aiAntigravityPanel"
+                        visible: antigravityColumn.sign.state !== ""
+                        spacing: 6
+                        Layout.fillWidth: true
+                        Label {
+                            text: antigravityColumn.sign.state === "code"
+                                  ? qsTr("Google’s sign-in page is open in your browser. Sign in there, then paste the code the page shows.")
+                                  : antigravityColumn.sign.state === "checking"
+                                    ? qsTr("Checking the code…")
+                                    : qsTr("Starting Antigravity’s sign-in…")
+                            wrapMode: Text.Wrap
+                            Layout.fillWidth: true
+                        }
+                        RowLayout {
+                            visible: antigravityColumn.sign.state === "code"
+                            spacing: 8
+                            Layout.fillWidth: true
+                            TextField {
+                                id: antigravityCode
+                                objectName: "aiAntigravityCode"
+                                placeholderText: qsTr("Code from Google’s page")
+                                Accessible.name: placeholderText
+                                Layout.fillWidth: true
+                                onAccepted: antigravityContinue.clicked()
+                            }
+                            PrimaryButton {
+                                id: antigravityContinue
+                                objectName: "aiAntigravityContinue"
+                                enabled: antigravityCode.text.trim() !== ""
+                                text: qsTr("Continue")
+                                onClicked: {
+                                    page.acp.enterCode(antigravityCode.text)
+                                    antigravityCode.clear()
+                                }
+                            }
+                        }
+                        RowLayout {
+                            spacing: 8
+                            BusyIcon {}
+                            Item { Layout.fillWidth: true }
+                            Button {
+                                visible: antigravityColumn.sign.state === "code"
+                                text: qsTr("Open the page again")
+                                onClicked: page.acp.openPage()
+                            }
+                            Button {
+                                objectName: "aiAntigravityCancel"
+                                text: qsTr("Cancel")
+                                onClicked: page.acp.cancel()
+                            }
+                        }
+                    }
+                    RowLayout {
+                        visible: (antigravityColumn.sign.error ?? "") !== ""
+                        spacing: 8
+                        Icon { iconRole: "notice-error"; Layout.alignment: Qt.AlignTop }
+                        Label {
+                            objectName: "aiAntigravityError"
+                            text: antigravityColumn.sign.error ?? ""
+                            textFormat: Text.PlainText
+                            wrapMode: Text.Wrap
+                            Layout.fillWidth: true
+                        }
+                    }
+                    Note {
+                        visible: antigravityColumn.found
+                        text: qsTr("HikariSub keeps its own Google sign-in for Antigravity and never reads ~/.gemini.")
+                        Layout.leftMargin: 0
+                        Layout.topMargin: 0
+                    }
+                }
+            }
+            ColumnLayout {
+                id: customAgents
+                objectName: "aiCustomAgents"
+                visible: page.acp.available
+                readonly property var rows: (page.dialog.values["ai.agents.custom"] ?? []).map(entry => {
+                    try { return JSON.parse(entry) } catch (e) { return null }
+                }).filter(row => row !== null && typeof row.id === "string")
+                property string editing: ""
+                function save(id, name, command, args) {
+                    const row = { id: id, name: name.trim(), command: command.trim(), arguments: args.trim() }
+                    const kept = rows.filter(r => r.id !== id)
+                    const at = rows.findIndex(r => r.id === id)
+                    kept.splice(at < 0 ? kept.length : at, 0, row)
+                    page.dialog.put("ai.agents.custom", kept.map(r => JSON.stringify(r)))
+                    editing = ""
+                }
+                function remove(id) {
+                    page.dialog.put("ai.agents.custom", rows.filter(r => r.id !== id).map(r => JSON.stringify(r)))
+                }
+                spacing: 6
+                Layout.fillWidth: true
+                Repeater {
+                    model: customAgents.rows
+                    delegate: Rectangle {
+                        id: customRow
+                        required property var modelData
+                        readonly property var found: page.ai ? page.acp.find(modelData.command) : ({})
+                        objectName: "aiCustomAgent_" + modelData.id
+                        color: "transparent"
+                        border.color: Theme.line
+                        radius: 2
+                        implicitHeight: customColumn.implicitHeight + 20
+                        Layout.fillWidth: true
+                        ColumnLayout {
+                            id: customColumn
+                            x: 10
+                            y: 10
+                            width: parent.width - 20
+                            spacing: 6
+                            RowLayout {
+                                visible: customAgents.editing !== customRow.modelData.id
+                                spacing: 8
+                                Layout.fillWidth: true
+                                Label { text: customRow.modelData.name; textFormat: Text.PlainText; font.bold: true }
+                                Label {
+                                    text: [customRow.modelData.command, customRow.modelData.arguments].join(" ").trim()
+                                    textFormat: Text.PlainText
+                                    font.family: page.codeFontFamily
+                                    color: Theme.muted
+                                    elide: Text.ElideMiddle
+                                    Layout.fillWidth: true
+                                }
+                                IconToolButton {
+                                    objectName: "aiCustomAgentEdit"
+                                    iconRole: "edit"
+                                    text: qsTr("Edit")
+                                    onClicked: customAgents.editing = customRow.modelData.id
+                                }
+                                IconToolButton {
+                                    objectName: "aiCustomAgentDelete"
+                                    iconRole: "delete"
+                                    text: qsTr("Delete")
+                                    onClicked: customAgents.remove(customRow.modelData.id)
+                                }
+                            }
+                            Label {
+                                visible: customAgents.editing !== customRow.modelData.id
+                                objectName: "aiCustomAgentLine"
+                                text: customRow.found.found ? customRow.found.path : qsTr("Not found on PATH.")
+                                textFormat: Text.PlainText
+                                color: Theme.muted
+                                elide: Text.ElideMiddle
+                                Layout.fillWidth: true
+                            }
+                            Loader {
+                                active: customAgents.editing === customRow.modelData.id
+                                visible: active
+                                Layout.fillWidth: true
+                                sourceComponent: CustomAgentForm { agent: customRow.modelData; list: customAgents }
+                            }
+                        }
+                    }
+                }
+                Loader {
+                    active: customAgents.editing === "new"
+                    visible: active
+                    Layout.fillWidth: true
+                    sourceComponent: CustomAgentForm { agent: ({ id: "", name: "", command: "", arguments: "" }); list: customAgents }
+                }
+                RowLayout {
+                    spacing: 8
+                    Layout.fillWidth: true
+                    IconTextButton {
+                        objectName: "aiAddCustomAgent"
+                        iconRole: "add"
+                        text: qsTr("Add agent")
+                        enabled: customAgents.editing === ""
+                        onClicked: customAgents.editing = "new"
+                    }
+                    Item { Layout.fillWidth: true }
+                }
+                Note {
+                    text: qsTr("Any agent that speaks ACP over stdio. It runs with its own folder as its home and can write nowhere else.")
+                    Layout.leftMargin: 0
+                    Layout.topMargin: 0
+                }
+            }
         }
 
         SettingsSection {
@@ -1690,6 +2238,129 @@ ScrollView {
                 text: mcpSection.httpOn ? qsTr("The JSON setup needs the address: press OK or Apply to start listening on 127.0.0.1.")
                                         : qsTr("The JSON setup is for agents that connect over HTTP, so it needs “Also listen on http://127.0.0.1”.")
             }
+            SettingsRow {
+                objectName: "aiMcpServers"
+                visible: !!page.mcpServers
+                text: qsTr("MCP servers")
+                Layout.topMargin: 8
+                Label {
+                    objectName: "aiNoMcpServers"
+                    visible: page.mcpServerList.length === 0 && page.mcpEditing === ""
+                    text: qsTr("No MCP servers yet. Add one to give the agent its tools.")
+                    color: Theme.muted
+                    elide: Text.ElideRight
+                    Layout.fillWidth: true
+                }
+                Item { visible: page.mcpServerList.length > 0 || page.mcpEditing !== ""; Layout.fillWidth: true }
+                IconTextButton {
+                    objectName: "aiAddMcpServer"
+                    iconRole: "add"
+                    text: qsTr("Add server…")
+                    enabled: page.mcpEditing === ""
+                    onClicked: page.mcpEditing = "new"
+                }
+            }
+            Repeater {
+                model: page.mcpServerList
+                delegate: ColumnLayout {
+                    id: serverRow
+                    required property var modelData
+                    objectName: "aiMcpServer_" + modelData.id
+                    spacing: 2
+                    Layout.fillWidth: true
+                    Loader {
+                        active: page.mcpEditing === serverRow.modelData.id
+                        visible: active
+                        Layout.fillWidth: true
+                        sourceComponent: McpServerForm { existing: serverRow.modelData }
+                    }
+                    RowLayout {
+                        visible: page.mcpEditing !== serverRow.modelData.id
+                        spacing: 8
+                        Layout.fillWidth: true
+                        ColumnLayout {
+                            spacing: 1
+                            Layout.fillWidth: true
+                            Label { text: serverRow.modelData.name; font.bold: true; elide: Text.ElideRight; Layout.fillWidth: true }
+                            Label {
+                                text: serverRow.modelData.transport === "http" ? serverRow.modelData.url : serverRow.modelData.command
+                                font.family: page.codeFontFamily
+                                color: Theme.muted
+                                elide: Text.ElideMiddle
+                                Layout.fillWidth: true
+                            }
+                        }
+                        StatusDot {
+                            status: serverRow.modelData.state === "ready" ? "ok" : serverRow.modelData.state === "failed" ? "failed" : ""
+                        }
+                        Label {
+                            objectName: "aiMcpServerStatus"
+                            text: page.mcpStatusText(serverRow.modelData)
+                            color: serverRow.modelData.state === "failed" ? Theme.danger : Theme.muted
+                            elide: Text.ElideRight
+                            Layout.maximumWidth: 260
+                        }
+                        IconToolButton {
+                            objectName: "aiMcpServerEdit"
+                            iconRole: "edit"
+                            text: qsTr("Edit")
+                            enabled: page.mcpEditing === ""
+                            onClicked: page.mcpEditing = serverRow.modelData.id
+                        }
+                        IconToolButton {
+                            objectName: "aiMcpServerDelete"
+                            iconRole: "delete"
+                            text: qsTr("Delete")
+                            onClicked: page.askDeleteMcpServer(serverRow.modelData)
+                        }
+                    }
+                    CheckBox {
+                        objectName: "aiMcpServerTrust"
+                        visible: page.mcpEditing !== serverRow.modelData.id
+                        checked: serverRow.modelData.trusted
+                        text: qsTr("Trust what it says about its tools")
+                        Layout.leftMargin: 12
+                        onToggled: page.mcpServers.setTrusted(serverRow.modelData.id, checked)
+                    }
+                    Repeater {
+                        model: page.mcpEditing !== serverRow.modelData.id ? serverRow.modelData.tools : []
+                        delegate: Loader {
+                            id: toolRow
+                            required property var modelData
+                            readonly property bool approvable: !modelData.readOnly && !modelData.alwaysAsks
+                            objectName: "aiMcpTool_" + modelData.name
+                            Layout.leftMargin: 36
+                            sourceComponent: approvable ? approveTool : toolNote
+                            Component {
+                                id: approveTool
+                                CheckBox {
+                                    text: qsTr("Run %1 without asking").arg(toolRow.modelData.name)
+                                    checked: serverRow.modelData.approved.indexOf(toolRow.modelData.name) >= 0
+                                    onToggled: page.mcpServers.setApproved(serverRow.modelData.id, toolRow.modelData.name, checked)
+                                }
+                            }
+                            Component {
+                                id: toolNote
+                                Label {
+                                    color: Theme.muted
+                                    text: toolRow.modelData.readOnly ? qsTr("%1 · only reads, never asks").arg(toolRow.modelData.name)
+                                                                     : qsTr("%1 · asks every time").arg(toolRow.modelData.name)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            Loader {
+                active: page.mcpEditing === "new"
+                visible: active
+                Layout.fillWidth: true
+                sourceComponent: McpServerForm {}
+            }
+            Note {
+                visible: !!page.mcpServers
+                text: qsTr("Servers run as you, outside the AI component’s sandbox. Tools that may change or delete things ask first in every mode. Changes apply at once.")
+            }
         }
 
         SettingsSection {
@@ -1743,6 +2414,131 @@ ScrollView {
             }
             Note { text: qsTr("At a cap the turn stops after its current change. The agent never raises a cap; only you can.") }
             AiCheck { setting: "ai.agent.costMeter"; text: qsTr("Show the cost meter") }
+            AiCheck { setting: "ai.agent.autoCompact"; text: qsTr("Compact long conversations automatically") }
+            Note { text: qsTr("At 90% of the model’s context window, old tool results are cleared, then older turns are summarised. Your history stays in the panel.") }
+        }
+
+        SettingsSection {
+            id: skillsSection
+            objectName: "aiSkills"
+            visible: page.live && !!page.skills
+            title: qsTr("Skills")
+            property var groups: []
+            function read() { groups = page.skills ? page.skills.groups(page.dialog.shellWindow) : [] }
+            Component.onCompleted: read()
+            onVisibleChanged: if (visible) read()
+            readonly property int broken: groups.reduce((n, g) => n + g.rows.filter(r => r.problem !== "").length, 0)
+            trailing: LinkButton {
+                objectName: "aiSkillsGuide"
+                iconRole: "help"
+                text: qsTr("About skills")
+                onClicked: page.skills.openGuide()
+            }
+            Rectangle {
+                color: "transparent"
+                border.color: Theme.line
+                radius: 2
+                implicitHeight: skillColumn.implicitHeight + 2
+                Layout.fillWidth: true
+                ColumnLayout {
+                    id: skillColumn
+                    x: 1
+                    y: 1
+                    width: parent.width - 2
+                    spacing: 0
+                    Repeater {
+                        model: skillsSection.groups
+                        delegate: ColumnLayout {
+                            id: group
+                            required property var modelData
+                            required property int index
+                            objectName: "aiSkillGroup_" + modelData.group
+                            spacing: 0
+                            Layout.fillWidth: true
+                            Rectangle { visible: group.index > 0; color: Theme.line; implicitHeight: 1; Layout.fillWidth: true }
+                            Rectangle {
+                                color: Theme.raised
+                                implicitHeight: groupHeader.implicitHeight + 8
+                                Layout.fillWidth: true
+                                RowLayout {
+                                    id: groupHeader
+                                    anchors.fill: parent
+                                    anchors.leftMargin: 10
+                                    anchors.rightMargin: 10
+                                    Label {
+                                        text: group.modelData.group === "project" ? qsTr("This project")
+                                            : group.modelData.group === "mine" ? qsTr("Mine") : qsTr("Built in")
+                                        font.bold: true
+                                        font.pixelSize: 11
+                                        color: Theme.muted
+                                    }
+                                    Label {
+                                        text: group.modelData.folder
+                                        font.family: page.codeFontFamily
+                                        font.pixelSize: 11
+                                        color: Theme.muted
+                                        elide: Text.ElideMiddle
+                                        horizontalAlignment: Text.AlignRight
+                                        Layout.fillWidth: true
+                                    }
+                                }
+                            }
+                            Label {
+                                objectName: "aiSkillsEmpty_" + group.modelData.group
+                                visible: group.modelData.rows.length === 0
+                                text: group.modelData.group === "project"
+                                      ? qsTr("No skills in this project yet. A skill is a folder with a SKILL.md in it.")
+                                      : qsTr("No skills of yours yet. A skill is a folder with a SKILL.md in it.")
+                                color: Theme.muted
+                                wrapMode: Text.Wrap
+                                leftPadding: 34
+                                topPadding: 6
+                                bottomPadding: 6
+                                Layout.fillWidth: true
+                            }
+                            Repeater {
+                                model: group.modelData.rows
+                                delegate: SkillRow {}
+                            }
+                        }
+                    }
+                }
+            }
+            RowLayout {
+                spacing: 8
+                Layout.fillWidth: true
+                IconTextButton {
+                    objectName: "aiSkillsOpenFolder"
+                    iconRole: "folder-open"
+                    text: qsTr("Open folder")
+                    onClicked: if (page.skills.openFolder()) skillsSection.read()
+                }
+                IconTextButton {
+                    objectName: "aiSkillsOpenProjectFolder"
+                    visible: page.dialog.hasProject
+                    iconRole: "project"
+                    text: qsTr("Open project folder")
+                    onClicked: if (page.skills.openProjectFolder(page.dialog.shellWindow)) skillsSection.read()
+                }
+                IconToolButton {
+                    objectName: "aiSkillsRefresh"
+                    iconRole: "refresh"
+                    text: qsTr("Read the folders again")
+                    onClicked: skillsSection.read()
+                }
+                Item { Layout.fillWidth: true }
+            }
+            Label {
+                objectName: "aiSkillsNote"
+                color: Theme.muted
+                wrapMode: Text.Wrap
+                Layout.fillWidth: true
+                text: skillsSection.broken > 0
+                      ? qsTr("%n skill(s) can’t be offered. Fix them in their folders, then read the folders again.", "", skillsSection.broken)
+                      : page.dialog.hasProject
+                        ? qsTr("Threads started in this window use this project’s skills. A new or changed skill shows in the next thread.")
+                        : qsTr("Hikari AI reads a skill when the work matches its description. Skills are instructions and give no permission. A new or changed skill shows in the next thread.")
+            }
         }
 
         SettingsSection {

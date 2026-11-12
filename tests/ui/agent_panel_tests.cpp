@@ -1,9 +1,13 @@
 #include "hikari/app/agent_controller.h"
 #include "hikari/app/ai_features.h"
+#include "hikari/app/ai_settings.h"
 #include "hikari/app/application.h"
+#include "hikari/app/automation_shell.h"
 #include "hikari/application/ai_providers.h"
 #include "hikari/application/hotkeys.h"
+#include "hikari/application/project.h"
 #include "hikari/backends/ai_agent_broker.h"
+#include "hikari/backends/ai_antigravity.h"
 #include "hikari/backends/ai_agent_cli.h"
 #include "hikari/backends/ai_sidecar_host.h"
 #include "hikari/backends/ai_signin.h"
@@ -13,9 +17,12 @@
 #include "line_table_model.h"
 #include "settings_store.h"
 #include "shell_controller.h"
+#include "stale_temporary_dirs.h"
 #include "theme.h"
 
 #include <QFile>
+#include <QFileInfo>
+#include <QProcess>
 #include <QPointer>
 #include <QSaveFile>
 #include <QStandardPaths>
@@ -37,11 +44,53 @@ namespace {
 
 constexpr int kPastCodexsDefaultToolTimeoutMs = 75'000;
 
-/// Every key is "key", except that HIKARI_REAL_CODEX_SESSION, if set, holds HikariSub's Codex sign-in.
+/// HikariSub's keychain item for `id` in the user's own Secret Service at HIKARI_REAL_AGY_BUS, which vx11's private
+/// bus hides; only secret-tool gets that bus, and the secret moves over its pipes only.
+class RealKeychain {
+public:
+    static bool reaches(const std::string &id)
+    {
+        return id == backends::ai::kAntigravitySecret && !qEnvironmentVariable("HIKARI_REAL_AGY_BUS").isEmpty();
+    }
+    static int run(const QStringList &arguments, const QByteArray &input = {}, QByteArray *output = nullptr)
+    {
+        QProcess tool;
+        QProcessEnvironment environment = QProcessEnvironment::systemEnvironment();
+        environment.insert(QStringLiteral("DBUS_SESSION_BUS_ADDRESS"), qEnvironmentVariable("HIKARI_REAL_AGY_BUS"));
+        tool.setProcessEnvironment(environment);
+        tool.setProcessChannelMode(QProcess::SeparateChannels);
+        tool.start(QStringLiteral("secret-tool"), arguments);
+        tool.write(input);
+        tool.closeWriteChannel();
+        if (!tool.waitForFinished(30'000))
+            return -1;
+        if (output)
+            *output = tool.readAllStandardOutput();
+        return tool.exitStatus() == QProcess::NormalExit ? tool.exitCode() : -1;
+    }
+    static QStringList item(const std::string &id, bool typed = true)
+    {
+        QStringList attributes{QStringLiteral("server"), QStringLiteral("HikariSub"), QStringLiteral("user"),
+                               QStringLiteral("ai-provider/") + QString::fromStdString(id)};
+        if (typed)
+            attributes << QStringLiteral("type") << QStringLiteral("plaintext");
+        return attributes;
+    }
+};
+
+/// Every key is "key", except that HIKARI_REAL_CODEX_SESSION, if set, holds HikariSub's Codex sign-in, and
+/// Antigravity's comes from RealKeychain when HIKARI_REAL_AGY_BUS is set.
 class Keys final : public ai::KeyStore {
 public:
     void read(const std::string &id, std::function<void(ai::KeyResult)> done) override
     {
+        if (RealKeychain::reaches(id)) {
+            QByteArray secret;
+            if (RealKeychain::run(QStringList{QStringLiteral("lookup")} + RealKeychain::item(id), {}, &secret) != 0 ||
+                secret.isEmpty())
+                return done(ai::KeyError::NotFound);
+            return done(ai::KeyResult(secret.toStdString()));
+        }
         QFile file(qEnvironmentVariable("HIKARI_REAL_CODEX_SESSION"));
         if (id == backends::ai::kCodexSecret && file.open(QIODevice::ReadOnly))
             return done(ai::KeyResult(file.readAll().toStdString()));
@@ -49,6 +98,13 @@ public:
     }
     void write(const std::string &id, const std::string &key, std::function<void(std::optional<ai::KeyError>)> done) override
     {
+        if (RealKeychain::reaches(id)) {
+            const QStringList store{QStringLiteral("store"),
+                                    QStringLiteral("--label=ai-provider/%1@HikariSub").arg(QString::fromStdString(id))};
+            return done(RealKeychain::run(store + RealKeychain::item(id), QByteArray::fromStdString(key)) == 0
+                            ? std::nullopt
+                            : std::optional(ai::KeyError::Other));
+        }
         if (const QString path = qEnvironmentVariable("HIKARI_REAL_CODEX_SESSION");
             id == backends::ai::kCodexSecret && !path.isEmpty()) {
             QSaveFile file(path);
@@ -58,8 +114,12 @@ public:
         }
         done(std::nullopt);
     }
-    void remove(const std::string &, std::function<void(std::optional<ai::KeyError>)> done) override
+    void remove(const std::string &id, std::function<void(std::optional<ai::KeyError>)> done) override
     {
+        if (RealKeychain::reaches(id))
+            return done(RealKeychain::run(QStringList{QStringLiteral("clear")} + RealKeychain::item(id, false)) == 0
+                            ? std::nullopt
+                            : std::optional(ai::KeyError::Other));
         done(std::nullopt);
     }
 };
@@ -209,7 +269,8 @@ class AgentPanelTest : public QObject {
         return qScopeGuard([this, path = qEnvironmentVariable(variable.toLatin1().constData())] {
             if (QFile file(path); file.open(QIODevice::WriteOnly | QIODevice::Truncate))
                 file.write(agent().markdown(agent().current()).toUtf8());
-            if (QFile file(path + QStringLiteral(".sidecar-stderr.txt")); realHost && file.open(QIODevice::WriteOnly | QIODevice::Truncate))
+            if (QFile file(path + QStringLiteral(".sidecar-stderr.txt"));
+                realHost && qEnvironmentVariableIsSet("HIKARI_REAL_SIDECAR_STDERR") && file.open(QIODevice::WriteOnly | QIODevice::Truncate))
                 file.write(realHost->diagnostics());
         });
     }
@@ -246,7 +307,29 @@ class AgentPanelTest : public QObject {
         ports.agentOnPath = [](const QString &) { return true; };
     }
 
+    QString antigravityProfile() const { return at(QStringLiteral("user/ai/agents/antigravity")); }
+    void realAntigravity(app::AiFeatures::Ports &ports)
+    {
+        const QString agy = qEnvironmentVariable("HIKARI_REAL_AGY");
+        const QString bridge = qEnvironmentVariable("HIKARI_REAL_HIKARISUB");
+        if (agy.isEmpty() || bridge.isEmpty())
+            return;
+        realAgents(ports);
+        ports.agents = [](backends::ai::AgentBroker &, application::ai::KeyStore &) {};
+        ports.agentOnPath = [](const QString &) { return false; };
+        ports.acpCli = [agy](const QString &command) { return command == QLatin1String("agy") ? agy : QString(); };
+        ports.acpSpec = [this, bridge](const app::AiFeatures::AcpAgent &agent,
+                                       std::shared_ptr<backends::ai::TokenFileLease> lease) -> std::optional<backends::ai::AgentSpec> {
+            if (agent.id != QLatin1String(app::AiFeatures::kAntigravity))
+                return std::nullopt;
+            return backends::ai::antigravityAgent(agent.program, antigravityProfile(), bridge, std::move(lease));
+        };
+        ports.antigravityTokenFile = antigravityProfile() + u'/' + QLatin1String(backends::ai::kAntigravityTokenFile);
+    }
+
 private slots:
+    void initTestCase() { testing::removeStaleTemporaryDirs(); }
+
     void init()
     {
         const QByteArray test(QTest::currentTestFunction());
@@ -286,6 +369,8 @@ private slots:
         };
         if (test == "theInstalledClaudeEditsIntoTheReview" || test == "theInstalledCodexEditsIntoTheReview")
             realAgents(ports);
+        if (test == "theInstalledAntigravityRepliesAndItsSignInGoesOnSignOut")
+            realAntigravity(ports);
 
         app::Application::Options options;
         options.settingsFile = at(QStringLiteral("settings.toml"));
@@ -374,6 +459,39 @@ private slots:
         QCOMPARE(session().document().lines()[0]->text, u8"A rather long first line");
         shoot(QStringLiteral("agent-codex"));
     }
+    void theInstalledAntigravityRepliesAndItsSignInGoesOnSignOut()
+    {
+        for (const char *variable : {"HIKARI_REAL_AI_RUNTIME", "HIKARI_REAL_AGY", "HIKARI_REAL_AGY_BUS", "HIKARI_REAL_HIKARISUB"})
+            if (qEnvironmentVariable(variable).isEmpty())
+                QSKIP("Evidence only: set HIKARI_REAL_AI_RUNTIME, HIKARI_REAL_AI_BUNDLE, HIKARI_REAL_AGY, HIKARI_REAL_AGY_BUS and "
+                      "HIKARI_REAL_HIKARISUB to run the installed agy on HikariSub's own Google sign-in");
+        const QStringList lookup = QStringList{QStringLiteral("lookup")} + RealKeychain::item(backends::ai::kAntigravitySecret);
+        QCOMPARE(RealKeychain::run(lookup), 0);
+        openPanel();
+        agent().newThread();
+        agent().setModel(QStringLiteral("agent:acp:antigravity\t"));
+        QTRY_COMPARE(agent().thread().value(QStringLiteral("modelText")).toString(), QStringLiteral("Antigravity"));
+        QElapsedTimer took;
+        took.start();
+        type(QStringLiteral("Reply with the word ready"));
+        QTRY_VERIFY_WITH_TIMEOUT(kinds().contains(QStringLiteral("text")) && !agent().thread().value(QStringLiteral("running")).toBool(),
+                                 900'000);
+        const QString reply = lastItem().value(QStringLiteral("text")).toString();
+        qInfo().noquote() << "agy replied in" << took.elapsed() << "ms:" << reply.left(200);
+        if (QFile out(qEnvironmentVariable("HIKARI_REAL_AGY_OUT")); out.open(QIODevice::WriteOnly | QIODevice::Truncate))
+            out.write(reply.toUtf8());
+        QVERIFY2(reply.contains(QStringLiteral("ready"), Qt::CaseInsensitive), qPrintable(reply.left(200)));
+
+        QObject *acp = application->aiSettings()->property("acp").value<QObject *>();
+        QVERIFY(acp);
+        QVERIFY(QMetaObject::invokeMethod(acp, "signOut"));
+        QTRY_COMPARE(RealKeychain::run(lookup), 1);
+        const QString tokenFile = antigravityProfile() + u'/' + QLatin1String(backends::ai::kAntigravityTokenFile);
+        engine.reset();
+        application.reset();
+        QTRY_VERIFY(!QFileInfo::exists(tokenFile));
+        QCOMPARE(RealKeychain::run(lookup), 1);
+    }
     void agentsAreNoModelsWhenTheyAreMissing()
     {
         openPanel();
@@ -414,6 +532,54 @@ private slots:
         QVERIFY(click(QStringLiteral("agentThreadsButton")));
         QTRY_VERIFY(item(QStringLiteral("agentThreadRow")));
         shoot(QStringLiteral("agent-threads"), QStringLiteral("Tighten the long first line"));
+    }
+
+    void aProjectListsItsThreadsFirstAndShowsWhenItsAgentsFileIsOn()
+    {
+        QStringList opened;
+        const auto previous = backends::desktop::replaceRoutes({.openUrl = [&](const QUrl &url) {
+            opened << url.toLocalFile();
+            return true;
+        }});
+        auto restore = qScopeGuard([&] { backends::desktop::replaceRoutes(previous); });
+        const QString show = at(QStringLiteral("Show S02"));
+        QVERIFY(QDir().mkpath(show));
+        QFile agents(show + QStringLiteral("/AGENTS.md"));
+        QVERIFY(agents.open(QIODevice::WriteOnly));
+        agents.write("Keep honorifics.");
+        agents.close();
+
+        openPanel();
+        QVERIFY(click(QStringLiteral("agentNewThread")));
+        QTRY_VERIFY(agent().thread().contains(QStringLiteral("id")));
+        const QString outside = agent().thread().value(QStringLiteral("id")).toString();
+        QVERIFY(!agent().thread().value(QStringLiteral("projectInstructions")).toBool());
+        QVERIFY(!item(QStringLiteral("agentProjectInstructions")));
+
+        QVERIFY(application->openFolder(show, 0, int(application::WindowRequest::Reuse)).value(QStringLiteral("ok")).toBool());
+        QVERIFY(click(QStringLiteral("agentNewThread")));
+        QTRY_VERIFY(agent().thread().value(QStringLiteral("id")).toString() != outside);
+        const QString inProject = agent().thread().value(QStringLiteral("id")).toString();
+        QVERIFY(agent().thread().value(QStringLiteral("projectInstructions")).toBool());
+        QTRY_VERIFY(item(QStringLiteral("agentProjectInstructions")));
+        QVERIFY(click(QStringLiteral("agentOpenProjectInstructions")));
+        QCOMPARE(opened, QStringList{QFileInfo(agents).absoluteFilePath()});
+
+        agent().open(outside);
+        QTest::qWait(5);
+        agent().rename(outside, QStringLiteral("Newest, outside the Project"));
+        const auto ids = [&] {
+            QStringList out;
+            for (const QVariant &t : agent().threads())
+                out << t.toMap().value(QStringLiteral("id")).toString() + QLatin1Char(':')
+                           + t.toMap().value(QStringLiteral("day")).toString();
+            return out;
+        };
+        QCOMPARE(ids(), (QStringList{inProject + QStringLiteral(":project"), outside + QStringLiteral(":today")}));
+        QTRY_VERIFY(!item(QStringLiteral("agentProjectInstructions")));
+        QVERIFY(click(QStringLiteral("agentThreadsButton")));
+        QTRY_VERIFY(item(QStringLiteral("agentThreadRow")));
+        shoot(QStringLiteral("agent-project-threads"), QStringLiteral("Show S02"));
     }
 
     void aProposalTakesTheFocusFromThePanelButNotFromTheComposer()
@@ -509,6 +675,59 @@ private slots:
         QVERIFY(!item(QStringLiteral("messageBoxDontAsk")));
     }
 
+    void anApprovedLuaScriptRunsAsOneMacroUndoStepAndFullAccessStillAsks()
+    {
+        openPanel();
+        QVERIFY(click(QStringLiteral("agentNewThread")));
+        agent().setFullAccessWarned();
+        agent().setMode(QStringLiteral("full"));
+        QTRY_COMPARE(agent().thread().value(QStringLiteral("mode")).toString(), QStringLiteral("full"));
+        std::string lua = "script_name = \"Shout\"\n";
+        for (int i = 0; i < 10; ++i)
+            lua += "-- padding " + std::to_string(i) + "\n";
+        lua += "aegisub.register_macro(\"Shout\", \"Upper-cases every Line\", function(subs)\n"
+               "    for i = 1, #subs do\n"
+               "        local line = subs[i]\n"
+               "        if line.class == \"dialogue\" then line.text = line.text:upper(); subs[i] = line end\n"
+               "    end\n"
+               "end)\n";
+        const Json run = Json::object({{"operation", "automation.run"},
+                                       {"params", Json::object({{"name", "Shout"}, {"script", lua}})}});
+        const QString script = QString::fromStdString(
+            Json::object({{"say", "I wrote a macro."}, {"calls", Json::array({run, run})}}).dump());
+        const std::size_t steps = session().historySize();
+        type(script);
+        QTRY_COMPARE(kinds().last(), QStringLiteral("script"));
+        QTRY_VERIFY(item(QStringLiteral("agentScriptRun")));
+        QVERIFY(item(QStringLiteral("agentScriptShowAll")));
+        QVERIFY(!item(QStringLiteral("agentAllowInThread")));
+        QCOMPARE(session().document().lines()[0]->text, u8"A rather long first line");
+        QVERIFY(!QFileInfo::exists(at(QStringLiteral("user/ai/scripts/Shout.lua"))));
+        shoot(QStringLiteral("agent-lua-script"), QStringLiteral("Shout every Line"));
+
+        QVERIFY(click(QStringLiteral("agentScriptShowAll")));
+        QTRY_VERIFY(!item(QStringLiteral("agentScriptShowAll")));
+        QVERIFY(click(QStringLiteral("agentScriptRun")));
+        QTRY_COMPARE_WITH_TIMEOUT(session().document().lines()[0]->text, u8"A RATHER LONG FIRST LINE", 20000);
+        QCOMPARE(session().historySize(), steps + 1);
+        QCOMPARE(session().history().back().name, std::string("Automation: Shout"));
+        QVERIFY(QFileInfo::exists(at(QStringLiteral("user/ai/scripts/Shout.lua"))));
+
+        QTRY_VERIFY_WITH_TIMEOUT(item(QStringLiteral("agentScriptRun")), 10000);
+        QVERIFY(click(QStringLiteral("agentScriptDecline")));
+        QTRY_VERIFY(!agent().thread().value(QStringLiteral("running")).toBool());
+        QCOMPARE(session().historySize(), steps + 1);
+        QVERIFY(session().undo());
+        QCOMPARE(session().document().lines()[0]->text, u8"A rather long first line");
+        const auto aiScriptLoaded = [this] {
+            return std::ranges::any_of(application->automation().manager().scripts(), [](const auto &loaded) {
+                return QString::fromStdString(loaded.path).contains(QStringLiteral("ai/scripts"));
+            });
+        };
+        QTRY_VERIFY(!aiScriptLoaded());
+        QVERIFY(application->automation().autoloadScripts().filter(QStringLiteral("Shout")).isEmpty());
+    }
+
     void aThreadAtItsCapStopsAndRaiseContinues()
     {
         openPanel();
@@ -540,6 +759,52 @@ private slots:
         QTest::keyClick(window(), Qt::Key_Escape);
         QTRY_VERIFY(!agent().thread().value(QStringLiteral("running")).toBool());
         QVERIFY(kinds().contains(QStringLiteral("notice")));
+    }
+
+    void compactionShowsTheMeterTheDividerTheOfferAndAFailure()
+    {
+        openPanel();
+        const std::string summary = "## Goal\n- QC Ep01–Ep12\n## Open work\n- Ep06 Lines 201–388";
+        const Json compacted = Json::object({{"sessionUpdate", "compacted"}, {"stage", 2}, {"before", 313000},
+            {"after", 21200}, {"stubs", Json::array()}, {"summary", summary},
+            {"message", Json::object({{"author", "assistant"},
+                                      {"parts", Json::array({Json::object({{"type", "text"}, {"text", summary}})})}})},
+            {"headEnd", 1}, {"keptFrom", 1}});
+        const Json failed = Json::object({{"error", Json::object({{"code", -32010}, {"message", "timeout"},
+            {"data", Json::object({{"kind", "timeout"}, {"httpStatus", 0}, {"detail", "provider timeout"}})}})}});
+        type(QString::fromStdString(Json::object({{"say", "Working."}, {"hang", true},
+            {"usage", Json::object({{"inputTokens", 117000}, {"outputTokens", 1000}})},
+            {"compact", Json::array({Json::object({{"updates", Json::array({compacted})},
+                                                   {"result", Json::object({{"compacted", true}, {"summary", summary}})}}),
+                                     failed})}}).dump()));
+        QTRY_VERIFY(agent().thread().value(QStringLiteral("running")).toBool());
+        QTRY_VERIFY(item(QStringLiteral("agentTokens")));
+        QTRY_VERIFY(item(QStringLiteral("agentTokens"))->property("text").toString()
+                        .endsWith(QStringLiteral(" · compacts at the next tool call")));
+        shoot(QStringLiteral("agent-meter-hot"), QStringLiteral("QC Ep01–Ep12"));
+
+        QTest::keyClick(window(), Qt::Key_Escape);
+        QTRY_VERIFY(!agent().thread().value(QStringLiteral("running")).toBool());
+        type(QStringLiteral("/compact keep the glossary decisions"));
+        QTRY_COMPARE(kinds().last(), QStringLiteral("compaction"));
+        QCOMPARE(agent().thread().value(QStringLiteral("contextTokens")).toLongLong(), 21200);
+        QTRY_VERIFY(item(QStringLiteral("agentCompactionToggle")));
+        QVERIFY(!item(QStringLiteral("agentCompactionSummary")));
+        QVERIFY(click(QStringLiteral("agentCompactionToggle")));
+        QTRY_VERIFY(item(QStringLiteral("agentCompactionSummary")));
+        shoot(QStringLiteral("agent-compacted"), QStringLiteral("QC Ep01–Ep12"));
+
+        application->settingsStore()->set(app::AgentController::kAutoCompactSetting, false);
+        QVERIFY(!item(QStringLiteral("agentCompactOffer")));
+        type(QString::fromStdString(Json::object({{"say", "Ep08 done."},
+            {"usage", Json::object({{"inputTokens", 125000}, {"outputTokens", 0}})}}).dump()));
+        QTRY_VERIFY(item(QStringLiteral("agentCompactOffer")));
+        shoot(QStringLiteral("agent-compact-offer"), QStringLiteral("QC Ep01–Ep12"));
+        QVERIFY(click(QStringLiteral("agentOfferCompact")));
+        QTRY_COMPARE(lastItem().value(QStringLiteral("notice")).toString(), QStringLiteral("compactFailed"));
+        QTRY_VERIFY(item(QStringLiteral("agentRetryCompact")));
+        QVERIFY(item(QStringLiteral("agentSummaryThread")));
+        shoot(QStringLiteral("agent-compact-failed"), QStringLiteral("QC Ep01–Ep12"));
     }
 
     void theGlobeSearchesPerThreadAndAnAnswerShowsItsSourcesAndSearches()

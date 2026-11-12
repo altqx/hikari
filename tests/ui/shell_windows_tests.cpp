@@ -11,7 +11,10 @@
 #include "audio_controller.h"
 #include "status_bar_controller.h"
 #include "video_controller.h"
+#include "wiring_warnings.h"
 #include "workspace_layout.h"
+
+#include <kddockwidgets/core/DockRegistry.h>
 
 #include <QAccessible>
 #include <QDir>
@@ -34,6 +37,7 @@
 
 #include <functional>
 #include <memory>
+#include <optional>
 #include <string_view>
 
 using namespace hikari;
@@ -430,9 +434,12 @@ class ShellWindowsTest : public QObject {
         QTRY_VERIFY(second->property("arrangementSettled").toBool());
     }
 
+    std::optional<testing::WiringWarnings> wiring;
+
 private slots:
     void init()
     {
+        wiring.emplace();
         QVERIFY(QDir(dir.path()).mkpath(QStringLiteral("Dictionary")));
         for (const char *file : {"Dictionary/en_US.aff", "Dictionary/en_US.dic"}) {
             QFile f(dir.filePath(QLatin1String(file)));
@@ -459,6 +466,7 @@ private slots:
         QVERIFY(application->openFile(writeSubtitles(dir.filePath(QStringLiteral("second.ass")), "second", 1280)));
         secondTab = *target();
         QVERIFY(secondTab != firstTab);
+        QCOMPARE(wiring->take(), QStringList());
     }
     void cleanup()
     {
@@ -470,6 +478,7 @@ private slots:
         application->endSession();
         engine.reset();
         application.reset();
+        wiring.reset();
     }
 
     void theSecondWindowIsAFullShell()
@@ -1105,6 +1114,23 @@ private slots:
         QCOMPARE(application->workspace().allTabs(), (std::vector{firstTab}));
         QCOMPARE(application->workspace().activeWindow(), 0);
         QVERIFY(modified(firstTab));
+    }
+
+    void aClosedWindowLeavesNoneOfItsPanels()
+    {
+        const QString suffix = QStringLiteral("~%1").arg(shellId(second));
+        const auto panelsOfSecond = [&] {
+            QStringList out;
+            for (const auto *dock : KDDockWidgets::DockRegistry::self()->dockwidgets())
+                if (dock->uniqueName().endsWith(suffix))
+                    out << dock->uniqueName();
+            return out;
+        };
+        QVERIFY(panelsOfSecond().contains(QStringLiteral("Editor") + suffix));
+        QPointer<QQuickWindow> closing = second;
+        closeDiscarding(closing);
+        QTRY_VERIFY(!closing);
+        QTRY_COMPARE(panelsOfSecond(), QStringList());
     }
 
     void aClosedWindowLeavesTheCrashSession()

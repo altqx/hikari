@@ -111,6 +111,25 @@ The marketplace website's Install in HikariSub opens `hikarisub://plugin/install
 
 An update keeps the enabled state, the grants whose ids the new manifest still asks for, and the setting values that still fit the new manifest. A `plugins.json` HikariSub can't read stops installs rather than forgetting pinned keys.
 
+### Plugins in a Project (PJ8 [#776](https://github.com/altqx/hikari/issues/776))
+
+Plugins are still installed per user. A trusted Project's `.hikari/project.toml` can turn them on or off and override their settings:
+
+```toml
+[plugins]
+enabled = ["keyframe-generator"]
+disabled = ["qc-pack"]
+
+[plugins."keyframe-generator"]
+threshold = 0.4
+```
+
+- **On and off.** `enabled` and `disabled` override your switch for that id. A revoked plugin stays off. `project.local.toml`'s lists replace `project.toml`'s.
+- **Settings.** `[plugins."<id>"]` values go over yours key by key, and `project.local.toml`'s go over `project.toml`'s. `hikari.settings.get` reads them from the Project of the window you're working in.
+- **Across windows (Q365).** A plugin runs while it is on in at least one window. Its commands, panels and events show only in windows where it is on.
+- **Trust (Q367).** None of `[plugins]` applies in an untrusted Project. The plugin manager then shows a lock on the plugins it names, with **Trust this folder to use them**.
+- **A missing plugin.** When a trusted Project enables a plugin that isn't installed, the plugin manager shows "This project uses <id>, which isn't installed." with **Install from the marketplace**, which opens the marketplace view and searches for the id.
+
 ## The plugin manager
 
 Automation > Plugins… (`GLOBAL_PLUGINS`, 5231) opens one resizable window with two views, Installed and Marketplace: the plugins on the left, the chosen one's details on the right. It also opens at a plugin from About <plugin>… in that plugin's panel menu. Installed counts the updates that wait for the user, and the newer versions that won't install automatically. The tool strip holds Install from file…, Check for updates and Plugin updates, whose popover has "Check for plugin updates" and "Install updates automatically".
@@ -147,10 +166,11 @@ The helper framing ([`helper_protocol.h`](../src/backends/include/hikari/backend
 | `hikari.commands.register(id, fn)` | Gives a command from the manifest's `contributes.commands` its handler, once. An id the manifest doesn't declare is refused. |
 | `hikari.commands.run(id)` | Runs a HikariSub command (`GLOBAL_SAVE_SUBS`), as `commands.run` does. |
 | `hikari.call(operation, params)` | Calls any [Hikari API](api.md) operation as the plugin. It returns the result, or `nil` and the error `{code, message, data}`. Without `documents.all` the plugin sees the editing target only. |
-| `hikari.events.on(name, fn)` | Calls `fn(data)` for each Hikari API event of that name (`document.changed`, `selection.changed`, `documents.changed`, `panel.changed`, `command.ran`). An unknown name is refused. |
+| `hikari.events.on(name, fn)` | Calls `fn(data)` for each Hikari API event of that name (`document.changed`, `selection.changed`, `documents.changed`, `panel.changed`, `command.ran`, `project.changed`). An unknown name is refused. |
 | `hikari.notify(text, level)` | A toast and a Log panel entry under the plugin's name. `level` is `"info"` (the default), `"warning"` or `"error"`. `print` writes to the Log panel only. |
 | `hikari.settings.get(id)`, `hikari.settings.set(id, value)` | The plugin's settings from `contributes.settings`. A value that doesn't fit the setting's type, options or bounds is refused, and kept values live in `plugins.json`. |
 | `hikari.i18n.locale`, `hikari.i18n.t(key, ...)` | The UI language (`"pt_BR"`, `"en"`) and the text for `key` from `i18n/<locale>.json`, then `i18n/<language>.json`, then `i18n/en.json`, then the key itself. `%1` to `%9` take the arguments. Each file is a JSON object of strings. |
+| `hikari.project.info()` | The [Project](adr/0030-open-a-folder-as-a-project.md) of the window the user works in, `{name, trusted}`, or `hikari.null` without one, as [`project.info`](api-reference.md#projectinfo) answers. `project.changed` comes when it changes. |
 | `hikari.plugin.id`, `hikari.plugin.version`, `hikari.api_version` | Who the plugin is, and the Hikari API number. |
 | `hikari.null`, `hikari.array(t)` | JSON `null`, and a table marked as a JSON array (so `{}` can be sent as `[]`). Arrays that come back from HikariSub are marked too. |
 | `hikari.document.list()`, `hikari.document.read(document)`, `hikari.document.edit(name, fn, options)` | The open Documents, a snapshot of one, and one edit applied as one undo step. See [Documents and selections](#documents-and-selections). |
@@ -320,6 +340,7 @@ Column {
 A restricted plugin never names a path on disk. It reaches a file only through a handle, and HikariSub hands one out only for a file the plugin may use:
 
 - **Its own folders.** `data` is `<user folder>/plugin-data/<id>/` and `cache` is `<cache>/plugins/<id>/`. Both are writable, and HikariSub makes them when first used.
+- **The Project.** `project` is the folder of the [Project](adr/0030-open-a-folder-as-a-project.md) open in the window the user works in, writable once the user trusts that folder (Settings › General › Trusted folders). Without a trusted Project, opening it answers `not_found`. It follows the user from window to window; listen to `project.changed` to know when.
 - **Folders the user chose.** Each `permissions.files` request `{id, title, writable, reason}` names a folder the plugin asks for, such as `{id = "fonts", title = "Font folder", writable = false, reason = "Reads fonts to measure lines"}`.
 - **Files the user picked or dropped.** `hikari.files.pick` opens the system file dialog, and a panel with `drop = true` takes dropped files.
 
@@ -333,7 +354,7 @@ if hikari.files.folder("fonts") then
 end
 ```
 
-`hikari.files.open(place, path)` returns `{file, name, access}`: the handle, the path asked for, and `"read"` or `"write"`. `place` is `"data"`, `"cache"` or a folder id. A writable place makes the missing folders on the way. `hikari.files.entries(place, path)` lists a folder in name order as `{name, folder}`, at most 4096 entries. `hikari.files.read(file, encoding)` and `hikari.files.write(file, data, encoding)` take a handle or the table that holds one, as [`files.read` and `files.write`](api.md) do, up to 16 MiB; `encoding` is `"utf8"` (the default) or `"base64"`. `hikari.files.list()` lists the handles the plugin holds.
+`hikari.files.open(place, path)` returns `{file, name, access}`: the handle, the path asked for, and `"read"` or `"write"`. `place` is `"data"`, `"cache"`, `"project"` or a folder id; a folder request can't take those three ids. A writable place makes the missing folders on the way. `hikari.files.entries(place, path)` lists a folder in name order as `{name, folder}`, at most 4096 entries. `hikari.files.read(file, encoding)` and `hikari.files.write(file, data, encoding)` take a handle or the table that holds one, as [`files.read` and `files.write`](api.md) do, up to 16 MiB; `encoding` is `"utf8"` (the default) or `"base64"`. `hikari.files.list()` lists the handles the plugin holds.
 
 A `path` is relative, with `/` between its parts, at most 1024 bytes of UTF-8. A part that is empty, `.` or `..`, that holds a control character or one of `\ : * ? " < > |`, that ends with a dot or a space, or that Windows reserves (`CON`, `NUL`, `COM1` and so on) is refused with `not_granted`, as is a path whose links lead outside the place. An empty path is `invalid_params` for `open` and the place itself for `entries`.
 

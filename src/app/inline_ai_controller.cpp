@@ -9,7 +9,9 @@
 #include "hikari/application/edit_session.h"
 #include "hikari/application/workspace.h"
 #include "hikari/backends/ai_agent.h"
+#include "hikari/application/grid_clipboard.h"
 #include "hikari/backends/ai_inline_run.h"
+#include "hikari/backends/ai_translation_run.h"
 #include "line_measures.h"
 #include "settings_store.h"
 
@@ -27,12 +29,16 @@ namespace ai = hikari::application::ai;
 namespace in = hikari::application::ai_inline;
 using api::Json;
 using backends::ai::InlineRun;
+using backends::ai::TranslationRun;
 
 namespace {
 
 constexpr int kMaxCps = 15;
 constexpr int kParallel = 4;
 constexpr int kRecentKept = 5;
+constexpr std::size_t kBeforeKept = 5;
+// The translator, the reviewer and the coherence sweep each see every Line once when nothing is retried.
+constexpr double kPipelinePasses = 3;
 
 QString qs(std::u8string_view s)
 {
@@ -112,6 +118,10 @@ struct InlineAiController::Line {
     std::u8string after;
     LineState state = LineState::Waiting;
     QString error;
+    // What the written field held: the Translated text in Translation mode, else `before`.
+    std::u8string previous;
+    bool needsReview = false;
+    QStringList issues;
 };
 
 struct InlineAiController::Run {
@@ -124,7 +134,12 @@ struct InlineAiController::Run {
     std::optional<std::pair<std::size_t, std::size_t>> span;
     std::vector<Line> lines;
     std::size_t skipped = 0;
-    std::unique_ptr<InlineRun> engine;
+    std::unique_ptr<backends::ai::LineRun> engine;
+    // Translate in Translation mode writes the Translated text and marks Lines that still need review Unconfirmed.
+    bool translationMode = false;
+    std::vector<TranslationRun::ProjectFile> projectFiles;
+    std::size_t pipelineDone = 0;
+    bool modelsWaitForTrust = false;
     QString end;
     double cost = 0;
     bool costKnown = true;
@@ -372,6 +387,8 @@ QVariantMap InlineAiController::plan(const QVariantMap &askMap, bool editor) con
                 const double output = static_cast<double>(p.sent.size()) / 4.0 * 1.5 + 8.0;
                 estimate += (input * price->input + output * price->output) / 1'000'000.0;
             }
+            if (ask->action == in::Action::Translate)
+                estimate *= kPipelinePasses;
         }
     }
     out[QStringLiteral("estimate")] = estimate;
@@ -431,14 +448,26 @@ bool InlineAiController::launch(const QVariantMap &askMap, Picked picked,
     run->span = span;
     run->skipped = picked.skipped;
     const int context = static_cast<int>(m_wiring.settings.integer(kContextLinesSetting));
+    const bool translating = ask->action == in::Action::Translate;
+    const application::EditSession *session = m_wiring.files.session(picked.document);
+    run->translationMode = translating && session && application::translationMode(*session);
+    if (run->translationMode)
+        run->span.reset();
     std::vector<InlineRun::Job> jobs;
+    std::vector<TranslationRun::Job> pipelineJobs;
     std::uint64_t key = 1;
     for (const core::LineId id : picked.send) {
         const core::LineRecord *line = lineOf(*doc, id);
         if (!line)
             continue;
-        run->lines.push_back({key, id, line->text, {}, LineState::Waiting, {}});
-        jobs.push_back({key, in::prepare(*ask, *line, neighboursOf(*doc, rowOf(*doc, id), context), span)});
+        run->lines.push_back({key, id, line->text, {}, LineState::Waiting, {},
+                              run->translationMode ? line->translation : line->text});
+        in::Prepared prepared = in::prepare(*ask, *line, neighboursOf(*doc, rowOf(*doc, id), context), run->span);
+        if (translating)
+            pipelineJobs.push_back({key, std::move(prepared), str(line->actor), line->start.value.microseconds() / 1000,
+                                    line->end.value.microseconds() / 1000});
+        else
+            jobs.push_back({key, std::move(prepared)});
         ++key;
     }
 
@@ -477,6 +506,10 @@ bool InlineAiController::launch(const QVariantMap &askMap, Picked picked,
             it->error = result.error->detail.empty() ? QString::fromLatin1(ai::errorKindId(result.error->kind))
                                                      : QString::fromStdString(result.error->detail);
         } else {
+            it->needsReview = result.needsReview;
+            it->issues.clear();
+            for (const std::string &issue : result.issues)
+                it->issues.push_back(QString::fromStdString(issue));
             switch (result.answer.outcome) {
             case in::Outcome::Changed:
                 it->state = LineState::Changed;
@@ -520,11 +553,62 @@ bool InlineAiController::launch(const QVariantMap &askMap, Picked picked,
         emit finished(why);
     };
     w.parallel = kParallel;
-    m_run->engine = std::make_unique<InlineRun>(role, std::move(jobs), std::move(w));
+    if (m_wiring.projectFolder)
+        w.project = m_wiring.projectFolder(m_run->document).toStdString();
+    if (translating)
+        m_run->engine = translationRun(std::move(pipelineJobs), std::move(w), *ask);
+    else
+        m_run->engine = std::make_unique<InlineRun>(role, std::move(jobs), std::move(w));
     emit changed();
     emit runChanged();
     m_run->engine->start();
     return true;
+}
+
+std::unique_ptr<backends::ai::LineRun> InlineAiController::translationRun(std::vector<TranslationRun::Job> jobs,
+                                                                          InlineRun::Wiring lines, const in::Ask &ask)
+{
+    TranslationRun::Wiring w;
+    w.lines = std::move(lines);
+    w.document = m_run->document.value;
+    w.language = ask.language;
+    const ai::Providers *providers = m_wiring.ai.providers();
+    const ai::Config *config = providers ? &providers->config() : nullptr;
+    const ProjectModels project = m_wiring.projectModels ? m_wiring.projectModels(m_run->document) : ProjectModels{};
+    m_run->modelsWaitForTrust = project.waitingForTrust;
+    const auto chosen = [config](const QString &named, ai::Role role) -> std::optional<ai::ModelRef> {
+        const std::string text = named.trimmed().toStdString();
+        if (const auto slash = text.find('/'); config && slash != std::string::npos && slash > 0 && slash + 1 < text.size()) {
+            ai::ModelRef ref{text.substr(0, slash), text.substr(slash + 1)};
+            if (config->provider(ref.providerId))
+                return ref;
+        }
+        return config ? config->modelFor(role) : std::nullopt;
+    };
+    const auto translator = chosen(project.translator, ai::Role::Translator);
+    const auto reviewer = chosen(project.reviewer, ai::Role::Reviewer);
+    if (translator) {
+        w.translator = *translator;
+        w.reviewer = reviewer.value_or(*translator);
+    }
+    if (m_run->translationMode)
+        if (const core::Document *doc = documentOf(m_run->document); doc && !m_run->lines.empty()) {
+            const auto all = doc->lines();
+            for (std::size_t row = rowOf(*doc, m_run->lines.front().id); row-- > 0 && w.before.size() < kBeforeKept;)
+                if (!all[row]->comment && !all[row]->translation.empty())
+                    w.before.insert(w.before.begin(), str(in::stripped(all[row]->translation)));
+        }
+    w.progressed = [this](std::size_t done, std::size_t) {
+        if (!m_run)
+            return;
+        m_run->pipelineDone = done;
+        emit runChanged();
+    };
+    w.projectChanged = [this](std::vector<TranslationRun::ProjectFile> files) {
+        if (m_run)
+            m_run->projectFiles = std::move(files);
+    };
+    return std::make_unique<TranslationRun>(std::move(jobs), std::move(w));
 }
 
 void InlineAiController::refreshed()
@@ -570,9 +654,11 @@ bool InlineAiController::write(const std::vector<std::uint64_t> &keys)
             line.state = LineState::Edited;
             continue;
         }
-        edits.push(Json::object({{"op", "set_line"},
-                                 {"line", Json(line.id.value)},
-                                 {"fields", Json::object({{"text", str(line.after)}})}}));
+        Json fields = m_run->translationMode ? Json::object({{"translation", str(line.after)}})
+                                             : Json::object({{"text", str(line.after)}});
+        if (m_run->translationMode && line.needsReview)
+            fields["unconfirmed"] = true;
+        edits.push(Json::object({{"op", "set_line"}, {"line", Json(line.id.value)}, {"fields", std::move(fields)}}));
         written.push_back(&line);
     }
     if (written.empty())
@@ -595,7 +681,21 @@ bool InlineAiController::write(const std::vector<std::uint64_t> &keys)
                       [ok](api::Result result) { *ok = result.has_value(); });
     for (Line *line : written)
         line->state = *ok ? LineState::Written : LineState::Failed;
+    if (*ok)
+        writeProjectFiles();
     return *ok;
+}
+
+void InlineAiController::writeProjectFiles()
+{
+    const std::vector<TranslationRun::ProjectFile> files = std::exchange(m_run->projectFiles, {});
+    api::Caller caller{kCallerId, "AI", false, {m_run->document}, true};
+    for (const TranslationRun::ProjectFile &file : files)
+        m_wiring.api.call(caller, "translation.project_write",
+                          Json::object({{"document", Json(m_run->document.value)},
+                                        {"file", file.name},
+                                        {"data", file.data}}),
+                          [](api::Result) {});
 }
 
 void InlineAiController::stop()
@@ -697,6 +797,7 @@ QVariantMap InlineAiController::progress() const
         if (line.state != LineState::Waiting)
             ++done;
     }
+    done = std::max(done, std::min(m_run->pipelineDone, total));
     out[QStringLiteral("action")] = m_run->ask.value(QStringLiteral("action"));
     out[QStringLiteral("label")] = QString::fromStdString(m_run->label);
     out[QStringLiteral("done")] = static_cast<int>(done);
@@ -727,7 +828,9 @@ QVariantList InlineAiController::results() const
         QVariantMap r;
         r[QStringLiteral("key")] = QVariant::fromValue<qulonglong>(line.key);
         r[QStringLiteral("row")] = doc ? static_cast<int>(rowOf(*doc, line.id)) + 1 : 0;
-        r[QStringLiteral("diff")] = diffHtml(qs(in::stripped(line.before)), qs(in::stripped(line.after)));
+        r[QStringLiteral("diff")] = diffHtml(qs(in::stripped(line.previous)), qs(in::stripped(line.after)));
+        r[QStringLiteral("needsReview")] = line.needsReview;
+        r[QStringLiteral("issues")] = line.issues;
         r[QStringLiteral("stale")] = line.state == LineState::Edited || !now || now->text != line.before;
         out.push_back(r);
     }
@@ -740,9 +843,11 @@ QVariantMap InlineAiController::notice() const
     if (!m_run || m_run->dismissed || (m_run->engine && m_run->engine->running()))
         return out;
     const core::Document *doc = documentOf(m_run->document);
-    QVariantList failed, same, edited;
+    QVariantList failed, same, edited, review;
     for (const Line &line : m_run->lines) {
         const int row = doc ? static_cast<int>(rowOf(*doc, line.id)) + 1 : 0;
+        if (line.needsReview && (line.state == LineState::Written || line.state == LineState::Changed))
+            review.push_back(row);
         switch (line.state) {
         case LineState::Failed:
         case LineState::DroppedTag:
@@ -761,8 +866,12 @@ QVariantMap InlineAiController::notice() const
         default: break;
         }
     }
-    if (failed.isEmpty() && same.isEmpty() && edited.isEmpty() && m_run->skipped == 0 && m_run->end == QLatin1String("done"))
+    if (failed.isEmpty() && same.isEmpty() && edited.isEmpty() && review.isEmpty() && !m_run->modelsWaitForTrust &&
+        m_run->skipped == 0 && m_run->end == QLatin1String("done"))
         return out;
+    out[QStringLiteral("review")] = review;
+    out[QStringLiteral("unconfirmed")] = m_run->translationMode;
+    out[QStringLiteral("modelsWaitForTrust")] = m_run->modelsWaitForTrust;
     out[QStringLiteral("failed")] = failed;
     out[QStringLiteral("same")] = same;
     out[QStringLiteral("edited")] = edited;

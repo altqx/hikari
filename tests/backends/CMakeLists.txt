@@ -35,6 +35,10 @@ hikari_add_gtest(hikari_backends_frame_tools_tests SOURCES frame_tools_tests.cpp
 target_include_directories(hikari_backends_frame_tools_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/api")
 target_compile_definitions(hikari_backends_frame_tools_tests PRIVATE
     HIKARI_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-${HIKARI_QT_VERSION}/quickcontrols/wearable/WearableStyle/fonts/TitilliumWeb-Regular.ttf")
+hikari_add_gtest(hikari_backends_typeset_tools_tests SOURCES typeset_tools_tests.cpp
+    "${PROJECT_SOURCE_DIR}/tests/api/script_client.cpp"
+    LIBRARIES hikari_api hikari_backends hikari_regex LABELS backends api)
+target_include_directories(hikari_backends_typeset_tools_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/api")
 hikari_add_gtest(hikari_backends_visual_geometry_tests SOURCES visual_geometry_tests.cpp
     LIBRARIES hikari_backends hikari_application Qt6::Gui LABELS backends)
 target_compile_definitions(hikari_backends_visual_geometry_tests PRIVATE
@@ -61,7 +65,7 @@ add_dependencies(hikari_backends_plugin_process_tests hikari_plugin_helper hikar
 # Generated at build time: discovered GoogleTest cases ignore a CTest setup fixture.
 set(HIKARI_MEDIA_FIXTURE_DIR "${CMAKE_CURRENT_BINARY_DIR}/media-fixtures")
 set(_hikari_media_fixtures "")
-foreach(kind cfr vfr bframes longgop long longaudio audio tracks unknown color601 color709 color709full colorhd colorhdr audiodelay audioonly sar mkvextract yuv10 keypoint)
+foreach(kind cfr vfr bframes longgop long longaudio audio tracks unknown color601 color709 color709full colorhd colorhdr audiodelay audioonly sar mkvextract yuv10 keypoint fade)
     set(out "${HIKARI_MEDIA_FIXTURE_DIR}/${kind}.mkv")
     add_custom_command(OUTPUT "${out}"
         COMMAND "${CMAKE_COMMAND}" -E make_directory "${HIKARI_MEDIA_FIXTURE_DIR}"
@@ -344,6 +348,8 @@ target_compile_definitions(hikari_backends_harper_client_tests PRIVATE HIKARI_HA
 hikari_add_gtest(hikari_backends_mecab_readings_tests SOURCES mecab_readings_tests.cpp
     LIBRARIES hikari_backends LABELS backends)
 target_compile_definitions(hikari_backends_mecab_readings_tests PRIVATE HIKARI_UNIDIC_DIR="${HIKARI_UNIDIC_DIR}")
+hikari_add_gtest(hikari_backends_external_aligner_tests SOURCES external_aligner_tests.cpp
+    LIBRARIES hikari_backends LABELS backends)
 
 find_package(ZLIB REQUIRED)
 hikari_add_gtest(hikari_backends_font_collector_tests SOURCES font_collector_tests.cpp
@@ -351,6 +357,7 @@ hikari_add_gtest(hikari_backends_font_collector_tests SOURCES font_collector_tes
     PROPERTIES ENVIRONMENT "FONTCONFIG_FILE=${CMAKE_CURRENT_BINARY_DIR}/font-fixtures.conf" RUN_SERIAL TRUE)
 target_compile_definitions(hikari_backends_font_collector_tests PRIVATE
     HIKARI_FONT_FIXTURES="${HIKARI_FONT_FIXTURE_DIR}"
+    HIKARI_ATTACHMENT_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/attachments"
     HIKARI_FONTCONFIG_FILE="${CMAKE_CURRENT_BINARY_DIR}/font-fixtures.conf")
 add_dependencies(hikari_backends_font_collector_tests hikari_font_fixtures)
 target_include_directories(hikari_backends_font_collector_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
@@ -385,6 +392,10 @@ hikari_add_gtest(hikari_backends_visual_drawing_render_tests SOURCES visual_draw
 target_compile_definitions(hikari_backends_visual_drawing_render_tests PRIVATE
     HIKARI_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-${HIKARI_QT_VERSION}/quickcontrols/wearable/WearableStyle/fonts/TitilliumWeb-Regular.ttf")
 
+hikari_add_gtest(hikari_backends_position_commands_render_tests SOURCES position_commands_render_tests.cpp
+    LIBRARIES hikari_backends hikari_application Qt6::Core LABELS backends)
+target_compile_definitions(hikari_backends_position_commands_render_tests PRIVATE
+    HIKARI_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-${HIKARI_QT_VERSION}/quickcontrols/wearable/WearableStyle/fonts/TitilliumWeb-Regular.ttf")
 hikari_add_gtest(hikari_backends_visual_move_render_tests SOURCES visual_move_render_tests.cpp
     LIBRARIES hikari_backends hikari_application Qt6::Gui LABELS backends)
 target_compile_definitions(hikari_backends_visual_move_render_tests PRIVATE
@@ -498,11 +509,24 @@ hikari_add_gtest(hikari_backends_ai_http_relay_tests SOURCES ai_http_relay_tests
     LIBRARIES hikari_ai Qt6::Core Qt6::Network LABELS backends)
 add_executable(hikari_fake_agent fake_agent.cpp)
 target_link_libraries(hikari_fake_agent PRIVATE hikari_api)
+add_executable(hikari_fake_acp_agent fake_acp_agent.cpp)
+target_link_libraries(hikari_fake_acp_agent PRIVATE hikari_api Qt6::Core)
+add_executable(hikari_test_mcp_http_bridge test_mcp_http_bridge.cpp)
+target_link_libraries(hikari_test_mcp_http_bridge PRIVATE hikari_ai Qt6::Core)
 hikari_add_gtest(hikari_backends_ai_agent_broker_tests SOURCES ai_agent_broker_tests.cpp
-    LIBRARIES hikari_ai Qt6::Core LABELS backends)
+    LIBRARIES hikari_ai Qt6::Core Qt6::Network LABELS backends)
 target_compile_definitions(hikari_backends_ai_agent_broker_tests PRIVATE
+    HIKARI_FAKE_AGENT="$<TARGET_FILE:hikari_fake_agent>"
+    HIKARI_FAKE_ACP_AGENT="$<TARGET_FILE:hikari_fake_acp_agent>"
+    HIKARI_TEST_MCP_HTTP_BRIDGE="$<TARGET_FILE:hikari_test_mcp_http_bridge>")
+add_dependencies(hikari_backends_ai_agent_broker_tests hikari_fake_agent hikari_fake_acp_agent hikari_test_mcp_http_bridge)
+hikari_add_gtest(hikari_backends_ai_antigravity_tests SOURCES ai_antigravity_tests.cpp
+    LIBRARIES hikari_ai Qt6::Core Qt6::Network Qt6::Test LABELS backends)
+hikari_add_gtest(hikari_backends_ai_mcp_clients_tests SOURCES ai_mcp_clients_tests.cpp
+    LIBRARIES hikari_ai Qt6::Core LABELS backends)
+target_compile_definitions(hikari_backends_ai_mcp_clients_tests PRIVATE
     HIKARI_FAKE_AGENT="$<TARGET_FILE:hikari_fake_agent>")
-add_dependencies(hikari_backends_ai_agent_broker_tests hikari_fake_agent)
+add_dependencies(hikari_backends_ai_mcp_clients_tests hikari_fake_agent)
 hikari_add_gtest(hikari_backends_ai_signin_tests SOURCES ai_signin_tests.cpp
     LIBRARIES hikari_ai Qt6::Core Qt6::Network LABELS backends)
 target_include_directories(hikari_backends_ai_signin_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
@@ -539,3 +563,13 @@ target_include_directories(hikari_backends_ai_agent_cli_tests PRIVATE "${PROJECT
 target_compile_definitions(hikari_backends_ai_agent_cli_tests PRIVATE
     HIKARI_FAKE_AGENT_CLI="$<TARGET_FILE:hikari_fake_agent_cli>")
 add_dependencies(hikari_backends_ai_agent_cli_tests hikari_fake_agent_cli)
+
+hikari_add_gtest(hikari_backends_icu_text_tests SOURCES icu_text_tests.cpp
+    LIBRARIES hikari_backends LABELS backends)
+hikari_add_gtest(hikari_backends_yutils_route_tests SOURCES yutils_route_tests.cpp
+    "${PROJECT_SOURCE_DIR}/src/helpers/lua/shape_tables.cpp" LIBRARIES hikari_application Hikari::luajit LABELS backends)
+target_include_directories(hikari_backends_yutils_route_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/helpers/lua")
+target_compile_definitions(hikari_backends_yutils_route_tests PRIVATE
+    HIKARI_YUTILS_INCLUDE="${PROJECT_SOURCE_DIR}/Automation/automation/Include"
+    HIKARI_SHAPE_GOLDEN_SCRIPT="${PROJECT_SOURCE_DIR}/tests/fixtures/shape-kernel/make_goldens.lua"
+    HIKARI_SHAPE_GOLDENS="${PROJECT_SOURCE_DIR}/tests/fixtures/shape-kernel/yutils-goldens.txt")

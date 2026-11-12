@@ -43,6 +43,21 @@ Each change is a named departure in the [compatibility decisions](compatibility-
 | TH5c-karaok-furichar-tags | Each `furichar` character takes its own syllable's tags, without `\k`; upstream took tags by index. |
 | TH5c-karaok-no-leaked-globals | A karaOK run leaves no `textbuffer` or `w` global. |
 | TH5c-karaok-graphemes | karaOK's `char`, `lchar` and `$ci`/`$slen`/`$llen`/`$len` count grapheme clusters. Thai support by Jibrill. |
+| TH5d1-stock-additions | In 3.2.2 mode, karaOK's `style`, `lsyl`/`lword`/`lchar`/`word`/`furichar`, `code word`/`char`/`furichar`, `k_retime` and `table`/`pairs`/`ipairs`/`tonumber`/`tostring`/`type` work in place of 3.2.2's warnings. `$ci`/`$slen`/`$llen`/`$len` stay text, as in 3.2.2 (Q346). |
+| TH5d1-furigana-styles-false | `furigana_styles = false` in a `code once` Line adds no "-furigana" Styles, as upstream's "(modded)" macro does. |
+| TH5d3-new-documents-karaok | A Document made with File › New is in karaOK mode until a mode line or a template or code Line decides. The first template inserted from the Template editor (New, a preset) or exported from a node graph writes `Karaoke Templater: karaOK` in the same undo step; saving writes nothing. |
+| TH5d3-stock-presets-translated | A stock preset inserted into a karaOK Document has its Effects translated to karaOK's words (`pre-line` → `line`, `line` → `lsyl`, `syl char` → `char`). |
+| TH5d3-karaok-preset-departures | The karaOK presets give upstream karaOK's Lines except where they reach TH5c-karaok-word-positions or TH5c-karaok-graphemes. |
+| TH5d3-editor-follows-mode | In karaOK mode, the Template editor's New and Effect picker use karaOK's words. |
+| TH5d2-ln-kara | `require "ln.kara"` loads the [ln.kara](#lnkara) HikariSub ships, before a copy in the user's Include. |
+| TH5d2-ln-kara-tags | `ln.line.tags`, `ln.syl.tags`, `gc` and `ga` read the Line's tags; upstream always gave the defaults. |
+| TH5d2-ln-kara-string-defaults | A string default (`ln.line.tag("bord", "\\bord3")`) works; upstream stopped with an error. |
+| TH5d2-ln-kara-pos-table | The table forms of `ln.tag.pos` and `ln.tag.kanjipos` work; upstream stopped with an error. |
+| TH5d2-ln-kara-move-offsets | `ln.tag.move` with its start offsets left out starts at the anchor; upstream stopped with an error. |
+| TH5d2-ln-kara-syldur | `ln.syldur()` and `sd()` with no argument give the whole duration; upstream gave 0. |
+| TH5d2-ln-kara-shift | `ln.shapes.shift` and `ln.shapes.circle` write whole coordinates without decimals; upstream wrote `%.2f` for most. |
+| TH5d2-ln-kara-lerp | `ln.math.lerp` between a string and a number is an error; upstream read a numeric string as a number. |
+| TH5d2-ln-kara-kanjipos | `ln.tag.kanjipos` in 3.2.2 mode is a problem that says it needs karaOK mode. |
 
 The generated Lines are byte for byte 3.2.2's in every case, apart from `char` templates over clusters (TH1, locked by `departures/thai.ass`), the order of several named line templates (`departures/named-line-templates.ass`) and the marks below, which a save adds to `[Aegisub Extradata]`. The macro returns a selection only when there were problems; otherwise the selection stays as it was.
 
@@ -101,6 +116,19 @@ The helper adds a table to `aegisub`. Stock scripts never see it unless they loo
 
 The Lua protocol carries these as version 6: `MacroDialogueLine::generatedFrom` and `MacroResult::report`.
 
+## karaskel in scripts
+
+Since AU17 ([#851](https://github.com/altqx/hikari/issues/851)), the bundled `karaskel.lua` hands `karaskel.collect_head` and `karaskel.preproc_line` to the helper (`aegisub.__karaskel_impl`). The helper builds the same tables as karaskel's Lua, field for field and in the same `pairs()` order, and logs the same lines. `preproc_line` lays the Line out from the meta, styles and line tables the script passes, not from the Document. The sub-stages (`preproc_line_text`, `preproc_line_size`, `preproc_line_pos`, `do_basic_layout`, `do_furigana_layout`) stay Lua.
+
+karaskel's own Lua runs instead when the helper could give a different result:
+
+- `collect_head`: `subs` is not the host's, `table.copy` or `aegisub.debug.out` was replaced, `karaskel.furigana_scale` is not a number, there is no Style, or a Style or info line would make the Lua raise;
+- `preproc_line`: a sub-stage or `unicode.charwidth` was replaced; `aegisub.text_extents`, `aegisub.parse_karaoke_data` or `aegisub.debug.out` is not the host's at the call; the trace level is 4 or more; the line already has `kara` or `styleref`; a table has a metatable; or a field karaskel reads is missing, has another type, or disagrees with the layout (margins apart from `margin_v`, an alignment outside 1 to 9, fractional times).
+
+So an error a script catches with `pcall` has karaskel's own message.
+
+`aegisub.util`'s `extract_color`, `trim` and `headtail` run in the helper when given a string, and `HSL_to_RGB` when given three numbers (`aegisub.__util_impl`). LuaJIT cannot compile their pattern captures, `gsub` or per-call closure, so the helper's versions are several times faster, and `words`, `alpha_from_style`, `color_from_style` and `interpolate_color`/`interpolate_alpha` gain through them. Any other argument goes to the Lua, which raises its own errors. The other functions stay Lua: compiled by the JIT, they are already faster than a call into the helper.
+
 ## The template editor
 
 KE2 ([#284](https://github.com/altqx/hikari/issues/284)) adds the Template editor, a panel tabbed with the Line editor (View › Panels › Template editor; closed by default). It lists the Document's template and code Lines in Grid order and edits one at a time: its Effect, Style, Layer and text. The text is coloured as the Line editor colours a template or code Line.
@@ -110,11 +138,65 @@ KE2 ([#284](https://github.com/altqx/hikari/issues/284)) adds the Template edito
 - **"Preview on Line N"** lists those Lines: layer, times and text, the current template's own Lines marked (a second run without it tells them apart). Each template's row gives its Lines and time from the last preview, or from the whole run after Apply.
 - **The video draws the preview** in place of the Line's generated Lines, as Apply will: the Lines generated from it go, the preview standing in their place in the file's order (a Line that made none before has its preview stand before the Lines of the karaoke Lines after it, as Apply writes them; in a file without KE1's marks those are found first), and so does the karaoke Line itself when its templates make Lines (Apply turns it into a Comment). A file opened without KE1's marks has its Lines found by one matching run per karaoke Line, on the templates as they are before the pending edit; it runs again when those Lines change (an Undo, a deletion, an Apply). If that run fails (the templates no longer make the file's Lines), nothing is left out. A badge in the picture's corner says "Preview · Line N · not applied"; the render cost moves below it. With the last template gone the preview goes too, and so do a run still going and its problems. A `template line karaoke`, which the stock templater runs as a template and as a karaoke Line, previews as the source with its pending text and is matched to its own generated Lines. The eye in the panel's header turns the preview off on the video. Loop the Line, beside it, plays the karaoke Line's time again and again until a pause, a stop or a seek; another Line previewed, or new times for it, loops that span instead.
 - **Problems are placed.** The run report's `issues` give the problem's Line and place: the template's row says Problem, the variable or expression has a wavy line under it, and the message (2.1.7's first line) is under the text. A first preview that fails says so in place of the Lines ("No preview of Line N: the templates stopped with a problem."). The preview keeps the last run that worked, dimmed and marked "Kept from the last run that worked", and Apply is off until the problem is fixed. Apply also waits for the last edit's preview, so a problem typed just before it is known first.
-- **`$` and `!`** open a list of what fits at the cursor: after `$` the stock variables, each with its value on the current Line's first syllable (one probe run), and inside an expression the template environment's functions. ↑ and ↓ choose, Enter or Tab inserts, Esc closes.
+- **`$` and `!`** open a list of what fits at the cursor: after `$` the stock variables, each with its value on the current Line's first syllable (one probe run), and inside an expression the template environment's functions. ↑ and ↓ choose, Enter or Tab inserts, Esc closes. After `ln.` (TH5d2, owner decision Q164), in an expression or a code Line, the list holds [ln.kara](#lnkara)'s namespaces, and after `ln.tag.` and the like its functions, each inserted with example arguments. `ln` itself is offered once a code Line loads `ln.kara`, and its shorthands (`st`, `sd`, `gc`, `ga`, `rgb`, `hsl`, `hsy`, `rnd`, `set`, `rset`, `clamp`, `fl`) once one calls `ln.init(tenv)`.
 - **The Effect's picker** writes stock syntax: what the template runs for (Line before its syllables, Line, syllable, character, furigana syllable; for a code Line once, Line, syllable, furigana syllable) and the modifiers in plain words. The field takes stock syntax as typed too, the class after modifiers included (`template noblank line`), as the stock parser reads it.
+- **The template language** (TH5d1, owner decision Q157) shows beside New: karaOK or Aegisub 3.2.2, the Document's mode as the templater picks it (TH5c-karaok-mode). Choosing one writes `Karaoke Templater: karaOK` or `Karaoke Templater: Aegisub 3.2.2` in `[Script Info]` as one undo step, "Set template mode", and the preview runs again. Its tooltip says whether the file sets the mode or its templates' syntax picks it. A Document made with File › New is in karaOK mode until a mode line or a template or code Line decides (TH5d3-new-documents-karaok); a file opened without either is in 3.2.2 mode. In karaOK mode, New inserts the karaOK form of what it lists ("Template for each line" writes `template lsyl`, "Template before each line" writes `template line`) and the Effect picker shows and writes karaOK's words (TH5d3-editor-follows-mode).
 - **New** inserts a template or code Line of the stock kinds (furigana ones included) above the first karaoke Line, with that Line's Style, as one undo step. Its "From a preset" (KE3) inserts one of the built-in [karaoke effect presets](karaoke-presets.md) there the same way: all its template and code Lines, in order and with their Layers, as one undo step, the first current. They are ordinary template Lines from then on, previewed and edited like the user's own.
 - **Apply** runs "Apply karaoke template" as the Automation menu does: the same macro, undo step, report and log. Its arrow offers "Apply to the selected Lines" (KE1's regenerate-selected), on only when the selection holds a karaoke Line or a Line marked as generated from one; a file's unmarked Lines are not. A shortcut for either is the macro's own, set in the Automation panel. After Apply the footer says how many Lines it wrote from how many karaoke Lines and in what time, until an Undo or another edit changes the Document.
 - A Line's fields (template text, Effect, Style, Actor values, the preview's text, the templater's messages) show as plain text, never markup: an `<img>` in a file fetches nothing.
 - At its minimum width (360 px) the fields stack and the preview folds into one row that unfolds on a click.
 
 The reduced snapshot leaves out the karaoke Lines before the current one, so state a code Line carries from Line to Line (a counter, a `remember`) starts afresh in the preview. Apply runs every Line and is unaffected.
+
+## ln.kara
+
+HikariSub ships `ln.kara`, karaOK's template library, by logarithm with petzku, as `Automation/automation/Include/ln/kara.lua` (TH5d2, owner decisions Q164 and Q165). It comes from [lost-logarithm/karaOK](https://github.com/lost-logarithm/karaOK) at commit `f749c4fa64e7`. Upstream states no licence; HikariSub's changes, marked `HikariSub (TH5d2)` in the file, are under the MIT licence. About › Credits credits logarithm and petzku. The TH5d2-ln-kara rows above list what HikariSub fixes.
+
+Load it from a `code once` Line:
+
+```
+ln = _G.require "ln.kara"; ln.init(tenv)
+```
+
+It reads only `orgline`, `line` and the current unit (`syl`, then `char`, then `word`), so it works in both template languages. `ln.tag.kanjipos` is the exception: it needs karaOK mode.
+
+`ln.init(tenv)` adds these shorthands to the template environment and clears the library's random values and lead-in cache:
+
+| Shorthand | Same as |
+| --- | --- |
+| `st(p)`, `sd(p)` | `ln.syltime(p)`, `ln.syldur(p)` |
+| `gc(n)`, `ga(n)` | `ln.line.c(n)`, `ln.line.a(n)` |
+| `rgb`, `hsl`, `hsy` | `ln.color.byRGB`, `ln.color.byHSL`, `ln.color.lumaHSL` |
+| `rnd`, `rset`, `clamp`, `fl` | `ln.math.random`, `ln.randomize`, `ln.math.clamp`, `math.floor` |
+| `set(name, value)` | sets a template variable and gives `""` |
+
+| Function | Gives |
+| --- | --- |
+| `ln.syltime(p)` | The unit's start plus `p` of its duration, from the Line's start (ms). `p` defaults to 0. |
+| `ln.syldur(p)` | `p` of the unit's duration (ms). `p` defaults to 1. |
+| `ln.randomize(name, min, max, override)` | Sets the template variable `name` to a random whole number from `min` to `max`, unless it is already set and `override` is false. Gives `""`. |
+| `ln.line.tag(tags, defaults)` | The first of each tag named in `tags` (a name or a list of names, without `\`) in the karaoke Line, joined. `defaults` is a string for one tag, or a table by name or by position. |
+| `ln.line.tags(tags, defaults, as_list)` | Every one of each named tag, joined, or as a list when `as_list` is true. |
+| `ln.line.c(n)`, `ln.line.a(n)` | The karaoke Line's `\Nc` or `\Na`, or else its Style's colour or alpha N. |
+| `ln.line.style_c(n)`, `ln.line.style_a(n)` | The Style's colour or alpha N. |
+| `ln.line.buffers(min_start, min_end, min_fad_in, min_fad_out)` | Lead-in and lead-out (ms): the Line's `\fad`, or the length of an empty first and last syllable, at least the minimums given. |
+| `ln.line.len_stripped()`, `ln.line.len()`, `ln.line.len_raw()` | The character count of the karaoke Line's text without tags, with tags, and as written. |
+| `ln.syl.tag`, `ln.syl.tags`, `ln.syl.c`, `ln.syl.a`, `ln.syl.len_stripped`, `ln.syl.len` | As the `ln.line` ones, on the current unit's text. |
+| `ln.tag.pos(an, anchor, dx, dy, once)` | `\anN\pos(x,y)` at the unit's anchor point (the Line's outside a unit), moved by `dx`, `dy`. `an` and `anchor` default to the Style's alignment. With `once`, only the first call per generated Line writes it. A table with `alignment`, `anchorpoint`, `offset_x`, `offset_y` and `line_kara_mode` works too. |
+| `ln.tag.move(x0, y0, x1, y1, t0, t1, an, anchor, once)` | `\anN\move(...)` from offsets to the anchor point, with `t0`, `t1` when both are given. Left-out offsets are 0. A table with `x0`/`x_start`, `y0`, `x1`, `y1`, `t0`/`time_start`, `t1`, `alignment`, `anchorpoint` and `lsyl_mode` works too. |
+| `ln.tag.kanjipos(dx, dy, once)` | Vertical placement for kanji: `\fn@font\frz-90\an5\pos(x,y)`. karaOK mode only. |
+| `ln.tag.t(t0, t1, accel, tags)` | `\t(...)` with whole-millisecond times; `ln.tag.t(tags)`, `ln.tag.t(accel, tags)` and `ln.tag.t(t0, t1, tags)` work too. |
+| `ln.tag.parse_transform(s)`, `ln.tag.parse_move(s)` | A `\t` or `\move` read into a table. |
+| `ln.tag.mod_transform(s, t0, t1, accel, tags)` | `s`'s `\t` with each part changed: `"+N"`, `"-N"` or `"=N"`; for its tags `"+tags"`, `"-tags"` or `"=tags"`. |
+| `ln.wave.new(form, wavelength, amplitude, phase)` | A wave: `sine`, `square`, `triangle`, `sawtooth` or `noise`. `addWave`, `addFunction`, `addConstant`, `clear`, `setWave`, `setFunction`, `setConstant` and `getValue(t)` build and read it. `noise` reseeds Lua's random numbers. |
+| `ln.wave.transform(wave, tags, t0, t1, delay, framestep)` | `\t` steps every `framestep` frames, at 23.976 fps, that follow the wave on `tags`. |
+| `ln.color.byRGB(r, g, b)`, `ln.color.byHSL(h, s, l)`, `ln.color.lumaHSL(h, s, y)` | `&HBBGGRR&` from 0–255 values; `lumaHSL` keeps Rec. 709 luma. `ln.color.rgb.get/add` and `ln.color.hsl.get/add` read a colour and add to it. |
+| `ln.math.clamp`, `modloop`, `modbounce`, `log(base, n)` | As named. |
+| `ln.math.sgn(n)` | -1 for a negative `n`, else 1. |
+| `ln.math.round(n, places)`, `ln.math.round_fast(n)` | Round half to even. |
+| `ln.math.random()`, `random(max)`, `random(min, max)` | A random number to 4 decimals, from 0 to 1, to `max`, or from `min` to `max`. |
+| `ln.math.lerp(t, a, b)`, `ln.math.xerp(t, a, b, accel)` | Between two numbers, `&H…&` colours or alphas; `xerp` raises `t` to `accel` first. |
+| `ln.shapes.shift(drawing, x, y)` | The drawing moved. |
+| `ln.shapes.rectangle`, `roundedRectangle`, `circle(r, segments)`, `triangle`, `polygon(sides, r)`, `gear` | Drawings for `\p1`; negative `segments` reverse a circle's winding. |
+| `ln.shapes.star`, `heart`, `twinkle1`–`3`, `snowflake`, `stolengleam` | Ready-made drawings. |
+| `ln.debug.prog(p)` | Sets the progress bar to `p` (0–1). Gives `""`. |

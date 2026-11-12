@@ -32,6 +32,10 @@ namespace hikari::ui {
 
 class SettingsStore;
 
+const application::Hyphenation &karaokeHyphenation();
+// Qt's character classes for the karaoke splitter.
+application::KaraokeCharClass karaokeCharClass();
+
 void deleteOldAudioCache(const std::filesystem::path &folder, const std::filesystem::path &inUse, int limit);
 
 class AudioController : public QObject {

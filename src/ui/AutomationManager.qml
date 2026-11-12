@@ -18,6 +18,10 @@ Pane {
     property var settings: null
     property var notices: null
     property int documentTab: -1
+    property int shellWindow: 0
+    // The untrusted Project's autoload scripts, which don't load.
+    property var lockedScripts: []
+    signal trustRequested()
     implicitWidth: 340
     implicitHeight: 420
     padding: 0
@@ -226,7 +230,8 @@ Pane {
             const members = []
             for (let i = 0; i < scripts.length; ++i) {
                 const script = scripts[i]
-                if (script.inDocument !== section.inDocument)
+                if (script.inDocument !== section.inDocument
+                        || (automation !== null && !automation.shownIn(script.path, shellWindow)))
                     continue
                 const named = matches(scriptTitle(script))
                 const macros = script.macros.filter(m => named || matches(m.name))
@@ -244,6 +249,13 @@ Pane {
                     out.push({ kind: "macro", script: m.script, index: m.index, macro: macro,
                                legacyName: legacyNameOf(m.script, macro) })
             }
+        }
+        const locked = lockedScripts.filter(path => matches(path.replace(/^.*[\\/]/, "")))
+        if (locked.length > 0) {
+            out.push({ kind: "section", key: "locked", title: qsTr("This project"), count: locked.length })
+            if (!folded.locked)
+                for (const path of locked)
+                    out.push({ kind: "locked", path: path, fileName: path.replace(/^.*[\\/]/, "") })
         }
         const missing = macroHotkeys ? macroHotkeys.missing.filter(b => matches(b.macro) || matches(b.legacyName)) : []
         if (missing.length > 0) {
@@ -493,7 +505,8 @@ Pane {
                 width: ListView.view.width
                 sourceComponent: modelData.kind === "section" ? sectionRow
                                  : modelData.kind === "script" ? scriptRow
-                                 : modelData.kind === "macro" ? macroRow : missingRow
+                                 : modelData.kind === "macro" ? macroRow
+                                 : modelData.kind === "locked" ? lockedRow : missingRow
             }
         }
 
@@ -995,6 +1008,17 @@ Pane {
                     ToolTip.text: qsTr("Load at start")
                     onToggled: root.controller.setEnabled(scriptItem.script.path, checked)
                 }
+                Icon {
+                    objectName: "builtIn_" + scriptItem.row.index
+                    visible: scriptItem.script.builtIn ?? false
+                    iconRole: "builtin-script"
+                    size: 14
+                    HoverHandler { id: builtInHover }
+                    ToolTip.visible: builtInHover.hovered
+                    ToolTip.text: qsTr("Built-in")
+                    Accessible.role: Accessible.Graphic
+                    Accessible.name: qsTr("Built-in")
+                }
                 Label {
                     Layout.fillWidth: true
                     text: root.scriptTitle(scriptItem.script)
@@ -1005,12 +1029,11 @@ Pane {
                     ToolTip.visible: nameHover.hovered && (truncated || (scriptItem.script.description ?? "") !== "")
                     ToolTip.text: (scriptItem.script.description ?? "") !== "" ? scriptItem.script.description : text
                 }
-                Label {
-                    objectName: "builtIn_" + scriptItem.row.index
-                    visible: scriptItem.script.builtIn ?? false
-                    text: qsTr("Built-in")
-                    color: Theme.muted
-                    font.pixelSize: Math.max(10, Qt.application.font.pixelSize - 2)
+                TierChip {
+                    objectName: "tier_" + scriptItem.row.index
+                    readonly property string scriptTier: root.automation ? root.automation.tierOf(scriptItem.script.path, root.shellWindow) : ""
+                    visible: scriptTier !== ""
+                    tier: scriptTier
                 }
                 Label {
                     objectName: "state_" + scriptItem.row.index
@@ -1251,6 +1274,44 @@ Pane {
         }
     }
 
+    Component {
+        id: lockedRow
+        ItemDelegate {
+            id: lockedItem
+            readonly property var row: parent ? parent.modelData : ({ fileName: "" })
+            readonly property int rowIndex: parent ? parent.index : -1
+            objectName: "locked_" + row.fileName
+            highlighted: list.currentIndex === rowIndex
+            leftPadding: 28
+            rightPadding: 8
+            focusPolicy: Qt.NoFocus
+            Accessible.name: row.fileName
+            Accessible.description: qsTr("Trust this folder to use them")
+            onClicked: list.currentIndex = rowIndex
+            contentItem: RowLayout {
+                spacing: 6
+                Icon {
+                    iconRole: "untrusted"
+                }
+                Label {
+                    Layout.fillWidth: true
+                    elide: Text.ElideMiddle
+                    color: Theme.muted
+                    text: lockedItem.row.fileName
+                }
+                TierChip {
+                    tier: "project"
+                    enabled: false
+                }
+                Button {
+                    objectName: "trustLockedScripts"
+                    flat: true
+                    text: qsTr("Trust this folder to use them")
+                    onClicked: root.trustRequested()
+                }
+            }
+        }
+    }
     Component {
         id: missingRow
         ItemDelegate {

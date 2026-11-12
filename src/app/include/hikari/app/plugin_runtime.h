@@ -7,6 +7,7 @@
 #include "hikari/app/plugin_ui.h"
 #include "hikari/backends/plugin_process.h"
 #include "hikari/plugins/installer.h"
+#include "hikari/plugins/project_plugins.h"
 
 #include <QNetworkAccessManager>
 #include <QObject>
@@ -18,6 +19,7 @@
 #include <map>
 #include <memory>
 #include <optional>
+#include <set>
 
 namespace hikari::ui {
 class LogController;
@@ -34,6 +36,8 @@ class PluginRuntime : public QObject {
     Q_PROPERTY(hikari::app::PluginUi *ui READ ui CONSTANT)
     // Restricted plugins run in an operating-system sandbox here.
     Q_PROPERTY(bool sandboxed READ sandboxed CONSTANT)
+    // Changes whenever a window's Project changes which plugins are on in it.
+    Q_PROPERTY(int windowsRevision READ windowsRevision NOTIFY windowsChanged)
 
 public:
     struct Wiring {
@@ -54,13 +58,25 @@ public:
         bool sandbox = false;
         // A QML panel's api.setSetting: the refusal, or "" once kept. Unset: the runtime keeps it itself.
         std::function<QString(const QString &plugin, const QString &setting, const QString &json)> setSetting;
+        // The Project the user works in, for the `project` place.
+        std::function<std::optional<api::ProjectState>()> project;
+        // Each shell window, with its trusted Project's [plugins]; nullopt: no Project, or an untrusted one.
+        std::function<std::map<int, std::optional<plugins::ProjectPlugins>>()> windowPlugins;
+        // The window the user works in.
+        std::function<int()> activeWindow;
     };
 
     explicit PluginRuntime(Wiring wiring, QObject *parent = nullptr);
     ~PluginRuntime() override;
 
-    // Starts a helper for each enabled plugin that has none or changed version, and stops the rest.
+    // Starts a helper for each plugin on in some window that has none or changed version, and stops the rest.
     Q_INVOKABLE void sync();
+    // A window's Project changed or became trusted.
+    void projectsChanged();
+    Q_INVOKABLE bool onIn(const QString &pluginId, int shellWindow) const;
+    // The ids the window's trusted Project enables that aren't installed.
+    Q_INVOKABLE QStringList missingIn(int shellWindow) const;
+    int windowsRevision() const { return m_windowsRevision; }
     QVariantList commands() const { return m_commands; }
     // False when no running plugin has the command.
     Q_INVOKABLE bool run(const QString &commandId);
@@ -79,6 +95,7 @@ public:
 
 signals:
     void commandsChanged();
+    void windowsChanged();
     // The plugin finished a command or an event, or stopped.
     void idle(const QString &pluginId);
 
@@ -95,6 +112,8 @@ private:
     void endAccess(Running &plugin);
     void wireQmlPanels();
     std::optional<std::string> setSetting(const std::string &plugin, const std::string &setting, const api::Json &value);
+    const plugins::ProjectPlugins *windowProject(int shellWindow) const;
+    api::Json storedSettings(const std::string &plugin) const;
 
     struct LockWaiter {
         Running *plugin = nullptr;
@@ -112,6 +131,10 @@ private:
     std::unique_ptr<QNetworkAccessManager> m_ownNetwork;
     PluginNetwork *m_network = nullptr;
     std::unique_ptr<PluginFiles> m_files;
+    std::map<int, std::optional<plugins::ProjectPlugins>> m_windows;
+    std::set<std::string> m_userOn;
+    std::map<int, std::set<std::string>> m_onIn; // by window, as of the last sync
+    int m_windowsRevision = 0;
 };
 
 }

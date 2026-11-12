@@ -5,6 +5,7 @@
 #include "hikari/application/edit_session.h"
 #include "hikari/application/node_graph.h"
 #include "hikari/application/resample.h"
+#include "hikari/application/shape_kernel.h"
 #include "hikari/core/document.h"
 
 #include <cstdint>
@@ -91,9 +92,13 @@ struct NodeEffectOptions {
     LuaNodePort *lua = nullptr;
     // As MacroMediaPort::peakAudio gives it: nullopt without audio, null while it opens.
     std::optional<const DisplayAudio *> audio;
+    // Fonts for Text to drawing; without them it gives an empty drawing and a problem.
+    shape::GlyphOutlinePort *glyphs = nullptr;
     // Only these karaoke Lines; all of them when unset.
     std::optional<std::set<core::LineId>> sources;
     NodeEffectCache *cache = nullptr;
+    // EditSession::isNewDocument: places follow karaOK until a mode line or a template or code Line decides.
+    bool newDocument = false;
     unsigned threads = 0; // 0: one per hardware thread
     // Filled by a run that evaluates; cached Lines are not evaluated, so pass no cache with it.
     NodeValueTrace *trace = nullptr;
@@ -156,12 +161,17 @@ struct TemplateLine {
     friend bool operator==(const TemplateLine &, const TemplateLine &) = default;
 };
 
-// The graph `name` as `template` Lines that give its Lines through the stock 2.1.7 karaoke
-// templater, in the engine's order; or each node that has no template form, and why.
-std::expected<std::vector<TemplateLine>, std::vector<NodeEffectProblem>> exportTemplateLines(const NodeGraph &graph,
-                                                                                           std::u8string_view name);
+// The template language an export writes: karaOK's, or Karaoke Templater 2.1.7's (Aegisub 3.2.2).
+enum class TemplateFormat { KaraOK, Stock };
 
-// Inserts the graph Line's template Lines after it, as one undo step "Export as template lines".
-std::expected<void, std::vector<NodeEffectProblem>> exportTemplateLines(EditSession &session, core::LineId graphLine);
+// The graph `name` as `template` Lines that give its Lines through the karaoke templater in `format`'s
+// mode, in the engine's order; or each node that has no template form, and why.
+std::expected<std::vector<TemplateLine>, std::vector<NodeEffectProblem>>
+exportTemplateLines(const NodeGraph &graph, std::u8string_view name, TemplateFormat format = TemplateFormat::Stock);
+
+// Inserts the graph Line's template Lines after it, as one undo step "Export as template lines". A karaOK
+// export also sets the Document's mode line to karaOK.
+std::expected<void, std::vector<NodeEffectProblem>> exportTemplateLines(EditSession &session, core::LineId graphLine,
+                                                                        TemplateFormat format = TemplateFormat::Stock);
 
 }

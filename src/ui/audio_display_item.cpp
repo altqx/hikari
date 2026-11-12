@@ -261,6 +261,8 @@ void build(QSGNode *parent, const std::vector<AudioShape> &shapes, QQuickWindow 
     buildNodes(parent, describe(shapes, fontOf), window);
 }
 
+}
+
 application::KaraokeCharClass karaokeCharClass()
 {
     const auto ascii = application::KaraokeCharClass::ascii();
@@ -274,8 +276,6 @@ application::KaraokeCharClass karaokeCharClass()
     classes.symbol = [ascii](char32_t c) { return c < 128 ? ascii.symbol(c) : QChar::isSymbol(c); };
     classes.lower = [](char16_t c) { return static_cast<char16_t>(QChar(c).toLower().unicode()); };
     return classes;
-}
-
 }
 
 AudioDisplayItem::AudioDisplayItem(QQuickItem *parent) : QQuickItem(parent)

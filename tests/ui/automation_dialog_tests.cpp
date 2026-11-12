@@ -1118,6 +1118,89 @@ private slots:
         QTRY_VERIFY(result);
     }
 
+    void presetsHaveAProjectTier()
+    {
+        QTemporaryDir dir;
+        hikari::ui::SettingsStore store(dir.filePath(QStringLiteral("settings.toml")));
+        ScriptDialogMemory memory(&store);
+        controller->setMemory(&memory);
+        window->setProperty("settings", QVariant::fromValue(&store));
+        auto unset = qScopeGuard([this] {
+            controller->setMemory(nullptr);
+            window->setProperty("settings", QVariant::fromValue<QObject *>(nullptr));
+        });
+        const DialogRequest dialog = sampleRequest();
+        const QString key = ScriptDialogMemory::keyOf(QStringLiteral("/s/x.lua"), dialog);
+        memory.savePreset(key, QStringLiteral("Soft"), {{"n", 10}});
+        const QString show = dir.filePath(QStringLiteral("show"));
+        memory.setProjectRoot(show);
+        memory.savePreset(key, QStringLiteral("Soft"), {{"n", 30}}, hikari::application::Tier::Project);
+
+        std::optional<DialogResult> result;
+        controller->present(QStringLiteral("Tiers"), dialog, [&](DialogResult r) { result = r; }, QString(),
+                            {std::nullopt, key, QString()});
+        QTRY_VERIFY(window->isVisible());
+        QVERIFY(controller->hasProject());
+        auto *presetsMenu = window->findChild<QObject *>(QStringLiteral("dialogPresetsMenu"));
+        const auto row = [presetsMenu](const QString &name) -> QObject * {
+            for (int i = 0; i < presetsMenu->property("count").toInt(); ++i) {
+                QQuickItem *item = nullptr;
+                QMetaObject::invokeMethod(presetsMenu, "itemAt", Q_RETURN_ARG(QQuickItem *, item), Q_ARG(int, i));
+                if (item && item->objectName() == name)
+                    return item;
+            }
+            return nullptr;
+        };
+        auto *project = row(QStringLiteral("dialogPreset_project_Soft"));
+        auto *mine = row(QStringLiteral("dialogPreset_mine_Soft"));
+        QVERIFY(project && mine);
+        QCOMPARE(project->property("detailText").toString(), QStringLiteral("Project"));
+        QVERIFY(project->property("enabled").toBool());
+        QVERIFY(!mine->property("enabled").toBool());
+        QCOMPARE(mine->property("help").toString(), QStringLiteral("Hidden by the project’s copy"));
+        QCOMPARE(controller->presetValues(QStringLiteral("Soft")).value(2).toInt(), 30);
+        QCOMPARE(controller->presetValues(QStringLiteral("Soft"), QStringLiteral("mine")).value(2).toInt(), 10);
+        QCOMPARE(menu_rows::shown(window->findChild<QObject *>(QStringLiteral("dialogDeletePresetMenu"))),
+                 QStringList{QStringLiteral("dialogDeletePreset_project_Soft")});
+
+        const QStringList tierMenus{QStringLiteral("dialogDeletePresetMenu"), QStringLiteral("dialogCopyToProjectMenu"),
+                                    QStringLiteral("dialogCopyToMineMenu"), QStringLiteral("dialogMoveToProjectMenu"),
+                                    QStringLiteral("dialogMoveToMineMenu")};
+        for (int twice = 0; twice < 2; ++twice) {
+            QVERIFY(QMetaObject::invokeMethod(window, "placeTierMenus"));
+            QVERIFY(menu_rows::shown(presetsMenu).join(QLatin1Char(',')).endsWith(tierMenus.join(QLatin1Char(','))));
+        }
+        QCOMPARE(menu_rows::shown(window->findChild<QObject *>(QStringLiteral("dialogCopyToMineMenu"))),
+                 QStringList{QStringLiteral("dialogCopyToMineMenu_Soft")});
+
+        auto *popover = window->findChild<QObject *>(QStringLiteral("savePresetPopover"));
+        QVERIFY(QMetaObject::invokeMethod(popover, "openFor"));
+        auto *face = window->findChild<QObject *>(QStringLiteral("presetSave"));
+        QCOMPARE(face->property("text").toString(), QStringLiteral("Save to project"));
+        window->findChild<QObject *>(QStringLiteral("presetName"))->setProperty("text", QStringLiteral("Firm"));
+        QVERIFY(QMetaObject::invokeMethod(face, "click"));
+        QTRY_VERIFY(controller->presetRows().contains(
+            QVariantMap{{QStringLiteral("name"), QStringLiteral("Firm")}, {QStringLiteral("tier"), QStringLiteral("project")},
+                        {QStringLiteral("hidden"), false}}));
+        QVERIFY(QFile::exists(show + QStringLiteral("/.hikari/presets.toml")));
+
+        QVERIFY(QMetaObject::invokeMethod(popover, "openFor"));
+        QVERIFY(QMetaObject::invokeMethod(window->findChild<QObject *>(QStringLiteral("presetSaveTierMine")), "triggered"));
+        QCOMPARE(face->property("text").toString(), QStringLiteral("Save to mine"));
+        QVERIFY(store.list("workspace.saveTiers").contains(QStringLiteral("dialogPresets\tmine")));
+        QVERIFY(QMetaObject::invokeMethod(popover, "revert"));
+
+        QVERIFY(QMetaObject::invokeMethod(window, "transferPreset", Q_ARG(QVariant, QStringLiteral("Soft")),
+                                          Q_ARG(QVariant, QStringLiteral("mine")), Q_ARG(QVariant, false)));
+        auto *review = window->findChild<QObject *>(QStringLiteral("dialogPresetClashReview"));
+        QTRY_VERIFY(review && review->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(review, "setAll", Q_ARG(QVariant, QStringLiteral("rename"))));
+        QVERIFY(QMetaObject::invokeMethod(review, "finish", Q_ARG(QVariant, true)));
+        QTRY_COMPARE(memory.presets(key), (QStringList{QStringLiteral("Soft"), QStringLiteral("Firm"), QStringLiteral("Soft (2)")}));
+        window->close();
+        QTRY_VERIFY(result);
+    }
+
     void filledDialogShowsItsValuesAndNotice()
     {
         const DialogRequest dialog = sampleRequest();

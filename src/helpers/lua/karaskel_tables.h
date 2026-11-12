@@ -17,11 +17,17 @@ namespace hikari::karaskel_tables {
 
 struct Head {
     std::optional<application::Resolution> video;
+    int firstStyle = 0;                      // the subs index the added "-furigana" Styles start at
+    std::vector<std::string> furiganaAdded; // those Styles' names, in subs order
 };
 
 // karaskel.collect_head(subs, generate_furigana): pushes meta, then styles. With `generateFurigana` the
-// "-furigana" Styles go into subs before the first Style, as karaskel inserts them.
-Head pushKaraskelHead(lua_State *L, int subs, bool generateFurigana);
+// "-furigana" Styles go into subs before the first Style, as karaskel inserts them. `rows`, when set, is a list
+// of subs' rows read already; `cancelCheck`, when set, is called in place of the cancel check.
+Head pushKaraskelHead(lua_State *L, int subs, bool generateFurigana, int rows = 0, int cancelCheck = 0);
+
+// Takes `head`'s added "-furigana" Styles out of the styles table at `styles`; subs keeps them.
+void dropAddedFurigana(lua_State *L, int styles, const Head &head);
 
 // karaskel.preproc_line(subs, meta, styles, line): fills the line table at `line` from `layout` and pushes it.
 // `layout` is of lua_helper::karaokeSource's line, which parse_karaoke_data reads.

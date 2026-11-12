@@ -1074,7 +1074,7 @@ icon("copy-to-tier", "Copy to", [], ["tier-chips"],
 icon("move-to-tier", "Move to", [], ["tier-chips"],
      rect(8.5, 2.5, 6, 11, 1) + accent(stroke("M1.5 8h5M5 6.5l1.5 1.5L5 9.5")))
 icon("trust", "Trust this folder", [], ["notices", "settings-dialog"], SHIELD + accent(stroke("M5.5 8l2 2 3-3.5")))
-icon("untrusted", "Needs a trusted folder", [], ["settings-dialog", "plugin-manager"],
+icon("untrusted", "Needs a trusted folder", [], ["automation", "settings-dialog", "plugin-manager"],
      SHIELD + accent(rect(5.5, 7.5, 5, 4, 0.5), stroke("M6.5 7.5v-1a1.5 1.5 0 0 1 3 0v1")))
 icon("explorer", "Explorer", [], [VIEW, "explorer"],
      stroke("M1.5 5.5v-3h3l1 1h3v2z") + stroke("M8.5 8.5h6M8.5 12.5h6") + accent(stroke("M3.5 5.5v7h3M3.5 8.5h3")),
@@ -1419,25 +1419,12 @@ NOT_REPLACED = {
 PENDING = {}
 for card, roles in {
     "AI2 #430": ["review-panel"],
-    "PJ5 #773": ["mine", "copy-to-tier", "move-to-tier"],
-    "PJ8 #776": ["untrusted"],
     "AI24 #744": ["update"],
     "PL7 #419": ["plugin-sandbox"],
-    "AU6 #845": ["shape-unite", "shape-subtract", "shape-intersect", "shape-exclude", "shape-offset", "clip-to-shape",
-                 "shape-to-clip", "shape-merge"],
+    "AU6 #845": ["clip-to-shape", "shape-to-clip", "shape-merge"],
     "AU9 #844": ["graph-shake", "graph-wobble", "graph-bounce", "graph-typewriter", "graph-fade-by-letter",
                  "graph-focus-lines", "graph-grain", "graph-chromatic-aberration", "graph-randomove",
                  "graph-karaoke-to-alpha"],
-    "AU10 #841": ["select-overlapping", "split-tag-blocks", "split-every-n"],
-    "AU11 #846": ["track-colour", "find-fade"],
-    "AU14 #847": ["tool-text-on-path"],
-    "AU16 #850": ["reinstall-scripts"],
-    "AU20 #854": ["line-break-insert", "line-break-left", "line-break-right", "line-break-remove", "change-case",
-                  "case-upper", "case-lower", "case-title", "case-sentence", "fullwidth", "halfwidth", "dialogue-swap"],
-    "AU21 #855": ["change-alignment", "align-left", "align-center", "align-right", "align-top", "align-middle",
-                  "align-bottom", "distribute-horizontal", "distribute-vertical", "pos-to-margins", "margins-to-pos",
-                  "phantom", "cycle-values", "shift-by-x", "shift-by-y"],
-    "TH5 #833": ["builtin-script"],
 }.items():
     for role in roles:
         PENDING[role] = card

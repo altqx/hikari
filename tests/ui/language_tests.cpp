@@ -540,6 +540,8 @@ private slots:
         const auto sizes = [this] {
             QList<QSizeF> out;
             for (const char *name : {"aboutDialog", "creditsDialog"}) {
+                if (auto *loader = root()->findChild<QObject *>(QLatin1String(name) + QLatin1String("Loader")))
+                    loader->setProperty("active", true);
                 QObject *dialog = root()->findChild<QObject *>(QLatin1String(name));
                 if (!dialog) {
                     out << QSizeF(-1, -1);
@@ -742,6 +744,8 @@ private slots:
         QCOMPARE(QGuiApplication::font().pointSize(), 14);
         QCOMPARE(QGuiApplication::font().families().value(0), QStringLiteral("DejaVu Sans"));
         QTRY_COMPARE(label->property("font").value<QFont>().pointSizeF(), statusSize(14));
+        root()->findChild<QObject *>(QStringLiteral("historyWindowLoader"))->setProperty("active", true);
+        QVERIFY(item("historyGo"));
         QCOMPARE(item("historyGo")->property("font").value<QFont>().pointSize(), 14);
         QTRY_COMPARE(label->property("font").value<QFont>().families().value(0), QStringLiteral("DejaVu Sans"));
         application->settingsStore()->set("program.fontSize", 0);
@@ -808,6 +812,7 @@ private slots:
         QVERIFY(application->openFile(episode));
         // MUST KILL: settingsDialog() is called for its side effect, making the Settings window
         QVERIFY(settingsDialog());
+        root()->findChild<QObject *>(QStringLiteral("styleManagerLoader"))->setProperty("active", true);
         QCoreApplication::processEvents();
         const Shown english = shown();
         application->settingsStore()->set("program.language", QStringLiteral("pl"));

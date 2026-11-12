@@ -1,6 +1,7 @@
 #include "hikari/app/application.h"
 
 #include "hikari/app/font_catalogs_controller.h"
+#include "hikari/app/style_manager_controller.h"
 #include "hikari/application/project.h"
 #include "log_controller.h"
 #include "project_file.h"
@@ -18,6 +19,19 @@
 #include <vector>
 
 namespace hikari::app {
+
+namespace {
+
+QString projectCredentialNotice(const std::string &id)
+{
+    return QCoreApplication::translate("HikariSub.Project",
+                                       "%1 in project.toml looks like a credential, so it is ignored. Keys go in this "
+                                       "Project’s credentials file (.hikari/credentials.toml) or this machine’s "
+                                       "environment, never in project.toml.")
+        .arg(QString::fromStdString(id));
+}
+
+}
 
 std::optional<int> Application::openWindowBeside(int shellWindow)
 {
@@ -50,15 +64,34 @@ const application::Settings &Application::windowSettings(int shellWindow) const
     return views(shellWindow).settings->settings();
 }
 
+std::vector<std::string> Application::projectAiExclude(const std::string &root)
+{
+    const ui::ProjectFile file(QString::fromStdString(root));
+    const auto value = file.read(*application::findSetting("ai.exclude"));
+    const auto *globs = value ? std::get_if<std::vector<std::string>>(&*value) : nullptr;
+    return globs ? *globs : std::vector<std::string>();
+}
+
+std::optional<api::ProjectState> Application::activeProject() const
+{
+    const QString root = m_projects ? m_projects->root(m_workspace.activeWindow()) : QString();
+    if (root.isEmpty())
+        return std::nullopt;
+    return api::ProjectState{m_projects->name(m_workspace.activeWindow()).toStdString(), root.toStdString(),
+                             projectTrusted(root)};
+}
+
 void Application::applyWindowProject(int shellWindow)
 {
     if (shellWindow != 0 && !m_shellWindows.contains(shellWindow)) {
         m_projectFonts.erase(shellWindow);
+        projectScriptsAndPluginsChanged();
         return;
     }
     auto &v = views(shellWindow);
     const QString root = m_projects->root(shellWindow);
     v.settings->setProject(root, !root.isEmpty() && projectTrusted(root));
+    projectScriptsAndPluginsChanged();
     if (const auto *project = v.settings->project()) {
         const QString title = QCoreApplication::translate("HikariSub.Project", "Project settings");
         for (const auto &problem : project->problems())
@@ -79,14 +112,51 @@ void Application::applyWindowProject(int shellWindow)
                                                       "A Project can’t set %1, so the project file’s value is ignored.")
                               .arg(QString::fromStdString(id)),
                           {}, shellWindow);
+        for (const auto &id : project->credentials())
+            m_log->notice(ui::LogController::Warning, title,
+                          projectCredentialNotice(id),
+                          {}, shellWindow);
     }
     loadProjectFonts(shellWindow);
+    if (m_styleManager)
+        m_styleManager->projectChanged();
+    if (m_shiftTimes)
+        m_shiftTimes->setProjectRoot(m_projects->root(m_workspace.activeWindow()));
     const bool moveTags = v.settings->settings().boolean("translation.autoMoveTagsFromOriginal");
     v.editor->setMoveTags(moveTags);
     v.shell->setRunMarks(moveTags);
     if (shellWindow == m_workspace.activeWindow())
         applyGrammarSettings();
     spellingRefresh();
+    if (m_apiHost)
+        m_apiHost->observe();
+}
+
+std::map<int, std::optional<plugins::ProjectPlugins>> Application::windowPlugins() const
+{
+    std::map<int, std::optional<plugins::ProjectPlugins>> windows;
+    for (const int window : sessionWindows()) {
+        const auto &settings = *views(window).settings;
+        const auto *project = settings.trusted() ? settings.project() : nullptr;
+        auto &entry = windows[window];
+        if (!project || !project->hasTable("plugins"))
+            continue;
+        const auto table = project->plugins();
+        plugins::ProjectPlugins plugins{table.enabled, table.disabled, {}};
+        for (const auto &[id, json] : table.settingsJson)
+            if (auto parsed = api::Json::parse(json))
+                plugins.settings.emplace(id, std::move(*parsed));
+        entry = std::move(plugins);
+    }
+    return windows;
+}
+
+void Application::projectScriptsAndPluginsChanged()
+{
+    if (m_automation)
+        m_automation->projectsChanged();
+    if (m_pluginRuntime)
+        m_pluginRuntime->projectsChanged();
 }
 
 void Application::loadProjectFonts(int shellWindow)
@@ -123,11 +193,7 @@ QString Application::projectFontFolder(int shellWindow) const
 
 bool Application::projectNeedsTrust(int shellWindow) const
 {
-    const auto &window = *views(shellWindow).settings;
-    const auto *project = window.project();
-    if (!project || window.trusted())
-        return false;
-    return QFileInfo(window.root() + QStringLiteral("/.hikari/automation")).isDir() || project->hasTable("plugins");
+    return !projectTrustReasons(shellWindow).isEmpty();
 }
 
 void Application::trustProject(int shellWindow)
@@ -141,6 +207,27 @@ void Application::trustProject(int shellWindow)
         m_settings->setValue(QStringLiteral("trust.folders"), folders << folder);
     m_settings->sync();
     emit projectsChanged();
+}
+
+QVariantMap Application::projectPlugins(int shellWindow) const
+{
+    const auto &settings = *views(shellWindow).settings;
+    const auto *project = settings.project();
+    if (!project)
+        return {};
+    const auto table = project->plugins();
+    QStringList named;
+    const auto name = [&](const std::string &id) {
+        if (!named.contains(QString::fromStdString(id)))
+            named << QString::fromStdString(id);
+    };
+    std::ranges::for_each(table.enabled, name);
+    std::ranges::for_each(table.disabled, name);
+    for (const auto &[id, json] : table.settingsJson)
+        name(id);
+    return {{QStringLiteral("trusted"), settings.trusted()},
+            {QStringLiteral("named"), named},
+            {QStringLiteral("missing"), m_pluginRuntime ? m_pluginRuntime->missingIn(shellWindow) : QStringList()}};
 }
 
 bool Application::windowEmpty(int shellWindow) const

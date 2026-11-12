@@ -11,14 +11,14 @@ The AI tab of Settings ([AI20 #649](https://github.com/altqx/hikari/issues/649))
 | Models | Chat, Translator, Reviewer, Vision and Judge. Every role but Chat can be "Same as chat"; Vision lists only models that read images. Refresh models fetches every provider's catalogue again | On OK or Apply |
 | Web search | **Let AI search the web** (`ai.webSearch`, on by default), how each provider searches, and **Search service** (`ai.searchService`: None, Brave Search, Tavily, Exa or Firecrawl) with its key | The switch and the service on OK or Apply; the key once its test passes, or on Add anyway |
 | External agents | Claude Code and Codex: each found on `PATH` with its version, a badge and Update now (AI24b), and for Codex HikariSub's own ChatGPT sign-in (AI6) | At once (see below) |
-| MCP | **Let agents outside HikariSub edit through MCP** (`ai.mcp.server`), which offers the AI component's download when it isn't installed; **Also listen on http://127.0.0.1:<port>** (`ai.mcp.http`); **Copy setup** and **Reset token** ([MCP server](ai-mcp.md#settings--ai)) | The check boxes on OK or Apply; the download and Reset token at once |
+| MCP | **Let agents outside HikariSub edit through MCP** (`ai.mcp.server`), which offers the AI component's download when it isn't installed; **Also listen on http://127.0.0.1:<port>** (`ai.mcp.http`); **Copy setup** and **Reset token** ([MCP server](ai-mcp.md#settings--ai)); **MCP servers** for the agent (`ai.mcp.servers`, [MCP servers](ai-mcp-clients.md#settings--ai)) | The check boxes on OK or Apply; the download, Reset token and the servers at once |
 | Inline actions | Your [inline actions](ai-inline-actions.md) (`ai.inline.actions`: add, edit, move and delete), **Translate to** (`ai.inline.translateTo`, English) and **Lines of context** (`ai.inline.contextLines`, 0–5, 2) | The actions at once, like providers; the rest on OK or Apply |
 | AI components | The AI component's version, its Bun and provider libraries, the update status with Check now and Update now, What's new, the rollback notice, and **Update AI components automatically** (`ai.autoUpdate`, on by default) (AI24b) | The switch on OK or Apply; the buttons at once |
 | Privacy | **Use prompt caching** (`ai.promptCaching`, on by default), the What is sent to providers link, and a line that says whether the AI component runs in its sandbox here; "isn’t sandboxed on this system" shows in the warning colour where the sandbox can’t apply ([ADR 0029](adr/0029-the-ai-sidecar-runs-in-an-os-sandbox.md)) | On OK or Apply |
 
 The owner approved the Web search [mockup](https://github.com/altqx/hikari/issues/742#issuecomment-6686712813) on 2026-11-06, with the switch on by default ([AI23 #742](https://github.com/altqx/hikari/issues/742)).
 
-The Agent section arrives with AI7 below Models, and AI13 adds MCP servers to the MCP section, as drawn in the mockup. AI15 adds ACP agents to External agents, with Choose… and their run errors. The owner approved AI24b's [design gate](https://github.com/altqx/hikari/issues/744#issuecomment-6731988977) on 2026-11-09.
+The Agent section arrives with AI7 below Models, and AI13 added MCP servers to the MCP section, as drawn in the mockup. AI15 adds ACP agents to External agents, with Choose… and their run errors. The owner approved AI24b's [design gate](https://github.com/altqx/hikari/issues/744#issuecomment-6731988977) on 2026-11-09.
 
 ## Turn off all AI features
 
@@ -35,6 +35,21 @@ With AI off, `AiSettings` lists no providers and refuses every action, and nothi
 - **Each row** shows the wire and host, the last test ("Connected · N models", the error, or "Not tested · N models"), where the key is ("Key in keychain" or "No key"), and Test connection, Edit and Delete. A rejected key says "Replace the key with Edit". Delete asks first and removes the key from the keychain; roles that used the provider go back to the chat model.
 - **OpenRouter can sign in** ([AI6 #434](https://github.com/altqx/hikari/issues/434)): "Sign in with OpenRouter…" sits next to the key field, "or paste a key". It opens openrouter.ai in the browser, which makes a key for HikariSub; the key goes to the keychain like a pasted one, and the provider is added and tested at once. The row then says "Signed in (OpenRouter)", and a rejected key says "Sign in again with Edit". Edit offers Sign out, which deletes the key from this computer and leaves the provider without one; the key stays in the user's OpenRouter keys until they delete it there. Pasting a key over a signed-in one makes it a pasted key.
 - **Test connection** in the form lists the provider's catalogue with the typed key through `AiRequests::probe`, and saves nothing. Add then stores the provider with that catalogue. A provider added without a test fetches its catalogue right after. The first catalogue fills the chat role while it is empty.
+
+## Project keys
+
+In a Project window, Settings › Project › AI lists the user's providers ([ADR 0030](adr/0030-open-a-folder-as-a-project.md#project-ai-keys), [PJ10 #982](https://github.com/altqx/hikari/issues/982)). Each row names an environment variable and a credentials entry for that provider's key, both optional, which Apply writes to `project.toml` as `[ai.keys] <provider id> = { env = "…", entry = "…" }`. Key used says where the key comes from: the variable, the credentials file, or the user's own, with the reason. No part of a key is shown. Use yours removes the row's names. Providers that need no key are greyed, and a provider id the user doesn't have is listed greyed by its id.
+
+- **Create credentials file** writes `.hikari/credentials.toml`, with an empty entry for each name, and `.hikari/.gitignore` listing it and `project.local.toml`. An existing `.gitignore` there only gains the lines it lacks. Once the file exists, Open file and Show in folder take its place.
+- **An untrusted Project** uses the user's keys. The page says so and offers Trust folder, and the window's trust bar names the keys when one is found in the environment or the file.
+- **A key value in `project.toml`** is ignored. A warning bar in the window and a notice on the page say so, in trusted and untrusted Projects alike, and Move to credentials file writes the value to the credentials file and names it there instead.
+- **Environment variables** are read from HikariSub's own environment. A launch from the desktop doesn't see a variable set only in a shell profile, and a changed variable needs a restart.
+
+What is sent:
+
+- A Project key goes only to that provider, in the request's key header, from Qt's relay, exactly like a keychain key. The sidecar sees the placeholder `hikari-key`; the model never sees a key.
+- `.hikari/credentials.toml` is never sent. Hikari AI never reads it.
+- Environment variables reach no one but the provider they are named for. Hikari AI isn't told their values.
 
 ## Web search
 
@@ -104,3 +119,7 @@ Later versions arrive on their own ([ADR 0031](adr/0031-the-ai-sidecar-updates-o
 - `hikari_backends_ai_agent_cli_tests`: each install method from fake paths, Windows `.cmd` shims, version parsing, badges, Claude's channel, the daily cache against a local server, and Update now's outcomes with a fake CLI (updated, unchanged, failed, timed out, cancelled). No test runs a real `claude` or `codex`.
 - `hikari_backends_ai_signin_tests` runs the flows against a fake auth.openai.com and openrouter.ai (`tests/support/fake_auth_server.h`): the device code's polling, its 3 s floor, 404 codes off, denials, expiry, 429 and server errors; the browser's state check and its busy port; OpenRouter's random callback path; refresh, a refused refresh, cancelling, a refusing keychain, the URL allow-list, import leaving `auth.json` untouched, and sign-out.
 - `hikari_application_ai_providers_tests`, `hikari_backends_ai_requests_tests` and the sidecar's `caching.test.ts` cover `update`, `unassign`, the first catalogue, `probe` and `caching: false`.
+
+## In a Project
+
+Providers, keys, budgets and permissions are yours alone ([ADR 0030](adr/0030-open-a-folder-as-a-project.md)). A trusted Project may only choose the translation pipeline's models from your providers, with `[translation] translator` and `reviewer` in `.hikari/project.toml`. A Project never carries an API key, token, base URL or other credential: such entries are ignored with a warning and never written ([AI translation pipeline](ai-translation.md#roles-and-models)).

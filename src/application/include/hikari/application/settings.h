@@ -72,6 +72,8 @@ public:
     const SettingsStorage *project() const { return m_project.get(); }
     bool trusted() const { return m_trusted; }
     bool fromProject(const SettingDefinition &setting) const;
+    // The Project sets a widening setting it may not set until its folder is trusted.
+    bool waitsForTrust(const SettingDefinition &setting) const;
 
     std::optional<SettingValue> read(const SettingDefinition &setting) const override;
     void write(const SettingDefinition &setting, const SettingValue &value) override;

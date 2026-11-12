@@ -2,26 +2,33 @@
 
 #include "hikari/api/api.h"
 #include "hikari/backends/ai_agent_broker.h"
+#include "hikari/backends/ai_antigravity.h"
 #include "hikari/backends/ai_config_store.h"
 #include "hikari/backends/ai_http_relay.h"
 #include "hikari/backends/ai_keychain.h"
+#include "hikari/backends/ai_mcp_clients.h"
 #include "hikari/backends/ai_requests.h"
 #include "hikari/backends/ai_sidecar_host.h"
 #include "hikari/backends/ai_signin.h"
 #include "hikari/backends/sandbox.h"
 #include "settings_store.h"
 
+#include <QCoreApplication>
 #include <QDir>
 #include <QElapsedTimer>
 #include <QFile>
 #include <QFileInfo>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QProcess>
+#include <QRegularExpression>
 #include <QSettings>
 #include <QStandardPaths>
 #include <QTimer>
 
+#include <algorithm>
 #include <cstdint>
+#include <tuple>
 
 namespace hikari::app {
 
@@ -62,6 +69,9 @@ struct AiFeatures::Live {
     std::unique_ptr<backends::ai::HttpRelay> relay;
     std::unique_ptr<backends::ai::AiSidecarHost> host;
     std::unique_ptr<backends::ai::AgentBroker> agents;
+    std::vector<std::string> acpAdded;
+    std::shared_ptr<backends::ai::TokenFileLease> antigravity;
+    std::unique_ptr<backends::ai::McpClients> mcp;
     std::unique_ptr<backends::ai::AiSignIn> signIn;
     bool drafting = false;
     std::uint64_t webSearchApplied = 0;
@@ -77,6 +87,15 @@ struct AiFeatures::Live {
 
 namespace {
 
+std::vector<backends::ai::McpServerEntry> mcpServersOf(const ui::SettingsStore &settings)
+{
+    api::Json rows = api::Json::array();
+    for (const QString &row : settings.list(AiFeatures::kMcpServersSetting))
+        if (auto parsed = api::Json::parse(row.toStdString()))
+            rows.push(std::move(*parsed));
+    return backends::ai::mcpServersFromJson(rows);
+}
+
 /// The agents Qt can start here. Codex needs a tools channel its AppContainer can reach on Windows (#931).
 QString agentCli(const QString &agent)
 {
@@ -85,6 +104,11 @@ QString agentCli(const QString &agent)
         return {};
 #endif
     return backends::ai::findAgentCli(agent);
+}
+
+QString acpBroker(const QString &id)
+{
+    return QStringLiteral("acp:") + id;
 }
 
 }
@@ -143,8 +167,27 @@ AiFeatures::Ports AiFeatures::defaultPorts(const QString &userFolder, api::Api *
                 broker.add("codex", std::move(*spec));
     };
     ports.agentOnPath = [](const QString &agent) { return !agentCli(agent).isEmpty(); };
+    ports.acpCli = [](const QString &command) {
+        if (QFileInfo(command).isAbsolute())
+            return QFileInfo(command).isExecutable() ? command : QString();
+        return backends::ai::findAgentCli(command);
+    };
+    ports.antigravityTokenFile = ai + QStringLiteral("/agents/antigravity/") + QLatin1String(backends::ai::kAntigravityTokenFile);
+    ports.acpSpec = [ai](const AcpAgent &agent, std::shared_ptr<backends::ai::TokenFileLease> antigravity)
+        -> std::optional<backends::ai::AgentSpec> {
+        const QString agents = ai + QStringLiteral("/agents");
+        const QString bridge = QCoreApplication::applicationFilePath();
+        if (agent.id == QLatin1String(kOpenCode))
+            return backends::ai::openCodeAgent(agent.program, QDir::homePath(), agents + QStringLiteral("/opencode"),
+                                               bridge);
+        if (agent.id == QLatin1String(kAntigravity))
+            return backends::ai::antigravityAgent(agent.program, agents + QStringLiteral("/antigravity"), bridge,
+                                                  std::move(antigravity));
+        return backends::ai::customAcpAgent(agent.program, QProcess::splitCommand(agent.arguments),
+                                            agents + QStringLiteral("/custom/") + agent.id, bridge);
+    };
     ports.signIn = [](application::ai::KeyStore &keys) { return std::make_unique<backends::ai::AiSignIn>(keys); };
-    ports.findAgent = [](const QString &agent, std::function<void(std::optional<backends::ai::AgentCli>)> done) {
+    ports.findAgent = [](const QString &agent, std::function<void(std::optional<backends::ai::AgentCli>, QString)> done) {
         backends::ai::probeAgentCli(agent, std::move(done));
     };
     ports.agentInstall = [](const backends::ai::AgentCli &cli) {
@@ -170,6 +213,10 @@ AiFeatures::AiFeatures(ui::SettingsStore &settings, Ports ports, QObject *parent
             m_live->requests->setCaching(m_settings.boolean(kCachingSetting));
         else if (id == QLatin1String(kWebSearchSetting) || id == QLatin1String(kSearchServiceSetting))
             applyWebSearch();
+        else if (id == QLatin1String(kCustomAgentsSetting) && m_live)
+            addAcpAgents();
+        else if (id == QLatin1String(kMcpServersSetting) && m_live)
+            m_live->mcp->setServers(mcpServersOf(m_settings));
         else if (id == QLatin1String(kAutoUpdateSetting) && m_live) {
             emit componentsChanged();
             if (autoUpdate())
@@ -190,15 +237,23 @@ void AiFeatures::apply()
         m_live = std::make_unique<Live>();
         m_live->clock.start();
         m_live->keys = m_ports.keyStore();
+        if (!m_ports.antigravityTokenFile.isEmpty())
+            m_live->antigravity = std::make_shared<backends::ai::TokenFileLease>(
+                *m_live->keys, backends::ai::kAntigravitySecret, m_ports.antigravityTokenFile,
+                QStringLiteral("Sign in with Google for Antigravity in Settings first"));
         m_live->configs = m_ports.configStore();
         m_live->providers = std::make_unique<application::ai::Providers>(*m_live->configs, *m_live->keys);
         m_live->requests =
             std::make_unique<backends::ai::AiRequests>(*m_live->providers, [this] { return sidecarForAction(); });
         m_live->requests->setCaching(m_settings.boolean(kCachingSetting));
+        m_live->requests->setProjectKeys(m_projectKeys);
         m_live->searchKeys = std::make_unique<application::ai::SearchKeys>(*m_live->keys);
         applyWebSearch();
+        m_live->mcp = std::make_unique<backends::ai::McpClients>(*m_live->keys, QDir::homePath());
+        m_live->mcp->setServers(mcpServersOf(m_settings));
         m_live->relay = std::make_unique<backends::ai::HttpRelay>(backends::ai::withSearchTargets(
-            backends::ai::withRegistryTargets(m_live->requests->relayTargets()), *m_live->searchKeys,
+            m_live->mcp->relayTargets(backends::ai::withRegistryTargets(m_live->requests->relayTargets())),
+            *m_live->searchKeys,
             [requests = m_live->requests.get()](application::ai::SearchService service) {
                 return requests->searchAccess(service);
             }));
@@ -211,6 +266,11 @@ void AiFeatures::apply()
         m_live.reset();
     }
     emit switched(wanted);
+}
+
+backends::ai::McpClients *AiFeatures::mcpClients()
+{
+    return m_live ? m_live->mcp.get() : nullptr;
 }
 
 void AiFeatures::applyWebSearch()
@@ -374,7 +434,9 @@ backends::ai::AiSidecarHost *AiFeatures::buildHost()
                 m_live->agents = std::make_unique<backends::ai::AgentBroker>();
                 if (m_ports.agents)
                     m_ports.agents(*m_live->agents, *m_live->keys);
+                addAcpAgents();
                 m_live->agents->attach(*m_live->host);
+                m_live->mcp->attach(*m_live->host, *m_live->agents);
                 watchHost(m_live->host.get(), install->version);
             }
         }
@@ -450,6 +512,14 @@ application::ai::SearchKeys *AiFeatures::searchKeys() const
     return m_live ? m_live->searchKeys.get() : nullptr;
 }
 
+void AiFeatures::setProjectKeys(
+    std::function<std::optional<std::string>(const std::string &project, const std::string &providerId)> keys)
+{
+    m_projectKeys = std::move(keys);
+    if (m_live)
+        m_live->requests->setProjectKeys(m_projectKeys);
+}
+
 backends::ai::AiRequests *AiFeatures::requests() const
 {
     return m_live ? m_live->requests.get() : nullptr;
@@ -494,6 +564,86 @@ QJsonObject AiFeatures::versionProperties() const
 std::size_t AiFeatures::agentSessions(const std::string &agent) const
 {
     return m_live && m_live->agents ? m_live->agents->running(agent) : 0;
+}
+
+std::vector<AiFeatures::AcpAgent> AiFeatures::customAgents() const
+{
+    std::vector<AcpAgent> out;
+    for (const QString &entry : m_settings.list(kCustomAgentsSetting)) {
+        const QJsonObject o = QJsonDocument::fromJson(entry.toUtf8()).object();
+        AcpAgent agent{.id = o.value(QLatin1String("id")).toString(),
+                       .name = o.value(QLatin1String("name")).toString(),
+                       .command = o.value(QLatin1String("command")).toString(),
+                       .arguments = o.value(QLatin1String("arguments")).toString()};
+        static const QRegularExpression safeId(QStringLiteral("^custom-[0-9a-z]{1,32}$"));
+        if (!safeId.match(agent.id).hasMatch() || agent.command.isEmpty())
+            continue;
+        if (m_ports.acpCli)
+            agent.program = m_ports.acpCli(agent.command);
+        out.push_back(std::move(agent));
+    }
+    return out;
+}
+
+void AiFeatures::setCustomAgents(const std::vector<AcpAgent> &agents)
+{
+    QStringList entries;
+    for (const AcpAgent &agent : agents)
+        entries << QString::fromUtf8(QJsonDocument(QJsonObject{{QStringLiteral("id"), agent.id},
+                                                               {QStringLiteral("name"), agent.name},
+                                                               {QStringLiteral("command"), agent.command},
+                                                               {QStringLiteral("arguments"), agent.arguments}})
+                                         .toJson(QJsonDocument::Compact));
+    m_settings.set(kCustomAgentsSetting, entries);
+}
+
+std::vector<AiFeatures::AcpAgent> AiFeatures::acpAgents() const
+{
+#ifdef Q_OS_WIN
+    return {};
+#else
+    std::vector<AcpAgent> out;
+    if (!m_ports.acpCli)
+        return out;
+    for (const auto &[id, name, cli] : {std::tuple{kOpenCode, "OpenCode", "opencode"}, std::tuple{kAntigravity, "Antigravity", "agy"}})
+        if (const QString program = m_ports.acpCli(QLatin1String(cli)); !program.isEmpty())
+            out.push_back({.id = QLatin1String(id), .name = QLatin1String(name), .command = QLatin1String(cli),
+                           .program = program});
+    for (AcpAgent &agent : customAgents())
+        if (!agent.program.isEmpty())
+            out.push_back(std::move(agent));
+    return out;
+#endif
+}
+
+void AiFeatures::addAcpAgents()
+{
+    if (!m_live->agents)
+        return;
+    for (const std::string &added : m_live->acpAdded)
+        m_live->agents->remove(added);
+    m_live->acpAdded.clear();
+    if (!m_ports.acpSpec)
+        return;
+    for (const AcpAgent &agent : acpAgents())
+        if (auto spec = m_ports.acpSpec(agent, m_live->antigravity)) {
+            m_live->acpAdded.push_back(acpBroker(agent.id).toStdString());
+            m_live->agents->add(m_live->acpAdded.back(), std::move(*spec));
+        }
+}
+
+std::unique_ptr<backends::ai::AntigravitySignIn> AiFeatures::antigravitySignIn()
+{
+    if (!m_live || !m_live->antigravity || !m_ports.acpSpec)
+        return nullptr;
+    const std::vector<AcpAgent> agents = acpAgents();
+    const auto agy = std::ranges::find(agents, QLatin1String(kAntigravity), &AcpAgent::id);
+    if (agy == agents.end())
+        return nullptr;
+    std::optional<backends::ai::AgentSpec> spec = m_ports.acpSpec(*agy, nullptr);
+    if (!spec)
+        return nullptr;
+    return std::make_unique<backends::ai::AntigravitySignIn>(std::move(*spec), m_live->antigravity);
 }
 
 backends::ai::AiSignIn *AiFeatures::signIn() const

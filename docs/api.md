@@ -2,7 +2,7 @@
 
 The Hikari API is one typed, versioned set of operations over the running application. Plugins, the AI tools, the MCP server and node-editor nodes all call it ([#411](https://github.com/altqx/hikari/issues/411), wave 8 [#410](https://github.com/altqx/hikari/issues/410)). It lives in `src/api` (`hikari_api`), next to the application layer and like it free of Qt; the composition root implements its host ports.
 
-The current version is **1**.
+The current version is **1**, and it stays 1 until the first public release.
 
 ## Operations
 
@@ -32,16 +32,30 @@ Schemas use a subset of JSON Schema 2020-12: `type`, `properties`, `required`, `
 | `video.keyframes` | read | The keyframes from one time to another, each with its start time; 500 at most, with the `total`. |
 | `audio.info` | read | Whether audio is open and loaded; duration, sample rate, channels. |
 | `audio.peaks` | read | The lowest and highest sample in each of `buckets` slices of a time range. |
-| `files.list`, `files.read` | read | The files granted to the caller, and their content as UTF-8 or base64 (16 MiB at most). |
+| `files.list`, `files.read` | read | The files and folders granted to the caller, what a granted folder holds, and a file's content as UTF-8 or base64 (16 MiB at most). |
+| `project.info` | read | The Project of the shell window used last: its name and whether its folder is trusted, or null. |
 | `skills.list`, `skills.read` | read | The user's [skills](ai-skills.md#the-hikari-api) and one file of a skill as UTF-8 (256 KiB at most); only with the skills grant. |
 | `nodes.catalogue` | read | The node-effect editor's node types, with ports and parameters. |
 | `nodes.validate` | read | Checks a node-effect graph; each problem names its node and port or field. |
+| `effects.graphs`, `effects.graph` | read | The Document's graph Lines, and one graph with its problems. |
+| `effects.edit` | read | Edits a graph in steps (`add`, `connect`, `disconnect`, `remove`, `set`) and gives the new graph with its problems; the Document doesn't change. |
+| `effects.preview` | read | Runs a graph on the karaoke Lines and gives the Lines it would write; Lua nodes don't run. |
+| `effects.save` | write | A graph into a new graph Line, or in place of one, as one undo step. |
+| `effects.apply` | write | A graph Line's generated Lines, as the editor's Apply writes them, as one undo step; Lua nodes don't run. |
+| `typeset.perspective`, `typeset.clip`, `typeset.drawing`, `typeset.shift`, `typeset.hydra` | read | The [typesetting solvers](ai-tools.md#typesetting): a Line's text with a quad's transform, a clip, a drawing, an offset or a Hydra change written; nothing is applied. |
+| `typeset.check` | read | Draws one Line alone with a proposed text and compares its ink bounds with a target quad or box. |
+| `karaoke.syllables`, `karaoke.split`, `karaoke.time`, `karaoke.snap`, `karaoke.kanji` | read | The [karaoke tools](ai-tools.md#karaoke): a Line's syllables, or Lines' texts split, timed, snapped to onsets or copied from a romaji Line; nothing is applied. |
+| `karaoke.onsets`, `karaoke.furigana`, `karaoke.check` | read | The audio's vocal onsets in a range, a Line's suggested readings, the Karaoke check's problems. |
+| `karaoke.template_preview` | read | The Lines the karaoke templater generates from one Line. |
 | `document.apply` | write | One change set to one Document, as one undo step. |
+| `typeset.apply` | write | Typeset Lines as one undo step, only when every one passes `typeset.check`. |
+| `karaoke.apply_template` | write | Runs the karaoke templater and applies what it generates as one undo step. |
+| `karaoke.align` | write | Runs the user's own WhisperX or MFA on the Lines' audio and answers each word's times; asks on every run. |
 | `selection.set` | write | The selected Lines and the active Line; the Grid follows. |
 | `commands.run` | write | Runs a command as its menu item or toolbar button would. |
 | `panels.open`, `panels.close`, `panels.focus` | write | Shows, closes or focuses a panel where the layout keeps it. |
 | `settings.set` | write | One setting, type-checked. |
-| `files.write` | write | Replaces a file granted for writing. |
+| `files.write` | write | Replaces a file granted for writing, or makes one in a writable folder. |
 
 Commands and panels are those of the shell window used last (ADR 0025), never a closed window's.
 
@@ -56,6 +70,12 @@ One write runs at a time; another write meanwhile gets `busy`.
 ## Files
 
 A caller reaches only files the user granted it: `Api::grantFile(caller, path, writable)` gives a handle such as `f1`, and `files.list` shows the handles with a display name, never the path. A file granted for reading refuses `files.write` with `not_granted`. Plugins get handles from pickers, drops and their folders ([Files](plugins.md#files)); the AI cards decide their own grants.
+
+A caller can also hold a folder: `Api::grantFolder(caller, path, writable)` gives a handle such as `d2`, which `files.list` shows under `folders`. `files.list` with `folder` (and a `path` inside it) adds that folder's `entries`, each with its `path` relative to the folder, in name order and at most 4096. `files.read` and `files.write` take `folder` and `path` instead of `file`; the answer's `file` is a handle for that file from then on. A path goes through the same checks as a plugin's ([Files](plugins.md#files)): `..`, absolute paths, names Windows can't hold, and links that lead outside the folder are refused with `not_granted`, and a list leaves such links out. A write in a writable folder makes the missing folders on the way. `Api::revokeFiles` ends a caller's folders with its files.
+
+An Agent panel thread's caller carries its window's Project folder (`Caller::project`). It holds that folder read-only as `project`, with no grant and no prompt, whether or not the Project is trusted. MCP callers have no Project folder.
+
+An AI caller (`reviewed`) never gets two kinds of file in a folder. **Excluded paths** are left out of a list and refused with reason `excluded`, whether named directly or reached through a link. They are the built-in `.hikari/credentials.toml`, `.env*`, `*.key`, `.git/` and `.hikari/project.local.toml`, together with the user's `ai.exclude` and the folder's Project's `ai.exclude`. A list adds to the others and never removes a default. Globs work as in `.gitignore`: one with a `/` before its end is anchored at the folder, one without matches a name at any depth, a trailing `/` matches folders only, and a folder's match covers everything inside it. **Media files** (video and audio) are refused with reason `media`; the AI reads them through `video.frame` and `audio.peaks`. An AI caller can't change `ai.exclude` through `settings.set` (reason `private`).
 
 The user's skills are apart from files: `skills.*` need the caller's `skills` grant, which only Hikari AI's callers hold ([AI skills](ai-skills.md#the-hikari-api)).
 

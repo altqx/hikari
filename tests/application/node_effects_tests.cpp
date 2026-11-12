@@ -11,15 +11,19 @@
 
 #include <gtest/gtest.h>
 
+#include <algorithm>
+#include <cctype>
 #include <cmath>
 #include <cstring>
 #include <filesystem>
 #include <random>
 #include <fstream>
 #include <map>
+#include <mutex>
 #include <set>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <vector>
 
 using namespace hikari;
@@ -738,7 +742,7 @@ TEST(NodeGraphLibrary, KeepsTheUsersGraphsAsFiles)
 TEST(NodeCatalogue, EveryNodeHasAValidFieldSchemaAndUniqueId)
 {
     const std::set<std::string> kFromTheUnit = {"output.emit.start", "output.emit.end",
-                                                "output.emit.text", "text.join.text"};
+                                                "output.emit.text", "text.join.text", "drawings.text.text"};
     std::set<std::string> ids;
     for (const NodeSpec &spec : nodeCatalogue()) {
         EXPECT_TRUE(ids.insert(spec.id).second) << spec.id;
@@ -1052,6 +1056,48 @@ TEST(NodeEffectsAudioPeaks, TheCacheKeepsLinesOnlyForTheSameAudio)
     EXPECT_EQ(blursOfFirstLine(runOn(peakGraph(), options)), first);
 }
 
+namespace {
+
+std::string whole(double v)
+{
+    return std::to_string(static_cast<int>(v));
+}
+
+// Each character a 10 × size block, a gap of 2 after it.
+class BlockGlyphs final : public shape::GlyphOutlinePort {
+public:
+    std::optional<shape::TextOutline> outline(const shape::GlyphStyle &style, std::string_view utf8) override
+    {
+        if (style.family == "Missing")
+            return std::nullopt;
+        {
+            std::scoped_lock lock(m_mutex);
+            m_styles.push_back(style);
+        }
+        shape::TextOutline out;
+        for (std::size_t i = 0; i < utf8.size(); ++i) {
+            const double x = 12.0 * static_cast<double>(i);
+            out.drawing += (out.drawing.empty() ? "" : " ") + std::string("m ") + whole(x) + " 0 l " +
+                           whole(x + 10) + " 0 " + whole(x + 10) + " " + whole(style.size) + " " +
+                           whole(x) + " " + whole(style.size);
+        }
+        out.width = 12.0 * static_cast<double>(utf8.size());
+        out.height = out.ascent = style.size;
+        return out;
+    }
+    std::vector<shape::GlyphStyle> styles()
+    {
+        std::scoped_lock lock(m_mutex);
+        return m_styles;
+    }
+
+private:
+    std::mutex m_mutex;
+    std::vector<shape::GlyphStyle> m_styles;
+};
+
+}
+
 TEST(NodeEffectExamples, EachShowsItsNodeAndRunsTheSameEveryTime)
 {
     const std::map<std::string_view, std::string_view> nodeOf = {{"gradient-strips", "units.clip_gradient"},
@@ -1059,8 +1105,11 @@ TEST(NodeEffectExamples, EachShowsItsNodeAndRunsTheSameEveryTime)
                                                                  {"particle-burst", "units.particles"},
                                                                  {"audio-pulse", "audio.peaks"},
                                                                  {"highlight-flashes", "units.highlights"},
-                                                                 {"paint-and-cloud", "units.inline_fx"}};
+                                                                 {"paint-and-cloud", "units.inline_fx"},
+                                                                 {"text-outlines", "drawings.text"},
+                                                                 {"striped-letters", "drawings.combine"}};
     const DisplayAudio audio = loudAudio(1000, 1400);
+    BlockGlyphs glyphs;
     std::set<std::string_view> seen;
     for (const NodeGraphPreset &p : nodeGraphPresets()) {
         if (p.example.empty())
@@ -1075,6 +1124,7 @@ TEST(NodeEffectExamples, EachShowsItsNodeAndRunsTheSameEveryTime)
         one.threads = 1;
         many.threads = 8;
         one.audio = many.audio = &audio;
+        one.glyphs = many.glyphs = &glyphs;
         const auto lines = runOn(p.graph, one);
         EXPECT_FALSE(lines.empty()) << p.example;
         EXPECT_EQ(lines, runOn(p.graph, many)) << p.example;
@@ -1189,6 +1239,121 @@ std::string_view exampleGraph(std::string_view example)
     return {};
 }
 
+namespace {
+
+constexpr std::string_view kTextDrawing = R"({"format": 1, "nodes": [
+    {"id": "syl", "type": "units.for_each"},
+    {"id": "glyphs", "type": "drawings.text"},
+    {"id": "wide", "type": "tags.tag", "fields": {"tag": "fsp"}},
+    {"id": "emit", "type": "output.emit"}],
+  "wires": [
+    {"from": "syl.units", "to": "emit.units"}, {"from": "glyphs.width", "to": "wide.value"},
+    {"from": "wide.tags", "to": "emit.tags"}, {"from": "glyphs.drawing", "to": "emit.drawing"}]})";
+
+std::string combineGraph(std::string_view op, std::string_view b, int bScale)
+{
+    return R"({"format": 1, "nodes": [
+        {"id": "line", "type": "units.for_each", "fields": {"unit": "line"}},
+        {"id": "a", "type": "drawings.shape", "fields": {"shape": "m 0 0 l 10 0 10 10 0 10"}},
+        {"id": "b", "type": "drawings.shape", "fields": {"shape": ")" + std::string(b) + R"(", "scale": )" +
+           std::to_string(bScale) + R"(}},
+        {"id": "both", "type": "drawings.combine", "fields": {"op": ")" + std::string(op) + R"("}},
+        {"id": "emit", "type": "output.emit"}],
+      "wires": [
+        {"from": "line.units", "to": "emit.units"}, {"from": "a.drawing", "to": "both.a"},
+        {"from": "b.drawing", "to": "both.b"}, {"from": "both.drawing", "to": "emit.drawing"}]})";
+}
+
+double areaOf(const shape::Contours &contours)
+{
+    double area = 0;
+    for (const shape::Contour &c : contours)
+        for (std::size_t i = 0; i < c.size(); ++i) {
+            const shape::Point &p = c[i], &q = c[(i + 1) % c.size()];
+            area += p.x * q.y - q.x * p.y;
+        }
+    return std::fabs(area) / 2;
+}
+
+double drawnArea(const std::string &line)
+{
+    const auto at = line.find("\\p1}");
+    EXPECT_NE(at, std::string::npos) << line;
+    return at == std::string::npos ? 0 : areaOf(shape::readDrawing(line.substr(at + 4)));
+}
+
+}
+
+TEST(NodeEffectDrawings, TextToDrawingDrawsEachUnitInItsLinesStyleFont)
+{
+    BlockGlyphs glyphs;
+    NodeEffectOptions options;
+    options.glyphs = &glyphs;
+    const auto lines = runOn(kTextDrawing, options);
+    ASSERT_FALSE(lines.empty());
+    EXPECT_NE(lines.front().find("{\\fsp24\\p1}m 0 0 l 10 0 10 48 0 48 m 12 0 l 22 0 22 48 12 48"), std::string::npos)
+        << lines.front();
+    const auto styles = glyphs.styles();
+    ASSERT_FALSE(styles.empty());
+    EXPECT_TRUE(std::ranges::all_of(styles, [](const shape::GlyphStyle &g) { return g.family == "Arial"; }));
+    EXPECT_TRUE(std::ranges::all_of(styles, [](const shape::GlyphStyle &g) { return g.size == 48; }));
+    EXPECT_FALSE(styles.front().bold || styles.front().italic || styles.front().underline || styles.front().strikeOut);
+}
+
+TEST(NodeEffectDrawings, TextToDrawingWithoutAFontGivesAnEmptyDrawingAndSaysWhy)
+{
+    const core::Document doc = fixtureWith(commentLine("graph g", graphText(graphOf(kTextDrawing))));
+    FakeMeasure measure;
+    NodeEffectOptions options;
+    options.measure = &measure;
+    const auto none = runDocumentGraph(doc, graphLineOf(doc, u8"g"), options);
+    ASSERT_TRUE(none.has_value());
+    ASSERT_FALSE(none->problems.empty());
+    EXPECT_EQ(none->problems.front().node, "glyphs");
+    EXPECT_EQ(none->problems.front().message, "has no fonts to draw with, so it gives an empty drawing");
+
+    std::string fixture = readFile(HIKARI_KARAOKE_PRESET_FIXTURES "/fixture.ass");
+    fixture.replace(fixture.find("Romaji,Arial"), 12, "Romaji,Missing");
+    fixture.insert(fixture.find("Dialogue: "), commentLine("graph g", graphText(graphOf(kTextDrawing))));
+    const core::Document missing = load(fixture);
+    BlockGlyphs glyphs;
+    options.glyphs = &glyphs;
+    const auto unread = runDocumentGraph(missing, graphLineOf(missing, u8"g"), options);
+    ASSERT_TRUE(unread.has_value());
+    ASSERT_FALSE(unread->problems.empty());
+    EXPECT_EQ(unread->problems.front().message, "can't read the Style's font \"Missing\", so it gives an empty drawing");
+}
+
+TEST(NodeEffectDrawings, CombineUnitesSubtractsIntersectsAndExcludesWithEachScale)
+{
+    const std::string b = "m 5 5 l 15 5 15 15 5 15";
+    const std::map<std::string_view, double> areas{{"unite", 175}, {"subtract", 75}, {"intersect", 25}, {"exclude", 150}};
+    for (const auto &[op, area] : areas) {
+        const auto lines = runOn(combineGraph(op, b, 1));
+        ASSERT_EQ(lines.size(), 3u) << op;
+        EXPECT_NEAR(drawnArea(lines.front()), area, 1e-6) << op;
+    }
+    const auto scaled = runOn(combineGraph("intersect", "m 10 10 l 30 10 30 30 10 30", 2));
+    ASSERT_FALSE(scaled.empty());
+    EXPECT_NEAR(drawnArea(scaled.front()), 25, 1e-6);
+    EXPECT_TRUE(runOn(combineGraph("subtract", "m -5 -5 l 20 -5 20 20 -5 20", 1)).front().ends_with("\\p1}"));
+}
+
+TEST(NodeEffectExport, TextToDrawingAndCombineHaveNoTemplateForm)
+{
+    const std::map<std::string_view, std::string> reasonOf{
+        {"text-outlines", "glyphs: draws text with HikariSub's fonts, which the templater can't"},
+        {"striped-letters", "striped: combines drawings, which the templater can't"}};
+    for (const auto &[example, reason] : reasonOf) {
+        const auto lines = exportTemplateLines(graphOf(exampleGraph(example)), u8"g");
+        ASSERT_FALSE(lines.has_value()) << example;
+        std::set<std::string> reasons;
+        for (const NodeEffectProblem &p : lines.error())
+            reasons.insert(p.node + ": " + p.message);
+        EXPECT_TRUE(reasons.contains(reason)) << example;
+    }
+}
+
 TEST(NodeEffectExport, HighlightsBecomeMultiAndInlineFxBecomesFx)
 {
     const auto flashes = exportTemplateLines(graphOf(exampleGraph("highlight-flashes")), u8"g");
@@ -1261,6 +1426,46 @@ std::vector<std::string> blockersOf(std::string_view json)
 
 }
 
+TEST(NodeEffectDocument, PlacesInAKaraOKDocumentRoundToTenthsAsKaraOKDoes)
+{
+    const auto example = std::ranges::find(nodeGraphPresets(), std::string_view("highlight-flashes"),
+                                           &NodeGraphPreset::example);
+    ASSERT_NE(example, nodeGraphPresets().end());
+    core::Document stock = fixtureWith(commentLine("graph g", graphText(graphOf(example->graph))));
+    core::Document karaOK = stock;
+    ASSERT_TRUE(karaOK.setScriptInfo(u8"Karaoke Templater", u8"karaOK"));
+    const auto places = [&](const core::Document &doc) {
+        std::vector<std::string> out;
+        for (const std::string &line : linesOf(runGraph(doc, u8"g")))
+            for (auto at = line.find("\\pos("); at != std::string::npos; at = line.find("\\pos(", at + 1)) {
+                const auto from = at + 5, to = line.find(')', from);
+                if (to != std::string::npos)
+                    out.push_back(line.substr(from, to - from));
+            }
+        return out;
+    };
+    const auto whole = places(stock), tenths = places(karaOK);
+    ASSERT_FALSE(whole.empty());
+    ASSERT_FALSE(tenths.empty());
+    EXPECT_TRUE(std::ranges::none_of(whole, [](const std::string &p) { return p.contains('.'); }));
+    EXPECT_TRUE(std::ranges::any_of(tenths, [](const std::string &p) { return p.contains('.'); }));
+    const auto atMostATenth = [](std::string_view n) {
+        if (n.starts_with('-'))
+            n.remove_prefix(1);
+        const auto dot = n.find('.');
+        const auto digits = [](std::string_view d) { return !d.empty() && std::ranges::all_of(d, [](unsigned char c) { return std::isdigit(c) != 0; }); };
+        return dot == std::string_view::npos ? digits(n) : digits(n.substr(0, dot)) && n.size() - dot == 2 &&
+                                                               digits(n.substr(dot + 1));
+    };
+    for (const std::string &p : tenths) {
+        const auto comma = p.find(',');
+        ASSERT_NE(comma, std::string::npos) << p;
+        EXPECT_TRUE(atMostATenth(std::string_view(p).substr(0, comma)) &&
+                    atMostATenth(std::string_view(p).substr(comma + 1)))
+            << p;
+    }
+}
+
 TEST(NodeEffectExport, ClassicFillBecomesOnePreLineAndLineTemplate)
 {
     const auto lines = exportTemplateLines(graphOf(kClassicFill), u8"Classic fill");
@@ -1269,6 +1474,26 @@ TEST(NodeEffectExport, ClassicFillBecomesOnePreLineAndLineTemplate)
         {0, u8"template pre-line classic_fill_emit", u8"!retime(\"line\", (-300), 300)!{\\fad(300,300)\\k30}"},
         {0, u8"template line classic_fill_emit", u8"{\\kf$kdur}"}};
     EXPECT_EQ(*lines, expected);
+}
+
+TEST(NodeEffectExport, ClassicFillInKaraOKBecomesOneLineAndLsylTemplate)
+{
+    const auto lines = exportTemplateLines(graphOf(kClassicFill), u8"Classic fill", TemplateFormat::KaraOK);
+    ASSERT_TRUE(lines.has_value());
+    const std::vector<TemplateLine> expected{
+        {0, u8"template line classic_fill_emit", u8"!retime(\"line\", (-300), 300)!{\\fad(300,300)\\k30}"},
+        {0, u8"template lsyl classic_fill_emit", u8"{\\kf$kdur}"}};
+    EXPECT_EQ(*lines, expected);
+}
+
+TEST(NodeEffectExport, KaraOKExportSetsTheModeLineInTheSameStep)
+{
+    EditSession session(presetDocument(kPresets[1]));
+    const std::string before = text(core::encodeAss(session.document()));
+    ASSERT_TRUE(exportTemplateLines(session, graphLineOf(session.document(), u8"bounce"), TemplateFormat::KaraOK));
+    EXPECT_EQ(session.document().scriptInfo(u8"Karaoke Templater"), u8"karaOK");
+    ASSERT_TRUE(session.undo());
+    EXPECT_EQ(text(core::encodeAss(session.document())), before);
 }
 
 TEST(NodeEffectExport, SparklesLoopsAndDrawsWithoutText)

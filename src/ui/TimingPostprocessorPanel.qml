@@ -133,9 +133,9 @@ FocusScope {
             objectName: "postprocessorRulesSummary"
             visible: !panel.wide && panel.assistant
             text: qsTr("Rules: lead-in %1 ms, lead-out %2 ms, gaps %3 ms, keyframes %4/%5 and %6/%7 ms")
-                      .arg(panel.settings.leadIn).arg(panel.settings.leadOut).arg(panel.settings.thresholdStart)
-                      .arg(panel.settings.keyframeBeforeStart).arg(panel.settings.keyframeAfterStart)
-                      .arg(panel.settings.keyframeBeforeEnd).arg(panel.settings.keyframeAfterEnd)
+                      .arg(panel.settings.leadIn, panel.settings.leadOut, panel.settings.thresholdStart,
+                           panel.settings.keyframeBeforeStart, panel.settings.keyframeAfterStart,
+                           panel.settings.keyframeBeforeEnd, panel.settings.keyframeAfterEnd)
             color: Theme.muted
             wrapMode: Text.WordWrap
             padding: 8
@@ -167,6 +167,7 @@ FocusScope {
                     shiftTimes: panel.shiftTimes
                     tool: "postprocessor"
                     messages: panel.messages
+                    appSettings: panel.app ? panel.app.settings : null
                 }
                 ShiftNeed {
                     objectName: "postprocessorVideoNeed"

@@ -4408,8 +4408,7 @@
    "legacy": [],
    "surfaces": [
     "tier-chips"
-   ],
-   "pending": "PJ5 #773"
+   ]
   },
   {
    "role": "copy-to-tier",
@@ -4420,8 +4419,7 @@
    "legacy": [],
    "surfaces": [
     "tier-chips"
-   ],
-   "pending": "PJ5 #773"
+   ]
   },
   {
    "role": "move-to-tier",
@@ -4432,8 +4430,7 @@
    "legacy": [],
    "surfaces": [
     "tier-chips"
-   ],
-   "pending": "PJ5 #773"
+   ]
   },
   {
    "role": "trust",
@@ -4455,10 +4452,10 @@
    "mirror": false,
    "legacy": [],
    "surfaces": [
+    "automation",
     "settings-dialog",
     "plugin-manager"
-   ],
-   "pending": "PJ8 #776"
+   ]
   },
   {
    "role": "explorer",
@@ -4769,8 +4766,7 @@
    "legacy": [],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "AU6 #845"
+   ]
   },
   {
    "role": "shape-subtract",
@@ -4781,8 +4777,7 @@
    "legacy": [],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "AU6 #845"
+   ]
   },
   {
    "role": "shape-intersect",
@@ -4793,8 +4788,7 @@
    "legacy": [],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "AU6 #845"
+   ]
   },
   {
    "role": "shape-exclude",
@@ -4805,8 +4799,7 @@
    "legacy": [],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "AU6 #845"
+   ]
   },
   {
    "role": "shape-offset",
@@ -4817,8 +4810,7 @@
    "legacy": [],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "AU6 #845"
+   ]
   },
   {
    "role": "clip-to-shape",
@@ -5084,8 +5076,7 @@
    "legacy": [],
    "surfaces": [
     "select-lines"
-   ],
-   "pending": "AU10 #841"
+   ]
   },
   {
    "role": "split-tag-blocks",
@@ -5096,8 +5087,7 @@
    "legacy": [],
    "surfaces": [
     "grid-menu"
-   ],
-   "pending": "AU10 #841"
+   ]
   },
   {
    "role": "split-every-n",
@@ -5108,8 +5098,7 @@
    "legacy": [],
    "surfaces": [
     "grid-menu"
-   ],
-   "pending": "AU10 #841"
+   ]
   },
   {
    "role": "track-colour",
@@ -5120,8 +5109,7 @@
    "legacy": [],
    "surfaces": [
     "menu:video"
-   ],
-   "pending": "AU11 #846"
+   ]
   },
   {
    "role": "find-fade",
@@ -5132,8 +5120,7 @@
    "legacy": [],
    "surfaces": [
     "menu:video"
-   ],
-   "pending": "AU11 #846"
+   ]
   },
   {
    "role": "tool-text-on-path",
@@ -5144,8 +5131,7 @@
    "legacy": [],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "AU14 #847"
+   ]
   },
   {
    "role": "reinstall-scripts",
@@ -5156,8 +5142,7 @@
    "legacy": [],
    "surfaces": [
     "automation-reset"
-   ],
-   "pending": "AU16 #850"
+   ]
   },
   {
    "role": "layers",
@@ -5293,8 +5278,7 @@
    "surfaces": [
     "line-editor",
     "grid-menu"
-   ],
-   "pending": "AU20 #854"
+   ]
   },
   {
    "role": "line-break-left",
@@ -5306,8 +5290,7 @@
    "surfaces": [
     "line-editor",
     "grid-menu"
-   ],
-   "pending": "AU20 #854"
+   ]
   },
   {
    "role": "line-break-right",
@@ -5319,8 +5302,7 @@
    "surfaces": [
     "line-editor",
     "grid-menu"
-   ],
-   "pending": "AU20 #854"
+   ]
   },
   {
    "role": "line-break-remove",
@@ -5332,8 +5314,7 @@
    "surfaces": [
     "line-editor",
     "grid-menu"
-   ],
-   "pending": "AU20 #854"
+   ]
   },
   {
    "role": "change-case",
@@ -5345,8 +5326,7 @@
    "surfaces": [
     "line-editor",
     "grid-menu"
-   ],
-   "pending": "AU20 #854"
+   ]
   },
   {
    "role": "case-upper",
@@ -5358,8 +5338,7 @@
    "surfaces": [
     "line-editor",
     "grid-menu"
-   ],
-   "pending": "AU20 #854"
+   ]
   },
   {
    "role": "case-lower",
@@ -5371,8 +5350,7 @@
    "surfaces": [
     "line-editor",
     "grid-menu"
-   ],
-   "pending": "AU20 #854"
+   ]
   },
   {
    "role": "case-title",
@@ -5384,8 +5362,7 @@
    "surfaces": [
     "line-editor",
     "grid-menu"
-   ],
-   "pending": "AU20 #854"
+   ]
   },
   {
    "role": "case-sentence",
@@ -5397,8 +5374,7 @@
    "surfaces": [
     "line-editor",
     "grid-menu"
-   ],
-   "pending": "AU20 #854"
+   ]
   },
   {
    "role": "fullwidth",
@@ -5410,8 +5386,7 @@
    "surfaces": [
     "line-editor",
     "grid-menu"
-   ],
-   "pending": "AU20 #854"
+   ]
   },
   {
    "role": "halfwidth",
@@ -5423,8 +5398,7 @@
    "surfaces": [
     "line-editor",
     "grid-menu"
-   ],
-   "pending": "AU20 #854"
+   ]
   },
   {
    "role": "dialogue-swap",
@@ -5436,8 +5410,7 @@
    "surfaces": [
     "line-editor",
     "grid-menu"
-   ],
-   "pending": "AU20 #854"
+   ]
   },
   {
    "role": "change-alignment",
@@ -5449,8 +5422,7 @@
    "surfaces": [
     "line-editor",
     "grid-menu"
-   ],
-   "pending": "AU21 #855"
+   ]
   },
   {
    "role": "align-left",
@@ -5461,8 +5433,7 @@
    "legacy": [],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "AU21 #855"
+   ]
   },
   {
    "role": "align-center",
@@ -5473,8 +5444,7 @@
    "legacy": [],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "AU21 #855"
+   ]
   },
   {
    "role": "align-right",
@@ -5485,8 +5455,7 @@
    "legacy": [],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "AU21 #855"
+   ]
   },
   {
    "role": "align-top",
@@ -5497,8 +5466,7 @@
    "legacy": [],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "AU21 #855"
+   ]
   },
   {
    "role": "align-middle",
@@ -5509,8 +5477,7 @@
    "legacy": [],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "AU21 #855"
+   ]
   },
   {
    "role": "align-bottom",
@@ -5521,8 +5488,7 @@
    "legacy": [],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "AU21 #855"
+   ]
   },
   {
    "role": "distribute-horizontal",
@@ -5533,8 +5499,7 @@
    "legacy": [],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "AU21 #855"
+   ]
   },
   {
    "role": "distribute-vertical",
@@ -5545,8 +5510,7 @@
    "legacy": [],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "AU21 #855"
+   ]
   },
   {
    "role": "pos-to-margins",
@@ -5558,8 +5522,7 @@
    "surfaces": [
     "line-editor",
     "grid-menu"
-   ],
-   "pending": "AU21 #855"
+   ]
   },
   {
    "role": "margins-to-pos",
@@ -5571,8 +5534,7 @@
    "surfaces": [
     "line-editor",
     "grid-menu"
-   ],
-   "pending": "AU21 #855"
+   ]
   },
   {
    "role": "phantom",
@@ -5584,8 +5546,7 @@
    "surfaces": [
     "line-editor",
     "grid-menu"
-   ],
-   "pending": "AU21 #855"
+   ]
   },
   {
    "role": "cycle-values",
@@ -5597,8 +5558,7 @@
    "surfaces": [
     "line-editor",
     "settings-dialog"
-   ],
-   "pending": "AU21 #855"
+   ]
   },
   {
    "role": "shift-by-x",
@@ -5609,8 +5569,7 @@
    "legacy": [],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "AU21 #855"
+   ]
   },
   {
    "role": "shift-by-y",
@@ -5621,8 +5580,7 @@
    "legacy": [],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "AU21 #855"
+   ]
   },
   {
    "role": "interpolate-lines",
@@ -5655,8 +5613,7 @@
    "legacy": [],
    "surfaces": [
     "automation-manager"
-   ],
-   "pending": "TH5 #833"
+   ]
   },
   {
    "role": "citations",

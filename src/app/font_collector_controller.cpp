@@ -423,8 +423,12 @@ void FontCollectorController::runPrepare()
     setStage(Working);
     auto documents = m_documents;
     const CollectorAction action = m_runAction;
-    m_worker = std::thread([this, documents = std::move(documents), action] {
-        auto review = m_collector->prepare(documents, action, &m_cancel);
+    std::vector<application::FontAttachment> folderFonts;
+    if (m_hooks.folderFonts)
+        for (auto &font : m_hooks.folderFonts())
+            folderFonts.push_back({std::move(font.family), std::move(font.bytes)});
+    m_worker = std::thread([this, documents = std::move(documents), action, folderFonts = std::move(folderFonts)]() mutable {
+        auto review = m_collector->prepare(documents, action, &m_cancel, std::move(folderFonts));
         QMetaObject::invokeMethod(this, [this, review = std::move(review)]() mutable { prepared(std::move(review)); },
                                   Qt::QueuedConnection);
     });

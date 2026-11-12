@@ -1,0 +1,48 @@
+[Script Info]
+; TH5d3: the karaoke Lines each karaOK preset is applied to (romaji and furigana phrases authored for the test)
+Title: TH5d3 karaOK preset fixture
+ScriptType: v4.00+
+WrapStyle: 0
+PlayResX: 1280
+PlayResY: 720
+ScaledBorderAndShadow: yes
+Karaoke Templater: karaOK
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Other-furigana,Arial,18,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,1,1,2,20,20,20,1
+Style: Romaji,Arial,48,&H00FFFFFF,&H00FF8C3C,&H00202020,&H80000000,0,0,0,0,100,100,0,0,1,2,1,8,20,20,30,1
+Style: Romaji-furigana,Arial,24,&H00FFFFFF,&H00FF8C3C,&H00202020,&H80000000,0,0,0,0,100,100,0,0,1,2,1,8,20,20,30,1
+Style:  Other,Arial,36,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,2,20,20,20,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Comment: 0,0:00:00.00,0:00:00.00,Romaji,,0,0,0,template syl noblank,!k_retime("line",-500,300)!{\an5\pos($center,$middle)\fad(500,300)\t(!syl.start_time-250!,!syl.start_time!,\1c&H70E8FF&\fscx110\fscy110)\t(!syl.start_time!,!syl.end_time!,\fscx100\fscy100)}
+Comment: 0,0:00:01.00,0:00:04.00,Romaji,,0,0,0,karaoke,{\k40}ki{\k35}ra{\k0} {\k45}ki{\k30}ra {\k60}hi{\k50}ka{\k40}ru
+Comment: 0,0:00:05.00,0:00:07.50,Romaji,,0,0,0,karaoke,{\k50}yo{\k25}ru{\k25}no {\k80}so{\k70}ra
+Dialogue: 0,0:00:08.00,0:00:09.00,Other,,0,0,0,,{\k50}ho{\k50}ka
+Comment: 0,0:00:10.00,0:00:12.00,Romaji,,0,0,0,karaoke,{\k30}ta{\k30}bi{\k0} {\k40}no{\k0} {\k50}to{\k50}chu{\k0}u
+Comment: 0,0:00:13.00,0:00:16.00,Romaji,,0,0,0,karaoke,{\k40}夜|よ{\k40}空|ぞら{\k30}に{\k0} {\k50}星|ほし{\k40}を
+Dialogue: 0,0:00:00.50,0:00:04.30,Romaji,,0,0,0,fx,{\an5\pos(455.2,54)\fad(500,300)\t(250,500,\1c&H70E8FF&\fscx110\fscy110)\t(500,900,\fscx100\fscy100)}ki
+Dialogue: 0,0:00:00.50,0:00:04.30,Romaji,,0,0,0,fx,{\an5\pos(508,54)\fad(500,300)\t(650,900,\1c&H70E8FF&\fscx110\fscy110)\t(900,1250,\fscx100\fscy100)}ra
+Dialogue: 0,0:00:00.50,0:00:04.30,Romaji,,0,0,0,fx,{\an5\pos(587.2,54)\fad(500,300)\t(1000,1250,\1c&H70E8FF&\fscx110\fscy110)\t(1250,1700,\fscx100\fscy100)}ki
+Dialogue: 0,0:00:00.50,0:00:04.30,Romaji,,0,0,0,fx,{\an5\pos(640,54)\fad(500,300)\t(1450,1700,\1c&H70E8FF&\fscx110\fscy110)\t(1700,2000,\fscx100\fscy100)}ra 
+Dialogue: 0,0:00:00.50,0:00:04.30,Romaji,,0,0,0,fx,{\an5\pos(719.2,54)\fad(500,300)\t(1750,2000,\1c&H70E8FF&\fscx110\fscy110)\t(2000,2600,\fscx100\fscy100)}hi
+Dialogue: 0,0:00:00.50,0:00:04.30,Romaji,,0,0,0,fx,{\an5\pos(772,54)\fad(500,300)\t(2350,2600,\1c&H70E8FF&\fscx110\fscy110)\t(2600,3100,\fscx100\fscy100)}ka
+Dialogue: 0,0:00:00.50,0:00:04.30,Romaji,,0,0,0,fx,{\an5\pos(824.8,54)\fad(500,300)\t(2850,3100,\1c&H70E8FF&\fscx110\fscy110)\t(3100,3500,\fscx100\fscy100)}ru
+Dialogue: 0,0:00:04.50,0:00:07.80,Romaji,,0,0,0,fx,{\an5\pos(521.2,54)\fad(500,300)\t(250,500,\1c&H70E8FF&\fscx110\fscy110)\t(500,1000,\fscx100\fscy100)}yo
+Dialogue: 0,0:00:04.50,0:00:07.80,Romaji,,0,0,0,fx,{\an5\pos(574,54)\fad(500,300)\t(750,1000,\1c&H70E8FF&\fscx110\fscy110)\t(1000,1250,\fscx100\fscy100)}ru
+Dialogue: 0,0:00:04.50,0:00:07.80,Romaji,,0,0,0,fx,{\an5\pos(626.8,54)\fad(500,300)\t(1000,1250,\1c&H70E8FF&\fscx110\fscy110)\t(1250,1500,\fscx100\fscy100)}no 
+Dialogue: 0,0:00:04.50,0:00:07.80,Romaji,,0,0,0,fx,{\an5\pos(706,54)\fad(500,300)\t(1250,1500,\1c&H70E8FF&\fscx110\fscy110)\t(1500,2300,\fscx100\fscy100)}so
+Dialogue: 0,0:00:04.50,0:00:07.80,Romaji,,0,0,0,fx,{\an5\pos(758.8,54)\fad(500,300)\t(2050,2300,\1c&H70E8FF&\fscx110\fscy110)\t(2300,3000,\fscx100\fscy100)}ra
+Dialogue: 0,0:00:09.50,0:00:12.30,Romaji,,0,0,0,fx,{\an5\pos(481.6,54)\fad(500,300)\t(250,500,\1c&H70E8FF&\fscx110\fscy110)\t(500,800,\fscx100\fscy100)}ta
+Dialogue: 0,0:00:09.50,0:00:12.30,Romaji,,0,0,0,fx,{\an5\pos(534.4,54)\fad(500,300)\t(550,800,\1c&H70E8FF&\fscx110\fscy110)\t(800,1100,\fscx100\fscy100)}bi
+Dialogue: 0,0:00:09.50,0:00:12.30,Romaji,,0,0,0,fx,{\an5\pos(613.6,54)\fad(500,300)\t(850,1100,\1c&H70E8FF&\fscx110\fscy110)\t(1100,1500,\fscx100\fscy100)}no
+Dialogue: 0,0:00:09.50,0:00:12.30,Romaji,,0,0,0,fx,{\an5\pos(692.8,54)\fad(500,300)\t(1250,1500,\1c&H70E8FF&\fscx110\fscy110)\t(1500,2000,\fscx100\fscy100)}to
+Dialogue: 0,0:00:09.50,0:00:12.30,Romaji,,0,0,0,fx,{\an5\pos(758.8,54)\fad(500,300)\t(1750,2000,\1c&H70E8FF&\fscx110\fscy110)\t(2000,2500,\fscx100\fscy100)}chu
+Dialogue: 0,0:00:09.50,0:00:12.30,Romaji,,0,0,0,fx,{\an5\pos(811.6,54)\fad(500,300)\t(2250,2500,\1c&H70E8FF&\fscx110\fscy110)\t(2500,2500,\fscx100\fscy100)}u
+Dialogue: 0,0:00:12.50,0:00:16.30,Romaji,,0,0,0,fx,{\an5\pos(530.8,54)\fad(500,300)\t(250,500,\1c&H70E8FF&\fscx110\fscy110)\t(500,900,\fscx100\fscy100)}夜
+Dialogue: 0,0:00:12.50,0:00:16.30,Romaji,,0,0,0,fx,{\an5\pos(578.8,54)\fad(500,300)\t(650,900,\1c&H70E8FF&\fscx110\fscy110)\t(900,1300,\fscx100\fscy100)}空
+Dialogue: 0,0:00:12.50,0:00:16.30,Romaji,,0,0,0,fx,{\an5\pos(626.8,54)\fad(500,300)\t(1050,1300,\1c&H70E8FF&\fscx110\fscy110)\t(1300,1600,\fscx100\fscy100)}に
+Dialogue: 0,0:00:12.50,0:00:16.30,Romaji,,0,0,0,fx,{\an5\pos(701.2,54)\fad(500,300)\t(1350,1600,\1c&H70E8FF&\fscx110\fscy110)\t(1600,2100,\fscx100\fscy100)}星
+Dialogue: 0,0:00:12.50,0:00:16.30,Romaji,,0,0,0,fx,{\an5\pos(749.2,54)\fad(500,300)\t(1850,2100,\1c&H70E8FF&\fscx110\fscy110)\t(2100,2500,\fscx100\fscy100)}を

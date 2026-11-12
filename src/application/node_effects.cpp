@@ -1,6 +1,7 @@
 #include "hikari/application/node_effects.h"
 
 #include "hikari/application/karaoke_layout.h"
+#include "hikari/application/karaoke_templates.h"
 #include "hikari/application/macro_transaction.h"
 #include "hikari/application/template_preview.h"
 
@@ -12,6 +13,7 @@
 #include <cctype>
 #include <chrono>
 #include <cmath>
+#include <cstdlib>
 #include <deque>
 #include <functional>
 #include <map>
@@ -55,7 +57,7 @@ NodeColour nodeColour(karaoke_layout::StyleColour c)
 
 enum class Kind {
     ForEach, Repeat, Frames, ClipGradient, Array, Particles, Highlights, InlineFx, Info, Number, Text, Colour, Point, Choose, Calculate, Compare, Progress, Random,
-    Retime, Stagger, Tag, Move, Fade, Transform, Gradient, Shape, AudioPeaks, Join, Emit, Lua
+    Retime, Stagger, Tag, Move, Fade, Transform, Gradient, Shape, TextShape, CombineShapes, AudioPeaks, Join, Emit, Lua
 };
 
 const std::map<std::string, Kind, std::less<>> kKinds{
@@ -68,6 +70,7 @@ const std::map<std::string, Kind, std::less<>> kKinds{
     {"math.random", Kind::Random},     {"time.retime", Kind::Retime},      {"time.stagger", Kind::Stagger},
     {"tags.tag", Kind::Tag},           {"tags.move", Kind::Move},          {"tags.fade", Kind::Fade},
     {"tags.transform", Kind::Transform}, {"colours.gradient", Kind::Gradient}, {"drawings.shape", Kind::Shape},
+    {"drawings.text", Kind::TextShape}, {"drawings.combine", Kind::CombineShapes},
     {"audio.peaks", Kind::AudioPeaks},
     {"text.join", Kind::Join},         {"output.emit", Kind::Emit},        {"lua.code", Kind::Lua}};
 
@@ -398,6 +401,7 @@ Compiled compile(const NodeGraph &flat)
             break;
         case Kind::Calculate:
         case Kind::Compare:
+        case Kind::CombineShapes:
             n.mode = text("op");
             break;
         case Kind::Progress:
@@ -473,6 +477,7 @@ Compiled compile(const NodeGraph &flat)
         case Kind::AudioPeaks:
         case Kind::Retime:
         case Kind::Lua:
+        case Kind::TextShape:
             l = Level::Element;
             break;
         case Kind::Random:
@@ -558,6 +563,7 @@ public:
               const NodeEffectOptions &options, std::atomic<bool> &luaStopped, Problems &problems,
               NodeValueTrace *trace)
         : m_c(c), m_line(line), m_name(name), m_seed(seed), m_lua(options.lua), m_audio(options.audio),
+          m_glyphs(options.glyphs),
           m_luaStopped(luaStopped), m_problems(problems), m_trace(trace),
           m_lineMemo(static_cast<std::size_t>(c.slots))
     {
@@ -694,8 +700,9 @@ private:
         const CNode &n = m_c.nodes[node];
         const Unit &u = unitOf(p);
         const bool syllable = p.kind == UnitKind::Syl || p.kind == UnitKind::Char;
+        const auto blank = [&](double duration) { return m_line.karaOK ? u.blank : duration <= 0; };
         if (!syllable || static_cast<std::size_t>(p.syl) >= m_line.karaSyllables.size()) {
-            if (n.flag && u.duration <= 0)
+            if (n.flag && blank(u.duration))
                 return;
             Element e = p;
             e.loops.push_back(loopAt(node, 1, 1));
@@ -706,7 +713,7 @@ private:
         const int count = static_cast<int>(all.size());
         for (int k = 0; k < count; ++k) {
             const karaoke_layout::Highlight &h = all[k];
-            if (n.flag && h.duration <= 0)
+            if (n.flag && blank(h.duration))
                 continue;
             Unit &t = m_timed.emplace_back(u);
             t.start = t.relStart = h.start;
@@ -714,7 +721,7 @@ private:
             t.duration = h.duration;
             t.kdur = h.duration / 10;
             t.mid = h.start + h.duration / 2;
-            t.blank = u.blank || h.duration <= 0;
+            t.blank = u.blank || (!m_line.karaOK && h.duration <= 0);
             Element e = p;
             e.timed = &t;
             e.loops.push_back(loopAt(node, k + 1, count));
@@ -938,6 +945,7 @@ private:
     NodeValue join(int node, const Element &e);
     NodeValue lua(int node, int port, const Element &e, Memo &memo);
     NodeValue audioPeak(int node, int port, const Element &e, Memo &memo);
+    NodeValue textShape(int node, int port, const Element &e, Memo &memo);
     bool luaBatch(int node, const std::vector<Element> &elements, std::vector<Memo> &memos);
 
     const Compiled &m_c;
@@ -946,6 +954,8 @@ private:
     std::int64_t m_seed;
     LuaNodePort *m_lua;
     std::optional<const DisplayAudio *> m_audio;
+    shape::GlyphOutlinePort *m_glyphs;
+    std::map<std::string, shape::TextOutline, std::less<>> m_outlines;
     std::atomic<bool> &m_luaStopped;
     Problems &m_problems;
     NodeValueTrace *m_trace;
@@ -1055,6 +1065,50 @@ double calculated(std::string_view op, double a, double b)
     if (op == "absolute")
         return std::fabs(a);
     return -a;
+}
+
+shape::Contours contoursAt(const NodeDrawing &d)
+{
+    shape::Contours contours = shape::readDrawing(d.commands);
+    if (d.scale > 1) {
+        const double unit = std::ldexp(1.0, 1 - d.scale);
+        for (shape::Contour &c : contours)
+            for (shape::Point &p : c)
+                p = {p.x * unit, p.y * unit};
+    }
+    return contours;
+}
+
+NodeDrawing combinedShape(std::string_view op, const NodeDrawing &a, const NodeDrawing &b)
+{
+    const shape::Combine how = op == "subtract"    ? shape::Combine::Subtract
+                               : op == "intersect" ? shape::Combine::Intersect
+                               : op == "exclude"   ? shape::Combine::Exclude
+                                                   : shape::Combine::Unite;
+    return {shape::writeDrawing(shape::combine(contoursAt(a), contoursAt(b), how)), 1};
+}
+
+bool styleFlag(const std::vector<std::string> &fields, std::size_t at)
+{
+    if (at >= fields.size())
+        return false;
+    const double v = std::strtod(fields[at].c_str(), nullptr);
+    return v == -1 || v == 1 || v >= 700;
+}
+
+shape::GlyphStyle glyphStyleOf(const karaoke_layout::StyleInfo &s)
+{
+    shape::GlyphStyle g;
+    g.family = s.fields.size() > 1 ? s.fields[1] : std::string();
+    g.size = s.fontsize;
+    g.bold = styleFlag(s.fields, 7);
+    g.italic = styleFlag(s.fields, 8);
+    g.underline = styleFlag(s.fields, 9);
+    g.strikeOut = styleFlag(s.fields, 10);
+    g.scaleX = s.scaleX;
+    g.scaleY = s.scaleY;
+    g.spacing = s.spacing;
+    return g;
 }
 
 double eased(double t, std::string_view ease)
@@ -1222,6 +1276,10 @@ NodeValue Evaluator::compute(int node, int port, const Element &e, Memo &memo)
         return gradientAt(n.list, num("progress"));
     case Kind::Shape:
         return NodeDrawing{n.text, static_cast<int>(n.number)};
+    case Kind::TextShape:
+        return textShape(node, port, e, memo);
+    case Kind::CombineShapes:
+        return combinedShape(n.mode, get<NodeDrawing>(node, "a", e, memo), get<NodeDrawing>(node, "b", e, memo));
     case Kind::AudioPeaks:
         return audioPeak(node, port, e, memo);
     case Kind::Join:
@@ -1259,6 +1317,28 @@ NodeValue Evaluator::audioPeak(int node, int port, const Element &e, Memo &memo)
     }
     const double low = peaks->min.front() / 32768.0, high = peaks->max.front() / 32768.0;
     return port == 0 ? std::max(std::fabs(low), std::fabs(high)) : port == 1 ? low : high;
+}
+
+NodeValue Evaluator::textShape(int node, int port, const Element &e, Memo &memo)
+{
+    const CNode &n = m_c.nodes[node];
+    const std::string text = wired(node, "text") ? get<std::string>(node, "text", e, memo) : unitOf(e).text;
+    auto found = m_outlines.find(text);
+    if (found == m_outlines.end()) {
+        std::optional<shape::TextOutline> outline;
+        if (!m_glyphs)
+            m_problems.add(n.graph->id, "has no fonts to draw with, so it gives an empty drawing");
+        else if (outline = m_glyphs->outline(glyphStyleOf(*m_line.style), text); !outline)
+            m_problems.add(n.graph->id, "can't read the Style's font \"" + glyphStyleOf(*m_line.style).family +
+                                            "\", so it gives an empty drawing");
+        found = m_outlines.emplace(text, outline.value_or(shape::TextOutline{})).first;
+    }
+    const shape::TextOutline &o = found->second;
+    if (port == 1)
+        return o.width;
+    if (port == 2)
+        return o.height;
+    return NodeDrawing{o.drawing, 1};
 }
 
 NodeValue Evaluator::lua(int node, int port, const Element &e, Memo &memo)
@@ -1431,6 +1511,9 @@ NodeEffectRun runNodeEffect(const core::Document &document, std::u8string_view n
                 ++styles;
         }
     double li = static_cast<double>(info + styles + layout.furiganaStylesAdded());
+    const bool karaOK = karaoke_templates::documentMode(document, options.newDocument ? karaoke_templates::Mode::KaraOK
+                                                                                      : karaoke_templates::Mode::Stock) ==
+                        karaoke_templates::Mode::KaraOK;
     std::vector<karaoke_layout::Line> lines;
     std::vector<std::vector<std::string>> layoutProblems;
     for (const core::LineRecord *l : document.lines()) {
@@ -1442,7 +1525,7 @@ NodeEffectRun runNodeEffect(const core::Document &document, std::u8string_view n
         if (options.sources && !options.sources->contains(l->id))
             continue;
         std::vector<std::string> problems;
-        lines.push_back(layout.line(macroLineOf(*l), li, {.chars = compiled.chars}, problems));
+        lines.push_back(layout.line(macroLineOf(*l), li, {.chars = compiled.chars, .karaOK = karaOK}, problems));
         layoutProblems.push_back(std::move(problems));
         run.sources.push_back(l->id);
     }
@@ -1715,8 +1798,8 @@ std::string templateId(std::u8string_view graph, std::string_view emit)
 
 class TemplateWriter {
 public:
-    TemplateWriter(const Compiled &c, std::u8string_view name, bool allStyles)
-        : m_c(c), m_name(name), m_allStyles(allStyles)
+    TemplateWriter(const Compiled &c, std::u8string_view name, bool allStyles, TemplateFormat format)
+        : m_c(c), m_name(name), m_allStyles(allStyles), m_karaOK(format == TemplateFormat::KaraOK)
     {
     }
 
@@ -1874,6 +1957,10 @@ private:
             return refuse(i, "runs in HikariSub's Lua helper, not in the templater");
         case Kind::AudioPeaks:
             return refuse(i, "reads the audio, which the templater can't");
+        case Kind::TextShape:
+            return refuse(i, "draws text with HikariSub's fonts, which the templater can't");
+        case Kind::CombineShapes:
+            return refuse(i, "combines drawings, which the templater can't");
         default:
             return refuse(i, "has no template form");
         }
@@ -1894,6 +1981,8 @@ private:
             {"style_fontsize", "fontsize"}, {"style_scale_x", "scale_x"}, {"style_scale_y", "scale_y"},
             {"style_spacing", "spacing"},   {"style_angle", "angle"},     {"style_outline", "outline"},
             {"style_shadow", "shadow"},     {"style_alignment", "align"}};
+        if (m_karaOK && m_unit == "char" && port == "i")
+            return luaScalar("syll.i");
         if (const auto v = kVariables.find(port); v != kVariables.end())
             return variable(v->second);
         if (const auto s = kStyle.find(port); s != kStyle.end())
@@ -2158,6 +2247,7 @@ private:
         const auto units = unitsOf(emit);
         if (!units)
             return std::nullopt;
+        m_unit = units->unit;
         const Context ctx{units->unit == "line" ? Scope::Line : Scope::Unit, units->loop};
         const auto when = get<Scalar>(emit, "when", ctx);
         const auto layer = get<Scalar>(emit, "layer", ctx).and_then([](const Scalar &s) { return constantNumber(s); });
@@ -2230,11 +2320,14 @@ private:
         if (m_allStyles)
             addModifier("all");
 
+        const std::string preLine = m_karaOK ? "line" : "pre-line";
         std::string head;
         if (ctx.scope == Scope::Line)
-            head = joined ? "pre-line " + templateId(m_name, n.graph->id) : "pre-line";
+            head = joined ? preLine + " " + templateId(m_name, n.graph->id) : preLine;
         else if (units->unit == "furi")
             head = units->skipBlank ? "furi noblank" : "furi";
+        else if (m_karaOK && units->unit == "char")
+            head = units->skipBlank ? "char noblank" : "char";
         else
             head = std::string(units->skipBlank ? "syl noblank" : "syl") + (units->unit == "char" ? " char" : "");
         for (const std::string &m : modifiers)
@@ -2243,23 +2336,30 @@ private:
         const std::string text = *times + (tags->text.empty() ? std::string() : "{" + tags->text + "}") + body;
         std::vector<TemplateLine> out;
         if (units->fx && units->fx->empty())
-            out.push_back({0, wide(std::string(units->unit == "furi" ? "code furi" : "code syl") + (m_allStyles ? " all" : "")),
+            out.push_back({0, wide(std::string(units->unit == "furi"               ? "code furi"
+                                               : m_karaOK && units->unit == "char" ? "code char"
+                                                                                   : "code syl") +
+                                   (m_allStyles ? " all" : "")),
                            wide("fxgroup[" + luaString(group) + "] = (syl.inline_fx == \"\")")});
         out.push_back({layerValue, wide("template " + head), wide(text)});
         if (joined)
-            out.push_back({layerValue, wide("template line " + templateId(m_name, n.graph->id)), wide(joinText)});
+            out.push_back({layerValue, wide(std::string(m_karaOK ? "template lsyl " : "template line ") +
+                                            templateId(m_name, n.graph->id)),
+                           wide(joinText)});
         return out;
     }
 
     const Compiled &m_c;
     std::u8string_view m_name;
     bool m_allStyles = false;
+    bool m_karaOK = false;
+    std::string m_unit;
 };
 
 }
 
-std::expected<std::vector<TemplateLine>, std::vector<NodeEffectProblem>> exportTemplateLines(const NodeGraph &graph,
-                                                                                           std::u8string_view name)
+std::expected<std::vector<TemplateLine>, std::vector<NodeEffectProblem>>
+exportTemplateLines(const NodeGraph &graph, std::u8string_view name, TemplateFormat format)
 {
     std::vector<NodeEffectProblem> problems;
     for (const GraphProblem &p : validateGraph(graph))
@@ -2267,14 +2367,15 @@ std::expected<std::vector<TemplateLine>, std::vector<NodeEffectProblem>> exportT
     if (!problems.empty())
         return std::unexpected(std::move(problems));
     const Compiled compiled = compile(*flattenGraph(graph));
-    TemplateWriter writer(compiled, name, graph.allStyles);
+    TemplateWriter writer(compiled, name, graph.allStyles, format);
     std::vector<TemplateLine> lines = writer.lines();
     if (!writer.problems.empty())
         return std::unexpected(std::move(writer.problems));
     return lines;
 }
 
-std::expected<void, std::vector<NodeEffectProblem>> exportTemplateLines(EditSession &session, core::LineId graphLine)
+std::expected<void, std::vector<NodeEffectProblem>> exportTemplateLines(EditSession &session, core::LineId graphLine,
+                                                                        TemplateFormat format)
 {
     const auto refused = [](std::string message) {
         return std::unexpected(std::vector<NodeEffectProblem>{{{}, std::nullopt, std::move(message)}});
@@ -2284,7 +2385,7 @@ std::expected<void, std::vector<NodeEffectProblem>> exportTemplateLines(EditSess
             continue;
         if (!g.graph)
             return std::unexpected(std::vector<NodeEffectProblem>{{g.graph.error().node, std::nullopt, g.graph.error().message}});
-        auto lines = exportTemplateLines(*g.graph, g.name);
+        auto lines = exportTemplateLines(*g.graph, g.name, format);
         if (!lines)
             return std::unexpected(std::move(lines.error()));
         Command command;
@@ -2306,6 +2407,12 @@ std::expected<void, std::vector<NodeEffectProblem>> exportTemplateLines(EditSess
                 if (!added)
                     return false;
                 after = *added;
+            }
+            if (format == TemplateFormat::KaraOK) {
+                const auto key = karaoke_templates::kModeKey, value = karaoke_templates::kModeKaraOK;
+                if (!document.setScriptInfo(std::u8string(key.begin(), key.end()),
+                                            std::u8string(value.begin(), value.end())))
+                    return false;
             }
             return true;
         };

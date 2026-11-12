@@ -182,7 +182,7 @@ Every widget that sends events needs an `id`. Each event says which widget sent 
 A plugin gets only what its manifest asks for. The user sees each request in the install question, and again when an update asks for more.
 
 - **The active document.** Every plugin can read and edit the subtitle file that's active. `documents.all` lets it see the other tabs too.
-- **Files.** A plugin has its own data and cache folders. It can open files that the user picks or drops on its panel, and folders that it names in `permissions.files`, after the user chooses them. It gets handles, never paths. See [Files](plugins.md#files).
+- **Files.** A plugin has its own data and cache folders, and the `project` place: the folder of the Project the user works in, once the user trusts it. It can open files that the user picks or drops on its panel, and folders that it names in `permissions.files`, after the user chooses them. It gets handles, never paths. See [Files](plugins.md#files).
 - **Network.** HikariSub makes each request for the plugin, over HTTPS, and only to the hosts in `permissions.network`. See [Network](plugins.md#network).
 - **Restricted, the default tier.** The plugin's Lua has no `io`, `os`, `ffi` or `debug`. Its helper runs in the operating system's sandbox where one is available.
 - **Full trust.** `"tier": "unrestricted"` gives the full LuaJIT libraries, no sandbox, and [QML panels](plugins.md#qml-panels). The user must agree to give the plugin full access to the computer. Ask for it only when the restricted tier can't do the job.

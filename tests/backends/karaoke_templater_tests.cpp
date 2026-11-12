@@ -20,12 +20,14 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QTemporaryDir>
 #include <gtest/gtest.h>
 
 #include <algorithm>
 #include <cstring>
 #include <filesystem>
 #include <functional>
+#include <iostream>
 #include <map>
 #include <optional>
 #include <set>
@@ -73,8 +75,16 @@ QString upstreamKaraOK()
     return karaOKDir() + QStringLiteral("/kara-templater-karaok.lua");
 }
 
+QString includesFor(const QString &script)
+{
+    const QString shipped = QStringLiteral(HIKARI_LUA_INCLUDE);
+    return script == upstreamKaraOK() ? shipped + QLatin1Char('\n') + karaOKDir() + QStringLiteral("/include")
+                                      : shipped;
+}
+
 constexpr char kApply[] = "Apply karaoke template";
 constexpr char kUpstreamKaraOKApply[] = "Apply karaoke template (modded with furigana)";
+constexpr char kUpstreamKaraOKWithoutFurigana[] = "Apply karaoke template (modded)";
 
 QString oracleScript()
 {
@@ -116,8 +126,7 @@ protected:
 
     std::unique_ptr<LuaScriptHost> load(const QString &script)
     {
-        auto host = std::make_unique<LuaScriptHost>(QStringLiteral(HIKARI_LUA_HELPER), script,
-                                                    QStringLiteral(HIKARI_LUA_INCLUDE));
+        auto host = std::make_unique<LuaScriptHost>(QStringLiteral(HIKARI_LUA_HELPER), script, includesFor(script));
         host->setServiceHandler([this](const HostServiceRequest &r, LuaScriptHost::ServiceReply reply) {
             ++asked[r.service];
             reply(answer(r));
@@ -306,7 +315,7 @@ TEST_F(KaraokeTemplater, BuiltinTemplaterMatchesAegisub322ByteForByte)
 TEST_F(KaraokeTemplater, KaraOKDocumentsMatchUpstreamKaraOKByteForByte)
 {
     const QStringList documents = corpus(karaOKDir());
-    ASSERT_EQ(documents.size(), 6);
+    ASSERT_EQ(documents.size(), 7);
     for (const QString &name : documents) {
         SCOPED_TRACE(name.toStdString());
         const QString document = karaOKDir() + QLatin1Char('/') + name;
@@ -323,7 +332,7 @@ TEST_F(KaraokeTemplater, KaraOKDeparturesDifferFromUpstreamKaraOK)
 {
     const QString dir = karaOKDir() + QStringLiteral("/departures");
     const QStringList documents = corpus(dir);
-    ASSERT_EQ(documents.size(), 8);
+    ASSERT_EQ(documents.size(), 15);
     for (const QString &name : documents) {
         SCOPED_TRACE(name.toStdString());
         const QString document = dir + QLatin1Char('/') + name;
@@ -333,6 +342,162 @@ TEST_F(KaraokeTemplater, KaraOKDeparturesDifferFromUpstreamKaraOK)
         EXPECT_EQ(builtin, textOf(readBytes(goldenOf(document))));
         EXPECT_NE(templated(document, upstreamKaraOK(), kUpstreamKaraOKApply), builtin);
     }
+}
+
+TEST_F(KaraokeTemplater, LnKaraKanjiposIn322ModeIsAProblemNamingKaraOKMode)
+{
+    const auto bytes = editedCorpus(QStringLiteral("karaok/ln-kara.ass"),
+                                    {{"Karaoke Templater: karaOK", "Karaoke Templater: Aegisub 3.2.2"}});
+    const std::string builtin = templatedBytes(bytes, builtinScript());
+    ASSERT_FALSE(builtin.empty());
+    EXPECT_TRUE(run.log.join(QString()).contains(QLatin1String("ln.tag.kanjipos works only in karaOK mode")))
+        << run.log.join(QString()).toStdString();
+}
+
+TEST_F(KaraokeTemplater, LnKaraLoadsTheShippedCopyBeforeTheUsersOwn)
+{
+    QTemporaryDir user;
+    ASSERT_TRUE(QDir(user.path()).mkpath(QStringLiteral("ln")));
+    QFile own(user.path() + QStringLiteral("/ln/kara.lua"));
+    ASSERT_TRUE(own.open(QIODevice::WriteOnly));
+    own.write("return { init = function() error('the user copy loaded') end }\n");
+    own.close();
+    auto host = std::make_unique<LuaScriptHost>(QStringLiteral(HIKARI_LUA_HELPER), builtinScript(),
+                                                user.path() + QLatin1Char('\n') + QStringLiteral(HIKARI_LUA_INCLUDE));
+    QStringList log;
+    std::optional<LuaScriptHost::RunOutcome> outcome;
+    host->setServiceHandler(
+        [this](const HostServiceRequest &r, LuaScriptHost::ServiceReply reply) { reply(answer(r)); });
+    QObject::connect(host.get(), &LuaScriptHost::logged, [&](const QString &t) { log << t; });
+    QObject::connect(host.get(), &LuaScriptHost::finished,
+                     [&](LuaScriptHost::RunOutcome o, const QString &) { outcome = o; });
+    host->load();
+    ASSERT_TRUE(waitFor([&] { return host->state() != LuaScriptHost::State::Loading; }));
+    hikari::application::EditSession session(
+        hikari::core::loadAss(readBytes(karaOKDir() + QStringLiteral("/ln-kara.ass"))).document);
+    const auto snapshot = hikari::application::snapshotForMacro(session);
+    ASSERT_TRUE(snapshot);
+    ASSERT_TRUE(host->run(macro(*host, kApply), *snapshot));
+    ASSERT_TRUE(waitFor([&] { return outcome.has_value(); }));
+    EXPECT_FALSE(log.join(QString()).contains(QLatin1String("the user copy loaded"))) << log.join(QString()).toStdString();
+}
+
+TEST_F(KaraokeTemplater, FuriganaStylesFalseAddsNoFuriganaStylesAsUpstreamsFuriganaOffMacro)
+{
+    const auto bytes = editedCorpus(
+        QStringLiteral("karaok/classes.ass"),
+        {{"Comment: 0,0:00:00.00,0:00:05.00,Romaji,,0,0,0,template line,",
+          "Comment: 0,0:00:00.00,0:00:05.00,Romaji,,0,0,0,code once,furigana_styles = false\n"
+          "Comment: 0,0:00:00.00,0:00:05.00,Romaji,,0,0,0,template line,"}});
+    const std::string builtin = templatedBytes(bytes, builtinScript());
+    ASSERT_FALSE(builtin.empty());
+    EXPECT_EQ(builtin.find("-furigana"), std::string::npos);
+    EXPECT_EQ(builtin, templatedBytes(bytes, upstreamKaraOK(), kUpstreamKaraOKWithoutFurigana));
+    EXPECT_NE(templatedBytes(bytes, upstreamKaraOK(), kUpstreamKaraOKApply), builtin);
+}
+
+TEST_F(KaraokeTemplater, FuriganaStylesFalseKeepsTheProblemLinesSelected)
+{
+    hikari::application::EditSession session(
+        hikari::core::loadAss(
+            editedCorpus(QStringLiteral("errors.ass"),
+                         {{"Comment: 0,0:00:00.00,0:00:05.00,Err,,0,0,0,code once,function (broken",
+                           "Comment: 0,0:00:00.00,0:00:05.00,Err,,0,0,0,code once,furigana_styles = false\n"
+                           "Comment: 0,0:00:00.00,0:00:05.00,Err,,0,0,0,code once,function (broken"}}))
+            .document);
+    std::vector<hikari::core::LineId> ids;
+    for (const auto *l : session.document().lines())
+        ids.push_back(l->id);
+    ASSERT_TRUE(apply(session, builtinScript(), kApply));
+    EXPECT_EQ(session.selection().selected, (std::set<hikari::core::LineId>(ids.begin() + 1, ids.begin() + 10)));
+    EXPECT_EQ(session.selection().active, ids[1]);
+    EXPECT_EQ(saved(session).find("-furigana,"), std::string::npos);
+}
+
+TEST_F(KaraokeTemplater, KaraOKAdditionsRunInStockModeWhere322OnlyWarned)
+{
+    const QString document = corpusDir() + QStringLiteral("/departures/stock-additions.ass");
+    const std::string builtin = templated(document, builtinScript());
+    ASSERT_FALSE(builtin.empty());
+    const QString builtinLog = run.log.join(QString());
+    writeGoldenIfAsked(document, builtin);
+    EXPECT_EQ(builtin, textOf(readBytes(goldenOf(document))));
+    EXPECT_FALSE(builtinLog.contains(QStringLiteral("Unknown modifier"))) << builtinLog.toStdString();
+    EXPECT_FALSE(builtinLog.contains(QStringLiteral("Runtime error"))) << builtinLog.toStdString();
+    EXPECT_NE(builtin.find("Other,,0,0,0,fx,{\\1c&H0000FF&}"), std::string::npos);
+    EXPECT_EQ(builtin.find("Default,,0,0,0,fx,{\\1c&H0000FF&}"), std::string::npos);
+    EXPECT_NE(builtin.find(",fx,number/1/2/"), std::string::npos);
+
+    EXPECT_NE(templated(document, pristineScript()), builtin);
+    const QString stockLog = run.log.join(QString());
+    for (const char *warning :
+         {"Unknown modifier in template: style", "Unknown modifier in template: lsyl", "Unknown modifier in template: lword",
+          "Unknown modifier in template: lchar", "Unknown modifier in template: word",
+          "Unknown modifier in template: furichar", "Unknown modifier in code template: word",
+          "Unknown modifier in code template: char", "Unknown modifier in code template: furichar",
+          "Runtime error in template code", "Runtime error in template expression"})
+        EXPECT_TRUE(stockLog.contains(QLatin1String(warning))) << warning;
+}
+
+TEST_F(KaraokeTemplater, KaraOKCountVariablesStayTextInStockMode)
+{
+    const std::string document = R"([Script Info]
+ScriptType: v4.00+
+PlayResX: 1280
+PlayResY: 720
+Karaoke Templater: Aegisub 3.2.2
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Default,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,8,20,20,20,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Comment: 0,0:00:00.00,0:00:05.00,Default,,0,0,0,template syl,$len/$ci/$slen/$i
+Comment: 0,0:00:00.00,0:00:05.00,Default,,0,0,0,template line,$llen
+Dialogue: 0,0:00:01.00,0:00:03.00,Default,,0,0,0,,{\k50}ka{\k50}ra
+)";
+    const std::string builtin = templatedBytes(bytesOf(document), builtinScript());
+    ASSERT_FALSE(builtin.empty());
+    EXPECT_NE(builtin.find(",fx,$len/$ci/$slen/1"), std::string::npos) << builtin;
+    EXPECT_NE(builtin.find(",fx,$llen"), std::string::npos) << builtin;
+    const QString log = run.log.join(QString());
+    for (const char *name : {"len", "ci", "slen", "llen"})
+        EXPECT_TRUE(log.contains(QStringLiteral("Unknown variable name: %1\n").arg(QLatin1String(name)))) << name;
+}
+
+TEST_F(KaraokeTemplater, SelectingEveryLineOfAKaraOKDocumentGivesTheWholeRun)
+{
+    for (const QString &dir : {karaOKDir(), karaOKDir() + QStringLiteral("/departures")})
+        for (const QString &name : corpus(dir)) {
+            SCOPED_TRACE(name.toStdString());
+            hikari::application::EditSession session(
+                hikari::core::loadAss(readBytes(dir + QLatin1Char('/') + name)).document);
+            std::vector<hikari::core::LineId> all;
+            for (const auto *l : session.document().lines())
+                all.push_back(l->id);
+            select(session, all);
+            ASSERT_TRUE(apply(session, builtinScript(), kSelected));
+            EXPECT_EQ(saved(session), textOf(readBytes(goldenOf(dir + QLatin1Char('/') + name))));
+        }
+}
+
+TEST_F(KaraokeTemplater, RegenerateSelectedInAKaraOKDocumentReplacesOnlyItsOutput)
+{
+    hikari::application::EditSession session(
+        hikari::core::loadAss(readBytes(karaOKDir() + QStringLiteral("/classes.ass"))).document);
+    ASSERT_TRUE(apply(session, builtinScript(), kApply));
+    const auto *source = lineWithText(session.document(), u8"{\\k30}ki{\\k0}ra{\\k20}ri", u8"karaoke");
+    ASSERT_NE(source, nullptr);
+    const auto sourceId = source->id;
+    ASSERT_TRUE(editText(session, sourceId, u8"{\\k30}KI{\\k0}ra{\\k20}ri"));
+    const std::size_t steps = session.historySize();
+    select(session, {sourceId});
+    ASSERT_TRUE(apply(session, builtinScript(), kSelected));
+    EXPECT_EQ(saved(session), templatedBytes(editedCorpus(QStringLiteral("karaok/classes.ass"),
+                                                          {{",,{\\k30}ki{\\k0}ra", ",,{\\k30}KI{\\k0}ra"}}),
+                                             builtinScript()));
+    EXPECT_EQ(session.historySize(), steps + 1);
 }
 
 TEST_F(KaraokeTemplater, KaraOKOnlySyntaxChoosesKaraOKModeWithoutTheModeLine)
@@ -364,8 +529,108 @@ TEST_F(KaraokeTemplater, NativeKaraskelTablesEqualKaraskelLuasFieldForField)
         };
         const std::string lua = dumped("Lua karaskel");
         ASSERT_FALSE(lua.empty());
+        EXPECT_FALSE(report[QStringLiteral("native_head")].toBool());
+        EXPECT_EQ(report[QStringLiteral("native_lines")].toInt(), 0);
         EXPECT_EQ(dumped("Native karaskel"), lua);
+        EXPECT_TRUE(report[QStringLiteral("native_head")].toBool());
+        EXPECT_GT(report[QStringLiteral("native_lines")].toInt(), 0);
     }
+}
+
+QString karaskelDir()
+{
+    return corpusDir() + QStringLiteral("/karaskel");
+}
+
+QStringList stringsOf(const QJsonValue &value)
+{
+    QStringList out;
+    for (const auto &v : value.toArray())
+        out << v.toString();
+    return out;
+}
+
+TEST_F(KaraokeTemplater, KaraskelPreprocLineRunsNativelyWithTheLuasTablesInTheirPairsOrder)
+{
+    const QString routing = karaskelDir() + QStringLiteral("/routing.lua");
+    for (const QString &name : {karaskelDir() + QStringLiteral("/routing.ass"), corpusDir() + QStringLiteral("/ke4.ass"),
+                                corpusDir() + QStringLiteral("/stock-furigana.ass"),
+                                corpusDir() + QStringLiteral("/departures/thai.ass")}) {
+        SCOPED_TRACE(name.toStdString());
+        hikari::application::EditSession session(hikari::core::loadAss(readBytes(name)).document);
+        ASSERT_TRUE(apply(session, routing, "Every line"));
+        EXPECT_EQ(stringsOf(report[QStringLiteral("mismatches")]).join(u'\n').toStdString(), "");
+        const QStringList runs = stringsOf(report[QStringLiteral("runs")]);
+        ASSERT_FALSE(runs.isEmpty());
+        for (const QString &r : runs)
+            EXPECT_TRUE(r.endsWith(QStringLiteral(":native"))) << r.toStdString();
+    }
+}
+
+TEST_F(KaraokeTemplater, KaraskelPreprocLineFallsBackToLuaWhereTheTablesOrHostWereChanged)
+{
+    hikari::application::EditSession session(
+        hikari::core::loadAss(readBytes(karaskelDir() + QStringLiteral("/routing.ass"))).document);
+    ASSERT_TRUE(apply(session, karaskelDir() + QStringLiteral("/routing.lua"), "Cases"));
+    EXPECT_EQ(stringsOf(report[QStringLiteral("mismatches")]).join(u'\n').toStdString(), "");
+    const QStringList expected = {
+        QStringLiteral("plain:native"),
+        QStringLiteral("extra style field:native"),
+        QStringLiteral("missing style field:lua"),
+        QStringLiteral("style without class:lua"),
+        QStringLiteral("style fontsize text:lua"),
+        QStringLiteral("style margins apart:lua"),
+        QStringLiteral("style align text:lua"),
+        QStringLiteral("style align outside:lua"),
+        QStringLiteral("style edited:native"),
+        QStringLiteral("style not found:native"),
+        QStringLiteral("style not a table:lua"),
+        QStringLiteral("styles with a metatable:lua"),
+        QStringLiteral("meta res text:lua"),
+        QStringLiteral("meta factor edited:native"),
+        QStringLiteral("line time fraction:lua"),
+        QStringLiteral("line margins apart:lua"),
+        QStringLiteral("line already sized:lua"),
+        QStringLiteral("line already parsed:lua"),
+        QStringLiteral("line not dialogue:lua"),
+        QStringLiteral("text_extents wrapped:lua"),
+        QStringLiteral("debug.out wrapped:lua"),
+        QStringLiteral("stage replaced:lua"),
+        QStringLiteral("stage replaced:replaced stage ran"),
+    };
+    EXPECT_EQ(stringsOf(report[QStringLiteral("runs")]).join(u'\n').toStdString(), expected.join(u'\n').toStdString());
+}
+
+TEST_F(KaraokeTemplater, AegisubUtilGivesTheLuasResultsWithTheHelpersFunctions)
+{
+    hikari::application::EditSession session(
+        hikari::core::loadAss(readBytes(corpusDir() + QStringLiteral("/ke4.ass"))).document);
+    ASSERT_TRUE(apply(session, karaskelDir() + QStringLiteral("/util-parity.lua"), "Compare"));
+    EXPECT_TRUE(report[QStringLiteral("native")].toBool());
+    EXPECT_GT(report[QStringLiteral("compared")].toInt(), 30000);
+    EXPECT_EQ(stringsOf(report[QStringLiteral("mismatches")]).join(u'\n').toStdString(), "");
+}
+
+TEST_F(KaraokeTemplater, KaraskelTimings)
+{
+    if (!qEnvironmentVariableIsSet("HIKARI_KARASKEL_BENCH"))
+        GTEST_SKIP() << "set HIKARI_KARASKEL_BENCH to time karaskel";
+    for (const QString &name : {corpusDir() + QStringLiteral("/ke4.ass"), corpusDir() + QStringLiteral("/departures/thai.ass"),
+                                karaskelDir() + QStringLiteral("/routing.ass")}) {
+        hikari::application::EditSession session(hikari::core::loadAss(readBytes(name)).document);
+        ASSERT_TRUE(apply(session, karaskelDir() + QStringLiteral("/bench.lua"), "Time karaskel"));
+        std::cout << name.toStdString() << ' ' << QJsonDocument(report).toJson(QJsonDocument::Compact).toStdString()
+                  << '\n';
+    }
+}
+TEST_F(KaraokeTemplater, UtilTimings)
+{
+    if (!qEnvironmentVariableIsSet("HIKARI_KARASKEL_BENCH"))
+        GTEST_SKIP() << "set HIKARI_KARASKEL_BENCH to time aegisub.util";
+    hikari::application::EditSession session(
+        hikari::core::loadAss(readBytes(corpusDir() + QStringLiteral("/ke4.ass"))).document);
+    ASSERT_TRUE(apply(session, karaskelDir() + QStringLiteral("/bench.lua"), "Time util"));
+    std::cout << QJsonDocument(report).toJson(QJsonDocument::Indented).toStdString() << '\n';
 }
 
 TEST_F(KaraokeTemplater, NamedLineTemplatesRunAfterUnnamedOnesInTheOrderTheirNamesFirstAppear)

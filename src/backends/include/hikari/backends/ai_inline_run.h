@@ -18,8 +18,22 @@ namespace hikari::backends::ai {
 
 class AiRequests;
 
+/// An inline action's engine: each Line's result, then finished(), once.
+class LineRun {
+public:
+    virtual ~LineRun() = default;
+    virtual void start() = 0;
+    /// Cancels the running requests and drops the waiting ones; finished() follows with Stopped.
+    virtual void stop() = 0;
+    /// The Line leaves the run: waiting, it isn't sent; running, its answer is ignored.
+    virtual void drop(std::uint64_t key) = 0;
+    virtual double cost() const = 0;
+    virtual bool costKnown() const = 0;
+    virtual bool running() const = 0;
+};
+
 /// One inline action over many Lines: one `_hikari/complete` request per Line, a few at a time, with no tools.
-class InlineRun {
+class InlineRun final : public LineRun {
 public:
     struct Job {
         std::uint64_t key = 0;
@@ -30,6 +44,9 @@ public:
         std::uint64_t key = 0;
         application::ai_inline::Answer answer;
         std::optional<application::ai::Error> error; // the request failed; answer is unset
+        /// A translation the pipeline's reviewer never approved, and what it found.
+        bool needsReview = false;
+        std::vector<std::string> issues;
     };
 
     enum class End { Done, Stopped, DailyCap, NoModel };
@@ -44,24 +61,24 @@ public:
         std::function<void(const Result &)> lineDone;
         std::function<void(End)> finished;
         std::size_t parallel = 4;
+        /// The Project folder of the Document's window, UTF-8; its keys replace the user's. Empty: none.
+        std::string project;
     };
 
     InlineRun(application::ai::Role role, std::vector<Job> jobs, Wiring wiring);
-    ~InlineRun();
+    ~InlineRun() override;
     InlineRun(const InlineRun &) = delete;
     InlineRun &operator=(const InlineRun &) = delete;
 
-    void start();
-    /// Cancels the running requests and drops the waiting ones; finished() follows with Stopped.
-    void stop();
-    /// The Line leaves the run: waiting, it isn't sent; running, its answer is ignored.
-    void drop(std::uint64_t key);
+    void start() override;
+    void stop() override;
+    void drop(std::uint64_t key) override;
 
     std::size_t total() const { return m_total; }
     std::size_t done() const { return m_done; }
-    double cost() const { return m_cost; }
-    bool costKnown() const { return m_costKnown; }
-    bool running() const { return !m_ended; }
+    double cost() const override { return m_cost; }
+    bool costKnown() const override { return m_costKnown; }
+    bool running() const override { return !m_ended; }
 
 private:
     void pump();
