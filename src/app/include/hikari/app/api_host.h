@@ -114,7 +114,7 @@ private:
 
     Wiring m_wiring;
     application::AiReview m_review;
-    std::unique_ptr<api::FolderSkills> m_skills;
+    std::unique_ptr<api::SkillTiers> m_skills;
     api::Api m_api;
     QJSValue m_commandHandler;
     QJSValue m_panelHandler;

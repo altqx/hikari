@@ -27,7 +27,7 @@ bool sameProject(const std::optional<api::ProjectState> &a, const std::optional<
 
 ApiHost::ApiHost(Wiring wiring, QObject *parent)
     : QObject(parent), m_wiring(std::move(wiring)),
-      m_skills(m_wiring.skills.empty() ? nullptr : std::make_unique<api::FolderSkills>(m_wiring.skills)),
+      m_skills(m_wiring.skills.empty() ? nullptr : std::make_unique<api::SkillTiers>(m_wiring.skills)),
       m_api(api::Host{
           .documents = this,
           .commands = this,

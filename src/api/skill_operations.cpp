@@ -17,17 +17,29 @@ std::expected<const SkillHost *, Error> skillHost(const Context &context)
     return context.host.skills;
 }
 
+std::filesystem::path projectOf(const Context &context)
+{
+    const std::string &p = context.caller.project;
+    return std::filesystem::path(std::u8string(reinterpret_cast<const char8_t *>(p.data()), p.size()));
+}
+
+std::string_view originId(SkillOrigin origin)
+{
+    return origin == SkillOrigin::Project ? "project" : "yours";
+}
+
 Result skillsList(const Context &context, const Json &)
 {
     const auto host = skillHost(context);
     if (!host)
         return std::unexpected(host.error());
     Json skills = Json::array();
-    for (const SkillFolder &skill : (*host)->skills()) {
+    for (const SkillFolder &skill : (*host)->skills(projectOf(context))) {
         Json files = Json::array();
         for (const std::string &file : skill.files)
             files.push(Json(file));
-        skills.push(Json::object({{"skill", Json(skill.name)}, {"files", std::move(files)}}));
+        skills.push(Json::object(
+            {{"skill", Json(skill.name)}, {"origin", Json(std::string(originId(skill.origin)))}, {"files", std::move(files)}}));
     }
     return Json::object({{"skills", std::move(skills)}});
 }
@@ -40,7 +52,7 @@ Result skillsRead(const Context &context, const Json &params)
     const std::string &skill = params.find("skill")->asString();
     const std::string &file = params.find("file")->asString();
     const auto where = Json::object({{"skill", Json(skill)}, {"file", Json(file)}});
-    const auto bytes = (*host)->read(skill, file, kMaxSkillFileBytes + 1);
+    const auto bytes = (*host)->read(projectOf(context), skill, file, kMaxSkillFileBytes + 1);
     if (!bytes)
         return fail(errors::kNotFound, "The skill \"" + skill + "\" has no file \"" + file + "\"; see skills.list.", where);
     if (bytes->size() > kMaxSkillFileBytes)
@@ -58,15 +70,16 @@ Result skillsRead(const Context &context, const Json &params)
 void addSkillOperations(Registry &registry)
 {
     addOperation(registry, Access::Read, "skills.list",
-                 "The user's skills: each skill folder's name and its files, SKILL.md among them.",
+                 "The caller's skills: each skill folder's name, whether it is the Project's or the user's, and its files, SKILL.md among them.",
                  R"({"type": "object", "additionalProperties": false})",
                  R"({"type": "object", "properties": {"skills": {"type": "array", "items": {"type": "object",
                      "properties": {"skill": {"$ref": "#/$defs/SkillName"},
+                                    "origin": {"enum": ["project", "yours"]},
                                     "files": {"type": "array", "items": {"type": "string"}}},
-                     "required": ["skill", "files"], "additionalProperties": false}}},
+                     "required": ["skill", "origin", "files"], "additionalProperties": false}}},
                      "required": ["skills"], "additionalProperties": false})",
                  now(skillsList));
-    addOperation(registry, Access::Read, "skills.read", "One file of a user's skill, as UTF-8 text; at most 256 KiB.",
+    addOperation(registry, Access::Read, "skills.read", "One file of a skill skills.list gives, as UTF-8 text; at most 256 KiB.",
                  R"({"type": "object", "properties": {"skill": {"$ref": "#/$defs/SkillName"},
                      "file": {"type": "string", "minLength": 1, "maxLength": 512,
                               "description": "A path skills.list gives, such as SKILL.md or references/tags.md."}},

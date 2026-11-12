@@ -1,6 +1,7 @@
 #include "hikari/application/visual_shift.h"
 
 #include "hikari/application/grid_clipboard.h"
+#include "hikari/application/position_commands.h"
 #include "hikari/application/visual_drawing.h"
 #include "hikari/application/visual_script.h"
 #include "hikari/application/visual_vector.h"
@@ -198,6 +199,68 @@ bool PositionShifterTool::setOption(const std::string &name, int value, VisualHo
         return true;
     }
     return false;
+}
+
+std::vector<ToolValue> PositionShifterTool::values(const VisualHost &host) const
+{
+    (void)host;
+    std::vector<ToolValue> out;
+    for (const auto &[name, label, value, icon] : {std::tuple{"shiftX", u"X", m_shiftX, "shift-by-x"},
+                                                   std::tuple{"shiftY", u"Y", m_shiftY, "shift-by-y"}}) {
+        ToolValue v;
+        v.name = name;
+        v.label = label;
+        v.text = u16of(position::formatted(value));
+        v.editable = true;
+        v.group = u"Shift";
+        v.iconRole = icon;
+        out.push_back(std::move(v));
+    }
+    return out;
+}
+
+bool PositionShifterTool::setValue(const std::string &name, const std::u16string &text, VisualHost &host, ValueEdit edit)
+{
+    if ((name != "shiftX" && name != "shiftY") || edit != ValueEdit::Commit)
+        return false;
+    double value = 0;
+    if (!parseValue(text, value))
+        return false;
+    (name == "shiftX" ? m_shiftX : m_shiftY) = value;
+    host.toolChanged();
+    return shiftBy(m_shiftX, m_shiftY, host);
+}
+
+bool PositionShifterTool::shiftBy(double dx, double dy, VisualHost &host)
+{
+    if ((dx == 0 && dy == 0) || host.gesture() || !beginEdit(host))
+        return false;
+    Gesture *g = host.gesture();
+    const Context ctx = context(host);
+    position::Geometry geometry;
+    geometry.width = ctx.width;
+    geometry.height = ctx.height;
+    geometry.style = [&](const core::LineRecord &line) { return lineStyle(ctx, line.style); };
+    const position::Parts parts{.position = (m_selectedTags & Position) != 0,
+                                .moveStart = (m_selectedTags & MoveStart) != 0,
+                                .moveEnd = (m_selectedTags & MoveEnd) != 0,
+                                .clip = (m_selectedTags & Clip) != 0,
+                                .drawing = (m_selectedTags & Drawing) != 0,
+                                .origin = (m_selectedTags & Origin) != 0};
+    const bool tlMode = host.session() && translationMode(*host.session());
+    for (const core::LineId id : g->targets()) {
+        const core::LineRecord &before = g->before(id);
+        core::LineRecord edited = before;
+        const bool translation = tlMode && !before.translation.empty();
+        edited.text = translation ? before.translation : before.text;
+        edited.translation.clear();
+        g->stage(id, position::shifted(edited, dx, dy, geometry, parts), transform::editsTranslation(before));
+    }
+    if (!g->changesAnyLine()) {
+        host.cancelGesture();
+        return false;
+    }
+    return host.commitGesture().has_value();
 }
 
 void PositionShifterTool::selected(VisualHost &host)

@@ -50,6 +50,13 @@ RowLayout {
         Layout.alignment: Qt.AlignVCenter
         Accessible.ignored: true
     }
+    Icon {
+        objectName: !field.named ? "" : "visualValueIcon_" + field.name
+        // MUST KILL: icon_tests parses this iconRole list from its single source line
+        iconRole: ["shift-by-x", "shift-by-y"].includes(field.value.iconRole ?? "") ? field.value.iconRole : ""
+        visible: iconRole.length > 0
+        Layout.alignment: Qt.AlignVCenter
+    }
     Label {
         id: label
         objectName: !field.named ? "" : "visualValueLabel_" + field.name

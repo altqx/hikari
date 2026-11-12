@@ -38,8 +38,8 @@ Version 2 of the Hikari API, generated from HikariSub's own registry: the same r
 | `files.list` | read | 1 | The files and folders the user granted this caller; with folder, also what that folder holds. |
 | `files.read` | read | 1 | A granted file's content, as UTF-8 text or base64; at most 16 MiB. |
 | `files.write` | write | 1 | Replaces a file granted for writing with new content; in a writable folder, makes it and its folders. |
-| `skills.list` | read | 1 | The user's skills: each skill folder's name and its files, SKILL.md among them. |
-| `skills.read` | read | 1 | One file of a user's skill, as UTF-8 text; at most 256 KiB. |
+| `skills.list` | read | 1 | The caller's skills: each skill folder's name, whether it is the Project's or the user's, and its files, SKILL.md among them. |
+| `skills.read` | read | 1 | One file of a skill skills.list gives, as UTF-8 text; at most 256 KiB. |
 | `automation.run` | write | 1 | Saves a Lua Automation script to the AI scripts folder and runs one of its macros on the active tab's selection, once the user approves the script. The run is one undo step. |
 | `translation.project` | read | 1 | The Document's Honya project files: PROJECT.md, GLOSSARY.md, CHARACTERS.md and STYLE.md, those that exist. folder is null when the Document has no project folder. |
 | `translation.project_write` | write | 1 | Replaces one of the Document's Honya project files, keeping Honya's Markdown and honya:data format. |
@@ -787,7 +787,7 @@ Replaces a file granted for writing with new content; in a writable folder, make
 
 Read. Since version 1.
 
-The user's skills: each skill folder's name and its files, SKILL.md among them.
+The caller's skills: each skill folder's name, whether it is the Project's or the user's, and its files, SKILL.md among them.
 
 **Parameters**: none.
 
@@ -797,13 +797,14 @@ The user's skills: each skill folder's name and its files, SKILL.md among them.
 | --- | --- | --- | --- |
 | `skills` | array of objects | yes |  |
 | `skills[].skill` | [SkillName](#skillname) | yes |  |
+| `skills[].origin` | one of `project` or `yours` | yes |  |
 | `skills[].files` | array of string | yes |  |
 
 ### `skills.read`
 
 Read. Since version 1.
 
-One file of a user's skill, as UTF-8 text; at most 256 KiB.
+One file of a skill skills.list gives, as UTF-8 text; at most 256 KiB.
 
 **Parameters**
 

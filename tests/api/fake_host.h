@@ -237,7 +237,7 @@ public:
         return id;
     }
 
-    FolderSkills skills{std::filesystem::path()};
+    SkillTiers skills{std::filesystem::path()};
     FakeAutomation automation;
     FakeTranslation translation;
     Host host()
