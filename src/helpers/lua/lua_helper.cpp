@@ -10,6 +10,7 @@
 #include "kara_templater.h"
 #include "karaskel_tables.h"
 #include "shape_tables.h"
+#include "util_impl.h"
 #include "lua_helper_internal.h"
 #include "lua_host_cache.h"
 #include "lua_native.h"
@@ -830,6 +831,7 @@ void installAegisub(lua_State *L)
     installHikari(L);
     hikari::karaskel_tables::install(L);
     hikari::shape_tables::install(L, textOutline);
+    hikari::util_impl::install(L);
     lua_setglobal(L, "aegisub");
 }
 
@@ -2567,6 +2569,36 @@ std::optional<application::MacroDialogueLine> dialogueOf(lua_State *L)
     if (!entry || !std::holds_alternative<MacroDialogueLine>(*entry))
         return std::nullopt;
     return std::get<MacroDialogueLine>(std::move(*entry));
+}
+
+bool isHost(lua_State *L, int index, HostFunction function)
+{
+    const lua_CFunction own = function == HostFunction::TextExtents       ? textExtents
+                              : function == HostFunction::ParseKaraokeData ? parseKaraokeData
+                                                                           : debugOut;
+    return lua_iscfunction(L, index) && lua_tocfunction(L, index) == own;
+}
+
+bool isSubtitles(lua_State *L, int index)
+{
+    if (!lua_isuserdata(L, index) || !luaL_getmetafield(L, index, "__index"))
+        return false;
+    const bool own = lua_tocfunction(L, -1) == subsIndex;
+    lua_pop(L, 1);
+    return own;
+}
+
+int traceLevel()
+{
+    return g_script.traceLevel;
+}
+
+std::optional<std::vector<std::string>> styleFields(lua_State *L)
+{
+    auto entry = luaToLine(L);
+    if (!entry || !std::holds_alternative<MacroStyleLine>(*entry))
+        return std::nullopt;
+    return std::get<MacroStyleLine>(std::move(*entry)).fields;
 }
 
 std::vector<std::string> canonicalStyle(const std::vector<std::string> &fields)
