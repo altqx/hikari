@@ -121,7 +121,9 @@ public:
 class FakeProject final : public ProjectHost {
 public:
     std::optional<ProjectState> project() const override { return state; }
+    std::vector<std::string> aiExclude(const std::string &) const override { return excludes; }
     std::optional<ProjectState> state;
+    std::vector<std::string> excludes;
 };
 
 std::string utf8(const fs::path &p)
@@ -145,9 +147,11 @@ protected:
     }
     std::string grant(bool writable) { return m_api.grantFolder(m_caller.id, utf8(m_data), writable); }
 
+    hikari::application::MemorySettingsStorage m_storage;
+    hikari::application::Settings m_settings{m_storage};
     DiskFiles m_files;
     FakeProject m_project;
-    Api m_api{Host{.files = &m_files, .project = &m_project}};
+    Api m_api{Host{.settings = &m_settings, .files = &m_files, .project = &m_project}};
     Caller m_caller{.id = "test.plugin", .label = "Test"};
 };
 
@@ -231,4 +235,104 @@ TEST_F(FolderGrants, ProjectInfoAndProjectChanged)
     ASSERT_EQ(heard.size(), 2u);
     EXPECT_EQ(heard[0], show);
     EXPECT_EQ(heard[1], *Json::parse(R"({"project": null})"));
+}
+
+TEST(AiExclude, GlobsMatchLikeGitignore)
+{
+    EXPECT_TRUE(globMatches(".env*", ".env"));
+    EXPECT_TRUE(globMatches(".env*", ".ENV.local"));
+    EXPECT_FALSE(globMatches("*.key", "a/b.key"));
+    EXPECT_TRUE(globMatches("**.key", "a/b.key"));
+    EXPECT_TRUE(globMatches("a?c", "abc"));
+    EXPECT_FALSE(globMatches("a?c", "a/c"));
+    const std::vector<std::string> defaults(std::begin(kAiExcludeDefaults), std::end(kAiExcludeDefaults));
+    for (const auto &[path, folder] : std::vector<std::pair<std::string, bool>>{
+             {".env", false}, {"show/.env.local", false}, {"keys/tls.key", false}, {".git", true}, {".git/config", false},
+             {"sub/.git/HEAD", false}, {".hikari/project.local.toml", false}, {".hikari/credentials.toml", false}})
+        EXPECT_TRUE(excludedPath(path, folder, defaults)) << path;
+    for (const auto &[path, folder] : std::vector<std::pair<std::string, bool>>{
+             {"notes.txt", false}, {".gitignore", false}, {".git", false}, {".hikari/project.toml", false},
+             {"sub/.hikari/project.local.toml", false}, {"keys", true}})
+        EXPECT_FALSE(excludedPath(path, folder, defaults)) << path;
+}
+
+namespace {
+
+class AiFolder : public FolderGrants {
+protected:
+    void SetUp() override
+    {
+        FolderGrants::SetUp();
+        for (const char *file : {".env", ".env.local", "keys/tls.key", ".git/config", ".hikari/project.local.toml",
+                                 ".hikari/credentials.toml", ".hikari/project.toml", "drafts/x.txt", "old.bak",
+                                 "raw/take1.WAV", "raw/ep01.mkv"}) {
+            fs::create_directories((m_data / file).parent_path());
+            std::ofstream(m_data / file) << "x";
+        }
+        m_caller.reviewed = true;
+        grant(false);
+    }
+    std::string reason(std::string_view operation, std::string_view params)
+    {
+        const Result r = call(operation, params);
+        const Json *why = r ? nullptr : r.error().data.find("reason");
+        return r ? std::string("ok") : why ? why->asString() : r.error().code;
+    }
+    std::vector<std::string> listed(std::string_view path)
+    {
+        const Result r = call("files.list", R"({"folder": "d1", "path": ")" + std::string(path) + R"("})");
+        std::vector<std::string> out;
+        if (r)
+            for (const Json &entry : r->find("entries")->asArray())
+                out.push_back(entry.find("path")->asString());
+        return out;
+    }
+};
+
+}
+
+TEST_F(AiFolder, TheDefaultsAndTheUsersAndTheProjectsGlobsAreNeitherListedNorRead)
+{
+    m_settings.set("ai.exclude", std::vector<std::string>{"*.bak"});
+    m_project.excludes = {"drafts/"};
+    EXPECT_EQ(listed(""), (std::vector<std::string>{".hikari", "keys", "notes", "raw"}));
+    EXPECT_EQ(listed(".hikari"), std::vector<std::string>{".hikari/project.toml"});
+    EXPECT_EQ(listed("keys"), std::vector<std::string>{});
+    for (const char *path : {".env", ".env.local", "keys/tls.key", ".git/config", ".hikari/project.local.toml",
+                             ".hikari/credentials.toml", "drafts/x.txt", "old.bak"})
+        EXPECT_EQ(reason("files.read", R"({"folder": "d1", "path": ")" + std::string(path) + R"("})"), "excluded") << path;
+    EXPECT_EQ(reason("files.list", R"({"folder": "d1", "path": ".git"})"), "excluded");
+    EXPECT_EQ(reason("files.read", R"({"folder": "d1", "path": ".hikari/project.toml"})"), "ok");
+    m_caller.reviewed = false;
+    EXPECT_EQ(reason("files.read", R"({"folder": "d1", "path": ".env"})"), "ok");
+}
+
+TEST_F(AiFolder, AProjectsExcludeCannotRemoveADefault)
+{
+    m_project.excludes = {"!.env*", ""};
+    m_settings.set("ai.exclude", std::vector<std::string>{"!*.key"});
+    EXPECT_EQ(reason("files.read", R"({"folder": "d1", "path": ".env"})"), "excluded");
+    EXPECT_EQ(reason("files.read", R"({"folder": "d1", "path": "keys/tls.key"})"), "excluded");
+}
+
+TEST_F(AiFolder, ALinkToAnExcludedFileIsRefused)
+{
+    if (!link(m_data / ".env", m_data / "settings.txt"))
+        GTEST_SKIP() << "this system can't make symbolic links here";
+    EXPECT_EQ(reason("files.read", R"({"folder": "d1", "path": "settings.txt"})"), "excluded");
+}
+
+TEST_F(AiFolder, MediaIsNeverSentAsBytes)
+{
+    EXPECT_EQ(reason("files.read", R"({"folder": "d1", "path": "raw/take1.WAV"})"), "media");
+    EXPECT_EQ(reason("files.read", R"({"folder": "d1", "path": "raw/ep01.mkv", "encoding": "base64"})"), "media");
+    m_caller.reviewed = false;
+    EXPECT_EQ(reason("files.read", R"({"folder": "d1", "path": "raw/ep01.mkv", "encoding": "base64"})"), "ok");
+}
+
+TEST_F(AiFolder, AnAiCallerCannotChangeAiExclude)
+{
+    EXPECT_EQ(reason("settings.set", R"({"setting": "ai.exclude", "value": []})"), "private");
+    m_caller.reviewed = false;
+    EXPECT_EQ(reason("settings.set", R"({"setting": "ai.exclude", "value": ["*.tmp"]})"), "ok");
 }
