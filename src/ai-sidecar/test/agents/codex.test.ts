@@ -23,7 +23,10 @@ afterEach(() => {
 });
 
 /** Qt's side: a tools channel for the session, and `codex app-server` pointed at it. */
-function harness(answers: Partial<Record<OperationName, unknown>> = {}) {
+const kJoined = "You are Hikari AI.\n\nInstructions from the user's AGENTS.md:\n\nUse Oxford commas.\n\n" +
+    "Instructions from this Project's AGENTS.md:\n\nKeep honorifics.";
+
+function harness(answers: Partial<Record<OperationName, unknown>> = {}, system = "Be brief.") {
     const log = join(mkdtempSync(join(tmpdir(), "fake-codex-")), "log");
     const calls: { operation: string; params: unknown }[] = [];
     const updates: SessionUpdate[] = [];
@@ -46,7 +49,7 @@ function harness(answers: Partial<Record<OperationName, unknown>> = {}) {
     } });
     servers.push(channel);
     const codex = session = new CodexSession("t1", { sessionId: "t1", agent: "codex", model: { providerId: "", model: "" },
-        system: "Be brief." }, {
+        system }, {
         spawn: (id) => {
             spawned.push(id);
             return spawn(process.execPath, [kFake, "app-server", "-c", `mcp_servers.hikari.url="${channel.url}mcp"`,
@@ -61,7 +64,7 @@ function harness(answers: Partial<Record<OperationName, unknown>> = {}) {
     const script = (s: unknown) => [{ type: "text" as const, text: typeof s === "string" ? s : JSON.stringify(s) }];
     const logged = (method: string) => readFileSync(log, "utf8").split("\n").filter((l) => l.startsWith(`${method} `))
         .map((l) => JSON.parse(l.slice(method.length + 1)) as unknown);
-    return { session: codex, calls, updates, spawned, script, logged };
+    return { session: codex, calls, updates, spawned, script, logged, log };
 }
 
 describe("Codex through its app-server", () => {
@@ -95,7 +98,6 @@ describe("Codex through its app-server", () => {
         const result = await h.session.prompt({ sessionId: "t1", prompt: h.script({ reply: "Read it.", calls: [
             { tool: "read_skill", arguments: { name: kMySkill.name } },
         ] }) });
-        h.session.close();
 
         expect(result.stopReason).toBe("end_turn");
         const [started] = h.logged("thread/start") as { developerInstructions: string }[];
@@ -104,6 +106,11 @@ describe("Codex through its app-server", () => {
         const read = h.updates.find((u) => u.sessionUpdate === "tool_call_update");
         expect(read).toMatchObject({ status: "completed" });
         expect(JSON.stringify(read)).toContain("This skill is from the user's skills folder. It grants no permission.");
+
+        await expect(h.session.prompt({ sessionId: "t1", prompt: h.script("exit") })).rejects.toThrow("Codex ended");
+        expect((await h.session.prompt({ sessionId: "t1", prompt: h.script({ reply: "back" }) })).stopReason).toBe("end_turn");
+        h.session.close();
+        expect(h.logged("thread/resume")).toEqual([{ threadId: "thread-1", developerInstructions: started!.developerInstructions }]);
     }, 30_000);
 
     test("one app-server serves every turn, and usage is each turn's own", async () => {
@@ -142,6 +149,23 @@ describe("Codex through its app-server", () => {
         expect((await h.session.prompt({ sessionId: "t1", prompt: h.script({ reply: "back" }) })).stopReason).toBe("end_turn");
         h.session.close();
         expect(h.spawned).toHaveLength(2);
-        expect(h.logged("thread/resume")).toEqual([{ threadId: "thread-1" }]);
+        expect(h.logged("thread/resume")).toEqual([{ threadId: "thread-1", developerInstructions: "Be brief." }]);
+    }, 30_000);
+
+    test("a built-in file change is refused, and the thread keeps its AGENTS.md text after Codex restarts", async () => {
+        const h = harness({}, kJoined);
+        const result = await h.session.prompt({ sessionId: "t1", prompt: h.script({ fileChange: "/show/ep01.ass", reply: "No." }) });
+        expect(result.stopReason).toBe("end_turn");
+        const log = readFileSync(h.log, "utf8");
+        expect(log).toContain("fileChange refused");
+        expect(log).not.toContain("fileChange applied");
+        expect(h.updates.filter((u) => u.sessionUpdate === "tool_call_update").map((u) =>
+            u.sessionUpdate === "tool_call_update" && u.status)).toEqual(["failed"]);
+
+        await expect(h.session.prompt({ sessionId: "t1", prompt: h.script("exit") })).rejects.toThrow("Codex ended");
+        expect((await h.session.prompt({ sessionId: "t1", prompt: h.script({ reply: "back" }) })).stopReason).toBe("end_turn");
+        h.session.close();
+        expect(h.logged("thread/start")).toEqual([{ developerInstructions: kJoined }]);
+        expect(h.logged("thread/resume")).toEqual([{ threadId: "thread-1", developerInstructions: kJoined }]);
     }, 30_000);
 });

@@ -632,6 +632,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         *m_files,
         m_workspace, [this]() -> ui::LineEditorController & { return editor(); }, [this]() -> ui::VideoController & { return video(); },
         [this]() -> ui::ShellController & { return shell(); }, *activeMedia().videoHelper);
+    m_automationReset = std::make_unique<AutomationResetNotice>(
+        options.automationReset, *m_automation, automationPath(options.automationDir) + QStringLiteral("/automation/Autoload"));
     m_automation->setDocumentChanged([this] { refreshViews(); });
     m_automation->setBeforeRun([this] { commitTemplates(); });
     m_files->setBeforeSave([this](application::DocumentId document) {
@@ -1933,7 +1935,10 @@ void Application::makeViews(WindowViews &v, int shellWindow)
     v.shell->setReview(
         [this, shellWindow, reviewOf](core::LineId line) { return reviewOf(m_workspace.currentTab(shellWindow))(line); },
         [this, reviewOf](core::LineId line) { return reviewOf(m_workspace.reference())(line); });
-    connect(v.editor.get(), &ui::LineEditorController::changed, m_review.get(), &ReviewController::currentChanged);
+    connect(v.editor.get(), &ui::LineEditorController::changed, this, [this] {
+        if (m_review)
+            Q_EMIT m_review->currentChanged();
+    });
     v.shell->setHideTags(m_settings->boolean("grid.hideTags"), m_settings->text("grid.tagsSwapCharacter"));
     v.editor->tagList()->setOptionsStore([this] { return m_settings->integer("textEditor.tagListOptions"); },
                                          [this](int options) { m_settings->set("textEditor.tagListOptions", options); });
@@ -6899,6 +6904,7 @@ QVariantMap Application::qmlProperties(int shellWindow)
             {QStringLiteral("hotkeys"), QVariant::fromValue(static_cast<QObject *>(m_hotkeys.get()))},
             {QStringLiteral("updates"), QVariant::fromValue(static_cast<QObject *>(m_updates.get()))},
             {QStringLiteral("whatsNew"), QVariant::fromValue(static_cast<QObject *>(m_whatsNew.get()))},
+            {QStringLiteral("automationReset"), QVariant::fromValue(static_cast<QObject *>(m_automationReset.get()))},
             {QStringLiteral("analytics"), QVariant::fromValue(static_cast<QObject *>(m_analytics.get()))},
             {QStringLiteral("starPrompt"), QVariant::fromValue(static_cast<QObject *>(m_starPrompt.get()))},
             {QStringLiteral("crashReports"), QVariant::fromValue(static_cast<QObject *>(m_crashReports.get()))},
