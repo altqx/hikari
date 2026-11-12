@@ -18050,6 +18050,40 @@ private slots:
         QVERIFY(!mcp->server());
     }
 
+    void settingsAiMcpServersAreAddedInPlaceWithTheirSecretsInTheKeychain()
+    {
+        auto stored = std::make_shared<MemoryAi>();
+        app::AiFeatures::Ports ports;
+        ports.keyStore = [stored] { return std::make_unique<MemoryAiKeys>(stored); };
+        ports.configStore = [stored] { return std::make_unique<MemoryAiConfigs>(stored); };
+        app::Application::Options options;
+        options.settingsFile = dir.filePath(QStringLiteral("ai-mcp-servers/hikari.ini"));
+        options.playbackAudio = false;
+        options.aiPorts = std::move(ports);
+        restartWith(options);
+        auto restart = qScopeGuard([&] { restartWith(app::Application::Options()); });
+        auto *dialog = openSettings();
+        QTRY_VERIFY(dialog && dialog->property("visible").toBool());
+        showSettingsPage("ai");
+        QTRY_VERIFY(dialogItem("settingsDialog", "aiMcpServers")->isVisible());
+        QVERIFY(dialogItem("settingsDialog", "aiNoMcpServers")->isVisible());
+
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "aiAddMcpServer"), "click"));
+        QTRY_VERIFY(dialogItem("settingsDialog", "aiMcpServerForm"));
+        QVERIFY(!dialogItem("settingsDialog", "aiNoMcpServers")->isVisible());
+        dialogItem("settingsDialog", "aiMcpServerName")->setProperty("text", QStringLiteral("Notes"));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "aiMcpServerSave"), "click"));
+        QTRY_VERIFY(dialogItem("settingsDialog", "aiMcpServerError")->isVisible());
+        dialogItem("settingsDialog", "aiMcpServerCommand")->setProperty("text", QStringLiteral("notes-mcp --stdio"));
+        dialogItem("settingsDialog", "aiMcpServerEnvironment")->setProperty("text", QStringLiteral("NOTES_TOKEN=t0k"));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "aiMcpServerSave"), "click"));
+        QTRY_VERIFY(dialogItem("settingsDialog", "aiMcpServer_notes"));
+        QTRY_VERIFY(!dialogItem("settingsDialog", "aiMcpServerForm"));
+        QCOMPARE(dialogItem("settingsDialog", "aiMcpServerStatus")->property("text").toString(),
+                 QStringLiteral("Starts when the agent needs it"));
+        QVERIFY(stored->keys["mcp-server:notes"].find("t0k") != std::string::npos);
+    }
+
     void settingsAiMcpOffersTheAiComponentWithoutAProvider()
     {
         test::LocalRelease release;

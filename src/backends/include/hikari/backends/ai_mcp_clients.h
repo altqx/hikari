@@ -168,6 +168,7 @@ private:
     std::set<std::string> m_registered;
     QPointer<AiSidecarHost> m_host;
     QPointer<AgentBroker> m_broker;
+    bool m_sidecarHasServers = false;
     std::uint64_t m_generation = 0;
     std::shared_ptr<bool> m_alive = std::make_shared<bool>(true);
 };

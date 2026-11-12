@@ -197,15 +197,16 @@ protected:
 
     void SetUp() override
     {
+        broker.attach(host);
         clients.attach(host, broker);
         broker.setNotify([this](const std::string &method, Json params) { notes.emplace_back(method, std::move(params)); });
     }
 
     Keys keys;
+    std::vector<std::pair<std::string, Json>> notes;
     AiSidecarHost host{AiSidecarHost::Options{}, nullptr, hikari::api::Caller{"ai", "AI"}};
     AgentBroker broker;
     McpClients clients{keys, QCoreApplication::applicationDirPath()};
-    std::vector<std::pair<std::string, Json>> notes;
     McpServerEntry fake{.id = "fake", .name = "Fake", .command = QStringLiteral(HIKARI_FAKE_AGENT)};
 };
 
@@ -217,7 +218,7 @@ TEST_F(McpClientsTest, QtStartsAStdioServerUnsandboxedWithItsSecretsAndOnlyItsOw
     EXPECT_FALSE(*call(kAgentStart, Json::object({{"process", 1}, {"agent", "mcp:fake"}, {"args", Json::array({"--x"})}})));
     ASSERT_TRUE(*call(kAgentStart, Json::object({{"process", 2}, {"agent", "mcp:fake"}})));
     ASSERT_TRUE(waitFor([&] { return !lines(2).empty(); }));
-    const Json &started = *lines(2)[0].find("started");
+    const Json started = *lines(2)[0].find("started");
     EXPECT_EQ(*started.find("args"), Json::array({"--from-settings"}));
     EXPECT_EQ(*started.find("secret"), Json("s3"));
 }
@@ -242,9 +243,10 @@ TEST_F(McpClientsTest, ServersEndWithTheSidecarAndARemovedOneCantStart)
     clients.setServers({fake});
     ASSERT_TRUE(*call(kAgentStart, Json::object({{"process", 1}, {"agent", "mcp:fake"}})));
     ASSERT_TRUE(waitFor([&] { return !lines(1).empty(); }));
+    ASSERT_EQ(broker.running("mcp:fake"), 1u);
     emit host.lost(QStringLiteral("crashed"));
-    ASSERT_TRUE(waitFor([&] { return exited(1); }));
     EXPECT_EQ(broker.running(), 0u);
+    EXPECT_FALSE(*call(kAgentWrite, Json::object({{"process", 1}, {"data", ""}})));
     clients.setServers({});
     EXPECT_FALSE(*call(kAgentStart, Json::object({{"process", 2}, {"agent", "mcp:fake"}})));
 }

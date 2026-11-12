@@ -426,6 +426,9 @@ void McpClients::announce()
 {
     if (!m_host || m_host->state() != AiSidecarHost::State::Ready)
         return;
+    if (m_servers.empty() && !m_sidecarHasServers)
+        return;
+    m_sidecarHasServers = !m_servers.empty();
     Json servers = Json::array();
     for (const McpServerEntry &server : m_servers)
         servers.push(Json::object({{"id", server.id},
@@ -440,7 +443,10 @@ void McpClients::attach(AiSidecarHost &host, AgentBroker &broker)
     m_host = &host;
     m_broker = &broker;
     registerStdio();
-    connect(&host, &AiSidecarHost::ready, this, [this] { announce(); });
+    connect(&host, &AiSidecarHost::ready, this, [this] {
+        m_sidecarHasServers = false;
+        announce();
+    });
     host.handle(kMcpServersStatus, [this, alive = std::weak_ptr(m_alive)](const Json &params,
                                                                           std::shared_ptr<SidecarRequest> request) {
         if (!alive.lock())
