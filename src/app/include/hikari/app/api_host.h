@@ -63,6 +63,7 @@ public:
         // The Project of the window the user works in.
         std::function<std::optional<api::ProjectState>()> project;
         std::function<std::optional<std::filesystem::path>(application::DocumentId)> translationFolder;
+        api::KaraokeHost *karaoke = nullptr;
     };
     explicit ApiHost(Wiring wiring, QObject *parent = nullptr);
     ~ApiHost() override;
