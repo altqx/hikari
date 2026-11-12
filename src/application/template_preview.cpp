@@ -303,6 +303,7 @@ bool isPreviewService(HostService service)
     switch (service) {
     case HostService::TextExtents:
     case HostService::TextExtentsMany:
+    case HostService::TextOutline:
     case HostService::FrameTimes:
     case HostService::FrameFromMs:
     case HostService::MsFromFrame:

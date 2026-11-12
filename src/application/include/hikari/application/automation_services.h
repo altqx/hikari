@@ -6,6 +6,7 @@
 #include "hikari/application/audio_display.h"
 #include "hikari/application/automation.h"
 #include "hikari/application/resample.h"
+#include "hikari/application/shape_kernel.h"
 
 #include <functional>
 #include <memory>
@@ -151,6 +152,7 @@ public:
     void setFilePicker(FilePickerPort *port) { m_picker = port; }
     void setEditor(EditorPort *port) { m_editor = port; }
     void setScriptResolution(ScriptResolutionPort *port) { m_resolution = port; }
+    void setGlyphOutlines(shape::GlyphOutlinePort *port) { m_glyphs = port; }
     void setPathContext(std::function<AutomationPathContext()> context) { m_paths = std::move(context); }
     // aegisub.gettext's lookup; without one the service is Unavailable and the
     // script gets its source.
@@ -167,6 +169,7 @@ private:
     FilePickerPort *m_picker = nullptr;
     EditorPort *m_editor = nullptr;
     ScriptResolutionPort *m_resolution = nullptr;
+    shape::GlyphOutlinePort *m_glyphs = nullptr;
     std::function<AutomationPathContext()> m_paths;
     std::function<std::string(const std::string &)> m_translate;
     struct HeldFrame {

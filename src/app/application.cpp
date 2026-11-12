@@ -695,6 +695,15 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     connect(m_settings.get(), &ui::SettingsStore::changed, this, &Application::settingChanged);
     m_automation->manager().setTraceLevel(m_settings->integer("automation.traceLevel"));
     m_automation->setSettings(m_settings.get());
+    m_automation->setWindowProjects([this] {
+        std::map<int, application::WindowProject> projects;
+        if (m_projects)
+            for (const int window : sessionWindows()) {
+                const QString root = m_projects->root(window);
+                projects[window] = {QDir::toNativeSeparators(root).toStdString(), !root.isEmpty() && projectTrusted(root)};
+            }
+        return projects;
+    });
     if (options.autoload)
         m_automation->autoload();
     m_renderer.select(m_settings->text("video.subtitleProvider").toStdString());
@@ -732,6 +741,14 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_aiScripts = std::make_unique<AiScripts>(
         *m_automation, m_userFolder.isEmpty() ? QString() : m_userFolder + QStringLiteral("/ai/scripts"),
         [this] { return m_workspace.editingTarget().has_value(); });
+    m_aiKaraoke = std::make_unique<AiKaraoke>(AiKaraoke::Wiring{
+        [this] { return activeMedia().audio ? activeMedia().audio->box().sharedAudio() : nullptr; },
+        [folder = m_readingDictionary]() -> application::ReadingAnalyzer {
+            std::shared_ptr<const backends::MecabReadings> readings =
+                backends::MecabReadings::open(std::filesystem::path(folder.toStdU16String()));
+            return readings ? backends::MecabReadings::analyzer(std::move(readings)) : application::ReadingAnalyzer{};
+        },
+        [this] { return &m_automation->templater(); }, QDir::tempPath()});
     m_apiHost = std::make_unique<ApiHost>(ApiHost::Wiring{
         m_workspace, *m_files, &m_settings->settings(), &m_automation->media(),
         [this](application::Selection next) { return applySelection(std::move(next)); },
@@ -755,7 +772,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
                                : std::filesystem::path((m_userFolder + QStringLiteral("/ai/skills")).toStdU16String()),
         m_aiScripts.get(),
         [this] { return perspectiveMeasure(); }, [this] { return activeProject(); },
-        [this](application::DocumentId document) { return honyaFolderOf(document); }});
+        [this](application::DocumentId document) { return honyaFolderOf(document); },
+        m_aiKaraoke.get()});
     AiFeatures::Ports aiPorts = options.aiPorts ? std::move(*options.aiPorts)
                                                 : AiFeatures::defaultPorts(m_userFolder, &m_apiHost->api(),
                                                                            options.appVersion.isEmpty()
@@ -825,6 +843,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     pluginWiring.setSetting = [this](const QString &id, const QString &setting, const QString &json) {
         return m_pluginManager->setSetting(id, setting, json);
     };
+    pluginWiring.windowPlugins = [this] { return windowPlugins(); };
+    pluginWiring.activeWindow = [this] { return m_workspace.activeWindow(); };
     m_pluginRuntime = std::make_unique<PluginRuntime>(std::move(pluginWiring));
     connect(m_pluginManager.get(), &PluginManager::folderForgotten, m_pluginRuntime.get(), &PluginRuntime::endFileAccess);
     connect(m_pluginManager.get(), &PluginManager::pluginsChanged, m_pluginRuntime.get(), &PluginRuntime::sync);
