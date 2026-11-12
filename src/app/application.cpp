@@ -759,6 +759,12 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
                                                                            options.appVersion.isEmpty()
                                                                                ? QStringLiteral(HIKARI_VERSION)
                                                                                : options.appVersion);
+    if (!options.externalAgents) {
+        aiPorts.agents = {};
+        aiPorts.agentOnPath = {};
+        aiPorts.findAgent = {};
+        aiPorts.agentLatest = {};
+    }
     aiPorts.reportRollback = [this](const QString &version, const QString &reason) {
         if (m_analytics)
             m_analytics->aiComponentRolledBack(version, reason, m_ai->versionProperties());
