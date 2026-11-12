@@ -1,0 +1,4 @@
+Dialogue: 2,0:00:01.00,0:00:01.25,Other,,0,0,0,fx lib,{\an8\pos(590.5,100)\alpha&HFF&\t(0,200,\alpha&H00&)}H
+Dialogue: 2,0:00:01.00,0:00:01.25,Other,,0,0,0,fx lib,{\an8\pos(609.5,100)\alpha&HFF&\t(40,240,\alpha&H00&)}i
+Dialogue: 2,0:00:01.00,0:00:01.25,Other,,0,0,0,fx lib,{\an8\pos(659.5,100)\alpha&HFF&\t(80,280,\alpha&H00&)}กิ
+Dialogue: 2,0:00:01.00,0:00:01.25,Other,,0,0,0,fx lib,{\an8\pos(689.5,100)\alpha&HFF&\t(120,320,\alpha&H00&)}น
