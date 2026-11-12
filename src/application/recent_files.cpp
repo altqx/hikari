@@ -1,5 +1,7 @@
 #include "hikari/application/recent_files.h"
 
+#include "hikari/core/lyrics_import.h"
+
 #include <algorithm>
 #include <cctype>
 #include <charconv>
@@ -125,7 +127,7 @@ OpenKind openKindOf(std::string_view path, bool single)
     }
     if (ext == "ass" || ext == "ssa" || ext == "txt" || ext == "srt" || ext == "sub")
         return OpenKind::Subtitles;
-    if (ext == "lrc" || ext == "ttml")
+    if (core::isLyricsExtension(std::u8string(ext.begin(), ext.end())))
         return OpenKind::Subtitles;
     return OpenKind::Video;
 }

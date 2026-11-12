@@ -116,7 +116,7 @@ TEST(OpenKind, FollowsTheLegacyExtensions)
     for (const bool single : {true, false}) {
         for (const char *s : {"a.ass", "a.SSA", "a.srt", "a.sub", "a.txt"})
             EXPECT_EQ(openKindOf(s, single), OpenKind::Subtitles) << s;
-        for (const char *s : {"a.lrc", "a.TTML"})
+        for (const char *s : {"a.lrc", "a.TTML", "a.krc", "a.QRC"})
             EXPECT_EQ(openKindOf(s, single), OpenKind::Subtitles) << s;
         for (const char *s : {"a.lua", "a.Moon"})
             EXPECT_EQ(openKindOf(s, single), OpenKind::Script) << s;

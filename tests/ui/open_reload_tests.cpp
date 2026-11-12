@@ -1,4 +1,5 @@
 #include "hikari/app/application.h"
+#include "hikari/app/composition.h"
 
 #include <QDateTime>
 #include <QFile>
@@ -105,6 +106,33 @@ private slots:
         const auto values = a.saveDialogValues();
         QCOMPARE(values.value(QStringLiteral("file")).toUrl().toLocalFile(), dir.filePath(QStringLiteral("enhanced")));
         QCOMPARE(values.value(QStringLiteral("extension")).toString(), QStringLiteral("ass"));
+    }
+
+    void krcAndQrcOpenAsLyricsFromTheCommandLineADropAndRecentlyOpened()
+    {
+        for (const char *name : {"decoded.krc", "decoded.qrc"}) {
+            const QString lyrics = dir.filePath(QStringLiteral("cli-%1").arg(QLatin1String(name)));
+            QFile::remove(lyrics);
+            QVERIFY(QFile::copy(QStringLiteral(HIKARI_LYRICS_FIXTURES "/") + QLatin1String(name), lyrics));
+            const std::string title = QFileInfo(lyrics).completeBaseName().toStdString() + ".ass";
+
+            app::Application a;
+            QVERIFY(!app::openStartFile(a, lyrics));
+            QCOMPARE(targetTitle(a), title);
+            QVERIFY(a.targetUntitled());
+
+            const QVariantMap dropped = a.openDropped({QUrl::fromLocalFile(lyrics)});
+            QCOMPARE(dropped.value(QStringLiteral("kind")).toString(), QStringLiteral("subtitles"));
+
+            const QVariantList recent = a.recentSubtitles();
+            QVERIFY(!recent.isEmpty());
+            const QString remembered = recent.front().toMap().value(QStringLiteral("path")).toString();
+            QCOMPARE(QFileInfo(remembered).fileName(), QFileInfo(lyrics).fileName());
+            const int tabs = static_cast<int>(a.tabs().size());
+            QVERIFY(a.openForwarded({remembered}).value(QStringLiteral("kind")).toString().isEmpty());
+            QCOMPARE(static_cast<int>(a.tabs().size()), tabs + 1);
+            QCOMPARE(targetTitle(a), title);
+        }
     }
 
     void youTubeTimedTextOpensAsAnUntitledAssDocument()
