@@ -56,6 +56,7 @@ public:
         std::function<std::string()> renderer;
         // Empty: the user has no skills.
         std::filesystem::path skills;
+        api::AutomationHost *automation = nullptr;
         std::function<application::visual::perspective::TextMeasure()> measure;
     };
     explicit ApiHost(Wiring wiring, QObject *parent = nullptr);

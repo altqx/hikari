@@ -1,6 +1,7 @@
 #include "hikari/application/karaoke_templates.h"
 
 #include "hikari/application/karaoke_layout.h"
+#include "hikari/core/document.h"
 
 #include <algorithm>
 #include <array>
@@ -422,23 +423,44 @@ std::string lower(std::string_view s)
     return out;
 }
 
+std::optional<Mode> modeOfLine(std::string_view v)
+{
+    while (!v.empty() && isSpace(v.front()))
+        v.remove_prefix(1);
+    while (!v.empty() && isSpace(v.back()))
+        v.remove_suffix(1);
+    if (lower(v) == lower(kModeKaraOK))
+        return Mode::KaraOK;
+    if (lower(v) == lower(kModeStock))
+        return Mode::Stock;
+    return std::nullopt;
+}
+
 Mode modeOf(std::optional<std::string_view> modeLine, const std::vector<SubsEntry> &subs)
 {
-    if (modeLine) {
-        std::string_view v = *modeLine;
-        while (!v.empty() && isSpace(v.front()))
-            v.remove_prefix(1);
-        while (!v.empty() && isSpace(v.back()))
-            v.remove_suffix(1);
-        if (lower(v) == lower(kModeKaraOK))
-            return Mode::KaraOK;
-        if (lower(v) == lower(kModeStock))
-            return Mode::Stock;
-    }
+    if (const auto set = modeLine.and_then(modeOfLine))
+        return *set;
     for (const SubsEntry &l : subs)
         if (l.dialogue && l.comment && karaOKOnly(l))
             return Mode::KaraOK;
     return Mode::Stock;
+}
+
+Mode documentMode(const core::Document &document)
+{
+    const auto narrow = [](std::u8string_view s) { return std::string(s.begin(), s.end()); };
+    const std::u8string key(kModeKey.begin(), kModeKey.end());
+    const auto value = document.scriptInfo(key);
+    const std::optional<std::string> modeLine = value ? std::optional(narrow(*value)) : std::nullopt;
+    std::vector<SubsEntry> entries;
+    for (const core::LineRecord *l : document.lines())
+        entries.push_back({.dialogue = true,
+                           .comment = l->comment,
+                           .layer = static_cast<int>(l->layer.value),
+                           .effect = narrow(l->effect),
+                           .text = narrow(l->text),
+                           .style = narrow(l->style)});
+    return modeOf(modeLine, entries);
 }
 
 Parsed parseTemplates(const std::vector<SubsEntry> &subs, bool keepFx, const ToNumber &toNumber, Mode mode)

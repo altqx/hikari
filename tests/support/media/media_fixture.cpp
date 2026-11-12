@@ -10,6 +10,8 @@ extern "C" {
 #include <libavutil/opt.h>
 }
 
+#include <algorithm>
+#include <cmath>
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
@@ -72,6 +74,26 @@ void drawKeyPoint(AVFrame *f, int index)
         for (int x = 0; x < kWidth; ++x)
             f->data[0][y * f->linesize[0] + x] =
                 shown && x >= 96 && x < 224 && y >= 64 && y < 176 ? std::uint8_t{235} : std::uint8_t{16};
+    for (int p = 1; p < 3; ++p)
+        for (int y = 0; y < kHeight / 2; ++y)
+            std::memset(f->data[p] + y * f->linesize[p], 128, kWidth / 2);
+}
+
+// A grey box over black that fades in over frames 4 to 9, is fully shown on 9 to 29 and fades
+// out over 30 to 35.
+constexpr int kFadeInFrom = 4, kFadeInTo = 9, kFadeOutFrom = 30, kFadeOutTo = 35;
+
+void drawFade(AVFrame *f, int index)
+{
+    double shown = 1;
+    if (index < kFadeInTo)
+        shown = std::max(0.0, static_cast<double>(index - kFadeInFrom + 1) / (kFadeInTo - kFadeInFrom + 1));
+    else if (index >= kFadeOutFrom)
+        shown = std::max(0.0, 1.0 - static_cast<double>(index - kFadeOutFrom + 1) / (kFadeOutTo - kFadeOutFrom + 1));
+    const auto box = static_cast<std::uint8_t>(16 + std::lround(shown * 180));
+    for (int y = 0; y < kHeight; ++y)
+        for (int x = 0; x < kWidth; ++x)
+            f->data[0][y * f->linesize[0] + x] = x >= 96 && x < 224 && y >= 64 && y < 176 ? box : std::uint8_t{16};
     for (int p = 1; p < 3; ++p)
         for (int y = 0; y < kHeight / 2; ++y)
             std::memset(f->data[p] + y * f->linesize[p], 128, kWidth / 2);
@@ -202,7 +224,7 @@ int writeTimedSubtitles(const std::string &out, const std::string &kind)
 int main(int argc, char **argv)
 {
     if (argc != 3)
-        return fail("usage: <out> <cfr|vfr|bframes|longgop|long|longaudio|audio|audiodelay|audioonly|tracks|unknown|color601|color709|color709full|colorhd|colorhdr|yuv10|keypoint|subs-mp4|subs-mov|subs-ts>");
+        return fail("usage: <out> <cfr|vfr|bframes|longgop|long|longaudio|audio|audiodelay|audioonly|tracks|unknown|color601|color709|color709full|colorhd|colorhdr|yuv10|keypoint|fade|subs-mp4|subs-mov|subs-ts>");
     const std::string out = argv[1], kind = argv[2];
     av_log_set_level(AV_LOG_ERROR); // the encoders' clipping notes are noise in the build log
     if (kind == "audioonly")
@@ -258,6 +280,7 @@ int main(int argc, char **argv)
     const bool extract = kind == "mkvextract";
     const bool color = kind.starts_with("color");
     const bool keyPoint = kind == "keypoint";
+    const bool fade = kind == "fade";
     const bool untagged = kind == "colorhd";
     if (untagged) {
         kWidth = 1280;
@@ -299,7 +322,7 @@ int main(int argc, char **argv)
         enc->color_primaries = AVCOL_PRI_BT2020;
         enc->color_trc = AVCOL_TRC_SMPTE2084;
         enc->color_range = AVCOL_RANGE_MPEG;
-    } else if (color || keyPoint) {
+    } else if (color || keyPoint || fade) {
         enc->colorspace = kind == "color601" ? AVCOL_SPC_SMPTE170M : AVCOL_SPC_BT709;
         enc->color_primaries = kind == "color601" ? AVCOL_PRI_SMPTE170M : AVCOL_PRI_BT709;
         enc->color_trc = kind == "color601" ? AVCOL_TRC_SMPTE170M : AVCOL_TRC_BT709;
@@ -417,6 +440,8 @@ int main(int argc, char **argv)
             drawColor(frame);
         else if (keyPoint)
             drawKeyPoint(frame, i);
+        else if (fade)
+            drawFade(frame, i);
         else
             drawIndex(frame, i);
         frame->pts = vfr ? pts : i;

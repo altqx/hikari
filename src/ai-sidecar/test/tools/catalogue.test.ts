@@ -56,6 +56,15 @@ describe("the tool catalogue", () => {
         expect(kOwn.entries.find((e) => e.tool.name === "search_tools")!.tool.annotations.readOnlyHint).toBe(true);
     });
 
+    test("offers AI-written Lua as a searchable write that carries the whole script", () => {
+        const run = kOwn.entries.find((e) => e.tool.name === "automation_run")!;
+        expect(run.operation).toBe("automation.run");
+        expect(run.group).toBe("automation");
+        expect(run.tool.annotations.readOnlyHint).toBe(false);
+        expect(run.tool.description).toContain("approves");
+        expect((run.tool.inputSchema as any).required).toEqual(["name", "script"]);
+    });
+
     test("gives self-contained object schemas without const, which Gemini refuses", () => {
         for (const { tool } of kOwn.entries) {
             expect(tool.inputSchema.type).toBe("object");

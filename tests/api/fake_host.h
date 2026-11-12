@@ -156,6 +156,28 @@ public:
     std::map<std::string, std::string> contents;
 };
 
+// Answers each run once finish() is called, with `next`.
+class FakeAutomation final : public AutomationHost {
+public:
+    LuaStart run(const LuaScript &script, std::function<void(LuaRun)> done) override
+    {
+        if (start == LuaStart::Started) {
+            runs.push_back(script);
+            pending = std::move(done);
+        }
+        return start;
+    }
+    void finish()
+    {
+        if (auto done = std::exchange(pending, {}))
+            done(next);
+    }
+    LuaStart start = LuaStart::Started;
+    LuaRun next{"applied", "", "", "x.lua"};
+    std::vector<LuaScript> runs;
+    std::function<void(LuaRun)> pending;
+};
+
 // Document 1 "a.ass" (the editing target, Lines 1-3, Lines 1 and 3 selected,
 // 3 active) and document 2 "b.ass", never saved.
 class FakeHost final : public DocumentHost, public CommandHost, public PanelHost {
@@ -186,7 +208,8 @@ public:
     }
 
     FolderSkills skills{std::filesystem::path()};
-    Host host() { return Host{this, this, this, &settings, &media, &files, &review, render, &skills, typeset}; }
+    FakeAutomation automation;
+    Host host() { return Host{this, this, this, &settings, &media, &files, &review, render, &skills, &automation, typeset}; }
 
     const application::Workspace &workspace() const override { return workspace_; }
     application::EditSession *session(application::DocumentId document) const override

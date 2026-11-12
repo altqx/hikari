@@ -675,6 +675,24 @@ export type SkillsReadResult = {
     data: string;
 };
 
+/** Saves a Lua Automation script to the AI scripts folder and runs one of its macros on the active tab's selection, once the user approves the script. The run is one undo step. */
+export type AutomationRunParams = {
+    /** The script's file name without .lua; an earlier script of that name is replaced. */
+    name: string;
+    /** The whole Lua script, registering its macro with aegisub.register_macro. */
+    script: string;
+    /** The macro to run, by its registered name; default the first. */
+    macro?: string;
+};
+
+export type AutomationRunResult = {
+    /** The saved script's file name. */
+    file: string;
+    outcome: "applied" | "refused" | "failed" | "cancelled" | "declined" | "stopped" | "lost" | "invalid";
+    message: string;
+    log: string;
+};
+
 /** The node types the node-effect editor offers, with their ports and parameters. */
 export type NodesCatalogueParams = {
     category?: string;
@@ -999,6 +1017,7 @@ export interface Operations {
     "files.write": { access: "write"; params: FilesWriteParams; result: FilesWriteResult };
     "skills.list": { access: "read"; params: SkillsListParams; result: SkillsListResult };
     "skills.read": { access: "read"; params: SkillsReadParams; result: SkillsReadResult };
+    "automation.run": { access: "write"; params: AutomationRunParams; result: AutomationRunResult };
     "nodes.catalogue": { access: "read"; params: NodesCatalogueParams; result: NodesCatalogueResult };
     "nodes.validate": { access: "read"; params: NodesValidateParams; result: NodesValidateResult };
     "typeset.perspective": { access: "read"; params: TypesetPerspectiveParams; result: TypesetPerspectiveResult };

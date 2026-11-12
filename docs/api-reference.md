@@ -40,6 +40,7 @@ Version 1 of the Hikari API, generated from HikariSub's own registry: the same r
 | `files.write` | write | 1 | Replaces a file granted for writing with new content. |
 | `skills.list` | read | 1 | The user's skills: each skill folder's name and its files, SKILL.md among them. |
 | `skills.read` | read | 1 | One file of a user's skill, as UTF-8 text; at most 256 KiB. |
+| `automation.run` | write | 1 | Saves a Lua Automation script to the AI scripts folder and runs one of its macros on the active tab's selection, once the user approves the script. The run is one undo step. |
 | `nodes.catalogue` | read | 1 | The node types the node-effect editor offers, with their ports and parameters. |
 | `nodes.validate` | read | 1 | Checks a node-effect graph; each problem names its node and port or field. |
 | `typeset.perspective` | read | 1 | The Line's text with the tags that render it on a quad (VT3's perspective solver): \pos, \org, \frx, \fry, \frz, \fax, \fscx and \fscy. |
@@ -787,6 +788,29 @@ One file of a user's skill, as UTF-8 text; at most 256 KiB.
 | `file` | string | yes |  |
 | `size` | integer | yes | At least 0. |
 | `data` | string | yes |  |
+
+### `automation.run`
+
+Write. Since version 1.
+
+Saves a Lua Automation script to the AI scripts folder and runs one of its macros on the active tab's selection, once the user approves the script. The run is one undo step.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `name` | string | yes | The script's file name without .lua; an earlier script of that name is replaced. At most 64 characters. `pattern`: `"^[A-Za-z0-9][A-Za-z0-9 _.-]*$"`. |
+| `script` | string | yes | The whole Lua script, registering its macro with aegisub.register_macro. 1 to 262144 characters. |
+| `macro` | string |  | The macro to run, by its registered name; default the first. Not empty. |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `file` | string | yes | The saved script's file name. |
+| `outcome` | one of `applied`, `refused`, `failed`, `cancelled`, `declined`, `stopped`, `lost` or `invalid` | yes |  |
+| `message` | string | yes |  |
+| `log` | string | yes |  |
 
 ### `nodes.catalogue`
 
