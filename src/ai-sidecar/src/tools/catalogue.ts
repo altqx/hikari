@@ -73,6 +73,7 @@ const kPlacements: Partial<Record<OperationName, Placement>> = {
     "video.colours": { group: "typeset" },
     "video.keyframes": { group: "typeset" },
     "audio.peaks": { group: "karaoke" },
+    "translation.project": { group: "translate" },
     "nodes.catalogue": { group: "effects" },
     "nodes.validate": { group: "effects" },
     "panels.list": { group: "app" },
@@ -85,10 +86,11 @@ const kPlacements: Partial<Record<OperationName, Placement>> = {
 };
 
 /**
- * Operations no tool offers as they are: search_commands wraps commands.list, read_skill the skills, and the sidecar
- * knows the version.
+ * Operations no tool offers as they are: search_commands wraps commands.list, read_skill the skills, the sidecar
+ * knows the version, and only a translation run Qt approved writes the project files.
  */
-const kUnoffered: readonly OperationName[] = ["commands.list", "skills.list", "skills.read", "api.version"];
+const kUnoffered: readonly OperationName[] = ["commands.list", "skills.list", "skills.read", "api.version",
+    "translation.project_write"];
 
 /** MCP's Tool, as `tools/list` gives it. */
 export interface Tool {

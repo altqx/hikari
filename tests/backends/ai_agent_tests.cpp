@@ -176,7 +176,8 @@ TEST(AgentPolicy, EveryWriteOperationIsClassified)
         if (op.access == hikari::api::Access::Write)
             writes.insert(op.name);
     EXPECT_EQ(writes, (std::set<std::string>{"commands.run", "document.apply", "files.write", "panels.close",
-                                             "panels.focus", "panels.open", "selection.set", "settings.set"}))
+                                             "panels.focus", "panels.open", "selection.set", "settings.set",
+                                             "translation.project_write"}))
         << "Classify the new write in alwaysAsk and docs/ai-agent.md, then add it here.";
 }
 

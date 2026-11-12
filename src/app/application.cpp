@@ -747,7 +747,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         [this](application::DocumentId document) { return subtitleFonts(document); },
         [this] { return m_settings->text("video.subtitleProvider").toStdString(); },
         m_userFolder.isEmpty() ? std::filesystem::path()
-                               : std::filesystem::path((m_userFolder + QStringLiteral("/ai/skills")).toStdU16String())});
+                               : std::filesystem::path((m_userFolder + QStringLiteral("/ai/skills")).toStdU16String()),
+        [this](application::DocumentId document) { return honyaFolderOf(document); }});
     AiFeatures::Ports aiPorts = options.aiPorts ? std::move(*options.aiPorts)
                                                 : AiFeatures::defaultPorts(m_userFolder, &m_apiHost->api(),
                                                                            options.appVersion.isEmpty()
@@ -778,6 +779,14 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         [this](application::DocumentId document, core::LineId line) {
             if (m_workspace.editingTarget() == document)
                 applySelection(application::Selection{line, {line}, line, {}});
+        },
+        [this](application::DocumentId document) {
+            const WindowSettings &window =
+                *views(m_workspace.window(document).value_or(m_workspace.activeWindow())).settings;
+            return InlineAiController::ProjectModels{
+                QString::fromStdString(window.settings().text("translation.translator")),
+                QString::fromStdString(window.settings().text("translation.reviewer")),
+                window.waitsForTrust("translation.translator") || window.waitsForTrust("translation.reviewer")};
         }});
     const auto hideAiCommands = [this] {
         m_hotkeys->setHidden([this](int id) { return !m_ai->on() && application::aiCommand(id); });

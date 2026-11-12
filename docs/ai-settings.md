@@ -104,3 +104,7 @@ Later versions arrive on their own ([ADR 0031](adr/0031-the-ai-sidecar-updates-o
 - `hikari_backends_ai_agent_cli_tests`: each install method from fake paths, Windows `.cmd` shims, version parsing, badges, Claude's channel, the daily cache against a local server, and Update now's outcomes with a fake CLI (updated, unchanged, failed, timed out, cancelled). No test runs a real `claude` or `codex`.
 - `hikari_backends_ai_signin_tests` runs the flows against a fake auth.openai.com and openrouter.ai (`tests/support/fake_auth_server.h`): the device code's polling, its 3 s floor, 404 codes off, denials, expiry, 429 and server errors; the browser's state check and its busy port; OpenRouter's random callback path; refresh, a refused refresh, cancelling, a refusing keychain, the URL allow-list, import leaving `auth.json` untouched, and sign-out.
 - `hikari_application_ai_providers_tests`, `hikari_backends_ai_requests_tests` and the sidecar's `caching.test.ts` cover `update`, `unassign`, the first catalogue, `probe` and `caching: false`.
+
+## In a Project
+
+Providers, keys, budgets and permissions are yours alone ([ADR 0030](adr/0030-open-a-folder-as-a-project.md)). A trusted Project may only choose the translation pipeline's models from your providers, with `[translation] translator` and `reviewer` in `.hikari/project.toml`. A Project never carries an API key, token, base URL or other credential: such entries are ignored with a warning and never written ([AI translation pipeline](ai-translation.md#roles-and-models)).

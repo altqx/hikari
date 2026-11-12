@@ -81,6 +81,7 @@ const Registry &Api::registry()
         detail::addMediaOperations(r);
         detail::addFileOperations(r);
         detail::addSkillOperations(r);
+        detail::addTranslationOperations(r);
         detail::addNodeOperations(r);
         detail::addEvents(r);
         return r;

@@ -2413,6 +2413,115 @@
       }
     },
     {
+      "name": "translation.project",
+      "access": "read",
+      "summary": "The Document's Honya project files: PROJECT.md, GLOSSARY.md, CHARACTERS.md and STYLE.md, those that exist. folder is null when the Document has no project folder.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId",
+            "description": "Defaults to the active Document."
+          }
+        },
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "folder": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "enum": [
+                    "PROJECT.md",
+                    "GLOSSARY.md",
+                    "CHARACTERS.md",
+                    "STYLE.md"
+                  ]
+                },
+                "data": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "name",
+                "data"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "folder",
+          "files"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "translation.project_write",
+      "access": "write",
+      "summary": "Replaces one of the Document's Honya project files, keeping Honya's Markdown and honya:data format.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId",
+            "description": "Defaults to the active Document."
+          },
+          "file": {
+            "enum": [
+              "PROJECT.md",
+              "GLOSSARY.md",
+              "CHARACTERS.md",
+              "STYLE.md"
+            ]
+          },
+          "data": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "file",
+          "data"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "file": {
+            "enum": [
+              "PROJECT.md",
+              "GLOSSARY.md",
+              "CHARACTERS.md",
+              "STYLE.md"
+            ]
+          },
+          "size": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "file",
+          "size"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
       "name": "nodes.catalogue",
       "access": "read",
       "summary": "The node types the node-effect editor offers, with their ports and parameters.",
