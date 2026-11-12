@@ -56,6 +56,12 @@ ColumnLayout {
             parts.push(qsTr("Came back the same: line %1.", "", n.same.length).arg(rows(n.same)))
         if ((n.edited || []).length > 0)
             parts.push(qsTr("You edited line %1 first, so it was left as it is.", "", n.edited.length).arg(rows(n.edited)))
+        if ((n.review || []).length > 0)
+            parts.push(n.unconfirmed
+                       ? qsTr("The reviewer didn’t approve line %1, so it’s marked Unconfirmed.", "", n.review.length).arg(rows(n.review))
+                       : qsTr("The reviewer didn’t approve line %1. Check it before you use it.", "", n.review.length).arg(rows(n.review)))
+        if (n.modelsWaitForTrust)
+            parts.push(qsTr("This project’s translator and reviewer models are used once you trust its folder; your own ran instead."))
         if ((n.skipped || 0) > 0)
             parts.push(qsTr("%n line(s) weren’t sent.", "", n.skipped))
         return parts.join(" ")
@@ -113,7 +119,8 @@ ColumnLayout {
         objectName: "inlineAiNotice"
         visible: bar.noticed
         Layout.fillWidth: true
-        severity: (bar.notice.failed || []).length > 0 || bar.notice.end === "noModel" ? "warning" : "info"
+        severity: (bar.notice.failed || []).length > 0 || (bar.notice.review || []).length > 0
+                  || bar.notice.end === "noModel" ? "warning" : "info"
         text: bar.noticeText(bar.notice)
         onClosed: bar.controller.dismiss()
         Button {
@@ -233,13 +240,26 @@ ColumnLayout {
                             Layout.preferredWidth: 32
                             horizontalAlignment: Text.AlignRight
                         }
-                        Label {
+                        ColumnLayout {
                             Layout.fillWidth: true
-                            wrapMode: Text.Wrap
-                            textFormat: row.modelData.stale ? Text.PlainText : Text.RichText
-                            color: row.modelData.stale ? Theme.muted : Theme.text
-                            text: row.modelData.stale ? qsTr("Out of date: you edited line %1 after it was sent.").arg(row.modelData.row)
-                                                      : row.modelData.diff
+                            spacing: 2
+                            Label {
+                                Layout.fillWidth: true
+                                wrapMode: Text.Wrap
+                                textFormat: row.modelData.stale ? Text.PlainText : Text.RichText
+                                color: row.modelData.stale ? Theme.muted : Theme.text
+                                text: row.modelData.stale ? qsTr("Out of date: you edited line %1 after it was sent.").arg(row.modelData.row)
+                                                          : row.modelData.diff
+                            }
+                            Label {
+                                objectName: "inlineAiNeedsReview" + row.index
+                                visible: !row.modelData.stale && !!row.modelData.needsReview
+                                Layout.fillWidth: true
+                                wrapMode: Text.Wrap
+                                textFormat: Text.PlainText
+                                color: Theme.muted
+                                text: qsTr("Not approved by the reviewer: %1").arg((row.modelData.issues || []).join(" "))
+                            }
                         }
                     }
                 }

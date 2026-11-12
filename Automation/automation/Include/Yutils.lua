@@ -3538,5 +3538,85 @@ Yutils = {
 	}
 }
 
+-- HikariSub (AU6 #845): the shape functions below run in HikariSub's native shape kernel,
+-- aegisub.__shape_impl, which gives this file's results byte for byte (goldens in
+-- tests/fixtures/shape-kernel). When the kernel answers false, the Lua above runs. transform routes only
+-- matrices made by create_matrix. Without pangocairo, create_font falls back to the host's fonts
+-- through FreeType. A user's DependencyControl copy of Yutils has none of this.
+local shape_impl = type(aegisub) == "table" and aegisub.__shape_impl
+if shape_impl then
+	local shape, lua = Yutils.shape, {}
+	for name, fn in pairs(shape) do
+		lua[name] = fn
+	end
+	local matrices = setmetatable({}, {__mode = "k"})
+	local create_matrix = Yutils.math.create_matrix
+	Yutils.math.create_matrix = function()
+		local matrix = create_matrix()
+		matrices[matrix] = true
+		return matrix
+	end
+	shape.bounding = function(s)
+		local ok, x0, y0, x1, y1 = shape_impl.bounding(s)
+		if ok then
+			return x0, y0, x1, y1
+		end
+		return lua.bounding(s)
+	end
+	for _, name in ipairs({"flatten", "move", "to_outline", "to_pixels"}) do
+		local native, fallback = shape_impl[name], lua[name]
+		shape[name] = function(...)
+			local ok, result = native(...)
+			if ok then
+				return result
+			end
+			return fallback(...)
+		end
+	end
+	shape.transform = function(s, matrix)
+		if matrices[matrix] then
+			local ok, result = shape_impl.transform(s, matrix.get_data())
+			if ok then
+				return result
+			end
+		end
+		return lua.transform(s, matrix)
+	end
+	if ffi.os ~= "Windows" and not pangocairo then
+		local create_font = Yutils.decode.create_font
+		Yutils.decode.create_font = function(family, bold, italic, underline, strikeout, size, xscale, yscale, hspace)
+			if type(family) ~= "string" or type(bold) ~= "boolean" or type(italic) ~= "boolean" or type(underline) ~= "boolean" or
+				type(strikeout) ~= "boolean" or type(size) ~= "number" or size <= 0 then
+				return create_font(family, bold, italic, underline, strikeout, size, xscale, yscale, hspace)
+			end
+			xscale, yscale, hspace = xscale or 1, yscale or 1, hspace or 0
+			local function outline(text)
+				if type(text) ~= "string" then
+					error("text expected", 3)
+				end
+				local ok, drawing, width, height, ascent, descent =
+					shape_impl.text_outline(family, bold, italic, underline, strikeout, size, xscale, yscale, hspace, text)
+				if not ok then
+					error("font \"" .. family .. "\" couldn't be loaded", 3)
+				end
+				return drawing, width, height, ascent, descent
+			end
+			return {
+				metrics = function()
+					local _, _, height, ascent, descent = outline("")
+					return {height = height, ascent = ascent, descent = descent, internal_leading = 0, external_leading = 0}
+				end,
+				text_extents = function(text)
+					local _, width, height = outline(text)
+					return {width = width, height = height}
+				end,
+				text_to_shape = function(text)
+					return (outline(text))
+				end
+			}
+		end
+	end
+end
+
 -- Return library to script loader
 return Yutils

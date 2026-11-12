@@ -7,6 +7,12 @@
 
 namespace hikari::ui {
 
+PanelDock::~PanelDock()
+{
+    if (auto *dock = controller(); dock && !dock->isOpen() && !dock->isInSideBar())
+        delete dock;
+}
+
 void PanelDock::open()
 {
     if (!handOver())

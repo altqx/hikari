@@ -49,6 +49,11 @@ struct AgentModel {
 const std::array kAgentModels{AgentModel{"claude", QT_TRANSLATE_NOOP("HikariSub.Agent", "Claude Code")},
                               AgentModel{"codex", QT_TRANSLATE_NOOP("HikariSub.Agent", "Codex")}};
 
+ai::ModelRef acpRef(const AiFeatures::AcpAgent &agent)
+{
+    return {std::string(backends::ai::kAgentProviderPrefix) + "acp:" + agent.id.toStdString(), ""};
+}
+
 QString modelValue(const ai::ModelRef &ref)
 {
     return qs(ref.providerId) + QLatin1Char('\t') + qs(ref.modelId);
@@ -196,7 +201,7 @@ void AgentController::apply()
         w.defaults = [this] {
             return AgentThreads::Defaults{
                 backends::ai::agentModeFromId(m_wiring.settings.text(kModeSetting).toStdString()).value_or(AgentMode::Auto),
-                threadCap(), dailyCap()};
+                threadCap(), dailyCap(), autoCompact()};
         };
         w.beginTurn = [this](const std::string &caller, const std::string &label) {
             return m_wiring.review.beginTurn(caller, label);
@@ -207,6 +212,11 @@ void AgentController::apply()
             return title ? *title : std::string();
         };
         w.safeFolders = [this] { return safeFolders(); };
+        w.project = [this] { return m_wiring.project ? m_wiring.project().toStdString() : std::string(); };
+        w.instructions = [this](const std::string &project) {
+            return backends::ai::joinInstructions(backends::ai::agentsFileText(m_wiring.userFolder),
+                                                  backends::ai::agentsFileText(qs(project)));
+        };
         w.now = m_wiring.now;
         if (m_wiring.scripts)
             w.scriptNeeds = [scripts = m_wiring.scripts](const std::string &script) { return scripts->needs(script); };
@@ -220,6 +230,10 @@ void AgentController::apply()
             emit threadsChanged();
             if (id.toStdString() == m_current)
                 refreshThread();
+        });
+        connect(m_threads.get(), &AgentThreads::summarised, this, [this](const QString &from, const QString &to) {
+            if (from.toStdString() == m_current)
+                select(to.toStdString());
         });
         connect(m_threads.get(), &AgentThreads::asked, this, [this](quint64 ask) {
             if (const auto it = m_threads->asks().find(ask); it != m_threads->asks().end())
@@ -262,6 +276,8 @@ std::optional<ai::ModelRef> AgentController::foundAgent() const
     for (const AgentModel &agent : kAgentModels)
         if (m_wiring.ai.agentFound(QString::fromLatin1(agent.program)))
             return agent.ref();
+    if (const auto acp = m_wiring.ai.acpAgents(); !acp.empty())
+        return acpRef(acp.front());
     return std::nullopt;
 }
 
@@ -289,7 +305,10 @@ QVariantList AgentController::threads() const
         return out;
     const ai::Providers *providers = m_wiring.ai.providers();
     const QDate today = QDate::currentDate();
-    for (const AgentThread *t : m_threads->threads()) {
+    const std::string project = m_wiring.project ? m_wiring.project().toStdString() : std::string();
+    std::vector<const AgentThread *> listed = m_threads->threads();
+    std::ranges::stable_partition(listed, [&](const AgentThread *t) { return !project.empty() && t->project == project; });
+    for (const AgentThread *t : listed) {
         QString model;
         if (const auto ref = m_threads->modelOf(*t); ref && providers)
             if (const ai::Model *m = modelIn(providers->config(), *ref))
@@ -311,7 +330,9 @@ QVariantList AgentController::threads() const
                                   {QStringLiteral("cost"), t->cost},
                                   {QStringLiteral("costUnknown"), t->costUnknown},
                                   {QStringLiteral("state"), state},
-                                  {QStringLiteral("day"), dayOf(t->updated, today)}});
+                                  {QStringLiteral("day"), !project.empty() && t->project == project
+                                                              ? QStringLiteral("project")
+                                                              : dayOf(t->updated, today)}});
     }
     return out;
 }
@@ -329,6 +350,9 @@ QVariantMap AgentController::thread() const
         model = modelValue(*ref);
         const auto agent = std::ranges::find_if(kAgentModels, [&](const AgentModel &a) { return a.ref() == *ref; });
         modelText = agent != kAgentModels.end() ? agent->text() : qs(ref->modelId);
+        for (const AiFeatures::AcpAgent &acp : m_wiring.ai.acpAgents())
+            if (acpRef(acp) == *ref)
+                modelText = acp.name;
         if (const ai::Model *m = providers ? modelIn(providers->config(), *ref) : nullptr) {
             modelText = qs(m->name.empty() ? m->id : m->name);
             window = m->contextTokens.value_or(0);
@@ -348,18 +372,45 @@ QVariantMap AgentController::thread() const
             {QStringLiteral("title"), qs(t->title)},
             {QStringLiteral("mode"), qs(std::string(backends::ai::agentModeId(t->mode)))},
             {QStringLiteral("running"), m_threads->running(t->id)},
+            {QStringLiteral("compacting"), m_threads->compacting(t->id)},
+            {QStringLiteral("external"), m_threads->modelOf(*t) && backends::ai::externalAgentOf(*m_threads->modelOf(*t))},
             {QStringLiteral("queued"), qs(m_threads->queued(t->id))},
             {QStringLiteral("cost"), t->cost},
             {QStringLiteral("cap"), t->cap},
             {QStringLiteral("costUnknown"), t->costUnknown},
             {QStringLiteral("contextTokens"), qint64(t->contextTokens)},
             {QStringLiteral("contextWindow"), window},
+            {QStringLiteral("compactWindow"),
+             qint64(backends::ai::contextWindowOf(providers ? &providers->config() : nullptr,
+                                                  m_threads->modelOf(*t).value_or(ai::ModelRef{})))},
             {QStringLiteral("model"), model},
             {QStringLiteral("modelText"), modelText},
             {QStringLiteral("attached"), attached},
             {QStringLiteral("webSearch"), t->webSearch},
             {QStringLiteral("webSearchReady"), searchReady},
-            {QStringLiteral("webSearchCacheMiss"), provider && provider->preset == ai::Preset::Anthropic}};
+            {QStringLiteral("webSearchCacheMiss"), provider && provider->preset == ai::Preset::Anthropic},
+            {QStringLiteral("projectInstructions"), !projectInstructionsFile(*t).isEmpty()}};
+}
+
+QString AgentController::projectInstructionsFile(const AgentThread &thread) const
+{
+    if (thread.project.empty())
+        return {};
+    const QFileInfo file(QDir(qs(thread.project)).filePath(QStringLiteral("AGENTS.md")));
+    return file.isFile() && file.size() > 0 ? file.absoluteFilePath() : QString();
+}
+
+void AgentController::openProjectInstructions() const
+{
+    const AgentThread *t = m_threads && !m_current.empty() ? m_threads->thread(m_current) : nullptr;
+    if (const QString file = t ? projectInstructionsFile(*t) : QString(); !file.isEmpty())
+        backends::desktop::openUrl(QUrl::fromLocalFile(file));
+}
+
+void AgentController::projectChanged()
+{
+    emit threadsChanged();
+    emit threadChanged();
 }
 
 QVariantList AgentController::models() const
@@ -370,6 +421,10 @@ QVariantList AgentController::models() const
             out.push_back(QVariantMap{{QStringLiteral("value"), modelValue(agent.ref())},
                                       {QStringLiteral("text"), agent.text()},
                                       {QStringLiteral("provider"), QString()}});
+    for (const AiFeatures::AcpAgent &acp : m_wiring.ai.acpAgents())
+        out.push_back(QVariantMap{{QStringLiteral("value"), modelValue(acpRef(acp))},
+                                  {QStringLiteral("text"), acp.name},
+                                  {QStringLiteral("provider"), QString()}});
     const ai::Providers *providers = m_wiring.ai.providers();
     if (!providers)
         return out;
@@ -402,6 +457,23 @@ QString AgentController::activeTitle() const
 bool AgentController::costMeter() const
 {
     return m_wiring.settings.boolean(kCostMeterSetting);
+}
+
+bool AgentController::autoCompact() const
+{
+    return m_wiring.settings.boolean(kAutoCompactSetting);
+}
+
+void AgentController::compact(const QString &instruction)
+{
+    if (m_threads && !m_current.empty())
+        m_threads->compact(m_current, instruction.trimmed().toStdString());
+}
+
+void AgentController::newThreadFromSummary()
+{
+    if (m_threads && !m_current.empty())
+        m_threads->newThreadFromSummary(m_current);
 }
 
 bool AgentController::fullAccessWarned() const

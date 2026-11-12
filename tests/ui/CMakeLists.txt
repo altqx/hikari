@@ -166,6 +166,7 @@ hikari_add_spix_test(hikari_ui_history_workflow SOURCES history_workflow.cpp LIB
 hikari_add_spix_test(hikari_ui_audio_timing_workflow SOURCES audio_timing_workflow.cpp LIBRARIES hikari_composition)
 hikari_add_qttest(hikari_ui_close_review_tests SOURCES close_review_tests.cpp LIBRARIES hikari_composition)
 hikari_add_qttest(hikari_ui_file_session_popups_tests SOURCES file_session_popups_tests.cpp LIBRARIES hikari_composition)
+hikari_add_qttest(hikari_ui_cold_start_tests SOURCES cold_start_tests.cpp LIBRARIES hikari_composition)
 hikari_add_qttest(hikari_ui_grammar_tests SOURCES grammar_ui_tests.cpp LIBRARIES hikari_composition)
 target_compile_definitions(hikari_ui_grammar_tests PRIVATE HIKARI_HARPER_LS="${HIKARI_HARPER_LS}")
 foreach(mode offscreen xvfb native)
@@ -462,7 +463,8 @@ add_dependencies(hikari_ui_forwarded_launches_tests hikari_media_fixtures hikari
 hikari_add_qttest(hikari_ui_project_windows_tests SOURCES project_windows_tests.cpp LIBRARIES hikari_composition)
 target_include_directories(hikari_ui_project_windows_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
 target_compile_definitions(hikari_ui_project_windows_tests PRIVATE
-    HIKARI_ATTACHMENT_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/attachments")
+    HIKARI_ATTACHMENT_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/attachments"
+    HIKARI_AI_SKILLS_SOURCE="${PROJECT_SOURCE_DIR}/src/ai-sidecar/skills")
 hikari_add_qttest(hikari_ui_desktop_handoff_tests SOURCES desktop_handoff_tests.cpp LIBRARIES hikari_composition)
 hikari_add_qttest(hikari_ui_user_guide_tests SOURCES user_guide_tests.cpp LIBRARIES hikari_composition)
 target_compile_definitions(hikari_ui_user_guide_tests PRIVATE HIKARI_UI_SOURCE_DIR="${PROJECT_SOURCE_DIR}/src/ui")

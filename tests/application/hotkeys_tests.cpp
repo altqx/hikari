@@ -63,6 +63,7 @@ constexpr ToolCommand kToolCommands[] = {
         {2032, "VIDEO_TOOL_HYDRA", "Hydra", "H"},
         {2033, "VIDEO_TOOL_PERSPECTIVE", "Perspective", "Q"},
         {2043, "VIDEO_TOOL_GRADIENT", "Gradient", "W"},
+        {2044, "VIDEO_TOOL_TEXT_ON_PATH", "Text on path", ""},
 };
 
 }
@@ -70,7 +71,7 @@ constexpr ToolCommand kToolCommands[] = {
 TEST(Hotkeys, ActionTableIsLegacyIdsAndTheMigrationMap)
 {
     ASSERT_EQ(ids().size(), 243u);
-    ASSERT_EQ(hotkeyActions().size(), 381u);
+    ASSERT_EQ(hotkeyActions().size(), 415u);
     for (const auto &a : hotkeyActions().first(kLegacyHotkeyActions)) {
         EXPECT_EQ(hotkeyIdOf(a.symbol), a.id);
         EXPECT_EQ(hotkeySymbol(a.id), a.symbol);
@@ -81,7 +82,7 @@ TEST(Hotkeys, ActionTableIsLegacyIdsAndTheMigrationMap)
         const bool editor = std::string_view(a.symbol).starts_with("EDITBOX_");
         const bool audio = a.id >= 1028 && a.id <= 1034;
         EXPECT_EQ(hotkeyType(a.id), editor                         ? EditorHotkey
-                                    : a.id >= 2021 && a.id <= 2043 ? VideoHotkey
+                                    : a.id >= 2021 && a.id <= 2044 ? VideoHotkey
                                     : audio                        ? AudioHotkey
                                                                    : GlobalHotkey)
             << a.symbol;
@@ -183,6 +184,39 @@ TEST(Hotkeys, ActionTableIsLegacyIdsAndTheMigrationMap)
     EXPECT_EQ(hotkeyIdOf("GLOBAL_TEXT_FULL_WIDTH"), 5280);
     EXPECT_EQ(hotkeyIdOf("GLOBAL_TEXT_HALF_WIDTH"), 5281);
     EXPECT_EQ(hotkeyIdOf("GLOBAL_SWAP_DIALOGUE_ALTERNATIVES"), 5282);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_ALIGNMENT_KEEP_POSITION_AN1"), 5285);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_ALIGNMENT_KEEP_POSITION_AN2"), 5286);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_ALIGNMENT_KEEP_POSITION_AN3"), 5287);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_ALIGNMENT_KEEP_POSITION_AN4"), 5288);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_ALIGNMENT_KEEP_POSITION_AN5"), 5289);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_ALIGNMENT_KEEP_POSITION_AN6"), 5290);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_ALIGNMENT_KEEP_POSITION_AN7"), 5291);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_ALIGNMENT_KEEP_POSITION_AN8"), 5292);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_ALIGNMENT_KEEP_POSITION_AN9"), 5293);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_ALIGN_LEFT_EDGES"), 5294);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_ALIGN_CENTRES"), 5295);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_ALIGN_RIGHT_EDGES"), 5296);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_ALIGN_TOP_EDGES"), 5297);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_ALIGN_MIDDLES"), 5298);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_ALIGN_BOTTOM_EDGES"), 5299);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_DISTRIBUTE_HORIZONTALLY"), 5334);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_DISTRIBUTE_VERTICALLY"), 5335);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_POSITION_TO_MARGINS"), 5336);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_MARGINS_TO_POSITION"), 5303);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_PHANTOM_KEEP_START"), 5304);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_PHANTOM_KEEP_END"), 5305);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_CYCLE_BLUR"), 5306);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_CYCLE_BLUR_BACK"), 5307);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_CYCLE_BORD"), 5308);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_CYCLE_BORD_BACK"), 5309);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_CYCLE_SHAD"), 5310);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_CYCLE_SHAD_BACK"), 5311);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_CYCLE_ALPHA"), 5312);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_CYCLE_ALPHA_BACK"), 5313);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_CYCLE_AN"), 5314);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_CYCLE_AN_BACK"), 5315);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_CYCLE_FSP"), 5316);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_CYCLE_FSP_BACK"), 5317);
     EXPECT_EQ(hotkeyIdOf("GLOBAL_KEEP_AI_CHANGE"), 5245);
     EXPECT_EQ(hotkeyIdOf("GLOBAL_UNDO_AI_CHANGE"), 5246);
     EXPECT_EQ(hotkeyIdOf("GLOBAL_NEXT_AI_CHANGE"), 5247);
@@ -392,8 +426,8 @@ TEST(Hotkeys, ListOrderIsAddHotkeysOnList)
     HotkeyList list(copy);
     auto live = defaultHotkeys();
     list.build(live);
-    ASSERT_EQ(list.rowCount(), 352u);
-    EXPECT_EQ(list.row(0).text, "Global Accept the timing assistant’s suggestion");
+    ASSERT_EQ(list.rowCount(), 386u);
+    EXPECT_EQ(list.row(0).text, "Global Position to margins");
     EXPECT_EQ(list.row(0).accel, "");
     EXPECT_EQ(rowNamed(list, "Global Close current tab").accel, "Ctrl-W");
     EXPECT_EQ(rowNamed(list, "Global Hide tags in the line editor").accel, "");
@@ -465,7 +499,7 @@ TEST(Hotkeys, ListOrderIsAddHotkeysOnList)
     live[HotkeyId{kSave, GridHotkey}] = Hotkey{"Save", "F7"};
     HotkeyList more(copy);
     more.build(live);
-    ASSERT_EQ(more.rowCount(), 354u);
+    ASSERT_EQ(more.rowCount(), 388u);
     const int script = more.find("Global Script a.lua-1");
     const int copied = more.find("Subtitles Save");
     ASSERT_GE(script, 0);
@@ -479,13 +513,13 @@ TEST(Hotkeys, ListOrderIsAddHotkeysOnList)
     fewer.erase(HotkeyId{kAudioCommitAlt, AudioHotkey});
     HotkeyList cut(copy);
     cut.build(fewer);
-    EXPECT_EQ(cut.rowCount(), 351u);
+    EXPECT_EQ(cut.rowCount(), 385u);
     EXPECT_EQ(cut.find("Audio Apply changes alt"), -1);
     auto odd = fewer;
     odd[HotkeyId{5001, -1}] = Hotkey{"", "F1"};
     HotkeyList whole(copy);
     whole.build(odd);
-    EXPECT_EQ(whole.rowCount(), 352u);
+    EXPECT_EQ(whole.rowCount(), 386u);
 }
 
 TEST(Hotkeys, AutomationAndPluginsFiltersSplitTheScriptRows)
@@ -536,7 +570,7 @@ TEST(Hotkeys, FilterModesAndSelection)
     list.filter(1);
     EXPECT_EQ(list.shown().size(), 113u);
     list.filter(0);
-    EXPECT_EQ(list.shown().size(), 352u);
+    EXPECT_EQ(list.shown().size(), 386u);
 }
 
 TEST(Hotkeys, SearchNarrowsTheFilter)
@@ -752,17 +786,17 @@ TEST(Hotkeys, MapToAnotherWindowAddsOrUpdatesItsRow)
     const int save = list.find("Global Save");
     list.map(save, "F7", VideoHotkey, HotkeyAnswer::Cancel, live);
     EXPECT_EQ(list.row(save).accel, "Ctrl-S");
-    ASSERT_EQ(list.rowCount(), 353u);
-    const auto &added = list.row(352);
+    ASSERT_EQ(list.rowCount(), 387u);
+    const auto &added = list.row(386);
     EXPECT_EQ(added.text, "Video Save");
     EXPECT_EQ((added.key), (HotkeyId{kSave, VideoHotkey}));
     EXPECT_EQ(added.accel, "F7");
     EXPECT_EQ(list.selection(), -1);
     EXPECT_EQ(copy.at(HotkeyId{kSave, VideoHotkey}).accel, "F7");
     list.map(save, "F6", VideoHotkey, HotkeyAnswer::Cancel, live);
-    EXPECT_EQ(list.rowCount(), 353u);
-    EXPECT_EQ(list.row(352).accel, "F6");
-    EXPECT_EQ(list.selection(), 352);
+    EXPECT_EQ(list.rowCount(), 387u);
+    EXPECT_EQ(list.row(386).accel, "F6");
+    EXPECT_EQ(list.selection(), 386);
 }
 
 TEST(Hotkeys, ResetDeleteUndoRedo)
@@ -843,7 +877,7 @@ TEST(Hotkeys, TheCopyOutlivesTheDialogAndSetDefault)
     auto reset = defaultHotkeys();
     third.clear();
     third.build(reset);
-    EXPECT_EQ(third.shown().size(), 352u);
+    EXPECT_EQ(third.shown().size(), 386u);
     EXPECT_EQ(third.filterMode(), 2);
     EXPECT_EQ(rowNamed(third, "Global Open subtitles").accel, "Ctrl-O");
     EXPECT_TRUE(third.modified());
@@ -977,7 +1011,7 @@ TEST(Hotkeys, FilteredListShowsAndHidesBlocks)
     list.filter(1);
     ASSERT_TRUE(list.filtered());
     const auto shown = list.shown();
-    ASSERT_EQ(shown.front(), 16);
+    ASSERT_EQ(shown.front(), 34);
     EXPECT_EQ(list.hiddenBlock(-1), 1);
     int position = -1;
     for (int i = 0; i + 1 < int(shown.size()); ++i)

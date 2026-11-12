@@ -19,6 +19,17 @@ DialogWindow {
     initialFocus: list
     defaultButton: closeButton
     signal copyRequested(string text)
+    // The window's Project: {trusted, named, missing}; empty without one.
+    property var project: ({})
+    signal trustRequested()
+    readonly property bool projectLocked: project.trusted === false && (project.named ?? []).length > 0
+    readonly property var missing: project.missing ?? []
+    function lockedRow(id) { return projectLocked && project.named.includes(id) }
+    function findInMarket(id) {
+        view = "market"
+        search = id
+        open()
+    }
 
     readonly property var ui: runtime ? runtime.ui : null
     readonly property var rows: manager ? manager.plugins : []
@@ -323,6 +334,44 @@ DialogWindow {
                     onTextEdited: dialog.filter = text
                     Keys.onDownPressed: list.forceActiveFocus()
                 }
+                RowLayout {
+                    objectName: "pluginProjectLocked"
+                    visible: dialog.projectLocked
+                    spacing: 6
+                    Layout.fillWidth: true
+                    Icon { iconRole: "untrusted" }
+                    Label {
+                        Layout.fillWidth: true
+                        wrapMode: Text.WordWrap
+                        color: Theme.muted
+                        text: qsTr("This project turns plugins on or off, or changes their settings.")
+                    }
+                    Button {
+                        objectName: "pluginTrustProject"
+                        flat: true
+                        text: qsTr("Trust this folder to use them")
+                        onClicked: dialog.trustRequested()
+                    }
+                }
+                Repeater {
+                    model: dialog.missing
+                    delegate: RowLayout {
+                        required property string modelData
+                        objectName: "pluginMissing_" + modelData
+                        spacing: 6
+                        Layout.fillWidth: true
+                        Label {
+                            Layout.fillWidth: true
+                            wrapMode: Text.WordWrap
+                            text: qsTr("This project uses %1, which isn’t installed.").arg(modelData)
+                        }
+                        Button {
+                            objectName: "pluginInstallMissing"
+                            text: qsTr("Install from the marketplace")
+                            onClicked: dialog.findInMarket(modelData)
+                        }
+                    }
+                }
                 Frame {
                     padding: 1
                     Layout.fillWidth: true
@@ -375,6 +424,11 @@ DialogWindow {
                             contentItem: RowLayout {
                                 spacing: 8
                                 PluginIcon { row: row.modelData; size: 24 }
+                                Icon {
+                                    objectName: "pluginLocked_" + row.modelData.id
+                                    visible: dialog.lockedRow(row.modelData.id)
+                                    iconRole: "untrusted"
+                                }
                                 ColumnLayout {
                                     spacing: 0
                                     Layout.fillWidth: true

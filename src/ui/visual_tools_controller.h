@@ -133,6 +133,7 @@ public:
     Q_INVOKABLE void dismissLastChange();
     // MUST KILL: value is a toggle's 0/1, a choice's index, or 1 for an action
     Q_INVOKABLE bool setOption(const QString &name, int value);
+    Q_INVOKABLE void previewOption(const QString &name, int index);
 
     using Encoder = std::function<std::vector<std::byte>(const core::Document &)>;
     std::vector<std::byte> subtitles(const core::Document &document, const Encoder &encode = {}) const;

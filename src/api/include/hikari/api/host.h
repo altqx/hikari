@@ -3,13 +3,19 @@
 // Ports the composition root implements; every call comes on the GUI thread.
 
 #include "hikari/application/ai_review.h"
+#include "hikari/application/audio_karaoke.h"
 #include "hikari/application/automation_services.h"
+#include "hikari/application/furigana.h"
+#include "hikari/application/karaoke_split.h"
+#include "hikari/application/template_preview.h"
 #include "hikari/application/edit_session.h"
+#include "hikari/application/node_effects.h"
 #include "hikari/application/settings.h"
 #include "hikari/application/subtitle_render.h"
 #include "hikari/application/visual_perspective.h"
 #include "hikari/application/workspace.h"
 
+#include <filesystem>
 #include <functional>
 #include <optional>
 #include <string>
@@ -76,18 +82,31 @@ public:
     virtual bool write(const std::string &path, std::string_view bytes) = 0;
 };
 
+enum class SkillOrigin { Project, Mine };
+
 struct SkillFolder {
     std::string name;
     std::vector<std::string> files; // relative to the folder, '/'-separated, SKILL.md among them
+    SkillOrigin origin = SkillOrigin::Mine;
 };
 
-// The user's skill folders (docs/ai-skills.md).
+// The skill folders a caller sees (docs/ai-skills.md). `project` is the caller's Project folder, empty for none;
+// its skills hide the user's of the same name.
 class SkillHost {
 public:
     virtual ~SkillHost() = default;
-    virtual std::vector<SkillFolder> skills() const = 0;
+    virtual std::vector<SkillFolder> skills(const std::filesystem::path &project) const = 0;
     // At most `atMost` bytes of a file listed under `skill`; nullopt: it cannot be read.
-    virtual std::optional<std::string> read(std::string_view skill, std::string_view file, std::size_t atMost) const = 0;
+    virtual std::optional<std::string> read(const std::filesystem::path &project, std::string_view skill,
+                                            std::string_view file, std::size_t atMost) const = 0;
+};
+
+// Where a Document's Honya project folder is: the glossary, characters and style its translation shares with Honya.
+class TranslationHost {
+public:
+    virtual ~TranslationHost() = default;
+    // nullopt: the Document has no project folder.
+    virtual std::optional<std::string> projectFolder(application::DocumentId document) const = 0;
 };
 
 // Draws subtitles as the video does, in a render context apart from the video's.
@@ -145,6 +164,50 @@ public:
     virtual std::optional<ProjectState> project() const = 0;
 };
 
+// An external aligner's job: the audio from startMs to endMs and the words sung there.
+struct AlignRequest {
+    std::string program; // "whisperx" or "mfa"
+    std::int64_t startMs = 0, endMs = 0;
+    std::string text;
+    std::string language;                   // WhisperX's --language; empty: it detects
+    std::string dictionary, acousticModel; // MFA's
+};
+
+struct AlignedWord {
+    std::string text;
+    std::int64_t startMs = 0, endMs = 0;
+};
+
+struct AlignResult {
+    std::string outcome; // "aligned", "missing" (not installed), "no_audio" or "failed"
+    std::string message;
+    std::vector<AlignedWord> words;
+};
+
+// What the karaoke tools need from the app.
+class KaraokeHost {
+public:
+    virtual ~KaraokeHost() = default;
+    virtual application::KaraokeCharClass classes() const = 0;
+    // Null: English words stay one syllable.
+    virtual const application::Hyphenation *hyphenation() const = 0;
+    // Empty: no reading dictionary is installed.
+    virtual application::ReadingAnalyzer readings() const = 0;
+    // The open audio's vocal onsets in ms, ascending, or nullopt without audio; `done` runs once.
+    virtual void onsets(std::function<void(std::optional<std::vector<int>>)> done) = 0;
+    // Null: no templater script is loaded. Its `done` always runs, once.
+    virtual application::KaraokeTemplaterPort *templater() = 0;
+    // Runs the user's installed aligner; `done` runs once, later.
+    virtual void align(const AlignRequest &request, std::function<void(AlignResult)> done) = 0;
+};
+
+// Runs node-effect graphs as the node-effect editor does, but never trusts a Document's Lua.
+class EffectsHost {
+public:
+    virtual ~EffectsHost() = default;
+    virtual application::NodeEffectOptions options() = 0;
+};
+
 // A missing port makes its operations answer unavailable.
 struct Host {
     DocumentHost *documents = nullptr;
@@ -159,6 +222,9 @@ struct Host {
     AutomationHost *automation = nullptr;
     TypesetHost *typeset = nullptr;
     ProjectHost *project = nullptr;
+    TranslationHost *translation = nullptr;
+    KaraokeHost *karaoke = nullptr;
+    EffectsHost *effects = nullptr;
 };
 
 }

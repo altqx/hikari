@@ -82,7 +82,7 @@ def find_frame(raw, iw, ih, fw, fh, scale=1, x_from=0):
 
 
 # videofs leaves the window on sway's scale-2 output; after outputs sway's virtual pointer maps over the old layout.
-LAST_STEPS = ("videofs", "outputs")
+LAST_STEPS = ("videofs", "windowsout", "outputs")
 
 
 def default_order(steps, sweep_steps):
@@ -95,3 +95,46 @@ def hikarisub_application(toolkits):
     if "Qt" in toolkits:
         return toolkits.index("Qt")
     return 0 if toolkits else None
+
+
+def inside(x, y, rect, margin=0):
+    rx, ry, rw, rh = rect[:4]
+    return rx - margin <= x < rx + rw + margin and ry - margin <= y < ry + rh + margin
+
+
+def free_point(rects, extent, candidates, margin=40):
+    """The first candidate on the layout that no window covers, kept clear of their edges."""
+    w, h = extent
+    for x, y in candidates:
+        if 0 <= x < w and 0 <= y < h and not any(inside(x, y, r, margin) for r in rects):
+            return x, y
+    return None
+
+
+def tab_sets(wins):
+    """Each shell window's tab names, without the window identity a restart changes."""
+    return sorted(sorted(t["name"] for t in w["tabs"]) for w in wins)
+
+
+def restore_differences(before, after, fields=("w", "h"), tolerance=2):
+    """Windows matched by their tabs: a missing one, or another value in FIELDS (x, y, w, h)."""
+    keyed = {tuple(sorted(t["name"] for t in w["tabs"])): w for w in after}
+    diffs = []
+    for w in before:
+        key = tuple(sorted(t["name"] for t in w["tabs"]))
+        a = keyed.get(key)
+        if a is None:
+            diffs.append(f"no window with tabs {list(key)}")
+            continue
+        moved = {f: (w[f], a[f]) for f in fields if abs(w[f] - a[f]) > tolerance}
+        if moved:
+            diffs.append(f"{list(key)}: {moved}")
+    if len(after) != len(before):
+        diffs.append(f"{len(before)} windows before, {len(after)} after")
+    return diffs
+
+
+def whole_on(rect, screen):
+    x, y, w, h = rect[:4]
+    sx, sy, sw, sh = screen
+    return sx <= x and sy <= y and x + w <= sx + sw and y + h <= sy + sh

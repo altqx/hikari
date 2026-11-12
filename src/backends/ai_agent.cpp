@@ -36,6 +36,9 @@ constexpr std::string_view kJudgeSystem =
     "about, or could lose their work. Answer with JSON only: {\"decision\": \"approve\"} or {\"decision\": "
     "\"escalate\", \"reason\": \"<one short sentence for the user>\"}.";
 
+constexpr std::string_view kFromSummary =
+    "We are carrying on from an earlier conversation. My next message follows on from your summary of it.";
+
 constexpr std::size_t kJudgeActionChars = 8000;
 constexpr std::size_t kJudgeMessagesChars = 8000;
 constexpr std::size_t kOutputChars = 4000;
@@ -303,6 +306,10 @@ RiskCheck alwaysAsk(const std::string &operation, const Json &params,
     };
     if (operation == "files.write" && outside(pathOf ? pathOf(stringAt(params, "file")) : std::nullopt))
         return {Risk::Files, "It overwrites a file outside the subtitles' folders and your user folder."};
+    if (operation == "karaoke.align")
+        return {Risk::Programs, "It runs " + std::string(stringAt(params, "program") == "mfa" ? "the Montreal Forced Aligner"
+                                                                                               : "WhisperX") +
+                                    ", a program you installed, on the song's audio."};
     if (operation == "commands.run") {
         const std::string command = stringAt(params, "command");
         if (application::isPluginCommand(command))
@@ -400,6 +407,55 @@ std::optional<app::Price> priceOf(const app::Config *config, const app::ModelRef
     return std::nullopt;
 }
 
+std::int64_t contextWindowOf(const app::Config *config, const app::ModelRef &ref)
+{
+    if (const app::Provider *provider = config ? config->provider(ref.providerId) : nullptr)
+        for (const app::Model &m : provider->models)
+            if (m.id == ref.modelId && m.contextTokens && *m.contextTokens > 0)
+                return *m.contextTokens;
+    return kDefaultContextTokens;
+}
+
+void applyCompaction(AgentThread &thread, const Json &update)
+{
+    std::map<std::string, std::string> stubs;
+    if (const Json *list = update.find("stubs"); list && list->isArray())
+        for (const Json &stub : list->asArray())
+            stubs[stringAt(stub, "callId")] = stringAt(stub, "content");
+    auto &history = thread.history.asArray();
+    for (Json &message : history)
+        if (const Json *parts = message.find("parts"); parts && parts->isArray())
+            for (Json &part : message["parts"].asArray())
+                if (stringAt(part, "type") == "toolResult")
+                    if (const auto stub = stubs.find(stringAt(part, "callId")); stub != stubs.end())
+                        part["content"] = stub->second;
+    const Json *message = update.find("message");
+    const Json *headEnd = update.find("headEnd");
+    const Json *keptFrom = update.find("keptFrom");
+    if (!message || !message->isObject() || !headEnd || !headEnd->isInt() || !keptFrom || !keptFrom->isInt())
+        return;
+    const std::int64_t head = headEnd->asInt();
+    const std::int64_t kept = keptFrom->asInt();
+    if (head < 0 || kept < head || kept > static_cast<std::int64_t>(history.size()))
+        return;
+    Json replayed = Json::array();
+    for (std::int64_t i = 0; i < head; ++i)
+        replayed.push(std::move(history[static_cast<std::size_t>(i)]));
+    replayed.push(*message);
+    for (std::size_t i = static_cast<std::size_t>(kept); i < history.size(); ++i)
+        replayed.push(std::move(history[i]));
+    thread.history = std::move(replayed);
+    for (Json &item : thread.items.asArray()) {
+        const Json *index = stringAt(item, "kind") == "user" ? item.find("history") : nullptr;
+        if (!index || !index->isInt() || index->asInt() < head)
+            continue;
+        if (index->asInt() < kept)
+            std::erase_if(item.asObject(), [](const Json::Member &m) { return m.key == "history"; });
+        else
+            item["history"] = index->asInt() - kept + head + 1;
+    }
+}
+
 Verdict judgeVerdict(std::string_view answer)
 {
     const auto open = answer.find('{');
@@ -440,6 +496,8 @@ Json AgentThread::toJson() const
                              {"webSearch", webSearch}});
     if (model)
         out["model"] = modelJson(*model);
+    if (!project.empty())
+        out["project"] = project;
     return out;
 }
 
@@ -487,6 +545,7 @@ std::optional<AgentThread> AgentThread::fromJson(const Json &json)
                 t.allowed.insert(key.asString());
     if (const Json *w = json.find("webSearch"); w && w->isBool())
         t.webSearch = w->asBool();
+    t.project = stringAt(json, "project");
     return t;
 }
 
@@ -569,6 +628,8 @@ struct AgentThreads::Run {
     std::optional<std::pair<std::size_t, qsizetype>> answerStart;
     std::set<std::string> webCalls;
     bool searchFailureShown = false;
+    bool compaction = false;
+    std::string compactionFailure;
 };
 
 AgentThreads::AgentThreads(Wiring wiring, ThreadStore *store, QObject *parent)
@@ -634,6 +695,8 @@ std::string AgentThreads::create()
     t.created = t.updated = nowMs();
     t.mode = defaults.mode;
     t.cap = defaults.threadCap;
+    if (m_wiring.project)
+        t.project = m_wiring.project();
     const std::string id = t.id;
     m_threads.emplace(id, std::move(t));
     if (m_store)
@@ -666,6 +729,7 @@ void AgentThreads::remove(const std::string &id)
     }
     m_live.erase(id);
     m_attached.erase(id);
+    m_compactAfter.erase(id);
     m_threads.erase(id);
     if (m_store)
         m_store->remove(id);
@@ -712,6 +776,43 @@ std::optional<std::string> externalAgentOf(const app::ModelRef &model)
     if (!model.providerId.starts_with(kAgentProviderPrefix))
         return std::nullopt;
     return model.providerId.substr(kAgentProviderPrefix.size());
+}
+
+std::string agentsFileText(const QString &folder)
+{
+    if (folder.isEmpty())
+        return {};
+    QFile file(QDir(folder).filePath(QStringLiteral("AGENTS.md")));
+    if (!file.open(QIODevice::ReadOnly))
+        return {};
+    std::string text = file.read(qint64(kInstructionsCap)).toStdString();
+    if (file.atEnd())
+        return text;
+    std::size_t lead = text.size();
+    while (lead > 0 && (static_cast<unsigned char>(text[lead - 1]) & 0xC0) == 0x80)
+        --lead;
+    if (lead == 0)
+        return text;
+    const auto first = static_cast<unsigned char>(text[lead - 1]);
+    const std::size_t length = first >= 0xF0 ? 4 : first >= 0xE0 ? 3 : first >= 0xC0 ? 2 : 1;
+    if (text.size() - (lead - 1) < length)
+        text.resize(lead - 1);
+    return text;
+}
+
+std::string joinInstructions(std::string_view user, std::string_view project)
+{
+    std::string out;
+    const auto add = [&out](std::string_view heading, std::string_view text) {
+        if (text.empty())
+            return;
+        if (!out.empty())
+            out += "\n\n";
+        out.append(heading).append("\n\n").append(text);
+    };
+    add("Instructions from the user's AGENTS.md:", user);
+    add("Instructions from this Project's AGENTS.md:", project);
+    return out;
 }
 
 std::optional<app::ModelRef> AgentThreads::modelOf(const AgentThread &thread) const
@@ -828,26 +929,16 @@ void AgentThreads::start(AgentThread &thread, std::string text, Json parts)
     AiRequests *requests = m_wiring.requests ? m_wiring.requests() : nullptr;
     const bool caching = requests && requests->caching();
     const bool search = searches(thread);
-    if (!m_live.contains(id)) {
-        Json open = Json::object({{"sessionId", id},
-                                  {"model", modelJson(*model)},
-                                  {"system", std::string(kSystemPrompt)},
-                                  {"history", thread.history},
-                                  {"cacheKey", id},
-                                  {"caching", caching},
-                                  {"webSearch", search}});
-        if (agent)
-            open["agent"] = *agent;
-        h->request("session/new", std::move(open), [](SidecarResult) {});
-        m_live.insert(id);
-    }
+    openSession(thread, *h, *model);
     auto run = std::make_unique<Run>();
     run->request = h->request("session/prompt",
                               Json::object({{"sessionId", id},
                                             {"prompt", std::move(prompt)},
                                             {"model", modelJson(*model)},
                                             {"caching", caching},
-                                            {"webSearch", search}}),
+                                            {"webSearch", search},
+                                            {"contextTokens", contextWindowOf(m_wiring.config ? m_wiring.config() : nullptr, *model)},
+                                            {"autoCompact", defaults.autoCompact}}),
                               [this, alive = std::weak_ptr(m_alive), id](SidecarResult result) {
                                   if (alive.lock())
                                       finished(id, result);
@@ -856,12 +947,150 @@ void AgentThreads::start(AgentThread &thread, std::string text, Json parts)
     touch(thread);
 }
 
+void AgentThreads::openSession(AgentThread &thread, AiSidecarHost &host, const app::ModelRef &model)
+{
+    if (m_live.contains(thread.id))
+        return;
+    AiRequests *requests = m_wiring.requests ? m_wiring.requests() : nullptr;
+    const Defaults defaults = m_wiring.defaults ? m_wiring.defaults() : Defaults{};
+    std::string system(kSystemPrompt);
+    if (const std::string joined = m_wiring.instructions ? m_wiring.instructions(thread.project) : std::string();
+        !joined.empty())
+        system.append("\n\n").append(joined);
+    Json open = Json::object({{"sessionId", thread.id},
+                              {"model", modelJson(model)},
+                              {"system", std::move(system)},
+                              {"history", thread.history},
+                              {"cacheKey", thread.id},
+                              {"caching", requests && requests->caching()},
+                              {"webSearch", searches(thread)},
+                              {"contextTokens", contextWindowOf(m_wiring.config ? m_wiring.config() : nullptr, model)},
+                              {"autoCompact", defaults.autoCompact}});
+    if (const auto agent = externalAgentOf(model))
+        open["agent"] = *agent;
+    host.request("session/new", std::move(open), [](SidecarResult) {});
+    m_live.insert(thread.id);
+}
+
+bool AgentThreads::compacting(const std::string &id) const
+{
+    const auto run = m_runs.find(id);
+    return m_compactAfter.contains(id) || (run != m_runs.end() && run->second->compaction);
+}
+
+void AgentThreads::compact(const std::string &id, std::string instruction)
+{
+    AgentThread *t = find(id);
+    if (!t || compacting(id))
+        return;
+    if (running(id)) {
+        m_compactAfter[id] = std::move(instruction);
+        return touch(*t);
+    }
+    startCompaction(*t, std::move(instruction), true);
+}
+
+void AgentThreads::newThreadFromSummary(const std::string &id)
+{
+    if (AgentThread *t = find(id); t && !running(id))
+        startCompaction(*t, {}, false);
+}
+
+void AgentThreads::startCompaction(AgentThread &thread, std::string instruction, bool apply)
+{
+    const auto model = modelOf(thread);
+    if (!model)
+        return push(thread, Json::object({{"kind", "notice"}, {"notice", "noModel"}})), touch(thread);
+    if (externalAgentOf(*model))
+        return;
+    AiSidecarHost *h = host(false);
+    if (!h)
+        return push(thread, Json::object({{"kind", "notice"}, {"notice", "noSidecar"}})), touch(thread);
+    openSession(thread, *h, *model);
+    Json params = Json::object({{"sessionId", thread.id}});
+    if (!instruction.empty())
+        params["instruction"] = std::move(instruction);
+    if (!apply)
+        params["apply"] = false;
+    auto run = std::make_unique<Run>();
+    run->compaction = true;
+    run->request = h->request("_hikari/session.compact", std::move(params),
+                              [this, alive = std::weak_ptr(m_alive), id = thread.id, apply](SidecarResult result) {
+                                  if (alive.lock())
+                                      compactionDone(id, result, apply);
+                              });
+    m_runs[thread.id] = std::move(run);
+    touch(thread);
+}
+
+void AgentThreads::compactionDone(const std::string &id, const SidecarResult &result, bool apply)
+{
+    const auto it = m_runs.find(id);
+    if (it == m_runs.end() || !it->second->compaction)
+        return;
+    const bool stopped = !it->second->stoppedFor.empty();
+    m_runs.erase(it);
+    AgentThread *t = find(id);
+    if (!t)
+        return;
+    if (!result) {
+        const SidecarFailure &failure = result.error();
+        if (failure.error == SidecarError::SidecarLost || failure.error == SidecarError::Stopped)
+            m_live.clear();
+        if (!stopped && failure.error != SidecarError::Cancelled) {
+            const app::Error error = requestError(failure);
+            push(*t, Json::object({{"kind", "notice"},
+                                   {"notice", "compactFailed"},
+                                   {"detail", clipped(error.detail.empty() ? std::string(app::errorKindId(error.kind))
+                                                                           : error.detail,
+                                                      kOutputChars)}}));
+        }
+        return touch(*t);
+    }
+    const Json *compacted = result->find("compacted");
+    const std::string summary = stringAt(*result, "summary");
+    if (!apply && !summary.empty()) {
+        const std::string to = create();
+        AgentThread &next = m_threads.at(to);
+        next.title = t->title;
+        next.mode = t->mode;
+        next.model = t->model;
+        next.webSearch = t->webSearch;
+        next.history = Json::array({Json::object({{"author", "user"},
+                                                  {"parts", Json::array({Json::object({{"type", "text"},
+                                                                                       {"text", std::string(kFromSummary)}})})}}),
+                                    Json::object({{"author", "assistant"},
+                                                  {"parts", Json::array({Json::object({{"type", "text"},
+                                                                                       {"text", summary}})})}})});
+        push(next, Json::object({{"kind", "compaction"}, {"from", t->title}, {"summary", summary}}));
+        touch(next);
+        touch(*t);
+        emit threadsChanged();
+        emit summarised(QString::fromStdString(id), QString::fromStdString(to));
+        return;
+    }
+    if (apply && !(compacted && compacted->isBool() && compacted->asBool()))
+        push(*t, Json::object({{"kind", "notice"}, {"notice", "nothingToCompact"}}));
+    touch(*t);
+    runQueued(*t);
+}
+
+void AgentThreads::runQueued(AgentThread &thread)
+{
+    if (const auto q = m_queued.find(thread.id); q != m_queued.end()) {
+        std::string next = std::move(q->second);
+        m_queued.erase(q);
+        start(thread, std::move(next), Json::array());
+    }
+}
+
 void AgentThreads::finished(const std::string &id, const SidecarResult &result)
 {
     const auto it = m_runs.find(id);
     if (it == m_runs.end())
         return;
     const std::string stop = it->second->stoppedFor;
+    const std::string compactionFailure = it->second->compactionFailure;
     const std::set<std::string> webCalls = std::move(it->second->webCalls);
     m_runs.erase(it);
     closeAsks(id, "The turn ended.");
@@ -881,6 +1110,10 @@ void AgentThreads::finished(const std::string &id, const SidecarResult &result)
             notice = "refusal";
         else if (reason == "max_turn_requests")
             notice = "maxRequests";
+        else if (reason == "compaction_failed") {
+            notice = "compactFailed";
+            detail = compactionFailure;
+        }
     } else {
         const SidecarFailure &failure = result.error();
         if (failure.error == SidecarError::SidecarLost || failure.error == SidecarError::Stopped) {
@@ -904,12 +1137,14 @@ void AgentThreads::finished(const std::string &id, const SidecarResult &result)
         push(*t, std::move(item));
     }
     touch(*t);
-    const bool ended = notice.empty() || notice == "maxTokens" || notice == "refusal" || notice == "maxRequests";
-    if (const auto q = m_queued.find(id); ended && q != m_queued.end()) {
-        std::string next = std::move(q->second);
-        m_queued.erase(q);
-        start(*t, std::move(next), Json::array());
+    if (const auto c = m_compactAfter.find(id); c != m_compactAfter.end() && notice != "lost") {
+        std::string instruction = std::move(c->second);
+        m_compactAfter.erase(c);
+        return startCompaction(*t, std::move(instruction), true);
     }
+    m_compactAfter.erase(id);
+    if (notice.empty() || notice == "maxTokens" || notice == "refusal" || notice == "maxRequests")
+        runQueued(*t);
 }
 
 void AgentThreads::sessionUpdate(const Json &params)
@@ -996,10 +1231,27 @@ void AgentThreads::sessionUpdate(const Json &params)
     } else if (kind == "search_failed") {
         searchFailed(*t, run == m_runs.end() ? nullptr : run->second.get(), *update);
     } else if (kind == "usage") {
-        if (run != m_runs.end())
+        const Json *compaction = update->find("compaction");
+        const bool summary = compaction && compaction->isBool() && compaction->asBool();
+        if (run != m_runs.end() && !summary)
             run->second->answerStart.reset();
         if (const Json *usage = update->find("usage"))
-            addUsage(*t, *usage);
+            addUsage(*t, *usage, !summary);
+    } else if (kind == "compacted") {
+        applyCompaction(*t, *update);
+        const Json *after = update->find("after");
+        Json item = Json::object({{"kind", "compaction"},
+                                  {"before", update->find("before") ? *update->find("before") : Json(0)},
+                                  {"after", after ? *after : Json(0)}});
+        if (const std::string summary = stringAt(*update, "summary"); !summary.empty())
+            item["summary"] = summary;
+        if (after && after->isInt())
+            t->contextTokens = after->asInt();
+        push(*t, std::move(item));
+    } else if (kind == "compaction_failed") {
+        if (run != m_runs.end())
+            run->second->compactionFailure = clipped(stringAt(*update, "reason"), kOutputChars);
+        return;
     } else if (kind == "history") {
         if (const Json *message = update->find("message"); message && message->isObject())
             t->history.push(withoutImages(*message));
@@ -1080,6 +1332,7 @@ api::Caller AgentThreads::callerOf(const AgentThread &thread) const
     caller.label = "AI";
     caller.reviewed = true;
     caller.skills = true;
+    caller.project = thread.project;
     if (const auto it = m_attached.find(thread.id); it != m_attached.end())
         caller.attached = it->second;
     return caller;
@@ -1463,10 +1716,11 @@ void AgentThreads::admitCall(AgentThread &thread, const std::string &operation, 
     admit(std::move(admission));
 }
 
-void AgentThreads::addUsage(AgentThread &thread, const Json &usageJson)
+void AgentThreads::addUsage(AgentThread &thread, const Json &usageJson, bool context)
 {
     const app::Usage usage = usageOf(usageJson);
-    thread.contextTokens = usage.inputTokens + usage.outputTokens;
+    if (context)
+        thread.contextTokens = usage.inputTokens + usage.outputTokens;
     const auto model = modelOf(thread);
     const std::optional<double> cost =
         model ? app::costOf(usage, priceOf(m_wiring.config ? m_wiring.config() : nullptr, *model)) : std::nullopt;

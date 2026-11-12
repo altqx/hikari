@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <functional>
 #include <sstream>
 
 namespace hikari::ui {
@@ -330,21 +331,14 @@ std::string valueText(const SettingValue &value)
     return formatToml(*holder.get("v"));
 }
 
-bool holds(std::string_view text, std::string_view id, const std::optional<SettingValue> &value)
-{
-    try {
-        const toml::table parsed = toml::parse(text);
-        const auto *node = tomlNode(parsed, id);
-        return value ? node && fromToml(*node) == value : node == nullptr;
-    } catch (const toml::parse_error &) {
-        return false;
-    }
-}
 
 }
 
-std::optional<std::string> patchTomlSetting(std::string_view text, std::string_view id,
-                                            const std::optional<SettingValue> &value)
+namespace {
+
+std::optional<std::string> patchToml(std::string_view text, std::string_view id,
+                                     const std::optional<std::string> &value,
+                                     const std::function<bool(const toml::node *)> &holds)
 {
     const auto layout = scanToml(text);
     if (!layout)
@@ -354,7 +348,7 @@ std::optional<std::string> patchTomlSetting(std::string_view text, std::string_v
     const auto entry = std::ranges::find(layout->entries, id, &TomlEntry::id);
     if (entry != layout->entries.end()) {
         if (value)
-            out.replace(entry->valueBegin, entry->valueEnd - entry->valueBegin, valueText(*value));
+            out.replace(entry->valueBegin, entry->valueEnd - entry->valueBegin, *value);
         else
             out.erase(entry->lineBegin, entry->lineEnd - entry->lineBegin);
     } else if (value) {
@@ -362,7 +356,7 @@ std::optional<std::string> patchTomlSetting(std::string_view text, std::string_v
         if (dot == npos)
             return std::nullopt;
         const std::string parent(id.substr(0, dot));
-        const std::string line = std::string(id.substr(dot + 1)) + " = " + valueText(*value) + newline;
+        const std::string line = std::string(id.substr(dot + 1)) + " = " + *value + newline;
         const auto table = std::ranges::find(layout->tables, parent, &TomlTable::name);
         if (table != layout->tables.end()) {
             const bool ended = table->end == 0 || text.substr(0, table->end).ends_with('\n');
@@ -373,9 +367,31 @@ std::optional<std::string> patchTomlSetting(std::string_view text, std::string_v
             out += (out.empty() ? "" : newline) + "[" + parent + "]" + newline + line;
         }
     }
-    if (!holds(out, id, value))
+    try {
+        const toml::table parsed = toml::parse(out);
+        if (!holds(tomlNode(parsed, id)))
+            return std::nullopt;
+    } catch (const toml::parse_error &) {
         return std::nullopt;
+    }
     return out;
+}
+
+}
+
+std::optional<std::string> patchTomlSetting(std::string_view text, std::string_view id,
+                                            const std::optional<SettingValue> &value)
+{
+    return patchToml(text, id, value ? std::optional(valueText(*value)) : std::nullopt, [&](const toml::node *node) {
+        return value ? node && fromToml(*node) == value : node == nullptr;
+    });
+}
+
+std::optional<std::string> patchTomlNode(std::string_view text, std::string_view id, const toml::node *value)
+{
+    return patchToml(text, id, value ? std::optional(formatToml(*value)) : std::nullopt, [&](const toml::node *node) {
+        return value ? node && formatToml(*node) == formatToml(*value) : node == nullptr;
+    });
 }
 
 }

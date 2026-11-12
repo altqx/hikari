@@ -22,8 +22,9 @@ struct Head {
 };
 
 // karaskel.collect_head(subs, generate_furigana): pushes meta, then styles. With `generateFurigana` the
-// "-furigana" Styles go into subs before the first Style, as karaskel inserts them.
-Head pushKaraskelHead(lua_State *L, int subs, bool generateFurigana);
+// "-furigana" Styles go into subs before the first Style, as karaskel inserts them. `rows`, when set, is a list
+// of subs' rows read already; `cancelCheck`, when set, is called in place of the cancel check.
+Head pushKaraskelHead(lua_State *L, int subs, bool generateFurigana, int rows = 0, int cancelCheck = 0);
 
 // Takes `head`'s added "-furigana" Styles out of the styles table at `styles`; subs keeps them.
 void dropAddedFurigana(lua_State *L, int styles, const Head &head);

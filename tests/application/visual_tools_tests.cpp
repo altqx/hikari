@@ -261,7 +261,7 @@ TEST(VisualFamilies, TheToolsThatNudgeTakeTheArrows)
 {
     const std::set<Family> nudging{Family::Position,      Family::Move,       Family::Scale,
                                    Family::RectangleClip, Family::VectorClip, Family::Drawing,
-                                   Family::PositionShifter, Family::Perspective};
+                                   Family::PositionShifter, Family::Perspective, Family::TextOnPath};
     for (const FamilyInfo &info : families()) {
         SCOPED_TRACE(std::string(info.tooltip));
         const auto tool = makeVisualTool(info.family);

@@ -26,6 +26,7 @@ class AiReview;
 class DocumentFiles;
 }
 namespace hikari::backends::ai {
+struct AgentThread;
 class AgentThreads;
 class ThreadStore;
 }
@@ -79,6 +80,7 @@ class AgentController final : public QObject {
     Q_PROPERTY(QVariantList attachable READ attachable NOTIFY threadChanged FINAL)
     Q_PROPERTY(QString activeTitle READ activeTitle NOTIFY threadChanged FINAL)
     Q_PROPERTY(bool costMeter READ costMeter NOTIFY settingsChanged FINAL)
+    Q_PROPERTY(bool autoCompact READ autoCompact NOTIFY settingsChanged FINAL)
     Q_PROPERTY(bool fullAccessWarned READ fullAccessWarned NOTIFY settingsChanged FINAL)
     Q_PROPERTY(double spentToday READ spentToday NOTIFY threadChanged FINAL)
     Q_PROPERTY(double dailyCap READ dailyCap NOTIFY settingsChanged FINAL)
@@ -98,12 +100,15 @@ public:
         std::function<std::int64_t()> now; // ms since the epoch; the clock when null
         AiScripts *scripts = nullptr;
         AutomationShell *automation = nullptr;
+        // The active window's Project folder; empty without one.
+        std::function<QString()> project;
     };
 
     static constexpr const char *kModeSetting = "ai.agent.mode";
     static constexpr const char *kThreadCapSetting = "ai.agent.threadCapCents";
     static constexpr const char *kDailyCapSetting = "ai.agent.dailyCapCents";
     static constexpr const char *kCostMeterSetting = "ai.agent.costMeter";
+    static constexpr const char *kAutoCompactSetting = "ai.agent.autoCompact";
     static constexpr const char *kFullAccessWarnedSetting = "ai.agent.fullAccessWarned";
 
     explicit AgentController(Wiring wiring, QObject *parent = nullptr);
@@ -119,6 +124,7 @@ public:
     QVariantList attachable() const;
     QString activeTitle() const;
     bool costMeter() const;
+    bool autoCompact() const;
     bool fullAccessWarned() const;
     double spentToday() const;
     /// Counts toward the day's cap with the threads' spending; inline actions use it.
@@ -144,6 +150,9 @@ public:
     Q_INVOKABLE void setQueued(const QString &text);
     Q_INVOKABLE void retry();
     Q_INVOKABLE void raiseCap();
+    /// Compacts the open thread now, or once its turn ends.
+    Q_INVOKABLE void compact(const QString &instruction = {});
+    Q_INVOKABLE void newThreadFromSummary();
     /// "manual", "auto" or "full".
     Q_INVOKABLE void setMode(const QString &mode);
     /// A value from `models`.
@@ -166,6 +175,10 @@ public:
     Q_INVOKABLE bool openLink(const QString &url) const;
     /// SearchSuggestions.qml's properties for Google's snippet.
     Q_INVOKABLE QVariantMap suggestions(const QString &html) const;
+    /// Opens the open thread's Project AGENTS.md in the system editor.
+    Q_INVOKABLE void openProjectInstructions() const;
+    /// The active window or its Project changed: the thread list puts that Project's threads first.
+    void projectChanged();
 
 signals:
     void switched();
@@ -186,6 +199,7 @@ private:
     void refreshThread();
     std::vector<std::string> safeFolders() const;
     std::optional<std::string> pathOf(application::DocumentId document) const;
+    QString projectInstructionsFile(const backends::ai::AgentThread &thread) const;
 
     Wiring m_wiring;
     std::unique_ptr<backends::ai::ThreadStore> m_store;

@@ -561,6 +561,49 @@ constexpr std::string_view kPaintAndCloud = R"({"format": 1, "nodes": [
 
     {"from": "plain.units", "to": "rest.units"}, {"from": "pos.tags", "to": "rest.tags"}]})";
 
+constexpr std::string_view kTextOutlines = R"({"format": 1, "nodes": [
+    {"id": "syl", "type": "units.for_each"},
+    {"id": "info", "type": "units.info"},
+    {"id": "glyphs", "type": "drawings.text"},
+    {"id": "corner", "type": "values.point"},
+    {"id": "an", "type": "tags.tag", "fields": {"tag": "an", "value": 7}},
+    {"id": "pos", "type": "tags.tag", "fields": {"tag": "pos"}},
+    {"id": "hollow", "type": "tags.tag", "fields": {"tag": "1a", "alpha": 255}},
+    {"id": "thin", "type": "tags.tag", "fields": {"tag": "bord", "value": 0}},
+    {"id": "thick", "type": "tags.tag", "fields": {"tag": "bord", "value": 4}},
+    {"id": "grow", "type": "tags.transform"},
+    {"id": "emit", "type": "output.emit"}],
+  "wires": [
+    {"from": "info.left", "to": "corner.x"}, {"from": "info.top", "to": "corner.y"},
+    {"from": "an.tags", "to": "pos.before"}, {"from": "corner.point", "to": "pos.point"},
+    {"from": "pos.tags", "to": "hollow.before"}, {"from": "hollow.tags", "to": "thin.before"},
+    {"from": "thin.tags", "to": "grow.before"}, {"from": "thick.tags", "to": "grow.tags"},
+    {"from": "info.start", "to": "grow.t1"}, {"from": "info.end", "to": "grow.t2"},
+    {"from": "syl.units", "to": "emit.units"}, {"from": "grow.tags", "to": "emit.tags"},
+    {"from": "glyphs.drawing", "to": "emit.drawing"}]})";
+
+constexpr std::string_view kStripedLetters = R"({"format": 1, "nodes": [
+    {"id": "syl", "type": "units.for_each"},
+    {"id": "info", "type": "units.info"},
+    {"id": "glyphs", "type": "drawings.text"},
+    {"id": "bars", "type": "drawings.shape", "fields": {"shape": "m 0 0 l 2000 0 2000 4 0 4 m 0 8 l 2000 8 2000 12 0 12 m 0 16 l 2000 16 2000 20 0 20 m 0 24 l 2000 24 2000 28 0 28 m 0 32 l 2000 32 2000 36 0 36 m 0 40 l 2000 40 2000 44 0 44 m 0 48 l 2000 48 2000 52 0 52 m 0 56 l 2000 56 2000 60 0 60 m 0 64 l 2000 64 2000 68 0 68 m 0 72 l 2000 72 2000 76 0 76 m 0 80 l 2000 80 2000 84 0 84 m 0 88 l 2000 88 2000 92 0 92 m 0 96 l 2000 96 2000 100 0 100 m 0 104 l 2000 104 2000 108 0 108 m 0 112 l 2000 112 2000 116 0 116 m 0 120 l 2000 120 2000 124 0 124 m 0 128 l 2000 128 2000 132 0 132 m 0 136 l 2000 136 2000 140 0 140 m 0 144 l 2000 144 2000 148 0 148 m 0 152 l 2000 152 2000 156 0 156 m 0 160 l 2000 160 2000 164 0 164 m 0 168 l 2000 168 2000 172 0 172 m 0 176 l 2000 176 2000 180 0 180 m 0 184 l 2000 184 2000 188 0 188 m 0 192 l 2000 192 2000 196 0 196"}},
+    {"id": "striped", "type": "drawings.combine", "fields": {"op": "intersect"}},
+    {"id": "corner", "type": "values.point"},
+    {"id": "an", "type": "tags.tag", "fields": {"tag": "an", "value": 7}},
+    {"id": "pos", "type": "tags.tag", "fields": {"tag": "pos"}},
+    {"id": "bord", "type": "tags.tag", "fields": {"tag": "bord", "value": 0}},
+    {"id": "fade", "type": "tags.fade", "fields": {"fade_in": 150, "fade_out": 150}},
+    {"id": "time", "type": "time.retime", "fields": {"mode": "syl", "end_offset": 300}},
+    {"id": "emit", "type": "output.emit", "fields": {"layer": 1}}],
+  "wires": [
+    {"from": "glyphs.drawing", "to": "striped.a"}, {"from": "bars.drawing", "to": "striped.b"},
+    {"from": "info.left", "to": "corner.x"}, {"from": "info.top", "to": "corner.y"},
+    {"from": "an.tags", "to": "pos.before"}, {"from": "corner.point", "to": "pos.point"},
+    {"from": "pos.tags", "to": "bord.before"}, {"from": "bord.tags", "to": "fade.before"},
+    {"from": "syl.units", "to": "emit.units"}, {"from": "time.start", "to": "emit.start"},
+    {"from": "time.end", "to": "emit.end"}, {"from": "fade.tags", "to": "emit.tags"},
+    {"from": "striped.drawing", "to": "emit.drawing"}]})";
+
 constexpr NodeGraphPreset kPresets[] = {
     {"01-classic-fill.ass", kClassicFill},
     {"02-staggered-fade.ass", kStaggeredFade},
@@ -578,6 +621,8 @@ constexpr NodeGraphPreset kPresets[] = {
     {{}, kAudioPulse, "audio-pulse"},
     {{}, kHighlightFlashes, "highlight-flashes"},
     {{}, kPaintAndCloud, "paint-and-cloud"},
+    {{}, kTextOutlines, "text-outlines"},
+    {{}, kStripedLetters, "striped-letters"},
 };
 
 }

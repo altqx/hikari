@@ -30,6 +30,7 @@ public:
     const application::Settings &settings() const { return m_settings; }
     // The Project sets `id` for this window.
     bool overridden(std::string_view id) const;
+    bool waitsForTrust(std::string_view id) const;
     // Reads this window's values; writes and removals go to project.toml. Without a Project nothing is written.
     application::SettingsStorage &projectWrites() { return m_projectWrites; }
     // A write or removal through projectWrites() failed since the last call.

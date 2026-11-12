@@ -2,6 +2,7 @@
 
 // Line text is searched from its start, not from the Line editor's caret.
 
+#include "hikari/application/shape_kernel.h"
 #include "hikari/application/shape_presets.h"
 #include "hikari/application/visual_tools.h"
 #include "hikari/application/visual_vector.h"
@@ -78,6 +79,11 @@ public:
     Overlay overlay(const VisualHost &host) const override;
     std::vector<ToolOption> options(const VisualHost &host) const override;
     bool setOption(const std::string &name, int value, VisualHost &host) override;
+    std::vector<ToolValue> values(const VisualHost &host) const override;
+    bool setValue(const std::string &name, const std::u16string &text, VisualHost &host,
+                  ValueEdit edit = ValueEdit::Commit) override;
+    // Pathfinder's entries, as setOption("pathfinder", i) takes them.
+    void previewOption(const std::string &name, int index, VisualHost &host) override;
     // Rereads the preset at `listSelection`, even if unchanged. Hidden, the tool reads its Line on reset.
     void presetsChanged(int listSelection, VisualHost &host, bool shown = true);
 
@@ -102,6 +108,10 @@ public:
     int shapeGrabbed() const { return m_shapeGrabbed; }
     // The drawing as it would be written now.
     std::u16string body() const;
+    // The outline Pathfinder or Offset would give, in the editor's units; empty when nothing is previewed.
+    const shape::Contours &preview() const { return m_preview; }
+    double offsetWidth() const { return m_offset; }
+    shape::Join offsetJoin() const { return m_join; }
 
     // Only `fromToolbar` rereads the Line on a return to "Choose".
     void changeShape(int listSelection, bool fromToolbar, VisualHost &host);
@@ -122,6 +132,12 @@ private:
     PointF pointToVideo(PointF point, const VisualHost &host) const;
     PointF pointToSubtitles(float x, float y, const VisualHost &host) const;
     PointF drawingAnchor() const;
+    shape::Contours editorContours() const;
+    // The second shape: the active Line's vector clip (`fromClip`), else the other picked Lines' drawings.
+    std::optional<shape::Contours> pathfinderOperand(const VisualHost &host, bool &fromClip) const;
+    std::optional<shape::Contours> pathfinderResult(int op, const VisualHost &host, bool &fromClip) const;
+    shape::Contours offsetResult() const;
+    void commitContours(const shape::Contours &result, bool dropClip, VisualHost &host);
 
     VectorEditor m_editor;
     PointF m_scale{1, 1};
@@ -151,6 +167,10 @@ private:
     std::size_t m_placedStart = 0, m_placedEnd = 0;
     bool m_began = false;
     bool m_inKey = false, m_keyCommit = false;
+
+    shape::Contours m_preview;
+    double m_offset = 0;
+    shape::Join m_join = shape::Join::Round;
 };
 
 }

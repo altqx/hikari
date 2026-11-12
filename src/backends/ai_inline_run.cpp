@@ -71,7 +71,7 @@ void InlineRun::pump()
             requests->complete(m_role, std::move(request), [this, alive, key](const app::Event &event) {
                 if (alive.lock())
                     received(key, event);
-            });
+            }, m_wiring.project);
         if (!alive.lock())
             return;
         if (const auto it = m_running.find(key); it != m_running.end())

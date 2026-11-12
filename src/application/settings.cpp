@@ -1,5 +1,7 @@
 #include "hikari/application/settings.h"
 
+#include "hikari/application/position_commands.h"
+
 #include <algorithm>
 #include <cctype>
 #include <charconv>
@@ -7,6 +9,14 @@
 namespace hikari::application {
 
 namespace {
+
+std::string cycleDefaults(position::CycleTag tag)
+{
+    std::string out;
+    for (const auto &v : position::defaultCycleValues(tag))
+        out += (out.empty() ? "" : ", ") + std::string(v.begin(), v.end());
+    return out;
+}
 
 using enum SettingType;
 using enum SettingScope;
@@ -24,10 +34,11 @@ constexpr std::string_view kProjectable[] = {
     "scriptProperties.scriptOn",     "scriptProperties.translation", "scriptProperties.translationOn",
     "scriptProperties.editing",      "scriptProperties.editingOn",   "scriptProperties.timing",
     "scriptProperties.timingOn",     "scriptProperties.update",      "scriptProperties.updateOn",
-    "scriptProperties.askForChange", "translation.autoMoveTagsFromOriginal",
+    "scriptProperties.askForChange", "translation.autoMoveTagsFromOriginal", "translation.glossary",
+    "translation.translator",        "translation.reviewer",
 };
 // Projectable ids whose Project value waits for trust.
-constexpr std::span<const std::string_view> kWidening;
+constexpr std::string_view kWidening[] = {"translation.translator", "translation.reviewer"};
 
 bool listed(std::span<const std::string_view> rules, std::string_view id)
 {
@@ -312,6 +323,17 @@ const std::vector<SettingDefinition> &definitions()
         {"audio.kanjiTimerSuggest", "", Bool, Profile, Mapped, false, true},
         {"editor.softLineBreak", "", Bool, Profile, Mapped, false, false},
         {"grid.splitFramesBakeAnimations", "", Bool, Profile, Mapped, false, true},
+        {"grid.alignToVideoFrame", "", Bool, Profile, Mapped, false, false},
+        // core::column Tags bits, kept apart from the legacy column choices.
+        {"grid.copyColumnTags", "", Int, Profile, Mapped, false, std::int64_t{0}},
+        {"grid.pasteColumnTags", "", Int, Profile, Mapped, false, std::int64_t{0}},
+        {"grid.columnTagNames", "", String, Profile, Mapped, false, std::string()},
+        {"editing.cycleValues.blur", "", String, Profile, Mapped, false, cycleDefaults(position::CycleTag::Blur)},
+        {"editing.cycleValues.bord", "", String, Profile, Mapped, false, cycleDefaults(position::CycleTag::Bord)},
+        {"editing.cycleValues.shad", "", String, Profile, Mapped, false, cycleDefaults(position::CycleTag::Shad)},
+        {"editing.cycleValues.alpha", "", String, Profile, Mapped, false, cycleDefaults(position::CycleTag::Alpha)},
+        {"editing.cycleValues.an", "", String, Profile, Mapped, false, cycleDefaults(position::CycleTag::An)},
+        {"editing.cycleValues.fsp", "", String, Profile, Mapped, false, cycleDefaults(position::CycleTag::Fsp)},
         // usageDataId: random, made at the first send, cleared when usage data is turned off.
         {"privacy.usageData", "", Bool, Profile, Mapped, false, true},
         {"privacy.usageDataId", "", String, Profile, Mapped, false, std::string()},
@@ -399,10 +421,15 @@ const std::vector<SettingDefinition> &definitions()
         {"ai.agent.threadCapCents", "", Int, Profile, Mapped, false, std::int64_t{200}},
         {"ai.agent.dailyCapCents", "", Int, Profile, Mapped, false, std::int64_t{1000}},
         {"ai.agent.costMeter", "", Bool, Profile, Mapped, false, true},
+        {"ai.agent.autoCompact", "", Bool, Profile, Mapped, false, true},
         {"ai.agent.fullAccessWarned", "", Bool, Profile, Mapped, false, false},
         // actions: one {"name", "instruction", "role", "ask"} JSON object per row.
+        {"ai.agents.custom", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {"ai.inline.actions", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {"ai.inline.translateTo", "", String, Profile, Mapped, false, std::string("English")},
+        {"translation.glossary", "", String, Profile, Mapped, false, std::string()},
+        {"translation.translator", "", String, Profile, Mapped, false, std::string()},
+        {"translation.reviewer", "", String, Profile, Mapped, false, std::string()},
         {"ai.inline.contextLines", "", Int, Profile, Mapped, false, std::int64_t{2}},
         {"ai.inline.recentInstructions", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {"plugins.network", "", Bool, Profile, Mapped, false, true},
@@ -594,6 +621,11 @@ void LayeredSettingsStorage::setProject(std::shared_ptr<const SettingsStorage> p
 bool LayeredSettingsStorage::fromProject(const SettingDefinition &setting) const
 {
     return m_project && projectMaySet(setting, m_trusted) && m_project->read(setting).has_value();
+}
+
+bool LayeredSettingsStorage::waitsForTrust(const SettingDefinition &setting) const
+{
+    return m_project && setting.projectable && !projectMaySet(setting, m_trusted) && m_project->read(setting).has_value();
 }
 
 std::optional<SettingValue> LayeredSettingsStorage::read(const SettingDefinition &setting) const

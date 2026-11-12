@@ -61,7 +61,7 @@ Number, Text, Colour, Alpha, Time, Point, Tags, Drawing, Bool and Units.
 | tags | `tag` (one override tag), `move`, `fade`, `transform` |
 | colours | `gradient` |
 | audio | `peaks` (the audio's level over a unit's span) |
-| drawings | `shape` |
+| drawings | `shape`, `text` (a unit's text as a drawing in its Style's font), `combine` (two drawings united, subtracted, intersected or excluded) |
 | text | `join` (one piece per unit, e.g. `{\kf$kdur}` and the syllable) |
 | output | `emit` (writes one Line per element) |
 | groups | `group`, `input`, `output` |
@@ -76,7 +76,7 @@ Number, Text, Colour, Alpha, Time, Point, Tags, Drawing, Bool and Units.
 
 **Strips, copies and particles.** Like `repeat`, each takes units and gives every unit once per strip, copy or particle, with that one's `index` and `count`.
 
-- `clip_gradient` cuts the unit's box, grown by `padding` on every side, into `strips` strips side by side (`across`) or stacked (`down`). Each strip gives its `\clip` rectangle as `clip` (and its corners `from` and `to`), and the colour of the `colours` gradient at its `progress`, 0 for the first strip and 1 for the last. Edges are whole pixels, and neighbouring strips share theirs, so the strips leave no gap and don't overlap. Strips are rectangles only; a gradient clipped to a drawing waits for the clipper nodes (NE5a).
+- `clip_gradient` cuts the unit's box, grown by `padding` on every side, into `strips` strips side by side (`across`) or stacked (`down`). Each strip gives its `\clip` rectangle as `clip` (and its corners `from` and `to`), and the colour of the `colours` gradient at its `progress`, 0 for the first strip and 1 for the last. Edges are whole pixels, and neighbouring strips share theirs, so the strips leave no gap and don't overlap. Strips are rectangles only. To clip a strip to a drawing, intersect a drawing of its rectangle with the shape in `combine` and wire the result into a `\clip` tag.
 - `array` places copies around the unit's position and gives each one's `offset`, its `position` (the unit's `x` and `y` plus the offset) and an `angle` in degrees, counter-clockwise as `\frz` takes it:
   - `grid`: `columns` × `rows` copies, `spacing` apart, centred on the unit, row by row; angle 0.
   - `circle`: `count` copies `radius` away, the first at `start_angle` (0 is to the right, 90 above), evenly round; the angle is the copy's own.
@@ -96,6 +96,12 @@ Offsets and angles are rounded to thousandths, so Linux and Windows write the sa
 - `highlights` gives a syllable once per highlight, with that highlight's `index` and `count`. A syllable whose text starts with `#` (or `＃`) is a further highlight of the one before it, as in `{\k20}空{\k20}#`. For each highlight, Unit info and Retime see the highlight's start, end and duration (and `kdur`, a tenth of it), as the templater's `multi` modifier sets them. A character has its syllable's highlights. A furigana unit and a Line unit have one highlight each, their own. With `skip_blank` (the default), highlights with no duration are left out, as `multi noblank` leaves them out.
 - `inline_fx` keeps only the units whose inline-fx is `fx`, as the templater's `fx` modifier does. An inline-fx is set with `{\-name}` and holds until the next one. Characters have their syllable's inline-fx, and a furigana unit has the one of the syllable it is in. An empty `fx` keeps the units with no inline-fx. A Line unit has none.
 - `KaraokePresets.NodeExamplesGiveTheLinesOfTheirStockTemplates` runs the two examples below and their stock templates (`template syl noblank multi`; `fx paint`, `fx cloud`, and an `fxgroup` for the rest) on Lines with highlights and inline-fx. The graph, and the template Lines it exports, give the same Lines as the unchanged 3.2.2 templater and the built-in templater.
+
+**Text to drawing and combine** (NE5a, [#906](https://github.com/altqx/hikari/issues/906)). Both run on AU6's shape kernel ([`shape_kernel.h`](../src/application/include/hikari/application/shape_kernel.h)), the code behind Yutils' `text_to_shape` and the Drawing tool's Pathfinder, so there is one copy of the maths.
+
+- `text` draws its `text` (unwired, the unit's text without tags) in the font of the unit's Line's Style: its font name, size, bold, italic, underline, strike-out, scale and spacing. The drawing is at `\p1`, its origin at the text's top left, as Yutils' `text_to_shape` gives it, so `\an7\pos($left,$top)` puts it over the unit. `width` and `height` are the text's. Glyphs come from FreeType, sized as libass sizes them, and from the same fonts the renderer finds. When a font can't be found or read, the node gives an empty drawing and the run has a problem at the node.
+- `combine` takes `a` and `b` and gives `unite` (what either covers), `subtract` (`a` without `b`), `intersect` (what both cover) or `exclude` (what only one covers). Each drawing is filled nonzero, as libass fills it, and Béziers and splines are flattened first. Each input keeps its own `\p` scale; the result is at `\p1`, with numbers to two places. Nothing left gives an empty drawing.
+- Both block Export as template lines.
 
 **Groups.** A group holds a graph of its own.
 
@@ -232,7 +238,7 @@ NE2 ([#424](https://github.com/altqx/hikari/issues/424)) edits a Document's grap
 - **Preview.** While the mode is shown, the graph runs on the current source Line on every edit, with NE1's cache. The video draws that Line's output in place of its generated Lines, with the badge "Preview · line N · not applied"; Source lines has the eye and Loop the line. A graph with problems keeps the last run that worked, dimmed.
 - **Lua trust** is the Template editor's choice for the open Document: trusting the file's Lua in either one covers both.
 - **Presets.** "From a preset" lists all ten KE3 presets ([karaoke presets](karaoke-presets.md)) as graphs, under their Template-editor names. Each graph writes the same Lines as its template, byte for byte (`hikari_application_node_effects_tests`), and uses only catalogue nodes, without Lua. Colour sweep, Glow and Echo have two emits, one per template Layer.
-- **Examples.** After the presets, "From a preset" lists one example per newer node: "Gradient strips" (`clip_gradient`), "Ring of copies" (`array` on a circle), "Particle burst" (`particles`), "Audio pulse" (`audio.peaks`, which needs audio open), "Highlight flashes" (`highlights`) and "Paint and cloud" (`inline_fx`). Each validates and gives the same Lines on every run. The last two also export as template lines.
+- **Examples.** After the presets, "From a preset" lists one example per newer node: "Gradient strips" (`clip_gradient`), "Ring of copies" (`array` on a circle), "Particle burst" (`particles`), "Audio pulse" (`audio.peaks`, which needs audio open), "Highlight flashes" (`highlights`), "Paint and cloud" (`inline_fx`), "Text outlines" (`text`) and "Striped letters" (`combine`, each syllable's letters intersected with horizontal bars). Each validates and gives the same Lines on every run. "Highlight flashes" and "Paint and cloud" also export as template lines.
 
 ## Export as template lines
 
@@ -244,7 +250,7 @@ NE4 ([#426](https://github.com/altqx/hikari/issues/426)). The mode bar menu's "E
 - **One template per Emit,** in the engine's order. Its class comes from the Emit's units: `syl`, `syl char`, `furi` or `pre-line`, with `noblank` when blank units are left out and `loop N` for a Repeat with a constant count (`j` and `maxj` read its place and count). Highlights becomes `multi`, when it leaves out blank highlights exactly when its For each leaves out blank units, and comes before any Repeat. Inline-fx becomes `fx name`. An empty name becomes a `code syl` (or `code furi`) Line that sets an `fxgroup` for units without an inline-fx, and the template takes `fxgroup`. An Emit on Line units that takes its text from a Join of the Line's syllables becomes a `pre-line <id>` and `line <id>` pair; the id is the graph name and the Emit's id. The Emit's constant Layer is the template's Layer; "All styles" adds `all`.
 - **Times** come from one Retime node as `!retime(mode, start, end)!`, or are the Line's when unwired.
 - **Values** become constants, the templater's `$variables` (Unit info), `orgline.styleref` fields (Style values) or Lua expressions (`math.*`, a table for Choose).
-- **What blocks it.** A node with no template form refuses the export, and a popup lists each one with the reason; choosing one selects it. Random numbers, Lua nodes, plugin nodes, Frames, Clip gradient, Array, Particles, Audio peaks, Gradient, Compare, Style colours, a unit's place from For each, a condition on an Emit, a Layer or Repeat count that is not constant, times from anything but one Retime node, a Line timed by a syllable, and text with `!` or `$` all block it, as does every node the compiler does not know yet.
+- **What blocks it.** A node with no template form refuses the export, and a popup lists each one with the reason; choosing one selects it. Random numbers, Lua nodes, plugin nodes, Frames, Clip gradient, Array, Particles, Audio peaks, Gradient, Compare, Style colours, a unit's place from For each, a condition on an Emit, a Layer or Repeat count that is not constant, times from anything but one Retime node, Text to drawing, Combine drawings, a Line timed by a syllable, and text with `!` or `$` all block it, as does every node the compiler does not know yet.
 - **Tests.** `KaraokePresets.ExportedPresetGraphsGiveTheGoldensThroughTheStockTemplater` exports the ten preset graphs and runs them through the unchanged 3.2.2 `kara-templater.lua` and the built-in templater; the generated Lines equal the goldens.
 - **Tests, karaOK.** `KaraokePresets.KaraOKExportsGiveTheNodeEngineLinesOfAKaraOKFile` exports every graph that has a template form in karaOK syntax and runs it through the built-in templater in a karaOK Document; the Lines equal the node engine's on the same Document.
 
@@ -254,3 +260,5 @@ NE4 ([#426](https://github.com/altqx/hikari/issues/426)). The mode bar menu's "E
 - `nodes.validate` checks a graph and returns `{valid, problems}`. Each problem has its `node`, `port` and `message`.
 
 Both are read operations of API version 1 ([Hikari API](api.md)).
+
+The `effects.*` operations ([#444](https://github.com/altqx/hikari/issues/444)) let an AI agent build a graph and run it. `effects.edit` changes a graph it is given, step by step, and `effects.preview` runs one without writing. `effects.save` and `effects.apply` write the graph Line and its Lines, each as one undo step. They run with the editor's text measurement and plugin nodes but never trust the Document's Lua, so a graph with a `lua.code` node previews and applies only from the editor.

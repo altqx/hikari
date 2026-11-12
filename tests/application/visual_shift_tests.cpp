@@ -841,6 +841,47 @@ TEST(VisualShiftEdit, EscEndsTheDragWithoutAStep)
     }
 }
 
+TEST(VisualShiftEdit, TheXAndYFieldsShiftTheToggledKindsAsOneStepEachEnter)
+{
+    TestHost host;
+    Case c;
+    c.clientW = 640;
+    c.clientH = 400;
+    c.panel = 40;
+    c.frame.width = 1280;
+    c.frame.height = 720;
+    c.frame.sarNum = 0;
+    c.frame.sarDen = 1;
+    c.scriptW = 1920;
+    c.scriptH = 1080;
+    c.time = 1500;
+    c.fps = 25;
+    c.styles.push_back("Style: Default,Garamond,40,&H00FFFFFF,&H00000000,&H00FF0000,&H00000000,0,0,0,0,100,100,0,0,0,2,"
+                       "2,2,20,20,20,1");
+    c.lines.push_back("Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\pos(960,540)\\clip(0,0,10,10)\\org(1,1)}Hello");
+    c.translations.push_back({});
+    setUp(host, c);
+    const std::size_t steps = host.s->historySize();
+    PositionShifterTool shifter;
+    shifter.selected(host);
+    shifter.reset(host);
+    shifter.setToggled(PositionShifterTool::Position | PositionShifterTool::Clip, &host);
+    const auto values = shifter.values(host);
+    ASSERT_EQ(values.size(), 2u);
+    EXPECT_EQ(values[0].iconRole, "shift-by-x");
+    EXPECT_EQ(values[1].text, u"0");
+    EXPECT_FALSE(shifter.setValue("shiftX", u"-12.5", host, ValueEdit::Sample));
+    ASSERT_TRUE(shifter.setValue("shiftX", u"-12.5", host));
+    EXPECT_EQ(lineOf(*host.s, *host.s->selection().active)->text,
+              u8"{\\pos(947.5,540)\\clip(-12.5,0,-2.5,10)\\org(1,1)}Hello");
+    EXPECT_EQ(host.s->historySize(), steps + 1);
+    ASSERT_TRUE(shifter.setValue("shiftY", u"2", host));
+    EXPECT_EQ(lineOf(*host.s, *host.s->selection().active)->text,
+              u8"{\\pos(935,542)\\clip(-25,2,-15,12)\\org(1,1)}Hello");
+    EXPECT_EQ(host.s->historySize(), steps + 2);
+    EXPECT_EQ(shifter.values(host)[0].text, u"-12.5");
+}
+
 TEST(VisualShiftEdit, ALargeBatchAsksForTheShownLinesOnce)
 {
     TestHost host;

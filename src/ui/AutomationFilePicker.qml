@@ -12,7 +12,10 @@ FileChooser {
     // 0x4 is QFileDialogOptions::DontConfirmOverwrite: the root object's bindings can't resolve that extension enum.
     options: picker.save && !picker.confirmOverwrite ? 0x4 : 0
     currentFolder: picker.folder
-    selectedFile: picker.file
+    Binding on selectedFile {
+        when: String(dialog.picker.file).length > 0
+        value: dialog.picker.file
+    }
     nameFilters: picker.nameFilters
     visible: picker.open
 
