@@ -46,6 +46,7 @@
 #include "hikari/application/grid_split.h"
 #include "hikari/application/motion_data.h"
 #include "hikari/application/visual_gradient.h"
+#include "hikari/application/visual_text_on_path.h"
 #include "hikari/application/visual_perspective.h"
 #include "hikari/application/visual_position.h"
 #include "hikari/application/visual_rotation.h"
@@ -21853,7 +21854,7 @@ private slots:
                                      "Video", "Audio", "Conversion", "Script properties", "Automation", "Shortcuts",
                                      "AI", "Updates and privacy"}));
         QVERIFY(dialogItem("settingsDialog", "settingsPageHotkeys"));
-        QCOMPARE(hotkeyRows().size(), 352);
+        QCOMPARE(hotkeyRows().size(), 353);
         QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(),
                  QStringLiteral("Global Accept the timing assistant\u2019s suggestion"));
         QCOMPARE(application->hotkeys().selected(), 0);
@@ -29118,6 +29119,96 @@ private slots:
         QVERIFY(session->undo());
         QCOMPARE(session->document().lines().size(), lines);
         QVERIFY(!session->document().lines()[2]->comment);
+    }
+
+    void visualTextOnPathThroughThePanel()
+    {
+        widenForTheInspectorBar();
+        using namespace application::visual;
+        QVERIFY(application->openFile(visualDocument(
+            "text-on-path.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\clip(m 40 200 b 80 80 240 80 280 200)}Sign\n")));
+        auto &tools = application->visualTools();
+        application->settingsStore()->set("video.openAtActiveLine", true);
+        application->video().openVideo(nativeFixture("cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(!tools.videoRect().isEmpty(), 20000);
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().frame() == 24, 20000);
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const core::LineId third = session->document().lines()[2]->id;
+        application->selectLine(third.value);
+        QTRY_VERIFY(session->selection().active == third);
+
+        QVERIFY(QMetaObject::invokeMethod(visualItem("visualTool13"), "click"));
+        QCOMPARE(tools.activeFamily(), int(Family::TextOnPath));
+        settleVisualBar();
+        QQuickItem *more = visualItem("visualToolMore");
+        auto *popover = visualItem("visualToolBar")->findChild<QObject *>(QStringLiteral("visualToolMorePopover"));
+        QVERIFY(more && popover);
+        if (more->isVisible()) {
+            QVERIFY(QMetaObject::invokeMethod(more, "click"));
+            QTRY_VERIFY(popover->property("opened").toBool());
+        }
+        const auto option = [&](const QString &name) { return visualItem(qPrintable(QStringLiteral("visualOption_") + name)); };
+        const QList<std::pair<QString, QString>> icons{
+            {QStringLiteral("mode0"), QStringLiteral("vector-drag")},   {QStringLiteral("mode1"), QStringLiteral("vector-line")},
+            {QStringLiteral("mode2"), QStringLiteral("vector-bezier")}, {QStringLiteral("mode3"), QStringLiteral("vector-delete")},
+            {QStringLiteral("align0"), QStringLiteral("align-left")},   {QStringLiteral("align1"), QStringLiteral("align-center")},
+            {QStringLiteral("align2"), QStringLiteral("align-right")},
+            {QStringLiteral("align3"), QStringLiteral("distribute-horizontal")},
+            {QStringLiteral("rotate"), QStringLiteral("tool-rotate-z")}, {QStringLiteral("reverse"), QStringLiteral("swap-lines")},
+            {QStringLiteral("slide"), QStringLiteral("media-play")},     {QStringLiteral("apply"), QStringLiteral("commit")}};
+        for (const auto &[name, icon] : icons) {
+            QTRY_VERIFY2(option(name), qPrintable(name));
+            QCOMPARE(option(name)->property("iconRole").toString(), icon);
+        }
+        QVERIFY(option(QStringLiteral("align0"))->property("checked").toBool());
+        QVERIFY(option(QStringLiteral("rotate"))->property("checked").toBool());
+        for (const char *value : {"offset", "lines"})
+            QVERIFY2(visualItem(qPrintable(QStringLiteral("visualValue_") + QLatin1String(value))), value);
+        if (popover->property("opened").toBool()) {
+            QVERIFY(QMetaObject::invokeMethod(popover, "revert"));
+            QTRY_VERIFY(!popover->property("visible").toBool());
+        }
+
+        auto *tool = dynamic_cast<TextOnPathTool *>(tools.tool());
+        QVERIFY(tool);
+        QTRY_VERIFY(tool->hasPending());
+        QCOMPARE(tool->previewLines(tools).size(), std::size_t(4));
+        QVERIFY(tool->hiddenLines(tools) == std::vector<core::LineId>{third});
+        const QString before = text(session->document().lines()[2]);
+        const std::size_t steps = session->historySize();
+        const std::size_t lines = session->document().lines().size();
+
+        visualItem("videoPanel")->forceActiveFocus();
+        QTest::keyClick(window, Qt::Key_Return);
+        QTRY_COMPARE(session->historySize(), steps + 1);
+        QCOMPARE(session->history().back().name, std::string("Text on path"));
+        QCOMPARE(session->document().lines().size(), lines + 4);
+        QVERIFY(session->document().lines()[2]->comment);
+        QCOMPARE(text(session->document().lines()[2]), before);
+        const QStringList clusters{QStringLiteral("S"), QStringLiteral("i"), QStringLiteral("g"), QStringLiteral("n")};
+        for (std::size_t i = 3; i < 7; ++i) {
+            const QString glyph = text(session->document().lines()[i]);
+            QVERIFY2(glyph.startsWith(QLatin1String("{\\an2\\pos(")) && glyph.contains(QLatin1String("\\frz")), qPrintable(glyph));
+            QVERIFY2(glyph.endsWith(QLatin1Char('}') + clusters[int(i - 3)]), qPrintable(glyph));
+            QVERIFY(session->selection().selected.contains(session->document().lines()[i]->id));
+        }
+        QVERIFY(session->undo());
+        QCOMPARE(session->document().lines().size(), lines);
+        QVERIFY(!session->document().lines()[2]->comment);
+
+        application->selectLine(third.value);
+        QTRY_VERIFY(session->selection().active == third);
+        QVERIFY(QMetaObject::invokeMethod(visualItem("visualTool0"), "click"));
+        QVERIFY(QMetaObject::invokeMethod(visualItem("visualTool13"), "click"));
+        tool = dynamic_cast<TextOnPathTool *>(tools.tool());
+        QVERIFY(tool);
+        QTRY_VERIFY(tool->hasPending());
+        const std::size_t beforeEscape = session->historySize();
+        visualItem("videoPanel")->forceActiveFocus();
+        QTest::keyClick(window, Qt::Key_Escape);
+        QTRY_VERIFY(!tool->hasPending());
+        QCOMPARE(session->historySize(), beforeEscape);
+        QCOMPARE(session->document().lines().size(), lines);
     }
 
     void visualGradientScreenshots()

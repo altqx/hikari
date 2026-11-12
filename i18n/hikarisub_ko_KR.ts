@@ -7374,6 +7374,10 @@ Failed to copy %2 fonts.</source>
         <translation>그라데이션</translation>
     </message>
     <message>
+        <source>Text on path</source>
+        <translation>경로 따라 텍스트</translation>
+    </message>
+    <message>
         <source>Vector clip: move points</source>
         <translation>벡터 클립: 점 이동</translation>
     </message>
@@ -23452,12 +23456,32 @@ or codecs or a splitter may be missing</source>
         <translation>단계</translation>
     </message>
     <message>
+        <source>Layout</source>
+        <translation>레이아웃</translation>
+    </message>
+    <message>
         <source>In</source>
         <translation>페이드 인</translation>
     </message>
     <message>
         <source>Out</source>
         <translation>페이드 아웃</translation>
+    </message>
+    <message>
+        <source>Offset</source>
+        <translation>오프셋</translation>
+    </message>
+    <message>
+        <source>Frames a step</source>
+        <translation>단계당 프레임</translation>
+    </message>
+    <message>
+        <source>Past the end</source>
+        <translation>끝을 넘은 길이</translation>
+    </message>
+    <message>
+        <source>Lines</source>
+        <translation>줄</translation>
     </message>
     <message numerus="yes">
         <source>Changes %n lines</source>
@@ -24086,6 +24110,10 @@ or codecs or a splitter may be missing</source>
         <translation>원근</translation>
     </message>
     <message>
+        <source>Text on path</source>
+        <translation>경로 따라 텍스트</translation>
+    </message>
+    <message>
         <source>\org mode</source>
         <translation>\org 모드</translation>
     </message>
@@ -24422,6 +24450,54 @@ increasing or decreasing the value.</source>
     <message>
         <source>No characters on the line</source>
         <translation>줄에 글자가 없습니다</translation>
+    </message>
+    <message>
+        <source>Apply</source>
+        <translation>적용</translation>
+    </message>
+    <message>
+        <source>Draw a path, or give the line a vector clip</source>
+        <translation>경로를 그리거나 줄에 벡터 클립을 지정하십시오</translation>
+    </message>
+    <message>
+        <source>Left</source>
+        <translation>좌측</translation>
+    </message>
+    <message>
+        <source>Reverse</source>
+        <translation>반대 방향</translation>
+    </message>
+    <message>
+        <source>Right</source>
+        <translation>우측</translation>
+    </message>
+    <message>
+        <source>Rotate</source>
+        <translation>회전</translation>
+    </message>
+    <message>
+        <source>Slide</source>
+        <translation>슬라이드</translation>
+    </message>
+    <message>
+        <source>Slide needs the video’s frames</source>
+        <translation>슬라이드에는 영상 프레임이 필요합니다</translation>
+    </message>
+    <message>
+        <source>Spread</source>
+        <translation>균등 배치</translation>
+    </message>
+    <message>
+        <source>Text can’t be measured here</source>
+        <translation>여기서는 텍스트를 측정할 수 없습니다</translation>
+    </message>
+    <message>
+        <source>No text to place</source>
+        <translation>배치할 텍스트 없음</translation>
+    </message>
+    <message>
+        <source>The text is longer than the path. The last graphemes continue along its end.</source>
+        <translation>텍스트가 경로보다 깁니다. 마지막 글자들은 경로 끝에서 그대로 이어집니다.</translation>
     </message>
     <message>
         <source>Edit</source>
