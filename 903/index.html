@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>PJ7c #903: AI file changes in the Review panel (draft)</title>
+<style>
+:root { --page: #f3f4f6; --page-ink: #1d232b; --page-muted: #56606b; --page-line: #d5dade; }
+body { margin: 0; padding: 24px; background: var(--page); color: var(--page-ink); font: 14px/1.4 "Inter", "Segoe UI", system-ui, sans-serif; }
+h1 { font-size: 20px; margin: 0 0 4px; }
+h2 { font-size: 15px; margin: 28px 0 10px; }
+p.lead { color: var(--page-muted); margin: 0 0 16px; max-width: 900px; }
+.grid { display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start; }
+.cap { font-size: 12px; color: var(--page-muted); margin-bottom: 6px; }
+.t-light { --bg: #E5E9EC; --panel: #F9FAFB; --raised: #EDF0F3; --field: #FFFFFF; --text: #202832; --muted: #526170; --line: #AAB5BE; --control: #76828D; --accent: #145C4C; --on: #FFFFFF; --select: #D6EBE4; --warning: #8A5A00; --add: #D6EBE4; --del: #F6D9DD; }
+.t-dark { --bg: #171B20; --panel: #20262D; --raised: #29313A; --field: #171D24; --text: #E8EDF2; --muted: #A5B1BD; --line: #414B57; --control: #7A8691; --accent: #9CDBC9; --on: #102C24; --select: #304C47; --warning: #E0A030; --add: #23423B; --del: #4A2A30; }
+.t-hcb { --bg: #000000; --panel: #080808; --raised: #151515; --field: #000000; --text: #FFFFFF; --muted: #EEEEEE; --line: #FFFFFF; --control: #FFFFFF; --accent: #FFFF00; --on: #000000; --select: #253F60; --warning: #FFD54A; --add: #10361A; --del: #4A0F0F; }
+.t-hcw { --bg: #FFFFFF; --panel: #FFFFFF; --raised: #EBEBEB; --field: #FFFFFF; --text: #000000; --muted: #1A1A1A; --line: #000000; --control: #000000; --accent: #0037B3; --on: #FFFFFF; --select: #C9DAF8; --warning: #6B4500; --add: #D7F0D7; --del: #F8D7D7; }
+.panel { background: var(--panel); color: var(--text); border: 1px solid var(--line); font-size: 13px; }
+.panel.narrow { width: 300px; }
+.panel.wide { width: 520px; }
+.head { padding: 8px 10px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.head .title { font-weight: 600; }
+.head .count { color: var(--muted); }
+.head .spacer { flex: 1; }
+.btn { display: inline-flex; align-items: center; gap: 4px; border: 1px solid var(--line); background: var(--raised); color: var(--text); border-radius: 4px; padding: 2px 8px; font-size: 12px; white-space: nowrap; }
+.btn.primary { background: var(--accent); color: var(--on); border-color: var(--accent); }
+.ibtn { width: 22px; height: 22px; display: inline-grid; place-items: center; border-radius: 4px; color: var(--control); }
+.ibtn:hover { background: var(--raised); }
+.ibtn svg, .btn svg, .ico svg { width: 16px; height: 16px; }
+.rule { height: 1px; background: var(--line); }
+.turn { padding: 6px 10px 8px; }
+.turnhead { display: flex; align-items: center; gap: 6px; }
+.turnhead .n { font-weight: 600; }
+.turnhead .label { color: var(--muted); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.row { display: flex; align-items: center; gap: 8px; padding: 3px 0 3px 8px; border-left: 3px solid var(--accent); margin: 4px 0 0 6px; }
+.row.warn { border-left-color: var(--warning); }
+.row .ico { color: var(--control); display: inline-grid; }
+.row .name { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.row .detail { color: var(--muted); white-space: nowrap; }
+.row .grow { flex: 1; min-width: 0; display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.row.selected { background: var(--select); }
+.diff { margin: 2px 0 6px 17px; border: 1px solid var(--line); background: var(--field); font: 12px/1.45 "JetBrains Mono", "Cascadia Mono", monospace; }
+.diff div { padding: 0 6px; white-space: pre; overflow: hidden; text-overflow: ellipsis; }
+.diff .a { background: var(--add); }
+.diff .d { background: var(--del); text-decoration: line-through; }
+.diff .c { color: var(--muted); }
+.ask { margin: 6px 0 4px 6px; padding: 8px; background: var(--raised); border: 1px solid var(--warning); }
+.ask p { margin: 0 0 6px; }
+.ask .btns { display: flex; gap: 6px; flex-wrap: wrap; }
+.sub { padding: 6px 10px; color: var(--muted); font-weight: 600; font-size: 12px; }
+.also { padding: 0 10px 8px; }
+.also .row { border-left-color: transparent; }
+.dialog { width: 420px; background: var(--panel); color: var(--text); border: 1px solid var(--line); padding: 16px; font-size: 13px; }
+.dialog h3 { margin: 0 0 6px; font-size: 15px; }
+.dialog p { margin: 0 0 12px; color: var(--muted); }
+.dialog ul { margin: 0 0 14px; padding-left: 18px; }
+.dialog .btns { display: flex; gap: 8px; justify-content: flex-end; }
+.notes { max-width: 1000px; }
+.notes li { margin-bottom: 6px; }
+</style>
+</head>
+<body>
+<h1>PJ7c #903: AI changes to Project files in the Review panel (draft)</h1>
+<p class="lead">An AI write to a Project file that isn't an open Document is staged. It shows in the Review panel in the turn that made it, and reaches the disk only on Keep; Undo drops it. Draft for owner question Q371; not posted on the card yet.</p>
+
+<template id="panel">
+  <div class="head">
+    <span class="title">episode-03.ass</span>
+    <span class="count">4 changes to review</span>
+    <span class="spacer"></span>
+    <span class="btn"><svg viewBox="0 0 16 16"><path d="M5 4 2 7l3 3M2 7h8a4 4 0 0 1 0 8H7" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>Undo all</span>
+    <span class="btn"><svg viewBox="0 0 16 16"><path d="m3 8 3 3 7-7" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>Keep all</span>
+  </div>
+  <div class="rule"></div>
+  <div class="turn">
+    <div class="turnhead">
+      <span class="ico"><svg viewBox="0 0 16 16" width="16" height="16"><circle cx="8" cy="8" r="5.5" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M8 5v3l2 1.5" fill="none" stroke="currentColor" stroke-width="1.4"/></svg></span>
+      <span class="n">Turn 2</span>
+      <span class="label">Add the cue notes and fix the glossary</span>
+      <span class="btn">Restore checkpoint</span>
+    </div>
+    <div class="row">
+      <span class="ico"><svg viewBox="0 0 16 16"><rect x="2.5" y="2.5" width="11" height="11" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M5 6h6M5 8.5h6M5 11h4" stroke="currentColor" stroke-width="1.2"/></svg></span>
+      <span class="grow"><span class="name">Retimed the sign lines</span><span class="detail">3 lines</span></span>
+      <span class="ibtn" title="Undo"><svg viewBox="0 0 16 16"><path d="M5 4 2 7l3 3M2 7h8a4 4 0 0 1 0 8H7" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></span>
+      <span class="ibtn" title="Keep"><svg viewBox="0 0 16 16"><path d="m3 8 3 3 7-7" fill="none" stroke="currentColor" stroke-width="1.7"/></svg></span>
+    </div>
+    <div class="row selected">
+      <span class="ico"><svg viewBox="0 0 16 16"><path d="M4 1.5h5.5L12.5 4.5V14.5H4z" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M9.5 1.5v3h3" fill="none" stroke="currentColor" stroke-width="1.3"/></svg></span>
+      <span class="grow"><span class="name">GLOSSARY.md</span><span class="detail">Changed, +2 −1 lines</span></span>
+      <span class="ibtn" title="Undo"><svg viewBox="0 0 16 16"><path d="M5 4 2 7l3 3M2 7h8a4 4 0 0 1 0 8H7" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></span>
+      <span class="ibtn" title="Keep"><svg viewBox="0 0 16 16"><path d="m3 8 3 3 7-7" fill="none" stroke="currentColor" stroke-width="1.7"/></svg></span>
+    </div>
+    <div class="diff">
+      <div class="c">| Senpai | senpai | keep |</div>
+      <div class="d">| Onee-san | big sister | translate |</div>
+      <div class="a">| Onee-san | Onee-san | keep, as in ep. 1 |</div>
+      <div class="a">| Kouhai | kouhai | keep |</div>
+    </div>
+    <div class="row">
+      <span class="ico"><svg viewBox="0 0 16 16"><path d="M4 1.5h5.5L12.5 4.5V14.5H4z" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M8 7v5M5.5 9.5h5" stroke="currentColor" stroke-width="1.3"/></svg></span>
+      <span class="grow"><span class="name">notes/ep03-cues.txt</span><span class="detail">New file, 14 lines</span></span>
+      <span class="ibtn" title="Undo"><svg viewBox="0 0 16 16"><path d="M5 4 2 7l3 3M2 7h8a4 4 0 0 1 0 8H7" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></span>
+      <span class="ibtn" title="Keep"><svg viewBox="0 0 16 16"><path d="m3 8 3 3 7-7" fill="none" stroke="currentColor" stroke-width="1.7"/></svg></span>
+    </div>
+    <div class="row warn">
+      <span class="ico"><svg viewBox="0 0 16 16"><path d="M4 1.5h5.5L12.5 4.5V14.5H4z" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M9.5 1.5v3h3" fill="none" stroke="currentColor" stroke-width="1.3"/></svg></span>
+      <span class="grow"><span class="name">PROJECT.md</span><span class="detail" style="color: var(--warning)">changed on disk since</span></span>
+      <span class="ibtn" title="Undo"><svg viewBox="0 0 16 16"><path d="M5 4 2 7l3 3M2 7h8a4 4 0 0 1 0 8H7" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></span>
+      <span class="ibtn" title="Keep"><svg viewBox="0 0 16 16"><path d="m3 8 3 3 7-7" fill="none" stroke="currentColor" stroke-width="1.7"/></svg></span>
+    </div>
+    <div class="ask">
+      <p>PROJECT.md changed on disk after the AI wrote its copy. Keep replaces the file on disk with the AI's copy, which drops those changes.</p>
+      <div class="btns"><span class="btn primary">Keep anyway</span><span class="btn">Cancel</span></div>
+    </div>
+  </div>
+  <div class="rule"></div>
+  <div class="sub">Also to review</div>
+  <div class="also">
+    <div class="row"><span class="grow"><span class="name">episode-04.ass</span><span class="detail">2 changes</span></span></div>
+  </div>
+</template>
+
+<h2>1. Review panel, wide (520 px) and narrow (300 px)</h2>
+<div class="grid" id="panels"></div>
+
+<h2>2. Closing the window or quitting with staged files</h2>
+<div class="grid" id="dialogs"></div>
+<template id="dialog">
+  <h3>Keep the AI's file changes?</h3>
+  <p>3 Project files the AI changed aren't on disk yet. They're lost when HikariSub closes.</p>
+  <ul><li>GLOSSARY.md</li><li>notes/ep03-cues.txt</li><li>PROJECT.md</li></ul>
+  <div class="btns"><span class="btn">Cancel</span><span class="btn">Discard all</span><span class="btn primary">Keep all</span></div>
+</template>
+
+<h2>Owner questions (Q371–Q376), recommendations in bold</h2>
+<ol class="notes">
+  <li>Gate these rows on this mockup: <b>yes</b>.</li>
+  <li>The AI's own files.read sees what it staged: <b>yes</b>.</li>
+  <li>Closing the window or quitting with staged files asks Keep all, Discard all or Cancel (above); nothing staged survives a restart: <b>yes</b>.</li>
+  <li>Restore checkpoint also puts back kept files' previous content, after a changed-on-disk check: <b>yes</b>.</li>
+  <li>files.write to an open Document's path is refused, pointing at document.apply: <b>yes</b>.</li>
+  <li>Deleting and renaming files stay out of scope: <b>yes</b>.</li>
+</ol>
+
+<script>
+const themes = [["t-light", "Light"], ["t-dark", "Dark"], ["t-hcw", "High contrast white"], ["t-hcb", "High contrast black"]];
+const panel = document.getElementById("panel"), dialog = document.getElementById("dialog");
+for (const [cls, name] of themes) {
+  for (const width of ["wide", "narrow"]) {
+    const box = document.createElement("div");
+    box.innerHTML = `<div class="cap">${name}, ${width}</div>`;
+    const p = document.createElement("div");
+    p.className = `panel ${width} ${cls}`;
+    p.appendChild(panel.content.cloneNode(true));
+    box.appendChild(p);
+    document.getElementById("panels").appendChild(box);
+  }
+  const box = document.createElement("div");
+  box.innerHTML = `<div class="cap">${name}</div>`;
+  const d = document.createElement("div");
+  d.className = `dialog ${cls}`;
+  d.appendChild(dialog.content.cloneNode(true));
+  box.appendChild(d);
+  document.getElementById("dialogs").appendChild(box);
+}
+</script>
+</body>
+</html>
