@@ -9,6 +9,7 @@
 #include <filesystem>
 #include <functional>
 #include <map>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -26,8 +27,10 @@ public:
         std::vector<plugins::FileGrantRequest> folders;
     };
 
-    // `installer` may be null: no data/, cache/ or remembered folders then.
-    PluginFiles(api::Api *api, plugins::Installer *installer, PluginUi &ui);
+    // `installer` may be null: no data/, cache/ or remembered folders then. `project` answers the
+    // Project the user works in (unset: never a Project).
+    PluginFiles(api::Api *api, plugins::Installer *installer, PluginUi &ui,
+                std::function<std::optional<api::ProjectState>()> project = {});
 
     void serve(const Plugin &plugin, const std::string &operation, const api::Json &params, api::Reply reply);
     // A file dropped on the plugin's panel, granted for reading: {file, name, access}.
@@ -51,6 +54,7 @@ private:
     api::Api *m_api = nullptr;
     plugins::Installer *m_installer = nullptr;
     PluginUi &m_ui;
+    std::function<std::optional<api::ProjectState>()> m_project;
     std::map<std::string, std::map<std::string, plugins::FileGrant>> m_thisRun; // by plugin id, then folder id
 };
 

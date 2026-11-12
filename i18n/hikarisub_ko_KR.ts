@@ -10632,6 +10632,30 @@ Failed to copy %2 fonts.</source>
         <source>Align to video</source>
         <translation>영상에 맞추기</translation>
     </message>
+    <message>
+        <source>Project</source>
+        <translation type="unfinished">프로젝트</translation>
+    </message>
+    <message>
+        <source>Mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation type="unfinished">저장</translation>
+    </message>
+    <message>
+        <source>Save to project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save to mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Where to save</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Matroska</name>
@@ -18433,6 +18457,30 @@ because it was edited.</source>
         <translation>목록</translation>
     </message>
     <message>
+        <source>Move catalogue</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy catalogue</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The project already has a catalogue named “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>You already have a catalogue named “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move</source>
+        <translation type="unfinished">이동</translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation type="unfinished">복사</translation>
+    </message>
+    <message>
         <source>Delete catalogue</source>
         <translation>목록 삭제</translation>
     </message>
@@ -18579,6 +18627,46 @@ because it was edited.</source>
     <message>
         <source>Catalogue</source>
         <translation>목록</translation>
+    </message>
+    <message>
+        <source>%1, hidden by the project’s copy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hidden by the project’s copy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Catalogue tiers</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy to project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy to mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hidden by the project’s copy. Copy it to the project to use it there.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Add to file</source>
@@ -18867,6 +18955,10 @@ because it was edited.</source>
     <message>
         <source>The catalogue “%1” no longer exists.</source>
         <translation>“%1” 목록이 더 이상 없습니다.</translation>
+    </message>
+    <message>
+        <source>The project’s copy hides this catalogue. Copy it to edit it.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Style named “%1” already exists.</source>
@@ -19977,6 +20069,10 @@ Styles deleted:
         <translation>줄별 코드</translation>
     </message>
     <message>
+        <source>Uses karaOK template syntax. Switch Template language to karaOK to use it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>The new line goes above the first karaoke line, with that line’s style.</source>
         <translation>새 줄은 첫 번째 노래방 줄 위에 그 줄의 스타일로 추가됩니다.</translation>
     </message>
@@ -20266,6 +20362,86 @@ Styles deleted:
     <message>
         <source>The karaoke fills from left to right, fading in with the line and out after it.</source>
         <translation>왼쪽에서 오른쪽으로 채워지는 노래방 효과입니다. 줄과 함께 페이드 인하고 줄이 끝나면 페이드 아웃합니다.</translation>
+    </message>
+    <message>
+        <source>Word pop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each word swells as it starts and settles back while it is sung.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Word wipe</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The line shows whole, and a second colour wipes across each word while it is sung.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Letter cascade</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Letters appear one after another along the line before it is sung.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Letter shimmer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each letter tilts and brightens as it is sung, then straightens.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Furigana rise</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Furigana rises into place over each syllable as it is sung.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Early lead-in</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each syllable lights up a moment before it is sung.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Wave bounce</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each syllable bobs up and down on a sine wave while it is sung (ln.kara).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shape burst</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Six stars burst out of each syllable as it is sung (ln.kara).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Line gradient</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The line’s letters run through a band of colours from left to right (ln.kara).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Thai fade</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each character cluster fades in as it is sung, so Thai vowels and tone marks stay on their letters.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>syllable duration (ms)</source>

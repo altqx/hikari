@@ -18,6 +18,7 @@ struct KaraokePresetLine {
 struct KaraokePreset {
     std::u8string title;
     std::u8string description;
+    bool karaOK = false;
     std::vector<KaraokePresetLine> lines;
 };
 

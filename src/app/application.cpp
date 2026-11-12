@@ -754,7 +754,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         m_userFolder.isEmpty() ? std::filesystem::path()
                                : std::filesystem::path((m_userFolder + QStringLiteral("/ai/skills")).toStdU16String()),
         m_aiScripts.get(),
-        [this] { return perspectiveMeasure(); }});
+        [this] { return perspectiveMeasure(); }, [this] { return activeProject(); }});
     AiFeatures::Ports aiPorts = options.aiPorts ? std::move(*options.aiPorts)
                                                 : AiFeatures::defaultPorts(m_userFolder, &m_apiHost->api(),
                                                                            options.appVersion.isEmpty()
@@ -811,6 +811,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     PluginRuntime::Wiring pluginWiring{pluginHelperPath(options.pluginHelper), options.plugins, &m_apiHost->api(), m_log.get(),
                                        [this] { return m_localisation ? m_localisation->language() : QString(); }};
     pluginWiring.networkAllowed = [this] { return m_settings->boolean("plugins.network"); };
+    pluginWiring.project = [this] { return activeProject(); };
     pluginWiring.sandbox = true;
     pluginWiring.setSetting = [this](const QString &id, const QString &setting, const QString &json) {
         return m_pluginManager->setSetting(id, setting, json);
@@ -934,6 +935,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         };
         hooks.lastCatalog = [this] { return m_settings->text("styles.lastCatalog"); };
         hooks.catalogChosen = [this](const QString &name) { m_settings->set("styles.lastCatalog", name); };
+        hooks.projectRoot = [this] { return m_projects ? m_projects->root(m_workspace.activeWindow()) : QString(); };
         m_styleManager = std::make_unique<StyleManagerController>(std::filesystem::path(catalogDir.toStdU16String()), std::move(hooks));
     }
     {

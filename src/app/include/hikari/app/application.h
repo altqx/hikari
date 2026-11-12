@@ -345,6 +345,7 @@ public:
     // The toast for a tab moved into `shellWindow`; "" when that window has no Project.
     Q_INVOKABLE QString projectMoveText(int shellWindow) const;
     QString projectOf(int shellWindow) const { return m_projects->root(shellWindow); }
+    std::optional<api::ProjectState> activeProject() const;
     ProjectWindows &projects() { return *m_projects; }
     // "modified" when the target's file is newer than when last read or written;
     // "removed" once when it is gone (the Document becomes unsaved).

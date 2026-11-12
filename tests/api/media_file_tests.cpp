@@ -191,7 +191,7 @@ TEST_F(MediaAndFiles, WithoutPortsEverythingIsUnavailable)
     ScriptClient none{bare};
     EXPECT_EQ(none.call(aiCaller(), "files.read", *Json::parse(R"({"file": "f1"})")).error().code, errors::kUnavailable);
     EXPECT_EQ(none.call(aiCaller(), "video.frame", Json()).error().code, errors::kUnavailable);
-    EXPECT_EQ(*none.call(aiCaller(), "files.list", Json()), *Json::parse(R"({"files": []})"));
+    EXPECT_EQ(*none.call(aiCaller(), "files.list", Json()), *Json::parse(R"({"files": [], "folders": []})"));
 }
 
 TEST_F(MediaAndFiles, RegisteredNodeTypesAreCatalogued)

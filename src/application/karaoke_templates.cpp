@@ -1,11 +1,14 @@
 #include "hikari/application/karaoke_templates.h"
 
+#include "hikari/application/edit_session.h"
 #include "hikari/application/karaoke_layout.h"
+#include "hikari/application/template_preview.h"
 #include "hikari/core/document.h"
 
 #include <algorithm>
 #include <array>
 #include <memory>
+#include <utility>
 
 namespace hikari::application::karaoke_templates {
 
@@ -446,7 +449,7 @@ Mode modeOf(std::optional<std::string_view> modeLine, const std::vector<SubsEntr
     return Mode::Stock;
 }
 
-Mode documentMode(const core::Document &document)
+Mode documentMode(const core::Document &document, Mode withoutTemplates)
 {
     const auto narrow = [](std::u8string_view s) { return std::string(s.begin(), s.end()); };
     const std::u8string key(kModeKey.begin(), kModeKey.end());
@@ -460,7 +463,82 @@ Mode documentMode(const core::Document &document)
                            .effect = narrow(l->effect),
                            .text = narrow(l->text),
                            .style = narrow(l->style)});
+    if (!modeLine && std::ranges::none_of(document.lines(), [](const core::LineRecord *l) {
+            return templateKindOf(*l).has_value();
+        }))
+        return withoutTemplates;
     return modeOf(modeLine, entries);
+}
+
+Mode documentMode(const EditSession &session)
+{
+    return documentMode(session.document(), session.isNewDocument() ? Mode::KaraOK : Mode::Stock);
+}
+
+namespace {
+
+std::vector<std::string> effectWords(std::string_view effect)
+{
+    std::vector<std::string> words;
+    std::size_t at = 0;
+    while (at < effect.size()) {
+        while (at < effect.size() && isSpace(effect[at]))
+            ++at;
+        const std::size_t from = at;
+        while (at < effect.size() && !isSpace(effect[at]))
+            ++at;
+        if (at > from)
+            words.emplace_back(effect.substr(from, at - from));
+    }
+    return words;
+}
+
+std::string joined(const std::vector<std::string> &words)
+{
+    std::string out;
+    for (const auto &w : words)
+        out += (out.empty() ? "" : " ") + w;
+    return out;
+}
+
+}
+
+std::string karaOKEffect(std::string_view stockEffect)
+{
+    const auto words = effectWords(stockEffect);
+    if (words.empty() || lower(words.front()) != "template")
+        return std::string(stockEffect);
+    const bool chars = std::ranges::any_of(words, [](const std::string &w) { return lower(w) == "char"; });
+    std::vector<std::string> out{words.front()};
+    bool charPlaced = false;
+    for (std::size_t k = 1; k < words.size(); ++k) {
+        const std::string w = lower(words[k]);
+        if (w == "pre-line")
+            out.push_back("line");
+        else if (w == "line")
+            out.push_back("lsyl");
+        else if (chars && (w == "syl" || w == "char")) {
+            if (!std::exchange(charPlaced, true))
+                out.push_back("char");
+        } else
+            out.push_back(words[k]);
+    }
+    return joined(out);
+}
+
+std::string stockEffect(std::string_view karaOKEffect)
+{
+    auto words = effectWords(karaOKEffect);
+    if (words.empty() || lower(words.front()) != "template")
+        return std::string(karaOKEffect);
+    for (std::size_t k = 1; k < words.size(); ++k) {
+        const std::string w = lower(words[k]);
+        if (w == "line")
+            words[k] = "pre-line";
+        else if (w == "lsyl")
+            words[k] = "line";
+    }
+    return joined(words);
 }
 
 Parsed parseTemplates(const std::vector<SubsEntry> &subs, bool keepFx, const ToNumber &toNumber, Mode mode)

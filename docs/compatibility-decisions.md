@@ -338,6 +338,22 @@ The table forms of `ln.tag.pos` and `ln.tag.kanjipos` read their fields from the
 
 `ln.tag.kanjipos` in a 3.2.2-mode Document is a problem, "ln.tag.kanjipos works only in karaOK mode", on its template Line. It reads karaOK's per-character table, which 3.2.2 mode builds only for char and word templates; upstream stopped with "attempt to index a nil value". [TH5d2 #833](https://github.com/altqx/hikari/issues/833), owner decision Q164.
 
+## TH5d3-new-documents-karaok
+
+A Document made with File › New is in karaOK mode until a `Karaoke Templater` line or a template or code Line decides; then detection decides as for any file. The mode line is written only where templates come in: the Template editor's New and presets, and a node graph's export, each in the same undo step as the Lines. Saving writes nothing, so a new file with no templates saves as before. A file opened without a mode line or templates stays in 3.2.2 mode. Aegisub has no karaOK mode. [TH5d3 #833](https://github.com/altqx/hikari/issues/833), owner decision Q167.
+
+## TH5d3-stock-presets-translated
+
+A stock KE3 preset inserted into a karaOK Document has its Effects translated: `pre-line` becomes `line`, `line` becomes `lsyl`, and `syl` with `char` becomes `char`; code Lines stay as they are. The translated Lines give upstream karaOK's bytes. A karaOK preset is off in a 3.2.2 Document that has templates. [TH5d3 #833](https://github.com/altqx/hikari/issues/833), owner decision Q158.
+
+## TH5d3-karaok-preset-departures
+
+The karaOK presets give upstream karaOK's bytes (with upstream's `ln/kara.lua`) except where they reach a defect HikariSub already fixed. Word pop and Word wipe on Lines with non-ASCII text reach TH5c-karaok-word-positions: upstream found the word's syllables by bytes and gave the last word the Line's absolute times. Letter cascade, Letter shimmer, Line gradient and Thai fade on Thai Lines reach TH5c-karaok-graphemes: upstream split `กิ` and `น้ำ` into code points. Their goldens come from the built-in. [TH5d3 #833](https://github.com/altqx/hikari/issues/833). Thai support by Jibrill.
+
+## TH5d3-editor-follows-mode
+
+In a karaOK Document, the Template editor's New inserts the karaOK form of each entry and shows it, and the Effect picker reads and writes karaOK's class words (`lsyl`, `line`) through the same translation. 3.2.2 mode is unchanged. [TH5d3 #833](https://github.com/altqx/hikari/issues/833).
+
 ## 892-script-info-on-save
 
 Every save but an autosave writes the Script Info values switched on in the `scriptProperties.*` settings (Title, Original Script, Original Translation, Original Editing, Original Timing, Script Updated By) into the file, as legacy's `SubsGrid::SwapAssProperties` does. They come from the window's settings, so a Project's values win over the user's. Both are set on the Script properties page of File › Settings, the user's on the Yours tab ([#966](https://github.com/altqx/hikari/issues/966)), where a value the Project sets says "Overridden in this project". With `scriptProperties.askForChange` on, a dialog first lists each value that would change, old and new, with a check box. OK writes the checked values, Skip saves without any of them, and Cancel stops the save. In legacy the check boxes are the switches themselves and OK stores them in the settings; here they apply to that one save. Legacy's third button, "Disable confirmation", turned the question off for good and then saved without the values; Skip keeps the question on. The values are one undo step, "Changing the subtitle header", and it stays when the save fails. [#892](https://github.com/altqx/hikari/issues/892), owner decision Q234 2026-11-11, refined the same day.
