@@ -57,6 +57,8 @@
 #include "hikari/backends/harper_client.h"
 #include "hikari/backends/legacy_spelling.h"
 #include "hikari/backends/lua_node_helper.h"
+#include "hikari/backends/freetype_glyph_outlines.h"
+#include "hikari/backends/libass_font_service.h"
 #include "hikari/backends/libass_renderer.h"
 #include "hikari/backends/subtitle_renderer_selection.h"
 #include "hikari/backends/qt_general_player.h"
@@ -704,6 +706,15 @@ public:
     // The keys the next save of `id` writes while askForChange is on; none skips them.
     Q_INVOKABLE void approveScriptInfo(qulonglong id, const QStringList &keys);
     Q_INVOKABLE bool shiftTranslation(int mode);
+    Q_INVOKABLE bool changeAlignment(int an);
+    // edge: 0 left, 1 centre, 2 right, 3 top, 4 middle, 5 bottom; grid.alignToVideoFrame picks the reference.
+    Q_INVOKABLE bool alignLines(int edge);
+    Q_INVOKABLE bool distributeLines(bool vertical);
+    Q_INVOKABLE bool positionToMargins();
+    Q_INVOKABLE bool marginsToPosition();
+    Q_INVOKABLE bool phantom(bool keepEnd);
+    // tag: 0 blur, 1 bord, 2 shad, 3 alpha, 4 an, 5 fsp.
+    Q_INVOKABLE bool cycleTag(int tag, bool back);
     Q_INVOKABLE bool makeGroups();
     // description: the id of the group's description Line.
     Q_INVOKABLE bool toggleGroup(qulonglong description);
@@ -726,8 +737,10 @@ public:
     // shownOnly: only those the filter shows.
     Q_INVOKABLE int selectedLineCount(bool shownOnly = false) const;
     // columns: bits OR'ed; the choice is remembered.
-    Q_INVOKABLE bool copyColumns(int columns);
-    Q_INVOKABLE bool pasteColumns(int columns);
+    // tagNames: the comma list of the NamedTags bit ("\blur, \3c").
+    Q_INVOKABLE bool copyColumns(int columns, const QString &tagNames = {});
+    Q_INVOKABLE bool pasteColumns(int columns, const QString &tagNames = {});
+    Q_INVOKABLE QString columnTagNames() const;
     void setChangeActiveOnSelection(bool on) { m_settings->set("grid.changeActiveOnSelection", on); }
 
     Q_PROPERTY(hikari::ui::SettingsStore *settings READ settingsStore CONSTANT)
@@ -860,6 +873,7 @@ public:
     AutomationShell &automation() { return *m_automation; }
     // Runs node effects' Lua nodes in their own sandboxed helper, started on first use.
     application::LuaNodePort &luaNodes();
+    application::shape::GlyphOutlinePort &glyphOutlines();
     AutomationHotkeysController &automationHotkeys() { return *m_automationHotkeys; }
     SettingsImportController &settingsImport() { return *m_settingsImport; }
     HotkeysController &hotkeys() { return *m_hotkeys; }
@@ -1118,7 +1132,7 @@ private:
     application::LineVisible actionLines(const application::EditSession &session) const;
     application::ShiftContext shiftContext(application::LegacyTimebase &timebase) const;
     application::ShiftTimesSettings shiftRunSettings(const QString &tool) const;
-    void rememberColumns(bool paste, int columns);
+    void rememberColumns(bool paste, int columns, const QString &tagNames);
     void protectReference();
     void refreshViews();
     void refreshVideo();
@@ -1295,6 +1309,8 @@ private:
     std::unique_ptr<AutomationShell> m_automation;
     QString m_luaHelper;
     std::unique_ptr<backends::LuaNodeHelper> m_luaNodes;
+    std::unique_ptr<backends::LibassFontService> m_glyphFonts;
+    std::unique_ptr<backends::FreetypeGlyphOutlines> m_glyphOutlines;
     std::optional<QVariantMap> m_layerPreview;
     std::map<core::LineId, std::u8string> m_interpolationPreview;
     std::unique_ptr<AutomationHotkeysController> m_automationHotkeys;

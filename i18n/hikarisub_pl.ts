@@ -5976,6 +5976,22 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Tekst do tłumaczenia</translation>
     </message>
     <message>
+        <source>Start tag block</source>
+        <translation>Początkowy blok tagów</translation>
+    </message>
+    <message>
+        <source>Clip (\clip or \iclip)</source>
+        <translation>Przycięcie (\clip lub \iclip)</translation>
+    </message>
+    <message>
+        <source>Only these tags</source>
+        <translation>Tylko te tagi</translation>
+    </message>
+    <message>
+        <source>These tags:</source>
+        <translation type="vanished">Te tagi:</translation>
+    </message>
+    <message>
         <source>changed</source>
         <translation>zmieniona</translation>
     </message>
@@ -6106,6 +6122,14 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Columns to copy from the %1 selected lines</source>
         <translation>Kolumny do skopiowania z zaznaczonych linijek (%1)</translation>
+    </message>
+    <message>
+        <source>Tags</source>
+        <translation>Tagi</translation>
+    </message>
+    <message>
+        <source>Paste puts each tag into the start block, replacing the same tag.</source>
+        <translation>Wklejanie umieszcza każdy tag w bloku początkowym, zastępując ten sam tag.</translation>
     </message>
     <message>
         <source>Select all</source>
@@ -7732,6 +7756,138 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Swap dialogue alternatives</source>
         <translation>Zamień warianty dialogu</translation>
+    </message>
+    <message>
+        <source>Change alignment to bottom left (\an1), keep position</source>
+        <translation>Zmień wyrównanie: na dole po lewej (\an1), zachowaj pozycję</translation>
+    </message>
+    <message>
+        <source>Change alignment to bottom centre (\an2), keep position</source>
+        <translation>Zmień wyrównanie: na dole pośrodku (\an2), zachowaj pozycję</translation>
+    </message>
+    <message>
+        <source>Change alignment to bottom right (\an3), keep position</source>
+        <translation>Zmień wyrównanie: na dole po prawej (\an3), zachowaj pozycję</translation>
+    </message>
+    <message>
+        <source>Change alignment to middle left (\an4), keep position</source>
+        <translation>Zmień wyrównanie: pośrodku po lewej (\an4), zachowaj pozycję</translation>
+    </message>
+    <message>
+        <source>Change alignment to middle centre (\an5), keep position</source>
+        <translation>Zmień wyrównanie: na środku (\an5), zachowaj pozycję</translation>
+    </message>
+    <message>
+        <source>Change alignment to middle right (\an6), keep position</source>
+        <translation>Zmień wyrównanie: pośrodku po prawej (\an6), zachowaj pozycję</translation>
+    </message>
+    <message>
+        <source>Change alignment to top left (\an7), keep position</source>
+        <translation>Zmień wyrównanie: u góry po lewej (\an7), zachowaj pozycję</translation>
+    </message>
+    <message>
+        <source>Change alignment to top centre (\an8), keep position</source>
+        <translation>Zmień wyrównanie: u góry pośrodku (\an8), zachowaj pozycję</translation>
+    </message>
+    <message>
+        <source>Change alignment to top right (\an9), keep position</source>
+        <translation>Zmień wyrównanie: u góry po prawej (\an9), zachowaj pozycję</translation>
+    </message>
+    <message>
+        <source>Align left edges</source>
+        <translation>Wyrównaj lewe krawędzie</translation>
+    </message>
+    <message>
+        <source>Align centres</source>
+        <translation>Wyrównaj środki</translation>
+    </message>
+    <message>
+        <source>Align right edges</source>
+        <translation>Wyrównaj prawe krawędzie</translation>
+    </message>
+    <message>
+        <source>Align top edges</source>
+        <translation>Wyrównaj górne krawędzie</translation>
+    </message>
+    <message>
+        <source>Align middles</source>
+        <translation>Wyrównaj środki w pionie</translation>
+    </message>
+    <message>
+        <source>Align bottom edges</source>
+        <translation>Wyrównaj dolne krawędzie</translation>
+    </message>
+    <message>
+        <source>Distribute horizontally</source>
+        <translation>Rozłóż poziomo</translation>
+    </message>
+    <message>
+        <source>Distribute vertically</source>
+        <translation>Rozłóż pionowo</translation>
+    </message>
+    <message>
+        <source>Position to margins</source>
+        <translation>Pozycja na marginesy</translation>
+    </message>
+    <message>
+        <source>Margins to position</source>
+        <translation>Marginesy na pozycję</translation>
+    </message>
+    <message>
+        <source>Phantom: keep the start aligned</source>
+        <translation>Fantom: zachowaj wyrównanie początku</translation>
+    </message>
+    <message>
+        <source>Phantom: keep the end aligned</source>
+        <translation>Fantom: zachowaj wyrównanie końca</translation>
+    </message>
+    <message>
+        <source>Cycle \blur</source>
+        <translation>Cykl \blur</translation>
+    </message>
+    <message>
+        <source>Cycle \blur back</source>
+        <translation>Cykl \blur wstecz</translation>
+    </message>
+    <message>
+        <source>Cycle \bord</source>
+        <translation>Cykl \bord</translation>
+    </message>
+    <message>
+        <source>Cycle \bord back</source>
+        <translation>Cykl \bord wstecz</translation>
+    </message>
+    <message>
+        <source>Cycle \shad</source>
+        <translation>Cykl \shad</translation>
+    </message>
+    <message>
+        <source>Cycle \shad back</source>
+        <translation>Cykl \shad wstecz</translation>
+    </message>
+    <message>
+        <source>Cycle \alpha</source>
+        <translation>Cykl \alpha</translation>
+    </message>
+    <message>
+        <source>Cycle \alpha back</source>
+        <translation>Cykl \alpha wstecz</translation>
+    </message>
+    <message>
+        <source>Cycle \an</source>
+        <translation>Cykl \an</translation>
+    </message>
+    <message>
+        <source>Cycle \an back</source>
+        <translation>Cykl \an wstecz</translation>
+    </message>
+    <message>
+        <source>Cycle \fsp</source>
+        <translation>Cykl \fsp</translation>
+    </message>
+    <message>
+        <source>Cycle \fsp back</source>
+        <translation>Cykl \fsp wstecz</translation>
     </message>
     <message>
         <source>Move tab to new window</source>
@@ -11127,7 +11283,7 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Tags</source>
-        <translation type="unfinished">Tagi</translation>
+        <translation>Tagi</translation>
     </message>
     <message>
         <source>Drawing</source>
@@ -11619,6 +11775,22 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Aegisub 3.2.2 templates</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text outlines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each syllable is drawn as a hollow drawing in its style’s font, and its outline thickens while it is sung.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Striped letters</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each syllable’s letters are cut into thin horizontal stripes, which fade in as it is sung.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -12222,7 +12394,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Tags</source>
-        <translation type="unfinished">Tagi</translation>
+        <translation>Tagi</translation>
     </message>
     <message>
         <source>Colours</source>
@@ -12243,6 +12415,26 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Groups</source>
         <translation type="unfinished">Grupy</translation>
+    </message>
+    <message>
+        <source>Text to drawing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The text (unwired, the unit’s own) drawn in its line’s Style font, at \p1 from the text’s top left, as Yutils’ text_to_shape draws it. width and height are the text’s.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Combine drawings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>a and b combined, each filled as libass fills it: unite, subtract (b taken away from a), intersect, or exclude (what only one of them covers). Each one’s \p scale is kept; the result is at \p1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How to combine them.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -14785,6 +14977,22 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Żądania trafiają tylko do dodanych dostawców i do %1. W tym systemie komponent AI nie jest izolowany w piaskownicy.</translation>
     </message>
     <message>
+        <source>Cycle values</source>
+        <translation>Wartości cykliczne</translation>
+    </message>
+    <message>
+        <source>Each Cycle command steps the tag in the start block of the selected lines to the next value. Cycle back steps the other way.</source>
+        <translation>Każde polecenie cyklu zmienia tag w bloku początkowym zaznaczonych wierszy na następną wartość. Cykl wstecz zmienia go w drugą stronę.</translation>
+    </message>
+    <message>
+        <source>Values for %1, in order</source>
+        <translation>Wartości dla %1, po kolei</translation>
+    </message>
+    <message>
+        <source>Each Cycle command steps the tag in the selected lines&apos; start block to the next value. Cycle back steps the other way.</source>
+        <translation type="vanished">Każde polecenie cyklu zmienia tag w bloku początkowym zaznaczonych wierszy na następną wartość. Cykl wstecz zmienia go w drugą stronę.</translation>
+    </message>
+    <message>
         <source>Delete MCP server</source>
         <translation type="unfinished"></translation>
     </message>
@@ -15770,6 +15978,125 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Its panel “%1” couldn’t load: %2</source>
         <translation>Nie udało się wczytać jej panelu „%1”: %2</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Position</name>
+    <message>
+        <source>Position to margins</source>
+        <translation>Pozycja na marginesy</translation>
+    </message>
+    <message>
+        <source>Margins to position</source>
+        <translation>Marginesy na pozycję</translation>
+    </message>
+    <message>
+        <source>Top left (%1)</source>
+        <translation>U góry po lewej (%1)</translation>
+    </message>
+    <message>
+        <source>Top centre (%1)</source>
+        <translation>U góry pośrodku (%1)</translation>
+    </message>
+    <message>
+        <source>Top right (%1)</source>
+        <translation>U góry po prawej (%1)</translation>
+    </message>
+    <message>
+        <source>Middle left (%1)</source>
+        <translation>Pośrodku po lewej (%1)</translation>
+    </message>
+    <message>
+        <source>Middle centre (%1)</source>
+        <translation>Na środku (%1)</translation>
+    </message>
+    <message>
+        <source>Middle right (%1)</source>
+        <translation>Pośrodku po prawej (%1)</translation>
+    </message>
+    <message>
+        <source>Bottom left (%1)</source>
+        <translation>Na dole po lewej (%1)</translation>
+    </message>
+    <message>
+        <source>Bottom centre (%1)</source>
+        <translation>Na dole pośrodku (%1)</translation>
+    </message>
+    <message>
+        <source>Bottom right (%1)</source>
+        <translation>Na dole po prawej (%1)</translation>
+    </message>
+    <message>
+        <source>Change alignment, keep position</source>
+        <translation>Zmień wyrównanie, zachowaj pozycję</translation>
+    </message>
+    <message>
+        <source>Align and distribute</source>
+        <translation>Wyrównaj i rozłóż</translation>
+    </message>
+    <message>
+        <source>Relative to</source>
+        <translation>Względem</translation>
+    </message>
+    <message>
+        <source>The active line</source>
+        <translation type="vanished">Aktywnego wiersza</translation>
+    </message>
+    <message>
+        <source>The video frame</source>
+        <translation type="vanished">Klatki wideo</translation>
+    </message>
+    <message>
+        <source>Active line</source>
+        <translation>Aktywnego wiersza</translation>
+    </message>
+    <message>
+        <source>Video frame</source>
+        <translation>Klatki wideo</translation>
+    </message>
+    <message>
+        <source>Align left edges</source>
+        <translation>Wyrównaj lewe krawędzie</translation>
+    </message>
+    <message>
+        <source>Align centres</source>
+        <translation>Wyrównaj środki</translation>
+    </message>
+    <message>
+        <source>Align right edges</source>
+        <translation>Wyrównaj prawe krawędzie</translation>
+    </message>
+    <message>
+        <source>Align top edges</source>
+        <translation>Wyrównaj górne krawędzie</translation>
+    </message>
+    <message>
+        <source>Align middles</source>
+        <translation>Wyrównaj środki w pionie</translation>
+    </message>
+    <message>
+        <source>Align bottom edges</source>
+        <translation>Wyrównaj dolne krawędzie</translation>
+    </message>
+    <message>
+        <source>Distribute horizontally</source>
+        <translation>Rozłóż poziomo</translation>
+    </message>
+    <message>
+        <source>Distribute vertically</source>
+        <translation>Rozłóż pionowo</translation>
+    </message>
+    <message>
+        <source>Phantom</source>
+        <translation>Fantom</translation>
+    </message>
+    <message>
+        <source>Keep the start aligned</source>
+        <translation>Zachowaj wyrównanie początku</translation>
+    </message>
+    <message>
+        <source>Keep the end aligned</source>
+        <translation>Zachowaj wyrównanie końca</translation>
     </message>
 </context>
 <context>
@@ -25249,7 +25576,7 @@ do not work on comments</source>
 nie działają na komentarzach</translation>
     </message>
     <message>
-        <source>Pathfinder: combine the drawing with the line’s clip, or with the other picked lines in the order they were picked</source>
+        <source>Pathfinder: combine the drawing with the line’s clip, or with the other picked lines in Grid order</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

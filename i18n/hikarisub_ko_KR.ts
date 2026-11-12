@@ -5874,6 +5874,22 @@ Failed to copy %2 fonts.</source>
         <translation>번역문에 넣을 글자</translation>
     </message>
     <message>
+        <source>Start tag block</source>
+        <translation>시작 태그 블록</translation>
+    </message>
+    <message>
+        <source>Clip (\clip or \iclip)</source>
+        <translation>클립 (\clip 또는 \iclip)</translation>
+    </message>
+    <message>
+        <source>Only these tags</source>
+        <translation>이 태그만</translation>
+    </message>
+    <message>
+        <source>These tags:</source>
+        <translation type="vanished">다음 태그:</translation>
+    </message>
+    <message>
         <source>changed</source>
         <translation>변경됨</translation>
     </message>
@@ -5996,6 +6012,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Columns to copy from the %1 selected lines</source>
         <translation>선택한 줄 %1개에서 복사할 열</translation>
+    </message>
+    <message>
+        <source>Tags</source>
+        <translation>태그</translation>
+    </message>
+    <message>
+        <source>Paste puts each tag into the start block, replacing the same tag.</source>
+        <translation>붙여넣기는 각 태그를 시작 블록에 넣고 같은 태그를 대체합니다.</translation>
     </message>
     <message>
         <source>Select all</source>
@@ -7620,6 +7644,138 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Swap dialogue alternatives</source>
         <translation>대사 대안 맞바꾸기</translation>
+    </message>
+    <message>
+        <source>Change alignment to bottom left (\an1), keep position</source>
+        <translation>정렬을 왼쪽 아래(\an1)으로 변경, 위치 유지</translation>
+    </message>
+    <message>
+        <source>Change alignment to bottom centre (\an2), keep position</source>
+        <translation>정렬을 가운데 아래(\an2)으로 변경, 위치 유지</translation>
+    </message>
+    <message>
+        <source>Change alignment to bottom right (\an3), keep position</source>
+        <translation>정렬을 오른쪽 아래(\an3)으로 변경, 위치 유지</translation>
+    </message>
+    <message>
+        <source>Change alignment to middle left (\an4), keep position</source>
+        <translation>정렬을 왼쪽 가운데(\an4)으로 변경, 위치 유지</translation>
+    </message>
+    <message>
+        <source>Change alignment to middle centre (\an5), keep position</source>
+        <translation>정렬을 정가운데(\an5)으로 변경, 위치 유지</translation>
+    </message>
+    <message>
+        <source>Change alignment to middle right (\an6), keep position</source>
+        <translation>정렬을 오른쪽 가운데(\an6)으로 변경, 위치 유지</translation>
+    </message>
+    <message>
+        <source>Change alignment to top left (\an7), keep position</source>
+        <translation>정렬을 왼쪽 위(\an7)으로 변경, 위치 유지</translation>
+    </message>
+    <message>
+        <source>Change alignment to top centre (\an8), keep position</source>
+        <translation>정렬을 가운데 위(\an8)으로 변경, 위치 유지</translation>
+    </message>
+    <message>
+        <source>Change alignment to top right (\an9), keep position</source>
+        <translation>정렬을 오른쪽 위(\an9)으로 변경, 위치 유지</translation>
+    </message>
+    <message>
+        <source>Align left edges</source>
+        <translation>왼쪽 가장자리 맞추기</translation>
+    </message>
+    <message>
+        <source>Align centres</source>
+        <translation>가로 가운데 맞추기</translation>
+    </message>
+    <message>
+        <source>Align right edges</source>
+        <translation>오른쪽 가장자리 맞추기</translation>
+    </message>
+    <message>
+        <source>Align top edges</source>
+        <translation>위쪽 가장자리 맞추기</translation>
+    </message>
+    <message>
+        <source>Align middles</source>
+        <translation>세로 가운데 맞추기</translation>
+    </message>
+    <message>
+        <source>Align bottom edges</source>
+        <translation>아래쪽 가장자리 맞추기</translation>
+    </message>
+    <message>
+        <source>Distribute horizontally</source>
+        <translation>가로로 균등 분배</translation>
+    </message>
+    <message>
+        <source>Distribute vertically</source>
+        <translation>세로로 균등 분배</translation>
+    </message>
+    <message>
+        <source>Position to margins</source>
+        <translation>위치를 여백으로</translation>
+    </message>
+    <message>
+        <source>Margins to position</source>
+        <translation>여백을 위치로</translation>
+    </message>
+    <message>
+        <source>Phantom: keep the start aligned</source>
+        <translation>팬텀: 시작 부분 맞춤 유지</translation>
+    </message>
+    <message>
+        <source>Phantom: keep the end aligned</source>
+        <translation>팬텀: 끝부분 맞춤 유지</translation>
+    </message>
+    <message>
+        <source>Cycle \blur</source>
+        <translation>\blur 순환</translation>
+    </message>
+    <message>
+        <source>Cycle \blur back</source>
+        <translation>\blur 거꾸로 순환</translation>
+    </message>
+    <message>
+        <source>Cycle \bord</source>
+        <translation>\bord 순환</translation>
+    </message>
+    <message>
+        <source>Cycle \bord back</source>
+        <translation>\bord 거꾸로 순환</translation>
+    </message>
+    <message>
+        <source>Cycle \shad</source>
+        <translation>\shad 순환</translation>
+    </message>
+    <message>
+        <source>Cycle \shad back</source>
+        <translation>\shad 거꾸로 순환</translation>
+    </message>
+    <message>
+        <source>Cycle \alpha</source>
+        <translation>\alpha 순환</translation>
+    </message>
+    <message>
+        <source>Cycle \alpha back</source>
+        <translation>\alpha 거꾸로 순환</translation>
+    </message>
+    <message>
+        <source>Cycle \an</source>
+        <translation>\an 순환</translation>
+    </message>
+    <message>
+        <source>Cycle \an back</source>
+        <translation>\an 거꾸로 순환</translation>
+    </message>
+    <message>
+        <source>Cycle \fsp</source>
+        <translation>\fsp 순환</translation>
+    </message>
+    <message>
+        <source>Cycle \fsp back</source>
+        <translation>\fsp 거꾸로 순환</translation>
     </message>
     <message>
         <source>Move tab to new window</source>
@@ -10933,7 +11089,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Tags</source>
-        <translation type="unfinished">태그</translation>
+        <translation>태그</translation>
     </message>
     <message>
         <source>Drawing</source>
@@ -11413,6 +11569,22 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Aegisub 3.2.2 templates</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text outlines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each syllable is drawn as a hollow drawing in its style’s font, and its outline thickens while it is sung.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Striped letters</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each syllable’s letters are cut into thin horizontal stripes, which fade in as it is sung.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -12016,7 +12188,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Tags</source>
-        <translation type="unfinished">태그</translation>
+        <translation>태그</translation>
     </message>
     <message>
         <source>Colours</source>
@@ -12037,6 +12209,26 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Groups</source>
         <translation type="unfinished">그룹</translation>
+    </message>
+    <message>
+        <source>Text to drawing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The text (unwired, the unit’s own) drawn in its line’s Style font, at \p1 from the text’s top left, as Yutils’ text_to_shape draws it. width and height are the text’s.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Combine drawings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>a and b combined, each filled as libass fills it: unite, subtract (b taken away from a), intersect, or exclude (what only one of them covers). Each one’s \p scale is kept; the result is at \p1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How to combine them.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -14559,6 +14751,22 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>요청은 추가한 공급자와 %1에만 갑니다. 이 시스템에서는 AI 구성 요소가 샌드박스에서 실행되지 않습니다.</translation>
     </message>
     <message>
+        <source>Cycle values</source>
+        <translation>순환 값</translation>
+    </message>
+    <message>
+        <source>Each Cycle command steps the tag in the start block of the selected lines to the next value. Cycle back steps the other way.</source>
+        <translation>각 순환 명령은 선택한 줄의 시작 블록에 있는 태그를 다음 값으로 바꿉니다. 거꾸로 순환은 반대 방향으로 바꿉니다.</translation>
+    </message>
+    <message>
+        <source>Values for %1, in order</source>
+        <translation>%1 값, 순서대로</translation>
+    </message>
+    <message>
+        <source>Each Cycle command steps the tag in the selected lines&apos; start block to the next value. Cycle back steps the other way.</source>
+        <translation type="vanished">각 순환 명령은 선택한 줄의 시작 블록에 있는 태그를 다음 값으로 바꿉니다. 거꾸로 순환은 반대 방향으로 바꿉니다.</translation>
+    </message>
+    <message>
         <source>Delete MCP server</source>
         <translation type="unfinished"></translation>
     </message>
@@ -15538,6 +15746,125 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Its panel “%1” couldn’t load: %2</source>
         <translation>패널 “%1”을(를) 불러오지 못했습니다: %2</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Position</name>
+    <message>
+        <source>Position to margins</source>
+        <translation>위치를 여백으로</translation>
+    </message>
+    <message>
+        <source>Margins to position</source>
+        <translation>여백을 위치로</translation>
+    </message>
+    <message>
+        <source>Top left (%1)</source>
+        <translation>왼쪽 위 (%1)</translation>
+    </message>
+    <message>
+        <source>Top centre (%1)</source>
+        <translation>가운데 위 (%1)</translation>
+    </message>
+    <message>
+        <source>Top right (%1)</source>
+        <translation>오른쪽 위 (%1)</translation>
+    </message>
+    <message>
+        <source>Middle left (%1)</source>
+        <translation>왼쪽 가운데 (%1)</translation>
+    </message>
+    <message>
+        <source>Middle centre (%1)</source>
+        <translation>정가운데 (%1)</translation>
+    </message>
+    <message>
+        <source>Middle right (%1)</source>
+        <translation>오른쪽 가운데 (%1)</translation>
+    </message>
+    <message>
+        <source>Bottom left (%1)</source>
+        <translation>왼쪽 아래 (%1)</translation>
+    </message>
+    <message>
+        <source>Bottom centre (%1)</source>
+        <translation>가운데 아래 (%1)</translation>
+    </message>
+    <message>
+        <source>Bottom right (%1)</source>
+        <translation>오른쪽 아래 (%1)</translation>
+    </message>
+    <message>
+        <source>Change alignment, keep position</source>
+        <translation>위치 유지하며 정렬 변경</translation>
+    </message>
+    <message>
+        <source>Align and distribute</source>
+        <translation>맞춤 및 분배</translation>
+    </message>
+    <message>
+        <source>Relative to</source>
+        <translation>기준</translation>
+    </message>
+    <message>
+        <source>The active line</source>
+        <translation type="vanished">활성 줄</translation>
+    </message>
+    <message>
+        <source>The video frame</source>
+        <translation type="vanished">비디오 프레임</translation>
+    </message>
+    <message>
+        <source>Active line</source>
+        <translation>활성 줄</translation>
+    </message>
+    <message>
+        <source>Video frame</source>
+        <translation>비디오 프레임</translation>
+    </message>
+    <message>
+        <source>Align left edges</source>
+        <translation>왼쪽 가장자리 맞추기</translation>
+    </message>
+    <message>
+        <source>Align centres</source>
+        <translation>가로 가운데 맞추기</translation>
+    </message>
+    <message>
+        <source>Align right edges</source>
+        <translation>오른쪽 가장자리 맞추기</translation>
+    </message>
+    <message>
+        <source>Align top edges</source>
+        <translation>위쪽 가장자리 맞추기</translation>
+    </message>
+    <message>
+        <source>Align middles</source>
+        <translation>세로 가운데 맞추기</translation>
+    </message>
+    <message>
+        <source>Align bottom edges</source>
+        <translation>아래쪽 가장자리 맞추기</translation>
+    </message>
+    <message>
+        <source>Distribute horizontally</source>
+        <translation>가로로 균등 분배</translation>
+    </message>
+    <message>
+        <source>Distribute vertically</source>
+        <translation>세로로 균등 분배</translation>
+    </message>
+    <message>
+        <source>Phantom</source>
+        <translation>팬텀</translation>
+    </message>
+    <message>
+        <source>Keep the start aligned</source>
+        <translation>시작 부분 맞춤 유지</translation>
+    </message>
+    <message>
+        <source>Keep the end aligned</source>
+        <translation>끝부분 맞춤 유지</translation>
     </message>
 </context>
 <context>
@@ -24829,7 +25156,7 @@ do not work on comments</source>
 주석에서 작동하지 않습니다</translation>
     </message>
     <message>
-        <source>Pathfinder: combine the drawing with the line’s clip, or with the other picked lines in the order they were picked</source>
+        <source>Pathfinder: combine the drawing with the line’s clip, or with the other picked lines in Grid order</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
