@@ -1,6 +1,6 @@
 # Hikari API reference
 
-Version 2 of the Hikari API, generated from HikariSub's own registry: the same reference `hikarisub --export-docs` writes to `api.json`. A plugin calls these operations with `hikari.call(operation, params)`, or `api.call` in a QML panel, and listens to the events with `hikari.events.on(name, fn)`.
+Version 1 of the Hikari API, generated from HikariSub's own registry: the same reference `hikarisub --export-docs` writes to `api.json`. A plugin calls these operations with `hikari.call(operation, params)`, or `api.call` in a QML panel, and listens to the events with `hikari.events.on(name, fn)`.
 
 ## Operations
 
@@ -52,7 +52,7 @@ Version 2 of the Hikari API, generated from HikariSub's own registry: the same r
 | `typeset.hydra` | read | 1 | Changes one tag across the Lines as the Hydra strip does: set it, add to it, multiply it by line number, or run a gradient across characters or Lines. |
 | `typeset.check` | read | 1 | Renders one Line alone, with a proposed text, on its frame and compares its ink with a target. |
 | `typeset.apply` | write | 1 | Applies typeset Lines as one undo step after every one passes the render check; when one misses its target nothing is applied. |
-| `project.info` | read | 2 | The Project of the window the user works in, or null. |
+| `project.info` | read | 1 | The Project of the window the user works in, or null. |
 | `karaoke.syllables` | read | 1 | A Line's karaoke syllables as the templater reads them: text, tag, start and end in ms. |
 | `karaoke.split` | read | 1 | Splits Lines without \k tags into syllables as the audio editor's karaoke mode does, the time shared by character; Lines that already have \k tags keep them. |
 | `karaoke.time` | read | 1 | Times a Line's existing syllables: each syllable's end in ms, in order; the \k tags are rewritten. |
@@ -718,7 +718,7 @@ The files and folders the user granted this caller; with folder, also what that 
 
 | Field | Type | Required | Meaning |
 | --- | --- | --- | --- |
-| `folder` | string |  | A folder handle to list (since version 2). |
+| `folder` | string |  | A folder handle to list. |
 | `path` | string |  | A folder inside it; default the folder itself. |
 
 **Result**
@@ -741,7 +741,7 @@ A granted file's content, as UTF-8 text or base64; at most 16 MiB.
 | Field | Type | Required | Meaning |
 | --- | --- | --- | --- |
 | `file` | string |  | A handle from files.list. |
-| `folder` | string |  | Instead of file, a folder handle from files.list (since version 2). |
+| `folder` | string |  | Instead of file, a folder handle from files.list. |
 | `path` | string |  | With folder, the file's path inside it, with / between its parts. |
 | `encoding` | one of `utf8` or `base64` |  | Default utf8. |
 
@@ -765,7 +765,7 @@ Replaces a file granted for writing with new content; in a writable folder, make
 | Field | Type | Required | Meaning |
 | --- | --- | --- | --- |
 | `file` | string |  | A handle from files.list. |
-| `folder` | string |  | Instead of file, a folder handle from files.list (since version 2). |
+| `folder` | string |  | Instead of file, a folder handle from files.list. |
 | `path` | string |  | With folder, the file's path inside it, with / between its parts. |
 | `encoding` | one of `utf8` or `base64` |  | Default utf8. |
 | `data` | string | yes |  |
@@ -1131,7 +1131,7 @@ Applies typeset Lines as one undo step after every one passes the render check; 
 
 ### `project.info`
 
-Read. Since version 2.
+Read. Since version 1.
 
 The Project of the window the user works in, or null.
 
@@ -1400,7 +1400,7 @@ Runs the user's own WhisperX or Montreal Forced Aligner on the audio under the L
 
 ### `project.changed`
 
-Since version 2.
+Since version 1.
 
 The window the user works in opened or closed a Project, or the user moved to a window with another one.
 
