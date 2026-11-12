@@ -24,7 +24,7 @@ class TextMeasurePort;
 
 namespace hikari::application::visual {
 
-// HikariSub legacy's family numbers, then Perspective and Gradient.
+// HikariSub legacy's family numbers, then Perspective, Gradient and Text on path.
 enum class Family : int {
     Crosshair = 0,
     Position,
@@ -39,9 +39,10 @@ enum class Family : int {
     Hydra,
     Perspective,
     Gradient,
+    TextOnPath,
 };
 inline constexpr int kLegacyFamilyCount = 11;
-inline constexpr int kFamilyCount = 13;
+inline constexpr int kFamilyCount = 14;
 
 struct FamilyInfo {
     Family family;
@@ -52,7 +53,7 @@ struct FamilyInfo {
 };
 const std::array<FamilyInfo, kFamilyCount> &families();
 const FamilyInfo &familyInfo(Family family);
-// Perspective comes after RotationXY; Gradient is last.
+// Perspective comes after RotationXY; Gradient and Text on path are last.
 const std::array<Family, kFamilyCount> &railOrder();
 // The family a VIDEO_TOOL_* command chooses.
 std::optional<Family> familyOfHotkey(std::string_view symbol);
@@ -185,6 +186,7 @@ struct ToolOption {
     std::vector<std::u16string> notes;
     std::vector<int> sections;
     std::vector<std::u16string> sectionNames;
+    std::vector<std::string> choiceRoles; // a choice's entries' icons, by index
     bool afterValues = false; // shown after the tool's values
 };
 
@@ -195,6 +197,12 @@ struct LastChange {
     int change = 0;
     int lines = 0;
     std::vector<ToolValue> values;
+};
+
+// A copy of a target that a replacement puts after it, with its own times where set.
+struct Replacement {
+    std::u8string text;
+    std::optional<core::DocumentTime> start, end;
 };
 
 // Stages new texts for its targets while the pointer or key is down and commits
@@ -219,6 +227,7 @@ public:
     void stageExtradata(core::LineId line, std::vector<core::Extradata> extra);
     // Comments a target and puts a copy of it after it for each text, in order; the commit selects the copies.
     void stageReplacement(core::LineId line, std::vector<std::u8string> texts);
+    void stageReplacement(core::LineId line, std::vector<Replacement> copies);
     bool hasChanges() const { return !m_staged.empty() || !m_stagedExtra.empty() || !m_replacements.empty(); }
     // A staged text or extradata list that differs from the target's as the gesture began.
     bool changesAnyLine() const;
@@ -245,7 +254,7 @@ private:
     std::map<core::LineId, core::LineRecord> m_before;
     std::map<std::pair<core::LineId, bool>, std::u8string> m_staged;
     std::map<core::LineId, std::vector<core::Extradata>> m_stagedExtra;
-    std::map<core::LineId, std::vector<std::u8string>> m_replacements;
+    std::map<core::LineId, std::vector<Replacement>> m_replacements;
 };
 
 // Lines picked explicitly and kept by identity; with nothing picked a tool
@@ -437,6 +446,13 @@ public:
     // The family became active: the tool's own state starts over; the rail's
     // options stay.
     virtual void selected(VisualHost &host) { (void)host; }
+    // A choice's menu entry under the pointer or keyboard (-1: none), for a preview of what it does.
+    virtual void previewOption(const std::string &name, int index, VisualHost &host)
+    {
+        (void)name;
+        (void)index;
+        (void)host;
+    }
     // The rail's second row for the family.
     virtual std::vector<ToolOption> options(const VisualHost &host) const
     {

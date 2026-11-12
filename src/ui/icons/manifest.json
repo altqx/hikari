@@ -4438,10 +4438,10 @@
    "mirror": false,
    "legacy": [],
    "surfaces": [
+    "automation",
     "settings-dialog",
     "plugin-manager"
-   ],
-   "pending": "PJ8 #776"
+   ]
   },
   {
    "role": "explorer",
@@ -4679,8 +4679,7 @@
    "legacy": [],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "AU6 #845"
+   ]
   },
   {
    "role": "shape-subtract",
@@ -4691,8 +4690,7 @@
    "legacy": [],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "AU6 #845"
+   ]
   },
   {
    "role": "shape-intersect",
@@ -4703,8 +4701,7 @@
    "legacy": [],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "AU6 #845"
+   ]
   },
   {
    "role": "shape-exclude",
@@ -4715,8 +4712,7 @@
    "legacy": [],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "AU6 #845"
+   ]
   },
   {
    "role": "shape-offset",
@@ -4727,8 +4723,7 @@
    "legacy": [],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "AU6 #845"
+   ]
   },
   {
    "role": "clip-to-shape",
@@ -5049,8 +5044,7 @@
    "legacy": [],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "AU14 #847"
+   ]
   },
   {
    "role": "reinstall-scripts",

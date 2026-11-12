@@ -162,6 +162,7 @@ constexpr OptionsBinding kBindings[] = {
     {"ai.agent.threadCapCents", Number, Ai, 0, 100000},
     {"ai.agent.dailyCapCents", Number, Ai, 0, 1000000},
     {"ai.agent.costMeter", Check, Ai},
+    {"ai.agent.autoCompact", Check, Ai},
     {"ai.inline.translateTo", Text, Ai},
     {"ai.inline.contextLines", Number, Ai, 0, 5},
     {"editing.cycleValues.blur", Text, Editing},

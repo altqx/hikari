@@ -595,6 +595,54 @@
             <numerusform>அனைத்து %n வரிகளையும் காட்டு</numerusform>
         </translation>
     </message>
+    <message>
+        <source>This conversation is nearly full</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 of %2 tokens. Automatic compaction is off in Settings › AI.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Compact conversation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New thread from summary</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>compacting…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>compacts at the next tool call</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Couldn’t compact the conversation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>There’s nothing to compact yet.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The summary request failed twice (%1). Nothing was removed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Carried on from the summary of “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Context compacted %1 → %2 tokens</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Audio</name>
@@ -1451,6 +1499,10 @@ Output device: %2</source>
         <translation>காட்டு</translation>
     </message>
     <message>
+        <source>This project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Scripts</source>
         <translation>ச்கிரிப்ட்கள்</translation>
     </message>
@@ -1680,6 +1732,10 @@ Output device: %2</source>
     <message>
         <source>%1 also uses %2 and takes it.</source>
         <translation>%1 உம் %2 ஐப் பயன்படுத்துகிறது; அதுவே அதைப் பெறுகிறது.</translation>
+    </message>
+    <message>
+        <source>Trust this folder to use them</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Remove shortcut</source>
@@ -7406,6 +7462,10 @@ Failed to copy %2 fonts.</source>
         <translation>சாய்வு</translation>
     </message>
     <message>
+        <source>Text on path</source>
+        <translation>பாதையில் உரை</translation>
+    </message>
+    <message>
         <source>Vector clip: move points</source>
         <translation>திசையன் கிளிப்: புள்ளிகளை நகர்த்து</translation>
     </message>
@@ -8192,6 +8252,24 @@ Failed to copy %2 fonts.</source>
         </translation>
     </message>
     <message numerus="yes">
+        <source>The reviewer didn’t approve line %1, so it’s marked Unconfirmed.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>The reviewer didn’t approve line %1. Check it before you use it.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>This project’s translator and reviewer models are used once you trust its folder; your own ran instead.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
         <source>%n line(s) weren’t sent.</source>
         <translation type="unfinished">
             <numerusform></numerusform>
@@ -8239,6 +8317,10 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Out of date: you edited line %1 after it was sent.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not approved by the reviewer: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -14830,6 +14912,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>Servers run as you, outside the AI component’s sandbox. Tools that may change or delete things ask first in every mode. Changes apply at once.</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Compact long conversations automatically</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>At 90% of the model’s context window, old tool results are cleared, then older turns are summarised. Your history stays in the panel.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Plugins</name>
@@ -15208,6 +15298,22 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Keep %1</source>
         <translation>%1 ஐ வைத்திரு</translation>
+    </message>
+    <message>
+        <source>This project turns plugins on or off, or changes their settings.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Trust this folder to use them</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This project uses %1, which isn’t installed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Install from the marketplace</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Search plugins</source>
@@ -15765,6 +15871,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
 </context>
 <context>
     <name>HikariSub.Project</name>
+    <message>
+        <source>%1 in project.toml looks like a credential, so it is ignored. Keys go in this Project’s credentials file (.hikari/credentials.toml) or this machine’s environment, never in project.toml.</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message>
         <source>Project settings</source>
         <translation>திட்டப்பணி அமைப்புகள்</translation>
@@ -23862,12 +23972,32 @@ or codecs or a splitter may be missing</source>
         <translation>படிகள்</translation>
     </message>
     <message>
+        <source>Layout</source>
+        <translation>தளவமைப்பு</translation>
+    </message>
+    <message>
         <source>In</source>
         <translation>தோன்றல்</translation>
     </message>
     <message>
         <source>Out</source>
         <translation>மறைதல்</translation>
+    </message>
+    <message>
+        <source>Offset</source>
+        <translation>இடப்பெயர்ச்சி</translation>
+    </message>
+    <message>
+        <source>Frames a step</source>
+        <translation>ஒரு படிக்குச் சட்டகங்கள்</translation>
+    </message>
+    <message>
+        <source>Past the end</source>
+        <translation>முடிவுக்கு அப்பால்</translation>
+    </message>
+    <message>
+        <source>Lines</source>
+        <translation>வரிகள்</translation>
     </message>
     <message numerus="yes">
         <source>Changes %n lines</source>
@@ -24503,6 +24633,10 @@ or codecs or a splitter may be missing</source>
         <translation>பார்வைக்கோணம்</translation>
     </message>
     <message>
+        <source>Text on path</source>
+        <translation>பாதையில் உரை</translation>
+    </message>
+    <message>
         <source>\org mode</source>
         <translation>\org பயன்முறை</translation>
     </message>
@@ -24841,6 +24975,54 @@ increasing or decreasing the value.</source>
         <translation>வரியில் எழுத்துகள் இல்லை</translation>
     </message>
     <message>
+        <source>Apply</source>
+        <translation>பயன்படுத்து</translation>
+    </message>
+    <message>
+        <source>Draw a path, or give the line a vector clip</source>
+        <translation>பாதையை வரையவும் அல்லது வரிக்குத் திசையன் கிளிப் கொடுக்கவும்</translation>
+    </message>
+    <message>
+        <source>Left</source>
+        <translation>இடது</translation>
+    </message>
+    <message>
+        <source>Reverse</source>
+        <translation>தலைகீழாக்கு</translation>
+    </message>
+    <message>
+        <source>Right</source>
+        <translation>வலது</translation>
+    </message>
+    <message>
+        <source>Rotate</source>
+        <translation>சுழற்று</translation>
+    </message>
+    <message>
+        <source>Slide</source>
+        <translation>நகர்வு</translation>
+    </message>
+    <message>
+        <source>Slide needs the video’s frames</source>
+        <translation>நகர்வுக்கு வீடியோவின் சட்டகங்கள் தேவை</translation>
+    </message>
+    <message>
+        <source>Spread</source>
+        <translation>பரப்பு</translation>
+    </message>
+    <message>
+        <source>Text can’t be measured here</source>
+        <translation>இங்கே உரையை அளவிட முடியாது</translation>
+    </message>
+    <message>
+        <source>No text to place</source>
+        <translation>வைக்க உரை இல்லை</translation>
+    </message>
+    <message>
+        <source>The text is longer than the path. The last graphemes continue along its end.</source>
+        <translation>உரை பாதையை விட நீளமானது. கடைசி எழுத்துகள் அதன் முடிவிலிருந்து தொடர்கின்றன.</translation>
+    </message>
+    <message>
         <source>Edit</source>
         <translation>திருத்து</translation>
     </message>
@@ -25033,6 +25215,50 @@ A rectangle of the text’s plane: match it to one in the shot, then place the t
 do not work on comments</source>
         <translation>காட்சித் திருத்தக் கருவிகள்
 கருத்துகளில் செயல்படாது</translation>
+    </message>
+    <message>
+        <source>Pathfinder: combine the drawing with the line’s clip, or with the other picked lines in the order they were picked</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unite</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Subtract</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Intersect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Exclude</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Offset corners</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Miter</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Round</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Square</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Apply offset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing would be left of the drawing</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

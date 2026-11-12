@@ -3,7 +3,11 @@
 // Ports the composition root implements; every call comes on the GUI thread.
 
 #include "hikari/application/ai_review.h"
+#include "hikari/application/audio_karaoke.h"
 #include "hikari/application/automation_services.h"
+#include "hikari/application/furigana.h"
+#include "hikari/application/karaoke_split.h"
+#include "hikari/application/template_preview.h"
 #include "hikari/application/edit_session.h"
 #include "hikari/application/settings.h"
 #include "hikari/application/subtitle_render.h"
@@ -90,6 +94,14 @@ public:
     virtual std::optional<std::string> read(std::string_view skill, std::string_view file, std::size_t atMost) const = 0;
 };
 
+// Where a Document's Honya project folder is: the glossary, characters and style its translation shares with Honya.
+class TranslationHost {
+public:
+    virtual ~TranslationHost() = default;
+    // nullopt: the Document has no project folder.
+    virtual std::optional<std::string> projectFolder(application::DocumentId document) const = 0;
+};
+
 // Draws subtitles as the video does, in a render context apart from the video's.
 class RenderHost {
 public:
@@ -145,6 +157,43 @@ public:
     virtual std::optional<ProjectState> project() const = 0;
 };
 
+// An external aligner's job: the audio from startMs to endMs and the words sung there.
+struct AlignRequest {
+    std::string program; // "whisperx" or "mfa"
+    std::int64_t startMs = 0, endMs = 0;
+    std::string text;
+    std::string language;                   // WhisperX's --language; empty: it detects
+    std::string dictionary, acousticModel; // MFA's
+};
+
+struct AlignedWord {
+    std::string text;
+    std::int64_t startMs = 0, endMs = 0;
+};
+
+struct AlignResult {
+    std::string outcome; // "aligned", "missing" (not installed), "no_audio" or "failed"
+    std::string message;
+    std::vector<AlignedWord> words;
+};
+
+// What the karaoke tools need from the app.
+class KaraokeHost {
+public:
+    virtual ~KaraokeHost() = default;
+    virtual application::KaraokeCharClass classes() const = 0;
+    // Null: English words stay one syllable.
+    virtual const application::Hyphenation *hyphenation() const = 0;
+    // Empty: no reading dictionary is installed.
+    virtual application::ReadingAnalyzer readings() const = 0;
+    // The open audio's vocal onsets in ms, ascending, or nullopt without audio; `done` runs once.
+    virtual void onsets(std::function<void(std::optional<std::vector<int>>)> done) = 0;
+    // Null: no templater script is loaded. Its `done` always runs, once.
+    virtual application::KaraokeTemplaterPort *templater() = 0;
+    // Runs the user's installed aligner; `done` runs once, later.
+    virtual void align(const AlignRequest &request, std::function<void(AlignResult)> done) = 0;
+};
+
 // A missing port makes its operations answer unavailable.
 struct Host {
     DocumentHost *documents = nullptr;
@@ -159,6 +208,8 @@ struct Host {
     AutomationHost *automation = nullptr;
     TypesetHost *typeset = nullptr;
     ProjectHost *project = nullptr;
+    TranslationHost *translation = nullptr;
+    KaraokeHost *karaoke = nullptr;
 };
 
 }

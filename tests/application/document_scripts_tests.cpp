@@ -62,3 +62,30 @@ TEST(DocumentScripts, TheLastValueReadIsNotReadAgain)
     EXPECT_TRUE(spaced.readScriptInfo(" a.lua", files));
     EXPECT_FALSE(spaced.readScriptInfo("a.lua", files));
 }
+
+TEST(DocumentScripts, TildePathsResolveBesideTheSubtitleFile)
+{
+    EXPECT_EQ(scriptInfoScriptPaths("|~../.hikari/automation/fx.lua|/abs/b.lua|rel.lua", "/show/01"),
+              (std::vector<std::string>{"", "", "/show/.hikari/automation/fx.lua", "/abs/b.lua", "rel.lua"}));
+    EXPECT_EQ(scriptInfoScriptPaths("~/subs/x.lua", "/show/01"), (std::vector<std::string>{"", "/subs/x.lua"}));
+    DocumentScripts scripts;
+    std::vector<std::string> added;
+    ASSERT_TRUE(scripts.readScriptInfo("|~../.hikari/automation/fx.lua", existing({"/show/.hikari/automation/fx.lua"}),
+                                       &added, "/show/01"));
+    EXPECT_EQ(added, std::vector<std::string>{"/show/.hikari/automation/fx.lua"});
+}
+
+TEST(DocumentScripts, ProjectScriptsAreWrittenRelativeWithATilde)
+{
+    EXPECT_EQ(scriptInfoPathFor("/show/.hikari/automation/fx.lua", "/show/01", "/show", false),
+              "~../.hikari/automation/fx.lua");
+    EXPECT_EQ(scriptInfoPathFor("/show/.hikari/automation/sub/fx.lua", "/show", "/show", false),
+              "~.hikari/automation/sub/fx.lua");
+    EXPECT_EQ(scriptInfoPathFor("/home/me/fx.lua", "/show/01", "/show", false), "/home/me/fx.lua");
+    EXPECT_EQ(scriptInfoPathFor("/show/fx.lua", "/show/01", "/show", false), "/show/fx.lua");
+    EXPECT_EQ(scriptInfoPathFor("/show/.hikari/automation/fx.lua", "/show/01", "", false),
+              "/show/.hikari/automation/fx.lua");
+    const std::string written = scriptInfoWithScript("", scriptInfoPathFor("/show/.hikari/automation/fx.lua", "/show/01",
+                                                                           "/show", false));
+    EXPECT_EQ(scriptInfoScriptPaths(written, "/show/01").back(), "/show/.hikari/automation/fx.lua");
+}

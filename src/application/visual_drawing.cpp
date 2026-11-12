@@ -1,6 +1,7 @@
 #include "hikari/application/visual_drawing.h"
 
 #include "hikari/application/grid_clipboard.h"
+#include "hikari/application/visual_clip.h"
 #include "hikari/core/legacy_regex.h"
 #include "hikari/core/style.h"
 #include "hikari/core/tag_commands.h"
@@ -576,6 +577,83 @@ DrawingTool::DrawingTool()
     m_editor.modeCount = 6; // no Invert clip mode
 }
 
+namespace {
+
+constexpr std::uint32_t kPreviewBorder = 0xFF00C8FF;
+constexpr std::uint32_t kPreviewFill = 0x4000C8FF;
+constexpr double kCurveTolerance = 0.1;
+
+struct Placed {
+    PointF origin{0, 0}, scale{1, 1}; // a point's script position is (origin + point) * scale
+    std::vector<VectorPoint> points;  // the alignment's offset taken out, \frz applied
+};
+
+Placed placeDrawing(const drawing::LineDrawing &line)
+{
+    Placed out;
+    out.scale = line.scale;
+    out.origin = {line.position.x / line.scale.x, line.position.y / line.scale.y};
+    const PointF org = line.org ? PointF{line.org->x / line.scale.x, line.org->y / line.scale.y} : out.origin;
+    out.points = parseVectorPoints(line.body);
+    if (out.points.empty())
+        return out;
+    const PointF offsetxy = drawing::drawingSize(line.alignment, out.points);
+    const float rad = 0.01745329251994329576923690768489f;
+    const PointF orgpivot{std::fabs(org.x - out.origin.x), std::fabs(org.y - out.origin.y)};
+    const float s = std::sin(-line.frz * rad);
+    const float c = std::cos(-line.frz * rad);
+    for (VectorPoint &p : out.points) {
+        p.x -= offsetxy.x;
+        p.y -= offsetxy.y;
+        if (line.frz) {
+            p.x *= line.scale.x;
+            p.y *= line.scale.y;
+            drawing::rotate(p, s, c, orgpivot);
+            p.x /= line.scale.x;
+            p.y /= line.scale.y;
+        }
+    }
+    return out;
+}
+
+shape::Contours contoursOf(const std::vector<VectorPoint> &points)
+{
+    const u16 text = serializeVectorPoints(points, "6.2f");
+    std::string ascii(text.begin(), text.end());
+    return shape::readDrawing(ascii, kCurveTolerance);
+}
+
+std::vector<VectorPoint> pointsOf(const shape::Contours &contours)
+{
+    std::vector<VectorPoint> out;
+    for (const shape::Contour &c : contours) {
+        if (c.size() < 3)
+            continue;
+        for (std::size_t i = 0; i < c.size(); ++i)
+            out.push_back({static_cast<float>(c[i].x), static_cast<float>(c[i].y), i == 0 ? u'm' : u'l', i < 2, false});
+    }
+    return out;
+}
+
+std::optional<core::LineRecord> recordOf(const VisualHost &host, core::LineId id)
+{
+    const EditSession *session = host.session();
+    if (!session)
+        return std::nullopt;
+    if (const auto draft = session->draftRecord(); draft && draft->id == id)
+        return draft;
+    for (const auto *line : session->document().lines())
+        if (line->id == id)
+            return *line;
+    return std::nullopt;
+}
+
+constexpr shape::Combine kPathfinder[] = {shape::Combine::Unite, shape::Combine::Subtract, shape::Combine::Intersect,
+                                          shape::Combine::Exclude};
+constexpr shape::Join kJoins[] = {shape::Join::Miter, shape::Join::Round, shape::Join::Square};
+
+}
+
 VectorFrame DrawingTool::frame(const VisualHost &host) const
 {
     const VideoView &v = host.view();
@@ -626,25 +704,7 @@ void DrawingTool::readActive(VisualHost &host)
     m_y = (line.position.y / m_scale.y);
     m_frz = line.frz;
     m_org = line.org ? PointF{line.org->x / m_scale.x, line.org->y / m_scale.y} : PointF{m_x, m_y};
-    m_editor.points = parseVectorPoints(line.body);
-    if (!m_editor.points.empty()) {
-        const PointF offsetxy = drawing::drawingSize(m_alignment, m_editor.points);
-        const float rad = 0.01745329251994329576923690768489f;
-        const PointF orgpivot{std::fabs(m_org.x - m_x), std::fabs(m_org.y - m_y)};
-        const float s = std::sin(-m_frz * rad);
-        const float c = std::cos(-m_frz * rad);
-        for (VectorPoint &p : m_editor.points) {
-            p.x -= offsetxy.x;
-            p.y -= offsetxy.y;
-            if (m_frz) {
-                p.x *= m_scale.x;
-                p.y *= m_scale.y;
-                drawing::rotate(p, s, c, orgpivot);
-                p.x /= m_scale.x;
-                p.y /= m_scale.y;
-            }
-        }
-    }
+    m_editor.points = placeDrawing(line).points;
 }
 
 void DrawingTool::reset(VisualHost &host)
@@ -657,6 +717,7 @@ void DrawingTool::reset(VisualHost &host)
     if (m_shape < 0)
         m_editor.normaliseFirst();
     syncMove(host);
+    m_preview = m_offset != 0 ? offsetResult() : shape::Contours{};
     host.toolChanged();
 }
 
@@ -1114,6 +1175,22 @@ Overlay DrawingTool::overlay(const VisualHost &host) const
     if (m_shape < 0) {
         syncMove(host);
         m_editor.draw(out, frame(host));
+        if (!m_preview.empty()) {
+            OverlayPolygon polygon;
+            polygon.fill = kPreviewFill;
+            polygon.border = kPreviewBorder;
+            polygon.above = true;
+            for (const shape::Contour &c : m_preview) {
+                std::vector<PointF> points;
+                for (const shape::Point p : c)
+                    points.push_back(pointToVideo({static_cast<float>(p.x) + m_x, static_cast<float>(p.y) + m_y}, host));
+                if (polygon.points.empty())
+                    polygon.points = std::move(points);
+                else
+                    polygon.more.push_back(std::move(points));
+            }
+            out.polygons.push_back(std::move(polygon));
+        }
         return out;
     }
     if (m_rectVisible) {
@@ -1158,6 +1235,39 @@ std::vector<ToolOption> DrawingTool::options(const VisualHost &host) const
     shapes.choices = shapeListChoices(presets ? *presets : none);
     shapes.index = m_shapeSelection;
     out.push_back(std::move(shapes));
+    if (m_shapeSelection != 0)
+        return out;
+    const bool drawn = m_shape < 0 && !m_editor.points.empty() && host.session();
+    bool fromClip = false;
+    ToolOption pathfinder;
+    pathfinder.name = "pathfinder";
+    pathfinder.kind = ToolOption::Kind::Choice;
+    pathfinder.iconRole = "shape-unite";
+    pathfinder.tooltip = u"Pathfinder: combine the drawing with the line’s clip, or with the other picked lines in "
+                         u"the order they were picked";
+    pathfinder.choices = {u"Unite", u"Subtract", u"Intersect", u"Exclude"};
+    pathfinder.choiceRoles = {"shape-unite", "shape-subtract", "shape-intersect", "shape-exclude"};
+    pathfinder.index = -1;
+    pathfinder.enabled = drawn && pathfinderOperand(host, fromClip);
+    pathfinder.group = u"Shape";
+    out.push_back(std::move(pathfinder));
+    ToolOption join;
+    join.name = "join";
+    join.kind = ToolOption::Kind::Switch;
+    join.tooltip = u"Offset corners";
+    join.choices = {u"Miter", u"Round", u"Square"};
+    join.index = static_cast<int>(std::find(std::begin(kJoins), std::end(kJoins), m_join) - std::begin(kJoins));
+    join.group = u"Offset";
+    join.afterValues = true;
+    out.push_back(std::move(join));
+    ToolOption offset;
+    offset.name = "offset";
+    offset.kind = ToolOption::Kind::Action;
+    offset.iconRole = "shape-offset";
+    offset.tooltip = u"Apply offset";
+    offset.enabled = drawn && m_offset != 0;
+    offset.afterValues = true;
+    out.push_back(std::move(offset));
     return out;
 }
 
@@ -1176,7 +1286,173 @@ bool DrawingTool::setOption(const std::string &name, int value, VisualHost &host
         host.toolChanged();
         return true;
     }
+    if (name == "join" && value >= 0 && value < static_cast<int>(std::size(kJoins))) {
+        m_join = kJoins[value];
+        m_preview = m_offset != 0 ? offsetResult() : shape::Contours{};
+        host.toolChanged();
+        return true;
+    }
+    if (name == "pathfinder" || name == "offset") {
+        if (m_shape >= 0 || m_editor.points.empty())
+            return false;
+        bool fromClip = false;
+        std::optional<shape::Contours> result;
+        if (name == "offset")
+            result = m_offset != 0 ? std::optional(offsetResult()) : std::nullopt;
+        else
+            result = pathfinderResult(value, host, fromClip);
+        if (!result)
+            return false;
+        if (result->empty()) {
+            host.bell();
+            host.notice(u"Nothing would be left of the drawing");
+            return false;
+        }
+        if (name == "offset")
+            m_offset = 0;
+        commitContours(*result, fromClip, host);
+        return true;
+    }
     return false;
+}
+
+std::vector<ToolValue> DrawingTool::values(const VisualHost &host) const
+{
+    if (m_shapeSelection != 0 || !host.session())
+        return {};
+    ToolValue offset;
+    offset.name = "offset";
+    offset.label = u"Offset";
+    offset.text = legacy::getfloat(static_cast<float>(m_offset), "5.2f");
+    offset.editable = true;
+    offset.group = u"Offset";
+    offset.step = 0.1;
+    return {offset};
+}
+
+bool DrawingTool::setValue(const std::string &name, const std::u16string &text, VisualHost &host, ValueEdit edit)
+{
+    (void)edit;
+    double value = 0;
+    if (name != "offset" || m_shapeSelection != 0 || !parseValue(text, value))
+        return false;
+    m_offset = value;
+    m_preview = m_offset != 0 ? offsetResult() : shape::Contours{};
+    host.toolChanged();
+    return true;
+}
+
+void DrawingTool::previewOption(const std::string &name, int index, VisualHost &host)
+{
+    if (name != "pathfinder")
+        return;
+    bool fromClip = false;
+    const auto result = index >= 0 ? pathfinderResult(index, host, fromClip) : std::nullopt;
+    m_preview = result ? *result : m_offset != 0 ? offsetResult() : shape::Contours{};
+}
+
+shape::Contours DrawingTool::editorContours() const
+{
+    return contoursOf(m_editor.points);
+}
+
+std::optional<shape::Contours> DrawingTool::pathfinderOperand(const VisualHost &host, bool &fromClip) const
+{
+    fromClip = false;
+    const auto active = activeRecord(host);
+    const EditSession *session = host.session();
+    if (!active || !session)
+        return std::nullopt;
+    const auto toEditor = [&](shape::Contours contours, PointF origin, PointF scale) {
+        for (shape::Contour &c : contours)
+            for (shape::Point &p : c)
+                p = {(origin.x + p.x) * scale.x / m_scale.x - m_x, (origin.y + p.y) * scale.y / m_scale.y - m_y};
+        return contours;
+    };
+    const clip::VectorRead clipped = clip::readVector(editedText(host, *active));
+    if (!clipped.body.empty()) {
+        fromClip = true;
+        const float unit = 1.f / static_cast<float>(clipped.divisor);
+        return toEditor(contoursOf(parseVectorPoints(clipped.body)), {0, 0}, {unit, unit});
+    }
+    shape::Contours operands;
+    std::size_t count = 0;
+    for (const core::LineId id : host.batchTargets()) {
+        if (id == active->id)
+            continue;
+        const auto record = recordOf(host, id);
+        if (!record)
+            continue;
+        const u16 text = editedText(host, *record);
+        std::array<double, 7> move{};
+        const Placed placed = placeDrawing(drawing::readLine(session->document(), *record, text, text,
+                                                             host.view().scriptWidth(), host.view().scriptHeight(),
+                                                             move));
+        if (placed.points.empty())
+            continue;
+        ++count;
+        for (auto &c : toEditor(contoursOf(placed.points), placed.origin, placed.scale))
+            operands.push_back(std::move(c));
+        operands.push_back({}); // ends one Line's contours
+    }
+    if (count == 0)
+        return std::nullopt;
+    return operands;
+}
+
+std::optional<shape::Contours> DrawingTool::pathfinderResult(int op, const VisualHost &host, bool &fromClip) const
+{
+    if (op < 0 || op >= static_cast<int>(std::size(kPathfinder)) || m_shape >= 0 || m_editor.points.empty())
+        return std::nullopt;
+    const auto operands = pathfinderOperand(host, fromClip);
+    if (!operands)
+        return std::nullopt;
+    shape::Contours result = editorContours();
+    shape::Contours next;
+    for (const shape::Contour &c : *operands) {
+        if (!c.empty()) {
+            next.push_back(c);
+            continue;
+        }
+        result = shape::combine(result, next, kPathfinder[op]);
+        next.clear();
+    }
+    if (!next.empty())
+        result = shape::combine(result, next, kPathfinder[op]);
+    return result;
+}
+
+shape::Contours DrawingTool::offsetResult() const
+{
+    if (m_shape >= 0 || m_editor.points.empty())
+        return {};
+    const double scale = (m_scale.x + m_scale.y) / 2;
+    return shape::offset(editorContours(), scale > 0 ? m_offset / scale : m_offset, m_join);
+}
+
+void DrawingTool::commitContours(const shape::Contours &result, bool dropClip, VisualHost &host)
+{
+    const auto active = host.activeLine();
+    if (!active)
+        return;
+    auto begun = host.beginGesture({*active}, std::string(familyInfo(Family::Drawing).history));
+    if (!begun) {
+        host.bell();
+        return;
+    }
+    m_editor.points = pointsOf(result);
+    Gesture &g = **begun;
+    const core::LineRecord &before = g.before(*active);
+    const bool tl = editsTranslation(host, before);
+    const u16 text = editedText(host, before);
+    u16 after = drawing::putDrawing(text, body(), {m_x * m_scale.x, m_y * m_scale.y}, m_alignment).text;
+    if (dropClip)
+        after = clip::putVector(after, u"");
+    stage(g, *active, tl, text, after);
+    m_preview.clear();
+    m_placed = false;
+    (void)host.commitGesture();
+    host.toolChanged();
 }
 
 }

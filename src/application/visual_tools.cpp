@@ -6,6 +6,7 @@
 #include "hikari/application/visual_crosshair.h"
 #include "hikari/application/visual_drawing.h"
 #include "hikari/application/visual_gradient.h"
+#include "hikari/application/visual_text_on_path.h"
 #include "hikari/application/visual_perspective.h"
 #include "hikari/application/visual_position.h"
 #include "hikari/application/visual_rotation.h"
@@ -39,7 +40,7 @@ const core::LineRecord *findLine(const core::Document &document, core::LineId id
     return nullptr;
 }
 
-bool replaceLine(core::Document &document, core::LineId target, const std::vector<std::u8string> &texts,
+bool replaceLine(core::Document &document, core::LineId target, const std::vector<Replacement> &copies,
                  std::vector<core::LineId> *added)
 {
     const core::LineRecord *source = findLine(document, target);
@@ -48,8 +49,10 @@ bool replaceLine(core::Document &document, core::LineId target, const std::vecto
     core::LineRecord copy = *source;
     copy.comment = false;
     core::LineId after = target;
-    for (const auto &text : texts) {
-        copy.text = text;
+    for (const auto &replacement : copies) {
+        copy.text = replacement.text;
+        copy.start.value = replacement.start.value_or(source->start.value);
+        copy.end.value = replacement.end.value_or(source->end.value);
         const auto id = document.insertLineAfter(after, copy);
         if (!id)
             return false;
@@ -101,6 +104,7 @@ const std::array<FamilyInfo, kFamilyCount> &families()
         {Family::Hydra, "ALL_TAGS", "Hydra", "Visual Hydra tool", "VIDEO_TOOL_HYDRA"},
         {Family::Perspective, "perspective", "Perspective", "Visual perspective tool", "VIDEO_TOOL_PERSPECTIVE"},
         {Family::Gradient, "gradient", "Gradient", "Gradient", "VIDEO_TOOL_GRADIENT"},
+        {Family::TextOnPath, "text-on-path", "Text on path", "Text on path", "VIDEO_TOOL_TEXT_ON_PATH"},
     }};
     return table;
 }
@@ -111,7 +115,7 @@ const std::array<Family, kFamilyCount> &railOrder()
         Family::Crosshair,     Family::Position,   Family::Move,    Family::Scale,
         Family::RotationZ,     Family::RotationXY, Family::Perspective, Family::RectangleClip,
         Family::VectorClip,    Family::Drawing,    Family::PositionShifter, Family::Hydra,
-        Family::Gradient};
+        Family::Gradient,      Family::TextOnPath};
     return order;
 }
 
@@ -206,8 +210,16 @@ void Gesture::stageExtradata(core::LineId line, std::vector<core::Extradata> ext
 
 void Gesture::stageReplacement(core::LineId line, std::vector<std::u8string> texts)
 {
+    std::vector<Replacement> copies;
+    for (auto &text : texts)
+        copies.push_back({std::move(text), std::nullopt, std::nullopt});
+    stageReplacement(line, std::move(copies));
+}
+
+void Gesture::stageReplacement(core::LineId line, std::vector<Replacement> copies)
+{
     if (m_before.contains(line))
-        m_replacements[line] = std::move(texts);
+        m_replacements[line] = std::move(copies);
 }
 
 bool Gesture::changesAnyLine() const
@@ -243,9 +255,14 @@ std::u8string Gesture::stagedKey() const
     };
     for (const auto &[at, text] : m_staged)
         add(at.first, at.second ? u8't' : u8's', text);
-    for (const auto &[id, texts] : m_replacements)
-        for (const auto &text : texts)
-            add(id, u8'r', text);
+    for (const auto &[id, copies] : m_replacements)
+        for (const auto &copy : copies) {
+            std::u8string times;
+            for (const auto &time : {copy.start, copy.end})
+                for (const char c : time ? std::to_string(time->microseconds()) : std::string("-"))
+                    times += static_cast<char8_t>(c);
+            add(id, u8'r', times + u8' ' + copy.text);
+        }
     return key;
 }
 
@@ -381,6 +398,8 @@ std::unique_ptr<VisualTool> makeVisualTool(Family family)
         return std::make_unique<PerspectiveTool>();
     case Family::Gradient:
         return std::make_unique<GradientTool>();
+    case Family::TextOnPath:
+        return std::make_unique<TextOnPathTool>();
     default:
         return nullptr;
     }
