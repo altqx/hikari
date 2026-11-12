@@ -44,6 +44,10 @@ _Avoid_: Filter without qualification where automation or presentation is also d
 The arrangement of subtitle-editing panels and tools in a shell window and its floating panels. Each Document tab has its own, in its own window, and switching tabs shows that tab's ([ADR 0020](docs/adr/0020-per-document-tab-layouts.md)); it places panels and never changes which Document is the editing target.
 _Avoid_: Document layout (the arrangement belongs to the tab, not to the Document's content); Workspace as a name for the set of open Documents or for an opened folder (a Project).
 
+**Side bar**:
+One of the two panel columns at a shell window's left and right edges, outside the docking area: an icon strip on top and one panel shown at a time ([ADR 0032](docs/adr/0032-side-bars.md)). The AI side bar holds the Agent and Review panels and the other the tools by default; any panel but the Grid, Video, Audio box and Line editor may go in either. Each window keeps its own side bars, and they don't change with the Document tab.
+_Avoid_: Sidebar, rail, activity bar; Workspace (a side bar is not part of the tab's arrangement).
+
 **Editing target**:
 The subtitle document to which ordinary editing commands apply: the current tab of the shell window that was active last ([ADR 0025](docs/adr/0025-multiple-windows.md)). A tool with an explicit pinned target may name a different unprotected document. Within a window it is distinct from the control or panel that currently has keyboard focus; focus moving to another window makes that window's current tab the editing target.
 _Avoid_: Focused panel as a synonym for the document receiving edits.
