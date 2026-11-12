@@ -65,10 +65,10 @@ TEST_F(Effects, AScriptedAgentBuildsTheClassicFillPresetThatValidatesPreviewsAnd
     std::vector<std::string> written;
     for (const core::LineRecord *line : host.target()->document().lines())
         if (line->effect == u8"fx classic")
-            written.push_back(narrow(core::assLineText(*line)));
+            written.push_back(narrow(core::legacy::assLineText(*line)));
     std::vector<std::string> wanted;
     for (const core::LineRecord &line : expected.lines)
-        wanted.push_back(narrow(core::assLineText(line)));
+        wanted.push_back(narrow(core::legacy::assLineText(line)));
     EXPECT_EQ(written, wanted);
 }
 

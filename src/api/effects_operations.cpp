@@ -299,7 +299,7 @@ Result preview(const Context &context, const Json &params)
     const std::size_t shown = std::min(run.lines.size(), std::size_t(limit ? limit->asInt() : 20));
     Json lines = Json::array();
     for (std::size_t i = 0; i < shown; ++i)
-        lines.push(Json(narrow(core::assLineText(run.lines[i]))));
+        lines.push(Json(narrow(core::legacy::assLineText(run.lines[i]))));
     return Json::object({{"ran", Json(run.ran && run.ok())},
                          {"complete", Json(run.complete)},
                          {"sources", Json(std::int64_t(run.sources.size()))},

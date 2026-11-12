@@ -10,6 +10,6 @@
 {"call": "effects.edit", "params": {"graph": {"format": 1, "nodes": [], "wires": []}, "steps": [{"op": "add", "type": "no.such"}]}, "error": "invalid_params", "errorData": {"step": 0}}
 {"call": "effects.edit", "params": {"graph": "$fill", "steps": [{"op": "remove", "node": "fade"}, {"op": "connect", "from": "join.text", "to": "emit.start"}]}, "error": "invalid_params", "errorData": {"step": 1}}
 {"call": "effects.edit", "params": {"graph": "$fill", "steps": [{"op": "set", "node": "k", "field": "nope", "value": 1}]}, "error": "invalid_params", "errorData": {"step": 0}}
-{"call": "effects.edit", "params": {"graph": "$fill", "steps": [{"op": "disconnect", "to": "emit.text"}]}, "result": {"valid": false}}
+{"call": "effects.edit", "params": {"graph": "$fill", "steps": [{"op": "disconnect", "to": "emit.text"}, {"op": "disconnect", "to": "emit.text"}]}, "error": "invalid_params", "errorData": {"step": 1}}
 {"call": "effects.save", "params": {"graph": "$fill", "name": "classic", "style": "Romaji"}, "error": "refused", "errorData": {"reason": "name_taken", "line": "$line"}}
 {"call": "effects.graph", "params": {"line": 1}, "error": "not_found"}
