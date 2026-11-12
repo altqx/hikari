@@ -570,6 +570,8 @@ public:
         if (type != QEvent::PlatformSurface && type != QEvent::Show && type != QEvent::ApplicationPaletteChange)
             return false;
         auto *window = qobject_cast<QWindow *>(object);
+        if (type == QEvent::Show && qobject_cast<QQuickWindow *>(window))
+            adopt({window});
         if (!window || !titlebars::themed(window))
             return false;
         if (type == QEvent::PlatformSurface) {
