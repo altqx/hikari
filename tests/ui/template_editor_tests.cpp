@@ -562,6 +562,30 @@ private slots:
         QCOMPARE(bytesOf(session->document()), before);
     }
 
+    void theModeSwitchWritesTheModeLineAsOneStep()
+    {
+        open(QStringLiteral("stock-tutorials.ass"));
+        showPanel();
+        QVERIFY(!editor->karaOKMode());
+        QVERIFY(!editor->modeInFile());
+        QCOMPARE(object(QStringLiteral("templateMode"))->property("currentIndex").toInt(), 1);
+        const std::string before = bytesOf(session->document());
+        QVERIFY(editor->setKaraOKMode(true));
+        QVERIFY(editor->karaOKMode());
+        QVERIFY(editor->modeInFile());
+        QCOMPARE(session->document().scriptInfo(u8"Karaoke Templater"), std::optional<std::u8string>(u8"karaOK"));
+        QCOMPARE(object(QStringLiteral("templateMode"))->property("currentIndex").toInt(), 0);
+        QVERIFY(!editor->setKaraOKMode(true));
+        QVERIFY(editor->setKaraOKMode(false));
+        QCOMPARE(session->document().scriptInfo(u8"Karaoke Templater"),
+                 std::optional<std::u8string>(u8"Aegisub 3.2.2"));
+        QVERIFY(session->undo());
+        QVERIFY(session->undo());
+        editor->refresh();
+        QCOMPARE(bytesOf(session->document()), before);
+        QVERIFY(!editor->modeInFile());
+    }
+
     void aScriptInfoChangePreviewsAgain()
     {
         openDocument(withoutLua(loadFile(QStringLiteral("stock-tutorials.ass"))), true);

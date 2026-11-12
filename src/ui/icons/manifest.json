@@ -5033,8 +5033,7 @@
    "legacy": [],
    "surfaces": [
     "menu:video"
-   ],
-   "pending": "AU11 #846"
+   ]
   },
   {
    "role": "find-fade",
@@ -5045,8 +5044,7 @@
    "legacy": [],
    "surfaces": [
     "menu:video"
-   ],
-   "pending": "AU11 #846"
+   ]
   },
   {
    "role": "tool-text-on-path",
@@ -5556,8 +5554,7 @@
    "legacy": [],
    "surfaces": [
     "automation-manager"
-   ],
-   "pending": "TH5 #833"
+   ]
   },
   {
    "role": "citations",

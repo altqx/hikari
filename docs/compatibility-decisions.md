@@ -114,6 +114,17 @@ The Gradient visual tool does natively what the gradient scripts do (records in 
 - **G8, wedge thickness.** Thickness is limited to 0–1. phos declares a minimum of 1 and a maximum of 0.
 - **G9, inline tags.** In the strip modes, inline instances of an interpolated tag are replaced, so no older `\1c` overrides a strip. Gradient Factory removes only the last channel's.
 
+## AU11-video-analysis
+
+Video › "Track colour…" and "Find fade…" do natively what zah.aegi-color-track 2.1.1 and phos.AutoFade 1.1.2 do (records in [AU11 #846](https://github.com/altqx/hikari/issues/846)). Both read one pixel a frame, decoded without subtitles. The departures below were accepted at the owner's gate on 2026-11-11 (Q271–Q278).
+
+- **V1, repeated colours.** Skip repeated colours, on by default, writes no `\t` for a frame whose value is the same as the last one written. With it off, the tags are byte for byte color-track's.
+- **V2, alpha hex.** A colour equal to the sign or background colour writes `&H00&` or `&HFF&`. color-track writes the decimal `&H0&` and `&H255&`.
+- **V3, tracking data.** Tracking data moves the picked point by the data's offset from the video's frame. color-track reads the rows as absolute positions, which is the same when the picked point is the tracked point.
+- **V4, each Line's own frames.** Each selected Line gets the colours of its own frames. color-track tracks over the first selected Line's frames and writes that to every Line.
+- **V5, every frame.** Find fade checks every frame after the video's frame for the fade out. AutoFade first halves the distance to the end while the colour holds, so it can step over a flicker.
+- **V6, unread frames.** A frame where the point is outside the picture counts as neither shown nor gone. AutoFade stops with an error.
+
 ## AU20-text-commands
 
 Line breaks, Change case and Swap dialogue alternatives do natively what these scripts do: ua.LineBreaker, petzku.Autowrapper, l0.InsertLineBreaks, ua.ChangeCase, Flux.TitleCase, zf.allCharsTo and Flux.DialogSwapper. The bundled "Make text fullwidth" demo still ships unchanged. The behaviour record and the owner's answers are on [AU20 #854](https://github.com/altqx/hikari/issues/854) (Q279–Q286, 2026-11-11).
@@ -248,6 +259,25 @@ A run no longer sets the globals `textbuffer` and `w`, which upstream wrote whil
 In karaOK mode, `char`, `lchar`, `$ci`, `$slen`, `$llen` and `$len` count grapheme clusters, as TH1 does for 3.2.2's `char`. Upstream counts code points. `graphemes = false` in a `code once` Line counts code points again. Corpus: `tests/backends/karaoke-corpus/karaok/departures/thai.ass`. [TH5c #833](https://github.com/altqx/hikari/issues/833), owner decision Q160. Thai support by Jibrill.
 
 Q161's seventh defect, text before the first `\k` shifting the character-to-syllable map, can't happen in HikariSub: that text belongs to syllable 1 for upstream and the built-in alike (corpus `karaok/leading-text.ass`), so it is not a departure.
+
+## TH5d1-stock-additions
+
+In 3.2.2 mode, karaOK's additions that don't clash with 3.2.2's syntax still work. Each one replaces a 3.2.2 warning or error:
+
+- `style X` on a template runs it only on Lines whose Style name contains X as plain text. 3.2.2 logged "Unknown modifier in template: style" and ran the template on every Line of its Style.
+- The `lsyl`, `lword`, `lchar`, `word` and `furichar` template classes run as they do in karaOK mode. 3.2.2 logged "Unknown modifier in template: lsyl" (and so on) and made the template a `syl` template.
+- `code word`, `code char` and `code furichar` run once per word, character and furigana character. 3.2.2 logged "Unknown modifier in code template: word" (and so on) and ran the Line once, before the first karaoke Line.
+- The template environment has `k_retime`, `table`, `pairs`, `ipairs`, `tonumber`, `tostring` and `type`. In 3.2.2 a call to one of them failed with "Runtime error in template code" or "Runtime error in template expression".
+
+The one exception is karaOK's `$ci`, `$slen`, `$llen` and `$len`: in 3.2.2 mode they stay as text and log "Unknown variable name", as in 3.2.2 (owner decision Q346). `subs` and the kept `line.text` stay karaOK-only too (TH5c-karaok-mode). Without a mode line, every addition here except `style` and the environment names picks karaOK mode (TH5c-karaok-mode), so these apply as listed to a file whose mode line says `Aegisub 3.2.2`. Corpus: `tests/backends/karaoke-corpus/departures/stock-additions.ass`. [TH5d1 #833](https://github.com/altqx/hikari/issues/833), owner decisions Q159 and Q346.
+
+## TH5d1-furigana-styles-false
+
+A `code once` Line that sets `furigana_styles = false` adds no "-furigana" Styles to the file: the built-in drops the ones it made for the run, and the output equals upstream's. Upstream karaOK has a second macro, "Apply karaoke template (modded)", that does the same; the built-in has no extra macro. [TH5d1 #833](https://github.com/altqx/hikari/issues/833), owner decision Q163.
+
+## TH5d1-node-effects-mode
+
+Node effects follow the Document's template mode. In a karaOK-mode Document, node-effect places round to 0.1 px as karaOK's `$` variables do, and a syllable with no duration isn't blank, so For each's "skip blank" keeps it as karaOK's `noblank` does. In 3.2.2 mode both stay as before. "Export as template lines" writes karaOK templates (`line`, `lsyl`, `char`, `code char`) or 3.2.2 templates (`pre-line`, `line`, `syl char`, `code syl`). It remembers the last choice, karaOK by default, and a karaOK export sets the Document's mode line to karaOK. [TH5d1 #833](https://github.com/altqx/hikari/issues/833), owner decisions Q154, Q155 and Q162.
 
 ## 892-script-info-on-save
 
