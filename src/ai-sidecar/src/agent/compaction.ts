@@ -66,14 +66,72 @@ function isPrompt(message: Message): boolean {
     return message.author === "user" && !message.parts.some((p) => p.type === "toolResult");
 }
 
-/** The kept head ends after the first user message; the kept tail starts at the second-to-last one. */
+/** The heading of the user message in which Qt hands finished sub-agents' results back. */
+export const kSubagentResultsHeading = "Results from your sub-agents:";
+const kEnded = new Set(["done", "failed", "stopped", "interrupted"]);
+const kTaskResults = new Set(["agent_delegate", "agent_task_status", "agent_task_cancel"]);
+
+interface TaskResult {
+    taskId: string;
+    status?: string;
+    summary?: string;
+}
+
+function taskResult(content: string): TaskResult | undefined {
+    try {
+        const value = JSON.parse(content) as Partial<TaskResult> | null;
+        return value && typeof value.taskId === "string" ? value as TaskResult : undefined;
+    } catch {
+        return undefined;
+    }
+}
+
+/** Each sub-agent task the history started, by the call that started it, and whether it has ended. */
+function tasks(history: readonly Message[]): { started: Map<string, string>; ended: Set<string> } {
+    const names = new Map<string, string>();
+    const started = new Map<string, string>();
+    const ended = new Set<string>();
+    for (const message of history)
+        for (const part of message.parts) {
+            if (part.type === "toolCall")
+                names.set(part.id, part.name);
+            else if (part.type === "toolResult" && !part.isError && kTaskResults.has(names.get(part.callId) ?? "")) {
+                const result = taskResult(part.content);
+                if (!result)
+                    continue;
+                if (names.get(part.callId) === "agent_delegate")
+                    started.set(part.callId, result.taskId);
+                if (result.status !== undefined && kEnded.has(result.status))
+                    ended.add(result.taskId);
+            } else if (part.type === "text" && message.author === "user" && part.text.startsWith(kSubagentResultsHeading)) {
+                for (const match of part.text.matchAll(/^Task (\S+) \(/gm))
+                    ended.add(match[1]!);
+            }
+        }
+    return { started, ended };
+}
+
+/** The calls that started a task still open: they and their results stay word for word. */
+export function openTaskCalls(history: readonly Message[]): Set<string> {
+    const { started, ended } = tasks(history);
+    return new Set([...started].filter(([, taskId]) => !ended.has(taskId)).map(([callId]) => callId));
+}
+
+/**
+ * The kept head ends after the first user message; the kept tail starts at the second-to-last one, or earlier, at the
+ * user message before the first call that started a task still open.
+ */
 export function keptRanges(history: readonly Message[]): { headEnd: number; tailStart: number } {
     const prompts = history.flatMap((m, i) => isPrompt(m) ? [i] : []);
     if (prompts.length === 0)
         return { headEnd: history.length, tailStart: history.length };
     const headEnd = prompts[0]! + 1;
-    const tailStart = Math.max(headEnd, prompts[Math.max(0, prompts.length - 2)]!);
-    return { headEnd, tailStart };
+    let tailStart = prompts[Math.max(0, prompts.length - 2)]!;
+    const open = openTaskCalls(history);
+    const firstOpen = history.findIndex((m) => m.parts.some((p) => p.type === "toolCall" && open.has(p.id)));
+    if (firstOpen >= 0 && firstOpen < tailStart)
+        tailStart = prompts.filter((i) => i <= firstOpen).at(-1) ?? tailStart;
+    return { headEnd, tailStart: Math.max(headEnd, tailStart) };
 }
 
 function stubOf(name: string, content: string): string {
@@ -84,18 +142,25 @@ function isStub(content: string): boolean {
     return content.startsWith("[Cleared to save context: ");
 }
 
-/** Stage 1: each old read-tool result becomes a one-line stub. */
+/** Stage 1: each old read-tool result, and each ended sub-agent's result, becomes a one-line stub. */
 export function clearedResults(history: readonly Message[], end: number, isRead: (tool: string) => boolean)
     : { callId: string; content: string }[] {
+    const { ended } = tasks(history);
     const names = new Map<string, string>();
     const stubs: { callId: string; content: string }[] = [];
+    const endedResult = (name: string, content: string) => {
+        if (name !== "agent_delegate" && name !== "agent_task_status")
+            return false;
+        const result = taskResult(content);
+        return result?.summary !== undefined && ended.has(result.taskId);
+    };
     for (const message of history.slice(0, end))
         for (const part of message.parts) {
             if (part.type === "toolCall")
                 names.set(part.id, part.name);
             else if (part.type === "toolResult" && !isStub(part.content)) {
                 const name = names.get(part.callId);
-                if (name !== undefined && isRead(name))
+                if (name !== undefined && (isRead(name) || (!part.isError && endedResult(name, part.content))))
                     stubs.push({ callId: part.callId, content: stubOf(name, part.content) });
             }
         }

@@ -17969,6 +17969,7 @@ private slots:
         QQuickItem *key = nullptr;
         QTRY_VERIFY((key = dialogItem("settingsDialog", "aiProviderKey")));
         QCOMPARE(dialogItem("settingsDialog", "aiProviderName")->property("text").toString(), QStringLiteral("Google Gemini"));
+        QCOMPARE(dialogItem("settingsDialog", "aiProviderId")->property("text").toString(), QStringLiteral("gemini"));
         QCOMPARE(dialogItem("settingsDialog", "aiProviderKeyRow")->property("text").toString(), QStringLiteral("Gemini API key"));
         QVERIFY(dialogItem("settingsDialog", "aiGeminiKeys")->isVisible());
         QVERIFY(!dialogItem("settingsDialog", "aiDownloadNotice")->isVisible());
@@ -17982,6 +17983,12 @@ private slots:
         QVERIFY(!dialogItem("settingsDialog", "aiProviderForm"));
         QTRY_COMPARE(dialogItem("settingsDialog", "aiRole_chat")->property("currentText").toString(),
                      QStringLiteral("B · Google Gemini"));
+        QVERIFY(QMetaObject::invokeMethod(page, "openForm", Q_ARG(QVariant, QStringLiteral("gemini")), Q_ARG(QVariant, QVariant())));
+        QTRY_VERIFY(dialogItem("settingsDialog", "aiProviderId"));
+        QCOMPARE(dialogItem("settingsDialog", "aiProviderId")->property("text").toString(), QStringLiteral("gemini-2"));
+        QVERIFY(dialogItem("settingsDialog", "aiProviderId")->property("readOnly").toBool());
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "aiDraftCancel"), "click"));
+        QTRY_VERIFY(!dialogItem("settingsDialog", "aiProviderForm"));
 
         QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "aiRole_judge"), "activated", Q_ARG(int, 1)));
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
@@ -21978,8 +21985,9 @@ private slots:
                                      "Video", "Audio", "Conversion", "Script properties", "Automation", "Shortcuts",
                                      "AI", "Updates and privacy"}));
         QVERIFY(dialogItem("settingsDialog", "settingsPageHotkeys"));
-        QCOMPARE(hotkeyRows().size(), 386);
-        QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Global Position to margins"));
+        QCOMPARE(hotkeyRows().size(), 387);
+        QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(),
+                 QStringLiteral("Global Typesetting graph\u2026"));
         QCOMPARE(application->hotkeys().selected(), 0);
         QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "hotkeyFilter"), "activated", Q_ARG(int, 5)));
         QCOMPARE(hotkeyRows().size(), int(std::ranges::count_if(application::hotkeyNames(), [](const auto &n) {

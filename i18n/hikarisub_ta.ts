@@ -196,6 +196,53 @@
         <translation>நிறுத்து</translation>
     </message>
     <message>
+        <source>needs you</source>
+        <translation>உங்களுக்காகக் காத்திருக்கிறது</translation>
+    </message>
+    <message>
+        <source>done</source>
+        <translation>முடிந்தது</translation>
+    </message>
+    <message>
+        <source>failed</source>
+        <translation>தோல்வி</translation>
+    </message>
+    <message>
+        <source>interrupted</source>
+        <translation>இடைமறிக்கப்பட்டது</translation>
+    </message>
+    <message>
+        <source>stopped · cap</source>
+        <translation>நிறுத்தப்பட்டது · வரம்பு</translation>
+    </message>
+    <message>
+        <source>stopped</source>
+        <translation>நிறுத்தப்பட்டது</translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 · %n line(s)</source>
+        <translation>
+            <numerusform>%1 · %n வரி</numerusform>
+            <numerusform>%1 · %n வரிகள்</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Back to the parent thread</source>
+        <translation>பெற்றோர் இழைக்குத் திரும்பு</translation>
+    </message>
+    <message>
+        <source>Sub-agent of “%1”. Read-only; talk to it through the parent.</source>
+        <translation>“%1” இன் துணை முகவர். படிக்க மட்டும்; பெற்றோர் இழை வழியாக அதனுடன் பேசுங்கள்.</translation>
+    </message>
+    <message>
+        <source>%1 · capped by the parent</source>
+        <translation>%1 · பெற்றோரால் வரம்பிடப்பட்டது</translation>
+    </message>
+    <message>
+        <source>scope: %1</source>
+        <translation>வரம்பெல்லை: %1</translation>
+    </message>
+    <message>
         <source>Send</source>
         <translation>அனுப்பு</translation>
     </message>
@@ -260,6 +307,14 @@
         <translation>மறுபெயரிடு</translation>
     </message>
     <message>
+        <source>Brief, written by the agent</source>
+        <translation>முகவர் எழுதிய பணிக்குறிப்பு</translation>
+    </message>
+    <message>
+        <source>Results from your sub-agents</source>
+        <translation>உங்கள் துணை முகவர்களின் முடிவுகள்</translation>
+    </message>
+    <message>
         <source>steered</source>
         <translation>வழிநடத்தப்பட்டது</translation>
     </message>
@@ -311,6 +366,14 @@
         <translation>திட்டம்</translation>
     </message>
     <message>
+        <source>%1 proposes: %2</source>
+        <translation>%1 முன்மொழிகிறது: %2</translation>
+    </message>
+    <message>
+        <source>%1 asks you</source>
+        <translation>%1 உங்களைக் கேட்கிறது</translation>
+    </message>
+    <message>
         <source>Judge asks you</source>
         <translation>நடுவர் உங்களைக் கேட்கிறது</translation>
     </message>
@@ -325,6 +388,18 @@
     <message>
         <source>asks in every mode</source>
         <translation>எல்லாப் பயன்முறைகளிலும் கேட்கும்</translation>
+    </message>
+    <message>
+        <source>sub-agent · asks in every mode</source>
+        <translation>துணை முகவர் · எல்லாப் பயன்முறைகளிலும் கேட்கும்</translation>
+    </message>
+    <message>
+        <source>sub-agent</source>
+        <translation>துணை முகவர்</translation>
+    </message>
+    <message>
+        <source>Only you can answer; the parent agent can’t.</source>
+        <translation>நீங்கள் மட்டுமே பதிலளிக்க முடியும்; பெற்றோர் முகவரால் முடியாது.</translation>
     </message>
     <message>
         <source>Why: %1</source>
@@ -349,86 +424,6 @@
     <message>
         <source>Deny and tell the agent…</source>
         <translation>மறுத்து முகவரிடம் சொல்…</translation>
-    </message>
-    <message>
-        <source>What should it do instead?</source>
-        <translation>அதற்குப் பதிலாக அது என்ன செய்ய வேண்டும்?</translation>
-    </message>
-    <message>
-        <source>Allowed</source>
-        <translation>அனுமதிக்கப்பட்டது</translation>
-    </message>
-    <message>
-        <source>Allowed in this thread</source>
-        <translation>இந்த இழையில் அனுமதிக்கப்பட்டது</translation>
-    </message>
-    <message>
-        <source>Denied</source>
-        <translation>மறுக்கப்பட்டது</translation>
-    </message>
-    <message>
-        <source>No longer needed</source>
-        <translation>இனி தேவையில்லை</translation>
-    </message>
-    <message>
-        <source>Run this Lua script?</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>%1 · macro “%2”</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>on %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>%1 isn’t installed, so the script will stop when it loads.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Runs as an Automation macro: one undo step, and Force stop while it runs. Saved in the AI scripts folder, never added to Autoload.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Run</source>
-        <translation type="unfinished">இயக்கு</translation>
-    </message>
-    <message>
-        <source>Don’t run</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Don’t run and tell the agent…</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Running %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Ran %1 · one undo step</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>%1 didn’t finish: %2</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Didn’t run %1 · “%2”</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Didn’t run %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Force stop</source>
-        <translation type="unfinished">கட்டாயமாக நிறுத்து</translation>
-    </message>
-    <message>
-        <source>Open</source>
-        <translation type="unfinished">திற</translation>
     </message>
     <message>
         <source>The signing key changed. The installed copy was signed by key %1, and this one by key %2. Install it only if you trust that the author changed keys.</source>
@@ -541,6 +536,142 @@
         <source>Open in Plugins</source>
         <translation type="unfinished"></translation>
     </message>
+    <message numerus="yes">
+        <source>%n sub-agent(s)</source>
+        <translation>
+            <numerusform>%n துணை முகவர்</numerusform>
+            <numerusform>%n துணை முகவர்கள்</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n running</source>
+        <translation>
+            <numerusform>%n இயங்குகிறது</numerusform>
+            <numerusform>%n இயங்குகின்றன</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n need(s) you</source>
+        <translation>
+            <numerusform>%n உங்களுக்காகக் காத்திருக்கிறது</numerusform>
+            <numerusform>%n உங்களுக்காகக் காத்திருக்கின்றன</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Stop all</source>
+        <translation>அனைத்தையும் நிறுத்து</translation>
+    </message>
+    <message>
+        <source>Sub-agent %1, %2</source>
+        <translation>துணை முகவர் %1, %2</translation>
+    </message>
+    <message numerus="yes">
+        <source>Estimate for %n sub-agent(s)</source>
+        <translation>
+            <numerusform>%n துணை முகவருக்கான மதிப்பீடு</numerusform>
+            <numerusform>%n துணை முகவர்களுக்கான மதிப்பீடு</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>About %1 tokens, %2.</source>
+        <translation>சுமார் %1 டோக்கன்கள், %2.</translation>
+    </message>
+    <message>
+        <source>About %1 tokens. This agent doesn’t report cost.</source>
+        <translation>சுமார் %1 டோக்கன்கள். இந்த முகவர் செலவைத் தெரிவிப்பதில்லை.</translation>
+    </message>
+    <message>
+        <source>Started</source>
+        <translation>தொடங்கியது</translation>
+    </message>
+    <message>
+        <source>Cancelled. No more sub-agents start this turn.</source>
+        <translation>ரத்துசெய்யப்பட்டது. இந்தச் சுற்றில் வேறு துணை முகவர் தொடங்காது.</translation>
+    </message>
+    <message>
+        <source>What should it do instead?</source>
+        <translation>அதற்குப் பதிலாக அது என்ன செய்ய வேண்டும்?</translation>
+    </message>
+    <message>
+        <source>Allowed</source>
+        <translation>அனுமதிக்கப்பட்டது</translation>
+    </message>
+    <message>
+        <source>Allowed in this thread</source>
+        <translation>இந்த இழையில் அனுமதிக்கப்பட்டது</translation>
+    </message>
+    <message>
+        <source>Denied</source>
+        <translation>மறுக்கப்பட்டது</translation>
+    </message>
+    <message>
+        <source>No longer needed</source>
+        <translation>இனி தேவையில்லை</translation>
+    </message>
+    <message>
+        <source>Run this Lua script?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 · macro “%2”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>on %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 isn’t installed, so the script will stop when it loads.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Runs as an Automation macro: one undo step, and Force stop while it runs. Saved in the AI scripts folder, never added to Autoload.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Run</source>
+        <translation type="unfinished">இயக்கு</translation>
+    </message>
+    <message>
+        <source>Don’t run</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Don’t run and tell the agent…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Running %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ran %1 · one undo step</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 didn’t finish: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Didn’t run %1 · “%2”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Didn’t run %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Force stop</source>
+        <translation type="unfinished">கட்டாயமாக நிறுத்து</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation type="unfinished">திற</translation>
+    </message>
+    <message>
+        <source>%1 asks to run this Lua script</source>
+        <translation>%1 இந்த Lua ஸ்கிரிப்டை இயக்கக் கேட்கிறது</translation>
+    </message>
     <message>
         <source>This thread reached its %1 cap</source>
         <translation>இந்த இழை அதன் %1 வரம்பை எட்டியது</translation>
@@ -560,6 +691,10 @@
     <message>
         <source>You stopped the turn.</source>
         <translation>நீங்கள் சுற்றை நிறுத்தினீர்கள்.</translation>
+    </message>
+    <message>
+        <source>The parent thread stopped this sub-agent.</source>
+        <translation>பெற்றோர் இழை இந்தத் துணை முகவரை நிறுத்தியது.</translation>
     </message>
     <message>
         <source>The answer reached the model’s length limit.</source>
@@ -592,6 +727,14 @@
     <message>
         <source>The turn stopped after its last change. Raise the cap for this thread to go on.</source>
         <translation>சுற்று அதன் கடைசி மாற்றத்துக்குப் பிறகு நின்றது. தொடர, இந்த இழையின் வரம்பை உயர்த்தவும்.</translation>
+    </message>
+    <message>
+        <source>The parent’s cost cap stopped this sub-agent. Its changes stay in the review.</source>
+        <translation>பெற்றோரின் செலவு வரம்பு இந்தத் துணை முகவரை நிறுத்தியது. அதன் மாற்றங்கள் மதிப்பாய்வில் இருக்கும்.</translation>
+    </message>
+    <message>
+        <source>The sub-agent was interrupted and won’t rerun. The parent got its partial result. Changes it made stay in the review.</source>
+        <translation>துணை முகவர் இடைமறிக்கப்பட்டது, மீண்டும் இயங்காது. பெற்றோர் அதன் பகுதி முடிவைப் பெற்றது. அது செய்த மாற்றங்கள் மதிப்பாய்வில் இருக்கும்.</translation>
     </message>
     <message>
         <source>Every thread stops until tomorrow, or until you raise the cap in Settings › AI.</source>
@@ -6584,6 +6727,10 @@ Failed to copy %2 fonts.</source>
         <translation>கடைசி மதிப்புகளுடன் அடுக்குகளை உருவாக்கு</translation>
     </message>
     <message>
+        <source>Typesetting graph…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Shift+click to set a shortcut</source>
         <translation>குறுக்குவிசையை அமைக்க Shift+சொடுக்கு</translation>
     </message>
@@ -10138,6 +10285,10 @@ Failed to copy %2 fonts.</source>
         <translation>கடைசி மதிப்புகளுடன் அடுக்குகளை உருவாக்கு (&amp;l)</translation>
     </message>
     <message>
+        <source>T&amp;ypesetting graph…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Notes from a QC pass, kept in the file, with the lines they mark</source>
         <translation>QC சரிபார்ப்புக் குறிப்புகள், கோப்பில் வைக்கப்பட்டு, அவை குறிக்கும் வரிகளுடன்</translation>
     </message>
@@ -11259,6 +11410,10 @@ Failed to copy %2 fonts.</source>
 <context>
     <name>HikariSub.NodeEffects</name>
     <message>
+        <source>Opens node effects with the selected lines as the sources of a typesetting graph</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Edits this file’s node effects on a canvas, with a preview on the video</source>
         <translation type="unfinished"></translation>
     </message>
@@ -11280,6 +11435,10 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Source lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select the lines a typesetting graph should run on.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -11597,6 +11756,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished">வேலை செய்த கடைசி இயக்கத்திலிருந்து வைக்கப்பட்டது</translation>
     </message>
     <message>
+        <source>No lines to preview on. Select lines in the grid, then choose Subtitles › Typesetting graph….</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>No karaoke line of this graph’s style to preview on.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -11629,6 +11792,17 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>1 selected line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n selected lines</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
         <source>Line %1, %2</source>
         <translation type="unfinished">வரி %1, %2</translation>
     </message>
@@ -11642,6 +11816,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Graph menu</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Target: selected lines</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -11745,6 +11923,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Only the lines selected in “Source lines” are regenerated; the others keep their output.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select lines in “Source lines” first.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -11861,6 +12043,86 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Shake</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>One line per frame step, each moved a random distance up to the amplitude from the line’s position.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Typewriter</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each character appears after the one before it, by grapheme cluster, and stays to the line’s end.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fade by letter</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each character fades in after the one before it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Wobble</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The characters rise and fall in a wave, one line per character and frame step.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bounce</source>
+        <translation type="unfinished">துள்ளல்</translation>
+    </message>
+    <message>
+        <source>Each character jumps up after the one before it and comes part of the way back down, as myaa.Bounce does.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Focus lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Spikes at random angles around the line’s position, drawn again on every frame step.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Grain</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Random characters in the Grain font over each character, in two colours. Needs the Grain font.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Chromatic aberration</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Two coloured copies offset either side of the line, under the line itself.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Random move</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The line moves from its position to a random point within the distance.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Karaoke to alpha</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each syllable appears at its karaoke time and stays to the line’s end.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>A graph name can’t be empty, start or end with a space, end with a dot, or hold “karaoke”, a comma, a double quote, a control character or any of / \ : * ? &lt; &gt; |.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -11900,6 +12162,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>Each syllable’s letters are cut into thin horizontal stripes, which fade in as it is sung.</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>For selected lines</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Nodes</name>
@@ -11929,10 +12195,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Each unit once per step of time from `start` to `end` (absolute ms); without them, the unit’s own span.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>What the karaoke templater’s $variables give for the current unit and its line, rounded as the templater rounds them. Times of a syllable are from its line’s start.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -11977,10 +12239,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Calculate</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Arithmetic in doubles, as Lua does it. modulo is a - floor(a/b)*b; round is floor(a + 0.5). One-input operations use a.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -12117,6 +12375,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Only the units whose inline-fx ({\-name}, kept until the next one) is `fx`, as the templater’s fx modifier keeps them. Characters have their syllable’s; a line unit has none.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>What the karaoke templater’s $variables give for the current unit and its line, rounded as the templater rounds them. Times of a syllable are from its line’s start. line_alignment is the line’s first \an, or its Style’s alignment.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Arithmetic in doubles, as Lua does it. modulo is a - floor(a/b)*b; round is floor(a + 0.5); sine and cosine take a in degrees and round to millionths. One-input operations use a.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -14619,6 +14885,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Id</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Open auth.openai.com</source>
         <translation>auth.openai.com-ஐத் திற</translation>
     </message>
@@ -15436,8 +15706,36 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>செருகுநிரல்களுக்குப் பயனர் கோப்புறை தேவை, இந்தப் பிரதியில் அது இல்லை.</translation>
     </message>
     <message>
+        <source>The package is larger than 1 MiB, so an agent can’t install it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>HikariSub can’t read %1.</source>
         <translation>HikariSub ஆல் %1 ஐப் படிக்க முடியவில்லை.</translation>
+    </message>
+    <message>
+        <source>There is no user folder to write the plugin to.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>That is not a plugin id.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>hikari-plugin.json isn’t valid: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>HikariSub can’t write %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Plugins are not available.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The package changed after the user approved it, so it wasn’t installed.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>The plugin changed while its update downloaded.</source>
@@ -16132,34 +16430,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Its panel “%1” couldn’t load: %2</source>
         <translation>இதன் பலகம் “%1” ஐ ஏற்ற முடியவில்லை: %2</translation>
-    </message>
-    <message>
-        <source>The package is larger than 1 MiB, so an agent can’t install it.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>There is no user folder to write the plugin to.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>That is not a plugin id.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>hikari-plugin.json isn’t valid: %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>HikariSub can’t write %1.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>The package changed after the user approved it, so it wasn’t installed.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Plugins are not available.</source>
-        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -17263,6 +17533,13 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>Removed</source>
         <translation type="unfinished"></translation>
     </message>
+    <message numerus="yes">
+        <source>%1: %n</source>
+        <translation>
+            <numerusform>%1: %n</numerusform>
+            <numerusform>%1: %n</numerusform>
+        </translation>
+    </message>
     <message>
         <source>Re&amp;view</source>
         <translation type="unfinished"></translation>
@@ -17399,6 +17676,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Sub-agent %1</source>
+        <translation>துணை முகவர் %1</translation>
+    </message>
+    <message>
         <source>By %1</source>
         <translation type="unfinished"></translation>
     </message>
@@ -17455,6 +17736,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Show the Review panel</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sub-agents: %1</source>
+        <translation>துணை முகவர்கள்: %1</translation>
     </message>
 </context>
 <context>

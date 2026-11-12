@@ -21,8 +21,10 @@ target_sources(hikari_application PRIVATE node_catalogue.cpp node_graph.cpp node
     include/hikari/application/karaoke_layout.h node_effects.cpp include/hikari/application/node_catalogue.h
     include/hikari/application/node_graph.h include/hikari/application/node_graph_library.h
     include/hikari/application/node_effects.h include/hikari/application/node_graph_editing.h)
+target_sources(hikari_application PRIVATE typesetting_line.cpp include/hikari/application/typesetting_line.h
+    typesetting_graphs.cpp include/hikari/application/typesetting_graphs.h)
 # Generated Lines must be byte-identical on every platform.
-set_source_files_properties(karaoke_layout.cpp node_effects.cpp PROPERTIES COMPILE_OPTIONS
+set_source_files_properties(karaoke_layout.cpp node_effects.cpp typesetting_line.cpp PROPERTIES COMPILE_OPTIONS
     "$<$<CXX_COMPILER_ID:GNU,Clang>:-ffp-contract=off>;$<$<CXX_COMPILER_ID:MSVC>:/fp:precise>")
 target_sources(hikari_application PRIVATE shape_yutils.cpp shape_geometry.cpp include/hikari/application/shape_kernel.h)
 target_link_libraries(hikari_application PRIVATE Hikari::clipper2)

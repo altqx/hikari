@@ -20,6 +20,7 @@
 #include "stale_temporary_dirs.h"
 #include "theme.h"
 
+#include <QAccessible>
 #include <QFile>
 #include <QFileInfo>
 #include <QProcess>
@@ -793,6 +794,49 @@ private slots:
         QVERIFY(agent().thread().value(QStringLiteral("cap")).toDouble() > 2.5);
         QTRY_COMPARE(kinds().last(), QStringLiteral("text"));
         QCOMPARE(lastItem().value(QStringLiteral("text")).toString(), QStringLiteral("ok: Continue."));
+    }
+
+    void aSubAgentShowsAsACardOpensReadOnlyAndStopsWithStopAll()
+    {
+        openPanel();
+        const Json child = Json::object({{"say", "Working on part 1."}, {"hang", true}});
+        const Json scope = Json::object({{"document", static_cast<std::int64_t>(application->workspace().editingTarget()->value)},
+                                         {"lines", Json::array({Json(static_cast<std::int64_t>(
+                                                       session().document().lines().front()->id.value))})}});
+        const Json request = Json::object(
+            {{"method", "_hikari/task.request"},
+             {"params", Json::object({{"task", child.dump()}, {"title", "Part 1"}, {"scope", scope}})}});
+        type(QString::fromStdString(
+            Json::object({{"say", "Delegated."}, {"calls", Json::array({request})}}).dump()));
+        QTRY_VERIFY(kinds().contains(QStringLiteral("tasks")));
+        QTRY_VERIFY(item(QStringLiteral("agentTask_t1")));
+        QCOMPARE(agent().threads().size(), 1);
+        QQuickItem *row = item(QStringLiteral("agentTask_t1"));
+        QAccessibleInterface *named = QAccessible::queryAccessibleInterface(row);
+        QVERIFY(named);
+        QCOMPARE(named->text(QAccessible::Name), QStringLiteral("Sub-agent Part 1, running"));
+        const QString parent = agent().current();
+        shoot(QStringLiteral("agent-subagents"), QStringLiteral("Translate in parts"));
+
+        row->forceActiveFocus();
+        QTest::keyClick(window(), Qt::Key_Return);
+        QTRY_VERIFY(agent().current() != parent);
+        QTRY_VERIFY(item(QStringLiteral("agentChildBanner")));
+        QVERIFY(!item(QStringLiteral("agentComposer")));
+        QVERIFY(!item(QStringLiteral("agentThreadsButton")));
+        QCOMPARE(item(QStringLiteral("agentChildMode"))->property("text").toString(), QStringLiteral("Auto · capped by the parent"));
+        QVERIFY(item(QStringLiteral("agentChildScope"))->property("text").toString().startsWith(QStringLiteral("scope: episode.ass · 1 line")));
+        QCOMPARE(kinds().front(), QStringLiteral("user"));
+        QVERIFY(item(QStringLiteral("agentStopChild")));
+        shoot(QStringLiteral("agent-subagent-open"), QStringLiteral("Part 1"));
+
+        item(QStringLiteral("agentView"))->forceActiveFocus();
+        QTest::keyClick(window(), Qt::Key_Escape);
+        QTRY_COMPARE(agent().current(), parent);
+        QTRY_VERIFY(click(QStringLiteral("agentStopChildren")));
+        QTRY_VERIFY(!item(QStringLiteral("agentStopChildren")));
+        QTRY_VERIFY(item(QStringLiteral("agentTask_t1")));
+        QVERIFY(!item(QStringLiteral("agentStopTask")));
     }
 
     void aMessageSentWhileATurnRunsIsQueuedAndCanSteer()

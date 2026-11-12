@@ -196,6 +196,52 @@
         <translation>멈춤</translation>
     </message>
     <message>
+        <source>needs you</source>
+        <translation>확인 필요</translation>
+    </message>
+    <message>
+        <source>done</source>
+        <translation>완료</translation>
+    </message>
+    <message>
+        <source>failed</source>
+        <translation>실패</translation>
+    </message>
+    <message>
+        <source>interrupted</source>
+        <translation>중단됨</translation>
+    </message>
+    <message>
+        <source>stopped · cap</source>
+        <translation>멈춤 · 한도</translation>
+    </message>
+    <message>
+        <source>stopped</source>
+        <translation>멈춤</translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 · %n line(s)</source>
+        <translation>
+            <numerusform>%1 · %n줄</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Back to the parent thread</source>
+        <translation>상위 스레드로 돌아가기</translation>
+    </message>
+    <message>
+        <source>Sub-agent of “%1”. Read-only; talk to it through the parent.</source>
+        <translation>“%1”의 하위 에이전트입니다. 읽기 전용이며, 상위 스레드를 통해 대화하세요.</translation>
+    </message>
+    <message>
+        <source>%1 · capped by the parent</source>
+        <translation>%1 · 상위 스레드가 제한</translation>
+    </message>
+    <message>
+        <source>scope: %1</source>
+        <translation>범위: %1</translation>
+    </message>
+    <message>
         <source>Send</source>
         <translation>보내기</translation>
     </message>
@@ -260,6 +306,14 @@
         <translation>이름 바꾸기</translation>
     </message>
     <message>
+        <source>Brief, written by the agent</source>
+        <translation>에이전트가 쓴 작업 지시</translation>
+    </message>
+    <message>
+        <source>Results from your sub-agents</source>
+        <translation>하위 에이전트의 결과</translation>
+    </message>
+    <message>
         <source>steered</source>
         <translation>방향 바꿈</translation>
     </message>
@@ -310,6 +364,14 @@
         <translation>계획</translation>
     </message>
     <message>
+        <source>%1 proposes: %2</source>
+        <translation>%1의 제안: %2</translation>
+    </message>
+    <message>
+        <source>%1 asks you</source>
+        <translation>%1이(가) 묻습니다</translation>
+    </message>
+    <message>
         <source>Judge asks you</source>
         <translation>판정자가 묻습니다</translation>
     </message>
@@ -324,6 +386,18 @@
     <message>
         <source>asks in every mode</source>
         <translation>모든 모드에서 물음</translation>
+    </message>
+    <message>
+        <source>sub-agent · asks in every mode</source>
+        <translation>하위 에이전트 · 모든 모드에서 물음</translation>
+    </message>
+    <message>
+        <source>sub-agent</source>
+        <translation>하위 에이전트</translation>
+    </message>
+    <message>
+        <source>Only you can answer; the parent agent can’t.</source>
+        <translation>답할 수 있는 것은 사용자뿐이며, 상위 에이전트는 답할 수 없습니다.</translation>
     </message>
     <message>
         <source>Why: %1</source>
@@ -348,86 +422,6 @@
     <message>
         <source>Deny and tell the agent…</source>
         <translation>거부하고 에이전트에게 알리기…</translation>
-    </message>
-    <message>
-        <source>What should it do instead?</source>
-        <translation>대신 무엇을 해야 합니까?</translation>
-    </message>
-    <message>
-        <source>Allowed</source>
-        <translation>허용됨</translation>
-    </message>
-    <message>
-        <source>Allowed in this thread</source>
-        <translation>이 스레드에서 허용됨</translation>
-    </message>
-    <message>
-        <source>Denied</source>
-        <translation>거부됨</translation>
-    </message>
-    <message>
-        <source>No longer needed</source>
-        <translation>더 이상 필요 없음</translation>
-    </message>
-    <message>
-        <source>Run this Lua script?</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>%1 · macro “%2”</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>on %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>%1 isn’t installed, so the script will stop when it loads.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Runs as an Automation macro: one undo step, and Force stop while it runs. Saved in the AI scripts folder, never added to Autoload.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Run</source>
-        <translation type="unfinished">실행</translation>
-    </message>
-    <message>
-        <source>Don’t run</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Don’t run and tell the agent…</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Running %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Ran %1 · one undo step</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>%1 didn’t finish: %2</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Didn’t run %1 · “%2”</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Didn’t run %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Force stop</source>
-        <translation type="unfinished">강제 중지</translation>
-    </message>
-    <message>
-        <source>Open</source>
-        <translation type="unfinished">열기</translation>
     </message>
     <message>
         <source>The signing key changed. The installed copy was signed by key %1, and this one by key %2. Install it only if you trust that the author changed keys.</source>
@@ -539,6 +533,138 @@
         <source>Open in Plugins</source>
         <translation type="unfinished"></translation>
     </message>
+    <message numerus="yes">
+        <source>%n sub-agent(s)</source>
+        <translation>
+            <numerusform>하위 에이전트 %n개</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n running</source>
+        <translation>
+            <numerusform>%n개 실행 중</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n need(s) you</source>
+        <translation>
+            <numerusform>%n개 확인 필요</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Stop all</source>
+        <translation>모두 멈춤</translation>
+    </message>
+    <message>
+        <source>Sub-agent %1, %2</source>
+        <translation>하위 에이전트 %1, %2</translation>
+    </message>
+    <message numerus="yes">
+        <source>Estimate for %n sub-agent(s)</source>
+        <translation>
+            <numerusform>하위 에이전트 %n개 예상</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>About %1 tokens, %2.</source>
+        <translation>토큰 약 %1개, %2.</translation>
+    </message>
+    <message>
+        <source>About %1 tokens. This agent doesn’t report cost.</source>
+        <translation>토큰 약 %1개. 이 에이전트는 비용을 보고하지 않습니다.</translation>
+    </message>
+    <message>
+        <source>Started</source>
+        <translation>시작됨</translation>
+    </message>
+    <message>
+        <source>Cancelled. No more sub-agents start this turn.</source>
+        <translation>취소했습니다. 이번 턴에는 하위 에이전트가 더 시작되지 않습니다.</translation>
+    </message>
+    <message>
+        <source>What should it do instead?</source>
+        <translation>대신 무엇을 해야 합니까?</translation>
+    </message>
+    <message>
+        <source>Allowed</source>
+        <translation>허용됨</translation>
+    </message>
+    <message>
+        <source>Allowed in this thread</source>
+        <translation>이 스레드에서 허용됨</translation>
+    </message>
+    <message>
+        <source>Denied</source>
+        <translation>거부됨</translation>
+    </message>
+    <message>
+        <source>No longer needed</source>
+        <translation>더 이상 필요 없음</translation>
+    </message>
+    <message>
+        <source>Run this Lua script?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 · macro “%2”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>on %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 isn’t installed, so the script will stop when it loads.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Runs as an Automation macro: one undo step, and Force stop while it runs. Saved in the AI scripts folder, never added to Autoload.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Run</source>
+        <translation type="unfinished">실행</translation>
+    </message>
+    <message>
+        <source>Don’t run</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Don’t run and tell the agent…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Running %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ran %1 · one undo step</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 didn’t finish: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Didn’t run %1 · “%2”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Didn’t run %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Force stop</source>
+        <translation type="unfinished">강제 중지</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation type="unfinished">열기</translation>
+    </message>
+    <message>
+        <source>%1 asks to run this Lua script</source>
+        <translation>%1이(가) 이 Lua 스크립트 실행을 요청합니다</translation>
+    </message>
     <message>
         <source>This thread reached its %1 cap</source>
         <translation>이 스레드가 %1 한도에 도달했습니다</translation>
@@ -558,6 +684,10 @@
     <message>
         <source>You stopped the turn.</source>
         <translation>턴을 멈췄습니다.</translation>
+    </message>
+    <message>
+        <source>The parent thread stopped this sub-agent.</source>
+        <translation>상위 스레드가 이 하위 에이전트를 멈췄습니다.</translation>
     </message>
     <message>
         <source>The answer reached the model’s length limit.</source>
@@ -590,6 +720,14 @@
     <message>
         <source>The turn stopped after its last change. Raise the cap for this thread to go on.</source>
         <translation>턴이 마지막 변경 뒤에 멈췄습니다. 계속하려면 이 스레드의 한도를 올리세요.</translation>
+    </message>
+    <message>
+        <source>The parent’s cost cap stopped this sub-agent. Its changes stay in the review.</source>
+        <translation>상위 스레드의 비용 한도로 이 하위 에이전트가 멈췄습니다. 변경은 검토에 남습니다.</translation>
+    </message>
+    <message>
+        <source>The sub-agent was interrupted and won’t rerun. The parent got its partial result. Changes it made stay in the review.</source>
+        <translation>하위 에이전트가 중단되었으며 다시 실행되지 않습니다. 상위 스레드는 부분 결과를 받았습니다. 한 변경은 검토에 남습니다.</translation>
     </message>
     <message>
         <source>Every thread stops until tomorrow, or until you raise the cap in Settings › AI.</source>
@@ -6526,6 +6664,10 @@ Failed to copy %2 fonts.</source>
         <translation>마지막 값으로 레이어 만들기</translation>
     </message>
     <message>
+        <source>Typesetting graph…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Shift+click to set a shortcut</source>
         <translation>Shift+클릭으로 단축키를 설정합니다</translation>
     </message>
@@ -10047,6 +10189,10 @@ Failed to copy %2 fonts.</source>
         <translation>마지막 값으로 레이어 만들기[&amp;L]</translation>
     </message>
     <message>
+        <source>T&amp;ypesetting graph…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Notes from a QC pass, kept in the file, with the lines they mark</source>
         <translation>QC 검토 메모를 파일에 저장하고 메모가 가리키는 줄을 표시합니다</translation>
     </message>
@@ -11163,6 +11309,10 @@ Failed to copy %2 fonts.</source>
 <context>
     <name>HikariSub.NodeEffects</name>
     <message>
+        <source>Opens node effects with the selected lines as the sources of a typesetting graph</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Edits this file’s node effects on a canvas, with a preview on the video</source>
         <translation type="unfinished"></translation>
     </message>
@@ -11184,6 +11334,10 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Source lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select the lines a typesetting graph should run on.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -11495,6 +11649,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished">마지막으로 성공한 실행의 결과</translation>
     </message>
     <message>
+        <source>No lines to preview on. Select lines in the grid, then choose Subtitles › Typesetting graph….</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>No karaoke line of this graph’s style to preview on.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -11526,6 +11684,16 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>1 selected line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n selected lines</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
         <source>Line %1, %2</source>
         <translation type="unfinished">%1번 줄, %2</translation>
     </message>
@@ -11539,6 +11707,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Graph menu</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Target: selected lines</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -11640,6 +11812,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Only the lines selected in “Source lines” are regenerated; the others keep their output.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select lines in “Source lines” first.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -11756,6 +11932,86 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Shake</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>One line per frame step, each moved a random distance up to the amplitude from the line’s position.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Typewriter</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each character appears after the one before it, by grapheme cluster, and stays to the line’s end.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fade by letter</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each character fades in after the one before it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Wobble</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The characters rise and fall in a wave, one line per character and frame step.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bounce</source>
+        <translation type="unfinished">튀어 오르기</translation>
+    </message>
+    <message>
+        <source>Each character jumps up after the one before it and comes part of the way back down, as myaa.Bounce does.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Focus lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Spikes at random angles around the line’s position, drawn again on every frame step.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Grain</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Random characters in the Grain font over each character, in two colours. Needs the Grain font.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Chromatic aberration</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Two coloured copies offset either side of the line, under the line itself.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Random move</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The line moves from its position to a random point within the distance.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Karaoke to alpha</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each syllable appears at its karaoke time and stays to the line’s end.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>A graph name can’t be empty, start or end with a space, end with a dot, or hold “karaoke”, a comma, a double quote, a control character or any of / \ : * ? &lt; &gt; |.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -11795,6 +12051,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>Each syllable’s letters are cut into thin horizontal stripes, which fade in as it is sung.</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>For selected lines</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Nodes</name>
@@ -11824,10 +12084,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Each unit once per step of time from `start` to `end` (absolute ms); without them, the unit’s own span.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>What the karaoke templater’s $variables give for the current unit and its line, rounded as the templater rounds them. Times of a syllable are from its line’s start.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -11872,10 +12128,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Calculate</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Arithmetic in doubles, as Lua does it. modulo is a - floor(a/b)*b; round is floor(a + 0.5). One-input operations use a.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -12012,6 +12264,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Only the units whose inline-fx ({\-name}, kept until the next one) is `fx`, as the templater’s fx modifier keeps them. Characters have their syllable’s; a line unit has none.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>What the karaoke templater’s $variables give for the current unit and its line, rounded as the templater rounds them. Times of a syllable are from its line’s start. line_alignment is the line’s first \an, or its Style’s alignment.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Arithmetic in doubles, as Lua does it. modulo is a - floor(a/b)*b; round is floor(a + 0.5); sine and cosine take a in degrees and round to millionths. One-input operations use a.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -14505,6 +14765,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Id</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Open auth.openai.com</source>
         <translation>auth.openai.com 열기</translation>
     </message>
@@ -15320,8 +15584,36 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>플러그인을 사용하려면 사용자 폴더가 필요하지만 이 사본에는 사용자 폴더가 없습니다.</translation>
     </message>
     <message>
+        <source>The package is larger than 1 MiB, so an agent can’t install it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>HikariSub can’t read %1.</source>
         <translation>HikariSub이 %1(을)를 읽을 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>There is no user folder to write the plugin to.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>That is not a plugin id.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>hikari-plugin.json isn’t valid: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>HikariSub can’t write %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Plugins are not available.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The package changed after the user approved it, so it wasn’t installed.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>The plugin changed while its update downloaded.</source>
@@ -16014,34 +16306,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Its panel “%1” couldn’t load: %2</source>
         <translation>패널 “%1”을(를) 불러오지 못했습니다: %2</translation>
-    </message>
-    <message>
-        <source>The package is larger than 1 MiB, so an agent can’t install it.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>There is no user folder to write the plugin to.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>That is not a plugin id.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>hikari-plugin.json isn’t valid: %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>HikariSub can’t write %1.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>The package changed after the user approved it, so it wasn’t installed.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Plugins are not available.</source>
-        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -17131,6 +17395,12 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>Removed</source>
         <translation type="unfinished"></translation>
     </message>
+    <message numerus="yes">
+        <source>%1: %n</source>
+        <translation>
+            <numerusform>%1: %n</numerusform>
+        </translation>
+    </message>
     <message>
         <source>Re&amp;view</source>
         <translation type="unfinished"></translation>
@@ -17262,6 +17532,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Sub-agent %1</source>
+        <translation>하위 에이전트 %1</translation>
+    </message>
+    <message>
         <source>By %1</source>
         <translation type="unfinished"></translation>
     </message>
@@ -17316,6 +17590,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Show the Review panel</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sub-agents: %1</source>
+        <translation>하위 에이전트: %1</translation>
     </message>
 </context>
 <context>

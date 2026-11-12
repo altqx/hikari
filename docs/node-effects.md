@@ -1,6 +1,6 @@
 # Node effects
 
-A node effect is a graph that turns karaoke Lines into generated Lines. The decision is [ADR 0023](adr/0023-node-effects.md). This page is the contract for the engine, the node catalogue and the graph format (NE1, [#423](https://github.com/altqx/hikari/issues/423)). The canvas and its editor mode (NE2, [#424](https://github.com/altqx/hikari/issues/424)) and the ten [karaoke presets](karaoke-presets.md) as graphs (NE3) build on it.
+A node effect is a graph that turns karaoke Lines, or the ordinary Lines a [typesetting graph](#typesetting-graphs) runs on, into generated Lines. The decision is [ADR 0023](adr/0023-node-effects.md). This page is the contract for the engine, the node catalogue and the graph format (NE1, [#423](https://github.com/altqx/hikari/issues/423)). The canvas and its editor mode (NE2, [#424](https://github.com/altqx/hikari/issues/424)) and the ten [karaoke presets](karaoke-presets.md) as graphs (NE3) build on it.
 
 The engine is `hikari::application` code with no Qt: `node_catalogue.h`, `node_graph.h`, `node_graph_library.h` and `node_effects.h`.
 
@@ -30,6 +30,7 @@ The Lines a graph generates carry the Effect `fx <name>`, and the Grid folds the
 - `format` is the graph format, now 1. HikariSub refuses a graph whose format is newer than its own.
 - `seed` seeds every Random node.
 - `allStyles` runs the graph on karaoke Lines of every Style, not only the graph Line's.
+- `target` is `karaoke`, the default, or `lines` for a [typesetting graph](#typesetting-graphs).
 - A node has:
   - an `id` (letters, digits, `_` and `-`, unique in its graph);
   - a `type` from the catalogue;
@@ -157,6 +158,44 @@ The engine runs only a graph without problems.
 - the karaoke Line and its Style.
 
 A change to one branch therefore re-runs only the Emits that read it, and only for the Lines that changed.
+
+## Typesetting graphs
+
+A graph whose `target` is `lines` runs on the ordinary Lines it is given (AU9, [#844](https://github.com/altqx/hikari/issues/844); [ADR 0023](adr/0023-node-effects.md#typesetting-graphs)).
+
+- **Its sources.** A run takes them from `sources`, and Lines of any Style count, karaoke or not, Dialogue or Comment. Graph Lines, template and code Lines, and generated Lines (Effect `fx` or `fx <name>`) never count. A run with no `sources` writes nothing: "targets the Lines you choose, and none were chosen".
+- **Its layout.** A Line is laid out as karaskel lays out a karaoke Line, with three changes (`placeTypesettingLine`, `typesetting_line.h`):
+  - the first `\pos`, or else the first `\move`'s start, places the units, by the first `\an`, or else the Style's alignment. The Line unit's position is that point, and every syllable and character moves with it. A Line with neither keeps karaskel's place by its Style;
+  - the Line unit's raw text has every `\pos` and `\move` taken out, so an Emit with `unit_text` raw and a `pos` tag gives `{\pos(x,y)}{\an7\fs20}text`;
+  - a Line with no karaoke tags is one syllable that spans the Line, and its characters (grapheme clusters, as TH4 cuts them) span it too. A unit is blank only when it holds nothing but spaces.
+
+  Widths still come from the Style, as karaskel measures them; tags inside the text don't change them.
+- **Apply** puts each source's Lines right after it, in the engine's order, and turns the source into a Comment that keeps its Effect, so running again (on the Comment) replaces them. A file read back has no record of which source made which Line, so a source's earlier Lines are the graph's `fx <name>` Lines that follow it. Lines of other sources, graphs and the templater stay. It is one undo step, "Apply node effect".
+
+### The library
+
+"From a preset" lists these under "For selected lines" (`typesettingGraphs`, `typesetting_graphs.h`), and Subtitles › "Typesetting graph…" (`GLOBAL_TYPESETTING_GRAPH`, also on the Grid menu) opens the mode with the Grid's selected lines as the sources. Each graph's knobs are value nodes named by their ids; the Node panel edits them. The scripts they stand in for keep shipping (D1); what each script does is in [the AU9 survey](research/au9-script-parameters.md).
+
+| Graph | One Line per | Knobs | Stands in for |
+|---|---|---|---|
+| Shake | frame step | `step` 42 ms, `amplitude` 6 px | l0.ShakeIt, petzku.Shake, ua.Relocator's shake |
+| Typewriter | character | `delay` 60 ms | petzku.Typewriter |
+| Fade by letter | character | `delay` 40 ms, `fade` 200 ms | ua.FadeWorks by letter |
+| Wobble | character and frame step | `step`, `period` 1000 ms, `phase` 30°, `amplitude` 6 px | phos.wave |
+| Bounce | character and frame step | `step`, `delay` 100 ms, `duration` 200 ms, `max_offset` 100 px, `final_offset` 30 px (myaa.Bounce's cap on the sine, so it settles part of the way down) | myaa.Bounce |
+| Focus lines | spike and frame step | `step`, `count` 40, `min_blur` 5, `max_blur` 10, `length_change` 10 %, `colour` | arch.FocusLines |
+| Grain | character and copy | `intensity` 1, `colour1`, `colour2` (needs the Grain font) | phos.AddGrain |
+| Chromatic aberration | colour copy | `x_offset` 2, `y_offset` 2, `colour1`, `colour2` | phos.ChromaticAbberation |
+| Random move | Line | `distance_x` 20, `distance_y` 20 | ua.Relocator's randomove |
+| Karaoke to alpha | syllable | none | karaoke2alpha |
+
+- Randomness comes from Random nodes, so the graph's Seed gives the same Lines on every run. The scripts drew from an unseeded `math.random`.
+- A one-character or one-Line source works; FadeWorks, FocusLines and phos.wobble divide by zero there.
+- Chromatic aberration offsets whole copies; phos's pathfinder regions wait for the clipper nodes (NE5a). A colour tag in the Line's own first block wins over the copies' colours.
+- Karaoke to alpha keeps each syllable's place and its \k time, and keeps the leading block's `\pos` and `\an`, which karaoke2alpha dropped with syllable 0.
+- `LibraryGraphsGiveTheirGoldens` (`hikari_application_node_effects_tests`) runs each graph on one sign Line and compares the output with `tests/application/typesetting-graphs/<id>.txt`; `HIKARI_WRITE_GOLDENS=1` writes them again.
+
+`math.calculate` has `sine` and `cosine` for these graphs. They take degrees and round to millionths, so Linux and Windows write the same numbers.
 
 ## Lua
 

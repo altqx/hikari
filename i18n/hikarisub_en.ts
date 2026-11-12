@@ -4,6 +4,13 @@
 <context>
     <name>HikariSub.Agent</name>
     <message numerus="yes">
+        <source>%1 · %n line(s)</source>
+        <translation>
+            <numerusform>%1 · %n line</numerusform>
+            <numerusform>%1 · %n lines</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
         <source>Show %n more</source>
         <translation>
             <numerusform>Show %n more</numerusform>
@@ -36,6 +43,34 @@
         <translation>
             <numerusform>Show the whole file</numerusform>
             <numerusform>Show all %n files</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n sub-agent(s)</source>
+        <translation>
+            <numerusform>%n sub-agent</numerusform>
+            <numerusform>%n sub-agents</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n running</source>
+        <translation>
+            <numerusform>%n running</numerusform>
+            <numerusform>%n running</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n need(s) you</source>
+        <translation>
+            <numerusform>%n needs you</numerusform>
+            <numerusform>%n need you</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Estimate for %n sub-agent(s)</source>
+        <translation>
+            <numerusform>Estimate for %n sub-agent</numerusform>
+            <numerusform>Estimate for %n sub-agents</numerusform>
         </translation>
     </message>
 </context>
@@ -768,6 +803,13 @@
         </translation>
     </message>
     <message numerus="yes">
+        <source>%n selected lines</source>
+        <translation>
+            <numerusform>%n selected line</numerusform>
+            <numerusform>%n selected lines</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
         <source>%n problems</source>
         <translation>
             <numerusform>%n problem</numerusform>
@@ -1033,6 +1075,13 @@
         <translation>
             <numerusform>%n change</numerusform>
             <numerusform>%n changes</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%1: %n</source>
+        <translation>
+            <numerusform>%1: %n</numerusform>
+            <numerusform>%1: %n</numerusform>
         </translation>
     </message>
 </context>

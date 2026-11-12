@@ -92,6 +92,8 @@ public:
 
     /// {id, preset, name, baseUrl, wire, needsKey} of an added provider, for its edit form.
     Q_INVOKABLE QVariantMap form(const QString &providerId) const;
+    /// The id saving a new provider of `preset` gives it: the preset's id, then `-2`, `-3`. Projects name models by it.
+    Q_INVOKABLE QString newProviderId(const QString &preset) const;
     /// The add or edit form opened: reads what the download would be, without downloading.
     Q_INVOKABLE void openDraft();
     Q_INVOKABLE void closeDraft();
