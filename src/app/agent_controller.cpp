@@ -203,8 +203,40 @@ void AgentController::apply()
                 backends::ai::agentModeFromId(m_wiring.settings.text(kModeSetting).toStdString()).value_or(AgentMode::Auto),
                 threadCap(), dailyCap(), autoCompact()};
         };
-        w.beginTurn = [this](const std::string &caller, const std::string &label) {
-            return m_wiring.review.beginTurn(caller, label);
+        w.beginTurn = [this](const std::string &caller, const std::string &label, std::uint64_t parentTurn) {
+            return m_wiring.review.beginTurn(caller, label, parentTurn);
+        };
+        w.agents = [this] {
+            std::vector<std::pair<std::string, std::string>> out;
+            for (const AgentModel &agent : kAgentModels)
+                if (m_wiring.ai.agentFound(QString::fromLatin1(agent.program)))
+                    out.emplace_back(agent.program, agent.name);
+            for (const AiFeatures::AcpAgent &acp : m_wiring.ai.acpAgents())
+                out.emplace_back("acp:" + acp.id.toStdString(), acp.name.toStdString());
+            return out;
+        };
+        w.scopeChars = [this](const backends::ai::TaskScope &scope) {
+            auto chars = std::make_shared<std::size_t>(0);
+            api::Caller reader{.id = "ai:estimate", .label = "AI", .attached = {scope.document}, .reviewed = true};
+            Json fields = Json::array({Json("text")});
+            Json params = Json::object({{"document", static_cast<std::int64_t>(scope.document.value)}, {"fields", fields}});
+            if (!scope.lines.empty()) {
+                Json ids = Json::array();
+                for (const std::int64_t id : scope.lines)
+                    ids.push(id);
+                params["ids"] = std::move(ids);
+            } else {
+                params["limit"] = 5000;
+            }
+            m_wiring.api.call(reader, scope.lines.empty() ? "lines.list" : "lines.get", params,
+                              [chars](const api::Result &result) {
+                                  const Json *lines = result ? result->find("lines") : nullptr;
+                                  if (lines && lines->isArray())
+                                      for (const Json &line : lines->asArray())
+                                          if (const Json *text = line.find("text"); text && text->isString())
+                                              *chars += text->asString().size();
+                              });
+            return *chars;
         };
         w.editingTarget = [this] { return m_wiring.workspace.editingTarget(); };
         w.documentTitle = [this](application::DocumentId document) {
@@ -228,7 +260,8 @@ void AgentController::apply()
         });
         connect(m_threads.get(), &AgentThreads::threadChanged, this, [this](const QString &id) {
             emit threadsChanged();
-            if (id.toStdString() == m_current)
+            const AgentThread *changed = m_threads->thread(id.toStdString());
+            if (id.toStdString() == m_current || (changed && changed->task && changed->task->parent == m_current))
                 refreshThread();
         });
         connect(m_threads.get(), &AgentThreads::summarised, this, [this](const QString &from, const QString &to) {
@@ -255,14 +288,97 @@ void AgentController::select(std::string id)
     emit currentChanged();
 }
 
+Json AgentController::childCard(const AgentThread &child) const
+{
+    const backends::ai::AgentTask &task = *child.task;
+    const bool running = task.status == backends::ai::TaskStatus::Running;
+    Json lines = Json::array();
+    for (const std::int64_t id : task.lines)
+        lines.push(id);
+    return Json::object({{"id", child.id},
+                         {"task", task.id},
+                         {"title", child.title},
+                         {"target", task.target},
+                         {"status", running && m_threads->needsYou(child)
+                                        ? std::string("needs_you")
+                                        : std::string(backends::ai::taskStatusId(task.status))},
+                         {"stoppedFor", task.stoppedFor},
+                         {"cost", child.cost},
+                         {"costUnknown", child.costUnknown},
+                         {"document", task.documentTitle},
+                         {"lines", std::move(lines)}});
+}
+
 void AgentController::refreshThread()
 {
     std::vector<std::string> dumps;
-    if (const AgentThread *t = m_threads && !m_current.empty() ? m_threads->thread(m_current) : nullptr)
-        for (const Json &item : t->items.asArray())
+    const AgentThread *t = m_threads && !m_current.empty() ? m_threads->thread(m_current) : nullptr;
+    if (!t) {
+        m_items.update({});
+        emit threadChanged();
+        return;
+    }
+    std::optional<Json> group;
+    std::vector<const AgentThread *> grouped;
+    const auto close = [&] {
+        if (!group)
+            return;
+        dumps.push_back(group->dump());
+        group.reset();
+        for (const AgentThread *child : grouped)
+            for (const Json &item : child->items.asArray()) {
+                const Json *kind = item.find("kind");
+                const Json *status = item.find("status");
+                if (kind && kind->isString() && status && status->isString() && status->asString() == "open" &&
+                    (kind->asString() == "ask" || kind->asString() == "proposal" || kind->asString() == "script")) {
+                    Json copy = item;
+                    copy["fromChild"] = child->title;
+                    copy["childId"] = child->id;
+                    dumps.push_back(copy.dump());
+                }
+            }
+        grouped.clear();
+    };
+    for (const Json &item : t->items.asArray()) {
+        const Json *kind = item.find("kind");
+        if (!kind || !kind->isString() || kind->asString() != "task") {
+            close();
             dumps.push_back(item.dump());
+            continue;
+        }
+        const Json *childId = item.find("child");
+        const AgentThread *child = childId && childId->isString() ? m_threads->thread(childId->asString()) : nullptr;
+        if (!child || !child->task)
+            continue;
+        if (!group)
+            group = Json::object({{"kind", "tasks"}, {"children", Json::array()}});
+        (*group)["children"].push(childCard(*child));
+        grouped.push_back(child);
+    }
+    close();
     m_items.update(std::move(dumps));
     emit threadChanged();
+}
+
+void AgentController::stopChild(const QString &id)
+{
+    if (m_threads)
+        m_threads->stop(id.toStdString());
+}
+
+void AgentController::stopChildren()
+{
+    if (!m_threads)
+        return;
+    for (const AgentThread *child : m_threads->children(m_current))
+        m_threads->stop(child->id);
+}
+
+void AgentController::openParent()
+{
+    const AgentThread *t = m_threads && !m_current.empty() ? m_threads->thread(m_current) : nullptr;
+    if (t && t->task)
+        select(t->task->parent);
 }
 
 bool AgentController::ready() const
@@ -368,7 +484,21 @@ QVariantMap AgentController::thread() const
         for (const application::DocumentId d : it->second)
             if (const std::string *title = m_wiring.workspace.title(d))
                 attached.push_back(QVariantMap{{QStringLiteral("id"), qulonglong(d.value)}, {QStringLiteral("title"), qs(*title)}});
+    QVariantMap child;
+    if (t->task) {
+        const AgentThread *parent = m_threads->thread(t->task->parent);
+        QVariantList lines;
+        for (const std::int64_t id : t->task->lines)
+            lines.push_back(qlonglong(id));
+        child = {{QStringLiteral("parent"), qs(t->task->parent)},
+                 {QStringLiteral("parentTitle"), parent ? qs(parent->title) : QString()},
+                 {QStringLiteral("target"), qs(t->task->target)},
+                 {QStringLiteral("status"), qs(std::string(backends::ai::taskStatusId(t->task->status)))},
+                 {QStringLiteral("document"), qs(t->task->documentTitle)},
+                 {QStringLiteral("lines"), lines}};
+    }
     return {{QStringLiteral("id"), qs(t->id)},
+            {QStringLiteral("child"), child},
             {QStringLiteral("title"), qs(t->title)},
             {QStringLiteral("mode"), qs(std::string(backends::ai::agentModeId(t->mode)))},
             {QStringLiteral("running"), m_threads->running(t->id)},

@@ -196,6 +196,52 @@
         <translation>멈춤</translation>
     </message>
     <message>
+        <source>needs you</source>
+        <translation>확인 필요</translation>
+    </message>
+    <message>
+        <source>done</source>
+        <translation>완료</translation>
+    </message>
+    <message>
+        <source>failed</source>
+        <translation>실패</translation>
+    </message>
+    <message>
+        <source>interrupted</source>
+        <translation>중단됨</translation>
+    </message>
+    <message>
+        <source>stopped · cap</source>
+        <translation>멈춤 · 한도</translation>
+    </message>
+    <message>
+        <source>stopped</source>
+        <translation>멈춤</translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 · %n line(s)</source>
+        <translation>
+            <numerusform>%1 · %n줄</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Back to the parent thread</source>
+        <translation>상위 스레드로 돌아가기</translation>
+    </message>
+    <message>
+        <source>Sub-agent of “%1”. Read-only; talk to it through the parent.</source>
+        <translation>“%1”의 하위 에이전트입니다. 읽기 전용이며, 상위 스레드를 통해 대화하세요.</translation>
+    </message>
+    <message>
+        <source>%1 · capped by the parent</source>
+        <translation>%1 · 상위 스레드가 제한</translation>
+    </message>
+    <message>
+        <source>scope: %1</source>
+        <translation>범위: %1</translation>
+    </message>
+    <message>
         <source>Send</source>
         <translation>보내기</translation>
     </message>
@@ -260,6 +306,14 @@
         <translation>이름 바꾸기</translation>
     </message>
     <message>
+        <source>Brief, written by the agent</source>
+        <translation>에이전트가 쓴 작업 지시</translation>
+    </message>
+    <message>
+        <source>Results from your sub-agents</source>
+        <translation>하위 에이전트의 결과</translation>
+    </message>
+    <message>
         <source>steered</source>
         <translation>방향 바꿈</translation>
     </message>
@@ -310,6 +364,14 @@
         <translation>계획</translation>
     </message>
     <message>
+        <source>%1 proposes: %2</source>
+        <translation>%1의 제안: %2</translation>
+    </message>
+    <message>
+        <source>%1 asks you</source>
+        <translation>%1이(가) 묻습니다</translation>
+    </message>
+    <message>
         <source>Judge asks you</source>
         <translation>판정자가 묻습니다</translation>
     </message>
@@ -324,6 +386,18 @@
     <message>
         <source>asks in every mode</source>
         <translation>모든 모드에서 물음</translation>
+    </message>
+    <message>
+        <source>sub-agent · asks in every mode</source>
+        <translation>하위 에이전트 · 모든 모드에서 물음</translation>
+    </message>
+    <message>
+        <source>sub-agent</source>
+        <translation>하위 에이전트</translation>
+    </message>
+    <message>
+        <source>Only you can answer; the parent agent can’t.</source>
+        <translation>답할 수 있는 것은 사용자뿐이며, 상위 에이전트는 답할 수 없습니다.</translation>
     </message>
     <message>
         <source>Why: %1</source>
@@ -348,6 +422,54 @@
     <message>
         <source>Deny and tell the agent…</source>
         <translation>거부하고 에이전트에게 알리기…</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n sub-agent(s)</source>
+        <translation>
+            <numerusform>하위 에이전트 %n개</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n running</source>
+        <translation>
+            <numerusform>%n개 실행 중</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n need(s) you</source>
+        <translation>
+            <numerusform>%n개 확인 필요</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Stop all</source>
+        <translation>모두 멈춤</translation>
+    </message>
+    <message>
+        <source>Sub-agent %1, %2</source>
+        <translation>하위 에이전트 %1, %2</translation>
+    </message>
+    <message numerus="yes">
+        <source>Estimate for %n sub-agent(s)</source>
+        <translation>
+            <numerusform>하위 에이전트 %n개 예상</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>About %1 tokens, %2.</source>
+        <translation>토큰 약 %1개, %2.</translation>
+    </message>
+    <message>
+        <source>About %1 tokens. This agent doesn’t report cost.</source>
+        <translation>토큰 약 %1개. 이 에이전트는 비용을 보고하지 않습니다.</translation>
+    </message>
+    <message>
+        <source>Started</source>
+        <translation>시작됨</translation>
+    </message>
+    <message>
+        <source>Cancelled. No more sub-agents start this turn.</source>
+        <translation>취소했습니다. 이번 턴에는 하위 에이전트가 더 시작되지 않습니다.</translation>
     </message>
     <message>
         <source>What should it do instead?</source>
@@ -430,6 +552,10 @@
         <translation type="unfinished">열기</translation>
     </message>
     <message>
+        <source>%1 asks to run this Lua script</source>
+        <translation>%1이(가) 이 Lua 스크립트 실행을 요청합니다</translation>
+    </message>
+    <message>
         <source>This thread reached its %1 cap</source>
         <translation>이 스레드가 %1 한도에 도달했습니다</translation>
     </message>
@@ -448,6 +574,10 @@
     <message>
         <source>You stopped the turn.</source>
         <translation>턴을 멈췄습니다.</translation>
+    </message>
+    <message>
+        <source>The parent thread stopped this sub-agent.</source>
+        <translation>상위 스레드가 이 하위 에이전트를 멈췄습니다.</translation>
     </message>
     <message>
         <source>The answer reached the model’s length limit.</source>
@@ -480,6 +610,14 @@
     <message>
         <source>The turn stopped after its last change. Raise the cap for this thread to go on.</source>
         <translation>턴이 마지막 변경 뒤에 멈췄습니다. 계속하려면 이 스레드의 한도를 올리세요.</translation>
+    </message>
+    <message>
+        <source>The parent’s cost cap stopped this sub-agent. Its changes stay in the review.</source>
+        <translation>상위 스레드의 비용 한도로 이 하위 에이전트가 멈췄습니다. 변경은 검토에 남습니다.</translation>
+    </message>
+    <message>
+        <source>The sub-agent was interrupted and won’t rerun. The parent got its partial result. Changes it made stay in the review.</source>
+        <translation>하위 에이전트가 중단되었으며 다시 실행되지 않습니다. 상위 스레드는 부분 결과를 받았습니다. 한 변경은 검토에 남습니다.</translation>
     </message>
     <message>
         <source>Every thread stops until tomorrow, or until you raise the cap in Settings › AI.</source>
@@ -16783,6 +16921,12 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>Removed</source>
         <translation type="unfinished"></translation>
     </message>
+    <message numerus="yes">
+        <source>%1: %n</source>
+        <translation>
+            <numerusform>%1: %n</numerusform>
+        </translation>
+    </message>
     <message>
         <source>Re&amp;view</source>
         <translation type="unfinished"></translation>
@@ -16914,6 +17058,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Sub-agent %1</source>
+        <translation>하위 에이전트 %1</translation>
+    </message>
+    <message>
         <source>By %1</source>
         <translation type="unfinished"></translation>
     </message>
@@ -16968,6 +17116,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Show the Review panel</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sub-agents: %1</source>
+        <translation>하위 에이전트: %1</translation>
     </message>
 </context>
 <context>

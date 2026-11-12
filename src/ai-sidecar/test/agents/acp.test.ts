@@ -9,7 +9,9 @@ import { whileTurnRuns } from "../../src/agent/session";
 import { AcpSession, hikariTool } from "../../src/agents/acp";
 import { McpServer } from "../../src/mcp/server";
 import type { SessionUpdate } from "../../src/protocol";
+import { HikariApi, sessionCalls } from "../../src/sidecar";
 import type { OperationName } from "../../src/tools/api.gen";
+import { qtLink } from "./qt_link";
 
 const kFake = join(import.meta.dir, "..", "fixtures", "fake-acp.ts");
 const kToken = "t".repeat(64);
@@ -21,15 +23,17 @@ afterEach(() => {
 });
 
 /** Qt's side: a tools channel for the session, and a guard that names it in `session/new`. */
-function harness(answers: Partial<Record<OperationName, unknown>> = {}, env: Record<string, string> = {}) {
+function harness(answers: Partial<Record<OperationName, unknown>> = {}, env: Record<string, string> = {}, child?: ReturnType<typeof qtLink>) {
     const log = join(mkdtempSync(join(tmpdir(), "fake-acp-")), "log");
     const calls: { operation: string; params: unknown }[] = [];
     const updates: SessionUpdate[] = [];
     const spawned: string[] = [];
     let session: AcpSession | undefined;
-    const mcp = new McpServer(() => whileTurnRuns({
-        call: (operation, params) => {
-            calls.push({ operation, params });
+    const params = { sessionId: "t1", agent: "acp:fake" as const, model: { providerId: "", model: "" }, system: "Be brief.",
+        ...(child ? { task: { parent: "p1", taskId: "k1", scope: { document: 1, lines: [1] } } } : {}) };
+    const mcp = new McpServer(() => whileTurnRuns(child ? sessionCalls(new HikariApi(child.peer, undefined, "t1"), params) : {
+        call: (operation, p) => {
+            calls.push({ operation, params: p });
             const answer = answers[operation];
             return Promise.resolve((typeof answer === "function" ? answer() : answer) as never);
         },
@@ -41,8 +45,7 @@ function harness(answers: Partial<Record<OperationName, unknown>> = {}, env: Rec
         return new Response(answer.reply ?? null, { status: answer.status });
     } });
     servers.push(channel);
-    const acp = session = new AcpSession("t1", { sessionId: "t1", agent: "acp:fake", model: { providerId: "", model: "" },
-        system: "Be brief." }, {
+    const acp = session = new AcpSession("t1", params, {
         spawn: (id) => {
             spawned.push(id);
             const child = spawn(process.execPath, [kFake], { env: { ...process.env, FAKE_ACP_LOG: log, ...env },
@@ -174,4 +177,21 @@ describe("which tool calls are Hikari's", () => {
         expect(hikariTool({ title: "Shell: rm -rf /" })).toBeUndefined();
         expect(hikariTool({ title: "hikari_" })).toBeUndefined();
     });
+
+    test("as a sub-agent it completes an edit through _hikari/api.call, as its own session", async () => {
+        const qt = qtLink({
+            "lines.find": [{ revision: 3, total: 1, lines: [{ id: 1, row: 1, text: "Helo" }] }],
+            "document.apply": [{ revision: 4, inserted: [], changed: true }],
+        });
+        const h = harness({}, {}, qt);
+        const result = await h.session.prompt({ sessionId: "t1", prompt: h.script({ reply: "Fixed.", calls: [
+            { tool: "lines_find", arguments: { document: 1, text: "Helo" } },
+            { tool: "document_apply", arguments: { document: 1, revision: 3, name: "Fix",
+                edits: [{ op: "set_line", line: 1, fields: { text: "Hello" } }] } },
+        ] }) });
+        h.session.close();
+        expect(result.stopReason).toBe("end_turn");
+        expect(qt.calls.map((c) => [c.operation, c.session])).toEqual([["lines.find", "t1"], ["document.apply", "t1"]]);
+        expect(h.calls).toEqual([]);
+    }, 30_000);
 });
