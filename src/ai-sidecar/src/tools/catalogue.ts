@@ -8,7 +8,8 @@ export const kGroups = {
     typeset: "Typesetting: video frames as images, ink bounds, colours and keyframes; solvers that write the tags for " +
         "a quad, clip, drawing, shift or Hydra change; a render check before applying.",
     translate: "Translation passes, the glossary, characters and tag rules.",
-    karaoke: "Karaoke timing: audio peaks, syllables and onsets.",
+    karaoke: "Karaoke: audio peaks and vocal onsets; splitting, timing and snapping syllables; the kanji timer and " +
+        "furigana; the karaoke check; the templater's preview and apply; the user's own forced aligner.",
     automation: "Automation macros and AI-written Lua.",
     effects: "The node-effect editor's node types and graphs.",
     plugins: "Installed plugins and what they offer.",
@@ -81,6 +82,17 @@ const kPlacements: Partial<Record<OperationName, Placement>> = {
     "typeset.check": { group: "typeset" },
     "typeset.apply": { group: "typeset" },
     "audio.peaks": { group: "karaoke" },
+    "karaoke.syllables": { group: "karaoke" },
+    "karaoke.split": { group: "karaoke" },
+    "karaoke.time": { group: "karaoke" },
+    "karaoke.onsets": { group: "karaoke" },
+    "karaoke.snap": { group: "karaoke" },
+    "karaoke.kanji": { group: "karaoke" },
+    "karaoke.furigana": { group: "karaoke" },
+    "karaoke.check": { group: "karaoke" },
+    "karaoke.template_preview": { group: "karaoke" },
+    "karaoke.apply_template": { group: "karaoke" },
+    "karaoke.align": { group: "karaoke" },
     "automation.run": {
         group: "automation",
         description: "Runs a Lua Automation script you write, as one macro on the active tab's selection, after the " +

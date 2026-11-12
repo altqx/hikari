@@ -452,7 +452,7 @@ std::string fill(std::string_view text)
 void add(Registry &registry, Access access, std::string name, std::string summary, std::string_view params,
          std::string_view result, SyncHandler handler)
 {
-    addOperation(registry, access, std::move(name), std::move(summary), fill(params), fill(result), now(std::move(handler)), 2);
+    addOperation(registry, access, std::move(name), std::move(summary), fill(params), fill(result), now(std::move(handler)));
 }
 
 }

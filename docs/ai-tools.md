@@ -37,7 +37,7 @@ Hikari AI's threads also get `update_plan` ([AI agent](ai-agent.md)) and `read_s
 | Group | Tools now |
 | --- | --- |
 | `typeset` | `video_frame`, `video_ink_bounds`, `video_colours`, `video_keyframes` ([frames](#frames)); `typeset_perspective`, `typeset_clip`, `typeset_drawing`, `typeset_shift`, `typeset_hydra`, `typeset_check`, `typeset_apply` ([typesetting](#typesetting)) |
-| `karaoke` | `audio_peaks` |
+| `karaoke` | `audio_peaks`; `karaoke_syllables`, `karaoke_split`, `karaoke_time`, `karaoke_onsets`, `karaoke_snap`, `karaoke_kanji`, `karaoke_furigana`, `karaoke_check`, `karaoke_template_preview`, `karaoke_apply_template`, `karaoke_align` ([karaoke](#karaoke)) |
 | `effects` | `nodes_catalogue`, `nodes_validate`, `effects_graphs`, `effects_graph`, `effects_edit`, `effects_preview`, `effects_save`, `effects_apply` |
 | `app` | `panels_list`, `panels_open`, `panels_close`, `panels_focus`, `settings_list`, `settings_get`, `settings_set`; the two reads leave out `privacy.*` and `recent.*` ([Agent](ai-agent.md#modes)) |
 | `automation` | `automation_run`, which asks the user on every run ([AI-written Lua](ai-agent.md#ai-written-lua)) |
@@ -90,6 +90,28 @@ The typesetting tools are HA1's `typeset.*` operations ([AI9 #437](https://githu
   - `typeset_shift` and `typeset_hydra` run the Position shifter and the Hydra engine (`PositionShifterTool`, `AllTagsTool`) on a copy of the Document, through a host whose view puts one device pixel at a hundredth of a script unit. Hydra knows its 22 default tags (tags.toml's defaults, not the user's own).
 - **`typeset_check`** draws one Line alone, with a proposed text, on its frame (the Line's first unless the frame shown is in it) and compares the [ink bounds](../CONTEXT.md) with the bounds of the target quad or box, scaled to video pixels. `error` is the largest distance between their edges; it passes at `tolerance` (4 video pixels by default) or less.
 - **`typeset_apply`** is the write: up to 100 Lines, each with its text and target. Every Line is checked first; when one misses, nothing is applied and the answer is `refused` with reason `check_failed` and each failing Line's check. Otherwise it applies the texts as `document_apply` would (one undo step, into the review) and answers the checks too.
+
+## Karaoke
+
+The karaoke tools are HA1's `karaoke.*` operations ([AI11 #439](https://github.com/altqx/hikari/issues/439)). They run the audio editor's karaoke code in C++, and the bundled `karaoke-templater` skill walks the model through timing and templates.
+
+- **Reads that answer texts.** None of these changes the Document; the model writes their texts with `document_apply`.
+  - `karaoke_split` splits Lines without `\k` tags as the audio editor's karaoke mode does (KA1), with the user's language rules and English hyphenation.
+  - `karaoke_time` sets each syllable's end in ms.
+  - `karaoke_snap` moves each boundary inside a Line to the nearest vocal onset (KA5) within `window` ms, 100 by default, keeping every syllable at least 10 ms long.
+  - `karaoke_kanji` runs the Kanji timer's group suggestion (KA3) from a timed romaji Line onto its kanji Line; `clean` is false where the timer would stop for the user.
+- **Other reads.**
+  - `karaoke_syllables` answers a Line's syllables as the templater reads them.
+  - `karaoke_onsets` answers the audio's vocal onsets in a range. The app finds them once per audio, off the UI thread.
+  - `karaoke_furigana` answers the reading dictionary's suggestions (KA4); without a dictionary it is `unavailable` with reason `no_dictionary`.
+  - `karaoke_check` answers the Karaoke check's problems (KA7).
+  - `karaoke_template_preview` runs the templater on one Line and answers what it generates.
+- **`karaoke_apply_template`** runs the templater on every karaoke Line, or the Lines given, against a revision, and applies the result as one undo step into the review. The templater replaces what its last run generated. A templater error is `refused` with reason `templater_failed` and the templater's message.
+  - The app's templater is shared with the template preview in the Line editor. A newer preview replaces an unfinished one without answering it, so a call that gets no answer in 2 minutes fails with `templater_failed`.
+- **`karaoke_align`** runs WhisperX (`whisperx`) or the Montreal Forced Aligner (`mfa align_one`) on the audio under the Lines, when the user installed it on their PATH. It answers each word's start and end in ms and applies nothing.
+  - It asks the user on every run ([always-ask list](ai-agent.md#modes)).
+  - Qt writes the clip as a 16-bit mono WAV and the Lines' words as text into a folder of its own under the temporary folder, runs the program there with an argument list (never a shell), reads its JSON and removes the folder.
+  - A program that isn't installed is `unavailable` with reason `missing`; a failed run is `refused` with reason `failed` and the end of the program's output.
 
 ## Documents
 
@@ -148,6 +170,8 @@ Qt calls the tools with two `_hikari/*` requests:
   - the two link methods;
   - each search service's requests, key headers, results and errors through a fake relay, and the `web` group appearing only while a service is chosen;
   - the up-front tool block within 5,000 tokens on every wire.
+- `hikari_api_tests` (`karaoke_tests.cpp`) splits, snaps and times a fixture song through the tools, then checks it; it previews and applies a fake templater, and sends a fake aligner the Lines' words.
+- `hikari_backends_external_aligner_tests` reads WhisperX's and MFA's JSON, writes the WAV clip and runs a fake `whisperx` and `mfa` in their own folders.
 - `hikari_backends_ai_tools_tests` runs the real `hikari-ai` against the real API over a fake host, with no provider and no network:
   - a scripted agent finds a Line, edits it, is refused a stale revision, then finds and runs a command;
   - `search_tools` offers `video_frame`;

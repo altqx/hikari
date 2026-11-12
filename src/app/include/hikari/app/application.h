@@ -1,5 +1,6 @@
 #pragma once
 
+#include "hikari/app/ai_karaoke.h"
 #include "hikari/app/ai_scripts.h"
 #include "hikari/app/api_host.h"
 #include "hikari/app/automation_hotkeys_controller.h"
@@ -334,6 +335,9 @@ public:
     Q_INVOKABLE bool projectNeedsTrust(int shellWindow) const;
     // Adds the window's Project folder to trust.folders, which applies the Project again.
     Q_INVOKABLE void trustProject(int shellWindow);
+    // {trusted, named: the ids its [plugins] table names, missing: those a trusted one enables that
+    // aren't installed}; empty without a Project.
+    Q_INVOKABLE QVariantMap projectPlugins(int shellWindow) const;
     Q_INVOKABLE void removeRecentProject(const QString &path) { m_projects->remove(path); }
     Q_INVOKABLE void removeMissingRecentProjects() { m_projects->removeMissing(); }
     // Close project: the rows to review before the window's tabs close; finishClose then closes
@@ -1295,6 +1299,7 @@ private:
     // MUST KILL: must be declared after m_automationHotkeys, which it holds a reference to.
     std::unique_ptr<HotkeysController> m_hotkeys;
     std::unique_ptr<AiScripts> m_aiScripts;
+    std::unique_ptr<AiKaraoke> m_aiKaraoke;
     std::unique_ptr<ApiHost> m_apiHost;
     std::unique_ptr<AiFeatures> m_ai;
     std::unique_ptr<AiMcp> m_aiMcp;
@@ -1439,6 +1444,8 @@ private:
     };
     std::map<int, ProjectFonts> m_projectFonts;
     void loadProjectFonts(int shellWindow);
+    std::map<int, std::optional<plugins::ProjectPlugins>> windowPlugins() const;
+    void projectScriptsAndPluginsChanged();
     void subtitleFontsChanged();
     bool setVideoFonts(std::optional<application::DocumentId> document);
     std::vector<std::pair<std::shared_ptr<const std::vector<std::byte>>, std::vector<std::string>>> m_leasedFontNames;

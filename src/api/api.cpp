@@ -87,6 +87,7 @@ const Registry &Api::registry()
         detail::addEffectsOperations(r);
         detail::addTypesetOperations(r);
         detail::addProjectOperations(r);
+        detail::addKaraokeOperations(r);
         detail::addEvents(r);
         return r;
     }();
