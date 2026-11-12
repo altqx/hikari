@@ -1,6 +1,7 @@
 #include "template_editor_controller.h"
 
 #include "hikari/application/karaoke_presets.h"
+#include "hikari/application/karaoke_templates.h"
 #include "hikari/application/macro_transaction.h"
 #include "hikari/application/node_graph.h"
 #include "hikari/core/ass_save.h"
@@ -1304,6 +1305,50 @@ void TemplateEditorController::applied(const std::string &report, std::optional<
     m_matched.clear();
     m_previewSnapshotKey.clear();
     emit changed();
+}
+
+namespace {
+std::u8string u8(std::string_view s)
+{
+    return {s.begin(), s.end()};
+}
+}
+
+bool TemplateEditorController::karaOKMode() const
+{
+    const auto *doc = document();
+    return doc && application::karaoke_templates::documentMode(*doc) == application::karaoke_templates::Mode::KaraOK;
+}
+
+bool TemplateEditorController::modeInFile() const
+{
+    const auto *doc = document();
+    const auto line = doc ? doc->scriptInfo(u8(application::karaoke_templates::kModeKey)) : std::nullopt;
+    return line && application::karaoke_templates::modeOfLine(std::string(line->begin(), line->end()));
+}
+
+bool TemplateEditorController::setKaraOKMode(bool karaOK)
+{
+    commit();
+    auto *s = session();
+    if (!s || !m_editable || (modeInFile() && karaOKMode() == karaOK))
+        return false;
+    namespace kt = application::karaoke_templates;
+    const std::u8string value = u8(karaOK ? kt::kModeKaraOK : kt::kModeStock);
+    application::Command command;
+    command.name = "Set template mode";
+    command.expectedRevision = s->revision();
+    command.apply = [&](core::Document &doc) { return doc.setScriptInfo(u8(kt::kModeKey), value); };
+    const bool chosen = trusted();
+    if (!s->run(command))
+        return false;
+    if (chosen)
+        trust();
+    m_seenRevision = s->revision();
+    emit documentEdited();
+    emit changed();
+    schedulePreview();
+    return true;
 }
 
 bool TemplateEditorController::insertTemplate(const QString &effect)
