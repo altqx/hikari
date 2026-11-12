@@ -1,4 +1,5 @@
 #include "hikari/application/document_files.h"
+#include "hikari/application/karaoke_templates.h"
 
 #include <gtest/gtest.h>
 
@@ -293,6 +294,19 @@ TEST_F(Files, ExternalChangesNeedAnExplicitOverwrite)
     EXPECT_FALSE(service.session(doc)->isDirty());
     ASSERT_TRUE(service.session(doc)->editDraftText(line(doc, 1), u8"next"));
     EXPECT_TRUE(service.startSave(*service.prepareSave(doc)));
+}
+
+TEST_F(Files, ANewDocumentIsKaraOKButSavesNoModeLine)
+{
+    const auto doc = service.createNew();
+    EditSession &s = *service.session(doc);
+    EXPECT_TRUE(s.isNewDocument());
+    EXPECT_EQ(karaoke_templates::documentMode(s), karaoke_templates::Mode::KaraOK);
+    EXPECT_FALSE(service.session(open("/a.ass"))->isNewDocument());
+    ASSERT_TRUE(s.editDraftText(s.document().lines().at(0)->id, u8"words"));
+    ASSERT_TRUE(service.startSave(*service.prepareSave(doc, DestinationKey{"/new.ass"})));
+    finish(WriteOutcome::Written);
+    EXPECT_EQ(text(disk.files["/new.ass"]).find("Karaoke Templater"), std::string::npos);
 }
 
 TEST_F(Files, AnAcceptedExternalChangeIsWrittenOver)

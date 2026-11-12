@@ -57,6 +57,8 @@ Each thread has a mode. Qt decides every write a session sends, so a sidecar tha
 
 - **Private settings.** `settings_list` and `settings_get` never show a thread or an MCP agent the `privacy.*` settings (the usage data ID among them) or the `recent.*` lists (recent-file paths and times). Folder settings stay readable. Plugins still read them.
 - Reads never ask. Neither do `selection.set`, `panels.open`, `panels.close` and `panels.focus`, which change no content and no setting.
+- `typeset.apply` isn't on the always-ask list: it changes the Document only after its render check passes, and asks as other writes do ([#1002](https://github.com/altqx/hikari/issues/1002)). Through MCP it is refused like every write but `document.apply`.
+- **MCP servers' tools** go through the modes by their hints: a trusted server's read-only tools never ask, destructive ones ask in every mode, and the mode decides the rest ([MCP servers](ai-mcp-clients.md#what-qt-enforces)).
 - **Web search** isn't under the thread modes or the always-ask list: the `web` tools go out through the HTTP relay, not `_hikari/api.call`. The per-thread globe (AI23b) controls it instead. It is on only while Let AI search the web is on, and a search sends only its query, never a file.
 - **Allow in this thread** covers the operation, or for `commands.run` the one command, until the thread is deleted.
 - **The always-ask list** ([#410](https://github.com/altqx/hikari/issues/410)) asks in every mode, with Allow once and Deny only. `alwaysAsk` holds it:

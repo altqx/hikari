@@ -3,6 +3,7 @@
 #include "hikari/backends/lua_script_host.h"
 #include "hikari/application/automation_services.h"
 #include "hikari/application/macro_transaction.h"
+#include "hikari/application/select_lines.h"
 #include "hikari/core/ass_load.h"
 #include "hikari/core/ass_save.h"
 #include "hikari/core/style.h"
@@ -27,6 +28,7 @@
 #include <cstdio>
 #include <functional>
 #include <map>
+#include <random>
 #ifdef _WIN32
 #ifndef NOMINMAX
 #define NOMINMAX
@@ -485,6 +487,48 @@ std::vector<std::string> texts(const hikari::application::EditSession &s)
     for (const auto *l : s.document().lines())
         out.emplace_back(l->text.begin(), l->text.end());
     return out;
+}
+
+TEST_F(LuaHelper, SelectOverlapsFindsWhatTheOverlappingLinesFieldFinds)
+{
+    using namespace hikari::application;
+    auto host = load(QStringLiteral(HIKARI_AUTOLOAD_DIR "/select-overlaps.moon"));
+    ASSERT_EQ(host->state(), LuaScriptHost::State::Ready) << host->lastError().toStdString();
+    std::mt19937 random(841);
+    for (int file = 0; file < 40; ++file) {
+        std::string script(kMacroScript.substr(0, kMacroScript.find("Dialogue:")));
+        for (int i = 0; i < 30; ++i) {
+            const int start = int(random() % 40) * 50, length = 50 + int(random() % 8) * 50;
+            const auto time = [](int cs) {
+                char buf[32];
+                std::snprintf(buf, sizeof buf, "0:%02d:%02d.%02d", cs / 6000, cs / 100 % 60, cs % 100);
+                return std::string(buf);
+            };
+            script += std::string(random() % 5 == 0 ? "Comment: " : "Dialogue: ") + "0," + time(start) + "," +
+                      time(start + length) + ",Default,,0,0,0,,l" + std::to_string(i) + "\n";
+        }
+        std::vector<std::byte> bytes(script.size());
+        std::memcpy(bytes.data(), script.data(), bytes.size());
+        EditSession byScript(hikari::core::loadAss(bytes).document);
+        EditSession native(hikari::core::loadAss(bytes).document);
+        const auto first = byScript.document().lines()[0]->id;
+        byScript.setSelection(Selection{first, {first}});
+        const auto snapshot = snapshotForMacro(byScript);
+        ASSERT_TRUE(snapshot);
+        run = {};
+        byScript.setReadOnly(true);
+        ASSERT_TRUE(host->run(0, *snapshot));
+        ASSERT_TRUE(waitFor([&] { return run.outcome.has_value(); }));
+        byScript.setReadOnly(false);
+        ASSERT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
+        ASSERT_TRUE(host->lastResult());
+        ASSERT_TRUE(applyMacroResult(byScript, *snapshot, *host->lastResult(), "Select overlaps"));
+        SelectLinesSettings settings;
+        settings.field = SelectLinesSettings::Field::Overlaps;
+        ASSERT_TRUE(selectLines(native, settings));
+        ASSERT_FALSE(native.selection().selected.empty());
+        EXPECT_EQ(native.selection().selected, byScript.selection().selected) << script;
+    }
 }
 
 TEST_F(LuaHelper, EdgeblurAppliesToTheSelectedLinesAsOneUndoStep)

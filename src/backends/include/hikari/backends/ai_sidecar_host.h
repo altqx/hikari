@@ -161,6 +161,10 @@ public:
     /// With a gate, a write that names neither a session nor an MCP connection is refused; without one, calls for
     /// sessions fail as unavailable.
     void setSessionGate(SessionGate gate) { m_sessionGate = std::move(gate); }
+    /// Puts a call that isn't HA1's, such as an MCP tool's, through the session gate. `admitted` runs once the gate
+    /// lets it through and must answer `request`; a refusal answers it as HA1 would.
+    void gateSession(const std::string &session, const std::string &operation, const api::Json &params,
+                     std::shared_ptr<SidecarRequest> request, std::function<void(SidecarRequest &)> admitted);
 
     /// Closes stdin, waits, then kills the sidecar's process tree. Pending requests fail with SidecarLost.
     void shutdown();

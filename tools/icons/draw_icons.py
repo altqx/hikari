@@ -1410,7 +1410,6 @@ PENDING = {}
 for card, roles in {
     "AI2 #430": ["review-panel"],
     "PJ4 #772": ["explorer", "new-subtitle-file", "show-all-files", "group-by-name"],
-    "PJ5 #773": ["mine", "copy-to-tier", "move-to-tier"],
     "PJ8 #776": ["untrusted"],
     "AI24 #744": ["update"],
     "PL7 #419": ["plugin-sandbox"],
@@ -1419,7 +1418,6 @@ for card, roles in {
     "AU9 #844": ["graph-shake", "graph-wobble", "graph-bounce", "graph-typewriter", "graph-fade-by-letter",
                  "graph-focus-lines", "graph-grain", "graph-chromatic-aberration", "graph-randomove",
                  "graph-karaoke-to-alpha"],
-    "AU10 #841": ["select-overlapping", "split-tag-blocks", "split-every-n"],
     "AU14 #847": ["tool-text-on-path"],
     "AU16 #850": ["reinstall-scripts"],
 }.items():
