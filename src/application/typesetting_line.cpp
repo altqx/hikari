@@ -90,46 +90,67 @@ void shift(Unit &u, double dx, double dy, int align)
     u.y = align >= 7 ? u.top : align >= 4 ? u.middle : u.bottom;
 }
 
+bool hasKaraokeTags(std::string_view text)
+{
+    for (std::size_t open = text.find('{'); open != std::string_view::npos; open = text.find('{', open + 1)) {
+        const std::size_t close = text.find('}', open);
+        const std::string_view body = text.substr(open, close == std::string_view::npos ? text.npos : close - open);
+        for (std::size_t at = body.find('\\'); at != std::string_view::npos; at = body.find('\\', at + 1)) {
+            std::string_view tag = body.substr(at + 1);
+            if (tag.starts_with("kf") || tag.starts_with("ko"))
+                tag.remove_prefix(2);
+            else if (tag.starts_with('k') || tag.starts_with('K'))
+                tag.remove_prefix(1);
+            else
+                continue;
+            if (!tag.empty() && tag.front() >= '0' && tag.front() <= '9')
+                return true;
+        }
+    }
+    return false;
+}
+
+void spanTheLine(Unit &u, const Unit &line)
+{
+    u.start = u.relStart = 0;
+    u.end = u.relEnd = line.duration;
+    u.duration = line.duration;
+    u.kdur = line.kdur;
+    u.mid = line.duration / 2;
+    u.i = 1;
+    u.blank = u.text.find_first_not_of(" \t") == std::string::npos || u.text == "\xE3\x80\x80";
+}
+
 void oneSyllable(karaoke_layout::Line &line)
 {
-    if (line.syls.size() != 1)
-        return;
-    Unit whole = line.syls.front();
-    whole.start = whole.relStart = 0;
-    whole.end = whole.relEnd = line.line.duration;
-    whole.duration = line.line.duration;
-    whole.kdur = line.line.kdur;
-    whole.mid = line.line.duration / 2;
-    whole.i = 1;
-    whole.blank = whole.spaceStripped.empty();
-    std::vector<Unit> chars = line.chars.empty() ? std::vector<Unit>() : line.chars.front();
-    for (Unit &c : chars) {
-        c.start = c.relStart = whole.start;
-        c.end = c.relEnd = whole.end;
-        c.duration = whole.duration;
-        c.kdur = whole.kdur;
-        c.mid = whole.mid;
-        c.i = 1;
-        c.blank = c.text.find_first_not_of(" \t") == std::string::npos || c.text == "\xE3\x80\x80";
+    if (line.syls.size() == 1) {
+        line.syls.push_back(line.syls.front());
+        line.syls.front() = Unit{.style = line.syls.back().style};
+        if (!line.chars.empty()) {
+            line.chars.push_back(std::move(line.chars.front()));
+            line.chars.front().clear();
+        }
+        line.karaSyllables.resize(1);
+        line.karaSyllables.push_back(line.karaSyllables.front());
+        line.karaSyllables.front() = karaoke_layout::KaraSyllable{};
     }
-    line.syls.front() = Unit{.style = whole.style};
-    line.syls.push_back(std::move(whole));
-    if (!line.chars.empty()) {
-        line.chars.front().clear();
-        line.chars.push_back(std::move(chars));
+    for (std::size_t s = 1; s < line.syls.size(); ++s) {
+        spanTheLine(line.syls[s], line.line);
+        line.syls[s].blank = line.syls[s].spaceStripped.empty();
+        if (s < line.chars.size())
+            for (Unit &c : line.chars[s])
+                spanTheLine(c, line.line);
     }
-    karaoke_layout::KaraSyllable syllable =
-        line.karaSyllables.empty() ? karaoke_layout::KaraSyllable{} : line.karaSyllables.front();
-    syllable.i = 1;
-    syllable.start = 0;
-    syllable.end = syllable.duration = line.line.duration;
-    syllable.kdur = line.line.kdur;
-    syllable.highlights = {{0, line.line.duration, line.line.duration}};
-    syllable.inlineFx.clear();
-    line.karaSyllables.resize(1);
-    line.karaSyllables.front() = karaoke_layout::KaraSyllable{};
-    line.karaSyllables.push_back(std::move(syllable));
-    line.syln = 1;
+    for (std::size_t s = 1; s < line.karaSyllables.size(); ++s) {
+        karaoke_layout::KaraSyllable &k = line.karaSyllables[s];
+        k.i = 1;
+        k.start = 0;
+        k.end = k.duration = line.line.duration;
+        k.kdur = line.line.kdur;
+        k.highlights = {{0, line.line.duration, line.line.duration}};
+        k.inlineFx.clear();
+    }
+    line.syln = static_cast<int>(line.syls.size()) - 1;
 }
 
 }
@@ -168,7 +189,8 @@ void placeTypesettingLine(karaoke_layout::Line &line)
     const int column = (placement.align - 1) % 3;
     line.kara.halign = column == 0 ? "left" : column == 1 ? "center" : "right";
     line.kara.valign = placement.align <= 3 ? "bottom" : placement.align <= 6 ? "middle" : "top";
-    oneSyllable(line);
+    if (!hasKaraokeTags(line.macro.text))
+        oneSyllable(line);
     if (line.syls.size() == 2 && line.syls[1].raw == line.macro.text)
         line.syls[1].raw = placement.rawWithoutPosition;
     if (!placement.pos)

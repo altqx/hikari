@@ -391,7 +391,7 @@ TEST(Hotkeys, ListOrderIsAddHotkeysOnList)
     HotkeyList list(copy);
     auto live = defaultHotkeys();
     list.build(live);
-    ASSERT_EQ(list.rowCount(), 348u);
+    ASSERT_EQ(list.rowCount(), 349u);
     EXPECT_EQ(list.row(0).text, "Global Accept the timing assistant’s suggestion");
     EXPECT_EQ(list.row(0).accel, "");
     EXPECT_EQ(rowNamed(list, "Global Close current tab").accel, "Ctrl-W");
@@ -484,7 +484,7 @@ TEST(Hotkeys, ListOrderIsAddHotkeysOnList)
     odd[HotkeyId{5001, -1}] = Hotkey{"", "F1"};
     HotkeyList whole(copy);
     whole.build(odd);
-    EXPECT_EQ(whole.rowCount(), 348u);
+    EXPECT_EQ(whole.rowCount(), 349u);
 }
 
 TEST(Hotkeys, AutomationAndPluginsFiltersSplitTheScriptRows)
@@ -535,7 +535,7 @@ TEST(Hotkeys, FilterModesAndSelection)
     list.filter(1);
     EXPECT_EQ(list.shown().size(), 113u);
     list.filter(0);
-    EXPECT_EQ(list.shown().size(), 348u);
+    EXPECT_EQ(list.shown().size(), 349u);
 }
 
 TEST(Hotkeys, SearchNarrowsTheFilter)
@@ -751,17 +751,17 @@ TEST(Hotkeys, MapToAnotherWindowAddsOrUpdatesItsRow)
     const int save = list.find("Global Save");
     list.map(save, "F7", VideoHotkey, HotkeyAnswer::Cancel, live);
     EXPECT_EQ(list.row(save).accel, "Ctrl-S");
-    ASSERT_EQ(list.rowCount(), 349u);
-    const auto &added = list.row(348);
+    ASSERT_EQ(list.rowCount(), 350u);
+    const auto &added = list.row(349);
     EXPECT_EQ(added.text, "Video Save");
     EXPECT_EQ((added.key), (HotkeyId{kSave, VideoHotkey}));
     EXPECT_EQ(added.accel, "F7");
     EXPECT_EQ(list.selection(), -1);
     EXPECT_EQ(copy.at(HotkeyId{kSave, VideoHotkey}).accel, "F7");
     list.map(save, "F6", VideoHotkey, HotkeyAnswer::Cancel, live);
-    EXPECT_EQ(list.rowCount(), 349u);
-    EXPECT_EQ(list.row(348).accel, "F6");
-    EXPECT_EQ(list.selection(), 348);
+    EXPECT_EQ(list.rowCount(), 350u);
+    EXPECT_EQ(list.row(349).accel, "F6");
+    EXPECT_EQ(list.selection(), 349);
 }
 
 TEST(Hotkeys, ResetDeleteUndoRedo)
@@ -842,7 +842,7 @@ TEST(Hotkeys, TheCopyOutlivesTheDialogAndSetDefault)
     auto reset = defaultHotkeys();
     third.clear();
     third.build(reset);
-    EXPECT_EQ(third.shown().size(), 348u);
+    EXPECT_EQ(third.shown().size(), 349u);
     EXPECT_EQ(third.filterMode(), 2);
     EXPECT_EQ(rowNamed(third, "Global Open subtitles").accel, "Ctrl-O");
     EXPECT_TRUE(third.modified());

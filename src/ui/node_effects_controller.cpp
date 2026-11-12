@@ -67,7 +67,7 @@ constexpr NodeExampleText kTypesettingTexts[] = {
     {"wobble", QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Wobble"),
      QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "The characters rise and fall in a wave, one line per character and frame step.")},
     {"bounce", QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Bounce"),
-     QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Each character jumps up after the one before it and settles at the final offset.")},
+     QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Each character jumps up after the one before it and comes part of the way back down, as myaa.Bounce does.")},
     {"focus-lines", QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Focus lines"),
      QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Spikes at random angles around the line’s position, drawn again on every frame step.")},
     {"grain", QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Grain"),

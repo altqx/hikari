@@ -176,7 +176,7 @@ A graph whose `target` is `lines` runs on the ordinary Lines it is given (AU9, [
 | Typewriter | character | `delay` 60 ms | petzku.Typewriter |
 | Fade by letter | character | `delay` 40 ms, `fade` 200 ms | ua.FadeWorks by letter |
 | Wobble | character and frame step | `step`, `period` 1000 ms, `phase` 30°, `amplitude` 6 px | phos.wave |
-| Bounce | character and frame step | `step`, `delay` 100 ms, `duration` 200 ms, `max_offset` 100 px, `final_offset` 30 px | myaa.Bounce |
+| Bounce | character and frame step | `step`, `delay` 100 ms, `duration` 200 ms, `max_offset` 100 px, `final_offset` 30 px (myaa.Bounce's cap on the sine, so it settles part of the way down) | myaa.Bounce |
 | Focus lines | spike and frame step | `step`, `count` 40, `min_blur` 5, `max_blur` 10, `length_change` 10 %, `colour` | arch.FocusLines |
 | Grain | character and copy | `intensity` 1, `colour1`, `colour2` (needs the Grain font) | phos.AddGrain |
 | Chromatic aberration | colour copy | `x_offset` 2, `y_offset` 2, `colour1`, `colour2` | phos.ChromaticAbberation |
