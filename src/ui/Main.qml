@@ -1778,312 +1778,929 @@ ApplicationWindow {
         onActivated: titleBar.keyboardMode ? titleBar.leaveKeyboard(true) : titleBar.enterKeyboard()
     }
 
+    Item {
+        objectName: "menuActions"
+        Action {
+            id: openAction
+            text: qsTr("&Open…")
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_SUBS")) openDialog.show()
+        }
+        Action {
+            id: openFolderAction
+            text: qsTr("Open &folder…")
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_FOLDER")) projectFolderDialog.show()
+        }
+        Action {
+            id: removeSubsAction
+            text: qsTr("Remove subtitles from the &editor")
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_REMOVE_SUBS")) root.beginClose("new")
+        }
+        Action {
+            id: closeAction
+            text: qsTr("&Close")
+            enabled: root.shell.hasEditingTarget
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_CLOSE_PAGE")) root.beginClose("close")
+        }
+        Action {
+            id: closeProjectAction
+            text: qsTr("Close pro&ject")
+            enabled: root.projectName.length > 0
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_CLOSE_PROJECT")) root.closeProject()
+        }
+        Action {
+            id: openVideoAction
+            text: qsTr("Open &video…")
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_VIDEO")) videoDialog.show()
+        }
+        Action {
+            id: saveAction
+            text: qsTr("&Save")
+            enabled: root.editor.editable
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_SAVE_SUBS")) root.saveSubtitles()
+        }
+        Action {
+            id: saveAllAction
+            text: qsTr("Save &all")
+            enabled: root.shell.hasEditingTarget
+            onTriggered: {
+                if (root.hotkeyGesture("GLOBAL_SAVE_ALL_SUBS"))
+                    return
+                root.saveAllTabs()
+            }
+        }
+        Action {
+            id: saveAsAction
+            text: qsTr("Save &as…")
+            enabled: root.shell.hasEditingTarget
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_SAVE_SUBS_AS")) root.openSaveDialog()
+        }
+        Action {
+            id: exportAsAction
+            text: qsTr("&Export as…")
+            enabled: root.shell.hasEditingTarget
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_EXPORT_SUBS_AS")) root.openExportDialog()
+        }
+        Action {
+            id: saveTranslationAction
+            text: qsTr("Save &translation")
+            enabled: root.shell.hasEditingTarget && root.editor.translationMode
+            onTriggered: {
+                if (root.hotkeyGesture("GLOBAL_SAVE_TRANSLATION"))
+                    return
+                if (root.app.turnOffTranslationMode())
+                    root.openSaveDialog()
+            }
+        }
+        Action {
+            id: saveWithVideoNameAction
+            text: qsTr("Save subtitles using the video name")
+            checkable: true
+            checked: root.app.saveWithVideoName
+            onToggled: {
+                if (root.hotkeyGesture("GLOBAL_SAVE_WITH_VIDEO_NAME"))
+                    checked = Qt.binding(() => root.app.saveWithVideoName)
+                else
+                    root.app.saveWithVideoName = checked
+            }
+        }
+        Action {
+            id: openAutoSaveAction
+            text: qsTr("Open autosave…")
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_AUTO_SAVE")) autosaves.show()
+        }
+        Action {
+            id: removeTemporaryAction
+            text: qsTr("Remove temporary files")
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_DELETE_TEMPORARY_FILES")) autosaves.show(true)
+        }
+        Action {
+            id: loadLastSessionAction
+            text: qsTr("Load last session")
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_LOAD_LAST_SESSION")) sessionWindows.load()
+        }
+        Action {
+            id: loadSessionFileAction
+            text: qsTr("Load session from file")
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_LOAD_EXTERNAL_SESSION")) sessionWindows.chooseSessionToLoad()
+        }
+        Action {
+            id: saveSessionFileAction
+            text: qsTr("Save session to file")
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_SAVE_EXTERNAL_SESSION")) sessionWindows.chooseSessionToSave()
+        }
+        Action {
+            id: settingsAction
+            text: qsTr("&Settings")
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_SETTINGS")) root.openSettings()
+        }
+        Action {
+            id: undoAction
+            text: qsTr("&Undo")
+            enabled: root.editor.hasLine
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_UNDO")) root.editor.undo()
+        }
+        Action {
+            id: redoAction
+            text: qsTr("&Redo")
+            enabled: root.editor.hasLine
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_REDO")) root.editor.redo()
+        }
+        Action {
+            id: undoToLastSaveAction
+            text: qsTr("Undo to last save")
+            enabled: root.editor.canUndoToLastSave
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_UNDO_TO_LAST_SAVE")) root.editor.undoToLastSave()
+        }
+        Action {
+            id: historyAction
+            text: qsTr("&History")
+            enabled: root.editor.hasLine
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_HISTORY")) root.lazy(historyWindowLoader).open()
+        }
+        Action {
+            id: selectLinesAction
+            text: qsTr("Select &lines")
+            enabled: root.editor.hasLine
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_SELECT_LINES")) root.lazy(selectLinesDialogLoader).openDialog()
+        }
+        Action {
+            id: findAction
+            text: qsTr("&Find…")
+            enabled: root.editor.hasLine
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_SEARCH")) root.openFind(false)
+        }
+        Action {
+            id: findReplaceAction
+            text: qsTr("Re&place…")
+            enabled: root.editor.hasLine
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_FIND_REPLACE")) root.openFind(true)
+        }
+        Action {
+            id: findNextAction
+            text: qsTr("Find next")
+            enabled: root.editor.hasLine && !root.app.findBusy
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_FIND_NEXT")) root.app.findNext()
+        }
+        Action {
+            id: findPreviousAction
+            text: qsTr("Find previous")
+            enabled: root.editor.hasLine && !root.app.findBusy
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_FIND_PREVIOUS")) root.app.findPrevious()
+        }
+        Action {
+            id: insertHardSpaceAction
+            text: qsTr("Insert hard space")
+            enabled: root.editor.editable
+            onTriggered: {
+                if (root.hotkeyGesture("GLOBAL_INSERT_HARD_SPACE"))
+                    return
+                const field = root.editedField()
+                root.editor.insertHardSpace(field.role, field.selectionStart, field.selectionEnd)
+                root.focusPanel(field, Qt.ShortcutFocusReason)
+            }
+        }
+        Action {
+            id: showShiftTimesAction
+            text: qsTr("Shift &times…")
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_SHOW_SHIFT_TIMES")) root.showPanel(timingDock)
+        }
+        Action {
+            id: showPostprocessorAction
+            text: qsTr("Timing &postprocessor…")
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_SHOW_TIMING_POSTPROCESSOR")) root.showPanel(postprocessorDock)
+        }
+        Action {
+            id: snapStartToPreviousKeyframeAction
+            text: qsTr("Start to previous keyframe")
+            enabled: root.video.hasVideo && root.shell.hasEditingTarget
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_SNAP_START_TO_PREVIOUS_KEYFRAME")) root.runTimingHelper("GLOBAL_SNAP_START_TO_PREVIOUS_KEYFRAME")
+        }
+        Action {
+            id: snapStartToNextKeyframeAction
+            text: qsTr("Start to next keyframe")
+            enabled: root.video.hasVideo && root.shell.hasEditingTarget
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_SNAP_START_TO_NEXT_KEYFRAME")) root.runTimingHelper("GLOBAL_SNAP_START_TO_NEXT_KEYFRAME")
+        }
+        Action {
+            id: snapEndToPreviousKeyframeAction
+            text: qsTr("End to previous keyframe")
+            enabled: root.video.hasVideo && root.shell.hasEditingTarget
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_SNAP_END_TO_PREVIOUS_KEYFRAME")) root.runTimingHelper("GLOBAL_SNAP_END_TO_PREVIOUS_KEYFRAME")
+        }
+        Action {
+            id: snapEndToNextKeyframeAction
+            text: qsTr("End to next keyframe")
+            enabled: root.video.hasVideo && root.shell.hasEditingTarget
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_SNAP_END_TO_NEXT_KEYFRAME")) root.runTimingHelper("GLOBAL_SNAP_END_TO_NEXT_KEYFRAME")
+        }
+        Action {
+            id: addLeadInAction
+            text: qsTr("Add lead-in")
+            enabled: root.video.hasVideo && root.shell.hasEditingTarget
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_ADD_LEAD_IN")) root.runTimingHelper("GLOBAL_ADD_LEAD_IN")
+        }
+        Action {
+            id: removeLeadInAction
+            text: qsTr("Remove lead-in")
+            enabled: root.video.hasVideo && root.shell.hasEditingTarget
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_REMOVE_LEAD_IN")) root.runTimingHelper("GLOBAL_REMOVE_LEAD_IN")
+        }
+        Action {
+            id: addLeadOutAction
+            text: qsTr("Add lead-out")
+            enabled: root.video.hasVideo && root.shell.hasEditingTarget
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_ADD_LEAD_OUT")) root.runTimingHelper("GLOBAL_ADD_LEAD_OUT")
+        }
+        Action {
+            id: removeLeadOutAction
+            text: qsTr("Remove lead-out")
+            enabled: root.video.hasVideo && root.shell.hasEditingTarget
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_REMOVE_LEAD_OUT")) root.runTimingHelper("GLOBAL_REMOVE_LEAD_OUT")
+        }
+        Action {
+            id: startFrameEarlierAction
+            text: qsTr("Start one frame earlier")
+            enabled: root.video.hasVideo && root.shell.hasEditingTarget
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_START_FRAME_EARLIER")) root.runTimingHelper("GLOBAL_START_FRAME_EARLIER")
+        }
+        Action {
+            id: startFrameLaterAction
+            text: qsTr("Start one frame later")
+            enabled: root.video.hasVideo && root.shell.hasEditingTarget
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_START_FRAME_LATER")) root.runTimingHelper("GLOBAL_START_FRAME_LATER")
+        }
+        Action {
+            id: endFrameEarlierAction
+            text: qsTr("End one frame earlier")
+            enabled: root.video.hasVideo && root.shell.hasEditingTarget
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_END_FRAME_EARLIER")) root.runTimingHelper("GLOBAL_END_FRAME_EARLIER")
+        }
+        Action {
+            id: endFrameLaterAction
+            text: qsTr("End one frame later")
+            enabled: root.video.hasVideo && root.shell.hasEditingTarget
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_END_FRAME_LATER")) root.runTimingHelper("GLOBAL_END_FRAME_LATER")
+        }
+        Action {
+            id: extendPreviousToStartAction
+            text: qsTr("Extend previous line to this start")
+            enabled: root.shell.hasEditingTarget
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_EXTEND_PREVIOUS_TO_START")) root.runTimingHelper("GLOBAL_EXTEND_PREVIOUS_TO_START")
+        }
+        Action {
+            id: extendNextToEndAction
+            text: qsTr("Extend next line to this end")
+            enabled: root.shell.hasEditingTarget
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_EXTEND_NEXT_TO_END")) root.runTimingHelper("GLOBAL_EXTEND_NEXT_TO_END")
+        }
+        Action {
+            id: timingAssistantAction
+            text: qsTr("Timing assistant")
+            enabled: root.video.hasVideo && root.shell.hasEditingTarget
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_TIMING_ASSISTANT")) root.runTimingHelper("GLOBAL_TIMING_ASSISTANT")
+        }
+        Action {
+            id: acceptTimingSuggestionAction
+            text: qsTr("Accept assistant suggestion")
+            enabled: root.video.hasVideo && root.shell.hasEditingTarget
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_TIMING_ASSISTANT_ACCEPT")) root.runTimingHelper("GLOBAL_TIMING_ASSISTANT_ACCEPT")
+        }
+        Action {
+            id: blurAndGlowLayersAction
+            text: qsTr("&Blur and glow layers…")
+            enabled: root.shell.hasEditingTarget
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_BLUR_AND_GLOW_LAYERS")) root.openBlurAndGlowLayers()
+        }
+        Action {
+            id: typesettingGraphAction
+            text: qsTr("T&ypesetting graph…")
+            enabled: root.shell.hasEditingTarget && !root.layoutLocked
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_TYPESETTING_GRAPH")) root.openTypesettingGraph()
+        }
+        Action {
+            id: showQcNotesAction
+            text: qsTr("&QC notes…")
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_SHOW_QC_NOTES")) root.showPanel(qcNotesDock)
+        }
+        Action {
+            id: styleManagerAction
+            text: qsTr("Style &manager")
+            enabled: root.shell.hasEditingTarget
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_STYLE_MANAGER")) root.lazy(styleManagerWindowLoader).showFor(root.app.activeLineStyle())
+        }
+        Action {
+            id: assPropertiesAction
+            text: qsTr("Script properties")
+            enabled: root.shell.hasEditingTarget
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_ASS_PROPERTIES")) root.openScriptProperties()
+        }
+        Action {
+            id: fontCollectorAction
+            text: qsTr("Font collector")
+            enabled: root.shell.hasEditingTarget && root.shell.assColumns
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_FONT_COLLECTOR")) root.openFontCollector()
+        }
+        Action {
+            id: resampleAction
+            text: qsTr("Resample subtitles")
+            enabled: root.shell.hasEditingTarget
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_SUBS_RESAMPLE")) root.openResample()
+        }
+        Action {
+            id: checkSpellingAction
+            text: qsTr("Check spelling")
+            enabled: root.shell.hasEditingTarget
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_SPELLCHECKER")) root.openSpellChecker()
+        }
+        Action {
+            id: checkKaraokeAction
+            text: qsTr("Check karaoke")
+            enabled: root.shell.hasEditingTarget
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_CHECK_KARAOKE")) root.openKaraokeCheck()
+        }
+        Action {
+            id: kanjiTimerAction
+            text: qsTr("Kanji timer")
+            enabled: root.shell.hasEditingTarget
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_KANJI_TIMER")) root.openKanjiTimer()
+        }
+        Action {
+            id: translationModeAction
+            text: qsTranslate("HikariSub.Translation", "Translation mode")
+            checkable: true
+            checked: root.editor.translationMode
+            enabled: root.shell.hasEditingTarget && (root.editor.translationMode || root.app.translatorModeAvailable)
+            onToggled: {
+                if (!root.hotkeyGesture("GLOBAL_TRANSLATION_MODE")) {
+                    if (checked)
+                        root.app.turnOnTranslationMode()
+                    else
+                        root.openInMainWindow(translationModeOffConfirm)
+                }
+                checked = Qt.binding(() => root.editor.translationMode)
+            }
+        }
+        Action {
+            id: openKeyframesAction
+            text: qsTr("Open keyframes")
+            enabled: root.video.hasVideo
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_KEYFRAMES")) keyframesDialog.show()
+        }
+        Action {
+            id: openTimecodesAction
+            text: qsTr("Open timecodes")
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_TIMECODES")) timecodesDialog.show()
+        }
+        Action {
+            id: saveTimecodesAction
+            text: qsTr("Save timecodes")
+            enabled: root.video.hasVideo || root.app.timecodesFile.length > 0
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_SAVE_TIMECODES")) saveTimecodesDialog.show()
+        }
+        Action {
+            id: closeTimecodesAction
+            text: qsTr("Close timecodes")
+            enabled: root.app.timecodesFile.length > 0
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_CLOSE_TIMECODES")) root.app.closeTimecodes()
+        }
+        Action {
+            id: dummyVideoAction
+            text: qsTr("Open dummy video")
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_DUMMY_VIDEO")) root.openDummyVideo()
+        }
+        Action {
+            id: centerTimesInFramesAction
+            text: qsTr("Centre times within frames")
+            enabled: root.video.hasVideo && root.shell.hasEditingTarget
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_CENTER_TIMES_IN_FRAMES")) root.app.centerTimesInFrames()
+        }
+        Action {
+            id: alignToVideoAction
+            text: qsTr("Align to video…")
+            enabled: root.video.hasVideo && root.shell.hasEditingTarget
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_ALIGN_TO_VIDEO")) root.openAlignToVideo()
+        }
+        Action {
+            id: trackColourAction
+            text: qsTr("Track colour…")
+            enabled: root.video.hasVideo && root.shell.hasEditingTarget
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_TRACK_COLOUR")) root.openVideoAnalysis("track")
+        }
+        Action {
+            id: findFadeAction
+            text: qsTr("Find fade…")
+            enabled: root.video.hasVideo && root.shell.hasEditingTarget
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_FIND_FADE")) root.openVideoAnalysis("fade")
+        }
+        Action {
+            id: setStartTimeAction
+            text: qsTr("Insert start time from video")
+            enabled: root.video.hasVideo && root.shell.hasEditingTarget
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_SET_START_TIME")) root.app.setTimeFromVideo(false)
+        }
+        Action {
+            id: setEndTimeAction
+            text: qsTr("Insert end time from video")
+            enabled: root.video.hasVideo && root.shell.hasEditingTarget
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_SET_END_TIME")) root.app.setTimeFromVideo(true)
+        }
+        Action {
+            id: shiftFramesToVideoStartAction
+            text: qsTr("Selected lines, start at video")
+            enabled: root.video.hasVideo && root.shell.hasEditingTarget
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_SHIFT_FRAMES_TO_VIDEO_START")) root.app.shiftFramesToVideo(false, false)
+        }
+        Action {
+            id: shiftFramesToVideoEndAction
+            text: qsTr("Selected lines, end at video")
+            enabled: root.video.hasVideo && root.shell.hasEditingTarget
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_SHIFT_FRAMES_TO_VIDEO_END")) root.app.shiftFramesToVideo(true, false)
+        }
+        Action {
+            id: shiftFollowingFramesToVideoStartAction
+            text: qsTr("Following lines, start at video")
+            enabled: root.video.hasVideo && root.shell.hasEditingTarget
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_SHIFT_FOLLOWING_FRAMES_TO_VIDEO_START")) root.app.shiftFramesToVideo(false, true)
+        }
+        Action {
+            id: shiftFollowingFramesToVideoEndAction
+            text: qsTr("Following lines, end at video")
+            enabled: root.video.hasVideo && root.shell.hasEditingTarget
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_SHIFT_FOLLOWING_FRAMES_TO_VIDEO_END")) root.app.shiftFramesToVideo(true, true)
+        }
+        Action {
+            id: applyMotionDataAction
+            text: qsTr("Apply motion data…")
+            enabled: root.video.hasVideo && root.shell.hasEditingTarget
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_APPLY_MOTION_DATA")) root.openMotionData()
+        }
+        Action {
+            id: perspectiveTrackingAction
+            text: qsTr("Perspective tracking…")
+            enabled: root.video.hasVideo && root.shell.hasEditingTarget
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_PERSPECTIVE_TRACKING")) root.openPerspectiveTracking()
+        }
+        Action {
+            id: revertMotionDataAction
+            text: qsTr("Revert motion data")
+            enabled: root.shell.hasEditingTarget
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_REVERT_MOTION_DATA")) root.revertMotionData()
+        }
+        Action {
+            id: copyMotionDataAction
+            text: qsTr("Copy motion data from lines")
+            enabled: root.video.hasVideo && root.shell.hasEditingTarget
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_COPY_MOTION_DATA")) root.trackingToast(root.app.copyMotionData())
+        }
+        Action {
+            id: copyPowerPinTrackAction
+            text: qsTr("Copy Power-Pin track from lines")
+            enabled: root.video.hasVideo && root.shell.hasEditingTarget
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_COPY_POWER_PIN_TRACK")) root.trackingToast(root.app.copyPowerPinTrack())
+        }
+        Action {
+            id: extendTrackedLinesAction
+            text: qsTr("Extend tracked lines…")
+            enabled: root.video.hasVideo && root.shell.hasEditingTarget
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_EXTEND_TRACKED_LINES")) root.openExtendTracking()
+        }
+        Action {
+            id: extrapolateMoveAction
+            text: qsTr("Extrapolate %1 to the line").arg("\\move")
+            enabled: root.shell.hasEditingTarget
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_EXTRAPOLATE_MOVE")) root.trackingToast(root.app.extrapolateMoves())
+        }
+        Action {
+            id: previousFrameAction
+            text: qsTr("Previous frame"); enabled: root.video.hasVideo
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_PREVIOUS_FRAME")) root.video.stepFrames(-1)
+        }
+        Action {
+            id: nextFrameAction
+            text: qsTr("Next frame"); enabled: root.video.hasVideo
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_NEXT_FRAME")) root.video.stepFrames(1)
+        }
+        Action {
+            id: goToStartAction
+            text: qsTr("Go to start time of line"); enabled: root.video.hasVideo
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_SET_VIDEO_AT_START_TIME")) root.video.goToLineStart()
+        }
+        Action {
+            id: goToEndAction
+            text: qsTr("Go to end time of line"); enabled: root.video.hasVideo
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_SET_VIDEO_AT_END_TIME")) root.video.goToLineEnd()
+        }
+        Action {
+            id: playPauseAction
+            text: qsTr("Play or pause"); enabled: root.video.hasVideo
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_PLAY_PAUSE")) root.video.togglePlay()
+        }
+        Action {
+            id: previousKeyframeAction
+            text: qsTr("Go to previous keyframe"); enabled: root.video.hasVideo
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_GO_TO_PREVIOUS_KEYFRAME")) root.video.previousKeyframe()
+        }
+        Action {
+            id: nextKeyframeAction
+            text: qsTr("Go to next keyframe"); enabled: root.video.hasVideo
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_GO_TO_NEXT_KEYFRAME")) root.video.nextKeyframe()
+        }
+        Action {
+            id: reloadVideoAction
+            text: qsTr("Reload video")
+            enabled: root.video.hasVideo && !root.video.dummy
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_RELOAD_VIDEO")) root.video.reloadVideo()
+        }
+        Action {
+            id: videoDetailsAction
+            text: qsTr("Video details…"); enabled: root.video.hasVideo
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_VIDEO_DETAILS")) root.openVideoDetails()
+        }
+        Action {
+            id: videoZoomAction
+            text: qsTr("Zoom video"); enabled: root.video.hasVideo
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_VIDEO_ZOOM")) root.videoView.toggleZoom()
+        }
+        Action {
+            id: resetVideoZoomAction
+            text: qsTr("Reset zoom and pan"); enabled: root.videoView.zoomed
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_RESET_VIDEO_ZOOM")) root.videoView.resetZoom()
+        }
+        Action {
+            id: renderCostAction
+            text: qsTr("Render cost"); enabled: root.video.hasVideo
+            checkable: true
+            checked: root.videoView.renderCost
+            onTriggered: {
+                checked = Qt.binding(() => root.videoView.renderCost)
+                if (!root.hotkeyGesture("GLOBAL_VIDEO_RENDER_COST")) root.videoView.toggleRenderCost()
+            }
+        }
+        Action {
+            id: openAudioAction
+            text: qsTr("Open audio")
+            onTriggered: {
+                if (root.hotkeyGesture("GLOBAL_OPEN_AUDIO"))
+                    return
+                audioDialog.currentFolder = root.startFolder("audio", root.app.audioDialogFolder())
+                audioDialog.open()
+            }
+        }
+        Action {
+            id: audioFromVideoAction
+            text: qsTr("Open audio from video")
+            enabled: root.video.hasVideo
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_AUDIO_FROM_VIDEO")) root.app.openAudioFromVideo()
+        }
+        Action {
+            id: closeAudioAction
+            text: qsTr("Close audio")
+            enabled: root.audio.hasAudio
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_CLOSE_AUDIO")) root.audio.closeAudio()
+        }
+        Action {
+            id: reloadAudioAction
+            text: qsTr("Reload audio")
+            enabled: root.audio.reloadable
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_RELOAD_AUDIO")) root.audio.reloadAudio()
+        }
+        Action {
+            id: setAudioFromVideoAction
+            text: qsTr("Set audio position to video time")
+            enabled: root.audio.hasAudio && root.shell.hasEditingTarget
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_SET_AUDIO_FROM_VIDEO")) root.app.setAudioFromVideo(false)
+        }
+        Action {
+            id: setAudioMarkFromVideoAction
+            text: qsTr("Set audio marker to video time")
+            enabled: root.audio.hasAudio && root.shell.hasEditingTarget
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_SET_AUDIO_MARK_FROM_VIDEO")) root.app.setAudioFromVideo(true)
+        }
+        Action {
+            id: joinPreviousAudioSelectionAction
+            text: qsTr("Join with previous line using the audio selection")
+            enabled: root.audio.ready && root.shell.hasEditingTarget
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_JOIN_PREVIOUS_AUDIO_SELECTION")) root.app.joinPreviousToAudioSelection()
+        }
+        Action {
+            id: loadScriptAction
+            text: qsTr("&Load script…")
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_AUTOMATION_LOAD_SCRIPT")) scriptDialog.open()
+        }
+        Action {
+            id: reloadAutoloadAction
+            text: qsTr("Refresh autoload scripts")
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_AUTOMATION_RELOAD_AUTOLOAD")) root.automation.reloadAutoload()
+        }
+        Action {
+            id: loadLastScriptAction
+            text: qsTr("Run the last loaded script")
+            enabled: !root.automation.running && !root.workspaceLayout.modalOpen
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_AUTOMATION_LOAD_LAST_SCRIPT")) root.automation.runLastLoadedScript()
+        }
+        Action {
+            id: repeatRunAction
+            text: qsTr("Repeat last run")
+            enabled: root.automation.canRepeat && !root.workspaceLayout.modalOpen
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_AUTOMATION_REPEAT_LAST_RUN")) root.automation.repeatLast()
+        }
+        Action {
+            id: pluginsAction
+            text: qsTr("Pl&ugins…")
+            enabled: !root.workspaceLayout.modalOpen
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_PLUGINS")) pluginManagerDialog.show()
+        }
+        Action {
+            id: nodeEffectsAction
+            text: qsTranslate("HikariSub.NodeEffects", "Node effects")
+            checkable: true
+            checked: root.workspaceLayout.nodeEffects
+            enabled: root.workspaceLayout.nodeEffects || (root.shell.hasEditingTarget && !root.layoutLocked)
+            onToggled: {
+                if (!root.hotkeyGesture("GLOBAL_NODE_EFFECTS"))
+                    root.setNodeEffects(checked)
+                checked = Qt.binding(() => root.workspaceLayout.nodeEffects)
+            }
+        }
+        Action {
+            id: showExplorerAction
+            text: qsTranslate("HikariSub.Explorer", "Explorer")
+            enabled: !root.layoutLocked
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_SHOW_EXPLORER")) root.showPanel(explorerDock)
+        }
+        Action {
+            id: hideEditorTagsAction
+            text: qsTr("Hide tags in the line editor")
+            checkable: true
+            checked: !root.editor.showTags
+            onToggled: {
+                if (!root.hotkeyGesture("GLOBAL_EDITOR_HIDE_TAGS"))
+                    root.editor.showTags = !checked
+                checked = Qt.binding(() => !root.editor.showTags)
+            }
+        }
+        Action {
+            id: gettingStartedAction
+            text: qsTr("&Getting started")
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_GETTING_STARTED")) root.lazy(gettingStartedDialogLoader).openSetup()
+        }
+        Action {
+            id: userGuideAction
+            text: qsTr("User &guide")
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_HELP")) root.openUserGuide()
+        }
+        Action {
+            id: reportIssueAction
+            text: qsTr("&Report an issue")
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_ANSI")) root.lazy(reportIssueWindowLoader).openForm()
+        }
+        Action {
+            id: checkForUpdatesAction
+            text: qsTr("Check for &updates")
+            enabled: !root.updates.checking
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_CHECK_FOR_UPDATES")) root.updates.checkNow()
+        }
+        Action {
+            id: openUserFolderAction
+            text: qsTr("Open user &folder")
+            onTriggered: root.app.openUserFolder()
+        }
+        Action {
+            id: whatsNewAction
+            text: qsTr("What’s &new")
+            onTriggered: root.lazy(whatsNewDialogLoader).open()
+        }
+        Action {
+            id: aboutAction
+            text: qsTr("&About")
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_ABOUT")) root.lazy(aboutDialogLoader).open()
+        }
+        Action {
+            id: creditsAction
+            text: qsTr("&Credits")
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_HELPERS")) root.lazy(creditsDialogLoader).open()
+        }
+    }
     TitleBarMenus {
         id: appMenus
         TitleBarMenuItem {
             objectName: "fileMenuBarItem"
             menu: ShellMenu {
                 title: qsTr("&File")
-                ShellMenuItem {
-                    command: "GLOBAL_OPEN_SUBS"
-                    help: qsTr("Open subtitle file")
-                    iconRole: "open-subtitles"
-                    action: Action {
-                        id: openAction
-                        text: qsTr("&Open…")
-                        onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_SUBS")) openDialog.show()
-                    }
-                }
-                ShellMenuItem {
-                    command: "GLOBAL_OPEN_FOLDER"
-                    help: qsTr("Open a folder as a project")
-                    iconRole: "open-project"
-                    objectName: "openFolderMenuItem"
-                    action: Action {
-                        id: openFolderAction
-                        text: qsTr("Open &folder…")
-                        onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_FOLDER")) projectFolderDialog.show()
-                    }
-                }
-                ShellMenu {
-                    help: qsTr("Recently opened subtitles")
-                    id: recentMenu
-                    iconRole: "recent-subtitles"
-                    objectName: "recentSubtitlesMenu"
-                    title: qsTr("Recently opened &subtitles")
-                    property var rows: []
-                    onAboutToShow: rows = root.app.recentSubtitles()
-                    Instantiator {
-                        model: recentMenu.rows
-                        delegate: ShellMenuItem {
-                            required property var modelData
-                            required property int index
-                            objectName: "recentSubtitles" + index
-                            help: qsTr("Open") + " " + modelData.path
-                            text: modelData.label
-                            onTriggered: if (!root.app.revealRecent(modelData.path)) root.openSubtitles(modelData.path)
-                        }
-                        onObjectAdded: (index, object) => recentMenu.insertItem(index, object)
-                        onObjectRemoved: (index, object) => recentMenu.removeItem(object)
+                onBuilt: root.applyMenuShortcuts()
+                lazyContent: MenuContent {
+                    ShellMenuItem {
+                        command: "GLOBAL_OPEN_SUBS"
+                        help: qsTr("Open subtitle file")
+                        iconRole: "open-subtitles"
+                        action: openAction
                     }
                     ShellMenuItem {
-                        text: qsTr("None")
-                        enabled: false
-                        visible: recentMenu.rows.length === 0
-                        height: visible ? implicitHeight : 0
+                        command: "GLOBAL_OPEN_FOLDER"
+                        help: qsTr("Open a folder as a project")
+                        iconRole: "open-project"
+                        objectName: "openFolderMenuItem"
+                        action: openFolderAction
                     }
-                }
-                ShellMenuItem {
-                    command: "GLOBAL_REMOVE_SUBS"
-                    help: qsTr("Remove subtitles from the editor")
-                    iconRole: "close-subtitles"
-                    objectName: "newMenuItem"
-                    action: Action {
-                        id: removeSubsAction
-                        text: qsTr("Remove subtitles from the &editor")
-                        onTriggered: if (!root.hotkeyGesture("GLOBAL_REMOVE_SUBS")) root.beginClose("new")
-                    }
-                }
-                ShellMenuItem {
-                    command: "GLOBAL_CLOSE_PAGE"
-                    iconRole: "tab-close"
-                    objectName: "closeMenuItem"
-                    action: Action {
-                        id: closeAction
-                        text: qsTr("&Close")
-                        enabled: root.shell.hasEditingTarget
-                        onTriggered: if (!root.hotkeyGesture("GLOBAL_CLOSE_PAGE")) root.beginClose("close")
-                    }
-                }
-                ShellMenuItem {
-                    command: "GLOBAL_CLOSE_PROJECT"
-                    help: qsTr("Close this window’s tabs and its project")
-                    iconRole: "close-project"
-                    objectName: "closeProjectMenuItem"
-                    action: Action {
-                        id: closeProjectAction
-                        text: qsTr("Close pro&ject")
-                        enabled: root.projectName.length > 0
-                        onTriggered: if (!root.hotkeyGesture("GLOBAL_CLOSE_PROJECT")) root.closeProject()
-                    }
-                }
-                ShellMenuItem {
-                    command: "GLOBAL_OPEN_VIDEO"
-                    help: qsTr("Opens video file")
-                    iconRole: "open-video"
-                    objectName: "openVideoMenuItem"
-                    action: Action {
-                        id: openVideoAction
-                        text: qsTr("Open &video…")
-                        onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_VIDEO")) videoDialog.show()
-                    }
-                }
-                ShellMenuItem {
-                    command: "GRID_SUBS_FROM_MKV"
-                    help: qsTr("Imports a subtitle track from a Matroska file")
-                    iconRole: "extract-subtitles"
-                    objectName: "importMkvMenuItem"
-                    text: qsTr("Import subtitles from MKV…")
-                    enabled: root.matroska.available
-                    onTriggered: if (!root.gridGesture(this, "GRID_SUBS_FROM_MKV")) matroskaSubtitles.begin()
-                }
-                ShellMenuItem {
-                    command: "GLOBAL_IMPORT_LYRICS"
-                    help: qsTr("Turns a lyrics file into lines, in the open file or a new one")
-                    iconRole: "import-lyrics"
-                    objectName: "importLyricsMenuItem"
-                    text: qsTr("Import lyrics…")
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_IMPORT_LYRICS")) lyricsDialog.show()
-                }
-                ShellMenuItem {
-                    command: "GLOBAL_SAVE_SUBS"
-                    help: qsTr("Save current file")
-                    iconRole: "save"
-                    objectName: "saveMenuItem"
-                    action: Action {
-                        id: saveAction
-                        text: qsTr("&Save")
-                        enabled: root.editor.editable
-                        onTriggered: if (!root.hotkeyGesture("GLOBAL_SAVE_SUBS")) root.saveSubtitles()
-                    }
-                }
-                ShellMenuItem {
-                    command: "GLOBAL_SAVE_ALL_SUBS"
-                    help: qsTr("Save all subtitles")
-                    iconRole: "save-all"
-                    objectName: "saveAllMenuItem"
-                    action: Action {
-                        id: saveAllAction
-                        text: qsTr("Save &all")
-                        enabled: root.shell.hasEditingTarget
-                        onTriggered: {
-                            if (root.hotkeyGesture("GLOBAL_SAVE_ALL_SUBS"))
-                                return
-                            root.saveAllTabs()
+                    ShellMenu {
+                        help: qsTr("Recently opened subtitles")
+                        id: recentMenu
+                        iconRole: "recent-subtitles"
+                        objectName: "recentSubtitlesMenu"
+                        title: qsTr("Recently opened &subtitles")
+                        property var rows: []
+                        onAboutToShow: rows = root.app.recentSubtitles()
+                        Instantiator {
+                            model: recentMenu.rows
+                            delegate: ShellMenuItem {
+                                required property var modelData
+                                required property int index
+                                objectName: "recentSubtitles" + index
+                                help: qsTr("Open") + " " + modelData.path
+                                text: modelData.label
+                                onTriggered: if (!root.app.revealRecent(modelData.path)) root.openSubtitles(modelData.path)
+                            }
+                            onObjectAdded: (index, object) => recentMenu.insertItem(index, object)
+                            onObjectRemoved: (index, object) => recentMenu.removeItem(object)
+                        }
+                        ShellMenuItem {
+                            text: qsTr("None")
+                            enabled: false
+                            visible: recentMenu.rows.length === 0
+                            height: visible ? implicitHeight : 0
                         }
                     }
-                }
-                ShellMenuItem {
-                    command: "GLOBAL_SAVE_SUBS_AS"
-                    help: qsTr("Save as")
-                    iconRole: "save-as"
-                    objectName: "saveAsMenuItem"
-                    action: Action {
-                        id: saveAsAction
-                        text: qsTr("Save &as…")
-                        enabled: root.shell.hasEditingTarget
-                        onTriggered: if (!root.hotkeyGesture("GLOBAL_SAVE_SUBS_AS")) root.openSaveDialog()
-                    }
-                }
-                ShellMenuItem {
-                    command: "GLOBAL_EXPORT_SUBS_AS"
-                    help: qsTr("Writes a copy of the document in another format")
-                    iconRole: "export"
-                    objectName: "exportAsMenuItem"
-                    action: Action {
-                        id: exportAsAction
-                        text: qsTr("&Export as…")
-                        enabled: root.shell.hasEditingTarget
-                        onTriggered: if (!root.hotkeyGesture("GLOBAL_EXPORT_SUBS_AS")) root.openExportDialog()
-                    }
-                }
-                ShellMenuItem {
-                    command: "GLOBAL_SAVE_TRANSLATION"
-                    help: qsTr("Save translation")
-                    iconRole: "save-translation"
-                    objectName: "saveTranslationMenuItem"
-                    action: Action {
-                        id: saveTranslationAction
-                        text: qsTr("Save &translation")
-                        enabled: root.shell.hasEditingTarget && root.editor.translationMode
-                        onTriggered: {
-                            if (root.hotkeyGesture("GLOBAL_SAVE_TRANSLATION"))
-                                return
-                            if (root.app.turnOffTranslationMode())
-                                root.openSaveDialog()
-                        }
-                    }
-                }
-                ShellMenuItem {
-                    command: "GLOBAL_SAVE_WITH_VIDEO_NAME"
-                    help: qsTr("Save subtitles using the video name")
-                    iconRole: "save-with-video-name"
-                    objectName: "saveWithVideoNameMenuItem"
-                    action: Action {
-                        id: saveWithVideoNameAction
-                        text: qsTr("Save subtitles using the video name")
-                        checkable: true
-                        checked: root.app.saveWithVideoName
-                        onToggled: {
-                            if (root.hotkeyGesture("GLOBAL_SAVE_WITH_VIDEO_NAME"))
-                                checked = Qt.binding(() => root.app.saveWithVideoName)
-                            else
-                                root.app.saveWithVideoName = checked
-                        }
-                    }
-                }
-                ShellMenuItem {
-                    command: "GLOBAL_OPEN_AUTO_SAVE"
-                    help: qsTr("Opens the selected autosave from the list")
-                    iconRole: "autosave"
-                    objectName: "openAutoSaveMenuItem"
-                    action: Action {
-                        id: openAutoSaveAction
-                        text: qsTr("Open autosave…")
-                        onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_AUTO_SAVE")) autosaves.show()
-                    }
-                }
-                ShellMenuItem {
-                    command: "GLOBAL_DELETE_TEMPORARY_FILES"
-                    help: qsTr("Opens the temporary file removal window")
-                    iconRole: "remove-temporary"
-                    objectName: "removeTemporaryMenuItem"
-                    action: Action {
-                        id: removeTemporaryAction
-                        text: qsTr("Remove temporary files")
-                        onTriggered: if (!root.hotkeyGesture("GLOBAL_DELETE_TEMPORARY_FILES")) autosaves.show(true)
-                    }
-                }
-                ShellMenu {
-                    help: qsTr("Last session options")
-                    iconRole: "last-session"
-                    objectName: "lastSessionMenu"
-                    title: qsTr("Last session")
                     ShellMenuItem {
-                        command: "GLOBAL_LOAD_LAST_SESSION"
-                        help: qsTr("Loads previously loaded files")
-                        id: loadLastSessionItem
+                        command: "GLOBAL_REMOVE_SUBS"
+                        help: qsTr("Remove subtitles from the editor")
+                        iconRole: "close-subtitles"
+                        objectName: "newMenuItem"
+                        action: removeSubsAction
+                    }
+                    ShellMenuItem {
+                        command: "GLOBAL_CLOSE_PAGE"
+                        iconRole: "tab-close"
+                        objectName: "closeMenuItem"
+                        action: closeAction
+                    }
+                    ShellMenuItem {
+                        command: "GLOBAL_CLOSE_PROJECT"
+                        help: qsTr("Close this window’s tabs and its project")
+                        iconRole: "close-project"
+                        objectName: "closeProjectMenuItem"
+                        action: closeProjectAction
+                    }
+                    ShellMenuItem {
+                        command: "GLOBAL_OPEN_VIDEO"
+                        help: qsTr("Opens video file")
+                        iconRole: "open-video"
+                        objectName: "openVideoMenuItem"
+                        action: openVideoAction
+                    }
+                    ShellMenuItem {
+                        command: "GRID_SUBS_FROM_MKV"
+                        help: qsTr("Imports a subtitle track from a Matroska file")
+                        iconRole: "extract-subtitles"
+                        objectName: "importMkvMenuItem"
+                        text: qsTr("Import subtitles from MKV…")
+                        enabled: root.matroska.available
+                        onTriggered: if (!root.gridGesture(this, "GRID_SUBS_FROM_MKV")) matroskaSubtitles.begin()
+                    }
+                    ShellMenuItem {
+                        command: "GLOBAL_IMPORT_LYRICS"
+                        help: qsTr("Turns a lyrics file into lines, in the open file or a new one")
+                        iconRole: "import-lyrics"
+                        objectName: "importLyricsMenuItem"
+                        text: qsTr("Import lyrics…")
+                        onTriggered: if (!root.hotkeyGesture("GLOBAL_IMPORT_LYRICS")) lyricsDialog.show()
+                    }
+                    ShellMenuItem {
+                        command: "GLOBAL_SAVE_SUBS"
+                        help: qsTr("Save current file")
+                        iconRole: "save"
+                        objectName: "saveMenuItem"
+                        action: saveAction
+                    }
+                    ShellMenuItem {
+                        command: "GLOBAL_SAVE_ALL_SUBS"
+                        help: qsTr("Save all subtitles")
+                        iconRole: "save-all"
+                        objectName: "saveAllMenuItem"
+                        action: saveAllAction
+                    }
+                    ShellMenuItem {
+                        command: "GLOBAL_SAVE_SUBS_AS"
+                        help: qsTr("Save as")
+                        iconRole: "save-as"
+                        objectName: "saveAsMenuItem"
+                        action: saveAsAction
+                    }
+                    ShellMenuItem {
+                        command: "GLOBAL_EXPORT_SUBS_AS"
+                        help: qsTr("Writes a copy of the document in another format")
+                        iconRole: "export"
+                        objectName: "exportAsMenuItem"
+                        action: exportAsAction
+                    }
+                    ShellMenuItem {
+                        command: "GLOBAL_SAVE_TRANSLATION"
+                        help: qsTr("Save translation")
+                        iconRole: "save-translation"
+                        objectName: "saveTranslationMenuItem"
+                        action: saveTranslationAction
+                    }
+                    ShellMenuItem {
+                        command: "GLOBAL_SAVE_WITH_VIDEO_NAME"
+                        help: qsTr("Save subtitles using the video name")
+                        iconRole: "save-with-video-name"
+                        objectName: "saveWithVideoNameMenuItem"
+                        action: saveWithVideoNameAction
+                    }
+                    ShellMenuItem {
+                        command: "GLOBAL_OPEN_AUTO_SAVE"
+                        help: qsTr("Opens the selected autosave from the list")
+                        iconRole: "autosave"
+                        objectName: "openAutoSaveMenuItem"
+                        action: openAutoSaveAction
+                    }
+                    ShellMenuItem {
+                        command: "GLOBAL_DELETE_TEMPORARY_FILES"
+                        help: qsTr("Opens the temporary file removal window")
+                        iconRole: "remove-temporary"
+                        objectName: "removeTemporaryMenuItem"
+                        action: removeTemporaryAction
+                    }
+                    ShellMenu {
+                        help: qsTr("Last session options")
                         iconRole: "last-session"
-                        objectName: "loadLastSessionMenuItem"
-                        text: qsTr("Load last session")
-                        onTriggered: if (!root.hotkeyGesture("GLOBAL_LOAD_LAST_SESSION")) sessionWindows.load()
+                        objectName: "lastSessionMenu"
+                        title: qsTr("Last session")
+                        ShellMenuItem {
+                            command: "GLOBAL_LOAD_LAST_SESSION"
+                            help: qsTr("Loads previously loaded files")
+                            iconRole: "last-session"
+                            objectName: "loadLastSessionMenuItem"
+                            action: loadLastSessionAction
+                        }
+                        ShellMenuItem {
+                            command: "GLOBAL_LOAD_EXTERNAL_SESSION"
+                            help: qsTr("Loads session from saved session file")
+                            iconRole: "session-open"
+                            objectName: "loadSessionFileMenuItem"
+                            action: loadSessionFileAction
+                        }
+                        ShellMenuItem {
+                            command: "GLOBAL_SAVE_EXTERNAL_SESSION"
+                            help: qsTr("Saves session to file")
+                            iconRole: "session-save"
+                            objectName: "saveSessionFileMenuItem"
+                            action: saveSessionFileAction
+                        }
+                        ShellMenuItem {
+                            help: qsTr("Asks whether to load previously loaded files at program startup")
+                            objectName: "askForLastSessionMenuItem"
+                            text: qsTr("Ask whether to load the last session at program startup")
+                            checkable: true
+                            checked: root.app.sessionRestore === 1
+                            keepsMenuOpen: false
+                            onToggled: root.app.sessionRestore = checked ? 1 : 0
+                        }
+                        ShellMenuItem {
+                            help: qsTr("Loads previously loaded files at program startup")
+                            objectName: "loadLastSessionOnStartMenuItem"
+                            text: qsTr("Load last session after program start")
+                            checkable: true
+                            checked: root.app.sessionRestore === 2
+                            keepsMenuOpen: false
+                            onToggled: root.app.sessionRestore = checked ? 2 : 0
+                        }
                     }
                     ShellMenuItem {
-                        command: "GLOBAL_LOAD_EXTERNAL_SESSION"
-                        help: qsTr("Loads session from saved session file")
-                        id: loadSessionFileItem
-                        iconRole: "session-open"
-                        objectName: "loadSessionFileMenuItem"
-                        text: qsTr("Load session from file")
-                        onTriggered: if (!root.hotkeyGesture("GLOBAL_LOAD_EXTERNAL_SESSION")) sessionWindows.chooseSessionToLoad()
+                        command: "GLOBAL_SETTINGS"
+                        help: qsTr("Program settings")
+                        iconRole: "settings"
+                        objectName: "settingsMenuItem"
+                        action: settingsAction
                     }
                     ShellMenuItem {
-                        command: "GLOBAL_SAVE_EXTERNAL_SESSION"
-                        help: qsTr("Saves session to file")
-                        id: saveSessionFileItem
-                        iconRole: "session-save"
-                        objectName: "saveSessionFileMenuItem"
-                        text: qsTr("Save session to file")
-                        onTriggered: if (!root.hotkeyGesture("GLOBAL_SAVE_EXTERNAL_SESSION")) sessionWindows.chooseSessionToSave()
+                        command: "GLOBAL_CLOSE_WINDOW"
+                        help: qsTr("Close this window; closing the last window exits the program")
+                        iconRole: "window-close"
+                        objectName: "closeWindowMenuItem"
+                        action: Action {
+                            text: qsTr("Close &window")
+                            onTriggered: if (!root.hotkeyGesture("GLOBAL_CLOSE_WINDOW")) Qt.callLater(root.close)
+                        }
                     }
                     ShellMenuItem {
-                        help: qsTr("Asks whether to load previously loaded files at program startup")
-                        objectName: "askForLastSessionMenuItem"
-                        text: qsTr("Ask whether to load the last session at program startup")
-                        checkable: true
-                        checked: root.app.sessionRestore === 1
-                        keepsMenuOpen: false
-                        onToggled: root.app.sessionRestore = checked ? 1 : 0
-                    }
-                    ShellMenuItem {
-                        help: qsTr("Loads previously loaded files at program startup")
-                        objectName: "loadLastSessionOnStartMenuItem"
-                        text: qsTr("Load last session after program start")
-                        checkable: true
-                        checked: root.app.sessionRestore === 2
-                        keepsMenuOpen: false
-                        onToggled: root.app.sessionRestore = checked ? 2 : 0
-                    }
-                }
-                ShellMenuItem {
-                    command: "GLOBAL_SETTINGS"
-                    help: qsTr("Program settings")
-                    iconRole: "settings"
-                    objectName: "settingsMenuItem"
-                    action: Action {
-                        id: settingsAction
-                        text: qsTr("&Settings")
-                        onTriggered: if (!root.hotkeyGesture("GLOBAL_SETTINGS")) root.openSettings()
-                    }
-                }
-                ShellMenuItem {
-                    command: "GLOBAL_CLOSE_WINDOW"
-                    help: qsTr("Close this window; closing the last window exits the program")
-                    iconRole: "window-close"
-                    objectName: "closeWindowMenuItem"
-                    action: Action {
-                        text: qsTr("Close &window")
-                        onTriggered: if (!root.hotkeyGesture("GLOBAL_CLOSE_WINDOW")) Qt.callLater(root.close)
-                    }
-                }
-                ShellMenuItem {
-                    command: "GLOBAL_QUIT"
-                    help: qsTr("Exit the program")
-                    iconRole: "exit"
-                    objectName: "exitMenuItem"
-                    action: Action {
-                        text: qsTr("E&xit")
-                        onTriggered: root.beginClose("quit")
+                        command: "GLOBAL_QUIT"
+                        help: qsTr("Exit the program")
+                        iconRole: "exit"
+                        objectName: "exitMenuItem"
+                        action: Action {
+                            text: qsTr("E&xit")
+                            onTriggered: root.beginClose("quit")
+                        }
                     }
                 }
             }
@@ -2091,1000 +2708,692 @@ ApplicationWindow {
         ShellMenu {
             id: editMenu
             title: qsTr("&Edit")
-            ShellMenuItem {
-                command: "GLOBAL_UNDO"
-                help: qsTr("Undo")
-                iconRole: "undo"
-                action: Action {
-                    id: undoAction
-                    text: qsTr("&Undo")
-                    enabled: root.editor.hasLine
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_UNDO")) root.editor.undo()
+            onBuilt: root.applyMenuShortcuts()
+            lazyContent: MenuContent {
+                ShellMenuItem {
+                    command: "GLOBAL_UNDO"
+                    help: qsTr("Undo")
+                    iconRole: "undo"
+                    action: undoAction
                 }
-            }
-            ShellMenuItem {
-                command: "GLOBAL_REDO"
-                help: qsTr("Redo")
-                iconRole: "redo"
-                action: Action {
-                    id: redoAction
-                    text: qsTr("&Redo")
-                    enabled: root.editor.hasLine
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_REDO")) root.editor.redo()
+                ShellMenuItem {
+                    command: "GLOBAL_REDO"
+                    help: qsTr("Redo")
+                    iconRole: "redo"
+                    action: redoAction
                 }
-            }
-            ShellMenu {
-                help: qsTr("Sorts all lines in ASS file")
-                iconRole: "sort"
-                objectName: "sortAllMenu"
-                title: qsTr("So&rt all lines")
-                enabled: root.editor.editable
-                id: sortAllMenu
-                Instantiator {
-                    model: root.sortKeys
-                    delegate: ShellMenuItem {
-                        required property var modelData
-                        objectName: "sortAll_" + modelData.key
-                        command: modelData.all
-                        help: modelData.help
-                        text: modelData.label
-                        onTriggered: if (!root.hotkeyGesture(modelData.all)) root.app.sortLines(modelData.key, false)
-                    }
-                    onObjectAdded: (index, object) => sortAllMenu.insertItem(index, object)
-                    onObjectRemoved: (index, object) => sortAllMenu.removeItem(object)
-                }
-            }
-            ShellMenu {
-                help: qsTr("Sorts selected lines in ASS file")
-                iconRole: "sort-selected"
-                objectName: "sortSelectedMenu"
-                title: qsTr("So&rt selected lines")
-                enabled: root.editor.editable
-                id: sortSelectedMenu
-                Instantiator {
-                    model: root.sortKeys
-                    delegate: ShellMenuItem {
-                        required property var modelData
-                        objectName: "sortSelected_" + modelData.key
-                        command: modelData.selected
-                        help: modelData.help
-                        text: modelData.label
-                        onTriggered: if (!root.hotkeyGesture(modelData.selected)) root.app.sortLines(modelData.key, true)
-                    }
-                    onObjectAdded: (index, object) => sortSelectedMenu.insertItem(index, object)
-                    onObjectRemoved: (index, object) => sortSelectedMenu.removeItem(object)
-                }
-            }
-            ShellMenuItem {
-                command: "GLOBAL_UNDO_TO_LAST_SAVE"
-                help: qsTr("Undo to last save")
-                iconRole: "undo-to-last-save"
-                objectName: "undoToLastSaveMenuItem"
-                action: Action {
-                    id: undoToLastSaveAction
-                    text: qsTr("Undo to last save")
-                    enabled: root.editor.canUndoToLastSave
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_UNDO_TO_LAST_SAVE")) root.editor.undoToLastSave()
-                }
-            }
-            ShellMenuItem {
-                id: historyMenuItem
-                command: "GLOBAL_HISTORY"
-                help: qsTr("History")
-                iconRole: "history"
-                objectName: "historyMenuItem"
-                action: Action {
-                    id: historyAction
-                    text: qsTr("&History")
-                    enabled: root.editor.hasLine
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_HISTORY")) root.lazy(historyWindowLoader).open()
-                }
-            }
-            Instantiator {
-                model: root.review.on ? 1 : 0
-                delegate: ShellMenu {
-                    objectName: "reviewMenu"
-                    iconRole: "review-keep"
-                    title: qsTranslate("HikariSub.Review", "Re&view")
-                    ShellMenuItem { command: "GLOBAL_KEEP_AI_CHANGE"; iconRole: "review-keep"; objectName: "keepAiChangeMenuItem"; action: keepAiChangeAction }
-                    ShellMenuItem { command: "GLOBAL_UNDO_AI_CHANGE"; iconRole: "undo"; objectName: "undoAiChangeMenuItem"; action: undoAiChangeAction }
-                    ShellMenuItem { command: "GLOBAL_NEXT_AI_CHANGE"; iconRole: "chevron-down"; objectName: "nextAiChangeMenuItem"; action: nextAiChangeAction }
-                    ShellMenuItem { command: "GLOBAL_PREVIOUS_AI_CHANGE"; iconRole: "chevron-left"; objectName: "previousAiChangeMenuItem"; action: previousAiChangeAction }
-                    MenuSeparator {}
-                    ShellMenuItem { command: "GLOBAL_KEEP_ALL_AI_CHANGES"; iconRole: "review-keep"; objectName: "keepAllAiChangesMenuItem"; action: keepAllAiChangesAction }
-                    ShellMenuItem { command: "GLOBAL_UNDO_ALL_AI_CHANGES"; iconRole: "undo"; objectName: "undoAllAiChangesMenuItem"; action: undoAllAiChangesAction }
-                    MenuSeparator {}
-                    ShellMenuItem { command: "GLOBAL_SHOW_AI_REVIEW"; iconRole: "show"; objectName: "showAiReviewMenuItem"; action: showAiReviewAction }
-                }
-                onObjectAdded: (index, object) => editMenu.insertMenu(root.menuIndexOf(editMenu, historyMenuItem) + 1, object)
-                onObjectRemoved: (index, object) => editMenu.removeMenu(object)
-            }
-            ShellMenuItem {
-                command: "GLOBAL_OPEN_SELECT_LINES"
-                help: qsTr("Selects lines by expressions")
-                iconRole: "select-lines"
-                objectName: "selectLinesMenuItem"
-                action: Action {
-                    id: selectLinesAction
-                    text: qsTr("Select &lines")
-                    enabled: root.editor.hasLine
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_SELECT_LINES")) root.lazy(selectLinesDialogLoader).openDialog()
-                }
-            }
-            ShellMenuItem {
-                command: "GLOBAL_SEARCH"
-                help: qsTr("Opens the Find panel")
-                iconRole: "search"
-                objectName: "findMenuItem"
-                action: Action {
-                    id: findAction
-                    text: qsTr("&Find…")
-                    enabled: root.editor.hasLine
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_SEARCH")) root.openFind(false)
-                }
-            }
-            ShellMenuItem {
-                command: "GLOBAL_FIND_REPLACE"
-                help: qsTr("Opens the Find panel with the replace row shown")
-                iconRole: "find-replace"
-                objectName: "findReplaceMenuItem"
-                action: Action {
-                    id: findReplaceAction
-                    text: qsTr("Re&place…")
-                    enabled: root.editor.hasLine
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_FIND_REPLACE")) root.openFind(true)
-                }
-            }
-            ShellMenuItem {
-                command: "GLOBAL_FIND_NEXT"
-                help: qsTr("Selects the next match")
-                iconRole: "match-next"
-                objectName: "findNextMenuItem"
-                action: Action {
-                    id: findNextAction
-                    text: qsTr("Find next")
-                    enabled: root.editor.hasLine && !root.app.findBusy
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_FIND_NEXT")) root.app.findNext()
-                }
-            }
-            ShellMenuItem {
-                command: "GLOBAL_FIND_PREVIOUS"
-                help: qsTr("Selects the previous match")
-                iconRole: "match-previous"
-                objectName: "findPreviousMenuItem"
-                action: Action {
-                    id: findPreviousAction
-                    text: qsTr("Find previous")
-                    enabled: root.editor.hasLine && !root.app.findBusy
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_FIND_PREVIOUS")) root.app.findPrevious()
-                }
-            }
-            MenuSeparator {}
-            ShellMenuItem {
-                command: "GLOBAL_INSERT_HARD_SPACE"
-                help: qsTr("Inserts a hard space (%1) at the cursor in the line editor").arg("\\h")
-                iconRole: "hard-space"
-                objectName: "insertHardSpaceMenuItem"
-                action: Action {
-                    id: insertHardSpaceAction
-                    text: qsTr("Insert hard space")
+                ShellMenu {
+                    help: qsTr("Sorts all lines in ASS file")
+                    iconRole: "sort"
+                    objectName: "sortAllMenu"
+                    title: qsTr("So&rt all lines")
                     enabled: root.editor.editable
-                    onTriggered: {
-                        if (root.hotkeyGesture("GLOBAL_INSERT_HARD_SPACE"))
-                            return
-                        const field = root.editedField()
-                        root.editor.insertHardSpace(field.role, field.selectionStart, field.selectionEnd)
-                        root.focusPanel(field, Qt.ShortcutFocusReason)
+                    id: sortAllMenu
+                    Instantiator {
+                        model: root.sortKeys
+                        delegate: ShellMenuItem {
+                            required property var modelData
+                            objectName: "sortAll_" + modelData.key
+                            command: modelData.all
+                            help: modelData.help
+                            text: modelData.label
+                            onTriggered: if (!root.hotkeyGesture(modelData.all)) root.app.sortLines(modelData.key, false)
+                        }
+                        onObjectAdded: (index, object) => sortAllMenu.insertItem(index, object)
+                        onObjectRemoved: (index, object) => sortAllMenu.removeItem(object)
                     }
+                }
+                ShellMenu {
+                    help: qsTr("Sorts selected lines in ASS file")
+                    iconRole: "sort-selected"
+                    objectName: "sortSelectedMenu"
+                    title: qsTr("So&rt selected lines")
+                    enabled: root.editor.editable
+                    id: sortSelectedMenu
+                    Instantiator {
+                        model: root.sortKeys
+                        delegate: ShellMenuItem {
+                            required property var modelData
+                            objectName: "sortSelected_" + modelData.key
+                            command: modelData.selected
+                            help: modelData.help
+                            text: modelData.label
+                            onTriggered: if (!root.hotkeyGesture(modelData.selected)) root.app.sortLines(modelData.key, true)
+                        }
+                        onObjectAdded: (index, object) => sortSelectedMenu.insertItem(index, object)
+                        onObjectRemoved: (index, object) => sortSelectedMenu.removeItem(object)
+                    }
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_UNDO_TO_LAST_SAVE"
+                    help: qsTr("Undo to last save")
+                    iconRole: "undo-to-last-save"
+                    objectName: "undoToLastSaveMenuItem"
+                    action: undoToLastSaveAction
+                }
+                ShellMenuItem {
+                    id: historyMenuItem
+                    command: "GLOBAL_HISTORY"
+                    help: qsTr("History")
+                    iconRole: "history"
+                    objectName: "historyMenuItem"
+                    action: historyAction
+                }
+                Instantiator {
+                    active: editMenu.lazyItems?.placed ?? false
+                    model: root.review.on ? 1 : 0
+                    delegate: ShellMenu {
+                        objectName: "reviewMenu"
+                        iconRole: "review-keep"
+                        title: qsTranslate("HikariSub.Review", "Re&view")
+                        ShellMenuItem { command: "GLOBAL_KEEP_AI_CHANGE"; iconRole: "review-keep"; objectName: "keepAiChangeMenuItem"; action: keepAiChangeAction }
+                        ShellMenuItem { command: "GLOBAL_UNDO_AI_CHANGE"; iconRole: "undo"; objectName: "undoAiChangeMenuItem"; action: undoAiChangeAction }
+                        ShellMenuItem { command: "GLOBAL_NEXT_AI_CHANGE"; iconRole: "chevron-down"; objectName: "nextAiChangeMenuItem"; action: nextAiChangeAction }
+                        ShellMenuItem { command: "GLOBAL_PREVIOUS_AI_CHANGE"; iconRole: "chevron-left"; objectName: "previousAiChangeMenuItem"; action: previousAiChangeAction }
+                        MenuSeparator {}
+                        ShellMenuItem { command: "GLOBAL_KEEP_ALL_AI_CHANGES"; iconRole: "review-keep"; objectName: "keepAllAiChangesMenuItem"; action: keepAllAiChangesAction }
+                        ShellMenuItem { command: "GLOBAL_UNDO_ALL_AI_CHANGES"; iconRole: "undo"; objectName: "undoAllAiChangesMenuItem"; action: undoAllAiChangesAction }
+                        MenuSeparator {}
+                        ShellMenuItem { command: "GLOBAL_SHOW_AI_REVIEW"; iconRole: "show"; objectName: "showAiReviewMenuItem"; action: showAiReviewAction }
+                    }
+                    onObjectAdded: (index, object) => editMenu.insertMenu(root.menuIndexOf(editMenu, historyMenuItem) + 1, object)
+                    onObjectRemoved: (index, object) => editMenu.removeMenu(object)
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_OPEN_SELECT_LINES"
+                    help: qsTr("Selects lines by expressions")
+                    iconRole: "select-lines"
+                    objectName: "selectLinesMenuItem"
+                    action: selectLinesAction
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_SEARCH"
+                    help: qsTr("Opens the Find panel")
+                    iconRole: "search"
+                    objectName: "findMenuItem"
+                    action: findAction
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_FIND_REPLACE"
+                    help: qsTr("Opens the Find panel with the replace row shown")
+                    iconRole: "find-replace"
+                    objectName: "findReplaceMenuItem"
+                    action: findReplaceAction
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_FIND_NEXT"
+                    help: qsTr("Selects the next match")
+                    iconRole: "match-next"
+                    objectName: "findNextMenuItem"
+                    action: findNextAction
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_FIND_PREVIOUS"
+                    help: qsTr("Selects the previous match")
+                    iconRole: "match-previous"
+                    objectName: "findPreviousMenuItem"
+                    action: findPreviousAction
+                }
+                MenuSeparator {}
+                ShellMenuItem {
+                    command: "GLOBAL_INSERT_HARD_SPACE"
+                    help: qsTr("Inserts a hard space (%1) at the cursor in the line editor").arg("\\h")
+                    iconRole: "hard-space"
+                    objectName: "insertHardSpaceMenuItem"
+                    action: insertHardSpaceAction
                 }
             }
         }
         ShellMenu {
             objectName: "subtitlesMenu"
             title: qsTr("&Subtitles")
-            ShellMenuItem {
-                command: "GLOBAL_SHOW_SHIFT_TIMES"
-                help: qsTr("Shifting subtitle times")
-                id: showShiftTimesItem
-                iconRole: "shift-times"
-                objectName: "showShiftTimes"
-                text: qsTr("Shift &times…")
-                onTriggered: if (!root.hotkeyGesture("GLOBAL_SHOW_SHIFT_TIMES")) root.showPanel(timingDock)
-            }
-            ShellMenuItem {
-                command: "GLOBAL_SHOW_TIMING_POSTPROCESSOR"
-                help: qsTr("Moves line times by the lead-in, lead-out, gap and keyframe rules")
-                id: showPostprocessorItem
-                iconRole: "timing-postprocessor"
-                objectName: "showTimingPostprocessor"
-                text: qsTr("Timing &postprocessor…")
-                onTriggered: if (!root.hotkeyGesture("GLOBAL_SHOW_TIMING_POSTPROCESSOR")) root.showPanel(postprocessorDock)
-            }
-            ShellMenu {
-                objectName: "timingHelpersMenu"
-                title: qsTr("Timing helpers")
-                iconRole: "timing-assistant"
+            onBuilt: root.applyMenuShortcuts()
+            lazyContent: MenuContent {
                 ShellMenuItem {
-                    command: "GLOBAL_SNAP_START_TO_PREVIOUS_KEYFRAME"
-                    help: qsTr("Moves the start of each selected line to the keyframe before it")
-                    id: snapStartToPreviousKeyframeItem
-                    iconRole: "snap-start-to-previous-keyframe"
-                    objectName: "snapStartToPreviousKeyframeItem"
-                    text: qsTr("Start to previous keyframe")
-                    enabled: root.video.hasVideo && root.shell.hasEditingTarget
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_SNAP_START_TO_PREVIOUS_KEYFRAME")) root.runTimingHelper("GLOBAL_SNAP_START_TO_PREVIOUS_KEYFRAME")
+                    command: "GLOBAL_SHOW_SHIFT_TIMES"
+                    help: qsTr("Shifting subtitle times")
+                    iconRole: "shift-times"
+                    objectName: "showShiftTimes"
+                    action: showShiftTimesAction
                 }
                 ShellMenuItem {
-                    command: "GLOBAL_SNAP_START_TO_NEXT_KEYFRAME"
-                    help: qsTr("Moves the start of each selected line to the keyframe after it, staying before its end")
-                    id: snapStartToNextKeyframeItem
-                    iconRole: "snap-start-to-next-keyframe"
-                    objectName: "snapStartToNextKeyframeItem"
-                    text: qsTr("Start to next keyframe")
-                    enabled: root.video.hasVideo && root.shell.hasEditingTarget
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_SNAP_START_TO_NEXT_KEYFRAME")) root.runTimingHelper("GLOBAL_SNAP_START_TO_NEXT_KEYFRAME")
+                    command: "GLOBAL_SHOW_TIMING_POSTPROCESSOR"
+                    help: qsTr("Moves line times by the lead-in, lead-out, gap and keyframe rules")
+                    iconRole: "timing-postprocessor"
+                    objectName: "showTimingPostprocessor"
+                    action: showPostprocessorAction
                 }
-                ShellMenuItem {
-                    command: "GLOBAL_SNAP_END_TO_PREVIOUS_KEYFRAME"
-                    help: qsTr("Moves the end of each selected line to the keyframe before it, staying after its start")
-                    id: snapEndToPreviousKeyframeItem
-                    iconRole: "snap-end-to-previous-keyframe"
-                    objectName: "snapEndToPreviousKeyframeItem"
-                    text: qsTr("End to previous keyframe")
-                    enabled: root.video.hasVideo && root.shell.hasEditingTarget
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_SNAP_END_TO_PREVIOUS_KEYFRAME")) root.runTimingHelper("GLOBAL_SNAP_END_TO_PREVIOUS_KEYFRAME")
-                }
-                ShellMenuItem {
-                    command: "GLOBAL_SNAP_END_TO_NEXT_KEYFRAME"
-                    help: qsTr("Moves the end of each selected line to the keyframe after it")
-                    id: snapEndToNextKeyframeItem
-                    iconRole: "snap-end-to-next-keyframe"
-                    objectName: "snapEndToNextKeyframeItem"
-                    text: qsTr("End to next keyframe")
-                    enabled: root.video.hasVideo && root.shell.hasEditingTarget
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_SNAP_END_TO_NEXT_KEYFRAME")) root.runTimingHelper("GLOBAL_SNAP_END_TO_NEXT_KEYFRAME")
-                }
-                MenuSeparator {}
-                ShellMenuItem {
-                    command: "GLOBAL_ADD_LEAD_IN"
-                    help: qsTr("Starts each selected line earlier by the lead-in, no earlier than the line before it ends")
-                    id: addLeadInItem
-                    iconRole: "lead-in"
-                    objectName: "addLeadInItem"
-                    text: qsTr("Add lead-in")
-                    enabled: root.video.hasVideo && root.shell.hasEditingTarget
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_ADD_LEAD_IN")) root.runTimingHelper("GLOBAL_ADD_LEAD_IN")
-                }
-                ShellMenuItem {
-                    command: "GLOBAL_REMOVE_LEAD_IN"
-                    help: qsTr("Starts each selected line later by the lead-in, keeping at least one frame")
-                    id: removeLeadInItem
-                    iconRole: "lead-in-remove"
-                    objectName: "removeLeadInItem"
-                    text: qsTr("Remove lead-in")
-                    enabled: root.video.hasVideo && root.shell.hasEditingTarget
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_REMOVE_LEAD_IN")) root.runTimingHelper("GLOBAL_REMOVE_LEAD_IN")
-                }
-                ShellMenuItem {
-                    command: "GLOBAL_ADD_LEAD_OUT"
-                    help: qsTr("Ends each selected line later by the lead-out, no later than the next line starts")
-                    id: addLeadOutItem
-                    iconRole: "lead-out"
-                    objectName: "addLeadOutItem"
-                    text: qsTr("Add lead-out")
-                    enabled: root.video.hasVideo && root.shell.hasEditingTarget
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_ADD_LEAD_OUT")) root.runTimingHelper("GLOBAL_ADD_LEAD_OUT")
-                }
-                ShellMenuItem {
-                    command: "GLOBAL_REMOVE_LEAD_OUT"
-                    help: qsTr("Ends each selected line earlier by the lead-out, keeping at least one frame")
-                    id: removeLeadOutItem
-                    iconRole: "lead-out-remove"
-                    objectName: "removeLeadOutItem"
-                    text: qsTr("Remove lead-out")
-                    enabled: root.video.hasVideo && root.shell.hasEditingTarget
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_REMOVE_LEAD_OUT")) root.runTimingHelper("GLOBAL_REMOVE_LEAD_OUT")
-                }
-                MenuSeparator {}
-                ShellMenuItem {
-                    command: "GLOBAL_START_FRAME_EARLIER"
-                    help: qsTr("Moves the start of each selected line one frame earlier")
-                    id: startFrameEarlierItem
-                    iconRole: "time-offset-start"
-                    objectName: "startFrameEarlierItem"
-                    text: qsTr("Start one frame earlier")
-                    enabled: root.video.hasVideo && root.shell.hasEditingTarget
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_START_FRAME_EARLIER")) root.runTimingHelper("GLOBAL_START_FRAME_EARLIER")
-                }
-                ShellMenuItem {
-                    command: "GLOBAL_START_FRAME_LATER"
-                    help: qsTr("Moves the start of each selected line one frame later")
-                    id: startFrameLaterItem
-                    iconRole: "time-offset-start"
-                    objectName: "startFrameLaterItem"
-                    text: qsTr("Start one frame later")
-                    enabled: root.video.hasVideo && root.shell.hasEditingTarget
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_START_FRAME_LATER")) root.runTimingHelper("GLOBAL_START_FRAME_LATER")
-                }
-                ShellMenuItem {
-                    command: "GLOBAL_END_FRAME_EARLIER"
-                    help: qsTr("Moves the end of each selected line one frame earlier")
-                    id: endFrameEarlierItem
-                    iconRole: "time-offset-end"
-                    objectName: "endFrameEarlierItem"
-                    text: qsTr("End one frame earlier")
-                    enabled: root.video.hasVideo && root.shell.hasEditingTarget
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_END_FRAME_EARLIER")) root.runTimingHelper("GLOBAL_END_FRAME_EARLIER")
-                }
-                ShellMenuItem {
-                    command: "GLOBAL_END_FRAME_LATER"
-                    help: qsTr("Moves the end of each selected line one frame later")
-                    id: endFrameLaterItem
-                    iconRole: "time-offset-end"
-                    objectName: "endFrameLaterItem"
-                    text: qsTr("End one frame later")
-                    enabled: root.video.hasVideo && root.shell.hasEditingTarget
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_END_FRAME_LATER")) root.runTimingHelper("GLOBAL_END_FRAME_LATER")
-                }
-                MenuSeparator {}
-                ShellMenuItem {
-                    command: "GLOBAL_EXTEND_PREVIOUS_TO_START"
-                    help: qsTr("Ends the line before the active line where the active line starts")
-                    id: extendPreviousToStartItem
-                    iconRole: "extend-previous-to-start"
-                    objectName: "extendPreviousToStartItem"
-                    text: qsTr("Extend previous line to this start")
-                    enabled: root.shell.hasEditingTarget
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_EXTEND_PREVIOUS_TO_START")) root.runTimingHelper("GLOBAL_EXTEND_PREVIOUS_TO_START")
-                }
-                ShellMenuItem {
-                    command: "GLOBAL_EXTEND_NEXT_TO_END"
-                    help: qsTr("Starts the line after the active line where the active line ends")
-                    id: extendNextToEndItem
-                    iconRole: "extend-next-to-end"
-                    objectName: "extendNextToEndItem"
-                    text: qsTr("Extend next line to this end")
-                    enabled: root.shell.hasEditingTarget
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_EXTEND_NEXT_TO_END")) root.runTimingHelper("GLOBAL_EXTEND_NEXT_TO_END")
-                }
-                MenuSeparator {}
-                ShellMenuItem {
-                    command: "GLOBAL_TIMING_ASSISTANT"
-                    help: qsTr("Steps through the lines one at a time with a suggested start and end")
-                    id: timingAssistantItem
+                ShellMenu {
+                    objectName: "timingHelpersMenu"
+                    title: qsTr("Timing helpers")
                     iconRole: "timing-assistant"
-                    objectName: "timingAssistantItem"
-                    text: qsTr("Timing assistant")
-                    enabled: root.video.hasVideo && root.shell.hasEditingTarget
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_TIMING_ASSISTANT")) root.runTimingHelper("GLOBAL_TIMING_ASSISTANT")
-                }
-                ShellMenuItem {
-                    command: "GLOBAL_TIMING_ASSISTANT_ACCEPT"
-                    help: qsTr("Applies the timing assistant’s suggestion to the active line and goes to the next one")
-                    id: acceptTimingSuggestionItem
-                    iconRole: "commit"
-                    objectName: "acceptTimingSuggestionItem"
-                    text: qsTr("Accept assistant suggestion")
-                    enabled: root.video.hasVideo && root.shell.hasEditingTarget
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_TIMING_ASSISTANT_ACCEPT")) root.runTimingHelper("GLOBAL_TIMING_ASSISTANT_ACCEPT")
-                }
-            }
-            ShellMenuItem {
-                command: "GLOBAL_BLUR_AND_GLOW_LAYERS"
-                help: qsTr("Builds glow, border and shadow layers under the selected lines")
-                iconRole: "layers"
-                objectName: "blurAndGlowLayersMenuItem"
-                action: Action {
-                    id: blurAndGlowLayersAction
-                    text: qsTr("&Blur and glow layers…")
-                    enabled: root.shell.hasEditingTarget
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_BLUR_AND_GLOW_LAYERS")) root.openBlurAndGlowLayers()
-                }
-            }
-            ShellMenuItem {
-                command: "GLOBAL_BLUR_AND_GLOW_LAYERS_REPEAT"
-                help: qsTr("Builds the layers again with the values Blur and glow layers last built with")
-                iconRole: "layers-repeat"
-                objectName: "blurAndGlowLayersRepeatMenuItem"
-                text: qsTr("Build layers with the &last values")
-                enabled: root.shell.hasEditingTarget
-                onTriggered: if (!root.hotkeyGesture("GLOBAL_BLUR_AND_GLOW_LAYERS_REPEAT")) root.repeatBlurAndGlowLayers()
-            }
-            ShellMenuItem {
-                command: "GLOBAL_TYPESETTING_GRAPH"
-                help: qsTranslate("HikariSub.NodeEffects", "Opens node effects with the selected lines as the sources of a typesetting graph")
-                iconRole: "node-editor"
-                objectName: "typesettingGraphMenuItem"
-                action: Action {
-                    id: typesettingGraphAction
-                    text: qsTr("T&ypesetting graph…")
-                    enabled: root.shell.hasEditingTarget && !root.layoutLocked
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_TYPESETTING_GRAPH")) root.openTypesettingGraph()
-                }
-            }
-            ShellMenuItem {
-                command: "GLOBAL_SHOW_QC_NOTES"
-                help: qsTr("Notes from a QC pass, kept in the file, with the lines they mark")
-                id: showQcNotesItem
-                iconRole: "qc-notes"
-                objectName: "showQcNotes"
-                text: qsTr("&QC notes…")
-                onTriggered: if (!root.hotkeyGesture("GLOBAL_SHOW_QC_NOTES")) root.showPanel(qcNotesDock)
-            }
-            ShellMenuItem {
-                command: "GLOBAL_OPEN_STYLE_MANAGER"
-                help: qsTr("Is used to manage ASS styles")
-                id: styleManagerItem
-                iconRole: "styles"
-                objectName: "styleManagerMenuItem"
-                text: qsTr("Style &manager")
-                enabled: root.shell.hasEditingTarget
-                onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_STYLE_MANAGER")) root.lazy(styleManagerWindowLoader).showFor(root.app.activeLineStyle())
-            }
-            ShellMenuItem {
-                command: "GLOBAL_OPEN_ASS_PROPERTIES"
-                help: qsTr("Opens Script properties")
-                id: assPropertiesItem
-                iconRole: "script-properties"
-                objectName: "assProperties"
-                text: qsTr("Script properties")
-                enabled: root.shell.hasEditingTarget
-                onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_ASS_PROPERTIES")) root.openScriptProperties()
-            }
-            ShellMenuItem {
-                command: "GLOBAL_OPEN_FONT_COLLECTOR"
-                help: qsTr("Font collector")
-                id: fontCollectorItem
-                objectName: "fontCollectorMenuItem"
-                iconRole: "font-collector"
-                text: qsTr("Font collector")
-                enabled: root.shell.hasEditingTarget && root.shell.assColumns
-                onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_FONT_COLLECTOR")) root.openFontCollector()
-            }
-            ShellMenuItem {
-                command: "GLOBAL_OPEN_SUBS_RESAMPLE"
-                help: qsTr("Resample subtitles")
-                id: resampleItem
-                iconRole: "resample"
-                objectName: "resampleMenuItem"
-                text: qsTr("Resample subtitles")
-                enabled: root.shell.hasEditingTarget
-                onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_SUBS_RESAMPLE")) root.openResample()
-            }
-            ShellMenu {
-                help: qsTr("Changes the frame rate of the subtitle times")
-                iconRole: "fps"
-                objectName: "setFpsMenu"
-                title: qsTr("Set FPS")
-                enabled: root.shell.hasEditingTarget
-                ShellMenuItem {
-                    command: "GRID_SET_NEW_FPS"
-                    iconRole: "fps"
-                    objectName: "setNewFps"
-                    text: qsTr("Set new FPS…")
-                    onTriggered: if (!root.gridGesture(this, "GRID_SET_NEW_FPS")) root.openSetNewFps()
-                }
-                ShellMenuItem {
-                    command: "GRID_SET_FPS_FROM_VIDEO"
-                    iconRole: "fps-from-video"
-                    objectName: "setFpsFromVideo"
-                    text: qsTr("Set FPS from video")
-                    enabled: root.video.hasVideo
-                    onTriggered: if (!root.gridGesture(this, "GRID_SET_FPS_FROM_VIDEO")) root.app.setFpsFromVideo()
-                }
-            }
-            ShellMenuItem {
-                command: "GLOBAL_OPEN_SPELLCHECKER"
-                help: qsTr("Check spelling")
-                id: checkSpellingItem
-                iconRole: "spellchecker"
-                objectName: "checkSpellingMenuItem"
-                text: qsTr("Check spelling")
-                enabled: root.shell.hasEditingTarget
-                onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_SPELLCHECKER")) root.openSpellChecker()
-            }
-            ShellMenuItem {
-                command: "GLOBAL_CHECK_KARAOKE"
-                help: qsTr("Checks the karaoke syllables of every line")
-                id: checkKaraokeItem
-                iconRole: "karaoke-check"
-                objectName: "checkKaraokeMenuItem"
-                text: qsTr("Check karaoke")
-                enabled: root.shell.hasEditingTarget
-                onTriggered: if (!root.hotkeyGesture("GLOBAL_CHECK_KARAOKE")) root.openKaraokeCheck()
-            }
-            ShellMenuItem {
-                command: "GLOBAL_KANJI_TIMER"
-                help: qsTr("Copies the karaoke timing of romaji lines to their kanji lines")
-                id: kanjiTimerItem
-                iconRole: "kanji-timer"
-                objectName: "kanjiTimerMenuItem"
-                text: qsTr("Kanji timer")
-                enabled: root.shell.hasEditingTarget
-                onTriggered: if (!root.hotkeyGesture("GLOBAL_KANJI_TIMER")) root.openKanjiTimer()
-            }
-            MenuSeparator {}
-            ShellMenuItem {
-                command: "GLOBAL_TRANSLATION_MODE"
-                help: root.app.translationHint.length > 0 ? root.app.translationHint
-                    : qsTranslate("HikariSub.Translation", "Translator mode displays and saves both foreign text and translation text")
-                iconRole: "translation-mode"
-                objectName: "translationModeMenuItem"
-                action: Action {
-                    id: translationModeAction
-                    text: qsTranslate("HikariSub.Translation", "Translation mode")
-                    checkable: true
-                    checked: root.editor.translationMode
-                    enabled: root.shell.hasEditingTarget && (root.editor.translationMode || root.app.translatorModeAvailable)
-                    onToggled: {
-                        if (!root.hotkeyGesture("GLOBAL_TRANSLATION_MODE")) {
-                            if (checked)
-                                root.app.turnOnTranslationMode()
-                            else
-                                root.openInMainWindow(translationModeOffConfirm)
-                        }
-                        checked = Qt.binding(() => root.editor.translationMode)
+                    ShellMenuItem {
+                        command: "GLOBAL_SNAP_START_TO_PREVIOUS_KEYFRAME"
+                        help: qsTr("Moves the start of each selected line to the keyframe before it")
+                        iconRole: "snap-start-to-previous-keyframe"
+                        objectName: "snapStartToPreviousKeyframeItem"
+                        action: snapStartToPreviousKeyframeAction
                     }
+                    ShellMenuItem {
+                        command: "GLOBAL_SNAP_START_TO_NEXT_KEYFRAME"
+                        help: qsTr("Moves the start of each selected line to the keyframe after it, staying before its end")
+                        iconRole: "snap-start-to-next-keyframe"
+                        objectName: "snapStartToNextKeyframeItem"
+                        action: snapStartToNextKeyframeAction
+                    }
+                    ShellMenuItem {
+                        command: "GLOBAL_SNAP_END_TO_PREVIOUS_KEYFRAME"
+                        help: qsTr("Moves the end of each selected line to the keyframe before it, staying after its start")
+                        iconRole: "snap-end-to-previous-keyframe"
+                        objectName: "snapEndToPreviousKeyframeItem"
+                        action: snapEndToPreviousKeyframeAction
+                    }
+                    ShellMenuItem {
+                        command: "GLOBAL_SNAP_END_TO_NEXT_KEYFRAME"
+                        help: qsTr("Moves the end of each selected line to the keyframe after it")
+                        iconRole: "snap-end-to-next-keyframe"
+                        objectName: "snapEndToNextKeyframeItem"
+                        action: snapEndToNextKeyframeAction
+                    }
+                    MenuSeparator {}
+                    ShellMenuItem {
+                        command: "GLOBAL_ADD_LEAD_IN"
+                        help: qsTr("Starts each selected line earlier by the lead-in, no earlier than the line before it ends")
+                        iconRole: "lead-in"
+                        objectName: "addLeadInItem"
+                        action: addLeadInAction
+                    }
+                    ShellMenuItem {
+                        command: "GLOBAL_REMOVE_LEAD_IN"
+                        help: qsTr("Starts each selected line later by the lead-in, keeping at least one frame")
+                        iconRole: "lead-in-remove"
+                        objectName: "removeLeadInItem"
+                        action: removeLeadInAction
+                    }
+                    ShellMenuItem {
+                        command: "GLOBAL_ADD_LEAD_OUT"
+                        help: qsTr("Ends each selected line later by the lead-out, no later than the next line starts")
+                        iconRole: "lead-out"
+                        objectName: "addLeadOutItem"
+                        action: addLeadOutAction
+                    }
+                    ShellMenuItem {
+                        command: "GLOBAL_REMOVE_LEAD_OUT"
+                        help: qsTr("Ends each selected line earlier by the lead-out, keeping at least one frame")
+                        iconRole: "lead-out-remove"
+                        objectName: "removeLeadOutItem"
+                        action: removeLeadOutAction
+                    }
+                    MenuSeparator {}
+                    ShellMenuItem {
+                        command: "GLOBAL_START_FRAME_EARLIER"
+                        help: qsTr("Moves the start of each selected line one frame earlier")
+                        iconRole: "time-offset-start"
+                        objectName: "startFrameEarlierItem"
+                        action: startFrameEarlierAction
+                    }
+                    ShellMenuItem {
+                        command: "GLOBAL_START_FRAME_LATER"
+                        help: qsTr("Moves the start of each selected line one frame later")
+                        iconRole: "time-offset-start"
+                        objectName: "startFrameLaterItem"
+                        action: startFrameLaterAction
+                    }
+                    ShellMenuItem {
+                        command: "GLOBAL_END_FRAME_EARLIER"
+                        help: qsTr("Moves the end of each selected line one frame earlier")
+                        iconRole: "time-offset-end"
+                        objectName: "endFrameEarlierItem"
+                        action: endFrameEarlierAction
+                    }
+                    ShellMenuItem {
+                        command: "GLOBAL_END_FRAME_LATER"
+                        help: qsTr("Moves the end of each selected line one frame later")
+                        iconRole: "time-offset-end"
+                        objectName: "endFrameLaterItem"
+                        action: endFrameLaterAction
+                    }
+                    MenuSeparator {}
+                    ShellMenuItem {
+                        command: "GLOBAL_EXTEND_PREVIOUS_TO_START"
+                        help: qsTr("Ends the line before the active line where the active line starts")
+                        iconRole: "extend-previous-to-start"
+                        objectName: "extendPreviousToStartItem"
+                        action: extendPreviousToStartAction
+                    }
+                    ShellMenuItem {
+                        command: "GLOBAL_EXTEND_NEXT_TO_END"
+                        help: qsTr("Starts the line after the active line where the active line ends")
+                        iconRole: "extend-next-to-end"
+                        objectName: "extendNextToEndItem"
+                        action: extendNextToEndAction
+                    }
+                    MenuSeparator {}
+                    ShellMenuItem {
+                        command: "GLOBAL_TIMING_ASSISTANT"
+                        help: qsTr("Steps through the lines one at a time with a suggested start and end")
+                        iconRole: "timing-assistant"
+                        objectName: "timingAssistantItem"
+                        action: timingAssistantAction
+                    }
+                    ShellMenuItem {
+                        command: "GLOBAL_TIMING_ASSISTANT_ACCEPT"
+                        help: qsTr("Applies the timing assistant’s suggestion to the active line and goes to the next one")
+                        iconRole: "commit"
+                        objectName: "acceptTimingSuggestionItem"
+                        action: acceptTimingSuggestionAction
+                    }
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_BLUR_AND_GLOW_LAYERS"
+                    help: qsTr("Builds glow, border and shadow layers under the selected lines")
+                    iconRole: "layers"
+                    objectName: "blurAndGlowLayersMenuItem"
+                    action: blurAndGlowLayersAction
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_BLUR_AND_GLOW_LAYERS_REPEAT"
+                    help: qsTr("Builds the layers again with the values Blur and glow layers last built with")
+                    iconRole: "layers-repeat"
+                    objectName: "blurAndGlowLayersRepeatMenuItem"
+                    text: qsTr("Build layers with the &last values")
+                    enabled: root.shell.hasEditingTarget
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_BLUR_AND_GLOW_LAYERS_REPEAT")) root.repeatBlurAndGlowLayers()
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_TYPESETTING_GRAPH"
+                    help: qsTranslate("HikariSub.NodeEffects", "Opens node effects with the selected lines as the sources of a typesetting graph")
+                    iconRole: "node-editor"
+                    objectName: "typesettingGraphMenuItem"
+                    action: typesettingGraphAction
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_SHOW_QC_NOTES"
+                    help: qsTr("Notes from a QC pass, kept in the file, with the lines they mark")
+                    iconRole: "qc-notes"
+                    objectName: "showQcNotes"
+                    action: showQcNotesAction
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_OPEN_STYLE_MANAGER"
+                    help: qsTr("Is used to manage ASS styles")
+                    iconRole: "styles"
+                    objectName: "styleManagerMenuItem"
+                    action: styleManagerAction
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_OPEN_ASS_PROPERTIES"
+                    help: qsTr("Opens Script properties")
+                    iconRole: "script-properties"
+                    objectName: "assProperties"
+                    action: assPropertiesAction
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_OPEN_FONT_COLLECTOR"
+                    help: qsTr("Font collector")
+                    objectName: "fontCollectorMenuItem"
+                    iconRole: "font-collector"
+                    action: fontCollectorAction
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_OPEN_SUBS_RESAMPLE"
+                    help: qsTr("Resample subtitles")
+                    iconRole: "resample"
+                    objectName: "resampleMenuItem"
+                    action: resampleAction
+                }
+                ShellMenu {
+                    help: qsTr("Changes the frame rate of the subtitle times")
+                    iconRole: "fps"
+                    objectName: "setFpsMenu"
+                    title: qsTr("Set FPS")
+                    enabled: root.shell.hasEditingTarget
+                    ShellMenuItem {
+                        command: "GRID_SET_NEW_FPS"
+                        iconRole: "fps"
+                        objectName: "setNewFps"
+                        text: qsTr("Set new FPS…")
+                        onTriggered: if (!root.gridGesture(this, "GRID_SET_NEW_FPS")) root.openSetNewFps()
+                    }
+                    ShellMenuItem {
+                        command: "GRID_SET_FPS_FROM_VIDEO"
+                        iconRole: "fps-from-video"
+                        objectName: "setFpsFromVideo"
+                        text: qsTr("Set FPS from video")
+                        enabled: root.video.hasVideo
+                        onTriggered: if (!root.gridGesture(this, "GRID_SET_FPS_FROM_VIDEO")) root.app.setFpsFromVideo()
+                    }
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_OPEN_SPELLCHECKER"
+                    help: qsTr("Check spelling")
+                    iconRole: "spellchecker"
+                    objectName: "checkSpellingMenuItem"
+                    action: checkSpellingAction
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_CHECK_KARAOKE"
+                    help: qsTr("Checks the karaoke syllables of every line")
+                    iconRole: "karaoke-check"
+                    objectName: "checkKaraokeMenuItem"
+                    action: checkKaraokeAction
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_KANJI_TIMER"
+                    help: qsTr("Copies the karaoke timing of romaji lines to their kanji lines")
+                    iconRole: "kanji-timer"
+                    objectName: "kanjiTimerMenuItem"
+                    action: kanjiTimerAction
+                }
+                MenuSeparator {}
+                ShellMenuItem {
+                    command: "GLOBAL_TRANSLATION_MODE"
+                    help: root.app.translationHint.length > 0 ? root.app.translationHint
+                        : qsTranslate("HikariSub.Translation", "Translator mode displays and saves both foreign text and translation text")
+                    iconRole: "translation-mode"
+                    objectName: "translationModeMenuItem"
+                    action: translationModeAction
                 }
             }
         }
         ShellMenu {
             objectName: "videoMenu"
             title: qsTr("&Video")
-            ShellMenuItem {
-                command: "GLOBAL_OPEN_VIDEO"
-                help: qsTr("Opens video file")
-                iconRole: "open-video"
-                action: Action {
-                    text: qsTr("Open &video…")
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_VIDEO")) videoDialog.show()
+            onBuilt: root.applyMenuShortcuts()
+            lazyContent: MenuContent {
+                ShellMenuItem {
+                    command: "GLOBAL_OPEN_VIDEO"
+                    help: qsTr("Opens video file")
+                    iconRole: "open-video"
+                    action: Action {
+                        text: qsTr("Open &video…")
+                        onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_VIDEO")) videoDialog.show()
+                    }
                 }
-            }
-            RecentFilesMenu {
-                iconRole: "recent-video"
-                objectName: "recentVideoMenu"
-                prefix: "recentVideo"
-                title: qsTr("Recently opened videos")
-                load: () => root.app.recentVideos()
-                onChosen: path => root.video.openVideo(path)
-            }
-            ShellMenuItem {
-                command: "GLOBAL_OPEN_KEYFRAMES"
-                objectName: "openKeyframesMenuItem"
-                help: qsTr("Open keyframes")
-                iconRole: "open-keyframes"
-                action: Action {
-                    id: openKeyframesAction
-                    text: qsTr("Open keyframes")
+                RecentFilesMenu {
+                    iconRole: "recent-video"
+                    objectName: "recentVideoMenu"
+                    prefix: "recentVideo"
+                    title: qsTr("Recently opened videos")
+                    load: () => root.app.recentVideos()
+                    onChosen: path => root.video.openVideo(path)
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_OPEN_KEYFRAMES"
+                    objectName: "openKeyframesMenuItem"
+                    help: qsTr("Open keyframes")
+                    iconRole: "open-keyframes"
+                    action: openKeyframesAction
+                }
+                RecentFilesMenu {
+                    iconRole: "recent-keyframes"
+                    objectName: "recentKeyframesMenu"
+                    prefix: "recentKeyframes"
+                    title: qsTr("Recently opened keyframes")
                     enabled: root.video.hasVideo
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_KEYFRAMES")) keyframesDialog.show()
-                }
-            }
-            RecentFilesMenu {
-                iconRole: "recent-keyframes"
-                objectName: "recentKeyframesMenu"
-                prefix: "recentKeyframes"
-                title: qsTr("Recently opened keyframes")
-                enabled: root.video.hasVideo
-                load: () => root.app.recentKeyframes()
-                onChosen: path => {
-                    const problem = root.app.openKeyframesFile(path)
-                    if (problem.length > 0)
-                        root.notices.post("error", qsTr("Open keyframes"), problem)
-                }
-            }
-            ShellMenuItem {
-                command: "GLOBAL_OPEN_TIMECODES"
-                objectName: "openTimecodesMenuItem"
-                help: qsTr("Open a VFR timecodes v1, v2 or v4 file")
-                iconRole: "open-timecodes"
-                action: Action {
-                    id: openTimecodesAction
-                    text: qsTr("Open timecodes")
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_TIMECODES")) timecodesDialog.show()
-                }
-            }
-            RecentFilesMenu {
-                iconRole: "recent-timecodes"
-                objectName: "recentTimecodesMenu"
-                prefix: "recentTimecodes"
-                title: qsTr("Recently opened timecodes")
-                load: () => root.app.recentTimecodes()
-                onChosen: path => root.openTimecodes(path)
-            }
-            ShellMenuItem {
-                command: "GLOBAL_SAVE_TIMECODES"
-                objectName: "saveTimecodesMenuItem"
-                help: qsTr("Save a VFR timecodes v2 file")
-                iconRole: "save-timecodes"
-                action: Action {
-                    id: saveTimecodesAction
-                    text: qsTr("Save timecodes")
-                    enabled: root.video.hasVideo || root.app.timecodesFile.length > 0
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_SAVE_TIMECODES")) saveTimecodesDialog.show()
-                }
-            }
-            ShellMenuItem {
-                command: "GLOBAL_CLOSE_TIMECODES"
-                objectName: "closeTimecodesMenuItem"
-                help: qsTr("Close the currently open timecodes file")
-                iconRole: "close-timecodes"
-                action: Action {
-                    id: closeTimecodesAction
-                    text: qsTr("Close timecodes")
-                    enabled: root.app.timecodesFile.length > 0
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_CLOSE_TIMECODES")) root.app.closeTimecodes()
-                }
-            }
-            ShellMenuItem {
-                command: "GLOBAL_OPEN_DUMMY_VIDEO"
-                iconRole: "dummy-video"
-                objectName: "dummyVideoMenuItem"
-                action: Action {
-                    id: dummyVideoAction
-                    text: qsTr("Open dummy video")
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_DUMMY_VIDEO")) root.openDummyVideo()
-                }
-            }
-            ShellMenuItem {
-                command: "GLOBAL_CENTER_TIMES_IN_FRAMES"
-                help: qsTr("Moves the selected lines’ start and end times to the middle of their frames, so a later shift by time keeps them on whole frames")
-                iconRole: "center-times"
-                objectName: "centerTimesInFramesMenuItem"
-                action: Action {
-                    id: centerTimesInFramesAction
-                    text: qsTr("Centre times within frames")
-                    enabled: root.video.hasVideo && root.shell.hasEditingTarget
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_CENTER_TIMES_IN_FRAMES")) root.app.centerTimesInFrames()
-                }
-            }
-            ShellMenuItem {
-                command: "GLOBAL_ALIGN_TO_VIDEO"
-                help: qsTr("Times the active line to the frames around the video’s frame where a picked point keeps its colour")
-                iconRole: "align-to-video"
-                objectName: "alignToVideoMenuItem"
-                action: Action {
-                    id: alignToVideoAction
-                    text: qsTr("Align to video…")
-                    enabled: root.video.hasVideo && root.shell.hasEditingTarget
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_ALIGN_TO_VIDEO")) root.openAlignToVideo()
-                }
-            }
-            ShellMenuItem {
-                command: "GLOBAL_TRACK_COLOUR"
-                help: qsTr("Follows a picked point’s colour across the selected lines’ frames and writes it as colour or alpha tags")
-                iconRole: "track-colour"
-                objectName: "trackColourMenuItem"
-                action: Action {
-                    id: trackColourAction
-                    text: qsTr("Track colour…")
-                    enabled: root.video.hasVideo && root.shell.hasEditingTarget
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_TRACK_COLOUR")) root.openVideoAnalysis("track")
-                }
-            }
-            ShellMenuItem {
-                command: "GLOBAL_FIND_FADE"
-                help: qsTr("Finds where the active line’s sign fades in and out at a picked point and writes %1").arg("\\fad")
-                iconRole: "find-fade"
-                objectName: "findFadeMenuItem"
-                action: Action {
-                    id: findFadeAction
-                    text: qsTr("Find fade…")
-                    enabled: root.video.hasVideo && root.shell.hasEditingTarget
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_FIND_FADE")) root.openVideoAnalysis("fade")
-                }
-            }
-            ShellMenuItem {
-                command: "GLOBAL_SET_START_TIME"
-                iconRole: "set-start-time"
-                objectName: "setStartTimeMenuItem"
-                action: Action {
-                    id: setStartTimeAction
-                    text: qsTr("Insert start time from video")
-                    enabled: root.video.hasVideo && root.shell.hasEditingTarget
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_SET_START_TIME")) root.app.setTimeFromVideo(false)
-                }
-            }
-            ShellMenuItem {
-                command: "GLOBAL_SET_END_TIME"
-                iconRole: "set-end-time"
-                objectName: "setEndTimeMenuItem"
-                action: Action {
-                    id: setEndTimeAction
-                    text: qsTr("Insert end time from video")
-                    enabled: root.video.hasVideo && root.shell.hasEditingTarget
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_SET_END_TIME")) root.app.setTimeFromVideo(true)
-                }
-            }
-            ShellMenu {
-                iconRole: "shift-times"
-                objectName: "shiftFramesToVideoMenu"
-                title: qsTr("Shift by frames to video")
-                enabled: root.video.hasVideo && root.shell.hasEditingTarget
-                ShellMenuItem {
-                    command: "GLOBAL_SHIFT_FRAMES_TO_VIDEO_START"
-                    help: qsTr("Shifts the selected lines by whole frames so the active line starts on the video frame")
-                    iconRole: "shift-start-to-video"
-                    objectName: "shiftFramesToVideoStartMenuItem"
-                    action: Action {
-                        id: shiftFramesToVideoStartAction
-                        text: qsTr("Selected lines, start at video")
-                        enabled: root.video.hasVideo && root.shell.hasEditingTarget
-                        onTriggered: if (!root.hotkeyGesture("GLOBAL_SHIFT_FRAMES_TO_VIDEO_START")) root.app.shiftFramesToVideo(false, false)
+                    load: () => root.app.recentKeyframes()
+                    onChosen: path => {
+                        const problem = root.app.openKeyframesFile(path)
+                        if (problem.length > 0)
+                            root.notices.post("error", qsTr("Open keyframes"), problem)
                     }
                 }
                 ShellMenuItem {
-                    command: "GLOBAL_SHIFT_FRAMES_TO_VIDEO_END"
-                    help: qsTr("Shifts the selected lines by whole frames so the active line ends on the video frame")
-                    iconRole: "shift-end-to-video"
-                    objectName: "shiftFramesToVideoEndMenuItem"
-                    action: Action {
-                        id: shiftFramesToVideoEndAction
-                        text: qsTr("Selected lines, end at video")
-                        enabled: root.video.hasVideo && root.shell.hasEditingTarget
-                        onTriggered: if (!root.hotkeyGesture("GLOBAL_SHIFT_FRAMES_TO_VIDEO_END")) root.app.shiftFramesToVideo(true, false)
-                    }
+                    command: "GLOBAL_OPEN_TIMECODES"
+                    objectName: "openTimecodesMenuItem"
+                    help: qsTr("Open a VFR timecodes v1, v2 or v4 file")
+                    iconRole: "open-timecodes"
+                    action: openTimecodesAction
+                }
+                RecentFilesMenu {
+                    iconRole: "recent-timecodes"
+                    objectName: "recentTimecodesMenu"
+                    prefix: "recentTimecodes"
+                    title: qsTr("Recently opened timecodes")
+                    load: () => root.app.recentTimecodes()
+                    onChosen: path => root.openTimecodes(path)
                 }
                 ShellMenuItem {
-                    command: "GLOBAL_SHIFT_FOLLOWING_FRAMES_TO_VIDEO_START"
-                    help: qsTr("Shifts the active line and every line after it by whole frames so the active line starts on the video frame")
-                    iconRole: "shift-start-to-video"
-                    objectName: "shiftFollowingFramesToVideoStartMenuItem"
-                    action: Action {
-                        id: shiftFollowingFramesToVideoStartAction
-                        text: qsTr("Following lines, start at video")
-                        enabled: root.video.hasVideo && root.shell.hasEditingTarget
-                        onTriggered: if (!root.hotkeyGesture("GLOBAL_SHIFT_FOLLOWING_FRAMES_TO_VIDEO_START")) root.app.shiftFramesToVideo(false, true)
-                    }
+                    command: "GLOBAL_SAVE_TIMECODES"
+                    objectName: "saveTimecodesMenuItem"
+                    help: qsTr("Save a VFR timecodes v2 file")
+                    iconRole: "save-timecodes"
+                    action: saveTimecodesAction
                 }
                 ShellMenuItem {
-                    command: "GLOBAL_SHIFT_FOLLOWING_FRAMES_TO_VIDEO_END"
-                    help: qsTr("Shifts the active line and every line after it by whole frames so the active line ends on the video frame")
-                    iconRole: "shift-end-to-video"
-                    objectName: "shiftFollowingFramesToVideoEndMenuItem"
-                    action: Action {
-                        id: shiftFollowingFramesToVideoEndAction
-                        text: qsTr("Following lines, end at video")
-                        enabled: root.video.hasVideo && root.shell.hasEditingTarget
-                        onTriggered: if (!root.hotkeyGesture("GLOBAL_SHIFT_FOLLOWING_FRAMES_TO_VIDEO_END")) root.app.shiftFramesToVideo(true, true)
+                    command: "GLOBAL_CLOSE_TIMECODES"
+                    objectName: "closeTimecodesMenuItem"
+                    help: qsTr("Close the currently open timecodes file")
+                    iconRole: "close-timecodes"
+                    action: closeTimecodesAction
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_OPEN_DUMMY_VIDEO"
+                    iconRole: "dummy-video"
+                    objectName: "dummyVideoMenuItem"
+                    action: dummyVideoAction
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_CENTER_TIMES_IN_FRAMES"
+                    help: qsTr("Moves the selected lines’ start and end times to the middle of their frames, so a later shift by time keeps them on whole frames")
+                    iconRole: "center-times"
+                    objectName: "centerTimesInFramesMenuItem"
+                    action: centerTimesInFramesAction
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_ALIGN_TO_VIDEO"
+                    help: qsTr("Times the active line to the frames around the video’s frame where a picked point keeps its colour")
+                    iconRole: "align-to-video"
+                    objectName: "alignToVideoMenuItem"
+                    action: alignToVideoAction
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_TRACK_COLOUR"
+                    help: qsTr("Follows a picked point’s colour across the selected lines’ frames and writes it as colour or alpha tags")
+                    iconRole: "track-colour"
+                    objectName: "trackColourMenuItem"
+                    action: trackColourAction
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_FIND_FADE"
+                    help: qsTr("Finds where the active line’s sign fades in and out at a picked point and writes %1").arg("\\fad")
+                    iconRole: "find-fade"
+                    objectName: "findFadeMenuItem"
+                    action: findFadeAction
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_SET_START_TIME"
+                    iconRole: "set-start-time"
+                    objectName: "setStartTimeMenuItem"
+                    action: setStartTimeAction
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_SET_END_TIME"
+                    iconRole: "set-end-time"
+                    objectName: "setEndTimeMenuItem"
+                    action: setEndTimeAction
+                }
+                ShellMenu {
+                    iconRole: "shift-times"
+                    objectName: "shiftFramesToVideoMenu"
+                    title: qsTr("Shift by frames to video")
+                    enabled: root.video.hasVideo && root.shell.hasEditingTarget
+                    ShellMenuItem {
+                        command: "GLOBAL_SHIFT_FRAMES_TO_VIDEO_START"
+                        help: qsTr("Shifts the selected lines by whole frames so the active line starts on the video frame")
+                        iconRole: "shift-start-to-video"
+                        objectName: "shiftFramesToVideoStartMenuItem"
+                        action: shiftFramesToVideoStartAction
+                    }
+                    ShellMenuItem {
+                        command: "GLOBAL_SHIFT_FRAMES_TO_VIDEO_END"
+                        help: qsTr("Shifts the selected lines by whole frames so the active line ends on the video frame")
+                        iconRole: "shift-end-to-video"
+                        objectName: "shiftFramesToVideoEndMenuItem"
+                        action: shiftFramesToVideoEndAction
+                    }
+                    ShellMenuItem {
+                        command: "GLOBAL_SHIFT_FOLLOWING_FRAMES_TO_VIDEO_START"
+                        help: qsTr("Shifts the active line and every line after it by whole frames so the active line starts on the video frame")
+                        iconRole: "shift-start-to-video"
+                        objectName: "shiftFollowingFramesToVideoStartMenuItem"
+                        action: shiftFollowingFramesToVideoStartAction
+                    }
+                    ShellMenuItem {
+                        command: "GLOBAL_SHIFT_FOLLOWING_FRAMES_TO_VIDEO_END"
+                        help: qsTr("Shifts the active line and every line after it by whole frames so the active line ends on the video frame")
+                        iconRole: "shift-end-to-video"
+                        objectName: "shiftFollowingFramesToVideoEndMenuItem"
+                        action: shiftFollowingFramesToVideoEndAction
                     }
                 }
-            }
-            ShellMenu {
-                iconRole: "motion-apply"
-                objectName: "trackingMenu"
-                title: qsTr("Tracking")
-                enabled: root.shell.hasEditingTarget
-                ShellMenuItem {
-                    command: "GLOBAL_APPLY_MOTION_DATA"
-                    help: root.video.hasVideo ? qsTr("Applies After Effects motion data from Mocha or Blender to the selected lines, one line a frame")
-                                              : qsTr("Open a video first: tracking data is per frame.")
+                ShellMenu {
                     iconRole: "motion-apply"
-                    objectName: "applyMotionDataMenuItem"
-                    action: Action {
-                        id: applyMotionDataAction
-                        text: qsTr("Apply motion data…")
-                        enabled: root.video.hasVideo && root.shell.hasEditingTarget
-                        onTriggered: if (!root.hotkeyGesture("GLOBAL_APPLY_MOTION_DATA")) root.openMotionData()
+                    objectName: "trackingMenu"
+                    title: qsTr("Tracking")
+                    enabled: root.shell.hasEditingTarget
+                    ShellMenuItem {
+                        command: "GLOBAL_APPLY_MOTION_DATA"
+                        help: root.video.hasVideo ? qsTr("Applies After Effects motion data from Mocha or Blender to the selected lines, one line a frame")
+                                                  : qsTr("Open a video first: tracking data is per frame.")
+                        iconRole: "motion-apply"
+                        objectName: "applyMotionDataMenuItem"
+                        action: applyMotionDataAction
+                    }
+                    ShellMenuItem {
+                        command: "GLOBAL_PERSPECTIVE_TRACKING"
+                        help: root.video.hasVideo ? qsTr("Applies Power-Pin tracking data to the selected lines, one line a frame")
+                                                  : qsTr("Open a video first: tracking data is per frame.")
+                        iconRole: "tool-perspective"
+                        objectName: "perspectiveTrackingMenuItem"
+                        action: perspectiveTrackingAction
+                    }
+                    ShellMenuItem {
+                        command: "GLOBAL_REVERT_MOTION_DATA"
+                        help: qsTr("Puts the tracked lines of the selection back as the lines they were made from")
+                        iconRole: "motion-revert"
+                        objectName: "revertMotionDataMenuItem"
+                        action: revertMotionDataAction
+                    }
+                    MenuSeparator {}
+                    ShellMenuItem {
+                        command: "GLOBAL_COPY_MOTION_DATA"
+                        help: root.video.hasVideo ? qsTr("Copies the selected frame-by-frame lines’ position, scale and rotation as motion data")
+                                                  : qsTr("Open a video first: tracking data is per frame.")
+                        iconRole: "motion-copy"
+                        objectName: "copyMotionDataMenuItem"
+                        action: copyMotionDataAction
+                    }
+                    ShellMenuItem {
+                        command: "GLOBAL_COPY_POWER_PIN_TRACK"
+                        help: root.video.hasVideo ? qsTr("Copies the selected lines’ perspective planes as Power-Pin data, one quad a frame")
+                                                  : qsTr("Open a video first: tracking data is per frame.")
+                        iconRole: "perspective-plane"
+                        objectName: "copyPowerPinTrackMenuItem"
+                        action: copyPowerPinTrackAction
+                    }
+                    MenuSeparator {}
+                    ShellMenuItem {
+                        command: "GLOBAL_EXTEND_TRACKED_LINES"
+                        help: root.video.hasVideo ? qsTr("Fits the selected frame-by-frame lines’ motion and carries it on for more frames")
+                                                  : qsTr("Open a video first: tracking data is per frame.")
+                        iconRole: "motion-extend"
+                        objectName: "extendTrackedLinesMenuItem"
+                        action: extendTrackedLinesAction
+                    }
+                    ShellMenuItem {
+                        command: "GLOBAL_EXTRAPOLATE_MOVE"
+                        help: qsTr("Carries each selected line’s timed %1 on at the same speed from its start to its end").arg("\\move")
+                        iconRole: "move-extend"
+                        objectName: "extrapolateMoveMenuItem"
+                        action: extrapolateMoveAction
                     }
                 }
                 ShellMenuItem {
-                    command: "GLOBAL_PERSPECTIVE_TRACKING"
-                    help: root.video.hasVideo ? qsTr("Applies Power-Pin tracking data to the selected lines, one line a frame")
-                                              : qsTr("Open a video first: tracking data is per frame.")
-                    iconRole: "tool-perspective"
-                    objectName: "perspectiveTrackingMenuItem"
-                    action: Action {
-                        id: perspectiveTrackingAction
-                        text: qsTr("Perspective tracking…")
-                        enabled: root.video.hasVideo && root.shell.hasEditingTarget
-                        onTriggered: if (!root.hotkeyGesture("GLOBAL_PERSPECTIVE_TRACKING")) root.openPerspectiveTracking()
-                    }
+                    command: "GLOBAL_PREVIOUS_FRAME"
+                    help: qsTr("Go to previous frame")
+                    iconRole: "frame-previous"
+                    action: previousFrameAction
                 }
                 ShellMenuItem {
-                    command: "GLOBAL_REVERT_MOTION_DATA"
-                    help: qsTr("Puts the tracked lines of the selection back as the lines they were made from")
-                    iconRole: "motion-revert"
-                    objectName: "revertMotionDataMenuItem"
-                    action: Action {
-                        id: revertMotionDataAction
-                        text: qsTr("Revert motion data")
-                        enabled: root.shell.hasEditingTarget
-                        onTriggered: if (!root.hotkeyGesture("GLOBAL_REVERT_MOTION_DATA")) root.revertMotionData()
-                    }
+                    command: "GLOBAL_NEXT_FRAME"
+                    help: qsTr("Go to next frame")
+                    iconRole: "frame-next"
+                    action: nextFrameAction
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_SET_VIDEO_AT_START_TIME"
+                    help: qsTr("Moves video to start time")
+                    iconRole: "video-to-start-time"
+                    action: goToStartAction
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_SET_VIDEO_AT_END_TIME"
+                    help: qsTr("Moves video to end time")
+                    iconRole: "video-to-end-time"
+                    action: goToEndAction
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_PLAY_PAUSE"
+                    help: qsTr("Plays or pauses the video")
+                    iconRole: root.video.playing ? "media-pause" : "media-play"
+                    action: playPauseAction
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_GO_TO_PREVIOUS_KEYFRAME"
+                    iconRole: "keyframe-previous"
+                    action: previousKeyframeAction
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_GO_TO_NEXT_KEYFRAME"
+                    iconRole: "keyframe-next"
+                    action: nextKeyframeAction
                 }
                 MenuSeparator {}
                 ShellMenuItem {
-                    command: "GLOBAL_COPY_MOTION_DATA"
-                    help: root.video.hasVideo ? qsTr("Copies the selected frame-by-frame lines’ position, scale and rotation as motion data")
-                                              : qsTr("Open a video first: tracking data is per frame.")
-                    iconRole: "motion-copy"
-                    objectName: "copyMotionDataMenuItem"
-                    action: Action {
-                        id: copyMotionDataAction
-                        text: qsTr("Copy motion data from lines")
-                        enabled: root.video.hasVideo && root.shell.hasEditingTarget
-                        onTriggered: if (!root.hotkeyGesture("GLOBAL_COPY_MOTION_DATA")) root.trackingToast(root.app.copyMotionData())
-                    }
+                    iconRole: "close-video"
+                    objectName: "unloadVideoMenuItem"
+                    text: qsTr("Unload video")
+                    enabled: root.video.loaded
+                    onTriggered: if (!root.hotkeyGesture("VIDEO_DELETE_FILE", 3)) root.video.unloadVideo()
                 }
                 ShellMenuItem {
-                    command: "GLOBAL_COPY_POWER_PIN_TRACK"
-                    help: root.video.hasVideo ? qsTr("Copies the selected lines’ perspective planes as Power-Pin data, one quad a frame")
-                                              : qsTr("Open a video first: tracking data is per frame.")
-                    iconRole: "perspective-plane"
-                    objectName: "copyPowerPinTrackMenuItem"
-                    action: Action {
-                        id: copyPowerPinTrackAction
-                        text: qsTr("Copy Power-Pin track from lines")
-                        enabled: root.video.hasVideo && root.shell.hasEditingTarget
-                        onTriggered: if (!root.hotkeyGesture("GLOBAL_COPY_POWER_PIN_TRACK")) root.trackingToast(root.app.copyPowerPinTrack())
-                    }
+                    command: "GLOBAL_RELOAD_VIDEO"
+                    iconRole: "reload-video"
+                    objectName: "reloadVideoMenuItem"
+                    action: reloadVideoAction
                 }
-                MenuSeparator {}
-                ShellMenuItem {
-                    command: "GLOBAL_EXTEND_TRACKED_LINES"
-                    help: root.video.hasVideo ? qsTr("Fits the selected frame-by-frame lines’ motion and carries it on for more frames")
-                                              : qsTr("Open a video first: tracking data is per frame.")
-                    iconRole: "motion-extend"
-                    objectName: "extendTrackedLinesMenuItem"
-                    action: Action {
-                        id: extendTrackedLinesAction
-                        text: qsTr("Extend tracked lines…")
-                        enabled: root.video.hasVideo && root.shell.hasEditingTarget
-                        onTriggered: if (!root.hotkeyGesture("GLOBAL_EXTEND_TRACKED_LINES")) root.openExtendTracking()
-                    }
+                VideoStreamsMenu {
+                    objectName: "videoStreamsMenu"
+                    video: root.video
+                }
+                VideoChaptersMenu {
+                    objectName: "videoChaptersMenu"
+                    video: root.video
                 }
                 ShellMenuItem {
-                    command: "GLOBAL_EXTRAPOLATE_MOVE"
-                    help: qsTr("Carries each selected line’s timed %1 on at the same speed from its start to its end").arg("\\move")
-                    iconRole: "move-extend"
-                    objectName: "extrapolateMoveMenuItem"
-                    action: Action {
-                        id: extrapolateMoveAction
-                        text: qsTr("Extrapolate %1 to the line").arg("\\move")
-                        enabled: root.shell.hasEditingTarget
-                        onTriggered: if (!root.hotkeyGesture("GLOBAL_EXTRAPOLATE_MOVE")) root.trackingToast(root.app.extrapolateMoves())
-                    }
+                    command: "GLOBAL_VIDEO_DETAILS"
+                    iconRole: "video-details"
+                    objectName: "videoDetailsMenuItem"
+                    action: videoDetailsAction
                 }
-            }
-            ShellMenuItem {
-                command: "GLOBAL_PREVIOUS_FRAME"
-                help: qsTr("Go to previous frame")
-                iconRole: "frame-previous"
-                action: Action {
-                    id: previousFrameAction
-                    text: qsTr("Previous frame"); enabled: root.video.hasVideo
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_PREVIOUS_FRAME")) root.video.stepFrames(-1)
+                ShellMenuItem {
+                    command: "GLOBAL_VIDEO_ZOOM"
+                    iconRole: "zoom"
+                    objectName: "videoZoomMenuItem"
+                    action: videoZoomAction
                 }
-            }
-            ShellMenuItem {
-                command: "GLOBAL_NEXT_FRAME"
-                help: qsTr("Go to next frame")
-                iconRole: "frame-next"
-                action: Action {
-                    id: nextFrameAction
-                    text: qsTr("Next frame"); enabled: root.video.hasVideo
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_NEXT_FRAME")) root.video.stepFrames(1)
+                ShellMenuItem {
+                    command: "GLOBAL_RESET_VIDEO_ZOOM"
+                    iconRole: "zoom-reset"
+                    objectName: "resetVideoZoomMenuItem"
+                    action: resetVideoZoomAction
                 }
-            }
-            ShellMenuItem {
-                command: "GLOBAL_SET_VIDEO_AT_START_TIME"
-                help: qsTr("Moves video to start time")
-                iconRole: "video-to-start-time"
-                action: Action {
-                    id: goToStartAction
-                    text: qsTr("Go to start time of line"); enabled: root.video.hasVideo
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_SET_VIDEO_AT_START_TIME")) root.video.goToLineStart()
-                }
-            }
-            ShellMenuItem {
-                command: "GLOBAL_SET_VIDEO_AT_END_TIME"
-                help: qsTr("Moves video to end time")
-                iconRole: "video-to-end-time"
-                action: Action {
-                    id: goToEndAction
-                    text: qsTr("Go to end time of line"); enabled: root.video.hasVideo
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_SET_VIDEO_AT_END_TIME")) root.video.goToLineEnd()
-                }
-            }
-            ShellMenuItem {
-                command: "GLOBAL_PLAY_PAUSE"
-                help: qsTr("Plays or pauses the video")
-                iconRole: root.video.playing ? "media-pause" : "media-play"
-                action: Action {
-                    id: playPauseAction
-                    text: qsTr("Play or pause"); enabled: root.video.hasVideo
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_PLAY_PAUSE")) root.video.togglePlay()
-                }
-            }
-            ShellMenuItem {
-                command: "GLOBAL_GO_TO_PREVIOUS_KEYFRAME"
-                iconRole: "keyframe-previous"
-                action: Action {
-                    id: previousKeyframeAction
-                    text: qsTr("Go to previous keyframe"); enabled: root.video.hasVideo
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_GO_TO_PREVIOUS_KEYFRAME")) root.video.previousKeyframe()
-                }
-            }
-            ShellMenuItem {
-                command: "GLOBAL_GO_TO_NEXT_KEYFRAME"
-                iconRole: "keyframe-next"
-                action: Action {
-                    id: nextKeyframeAction
-                    text: qsTr("Go to next keyframe"); enabled: root.video.hasVideo
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_GO_TO_NEXT_KEYFRAME")) root.video.nextKeyframe()
-                }
-            }
-            MenuSeparator {}
-            ShellMenuItem {
-                iconRole: "close-video"
-                objectName: "unloadVideoMenuItem"
-                text: qsTr("Unload video")
-                enabled: root.video.loaded
-                onTriggered: if (!root.hotkeyGesture("VIDEO_DELETE_FILE", 3)) root.video.unloadVideo()
-            }
-            ShellMenuItem {
-                command: "GLOBAL_RELOAD_VIDEO"
-                iconRole: "reload-video"
-                objectName: "reloadVideoMenuItem"
-                action: Action {
-                    id: reloadVideoAction
-                    text: qsTr("Reload video")
-                    enabled: root.video.hasVideo && !root.video.dummy
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_RELOAD_VIDEO")) root.video.reloadVideo()
-                }
-            }
-            VideoStreamsMenu {
-                objectName: "videoStreamsMenu"
-                video: root.video
-            }
-            VideoChaptersMenu {
-                objectName: "videoChaptersMenu"
-                video: root.video
-            }
-            ShellMenuItem {
-                command: "GLOBAL_VIDEO_DETAILS"
-                iconRole: "video-details"
-                objectName: "videoDetailsMenuItem"
-                action: Action {
-                    id: videoDetailsAction
-                    text: qsTr("Video details…"); enabled: root.video.hasVideo
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_VIDEO_DETAILS")) root.openVideoDetails()
-                }
-            }
-            ShellMenuItem {
-                command: "GLOBAL_VIDEO_ZOOM"
-                iconRole: "zoom"
-                objectName: "videoZoomMenuItem"
-                action: Action {
-                    id: videoZoomAction
-                    text: qsTr("Zoom video"); enabled: root.video.hasVideo
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_VIDEO_ZOOM")) root.videoView.toggleZoom()
-                }
-            }
-            ShellMenuItem {
-                command: "GLOBAL_RESET_VIDEO_ZOOM"
-                iconRole: "zoom-reset"
-                objectName: "resetVideoZoomMenuItem"
-                action: Action {
-                    id: resetVideoZoomAction
-                    text: qsTr("Reset zoom and pan"); enabled: root.videoView.zoomed
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_RESET_VIDEO_ZOOM")) root.videoView.resetZoom()
-                }
-            }
-            ShellMenuItem {
-                iconRole: "render-cost"
-                command: "GLOBAL_VIDEO_RENDER_COST"
-                objectName: "renderCostMenuItem"
-                action: Action {
-                    id: renderCostAction
-                    text: qsTr("Render cost"); enabled: root.video.hasVideo
-                    checkable: true
-                    checked: root.videoView.renderCost
-                    onTriggered: {
-                        checked = Qt.binding(() => root.videoView.renderCost)
-                        if (!root.hotkeyGesture("GLOBAL_VIDEO_RENDER_COST")) root.videoView.toggleRenderCost()
-                    }
+                ShellMenuItem {
+                    iconRole: "render-cost"
+                    command: "GLOBAL_VIDEO_RENDER_COST"
+                    objectName: "renderCostMenuItem"
+                    action: renderCostAction
                 }
             }
         }
@@ -3092,118 +3401,82 @@ ApplicationWindow {
             id: audioMenu
             objectName: "audioMenu"
             title: qsTr("A&udio")
-            ShellMenuItem {
-                command: "GLOBAL_OPEN_AUDIO"
-                help: qsTr("Opens audio file")
-                iconRole: "open-audio"
-                objectName: "openAudioMenuItem"
-                action: Action {
-                    id: openAudioAction
-                    text: qsTr("Open audio")
-                    onTriggered: {
-                        if (root.hotkeyGesture("GLOBAL_OPEN_AUDIO"))
-                            return
-                        audioDialog.currentFolder = root.startFolder("audio", root.app.audioDialogFolder())
-                        audioDialog.open()
-                    }
+            onBuilt: root.applyMenuShortcuts()
+            lazyContent: MenuContent {
+                ShellMenuItem {
+                    command: "GLOBAL_OPEN_AUDIO"
+                    help: qsTr("Opens audio file")
+                    iconRole: "open-audio"
+                    objectName: "openAudioMenuItem"
+                    action: openAudioAction
                 }
-            }
-            ShellMenu {
-                help: qsTr("Recently opened audio")
-                id: recentAudioMenu
-                iconRole: "recent-audio"
-                objectName: "recentAudioMenu"
-                title: qsTr("Recently opened audio")
-                property var rows: []
-                onAboutToShow: rows = root.app.recentAudio()
-                Instantiator {
-                    model: recentAudioMenu.rows
-                    delegate: ShellMenuItem {
-                        required property var modelData
-                        required property int index
-                        objectName: "recentAudio" + index
-                        help: qsTr("Open") + " " + modelData.path
-                        text: modelData.label
-                        onTriggered: if (!root.app.revealRecent(modelData.path)) root.audio.openAudio(modelData.path)
+                ShellMenu {
+                    help: qsTr("Recently opened audio")
+                    id: recentAudioMenu
+                    iconRole: "recent-audio"
+                    objectName: "recentAudioMenu"
+                    title: qsTr("Recently opened audio")
+                    property var rows: []
+                    onAboutToShow: rows = root.app.recentAudio()
+                    Instantiator {
+                        model: recentAudioMenu.rows
+                        delegate: ShellMenuItem {
+                            required property var modelData
+                            required property int index
+                            objectName: "recentAudio" + index
+                            help: qsTr("Open") + " " + modelData.path
+                            text: modelData.label
+                            onTriggered: if (!root.app.revealRecent(modelData.path)) root.audio.openAudio(modelData.path)
+                        }
+                        onObjectAdded: (index, object) => recentAudioMenu.insertItem(index, object)
+                        onObjectRemoved: (index, object) => recentAudioMenu.removeItem(object)
                     }
-                    onObjectAdded: (index, object) => recentAudioMenu.insertItem(index, object)
-                    onObjectRemoved: (index, object) => recentAudioMenu.removeItem(object)
+                    ShellMenuItem {
+                        text: qsTr("None")
+                        enabled: false
+                        visible: recentAudioMenu.rows.length === 0
+                        height: visible ? implicitHeight : 0
+                    }
                 }
                 ShellMenuItem {
-                    text: qsTr("None")
-                    enabled: false
-                    visible: recentAudioMenu.rows.length === 0
-                    height: visible ? implicitHeight : 0
+                    command: "GLOBAL_AUDIO_FROM_VIDEO"
+                    help: qsTr("Opens audio from video")
+                    iconRole: "audio-from-video"
+                    objectName: "audioFromVideoMenuItem"
+                    action: audioFromVideoAction
                 }
-            }
-            ShellMenuItem {
-                command: "GLOBAL_AUDIO_FROM_VIDEO"
-                help: qsTr("Opens audio from video")
-                iconRole: "audio-from-video"
-                objectName: "audioFromVideoMenuItem"
-                action: Action {
-                    id: audioFromVideoAction
-                    text: qsTr("Open audio from video")
-                    enabled: root.video.hasVideo
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_AUDIO_FROM_VIDEO")) root.app.openAudioFromVideo()
+                ShellMenuItem {
+                    command: "GLOBAL_CLOSE_AUDIO"
+                    help: qsTr("Closes audio")
+                    iconRole: "close-audio"
+                    objectName: "closeAudioMenuItem"
+                    action: closeAudioAction
                 }
-            }
-            ShellMenuItem {
-                command: "GLOBAL_CLOSE_AUDIO"
-                help: qsTr("Closes audio")
-                iconRole: "close-audio"
-                objectName: "closeAudioMenuItem"
-                action: Action {
-                    id: closeAudioAction
-                    text: qsTr("Close audio")
-                    enabled: root.audio.hasAudio
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_CLOSE_AUDIO")) root.audio.closeAudio()
+                ShellMenuItem {
+                    command: "GLOBAL_RELOAD_AUDIO"
+                    iconRole: "reload-audio"
+                    objectName: "reloadAudioMenuItem"
+                    action: reloadAudioAction
                 }
-            }
-            ShellMenuItem {
-                command: "GLOBAL_RELOAD_AUDIO"
-                iconRole: "reload-audio"
-                objectName: "reloadAudioMenuItem"
-                action: Action {
-                    id: reloadAudioAction
-                    text: qsTr("Reload audio")
-                    enabled: root.audio.reloadable
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_RELOAD_AUDIO")) root.audio.reloadAudio()
+                MenuSeparator {}
+                ShellMenuItem {
+                    command: "GLOBAL_SET_AUDIO_FROM_VIDEO"
+                    iconRole: "audio-to-video-time"
+                    objectName: "setAudioFromVideoMenuItem"
+                    action: setAudioFromVideoAction
                 }
-            }
-            MenuSeparator {}
-            ShellMenuItem {
-                command: "GLOBAL_SET_AUDIO_FROM_VIDEO"
-                iconRole: "audio-to-video-time"
-                objectName: "setAudioFromVideoMenuItem"
-                action: Action {
-                    id: setAudioFromVideoAction
-                    text: qsTr("Set audio position to video time")
-                    enabled: root.audio.hasAudio && root.shell.hasEditingTarget
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_SET_AUDIO_FROM_VIDEO")) root.app.setAudioFromVideo(false)
+                ShellMenuItem {
+                    command: "GLOBAL_SET_AUDIO_MARK_FROM_VIDEO"
+                    iconRole: "audio-marker-to-video-time"
+                    objectName: "setAudioMarkFromVideoMenuItem"
+                    action: setAudioMarkFromVideoAction
                 }
-            }
-            ShellMenuItem {
-                command: "GLOBAL_SET_AUDIO_MARK_FROM_VIDEO"
-                iconRole: "audio-marker-to-video-time"
-                objectName: "setAudioMarkFromVideoMenuItem"
-                action: Action {
-                    id: setAudioMarkFromVideoAction
-                    text: qsTr("Set audio marker to video time")
-                    enabled: root.audio.hasAudio && root.shell.hasEditingTarget
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_SET_AUDIO_MARK_FROM_VIDEO")) root.app.setAudioFromVideo(true)
-                }
-            }
-            ShellMenuItem {
-                command: "GLOBAL_JOIN_PREVIOUS_AUDIO_SELECTION"
-                help: qsTr("Gives the active line the audio selection and ends the line before it where the selection starts")
-                iconRole: "join-lines"
-                objectName: "joinPreviousAudioSelectionMenuItem"
-                action: Action {
-                    id: joinPreviousAudioSelectionAction
-                    text: qsTr("Join with previous line using the audio selection")
-                    enabled: root.audio.ready && root.shell.hasEditingTarget
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_JOIN_PREVIOUS_AUDIO_SELECTION")) root.app.joinPreviousToAudioSelection()
+                ShellMenuItem {
+                    command: "GLOBAL_JOIN_PREVIOUS_AUDIO_SELECTION"
+                    help: qsTr("Gives the active line the audio selection and ends the line before it where the selection starts")
+                    iconRole: "join-lines"
+                    objectName: "joinPreviousAudioSelectionMenuItem"
+                    action: joinPreviousAudioSelectionAction
                 }
             }
         }
@@ -3212,121 +3485,101 @@ ApplicationWindow {
             objectName: "automationMenu"
             title: qsTr("&Automation")
             onAboutToShow: root.automation.menuOpened()
-            ShellMenuItem {
-                command: "GLOBAL_AUTOMATION_LOAD_SCRIPT"
-                help: qsTr("Load script")
-                iconRole: "automation"
-                objectName: "loadScriptMenuItem"
-                action: Action {
-                    id: loadScriptAction
-                    text: qsTr("&Load script…")
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_AUTOMATION_LOAD_SCRIPT")) scriptDialog.open()
+            onBuilt: root.applyMenuShortcuts()
+            lazyContent: MenuContent {
+                ShellMenuItem {
+                    command: "GLOBAL_AUTOMATION_LOAD_SCRIPT"
+                    help: qsTr("Load script")
+                    iconRole: "automation"
+                    objectName: "loadScriptMenuItem"
+                    action: loadScriptAction
                 }
-            }
-            ShellMenuItem {
-                command: "GLOBAL_AUTOMATION_RELOAD_AUTOLOAD"
-                help: qsTr("Refresh autoload scripts")
-                iconRole: "automation"
-                objectName: "reloadAutoloadMenuItem"
-                action: Action {
-                    id: reloadAutoloadAction
-                    text: qsTr("Refresh autoload scripts")
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_AUTOMATION_RELOAD_AUTOLOAD")) root.automation.reloadAutoload()
+                ShellMenuItem {
+                    command: "GLOBAL_AUTOMATION_RELOAD_AUTOLOAD"
+                    help: qsTr("Refresh autoload scripts")
+                    iconRole: "automation"
+                    objectName: "reloadAutoloadMenuItem"
+                    action: reloadAutoloadAction
                 }
-            }
-            ShellMenuItem {
-                command: "GLOBAL_AUTOMATION_LOAD_LAST_SCRIPT"
-                iconRole: "run-script"
-                objectName: "loadLastScriptMenuItem"
-                action: Action {
-                    id: loadLastScriptAction
-                    text: qsTr("Run the last loaded script")
-                    enabled: !root.automation.running && !root.workspaceLayout.modalOpen
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_AUTOMATION_LOAD_LAST_SCRIPT")) root.automation.runLastLoadedScript()
+                ShellMenuItem {
+                    command: "GLOBAL_AUTOMATION_LOAD_LAST_SCRIPT"
+                    iconRole: "run-script"
+                    objectName: "loadLastScriptMenuItem"
+                    action: loadLastScriptAction
                 }
-            }
-            ShellMenuItem {
-                iconRole: "rerun-macro"
-                objectName: "rerunMenuItem"
-                action: Action {
-                    text: qsTr("Rerun last macro")
-                    enabled: root.automation.canRerun && !root.workspaceLayout.modalOpen
-                    onTriggered: root.automation.rerunLast()
+                ShellMenuItem {
+                    iconRole: "rerun-macro"
+                    objectName: "rerunMenuItem"
+                    action: Action {
+                        text: qsTr("Rerun last macro")
+                        enabled: root.automation.canRerun && !root.workspaceLayout.modalOpen
+                        onTriggered: root.automation.rerunLast()
+                    }
                 }
-            }
-            ShellMenuItem {
-                command: "GLOBAL_AUTOMATION_REPEAT_LAST_RUN"
-                help: qsTr("Run the last macro again with the same answers, without its dialogs when they are unchanged")
-                iconRole: "repeat-run"
-                objectName: "repeatRunMenuItem"
-                action: Action {
-                    id: repeatRunAction
-                    text: qsTr("Repeat last run")
-                    enabled: root.automation.canRepeat && !root.workspaceLayout.modalOpen
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_AUTOMATION_REPEAT_LAST_RUN")) root.automation.repeatLast()
+                ShellMenuItem {
+                    command: "GLOBAL_AUTOMATION_REPEAT_LAST_RUN"
+                    help: qsTr("Run the last macro again with the same answers, without its dialogs when they are unchanged")
+                    iconRole: "repeat-run"
+                    objectName: "repeatRunMenuItem"
+                    action: repeatRunAction
                 }
-            }
-            ShellMenuItem {
-                iconRole: "run-cancelled"
-                objectName: "cancelMacroMenuItem"
-                visible: root.automation.running
-                height: visible ? implicitHeight : 0
-                action: Action {
-                    text: qsTr("Cancel macro")
-                    enabled: root.automation.running && !root.automation.cancelling
-                    onTriggered: root.automation.cancelRun()
+                ShellMenuItem {
+                    iconRole: "run-cancelled"
+                    objectName: "cancelMacroMenuItem"
+                    visible: root.automation.running
+                    height: visible ? implicitHeight : 0
+                    action: Action {
+                        text: qsTr("Cancel macro")
+                        enabled: root.automation.running && !root.automation.cancelling
+                        onTriggered: root.automation.cancelRun()
+                    }
                 }
-            }
-            ShellMenuItem {
-                iconRole: "automation-manager"
-                objectName: "automationManagerMenuItem"
-                action: Action {
-                    text: qsTr("Show &panel")
-                    onTriggered: root.showPanel(automationDock)
+                ShellMenuItem {
+                    iconRole: "automation-manager"
+                    objectName: "automationManagerMenuItem"
+                    action: Action {
+                        text: qsTr("Show &panel")
+                        onTriggered: root.showPanel(automationDock)
+                    }
                 }
-            }
-            ShellMenuItem {
-                id: pluginsMenuItem
-                command: "GLOBAL_PLUGINS"
-                help: qsTr("Install, turn on and off, and uninstall plugins")
-                iconRole: "plugins"
-                objectName: "pluginsMenuItem"
-                action: Action {
-                    id: pluginsAction
-                    text: qsTr("Pl&ugins…")
-                    enabled: !root.workspaceLayout.modalOpen
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_PLUGINS")) pluginManagerDialog.show()
+                ShellMenuItem {
+                    id: pluginsMenuItem
+                    command: "GLOBAL_PLUGINS"
+                    help: qsTr("Install, turn on and off, and uninstall plugins")
+                    iconRole: "plugins"
+                    objectName: "pluginsMenuItem"
+                    action: pluginsAction
                 }
-            }
-            MacroMenuEntries {
-                menu: automationMenu
-                after: pluginsMenuItem
-                macros: {
-                    const runtime = root.app.pluginRuntime
-                    if (!runtime)
-                        return []
-                    runtime.windowsRevision
-                    return runtime.commands.filter(c => runtime.onIn(c.plugin, root.shellWindow))
+                MacroMenuEntries {
+                    menu: automationMenu
+                    after: pluginsMenuItem
+                    macros: {
+                        const runtime = root.app.pluginRuntime
+                        if (!automationMenu.lazyItems?.placed || !runtime)
+                            return []
+                        runtime.windowsRevision
+                        return runtime.commands.filter(c => runtime.onIn(c.plugin, root.shellWindow))
+                    }
+                    itemPrefix: "pluginCommand_"
+                    menuPrefix: "pluginCommandMenu_"
+                    onTriggered: command => root.app.pluginRuntime.run(command.id)
                 }
-                itemPrefix: "pluginCommand_"
-                menuPrefix: "pluginCommandMenu_"
-                onTriggered: command => root.app.pluginRuntime.run(command.id)
-            }
-            MenuSeparator {
-                id: macrosSeparator
-                objectName: "macrosSeparator"
-            }
-            MacroMenuEntries {
-                menu: automationMenu
-                after: macrosSeparator
-                macros: root.macroItems
-                enabled: !root.automation.running
-                onTriggered: macro => {
-                    if (root.hotkeys.shiftClicked(true)) {
-                        root.showPanel(automationDock)
-                        automationTool.record(root.automationHotkeys.legacyNameFor(macro.path, macro.ordinal))
-                    } else {
-                        root.automationManager.run(macro.path, macro.ordinal)
+                MenuSeparator {
+                    id: macrosSeparator
+                    objectName: "macrosSeparator"
+                }
+                MacroMenuEntries {
+                    menu: automationMenu
+                    after: macrosSeparator
+                    macros: automationMenu.lazyItems?.placed ? root.macroItems : []
+                    enabled: !root.automation.running
+                    onTriggered: macro => {
+                        if (root.hotkeys.shiftClicked(true)) {
+                            root.showPanel(automationDock)
+                            automationTool.record(root.automationHotkeys.legacyNameFor(macro.path, macro.ordinal))
+                        } else {
+                            root.automationManager.run(macro.path, macro.ordinal)
+                        }
                     }
                 }
             }
@@ -3335,282 +3588,231 @@ ApplicationWindow {
             id: viewMenu
             objectName: "viewMenu"
             title: qsTr("Vie&w")
-            LayoutMenu {
-                id: viewLayoutMenu
-                objectName: "viewLayoutMenu"
-                iconRole: "layout"
-                title: qsTr("&Layout")
-                prefix: "viewLayout"
-                layouts: root.workspaceLayout
-                lockAction: lockLayoutAction
-                lockReason: root.lockReason
-                onPresetChosen: name => root.applyPreset(name)
-                onSavedLayoutChosen: name => root.applySavedLayout(name)
-                onSaveRequested: root.lazy(saveLayoutDialogLoader).show()
-                onResetRequested: root.resetLayout()
-                onManageRequested: root.lazy(manageLayoutsDialogLoader).show()
-            }
-            MenuSeparator {}
-            ShellMenu {
-                id: panelsMenu
-                iconRole: "panels"
-                objectName: "panelsMenu"
-                title: qsTr("&Panels")
-                Instantiator {
-                    model: root.builtInDocks
-                    delegate: ShellMenu {
-                        required property var modelData
-                        objectName: "panelMenu" + modelData.uniqueName
-                        title: modelData.title
-                        ShellMenuItem {
-                            iconRole: "show"
-                            objectName: "panelShow" + modelData.uniqueName
-                            text: qsTr("Show")
-                            enabled: root.panelAvailable(modelData) && !root.layoutLocked
-                            onTriggered: root.showPanel(modelData)
+            onBuilt: root.applyMenuShortcuts()
+            lazyContent: MenuContent {
+                LayoutMenu {
+                    id: viewLayoutMenu
+                    objectName: "viewLayoutMenu"
+                    iconRole: "layout"
+                    title: qsTr("&Layout")
+                    prefix: "viewLayout"
+                    layouts: root.workspaceLayout
+                    lockAction: lockLayoutAction
+                    lockReason: root.lockReason
+                    onPresetChosen: name => root.applyPreset(name)
+                    onSavedLayoutChosen: name => root.applySavedLayout(name)
+                    onSaveRequested: root.lazy(saveLayoutDialogLoader).show()
+                    onResetRequested: root.resetLayout()
+                    onManageRequested: root.lazy(manageLayoutsDialogLoader).show()
+                }
+                MenuSeparator {}
+                ShellMenu {
+                    id: panelsMenu
+                    iconRole: "panels"
+                    objectName: "panelsMenu"
+                    title: qsTr("&Panels")
+                    Instantiator {
+                        model: root.builtInDocks
+                        delegate: ShellMenu {
+                            required property var modelData
+                            objectName: "panelMenu" + modelData.uniqueName
+                            title: modelData.title
+                            ShellMenuItem {
+                                iconRole: "show"
+                                objectName: "panelShow" + modelData.uniqueName
+                                text: qsTr("Show")
+                                enabled: root.panelAvailable(modelData) && !root.layoutLocked
+                                onTriggered: root.showPanel(modelData)
+                            }
+                            ShellMenuItem {
+                                iconRole: modelData.isFloating ? "panel-dock" : "panel-float"
+                                objectName: "panelFloat" + modelData.uniqueName
+                                text: modelData.isFloating ? qsTr("Dock") : qsTr("Float")
+                                enabled: modelData.isOpen && !root.layoutLocked
+                                onTriggered: root.setPanelFloating(modelData, !modelData.isFloating)
+                            }
+                            MenuSeparator {}
+                            ShellMenuItem {
+                                iconRole: "tab-close"
+                                objectName: "panelClose" + modelData.uniqueName
+                                text: qsTr("Close")
+                                enabled: modelData.isOpen && !root.layoutLocked
+                                onTriggered: root.closePanel(modelData)
+                            }
                         }
-                        ShellMenuItem {
-                            iconRole: modelData.isFloating ? "panel-dock" : "panel-float"
-                            objectName: "panelFloat" + modelData.uniqueName
-                            text: modelData.isFloating ? qsTr("Dock") : qsTr("Float")
-                            enabled: modelData.isOpen && !root.layoutLocked
-                            onTriggered: root.setPanelFloating(modelData, !modelData.isFloating)
-                        }
-                        MenuSeparator {}
-                        ShellMenuItem {
-                            iconRole: "tab-close"
-                            objectName: "panelClose" + modelData.uniqueName
-                            text: qsTr("Close")
-                            enabled: modelData.isOpen && !root.layoutLocked
-                            onTriggered: root.closePanel(modelData)
-                        }
+                        onObjectAdded: (index, object) => panelsMenu.insertMenu(index, object)
+                        onObjectRemoved: (index, object) => panelsMenu.removeMenu(object)
                     }
-                    onObjectAdded: (index, object) => panelsMenu.insertMenu(index, object)
-                    onObjectRemoved: (index, object) => panelsMenu.removeMenu(object)
-                }
-                MenuSeparator {
-                    visible: root.pluginPanelRows.length > 0
-                    height: root.pluginPanelRows.length > 0 ? implicitHeight : 0
-                }
-                Instantiator {
-                    model: root.pluginPanelRows
-                    delegate: ShellMenu {
-                        id: pluginPanelMenu
-                        required property var modelData
-                        readonly property var dock: root.pluginDocks.find(d => d.storedName === modelData.dock) ?? null
-                        readonly property bool kept: !root.pluginUi || !root.pluginUi.panels.some(r => r.dock === modelData.dock)
-                        objectName: "panelMenu" + modelData.dock
-                        iconRole: "plugins"
-                        title: modelData.title
-                        detailText: modelData.pluginName
-                        ShellMenuItem {
-                            iconRole: "show"
-                            objectName: "panelShow" + pluginPanelMenu.modelData.dock
-                            text: qsTr("Show")
-                            enabled: !pluginPanelMenu.kept && !root.layoutLocked
-                            onTriggered: root.showPluginPanel(pluginPanelMenu.modelData.dock)
-                        }
-                        ShellMenuItem {
-                            iconRole: pluginPanelMenu.dock?.isFloating ? "panel-dock" : "panel-float"
-                            objectName: "panelFloat" + pluginPanelMenu.modelData.dock
-                            text: pluginPanelMenu.dock?.isFloating ? qsTr("Dock") : qsTr("Float")
-                            enabled: pluginPanelMenu.dock !== null && pluginPanelMenu.dock.isOpen && !root.layoutLocked
-                            onTriggered: root.setPanelFloating(pluginPanelMenu.dock, !pluginPanelMenu.dock.isFloating)
-                        }
-                        MenuSeparator {}
-                        ShellMenuItem {
-                            iconRole: "tab-close"
-                            objectName: "panelClose" + pluginPanelMenu.modelData.dock
-                            text: qsTr("Close")
-                            enabled: pluginPanelMenu.dock !== null && pluginPanelMenu.dock.isOpen && !root.layoutLocked
-                            onTriggered: root.closePanel(pluginPanelMenu.dock)
-                        }
-                        ShellMenuItem {
-                            iconRole: "remove"
-                            objectName: "panelForget" + pluginPanelMenu.modelData.dock
-                            text: qsTr("Remove from the layout")
-                            visible: pluginPanelMenu.kept
-                            height: pluginPanelMenu.kept ? implicitHeight : 0
-                            enabled: !root.layoutLocked
-                            onTriggered: root.forgetPluginDock(pluginPanelMenu.dock)
-                        }
+                    MenuSeparator {
+                        visible: root.pluginPanelRows.length > 0
+                        height: root.pluginPanelRows.length > 0 ? implicitHeight : 0
                     }
-                    onObjectAdded: (index, object) => panelsMenu.insertMenu(root.builtInDocks.length + 1 + index, object)
-                    onObjectRemoved: (index, object) => panelsMenu.removeMenu(object)
-                }
-            }
-            ShellMenuItem {
-                iconRole: "panel-move"
-                objectName: "movePanel"
-                text: qsTr("&Move panel…")
-                enabled: !root.layoutLocked
-                onTriggered: placementWindow.openFor(root.focusedDock())
-            }
-            ShellMenuItem {
-                iconRole: "layout-restore"
-                objectName: "restoreLayoutBackup"
-                text: qsTr("Restore the previous layout")
-                enabled: root.workspaceLayout.hasBackup && !root.layoutLocked
-                onTriggered: root.workspaceLayout.restoreBackup()
-            }
-            MenuSeparator {}
-            ShellMenuItem {
-                command: "GLOBAL_NODE_EFFECTS"
-                help: qsTranslate("HikariSub.NodeEffects", "Edits this file’s node effects on a canvas, with a preview on the video")
-                iconRole: "node-editor"
-                objectName: "nodeEffectsMenuItem"
-                action: Action {
-                    id: nodeEffectsAction
-                    text: qsTranslate("HikariSub.NodeEffects", "Node effects")
-                    checkable: true
-                    checked: root.workspaceLayout.nodeEffects
-                    enabled: root.workspaceLayout.nodeEffects || (root.shell.hasEditingTarget && !root.layoutLocked)
-                    onToggled: {
-                        if (!root.hotkeyGesture("GLOBAL_NODE_EFFECTS"))
-                            root.setNodeEffects(checked)
-                        checked = Qt.binding(() => root.workspaceLayout.nodeEffects)
+                    Instantiator {
+                        model: root.pluginPanelRows
+                        delegate: ShellMenu {
+                            id: pluginPanelMenu
+                            required property var modelData
+                            readonly property var dock: root.pluginDocks.find(d => d.storedName === modelData.dock) ?? null
+                            readonly property bool kept: !root.pluginUi || !root.pluginUi.panels.some(r => r.dock === modelData.dock)
+                            objectName: "panelMenu" + modelData.dock
+                            iconRole: "plugins"
+                            title: modelData.title
+                            detailText: modelData.pluginName
+                            ShellMenuItem {
+                                iconRole: "show"
+                                objectName: "panelShow" + pluginPanelMenu.modelData.dock
+                                text: qsTr("Show")
+                                enabled: !pluginPanelMenu.kept && !root.layoutLocked
+                                onTriggered: root.showPluginPanel(pluginPanelMenu.modelData.dock)
+                            }
+                            ShellMenuItem {
+                                iconRole: pluginPanelMenu.dock?.isFloating ? "panel-dock" : "panel-float"
+                                objectName: "panelFloat" + pluginPanelMenu.modelData.dock
+                                text: pluginPanelMenu.dock?.isFloating ? qsTr("Dock") : qsTr("Float")
+                                enabled: pluginPanelMenu.dock !== null && pluginPanelMenu.dock.isOpen && !root.layoutLocked
+                                onTriggered: root.setPanelFloating(pluginPanelMenu.dock, !pluginPanelMenu.dock.isFloating)
+                            }
+                            MenuSeparator {}
+                            ShellMenuItem {
+                                iconRole: "tab-close"
+                                objectName: "panelClose" + pluginPanelMenu.modelData.dock
+                                text: qsTr("Close")
+                                enabled: pluginPanelMenu.dock !== null && pluginPanelMenu.dock.isOpen && !root.layoutLocked
+                                onTriggered: root.closePanel(pluginPanelMenu.dock)
+                            }
+                            ShellMenuItem {
+                                iconRole: "remove"
+                                objectName: "panelForget" + pluginPanelMenu.modelData.dock
+                                text: qsTr("Remove from the layout")
+                                visible: pluginPanelMenu.kept
+                                height: pluginPanelMenu.kept ? implicitHeight : 0
+                                enabled: !root.layoutLocked
+                                onTriggered: root.forgetPluginDock(pluginPanelMenu.dock)
+                            }
+                        }
+                        onObjectAdded: (index, object) => panelsMenu.insertMenu(root.builtInDocks.length + 1 + index, object)
+                        onObjectRemoved: (index, object) => panelsMenu.removeMenu(object)
                     }
                 }
-            }
-            MenuSeparator {}
-            ShellMenuItem {
-                command: "GLOBAL_SHOW_EXPLORER"
-                help: qsTranslate("HikariSub.Explorer", "Files in the project folder")
-                id: showExplorerItem
-                iconRole: "explorer"
-                objectName: "showExplorer"
-                text: qsTranslate("HikariSub.Explorer", "Explorer")
-                enabled: !root.layoutLocked
-                onTriggered: if (!root.hotkeyGesture("GLOBAL_SHOW_EXPLORER")) root.showPanel(explorerDock)
-            }
-            ShellMenuItem {
-                iconRole: "log"
-                objectName: "logMenuItem"
-                action: Action {
-                    text: qsTr("Log")
+                ShellMenuItem {
+                    iconRole: "panel-move"
+                    objectName: "movePanel"
+                    text: qsTr("&Move panel…")
                     enabled: !root.layoutLocked
-                    onTriggered: {
-                        if (logDock.isOpen)
-                            logDock.close()
-                        else
-                            root.showPanel(logDock)
+                    onTriggered: placementWindow.openFor(root.focusedDock())
+                }
+                ShellMenuItem {
+                    iconRole: "layout-restore"
+                    objectName: "restoreLayoutBackup"
+                    text: qsTr("Restore the previous layout")
+                    enabled: root.workspaceLayout.hasBackup && !root.layoutLocked
+                    onTriggered: root.workspaceLayout.restoreBackup()
+                }
+                MenuSeparator {}
+                ShellMenuItem {
+                    command: "GLOBAL_NODE_EFFECTS"
+                    help: qsTranslate("HikariSub.NodeEffects", "Edits this file’s node effects on a canvas, with a preview on the video")
+                    iconRole: "node-editor"
+                    objectName: "nodeEffectsMenuItem"
+                    action: nodeEffectsAction
+                }
+                MenuSeparator {}
+                ShellMenuItem {
+                    command: "GLOBAL_SHOW_EXPLORER"
+                    help: qsTranslate("HikariSub.Explorer", "Files in the project folder")
+                    iconRole: "explorer"
+                    objectName: "showExplorer"
+                    action: showExplorerAction
+                }
+                ShellMenuItem {
+                    iconRole: "log"
+                    objectName: "logMenuItem"
+                    action: Action {
+                        text: qsTr("Log")
+                        enabled: !root.layoutLocked
+                        onTriggered: {
+                            if (logDock.isOpen)
+                                logDock.close()
+                            else
+                                root.showPanel(logDock)
+                        }
                     }
                 }
-            }
-            ShellMenuItem {
-                command: "GLOBAL_HIDE_TAGS"
-                id: hideTagsItem
-                iconRole: "hide-tags"
-                objectName: "hideTagsMenuItem"
-                text: qsTr("Hide tags")
-                onTriggered: if (!root.hotkeyGesture("GLOBAL_HIDE_TAGS")) root.app.toggleHideTags()
-            }
-            ShellMenuItem {
-                command: "GLOBAL_EDITOR_HIDE_TAGS"
-                iconRole: "hide-tags"
-                objectName: "hideEditorTagsMenuItem"
-                action: Action {
-                    id: hideEditorTagsAction
-                    text: qsTr("Hide tags in the line editor")
-                    checkable: true
-                    checked: !root.editor.showTags
-                    onToggled: {
-                        if (!root.hotkeyGesture("GLOBAL_EDITOR_HIDE_TAGS"))
-                            root.editor.showTags = !checked
-                        checked = Qt.binding(() => !root.editor.showTags)
-                    }
+                ShellMenuItem {
+                    command: "GLOBAL_HIDE_TAGS"
+                    id: hideTagsItem
+                    iconRole: "hide-tags"
+                    objectName: "hideTagsMenuItem"
+                    text: qsTr("Hide tags")
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_HIDE_TAGS")) root.app.toggleHideTags()
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_EDITOR_HIDE_TAGS"
+                    iconRole: "hide-tags"
+                    objectName: "hideEditorTagsMenuItem"
+                    action: hideEditorTagsAction
                 }
             }
         }
         ShellMenu {
             title: qsTr("&Help")
-            ShellMenuItem {
-                command: "GLOBAL_GETTING_STARTED"
-                help: qsTr("Walks through the settings most people change first")
-                iconRole: "getting-started"
-                objectName: "gettingStartedMenuItem"
-                action: Action {
-                    id: gettingStartedAction
-                    text: qsTr("&Getting started")
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_GETTING_STARTED")) root.lazy(gettingStartedDialogLoader).openSetup()
+            onBuilt: root.applyMenuShortcuts()
+            lazyContent: MenuContent {
+                ShellMenuItem {
+                    command: "GLOBAL_GETTING_STARTED"
+                    help: qsTr("Walks through the settings most people change first")
+                    iconRole: "getting-started"
+                    objectName: "gettingStartedMenuItem"
+                    action: gettingStartedAction
                 }
-            }
-            ShellMenuItem {
-                command: "GLOBAL_HELP"
-                help: qsTr("Opens the user guide in the default browser")
-                iconRole: "help"
-                objectName: "userGuideMenuItem"
-                action: Action {
-                    id: userGuideAction
-                    text: qsTr("User &guide")
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_HELP")) root.openUserGuide()
+                ShellMenuItem {
+                    command: "GLOBAL_HELP"
+                    help: qsTr("Opens the user guide in the default browser")
+                    iconRole: "help"
+                    objectName: "userGuideMenuItem"
+                    action: userGuideAction
                 }
-            }
-            ShellMenuItem {
-                command: "GLOBAL_ANSI"
-                help: qsTr("Opens a form for a bug, feature request or question on GitHub")
-                iconRole: "report-issue"
-                objectName: "reportIssueMenuItem"
-                action: Action {
-                    id: reportIssueAction
-                    text: qsTr("&Report an issue")
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_ANSI")) root.lazy(reportIssueWindowLoader).openForm()
+                ShellMenuItem {
+                    command: "GLOBAL_ANSI"
+                    help: qsTr("Opens a form for a bug, feature request or question on GitHub")
+                    iconRole: "report-issue"
+                    objectName: "reportIssueMenuItem"
+                    action: reportIssueAction
                 }
-            }
-            ShellMenuItem {
-                command: "GLOBAL_CHECK_FOR_UPDATES"
-                help: qsTr("Checks whether a newer version is available")
-                iconRole: "check-updates"
-                objectName: "checkForUpdatesMenuItem"
-                action: Action {
-                    id: checkForUpdatesAction
-                    text: qsTr("Check for &updates")
-                    enabled: !root.updates.checking
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_CHECK_FOR_UPDATES")) root.updates.checkNow()
+                ShellMenuItem {
+                    command: "GLOBAL_CHECK_FOR_UPDATES"
+                    help: qsTr("Checks whether a newer version is available")
+                    iconRole: "check-updates"
+                    objectName: "checkForUpdatesMenuItem"
+                    action: checkForUpdatesAction
                 }
-            }
-            ShellMenuItem {
-                help: qsTr("Opens the folder that holds your settings, scripts, dictionaries and presets")
-                iconRole: "show-in-folder"
-                objectName: "openUserFolderMenuItem"
-                visible: root.app.userFolder.length > 0
-                height: visible ? implicitHeight : 0
-                action: Action {
-                    id: openUserFolderAction
-                    text: qsTr("Open user &folder")
-                    onTriggered: root.app.openUserFolder()
+                ShellMenuItem {
+                    help: qsTr("Opens the folder that holds your settings, scripts, dictionaries and presets")
+                    iconRole: "show-in-folder"
+                    objectName: "openUserFolderMenuItem"
+                    visible: root.app.userFolder.length > 0
+                    height: visible ? implicitHeight : 0
+                    action: openUserFolderAction
                 }
-            }
-            ShellMenuItem {
-                help: qsTr("Shows the release notes of the versions since the one you used before")
-                iconRole: "whats-new"
-                objectName: "whatsNewMenuItem"
-                action: Action {
-                    id: whatsNewAction
-                    text: qsTr("What’s &new")
-                    onTriggered: root.lazy(whatsNewDialogLoader).open()
+                ShellMenuItem {
+                    help: qsTr("Shows the release notes of the versions since the one you used before")
+                    iconRole: "whats-new"
+                    objectName: "whatsNewMenuItem"
+                    action: whatsNewAction
                 }
-            }
-            ShellMenuItem {
-                command: "GLOBAL_ABOUT"
-                help: qsTr("Shows program info")
-                iconRole: "about"
-                objectName: "aboutMenuItem"
-                action: Action {
-                    id: aboutAction
-                    text: qsTr("&About")
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_ABOUT")) root.lazy(aboutDialogLoader).open()
+                ShellMenuItem {
+                    command: "GLOBAL_ABOUT"
+                    help: qsTr("Shows program info")
+                    iconRole: "about"
+                    objectName: "aboutMenuItem"
+                    action: aboutAction
                 }
-            }
-            ShellMenuItem {
-                command: "GLOBAL_HELPERS"
-                help: qsTr("Shows credits")
-                iconRole: "credits"
-                objectName: "creditsMenuItem"
-                action: Action {
-                    id: creditsAction
-                    text: qsTr("&Credits")
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_HELPERS")) root.lazy(creditsDialogLoader).open()
+                ShellMenuItem {
+                    command: "GLOBAL_HELPERS"
+                    help: qsTr("Shows credits")
+                    iconRole: "credits"
+                    objectName: "creditsMenuItem"
+                    action: creditsAction
                 }
             }
         }
@@ -7786,6 +7988,11 @@ ApplicationWindow {
                     root.contentItem.forceActiveFocus(Qt.OtherFocusReason)
             }
         }
+        PluginJobCards {
+            width: parent ? parent.width : implicitWidth
+            y: automationProgress.shown ? automationProgress.implicitHeight + 8 : 0
+            runtime: root.app.pluginRuntime
+        }
     }
     readonly property alias notices: notices
     Connections {
@@ -9438,17 +9645,14 @@ ApplicationWindow {
     }
 
     function apiCommand(symbol, run) {
-        const target = root.globalActions()[symbol] ?? root.globalItems()[symbol]
+        const target = root.globalActions()[symbol]
         if (!target)
             return null
         if (!run)
             return { enabled: target.enabled, reason: "" }
         if (!target.enabled)
             return false
-        if (target.trigger)
-            target.trigger()
-        else
-            target.triggered()
+        target.trigger()
         return true
     }
     function apiPanels(name, action) {
@@ -9479,9 +9683,9 @@ ApplicationWindow {
         const api = root.app.apiHost
         if (root.servesApi)
             root.serveApi()
-        for (const symbols of [root.globalActions(), root.globalItems()])
-            for (const symbol in symbols)
-                symbols[symbol].triggered.connect(() => { if (root.servesApi) api.commandRan(symbol, true) })
+        const actions = root.globalActions()
+        for (const symbol in actions)
+            actions[symbol].triggered.connect(() => { if (root.servesApi) api.commandRan(symbol, true) })
         for (const dock of root.dockList) {
             dock.isOpenChanged.connect(() => { if (root.servesApi) api.panelChanged(root.panelName(dock)) })
             dock.isFloatingChanged.connect(() => { if (root.servesApi) api.panelChanged(root.panelName(dock)) })
@@ -9490,7 +9694,6 @@ ApplicationWindow {
 
     Component.onCompleted: {
         root.app.shellWindowLoaded(root)
-        root.applyMenuShortcuts()
         root.connectApi()
         const turnedOn = root.app.settings.value("workspace.karaokeTurnedOn")
         root.karaokeTurnedOn = turnedOn.indexOf("audio.karaoke") >= 0
@@ -9554,10 +9757,6 @@ ApplicationWindow {
         if (item.checkable)
             item.toggle()
         return true
-    }
-    function runItem(item) {
-        if (item.enabled)
-            item.triggered()
     }
     function menuIndexOf(menu, item) {
         for (let i = 0; i < menu.count; ++i)
@@ -9752,45 +9951,49 @@ ApplicationWindow {
         GLOBAL_SHOW_AI_REVIEW: showAiReviewAction,
         GLOBAL_SHOW_AI_AGENT: showAiAgentAction, GLOBAL_NEW_AI_THREAD: newAiThreadAction,
         GLOBAL_AI_ACTIONS: aiActionsAction, GLOBAL_REPEAT_AI_ACTION: repeatAiActionAction,
-        GLOBAL_CLOSE_PAGE: closeAction
+        GLOBAL_CLOSE_PAGE: closeAction,
+        GLOBAL_OPEN_SPELLCHECKER: checkSpellingAction, GLOBAL_OPEN_ASS_PROPERTIES: assPropertiesAction,
+        GLOBAL_OPEN_STYLE_MANAGER: styleManagerAction, GLOBAL_OPEN_SUBS_RESAMPLE: resampleAction,
+        GLOBAL_OPEN_FONT_COLLECTOR: fontCollectorAction,
+        GLOBAL_SHOW_SHIFT_TIMES: showShiftTimesAction, GLOBAL_SHOW_TIMING_POSTPROCESSOR: showPostprocessorAction,
+        GLOBAL_SHOW_QC_NOTES: showQcNotesAction, GLOBAL_SHOW_EXPLORER: showExplorerAction,
+        GLOBAL_SNAP_START_TO_PREVIOUS_KEYFRAME: snapStartToPreviousKeyframeAction,
+        GLOBAL_SNAP_START_TO_NEXT_KEYFRAME: snapStartToNextKeyframeAction,
+        GLOBAL_SNAP_END_TO_PREVIOUS_KEYFRAME: snapEndToPreviousKeyframeAction,
+        GLOBAL_SNAP_END_TO_NEXT_KEYFRAME: snapEndToNextKeyframeAction,
+        GLOBAL_ADD_LEAD_IN: addLeadInAction,
+        GLOBAL_REMOVE_LEAD_IN: removeLeadInAction,
+        GLOBAL_ADD_LEAD_OUT: addLeadOutAction,
+        GLOBAL_REMOVE_LEAD_OUT: removeLeadOutAction,
+        GLOBAL_START_FRAME_EARLIER: startFrameEarlierAction,
+        GLOBAL_START_FRAME_LATER: startFrameLaterAction,
+        GLOBAL_END_FRAME_EARLIER: endFrameEarlierAction,
+        GLOBAL_END_FRAME_LATER: endFrameLaterAction,
+        GLOBAL_EXTEND_PREVIOUS_TO_START: extendPreviousToStartAction,
+        GLOBAL_EXTEND_NEXT_TO_END: extendNextToEndAction,
+        GLOBAL_TIMING_ASSISTANT: timingAssistantAction,
+        GLOBAL_TIMING_ASSISTANT_ACCEPT: acceptTimingSuggestionAction,
+        GLOBAL_LOAD_EXTERNAL_SESSION: loadSessionFileAction, GLOBAL_SAVE_EXTERNAL_SESSION: saveSessionFileAction,
+        GLOBAL_LOAD_LAST_SESSION: loadLastSessionAction,
+        GLOBAL_CHECK_KARAOKE: checkKaraokeAction,
+        GLOBAL_KANJI_TIMER: kanjiTimerAction
     }
     }
-    function globalItems() {
-        return {
-        GLOBAL_OPEN_SPELLCHECKER: checkSpellingItem, GLOBAL_OPEN_ASS_PROPERTIES: assPropertiesItem,
-        GLOBAL_OPEN_STYLE_MANAGER: styleManagerItem, GLOBAL_OPEN_SUBS_RESAMPLE: resampleItem,
-        GLOBAL_OPEN_FONT_COLLECTOR: fontCollectorItem,
-        GLOBAL_SHOW_SHIFT_TIMES: showShiftTimesItem, GLOBAL_SHOW_TIMING_POSTPROCESSOR: showPostprocessorItem,
-        GLOBAL_SHOW_QC_NOTES: showQcNotesItem, GLOBAL_SHOW_EXPLORER: showExplorerItem,
-        GLOBAL_SNAP_START_TO_PREVIOUS_KEYFRAME: snapStartToPreviousKeyframeItem,
-        GLOBAL_SNAP_START_TO_NEXT_KEYFRAME: snapStartToNextKeyframeItem,
-        GLOBAL_SNAP_END_TO_PREVIOUS_KEYFRAME: snapEndToPreviousKeyframeItem,
-        GLOBAL_SNAP_END_TO_NEXT_KEYFRAME: snapEndToNextKeyframeItem,
-        GLOBAL_ADD_LEAD_IN: addLeadInItem,
-        GLOBAL_REMOVE_LEAD_IN: removeLeadInItem,
-        GLOBAL_ADD_LEAD_OUT: addLeadOutItem,
-        GLOBAL_REMOVE_LEAD_OUT: removeLeadOutItem,
-        GLOBAL_START_FRAME_EARLIER: startFrameEarlierItem,
-        GLOBAL_START_FRAME_LATER: startFrameLaterItem,
-        GLOBAL_END_FRAME_EARLIER: endFrameEarlierItem,
-        GLOBAL_END_FRAME_LATER: endFrameLaterItem,
-        GLOBAL_EXTEND_PREVIOUS_TO_START: extendPreviousToStartItem,
-        GLOBAL_EXTEND_NEXT_TO_END: extendNextToEndItem,
-        GLOBAL_TIMING_ASSISTANT: timingAssistantItem,
-        GLOBAL_TIMING_ASSISTANT_ACCEPT: acceptTimingSuggestionItem,
-        GLOBAL_LOAD_EXTERNAL_SESSION: loadSessionFileItem, GLOBAL_SAVE_EXTERNAL_SESSION: saveSessionFileItem,
-        GLOBAL_LOAD_LAST_SESSION: loadLastSessionItem,
-        GLOBAL_CHECK_KARAOKE: checkKaraokeItem,
-        GLOBAL_KANJI_TIMER: kanjiTimerItem,
-    }
+    function buildMenus() {
+        let built = false
+        for (let i = 0; i < appMenus.count; ++i) {
+            const menu = appMenus.menuAt(i)
+            built = built || !menu.lazyItems
+            menu.build()
+        }
+        return built
     }
     function commandMenus() {
+        root.buildMenus()
         const symbolOf = new Map()
-        const actions = root.globalActions(), items = root.globalItems()
+        const actions = root.globalActions()
         for (const s in actions)
             symbolOf.set(actions[s], s)
-        for (const s in items)
-            symbolOf.set(items[s], s)
         const plain = text => text.replace(/&(&?)/g, "$1")
         const out = {}
         const walk = (menu, path) => {
@@ -9802,7 +10005,7 @@ ApplicationWindow {
                     walk(item.subMenu, path.concat(plain(item.subMenu.title)))
                     continue
                 }
-                const symbol = item.command || symbolOf.get(item.action) || symbolOf.get(item)
+                const symbol = item.command || symbolOf.get(item.action)
                 if (!symbol)
                     continue
                 const place = path.concat(plain(item.docsText || item.text)).join(" > ")
@@ -9827,11 +10030,9 @@ ApplicationWindow {
     }
     function applyMenuShortcuts() {
         const symbolOf = new Map()
-        const actions = root.globalActions(), items = root.globalItems()
+        const actions = root.globalActions()
         for (const s in actions)
             symbolOf.set(actions[s], s)
-        for (const s in items)
-            symbolOf.set(items[s], s)
         const walk = menu => {
             for (let i = 0; i < menu.count; ++i) {
                 const item = menu.itemAt(i)
@@ -9840,7 +10041,7 @@ ApplicationWindow {
                 if (item.subMenu)
                     walk(item.subMenu)
                 else if (item.shortcutText !== undefined) {
-                    const symbol = symbolOf.get(item.action) ?? symbolOf.get(item)
+                    const symbol = symbolOf.get(item.action)
                     item.shortcutText = symbol ? root.boundKeys(symbol, 0) : ""
                 }
             }
@@ -9893,15 +10094,10 @@ ApplicationWindow {
                                "GLOBAL_HELP", "GLOBAL_ANSI", "GLOBAL_CHECK_FOR_UPDATES", "GLOBAL_SELECT_FROM_VIDEO",
                                "GLOBAL_PLAY_ACTUAL_LINE", "GLOBAL_STYLE_MANAGER_CLEAN_STYLE"]
         const actions = root.globalActions()
-        const items = root.globalItems()
         if (menuSelected1.includes(symbol) && root.hotkeys.repeatedKey(symbol))
             return true
         if (actions[symbol] !== undefined) {
             actions[symbol].trigger()
-            return true
-        }
-        if (items[symbol] !== undefined) {
-            root.runItem(items[symbol])
             return true
         }
         const sort = root.sortKeys.find(k => k.all === symbol || k.selected === symbol)

@@ -32,6 +32,7 @@ public:
         switch (area) {
         case Area::Files: return envelope(protocol::Service::Files, operation, params);
         case Area::Net: return envelope(protocol::Service::Net, operation, params);
+        case Area::Job: return envelope(protocol::Service::Job, operation, params);
         case Area::Ui: break;
         }
         return envelope(protocol::Service::Ui, operation, params);

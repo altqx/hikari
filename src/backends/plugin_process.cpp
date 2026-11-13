@@ -1,6 +1,8 @@
 #include "hikari/backends/plugin_process.h"
 
 #include <QCryptographicHash>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QFileInfo>
 
 #include <algorithm>
@@ -102,6 +104,7 @@ void PluginProcess::startHelper()
         }
         m_state = State::Stopped;
         m_queue.clear();
+        endJob();
         dropHelper(false);
         emit stopped(StopReason::Crashed);
     });
@@ -189,6 +192,8 @@ void PluginProcess::pauseWatchdog()
 void PluginProcess::resumeWatchdog()
 {
     m_clock.start();
+    if (m_job)
+        return;
     m_watchdog.start(static_cast<int>(std::max<qint64>(0, m_limits.timeLimitMs - m_spentMs)));
 }
 
@@ -196,6 +201,7 @@ void PluginProcess::onEvent(std::expected<helper::Event, helper::HostError> even
 {
     if (!event) {
         m_watchdog.stop();
+        endJob();
         const bool loading = m_running && m_running->kind == Unit::Kind::Load;
         m_running.reset();
         m_queue.clear();
@@ -226,6 +232,7 @@ void PluginProcess::onService(const helper::Event &event)
     case plugin::Service::Ui:
     case plugin::Service::Files:
     case plugin::Service::Net:
+    case plugin::Service::Job:
     case plugin::Service::SetSetting:
         request.name = in.str();
         request.json = in.str();
@@ -249,6 +256,12 @@ void PluginProcess::onService(const helper::Event &event)
     }
     if (!in.ok() || !in.atEnd()) {
         m_host->answer(m_request, event.call, Outcome::InvalidInput);
+        return;
+    }
+    if (request.service == plugin::Service::Job) {
+        Writer w;
+        w.str(job(request.name, request.json));
+        m_host->answer(m_request, event.call, Outcome::Ok, w.take());
         return;
     }
     if (m_openServices++ == 0)
@@ -279,9 +292,60 @@ void PluginProcess::onService(const helper::Event &event)
         reply({});
 }
 
+std::string PluginProcess::job(const std::string &operation, const std::string &json)
+{
+    const QJsonObject params = QJsonDocument::fromJson(QByteArray::fromStdString(json)).object();
+    const auto refused = [](const char *message) {
+        return QJsonDocument(QJsonObject{{QStringLiteral("error"), QJsonObject{{QStringLiteral("code"), QStringLiteral("refused")},
+                                                                                {QStringLiteral("message"), QString::fromUtf8(message)}}}})
+            .toJson(QJsonDocument::Compact)
+            .toStdString();
+    };
+    const auto result = [](QJsonObject value) {
+        return QJsonDocument(QJsonObject{{QStringLiteral("result"), value}}).toJson(QJsonDocument::Compact).toStdString();
+    };
+    if (operation == "job.cancelled")
+        return result({{QStringLiteral("cancelled"), m_jobCancelled}});
+    if (operation == "job.begin") {
+        if (!m_running || m_running->kind != Unit::Kind::Command)
+            return refused("Only a command can become a job.");
+        if (m_job)
+            return refused("This command is a job already.");
+        m_job = true;
+        m_jobCancelled = false;
+        m_watchdog.stop();
+        emit jobBegan(QString::fromStdString(m_running->name), params.value(QStringLiteral("title")).toString());
+        return result({});
+    }
+    if (operation == "job.progress") {
+        if (!m_job)
+            return refused("Call hikari.job.begin first.");
+        const QJsonValue fraction = params.value(QStringLiteral("fraction"));
+        emit jobProgress(fraction.isDouble() ? std::clamp(fraction.toDouble(), 0.0, 1.0) : -1.0,
+                         params.value(QStringLiteral("text")).toString());
+        return result({});
+    }
+    return refused("No such job operation.");
+}
+
+void PluginProcess::cancelJob()
+{
+    if (m_job)
+        m_jobCancelled = true;
+}
+
+void PluginProcess::endJob()
+{
+    if (!std::exchange(m_job, false))
+        return;
+    m_jobCancelled = false;
+    emit jobEnded();
+}
+
 void PluginProcess::endUnit(Outcome outcome, const std::vector<std::byte> &payload)
 {
     m_watchdog.stop();
+    endJob();
     if (!m_running)
         return;
     const Unit unit = std::move(*m_running);
@@ -318,6 +382,7 @@ void PluginProcess::endUnit(Outcome outcome, const std::vector<std::byte> &paylo
 void PluginProcess::stopHelper(StopReason reason)
 {
     m_watchdog.stop();
+    endJob();
     m_running.reset();
     m_queue.clear();
     m_openServices = 0;

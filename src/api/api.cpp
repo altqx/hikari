@@ -100,6 +100,7 @@ const Registry &Api::registry()
         detail::addTypesetOperations(r);
         detail::addProjectOperations(r);
         detail::addKaraokeOperations(r);
+        detail::addMarkOperations(r);
         detail::addEvents(r);
         return r;
     }();

@@ -10,7 +10,32 @@ Menu {
     property string detailText
     // False hides this submenu's row in its parent menu.
     property bool shown: true
-    onAboutToShow: StatusHelp.menuOpened()
+    property Component lazyContent
+    property MenuContent lazyItems
+    signal built()
+    function build() {
+        if (!lazyContent || lazyItems)
+            return
+        lazyItems = lazyContent.createObject(menu)
+        for (const item of lazyItems.items) {
+            if (item instanceof Menu)
+                addMenu(item)
+            else if (item instanceof Item)
+                addItem(item)
+        }
+        lazyItems.placed = true
+        layOut()
+        built()
+    }
+    function layOut() {
+        const list = contentItem as ListView
+        list?.forceLayout()
+    }
+    onOpened: layOut()
+    onAboutToShow: {
+        build()
+        StatusHelp.menuOpened()
+    }
     onAboutToHide: StatusHelp.menuClosed()
     Component.onDestruction: if (visible) StatusHelp.menuClosed()
     icon.source: iconRole.length === 0 ? ""

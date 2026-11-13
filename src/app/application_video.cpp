@@ -152,6 +152,30 @@ QString Application::openKeyframesFile(const QString &path)
     return problem;
 }
 
+std::optional<std::string> Application::setKeyframesFromApi(const std::vector<std::int64_t> &frames,
+                                                             const std::optional<std::string> &file)
+{
+    auto &video = activeMedia().video->session();
+    if (video.state() != application::VideoSession::State::Ready)
+        return QCoreApplication::translate("HikariSub.Video", "No video is open.").toStdString();
+    if (file) {
+        QFile out(QString::fromStdString(*file));
+        if (!out.open(QIODevice::WriteOnly | QIODevice::Truncate) ||
+            out.write(QByteArray::fromStdString(application::formatKeyframes(frames))) < 0 || !out.flush())
+            return QCoreApplication::translate("HikariSub.Video", "The keyframes file could not be written.").toStdString();
+        out.close();
+        const QString problem = openKeyframesFile(out.fileName());
+        if (problem.isEmpty())
+            return std::nullopt;
+        return problem.toStdString();
+    }
+    if (const auto target = m_workspace.editingTarget())
+        m_tabMedia[target->value].keyframes.clear();
+    video.setKeyframes(std::vector<int>(frames.begin(), frames.end()));
+    refreshViews();
+    return std::nullopt;
+}
+
 QUrl Application::videoDialogFolder() const
 {
     QString from;

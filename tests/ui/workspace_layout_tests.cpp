@@ -50,6 +50,7 @@ class WorkspaceLayoutTest : public QObject {
         engine->setInitialProperties(application->qmlProperties());
         engine->loadFromModule("Hikari.Ui", "Main");
         QVERIFY(!engine->rootObjects().isEmpty());
+        QVERIFY(QMetaObject::invokeMethod(engine->rootObjects().first(), "buildMenus"));
         auto *window = qobject_cast<QQuickWindow *>(engine->rootObjects().first());
         QVERIFY(QTest::qWaitForWindowExposed(window));
         // On a real platform's render thread the first frame comes after the window is exposed.
@@ -379,6 +380,7 @@ private slots:
         engine->setInitialProperties(application->qmlProperties());
         engine->loadFromModule("Hikari.Ui", "Main");
         QVERIFY(!engine->rootObjects().isEmpty());
+        QVERIFY(QMetaObject::invokeMethod(engine->rootObjects().first(), "buildMenus"));
         QVERIFY(!engine->rootObjects().first()->property("arrangementSettled").toBool());
         QVERIFY(!application->workspaceLayout().save());
         QVERIFY(f.open(QIODevice::ReadOnly));

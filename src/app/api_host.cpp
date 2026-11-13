@@ -45,12 +45,22 @@ ApiHost::ApiHost(Wiring wiring, QObject *parent)
           .karaoke = m_wiring.karaoke,
           .effects = this,
           .plugins = m_wiring.plugins,
+          .macros = m_wiring.macros,
+          .keyframes = this,
+          .marks = m_wiring.marks,
       }),
       m_seenProject(project())
 {
 }
 
 ApiHost::~ApiHost() = default;
+
+std::optional<std::string> ApiHost::setKeyframes(const std::vector<std::int64_t> &frames, const std::optional<std::string> &file)
+{
+    if (!m_wiring.setKeyframes)
+        return "Keyframes can't be set here.";
+    return m_wiring.setKeyframes(frames, file);
+}
 
 application::NodeEffectOptions ApiHost::options()
 {

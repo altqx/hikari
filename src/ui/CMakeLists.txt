@@ -19,7 +19,7 @@ target_include_directories(hikari_ui PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 qt_add_qml_module(hikari_ui
     URI Hikari.Ui
     VERSION 1.0
-    QML_FILES Main.qml ShellMenu.qml ShellMenuItem.qml MacroMenuEntries.qml AutomationDialog.qml AutomationManager.qml TemplateEditor.qml AutomationFilePicker.qml FontPicker.qml ScriptPropertiesDialog.qml SelectLinesDialog.qml StyleManager.qml HistoryWindow.qml ColumnsWindow.qml TranslationShiftWindow.qml SpellCheckerPanel.qml SettingsDialog.qml SearchTool.qml DockTitleBar.qml DockTabBar.qml
+    QML_FILES Main.qml ShellMenu.qml ShellMenuItem.qml MenuContent.qml MacroMenuEntries.qml AutomationDialog.qml AutomationManager.qml TemplateEditor.qml AutomationFilePicker.qml FontPicker.qml ScriptPropertiesDialog.qml SelectLinesDialog.qml StyleManager.qml HistoryWindow.qml ColumnsWindow.qml TranslationShiftWindow.qml SpellCheckerPanel.qml SettingsDialog.qml SearchTool.qml DockTitleBar.qml DockTabBar.qml
         DocumentTabBar.qml SessionWindows.qml)
 list(APPEND hikari_ui_qml_files ShiftTimesPanel.qml TimingPostprocessorPanel.qml TimingAssistantView.qml ShiftPresetBar.qml ShiftPreview.qml
     ShiftLines.qml ShiftNeed.qml FormSection.qml SegmentedButtons.qml PrimaryButton.qml)
@@ -47,7 +47,7 @@ hikari_module(hikari_ui ALLOW hikari_application hikari_core "Qt6::*" "hikari_ui
 list(APPEND hikari_ui_qml_files AutomationNotices.qml)
 list(APPEND hikari_ui_qml_files AutomationResetDialog.qml)
 list(APPEND hikari_ui_qml_files FileChooser.qml FolderChooser.qml)
-list(APPEND hikari_ui_qml_files AutomationProgress.qml RunLogLine.qml)
+list(APPEND hikari_ui_qml_files AutomationProgress.qml RunLogLine.qml PluginJobCards.qml)
 list(APPEND hikari_ui_qml_files ScriptResolutionDialog.qml ScriptInfoOnSaveDialog.qml ProjectSettingsPages.qml ProjectAiKeysPage.qml)
 list(APPEND hikari_ui_qml_files SubtitleComparisonMenu.qml DocumentTabMenu.qml MoveTabMenu.qml)
 list(APPEND hikari_ui_qml_files ReferenceTray.qml)

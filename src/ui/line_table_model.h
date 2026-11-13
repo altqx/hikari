@@ -1,5 +1,7 @@
 #pragma once
 
+#include "hikari/application/row_marks.h"
+
 #include "hikari/application/edit_session.h"
 #include "hikari/application/legacy_timebase.h"
 #include "hikari/application/subtitle_comparison.h"
@@ -48,6 +50,7 @@ public:
     // MUST KILL: LabelColoursRole is an untyped list whose order (normal, modified, saved, doubtful) is a hidden contract
     static constexpr int LabelColoursRole = Qt::UserRole + 54;
     static constexpr int QcMarkedRole = Qt::UserRole + 55;
+    static constexpr int RowMarkedRole = Qt::UserRole + 56;
     enum Role {
         LineIdRole = Qt::UserRole + 1,
         CommentRole,
@@ -84,6 +87,9 @@ public:
         ReviewRole,
         // MUST KILL: ReviewMarksRole is a flat list of inclusive [start, end] pairs
         ReviewMarksRole,
+        // application::MarkColour values, one per plugin marking the Line
+        RowMarkColoursRole,
+        RowMarkNotesRole,
     };
     enum class ReviewState { None, Waiting, EditedSince };
     // An AI change waiting on the Line; `before` is absent for an inserted Line.
@@ -148,6 +154,13 @@ public:
     // Per Line id, the QC notes its flag lists.
     using QcMarks = absl::flat_hash_map<std::uint64_t, QStringList>;
     void setQcMarks(QcMarks marks, std::optional<core::LineId> current);
+    struct RowMark {
+        application::MarkColour colour = application::MarkColour::Accent;
+        QString note; // "<plugin>: <tooltip>"
+        bool operator==(const RowMark &) const = default;
+    };
+    using RowMarks = absl::flat_hash_map<std::uint64_t, std::vector<RowMark>>;
+    void setRowMarks(RowMarks marks);
 
     void setFoldGenerated(bool on);
     bool foldGenerated() const { return m_foldGenerated; }
@@ -237,6 +250,7 @@ private:
     absl::flat_hash_set<std::uint64_t> m_unfolded;
     QcMarks m_qcMarks;
     std::optional<core::LineId> m_qcCurrent;
+    RowMarks m_rowMarks;
     int m_headerBlock = 0;
     int m_hidden = 0;
     bool m_autoHide = false;

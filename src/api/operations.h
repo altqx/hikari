@@ -29,6 +29,7 @@ void addPluginOperations(Registry &registry);
 void addTypesetOperations(Registry &registry);
 void addProjectOperations(Registry &registry);
 void addKaraokeOperations(Registry &registry);
+void addMarkOperations(Registry &registry);
 void addEvents(Registry &registry);
 Json projectJson(const Host &host);
 
@@ -55,6 +56,7 @@ std::unexpected<Error> refusal(application::CommandRefusal refusal, const applic
 Json problemsJson(const std::vector<application::GraphProblem> &problems);
 
 std::string narrow(std::u8string_view s);
+std::string lowerAscii(std::string_view s);
 // document.apply: the edits as one undo step, recorded for review when the caller is reviewed.
 Result documentApply(const Context &context, const Json &params);
 std::unexpected<Error> noVideo();
@@ -67,6 +69,7 @@ std::unexpected<Error> notDrawn(std::int64_t frame);
 std::int64_t frameOf(const application::MacroMediaPort &media, const Json &params, const core::LineRecord *record);
 
 Json selectionJson(const application::EditSession &session);
+Json dialogValueJson(const application::DialogValue &value);
 Json panelJson(const PanelState &panel);
 
 }

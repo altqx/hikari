@@ -259,7 +259,7 @@ Item {
                 let h = 0
                 for (const child of children)
                     if (child.shown === true)
-                        h = Math.max(h, child.implicitHeight)
+                        h = Math.max(h, child.y + child.implicitHeight)
                 return h
             }
             visible: implicitHeight > 0

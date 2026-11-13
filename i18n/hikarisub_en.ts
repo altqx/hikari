@@ -921,6 +921,13 @@
             <numerusform>The plugin ran for more than %n seconds, so HikariSub stopped it. Its next command starts it again.</numerusform>
         </translation>
     </message>
+    <message numerus="yes">
+        <source>Marks %n line(s) in %1</source>
+        <translation>
+            <numerusform>Marks %n line in %1</numerusform>
+            <numerusform>Marks %n lines in %1</numerusform>
+        </translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.QcNotes</name>

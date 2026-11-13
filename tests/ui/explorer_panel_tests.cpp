@@ -65,6 +65,7 @@ class ExplorerPanelTests : public QObject {
         engine->setInitialProperties(application->qmlProperties());
         engine->loadFromModule("Hikari.Ui", "Main");
         QVERIFY(!engine->rootObjects().isEmpty());
+        QVERIFY(QMetaObject::invokeMethod(engine->rootObjects().first(), "buildMenus"));
         window = qobject_cast<QQuickWindow *>(engine->rootObjects().first());
         QVERIFY(window);
         QVERIFY(QTest::qWaitForWindowExposed(window));
@@ -202,7 +203,7 @@ private slots:
     void theExplorerOpensLeftOfTheGridWithTheProject()
     {
         QVERIFY(!dockOpen());
-        QVERIFY(QMetaObject::invokeMethod(named("showExplorer"), "triggered"));
+        QVERIFY(QMetaObject::invokeMethod(named("showExplorer")->property("action").value<QObject *>(), "trigger"));
         QTRY_VERIFY(shown("explorerEmpty"));
         QVERIFY(QMetaObject::invokeMethod(named("explorerDock"), "close"));
         QTRY_VERIFY(!dockOpen());
@@ -235,7 +236,7 @@ private slots:
         QTRY_VERIFY(!dockOpen());
         QObject *item = named("showExplorer");
         QCOMPARE(item->property("command").toString(), QStringLiteral("GLOBAL_SHOW_EXPLORER"));
-        QVERIFY(QMetaObject::invokeMethod(item, "triggered"));
+        QVERIFY(QMetaObject::invokeMethod(item->property("action").value<QObject *>(), "trigger"));
         QTRY_VERIFY(dockOpen());
     }
 
