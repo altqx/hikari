@@ -105,6 +105,14 @@ namespace hikari::app {
 
 namespace {
 
+void keepShellWindowWhole(QQuickWindow &window)
+{
+    if (!window.isVisible() || window.windowStates() != Qt::WindowNoState)
+        return;
+    if (const QRect whole = ui::clientWholeOnScreens(window, window.geometry()); whole != window.geometry())
+        window.setGeometry(whole);
+}
+
 QString refusalText(application::CommandRefusal refusal);
 
 // QString::toCaseFolded is simple case folding (one code point to one), so offsets carry over.
@@ -6717,6 +6725,10 @@ void Application::shellWindowLoaded(QQuickWindow *window)
     for (const auto changed : {&QWindow::xChanged, &QWindow::yChanged, &QWindow::widthChanged, &QWindow::heightChanged})
         connect(window, changed, this, keepPlace);
     connect(window, &QWindow::windowStateChanged, this, keepPlace);
+    if (!QGuiApplication::platformName().startsWith(QLatin1String("wayland")))
+        connect(qGuiApp, &QGuiApplication::screenRemoved, window, [window] {
+            QTimer::singleShot(ui::dockchrome::kScaleSettleMs, window, [window] { keepShellWindowWhole(*window); });
+        });
     keepPlace();
 }
 
@@ -6758,21 +6770,15 @@ void Application::placeShellWindow(QQuickWindow &window, const application::Sess
         window.setWindowStates(Qt::WindowNoState);
     if (const auto &g = saved.geometry) {
         const QRect client(g->x, g->y, g->width, g->height);
-        if (QGuiApplication::platformName().startsWith(QLatin1String("wayland"))) {
+        if (QGuiApplication::platformName().startsWith(QLatin1String("wayland")))
             window.resize(client.size());
-        } else if (QScreen *primary = QGuiApplication::primaryScreen()) {
-            QList<QRect> available;
-            for (QScreen *screen : QGuiApplication::screens())
-                available << screen->availableGeometry();
-            const QMargins margins = window.frameMargins();
-            const QRect fitted = ui::fitOnScreens(client.marginsAdded(margins), margins.top() + ui::dockchrome::kHeaderHeight,
-                                                  available, primary->availableGeometry());
-            window.setGeometry(fitted.marginsRemoved(margins));
-        }
+        else
+            window.setGeometry(ui::clientMostlyOnScreens(window, client));
     }
     if (saved.maximized)
         window.setWindowStates(Qt::WindowMaximized);
 }
+
 
 bool Application::saveLayoutForQuit()
 {

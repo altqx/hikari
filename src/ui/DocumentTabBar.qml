@@ -218,6 +218,7 @@ Item {
             releasedAt = bar.mapToGlobal(centroid.position.x, centroid.position.y)
             const margin = Application.styleHints.startDragDistance
             out = centroid.position.y < -margin || centroid.position.y > bar.height + margin
+                  || centroid.position.x < -margin || centroid.position.x > bar.width + margin
             if (out) {
                 if (wayland && !draggedTab.Drag.active) {
                     bar.app.tabDragging = true
