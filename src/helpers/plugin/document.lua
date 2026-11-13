@@ -141,6 +141,25 @@ local function edit(name, prepare, options)
     return result, err
 end
 
+local function group(name, steps)
+    if type(name) ~= "string" or name == "" then
+        error("hikari.document.group needs a step name", 2)
+    end
+    if type(steps) ~= "function" then
+        error("hikari.document.group needs a function that makes the steps", 2)
+    end
+    local opened, err = call("document.group_begin", { name = name })
+    if not opened then
+        return nil, err
+    end
+    local results = { pcall(steps) }
+    local ended = call("document.group_end", {})
+    if not results[1] then
+        error(results[2], 0)
+    end
+    return ended or { steps = 0 }, unpack(results, 2)
+end
+
 hikari.document = {
     list = function()
         local result, err = call("documents.list", {})
@@ -151,6 +170,7 @@ hikari.document = {
     end,
     read = snapshot,
     edit = edit,
+    group = group,
 }
 
 hikari.selection = {

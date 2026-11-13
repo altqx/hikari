@@ -555,6 +555,8 @@ void PluginRuntime::releaseLock(Running &plugin)
 {
     std::erase_if(m_lockWaiters, [&plugin](const LockWaiter &w) { return w.plugin == &plugin; });
     unlock(plugin);
+    if (m_wiring.api)
+        m_wiring.api->endGroup(plugin.caller.id);
 }
 
 QVariantList PluginRuntime::jobs() const

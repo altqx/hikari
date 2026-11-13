@@ -39,6 +39,42 @@ std::vector<std::string> buttonLabels(const application::DialogRequest &request)
     return labels;
 }
 
+std::vector<api::DialogControlInfo> controlsOf(const application::DialogRequest &request)
+{
+    std::vector<api::DialogControlInfo> out;
+    for (const application::DialogControl &c : request.controls) {
+        if (application::dialogValueType(c.kind) == application::DialogValueType::None)
+            continue;
+        api::DialogControlInfo info{c.name, c.kind, c.kind == "checkbox" ? c.label : std::string(), c.hint, {}, {}, {}, {}};
+        if (c.kind == "dropdown")
+            info.items = c.items;
+        if (c.kind == "intedit") {
+            if (c.intMin != INT_MIN)
+                info.min = c.intMin;
+            if (c.intMax != INT_MAX)
+                info.max = c.intMax;
+        } else if (c.kind == "floatedit") {
+            if (c.numberMin != -DBL_MAX)
+                info.min = c.numberMin;
+            if (c.numberMax != DBL_MAX)
+                info.max = c.numberMax;
+            info.step = c.step;
+        }
+        out.push_back(std::move(info));
+    }
+    return out;
+}
+
+bool answersDialog(const api::DialogAnswer &answer, const application::DialogRequest &request, const std::string &key)
+{
+    if (!answer.key.empty())
+        return answer.key == key;
+    const auto controls = controlsOf(request);
+    return std::ranges::equal(answer.controls, controls, [](const api::DialogControlInfo &a, const api::DialogControlInfo &b) {
+        return a.kind == b.kind && a.name == b.name;
+    });
+}
+
 std::string buttonLabel(const application::DialogRequest &request, int pressed)
 {
     const auto labels = buttonLabels(request);
@@ -1226,7 +1262,7 @@ void AutomationShell::presentDialog(const application::DialogRequest &request, b
     if (m_run->answers) {
         const auto &given = m_run->answers->dialogs;
         const std::size_t at = m_run->dialogs.size();
-        const bool matches = at < given.size() && given[at].key == key.toStdString();
+        const bool matches = at < given.size() && answersDialog(given[at], request, key.toStdString());
         if (matches) {
             const auto filled = application::filledByName(request, application::initialDialogResult(request), given[at].values);
             const int pressed = buttonIndex(request, given[at].button);
@@ -1606,7 +1642,7 @@ void AutomationShell::finished(const QString &, backends::LuaScriptHost::RunOutc
     std::vector<api::DialogAnswer> answers;
     for (const AnsweredDialog &d : run.dialogs)
         answers.push_back(api::DialogAnswer{d.key, application::namedDialogValues(d.request, d.answer),
-                                            buttonLabel(d.request, d.answer.pressed)});
+                                            buttonLabel(d.request, d.answer.pressed), controlsOf(d.request)});
     if (!run.cancelledAtDialog && (outcome == Outcome::Ok || outcome == Outcome::Failed))
         m_repeat = RepeatRecord{run.path, run.macro, run.ordinal, std::move(run.dialogs)};
     auto *s = session(run.target);

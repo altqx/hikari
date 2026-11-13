@@ -83,7 +83,11 @@ void runMacro(const Context &context, const Json &params, Reply reply)
                          params.find("show") && params.find("show")->asString() == "prefilled"};
     if (const Json *answers = params.find("answers"))
         for (const Json &a : answers->asArray()) {
-            DialogAnswer answer{a.find("key")->asString(), {}, a.find("button") ? a.find("button")->asString() : ""};
+            DialogAnswer answer{a.find("key") ? a.find("key")->asString() : "", {},
+                                a.find("button") ? a.find("button")->asString() : "", {}};
+            if (const Json *controls = a.find("controls"))
+                for (const Json &c : controls->asArray())
+                    answer.controls.push_back(DialogControlInfo{c.find("name")->asString(), c.find("kind")->asString(), {}, {}, {}, {}, {}, {}});
             for (const Json::Member &v : a.find("values")->asObject())
                 if (const auto value = dialogValue(v.value))
                     answer.values.insert_or_assign(v.key, *value);
