@@ -209,8 +209,52 @@ TEST_F(PluginProcessTest, OnlyACommandBecomesAJob)
     ASSERT_TRUE(p->run("greet"));
     ASSERT_TRUE(waitFor([&] { return finished.count() == 1; }));
     ASSERT_EQ(m_notices.size(), 2u);
-    EXPECT_EQ(m_notices[0], "nil Only a command can become a job.");
+    EXPECT_EQ(m_notices[0], "nil Only a command or a click in the plugin's own panel or dialog can become a job.");
     EXPECT_EQ(m_notices[1], "nil");
+}
+
+TEST_F(PluginProcessTest, AClickInItsOwnPanelBecomesAJob)
+{
+    auto p = process(plugin("panel", R"(
+        hikari.commands.register('greet', function() end)
+        hikari.panels.on('scan', function(e)
+            local ok, err = hikari.job.begin{title = 'Scanning'}
+            hikari.notify(e.kind .. ' ' .. tostring(ok) .. ' ' .. (err and err.message or ''))
+        end))"),
+                     {.timeLimitMs = 300});
+    QSignalSpy began(p.get(), &PluginProcess::jobBegan);
+    QSignalSpy ended(p.get(), &PluginProcess::jobEnded);
+    ASSERT_TRUE(p->run("greet"));
+    ASSERT_TRUE(waitFor([&] { return p->state() == PluginProcess::State::Ready && !p->busy(); }));
+    ASSERT_TRUE(p->deliver("panel:scan", R"({"kind": "click", "widget": "go", "panel": "scan", "values": {}})", {}));
+    ASSERT_TRUE(waitFor([&] { return m_notices.size() == 1; }));
+    EXPECT_EQ(m_notices[0], "click true ");
+    ASSERT_EQ(began.count(), 1);
+    EXPECT_EQ(began.at(0).at(1).toString(), QStringLiteral("Scanning"));
+    ASSERT_TRUE(waitFor([&] { return ended.count() == 1; }));
+    EXPECT_FALSE(p->inJob());
+}
+
+TEST_F(PluginProcessTest, OtherEventsDontBecomeAJob)
+{
+    auto p = process(plugin("events", R"(
+        hikari.commands.register('greet', function() end)
+        local function try(e)
+            local ok, err = hikari.job.begin{title = 'Scanning'}
+            hikari.notify(tostring(ok) .. ' ' .. (err and err.message or ''))
+        end
+        hikari.panels.on('scan', try)
+        hikari.events.on('document.changed', try))"));
+    QSignalSpy began(p.get(), &PluginProcess::jobBegan);
+    ASSERT_TRUE(p->run("greet"));
+    ASSERT_TRUE(waitFor([&] { return p->state() == PluginProcess::State::Ready && !p->busy(); }));
+    ASSERT_TRUE(p->deliver("panel:scan", R"({"kind": "change", "widget": "gap", "value": 3, "panel": "scan", "values": {}})", {}));
+    ASSERT_TRUE(p->deliver("panel:scan", R"({"kind": "show", "panel": "scan", "values": {}})", {}));
+    ASSERT_TRUE(p->deliver("document.changed", R"({"kind": "click"})", {}));
+    ASSERT_TRUE(waitFor([&] { return m_notices.size() == 3; }));
+    const std::string no = "nil Only a command or a click in the plugin's own panel or dialog can become a job.";
+    EXPECT_EQ(m_notices, (std::vector<std::string>{no, no, no}));
+    EXPECT_EQ(began.count(), 0);
 }
 
 TEST_F(PluginProcessTest, MarksGoThroughTheHikariApi)

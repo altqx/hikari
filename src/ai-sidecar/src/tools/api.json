@@ -598,13 +598,72 @@
       ],
       "description": "The Project of the window the user works in; null without one."
     },
+    "DialogControl": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "edit",
+            "textbox",
+            "intedit",
+            "floatedit",
+            "dropdown",
+            "checkbox",
+            "color",
+            "coloralpha",
+            "alpha"
+          ],
+          "description": "The control's Lua class, lowercased."
+        },
+        "label": {
+          "type": "string",
+          "description": "A checkbox's text."
+        },
+        "hint": {
+          "type": "string"
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "A dropdown's choices."
+        },
+        "min": {
+          "type": "number"
+        },
+        "max": {
+          "type": "number"
+        },
+        "step": {
+          "type": "number",
+          "description": "A floatedit's step; 0 for none."
+        }
+      },
+      "required": [
+        "name",
+        "kind"
+      ],
+      "additionalProperties": false
+    },
     "DialogAnswer": {
       "type": "object",
       "properties": {
         "key": {
           "type": "string",
           "pattern": "^[0-9a-f]{16}$",
-          "description": "The dialog's key: its script and its controls' kinds and names, as Automation remembers answers by."
+          "description": "The dialog's key: its script and its controls' kinds and names, as Automation remembers answers by. When given, the key alone decides which dialog the answer fills."
+        },
+        "controls": {
+          "type": "array",
+          "maxItems": 256,
+          "items": {
+            "$ref": "#/$defs/DialogControl"
+          },
+          "description": "The dialog's value-bearing controls, in order. Without a key, the answer fills the dialog of the script being run whose controls have these kinds and names; the other fields don't count."
         },
         "values": {
           "type": "object",
@@ -623,8 +682,19 @@
         }
       },
       "required": [
-        "key",
         "values"
+      ],
+      "anyOf": [
+        {
+          "required": [
+            "key"
+          ]
+        },
+        {
+          "required": [
+            "controls"
+          ]
+        }
       ],
       "additionalProperties": false
     },
@@ -1750,6 +1820,63 @@
       }
     },
     {
+      "name": "document.group_begin",
+      "access": "write",
+      "summary": "Groups the steps the caller commits on the editing target from now on, by any write, into one undo step named after the caller and `name`. The group ends at document.group_end, when the plugin's command or event handler returns, when the plugin stops, or at the first step someone else makes. Plugins only.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "A few words naming the grouped step, as the user reads it in History after the caller's name."
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId"
+          }
+        },
+        "required": [
+          "document"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "document.group_end",
+      "access": "write",
+      "summary": "Ends the caller's group: its steps become one undo step.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "steps": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "How many steps became one; 0 when the group made none. A group someone else's step ended earlier is no longer open."
+          }
+        },
+        "required": [
+          "steps"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
       "name": "video.info",
       "access": "read",
       "summary": "Whether a video is open, its size and aspect ratio, the frame shown and the keyframes.",
@@ -2847,6 +2974,13 @@
           },
           "log": {
             "type": "string"
+          },
+          "dialogs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/DialogAnswer"
+            },
+            "description": "The answers its dialogs got, as macro.ran gives them; only when the caller sees the Document it ran on."
           }
         },
         "required": [
@@ -6136,6 +6270,33 @@
       }
     },
     {
+      "name": "document.saved",
+      "summary": "A Document was written to a file: Save, Save as, Save all or Save translation. Nothing comes for a save that was cancelled or failed.",
+      "since": 1,
+      "data": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId"
+          },
+          "path": {
+            "type": "string",
+            "description": "The file it was written to, as documents.list gives paths."
+          },
+          "revision": {
+            "$ref": "#/$defs/Revision",
+            "description": "The revision that was written."
+          }
+        },
+        "required": [
+          "document",
+          "path",
+          "revision"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
       "name": "selection.changed",
       "summary": "The selected or the active Line changed.",
       "since": 1,
@@ -6240,7 +6401,7 @@
     },
     {
       "name": "command.ran",
-      "summary": "A command ran, from a menu, a key, the API or anywhere else.",
+      "summary": "A command was triggered, from a menu, a key, the API or anywhere else. It reports the trigger, not the outcome: a Save that opens a dialog or a question comes before anything is written, and even when it is then cancelled; document.saved reports the write.",
       "since": 1,
       "data": {
         "type": "object",

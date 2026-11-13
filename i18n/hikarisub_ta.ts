@@ -16418,6 +16418,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>இயக்கு</translation>
     </message>
     <message>
+        <source>Off</source>
+        <translation>முடக்கம்</translation>
+    </message>
+    <message>
         <source>Plugin not changed</source>
         <translation>செருகுநிரல் மாற்றப்படவில்லை</translation>
     </message>

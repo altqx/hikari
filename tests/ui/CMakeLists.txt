@@ -15,6 +15,17 @@ hikari_add_qttest(hikari_ui_shell_tests SOURCES shell_tests.cpp next_file_folder
           panels2=saveAsOffersAssForADocumentOfAnotherFormat
           panels3=spellCheckerWindowAndEditorMarks
           translation=translationModeStacksOriginalAboveTranslated
+          translation2=lineEditorMinimumFitsEveryPreset
+          translation3=tagsFromOriginalUnderlineEveryRowOfAWrappedRun
+          translation4=tagsFromOriginalRedoKeepsTheCarriedTags
+          translation5=gridShowsTheTranslationColumnWithTheOriginal
+          translation6=settingsAiPageAddsGeminiAndFoldsAwayWhenAiIsOff
+          translation7=settingsAppearanceScrollsSidewaysWhenNarrow
+          translation8=pluginsInstallFromTheAutomationMenu
+          translation9=withAiOffShowingOrFloatingAPanelFocusesThatPanel
+          translation10=gettingStartedFinishWritesEveryPage
+          translation11=findAndMultireplacerFollowLegacyOwnersThroughSetDefault
+          translation12=audioPanelScreenshots
           hotkeys=hotkeysPageMapsAndOkInstalls
           visual=visualToolRailCrosshairAndCopyCoordinates
           visual2=importLyricsAddsLinesToTheOpenFileInOneStep
@@ -227,7 +238,8 @@ target_compile_definitions(hikari_ui_automation_submenus_tests PRIVATE
     HIKARI_LUA_FIXTURES="${PROJECT_SOURCE_DIR}/tests/backends/lua-fixtures")
 add_dependencies(hikari_ui_automation_submenus_tests hikari_lua_helper hikari_automation_stage)
 hikari_add_qttest(hikari_ui_template_editor_tests SOURCES template_editor_tests.cpp
-    LIBRARIES hikari_ui hikari_uiplugin hikari_backends)
+    LIBRARIES hikari_ui hikari_uiplugin hikari_backends
+    PARTS listing matching=anUndoneApplyMatchesAgain applying=aFailedMatchIsNotKept)
 target_compile_definitions(hikari_ui_template_editor_tests PRIVATE
     HIKARI_LUA_HELPER="$<TARGET_FILE:hikari_lua_helper>"
     HIKARI_LUA_INCLUDE="${HIKARI_AUTOMATION_STAGE}/Include"
@@ -240,11 +252,6 @@ hikari_add_qttest(hikari_ui_node_effects_controller_tests SOURCES node_effects_c
 target_compile_definitions(hikari_ui_node_effects_controller_tests PRIVATE
     HIKARI_KARAOKE_PRESET_FIXTURES="${PROJECT_SOURCE_DIR}/tests/backends/karaoke-presets")
 target_include_directories(hikari_ui_node_effects_controller_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/ui")
-foreach(mode offscreen xvfb native)
-    if(TEST hikari_ui_template_editor_tests.${mode})
-        set_tests_properties(hikari_ui_template_editor_tests.${mode} PROPERTIES TIMEOUT 300)
-    endif()
-endforeach()
 hikari_add_qttest(hikari_ui_template_editor_shell_tests SOURCES template_editor_shell_tests.cpp
     LIBRARIES hikari_composition)
 target_compile_definitions(hikari_ui_template_editor_shell_tests PRIVATE
@@ -290,23 +297,32 @@ if(Python3_Interpreter_FOUND)
     set_tests_properties(hikari_native_gate_windows_declared_skips PROPERTIES LABELS "native-gate" TIMEOUT 60)
 endif()
 hikari_add_qttest(hikari_ui_workspace_layout_tests SOURCES workspace_layout_tests.cpp
-    LIBRARIES hikari_composition KDAB::kddockwidgets)
+    LIBRARIES hikari_composition KDAB::kddockwidgets
+    PARTS envelope saving=aSaveBeforeTheSavedLayoutIsRestoredKeepsIt)
+target_include_directories(hikari_ui_workspace_layout_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
 hikari_add_qttest(hikari_ui_layout_migration_tests SOURCES layout_migration_tests.cpp
     LIBRARIES hikari_composition KDAB::kddockwidgets)
 target_compile_definitions(hikari_ui_layout_migration_tests PRIVATE
     HIKARI_LAYOUT_FIXTURES="${CMAKE_CURRENT_SOURCE_DIR}/layout-fixtures")
 hikari_add_qttest(hikari_ui_shell_windows_tests SOURCES shell_windows_tests.cpp
     LIBRARIES hikari_composition KDAB::kddockwidgets Qt6::QuickTest
-    PARTS windows notices=aTaskToastOpensInTheWindowOfItsTabWhileAnotherIsActive
+    PARTS windows windows2=anEditReachesAnotherWindowsToolPanelsOnlyForItsDocument
+          windows3=focusingAWindowRetargetsItsHotkeys
+          notices=aTaskToastOpensInTheWindowOfItsTabWhileAnotherIsActive
           media=eachWindowShowsItsOwnVideoAndKeepsItWhileAnotherIsActive
-          sessions=aSessionReopensEachWindowWithItsTabsAndPlace closing=closingAWindowReviewsOnlyItsTabs
-          moving=aTabDraggedOutOfEveryWindowOpensANewWindowHoldingIt)
+          sessions=aSessionReopensEachWindowWithItsTabsAndPlace sessions2=aCrashRestoreReopensEveryWindow
+          closing=closingAWindowReviewsOnlyItsTabs
+          closing2=exitTakesAKeyInTheHotkeysSettingsAndItQuitsEveryWindow
+          closing3=aSessionOpenedLaterShowsTheFirstWindowWithItsFloatingPanels
+          moving=aTabDraggedOutOfEveryWindowOpensANewWindowHoldingIt
+          moving2=aTabDraggedOutNearAScreenCornerOpensWholeOnThatScreen)
 target_include_directories(hikari_ui_shell_windows_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
 target_compile_definitions(hikari_ui_shell_windows_tests PRIVATE
     HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures")
 add_dependencies(hikari_ui_shell_windows_tests hikari_media_fixtures hikari_media_helper)
 hikari_add_qttest(hikari_ui_tab_layouts_tests SOURCES tab_layouts_tests.cpp
-    LIBRARIES hikari_composition KDAB::kddockwidgets)
+    LIBRARIES hikari_composition KDAB::kddockwidgets
+    PARTS places switching=switchingTabsSwapsTheirArrangements)
 target_compile_definitions(hikari_ui_tab_layouts_tests PRIVATE
     HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures")
 add_dependencies(hikari_ui_tab_layouts_tests hikari_media_fixtures hikari_media_helper)
@@ -324,13 +340,15 @@ hikari_add_qttest(hikari_ui_typesetting_preset_tests SOURCES typesetting_preset_
 hikari_add_qttest(hikari_ui_export_dialog_tests SOURCES export_dialog_tests.cpp
     LIBRARIES hikari_composition hikari_translations KDAB::kddockwidgets)
 hikari_add_qttest(hikari_ui_karaoke_preset_tests SOURCES karaoke_preset_tests.cpp
-    LIBRARIES hikari_composition KDAB::kddockwidgets)
+    LIBRARIES hikari_composition KDAB::kddockwidgets
+    PARTS preset restarts=leavingAfterARestart)
 target_compile_definitions(hikari_ui_karaoke_preset_tests PRIVATE
     HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures")
+target_include_directories(hikari_ui_karaoke_preset_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
 add_dependencies(hikari_ui_karaoke_preset_tests hikari_media_helper hikari_media_fixtures)
 hikari_add_qttest(hikari_ui_saved_layouts_tests SOURCES saved_layouts_tests.cpp
     LIBRARIES hikari_composition hikari_translations KDAB::kddockwidgets
-    PARTS layouts kept=unusableLayoutsAreKept)
+    PARTS layouts layouts2=theBackupNamesItsLayout kept=unusableLayoutsAreKept)
 target_include_directories(hikari_ui_saved_layouts_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
 target_compile_definitions(hikari_ui_saved_layouts_tests PRIVATE
     HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures")
@@ -488,10 +506,12 @@ set_tests_properties(hikari_ui_side_bars_shell_tests.screen1280 PROPERTIES
     LABELS "qttest;offscreen" TIMEOUT 300)
 hikari_add_qttest(hikari_ui_single_instance_tests SOURCES single_instance_tests.cpp LIBRARIES hikari_composition)
 hikari_add_qttest(hikari_ui_user_folder_tests SOURCES user_folder_tests.cpp LIBRARIES hikari_composition)
-hikari_add_qttest(hikari_ui_forwarded_launches_tests SOURCES forwarded_launches_tests.cpp LIBRARIES hikari_composition)
+hikari_add_qttest(hikari_ui_forwarded_launches_tests SOURCES forwarded_launches_tests.cpp LIBRARIES hikari_composition
+    PARTS links tabs=tabsWithSomethingOfTheirOwnKeepIt)
 target_compile_definitions(hikari_ui_forwarded_launches_tests PRIVATE
     HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures"
     HIKARI_PLUGIN_FIXTURES="${PROJECT_SOURCE_DIR}/tests/plugins/fixtures")
+target_include_directories(hikari_ui_forwarded_launches_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
 add_dependencies(hikari_ui_forwarded_launches_tests hikari_media_fixtures hikari_media_helper)
 hikari_add_qttest(hikari_ui_explorer_panel_tests SOURCES explorer_panel_tests.cpp
     LIBRARIES hikari_composition KDAB::kddockwidgets)
@@ -499,7 +519,8 @@ target_compile_definitions(hikari_ui_explorer_panel_tests PRIVATE
     HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures")
 add_dependencies(hikari_ui_explorer_panel_tests hikari_media_helper hikari_media_fixtures)
 set_tests_properties(hikari_ui_explorer_panel_tests.offscreen PROPERTIES TIMEOUT 300)
-hikari_add_qttest(hikari_ui_project_windows_tests SOURCES project_windows_tests.cpp LIBRARIES hikari_composition)
+hikari_add_qttest(hikari_ui_project_windows_tests SOURCES project_windows_tests.cpp LIBRARIES hikari_composition
+    PARTS skills spelling=eachWindowSpellsWithItsProjectsDictionary trust=aNamedKeyNobodyHasAsksNoTrust)
 target_include_directories(hikari_ui_project_windows_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
 target_compile_definitions(hikari_ui_project_windows_tests PRIVATE
     HIKARI_ATTACHMENT_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/attachments"

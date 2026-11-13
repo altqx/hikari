@@ -2994,6 +2994,8 @@ void Application::writeFinished(const application::WriteResult &result)
             destination && destination->value == result.destination.value)
             recordFileTime(result.document);
         emit documentWritten(result.document.value);
+        if (m_apiHost)
+            m_apiHost->api().documentSaved(result.document, result.destination.value, result.revision);
     } else if (result.outcome == application::WriteOutcome::Failed ||
                result.outcome == application::WriteOutcome::Cancelled) {
         if (result.outcome == application::WriteOutcome::Failed)

@@ -180,6 +180,7 @@ private slots:
         QVERIFY(dock);
         QVERIFY(!dock->property("isOpen").toBool());
         QCOMPARE(dock->property("title").toString(), QStringLiteral("Template editor"));
+        QVERIFY(QMetaObject::invokeMethod(object(QStringLiteral("viewMenu")), "build"));
         QVERIFY(object(QStringLiteral("panelMenuTemplate")));
         QVERIFY(openSong("stock-tutorials.ass", false));
         QVERIFY(!editor().shown());

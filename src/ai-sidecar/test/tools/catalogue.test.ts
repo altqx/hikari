@@ -107,13 +107,22 @@ describe("the tool catalogue", () => {
     test("offers the frame tools and the solvers in typeset, with full instead of maxPixels on video_frame", () => {
         const typeset = kOwn.entries.filter((e) => e.group === "typeset").map((e) => e.tool.name).sort();
         expect(typeset).toEqual(["typeset_apply", "typeset_check", "typeset_clip", "typeset_drawing", "typeset_hydra",
-            "typeset_perspective", "typeset_shift", "video_colours", "video_frame", "video_ink_bounds", "video_keyframes"]);
+            "typeset_perspective", "typeset_shift", "video_colours", "video_frame", "video_ink_bounds", "video_keyframes",
+            "video_set_keyframes"]);
         expect(kOwn.entries.find((e) => e.tool.name === "typeset_apply")!.tool.annotations.readOnlyHint).toBe(false);
         expect(kOwn.entries.find((e) => e.tool.name === "typeset_perspective")!.tool.annotations.readOnlyHint).toBe(true);
         const frame = kOwn.entries.find((e) => e.tool.name === "video_frame")!.tool.inputSchema as any;
         expect(Object.keys(frame.properties).sort()).toEqual(["crop", "document", "frame", "full", "line", "maxEdge", "subtitles"]);
         expect(frame.properties.full.type).toBe("boolean");
         expect(frame.additionalProperties).toBe(false);
+    });
+
+    test("offers the macro list but no plugin-only operation and no raw frame batches", () => {
+        const names = kOwn.entries.map((e) => e.tool.name);
+        expect(kOwn.entries.find((e) => e.tool.name === "automation_macros")!.group).toBe("automation");
+        for (const name of ["automation_run_macro", "vcs_refs", "vcs_show", "marks_set", "marks_clear", "marks_list",
+            "video_frames"])
+            expect(names).not.toContain(name);
     });
 
     test("names tools, not HA1 operations, in every description", () => {
