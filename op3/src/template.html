@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>OP3 Git line marks: design gate</title>
+<style>
+:root { font-family: "Inter", "Noto Sans", "Segoe UI", sans-serif; font-size: 13px; }
+body { margin: 0; background: #f3f4f6; color: #202832; }
+.t-light { --bg:#E5E9EC; --panel:#F9FAFB; --raised:#EDF0F3; --field:#FFFFFF; --text:#202832; --muted:#526170; --line:#AAB5BE; --accent:#145C4C; --on-accent:#FFFFFF; --select:#145C4C37; --danger:#A51F31; --warning:#8A5A00; --success:#008000; --mutedmark:#526170; --disabled:#74808B; --hc:0; }
+.t-dark { --bg:#171B20; --panel:#20262D; --raised:#29313A; --field:#171D24; --text:#E8EDF2; --muted:#A5B1BD; --line:#414B57; --accent:#9CDBC9; --on-accent:#102C24; --select:#9CDBC937; --danger:#FFADAD; --warning:#E0A030; --success:#4DBA4D; --mutedmark:#A5B1BD; --disabled:#75818D; --hc:0; }
+.t-hcw { --bg:#FFFFFF; --panel:#FFFFFF; --raised:#EBEBEB; --field:#FFFFFF; --text:#000000; --muted:#1A1A1A; --line:#000000; --accent:#0037B3; --on-accent:#FFFFFF; --select:#C9DAF8; --danger:#A00000; --warning:#6B4500; --success:#005A00; --mutedmark:#1A1A1A; --disabled:#6E6E6E; --hc:1; }
+.t-hcb { --bg:#000000; --panel:#080808; --raised:#151515; --field:#000000; --text:#FFFFFF; --muted:#EEEEEE; --line:#FFFFFF; --accent:#FFFF00; --on-accent:#000000; --select:#253F60; --danger:#FFADAD; --warning:#FFD54A; --success:#7CFC7C; --mutedmark:#EEEEEE; --disabled:#8C8C8C; --hc:1; }
+
+section.sheet { padding: 24px 28px 32px; }
+section.sheet > h2 { margin: 0 0 4px; font-size: 18px; }
+section.sheet > p.lead { margin: 0 0 16px; max-width: 1100px; color: #3b4652; }
+.themes { display: flex; flex-direction: column; gap: 18px; }
+.theme { background: var(--bg); color: var(--text); padding: 14px; border-radius: 6px; }
+.theme > .name { font-weight: 600; margin-bottom: 10px; font-size: 12px; color: var(--muted); letter-spacing: .02em; }
+.row { display: flex; gap: 12px; align-items: flex-start; }
+
+svg.i { width: 16px; height: 16px; flex: none; color: var(--text); vertical-align: -3px; }
+svg.i #accent { color: var(--accent); }
+
+.window { background: var(--panel); border: 1px solid var(--line); border-radius: 4px; display: flex; overflow: hidden; }
+.grid { flex: 1; background: var(--field); position: relative; border-right: 1px solid var(--line); }
+.grid table { border-collapse: collapse; width: 100%; table-layout: fixed; }
+.grid th { background: var(--raised); font-weight: 600; text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--line); border-right: 1px solid var(--line); color: var(--text); font-size: 12px; }
+.grid td { padding: 0 6px; height: 22px; border-bottom: 1px solid color-mix(in srgb, var(--line) 45%, transparent); border-right: 1px solid color-mix(in srgb, var(--line) 45%, transparent); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.grid tr.sel td { background: var(--select); }
+.grid tr.comment td { color: var(--muted); font-style: italic; }
+.grid td.num { position: relative; text-align: right; padding-right: 14px; color: var(--muted); background: var(--raised); }
+.grid tr.sel td.num { background: color-mix(in srgb, var(--raised) 70%, var(--accent)); color: var(--text); }
+.bar { position: absolute; right: 2px; top: 3px; bottom: 3px; width: 4px; }
+.t-hcw .bar, .t-hcb .bar { outline: 1px solid var(--text); outline-offset: 0; }
+.c-success { background: var(--success); } .c-warning { background: var(--warning); } .c-danger { background: var(--danger); } .c-accent { background: var(--accent); } .c-muted { background: var(--mutedmark); }
+.tip { position: absolute; background: var(--panel); color: var(--text); border: 1px solid var(--line); padding: 4px 7px; border-radius: 3px; font-size: 12px; box-shadow: 0 2px 6px #0004; white-space: nowrap; z-index: 3; }
+.cursor { position: absolute; width: 0; height: 0; border-left: 6px solid var(--text); border-top: 4px solid transparent; border-bottom: 4px solid transparent; transform: rotate(-60deg); z-index: 4; }
+
+.dock { width: 360px; flex: none; display: flex; flex-direction: column; background: var(--panel); }
+.dock.solo { border: 1px solid var(--line); border-radius: 4px; width: 330px; }
+.dock .head { display: flex; align-items: center; height: 28px; padding: 0 6px 0 10px; border-bottom: 1px solid var(--line); font-weight: 600; gap: 6px; }
+.dock .head .grow { flex: 1; }
+.dock .body { padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+.lbl { color: var(--muted); font-size: 12px; }
+.lbl.head2 { color: var(--text); font-weight: 600; font-size: 13px; }
+.field { display: flex; align-items: center; gap: 6px; background: var(--field); border: 1px solid var(--line); border-radius: 3px; height: 26px; padding: 0 6px; }
+.field.focus { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.field .ph { color: var(--muted); }
+.field.mono { height: auto; padding: 4px 6px; white-space: normal; word-break: break-all; font-family: "JetBrains Mono", "DejaVu Sans Mono", monospace; font-size: 12px; }
+.tree { background: var(--field); border: 1px solid var(--line); border-radius: 3px; overflow: hidden; }
+.tree .g { display: flex; gap: 6px; align-items: center; height: 22px; padding: 0 6px; font-weight: 600; color: var(--text); }
+.tree .g .caret { width: 10px; color: var(--muted); }
+.tree .r { display: flex; align-items: center; height: 22px; padding: 0 6px 0 26px; gap: 8px; }
+.tree .r .t { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tree .r .d { color: var(--muted); font-size: 12px; white-space: nowrap; }
+.tree .r.sel { background: var(--accent); color: var(--on-accent); }
+.tree .r.sel .d { color: var(--on-accent); }
+.tree .r.hint { color: var(--muted); font-style: italic; padding-left: 10px; }
+.btns { display: flex; gap: 6px; align-items: center; }
+.btn { height: 26px; padding: 0 12px; border-radius: 3px; border: 1px solid var(--line); background: var(--raised); color: var(--text); display: inline-flex; align-items: center; gap: 6px; }
+.btn.primary { background: var(--accent); color: var(--on-accent); border-color: var(--accent); font-weight: 600; }
+.ibtn { width: 26px; height: 26px; border-radius: 3px; display: inline-flex; align-items: center; justify-content: center; }
+.ibtn.hover { background: var(--raised); border: 1px solid var(--line); }
+.check { display: flex; align-items: center; gap: 7px; }
+.box { width: 14px; height: 14px; border: 1px solid var(--line); border-radius: 2px; background: var(--field); display: inline-flex; align-items: center; justify-content: center; }
+.box.on { background: var(--accent); border-color: var(--accent); }
+.box.on::after { content: ""; width: 7px; height: 4px; border-left: 2px solid var(--on-accent); border-bottom: 2px solid var(--on-accent); transform: rotate(-45deg) translate(1px, -1px); }
+.grp { border: 1px solid var(--line); border-radius: 3px; padding: 8px; display: flex; flex-direction: column; gap: 6px; }
+.grp .title { font-weight: 600; }
+.legend { display: flex; gap: 14px; align-items: center; }
+.legend span { display: inline-flex; gap: 6px; align-items: center; }
+.legend i { display: inline-block; width: 4px; height: 14px; }
+.t-hcw .legend i, .t-hcb .legend i { outline: 1px solid var(--text); }
+.list { background: var(--field); border: 1px solid var(--line); border-radius: 3px; }
+.list .r { display: flex; height: 22px; align-items: center; padding: 0 8px; gap: 10px; }
+.list .r .t { width: 64px; }
+.list .r .d { color: var(--muted); font-size: 12px; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.list .r.sel { background: var(--accent); color: var(--on-accent); }
+.list .r.sel .d { color: var(--on-accent); }
+.empty { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; padding: 6px 2px; }
+.empty .h { font-weight: 600; display: flex; gap: 8px; align-items: center; }
+.empty p { margin: 0; color: var(--muted); line-height: 1.45; }
+.progress { height: 4px; background: var(--raised); border-radius: 2px; overflow: hidden; }
+.progress i { display: block; width: 40%; height: 100%; background: var(--accent); }
+
+.iconsheet { display: flex; gap: 22px; align-items: flex-end; }
+.iconsheet figure { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 6px; color: var(--muted); font-size: 11px; }
+.pm-row { display: flex; align-items: center; gap: 8px; background: var(--field); border: 1px solid var(--line); border-radius: 3px; padding: 6px 10px; width: 300px; }
+.pm-row .n { font-weight: 600; } .pm-row .v { color: var(--muted); font-size: 12px; }
+.pm-row.sel { background: var(--accent); color: var(--on-accent); } .pm-row.sel .v { color: var(--on-accent); }
+.pm-row.sel svg.i, .pm-row.sel svg.i #accent { color: var(--on-accent); }
+
+table.spec { border-collapse: collapse; background: #fff; max-width: 1200px; }
+table.spec td, table.spec th { border: 1px solid #c9d0d6; padding: 6px 9px; text-align: left; vertical-align: top; }
+table.spec th { background: #eef1f4; }
+code { font-family: "JetBrains Mono", "DejaVu Sans Mono", monospace; font-size: 12px; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+const ICONS = {{ICONS}};
+const PLUGIN_ICON = {{PLUGIN_ICON}};
+const THEMES = [["light", "Light"], ["dark", "Dark"], ["hcw", "High contrast white"], ["hcb", "High contrast black"]];
+const q = new URLSearchParams(location.search);
+const icon = (n) => ICONS[n].replace("<svg ", '<svg class="i" ');
+const plugIcon = (px) => PLUGIN_ICON.replace("<svg ", `<svg width="${px}" height="${px}" style="flex:none" `);
+
+const LINES = [
+  [1, "0:00:01.00", "0:00:03.40", "Default", "The lantern swings over the quiet pier.", null],
+  [2, "0:00:04.00", "0:00:06.10", "Default", "Somebody left the gate open again.", ["warning", "Changed since v1.0: text"]],
+  [3, "0:00:06.20", "0:00:07.90", "Default", "A gull lands on the railing.", ["success", "Added since v1.0"]],
+  [4, "0:00:08.00", "0:00:10.00", "Default", "Mind the third step, it creaks.", null],
+  [5, "0:00:10.10", "0:00:12.30", "Default", "We should have taken the early ferry.", ["danger", "1 Line removed above since v1.0"]],
+  [6, "0:00:12.50", "0:00:14.60", "Default", "The tide tables say otherwise.", ["warning", "Changed since v1.0: time"]],
+  [7, "0:00:14.60", "0:00:16.00", "Sign", "{\\an8}HARBOUR MASTER", ["warning", "Changed since v1.0: style, margins"]],
+  [8, "0:00:16.20", "0:00:18.00", "Default", "Fine. Tomorrow, then.", ["warning", "Moved since v1.0"]],
+  [9, "0:00:18.10", "0:00:20.40", "Default", "Bring the blue umbrella this time.", ["danger", "Changed since v1.0: text; 2 Lines removed above"]],
+  [10, "0:00:20.50", "0:00:22.00", "Default", "It never rains on the crossing.", null],
+  [11, "0:00:22.10", "0:00:24.80", "Default", "That's what you said last spring.", ["success", "Added since v1.0"]],
+  [12, "0:00:25.00", "0:00:27.00", "Default", "Last spring was different.", ["danger", "1 Line removed below since v1.0"]],
+];
+
+function grid(opts) {
+  const rows = LINES.map(([n, s, e, st, tx, m]) => {
+    const sel = opts.sel === n ? ' class="sel"' : "";
+    const bar = m ? `<span class="bar c-${m[0]}"></span>` : "";
+    return `<tr${sel}><td class="num">${n}${bar}</td><td>${s}</td><td>${e}</td><td>${st}</td><td>${tx.replace(/</g, "&lt;")}</td></tr>`;
+  }).join("");
+  const tipRow = opts.tip || 6;
+  const tip = LINES[tipRow - 1][5];
+  const top = 26 + (tipRow - 1) * 23;
+  return `<div class="grid"><table><colgroup><col style="width:52px"><col style="width:86px"><col style="width:86px"><col style="width:70px"><col></colgroup>
+    <tr><th style="text-align:right;padding-right:14px">#</th><th>Start</th><th>End</th><th>Style</th><th>Text</th></tr>${rows}</table>
+    <span class="cursor" style="left:47px;top:${top + 10}px"></span>
+    <div class="tip" style="left:56px;top:${top + 20}px">Git line marks: ${tip[1]}</div></div>`;
+}
+
+function head(title) {
+  return `<div class="head">${title}<span class="grow"></span><span class="ibtn">${icon("panel-menu")}</span></div>`;
+}
+
+function picker(state) {
+  if (state === "search") {
+    return `<div class="field focus">${icon("search")}<span>v1</span></div>
+    <div class="tree">
+      <div class="g"><span class="caret">▾</span>Tags</div>
+      <div class="r sel"><span class="t">v1.0</span><span class="d">3f2a1c9 · 12 Oct</span></div>
+      <div class="r"><span class="t">v1.1-rc</span><span class="d">c0de7a1 · 2 Nov</span></div>
+      <div class="g"><span class="caret">▾</span>Recent commits</div>
+      <div class="r"><span class="t">Retime for v1.1</span><span class="d">c0de7a1 · Kai · 2 Nov</span></div>
+      <div class="r hint">Enter compares with “v1” as typed, as a revision</div>
+    </div>`;
+  }
+  const sel = state === "none" ? "" : " sel";
+  return `<div class="field">${icon("search")}<span class="ph">Search branches, tags and commits</span></div>
+    <div class="tree">
+      <div class="g"><span class="caret">▾</span>Branches</div>
+      <div class="r"><span class="t">main</span><span class="d">current · a41c9e2 · 2 h ago</span></div>
+      <div class="r"><span class="t">typeset-pass</span><span class="d">77d0b13 · yesterday</span></div>
+      <div class="g"><span class="caret">▾</span>Tags</div>
+      <div class="r${sel}"><span class="t">v1.0</span><span class="d">3f2a1c9 · 12 Oct</span></div>
+      <div class="r"><span class="t">tl-check</span><span class="d">9be4410 · 8 Oct</span></div>
+      <div class="g"><span class="caret">▸</span>Recent commits <span class="lbl">50</span></div>
+    </div>`;
+}
+
+function actions(primary) {
+  return `<div class="btns"><span class="btn primary">${primary || "Compare"}</span><span class="grow" style="flex:1"></span>
+    <span class="ibtn hover" title="Refresh">${icon("refresh")}</span><span class="ibtn" title="Clear marks">${icon("clear")}</span></div>
+    <div class="check"><span class="box on"></span>Refresh when I save</div>`;
+}
+
+function results() {
+  return `<div class="grp"><div class="title">Compared with v1.0</div>
+      <div class="legend"><span><i class="c-success"></i>2 added</span><span><i class="c-warning"></i>5 changed</span><span><i class="c-danger"></i>4 removed</span></div>
+      <div class="lbl">3f2a1c9 · compared at 14:02, after Save</div></div>
+    <div class="list">
+      <div class="r"><span class="t">Line 2</span><span class="d">Changed: text</span></div>
+      <div class="r"><span class="t">Line 3</span><span class="d">Added</span></div>
+      <div class="r"><span class="t">Line 5</span><span class="d">1 Line removed above</span></div>
+      <div class="r sel"><span class="t">Line 6</span><span class="d">Changed: time</span></div>
+      <div class="r"><span class="t">Line 7</span><span class="d">Changed: style, margins</span></div>
+      <div class="r"><span class="t">Line 8</span><span class="d">Moved</span></div>
+      <div class="r"><span class="t">Line 9</span><span class="d">Changed: text; 2 Lines removed above</span></div>
+    </div>`;
+}
+
+function dock(body, solo) {
+  return `<div class="dock${solo ? " solo" : ""}">${head("Git line marks")}<div class="body">${body}</div></div>`;
+}
+
+function state(h, ic, text, extra) {
+  return dock(`<div class="lbl">Compare ep01.ass with</div><div class="empty"><div class="h">${icon(ic)}${h}</div><p>${text}</p>${extra || ""}</div>`, true);
+}
+
+const STATES = [
+  ["Git isn’t available", "notice-error", "HikariSub couldn’t run git. Install Git (Git for Windows on Windows), make sure it is on PATH, then choose Refresh.", `<span class="btn">${icon("refresh")}Refresh</span>`],
+  ["Not in a git repository", "notice-info", "ep01.ass isn’t in a git repository, so there is nothing to compare it with.", `<span class="btn">${icon("refresh")}Refresh</span>`],
+  ["Git doesn’t trust this repository", "notice-warning", "Another user owns /srv/subs/harbour. If you trust it, run this command, then choose Refresh:", `<div class="field mono" style="width:100%;box-sizing:border-box">git config --global --add safe.directory /srv/subs/harbour</div><span class="btn">${icon("refresh")}Refresh</span>`],
+  ["Save the file first", "notice-info", "This file was never saved, so it isn’t in a repository yet.", `<span class="btn">${icon("save")}Save…</span>`],
+  ["ep01.ass isn’t in v0.9", "notice-info", "It may have been added after v0.9, or renamed since. Pick another branch, tag or commit.", ""],
+  ["Only ASS files can be compared", "notice-info", "ep01.srt is SubRip. Marks need ASS Events to match Lines.", ""],
+];
+
+function section(id, title, lead, body) {
+  if (q.get("only") && q.get("only") !== id) return "";
+  const which = q.get("theme") ? THEMES.filter(t => t[0] === q.get("theme")) : THEMES;
+  const themes = which.map(([k, n]) => `<div class="theme t-${k}"><div class="name">${n}</div>${body(k)}</div>`).join("");
+  return `<section class="sheet" id="${id}"><h2>${title}</h2><p class="lead">${lead}</p><div class="themes">${themes}</div></section>`;
+}
+
+let html = "";
+html += section("grid", "1. The Grid with marks, and the panel after a compare",
+  "Marks are the marks API’s 4 px bar at the right of the row number, in the theme’s own roles: success = added, warning = changed (moved and retimed too), danger = Lines removed above. High contrast outlines each bar in the text colour. Hover shows HikariSub’s tooltip, the plugin’s name then the mark’s text; screen readers read the same. Line 6 is chosen in the panel’s list, so the Grid selects it.",
+  () => `<div class="window">${grid({sel: 6, tip: 9})}${dock(`<div class="lbl">Compare ep01.ass with</div>${picker()}${actions()}${results()}`)}</div>`);
+html += section("picker", "2. The ref picker with a search",
+  "One searchable tree from vcs.refs: Branches (the current one first, marked current), Tags, and the 50 most recent commits (collapsed). Search matches names, commit summaries and short hashes. Enter compares with the text as typed, so a revision such as HEAD~2 or a full hash works too. The last ref compared is remembered. Middle: nothing picked yet. Right: comparing.",
+  () => `<div class="row">${dock(`<div class="lbl">Compare ep01.ass with</div>${picker("search")}${actions()}`, true)}
+    ${dock(`<div class="lbl">Compare ep01.ass with</div>${picker("none")}${actions("Compare")}<div class="empty"><p>Pick a branch, tag or commit, then Compare.</p></div>`, true)}
+    ${dock(`<div class="lbl">Compare ep01.ass with</div>${picker()}<div class="progress"><i></i></div><div class="lbl">Comparing with v1.0…</div>`, true)}</div>`);
+html += section("states", "3. When there is nothing to compare",
+  "Each state clears the plugin’s marks and says what helps; for a missing file or a ref that isn’t ASS, the picker stays above the message so another ref is one click away. They come from vcs.show’s error reasons: no_git, no_repository, unsafe_repository (with the safe.directory command to copy from a read-only field), no_path (Save… runs Save subtitles), no_file, and a Document or ref text that isn’t ASS.",
+  () => `<div class="row" style="flex-wrap:wrap">${STATES.map(s => state(...s)).join("")}</div>`);
+html += section("icon", "4. The plugin’s icon",
+  "A new icon, not a letter tile: three Grid rows with their marks in the added, changed and removed colours, and a branch in the badge corner (lower right, as the icon set’s badges sit). Drawn on the set’s 16-unit grid with its 1-unit round strokes, on a tile in HikariSub’s Dawn Peek indigo and cream, so the same SVG reads on every theme. Shown at 256 px, at the plugin manager’s 48, 32 and 24 px, and in an Installed row with the By HikariSub badge.",
+  () => `<div class="iconsheet"><figure>${plugIcon(256)}256</figure><figure>${plugIcon(48)}48</figure><figure>${plugIcon(32)}32</figure><figure>${plugIcon(24)}24</figure>
+    <div style="display:flex;flex-direction:column;gap:6px"><div class="pm-row">${plugIcon(24)}<span class="n">Git line marks</span><span class="v">1.0.0</span><span style="flex:1"></span>${icon("plugin-official")}</div>
+    <div class="pm-row sel">${plugIcon(24)}<span class="n">Git line marks</span><span class="v">1.0.0</span><span style="flex:1"></span>${icon("plugin-official")}</div>
+    <div class="pm-row">${icon("plugins")}<span class="n">Line tools</span><span class="v">1.2.0 · no icon</span></div></div></div>`);
+document.getElementById("root").innerHTML = html;
+</script>
+</body>
+</html>
