@@ -303,7 +303,8 @@ class AgentPanelTest : public QObject {
             const QString home = at(QStringLiteral("ai/agents/codex/home"));
             if (auto codex = backends::ai::codexAgent(backends::ai::findAgentCli(QStringLiteral("codex")), home,
                                                       at(QStringLiteral("ai/agents/codex/work")),
-                                                      std::make_shared<backends::ai::CodexLease>(keys, home)))
+                                                      std::make_shared<backends::ai::CodexLease>(keys, home),
+                                                      QCoreApplication::applicationFilePath()))
                 broker.add("codex", std::move(*codex));
         };
         ports.agentOnPath = [](const QString &) { return true; };
