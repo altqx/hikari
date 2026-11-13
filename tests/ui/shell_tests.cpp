@@ -7678,6 +7678,7 @@ private slots:
 
     void panelMenusReadInTheOrderTheyShow()
     {
+        window->resize(1280, 1000);
         QAccessible::setActive(true);
         const auto inactive = qScopeGuard([] { QAccessible::setActive(false); });
         QVERIFY(application->openFile(episode));

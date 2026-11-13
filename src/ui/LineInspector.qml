@@ -223,7 +223,7 @@ ColumnLayout {
         property string label
         property real minimum
         default property alias controls: box.data
-        readonly property real smallest: (label.length > 0 ? name.implicitWidth + spacing : 0) + minimum
+        readonly property real smallest: (label.length > 0 ? Math.ceil(name.implicitWidth) + spacing : 0) + Math.ceil(minimum)
         spacing: 5
         Label {
             id: name
