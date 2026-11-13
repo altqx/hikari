@@ -6785,7 +6785,8 @@ private slots:
         QVERIFY(application->openFile(writeFile(dir, "find-typing.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n")));
         item("editingGrid")->forceActiveFocus();
         press(Qt::Key_F, Qt::ControlModifier);
-        QTRY_VERIFY(item("findText")->hasActiveFocus());
+        QTRY_VERIFY(item("findText") && item("findText")->hasActiveFocus());
+        QVERIFY(item<QObject>("searchTool"));
         item<QObject>("searchTool")->setProperty("scope", QStringLiteral("folder"));
         QVERIFY(QMetaObject::invokeMethod(item("findOptionsButton"), "click"));
         QTRY_VERIFY(item("findFolder")->isVisible());

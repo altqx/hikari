@@ -119,7 +119,7 @@ class TabLayoutsTest : public QObject {
     QRectF sceneRect(const char *name) const
     {
         auto *item = window()->findChild<QQuickItem *>(QLatin1String(name));
-        return QRectF(item->mapToScene(QPointF(0, 0)), QSizeF(item->width(), item->height()));
+        return item ? QRectF(item->mapToScene(QPointF(0, 0)), QSizeF(item->width(), item->height())) : QRectF();
     }
     void showPanel(const char *name)
     {
@@ -202,7 +202,10 @@ private slots:
         const QByteArray firstPanel = (first + QLatin1String("Panel")).toLatin1();
         const QString firstName = uniqueName(first);
         open(firstDock.constData());
-        QTRY_VERIFY(window()->findChild<QQuickItem *>(QLatin1String(firstPanel))->isVisible());
+        if (QTest::currentTestFailed())
+            return;
+        const auto shownPanel = [&] { return window()->findChild<QQuickItem *>(QLatin1String(firstPanel)); };
+        QTRY_VERIFY(shownPanel() && shownPanel()->isVisible());
         QTRY_VERIFY(sceneRect(firstPanel.constData()).left() > sceneRect("gridPanel").right() - 1);
         const QRectF grid = sceneRect("gridPanel");
         const QRectF column = sceneRect(firstPanel.constData());
