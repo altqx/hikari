@@ -154,6 +154,7 @@ public:
 
     // The host reports each change once, after it happened, whoever made it.
     void documentChanged(application::DocumentId document); // a commit, Undo or Redo
+    void documentSaved(application::DocumentId document, std::string_view path, std::uint64_t revision);
     void selectionChanged(application::DocumentId document);
     void documentsChanged(); // a tab opened or closed, or the editing target moved
     void panelChanged(std::string_view panel);

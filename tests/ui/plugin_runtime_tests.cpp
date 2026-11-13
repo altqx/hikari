@@ -13,8 +13,10 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QProcess>
+#include <QScopeGuard>
 #include <QSignalSpy>
 #include <QTemporaryDir>
+#include <QUrl>
 #include <QtQml/qqmlextensionplugin.h>
 #include <QtTest>
 
@@ -1002,6 +1004,83 @@ private slots:
         QFile secret(m_dir.filePath(QStringLiteral("secret/key.txt")));
         QVERIFY(secret.open(QIODevice::ReadOnly));
         QCOMPARE(secret.readAll(), QByteArray("secret"));
+    }
+
+    void documentSavedComesAfterEachWriteAndNeverForAFailedOne()
+    {
+        install(QStringLiteral("com.example.tidy"), QStringLiteral("Tidy"), R"~(
+            hikari.events.on('document.saved', function(data)
+                hikari.notify('saved ' .. data.path:match('[^/\\]+$') .. ' ' .. data.revision)
+            end)
+        )~");
+        auto a = openEpisodes(2);
+        QVERIFY(a);
+        QSignalSpy noticed(&a->log(), &ui::LogController::noticed);
+        QStringList saved;
+        api::Api &api = a->apiHost()->api();
+        const auto subscription = api.subscribe(api::Caller{"test", "Test", true}, {"document.saved"}, [&](const api::Event &e) {
+            const QString path = QString::fromStdString(e.data.find("path")->asString());
+            QFile file(path);
+            const QByteArray bytes = file.open(QIODevice::ReadOnly) ? file.readAll() : QByteArray();
+            const auto marker = bytes.mid(bytes.lastIndexOf(",,") + 2).trimmed();
+            saved << QFileInfo(path).fileName() + u' ' + QString::number(e.data.find("revision")->asInt()) + u' ' +
+                         QString::fromUtf8(marker);
+        });
+        auto guard = qScopeGuard([&] { api.unsubscribe(subscription); });
+        app::PluginRuntime runtime(wiring(*a));
+        runtime.sync();
+        QTRY_VERIFY(runtime.process(QStringLiteral("com.example.tidy"))->state() == PluginProcess::State::Ready);
+        const auto edit = [&](std::optional<application::DocumentId> document, const QString &text) {
+            const auto id = document ? *document : *a->workspace().editingTarget();
+            auto &s = *a->files().session(id);
+            QVERIFY(apiCall(*a, "document.apply",
+                            QStringLiteral(R"({"document": %1, "revision": %2, "name": "Edit",
+                                "edits": [{"op": "set_line", "line": %3, "fields": {"text": "%4"}}]})")
+                                .arg(id.value)
+                                .arg(s.revision())
+                                .arg(s.document().lines().back()->id.value)
+                                .arg(text)));
+        };
+        const auto revision = [&] { return QString::number(session(*a).revision()); };
+
+        edit(std::nullopt, QStringLiteral("plain"));
+        QVERIFY(a->saveDocument(0));
+        QTRY_COMPARE(saved, QStringList{QStringLiteral("episode-1.ass ") + revision() + QStringLiteral(" plain")});
+        QTRY_VERIFY(texts(noticed).contains(QStringLiteral("Tidy: saved episode-1.ass ") + revision()));
+
+        edit(std::nullopt, QStringLiteral("as"));
+        QVERIFY(a->saveAs(m_dir.filePath(QStringLiteral("renamed.ass"))));
+        QTRY_COMPARE(saved.size(), 2);
+        QCOMPARE(saved.last(), QStringLiteral("renamed.ass ") + revision() + QStringLiteral(" as"));
+
+        QSignalSpy failed(a.get(), &app::Application::documentWriteFailed);
+        edit(std::nullopt, QStringLiteral("nowhere"));
+        QVERIFY(a->saveAs(m_dir.filePath(QStringLiteral("episode-2.ass/inside.ass"))));
+        QTRY_COMPARE(failed.size(), 1);
+        QCOMPARE(saved.size(), 2);
+
+        const auto target = *a->workspace().editingTarget();
+        const auto documents = a->workspace().documents();
+        const auto other = *std::ranges::find_if(documents, [&](auto id) { return id != target; });
+        edit(other, QStringLiteral("all one"));
+        edit(std::nullopt, QStringLiteral("all two"));
+        a->saveAll();
+        QTRY_COMPARE(saved.size(), 4);
+        QStringList both{saved[2], saved[3]};
+        both.sort();
+        QVERIFY2(both[0].startsWith(QStringLiteral("episode-2.ass ")) && both[0].endsWith(QStringLiteral(" all one")),
+                 qPrintable(both.join(u'|')));
+        QVERIFY2(both[1].startsWith(QStringLiteral("renamed.ass ")) && both[1].endsWith(QStringLiteral(" all two")),
+                 qPrintable(both.join(u'|')));
+
+        a->addPage();
+        edit(std::nullopt, QStringLiteral("first"));
+        QCOMPARE(a->saveRouteFor(0), QStringLiteral("dialog"));
+        QCOMPARE(saved.size(), 4);
+        QCOMPARE(a->saveChosen(QUrl::fromLocalFile(m_dir.filePath(QStringLiteral("new.ass")))), QString());
+        QTRY_COMPARE(saved.size(), 5);
+        QCOMPARE(saved.last(), QStringLiteral("new.ass ") + revision() + QStringLiteral(" first"));
+        QTRY_VERIFY(texts(noticed).contains(QStringLiteral("Tidy: saved new.ass ") + revision()));
     }
 
     void aPluginReachesATrustedProjectsPlaceAndHearsTheProjectChange()

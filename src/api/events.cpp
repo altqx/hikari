@@ -14,6 +14,14 @@ void addEvents(Registry &registry)
                                     "revision": {"$ref": "#/$defs/Revision"},
                                     "step": {"type": "string", "description": "The History step now current."}},
                                     "required": ["document", "revision", "step"], "additionalProperties": false})")});
+    registry.addEvent(EventType{"document.saved",
+                                "A Document was written to a file: Save, Save as, Save all or Save translation. Nothing "
+                                "comes for a save that was cancelled or failed.",
+                                schema(R"({"type": "object", "properties": {
+                                    "document": {"$ref": "#/$defs/DocumentId"},
+                                    "path": {"type": "string", "description": "The file it was written to, as documents.list gives paths."},
+                                    "revision": {"$ref": "#/$defs/Revision", "description": "The revision that was written."}},
+                                    "required": ["document", "path", "revision"], "additionalProperties": false})")});
     registry.addEvent(EventType{"selection.changed", "The selected or the active Line changed.",
                                 schema(R"({"type": "object", "properties": {
                                     "document": {"$ref": "#/$defs/DocumentId"},
@@ -33,7 +41,10 @@ void addEvents(Registry &registry)
                                     "floating": {"type": "boolean"}, "focused": {"type": "boolean"}},
                                     "required": ["panel", "title", "open", "floating", "focused"],
                                     "additionalProperties": false})")});
-    registry.addEvent(EventType{"command.ran", "A command ran, from a menu, a key, the API or anywhere else.",
+    registry.addEvent(EventType{"command.ran",
+                                "A command was triggered, from a menu, a key, the API or anywhere else. It reports the "
+                                "trigger, not the outcome: a Save that opens a dialog or a question comes before anything "
+                                "is written, and even when it is then cancelled; document.saved reports the write.",
                                 schema(R"({"type": "object", "properties": {"command": {"type": "string"},
                                     "ok": {"type": "boolean", "description": "False when it was refused or failed."}},
                                     "required": ["command", "ok"], "additionalProperties": false})")});
@@ -195,6 +206,13 @@ void Api::macroRan(application::DocumentId document, std::string_view file, std:
                                              {"outcome", Json(outcome)},
                                              {"ok", Json(outcome == "applied")},
                                              {"dialogs", detail::dialogsJson(dialogs)}})},
+            document);
+}
+
+void Api::documentSaved(application::DocumentId document, std::string_view path, std::uint64_t revision)
+{
+    publish(Event{"document.saved",
+                  Json::object({{"document", Json(document.value)}, {"path", Json(path)}, {"revision", Json(revision)}})},
             document);
 }
 
