@@ -133,6 +133,36 @@
           ]
         }
       ]
+    },
+    {
+      "id": "hikarisub.macro-chains",
+      "author": "hikarisub",
+      "authorName": "altqx",
+      "repo": "https://github.com/hikarisub/macro-chains",
+      "publicKey": "RWT+3LqYdlQyECmsuuFBvMrwsi4alNNNC8c2HlJtC/4SyJeUvJMilm3X",
+      "categories": [
+        "Utilities"
+      ],
+      "versions": [
+        {
+          "version": "1.0.0",
+          "api": 1,
+          "tier": "restricted",
+          "name": "Macro chains",
+          "summary": "Records macros and replays them as one",
+          "license": "MIT",
+          "authors": [
+            "altqx"
+          ],
+          "permissions": {},
+          "url": "https://marketplace.test/p/hikarisub.macro-chains/1.0.0.hikariplugin",
+          "sha256": "6b4905c6166a99f21b6afd90536bd126ea0b29eb4cdfc16738bec4e8b2960892",
+          "size": 426,
+          "published": "2026-11-01T10:00:00Z",
+          "readme": "https://marketplace.test/readme.md",
+          "icon": "https://marketplace.test/m/macro-chains.svg"
+        }
+      ]
     }
   ]
 }

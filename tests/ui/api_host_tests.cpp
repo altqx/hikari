@@ -96,7 +96,7 @@ class ApiHostTest : public QObject {
     std::u8string textAt(std::size_t row) const { return session().document().lines()[row]->text; }
     bool reviewMenuShown()
     {
-        return shell(QStringLiteral("(() => { for (let i = 0; i < editMenu.count; ++i) { const it = editMenu.itemAt(i);"
+        return shell(QStringLiteral("(() => { editMenu.build(); for (let i = 0; i < editMenu.count; ++i) { const it = editMenu.itemAt(i);"
                                     " if (it && it.subMenu && it.subMenu.objectName === 'reviewMenu') return true }"
                                     " return false })()"))
             .toBool();
@@ -552,7 +552,7 @@ private slots:
 
     void aUserCommandIsHeard()
     {
-        shell(QStringLiteral("root.runItem(root.globalActions().GLOBAL_ABOUT)"));
+        shell(QStringLiteral("root.globalActions().GLOBAL_ABOUT.trigger()"));
         QVERIFY(heardEvent("command.ran"));
     }
 

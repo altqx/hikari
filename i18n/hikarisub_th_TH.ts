@@ -16071,6 +16071,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>%1 รอคุณอยู่</translation>
     </message>
     <message>
+        <source>By HikariSub</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>New</source>
         <translation>ใหม่</translation>
     </message>

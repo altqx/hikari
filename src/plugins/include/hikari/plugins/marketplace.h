@@ -19,6 +19,17 @@ namespace hikari::plugins {
 
 // The key that signs the marketplace's index.json, separate from the release key (ADR 0022).
 inline constexpr std::string_view kMarketplaceKey = "RWRj5HLU1C1i70gsNZclt1QV9nnY1f2sCHn+OGCw3Jok59Ox8sXliEoH";
+// HikariSub's own author key, which alone may sign plugins under the hikarisub handle (ADR 0028).
+inline constexpr std::string_view kOfficialKey = "RWQwy4ukzuuZw1Rmfuf/pEwiEwWJhmXWHE8xGwRY6bWV/DRGBz3PbmYK";
+
+// Who the "By HikariSub" badge is for: ids under `handle` signed with `key`.
+struct OfficialAuthor {
+    std::string handle;
+    minisign::PublicKey key;
+
+    static OfficialAuthor hikarisub();
+    bool owns(std::string_view id, const std::optional<minisign::PublicKey> &signer) const;
+};
 
 // docs/schemas/marketplace-index.schema.json, compiled in.
 std::string_view marketplaceIndexSchema();

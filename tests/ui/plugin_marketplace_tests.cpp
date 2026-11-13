@@ -232,6 +232,25 @@ private slots:
         m_network.reset();
     }
 
+    void theOfficialMarkNeedsTheHandleAndTheKey()
+    {
+        const auto author = hikari::minisign::parsePublicKey(authorKey().toStdString());
+        QVERIFY(author);
+        installFromMarketplace();
+        QVERIFY(!listing().value(QStringLiteral("official")).toBool());
+        QVERIFY(!row().value(QStringLiteral("official")).toBool());
+
+        m_manager->setOfficialAuthor({"com", *author});
+        QVERIFY(refreshed());
+        QVERIFY(listing().value(QStringLiteral("official")).toBool());
+        QVERIFY(row().value(QStringLiteral("official")).toBool());
+
+        m_manager->setOfficialAuthor({"com", test::signer(40).key});
+        QVERIFY(refreshed());
+        QVERIFY(!listing().value(QStringLiteral("official")).toBool());
+        QVERIFY(!row().value(QStringLiteral("official")).toBool());
+    }
+
     void aRefreshAsksForTheWholeListOnly()
     {
         installFromFile("hello-1.0.0.hikariplugin");

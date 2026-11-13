@@ -108,6 +108,7 @@ class LanguageTest : public QObject {
         engine->setInitialProperties(application->qmlProperties());
         engine->loadFromModule("Hikari.Ui", "Main");
         QVERIFY(!engine->rootObjects().isEmpty());
+        QVERIFY(QMetaObject::invokeMethod(engine->rootObjects().first(), "buildMenus"));
         window = qobject_cast<QQuickWindow *>(engine->rootObjects().first());
         QVERIFY(window);
         QVERIFY(QTest::qWaitForWindowExposed(window));
@@ -860,7 +861,7 @@ private slots:
     {
         start();
         QVERIFY(application->openFile(episode));
-        QVERIFY(QMetaObject::invokeMethod(root()->findChild<QObject *>(QStringLiteral("assProperties")), "triggered"));
+        QVERIFY(QMetaObject::invokeMethod(root()->findChild<QObject *>(QStringLiteral("assProperties"))->property("action").value<QObject *>(), "trigger"));
         QTRY_VERIFY(item("propWrapStyle"));
         const auto choice = [this](int index) {
             QString text;

@@ -270,6 +270,7 @@ class ShellWindowsTest : public QObject {
         engine->setInitialProperties(application->qmlProperties());
         engine->loadFromModule("Hikari.Ui", "Main");
         QVERIFY(!engine->rootObjects().isEmpty());
+        QVERIFY(QMetaObject::invokeMethod(engine->rootObjects().first(), "buildMenus"));
         QVERIFY(QTest::qWaitForWindowExposed(first()));
         QTRY_VERIFY(first()->property("arrangementSettled").toBool());
     }
@@ -777,6 +778,7 @@ private slots:
 
     void aHotkeyChangeAppliesToBothWindows()
     {
+        QVERIFY(QMetaObject::invokeMethod(second.get(), "buildMenus"));
         QObject *firstClose = first()->findChild<QObject *>(QStringLiteral("closeMenuItem"));
         QObject *secondClose = second->findChild<QObject *>(QStringLiteral("closeMenuItem"));
         QVERIFY(firstClose && secondClose);
@@ -1239,6 +1241,7 @@ private slots:
         hotkeys.optionsMap(QStringLiteral("Ctrl-Alt-Q"), 0, QStringLiteral("cancel"));
         hotkeys.commitOptions();
         QCOMPARE(hotkeys.accelOf(QStringLiteral("GLOBAL_QUIT"), 0), QStringLiteral("Ctrl-Alt-Q"));
+        QVERIFY(QMetaObject::invokeMethod(second, "buildMenus"));
         QObject *exitItem = second->findChild<QObject *>(QStringLiteral("exitMenuItem"));
         QVERIFY(exitItem);
         QTRY_COMPARE(exitItem->property("keysText").toString(), QStringLiteral("Ctrl+Alt+Q"));
