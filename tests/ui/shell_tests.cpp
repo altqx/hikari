@@ -19498,6 +19498,21 @@ private slots:
                      QStringLiteral("Chains: Finding keyframes"));
         QTRY_COMPARE(findItem(card, QStringLiteral("pluginJobText"))->property("text").toString(),
                      QStringLiteral("Frame 1008 of 2400"));
+        QQuickItem *bar = findItem(card, QStringLiteral("pluginJobBar"));
+        QTRY_VERIFY(!bar->property("indeterminate").toBool());
+        QCOMPARE(bar->property("value").toDouble(), 0.42);
+        QQuickItem *fill = findItem(card, QStringLiteral("pluginJobFill"));
+        QTRY_COMPARE(fill->x(), 0.0);
+        QTRY_COMPARE(fill->width(), bar->property("position").toDouble() * fill->parentItem()->width());
+        for (QObject *child : card->findChildren<QObject *>())
+            if (child->inherits("QQuickAbstractAnimation"))
+                QVERIFY2(!child->property("running").toBool(), child->metaObject()->className());
+        QAccessibleInterface *barFace = QAccessible::queryAccessibleInterface(bar);
+        QVERIFY(barFace);
+        QCOMPARE(barFace->role(), QAccessible::ProgressBar);
+        QCOMPARE(barFace->text(QAccessible::Name), QStringLiteral("Progress"));
+        QVERIFY(barFace->valueInterface());
+        QCOMPARE(barFace->valueInterface()->currentValue().toDouble(), 0.42);
         auto *grid = qobject_cast<ui::LineGrid *>(item("editingGrid"));
         QTRY_COMPARE(grid->rowStateText(1).count(QStringLiteral("marked by")), 2);
         QVERIFY(grid->rowStateText(1).contains(QStringLiteral("marked by Chains: Removed in v1.1")));
