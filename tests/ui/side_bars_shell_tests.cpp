@@ -1,4 +1,5 @@
 #include "hikari/app/application.h"
+#include "hikari/application/side_bars.h"
 #include "docking.h"
 #include "line_grid.h"
 #include "settings_store.h"
@@ -37,7 +38,7 @@ class SideBarsShellTests : public QObject {
     QQmlApplicationEngine *engine = nullptr;
     QQuickWindow *window = nullptr;
 
-    void start(const QString &sideBars = {})
+    void start(const QString &sideBars = {}, int width = 0)
     {
         app::Application::Options o;
         o.settingsFile = home->filePath(QStringLiteral("settings.toml"));
@@ -49,7 +50,10 @@ class SideBarsShellTests : public QObject {
             application->settingsStore()->setValue(QStringLiteral("workspace.sideBars"), sideBars);
         engine = new QQmlApplicationEngine;
         hikari::ui::attachDocking(*engine);
-        engine->setInitialProperties(application->qmlProperties());
+        QVariantMap properties = application->qmlProperties();
+        if (width > 0)
+            properties.insert(QStringLiteral("width"), width);
+        engine->setInitialProperties(properties);
         engine->loadFromModule("Hikari.Ui", "Main");
         QVERIFY(!engine->rootObjects().isEmpty());
         window = qobject_cast<QQuickWindow *>(engine->rootObjects().first());
@@ -421,6 +425,24 @@ private slots:
                     && item("originalTextButtons")->parentItem()->parentItem()->objectName() == QLatin1String("dockToolbarSlot"));
     }
 
+    void aNarrowWindowShrinksTheSideBarsBeforeTheMiddle()
+    {
+        start({}, 1280);
+        QVERIFY(application->openFile(writeSubtitles()));
+        if (!shown("leftSideBar"))
+            call("toggleSideBar", true);
+        QTRY_VERIFY(shown("leftSideBar") && shown("rightSideBar"));
+        const int middleLeast = root()->property("middleLeast").toInt();
+        QVERIFY(middleLeast > 0);
+        QQuickItem *middle = item("dockingArea");
+        QQuickItem *right = item("rightSideBar");
+        QTRY_VERIFY2(middle->width() >= middleLeast && right->x() + right->width() <= window->width(),
+                     qPrintable(QStringLiteral("window %1, left %2, middle %3 (least %4), right %5 at %6")
+                                    .arg(window->width()).arg(item("leftSideBar")->width()).arg(middle->width())
+                                    .arg(middleLeast).arg(right->width()).arg(right->x())));
+        QVERIFY(item("leftSideBar")->width() < hikari::application::kSideBarStartWidth);
+    }
+
     void sideBarScreenshots()
     {
         const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
@@ -436,6 +458,7 @@ private slots:
         call("sideBarIconClicked", QStringLiteral("Styles"));
         QTRY_COMPARE(parentOf("stylesPanel"), slotOf("rightSideBar"));
         QTRY_COMPARE(parentOf("originalPanel"), slotOf("leftSideBar"));
+        QTRY_VERIFY(window->width() >= window->minimumWidth() && window->contentItem()->width() == window->width());
         auto &settings = *application->settingsStore();
         settings.setValue(QStringLiteral("appearance.followSystem"), false);
         for (const auto code : ui::theme::kCodes) {
@@ -455,24 +478,33 @@ private slots:
 
     void theShippedMiddleKeepsItsAudioAndEditorControls_data()
     {
-        QTest::addColumn<bool>("barsShown");
-        QTest::newRow("both side bars shown") << true;
-        QTest::newRow("both side bars hidden") << false;
+        QTest::addColumn<int>("width");
+        QTest::addColumn<int>("height");
+        QTest::addColumn<bool>("hideBoth");
+        QTest::addColumn<bool>("aiShown");
+        const int threshold = hikari::application::kBothSideBarsWindowWidth;
+        QTest::newRow("1920: the tools side bar only") << 1920 << 1080 << false << false;
+        QTest::newRow("just under the threshold: the tools side bar only") << threshold - 1 << 1200 << false << false;
+        QTest::newRow("at the threshold: both side bars") << threshold << 1200 << false << true;
+        QTest::newRow("1920: both side bars hidden") << 1920 << 1080 << true << false;
     }
     void theShippedMiddleKeepsItsAudioAndEditorControls()
     {
-        QFETCH(bool, barsShown);
-        if (QGuiApplication::primaryScreen()->availableGeometry().width() < 1920)
-            QSKIP("needs a 1920x1080 screen");
-        start();
-        window->setGeometry(0, 0, 1920, 1080);
-        QTRY_COMPARE(window->width(), 1920);
-        if (!barsShown) {
-            call("toggleSideBar", true);
+        QFETCH(int, width);
+        QFETCH(int, height);
+        QFETCH(bool, hideBoth);
+        QFETCH(bool, aiShown);
+        if (QGuiApplication::primaryScreen()->availableGeometry().width() < width)
+            QSKIP("needs a screen at least as wide as the row");
+        start({}, width);
+        window->setGeometry(0, 0, width, height);
+        QTRY_COMPARE(window->width(), width);
+        QTRY_COMPARE(shown("leftSideBar"), aiShown);
+        QTRY_VERIFY(shown("rightSideBar"));
+        if (hideBoth) {
             call("toggleSideBar", false);
+            QTRY_VERIFY(!shown("rightSideBar"));
         }
-        QTRY_COMPARE(shown("leftSideBar"), barsShown);
-        QTRY_COMPARE(shown("rightSideBar"), barsShown);
         QVERIFY(application->openFile(writeSubtitles()));
         application->video().openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/audio.mkv"));
         QTRY_VERIFY_WITH_TIMEOUT(application->audio().ready(), 20000);
@@ -485,7 +517,7 @@ private slots:
         };
         QTRY_VERIFY2(item("audioSyncVideo") && item("audioSyncVideo")->isVisible() && item("audioSyncVideo")->width() > 0,
                      qPrintable(widths()));
-        QVERIFY(!item("audioButtons")->property("folded").toBool());
+        QVERIFY2(!item("audioButtons")->property("folded").toBool(), qPrintable(widths()));
         QTRY_VERIFY(item("addTagButton") && item("addTagButton")->isVisible() && item("addTagButton")->width() > 0);
         auto *grid = qobject_cast<ui::LineGrid *>(item("editingGrid"));
         QVERIFY(grid);

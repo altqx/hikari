@@ -126,9 +126,10 @@ SideBars defaultSideBars(SideBarStart start)
     return bars;
 }
 
-SideBars migratedSideBars(SideBarStart start, const std::vector<std::string> &rightOfGrid)
+SideBars migratedSideBars(SideBarStart start, int windowWidth, const std::vector<std::string> &rightOfGrid)
 {
     SideBars bars = defaultSideBars(start);
+    bars.first.hidden = windowWidth < kBothSideBarsWindowWidth;
     for (const auto &panel : rightOfGrid)
         if (sideBarMayHold(panel) && !sideOf(bars, panel))
             (isAi(panel) ? bars.first : bars.second).panels.push_back(panel);

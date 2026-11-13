@@ -14,6 +14,8 @@ namespace hikari::application {
 inline constexpr int kSideBarMinimumWidth = 240;
 inline constexpr int kSideBarStartWidth = 320;
 inline constexpr int kSideBarMaximumWidth = 2000;
+inline constexpr int kMiddleWidthBesideBothSideBars = 1500;
+inline constexpr int kBothSideBarsWindowWidth = 2 * kSideBarStartWidth + kMiddleWidthBesideBothSideBars;
 
 enum class SideBarId { First, Second };
 
@@ -44,8 +46,9 @@ struct SideBarStart {
     bool project = false; // the window has a Project, so the tools side bar shows the Explorer
 };
 SideBars defaultSideBars(SideBarStart start);
-// A first start of this version: the panels a saved arrangement docked right of the Grid join the side bars.
-SideBars migratedSideBars(SideBarStart start, const std::vector<std::string> &rightOfGrid);
+// A first start of this version: the panels a saved arrangement docked right of the Grid join the side bars,
+// and a window narrower than kBothSideBarsWindowWidth starts with the AI side bar hidden.
+SideBars migratedSideBars(SideBarStart start, int windowWidth, const std::vector<std::string> &rightOfGrid);
 
 // The Grid, Video, Audio and the Line editor stay in the middle.
 bool sideBarMayHold(std::string_view panel);

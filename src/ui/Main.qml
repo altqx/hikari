@@ -563,7 +563,7 @@ ApplicationWindow {
         if (saved.length > 0) {
             root.sideBarsJson = saved
         } else {
-            root.setSideBars(SideBarModel.migrated(root.projectName.length > 0, root.rightOfGridPanels()))
+            root.setSideBars(SideBarModel.migrated(root.projectName.length > 0, root.width, root.rightOfGridPanels()))
             root.sideBarsMigrated = true
         }
         root.sideBarsLoaded = true
@@ -612,10 +612,10 @@ ApplicationWindow {
     readonly property int sideBarsWidth: (root.leftSideBarShown ? leftSideBar.width : 0) + (root.rightSideBarShown ? rightSideBar.width : 0)
     readonly property int sideBarsLeast: ((root.leftSideBarShown ? 1 : 0) + (root.rightSideBarShown ? 1 : 0)) * SideBarModel.minimumWidth
     onSideBarsWidthChanged: if (root.arrangementSettled) Docking.setShrinkableWidth(dockingArea.uniqueName, Math.max(0, root.sideBarsWidth - root.sideBarsLeast))
+    readonly property int middleLeast: root.arrangementSettled && root.width > 0 ? Docking.layoutMinimumSize(dockingArea.uniqueName).width : 0
     function sideBarWidth(bar) {
         const shown = (root.leftSideBarShown ? 1 : 0) + (root.rightSideBarShown ? 1 : 0)
-        // MUST KILL: 480 is a magic width kept for the middle before the side bars shrink
-        const room = Math.max(SideBarModel.minimumWidth, (root.width - 480) / Math.max(1, shown))
+        const room = Math.max(SideBarModel.minimumWidth, (root.width - root.middleLeast) / Math.max(1, shown))
         return Math.round(Math.min(bar.width, room))
     }
     function showInSideBar(dock, focus) {

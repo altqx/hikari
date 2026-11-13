@@ -21,7 +21,7 @@ public:
     static bool setFirstStartEmpty(bool empty);
 
     Q_INVOKABLE QString defaults(bool project) const;
-    Q_INVOKABLE QString migrated(bool project, const QStringList &rightOfGrid) const;
+    Q_INVOKABLE QString migrated(bool project, int windowWidth, const QStringList &rightOfGrid) const;
     /// {first, second}, each {panels, shown, width, hidden}; the defaults for JSON that doesn't read.
     Q_INVOKABLE QVariantMap read(const QString &json) const;
     Q_INVOKABLE bool mayHold(const QString &panel) const;

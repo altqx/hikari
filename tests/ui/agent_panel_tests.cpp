@@ -417,8 +417,11 @@ private slots:
         QTRY_VERIFY(shell(QStringLiteral("agentPanel.visible && agentPanel.parent.objectName === 'sideBarSlot'"
                                          " && root.sideBarOnLeft(root.sideBarOf(agentDock))")).toBool());
         QTRY_VERIFY(item(QStringLiteral("agentView")));
+        auto *aiSlot = shell(QStringLiteral("agentPanel.parent")).value<QObject *>();
+        QVERIFY(aiSlot);
         QVERIFY(!shell(QStringLiteral("root.showPanel(reviewDock), reviewDock.isOpen")).toBool());
-        QTRY_VERIFY(shell(QStringLiteral("reviewPanel.visible && reviewPanel.parent === agentPanel.parent")).toBool());
+        QTRY_VERIFY(shell(QStringLiteral("reviewPanel.visible")).toBool());
+        QCOMPARE(shell(QStringLiteral("reviewPanel.parent")).value<QObject *>(), aiSlot);
         QVERIFY(!shell(QStringLiteral("agentPanel.visible")).toBool());
     }
 

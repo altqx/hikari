@@ -43,14 +43,14 @@ bool SideBarModel::setFirstStartEmpty(bool empty) { return std::exchange(firstSt
 
 QString SideBarModel::defaults(bool project) const { return text(application::defaultSideBars({.project = project})); }
 
-QString SideBarModel::migrated(bool project, const QStringList &rightOfGrid) const
+QString SideBarModel::migrated(bool project, int windowWidth, const QStringList &rightOfGrid) const
 {
     std::vector<std::string> panels;
     for (const QString &panel : rightOfGrid)
         panels.push_back(panel.toStdString());
     if (firstStartEmpty)
         return text(SideBars{.first = {.hidden = true}, .second = {.hidden = true}});
-    return text(application::migratedSideBars({.project = project}, panels));
+    return text(application::migratedSideBars({.project = project}, windowWidth, panels));
 }
 
 QVariantMap SideBarModel::read(const QString &json) const

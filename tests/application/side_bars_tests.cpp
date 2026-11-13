@@ -226,7 +226,7 @@ TEST(SideBars, AMissingSideBarReadsEmpty)
 
 TEST(SideBars, MigrationMovesTheRightOfGridColumnInOnce)
 {
-    const SideBars bars = migratedSideBars({.project = false}, {"Search", "Agent", "Automation", "Timing"});
+    const SideBars bars = migratedSideBars({.project = false}, kBothSideBarsWindowWidth, {"Search", "Agent", "Automation", "Timing"});
     EXPECT_EQ(bars.first.panels, (Panels{"Agent", "Review"}));
     EXPECT_EQ(bars.second.panels, (Panels{"Explorer", "Search", "Timing", "Postprocessor", "Styles", "QcNotes", "Automation"}));
     EXPECT_EQ(bars.second.shown, "Search");
@@ -234,8 +234,22 @@ TEST(SideBars, MigrationMovesTheRightOfGridColumnInOnce)
 
 TEST(SideBars, MigrationSendsPluginPanelsToTheTools)
 {
-    const SideBars bars = migratedSideBars({}, {"plugin:karaoke/main"});
+    const SideBars bars = migratedSideBars({}, kBothSideBarsWindowWidth, {"plugin:karaoke/main"});
     EXPECT_EQ(bars.second.panels.back(), "plugin:karaoke/main");
+}
+
+TEST(SideBars, AFirstStartShowsBothSideBarsOnlyWhereTheMiddleKeepsItsRoom)
+{
+    EXPECT_EQ(kBothSideBarsWindowWidth, 2140);
+    const SideBars wide = migratedSideBars({}, kBothSideBarsWindowWidth, {});
+    EXPECT_FALSE(wide.first.hidden);
+    EXPECT_FALSE(wide.second.hidden);
+    for (const int width : {kBothSideBarsWindowWidth - 1, 1920, 1280}) {
+        const SideBars narrow = migratedSideBars({}, width, {});
+        EXPECT_TRUE(narrow.first.hidden) << width;
+        EXPECT_FALSE(narrow.second.hidden) << width;
+        EXPECT_EQ(narrow.first.panels, wide.first.panels) << width;
+    }
 }
 
 TEST(SideBars, MiddleOnlyPanelsNeverGoIn)

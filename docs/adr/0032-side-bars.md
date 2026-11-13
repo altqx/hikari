@@ -36,6 +36,7 @@ This amends [ADR 0025](0025-multiple-windows.md)'s table: the side bars join the
 
 - **The AI side bar** (left unless swapped) starts with Agent and Review (Q425).
 - **The tools side bar** (right unless swapped) starts with Explorer, Find and replace, Shift times, Timing postprocessor, Styles and QC notes.
+- **Narrow windows** (Q484): a first start shows both side bars only in a window at least 2140 px wide (two 320 px side bars and a 1500 px middle, where the audio strip keeps its buttons). A narrower window starts with the AI side bar hidden and the tools side bar shown.
 - **Swap** (Q429): View › Swap side bars, and Settings › Appearance › AI side bar: Left / Right. Contents and widths move together.
 - **Plugins** (Q440): a manifest panel with `area: left` or `right` first shows in that side bar; `bottom` stays in the middle.
 
