@@ -117,6 +117,46 @@ TEST_F(PluginFeatures, RunMacroPassesTheAnswersAndAnswersWithTheOutcomeWhenTheMa
     EXPECT_EQ((*out)->find("log")->asString(), "3 lines");
 }
 
+TEST_F(PluginFeatures, RunMacroAnswersWithTheDialogsItsRunGotAsMacroRanGivesThem)
+{
+    const auto document = *host.workspace().editingTarget();
+    macros.next = LuaRun{"applied", "", "", "fade.lua", document,
+                         {DialogAnswer{"0123456789abcdef", {{"n", 3}}, "OK",
+                                       {DialogControlInfo{"n", "intedit", "Times", {}, {}, 1.0, 9.0, {}}}}}};
+    std::optional<Result> out;
+    callLater("automation.run_macro", R"({"file": "fade.lua", "macro": "Fade"})", out);
+    macros.finish();
+    ASSERT_TRUE(out && *out) << (*out).error().message;
+    const Json &dialog = (*out)->find("dialogs")->asArray().at(0);
+    EXPECT_EQ(dialog.find("key")->asString(), "0123456789abcdef");
+    EXPECT_EQ(dialog.find("values")->find("n")->asInt(), 3);
+    EXPECT_EQ(dialog.find("button")->asString(), "OK");
+    const Json &control = dialog.find("controls")->asArray().at(0);
+    EXPECT_EQ(control.find("name")->asString(), "n");
+    EXPECT_EQ(control.find("label")->asString(), "Times");
+    EXPECT_EQ(control.find("max")->asNumber(), 9.0);
+}
+
+TEST_F(PluginFeatures, RunMacroLeavesOutTheDialogsOfADocumentTheCallerCannotSee)
+{
+    const application::DocumentId elsewhere{host.workspace().editingTarget()->value + 1000};
+    macros.next = LuaRun{"applied", "", "", "fade.lua", elsewhere, {DialogAnswer{"0123456789abcdef", {{"n", 3}}, "OK"}}};
+    std::optional<Result> out;
+    callLater("automation.run_macro", R"({"file": "fade.lua", "macro": "Fade"})", out);
+    macros.finish();
+    ASSERT_TRUE(out && *out) << (*out).error().message;
+    EXPECT_EQ((*out)->find("outcome")->asString(), "applied");
+    EXPECT_EQ((*out)->find("dialogs"), nullptr);
+
+    Caller everywhere = chains();
+    everywhere.allDocuments = true;
+    out.reset();
+    callLater("automation.run_macro", R"({"file": "fade.lua", "macro": "Fade"})", out, everywhere);
+    macros.finish();
+    ASSERT_TRUE(out && *out) << (*out).error().message;
+    EXPECT_EQ((*out)->find("dialogs")->asArray().size(), 1u);
+}
+
 TEST_F(PluginFeatures, RunMacroRejectsAKeyThatIsNotADialogKey)
 {
     EXPECT_EQ(code(call("automation.run_macro", R"({"file": "fade.lua", "macro": "Fade",
@@ -351,4 +391,148 @@ TEST(RowMarks, KeepOnlyForgetsClosedDocumentsAndTheLimitCountsNewLinesOnly)
     marks.keepOnly({b});
     EXPECT_TRUE(marks.shown(a).empty());
     EXPECT_EQ(marks.counts("plugin:x"), (std::map<std::uint64_t, std::size_t>{{2, 1}}));
+}
+
+namespace {
+
+Caller other() { return Caller{"plugin:example.other", "Other", false}; }
+
+std::string setText(const application::EditSession &session, int line, std::string_view text)
+{
+    return R"({"revision": )" + std::to_string(session.revision()) + R"(, "name": "Step", "edits": [{"op": "set_line", "line": )" +
+           std::to_string(line) + R"(, "fields": {"text": ")" + std::string(text) + R"("}}]})";
+}
+
+}
+
+TEST_F(PluginFeatures, RunMacroTakesTheDialogsControlsInPlaceOfAKey)
+{
+    std::optional<Result> out;
+    callLater("automation.run_macro", R"({"file": "fade.lua", "macro": "Fade",
+        "answers": [{"controls": [{"kind": "intedit", "name": "n"}, {"kind": "dropdown", "name": "mode"}],
+                     "values": {"n": 3, "mode": "fast"}, "button": "OK"}]})",
+              out);
+    ASSERT_EQ(macros.requests.size(), 1u);
+    const DialogAnswer &answer = macros.requests[0].answers.at(0);
+    EXPECT_TRUE(answer.key.empty());
+    ASSERT_EQ(answer.controls.size(), 2u);
+    EXPECT_EQ(answer.controls[0].kind, "intedit");
+    EXPECT_EQ(answer.controls[0].name, "n");
+    EXPECT_EQ(answer.controls[1].kind, "dropdown");
+    EXPECT_EQ(answer.controls[1].name, "mode");
+}
+
+TEST_F(PluginFeatures, AnAnswerNeedsAKeyOrControls)
+{
+    EXPECT_EQ(code(call("automation.run_macro", R"({"file": "fade.lua", "macro": "Fade",
+        "answers": [{"values": {}}]})")),
+              errors::kInvalidParams);
+    EXPECT_TRUE(macros.requests.empty());
+    std::optional<Result> out;
+    callLater("automation.run_macro", R"({"file": "fade.lua", "macro": "Fade",
+        "answers": [{"key": "0123456789abcdef", "values": {},
+                     "controls": [{"kind": "dropdown", "name": "a", "items": ["x"], "label": "", "min": 1}]}]})",
+              out);
+    ASSERT_EQ(macros.requests.size(), 1u);
+    EXPECT_EQ(macros.requests[0].answers.at(0).key, "0123456789abcdef");
+}
+
+TEST_F(PluginFeatures, MacroRanGivesEachDialogsControlsToAskAgain)
+{
+    std::vector<Event> heard;
+    api.subscribe(chains(), {"macro.ran"}, [&](const Event &e) { heard.push_back(e); });
+    DialogAnswer dialog{"0123456789abcdef", {{"n", 3}, {"mode", std::string("fast")}, {"on", true}}, "OK", {}};
+    dialog.controls = {DialogControlInfo{"n", "intedit", "", "How many", {}, 1.0, 10.0, std::nullopt},
+                       DialogControlInfo{"mode", "dropdown", "", "", {"fast", "slow"}, {}, {}, {}},
+                       DialogControlInfo{"on", "checkbox", "Keep it", "", {}, {}, {}, {}},
+                       DialogControlInfo{"f", "floatedit", "", "", {}, std::nullopt, 2.5, 0.5}};
+    api.macroRan(*host.workspace().editingTarget(), "fade.lua", "Fade", "applied", {dialog});
+    ASSERT_EQ(heard.size(), 1u);
+    const Json &controls = *heard[0].data.find("dialogs")->asArray().at(0).find("controls");
+    ASSERT_EQ(controls.asArray().size(), 4u);
+    const Json &n = controls.asArray()[0];
+    EXPECT_EQ(n.find("kind")->asString(), "intedit");
+    EXPECT_EQ(n.find("hint")->asString(), "How many");
+    EXPECT_EQ(n.find("min")->asNumber(), 1.0);
+    EXPECT_EQ(n.find("max")->asNumber(), 10.0);
+    EXPECT_EQ(n.find("step"), nullptr);
+    const Json &mode = controls.asArray()[1];
+    ASSERT_EQ(mode.find("items")->asArray().size(), 2u);
+    EXPECT_EQ(mode.find("items")->asArray()[1].asString(), "slow");
+    EXPECT_EQ(controls.asArray()[2].find("label")->asString(), "Keep it");
+    const Json &f = controls.asArray()[3];
+    EXPECT_EQ(f.find("min"), nullptr);
+    EXPECT_EQ(f.find("step")->asNumber(), 0.5);
+}
+
+TEST_F(PluginFeatures, AGroupMakesThePluginsStepsOneUndoStep)
+{
+    host.api = &api;
+    auto *session = host.target();
+    const auto before = session->historySize();
+    ASSERT_TRUE(call("document.group_begin", R"({"name": "Clean up"})"));
+    ASSERT_TRUE(call("document.apply", setText(*session, 1, "a")));
+    ASSERT_TRUE(call("document.apply", setText(*session, 2, "b")));
+    ASSERT_TRUE(call("document.apply", setText(*session, 3, "c")));
+    const Result ended = call("document.group_end", "{}");
+    ASSERT_TRUE(ended) << ended.error().message;
+    EXPECT_EQ(ended->find("steps")->asInt(), 3);
+    EXPECT_EQ(session->historySize(), before + 1);
+    EXPECT_EQ(session->history().back().name, "Chains: Clean up");
+    ASSERT_TRUE(session->undo());
+    EXPECT_EQ(session->historySize(), before + 1);
+    EXPECT_EQ(session->historyCursor(), before - 1);
+}
+
+TEST_F(PluginFeatures, AGroupTheCommandLeftOpenEndsWhenTheCommandReturnsAndUndoesAsOne)
+{
+    host.api = &api;
+    auto *session = host.target();
+    const auto before = session->historyCursor();
+    ASSERT_TRUE(call("document.group_begin", R"({"name": "Chain"})"));
+    ASSERT_TRUE(call("document.apply", setText(*session, 1, "a")));
+    ASSERT_TRUE(call("commands.run", R"({"command": "GLOBAL_SAVE_SUBS"})"));
+    ASSERT_TRUE(call("document.apply", setText(*session, 2, "b")));
+    api.endGroup(chains().id);
+    EXPECT_EQ(code(call("document.group_end", "{}")), errors::kInvalidParams);
+    EXPECT_EQ(session->history().back().name, "Chains: Chain");
+    ASSERT_TRUE(call("commands.run", R"({"command": "GLOBAL_UNDO"})"));
+    EXPECT_EQ(session->historyCursor(), before);
+}
+
+TEST_F(PluginFeatures, SomeoneElsesStepEndsTheGroupAtThePluginsLastStep)
+{
+    host.api = &api;
+    auto *session = host.target();
+    const auto start = session->historySize();
+    ASSERT_TRUE(call("document.group_begin", R"({"name": "Chain"})"));
+    ASSERT_TRUE(call("document.apply", setText(*session, 1, "a")));
+    ASSERT_TRUE(call("document.apply", setText(*session, 2, "b")));
+    ASSERT_TRUE(session->run(application::Command{"Typed", session->revision(), {core::LineId{3}}, [](core::Document &d) {
+        return d.setLineText(core::LineId{3}, u8"user");
+    }}));
+    api.documentChanged(*host.workspace().editingTarget());
+    ASSERT_TRUE(call("document.apply", setText(*session, 1, "after")));
+    EXPECT_EQ(code(call("document.group_end", "{}")), errors::kInvalidParams);
+    const auto history = session->history();
+    ASSERT_EQ(history.size(), start + 3);
+    EXPECT_EQ(history[start].name, "Chains: Chain");
+    EXPECT_EQ(history[start + 1].name, "Typed");
+    EXPECT_EQ(history[start + 2].name, "Chains: Step");
+}
+
+TEST_F(PluginFeatures, GroupsDontNest)
+{
+    ASSERT_TRUE(call("document.group_begin", R"({"name": "One"})"));
+    EXPECT_EQ(code(call("document.group_begin", R"({"name": "Two"})")), errors::kInvalidParams);
+    EXPECT_EQ(code(call("document.group_begin", R"({"name": "Mine"})", other())), errors::kBusy);
+    ASSERT_TRUE(call("document.group_end", "{}"));
+    EXPECT_TRUE(call("document.group_begin", R"({"name": "Mine"})", other()));
+}
+
+TEST_F(PluginFeatures, GroupsAreForPluginsOnly)
+{
+    for (const Caller &caller : {aiCaller(), Caller{"mcp:c", "C"}})
+        EXPECT_EQ(code(call("document.group_begin", R"({"name": "x"})", caller)), errors::kNotGranted) << caller.id;
+    EXPECT_EQ(code(call("document.group_end", "{}")), errors::kInvalidParams);
 }

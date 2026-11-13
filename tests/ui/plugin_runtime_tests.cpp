@@ -148,7 +148,7 @@ class PluginRuntimeTests : public QObject {
     {
         static const QStringList plugins{QStringLiteral("Tidy"),   QStringLiteral("Narrow"), QStringLiteral("Wide"),
                                          QStringLiteral("Holder"), QStringLiteral("Waiter"), QStringLiteral("Left"),
-                                         QStringLiteral("Right")};
+                                         QStringLiteral("Right"),  QStringLiteral("Chains")};
         QStringList out;
         for (const auto &args : spy)
             if (plugins.contains(args.at(2).toString()))
@@ -460,6 +460,76 @@ private slots:
         QTRY_COMPARE(texts(noticed).size(), 2);
         QCOMPARE(texts(noticed).at(1), QStringLiteral("Tidy: stale_revision"));
         QCOMPARE(session(*a).history().back().name, std::string("Tidy: Meanwhile"));
+    }
+
+    void aGroupedChainUndoesAsOneStepEvenWhenTheCommandLeavesItOpen()
+    {
+        install(QStringLiteral("example.chains"), QStringLiteral("Chains"), R"~(
+            local function shout(n)
+                hikari.document.edit('Shout ' .. n, function(doc, change)
+                    change:set_line(doc.lines[n].id, {text = doc.lines[n].text:upper()})
+                end)
+            end
+            hikari.commands.register('greet', function()
+                local ended, value = hikari.document.group('Chain', function()
+                    shout(1)
+                    shout(2)
+                    return 'kept'
+                end)
+                hikari.notify(ended.steps .. ' ' .. value)
+            end)
+            hikari.commands.register('spin', function()
+                hikari.call('document.group_begin', {name = 'Left open'})
+                shout(1)
+                shout(2)
+                hikari.notify('left')
+            end)
+        )~");
+        auto a = openEpisodes(1);
+        QVERIFY(a);
+        QSignalSpy noticed(&a->log(), &ui::LogController::noticed);
+        app::PluginRuntime runtime(wiring(*a));
+        runtime.sync();
+        const std::size_t steps = session(*a).historySize();
+        QVERIFY(runtime.run(QStringLiteral("plugin.example.chains.greet")));
+        QTRY_COMPARE(texts(noticed), QStringList{QStringLiteral("Chains: 2 kept")});
+        QCOMPARE(session(*a).historySize(), steps + 1);
+        QCOMPARE(session(*a).history().back().name, std::string("Chains: Chain"));
+        QVERIFY(session(*a).undo());
+        QCOMPARE(session(*a).document().lines().at(0)->text, std::u8string(u8"first"));
+        QCOMPARE(session(*a).document().lines().at(1)->text, std::u8string(u8"second"));
+
+        QVERIFY(runtime.run(QStringLiteral("plugin.example.chains.spin")));
+        QTRY_COMPARE(texts(noticed).size(), 2);
+        QTRY_COMPARE(session(*a).history().back().name, std::string("Chains: Left open"));
+        QCOMPARE(session(*a).historySize(), steps + 1);
+        QVERIFY(session(*a).undo());
+        QCOMPARE(session(*a).document().lines().at(1)->text, std::u8string(u8"second"));
+    }
+
+    void aGroupEndsWhenItsFunctionFailsAndTheErrorPassesThrough()
+    {
+        install(QStringLiteral("example.chains"), QStringLiteral("Chains"), R"~(
+            hikari.commands.register('greet', function()
+                local ok, err = pcall(hikari.document.group, 'Broken', function()
+                    hikari.document.edit('One', function(doc, change)
+                        change:set_line(doc.lines[1].id, {text = 'one'})
+                    end)
+                    error('chain broke')
+                end)
+                local again = hikari.call('document.group_begin', {name = 'Again'})
+                hikari.notify(tostring(not ok and err:find('chain broke') ~= nil) .. ' ' .. tostring(again ~= nil))
+                hikari.call('document.group_end', {})
+            end)
+        )~");
+        auto a = openEpisodes(1);
+        QVERIFY(a);
+        QSignalSpy noticed(&a->log(), &ui::LogController::noticed);
+        app::PluginRuntime runtime(wiring(*a));
+        runtime.sync();
+        QVERIFY(runtime.run(QStringLiteral("plugin.example.chains.greet")));
+        QTRY_COMPARE(texts(noticed), QStringList{QStringLiteral("Chains: true true")});
+        QCOMPARE(session(*a).history().back().name, std::string("Chains: Broken"));
     }
 
     void otherTabsNeedTheDocumentsAllPermission()

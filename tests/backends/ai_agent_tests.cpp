@@ -250,6 +250,7 @@ TEST(AgentPolicy, EveryWriteOperationIsClassified)
         if (op.access == hikari::api::Access::Write)
             writes.insert(op.name);
     EXPECT_EQ(writes, (std::set<std::string>{"automation.run", "automation.run_macro", "commands.run", "document.apply",
+                                             "document.group_begin", "document.group_end",
                                              "effects.apply", "effects.save", "files.write",
                                              "karaoke.align", "karaoke.apply_template", "marks.clear", "marks.set",
                                              "panels.close", "panels.focus", "panels.open", "plugins.install", "plugins.run",

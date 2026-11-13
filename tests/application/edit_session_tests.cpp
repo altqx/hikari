@@ -501,3 +501,64 @@ TEST_F(SessionTest, AmendingTheSavedStepMakesTheDocumentDirty)
     EXPECT_TRUE(session.isDirty());
     EXPECT_FALSE(session.savedStep());
 }
+
+TEST_F(SessionTest, FoldedStepsUndoAsOneNamedStep)
+{
+    ASSERT_TRUE(session.run(setText(l1, u8"user")));
+    const ContentId base = session.contentId();
+    ASSERT_TRUE(session.run(setText(l1, u8"a")));
+    ASSERT_TRUE(session.run(setText(l2, u8"b")));
+    ASSERT_TRUE(session.run(setText(l3, u8"c")));
+    const ContentId last = session.contentId();
+    ASSERT_TRUE(session.foldSteps(base, last, "Chains: Clean up"));
+    EXPECT_EQ(session.historySize(), 3u);
+    EXPECT_EQ(session.history().back().name, "Chains: Clean up");
+    EXPECT_EQ(session.contentId(), last);
+    ASSERT_TRUE(session.undo());
+    EXPECT_EQ(session.contentId(), base);
+    EXPECT_EQ(textOf(session, l1), u8"user");
+    EXPECT_EQ(textOf(session, l2), u8"two");
+    ASSERT_TRUE(session.redo());
+    EXPECT_EQ(textOf(session, l3), u8"c");
+}
+
+TEST_F(SessionTest, FoldingOneStepOnlyNamesIt)
+{
+    const ContentId base = session.contentId();
+    ASSERT_TRUE(session.run(setText(l1, u8"a")));
+    ASSERT_TRUE(session.foldSteps(base, session.contentId(), "Chains: One"));
+    EXPECT_EQ(session.historySize(), 2u);
+    EXPECT_EQ(session.history().back().name, "Chains: One");
+}
+
+TEST_F(SessionTest, FoldingLeavesLaterStepsInPlace)
+{
+    const ContentId base = session.contentId();
+    ASSERT_TRUE(session.run(setText(l1, u8"a")));
+    ASSERT_TRUE(session.run(setText(l2, u8"b")));
+    const ContentId last = session.contentId();
+    ASSERT_TRUE(session.run(setText(l3, u8"user")));
+    ASSERT_TRUE(session.foldSteps(base, last, "Chains: Two"));
+    EXPECT_EQ(session.historySize(), 3u);
+    EXPECT_EQ(session.historyCursor(), 2u);
+    EXPECT_EQ(textOf(session, l3), u8"user");
+    ASSERT_TRUE(session.undo());
+    EXPECT_EQ(session.contentId(), last);
+    ASSERT_TRUE(session.undo());
+    EXPECT_EQ(session.contentId(), base);
+}
+
+TEST_F(SessionTest, StepsAreNotFoldedWhenTheCursorSitsInsideOrTheyLeftHistory)
+{
+    const ContentId base = session.contentId();
+    ASSERT_TRUE(session.run(setText(l1, u8"a")));
+    ASSERT_TRUE(session.run(setText(l2, u8"b")));
+    const ContentId last = session.contentId();
+    ASSERT_TRUE(session.undo());
+    EXPECT_FALSE(session.foldSteps(base, last, "Chains: Inside"));
+    EXPECT_EQ(session.historySize(), 3u);
+    EXPECT_FALSE(session.foldSteps(last, base, "Chains: Backwards"));
+    EXPECT_FALSE(session.foldSteps(base, base, "Chains: None"));
+    ASSERT_TRUE(session.run(setText(l3, u8"branch")));
+    EXPECT_FALSE(session.foldSteps(base, last, "Chains: Gone"));
+}
