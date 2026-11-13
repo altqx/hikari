@@ -2588,7 +2588,7 @@ Output device: %2</source>
     </message>
     <message>
         <source>Moved</source>
-        <translation type="unfinished">이동됨</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Backup</source>

@@ -2628,7 +2628,7 @@ Urządzenie wyjściowe: %2</translation>
     </message>
     <message>
         <source>Moved</source>
-        <translation type="unfinished">Przeniesiona</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Backup</source>

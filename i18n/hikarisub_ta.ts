@@ -2608,7 +2608,7 @@ Output device: %2</source>
     </message>
     <message>
         <source>Moved</source>
-        <translation type="unfinished">நகர்த்தப்பட்டது</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Backup</source>
