@@ -1998,6 +1998,20 @@ A Document's content changed: a commit, Undo or Redo.
 | `revision` | [Revision](#revision) | yes |  |
 | `step` | string | yes | The History step now current. |
 
+### `document.saved`
+
+Since version 1.
+
+A Document was written to a file: Save, Save as, Save all or Save translation. Nothing comes for a save that was cancelled or failed.
+
+**Data**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `document` | [DocumentId](#documentid) | yes |  |
+| `path` | string | yes | The file it was written to, as documents.list gives paths. |
+| `revision` | [Revision](#revision) | yes | The revision that was written. |
+
 ### `selection.changed`
 
 Since version 1.
@@ -2046,7 +2060,7 @@ A panel opened, closed, floated, docked or took the focus.
 
 Since version 1.
 
-A command ran, from a menu, a key, the API or anywhere else.
+A command was triggered, from a menu, a key, the API or anywhere else. It reports the trigger, not the outcome: a Save that opens a dialog or a question comes before anything is written, and even when it is then cancelled; document.saved reports the write.
 
 **Data**
 

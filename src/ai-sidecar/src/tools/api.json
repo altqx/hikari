@@ -6136,6 +6136,33 @@
       }
     },
     {
+      "name": "document.saved",
+      "summary": "A Document was written to a file: Save, Save as, Save all or Save translation. Nothing comes for a save that was cancelled or failed.",
+      "since": 1,
+      "data": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId"
+          },
+          "path": {
+            "type": "string",
+            "description": "The file it was written to, as documents.list gives paths."
+          },
+          "revision": {
+            "$ref": "#/$defs/Revision",
+            "description": "The revision that was written."
+          }
+        },
+        "required": [
+          "document",
+          "path",
+          "revision"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
       "name": "selection.changed",
       "summary": "The selected or the active Line changed.",
       "since": 1,
@@ -6240,7 +6267,7 @@
     },
     {
       "name": "command.ran",
-      "summary": "A command ran, from a menu, a key, the API or anywhere else.",
+      "summary": "A command was triggered, from a menu, a key, the API or anywhere else. It reports the trigger, not the outcome: a Save that opens a dialog or a question comes before anything is written, and even when it is then cancelled; document.saved reports the write.",
       "since": 1,
       "data": {
         "type": "object",

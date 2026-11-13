@@ -1,8 +1,11 @@
 #pragma once
 
 #include <QCoreApplication>
+#include <QCursor>
 #include <QGuiApplication>
+#include <QHoverEvent>
 #include <QKeyEvent>
+#include <QLineF>
 #include <QKeySequence>
 #include <QObject>
 #include <QQuickItem>
@@ -59,6 +62,34 @@ public:
     {
         return QGuiApplication::keyboardModifiers().testFlag(Qt::ShiftModifier);
     }
+    Q_INVOKABLE void menuShowing()
+    {
+        m_pointerAtShow = QCursor::pos();
+        m_pointerMoved = false;
+    }
+    // Qt Quick hovers a row that appears under a still pointer; native menus take hover only from motion, #1109.
+    Q_INVOKABLE void takeHoverOnlyFromMotion(QQuickItem *row)
+    {
+        if (row)
+            row->installEventFilter(this);
+    }
+
+protected:
+    bool eventFilter(QObject *watched, QEvent *event) override
+    {
+        if (m_pointerMoved || (event->type() != QEvent::HoverEnter && event->type() != QEvent::HoverMove))
+            return QObject::eventFilter(watched, event);
+        const QPointF at = static_cast<QHoverEvent *>(event)->globalPosition();
+        if (QLineF(at, QPointF(m_pointerAtShow)).length() < kStillPointerSlack)
+            return true;
+        m_pointerMoved = true;
+        return QObject::eventFilter(watched, event);
+    }
+
+private:
+    static constexpr qreal kStillPointerSlack = 2.0;
+    QPoint m_pointerAtShow;
+    bool m_pointerMoved = true;
 };
 
 }
