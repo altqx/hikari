@@ -618,9 +618,11 @@ TEST_F(AiSettingsTest, AnAgentThatWasFoundButCantBeUsedSaysWhy)
     page.checkAgents();
     EXPECT_FALSE(agent(page, "claude", "found").toBool());
     EXPECT_EQ(agent(page, "claude", "missing").toString(),
-              QStringLiteral("Found a mise shim that mise couldn’t resolve: /home/u/.local/share/mise/shims/claude"));
+              QStringLiteral("Found a mise shim that mise couldn’t resolve: %1")
+                  .arg(QDir::toNativeSeparators(QStringLiteral("/home/u/.local/share/mise/shims/claude"))));
     EXPECT_EQ(agent(page, "codex", "missing").toString(),
-              QStringLiteral("Found an asdf shim that asdf couldn’t resolve: /home/u/.asdf/shims/codex"));
+              QStringLiteral("Found an asdf shim that asdf couldn’t resolve: %1")
+                  .arg(QDir::toNativeSeparators(QStringLiteral("/home/u/.asdf/shims/codex"))));
     agentMissing.clear();
     page.checkAgents();
     EXPECT_EQ(agent(page, "codex", "missing").toString(), QString());
