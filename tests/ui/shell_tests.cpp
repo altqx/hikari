@@ -11930,7 +11930,7 @@ private:
                                    .boundedTo(window->screen()->availableGeometry().size().shrunkBy(window->frameMargins()));
         return window->minimumSize() == expected;
     }
-    void rightClickOn(QQuickItem *target, const std::function<QPoint()> &point)
+    void waitUntilOver(QQuickItem *target, const std::function<QPoint()> &point)
     {
         const auto over = [&] {
             QQuickItem *hit = mouseItemAt(window->contentItem(), point());
@@ -11938,6 +11938,10 @@ private:
         };
         QTRY_VERIFY(dockingMinimumApplied());
         QTRY_VERIFY2(over(), qPrintable(QDebug::toString(mouseItemAt(window->contentItem(), point()))));
+    }
+    void rightClickOn(QQuickItem *target, const std::function<QPoint()> &point)
+    {
+        waitUntilOver(target, point);
         rightClick(point());
     }
     QPoint fieldPoint(QQuickItem *field, int position) const
@@ -13515,6 +13519,46 @@ private slots:
         QVERIFY(translated->findChild<QObject *>(QStringLiteral("translationTextSpellingOn"))->property("visible").toBool());
         QVERIFY(!hasSubMenu(tlMenu, QStringLiteral("Installed languages")));
         QVERIFY(QMetaObject::invokeMethod(tlMenu, "close"));
+        application->editor().discard();
+    }
+
+    void rightClickMovesTheCaretToThePointerOutsideTheSelection()
+    {
+        QTemporaryDir home;
+        QVERIFY(home.isValid());
+        writeDictionary(home.path());
+        restartWithSpelling(home.path(), true);
+        const QString path = writeFile(dir, "right-click-caret.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,Hello wrold Teh\n");
+        QVERIFY(application->openFile(path));
+        auto *field = item("lineText");
+        QTRY_COMPARE(field->property("text").toString(), QStringLiteral("Hello wrold Teh"));
+        auto *menu = field->findChild<QObject *>(QStringLiteral("lineTextMenu"));
+        QVERIFY(menu);
+        const auto inWrold = [&] { return fieldPoint(field, 8); };
+
+        field->setProperty("cursorPosition", 0);
+        waitUntilOver(field, inWrold);
+        QTest::mouseClick(window, Qt::RightButton, Qt::NoModifier, inWrold());
+        QTRY_VERIFY(menu->property("visible").toBool());
+        QCOMPARE(field->property("cursorPosition").toInt(), 8);
+        const auto entries = menuItems(menu);
+        QVERIFY(!entries.isEmpty());
+        QCOMPARE(entries.first()->property("text").toString(), QStringLiteral("world"));
+        QVERIFY(QMetaObject::invokeMethod(menu, "close"));
+        QTRY_VERIFY(!menu->property("visible").toBool());
+
+        QVERIFY(QMetaObject::invokeMethod(field, "select", Q_ARG(int, 0), Q_ARG(int, 11)));
+        QTest::mouseClick(window, Qt::RightButton, Qt::NoModifier, inWrold());
+        QTRY_VERIFY(menu->property("visible").toBool());
+        QCOMPARE(field->property("selectionStart").toInt(), 0);
+        QCOMPARE(field->property("selectionEnd").toInt(), 11);
+        QVERIFY(QMetaObject::invokeMethod(menu, "close"));
+        QTRY_VERIFY(!menu->property("visible").toBool());
+
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, fieldPoint(field, 13));
+        QTRY_COMPARE(field->property("cursorPosition").toInt(), 13);
+        QCOMPARE(field->property("selectedText").toString(), QString());
+        QVERIFY(!menu->property("visible").toBool());
         application->editor().discard();
     }
 
@@ -19500,6 +19544,21 @@ private slots:
                      QStringLiteral("Chains: Finding keyframes"));
         QTRY_COMPARE(findItem(card, QStringLiteral("pluginJobText"))->property("text").toString(),
                      QStringLiteral("Frame 1008 of 2400"));
+        QQuickItem *bar = findItem(card, QStringLiteral("pluginJobBar"));
+        QTRY_VERIFY(!bar->property("indeterminate").toBool());
+        QCOMPARE(bar->property("value").toDouble(), 0.42);
+        QQuickItem *fill = findItem(card, QStringLiteral("pluginJobFill"));
+        QTRY_COMPARE(fill->x(), 0.0);
+        QTRY_COMPARE(fill->width(), bar->property("position").toDouble() * fill->parentItem()->width());
+        for (QObject *child : card->findChildren<QObject *>())
+            if (child->inherits("QQuickAbstractAnimation"))
+                QVERIFY2(!child->property("running").toBool(), child->metaObject()->className());
+        QAccessibleInterface *barFace = QAccessible::queryAccessibleInterface(bar);
+        QVERIFY(barFace);
+        QCOMPARE(barFace->role(), QAccessible::ProgressBar);
+        QCOMPARE(barFace->text(QAccessible::Name), QStringLiteral("Progress"));
+        QVERIFY(barFace->valueInterface());
+        QCOMPARE(barFace->valueInterface()->currentValue().toDouble(), 0.42);
         auto *grid = qobject_cast<ui::LineGrid *>(item("editingGrid"));
         QTRY_COMPARE(grid->rowStateText(1).count(QStringLiteral("marked by")), 2);
         QVERIFY(grid->rowStateText(1).contains(QStringLiteral("marked by Chains: Removed in v1.1")));

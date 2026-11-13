@@ -83,7 +83,11 @@ void runMacro(const Context &context, const Json &params, Reply reply)
                          params.find("show") && params.find("show")->asString() == "prefilled"};
     if (const Json *answers = params.find("answers"))
         for (const Json &a : answers->asArray()) {
-            DialogAnswer answer{a.find("key")->asString(), {}, a.find("button") ? a.find("button")->asString() : ""};
+            DialogAnswer answer{a.find("key") ? a.find("key")->asString() : "", {},
+                                a.find("button") ? a.find("button")->asString() : "", {}};
+            if (const Json *controls = a.find("controls"))
+                for (const Json &c : controls->asArray())
+                    answer.controls.push_back(DialogControlInfo{c.find("name")->asString(), c.find("kind")->asString(), {}, {}, {}, {}, {}, {}});
             for (const Json::Member &v : a.find("values")->asObject())
                 if (const auto value = dialogValue(v.value))
                     answer.values.insert_or_assign(v.key, *value);
@@ -92,8 +96,12 @@ void runMacro(const Context &context, const Json &params, Reply reply)
     const auto refused = [&](std::string_view reason, std::string message) {
         reply(fail(errors::kRefused, std::move(message), Json::object({{"reason", Json(reason)}})));
     };
-    const auto answer = [reply](LuaRun ran) {
-        reply(Json::object({{"outcome", Json(ran.outcome)}, {"message", Json(ran.message)}, {"log", Json(ran.log)}}));
+    const auto answer = [reply, caller = context.caller, documents = context.host.documents](LuaRun ran) {
+        Json result = Json::object({{"outcome", Json(ran.outcome)}, {"message", Json(ran.message)}, {"log", Json(ran.log)}});
+        const auto target = documents ? documents->workspace().editingTarget() : std::nullopt;
+        if (ran.document && sees(caller, target, *ran.document))
+            result["dialogs"] = dialogsJson(ran.dialogs);
+        reply(std::move(result));
     };
     switch (context.host.macros->runMacro(request, answer)) {
     case MacroStart::Started:
@@ -146,7 +154,9 @@ void addAutomationOperations(Registry &registry)
                      "required": ["file", "macro"], "additionalProperties": false})",
                  R"({"type": "object", "properties": {
                      "outcome": {"enum": ["applied", "refused", "failed", "cancelled", "declined", "stopped", "lost"]},
-                     "message": {"type": "string"}, "log": {"type": "string"}},
+                     "message": {"type": "string"}, "log": {"type": "string"},
+                     "dialogs": {"type": "array", "items": {"$ref": "#/$defs/DialogAnswer"},
+                         "description": "The answers its dialogs got, as macro.ran gives them; only when the caller sees the Document it ran on."}},
                      "required": ["outcome", "message", "log"], "additionalProperties": false})",
                  runMacro);
     addOperation(registry, Access::Write, "automation.run",

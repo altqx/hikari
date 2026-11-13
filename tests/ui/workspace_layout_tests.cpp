@@ -3,6 +3,8 @@
 #include "docking.h"
 #include "workspace_layout.h"
 
+#include "qtest_parts.h"
+
 #include <kddockwidgets/core/DockRegistry.h>
 #include <kddockwidgets/core/DropArea.h>
 #include <kddockwidgets/core/FloatingWindow.h>
@@ -539,5 +541,5 @@ private slots:
     }
 };
 
-QTEST_MAIN(WorkspaceLayoutTest)
+HIKARI_QTEST_MAIN_IN_PARTS(WorkspaceLayoutTest)
 #include "workspace_layout_tests.moc"

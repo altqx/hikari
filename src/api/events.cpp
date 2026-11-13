@@ -75,6 +75,40 @@ Json dialogValueJson(const application::DialogValue &value)
         value);
 }
 
+Json dialogsJson(const std::vector<DialogAnswer> &dialogs)
+{
+    Json answers = Json::array();
+    for (const DialogAnswer &d : dialogs) {
+        Json values = Json::object();
+        for (const auto &[name, value] : d.values)
+            if (!std::holds_alternative<std::monostate>(value))
+                values[name] = detail::dialogValueJson(value);
+        Json controls = Json::array();
+        for (const DialogControlInfo &c : d.controls) {
+            Json control = Json::object({{"name", Json(c.name)}, {"kind", Json(c.kind)}});
+            if (!c.label.empty())
+                control["label"] = Json(c.label);
+            if (!c.hint.empty())
+                control["hint"] = Json(c.hint);
+            if (c.kind == "dropdown") {
+                Json items = Json::array();
+                for (const std::string &item : c.items)
+                    items.push(Json(item));
+                control["items"] = std::move(items);
+            }
+            for (const auto &[field, value] : {std::pair{"min", c.min}, std::pair{"max", c.max}, std::pair{"step", c.step}})
+                if (value)
+                    control[field] = Json(*value);
+            controls.push(std::move(control));
+        }
+        answers.push(Json::object({{"key", Json(d.key)},
+                                   {"values", std::move(values)},
+                                   {"button", Json(d.button)},
+                                   {"controls", std::move(controls)}}));
+    }
+    return answers;
+}
+
 }
 
 std::uint64_t Api::subscribe(const Caller &caller, std::vector<std::string> events, Listener listener)
@@ -114,6 +148,7 @@ void Api::documentChanged(application::DocumentId document)
     const application::EditSession *session = m_host.documents ? m_host.documents->session(document) : nullptr;
     if (!session)
         return;
+    m_groups.changed(document, m_writing ? &m_writingCaller : nullptr, *m_host.documents);
     const auto history = session->history();
     const std::string step = session->historyCursor() < history.size() ? history[session->historyCursor()].name : "";
     publish(Event{"document.changed", Json::object({{"document", Json(document.value)},
@@ -165,20 +200,12 @@ void Api::panelChanged(std::string_view panel)
 void Api::macroRan(application::DocumentId document, std::string_view file, std::string_view macro,
                    std::string_view outcome, const std::vector<DialogAnswer> &dialogs)
 {
-    Json answers = Json::array();
-    for (const DialogAnswer &d : dialogs) {
-        Json values = Json::object();
-        for (const auto &[name, value] : d.values)
-            if (!std::holds_alternative<std::monostate>(value))
-                values[name] = detail::dialogValueJson(value);
-        answers.push(Json::object({{"key", Json(d.key)}, {"values", std::move(values)}, {"button", Json(d.button)}}));
-    }
     publish(Event{"macro.ran", Json::object({{"document", Json(document.value)},
                                              {"file", Json(file)},
                                              {"macro", Json(macro)},
                                              {"outcome", Json(outcome)},
                                              {"ok", Json(outcome == "applied")},
-                                             {"dialogs", std::move(answers)}})},
+                                             {"dialogs", detail::dialogsJson(dialogs)}})},
             document);
 }
 
