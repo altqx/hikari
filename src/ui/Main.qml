@@ -4157,6 +4157,33 @@ ApplicationWindow {
             acceptedButtons: Qt.RightButton
             onActiveChanged: if (active) field.moveCaretUnlessInSelection(point.pressPosition)
         }
+        property real lastLeftPressTime: 0
+        property int leftPresses: 0
+        function countLeftPress() {
+            const now = Date.now()
+            field.leftPresses = now - field.lastLeftPressTime < Application.styleHints.mouseDoubleClickInterval ? field.leftPresses + 1 : 1
+            field.lastLeftPressTime = now
+        }
+        function selectCharacterWise(press, current) {
+            if (field.leftPresses !== 1)
+                return
+            const anchor = field.positionAt(press.x, press.y)
+            const caret = field.positionAt(current.x, current.y)
+            if (field.selectionStart !== Math.min(anchor, caret) || field.selectionEnd !== Math.max(anchor, caret))
+                field.select(anchor, caret)
+        }
+        // Qt's text control treats a lone press near its origin as a triple click: https://github.com/altqx/hikari/issues/1142
+        PointHandler {
+            objectName: field.objectName + "LeftPress"
+            acceptedButtons: Qt.LeftButton
+            acceptedModifiers: Qt.NoModifier
+            onActiveChanged: if (active) field.countLeftPress()
+            onPointChanged: if (active) {
+                const press = point.pressPosition
+                const current = point.position
+                Qt.callLater(() => field.selectCharacterWise(press, current))
+            }
+        }
         ContextMenu.onRequested: position => {
             root.editor.tagList.close()
             field.readMarksAt(position)
