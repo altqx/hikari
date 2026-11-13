@@ -1701,6 +1701,15 @@ export type DocumentChangedEvent = {
     step: string;
 };
 
+/** A Document was written to a file: Save, Save as, Save all or Save translation. Nothing comes for a save that was cancelled or failed. */
+export type DocumentSavedEvent = {
+    document: DocumentId;
+    /** The file it was written to, as documents.list gives paths. */
+    path: string;
+    /** The revision that was written. */
+    revision: Revision;
+};
+
 /** The selected or the active Line changed. */
 export type SelectionChangedEvent = {
     document: DocumentId;
@@ -1724,7 +1733,7 @@ export type PanelChangedEvent = {
     focused: boolean;
 };
 
-/** A command ran, from a menu, a key, the API or anywhere else. */
+/** A command was triggered, from a menu, a key, the API or anywhere else. It reports the trigger, not the outcome: a Save that opens a dialog or a question comes before anything is written, and even when it is then cancelled; document.saved reports the write. */
 export type CommandRanEvent = {
     command: string;
     /** False when it was refused or failed. */
@@ -1830,6 +1839,7 @@ export type OperationName = keyof Operations;
 export interface Events {
     "project.changed": ProjectChangedEvent;
     "document.changed": DocumentChangedEvent;
+    "document.saved": DocumentSavedEvent;
     "selection.changed": SelectionChangedEvent;
     "documents.changed": DocumentsChangedEvent;
     "panel.changed": PanelChangedEvent;
