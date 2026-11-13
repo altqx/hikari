@@ -99,6 +99,7 @@ const Registry &Api::registry()
         detail::addPluginOperations(r);
         detail::addTypesetOperations(r);
         detail::addProjectOperations(r);
+        detail::addVcsOperations(r);
         detail::addKaraokeOperations(r);
         detail::addMarkOperations(r);
         detail::addEvents(r);

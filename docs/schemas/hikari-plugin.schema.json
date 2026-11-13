@@ -106,6 +106,10 @@
               "reason": {"$ref": "#/$defs/Reason"}
             }
           }
+        },
+        "vcs.read": {
+          "description": "Read the branches, tags, recent commits and the active Document's earlier versions in the git repository holding it (vcs.refs, vcs.show). The value is the reason shown to the user.",
+          "$ref": "#/$defs/Reason"
         }
       }
     },

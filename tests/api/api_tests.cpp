@@ -73,8 +73,9 @@ TEST(ApiRegistry, EveryEventIsWellFormed)
         EXPECT_FALSE(event.summary.empty()) << event.name;
         EXPECT_FALSE(checkSchema(event.data, registry.defs())) << event.name;
     }
-    EXPECT_EQ(names, (std::set<std::string>{"document.changed", "selection.changed", "documents.changed", "panel.changed",
-                                            "command.ran", "project.changed", "macro.ran"}));
+    EXPECT_EQ(names, (std::set<std::string>{"document.changed", "document.saved", "selection.changed",
+                                            "documents.changed", "panel.changed", "command.ran", "project.changed",
+                                            "macro.ran"}));
 }
 
 class ApiScripts : public ::testing::Test {
@@ -113,8 +114,10 @@ TEST_F(ApiScripts, WriteScope)
 
 TEST_F(ApiScripts, EveryOperationAnswersEmptyParams)
 {
+    Caller plugin = pluginCaller();
+    plugin.vcsRead = true;
     for (const Operation &op : Api::registry().operations()) {
-        const Result asPlugin = client.call(pluginCaller(), op.name, Json::object());
+        const Result asPlugin = client.call(plugin, op.name, Json::object());
         const Result result = client.call(aiCaller(), op.name, Json::object());
         if (!result && !(asPlugin && result.error().code == errors::kNotGranted)) {
             EXPECT_EQ(result.error().code, errors::kInvalidParams) << op.name << ": " << result.error().message;
@@ -400,6 +403,21 @@ TEST_F(ApiScripts, AttachedDocumentsAreVisibleBesidesTheEditingTarget)
     EXPECT_TRUE(heard[0].starts_with(R"(document.changed {"document":2,)")) << heard[0];
     EXPECT_EQ(heard[1], R"(documents.changed {"documents":[1,2],"editingTarget":1})");
     api.unsubscribe(s);
+}
+
+TEST_F(ApiScripts, DocumentSavedSaysWhereAndWhichRevisionWithinTheCallersScope)
+{
+    std::vector<std::string> ai, plugin;
+    const auto a = api.subscribe(aiCaller(), {"document.saved"}, [&](const Event &e) { ai.push_back(e.data.dump()); });
+    const auto p =
+        api.subscribe(pluginCaller(), {"document.saved"}, [&](const Event &e) { plugin.push_back(e.data.dump()); });
+    api.documentSaved(hikari::application::DocumentId{1}, "/subs/a.ass", 4);
+    api.documentSaved(hikari::application::DocumentId{2}, "/subs/b.ass", 0);
+    EXPECT_EQ(ai, (std::vector<std::string>{R"({"document":1,"path":"/subs/a.ass","revision":4})",
+                                            R"({"document":2,"path":"/subs/b.ass","revision":0})"}));
+    EXPECT_EQ(plugin, (std::vector<std::string>{R"({"document":1,"path":"/subs/a.ass","revision":4})"}));
+    api.unsubscribe(a);
+    api.unsubscribe(p);
 }
 
 TEST_F(ApiScripts, DocumentsChangedIsNarrowedWithoutTheGrant)

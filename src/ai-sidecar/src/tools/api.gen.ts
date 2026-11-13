@@ -1084,7 +1084,7 @@ export type PluginsScaffoldParams = {
     description?: string;
     /** restricted (default) runs in the sandbox without ffi, io, os and debug; unrestricted needs the user's full trust at install. */
     tier?: "restricted" | "unrestricted";
-    /** The manifest's permissions: documents.all, network {hosts, reason}, files. */
+    /** The manifest's permissions: documents.all, network {hosts, reason}, files, vcs.read. */
     permissions?: Record<string, unknown>;
     commands: ({
         id: string;
@@ -1399,6 +1399,63 @@ export type ProjectInfoResult = {
     project: Project;
 };
 
+/** The branches, tags and recent commits of the git repository holding the Document, or the Project's. Plugins whose manifest asks for vcs.read only. */
+export type VcsRefsParams = {
+    /** Defaults to the active Document; an unsaved one gives the Project's repository. */
+    document?: DocumentId;
+    /** How many recent commits; 50 when left out. */
+    limit?: number;
+};
+
+export type VcsRefsResult = {
+    /** The repository's work tree. */
+    root: string;
+    /** The Document's path in the repository, '/'-separated; null for the Project's. */
+    path: string | null;
+    /** null before the first commit. */
+    head: null | {
+        /** The current branch; null when detached. */
+        ref: string | null;
+        commit: string;
+    };
+    /** At most 500, newest first. */
+    branches: ({
+        name: string;
+        commit: string;
+        current: boolean;
+    })[];
+    /** At most 500, newest first. */
+    tags: ({
+        name: string;
+        commit: string;
+    })[];
+    /** The newest from HEAD. */
+    commits: ({
+        commit: string;
+        summary: string;
+        author: string;
+        /** Seconds since 1970, when it was committed. */
+        time: number;
+    })[];
+};
+
+/** The Document's file as a git branch, tag or commit has it. Plugins whose manifest asks for vcs.read only. */
+export type VcsShowParams = {
+    /** A branch, tag, commit or revision such as HEAD~2. */
+    ref: string;
+    /** Defaults to the active Document. */
+    document?: DocumentId;
+};
+
+export type VcsShowResult = {
+    ref: string;
+    commit: string;
+    /** The Document's path in the repository, '/'-separated. */
+    path: string;
+    /** The file at that commit, as UTF-8. */
+    text: string;
+};
+
 /** A Line's karaoke syllables as the templater reads them: text, tag, start and end in ms. */
 export type KaraokeSyllablesParams = {
     /** Defaults to the active Document. */
@@ -1644,6 +1701,15 @@ export type DocumentChangedEvent = {
     step: string;
 };
 
+/** A Document was written to a file: Save, Save as, Save all or Save translation. Nothing comes for a save that was cancelled or failed. */
+export type DocumentSavedEvent = {
+    document: DocumentId;
+    /** The file it was written to, as documents.list gives paths. */
+    path: string;
+    /** The revision that was written. */
+    revision: Revision;
+};
+
 /** The selected or the active Line changed. */
 export type SelectionChangedEvent = {
     document: DocumentId;
@@ -1667,7 +1733,7 @@ export type PanelChangedEvent = {
     focused: boolean;
 };
 
-/** A command ran, from a menu, a key, the API or anywhere else. */
+/** A command was triggered, from a menu, a key, the API or anywhere else. It reports the trigger, not the outcome: a Save that opens a dialog or a question comes before anything is written, and even when it is then cancelled; document.saved reports the write. */
 export type CommandRanEvent = {
     command: string;
     /** False when it was refused or failed. */
@@ -1750,6 +1816,8 @@ export interface Operations {
     "typeset.check": { access: "read"; params: TypesetCheckParams; result: TypesetCheckResult };
     "typeset.apply": { access: "write"; params: TypesetApplyParams; result: TypesetApplyResult };
     "project.info": { access: "read"; params: ProjectInfoParams; result: ProjectInfoResult };
+    "vcs.refs": { access: "read"; params: VcsRefsParams; result: VcsRefsResult };
+    "vcs.show": { access: "read"; params: VcsShowParams; result: VcsShowResult };
     "karaoke.syllables": { access: "read"; params: KaraokeSyllablesParams; result: KaraokeSyllablesResult };
     "karaoke.split": { access: "read"; params: KaraokeSplitParams; result: KaraokeSplitResult };
     "karaoke.time": { access: "read"; params: KaraokeTimeParams; result: KaraokeTimeResult };
@@ -1771,6 +1839,7 @@ export type OperationName = keyof Operations;
 export interface Events {
     "project.changed": ProjectChangedEvent;
     "document.changed": DocumentChangedEvent;
+    "document.saved": DocumentSavedEvent;
     "selection.changed": SelectionChangedEvent;
     "documents.changed": DocumentsChangedEvent;
     "panel.changed": PanelChangedEvent;

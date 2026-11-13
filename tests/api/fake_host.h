@@ -322,6 +322,37 @@ public:
 
 // Document 1 "a.ass" (the editing target, Lines 1-3, Lines 1 and 3 selected,
 // 3 active) and document 2 "b.ass", never saved.
+class FakeVcs final : public application::VcsPort {
+public:
+    void refs(const std::string &at, int commits,
+              std::function<void(std::expected<application::VcsRefs, application::VcsFailure>)> done) override
+    {
+        asked.push_back("refs " + at + " " + std::to_string(commits));
+        if (problem)
+            return done(std::unexpected(*problem));
+        application::VcsRefs refs;
+        refs.root = "/subs";
+        refs.prefix = "season1/";
+        refs.head = "main";
+        refs.headCommit = "c2";
+        refs.branches = {{"main", "c2", true}, {"draft", "c1", false}};
+        refs.tags = {{"v1", "c1", false}};
+        refs.commits = {{"c2", "Time the OP", "Ana", 1700000100}, {"c1", "First pass", "Bo", 1700000000}};
+        done(std::move(refs));
+    }
+    void show(const std::string &file, const std::string &ref,
+              std::function<void(std::expected<application::VcsFile, application::VcsFailure>)> done) override
+    {
+        asked.push_back("show " + file + " " + ref);
+        if (problem)
+            return done(std::unexpected(*problem));
+        done(application::VcsFile{"c1", "season1/a.ass", "[Script Info]\n"});
+    }
+
+    std::vector<std::string> asked;
+    std::optional<application::VcsFailure> problem;
+};
+
 class FakeHost final : public DocumentHost, public CommandHost, public PanelHost {
 public:
     FakeHost()
@@ -373,6 +404,7 @@ public:
             .macros = &macros,
             .keyframes = &keyframes,
             .marks = &marks,
+            .vcs = &vcs,
         };
     }
 
@@ -482,6 +514,7 @@ public:
     application::AiReview review;
     FakeMacros macros;
     FakeKeyframes keyframes;
+    FakeVcs vcs;
     application::RowMarks marks;
 };
 

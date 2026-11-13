@@ -3822,7 +3822,7 @@
           },
           "permissions": {
             "type": "object",
-            "description": "The manifest's permissions: documents.all, network {hosts, reason}, files."
+            "description": "The manifest's permissions: documents.all, network {hosts, reason}, files, vcs.read."
           },
           "commands": {
             "type": "array",
@@ -5077,6 +5077,206 @@
       }
     },
     {
+      "name": "vcs.refs",
+      "access": "read",
+      "summary": "The branches, tags and recent commits of the git repository holding the Document, or the Project's. Plugins whose manifest asks for vcs.read only.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId",
+            "description": "Defaults to the active Document; an unsaved one gives the Project's repository."
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 200,
+            "description": "How many recent commits; 50 when left out."
+          }
+        },
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "root": {
+            "type": "string",
+            "description": "The repository's work tree."
+          },
+          "path": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The Document's path in the repository, '/'-separated; null for the Project's."
+          },
+          "head": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "ref": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The current branch; null when detached."
+                  },
+                  "commit": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "ref",
+                  "commit"
+                ],
+                "additionalProperties": false
+              }
+            ],
+            "description": "null before the first commit."
+          },
+          "branches": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "commit": {
+                  "type": "string"
+                },
+                "current": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "name",
+                "commit",
+                "current"
+              ],
+              "additionalProperties": false
+            },
+            "description": "At most 500, newest first."
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "commit": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "name",
+                "commit"
+              ],
+              "additionalProperties": false
+            },
+            "description": "At most 500, newest first."
+          },
+          "commits": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "commit": {
+                  "type": "string"
+                },
+                "summary": {
+                  "type": "string"
+                },
+                "author": {
+                  "type": "string"
+                },
+                "time": {
+                  "type": "integer",
+                  "description": "Seconds since 1970, when it was committed."
+                }
+              },
+              "required": [
+                "commit",
+                "summary",
+                "author",
+                "time"
+              ],
+              "additionalProperties": false
+            },
+            "description": "The newest from HEAD."
+          }
+        },
+        "required": [
+          "root",
+          "path",
+          "head",
+          "branches",
+          "tags",
+          "commits"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "vcs.show",
+      "access": "read",
+      "summary": "The Document's file as a git branch, tag or commit has it. Plugins whose manifest asks for vcs.read only.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "ref": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256,
+            "pattern": "^[A-Za-z0-9._/@{}~^][A-Za-z0-9._/@{}~^-]*$",
+            "description": "A branch, tag, commit or revision such as HEAD~2."
+          },
+          "document": {
+            "$ref": "#/$defs/DocumentId",
+            "description": "Defaults to the active Document."
+          }
+        },
+        "required": [
+          "ref"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "ref": {
+            "type": "string"
+          },
+          "commit": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string",
+            "description": "The Document's path in the repository, '/'-separated."
+          },
+          "text": {
+            "type": "string",
+            "description": "The file at that commit, as UTF-8."
+          }
+        },
+        "required": [
+          "ref",
+          "commit",
+          "path",
+          "text"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
       "name": "karaoke.syllables",
       "access": "read",
       "summary": "A Line's karaoke syllables as the templater reads them: text, tag, start and end in ms.",
@@ -5936,6 +6136,33 @@
       }
     },
     {
+      "name": "document.saved",
+      "summary": "A Document was written to a file: Save, Save as, Save all or Save translation. Nothing comes for a save that was cancelled or failed.",
+      "since": 1,
+      "data": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId"
+          },
+          "path": {
+            "type": "string",
+            "description": "The file it was written to, as documents.list gives paths."
+          },
+          "revision": {
+            "$ref": "#/$defs/Revision",
+            "description": "The revision that was written."
+          }
+        },
+        "required": [
+          "document",
+          "path",
+          "revision"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
       "name": "selection.changed",
       "summary": "The selected or the active Line changed.",
       "since": 1,
@@ -6040,7 +6267,7 @@
     },
     {
       "name": "command.ran",
-      "summary": "A command ran, from a menu, a key, the API or anywhere else.",
+      "summary": "A command was triggered, from a menu, a key, the API or anywhere else. It reports the trigger, not the outcome: a Save that opens a dialog or a question comes before anything is written, and even when it is then cancelled; document.saved reports the write.",
       "since": 1,
       "data": {
         "type": "object",

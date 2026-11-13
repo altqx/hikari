@@ -767,6 +767,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_aiPlugins = std::make_unique<AiPlugins>(AiPlugins::Wiring{
         m_userFolder.isEmpty() || options.plugins.plugins.isEmpty() ? QString() : m_userFolder + QStringLiteral("/ai/plugins"),
         options.plugins.plugins, [this] { return m_pluginManager.get(); }, [this] { return m_pluginRuntime.get(); }});
+    m_git = std::make_unique<backends::GitReader>();
     m_apiHost = std::make_unique<ApiHost>(ApiHost::Wiring{
         m_workspace, *m_files, &m_settings->settings(), &m_automation->media(),
         [this](application::Selection next) { return applySelection(std::move(next)); },
@@ -803,7 +804,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         [this](const std::vector<std::int64_t> &frames, const std::optional<std::string> &file) {
             return setKeyframesFromApi(frames, file);
         },
-        &m_rowMarks});
+        &m_rowMarks, m_git.get()});
     m_automation->setMacroRan([this](const AutomationShell::Ran &ran) {
         m_apiHost->api().macroRan(ran.document, application::scriptFileName(ran.path), ran.macro, ran.outcome, ran.dialogs);
     });
@@ -2993,6 +2994,8 @@ void Application::writeFinished(const application::WriteResult &result)
             destination && destination->value == result.destination.value)
             recordFileTime(result.document);
         emit documentWritten(result.document.value);
+        if (m_apiHost)
+            m_apiHost->api().documentSaved(result.document, result.destination.value, result.revision);
     } else if (result.outcome == application::WriteOutcome::Failed ||
                result.outcome == application::WriteOutcome::Cancelled) {
         if (result.outcome == application::WriteOutcome::Failed)
