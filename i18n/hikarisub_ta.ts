@@ -15926,6 +15926,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>%1 உடன் இணைதல்: %2</translation>
     </message>
     <message>
+        <source>Read the branches, tags and history of the git repository holding your subtitle files: %1</source>
+        <translation>உங்கள் வசனக் கோப்புகள் உள்ள git களஞ்சியத்தின் கிளைகள், குறிச்சொற்கள், வரலாற்றைப் படித்தல்: %1</translation>
+    </message>
+    <message>
         <source>Ask you for a folder to read and write, %1: %2</source>
         <translation>படிக்கவும் எழுதவும் ஒரு கோப்புறையை உங்களிடம் கேட்டல், %1: %2</translation>
     </message>

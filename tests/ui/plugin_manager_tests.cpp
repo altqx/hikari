@@ -198,7 +198,7 @@ private slots:
         QVERIFY(manifest.open(QIODevice::WriteOnly | QIODevice::Truncate));
         manifest.write(R"({"id": "com.example.hello", "name": "Hello", "version": "1.0.0", "api": 1, "main": "main.lua",
             "authors": ["Ana", "Bo"], "icon": "icon.png",
-            "permissions": {"documents.all": "It checks every tab."},
+            "permissions": {"documents.all": "It checks every tab.", "vcs.read": "It marks Lines changed since a tag."},
             "contributes": {"commands": [{"id": "greet", "title": "Say hello"}],
                             "panels": [{"id": "notes", "title": "Notes"}],
                             "settings": [{"id": "count", "title": "Count", "type": "integer", "default": 1, "maximum": 5}]}})");
@@ -209,8 +209,11 @@ private slots:
         QCOMPARE(row.value(QStringLiteral("icon")).toUrl(), QUrl::fromLocalFile(installed("icon.png")));
         QCOMPARE(row.value(QStringLiteral("adds")).toStringList(),
                  (QStringList{QStringLiteral("Command: Say hello"), QStringLiteral("Panel: Notes")}));
-        QCOMPARE(row.value(QStringLiteral("permissions")).toStringList().size(), 1);
-        QVERIFY(row.value(QStringLiteral("permissions")).toStringList().first().contains(QStringLiteral("It checks every tab.")));
+        const QStringList permissions = row.value(QStringLiteral("permissions")).toStringList();
+        QCOMPARE(permissions.size(), 2);
+        QVERIFY(permissions.first().contains(QStringLiteral("It checks every tab.")));
+        QCOMPARE(permissions.last(), QStringLiteral("Read the branches, tags and history of the git repository holding your "
+                                                    "subtitle files: It marks Lines changed since a tag."));
         QUrl opened;
         const auto routes = hikari::backends::desktop::replaceRoutes({[&](const QUrl &url) { opened = url; return true; }, {}, {}});
         QVERIFY(reread.openDataFolder(QStringLiteral("com.example.hello")));

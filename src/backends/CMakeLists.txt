@@ -91,6 +91,7 @@ add_library(hikari_ai STATIC ai_config_store.cpp include/hikari/backends/ai_conf
     ai_mcp_server.cpp include/hikari/backends/ai_mcp_server.h ai_mcp_clients.cpp include/hikari/backends/ai_mcp_clients.h ai_mcp_bridge.cpp include/hikari/backends/ai_mcp_bridge.h
     ai_inline_run.cpp ai_translation_run.cpp include/hikari/backends/ai_inline_run.h)
 target_sources(hikari_backends PRIVATE external_aligner.cpp include/hikari/backends/external_aligner.h)
+target_sources(hikari_backends PRIVATE git_reader.cpp include/hikari/backends/git_reader.h)
 find_package(ZLIB REQUIRED)
 target_include_directories(hikari_ai PUBLIC include)
 target_link_libraries(hikari_ai PUBLIC hikari_application hikari_api hikari_sandbox Qt6::Core Qt6::Network

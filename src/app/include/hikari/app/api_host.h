@@ -74,6 +74,7 @@ public:
         std::function<std::optional<std::string>(const std::vector<std::int64_t> &, const std::optional<std::string> &)>
             setKeyframes;
         application::RowMarks *marks = nullptr;
+        application::VcsPort *vcs = nullptr;
     };
     explicit ApiHost(Wiring wiring, QObject *parent = nullptr);
     ~ApiHost() override;

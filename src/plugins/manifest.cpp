@@ -284,6 +284,7 @@ PermissionIncrease permissionIncrease(const Manifest &current, const Manifest &n
     PermissionIncrease more;
     more.unrestricted = next.tier == Tier::Unrestricted && current.tier != Tier::Unrestricted;
     more.allDocuments = next.permissions.allDocuments && !current.permissions.allDocuments;
+    more.vcsRead = next.permissions.vcsRead && !current.permissions.vcsRead;
     for (const std::string &host : next.permissions.networkHosts)
         if (std::ranges::find(current.permissions.networkHosts, host) == current.permissions.networkHosts.end())
             more.networkHosts.push_back(host);
@@ -307,6 +308,8 @@ Permissions readPermissions(const Json &permissions)
                 out.networkHosts.push_back(host.asString());
         out.networkReason = text(*network, "reason");
     }
+    if (const Json *vcs = permissions.find("vcs.read"); vcs && vcs->isString())
+        out.vcsRead = vcs->asString();
     for (const Json &f : list(permissions.find("files"))) {
         const Json *writable = f.find("writable");
         out.files.push_back({text(f, "id"), text(f, "title"), writable && writable->isBool() && writable->asBool(),
