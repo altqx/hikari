@@ -1413,6 +1413,10 @@ private slots:
         QCOMPARE(target(), menuTitle(1));
         QTest::keyClick(window, Qt::Key_Left);
         QTest::keyClick(window, Qt::Key_Left);
+        QCOMPARE(target(), visualItem("rightSideBarToggle"));
+        QTest::keyClick(window, Qt::Key_Left);
+        QCOMPARE(target(), visualItem("leftSideBarToggle"));
+        QTest::keyClick(window, Qt::Key_Left);
         QCOMPARE(target(), switcher);
         QVERIFY(switcher->property("keyboardCurrent").toBool());
         QTest::keyClick(window, Qt::Key_Escape);
@@ -21978,7 +21982,7 @@ private slots:
                                      "Video", "Audio", "Conversion", "Script properties", "Automation", "Shortcuts",
                                      "AI", "Updates and privacy"}));
         QVERIFY(dialogItem("settingsDialog", "settingsPageHotkeys"));
-        QCOMPARE(hotkeyRows().size(), 386);
+        QCOMPARE(hotkeyRows().size(), 389);
         QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Global Position to margins"));
         QCOMPARE(application->hotkeys().selected(), 0);
         QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "hotkeyFilter"), "activated", Q_ARG(int, 5)));
@@ -22457,7 +22461,8 @@ private slots:
         QCOMPARE(table().value(QStringLiteral("GLOBAL_HISTORY")), QStringLiteral("Ctrl+Shift+H"));
         QCOMPARE(table().value(QStringLiteral("GLOBAL_ADD_PAGE")), QStringLiteral("Ctrl+T"));
         QVERIFY(!table().contains(QStringLiteral("GLOBAL_CONVERT_TO_TMP")));
-        QCOMPARE(table().size(), 38);
+        QCOMPARE(table().value(QStringLiteral("GLOBAL_TOGGLE_LEFT_SIDE_BAR")), QStringLiteral("Ctrl+Alt+B"));
+        QCOMPARE(table().size(), 39);
         h.beginOptions();
         h.select(hotkeyPosition(QStringLiteral("Subtitles Duplicate lines")));
         h.optionsMap(QStringLiteral("Ctrl-Alt-D"), 0, QStringLiteral("cancel"));
