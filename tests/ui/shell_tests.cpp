@@ -20121,15 +20121,23 @@ private slots:
         const QString board = QStringLiteral("plugin:com.example.board/board");
         const QString notes = QStringLiteral("plugin:com.example.board/notes");
         const auto at = [](const char *prefix, const QString &dock) { return (QLatin1String(prefix) + dock).toUtf8(); };
-        for (const QString &dock : {board, notes}) {
+        const auto showPanel = [&](const QString &dock) {
             QObject *show = nullptr;
             QTRY_VERIFY((show = named(at("panelShow", dock).constData())));
             QVERIFY(QMetaObject::invokeMethod(show, "triggered"));
-        }
+        };
+        showPanel(board);
+        const auto dockIs = [&](const char *state, QObject *dock) {
+            QVariant result;
+            return dock && QMetaObject::invokeMethod(window, state, Q_RETURN_ARG(QVariant, result), Q_ARG(QVariant, QVariant::fromValue(dock)))
+                   && result.toBool();
+        };
         QPointer<QObject> boardDock;
-        QTRY_VERIFY((boardDock = item<QObject>(at("pluginDock_", board).constData())) && boardDock->property("isOpen").toBool());
+        QTRY_VERIFY((boardDock = item<QObject>(at("pluginDock_", board).constData())) && dockIs("panelShown", boardDock));
+        QVERIFY(dockIs("inSideBar", boardDock));
         QCOMPARE(boardDock->property("title").toString(), QStringLiteral("Board"));
-        QQuickItem *body = item(at("pluginPanelBody_", board).constData());
+        QQuickItem *body = visualItem(at("pluginPanelBody_", board).constData());
+        QVERIFY(body);
         QPointer<QQuickItem> root;
         QTRY_VERIFY((root = findItem(body, QStringLiteral("board"))));
         QCOMPARE(root->parentItem(), findItem(body, QStringLiteral("pluginQmlHost")));
@@ -20137,16 +20145,23 @@ private slots:
         QVERIFY(!findItem(body, QStringLiteral("pluginPanelPlaceholder"))->isVisible());
         QVERIFY(QMetaObject::invokeMethod(root, "countLines"));
         QTRY_COMPARE(root ? root->property("lines").toString() : QString(), QStringLiteral("2"));
+        showPanel(notes);
         QQuickItem *said = nullptr;
-        QQuickItem *notesBody = item(at("pluginPanelBody_", notes).constData());
+        QQuickItem *notesBody = nullptr;
+        QTRY_VERIFY((notesBody = visualItem(at("pluginPanelBody_", notes).constData())));
         QTRY_VERIFY((said = findItem(notesBody, QStringLiteral("pluginPanelTree"))) && said->isVisible());
         QCOMPARE(QFileInfo(home.filePath(QStringLiteral("plugin-panels.json"))).exists(), true);
 
-        QVERIFY(QMetaObject::invokeMethod(named(at("panelFloat", board).constData()), "triggered"));
-        QTRY_VERIFY(boardDock && boardDock->property("isFloating").toBool());
+        showPanel(board);
+        QTRY_VERIFY(dockIs("panelShown", boardDock));
+        QObject *floatItem = named(at("panelFloat", board).constData());
+        QCOMPARE(floatItem->property("text").toString(), QStringLiteral("Float"));
+        QVERIFY(floatItem->property("enabled").toBool());
+        QVERIFY(QMetaObject::invokeMethod(floatItem, "triggered"));
+        QTRY_VERIFY(dockIs("panelFloating", boardDock));
         QTRY_VERIFY(findItem(body, QStringLiteral("board")));
         QVERIFY(QMetaObject::invokeMethod(named(at("panelFloat", board).constData()), "triggered"));
-        QTRY_VERIFY(boardDock && !boardDock->property("isFloating").toBool());
+        QTRY_VERIFY(boardDock && !dockIs("panelFloating", boardDock) && dockIs("inSideBar", boardDock));
         QCOMPARE(findItem(body, QStringLiteral("board")), root.data());
 
         const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");

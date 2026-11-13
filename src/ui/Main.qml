@@ -675,6 +675,7 @@ ApplicationWindow {
         return ""
     }
     function inSideBar(dock) { return !!dock && root.sideBarOf(dock) !== "" }
+    function panelFloating(dock) { return !!dock && dock.isFloating && !root.inSideBar(dock) }
     function sideBarOnLeft(side) { return (side === "first") === root.firstSideBarOnLeft }
     function setSideBars(asked) {
         const json = root.oneSideBarOnANarrowScreen(asked)
@@ -751,11 +752,17 @@ ApplicationWindow {
                 delete root.sideBarHomes[name]
             }
         }
-        Docking.setShrinkableWidth(dockingArea.uniqueName, Math.max(0, root.sideBarsWidth - root.sideBarsLeast))
+        root.sendShrinkableWidth()
     }
     readonly property int sideBarsWidth: (root.leftSideBarShown ? leftSideBar.width : 0) + (root.rightSideBarShown ? rightSideBar.width : 0)
     readonly property int sideBarsLeast: ((root.leftSideBarShown ? 1 : 0) + (root.rightSideBarShown ? 1 : 0)) * SideBarModel.minimumWidth
-    onSideBarsWidthChanged: if (root.arrangementSettled) Docking.setShrinkableWidth(dockingArea.uniqueName, Math.max(0, root.sideBarsWidth - root.sideBarsLeast))
+    onSideBarsWidthChanged: if (root.arrangementSettled) root.sendShrinkableWidth()
+    property int sentShrinkableWidth: -1
+    function sendShrinkableWidth() {
+        const width = Math.max(0, root.sideBarsWidth - root.sideBarsLeast)
+        if (width !== root.sentShrinkableWidth && Docking.setShrinkableWidth(dockingArea.uniqueName, width))
+            root.sentShrinkableWidth = width
+    }
     function sideBarWidth(bar) {
         const shown = (root.leftSideBarShown ? 1 : 0) + (root.rightSideBarShown ? 1 : 0)
         const middleLeast = root.arrangementSettled ? Docking.layoutMinimumSize(dockingArea.uniqueName).width : 0
@@ -830,7 +837,10 @@ ApplicationWindow {
         root.sideBarOrigins[name] = { second: side === "second", index: root.sideBarsState[side].panels.indexOf(name) }
         root.setSideBars(SideBarModel.removed(root.sideBarsJson, name))
         root.placeSideBarPanels()
-        root.openAtFirstPlace(dock)
+        if (root.isPluginDock(dock) && !Docking.hasPlace(dock.uniqueName))
+            root.addPluginDock(dock, false)
+        else
+            root.openAtFirstPlace(dock)
         dock.isFloating = true
     }
     function dockBackIntoSideBar(dock) {
@@ -943,11 +953,11 @@ ApplicationWindow {
         if (dock)
             root.showPanel(dock)
     }
-    function addPluginDock(dock) {
+    function addPluginDock(dock, intoSideBar = true) {
         const row = root.pluginUi ? root.pluginUi.panels.find(r => r.dock === dock.storedName) : undefined
         const area = row ? row.area : "right"
         const side = SideBarModel.pluginSideBar(area, root.aiSideBarEdge, Qt.application.layoutDirection === Qt.RightToLeft)
-        if (side !== "" && root.arrangementSettled && !root.layoutLocked)
+        if (intoSideBar && side !== "" && root.arrangementSettled && !root.layoutLocked)
             root.moveToSideBar(dock, root.sideBarOnLeft(side))
         else if (area === "bottom" && logDock.isOpen && !logDock.isFloating)
             logDock.addDockWidgetAsTab(dock)
@@ -1307,7 +1317,7 @@ ApplicationWindow {
         qcNotesTool.startAdding(ms)
     }
     function showPanel(dock) {
-        if (!root.sideBarsLoaded) {
+        if (!root.sideBarsLoaded && SideBarModel.mayHold(root.panelName(dock))) {
             root.shownBeforeSideBarsLoad.push(dock)
             return
         }
@@ -1707,12 +1717,12 @@ ApplicationWindow {
             onTriggered: root.moveTab(panelOptionsMenu.dock, -panelOptionsMenu.leftStep)
         }
         ShellMenuItem {
-            iconRole: panelOptionsMenu.dock && panelOptionsMenu.dock.isFloating ? "panel-dock" : "panel-float"
+            iconRole: root.panelFloating(panelOptionsMenu.dock) ? "panel-dock" : "panel-float"
             objectName: "panelOptionsFloat"
-            text: panelOptionsMenu.dock && panelOptionsMenu.dock.isFloating ? qsTranslate("HikariSub.Workspace", "Dock") : qsTranslate("HikariSub.Workspace", "Float")
+            text: root.panelFloating(panelOptionsMenu.dock) ? qsTranslate("HikariSub.Workspace", "Dock") : qsTranslate("HikariSub.Workspace", "Float")
             enabled: panelOptionsMenu.dock !== null && !root.layoutLocked
-                     && (!panelOptionsMenu.dock.isFloating || panelOptionsMenu.dockable)
-            onTriggered: root.setPanelFloating(panelOptionsMenu.dock, !panelOptionsMenu.dock.isFloating)
+                     && (!root.panelFloating(panelOptionsMenu.dock) || panelOptionsMenu.dockable)
+            onTriggered: root.setPanelFloating(panelOptionsMenu.dock, !root.panelFloating(panelOptionsMenu.dock))
         }
         MenuSeparator {}
         ShellMenuItem {
@@ -4102,11 +4112,11 @@ ApplicationWindow {
                                 onTriggered: root.showPanel(modelData)
                             }
                             ShellMenuItem {
-                                iconRole: modelData.isFloating ? "panel-dock" : "panel-float"
+                                iconRole: root.panelFloating(modelData) ? "panel-dock" : "panel-float"
                                 objectName: "panelFloat" + modelData.uniqueName
-                                text: modelData.isFloating ? qsTr("Dock") : qsTr("Float")
-                                enabled: modelData.isOpen && !root.layoutLocked
-                                onTriggered: root.setPanelFloating(modelData, !modelData.isFloating)
+                                text: root.panelFloating(modelData) ? qsTr("Dock") : qsTr("Float")
+                                enabled: root.panelShown(modelData) && !root.layoutLocked
+                                onTriggered: root.setPanelFloating(modelData, !root.panelFloating(modelData))
                             }
                             MenuSeparator {}
                             ShellMenuItem {
@@ -4143,11 +4153,11 @@ ApplicationWindow {
                                 onTriggered: root.showPluginPanel(pluginPanelMenu.modelData.dock)
                             }
                             ShellMenuItem {
-                                iconRole: pluginPanelMenu.dock?.isFloating ? "panel-dock" : "panel-float"
+                                iconRole: root.panelFloating(pluginPanelMenu.dock) ? "panel-dock" : "panel-float"
                                 objectName: "panelFloat" + pluginPanelMenu.modelData.dock
-                                text: pluginPanelMenu.dock?.isFloating ? qsTr("Dock") : qsTr("Float")
-                                enabled: pluginPanelMenu.dock !== null && pluginPanelMenu.dock.isOpen && !root.layoutLocked
-                                onTriggered: root.setPanelFloating(pluginPanelMenu.dock, !pluginPanelMenu.dock.isFloating)
+                                text: root.panelFloating(pluginPanelMenu.dock) ? qsTr("Dock") : qsTr("Float")
+                                enabled: root.panelShown(pluginPanelMenu.dock) && !root.layoutLocked
+                                onTriggered: root.setPanelFloating(pluginPanelMenu.dock, !root.panelFloating(pluginPanelMenu.dock))
                             }
                             MenuSeparator {}
                             ShellMenuItem {
