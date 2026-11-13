@@ -467,10 +467,19 @@ ApplicationWindow {
                                   Qt.size(0, root.workspaceLayout.panelSize(audioDock).height))
         templateDock.open()
         templateDock.raise()
-        const lower = root.workspaceLayout.panelSize(gridDock).height
-        const short = Math.ceil(lower - grid.height + grid.rowHeight * 8)
-        if (short !== lower)
-            Docking.resizeInLayout(root.engineName("Grid"), 0, short - lower, 0, 0)
+        const eightRows = Math.ceil(root.workspaceLayout.panelSize(gridDock).height - grid.height + grid.rowHeight * 8)
+        const fitGrid = () => {
+            const now = root.workspaceLayout.panelSize(gridDock).height
+            if (now !== eightRows)
+                Docking.resizeInLayout(root.engineName("Grid"), 0, eightRows - now, 0, 0)
+            return eightRows - root.workspaceLayout.panelSize(gridDock).height
+        }
+        // KDDW splits a Grid resize between the Audio and Video edges, so the Video row gives up what is still short.
+        const short = fitGrid()
+        if (short > 0) {
+            Docking.resizeInLayout(root.engineName("Video"), 0, 0, 0, -short)
+            fitGrid()
+        }
     }
     Connections {
         target: root.workspaceLayout
