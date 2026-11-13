@@ -1,0 +1,64 @@
+CSS = """
+body{margin:0;font:13px/1.35 "Inter","Noto Sans",sans-serif;background:#f3f4f6;color:#111}
+h2{font-size:15px;margin:18px 16px 8px}
+.sec{padding:0 0 12px}
+.cols{display:flex;gap:12px;padding:0 16px;align-items:flex-start}
+.col{background:var(--bg);color:var(--text);padding:12px;border-radius:6px}
+.col>.cap{font-size:11px;color:var(--muted);margin-bottom:8px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:4px}
+.ph{display:flex;justify-content:space-between;align-items:center;padding:4px 6px 4px 8px;border-bottom:1px solid var(--line);font-weight:600}
+.pb{padding:8px;display:flex;flex-direction:column;gap:8px}
+.ico{display:inline-flex;width:16px;height:16px;color:var(--text);vertical-align:middle}
+.ico svg{width:16px;height:16px}
+.ico.acc #accent{color:var(--accent)}
+.strip{display:flex;gap:2px}
+.tb{display:inline-flex;padding:3px;border-radius:3px}
+
+.list{border:1px solid var(--line);background:var(--field);border-radius:3px}
+.row{display:flex;gap:8px;align-items:center;padding:5px 8px}
+.row.sel{background:var(--select)}
+.row.muted{color:var(--muted)}
+.rd{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pm .row{padding:6px 8px;position:relative}
+.pm .rt{min-width:0;flex:1}
+.row.accbar{box-shadow:inset 3px 0 0 var(--accent)}
+.nm{display:flex;gap:4px;align-items:center;position:relative}
+.ico.mark,.ico.mark svg{width:14px;height:14px}
+.tip{position:absolute;left:142px;top:-1px;background:var(--raised);color:var(--text);border:1px solid var(--line);padding:2px 6px;font-size:12px;border-radius:3px;white-space:nowrap}
+.rowb{display:flex;gap:6px}
+.rowb.sp{justify-content:space-between;align-items:center}
+.btn{display:inline-block;padding:4px 12px;border:1px solid var(--line);border-radius:3px;background:var(--raised)}
+.btn.primary{background:var(--accent);color:var(--onAccent);border-color:var(--accent)}
+.btn.danger{color:var(--danger);border-color:var(--danger)}
+.lf{display:flex;flex-direction:column;gap:3px}
+.ll{font-size:12px;color:var(--muted)}
+.fld{display:flex;justify-content:space-between;border:1px solid var(--line);background:var(--field);padding:3px 6px;border-radius:3px;min-height:16px}
+.fld.sm{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+.choice{flex:none}
+.fld.off{color:var(--muted);border-style:dashed}
+.caret,.spin{color:var(--muted);font-size:10px}
+.ck{display:flex;gap:6px;align-items:center}
+.box{width:13px;height:13px;border:1px solid var(--line);background:var(--field);display:inline-flex;align-items:center;justify-content:center;font-size:10px;border-radius:2px}
+.box.on{background:var(--accent);color:var(--onAccent);border-color:var(--accent)}
+.choice{display:inline-flex;border:1px solid var(--line);border-radius:3px;overflow:hidden}
+.opt{padding:2px 7px;font-size:12px;border-left:1px solid var(--line)}
+.opt:first-child{border-left:0}
+.opt.on{background:var(--accent);color:var(--onAccent)}
+.grp{border:1px solid var(--line);border-radius:3px;padding:6px 8px 8px;display:flex;flex-direction:column;gap:6px}
+.gt{font-weight:600;font-size:12.5px}
+.fg{display:grid;grid-template-columns:auto max-content minmax(56px,1fr);gap:6px 8px;align-items:center}
+.fn{font-size:12.5px}
+.lbl.heading{font-weight:600;font-size:14px}
+.lbl.muted{color:var(--muted)}
+.lbl.small{font-size:11.5px;color:var(--muted)}
+.dlg{background:var(--panel);border:1px solid var(--line);border-radius:6px;box-shadow:0 4px 18px rgba(0,0,0,.25)}
+.dt{padding:8px 12px;font-weight:600;border-bottom:1px solid var(--line)}
+.db{padding:12px;display:flex;flex-direction:column;gap:10px}
+.dbtn{display:flex;justify-content:flex-end;gap:6px;padding:8px 12px;border-top:1px solid var(--line)}
+.bar{display:flex;gap:8px;padding:6px 8px;border:1px solid var(--warning);border-radius:3px}
+.bar .ico{color:var(--warning)}
+.irow{display:flex;gap:14px;align-items:center;margin-bottom:10px}
+.iname{width:200px;font-size:12px}
+.isz{display:inline-flex}
+.isz svg{width:100%;height:100%}
+"""
