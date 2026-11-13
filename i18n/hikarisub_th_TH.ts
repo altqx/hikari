@@ -15804,6 +15804,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>เชื่อมต่อกับ %1: %2</translation>
     </message>
     <message>
+        <source>Read the branches, tags and history of the git repository holding your subtitle files: %1</source>
+        <translation>อ่านสาขา แท็ก และประวัติของที่เก็บ git ที่มีไฟล์คำบรรยายของคุณ: %1</translation>
+    </message>
+    <message>
         <source>Ask you for a folder to read and write, %1: %2</source>
         <translation>ขอโฟลเดอร์จากคุณเพื่ออ่านและเขียน %1: %2</translation>
     </message>

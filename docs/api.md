@@ -43,6 +43,7 @@ Schemas use a subset of JSON Schema 2020-12: `type`, `properties`, `required`, `
 | `effects.save` | write | A graph into a new graph Line, or in place of one, as one undo step. |
 | `effects.apply` | write | A graph Line's generated Lines, as the editor's Apply writes them, as one undo step; Lua nodes don't run. |
 | `plugins.list`, `plugins.manifest` | read | The installed plugins with their tier and commands, and one plugin's `hikari-plugin.json`. |
+| `vcs.refs`, `vcs.show` | read | Plugins with `vcs.read` only: the branches, tags and recent commits of the git repository holding a Document, and the Document's file at a ref, read-only ([Git](plugins.md#git)). |
 | `plugins.review` | read | A scaffolded or granted package as the install question shows it, with its text files and SHA-256. |
 | `plugins.scaffold` | write | A new plugin from the guide's template in the AI plugins folder, packed as a `.hikariplugin`; nothing installs. |
 | `plugins.install` | write | Installs the package the user approved in the agent's card; any other caller gets `not_granted` ([AI-written plugins](ai-agent.md#ai-written-plugins)). |

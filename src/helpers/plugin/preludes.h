@@ -4,7 +4,7 @@
 
 namespace hikari::plugin_helper {
 
-// document.lua: hikari.document and hikari.selection, built on hikari.call.
+// document.lua: hikari.document, hikari.selection and hikari.vcs, built on hikari.call.
 std::string_view documentPrelude();
 // ui.lua: hikari.panels and hikari.dialogs.
 std::string_view uiPrelude();

@@ -1,0 +1,41 @@
+include_guard(GLOBAL)
+
+# cmd.exe stops at 8,191 chars, and a qmlcachegen line past it in a generated .bat hangs the Windows build (#1102).
+function(hikari_qmlcachegen_line_estimate qrc_files binary_dir out_var)
+    set(windows_build_dir_length 64)
+    set(length 1000)
+    foreach(qrc IN LISTS qrc_files)
+        file(RELATIVE_PATH relative "${binary_dir}" "${qrc}")
+        string(LENGTH " --resource /${relative}" n)
+        math(EXPR length "${length} + ${n} + ${windows_build_dir_length}")
+    endforeach()
+    set(${out_var} ${length} PARENT_SCOPE)
+endfunction()
+
+function(hikari_qmlcachegen_line_problem target qrc_files binary_dir out_var)
+    hikari_qmlcachegen_line_estimate("${qrc_files}" "${binary_dir}" length)
+    set(problem "")
+    if(length GREATER 8000)
+        list(LENGTH qrc_files count)
+        set(problem "${target} passes ${count} qrc files to every qmlcachegen command, about ${length} chars on Windows. "
+            "cmd.exe stops at 8,191 and the build hangs. Add QML files to the target's one qt_target_qml_sources call "
+            "instead of a new call.")
+        string(JOIN "" problem ${problem})
+    endif()
+    set(${out_var} "${problem}" PARENT_SCOPE)
+endfunction()
+
+function(hikari_check_qmlcachegen_lines)
+    get_property(modules GLOBAL PROPERTY HIKARI_MODULES)
+    foreach(target IN LISTS modules)
+        # Qt's own list of the qrc files it passes as --resource to each qmlcachegen command.
+        get_target_property(qrc_files ${target} _qt_generated_qrc_files)
+        if(NOT qrc_files)
+            continue()
+        endif()
+        hikari_qmlcachegen_line_problem(${target} "${qrc_files}" "${CMAKE_BINARY_DIR}" problem)
+        if(problem)
+            message(FATAL_ERROR "${problem}")
+        endif()
+    endforeach()
+endfunction()

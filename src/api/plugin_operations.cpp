@@ -289,7 +289,7 @@ void addPluginOperations(Registry &registry)
             "version": {"type": "string", "maxLength": 64, "description": "Semantic version; default 0.1.0."},
             "description": {"type": "string", "maxLength": 1000},
             "tier": {"enum": ["restricted", "unrestricted"], "description": "restricted (default) runs in the sandbox without ffi, io, os and debug; unrestricted needs the user's full trust at install."},
-            "permissions": {"type": "object", "description": "The manifest's permissions: documents.all, network {hosts, reason}, files."},
+            "permissions": {"type": "object", "description": "The manifest's permissions: documents.all, network {hosts, reason}, files, vcs.read."},
             "commands": {"type": "array", "minItems": 1, "maxItems": 256, "items": {"type": "object", "properties": {
                 "id": {"type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"}, "title": {"type": "string", "minLength": 1, "maxLength": 80}},
                 "required": ["id", "title"], "additionalProperties": false}},

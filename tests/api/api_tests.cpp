@@ -113,8 +113,10 @@ TEST_F(ApiScripts, WriteScope)
 
 TEST_F(ApiScripts, EveryOperationAnswersEmptyParams)
 {
+    Caller plugin = pluginCaller();
+    plugin.vcsRead = true;
     for (const Operation &op : Api::registry().operations()) {
-        const Result asPlugin = client.call(pluginCaller(), op.name, Json::object());
+        const Result asPlugin = client.call(plugin, op.name, Json::object());
         const Result result = client.call(aiCaller(), op.name, Json::object());
         if (!result && !(asPlugin && result.error().code == errors::kNotGranted)) {
             EXPECT_EQ(result.error().code, errors::kInvalidParams) << op.name << ": " << result.error().message;
