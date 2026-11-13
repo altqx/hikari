@@ -120,7 +120,7 @@ FocusScope {
         Label {
             objectName: "assistantEmpty"
             visible: !view.ok
-            text: view.finished ? qsTr("No more lines. Accepted %1, skipped %2.").arg(view.accepted).arg(view.skipped)
+            text: view.finished ? qsTr("No more lines. Accepted %1, skipped %2.").arg(view.accepted, view.skipped)
                                 : qsTr("Select a line to time.")
             color: Theme.muted
             wrapMode: Text.WordWrap
@@ -132,7 +132,7 @@ FocusScope {
             Layout.fillWidth: true
             Label {
                 objectName: "assistantPosition"
-                text: qsTr("Line %1 of %2").arg(view.suggestion.index || 0).arg(view.suggestion.count || 0)
+                text: qsTr("Line %1 of %2").arg(view.suggestion.index || 0, view.suggestion.count || 0)
                 font.bold: true
             }
             Label {
@@ -303,7 +303,7 @@ FocusScope {
         Label {
             objectName: "assistantTally"
             visible: view.ok
-            text: qsTr("Accepted %1, skipped %2. Each accepted line is one undo step.").arg(view.accepted).arg(view.skipped)
+            text: qsTr("Accepted %1, skipped %2. Each accepted line is one undo step.").arg(view.accepted, view.skipped)
             color: Theme.muted
             font.pixelSize: Math.max(10, Qt.application.font.pixelSize - 1)
             wrapMode: Text.WordWrap

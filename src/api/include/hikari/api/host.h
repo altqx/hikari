@@ -16,6 +16,7 @@
 #include "hikari/application/workspace.h"
 
 #include <filesystem>
+#include <expected>
 #include <functional>
 #include <optional>
 #include <string>
@@ -162,6 +163,8 @@ public:
     virtual ~ProjectHost() = default;
     // nullopt: that window has no Project.
     virtual std::optional<ProjectState> project() const = 0;
+    // ai.exclude as the Project at `root` sets it; empty for a folder that is no Project.
+    virtual std::vector<std::string> aiExclude(const std::string &root) const = 0;
 };
 
 // An external aligner's job: the audio from startMs to endMs and the words sung there.
@@ -201,6 +204,60 @@ public:
     virtual void align(const AlignRequest &request, std::function<void(AlignResult)> done) = 0;
 };
 
+struct PluginCommand {
+    std::string command; // "plugin.<plugin id>.<command id>"
+    std::string title;
+};
+
+struct PluginState {
+    std::string id, name, version, description;
+    std::string source; // "file" or "marketplace"
+    bool signedPackage = false, enabled = false, fullTrust = false, revoked = false;
+    std::vector<PluginCommand> commands; // only while it runs
+};
+
+struct PluginFile {
+    std::string path; // '/'-separated, relative to the plugin's folder
+    std::string text;
+};
+
+struct ScaffoldedPlugin {
+    std::string folder, package;
+};
+
+enum class PluginRun { Ran, NotInstalled, NotRunning, UnknownCommand };
+
+// What the install question shows for a package.
+struct PluginReview {
+    std::string id, name, version;
+    std::string change; // "install", "update", "reinstall" or "downgrade"
+    std::string installedVersion;
+    bool fullTrust = false, needsRetrust = false;
+    std::string keyId, pinnedKeyId; // empty: unsigned, or nothing pinned yet
+    std::vector<std::string> permissions; // as the install question words them
+    std::vector<std::string> commands;    // the titles of the commands it adds
+    std::vector<PluginFile> files; // the package's text files, main first
+    std::string digest;            // the package's SHA-256, hex
+};
+
+// The user's installed plugins, and the AI plugins folder agents scaffold into.
+class PluginHost {
+public:
+    virtual ~PluginHost() = default;
+    virtual std::vector<PluginState> plugins() const = 0;
+    // The installed hikari-plugin.json; nullopt when the plugin isn't installed.
+    virtual std::optional<std::string> manifest(std::string_view plugin) const = 0;
+    virtual PluginRun run(std::string_view plugin, std::string_view command) = 0;
+    // Replaces the plugin's folder in the AI plugins folder with the files and packs them; or why it could not.
+    virtual std::expected<ScaffoldedPlugin, std::string> scaffold(std::string_view plugin,
+                                                                 const std::vector<PluginFile> &files) = 0;
+    // The package a scaffold wrote; nullopt when there is none.
+    virtual std::optional<std::string> scaffoldedPackage(std::string_view plugin) const = 0;
+    virtual std::expected<PluginReview, std::string> review(const std::string &package) = 0;
+    // Installs and turns on the package only while its SHA-256 is `digest`.
+    virtual std::expected<PluginReview, std::string> install(const std::string &package, const std::string &digest) = 0;
+};
+
 // Runs node-effect graphs as the node-effect editor does, but never trusts a Document's Lua.
 class EffectsHost {
 public:
@@ -225,6 +282,7 @@ struct Host {
     TranslationHost *translation = nullptr;
     KaraokeHost *karaoke = nullptr;
     EffectsHost *effects = nullptr;
+    PluginHost *plugins = nullptr;
 };
 
 }

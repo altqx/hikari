@@ -1,8 +1,10 @@
 #pragma once
 
 #include "hikari/application/edit_history.h"
+#include "hikari/application/tiers.h"
 
 #include <array>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -33,6 +35,7 @@ struct AllTagsSetting {
     unsigned char digitsAfterDot = 0;
     unsigned char numOfValues = 1;
     int tagMode = 0; // an AllTagsPasteMode
+    TierMark mark;
 
     // Name and tag `name`, step 1, range 0-100.
     static AllTagsSetting named(std::u16string name);
@@ -100,7 +103,9 @@ public:
         DeleteTag,
         ReplaceTag,
         RestoreDefaults,
-        UndoAll
+        UndoAll,
+        CopyToTier,
+        MoveToTier
     };
     enum class Check {
         Ok,
@@ -146,8 +151,16 @@ public:
     // The next change starts a new history step.
     void endTyping() { m_history.endMerge(); }
 
-    // Appends and selects "New tag" (numbered when taken) with no tag yet.
-    void addTag();
+    // Names are unique within a tier. A Mine definition the Project's hides is read-only: only
+    // remove, Copy and Move change it.
+    bool readOnly() const { return current().mark.hidden; }
+    // Appends "New tag" (numbered when taken) to `tier` with no tag yet and selects it.
+    void addTag(Tier tier = Tier::Mine);
+    // The other tier's definition named as the selected one, when there is one.
+    std::optional<std::u16string> tierClash() const;
+    // Copies or moves the selected definition to the other tier, one step; false when the clash is
+    // skipped.
+    bool sendToOtherTier(bool move, const ClashChoice &clash, std::u16string_view newName = {});
     // Inserts "<name> copy" after the selected one and selects it.
     void duplicate();
     // False for the last definition, or the last one with a tag.
@@ -156,7 +169,8 @@ public:
     // Drops the definition named `name` and renames the selected one to it,
     // one step; refused when that drops the last definition with a tag.
     void replaceNamed(std::u16string_view name);
-    // Keeps the selected name selected when the defaults have it, one step.
+    // Replaces the Mine definitions; keeps the selected name selected when the defaults have it,
+    // one step.
     void restoreDefaults();
     // Back to the definitions it opened with, one step.
     bool undoAll() { return m_history.undoAll(UndoAll); }
@@ -174,7 +188,10 @@ public:
 private:
     bool replacesLastUsable(std::size_t other) const;
     void edit(AllTagsSetting tag, Step step, std::string mergeKey = {}, Renames renamed = {});
-    std::u16string freeName(std::u16string base, bool copy) const;
+    void change(std::vector<AllTagsSetting> items, int selection, Step step, std::string mergeKey = {},
+                Renames renamed = {});
+    bool takenInTier(std::u16string_view name, Tier tier, int except) const;
+    std::u16string freeName(std::u16string base, bool copy, Tier tier) const;
     EditHistory<AllTagsSetting> m_history;
 };
 

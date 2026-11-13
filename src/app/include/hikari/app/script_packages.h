@@ -21,7 +21,7 @@ class AutomationShell;
 // in the HikariSub.Automation context.
 struct RecommendedScript {
     std::string nameSpace;
-    // Its file name, in the third-party corpus and in an autoload folder.
+    // Its file name, in the third-party corpus and in an autoload folder. Empty: <nameSpace>.<any extension>.
     std::string fileName;
     std::string name;
     std::string group;

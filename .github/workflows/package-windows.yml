@@ -123,7 +123,7 @@ jobs:
           $ErrorActionPreference = 'Stop'
           if (Test-Path "$env:APPDATA\Qt\qtaccount.ini") { throw 'Qt account file left in the profile' }
           if (Test-Path out/sdk/qt-install-private) { throw 'Private install directory left behind' }
-          cmake --preset windows-x64-package "-DHIKARI_VERSION_SUFFIX=$env:SUFFIX" "-DHIKARI_POSTHOG_KEY=$env:POSTHOG_KEY" -DHIKARI_DEBUG_SYMBOLS=ON
+          cmake --preset windows-x64-package "-DHIKARI_VERSION_SUFFIX=$env:SUFFIX" "-DHIKARI_POSTHOG_KEY=$env:POSTHOG_KEY" -DHIKARI_DEBUG_SYMBOLS=ON -DHIKARI_AUTOMATION_RESET=ON
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           cmake --build --preset windows-x64-package
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

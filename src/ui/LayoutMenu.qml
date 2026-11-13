@@ -58,12 +58,14 @@ ShellMenu {
             required property int index
             objectName: layoutMenu.prefix + "Saved" + index
             text: modelData.name
-            enabled: modelData.usable && !layoutMenu.layouts.locked
+            iconRole: layoutMenu.layouts.hasProject ? (modelData.tier === "project" ? "project" : "mine") : ""
+            reason: modelData.hidden ? qsTr("Hidden by the project’s copy") : ""
+            enabled: modelData.usable && !modelData.hidden && !layoutMenu.layouts.locked
             checkable: true
-            checked: layoutMenu.layouts.layout === modelData.name
+            checked: !modelData.hidden && layoutMenu.layouts.layout === modelData.name
             keepsMenuOpen: false
             onTriggered: {
-                checked = Qt.binding(() => layoutMenu.layouts.layout === modelData.name)
+                checked = Qt.binding(() => !modelData.hidden && layoutMenu.layouts.layout === modelData.name)
                 layoutMenu.savedLayoutChosen(modelData.name)
             }
         }

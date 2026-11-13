@@ -9,6 +9,7 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QPointer>
 #include <QQmlComponent>
 #include <QQmlEngine>
 #include <QQuickItem>
@@ -131,6 +132,18 @@ class PluginQmlPanelTests : public QObject {
         return result;
     }
 
+    static bool holds(const QPointer<QQuickItem> &item, const char *name, const QVariant &value)
+    {
+        return item && item->property(name) == value;
+    }
+
+    static QString whyNot(const QPointer<QQuickItem> &item, const app::PluginPanelState *panel, const char *name = nullptr)
+    {
+        if (!item)
+            return QStringLiteral("The panel item was deleted; the panel is %1: %2").arg(panel->status(), panel->reason());
+        return QStringLiteral("%1 is %2").arg(QLatin1String(name), item->property(name).toString());
+    }
+
 private slots:
     void init()
     {
@@ -172,7 +185,7 @@ private slots:
         QVERIFY(!panel->item());
         host->setProperty("shown", true);
         QTRY_VERIFY(panel->item());
-        QQuickItem *board = panel->item();
+        QPointer<QQuickItem> board = panel->item();
         QCOMPARE(board->objectName(), QStringLiteral("board"));
         QCOMPARE(board->parentItem(), child(host.get(), "pluginQmlHost"));
         QCOMPARE(board->width(), 400.0);
@@ -185,19 +198,19 @@ private slots:
         QCOMPARE(loadedPanels().value(QStringLiteral("loaded")).toArray(), QJsonArray{kPlugin});
 
         call(board, "countLines");
-        QTRY_COMPARE(board->property("lines").toString(), QStringLiteral("2"));
+        QTRY_VERIFY2(holds(board, "lines", QStringLiteral("2")), qPrintable(whyNot(board, panel, "lines")));
         call(board, "callNothing");
-        QTRY_COMPARE(board->property("failed").toString(), QStringLiteral("unknown_operation"));
+        QTRY_VERIFY2(holds(board, "failed", QStringLiteral("unknown_operation")), qPrintable(whyNot(board, panel, "failed")));
         call(board, "say", QStringLiteral("hi"));
-        QTRY_COMPARE(board->property("echo").toString(), QStringLiteral("hi!"));
+        QTRY_VERIFY2(holds(board, "echo", QStringLiteral("hi!")), qPrintable(whyNot(board, panel, "echo")));
         added.clear();
         QVERIFY(runtime.run(kPing));
         QTRY_VERIFY(logged(added).contains(QStringLiteral("true")));
-        QTRY_COMPARE(board->property("echo").toString(), QStringLiteral("ping"));
+        QTRY_VERIFY2(holds(board, "echo", QStringLiteral("ping")), qPrintable(whyNot(board, panel, "echo")));
 
         call(board, "keep", 3);
         QCOMPARE(board->property("refused").toString(), QString());
-        QTRY_COMPARE(board->property("count").toInt(), 3);
+        QTRY_VERIFY2(holds(board, "count", 3), qPrintable(whyNot(board, panel, "count")));
         call(board, "keep", 11);
         QVERIFY(!board->property("refused").toString().isEmpty());
         QCOMPARE(board->property("count").toInt(), 3);

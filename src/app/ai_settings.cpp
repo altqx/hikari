@@ -38,6 +38,14 @@ std::string str(const QVariant &value)
     return value.toString().toStdString();
 }
 
+std::string freshId(const ai::Config &config, ai::Preset preset)
+{
+    std::string id(ai::presetId(preset));
+    for (int n = 2; config.provider(id); ++n)
+        id = std::string(ai::presetId(preset)) + '-' + std::to_string(n);
+    return id;
+}
+
 QString modelValue(const std::string &providerId, const std::string &modelId)
 {
     return qs(providerId) + QLatin1Char('\t') + qs(modelId);
@@ -327,6 +335,13 @@ QVariantMap AiSettings::form(const QString &providerId) const
             {QStringLiteral("signedIn"), p->signedIn}};
 }
 
+QString AiSettings::newProviderId(const QString &preset) const
+{
+    const ai::Providers *providers = m_features.providers();
+    const auto kind = ai::presetFromId(preset.toStdString());
+    return providers && kind ? qs(freshId(providers->config(), *kind)) : QString();
+}
+
 std::optional<ai::Provider> AiSettings::draftProvider(const QVariantMap &form) const
 {
     const ai::Providers *providers = m_features.providers();
@@ -343,10 +358,7 @@ std::optional<ai::Provider> AiSettings::draftProvider(const QVariantMap &form) c
         const auto preset = ai::presetFromId(str(form.value(QStringLiteral("preset"))));
         if (!preset)
             return std::nullopt;
-        std::string fresh(ai::presetId(*preset));
-        for (int n = 2; providers->config().provider(fresh); ++n)
-            fresh = std::string(ai::presetId(*preset)) + '-' + std::to_string(n);
-        p = ai::presetProvider(*preset, fresh, {});
+        p = ai::presetProvider(*preset, freshId(providers->config(), *preset), {});
         if (*preset == ai::Preset::Custom)
             p.needsKey = !key.empty();
     }

@@ -4,10 +4,10 @@
 #include "hikari/app/window_settings.h"
 #include "hikari/application/ai_project_keys.h"
 #include "hikari/application/ai_providers.h"
+#include "hikari/backends/desktop_handoff.h"
 #include "project_credentials.h"
 #include "project_file.h"
 
-#include <QDesktopServices>
 #include <QDir>
 #include <QFileInfo>
 #include <QUrl>
@@ -212,7 +212,7 @@ void Application::openProjectCredentials(int shellWindow)
 {
     const ui::ProjectCredentials credentials(views(shellWindow).settings->root());
     if (credentials.exists())
-        QDesktopServices::openUrl(QUrl::fromLocalFile(credentials.path()));
+        backends::desktop::openUrl(QUrl::fromLocalFile(credentials.path()));
 }
 
 }

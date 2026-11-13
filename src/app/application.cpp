@@ -35,6 +35,7 @@
 #include "hikari/application/video_matrix.h"
 #include "hikari/application/script_resolution.h"
 #include "hikari/application/video_properties.h"
+#include "hikari/application/tiers.h"
 #include "hikari/core/spelling.h"
 #include "hikari/core/text_projection.h"
 #include "hikari/core/conversion.h"
@@ -103,6 +104,14 @@
 namespace hikari::app {
 
 namespace {
+
+void keepShellWindowWhole(QQuickWindow &window)
+{
+    if (!window.isVisible() || window.windowStates() != Qt::WindowNoState)
+        return;
+    if (const QRect whole = ui::clientWholeOnScreens(window, window.geometry()); whole != window.geometry())
+        window.setGeometry(whole);
+}
 
 QString refusalText(application::CommandRefusal refusal);
 
@@ -632,6 +641,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         *m_files,
         m_workspace, [this]() -> ui::LineEditorController & { return editor(); }, [this]() -> ui::VideoController & { return video(); },
         [this]() -> ui::ShellController & { return shell(); }, *activeMedia().videoHelper);
+    m_automationReset = std::make_unique<AutomationResetNotice>(
+        options.automationReset, *m_automation, automationPath(options.automationDir) + QStringLiteral("/automation/Autoload"));
     m_automation->setDocumentChanged([this] { refreshViews(); });
     m_automation->setBeforeRun([this] { commitTemplates(); });
     m_files->setBeforeSave([this](application::DocumentId document) {
@@ -697,6 +708,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     connect(m_settings.get(), &ui::SettingsStore::changed, this, &Application::settingChanged);
     m_automation->manager().setTraceLevel(m_settings->integer("automation.traceLevel"));
     m_automation->setSettings(m_settings.get());
+    m_automation->setRunProjectRoot([this] { return m_projects ? m_projects->root(m_workspace.activeWindow()) : QString(); });
     m_automation->setWindowProjects([this] {
         std::map<int, application::WindowProject> projects;
         if (m_projects)
@@ -751,6 +763,9 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             return readings ? backends::MecabReadings::analyzer(std::move(readings)) : application::ReadingAnalyzer{};
         },
         [this] { return &m_automation->templater(); }, QDir::tempPath()});
+    m_aiPlugins = std::make_unique<AiPlugins>(AiPlugins::Wiring{
+        m_userFolder.isEmpty() || options.plugins.plugins.isEmpty() ? QString() : m_userFolder + QStringLiteral("/ai/plugins"),
+        options.plugins.plugins, [this] { return m_pluginManager.get(); }, [this] { return m_pluginRuntime.get(); }});
     m_apiHost = std::make_unique<ApiHost>(ApiHost::Wiring{
         m_workspace, *m_files, &m_settings->settings(), &m_automation->media(),
         [this](application::Selection next) { return applySelection(std::move(next)); },
@@ -782,7 +797,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             o.lua = &luaNodes();
             o.audio = m_automation->media().peakAudio();
             return o;
-        }});
+        },
+        projectAiExclude, m_aiPlugins.get()});
     AiFeatures::Ports aiPorts = options.aiPorts ? std::move(*options.aiPorts)
                                                 : AiFeatures::defaultPorts(m_userFolder, &m_apiHost->api(),
                                                                            options.appVersion.isEmpty()
@@ -801,7 +817,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     };
     m_ai = std::make_unique<AiFeatures>(*m_settings, std::move(aiPorts));
     m_aiMcp = std::make_unique<AiMcp>(*m_settings, *m_ai,
-                                      m_userFolder.isEmpty() ? QString() : backends::ai::mcpEndpointFile(m_userFolder));
+                                      m_userFolder.isEmpty() ? QString() : backends::ai::mcpEndpointFile(m_userFolder),
+                                      [this] { return m_projects ? m_projects->root(m_workspace.activeWindow()) : QString(); });
     m_aiMcpServers = std::make_unique<AiMcpServers>(*m_settings, *m_ai);
     m_aiSettings = std::make_unique<AiSettings>(*m_ai, m_aiMcp.get(), m_aiMcpServers.get());
     m_review = std::make_unique<ReviewController>(ReviewController::Wiring{
@@ -1171,6 +1188,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         hooks.fileProblem = report.problem;
         hooks.fileReplaced = report.replaced;
         hooks.fontsChanged = [this] { subtitleFontsChanged(); };
+        hooks.projectRoot = [this] { return m_projects ? m_projects->root(m_workspace.activeWindow()) : QString(); };
         m_fontCatalogs = std::make_unique<FontCatalogsController>(*m_settings, std::filesystem::path(dir.toStdU16String()),
                                                                   std::move(hooks));
         setVideoFonts(std::nullopt);
@@ -2462,6 +2480,10 @@ void Application::refreshViews()
     scheduleAutosave();
     if (m_styleManager)
         m_styleManager->targetRefreshed();
+    if (m_fontCatalogs)
+        m_fontCatalogs->projectChanged();
+    if (m_shiftTimes)
+        m_shiftTimes->setProjectRoot(m_projects ? m_projects->root(m_workspace.activeWindow()) : QString());
     const auto target = m_workspace.editingTarget();
     const auto reference = m_workspace.reference();
     auto *targetSession = target ? m_files->session(*target) : nullptr;
@@ -5081,6 +5103,20 @@ void Application::convertListFiles()
     }
 }
 
+void Application::applyProjectTierFiles(int shellWindow, const QString &root)
+{
+    const auto file = [&](std::string_view store, const ui::ListFormat &format) -> std::shared_ptr<ui::ListFile> {
+        const auto path = application::projectPathOf(store, root.toStdU16String());
+        if (!path)
+            return nullptr;
+        return ui::ListFile::make(QString::fromStdU16String(path->u16string()), QString(), format, {},
+                                  listFileReport(*m_log));
+    };
+    views(shellWindow).visualTools->setProjectListFiles(file("shapes", ui::kShapesFormat), file("tags", ui::kTagsFormat));
+    const auto layouts = application::projectPathOf("layouts", root.toStdU16String());
+    layoutOf(shellWindow).setProjectLayoutsFile(layouts ? QString::fromStdU16String(layouts->u16string()) : QString());
+}
+
 Application::SpellSlot *Application::spellSlot(const QString &language)
 {
     if (m_spellingFolders.empty() || !m_spellingLoader)
@@ -6692,6 +6728,10 @@ void Application::shellWindowLoaded(QQuickWindow *window)
     for (const auto changed : {&QWindow::xChanged, &QWindow::yChanged, &QWindow::widthChanged, &QWindow::heightChanged})
         connect(window, changed, this, keepPlace);
     connect(window, &QWindow::windowStateChanged, this, keepPlace);
+    if (!QGuiApplication::platformName().startsWith(QLatin1String("wayland")))
+        connect(qGuiApp, &QGuiApplication::screenRemoved, window, [window] {
+            QTimer::singleShot(ui::dockchrome::kScaleSettleMs, window, [window] { keepShellWindowWhole(*window); });
+        });
     keepPlace();
 }
 
@@ -6733,21 +6773,15 @@ void Application::placeShellWindow(QQuickWindow &window, const application::Sess
         window.setWindowStates(Qt::WindowNoState);
     if (const auto &g = saved.geometry) {
         const QRect client(g->x, g->y, g->width, g->height);
-        if (QGuiApplication::platformName().startsWith(QLatin1String("wayland"))) {
+        if (QGuiApplication::platformName().startsWith(QLatin1String("wayland")))
             window.resize(client.size());
-        } else if (QScreen *primary = QGuiApplication::primaryScreen()) {
-            QList<QRect> available;
-            for (QScreen *screen : QGuiApplication::screens())
-                available << screen->availableGeometry();
-            const QMargins margins = window.frameMargins();
-            const QRect fitted = ui::fitOnScreens(client.marginsAdded(margins), margins.top() + ui::dockchrome::kHeaderHeight,
-                                                  available, primary->availableGeometry());
-            window.setGeometry(fitted.marginsRemoved(margins));
-        }
+        else
+            window.setGeometry(ui::clientMostlyOnScreens(window, client));
     }
     if (saved.maximized)
         window.setWindowStates(Qt::WindowMaximized);
 }
+
 
 bool Application::saveLayoutForQuit()
 {
@@ -6904,6 +6938,7 @@ QVariantMap Application::qmlProperties(int shellWindow)
             {QStringLiteral("hotkeys"), QVariant::fromValue(static_cast<QObject *>(m_hotkeys.get()))},
             {QStringLiteral("updates"), QVariant::fromValue(static_cast<QObject *>(m_updates.get()))},
             {QStringLiteral("whatsNew"), QVariant::fromValue(static_cast<QObject *>(m_whatsNew.get()))},
+            {QStringLiteral("automationReset"), QVariant::fromValue(static_cast<QObject *>(m_automationReset.get()))},
             {QStringLiteral("analytics"), QVariant::fromValue(static_cast<QObject *>(m_analytics.get()))},
             {QStringLiteral("starPrompt"), QVariant::fromValue(static_cast<QObject *>(m_starPrompt.get()))},
             {QStringLiteral("crashReports"), QVariant::fromValue(static_cast<QObject *>(m_crashReports.get()))},

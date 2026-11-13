@@ -6,7 +6,7 @@ qt_add_library(hikari_ui STATIC line_table_model.cpp line_table_model.h line_gri
     automation_runs.cpp automation_runs.h log_controller.cpp log_controller.h karaoke_report.cpp karaoke_report.h tag_buttons_controller.cpp tag_buttons_controller.h
     line_measures.cpp line_measures.h grid_filter_controller.cpp grid_filter_controller.h
     colour_picker_controller.cpp colour_picker_controller.h docking.cpp docking.h panel_dock.cpp panel_dock.h
-    workspace_layout.cpp workspace_layout.h controls_style.h shell_menus.h shift_times_controller.cpp shift_times_controller.h
+    workspace_layout.cpp workspace_layout.h controls_style.h shell_menus.h shift_times_controller.cpp shift_times_controller.h presets_file.cpp presets_file.h tiered_presets.cpp tiered_presets.h
     editor_highlighter.cpp editor_highlighter.h
     settings_store.cpp settings_store.h settings_files.cpp settings_files.h project_file.cpp project_file.h project_credentials.cpp project_credentials.h toml_file.cpp toml_file.h list_files.cpp list_files.h dialog_placement.cpp dialog_placement.h
     audio_controller.cpp audio_controller.h audio_display_item.cpp audio_display_item.h
@@ -45,6 +45,7 @@ target_include_directories(hikari_ui PRIVATE "${hikari_kddw_include}/kddockwidge
 target_link_libraries(hikari_ui PUBLIC Hikari::tomlplusplus)
 hikari_module(hikari_ui ALLOW hikari_application hikari_core "Qt6::*" "hikari_ui*" "KDAB::*" Hikari::tomlplusplus)
 qt_target_qml_sources(hikari_ui QML_FILES AutomationNotices.qml)
+qt_target_qml_sources(hikari_ui QML_FILES AutomationResetDialog.qml)
 qt_target_qml_sources(hikari_ui QML_FILES FileChooser.qml FolderChooser.qml)
 qt_target_qml_sources(hikari_ui QML_FILES AutomationProgress.qml RunLogLine.qml)
 qt_target_qml_sources(hikari_ui QML_FILES ScriptResolutionDialog.qml ScriptInfoOnSaveDialog.qml ProjectSettingsPages.qml ProjectAiKeysPage.qml)
@@ -166,7 +167,7 @@ qt_target_qml_sources(hikari_ui QML_FILES MessageBox.qml DangerButton.qml Popove
     ToastStack.qml InlineBar.qml ClashReview.qml ChooseStyles.qml HotkeyCapture.qml ListChooser.qml DatePicker.qml
     MessageHost.qml LogPanel.qml)
 qt_target_qml_sources(hikari_ui QML_FILES HidableQuestion.qml)
-qt_target_qml_sources(hikari_ui QML_FILES TierChip.qml TierSaveButton.qml)
+qt_target_qml_sources(hikari_ui QML_FILES TierChip.qml TierSaveButton.qml TierSaveMenu.qml)
 qt_target_qml_sources(hikari_ui QML_FILES SetNewFpsWindow.qml)
 qt_target_qml_sources(hikari_ui QML_FILES LazyMessageBox.qml UnsavedChanges.qml Autosaves.qml StartupOffer.qml)
 qt_target_qml_sources(hikari_ui QML_FILES SpellingAddedWords.qml ResampleWindow.qml)

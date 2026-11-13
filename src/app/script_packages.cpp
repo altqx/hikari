@@ -38,6 +38,14 @@ Qt::CaseSensitivity fileCase()
 #endif
 }
 
+bool isFileOf(const RecommendedScript &script, const QString &path)
+{
+    const QFileInfo file(path);
+    if (script.fileName.empty())
+        return file.completeBaseName().compare(QString::fromStdString(script.nameSpace), fileCase()) == 0;
+    return file.fileName().compare(QString::fromStdString(script.fileName), fileCase()) == 0;
+}
+
 QString luaString(const QString &text)
 {
     QString out = QStringLiteral("\"");
@@ -150,9 +158,8 @@ bool ScriptPackages::queued(const QString &nameSpace) const
 
 QString ScriptPackages::loadedPath(const RecommendedScript &script) const
 {
-    const QString name = QString::fromStdString(script.fileName);
     for (const auto &s : m_shell.scripts())
-        if (QFileInfo(QString::fromStdString(s.path)).fileName().compare(name, fileCase()) == 0)
+        if (isFileOf(script, QString::fromStdString(s.path)))
             return QString::fromStdString(s.path);
     return {};
 }
@@ -166,7 +173,7 @@ QString ScriptPackages::state(const RecommendedScript &script) const
         return QStringLiteral("queued");
     if (m_records.contains(nameSpace))
         return QStringLiteral("installed");
-    if (m_files.contains(QString::fromStdString(script.fileName), fileCase()))
+    if (std::ranges::any_of(m_files, [&](const QString &file) { return isFileOf(script, file); }))
         return QStringLiteral("manual");
     return m_failures.contains(nameSpace) ? QStringLiteral("failed") : QStringLiteral("install");
 }
@@ -209,9 +216,7 @@ void ScriptPackages::refresh()
 {
     m_records = dependencyControlScripts(QDir(m_shell.userAutomationRoot())
                                              .filePath(QStringLiteral("config/l0.DependencyControl.json")));
-    m_files.clear();
-    for (const QString &path : m_shell.autoloadScripts())
-        m_files << QFileInfo(path).fileName();
+    m_files = m_shell.autoloadScripts();
     emit changed();
 }
 
@@ -342,10 +347,9 @@ QString ScriptPackages::finished(Job job, backends::LuaScriptHost::RunOutcome ou
     }
     if (outcome == Outcome::Ok && script) {
         refresh();
-        const QString fileName = QString::fromStdString(script->fileName);
         if (job.install) {
             for (const QString &path : m_shell.autoloadScripts()) {
-                if (QFileInfo(path).fileName().compare(fileName, fileCase()) != 0)
+                if (!isFileOf(*script, path))
                     continue;
                 m_shell.setAutoloadEnabled(path, true);
                 if (!m_shell.manager().host(path.toStdString()))
@@ -353,8 +357,7 @@ QString ScriptPackages::finished(Job job, backends::LuaScriptHost::RunOutcome ou
             }
         } else {
             for (const auto &s : m_shell.scripts())
-                if (QFileInfo(QString::fromStdString(s.path)).fileName().compare(fileName, fileCase()) == 0 &&
-                    !QFile::exists(QString::fromStdString(s.path)))
+                if (isFileOf(*script, QString::fromStdString(s.path)) && !QFile::exists(QString::fromStdString(s.path)))
                     m_shell.unload(s.path);
         }
         refresh();

@@ -109,7 +109,8 @@ Item {
     }
     function tabEntry(row) {
         return { tabId: String(row.id), tabLabel: row.label, tabTitle: row.title, tabModified: row.modified,
-                 tabCurrent: row.current, tabTip: row.tip, tabReference: !!row.reference, tabReview: row.review ?? 0 }
+                 tabCurrent: row.current, tabTip: row.tip, tabReference: !!row.reference, tabReview: row.review ?? 0,
+                 tabReviewByChild: row.reviewByChild ?? "" }
     }
     property bool syncing: false
     // A Repeater crashes if its model changes while it removes a delegate, and that removal can move focus and resync.
@@ -217,6 +218,7 @@ Item {
             releasedAt = bar.mapToGlobal(centroid.position.x, centroid.position.y)
             const margin = Application.styleHints.startDragDistance
             out = centroid.position.y < -margin || centroid.position.y > bar.height + margin
+                  || centroid.position.x < -margin || centroid.position.x > bar.width + margin
             if (out) {
                 if (wayland && !draggedTab.Drag.active) {
                     bar.app.tabDragging = true
@@ -267,6 +269,7 @@ Item {
                     required property string tabTip
                     required property bool tabReference
                     required property int tabReview
+                    required property string tabReviewByChild
                     objectName: "documentTab" + index
                     checkable: false
                     checked: tabCurrent
@@ -288,7 +291,8 @@ Item {
                     ToolTip.visible: hovered
                     ToolTip.text: [tabTip,
                                    stepText.length > 0 ? qsTr("Modified (history step %1)").arg(stepText) : "",
-                                   tabReview > 0 ? qsTranslate("HikariSub.Review", "%n AI change(s) to review", "", tabReview) : ""]
+                                   tabReview > 0 ? qsTranslate("HikariSub.Review", "%n AI change(s) to review", "", tabReview) : "",
+                                   tabReview > 0 && tabReviewByChild.length > 0 ? qsTranslate("HikariSub.Review", "Sub-agents: %1").arg(tabReviewByChild) : ""]
                                   .filter(s => s.length > 0).join("\n")
                     background: Rectangle {
                         color: tab.checked ? palette.base : (tab.hovered ? palette.midlight : palette.button)

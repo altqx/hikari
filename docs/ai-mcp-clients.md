@@ -33,7 +33,7 @@ The SDK stays on 1.x while the Claude Agent SDK's peer range is `^1.29`.
 
 ## Tools
 
-- **Namespaced:** a tool is offered as `<server id>__<tool>`, in `[A-Za-z0-9_-]`. A name longer than 64 characters is cut and ends in a hash of the whole name. Each server is a group, `mcp_<id>`, that `search_tools` finds ([tool sources](ai-tools.md#the-tools)). None are offered up front, so they don't count toward the up-front budget.
+- **Namespaced:** a tool is offered as `<server id>__<tool>`, in `[A-Za-z0-9_-]`. A name longer than 64 characters is cut and ends in a hash of the whole name. Each server is a group, `mcp_<id>`, that `search_tools` finds ([tool sources](ai-tools.md#the-tools)). `search_tools`' description names each MCP server you added, with the first 40 characters of its name. A server's tools are sent only after `search_tools` finds them. Each server's line still counts toward the [up-front budget](ai-tools.md#the-tools).
 - **Results:** text and images pass through as they came. Other content goes to the model as JSON text, and `structuredContent` does too when a result has no content.
 - **Threads only.** Only the in-app agent loop gets these tools. They aren't offered to the Claude Code or Codex sessions, or to agents that use HikariSub's MCP server.
 
@@ -71,6 +71,6 @@ Each row shows the command or URL, the status ("Starts when the agent needs it",
 
 ## Tests
 
-- `hikari_ai_sidecar_bun_tests` (`src/ai-sidecar/test/mcp/client.test.ts`) uses a real SDK server behind a fake relayed process: nothing starts before a session, tools are grouped and named per server, every call asks Qt first and a refused one never reaches the server, `search_tools` finds a server's group, a changed or removed server stops, a server that exits is started again, and HTTP goes through the relay.
+- `hikari_ai_sidecar_bun_tests` (`src/ai-sidecar/test/mcp/client.test.ts`) uses a real SDK server behind a fake relayed process: nothing starts before a session, tools are grouped and named per server, every call asks Qt first and a refused one never reaches the server, `search_tools` finds a server's group, a thread on a scripted Anthropic provider finds a server's tool after the cached prefix as a `tool_reference` block and calls it, a server's name is cut to 40 characters, a changed or removed server stops, a server that exits is started again, and HTTP goes through the relay.
 - `hikari_backends_ai_mcp_clients_tests`: hints from the server's own list (pages too) with MCP's defaults, admissions that work once and only for those arguments, the allowed methods, JSON and event-stream answers, the settings rows and secrets, a stdio server started unsandboxed with its own arguments and secrets, a call Qt didn't admit answered with an error, servers ending with the sidecar, a removed server refused, and the HTTP target with its URL, token and guard.
 - `hikari_backends_ai_agent_tests`: trust and the decision table, the allowance key, and a thread whose MCP calls run, ask and always ask, with the ask naming the server.

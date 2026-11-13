@@ -6,6 +6,7 @@
 #include <QString>
 #include <QVariantMap>
 
+#include <functional>
 #include <memory>
 
 namespace hikari::ui {
@@ -26,9 +27,12 @@ class AiMcp final : public QObject {
 public:
     static constexpr const char *kSetting = "ai.mcp.server";
     static constexpr const char *kHttpSetting = "ai.mcp.http";
+    static constexpr const char *kSkillsSetting = "ai.mcp.skills";
 
     /// An empty `endpointFile` keeps nothing, for tests without a user folder.
-    AiMcp(ui::SettingsStore &settings, AiFeatures &ai, QString endpointFile, QObject *parent = nullptr);
+    /// `project` answers the active window's Project folder, empty without one.
+    AiMcp(ui::SettingsStore &settings, AiFeatures &ai, QString endpointFile, std::function<QString()> project = {},
+          QObject *parent = nullptr);
     ~AiMcp() override;
 
     /// Null while off.
@@ -55,6 +59,7 @@ private:
     ui::SettingsStore &m_settings;
     AiFeatures &m_ai;
     QString m_endpointFile;
+    std::function<QString()> m_project;
     backends::ai::McpEndpoint m_endpoint;
     std::unique_ptr<backends::ai::McpServer> m_server;
     int m_busySource = 0;

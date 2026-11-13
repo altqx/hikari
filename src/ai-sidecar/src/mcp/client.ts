@@ -265,7 +265,7 @@ export class McpClients {
     sources(sessionId: string): ToolSource[] {
         return [...this.connections.values()].map((connection): ToolSource => ({
             group: connection.group,
-            description: `Tools from the MCP server "${connection.config.name}"`,
+            description: serverGroupDescription(connection.config.name),
             tools: () => connection.list(),
             call: (name, args) => connection.call(sessionId, name, args),
         }));
@@ -276,6 +276,12 @@ export class McpClients {
         this.connections.clear();
         return Promise.all(all.map((c) => c.close())).then(() => {});
     }
+}
+
+export const kServerNameShown = 40;
+
+export function serverGroupDescription(name: string): string {
+    return `Tools from the MCP server "${[...name].slice(0, kServerNameShown).join("")}"`;
 }
 
 export function connector(peer: { request(method: string, params?: unknown): Promise<unknown> }, stdio: Connector["stdio"], relay: Relay,
