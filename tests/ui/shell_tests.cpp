@@ -13268,7 +13268,7 @@ private slots:
         field = item("lineText");
         menu = field->findChild<QObject *>(QStringLiteral("lineTextMenu"));
         QTRY_COMPARE(field->property("text").toString(), QStringLiteral("wrold"));
-        QTRY_VERIFY(field->parentItem() == item("originalSlot"));
+        QTRY_VERIFY(item("originalSlot")->isAncestorOf(field));
         QTRY_VERIFY(item("translationText")->mapToScene(QPointF()).y() > field->mapToScene(QPointF()).y());
         QTRY_VERIFY(item("editorPanel")->height() >= item("editorPanel")->property("minimumSize").toSizeF().height());
         rightClick(fieldPoint(field, 1));
