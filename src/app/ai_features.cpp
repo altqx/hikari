@@ -598,6 +598,7 @@ void AiFeatures::setCustomAgents(const std::vector<AcpAgent> &agents)
                                                                {QStringLiteral("arguments"), agent.arguments}})
                                          .toJson(QJsonDocument::Compact));
     m_settings.set(kCustomAgentsSetting, entries);
+    m_refusedInProjects = refusedInProjects();
 }
 
 std::vector<AiFeatures::AcpAgent> AiFeatures::acpAgents() const
@@ -623,12 +624,27 @@ std::vector<AiFeatures::AcpAgent> AiFeatures::acpAgents() const
 void AiFeatures::setProjectRoots(std::function<QStringList()> roots)
 {
     m_projectRoots = std::move(roots);
+    m_refusedInProjects = refusedInProjects();
+}
+
+QStringList AiFeatures::refusedInProjects() const
+{
+    QStringList ids;
+    for (const AcpAgent &custom : customAgents())
+        if (!custom.program.isEmpty() && acpRefusal(custom.program) == QLatin1String("project"))
+            ids << custom.id;
+    return ids;
 }
 
 void AiFeatures::projectsChanged()
 {
+    QStringList refused = refusedInProjects();
+    if (refused == m_refusedInProjects)
+        return;
+    m_refusedInProjects = std::move(refused);
     if (m_live)
         addAcpAgents();
+    emit agentsChanged();
 }
 
 bool AiFeatures::confinesFiles() const

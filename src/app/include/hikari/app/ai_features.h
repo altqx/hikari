@@ -128,7 +128,8 @@ public:
     void setProjectKeys(std::function<std::optional<std::string>(const std::string &project, const std::string &providerId)> keys);
     /// Every open Project's folder; kept across AI being switched off and on.
     void setProjectRoots(std::function<QStringList()> roots);
-    /// A Project opened or closed: custom ACP agents inside one stop being offered.
+    /// A Project opened or closed: custom ACP agents inside one stop being offered, and `agentsChanged` says when that
+    /// changed which agents are offered.
     void projectsChanged();
     bool confinesFiles() const;
     /// Why `agent` ("codex", "opencode", "agy") isn't offered: "sandbox", or empty when it is. Claude never is refused.
@@ -195,10 +196,13 @@ signals:
     /// `version` failed `initialize` or crashed twice (`reason` "initialize" or "crashed"); the previous sidecar runs
     /// again and `version` is skipped.
     void rolledBack(QString version, QString reason);
+    void agentsChanged();
 
 private:
     std::function<std::optional<std::string>(const std::string &, const std::string &)> m_projectKeys;
     std::function<QStringList()> m_projectRoots;
+    QStringList m_refusedInProjects;
+    QStringList refusedInProjects() const;
     void apply();
     void startUpdates();
     void stage();

@@ -177,8 +177,7 @@ public:
     Q_INVOKABLE QVariantMap suggestions(const QString &html) const;
     /// Opens the open thread's Project AGENTS.md in the system editor.
     Q_INVOKABLE void openProjectInstructions() const;
-    /// The active window or its Project changed: the thread list puts that Project's threads first, and the model
-    /// menu drops a custom ACP agent inside an open Project.
+    /// The active window or its Project changed: the thread list puts that Project's threads first.
     void projectChanged();
 
 signals:

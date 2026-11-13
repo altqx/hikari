@@ -414,7 +414,6 @@ void AgentController::projectChanged()
 {
     emit threadsChanged();
     emit threadChanged();
-    emit modelsChanged();
 }
 
 QVariantList AgentController::models() const
