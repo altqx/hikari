@@ -3876,6 +3876,23 @@ ApplicationWindow {
             readonly property bool grammar: !!field.grammar.rule
             readonly property var suggestions: (grammar ? field.grammar.suggestions : field.misspell.suggestions) || []
             property bool headerShown: false
+            readonly property bool tiered: root.projectName.length > 0
+            property string dictionaryTier: "project"
+            onAboutToShow: {
+                const row = (root.app.settings.value("workspace.saveTiers") || []).find(r => r.startsWith("dictionary\t"))
+                dictionaryTier = row && row.endsWith("\tmine") ? "mine" : "project"
+            }
+            function addWord(word, tier) {
+                const project = tiered && tier === "project"
+                const added = grammar ? root.app.addGrammarWord(word, project) : root.app.addEditorWord(word, project)
+                if (!added)
+                    root.notices.post("error", qsTranslate("HikariSub.Editor", "Add word to dictionary"),
+                                      qsTranslate("HikariSub.Editor", "“%1” was not added to the dictionary.").arg(word))
+                else if (tiered && tier !== dictionaryTier) {
+                    const rows = (root.app.settings.value("workspace.saveTiers") || []).filter(r => !r.startsWith("dictionary\t"))
+                    root.app.settings.setValue("workspace.saveTiers", rows.concat(["dictionary\t" + tier]))
+                }
+            }
             Instantiator {
                 model: editMenu.grammar ? 1 : 0
                 delegate: ShellMenuItem {
@@ -3935,19 +3952,28 @@ ApplicationWindow {
                 onTriggered: field.ignoreGrammarRule()
             }
             ShellMenuItem {
+                id: addWordItem
                 readonly property string word: editMenu.grammar ? (field.grammar.word ? field.grammar.text || "" : "")
                                                                 : field.misspell.word || ""
                 iconRole: "dictionary-add"
                 objectName: field.objectName + "AddWord"
                 text: qsTranslate("HikariSub.Spelling", "Add “%1” to dictionary").arg(word)
+                detailText: !editMenu.tiered ? ""
+                    : editMenu.dictionaryTier === "project" ? qsTranslate("HikariSub.Spelling", "This project")
+                    : qsTranslate("HikariSub.Spelling", "Mine")
                 visible: word.length > 0
                 height: visible ? implicitHeight : 0
-                onTriggered: {
-                    const added = editMenu.grammar ? root.app.addGrammarWord(word) : root.app.addEditorWord(word)
-                    if (!added)
-                        root.notices.post("error", qsTranslate("HikariSub.Editor", "Add word to dictionary"),
-                                          qsTranslate("HikariSub.Editor", "“%1” was not added to the dictionary.").arg(word))
-                }
+                onTriggered: editMenu.addWord(word, editMenu.dictionaryTier)
+            }
+            ShellMenuItem {
+                readonly property string other: editMenu.dictionaryTier === "project" ? "mine" : "project"
+                iconRole: other
+                objectName: field.objectName + "AddWordOther"
+                text: other === "project" ? qsTranslate("HikariSub.Spelling", "Add to project dictionary")
+                                          : qsTranslate("HikariSub.Spelling", "Add to my dictionary")
+                visible: editMenu.tiered && addWordItem.visible
+                height: visible ? implicitHeight : 0
+                onTriggered: editMenu.addWord(addWordItem.word, other)
             }
             MenuSeparator {
                 visible: editMenu.suggestions.length > 0 || editMenu.grammar || !!field.misspell.word

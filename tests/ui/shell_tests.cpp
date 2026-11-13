@@ -7946,7 +7946,8 @@ private slots:
             return QSize(window->width() - qCeil(area->width()), window->height() - qCeil(area->height()));
         };
         const auto expected = [&] {
-            return (docking->layoutMinimumSize(mainName) + outside()).boundedTo(window->screen()->availableGeometry().size());
+            return (docking->layoutMinimumSize(mainName) + outside())
+                .boundedTo(window->screen()->availableGeometry().size().shrunkBy(window->frameMargins()));
         };
         const auto describe = [&] {
             const QRect screen = window->screen()->availableGeometry();
@@ -22690,10 +22691,18 @@ private slots:
         auto &h = application->hotkeys();
         QVERIFY(!h.listFiltered());
         showSettingsPage("hotkeys");
+        const bool firstRowHasKeys = !hotkeyRows().first().toMap().value(QStringLiteral("accel")).toString().isEmpty();
         QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "hotkeyFilter"), "activated", Q_ARG(int, 1)));
         QVERIFY(h.listFiltered());
         const int count = int(hotkeyRows().size());
-        QCOMPARE(h.topBlock(), 1);
+        QCOMPARE(h.topBlock(), firstRowHasKeys ? 0 : 1);
+        if (!firstRowHasKeys) {
+            h.toggleBlock(-1);
+            QCOMPARE(h.topBlock(), 2);
+            QVERIFY(hotkeyRows().first().toMap().value(QStringLiteral("inBlock")).toBool());
+            h.toggleBlock(-1);
+            QCOMPARE(int(hotkeyRows().size()), count);
+        }
         int gap = -1;
         for (int i = 0; i < count && gap < 0; ++i)
             if (hotkeyRows()[i].toMap().value(QStringLiteral("block")).toInt() == 1)
@@ -26899,11 +26908,19 @@ private slots:
         const auto where = [](const char *what, QPointF at) {
             return QStringLiteral("%1 at %2,%3").arg(QLatin1String(what)).arg(at.x()).arg(at.y());
         };
+        QQuickItem *pointerArea = overlay->findChild<QQuickItem *>(QStringLiteral("visualPointer"));
+        QVERIFY(pointerArea);
+        const auto blankAt = [&](const char *what, QPointF at) {
+            return QStringLiteral("%1: window cursor %2, pointer area cursor %3, hideCursor %4, override %5, overlay in window %6")
+                .arg(where(what, at), QString::number(shown->cursor().shape()), QString::number(pointerArea->cursor().shape()),
+                     QString::number(tools.hideCursor()), overlay->property("cursorOverride").toString(),
+                     QString::number(overlay->window() == shown));
+        };
         const auto crosshairOnlyOverThePicture = [&](const char *what) {
             const Points p = points();
             QVERIFY2(!p.bars.isEmpty(), qPrintable(QDebug::toString(tools.videoRect())));
             const auto in = [&](QPointF at) {
-                QTRY_COMPARE_WITH_TIMEOUT(cursorAt(at), Qt::BlankCursor, 2000);
+                QTRY_VERIFY2_WITH_TIMEOUT(cursorAt(at) == Qt::BlankCursor, qPrintable(blankAt(what, at)), 2000);
                 QVERIFY2(tools.hideCursor(), qPrintable(where(what, at)));
                 QTRY_VERIFY2(!tools.overlay().isEmpty(), qPrintable(where(what, at)));
             };
@@ -26939,7 +26956,7 @@ private slots:
                 const auto in = [&](QPointF at) {
                     const Qt::CursorShape inside = cursorAt(at);
                     if (f == 0) {
-                        QTRY_COMPARE_WITH_TIMEOUT(cursorAt(at), Qt::BlankCursor, 2000);
+                        QTRY_VERIFY2_WITH_TIMEOUT(cursorAt(at) == Qt::BlankCursor, qPrintable(blankAt(what, at)), 2000);
                     } else {
                         QVERIFY2(inside != Qt::BlankCursor, qPrintable(where(what, at) + QString::number(f)));
                         QTRY_COMPARE_WITH_TIMEOUT(cursorAt(at), Qt::CursorShape(tools.pointerShapeCursor()), 2000);

@@ -25,7 +25,7 @@ One-shot AI actions on the Lines you chose, with no agent thread ([AI8 #436](htt
 | Rewrite… | Chat | An instruction, with the last 5 as chips |
 | Shorten to 15 CPS | Chat | Nothing; sends only the Lines over 15 CPS |
 | Fix spelling and grammar | Reviewer | Nothing |
-| Translate to <language> | Translator | Nothing; the language is **Translate to** in Settings |
+| Translate to <language> | Translator | Nothing; the language is the Project's target language, else **Translate to** in Settings |
 | Translate to… | Translator | A language |
 | Your actions | Their own role | Nothing, or their instruction when **Ask each time** is on |
 

@@ -105,7 +105,7 @@ Export as leaves the Document alone. To turn an SRT, WebVTT, SBV, MicroDVD, MPL2
 Subtitles › Conversion and its five commands (5020–5024, `GLOBAL_CONVERT_TO_*`) were removed in [#611](https://github.com/altqx/hikari/issues/611). Shortcut files and imported settings that bind them still load. The bindings are dropped with a Log notice that points to Save as (ASS) or Export as (other formats).
 
 ## Memory
-The last format and options are kept per document file in `export.choices` (at most 100 rows, last used first). A document without a remembered choice, or without a file, gets the last export's.
+The last format and options are kept per document file in `export.choices` (at most 100 rows, last used first). A document without a remembered choice, or without a file, gets its Project's `[export]` default over the last export's ([Project tiers](project-tiers.md)).
 
 ## Tests
 - `hikari_core_export_tests`: goldens for every format on `tests/fixtures/export/{plain,karaoke,typesetting}.ass`, TTML in three variants (`.ttml`, `.dfxp` in frames, `.netflix.ttml`) (`HIKARI_WRITE_EXPORT_GOLDENS=1` rewrites them); read-back through the SRT and line-format loaders; every option; the report; and the TTML layout rules.

@@ -5,6 +5,7 @@
 #include "hikari/core/export.h"
 #include "hikari/core/srv3.h"
 #include "hikari/core/text_projection.h"
+#include "project_file.h"
 
 #include <QCoreApplication>
 #include <QDir>
@@ -66,13 +67,33 @@ QString rowKey(const QString &row)
     return row.left(row.indexOf(u'\t'));
 }
 
+QJsonObject rememberedRow(const QStringList &rows, const QString &key)
+{
+    for (const QString &row : rows)
+        if (row.contains(u'\t') && rowKey(row) == key)
+            return QJsonDocument::fromJson(row.mid(row.indexOf(u'\t') + 1).toUtf8()).object();
+    return {};
+}
+
 QJsonObject rememberedExport(const QStringList &rows, const QString &key)
 {
-    for (const QString &wanted : {key, QString()})
-        for (const QString &row : rows)
-            if (row.contains(u'\t') && rowKey(row) == wanted)
-                return QJsonDocument::fromJson(row.mid(row.indexOf(u'\t') + 1).toUtf8()).object();
-    return {};
+    const QJsonObject exact = rememberedRow(rows, key);
+    return exact.isEmpty() ? rememberedRow(rows, {}) : exact;
+}
+
+QJsonObject overlaid(QJsonObject under, const QJsonObject &over)
+{
+    for (auto it = over.begin(); it != over.end(); ++it)
+        under.insert(it.key(), it.value());
+    return under;
+}
+
+// This file's choice, then the Project's `[export]`, then the last export.
+QJsonObject startingExport(const QStringList &rows, const QString &key, const std::string &project)
+{
+    const QJsonObject projectDefault = QJsonDocument::fromJson(QByteArray::fromStdString(project)).object();
+    const QJsonObject exact = key.isEmpty() ? QJsonObject() : rememberedRow(rows, key);
+    return overlaid(overlaid(rememberedRow(rows, {}), projectDefault), exact);
 }
 
 QStringList rememberedWith(const QStringList &rows, const QString &key, const QJsonObject &choice)
@@ -285,7 +306,9 @@ QVariantMap Application::exportSetup() const
     if (!session)
         return {};
     const QString key = exportKey(*target);
-    const QJsonObject saved = rememberedExport(m_settings->list("export.choices"), key);
+    const auto *project = views(m_workspace.window(*target).value_or(m_workspace.activeWindow())).settings->project();
+    const QJsonObject saved =
+        startingExport(m_settings->list("export.choices"), key, project ? project->exportJson() : std::string());
 
     const core::ExportOptions defaults;
     QVariantMap options;

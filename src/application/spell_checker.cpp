@@ -90,13 +90,19 @@ core::spelling::Scripts scriptsOf(std::u16string_view symbol, const fs::path &af
 }
 
 std::unique_ptr<SpellingBackend> loadWithUserWords(const SpellingBackendLoader &loader, const fs::path &aff,
-                                                   const fs::path &dic, const fs::path &userDictionary)
+                                                   const fs::path &dic, const fs::path &userDictionary,
+                                                   const fs::path &projectWords)
 {
     auto backend = loader ? loader(aff, dic) : nullptr;
-    if (backend && fileExists(userDictionary))
+    if (!backend)
+        return backend;
+    if (fileExists(userDictionary))
         if (const auto content = readUserDictionary(userDictionary))
             for (const auto &word : core::legacy::userDictionaryWords(*content))
                 backend->add(word);
+    if (!projectWords.empty())
+        for (const auto &word : readWordList(projectWords))
+            backend->add(word);
     return backend;
 }
 
@@ -195,6 +201,44 @@ bool writeUserDictionary(const fs::path &file, std::u16string_view text)
     return static_cast<bool>(out);
 }
 
+std::vector<std::u16string> readWordList(const fs::path &file)
+{
+    std::vector<std::u16string> words;
+    const auto content = fileExists(file) ? readUserDictionary(file) : std::nullopt;
+    if (!content)
+        return words;
+    std::u16string_view rest(*content);
+    while (!rest.empty()) {
+        const auto end = rest.find(u'\n');
+        std::u16string_view line = rest.substr(0, end);
+        rest = end == std::u16string_view::npos ? std::u16string_view() : rest.substr(end + 1);
+        while (!line.empty() && (line.back() == u'\r' || line.back() == u' ' || line.back() == u'\t'))
+            line.remove_suffix(1);
+        while (!line.empty() && (line.front() == u' ' || line.front() == u'\t'))
+            line.remove_prefix(1);
+        if (!line.empty() && std::ranges::find(words, line) == words.end())
+            words.emplace_back(line);
+    }
+    return words;
+}
+
+bool appendToWordList(const fs::path &file, std::u16string_view word)
+{
+    auto words = readWordList(file);
+    if (std::ranges::find(words, word) != words.end())
+        return true;
+    words.emplace_back(word);
+    std::error_code ec;
+    fs::create_directories(file.parent_path(), ec);
+    std::ofstream out(file, std::ios::binary | std::ios::trunc);
+    for (const auto &each : words) {
+        const std::u8string utf8 = core::toUtf8(each);
+        out.write(reinterpret_cast<const char *>(utf8.data()), static_cast<std::streamsize>(utf8.size()));
+        out << '\n';
+    }
+    return static_cast<bool>(out);
+}
+
 SpellChecker::SpellChecker(std::vector<fs::path> folders, SpellingBackendLoader loader)
     : m_folders(std::move(folders)), m_loader(std::move(loader))
 {
@@ -227,7 +271,7 @@ SpellChecker::Status SpellChecker::initialize(std::u16string_view language)
     if (!pair)
         return Status::NoDictionary;
     const auto &[aff, dic] = *pair;
-    auto backend = loadWithUserWords(m_loader, aff, dic, userDictionary());
+    auto backend = loadWithUserWords(m_loader, aff, dic, userDictionary(), m_projectWords);
     if (!backend)
         return Status::LoadFailed;
     m_dictionaries.emplace_back();
@@ -262,8 +306,9 @@ void SpellChecker::startLoad(Dictionary &dictionary)
     dictionary.generation = m_userGeneration;
     // Assigning joins the earlier, finished worker.
     dictionary.worker = std::jthread([promise = std::move(promise), loader = m_loader, aff = dictionary.aff,
-                                      dic = dictionary.dic, user = userDictionary(), loaded = m_loaded]() mutable {
-        promise.set_value(loadWithUserWords(loader, aff, dic, user));
+                                      dic = dictionary.dic, user = userDictionary(), project = m_projectWords,
+                                      loaded = m_loaded]() mutable {
+        promise.set_value(loadWithUserWords(loader, aff, dic, user, project));
         if (loaded)
             loaded();
     });
@@ -367,9 +412,27 @@ std::vector<std::u16string> SpellChecker::suggestions(std::u16string_view word,
     return out;
 }
 
-bool SpellChecker::addWord(std::u16string_view word)
+void SpellChecker::setProjectWords(fs::path file)
 {
-    return ready() && addUserWord(word);
+    m_projectWords = std::move(file);
+}
+
+bool SpellChecker::addWord(std::u16string_view word, Tier tier)
+{
+    return ready() && (tier == Tier::Project ? addProjectWord(word) : addUserWord(word));
+}
+
+bool SpellChecker::addProjectWord(std::u16string_view word)
+{
+    if (m_projectWords.empty() || word.empty() || core::legacy::legacyIsNumber(word) ||
+        !appendToWordList(m_projectWords, word))
+        return false;
+    for (auto &dictionary : m_dictionaries)
+        if (dictionary.backend)
+            dictionary.backend->add(word);
+    ++m_userGeneration;
+    m_results.clear();
+    return true;
 }
 
 bool SpellChecker::addUserWord(std::u16string_view word)
@@ -710,9 +773,9 @@ void SpellCheckWalk::ignoreAll(EditSession &session, std::u16string_view word, c
     next(session, options);
 }
 
-bool SpellCheckWalk::addWord(EditSession &session, std::u16string_view word, const Options &options)
+bool SpellCheckWalk::addWord(EditSession &session, std::u16string_view word, const Options &options, Tier tier)
 {
-    const bool added = m_checker.addWord(word);
+    const bool added = m_checker.addWord(word, tier);
     next(session, options);
     return added;
 }
