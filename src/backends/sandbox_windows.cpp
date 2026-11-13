@@ -23,7 +23,7 @@ struct Grant {
 };
 
 // Two processes creating the same new profile at once: the second can fail with ERROR_PATH_NOT_FOUND.
-HRESULT containerSid(const std::wstring &name, PSID *sid)
+HRESULT appContainerSid(const std::wstring &name, PSID *sid)
 {
     const HANDLE creating = CreateMutexW(nullptr, FALSE, (L"Local\\" + name + L".profile").c_str());
     const DWORD waited = creating ? WaitForSingleObject(creating, 30'000) : WAIT_FAILED;
@@ -170,7 +170,7 @@ Launcher::Launcher(std::optional<Profile> profile) : m(std::make_unique<Impl>())
     }
     const std::wstring name = profile->name.toStdWString();
     PSID sid = nullptr;
-    const HRESULT hr = containerSid(name, &sid);
+    const HRESULT hr = appContainerSid(name, &sid);
     if (FAILED(hr) || !sid) {
         m->coverage.missing =
             QStringLiteral("the AppContainer couldn't be created (0x%1)").arg(static_cast<quint32>(hr), 8, 16,
