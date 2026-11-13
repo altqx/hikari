@@ -951,22 +951,24 @@ public:
         const QSize least = wanted();
         if (!window || least.isEmpty())
             return;
+        QScreen *screen = window->screen();
+        const QMargins margins = window->frameMargins();
+        const bool whole = screen && !QGuiApplication::platformName().startsWith(QLatin1String("wayland"))
+            && screen->availableGeometry().contains(window->geometry().marginsAdded(margins));
         if (window->minimumSize() != least) {
             qCDebug(lcDocking) << "main window minimum" << window->minimumSize() << "->" << least;
             window->setMinimumSize(least);
         }
-        if (window->width() >= least.width() && window->height() >= least.height())
-            return;
         const QSize grown = window->size().expandedTo(least);
-        QScreen *screen = window->screen();
-        const QMargins margins = window->frameMargins();
-        if (!screen || QGuiApplication::platformName().startsWith(QLatin1String("wayland"))
-            || !screen->availableGeometry().contains(window->geometry().marginsAdded(margins))) {
-            window->resize(grown);
+        if (!whole) {
+            if (grown != window->size())
+                window->resize(grown);
             return;
         }
         const QRect frame = QRect(window->geometry().topLeft(), grown).marginsAdded(margins);
-        window->setGeometry(wholeOn(frame, screen->availableGeometry()).marginsRemoved(margins));
+        const QRect fitted = wholeOn(frame, screen->availableGeometry()).marginsRemoved(margins);
+        if (fitted != window->geometry())
+            window->setGeometry(fitted);
     }
 
 private:
