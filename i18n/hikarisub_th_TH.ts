@@ -2340,7 +2340,7 @@ Output device: %2</source>
     </message>
     <message>
         <source>Moved</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">ย้ายแล้ว</translation>
     </message>
     <message>
         <source>Backup</source>

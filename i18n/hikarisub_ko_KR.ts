@@ -2340,7 +2340,7 @@ Output device: %2</source>
     </message>
     <message>
         <source>Moved</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">이동됨</translation>
     </message>
     <message>
         <source>Backup</source>
