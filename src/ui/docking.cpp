@@ -932,6 +932,12 @@ QSize Docking::layoutMinimumSize(const QString &mainName) const
     return main ? QSize(main->layout()->layoutMinimumSize()) : QSize();
 }
 
+int Docking::screenAvailableWidth(QQuickItem *item) const
+{
+    QScreen *screen = item && item->window() ? item->window()->screen() : nullptr;
+    return screen ? screen->availableGeometry().width() : 0;
+}
+
 namespace {
 KDDockWidgets::Core::DockWidget *dockByName(const QString &uniqueName)
 {

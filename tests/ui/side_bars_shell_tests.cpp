@@ -38,7 +38,7 @@ class SideBarsShellTests : public QObject {
     QQmlApplicationEngine *engine = nullptr;
     QQuickWindow *window = nullptr;
 
-    void start(const QString &sideBars = {}, int width = 0)
+    void start(const QString &sideBars = {}, int width = 0, const QString &beforeTheFirstFrame = {})
     {
         app::Application::Options o;
         o.settingsFile = home->filePath(QStringLiteral("settings.toml"));
@@ -58,6 +58,10 @@ class SideBarsShellTests : public QObject {
         QVERIFY(!engine->rootObjects().isEmpty());
         window = qobject_cast<QQuickWindow *>(engine->rootObjects().first());
         QVERIFY(window);
+        if (!beforeTheFirstFrame.isEmpty()) {
+            QVERIFY(!root()->property("sideBarsLoaded").toBool());
+            shell(beforeTheFirstFrame);
+        }
         QVERIFY(QTest::qWaitForWindowExposed(window));
         QTRY_VERIFY(root()->property("sideBarsLoaded").toBool());
     }
@@ -119,6 +123,7 @@ class SideBarsShellTests : public QObject {
         QVERIFY2(QMetaObject::invokeMethod(root(), function, Q_ARG(QVariant, QVariant::fromValue(args))...), function);
     }
     QVariant dock(const char *name) const { return QVariant::fromValue(item<QObject>(name)); }
+    int middleLeast() const { return shell(QStringLiteral("Docking.layoutMinimumSize(dockingArea.uniqueName).width")).toInt(); }
     QVariant shell(const QString &code) const
     {
         QQmlExpression expression(qmlContext(root()), root(), code);
@@ -425,6 +430,16 @@ private slots:
                     && item("originalTextButtons")->parentItem()->parentItem()->objectName() == QLatin1String("dockToolbarSlot"));
     }
 
+    void aPanelShownBeforeTheSideBarsLoadStillOpensInItsSideBar()
+    {
+        start({}, 0, QStringLiteral("root.showPanel(timingDock)"));
+        QTRY_COMPARE(parentOf("timingPanel"), slotOf("rightSideBar"));
+        QVERIFY(!item<QObject>("timingDock")->property("isOpen").toBool());
+        const QJsonObject tools = saved().value(QStringLiteral("second")).toObject();
+        QCOMPARE(tools.value(QStringLiteral("shown")).toString(), QStringLiteral("Timing"));
+        QCOMPARE(saved().value(QStringLiteral("first")).toObject().value(QStringLiteral("hidden")).toBool(), true);
+    }
+
     void aNarrowWindowShrinksTheSideBarsBeforeTheMiddle()
     {
         start({}, 1280);
@@ -432,15 +447,42 @@ private slots:
         if (!shown("leftSideBar"))
             call("toggleSideBar", true);
         QTRY_VERIFY(shown("leftSideBar") && shown("rightSideBar"));
-        const int middleLeast = root()->property("middleLeast").toInt();
-        QVERIFY(middleLeast > 0);
+        const int least = middleLeast();
+        QVERIFY(least > 0);
         QQuickItem *middle = item("dockingArea");
         QQuickItem *right = item("rightSideBar");
-        QTRY_VERIFY2(middle->width() >= middleLeast && right->x() + right->width() <= window->width(),
+        QTRY_VERIFY2(middle->width() >= least && right->x() + right->width() <= window->width(),
                      qPrintable(QStringLiteral("window %1, left %2, middle %3 (least %4), right %5 at %6")
                                     .arg(window->width()).arg(item("leftSideBar")->width()).arg(middle->width())
-                                    .arg(middleLeast).arg(right->width()).arg(right->x())));
+                                    .arg(least).arg(right->width()).arg(right->x())));
         QVERIFY(item("leftSideBar")->width() < hikari::application::kSideBarStartWidth);
+    }
+
+    void aScreenTooNarrowForBothShowsOneSideBarAtATime()
+    {
+        start({}, 1280);
+        const int screenWidth = window->screen()->availableGeometry().width();
+        QVERIFY(application->openFile(writeSubtitles()));
+        QTRY_VERIFY(middleLeast() > 0);
+        const int least = middleLeast();
+        if (least + 2 * hikari::ui::SideBarModel().minimumWidth() <= screenWidth)
+            QSKIP(qPrintable(QStringLiteral("needs a screen too narrow for both side bars, like screen-1280x800.json (screen %1, middle %2)")
+                                 .arg(screenWidth).arg(least)));
+        QTRY_VERIFY(shown("rightSideBar") && !shown("leftSideBar"));
+        const auto fits = [&] {
+            QQuickItem *middle = item("dockingArea");
+            return window->width() <= screenWidth && middle->width() >= middleLeast();
+        };
+        call("toggleSideBar", true);
+        QTRY_VERIFY(shown("leftSideBar") && !shown("rightSideBar"));
+        QTRY_VERIFY(fits());
+        call("sideBarIconClicked", QStringLiteral("Styles"));
+        QTRY_VERIFY(shown("rightSideBar") && !shown("leftSideBar"));
+        QCOMPARE(parentOf("stylesPanel"), slotOf("rightSideBar"));
+        QTRY_VERIFY(fits());
+        shell(QStringLiteral("showAiAgentAction.trigger()"));
+        QTRY_VERIFY(shown("leftSideBar") && !shown("rightSideBar"));
+        QTRY_VERIFY(fits());
     }
 
     void sideBarScreenshots()
@@ -451,29 +493,31 @@ private slots:
         QVERIFY(QDir().mkpath(out));
         start();
         QVERIFY(application->openFile(writeSubtitles()));
-        window->resize(1280, 800);
         shell(QStringLiteral("translationModeAction.trigger()"));
         QTRY_VERIFY(application->editor().translationMode());
         call("moveToSideBar", dock("originalDock"), true, 2);
         call("sideBarIconClicked", QStringLiteral("Styles"));
         QTRY_COMPARE(parentOf("stylesPanel"), slotOf("rightSideBar"));
         QTRY_COMPARE(parentOf("originalPanel"), slotOf("leftSideBar"));
-        QTRY_VERIFY(window->width() >= window->minimumWidth() && window->contentItem()->width() == window->width());
         auto &settings = *application->settingsStore();
         settings.setValue(QStringLiteral("appearance.followSystem"), false);
-        for (const auto code : ui::theme::kCodes) {
-            settings.setValue(QStringLiteral("appearance.theme"), ui::theme::codeName(code));
-            QTest::qWait(300);
-            QVERIFY(window->grabWindow().save(out + QStringLiteral("/side-bars-") + ui::theme::codeName(code) + QStringLiteral(".png")));
-        }
+        const auto shoot = [&](const QString &set) {
+            QTRY_VERIFY(window->width() >= window->minimumWidth() && window->contentItem()->width() == window->width());
+            for (const auto code : ui::theme::kCodes) {
+                settings.setValue(QStringLiteral("appearance.theme"), ui::theme::codeName(code));
+                QTest::qWait(300);
+                QVERIFY(window->grabWindow().save(out + QStringLiteral("/side-bars-") + set + ui::theme::codeName(code) + QStringLiteral(".png")));
+            }
+        };
+        window->resize(1600, 900);
+        QTRY_COMPARE(item("rightSideBar")->width(), qreal(hikari::application::kSideBarStartWidth));
+        shoot(QStringLiteral("1600-"));
         call("resizeSideBar", true, hikari::ui::SideBarModel().minimumWidth(), true);
         call("resizeSideBar", false, hikari::ui::SideBarModel().minimumWidth(), true);
         QTRY_COMPARE(item("rightSideBar")->width(), qreal(hikari::ui::SideBarModel().minimumWidth()));
-        for (const auto code : ui::theme::kCodes) {
-            settings.setValue(QStringLiteral("appearance.theme"), ui::theme::codeName(code));
-            QTest::qWait(300);
-            QVERIFY(window->grabWindow().save(out + QStringLiteral("/side-bars-minimum-") + ui::theme::codeName(code) + QStringLiteral(".png")));
-        }
+        shoot(QStringLiteral("1600-minimum-"));
+        window->resize(1280, 800);
+        shoot(QStringLiteral("1280-"));
     }
 
     void theShippedMiddleKeepsItsAudioAndEditorControls_data()

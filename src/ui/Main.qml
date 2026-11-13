@@ -540,6 +540,8 @@ ApplicationWindow {
         return root.isPluginDock(dock) ? "plugins" : (icons[root.panelName(dock)] ?? "panels")
     }
     function sideBarOf(dock) {
+        if (!root.sideBarsLoaded)
+            return ""
         const name = root.panelName(dock)
         if (root.sideBarsState.first.panels.includes(name))
             return "first"
@@ -549,11 +551,24 @@ ApplicationWindow {
     }
     function inSideBar(dock) { return !!dock && root.sideBarOf(dock) !== "" }
     function sideBarOnLeft(side) { return (side === "first") === root.firstSideBarOnLeft }
-    function setSideBars(json) {
+    function setSideBars(asked) {
+        const json = root.oneSideBarOnANarrowScreen(asked)
         if (json === root.sideBarsJson)
             return
         root.sideBarsJson = json
         root.app.setSideBars(root.shellWindow, json)
+    }
+    function bothSideBarsFit() {
+        const screenWidth = Docking.screenAvailableWidth(dockingArea)
+        return screenWidth <= 0
+            || Docking.layoutMinimumSize(dockingArea.uniqueName).width + 2 * SideBarModel.minimumWidth <= screenWidth
+    }
+    function oneSideBarOnANarrowScreen(json) {
+        const next = SideBarModel.read(json)
+        if (next.first.hidden || next.second.hidden || root.bothSideBarsFit())
+            return json
+        const firstAsked = SideBarModel.read(root.sideBarsJson).first.hidden
+        return SideBarModel.toggled(json, firstAsked)
     }
     function loadSideBars() {
         const saved = root.app.sideBars(root.shellWindow)
@@ -562,13 +577,17 @@ ApplicationWindow {
             root.pluginDock(name)
         if (saved.length > 0) {
             root.sideBarsJson = saved
+            root.setSideBars(saved)
         } else {
             root.setSideBars(SideBarModel.migrated(root.projectName.length > 0, root.width, root.rightOfGridPanels()))
             root.sideBarsMigrated = true
         }
         root.sideBarsLoaded = true
         root.placeSideBarPanels()
+        for (const dock of root.shownBeforeSideBarsLoad.splice(0))
+            root.showPanel(dock)
     }
+    property var shownBeforeSideBarsLoad: []
     property bool sideBarsMigrated: false
     function rightOfGridPanels() {
         const column = root.dockList.find(d => d.uniqueName === Docking.dockRightOf(root.engineName("Grid")))
@@ -612,10 +631,10 @@ ApplicationWindow {
     readonly property int sideBarsWidth: (root.leftSideBarShown ? leftSideBar.width : 0) + (root.rightSideBarShown ? rightSideBar.width : 0)
     readonly property int sideBarsLeast: ((root.leftSideBarShown ? 1 : 0) + (root.rightSideBarShown ? 1 : 0)) * SideBarModel.minimumWidth
     onSideBarsWidthChanged: if (root.arrangementSettled) Docking.setShrinkableWidth(dockingArea.uniqueName, Math.max(0, root.sideBarsWidth - root.sideBarsLeast))
-    readonly property int middleLeast: root.arrangementSettled && root.width > 0 ? Docking.layoutMinimumSize(dockingArea.uniqueName).width : 0
     function sideBarWidth(bar) {
         const shown = (root.leftSideBarShown ? 1 : 0) + (root.rightSideBarShown ? 1 : 0)
-        const room = Math.max(SideBarModel.minimumWidth, (root.width - root.middleLeast) / Math.max(1, shown))
+        const middleLeast = root.arrangementSettled ? Docking.layoutMinimumSize(dockingArea.uniqueName).width : 0
+        const room = Math.max(SideBarModel.minimumWidth, (root.width - middleLeast) / Math.max(1, shown))
         return Math.round(Math.min(bar.width, room))
     }
     function showInSideBar(dock, focus) {
@@ -1163,6 +1182,10 @@ ApplicationWindow {
         qcNotesTool.startAdding(ms)
     }
     function showPanel(dock) {
+        if (!root.sideBarsLoaded) {
+            root.shownBeforeSideBarsLoad.push(dock)
+            return
+        }
         if (!root.panelAvailable(dock))
             return
         root.analytics.panelOpened(root.panelName(dock))

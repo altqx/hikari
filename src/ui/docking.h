@@ -94,6 +94,7 @@ public:
     /// Width beside the main's view that the window minimum leaves out, because it can shrink (the side bars past their minimum).
     Q_INVOKABLE bool setShrinkableWidth(const QString &mainName, int width);
     Q_INVOKABLE QSize layoutMinimumSize(const QString &mainName) const;
+    Q_INVOKABLE int screenAvailableWidth(QQuickItem *item) const;
 
     // MUST KILL: `horizontal` means "keeps a one-tab bar even when alone", not an orientation
     Q_INVOKABLE void setPanelHeader(const QString &uniqueName, bool horizontal, QQuickItem *toolbar);
