@@ -39,6 +39,9 @@ class ReviewController final : public QObject {
     Q_PROPERTY(QVariantMap current READ current NOTIFY currentChanged FINAL)
 
 public:
+    enum class KeptFile { Kept, ChangedOnDisk, WriteFailed };
+    Q_ENUM(KeptFile)
+
     struct Wiring {
         application::AiReview &review;
         application::DocumentFiles &files;
@@ -84,12 +87,11 @@ public:
     // for the Project files when it changes any.
     Q_INVOKABLE QVariantList checkpoint(qulonglong turn) const;
     Q_INVOKABLE bool restore(qulonglong turn, bool force, bool forceFiles = false);
-    // 0: kept; 1: the file changed on disk since, so it waits unless `force`; 2: it could not be written.
-    Q_INVOKABLE int keepFile(qulonglong file, bool force);
+    Q_INVOKABLE KeptFile keepFile(qulonglong file, bool force);
     Q_INVOKABLE void undoFile(qulonglong file);
     // {text, lines: [{kind: "same"|"removed"|"added"|"gap", text}]}; text false: only the sizes are known.
     Q_INVOKABLE QVariantMap fileDiff(qulonglong file) const;
-    // The quit question: false when some files stayed waiting, because they changed on disk or couldn't be written.
+    // False when some files stayed waiting, because they changed on disk or couldn't be written.
     Q_INVOKABLE bool keepAllFiles();
     Q_INVOKABLE void discardAllFiles();
     Q_INVOKABLE bool isAiStep(int step) const;

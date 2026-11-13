@@ -13,7 +13,7 @@ namespace {
 GrantedFolder projectFolder(const std::string &root, bool staged)
 {
     const std::size_t slash = root.find_last_of("/\\");
-    return {std::string(kProjectFolder), slash == std::string::npos ? root : root.substr(slash + 1), root, staged};
+    return {std::string(kProjectFolderHandle), slash == std::string::npos ? root : root.substr(slash + 1), root, staged};
 }
 
 }
@@ -191,7 +191,7 @@ std::optional<std::string> Api::writeTarget(const Caller &caller, const Json &pa
     if (!folder || !folder->isString() || !path || !path->isString())
         return std::nullopt;
     std::optional<std::string> root;
-    if (caller.reviewed && !caller.project.empty() && folder->asString() == kProjectFolder)
+    if (caller.reviewed && !caller.project.empty() && folder->asString() == kProjectFolderHandle)
         root = caller.project;
     for (const auto &[id, granted] : m_folders)
         if (id == caller.id && granted.handle == folder->asString())
