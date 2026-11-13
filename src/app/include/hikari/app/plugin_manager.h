@@ -1,6 +1,7 @@
 #pragma once
 
 #include "hikari/plugins/installer.h"
+#include "hikari/plugins/marketplace.h"
 
 #include <QObject>
 #include <QUrl>
@@ -32,8 +33,10 @@ public:
     explicit PluginManager(Folders folders, QObject *parent = nullptr);
 
     bool available() const { return m_installer.has_value(); }
+    const plugins::OfficialAuthor &officialAuthor() const { return m_official; }
+    void setOfficialAuthor(plugins::OfficialAuthor official);
     // Rows {id, name, version, description, enabled, keyId ("" when unsigned), source ("file" or "marketplace"),
-    // unrestricted, icon (a file URL, or empty), authors, homepage, permissions: [text], adds: [text], settings: [the
+    // unrestricted, official (signed by officialAuthor() under its handle), icon (a file URL, or empty), authors, homepage, permissions: [text], adds: [text], settings: [the
     // manifest's setting with its value], folders: [{id, title, path, writable}] remembered for it, autoUpdate,
     // previous (the version Roll back returns to, or ""), held (a newer version waiting for consent, or ""),
     // revoked, revokedReason, lastGood (the version to offer instead of a revoked one, or "")}, by name.
@@ -101,6 +104,7 @@ private:
 
     std::optional<plugins::Installer> m_installer;
     std::optional<plugins::InstallReview> m_review;
+    plugins::OfficialAuthor m_official = plugins::OfficialAuthor::hikarisub();
     QVariantList m_rows;
     QString m_problem;
 };
