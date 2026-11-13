@@ -429,6 +429,7 @@ constexpr HotkeyAction kActions[] = {
         {"GLOBAL_CYCLE_AN_BACK", 5315},
         {"GLOBAL_CYCLE_FSP", 5316},
         {"GLOBAL_CYCLE_FSP_BACK", 5317},
+        {"GLOBAL_SHOW_EXPLORER", 5337},
 };
 
 struct NameRow {
@@ -824,6 +825,7 @@ constexpr NameRow kNames[] = {
         {5315, "Cycle \\an back"},
         {5316, "Cycle \\fsp"},
         {5317, "Cycle \\fsp back"},
+        {5337, "Explorer panel"},
 };
 
 struct DefaultRow {

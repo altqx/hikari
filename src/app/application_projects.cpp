@@ -344,4 +344,27 @@ QString Application::projectMoveText(int shellWindow) const
                           : QCoreApplication::translate("HikariSub.Project", "This tab now uses the project %1.").arg(name);
 }
 
+QStringList Application::explorerExcludes(int shellWindow) const
+{
+    QStringList excludes;
+    for (const auto &pattern : windowSettings(shellWindow).list("explorer.exclude"))
+        excludes << QString::fromStdString(pattern);
+    return excludes;
+}
+
+int Application::tabOfFile(int shellWindow, const QString &path) const
+{
+    const QString wanted = QFileInfo(path).canonicalFilePath();
+    if (wanted.isEmpty())
+        return -1;
+    int index = 0;
+    for (const auto id : m_workspace.tabs(shellWindow)) {
+        if (const auto destination = m_files->destination(id);
+            destination && QFileInfo(QString::fromStdString(destination->value)).canonicalFilePath() == wanted)
+            return index;
+        ++index;
+    }
+    return -1;
+}
+
 }
