@@ -56,3 +56,7 @@
 
 # AU23: the lyrics fixtures keep their encodings and line ends byte for byte.
 /tests/fixtures/lyrics/** -text
+
+/tests/fixtures/au20/** -text
+/tests/fixtures/shape-kernel/** -text
+/tests/application/typesetting-graphs/** -text
