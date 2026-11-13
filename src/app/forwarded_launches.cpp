@@ -4,6 +4,8 @@
 #include "hikari/app/composition.h"
 #include "hikari/plugins/marketplace.h"
 
+#include "shown_objects.h"
+
 #include <QGuiApplication>
 #include <QLoggingCategory>
 #include <QQuickItem>
@@ -38,15 +40,10 @@ QString installLinkId(const QString &link)
 
 bool modalPopupOpen(QWindow *window)
 {
-    auto open = [](const QObject *root) {
-        const auto objects = root->findChildren<QObject *>();
-        return std::any_of(objects.begin(), objects.end(), [](const QObject *object) {
-            return object->inherits("QQuickPopup") && object->property("opened").toBool() &&
-                   object->property("modal").toBool();
-        });
-    };
-    auto *quick = qobject_cast<QQuickWindow *>(window);
-    return window && (open(window) || (quick && open(quick->contentItem())));
+    const auto objects = ui::shownObjects(window);
+    return std::any_of(objects.begin(), objects.end(), [](const QObject *object) {
+        return object->inherits("QQuickPopup") && object->property("opened").toBool() && object->property("modal").toBool();
+    });
 }
 
 }
