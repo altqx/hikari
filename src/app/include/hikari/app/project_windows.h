@@ -5,6 +5,7 @@
 
 #include <QObject>
 #include <QString>
+#include <QStringList>
 #include <QVariantList>
 
 #include <map>
@@ -31,6 +32,8 @@ public:
     static QString canonicalFolder(const QString &path);
 
     QString root(int window) const;
+    // Every window's Project folder.
+    QStringList roots() const;
     QString name(int window) const;
     std::optional<int> windowOf(const QString &root) const;
     // An empty root clears the window's Project; a set one goes first in Recent projects.

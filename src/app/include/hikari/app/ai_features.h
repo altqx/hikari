@@ -97,6 +97,12 @@ public:
         /// Whether Qt can start `agent` ("claude" or "codex"), found as Settings › AI › External agents finds it; the
         /// panel offers only these.
         std::function<bool(const QString &agent)> agentOnPath;
+        /// Whether this system's sandbox keeps an agent to its own files; Codex and ACP agents need it (Q413). Unset
+        /// counts as kept.
+        std::function<bool()> filesConfined;
+        /// Why agents' private tools channel can't open here, as on a Windows that can't make a pipe for their
+        /// AppContainer; empty when it can. Codex and ACP agents need it. Unset counts as open.
+        std::function<QString()> channelProblem;
         /// Finds an agent CLI ("claude" or "codex") and asks it for its version.
         std::function<void(const QString &agent, std::function<void(std::optional<backends::ai::AgentCli>, QString unresolvedShim)>)> findAgent;
         std::function<backends::ai::AgentInstall(const backends::ai::AgentCli &)> agentInstall;
@@ -123,6 +129,24 @@ public:
     backends::ai::AiRequests *requests() const;
     /// Kept across AI being switched off and on.
     void setProjectKeys(std::function<std::optional<std::string>(const std::string &project, const std::string &providerId)> keys);
+    /// Every open Project's folder; kept across AI being switched off and on.
+    void setProjectRoots(std::function<QStringList()> roots);
+    /// A Project opened or closed: custom ACP agents inside one stop being offered, and `agentsChanged` says when that
+    /// changed which agents are offered.
+    void projectsChanged();
+    bool confinesFiles() const;
+    /// Whether Codex and ACP agents can have a private tools channel; asked once.
+    bool channelOpens() const;
+    /// Why `agent` ("codex", "opencode", "agy") isn't offered: "sandbox", "channel", or empty when it is. Claude never
+    /// is refused.
+    QString refusal(const QString &agent) const;
+    /// Why the ACP agent at `program` isn't offered: "sandbox", "channel", "project" when it lies inside an open
+    /// Project, or empty.
+    QString acpRefusal(const QString &program) const;
+    /// Why a thread's external agent (`claude`, `codex` or `acp:<id>`, as in its `agent:` provider) can't start here.
+    QString agentRefusal(const QString &agent) const;
+    /// Found and not refused.
+    bool offersAgent(const QString &agent) const { return agentFound(agent) && refusal(agent).isEmpty(); }
     /// Null with AI off, or in builds that run their own sidecar.
     backends::ai::AiSidecarUpdater *updater() const;
     backends::ai::AiSignIn *signIn() const;
@@ -179,9 +203,14 @@ signals:
     /// `version` failed `initialize` or crashed twice (`reason` "initialize" or "crashed"); the previous sidecar runs
     /// again and `version` is skipped.
     void rolledBack(QString version, QString reason);
+    void agentsChanged();
 
 private:
     std::function<std::optional<std::string>(const std::string &, const std::string &)> m_projectKeys;
+    std::function<QStringList()> m_projectRoots;
+    QStringList m_refusedInProjects;
+    mutable std::optional<bool> m_channelOpens;
+    QStringList refusedInProjects() const;
     void apply();
     void startUpdates();
     void stage();

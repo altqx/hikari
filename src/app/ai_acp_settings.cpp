@@ -130,7 +130,9 @@ QVariantMap AiAcpSettings::find(const QString &command) const
 {
     const auto &acpCli = m_features.ports().acpCli;
     const QString path = acpCli && !command.trimmed().isEmpty() ? acpCli(command.trimmed()) : QString();
-    return {{QStringLiteral("found"), !path.isEmpty()}, {QStringLiteral("path"), QDir::toNativeSeparators(path)}};
+    return {{QStringLiteral("found"), !path.isEmpty()},
+            {QStringLiteral("path"), QDir::toNativeSeparators(path)},
+            {QStringLiteral("refused"), path.isEmpty() ? QString() : m_features.acpRefusal(path)}};
 }
 
 QString AiAcpSettings::newId()

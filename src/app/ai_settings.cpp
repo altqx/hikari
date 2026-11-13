@@ -1193,6 +1193,7 @@ QVariantMap AiSettings::agentRow(const QString &name) const
     const Agent &a = *m_agents.at(name);
     if (!a.cli)
         return {{QStringLiteral("found"), false}, {QStringLiteral("missing"), a.missing}};
+    const QString refused = m_features.refusal(name);
     backends::ai::AgentCompat compat;
     if (const backends::ai::AiSidecarUpdater *updater = m_features.updater())
         if (const auto it = updater->agentCompat().find(name); it != updater->agentCompat().end())
@@ -1201,6 +1202,7 @@ QVariantMap AiSettings::agentRow(const QString &name) const
         compat.minimum = QLatin1String(backends::ai::kAntigravityMinimumVersion);
     const bool updating = a.update && a.update->running();
     return {{QStringLiteral("found"), true},
+            {QStringLiteral("refused"), refused},
             {QStringLiteral("path"), shownPath(a.cli->path)},
             {QStringLiteral("version"), a.cli->version},
             {QStringLiteral("latest"), a.latest},

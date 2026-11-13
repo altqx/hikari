@@ -1695,6 +1695,7 @@ FocusScope {
             id: install
             readonly property var item: parent ? parent.item : ({})
             readonly property bool open: item.status === "open"
+            readonly property bool installed: item.status === "installed"
             readonly property bool fullTrust: item.tier === "unrestricted"
             readonly property var files: item.files ?? []
             readonly property var mainLines: files.length > 0 ? files[0].text.replace(/\n$/, "").split("\n") : []
@@ -1876,7 +1877,7 @@ FocusScope {
                 visible: !install.open
                 Layout.fillWidth: true
                 spacing: 6
-                Icon { iconRole: install.item.status === "installed" ? "plugin-installed" : "plugin-install"; size: 14 }
+                Icon { iconRole: install.installed ? "plugin-installed" : "plugin-install"; size: 14 }
                 Label {
                     objectName: "agentInstallStatus"
                     Layout.fillWidth: true
@@ -1986,6 +1987,7 @@ FocusScope {
                       : notice.kind === "refusal" ? qsTr("The model declined to answer.")
                       : notice.kind === "maxRequests" ? qsTr("The turn stopped after its most model requests.")
                       : notice.kind === "noModel" ? qsTr("Choose a chat model in Settings › AI")
+                      : notice.kind === "notOffered" ? qsTr("This agent can’t start here")
                       : notice.kind === "compactFailed" ? qsTr("Couldn’t compact the conversation")
                       : notice.kind === "nothingToCompact" ? qsTr("There’s nothing to compact yet.")
                       : notice.kind === "searchUsedUp" ? qsTr("%1 has no searches left").arg(panel.serviceName(notice.item.service ?? ""))
@@ -2005,6 +2007,11 @@ FocusScope {
                       : notice.kind === "failed" ? (notice.item.detail ?? "")
                       : notice.kind === "compactFailed" ? qsTr("The summary request failed twice (%1). Nothing was removed.").arg(notice.item.detail ?? "")
                       : notice.kind === "noSidecar" ? qsTr("HikariSub is still getting the AI component, or it couldn’t start.")
+                      : notice.kind === "notOffered" && notice.item.detail === "project"
+                        ? qsTr("Not offered: its command is inside an open project, which it could read.")
+                      : notice.kind === "notOffered" && notice.item.detail === "channel"
+                        ? qsTr("Not offered: HikariSub can’t open a private tools channel for it on this system.")
+                      : notice.kind === "notOffered" ? qsTr("Not offered: this system can’t keep it to its own folders.")
                       : notice.searchFailed ? qsTr("The search service answered %1. The answer goes on without searching the web.").arg(notice.item.status ?? 0)
                       : ""
             }
@@ -2047,7 +2054,8 @@ FocusScope {
                     onClicked: panel.logRequested()
                 }
                 Button {
-                    visible: notice.kind === "dailyCap" || notice.kind === "noModel" || notice.kind === "noSidecar" || notice.searchFailed
+                    visible: notice.kind === "dailyCap" || notice.kind === "noModel" || notice.kind === "noSidecar"
+                             || notice.kind === "notOffered" || notice.searchFailed
                     text: qsTr("Open Settings › AI")
                     onClicked: panel.settingsRequested()
                 }

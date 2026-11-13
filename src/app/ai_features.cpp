@@ -159,6 +159,8 @@ AiFeatures::Ports AiFeatures::defaultPorts(const QString &userFolder, api::Api *
                 broker.add("codex", std::move(*spec));
     };
     ports.agentOnPath = [](const QString &agent) { return !backends::ai::findAgentCli(agent).isEmpty(); };
+    ports.filesConfined = [] { return backends::sandbox::systemCoverage(backends::sandbox::Network::Any).files; };
+    ports.channelProblem = [] { return backends::ai::channelProblem(QStringLiteral("HikariSub.AI.Codex")); };
     ports.acpCli = [](const QString &command) {
         if (QFileInfo(command).isAbsolute())
             return QFileInfo(command).isExecutable() ? command : QString();
@@ -426,6 +428,8 @@ backends::ai::AiSidecarHost *AiFeatures::buildHost()
                 m_live->agents = std::make_unique<backends::ai::AgentBroker>();
                 if (m_ports.agents)
                     m_ports.agents(*m_live->agents, *m_live->keys);
+                if (!refusal(QStringLiteral("codex")).isEmpty())
+                    m_live->agents->remove("codex");
                 addAcpAgents();
                 m_live->agents->attach(*m_live->host);
                 m_live->mcp->attach(*m_live->host, *m_live->agents);
@@ -587,6 +591,7 @@ void AiFeatures::setCustomAgents(const std::vector<AcpAgent> &agents)
                                                                {QStringLiteral("arguments"), agent.arguments}})
                                          .toJson(QJsonDocument::Compact));
     m_settings.set(kCustomAgentsSetting, entries);
+    m_refusedInProjects = refusedInProjects();
 }
 
 std::vector<AiFeatures::AcpAgent> AiFeatures::acpAgents() const
@@ -601,7 +606,83 @@ std::vector<AiFeatures::AcpAgent> AiFeatures::acpAgents() const
     for (AcpAgent &agent : customAgents())
         if (!agent.program.isEmpty())
             out.push_back(std::move(agent));
+    std::erase_if(out, [this](const AcpAgent &agent) { return !acpRefusal(agent.program).isEmpty(); });
     return out;
+}
+
+void AiFeatures::setProjectRoots(std::function<QStringList()> roots)
+{
+    m_projectRoots = std::move(roots);
+    m_refusedInProjects = refusedInProjects();
+}
+
+QStringList AiFeatures::refusedInProjects() const
+{
+    QStringList ids;
+    for (const AcpAgent &custom : customAgents())
+        if (!custom.program.isEmpty() && acpRefusal(custom.program) == QLatin1String("project"))
+            ids << custom.id;
+    return ids;
+}
+
+void AiFeatures::projectsChanged()
+{
+    QStringList refused = refusedInProjects();
+    if (refused == m_refusedInProjects)
+        return;
+    m_refusedInProjects = std::move(refused);
+    if (m_live)
+        addAcpAgents();
+    emit agentsChanged();
+}
+
+bool AiFeatures::confinesFiles() const
+{
+    return !m_ports.filesConfined || m_ports.filesConfined();
+}
+
+bool AiFeatures::channelOpens() const
+{
+    if (!m_channelOpens)
+        m_channelOpens = !m_ports.channelProblem || m_ports.channelProblem().isEmpty();
+    return *m_channelOpens;
+}
+
+QString AiFeatures::refusal(const QString &agent) const
+{
+    if (agent == QLatin1String("claude"))
+        return {};
+    if (!confinesFiles())
+        return QStringLiteral("sandbox");
+    return channelOpens() ? QString() : QStringLiteral("channel");
+}
+
+QString AiFeatures::agentRefusal(const QString &agent) const
+{
+    if (!agent.startsWith(QLatin1String("acp:")))
+        return refusal(agent);
+    const QString id = agent.mid(4);
+    for (const AcpAgent &custom : customAgents())
+        if (custom.id == id)
+            return custom.program.isEmpty() ? QString() : acpRefusal(custom.program);
+    return refusal(id);
+}
+
+QString AiFeatures::acpRefusal(const QString &program) const
+{
+    if (!confinesFiles())
+        return QStringLiteral("sandbox");
+    if (!channelOpens())
+        return QStringLiteral("channel");
+    const QString real = QFileInfo(program).canonicalFilePath();
+    if (real.isEmpty() || !m_projectRoots)
+        return {};
+    for (const QString &root : m_projectRoots()) {
+        const QString folder = QDir::fromNativeSeparators(QFileInfo(root).canonicalFilePath());
+        if (!folder.isEmpty() && real.startsWith(folder + QLatin1Char('/')))
+            return QStringLiteral("project");
+    }
+    return {};
 }
 
 void AiFeatures::addAcpAgents()

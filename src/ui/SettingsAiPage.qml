@@ -301,6 +301,12 @@ ScrollView {
     }
     function agentFailed(row) { return row.outcome === "unchanged" || row.outcome === "failed" || row.outcome === "timedOut" }
     function agentNeedsUpdate(row) { return row.badge === "update" || row.badge === "unsupported" || row.badge === "broken" }
+    function refusalText(refused) {
+        return refused === "sandbox" ? qsTr("Not offered: this system can’t keep it to its own folders.")
+             : refused === "project" ? qsTr("Not offered: its command is inside an open project, which it could read.")
+             : refused === "channel" ? qsTr("Not offered: HikariSub can’t open a private tools channel for it on this system.")
+             : ""
+    }
     function agentLine(row, name) {
         if (!row.found)
             return row.missing ? row.missing : qsTr("Not found on PATH.")
@@ -543,6 +549,14 @@ ScrollView {
                 tone: program.badge.tone
                 text: program.badge.text
             }
+        }
+        Label {
+            objectName: "aiAgentRefused_" + program.agent
+            visible: text.length > 0
+            text: page.refusalText(program.row.refused ?? "")
+            color: Theme.warning
+            wrapMode: Text.Wrap
+            Layout.fillWidth: true
         }
         Label {
             objectName: "aiAgentLine_" + program.agent
@@ -2046,9 +2060,11 @@ ScrollView {
                             Label {
                                 visible: customAgents.editing !== customRow.modelData.id
                                 objectName: "aiCustomAgentLine"
-                                text: customRow.found.found ? customRow.found.path : qsTr("Not found on PATH.")
+                                readonly property string refused: page.refusalText(customRow.found.refused ?? "")
+                                text: refused.length > 0 ? refused : customRow.found.found ? customRow.found.path
+                                                                                           : qsTr("Not found on PATH.")
                                 textFormat: Text.PlainText
-                                color: Theme.muted
+                                color: refused.length > 0 ? Theme.warning : Theme.muted
                                 elide: Text.ElideMiddle
                                 Layout.fillWidth: true
                             }

@@ -1232,6 +1232,9 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     connect(m_projects.get(), &ProjectWindows::changed, this, &Application::applyWindowProject);
     connect(m_projects.get(), &ProjectWindows::changed, this, &Application::projectsChanged);
     connect(m_projects.get(), &ProjectWindows::changed, m_agent.get(), &AgentController::projectChanged);
+    m_ai->setProjectRoots([this] { return m_projects->roots(); });
+    connect(m_projects.get(), &ProjectWindows::changed, m_ai.get(), &AiFeatures::projectsChanged);
+    connect(m_ai.get(), &AiFeatures::agentsChanged, m_agent.get(), &AgentController::modelsChanged);
     connect(m_projects.get(), &ProjectWindows::recentChanged, this, &Application::recentProjectsChanged);
     m_copyColumns = int(m_settings->integer("grid.copyColumns") | (m_settings->integer("grid.copyColumnTags") & core::column::Tags));
     m_pasteColumns = int(m_settings->integer("grid.pasteColumns") | (m_settings->integer("grid.pasteColumnTags") & core::column::Tags));

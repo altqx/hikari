@@ -104,6 +104,18 @@
         <translation>어제</translation>
     </message>
     <message>
+        <source>This agent can’t start here</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not offered: its command is inside an open project, which it could read.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not offered: this system can’t keep it to its own folders.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>This project</source>
         <translation type="unfinished"></translation>
     </message>
@@ -531,6 +543,10 @@
     </message>
     <message>
         <source>Open in Plugins</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not offered: HikariSub can’t open a private tools channel for it on this system.</source>
         <translation type="unfinished"></translation>
     </message>
     <message numerus="yes">
@@ -14892,6 +14908,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>PATH에서 찾을 수 없습니다.</translation>
     </message>
     <message>
+        <source>Not offered: this system can’t keep it to its own folders.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not offered: its command is inside an open project, which it could read.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Found on PATH.</source>
         <translation>PATH에서 찾음.</translation>
     </message>
@@ -14954,6 +14978,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Copy</source>
         <translation>복사</translation>
+    </message>
+    <message>
+        <source>Not offered: HikariSub can’t open a private tools channel for it on this system.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>%1 is older than the oldest HikariSub supports (%2). Run this in a terminal:</source>

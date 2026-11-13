@@ -6,6 +6,7 @@
 #include "hikari/backends/ai_signin.h"
 
 #include <QDir>
+#include <QLoggingCategory>
 #include <QFile>
 #include <QFileInfo>
 #include <QPointer>
@@ -27,6 +28,8 @@
 namespace hikari::backends::ai {
 
 namespace {
+
+Q_LOGGING_CATEGORY(lcChannel, "hikari.ai.sandbox")
 
 constexpr qsizetype kMaxLineBytes = 64 << 20;
 constexpr int kCodexToolTimeoutSeconds = 24 * 60 * 60;
@@ -313,7 +316,10 @@ QString channelProblem(const QString &containerName)
     QString why;
     if (probe.listenPipe(launcher.containerSid(), [](qint64) { return false; }, &why))
         return {};
-    return why.isEmpty() ? launcher.coverage().missing : why;
+    if (why.isEmpty())
+        why = launcher.coverage().missing;
+    qCWarning(lcChannel) << "Codex and ACP agents aren't offered: their tools channel can't open:" << why;
+    return why;
 }
 
 std::unique_ptr<AgentGuard> acpGuard(AcpChannel channel)
