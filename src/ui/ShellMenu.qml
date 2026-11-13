@@ -33,6 +33,7 @@ Menu {
     }
     onOpened: layOut()
     onAboutToShow: {
+        ShellMenus.menuShowing()
         build()
         StatusHelp.menuOpened()
     }
