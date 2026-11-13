@@ -468,8 +468,8 @@ ApplicationWindow {
     readonly property var rightSideBarState: root.firstSideBarOnLeft ? root.sideBarsState.second : root.sideBarsState.first
     readonly property var leftSideBarEntries: root.sideBarEntries(root.leftSideBarState)
     readonly property var rightSideBarEntries: root.sideBarEntries(root.rightSideBarState)
-    readonly property bool leftSideBarShown: root.sideBarShows(root.leftSideBarState, root.leftSideBarEntries)
-    readonly property bool rightSideBarShown: root.sideBarShows(root.rightSideBarState, root.rightSideBarEntries)
+    readonly property bool leftSideBarShown: root.sideBarsLoaded && root.sideBarShows(root.leftSideBarState, root.leftSideBarEntries)
+    readonly property bool rightSideBarShown: root.sideBarsLoaded && root.sideBarShows(root.rightSideBarState, root.rightSideBarEntries)
     property var sideBarHomes: ({})
     property var sideBarOrigins: ({})
     Connections {

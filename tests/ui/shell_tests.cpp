@@ -6906,8 +6906,15 @@ private slots:
         QVERIFY(root->property("menuHasKeys").toBool());
         press(Qt::Key_Down);
         QCOMPARE(current(view)->property("subMenu").value<QObject *>(), named("viewLayoutMenu"));
-        press(Qt::Key_Down);
-        QCOMPARE(current(view)->property("subMenu").value<QObject *>(), panels);
+        QStringList between;
+        for (int presses = 0; current(view)->property("subMenu").value<QObject *>() != panels; ++presses) {
+            QVERIFY2(presses < 10, qPrintable(QStringLiteral("no Panels after 10 presses, at ") + current(view)->objectName()));
+            press(Qt::Key_Down);
+            if (current(view)->property("subMenu").value<QObject *>() != panels)
+                between << current(view)->objectName();
+        }
+        QCOMPARE(between, (QStringList{QStringLiteral("viewToggleLeftSideBar"), QStringLiteral("viewToggleRightSideBar"),
+                                       QStringLiteral("viewSwapSideBars"), QStringLiteral("viewResetSideBars")}));
         QVERIFY(showsHighlight(current(view)));
         press(Qt::Key_Right);
         QTRY_VERIFY(panels->property("opened").toBool());
@@ -7458,7 +7465,8 @@ private slots:
         QVERIFY(openPanelMenu(QStringLiteral("Reference")));
         const QStringList referenceItems = panelMenuItems();
         QCOMPARE(referenceItems, (QStringList{QStringLiteral("Compare with reference"), QStringLiteral("|"),
-                                              QStringLiteral("Move panel…"), QStringLiteral("Float"), QStringLiteral("|"), QStringLiteral("Lock layout"), QStringLiteral("|"),
+                                              QStringLiteral("Move panel…"), QStringLiteral("Move to the left side bar"),
+                                              QStringLiteral("Move to the right side bar"), QStringLiteral("Float"), QStringLiteral("|"), QStringLiteral("Lock layout"), QStringLiteral("|"),
                                               QStringLiteral("Close")}));
         QQuickItem *referenceHeader = dockHeader(QStringLiteral("Reference"));
         std::function<void(QQuickItem *)> noRepeat = [&](QQuickItem *from) {

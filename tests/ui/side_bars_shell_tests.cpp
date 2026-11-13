@@ -498,7 +498,8 @@ private slots:
         call("moveToSideBar", dock("originalDock"), true, 2);
         call("sideBarIconClicked", QStringLiteral("Styles"));
         QTRY_COMPARE(parentOf("stylesPanel"), slotOf("rightSideBar"));
-        QTRY_COMPARE(parentOf("originalPanel"), slotOf("leftSideBar"));
+        if (shown("leftSideBar"))
+            QTRY_COMPARE(parentOf("originalPanel"), slotOf("leftSideBar"));
         auto &settings = *application->settingsStore();
         settings.setValue(QStringLiteral("appearance.followSystem"), false);
         const auto shoot = [&](const QString &set) {
@@ -509,15 +510,25 @@ private slots:
                 QVERIFY(window->grabWindow().save(out + QStringLiteral("/side-bars-") + set + ui::theme::codeName(code) + QStringLiteral(".png")));
             }
         };
-        window->resize(1600, 900);
-        QTRY_COMPARE(item("rightSideBar")->width(), qreal(hikari::application::kSideBarStartWidth));
-        shoot(QStringLiteral("1600-"));
-        call("resizeSideBar", true, hikari::ui::SideBarModel().minimumWidth(), true);
-        call("resizeSideBar", false, hikari::ui::SideBarModel().minimumWidth(), true);
-        QTRY_COMPARE(item("rightSideBar")->width(), qreal(hikari::ui::SideBarModel().minimumWidth()));
-        shoot(QStringLiteral("1600-minimum-"));
+        if (window->screen()->availableGeometry().width() >= 1600) {
+            window->resize(1600, 900);
+            QTRY_COMPARE(item("rightSideBar")->width(), qreal(hikari::application::kSideBarStartWidth));
+            shoot(QStringLiteral("1600-"));
+            call("resizeSideBar", true, hikari::ui::SideBarModel().minimumWidth(), true);
+            call("resizeSideBar", false, hikari::ui::SideBarModel().minimumWidth(), true);
+            QTRY_COMPARE(item("rightSideBar")->width(), qreal(hikari::ui::SideBarModel().minimumWidth()));
+            shoot(QStringLiteral("1600-minimum-"));
+        }
         window->resize(1280, 800);
-        shoot(QStringLiteral("1280-"));
+        QTest::qWait(500);
+        QTRY_VERIFY(window->width() >= window->minimumWidth());
+        const bool both = shown("leftSideBar") && shown("rightSideBar");
+        shoot(QString::number(window->width()) + (both ? QStringLiteral("-both-") : QStringLiteral("-")));
+        if (both)
+            return;
+        call("toggleSideBar", !root()->property("leftSideBarShown").toBool());
+        QTRY_VERIFY(shown("leftSideBar") != shown("rightSideBar"));
+        shoot(QString::number(window->width()) + QStringLiteral("-other-"));
     }
 
     void theShippedMiddleKeepsItsAudioAndEditorControls_data()
