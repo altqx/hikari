@@ -19468,6 +19468,74 @@ private slots:
         QCOMPARE(findItem(body, QStringLiteral("pluginPanelPlaceholderText"))->property("text").toString(),
                  QStringLiteral("Notes helper isn’t installed."));
     }
+    void withAiOffShowingOrFloatingAPanelFocusesThatPanel()
+    {
+        QTemporaryDir home;
+        const auto put = [&](const QString &path, const QByteArray &bytes) {
+            QDir().mkpath(QFileInfo(home.filePath(path)).absolutePath());
+            QFile f(home.filePath(path));
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write(bytes);
+        };
+        put(QStringLiteral("plugins/com.example.notes/hikari-plugin.json"), R"({"id": "com.example.notes", "name": "Notes helper",
+            "version": "1.0.0", "api": 1, "main": "main.lua", "authors": ["Ana"],
+            "contributes": {"panels": [{"id": "notes", "title": "Notes", "area": "bottom"}]}})");
+        put(QStringLiteral("plugins/com.example.notes/main.lua"), R"~(
+            hikari.panels.on('notes', function(e)
+                if e.kind == 'show' then hikari.panels.render('notes', {kind = 'label', id = 'said', text = 'hello'}) end
+            end)
+        )~");
+        put(QStringLiteral("plugins.json"), R"({"format": 1, "plugins": {"com.example.notes": {"version": "1.0.0", "enabled": true}}})");
+        app::Application::Options options;
+        options.playbackAudio = false;
+        options.plugins = {home.filePath(QStringLiteral("plugins")), home.filePath(QStringLiteral("plugin-data")),
+                           home.filePath(QStringLiteral("cache")), home.filePath(QStringLiteral("plugins.json"))};
+        options.pluginHelper = QStringLiteral(HIKARI_PLUGIN_HELPER);
+        restartWith(options);
+        application->settingsStore()->set(app::AiFeatures::kOffSetting, true);
+        auto restore = qScopeGuard([&] {
+            application->settingsStore()->set(app::AiFeatures::kOffSetting, false);
+            restartWith(app::Application::Options());
+        });
+        QTRY_VERIFY(!application->ai()->on());
+        QVERIFY(application->openFile(writeFile(dir, "ai-off-panels.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,Hi\n")));
+
+        QObject *root = engine->rootObjects().first();
+        const auto showsAndFloatsWithFocus = [&](QObject *dock, const QByteArray &panelName) {
+            QVERIFY(dock);
+            item("lineText")->forceActiveFocus();
+            QVERIFY(QMetaObject::invokeMethod(root, "showPanel", Q_ARG(QVariant, QVariant::fromValue(dock))));
+            QTRY_VERIFY(dock->property("isOpen").toBool());
+            QQuickItem *panel = nullptr;
+            QTRY_VERIFY2((panel = qobject_cast<QQuickItem *>(named(panelName.constData()))), panelName.constData());
+            const auto where = [&] {
+                const QQuickItem *focused = panel->window() ? panel->window()->activeFocusItem() : nullptr;
+                return QStringLiteral("%1 visible %2, focus on %3").arg(QString::fromUtf8(panelName)).arg(panel->isVisible())
+                    .arg(focused ? focused->objectName() + u'/' + QString::fromUtf8(focused->metaObject()->className()) : QStringLiteral("none"));
+            };
+            QTRY_VERIFY2(panel->hasActiveFocus(), qPrintable(where()));
+            item("lineText")->forceActiveFocus();
+            QVERIFY(!panel->hasActiveFocus());
+            QVERIFY(QMetaObject::invokeMethod(root, "setPanelFloating", Q_ARG(QVariant, QVariant::fromValue(dock)), Q_ARG(QVariant, true)));
+            QTRY_VERIFY(dock->property("isFloating").toBool());
+            QTRY_VERIFY2(panel->hasActiveFocus(), qPrintable(where()));
+            QVERIFY(QMetaObject::invokeMethod(root, "setPanelFloating", Q_ARG(QVariant, QVariant::fromValue(dock)), Q_ARG(QVariant, false)));
+            QTRY_VERIFY(!dock->property("isFloating").toBool());
+            QTRY_VERIFY2(panel->hasActiveFocus(), qPrintable(where()));
+        };
+        showsAndFloatsWithFocus(named("nodeGraphDock"), "nodeGraphPanelHost");
+        if (QTest::currentTestFailed())
+            return;
+
+        const QString dock = QStringLiteral("plugin:com.example.notes/notes");
+        const auto at = [&](const char *prefix) { return (QLatin1String(prefix) + dock).toUtf8(); };
+        QObject *show = nullptr;
+        QTRY_VERIFY((show = named(at("panelShow").constData())));
+        QVERIFY(QMetaObject::invokeMethod(show, "triggered"));
+        QObject *notes = nullptr;
+        QTRY_VERIFY((notes = item<QObject>(at("pluginDock_").constData())) && notes->property("isOpen").toBool());
+        showsAndFloatsWithFocus(notes, at("pluginPanel_"));
+    }
     void aQmlPanelDocksBesideADeclarativeOne()
     {
         QTemporaryDir home;

@@ -136,7 +136,6 @@ MenuItem {
             font.family: control.font.family
             font.pointSize: control.font.pointSize
             font.italic: detail
-            opacity: detail ? 0.85 : 1
             color: control.enabled && (control.down || control.highlighted) ? control.palette.highlightedText : Theme.muted
         }
     }

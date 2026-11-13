@@ -145,6 +145,26 @@ class SessionTabsTests : public QObject {
         return true;
     }
 
+    void writeTwoWindowSession(const QTemporaryDir &home, bool closed)
+    {
+        application::SessionTab a, b;
+        a.subtitles = writeSubtitles(dir.filePath(QStringLiteral("kept-a.ass")), "a").toStdString();
+        b.subtitles = writeSubtitles(dir.filePath(QStringLiteral("kept-b.ass")), "b").toStdString();
+        b.window = 1;
+        application::SessionWindow first, second;
+        first.geometry = application::SessionGeometry{10, 20, 800, 600};
+        first.currentTab = 0;
+        second.geometry = application::SessionGeometry{900, 20, 640, 480};
+        second.currentTab = 1;
+        second.unknown = R"({"future":1})";
+        writeSession(home.filePath(QStringLiteral("last-session.json")),
+                     app::writeSessionJson(application::Session{"HikariSub", closed, {a, b}, 1, {first, second}}, closed));
+    }
+    static QStringList keptNames(const app::Application &a)
+    {
+        return a.lastSessionSummary().value(QStringLiteral("names")).toStringList();
+    }
+
 private slots:
     void tabTraversalWrapsAndSkipsTheReference()
     {
@@ -1110,6 +1130,99 @@ private slots:
         file.write(app::writeSessionJson(application::Session{"HikariSub", true, {dummy}, {}}, true));
         file.close();
         QVERIFY(b.lastSessionSummary().value(QStringLiteral("names")).toStringList().isEmpty());
+    }
+
+    void closingTheLastTabLeavesAnEmptySession()
+    {
+        QTemporaryDir home;
+        writeTwoWindowSession(home, true);
+        app::Application a(options(home));
+        QVERIFY(a.openFile(writeSubtitles(dir.filePath(QStringLiteral("closed-last.ass")), "c")));
+        QCOMPARE(readSession(a.lastSessionPath()).tabs.size(), std::size_t(1));
+        QVERIFY(a.reviewCloseTab(0).isEmpty());
+        a.finishClose();
+        QVERIFY(a.tabs().isEmpty());
+        QVERIFY(readSession(a.lastSessionPath()).tabs.empty());
+        QVERIFY(keptNames(a).isEmpty());
+    }
+
+    void closingARestoredSessionLeavesAnEmptySession()
+    {
+        QTemporaryDir home;
+        writeTwoWindowSession(home, true);
+        app::Application a(options(home));
+        QVERIFY(loadSession(a));
+        QCOMPARE(a.tabs().size(), qsizetype(2));
+        while (!a.tabs().isEmpty()) {
+            QVERIFY(a.reviewCloseTab(0).isEmpty());
+            a.finishClose();
+        }
+        QVERIFY(readSession(a.lastSessionPath()).tabs.empty());
+    }
+
+    void savesFromHomeKeepTheStoredDocumentsOfEveryWindow()
+    {
+        QTemporaryDir home;
+        writeTwoWindowSession(home, true);
+        app::Application a(options(home));
+        QVERIFY(a.tabs().isEmpty());
+        QVERIFY(a.saveLastSession());
+        a.shellWindowClosed(1);
+        a.endTabDrag();
+        const application::Session kept = readSession(a.lastSessionPath());
+        QCOMPARE(kept.tabs.size(), std::size_t(2));
+        QCOMPARE(kept.tabs[1].window, std::size_t(1));
+        QCOMPARE(kept.activeTab, std::optional<std::size_t>(1));
+        QCOMPARE(kept.windows.size(), std::size_t(2));
+        QCOMPARE(kept.windows[1].currentTab, std::optional<std::size_t>(1));
+        QCOMPARE(kept.windows[1].geometry, std::optional(application::SessionGeometry{900, 20, 640, 480}));
+        QCOMPARE(kept.windows[1].unknown, std::string(R"({"future":1})"));
+        QCOMPARE(keptNames(a), (QStringList{QStringLiteral("kept-a.ass"), QStringLiteral("kept-b.ass")}));
+    }
+
+    void quittingFromHomeKeepsTheDocumentsAndEndsACrashedSession()
+    {
+        QTemporaryDir home;
+        writeTwoWindowSession(home, false);
+        {
+            app::Application a(options(home));
+            QCOMPARE(a.startupSession(), QStringLiteral("crash"));
+            QVERIFY(a.lastSessionCrashed());
+        }
+        const application::Session kept = readSession(home.filePath(QStringLiteral("last-session.json")));
+        QCOMPARE(kept.tabs.size(), std::size_t(2));
+        QVERIFY(kept.closed);
+        app::Application b(options(home));
+        QVERIFY(!b.lastSessionCrashed());
+        QCOMPARE(keptNames(b), (QStringList{QStringLiteral("kept-a.ass"), QStringLiteral("kept-b.ass")}));
+    }
+
+    void savingASessionFileWithNoDocumentsStillWritesIt()
+    {
+        QTemporaryDir home;
+        writeTwoWindowSession(home, true);
+        app::Application a(options(home));
+        const QString file = home.filePath(QStringLiteral("empty.hksession"));
+        QCOMPARE(a.saveSessionTo(QUrl::fromLocalFile(file)), QString());
+        QVERIFY(QFile::exists(file));
+        QVERIFY(readSession(file).tabs.empty());
+    }
+
+    void removingAMissingFileKeepsItsRestoredTab()
+    {
+        QTemporaryDir home;
+        application::SessionTab gone;
+        gone.subtitles = dir.filePath(QStringLiteral("never-there.ass")).toStdString();
+        writeSession(home.filePath(QStringLiteral("last-session.json")),
+                     app::writeSessionJson(application::Session{"HikariSub", true, {gone}, {}, {}}, true));
+        app::Application a(options(home));
+        QVERIFY(loadSession(a));
+        QCOMPARE(a.unresolvedRestores().size(), qsizetype(1));
+        a.removeRestore(0);
+        QVERIFY(a.unresolvedRestores().isEmpty());
+        const application::Session kept = readSession(a.lastSessionPath());
+        QCOMPARE(kept.tabs.size(), std::size_t(1));
+        QVERIFY(kept.tabs[0].subtitles.empty());
     }
 
     void recentFilesKeepTheirTimesAndMissingEntries()
