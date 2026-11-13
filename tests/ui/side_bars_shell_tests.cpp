@@ -124,6 +124,10 @@ class SideBarsShellTests : public QObject {
     }
     QVariant dock(const char *name) const { return QVariant::fromValue(item<QObject>(name)); }
     int middleLeast() const { return shell(QStringLiteral("Docking.layoutMinimumSize(dockingArea.uniqueName).width")).toInt(); }
+    bool screenFitsBothSideBars() const
+    {
+        return QTest::qWaitFor([&] { return middleLeast() > 0; }) && shell(QStringLiteral("bothSideBarsFit()")).toBool();
+    }
     QVariant shell(const QString &code) const
     {
         QQmlExpression expression(qmlContext(root()), root(), code);
@@ -261,6 +265,8 @@ private slots:
     void swapPutsTheAiSideBarOnTheOtherEdge()
     {
         start(QStringLiteral(R"({"first":{"panels":["Log"]},"second":{"panels":["Search"]}})"));
+        if (!screenFitsBothSideBars())
+            QSKIP("needs a screen wide enough for both side bars, like screen-2560x1440.json");
         QCOMPARE(parentOf("logPanel"), slotOf("leftSideBar"));
         call("swapSideBars");
         QCOMPARE(application->settingsStore()->text("appearance.aiSideBar"), QStringLiteral("end"));
@@ -283,6 +289,8 @@ private slots:
     void f6GoesFromTheLeftSideBarThroughTheMiddleToTheRight()
     {
         start(QStringLiteral(R"({"first":{"panels":["Log"]},"second":{"panels":["Search"]}})"));
+        if (!screenFitsBothSideBars())
+            QSKIP("needs a screen wide enough for both side bars, like screen-2560x1440.json");
         QVariant order;
         QVERIFY(QMetaObject::invokeMethod(root(), "sideBarPanelCycle", Q_RETURN_ARG(QVariant, order)));
         const QVariantList panels = order.metaType() == QMetaType::fromType<QJSValue>() ? order.value<QJSValue>().toVariant().toList()
@@ -444,6 +452,8 @@ private slots:
     {
         start({}, 1280);
         QVERIFY(application->openFile(writeSubtitles()));
+        if (!screenFitsBothSideBars())
+            QSKIP("needs a screen wide enough for both side bars, like screen-2560x1440.json");
         if (!shown("leftSideBar"))
             call("toggleSideBar", true);
         QTRY_VERIFY(shown("leftSideBar") && shown("rightSideBar"));
@@ -465,8 +475,9 @@ private slots:
         QVERIFY(application->openFile(writeSubtitles()));
         QTRY_VERIFY(middleLeast() > 0);
         const int least = middleLeast();
-        if (least + 2 * hikari::ui::SideBarModel().minimumWidth() <= screenWidth)
-            QSKIP(qPrintable(QStringLiteral("needs a screen too narrow for both side bars, like screen-1280x800.json (screen %1, middle %2)")
+        const int bar = hikari::ui::SideBarModel().minimumWidth();
+        if (least + 2 * bar <= screenWidth || least + bar > screenWidth)
+            QSKIP(qPrintable(QStringLiteral("needs a screen too narrow for both side bars but wide enough for one, like screen-1280x800.json (screen %1, middle %2)")
                                  .arg(screenWidth).arg(least)));
         QTRY_VERIFY(shown("rightSideBar") && !shown("leftSideBar"));
         const auto fits = [&] {

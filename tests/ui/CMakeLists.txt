@@ -457,8 +457,15 @@ hikari_add_qttest(hikari_ui_side_bars_shell_tests SOURCES side_bars_shell_tests.
 target_compile_definitions(hikari_ui_side_bars_shell_tests PRIVATE
     HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures")
 add_dependencies(hikari_ui_side_bars_shell_tests hikari_media_fixtures hikari_media_helper)
+foreach(mode offscreen xvfb)
+    if(TEST hikari_ui_side_bars_shell_tests.${mode})
+        set_tests_properties(hikari_ui_side_bars_shell_tests.${mode} PROPERTIES TIMEOUT 300)
+    endif()
+endforeach()
 add_test(NAME hikari_ui_side_bars_shell_tests.screen2560
-    COMMAND $<TARGET_FILE:hikari_ui_side_bars_shell_tests> theShippedMiddleKeepsItsAudioAndEditorControls)
+    COMMAND $<TARGET_FILE:hikari_ui_side_bars_shell_tests> theShippedMiddleKeepsItsAudioAndEditorControls
+            swapPutsTheAiSideBarOnTheOtherEdge f6GoesFromTheLeftSideBarThroughTheMiddleToTheRight
+            aNarrowWindowShrinksTheSideBarsBeforeTheMiddle)
 set_tests_properties(hikari_ui_side_bars_shell_tests.screen2560 PROPERTIES
     ENVIRONMENT "QT_QPA_PLATFORM=offscreen:configfile=${CMAKE_CURRENT_SOURCE_DIR}/screen-2560x1440.json"
     LABELS "qttest;offscreen" TIMEOUT 300)
