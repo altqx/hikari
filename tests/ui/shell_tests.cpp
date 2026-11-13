@@ -7676,6 +7676,68 @@ private slots:
         return out;
     }
 
+    void everyPanelDocksInASmallWindowAndStaysReachable()
+    {
+        QCOMPARE(window->size(), QSize(1280, 800));
+        QVERIFY(application->openFile(episode));
+        QVERIFY(application->openReference(original));
+        QTRY_VERIFY(item<QObject>("referenceDock")->property("isOpen").toBool());
+        QObject *root = engine->rootObjects().first();
+        const QVariantList docks = root->property("dockList").value<QJSValue>().toVariant().toList();
+        QVERIFY(docks.size() > 10);
+        QList<QObject *> docked;
+        for (const QVariant &value : docks) {
+            auto *dock = value.value<QObject *>();
+            QVariant available;
+            QVERIFY(QMetaObject::invokeMethod(root, "panelAvailable", Q_RETURN_ARG(QVariant, available),
+                                              Q_ARG(QVariant, QVariant::fromValue(dock))));
+            if (!available.toBool())
+                continue;
+            const QString panel = dock->property("uniqueName").toString();
+            QElapsedTimer showing;
+            showing.start();
+            QVERIFY(QMetaObject::invokeMethod(root, "showPanel", Q_ARG(QVariant, QVariant::fromValue(dock))));
+            QVERIFY2(showing.elapsed() < 2000, qPrintable(panel));
+            QTRY_VERIFY2(dock->property("isOpen").toBool(), qPrintable(panel));
+            docked << dock;
+        }
+        bool ticked = false;
+        QTimer::singleShot(0, [&] { ticked = true; });
+        QTRY_VERIFY_WITH_TIMEOUT(ticked, 1000);
+
+        auto *panels = named("panelsMenu");
+        QVERIFY(panels);
+        QStringList names;
+        for (QObject *dock : std::as_const(docked)) {
+            const QString panel = dock->property("uniqueName").toString();
+            names << panel;
+            QVERIFY2(dock->property("isOpen").toBool(), qPrintable(panel));
+            QVERIFY2(ui::Docking().hasPlace(panel), qPrintable(panel));
+            QObject *entry = named(qPrintable(QStringLiteral("panelShow") + panel));
+            QVERIFY2(entry && entry->property("enabled").toBool(), qPrintable(panel));
+        }
+
+        const QString spelling = QStringLiteral("Spellchecker");
+        QVERIFY(names.contains(spelling));
+        QQuickItem *header = nullptr;
+        QTRY_VERIFY((header = dockHeader(spelling)) != nullptr);
+        QTRY_VERIFY2(header->height() >= header->implicitHeight(),
+                     qPrintable(QStringLiteral("%1 < %2").arg(header->height()).arg(header->implicitHeight())));
+        const QRect place = ui::Docking().placeInLayout(spelling);
+        const QSize minimum = ui::Docking().minimumSize(spelling);
+        QVERIFY2(place.height() >= minimum.height(),
+                 qPrintable(QStringLiteral("%1 < %2").arg(place.height()).arg(minimum.height())));
+        QQuickItem *button = findItem(header, QStringLiteral("dockMenuButton"));
+        QVERIFY(button && button->isVisible());
+        const QRectF shown = button->mapRectToScene(QRectF(0, 0, button->width(), button->height()));
+        const QRectF inside(QPointF(0, 0), button->window()->size());
+        QVERIFY2(inside.contains(shown), qPrintable(QStringLiteral("menu button at %1,%2 %3x%4 in a %5x%6 window")
+                                                        .arg(shown.x()).arg(shown.y()).arg(shown.width()).arg(shown.height())
+                                                        .arg(inside.width()).arg(inside.height())));
+        QVERIFY(openPanelMenu(spelling));
+        QVERIFY(QMetaObject::invokeMethod(named("panelOptionsMenu"), "close"));
+    }
+
     void panelMenusReadInTheOrderTheyShow()
     {
         window->resize(1280, 1000);
@@ -7921,10 +7983,14 @@ private slots:
             QTRY_VERIFY(settled(panel));
         }
         QQuickItem *editor = item("editorPanel");
+        QTRY_VERIFY(settled(editor) && settled(editor));
         const qreal minimumHeight = editor->property("minimumSize").toSizeF().height();
         const qreal before = editor->height();
         QVERIFY(docking->resizeInLayout(editor->property("dockName").toString(), 0, 60 - int(before), 0, 0));
-        QTRY_VERIFY(editor->height() < before || editor->height() <= minimumHeight + 0.5);
+        QTRY_VERIFY2(editor->height() < before || editor->height() <= minimumHeight + 0.5,
+                     qPrintable(QStringLiteral("%1 from %2, minimum %3, engine %4")
+                                    .arg(editor->height()).arg(before).arg(minimumHeight)
+                                    .arg(docking->minimumSize(editor->property("dockName").toString()).height())));
         QVERIFY2(editor->height() >= minimumHeight - 0.5, qPrintable(QString::number(editor->height())));
         auto *videoDock = item<QObject>("videoDock");
         application->workspaceLayout().resizePanel(videoDock, 470, application->workspaceLayout().panelSize(videoDock).height());
