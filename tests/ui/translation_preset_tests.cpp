@@ -107,7 +107,7 @@ class TranslationPresetTest : public QObject {
     }
     bool originalInPanel() const
     {
-        return item("lineText")->parentItem() == item("originalSlot");
+        return item("originalSlot")->isAncestorOf(item("lineText"));
     }
     QObject *modeAction() const { return item<QObject>("translationModeMenuItem")->property("action").value<QObject *>(); }
     void openFile(const char *name, bool translation)

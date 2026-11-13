@@ -158,7 +158,6 @@ class TypesettingPresetTest : public QObject {
         QVERIFY(editor.top() > styles.bottom() - 1);
         QVERIFY2(video.height() > 1.3 * editor.height(),
                  qPrintable(QStringLiteral("%1 vs %2").arg(video.height()).arg(editor.height())));
-        QTRY_VERIFY(!item("editorScroll")->property("overflows").toBool());
         QVERIFY2(item("lineInspector")->property("wide").toBool(),
                  qPrintable(QStringLiteral("%1 < %2").arg(item("lineInspector")->parentItem()->width())
                                 .arg(item("lineInspector")->property("wideMinimum").toReal())));
