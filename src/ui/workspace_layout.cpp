@@ -468,6 +468,32 @@ QByteArray moveWindows(const QByteArray &payload, QPoint by, bool forFile)
     return QJsonDocument(o).toJson(QJsonDocument::Compact);
 }
 
+QByteArray onMainWindowOf(const QByteArray &payload, const QByteArray &own)
+{
+    const QJsonObject ownObject = QJsonDocument::fromJson(own).object();
+    QJsonObject ownMain;
+    for (const auto &w : ownObject.value(QStringLiteral("mainWindows")).toArray())
+        if (w.toObject().value(QStringLiteral("uniqueName")).toString() == QStringLiteral("Classic"))
+            ownMain = w.toObject();
+    if (ownMain.isEmpty())
+        return payload;
+    const QPoint by = mainWindowPosition(ownObject) - mainWindowPosition(QJsonDocument::fromJson(payload).object());
+    QJsonObject o = QJsonDocument::fromJson(moveWindows(payload, by, false)).object();
+    QJsonArray mains = o.value(QStringLiteral("mainWindows")).toArray();
+    for (qsizetype i = 0; i < mains.size(); ++i) {
+        QJsonObject window = mains.at(i).toObject();
+        if (window.value(QStringLiteral("uniqueName")).toString() != QStringLiteral("Classic"))
+            continue;
+        for (const QString key : {QStringLiteral("geometry"), QStringLiteral("normalGeometry"),
+                                  QStringLiteral("windowState"), QStringLiteral("screenIndex"), QStringLiteral("screenSize")})
+            if (ownMain.contains(key))
+                window.insert(key, ownMain.value(key));
+        mains.replace(i, window);
+    }
+    o.insert(QStringLiteral("mainWindows"), mains);
+    return QJsonDocument(o).toJson(QJsonDocument::Compact);
+}
+
 }
 
 QByteArray WorkspaceArrangement::serialiseForFile() const
@@ -1167,7 +1193,10 @@ bool WorkspaceLayoutController::saveForQuit()
 
 bool WorkspaceLayoutController::saveForQuit(const WorkspaceArrangement &active)
 {
-    const bool saved = write(active);
+    WorkspaceArrangement placed = active;
+    if (m_loaded && !placed.payload.isEmpty())
+        placed.payload = onMainWindowOf(placed.payload, serialiseWindow());
+    const bool saved = write(placed);
     if (m_beforeNodeEffects && !nodeEffectsFile().isEmpty())
         writeAtomically(nodeEffectsFile(), envelope(serialiseWindow()));
     if (m_loaded)
