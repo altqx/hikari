@@ -228,19 +228,34 @@ TEST(AgentPolicy, EffectsWritesAskInManualModeLikeOtherWrites)
     }
 }
 
+TEST(AgentPolicy, RunningAMacroAlwaysAsksAndMarksNeverAsk)
+{
+    EXPECT_EQ(riskOf("automation.run_macro", Json::object({{"macro", "Strip tags"}})), Risk::Programs);
+    for (const std::string operation : {"marks.set", "marks.clear"})
+        EXPECT_FALSE(asksPermission(operation)) << operation;
+}
+
+TEST(AgentPolicy, SettingKeyframesAsksLikeOtherWrites)
+{
+    ASSERT_EQ(riskOf("video.set_keyframes", Json::object()), Risk::None);
+    EXPECT_TRUE(asksPermission("video.set_keyframes"));
+    EXPECT_EQ(decide(AgentMode::Manual, "video.set_keyframes", false, false), Decision::Ask);
+    EXPECT_EQ(decide(AgentMode::Auto, "video.set_keyframes", false, false), Decision::Judge);
+}
+
 TEST(AgentPolicy, EveryWriteOperationIsClassified)
 {
     std::set<std::string> writes;
     for (const hikari::api::Operation &op : hikari::api::Api::registry().operations())
         if (op.access == hikari::api::Access::Write)
             writes.insert(op.name);
-    EXPECT_EQ(writes, (std::set<std::string>{"automation.run", "commands.run", "document.apply", "document.group_begin",
-                                             "document.group_end", "effects.apply",
-                                             "effects.save", "files.write",
-                                             "karaoke.align", "karaoke.apply_template", "panels.close", "panels.focus",
-                                             "panels.open", "plugins.install", "plugins.run",
+    EXPECT_EQ(writes, (std::set<std::string>{"automation.run", "automation.run_macro", "commands.run", "document.apply",
+                                             "document.group_begin", "document.group_end",
+                                             "effects.apply", "effects.save", "files.write",
+                                             "karaoke.align", "karaoke.apply_template", "marks.clear", "marks.set",
+                                             "panels.close", "panels.focus", "panels.open", "plugins.install", "plugins.run",
                                              "plugins.scaffold", "selection.set", "settings.set",
-                                             "translation.project_write", "typeset.apply"}))
+                                             "translation.project_write", "typeset.apply", "video.set_keyframes"}))
         << "Classify the new write in alwaysAsk and docs/ai-agent.md, then add it here.";
 }
 
