@@ -120,3 +120,15 @@ TEST(Tiers, PresetStoresShareTheProjectsPresetsFile)
         EXPECT_EQ(projectPathOf(id, root), root / ".hikari" / "presets.toml") << id;
     }
 }
+
+TEST(Tiers, TheDictionaryMergesAndProjectTomlSettingsGoPerKey)
+{
+    const std::filesystem::path root = "/show";
+    EXPECT_EQ(tierStore("dictionary")->rule, TierRule::Merged);
+    EXPECT_EQ(projectPathOf("dictionary", root), root / ".hikari" / "dictionary.txt");
+    for (const char *id : {"exportDefault", "translationPair"}) {
+        ASSERT_NE(tierStore(id), nullptr) << id;
+        EXPECT_EQ(tierStore(id)->rule, TierRule::PerKey) << id;
+        EXPECT_EQ(projectPathOf(id, root), root / ".hikari" / "project.toml") << id;
+    }
+}

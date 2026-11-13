@@ -23,6 +23,8 @@ export function checkedTranslate(params: unknown): TranslateParams {
         throw fail("needs a stream");
     if (typeof p.language !== "string" || p.language.trim().length === 0)
         throw fail("needs a language");
+    if (p.sourceLanguage !== undefined && typeof p.sourceLanguage !== "string")
+        throw fail("takes sourceLanguage as a text");
     const models = p.models as Record<string, unknown> | undefined;
     if (!models || !isModel(models.translator) || !isModel(models.reviewer))
         throw fail("needs translator and reviewer models");
@@ -51,6 +53,7 @@ export async function translate(params: TranslateParams, signal: AbortSignal, de
                 files[file.name as ProjectFileName] = file.data;
     const pipeline = new TranslationPipeline({
         language: params.language,
+        sourceLanguage: params.sourceLanguage?.trim() || undefined,
         models: params.models,
         lines: params.lines,
         before: params.before,

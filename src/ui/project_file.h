@@ -45,6 +45,8 @@ public:
     };
     // project.local.toml's lists replace project.toml's, and its plugin settings go over them key by key.
     PluginTable plugins() const;
+    // `[export]` as a JSON object, project.local.toml's keys over project.toml's; empty without the table.
+    std::string exportJson() const;
 
     application::ai::ProjectKeyNames aiKeyNames() const;
     // A key project.toml holds instead of naming one: an `[ai.keys]` provider's, or a `[keys]` entry's.

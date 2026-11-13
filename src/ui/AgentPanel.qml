@@ -1695,6 +1695,7 @@ FocusScope {
             id: install
             readonly property var item: parent ? parent.item : ({})
             readonly property bool open: item.status === "open"
+            readonly property bool installed: item.status === "installed"
             readonly property bool fullTrust: item.tier === "unrestricted"
             readonly property var files: item.files ?? []
             readonly property var mainLines: files.length > 0 ? files[0].text.replace(/\n$/, "").split("\n") : []
@@ -1876,7 +1877,7 @@ FocusScope {
                 visible: !install.open
                 Layout.fillWidth: true
                 spacing: 6
-                Icon { iconRole: install.item.status === "installed" ? "plugin-installed" : "plugin-install"; size: 14 }
+                Icon { iconRole: install.installed ? "plugin-installed" : "plugin-install"; size: 14 }
                 Label {
                     objectName: "agentInstallStatus"
                     Layout.fillWidth: true

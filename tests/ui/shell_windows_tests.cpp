@@ -48,7 +48,7 @@ const char *const kPanels[] = {"videoDock",     "audioDock",      "originalDock"
                                "referenceDock", "timingDock",     "searchDock",    "automationDock",
                                "spellDock",     "stylesDock",     "templateDock",  "logDock",
                                "postprocessorDock", "qcNotesDock", "reviewDock", "agentDock", "nodeGraphDock",
-                               "nodeInspectorDock", "nodeSourcesDock"};
+                               "nodeInspectorDock", "nodeSourcesDock", "explorerDock"};
 
 QString writeSubtitles(const QString &path, const char *text, int width, const char *more = "")
 {
@@ -1005,6 +1005,30 @@ private slots:
         QTRY_COMPARE(titles(shellId(second)), (QStringList{"second.ass*"}));
         QTRY_COMPARE(second->geometry(), secondPlace);
         QCOMPARE(titles(0), (QStringList{"first.ass*"}));
+    }
+
+    void quittingFromTheSecondWindowBringsEachWindowBackToItsOwnPlace()
+    {
+        const QRect firstPlace(40, 60, 900, 600);
+        const QRect secondPlace(300, 200, 900, 650);
+        first()->setGeometry(firstPlace);
+        second->setGeometry(secondPlace);
+        QTRY_COMPARE(first()->geometry(), firstPlace);
+        QTRY_COMPARE(second->geometry(), secondPlace);
+        QCOMPARE(application->workspace().activeWindow(), 1);
+        application->setSessionRestore(2);
+        QVERIFY(application->reviewClose(QStringLiteral("quit")).isEmpty());
+        application->finishClose();
+        QVERIFY(application->quitApproved());
+        QTRY_VERIFY(!first()->isVisible());
+        QTRY_VERIFY(!second || !second->isVisible());
+        tearDownAfterQuit();
+
+        relaunch();
+        QTRY_VERIFY((second = otherShellWindow(first())));
+        QTRY_VERIFY(second->property("arrangementSettled").toBool());
+        QTRY_COMPARE(second->geometry(), secondPlace);
+        QTRY_COMPARE(first()->geometry(), firstPlace);
     }
 
     void aCrashRestoreReopensEveryWindow()

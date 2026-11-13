@@ -288,6 +288,8 @@ export interface TranslateParams {
     /** The Document whose project folder holds the glossary, characters and style, read through HA1. */
     document?: number;
     language: string;
+    /** Absent lets the models detect it. */
+    sourceLanguage?: string;
     models: { translator: SessionModel; reviewer: SessionModel };
     lines: { key: number; text: string; speaker?: string; start: number; end: number }[];
     /** The translated Lines just before the run, oldest first. */
