@@ -11,6 +11,13 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
+#include <string>
+
+#ifdef _WIN32
+#include <windows.h>
+#include <aclapi.h>
+#include <sddl.h>
+#endif
 
 using namespace hikari::backends::sandbox;
 
@@ -78,6 +85,45 @@ protected:
 
     QTemporaryDir m_root;
 };
+
+#ifdef _WIN32
+bool aceFor(const QString &path, const QString &sidText)
+{
+    PSID sid = nullptr;
+    if (!ConvertStringSidToSidW(reinterpret_cast<LPCWSTR>(sidText.utf16()), &sid))
+        return false;
+    PACL acl = nullptr;
+    PSECURITY_DESCRIPTOR descriptor = nullptr;
+    bool found = false;
+    if (GetNamedSecurityInfoW(reinterpret_cast<LPCWSTR>(QDir::toNativeSeparators(path).utf16()), SE_FILE_OBJECT,
+                              DACL_SECURITY_INFORMATION, nullptr, nullptr, &acl, nullptr, &descriptor) == ERROR_SUCCESS &&
+        acl)
+        for (DWORD i = 0; i < acl->AceCount && !found; ++i) {
+            void *ace = nullptr;
+            found = GetAce(acl, i, &ace) && static_cast<ACE_HEADER *>(ace)->AceType == ACCESS_ALLOWED_ACE_TYPE &&
+                    EqualSid(&static_cast<ACCESS_ALLOWED_ACE *>(ace)->SidStart, sid);
+        }
+    LocalFree(descriptor);
+    LocalFree(sid);
+    return found;
+}
+
+bool setProtectedDacl(const QString &path, const wchar_t *sddl)
+{
+    PSECURITY_DESCRIPTOR descriptor = nullptr;
+    if (!ConvertStringSecurityDescriptorToSecurityDescriptorW(sddl, SDDL_REVISION_1, &descriptor, nullptr))
+        return false;
+    BOOL present = FALSE, defaulted = FALSE;
+    PACL acl = nullptr;
+    std::wstring native = QDir::toNativeSeparators(path).toStdWString();
+    const bool ok = GetSecurityDescriptorDacl(descriptor, &present, &acl, &defaulted) &&
+                    SetNamedSecurityInfoW(native.data(), SE_FILE_OBJECT,
+                                          DACL_SECURITY_INFORMATION | PROTECTED_DACL_SECURITY_INFORMATION, nullptr,
+                                          nullptr, acl, nullptr) == ERROR_SUCCESS;
+    LocalFree(descriptor);
+    return ok;
+}
+#endif
 
 TEST_F(Sandbox, TheSystemsCoverageIsWhatALauncherGets)
 {
@@ -209,6 +255,42 @@ TEST_F(Sandbox, KillTreeEndsTheChildrenToo)
     ASSERT_TRUE(process.waitForStarted(10'000));
     launcher.killTree();
     EXPECT_TRUE(process.waitForFinished(5'000));
+}
+
+TEST_F(Sandbox, AFolderEveryAppContainerCanAlreadyReadGetsNoAceOfItsOwn)
+{
+    ASSERT_TRUE(QDir(m_root.path()).mkpath(QStringLiteral("packages")));
+    ASSERT_TRUE(setProtectedDacl(path("packages"), L"D:P(A;OICI;FA;;;OW)(A;OICI;FA;;;SY)(A;OICI;GRGX;;;AC)"));
+    Profile p = profile();
+    p.readExecute << path("packages");
+    Launcher launcher(p);
+    ASSERT_FALSE(launcher.containerSid().isEmpty()) << launcher.coverage().missing.toStdString();
+    EXPECT_TRUE(launcher.coverage().missing.isEmpty()) << launcher.coverage().missing.toStdString();
+    EXPECT_FALSE(aceFor(path("packages"), launcher.containerSid()));
+}
+
+TEST_F(Sandbox, AFolderTheContainerCantReachGetsItsAce)
+{
+    Launcher launcher(profile());
+    ASSERT_FALSE(launcher.containerSid().isEmpty()) << launcher.coverage().missing.toStdString();
+    EXPECT_TRUE(launcher.coverage().missing.isEmpty()) << launcher.coverage().missing.toStdString();
+    EXPECT_TRUE(aceFor(path("readonly"), launcher.containerSid()));
+    EXPECT_TRUE(aceFor(path("allowed"), launcher.containerSid()));
+}
+
+TEST_F(Sandbox, AFolderTheUserCantChangeIsReportedAsRefused)
+{
+    ASSERT_TRUE(QDir(m_root.path()).mkpath(QStringLiteral("locked")));
+    ASSERT_TRUE(setProtectedDacl(path("locked"), L"D:P(A;OICI;GRGX;;;OW)(A;OICI;GRGX;;;WD)"));
+    Profile p = profile();
+    p.readExecute << path("locked");
+    Launcher launcher(p);
+    ASSERT_FALSE(launcher.containerSid().isEmpty()) << launcher.coverage().missing.toStdString();
+    const QString missing = launcher.coverage().missing;
+    EXPECT_TRUE(missing.contains(QDir::toNativeSeparators(path("locked")))) << missing.toStdString();
+    EXPECT_TRUE(missing.contains(QStringLiteral("can't change its permissions"))) << missing.toStdString();
+    EXPECT_FALSE(missing.contains(QDir::toNativeSeparators(path("readonly")))) << missing.toStdString();
+    EXPECT_FALSE(aceFor(path("locked"), launcher.containerSid()));
 }
 #endif
 

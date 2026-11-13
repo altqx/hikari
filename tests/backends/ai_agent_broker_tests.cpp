@@ -22,10 +22,52 @@
 #include <string>
 #include <vector>
 
+#ifdef _WIN32
+#include <windows.h>
+#include <psapi.h>
+#endif
+
 using namespace hikari::backends::ai;
 using hikari::api::Json;
 
 namespace {
+
+#ifdef _WIN32
+// MUST KILL: sandbox grants are never revoked, so a test can't grant Qt's own folder; agents load a copy instead.
+class QtCopy
+{
+public:
+    QtCopy() : m_path(qgetenv("PATH"))
+    {
+        HMODULE modules[1024];
+        DWORD bytes = 0;
+        if (!m_dir.isValid() || !EnumProcessModules(GetCurrentProcess(), modules, sizeof modules, &bytes))
+            return;
+        const QString qtBin = QDir::cleanPath(QLibraryInfo::path(QLibraryInfo::BinariesPath));
+        for (DWORD i = 0; i < bytes / sizeof(HMODULE); ++i) {
+            wchar_t name[MAX_PATH];
+            const DWORD length = GetModuleFileNameW(modules[i], name, MAX_PATH);
+            const QFileInfo module(QDir::fromNativeSeparators(QString::fromWCharArray(name, int(length))));
+            if (module.absolutePath().compare(qtBin, Qt::CaseInsensitive) == 0 &&
+                !QFile::copy(module.absoluteFilePath(), m_dir.filePath(module.fileName())))
+                return;
+        }
+        qputenv("PATH", QDir::toNativeSeparators(m_dir.path()).toLocal8Bit() + ';' + m_path);
+        m_ready = true;
+    }
+    ~QtCopy() { qputenv("PATH", m_path); }
+    QtCopy(const QtCopy &) = delete;
+    QtCopy &operator=(const QtCopy &) = delete;
+
+    bool ready() const { return m_ready; }
+    QString folder() const { return m_dir.path(); }
+
+private:
+    QTemporaryDir m_dir;
+    QByteArray m_path;
+    bool m_ready = false;
+};
+#endif
 
 void ensureApp()
 {
@@ -655,8 +697,13 @@ TEST_F(AgentBrokerTest, AStdioOnlyAcpAgentReachesTheSessionsChannelThroughTheBri
 {
     const QString work = dir.filePath(QStringLiteral("work"));
     AgentSpec s = acpAgent(QStringLiteral(HIKARI_FAKE_ACP_AGENT), {}, {}, work, QStringLiteral(HIKARI_TEST_MCP_HTTP_BRIDGE));
-    s.profile->readExecute << QLibraryInfo::path(QLibraryInfo::LibrariesPath) << QLibraryInfo::path(QLibraryInfo::BinariesPath)
-                           << QLibraryInfo::path(QLibraryInfo::PluginsPath);
+#ifdef _WIN32
+    const QtCopy qt;
+    ASSERT_TRUE(qt.ready());
+    s.profile->readExecute << qt.folder();
+#else
+    s.profile->readExecute << QLibraryInfo::path(QLibraryInfo::LibrariesPath) << QLibraryInfo::path(QLibraryInfo::PluginsPath);
+#endif
     broker.add("acp:fake", s);
     ASSERT_FALSE(*call(kAgentStart, Json::object({{"process", 1}, {"agent", "acp:fake"}, {"args", Json::array({"--yolo"})},
                                                   {"session", "t1"}})));
@@ -705,12 +752,12 @@ TEST(PrivatePipe, AChannelOpensForAnAgentsAppContainer)
 TEST(PrivatePipe, OnlyTheAgentsOwnAppContainerOpensItsChannel)
 {
     ensureApp();
-    const auto profile = [](const char *name) {
+    const QtCopy qt;
+    ASSERT_TRUE(qt.ready());
+    const auto profile = [&qt](const char *name) {
         return hikari::backends::sandbox::Profile{
             .name = QString::fromLatin1(name),
-            .readExecute = {QFileInfo(QStringLiteral(HIKARI_TEST_MCP_HTTP_BRIDGE)).absolutePath(),
-                            QLibraryInfo::path(QLibraryInfo::LibrariesPath), QLibraryInfo::path(QLibraryInfo::BinariesPath),
-                            QLibraryInfo::path(QLibraryInfo::PluginsPath)},
+            .readExecute = {QFileInfo(QStringLiteral(HIKARI_TEST_MCP_HTTP_BRIDGE)).absolutePath(), qt.folder()},
             .network = hikari::backends::sandbox::Network::Any};
     };
     hikari::backends::sandbox::Launcher agent(profile("HikariSub.Test.Agent"));

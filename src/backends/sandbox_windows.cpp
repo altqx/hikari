@@ -38,37 +38,55 @@ HRESULT appContainerSid(const std::wstring &name, PSID *sid)
     return hr;
 }
 
-bool hasAce(PACL acl, PSID sid, DWORD access)
+DWORD fileAccess(DWORD access)
+{
+    GENERIC_MAPPING mapping{FILE_GENERIC_READ, FILE_GENERIC_WRITE, FILE_GENERIC_EXECUTE, FILE_ALL_ACCESS};
+    MapGenericMask(&access, &mapping);
+    return access;
+}
+
+/// Whether `acl` already gives an AppContainer `access`, through its own SID or ALL APPLICATION PACKAGES.
+bool covered(PACL acl, PSID sid, DWORD access)
 {
     if (!acl)
-        return false;
+        return true;
+    BYTE anyPackage[SECURITY_MAX_SID_SIZE]{};
+    DWORD size = sizeof anyPackage;
+    const bool haveAnyPackage = CreateWellKnownSid(WinBuiltinAnyPackageSid, nullptr, anyPackage, &size);
+    DWORD granted = 0, denied = 0;
     for (DWORD i = 0; i < acl->AceCount; ++i) {
         void *ace = nullptr;
         if (!GetAce(acl, i, &ace))
             continue;
         const auto *header = static_cast<ACE_HEADER *>(ace);
-        if (header->AceType != ACCESS_ALLOWED_ACE_TYPE)
+        const bool allows = header->AceType == ACCESS_ALLOWED_ACE_TYPE;
+        if ((!allows && header->AceType != ACCESS_DENIED_ACE_TYPE) || (header->AceFlags & INHERIT_ONLY_ACE))
             continue;
-        const auto *allowed = static_cast<ACCESS_ALLOWED_ACE *>(ace);
-        if (EqualSid(const_cast<DWORD *>(&allowed->SidStart), sid) && (allowed->Mask & access) == access)
-            return true;
+        const auto *entry = static_cast<ACCESS_ALLOWED_ACE *>(ace);
+        auto *aceSid = const_cast<DWORD *>(&entry->SidStart);
+        if (!EqualSid(aceSid, sid) && !(haveAnyPackage && EqualSid(aceSid, anyPackage)))
+            continue;
+        const DWORD mask = fileAccess(entry->Mask);
+        if (allows)
+            granted |= mask & ~denied;
+        else
+            denied |= mask & ~granted;
     }
-    return false;
+    return (granted & access) == access;
 }
 
-/// Adds an allow ACE for the container, unless one already covers `access`: rewriting a folder's ACL walks its tree.
-bool grant(PSID sid, const Grant &g)
+/// Adds an allow ACE for the container unless it already has `access`: rewriting a folder's ACL walks its tree.
+DWORD grant(PSID sid, const Grant &g)
 {
     PACL current = nullptr;
     PSECURITY_DESCRIPTOR descriptor = nullptr;
-    if (GetNamedSecurityInfoW(g.path.c_str(), SE_FILE_OBJECT, DACL_SECURITY_INFORMATION, nullptr, nullptr, &current,
-                              nullptr, &descriptor) != ERROR_SUCCESS)
-        return false;
-    GENERIC_MAPPING mapping{FILE_GENERIC_READ, FILE_GENERIC_WRITE, FILE_GENERIC_EXECUTE, FILE_ALL_ACCESS};
-    DWORD mapped = g.access;
-    MapGenericMask(&mapped, &mapping);
-    bool ok = hasAce(current, sid, mapped);
-    if (!ok) {
+    if (const DWORD read = GetNamedSecurityInfoW(g.path.c_str(), SE_FILE_OBJECT, DACL_SECURITY_INFORMATION, nullptr,
+                                                 nullptr, &current, nullptr, &descriptor);
+        read != ERROR_SUCCESS)
+        return read;
+    const DWORD mapped = fileAccess(g.access);
+    DWORD result = ERROR_SUCCESS;
+    if (!covered(current, sid, mapped)) {
         EXPLICIT_ACCESSW entry{};
         entry.grfAccessPermissions = mapped;
         entry.grfAccessMode = GRANT_ACCESS;
@@ -77,13 +95,21 @@ bool grant(PSID sid, const Grant &g)
         entry.Trustee.TrusteeType = TRUSTEE_IS_WELL_KNOWN_GROUP;
         entry.Trustee.ptstrName = static_cast<LPWSTR>(sid);
         PACL updated = nullptr;
-        ok = SetEntriesInAclW(1, &entry, current, &updated) == ERROR_SUCCESS &&
-             SetNamedSecurityInfoW(const_cast<LPWSTR>(g.path.c_str()), SE_FILE_OBJECT, DACL_SECURITY_INFORMATION,
-                                   nullptr, nullptr, updated, nullptr) == ERROR_SUCCESS;
+        result = SetEntriesInAclW(1, &entry, current, &updated);
+        if (result == ERROR_SUCCESS)
+            result = SetNamedSecurityInfoW(const_cast<LPWSTR>(g.path.c_str()), SE_FILE_OBJECT,
+                                           DACL_SECURITY_INFORMATION, nullptr, nullptr, updated, nullptr);
         LocalFree(updated);
     }
     LocalFree(descriptor);
-    return ok;
+    return result;
+}
+
+QString refusal(const Grant &g, DWORD error)
+{
+    const QString path = QString::fromStdWString(g.path);
+    return error == ERROR_ACCESS_DENIED ? QStringLiteral("%1 (this user can't change its permissions)").arg(path)
+                                        : QStringLiteral("%1 (error %2)").arg(path).arg(error);
 }
 
 void collect(std::vector<Grant> &grants, const QStringList &paths, DWORD access)
@@ -185,8 +211,8 @@ Launcher::Launcher(std::optional<Profile> profile) : m(std::make_unique<Impl>())
     collect(grants, profile->readWrite, GENERIC_ALL);
     QStringList refused;
     for (const Grant &g : grants)
-        if (!grant(sid, g))
-            refused << QString::fromStdWString(g.path);
+        if (const DWORD error = grant(sid, g); error != ERROR_SUCCESS)
+            refused << refusal(g, error);
 
     m->security.AppContainerSid = sid;
     if (profile->network == Network::Any) {

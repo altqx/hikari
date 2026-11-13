@@ -691,6 +691,8 @@ void AgentBroker::start(const api::Json &params, const Answer &answer)
                 environment.insert(QString::fromStdString(name), QString::fromStdString(value.asString()));
 
     auto launcher = std::make_unique<sandbox::Launcher>(spec->second.profile);
+    if (spec->second.profile && !launcher->coverage().missing.isEmpty())
+        qCWarning(lcChannel) << "the agent's sandbox is incomplete:" << launcher->coverage().missing;
     std::unique_ptr<McpServer> channel;
     ChannelAddress address;
     if (spec->second.channelArguments || spec->second.channelGuard) {
