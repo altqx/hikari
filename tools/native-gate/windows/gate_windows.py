@@ -2933,6 +2933,7 @@ MW_HOTKEYS = ('version = 1\n\n[global]\nGLOBAL_MOVE_TAB_TO_NEW_WINDOW = "Ctrl+Al
               'GLOBAL_MOVE_TAB_TO_WINDOW = "Ctrl+Alt+Shift+M"\nGLOBAL_QUIT = "Ctrl+Alt+Shift+Q"\n')
 # The tablet reaches the primary monitor only, so both windows share it: the second overlaps the first's right part.
 MW_PLACES = ((0, 0, 640, 720), (384, 40, 640, 720))
+MW_LEVEL = ((0, 0, 512, 720), (512, 0, 512, 720))
 
 
 def mw_windows(st=None):
@@ -3013,10 +3014,10 @@ def mw_place(win, rect):
     return json.loads(raw) if raw else {"error": lines[-6:]}
 
 
-def mw_layout():
+def mw_layout(places=MW_PLACES):
     """The window holding a.ass at the first place, the other at the second."""
     wins = sorted(mw_windows(), key=lambda w: not mw_holding([w], "a.ass"))
-    for w, rect in zip(wins, MW_PLACES):
+    for w, rect in zip(wins, places):
         mw_place(w, rect)
     time.sleep(1)
     return mw_windows()
@@ -3093,7 +3094,8 @@ def step_windows():
     wins = mw_start()
     ev = mw_evidence("windows-0-start", wins)
     if len(wins) != 1:
-        for item in ("windows-drag-out", "windows-drag-between", "windows-drag-back"):
+        for item in ("windows-drag-out", "windows-drag-out-on-screen", "windows-drag-between-level",
+                     "windows-drag-between", "windows-drag-back"):
             verdict(item, "failed", f"the three documents did not open as tabs of one window: {mw_tabs(wins)}", ev)
         return
     mw_place(wins[0], MW_PLACES[0])
@@ -3111,15 +3113,30 @@ def step_windows():
     verdict("windows-drag-out", "observed" if out_ok and under else "failed",
             f"c.ass's tab dragged off the window to {drop} and released: windows {mw_tabs(wins)}; the new window at "
             f"{new and (new['x'], new['y'], new['w'], new['h'])}, the drop point inside it: {under}", ev + ev1)
+    if new is not None:
+        screens = monitors()
+        rect = (new["x"], new["y"], new["w"], new["h"])
+        whole = any(m["x"] <= rect[0] and m["y"] <= rect[1] and rect[0] + rect[2] <= m["x"] + m["w"]
+                    and rect[1] + rect[3] <= m["y"] + m["h"] for m in screens)
+        verdict("windows-drag-out-on-screen", "observed" if whole and under else "failed",
+                f"the new window at {rect} holds the drop point {drop}: {under}; whole on a monitor "
+                f"{[(m['x'], m['y'], m['w'], m['h']) for m in screens]}: {whole}", ev1)
     if not out_ok:
-        for item in ("windows-drag-between", "windows-drag-back"):
+        for item in ("windows-drag-between-level", "windows-drag-between", "windows-drag-back"):
             verdict(item, "failed", "not reached: the drag out did not open a window", ev1)
         return
-    wins = mw_layout()
-    second = mw_holding(wins, "c.ass")
-    wins, why = mw_drag_onto("b.ass", second["hwnd"], "drag-between")
-    ev2 = mw_evidence("windows-2-drag-between", wins)
+    wins = mw_layout(MW_LEVEL)
+    wins, why = mw_drag_onto("b.ass", mw_holding(wins, "c.ass")["hwnd"], "drag-between-level")
+    ev2 = mw_evidence("windows-2-drag-between-level", wins)
     between = mw_merged(wins)
+    verdict("windows-drag-between-level", "observed" if between else "failed",
+            f"b.ass's tab dragged sideways onto the second window's tab bar at the same height: windows "
+            f"{mw_tabs(wins)} {why}", ev2)
+    if not between:
+        wins = mw_layout()
+        wins, why = mw_drag_onto("b.ass", mw_holding(wins, "c.ass")["hwnd"], "drag-between")
+        ev2 = mw_evidence("windows-2-drag-between", wins)
+        between = mw_merged(wins)
     verdict("windows-drag-between", "observed" if between else "failed",
             f"b.ass's tab dragged from the first window onto the second's tab bar: windows {mw_tabs(wins)} {why}", ev2)
     first = mw_holding(wins, "a.ass")

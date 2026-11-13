@@ -1524,6 +1524,18 @@ private slots:
         QCOMPARE(ui::wholeOnScreens(QRect(-100, 900, 2000, 1200), {left}, fallback), QRect(0, 0, 1600, 1000));
     }
 
+    void wholeOnScreenAtMovesAFrameWholeOntoTheScreenHoldingThePoint()
+    {
+        const QRect primary(0, 0, 1024, 768);
+        const QRect second(1024, 0, 1024, 768);
+        const QList<QRect> both{primary, second};
+        QCOMPARE(ui::wholeOnScreenAt(QRect(870, 580, 877, 720), QPoint(900, 600), both, primary), QRect(147, 48, 877, 720));
+        QCOMPARE(ui::wholeOnScreenAt(QRect(100, 40, 800, 600), QPoint(130, 60), both, primary), QRect(100, 40, 800, 600));
+        QCOMPARE(ui::wholeOnScreenAt(QRect(1000, 100, 800, 600), QPoint(1100, 150), both, primary), QRect(1024, 100, 800, 600));
+        QCOMPARE(ui::wholeOnScreenAt(QRect(100, 100, 2000, 1000), QPoint(200, 200), both, primary), QRect(0, 0, 1024, 768));
+        QCOMPARE(ui::wholeOnScreenAt(QRect(5000, 40, 800, 600), QPoint(5050, 50), both, primary), QRect(224, 40, 800, 600));
+    }
+
     void mostlyOnScreensKeepsAFrameHalfOnTheScreensAndMovesAMostlyGoneOne()
     {
         const QRect left(0, 0, 1600, 1000);

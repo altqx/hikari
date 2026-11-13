@@ -628,6 +628,18 @@ QRect fitOnScreens(const QRect &frame, int strip, const QList<QRect> &screens, c
     return {QPoint(x, y), outer};
 }
 
+namespace {
+
+QRect wholeOn(const QRect &frame, const QRect &target)
+{
+    const QSize outer = frame.size().boundedTo(target.size());
+    const int x = std::clamp(frame.x(), target.left(), target.right() + 1 - outer.width());
+    const int y = std::clamp(frame.y(), target.top(), target.bottom() + 1 - outer.height());
+    return {QPoint(x, y), outer};
+}
+
+}
+
 QRect wholeOnScreens(const QRect &frame, const QList<QRect> &screens, const QRect &fallback)
 {
     if (std::ranges::any_of(screens, [&](const QRect &screen) { return screen.contains(frame); }))
@@ -641,10 +653,15 @@ QRect wholeOnScreens(const QRect &frame, const QList<QRect> &screens, const QRec
             target = screen;
         }
     }
-    const QSize outer = frame.size().boundedTo(target.size());
-    const int x = std::clamp(frame.x(), target.left(), target.right() + 1 - outer.width());
-    const int y = std::clamp(frame.y(), target.top(), target.bottom() + 1 - outer.height());
-    return {QPoint(x, y), outer};
+    return wholeOn(frame, target);
+}
+
+QRect wholeOnScreenAt(const QRect &frame, QPoint point, const QList<QRect> &screens, const QRect &fallback)
+{
+    const auto holding = std::ranges::find_if(screens, [&](const QRect &screen) { return screen.contains(point); });
+    if (holding == screens.end())
+        return wholeOnScreens(frame, screens, fallback);
+    return holding->contains(frame) ? frame : wholeOn(frame, *holding);
 }
 
 QRect mostlyOnScreens(const QRect &frame, const QList<QRect> &screens, const QRect &fallback)
@@ -659,8 +676,8 @@ QRect mostlyOnScreens(const QRect &frame, const QList<QRect> &screens, const QRe
 
 namespace {
 
-QRect clientOnScreens(const QWindow &window, const QRect &client,
-                      QRect (*fit)(const QRect &, const QList<QRect> &, const QRect &))
+template <typename Fit>
+QRect clientOnScreens(const QWindow &window, const QRect &client, Fit fit)
 {
     QScreen *primary = QGuiApplication::primaryScreen();
     if (!primary)
@@ -682,6 +699,13 @@ QRect clientWholeOnScreens(const QWindow &window, const QRect &client)
 QRect clientMostlyOnScreens(const QWindow &window, const QRect &client)
 {
     return clientOnScreens(window, client, mostlyOnScreens);
+}
+
+QRect clientWholeOnScreenAt(const QWindow &window, const QRect &client, QPoint point)
+{
+    return clientOnScreens(window, client, [point](const QRect &frame, const QList<QRect> &screens, const QRect &fallback) {
+        return wholeOnScreenAt(frame, point, screens, fallback);
+    });
 }
 
 void setLayoutLocked(bool locked)

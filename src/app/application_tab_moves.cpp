@@ -75,7 +75,7 @@ bool Application::moveTabToNewWindow(qulonglong document, QPointF global, bool p
         return false;
     QQuickWindow &window = *shellQuickWindow(*opened);
     if (place && !size.isEmpty()) {
-        const QRect at = ui::clientWholeOnScreens(window, QRect(global.toPoint() - kTabGrabbedAt, size));
+        const QRect at = ui::clientWholeOnScreenAt(window, QRect(global.toPoint() - kTabGrabbedAt, size), global.toPoint());
         application::SessionWindow placed;
         placed.geometry = application::SessionGeometry{at.x(), at.y(), at.width(), at.height()};
         placeShellWindow(window, placed);
