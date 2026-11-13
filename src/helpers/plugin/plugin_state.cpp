@@ -427,6 +427,11 @@ int netCall(lua_State *L)
     return request(L, Area::Net);
 }
 
+int jobCall(lua_State *L)
+{
+    return request(L, Area::Job);
+}
+
 void addHandler(lua_State *L, const std::string &name, int function)
 {
     lua_getfield(L, LUA_REGISTRYINDEX, kEventsKey);
@@ -731,6 +736,7 @@ std::expected<void, std::string> PluginState::runPrelude()
         {documentPrelude(), {lock, unlock}},
         {uiPrelude(), {uiCall, listen}},
         {filesPrelude(), {filesCall, netCall}},
+        {jobPrelude(), {jobCall, call}},
     };
     for (const auto &[source, functions] : preludes) {
         if (luaL_loadbufferx(L, source.data(), source.size(), "=hikari", "t") != 0) {

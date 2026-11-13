@@ -5,6 +5,8 @@
 #include "hikari/application/ai_review.h"
 #include "hikari/application/audio_karaoke.h"
 #include "hikari/application/automation_services.h"
+#include "hikari/application/dialog_memory.h"
+#include "hikari/application/row_marks.h"
 #include "hikari/application/furigana.h"
 #include "hikari/application/karaoke_split.h"
 #include "hikari/application/template_preview.h"
@@ -142,6 +144,50 @@ public:
     virtual ~AutomationHost() = default;
     // `done` runs once, later, only when this answers Started.
     virtual LuaStart run(const LuaScript &script, std::function<void(LuaRun)> done) = 0;
+};
+
+struct MacroInfo {
+    std::string script; // the script's name
+    std::string file;   // its file name, as aliases know it
+    std::string macro;
+    std::string description;
+    int ordinal = 0;
+    bool enabled = true; // loaded, and shown in the user's window
+    std::string disabledReason;
+};
+
+// One dialog's answer: its ScriptDialogMemory key, the values by control name, the button's label.
+struct DialogAnswer {
+    std::string key;
+    application::NamedDialogValues values;
+    std::string button;
+};
+
+struct MacroRequest {
+    std::string file, macro;
+    std::vector<DialogAnswer> answers;
+    bool showAnswered = false;
+};
+
+enum class MacroStart { Started, Busy, NoDocument, NotFound, Ambiguous, Disabled };
+
+// The user's loaded Automation macros, run as the menu runs them.
+class MacroHost {
+public:
+    virtual ~MacroHost() = default;
+    virtual std::vector<MacroInfo> macros() const = 0;
+    // `done` runs once, later, only when this answers Started.
+    virtual MacroStart runMacro(const MacroRequest &request, std::function<void(LuaRun)> done) = 0;
+};
+
+// The editing target's video keyframes.
+class KeyframeHost {
+public:
+    virtual ~KeyframeHost() = default;
+    // Replaces the keyframes as Open keyframes does; with `file`, writes them there first and opens that file.
+    // Answers why it could not.
+    virtual std::optional<std::string> setKeyframes(const std::vector<std::int64_t> &frames,
+                                                    const std::optional<std::string> &file) = 0;
 };
 
 // What the typesetting solvers measure text with.
@@ -284,6 +330,9 @@ struct Host {
     KaraokeHost *karaoke = nullptr;
     EffectsHost *effects = nullptr;
     PluginHost *plugins = nullptr;
+    MacroHost *macros = nullptr;
+    KeyframeHost *keyframes = nullptr;
+    application::RowMarks *marks = nullptr;
     application::VcsPort *vcs = nullptr;
 };
 

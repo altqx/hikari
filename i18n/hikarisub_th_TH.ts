@@ -2274,6 +2274,10 @@ Output device: %2</source>
         <translation>เรียกใช้ครั้งล่าสุดซ้ำ: %1 โดยกด %2 ด้วยคำตอบเดิม</translation>
     </message>
     <message>
+        <source>This dialog has changed since the plugin recorded it, so it is shown with its answers filled in.</source>
+        <translation>กล่องโต้ตอบนี้เปลี่ยนไปหลังจากที่ปลั๊กอินบันทึกไว้ จึงแสดงพร้อมคำตอบที่กรอกไว้แล้ว</translation>
+    </message>
+    <message>
         <source>Repeat last run asks questions again rather than answering them for you.</source>
         <translation>“เรียกใช้ครั้งล่าสุดซ้ำ” จะถามคำถามอีกครั้งแทนที่จะตอบให้คุณ</translation>
     </message>
@@ -2288,6 +2292,10 @@ Output device: %2</source>
     <message>
         <source>The last run did not show this dialog, so it is shown with your last answers filled in.</source>
         <translation>การเรียกใช้ครั้งล่าสุดไม่ได้แสดงกล่องโต้ตอบนี้ จึงแสดงพร้อมกรอกคำตอบล่าสุดของคุณไว้</translation>
+    </message>
+    <message>
+        <source>This window’s project doesn’t show the script.</source>
+        <translation>โปรเจกต์ของหน้าต่างนี้ไม่แสดงสคริปต์นี้</translation>
     </message>
     <message>
         <source>Open a document to run a macro on.</source>
@@ -6379,6 +6387,11 @@ Failed to copy %2 fonts.</source>
         <translation>บรรทัด %1</translation>
     </message>
     <message>
+        <source>%1: %2</source>
+        <comment>A plugin&apos;s mark on a Grid row: the plugin&apos;s name, then what the mark means</comment>
+        <translation>%1: %2</translation>
+    </message>
+    <message>
         <source>Layer</source>
         <translation>ชั้น</translation>
     </message>
@@ -6459,6 +6472,10 @@ Failed to copy %2 fonts.</source>
         <translation>
             <numerusform>โน้ต QC %n รายการ</numerusform>
         </translation>
+    </message>
+    <message>
+        <source>marked by %1</source>
+        <translation>ทำเครื่องหมายโดย %1</translation>
     </message>
     <message>
         <source>uncommitted</source>
@@ -15975,6 +15992,22 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>ติดตั้งพร้อมสิทธิ์เต็ม</translation>
     </message>
     <message>
+        <source>Cancelling…</source>
+        <translation>กำลังยกเลิก…</translation>
+    </message>
+    <message>
+        <source>Progress</source>
+        <translation>ความคืบหน้า</translation>
+    </message>
+    <message>
+        <source>The plugin hasn’t stopped. Stop ends it now; work it hasn’t applied is lost.</source>
+        <translation>ปลั๊กอินยังไม่หยุด หยุดจะจบการทำงานทันที งานที่ยังไม่ได้นำไปใช้จะหายไป</translation>
+    </message>
+    <message>
+        <source>Stop</source>
+        <translation>หยุด</translation>
+    </message>
+    <message>
         <source>Cancel</source>
         <translation>ยกเลิก</translation>
     </message>
@@ -16272,6 +16305,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>%1: %2</source>
+        <extracomment>A plugin&apos;s background job: the plugin&apos;s name, then what the job does</extracomment>
         <translation>%1: %2</translation>
     </message>
     <message>
@@ -16281,6 +16315,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>%1 asks again the next time it needs this folder</source>
         <translation>%1 จะถามอีกครั้งเมื่อต้องใช้โฟลเดอร์นี้ครั้งถัดไป</translation>
+    </message>
+    <message>
+        <source>Marks</source>
+        <translation>เครื่องหมาย</translation>
+    </message>
+    <message>
+        <source>Clear marks</source>
+        <translation>ล้างเครื่องหมาย</translation>
+    </message>
+    <message>
+        <source>Removes %1’s marks from the Grid of %2</source>
+        <translation>ลบเครื่องหมายของ %1 ออกจากตารางของ %2</translation>
     </message>
     <message>
         <source>What it adds</source>
@@ -16309,6 +16355,12 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Install from file…</source>
         <translation>ติดตั้งจากไฟล์…</translation>
+    </message>
+    <message numerus="yes">
+        <source>Marks %n line(s) in %1</source>
+        <translation>
+            <numerusform>ทำเครื่องหมาย %n บรรทัดใน %1</numerusform>
+        </translation>
     </message>
     <message>
         <source>Check for plugin updates</source>
@@ -24478,6 +24530,14 @@ Styles deleted:
         <source>Play video</source>
         <extracomment>Title of the notice shown when Play cannot play the video</extracomment>
         <translation>เล่นวิดีโอ</translation>
+    </message>
+    <message>
+        <source>No video is open.</source>
+        <translation>ไม่มีวิดีโอที่เปิดอยู่</translation>
+    </message>
+    <message>
+        <source>The keyframes file could not be written.</source>
+        <translation>เขียนไฟล์คีย์เฟรมไม่ได้</translation>
     </message>
     <message>
         <source>Invalid FPS value.</source>

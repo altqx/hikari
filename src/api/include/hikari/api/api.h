@@ -158,6 +158,9 @@ public:
     void panelChanged(std::string_view panel);
     void commandRan(std::string_view command, bool ok);
     void projectChanged(); // the Project that project.info answers changed
+    // An Automation macro run ended, however it was started.
+    void macroRan(application::DocumentId document, std::string_view file, std::string_view macro, std::string_view outcome,
+                  const std::vector<DialogAnswer> &dialogs);
 
     // The handle files.* use for `path`; granting a path again updates `writable`.
     std::string grantFile(const std::string &callerId, const std::string &path, bool writable);

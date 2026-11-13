@@ -10,5 +10,7 @@ std::string_view documentPrelude();
 std::string_view uiPrelude();
 // files.lua: hikari.files and hikari.net.
 std::string_view filesPrelude();
+// job.lua: hikari.job and hikari.marks.
+std::string_view jobPrelude();
 
 }

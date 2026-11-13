@@ -16,8 +16,8 @@
 {"call": "selection.get", "exact": {"document": 1, "revision": "$rev", "active": 3, "selected": [1, 3]}}
 {"call": "lines.list", "params": {"document": 2, "fields": ["text"]}, "result": {"total": 1, "lines": [{"id": 1, "text": "other"}]}}
 {"call": "selection.get", "params": {"document": 2}, "result": {"document": 2, "active": null, "selected": []}}
-{"call": "commands.list", "params": {"query": "undo"}, "exact": {"commands": [{"command": "GLOBAL_UNDO", "name": "Undo", "window": "global", "enabled": false, "keys": ["Ctrl-Z"], "disabledReason": "Nothing to undo"}]}}
-{"call": "commands.list", "result": {"commands": [{"command": "GLOBAL_SAVE_SUBS", "enabled": true, "keys": ["Ctrl-S"]}, {"command": "GLOBAL_UNDO"}]}}
+{"call": "commands.list", "params": {"query": "undo"}, "exact": {"commands": [{"command": "GLOBAL_UNDO", "name": "Undo", "window": "global", "enabled": false, "keys": ["Ctrl-Z"], "disabledReason": "Nothing to undo", "kind": "hotkey"}]}}
+{"call": "commands.list", "result": {"commands": [{"command": "GLOBAL_SAVE_SUBS", "enabled": true, "keys": ["Ctrl-S"], "kind": "hotkey"}, {"command": "GLOBAL_UNDO"}, {"command": "macro:fade.lua:0", "name": "Fade", "kind": "macro", "file": "fade.lua", "macro": "Fade", "enabled": true}, {"command": "macro:fade.lua:1", "enabled": false, "disabledReason": "Not shown here."}, {"command": "macro:dup.lua:0"}, {"command": "plugin.org.example.word-count.count", "name": "Count words", "kind": "plugin"}]}}
 {"call": "commands.list", "params": {"window": "video"}, "exact": {"commands": []}}
 {"call": "panels.list", "exact": {"panels": [{"panel": "Grid", "title": "Subtitles grid", "open": true, "floating": false, "focused": true}, {"panel": "Video", "title": "Video", "open": false, "floating": false, "focused": false}]}}
 {"call": "settings.get", "params": {"settings": ["grid.changeActiveOnSelection", "editor.dictionaryLanguage", "grid.copyColumns"]}, "exact": {"values": {"grid.changeActiveOnSelection": true, "editor.dictionaryLanguage": "en_US", "grid.copyColumns": 0}}}

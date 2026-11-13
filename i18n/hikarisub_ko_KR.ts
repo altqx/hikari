@@ -2274,6 +2274,10 @@ Output device: %2</source>
         <translation>마지막 실행 반복: %1, 같은 답변과 %2 버튼으로</translation>
     </message>
     <message>
+        <source>This dialog has changed since the plugin recorded it, so it is shown with its answers filled in.</source>
+        <translation>플러그인이 기록한 뒤 이 대화 상자가 바뀌어서 답변을 채운 채로 표시합니다.</translation>
+    </message>
+    <message>
         <source>Repeat last run asks questions again rather than answering them for you.</source>
         <translation>마지막 실행 반복은 질문에 대신 답하지 않고 다시 묻습니다.</translation>
     </message>
@@ -2288,6 +2292,10 @@ Output device: %2</source>
     <message>
         <source>The last run did not show this dialog, so it is shown with your last answers filled in.</source>
         <translation>마지막 실행에서는 이 대화 상자가 표시되지 않았으므로 마지막 답변을 채운 상태로 표시됩니다.</translation>
+    </message>
+    <message>
+        <source>This window’s project doesn’t show the script.</source>
+        <translation>이 창의 프로젝트에서는 이 스크립트를 표시하지 않습니다.</translation>
     </message>
     <message>
         <source>Open a document to run a macro on.</source>
@@ -6379,6 +6387,11 @@ Failed to copy %2 fonts.</source>
         <translation>%1번 줄</translation>
     </message>
     <message>
+        <source>%1: %2</source>
+        <comment>A plugin&apos;s mark on a Grid row: the plugin&apos;s name, then what the mark means</comment>
+        <translation>%1: %2</translation>
+    </message>
+    <message>
         <source>Layer</source>
         <translation>레이어</translation>
     </message>
@@ -6459,6 +6472,10 @@ Failed to copy %2 fonts.</source>
         <translation>
             <numerusform>QC 메모 %n개</numerusform>
         </translation>
+    </message>
+    <message>
+        <source>marked by %1</source>
+        <translation>%1의 표시</translation>
     </message>
     <message>
         <source>uncommitted</source>
@@ -15975,6 +15992,22 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>모든 권한으로 설치</translation>
     </message>
     <message>
+        <source>Cancelling…</source>
+        <translation>취소하는 중…</translation>
+    </message>
+    <message>
+        <source>Progress</source>
+        <translation>진행 상황</translation>
+    </message>
+    <message>
+        <source>The plugin hasn’t stopped. Stop ends it now; work it hasn’t applied is lost.</source>
+        <translation>플러그인이 멈추지 않았습니다. 중지하면 바로 끝나며, 적용하지 않은 작업은 사라집니다.</translation>
+    </message>
+    <message>
+        <source>Stop</source>
+        <translation>중지</translation>
+    </message>
+    <message>
         <source>Cancel</source>
         <translation>취소</translation>
     </message>
@@ -16272,6 +16305,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>%1: %2</source>
+        <extracomment>A plugin&apos;s background job: the plugin&apos;s name, then what the job does</extracomment>
         <translation>%1: %2</translation>
     </message>
     <message>
@@ -16281,6 +16315,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>%1 asks again the next time it needs this folder</source>
         <translation>다음에 이 폴더가 필요할 때 %1이(가) 다시 묻습니다</translation>
+    </message>
+    <message>
+        <source>Marks</source>
+        <translation>표시</translation>
+    </message>
+    <message>
+        <source>Clear marks</source>
+        <translation>표시 지우기</translation>
+    </message>
+    <message>
+        <source>Removes %1’s marks from the Grid of %2</source>
+        <translation>%2의 자막 목록에서 %1의 표시를 지웁니다</translation>
     </message>
     <message>
         <source>What it adds</source>
@@ -16309,6 +16355,12 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Install from file…</source>
         <translation>파일에서 설치…</translation>
+    </message>
+    <message numerus="yes">
+        <source>Marks %n line(s) in %1</source>
+        <translation>
+            <numerusform>%1의 줄 %n개에 표시</numerusform>
+        </translation>
     </message>
     <message>
         <source>Check for plugin updates</source>
@@ -24478,6 +24530,14 @@ Styles deleted:
         <source>Play video</source>
         <extracomment>Title of the notice shown when Play cannot play the video</extracomment>
         <translation>영상 재생</translation>
+    </message>
+    <message>
+        <source>No video is open.</source>
+        <translation>열린 영상이 없습니다.</translation>
+    </message>
+    <message>
+        <source>The keyframes file could not be written.</source>
+        <translation>키 프레임 파일을 쓸 수 없습니다.</translation>
     </message>
     <message>
         <source>Invalid FPS value.</source>

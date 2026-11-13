@@ -1,5 +1,6 @@
 #pragma once
 
+#include "hikari/api/host.h"
 #include "hikari/application/audio_box.h"
 #include "hikari/application/automation.h"
 #include "hikari/application/automation_services.h"
@@ -40,7 +41,7 @@
 
 namespace hikari::app {
 
-class AutomationShell : public QObject, public application::AutomationServicePort {
+class AutomationShell : public QObject, public application::AutomationServicePort, public api::MacroHost {
     Q_OBJECT
     Q_PROPERTY(bool running READ running NOTIFY progressChanged)
     Q_PROPERTY(QString runTitle READ runTitle NOTIFY progressChanged)
@@ -179,6 +180,20 @@ public:
     // outcome and the run's message, and returns the line that ends the run's log.
     using TaskDone = std::function<QString(backends::LuaScriptHost::RunOutcome, const QString &)>;
     bool runTask(const QString &title, const QString &script, TaskDone done);
+    struct Answers {
+        std::vector<api::DialogAnswer> dialogs;
+        bool showAnswered = false;
+    };
+    // As run(), with the API's answers for its dialogs; `done` gets the outcome once the run ends.
+    bool runAnswered(const std::string &path, int ordinal, Answers answers, std::function<void(api::LuaRun)> done);
+    struct Ran {
+        application::DocumentId document;
+        std::string path, macro, outcome;
+        std::vector<api::DialogAnswer> dialogs;
+    };
+    void setMacroRan(std::function<void(const Ran &)> ran) { m_macroRan = std::move(ran); }
+    std::vector<api::MacroInfo> macros() const override;
+    api::MacroStart runMacro(const api::MacroRequest &request, std::function<void(api::LuaRun)> done) override;
     bool busy() const { return running() || m_manager.busy(); }
     // What ?user decodes to.
     QString userAutomationRoot() const;
@@ -240,6 +255,7 @@ private:
     struct AnsweredDialog {
         application::DialogRequest request;
         application::DialogResult answer;
+        std::string key;
     };
     struct Run {
         application::DocumentId target;
@@ -259,6 +275,8 @@ private:
         std::optional<std::vector<AnsweredDialog>> repeat;
         bool replaying = false;
         QString projectRoot;
+        std::optional<Answers> answers;
+        std::function<void(api::LuaRun)> done;
     };
     struct RepeatRecord {
         std::string path, macro;
@@ -315,6 +333,7 @@ private:
     backends::AutomationManager m_manager;
     application::AutomationServiceRouter m_router;
     ui::ScriptDialogMemory m_dialogMemory;
+    std::function<void(const Ran &)> m_macroRan;
     ui::AutomationDialogController m_dialogs;
     ui::AutomationFilePickerController m_picker;
     ui::ScriptResolutionPromptController m_resolutionPrompt;

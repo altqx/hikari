@@ -118,10 +118,10 @@ Plugins are still installed per user. A trusted Project's `.hikari/project.toml`
 
 ```toml
 [plugins]
-enabled = ["keyframe-generator"]
+enabled = ["com.example.keyframe-generator"]
 disabled = ["qc-pack"]
 
-[plugins."keyframe-generator"]
+[plugins."com.example.keyframe-generator"]
 threshold = 0.4
 ```
 
@@ -152,14 +152,14 @@ Each enabled plugin runs in its own `hikari-plugin-helper` process, started when
 - **Restricted (the default).** A fresh LuaJIT state with `string` (without `dump`), `table`, `math`, `bit`, `coroutine` and the base functions, minus `dofile`, `loadfile` and `module`. `load` and `loadstring` take text only, so bytecode never loads. There's no `ffi`, `io`, `os`, `debug`, `jit` or `package`, so no `package.loadlib` either. `require "a.b"` reads only `lua/a/b.lua` or `lua/a/b/init.lua` in the package, and only as text.
 - **Unrestricted.** The full LuaJIT libraries, with `package.path` pointed at the package's `lua/` folder and `package.cpath` at its `lib/`. Installing one shows the full-trust warning. Only these plugins can ship [QML panels](#qml-panels), and the warning then adds "Shows its own panels inside HikariSub".
 - **Memory.** A counting allocator caps the state at 256 MB. A command or event that hits the cap fails with "the plugin ran out of memory: it may hold 256 MB", and the plugin keeps running.
-- **Time.** The load, each command and each event runs one at a time. One that runs longer than 10 seconds is force stopped: HikariSub ends the helper and says so in a toast. Time HikariSub spends answering the plugin (an API call, a setting) doesn't count. The plugin's next command starts a new helper.
+- **Time.** The load, each command and each event runs one at a time. One that runs longer than 10 seconds, and isn't a [job](#long-jobs), is force stopped: HikariSub ends the helper and says so in a toast. Time HikariSub spends answering the plugin (an API call, a setting) doesn't count. The plugin's next command starts a new helper.
 - **The sandbox.** A restricted plugin's helper starts in an operating-system sandbox, `hikari_sandbox` ([ADR 0029](adr/0029-the-ai-sidecar-runs-in-an-os-sandbox.md)): Landlock and seccomp on Linux, an AppContainer on Windows. Its profile is `HikariSub.Plugin.<the first 32 hex digits of the id's SHA-256>`: the helper's folder to read and execute, the plugin's package folder to read, nothing else, and no network. The helper needs no more, because HikariSub itself opens the files a plugin was granted (`hikari.files`) and makes its requests (`hikari.net.fetch`).
 - **Full trust plugins run outside the sandbox,** with the same access as HikariSub.
 - **Where the sandbox can't apply,** for example on a kernel without Landlock or seccomp, restricted plugins still run under the limits above. HikariSub logs what is missing under `hikari.plugins.sandbox`, and the plugin's details say "HikariSub keeps it to these permissions, but it isn’t sandboxed on this system."
 
 ### The helper protocol
 
-The helper framing ([`helper_protocol.h`](../src/backends/include/hikari/backends/helper_protocol.h)) has an `Event` frame (17) in which the host pushes application events to a helper. It waits behind the helper's running work and is answered like a request, so an event handler can call back into HikariSub. A helper without an event handler answers `Unsupported`. The plugin protocol ([`plugin_protocol.h`](../src/backends/include/hikari/backends/plugin_protocol.h), version 4) has two requests, `Load` and `Run`, plus events and nine services: `Call`, `Notify`, `SetSetting`, `Subscribe`, `Lock`, `Unlock`, `Ui`, `Files` and `Net`. `Ui` carries the panel and dialog operations (`panels.render`, `panels.show`, `panels.post`, `dialogs.show`, `dialogs.ask`, `dialogs.close`), `Files` the file operations (`files.pick`, `files.folder`, `files.open`, `files.entries`) and `Net` `net.fetch`. Each takes JSON parameters and is answered like `Call`. When several events of one name wait, only the newest is delivered. Panel and dialog events merge more finely: only text edits, slider drags and pointer moves of one widget replace each other.
+The helper framing ([`helper_protocol.h`](../src/backends/include/hikari/backends/helper_protocol.h)) has an `Event` frame (17) in which the host pushes application events to a helper. It waits behind the helper's running work and is answered like a request, so an event handler can call back into HikariSub. A helper without an event handler answers `Unsupported`. The plugin protocol ([`plugin_protocol.h`](../src/backends/include/hikari/backends/plugin_protocol.h), version 1) has two requests, `Load` and `Run`, plus events and ten services: `Call`, `Notify`, `SetSetting`, `Subscribe`, `Lock`, `Unlock`, `Ui`, `Files`, `Net` and `Job`. `Ui` carries the panel and dialog operations (`panels.render`, `panels.show`, `panels.post`, `dialogs.show`, `dialogs.ask`, `dialogs.close`), `Files` the file operations (`files.pick`, `files.folder`, `files.open`, `files.entries`), `Net` `net.fetch` and `Job` `job.begin`, `job.progress` and `job.cancelled`, which the helper process answers itself. Each takes JSON parameters and is answered like `Call`. When several events of one name wait, only the newest is delivered. Panel and dialog events merge more finely: only text edits, slider drags and pointer moves of one widget replace each other.
 
 ## The `hikari` global
 
@@ -168,7 +168,7 @@ The helper framing ([`helper_protocol.h`](../src/backends/include/hikari/backend
 | `hikari.commands.register(id, fn)` | Gives a command from the manifest's `contributes.commands` its handler, once. An id the manifest doesn't declare is refused. |
 | `hikari.commands.run(id)` | Runs a HikariSub command (`GLOBAL_SAVE_SUBS`), as `commands.run` does. |
 | `hikari.call(operation, params)` | Calls any [Hikari API](api.md) operation as the plugin. It returns the result, or `nil` and the error `{code, message, data}`. Without `documents.all` the plugin sees the editing target only. |
-| `hikari.events.on(name, fn)` | Calls `fn(data)` for each Hikari API event of that name (`document.changed`, `selection.changed`, `documents.changed`, `panel.changed`, `command.ran`, `project.changed`). An unknown name is refused. |
+| `hikari.events.on(name, fn)` | Calls `fn(data)` for each Hikari API event of that name (`document.changed`, `selection.changed`, `documents.changed`, `panel.changed`, `command.ran`, `project.changed`, `macro.ran`). An unknown name is refused. |
 | `hikari.notify(text, level)` | A toast and a Log panel entry under the plugin's name. `level` is `"info"` (the default), `"warning"` or `"error"`. `print` writes to the Log panel only. |
 | `hikari.settings.get(id)`, `hikari.settings.set(id, value)` | The plugin's settings from `contributes.settings`. A value that doesn't fit the setting's type, options or bounds is refused, and kept values live in `plugins.json`. |
 | `hikari.i18n.locale`, `hikari.i18n.t(key, ...)` | The UI language (`"pt_BR"`, `"en"`) and the text for `key` from `i18n/<locale>.json`, then `i18n/<language>.json`, then `i18n/en.json`, then the key itself. `%1` to `%9` take the arguments. Each file is a JSON object of strings. |
@@ -181,6 +181,8 @@ The helper framing ([`helper_protocol.h`](../src/backends/include/hikari/backend
 | `hikari.panels.post(panel, data)` | Sends `data` to a [QML panel](#qml-panels)'s `api.received`. It returns `true` when the panel is loaded, and `false` otherwise. |
 | `hikari.files.open(place, path)`, `hikari.files.entries(place, path)`, `hikari.files.pick(options)`, `hikari.files.folder(id)`, `hikari.files.list()`, `hikari.files.read(file, encoding)`, `hikari.files.write(file, data, encoding)` | Files in the plugin's own folders, in folders the user chose, and that the user picked or dropped. See [Files](#files). |
 | `hikari.net.fetch(request)` | An HTTPS request that HikariSub makes to a host from the manifest. See [Network](#network). |
+| `hikari.job.begin{title}`, `hikari.job.progress(fraction, text)`, `hikari.job.cancelled()` | Turns the running command into a job with a card and no time limit. See [Long jobs](#long-jobs). |
+| `hikari.marks.set(marks, document)`, `hikari.marks.clear(lines, document)`, `hikari.marks.list(document)` | The plugin's Grid row marks. See [Grid row marks](#grid-row-marks). |
 | `hikari.vcs.refs(options)`, `hikari.vcs.show(ref, document)` | The git repository holding a Document, read-only, with `vcs.read`. See [Git](#git). |
 | `hikari.dialogs.show(dialog, spec)`, `hikari.dialogs.ask(dialog, spec)`, `hikari.dialogs.close(dialog)`, `hikari.dialogs.on(dialog, fn)` | Opens a dialog, or opens one and waits for its answer `button, values`; closes it; and calls `fn(event)` for its events. |
 
@@ -366,6 +368,49 @@ A `path` is relative, with `/` between its parts, at most 1024 bytes of UTF-8. A
 `hikari.files.pick{title, save, name, filters}` opens the file dialog and returns `{file, name, access}`, or `nil` when the user cancels. `save = true` asks for a file to write, with `name` as the suggestion. `filters` is a list of up to 16 `{name, patterns}`, where a pattern is `*` or `*.ext`. A file dropped on a panel with `drop = true` sends `{kind = "drop", files = {{file, name, access}}}`, read-only. A pick or drop grants that one file only.
 
 A plugin that stops, crashes or is turned off loses its handles, its folders for this run, and any file dialog still open for it.
+
+## Long jobs
+
+A command that takes longer than 10 seconds, such as scanning a video, calls `hikari.job.begin` first:
+
+```lua
+hikari.commands.register("scan", function()
+    hikari.job.begin{title = "Finding keyframes"}
+    for i = first, last, 64 do
+        if hikari.job.cancelled() then
+            return
+        end
+        hikari.job.progress((i - first) / (last - first), "Frame " .. i)
+        local batch = hikari.call("video.frames", {from = i, to = math.min(i + 63, last)})
+        -- …
+    end
+end)
+```
+
+From `begin` until the command returns, it has no time limit, and a card above the status bar shows the plugin's name, the title, the progress and **Cancel**. `hikari.job.progress(nil, text)` shows a bar that moves without a fraction. **Cancel** only makes `hikari.job.cancelled()` answer `true`, so check it often. When the plugin hasn't stopped 5 seconds later, the card says so and offers **Stop**, which force stops it; work it hasn't applied is lost. Only a command can become a job, once; outside one, the job calls answer `nil` and an error. Several plugins' jobs stack, the newest first.
+
+## Grid row marks
+
+A plugin can mark Grid rows with a coloured bar at the right of the row number, for example the Lines a git ref changed:
+
+```lua
+hikari.marks.set({
+    {line = 12, colour = "warning", tooltip = "Changed since v1.0"},
+    {line = 15, colour = "danger", tooltip = "Removed in the next ref"},
+})
+```
+
+`colour` is a theme role: `accent`, `warning`, `danger`, `success` or `muted`. `tooltip` (1 to 200 characters) shows on hover after the plugin's name, and screen readers read the row as "marked by <plugin>: <tooltip>". Setting a Line again replaces the plugin's own mark there. When several plugins mark one Line, the bar splits. A plugin marks at most 20000 Lines of a Document. `hikari.marks.clear(lines)` removes some marks, `hikari.marks.clear()` all of them, and `hikari.marks.list()` gives them back.
+
+Marks are never saved and aren't undo steps. They go when the plugin stops or is turned off, and when the Document closes. The plugin manager's details list them per file, as "Marks 3 lines in ep01.ass", with **Clear marks**.
+
+## Macros, keyframes and frames
+
+Any plugin can use these through `hikari.call`; none needs a permission.
+
+- **`automation.macros` and `automation.run_macro`.** The Automation macros the user loaded, and a run of one on the active tab's selection, as the menu runs it, as one undo step. Set the selection first with `hikari.selection.set`. `answers` fills the macro's dialogs: one `{key, values, button}` per dialog, as the [`macro.ran`](api-reference.md#macroran) event gives them after the user runs a macro. A dialog whose key matches is answered without showing it, unless `show = "prefilled"`; a question and a dialog that changed are always shown. AI callers can't run installed macros.
+- **`video.set_keyframes`.** Replaces the video's keyframes as Open keyframes does, or with `file` (a writable handle from `hikari.files.pick`) writes an Aegisub keyframes file there first and opens it.
+- **`video.frames`.** Up to 256 frames at once, every `stride`-th, scaled down to `maxEdge` (16 to 512, 64 by default), as one byte of luma per pixel or as BGRA, in base64.
 
 ## Network
 

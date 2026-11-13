@@ -19314,6 +19314,137 @@ private:
     };
 
 private slots:
+    void pluginJobsAndRowMarksShowInTheShell()
+    {
+        QTemporaryDir home;
+        app::Application::Options options;
+        options.playbackAudio = false;
+        options.plugins = {home.filePath(QStringLiteral("plugins")), home.filePath(QStringLiteral("plugin-data")),
+                           home.filePath(QStringLiteral("cache")), home.filePath(QStringLiteral("plugins.json"))};
+        QJsonObject registry;
+        const auto install = [&](const char *id, const char *name, const char *command, const char *main) {
+            const QString folder = options.plugins.plugins + u'/' + QLatin1String(id);
+            QDir().mkpath(folder);
+            QFile manifest(folder + QStringLiteral("/hikari-plugin.json"));
+            QVERIFY(manifest.open(QIODevice::WriteOnly));
+            manifest.write(QStringLiteral(R"({"id": "%1", "name": "%2", "version": "1.0.0", "api": 1, "main": "main.lua",)"
+                                          R"( "authors": ["Ana"], "contributes": {"commands": [{"id": "%3", "title": "Run"}]}})")
+                               .arg(QLatin1String(id), QLatin1String(name), QLatin1String(command))
+                               .toUtf8());
+            QFile lua(folder + QStringLiteral("/main.lua"));
+            QVERIFY(lua.open(QIODevice::WriteOnly));
+            lua.write(main);
+            registry[QLatin1String(id)] =
+                QJsonObject{{QStringLiteral("version"), QStringLiteral("1.0.0")}, {QStringLiteral("enabled"), true}};
+        };
+        install("example.chains", "Chains", "scan", R"(
+            hikari.commands.register('scan', function()
+                local lines = hikari.document.read().lines
+                hikari.marks.set({{line = lines[1].id, colour = 'warning', tooltip = 'Changed since v1.0'},
+                                  {line = lines[2].id, colour = 'danger', tooltip = 'Removed in v1.1'}})
+                hikari.job.begin{title = 'Finding keyframes'}
+                hikari.job.progress(0.42, 'Frame 1008 of 2400')
+                while true do end
+            end))");
+        install("example.other", "Other", "mark", R"(
+            hikari.commands.register('mark', function()
+                hikari.marks.set({{line = hikari.document.read().lines[2].id, colour = 'accent', tooltip = 'Needs a check'}})
+            end))");
+        QFile json(options.plugins.registry);
+        QVERIFY(json.open(QIODevice::WriteOnly));
+        json.write(QJsonDocument(QJsonObject{{QStringLiteral("format"), 1}, {QStringLiteral("plugins"), registry}}).toJson());
+        json.close();
+        QTranslator english;
+        QVERIFY(english.load(QStringLiteral(HIKARI_EN_CATALOG)));
+        QCoreApplication::installTranslator(&english);
+        auto removeEnglish = qScopeGuard([&] { QCoreApplication::removeTranslator(&english); });
+        restartWith(options);
+        QVERIFY(application->openFile(episode));
+        app::PluginRuntime *runtime = application->pluginRuntime();
+        QTRY_VERIFY_WITH_TIMEOUT(runtime->run(QStringLiteral("plugin.example.other.mark")), 10'000);
+        QTRY_COMPARE_WITH_TIMEOUT(runtime->marks(QStringLiteral("example.other")).size(), 1, 10'000);
+        QVERIFY(runtime->run(QStringLiteral("plugin.example.chains.scan")));
+
+        QTRY_COMPARE_WITH_TIMEOUT(runtime->jobs().size(), 1, 10'000);
+        QQuickItem *card = nullptr;
+        QTRY_VERIFY_WITH_TIMEOUT((card = findItem(item("pluginJobCards"), QStringLiteral("pluginJobCard_example.chains"))) &&
+                                     card->isVisible(),
+                                 10'000);
+        QTRY_COMPARE(findItem(card, QStringLiteral("pluginJobTitle"))->property("text").toString(),
+                     QStringLiteral("Chains: Finding keyframes"));
+        QTRY_COMPARE(findItem(card, QStringLiteral("pluginJobText"))->property("text").toString(),
+                     QStringLiteral("Frame 1008 of 2400"));
+        auto *grid = qobject_cast<ui::LineGrid *>(item("editingGrid"));
+        QTRY_COMPARE(grid->rowStateText(1).count(QStringLiteral("marked by")), 2);
+        QVERIFY(grid->rowStateText(1).contains(QStringLiteral("marked by Chains: Removed in v1.1")));
+        QVERIFY(grid->rowStateText(1).contains(QStringLiteral("marked by Other: Needs a check")));
+
+        QObject *dialog = named("pluginManagerDialog");
+        QVERIFY(QMetaObject::invokeMethod(dialog, "showPlugin", Q_ARG(QVariant, QStringLiteral("example.chains"))));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        const QVariantList marks = runtime->marks(QStringLiteral("example.chains"));
+        QCOMPARE(marks.size(), 1);
+        const QByteArray document = QByteArray::number(marks.at(0).toMap().value(QStringLiteral("document")).toULongLong());
+        QQuickItem *row = nullptr;
+        QTRY_VERIFY((row = dialogItem("pluginManagerDialog", ("pluginMarks_" + document).constData())) && row->isVisible());
+        QCOMPARE(row->property("text").toString(), QStringLiteral("Marks 2 lines in episode.ass"));
+
+        const QString shots = qEnvironmentVariable("HIKARI_PLUGIN_SHOT_DIR");
+        struct Shot {
+            QQuickItem *area;
+            QRectF part;
+            const char *name;
+        };
+        const auto shootThemes = [&](const std::vector<Shot> &wanted) {
+            if (shots.isEmpty())
+                return;
+            QVERIFY(QDir().mkpath(shots));
+            auto &settings = *application->settingsStore();
+            settings.setValue(QStringLiteral("appearance.followSystem"), false);
+            auto *root = engine->rootObjects().first();
+            for (const char *code : {"light", "dark", "highContrastWhite", "highContrastBlack"}) {
+                settings.setValue(QStringLiteral("appearance.theme"), QString::fromLatin1(code));
+                QTRY_COMPARE(root->property("palette").value<QObject *>()->property("window").value<QColor>(),
+                             ui::theme::current().roles.panel);
+                QTest::qWait(300);
+                for (const Shot &want : wanted) {
+                    QImage shot;
+                    QTRY_VERIFY((shot = want.area->window()->grabWindow(), !shot.isNull() && shot.width() > 0));
+                    const qreal dpr = shot.devicePixelRatio();
+                    const QRectF part = want.part.isNull() ? QRectF(0, 0, want.area->width(), want.area->height()) : want.part;
+                    const QRectF r = want.area->mapRectToScene(part).adjusted(-24, -24, 24, 24);
+                    QVERIFY(shot.copy(QRectF(r.x() * dpr, r.y() * dpr, r.width() * dpr, r.height() * dpr).toRect())
+                                .save(shots + QStringLiteral("/plugin-") + QLatin1String(want.name) + u'-' +
+                                      QLatin1String(code) + QStringLiteral(".png")));
+                }
+            }
+        };
+        QQuickItem *section = row->parentItem();
+        shootThemes({{grid, QRectF(0, 0, std::min<qreal>(grid->width(), 520), grid->geometry().headerHeight + 4 * grid->rowHeight()),
+                      "gutter"},
+                     {card, {}, "job"},
+                     {section, QRectF(0, -36, section->width(), section->height() + 36), "marks"}});
+
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("pluginManagerDialog", ("pluginClearMarks_" + document).constData()),
+                                          "click"));
+        QTRY_VERIFY(runtime->marks(QStringLiteral("example.chains")).isEmpty());
+        QTRY_COMPARE(grid->rowStateText(1), QStringLiteral("marked by Other: Needs a check"));
+        QVERIFY(grid->rowStateText(0).isEmpty());
+
+        auto *cancel = findItem(card, QStringLiteral("pluginJobCancel"));
+        QVERIFY(QMetaObject::invokeMethod(cancel, "click"));
+        QTRY_COMPARE(cancel->property("text").toString(), QStringLiteral("Cancelling…"));
+        QVERIFY(!cancel->isEnabled());
+        auto *stop = findItem(card, QStringLiteral("pluginJobStop"));
+        QVERIFY(!stop->isVisible());
+        QTRY_VERIFY_WITH_TIMEOUT(stop->isVisible(), 10'000);
+        QVERIFY(findItem(card, QStringLiteral("pluginJobStuck"))->isVisible());
+        shootThemes({{card, {}, "job-stuck"}});
+        QVERIFY(QMetaObject::invokeMethod(stop, "click"));
+        QTRY_VERIFY(!item("pluginJobCards")->isVisible());
+        QVERIFY(runtime->jobs().isEmpty());
+    }
+
     void pluginsInstallFromTheAutomationMenu()
     {
         QTemporaryDir home;

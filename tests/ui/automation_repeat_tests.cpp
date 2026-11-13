@@ -1,3 +1,4 @@
+#include "hikari/app/api_host.h"
 #include "hikari/app/application.h"
 #include "docking.h"
 
@@ -123,6 +124,39 @@ class AutomationRepeatTests : public QObject {
         return app->automation().log();
     }
     QString run() { return ran([this] { return app->automation().run(kScript.toStdString(), 0); }); }
+
+    static api::Caller chains() { return api::Caller{"plugin:example.chains", "Chains", false}; }
+
+    api::Json recordedDialogs(const std::function<void()> &userRun)
+    {
+        api::Json dialogs;
+        api::Api &api = app->apiHost()->api();
+        const auto subscription =
+            api.subscribe(chains(), {"macro.ran"}, [&](const api::Event &e) { dialogs = *e.data.find("dialogs"); });
+        userRun();
+        api.unsubscribe(subscription);
+        return dialogs;
+    }
+
+    api::Result runMacro(const api::Json &params, const api::Caller &caller = chains())
+    {
+        std::optional<api::Result> out;
+        app->apiHost()->api().call(caller, "automation.run_macro", params, [&](api::Result r) { out = std::move(r); });
+        QDeadlineTimer deadline(30'000);
+        while (!out && !deadline.hasExpired())
+            QCoreApplication::processEvents(QEventLoop::AllEvents, 50);
+        return out ? *out : api::fail(api::errors::kUnavailable, "no answer");
+    }
+
+    static api::Json twoDialogs(api::Json answers, const char *show = nullptr)
+    {
+        api::Json params = api::Json::object({{"file", api::Json("repeat-dialogs.lua")},
+                                              {"macro", api::Json("Two dialogs")},
+                                              {"answers", std::move(answers)}});
+        if (show)
+            params["show"] = api::Json(show);
+        return params;
+    }
     QString repeat() { return ran([this] { return app->automation().repeatLast(); }); }
 
 private slots:
@@ -178,6 +212,63 @@ private slots:
             QStringLiteral("first button=Apply tags=\\blur count=2 flag=true")));
         QCOMPARE(shown.size(), 2);
         QVERIFY(shown[0].notice.isEmpty());
+    }
+
+    void aPluginReplaysTheAnswersMacroRanRecorded()
+    {
+        select(1);
+        answers = {{0, {{QStringLiteral("tags"), QStringLiteral("\\fs")},
+                        {QStringLiteral("count"), 7},
+                        {QStringLiteral("flag"), false}}},
+                   {0, {{QStringLiteral("flag"), true}}}};
+        const api::Json dialogs = recordedDialogs([this] { run(); });
+        QCOMPARE(dialogs.asArray().size(), 2u);
+        QCOMPARE(QString::fromStdString(dialogs.asArray()[0].find("button")->asString()), QStringLiteral("Apply"));
+        QCOMPARE(dialogs.asArray()[0].find("values")->find("count")->asInt(), 7);
+        QCOMPARE(QString::fromStdString(dialogs.asArray()[1].find("button")->asString()), QStringLiteral("Yes"));
+
+        shown.clear();
+        const api::Result result = runMacro(twoDialogs(dialogs));
+        QVERIFY2(result, result ? "" : result.error().message.c_str());
+        QCOMPARE(QString::fromStdString(result->find("outcome")->asString()), QStringLiteral("applied"));
+        QCOMPARE(QString::fromStdString(result->find("log")->asString()),
+                 QStringLiteral("first button=Apply tags=\\fs count=7 flag=false clip=nil\n"
+                                "second button=Yes tags=nil count=nil flag=true clip=nil\n"));
+        QVERIFY(shown.isEmpty());
+    }
+
+    void aPluginCanShowItsAnswersFilledInOrMeetAChangedDialog()
+    {
+        select(1);
+        answers = {{0, {{QStringLiteral("tags"), QStringLiteral("\\fs")}}}, {0, {}}};
+        const api::Json dialogs = recordedDialogs([this] { run(); });
+
+        shown.clear();
+        answers = {{0, {}}, {0, {}}};
+        QVERIFY(runMacro(twoDialogs(dialogs, "prefilled")));
+        QCOMPARE(shown.size(), 2);
+        QCOMPARE(shown[0].value(QStringLiteral("tags")).toString(), QStringLiteral("\\fs"));
+        QVERIFY(shown[0].notice.isEmpty());
+
+        select(3);
+        shown.clear();
+        answers = {{1, {}}};
+        QVERIFY(runMacro(twoDialogs(dialogs)));
+        QCOMPARE(shown.size(), 1);
+        QCOMPARE(shown[0].value(QStringLiteral("tags")).toString(), QStringLiteral("\\fs"));
+        QCOMPARE(shown[0].notice, QStringLiteral("This dialog has changed since the plugin recorded it, so it is shown "
+                                                 "with its answers filled in."));
+    }
+
+    void runMacroIsRefusedToAiCallersAndWhileAMacroRuns()
+    {
+        const api::Result ai = runMacro(twoDialogs(api::Json::array()), api::Caller{"ai:t", "AI", false, {}, true});
+        QVERIFY(!ai);
+        QCOMPARE(QString::fromStdString(ai.error().code), QStringLiteral("not_granted"));
+        const api::Result missing = runMacro(api::Json::object({{"file", api::Json("repeat-dialogs.lua")},
+                                                                {"macro", api::Json("No such macro")}}));
+        QVERIFY(!missing);
+        QCOMPARE(QString::fromStdString(missing.error().code), QStringLiteral("not_found"));
     }
 
     void repeatShowsAChangedDialogFilledIn()

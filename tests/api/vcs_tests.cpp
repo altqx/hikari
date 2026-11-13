@@ -11,37 +11,6 @@ using application::VcsProblem;
 
 namespace {
 
-class FakeVcs final : public application::VcsPort {
-public:
-    void refs(const std::string &at, int commits,
-              std::function<void(std::expected<application::VcsRefs, VcsFailure>)> done) override
-    {
-        asked.push_back("refs " + at + " " + std::to_string(commits));
-        if (problem)
-            return done(std::unexpected(*problem));
-        application::VcsRefs refs;
-        refs.root = "/subs";
-        refs.prefix = "season1/";
-        refs.head = "main";
-        refs.headCommit = "c2";
-        refs.branches = {{"main", "c2", true}, {"draft", "c1", false}};
-        refs.tags = {{"v1", "c1", false}};
-        refs.commits = {{"c2", "Time the OP", "Ana", 1700000100}, {"c1", "First pass", "Bo", 1700000000}};
-        done(std::move(refs));
-    }
-    void show(const std::string &file, const std::string &ref,
-              std::function<void(std::expected<application::VcsFile, VcsFailure>)> done) override
-    {
-        asked.push_back("show " + file + " " + ref);
-        if (problem)
-            return done(std::unexpected(*problem));
-        done(application::VcsFile{"c1", "season1/a.ass", "[Script Info]\n"});
-    }
-
-    std::vector<std::string> asked;
-    std::optional<VcsFailure> problem;
-};
-
 class FakeProject final : public ProjectHost {
 public:
     std::optional<ProjectState> project() const override { return state; }
@@ -68,13 +37,12 @@ protected:
     Host wired()
     {
         Host h = host.host();
-        h.vcs = &vcs;
         h.project = &project;
         return h;
     }
 
     FakeHost host;
-    FakeVcs vcs;
+    FakeVcs &vcs = host.vcs;
     FakeProject project;
     Api api{wired()};
     ScriptClient client{api};
@@ -170,7 +138,9 @@ TEST_F(Vcs, EachGitProblemKeepsItsOwnReason)
 TEST(VcsUnwired, WithoutGitTheOperationsAreUnavailable)
 {
     FakeHost host;
-    Api api{host.host()};
+    Host unwired = host.host();
+    unwired.vcs = nullptr;
+    Api api{unwired};
     ScriptClient client{api};
     EXPECT_EQ(reasonOf(client.call(chains(), "vcs.refs", Json::object())), "unavailable/");
 }

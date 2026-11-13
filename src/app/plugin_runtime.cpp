@@ -52,6 +52,19 @@ ui::LogController::Severity severityOf(protocol::Level level)
     return ui::LogController::Info;
 }
 
+QString analyticsFeature(std::string_view operation)
+{
+    if (operation == "automation.run_macro")
+        return QStringLiteral("run_macro");
+    if (operation == "video.set_keyframes")
+        return QStringLiteral("set_keyframes");
+    if (operation == "video.frames")
+        return QStringLiteral("frames");
+    if (operation == "marks.set")
+        return QStringLiteral("row_marks");
+    return {};
+}
+
 QString stopReason(PluginProcess::StopReason reason, int timeLimitMs)
 {
     switch (reason) {
@@ -339,6 +352,27 @@ std::unique_ptr<PluginRuntime::Running> PluginRuntime::launch(const std::string 
         emit idle(qs(raw->id));
     });
     connect(process, &PluginProcess::stopped, this, [this, raw] { emit idle(qs(raw->id)); });
+    connect(process, &PluginProcess::jobBegan, this, [this, raw](const QString &command, const QString &title) {
+        if (m_wiring.featureUsed)
+            m_wiring.featureUsed(QStringLiteral("job"));
+        QString commandTitle = command;
+        for (const auto &c : raw->manifest.commands)
+            if (qs(c.id) == command)
+                commandTitle = qs(c.title);
+        Job job{raw->id, qs(raw->manifest.name), title.isEmpty() ? commandTitle : title, {}, -1, false, false, {}};
+        endJob(raw->id);
+        m_jobs.push_back(std::move(job));
+        emit jobsChanged();
+    });
+    connect(process, &PluginProcess::jobProgress, this, [this, raw](double fraction, const QString &text) {
+        for (Job &job : m_jobs)
+            if (job.plugin == raw->id) {
+                job.fraction = fraction;
+                job.text = text;
+                emit jobsChanged();
+            }
+    });
+    connect(process, &PluginProcess::jobEnded, this, [this, raw] { endJob(raw->id); });
     connect(process, &PluginProcess::loaded, this, [this, raw] { m_ui->running(raw->id); });
     connect(process, &PluginProcess::loadFailed, this, [this, raw, name, log](const QString &message) {
         unsubscribe(*raw);
@@ -409,6 +443,9 @@ void PluginRuntime::serve(Running &plugin, const PluginProcess::ServiceRequest &
             reply(envelope(api::fail(api::errors::kUnavailable, "the Hikari API isn't available here")));
             return;
         }
+        if (m_wiring.featureUsed)
+            if (const QString feature = analyticsFeature(request.name); !feature.isEmpty())
+                m_wiring.featureUsed(feature);
         m_wiring.api->call(plugin.caller, request.name, *params, [reply](api::Result result) { reply(envelope(result)); });
         return;
     }
@@ -521,10 +558,77 @@ void PluginRuntime::releaseLock(Running &plugin)
     unlock(plugin);
 }
 
+QVariantList PluginRuntime::jobs() const
+{
+    QVariantList out;
+    for (auto it = m_jobs.rbegin(); it != m_jobs.rend(); ++it)
+        out.push_back(QVariantMap{{QStringLiteral("plugin"), qs(it->plugin)},
+                                  {QStringLiteral("name"), it->name},
+                                  {QStringLiteral("title"), it->title},
+                                  {QStringLiteral("fraction"), it->fraction},
+                                  {QStringLiteral("text"), it->text},
+                                  {QStringLiteral("cancelling"), it->cancelling},
+                                  {QStringLiteral("stuck"), it->stuck}});
+    return out;
+}
+
+void PluginRuntime::cancelJob(const QString &pluginId)
+{
+    const std::string id = pluginId.toStdString();
+    const auto job = std::ranges::find(m_jobs, id, &Job::plugin);
+    const auto running = m_plugins.find(id);
+    if (job == m_jobs.end() || job->cancelling || running == m_plugins.end())
+        return;
+    running->second->process->cancelJob();
+    job->cancelling = true;
+    job->grace = std::make_unique<QTimer>();
+    job->grace->setSingleShot(true);
+    connect(job->grace.get(), &QTimer::timeout, this, [this, id] {
+        if (const auto stuck = std::ranges::find(m_jobs, id, &Job::plugin); stuck != m_jobs.end()) {
+            stuck->stuck = true;
+            emit jobsChanged();
+        }
+    });
+    job->grace->start(m_wiring.jobGraceMs);
+    emit jobsChanged();
+}
+
+QVariantList PluginRuntime::marks(const QString &pluginId) const
+{
+    QVariantList out;
+    if (!m_wiring.marks)
+        return out;
+    static const QStringList roles{QStringLiteral("accent"), QStringLiteral("warning"), QStringLiteral("danger"),
+                                   QStringLiteral("success"), QStringLiteral("muted")};
+    const std::string owner = "plugin:" + pluginId.toStdString();
+    for (const auto &[document, count] : m_wiring.marks->counts(owner))
+        out.push_back(QVariantMap{
+            {QStringLiteral("document"), double(document)},
+            {QStringLiteral("colour"), roles.value(int(m_wiring.marks->of(owner, application::DocumentId{document}).front().colour))},
+            {QStringLiteral("file"), m_wiring.documentTitle ? m_wiring.documentTitle(application::DocumentId{document}) : QString()},
+            {QStringLiteral("count"), qulonglong(count)}});
+    return out;
+}
+
+void PluginRuntime::clearMarks(const QString &pluginId, double document)
+{
+    if (m_wiring.marks)
+        m_wiring.marks->clear("plugin:" + pluginId.toStdString(), application::DocumentId{std::uint64_t(document)});
+}
+
+void PluginRuntime::endJob(const std::string &plugin)
+{
+    if (std::erase_if(m_jobs, [&](const Job &job) { return job.plugin == plugin; }) > 0)
+        emit jobsChanged();
+}
+
 void PluginRuntime::endAccess(Running &plugin)
 {
     m_network->cancel(plugin.id);
     m_files->end(plugin.id, plugin.caller.id);
+    if (m_wiring.marks)
+        m_wiring.marks->clearOwner(plugin.caller.id);
+    endJob(plugin.id);
 }
 
 void PluginRuntime::endFileAccess(const QString &pluginId)
