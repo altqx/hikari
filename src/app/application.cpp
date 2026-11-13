@@ -858,6 +858,11 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         },
         [this] {
             return QString::fromStdString(activeViews().settings->settings().text("translation.targetLanguage"));
+        },
+        [this](application::DocumentId document) {
+            return QString::fromStdString(views(m_workspace.window(document).value_or(m_workspace.activeWindow()))
+                                              .settings->settings()
+                                              .text("translation.sourceLanguage"));
         }});
     const auto hideAiCommands = [this] {
         m_hotkeys->setHidden([this](int id) { return !m_ai->on() && application::aiCommand(id); });
