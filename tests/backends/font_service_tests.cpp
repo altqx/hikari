@@ -4,6 +4,10 @@
 #include <QFile>
 #include <gtest/gtest.h>
 
+#ifndef _WIN32
+#include <fontconfig/fontconfig.h>
+#endif
+
 #include <algorithm>
 #include <cstdio>
 #include <cstdlib>
@@ -186,15 +190,35 @@ TEST(FontIdentity, InvalidFamiliesAreRefused)
 
 #ifndef _WIN32
 
-extern "C" int FcGetVersion(void);
-
 TEST(FontconfigIdentity, ThePinnedFontconfigReadsThePrivateConfiguration)
 {
     const char *file = std::getenv("FONTCONFIG_FILE");
     std::fprintf(stderr, "fontconfig %d, FONTCONFIG_FILE=%s\n", FcGetVersion(), file ? file : "(unset)");
-    EXPECT_EQ(FcGetVersion(), 21701);
+    EXPECT_EQ(FcGetVersion(), 21803);
     ASSERT_NE(file, nullptr);
     EXPECT_NE(std::string(file).find("font-fixtures.conf"), std::string::npos);
+}
+
+TEST(FontconfigIdentity, AHostsGenericFamilyRulesApply)
+{
+    for (const char *generic : {"sans-serif", "serif", "monospace", "emoji", "math", "system-ui"})
+        EXPECT_NE(FcNameGetConstantFor(reinterpret_cast<const FcChar8 *>(generic), FC_GENERIC_FAMILY), nullptr)
+            << generic;
+    const auto *rule = reinterpret_cast<const FcChar8 *>(
+        "<fontconfig><match target=\"pattern\"><test qual=\"first\" name=\"genericfamily\" compare=\"eq\">"
+        "<const>monospace</const></test><edit name=\"family\" mode=\"append\"><string>Probe</string></edit>"
+        "</match></fontconfig>");
+    FcConfig *config = FcConfigCreate();
+    ASSERT_TRUE(FcConfigParseAndLoadFromMemory(config, rule, FcTrue));
+    FcPattern *pattern = FcPatternCreate();
+    FcPatternAddInteger(pattern, FC_GENERIC_FAMILY,
+                        FcNameGetConstantFor(reinterpret_cast<const FcChar8 *>("monospace"), FC_GENERIC_FAMILY)->value);
+    FcConfigSubstitute(config, pattern, FcMatchPattern);
+    FcChar8 *family = nullptr;
+    ASSERT_EQ(FcPatternGetString(pattern, FC_FAMILY, 0, &family), FcResultMatch);
+    EXPECT_STREQ(reinterpret_cast<const char *>(family), "Probe");
+    FcPatternDestroy(pattern);
+    FcConfigDestroy(config);
 }
 
 TEST(FontconfigIdentity, TheProviderNamesTheFileItSelected)

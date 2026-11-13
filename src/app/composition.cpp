@@ -28,6 +28,7 @@
 #include <QDate>
 #include <QGuiApplication>
 #include <QLocale>
+#include <QLoggingCategory>
 #include <QProcess>
 #include <QQmlApplicationEngine>
 #include <QQmlComponent>
@@ -434,6 +435,7 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
 
 int run(int argc, char **argv, StartupMode mode, const std::function<void()> &windowShown)
 {
+    QLoggingCategory::setFilterRules(QStringLiteral("hikari.*.debug=false\nqt.multimedia.ffmpeg.info=false"));
 #ifdef _WIN32
     if (argc >= 2 && std::string_view(argv[1]) == application::kApplyUpdateSwitch) {
         QCoreApplication core(argc, argv);
