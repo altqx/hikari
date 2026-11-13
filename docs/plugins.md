@@ -28,7 +28,7 @@ A `.hikariplugin` file is a zip. It holds `hikari-plugin.json` at its top level 
 | `icon` | no | A package file: a 256 × 256 px PNG or a square SVG. |
 | `screenshots` | no | One to six `{path, caption}` objects. `path` is a package `.png` or `.jpg`; `caption`, at most 120 characters, shows under the image and is its alt text. |
 | `publicKey` | no | The author's minisign public key, the base64 line of its `.pub`. |
-| `permissions` | no | `documents.all` (the reason), `network` (`hosts` and a `reason`), `files` (folder requests, each `id`, `title`, `writable`, `reason`; the ids `data` and `cache` are the plugin's own). See [Files](#files) and [Network](#network). |
+| `permissions` | no | `documents.all` (the reason), `network` (`hosts` and a `reason`), `files` (folder requests, each `id`, `title`, `writable`, `reason`; the ids `data` and `cache` are the plugin's own), `vcs.read` (the reason). See [Files](#files), [Network](#network) and [Git](#git). |
 | `contributes` | no | `commands` (`id`, `title`), `panels` (`id`, `title`, `area`: `left`, `right` or `bottom`, where the panel docks when first shown, `right` by default; and for a Full trust plugin `qml`, a package `.qml` file that makes it a [QML panel](#qml-panels)), `settings` (`boolean`, `integer`, `number`, `string` or `choice`, each with a `default`), and `nodes`, [node-effects nodes](#nodes). |
 
 Beyond the schema, an id repeated within `files`, `commands`, `panels`, `settings` or `nodes` is refused, and so is a port name repeated across a node's inputs and outputs, or an input `default` that isn't of its type; a setting default outside its `options` or its `minimum`/`maximum` is refused too. A `qml` panel in a manifest that isn't `unrestricted` is refused with "Only Full trust plugins can ship QML panels." A package with QML panels must hold each panel's file, and every `.qml`, `.js` and `.mjs` file in it must keep to the [import rule](#qml-panels).
@@ -181,6 +181,7 @@ The helper framing ([`helper_protocol.h`](../src/backends/include/hikari/backend
 | `hikari.panels.post(panel, data)` | Sends `data` to a [QML panel](#qml-panels)'s `api.received`. It returns `true` when the panel is loaded, and `false` otherwise. |
 | `hikari.files.open(place, path)`, `hikari.files.entries(place, path)`, `hikari.files.pick(options)`, `hikari.files.folder(id)`, `hikari.files.list()`, `hikari.files.read(file, encoding)`, `hikari.files.write(file, data, encoding)` | Files in the plugin's own folders, in folders the user chose, and that the user picked or dropped. See [Files](#files). |
 | `hikari.net.fetch(request)` | An HTTPS request that HikariSub makes to a host from the manifest. See [Network](#network). |
+| `hikari.vcs.refs(options)`, `hikari.vcs.show(ref, document)` | The git repository holding a Document, read-only, with `vcs.read`. See [Git](#git). |
 | `hikari.dialogs.show(dialog, spec)`, `hikari.dialogs.ask(dialog, spec)`, `hikari.dialogs.close(dialog)`, `hikari.dialogs.on(dialog, fn)` | Opens a dialog, or opens one and waits for its answer `button, values`; closes it; and calls `fn(event)` for its events. |
 
 Tables go to HikariSub as JSON: a table with keys 1 to n is an array, one with text keys an object. Numbers must be finite, text must be UTF-8, and a table that holds itself is refused.
@@ -392,3 +393,24 @@ HikariSub refuses the request, with the error `refused` and its `reason`, or `no
 - **`too_large`**, **`not_text`** (an answer that isn't UTF-8, without `encoding = "base64"`), **`failed`** and **`timeout`** (30 seconds).
 
 Redirects are followed up to 5 times, each checked the same way. HikariSub sends no cookies and keeps no cache. Requests still running when the plugin stops are dropped.
+
+## Git
+
+A plugin can't run programs, so HikariSub runs git for it, read-only. The manifest asks with `"vcs.read": "<reason>"`, and the install question, the plugin manager and the marketplace show it as "Read the branches, tags and history of the git repository holding your subtitle files: <reason>". Every plugin that asks gets it on the same terms; AI and MCP callers never do.
+
+```lua
+local refs = hikari.vcs.refs({ limit = 20 })
+for _, tag in ipairs(refs.tags) do
+    local text, shown = hikari.vcs.show(tag.name)
+    if text then
+        print(tag.name, shown.commit, #text)
+    end
+end
+```
+
+- **`hikari.vcs.refs(options)`** (`vcs.refs`) gives the repository holding the active Document, or `options.document`: `{root, path, head, branches, tags, commits}`. `path` is the Document's path in the repository; `head` is `{ref, commit}`, with `ref` null when detached, and null before the first commit. Branches and tags (at most 500 each) come newest first, each with its `commit`; `commits` are the newest `limit` (50 by default, at most 200) from HEAD, each `{commit, summary, author, time}`. A Document that was never saved gives the Project's repository, with `path` null.
+- **`hikari.vcs.show(ref, document)`** (`vcs.show`) gives the Document's own file as `ref` has it, as UTF-8 text, and `{ref, commit, path, text}` second. `ref` is a branch, tag, commit or revision such as `HEAD~2`; it can't start with `-` or hold `:` or spaces.
+
+HikariSub runs the git on PATH (Git for Windows on Windows) without the system config, with no pager, hooks, fsmonitor, signature checks, filters, textconv or external diff, and with every transport off, so nothing is fetched. The user's own git config still counts, for `safe.directory`. Each git run has 10 seconds, and a file at most 16 MiB.
+
+The errors carry a `reason`: `unavailable` with `no_git` (git isn't installed or on PATH), `timed_out` or `failed`; `not_found` with `no_repository`, `no_ref`, `no_file` (the file isn't in that ref, as after a rename) or `no_path` (the Document was never saved); and `refused` with `unsafe_repository` (git distrusts a repository another user owns; add it to `safe.directory`), `too_large` or `not_text`.

@@ -68,6 +68,7 @@ public:
         std::function<application::NodeEffectOptions()> effects;
         std::function<std::vector<std::string>(const std::string &root)> aiExclude;
         api::PluginHost *plugins = nullptr;
+        application::VcsPort *vcs = nullptr;
     };
     explicit ApiHost(Wiring wiring, QObject *parent = nullptr);
     ~ApiHost() override;

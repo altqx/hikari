@@ -55,6 +55,7 @@
 #include "hikari/application/translation_mode.h"
 #include "hikari/application/workspace.h"
 #include "hikari/backends/audio_box_player.h"
+#include "hikari/backends/git_reader.h"
 #include "hikari/backends/portaudio_output.h"
 #include "hikari/backends/ffms_indexed_source.h"
 #include "hikari/backends/harper_client.h"
@@ -1354,6 +1355,7 @@ private:
     std::unique_ptr<AiScripts> m_aiScripts;
     std::unique_ptr<AiKaraoke> m_aiKaraoke;
     std::unique_ptr<AiPlugins> m_aiPlugins;
+    std::unique_ptr<backends::GitReader> m_git;
     std::unique_ptr<ApiHost> m_apiHost;
     std::unique_ptr<AiFeatures> m_ai;
     std::unique_ptr<AiMcp> m_aiMcp;

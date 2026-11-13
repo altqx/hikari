@@ -61,7 +61,8 @@ TEST(PluginManifest, EveryFieldReads)
     json["publicKey"] = "RWQBI0VniavN7wOhB7/zzhC+HXDdGOdLwJln5NYwm6UNXx3chmQSVTG4";
     json["permissions"] = *Json::parse(R"({"documents.all": "Compares scripts",
         "network": {"hosts": ["api.example.com"], "reason": "Looks words up"},
-        "files": [{"id": "fonts", "title": "Fonts", "writable": true, "reason": "Reads fonts"}]})");
+        "files": [{"id": "fonts", "title": "Fonts", "writable": true, "reason": "Reads fonts"}],
+        "vcs.read": "Marks Lines changed since a tag"})");
     json["contributes"] = *Json::parse(R"({"commands": [{"id": "greet", "title": "Greet"}],
         "panels": [{"id": "board", "title": "Board"}, {"id": "notes", "title": "Notes", "area": "bottom"}],
         "settings": [{"id": "loud", "title": "Loud", "type": "boolean", "default": false},
@@ -76,6 +77,7 @@ TEST(PluginManifest, EveryFieldReads)
     EXPECT_EQ(m->permissions.networkHosts, std::vector<std::string>{"api.example.com"});
     ASSERT_EQ(m->permissions.files.size(), 1u);
     EXPECT_TRUE(m->permissions.files[0].writable);
+    EXPECT_EQ(m->permissions.vcsRead, "Marks Lines changed since a tag");
     ASSERT_EQ(m->commands.size(), 1u);
     EXPECT_EQ(m->commands[0].title, "Greet");
     ASSERT_EQ(m->panels.size(), 2u);
@@ -324,8 +326,9 @@ TEST(PluginManifest, ListedPermissionsOfTheWrongShapeAreLeftOut)
 {
     const Permissions p = readPermissions(*Json::parse(
         R"({"documents.all": 1, "network": {"hosts": ["api.example.com", 2], "reason": "Looks words up"},
-            "files": [{"id": "fonts", "title": "Fonts", "writable": "yes", "reason": 3}]})"));
+            "files": [{"id": "fonts", "title": "Fonts", "writable": "yes", "reason": 3}], "vcs.read": true})"));
     EXPECT_FALSE(p.allDocuments);
+    EXPECT_FALSE(p.vcsRead);
     EXPECT_EQ(p.networkHosts, std::vector<std::string>{"api.example.com"});
     EXPECT_EQ(p.networkReason, "Looks words up");
     ASSERT_EQ(p.files.size(), 1u);
@@ -349,12 +352,14 @@ TEST(PluginManifest, AnUpdateAsksForMoreOnlyWhenItAddsAPermission)
     Manifest more = current;
     more.tier = Tier::Unrestricted;
     more.permissions.allDocuments = "Compares scripts";
+    more.permissions.vcsRead = "Marks changed Lines";
     more.permissions.networkHosts = {"api.example.com", "cdn.example.com"};
     more.permissions.files = {{"fonts", "Fonts", true, "r"}, {"out", "Out", true, "r"}, {"logs", "Logs", false, "r"}};
     const PermissionIncrease increase = permissionIncrease(current, more);
     EXPECT_TRUE(increase.any());
     EXPECT_TRUE(increase.unrestricted);
     EXPECT_TRUE(increase.allDocuments);
+    EXPECT_TRUE(increase.vcsRead);
     EXPECT_EQ(increase.networkHosts, std::vector<std::string>{"cdn.example.com"});
     EXPECT_EQ(increase.files, (std::vector<std::string>{"fonts", "logs"}));
     EXPECT_FALSE(permissionIncrease(more, more).any());

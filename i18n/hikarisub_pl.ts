@@ -16031,6 +16031,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Łączyć się z %1: %2</translation>
     </message>
     <message>
+        <source>Read the branches, tags and history of the git repository holding your subtitle files: %1</source>
+        <translation>Odczytywać gałęzie, tagi i historię repozytorium git z Twoimi plikami napisów: %1</translation>
+    </message>
+    <message>
         <source>Ask you for a folder to read and write, %1: %2</source>
         <translation>Prosić Cię o folder do odczytu i zapisu, %1: %2</translation>
     </message>

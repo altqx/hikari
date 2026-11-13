@@ -766,6 +766,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_aiPlugins = std::make_unique<AiPlugins>(AiPlugins::Wiring{
         m_userFolder.isEmpty() || options.plugins.plugins.isEmpty() ? QString() : m_userFolder + QStringLiteral("/ai/plugins"),
         options.plugins.plugins, [this] { return m_pluginManager.get(); }, [this] { return m_pluginRuntime.get(); }});
+    m_git = std::make_unique<backends::GitReader>();
     m_apiHost = std::make_unique<ApiHost>(ApiHost::Wiring{
         m_workspace, *m_files, &m_settings->settings(), &m_automation->media(),
         [this](application::Selection next) { return applySelection(std::move(next)); },
@@ -798,7 +799,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             o.audio = m_automation->media().peakAudio();
             return o;
         },
-        projectAiExclude, m_aiPlugins.get()});
+        projectAiExclude, m_aiPlugins.get(), m_git.get()});
     AiFeatures::Ports aiPorts = options.aiPorts ? std::move(*options.aiPorts)
                                                 : AiFeatures::defaultPorts(m_userFolder, &m_apiHost->api(),
                                                                            options.appVersion.isEmpty()

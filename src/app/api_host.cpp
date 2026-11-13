@@ -45,6 +45,7 @@ ApiHost::ApiHost(Wiring wiring, QObject *parent)
           .karaoke = m_wiring.karaoke,
           .effects = this,
           .plugins = m_wiring.plugins,
+          .vcs = m_wiring.vcs,
       }),
       m_seenProject(project())
 {

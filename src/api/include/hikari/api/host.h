@@ -12,6 +12,7 @@
 #include "hikari/application/node_effects.h"
 #include "hikari/application/settings.h"
 #include "hikari/application/subtitle_render.h"
+#include "hikari/application/vcs.h"
 #include "hikari/application/visual_perspective.h"
 #include "hikari/application/workspace.h"
 
@@ -283,6 +284,7 @@ struct Host {
     KaraokeHost *karaoke = nullptr;
     EffectsHost *effects = nullptr;
     PluginHost *plugins = nullptr;
+    application::VcsPort *vcs = nullptr;
 };
 
 }

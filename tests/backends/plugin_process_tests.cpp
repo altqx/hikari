@@ -107,6 +107,20 @@ TEST_F(PluginProcessTest, ACommandRunsInTheHelperAndCallsHikariSub)
     EXPECT_EQ(m_calls, std::vector<std::string>{"api.version {}"});
 }
 
+TEST_F(PluginProcessTest, HikariVcsCallsTheGitOperationsForTheDocument)
+{
+    auto p = process(plugin("git", "hikari.commands.register('greet', function() "
+                                   "local refs = hikari.vcs.refs({limit = 5}) "
+                                   "local _, shown = hikari.vcs.show('v1', 3) "
+                                   "hikari.notify(refs.version .. ' ' .. shown.version) "
+                                   "hikari.notify(tostring(pcall(hikari.vcs.show, ''))) end)"));
+    QSignalSpy finished(p.get(), &PluginProcess::finished);
+    ASSERT_TRUE(p->run("greet"));
+    ASSERT_TRUE(waitFor([&] { return finished.count() == 1; }));
+    EXPECT_EQ(m_calls, (std::vector<std::string>{R"(vcs.refs {"limit":5})", R"(vcs.show {"document":3,"ref":"v1"})"}));
+    EXPECT_EQ(m_notices, (std::vector<std::string>{"1 1", "false"}));
+}
+
 TEST_F(PluginProcessTest, TheWatchdogStopsARunawayCommandAndTheNextRunStartsAgain)
 {
     auto p = process(plugin("spin", "hikari.commands.register('spin', function() while true do end end) "
