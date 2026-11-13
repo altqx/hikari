@@ -8,9 +8,11 @@
 
 #include <QCoreApplication>
 #include <QDir>
+#include <QFile>
 #include <QFileInfo>
 #include <QQmlEngine>
 #include <QQuickWindow>
+#include <QSaveFile>
 
 #include <algorithm>
 #include <filesystem>
@@ -62,6 +64,23 @@ application::Settings &Application::windowSettings(int shellWindow)
 const application::Settings &Application::windowSettings(int shellWindow) const
 {
     return views(shellWindow).settings->settings();
+}
+
+application::AiReview::Disk Application::reviewDisk()
+{
+    const auto path = [](const std::string &p) { return QString::fromStdString(p); };
+    return {[path](const std::string &p) -> std::optional<std::string> {
+                QFile file(path(p));
+                if (!file.open(QIODevice::ReadOnly))
+                    return std::nullopt;
+                return file.readAll().toStdString();
+            },
+            [path](const std::string &p, std::string_view bytes) {
+                QSaveFile file(path(p));
+                return QDir().mkpath(QFileInfo(path(p)).absolutePath()) && file.open(QIODevice::WriteOnly) &&
+                       file.write(bytes.data(), qint64(bytes.size())) == qint64(bytes.size()) && file.commit();
+            },
+            [path](const std::string &p) { return QFile::remove(path(p)); }};
 }
 
 std::vector<std::string> Application::projectAiExclude(const std::string &root)

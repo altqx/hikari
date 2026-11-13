@@ -7,7 +7,9 @@
 #include "shell_controller.h"
 #include "theme.h"
 
+#include <QDir>
 #include <QFile>
+#include <QFileInfo>
 #include <QQmlApplicationEngine>
 #include <QQmlExpression>
 #include <QQuickWindow>
@@ -151,6 +153,34 @@ class ApiHostTest : public QObject {
     {
         const auto found = visibleNamed(name);
         return found.size() == 1 && QMetaObject::invokeMethod(found.front(), "click");
+    }
+
+    api::Caller projectAi()
+    {
+        QDir().mkpath(root.filePath(QStringLiteral("show")));
+        api::Caller caller = reviewedAi();
+        caller.project = root.filePath(QStringLiteral("show")).toStdString();
+        return caller;
+    }
+    QString projectFile(const QString &name) const { return root.filePath(QStringLiteral("show/") + name); }
+    static QByteArray readFile(const QString &path)
+    {
+        QFile file(path);
+        return file.open(QIODevice::ReadOnly) ? file.readAll() : QByteArray();
+    }
+    static void writeFile(const QString &path, const QByteArray &bytes)
+    {
+        QDir().mkpath(QFileInfo(path).absolutePath());
+        QFile file(path);
+        QVERIFY(file.open(QIODevice::WriteOnly | QIODevice::Truncate));
+        file.write(bytes);
+    }
+    QVariantList fileRows() const
+    {
+        QVariantList out;
+        for (const QVariant &turn : application->review()->turns())
+            out << turn.toMap().value(QStringLiteral("files")).toList();
+        return out;
     }
 
 private slots:
@@ -524,6 +554,116 @@ private slots:
     {
         shell(QStringLiteral("root.runItem(root.globalActions().GLOBAL_ABOUT)"));
         QVERIFY(heardEvent("command.ran"));
+    }
+
+    void anAiFileWriteWaitsInTheReviewPanelUntilKept()
+    {
+        writeFile(projectFile(QStringLiteral("notes.txt")), "one\ntwo\n");
+        QVERIFY(call("files.write", R"({"folder": "project", "path": "notes.txt", "data": "one\n2\n"})", projectAi()));
+        QVERIFY(call("files.write", R"({"folder": "project", "path": "plan/new.md", "data": "a\nb\n"})", projectAi()));
+        QCOMPARE(readFile(projectFile(QStringLiteral("notes.txt"))), QByteArray("one\ntwo\n"));
+        QVERIFY(!QFile::exists(projectFile(QStringLiteral("plan/new.md"))));
+        QTRY_COMPARE(application->review()->waiting(), 2);
+        QCOMPARE(application->review()->waitingFiles(), (QStringList{QStringLiteral("notes.txt"), QStringLiteral("plan/new.md")}));
+        const QVariantList rows = fileRows();
+        QCOMPARE(rows.size(), 2);
+        QCOMPARE(rows[0].toMap().value(QStringLiteral("detail")).toString(), QStringLiteral("Changed, +1 −1 lines"));
+        QCOMPARE(rows[1].toMap().value(QStringLiteral("detail")).toString(), QStringLiteral("New file, 2 line(s)"));
+        QVERIFY(rows[1].toMap().value(QStringLiteral("isNew")).toBool());
+        QTRY_COMPARE(shell(QStringLiteral("statusStrip.reviewText")).toString(), QStringLiteral("2 AI change(s) to review"));
+
+        QVERIFY(shell(QStringLiteral("root.showPanel(reviewDock), reviewDock.isOpen")).toBool());
+        QTRY_COMPARE(visibleNamed(QStringLiteral("reviewFile")).size(), 2);
+        QVERIFY(QMetaObject::invokeMethod(visibleNamed(QStringLiteral("reviewFile")).front(), "click"));
+        QTRY_COMPARE(visibleNamed(QStringLiteral("reviewFileDiff")).size(), 1);
+        const QVariantMap diff = application->review()->fileDiff(rows[0].toMap().value(QStringLiteral("file")).toULongLong());
+        QVERIFY(diff.value(QStringLiteral("text")).toBool());
+        QCOMPARE(diff.value(QStringLiteral("lines")).toList().size(), 3);
+        shoot(QStringLiteral("pj7c-review-files"));
+
+        QCOMPARE(application->review()->keepFile(rows[0].toMap().value(QStringLiteral("file")).toULongLong(), false), 0);
+        QCOMPARE(readFile(projectFile(QStringLiteral("notes.txt"))), QByteArray("one\n2\n"));
+        application->review()->undoFile(rows[1].toMap().value(QStringLiteral("file")).toULongLong());
+        QTRY_COMPARE(application->review()->waiting(), 0);
+        QVERIFY(!QFile::exists(projectFile(QStringLiteral("plan/new.md"))));
+        QTRY_COMPARE(visibleNamed(QStringLiteral("reviewFile")).size(), 0);
+    }
+
+    void keepingAFileChangedOnDiskAsksFirst()
+    {
+        writeFile(projectFile(QStringLiteral("notes.txt")), "one\n");
+        QVERIFY(call("files.write", R"({"folder": "project", "path": "notes.txt", "data": "ai\n"})", projectAi()));
+        writeFile(projectFile(QStringLiteral("notes.txt")), "mine\n");
+        QVERIFY(shell(QStringLiteral("root.showPanel(reviewDock), reviewDock.isOpen")).toBool());
+        QTRY_COMPARE(visibleNamed(QStringLiteral("reviewFile")).size(), 1);
+        QTRY_VERIFY(fileRows().value(0).toMap().value(QStringLiteral("changedOnDisk")).toBool());
+        QVERIFY(shell(QStringLiteral("reviewLoader.item.keepFile(%1, false), true")
+                          .arg(fileRows().value(0).toMap().value(QStringLiteral("file")).toULongLong()))
+                    .toBool());
+        QTRY_COMPARE(visibleNamed(QStringLiteral("reviewConfirmFile")).size(), 1);
+        QCOMPARE(readFile(projectFile(QStringLiteral("notes.txt"))), QByteArray("mine\n"));
+        QVERIFY(clickVisible(QStringLiteral("reviewKeepFileAnyway")));
+        QTRY_COMPARE(readFile(projectFile(QStringLiteral("notes.txt"))), QByteArray("ai\n"));
+        QTRY_COMPARE(application->review()->waiting(), 0);
+    }
+
+    void keepAllAndUndoAllIncludeFiles()
+    {
+        const auto first = session().document().lines().front()->id;
+        QVERIFY(aiWrites(first, "changed"));
+        QVERIFY(call("files.write", R"({"folder": "project", "path": "a.txt", "data": "a"})", projectAi()));
+        QTRY_COMPARE(application->review()->waiting(), 2);
+        application->review()->keep(0, -1);
+        QTRY_COMPARE(application->review()->waiting(), 0);
+        QCOMPARE(readFile(projectFile(QStringLiteral("a.txt"))), QByteArray("a"));
+
+        QVERIFY(call("files.write", R"({"folder": "project", "path": "b.txt", "data": "b"})", projectAi()));
+        QTRY_COMPARE(application->review()->waiting(), 1);
+        QVERIFY(application->review()->undo(0, -1, false));
+        QTRY_COMPARE(application->review()->waiting(), 0);
+        QVERIFY(!QFile::exists(projectFile(QStringLiteral("b.txt"))));
+    }
+
+    void restoringACheckpointPutsKeptFilesBackAndDropsStagedOnes()
+    {
+        writeFile(projectFile(QStringLiteral("notes.txt")), "before\n");
+        QVERIFY(call("files.write", R"({"folder": "project", "path": "notes.txt", "data": "kept\n"})", projectAi()));
+        QVERIFY(call("files.write", R"({"folder": "project", "path": "staged.txt", "data": "s"})", projectAi()));
+        const qulonglong turn = application->review()->turns().value(0).toMap().value(QStringLiteral("turn")).toULongLong();
+        application->review()->keepFile(fileRows().value(0).toMap().value(QStringLiteral("file")).toULongLong(), false);
+        QCOMPARE(readFile(projectFile(QStringLiteral("notes.txt"))), QByteArray("kept\n"));
+        const QVariantList documents = application->review()->checkpoint(turn);
+        QCOMPARE(documents.size(), 1);
+        QCOMPARE(documents[0].toMap().value(QStringLiteral("files")).toInt(), 2);
+        QVERIFY(application->review()->restore(turn, false));
+        QCOMPARE(readFile(projectFile(QStringLiteral("notes.txt"))), QByteArray("before\n"));
+        QTRY_COMPARE(application->review()->waiting(), 0);
+        QVERIFY(!QFile::exists(projectFile(QStringLiteral("staged.txt"))));
+    }
+
+    void quittingWithStagedFilesAsksFirst()
+    {
+        for (int i = 0; i < 12; ++i)
+            QVERIFY(call("files.write",
+                         QStringLiteral(R"({"folder": "project", "path": "f%1.txt", "data": "x"})").arg(i, 2, 10, QLatin1Char('0'))
+                             .toUtf8()
+                             .constData(),
+                         projectAi()));
+        QTRY_COMPARE(application->review()->waitingFiles().size(), 12);
+        QVERIFY(shell(QStringLiteral("root.askAboutAiFiles()")).toBool());
+        QTRY_VERIFY(shell(QStringLiteral("root.messages.current !== null")).toBool());
+        QCOMPARE(shell(QStringLiteral("root.messages.current.options.text")).toString(),
+                 QStringLiteral("Keep the AI’s file changes?"));
+        const QString detail = shell(QStringLiteral("root.messages.current.options.detail")).toString();
+        QVERIFY(detail.startsWith(QStringLiteral("f00.txt\nf01.txt")));
+        QVERIFY(detail.endsWith(QStringLiteral("f09.txt\nand 2 more")));
+        QCOMPARE(shell(QStringLiteral("root.messages.current.options.choices.map(c => c.id).join()")).toString(),
+                 QStringLiteral("keep,discard,cancel"));
+        QVERIFY(shell(QStringLiteral("root.messages.box.answer('cancel'), true")).toBool());
+        QTRY_VERIFY(shell(QStringLiteral("root.messages.current === null")).toBool());
+        QCOMPARE(application->review()->waitingFiles().size(), 12);
+        QVERIFY(window()->isVisible());
+        QVERIFY(!QFile::exists(projectFile(QStringLiteral("f00.txt"))));
     }
 };
 
