@@ -117,6 +117,46 @@ TEST_F(PluginFeatures, RunMacroPassesTheAnswersAndAnswersWithTheOutcomeWhenTheMa
     EXPECT_EQ((*out)->find("log")->asString(), "3 lines");
 }
 
+TEST_F(PluginFeatures, RunMacroAnswersWithTheDialogsItsRunGotAsMacroRanGivesThem)
+{
+    const auto document = *host.workspace().editingTarget();
+    macros.next = LuaRun{"applied", "", "", "fade.lua", document,
+                         {DialogAnswer{"0123456789abcdef", {{"n", 3}}, "OK",
+                                       {DialogControlInfo{"n", "intedit", "Times", {}, {}, 1.0, 9.0, {}}}}}};
+    std::optional<Result> out;
+    callLater("automation.run_macro", R"({"file": "fade.lua", "macro": "Fade"})", out);
+    macros.finish();
+    ASSERT_TRUE(out && *out) << (*out).error().message;
+    const Json &dialog = (*out)->find("dialogs")->asArray().at(0);
+    EXPECT_EQ(dialog.find("key")->asString(), "0123456789abcdef");
+    EXPECT_EQ(dialog.find("values")->find("n")->asInt(), 3);
+    EXPECT_EQ(dialog.find("button")->asString(), "OK");
+    const Json &control = dialog.find("controls")->asArray().at(0);
+    EXPECT_EQ(control.find("name")->asString(), "n");
+    EXPECT_EQ(control.find("label")->asString(), "Times");
+    EXPECT_EQ(control.find("max")->asNumber(), 9.0);
+}
+
+TEST_F(PluginFeatures, RunMacroLeavesOutTheDialogsOfADocumentTheCallerCannotSee)
+{
+    const application::DocumentId elsewhere{host.workspace().editingTarget()->value + 1000};
+    macros.next = LuaRun{"applied", "", "", "fade.lua", elsewhere, {DialogAnswer{"0123456789abcdef", {{"n", 3}}, "OK"}}};
+    std::optional<Result> out;
+    callLater("automation.run_macro", R"({"file": "fade.lua", "macro": "Fade"})", out);
+    macros.finish();
+    ASSERT_TRUE(out && *out) << (*out).error().message;
+    EXPECT_EQ((*out)->find("outcome")->asString(), "applied");
+    EXPECT_EQ((*out)->find("dialogs"), nullptr);
+
+    Caller everywhere = chains();
+    everywhere.allDocuments = true;
+    out.reset();
+    callLater("automation.run_macro", R"({"file": "fade.lua", "macro": "Fade"})", out, everywhere);
+    macros.finish();
+    ASSERT_TRUE(out && *out) << (*out).error().message;
+    EXPECT_EQ((*out)->find("dialogs")->asArray().size(), 1u);
+}
+
 TEST_F(PluginFeatures, RunMacroRejectsAKeyThatIsNotADialogKey)
 {
     EXPECT_EQ(code(call("automation.run_macro", R"({"file": "fade.lua", "macro": "Fade",

@@ -2974,6 +2974,13 @@
           },
           "log": {
             "type": "string"
+          },
+          "dialogs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/DialogAnswer"
+            },
+            "description": "The answers its dialogs got, as macro.ran gives them; only when the caller sees the Document it ran on."
           }
         },
         "required": [

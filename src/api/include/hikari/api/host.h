@@ -129,12 +129,7 @@ struct LuaScript {
     std::string macro; // empty: the script's first macro
 };
 
-struct LuaRun {
-    std::string outcome; // "applied", "refused", "failed", "cancelled", "declined", "stopped", "lost" or "invalid"
-    std::string message;
-    std::string log;
-    std::string file;
-};
+struct LuaRun;
 
 enum class LuaStart { Started, Busy, NoDocument, NotSaved };
 
@@ -170,6 +165,15 @@ struct DialogAnswer {
     application::NamedDialogValues values;
     std::string button;
     std::vector<DialogControlInfo> controls;
+};
+
+struct LuaRun {
+    std::string outcome; // "applied", "refused", "failed", "cancelled", "declined", "stopped", "lost" or "invalid"
+    std::string message;
+    std::string log;
+    std::string file;
+    std::optional<application::DocumentId> document; // the Document the macro ran on
+    std::vector<DialogAnswer> dialogs;
 };
 
 struct MacroRequest {

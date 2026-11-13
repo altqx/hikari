@@ -970,6 +970,7 @@ Runs a loaded Automation macro on the active tab's selection, as the menu would,
 | `outcome` | one of `applied`, `refused`, `failed`, `cancelled`, `declined`, `stopped` or `lost` | yes |  |
 | `message` | string | yes |  |
 | `log` | string | yes |  |
+| `dialogs` | array of [DialogAnswer](#dialoganswer) |  | The answers its dialogs got, as macro.ran gives them; only when the caller sees the Document it ran on. |
 
 ### `automation.run`
 

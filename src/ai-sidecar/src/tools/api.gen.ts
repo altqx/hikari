@@ -835,6 +835,8 @@ export type AutomationRunMacroResult = {
     outcome: "applied" | "refused" | "failed" | "cancelled" | "declined" | "stopped" | "lost";
     message: string;
     log: string;
+    /** The answers its dialogs got, as macro.ran gives them; only when the caller sees the Document it ran on. */
+    dialogs?: DialogAnswer[];
 };
 
 /** Saves a Lua Automation script to the AI scripts folder and runs one of its macros on the active tab's selection, once the user approves the script. The run is one undo step. */

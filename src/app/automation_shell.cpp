@@ -1733,9 +1733,10 @@ void AutomationShell::finished(const QString &, backends::LuaScriptHost::RunOutc
     m_lastOutcome = ended;
     const std::string reported = ended == QLatin1String("invalid") ? "declined" : ended.toStdString();
     if (m_macroRan)
-        m_macroRan(Ran{run.target, run.path, run.macro, reported, std::move(answers)});
+        m_macroRan(Ran{run.target, run.path, run.macro, reported, answers});
     if (run.done)
-        run.done(api::LuaRun{reported, text.toStdString(), m_log.toStdString(), application::scriptFileName(run.path)});
+        run.done(api::LuaRun{reported, text.toStdString(), m_log.toStdString(), application::scriptFileName(run.path),
+                             run.target, std::move(answers)});
     finishCard(ended, text, outcome == Outcome::NotValid ? message : QString());
     m_editor().reloadFromSession();
     if (m_documentChanged)
