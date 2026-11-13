@@ -63,6 +63,15 @@ QString ProjectWindows::root(int window) const
     return found == m_roots.end() ? QString() : found->second;
 }
 
+QStringList ProjectWindows::roots() const
+{
+    QStringList out;
+    for (const auto &[window, root] : m_roots)
+        if (!root.isEmpty())
+            out << root;
+    return out;
+}
+
 QString ProjectWindows::name(int window) const
 {
     const QString folder = root(window);
