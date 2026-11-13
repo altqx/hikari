@@ -576,6 +576,13 @@ foreach(mode offscreen xvfb)
     endif()
 endforeach()
 
+hikari_add_qttest(hikari_ui_contrast_tests SOURCES contrast_tests.cpp LIBRARIES hikari_composition)
+foreach(mode offscreen xvfb native)
+    if(TEST hikari_ui_contrast_tests.${mode})
+        set_tests_properties(hikari_ui_contrast_tests.${mode} PROPERTIES TIMEOUT 600)
+    endif()
+endforeach()
+
 get_directory_property(hikari_ui_test_targets BUILDSYSTEM_TARGETS)
 foreach(target IN LISTS hikari_ui_test_targets)
     get_target_property(type ${target} TYPE)
