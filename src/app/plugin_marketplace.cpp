@@ -524,6 +524,7 @@ void PluginMarketplace::rebuild()
             {QStringLiteral("summary"), text(shown.summary)},
             {QStringLiteral("description"), text(shown.description)},
             {QStringLiteral("authorName"), text(listing.authorName)},
+            {QStringLiteral("official"), m_manager.officialAuthor().owns(listing.id, listing.publicKey)},
             {QStringLiteral("version"), text(shown.version)},
             {QStringLiteral("unrestricted"), shown.unrestricted},
             {QStringLiteral("categories"), listed},

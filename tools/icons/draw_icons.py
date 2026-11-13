@@ -1029,6 +1029,8 @@ icon("plugins", "Plugins", [], [AUTO, "plugin-manager"], stroke("M2.5 4.5h3a1.5 
 icon("plugin-install", "Install plugin", [], ["plugin-manager"], PUZZLE_CUT + plus_badge())
 icon("plugin-unverified", "Unverified plugin", [], ["plugin-manager"],
      PUZZLE_CUT + accent(stroke("M12 9.5v2.5"), dot(12, 14, 0.75)))
+icon("plugin-official", "By HikariSub", [], ["plugin-manager"],
+     PUZZLE_CUT + accent(fill("M12 8.5l.75 2.75 2.75.75-2.75.75-.75 2.75-.75-2.75-2.75-.75 2.75-.75z")))
 icon("node-editor", "Node effects", [], [VIEW, "node-editor"],
      rect(1.5, 2.5, 4, 3.5, 1) + rect(1.5, 10, 4, 3.5, 1) + rect(10.5, 6, 4, 3.5, 1)
      + accent(stroke("M5.5 4.25C8 4.25 8 7.75 10.5 7.75M5.5 11.75C8 11.75 8 7.75 10.5 7.75")))

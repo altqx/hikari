@@ -4203,6 +4203,17 @@
    ]
   },
   {
+   "role": "plugin-official",
+   "file": "plugin-official.svg",
+   "label": "By HikariSub",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "plugin-manager"
+   ]
+  },
+  {
    "role": "node-editor",
    "file": "node-editor.svg",
    "label": "Node effects",
