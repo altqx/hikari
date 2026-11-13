@@ -317,10 +317,10 @@ private slots:
         QTest::addColumn<QString>("dockName");
         QTest::addColumn<QString>("control");
         QTest::newRow("Search") << "root.openFind(false)" << "searchPanel" << "searchDock" << "findText";
-        QTest::newRow("Shift times") << "showShiftTimesItem.triggered()" << "timingPanel" << "timingDock" << "";
-        QTest::newRow("Postprocessor") << "showPostprocessorItem.triggered()" << "postprocessorPanel" << "postprocessorDock" << "";
+        QTest::newRow("Shift times") << "showShiftTimesAction.trigger()" << "timingPanel" << "timingDock" << "";
+        QTest::newRow("Postprocessor") << "showPostprocessorAction.trigger()" << "postprocessorPanel" << "postprocessorDock" << "";
         QTest::newRow("Styles") << "root.showPanel(stylesDock)" << "stylesPanel" << "stylesDock" << "stylesTool";
-        QTest::newRow("QC notes") << "showQcNotesItem.triggered()" << "qcNotesPanel" << "qcNotesDock" << "";
+        QTest::newRow("QC notes") << "showQcNotesAction.trigger()" << "qcNotesPanel" << "qcNotesDock" << "";
     }
     void eachCommandOpensItsPanelInTheToolsSideBar()
     {
@@ -418,7 +418,12 @@ private slots:
             return names.join(QLatin1String(" < "));
         };
         QTRY_VERIFY2(findItem(header, QStringLiteral("originalTextButtons")), qPrintable(chain()));
-        const auto lineTextIn = [&] { return item("lineText") ? item("lineText")->parentItem()->objectName() : QString(); };
+        const auto lineTextIn = [&] {
+            for (QQuickItem *p = item("lineText"); p; p = p->parentItem())
+                if (p->objectName().endsWith(QLatin1String("Slot")))
+                    return p->objectName();
+            return QString();
+        };
         QTRY_COMPARE(lineTextIn(), QStringLiteral("originalSlot"));
         call("toggleSideBar", false);
         QTRY_COMPARE(lineTextIn(), QStringLiteral("lineTextSlot"));
