@@ -24,6 +24,7 @@
 
 #include <QDir>
 #include <QFile>
+#include <QFileInfo>
 #include <QGuiApplication>
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -846,6 +847,25 @@ private slots:
         QVERIFY(!named(shell(w), "projectTrustBar")->property("visible").toBool());
         QCOMPARE(application->projectAiKeys(w).value(QStringLiteral("rows")).toList().value(0).toMap()
                      .value(QStringLiteral("used")).toString(), QStringLiteral("untrusted"));
+    }
+
+    void theCredentialsFileOpensThroughTheDesktopHandoff()
+    {
+        start();
+        const QString show = folder("credentialed", true);
+        writeAll(show + QStringLiteral("/.hikari/project.toml"), "version = 1\n");
+        const int w = openProjectWindow(show);
+        QVERIFY(w >= 0);
+        QList<QUrl> opened;
+        auto routes = backends::desktop::replaceRoutes({[&](const QUrl &url) { opened << url; return true; }, {}, {}});
+        auto restore = qScopeGuard([&] { backends::desktop::replaceRoutes(routes); });
+        application->openProjectCredentials(w);
+        QVERIFY(opened.isEmpty());
+        const QString credentials = show + QStringLiteral("/.hikari/credentials.toml");
+        writeAll(credentials, "version = 1\n[keys]\nopenai = \"sk-handed-off\"\n");
+        application->openProjectCredentials(w);
+        QCOMPARE(opened.size(), 1);
+        QCOMPARE(QFileInfo(opened.first().toLocalFile()).canonicalFilePath(), QFileInfo(credentials).canonicalFilePath());
     }
 
     void aKeyInProjectTomlIsIgnoredAndMovesToTheCredentialsFile()

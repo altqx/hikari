@@ -27,6 +27,13 @@ public:
 
 protected:
     std::string title() { return getStringProperty("mainWindow", "title"); }
+    long long pageIndex(const std::string &id)
+    {
+        const spix::Variant index = invokeMethod("settingsDialog", "pageIndex", {id});
+        if (index.index() == spix::Variant::Int)
+            return std::get<long long>(index);
+        return index.index() == spix::Variant::Double ? static_cast<long long>(std::get<double>(index)) : -1;
+    }
     void executeTest() override
     {
         if (waitForItem("mainWindow/editingGrid", 5s)) {
@@ -35,8 +42,10 @@ protected:
             wait(300ms);
             mouseClick("mainWindow/settingsMenuItem");
             if (waitForItem("settingsDialog/settingsPages", 5s)) {
-                // MUST KILL: magic page index 10 is the Hotkeys page
-                setStringProperty("settingsDialog/settingsPages", "currentIndex", "10");
+                setStringProperty("settingsDialog/settingsPages", "currentIndex", std::to_string(pageIndex("hotkeys")));
+                wait(300ms);
+                mouseClick("settingsDialog/hotkeySearch");
+                inputText("settingsDialog/hotkeySearch", "Close current tab");
                 wait(300ms);
                 observed.push_back(getStringProperty("settingsDialog/hotkeyList", "selectedRow"));
                 mouseClick("settingsDialog/hotkeyMap");
