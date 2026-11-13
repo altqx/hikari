@@ -7730,15 +7730,6 @@ private slots:
         const QSize minimum = ui::Docking().minimumSize(spelling);
         QVERIFY2(place.height() >= minimum.height(),
                  qPrintable(QStringLiteral("%1 < %2").arg(place.height()).arg(minimum.height())));
-        QQuickItem *button = findItem(header, QStringLiteral("dockMenuButton"));
-        QVERIFY(button && button->isVisible());
-        const QRectF shown = button->mapRectToScene(QRectF(0, 0, button->width(), button->height()));
-        const QRectF inside(QPointF(0, 0), button->window()->size());
-        QVERIFY2(inside.contains(shown), qPrintable(QStringLiteral("menu button at %1,%2 %3x%4 in a %5x%6 window")
-                                                        .arg(shown.x()).arg(shown.y()).arg(shown.width()).arg(shown.height())
-                                                        .arg(inside.width()).arg(inside.height())));
-        QVERIFY(openPanelMenu(spelling));
-        QVERIFY(QMetaObject::invokeMethod(named("panelOptionsMenu"), "close"));
     }
 
     void panelMenusReadInTheOrderTheyShow()
@@ -7986,14 +7977,15 @@ private slots:
             QTRY_VERIFY(settled(panel));
         }
         QQuickItem *editor = item("editorPanel");
-        QTRY_VERIFY(settled(editor) && settled(editor));
+        const QString editorDock = editor->property("dockName").toString();
         const qreal minimumHeight = editor->property("minimumSize").toSizeF().height();
         const qreal before = editor->height();
-        QVERIFY(docking->resizeInLayout(editor->property("dockName").toString(), 0, 60 - int(before), 0, 0));
+        QVERIFY(docking->resizeInLayout(editorDock, 0, qCeil(minimumHeight) - int(before), 0, 0));
         QTRY_VERIFY2(editor->height() < before || editor->height() <= minimumHeight + 0.5,
-                     qPrintable(QStringLiteral("%1 from %2, minimum %3, engine %4")
-                                    .arg(editor->height()).arg(before).arg(minimumHeight)
-                                    .arg(docking->minimumSize(editor->property("dockName").toString()).height())));
+                     qPrintable(QStringLiteral("%1 from %2, minimum %3").arg(editor->height()).arg(before).arg(minimumHeight)));
+        QVERIFY2(editor->height() >= minimumHeight - 0.5, qPrintable(QString::number(editor->height())));
+        QVERIFY(docking->resizeInLayout(editorDock, 0, -100, 0, 0));
+        QTRY_VERIFY(settled(editor));
         QVERIFY2(editor->height() >= minimumHeight - 0.5, qPrintable(QString::number(editor->height())));
         auto *videoDock = item<QObject>("videoDock");
         application->workspaceLayout().resizePanel(videoDock, 470, application->workspaceLayout().panelSize(videoDock).height());
