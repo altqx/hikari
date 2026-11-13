@@ -655,7 +655,8 @@ TEST_F(AgentBrokerTest, AStdioOnlyAcpAgentReachesTheSessionsChannelThroughTheBri
 {
     const QString work = dir.filePath(QStringLiteral("work"));
     AgentSpec s = acpAgent(QStringLiteral(HIKARI_FAKE_ACP_AGENT), {}, {}, work, QStringLiteral(HIKARI_TEST_MCP_HTTP_BRIDGE));
-    s.profile->readExecute << QLibraryInfo::path(QLibraryInfo::LibrariesPath) << QLibraryInfo::path(QLibraryInfo::PluginsPath);
+    s.profile->readExecute << QLibraryInfo::path(QLibraryInfo::LibrariesPath) << QLibraryInfo::path(QLibraryInfo::BinariesPath)
+                           << QLibraryInfo::path(QLibraryInfo::PluginsPath);
     broker.add("acp:fake", s);
     ASSERT_FALSE(*call(kAgentStart, Json::object({{"process", 1}, {"agent", "acp:fake"}, {"args", Json::array({"--yolo"})},
                                                   {"session", "t1"}})));
