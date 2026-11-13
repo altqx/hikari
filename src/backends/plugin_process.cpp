@@ -304,13 +304,21 @@ std::string PluginProcess::job(const std::string &operation, const std::string &
     const auto result = [](QJsonObject value) {
         return QJsonDocument(QJsonObject{{QStringLiteral("result"), value}}).toJson(QJsonDocument::Compact).toStdString();
     };
+    const auto userClick = [](const Unit &unit) {
+        const bool dialog = unit.name.starts_with("dialog:");
+        if (unit.kind != Unit::Kind::Event || !(dialog || unit.name.starts_with("panel:")))
+            return false;
+        const QString kind =
+            QJsonDocument::fromJson(QByteArray::fromStdString(unit.json)).object().value(QStringLiteral("kind")).toString();
+        return kind == QStringLiteral("click") || (dialog && kind == QStringLiteral("button"));
+    };
     if (operation == "job.cancelled")
         return result({{QStringLiteral("cancelled"), m_jobCancelled}});
     if (operation == "job.begin") {
-        if (!m_running || m_running->kind != Unit::Kind::Command)
-            return refused("Only a command can become a job.");
+        if (!m_running || !(m_running->kind == Unit::Kind::Command || userClick(*m_running)))
+            return refused("Only a command or a click in the plugin's own panel or dialog can become a job.");
         if (m_job)
-            return refused("This command is a job already.");
+            return refused("This is a job already.");
         m_job = true;
         m_jobCancelled = false;
         m_watchdog.stop();
