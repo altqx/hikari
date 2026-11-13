@@ -37,7 +37,7 @@ Version 1 of the Hikari API, generated from HikariSub's own registry: the same r
 | `audio.peaks` | read | 1 | The lowest and highest 16-bit sample in each of `buckets` equal slices of a time range. |
 | `files.list` | read | 1 | The files and folders the user granted this caller; with folder, also what that folder holds. |
 | `files.read` | read | 1 | A granted file's content, as UTF-8 text or base64; at most 16 MiB. |
-| `files.write` | write | 1 | Replaces a file granted for writing with new content; in a writable folder, makes it and its folders. |
+| `files.write` | write | 1 | Replaces a file granted for writing with new content; in a writable folder, makes it and its folders. An AI caller's write is staged for the user to review and reaches the disk only when kept. |
 | `skills.list` | read | 1 | The caller's skills: each skill folder's name, whether it is the Project's or the user's, and its files, SKILL.md among them. |
 | `skills.read` | read | 1 | One file of a skill skills.list gives, as UTF-8 text; at most 256 KiB. |
 | `automation.run` | write | 1 | Saves a Lua Automation script to the AI scripts folder and runs one of its macros on the active tab's selection, once the user approves the script. The run is one undo step. |
@@ -770,7 +770,7 @@ A granted file's content, as UTF-8 text or base64; at most 16 MiB.
 
 Write. Since version 1.
 
-Replaces a file granted for writing with new content; in a writable folder, makes it and its folders.
+Replaces a file granted for writing with new content; in a writable folder, makes it and its folders. An AI caller's write is staged for the user to review and reaches the disk only when kept.
 
 **Parameters**
 
@@ -788,6 +788,7 @@ Replaces a file granted for writing with new content; in a writable folder, make
 | --- | --- | --- | --- |
 | `file` | string | yes |  |
 | `size` | integer | yes | At least 0. |
+| `staged` | boolean |  | True: waiting in the review, not on the disk yet. |
 
 ### `skills.list`
 

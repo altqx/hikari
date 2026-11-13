@@ -49,11 +49,11 @@ struct RiskCheck {
     std::string reason;
 };
 
-/// `pathOf` gives a granted file's path; `safeFolders` are the user folder, the open subtitles' folders and the
-/// Project.
+/// `writeTarget` gives the file a files.write would change; `safeFolders` are the user folder and the open subtitles'
+/// folders; `project` is the thread's Project folder, empty for none. Its .hikari folder always asks.
 RiskCheck alwaysAsk(const std::string &operation, const api::Json &params,
-                    const std::function<std::optional<std::string>(std::string_view handle)> &pathOf,
-                    const std::vector<std::string> &safeFolders);
+                    const std::function<std::optional<std::string>(const api::Json &params)> &writeTarget,
+                    const std::vector<std::string> &safeFolders, const std::string &project = {});
 
 /// Reads, and moving the selection or a panel, never ask: they change no content and no setting.
 bool asksPermission(const std::string &operation);

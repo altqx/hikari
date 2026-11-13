@@ -4262,6 +4262,28 @@
    ]
   },
   {
+   "role": "review-file",
+   "file": "review-file.svg",
+   "label": "Changed file",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "agent-panel"
+   ]
+  },
+  {
+   "role": "review-new-file",
+   "file": "review-new-file.svg",
+   "label": "New file",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "agent-panel"
+   ]
+  },
+  {
    "role": "copy-path",
    "file": "copy-path.svg",
    "label": "Copy path",

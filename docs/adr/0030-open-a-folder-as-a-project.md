@@ -111,7 +111,7 @@ The more specific source wins (attached, then Project, then the Fonts folder, th
 - **Never sent:** paths matching `[ai] exclude` (by default `.env*`, `*.key`, `.git/`, `project.local.toml` and `.hikari/credentials.toml`), the bytes of media files, and anything a symlink reaches outside the Project.
 - **Claude's and Codex's built-in file tools stay off.** The sidecar's working directory stays its private folder ([ADR 0026](0026-hikari-ai-runs-in-a-typescript-sidecar-on-bun.md)).
 - **Instructions.** The user's `AGENTS.md` and then the Project root's are joined in that order and given to every agent.
-- **In an untrusted Project** the AI still runs. A banner shows when the Project's `AGENTS.md` is loaded.
+- **In an untrusted Project** the AI still runs. A banner shows when the Project's `AGENTS.md` is loaded. Its writes stage in the review there too, and nothing reaches the disk until the user keeps it, so staging widens nothing (owner, 2026-11-13, Q473, [PJ7c #903](https://github.com/altqx/hikari/issues/903)). The plugin `project` place stays writable only in a trusted Project (Q362).
 - **Honya's project folder is the Project** ([ADR 0024](0024-hikari-ai.md), "Translation"): `PROJECT.md` and `GLOSSARY.md` at its root, or the subfolder `[translation] glossary` names. The Script Info pointer stays only for files outside a Project.
 
 ## Project AI keys

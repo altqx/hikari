@@ -129,6 +129,19 @@ std::expected<GrantedFile, Error> named(const Context &context, const Json &para
     return GrantedFile{context.grantFile(resolved, (*folder)->writable), path->asString(), resolved, (*folder)->writable};
 }
 
+bool openInATab(const Context &context, const std::string &path)
+{
+    if (!context.host.documents)
+        return false;
+    std::error_code error;
+    const fs::path target = fs::weakly_canonical(pathOf(path), error);
+    for (const application::DocumentId document : context.host.documents->workspace().allTabs())
+        if (const auto open = context.host.documents->path(document))
+            if (fs::weakly_canonical(pathOf(*open), error) == target)
+                return true;
+    return false;
+}
+
 bool base64Encoding(const Json &params)
 {
     const Json *encoding = params.find("encoding");
@@ -189,7 +202,9 @@ Result filesRead(const Context &context, const Json &params)
     if (context.caller.reviewed && mediaFile(file->path))
         return fail(errors::kRefused, "\"" + file->name + "\" is a media file; read it through video.frame or audio.peaks.",
                     Json::object({{"reason", Json("media")}}));
-    const auto bytes = context.host.files->read(file->path, kMaxFileBytes + 1);
+    const std::string *staged = context.caller.reviewed && context.host.review ? context.host.review->staged(file->path)
+                                                                                : nullptr;
+    const auto bytes = staged ? std::optional(*staged) : context.host.files->read(file->path, kMaxFileBytes + 1);
     if (!bytes)
         return fail(errors::kNotFound, "\"" + file->name + "\" cannot be read.", Json::object({{"file", Json(file->handle)}}));
     if (bytes->size() > kMaxFileBytes)
@@ -221,6 +236,16 @@ Result filesWrite(const Context &context, const Json &params)
         return fail(errors::kInvalidParams, "Parameter /data: not base64.", Json::object({{"pointer", Json("/data")}}));
     if (bytes->size() > kMaxFileBytes)
         return fail(errors::kRefused, "The data is larger than 16 MiB.", Json::object({{"reason", Json("too_large")}}));
+    if (context.caller.reviewed && context.host.review) {
+        if (openInATab(context, file->path))
+            return fail(errors::kRefused, "\"" + file->name + "\" is open in a tab; change it with document.apply.",
+                        Json::object({{"reason", Json("open_document")}}));
+        context.host.review->stageFile(context.caller.id, context.caller.label, file->path, file->name,
+                                       context.host.files->read(file->path, kMaxFileBytes + 1), *bytes);
+        return Json::object({{"file", Json(file->handle)},
+                             {"size", Json(static_cast<std::int64_t>(bytes->size()))},
+                             {"staged", Json(true)}});
+    }
     if (params.find("folder")) {
         std::error_code error;
         fs::create_directories(pathOf(file->path).parent_path(), error);
@@ -262,10 +287,12 @@ void addFileOperations(Registry &registry)
                      "required": ["file", "size", "encoding", "data"], "additionalProperties": false})",
                  now(filesRead));
     addOperation(registry, Access::Write, "files.write",
-                 "Replaces a file granted for writing with new content; in a writable folder, makes it and its folders.",
+                 "Replaces a file granted for writing with new content; in a writable folder, makes it and its folders. "
+                 "An AI caller's write is staged for the user to review and reaches the disk only when kept.",
                  R"({"type": "object", "properties": {)" + std::string(kNamed) + ", " + std::string(kEncoding) +
                      R"(, "data": {"type": "string"}}, "required": ["data"], "additionalProperties": false})",
-                 R"({"type": "object", "properties": {"file": {"type": "string"}, "size": {"type": "integer", "minimum": 0}},
+                 R"({"type": "object", "properties": {"file": {"type": "string"}, "size": {"type": "integer", "minimum": 0},
+                     "staged": {"type": "boolean", "description": "True: waiting in the review, not on the disk yet."}},
                      "required": ["file", "size"], "additionalProperties": false})",
                  now(filesWrite));
 }

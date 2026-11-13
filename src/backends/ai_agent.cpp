@@ -305,8 +305,8 @@ std::optional<AgentMode> agentModeFromId(std::string_view id)
 }
 
 RiskCheck alwaysAsk(const std::string &operation, const Json &params,
-                    const std::function<std::optional<std::string>(std::string_view)> &pathOf,
-                    const std::vector<std::string> &safeFolders)
+                    const std::function<std::optional<std::string>(const Json &)> &writeTarget,
+                    const std::vector<std::string> &safeFolders, const std::string &project)
 {
     const auto outside = [&](const std::optional<std::string> &path) {
         return !path || std::none_of(safeFolders.begin(), safeFolders.end(),
@@ -318,8 +318,14 @@ RiskCheck alwaysAsk(const std::string &operation, const Json &params,
                 return {r.risk, std::string(r.reason)};
         return {};
     };
-    if (operation == "files.write" && outside(pathOf ? pathOf(stringAt(params, "file")) : std::nullopt))
-        return {Risk::Files, "It overwrites a file outside the subtitles' folders and your user folder."};
+    if (operation == "files.write") {
+        const std::optional<std::string> target = writeTarget ? writeTarget(params) : std::nullopt;
+        const bool inProject = target && !project.empty() && under(*target, project);
+        if (inProject && under(*target, project + "/.hikari"))
+            return {Risk::Files, "It changes the Project's .hikari folder, which holds the Project's settings."};
+        if (!inProject && outside(target))
+            return {Risk::Files, "It overwrites a file outside the subtitles' folders and your user folder."};
+    }
     if (operation == "karaoke.align")
         return {Risk::Programs, "It runs " + std::string(stringAt(params, "program") == "mfa" ? "the Montreal Forced Aligner"
                                                                                                : "WhisperX") +
@@ -1458,12 +1464,12 @@ void AgentThreads::gate(const std::string &session, const std::string &operation
                                                 "This turn has stopped; make no more changes.", {}}));
     if (!asksPermission(operation))
         return admitCall(*t, operation, params, false, std::move(admit));
-    const std::string caller = callerOf(*t).id;
-    const auto pathOf = [this, caller](std::string_view handle) {
-        return m_wiring.api ? m_wiring.api->grantedPath(caller, handle) : std::nullopt;
+    const auto writeTarget = [this, caller = callerOf(*t)](const Json &p) {
+        return m_wiring.api ? m_wiring.api->writeTarget(caller, p) : std::nullopt;
     };
-    const RiskCheck risk =
-        alwaysAsk(operation, params, pathOf, m_wiring.safeFolders ? m_wiring.safeFolders() : std::vector<std::string>());
+    const RiskCheck risk = alwaysAsk(operation, params, writeTarget,
+                                     m_wiring.safeFolders ? m_wiring.safeFolders() : std::vector<std::string>(),
+                                     t->project);
     switch (decide(t->mode, operation, risk.risk != Risk::None, t->allowed.contains(allowanceKey(operation, params)))) {
     case Decision::Run:
         return admitCall(*t, operation, params, false, std::move(admit));
