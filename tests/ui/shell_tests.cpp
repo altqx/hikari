@@ -923,6 +923,7 @@ private slots:
         QVERIFY(window);
         window->requestActivate();
         QVERIFY(QTest::qWaitForWindowExposed(window));
+        QTRY_VERIFY(window->property("sideBarsLoaded").toBool());
     }
     void cleanup()
     {
