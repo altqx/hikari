@@ -938,6 +938,47 @@ private slots:
         QCOMPARE(grid.cellRect(0, 0).width(), plain);
     }
 
+    void showsPluginRowMarksInTheNumberGutter()
+    {
+        struct Grid : LineGrid {
+            using LineGrid::hoverMoveEvent;
+        };
+        LineTableModel model;
+        model.setDocument(generate(3));
+        Grid grid;
+        grid.setSize(QSizeF(1000, 300));
+        grid.setModel(&model);
+        const qreal plain = grid.cellRect(0, 0).width();
+        const auto second = *model.lineAt(1);
+        using application::MarkColour;
+        model.setRowMarks({{second.value,
+                            {LineTableModel::RowMark{MarkColour::Warning, QStringLiteral("Chains: Changed since v1")},
+                             LineTableModel::RowMark{MarkColour::Danger, QStringLiteral("Other: Removed")}}}});
+        QCOMPARE(grid.cellRect(0, 0).width(), plain + 8);
+        QCOMPARE(grid.rowStateText(1),
+                 QStringLiteral("marked by Chains: Changed since v1, marked by Other: Removed"));
+        QCOMPARE(grid.rowStateText(0), QString());
+        QHoverEvent event(QEvent::HoverMove, grid.cellRect(1, 0).center(), grid.cellRect(1, 0).center(),
+                          grid.cellRect(1, 0).center());
+        grid.hoverMoveEvent(&event);
+        QCOMPARE(grid.hoverToolTip(), QStringLiteral("Chains: Changed since v1\nOther: Removed"));
+
+        QImage image(1000, 300, QImage::Format_ARGB32);
+        QPainter painter(&image);
+        grid.paint(&painter);
+        painter.end();
+        const QRectF cell = grid.cellRect(1, 0);
+        const auto &roles = theme::current().roles;
+        const int x = int(cell.right() - 4);
+        QCOMPARE(image.pixelColor(x, int(cell.top() + 5)), roles.warning);
+        QCOMPARE(image.pixelColor(x, int(cell.bottom() - 5)), roles.danger);
+        QVERIFY(image.pixelColor(x, int(grid.cellRect(0, 0).center().y())) != roles.warning);
+
+        model.setRowMarks({});
+        QCOMPARE(grid.cellRect(0, 0).width(), plain);
+        QCOMPARE(grid.rowStateText(1), QString());
+    }
+
     void paintsTheChangedLineMark()
     {
         const char *script = "[Events]\n"

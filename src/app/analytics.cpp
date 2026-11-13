@@ -647,6 +647,16 @@ void Analytics::dialogOpened(const QString &id)
     capture(QStringLiteral("dialog_opened"), {{QStringLiteral("dialog"), dialogId}});
 }
 
+void Analytics::pluginFeatureUsed(const QString &feature)
+{
+    static const QStringList features{QStringLiteral("run_macro"), QStringLiteral("set_keyframes"), QStringLiteral("frames"),
+                                      QStringLiteral("job"), QStringLiteral("row_marks")};
+    if (!features.contains(feature) || !active() || m_once.contains(QStringLiteral("plugin:") + feature))
+        return;
+    m_once.insert(QStringLiteral("plugin:") + feature);
+    capture(QStringLiteral("plugin_feature_used"), {{QStringLiteral("feature"), feature}});
+}
+
 void Analytics::layoutChanged(const QString &layout)
 {
     const QString id = layout == QLatin1String("saved") ? layout : layout.toLower();

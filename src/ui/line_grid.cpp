@@ -240,6 +240,7 @@ void LineGrid::updateColumns()
         }
     m_markWidth = m_model && m_model->headerData(0, Qt::Horizontal, LineTableModel::FilteredRole).toBool() ? 11 : 0;
     m_qcMarked = m_model && m_model->headerData(0, Qt::Horizontal, LineTableModel::QcMarkedRole).toBool();
+    m_rowMarked = m_model && m_model->headerData(0, Qt::Horizontal, LineTableModel::RowMarkedRole).toBool();
     const auto it = std::find(m_columns.begin(), m_columns.end(), previous);
     m_currentColumn = it != m_columns.end() ? static_cast<int>(it - m_columns.begin())
                                             : static_cast<int>(m_columns.size()) - 1;
@@ -277,6 +278,8 @@ QString LineGrid::rowStateText(int row) const
         words << QCoreApplication::translate("HikariSub.Grid", "bookmarked");
     if (const auto notes = m_model->index(row, 0).data(LineTableModel::QcNotesRole).toStringList(); !notes.isEmpty())
         words << QCoreApplication::translate("HikariSub.Grid", "%n QC note(s)", nullptr, int(notes.size()));
+    for (const QString &note : m_model->index(row, 0).data(LineTableModel::RowMarkNotesRole).toStringList())
+        words << QCoreApplication::translate("HikariSub.Grid", "marked by %1").arg(note);
     if (m_model->index(row, 0).data(LineTableModel::DraftRole).toBool())
         words << QCoreApplication::translate("HikariSub.Grid", "uncommitted");
     if (m_model->index(row, 0).data(LineTableModel::UnplacedRunsRole).toBool())
@@ -733,9 +736,10 @@ void LineGrid::setHoverToolTip(std::optional<QPointF> at)
                                QRectF(first.x(), 0, first.width(), m_geometry.headerHeight));
     }
     const int row = rowAt(at->y());
-    const QStringList notes = modelColumn(column) == LineTableModel::NumberColumn && row >= 0
-                                  ? m_model->index(row, 0).data(LineTableModel::QcNotesRole).toStringList()
-                                  : QStringList();
+    QStringList notes;
+    if (modelColumn(column) == LineTableModel::NumberColumn && row >= 0)
+        notes = m_model->index(row, 0).data(LineTableModel::QcNotesRole).toStringList() +
+                m_model->index(row, 0).data(LineTableModel::RowMarkNotesRole).toStringList();
     setHoverToolTip(notes.join(u'\n'), notes.isEmpty() ? QRectF() : cellRect(row, column));
 }
 
@@ -894,7 +898,7 @@ std::vector<double> LineGrid::widthsFor(double total) const
             continue;
         }
         switch (c) {
-        case LineTableModel::NumberColumn: width = fit("00000", 8) + numberIndent(); break;
+        case LineTableModel::NumberColumn: width = fit("00000", 8) + numberIndent() + rowMarkGutter(); break;
         case LineTableModel::LayerColumn: width = fit("000", 8); break;
         case LineTableModel::StartColumn:
         case LineTableModel::EndColumn: width = fit("00:00:00,000", 12); break;
@@ -979,7 +983,7 @@ void LineGrid::drawLabel(QPainter *painter, const QRectF &cell, int state, bool 
     const QColor mark = labelInk(label);
     // Centred on a device pixel corner so the ring's 1-wide pen covers whole pixels.
     const QTransform &device = painter->deviceTransform();
-    const QPointF centre = device.map(QPointF(cell.right() - 6.5, cell.center().y()));
+    const QPointF centre = device.map(QPointF(cell.right() - rowMarkGutter() - 6.5, cell.center().y()));
     const QPointF snapped = device.inverted().map(QPointF(std::round(centre.x()), std::round(centre.y())));
     const QRectF dot(snapped.x() - 2.5, snapped.y() - 2.5, 5, 5);
     if (draft) {
@@ -1013,6 +1017,34 @@ void LineGrid::drawQcFlag(QPainter *painter, const QRectF &cell, const QColor &i
     painter->setBrush(current ? QBrush(ink) : QBrush(Qt::NoBrush));
     painter->drawPolygon(pennant, 5);
     painter->restore();
+}
+
+void LineGrid::drawRowMarks(QPainter *painter, const QRectF &cell, const QVariantList &colours) const
+{
+    const theme::State &state = theme::current();
+    const theme::Roles &roles = state.roles;
+    const auto ink = [&](int colour) {
+        switch (static_cast<application::MarkColour>(colour)) {
+        case application::MarkColour::Warning: return roles.warning;
+        case application::MarkColour::Danger: return roles.danger;
+        case application::MarkColour::Success: return roles.success;
+        case application::MarkColour::Muted: return roles.muted;
+        case application::MarkColour::Accent: break;
+        }
+        return roles.accent;
+    };
+    const QRectF bar(cell.right() - 6, cell.top() + 3, 4, cell.height() - 6);
+    const double gap = 1;
+    const double part = (bar.height() - gap * double(colours.size() - 1)) / double(colours.size());
+    for (qsizetype i = 0; i < colours.size(); ++i)
+        painter->fillRect(QRectF(bar.left(), bar.top() + double(i) * (part + gap), bar.width(), part), ink(colours[i].toInt()));
+    if (theme::isHighContrast(state.code)) {
+        painter->save();
+        painter->setPen(QPen(roles.text, 1));
+        painter->setBrush(Qt::NoBrush);
+        painter->drawRect(bar.adjusted(-0.5, -0.5, 0.5, 0.5));
+        painter->restore();
+    }
 }
 
 void LineGrid::drawComparisonMarks(QPainter *painter, const QRectF &cell, const QString &text, const QVariantList &marks,
@@ -1167,6 +1199,8 @@ void LineGrid::paint(QPainter *painter)
                                ? labelInk(labelColours.value(LineTableModel::labelSlot(state)).value<QColor>())
                                : roles.text,
                            idx.data(LineTableModel::QcCurrentRole).toBool());
+            if (const QVariantList colours = idx.data(LineTableModel::RowMarkColoursRole).toList(); !colours.isEmpty())
+                drawRowMarks(painter, cell, colours);
         }
         if (const int review = idx.data(LineTableModel::ReviewRole).toInt(); numberShown && review != 0)
             painter->fillRect(QRectF(columnLeft(widths, 0), top, 3, rh),
@@ -1227,8 +1261,9 @@ void LineGrid::paint(QPainter *painter)
                 painter->setFont(bold);
                 painter->setPen(roles.text);
             }
-            painter->drawText(QRectF(x + 4 + indent, top, widths[c] - 8 - indent, rh), Qt::AlignVCenter | Qt::TextSingleLine,
-                              QFontMetricsF(painter->font()).elidedText(text, Qt::ElideRight, widths[c] - 8 - indent));
+            const double room = widths[c] - 8 - indent - (mc == LineTableModel::NumberColumn ? rowMarkGutter() : 0);
+            painter->drawText(QRectF(x + 4 + indent, top, room, rh), Qt::AlignVCenter | Qt::TextSingleLine,
+                              QFontMetricsF(painter->font()).elidedText(text, Qt::ElideRight, room));
             if (onLabel || count)
                 painter->restore();
             if (mc == LineTableModel::TextColumn && idx.data(LineTableModel::UnplacedRunsRole).toBool()) {

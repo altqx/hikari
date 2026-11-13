@@ -1,5 +1,7 @@
 #pragma once
 
+#include "hikari/application/row_marks.h"
+
 #include "hikari/app/ai_karaoke.h"
 #include "hikari/app/ai_plugins.h"
 #include "hikari/app/ai_scripts.h"
@@ -1167,6 +1169,10 @@ private:
     void rememberColumns(bool paste, int columns, const QString &tagNames);
     void protectReference();
     void refreshViews();
+    std::optional<std::string> setKeyframesFromApi(const std::vector<std::int64_t> &frames,
+                                                   const std::optional<std::string> &file);
+    void showRowMarks(application::DocumentId document);
+    ui::LineTableModel::RowMarks rowMarksOf(std::optional<application::DocumentId> document) const;
     void refreshVideo();
     void switchTabMedia(WindowMedia &media, std::optional<application::DocumentId> tab);
     bool changeResolution(int fromWidth, int fromHeight, int width, int height, bool resample, bool stretch,
@@ -1352,6 +1358,7 @@ private:
     std::unique_ptr<AiScripts> m_aiScripts;
     std::unique_ptr<AiKaraoke> m_aiKaraoke;
     std::unique_ptr<AiPlugins> m_aiPlugins;
+    application::RowMarks m_rowMarks;
     std::unique_ptr<ApiHost> m_apiHost;
     std::unique_ptr<AiFeatures> m_ai;
     std::unique_ptr<AiMcp> m_aiMcp;

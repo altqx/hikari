@@ -33,6 +33,8 @@ Version 1 of the Hikari API, generated from HikariSub's own registry: the same r
 | `video.ink_bounds` | read | 1 | Where one Line's ink, or every Line's, lies on a video frame, in video pixels. |
 | `video.colours` | read | 1 | The colours of a video frame at points, as ASS &HBBGGRR&, each the mean of the square radius pixels around it. |
 | `video.keyframes` | read | 1 | The keyframes from one time to another, each with its start time. |
+| `video.frames` | read | 1 | Video frames from one to another, every stride-th, scaled to fit maxEdge, as luma or BGRA in base64. At most 256 frames and 16 MiB of pixels come in one call. |
+| `video.set_keyframes` | write | 1 | Replaces the video's keyframes as Open keyframes does. With file, writes them there as an Aegisub keyframes file first and opens it. Not an undo step. |
 | `audio.info` | read | 1 | Whether audio is open and loaded, its duration and sample rate. |
 | `audio.peaks` | read | 1 | The lowest and highest 16-bit sample in each of `buckets` equal slices of a time range. |
 | `files.list` | read | 1 | The files and folders the user granted this caller; with folder, also what that folder holds. |
@@ -40,6 +42,8 @@ Version 1 of the Hikari API, generated from HikariSub's own registry: the same r
 | `files.write` | write | 1 | Replaces a file granted for writing with new content; in a writable folder, makes it and its folders. |
 | `skills.list` | read | 1 | The caller's skills: each skill folder's name, whether it is the Project's or the user's, and its files, SKILL.md among them. |
 | `skills.read` | read | 1 | One file of a skill skills.list gives, as UTF-8 text; at most 256 KiB. |
+| `automation.macros` | read | 1 | The loaded Automation macros, as the Automation menu lists them. |
+| `automation.run_macro` | write | 1 | Runs a loaded Automation macro on the active tab's selection, as the menu would, as one undo step. Answers fill its dialogs. Plugins only. |
 | `automation.run` | write | 1 | Saves a Lua Automation script to the AI scripts folder and runs one of its macros on the active tab's selection, once the user approves the script. The run is one undo step. |
 | `translation.project` | read | 1 | The Document's Honya project files: PROJECT.md, GLOSSARY.md, CHARACTERS.md and STYLE.md, those that exist. folder is null when the Document has no project folder. |
 | `translation.project_write` | write | 1 | Replaces one of the Document's Honya project files, keeping Honya's Markdown and honya:data format. |
@@ -76,6 +80,9 @@ Version 1 of the Hikari API, generated from HikariSub's own registry: the same r
 | `karaoke.template_preview` | read | 1 | The Lines the karaoke templater generates from one karaoke Line, without applying them. |
 | `karaoke.apply_template` | write | 1 | Runs the karaoke templater on the karaoke Lines, or the Lines given, and applies what it generates as one undo step: old generated Lines are replaced. |
 | `karaoke.align` | write | 1 | Runs the user's own WhisperX or Montreal Forced Aligner on the audio under the Lines and answers each word with its start and end in ms; the user approves every run, and nothing is applied. |
+| `marks.set` | write | 1 | Marks Grid rows with a coloured bar and a tooltip, replacing the caller's marks on those Lines. Marks belong to the plugin, are never saved and go when it stops. Not an undo step. Plugins only. |
+| `marks.clear` | write | 1 | Removes the caller's Grid row marks. Plugins only. |
+| `marks.list` | read | 1 | The caller's Grid row marks on a Document. Plugins only. |
 
 ### `documents.list`
 
@@ -305,6 +312,9 @@ The commands of menus, toolbars and shortcuts, with their enabled state and keys
 | `commands[].enabled` | boolean | yes |  |
 | `commands[].disabledReason` | string |  |  |
 | `commands[].keys` | array of string | yes |  |
+| `commands[].kind` | one of `hotkey`, `macro` or `plugin` |  | Always given: a HikariSub command, an Automation macro (macro:<file>:<ordinal>) or a plugin's (plugin.<id>.<command>). |
+| `commands[].file` | string |  | A macro's script file name. |
+| `commands[].macro` | string |  | A macro's name. |
 
 ### `panels.list`
 
@@ -679,6 +689,54 @@ The keyframes from one time to another, each with its start time.
 | `keyframes[].time` | integer | yes |  |
 | `total` | integer | yes | Every keyframe in the range; the first 500 are listed. At least 0. |
 
+### `video.frames`
+
+Read. Since version 1.
+
+Video frames from one to another, every stride-th, scaled to fit maxEdge, as luma or BGRA in base64. At most 256 frames and 16 MiB of pixels come in one call.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `from` | integer | yes | At least 0. |
+| `to` | integer | yes | At least 0. |
+| `stride` | integer |  | Default 1, every frame. At least 1. |
+| `maxEdge` | integer |  | Default 64. From 16 to 512. |
+| `format` | one of `luma` or `bgra` |  | Default luma, one byte per pixel. |
+| `subtitles` | boolean |  | Render the subtitles on them. Default false. |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `width` | integer | yes | At least 1. |
+| `height` | integer | yes | At least 1. |
+| `format` | one of `luma` or `bgra` | yes |  |
+| `frames` | array of objects | yes |  |
+| `frames[].frame` | integer | yes | At least 0. |
+| `frames[].data` | string | yes | width bytes per row for luma, width * 4 for bgra; top row first; base64. |
+
+### `video.set_keyframes`
+
+Write. Since version 1.
+
+Replaces the video's keyframes as Open keyframes does. With file, writes them there as an Aegisub keyframes file first and opens it. Not an undo step.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `frames` | array of integer | yes | At most 100000 items. |
+| `file` | string |  | A writable file handle, from files.pick or files.open. |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `count` | integer | yes | At least 0. |
+| `file` | string |  |  |
+
 ### `audio.info`
 
 Read. Since version 1.
@@ -827,6 +885,54 @@ One file of a skill skills.list gives, as UTF-8 text; at most 256 KiB.
 | `file` | string | yes |  |
 | `size` | integer | yes | At least 0. |
 | `data` | string | yes |  |
+
+### `automation.macros`
+
+Read. Since version 1.
+
+The loaded Automation macros, as the Automation menu lists them.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `query` | string |  | Keep macros whose name, script or file name holds this, ignoring case. |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `macros` | array of objects | yes |  |
+| `macros[].script` | string | yes | The script's name. |
+| `macros[].file` | string | yes | The script's file name. |
+| `macros[].macro` | string | yes |  |
+| `macros[].ordinal` | integer | yes | The macro's place among the script's, from 0. At least 0. |
+| `macros[].description` | string | yes |  |
+| `macros[].enabled` | boolean | yes | The script is loaded and shown in the user's window. |
+| `macros[].disabledReason` | string |  |  |
+
+### `automation.run_macro`
+
+Write. Since version 1.
+
+Runs a loaded Automation macro on the active tab's selection, as the menu would, as one undo step. Answers fill its dialogs. Plugins only.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `file` | string | yes | The script's file name. Not empty. |
+| `macro` | string | yes | Not empty. |
+| `answers` | array of [DialogAnswer](#dialoganswer) |  | One per dialog, in order, as macro.ran gives them. At most 64 items. |
+| `show` | one of `never` or `prefilled` |  | never (the default) answers a dialog whose key matches without showing it; prefilled shows it filled in. A dialog without a matching answer, and a question, is always shown. |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `outcome` | one of `applied`, `refused`, `failed`, `cancelled`, `declined`, `stopped` or `lost` | yes |  |
+| `message` | string | yes |  |
+| `log` | string | yes |  |
 
 ### `automation.run`
 
@@ -1742,6 +1848,70 @@ Runs the user's own WhisperX or Montreal Forced Aligner on the audio under the L
 | `words[].start` | integer | yes |  |
 | `words[].end` | integer | yes |  |
 
+### `marks.set`
+
+Write. Since version 1.
+
+Marks Grid rows with a coloured bar and a tooltip, replacing the caller's marks on those Lines. Marks belong to the plugin, are never saved and go when it stops. Not an undo step. Plugins only.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `document` | [DocumentId](#documentid) |  | Defaults to the active Document. |
+| `marks` | array of objects | yes | 1 to 20000 items. |
+| `marks[].line` | [LineId](#lineid) | yes |  |
+| `marks[].colour` | [MarkColour](#markcolour) | yes |  |
+| `marks[].tooltip` | string | yes | What the mark means; shown on hover after the plugin's name and read by screen readers. 1 to 200 characters. |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `document` | [DocumentId](#documentid) | yes |  |
+| `marked` | integer | yes | At least 0. |
+
+### `marks.clear`
+
+Write. Since version 1.
+
+Removes the caller's Grid row marks. Plugins only.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `document` | [DocumentId](#documentid) |  | Defaults to the active Document. |
+| `lines` | array of [LineId](#lineid) |  | These Lines only; every mark of the caller when omitted. |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `document` | [DocumentId](#documentid) | yes |  |
+
+### `marks.list`
+
+Read. Since version 1.
+
+The caller's Grid row marks on a Document. Plugins only.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `document` | [DocumentId](#documentid) |  | Defaults to the active Document. |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `document` | [DocumentId](#documentid) | yes |  |
+| `marks` | array of objects | yes |  |
+| `marks[].line` | [LineId](#lineid) | yes |  |
+| `marks[].colour` | [MarkColour](#markcolour) | yes |  |
+| `marks[].tooltip` | string | yes | What the mark means; shown on hover after the plugin's name and read by screen readers. 1 to 200 characters. |
+
 ## Events
 
 ### `project.changed`
@@ -1826,6 +1996,23 @@ A command ran, from a menu, a key, the API or anywhere else.
 | --- | --- | --- | --- |
 | `command` | string | yes |  |
 | `ok` | boolean | yes | False when it was refused or failed. |
+
+### `macro.ran`
+
+Since version 1.
+
+An Automation macro run ended, from the menu, a key, Repeat last run or the API, with the answers its dialogs got, in the form automation.run_macro takes.
+
+**Data**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `document` | [DocumentId](#documentid) | yes |  |
+| `file` | string | yes | The script's file name. |
+| `macro` | string | yes |  |
+| `outcome` | one of `applied`, `refused`, `failed`, `cancelled`, `declined`, `stopped` or `lost` | yes |  |
+| `ok` | boolean | yes | True when it applied. |
+| `dialogs` | array of [DialogAnswer](#dialoganswer) | yes |  |
 
 ## Types
 
@@ -2066,3 +2253,15 @@ One of:
 | --- | --- | --- | --- |
 | `name` | string | yes | The Project folder's name. |
 | `trusted` | boolean | yes | Whether the folder is in Trusted folders. |
+
+### DialogAnswer
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `key` | string | yes | The dialog's key: its script and its controls' kinds and names, as Automation remembers answers by. `pattern`: `"^[0-9a-f]{16}$"`. |
+| `values` | object of string, number or boolean by name | yes | The answered values by control name. |
+| `button` | string |  | The pressed button's label; empty when the dialog was closed. |
+
+### MarkColour
+
+Type: one of `accent`, `warning`, `danger`, `success` or `muted`. A theme role, so the mark follows the theme and high contrast.

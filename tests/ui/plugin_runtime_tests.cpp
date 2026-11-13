@@ -5,6 +5,7 @@
 #include "hikari/app/plugin_ui.h"
 #include "hikari/app/project_windows.h"
 #include "hikari/application/node_catalogue.h"
+#include "hikari/application/row_marks.h"
 #include "hikari/plugins/registry.h"
 
 #include <QDir>
@@ -296,6 +297,54 @@ private slots:
         QTRY_COMPARE(noticed.size(), 3);
         QCOMPARE(notices(noticed).at(2).text, QStringLiteral("still here"));
         QCOMPARE(runtime.process(QStringLiteral("com.example.hello"))->processId(), steady);
+    }
+
+    void jobsStackNewestFirstAndCancelOffersStopAfterTheGrace()
+    {
+        const QByteArray scan = "hikari.commands.register('spin', function() "
+                                "hikari.job.begin{title = 'Scanning'} hikari.job.progress(0.25, 'Frame 64') "
+                                "while true do end end)";
+        install(QStringLiteral("example.chains"), QStringLiteral("Chains"), scan);
+        install(QStringLiteral("com.example.other"), QStringLiteral("Other"), scan);
+        ui::LogController log;
+        application::RowMarks marks;
+        QStringList used;
+        app::PluginRuntime::Wiring w{QStringLiteral(HIKARI_PLUGIN_HELPER), folders(), nullptr, &log, {}, {.timeLimitMs = 500}};
+        w.jobGraceMs = 200;
+        w.marks = &marks;
+        w.featureUsed = [&](const QString &feature) { used << feature; };
+        app::PluginRuntime runtime(std::move(w));
+        runtime.sync();
+        QVERIFY(runtime.run(QStringLiteral("plugin.example.chains.spin")));
+        QTRY_COMPARE_WITH_TIMEOUT(runtime.jobs().size(), 1, 10'000);
+        QVERIFY(runtime.run(QStringLiteral("plugin.com.example.other.spin")));
+        QTRY_COMPARE_WITH_TIMEOUT(runtime.jobs().size(), 2, 10'000);
+        QTRY_COMPARE(runtime.jobs().at(1).toMap().value(QStringLiteral("fraction")).toDouble(), 0.25);
+        QCOMPARE(runtime.jobs().at(0).toMap().value(QStringLiteral("plugin")).toString(), QStringLiteral("com.example.other"));
+        const QVariantMap chains = runtime.jobs().at(1).toMap();
+        QCOMPARE(chains.value(QStringLiteral("name")).toString(), QStringLiteral("Chains"));
+        QCOMPARE(chains.value(QStringLiteral("title")).toString(), QStringLiteral("Scanning"));
+        QCOMPARE(chains.value(QStringLiteral("text")).toString(), QStringLiteral("Frame 64"));
+        QCOMPARE(used, (QStringList{QStringLiteral("job"), QStringLiteral("job")}));
+
+        QTest::qWait(800);
+        QCOMPARE(runtime.jobs().size(), 2);
+        marks.set("plugin:example.chains", "Chains", application::DocumentId{1},
+                  {{core::LineId{4}, application::MarkColour::Warning, "Changed"}});
+        QCOMPARE(runtime.marks(QStringLiteral("example.chains")).size(), 1);
+        QCOMPARE(runtime.marks(QStringLiteral("example.chains")).at(0).toMap().value(QStringLiteral("colour")).toString(),
+                 QStringLiteral("warning"));
+
+        runtime.cancelJob(QStringLiteral("example.chains"));
+        QVERIFY(runtime.jobs().at(1).toMap().value(QStringLiteral("cancelling")).toBool());
+        QVERIFY(!runtime.jobs().at(1).toMap().value(QStringLiteral("stuck")).toBool());
+        QTRY_VERIFY(runtime.jobs().at(1).toMap().value(QStringLiteral("stuck")).toBool());
+        runtime.forceStop(QStringLiteral("example.chains"));
+        QTRY_COMPARE(runtime.jobs().size(), 1);
+        QCOMPARE(runtime.jobs().at(0).toMap().value(QStringLiteral("plugin")).toString(), QStringLiteral("com.example.other"));
+        QVERIFY(marks.counts("plugin:example.chains").empty());
+        runtime.forceStop(QStringLiteral("com.example.other"));
+        QTRY_VERIFY(runtime.jobs().isEmpty());
     }
 
     void loadAndCommandErrorsAreNoticed()

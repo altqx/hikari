@@ -7727,6 +7727,11 @@ ApplicationWindow {
                     root.contentItem.forceActiveFocus(Qt.OtherFocusReason)
             }
         }
+        PluginJobCards {
+            width: parent ? parent.width : implicitWidth
+            y: automationProgress.shown ? automationProgress.implicitHeight + 8 : 0
+            runtime: root.app.pluginRuntime
+        }
     }
     readonly property alias notices: notices
     Connections {

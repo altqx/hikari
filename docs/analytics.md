@@ -71,6 +71,7 @@ Time buckets: `<250ms`, `250-500ms`, `0.5-1s`, `1-2s`, `2-5s`, `5-15s`, `15-60s`
 | `getting_started_skipped` | Getting started's Skip | (none) |
 | `star_prompt_shown` | The suggestion to star HikariSub on GitHub shows ([star-prompt.md](star-prompt.md)), at most twice ever | (none) |
 | `star_prompt_clicked` | Its Star on GitHub | (none) |
+| `plugin_feature_used` | A plugin uses a feature made for long or media work | `feature`: `run_macro` (runs one of your Automation macros), `job` (shows a job card), `frames` (reads video frames), `set_keyframes` or `row_marks` (marks Grid rows). Which plugin, which macro and what it marked is not sent. |
 
 Where `command_used` is reported:
 - `via: key`: every command a key runs. The shell reports it through `HotkeysController::ran`.
@@ -80,6 +81,7 @@ Where `command_used` is reported:
 - `command_used` goes at most once per command and `via` per session.
 - `panel_opened` and `dialog_opened` go at most once per id per session.
 - `layout_changed` goes each time, up to 20 per session.
+- `plugin_feature_used` goes at most once per `feature` per session.
 
 ### Errors and crashes
 

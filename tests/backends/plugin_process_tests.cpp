@@ -49,6 +49,7 @@ protected:
     std::vector<std::string> m_notices;
     std::vector<std::string> m_calls;
     int m_slowReplyMs = 0;
+    std::string m_id = "com.example.test";
 
     std::string plugin(const std::string &name, const std::string &main)
     {
@@ -61,16 +62,16 @@ protected:
     std::unique_ptr<PluginProcess> process(const std::string &root, PluginProcess::Limits limits = {},
                                            plugin::Tier tier = plugin::Tier::Restricted)
     {
-        auto load = [root, tier] {
+        auto load = [root, tier, id = m_id] {
             plugin::LoadRequest request;
             request.root = root;
             request.main = "main.lua";
-            request.id = "com.example.test";
+            request.id = id;
             request.version = "1.0.0";
             request.tier = tier;
             request.memoryLimit = 64 << 20;
             request.settings = "{}";
-            request.commands = {"greet", "spin", "wait", "crash"};
+            request.commands = {"greet", "spin", "wait", "crash", "scan"};
             return request;
         };
         auto p = std::make_unique<PluginProcess>(QStringLiteral(HIKARI_PLUGIN_HELPER), load, limits);
@@ -145,6 +146,93 @@ TEST_F(PluginProcessTest, ForceStopEndsARunningCommand)
     p->forceStop();
     ASSERT_EQ(stopped.count(), 1);
     EXPECT_EQ(stopped.at(0).at(0).value<PluginProcess::StopReason>(), PluginProcess::StopReason::ForceStopped);
+    EXPECT_FALSE(p->busy());
+}
+
+TEST_F(PluginProcessTest, AJobOutlivesTheTimeLimitReportsProgressAndEndsWhenCancelled)
+{
+    m_id = "example.chains";
+    auto p = process(plugin("job", R"(
+        hikari.commands.register('scan', function()
+            assert(hikari.job.begin{title = 'Scanning'})
+            local step = 0
+            while not hikari.job.cancelled() do
+                step = step + 1
+                hikari.job.progress(step % 2 == 0 and 0.5 or nil, 'step')
+                for _ = 1, 200000 do end
+            end
+            hikari.notify('cancelled after ' .. (step > 0 and 'steps' or 'nothing'))
+        end))"),
+                     {.timeLimitMs = 300});
+    QSignalSpy began(p.get(), &PluginProcess::jobBegan);
+    QSignalSpy progress(p.get(), &PluginProcess::jobProgress);
+    QSignalSpy ended(p.get(), &PluginProcess::jobEnded);
+    QSignalSpy finished(p.get(), &PluginProcess::finished);
+    QSignalSpy stopped(p.get(), &PluginProcess::stopped);
+    ASSERT_TRUE(p->run("scan"));
+    ASSERT_TRUE(waitFor([&] { return began.count() == 1; }));
+    EXPECT_EQ(began.at(0).at(0).toString(), QStringLiteral("scan"));
+    EXPECT_EQ(began.at(0).at(1).toString(), QStringLiteral("Scanning"));
+    EXPECT_TRUE(p->inJob());
+    waitFor([] { return false; }, 900);
+    EXPECT_EQ(stopped.count(), 0);
+    ASSERT_GE(progress.count(), 2);
+    const std::vector<double> fractions{progress.at(0).at(0).toDouble(), progress.at(1).at(0).toDouble()};
+    EXPECT_EQ(fractions, (std::vector<double>{-1.0, 0.5}));
+    EXPECT_EQ(progress.at(0).at(1).toString(), QStringLiteral("step"));
+    p->cancelJob();
+    ASSERT_TRUE(waitFor([&] { return finished.count() == 1; }));
+    EXPECT_EQ(ended.count(), 1);
+    EXPECT_FALSE(p->inJob());
+    EXPECT_EQ(m_notices, std::vector<std::string>{"cancelled after steps"});
+}
+
+TEST_F(PluginProcessTest, OnlyACommandBecomesAJob)
+{
+    auto p = process(plugin("early", "local ok, err = hikari.job.begin{title = 'x'} hikari.notify(tostring(ok) .. ' ' .. err.message) "
+                                     "hikari.commands.register('greet', function() hikari.notify(tostring(hikari.job.progress(1))) end)"));
+    QSignalSpy finished(p.get(), &PluginProcess::finished);
+    ASSERT_TRUE(p->run("greet"));
+    ASSERT_TRUE(waitFor([&] { return finished.count() == 1; }));
+    ASSERT_EQ(m_notices.size(), 2u);
+    EXPECT_EQ(m_notices[0], "nil Only a command can become a job.");
+    EXPECT_EQ(m_notices[1], "nil");
+}
+
+TEST_F(PluginProcessTest, MarksGoThroughTheHikariApi)
+{
+    auto p = process(plugin("marks", "hikari.commands.register('greet', function() "
+                                     "hikari.marks.set({{line = 2, colour = 'warning', tooltip = 'Changed'}}) "
+                                     "hikari.marks.clear({2}) hikari.marks.list() end)"));
+    QSignalSpy finished(p.get(), &PluginProcess::finished);
+    ASSERT_TRUE(p->run("greet"));
+    ASSERT_TRUE(waitFor([&] { return finished.count() == 1; }));
+    ASSERT_EQ(m_calls.size(), 3u);
+    EXPECT_EQ(m_calls[0], R"(marks.set {"marks":[{"colour":"warning","line":2,"tooltip":"Changed"}]})");
+    EXPECT_EQ(m_calls[1], R"(marks.clear {"lines":[2]})");
+    EXPECT_EQ(m_calls[2], "marks.list {}");
+}
+
+TEST_F(PluginProcessTest, ForceStopEndsAJobThatIgnoresCancel)
+{
+    m_id = "example.chains";
+    auto p = process(plugin("stuck", "hikari.commands.register('scan', function() "
+                                     "hikari.job.begin{title = 'Stuck'} while true do end end)"),
+                     {.timeLimitMs = 300});
+    QSignalSpy began(p.get(), &PluginProcess::jobBegan);
+    QSignalSpy ended(p.get(), &PluginProcess::jobEnded);
+    QSignalSpy stopped(p.get(), &PluginProcess::stopped);
+    ASSERT_TRUE(p->run("scan"));
+    ASSERT_TRUE(waitFor([&] { return began.count() == 1; }));
+    p->cancelJob();
+    waitFor([] { return false; }, 700);
+    EXPECT_EQ(stopped.count(), 0);
+    EXPECT_TRUE(p->inJob());
+    p->forceStop();
+    ASSERT_EQ(stopped.count(), 1);
+    EXPECT_EQ(stopped.at(0).at(0).value<PluginProcess::StopReason>(), PluginProcess::StopReason::ForceStopped);
+    EXPECT_EQ(ended.count(), 1);
+    EXPECT_FALSE(p->inJob());
     EXPECT_FALSE(p->busy());
 }
 

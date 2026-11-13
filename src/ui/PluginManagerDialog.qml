@@ -1065,6 +1065,44 @@ DialogWindow {
             }
         }
         Heading {
+            visible: marksRepeater.count > 0
+            text: qsTr("Marks")
+        }
+        Repeater {
+            id: marksRepeater
+            model: {
+                dialog.runtime ? dialog.runtime.marksRevision : 0
+                return dialog.runtime ? dialog.runtime.marks(details.row.id) : []
+            }
+            RowLayout {
+                id: marksRow
+                required property var modelData
+                spacing: 8
+                Layout.fillWidth: true
+                Rectangle {
+                    implicitWidth: 4
+                    implicitHeight: 12
+                    color: Theme[marksRow.modelData.colour]
+                    border.width: Theme.highContrast ? 1 : 0
+                    border.color: Theme.text
+                }
+                Label {
+                    objectName: "pluginMarks_" + marksRow.modelData.document
+                    text: qsTr("Marks %n line(s) in %1", "", marksRow.modelData.count).arg(marksRow.modelData.file)
+                    textFormat: Text.PlainText
+                    elide: Text.ElideMiddle
+                    Layout.fillWidth: true
+                }
+                IconTextButton {
+                    objectName: "pluginClearMarks_" + marksRow.modelData.document
+                    iconRole: "remove"
+                    text: qsTr("Clear marks")
+                    tip: qsTr("Removes %1’s marks from the Grid of %2").arg(details.row.name, marksRow.modelData.file)
+                    onClicked: dialog.runtime.clearMarks(details.row.id, marksRow.modelData.document)
+                }
+            }
+        }
+        Heading {
             visible: details.row.adds.length > 0
             text: qsTr("What it adds")
         }
