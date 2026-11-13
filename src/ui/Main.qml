@@ -2435,6 +2435,7 @@ ApplicationWindow {
             objectName: "fileMenuBarItem"
             menu: ShellMenu {
                 title: qsTr("&File")
+                onBuilt: root.applyMenuShortcuts()
                 lazyContent: MenuContent {
                     ShellMenuItem {
                         command: "GLOBAL_OPEN_SUBS"
@@ -2655,6 +2656,7 @@ ApplicationWindow {
         ShellMenu {
             id: editMenu
             title: qsTr("&Edit")
+            onBuilt: root.applyMenuShortcuts()
             lazyContent: MenuContent {
                 ShellMenuItem {
                     command: "GLOBAL_UNDO"
@@ -2793,6 +2795,7 @@ ApplicationWindow {
         ShellMenu {
             objectName: "subtitlesMenu"
             title: qsTr("&Subtitles")
+            onBuilt: root.applyMenuShortcuts()
             lazyContent: MenuContent {
                 ShellMenuItem {
                     command: "GLOBAL_SHOW_SHIFT_TIMES"
@@ -3044,6 +3047,7 @@ ApplicationWindow {
         ShellMenu {
             objectName: "videoMenu"
             title: qsTr("&Video")
+            onBuilt: root.applyMenuShortcuts()
             lazyContent: MenuContent {
                 ShellMenuItem {
                     command: "GLOBAL_OPEN_VIDEO"
@@ -3345,6 +3349,7 @@ ApplicationWindow {
             id: audioMenu
             objectName: "audioMenu"
             title: qsTr("A&udio")
+            onBuilt: root.applyMenuShortcuts()
             lazyContent: MenuContent {
                 ShellMenuItem {
                     command: "GLOBAL_OPEN_AUDIO"
@@ -3428,6 +3433,7 @@ ApplicationWindow {
             objectName: "automationMenu"
             title: qsTr("&Automation")
             onAboutToShow: root.automation.menuOpened()
+            onBuilt: root.applyMenuShortcuts()
             lazyContent: MenuContent {
                 ShellMenuItem {
                     command: "GLOBAL_AUTOMATION_LOAD_SCRIPT"
@@ -3530,6 +3536,7 @@ ApplicationWindow {
             id: viewMenu
             objectName: "viewMenu"
             title: qsTr("Vie&w")
+            onBuilt: root.applyMenuShortcuts()
             lazyContent: MenuContent {
                 LayoutMenu {
                     id: viewLayoutMenu
@@ -3697,6 +3704,7 @@ ApplicationWindow {
         }
         ShellMenu {
             title: qsTr("&Help")
+            onBuilt: root.applyMenuShortcuts()
             lazyContent: MenuContent {
                 ShellMenuItem {
                     command: "GLOBAL_GETTING_STARTED"
@@ -9627,8 +9635,6 @@ ApplicationWindow {
 
     Component.onCompleted: {
         root.app.shellWindowLoaded(root)
-        for (let i = 0; i < appMenus.count; ++i)
-            appMenus.menuAt(i).built.connect(root.applyMenuShortcuts)
         root.connectApi()
         const turnedOn = root.app.settings.value("workspace.karaokeTurnedOn")
         root.karaokeTurnedOn = turnedOn.indexOf("audio.karaoke") >= 0
