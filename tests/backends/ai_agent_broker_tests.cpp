@@ -667,10 +667,15 @@ TEST_F(AgentBrokerTest, AStdioOnlyAcpAgentReachesTheSessionsChannelThroughTheBri
     const auto said = [&](const std::string &prompt, int id) {
         send(2, R"({"jsonrpc":"2.0","id":)" + std::to_string(id) + R"(,"method":"session/prompt","params":{"sessionId":"s1","prompt":[{"type":"text","text":")" + prompt + R"("}]}})");
         EXPECT_TRUE(waitFor([&] { return withId(2, id).has_value(); }, 30'000));
+        std::string last;
         for (const Json &l : lines(2))
             if (const Json *p = l.find("params"); p && p->find("update") && l.find("method")->asString() == "session/update")
-                if (const Json *t = p->find("update")->find("content")->find("text"); t && t->asString().find(prompt == "close" ? "exit" : "jsonrpc") != std::string::npos)
-                    return t->asString();
+                if (const Json *t = p->find("update")->find("content")->find("text")) {
+                    if (t->asString().find(prompt == "close" ? "exit" : "jsonrpc") != std::string::npos)
+                        return t->asString();
+                    last = t->asString();
+                }
+        ADD_FAILURE() << prompt << ": " << last;
         return std::string();
     };
     const std::vector<Json> out = lines(2);
