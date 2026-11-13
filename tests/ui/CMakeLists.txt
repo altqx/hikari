@@ -12,12 +12,15 @@ hikari_add_qttest(hikari_ui_shell_tests SOURCES shell_tests.cpp next_file_folder
     LIBRARIES hikari_composition Qt6::CorePrivate ZLIB::ZLIB Hikari::sodium
     PARTS documents
           panels=panelsFloatDockHideAndKeepTheirState
+          panels2=saveAsOffersAssForADocumentOfAnotherFormat
+          panels3=spellCheckerWindowAndEditorMarks
           translation=translationModeStacksOriginalAboveTranslated
           hotkeys=hotkeysPageMapsAndOkInstalls
           visual=visualToolRailCrosshairAndCopyCoordinates
+          visual2=importLyricsAddsLinesToTheOpenFileInOneStep
           video=videoRecentListsAndDialogFolders
     PART_TIMEOUT 600)
-foreach(part documents visual)
+foreach(part documents visual visual2)
     foreach(mode offscreen xvfb)
         if(TEST hikari_ui_shell_tests.${part}.${mode})
             set_property(TEST hikari_ui_shell_tests.${part}.${mode} APPEND PROPERTY
