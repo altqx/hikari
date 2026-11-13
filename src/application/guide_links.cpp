@@ -31,6 +31,7 @@ constexpr std::array kLinks{
     GuideLink{Panel, "NodeGraph", "/en/docs/karaoke/node-effects"},
     GuideLink{Panel, "NodeInspector", "/en/docs/karaoke/node-effects"},
     GuideLink{Panel, "NodeSources", "/en/docs/karaoke/node-effects"},
+    GuideLink{Panel, "Explorer", "/en/docs/basics/projects"},
     GuideLink{Window, "allTagsEdition", "/en/docs/typesetting/shapes-and-tags-editors"},
     GuideLink{Window, "automation", "/en/docs/automation/running-scripts"},
     GuideLink{Window, "dummyVideo", "/en/docs/basics/video"},

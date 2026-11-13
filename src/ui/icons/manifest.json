@@ -13,7 +13,8 @@
    ],
    "surfaces": [
     "menu:file",
-    "video-context-menu"
+    "video-context-menu",
+    "explorer"
    ]
   },
   {
@@ -136,7 +137,8 @@
    "surfaces": [
     "menu:file",
     "settings-dialog",
-    "font-catalog"
+    "font-catalog",
+    "explorer"
    ]
   },
   {
@@ -286,7 +288,8 @@
    "surfaces": [
     "menu:video",
     "video-context-menu",
-    "dummy-video"
+    "dummy-video",
+    "explorer"
    ]
   },
   {
@@ -313,7 +316,8 @@
     "OpenKeyframes.png"
    ],
    "surfaces": [
-    "menu:video"
+    "menu:video",
+    "explorer"
    ]
   },
   {
@@ -337,7 +341,8 @@
    "mirror": false,
    "legacy": [],
    "surfaces": [
-    "menu:video"
+    "menu:video",
+    "explorer"
    ]
   },
   {
@@ -646,7 +651,8 @@
     "OpenAudio.png"
    ],
    "surfaces": [
-    "menu:audio"
+    "menu:audio",
+    "explorer"
    ]
   },
   {
@@ -990,7 +996,8 @@
    ],
    "surfaces": [
     "line-editor",
-    "font-dialog"
+    "font-dialog",
+    "explorer"
    ]
   },
   {
@@ -2194,7 +2201,8 @@
    "mirror": false,
    "legacy": [],
    "surfaces": [
-    "document-tabs"
+    "document-tabs",
+    "explorer"
    ]
   },
   {
@@ -2377,7 +2385,8 @@
     "style-manager",
     "grid-menu",
     "visual-tools",
-    "automation-panel"
+    "automation-panel",
+    "explorer"
    ]
   },
   {
@@ -2401,7 +2410,8 @@
    "surfaces": [
     "style-manager",
     "grid-menu",
-    "text-field-menu"
+    "text-field-menu",
+    "explorer"
    ]
   },
   {
@@ -2439,7 +2449,8 @@
    "legacy": [],
    "surfaces": [
     "font-catalog",
-    "automation-panel"
+    "automation-panel",
+    "explorer"
    ]
   },
   {
@@ -2525,7 +2536,8 @@
     "tab-menu",
     "menu:file",
     "settings-dialog",
-    "plugin-manager"
+    "plugin-manager",
+    "explorer"
    ]
   },
   {
@@ -2998,7 +3010,8 @@
    "legacy": [],
    "surfaces": [
     "menu:video",
-    "video-context-menu"
+    "video-context-menu",
+    "explorer"
    ]
   },
   {
@@ -4257,7 +4270,8 @@
    "legacy": [],
    "surfaces": [
     "tab-menu",
-    "home"
+    "home",
+    "explorer"
    ]
   },
   {
@@ -4453,8 +4467,7 @@
    "surfaces": [
     "menu:view",
     "explorer"
-   ],
-   "pending": "PJ4 #772"
+   ]
   },
   {
    "role": "new-subtitle-file",
@@ -4465,8 +4478,7 @@
    "legacy": [],
    "surfaces": [
     "explorer"
-   ],
-   "pending": "PJ4 #772"
+   ]
   },
   {
    "role": "show-all-files",
@@ -4477,8 +4489,7 @@
    "legacy": [],
    "surfaces": [
     "explorer"
-   ],
-   "pending": "PJ4 #772"
+   ]
   },
   {
    "role": "group-by-name",
@@ -4489,8 +4500,84 @@
    "legacy": [],
    "surfaces": [
     "explorer"
-   ],
-   "pending": "PJ4 #772"
+   ]
+  },
+  {
+   "role": "file-folder",
+   "file": "file-folder.svg",
+   "label": "Folder",
+   "accent": false,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "explorer"
+   ]
+  },
+  {
+   "role": "file-subtitles",
+   "file": "file-subtitles.svg",
+   "label": "Subtitle file",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "explorer"
+   ]
+  },
+  {
+   "role": "file-video",
+   "file": "file-video.svg",
+   "label": "Video file",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "explorer"
+   ]
+  },
+  {
+   "role": "file-audio",
+   "file": "file-audio.svg",
+   "label": "Audio file",
+   "accent": false,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "explorer"
+   ]
+  },
+  {
+   "role": "file-keyframes",
+   "file": "file-keyframes.svg",
+   "label": "Keyframes file",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "explorer"
+   ]
+  },
+  {
+   "role": "file-timecodes",
+   "file": "file-timecodes.svg",
+   "label": "Timecodes file",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "explorer"
+   ]
+  },
+  {
+   "role": "file-other",
+   "file": "file-other.svg",
+   "label": "File",
+   "accent": false,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "explorer"
+   ]
   },
   {
    "role": "tab-to-new-window",

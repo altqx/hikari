@@ -370,6 +370,16 @@ bool Application::openInNewTab(application::StagedOpen staged, const QString &pa
     return true;
 }
 
+bool Application::openInTab(const QString &path)
+{
+    if (!m_workspace.editingTarget() || targetUntouchedUntitled())
+        return openFile(path);
+    auto staged = m_files->stageOpen({QFileInfo(path).absoluteFilePath().toStdString()});
+    if (!staged)
+        return reviewOpen(path, true).value(QStringLiteral("ok")).toBool();
+    return openInNewTab(std::move(*staged), path);
+}
+
 QVariantMap Application::openVideoFile(const QString &path)
 {
     QString subtitles;

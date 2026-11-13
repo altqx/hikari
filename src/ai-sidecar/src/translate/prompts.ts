@@ -5,8 +5,12 @@ const kLines = "- Each Line has an id. Answer every id exactly once.\n" +
 
 const kJsonOnly = "Answer with one JSON object and nothing else.";
 
-export function translatorSystem(language: string): string {
-    return `You translate subtitles into ${language}.\n\n` +
+function into(language: string, source?: string): string {
+    return source ? `from ${source} into ${language}` : `into ${language}`;
+}
+
+export function translatorSystem(language: string, source?: string): string {
+    return `You translate subtitles ${into(language, source)}.\n\n` +
         "Rules:\n" +
         "- Translate everything. Never censor, soften, summarise or embellish.\n" +
         kLines +
@@ -26,8 +30,8 @@ export function translatorSystem(language: string): string {
         `"new_characters": [{"source": "…", "target": "…", "honorific": "…", "speech": "…"}]}`;
 }
 
-export function reviewerSystem(language: string): string {
-    return `You review subtitle translations into ${language}.\n\n` +
+export function reviewerSystem(language: string, source?: string): string {
+    return `You review subtitle translations ${into(language, source)}.\n\n` +
         "Check each Line against its source: nothing left out or added, the meaning, names, honorifics and glossary " +
         "terms as REFERENCE gives them, the speaker's voice and pronouns, idioms, continuity with PREVIOUS, and " +
         "leftover untranslated source text. Markers such as ⟦1⟧ are formatting tags and must stay, once each, in order.\n" +
@@ -37,8 +41,8 @@ export function reviewerSystem(language: string): string {
         `${kJsonOnly} Its shape: {"status": "approve" | "reject", "feedback": [{"id": 1, "issue": "…"}]}`;
 }
 
-export function prepassSystem(language: string): string {
-    return `You prepare a subtitle translation into ${language}.\n\n` +
+export function prepassSystem(language: string, source?: string): string {
+    return `You prepare a subtitle translation ${into(language, source)}.\n\n` +
         "From the sample Lines and speakers, list the recurring characters and the terms that need one fixed " +
         "rendering: names, places, titles, skills, items. Give each its target form in the target language. Add 2–4 " +
         "short examples of the register to aim for. Use only what the Lines show; invent nothing they don't support.\n\n" +
@@ -47,8 +51,8 @@ export function prepassSystem(language: string): string {
         `"examples": [{"source": "…", "target": "…", "note": "…"}]}`;
 }
 
-export function coherenceSystem(language: string): string {
-    return `You check a translated subtitle into ${language} for drift across the whole run.\n\n` +
+export function coherenceSystem(language: string, source?: string): string {
+    return `You check a subtitle translated ${into(language, source)} for drift across the whole run.\n\n` +
         "Look only for: a character's pronouns or register changing without a reason in the scene, names, honorifics " +
         "or terms written two ways, and register flips between neighbouring Lines. Fix a name or term only when " +
         "REFERENCE supports one form. Change nothing else; leave good Lines out of the answer.\n" +

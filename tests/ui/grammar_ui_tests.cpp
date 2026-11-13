@@ -355,6 +355,26 @@ private slots:
         QTRY_VERIFY(!application->editorSpellingMarks(0).contains(word));
     }
 
+    void aProjectWordGoesToTheProjectsDictionaryAndHarperReadsIt()
+    {
+        start();
+        grammarOn();
+        const QString show = home() + QStringLiteral("/show");
+        QDir().mkpath(show + QStringLiteral("/.hikari"));
+        QCOMPARE(application->openFolder(show, 0).value(QStringLiteral("window")).toInt(), 0);
+        const QString text = QStringLiteral("Their going to the store tomorow.");
+        QVERIFY(application->openFile(writeAss(show + QStringLiteral("/ep01.ass"), dialogue(text.toUtf8()))));
+        QTRY_VERIFY_WITH_TIMEOUT(marked(text, QStringLiteral("tomorow")), kHarperWait);
+        QVERIFY(application->addGrammarWord(QStringLiteral("tomorow"), true));
+        QFile words(show + QStringLiteral("/.hikari/dictionary.txt"));
+        QVERIFY(words.open(QIODevice::ReadOnly));
+        QCOMPARE(words.readAll(), QByteArray("tomorow\n"));
+        QTRY_VERIFY_WITH_TIMEOUT(marked(text, QStringLiteral("Their")) && !marked(text, QStringLiteral("tomorow")),
+                                 kHarperWait);
+        QFile mine(grammarDir() + QStringLiteral("/dictionary.txt"));
+        QVERIFY(!mine.open(QIODevice::ReadOnly) || !mine.readAll().contains("tomorow"));
+    }
+
     void wordsAddedWithoutASpellCheckerStay()
     {
         start();

@@ -6455,6 +6455,8 @@ private slots:
         QVERIFY(openPanelMenu(QStringLiteral("Grid")));
         QVERIFY(QMetaObject::invokeMethod(named("panelOptionsMenu"), "close"));
         QTRY_VERIFY(!named("panelOptionsMenu")->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(named("showExplorer"), "triggered"));
+        QTRY_VERIFY(named("explorerRowMenu"));
         const std::vector<std::pair<QString, QObject *>> listed{
             {QStringLiteral("Line editor text"), named("lineTextMenu")},
             {QStringLiteral("Text field"), textMenu},
@@ -6473,6 +6475,7 @@ private slots:
             {QStringLiteral("Reference tray"), named("referenceOccurrenceMenu")},
             {QStringLiteral("Tag button"), named("tagButtonMenu")},
             {QStringLiteral("Tag list"), named("lineTextTagListOptions")},
+            {QStringLiteral("Explorer row"), named("explorerRowMenu")},
         };
         QStringList missing;
         for (const auto &[name, menu] : listed)
@@ -22059,7 +22062,7 @@ private slots:
                                      "Video", "Audio", "Conversion", "Script properties", "Automation", "Shortcuts",
                                      "AI", "Updates and privacy"}));
         QVERIFY(dialogItem("settingsDialog", "settingsPageHotkeys"));
-        QCOMPARE(hotkeyRows().size(), 387);
+        QCOMPARE(hotkeyRows().size(), 388);
         QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(),
                  QStringLiteral("Global Typesetting graph\u2026"));
         QCOMPARE(application->hotkeys().selected(), 0);
@@ -26973,11 +26976,19 @@ private slots:
         const auto where = [](const char *what, QPointF at) {
             return QStringLiteral("%1 at %2,%3").arg(QLatin1String(what)).arg(at.x()).arg(at.y());
         };
+        QQuickItem *pointerArea = overlay->findChild<QQuickItem *>(QStringLiteral("visualPointer"));
+        QVERIFY(pointerArea);
+        const auto blankAt = [&](const char *what, QPointF at) {
+            return QStringLiteral("%1: window cursor %2, pointer area cursor %3, hideCursor %4, override %5, overlay in window %6")
+                .arg(where(what, at), QString::number(shown->cursor().shape()), QString::number(pointerArea->cursor().shape()),
+                     QString::number(tools.hideCursor()), overlay->property("cursorOverride").toString(),
+                     QString::number(overlay->window() == shown));
+        };
         const auto crosshairOnlyOverThePicture = [&](const char *what) {
             const Points p = points();
             QVERIFY2(!p.bars.isEmpty(), qPrintable(QDebug::toString(tools.videoRect())));
             const auto in = [&](QPointF at) {
-                QTRY_COMPARE_WITH_TIMEOUT(cursorAt(at), Qt::BlankCursor, 2000);
+                QTRY_VERIFY2_WITH_TIMEOUT(cursorAt(at) == Qt::BlankCursor, qPrintable(blankAt(what, at)), 2000);
                 QVERIFY2(tools.hideCursor(), qPrintable(where(what, at)));
                 QTRY_VERIFY2(!tools.overlay().isEmpty(), qPrintable(where(what, at)));
             };
@@ -27013,7 +27024,7 @@ private slots:
                 const auto in = [&](QPointF at) {
                     const Qt::CursorShape inside = cursorAt(at);
                     if (f == 0) {
-                        QTRY_COMPARE_WITH_TIMEOUT(cursorAt(at), Qt::BlankCursor, 2000);
+                        QTRY_VERIFY2_WITH_TIMEOUT(cursorAt(at) == Qt::BlankCursor, qPrintable(blankAt(what, at)), 2000);
                     } else {
                         QVERIFY2(inside != Qt::BlankCursor, qPrintable(where(what, at) + QString::number(f)));
                         QTRY_COMPARE_WITH_TIMEOUT(cursorAt(at), Qt::CursorShape(tools.pointerShapeCursor()), 2000);

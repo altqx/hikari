@@ -86,6 +86,9 @@ inline constexpr std::u8string_view kActiveLineKey = u8"Active Line";
 // The active Line's 0-based row (0 with none) for an ASS Document; nullopt for
 // other formats.
 std::optional<std::u8string> activeLineToSave(const EditSession &session);
+
+// An Untitled Document's file: the default Script Info, Style and one empty Line.
+std::string_view defaultScript();
 // `document` as a save writes it: with "Active Line" set to `row`.
 core::Document withActiveLine(core::Document document, const std::optional<std::u8string> &row);
 

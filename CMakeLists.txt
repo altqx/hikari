@@ -78,9 +78,11 @@ include("${CMAKE_CURRENT_LIST_DIR}/cmake/HikariInstall.cmake")
 # hikari_i18n_extraction_reads_every_caller fails when a qsTr/tr caller under src/ is in none of these targets.
 set(HIKARI_I18N_SOURCE_TARGETS hikarisub hikari_composition hikari_ui)
 qt_add_lupdate(SOURCE_TARGETS ${HIKARI_I18N_SOURCE_TARGETS} TS_FILES ${HIKARI_I18N_UI_TS}
-    LUPDATE_TARGET hikari_lupdate NO_GLOBAL_TARGET OPTIONS -locations none)
+    LUPDATE_TARGET hikari_lupdate NO_GLOBAL_TARGET
+    OPTIONS -locations none -disable-heuristic sametext -disable-heuristic similartext)
 qt_add_lupdate(SOURCE_TARGETS ${HIKARI_I18N_SOURCE_TARGETS} TS_FILES ${HIKARI_I18N_EN_TS}
-    LUPDATE_TARGET hikari_lupdate_en NO_GLOBAL_TARGET OPTIONS -locations none -pluralonly -no-obsolete)
+    LUPDATE_TARGET hikari_lupdate_en NO_GLOBAL_TARGET
+    OPTIONS -locations none -pluralonly -no-obsolete -disable-heuristic sametext -disable-heuristic similartext)
 add_dependencies(hikari_lupdate hikari_lupdate_en)
 add_subdirectory(tests/dependency-load)
 if(BUILD_TESTING)

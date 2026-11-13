@@ -286,6 +286,7 @@ TEST_F(InlineRunTest, ThePipelineSendsEveryLineMaskedInOneRequestAndTagsComeBack
     EXPECT_EQ(params.find("lines")->asArray()[0].find("text")->asString(), "\xE2\x9F\xA6" "1\xE2\x9F\xA7one\xE2\x9F\xA6" "2\xE2\x9F\xA7 a");
     EXPECT_EQ(params.find("lines")->asArray()[0].find("speaker")->asString(), "Yui");
     EXPECT_EQ(params.find("document")->asInt(), 4);
+    EXPECT_EQ(params.find("sourceLanguage"), nullptr);
 
     TranslationRun run(translationJobs({u8"{\\i1}one{\\i0} a", u8"two?"}), std::move(w));
     run.start();
@@ -301,6 +302,16 @@ TEST_F(InlineRunTest, ThePipelineSendsEveryLineMaskedInOneRequestAndTagsComeBack
     EXPECT_EQ(files[0].name, "GLOSSARY.md");
     EXPECT_DOUBLE_EQ(run.cost(), 1.0);
     EXPECT_DOUBLE_EQ(spent, 1.0);
+}
+
+TEST_F(InlineRunTest, ThePipelineSendsTheSourceLanguageWhenOneIsSet)
+{
+    TranslationRun::Wiring w;
+    w.language = "English";
+    w.sourceLanguage = "Japanese";
+    const Json params = translateParams(translationJobs({u8"one"}), w);
+    EXPECT_EQ(params.find("language")->asString(), "English");
+    EXPECT_EQ(params.find("sourceLanguage")->asString(), "Japanese");
 }
 
 TEST_F(InlineRunTest, StoppingThePipelineCancelsItsOneRequest)
