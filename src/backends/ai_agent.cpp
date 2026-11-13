@@ -1,5 +1,7 @@
 #include "hikari/backends/ai_agent.h"
 
+#include "ai_agent_detail.h"
+
 #include "hikari/application/hotkeys.h"
 #include "hikari/backends/ai_mcp_clients.h"
 #include "hikari/backends/ai_requests.h"
@@ -20,7 +22,7 @@ namespace hikari::backends::ai {
 namespace app = hikari::application::ai;
 using api::Json;
 
-namespace {
+namespace detail {
 
 constexpr std::string_view kSystemPrompt =
     "You are Hikari AI, the assistant in HikariSub, a subtitle editor. You read and edit the user's subtitles only "
@@ -267,7 +269,19 @@ Json modelJson(const app::ModelRef &ref)
     return Json::object({{"providerId", ref.providerId}, {"model", ref.modelId}});
 }
 
+std::string_view systemPrompt()
+{
+    return kSystemPrompt;
 }
+
+std::size_t outputChars()
+{
+    return kOutputChars;
+}
+
+}
+
+using namespace detail;
 
 std::string_view agentModeId(AgentMode mode)
 {
@@ -291,8 +305,8 @@ std::optional<AgentMode> agentModeFromId(std::string_view id)
 }
 
 RiskCheck alwaysAsk(const std::string &operation, const Json &params,
-                    const std::function<std::optional<std::string>(std::string_view)> &pathOf,
-                    const std::vector<std::string> &safeFolders)
+                    const std::function<std::optional<std::string>(const Json &)> &writeTarget,
+                    const std::vector<std::string> &safeFolders, const std::string &project)
 {
     const auto outside = [&](const std::optional<std::string> &path) {
         return !path || std::none_of(safeFolders.begin(), safeFolders.end(),
@@ -304,8 +318,14 @@ RiskCheck alwaysAsk(const std::string &operation, const Json &params,
                 return {r.risk, std::string(r.reason)};
         return {};
     };
-    if (operation == "files.write" && outside(pathOf ? pathOf(stringAt(params, "file")) : std::nullopt))
-        return {Risk::Files, "It overwrites a file outside the subtitles' folders and your user folder."};
+    if (operation == "files.write") {
+        const std::optional<std::string> target = writeTarget ? writeTarget(params) : std::nullopt;
+        const bool inProject = target && !project.empty() && under(*target, project);
+        if (inProject && under(*target, project + "/.hikari"))
+            return {Risk::Files, "It changes the Project's .hikari folder, which holds the Project's settings."};
+        if (!inProject && outside(target))
+            return {Risk::Files, "It overwrites a file outside the subtitles' folders and your user folder."};
+    }
     if (operation == "karaoke.align")
         return {Risk::Programs, "It runs " + std::string(stringAt(params, "program") == "mfa" ? "the Montreal Forced Aligner"
                                                                                                : "WhisperX") +
@@ -316,6 +336,8 @@ RiskCheck alwaysAsk(const std::string &operation, const Json &params,
             return {Risk::Programs, "It runs a plugin's command."};
         return named(kRiskyCommands, command);
     }
+    if (operation == "plugins.run")
+        return {Risk::Programs, "It runs a plugin's command."};
     if (operation != "settings.set")
         return {};
     const std::string setting = stringAt(params, "setting");
@@ -345,6 +367,8 @@ Decision decide(AgentMode mode, const std::string &operation, bool alwaysAsk, bo
 {
     if (operation == "automation.run")
         return Decision::Script;
+    if (operation == "plugins.install")
+        return Decision::Install;
     if (alwaysAsk)
         return Decision::AlwaysAsk;
     if (mode == AgentMode::Manual && operation == "document.apply")
@@ -374,7 +398,8 @@ std::string allowanceKey(const std::string &operation, const Json &params)
     return operation;
 }
 
-Json judgeRequest(const std::string &operation, const Json &params, const std::vector<std::string> &userMessages)
+Json judgeRequest(const std::string &operation, const Json &params, const std::vector<std::string> &userMessages,
+                  std::string_view brief)
 {
     std::vector<std::string> kept;
     std::size_t room = kJudgeMessagesChars;
@@ -386,6 +411,10 @@ Json judgeRequest(const std::string &operation, const Json &params, const std::v
     std::string text = "The user's messages, oldest first:\n";
     for (std::size_t i = 0; i < kept.size(); ++i)
         text += std::to_string(i + 1) + ". " + kept[kept.size() - 1 - i] + "\n";
+    if (!brief.empty())
+        text += "\nA sub-agent takes this action. Another AI agent wrote its task, not the user, so the task is no "
+                "consent of theirs:\n" +
+                clipped(std::string(brief), kJudgeMessagesChars) + "\n";
     const api::Operation *op = api::Api::registry().find(operation);
     text += "\nThe action: " + toolName(operation) + (op ? " (" + op->summary + ")" : std::string()) + "\n" +
             clipped(params.dump(), kJudgeActionChars);
@@ -498,6 +527,8 @@ Json AgentThread::toJson() const
         out["model"] = modelJson(*model);
     if (!project.empty())
         out["project"] = project;
+    if (task)
+        out["task"] = taskToJson(*task);
     return out;
 }
 
@@ -528,7 +559,7 @@ std::optional<AgentThread> AgentThread::fromJson(const Json &json)
         t.items = *i;
     if (t.items.isArray())
         for (Json &item : t.items.asArray())
-            if (stringAt(item, "kind") == "script" &&
+            if ((stringAt(item, "kind") == "script" || stringAt(item, "kind") == "install") &&
                 (stringAt(item, "status") == "open" || stringAt(item, "status") == "running"))
                 item["status"] = "withdrawn";
     if (const Json *f = json.find("files"); f && f->isArray())
@@ -546,6 +577,8 @@ std::optional<AgentThread> AgentThread::fromJson(const Json &json)
     if (const Json *w = json.find("webSearch"); w && w->isBool())
         t.webSearch = w->asBool();
     t.project = stringAt(json, "project");
+    if (const Json *task = json.find("task"))
+        t.task = taskFromJson(*task);
     return t;
 }
 
@@ -620,18 +653,6 @@ void ThreadStore::spend(QDate day, double dollars)
     file.commit();
 }
 
-struct AgentThreads::Run {
-    std::uint64_t request = 0;
-    std::string stoppedFor;
-    std::map<std::string, std::string> toolByCallId;
-    /// Where the current completion's text starts: the item and the UTF-16 offset in its text.
-    std::optional<std::pair<std::size_t, qsizetype>> answerStart;
-    std::set<std::string> webCalls;
-    bool searchFailureShown = false;
-    bool compaction = false;
-    std::string compactionFailure;
-};
-
 AgentThreads::AgentThreads(Wiring wiring, ThreadStore *store, QObject *parent)
     : QObject(parent), m_wiring(std::move(wiring)), m_store(store)
 {
@@ -666,7 +687,8 @@ std::vector<const AgentThread *> AgentThreads::threads() const
 {
     std::vector<const AgentThread *> out;
     for (const auto &[id, t] : m_threads)
-        out.push_back(&t);
+        if (!t.task)
+            out.push_back(&t);
     std::sort(out.begin(), out.end(), [](const AgentThread *a, const AgentThread *b) {
         return a->updated != b->updated ? a->updated > b->updated : a->id < b->id;
     });
@@ -721,11 +743,26 @@ void AgentThreads::remove(const std::string &id)
     AgentThread *t = find(id);
     if (!t)
         return;
+    std::vector<std::string> kids;
+    for (const AgentThread *child : children(id))
+        kids.push_back(child->id);
+    for (const std::string &child : kids)
+        remove(child);
     stop(id);
+    m_results.erase(id);
+    std::erase_if(m_taskWaits, [&](const auto &w) {
+        if (w->parent != id)
+            return false;
+        w->request->fail(rpc::kRequestCancelled, "The thread is gone.");
+        return true;
+    });
+    t = find(id);
+    if (!t)
+        return;
     if (AiSidecarHost *h = m_host) {
         h->request("_hikari/session.close", Json::object({{"sessionId", id}}), [](SidecarResult) {});
         if (const auto model = modelOf(*t); model && m_wiring.requests && m_wiring.requests())
-            m_wiring.requests()->endConversation(model->providerId, id);
+            m_wiring.requests()->endConversation(model->providerId, id, t->project);
     }
     m_live.erase(id);
     m_attached.erase(id);
@@ -742,6 +779,9 @@ void AgentThreads::setMode(const std::string &id, AgentMode mode)
         t->mode = mode;
         touch(*t);
     }
+    for (const AgentThread *child : children(id))
+        if (agentModeRank(child->mode) > agentModeRank(mode))
+            setMode(child->id, mode);
 }
 
 void AgentThreads::setModel(const std::string &id, app::ModelRef model)
@@ -883,6 +923,7 @@ AiSidecarHost *AgentThreads::host(bool externalAgent)
         if (alive.lock())
             sessionUpdate(params);
     });
+    handleTasks(*h);
     connect(h, &AiSidecarHost::lost, this, &AgentThreads::sessionsLost);
     connect(h, &AiSidecarHost::finished, this, &AgentThreads::sessionsLost);
     connect(h, &AiSidecarHost::stopped, this, &AgentThreads::sessionsLost);
@@ -900,6 +941,7 @@ void AgentThreads::start(AgentThread &thread, std::string text, Json parts)
     const Defaults defaults = m_wiring.defaults ? m_wiring.defaults() : Defaults{};
     const auto model = modelOf(thread);
     const std::optional<std::string> agent = model ? externalAgentOf(*model) : std::nullopt;
+    const Json wire = model ? wireModel(thread, *model) : Json();
     AiSidecarHost *h = model ? host(agent.has_value()) : nullptr;
     const auto notice = [&](std::string_view kind) {
         push(thread, Json::object({{"kind", "notice"}, {"notice", std::string(kind)}}));
@@ -907,34 +949,60 @@ void AgentThreads::start(AgentThread &thread, std::string text, Json parts)
     };
     if (!model)
         return notice("noModel");
+    if (const std::string refused = agent && m_wiring.agentRefusal ? m_wiring.agentRefusal(*agent) : std::string();
+        !refused.empty()) {
+        push(thread, Json::object({{"kind", "notice"}, {"notice", "notOffered"}, {"detail", refused}}));
+        return touch(thread);
+    }
     if (!h)
         return notice("noSidecar");
     if (defaults.dailyCap > 0 && spentToday() >= defaults.dailyCap)
         return notice("dailyCap");
     if (thread.cap > 0 && thread.cost >= thread.cap)
         return notice("cap");
+    std::string asked = text;
+    bool results = false;
+    if (const auto r = m_results.find(id); r != m_results.end() && !thread.task) {
+        std::string joined = "Results from your sub-agents:";
+        for (const std::string &result : r->second)
+            joined += "\n\n" + result;
+        m_results.erase(r);
+        results = text.empty();
+        asked = results ? joined : joined + "\n\nThe user's message:\n" + text;
+        if (results)
+            text = std::move(joined);
+    }
+    if (asked.empty())
+        return;
     if (!thread.renamed && thread.title.empty())
         thread.title = firstLine(text);
     const std::string caller = callerOf(thread).id;
-    const std::uint64_t turn = m_wiring.beginTurn ? m_wiring.beginTurn(caller, firstLine(text)) : 0;
-    push(thread, Json::object({{"kind", "user"},
-                               {"text", text},
-                               {"turn", turn},
-                               {"history", static_cast<std::int64_t>(thread.history.asArray().size())},
-                               {"time", nowMs()}}));
-    Json prompt = Json::array({Json::object({{"type", "text"}, {"text", std::move(text)}})});
+    const std::uint64_t turn = m_wiring.beginTurn ? m_wiring.beginTurn(caller, results ? std::string() : firstLine(text),
+                                                                       thread.task ? thread.task->parentTurn : 0)
+                                                  : 0;
+    Json item = Json::object({{"kind", "user"},
+                              {"text", text},
+                              {"turn", turn},
+                              {"history", static_cast<std::int64_t>(thread.history.asArray().size())},
+                              {"time", nowMs()}});
+    if (results)
+        item["results"] = true;
+    if (thread.task && thread.items.asArray().empty())
+        item["brief"] = true;
+    push(thread, std::move(item));
+    Json prompt = Json::array({Json::object({{"type", "text"}, {"text", std::move(asked)}})});
     if (parts.isArray())
         for (Json &part : parts.asArray())
             prompt.push(std::move(part));
     AiRequests *requests = m_wiring.requests ? m_wiring.requests() : nullptr;
     const bool caching = requests && requests->caching();
     const bool search = searches(thread);
-    openSession(thread, *h, *model);
+    openSession(thread, *h, *model, wire);
     auto run = std::make_unique<Run>();
     run->request = h->request("session/prompt",
                               Json::object({{"sessionId", id},
                                             {"prompt", std::move(prompt)},
-                                            {"model", modelJson(*model)},
+                                            {"model", wire},
                                             {"caching", caching},
                                             {"webSearch", search},
                                             {"contextTokens", contextWindowOf(m_wiring.config ? m_wiring.config() : nullptr, *model)},
@@ -947,18 +1015,27 @@ void AgentThreads::start(AgentThread &thread, std::string text, Json parts)
     touch(thread);
 }
 
-void AgentThreads::openSession(AgentThread &thread, AiSidecarHost &host, const app::ModelRef &model)
+Json AgentThreads::wireModel(const AgentThread &thread, const app::ModelRef &model) const
+{
+    AiRequests *requests = m_wiring.requests ? m_wiring.requests() : nullptr;
+    return modelJson({requests ? requests->wireProvider(model.providerId, thread.project) : model.providerId,
+                      model.modelId});
+}
+
+void AgentThreads::openSession(AgentThread &thread, AiSidecarHost &host, const app::ModelRef &model, const Json &wire)
 {
     if (m_live.contains(thread.id))
         return;
     AiRequests *requests = m_wiring.requests ? m_wiring.requests() : nullptr;
     const Defaults defaults = m_wiring.defaults ? m_wiring.defaults() : Defaults{};
     std::string system(kSystemPrompt);
+    if (thread.task)
+        system.append("\n\n").append(childSystem(*thread.task, thread.task->documentTitle));
     if (const std::string joined = m_wiring.instructions ? m_wiring.instructions(thread.project) : std::string();
         !joined.empty())
         system.append("\n\n").append(joined);
     Json open = Json::object({{"sessionId", thread.id},
-                              {"model", modelJson(model)},
+                              {"model", wire},
                               {"system", std::move(system)},
                               {"history", thread.history},
                               {"cacheKey", thread.id},
@@ -968,6 +1045,19 @@ void AgentThreads::openSession(AgentThread &thread, AiSidecarHost &host, const a
                               {"autoCompact", defaults.autoCompact}});
     if (const auto agent = externalAgentOf(model))
         open["agent"] = *agent;
+    if (!thread.task)
+        open["delegate"] = true;
+    else if (thread.task->scope)
+        open["task"] = Json::object({{"parent", thread.task->parent},
+                                     {"taskId", thread.task->id},
+                                     {"scope", Json::object({{"document", static_cast<std::int64_t>(
+                                                                              thread.task->scope->document.value)}})}});
+    if (thread.task && thread.task->scope && !thread.task->lines.empty()) {
+        Json lines = Json::array();
+        for (const std::int64_t line : thread.task->lines)
+            lines.push(line);
+        open["task"]["scope"]["lines"] = std::move(lines);
+    }
     host.request("session/new", std::move(open), [](SidecarResult) {});
     m_live.insert(thread.id);
 }
@@ -1003,10 +1093,11 @@ void AgentThreads::startCompaction(AgentThread &thread, std::string instruction,
         return push(thread, Json::object({{"kind", "notice"}, {"notice", "noModel"}})), touch(thread);
     if (externalAgentOf(*model))
         return;
+    const Json wire = wireModel(thread, *model);
     AiSidecarHost *h = host(false);
     if (!h)
         return push(thread, Json::object({{"kind", "notice"}, {"notice", "noSidecar"}})), touch(thread);
-    openSession(thread, *h, *model);
+    openSession(thread, *h, *model, wire);
     Json params = Json::object({{"sessionId", thread.id}});
     if (!instruction.empty())
         params["instruction"] = std::move(instruction);
@@ -1137,14 +1228,18 @@ void AgentThreads::finished(const std::string &id, const SidecarResult &result)
         push(*t, std::move(item));
     }
     touch(*t);
+    if (t->task)
+        return childEnded(*t, notice, detail);
     if (const auto c = m_compactAfter.find(id); c != m_compactAfter.end() && notice != "lost") {
         std::string instruction = std::move(c->second);
         m_compactAfter.erase(c);
         return startCompaction(*t, std::move(instruction), true);
     }
     m_compactAfter.erase(id);
-    if (notice.empty() || notice == "maxTokens" || notice == "refusal" || notice == "maxRequests")
+    if (notice.empty() || notice == "maxTokens" || notice == "refusal" || notice == "maxRequests") {
         runQueued(*t);
+        deliverResults(*t);
+    }
 }
 
 void AgentThreads::sessionUpdate(const Json &params)
@@ -1329,7 +1424,7 @@ api::Caller AgentThreads::callerOf(const AgentThread &thread) const
 {
     api::Caller caller;
     caller.id = "ai:" + thread.id;
-    caller.label = "AI";
+    caller.label = thread.task ? thread.title : std::string("AI");
     caller.reviewed = true;
     caller.skills = true;
     caller.project = thread.project;
@@ -1344,6 +1439,20 @@ void AgentThreads::gate(const std::string &session, const std::string &operation
     AgentThread *t = find(session);
     if (!t)
         return admit(std::unexpected(api::Error{std::string(api::errors::kNotGranted), "No agent thread has that id.", {}}));
+    if (t->task) {
+        std::optional<std::string> outside;
+        if (operation == kMcpCallOperation) {
+            const Json *readOnly = params.find("readOnly");
+            if (!readOnly || !readOnly->isBool() || !readOnly->asBool())
+                outside = "A sub-agent may only read through MCP tools.";
+        } else if (const api::Operation *o = api::Api::registry().find(operation); o && o->access == api::Access::Write) {
+            outside = t->task->scope ? outsideScope(*t->task->scope, operation, params,
+                                                    m_wiring.editingTarget ? m_wiring.editingTarget() : std::nullopt)
+                                     : std::optional<std::string>("This sub-agent's task has ended.");
+        }
+        if (outside)
+            return admit(std::unexpected(api::Error{std::string(api::errors::kNotGranted), std::move(*outside), {}}));
+    }
     if (operation == kMcpCallOperation)
         return gateMcp(*t, params, std::move(admit), std::move(onWithdraw));
     const api::Operation *op = api::Api::registry().find(operation);
@@ -1355,12 +1464,12 @@ void AgentThreads::gate(const std::string &session, const std::string &operation
                                                 "This turn has stopped; make no more changes.", {}}));
     if (!asksPermission(operation))
         return admitCall(*t, operation, params, false, std::move(admit));
-    const std::string caller = callerOf(*t).id;
-    const auto pathOf = [this, caller](std::string_view handle) {
-        return m_wiring.api ? m_wiring.api->grantedPath(caller, handle) : std::nullopt;
+    const auto writeTarget = [this, caller = callerOf(*t)](const Json &p) {
+        return m_wiring.api ? m_wiring.api->writeTarget(caller, p) : std::nullopt;
     };
-    const RiskCheck risk =
-        alwaysAsk(operation, params, pathOf, m_wiring.safeFolders ? m_wiring.safeFolders() : std::vector<std::string>());
+    const RiskCheck risk = alwaysAsk(operation, params, writeTarget,
+                                     m_wiring.safeFolders ? m_wiring.safeFolders() : std::vector<std::string>(),
+                                     t->project);
     switch (decide(t->mode, operation, risk.risk != Risk::None, t->allowed.contains(allowanceKey(operation, params)))) {
     case Decision::Run:
         return admitCall(*t, operation, params, false, std::move(admit));
@@ -1374,6 +1483,8 @@ void AgentThreads::gate(const std::string &session, const std::string &operation
         return openProposal(*t, params, std::move(admit), std::move(onWithdraw));
     case Decision::Script:
         return openScript(*t, params, std::move(admit), std::move(onWithdraw));
+    case Decision::Install:
+        return openInstall(*t, params, std::move(admit), std::move(onWithdraw));
     }
 }
 
@@ -1401,6 +1512,7 @@ void AgentThreads::gateMcp(AgentThread &thread, const Json &params, AiSidecarHos
     case Decision::AlwaysAsk:
     case Decision::Propose:
     case Decision::Script:
+    case Decision::Install:
         return openAsk(thread, Decision::AlwaysAsk, operation, params,
                        "Its MCP server doesn't promise that it only reads or changes nothing it can't undo.",
                        std::move(admit), std::move(onWithdraw));
@@ -1414,10 +1526,12 @@ void AgentThreads::judge(AgentThread &thread, const std::string &operation, cons
     if (!requests)
         return openAsk(thread, Decision::Judge, operation, params, "The judge isn't available.", std::move(admit),
                        std::move(onWithdraw));
+    const AgentThread *root = thread.task ? find(thread.task->parent) : &thread;
     std::vector<std::string> messages;
-    for (const Json &item : thread.items.asArray())
-        if (stringAt(item, "kind") == "user")
+    for (const Json &item : (root ? *root : thread).items.asArray())
+        if (stringAt(item, "kind") == "user" && !item.find("results") && !item.find("brief"))
             messages.push_back(stringAt(item, "text"));
+    const std::string brief = thread.task ? thread.task->brief : std::string();
     struct State {
         bool done = false;
         app::StreamId stream = 0;
@@ -1432,7 +1546,7 @@ void AgentThreads::judge(AgentThread &thread, const std::string &operation, cons
     const std::string id = thread.id;
     const auto judgeModel = m_wiring.config && m_wiring.config() ? m_wiring.config()->modelFor(app::Role::Judge) : std::nullopt;
     state->stream = requests->complete(
-        app::Role::Judge, judgeRequest(operation, params, messages),
+        app::Role::Judge, judgeRequest(operation, params, messages, brief),
         [this, alive = std::weak_ptr(m_alive), state, id, operation, params, judgeModel, admit = std::move(admit),
          onWithdraw = std::move(onWithdraw)](const app::Event &event) mutable {
             if (!alive.lock() || state->done)
@@ -1452,6 +1566,7 @@ void AgentThreads::judge(AgentThread &thread, const std::string &operation, cons
                     t->cost += *cost;
                     if (m_store)
                         m_store->spend(today(), *cost);
+                    chargeParent(*t, *cost);
                 }
             }
             if (const auto run = m_runs.find(id); run == m_runs.end() || !run->second->stoppedFor.empty())
@@ -1587,6 +1702,43 @@ void AgentThreads::runScript(AgentThread &thread, std::uint64_t ask, AiSidecarHo
     admit(std::move(admission));
 }
 
+void AgentThreads::openInstall(AgentThread &thread, const Json &params, AiSidecarHost::Admit admit,
+                               std::function<void(std::function<void()>)> onWithdraw)
+{
+    std::optional<api::Result> review;
+    if (m_wiring.api)
+        m_wiring.api->call(callerOf(thread), "plugins.review", params,
+                           [&review](const api::Result &result) { review = result; });
+    if (!review)
+        return admit(std::unexpected(api::Error{std::string(api::errors::kUnavailable), "Plugins are not available.", {}}));
+    if (!*review)
+        return admit(std::unexpected(review->error()));
+    Json item = **review;
+    item["kind"] = "install";
+    item["status"] = "open";
+    wait(thread, Ask{0, thread.id, Decision::Install, "plugins.install", params, {}}, std::move(item), std::move(admit),
+         std::move(onWithdraw));
+}
+
+void AgentThreads::runInstall(AgentThread &thread, std::uint64_t ask, const std::string &digest, AiSidecarHost::Admit admit)
+{
+    AiSidecarHost::Admission admission{callerOf(thread), {}};
+    admission.caller.approvedPackage = digest;
+    admission.ran = [this, alive = std::weak_ptr(m_alive), id = thread.id, ask](const api::Result &result) {
+        if (!alive.lock())
+            return;
+        AgentThread *t = find(id);
+        Json *item = t ? itemWith(*t, "ask", Json(ask)) : nullptr;
+        if (!item)
+            return;
+        (*item)["status"] = result ? "installed" : "failed";
+        if (!result)
+            (*item)["result"] = result.error().message;
+        touch(*t);
+    };
+    admit(std::move(admission));
+}
+
 void AgentThreads::wait(AgentThread &thread, Ask ask, Json item, AiSidecarHost::Admit admit,
                         std::function<void(std::function<void()>)> onWithdraw)
 {
@@ -1617,16 +1769,28 @@ void AgentThreads::wait(AgentThread &thread, Ask ask, Json item, AiSidecarHost::
 
 void AgentThreads::answer(std::uint64_t askId, Answer answer, const std::string &message)
 {
+    if (const auto e = m_estimates.find(askId); e != m_estimates.end()) {
+        if (answer != Answer::AllowOnce && answer != Answer::Deny)
+            return;
+        std::unique_ptr<Estimate> estimate = std::move(e->second);
+        m_estimates.erase(e);
+        if (AgentThread *p = find(estimate->parent))
+            if (Json *item = itemWith(*p, "ask", Json(askId)))
+                (*item)["status"] = answer == Answer::Deny ? "declined" : "started";
+        estimate->answered(answer == Answer::AllowOnce);
+        return;
+    }
     const auto it = m_asks.find(askId);
     if (it == m_asks.end())
         return;
     const bool proposal = it->second.kind == Decision::Propose;
     const bool script = it->second.kind == Decision::Script;
+    const bool install = it->second.kind == Decision::Install;
     if (proposal && (answer == Answer::AskAgain) != it->second.stale && answer != Answer::Deny)
         return;
     if (!proposal && answer == Answer::AskAgain)
         return;
-    if (script && answer == Answer::AllowInThread)
+    if ((script || install) && answer == Answer::AllowInThread)
         return;
     Ask ask = std::move(it->second);
     m_asks.erase(it);
@@ -1647,6 +1811,20 @@ void AgentThreads::answer(std::uint64_t askId, Answer answer, const std::string 
         if (Json *item = itemWith(*t, "ask", Json(askId)))
             (*item)["status"] = "running";
         runScript(*t, askId, std::move(admit));
+        return touch(*t);
+    } else if (install && answer == Answer::Deny) {
+        status = "declined";
+        std::string text = "The user didn't install the plugin; nothing changed.";
+        if (!message.empty())
+            text += " The user said: " + message;
+        admit(std::unexpected(
+            api::Error{std::string(api::errors::kRefused), std::move(text), Json::object({{"reason", "declined"}})}));
+    } else if (install) {
+        Json *item = itemWith(*t, "ask", Json(askId));
+        const std::string digest = item ? stringAt(*item, "digest") : std::string();
+        if (item)
+            (*item)["status"] = "running";
+        runInstall(*t, askId, digest, std::move(admit));
         return touch(*t);
     } else if (proposal && answer == Answer::Deny) {
         status = "declined";
@@ -1710,6 +1888,13 @@ void AgentThreads::admitCall(AgentThread &thread, const std::string &operation, 
             push(*t, std::move(item));
             if (!title.empty() && std::find(t->files.begin(), t->files.end(), title) == t->files.end())
                 t->files.push_back(title);
+            if (t->task && t->task->scope && !t->task->scope->lines.empty())
+                if (const Json *inserted = result->find("inserted"); inserted && inserted->isArray())
+                    for (const Json &line : inserted->asArray())
+                        if (line.isInt()) {
+                            t->task->scope->lines.push_back(line.asInt());
+                            t->task->lines.push_back(line.asInt());
+                        }
             touch(*t);
         };
     }
@@ -1731,6 +1916,7 @@ void AgentThreads::addUsage(AgentThread &thread, const Json &usageJson, bool con
     thread.cost += *cost;
     if (m_store)
         m_store->spend(today(), *cost);
+    chargeParent(thread, *cost);
     const Defaults defaults = m_wiring.defaults ? m_wiring.defaults() : Defaults{};
     if (thread.cap > 0 && thread.cost >= thread.cap)
         stopFor(thread, "cap");
@@ -1745,6 +1931,13 @@ double AgentThreads::spentToday() const
 
 void AgentThreads::stopFor(AgentThread &thread, const std::string &why)
 {
+    if (!thread.task) {
+        for (const AgentThread *child : children(thread.id))
+            if (child->task->status == TaskStatus::Running)
+                if (AgentThread *c = find(child->id))
+                    stopFor(*c, why == "stopped" ? std::string("parent") : why);
+        answerWaits(thread);
+    }
     const auto run = m_runs.find(thread.id);
     if (run == m_runs.end() || !run->second->stoppedFor.empty())
         return;
@@ -1839,6 +2032,18 @@ void AgentThreads::documentChanged(application::DocumentId document, std::int64_
 
 void AgentThreads::closeAsks(const std::string &thread, const std::string &why)
 {
+    std::vector<std::uint64_t> estimates;
+    for (const auto &[id, estimate] : m_estimates)
+        if (estimate->parent == thread)
+            estimates.push_back(id);
+    for (const std::uint64_t id : estimates) {
+        std::unique_ptr<Estimate> estimate = std::move(m_estimates.at(id));
+        m_estimates.erase(id);
+        if (AgentThread *t = find(thread))
+            if (Json *item = itemWith(*t, "ask", Json(id)))
+                (*item)["status"] = "withdrawn";
+        estimate->answered(false);
+    }
     std::vector<std::uint64_t> open;
     for (const auto &[id, ask] : m_asks)
         if (ask.thread == thread)

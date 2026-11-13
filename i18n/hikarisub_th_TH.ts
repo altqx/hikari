@@ -104,6 +104,18 @@
         <translation>เมื่อวาน</translation>
     </message>
     <message>
+        <source>This agent can’t start here</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not offered: its command is inside an open project, which it could read.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not offered: this system can’t keep it to its own folders.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>This project</source>
         <translation type="unfinished"></translation>
     </message>
@@ -196,6 +208,52 @@
         <translation>หยุด</translation>
     </message>
     <message>
+        <source>needs you</source>
+        <translation>รอคุณ</translation>
+    </message>
+    <message>
+        <source>done</source>
+        <translation>เสร็จแล้ว</translation>
+    </message>
+    <message>
+        <source>failed</source>
+        <translation>ล้มเหลว</translation>
+    </message>
+    <message>
+        <source>interrupted</source>
+        <translation>ถูกขัดจังหวะ</translation>
+    </message>
+    <message>
+        <source>stopped · cap</source>
+        <translation>หยุดแล้ว · วงเงิน</translation>
+    </message>
+    <message>
+        <source>stopped</source>
+        <translation>หยุดแล้ว</translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 · %n line(s)</source>
+        <translation>
+            <numerusform>%1 · %n บรรทัด</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Back to the parent thread</source>
+        <translation>กลับไปที่เธรดหลัก</translation>
+    </message>
+    <message>
+        <source>Sub-agent of “%1”. Read-only; talk to it through the parent.</source>
+        <translation>เอเจนต์ย่อยของ “%1” อ่านอย่างเดียว คุยกับมันผ่านเธรดหลัก</translation>
+    </message>
+    <message>
+        <source>%1 · capped by the parent</source>
+        <translation>%1 · จำกัดโดยเธรดหลัก</translation>
+    </message>
+    <message>
+        <source>scope: %1</source>
+        <translation>ขอบเขต: %1</translation>
+    </message>
+    <message>
         <source>Send</source>
         <translation>ส่ง</translation>
     </message>
@@ -260,6 +318,14 @@
         <translation>เปลี่ยนชื่อ</translation>
     </message>
     <message>
+        <source>Brief, written by the agent</source>
+        <translation>คำสั่งงานที่เอเจนต์เขียน</translation>
+    </message>
+    <message>
+        <source>Results from your sub-agents</source>
+        <translation>ผลจากเอเจนต์ย่อยของคุณ</translation>
+    </message>
+    <message>
         <source>steered</source>
         <translation>ปรับทิศทางแล้ว</translation>
     </message>
@@ -310,6 +376,14 @@
         <translation>แผน</translation>
     </message>
     <message>
+        <source>%1 proposes: %2</source>
+        <translation>%1 เสนอ: %2</translation>
+    </message>
+    <message>
+        <source>%1 asks you</source>
+        <translation>%1 ถามคุณ</translation>
+    </message>
+    <message>
         <source>Judge asks you</source>
         <translation>ผู้ตัดสินถามคุณ</translation>
     </message>
@@ -324,6 +398,18 @@
     <message>
         <source>asks in every mode</source>
         <translation>ถามในทุกโหมด</translation>
+    </message>
+    <message>
+        <source>sub-agent · asks in every mode</source>
+        <translation>เอเจนต์ย่อย · ถามในทุกโหมด</translation>
+    </message>
+    <message>
+        <source>sub-agent</source>
+        <translation>เอเจนต์ย่อย</translation>
+    </message>
+    <message>
+        <source>Only you can answer; the parent agent can’t.</source>
+        <translation>มีแต่คุณที่ตอบได้ เอเจนต์หลักตอบไม่ได้</translation>
     </message>
     <message>
         <source>Why: %1</source>
@@ -348,6 +434,164 @@
     <message>
         <source>Deny and tell the agent…</source>
         <translation>ปฏิเสธและบอกเอเจนต์…</translation>
+    </message>
+    <message>
+        <source>The signing key changed. The installed copy was signed by key %1, and this one by key %2. Install it only if you trust that the author changed keys.</source>
+        <translation type="unfinished">คีย์ลงนามเปลี่ยนไป สำเนาที่ติดตั้งไว้ลงนามด้วยคีย์ %1 และสำเนานี้ลงนามด้วยคีย์ %2 ติดตั้งเฉพาะเมื่อคุณเชื่อถือว่าผู้สร้างเปลี่ยนคีย์จริง</translation>
+    </message>
+    <message>
+        <source>This package isn’t signed, but the installed copy was signed by key %1. Install it only if you trust where it came from.</source>
+        <translation type="unfinished">แพ็กเกจนี้ไม่ได้ลงนาม แต่สำเนาที่ติดตั้งไว้ลงนามด้วยคีย์ %1 ติดตั้งเฉพาะเมื่อคุณเชื่อถือแหล่งที่มาของแพ็กเกจนี้</translation>
+    </message>
+    <message>
+        <source>Unverified source, signed by key %1. Updates must be signed by the same key.</source>
+        <translation type="unfinished">แหล่งที่มาที่ยังไม่ได้ยืนยัน ลงนามด้วยคีย์ %1 การอัปเดตต้องลงนามด้วยคีย์เดียวกัน</translation>
+    </message>
+    <message>
+        <source>Unverified: the package isn’t signed, so HikariSub can’t tell who made it.</source>
+        <translation type="unfinished">ยังไม่ได้ยืนยัน: แพ็กเกจไม่ได้ลงนาม HikariSub จึงบอกไม่ได้ว่าใครเป็นผู้สร้าง</translation>
+    </message>
+    <message>
+        <source>Install with full access?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Install this plugin?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 %2 · %3</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Full trust: it runs outside the sandbox and gets full access to your computer.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restricted: it runs in the sandbox.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>It asks for no permissions beyond the active subtitle file.</source>
+        <translation type="unfinished">ปลั๊กอินนี้ไม่ขอสิทธิ์ใดนอกเหนือจากไฟล์คำบรรยายที่ใช้งานอยู่</translation>
+    </message>
+    <message>
+        <source>It asks for these permissions</source>
+        <translation type="unfinished">ปลั๊กอินนี้ขอสิทธิ์เหล่านี้</translation>
+    </message>
+    <message>
+        <source>Adds the command %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Adds the commands %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Show all %n files</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Installs as Install from file… would: it turns on, and Plugins can turn it off or uninstall it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Install</source>
+        <translation type="unfinished">ติดตั้ง</translation>
+    </message>
+    <message>
+        <source>Trust and install</source>
+        <translation type="unfinished">เชื่อถือและติดตั้ง</translation>
+    </message>
+    <message>
+        <source>Install with full access</source>
+        <translation type="unfinished">ติดตั้งพร้อมสิทธิ์เต็ม</translation>
+    </message>
+    <message>
+        <source>Don’t install</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Don’t install and tell the agent…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installing %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installed %1 %2 · full trust</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installed %1 %2 · restricted</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 didn’t install: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Didn’t install %1 · “%2”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Didn’t install %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open in Plugins</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n sub-agent(s)</source>
+        <translation>
+            <numerusform>เอเจนต์ย่อย %n ตัว</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n running</source>
+        <translation>
+            <numerusform>กำลังทำงาน %n ตัว</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n need(s) you</source>
+        <translation>
+            <numerusform>รอคุณ %n ตัว</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Stop all</source>
+        <translation>หยุดทั้งหมด</translation>
+    </message>
+    <message>
+        <source>Sub-agent %1, %2</source>
+        <translation>เอเจนต์ย่อย %1, %2</translation>
+    </message>
+    <message numerus="yes">
+        <source>Estimate for %n sub-agent(s)</source>
+        <translation>
+            <numerusform>ประมาณการสำหรับเอเจนต์ย่อย %n ตัว</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>About %1 tokens, %2.</source>
+        <translation>ประมาณ %1 โทเค็น %2</translation>
+    </message>
+    <message>
+        <source>About %1 tokens. This agent doesn’t report cost.</source>
+        <translation>ประมาณ %1 โทเค็น เอเจนต์นี้ไม่รายงานค่าใช้จ่าย</translation>
+    </message>
+    <message>
+        <source>Started</source>
+        <translation>เริ่มแล้ว</translation>
+    </message>
+    <message>
+        <source>Cancelled. No more sub-agents start this turn.</source>
+        <translation>ยกเลิกแล้ว รอบนี้จะไม่เริ่มเอเจนต์ย่อยอีก</translation>
     </message>
     <message>
         <source>What should it do instead?</source>
@@ -430,6 +674,10 @@
         <translation type="unfinished">เปิด</translation>
     </message>
     <message>
+        <source>%1 asks to run this Lua script</source>
+        <translation>%1 ขอเรียกใช้สคริปต์ Lua นี้</translation>
+    </message>
+    <message>
         <source>This thread reached its %1 cap</source>
         <translation>เธรดนี้ถึงวงเงิน %1 แล้ว</translation>
     </message>
@@ -448,6 +696,10 @@
     <message>
         <source>You stopped the turn.</source>
         <translation>คุณหยุดรอบนี้แล้ว</translation>
+    </message>
+    <message>
+        <source>The parent thread stopped this sub-agent.</source>
+        <translation>เธรดหลักหยุดเอเจนต์ย่อยนี้แล้ว</translation>
     </message>
     <message>
         <source>The answer reached the model’s length limit.</source>
@@ -480,6 +732,14 @@
     <message>
         <source>The turn stopped after its last change. Raise the cap for this thread to go on.</source>
         <translation>รอบนี้หยุดหลังการเปลี่ยนแปลงล่าสุด เพิ่มวงเงินของเธรดนี้เพื่อทำต่อ</translation>
+    </message>
+    <message>
+        <source>The parent’s cost cap stopped this sub-agent. Its changes stay in the review.</source>
+        <translation>วงเงินค่าใช้จ่ายของเธรดหลักหยุดเอเจนต์ย่อยนี้ การเปลี่ยนแปลงยังคงอยู่ในการตรวจทาน</translation>
+    </message>
+    <message>
+        <source>The sub-agent was interrupted and won’t rerun. The parent got its partial result. Changes it made stay in the review.</source>
+        <translation>เอเจนต์ย่อยถูกขัดจังหวะและจะไม่เริ่มใหม่ เธรดหลักได้รับผลบางส่วนแล้ว การเปลี่ยนแปลงที่ทำไว้ยังคงอยู่ในการตรวจทาน</translation>
     </message>
     <message>
         <source>Every thread stops until tomorrow, or until you raise the cap in Settings › AI.</source>
@@ -1212,6 +1472,26 @@ Output device: %2</source>
         <translation>เปลี่ยนจากค่าของสคริปต์ (%1)</translation>
     </message>
     <message>
+        <source>Move preset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy preset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The project already has a preset named “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>You already have a preset named “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Delete preset</source>
         <translation>ลบพรีเซ็ต</translation>
     </message>
@@ -1240,6 +1520,18 @@ Output device: %2</source>
         <translation>พรีเซ็ต</translation>
     </message>
     <message>
+        <source>Project</source>
+        <translation type="unfinished">โปรเจกต์</translation>
+    </message>
+    <message>
+        <source>Mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hidden by the project’s copy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Save as preset…</source>
         <translation>บันทึกเป็นพรีเซ็ต…</translation>
     </message>
@@ -1266,6 +1558,22 @@ Output device: %2</source>
     <message>
         <source>Save</source>
         <translation>บันทึก</translation>
+    </message>
+    <message>
+        <source>Copy to project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy to mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to mine</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Changed from the script’s %1. Click the bar to put it back.</source>
@@ -2273,6 +2581,56 @@ Output device: %2</source>
     <message>
         <source>Some of its files couldn’t be deleted. Close what uses them and try again.</source>
         <translation>ลบไฟล์บางไฟล์ไม่ได้ ปิดสิ่งที่ใช้ไฟล์เหล่านั้นอยู่แล้วลองอีกครั้ง</translation>
+    </message>
+    <message>
+        <source>Automation folder reset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Automation folder not reset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The karaoke templater and several scripts are now built into HikariSub. Old copies could replace or break them, so your automation folder was reset.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Your automation folder wasn’t reset: %1. Nothing was moved or deleted. HikariSub tries again at the next start.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moved</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Backup</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Now built in</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1: use %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1: %2</source>
+        <translation type="unfinished">%1: %2</translation>
+    </message>
+    <message>
+        <source>Scripts you copied in by hand aren’t reinstalled. They’re still in the backup folder.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Reinstall %n script(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Open backup folder</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -3726,6 +4084,137 @@ Output device: %2</source>
     </message>
 </context>
 <context>
+    <name>HikariSub.Explorer</name>
+    <message>
+        <source>Files in the project folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Explorer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>untitled</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to the trash</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move the folder “%1” and everything in it to the trash?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move “%1” to the trash?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">ยกเลิก</translation>
+    </message>
+    <message>
+        <source>New subtitle file name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>expanded</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>collapsed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New name for %1</source>
+        <translation type="unfinished">ชื่อใหม่สำหรับ %1</translation>
+    </message>
+    <message>
+        <source>No files to show here.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open a folder as a project to see its files here.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open folder…</source>
+        <translation type="unfinished">เปิดโฟลเดอร์…</translation>
+    </message>
+    <message>
+        <source>Show all files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New subtitle file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Group by name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Refresh</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open in a new tab</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open in this tab</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New subtitle file here</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rename</source>
+        <translation type="unfinished">เปลี่ยนชื่อ</translation>
+    </message>
+    <message>
+        <source>Show in folder</source>
+        <translation type="unfinished">แสดงในโฟลเดอร์</translation>
+    </message>
+    <message>
+        <source>Copy path</source>
+        <translation type="unfinished">คัดลอกเส้นทาง</translation>
+    </message>
+    <message>
+        <source>Type a name.</source>
+        <translation type="unfinished">พิมพ์ชื่อ</translation>
+    </message>
+    <message>
+        <source>“%1” can’t be a name.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A name can’t contain %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>“%1” is already in this folder.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Couldn’t rename “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Couldn’t move “%1” to the trash.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Couldn’t create “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Project settings</source>
+        <translation type="unfinished">การตั้งค่าโปรเจกต์</translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.Export</name>
     <message>
         <source>Drawing removed</source>
@@ -4255,6 +4744,30 @@ Output device: %2</source>
         <translation>แคตตาล็อก</translation>
     </message>
     <message>
+        <source>Move font catalogue</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy font catalogue</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The project already has a catalogue named “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>You already have a catalogue named “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation type="unfinished">คัดลอก</translation>
+    </message>
+    <message>
         <source>%1 here, +%2 new</source>
         <translation>ที่นี่ %1, ใหม่ +%2</translation>
     </message>
@@ -4323,8 +4836,28 @@ Output device: %2</source>
         <translation>เปลี่ยนชื่อ</translation>
     </message>
     <message>
+        <source>Catalogue tiers</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Load from a file</source>
         <translation>โหลดจากไฟล์</translation>
+    </message>
+    <message>
+        <source>This project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1, hidden by the project’s copy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hidden by the project’s copy. Copy it to the project to use it there.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Show</source>
@@ -4397,6 +4930,22 @@ Output device: %2</source>
     <message>
         <source>Merge</source>
         <translation>รวม</translation>
+    </message>
+    <message>
+        <source>Copy to project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy to mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to mine</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Choose font catalogue file</source>
@@ -6318,6 +6867,10 @@ Failed to copy %2 fonts.</source>
         <translation>สร้างชั้นด้วยค่าล่าสุด</translation>
     </message>
     <message>
+        <source>Typesetting graph…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Shift+click to set a shortcut</source>
         <translation>Shift+คลิกเพื่อกำหนดปุ่มลัด</translation>
     </message>
@@ -7903,6 +8456,10 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Accept the timing assistant’s suggestion</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Explorer panel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -9851,6 +10408,10 @@ Failed to copy %2 fonts.</source>
         <translation>สร้างชั้นด้วยค่า&amp;ล่าสุด</translation>
     </message>
     <message>
+        <source>T&amp;ypesetting graph…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Notes from a QC pass, kept in the file, with the lines they mark</source>
         <translation>โน้ตจากการตรวจ QC ที่เก็บไว้ในไฟล์ พร้อมบรรทัดที่โน้ตนั้นชี้</translation>
     </message>
@@ -10897,6 +11458,14 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished">บันทึก</translation>
     </message>
     <message>
+        <source>%1 in the project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 in mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Save to project</source>
         <translation type="unfinished"></translation>
     </message>
@@ -10967,6 +11536,10 @@ Failed to copy %2 fonts.</source>
 <context>
     <name>HikariSub.NodeEffects</name>
     <message>
+        <source>Opens node effects with the selected lines as the sources of a typesetting graph</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Edits this file’s node effects on a canvas, with a preview on the video</source>
         <translation type="unfinished"></translation>
     </message>
@@ -10988,6 +11561,10 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Source lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select the lines a typesetting graph should run on.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -11299,6 +11876,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished">เก็บไว้จากการทำงานครั้งล่าสุดที่สำเร็จ</translation>
     </message>
     <message>
+        <source>No lines to preview on. Select lines in the grid, then choose Subtitles › Typesetting graph….</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>No karaoke line of this graph’s style to preview on.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -11330,6 +11911,16 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>1 selected line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n selected lines</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
         <source>Line %1, %2</source>
         <translation type="unfinished">บรรทัด %1, %2</translation>
     </message>
@@ -11343,6 +11934,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Graph menu</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Target: selected lines</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -11444,6 +12039,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Only the lines selected in “Source lines” are regenerated; the others keep their output.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select lines in “Source lines” first.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -11560,6 +12159,86 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Shake</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>One line per frame step, each moved a random distance up to the amplitude from the line’s position.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Typewriter</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each character appears after the one before it, by grapheme cluster, and stays to the line’s end.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fade by letter</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each character fades in after the one before it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Wobble</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The characters rise and fall in a wave, one line per character and frame step.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bounce</source>
+        <translation type="unfinished">กระดอน</translation>
+    </message>
+    <message>
+        <source>Each character jumps up after the one before it and comes part of the way back down, as myaa.Bounce does.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Focus lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Spikes at random angles around the line’s position, drawn again on every frame step.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Grain</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Random characters in the Grain font over each character, in two colours. Needs the Grain font.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Chromatic aberration</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Two coloured copies offset either side of the line, under the line itself.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Random move</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The line moves from its position to a random point within the distance.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Karaoke to alpha</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each syllable appears at its karaoke time and stays to the line’s end.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>A graph name can’t be empty, start or end with a space, end with a dot, or hold “karaoke”, a comma, a double quote, a control character or any of / \ : * ? &lt; &gt; |.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -11599,6 +12278,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>Each syllable’s letters are cut into thin horizontal stripes, which fade in as it is sung.</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>For selected lines</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Nodes</name>
@@ -11628,10 +12311,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Each unit once per step of time from `start` to `end` (absolute ms); without them, the unit’s own span.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>What the karaoke templater’s $variables give for the current unit and its line, rounded as the templater rounds them. Times of a syllable are from its line’s start.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -11676,10 +12355,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Calculate</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Arithmetic in doubles, as Lua does it. modulo is a - floor(a/b)*b; round is floor(a + 0.5). One-input operations use a.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -11816,6 +12491,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Only the units whose inline-fx ({\-name}, kept until the next one) is `fx`, as the templater’s fx modifier keeps them. Characters have their syllable’s; a line unit has none.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>What the karaoke templater’s $variables give for the current unit and its line, rounded as the templater rounds them. Times of a syllable are from its line’s start. line_alignment is the line’s first \an, or its Style’s alignment.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Arithmetic in doubles, as Lua does it. modulo is a - floor(a/b)*b; round is floor(a + 0.5); sine and cosine take a in degrees and round to millionths. One-input operations use a.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -14249,6 +14932,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>ไม่พบใน PATH</translation>
     </message>
     <message>
+        <source>Not offered: this system can’t keep it to its own folders.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not offered: its command is inside an open project, which it could read.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Found on PATH.</source>
         <translation>พบใน PATH</translation>
     </message>
@@ -14322,6 +15013,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Arguments</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Id</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -14443,6 +15138,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>For agents that connect over HTTP. Only this computer can reach it, and only with the token.</source>
         <translation>สำหรับเอเจนต์ที่เชื่อมต่อผ่าน HTTP เข้าถึงได้จากคอมพิวเตอร์เครื่องนี้เท่านั้น และต้องมีโทเค็น</translation>
+    </message>
+    <message>
+        <source>Let them read your skills</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Yours, this project’s and the built-in ones. Skills guide the agent; they grant no permission.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Copy setup</source>
@@ -15140,8 +15843,36 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>ปลั๊กอินต้องใช้โฟลเดอร์ผู้ใช้ แต่สำเนานี้ไม่มี</translation>
     </message>
     <message>
+        <source>The package is larger than 1 MiB, so an agent can’t install it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>HikariSub can’t read %1.</source>
         <translation>HikariSub อ่าน %1 ไม่ได้</translation>
+    </message>
+    <message>
+        <source>There is no user folder to write the plugin to.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>That is not a plugin id.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>hikari-plugin.json isn’t valid: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>HikariSub can’t write %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Plugins are not available.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The package changed after the user approved it, so it wasn’t installed.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>The plugin changed while its update downloaded.</source>
@@ -15366,6 +16097,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>%1 waits for you</source>
         <translation>%1 รอคุณอยู่</translation>
+    </message>
+    <message>
+        <source>By HikariSub</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>New</source>
@@ -16038,8 +16773,32 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>ตั้งไว้ใน project.local.toml</translation>
     </message>
     <message>
+        <source>Not set</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Use yours</source>
         <translation>ใช้ของคุณ</translation>
+    </message>
+    <message>
+        <source>Source language</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Detect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Target language</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Export format</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Used for files that haven’t been exported yet.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Overridden in this project</source>
@@ -16923,6 +17682,30 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>Removed</source>
         <translation type="unfinished"></translation>
     </message>
+    <message numerus="yes">
+        <source>%1: %n</source>
+        <translation>
+            <numerusform>%1: %n</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Changed, %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New file, %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>New file, %n line(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Changed, +%1 −%2 lines</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message>
         <source>Re&amp;view</source>
         <translation type="unfinished"></translation>
@@ -16974,6 +17757,56 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Cancel</source>
         <translation type="unfinished">ยกเลิก</translation>
+    </message>
+    <message>
+        <source>Quit</source>
+        <translation type="unfinished">ออก</translation>
+    </message>
+    <message>
+        <source>Keep the AI’s file changes?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>and %n more</source>
+        <translation type="unfinished">
+            <numerusform>และอีก %n รายการ</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Discard all</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Some files weren’t kept.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>They changed on disk after the AI wrote them, or couldn’t be written. They stay in the Review panel.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The file couldn’t be written.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>It stays in the review. Check that its folder exists and that you can write there, then keep it again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Project files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n file(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Also put back %n file(s) changed on disk after they were kept</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <source>Keep AI change</source>
@@ -17054,6 +17887,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Sub-agent %1</source>
+        <translation>เอเจนต์ย่อย %1</translation>
+    </message>
+    <message>
         <source>By %1</source>
         <translation type="unfinished"></translation>
     </message>
@@ -17073,6 +17910,22 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>You changed it after this change. Undo puts it back as it was before the AI, which drops your edit.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1, changed on disk since</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The file changed on disk after the AI wrote its version. Keep replaces it with the AI’s version.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep anyway</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not a text file, or too large to compare.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -17108,6 +17961,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Show the Review panel</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sub-agents: %1</source>
+        <translation>เอเจนต์ย่อย: %1</translation>
     </message>
 </context>
 <context>
@@ -18571,6 +19428,22 @@ because it was edited.</source>
         <translation>เพิ่ม “%1” ไปยังพจนานุกรม</translation>
     </message>
     <message>
+        <source>This project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add to project dictionary</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add to my dictionary</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Fix suggestions</source>
         <translation>คำแนะนำการแก้ไข</translation>
     </message>
@@ -18721,6 +19594,10 @@ because it was edited.</source>
     <message>
         <source>Ignore all</source>
         <translation>ละเว้นทั้งหมด</translation>
+    </message>
+    <message>
+        <source>Where to add</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Add to dictionary</source>
@@ -22151,6 +23028,26 @@ Styles deleted:
         <translation>%1 (ค่าเริ่มต้นของการจัดเวลา)</translation>
     </message>
     <message>
+        <source>Move preset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy preset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The project already has a preset named “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>You already have a preset named “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation type="unfinished">คัดลอก</translation>
+    </message>
+    <message>
         <source>Delete preset</source>
         <translation>ลบพรีเซ็ต</translation>
     </message>
@@ -22179,6 +23076,22 @@ Styles deleted:
         <translation>ใช้ล่าสุด</translation>
     </message>
     <message>
+        <source>%1, hidden by the project’s copy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hidden by the project’s copy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Preset commands</source>
         <translation>คำสั่งพรีเซ็ต</translation>
     </message>
@@ -22193,6 +23106,22 @@ Styles deleted:
     <message>
         <source>Delete preset…</source>
         <translation>ลบพรีเซ็ต…</translation>
+    </message>
+    <message>
+        <source>Copy to project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy to mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to mine</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Use in the Timing layout</source>
@@ -24254,6 +25183,22 @@ or codecs or a splitter may be missing</source>
         <translation>คืนค่าแท็กเริ่มต้น</translation>
     </message>
     <message>
+        <source>Copy tag</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move tag</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The project already has a tag named “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>You already have a tag named “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Type the tag, without the backslash.</source>
         <translation>พิมพ์แท็กโดยไม่ต้องมีแบ็กสแลช</translation>
     </message>
@@ -24426,6 +25371,26 @@ or codecs or a splitter may be missing</source>
         <translation>เลิกทำการเปลี่ยนแปลงทั้งหมด</translation>
     </message>
     <message>
+        <source>Copy shape</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move shape</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The project already has a shape named “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>You already have a shape named “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation type="unfinished">คัดลอก</translation>
+    </message>
+    <message>
         <source>Type a name.</source>
         <translation>พิมพ์ชื่อ</translation>
     </message>
@@ -24472,6 +25437,18 @@ or codecs or a splitter may be missing</source>
         <translation>คืนค่าเริ่มต้น</translation>
     </message>
     <message>
+        <source>%1, hidden by the project’s copy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>yours</source>
         <translation>ของคุณ</translation>
     </message>
@@ -24486,6 +25463,10 @@ or codecs or a splitter may be missing</source>
     <message>
         <source>The list keeps at least one shape.</source>
         <translation>รายการต้องมีรูปร่างอย่างน้อยหนึ่งรายการ</translation>
+    </message>
+    <message>
+        <source>Hidden by the project’s copy. Copy it to the project to use it there.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Name</source>
@@ -24558,6 +25539,22 @@ or codecs or a splitter may be missing</source>
     <message>
         <source>Redo “%1”</source>
         <translation>ทำซ้ำ “%1”</translation>
+    </message>
+    <message>
+        <source>Copy to project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy to mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to mine</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Restore default shapes…</source>
@@ -25587,6 +26584,10 @@ do not work on comments</source>
         <translation>ไทป์เซ็ต</translation>
     </message>
     <message>
+        <source>Hidden by the project’s copy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>the file is larger than %1 bytes</source>
         <translation>ไฟล์มีขนาดใหญ่กว่า %1 ไบต์</translation>
     </message>
@@ -25747,6 +26748,22 @@ do not work on comments</source>
         <translation>ชื่อ</translation>
     </message>
     <message>
+        <source>Save to</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Where to save</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Saving replaces the layout %1.</source>
         <translation>การบันทึกจะแทนที่เค้าโครง %1</translation>
     </message>
@@ -25779,8 +26796,48 @@ do not work on comments</source>
         <translation>แท็บที่ใช้เค้าโครงนี้จะคงการจัดวางไว้ ภายใต้พรีเซ็ตที่เป็นจุดเริ่มต้น</translation>
     </message>
     <message>
+        <source>Move layout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy layout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The project already has a layout named “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>You already have a layout named “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation type="unfinished">คัดลอก</translation>
+    </message>
+    <message>
+        <source>Copy to project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy to mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Saved layouts</source>
         <translation>เค้าโครงที่บันทึกไว้</translation>
+    </message>
+    <message>
+        <source>%1, hidden by the project’s copy</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>%1, cannot be used</source>
@@ -25789,6 +26846,10 @@ do not work on comments</source>
     <message>
         <source>Cannot be used: %1</source>
         <translation>ใช้ไม่ได้: %1</translation>
+    </message>
+    <message>
+        <source>Layout tiers</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Rename (F2)</source>

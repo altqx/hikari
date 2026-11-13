@@ -127,7 +127,8 @@ QVariantList Application::windowTabs(int shellWindow) const
                             {QStringLiteral("reference"), m_workspace.reference() == id},
                             {QStringLiteral("tip"), name + QLatin1Char('\n') + video},
                             {QStringLiteral("video"), video},
-                            {QStringLiteral("review"), m_review ? m_review->waitingIn(id) : 0}};
+                            {QStringLiteral("review"), m_review ? m_review->waitingIn(id) : 0},
+                            {QStringLiteral("reviewByChild"), m_review ? m_review->waitingByChild(id) : QString()}};
     }
     return rows;
 }
@@ -676,17 +677,61 @@ void Application::keepProjectTabs(int shellWindow)
         m_projects->keepTabs(root, sessionOf(shellWindow));
 }
 
+namespace {
+
+constexpr bool kQuittingFromHomeEndsACrashedSession = true;
+
+void keepStoredDocuments(application::Session &session, const application::Session &stored)
+{
+    session.tabs = stored.tabs;
+    session.activeTab = stored.activeTab;
+    std::vector<application::SessionWindow> windows = stored.windows;
+    if (windows.empty())
+        windows.resize(1);
+    for (std::size_t w = 0; w < std::min(windows.size(), session.windows.size()); ++w) {
+        windows[w].geometry = session.windows[w].geometry;
+        windows[w].maximized = session.windows[w].maximized;
+    }
+    for (std::size_t w = windows.size(); w < session.windows.size(); ++w)
+        windows.push_back(session.windows[w]);
+    session.windows = std::move(windows);
+}
+
+std::optional<application::Session> readSessionAt(const QString &path, application::ParseFailure *failure = nullptr)
+{
+    if (path.isEmpty())
+        return std::nullopt;
+    const auto bytes = readSessionBytes(path);
+    if (!bytes) {
+        if (failure && QFileInfo::exists(path))
+            *failure = {0, 0, QCoreApplication::translate("HikariSub.Session", "It could not be read.").toStdString()};
+        return std::nullopt;
+    }
+    return readSession(std::string_view(bytes->constData(), static_cast<std::size_t>(bytes->size())), failure);
+}
+
+}
+
 bool Application::saveLastSession(bool closing, const QString &path)
 {
     const QString file = path.isEmpty() ? lastSessionPath() : path;
     if (file.isEmpty() || (path.isEmpty() && !m_lastSessionWritable))
         return false;
     application::Session session = sessionOf(std::nullopt);
+    bool closed = closing;
+    if (path.isEmpty() && !session.tabs.empty())
+        m_sessionHadTabs = true;
+    else if (path.isEmpty() && !m_sessionHadTabs)
+        if (const auto stored = readSessionAt(file); stored && !stored->tabs.empty()) {
+            keepStoredDocuments(session, *stored);
+            if (!kQuittingFromHomeEndsACrashedSession)
+                closed = closing && stored->closed;
+        }
     if (const auto &only = session.windows.front();
         session.windows.size() == 1 && !only.geometry && !only.maximized && only.unknown.empty() &&
         only.project.empty() && !only.sideBars)
         session.windows.clear();
-    const QByteArray bytes = writeSessionJson(session, path.isEmpty() ? std::optional<bool>(closing) : std::nullopt);
+    const QByteArray bytes = writeSessionJson(session, path.isEmpty() ? std::optional<bool>(closed) : std::nullopt);
     QDir().mkpath(QFileInfo(file).absolutePath());
     QSaveFile out(file);
     if (!out.open(QIODevice::WriteOnly))
@@ -716,23 +761,6 @@ QString Application::saveSessionTo(const QUrl &file, bool replace)
     if (const QFileInfo info(path); info.exists() && !info.isWritable())
         return QStringLiteral("readonly");
     return saveLastSession(false, path) ? QString() : QStringLiteral("failed");
-}
-
-namespace {
-
-std::optional<application::Session> readSessionAt(const QString &path, application::ParseFailure *failure = nullptr)
-{
-    if (path.isEmpty())
-        return std::nullopt;
-    const auto bytes = readSessionBytes(path);
-    if (!bytes) {
-        if (failure && QFileInfo::exists(path))
-            *failure = {0, 0, QCoreApplication::translate("HikariSub.Session", "It could not be read.").toStdString()};
-        return std::nullopt;
-    }
-    return readSession(std::string_view(bytes->constData(), static_cast<std::size_t>(bytes->size())), failure);
-}
-
 }
 
 bool Application::lastSessionCrashed() const

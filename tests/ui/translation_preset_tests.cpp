@@ -64,6 +64,7 @@ class TranslationPresetTest : public QObject {
         engine->setInitialProperties(application->qmlProperties());
         engine->loadFromModule("Hikari.Ui", "Main");
         QVERIFY(!engine->rootObjects().isEmpty());
+        QVERIFY(QMetaObject::invokeMethod(engine->rootObjects().first(), "buildMenus"));
         QVERIFY(QTest::qWaitForWindowExposed(window()));
         QTRY_VERIFY(window()->property("arrangementSettled").toBool());
         application->addPage();
@@ -107,7 +108,7 @@ class TranslationPresetTest : public QObject {
     }
     bool originalInPanel() const
     {
-        return item("lineText")->parentItem() == item("originalSlot");
+        return item("originalSlot")->isAncestorOf(item("lineText"));
     }
     QObject *modeAction() const { return item<QObject>("translationModeMenuItem")->property("action").value<QObject *>(); }
     void openFile(const char *name, bool translation)

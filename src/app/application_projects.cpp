@@ -8,9 +8,11 @@
 
 #include <QCoreApplication>
 #include <QDir>
+#include <QFile>
 #include <QFileInfo>
 #include <QQmlEngine>
 #include <QQuickWindow>
+#include <QSaveFile>
 
 #include <algorithm>
 #include <filesystem>
@@ -64,6 +66,31 @@ const application::Settings &Application::windowSettings(int shellWindow) const
     return views(shellWindow).settings->settings();
 }
 
+application::AiReview::Disk Application::reviewDisk()
+{
+    const auto path = [](const std::string &p) { return QString::fromStdString(p); };
+    return {[path](const std::string &p) -> std::optional<std::string> {
+                QFile file(path(p));
+                if (!file.open(QIODevice::ReadOnly))
+                    return std::nullopt;
+                return file.readAll().toStdString();
+            },
+            [path](const std::string &p, std::string_view bytes) {
+                QSaveFile file(path(p));
+                return QDir().mkpath(QFileInfo(path(p)).absolutePath()) && file.open(QIODevice::WriteOnly) &&
+                       file.write(bytes.data(), qint64(bytes.size())) == qint64(bytes.size()) && file.commit();
+            },
+            [path](const std::string &p) { return QFile::remove(path(p)); }};
+}
+
+std::vector<std::string> Application::projectAiExclude(const std::string &root)
+{
+    const ui::ProjectFile file(QString::fromStdString(root));
+    const auto value = file.read(*application::findSetting("ai.exclude"));
+    const auto *globs = value ? std::get_if<std::vector<std::string>>(&*value) : nullptr;
+    return globs ? *globs : std::vector<std::string>();
+}
+
 std::optional<api::ProjectState> Application::activeProject() const
 {
     const QString root = m_projects ? m_projects->root(m_workspace.activeWindow()) : QString();
@@ -110,14 +137,21 @@ void Application::applyWindowProject(int shellWindow)
                           {}, shellWindow);
     }
     loadProjectFonts(shellWindow);
+    applyProjectTierFiles(shellWindow, root);
     if (m_styleManager)
         m_styleManager->projectChanged();
+    if (m_fontCatalogs)
+        m_fontCatalogs->projectChanged();
+    if (m_shiftTimes)
+        m_shiftTimes->setProjectRoot(m_projects->root(m_workspace.activeWindow()));
     const bool moveTags = v.settings->settings().boolean("translation.autoMoveTagsFromOriginal");
     v.editor->setMoveTags(moveTags);
     v.shell->setRunMarks(moveTags);
     if (shellWindow == m_workspace.activeWindow())
         applyGrammarSettings();
     spellingRefresh();
+    if (m_inlineAi)
+        m_inlineAi->projectChanged();
     if (m_apiHost)
         m_apiHost->observe();
 }
@@ -327,6 +361,29 @@ QString Application::projectMoveText(int shellWindow) const
     const QString name = m_projects->name(shellWindow);
     return name.isEmpty() ? QString()
                           : QCoreApplication::translate("HikariSub.Project", "This tab now uses the project %1.").arg(name);
+}
+
+QStringList Application::explorerExcludes(int shellWindow) const
+{
+    QStringList excludes;
+    for (const auto &pattern : windowSettings(shellWindow).list("explorer.exclude"))
+        excludes << QString::fromStdString(pattern);
+    return excludes;
+}
+
+int Application::tabOfFile(int shellWindow, const QString &path) const
+{
+    const QString wanted = QFileInfo(path).canonicalFilePath();
+    if (wanted.isEmpty())
+        return -1;
+    int index = 0;
+    for (const auto id : m_workspace.tabs(shellWindow)) {
+        if (const auto destination = m_files->destination(id);
+            destination && QFileInfo(QString::fromStdString(destination->value)).canonicalFilePath() == wanted)
+            return index;
+        ++index;
+    }
+    return -1;
 }
 
 }

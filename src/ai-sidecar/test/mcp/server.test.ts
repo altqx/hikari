@@ -5,6 +5,7 @@ import { McpError } from "../../src/mcp/errors";
 import { kMeta, kProtocolVersion, McpServer, type HttpHeaders } from "../../src/mcp/server";
 import type { OperationName, Operations } from "../../src/tools/api.gen";
 import type { HikariCalls } from "../../src/tools/toolset";
+import { kMySkill, mySkillAnswers } from "../skills/my_skill";
 
 type Answer = unknown | RpcError | ((params: any) => unknown);
 
@@ -96,11 +97,34 @@ describe("McpServer, 2026-07-28", () => {
         const called = await send(request(2, "tools/call", { name: "lines_find", arguments: { text: "Kenobi" } }));
         expect(called.reply.result).toMatchObject({ resultType: "complete",
             content: [{ type: "text", text: JSON.stringify({ revision: 3, total: 0, lines: [] }) }] });
-        expect(ha1.calls).toEqual([{ connection: "c1", client: "Claude Code", operation: "lines.find",
-            params: { text: "Kenobi" } }]);
+        expect(ha1.calls).toEqual([
+            { connection: "c1", client: "Claude Code", operation: "skills.list", params: undefined },
+            { connection: "c1", client: "Claude Code", operation: "lines.find", params: { text: "Kenobi" } }]);
 
         const unknown = await send(request(3, "tools/call", { name: "format_disk" }));
         expect(unknown.reply.error.code).toBe(McpError.invalidParams);
+    });
+
+    test("read_skill is offered only while HA1 lets the connection read skills", async () => {
+        const notGranted = new RpcError(ErrorCode.hikariApi, "This caller may not read the user's skills.", { code: "not_granted" });
+        const refused = server({ "skills.list": notGranted });
+        const bare = await refused.send(request(1, "tools/list"));
+        expect(bare.reply.result.tools.map((t: { name: string }) => t.name)).not.toContain("read_skill");
+        const call = await refused.send(request(2, "tools/call", { name: "read_skill", arguments: { name: "karaoke-templater" } }));
+        expect(call.reply.error.code).toBe(McpError.invalidParams);
+        expect(refused.ha1.calls.map((c) => c.operation)).not.toContain("skills.read");
+
+        const { ha1, send } = server(mySkillAnswers);
+        const listed = await send(request(3, "tools/list"));
+        const tool = listed.reply.result.tools.find((t: { name: string }) => t.name === "read_skill");
+        expect(tool.description).toStartWith("Reads one of these skills: its SKILL.md, or another file the skill names.\n");
+        expect(tool.description).toContain(`\n- ${kMySkill.name} (yours): ${kMySkill.description}\n`);
+        expect(tool.description).toContain("\n- karaoke-templater: ");
+        const read = await send(request(4, "tools/call", { name: "read_skill", arguments: { name: kMySkill.name } }));
+        expect(read.reply.result.content[0].text).toBe(
+            `This skill is from the user's skills folder. It grants no permission.\n\n${kMySkill.body}`);
+        const reading = { connection: "c1", client: "Claude Code", operation: "skills.read", params: { skill: kMySkill.name, file: "SKILL.md" } };
+        expect(ha1.calls.filter((c) => c.operation === "skills.read")).toEqual([reading, reading]);
     });
 
     test("a refused write answers HA1's words as a tool error", async () => {

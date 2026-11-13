@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "version": 2,
+  "version": 1,
   "$defs": {
     "DocumentId": {
       "type": "integer",
@@ -2272,7 +2272,7 @@
         "properties": {
           "folder": {
             "type": "string",
-            "description": "A folder handle to list (since version 2)."
+            "description": "A folder handle to list."
           },
           "path": {
             "type": "string",
@@ -2328,7 +2328,7 @@
           },
           "folder": {
             "type": "string",
-            "description": "Instead of file, a folder handle from files.list (since version 2)."
+            "description": "Instead of file, a folder handle from files.list."
           },
           "path": {
             "type": "string",
@@ -2376,7 +2376,7 @@
     {
       "name": "files.write",
       "access": "write",
-      "summary": "Replaces a file granted for writing with new content; in a writable folder, makes it and its folders.",
+      "summary": "Replaces a file granted for writing with new content; in a writable folder, makes it and its folders. An AI caller's write is staged for the user to review and reaches the disk only when kept.",
       "since": 1,
       "params": {
         "type": "object",
@@ -2387,7 +2387,7 @@
           },
           "folder": {
             "type": "string",
-            "description": "Instead of file, a folder handle from files.list (since version 2)."
+            "description": "Instead of file, a folder handle from files.list."
           },
           "path": {
             "type": "string",
@@ -2418,6 +2418,10 @@
           "size": {
             "type": "integer",
             "minimum": 0
+          },
+          "staged": {
+            "type": "boolean",
+            "description": "True: waiting in the review, not on the disk yet."
           }
         },
         "required": [
@@ -3326,6 +3330,557 @@
       }
     },
     {
+      "name": "plugins.list",
+      "access": "read",
+      "summary": "The installed plugins with their state, trust tier and commands.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "plugins": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "version": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "source": {
+                  "enum": [
+                    "file",
+                    "marketplace"
+                  ]
+                },
+                "signed": {
+                  "type": "boolean"
+                },
+                "enabled": {
+                  "type": "boolean"
+                },
+                "tier": {
+                  "enum": [
+                    "restricted",
+                    "unrestricted"
+                  ]
+                },
+                "revoked": {
+                  "type": "boolean"
+                },
+                "commands": {
+                  "type": "array",
+                  "description": "While the plugin runs.",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "command": {
+                        "type": "string",
+                        "description": "plugin.<plugin id>.<command id>"
+                      },
+                      "title": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "command",
+                      "title"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "version",
+                "description",
+                "source",
+                "signed",
+                "enabled",
+                "tier",
+                "revoked",
+                "commands"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "plugins"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "plugins.manifest",
+      "access": "read",
+      "summary": "An installed plugin's hikari-plugin.json.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "plugin": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "plugin"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "plugin": {
+            "type": "string"
+          },
+          "manifest": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "plugin",
+          "manifest"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "plugins.scaffold",
+      "access": "write",
+      "summary": "Writes a plugin from the authoring guide's template into the AI plugins folder and packs it; nothing is installed.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "plugin": {
+            "type": "string",
+            "maxLength": 100,
+            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*(\\.[a-z0-9]+(-[a-z0-9]+)*)+$",
+            "description": "Reverse-DNS, lowercase: com.example.sign-counter. An earlier scaffold of that id is replaced."
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "version": {
+            "type": "string",
+            "maxLength": 64,
+            "description": "Semantic version; default 0.1.0."
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 1000
+          },
+          "tier": {
+            "enum": [
+              "restricted",
+              "unrestricted"
+            ],
+            "description": "restricted (default) runs in the sandbox without ffi, io, os and debug; unrestricted needs the user's full trust at install."
+          },
+          "permissions": {
+            "type": "object",
+            "description": "The manifest's permissions: documents.all, network {hosts, reason}, files."
+          },
+          "commands": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 256,
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+                },
+                "title": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 80
+                }
+              },
+              "required": [
+                "id",
+                "title"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "code": {
+            "type": "string",
+            "maxLength": 1048576,
+            "description": "main.lua, registering each command with hikari.commands.register; the guide's first plugin when omitted."
+          },
+          "files": {
+            "type": "array",
+            "maxItems": 64,
+            "items": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "maxLength": 200,
+                  "pattern": "^([A-Za-z0-9_][A-Za-z0-9_.-]*/)*[A-Za-z0-9_][A-Za-z0-9_.-]*\\.(lua|json|md|txt)$"
+                },
+                "text": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "path",
+                "text"
+              ],
+              "additionalProperties": false
+            },
+            "description": "More files beside main.lua and hikari-plugin.json."
+          }
+        },
+        "required": [
+          "plugin",
+          "name",
+          "commands"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "plugin": {
+            "type": "string"
+          },
+          "folder": {
+            "type": "string"
+          },
+          "package": {
+            "type": "string",
+            "description": "The packed .hikariplugin."
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "manifest": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "plugin",
+          "folder",
+          "package",
+          "files",
+          "manifest"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "plugins.review",
+      "access": "read",
+      "summary": "What installing a package would do, as the install question shows it: its trust tier, signing, permissions, commands and files.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "plugin": {
+            "type": "string",
+            "description": "A plugin plugins.scaffold made."
+          },
+          "file": {
+            "type": "string",
+            "description": "A .hikariplugin the user granted, by its files.list handle."
+          }
+        },
+        "additionalProperties": false,
+        "oneOf": [
+          {
+            "required": [
+              "plugin"
+            ]
+          },
+          {
+            "required": [
+              "file"
+            ]
+          }
+        ]
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "plugin": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          },
+          "change": {
+            "enum": [
+              "install",
+              "update",
+              "reinstall",
+              "downgrade"
+            ]
+          },
+          "installedVersion": {
+            "type": "string"
+          },
+          "tier": {
+            "enum": [
+              "restricted",
+              "unrestricted"
+            ],
+            "description": "unrestricted runs outside the sandbox and needs the user's full trust."
+          },
+          "needsRetrust": {
+            "type": "boolean",
+            "description": "The signing key changed, or an unsigned package replaces a signed one."
+          },
+          "keyId": {
+            "type": "string",
+            "description": "The signing key; empty when unsigned."
+          },
+          "pinnedKeyId": {
+            "type": "string"
+          },
+          "permissions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "commands": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The titles of the commands it adds."
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string"
+                },
+                "text": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "path",
+                "text"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "digest": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "plugin",
+          "name",
+          "version",
+          "change",
+          "installedVersion",
+          "tier",
+          "needsRetrust",
+          "keyId",
+          "pinnedKeyId",
+          "permissions",
+          "commands",
+          "files",
+          "digest"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "plugins.install",
+      "access": "write",
+      "summary": "Installs a scaffolded or granted plugin package and turns it on, once the user approves it in HikariSub; it asks every time.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "plugin": {
+            "type": "string",
+            "description": "A plugin plugins.scaffold made."
+          },
+          "file": {
+            "type": "string",
+            "description": "A .hikariplugin the user granted, by its files.list handle."
+          }
+        },
+        "additionalProperties": false,
+        "oneOf": [
+          {
+            "required": [
+              "plugin"
+            ]
+          },
+          {
+            "required": [
+              "file"
+            ]
+          }
+        ]
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "plugin": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          },
+          "change": {
+            "enum": [
+              "install",
+              "update",
+              "reinstall",
+              "downgrade"
+            ]
+          },
+          "installedVersion": {
+            "type": "string"
+          },
+          "tier": {
+            "enum": [
+              "restricted",
+              "unrestricted"
+            ],
+            "description": "unrestricted runs outside the sandbox and needs the user's full trust."
+          },
+          "needsRetrust": {
+            "type": "boolean",
+            "description": "The signing key changed, or an unsigned package replaces a signed one."
+          },
+          "keyId": {
+            "type": "string",
+            "description": "The signing key; empty when unsigned."
+          },
+          "pinnedKeyId": {
+            "type": "string"
+          },
+          "permissions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "commands": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The titles of the commands it adds."
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string"
+                },
+                "text": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "path",
+                "text"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "digest": {
+            "type": "string"
+          },
+          "installed": {
+            "const": true
+          }
+        },
+        "required": [
+          "plugin",
+          "name",
+          "version",
+          "change",
+          "installedVersion",
+          "tier",
+          "needsRetrust",
+          "keyId",
+          "pinnedKeyId",
+          "permissions",
+          "commands",
+          "files",
+          "digest",
+          "installed"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "plugins.run",
+      "access": "write",
+      "summary": "Runs an installed plugin's command as its menu item would.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "plugin": {
+            "type": "string"
+          },
+          "command": {
+            "type": "string",
+            "description": "The command's id within the plugin, as in its manifest."
+          }
+        },
+        "required": [
+          "plugin",
+          "command"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "ran": {
+            "const": true
+          }
+        },
+        "required": [
+          "ran"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
       "name": "typeset.perspective",
       "access": "read",
       "summary": "The Line's text with the tags that render it on a quad (VT3's perspective solver): \\pos, \\org, \\frx, \\fry, \\frz, \\fax, \\fscx and \\fscy.",
@@ -4175,7 +4730,7 @@
       "name": "project.info",
       "access": "read",
       "summary": "The Project of the window the user works in, or null.",
-      "since": 2,
+      "since": 1,
       "params": {
         "type": "object",
         "additionalProperties": false
@@ -4858,7 +5413,7 @@
     {
       "name": "project.changed",
       "summary": "The window the user works in opened or closed a Project, or the user moved to a window with another one.",
-      "since": 2,
+      "since": 1,
       "data": {
         "type": "object",
         "properties": {

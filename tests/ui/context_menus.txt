@@ -2,6 +2,7 @@ Line editor text
 Line editor text > -
 Line editor text > Ignore this rule
 Line editor text > Add “” to dictionary
+Line editor text > Add to my dictionary
 Line editor text > -
 Line editor text > Undo
 Line editor text > Redo
@@ -70,6 +71,7 @@ Grid > Insert > After, at video frame time [GRID_INSERT_AFTER_WITH_VIDEO_FRAME]
 Grid > Duplicate 1 line(s) [GRID_DUPLICATE_LINES]
 Grid > Blur and glow layers… [GLOBAL_BLUR_AND_GLOW_LAYERS]
 Grid > Build layers with the last values [GLOBAL_BLUR_AND_GLOW_LAYERS_REPEAT]
+Grid > Typesetting graph… [GLOBAL_TYPESETTING_GRAPH]
 Grid > Cut [GRID_CUT]
 Grid > Copy [GRID_COPY]
 Grid > Paste [GRID_PASTE]
@@ -381,3 +383,13 @@ Tag list
 Tag list > Show description
 Tag list > Show all tags
 Tag list > Show VSFilterMod tags
+Explorer row
+Explorer row > Open in a new tab
+Explorer row > Open in this tab
+Explorer row > -
+Explorer row > New subtitle file here
+Explorer row > Rename
+Explorer row > Move to the trash
+Explorer row > -
+Explorer row > Show in folder
+Explorer row > Copy path

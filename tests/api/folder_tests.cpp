@@ -1,3 +1,4 @@
+#include "fake_host.h"
 #include "hikari/api/api.h"
 #include "hikari/api/folder.h"
 
@@ -121,7 +122,9 @@ public:
 class FakeProject final : public ProjectHost {
 public:
     std::optional<ProjectState> project() const override { return state; }
+    std::vector<std::string> aiExclude(const std::string &) const override { return excludes; }
     std::optional<ProjectState> state;
+    std::vector<std::string> excludes;
 };
 
 std::string utf8(const fs::path &p)
@@ -145,9 +148,14 @@ protected:
     }
     std::string grant(bool writable) { return m_api.grantFolder(m_caller.id, utf8(m_data), writable); }
 
+    hikari::application::MemorySettingsStorage m_storage;
+    hikari::application::Settings m_settings{m_storage};
     DiskFiles m_files;
     FakeProject m_project;
-    Api m_api{Host{.files = &m_files, .project = &m_project}};
+    hikari::api::testing::FakeHost m_documents;
+    hikari::application::AiReview m_review;
+    Api m_api{Host{.documents = &m_documents, .settings = &m_settings, .files = &m_files, .review = &m_review,
+                   .project = &m_project}};
     Caller m_caller{.id = "test.plugin", .label = "Test"};
 };
 
@@ -231,4 +239,240 @@ TEST_F(FolderGrants, ProjectInfoAndProjectChanged)
     ASSERT_EQ(heard.size(), 2u);
     EXPECT_EQ(heard[0], show);
     EXPECT_EQ(heard[1], *Json::parse(R"({"project": null})"));
+}
+
+TEST(AiExclude, GlobsMatchLikeGitignore)
+{
+    EXPECT_TRUE(globMatches(".env*", ".env"));
+    EXPECT_TRUE(globMatches(".env*", ".ENV.local"));
+    EXPECT_FALSE(globMatches("*.key", "a/b.key"));
+    EXPECT_TRUE(globMatches("**.key", "a/b.key"));
+    EXPECT_TRUE(globMatches("a?c", "abc"));
+    EXPECT_FALSE(globMatches("a?c", "a/c"));
+    const std::vector<std::string> defaults(std::begin(kAiExcludeDefaults), std::end(kAiExcludeDefaults));
+    for (const auto &[path, folder] : std::vector<std::pair<std::string, bool>>{
+             {".env", false}, {"show/.env.local", false}, {"keys/tls.key", false}, {".git", true}, {".git/config", false},
+             {"sub/.git/HEAD", false}, {".hikari/project.local.toml", false}, {".hikari/credentials.toml", false}})
+        EXPECT_TRUE(excludedPath(path, folder, defaults)) << path;
+    for (const auto &[path, folder] : std::vector<std::pair<std::string, bool>>{
+             {"notes.txt", false}, {".gitignore", false}, {".git", false}, {".hikari/project.toml", false},
+             {"sub/.hikari/project.local.toml", false}, {"keys", true}})
+        EXPECT_FALSE(excludedPath(path, folder, defaults)) << path;
+}
+
+namespace {
+
+class AiFolder : public FolderGrants {
+protected:
+    void SetUp() override
+    {
+        FolderGrants::SetUp();
+        for (const char *file : {".env", ".env.local", "keys/tls.key", ".git/config", ".hikari/project.local.toml",
+                                 ".hikari/credentials.toml", ".hikari/project.toml", "drafts/x.txt", "old.bak",
+                                 "raw/take1.WAV", "raw/ep01.mkv"}) {
+            fs::create_directories((m_data / file).parent_path());
+            std::ofstream(m_data / file) << "x";
+        }
+        m_caller.reviewed = true;
+        grant(false);
+    }
+    std::string reason(std::string_view operation, std::string_view params)
+    {
+        const Result r = call(operation, params);
+        const Json *why = r ? nullptr : r.error().data.find("reason");
+        return r ? std::string("ok") : why ? why->asString() : r.error().code;
+    }
+    std::vector<std::string> listed(std::string_view path)
+    {
+        const Result r = call("files.list", R"({"folder": "d1", "path": ")" + std::string(path) + R"("})");
+        std::vector<std::string> out;
+        if (r)
+            for (const Json &entry : r->find("entries")->asArray())
+                out.push_back(entry.find("path")->asString());
+        return out;
+    }
+};
+
+}
+
+TEST_F(AiFolder, TheDefaultsAndTheUsersAndTheProjectsGlobsAreNeitherListedNorRead)
+{
+    m_settings.set("ai.exclude", std::vector<std::string>{"*.bak"});
+    m_project.excludes = {"drafts/"};
+    EXPECT_EQ(listed(""), (std::vector<std::string>{".hikari", "keys", "notes", "raw"}));
+    EXPECT_EQ(listed(".hikari"), std::vector<std::string>{".hikari/project.toml"});
+    EXPECT_EQ(listed("keys"), std::vector<std::string>{});
+    for (const char *path : {".env", ".env.local", "keys/tls.key", ".git/config", ".hikari/project.local.toml",
+                             ".hikari/credentials.toml", "drafts/x.txt", "old.bak"})
+        EXPECT_EQ(reason("files.read", R"({"folder": "d1", "path": ")" + std::string(path) + R"("})"), "excluded") << path;
+    EXPECT_EQ(reason("files.list", R"({"folder": "d1", "path": ".git"})"), "excluded");
+    EXPECT_EQ(reason("files.read", R"({"folder": "d1", "path": ".hikari/project.toml"})"), "ok");
+    m_caller.reviewed = false;
+    EXPECT_EQ(reason("files.read", R"({"folder": "d1", "path": ".env"})"), "ok");
+}
+
+TEST_F(AiFolder, AProjectsExcludeCannotRemoveADefault)
+{
+    m_project.excludes = {"!.env*", ""};
+    m_settings.set("ai.exclude", std::vector<std::string>{"!*.key"});
+    EXPECT_EQ(reason("files.read", R"({"folder": "d1", "path": ".env"})"), "excluded");
+    EXPECT_EQ(reason("files.read", R"({"folder": "d1", "path": "keys/tls.key"})"), "excluded");
+}
+
+TEST_F(AiFolder, ALinkToAnExcludedFileIsRefused)
+{
+    if (!link(m_data / ".env", m_data / "settings.txt"))
+        GTEST_SKIP() << "this system can't make symbolic links here";
+    EXPECT_EQ(reason("files.read", R"({"folder": "d1", "path": "settings.txt"})"), "excluded");
+}
+
+TEST_F(AiFolder, MediaIsNeverSentAsBytes)
+{
+    EXPECT_EQ(reason("files.read", R"({"folder": "d1", "path": "raw/take1.WAV"})"), "media");
+    EXPECT_EQ(reason("files.read", R"({"folder": "d1", "path": "raw/ep01.mkv", "encoding": "base64"})"), "media");
+    m_caller.reviewed = false;
+    EXPECT_EQ(reason("files.read", R"({"folder": "d1", "path": "raw/ep01.mkv", "encoding": "base64"})"), "ok");
+}
+
+TEST_F(AiFolder, AnAiCallerCannotChangeAiExclude)
+{
+    EXPECT_EQ(reason("settings.set", R"({"setting": "ai.exclude", "value": []})"), "private");
+    m_caller.reviewed = false;
+    EXPECT_EQ(reason("settings.set", R"({"setting": "ai.exclude", "value": ["*.tmp"]})"), "ok");
+}
+
+TEST_F(AiFolder, AnAiThreadUsesItsProjectWithoutAGrantAndItsWritesStage)
+{
+    m_api.revokeFiles(m_caller.id);
+    m_caller.project = utf8(m_data);
+    const Result held = call("files.list", "{}");
+    ASSERT_TRUE(held);
+    EXPECT_EQ(*held->find("folders"), *Json::parse(R"([{"folder": "project", "name": "data", "access": "write"}])"));
+    const Result read = call("files.read", R"({"folder": "project", "path": "notes/today.txt"})");
+    ASSERT_TRUE(read);
+    EXPECT_EQ(*read->find("data"), Json("today"));
+    const Result wrote = call("files.write", R"({"folder": "project", "path": "notes/today.txt", "data": "x"})");
+    ASSERT_TRUE(wrote);
+    EXPECT_EQ(*wrote->find("staged"), Json(true));
+    EXPECT_EQ(*m_files.read(utf8(m_data / "notes/today.txt"), 100), "today");
+}
+
+TEST_F(AiFolder, WithoutAReviewTheProjectIsReadOnly)
+{
+    hikari::api::testing::FakeHost documents;
+    Api api{Host{.documents = &documents, .settings = &m_settings, .files = &m_files, .project = &m_project}};
+    m_caller.project = utf8(m_data);
+    Result out = fail("unanswered", "");
+    api.call(m_caller, "files.write", *Json::parse(R"({"folder": "project", "path": "notes/today.txt", "data": "x"})"),
+             [&](Result r) { out = std::move(r); });
+    ASSERT_FALSE(out);
+    EXPECT_EQ(out.error().code, "not_granted");
+    EXPECT_EQ(*m_files.read(utf8(m_data / "notes/today.txt"), 100), "today");
+}
+
+TEST_F(AiFolder, TheProjectFolderKeepsTheExcludesAndTheMediaRule)
+{
+    m_api.revokeFiles(m_caller.id);
+    m_caller.project = utf8(m_data);
+    m_project.excludes = {"drafts/"};
+    for (const char *path : {".env", "keys/tls.key", ".git/config", ".hikari/credentials.toml", "drafts/x.txt"})
+        EXPECT_EQ(reason("files.read", R"({"folder": "project", "path": ")" + std::string(path) + R"("})"), "excluded")
+            << path;
+    EXPECT_EQ(reason("files.read", R"({"folder": "project", "path": "raw/ep01.mkv"})"), "media");
+}
+
+TEST_F(AiFolder, AnUntrustedProjectsWritesOnlyStage)
+{
+    m_api.revokeFiles(m_caller.id);
+    m_project.state = ProjectState{.name = "data", .root = utf8(m_data), .trusted = false};
+    m_caller.project = utf8(m_data);
+    EXPECT_EQ(code("files.read", R"({"folder": "project", "path": "notes/today.txt"})"), "ok");
+    EXPECT_EQ(code("files.write", R"({"folder": "project", "path": "new.txt", "data": "x"})"), "ok");
+    EXPECT_EQ(code("files.write", R"({"folder": "project", "path": "notes/today.txt", "data": "ai"})"), "ok");
+    EXPECT_FALSE(fs::exists(m_data / "new.txt"));
+    EXPECT_EQ(*m_files.read(utf8(m_data / "notes/today.txt"), 100), "today");
+    ASSERT_EQ(m_review.pendingFiles().size(), 2u);
+    const hikari::application::AiReview::Disk disk{
+        [&](const std::string &p) { return m_files.read(p, 100); },
+        [&](const std::string &p, std::string_view b) { return m_files.write(p, b); },
+        [](const std::string &) { return false; }};
+    for (const auto *staged : m_review.pendingFiles())
+        if (staged->shown == "notes/today.txt")
+            EXPECT_EQ(m_review.keepFile(staged->id, disk, false), hikari::application::AiReview::KeepFile::Kept);
+    EXPECT_EQ(*m_files.read(utf8(m_data / "notes/today.txt"), 100), "ai");
+    EXPECT_FALSE(fs::exists(m_data / "new.txt"));
+}
+
+TEST_F(AiFolder, AnUntrustedProjectsExcludeOnlyAdds)
+{
+    m_api.revokeFiles(m_caller.id);
+    m_project.state = ProjectState{.name = "data", .root = utf8(m_data), .trusted = false};
+    m_caller.project = utf8(m_data);
+    m_settings.set("ai.exclude", std::vector<std::string>{"*.bak"});
+    m_project.excludes = {"!.env*", "!*.bak", "!.git/", "drafts/"};
+    for (const char *path : {".env", ".git/config", "old.bak", "drafts/x.txt"})
+        EXPECT_EQ(reason("files.read", R"({"folder": "project", "path": ")" + std::string(path) + R"("})"), "excluded")
+            << path;
+    EXPECT_EQ(reason("files.read", R"({"folder": "project", "path": ".hikari/project.toml"})"), "ok");
+}
+
+TEST_F(AiFolder, OnlyAnAiCallerWithAProjectGetsTheFolder)
+{
+    m_api.revokeFiles(m_caller.id);
+    EXPECT_EQ(code("files.read", R"({"folder": "project", "path": "notes/today.txt"})"), "not_granted");
+    m_caller.project = utf8(m_data);
+    m_caller.reviewed = false;
+    EXPECT_EQ(code("files.read", R"({"folder": "project", "path": "notes/today.txt"})"), "not_granted");
+}
+
+class AiWrites : public AiFolder {
+protected:
+    void SetUp() override
+    {
+        AiFolder::SetUp();
+        m_api.revokeFiles(m_caller.id);
+        m_caller.label = "AI";
+        grant(true);
+    }
+};
+
+TEST_F(AiWrites, AnAiWriteStagesAndTheDiskStaysUntilKept)
+{
+    const Result wrote = call("files.write", R"({"folder": "d2", "path": "notes/today.txt", "data": "tomorrow"})");
+    ASSERT_TRUE(wrote);
+    EXPECT_EQ(*wrote->find("staged"), Json(true));
+    EXPECT_EQ(*m_files.read(utf8(m_data / "notes/today.txt"), 100), "today");
+    ASSERT_EQ(m_review.pendingFiles().size(), 1u);
+    const auto *staged = m_review.pendingFiles().front();
+    EXPECT_EQ(staged->shown, "notes/today.txt");
+    EXPECT_EQ(staged->before, std::optional<std::string>("today"));
+    EXPECT_EQ(staged->after, "tomorrow");
+    EXPECT_EQ(code("files.write", R"({"folder": "d2", "path": "new/later.txt", "data": "later"})"), "ok");
+    EXPECT_FALSE(fs::exists(m_data / "new"));
+}
+
+TEST_F(AiWrites, TheAiReadsWhatItStagedAndUndoBringsTheDiskBack)
+{
+    ASSERT_TRUE(call("files.write", R"({"folder": "d2", "path": "notes/today.txt", "data": "tomorrow"})"));
+    EXPECT_EQ(call("files.read", R"({"folder": "d2", "path": "notes/today.txt"})")->find("data")->asString(),
+              "tomorrow");
+    m_review.undoFile(m_review.pendingFiles().front()->id);
+    EXPECT_EQ(call("files.read", R"({"folder": "d2", "path": "notes/today.txt"})")->find("data")->asString(), "today");
+    m_caller.reviewed = false;
+    ASSERT_TRUE(call("files.write", R"({"folder": "d2", "path": "notes/today.txt", "data": "plugin"})"));
+    EXPECT_EQ(*m_files.read(utf8(m_data / "notes/today.txt"), 100), "plugin");
+}
+
+TEST_F(AiWrites, AWriteToAnOpenDocumentIsRefused)
+{
+    std::ofstream(m_data / "ep01.ass") << "x";
+    m_documents.open("ep01.ass", hikari::api::testing::kAlpha, utf8(m_data / "ep01.ass"));
+    EXPECT_EQ(reason("files.write", R"({"folder": "d2", "path": "ep01.ass", "data": "y"})"), "open_document");
+    EXPECT_TRUE(m_review.pendingFiles().empty());
+}
+
+TEST_F(AiWrites, ExcludedPathsAreNeverStaged)
+{
+    EXPECT_EQ(reason("files.write", R"({"folder": "d2", "path": ".env", "data": "y"})"), "excluded");
+    EXPECT_TRUE(m_review.pendingFiles().empty());
 }

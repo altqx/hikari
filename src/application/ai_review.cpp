@@ -369,15 +369,15 @@ std::size_t rowOf(const core::Document &document, core::LineId id)
 
 }
 
-std::uint64_t AiReview::beginTurn(const std::string &caller, std::string label)
+std::uint64_t AiReview::beginTurn(const std::string &caller, std::string label, std::uint64_t parent)
 {
     const std::uint64_t id = m_nextId++;
-    m_turns.push_back(Turn{id, m_turns.size() + 1, caller, std::move(label)});
+    m_turns.push_back(Turn{id, m_turns.size() + 1, caller, std::move(label), parent});
     const auto open = std::ranges::find(m_open, caller, &std::pair<std::string, Open>::first);
     if (open == m_open.end())
-        m_open.emplace_back(caller, Open{id, {}});
+        m_open.emplace_back(caller, Open{id, parent, {}});
     else
-        open->second = Open{id, {}};
+        open->second = Open{id, parent, {}};
     return id;
 }
 
@@ -395,7 +395,7 @@ void AiReview::record(DocumentId document, const std::string &callerId, const st
         fresh = here != last.end() && here->second != previous;
     }
     if (fresh) {
-        beginTurn(callerId, callerLabel);
+        beginTurn(callerId, callerLabel, open == m_open.end() ? 0 : open->second.parent);
         open = std::ranges::find(m_open, callerId, &std::pair<std::string, Open>::first);
     }
     Open &turn = open->second;

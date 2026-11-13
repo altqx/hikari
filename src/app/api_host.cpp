@@ -44,6 +44,7 @@ ApiHost::ApiHost(Wiring wiring, QObject *parent)
           .translation = this,
           .karaoke = m_wiring.karaoke,
           .effects = this,
+          .plugins = m_wiring.plugins,
       }),
       m_seenProject(project())
 {
@@ -64,6 +65,11 @@ application::visual::perspective::TextMeasure ApiHost::measure() const
 std::optional<api::ProjectState> ApiHost::project() const
 {
     return m_wiring.project ? m_wiring.project() : std::nullopt;
+}
+
+std::vector<std::string> ApiHost::aiExclude(const std::string &root) const
+{
+    return m_wiring.aiExclude ? m_wiring.aiExclude(root) : std::vector<std::string>();
 }
 
 application::EditSession *ApiHost::session(application::DocumentId document) const

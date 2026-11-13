@@ -1,4 +1,4 @@
-add_library(hikari_application STATIC module.cpp write_coordinator.cpp edit_session.cpp ai_review.cpp word_diff.cpp workspace.cpp document_files.cpp
+add_library(hikari_application STATIC module.cpp write_coordinator.cpp edit_session.cpp ai_review.cpp ai_review_files.cpp file_diff.cpp word_diff.cpp workspace.cpp document_files.cpp
     automation_registry.cpp macro_transaction.cpp template_preview.cpp generated_runs.cpp automation_services.cpp extents_cache.cpp compile_cache.cpp media_association.cpp video_session.cpp seek_throttle.cpp grid_selection.cpp grid_commands.cpp recent_files.cpp grid_clipboard.cpp lyrics_insert.cpp grid_filtering.cpp grid_groups.cpp recovery_store.cpp automation_hotkeys.cpp legacy_timebase.cpp aegisub_frame_times.cpp editor_fields.cpp grid_split.cpp frame_bake.cpp override_blocks.cpp layer_builders.cpp grid_translation.cpp script_properties.cpp shift_times.cpp keyframe_files.cpp select_lines.cpp update_check.cpp resample.cpp script_resolution.cpp style_manager.cpp tiers.cpp spell_checker.cpp settings.cpp options_dialog.cpp getting_started.cpp audio_display.cpp audio_box.cpp fold_groups.cpp timecodes_file.cpp
     dialog_memory.cpp dependency_control.cpp)
 target_sources(hikari_application PRIVATE text_commands.cpp include/hikari/application/text_commands.h)
@@ -21,8 +21,10 @@ target_sources(hikari_application PRIVATE node_catalogue.cpp node_graph.cpp node
     include/hikari/application/karaoke_layout.h node_effects.cpp include/hikari/application/node_catalogue.h
     include/hikari/application/node_graph.h include/hikari/application/node_graph_library.h
     include/hikari/application/node_effects.h include/hikari/application/node_graph_editing.h)
+target_sources(hikari_application PRIVATE typesetting_line.cpp include/hikari/application/typesetting_line.h
+    typesetting_graphs.cpp include/hikari/application/typesetting_graphs.h)
 # Generated Lines must be byte-identical on every platform.
-set_source_files_properties(karaoke_layout.cpp node_effects.cpp PROPERTIES COMPILE_OPTIONS
+set_source_files_properties(karaoke_layout.cpp node_effects.cpp typesetting_line.cpp PROPERTIES COMPILE_OPTIONS
     "$<$<CXX_COMPILER_ID:GNU,Clang>:-ffp-contract=off>;$<$<CXX_COMPILER_ID:MSVC>:/fp:precise>")
 target_sources(hikari_application PRIVATE shape_yutils.cpp shape_geometry.cpp include/hikari/application/shape_kernel.h)
 target_link_libraries(hikari_application PRIVATE Hikari::clipper2)
@@ -57,7 +59,7 @@ target_sources(hikari_application PRIVATE document_scripts.cpp)
 target_sources(hikari_application PRIVATE macro_validation.cpp)
 target_sources(hikari_application PRIVATE subtitle_comparison.cpp)
 target_sources(hikari_application PRIVATE reference_navigation.cpp)
-target_sources(hikari_application PRIVATE associated_files.cpp legacy_autosaves.cpp project.cpp project_automation.cpp translation_project.cpp)
+target_sources(hikari_application PRIVATE associated_files.cpp explorer.cpp legacy_autosaves.cpp project.cpp project_automation.cpp translation_project.cpp)
 target_sources(hikari_application PRIVATE font_collector.cpp)
 target_sources(hikari_application PRIVATE matroska.cpp)
 target_sources(hikari_application PRIVATE visual_view.cpp visual_tools.cpp visual_crosshair.cpp)

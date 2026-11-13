@@ -1,6 +1,6 @@
 # Hikari API reference
 
-Version 2 of the Hikari API, generated from HikariSub's own registry: the same reference `hikarisub --export-docs` writes to `api.json`. A plugin calls these operations with `hikari.call(operation, params)`, or `api.call` in a QML panel, and listens to the events with `hikari.events.on(name, fn)`.
+Version 1 of the Hikari API, generated from HikariSub's own registry: the same reference `hikarisub --export-docs` writes to `api.json`. A plugin calls these operations with `hikari.call(operation, params)`, or `api.call` in a QML panel, and listens to the events with `hikari.events.on(name, fn)`.
 
 ## Operations
 
@@ -37,7 +37,7 @@ Version 2 of the Hikari API, generated from HikariSub's own registry: the same r
 | `audio.peaks` | read | 1 | The lowest and highest 16-bit sample in each of `buckets` equal slices of a time range. |
 | `files.list` | read | 1 | The files and folders the user granted this caller; with folder, also what that folder holds. |
 | `files.read` | read | 1 | A granted file's content, as UTF-8 text or base64; at most 16 MiB. |
-| `files.write` | write | 1 | Replaces a file granted for writing with new content; in a writable folder, makes it and its folders. |
+| `files.write` | write | 1 | Replaces a file granted for writing with new content; in a writable folder, makes it and its folders. An AI caller's write is staged for the user to review and reaches the disk only when kept. |
 | `skills.list` | read | 1 | The caller's skills: each skill folder's name, whether it is the Project's or the user's, and its files, SKILL.md among them. |
 | `skills.read` | read | 1 | One file of a skill skills.list gives, as UTF-8 text; at most 256 KiB. |
 | `automation.run` | write | 1 | Saves a Lua Automation script to the AI scripts folder and runs one of its macros on the active tab's selection, once the user approves the script. The run is one undo step. |
@@ -51,6 +51,12 @@ Version 2 of the Hikari API, generated from HikariSub's own registry: the same r
 | `effects.preview` | read | 1 | Runs a graph on the Document's karaoke Lines and gives the Lines it would write; nothing is applied. Lua nodes don't run. |
 | `effects.save` | write | 1 | Writes a graph to the Document as one undo step: into a new graph Line, or in place of a graph Line's. |
 | `effects.apply` | write | 1 | Runs a graph Line and writes its Lines as one undo step, replacing those it wrote before; the karaoke Lines it ran on become Comments. Lua nodes don't run, so a graph with one applies from the node-effect editor. |
+| `plugins.list` | read | 1 | The installed plugins with their state, trust tier and commands. |
+| `plugins.manifest` | read | 1 | An installed plugin's hikari-plugin.json. |
+| `plugins.scaffold` | write | 1 | Writes a plugin from the authoring guide's template into the AI plugins folder and packs it; nothing is installed. |
+| `plugins.review` | read | 1 | What installing a package would do, as the install question shows it: its trust tier, signing, permissions, commands and files. |
+| `plugins.install` | write | 1 | Installs a scaffolded or granted plugin package and turns it on, once the user approves it in HikariSub; it asks every time. |
+| `plugins.run` | write | 1 | Runs an installed plugin's command as its menu item would. |
 | `typeset.perspective` | read | 1 | The Line's text with the tags that render it on a quad (VT3's perspective solver): \pos, \org, \frx, \fry, \frz, \fax, \fscx and \fscy. |
 | `typeset.clip` | read | 1 | The Line's text with its first clip replaced by a rectangle or a vector clip. |
 | `typeset.drawing` | read | 1 | The Line's text with its first drawing replaced by a shape (\p1), placed at a position with an alignment. |
@@ -58,7 +64,7 @@ Version 2 of the Hikari API, generated from HikariSub's own registry: the same r
 | `typeset.hydra` | read | 1 | Changes one tag across the Lines as the Hydra strip does: set it, add to it, multiply it by line number, or run a gradient across characters or Lines. |
 | `typeset.check` | read | 1 | Renders one Line alone, with a proposed text, on its frame and compares its ink with a target. |
 | `typeset.apply` | write | 1 | Applies typeset Lines as one undo step after every one passes the render check; when one misses its target nothing is applied. |
-| `project.info` | read | 2 | The Project of the window the user works in, or null. |
+| `project.info` | read | 1 | The Project of the window the user works in, or null. |
 | `karaoke.syllables` | read | 1 | A Line's karaoke syllables as the templater reads them: text, tag, start and end in ms. |
 | `karaoke.split` | read | 1 | Splits Lines without \k tags into syllables as the audio editor's karaoke mode does, the time shared by character; Lines that already have \k tags keep them. |
 | `karaoke.time` | read | 1 | Times a Line's existing syllables: each syllable's end in ms, in order; the \k tags are rewritten. |
@@ -724,7 +730,7 @@ The files and folders the user granted this caller; with folder, also what that 
 
 | Field | Type | Required | Meaning |
 | --- | --- | --- | --- |
-| `folder` | string |  | A folder handle to list (since version 2). |
+| `folder` | string |  | A folder handle to list. |
 | `path` | string |  | A folder inside it; default the folder itself. |
 
 **Result**
@@ -747,7 +753,7 @@ A granted file's content, as UTF-8 text or base64; at most 16 MiB.
 | Field | Type | Required | Meaning |
 | --- | --- | --- | --- |
 | `file` | string |  | A handle from files.list. |
-| `folder` | string |  | Instead of file, a folder handle from files.list (since version 2). |
+| `folder` | string |  | Instead of file, a folder handle from files.list. |
 | `path` | string |  | With folder, the file's path inside it, with / between its parts. |
 | `encoding` | one of `utf8` or `base64` |  | Default utf8. |
 
@@ -764,14 +770,14 @@ A granted file's content, as UTF-8 text or base64; at most 16 MiB.
 
 Write. Since version 1.
 
-Replaces a file granted for writing with new content; in a writable folder, makes it and its folders.
+Replaces a file granted for writing with new content; in a writable folder, makes it and its folders. An AI caller's write is staged for the user to review and reaches the disk only when kept.
 
 **Parameters**
 
 | Field | Type | Required | Meaning |
 | --- | --- | --- | --- |
 | `file` | string |  | A handle from files.list. |
-| `folder` | string |  | Instead of file, a folder handle from files.list (since version 2). |
+| `folder` | string |  | Instead of file, a folder handle from files.list. |
 | `path` | string |  | With folder, the file's path inside it, with / between its parts. |
 | `encoding` | one of `utf8` or `base64` |  | Default utf8. |
 | `data` | string | yes |  |
@@ -782,6 +788,7 @@ Replaces a file granted for writing with new content; in a writable folder, make
 | --- | --- | --- | --- |
 | `file` | string | yes |  |
 | `size` | integer | yes | At least 0. |
+| `staged` | boolean |  | True: waiting in the review, not on the disk yet. |
 
 ### `skills.list`
 
@@ -1103,6 +1110,171 @@ Runs a graph Line and writes its Lines as one undo step, replacing those it wrot
 | `sources` | integer | yes | How many karaoke Lines got Lines. |
 | `changed` | boolean | yes |  |
 
+### `plugins.list`
+
+Read. Since version 1.
+
+The installed plugins with their state, trust tier and commands.
+
+**Parameters**: none.
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `plugins` | array of objects | yes |  |
+| `plugins[].id` | string | yes |  |
+| `plugins[].name` | string | yes |  |
+| `plugins[].version` | string | yes |  |
+| `plugins[].description` | string | yes |  |
+| `plugins[].source` | one of `file` or `marketplace` | yes |  |
+| `plugins[].signed` | boolean | yes |  |
+| `plugins[].enabled` | boolean | yes |  |
+| `plugins[].tier` | one of `restricted` or `unrestricted` | yes |  |
+| `plugins[].revoked` | boolean | yes |  |
+| `plugins[].commands` | array of objects | yes | While the plugin runs. |
+| `plugins[].commands[].command` | string | yes | plugin.<plugin id>.<command id> |
+| `plugins[].commands[].title` | string | yes |  |
+
+### `plugins.manifest`
+
+Read. Since version 1.
+
+An installed plugin's hikari-plugin.json.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `plugin` | string | yes |  |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `plugin` | string | yes |  |
+| `manifest` | object | yes |  |
+
+### `plugins.scaffold`
+
+Write. Since version 1.
+
+Writes a plugin from the authoring guide's template into the AI plugins folder and packs it; nothing is installed.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `plugin` | string | yes | Reverse-DNS, lowercase: com.example.sign-counter. An earlier scaffold of that id is replaced. At most 100 characters. `pattern`: `"^[a-z0-9]+(-[a-z0-9]+)*(\\.[a-z0-9]+(-[a-z0-9]+)*)+$"`. |
+| `name` | string | yes | 1 to 80 characters. |
+| `version` | string |  | Semantic version; default 0.1.0. At most 64 characters. |
+| `description` | string |  | At most 1000 characters. |
+| `tier` | one of `restricted` or `unrestricted` |  | restricted (default) runs in the sandbox without ffi, io, os and debug; unrestricted needs the user's full trust at install. |
+| `permissions` | object |  | The manifest's permissions: documents.all, network {hosts, reason}, files. |
+| `commands` | array of objects | yes | 1 to 256 items. |
+| `commands[].id` | string | yes | `pattern`: `"^[a-z0-9]+(-[a-z0-9]+)*$"`. |
+| `commands[].title` | string | yes | 1 to 80 characters. |
+| `code` | string |  | main.lua, registering each command with hikari.commands.register; the guide's first plugin when omitted. At most 1048576 characters. |
+| `files` | array of objects |  | More files beside main.lua and hikari-plugin.json. At most 64 items. |
+| `files[].path` | string | yes | At most 200 characters. `pattern`: `"^([A-Za-z0-9_][A-Za-z0-9_.-]*/)*[A-Za-z0-9_][A-Za-z0-9_.-]*\\.(lua\|json\|md\|txt)$"`. |
+| `files[].text` | string | yes |  |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `plugin` | string | yes |  |
+| `folder` | string | yes |  |
+| `package` | string | yes | The packed .hikariplugin. |
+| `files` | array of string | yes |  |
+| `manifest` | object | yes |  |
+
+### `plugins.review`
+
+Read. Since version 1.
+
+What installing a package would do, as the install question shows it: its trust tier, signing, permissions, commands and files.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `plugin` | string |  | A plugin plugins.scaffold made. |
+| `file` | string |  | A .hikariplugin the user granted, by its files.list handle. |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `plugin` | string | yes |  |
+| `name` | string | yes |  |
+| `version` | string | yes |  |
+| `change` | one of `install`, `update`, `reinstall` or `downgrade` | yes |  |
+| `installedVersion` | string | yes |  |
+| `tier` | one of `restricted` or `unrestricted` | yes | unrestricted runs outside the sandbox and needs the user's full trust. |
+| `needsRetrust` | boolean | yes | The signing key changed, or an unsigned package replaces a signed one. |
+| `keyId` | string | yes | The signing key; empty when unsigned. |
+| `pinnedKeyId` | string | yes |  |
+| `permissions` | array of string | yes |  |
+| `commands` | array of string | yes | The titles of the commands it adds. |
+| `files` | array of objects | yes |  |
+| `files[].path` | string | yes |  |
+| `files[].text` | string | yes |  |
+| `digest` | string | yes |  |
+
+### `plugins.install`
+
+Write. Since version 1.
+
+Installs a scaffolded or granted plugin package and turns it on, once the user approves it in HikariSub; it asks every time.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `plugin` | string |  | A plugin plugins.scaffold made. |
+| `file` | string |  | A .hikariplugin the user granted, by its files.list handle. |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `plugin` | string | yes |  |
+| `name` | string | yes |  |
+| `version` | string | yes |  |
+| `change` | one of `install`, `update`, `reinstall` or `downgrade` | yes |  |
+| `installedVersion` | string | yes |  |
+| `tier` | one of `restricted` or `unrestricted` | yes | unrestricted runs outside the sandbox and needs the user's full trust. |
+| `needsRetrust` | boolean | yes | The signing key changed, or an unsigned package replaces a signed one. |
+| `keyId` | string | yes | The signing key; empty when unsigned. |
+| `pinnedKeyId` | string | yes |  |
+| `permissions` | array of string | yes |  |
+| `commands` | array of string | yes | The titles of the commands it adds. |
+| `files` | array of objects | yes |  |
+| `files[].path` | string | yes |  |
+| `files[].text` | string | yes |  |
+| `digest` | string | yes |  |
+| `installed` | `true` | yes |  |
+
+### `plugins.run`
+
+Write. Since version 1.
+
+Runs an installed plugin's command as its menu item would.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `plugin` | string | yes |  |
+| `command` | string | yes | The command's id within the plugin, as in its manifest. |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `ran` | `true` | yes |  |
+
 ### `typeset.perspective`
 
 Read. Since version 1.
@@ -1306,7 +1478,7 @@ Applies typeset Lines as one undo step after every one passes the render check; 
 
 ### `project.info`
 
-Read. Since version 2.
+Read. Since version 1.
 
 The Project of the window the user works in, or null.
 
@@ -1575,7 +1747,7 @@ Runs the user's own WhisperX or Montreal Forced Aligner on the audio under the L
 
 ### `project.changed`
 
-Since version 2.
+Since version 1.
 
 The window the user works in opened or closed a Project, or the user moved to a window with another one.
 

@@ -57,6 +57,8 @@ Json translateParams(const std::vector<TranslationRun::Job> &jobs, const Transla
                                                          {"reviewer", modelJson(wiring.reviewer)}})},
                                 {"lines", std::move(lines)},
                                 {"before", std::move(before)}});
+    if (!wiring.sourceLanguage.empty())
+        params["sourceLanguage"] = wiring.sourceLanguage;
     if (wiring.document)
         params["document"] = static_cast<std::int64_t>(*wiring.document);
     return params;

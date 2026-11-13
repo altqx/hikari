@@ -157,6 +157,7 @@ constexpr OptionsBinding kBindings[] = {
     {"ai.searchService", Text, Ai},
     {"ai.mcp.server", Check, Ai},
     {"ai.mcp.http", Check, Ai},
+    {"ai.mcp.skills", Check, Ai},
     {"audio.karaokeThaiClusters", Check, Audio},
     {"ai.agent.mode", Text, Ai},
     {"ai.agent.threadCapCents", Number, Ai, 0, 100000},

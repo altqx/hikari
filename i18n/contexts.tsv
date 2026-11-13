@@ -13,6 +13,7 @@ HikariSub.Export	Export as: its window, the formats and options, and the report 
 HikariSub.Fonts	The font collector, font catalogs, fonts from subtitles and the font chooser
 HikariSub.GettingStarted	Getting started, the setup of the first start (FR1)
 HikariSub.Grid	The subtitle grid: headings, line states, selection, line groups, copy and paste of columns
+HikariSub.Explorer	The Explorer panel: the Project folder tree, its filter, grouping and file actions (PJ4)
 HikariSub.Home	The Home page while no Document is open: New and Open, the last session, the Project, the recent projects and files and their menus
 HikariSub.Hotkeys	Hotkey mapping and shortcut hints
 HikariSub.Interpolate	Interpolate across lines: its window, the tags it changes and why some can't be, and its options (AU22)

@@ -108,18 +108,30 @@ TEST(AgentPolicy, EachModeDecidesWrites)
 
 const std::vector<std::string> kSafe{"/home/u/subs", "/home/u/.local/share/HikariSub"};
 
-std::optional<std::string> pathOf(std::string_view handle)
+std::optional<std::string> writeTarget(const Json &params)
 {
+    const Json *file = params.find("file");
+    const std::string handle = file && file->isString() ? file->asString() : std::string();
     if (handle == "inside")
         return "/home/u/subs/b.ass";
     if (handle == "outside")
         return "/home/u/subsidiary/b.ass";
+    const Json *folder = params.find("folder"), *path = params.find("path");
+    if (folder && folder->isString() && folder->asString() == "project" && path && path->isString())
+        return "/home/u/show/" + path->asString();
     return std::nullopt;
 }
 
 Risk riskOf(const std::string &operation, const Json &params)
 {
-    return alwaysAsk(operation, params, pathOf, kSafe).risk;
+    return alwaysAsk(operation, params, writeTarget, kSafe).risk;
+}
+
+Risk projectWriteRisk(std::string_view path)
+{
+    return alwaysAsk("files.write", Json::object({{"folder", "project"}, {"path", std::string(path)}}), writeTarget,
+                     kSafe, "/home/u/show")
+        .risk;
 }
 
 Risk commandRisk(std::string_view command)
@@ -137,6 +149,20 @@ TEST(AgentPolicy, AiWrittenLuaAsksOnEveryRunInEveryMode)
     for (const AgentMode mode : {AgentMode::Manual, AgentMode::Auto, AgentMode::FullAccess})
         for (const bool allowed : {false, true})
             EXPECT_EQ(decide(mode, "automation.run", false, allowed), Decision::Script);
+}
+
+TEST(AgentPolicy, InstallingAPluginAsksOnEveryInstallInEveryMode)
+{
+    for (const AgentMode mode : {AgentMode::Manual, AgentMode::Auto, AgentMode::FullAccess})
+        for (const bool allowed : {false, true})
+            EXPECT_EQ(decide(mode, "plugins.install", false, allowed), Decision::Install);
+}
+
+TEST(AgentPolicy, ScaffoldingAPluginAsksLikeOtherWrites)
+{
+    EXPECT_EQ(riskOf("plugins.scaffold", Json::object({{"plugin", "org.example.a"}})), Risk::None);
+    EXPECT_EQ(decide(AgentMode::Manual, "plugins.scaffold", false, false), Decision::Ask);
+    EXPECT_EQ(decide(AgentMode::Auto, "plugins.scaffold", false, false), Decision::Judge);
 }
 
 TEST(AgentPolicy, FilesOutsideTheSubtitlesFoldersAndTheUserFolderAsk)
@@ -164,6 +190,7 @@ TEST(AgentPolicy, RunningScriptsOrProgramsAsks)
     for (const char *program : {"whisperx", "mfa"})
         EXPECT_EQ(riskOf("karaoke.align", Json::object({{"program", program}})), Risk::Programs) << program;
     EXPECT_EQ(riskOf("karaoke.apply_template", Json::object({})), Risk::None);
+    EXPECT_EQ(riskOf("plugins.run", Json::object({{"plugin", "org.example.a"}, {"command", "count"}})), Risk::Programs);
 }
 
 TEST(AgentPolicy, InstallingOrTrustingPluginsAndScriptsAsks)
@@ -210,7 +237,8 @@ TEST(AgentPolicy, EveryWriteOperationIsClassified)
     EXPECT_EQ(writes, (std::set<std::string>{"automation.run", "commands.run", "document.apply", "effects.apply",
                                              "effects.save", "files.write",
                                              "karaoke.align", "karaoke.apply_template", "panels.close", "panels.focus",
-                                             "panels.open", "selection.set", "settings.set",
+                                             "panels.open", "plugins.install", "plugins.run",
+                                             "plugins.scaffold", "selection.set", "settings.set",
                                              "translation.project_write", "typeset.apply"}))
         << "Classify the new write in alwaysAsk and docs/ai-agent.md, then add it here.";
 }
@@ -379,13 +407,14 @@ protected:
         w.config = [this] { return &providers->config(); };
         w.api = &api;
         w.defaults = [this] { return defaults; };
-        w.beginTurn = [this](const std::string &caller, const std::string &label) {
-            return fake.review.beginTurn(caller, label);
+        w.beginTurn = [this](const std::string &caller, const std::string &label, std::uint64_t parentTurn) {
+            return fake.review.beginTurn(caller, label, parentTurn);
         };
         w.editingTarget = [this] { return fake.workspace().editingTarget(); };
         w.documentTitle = [](hikari::application::DocumentId) { return std::string("a.ass"); };
         w.safeFolders = [] { return std::vector<std::string>{"/subs"}; };
         w.project = [this] { return project; };
+        w.agentRefusal = [this](const std::string &agent) { return agent == refusedAgent ? std::string("sandbox") : std::string(); };
         w.instructions = [this](const std::string &folder) {
             return joinInstructions(agentsFileText(dir.filePath(QStringLiteral("user"))),
                                     agentsFileText(QString::fromStdString(folder)));
@@ -485,6 +514,7 @@ protected:
     std::int64_t clock = 0;
     QString sidecarMode = QStringLiteral("ok");
     std::string project;
+    std::string refusedAgent;
     std::unique_ptr<AgentThreads> threads;
 };
 
@@ -526,6 +556,27 @@ TEST_F(AgentThreadsTest, AThreadOnClaudeOpensItsSessionOnTheAgentWithoutAProvide
     const std::string plain = threads->create();
     threads->send(plain, "Hello");
     EXPECT_EQ(notice(plain), "noSidecar");
+}
+
+TEST_F(AgentThreadsTest, AThreadOnAnAgentThisSystemWontStartSaysWhyAndOpensNoSession)
+{
+    threads = makeThreads(true);
+    refusedAgent = "codex";
+    const std::string id = threads->create();
+    threads->setModel(id, {"agent:codex", ""});
+    threads->send(id, "Fix the typo");
+    EXPECT_FALSE(threads->running(id));
+    EXPECT_EQ(notice(id), "notOffered");
+    const auto notices = items(id, "notice");
+    ASSERT_EQ(notices.size(), 1u);
+    EXPECT_EQ(at(notices[0], "detail"), "sandbox");
+    EXPECT_TRUE(items(id, "user").empty());
+    EXPECT_TRUE(receivedAs("session/new").empty());
+
+    threads->setModel(id, {"agent:claude", ""});
+    threads->send(id, "Fix the typo");
+    ASSERT_TRUE(idle(id));
+    EXPECT_EQ(receivedAs("session/new").size(), 1u);
 }
 
 TEST_F(AgentThreadsTest, FullAccessRunsAWriteIntoTheReviewAndShowsTheChange)
@@ -796,6 +847,64 @@ TEST_F(AgentThreadsTest, ALuaScriptShowsInFullAndAsksOnEveryRunInEveryMode)
     }
 }
 
+TEST_F(AgentThreadsTest, APluginInstallShowsItsCodeAndAsksOnEveryInstallInEveryMode)
+{
+    fake.fakePlugins.package = "/user/ai/plugins/org.example.word-count.hikariplugin";
+    const Json install = call("plugins.install", Json::object({{"plugin", "org.example.word-count"}}));
+    for (const AgentMode mode : {AgentMode::Manual, AgentMode::Auto, AgentMode::FullAccess}) {
+        fake.fakePlugins.installs.clear();
+        fake.fakePlugins.fullTrust = mode == AgentMode::FullAccess;
+        const std::string id = withMode(mode);
+        threads->send(id, script(Json::array({install, install})));
+        const std::uint64_t first = openAsk();
+        ASSERT_NE(first, 0u);
+        EXPECT_EQ(threads->asks().at(first).kind, Decision::Install);
+        const Json card = items(id, "install").at(0);
+        EXPECT_EQ(at(card, "name"), "Word count");
+        EXPECT_EQ(at(card, "tier"), mode == AgentMode::FullAccess ? "unrestricted" : "restricted");
+        EXPECT_EQ(at(card.find("files")->asArray().at(0), "path"), "main.lua");
+        threads->answer(first, Answer::AllowInThread);
+        EXPECT_TRUE(threads->asks().contains(first)) << "an install has no Allow in this thread";
+        threads->answer(first, Answer::AllowOnce);
+        ASSERT_TRUE(waitFor([&] { return !threads->asks().empty() && threads->asks().begin()->first != first; }));
+        EXPECT_EQ(threads->asks().begin()->second.kind, Decision::Install) << "a second install asks again";
+        threads->answer(threads->asks().begin()->first, Answer::Deny, "Not this one");
+        ASSERT_TRUE(idle(id));
+        EXPECT_EQ(fake.fakePlugins.installs.size(), 1u);
+        EXPECT_TRUE(thread(id).allowed.empty());
+        const auto cards = items(id, "install");
+        ASSERT_EQ(cards.size(), 2u);
+        EXPECT_EQ(at(cards[0], "status"), "installed");
+        EXPECT_EQ(at(cards[1], "status"), "declined");
+        EXPECT_EQ(at(cards[1], "message"), "Not this one");
+        const auto answers = receivedAs("answer");
+        ASSERT_GE(answers.size(), 2u);
+        EXPECT_NE(answers.back().dump().find("Not this one"), std::string::npos);
+    }
+}
+
+TEST_F(AgentThreadsTest, APluginThatCantBeReviewedIsRefusedWithoutACard)
+{
+    const std::string id = withMode(AgentMode::FullAccess);
+    threads->send(id, script(Json::array({call("plugins.install", Json::object({{"plugin", "org.example.none"}}))})));
+    ASSERT_TRUE(idle(id));
+    EXPECT_TRUE(items(id, "install").empty());
+    EXPECT_TRUE(fake.fakePlugins.installs.empty());
+}
+
+TEST_F(AgentThreadsTest, RunningAPluginCommandAlwaysAsks)
+{
+    const std::string id = withMode(AgentMode::FullAccess);
+    threads->send(id, script(Json::array({call("plugins.run", Json::object({{"plugin", "org.example.word-count"},
+                                                                            {"command", "count"}}))})));
+    const std::uint64_t ask = openAsk();
+    ASSERT_NE(ask, 0u);
+    EXPECT_EQ(threads->asks().at(ask).kind, Decision::AlwaysAsk);
+    threads->answer(ask, Answer::AllowOnce);
+    ASSERT_TRUE(idle(id));
+    EXPECT_EQ(fake.fakePlugins.runs, std::vector<std::string>{"org.example.word-count/count"});
+}
+
 TEST_F(AgentThreadsTest, QtRefusesWritesWithoutAThreadOrAfterTheTurnStopped)
 {
     const std::string id = threads->create();
@@ -930,6 +1039,46 @@ TEST_F(AgentThreadsTest, ASessionGetsTheUsersThenItsProjectsAgentsFileAfterHikar
                                  "Instructions from this Project's AGENTS.md:\n\nKeep honorifics."))
         << system;
     EXPECT_TRUE(at(opened[1], "system").ends_with("Use Oxford commas.")) << at(opened[1], "system");
+}
+
+TEST_F(AgentThreadsTest, AThreadInAProjectWithAKeyTalksToItsAliasAndKeepsTheUsersProvider)
+{
+    requests->setProjectKeys([](const std::string &folder, const std::string &providerId) -> std::optional<std::string> {
+        if (folder == "/show" && providerId == "or")
+            return "sk-project";
+        return std::nullopt;
+    });
+    project = "/show";
+    const std::string inProject = threads->create();
+    project.clear();
+    const std::string outside = threads->create();
+
+    threads->send(inProject, "Hi");
+    ASSERT_TRUE(idle(inProject));
+    threads->send(outside, "Hi");
+    ASSERT_TRUE(idle(outside));
+    threads->remove(inProject);
+    threads->remove(outside);
+
+    const Json alias = Json::object({{"providerId", "or@p1"}, {"model", "m"}});
+    const Json own = Json::object({{"providerId", "or"}, {"model", "m"}});
+    const auto opened = receivedAs("session/new");
+    ASSERT_EQ(opened.size(), 2u);
+    EXPECT_EQ(*opened[0].find("model"), alias);
+    EXPECT_EQ(*opened[1].find("model"), own);
+    const auto prompts = receivedAs("session/prompt");
+    ASSERT_EQ(prompts.size(), 2u);
+    EXPECT_EQ(*prompts[0].find("model"), alias);
+    EXPECT_EQ(*prompts[1].find("model"), own);
+    const auto told = receivedAs("_hikari/providers.set");
+    ASSERT_FALSE(told.empty());
+    EXPECT_NE(told.front().dump().find(R"("id":"or@p1")"), std::string::npos) << told.front().dump();
+    const auto ended = receivedAs("_hikari/conversation.end");
+    ASSERT_EQ(ended.size(), 2u);
+    EXPECT_EQ(*ended[0].find("providerId"), Json("or@p1"));
+    EXPECT_EQ(*ended[1].find("providerId"), Json("or"));
+    EXPECT_EQ(received().dump().find("sk-project"), std::string::npos);
+    EXPECT_FALSE(threads->thread(inProject));
 }
 
 TEST_F(AgentThreadsTest, StopWithdrawsTheOpenAskAndEndsTheTurn)
@@ -1337,4 +1486,419 @@ TEST_F(AgentThreadsTest, TheSessionLearnsTheContextWindowAndWhetherToCompactByIt
     threads->send(id, "Again");
     ASSERT_TRUE(idle(id));
     EXPECT_TRUE(receivedAs("session/prompt").back().find("autoCompact")->asBool());
+}
+
+TEST(AgentPolicy, AWriteInsideTheProjectFollowsTheThreadsMode)
+{
+    EXPECT_EQ(projectWriteRisk("notes/plan.md"), Risk::None);
+    EXPECT_EQ(projectWriteRisk(".hikarix/plan.md"), Risk::None);
+}
+
+TEST(AgentPolicy, AWriteInTheProjectsHikariFolderAlwaysAsks)
+{
+    EXPECT_EQ(projectWriteRisk(".hikari/project.toml"), Risk::Files);
+    EXPECT_EQ(projectWriteRisk(".hikari/skills/new/SKILL.md"), Risk::Files);
+    for (const AgentMode mode : {AgentMode::Manual, AgentMode::Auto, AgentMode::FullAccess})
+        EXPECT_EQ(decide(mode, "files.write", projectWriteRisk(".hikari/project.toml") != Risk::None, true),
+                  Decision::AlwaysAsk);
+}
+
+TEST(AgentPolicy, AFolderWriteOutsideTheProjectAndTheSafeFoldersAlwaysAsks)
+{
+    EXPECT_EQ(projectWriteRisk("../elsewhere/plan.md"), Risk::Files);
+    EXPECT_EQ(alwaysAsk("files.write", Json::object({{"folder", "project"}, {"path", "notes/plan.md"}}), writeTarget,
+                        kSafe)
+                  .risk,
+              Risk::Files);
+}
+
+namespace {
+
+const hikari::application::DocumentId kDoc{1};
+
+TaskAsk taskAsk(TaskScope scope = {kDoc, {1}})
+{
+    TaskAsk ask;
+    ask.parentMode = AgentMode::Auto;
+    ask.scope = std::move(scope);
+    return ask;
+}
+
+Json linesEdit(std::string op, std::int64_t line)
+{
+    return Json::object({{"op", std::move(op)}, {"line", line}, {"fields", Json::object({{"text", "x"}})}});
+}
+
+Json applyTo(std::int64_t document, Json edits)
+{
+    return Json::object({{"document", document}, {"revision", 1}, {"name", "n"}, {"edits", std::move(edits)}});
+}
+
+}
+
+TEST(AgentTasks, QtRefusesDepthAFifthChildABroaderModeTheCapsAndAnOverlap)
+{
+    EXPECT_EQ(checkTask(taskAsk()), AgentMode::Auto);
+    TaskAsk ask = taskAsk();
+    ask.mode = AgentMode::Manual;
+    EXPECT_EQ(checkTask(ask), AgentMode::Manual) << "a narrower child is fine";
+    ask.mode = AgentMode::FullAccess;
+    EXPECT_EQ(checkTask(ask), std::unexpected(TaskRefusal::ModeEscalation));
+    ask = taskAsk();
+    ask.fromChild = true;
+    EXPECT_EQ(checkTask(ask), std::unexpected(TaskRefusal::Depth));
+    ask = taskAsk();
+    ask.running = kMaxRunningChildren;
+    EXPECT_EQ(checkTask(ask), std::unexpected(TaskRefusal::TooManyChildren));
+    ask = taskAsk();
+    ask.overCap = true;
+    EXPECT_EQ(checkTask(ask), std::unexpected(TaskRefusal::CostCap));
+    ask = taskAsk();
+    ask.overDailyCap = true;
+    EXPECT_EQ(checkTask(ask), std::unexpected(TaskRefusal::DailyCap));
+    ask = taskAsk();
+    ask.runningScopes = {{kDoc, {2, 3}}, {hikari::application::DocumentId{2}, {}}};
+    EXPECT_EQ(checkTask(ask), AgentMode::Auto) << "disjoint Lines, and another Document";
+    ask.runningScopes.push_back({kDoc, {}});
+    EXPECT_EQ(checkTask(ask), std::unexpected(TaskRefusal::ScopeOverlap)) << "a whole-Document scope holds every Line";
+    EXPECT_TRUE(scopesOverlap({kDoc, {1, 2}}, {kDoc, {2}}));
+    EXPECT_FALSE(scopesOverlap({kDoc, {1}}, {kDoc, {2}}));
+}
+
+TEST(AgentTasks, AChildWritesOnlyItsLinesOfItsDocumentThroughDocumentApply)
+{
+    const TaskScope scope{kDoc, {1, 2}};
+    EXPECT_FALSE(outsideScope(scope, "document.apply", applyTo(1, Json::array({linesEdit("set_line", 1)})), kDoc));
+    EXPECT_FALSE(outsideScope(scope, "lines.list", Json::object(), kDoc)) << "reads are free";
+    EXPECT_FALSE(outsideScope(scope, "selection.set", Json::object(), kDoc));
+    EXPECT_TRUE(outsideScope(scope, "document.apply", applyTo(1, Json::array({linesEdit("set_line", 3)})), kDoc));
+    EXPECT_TRUE(outsideScope(scope, "document.apply", applyTo(2, Json::array({linesEdit("set_line", 1)})), kDoc));
+    Json noDocument = applyTo(1, Json::array({linesEdit("delete_line", 2)}));
+    std::erase_if(noDocument.asObject(), [](const Json::Member &m) { return m.key == "document"; });
+    EXPECT_FALSE(outsideScope(scope, "document.apply", noDocument, kDoc));
+    EXPECT_TRUE(outsideScope(scope, "document.apply", noDocument, hikari::application::DocumentId{2}))
+        << "the editing target moved to another tab";
+    EXPECT_TRUE(outsideScope(scope, "document.apply",
+                             applyTo(1, Json::array({Json::object({{"op", "set_style"}, {"name", "Default"}})})), kDoc));
+    EXPECT_FALSE(outsideScope({kDoc, {}}, "document.apply",
+                              applyTo(1, Json::array({Json::object({{"op", "set_style"}, {"name", "Default"}})})), kDoc));
+    EXPECT_FALSE(outsideScope(scope, "document.apply",
+                              applyTo(1, Json::array({Json::object({{"op", "insert_line"}, {"after", 2}})})), kDoc));
+    EXPECT_TRUE(outsideScope(scope, "commands.run", Json::object({{"command", "GLOBAL_SAVE_SUBS"}}), kDoc));
+    EXPECT_TRUE(outsideScope(scope, "settings.set", Json::object({{"setting", "video.zoom"}}), kDoc));
+}
+
+TEST(AgentTasks, TheJudgeSeesAChildsBriefAsTheAgentsWordsNotTheUsers)
+{
+    const std::string sent =
+        judgeRequest("document.apply", Json::object({{"name", "n"}}), {"Translate it"}, "Translate Lines 1-3").dump();
+    EXPECT_NE(sent.find("Translate it"), std::string::npos);
+    EXPECT_NE(sent.find("Another AI agent wrote its task, not the user"), std::string::npos);
+    EXPECT_NE(sent.find("Translate Lines 1-3"), std::string::npos);
+    EXPECT_EQ(judgeRequest("document.apply", Json::object(), {"x"}).dump().find("sub-agent"), std::string::npos);
+}
+
+TEST(AgentTasks, AChildThreadKeepsItsParentAndTaskAndARunningOneComesBackInterrupted)
+{
+    AgentThread t;
+    t.id = "c1";
+    t.task = AgentTask{.parent = "p1", .id = "t2", .brief = "Do it", .role = "translator", .lines = {4, 5},
+                       .status = TaskStatus::Running, .summary = "half", .target = "Codex"};
+    const auto back = AgentThread::fromJson(t.toJson());
+    ASSERT_TRUE(back && back->task);
+    EXPECT_EQ(back->task->parent, "p1");
+    EXPECT_EQ(back->task->id, "t2");
+    EXPECT_EQ(back->task->brief, "Do it");
+    EXPECT_EQ(back->task->lines, (std::vector<std::int64_t>{4, 5}));
+    EXPECT_EQ(back->task->target, "Codex");
+    EXPECT_EQ(back->task->status, TaskStatus::Interrupted);
+    EXPECT_FALSE(back->task->scope) << "Document ids don't outlive the app";
+}
+
+namespace {
+
+Json delegate(Json brief, Json scope, Json extra = Json::object())
+{
+    extra["task"] = brief.isString() ? brief : Json(brief.dump());
+    extra["scope"] = std::move(scope);
+    return Json::object({{"method", "_hikari/task.request"}, {"params", std::move(extra)}});
+}
+
+Json taskCall(std::string method, std::string task, Json extra = Json::object())
+{
+    extra["taskId"] = std::move(task);
+    return Json::object({{"method", std::move(method)}, {"params", std::move(extra)}});
+}
+
+Json setLine(std::int64_t revision, std::int64_t line, std::string text, std::string name)
+{
+    return call("document.apply",
+                Json::object({{"revision", revision},
+                              {"name", std::move(name)},
+                              {"edits", Json::array({Json::object({{"op", "set_line"},
+                                                                   {"line", line},
+                                                                   {"fields", Json::object({{"text", std::move(text)}})}})})}}));
+}
+
+Json scopeOf(std::int64_t document, std::vector<std::int64_t> lines = {})
+{
+    Json out = Json::object({{"document", document}});
+    if (!lines.empty()) {
+        Json ids = Json::array();
+        for (const std::int64_t id : lines)
+            ids.push(id);
+        out["lines"] = std::move(ids);
+    }
+    return out;
+}
+
+const Json kHang = Json::object({{"calls", Json::array()}, {"hang", true}});
+
+}
+
+class AgentTasksTest : public AgentThreadsTest {
+protected:
+    void SetUp() override
+    {
+        AgentThreadsTest::SetUp();
+        app::Provider other = app::presetProvider(app::Preset::OpenRouter, "or2", "Other");
+        other.models = {{.id = "m2", .name = "M2", .price = app::Price{.input = 1, .output = 1}}};
+        configs.stored.providers.push_back(other);
+        threads.reset();
+        requests.reset();
+        providers = std::make_unique<app::Providers>(configs, keys);
+        requests = std::make_unique<AiRequests>(*providers, [this] { return sidecar(); });
+        threads = makeThreads();
+        document = static_cast<std::int64_t>(fake.workspace().editingTarget()->value);
+    }
+
+    std::vector<const AgentThread *> kids(const std::string &parent) { return threads->children(parent); }
+
+    std::string toolOutput(const std::string &id, std::size_t index)
+    {
+        const auto tools = items(id, "tool");
+        return index < tools.size() ? at(tools[index], "output") : std::string();
+    }
+
+    std::int64_t revision() { return static_cast<std::int64_t>(fake.target()->revision()); }
+
+    std::int64_t document = 0;
+};
+
+TEST_F(AgentTasksTest, TwoChildrenOnOtherProvidersEditDisjointLinesIntoTheirOwnChangeSetsUnderTheParentsTurn)
+{
+    const std::string parent = withMode(AgentMode::FullAccess);
+    const std::int64_t r = revision();
+    const Json first = Json::object({{"calls", Json::array({setLine(r, 1, "Hi", "Shortened 1")})}, {"say", "Did 1."}});
+    const Json second = Json::object({{"calls", Json::array({setLine(r + 1, 3, "Hey", "Shortened 3")})}, {"say", "Did 3."}});
+    threads->send(parent, script(Json::array(
+                              {delegate(first, scopeOf(document, {1}),
+                                        Json::object({{"title", "Part 1"}, {"target", Json::object({{"providerId", "or"}, {"model", "m"}})}})),
+                               taskCall("_hikari/task.wait", "t1", Json::object({{"timeoutMs", 20000}})),
+                               delegate(second, scopeOf(document, {3}),
+                                        Json::object({{"title", "Part 3"}, {"target", Json::object({{"providerId", "or2"}, {"model", "m2"}})}}))})));
+    ASSERT_TRUE(waitFor([&] {
+        const auto k = kids(parent);
+        return k.size() == 2 && k[0]->task->status != TaskStatus::Running && k[1]->task->status != TaskStatus::Running;
+    }));
+    ASSERT_TRUE(idle(parent));
+    const auto k = kids(parent);
+    EXPECT_EQ(k[0]->task->status, TaskStatus::Done);
+    EXPECT_EQ(k[1]->task->status, TaskStatus::Done);
+    EXPECT_EQ(k[0]->task->summary, "Did 1.");
+    EXPECT_EQ(*k[1]->model, (app::ModelRef{"or2", "m2"}));
+    EXPECT_EQ(k[1]->task->target, "Hikari · M2");
+    EXPECT_TRUE(threads->threads().size() == 1u) << "children aren't in the threads list";
+    EXPECT_NE(toolOutput(parent, 1).find("Did 1."), std::string::npos) << "the wait gave the result";
+
+    const auto doc = fake.workspace().editingTarget();
+    const auto changes = fake.review.changes(*doc);
+    ASSERT_EQ(changes.size(), 2u);
+    EXPECT_EQ(changes[0]->caller, "Part 1");
+    EXPECT_EQ(changes[1]->caller, "Part 3");
+    EXPECT_NE(changes[0]->turn, changes[1]->turn);
+    const std::uint64_t parentTurn = fake.review.turn(changes[0]->turn)->parent;
+    EXPECT_NE(parentTurn, 0u);
+    EXPECT_EQ(fake.review.turn(changes[1]->turn)->parent, parentTurn);
+    EXPECT_EQ(fake.review.turn(parentTurn)->caller, "ai:" + parent);
+
+    auto *session = fake.session(*doc);
+    ASSERT_TRUE(fake.review.undo(*doc, *session, {.change = changes[1]->id}, false));
+    EXPECT_EQ(fake.target()->document().lines()[2]->text, u8"General Kenobi");
+    EXPECT_EQ(fake.target()->document().lines()[0]->text, u8"Hi");
+    ASSERT_TRUE(fake.review.undo(*doc, *session, {.change = changes[0]->id}, false));
+    EXPECT_EQ(fake.target()->document().lines()[0]->text, u8"Hello there");
+
+    const auto opened = receivedAs("session/new");
+    ASSERT_GE(opened.size(), 3u);
+    EXPECT_TRUE(opened[0].find("delegate"));
+    EXPECT_FALSE(opened[1].find("delegate")) << "a child can't delegate";
+    EXPECT_EQ(*opened[1].find("task")->find("scope"), scopeOf(document, {1}));
+    EXPECT_NE(at(opened[1], "system").find("you can't hand it to another agent"), std::string::npos);
+}
+
+TEST_F(AgentTasksTest, AChildReadsItsParentsProjectSkillsWithTheSameGrant)
+{
+    const QString show = dir.filePath(QStringLiteral("show"));
+    ASSERT_TRUE(QDir().mkpath(show + QStringLiteral("/.hikari/skills/honorifics")));
+    QFile skill(show + QStringLiteral("/.hikari/skills/honorifics/SKILL.md"));
+    ASSERT_TRUE(skill.open(QIODevice::WriteOnly));
+    skill.write("---\nname: honorifics\ndescription: Honorifics.\n---\n");
+    skill.close();
+    project = show.toStdString();
+    const std::string parent = withMode(AgentMode::FullAccess);
+    project.clear();
+    threads->send(parent, script(Json::array({delegate(kHang, scopeOf(document, {1}))}), Json::object({{"hang", true}})));
+    ASSERT_TRUE(waitFor([&] { return kids(parent).size() == 1u; }));
+    const std::string child = kids(parent)[0]->id;
+    EXPECT_EQ(kids(parent)[0]->project, show.toStdString());
+
+    std::optional<SidecarResult> result;
+    Json request = call("skills.list");
+    request["session"] = child;
+    sidecar()->request("api", request, [&](SidecarResult r) { result = std::move(r); });
+    ASSERT_TRUE(waitFor([&] { return result.has_value(); }));
+    ASSERT_TRUE(*result);
+    const std::string listed = (*result)->dump();
+    EXPECT_NE(listed.find(R"("honorifics")"), std::string::npos) << listed;
+    EXPECT_NE(listed.find(R"("origin":"project")"), std::string::npos) << listed;
+    threads->stop(parent);
+    ASSERT_TRUE(idle(parent));
+}
+
+TEST_F(AgentTasksTest, QtRefusesWhatTheSidecarAsksBeyondTheRules)
+{
+    const std::string parent = withMode(AgentMode::Auto);
+    Json calls = Json::array({delegate(kHang, scopeOf(document, {1}), Json::object({{"mode", "full"}}))});
+    for (const std::int64_t line : {1, 1})
+        calls.push(delegate(kHang, scopeOf(document, {line})));
+    threads->send(parent, script(std::move(calls), Json::object({{"hang", true}})));
+    ASSERT_TRUE(waitFor([&] { return items(parent, "tool").size() == 3u && at(items(parent, "tool")[2], "status") != "running"; }));
+    EXPECT_NE(toolOutput(parent, 0).find("mode_escalation_denied"), std::string::npos);
+    EXPECT_EQ(at(items(parent, "tool")[1], "status"), "done");
+    EXPECT_NE(toolOutput(parent, 2).find("scope_overlap"), std::string::npos);
+    threads->stop(parent);
+    ASSERT_TRUE(idle(parent));
+    ASSERT_TRUE(waitFor([&] { return kids(parent)[0]->task->status == TaskStatus::Stopped; }));
+    EXPECT_EQ(kids(parent)[0]->task->stoppedFor, "parent");
+
+    const std::string other = withMode(AgentMode::Auto);
+    const Json outside = Json::object({{"calls", Json::array({setLine(revision(), 3, "No", "Outside"),
+                                                              delegate(kHang, scopeOf(document, {1}))})}});
+    threads->send(other, script(Json::array({delegate(outside, scopeOf(document, {1}),
+                                                      Json::object({{"title", "Edge"}, {"wait", true}})),
+                                              taskCall("_hikari/task.wait", "t1", Json::object({{"timeoutMs", 20000}}))})));
+    ASSERT_TRUE(idle(other));
+    ASSERT_EQ(kids(other).size(), 1u);
+    const std::string child = kids(other)[0]->id;
+    const auto childTools = items(child, "tool");
+    ASSERT_EQ(childTools.size(), 2u);
+    EXPECT_NE(at(childTools[0], "output").find("outside this sub-agent"), std::string::npos);
+    EXPECT_NE(at(childTools[1], "output").find("depth"), std::string::npos);
+    EXPECT_EQ(fake.target()->document().lines()[2]->text, u8"General Kenobi") << "outside the child's scope";
+}
+
+TEST_F(AgentTasksTest, AFifthRunningChildIsRefusedAndStopStopsEveryChild)
+{
+    const std::string parent = withMode(AgentMode::FullAccess);
+    const Json edits = Json::object({{"calls", Json::array({setLine(revision(), 1, "Hi", "Part")})}, {"hang", true}});
+    Json calls = Json::array({delegate(edits, scopeOf(document, {1}))});
+    for (std::int64_t i = 2; i <= 5; ++i)
+        calls.push(delegate(kHang, scopeOf(i <= 3 ? document : 2, {i <= 3 ? i : i - 3})));
+    threads->setAttached(parent, {hikari::application::DocumentId{2}});
+    threads->send(parent, script(std::move(calls), Json::object({{"hang", true}})));
+    const std::uint64_t estimate = [&] {
+        EXPECT_TRUE(waitFor([&] { return !items(parent, "estimate").empty(); }));
+        const auto e = items(parent, "estimate");
+        return e.empty() ? 0u : static_cast<std::uint64_t>(e[0].find("ask")->asInt());
+    }();
+    ASSERT_NE(estimate, 0u);
+    EXPECT_EQ(items(parent, "estimate")[0].find("children")->asInt(), 3);
+    threads->answer(estimate, Answer::AllowOnce);
+    ASSERT_TRUE(waitFor([&] { return items(parent, "tool").size() == 5u && at(items(parent, "tool")[4], "status") != "running"; }));
+    EXPECT_EQ(items(parent, "estimate").size(), 1u) << "once per turn";
+    EXPECT_NE(toolOutput(parent, 4).find("too_many_children"), std::string::npos);
+    ASSERT_EQ(kids(parent).size(), 4u);
+    threads->stop(parent);
+    ASSERT_TRUE(idle(parent));
+    ASSERT_TRUE(waitFor([&] {
+        return std::ranges::all_of(kids(parent), [](const AgentThread *c) { return c->task->status == TaskStatus::Stopped; });
+    }));
+    EXPECT_EQ(fake.target()->document().lines()[0]->text, u8"Hi");
+    EXPECT_EQ(fake.review.changes(*fake.workspace().editingTarget()).size(), 1u) << "a stopped child's edits stay";
+}
+
+TEST_F(AgentTasksTest, DecliningTheEstimateRefusesTheThirdChildAndTheRestOfTheTurn)
+{
+    const std::string parent = withMode(AgentMode::FullAccess);
+    Json calls = Json::array();
+    for (const std::int64_t line : {1, 2, 3})
+        calls.push(delegate("ok", scopeOf(document, {line})));
+    threads->send(parent, script(std::move(calls)));
+    ASSERT_TRUE(waitFor([&] { return !items(parent, "estimate").empty(); }));
+    threads->answer(static_cast<std::uint64_t>(items(parent, "estimate")[0].find("ask")->asInt()), Answer::Deny);
+    ASSERT_TRUE(waitFor([&] { return items(parent, "tool").size() == 3u && at(items(parent, "tool")[2], "status") != "running"; }));
+    EXPECT_NE(toolOutput(parent, 2).find("declined"), std::string::npos);
+    EXPECT_EQ(at(items(parent, "estimate")[0], "status"), "declined");
+    EXPECT_EQ(kids(parent).size(), 2u);
+}
+
+TEST_F(AgentTasksTest, AChildsQuestionIsTheUsersAndItsJudgeSeesTheRootsMessagesAndTheBrief)
+{
+    const std::string parent = withMode(AgentMode::Auto);
+    const Json child = Json::object({{"calls", Json::array({setLine(revision(), 1, "Hi", "Fix")})}});
+    threads->send(parent, script(Json::array({delegate(child, scopeOf(document, {1}), Json::object({{"mode", "manual"}}))})));
+    ASSERT_TRUE(waitFor([&] { return !threads->asks().empty(); }));
+    const auto &ask = threads->asks().begin()->second;
+    ASSERT_EQ(kids(parent).size(), 1u);
+    EXPECT_EQ(ask.thread, kids(parent)[0]->id) << "the child asks; the parent's model never sees it";
+    EXPECT_EQ(ask.kind, Decision::Propose);
+    threads->answer(threads->asks().begin()->first, Answer::AllowOnce);
+    ASSERT_TRUE(waitFor([&] { return kids(parent)[0]->task->status == TaskStatus::Done; }));
+
+    const std::string judged = withMode(AgentMode::Auto);
+    const Json reads = Json::object({{"calls", Json::array({call("lines.list"), setLine(revision(), 1, "Yo", "Fix")})}});
+    threads->send(judged, script(Json::array({delegate(reads, scopeOf(document, {1}), Json::object({{"title", "Judged"}}))})));
+    ASSERT_TRUE(waitFor([&] {
+        const auto k = kids(judged);
+        return k.size() == 1 && k[0]->task->status != TaskStatus::Running;
+    }));
+    std::string sent;
+    for (const Json &c : receivedAs("_hikari/complete"))
+        sent = c.dump();
+    EXPECT_NE(sent.find("Another AI agent wrote its task"), std::string::npos);
+    EXPECT_NE(sent.find("_hikari/task.request"), std::string::npos) << "the root's user message is the script";
+    EXPECT_EQ(sent.find("General Kenobi"), std::string::npos) << "no tool output";
+}
+
+TEST_F(AgentTasksTest, ChildrenCostCountsInTheParentsMeterAndCapAndASidecarCrashInterruptsThem)
+{
+    defaults.threadCap = 1.0;
+    const std::string parent = withMode(AgentMode::FullAccess);
+    const Json costly = Json::object({{"calls", Json::array()}, {"hang", true},
+                                      {"usage", Json::object({{"inputTokens", 1}, {"reportedCost", 1.5}})}});
+    threads->send(parent, script(Json::array({delegate(costly, scopeOf(document, {1})),
+                                              delegate(kHang, scopeOf(document, {2}))}),
+                                 Json::object({{"hang", true}})));
+    ASSERT_TRUE(waitFor([&] { return kids(parent).size() == 1 && kids(parent)[0]->task->status == TaskStatus::Stopped; }));
+    ASSERT_TRUE(idle(parent));
+    EXPECT_DOUBLE_EQ(thread(parent).cost, 1.5);
+    EXPECT_EQ(kids(parent)[0]->task->stoppedFor, "cap");
+    EXPECT_EQ(notice(parent), "cap");
+    EXPECT_NE(toolOutput(parent, 1).find("cost_cap"), std::string::npos);
+    EXPECT_DOUBLE_EQ(threads->spentToday(), 1.5) << "counted once";
+
+    defaults.threadCap = 0;
+    const std::string other = withMode(AgentMode::FullAccess);
+    const QString marker = dir.filePath(QStringLiteral("crashed"));
+    const Json crash = Json::object({{"crashUnless", marker.toStdString()}});
+    threads->send(other, script(Json::array({delegate(kHang, scopeOf(document, {1})),
+                                             delegate(crash, scopeOf(document, {3}))}),
+                                Json::object({{"hang", true}})));
+    ASSERT_TRUE(waitFor([&] {
+        const auto k = kids(other);
+        return k.size() == 2 && std::ranges::all_of(k, [](const AgentThread *c) { return c->task->status == TaskStatus::Interrupted; });
+    }));
+    EXPECT_EQ(notice(other), "lost");
+    EXPECT_FALSE(threads->running(kids(other)[0]->id)) << "never rerun";
 }

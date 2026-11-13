@@ -96,6 +96,16 @@ std::string inQuotes(std::string_view s)
 
 }
 
+OfficialAuthor OfficialAuthor::hikarisub()
+{
+    return {"hikarisub", *minisign::parsePublicKey(kOfficialKey)};
+}
+
+bool OfficialAuthor::owns(std::string_view id, const std::optional<minisign::PublicKey> &signer) const
+{
+    return id.size() > handle.size() && id.starts_with(handle) && id[handle.size()] == '.' && signer == key;
+}
+
 const ListedVersion *Listing::newest(std::int64_t apiVersion) const
 {
     if (revoked)

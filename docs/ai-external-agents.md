@@ -2,6 +2,10 @@
 
 A thread can run on an agent the user already has, instead of Hikari's own loop ([AI15 #443](https://github.com/altqx/hikari/issues/443), [ADR 0026](adr/0026-hikari-ai-runs-in-a-typescript-sidecar-on-bun.md), [ADR 0029](adr/0029-the-ai-sidecar-runs-in-an-os-sandbox.md)). Every agent edits only through Hikari's tools, into the [review](ai-review.md), under the thread's mode. Hikari never downloads or installs an agent's CLI. It uses the one on `PATH`.
 
+**Only where the sandbox keeps them to their folders** (owner Q413, [#1038](https://github.com/altqx/hikari/issues/1038)). Codex and ACP agents use their own file and command tools inside their sandbox, so where this system can't confine files, for example on a Linux kernel without Landlock, they aren't offered: no model-menu entry, no fallback, and Qt doesn't start Codex. Their rows in Settings › AI › External agents say "Not offered: this system can’t keep it to its own folders." A thread already on one of them doesn't start it: its turn ends in a card that says the same, with Open Settings › AI. Claude Code is still offered, because all its own tools are off. A custom ACP agent whose command lies inside an open Project isn't offered either, because its program folder is readable to it.
+
+**Instructions.** Every agent gets `session/new`'s `system`, which holds Hikari's prompt and the joined `AGENTS.md` text ([Threads](ai-agent.md#threads), PJ7 [#904](https://github.com/altqx/hikari/issues/904), [#905](https://github.com/altqx/hikari/issues/905)). Its own instruction files never load: its built-in file tools are off, and its settings sources are empty. Claude gets the text as its system prompt, and Codex as `developerInstructions`. Both get it again when they resume after the CLI exits. An ACP agent gets it as a text block before its first prompt, and again after a new `session/new`, because ACP has no instructions field. After `session/load` the agent already has it in its history.
+
 ## Claude
 
 Claude runs through the Claude Agent SDK, on the user's own `claude` and its login. Hikari never starts, reads, stores or relays that login.
@@ -56,7 +60,8 @@ Any agent that speaks the [Agent Client Protocol](https://agentclientprotocol.co
 `test/fixtures/fake-claude.ts` stands in for `claude`. It speaks the SDK's control protocol as recorded from Claude Code 2.1.322: initialize, hook callbacks, `mcp_message` and interrupt. Each user message it gets is a script of tool calls. The sidecar tests drive the real SDK against it. They check that:
 
 - an edit runs on Hikari's tools;
-- a built-in tool is denied;
+- a built-in tool is denied, including the file tools Read, Edit and Write;
+- the system prompt, with the joined `AGENTS.md` text, reaches Claude, and again when it resumes;
 - the arguments that turn Claude's tools, settings and permissions off are passed;
 - one process serves every turn.
 
@@ -65,8 +70,9 @@ Any agent that speaks the [Agent Client Protocol](https://agentclientprotocol.co
 - an edit over the session's channel;
 - one process and thread for every turn, with each turn's usage;
 - Stop as `turn/interrupt`;
-- resuming the thread after Codex exits.
+- resuming the thread after Codex exits, with the same `developerInstructions` as `thread/start`;
+- a built-in file change that asks for approval is never accepted.
 
-In Qt, the broker tests cover the channel (its token, its arguments and its end) and the hooks around each process. The sign-in tests cover handing the sign-in to Codex and back.
+In Qt, the broker tests cover the channel (its token, its arguments and its end), the hooks around each process, and Qt declining Codex's command and file-change approvals. The sign-in tests cover handing the sign-in to Codex and back.
 
 `test/fixtures/fake-acp.ts` stands in for an ACP agent in the sidecar tests, and `tests/backends/fake_acp_agent.cpp` stands in for a stdio-only one in Qt. That fake starts the bridge from its `session/new` and makes an edit through it. The Antigravity tests check that every path agy gets stays inside its profile, that the token file goes back and forth between the keychain and the profile, and that the sign-in takes the code from Google's page.

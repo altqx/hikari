@@ -1,0 +1,45 @@
+﻿[Script Info]
+Title: karaskel routing corpus
+ScriptType: v4.00+
+WrapStyle: 0
+PlayResX: 1280
+PlayResY: 720
+ScaledBorderAndShadow: yes
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: A1,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,1,11,12,13,1
+Style: A2,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,2,20,20,20,1
+Style: A3,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,3,30,10,40,1
+Style: A4,Arial,36,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,1,0,0,0,120,90,2,0,1,3,1,4,20,20,20,1
+Style: A5,Arial,36,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,1,0,0,100,100,0,0,1,2,2,5,20,20,20,1
+Style: A6,Arial,36,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,80,100,0,0,1,2,2,6,5,55,20,1
+Style: A7,Arial,32,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,7,20,20,20,1
+Style: A8,Arial,48,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,8,20,20,20,1
+Style: A9,Arial,32,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,9,20,20,25,1
+Style: Thai,Tahoma,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,8,20,20,20,1
+Style: Vertical,@Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,90,1,2,2,7,20,20,20,1
+Style: Kana,Arial,48,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,8,20,20,20,1
+Style: Kana-furigana,Arial,24,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,8,20,20,20,1
+Style: Ruby,Arial,44,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,2,20,20,20,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:01.00,0:00:03.00,A1,,0,0,0,,{\k20}ka{\k30}ra{\k25} o{\k15}ke
+Dialogue: 0,0:00:01.00,0:00:03.00,A2,,40,0,0,,{\k20}to{\k30}ki {\k25}ga
+Dialogue: 0,0:00:01.00,0:00:03.00,A3,,0,50,60,,{\kf20}na{\ko30}ga{\K25}re
+Dialogue: 0,0:00:01.00,0:00:03.00,A4,,0,0,0,,{\k20}spa{\k30}cing {\k0}{\k25}wide
+Dialogue: 0,0:00:01.00,0:00:03.00,A5,,0,0,0,,{\k20}mid{\k-0}{\k30}dle
+Dialogue: 0,0:00:01.00,0:00:03.00,A6,,0,0,0,,{\k20\fscx150}wi{\k30}de {\k25\fsp6}apart
+Dialogue: 0,0:00:01.00,0:00:03.00,A7,,0,0,0,,{\k20}to{\k30}p le{\k25}ft
+Dialogue: 0,0:00:01.00,0:00:03.00,A8,,0,0,0,,{\fsp3\k20}spa{\k30}ced{\fscx80\k25} out
+Dialogue: 0,0:00:01.00,0:00:03.00,A9,,0,0,0,,{\k20\-fx}in{\k30}line {\k25\-two}fx
+Dialogue: 0,0:00:04.00,0:00:07.00,Thai,,0,0,0,,{\k40}กิน{\k60}น้ำ{\k0} {\k50}ขึ้น{\k45}ไป
+Dialogue: 0,0:00:04.00,0:00:07.00,Thai,,0,0,0,,{\k50}café{\k0} {\k40}👨‍👩‍👧{\k30}🇹🇭
+Dialogue: 0,0:00:04.00,0:00:07.00,Vertical,,0,0,0,,{\k30}縦{\k30}書{\k40}き
+Dialogue: 0,0:00:07.00,0:00:10.00,Kana,,0,0,0,,{\k30}日|に{\k30}本|ほん{\k40}語|ご
+Dialogue: 0,0:00:07.00,0:00:10.00,Kana,,0,0,0,,{\k30}東|<と{\k20}#|う{\k30}京|きょう{\k0} {\k40}は!|は
+Dialogue: 0,0:00:07.00,0:00:10.00,Ruby,,0,0,0,,{\k30}漢|か{\k30}#|ん{\k40}字|じ
+Dialogue: 0,0:00:10.00,0:00:12.00,Missing,,0,0,0,,{\k30}no{\k30} style
+Dialogue: 0,0:00:10.00,0:00:12.00,A2,,0,0,0,,plain text with no karaoke
+Dialogue: 0,0:00:10.00,0:00:12.00,A2,,0,0,0,,

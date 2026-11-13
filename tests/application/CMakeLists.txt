@@ -4,6 +4,8 @@ hikari_add_gtest(hikari_application_edit_tests SOURCES edit_session_tests.cpp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_ai_review_tests SOURCES ai_review_tests.cpp
     LIBRARIES hikari_application LABELS application)
+hikari_add_gtest(hikari_application_ai_review_files_tests SOURCES ai_review_files_tests.cpp
+    LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_ai_inline_tests SOURCES ai_inline_tests.cpp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_word_diff_tests SOURCES word_diff_tests.cpp
@@ -245,6 +247,8 @@ hikari_add_gtest(hikari_application_associated_files_tests SOURCES associated_fi
     LIBRARIES hikari_application LABELS application)
 target_compile_definitions(hikari_application_associated_files_tests PRIVATE
     HIKARI_ASSOCIATION_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/associations")
+hikari_add_gtest(hikari_application_explorer_tests SOURCES explorer_tests.cpp
+    LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_ai_providers_tests SOURCES ai_providers_tests.cpp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_ai_project_keys_tests SOURCES ai_project_keys_tests.cpp
@@ -258,7 +262,8 @@ hikari_add_gtest(hikari_application_aegisub_frame_times_tests SOURCES aegisub_fr
 hikari_add_gtest(hikari_application_node_effects_tests SOURCES node_effects_tests.cpp
     LIBRARIES hikari_application LABELS application)
 target_compile_definitions(hikari_application_node_effects_tests PRIVATE
-    HIKARI_KARAOKE_PRESET_FIXTURES="${PROJECT_SOURCE_DIR}/tests/backends/karaoke-presets")
+    HIKARI_KARAOKE_PRESET_FIXTURES="${PROJECT_SOURCE_DIR}/tests/backends/karaoke-presets"
+    HIKARI_TYPESETTING_GOLDENS="${PROJECT_SOURCE_DIR}/tests/application/typesetting-graphs")
 hikari_add_gtest(hikari_application_node_graph_editing_tests SOURCES node_graph_editing_tests.cpp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_timecodes_file_tests SOURCES timecodes_file_tests.cpp

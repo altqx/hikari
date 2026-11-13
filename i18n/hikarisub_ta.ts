@@ -104,6 +104,18 @@
         <translation>நேற்று</translation>
     </message>
     <message>
+        <source>This agent can’t start here</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not offered: its command is inside an open project, which it could read.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not offered: this system can’t keep it to its own folders.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>This project</source>
         <translation type="unfinished"></translation>
     </message>
@@ -196,6 +208,53 @@
         <translation>நிறுத்து</translation>
     </message>
     <message>
+        <source>needs you</source>
+        <translation>உங்களுக்காகக் காத்திருக்கிறது</translation>
+    </message>
+    <message>
+        <source>done</source>
+        <translation>முடிந்தது</translation>
+    </message>
+    <message>
+        <source>failed</source>
+        <translation>தோல்வி</translation>
+    </message>
+    <message>
+        <source>interrupted</source>
+        <translation>இடைமறிக்கப்பட்டது</translation>
+    </message>
+    <message>
+        <source>stopped · cap</source>
+        <translation>நிறுத்தப்பட்டது · வரம்பு</translation>
+    </message>
+    <message>
+        <source>stopped</source>
+        <translation>நிறுத்தப்பட்டது</translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 · %n line(s)</source>
+        <translation>
+            <numerusform>%1 · %n வரி</numerusform>
+            <numerusform>%1 · %n வரிகள்</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Back to the parent thread</source>
+        <translation>பெற்றோர் இழைக்குத் திரும்பு</translation>
+    </message>
+    <message>
+        <source>Sub-agent of “%1”. Read-only; talk to it through the parent.</source>
+        <translation>“%1” இன் துணை முகவர். படிக்க மட்டும்; பெற்றோர் இழை வழியாக அதனுடன் பேசுங்கள்.</translation>
+    </message>
+    <message>
+        <source>%1 · capped by the parent</source>
+        <translation>%1 · பெற்றோரால் வரம்பிடப்பட்டது</translation>
+    </message>
+    <message>
+        <source>scope: %1</source>
+        <translation>வரம்பெல்லை: %1</translation>
+    </message>
+    <message>
         <source>Send</source>
         <translation>அனுப்பு</translation>
     </message>
@@ -260,6 +319,14 @@
         <translation>மறுபெயரிடு</translation>
     </message>
     <message>
+        <source>Brief, written by the agent</source>
+        <translation>முகவர் எழுதிய பணிக்குறிப்பு</translation>
+    </message>
+    <message>
+        <source>Results from your sub-agents</source>
+        <translation>உங்கள் துணை முகவர்களின் முடிவுகள்</translation>
+    </message>
+    <message>
         <source>steered</source>
         <translation>வழிநடத்தப்பட்டது</translation>
     </message>
@@ -311,6 +378,14 @@
         <translation>திட்டம்</translation>
     </message>
     <message>
+        <source>%1 proposes: %2</source>
+        <translation>%1 முன்மொழிகிறது: %2</translation>
+    </message>
+    <message>
+        <source>%1 asks you</source>
+        <translation>%1 உங்களைக் கேட்கிறது</translation>
+    </message>
+    <message>
         <source>Judge asks you</source>
         <translation>நடுவர் உங்களைக் கேட்கிறது</translation>
     </message>
@@ -325,6 +400,18 @@
     <message>
         <source>asks in every mode</source>
         <translation>எல்லாப் பயன்முறைகளிலும் கேட்கும்</translation>
+    </message>
+    <message>
+        <source>sub-agent · asks in every mode</source>
+        <translation>துணை முகவர் · எல்லாப் பயன்முறைகளிலும் கேட்கும்</translation>
+    </message>
+    <message>
+        <source>sub-agent</source>
+        <translation>துணை முகவர்</translation>
+    </message>
+    <message>
+        <source>Only you can answer; the parent agent can’t.</source>
+        <translation>நீங்கள் மட்டுமே பதிலளிக்க முடியும்; பெற்றோர் முகவரால் முடியாது.</translation>
     </message>
     <message>
         <source>Why: %1</source>
@@ -349,6 +436,169 @@
     <message>
         <source>Deny and tell the agent…</source>
         <translation>மறுத்து முகவரிடம் சொல்…</translation>
+    </message>
+    <message>
+        <source>The signing key changed. The installed copy was signed by key %1, and this one by key %2. Install it only if you trust that the author changed keys.</source>
+        <translation type="unfinished">கையொப்ப விசை மாறிவிட்டது. நிறுவப்பட்ட பிரதி %1 விசையாலும், இது %2 விசையாலும் கையொப்பமிடப்பட்டுள்ளன. உருவாக்கியவர் விசையை மாற்றினார் என்று நீங்கள் நம்பினால் மட்டுமே இதை நிறுவவும்.</translation>
+    </message>
+    <message>
+        <source>This package isn’t signed, but the installed copy was signed by key %1. Install it only if you trust where it came from.</source>
+        <translation type="unfinished">இந்தத் தொகுப்பு கையொப்பமிடப்படவில்லை, ஆனால் நிறுவப்பட்ட பிரதி %1 விசையால் கையொப்பமிடப்பட்டது. இது வந்த இடத்தை நீங்கள் நம்பினால் மட்டுமே நிறுவவும்.</translation>
+    </message>
+    <message>
+        <source>Unverified source, signed by key %1. Updates must be signed by the same key.</source>
+        <translation type="unfinished">சரிபார்க்கப்படாத மூலம், %1 விசையால் கையொப்பமிடப்பட்டது. புதுப்பிப்புகள் அதே விசையால் கையொப்பமிடப்பட வேண்டும்.</translation>
+    </message>
+    <message>
+        <source>Unverified: the package isn’t signed, so HikariSub can’t tell who made it.</source>
+        <translation type="unfinished">சரிபார்க்கப்படாதது: தொகுப்பு கையொப்பமிடப்படவில்லை, எனவே அதை யார் உருவாக்கினார் என்பதை HikariSub ஆல் அறிய முடியாது.</translation>
+    </message>
+    <message>
+        <source>Install with full access?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Install this plugin?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 %2 · %3</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Full trust: it runs outside the sandbox and gets full access to your computer.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restricted: it runs in the sandbox.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>It asks for no permissions beyond the active subtitle file.</source>
+        <translation type="unfinished">செயலில் உள்ள வசனக் கோப்பைத் தவிர வேறு எந்த அனுமதியையும் இது கேட்கவில்லை.</translation>
+    </message>
+    <message>
+        <source>It asks for these permissions</source>
+        <translation type="unfinished">இது இந்த அனுமதிகளைக் கேட்கிறது</translation>
+    </message>
+    <message>
+        <source>Adds the command %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Adds the commands %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Show all %n files</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Installs as Install from file… would: it turns on, and Plugins can turn it off or uninstall it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Install</source>
+        <translation type="unfinished">நிறுவு</translation>
+    </message>
+    <message>
+        <source>Trust and install</source>
+        <translation type="unfinished">நம்பி நிறுவு</translation>
+    </message>
+    <message>
+        <source>Install with full access</source>
+        <translation type="unfinished">முழு அணுகலுடன் நிறுவு</translation>
+    </message>
+    <message>
+        <source>Don’t install</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Don’t install and tell the agent…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installing %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installed %1 %2 · full trust</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installed %1 %2 · restricted</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 didn’t install: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Didn’t install %1 · “%2”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Didn’t install %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open in Plugins</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n sub-agent(s)</source>
+        <translation>
+            <numerusform>%n துணை முகவர்</numerusform>
+            <numerusform>%n துணை முகவர்கள்</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n running</source>
+        <translation>
+            <numerusform>%n இயங்குகிறது</numerusform>
+            <numerusform>%n இயங்குகின்றன</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n need(s) you</source>
+        <translation>
+            <numerusform>%n உங்களுக்காகக் காத்திருக்கிறது</numerusform>
+            <numerusform>%n உங்களுக்காகக் காத்திருக்கின்றன</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Stop all</source>
+        <translation>அனைத்தையும் நிறுத்து</translation>
+    </message>
+    <message>
+        <source>Sub-agent %1, %2</source>
+        <translation>துணை முகவர் %1, %2</translation>
+    </message>
+    <message numerus="yes">
+        <source>Estimate for %n sub-agent(s)</source>
+        <translation>
+            <numerusform>%n துணை முகவருக்கான மதிப்பீடு</numerusform>
+            <numerusform>%n துணை முகவர்களுக்கான மதிப்பீடு</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>About %1 tokens, %2.</source>
+        <translation>சுமார் %1 டோக்கன்கள், %2.</translation>
+    </message>
+    <message>
+        <source>About %1 tokens. This agent doesn’t report cost.</source>
+        <translation>சுமார் %1 டோக்கன்கள். இந்த முகவர் செலவைத் தெரிவிப்பதில்லை.</translation>
+    </message>
+    <message>
+        <source>Started</source>
+        <translation>தொடங்கியது</translation>
+    </message>
+    <message>
+        <source>Cancelled. No more sub-agents start this turn.</source>
+        <translation>ரத்துசெய்யப்பட்டது. இந்தச் சுற்றில் வேறு துணை முகவர் தொடங்காது.</translation>
     </message>
     <message>
         <source>What should it do instead?</source>
@@ -431,6 +681,10 @@
         <translation type="unfinished">திற</translation>
     </message>
     <message>
+        <source>%1 asks to run this Lua script</source>
+        <translation>%1 இந்த Lua ஸ்கிரிப்டை இயக்கக் கேட்கிறது</translation>
+    </message>
+    <message>
         <source>This thread reached its %1 cap</source>
         <translation>இந்த இழை அதன் %1 வரம்பை எட்டியது</translation>
     </message>
@@ -449,6 +703,10 @@
     <message>
         <source>You stopped the turn.</source>
         <translation>நீங்கள் சுற்றை நிறுத்தினீர்கள்.</translation>
+    </message>
+    <message>
+        <source>The parent thread stopped this sub-agent.</source>
+        <translation>பெற்றோர் இழை இந்தத் துணை முகவரை நிறுத்தியது.</translation>
     </message>
     <message>
         <source>The answer reached the model’s length limit.</source>
@@ -481,6 +739,14 @@
     <message>
         <source>The turn stopped after its last change. Raise the cap for this thread to go on.</source>
         <translation>சுற்று அதன் கடைசி மாற்றத்துக்குப் பிறகு நின்றது. தொடர, இந்த இழையின் வரம்பை உயர்த்தவும்.</translation>
+    </message>
+    <message>
+        <source>The parent’s cost cap stopped this sub-agent. Its changes stay in the review.</source>
+        <translation>பெற்றோரின் செலவு வரம்பு இந்தத் துணை முகவரை நிறுத்தியது. அதன் மாற்றங்கள் மதிப்பாய்வில் இருக்கும்.</translation>
+    </message>
+    <message>
+        <source>The sub-agent was interrupted and won’t rerun. The parent got its partial result. Changes it made stay in the review.</source>
+        <translation>துணை முகவர் இடைமறிக்கப்பட்டது, மீண்டும் இயங்காது. பெற்றோர் அதன் பகுதி முடிவைப் பெற்றது. அது செய்த மாற்றங்கள் மதிப்பாய்வில் இருக்கும்.</translation>
     </message>
     <message>
         <source>Every thread stops until tomorrow, or until you raise the cap in Settings › AI.</source>
@@ -1216,6 +1482,26 @@ Output device: %2</source>
         <translation>ச்கிரிப்டின் %1 இலிருந்து மாற்றப்பட்டது.</translation>
     </message>
     <message>
+        <source>Move preset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy preset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The project already has a preset named “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>You already have a preset named “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Delete preset</source>
         <translation>முன்னமைவை நீக்கு</translation>
     </message>
@@ -1244,6 +1530,18 @@ Output device: %2</source>
         <translation>முன்னமைவுகள்</translation>
     </message>
     <message>
+        <source>Project</source>
+        <translation type="unfinished">திட்டப்பணி</translation>
+    </message>
+    <message>
+        <source>Mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hidden by the project’s copy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Save as preset…</source>
         <translation>முன்னமைவாகச் சேமி…</translation>
     </message>
@@ -1270,6 +1568,22 @@ Output device: %2</source>
     <message>
         <source>Save</source>
         <translation>சேமி</translation>
+    </message>
+    <message>
+        <source>Copy to project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy to mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to mine</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Changed from the script’s %1. Click the bar to put it back.</source>
@@ -2287,6 +2601,57 @@ Output device: %2</source>
     <message>
         <source>Some of its files couldn’t be deleted. Close what uses them and try again.</source>
         <translation>இதன் சில கோப்புகளை நீக்க முடியவில்லை. அவற்றைப் பயன்படுத்துவதை மூடிவிட்டு மீண்டும் முயலவும்.</translation>
+    </message>
+    <message>
+        <source>Automation folder reset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Automation folder not reset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The karaoke templater and several scripts are now built into HikariSub. Old copies could replace or break them, so your automation folder was reset.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Your automation folder wasn’t reset: %1. Nothing was moved or deleted. HikariSub tries again at the next start.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moved</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Backup</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Now built in</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1: use %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1: %2</source>
+        <translation type="unfinished">%1: %2</translation>
+    </message>
+    <message>
+        <source>Scripts you copied in by hand aren’t reinstalled. They’re still in the backup folder.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Reinstall %n script(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Open backup folder</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -3755,6 +4120,137 @@ Output device: %2</source>
     </message>
 </context>
 <context>
+    <name>HikariSub.Explorer</name>
+    <message>
+        <source>Files in the project folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Explorer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>untitled</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to the trash</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move the folder “%1” and everything in it to the trash?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move “%1” to the trash?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">ரத்துசெய்</translation>
+    </message>
+    <message>
+        <source>New subtitle file name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>expanded</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>collapsed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New name for %1</source>
+        <translation type="unfinished">%1 க்கான புதிய பெயர்</translation>
+    </message>
+    <message>
+        <source>No files to show here.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open a folder as a project to see its files here.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open folder…</source>
+        <translation type="unfinished">கோப்புறையைத் திற…</translation>
+    </message>
+    <message>
+        <source>Show all files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New subtitle file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Group by name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Refresh</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open in a new tab</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open in this tab</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New subtitle file here</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rename</source>
+        <translation type="unfinished">மறுபெயரிடு</translation>
+    </message>
+    <message>
+        <source>Show in folder</source>
+        <translation type="unfinished">கோப்புறையில் காட்டு</translation>
+    </message>
+    <message>
+        <source>Copy path</source>
+        <translation type="unfinished">பாதையை நகலெடு</translation>
+    </message>
+    <message>
+        <source>Type a name.</source>
+        <translation type="unfinished">ஒரு பெயரைத் தட்டச்சு செய்யவும்.</translation>
+    </message>
+    <message>
+        <source>“%1” can’t be a name.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A name can’t contain %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>“%1” is already in this folder.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Couldn’t rename “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Couldn’t move “%1” to the trash.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Couldn’t create “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Project settings</source>
+        <translation type="unfinished">திட்டப்பணி அமைப்புகள்</translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.Export</name>
     <message>
         <source>Drawing removed</source>
@@ -4288,6 +4784,30 @@ Output device: %2</source>
         <translation>பட்டியல்</translation>
     </message>
     <message>
+        <source>Move font catalogue</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy font catalogue</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The project already has a catalogue named “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>You already have a catalogue named “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation type="unfinished">நகலெடு</translation>
+    </message>
+    <message>
         <source>%1 here, +%2 new</source>
         <translation>இங்கே %1, +%2 புதியவை</translation>
     </message>
@@ -4362,8 +4882,28 @@ Output device: %2</source>
         <translation>மறுபெயரிடு</translation>
     </message>
     <message>
+        <source>Catalogue tiers</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Load from a file</source>
         <translation>கோப்பிலிருந்து ஏற்று</translation>
+    </message>
+    <message>
+        <source>This project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1, hidden by the project’s copy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hidden by the project’s copy. Copy it to the project to use it there.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Show</source>
@@ -4436,6 +4976,22 @@ Output device: %2</source>
     <message>
         <source>Merge</source>
         <translation>ஒன்றிணை</translation>
+    </message>
+    <message>
+        <source>Copy to project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy to mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to mine</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Choose font catalogue file</source>
@@ -6374,6 +6930,10 @@ Failed to copy %2 fonts.</source>
         <translation>கடைசி மதிப்புகளுடன் அடுக்குகளை உருவாக்கு</translation>
     </message>
     <message>
+        <source>Typesetting graph…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Shift+click to set a shortcut</source>
         <translation>குறுக்குவிசையை அமைக்க Shift+சொடுக்கு</translation>
     </message>
@@ -7959,6 +8519,10 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Accept the timing assistant’s suggestion</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Explorer panel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -9940,6 +10504,10 @@ Failed to copy %2 fonts.</source>
         <translation>கடைசி மதிப்புகளுடன் அடுக்குகளை உருவாக்கு (&amp;l)</translation>
     </message>
     <message>
+        <source>T&amp;ypesetting graph…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Notes from a QC pass, kept in the file, with the lines they mark</source>
         <translation>QC சரிபார்ப்புக் குறிப்புகள், கோப்பில் வைக்கப்பட்டு, அவை குறிக்கும் வரிகளுடன்</translation>
     </message>
@@ -10991,6 +11559,14 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished">சேமி</translation>
     </message>
     <message>
+        <source>%1 in the project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 in mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Save to project</source>
         <translation type="unfinished"></translation>
     </message>
@@ -11061,6 +11637,10 @@ Failed to copy %2 fonts.</source>
 <context>
     <name>HikariSub.NodeEffects</name>
     <message>
+        <source>Opens node effects with the selected lines as the sources of a typesetting graph</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Edits this file’s node effects on a canvas, with a preview on the video</source>
         <translation type="unfinished"></translation>
     </message>
@@ -11082,6 +11662,10 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Source lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select the lines a typesetting graph should run on.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -11399,6 +11983,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished">வேலை செய்த கடைசி இயக்கத்திலிருந்து வைக்கப்பட்டது</translation>
     </message>
     <message>
+        <source>No lines to preview on. Select lines in the grid, then choose Subtitles › Typesetting graph….</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>No karaoke line of this graph’s style to preview on.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -11431,6 +12019,17 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>1 selected line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n selected lines</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
         <source>Line %1, %2</source>
         <translation type="unfinished">வரி %1, %2</translation>
     </message>
@@ -11444,6 +12043,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Graph menu</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Target: selected lines</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -11547,6 +12150,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Only the lines selected in “Source lines” are regenerated; the others keep their output.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select lines in “Source lines” first.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -11663,6 +12270,86 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Shake</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>One line per frame step, each moved a random distance up to the amplitude from the line’s position.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Typewriter</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each character appears after the one before it, by grapheme cluster, and stays to the line’s end.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fade by letter</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each character fades in after the one before it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Wobble</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The characters rise and fall in a wave, one line per character and frame step.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bounce</source>
+        <translation type="unfinished">துள்ளல்</translation>
+    </message>
+    <message>
+        <source>Each character jumps up after the one before it and comes part of the way back down, as myaa.Bounce does.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Focus lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Spikes at random angles around the line’s position, drawn again on every frame step.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Grain</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Random characters in the Grain font over each character, in two colours. Needs the Grain font.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Chromatic aberration</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Two coloured copies offset either side of the line, under the line itself.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Random move</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The line moves from its position to a random point within the distance.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Karaoke to alpha</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each syllable appears at its karaoke time and stays to the line’s end.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>A graph name can’t be empty, start or end with a space, end with a dot, or hold “karaoke”, a comma, a double quote, a control character or any of / \ : * ? &lt; &gt; |.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -11702,6 +12389,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>Each syllable’s letters are cut into thin horizontal stripes, which fade in as it is sung.</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>For selected lines</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Nodes</name>
@@ -11731,10 +12422,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Each unit once per step of time from `start` to `end` (absolute ms); without them, the unit’s own span.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>What the karaoke templater’s $variables give for the current unit and its line, rounded as the templater rounds them. Times of a syllable are from its line’s start.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -11779,10 +12466,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Calculate</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Arithmetic in doubles, as Lua does it. modulo is a - floor(a/b)*b; round is floor(a + 0.5). One-input operations use a.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -11919,6 +12602,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Only the units whose inline-fx ({\-name}, kept until the next one) is `fx`, as the templater’s fx modifier keeps them. Characters have their syllable’s; a line unit has none.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>What the karaoke templater’s $variables give for the current unit and its line, rounded as the templater rounds them. Times of a syllable are from its line’s start. line_alignment is the line’s first \an, or its Style’s alignment.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Arithmetic in doubles, as Lua does it. modulo is a - floor(a/b)*b; round is floor(a + 0.5); sine and cosine take a in degrees and round to millionths. One-input operations use a.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -14361,6 +15052,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>PATH-இல் கிடைக்கவில்லை.</translation>
     </message>
     <message>
+        <source>Not offered: this system can’t keep it to its own folders.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not offered: its command is inside an open project, which it could read.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Found on PATH.</source>
         <translation>PATH-இல் கிடைத்தது.</translation>
     </message>
@@ -14434,6 +15133,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Arguments</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Id</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -14555,6 +15258,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>For agents that connect over HTTP. Only this computer can reach it, and only with the token.</source>
         <translation>HTTP வழியாக இணையும் முகவர்களுக்கு. இந்தக் கணினி மட்டுமே, டோக்கனுடன் மட்டுமே இதை அணுக முடியும்.</translation>
+    </message>
+    <message>
+        <source>Let them read your skills</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Yours, this project’s and the built-in ones. Skills guide the agent; they grant no permission.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Copy setup</source>
@@ -15254,8 +15965,36 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>செருகுநிரல்களுக்குப் பயனர் கோப்புறை தேவை, இந்தப் பிரதியில் அது இல்லை.</translation>
     </message>
     <message>
+        <source>The package is larger than 1 MiB, so an agent can’t install it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>HikariSub can’t read %1.</source>
         <translation>HikariSub ஆல் %1 ஐப் படிக்க முடியவில்லை.</translation>
+    </message>
+    <message>
+        <source>There is no user folder to write the plugin to.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>That is not a plugin id.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>hikari-plugin.json isn’t valid: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>HikariSub can’t write %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Plugins are not available.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The package changed after the user approved it, so it wasn’t installed.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>The plugin changed while its update downloaded.</source>
@@ -15480,6 +16219,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>%1 waits for you</source>
         <translation>%1 உங்களுக்காகக் காத்திருக்கிறது</translation>
+    </message>
+    <message>
+        <source>By HikariSub</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>New</source>
@@ -16154,8 +16897,32 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>project.local.toml இல் அமைக்கப்பட்டது</translation>
     </message>
     <message>
+        <source>Not set</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Use yours</source>
         <translation>உங்களுடையதைப் பயன்படுத்து</translation>
+    </message>
+    <message>
+        <source>Source language</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Detect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Target language</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Export format</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Used for files that haven’t been exported yet.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Overridden in this project</source>
@@ -17053,6 +17820,32 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>Removed</source>
         <translation type="unfinished"></translation>
     </message>
+    <message numerus="yes">
+        <source>%1: %n</source>
+        <translation>
+            <numerusform>%1: %n</numerusform>
+            <numerusform>%1: %n</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Changed, %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New file, %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>New file, %n line(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Changed, +%1 −%2 lines</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message>
         <source>Re&amp;view</source>
         <translation type="unfinished"></translation>
@@ -17108,6 +17901,59 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Cancel</source>
         <translation type="unfinished">ரத்துசெய்</translation>
+    </message>
+    <message>
+        <source>Quit</source>
+        <translation type="unfinished">வெளியேறு</translation>
+    </message>
+    <message>
+        <source>Keep the AI’s file changes?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>and %n more</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Discard all</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Some files weren’t kept.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>They changed on disk after the AI wrote them, or couldn’t be written. They stay in the Review panel.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The file couldn’t be written.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>It stays in the review. Check that its folder exists and that you can write there, then keep it again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Project files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n file(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Also put back %n file(s) changed on disk after they were kept</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <source>Keep AI change</source>
@@ -17189,6 +18035,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Sub-agent %1</source>
+        <translation>துணை முகவர் %1</translation>
+    </message>
+    <message>
         <source>By %1</source>
         <translation type="unfinished"></translation>
     </message>
@@ -17209,6 +18059,22 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>You changed it after this change. Undo puts it back as it was before the AI, which drops your edit.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1, changed on disk since</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The file changed on disk after the AI wrote its version. Keep replaces it with the AI’s version.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep anyway</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not a text file, or too large to compare.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -17245,6 +18111,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Show the Review panel</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sub-agents: %1</source>
+        <translation>துணை முகவர்கள்: %1</translation>
     </message>
 </context>
 <context>
@@ -18722,6 +19592,22 @@ because it was edited.</source>
         <translation>“%1” ஐ அகராதியில் சேர்</translation>
     </message>
     <message>
+        <source>This project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add to project dictionary</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add to my dictionary</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Fix suggestions</source>
         <translation>திருத்தப் பரிந்துரைகள்</translation>
     </message>
@@ -18874,6 +19760,10 @@ because it was edited.</source>
     <message>
         <source>Ignore all</source>
         <translation>அனைத்தையும் புறக்கணிக்கவும்</translation>
+    </message>
+    <message>
+        <source>Where to add</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Add to dictionary</source>
@@ -22335,6 +23225,26 @@ Styles deleted:
         <translation>%1 (நேரமிடல் இயல்பு)</translation>
     </message>
     <message>
+        <source>Move preset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy preset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The project already has a preset named “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>You already have a preset named “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation type="unfinished">நகலெடு</translation>
+    </message>
+    <message>
         <source>Delete preset</source>
         <translation>முன்னமைவை நீக்கு</translation>
     </message>
@@ -22363,6 +23273,22 @@ Styles deleted:
         <translation>கடைசியாகப் பயன்படுத்தியவை</translation>
     </message>
     <message>
+        <source>%1, hidden by the project’s copy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hidden by the project’s copy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Preset commands</source>
         <translation>முன்னமைவுக் கட்டளைகள்</translation>
     </message>
@@ -22377,6 +23303,22 @@ Styles deleted:
     <message>
         <source>Delete preset…</source>
         <translation>முன்னமைவை நீக்கு…</translation>
+    </message>
+    <message>
+        <source>Copy to project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy to mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to mine</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Use in the Timing layout</source>
@@ -24461,6 +25403,22 @@ or codecs or a splitter may be missing</source>
         <translation>இயல்புநிலை குறிச்சொற்களை மீட்டமை</translation>
     </message>
     <message>
+        <source>Copy tag</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move tag</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The project already has a tag named “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>You already have a tag named “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Type the tag, without the backslash.</source>
         <translation>பின்சாய்வுக்கோடு இல்லாமல் குறிச்சொல்லைத் தட்டச்சு செய்யவும்.</translation>
     </message>
@@ -24635,6 +25593,26 @@ or codecs or a splitter may be missing</source>
         <translation>எல்லா மாற்றங்களையும் செயல்தவிர்</translation>
     </message>
     <message>
+        <source>Copy shape</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move shape</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The project already has a shape named “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>You already have a shape named “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation type="unfinished">நகலெடு</translation>
+    </message>
+    <message>
         <source>Type a name.</source>
         <translation>ஒரு பெயரைத் தட்டச்சு செய்யவும்.</translation>
     </message>
@@ -24682,6 +25660,18 @@ or codecs or a splitter may be missing</source>
         <translation>இயல்புநிலைகளை மீட்டமை</translation>
     </message>
     <message>
+        <source>%1, hidden by the project’s copy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>yours</source>
         <translation>உங்களுடையது</translation>
     </message>
@@ -24696,6 +25686,10 @@ or codecs or a splitter may be missing</source>
     <message>
         <source>The list keeps at least one shape.</source>
         <translation>பட்டியலில் குறைந்தது ஒரு வடிவம் இருக்கும்.</translation>
+    </message>
+    <message>
+        <source>Hidden by the project’s copy. Copy it to the project to use it there.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Name</source>
@@ -24768,6 +25762,22 @@ or codecs or a splitter may be missing</source>
     <message>
         <source>Redo “%1”</source>
         <translation>“%1” மீண்டும்செய்</translation>
+    </message>
+    <message>
+        <source>Copy to project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy to mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to mine</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Restore default shapes…</source>
@@ -25797,6 +26807,10 @@ do not work on comments</source>
         <translation>டைப்செட்டிங்</translation>
     </message>
     <message>
+        <source>Hidden by the project’s copy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>the file is larger than %1 bytes</source>
         <translation>கோப்பு %1 பைட்டுகளை விடப் பெரியது</translation>
     </message>
@@ -25957,6 +26971,22 @@ do not work on comments</source>
         <translation>பெயர்</translation>
     </message>
     <message>
+        <source>Save to</source>
+        <translation type="unfinished">சேமிக்கும் இடம்</translation>
+    </message>
+    <message>
+        <source>This project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Where to save</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Saving replaces the layout %1.</source>
         <translation>சேமித்தால் %1 தளவமைப்பு மாற்றப்படும்.</translation>
     </message>
@@ -25989,8 +27019,48 @@ do not work on comments</source>
         <translation>இதைப் பயன்படுத்தும் தாவல்கள், இது தொடங்கிய முன்னமைவின் கீழ் தங்கள் அமைப்பை வைத்திருக்கும்.</translation>
     </message>
     <message>
+        <source>Move layout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy layout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The project already has a layout named “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>You already have a layout named “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation type="unfinished">நகலெடு</translation>
+    </message>
+    <message>
+        <source>Copy to project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy to mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Saved layouts</source>
         <translation>சேமித்த தளவமைப்புகள்</translation>
+    </message>
+    <message>
+        <source>%1, hidden by the project’s copy</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>%1, cannot be used</source>
@@ -25999,6 +27069,10 @@ do not work on comments</source>
     <message>
         <source>Cannot be used: %1</source>
         <translation>பயன்படுத்த முடியாது: %1</translation>
+    </message>
+    <message>
+        <source>Layout tiers</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Rename (F2)</source>

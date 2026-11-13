@@ -12,7 +12,8 @@ export const kGroups = {
         "furigana; the karaoke check; the templater's preview and apply; the user's own forced aligner.",
     automation: "Automation macros and AI-written Lua.",
     effects: "The node-effect editor's node types and graphs.",
-    plugins: "Installed plugins and what they offer.",
+    plugins: "Plugins: the installed ones, their manifests and commands; scaffolding a new one from the guide's " +
+        "template and installing it once the user approves.",
     app: "Workspace panels and settings.",
 } as const;
 export type Group = keyof typeof kGroups;
@@ -114,6 +115,21 @@ const kPlacements: Partial<Record<OperationName, Placement>> = {
     "effects.preview": { group: "effects" },
     "effects.save": { group: "effects" },
     "effects.apply": { group: "effects" },
+    "plugins.list": { group: "plugins" },
+    "plugins.manifest": { group: "plugins" },
+    "plugins.scaffold": {
+        group: "plugins",
+        description: "Writes a plugin into the AI plugins folder from the plugin guide's template and packs it; " +
+            "nothing installs. Give its commands, and main.lua as code, or the template registers each command. " +
+            "It stays restricted (sandboxed) unless tier is unrestricted. Then plugins_install asks the user.",
+    },
+    "plugins.review": { group: "plugins" },
+    "plugins.install": {
+        group: "plugins",
+        description: "Asks the user to install a plugin plugins_scaffold made, or a .hikariplugin they granted; " +
+            "every install asks, in every mode. A declined install answers what the user said.",
+    },
+    "plugins.run": { group: "plugins" },
     "panels.list": { group: "app" },
     "panels.open": { group: "app" },
     "panels.close": { group: "app" },

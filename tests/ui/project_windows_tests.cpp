@@ -11,13 +11,20 @@
 #include "hikari/application/owned_file.h"
 #include "hikari/application/session_file.h"
 #include "docking.h"
+#include "hikari/application/all_tags.h"
+#include "hikari/application/shape_presets.h"
+#include "list_files.h"
 #include "line_table_model.h"
 #include "settings_store.h"
 #include "shell_controller.h"
+#include "shift_times_controller.h"
 #include "spelling/fake_spelling.h"
+#include "visual_tools_controller.h"
+#include "workspace_layout.h"
 
 #include <QDir>
 #include <QFile>
+#include <QFileInfo>
 #include <QGuiApplication>
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -101,6 +108,7 @@ class ProjectWindowsTests : public QObject {
         engine->setInitialProperties(application->qmlProperties());
         engine->loadFromModule("Hikari.Ui", "Main");
         QVERIFY(!engine->rootObjects().isEmpty());
+        QVERIFY(QMetaObject::invokeMethod(engine->rootObjects().first(), "buildMenus"));
         window = qobject_cast<QQuickWindow *>(engine->rootObjects().first());
         QVERIFY(window);
         QVERIFY(QTest::qWaitForWindowExposed(window));
@@ -243,7 +251,7 @@ private slots:
         delete application;
         application = nullptr;
         for (const char *name : {"settings.toml", "hotkeys.toml", "state.json", "last-session.json", "projects.hksession",
-                                 "gone.hksession"})
+                                 "gone.hksession", "fonts.toml", "layouts.json", "layout.json", "shapes.toml", "tags.toml"})
             QFile::remove(home.filePath(QLatin1String(name)));
         QDir(home.filePath(QStringLiteral("projects"))).removeRecursively();
         QDir(home.filePath(QStringLiteral("Dictionary"))).removeRecursively();
@@ -614,6 +622,101 @@ private slots:
         QCOMPARE(marks(other), (QVariantList{6, 9}));
     }
 
+    void aProjectsWordsSpellOnlyInItsWindowsAndAddToDictionaryGoesThere()
+    {
+        writeAll(home.filePath(QStringLiteral("Dictionary/en_US.aff")), {});
+        writeAll(home.filePath(QStringLiteral("Dictionary/en_US.dic")), "1\nHello\n");
+        start(fakes::FakeSpelling::loader());
+        const QString plain = folder("plain");
+        const QString show = folder("show", true);
+        const QString words = show + QStringLiteral("/.hikari/dictionary.txt");
+        writeAll(words, "Haruhi\n");
+        QCOMPARE(application->openFolder(plain, 0).value(QStringLiteral("window")).toInt(), 0);
+        QVERIFY(application->openFile(writeAss(plain + QStringLiteral("/mine.ass"), "Hello Haruhi Kyon")));
+        QTRY_COMPARE(marks(0).size(), 4);
+        const int w = openProjectWindow(show);
+        QVERIFY(w > 0);
+        QVERIFY(application->openFile(writeAss(show + QStringLiteral("/ep01.ass"), "Hello Haruhi Kyon")));
+        QTRY_COMPARE(marks(w).size(), 2);
+
+        QVERIFY(application->addEditorWord(QStringLiteral("Kyon"), true));
+        QCOMPARE(readAll(words), QByteArray("Haruhi\nKyon\n"));
+        QVERIFY(!application->addedDictionaryWords().contains(QStringLiteral("Kyon")));
+        QTRY_VERIFY(marks(w).isEmpty());
+        QCOMPARE(marks(0).size(), 4);
+
+        auto *menu = shell(w)->findChild<QObject *>(QStringLiteral("lineTextMenu"));
+        QVERIFY(menu);
+        QVERIFY(QMetaObject::invokeMethod(menu, "aboutToShow"));
+        QCOMPARE(menu->property("dictionaryTier").toString(), QStringLiteral("project"));
+        QVERIFY(QMetaObject::invokeMethod(menu, "addWord", Q_ARG(QVariant, QStringLiteral("Itsuki")),
+                                          Q_ARG(QVariant, QStringLiteral("mine"))));
+        QVERIFY(application->addedDictionaryWords().contains(QStringLiteral("Itsuki")));
+        QVERIFY(!readAll(words).contains("Itsuki"));
+        QVERIFY(application->settingsStore()->list("workspace.saveTiers").contains(QStringLiteral("dictionary\tmine")));
+        QVERIFY(QMetaObject::invokeMethod(menu, "aboutToShow"));
+        QCOMPARE(menu->property("dictionaryTier").toString(), QStringLiteral("mine"));
+    }
+
+    void theExportDefaultComesAfterTheFilesOwnChoiceAndBeforeTheLastExport()
+    {
+        start();
+        const QString plain = folder("plain");
+        const QString show = folder("show", true);
+        writeAll(show + QStringLiteral("/.hikari/project.toml"),
+                 "version = 1\n[export]\nformat = \"vtt\"\nmergeOverlaps = true\n");
+        const QString exported = show + QStringLiteral("/done.ass");
+        application->settingsStore()->setValue(
+            QStringLiteral("export.choices"),
+            QStringList{QFileInfo(exported).absoluteFilePath() + QStringLiteral("\t{\"format\":\"mdvd\",\"fps\":25}"),
+                        QStringLiteral("\t{\"format\":\"sbv\",\"lines\":\"selected\"}")});
+        const auto setup = [&] { return application->exportSetup(); };
+        const auto format = [&] { return setup().value(QStringLiteral("format")).toString(); };
+        const auto option = [&](const char *name) {
+            return setup().value(QStringLiteral("options")).toMap().value(QLatin1String(name));
+        };
+
+        QCOMPARE(application->openFolder(plain, 0).value(QStringLiteral("window")).toInt(), 0);
+        QVERIFY(application->openFile(writeAss(plain + QStringLiteral("/new.ass"), "one")));
+        QCOMPARE(format(), QStringLiteral("sbv"));
+
+        const int w = openProjectWindow(show);
+        QVERIFY(w > 0);
+        QVERIFY(application->openFile(writeAss(show + QStringLiteral("/ep01.ass"), "one")));
+        QCOMPARE(format(), QStringLiteral("vtt"));
+        QVERIFY(option("mergeOverlaps").toBool());
+        QCOMPARE(option("lines").toString(), QStringLiteral("selected"));
+        QVERIFY(application->openFile(writeAss(exported, "one")));
+        const QVariantList tabs = application->tabs();
+        for (int i = 0; i < tabs.size(); ++i)
+            if (tabs[i].toMap().value(QStringLiteral("title")).toString().contains(QStringLiteral("done.ass")))
+                application->selectTab(i);
+        QTRY_COMPARE(setup().value(QStringLiteral("name")).toString(), QStringLiteral("done"));
+        QCOMPARE(format(), QStringLiteral("mdvd"));
+        QCOMPARE(option("fps").toDouble(), 25.0);
+        QVERIFY(!readAll(show + QStringLiteral("/.hikari/project.toml")).contains("mdvd"));
+    }
+
+    void theProjectsTargetLanguageIsInlineTranslatesDefault()
+    {
+        start();
+        application->settingsStore()->setValue(QStringLiteral("ai.inline.translateTo"), QStringLiteral("German"));
+        const QString show = folder("show", true);
+        writeAll(show + QStringLiteral("/.hikari/project.toml"),
+                 "version = 1\n[translation]\nsourceLanguage = \"Japanese\"\ntargetLanguage = \"Polish\"\n");
+        const QString plain = folder("plain");
+        QCOMPARE(application->openFolder(plain, 0).value(QStringLiteral("window")).toInt(), 0);
+        QVERIFY(application->openFile(writeAss(plain + QStringLiteral("/mine.ass"), "one")));
+        QCOMPARE(application->inlineAi()->translateTo(), QStringLiteral("German"));
+        const int w = openProjectWindow(show);
+        QVERIFY(w > 0);
+        QCOMPARE(application->inlineAi()->translateTo(), QStringLiteral("Polish"));
+        QVERIFY(application->projectOverrides(w).contains(QStringLiteral("translation.sourceLanguage")));
+        application->activateShellWindow(0);
+        QTRY_COMPARE(application->workspace().activeWindow(), 0);
+        QCOMPARE(application->inlineAi()->translateTo(), QStringLiteral("German"));
+    }
+
     void aProjectsMissingDictionaryLeavesMySpellingOn()
     {
         writeAll(home.filePath(QStringLiteral("Dictionary/en_US.aff")), {});
@@ -842,6 +945,25 @@ private slots:
                      .value(QStringLiteral("used")).toString(), QStringLiteral("untrusted"));
     }
 
+    void theCredentialsFileOpensThroughTheDesktopHandoff()
+    {
+        start();
+        const QString show = folder("credentialed", true);
+        writeAll(show + QStringLiteral("/.hikari/project.toml"), "version = 1\n");
+        const int w = openProjectWindow(show);
+        QVERIFY(w >= 0);
+        QList<QUrl> opened;
+        auto routes = backends::desktop::replaceRoutes({[&](const QUrl &url) { opened << url; return true; }, {}, {}});
+        auto restore = qScopeGuard([&] { backends::desktop::replaceRoutes(routes); });
+        application->openProjectCredentials(w);
+        QVERIFY(opened.isEmpty());
+        const QString credentials = show + QStringLiteral("/.hikari/credentials.toml");
+        writeAll(credentials, "version = 1\n[keys]\nopenai = \"sk-handed-off\"\n");
+        application->openProjectCredentials(w);
+        QCOMPARE(opened.size(), 1);
+        QCOMPARE(QFileInfo(opened.first().toLocalFile()).canonicalFilePath(), QFileInfo(credentials).canonicalFilePath());
+    }
+
     void aKeyInProjectTomlIsIgnoredAndMovesToTheCredentialsFile()
     {
         start();
@@ -1004,7 +1126,7 @@ private slots:
         QCOMPARE(styles.storeStyles(), QStringList{QStringLiteral("Project show")});
         QCOMPARE(application->settingsStore()->text("styles.lastCatalog"), QStringLiteral("Show"));
 
-        QVERIFY(QMetaObject::invokeMethod(named(shell(w), "styleManagerMenuItem"), "triggered"));
+        QVERIFY(QMetaObject::invokeMethod(named(shell(w), "styleManagerMenuItem")->property("action").value<QObject *>(), "trigger"));
         auto *manager = shell(w)->findChild<QQuickWindow *>(QStringLiteral("styleManager"));
         QTRY_VERIFY(manager && manager->isVisible());
         QQuickItem *content = manager->contentItem();
@@ -1069,6 +1191,162 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(field("newCatalog"), "click"));
         QTRY_VERIFY(popover->property("opened").toBool());
         QCOMPARE(create->property("text").toString(), QStringLiteral("Save to mine"));
+    }
+
+    void fontCatalogsAndLayoutsHaveAProjectTier()
+    {
+        start();
+        const QString show = folder("tieredlists", true);
+        const QString hikariDir = show + QStringLiteral("/.hikari");
+        auto &fonts = application->fontCatalogs();
+        QVERIFY(fonts.addCatalog(QStringLiteral("Signs"), false));
+        QVERIFY(!fonts.hasProject());
+        const int w = openProjectWindow(show);
+        QVERIFY(w >= 0);
+        QVERIFY(!QDir(hikariDir).exists(QStringLiteral("catalogs")));
+        QTRY_VERIFY(fonts.hasProject());
+        QVERIFY(fonts.addCatalog(QStringLiteral("signs"), false, QStringLiteral("project")));
+        fonts.setFontsInCatalog(QStringLiteral("signs"), {QStringLiteral("Arial")}, true);
+        QCOMPARE(rowKeys(fonts.catalogRows()),
+                 (QStringList{QStringLiteral("project:signs"), QStringLiteral("mine:Signs (hidden)")}));
+        QCOMPARE(fonts.catalogNames(), QStringList{QStringLiteral("signs")});
+        QCOMPARE(fonts.catalogSize(QStringLiteral("signs")), 1);
+        QCOMPARE(fonts.catalogSize(QStringLiteral("Signs"), QStringLiteral("mine")), 0);
+        QVERIFY(fonts.save());
+        const QString projectFonts = hikariDir + QStringLiteral("/catalogs/fonts.toml");
+        const QString mineFonts = QString::fromStdU16String((fonts.catalogDir() / "fonts.toml").u16string());
+        QVERIFY(readAll(projectFonts).contains("Arial"));
+        QVERIFY(!readAll(mineFonts).contains("Arial"));
+
+        const QVariantList clashes = fonts.catalogClashes(QStringLiteral("Signs"), QStringLiteral("mine"));
+        QCOMPARE(clashes.size(), 1);
+        QCOMPARE(clashes[0].toMap().value(QStringLiteral("suggestion")).toString(), QStringLiteral("signs (2)"));
+        const QVariantList rename{QVariantMap{{QStringLiteral("name"), QStringLiteral("Signs")},
+                                              {QStringLiteral("action"), QStringLiteral("rename")},
+                                              {QStringLiteral("newName"), QString()}}};
+        QCOMPARE(fonts.copyCatalog(QStringLiteral("Signs"), QStringLiteral("mine"), rename), QStringLiteral("Signs (2)"));
+        QCOMPARE(fonts.moveCatalog(QStringLiteral("Signs (2)"), QStringLiteral("project")), QStringLiteral("Signs (2)"));
+        QCOMPARE(rowKeys(fonts.catalogRows()), (QStringList{QStringLiteral("project:signs"), QStringLiteral("mine:Signs (hidden)"),
+                                                            QStringLiteral("mine:Signs (2)")}));
+        QVERIFY(readAll(mineFonts).contains("Signs (2)"));
+        QVERIFY(!readAll(projectFonts).contains("Signs (2)"));
+
+        auto *layouts = qobject_cast<ui::WorkspaceLayoutController *>(shell(w)->property("workspaceLayout").value<QObject *>());
+        QVERIFY(layouts && layouts->hasProject());
+        QTRY_VERIFY(layouts->saveLayoutAs(QStringLiteral("Review")));
+        QVERIFY(!QFile::exists(hikariDir + QStringLiteral("/layouts.json")));
+        QVERIFY(layouts->saveLayoutAs(QStringLiteral("review"), QStringLiteral("project")));
+        QCOMPARE(rowKeys(layouts->savedLayouts()),
+                 (QStringList{QStringLiteral("project:review"), QStringLiteral("mine:Review (hidden)")}));
+        const QString projectLayouts = hikariDir + QStringLiteral("/layouts.json");
+        const QString mineLayouts = layouts->savedLayoutsFile();
+        const QByteArray projectBefore = readAll(projectLayouts), mineBefore = readAll(mineLayouts);
+        QVERIFY(projectBefore.contains("review"));
+        QVERIFY(layouts->applySavedLayout(QStringLiteral("Review")));
+        QCOMPARE(layouts->layout(), QStringLiteral("review"));
+        QCOMPARE(readAll(projectLayouts), projectBefore);
+        QCOMPARE(readAll(mineLayouts), mineBefore);
+        QCOMPARE(layouts->layoutClashes(QStringLiteral("review"), QStringLiteral("project")).size(), 1);
+        const QVariantList replace{QVariantMap{{QStringLiteral("name"), QStringLiteral("review")}, {QStringLiteral("action"), QStringLiteral("replace")}}};
+        QCOMPARE(layouts->moveLayout(QStringLiteral("review"), QStringLiteral("project"), replace), QStringLiteral("review"));
+        QCOMPARE(rowKeys(layouts->savedLayouts()), QStringList{QStringLiteral("mine:review")});
+        QVERIFY(!readAll(projectLayouts).contains("review"));
+        application->resolveClose(discardAll(application->reviewCloseProject(w)));
+        QTRY_VERIFY(application->projectRoot(w).isEmpty());
+        QTRY_VERIFY(!layouts->hasProject());
+        QCOMPARE(rowKeys(layouts->savedLayouts()), QStringList{QStringLiteral("mine:review")});
+    }
+
+    void shapesAndTagsReadTheProjectsLists()
+    {
+        start();
+        const QString show = folder("tieredtools", true);
+        application::visual::ShapePreset star{u"Star", u"m 0 0 l 5 5", 0, 0};
+        application::visual::ShapePreset circle{u"Circle", u"m 0 0 l 9 9", 0, 0};
+        ui::ListFile::make(show + QStringLiteral("/.hikari/shapes.toml"), {}, ui::kShapesFormat, nullptr)
+            ->write(ui::shapesToToml({star, circle}));
+        auto blur = application::visual::AllTagsSetting::named(u"Blur");
+        blur.tag = u"be";
+        ui::ListFile::make(show + QStringLiteral("/.hikari/tags.toml"), {}, ui::kTagsFormat, nullptr)->write(ui::tagsToToml({blur}));
+        const int w = openProjectWindow(show);
+        QVERIFY(w >= 0);
+        auto *tools = shell(w)->property("visualTools").value<ui::VisualToolsController *>();
+        QVERIFY(tools);
+        const auto *shapes = tools->shapePresets();
+        QVERIFY(shapes && shapes->size() >= 2);
+        QCOMPARE(shapes->at(0).name, u"Star");
+        QCOMPARE(shapes->at(1).name, u"Circle");
+        const auto circles = std::ranges::count_if(*shapes, [](const auto &p) {
+            return application::visual::sameNameIgnoringCase(p.name, u"circle");
+        });
+        QCOMPARE(circles, 1);
+        const auto *tags = tools->allTagsSettings();
+        QVERIFY(tags && !tags->empty());
+        QCOMPARE(tags->at(0).name, u"Blur");
+        QCOMPARE(tags->at(0).tag, u"be");
+        QCOMPARE(std::ranges::count_if(*tags, [](const auto &t) { return t.name == u"blur"; }), 0);
+        QVERIFY(application->visualTools().shapePresets()->at(0).name == u"Star");
+    }
+
+    void shiftTimesPresetsHaveAProjectTier()
+    {
+        start();
+        const QString show = folder("presets", true);
+        const QString presets = show + QStringLiteral("/.hikari/presets.toml");
+        writeAll(presets, "version = 1\n[shiftTimes]\npresets = ['{\"name\":\"Late\",\"values\":{\"timeMs\":900}}']\n");
+        auto &shift = application->shiftTimesSettings();
+        auto values = shift.settingsMap();
+        values.insert(QStringLiteral("timeMs"), 100);
+        shift.setSettingsMap(values);
+        QVERIFY(shift.savePreset(QStringLiteral("shift"), QStringLiteral("Late")));
+        QVERIFY(!shift.hasProject());
+
+        const int w = openProjectWindow(show);
+        QVERIFY(w >= 0);
+        QVERIFY(application->openFile(writeAss(show + QStringLiteral("/ep.ass"), "a")));
+        QTRY_VERIFY(shift.hasProject());
+        QCOMPARE(rowKeys(shift.shiftPresetRows()), (QStringList{QStringLiteral("project:Late"), QStringLiteral("mine:Late (hidden)")}));
+        QVERIFY(shift.applyPreset(QStringLiteral("shift"), QStringLiteral("Late")));
+        QCOMPARE(shift.settings().timeMs, 900);
+
+        QVERIFY(QMetaObject::invokeMethod(named(shell(w), "panelShowTiming"), "triggered"));
+        QQuickItem *content = shell(w)->contentItem();
+        const auto field = [&](const char *name) { return item(content, QLatin1String(name)); };
+        QTRY_VERIFY(field("shiftPresetTier") && field("shiftPresetTier")->isVisible());
+        QCOMPARE(field("shiftPresetTier")->property("text").toString(), QStringLiteral("Project"));
+        QVERIFY(named(shell(w), "shiftRenamePreset")->property("enabled").toBool());
+
+        QVERIFY(shift.applyPreset(QStringLiteral("shift"), QStringLiteral("Late"), QStringLiteral("mine")));
+        QCOMPARE(shift.settings().timeMs, 100);
+        QCOMPARE(field("shiftPresetTier")->property("text").toString(), QStringLiteral("Mine"));
+        QTRY_VERIFY(!named(shell(w), "shiftRenamePreset")->property("enabled").toBool());
+        QVERIFY(!named(shell(w), "shiftDeletePreset")->property("enabled").toBool());
+        QCOMPARE(named(shell(w), "shiftCopyPresetToTier")->property("text").toString(), QStringLiteral("Copy to project"));
+
+        QVERIFY(QMetaObject::invokeMethod(field("shiftPresetBar"), "transfer", Q_ARG(QVariant, false)));
+        auto *review = shell(w)->findChild<QObject *>(QStringLiteral("shiftPresetClashReview"));
+        QTRY_VERIFY(review && review->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(review, "setAll", Q_ARG(QVariant, QStringLiteral("rename"))));
+        QVERIFY(QMetaObject::invokeMethod(review, "finish", Q_ARG(QVariant, true)));
+        QTRY_VERIFY(readAll(presets).contains("Late (2)"));
+
+        auto *popover = shell(w)->findChild<QObject *>(QStringLiteral("shiftPresetPopover"));
+        QVERIFY(QMetaObject::invokeMethod(popover, "openFor", Q_ARG(QVariant, QString())));
+        QTRY_VERIFY(popover->property("opened").toBool());
+        auto *popoverContent = popover->property("contentItem").value<QQuickItem *>();
+        QQuickItem *save = item(popoverContent, QStringLiteral("shiftPresetSave"));
+        QCOMPARE(save->property("text").toString(), QStringLiteral("Save to project"));
+        item(popoverContent, QStringLiteral("shiftPresetName"))->setProperty("text", QStringLiteral("House"));
+        QVERIFY(QMetaObject::invokeMethod(save, "click"));
+        QTRY_VERIFY(readAll(presets).contains("House"));
+        QCOMPARE(shift.shiftPresetTier(), QStringLiteral("project"));
+
+        QVERIFY(QMetaObject::invokeMethod(popover, "openFor", Q_ARG(QVariant, QString())));
+        QTRY_VERIFY(popover->property("opened").toBool());
+        QVERIFY(QMetaObject::invokeMethod(popover->findChild<QObject *>(QStringLiteral("shiftPresetSaveTierMine")), "triggered"));
+        QCOMPARE(save->property("text").toString(), QStringLiteral("Save to mine"));
+        QVERIFY(application->settingsStore()->list("workspace.saveTiers").contains(QStringLiteral("shiftPresets\tmine")));
+        QVERIFY(QMetaObject::invokeMethod(popover, "revert"));
     }
 
     void userOnlyStoresIgnoreTheProjectsFiles()

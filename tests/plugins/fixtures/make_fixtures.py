@@ -85,6 +85,7 @@ def media():
     folder.mkdir(parents=True, exist_ok=True)
     (folder / "hello.svg").write_text(icon("#2f6fde", '<path d="M14 18h36v22H30l-10 8v-8h-6z"/>'))
     (folder / "native.svg").write_text(icon("#7a4fd6", '<circle cx="32" cy="32" r="14"/><path d="M32 10v10M32 44v10M10 32h10M44 32h10"/>'))
+    (folder / "macro-chains.svg").write_text(icon("#145c4c", '<path d="M14 22h14M14 32h22M14 42h14"/><path d="M38 18l10 10-10 10"/>'))
     (folder / "glossary.svg").write_text(icon("#1f9d74", '<path d="M16 14h22a8 8 0 0 1 8 8v28H24a8 8 0 0 1-8-8z"/><path d="M24 26h14M24 34h10"/>'))
     panel, line, accent, text = (36, 38, 44), (58, 61, 70), (47, 111, 222), (150, 154, 166)
     rects = [(0, 0, 1280, 40, (28, 30, 34)), (24, 64, 1256, 104, panel), (40, 78, 360, 90, text),
@@ -142,9 +143,9 @@ def listed(version, package, **extra):
     return v
 
 
-def plugin(id, categories, versions):
-    return {"id": id, "author": "ana", "authorName": "Ana Fansubs", "repo": f"https://github.com/ana/{id.split('.')[-1]}",
-            "publicKey": public_key("a"), "categories": categories, "versions": versions}
+def plugin(id, categories, versions, author="ana", author_name="Ana Fansubs", key="a"):
+    return {"id": id, "author": author, "authorName": author_name, "repo": f"https://github.com/{author}/{id.split('.')[-1]}",
+            "publicKey": public_key(key), "categories": categories, "versions": versions}
 
 
 def marketplace(hello_1_0, hello_1_1, native):
@@ -163,7 +164,11 @@ def marketplace(hello_1_0, hello_1_1, native):
                      listed("2.0.0", hello_1_0, id="com.example.glossary", name="Glossary",
                             summary="Looks words up in an online dictionary", icon=f"{MARKET}m/glossary.svg",
                             screenshots=[shot],
-                            permissions={"network": {"hosts": ["api.example.com"], "reason": "Looks words up"}})])]}
+                            permissions={"network": {"hosts": ["api.example.com"], "reason": "Looks words up"}})]),
+                 plugin("hikarisub.macro-chains", ["Utilities"], [
+                     listed("1.0.0", hello_1_0, id="hikarisub.macro-chains", name="Macro chains", authors=["altqx"],
+                            summary="Records macros and replays them as one", icon=f"{MARKET}m/macro-chains.svg")],
+                        author="hikarisub", author_name="altqx", key="b")]}
     data = (json.dumps(index, indent=2, ensure_ascii=False) + "\n").encode()
     (HERE / "marketplace").mkdir(exist_ok=True)
     (HERE / "marketplace/index.json").write_bytes(data)

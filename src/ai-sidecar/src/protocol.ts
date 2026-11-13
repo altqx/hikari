@@ -27,6 +27,8 @@ export const ErrorCode = {
     hikariApi: -32000,
     /** A provider failed; `data` is the ErrorData with its kind, HTTP status and message. */
     providerFailed: -32010,
+    /** Qt refused a `_hikari/task.*` request; `data.code` says why. */
+    taskRefused: -32020,
 } as const;
 
 export const Method = {
@@ -65,6 +67,11 @@ export const Method = {
     mcpServersSet: "_hikari/mcpServers.set",
     mcpServerStatus: "_hikari/mcpServers.status",
     mcpAdmit: "_hikari/mcpServers.admit",
+    taskCapabilities: "_hikari/task.capabilities",
+    taskRequest: "_hikari/task.request",
+    taskStatus: "_hikari/task.status",
+    taskWait: "_hikari/task.wait",
+    taskCancel: "_hikari/task.cancel",
 } as const;
 
 export interface InitializeParams {
@@ -121,6 +128,65 @@ export interface SessionNewParams {
     contextTokens?: number;
     /** Compacts the conversation by itself at 90% of the context window. */
     autoCompact?: boolean;
+    /** The session may hand tasks to sub-agents; only a root thread's. */
+    delegate?: boolean;
+    /** The session is a sub-agent's. */
+    task?: SessionTask;
+}
+
+/** A sub-agent's write scope: one Document, and only these Lines when `lines` is set. */
+export interface Scope {
+    document: number;
+    lines?: number[];
+}
+
+export interface SessionTask {
+    parent: string;
+    taskId: string;
+    scope: Scope;
+}
+
+export type TargetRef = { agent: string } | { providerId: string; model: string };
+
+export type AgentModeId = "manual" | "auto" | "full";
+
+export interface TaskCapabilitiesResult {
+    targets: { target: TargetRef; label: string }[];
+    running: number;
+    limit: number;
+    mode: AgentModeId;
+}
+
+export interface TaskRequestParams {
+    sessionId: string;
+    task: string;
+    title?: string;
+    role?: string;
+    target?: TargetRef;
+    mode?: AgentModeId;
+    scope: Scope;
+    clientRequestId?: string;
+}
+
+export interface TaskIdParams {
+    sessionId: string;
+    taskId: string;
+}
+
+export interface TaskWaitParams extends TaskIdParams {
+    timeoutMs: number;
+}
+
+export type TaskStatus = "running" | "needs_you" | "done" | "failed" | "stopped" | "interrupted";
+
+export interface TaskState {
+    taskId: string;
+    childSessionId: string;
+    title: string;
+    status: TaskStatus;
+    summary?: string;
+    cost?: number | null;
+    waitTimedOut?: boolean;
 }
 
 export interface SessionPromptParams {
@@ -222,6 +288,8 @@ export interface TranslateParams {
     /** The Document whose project folder holds the glossary, characters and style, read through HA1. */
     document?: number;
     language: string;
+    /** Absent lets the models detect it. */
+    sourceLanguage?: string;
     models: { translator: SessionModel; reviewer: SessionModel };
     lines: { key: number; text: string; speaker?: string; start: number; end: number }[];
     /** The translated Lines just before the run, oldest first. */

@@ -92,6 +92,7 @@ Subtitles > Timing helpers > Timing assistant [GLOBAL_TIMING_ASSISTANT]
 Subtitles > Timing helpers > Accept assistant suggestion [GLOBAL_TIMING_ASSISTANT_ACCEPT]
 Subtitles > Blur and glow layers… [GLOBAL_BLUR_AND_GLOW_LAYERS]
 Subtitles > Build layers with the last values [GLOBAL_BLUR_AND_GLOW_LAYERS_REPEAT]
+Subtitles > Typesetting graph… [GLOBAL_TYPESETTING_GRAPH]
 Subtitles > QC notes… [GLOBAL_SHOW_QC_NOTES]
 Subtitles > Style manager [GLOBAL_OPEN_STYLE_MANAGER]
 Subtitles > Script properties [GLOBAL_OPEN_ASS_PROPERTIES]
@@ -217,12 +218,14 @@ View > Panels > Agent >
 View > Panels > Graph >
 View > Panels > Node >
 View > Panels > Source lines >
+View > Panels > Explorer >
 View > Panels > -
 View > Move panel…
 View > Restore the previous layout
 View > -
 View > Node effects [GLOBAL_NODE_EFFECTS]
 View > -
+View > Explorer [GLOBAL_SHOW_EXPLORER]
 View > Log
 View > Hide tags [GLOBAL_HIDE_TAGS]
 View > Hide tags in the line editor [GLOBAL_EDITOR_HIDE_TAGS]

@@ -471,11 +471,6 @@ bool listed(const std::vector<std::u8string> &names, const std::u8string &name)
     return std::find(names.begin(), names.end(), name) != names.end();
 }
 
-Tier otherTier(Tier tier)
-{
-    return tier == Tier::Project ? Tier::Mine : Tier::Project;
-}
-
 }
 
 StyleCatalogs::StyleCatalogs(std::filesystem::path directory) : m_dir(std::move(directory))
@@ -517,7 +512,6 @@ std::vector<std::u8string> StyleCatalogs::names() const
     for (const auto &name : m_projectNames)
         if (!listed(out, name))
             out.push_back(name);
-    std::sort(out.begin(), out.end());
     return out;
 }
 
@@ -564,8 +558,7 @@ bool StyleCatalogs::create(const std::u8string &name, Tier tier)
         (tier == Tier::Mine && listed(m_projectNames, name)))
         return false;
     save();
-    auto &into = namesIn(tier);
-    into.insert(std::upper_bound(into.begin(), into.end(), name), name);
+    namesIn(tier).push_back(name);
     m_current = name;
     m_currentTier = tier;
     m_styles.clear();

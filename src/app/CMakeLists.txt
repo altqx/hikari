@@ -23,6 +23,8 @@ add_library(hikari_composition STATIC composition.cpp application.cpp include/hi
     whats_new.cpp include/hikari/app/whats_new.h
     package_kind.cpp include/hikari/app/package_kind.h
     user_folder.cpp include/hikari/app/user_folder.h
+    automation_reset.cpp include/hikari/app/automation_reset.h
+    automation_reset_notice.cpp include/hikari/app/automation_reset_notice.h
     style_manager_controller.cpp include/hikari/app/style_manager_controller.h
     kanji_timer_controller.cpp include/hikari/app/kanji_timer_controller.h
     align_to_video_controller.cpp include/hikari/app/align_to_video_controller.h
@@ -32,6 +34,7 @@ add_library(hikari_composition STATIC composition.cpp application.cpp include/hi
     local_only_network.cpp include/hikari/app/local_only_network.h
     api_host.cpp include/hikari/app/api_host.h
     ai_karaoke.cpp include/hikari/app/ai_karaoke.h
+    ai_plugins.cpp include/hikari/app/ai_plugins.h
     ai_scripts.cpp include/hikari/app/ai_scripts.h
     ai_features.cpp include/hikari/app/ai_features.h ai_mcp.cpp include/hikari/app/ai_mcp.h ai_mcp_servers.cpp include/hikari/app/ai_mcp_servers.h
     ai_settings.cpp include/hikari/app/ai_settings.h ai_acp_settings.cpp include/hikari/app/ai_acp_settings.h
@@ -62,6 +65,10 @@ if(HIKARI_AI_LOCAL_SIDECAR)
     target_compile_definitions(hikari_composition PRIVATE HIKARI_AI_LOCAL_RUNTIME="${HIKARI_AI_RUNTIME_FILE}"
         HIKARI_AI_LOCAL_BUNDLE="${HIKARI_AI_BUNDLE_FILE}")
     add_dependencies(hikari_composition hikari_ai_sidecar)
+endif()
+option(HIKARI_AUTOMATION_RESET "Reset the user automation folder once, from kAutomationResetVersion on (release packages)" OFF)
+if(HIKARI_AUTOMATION_RESET)
+    target_compile_definitions(hikari_composition PRIVATE HIKARI_AUTOMATION_RESET)
 endif()
 option(HIKARI_UPDATE_TEST_FEED "Read the update feed and package kind from the environment (test builds only)" OFF)
 if(HIKARI_UPDATE_TEST_FEED)

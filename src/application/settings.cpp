@@ -35,7 +35,9 @@ constexpr std::string_view kProjectable[] = {
     "scriptProperties.editing",      "scriptProperties.editingOn",   "scriptProperties.timing",
     "scriptProperties.timingOn",     "scriptProperties.update",      "scriptProperties.updateOn",
     "scriptProperties.askForChange", "translation.autoMoveTagsFromOriginal", "translation.glossary",
-    "translation.translator",        "translation.reviewer",
+    "translation.translator",        "translation.reviewer",         "ai.exclude",
+    "translation.sourceLanguage",    "translation.targetLanguage",   "export.format",
+    "explorer.exclude",
 };
 // Projectable ids whose Project value waits for trust.
 constexpr std::string_view kWidening[] = {"translation.translator", "translation.reviewer"};
@@ -313,6 +315,9 @@ const std::vector<SettingDefinition> &definitions()
         // Controls the row shows: "playAround", the plays, "autoCommit", "nextCommit",
         // "goto", "sliders".
         {"audio.panelControls", "", StringList, Profile, Mapped, false, std::vector<std::string>{"playAround"}},
+        {"explorer.exclude", "", StringList, Profile, Mapped, false, std::vector<std::string>{"*.lwi", "*.ffindex"}},
+        {"explorer.allFiles", "", Bool, Profile, Mapped, false, false},
+        {"explorer.groupByName", "", Bool, Profile, Mapped, false, false},
         // On: so|ma|t|ta; off: so|mat|ta.
         {"audio.karaokeDoubleConsonantApart", "", Bool, Profile, Mapped, false, false},
         // On: กิ|น; off: a Thai word is one syllable.
@@ -414,8 +419,10 @@ const std::vector<SettingDefinition> &definitions()
         {"trust.folders", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {"ai.mcp.server", "", Bool, Profile, Mapped, false, false},
         {"ai.mcp.http", "", Bool, Profile, Mapped, false, false},
+        {"ai.mcp.skills", "", Bool, Profile, Mapped, false, false},
         // servers: one McpServerEntry JSON object per row; their secrets are in the keychain.
         {"ai.mcp.servers", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
+        {"ai.exclude", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {"ai.off", "", Bool, Profile, Mapped, false, false},
         {"ai.autoUpdate", "", Bool, Profile, Mapped, false, true},
         {"ai.promptCaching", "", Bool, Profile, Mapped, false, true},
@@ -434,6 +441,8 @@ const std::vector<SettingDefinition> &definitions()
         {"translation.glossary", "", String, Profile, Mapped, false, std::string()},
         {"translation.translator", "", String, Profile, Mapped, false, std::string()},
         {"translation.reviewer", "", String, Profile, Mapped, false, std::string()},
+        {"translation.sourceLanguage", "", String, Profile, Mapped, false, std::string()},
+        {"translation.targetLanguage", "", String, Profile, Mapped, false, std::string()},
         {"ai.inline.contextLines", "", Int, Profile, Mapped, false, std::int64_t{2}},
         {"ai.inline.recentInstructions", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {"plugins.network", "", Bool, Profile, Mapped, false, true},
@@ -454,6 +463,7 @@ const std::vector<SettingDefinition> &definitions()
         {"grammar.group.miscellaneous", "", Bool, Profile, Mapped, false, true},
         // One "<document file>\t<JSON>" row per document, last used first, at most 100; "" holds the last export.
         {"export.choices", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
+        {"export.format", "", String, Profile, Mapped, false, std::string()},
         // Percent of HikariSub legacy's size.
         {"video.handleSize", "", Int, Profile, Mapped, false, std::int64_t{100}},
         // application::VideoPropertyAction values; video.missingLayoutRes adds 3, set to the PlayRes.

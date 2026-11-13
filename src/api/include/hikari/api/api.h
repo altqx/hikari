@@ -13,7 +13,7 @@
 namespace hikari::api {
 
 // Grows by one with each release that adds to the API.
-inline constexpr int kApiVersion = 2;
+inline constexpr int kApiVersion = 1;
 
 enum class Access { Read, Write };
 std::string_view accessName(Access access);
@@ -55,6 +55,8 @@ struct Caller {
     std::string project;
     // The user approved this call's Lua script; automation.run refuses without it.
     bool scriptApproved = false;
+    // The SHA-256 of the plugin package the user approved; plugins.install refuses any other.
+    std::string approvedPackage;
 };
 
 // A file the user let one caller use; the caller sees the handle and name, never the path.
@@ -72,6 +74,8 @@ struct GrantedFolder {
     std::string path;
     bool writable = false;
 };
+
+inline constexpr std::string_view kProjectFolderHandle = "project";
 
 struct Context {
     const Host &host;
@@ -161,6 +165,8 @@ public:
     void revokeFiles(const std::string &callerId);
     // The path behind a caller's handle, if the caller holds it.
     std::optional<std::string> grantedPath(const std::string &callerId, std::string_view handle) const;
+    // The file a files.write would change, from its file handle or its folder and path; nullopt: neither is granted.
+    std::optional<std::string> writeTarget(const Caller &caller, const Json &params) const;
 
 private:
     struct Subscription {

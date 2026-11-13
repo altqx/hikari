@@ -3,9 +3,20 @@
 #include "hikari/api/schema.h"
 
 #include <cstdio>
+#include <filesystem>
 #include <cstdlib>
 
 namespace hikari::api {
+
+namespace {
+
+GrantedFolder projectFolder(const std::string &root, bool staged)
+{
+    const std::size_t slash = root.find_last_of("/\\");
+    return {std::string(kProjectFolderHandle), slash == std::string::npos ? root : root.substr(slash + 1), root, staged};
+}
+
+}
 
 std::string_view accessName(Access access)
 {
@@ -85,6 +96,7 @@ const Registry &Api::registry()
         detail::addTranslationOperations(r);
         detail::addNodeOperations(r);
         detail::addEffectsOperations(r);
+        detail::addPluginOperations(r);
         detail::addTypesetOperations(r);
         detail::addProjectOperations(r);
         detail::addKaraokeOperations(r);
@@ -118,6 +130,8 @@ void Api::call(const Caller &caller, std::string_view name, const Json &params, 
     for (const auto &[callerId, folder] : m_folders)
         if (callerId == caller.id)
             folders.push_back(folder);
+    if (caller.reviewed && !caller.project.empty())
+        folders.push_back(projectFolder(caller.project, m_host.review != nullptr));
     const Context context{m_host, caller, std::move(files), std::move(folders),
                           [this, id = caller.id](const std::string &path, bool writable) { return grantFile(id, path, writable); }};
     if (operation->access == Access::Read) {
@@ -167,6 +181,26 @@ void Api::revokeFiles(const std::string &callerId)
 {
     std::erase_if(m_grants, [&](const auto &grant) { return grant.first == callerId; });
     std::erase_if(m_folders, [&](const auto &grant) { return grant.first == callerId; });
+}
+
+std::optional<std::string> Api::writeTarget(const Caller &caller, const Json &params) const
+{
+    if (const Json *file = params.find("file"); file && file->isString())
+        return grantedPath(caller.id, file->asString());
+    const Json *folder = params.find("folder"), *path = params.find("path");
+    if (!folder || !folder->isString() || !path || !path->isString())
+        return std::nullopt;
+    std::optional<std::string> root;
+    if (caller.reviewed && !caller.project.empty() && folder->asString() == kProjectFolderHandle)
+        root = caller.project;
+    for (const auto &[id, granted] : m_folders)
+        if (id == caller.id && granted.handle == folder->asString())
+            root = granted.path;
+    if (!root)
+        return std::nullopt;
+    const auto u8 = [](const std::string &s) { return std::filesystem::path(std::u8string(s.begin(), s.end())); };
+    const std::u8string joined = (u8(*root) / u8(path->asString())).lexically_normal().u8string();
+    return std::string(joined.begin(), joined.end());
 }
 
 std::optional<std::string> Api::grantedPath(const std::string &callerId, std::string_view handle) const

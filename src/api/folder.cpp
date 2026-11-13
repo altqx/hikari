@@ -70,6 +70,61 @@ std::expected<fs::path, std::string> pathInside(const fs::path &folder, std::str
     return real;
 }
 
+namespace {
+
+char folded(char c)
+{
+    return c >= 'A' && c <= 'Z' ? char(c - 'A' + 'a') : c;
+}
+
+}
+
+bool globMatches(std::string_view pattern, std::string_view text)
+{
+    if (pattern.empty())
+        return text.empty();
+    if (pattern.starts_with("**")) {
+        for (std::size_t skip = 0; skip <= text.size(); ++skip)
+            if (globMatches(pattern.substr(2), text.substr(skip)))
+                return true;
+        return false;
+    }
+    if (pattern.front() == '*') {
+        for (std::size_t skip = 0; skip <= text.size(); ++skip) {
+            if (globMatches(pattern.substr(1), text.substr(skip)))
+                return true;
+            if (skip < text.size() && text[skip] == '/')
+                return false;
+        }
+        return false;
+    }
+    if (text.empty())
+        return false;
+    const bool one = pattern.front() == '?' ? text.front() != '/' : folded(pattern.front()) == folded(text.front());
+    return one && globMatches(pattern.substr(1), text.substr(1));
+}
+
+bool excludedPath(std::string_view relative, bool folder, std::span<const std::string> globs)
+{
+    for (const std::string &glob : globs) {
+        const bool foldersOnly = glob.ends_with('/');
+        const std::string_view core = std::string_view(glob).substr(0, glob.size() - (foldersOnly ? 1 : 0));
+        if (core.empty())
+            continue;
+        const bool anchored = core.find('/') != std::string_view::npos;
+        for (std::size_t end = 0, start = 0; start <= relative.size(); start = end + 1) {
+            end = std::min(relative.find('/', start), relative.size());
+            const bool isFolder = end < relative.size() || folder;
+            if ((!foldersOnly || isFolder) &&
+                globMatches(core, anchored ? relative.substr(0, end) : relative.substr(start, end - start)))
+                return true;
+            if (end == relative.size())
+                break;
+        }
+    }
+    return false;
+}
+
 std::optional<FolderEntries> folderEntries(const fs::path &root, const fs::path &real)
 {
     std::error_code error;

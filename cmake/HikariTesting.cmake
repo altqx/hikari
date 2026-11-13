@@ -23,6 +23,8 @@ set(HIKARI_XVFB_SUITES
     hikari_ui_shell_tests.documents
     # The Timing panel's sections and a floating panel's focus.
     hikari_ui_shell_tests.panels
+    hikari_ui_shell_tests.panels2
+    hikari_ui_shell_tests.panels3
     hikari_ui_shell_tests.hotkeys
     # On xcb the fullscreen rail took the hover from the picture.
     hikari_ui_shell_tests.video
@@ -35,6 +37,7 @@ set(HIKARI_XVFB_SUITES
     hikari_ui_popup_kit_tests
     hikari_ui_dialog_frame_tests
     hikari_ui_theme_startup_tests # the popups' palette at start
+    hikari_ui_contrast_tests # an X11 dialog shown without focus kept the light palette
     hikari_ui_window_frame_tests
     hikari_ui_title_bar_tests
     hikari_ui_docking_qualification_tests # floating panels' windows
@@ -71,17 +74,18 @@ function(_hikari_add_qt_modes name label)
     endif()
     foreach(platform IN LISTS modes)
         set(command ${mode_UNPARSED_ARGUMENTS})
-        set(qpa offscreen)
+        set(environment QT_QPA_PLATFORM=offscreen)
         if(platform STREQUAL "xvfb")
             list(PREPEND command sh "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/run_on_own_xvfb.sh")
-            set(qpa xcb)
+            # glibc arenas keep llvmpipe's freed render-thread memory: https://github.com/altqx/hikari/issues/1055
+            set(environment QT_QPA_PLATFORM=xcb MALLOC_ARENA_MAX=2)
         endif()
         if(WIN32 AND label STREQUAL "qttest")
             list(APPEND command -o "${CMAKE_BINARY_DIR}/qttest-${name}.${platform}.txt,txt" -o "-,txt")
         endif()
         add_test(NAME ${name}.${platform} COMMAND ${command})
         set_tests_properties(${name}.${platform} PROPERTIES
-            ENVIRONMENT "QT_QPA_PLATFORM=${qpa}" LABELS "${label};${platform}" TIMEOUT 120
+            ENVIRONMENT "${environment}" LABELS "${label};${platform}" TIMEOUT 120
             RESOURCE_LOCK "${name}")
     endforeach()
 endfunction()

@@ -11,7 +11,7 @@ ScrollView {
     required property var dialog
     // Set later from the column: reading its minimum width in this binding loops.
     property real narrowest: 0
-    contentWidth: Math.max(narrowest, availableWidth)
+    contentWidth: narrowest
     ScrollBar.horizontal.policy: contentWidth > availableWidth + 0.5 ? ScrollBar.AlwaysOn : ScrollBar.AsNeeded
 
     function staged(setting) { return page.dialog.values[setting] }
@@ -19,7 +19,7 @@ ScrollView {
     readonly property string accentSetting: Theme.dark ? "appearance.darkAccent" : "appearance.lightAccent"
 
     ColumnLayout {
-        width: page.contentWidth
+        width: Math.max(page.contentWidth, page.availableWidth)
         spacing: 16
         onImplicitWidthChanged: Qt.callLater(() => page.narrowest = Layout.minimumWidth)
 

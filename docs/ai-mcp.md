@@ -29,6 +29,7 @@ The MCP section sits between External agents and Privacy, as the [Settings › A
   - When the AI component isn't installed, checking it offers the component's one-time download first, with its size, as the provider form does. The box stays clear until the download finishes. **Download** installs the component with no provider (`AiSettings::installComponent`), then checks the box.
   - If the user presses **Cancel**, or the download fails, the setting stays off and a line under the box says why: "MCP stays off. It needs the AI component." or the download's error.
 - **Also listen on http://127.0.0.1:<port>** (`ai.mcp.http`) shows under it while it is on. It names the last port once the server has listened over HTTP.
+- **Let them read your skills** (`ai.mcp.skills`, off by default) shows under it too: "Yours, this project's and the built-in ones. Skills guide the agent; they grant no permission." ([skills](ai-skills.md#outside-hikari-ais-own-threads)).
 - **Copy setup** copies one of three texts (`AiMcp::setup`):
 
 | Entry | Copies |
@@ -88,6 +89,7 @@ Replies are `application/json`, never SSE. A notification gets 202. The sidecar 
 `McpServer::callerFor` sets the caller for an MCP connection's calls:
 - the caller sees every open Document (`allDocuments`), as the user asked for when they turned the server on;
 - its label, which names undo steps, is the client's `title` or `name` from `clientInfo`;
+- it may read skills (`skills`) only while `ai.mcp.skills` is on, and then sees the active window's Project (`project`), which `McpServer::setSkills` answers at each call;
 - its edits wait in the review ([AI2 #430](https://github.com/altqx/hikari/issues/430), [AI review](ai-review.md)) as `reviewed`, in a turn of its own for each connection. The Review panel lists each one under the client's name, and Keep and Undo act on it as on the sidecar's.
 
 `document.apply` is the only write. Every other write is refused with `refused`: "Through MCP, only document.apply writes; its edits land in the review." The permission modes reach MCP with the agent panel ([AI7 #435](https://github.com/altqx/hikari/issues/435)).

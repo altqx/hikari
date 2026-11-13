@@ -301,6 +301,11 @@ ScrollView {
     }
     function agentFailed(row) { return row.outcome === "unchanged" || row.outcome === "failed" || row.outcome === "timedOut" }
     function agentNeedsUpdate(row) { return row.badge === "update" || row.badge === "unsupported" || row.badge === "broken" }
+    function refusalText(refused) {
+        return refused === "sandbox" ? qsTr("Not offered: this system can’t keep it to its own folders.")
+             : refused === "project" ? qsTr("Not offered: its command is inside an open project, which it could read.")
+             : ""
+    }
     function agentLine(row, name) {
         if (!row.found)
             return row.missing ? row.missing : qsTr("Not found on PATH.")
@@ -417,7 +422,7 @@ ScrollView {
             objectName: "aiSkillDetail"
             text: skillRow.broken ? skillRow.modelData.problem
                 : skillRow.hidden ? skillRow.modelData.hidden
-                : skillRow.capped ? qsTr("Only the first %1 of its %2 files are offered.").arg(skillRow.modelData.files).arg(skillRow.modelData.found)
+                : skillRow.capped ? qsTr("Only the first %1 of its %2 files are offered.").arg(skillRow.modelData.files, skillRow.modelData.found)
                 : skillRow.modelData.description
             color: skillRow.broken ? Theme.danger : skillRow.capped && !skillRow.hidden ? Theme.warning : Theme.muted
             elide: Text.ElideRight
@@ -543,6 +548,14 @@ ScrollView {
                 tone: program.badge.tone
                 text: program.badge.text
             }
+        }
+        Label {
+            objectName: "aiAgentRefused_" + program.agent
+            visible: text.length > 0
+            text: page.refusalText(program.row.refused ?? "")
+            color: Theme.warning
+            wrapMode: Text.Wrap
+            Layout.fillWidth: true
         }
         Label {
             objectName: "aiAgentLine_" + program.agent
@@ -912,6 +925,20 @@ ScrollView {
                 text: qsTr("Name")
                 labelWidth: 150
                 TextField { id: nameField; objectName: "aiProviderName"; Layout.fillWidth: true; Accessible.name: qsTr("Name") }
+            }
+            SettingsRow {
+                text: qsTr("Id")
+                labelWidth: 150
+                TextEdit {
+                    objectName: "aiProviderId"
+                    text: form.editingOne ? form.providerId : page.ai.newProviderId(form.preset)
+                    readOnly: true
+                    selectByMouse: true
+                    color: Theme.muted
+                    font.family: "monospace"
+                    Layout.fillWidth: true
+                    Accessible.name: qsTr("Id")
+                }
             }
             SettingsRow {
                 visible: form.custom
@@ -2032,9 +2059,11 @@ ScrollView {
                             Label {
                                 visible: customAgents.editing !== customRow.modelData.id
                                 objectName: "aiCustomAgentLine"
-                                text: customRow.found.found ? customRow.found.path : qsTr("Not found on PATH.")
+                                readonly property string refused: page.refusalText(customRow.found.refused ?? "")
+                                text: refused.length > 0 ? refused : customRow.found.found ? customRow.found.path
+                                                                                           : qsTr("Not found on PATH.")
                                 textFormat: Text.PlainText
-                                color: Theme.muted
+                                color: refused.length > 0 ? Theme.warning : Theme.muted
                                 elide: Text.ElideMiddle
                                 Layout.fillWidth: true
                             }
@@ -2168,6 +2197,17 @@ ScrollView {
                 visible: mcpSection.serverOn
                 Layout.leftMargin: 48
                 text: qsTr("For agents that connect over HTTP. Only this computer can reach it, and only with the token.")
+            }
+            AiCheck {
+                setting: "ai.mcp.skills"
+                visible: mcpSection.serverOn
+                Layout.leftMargin: 24
+                text: qsTr("Let them read your skills")
+            }
+            Note {
+                visible: mcpSection.serverOn
+                Layout.leftMargin: 48
+                text: qsTr("Yours, this project’s and the built-in ones. Skills guide the agent; they grant no permission.")
             }
             RowLayout {
                 visible: mcpSection.serverOn

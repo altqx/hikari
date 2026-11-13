@@ -11,7 +11,7 @@ add_library(hikari_plugin_protocol STATIC plugin_protocol.cpp include/hikari/bac
 target_link_libraries(hikari_plugin_protocol PUBLIC hikari_helper_endpoint)
 hikari_module(hikari_plugin_protocol ALLOW hikari_helper_endpoint)
 
-add_library(hikari_backends STATIC module.cpp libass_renderer.cpp overlay_blend.cpp
+add_library(hikari_backends STATIC module.cpp libass_renderer.cpp libass_log.h overlay_blend.cpp
     include/hikari/backends/overlay_blend.h helper_host.cpp ffms_indexed_source.cpp
     audio_ring.cpp audio_output_engine.cpp portaudio_output.cpp lua_script_host.cpp qt_general_player.cpp
     video_frame_bgra.cpp include/hikari/backends/video_frame_bgra.h
@@ -85,7 +85,7 @@ add_library(hikari_ai STATIC ai_config_store.cpp include/hikari/backends/ai_conf
     include/hikari/backends/ai_requests.h ai_signin.cpp include/hikari/backends/ai_signin.h ai_keychain.cpp
     include/hikari/backends/ai_keychain.h ai_sidecar_host.cpp include/hikari/backends/ai_sidecar_host.h ai_channel.cpp
     include/hikari/backends/ai_channel.h ai_sidecar_updater.cpp include/hikari/backends/ai_sidecar_updater.h
-    ai_http_relay.cpp include/hikari/backends/ai_http_relay.h ai_agent.cpp include/hikari/backends/ai_agent.h ai_agent_broker.cpp
+    ai_http_relay.cpp include/hikari/backends/ai_http_relay.h ai_agent.cpp ai_agent_detail.h ai_agent_tasks.cpp include/hikari/backends/ai_agent.h ai_agent_broker.cpp
     include/hikari/backends/ai_agent_broker.h ai_agent_cli.cpp include/hikari/backends/ai_agent_cli.h ai_antigravity.cpp
     include/hikari/backends/ai_antigravity.h
     ai_mcp_server.cpp include/hikari/backends/ai_mcp_server.h ai_mcp_clients.cpp include/hikari/backends/ai_mcp_clients.h ai_mcp_bridge.cpp include/hikari/backends/ai_mcp_bridge.h
