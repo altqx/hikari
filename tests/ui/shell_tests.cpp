@@ -26905,11 +26905,19 @@ private slots:
         const auto where = [](const char *what, QPointF at) {
             return QStringLiteral("%1 at %2,%3").arg(QLatin1String(what)).arg(at.x()).arg(at.y());
         };
+        QQuickItem *pointerArea = overlay->findChild<QQuickItem *>(QStringLiteral("visualPointer"));
+        QVERIFY(pointerArea);
+        const auto blankAt = [&](const char *what, QPointF at) {
+            return QStringLiteral("%1: window cursor %2, pointer area cursor %3, hideCursor %4, override %5, overlay in window %6")
+                .arg(where(what, at), QString::number(shown->cursor().shape()), QString::number(pointerArea->cursor().shape()),
+                     QString::number(tools.hideCursor()), overlay->property("cursorOverride").toString(),
+                     QString::number(overlay->window() == shown));
+        };
         const auto crosshairOnlyOverThePicture = [&](const char *what) {
             const Points p = points();
             QVERIFY2(!p.bars.isEmpty(), qPrintable(QDebug::toString(tools.videoRect())));
             const auto in = [&](QPointF at) {
-                QTRY_COMPARE_WITH_TIMEOUT(cursorAt(at), Qt::BlankCursor, 2000);
+                QTRY_VERIFY2_WITH_TIMEOUT(cursorAt(at) == Qt::BlankCursor, qPrintable(blankAt(what, at)), 2000);
                 QVERIFY2(tools.hideCursor(), qPrintable(where(what, at)));
                 QTRY_VERIFY2(!tools.overlay().isEmpty(), qPrintable(where(what, at)));
             };
@@ -26945,7 +26953,7 @@ private slots:
                 const auto in = [&](QPointF at) {
                     const Qt::CursorShape inside = cursorAt(at);
                     if (f == 0) {
-                        QTRY_COMPARE_WITH_TIMEOUT(cursorAt(at), Qt::BlankCursor, 2000);
+                        QTRY_VERIFY2_WITH_TIMEOUT(cursorAt(at) == Qt::BlankCursor, qPrintable(blankAt(what, at)), 2000);
                     } else {
                         QVERIFY2(inside != Qt::BlankCursor, qPrintable(where(what, at) + QString::number(f)));
                         QTRY_COMPARE_WITH_TIMEOUT(cursorAt(at), Qt::CursorShape(tools.pointerShapeCursor()), 2000);
