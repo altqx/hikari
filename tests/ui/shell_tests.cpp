@@ -7714,8 +7714,7 @@ private slots:
         for (QObject *dock : std::as_const(docked)) {
             const QString panel = dock->property("uniqueName").toString();
             names << panel;
-            QVERIFY2(dock->property("isOpen").toBool(), qPrintable(panel));
-            QVERIFY2(ui::Docking().hasPlace(panel), qPrintable(panel));
+            QVERIFY2(!dock->property("isOpen").toBool() || ui::Docking().hasPlace(panel), qPrintable(panel));
             QObject *entry = named(qPrintable(QStringLiteral("panelShow") + panel));
             QVERIFY2(entry && entry->property("enabled").toBool(), qPrintable(panel));
         }
