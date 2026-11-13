@@ -855,6 +855,9 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         },
         [this](application::DocumentId document) {
             return views(m_workspace.window(document).value_or(m_workspace.activeWindow())).settings->root();
+        },
+        [this] {
+            return QString::fromStdString(activeViews().settings->settings().text("translation.targetLanguage"));
         }});
     const auto hideAiCommands = [this] {
         m_hotkeys->setHidden([this](int id) { return !m_ai->on() && application::aiCommand(id); });
@@ -2529,6 +2532,8 @@ void Application::refreshViews()
     if (m_projects && left != m_viewsWindow && m_projects->root(left) != m_projects->root(m_viewsWindow)) {
         applyGrammarSettings();
         emit spellingChanged();
+        if (m_inlineAi)
+            m_inlineAi->projectChanged();
     }
     for (const auto &[shellWindow, shell] : m_shellWindows)
         refreshInactiveViews(shellWindow, left);
@@ -5114,13 +5119,15 @@ void Application::applyProjectTierFiles(int shellWindow, const QString &root)
     layoutOf(shellWindow).setProjectLayoutsFile(layouts ? QString::fromStdU16String(layouts->u16string()) : QString());
 }
 
-Application::SpellSlot *Application::spellSlot(const QString &language)
+Application::SpellSlot *Application::spellSlot(const QString &language, const QString &projectRoot)
 {
     if (m_spellingFolders.empty() || !m_spellingLoader)
         return nullptr;
-    auto &slot = m_spellCheckers[language];
+    auto &slot = m_spellCheckers[language + u'\n' + projectRoot];
     if (!slot.checker) {
         slot.checker = std::make_unique<application::SpellChecker>(m_spellingFolders, m_spellingLoader);
+        if (const auto words = application::projectPathOf("dictionary", projectRoot.toStdU16String()))
+            slot.checker->setProjectWords(*words);
         slot.checker->setLoadedHandler(
             [this] { QMetaObject::invokeMethod(this, [this] { spellingRefresh(); }, Qt::QueuedConnection); });
     }
@@ -5131,7 +5138,7 @@ application::SpellChecker *Application::spellChecker(int shellWindow)
 {
     const auto &settings = windowSettings(shellWindow);
     const QString language = QString::fromStdString(settings.text("editor.dictionaryLanguage"));
-    auto *slot = spellSlot(language);
+    auto *slot = spellSlot(language, views(shellWindow).settings->root());
     if (!slot)
         return nullptr;
     if (!slot->started) {
@@ -5163,7 +5170,8 @@ application::SpellChecker *Application::spellChecker(int shellWindow)
 application::SpellChecker *Application::startedSpellChecker(int shellWindow)
 {
     const auto slot =
-        m_spellCheckers.find(QString::fromStdString(windowSettings(shellWindow).text("editor.dictionaryLanguage")));
+        m_spellCheckers.find(QString::fromStdString(windowSettings(shellWindow).text("editor.dictionaryLanguage")) +
+                             u'\n' + views(shellWindow).settings->root());
     return slot != m_spellCheckers.end() && slot->second.started ? slot->second.checker.get() : nullptr;
 }
 
@@ -5179,6 +5187,21 @@ void Application::userWordsChanged(const application::SpellChecker *by)
             slot.checker->clear();
             slot.started = false;
         }
+}
+
+void Application::projectWordsChanged(const std::filesystem::path &file, const application::SpellChecker *by)
+{
+    for (auto &[key, slot] : m_spellCheckers)
+        if (slot.checker.get() != by && slot.checker->projectWords() == file) {
+            slot.checker->clear();
+            slot.started = false;
+        }
+}
+
+QString Application::projectDictionary(int shellWindow) const
+{
+    const auto path = application::projectPathOf("dictionary", views(shellWindow).settings->root().toStdU16String());
+    return path ? QString::fromStdU16String(path->u16string()) : QString();
 }
 
 void Application::restartSpellChecker()
@@ -5356,12 +5379,17 @@ bool Application::replaceEditorMisspell(int role, int position, const QString &r
     return true;
 }
 
-bool Application::addEditorWord(const QString &word)
+bool Application::addEditorWord(const QString &word, bool project)
 {
     auto *checker = spellChecker();
-    if (!checker || !checker->addWord(word.toStdU16String()))
+    if (!checker || !checker->addWord(word.toStdU16String(), project ? application::Tier::Project : application::Tier::Mine))
         return false;
-    userWordsChanged(checker);
+    if (project) {
+        projectWordsChanged(checker->projectWords(), checker);
+        recheckGrammar();
+    } else {
+        userWordsChanged(checker);
+    }
     spellingRefresh();
     return true;
 }
@@ -5592,7 +5620,12 @@ QVariantMap Application::spellCheckerAddWord(const QString &word, const QVariant
         return spellCheckState(shellWindow, false);
     if (auto restarted = restartStaleSpellCheck(*session, options))
         return *restarted;
-    walk->addWord(*session, word.toStdU16String(), walkOptions(options));
+    const bool project = options.value(QStringLiteral("project")).toBool();
+    const auto tier = project ? application::Tier::Project : application::Tier::Mine;
+    if (walk->addWord(*session, word.toStdU16String(), walkOptions(options), tier) && project) {
+        projectWordsChanged(spellChecker()->projectWords(), spellChecker());
+        recheckGrammar();
+    }
     showSpellCheckWord(shellWindow);
     return spellCheckState(shellWindow, false);
 }
@@ -7334,7 +7367,15 @@ void Application::applySettings(const QVariantMap &values, bool resetAll)
 
 namespace {
 
-constexpr std::string_view kMoveTags = "translation.autoMoveTagsFromOriginal";
+// Projectable settings the Options dialog doesn't hold.
+constexpr std::string_view kProjectExtras[] = {"translation.autoMoveTagsFromOriginal", "translation.sourceLanguage",
+                                               "translation.targetLanguage", "export.format"};
+
+void insertExtras(QVariantMap &values, const application::Settings &settings)
+{
+    for (const auto id : kProjectExtras)
+        values.insert(qs(id), ui::SettingsStore::toVariant(settings.value(id)));
+}
 
 application::OptionsState projectableOnly(application::OptionsState state)
 {
@@ -7354,9 +7395,11 @@ QVariantMap Application::openProjectSettings(int shellWindow)
     if (!project)
         return {};
     auto values = toVariant(projectableOnly(application::openOptionsDialog(window.settings(), m_optionsLists).state));
-    values.insert(qs(kMoveTags), window.settings().boolean(kMoveTags));
+    insertExtras(values, window.settings());
     auto yours = toVariant(projectableOnly(application::openOptionsDialog(m_settings->settings(), m_optionsLists).state));
-    yours.insert(qs(kMoveTags), m_settings->boolean(kMoveTags.data()));
+    insertExtras(yours, m_settings->settings());
+    const QString translateTo = m_settings->text(InlineAiController::kTranslateToSetting).trimmed();
+    yours.insert(QStringLiteral("ai.inline.translateTo"), translateTo.isEmpty() ? QStringLiteral("English") : translateTo);
     QVariantMap sources;
     for (const auto &setting : application::settingDefinitions())
         if (const auto file = project->source(setting))
@@ -7388,9 +7431,12 @@ bool Application::applyProjectSettings(int shellWindow, const QVariantMap &value
             target.remove(*setting);
     application::Settings writes(target);
     application::commitOptionsDialog(writes, m_optionsLists, projectableOnly(fromVariant(values)));
-    if (const auto moveTags = values.constFind(qs(kMoveTags));
-        moveTags != values.cend() && moveTags->toBool() != writes.boolean(kMoveTags))
-        writes.set(kMoveTags, moveTags->toBool());
+    for (const auto id : kProjectExtras)
+        if (const auto value = values.constFind(qs(id)); value != values.cend()) {
+            const auto wanted = ui::SettingsStore::fromVariant(*value);
+            if (wanted != writes.value(id))
+                writes.set(id, wanted);
+        }
     const bool failed = window.takeProjectWriteFailure();
     applyWindowProject(shellWindow);
     emit projectsChanged();

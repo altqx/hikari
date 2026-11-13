@@ -216,8 +216,16 @@ void InlineAiController::setActions(const QVariantList &list)
 
 QString InlineAiController::translateTo() const
 {
+    if (m_wiring.targetLanguage)
+        if (const QString project = m_wiring.targetLanguage().trimmed(); !project.isEmpty())
+            return project;
     const QString language = m_wiring.settings.text(kTranslateToSetting).trimmed();
     return language.isEmpty() ? QStringLiteral("English") : language;
+}
+
+void InlineAiController::projectChanged()
+{
+    emit changed();
 }
 
 QStringList InlineAiController::recentInstructions() const
