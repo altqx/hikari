@@ -580,6 +580,8 @@ std::unique_ptr<backends::ai::LineRun> InlineAiController::translationRun(std::v
     w.lines = std::move(lines);
     w.document = m_run->document.value;
     w.language = ask.language;
+    if (m_wiring.sourceLanguage)
+        w.sourceLanguage = m_wiring.sourceLanguage(m_run->document).trimmed().toStdString();
     const ai::Providers *providers = m_wiring.ai.providers();
     const ai::Config *config = providers ? &providers->config() : nullptr;
     const ProjectModels project = m_wiring.projectModels ? m_wiring.projectModels(m_run->document) : ProjectModels{};

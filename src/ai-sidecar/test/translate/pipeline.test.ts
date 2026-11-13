@@ -135,10 +135,26 @@ test("progress and usage come as notifications on the run's stream", async () =>
     expect(progress.find((p) => p.role)!.usage).toMatchObject({ inputTokens: 100, outputTokens: 20 });
 });
 
+test("the Project's source language names the pair in every prompt", async () => {
+    await run({ sourceLanguage: "Japanese" });
+    for (const call of provider.calls)
+        expect(call.system.split("\n")[0]).toContain("from Japanese into English");
+    expect(provider.of("You check").length).toBeGreaterThan(0);
+});
+
+test("without a source language the prompts name only the target, so the models detect the source", async () => {
+    await run({ sourceLanguage: " " });
+    for (const call of provider.calls) {
+        expect(call.system.split("\n")[0]).toContain("into English");
+        expect(call.system.split("\n")[0]).not.toContain(" from ");
+    }
+});
+
 test("bad params are refused", async () => {
     expect((await run({ lines: [] })).error.code).toBe(ErrorCode.invalidParams);
     expect((await run({ models: { translator: models.translator } })).error.code).toBe(ErrorCode.invalidParams);
     expect((await run({ lines: [kLines[0], kLines[0]] })).error.code).toBe(ErrorCode.invalidParams);
+    expect((await run({ sourceLanguage: 3 })).error.code).toBe(ErrorCode.invalidParams);
     expect(provider.calls).toEqual([]);
 });
 
