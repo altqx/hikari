@@ -19598,8 +19598,17 @@ private slots:
         QCOMPARE(trust->property("text").toString(), QStringLiteral("Unverified, signed by key EFCDAB8967452301"));
         QVERIFY(!dialogItem("pluginManagerDialog", "pluginManagerEmpty")->isVisible());
 
-        QVERIFY(QMetaObject::invokeMethod(dialogItem("pluginManagerDialog", "pluginEnabled_com.example.hello"), "click"));
+        QQuickItem *enabled = dialogItem("pluginManagerDialog", "pluginEnabled_com.example.hello");
+        QAccessibleInterface *enabledFace = QAccessible::queryAccessibleInterface(enabled);
+        QVERIFY(enabledFace);
+        QCOMPARE(enabled->property("text").toString(), QStringLiteral("On"));
+        QCOMPARE(enabledFace->text(QAccessible::Name), QStringLiteral("Hello"));
+        QVERIFY(enabledFace->state().checked);
+        QVERIFY(QMetaObject::invokeMethod(enabled, "click"));
         QTRY_VERIFY(!rows().first().toMap().value(QStringLiteral("enabled")).toBool());
+        QTRY_COMPARE(enabled->property("text").toString(), QStringLiteral("Off"));
+        QVERIFY(!enabledFace->state().checked);
+        QCOMPARE(enabledFace->text(QAccessible::Name), QStringLiteral("Hello"));
 
         QVERIFY(QMetaObject::invokeMethod(dialog, "reviewFile", Q_ARG(QVariant, fixture("hello-2.0.0-other-key.hikariplugin"))));
         QQuickWindow *box = nullptr;
