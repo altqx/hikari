@@ -1,9 +1,10 @@
 file(READ "${CMAKE_CURRENT_SOURCE_DIR}/document.lua" HIKARI_DOCUMENT_LUA)
 file(READ "${CMAKE_CURRENT_SOURCE_DIR}/ui.lua" HIKARI_UI_LUA)
 file(READ "${CMAKE_CURRENT_SOURCE_DIR}/files.lua" HIKARI_FILES_LUA)
+file(READ "${CMAKE_CURRENT_SOURCE_DIR}/job.lua" HIKARI_JOB_LUA)
 configure_file(preludes.cpp.in "${CMAKE_CURRENT_BINARY_DIR}/preludes.cpp" @ONLY)
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
-    "${CMAKE_CURRENT_SOURCE_DIR}/document.lua" "${CMAKE_CURRENT_SOURCE_DIR}/ui.lua" "${CMAKE_CURRENT_SOURCE_DIR}/files.lua")
+    "${CMAKE_CURRENT_SOURCE_DIR}/document.lua" "${CMAKE_CURRENT_SOURCE_DIR}/ui.lua" "${CMAKE_CURRENT_SOURCE_DIR}/files.lua" "${CMAKE_CURRENT_SOURCE_DIR}/job.lua")
 
 add_library(hikari_plugin_state STATIC plugin_state.cpp plugin_state.h preludes.h
     "${CMAKE_CURRENT_BINARY_DIR}/preludes.cpp")

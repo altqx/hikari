@@ -33,7 +33,8 @@ class ApiHost final : public QObject,
                       public api::TypesetHost,
                       public api::ProjectHost,
                       public api::TranslationHost,
-                      public api::EffectsHost {
+                      public api::EffectsHost,
+                      public api::KeyframeHost {
     Q_OBJECT
     // (command, run) => null for a command the shell cannot run; else
     // {enabled, reason} without run, or whether it ran.
@@ -68,6 +69,11 @@ public:
         std::function<application::NodeEffectOptions()> effects;
         std::function<std::vector<std::string>(const std::string &root)> aiExclude;
         api::PluginHost *plugins = nullptr;
+        api::MacroHost *macros = nullptr;
+        // As api::KeyframeHost::setKeyframes, for the editing target's video.
+        std::function<std::optional<std::string>(const std::vector<std::int64_t> &, const std::optional<std::string> &)>
+            setKeyframes;
+        application::RowMarks *marks = nullptr;
     };
     explicit ApiHost(Wiring wiring, QObject *parent = nullptr);
     ~ApiHost() override;
@@ -107,6 +113,8 @@ public:
 
     std::optional<api::ProjectState> project() const override;
     std::vector<std::string> aiExclude(const std::string &root) const override;
+    std::optional<std::string> setKeyframes(const std::vector<std::int64_t> &frames,
+                                            const std::optional<std::string> &file) override;
 
 private:
     struct Seen {

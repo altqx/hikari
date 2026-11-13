@@ -66,4 +66,12 @@ std::vector<int> parseKeyframes(std::string_view text)
     return out;
 }
 
+std::string formatKeyframes(const std::vector<std::int64_t> &frames)
+{
+    std::string out = "# keyframe format v1\nfps 0\n";
+    for (const std::int64_t frame : frames)
+        out += std::to_string(frame) + '\n';
+    return out;
+}
+
 }

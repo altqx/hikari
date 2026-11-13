@@ -207,7 +207,11 @@ private:
     void setHoverToolTip(const QString &tip, const QRectF &cell);
     double numberIndent() const { return m_qcMarked ? kQcFlagWidth : 0; }
     static constexpr double kQcFlagWidth = 12;
+    double rowMarkGutter() const { return m_rowMarked ? kRowMarkGutter : 0; }
+    static constexpr double kRowMarkGutter = 8;
+    void drawRowMarks(QPainter *painter, const QRectF &cell, const QVariantList &colours) const;
     bool m_qcMarked = false;
+    bool m_rowMarked = false;
     void updateColumns();
     std::optional<core::LineId> m_dragLine;
     std::optional<core::LineId> m_announcedActive;
