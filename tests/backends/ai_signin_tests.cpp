@@ -1,4 +1,5 @@
 #include "hikari/backends/ai_signin.h"
+#include "hikari/backends/user_alone.h"
 
 #include "fake_auth_server.h"
 
@@ -489,8 +490,7 @@ TEST_F(CodexLeaseTest, CodexGetsTheKeychainSessionAndItsRefreshComesBackAfterThe
     keys.keys[kCodexSecret] = sessionJson(signedIn("first"));
     ASSERT_EQ(acquire(), QString());
     EXPECT_EQ(sessionFromCodexAuth(auth())->refresh, "first");
-    EXPECT_EQ(QFileInfo(auth()).permissions() & ~(QFile::ReadOwner | QFile::WriteOwner | QFile::ReadUser | QFile::WriteUser),
-              QFileDevice::Permissions());
+    EXPECT_TRUE(hikari::backends::isForUserAlone(auth()));
     const QJsonObject written = [&] {
         QFile file(auth());
         EXPECT_TRUE(file.open(QIODevice::ReadOnly));

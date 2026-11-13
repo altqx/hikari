@@ -1,4 +1,5 @@
 #include "hikari/backends/ai_antigravity.h"
+#include "hikari/backends/user_alone.h"
 
 #include <QCoreApplication>
 #include <QDir>
@@ -67,12 +68,6 @@ void writeFile(const QString &path, const QByteArray &content)
     file.write(content);
 }
 
-QFileDevice::Permissions othersAndGroup(const QString &path)
-{
-    return QFileInfo(path).permissions() & (QFileDevice::ReadGroup | QFileDevice::WriteGroup | QFileDevice::ExeGroup |
-                                            QFileDevice::ReadOther | QFileDevice::WriteOther | QFileDevice::ExeOther);
-}
-
 bool inside(const QString &path, const QString &dir)
 {
     const QString clean = QDir::cleanPath(QDir::fromNativeSeparators(path));
@@ -126,7 +121,7 @@ TEST(AntigravitySpec, EveryPathAgyGetsStaysInsideItsProfile)
     EXPECT_FALSE(spec.before);
     for (const QString &folder : {profile, profile + QStringLiteral("/gemini"), profile + QStringLiteral("/gemini/app-data"),
                                   profile + QStringLiteral("/home")})
-        EXPECT_EQ(othersAndGroup(folder), QFileDevice::Permissions()) << folder.toStdString();
+        EXPECT_TRUE(hikari::backends::isForUserAlone(folder)) << folder.toStdString();
 }
 
 #ifndef Q_OS_WIN
@@ -140,7 +135,7 @@ TEST_F(TokenFileLeaseTest, TheLentFileAndItsFolderAreTheUsersAloneFromTheirFirst
     EXPECT_EQ(contents(file), "first");
     EXPECT_EQ(QFileInfo(file).permissions() & ~(QFile::ReadOwner | QFile::WriteOwner | QFile::ReadUser | QFile::WriteUser),
               QFileDevice::Permissions());
-    EXPECT_EQ(othersAndGroup(QFileInfo(file).absolutePath()), QFileDevice::Permissions());
+    EXPECT_TRUE(hikari::backends::isForUserAlone(QFileInfo(file).absolutePath()));
     EXPECT_FALSE(QFileInfo::exists(file + QStringLiteral(".new")));
 }
 #endif

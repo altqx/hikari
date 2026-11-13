@@ -1,8 +1,11 @@
 #include "hikari/backends/ai_signin.h"
 
+#include "hikari/backends/user_alone.h"
+
 #include <QCryptographicHash>
 #include <QDateTime>
 #include <QFile>
+#include <QFileInfo>
 #include <QHostAddress>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -182,6 +185,9 @@ std::optional<CodexSession> sessionFromCodexAuth(const QString &authJsonPath)
 
 bool writeCodexAuth(const QString &authJsonPath, const CodexSession &session)
 {
+    const QString home = QFileInfo(authJsonPath).absolutePath();
+    if (!isForUserAlone(home) && !keepForUserAlone(home))
+        return false;
     QSaveFile file(authJsonPath);
     if (!file.open(QIODevice::WriteOnly) || !file.setPermissions(QFileDevice::ReadOwner | QFileDevice::WriteOwner))
         return false;

@@ -1,6 +1,7 @@
 #include "hikari/backends/ai_antigravity.h"
 
 #include "hikari/backends/ai_sidecar_host.h"
+#include "hikari/backends/user_alone.h"
 
 #include <QDir>
 #include <QFile>
@@ -40,11 +41,12 @@ constexpr QFileDevice::Permissions kUserOnlyFolder = QFileDevice::ReadOwner | QF
 bool makeForUserOnly(const QString &folder)
 {
     const QFileInfo info(folder);
-    if (info.isDir())
-        return (info.permissions() & ~kUserOnlyFolder) == QFileDevice::Permissions() ||
-               QFile::setPermissions(folder, kUserOnlyFolder);
-    const QString parent = info.absolutePath();
-    return (QFileInfo(parent).isDir() || QDir().mkpath(parent)) && QDir().mkdir(folder, kUserOnlyFolder);
+    if (!info.isDir()) {
+        const QString parent = info.absolutePath();
+        if (!(QFileInfo(parent).isDir() || QDir().mkpath(parent)) || !QDir().mkdir(folder, kUserOnlyFolder))
+            return false;
+    }
+    return isForUserAlone(folder) || keepForUserAlone(folder);
 }
 
 bool writeForUserOnly(const QString &path, const QByteArray &data)
