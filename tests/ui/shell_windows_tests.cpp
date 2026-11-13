@@ -1506,10 +1506,15 @@ private slots:
         second->setGeometry(screen.right() + 400, screen.top(), 800, 480);
         QTRY_VERIFY(second->property("arrangementSettled").toBool());
         openTab(0, "third");
-        dragTab(first(), tabCentre(first(), 1), screen.bottomRight() - QPoint(40, 40));
+        const QPoint drop = screen.bottomRight() - QPoint(40, 40);
+        dragTab(first(), tabCentre(first(), 1), drop);
         QQuickWindow *opened = nullptr;
         QTRY_VERIFY((opened = newestShellWindow()) && opened != second);
-        QTRY_VERIFY(screen.contains(opened->frameGeometry()));
+        QTRY_VERIFY(!opened->minimumSize().isEmpty());
+        QTRY_VERIFY(opened->width() >= opened->minimumWidth() && opened->height() >= opened->minimumHeight());
+        QTest::qWait(500);
+        QCOMPARE(opened->frameGeometry().intersected(screen), opened->frameGeometry());
+        QVERIFY(opened->frameGeometry().contains(drop));
     }
 
     void wholeOnScreensMovesAFrameWholeOntoTheScreenItMostlyOverlaps()

@@ -955,8 +955,18 @@ public:
             qCDebug(lcDocking) << "main window minimum" << window->minimumSize() << "->" << least;
             window->setMinimumSize(least);
         }
-        if (window->width() < least.width() || window->height() < least.height())
-            window->resize(window->size().expandedTo(least));
+        if (window->width() >= least.width() && window->height() >= least.height())
+            return;
+        const QSize grown = window->size().expandedTo(least);
+        QScreen *screen = window->screen();
+        const QMargins margins = window->frameMargins();
+        if (!screen || QGuiApplication::platformName().startsWith(QLatin1String("wayland"))
+            || !screen->availableGeometry().contains(window->geometry().marginsAdded(margins))) {
+            window->resize(grown);
+            return;
+        }
+        const QRect frame = QRect(window->geometry().topLeft(), grown).marginsAdded(margins);
+        window->setGeometry(wholeOn(frame, screen->availableGeometry()).marginsRemoved(margins));
     }
 
 private:
