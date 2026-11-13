@@ -21,6 +21,9 @@
 namespace hikari::api {
 class Api;
 }
+namespace hikari::json {
+class Json;
+}
 namespace hikari::application {
 class AiReview;
 class DocumentFiles;
@@ -146,6 +149,9 @@ public:
     /// Starts a turn, or queues the message while one runs; opens a thread first when none is open.
     Q_INVOKABLE void send(const QString &text);
     Q_INVOKABLE void stop();
+    Q_INVOKABLE void stopChild(const QString &id);
+    Q_INVOKABLE void stopChildren();
+    Q_INVOKABLE void openParent();
     Q_INVOKABLE void steer();
     Q_INVOKABLE void setQueued(const QString &text);
     Q_INVOKABLE void retry();
@@ -197,6 +203,7 @@ private:
     void fallBackToAnAgent(const std::string &thread);
     void select(std::string id);
     void refreshThread();
+    json::Json childCard(const backends::ai::AgentThread &child) const;
     std::vector<std::string> safeFolders() const;
     std::optional<std::string> pathOf(application::DocumentId document) const;
     QString projectInstructionsFile(const backends::ai::AgentThread &thread) const;

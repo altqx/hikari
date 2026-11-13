@@ -35,6 +35,7 @@
 #include "hikari/application/video_matrix.h"
 #include "hikari/application/script_resolution.h"
 #include "hikari/application/video_properties.h"
+#include "hikari/application/tiers.h"
 #include "hikari/core/spelling.h"
 #include "hikari/core/text_projection.h"
 #include "hikari/core/conversion.h"
@@ -754,6 +755,9 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             return readings ? backends::MecabReadings::analyzer(std::move(readings)) : application::ReadingAnalyzer{};
         },
         [this] { return &m_automation->templater(); }, QDir::tempPath()});
+    m_aiPlugins = std::make_unique<AiPlugins>(AiPlugins::Wiring{
+        m_userFolder.isEmpty() || options.plugins.plugins.isEmpty() ? QString() : m_userFolder + QStringLiteral("/ai/plugins"),
+        options.plugins.plugins, [this] { return m_pluginManager.get(); }, [this] { return m_pluginRuntime.get(); }});
     m_apiHost = std::make_unique<ApiHost>(ApiHost::Wiring{
         m_workspace, *m_files, &m_settings->settings(), &m_automation->media(),
         [this](application::Selection next) { return applySelection(std::move(next)); },
@@ -786,7 +790,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             o.audio = m_automation->media().peakAudio();
             return o;
         },
-        projectAiExclude});
+        projectAiExclude, m_aiPlugins.get()});
     AiFeatures::Ports aiPorts = options.aiPorts ? std::move(*options.aiPorts)
                                                 : AiFeatures::defaultPorts(m_userFolder, &m_apiHost->api(),
                                                                            options.appVersion.isEmpty()
@@ -805,7 +809,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     };
     m_ai = std::make_unique<AiFeatures>(*m_settings, std::move(aiPorts));
     m_aiMcp = std::make_unique<AiMcp>(*m_settings, *m_ai,
-                                      m_userFolder.isEmpty() ? QString() : backends::ai::mcpEndpointFile(m_userFolder));
+                                      m_userFolder.isEmpty() ? QString() : backends::ai::mcpEndpointFile(m_userFolder),
+                                      [this] { return m_projects ? m_projects->root(m_workspace.activeWindow()) : QString(); });
     m_aiMcpServers = std::make_unique<AiMcpServers>(*m_settings, *m_ai);
     m_aiSettings = std::make_unique<AiSettings>(*m_ai, m_aiMcp.get(), m_aiMcpServers.get());
     m_review = std::make_unique<ReviewController>(ReviewController::Wiring{
@@ -1175,6 +1180,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         hooks.fileProblem = report.problem;
         hooks.fileReplaced = report.replaced;
         hooks.fontsChanged = [this] { subtitleFontsChanged(); };
+        hooks.projectRoot = [this] { return m_projects ? m_projects->root(m_workspace.activeWindow()) : QString(); };
         m_fontCatalogs = std::make_unique<FontCatalogsController>(*m_settings, std::filesystem::path(dir.toStdU16String()),
                                                                   std::move(hooks));
         setVideoFonts(std::nullopt);
@@ -2463,6 +2469,8 @@ void Application::refreshViews()
     scheduleAutosave();
     if (m_styleManager)
         m_styleManager->targetRefreshed();
+    if (m_fontCatalogs)
+        m_fontCatalogs->projectChanged();
     if (m_shiftTimes)
         m_shiftTimes->setProjectRoot(m_projects ? m_projects->root(m_workspace.activeWindow()) : QString());
     const auto target = m_workspace.editingTarget();
@@ -5082,6 +5090,20 @@ void Application::convertListFiles()
         views->visualTools->setShapesFile(shapes);
         views->visualTools->setAllTagsFile(tags);
     }
+}
+
+void Application::applyProjectTierFiles(int shellWindow, const QString &root)
+{
+    const auto file = [&](std::string_view store, const ui::ListFormat &format) -> std::shared_ptr<ui::ListFile> {
+        const auto path = application::projectPathOf(store, root.toStdU16String());
+        if (!path)
+            return nullptr;
+        return ui::ListFile::make(QString::fromStdU16String(path->u16string()), QString(), format, {},
+                                  listFileReport(*m_log));
+    };
+    views(shellWindow).visualTools->setProjectListFiles(file("shapes", ui::kShapesFormat), file("tags", ui::kTagsFormat));
+    const auto layouts = application::projectPathOf("layouts", root.toStdU16String());
+    layoutOf(shellWindow).setProjectLayoutsFile(layouts ? QString::fromStdU16String(layouts->u16string()) : QString());
 }
 
 Application::SpellSlot *Application::spellSlot(const QString &language)

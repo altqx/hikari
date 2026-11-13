@@ -9,6 +9,7 @@ DialogWindow {
     id: dialog
     objectName: "shapesEditionDialog"
     property ShapeEditor editor
+    readonly property bool tiered: editor ? editor.hasProject : false
     title: qsTr("Edit shapes")
     dialogId: "shapesEdition"
     resizable: true
@@ -18,7 +19,30 @@ DialogWindow {
     function stepText(step) {
         return [qsTr("Rename shape"), qsTr("Edit drawing"), qsTr("Change scaling"), qsTr("New shape"),
                 qsTr("Duplicate shape"), qsTr("Delete shape"), qsTr("Take drawing from line"),
-                qsTr("Replace shape"), qsTr("Restore default shapes"), qsTr("Undo all changes")][step] ?? ""
+                qsTr("Replace shape"), qsTr("Restore default shapes"), qsTr("Undo all changes"),
+                qsTr("Copy shape"), qsTr("Move shape")][step] ?? ""
+    }
+    function transfer(move) {
+        const run = choices => { dialog.editor.sendToOtherTier(move, choices); dialog.showFields() }
+        const clashes = dialog.editor.tierClashes()
+        if (clashes.length === 0) {
+            run([])
+            return
+        }
+        const fromMine = dialog.editor.items[dialog.editor.selection].tier === "mine"
+        clashReviewLoader.active = true
+        clashReviewLoader.item.review({
+            title: move ? qsTr("Move shape") : qsTr("Copy shape"),
+            text: fromMine ? qsTr("The project already has a shape named “%1”.").arg(clashes[0].name)
+                           : qsTr("You already have a shape named “%1”.").arg(clashes[0].name),
+            rows: clashes.map(c => ({ name: c.name, difference: "", suggestion: c.suggestion })),
+            acceptText: count => move ? qsTr("Move") : qsTr("Copy"),
+            nameTaken: n => dialog.editor.items.some(r => r.tier !== (fromMine ? "mine" : "project")
+                                                          && r.name.toLowerCase() === n.trim().toLowerCase())
+        }, results => {
+            if (results)
+                run(results)
+        })
     }
     function showFields() {
         if (!editor)
@@ -149,15 +173,37 @@ DialogWindow {
                         id: row
                         required property var modelData
                         required property int index
+                        readonly property bool heading: dialog.tiered
+                            && (index === 0 || dialog.editor.items[index - 1].tier !== modelData.tier)
                         objectName: "shapeRow" + index
                         width: ListView.view.width
-                        height: 30
+                        height: 30 + topInset
+                        topInset: heading ? headingLabel.implicitHeight : 0
+                        topPadding: topInset
                         focusPolicy: Qt.NoFocus
                         highlighted: ListView.isCurrentItem
                         Accessible.role: Accessible.ListItem
-                        Accessible.name: modelData.name
+                        Accessible.name: modelData.hidden ? qsTr("%1, hidden by the project’s copy").arg(modelData.name) : modelData.name
                         Accessible.selected: highlighted
                         onClicked: shapeList.selectRow(index)
+                        Label {
+                            id: headingLabel
+                            visible: row.heading
+                            text: row.modelData.tier === "project" ? qsTr("This project") : qsTr("Mine")
+                            color: Theme.muted
+                            font.weight: Font.DemiBold
+                            leftPadding: 8
+                            topPadding: 6
+                            bottomPadding: 2
+                        }
+                        TapHandler {
+                            acceptedButtons: Qt.RightButton
+                            enabled: dialog.tiered
+                            onTapped: {
+                                shapeList.selectRow(row.index)
+                                tierMenu.popup()
+                            }
+                        }
                         background: Rectangle {
                             color: row.highlighted ? Theme.select : row.hovered ? Theme.raised : "transparent"
                             Rectangle {
@@ -179,15 +225,21 @@ DialogWindow {
                             }
                             Label {
                                 text: row.modelData.name
+                                color: row.modelData.hidden ? Theme.muted : Theme.text
                                 font.weight: row.highlighted ? Font.DemiBold : Font.Normal
                                 elide: Text.ElideRight
                                 Layout.fillWidth: true
                             }
                             Label {
-                                visible: row.modelData.own
+                                visible: row.modelData.own && !dialog.tiered
                                 text: qsTr("yours")
                                 color: Theme.muted
                                 font.pixelSize: Math.round(Qt.application.font.pixelSize * 0.85)
+                            }
+                            TierChip {
+                                visible: dialog.tiered
+                                tier: row.modelData.tier
+                                enabled: !row.modelData.hidden
                             }
                         }
                     }
@@ -196,11 +248,20 @@ DialogWindow {
                 RowLayout {
                     Layout.margins: 4
                     spacing: 2
-                    IconToolButton {
-                        objectName: "addShape"
+                    TierSaveButton {
+                        objectName: "addShapeSave"
+                        faceName: "addShape"
+                        listId: "shapes"
+                        settings: dialog.settings
+                        hasProject: dialog.tiered
                         iconRole: "add"
-                        text: qsTr("New shape")
-                        onClicked: { dialog.editor.addShape(); dialog.showFields(); shapeName.forceActiveFocus(); shapeName.selectAll() }
+                        plainText: qsTr("New shape")
+                        onSave: tier => {
+                            dialog.editor.addShapeTo(tier)
+                            dialog.showFields()
+                            shapeName.forceActiveFocus()
+                            shapeName.selectAll()
+                        }
                     }
                     IconToolButton {
                         objectName: "duplicateShape"
@@ -236,6 +297,15 @@ DialogWindow {
             Layout.rightMargin: 20
             Layout.preferredWidth: 360
             spacing: 8
+            enabled: !(dialog.editor && dialog.editor.readOnly)
+            Label {
+                objectName: "shapeHidden"
+                visible: dialog.editor ? dialog.editor.readOnly : false
+                text: qsTr("Hidden by the project’s copy. Copy it to the project to use it there.")
+                color: Theme.muted
+                wrapMode: Text.Wrap
+                Layout.fillWidth: true
+            }
             Label { text: qsTr("Name"); font.weight: Font.DemiBold }
             TextField {
                 id: shapeName
@@ -422,8 +492,50 @@ DialogWindow {
     defaultButton: closeButton
 
     ShellMenu {
+        id: tierMenu
+        objectName: "shapeTierMenu"
+        readonly property bool fromMine: dialog.editor && dialog.editor.selection >= 0
+                                         && dialog.editor.items[dialog.editor.selection]?.tier === "mine"
+        ShellMenuItem {
+            objectName: "copyShapeToTier"
+            iconRole: "copy-to-tier"
+            text: tierMenu.fromMine ? qsTr("Copy to project") : qsTr("Copy to mine")
+            onTriggered: dialog.transfer(false)
+        }
+        ShellMenuItem {
+            objectName: "moveShapeToTier"
+            iconRole: "move-to-tier"
+            text: tierMenu.fromMine ? qsTr("Move to project") : qsTr("Move to mine")
+            onTriggered: dialog.transfer(true)
+        }
+    }
+    Loader {
+        id: clashReviewLoader
+        active: false
+        sourceComponent: ClashReview {
+            objectName: "shapeClashReview"
+            dialogId: "shapeClashes"
+            settings: dialog.settings
+        }
+    }
+    ShellMenu {
         id: moreMenu
         objectName: "shapesMoreMenu"
+        ShellMenuItem {
+            objectName: "shapesCopyToTier"
+            visible: dialog.tiered
+            iconRole: "copy-to-tier"
+            text: tierMenu.fromMine ? qsTr("Copy to project") : qsTr("Copy to mine")
+            onTriggered: dialog.transfer(false)
+        }
+        ShellMenuItem {
+            objectName: "shapesMoveToTier"
+            visible: dialog.tiered
+            iconRole: "move-to-tier"
+            text: tierMenu.fromMine ? qsTr("Move to project") : qsTr("Move to mine")
+            onTriggered: dialog.transfer(true)
+        }
+        MenuSeparator { visible: dialog.tiered }
         ShellMenuItem {
             objectName: "shapesRestoreDefault"
             iconRole: "restore-default"

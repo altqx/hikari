@@ -914,6 +914,20 @@ ScrollView {
                 TextField { id: nameField; objectName: "aiProviderName"; Layout.fillWidth: true; Accessible.name: qsTr("Name") }
             }
             SettingsRow {
+                text: qsTr("Id")
+                labelWidth: 150
+                TextEdit {
+                    objectName: "aiProviderId"
+                    text: form.editingOne ? form.providerId : page.ai.newProviderId(form.preset)
+                    readOnly: true
+                    selectByMouse: true
+                    color: Theme.muted
+                    font.family: "monospace"
+                    Layout.fillWidth: true
+                    Accessible.name: qsTr("Id")
+                }
+            }
+            SettingsRow {
                 visible: form.custom
                 text: qsTr("Base URL")
                 labelWidth: 150
@@ -2168,6 +2182,17 @@ ScrollView {
                 visible: mcpSection.serverOn
                 Layout.leftMargin: 48
                 text: qsTr("For agents that connect over HTTP. Only this computer can reach it, and only with the token.")
+            }
+            AiCheck {
+                setting: "ai.mcp.skills"
+                visible: mcpSection.serverOn
+                Layout.leftMargin: 24
+                text: qsTr("Let them read your skills")
+            }
+            Note {
+                visible: mcpSection.serverOn
+                Layout.leftMargin: 48
+                text: qsTr("Yours, this project’s and the built-in ones. Skills guide the agent; they grant no permission.")
             }
             RowLayout {
                 visible: mcpSection.serverOn

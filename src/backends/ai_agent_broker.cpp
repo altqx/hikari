@@ -395,7 +395,8 @@ std::optional<AgentSpec> codexAgent(const QString &program, const QString &codex
     QDir().mkpath(codexHome);
     AgentSpec spec;
     spec.program = binary;
-    spec.arguments = {QStringLiteral("app-server")};
+    spec.arguments = {QStringLiteral("app-server"), QStringLiteral("-c"), QStringLiteral("features.multi_agent=false"),
+                      QStringLiteral("-c"), QStringLiteral("features.multi_agent_v2=false")};
     spec.profile = sandbox::Profile{.name = QStringLiteral("HikariSub.AI.Codex"),
                                     .readExecute = {QFileInfo(binary).absolutePath()},
                                     .readWrite = {codexHome, work},
