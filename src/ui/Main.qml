@@ -4146,6 +4146,17 @@ ApplicationWindow {
             field.misspell = field.spelled && !field.grammar.rule
                 ? root.app.editorMisspellAt(field.role, field.misspellPosition) : ({})
         }
+        function moveCaretUnlessInSelection(point) {
+            const position = field.positionAt(point.x, point.y)
+            if (position < field.selectionStart || position > field.selectionEnd || field.selectionStart === field.selectionEnd)
+                field.cursorPosition = position
+        }
+        // Qt's ContextMenu reports the caret, not the pointer: https://github.com/altqx/hikari/issues/1113
+        PointHandler {
+            objectName: field.objectName + "RightPress"
+            acceptedButtons: Qt.RightButton
+            onActiveChanged: if (active) field.moveCaretUnlessInSelection(point.pressPosition)
+        }
         ContextMenu.onRequested: position => {
             root.editor.tagList.close()
             field.readMarksAt(position)
