@@ -322,7 +322,6 @@ public:
 
 // Document 1 "a.ass" (the editing target, Lines 1-3, Lines 1 and 3 selected,
 // 3 active) and document 2 "b.ass", never saved.
-// The repository at /subs: a.ass at season1/a.ass, branches main and draft, tag v1.
 class FakeVcs final : public application::VcsPort {
 public:
     void refs(const std::string &at, int commits,
