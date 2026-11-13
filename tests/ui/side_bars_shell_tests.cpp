@@ -1,6 +1,8 @@
 #include "hikari/app/application.h"
 #include "docking.h"
+#include "line_grid.h"
 #include "settings_store.h"
+#include "shown_objects.h"
 #include "side_bar_model.h"
 
 #include <QDir>
@@ -11,6 +13,9 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QQmlApplicationEngine>
+#include <QQmlContext>
+#include <QQmlExpression>
+#include <QScreen>
 #include <QQuickItem>
 #include <QQuickWindow>
 #include <QTemporaryDir>
@@ -109,9 +114,27 @@ class SideBarsShellTests : public QObject {
         QVERIFY2(QMetaObject::invokeMethod(root(), function, Q_ARG(QVariant, QVariant::fromValue(args))...), function);
     }
     QVariant dock(const char *name) const { return QVariant::fromValue(item<QObject>(name)); }
+    QVariant shell(const QString &code) const
+    {
+        QQmlExpression expression(qmlContext(root()), root(), code);
+        const QVariant out = expression.evaluate();
+        if (expression.hasError())
+            qWarning() << expression.error();
+        return out;
+    }
+    QString writeSubtitles() const
+    {
+        const QString path = home->filePath(QStringLiteral("episode.ass"));
+        QFile file(path);
+        if (file.open(QIODevice::WriteOnly))
+            file.write("[Script Info]\nScriptType: v4.00+\n\n[Events]\n"
+                       "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                       "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,A line with {\\b1}tags{\\b0}\n");
+        return path;
+    }
 
 private slots:
-    void initTestCase() { hikari::ui::SideBarModel::setFirstStartHidden(false); }
+    void initTestCase() { hikari::ui::SideBarModel::setFirstStartEmpty(false); }
     void init()
     {
         home = std::make_unique<QTemporaryDir>();
@@ -262,6 +285,78 @@ private slots:
         call("resizeSideBar", false, 100, true);
         QTRY_VERIFY(!shown("rightSideBar"));
         QCOMPARE(saved().value(QStringLiteral("second")).toObject().value(QStringLiteral("width")).toInt(), 400);
+    }
+
+    void eachCommandOpensItsPanelInTheToolsSideBar_data()
+    {
+        QTest::addColumn<QString>("command");
+        QTest::addColumn<QString>("panelName");
+        QTest::addColumn<QString>("dockName");
+        QTest::addColumn<QString>("control");
+        QTest::newRow("Search") << "root.openFind(false)" << "searchPanel" << "searchDock" << "findText";
+        QTest::newRow("Shift times") << "showShiftTimesItem.triggered()" << "timingPanel" << "timingDock" << "";
+        QTest::newRow("Postprocessor") << "showPostprocessorItem.triggered()" << "postprocessorPanel" << "postprocessorDock" << "";
+        QTest::newRow("Styles") << "root.showPanel(stylesDock)" << "stylesPanel" << "stylesDock" << "stylesTool";
+        QTest::newRow("QC notes") << "showQcNotesItem.triggered()" << "qcNotesPanel" << "qcNotesDock" << "";
+    }
+    void eachCommandOpensItsPanelInTheToolsSideBar()
+    {
+        QFETCH(QString, command);
+        QFETCH(QString, panelName);
+        QFETCH(QString, dockName);
+        QFETCH(QString, control);
+        start();
+        call("toggleSideBar", false);
+        QTRY_VERIFY(!shown("rightSideBar"));
+        shell(command);
+        QTRY_VERIFY(shown("rightSideBar"));
+        const QByteArray name = panelName.toLatin1();
+        QTRY_COMPARE(parentOf(name.constData()), slotOf("rightSideBar"));
+        QVERIFY(shown(name.constData()));
+        QVERIFY(!item<QObject>(dockName.toLatin1().constData())->property("isOpen").toBool());
+        if (!control.isEmpty()) {
+            QTRY_VERIFY(in("rightSideBar", control) && in("rightSideBar", control)->isVisible());
+            QVERIFY(ui::shownObjects(window).contains(in("rightSideBar", control)));
+        }
+        if (control == QLatin1String("findText"))
+            QTRY_VERIFY(in("rightSideBar", control)->hasActiveFocus());
+    }
+
+    void theShippedMiddleKeepsItsAudioAndEditorControls_data()
+    {
+        QTest::addColumn<bool>("barsShown");
+        QTest::newRow("both side bars shown") << true;
+        QTest::newRow("both side bars hidden") << false;
+    }
+    void theShippedMiddleKeepsItsAudioAndEditorControls()
+    {
+        QFETCH(bool, barsShown);
+        if (QGuiApplication::primaryScreen()->availableGeometry().width() < 1920)
+            QSKIP("needs a 1920x1080 screen");
+        start();
+        window->setGeometry(0, 0, 1920, 1080);
+        QTRY_COMPARE(window->width(), 1920);
+        if (!barsShown) {
+            call("toggleSideBar", true);
+            call("toggleSideBar", false);
+        }
+        QTRY_COMPARE(shown("leftSideBar"), barsShown);
+        QTRY_COMPARE(shown("rightSideBar"), barsShown);
+        QVERIFY(application->openFile(writeSubtitles()));
+        application->video().openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/audio.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(application->audio().ready(), 20000);
+        QTRY_VERIFY(item("audioSyncVideo") && item("audioSyncVideo")->isVisible() && item("audioSyncVideo")->width() > 0);
+        QVERIFY(!item("audioButtons")->property("folded").toBool());
+        QTRY_VERIFY(item("addTagButton") && item("addTagButton")->isVisible() && item("addTagButton")->width() > 0);
+        auto *grid = qobject_cast<ui::LineGrid *>(item("editingGrid"));
+        QVERIFY(grid);
+        QTRY_VERIFY(grid->columnCount() > 0);
+        for (int c = 0; c < grid->columnCount(); ++c) {
+            const double width = grid->cellRect(0, c).width();
+            QVERIFY2(width > 0, qPrintable(grid->columnTitle(c)));
+            if (grid->columnTitle(c) == QLatin1String("Style"))
+                QVERIFY2(width >= 60 && width <= grid->width() / 3, qPrintable(QString::number(width)));
+        }
     }
 
     void theSideBarsComeBackAfterARestart()
