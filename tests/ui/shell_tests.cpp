@@ -702,6 +702,19 @@ class ShellTest : public QObject {
     }
     QQuickItem *visualItem(const char *name) const { return findItem(window->contentItem(), QLatin1String(name)); }
     void widenForTheInspectorBar() { window->resize(2400, std::max(window->height(), 900)); }
+    QRectF panelMenuRect() const
+    {
+        auto *list = qobject_cast<QQuickItem *>(named("panelOptionsMenu")->property("contentItem").value<QObject *>());
+        QQuickItem *popup = list ? list->parentItem() : nullptr;
+        return popup ? popup->mapRectToScene(QRectF(0, 0, popup->width(), popup->height())) : QRectF();
+    }
+    QRectF panelMenuButtonRect(const QString &panel) const
+    {
+        QQuickItem *header = dockHeader(panel);
+        QQuickItem *button = header ? findItem(header, QStringLiteral("dockMenuButton")) : nullptr;
+        return button ? button->mapRectToScene(QRectF(0, 0, button->width(), button->height())) : QRectF();
+    }
+
     QQuickItem *dockHeader(const QString &panel) const
     {
         std::function<QQuickItem *(QQuickItem *)> walk = [&](QQuickItem *from) -> QQuickItem * {
@@ -7454,6 +7467,38 @@ private slots:
         QTRY_VERIFY(!timingDock->property("isOpen").toBool());
     }
 
+    void panelMenusOpenWhereTheyLeaveTheirButtonFree()
+    {
+        window->resize(1280, 800);
+        QTRY_COMPARE(window->size(), QSize(1280, 800));
+        QVERIFY(application->openFile(episode));
+        QVERIFY(application->openReference(original));
+        auto *referenceDock = item<QObject>("referenceDock");
+        QTRY_VERIFY(referenceDock->property("isOpen").toBool());
+        auto *menu = named("panelOptionsMenu");
+
+        QVERIFY(openPanelMenu(QStringLiteral("Video")));
+        QTRY_VERIFY(menu->property("opened").toBool());
+        QVERIFY2(panelMenuRect().top() >= panelMenuButtonRect(QStringLiteral("Video")).bottom(),
+                 qPrintable(QStringLiteral("menu at %1, button bottom %2").arg(panelMenuRect().top()).arg(panelMenuButtonRect(QStringLiteral("Video")).bottom())));
+        QVERIFY(QMetaObject::invokeMethod(menu, "close"));
+        QTRY_VERIFY(!menu->property("visible").toBool());
+
+        const QRectF button = panelMenuButtonRect(QStringLiteral("Reference"));
+        QVERIFY(!button.isEmpty());
+        QVERIFY(openPanelMenu(QStringLiteral("Reference")));
+        QTRY_VERIFY(menu->property("opened").toBool());
+        const QRectF opened = panelMenuRect();
+        QVERIFY2(button.bottom() + opened.height() > window->height(), "the Reference menu should not fit below its button at 1280x800");
+        QVERIFY2(opened.bottom() <= button.top() && !opened.intersects(button),
+                 qPrintable(QStringLiteral("menu %1..%2, button %3..%4").arg(opened.top()).arg(opened.bottom()).arg(button.top()).arg(button.bottom())));
+        QTest::mouseClick(window, Qt::LeftButton, {}, button.center().toPoint());
+        QTRY_VERIFY(!menu->property("visible").toBool());
+        QVERIFY(referenceDock->property("isOpen").toBool());
+        QVERIFY(!referenceDock->property("isFloating").toBool());
+        QCOMPARE(engine->rootObjects().first()->property("sideBarsJson").toString().contains(QLatin1String("Reference")), false);
+    }
+
     void panelMenuHoldsMoveFloatAndClose()
     {
         QVERIFY(application->openFile(episode));
@@ -7721,8 +7766,11 @@ private slots:
         QTRY_VERIFY(item<QObject>("referenceDock")->property("isOpen").toBool());
         QObject *root = engine->rootObjects().first();
         auto *menu = named("panelOptionsMenu");
-        const auto readsAsShown = [&](const QString &panel) {
-            QTRY_VERIFY2(openPanelMenu(panel), qPrintable(panel));
+        const auto readsAsShown = [&](const QString &panel, int clicks = 1) {
+            bool opened = false;
+            for (int click = 0; click < clicks && !opened; ++click)
+                opened = openPanelMenu(panel);
+            QVERIFY2(opened, qPrintable(panel));
             QTRY_VERIFY2(shownMenuEntries(menu).size() > 1, qPrintable(panel));
             QTRY_COMPARE(menuToScreenReaders(menu).size(), shownMenuEntries(menu).size());
             QTRY_COMPARE(menuToScreenReaders(menu), menuOnScreen(menu));
@@ -7766,7 +7814,7 @@ private slots:
         QWindow *floating = dockHeader(QStringLiteral("Grid"))->window();
         floating->setHeight(std::max(floating->height(), 420));
         QTRY_VERIFY(floating->height() >= 420);
-        readsAsShown(QStringLiteral("Audio"));
+        readsAsShown(QStringLiteral("Audio"), 2); // MUST KILL: first click after a panel floats is lost, #1098
         QVERIFY(!QTest::currentTestFailed());
         readsAsShown(QStringLiteral("Grid"));
         QVERIFY(!QTest::currentTestFailed());

@@ -1387,7 +1387,12 @@ ApplicationWindow {
         readonly property int sideBarIndex: dock ? sideBarPanels.indexOf(root.panelName(dock)) : -1
         readonly property int leftStep: Qt.application.layoutDirection === Qt.RightToLeft ? 1 : -1
         readonly property var hostedMenus: [gridFilteringMenu, gridColumnsMenu]
+        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside | Popup.CloseOnPressOutsideParent
         function openFor(target, anchor) {
+            if (visible && menuButton === anchor) {
+                close()
+                return
+            }
             for (let i = count - 1; i >= 0; --i)
                 if (hostedMenus.includes(menuAt(i)))
                     takeMenu(i)
@@ -1397,10 +1402,34 @@ ApplicationWindow {
             tabIndex = Docking.tabIndex(target.uniqueName)
             tabCount = Docking.tabCount(target.uniqueName)
             margins = anchor.Window.window !== root ? Docking.windowShadow(anchor.Window.window) + 1 : 0
+            menuButton = anchor
+            topMargin = -1
+            bottomMargin = -1
             popup(anchor, 0, anchor.height)
+            leaveTheMenuButtonFree()
         }
+        property Item menuButton: null
+        function leaveTheMenuButtonFree() {
+            if (!menuButton)
+                return
+            const top = menuButton.mapToItem(null, 0, 0).y
+            const windowHeight = menuButton.Window.height
+            const room = { above: top - margins, below: windowHeight - top - menuButton.height - margins }
+            const tall = implicitHeight
+            if (tall <= room.below || (tall > room.above && room.below >= room.above)) {
+                bottomMargin = -1
+                topMargin = tall > room.below ? top + menuButton.height : -1
+                y = menuButton.height
+            } else {
+                topMargin = -1
+                bottomMargin = tall > room.above ? windowHeight - top : -1
+                y = -Math.min(tall, room.above)
+            }
+        }
+        onImplicitHeightChanged: if (visible) leaveTheMenuButtonFree()
         onAboutToShow: Docking.openMenu = dock ? dock.uniqueName : ""
         onAboutToHide: Docking.openMenu = ""
+        onClosed: menuButton = null
         Instantiator {
             id: panelOwnItemsInstantiator
             model: panelOptionsMenu.ownItems

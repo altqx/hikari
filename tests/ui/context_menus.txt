@@ -291,6 +291,11 @@ Grid panel options > Fold generated lines
 Grid panel options > -
 Grid panel options > -
 Grid panel options > Move panel…
+Grid panel options > Move to the left side bar
+Grid panel options > Move to the right side bar
+Grid panel options > Move out of the side bar
+Grid panel options > Move left
+Grid panel options > Move right
 Grid panel options > Move tab left
 Grid panel options > Move tab right
 Grid panel options > Float
