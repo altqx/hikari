@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <cmath>
 #include <limits>
+#include <memory>
 
 namespace hikari::api::detail {
 
@@ -330,6 +331,142 @@ Result videoKeyframes(const Context &context, const Json &params)
     return Json::object({{"keyframes", std::move(keyframes)}, {"total", Json(total)}});
 }
 
+constexpr std::int64_t kMostFrames = 256;
+constexpr std::int64_t kMostFrameBytes = 16 * 1024 * 1024;
+
+struct Shrunk {
+    int width = 0, height = 0;
+    std::string bytes;
+};
+
+Shrunk shrink(const MacroMediaPort::Frame &frame, int maxEdge, bool luma)
+{
+    const int edge = std::max(frame.width, frame.height);
+    const int w = edge <= maxEdge ? frame.width : std::max(1, int((std::int64_t(frame.width) * maxEdge + edge / 2) / edge));
+    const int h = edge <= maxEdge ? frame.height : std::max(1, int((std::int64_t(frame.height) * maxEdge + edge / 2) / edge));
+    Shrunk out{w, h, std::string(std::size_t(w) * h * (luma ? 1 : 4), '\0')};
+    for (int y = 0; y < h; ++y)
+        for (int x = 0; x < w; ++x) {
+            const int x0 = int(std::int64_t(x) * frame.width / w), x1 = std::max(x0 + 1, int(std::int64_t(x + 1) * frame.width / w));
+            const int y0 = int(std::int64_t(y) * frame.height / h), y1 = std::max(y0 + 1, int(std::int64_t(y + 1) * frame.height / h));
+            std::int64_t sum[4] = {0, 0, 0, 0};
+            for (int sy = y0; sy < y1; ++sy)
+                for (int sx = x0; sx < x1; ++sx) {
+                    const std::byte *p = frame.bgra.data() + (std::size_t(sy) * frame.width + sx) * 4;
+                    for (int c = 0; c < 4; ++c)
+                        sum[c] += std::to_integer<int>(p[c]);
+                }
+            const std::int64_t count = std::int64_t(x1 - x0) * (y1 - y0);
+            const auto mean = [&](int c) { return char((sum[c] + count / 2) / count); };
+            const std::size_t at = std::size_t(y) * w + x;
+            if (luma) {
+                const std::int64_t b = sum[0], g = sum[1], r = sum[2];
+                out.bytes[at] = char(((77 * r + 150 * g + 29 * b) / count + 128) >> 8);
+            } else {
+                for (int c = 0; c < 4; ++c)
+                    out.bytes[at * 4 + c] = mean(c);
+            }
+        }
+    return out;
+}
+
+struct FrameBatch : std::enable_shared_from_this<FrameBatch> {
+    MacroMediaPort *media = nullptr;
+    std::int64_t to = 0, stride = 1;
+    int maxEdge = 64;
+    bool luma = true, subtitles = false;
+    Reply reply;
+    Json frames = Json::array();
+    int width = 0, height = 0;
+
+    void step(std::int64_t index)
+    {
+        if (index > to)
+            return reply(Json::object({{"width", Json(width)},
+                                       {"height", Json(height)},
+                                       {"format", Json(luma ? "luma" : "bgra")},
+                                       {"frames", std::move(frames)}}));
+        media->frame(index, subtitles, [self = shared_from_this(), index](std::optional<MacroMediaPort::Frame> frame) {
+            if (!frame || frame->width <= 0 || frame->height <= 0)
+                return self->reply(fail(errors::kUnavailable, "Frame " + std::to_string(index) + " could not be decoded.",
+                                        Json::object({{"frame", Json(index)}})));
+            Shrunk shrunk = shrink(*frame, self->maxEdge, self->luma);
+            self->width = shrunk.width;
+            self->height = shrunk.height;
+            self->frames.push(Json::object({{"frame", Json(index)}, {"data", Json(base64(shrunk.bytes))}}));
+            self->step(index + self->stride);
+        });
+    }
+};
+
+void videoFrames(const Context &context, const Json &params, Reply reply)
+{
+    MacroMediaPort *media = context.host.media;
+    if (!videoOpen(context))
+        return reply(noVideo());
+    const std::int64_t from = params.find("from")->asInt(), to = params.find("to")->asInt();
+    const std::int64_t stride = params.find("stride") ? params.find("stride")->asInt() : 1;
+    const int maxEdge = params.find("maxEdge") ? int(params.find("maxEdge")->asInt()) : 64;
+    const bool luma = !params.find("format") || params.find("format")->asString() == "luma";
+    const bool subtitles = params.find("subtitles") && params.find("subtitles")->asBool();
+    if (to < from)
+        return reply(fail(errors::kInvalidParams, "Parameter /to: it must not be before from.", Json::object({{"pointer", Json("/to")}})));
+    const std::int64_t count = (to - from) / stride + 1;
+    const auto size = media->videoSize();
+    const std::int64_t edge = size ? std::max(size->width, size->height) : maxEdge;
+    const std::int64_t scale = std::min<std::int64_t>(maxEdge, edge);
+    const std::int64_t perFrame = scale * scale * (luma ? 1 : 4);
+    if (count > kMostFrames || count * perFrame > kMostFrameBytes)
+        return reply(fail(errors::kInvalidParams,
+                          "Parameter /to: at most 256 frames and 16 MiB of pixels come in one call; ask for fewer or a larger stride.",
+                          Json::object({{"pointer", Json("/to")}})));
+    auto batch = std::make_shared<FrameBatch>();
+    batch->media = media;
+    batch->to = to;
+    batch->stride = stride;
+    batch->maxEdge = maxEdge;
+    batch->luma = luma;
+    batch->subtitles = subtitles;
+    batch->reply = std::move(reply);
+    batch->step(from);
+}
+
+constexpr std::size_t kMostKeyframes = 100000;
+
+Result setKeyframes(const Context &context, const Json &params)
+{
+    if (!videoOpen(context))
+        return noVideo();
+    if (!context.host.keyframes)
+        return fail(errors::kUnavailable, "Keyframes can't be set here.");
+    std::vector<std::int64_t> frames;
+    for (const Json &f : params.find("frames")->asArray())
+        frames.push_back(f.asInt());
+    std::sort(frames.begin(), frames.end());
+    frames.erase(std::unique(frames.begin(), frames.end()), frames.end());
+    if (frames.size() > kMostKeyframes)
+        return fail(errors::kInvalidParams, "Parameter /frames: at most 100000 keyframes.", Json::object({{"pointer", Json("/frames")}}));
+    std::optional<std::string> path;
+    Json written;
+    if (const Json *file = params.find("file")) {
+        const std::string &handle = file->asString();
+        const auto granted = std::find_if(context.files.begin(), context.files.end(),
+                                          [&](const GrantedFile &g) { return g.handle == handle; });
+        if (granted == context.files.end())
+            return fail(errors::kNotGranted, "The file isn't granted to the caller.", Json::object({{"file", Json(handle)}}));
+        if (!granted->writable)
+            return fail(errors::kReadOnly, "The file is granted read-only.", Json::object({{"file", Json(handle)}}));
+        path = granted->path;
+        written = Json(handle);
+    }
+    if (const auto problem = context.host.keyframes->setKeyframes(frames, path))
+        return fail(errors::kRefused, *problem, Json::object({{"reason", Json("not_set")}}));
+    Json result = Json::object({{"count", Json(std::int64_t(frames.size()))}});
+    if (path)
+        result["file"] = written;
+    return result;
+}
+
 Result audioInfo(const Context &context, const Json &)
 {
     const auto audio = context.host.media ? context.host.media->peakAudio() : std::nullopt;
@@ -473,6 +610,35 @@ void addMediaOperations(Registry &registry)
                      "total": {"type": "integer", "minimum": 0, "description": "Every keyframe in the range; the first 500 are listed."}},
                      "required": ["keyframes", "total"], "additionalProperties": false})",
                  now(videoKeyframes));
+    addOperation(registry, Access::Read, "video.frames",
+                 "Video frames from one to another, every stride-th, scaled to fit maxEdge, as luma or BGRA in base64. At "
+                 "most 256 frames and 16 MiB of pixels come in one call.",
+                 R"({"type": "object", "properties": {
+                     "from": {"type": "integer", "minimum": 0}, "to": {"type": "integer", "minimum": 0},
+                     "stride": {"type": "integer", "minimum": 1, "description": "Default 1, every frame."},
+                     "maxEdge": {"type": "integer", "minimum": 16, "maximum": 512, "description": "Default 64."},
+                     "format": {"enum": ["luma", "bgra"], "description": "Default luma, one byte per pixel."},
+                     "subtitles": {"type": "boolean", "description": "Render the subtitles on them. Default false."}},
+                     "required": ["from", "to"], "additionalProperties": false})",
+                 R"({"type": "object", "properties": {
+                     "width": {"type": "integer", "minimum": 1}, "height": {"type": "integer", "minimum": 1},
+                     "format": {"enum": ["luma", "bgra"]},
+                     "frames": {"type": "array", "items": {"type": "object", "properties": {
+                         "frame": {"type": "integer", "minimum": 0},
+                         "data": {"type": "string", "description": "width bytes per row for luma, width * 4 for bgra; top row first; base64."}},
+                         "required": ["frame", "data"], "additionalProperties": false}}},
+                     "required": ["width", "height", "format", "frames"], "additionalProperties": false})",
+                 videoFrames);
+    addOperation(registry, Access::Write, "video.set_keyframes",
+                 "Replaces the video's keyframes as Open keyframes does. With file, writes them there as an Aegisub "
+                 "keyframes file first and opens it. Not an undo step.",
+                 R"({"type": "object", "properties": {
+                     "frames": {"type": "array", "maxItems": 100000, "items": {"type": "integer", "minimum": 0}},
+                     "file": {"type": "string", "description": "A writable file handle, from files.pick or files.open."}},
+                     "required": ["frames"], "additionalProperties": false})",
+                 R"({"type": "object", "properties": {"count": {"type": "integer", "minimum": 0},
+                     "file": {"type": "string"}}, "required": ["count"], "additionalProperties": false})",
+                 now(setKeyframes));
     addOperation(registry, Access::Read, "audio.info", "Whether audio is open and loaded, its duration and sample rate.",
                  R"({"type": "object", "additionalProperties": false})",
                  R"({"type": "object", "properties": {"open": {"type": "boolean"}, "ready": {"type": "boolean"},

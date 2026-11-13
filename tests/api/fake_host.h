@@ -272,8 +272,87 @@ public:
     std::string package;
 };
 
+// fade.lua (Fade; Shift is not shown) and dup.lua (Go).
+// A run answers once finish() is called, with `next`.
+class FakeMacros final : public MacroHost {
+public:
+    std::vector<MacroInfo> macros() const override
+    {
+        return {MacroInfo{"Fade signs", "fade.lua", "Fade", "Fades signs in", 0, true, ""},
+                MacroInfo{"Fade signs", "fade.lua", "Shift", "Shifts", 1, false, "Not shown here."},
+                MacroInfo{"Dup", "dup.lua", "Go", "", 0, true, ""}};
+    }
+    MacroStart runMacro(const MacroRequest &request, std::function<void(LuaRun)> done) override
+    {
+        if (start != MacroStart::Started)
+            return start;
+        requests.push_back(request);
+        pending = std::move(done);
+        if (onRun)
+            onRun();
+        return MacroStart::Started;
+    }
+    void finish()
+    {
+        if (auto done = std::exchange(pending, {}))
+            done(next);
+    }
+    MacroStart start = MacroStart::Started;
+    LuaRun next{"applied", "", "", "fade.lua"};
+    std::vector<MacroRequest> requests;
+    std::function<void(LuaRun)> pending;
+    std::function<void()> onRun;
+};
+
+class FakeKeyframes final : public KeyframeHost {
+public:
+    std::optional<std::string> setKeyframes(const std::vector<std::int64_t> &frames,
+                                            const std::optional<std::string> &file) override
+    {
+        if (problem)
+            return problem;
+        set = frames;
+        written = file;
+        return std::nullopt;
+    }
+    std::optional<std::string> problem;
+    std::vector<std::int64_t> set;
+    std::optional<std::string> written;
+};
+
 // Document 1 "a.ass" (the editing target, Lines 1-3, Lines 1 and 3 selected,
 // 3 active) and document 2 "b.ass", never saved.
+class FakeVcs final : public application::VcsPort {
+public:
+    void refs(const std::string &at, int commits,
+              std::function<void(std::expected<application::VcsRefs, application::VcsFailure>)> done) override
+    {
+        asked.push_back("refs " + at + " " + std::to_string(commits));
+        if (problem)
+            return done(std::unexpected(*problem));
+        application::VcsRefs refs;
+        refs.root = "/subs";
+        refs.prefix = "season1/";
+        refs.head = "main";
+        refs.headCommit = "c2";
+        refs.branches = {{"main", "c2", true}, {"draft", "c1", false}};
+        refs.tags = {{"v1", "c1", false}};
+        refs.commits = {{"c2", "Time the OP", "Ana", 1700000100}, {"c1", "First pass", "Bo", 1700000000}};
+        done(std::move(refs));
+    }
+    void show(const std::string &file, const std::string &ref,
+              std::function<void(std::expected<application::VcsFile, application::VcsFailure>)> done) override
+    {
+        asked.push_back("show " + file + " " + ref);
+        if (problem)
+            return done(std::unexpected(*problem));
+        done(application::VcsFile{"c1", "season1/a.ass", "[Script Info]\n"});
+    }
+
+    std::vector<std::string> asked;
+    std::optional<application::VcsFailure> problem;
+};
+
 class FakeHost final : public DocumentHost, public CommandHost, public PanelHost {
 public:
     FakeHost()
@@ -322,6 +401,10 @@ public:
             .karaoke = karaoke,
             .effects = effects,
             .plugins = plugins,
+            .macros = &macros,
+            .keyframes = &keyframes,
+            .marks = &marks,
+            .vcs = &vcs,
         };
     }
 
@@ -429,6 +512,10 @@ public:
     FakePlugins fakePlugins;
     PluginHost *plugins = &fakePlugins;
     application::AiReview review;
+    FakeMacros macros;
+    FakeKeyframes keyframes;
+    FakeVcs vcs;
+    application::RowMarks marks;
 };
 
 }

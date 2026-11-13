@@ -70,6 +70,9 @@ public:
     // As push, but a queued event takes the newer data only when both carry the same non-empty key.
     bool deliver(const std::string &event, const std::string &json, const std::string &coalesceKey);
     void forceStop();
+    // The running command's job, after hikari.job.begin: hikari.job.cancelled answers true from now on.
+    void cancelJob();
+    bool inJob() const { return m_job; }
 
     State state() const { return m_state; }
     QString loadError() const { return m_loadError; }
@@ -89,6 +92,11 @@ signals:
     // crash gives stopped or loadFailed instead.
     void unitEnded();
     void stopped(hikari::backends::PluginProcess::StopReason reason);
+    // A command called hikari.job.begin: from then it has no time limit, until it ends.
+    void jobBegan(const QString &command, const QString &title);
+    // fraction < 0: it can't tell how far it is.
+    void jobProgress(double fraction, const QString &text);
+    void jobEnded();
 
 private:
     struct Unit {
@@ -106,6 +114,8 @@ private:
     void dropHelper(bool kill);
     void pauseWatchdog();
     void resumeWatchdog();
+    std::string job(const std::string &operation, const std::string &json);
+    void endJob();
 
     QString m_helperPath;
     LoadSource m_load;
@@ -126,6 +136,8 @@ private:
     qint64 m_spentMs = 0;
     QElapsedTimer m_clock;
     QTimer m_watchdog;
+    bool m_job = false;
+    bool m_jobCancelled = false;
 };
 
 }

@@ -5,6 +5,14 @@ add_test(NAME modules.direction-allowed-accepted
     COMMAND "${CMAKE_COMMAND}" -DCASE=allowed -P "${CMAKE_CURRENT_SOURCE_DIR}/check_direction.cmake")
 set_tests_properties(modules.direction-allowed-accepted PROPERTIES LABELS "modules;control")
 
+add_test(NAME modules.qmlcachegen-line-violation-rejected
+    COMMAND "${CMAKE_COMMAND}" -DCASE=violation -P "${CMAKE_CURRENT_SOURCE_DIR}/check_qmlcachegen_lines.cmake")
+set_tests_properties(modules.qmlcachegen-line-violation-rejected PROPERTIES
+    PASS_REGULAR_EXPRESSION "hikari_ui passes 76 qrc files.*the build hangs" LABELS "modules;control")
+add_test(NAME modules.qmlcachegen-line-allowed-accepted
+    COMMAND "${CMAKE_COMMAND}" -DCASE=allowed -P "${CMAKE_CURRENT_SOURCE_DIR}/check_qmlcachegen_lines.cmake")
+set_tests_properties(modules.qmlcachegen-line-allowed-accepted PROPERTIES LABELS "modules;control")
+
 add_test(NAME modules.desktop-handoffs
     COMMAND "${CMAKE_COMMAND}" -DROOT=${PROJECT_SOURCE_DIR} -P "${CMAKE_CURRENT_SOURCE_DIR}/check_desktop_handoffs.cmake")
 set_tests_properties(modules.desktop-handoffs PROPERTIES LABELS "modules")

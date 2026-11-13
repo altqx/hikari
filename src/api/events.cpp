@@ -37,6 +37,31 @@ void addEvents(Registry &registry)
                                 schema(R"({"type": "object", "properties": {"command": {"type": "string"},
                                     "ok": {"type": "boolean", "description": "False when it was refused or failed."}},
                                     "required": ["command", "ok"], "additionalProperties": false})")});
+    registry.addEvent(EventType{"macro.ran",
+                                "An Automation macro run ended, from the menu, a key, Repeat last run or the API, with "
+                                "the answers its dialogs got, in the form automation.run_macro takes.",
+                                schema(R"({"type": "object", "properties": {
+                                    "document": {"$ref": "#/$defs/DocumentId"},
+                                    "file": {"type": "string", "description": "The script's file name."},
+                                    "macro": {"type": "string"},
+                                    "outcome": {"enum": ["applied", "refused", "failed", "cancelled", "declined", "stopped", "lost"]},
+                                    "ok": {"type": "boolean", "description": "True when it applied."},
+                                    "dialogs": {"type": "array", "items": {"$ref": "#/$defs/DialogAnswer"}}},
+                                    "required": ["document", "file", "macro", "outcome", "ok", "dialogs"],
+                                    "additionalProperties": false})")});
+}
+
+Json dialogValueJson(const application::DialogValue &value)
+{
+    return std::visit(
+        [](const auto &v) -> Json {
+            using T = std::decay_t<decltype(v)>;
+            if constexpr (std::is_same_v<T, std::monostate>)
+                return Json(nullptr);
+            else
+                return Json(v);
+        },
+        value);
 }
 
 }
@@ -124,6 +149,26 @@ void Api::panelChanged(std::string_view panel)
     for (const PanelState &state : m_host.panels->panels())
         if (state.id == panel)
             publish(Event{"panel.changed", detail::panelJson(state)}, std::nullopt);
+}
+
+void Api::macroRan(application::DocumentId document, std::string_view file, std::string_view macro,
+                   std::string_view outcome, const std::vector<DialogAnswer> &dialogs)
+{
+    Json answers = Json::array();
+    for (const DialogAnswer &d : dialogs) {
+        Json values = Json::object();
+        for (const auto &[name, value] : d.values)
+            if (!std::holds_alternative<std::monostate>(value))
+                values[name] = detail::dialogValueJson(value);
+        answers.push(Json::object({{"key", Json(d.key)}, {"values", std::move(values)}, {"button", Json(d.button)}}));
+    }
+    publish(Event{"macro.ran", Json::object({{"document", Json(document.value)},
+                                             {"file", Json(file)},
+                                             {"macro", Json(macro)},
+                                             {"outcome", Json(outcome)},
+                                             {"ok", Json(outcome == "applied")},
+                                             {"dialogs", std::move(answers)}})},
+            document);
 }
 
 void Api::commandRan(std::string_view command, bool ok)

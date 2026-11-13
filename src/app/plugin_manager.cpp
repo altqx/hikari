@@ -268,6 +268,8 @@ QVariantList permissionChanges(const plugins::Manifest &current, const plugins::
         added << more.allDocuments;
     if (!next.permissions.networkHosts.empty())
         added << !more.networkHosts.empty();
+    if (next.permissions.vcsRead)
+        added << more.vcsRead;
     for (const plugins::FileGrantRequest &request : next.permissions.files)
         added << (std::ranges::find(more.files, request.id) != more.files.end());
     const QStringList lines = permissionLines(next);
@@ -294,6 +296,10 @@ QStringList permissionLines(bool unrestricted, const plugins::Permissions &p, bo
             hosts << text(host);
         lines << QCoreApplication::translate("HikariSub.Plugins", "Connect to %1: %2").arg(hosts.join(QStringLiteral(", ")), text(p.networkReason));
     }
+    if (p.vcsRead)
+        lines << QCoreApplication::translate("HikariSub.Plugins",
+                                             "Read the branches, tags and history of the git repository holding your subtitle files: %1")
+                     .arg(text(*p.vcsRead));
     for (const plugins::FileGrantRequest &f : p.files)
         lines << (f.writable ? QCoreApplication::translate("HikariSub.Plugins", "Ask you for a folder to read and write, %1: %2")
                              : QCoreApplication::translate("HikariSub.Plugins", "Ask you for a folder to read, %1: %2"))

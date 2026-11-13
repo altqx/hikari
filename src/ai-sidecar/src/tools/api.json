@@ -597,6 +597,46 @@
         }
       ],
       "description": "The Project of the window the user works in; null without one."
+    },
+    "DialogAnswer": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{16}$",
+          "description": "The dialog's key: its script and its controls' kinds and names, as Automation remembers answers by."
+        },
+        "values": {
+          "type": "object",
+          "additionalProperties": {
+            "type": [
+              "string",
+              "number",
+              "boolean"
+            ]
+          },
+          "description": "The answered values by control name."
+        },
+        "button": {
+          "type": "string",
+          "description": "The pressed button's label; empty when the dialog was closed."
+        }
+      },
+      "required": [
+        "key",
+        "values"
+      ],
+      "additionalProperties": false
+    },
+    "MarkColour": {
+      "enum": [
+        "accent",
+        "warning",
+        "danger",
+        "success",
+        "muted"
+      ],
+      "description": "A theme role, so the mark follows the theme and high contrast."
     }
   },
   "operations": [
@@ -1172,6 +1212,22 @@
                   "items": {
                     "type": "string"
                   }
+                },
+                "kind": {
+                  "enum": [
+                    "hotkey",
+                    "macro",
+                    "plugin"
+                  ],
+                  "description": "Always given: a HikariSub command, an Automation macro (macro:<file>:<ordinal>) or a plugin's (plugin.<id>.<command>)."
+                },
+                "file": {
+                  "type": "string",
+                  "description": "A macro's script file name."
+                },
+                "macro": {
+                  "type": "string",
+                  "description": "A macro's name."
                 }
               },
               "required": [
@@ -2162,6 +2218,142 @@
       }
     },
     {
+      "name": "video.frames",
+      "access": "read",
+      "summary": "Video frames from one to another, every stride-th, scaled to fit maxEdge, as luma or BGRA in base64. At most 256 frames and 16 MiB of pixels come in one call.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "to": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "stride": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Default 1, every frame."
+          },
+          "maxEdge": {
+            "type": "integer",
+            "minimum": 16,
+            "maximum": 512,
+            "description": "Default 64."
+          },
+          "format": {
+            "enum": [
+              "luma",
+              "bgra"
+            ],
+            "description": "Default luma, one byte per pixel."
+          },
+          "subtitles": {
+            "type": "boolean",
+            "description": "Render the subtitles on them. Default false."
+          }
+        },
+        "required": [
+          "from",
+          "to"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "width": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "height": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "format": {
+            "enum": [
+              "luma",
+              "bgra"
+            ]
+          },
+          "frames": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "frame": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "data": {
+                  "type": "string",
+                  "description": "width bytes per row for luma, width * 4 for bgra; top row first; base64."
+                }
+              },
+              "required": [
+                "frame",
+                "data"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "width",
+          "height",
+          "format",
+          "frames"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "video.set_keyframes",
+      "access": "write",
+      "summary": "Replaces the video's keyframes as Open keyframes does. With file, writes them there as an Aegisub keyframes file first and opens it. Not an undo step.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "frames": {
+            "type": "array",
+            "maxItems": 100000,
+            "items": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "file": {
+            "type": "string",
+            "description": "A writable file handle, from files.pick or files.open."
+          }
+        },
+        "required": [
+          "frames"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "file": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "count"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
       "name": "audio.info",
       "access": "read",
       "summary": "Whether audio is open and loaded, its duration and sample rate.",
@@ -2525,6 +2717,142 @@
           "file",
           "size",
           "data"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "automation.macros",
+      "access": "read",
+      "summary": "The loaded Automation macros, as the Automation menu lists them.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "Keep macros whose name, script or file name holds this, ignoring case."
+          }
+        },
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "macros": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "script": {
+                  "type": "string",
+                  "description": "The script's name."
+                },
+                "file": {
+                  "type": "string",
+                  "description": "The script's file name."
+                },
+                "macro": {
+                  "type": "string"
+                },
+                "ordinal": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "The macro's place among the script's, from 0."
+                },
+                "description": {
+                  "type": "string"
+                },
+                "enabled": {
+                  "type": "boolean",
+                  "description": "The script is loaded and shown in the user's window."
+                },
+                "disabledReason": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "script",
+                "file",
+                "macro",
+                "ordinal",
+                "description",
+                "enabled"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "macros"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "automation.run_macro",
+      "access": "write",
+      "summary": "Runs a loaded Automation macro on the active tab's selection, as the menu would, as one undo step. Answers fill its dialogs. Plugins only.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "file": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The script's file name."
+          },
+          "macro": {
+            "type": "string",
+            "minLength": 1
+          },
+          "answers": {
+            "type": "array",
+            "maxItems": 64,
+            "items": {
+              "$ref": "#/$defs/DialogAnswer"
+            },
+            "description": "One per dialog, in order, as macro.ran gives them."
+          },
+          "show": {
+            "enum": [
+              "never",
+              "prefilled"
+            ],
+            "description": "never (the default) answers a dialog whose key matches without showing it; prefilled shows it filled in. A dialog without a matching answer, and a question, is always shown."
+          }
+        },
+        "required": [
+          "file",
+          "macro"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "outcome": {
+            "enum": [
+              "applied",
+              "refused",
+              "failed",
+              "cancelled",
+              "declined",
+              "stopped",
+              "lost"
+            ]
+          },
+          "message": {
+            "type": "string"
+          },
+          "log": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "outcome",
+          "message",
+          "log"
         ],
         "additionalProperties": false
       }
@@ -3494,7 +3822,7 @@
           },
           "permissions": {
             "type": "object",
-            "description": "The manifest's permissions: documents.all, network {hosts, reason}, files."
+            "description": "The manifest's permissions: documents.all, network {hosts, reason}, files, vcs.read."
           },
           "commands": {
             "type": "array",
@@ -4749,6 +5077,206 @@
       }
     },
     {
+      "name": "vcs.refs",
+      "access": "read",
+      "summary": "The branches, tags and recent commits of the git repository holding the Document, or the Project's. Plugins whose manifest asks for vcs.read only.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId",
+            "description": "Defaults to the active Document; an unsaved one gives the Project's repository."
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 200,
+            "description": "How many recent commits; 50 when left out."
+          }
+        },
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "root": {
+            "type": "string",
+            "description": "The repository's work tree."
+          },
+          "path": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The Document's path in the repository, '/'-separated; null for the Project's."
+          },
+          "head": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "ref": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The current branch; null when detached."
+                  },
+                  "commit": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "ref",
+                  "commit"
+                ],
+                "additionalProperties": false
+              }
+            ],
+            "description": "null before the first commit."
+          },
+          "branches": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "commit": {
+                  "type": "string"
+                },
+                "current": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "name",
+                "commit",
+                "current"
+              ],
+              "additionalProperties": false
+            },
+            "description": "At most 500, newest first."
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "commit": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "name",
+                "commit"
+              ],
+              "additionalProperties": false
+            },
+            "description": "At most 500, newest first."
+          },
+          "commits": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "commit": {
+                  "type": "string"
+                },
+                "summary": {
+                  "type": "string"
+                },
+                "author": {
+                  "type": "string"
+                },
+                "time": {
+                  "type": "integer",
+                  "description": "Seconds since 1970, when it was committed."
+                }
+              },
+              "required": [
+                "commit",
+                "summary",
+                "author",
+                "time"
+              ],
+              "additionalProperties": false
+            },
+            "description": "The newest from HEAD."
+          }
+        },
+        "required": [
+          "root",
+          "path",
+          "head",
+          "branches",
+          "tags",
+          "commits"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "vcs.show",
+      "access": "read",
+      "summary": "The Document's file as a git branch, tag or commit has it. Plugins whose manifest asks for vcs.read only.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "ref": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256,
+            "pattern": "^[A-Za-z0-9._/@{}~^][A-Za-z0-9._/@{}~^-]*$",
+            "description": "A branch, tag, commit or revision such as HEAD~2."
+          },
+          "document": {
+            "$ref": "#/$defs/DocumentId",
+            "description": "Defaults to the active Document."
+          }
+        },
+        "required": [
+          "ref"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "ref": {
+            "type": "string"
+          },
+          "commit": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string",
+            "description": "The Document's path in the repository, '/'-separated."
+          },
+          "text": {
+            "type": "string",
+            "description": "The file at that commit, as UTF-8."
+          }
+        },
+        "required": [
+          "ref",
+          "commit",
+          "path",
+          "text"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
       "name": "karaoke.syllables",
       "access": "read",
       "summary": "A Line's karaoke syllables as the templater reads them: text, tag, start and end in ms.",
@@ -5407,6 +5935,160 @@
         ],
         "additionalProperties": false
       }
+    },
+    {
+      "name": "marks.set",
+      "access": "write",
+      "summary": "Marks Grid rows with a coloured bar and a tooltip, replacing the caller's marks on those Lines. Marks belong to the plugin, are never saved and go when it stops. Not an undo step. Plugins only.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId",
+            "description": "Defaults to the active Document."
+          },
+          "marks": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 20000,
+            "items": {
+              "type": "object",
+              "properties": {
+                "line": {
+                  "$ref": "#/$defs/LineId"
+                },
+                "colour": {
+                  "$ref": "#/$defs/MarkColour"
+                },
+                "tooltip": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 200,
+                  "description": "What the mark means; shown on hover after the plugin's name and read by screen readers."
+                }
+              },
+              "required": [
+                "line",
+                "colour",
+                "tooltip"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "marks"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId"
+          },
+          "marked": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "document",
+          "marked"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "marks.clear",
+      "access": "write",
+      "summary": "Removes the caller's Grid row marks. Plugins only.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId",
+            "description": "Defaults to the active Document."
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/LineId"
+            },
+            "description": "These Lines only; every mark of the caller when omitted."
+          }
+        },
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId"
+          }
+        },
+        "required": [
+          "document"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "marks.list",
+      "access": "read",
+      "summary": "The caller's Grid row marks on a Document. Plugins only.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId",
+            "description": "Defaults to the active Document."
+          }
+        },
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId"
+          },
+          "marks": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "line": {
+                  "$ref": "#/$defs/LineId"
+                },
+                "colour": {
+                  "$ref": "#/$defs/MarkColour"
+                },
+                "tooltip": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 200,
+                  "description": "What the mark means; shown on hover after the plugin's name and read by screen readers."
+                }
+              },
+              "required": [
+                "line",
+                "colour",
+                "tooltip"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "document",
+          "marks"
+        ],
+        "additionalProperties": false
+      }
     }
   ],
   "events": [
@@ -5574,6 +6256,56 @@
         "required": [
           "command",
           "ok"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "macro.ran",
+      "summary": "An Automation macro run ended, from the menu, a key, Repeat last run or the API, with the answers its dialogs got, in the form automation.run_macro takes.",
+      "since": 1,
+      "data": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId"
+          },
+          "file": {
+            "type": "string",
+            "description": "The script's file name."
+          },
+          "macro": {
+            "type": "string"
+          },
+          "outcome": {
+            "enum": [
+              "applied",
+              "refused",
+              "failed",
+              "cancelled",
+              "declined",
+              "stopped",
+              "lost"
+            ]
+          },
+          "ok": {
+            "type": "boolean",
+            "description": "True when it applied."
+          },
+          "dialogs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/DialogAnswer"
+            }
+          }
+        },
+        "required": [
+          "document",
+          "file",
+          "macro",
+          "outcome",
+          "ok",
+          "dialogs"
         ],
         "additionalProperties": false
       }
