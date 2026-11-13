@@ -17,8 +17,8 @@ class SideBarModel : public QObject {
 public:
     using QObject::QObject;
     int minimumWidth() const;
-    /// Test fixtures only: a first start puts both side bars away, so the middle keeps its pre-side-bar width.
-    static void setFirstStartHidden(bool hidden);
+    /// Test fixtures only: a first start puts no panels into the side bars. No setting or shipped path calls it.
+    static bool setFirstStartEmpty(bool empty);
 
     Q_INVOKABLE QString defaults(bool project) const;
     Q_INVOKABLE QString migrated(bool project, const QStringList &rightOfGrid) const;

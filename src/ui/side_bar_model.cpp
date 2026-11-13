@@ -5,6 +5,7 @@
 #include <QVariantList>
 
 #include <algorithm>
+#include <utility>
 
 namespace hikari::ui {
 namespace {
@@ -19,7 +20,7 @@ SideBars parsed(const QString &json)
 
 QString text(const SideBars &bars) { return QString::fromStdString(application::sideBarsJson(bars)); }
 
-bool firstStartHidden = false;
+bool firstStartEmpty = false;
 
 SideBarId id(bool second) { return second ? SideBarId::Second : SideBarId::First; }
 
@@ -38,7 +39,7 @@ QVariantMap barMap(const application::SideBar &bar)
 
 int SideBarModel::minimumWidth() const { return application::kSideBarMinimumWidth; }
 
-void SideBarModel::setFirstStartHidden(bool hidden) { firstStartHidden = hidden; }
+bool SideBarModel::setFirstStartEmpty(bool empty) { return std::exchange(firstStartEmpty, empty); }
 
 QString SideBarModel::defaults(bool project) const { return text(application::defaultSideBars({.project = project})); }
 
@@ -47,10 +48,9 @@ QString SideBarModel::migrated(bool project, const QStringList &rightOfGrid) con
     std::vector<std::string> panels;
     for (const QString &panel : rightOfGrid)
         panels.push_back(panel.toStdString());
-    SideBars bars = application::migratedSideBars({.project = project}, panels);
-    bars.first.hidden = bars.first.hidden || firstStartHidden;
-    bars.second.hidden = bars.second.hidden || firstStartHidden;
-    return text(bars);
+    if (firstStartEmpty)
+        return text(SideBars{.first = {.hidden = true}, .second = {.hidden = true}});
+    return text(application::migratedSideBars({.project = project}, panels));
 }
 
 QVariantMap SideBarModel::read(const QString &json) const
