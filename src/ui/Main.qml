@@ -261,9 +261,49 @@ ApplicationWindow {
     }
     // KDDW closes every panel before onClosing, so the close is reviewed here first (Docking.guardClose).
     property bool admittingClose: false
+    function askAboutAiFiles() {
+        const files = root.review.on ? root.review.waitingFiles : []
+        if (files.length === 0)
+            return false
+        const listed = files.slice(0, 10).join("\n")
+        root.messages.ask({
+            title: qsTranslate("HikariSub.Review", "Quit"),
+            text: qsTranslate("HikariSub.Review", "Keep the AI’s file changes?"),
+            detail: files.length > 10
+                    ? listed + "\n" + qsTranslate("HikariSub.Review", "and %n more", "", files.length - 10)
+                    : listed,
+            plainText: true,
+            severity: "warning",
+            choices: [
+                { id: "keep", text: qsTranslate("HikariSub.Review", "Keep all"), role: "accept", isDefault: true },
+                { id: "discard", text: qsTranslate("HikariSub.Review", "Discard all"), role: "destructive" },
+                { id: "cancel", text: qsTranslate("HikariSub.Review", "Cancel"), role: "reject" }
+            ]
+        }, id => {
+            if (id === "discard") {
+                root.review.discardAllFiles()
+            } else if (id === "keep") {
+                if (!root.review.keepAllFiles()) {
+                    root.messages.ask({
+                        title: qsTranslate("HikariSub.Review", "Quit"),
+                        text: qsTranslate("HikariSub.Review", "Some files weren’t kept."),
+                        detail: qsTranslate("HikariSub.Review", "They changed on disk after the AI wrote them, or couldn’t be written. They stay in the Review panel."),
+                        severity: "warning"
+                    }, () => {})
+                    return
+                }
+            } else {
+                return
+            }
+            root.close()
+        })
+        return true
+    }
     function admitClose() {
         if (!root.app.closeApproved(root.shellWindow)) {
             const quits = !root.app.otherShellWindowOpen(root.shellWindow)
+            if (quits && root.askAboutAiFiles())
+                return false
             const rows = quits ? root.app.reviewClose("quit") : root.app.reviewCloseWindow(root.shellWindow)
             if (rows.length > 0) {
                 closeReview.review(rows)
@@ -288,6 +328,10 @@ ApplicationWindow {
             return
         }
         if (!root.app.quitApproved) {
+            if (root.askAboutAiFiles()) {
+                close.accepted = false
+                return
+            }
             const rows = root.app.reviewClose("quit")
             if (rows.length > 0) {
                 close.accepted = false
@@ -7015,6 +7059,12 @@ ApplicationWindow {
                                 root.app.selectTab(index)
                         }
                         onRestoreRequested: turn => restoreCheckpointDialog.openFor(turn)
+                        onFileNotWritten: root.messages.ask({
+                            title: qsTranslate("HikariSub.Review", "Keep"),
+                            text: qsTranslate("HikariSub.Review", "The file couldn’t be written."),
+                            detail: qsTranslate("HikariSub.Review", "It stays in the review. Check that its folder exists and that you can write there, then keep it again."),
+                            severity: "error"
+                        }, () => {})
                     }
                 }
                 Connections {
@@ -8461,11 +8511,13 @@ ApplicationWindow {
         defaultButton: restoreCheckpointButton
         property var turn: 0
         property var documents: []
-        readonly property int editedSince: documents.reduce((n, d) => n + d.editedSince, 0)
+        readonly property int editedSince: documents.reduce((n, d) => n + (d.editedSince ?? 0), 0)
+        readonly property var fileEntry: documents.find(d => d.files !== undefined) ?? null
         function openFor(turn) {
             restoreCheckpointDialog.turn = turn
             documents = root.review.checkpoint(turn)
             alsoMyEdits.checked = false
+            alsoChangedFiles.checked = false
             open()
         }
         Label {
@@ -8474,7 +8526,7 @@ ApplicationWindow {
             text: qsTranslate("HikariSub.Review", "Every AI change from this turn on is undone, kept ones too, in every tab it touched, as one history step per tab.")
         }
         Repeater {
-            model: restoreCheckpointDialog.documents
+            model: restoreCheckpointDialog.documents.filter(d => d.files === undefined)
             delegate: RowLayout {
                 required property var modelData
                 Layout.fillWidth: true
@@ -8492,6 +8544,26 @@ ApplicationWindow {
                           : qsTranslate("HikariSub.Review", "%n line(s)", "", modelData.lines)
                 }
             }
+        }
+        RowLayout {
+            visible: restoreCheckpointDialog.fileEntry !== null
+            Layout.fillWidth: true
+            Label {
+                Layout.fillWidth: true
+                text: qsTranslate("HikariSub.Review", "Project files")
+            }
+            Label {
+                objectName: "restoreFiles"
+                color: Theme.muted
+                text: qsTranslate("HikariSub.Review", "%n file(s)", "", restoreCheckpointDialog.fileEntry?.files ?? 0)
+            }
+        }
+        CheckBox {
+            id: alsoChangedFiles
+            objectName: "restoreAlsoChangedFiles"
+            visible: (restoreCheckpointDialog.fileEntry?.filesChangedSince ?? 0) > 0
+            text: qsTranslate("HikariSub.Review", "Also put back %n file(s) changed on disk after they were kept", "",
+                              restoreCheckpointDialog.fileEntry?.filesChangedSince ?? 0)
         }
         CheckBox {
             id: alsoMyEdits
@@ -8514,7 +8586,7 @@ ApplicationWindow {
                 enabled: restoreCheckpointDialog.documents.length > 0
                 DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
                 onClicked: {
-                    root.review.restore(restoreCheckpointDialog.turn, alsoMyEdits.checked)
+                    root.review.restore(restoreCheckpointDialog.turn, alsoMyEdits.checked, alsoChangedFiles.checked)
                     restoreCheckpointDialog.close()
                 }
             },

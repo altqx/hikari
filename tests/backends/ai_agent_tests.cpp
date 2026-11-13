@@ -108,18 +108,30 @@ TEST(AgentPolicy, EachModeDecidesWrites)
 
 const std::vector<std::string> kSafe{"/home/u/subs", "/home/u/.local/share/HikariSub"};
 
-std::optional<std::string> pathOf(std::string_view handle)
+std::optional<std::string> writeTarget(const Json &params)
 {
+    const Json *file = params.find("file");
+    const std::string handle = file && file->isString() ? file->asString() : std::string();
     if (handle == "inside")
         return "/home/u/subs/b.ass";
     if (handle == "outside")
         return "/home/u/subsidiary/b.ass";
+    const Json *folder = params.find("folder"), *path = params.find("path");
+    if (folder && folder->isString() && folder->asString() == "project" && path && path->isString())
+        return "/home/u/show/" + path->asString();
     return std::nullopt;
 }
 
 Risk riskOf(const std::string &operation, const Json &params)
 {
-    return alwaysAsk(operation, params, pathOf, kSafe).risk;
+    return alwaysAsk(operation, params, writeTarget, kSafe).risk;
+}
+
+Risk projectWriteRisk(std::string_view path)
+{
+    return alwaysAsk("files.write", Json::object({{"folder", "project"}, {"path", std::string(path)}}), writeTarget,
+                     kSafe, "/home/u/show")
+        .risk;
 }
 
 Risk commandRisk(std::string_view command)
@@ -1474,6 +1486,30 @@ TEST_F(AgentThreadsTest, TheSessionLearnsTheContextWindowAndWhetherToCompactByIt
     threads->send(id, "Again");
     ASSERT_TRUE(idle(id));
     EXPECT_TRUE(receivedAs("session/prompt").back().find("autoCompact")->asBool());
+}
+
+TEST(AgentPolicy, AWriteInsideTheProjectFollowsTheThreadsMode)
+{
+    EXPECT_EQ(projectWriteRisk("notes/plan.md"), Risk::None);
+    EXPECT_EQ(projectWriteRisk(".hikarix/plan.md"), Risk::None);
+}
+
+TEST(AgentPolicy, AWriteInTheProjectsHikariFolderAlwaysAsks)
+{
+    EXPECT_EQ(projectWriteRisk(".hikari/project.toml"), Risk::Files);
+    EXPECT_EQ(projectWriteRisk(".hikari/skills/new/SKILL.md"), Risk::Files);
+    for (const AgentMode mode : {AgentMode::Manual, AgentMode::Auto, AgentMode::FullAccess})
+        EXPECT_EQ(decide(mode, "files.write", projectWriteRisk(".hikari/project.toml") != Risk::None, true),
+                  Decision::AlwaysAsk);
+}
+
+TEST(AgentPolicy, AFolderWriteOutsideTheProjectAndTheSafeFoldersAlwaysAsks)
+{
+    EXPECT_EQ(projectWriteRisk("../elsewhere/plan.md"), Risk::Files);
+    EXPECT_EQ(alwaysAsk("files.write", Json::object({{"folder", "project"}, {"path", "notes/plan.md"}}), writeTarget,
+                        kSafe)
+                  .risk,
+              Risk::Files);
 }
 
 namespace {
