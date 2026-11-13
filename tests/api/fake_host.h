@@ -5,6 +5,7 @@
 #include "hikari/api/host.h"
 #include "hikari/application/audio_display.h"
 #include "hikari/core/ass_load.h"
+#include "hikari/core/frame_shrink.h"
 
 #include <cstring>
 #include <map>
@@ -93,6 +94,25 @@ public:
             }
         reply(std::move(out));
     }
+    bool smallFrames(const SmallFramesRequest &request, std::function<void(std::optional<SmallFrames>)> reply) override
+    {
+        smallAsked.push_back(request);
+        if (!offerSmallFrames)
+            return false;
+        if (smallFramesFail)
+            return reply(std::nullopt), true;
+        SmallFrames out;
+        for (std::int64_t index = request.from; index <= request.to; index += request.stride)
+            frame(index, false, [&](std::optional<Frame> f) {
+                const auto shrunk = core::shrinkFrame(f->bgra.data(), f->width, f->height, std::size_t(f->width) * 4,
+                                                      int(request.maxEdge), request.luma);
+                out.width = shrunk.width;
+                out.height = shrunk.height;
+                out.pixels.push_back(shrunk.bytes);
+            });
+        reply(std::move(out));
+        return true;
+    }
     std::optional<std::pair<std::int64_t, std::int64_t>> audioSelection() const override { return std::nullopt; }
     std::optional<Project> project() const override { return Project{7, {}, {}, {}}; }
     std::optional<std::string> fileName() const override { return std::nullopt; }
@@ -108,6 +128,9 @@ public:
     bool audioOpen = true;
     bool audioLoading = false;
     bool lastWithSubtitles = false;
+    bool offerSmallFrames = false;
+    bool smallFramesFail = false;
+    std::vector<SmallFramesRequest> smallAsked;
     application::DisplayAudio audio{2000, 2000};
 };
 

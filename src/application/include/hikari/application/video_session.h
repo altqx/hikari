@@ -69,6 +69,9 @@ public:
     // Decodes without showing; the overlay at its start when asked; nullptr without video.
     void requestFrame(int index, bool withSubtitles,
                       std::function<void(std::shared_ptr<const IndexedFrame>)> done);
+    // from..to every stride-th frame, without subtitles, as the source shrinks them; nullopt without video or when it can't.
+    void requestShrunkFrames(int from, int to, int stride, int maxEdge, bool luma,
+                             std::function<void(std::optional<IndexedSourcePort::ShrunkFrames>)> done);
 
     // nullptr: no playback. A playing video pauses first; the new player opens
     // the video at the next play.

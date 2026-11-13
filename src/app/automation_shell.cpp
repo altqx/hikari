@@ -142,6 +142,20 @@ public:
                                            reply(std::move(out));
                                        });
     }
+    bool smallFrames(const SmallFramesRequest &request, std::function<void(std::optional<SmallFrames>)> reply) override
+    {
+        auto &session = m_video().session();
+        if (session.state() != application::VideoSession::State::Ready)
+            return false;
+        session.requestShrunkFrames(static_cast<int>(request.from), static_cast<int>(request.to), static_cast<int>(request.stride),
+                                    request.maxEdge, request.luma,
+                                    [reply](std::optional<application::IndexedSourcePort::ShrunkFrames> frames) {
+                                        if (!frames)
+                                            return reply(std::nullopt);
+                                        reply(SmallFrames{frames->width, frames->height, std::move(frames->pixels)});
+                                    });
+        return true;
+    }
     // Aegisub's get_audio_selection gives the current Line's times, not the audio box's selection.
     std::optional<std::pair<std::int64_t, std::int64_t>> audioSelection() const override
     {

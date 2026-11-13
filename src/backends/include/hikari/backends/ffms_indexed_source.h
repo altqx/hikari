@@ -7,6 +7,7 @@
 
 #include <QString>
 
+#include <chrono>
 #include <functional>
 #include <map>
 #include <memory>
@@ -34,6 +35,10 @@ public:
     void cancelOpen() override;
     std::optional<application::OpenFailure> openFailure() const override { return m_openFailure; }
     void frame(int index, FrameReady done) override;
+    void shrunkFrames(int from, int to, int stride, int maxEdge, bool luma, ShrunkFramesReady done) override;
+    // How many FrameBatch decoders the helper has open now.
+    void openBatchDecoders(std::function<void(std::expected<int, application::SourceError>)> done);
+    void setBatchIdle(std::chrono::milliseconds idle) { m_batchIdle = idle; }
     void openAudio(int track, AudioOpened done) override;
     void audio(std::int64_t start, std::int64_t count, AudioReady done) override;
     void cancelReads() override;
@@ -84,6 +89,7 @@ private:
     application::IndexRequest m_index;
     QString m_handoff;
     bool m_lost = false;
+    std::chrono::milliseconds m_batchIdle{10000};
     int m_pcmChannels = 0;
     double m_startupMs = 0;
     struct Pending {

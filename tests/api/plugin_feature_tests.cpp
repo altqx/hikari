@@ -269,6 +269,33 @@ TEST_F(PluginFeatures, FramesComeScaledAsLumaOrBgra)
     EXPECT_EQ(fromBase64(small->find("frames")->asArray()[0].find("data")->asString()).size(), 32u * 18);
 }
 
+TEST_F(PluginFeatures, FramesWithoutSubtitlesComeFromTheBatchPathUnchanged)
+{
+    const char *const asks[] = {R"({"from": 2, "to": 6, "stride": 2, "maxEdge": 64, "format": "bgra"})",
+                                R"({"from": 0, "to": 9, "maxEdge": 16})", R"({"from": 99, "to": 99})"};
+    for (const char *ask : asks) {
+        host.media.offerSmallFrames = false;
+        const Result oneByOne = call("video.frames", ask);
+        host.media.offerSmallFrames = true;
+        const Result batched = call("video.frames", ask);
+        ASSERT_TRUE(oneByOne && batched) << ask;
+        EXPECT_EQ(batched->dump(), oneByOne->dump()) << ask;
+    }
+    ASSERT_EQ(host.media.smallAsked.size(), 6u);
+    EXPECT_EQ(host.media.smallAsked[1].stride, 2);
+    EXPECT_FALSE(host.media.smallAsked[1].luma);
+
+    host.media.smallAsked.clear();
+    EXPECT_TRUE(call("video.frames", R"({"from": 0, "to": 3, "subtitles": true})"));
+    EXPECT_TRUE(host.media.smallAsked.empty());
+    EXPECT_TRUE(host.media.lastWithSubtitles);
+
+    host.media.smallFramesFail = true;
+    const Result fallback = call("video.frames", R"({"from": 0, "to": 3})");
+    ASSERT_TRUE(fallback);
+    EXPECT_EQ(fallback->find("frames")->asArray().size(), 4u);
+}
+
 TEST_F(PluginFeatures, FramesKeepToTheLimits)
 {
     EXPECT_EQ(code(call("video.frames", R"({"from": 5, "to": 4})")), errors::kInvalidParams);
