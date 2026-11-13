@@ -18252,7 +18252,7 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "aiCustomAgentSave"), "click"));
         QQuickItem *line = nullptr;
         QTRY_VERIFY((line = dialogItem("settingsDialog", "aiCustomAgentLine")));
-        QCOMPARE(line->property("text").toString(), QStringLiteral("/opt/my-agent/bin/my-agent"));
+        QCOMPARE(line->property("text").toString(), QDir::toNativeSeparators(QStringLiteral("/opt/my-agent/bin/my-agent")));
         QVERIFY(!dialogItem("settingsDialog", "aiCustomAgentForm"));
 
         auto *window = qobject_cast<QQuickWindow *>(settingsWindow());
