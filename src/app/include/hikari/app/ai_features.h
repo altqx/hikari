@@ -154,7 +154,7 @@ public:
     /// The user's own ACP agents, found or not.
     std::vector<AcpAgent> customAgents() const;
     void setCustomAgents(const std::vector<AcpAgent> &agents);
-    /// OpenCode and Antigravity when found, then the user's own agents that are. None on Windows (#931).
+    /// OpenCode and Antigravity when found, then the user's own agents that are.
     std::vector<AcpAgent> acpAgents() const;
     /// `agy acp --login` in Hikari's Antigravity profile. Null with AI off or without agy.
     std::unique_ptr<backends::ai::AntigravitySignIn> antigravitySignIn();

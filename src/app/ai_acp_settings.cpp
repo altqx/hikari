@@ -23,15 +23,6 @@ AiAcpSettings::~AiAcpSettings()
     *m_alive = false;
 }
 
-bool AiAcpSettings::available()
-{
-#ifdef Q_OS_WIN
-    return false;
-#else
-    return true;
-#endif
-}
-
 QVariantMap AiAcpSettings::antigravity() const
 {
     return {{QStringLiteral("signedIn"), m_signedIn},

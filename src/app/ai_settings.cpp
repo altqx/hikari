@@ -211,9 +211,8 @@ AiSettings::AiSettings(AiFeatures &features, AiMcp *mcp, AiMcpServers *mcpServer
 {
     for (const char *name : backends::ai::kAgentClis)
         m_agents.emplace(QLatin1String(name), std::make_unique<Agent>());
-    if (AiAcpSettings::available())
-        for (const char *name : kAcpClis)
-            m_agents.emplace(QLatin1String(name), std::make_unique<Agent>());
+    for (const char *name : kAcpClis)
+        m_agents.emplace(QLatin1String(name), std::make_unique<Agent>());
     m_acp = new AiAcpSettings(m_features, this);
     connect(&m_features, &AiFeatures::switched, this, [this] {
         reset();

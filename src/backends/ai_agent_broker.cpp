@@ -30,6 +30,17 @@ namespace {
 
 constexpr qsizetype kMaxLineBytes = 64 << 20;
 constexpr int kCodexToolTimeoutSeconds = 24 * 60 * 60;
+#ifdef Q_OS_WIN
+constexpr bool kChannelsArePipes = true;
+#else
+constexpr bool kChannelsArePipes = false;
+#endif
+
+QString tomlString(QString text)
+{
+    text.replace(QLatin1Char('\\'), QLatin1String("\\\\")).replace(QLatin1Char('"'), QLatin1String("\\\""));
+    return QLatin1Char('"') + text + QLatin1Char('"');
+}
 
 constexpr std::array kRefusedClaudeFlags = {
     "--dangerously-skip-permissions", "--allow-dangerously-skip-permissions", "--add-dir", "--plugin-dir",
@@ -250,14 +261,24 @@ private:
 
     api::Json server() const
     {
+        if (!m_channel.pipe.isEmpty())
+            return bridged({"--mcp", "--channel", m_channel.pipe.toStdString()});
         if (m_http)
             return api::Json::object(
                 {{"type", "http"}, {"name", kAcpServer}, {"url", m_channel.url.toStdString()},
                  {"headers", api::Json::array({api::Json::object(
                                  {{"name", "Authorization"}, {"value", "Bearer " + m_channel.token.toStdString()}})})}});
+        return bridged({"--mcp", "--channel-url", m_channel.url.toStdString()});
+    }
+
+    api::Json bridged(std::initializer_list<std::string> args) const
+    {
+        api::Json list = api::Json::array();
+        for (const std::string &arg : args)
+            list.push(api::Json(arg));
         return api::Json::object(
             {{"name", kAcpServer}, {"command", QDir::toNativeSeparators(m_channel.bridge).toStdString()},
-             {"args", api::Json::array({api::Json("--mcp"), api::Json("--channel-url"), api::Json(m_channel.url.toStdString())})},
+             {"args", std::move(list)},
              {"env", api::Json::array({api::Json::object(
                          {{"name", kMcpTokenVariable}, {"value", m_channel.token.toStdString()}})})}});
     }
@@ -281,6 +302,18 @@ std::optional<std::string> acpHikariTool(const api::Json &toolCall)
     if (const api::Json *meta = toolCall.find("_meta"); meta && servedByHikari(*meta) && !firstWord(text).empty())
         return firstWord(text);
     return std::nullopt;
+}
+
+QString channelProblem(const QString &containerName)
+{
+    if (!kChannelsArePipes)
+        return {};
+    const sandbox::Launcher launcher(sandbox::Profile{.name = containerName});
+    McpServer probe([] { return nullptr; }, newMcpToken());
+    QString why;
+    if (probe.listenPipe(launcher.containerSid(), [](qint64) { return false; }, &why))
+        return {};
+    return why.isEmpty() ? launcher.coverage().missing : why;
 }
 
 std::unique_ptr<AgentGuard> acpGuard(AcpChannel channel)
@@ -387,7 +420,7 @@ AgentSpec claudeAgent(const QString &program, const QString &home, const QString
 }
 
 std::optional<AgentSpec> codexAgent(const QString &program, const QString &codexHome, const QString &work,
-                                    std::shared_ptr<CodexLease> lease)
+                                    std::shared_ptr<CodexLease> lease, const QString &bridge)
 {
     const QString binary = codexBinary(program);
     if (binary.isEmpty())
@@ -401,6 +434,8 @@ std::optional<AgentSpec> codexAgent(const QString &program, const QString &codex
                                     .readExecute = {QFileInfo(binary).absolutePath()},
                                     .readWrite = {codexHome, work},
                                     .network = sandbox::Network::Any};
+    if (kChannelsArePipes)
+        spec.profile->readExecute << QFileInfo(bridge).absolutePath();
     spec.workingDirectory = work;
     spec.environment = privateTemporary(work);
     spec.environment.insert(QStringLiteral("CODEX_HOME"), QDir::toNativeSeparators(codexHome));
@@ -408,13 +443,19 @@ std::optional<AgentSpec> codexAgent(const QString &program, const QString &codex
         return arguments.isEmpty() ? QString() : QStringLiteral("Codex takes no arguments from the sidecar");
     };
     spec.guard = codexGuard;
-    spec.channelArguments = [](const QString &url) {
-        return QStringList{QStringLiteral("-c"), QStringLiteral("mcp_servers.hikari.url=\"%1\"").arg(url),
-                           QStringLiteral("-c"),
-                           QStringLiteral("mcp_servers.hikari.bearer_token_env_var=\"%1\"")
-                               .arg(QString::fromLatin1(kMcpTokenVariable)),
-                           QStringLiteral("-c"), QStringLiteral("mcp_servers.hikari.default_tools_approval_mode=\"approve\""),
-                           QStringLiteral("-c"), QStringLiteral("mcp_servers.hikari.tool_timeout_sec=%1").arg(kCodexToolTimeoutSeconds)};
+    spec.channelArguments = [bridge](const ChannelAddress &channel) {
+        const QString token = tomlString(QString::fromLatin1(kMcpTokenVariable));
+        QStringList out =
+            channel.pipe.isEmpty()
+                ? QStringList{QStringLiteral("-c"), QStringLiteral("mcp_servers.hikari.url=") + tomlString(channel.url),
+                              QStringLiteral("-c"), QStringLiteral("mcp_servers.hikari.bearer_token_env_var=") + token}
+                : QStringList{QStringLiteral("-c"),
+                              QStringLiteral("mcp_servers.hikari.command=") + tomlString(QDir::toNativeSeparators(bridge)),
+                              QStringLiteral("-c"),
+                              QStringLiteral("mcp_servers.hikari.args=[\"--mcp\",\"--channel\",%1]").arg(tomlString(channel.pipe)),
+                              QStringLiteral("-c"), QStringLiteral("mcp_servers.hikari.env_vars=[%1]").arg(token)};
+        return out + QStringList{QStringLiteral("-c"), QStringLiteral("mcp_servers.hikari.default_tools_approval_mode=\"approve\""),
+                                 QStringLiteral("-c"), QStringLiteral("mcp_servers.hikari.tool_timeout_sec=%1").arg(kCodexToolTimeoutSeconds)};
     };
     spec.before = [lease](std::function<void(QString)> go) { lease->acquire(std::move(go)); };
     spec.after = [lease] { lease->release(); };
@@ -442,8 +483,8 @@ AgentSpec acpAgent(const QString &program, const QStringList &arguments, const Q
     spec.refuse = [](const QStringList &extra) {
         return extra.isEmpty() ? QString() : QStringLiteral("An ACP agent takes no arguments from the sidecar");
     };
-    spec.channelGuard = [work, bridge](const QString &url, const QByteArray &token) {
-        return acpGuard({.url = url, .token = token, .bridge = bridge, .work = work});
+    spec.channelGuard = [work, bridge](const ChannelAddress &channel, const QByteArray &token) {
+        return acpGuard({.url = channel.url, .pipe = channel.pipe, .token = token, .bridge = bridge, .work = work});
     };
     return spec;
 }
@@ -643,8 +684,9 @@ void AgentBroker::start(const api::Json &params, const Answer &answer)
             if (value.isString() && spec->second.sidecarEnvironment.contains(QString::fromStdString(name)))
                 environment.insert(QString::fromStdString(name), QString::fromStdString(value.asString()));
 
+    auto launcher = std::make_unique<sandbox::Launcher>(spec->second.profile);
     std::unique_ptr<McpServer> channel;
-    QString channelUrl;
+    ChannelAddress address;
     if (spec->second.channelArguments || spec->second.channelGuard) {
         const api::Json *session = params.find("session");
         if (!session || !session->isString() || session->asString().empty())
@@ -652,11 +694,18 @@ void AgentBroker::start(const api::Json &params, const Answer &answer)
         channel = std::make_unique<McpServer>([host = m_host] { return host.data(); }, newMcpToken());
         channel->setChannel(session->asString());
         QString why;
-        if (!channel->listenHttp(0, &why))
-            return refuse(rpc::kBusy, "Hikari's tools channel didn't open: " + why.toStdString());
-        channelUrl = QStringLiteral("http://127.0.0.1:%1/mcp").arg(channel->httpPort());
+        if (kChannelsArePipes) {
+            const auto admits = [inside = launcher.get()](qint64 pid) { return inside->runs(pid); };
+            if (!channel->listenPipe(launcher->containerSid(), admits, &why))
+                return refuse(rpc::kBusy, "Hikari's tools channel didn't open: " + why.toStdString());
+            address.pipe = channel->socketName();
+        } else {
+            if (!channel->listenHttp(0, &why))
+                return refuse(rpc::kBusy, "Hikari's tools channel didn't open: " + why.toStdString());
+            address.url = QStringLiteral("http://127.0.0.1:%1/mcp").arg(channel->httpPort());
+        }
         if (spec->second.channelArguments) {
-            arguments = spec->second.channelArguments(channelUrl) + arguments;
+            arguments = spec->second.channelArguments(address) + arguments;
             environment.insert(QString::fromLatin1(kMcpTokenVariable), QString::fromLatin1(channel->token()));
         }
     }
@@ -665,10 +714,10 @@ void AgentBroker::start(const api::Json &params, const Answer &answer)
     running->id = id;
     running->agent = spec->first;
     running->process = std::make_unique<QProcess>();
-    running->launcher = std::make_unique<sandbox::Launcher>(spec->second.profile);
+    running->launcher = std::move(launcher);
     running->channel = std::move(channel);
     if (spec->second.channelGuard)
-        running->guard = spec->second.channelGuard(channelUrl, running->channel->token());
+        running->guard = spec->second.channelGuard(address, running->channel->token());
     else if (spec->second.guard)
         running->guard = spec->second.guard();
     QProcess &process = *running->process;

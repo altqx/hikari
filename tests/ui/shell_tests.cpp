@@ -18193,9 +18193,6 @@ private slots:
 
     void settingsAiPageListsTheAcpAgentsAndTheUsersOwn()
     {
-#ifdef Q_OS_WIN
-        QSKIP("Hikari runs no ACP agents on Windows (#931)");
-#else
         auto stored = std::make_shared<MemoryAi>();
         const QString realAgy = qEnvironmentVariable("HIKARI_REAL_AGY");
         const QString folder = dir.filePath(QStringLiteral("acp-page"));
@@ -18305,7 +18302,6 @@ private slots:
         QCOMPARE(custom.size(), 1u);
         QCOMPARE(custom.front().name, QStringLiteral("My agent"));
         QCOMPARE(custom.front().arguments, QStringLiteral("--acp"));
-#endif
     }
 
     void settingsAiMcpServersAreAddedInPlaceWithTheirSecretsInTheKeychain()

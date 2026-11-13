@@ -16,6 +16,8 @@ It adds to ADR 0026's Agents and Tests sections. The rest of ADR 0026 stands.
 
 Amended by [AI15c #443](https://github.com/altqx/hikari/issues/443) on 2026-11-12: ACP agents run in a profile of their own instead of unsandboxed. MCP servers stay unsandboxed in v1.
 
+Amended by [AI15d #931](https://github.com/altqx/hikari/issues/931) on 2026-11-13. On Windows, an agent's private tools channel is a named pipe that only the user and that agent's AppContainer may open, from a process in the agent's own job. Agents get no loopback exemption.
+
 ## The sandbox
 
 - **One shared module.** `hikari_sandbox` in `src/backends` starts a process under a `sandbox::Profile`: the paths it may read and execute, read, or read and write, and whether it gets the network. Plugins ([PL7 #419](https://github.com/altqx/hikari/issues/419)) reuse it.

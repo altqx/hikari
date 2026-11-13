@@ -18,8 +18,6 @@ class AiFeatures;
 /// Settings › AI › External agents for the ACP agents: Antigravity's Google sign-in and the user's own agents.
 class AiAcpSettings final : public QObject {
     Q_OBJECT
-    /// False where Hikari runs no ACP agents (#931).
-    Q_PROPERTY(bool available READ available CONSTANT FINAL)
     /// {signedIn, state, error}; state is "", "starting", "code" or "checking".
     Q_PROPERTY(QVariantMap antigravity READ antigravity NOTIFY antigravityChanged FINAL)
 
@@ -27,7 +25,6 @@ public:
     explicit AiAcpSettings(AiFeatures &features, QObject *parent = nullptr);
     ~AiAcpSettings() override;
 
-    static bool available();
     QVariantMap antigravity() const;
 
     /// Reads whether HikariSub has its own Antigravity sign-in.

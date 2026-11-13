@@ -257,7 +257,6 @@ TEST_F(AiFeaturesTest, McpClientsReadSkillsOnlyWithTheGrantAndFromTheActiveWindo
     EXPECT_FALSE(mcp.server()->callerFor(connection, "skills.list")->skills);
 }
 
-#ifndef Q_OS_WIN
 TEST_F(AiFeaturesTest, TheAcpAgentsFoundAndTheUsersOwnAreAddedAgainWhenTheirListChanges)
 {
     app::AiFeatures::Ports p = ports(false);
@@ -290,7 +289,6 @@ TEST_F(AiFeaturesTest, TheAcpAgentsFoundAndTheUsersOwnAreAddedAgainWhenTheirList
     features.setCustomAgents({});
     EXPECT_EQ(added, (std::vector<QString>{QStringLiteral("opencode=/opt/opencode ")}));
 }
-#endif
 
 TEST_F(AiFeaturesTest, NoMcpListenerUnlessTheUserTurnsItOnAndNeverWithAiOff)
 {

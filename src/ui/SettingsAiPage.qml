@@ -25,7 +25,7 @@ ScrollView {
     readonly property var codex: ai ? ai.codex : ({})
     readonly property var components: ai ? ai.components : ({})
     readonly property var agents: ai ? ai.agents : ({})
-    readonly property var acp: ai ? ai.acp : ({ available: false, antigravity: ({}) })
+    readonly property var acp: ai ? ai.acp : ({ antigravity: ({}) })
     readonly property bool autoUpdate: dialog.values["ai.autoUpdate"] === true && components.policyOff !== true
     readonly property bool webSearchOn: dialog.values["ai.webSearch"] === true
     readonly property string stagedService: dialog.values["ai.searchService"] ?? ""
@@ -1851,7 +1851,7 @@ ScrollView {
                 }
             }
             Rectangle {
-                visible: page.acp.available
+                visible: !!page.ai
                 color: "transparent"
                 border.color: Theme.line
                 radius: 2
@@ -1867,7 +1867,7 @@ ScrollView {
                 }
             }
             Rectangle {
-                visible: page.acp.available
+                visible: !!page.ai
                 color: "transparent"
                 border.color: Theme.line
                 radius: 2
@@ -1981,7 +1981,7 @@ ScrollView {
             ColumnLayout {
                 id: customAgents
                 objectName: "aiCustomAgents"
-                visible: page.acp.available
+                visible: !!page.ai
                 readonly property var rows: (page.dialog.values["ai.agents.custom"] ?? []).map(entry => {
                     try { return JSON.parse(entry) } catch (e) { return null }
                 }).filter(row => row !== null && typeof row.id === "string")

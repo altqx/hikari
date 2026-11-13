@@ -17,11 +17,13 @@
 #include <string>
 
 class QLocalServer;
+class QLocalSocket;
 class QTcpServer;
 
 namespace hikari::backends::ai {
 
 class AiSidecarHost;
+class PrivatePipe;
 
 /// Where a running MCP server listens, kept in a file only the user can read so `hikarisub --mcp` can connect.
 struct McpEndpoint {
@@ -61,6 +63,10 @@ public:
     /// A private channel for one agent session, relayed as `channel:<session>`: its calls carry the session and go
     /// through its thread's gate, not the MCP one. The local socket takes one connection at most.
     void setChannel(std::string session);
+    /// A private channel's pipe on Windows, at a random name only the user and `containerSid` may open, taking one
+    /// connection from a process `admits` accepts. False with `error` set where it can't be made exactly so, and
+    /// everywhere else.
+    bool listenPipe(const QString &containerSid, std::function<bool(qint64 pid)> admits, QString *error = nullptr);
     /// `port` 0 picks a free one.
     bool listenHttp(quint16 port, QString *error = nullptr);
     void closeHttp();
@@ -85,6 +91,7 @@ private:
     struct Http;
 
     void acceptLocal();
+    void adoptLocal(QLocalSocket *socket);
     void readLocal(Local &client);
     void dropLocal(std::uint64_t id);
     void acceptHttp();
@@ -104,6 +111,10 @@ private:
     std::string m_channel;
     QPointer<AiSidecarHost> m_host;
     std::unique_ptr<QLocalServer> m_localServer;
+#ifdef Q_OS_WIN
+    std::unique_ptr<PrivatePipe> m_pipe;
+#endif
+    QString m_pipeName;
     std::unique_ptr<QTcpServer> m_httpServer;
     std::map<std::uint64_t, std::unique_ptr<Local>> m_local;
     std::map<std::uint64_t, std::unique_ptr<Http>> m_http;

@@ -2,6 +2,10 @@
 
 #include "hikari/backends/ai_sidecar_host.h"
 
+#ifdef Q_OS_WIN
+#include "ai_private_pipe.h"
+#endif
+
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
@@ -254,8 +258,32 @@ bool McpServer::channelTaken() const
     return std::ranges::any_of(m_local, [](const auto &entry) { return entry.second->authorised; });
 }
 
+bool McpServer::listenPipe(const QString &containerSid, std::function<bool(qint64 pid)> admits, QString *error)
+{
+#ifdef Q_OS_WIN
+    m_pipeName = QStringLiteral("\\\\.\\pipe\\hikarisub-ch-") + QString::fromLatin1(randomHex(16));
+    m_pipe = std::make_unique<PrivatePipe>(std::move(admits), [this](QLocalSocket *socket) {
+        socket->setParent(this);
+        adoptLocal(socket);
+    });
+    if (m_pipe->listen(m_pipeName, containerSid, error))
+        return true;
+    m_pipe.reset();
+    m_pipeName.clear();
+    return false;
+#else
+    Q_UNUSED(containerSid)
+    Q_UNUSED(admits)
+    if (error)
+        *error = QStringLiteral("private pipes are Windows only");
+    return false;
+#endif
+}
+
 QString McpServer::socketName() const
 {
+    if (!m_pipeName.isEmpty())
+        return m_pipeName;
     return m_localServer ? m_localServer->fullServerName() : QString();
 }
 
@@ -364,18 +392,24 @@ void McpServer::relay(const std::string &connection, QByteArray text, api::Json 
 
 void McpServer::acceptLocal()
 {
-    while (QLocalSocket *socket = m_localServer->nextPendingConnection()) {
-        auto client = std::make_unique<Local>();
-        client->id = m_nextId++;
-        client->socket = socket;
-        const std::uint64_t id = client->id;
-        connect(socket, &QLocalSocket::readyRead, this, [this, id] {
-            if (const auto it = m_local.find(id); it != m_local.end())
-                readLocal(*it->second);
-        });
-        connect(socket, &QLocalSocket::disconnected, this, [this, id] { dropLocal(id); }, Qt::QueuedConnection);
-        m_local.emplace(id, std::move(client));
-    }
+    while (QLocalSocket *socket = m_localServer->nextPendingConnection())
+        adoptLocal(socket);
+}
+
+void McpServer::adoptLocal(QLocalSocket *socket)
+{
+    auto client = std::make_unique<Local>();
+    client->id = m_nextId++;
+    client->socket = socket;
+    const std::uint64_t id = client->id;
+    connect(socket, &QLocalSocket::readyRead, this, [this, id] {
+        if (const auto it = m_local.find(id); it != m_local.end())
+            readLocal(*it->second);
+    });
+    connect(socket, &QLocalSocket::disconnected, this, [this, id] { dropLocal(id); }, Qt::QueuedConnection);
+    Local &adopted = *m_local.emplace(id, std::move(client)).first->second;
+    if (socket->bytesAvailable() > 0)
+        readLocal(adopted);
 }
 
 void McpServer::readLocal(Local &client)

@@ -171,6 +171,33 @@ TEST_F(Sandbox, NoNewNamespaces)
 #endif
 
 #ifdef _WIN32
+TEST_F(Sandbox, AnAgentWithTheNetworkStillReachesNothingOnLoopback)
+{
+    QTcpServer server;
+    ASSERT_TRUE(server.listen(QHostAddress::LocalHost));
+    Launcher launcher(profile(Network::Any));
+    ASSERT_FALSE(launcher.containerSid().isEmpty()) << launcher.coverage().missing.toStdString();
+    const QStringList lines = run(launcher, {QStringLiteral("tcp"), QStringLiteral("127.0.0.1"),
+                                             QString::number(server.serverPort())});
+    EXPECT_TRUE(denied(lines, QStringLiteral("tcp"))) << lines.join(QLatin1Char('\n')).toStdString();
+}
+
+TEST_F(Sandbox, OnlyProcessesItStartedRunInItsJobs)
+{
+    Launcher launcher(profile());
+    EXPECT_FALSE(launcher.runs(QCoreApplication::applicationPid()));
+    QProcess process;
+    process.setProgram(QStringLiteral(HIKARI_SANDBOX_PROBE));
+    process.setArguments({QStringLiteral("sleep"), QStringLiteral("60")});
+    launcher.prepare(process);
+    process.start();
+    ASSERT_TRUE(process.waitForStarted(10'000));
+    EXPECT_TRUE(launcher.runs(process.processId()));
+    EXPECT_FALSE(Launcher(profile()).runs(process.processId()));
+    launcher.killTree();
+    EXPECT_TRUE(process.waitForFinished(5'000));
+}
+
 TEST_F(Sandbox, KillTreeEndsTheChildrenToo)
 {
     Launcher launcher(profile());

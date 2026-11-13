@@ -46,6 +46,10 @@ public:
     Launcher &operator=(const Launcher &) = delete;
 
     const Coverage &coverage() const;
+    /// The AppContainer's SID as text ("S-1-15-2-…") on Windows; empty without a container or elsewhere.
+    QString containerSid() const;
+    /// Whether process `pid` runs in a job of a process this launcher started; false elsewhere.
+    bool runs(qint64 pid) const;
     /// Sets `process` up to start confined. On Unix `inChild` runs first in the child and must be async-signal-safe.
     void prepare(QProcess &process, void (*inChild)() = nullptr);
     /// Ends every process started through this launcher on Windows; elsewhere the caller kills its process group.

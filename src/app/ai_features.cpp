@@ -96,15 +96,6 @@ std::vector<backends::ai::McpServerEntry> mcpServersOf(const ui::SettingsStore &
     return backends::ai::mcpServersFromJson(rows);
 }
 
-/// The agents Qt can start here. Codex needs a tools channel its AppContainer can reach on Windows (#931).
-QString agentCli(const QString &agent)
-{
-#ifdef Q_OS_WIN
-    if (agent == QLatin1String("codex"))
-        return {};
-#endif
-    return backends::ai::findAgentCli(agent);
-}
 
 QString acpBroker(const QString &id)
 {
@@ -158,15 +149,16 @@ AiFeatures::Ports AiFeatures::defaultPorts(const QString &userFolder, api::Api *
     };
     ports.agents = [ai](backends::ai::AgentBroker &broker, application::ai::KeyStore &keys) {
         const QString agents = ai + QStringLiteral("/agents");
-        if (const QString claude = agentCli(QStringLiteral("claude")); !claude.isEmpty())
+        if (const QString claude = backends::ai::findAgentCli(QStringLiteral("claude")); !claude.isEmpty())
             broker.add("claude", backends::ai::claudeAgent(claude, QDir::homePath(), agents + QStringLiteral("/claude")));
-        if (const QString codex = agentCli(QStringLiteral("codex")); !codex.isEmpty())
+        if (const QString codex = backends::ai::findAgentCli(QStringLiteral("codex")); !codex.isEmpty())
             if (auto spec = backends::ai::codexAgent(
                     codex, agents + QStringLiteral("/codex/home"), agents + QStringLiteral("/codex/work"),
-                    std::make_shared<backends::ai::CodexLease>(keys, agents + QStringLiteral("/codex/home"))))
+                    std::make_shared<backends::ai::CodexLease>(keys, agents + QStringLiteral("/codex/home")),
+                    QCoreApplication::applicationFilePath()))
                 broker.add("codex", std::move(*spec));
     };
-    ports.agentOnPath = [](const QString &agent) { return !agentCli(agent).isEmpty(); };
+    ports.agentOnPath = [](const QString &agent) { return !backends::ai::findAgentCli(agent).isEmpty(); };
     ports.acpCli = [](const QString &command) {
         if (QFileInfo(command).isAbsolute())
             return QFileInfo(command).isExecutable() ? command : QString();
@@ -599,9 +591,6 @@ void AiFeatures::setCustomAgents(const std::vector<AcpAgent> &agents)
 
 std::vector<AiFeatures::AcpAgent> AiFeatures::acpAgents() const
 {
-#ifdef Q_OS_WIN
-    return {};
-#else
     std::vector<AcpAgent> out;
     if (!m_ports.acpCli)
         return out;
@@ -613,7 +602,6 @@ std::vector<AiFeatures::AcpAgent> AiFeatures::acpAgents() const
         if (!agent.program.isEmpty())
             out.push_back(std::move(agent));
     return out;
-#endif
 }
 
 void AiFeatures::addAcpAgents()

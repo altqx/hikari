@@ -9,6 +9,7 @@
 
 #include <windows.h>
 #include <aclapi.h>
+#include <sddl.h>
 #include <userenv.h>
 
 namespace hikari::backends::sandbox {
@@ -210,6 +211,29 @@ Launcher::~Launcher()
 const Coverage &Launcher::coverage() const
 {
     return m->coverage;
+}
+
+QString Launcher::containerSid() const
+{
+    LPWSTR text = nullptr;
+    if (!m->container || !ConvertSidToStringSidW(m->container, &text))
+        return {};
+    const QString sid = QString::fromWCharArray(text);
+    LocalFree(text);
+    return sid;
+}
+
+bool Launcher::runs(qint64 pid) const
+{
+    const HANDLE process = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, static_cast<DWORD>(pid));
+    if (!process)
+        return false;
+    const bool inside = std::ranges::any_of(m->jobs, [process](HANDLE job) {
+        BOOL in = FALSE;
+        return IsProcessInJob(process, job, &in) && in;
+    });
+    CloseHandle(process);
+    return inside;
 }
 
 void Launcher::prepare(QProcess &process, void (*)())
