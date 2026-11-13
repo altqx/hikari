@@ -10126,6 +10126,97 @@ private slots:
         QTRY_VERIFY(!credits->isVisible());
     }
 
+    void creditNamesStayClearOfTheCopyrightColumn()
+    {
+        auto *credits = lazyWindow("creditsDialog");
+        QVERIFY(QMetaObject::invokeMethod(credits, "open"));
+        QTRY_VERIFY(credits->isVisible());
+        QQuickItem *list = dialogItem("creditsDialog", "creditsComponents");
+        QQuickItem *sources = dialogItem("creditsDialog", "creditsSources");
+        QVERIFY(list && sources);
+        const auto overlapping = [](const QList<QQuickItem *> &rows) {
+            QStringList names;
+            for (QQuickItem *row : rows) {
+                if (!row->property("modelData").isValid())
+                    continue;
+                auto *name = row->findChild<QQuickItem *>(QStringLiteral("creditName"));
+                auto *copyright = row->findChild<QQuickItem *>(QStringLiteral("creditCopyright"));
+                if (!name || !copyright) {
+                    names << row->property("modelData").toList().value(0).toString();
+                    continue;
+                }
+                const qreal textRight = name->property("leftPadding").toReal() + name->property("contentWidth").toReal();
+                const qreal nameRight = name->mapToScene(QPointF(qMax(textRight, name->width()), 0)).x();
+                const qreal textBottom = name->property("topPadding").toReal() + name->property("contentHeight").toReal();
+                const qreal nameBottom = name->mapToItem(row, QPointF(0, textBottom)).y();
+                if (nameRight > copyright->mapToScene(QPointF()).x() || copyright->width() <= 0 || nameBottom > row->height())
+                    names << name->property("text").toString();
+            }
+            return names;
+        };
+        const auto componentRows = [&] {
+            QList<QQuickItem *> rows;
+            const int count = list->property("count").toInt();
+            for (int index = 0; index < count; ++index) {
+                QVERIFY(QMetaObject::invokeMethod(list, "positionViewAtIndex", Q_ARG(int, index), Q_ARG(int, 0)));
+                QQuickItem *row = nullptr;
+                QTRY_VERIFY(QMetaObject::invokeMethod(list, "itemAtIndex", Q_RETURN_ARG(QQuickItem *, row), Q_ARG(int, index)) && row);
+                rows << row;
+            }
+            QCOMPARE(rows.size(), count);
+            QCOMPARE(overlapping(rows), QStringList{});
+        };
+        const int defaultWidth = credits->width();
+        for (const int width : {defaultWidth, credits->minimumWidth()}) {
+            credits->setWidth(width);
+            QTRY_COMPARE(credits->width(), width);
+            QTRY_COMPARE(overlapping(sources->childItems()), QStringList{});
+            componentRows();
+            if (QTest::currentTestFailed())
+                return;
+        }
+        QVERIFY(QMetaObject::invokeMethod(credits, "close"));
+        QTRY_VERIFY(!credits->isVisible());
+    }
+
+    void creditsScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        auto &settings = *application->settingsStore();
+        auto *root = engine->rootObjects().first();
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        auto restore = qScopeGuard([&] { settings.setValue(QStringLiteral("appearance.theme"), QStringLiteral("light")); });
+        auto *credits = lazyWindow("creditsDialog");
+        QVERIFY(QMetaObject::invokeMethod(credits, "open"));
+        QTRY_VERIFY(credits->isVisible());
+        QQuickItem *sources = dialogItem("creditsDialog", "creditsSources");
+        const int defaultWidth = credits->width();
+        for (const auto code : ui::theme::kCodes) {
+            settings.setValue(QStringLiteral("appearance.theme"), ui::theme::codeName(code));
+            auto *controls = root->property("palette").value<QObject *>();
+            QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+            for (const auto &[size, width] : {std::pair<const char *, int>{"default", defaultWidth}, {"minimum", credits->minimumWidth()}}) {
+                credits->setWidth(width);
+                QTRY_COMPARE(credits->width(), width);
+                QVERIFY(QTest::qWaitForWindowExposed(credits));
+                QTest::qWait(300);
+                QQuickItem *frame = sources->parentItem();
+                const QImage shot = credits->grabWindow();
+                const qreal ratio = shot.devicePixelRatio();
+                const QRectF framed = frame->mapRectToScene(QRectF(0, 0, frame->width(), frame->height())).adjusted(-8, -28, 8, 8);
+                const QRectF rows(framed.topLeft() * ratio, framed.size() * ratio);
+                const QString name = QStringLiteral("/credits-%1-%2").arg(QLatin1String(size), ui::theme::codeName(code));
+                QVERIFY(shot.save(out + name + QStringLiteral(".png")));
+                QVERIFY(shot.copy(rows.toAlignedRect()).save(out + name + QStringLiteral("-sources.png")));
+            }
+        }
+        QVERIFY(QMetaObject::invokeMethod(credits, "close"));
+        QTRY_VERIFY(!credits->isVisible());
+    }
+
     void whatsNewOnHomeAndInHelp()
     {
         const QString root = dir.filePath(QStringLiteral("whats-new"));
