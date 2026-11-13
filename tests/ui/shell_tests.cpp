@@ -148,6 +148,9 @@ using namespace hikari;
 
 namespace {
 
+constexpr std::string_view kFixtureKeyB = "RWT+3LqYdlQyECmsuuFBvMrwsi4alNNNC8c2HlJtC/4SyJeUvJMilm3X";
+constexpr std::string_view kFixtureKeyA = "RWQBI0VniavN7wOhB7/zzhC+HXDdGOdLwJln5NYwm6UNXx3chmQSVTG4";
+
 QByteArray settingsText(const QString &folder, const char *name)
 {
     QFile f(folder + QLatin1Char('/') + QLatin1String(name));
@@ -19352,9 +19355,6 @@ private slots:
         QTRY_VERIFY(rows().isEmpty());
         QVERIFY(!QDir(home.filePath(QStringLiteral("plugins/com.example.hello"))).exists());
     }
-    static constexpr std::string_view kFixtureKeyB = "RWT+3LqYdlQyECmsuuFBvMrwsi4alNNNC8c2HlJtC/4SyJeUvJMilm3X";
-    static constexpr std::string_view kFixtureKeyA = "RWQBI0VniavN7wOhB7/zzhC+HXDdGOdLwJln5NYwm6UNXx3chmQSVTG4";
-
     void startMarketplace(const QTemporaryDir &home, bool sideloadHello)
     {
         if (!marketNetwork)

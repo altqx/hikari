@@ -16315,6 +16315,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>%1 czeka na Ciebie</translation>
     </message>
     <message>
+        <source>By HikariSub</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>New</source>
         <translation>Nowe</translation>
     </message>

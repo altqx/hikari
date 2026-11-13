@@ -694,13 +694,17 @@ DialogWindow {
                 Layout.fillWidth: true
                 RowLayout {
                     spacing: 6
+                    Layout.fillWidth: true
                     Label {
                         objectName: "marketDetailsName"
                         text: market.listing.name
                         textFormat: Text.PlainText
                         font: dialog.fontAt(15, Font.DemiBold)
                         elide: Text.ElideRight
+                        Layout.preferredWidth: implicitWidth
+                        Layout.minimumWidth: 40
                         Layout.fillWidth: true
+                        Layout.maximumWidth: implicitWidth
                     }
                     Badge {
                         objectName: "marketDetailsOfficial"
@@ -714,6 +718,7 @@ DialogWindow {
                         iconRole: "plugin-full-access"
                         text: qsTr("Full trust")
                     }
+                    Item { Layout.fillWidth: true }
                 }
                 Label {
                     text: market.listing.authorName + " · " + market.listing.version
