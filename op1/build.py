@@ -24,7 +24,7 @@ THEMES = {
 # Set icons, inlined from src/ui/icons so they follow currentColor like IconTheme tints them.
 SET = {}
 root = here.parent.parent / "src" / "ui" / "icons"
-for role in ["media-record", "run-script", "import", "delete", "edit", "move-up", "move-down", "panel-menu", "duplicate",
+for role in ["plugin-official", "media-record", "run-script", "import", "delete", "edit", "move-up", "move-down", "panel-menu", "duplicate",
              "notice-warning", "automation", "media-stop", "hotkeys", "add"]:
     p = root / f"{role}.svg"
     if p.exists():
@@ -129,14 +129,14 @@ editor = panel("Macro chains",
           check("Show this step’s dialogs, filled in", False) +
           group("Dialog 1 · presses “Apply”",
                 '<div class="fg">' +
-                "".join(f'<span class="fn">{esc(n)}</span>{choice(MODES, m)}<span class="fld sm{" off" if m == "Exclude" else ""}">{esc(v)}</span>'
+                "".join(f'<span class="fn">{esc(n)}</span>{choice(MODES, m)}<span class="fld sm{" off" if m == "Exclude" else ""}" title="{esc(v)}">{esc(v)}</span>'
                         for n, m, v in [("Blur", "Ask", "2"), ("Glow colour", "Constant", "&H00FFFF&"),
                                         ("Layers", "Exclude", "3"), ("Keep original", "Ask", "✓")]) +
                 "</div>") +
           group("Dialog 2 · presses “Yes”",
                 '<div class="fg"><span class="fn">Sure?</span>' + choice(MODES, "Constant") + '<span class="fld sm">✓</span></div>')) +
     field("Shortcut slot", "Slot 1 (Run chain slot 1)", "dropdown") +
-    '<div class="rowb">' + button("Save", "primary") + button("Cancel") + "</div>", width=380)
+    '<div class="rowb">' + button("Save", "primary") + button("Cancel") + "</div>", width=420)
 
 replay = dialog("Signs",
     group("Step 1: Fade in/out", field("Fade in (ms)", "200", "number")) +
@@ -168,10 +168,15 @@ def icon_sheet():
     for stem, svg in icons.items():
         sizes = "".join(f'<span class="isz" style="width:{s}px;height:{s}px">{svg}</span>' for s in (16, 24, 32, 48, 128))
         out.append(f'<div class="irow"><div class="iname">{esc(names.get(stem, stem))}</div>{sizes}</div>')
-    row = (f'<div class="list" style="width:330px"><div class="row sel"><span class="isz" style="width:24px;height:24px">'
-           f'{icons["a-linked"]}</span><div class="rt"><div>Macro chains {SET.get("plugins", "")}</div>'
-           f'<div class="rd">altqx · 1.0.0</div></div></div></div>')
-    return "".join(out) + label("In the plugin manager’s list (variant A):", "muted") + row
+    mark = f'<span class="ico acc mark">{SET["plugin-official"]}</span>'
+    installed = (f'<div class="list pm" style="width:330px"><div class="row sel accbar"><span class="isz" style="width:24px;height:24px">'
+                 f'{icons["a-linked"]}</span><div class="rt"><div class="nm"><span>Macro chains 1.0.0</span>{mark}'
+                 f'<span class="tip">By HikariSub</span></div><div class="rd">From the marketplace</div></div></div></div>')
+    listed = (f'<div class="list pm" style="width:330px"><div class="row"><span class="isz" style="width:32px;height:32px">'
+              f'{icons["a-linked"]}</span><div class="rt"><div class="nm"><span>Macro chains</span>{mark}</div>'
+              f'<div class="rd">Records a chain of commands and macros and replays it as one undo step.</div></div></div></div>')
+    return ("".join(out) + label("Installed, in the plugin manager (variant A, pointer on the mark):", "muted") + installed +
+            label("In the marketplace list:", "muted") + listed)
 
 
 SECTIONS = [
@@ -204,7 +209,13 @@ h2{font-size:15px;margin:18px 16px 8px}
 .row{display:flex;gap:8px;align-items:center;padding:5px 8px}
 .row.sel{background:var(--select)}
 .row.muted{color:var(--muted)}
-.rd{font-size:11.5px;color:var(--muted)}
+.rd{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pm .row{padding:6px 8px;position:relative}
+.pm .rt{min-width:0;flex:1}
+.row.accbar{box-shadow:inset 3px 0 0 var(--accent)}
+.nm{display:flex;gap:4px;align-items:center;position:relative}
+.ico.mark,.ico.mark svg{width:14px;height:14px}
+.tip{position:absolute;left:142px;top:-1px;background:var(--raised);color:var(--text);border:1px solid var(--line);padding:2px 6px;font-size:12px;border-radius:3px;white-space:nowrap}
 .rowb{display:flex;gap:6px}
 .rowb.sp{justify-content:space-between;align-items:center}
 .btn{display:inline-block;padding:4px 12px;border:1px solid var(--line);border-radius:3px;background:var(--raised)}
@@ -213,7 +224,7 @@ h2{font-size:15px;margin:18px 16px 8px}
 .lf{display:flex;flex-direction:column;gap:3px}
 .ll{font-size:12px;color:var(--muted)}
 .fld{display:flex;justify-content:space-between;border:1px solid var(--line);background:var(--field);padding:3px 6px;border-radius:3px;min-height:16px}
-.fld.sm{min-width:0}
+.fld.sm{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
 .choice{flex:none}
 .fld.off{color:var(--muted);border-style:dashed}
 .caret,.spin{color:var(--muted);font-size:10px}
