@@ -62,16 +62,8 @@ ColumnLayout {
                     spacing: 10
                     Layout.fillWidth: true
                     Icon {
-                        id: busy
                         iconRole: "run-busy"
                         accentColor: IconTheme.accent
-                        RotationAnimator on rotation {
-                            running: busy.visible
-                            from: 0
-                            to: 360
-                            duration: 1200
-                            loops: Animation.Infinite
-                        }
                     }
                     Label {
                         id: title
@@ -125,17 +117,19 @@ ColumnLayout {
                         clip: true
                         Rectangle {
                             id: fill
+                            objectName: "pluginJobFill"
                             height: parent.height
                             color: Theme.accent
+                            property real sweep: 0
                             width: bar.indeterminate ? parent.width * 0.3 : parent.width * bar.position
-                            XAnimator on x {
+                            x: bar.indeterminate ? sweep : 0
+                            NumberAnimation on sweep {
                                 running: bar.indeterminate && bar.visible
                                 from: -fill.width
                                 to: bar.width
                                 duration: 1200
                                 loops: Animation.Infinite
                             }
-                            x: 0
                         }
                     }
                 }
