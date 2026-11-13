@@ -75,6 +75,7 @@ Amended by [AI15c #443](https://github.com/altqx/hikari/issues/443) on 2026-11-1
   Codex's own bubblewrap sandbox can't start inside Landlock. That affects only commands, and Hikari declines all of them.
 - **MCP servers run unsandboxed in v1.** They are user commands (`npx …`) that need their own config, caches and hosts, so Qt starts them without a profile. The AI guide says so.
 - **ACP agents run in a profile.** Each one has the network, but it can read and write only its own state folders and a private work folder under `ai/agents/`, beside its program and the system files every process needs. Where Landlock exists, no Project or other user file is readable to it: OpenCode's four XDG `opencode` folders, Antigravity's profile, and `ai/agents/custom/<id>` for the user's own agents, which is their home too.
+- **No file sandbox, no Codex or ACP agents** (owner Q413, [#1038](https://github.com/altqx/hikari/issues/1038)). Where the system can't confine files, Qt offers neither and doesn't start Codex. Claude Code stays, its own tools all off. A custom ACP agent whose command lies inside an open Project is refused too.
 
 ## Tests
 

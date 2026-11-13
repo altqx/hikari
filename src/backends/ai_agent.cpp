@@ -949,6 +949,11 @@ void AgentThreads::start(AgentThread &thread, std::string text, Json parts)
     };
     if (!model)
         return notice("noModel");
+    if (const std::string refused = agent && m_wiring.agentRefusal ? m_wiring.agentRefusal(*agent) : std::string();
+        !refused.empty()) {
+        push(thread, Json::object({{"kind", "notice"}, {"notice", "notOffered"}, {"detail", refused}}));
+        return touch(thread);
+    }
     if (!h)
         return notice("noSidecar");
     if (defaults.dailyCap > 0 && spentToday() >= defaults.dailyCap)

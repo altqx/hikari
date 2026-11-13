@@ -580,18 +580,17 @@ ApplicationWindow {
         automationTool.showRun(runId)
     }
 
-    readonly property list<Item> builtInPanels: [videoPanel, audioPanel, originalPanel, editorPanel, gridPanel, referencePanel,
-                                                 timingPanel, postprocessorPanel, searchPanel, automationPanel, spellPanel,
-                                                 logPanel, stylesPanel, templatePanel, qcNotesPanel, reviewPanel,
-                                                 agentPanel, nodeGraphPanel, nodeInspectorPanel, nodeSourcesPanel,
-                                                 explorerPanel]
-    readonly property var builtInDocks: [videoDock, audioDock, originalDock, editorDock, gridDock, referenceDock, timingDock,
-                                         postprocessorDock, searchDock, automationDock, spellDock, logDock, stylesDock,
-                                         templateDock, qcNotesDock].concat(root.review.on ? [reviewDock] : [])
-                                         .concat(root.agent.on ? [agentDock] : [])
-                                         .concat([nodeGraphDock, nodeInspectorDock, nodeSourcesDock, explorerDock])
+    readonly property var builtIns: [
+        [videoDock, videoPanel], [audioDock, audioPanel], [originalDock, originalPanel], [editorDock, editorPanel],
+        [gridDock, gridPanel], [referenceDock, referencePanel], [timingDock, timingPanel],
+        [postprocessorDock, postprocessorPanel], [searchDock, searchPanel], [automationDock, automationPanel],
+        [spellDock, spellPanel], [logDock, logPanel], [stylesDock, stylesPanel], [templateDock, templatePanel],
+        [qcNotesDock, qcNotesPanel], [reviewDock, reviewPanel], [agentDock, agentPanel], [nodeGraphDock, nodeGraphPanel],
+        [nodeInspectorDock, nodeInspectorPanel], [nodeSourcesDock, nodeSourcesPanel], [explorerDock, explorerPanel]
+    ].filter(([dock]) => (dock !== reviewDock || root.review.on) && (dock !== agentDock || root.agent.on))
+    readonly property var builtInDocks: builtIns.map(([dock]) => dock)
     property var pluginDocks: []
-    readonly property var panels: Array.from(builtInPanels).concat(pluginDocks.map(d => d.panel))
+    readonly property var panels: builtIns.map(([, panel]) => panel).concat(pluginDocks.map(d => d.panel))
     readonly property var dockList: builtInDocks.concat(pluginDocks)
     readonly property var pluginUi: root.app.pluginRuntime ? root.app.pluginRuntime.ui : null
     readonly property var pluginPanelRows: {
