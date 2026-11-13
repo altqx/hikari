@@ -664,12 +664,29 @@ class ShellTest : public QObject {
 
     template <typename T = QQuickItem> T *item(const char *name) const
     {
-        if (T *found = window->findChild<T *>(QLatin1String(name)))
+        if (T *found = shown<T>(name))
             return found;
+        return buildMenus() ? shown<T>(name) : nullptr;
+    }
+    template <typename T> T *shown(const char *name) const
+    {
+        if (T *found = window->findChild<T *>(QLatin1String(name)))
+            return built(found);
         for (QWindow *w : QGuiApplication::allWindows())
             if (T *found = w->findChild<T *>(QLatin1String(name)))
-                return found;
+                return built(found);
         return nullptr;
+    }
+    template <typename T> static T *built(T *menu)
+    {
+        if (menu->property("lazyContent").template value<QObject *>())
+            QMetaObject::invokeMethod(menu, "build");
+        return menu;
+    }
+    bool buildMenus() const
+    {
+        QVariant built;
+        return QMetaObject::invokeMethod(window, "buildMenus", Q_RETURN_ARG(QVariant, built)) && built.toBool();
     }
     void closeTheOriginalTextPanel()
     {
@@ -774,15 +791,15 @@ class ShellTest : public QObject {
     {
         auto *root = engine->rootObjects().first();
         if (auto *found = root->findChild<QObject *>(QLatin1String(name)))
-            return found;
+            return built(found);
         for (QObject *o : root->findChildren<QObject *>())
             if (o->objectName() == QLatin1String(name))
-                return o;
+                return built(o);
         if (auto *loader = root->findChild<QObject *>(QLatin1String(name) + QLatin1String("Loader"))) {
             loader->setProperty("active", true);
             return named(name);
         }
-        return nullptr;
+        return buildMenus() ? named(name) : nullptr;
     }
     QQuickWindow *lazyWindow(const char *name) const { return qobject_cast<QQuickWindow *>(named(name)); }
     QQuickItem *stylesFilter()
@@ -3003,7 +3020,7 @@ private slots:
             return out;
         };
         auto *root = engine->rootObjects().first();
-        auto *byStart = root->findChild<QObject *>(QStringLiteral("sortAll_start"));
+        auto *byStart = named("sortAll_start");
         QVERIFY(byStart);
         QVERIFY(QMetaObject::invokeMethod(byStart, "triggered"));
         QTRY_COMPARE(texts(), (QStringList{"early", "middle", "late"}));
@@ -3171,7 +3188,7 @@ private slots:
                                           Q_ARG(int, quotedText->property("length").toInt())));
         QCOMPARE(shown, QStringLiteral("Open subtitles <img src=\"x\"> & <b>"));
         QVERIFY(log.history().contains(QStringLiteral("Save: nt1 could not be saved.\n    disk full\n")));
-        auto *menuItem = root->findChild<QObject *>(QStringLiteral("logMenuItem"));
+        auto *menuItem = named("logMenuItem");
         QCOMPARE(menuItem->property("text").toString(), QStringLiteral("Log"));
         QVERIFY(QMetaObject::invokeMethod(menuItem, "click"));
         QTRY_VERIFY(!dock->property("isOpen").toBool());
@@ -4017,7 +4034,7 @@ private slots:
         application->fontCatalogs().waitResolved();
 
         auto *manager = lazyWindow("styleManager");
-        QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("styleManagerMenuItem")), "triggered"));
+        QVERIFY(QMetaObject::invokeMethod(named("styleManagerMenuItem")->property("action").value<QObject *>(), "trigger"));
         QTRY_VERIFY(manager->isVisible());
         QVERIFY(!manager->findChild<QObject *>(QStringLiteral("fontCatalogWindow")));
         const QVariantMap values = application->styleManager().beginEdit(false, 0);
@@ -4609,7 +4626,7 @@ private slots:
         QVERIFY(application->openFile(fontAss("style-editor.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n")));
         auto *root = engine->rootObjects().first();
         auto *window = lazyWindow("styleManager");
-        QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("styleManagerMenuItem")), "triggered"));
+        QVERIFY(QMetaObject::invokeMethod(named("styleManagerMenuItem")->property("action").value<QObject *>(), "trigger"));
         QTRY_VERIFY(window->isVisible());
         const auto more = [&](const QString &prefix) {
             for (QObject *o : root->findChildren<QObject *>())
@@ -4703,7 +4720,7 @@ private slots:
         QVERIFY(application->openFile(fontAss("style-type.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n")));
         auto *root = engine->rootObjects().first();
         auto *manager = lazyWindow("styleManager");
-        QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("styleManagerMenuItem")), "triggered"));
+        QVERIFY(QMetaObject::invokeMethod(named("styleManagerMenuItem")->property("action").value<QObject *>(), "trigger"));
         QTRY_VERIFY(manager->isVisible());
         QVERIFY(QTest::qWaitForWindowExposed(manager));
         const QVariantMap values = application->styleManager().beginEdit(false, 0);
@@ -4790,7 +4807,7 @@ private slots:
             QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
 
             auto *manager = lazyWindow("styleManager");
-            QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("styleManagerMenuItem")), "triggered"));
+            QVERIFY(QMetaObject::invokeMethod(named("styleManagerMenuItem")->property("action").value<QObject *>(), "trigger"));
             QTRY_VERIFY(manager->isVisible());
             const QVariantMap values = application->styleManager().beginEdit(false, 0);
             QVERIFY(QMetaObject::invokeMethod(manager, "beginEditing", Q_ARG(QVariant, values), Q_ARG(QVariant, false)));
@@ -4824,7 +4841,7 @@ private slots:
         QVERIFY(application->openFile(fontAss("style-fit.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n")));
         auto *root = engine->rootObjects().first();
         auto *manager = lazyWindow("styleManager");
-        QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("styleManagerMenuItem")), "triggered"));
+        QVERIFY(QMetaObject::invokeMethod(named("styleManagerMenuItem")->property("action").value<QObject *>(), "trigger"));
         QTRY_VERIFY(manager->isVisible());
         QVERIFY(QTest::qWaitForWindowExposed(manager));
         const QRect available = manager->screen()->availableGeometry();
@@ -4973,7 +4990,7 @@ private slots:
         QVERIFY(application->openFile(fontAss("style-choice.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n")));
         auto *root = engine->rootObjects().first();
         auto *editor = lazyWindow("styleManager");
-        QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("styleManagerMenuItem")), "triggered"));
+        QVERIFY(QMetaObject::invokeMethod(named("styleManagerMenuItem")->property("action").value<QObject *>(), "trigger"));
         QTRY_VERIFY(editor->isVisible());
         const QVariantMap values = application->styleManager().beginEdit(false, 0);
         QVERIFY(QMetaObject::invokeMethod(editor, "beginEditing", Q_ARG(QVariant, values), Q_ARG(QVariant, false)));
@@ -5020,7 +5037,7 @@ private slots:
         QVERIFY(application->openFile(path));
         auto *root = engine->rootObjects().first();
         auto *editor = lazyWindow("styleManager");
-        QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("styleManagerMenuItem")), "triggered"));
+        QVERIFY(QMetaObject::invokeMethod(named("styleManagerMenuItem")->property("action").value<QObject *>(), "trigger"));
         QTRY_VERIFY(editor->isVisible());
         const QVariantMap values = application->styleManager().beginEdit(false, 0);
         QCOMPARE(values.value(QStringLiteral("borderStyle")).toInt(), 4);
@@ -5056,7 +5073,7 @@ private slots:
         QVERIFY(application->openFile(path));
         auto *root = engine->rootObjects().first();
         auto *manager = lazyWindow("styleManager");
-        QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("styleManagerMenuItem")), "triggered"));
+        QVERIFY(QMetaObject::invokeMethod(named("styleManagerMenuItem")->property("action").value<QObject *>(), "trigger"));
         QTRY_VERIFY(manager->isVisible());
         const QVariantMap values = application->styleManager().beginEdit(false, 0);
         QVERIFY(QMetaObject::invokeMethod(manager, "beginEditing", Q_ARG(QVariant, values), Q_ARG(QVariant, false)));
@@ -5192,7 +5209,7 @@ private slots:
         QVERIFY(application->openFile(path));
         auto *root = engine->rootObjects().first();
         auto *manager = lazyWindow("styleManager");
-        QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("styleManagerMenuItem")), "triggered"));
+        QVERIFY(QMetaObject::invokeMethod(named("styleManagerMenuItem")->property("action").value<QObject *>(), "trigger"));
         QTRY_VERIFY(manager->isVisible());
         const QVariantMap values = application->styleManager().beginEdit(false, 0);
         QVERIFY(QMetaObject::invokeMethod(manager, "beginEditing", Q_ARG(QVariant, values), Q_ARG(QVariant, false)));
@@ -5852,7 +5869,7 @@ private slots:
         }
         QVERIFY(application->openFile(path));
         auto *manager = lazyWindow("styleManager");
-        QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("styleManagerMenuItem")), "triggered"));
+        QVERIFY(QMetaObject::invokeMethod(named("styleManagerMenuItem")->property("action").value<QObject *>(), "trigger"));
         QTRY_VERIFY(manager->isVisible());
         const QVariantMap values = application->styleManager().beginEdit(false, 0);
         QVERIFY(QMetaObject::invokeMethod(manager, "beginEditing", Q_ARG(QVariant, values), Q_ARG(QVariant, false)));
@@ -6306,14 +6323,7 @@ private slots:
         auto *root = engine->rootObjects().first();
         auto *editorDock = root->findChild<QObject *>(QStringLiteral("editorDock"));
         auto *gridDock = root->findChild<QObject *>(QStringLiteral("gridDock"));
-        auto menuItem = [&](const char *name) {
-            auto *found = root->findChild<QObject *>(QLatin1String(name));
-            if (!found)
-                for (QObject *o : root->findChildren<QObject *>())
-                    if (o->objectName() == QLatin1String(name))
-                        found = o;
-            return found;
-        };
+        auto menuItem = [&](const char *name) { return named(name); };
 
         QCOMPARE(menu_rows::shown(menuItem("panelMenuEditor")),
                  (QStringList{QStringLiteral("panelShowEditor"), QStringLiteral("panelFloatEditor"), QStringLiteral("|"),
@@ -6426,6 +6436,7 @@ private slots:
     {
         static const QRegularExpression byData(QStringLiteral(R"(^(macro_|recent\w*\d+$|viewLayoutSaved\d+$))"));
         QStringList shown;
+        QVERIFY(buildMenus());
         QObject *bar = named("appMenus");
         QVERIFY(bar);
         for (int i = 0; i < bar->property("count").toInt(); ++i) {
@@ -6459,7 +6470,7 @@ private slots:
         QVERIFY(openPanelMenu(QStringLiteral("Grid")));
         QVERIFY(QMetaObject::invokeMethod(named("panelOptionsMenu"), "close"));
         QTRY_VERIFY(!named("panelOptionsMenu")->property("visible").toBool());
-        QVERIFY(QMetaObject::invokeMethod(named("showExplorer"), "triggered"));
+        QVERIFY(QMetaObject::invokeMethod(named("showExplorer")->property("action").value<QObject *>(), "trigger"));
         QTRY_VERIFY(named("explorerRowMenu"));
         const std::vector<std::pair<QString, QObject *>> listed{
             {QStringLiteral("Line editor text"), named("lineTextMenu")},
@@ -7158,7 +7169,7 @@ private slots:
         auto *placement = root->findChild<QQuickWindow *>(QStringLiteral("placementWindow"));
         QVERIFY(placement);
         auto *audioDock = root->findChild<QObject *>(QStringLiteral("audioDock"));
-        QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("movePanel")), "triggered"));
+        QVERIFY(QMetaObject::invokeMethod(named("movePanel"), "triggered"));
         QTRY_VERIFY(placement->isVisible());
         auto *panelBox = findItem(placement->contentItem(), QStringLiteral("placementPanel"));
         auto *kindBox = findItem(placement->contentItem(), QStringLiteral("placementKind"));
@@ -8120,7 +8131,7 @@ private slots:
         QVERIFY(application->openFile(path));
         auto *session = application->files().session(*application->workspace().editingTarget());
         auto *root = engine->rootObjects().first();
-        QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("assProperties")), "triggered"));
+        QVERIFY(QMetaObject::invokeMethod(named("assProperties")->property("action").value<QObject *>(), "trigger"));
         QObject *dialog = nullptr;
         QTRY_VERIFY((dialog = root->findChild<QObject *>(QStringLiteral("scriptPropertiesDialog"))) &&
                     dialog->property("visible").toBool());
@@ -8218,7 +8229,7 @@ private slots:
         const bool wasActive = QAccessible::isActive();
         QAccessible::setActive(true);
         const auto restore = qScopeGuard([wasActive] { QAccessible::setActive(wasActive); });
-        QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("styleManagerMenuItem")), "triggered"));
+        QVERIFY(QMetaObject::invokeMethod(named("styleManagerMenuItem")->property("action").value<QObject *>(), "trigger"));
         QTRY_VERIFY(window->isVisible());
         {
             auto *catalog = window->findChild<QQuickItem *>(QStringLiteral("styleCatalog"));
@@ -8284,7 +8295,7 @@ private slots:
         press(Qt::Key_Home);
         QTRY_VERIFY(application->editor().hasLine());
         auto *manager = lazyWindow("styleManager");
-        QVERIFY(QMetaObject::invokeMethod(named("styleManagerMenuItem"), "triggered"));
+        QVERIFY(QMetaObject::invokeMethod(named("styleManagerMenuItem")->property("action").value<QObject *>(), "trigger"));
         QTRY_VERIFY(manager->isVisible());
         auto *content = manager->contentItem();
         const auto field = [&](const char *name) { return findItem(content, QLatin1String(name)); };
@@ -8451,7 +8462,7 @@ private slots:
         QTRY_VERIFY(application->editor().hasLine());
         auto &styles = application->styleManager();
         auto *manager = lazyWindow("styleManager");
-        QVERIFY(QMetaObject::invokeMethod(named("styleManagerMenuItem"), "triggered"));
+        QVERIFY(QMetaObject::invokeMethod(named("styleManagerMenuItem")->property("action").value<QObject *>(), "trigger"));
         QTRY_VERIFY(manager->isVisible());
         auto *content = manager->contentItem();
         const auto field = [&](const char *name) { return findItem(content, QLatin1String(name)); };
@@ -8635,7 +8646,7 @@ private slots:
         QTRY_VERIFY(application->editor().hasLine());
         auto &styles = application->styleManager();
         auto *manager = lazyWindow("styleManager");
-        QVERIFY(QMetaObject::invokeMethod(named("styleManagerMenuItem"), "triggered"));
+        QVERIFY(QMetaObject::invokeMethod(named("styleManagerMenuItem")->property("action").value<QObject *>(), "trigger"));
         QTRY_VERIFY(manager->isVisible());
         auto *content = manager->contentItem();
         const auto field = [&](const char *name) { return findItem(content, QLatin1String(name)); };
@@ -8839,7 +8850,7 @@ private slots:
             if (tabs[i].toMap().value(QStringLiteral("title")).toString() == QLatin1String("repeated.ass"))
                 application->selectTab(i);
         auto *manager = lazyWindow("styleManager");
-        QVERIFY(QMetaObject::invokeMethod(named("styleManagerMenuItem"), "triggered"));
+        QVERIFY(QMetaObject::invokeMethod(named("styleManagerMenuItem")->property("action").value<QObject *>(), "trigger"));
         QTRY_VERIFY(manager->isVisible());
         auto *content = manager->contentItem();
         const auto field = [&](const char *name) { return findItem(content, QLatin1String(name)); };
@@ -8916,7 +8927,7 @@ private slots:
         QVERIFY(first != second);
         auto &styles = application->styleManager();
         auto *manager = lazyWindow("styleManager");
-        QVERIFY(QMetaObject::invokeMethod(named("styleManagerMenuItem"), "triggered"));
+        QVERIFY(QMetaObject::invokeMethod(named("styleManagerMenuItem")->property("action").value<QObject *>(), "trigger"));
         QTRY_VERIFY(manager->isVisible());
         auto *content = manager->contentItem();
         const auto field = [&](const char *name) { return findItem(content, QLatin1String(name)); };
@@ -9208,7 +9219,7 @@ private slots:
         const auto &text = session->document().lines()[0]->text;
         QCOMPARE(QString::fromUtf8(reinterpret_cast<const char *>(text.data()), qsizetype(text.size())),
                  QStringLiteral("{\\pos(%1,%2)}a").arg(width / 10).arg(height / 10));
-        QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("resampleMenuItem")), "triggered"));
+        QVERIFY(QMetaObject::invokeMethod(named("resampleMenuItem")->property("action").value<QObject *>(), "trigger"));
         QObject *resample = nullptr;
         QTRY_VERIFY((resample = root->findChild<QObject *>(QStringLiteral("resampleDialog"))) && resample->property("visible").toBool());
         QCOMPARE(dialogItem("resampleDialog", "resampleSubsWidth")->property("value").toInt(), width);
@@ -9256,7 +9267,7 @@ private slots:
         QVERIFY(application->video().unloadVideo());
         QTRY_COMPARE(application->resampleValues().value(QStringLiteral("hasVideo")).toBool(), false);
         {
-            QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("assProperties")), "triggered"));
+            QVERIFY(QMetaObject::invokeMethod(named("assProperties")->property("action").value<QObject *>(), "trigger"));
             QObject *properties = nullptr;
             QTRY_VERIFY((properties = root->findChild<QObject *>(QStringLiteral("scriptPropertiesDialog"))) &&
                         properties->property("visible").toBool());
@@ -9266,7 +9277,7 @@ private slots:
             QVERIFY(QMetaObject::invokeMethod(properties, "reject"));
             QTRY_VERIFY(!properties->property("visible").toBool());
         }
-        QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("assProperties")), "triggered"));
+        QVERIFY(QMetaObject::invokeMethod(named("assProperties")->property("action").value<QObject *>(), "trigger"));
         QObject *properties = nullptr;
         QTRY_VERIFY((properties = root->findChild<QObject *>(QStringLiteral("scriptPropertiesDialog"))) &&
                     properties->property("visible").toBool());
@@ -9373,7 +9384,7 @@ private slots:
         auto *root = engine->rootObjects().first();
         const auto *line = session->document().lines()[0];
         session->setSelection(application::Selection{line->id, {line->id}, line->id, {}});
-        auto *action = root->findChild<QObject *>(QStringLiteral("perspectiveTrackingMenuItem"))->property("action").value<QObject *>();
+        auto *action = named("perspectiveTrackingMenuItem")->property("action").value<QObject *>();
         QVERIFY(action);
         QVERIFY(!action->property("enabled").toBool());
         application->video().openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
@@ -9452,7 +9463,7 @@ private slots:
             return QString::fromUtf8(reinterpret_cast<const char *>(t.data()), qsizetype(t.size()));
         };
         const auto action = [&](const char *item) {
-            return root->findChild<QObject *>(QLatin1String(item))->property("action").value<QObject *>();
+            return named(item)->property("action").value<QObject *>();
         };
         selectAll();
         QObject *apply = action("applyMotionDataMenuItem");
@@ -9712,7 +9723,7 @@ private slots:
         QTRY_VERIFY_WITH_TIMEOUT(video.hasSubtitles(), 20000);
 
         QCOMPARE(application->repeatLayerBuilders().value(QStringLiteral("ok")).toBool(), false);
-        auto *item = root->findChild<QObject *>(QStringLiteral("blurAndGlowLayersMenuItem"));
+        auto *item = named("blurAndGlowLayersMenuItem");
         QVERIFY(item);
         QVERIFY(QMetaObject::invokeMethod(item->property("action").value<QObject *>(), "trigger"));
         QObject *dialog = nullptr;
@@ -9954,7 +9965,7 @@ private slots:
             session->setSelection(all);
         };
         const auto action = [&](const char *item) {
-            return root->findChild<QObject *>(QLatin1String(item))->property("action").value<QObject *>();
+            return named(item)->property("action").value<QObject *>();
         };
         selectAll();
         application->video().openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
@@ -10046,7 +10057,7 @@ private slots:
         auto *root = engine->rootObjects().first();
         auto *about = lazyWindow("aboutDialog");
         QVERIFY(about);
-        QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("aboutMenuItem"))->property("action").value<QObject *>(), "trigger"));
+        QVERIFY(QMetaObject::invokeMethod(named("aboutMenuItem")->property("action").value<QObject *>(), "trigger"));
         QTRY_VERIFY(about->isVisible());
         QCOMPARE(about->modality(), Qt::NonModal);
         QCOMPARE(about->transientParent(), qobject_cast<QWindow *>(root));
@@ -10065,7 +10076,7 @@ private slots:
         QTRY_VERIFY(!about->isVisible());
 
         auto *credits = lazyWindow("creditsDialog");
-        QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("creditsMenuItem"))->property("action").value<QObject *>(), "trigger"));
+        QVERIFY(QMetaObject::invokeMethod(named("creditsMenuItem")->property("action").value<QObject *>(), "trigger"));
         QTRY_VERIFY(credits->isVisible());
         QCOMPARE(credits->modality(), Qt::NonModal);
         QStringList names;
@@ -10254,7 +10265,7 @@ private slots:
         QVERIFY(!window->findChild<QObject *>(QStringLiteral("whatsNewCard")));
         auto *dialog = lazyWindow("whatsNewDialog");
         QVERIFY(dialog);
-        auto *menuItem = top->findChild<QObject *>(QStringLiteral("whatsNewMenuItem"));
+        auto *menuItem = named("whatsNewMenuItem");
         QVERIFY(menuItem);
         QCOMPARE(menuItem->property("iconRole").toString(), QStringLiteral("whats-new"));
         auto *action = menuItem->property("action").value<QObject *>();
@@ -11026,7 +11037,7 @@ private slots:
                                  30000);
         auto &collector = application->fontCollector();
         QObject *dialog = nullptr;
-        QVERIFY(QMetaObject::invokeMethod(named("fontCollectorMenuItem"), "triggered"));
+        QVERIFY(QMetaObject::invokeMethod(named("fontCollectorMenuItem")->property("action").value<QObject *>(), "trigger"));
         QTRY_VERIFY((dialog = named("fontCollectorDialog")) && dialog->property("visible").toBool());
         auto *fromMkv = dialogItem("fontCollectorDialog", "fontCollectorFromMkv");
         QVERIFY(fromMkv);
@@ -11054,7 +11065,7 @@ private slots:
         QCOMPARE(collector.logText(), checked);
         QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorClose"), "click"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
-        QVERIFY(QMetaObject::invokeMethod(named("fontCollectorMenuItem"), "triggered"));
+        QVERIFY(QMetaObject::invokeMethod(named("fontCollectorMenuItem")->property("action").value<QObject *>(), "trigger"));
         QTRY_VERIFY(dialog->property("visible").toBool());
         QVERIFY(collector.fromMkv());
         QTRY_VERIFY(fromMkv->property("checked").toBool());
@@ -11120,7 +11131,7 @@ private slots:
                                      QDir::toNativeSeparators(QString::fromStdString(
                                          application->video().session().path())) == QDir::toNativeSeparators(other),
                                  30000);
-        QVERIFY(QMetaObject::invokeMethod(named("fontCollectorMenuItem"), "triggered"));
+        QVERIFY(QMetaObject::invokeMethod(named("fontCollectorMenuItem")->property("action").value<QObject *>(), "trigger"));
         QTRY_VERIFY(dialog->property("visible").toBool());
         QTRY_VERIFY(fromMkv->property("checked").toBool());
         QVERIFY(!fromMkv->property("enabled").toBool());
@@ -11169,7 +11180,7 @@ private slots:
         QVERIFY(menuItem && menuItem->property("enabled").toBool());
         QQmlExpression iconSource(qmlContext(menuItem), menuItem, QStringLiteral("icon.source.toString()"));
         QVERIFY(iconSource.evaluate().toString().startsWith(QLatin1String("image://hikari-icon/font-collector/")));
-        QVERIFY(QMetaObject::invokeMethod(menuItem, "triggered"));
+        QVERIFY(QMetaObject::invokeMethod(menuItem->property("action").value<QObject *>(), "trigger"));
         QObject *dialog = nullptr;
         QTRY_VERIFY((dialog = root->findChild<QObject *>(QStringLiteral("fontCollectorDialog"))) &&
                     dialog->property("visible").toBool());
@@ -11646,7 +11657,7 @@ private slots:
         auto *root = engine->rootObjects().first();
         auto *dialog = named("selectLinesDialog");
         QVERIFY(dialog);
-        auto *menuItem = root->findChild<QObject *>(QStringLiteral("selectLinesMenuItem"));
+        auto *menuItem = named("selectLinesMenuItem");
         QVERIFY(QMetaObject::invokeMethod(menuItem->property("action").value<QObject *>(), "trigger"));
         QTRY_VERIFY(dialog->property("visible").toBool());
         auto *find = dialogItem("selectLinesDialog", "selectFindText");
@@ -11876,7 +11887,7 @@ private slots:
 
         auto *root = engine->rootObjects().first();
         QVERIFY(!root->findChild<QObject *>(QStringLiteral("karaokeCheckDialog")));
-        auto *item = root->findChild<QObject *>(QStringLiteral("checkKaraokeMenuItem"));
+        auto *item = named("checkKaraokeMenuItem");
         const auto entries = menuItems(item->property("menu").value<QObject *>());
         const auto at = [&](const char *name) {
             for (qsizetype i = 0; i < entries.size(); ++i)
@@ -11885,7 +11896,7 @@ private slots:
             return qsizetype(-1);
         };
         QCOMPARE(at("checkKaraokeMenuItem"), at("checkSpellingMenuItem") + 1);
-        QVERIFY(QMetaObject::invokeMethod(item, "triggered"));
+        QVERIFY(QMetaObject::invokeMethod(item->property("action").value<QObject *>(), "trigger"));
         QObject *dialog = nullptr;
         QTRY_VERIFY((dialog = root->findChild<QObject *>(QStringLiteral("karaokeCheckDialog"))));
         QTRY_VERIFY(dialog->property("visible").toBool());
@@ -12010,7 +12021,7 @@ private slots:
 
         auto *root = engine->rootObjects().first();
         QVERIFY(!root->findChild<QObject *>(QStringLiteral("kanjiTimerDialog")));
-        auto *item = root->findChild<QObject *>(QStringLiteral("kanjiTimerMenuItem"));
+        auto *item = named("kanjiTimerMenuItem");
         const auto entries = menuItems(item->property("menu").value<QObject *>());
         const auto at = [&](const char *name) {
             for (qsizetype i = 0; i < entries.size(); ++i)
@@ -12019,7 +12030,7 @@ private slots:
             return qsizetype(-1);
         };
         QCOMPARE(at("kanjiTimerMenuItem"), at("checkKaraokeMenuItem") + 1);
-        QVERIFY(QMetaObject::invokeMethod(item, "triggered"));
+        QVERIFY(QMetaObject::invokeMethod(item->property("action").value<QObject *>(), "trigger"));
         QObject *dialog = nullptr;
         QTRY_VERIFY((dialog = root->findChild<QObject *>(QStringLiteral("kanjiTimerDialog"))));
         QTRY_VERIFY(dialog->property("visible").toBool());
@@ -12113,7 +12124,7 @@ private slots:
         QTRY_VERIFY(!dialog->property("visible").toBool());
         QVERIFY(!messageBox("kanjiTimerMessages") || !messageBox("kanjiTimerMessages")->isVisible());
 
-        QVERIFY(QMetaObject::invokeMethod(item, "triggered"));
+        QVERIFY(QMetaObject::invokeMethod(item->property("action").value<QObject *>(), "trigger"));
         QTRY_VERIFY(dialog->property("visible").toBool());
         QVERIFY(QMetaObject::invokeMethod(controller, "setStyles", Q_ARG(QString, QStringLiteral("Song")),
                                           Q_ARG(QString, QStringLiteral("Song"))));
@@ -12149,7 +12160,7 @@ private slots:
         QVERIFY(application->openFile(path));
         auto *session = application->files().session(*application->workspace().editingTarget());
         auto *root = engine->rootObjects().first();
-        QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("kanjiTimerMenuItem")), "triggered"));
+        QVERIFY(QMetaObject::invokeMethod(named("kanjiTimerMenuItem")->property("action").value<QObject *>(), "trigger"));
         QObject *dialog = nullptr;
         QTRY_VERIFY((dialog = root->findChild<QObject *>(QStringLiteral("kanjiTimerDialog"))));
         QTRY_VERIFY(dialog->property("visible").toBool());
@@ -12317,7 +12328,7 @@ private slots:
                                                 "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,second\n")));
         auto *session = application->files().session(*application->workspace().editingTarget());
         auto &qc = application->qcNotes();
-        QVERIFY(QMetaObject::invokeMethod(named("showQcNotes"), "triggered"));
+        QVERIFY(QMetaObject::invokeMethod(named("showQcNotes")->property("action").value<QObject *>(), "trigger"));
         QTRY_VERIFY(item<QObject>("qcNotesDock")->property("isOpen").toBool());
         QTRY_VERIFY(item("qcNotesEmpty") && item("qcNotesEmpty")->isVisible());
 
@@ -12576,7 +12587,7 @@ private slots:
         }
         QVERIFY(application->openFile(path));
         auto *root = engine->rootObjects().first();
-        QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("kanjiTimerMenuItem")), "triggered"));
+        QVERIFY(QMetaObject::invokeMethod(named("kanjiTimerMenuItem")->property("action").value<QObject *>(), "trigger"));
         QObject *dialog = nullptr;
         QTRY_VERIFY((dialog = root->findChild<QObject *>(QStringLiteral("kanjiTimerDialog"))));
         auto *kanji = qobject_cast<QQuickWindow *>(dialog);
@@ -12660,7 +12671,7 @@ private slots:
         auto *root = engine->rootObjects().first();
         auto *dock = item<QObject>("spellDock");
         QVERIFY(dock);
-        QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("checkSpellingMenuItem")), "triggered"));
+        QVERIFY(QMetaObject::invokeMethod(named("checkSpellingMenuItem")->property("action").value<QObject *>(), "trigger"));
         QTRY_VERIFY(dock->property("isOpen").toBool());
         QCOMPARE(spellItem("spellMisspell")->property("text").toString(), QStringLiteral("wrold"));
         QCOMPARE(spellItem("spellReplacement")->property("text").toString(), QStringLiteral("world"));
@@ -12965,7 +12976,7 @@ private slots:
         auto *session = application->files().session(*application->workspace().editingTarget());
         auto *root = engine->rootObjects().first();
         auto *dock = item<QObject>("spellDock");
-        auto *check = root->findChild<QObject *>(QStringLiteral("checkSpellingMenuItem"));
+        auto *check = named("checkSpellingMenuItem");
         auto *subtitles = check->property("menu").value<QObject *>();
         QVERIFY(subtitles);
         const auto entries = menuItems(subtitles);
@@ -12978,7 +12989,7 @@ private slots:
         QCOMPARE(entries[at("resampleMenuItem") + 1]->property("subMenu").value<QObject *>(), named("setFpsMenu"));
         QCOMPARE(at("checkSpellingMenuItem"), at("resampleMenuItem") + 2);
 
-        QVERIFY(QMetaObject::invokeMethod(check, "triggered"));
+        QVERIFY(QMetaObject::invokeMethod(check->property("action").value<QObject *>(), "trigger"));
         QTRY_VERIFY(dock->property("isOpen").toBool());
         auto *panel = item<QObject>("spellCheckerPanel");
         auto *misspell = spellItem("spellMisspell");
@@ -13035,7 +13046,7 @@ private slots:
         auto *session = application->files().session(*application->workspace().editingTarget());
         auto *root = engine->rootObjects().first();
         auto *dock = item<QObject>("spellDock");
-        QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("checkSpellingMenuItem")), "triggered"));
+        QVERIFY(QMetaObject::invokeMethod(named("checkSpellingMenuItem")->property("action").value<QObject *>(), "trigger"));
         QTRY_VERIFY(dock->property("isOpen").toBool());
         auto *panel = item<QObject>("spellCheckerPanel");
         auto *misspell = spellItem("spellMisspell");
@@ -14063,7 +14074,7 @@ private slots:
 
     void showPostprocessor()
     {
-        QVERIFY(QMetaObject::invokeMethod(named("showTimingPostprocessor"), "triggered"));
+        QVERIFY(QMetaObject::invokeMethod(named("showTimingPostprocessor")->property("action").value<QObject *>(), "trigger"));
         QTRY_VERIFY(item<QObject>("postprocessorDock")->property("isOpen").toBool());
         QTRY_VERIFY(item("postprocessorApply") && item("postprocessorApply")->isVisible());
     }
@@ -17621,7 +17632,7 @@ private slots:
         };
         QTRY_VERIFY_WITH_TIMEOUT(std::abs(shownMs() - 1000) < 50, 20000);
         const auto videoMs = shownMs();
-        auto *menuItem = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("setFpsFromVideo"));
+        auto *menuItem = named("setFpsFromVideo");
         QVERIFY(menuItem);
         QVERIFY(QMetaObject::invokeMethod(menuItem, "triggered"));
         QTRY_COMPARE(session->document().lines()[1]->start.value.microseconds() / 1000, videoMs);
@@ -17720,7 +17731,7 @@ private slots:
         QCOMPARE(draft(), QStringLiteral("one\\h two"));
         QCOMPARE(text->property("cursorPosition").toInt(), 5);
 
-        auto *menuItem = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("insertHardSpaceMenuItem"));
+        auto *menuItem = named("insertHardSpaceMenuItem");
         QVERIFY(menuItem);
         text->setProperty("cursorPosition", 0);
         QVERIFY(QMetaObject::invokeMethod(menuItem->property("action").value<QObject *>(), "trigger"));
@@ -17796,7 +17807,7 @@ private slots:
     {
         auto *root = engine->rootObjects().first();
         auto *dialog = settingsWindow();
-        auto *menuItem = root->findChild<QObject *>(QStringLiteral("settingsMenuItem"));
+        auto *menuItem = named("settingsMenuItem");
         if (!dialog || !menuItem || !QMetaObject::invokeMethod(menuItem->property("action").value<QObject *>(), "trigger"))
             return nullptr;
         return dialog;
@@ -31105,18 +31116,17 @@ private slots:
             QCOMPARE(name(button), QString::fromUtf8(e.name));
             QVERIFY(button->property("tip").toString().startsWith(QString::fromUtf8(e.name)));
         }
-        auto *root = engine->rootObjects().first();
         const QString normal = ui::IconTheme::colours()[0].name().mid(1);
         const QString accent = ui::IconTheme::colours()[1].name().mid(1);
         const QString disabled = ui::IconTheme::colours()[2].name().mid(1);
         for (const Expected &e : {Expected{"settingsMenuItem", "settings", ""}, Expected{"aboutMenuItem", "about", ""},
                                   Expected{"openAudioMenuItem", "open-audio", ""}, Expected{"recentSubtitlesMenu", "recent-subtitles", ""},
                                   Expected{"loadLastSessionMenuItem", "last-session", ""}}) {
-            auto *menuItem = root->findChild<QObject *>(QLatin1String(e.object));
+            auto *menuItem = named(e.object);
             QVERIFY2(menuItem, e.object);
             QCOMPARE(url(menuItem), QStringLiteral("image://hikari-icon/%1/%2/%3/0").arg(QLatin1String(e.role), normal, accent));
         }
-        QCOMPARE(url(root->findChild<QObject *>(QStringLiteral("saveMenuItem"))),
+        QCOMPARE(url(named("saveMenuItem")),
                  QStringLiteral("image://hikari-icon/save/%1/%1/0").arg(disabled));
         QVERIFY(application->openFile(episode));
         QTRY_VERIFY(visualItem("documentTabClose0") && visualItem("documentTabClose0")->isVisible());
@@ -31543,7 +31553,7 @@ private slots:
             QTRY_VERIFY(!popover->property("visible").toBool());
 
             auto *manager = lazyWindow("styleManager");
-            QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("styleManagerMenuItem")), "triggered"));
+            QVERIFY(QMetaObject::invokeMethod(named("styleManagerMenuItem")->property("action").value<QObject *>(), "trigger"));
             QTRY_VERIFY(manager->isVisible());
             const QVariantMap values = application->styleManager().beginEdit(false, 0);
             QVERIFY(QMetaObject::invokeMethod(manager, "beginEditing", Q_ARG(QVariant, values), Q_ARG(QVariant, false)));
@@ -34357,7 +34367,7 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(dialog, "reject"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
         auto *about = named("aboutDialog");
-        QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("aboutMenuItem"))->property("action").value<QObject *>(), "trigger"));
+        QVERIFY(QMetaObject::invokeMethod(named("aboutMenuItem")->property("action").value<QObject *>(), "trigger"));
         QTRY_VERIFY(about->property("visible").toBool());
         for (const char *code : {"light", "dark"}) {
             setTheme(code);
@@ -36789,7 +36799,7 @@ private slots:
         QVERIFY(!near(bt709, bt601));
         QVERIFY(near(pixel(), bt709));
         auto *root = engine->rootObjects().first();
-        QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("assProperties")), "triggered"));
+        QVERIFY(QMetaObject::invokeMethod(named("assProperties")->property("action").value<QObject *>(), "trigger"));
         QObject *dialog = nullptr;
         QTRY_VERIFY((dialog = root->findChild<QObject *>(QStringLiteral("scriptPropertiesDialog"))) &&
                     dialog->property("visible").toBool());
@@ -36848,7 +36858,7 @@ private slots:
         QVERIFY2(near(pixel(), bt709), "the untagged HD frame is converted as BT.709, its name");
         auto *root = engine->rootObjects().first();
         auto choose = [&](int index, const QString &name) {
-            QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("assProperties")), "triggered"));
+            QVERIFY(QMetaObject::invokeMethod(named("assProperties")->property("action").value<QObject *>(), "trigger"));
             QObject *dialog = nullptr;
             QTRY_VERIFY((dialog = root->findChild<QObject *>(QStringLiteral("scriptPropertiesDialog"))) &&
                         dialog->property("visible").toBool());

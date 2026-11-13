@@ -398,6 +398,7 @@ private slots:
         engine.setInitialProperties(app->qmlProperties());
         engine.loadFromModule("Hikari.Ui", "Main");
         QVERIFY(!engine.rootObjects().isEmpty());
+        QVERIFY(QMetaObject::invokeMethod(engine.rootObjects().first(), "buildMenus"));
         auto *root = engine.rootObjects().first();
         auto *window = qobject_cast<QQuickWindow *>(root);
         window->resize(1280, 800);
