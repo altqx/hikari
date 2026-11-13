@@ -153,7 +153,7 @@ QString difference(const QJsonValue &expected, const QJsonValue &actual, const Q
     return expected == actual ? QString() : mismatch();
 }
 
-QHash<QString, int> minimumHeights()
+QHash<QString, int> liveMinimumHeights()
 {
     QHash<QString, int> out;
     for (const auto *group : DockRegistry::self()->groups())
@@ -178,9 +178,8 @@ QJsonObject moved(QJsonObject group, int top, int height)
     return group;
 }
 
-// A panel's minimum can depend on its width and fonts (the Line editor's, #1099), so a recording can fall below it.
-QString expectAtMinimums(QJsonObject &expected, const QJsonObject &actual, const QHash<QString, int> &minimums,
-                         QString &summary)
+QString expectHeightsAllowingTheLiveMinimum(QJsonObject &expected, const QJsonObject &actual,
+                                            const QHash<QString, int> &liveMinimums, QString &summary)
 {
     QJsonArray groups = expected.value(QStringLiteral("groups")).toArray();
     const QJsonArray live = actual.value(QStringLiteral("groups")).toArray();
@@ -196,15 +195,16 @@ QString expectAtMinimums(QJsonObject &expected, const QJsonObject &actual, const
     for (qsizetype i = 0; i < groups.size(); ++i) {
         const QJsonObject group = groups.at(i).toObject();
         const int recorded = group.value(QStringLiteral("rect")).toObject().value(QStringLiteral("height")).toInt();
-        const int minimum = minimums.value(key(group), 0);
-        if (group.value(QStringLiteral("floating")).toBool() || recorded + kSlack >= minimum)
+        const int liveMinimum = liveMinimums.value(key(group), 0);
+        const int allowedHeight = std::max(recorded, liveMinimum);
+        const int delta = allowedHeight - recorded;
+        if (group.value(QStringLiteral("floating")).toBool() || delta <= kSlack)
             continue;
-        const int delta = minimum - recorded;
         const QJsonObject restored = liveOf(group);
         const bool top = edgeOf(restored, true) < edgeOf(group, true) - kSlack;
         const int edge = edgeOf(group, top);
         QString why = QStringLiteral("%1 recorded %2 below its live minimum %3, so it restores %4 taller; across its %5 edge:")
-                          .arg(group.value(QStringLiteral("current")).toString()).arg(recorded).arg(minimum).arg(delta)
+                          .arg(group.value(QStringLiteral("current")).toString()).arg(recorded).arg(liveMinimum).arg(delta)
                           .arg(top ? QStringLiteral("top") : QStringLiteral("bottom"));
         int given = 0;
         for (qsizetype j = 0; j < groups.size(); ++j) {
@@ -317,11 +317,11 @@ class LayoutMigrationTest : public QObject {
     {
         QVERIFY2(layouts().notice().isEmpty(), qPrintable(what + QStringLiteral(": ") + layouts().notice()));
         const QJsonObject actual = settled();
-        QJsonObject atMinimums = expected;
+        QJsonObject allowingTheLiveMinimum = expected;
         QString summary;
-        const QString grown = expectAtMinimums(atMinimums, actual, minimumHeights(), summary);
+        const QString grown = expectHeightsAllowingTheLiveMinimum(allowingTheLiveMinimum, actual, liveMinimumHeights(), summary);
         QVERIFY2(grown.isEmpty(), qPrintable(what + QStringLiteral(": ") + grown));
-        const QString d = difference(atMinimums, actual);
+        const QString d = difference(allowingTheLiveMinimum, actual);
         QVERIFY2(d.isEmpty(), qPrintable(what + QStringLiteral(": ") + d + summary));
         QVERIFY(DockRegistry::self()->isSane());
     }

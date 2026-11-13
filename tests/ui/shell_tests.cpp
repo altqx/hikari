@@ -8040,21 +8040,20 @@ private slots:
             return out;
         };
         const auto firstPanels = dockedPanels();
-        // A panel's minimum can depend on its width and fonts (the Line editor's, #1099), and a reset can change widths (#1106).
-        const auto dockedAgain = [&] {
-            QSize want = docked;
-            QString why;
+        const auto minimumGrowthFromPanels = [&] {
+            QSize growth(0, 0);
+            QString changes;
             const auto now = dockedPanels();
             for (auto it = firstPanels.begin(); it != firstPanels.end(); ++it) {
                 const auto after = now.value(it.key(), it.value());
                 if (after.first == it.value().first)
                     continue;
-                want += after.first - it.value().first;
-                why += QStringLiteral(" %1 minimum %2x%3 -> %4x%5 at width %6 -> %7;")
+                growth += after.first - it.value().first;
+                changes += QStringLiteral(" %1 minimum %2x%3 -> %4x%5 at width %6 -> %7;")
                            .arg(it.key()).arg(it.value().first.width()).arg(it.value().first.height())
                            .arg(after.first.width()).arg(after.first.height()).arg(it.value().second).arg(after.second);
             }
-            return std::pair{want, why};
+            return std::pair{growth, changes};
         };
         QTRY_VERIFY2(window->minimumSize() == expected(), qPrintable(describe()));
         const QSize rows = outside();
@@ -8102,10 +8101,12 @@ private slots:
         QVERIFY2(fitted > 0, qPrintable(describe()));
         application->workspaceLayout().resetLayout();
         QTRY_VERIFY(item("editorPanel")->window() == window);
-        QTRY_VERIFY2(docking->layoutMinimumSize(mainName) == dockedAgain().first,
+        QTRY_VERIFY2(docking->layoutMinimumSize(mainName) == docked + minimumGrowthFromPanels().first,
                      qPrintable(QStringLiteral("first docked %1x%2, allowed %3x%4 for the panel minimums that changed:%5 ")
-                                    .arg(docked.width()).arg(docked.height()).arg(dockedAgain().first.width())
-                                    .arg(dockedAgain().first.height()).arg(dockedAgain().second) + describe()));
+                                    .arg(docked.width()).arg(docked.height())
+                                    .arg((docked + minimumGrowthFromPanels().first).width())
+                                    .arg((docked + minimumGrowthFromPanels().first).height())
+                                    .arg(minimumGrowthFromPanels().second) + describe()));
         QTRY_VERIFY2(window->minimumSize() == expected(), qPrintable(describe()));
     }
 
