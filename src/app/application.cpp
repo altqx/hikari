@@ -6735,7 +6735,6 @@ void Application::setSideBars(int shellWindow, const QString &json)
         return;
     m_windowPlaces[shellWindow].sideBars = bars;
     m_settings->set("workspace.sideBars", QString::fromStdString(application::sideBarsJson(*bars)));
-    saveLastSession();
 }
 
 void Application::placeShellWindow(QQuickWindow &window, const application::SessionWindow &saved)

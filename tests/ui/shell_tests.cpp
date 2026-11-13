@@ -1088,6 +1088,32 @@ private slots:
         restartWith(app::Application::Options());
     }
 
+    void homePageRestoresTheLastSessionAfterTheSideBarsChange()
+    {
+        QVERIFY(QDir().mkpath(dir.filePath(QStringLiteral("home-side-bars"))));
+        app::Application::Options options;
+        options.settingsFile = dir.filePath(QStringLiteral("home-side-bars/hikari.ini"));
+        options.playbackAudio = false;
+        {
+            app::Application first(options);
+            QVERIFY(first.openFile(episode));
+        }
+        restartWith(options);
+        QTRY_VERIFY(item("homeSession")->isVisible());
+        auto *root = engine->rootObjects().first();
+        QTRY_VERIFY(root->property("sideBarsLoaded").toBool());
+        QVERIFY(QMetaObject::invokeMethod(root, "toggleSideBar", Q_ARG(QVariant, true)));
+        QVERIFY(QMetaObject::invokeMethod(root, "toggleSideBar", Q_ARG(QVariant, true)));
+        QVERIFY(QMetaObject::invokeMethod(root, "resizeSideBar", Q_ARG(QVariant, false), Q_ARG(QVariant, 300),
+                                          Q_ARG(QVariant, true)));
+        QVERIFY(QMetaObject::invokeMethod(item("homeRestore"), "clicked"));
+        QTRY_VERIFY(!item("homePage")->isVisible());
+        QCOMPARE(window->title(), QStringLiteral("episode.ass - HikariSub"));
+        QVERIFY(application->reviewCloseTab(0).isEmpty());
+        application->finishClose();
+        restartWith(app::Application::Options());
+    }
+
     void homePageScreenshots()
     {
         const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
