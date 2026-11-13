@@ -33,19 +33,20 @@ ScrollView {
                 delegate: SettingsRow {
                     id: row
                     required property string modelData
-                    readonly property string setting: "editing.cycleValues." + modelData
+                    readonly property string key: "editing.cycleValues." + modelData
                     iconRole: "cycle-values"
                     text: "\\" + modelData
                     TextField {
                         id: values
-                        objectName: "setting_" + row.setting
+                        objectName: "setting_" + row.key
+                        readonly property string docsLabel: row.text
                         font.family: "monospace"
                         Layout.fillWidth: true
                         Accessible.name: qsTr("Values for %1, in order").arg(row.text)
-                        function refresh() { text = page.dialog.values[row.setting] ?? "" }
+                        function refresh() { text = page.dialog.values[row.key] ?? "" }
                         Component.onCompleted: refresh()
                         Connections { target: page.dialog; function onReloaded() { values.refresh() } }
-                        onTextEdited: page.dialog.put(row.setting, text)
+                        onTextEdited: page.dialog.put(row.key, text)
                     }
                 }
             }

@@ -22687,10 +22687,18 @@ private slots:
         auto &h = application->hotkeys();
         QVERIFY(!h.listFiltered());
         showSettingsPage("hotkeys");
+        const bool firstRowHasKeys = !hotkeyRows().first().toMap().value(QStringLiteral("accel")).toString().isEmpty();
         QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "hotkeyFilter"), "activated", Q_ARG(int, 1)));
         QVERIFY(h.listFiltered());
         const int count = int(hotkeyRows().size());
-        QCOMPARE(h.topBlock(), 1);
+        QCOMPARE(h.topBlock(), firstRowHasKeys ? 0 : 1);
+        if (!firstRowHasKeys) {
+            h.toggleBlock(-1);
+            QCOMPARE(h.topBlock(), 2);
+            QVERIFY(hotkeyRows().first().toMap().value(QStringLiteral("inBlock")).toBool());
+            h.toggleBlock(-1);
+            QCOMPARE(int(hotkeyRows().size()), count);
+        }
         int gap = -1;
         for (int i = 0; i < count && gap < 0; ++i)
             if (hotkeyRows()[i].toMap().value(QStringLiteral("block")).toInt() == 1)
