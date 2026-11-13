@@ -14,6 +14,7 @@
 #include <QDir>
 #include <QFile>
 #include <QGuiApplication>
+#include <QHash>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -24,6 +25,7 @@
 #include <QtTest>
 
 #include <algorithm>
+#include <cstdlib>
 #include <memory>
 
 using namespace hikari;
@@ -151,6 +153,84 @@ QString difference(const QJsonValue &expected, const QJsonValue &actual, const Q
     return expected == actual ? QString() : mismatch();
 }
 
+QHash<QString, int> liveMinimumHeights()
+{
+    QHash<QString, int> out;
+    for (const auto *group : DockRegistry::self()->groups())
+        if (!group->dockWidgets().isEmpty() && !group->isInFloatingWindow())
+            out.insert(QString::fromUtf8(QJsonDocument(panelsOf(group)).toJson(QJsonDocument::Compact)),
+                       group->view()->minSize().height());
+    return out;
+}
+
+int edgeOf(const QJsonObject &group, bool top)
+{
+    const QJsonObject r = group.value(QStringLiteral("rect")).toObject();
+    return top ? r.value(QStringLiteral("y")).toInt() : r.value(QStringLiteral("y")).toInt() + r.value(QStringLiteral("height")).toInt();
+}
+
+QJsonObject moved(QJsonObject group, int top, int height)
+{
+    QJsonObject r = group.value(QStringLiteral("rect")).toObject();
+    r.insert(QStringLiteral("y"), r.value(QStringLiteral("y")).toInt() + top);
+    r.insert(QStringLiteral("height"), r.value(QStringLiteral("height")).toInt() + height);
+    group.insert(QStringLiteral("rect"), r);
+    return group;
+}
+
+QString expectHeightsAllowingTheLiveMinimum(QJsonObject &expected, const QJsonObject &actual,
+                                            const QHash<QString, int> &liveMinimums, QString &summary)
+{
+    QJsonArray groups = expected.value(QStringLiteral("groups")).toArray();
+    const QJsonArray live = actual.value(QStringLiteral("groups")).toArray();
+    const auto key = [](const QJsonObject &g) {
+        return QString::fromUtf8(QJsonDocument(g.value(QStringLiteral("panels")).toArray()).toJson(QJsonDocument::Compact));
+    };
+    const auto liveOf = [&](const QJsonObject &g) {
+        for (const auto &l : live)
+            if (key(l.toObject()) == key(g))
+                return l.toObject();
+        return QJsonObject();
+    };
+    for (qsizetype i = 0; i < groups.size(); ++i) {
+        const QJsonObject group = groups.at(i).toObject();
+        const int recorded = group.value(QStringLiteral("rect")).toObject().value(QStringLiteral("height")).toInt();
+        const int liveMinimum = liveMinimums.value(key(group), 0);
+        const int allowedHeight = std::max(recorded, liveMinimum);
+        const int delta = allowedHeight - recorded;
+        if (group.value(QStringLiteral("floating")).toBool() || delta <= kSlack)
+            continue;
+        const QJsonObject restored = liveOf(group);
+        const bool top = edgeOf(restored, true) < edgeOf(group, true) - kSlack;
+        const int edge = edgeOf(group, top);
+        QString why = QStringLiteral("%1 recorded %2 below its live minimum %3, so it restores %4 taller; across its %5 edge:")
+                          .arg(group.value(QStringLiteral("current")).toString()).arg(recorded).arg(liveMinimum).arg(delta)
+                          .arg(top ? QStringLiteral("top") : QStringLiteral("bottom"));
+        int given = 0;
+        for (qsizetype j = 0; j < groups.size(); ++j) {
+            const QJsonObject other = groups.at(j).toObject();
+            if (other.value(QStringLiteral("floating")).toBool())
+                continue;
+            if (std::abs(edgeOf(other, top) - edge) <= kSlack) {
+                groups.replace(j, top ? moved(other, -delta, delta) : moved(other, 0, delta));
+            } else if (std::abs(edgeOf(other, !top) - edge) <= kSlack + 1) {
+                const int was = other.value(QStringLiteral("rect")).toObject().value(QStringLiteral("height")).toInt();
+                const int now = liveOf(other).value(QStringLiteral("rect")).toObject().value(QStringLiteral("height")).toInt();
+                why += QStringLiteral(" %1 %2").arg(other.value(QStringLiteral("current")).toString()).arg(now - was);
+                if (std::abs(now - was + delta) > kSlack)
+                    return why + QStringLiteral(" (each must give up %1)").arg(delta);
+                given = std::max(given, was - now);
+                groups.replace(j, top ? moved(other, 0, -delta) : moved(other, delta, -delta));
+            }
+        }
+        if (given == 0)
+            return why + QStringLiteral(" nothing gave up the room");
+        summary += QLatin1Char(' ') + why;
+    }
+    expected.insert(QStringLiteral("groups"), groups);
+    return {};
+}
+
 QString expectationsFile()
 {
     return QStringLiteral("expected-%1.json").arg(QGuiApplication::platformName());
@@ -236,8 +316,13 @@ class LayoutMigrationTest : public QObject {
     void expectRestored(const QJsonObject &expected, const QString &what)
     {
         QVERIFY2(layouts().notice().isEmpty(), qPrintable(what + QStringLiteral(": ") + layouts().notice()));
-        const QString d = difference(expected, settled());
-        QVERIFY2(d.isEmpty(), qPrintable(what + QStringLiteral(": ") + d));
+        const QJsonObject actual = settled();
+        QJsonObject allowingTheLiveMinimum = expected;
+        QString summary;
+        const QString grown = expectHeightsAllowingTheLiveMinimum(allowingTheLiveMinimum, actual, liveMinimumHeights(), summary);
+        QVERIFY2(grown.isEmpty(), qPrintable(what + QStringLiteral(": ") + grown));
+        const QString d = difference(allowingTheLiveMinimum, actual);
+        QVERIFY2(d.isEmpty(), qPrintable(what + QStringLiteral(": ") + d + summary));
         QVERIFY(DockRegistry::self()->isSane());
     }
     QJsonObject expectations(const QString &engineDir) const
