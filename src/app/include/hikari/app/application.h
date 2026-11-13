@@ -1770,6 +1770,7 @@ private:
     bool m_startedWithPaths = false;
     std::optional<application::Session> m_startSession;
     bool m_lastSessionWritable = true;
+    bool m_sessionHadTabs = false;
     void rememberStartSession();
     void convertLastSession();
     std::optional<application::Session> loadLastSession();
