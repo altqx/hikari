@@ -1,0 +1,98 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>HA2 mockup: plugin job card, Grid row marks, Marks row</title>
+<style>
+body{margin:0;font:13px/1.35 "Inter","Segoe UI",sans-serif;background:#888}
+.theme{padding:18px 20px 22px;background:var(--bg);color:var(--text)}
+.theme h2{margin:0 0 12px;font-size:14px;font-weight:600}
+.light{--bg:#E5E9EC;--panel:#F9FAFB;--raised:#EDF0F3;--field:#FFFFFF;--text:#202832;--muted:#526170;--line:#AAB5BE;--accent:#1D5BA8;--onaccent:#FFFFFF;--select:#D6DFEB;--danger:#A51F31;--warning:#8A5A00;--success:#008000;--alt:#F0F2F4}
+.dark{--bg:#171B20;--panel:#20262D;--raised:#29313A;--field:#171D24;--text:#E8EDF2;--muted:#A5B1BD;--line:#414B57;--accent:#A6C8F2;--onaccent:#101D2C;--select:#303D4C;--danger:#FFADAD;--warning:#E0A030;--success:#4DBA4D;--alt:#242A31}
+.hcw{--bg:#FFFFFF;--panel:#FFFFFF;--raised:#EBEBEB;--field:#FFFFFF;--text:#000000;--muted:#1A1A1A;--line:#000000;--accent:#0037B3;--onaccent:#FFFFFF;--select:#C9DAF8;--danger:#A00000;--warning:#6B4500;--success:#005A00;--alt:#FFFFFF}
+.hcb{--bg:#000000;--panel:#080808;--raised:#151515;--field:#000000;--text:#FFFFFF;--muted:#EEEEEE;--line:#FFFFFF;--accent:#FFFF00;--onaccent:#000000;--select:#253F60;--danger:#FFADAD;--warning:#FFD54A;--success:#7CFC7C;--alt:#000000}
+.row3{display:flex;gap:22px;align-items:flex-start;flex-wrap:wrap}
+.cap{font-size:11px;color:var(--muted);margin:0 0 6px;text-transform:none}
+.n{display:inline-block;min-width:16px;height:16px;border-radius:8px;background:var(--text);color:var(--bg);font-size:10px;text-align:center;line-height:16px;margin-right:4px;font-weight:700}
+/* grid */
+.grid{position:relative;width:520px;margin-bottom:52px;background:var(--panel);border:1px solid var(--line)}
+.grid table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+.grid th{font-weight:600;text-align:left;padding:3px 6px;border-bottom:1px solid var(--line);background:var(--raised);font-size:12px}
+.grid td{padding:0 6px;height:22px;white-space:nowrap;overflow:hidden}
+.grid tr:nth-child(even) td{background:var(--alt)}
+.grid tr.sel td{background:var(--select)}
+.num{position:relative;width:38px;text-align:right;padding-right:11px!important}
+.mark{position:absolute;right:2px;top:3px;bottom:3px;width:4px;border-radius:1px}
+.hcw .mark,.hcb .mark{outline:1px solid var(--text);outline-offset:0}
+.mark.two{background:none!important;display:flex;flex-direction:column;gap:1px}
+.mark.two i{flex:1;display:block;border-radius:1px}
+.qc{position:absolute;left:4px;top:5px;width:9px;height:11px}
+.tip{position:absolute;left:30px;top:162px;background:var(--panel);color:var(--text);border:1px solid var(--line);padding:5px 8px;font-size:12px;box-shadow:0 2px 8px rgba(0,0,0,.25);white-space:nowrap;z-index:2}
+.tip b{font-weight:600}
+/* card */
+.card{width:360px;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:9px 12px 10px;box-shadow:0 3px 12px rgba(0,0,0,.22)}
+.card .t{display:flex;align-items:center;gap:8px;font-weight:600}
+.card .t .ic{width:16px;height:16px;border:2px solid var(--muted);border-top-color:transparent;border-radius:50%;box-sizing:border-box}
+.card .s{color:var(--muted);font-size:12px;margin:4px 0 6px 24px}
+.bar{height:6px;background:var(--raised);border:1px solid var(--line);border-radius:1px;margin-left:24px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent)}
+.btns{display:flex;justify-content:flex-end;gap:6px;margin-top:8px}
+.btn{border:1px solid var(--line);background:var(--raised);color:var(--text);padding:3px 12px;border-radius:4px;font:inherit;font-size:12px}
+.btn.danger{border-color:var(--danger);color:var(--danger)}
+.note{font-size:12px;color:var(--warning);margin:6px 0 0 24px}
+/* details */
+.details{width:420px;background:var(--panel);border:1px solid var(--line);padding:10px 12px}
+.details .h{font-weight:600;font-size:12px;color:var(--muted);margin:8px 0 4px}
+.details .h:first-child{margin-top:0}
+.drow{display:flex;align-items:center;justify-content:space-between;padding:3px 0}
+.drow .mk{display:inline-block;width:4px;height:12px;margin-right:8px;vertical-align:-1px}
+.hcw .drow .mk,.hcb .drow .mk{outline:1px solid var(--text)}
+.link{color:var(--accent);text-decoration:underline}
+.qs{background:#fff;color:#000;padding:16px 20px;font-size:13px}
+.qs li{margin:4px 0}
+</style></head><body>
+
+<div class="qs"><b>HA2 #1091 — mockup for the owner (via coordinator).</b> Four themes below: Light, Dark, High contrast white, High contrast black. Numbers ① ② ③ match the recommendations at the end.
+</div>
+
+<script>
+const themes=[["light","Light"],["dark","Dark"],["hcw","High contrast white"],["hcb","High contrast black"]];
+const qcFlag=`<svg class="qc" viewBox="0 0 9 11"><path d="M1 0.5V11" stroke="currentColor" stroke-width="1.2"/><path d="M1 1h7l-1.8 2.25L8 5.5H1z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>`;
+const rows=[
+ [1,"0:00:01.20","0:00:03.80","Where did you put the map?",""],
+ [2,"0:00:04.10","0:00:06.00","I left it on the train.","success"],
+ [3,"0:00:06.30","0:00:08.90","Then we're walking.","warning","sel"],
+ [4,"0:00:09.40","0:00:11.10","{\\an8}Platform 9",""],
+ [5,"0:00:11.50","0:00:13.20","Don't look at me like that.","two"],
+ [6,"0:00:13.60","0:00:15.00","Fine. Let's go.","success","","qc"],
+];
+for(const [cls,name] of themes){
+ const body=rows.map(r=>{
+  let m="";
+  if(r[4]==="two") m=`<span class="mark two"><i style="background:var(--warning)"></i><i style="background:var(--accent)"></i></span>`;
+  else if(r[4]) m=`<span class="mark" style="background:var(--${r[4]})"></span>`;
+  return `<tr class="${r[5]||""}"><td class="num">${r[6]?qcFlag:""}${r[0]}${m}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td></tr>`}).join("");
+ document.write(`<section class="theme ${cls}"><h2>${name}</h2><div class="row3">
+ <div><p class="cap"><span class="n">1</span>Grid: plugin marks are a 4 px bar at the right edge of the # cell. Two plugins on one Line split the bar. QC keeps its flag on the left.</p>
+ <div class="grid"><table><tr><th class="num">#</th><th>Start</th><th>End</th><th>Text</th></tr>${body}</table>
+ <div class="tip"><span style="color:var(--muted);font-size:11px">Hover on # of Line 5:</span><br><b>Git-ref line marks:</b> Changed since v1.0 (a1b2c3d)<br><b>Typo checker:</b> “walking” is in the word list</div></div></div>
+ <div><p class="cap"><span class="n">2</span>Plugin job card, where the Automation card shows. Running:</p>
+ <div class="card"><div class="t"><span class="ic"></span>Keyframe generator: Find keyframes</div>
+ <div class="s">Frame 12 400 of 29 520</div><div class="bar"><i style="width:42%"></i></div>
+ <div class="btns"><button class="btn">Cancel</button></div></div>
+ <p class="cap" style="margin-top:12px">After Cancel, still running 5 s later:</p>
+ <div class="card"><div class="t"><span class="ic"></span>Keyframe generator: Find keyframes</div>
+ <div class="s">Cancelling…</div><div class="bar"><i style="width:43%"></i></div>
+ <div class="note">The plugin hasn’t stopped. Stop ends it now; work it hasn’t applied is lost.</div>
+ <div class="btns"><button class="btn danger">Stop</button></div></div></div>
+ <div><p class="cap"><span class="n">3</span>Plugin manager › details: a Marks row while the plugin marks Lines.</p>
+ <div class="details"><div class="h">Adds</div><div class="drow"><span>Commands: Mark changed Lines</span></div>
+ <div class="h">Marks</div><div class="drow"><span><span class="mk" style="background:var(--success)"></span>Marks 37 Lines in Episode 01.ass</span><button class="btn">Clear marks</button></div>
+ <div class="h">Permissions</div><div class="drow"><span>Read this repository’s history with git</span></div></div></div>
+ </div></section>`);
+}
+</script>
+
+<div class="qs"><b>Recommendations (answer yes/no each):</b><ol>
+<li>Plugin row marks are a 4 px bar at the right edge of the Grid's # cell, in the plugin's theme role. Two or more plugins on one Line split it top to bottom. In high contrast the bar gets a text-coloured outline. Hovering the # cell lists every mark as “&lt;plugin&gt;: &lt;text&gt;” under the QC notes, and screen readers read “marked by &lt;plugin&gt;”.</li>
+<li>A plugin job uses the Automation card's look and place: “&lt;plugin&gt;: &lt;command&gt;”, the plugin's text, a bar (busy when it gives no fraction) and Cancel. If the plugin hasn't stopped 5 s after Cancel, Stop replaces it, as for macros. Several jobs stack, newest on top.</li>
+<li>A plugin's details in the plugin manager show “Marks N Lines in &lt;file&gt;” per Document with Clear marks, only while it has marks.</li>
+</ol></div>
+</body></html>
