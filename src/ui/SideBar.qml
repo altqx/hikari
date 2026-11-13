@@ -13,6 +13,7 @@ Rectangle {
     property bool dropTarget: false
     property int dropIndex: -1
     property string dragging
+    property Item toolbar: null
     readonly property Item slot: slotItem
     readonly property Item strip: stripRow
     readonly property var shownEntry: entries.find(e => e.name === shown) ?? null
@@ -131,11 +132,22 @@ Rectangle {
         Accessible.role: Accessible.TitleBar
         Accessible.name: bar.shownEntry ? bar.shownEntry.title : ""
         Label {
-            anchors { left: parent.left; leftMargin: 10; right: menuButton.left; rightMargin: 6; verticalCenter: parent.verticalCenter }
+            id: headerTitle
+            objectName: "sideBarTitle"
+            anchors { left: parent.left; leftMargin: 10; right: toolbarSlot.left; rightMargin: 6; verticalCenter: parent.verticalCenter }
             text: bar.shownEntry ? bar.shownEntry.title : ""
             color: Theme.text
             font.bold: true
             elide: Text.ElideRight
+        }
+        PanelToolbarSlot {
+            id: toolbarSlot
+            toolbar: header.visible ? bar.toolbar : null
+            anchors { right: menuButton.left; rightMargin: 4; verticalCenter: parent.verticalCenter }
+            height: parent.height - 1
+            readonly property real room: Math.max(0, header.width - menuButton.width - 32)
+            readonly property bool fits: toolbar !== null && room - 40 >= toolbar.implicitWidth
+            width: !toolbar ? 0 : fits ? toolbar.implicitWidth : Math.max(0, Math.min(32, room - 40))
         }
         DockMenuButton {
             id: menuButton

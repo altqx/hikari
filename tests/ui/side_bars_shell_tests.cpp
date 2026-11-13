@@ -4,6 +4,7 @@
 #include "settings_store.h"
 #include "shown_objects.h"
 #include "side_bar_model.h"
+#include "theme.h"
 
 #include <QDir>
 #include <QJSValue>
@@ -127,7 +128,12 @@ class SideBarsShellTests : public QObject {
         const QString path = home->filePath(QStringLiteral("episode.ass"));
         QFile file(path);
         if (file.open(QIODevice::WriteOnly))
-            file.write("[Script Info]\nScriptType: v4.00+\n\n[Events]\n"
+            file.write("[Script Info]\nScriptType: v4.00+\n\n[V4+ Styles]\n"
+                       "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, "
+                       "Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, "
+                       "Alignment, MarginL, MarginR, MarginV, Encoding\n"
+                       "Style: Default,Arial,48,&H00FFFFFF,&H000000FF,&H00101010,&H00000000,0,0,0,0,100,100,0,0,1,2,1,2,10,10,10,1\n\n"
+                       "[Events]\n"
                        "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
                        "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,A line with {\\b1}tags{\\b0}\n");
         return path;
@@ -322,6 +328,131 @@ private slots:
             QTRY_VERIFY(in("rightSideBar", control)->hasActiveFocus());
     }
 
+    void aSecondFindHidesItsSideBar()
+    {
+        start();
+        QVERIFY(application->openFile(writeSubtitles()));
+        shell(QStringLiteral("root.openFind(false)"));
+        QTRY_VERIFY(in("rightSideBar", QStringLiteral("findText")) && in("rightSideBar", QStringLiteral("findText"))->hasActiveFocus());
+        shell(QStringLiteral("root.openFind(false)"));
+        QTRY_VERIFY(!shown("rightSideBar"));
+        QCOMPARE(panelsOf(saved().value(QStringLiteral("second")).toObject()).contains(QStringLiteral("Search")), true);
+        shell(QStringLiteral("root.openFind(false)"));
+        QTRY_VERIFY(shown("rightSideBar"));
+    }
+
+    void stylesInTheToolsSideBarKeepsItsToolbar_data()
+    {
+        QTest::addColumn<bool>("minimum");
+        QTest::newRow("start width") << false;
+        QTest::newRow("minimum width") << true;
+    }
+    void stylesInTheToolsSideBarKeepsItsToolbar()
+    {
+        QFETCH(bool, minimum);
+        start();
+        QVERIFY(application->openFile(writeSubtitles()));
+        call("sideBarIconClicked", QStringLiteral("Styles"));
+        QTRY_COMPARE(parentOf("stylesPanel"), slotOf("rightSideBar"));
+        QQuickItem *header = in("rightSideBar", QStringLiteral("sideBarHeader"));
+        QVERIFY(header);
+        QTRY_VERIFY(findItem(header, QStringLiteral("stylesTools")));
+        const auto inside = [&](const char *name) {
+            QQuickItem *control = findItem(header, QLatin1String(name));
+            if (!control || !control->isVisible() || control->width() <= 0)
+                return false;
+            const QRectF r = control->mapRectToItem(header, QRectF(0, 0, control->width(), control->height()));
+            return r.left() >= 0 && r.right() <= header->width() + 0.5;
+        };
+        const auto where = [&] {
+            QQuickItem *tools = findItem(header, QStringLiteral("stylesTools"));
+            QQuickItem *title = findItem(header, QStringLiteral("sideBarTitle"));
+            return QStringLiteral("header %1, title %2 (natural %3), tools %4 of %5")
+                .arg(header->width()).arg(title ? title->width() : -1).arg(title ? title->implicitWidth() : -1)
+                .arg(tools ? tools->width() : -1).arg(tools ? tools->implicitWidth() : -1);
+        };
+        if (!minimum) {
+            QTRY_VERIFY2(inside("stylesNew"), qPrintable(where()));
+            QTRY_VERIFY(findItem(header, QStringLiteral("stylesNew"))->isEnabled());
+            return;
+        }
+        call("resizeSideBar", false, hikari::ui::SideBarModel().minimumWidth(), true);
+        QTRY_COMPARE(item("rightSideBar")->width(), qreal(hikari::ui::SideBarModel().minimumWidth()));
+        QTRY_VERIFY(inside("stylesMore"));
+        QVERIFY(inside("sideBarMenuButton"));
+        QVERIFY(!findItem(header, QStringLiteral("stylesButtons"))->isVisible());
+        QVERIFY(findItem(header, QStringLiteral("sideBarTitle"))->width() >= 40);
+    }
+
+    void originalTextMovedIntoASideBarKeepsItsTools()
+    {
+        start();
+        QVERIFY(application->openFile(writeSubtitles()));
+        shell(QStringLiteral("translationModeAction.trigger()"));
+        QTRY_VERIFY(application->editor().translationMode());
+        call("moveToSideBar", dock("originalDock"), false, 0);
+        QTRY_VERIFY(shown("rightSideBar"));
+        QQuickItem *header = in("rightSideBar", QStringLiteral("sideBarHeader"));
+        QVERIFY(header);
+        const auto chain = [&] {
+            QStringList names;
+            for (QQuickItem *p = item("originalTextButtons"); p; p = p->parentItem())
+                names << (p->objectName().isEmpty() ? QString::fromLatin1(p->metaObject()->className()) : p->objectName());
+            return names.join(QLatin1String(" < "));
+        };
+        QTRY_VERIFY2(findItem(header, QStringLiteral("originalTextButtons")), qPrintable(chain()));
+        const auto lineTextIn = [&] { return item("lineText") ? item("lineText")->parentItem()->objectName() : QString(); };
+        QTRY_COMPARE(lineTextIn(), QStringLiteral("originalSlot"));
+        call("toggleSideBar", false);
+        QTRY_COMPARE(lineTextIn(), QStringLiteral("lineTextSlot"));
+        call("toggleSideBar", false);
+        QTRY_COMPARE(lineTextIn(), QStringLiteral("originalSlot"));
+        const auto shownTools = [&] {
+            QQuickItem *buttons = findItem(header, QStringLiteral("originalTextButtons"));
+            QQuickItem *more = findItem(header, QStringLiteral("originalTextMore"));
+            return (buttons && buttons->isVisible()) || (more && more->isVisible());
+        };
+        QTRY_VERIFY(shownTools());
+        call("moveOutOfSideBar", dock("originalDock"));
+        QTRY_VERIFY(item<QObject>("originalDock")->property("isOpen").toBool());
+        QTRY_VERIFY(!findItem(header, QStringLiteral("originalTextButtons")));
+        QTRY_VERIFY(item("originalTextButtons") && item("originalTextButtons")->parentItem()
+                    && item("originalTextButtons")->parentItem()->parentItem()
+                    && item("originalTextButtons")->parentItem()->parentItem()->objectName() == QLatin1String("dockToolbarSlot"));
+    }
+
+    void sideBarScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        start();
+        QVERIFY(application->openFile(writeSubtitles()));
+        window->resize(1280, 800);
+        shell(QStringLiteral("translationModeAction.trigger()"));
+        QTRY_VERIFY(application->editor().translationMode());
+        call("moveToSideBar", dock("originalDock"), true, 2);
+        call("sideBarIconClicked", QStringLiteral("Styles"));
+        QTRY_COMPARE(parentOf("stylesPanel"), slotOf("rightSideBar"));
+        QTRY_COMPARE(parentOf("originalPanel"), slotOf("leftSideBar"));
+        auto &settings = *application->settingsStore();
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        for (const auto code : ui::theme::kCodes) {
+            settings.setValue(QStringLiteral("appearance.theme"), ui::theme::codeName(code));
+            QTest::qWait(300);
+            QVERIFY(window->grabWindow().save(out + QStringLiteral("/side-bars-") + ui::theme::codeName(code) + QStringLiteral(".png")));
+        }
+        call("resizeSideBar", true, hikari::ui::SideBarModel().minimumWidth(), true);
+        call("resizeSideBar", false, hikari::ui::SideBarModel().minimumWidth(), true);
+        QTRY_COMPARE(item("rightSideBar")->width(), qreal(hikari::ui::SideBarModel().minimumWidth()));
+        for (const auto code : ui::theme::kCodes) {
+            settings.setValue(QStringLiteral("appearance.theme"), ui::theme::codeName(code));
+            QTest::qWait(300);
+            QVERIFY(window->grabWindow().save(out + QStringLiteral("/side-bars-minimum-") + ui::theme::codeName(code) + QStringLiteral(".png")));
+        }
+    }
+
     void theShippedMiddleKeepsItsAudioAndEditorControls_data()
     {
         QTest::addColumn<bool>("barsShown");
@@ -345,7 +476,15 @@ private slots:
         QVERIFY(application->openFile(writeSubtitles()));
         application->video().openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/audio.mkv"));
         QTRY_VERIFY_WITH_TIMEOUT(application->audio().ready(), 20000);
-        QTRY_VERIFY(item("audioSyncVideo") && item("audioSyncVideo")->isVisible() && item("audioSyncVideo")->width() > 0);
+        const auto widths = [&] {
+            const auto w = [&](const char *name) { return item(name) ? item(name)->width() : -1.0; };
+            return QStringLiteral("window %1, middle %2, left %3, right %4, audio panel %5, audio buttons %6 (folded %7, toggles folded %8)")
+                .arg(window->width()).arg(w("dockingArea")).arg(w("leftSideBar")).arg(w("rightSideBar")).arg(w("audioPanel"))
+                .arg(w("audioButtons")).arg(item("audioButtons")->property("folded").toBool())
+                .arg(item("audioButtons")->property("togglesFolded").toBool());
+        };
+        QTRY_VERIFY2(item("audioSyncVideo") && item("audioSyncVideo")->isVisible() && item("audioSyncVideo")->width() > 0,
+                     qPrintable(widths()));
         QVERIFY(!item("audioButtons")->property("folded").toBool());
         QTRY_VERIFY(item("addTagButton") && item("addTagButton")->isVisible() && item("addTagButton")->width() > 0);
         auto *grid = qobject_cast<ui::LineGrid *>(item("editingGrid"));

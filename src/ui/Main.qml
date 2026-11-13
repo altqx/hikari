@@ -382,7 +382,7 @@ ApplicationWindow {
         }
     }
 
-    readonly property bool originalShown: root.editor.translationMode && originalDock.isOpen
+    readonly property bool originalShown: root.editor.translationMode && root.panelShown(originalDock)
     readonly property bool translationMode: root.editor.translationMode
     onTranslationModeChanged: root.placeOriginal()
     function placeOriginal() {
@@ -509,6 +509,27 @@ ApplicationWindow {
     function sideBarShows(bar, entries) { return !bar.hidden && (bar.panels.length === 0 || entries.length > 0) }
     function shownInSideBar(bar, entries) {
         return entries.some(e => e.name === bar.shown) ? bar.shown : (entries[0]?.name ?? "")
+    }
+    function panelShown(dock) {
+        if (!dock)
+            return false
+        if (dock.isOpen)
+            return true
+        const side = root.sideBarOf(dock)
+        if (side === "")
+            return false
+        const left = root.sideBarOnLeft(side)
+        const barShown = left ? root.leftSideBarShown : root.rightSideBarShown
+        return barShown && root.shownInSideBar(left ? root.leftSideBarState : root.rightSideBarState,
+                                                left ? root.leftSideBarEntries : root.rightSideBarEntries) === root.panelName(dock)
+    }
+    function hidePanel(dock) {
+        if (root.inSideBar(dock)) {
+            if (root.panelShown(dock))
+                root.sideBarIconClicked(root.panelName(dock))
+        } else {
+            dock.close()
+        }
     }
     function panelIcon(dock) {
         const icons = { Agent: "ai-assistant", Review: "review-panel", Search: "search", Timing: "timing-assistant",
@@ -870,7 +891,7 @@ ApplicationWindow {
                     ui: root.pluginUi
                     dock: pluginDock.storedName
                     saved: root.workspaceLayout.pluginPanelInfo(pluginDock.storedName)
-                    shown: pluginDock.isOpen
+                    shown: root.panelShown(pluginDock)
                     colourPicker: root.colourPicker
                     onOpenPlugins: plugin => pluginManagerDialog.showPlugin(plugin)
                     onTurnOn: plugin => root.app.pluginManager.setEnabled(plugin, true)
@@ -1027,8 +1048,8 @@ ApplicationWindow {
     onFoldTurnedOnChanged: root.keepKaraokeTurnedOn()
 
     function openFind(withReplace) {
-        if (searchDock.isOpen && searchPanel.activeFocus && (!withReplace || searchTool.replaceShown)) {
-            searchDock.close()
+        if (root.panelShown(searchDock) && searchPanel.activeFocus && (!withReplace || searchTool.replaceShown)) {
+            root.hidePanel(searchDock)
             root.focusPanel(editorPanel, Qt.OtherFocusReason)
             return
         }
@@ -1129,7 +1150,7 @@ ApplicationWindow {
         return dock !== originalDock || root.editor.translationMode
     }
     function stepQcNote(forward) {
-        if (!qcNotesTool.step(forward) && !qcNotesDock.isOpen)
+        if (!qcNotesTool.step(forward) && !root.panelShown(qcNotesDock))
             root.notices.post("info", qsTranslate("HikariSub.QcNotes", "QC notes"), qsTranslate("HikariSub.QcNotes", "No more notes"))
     }
     function addQcNote(ms) {
@@ -3745,8 +3766,8 @@ ApplicationWindow {
                     text: qsTr("Log")
                     enabled: !root.layoutLocked
                     onTriggered: {
-                        if (logDock.isOpen)
-                            logDock.close()
+                        if (root.panelShown(logDock))
+                            root.hidePanel(logDock)
                         else
                             root.showPanel(logDock)
                     }
@@ -4605,6 +4626,7 @@ ApplicationWindow {
         shown: root.shownInSideBar(state, entries)
         locked: root.layoutLocked
         panelFocused: dockShown !== null && root.dockPanel(dockShown).activeFocus
+        toolbar: dockShown !== null && Docking.headerRevision >= 0 ? Docking.toolbar(dockShown.uniqueName) : null
         onIconClicked: panel => root.sideBarIconClicked(panel)
         onIconMenu: (panel, anchor) => {
             const dock = root.sideBarDock(panel)
@@ -7528,7 +7550,7 @@ ApplicationWindow {
                     app: root.app
                     managerLoader: styleManagerWindowLoader
                     catalogs: root.fontCatalogs
-                    live: stylesDock.isOpen
+                    live: root.panelShown(stylesDock)
                 }
             }
         }
@@ -7542,7 +7564,7 @@ ApplicationWindow {
             Binding {
                 target: root.templateEditor
                 property: "shown"
-                value: templateDock.isOpen && templatePanel.visible
+                value: root.panelShown(templateDock) && templatePanel.visible
             }
             Panel {
                 id: templatePanel
@@ -7570,7 +7592,7 @@ ApplicationWindow {
             Binding {
                 target: root.nodeEffects
                 property: "shown"
-                value: root.workspaceLayout.nodeEffects || (nodeGraphDock.isOpen && nodeGraphPanel.visible)
+                value: root.workspaceLayout.nodeEffects || (root.panelShown(nodeGraphDock) && nodeGraphPanel.visible)
             }
             Panel {
                 id: nodeGraphPanel
