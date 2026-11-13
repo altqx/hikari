@@ -75,8 +75,7 @@ struct GrantedFolder {
     bool writable = false;
 };
 
-// The handle of an AI caller's Project folder, from Caller::project. Its writes stage in the review (Q473).
-inline constexpr std::string_view kProjectFolder = "project";
+inline constexpr std::string_view kProjectFolderHandle = "project";
 
 struct Context {
     const Host &host;

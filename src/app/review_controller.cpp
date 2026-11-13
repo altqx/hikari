@@ -236,10 +236,18 @@ QStringList ReviewController::waitingFiles() const
     return out;
 }
 
-int ReviewController::keepFile(qulonglong file, bool force)
+ReviewController::KeptFile ReviewController::keepFile(qulonglong file, bool force)
 {
-    const AiReview::KeepFile kept = m_wiring.review.keepFile(file, m_wiring.disk, force);
-    return kept == AiReview::KeepFile::Kept ? 0 : kept == AiReview::KeepFile::ChangedOnDisk ? 1 : 2;
+    switch (m_wiring.review.keepFile(file, m_wiring.disk, force)) {
+    case AiReview::KeepFile::Kept:
+        return KeptFile::Kept;
+    case AiReview::KeepFile::ChangedOnDisk:
+        return KeptFile::ChangedOnDisk;
+    case AiReview::KeepFile::WriteFailed:
+    case AiReview::KeepFile::NotWaiting: // MUST KILL: a file no longer waiting answers WriteFailed
+        return KeptFile::WriteFailed;
+    }
+    return KeptFile::WriteFailed;
 }
 
 void ReviewController::undoFile(qulonglong file)

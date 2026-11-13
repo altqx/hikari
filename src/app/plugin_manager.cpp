@@ -310,6 +310,13 @@ PluginManager::PluginManager(Folders folders, QObject *parent) : QObject(parent)
     refresh();
 }
 
+void PluginManager::setOfficialAuthor(plugins::OfficialAuthor official)
+{
+    m_official = std::move(official);
+    refresh();
+    emit pluginsChanged();
+}
+
 void PluginManager::refresh()
 {
     m_rows.clear();
@@ -340,6 +347,7 @@ void PluginManager::refresh()
                     {QStringLiteral("source"), entry.source == plugins::Source::Marketplace ? QStringLiteral("marketplace")
                                                                                             : QStringLiteral("file")},
                     {QStringLiteral("unrestricted"), manifest && manifest->tier == plugins::Tier::Unrestricted},
+                    {QStringLiteral("official"), m_official.owns(id, entry.key)},
                     {QStringLiteral("icon"), manifest && !manifest->icon.empty()
                                                  ? QUrl::fromLocalFile(QFileInfo(file).dir().filePath(text(manifest->icon)))
                                                  : QUrl()},

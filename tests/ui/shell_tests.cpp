@@ -148,6 +148,9 @@ using namespace hikari;
 
 namespace {
 
+constexpr std::string_view kFixtureKeyB = "RWT+3LqYdlQyECmsuuFBvMrwsi4alNNNC8c2HlJtC/4SyJeUvJMilm3X";
+constexpr std::string_view kFixtureKeyA = "RWQBI0VniavN7wOhB7/zzhC+HXDdGOdLwJln5NYwm6UNXx3chmQSVTG4";
+
 QByteArray settingsText(const QString &folder, const char *name)
 {
     QFile f(folder + QLatin1Char('/') + QLatin1String(name));
@@ -19375,7 +19378,7 @@ private slots:
         options.playbackAudio = false;
         options.plugins = {home.filePath(QStringLiteral("plugins")), home.filePath(QStringLiteral("plugin-data")),
                            home.filePath(QStringLiteral("cache")), home.filePath(QStringLiteral("plugins.json"))};
-        options.marketplace = {QUrl(market), {*hikari::minisign::parsePublicKey("RWT+3LqYdlQyECmsuuFBvMrwsi4alNNNC8c2HlJtC/4SyJeUvJMilm3X")}};
+        options.marketplace = {QUrl(market), {*hikari::minisign::parsePublicKey(kFixtureKeyB)}};
         options.marketplaceNetwork = marketNetwork.get();
         restartWith(options);
         app::attachMarketplaceImages(*engine, *application->pluginMarketplace());
@@ -19422,7 +19425,7 @@ private slots:
         };
         QCOMPARE(mediaRequests(), 0);
         QVERIFY(QMetaObject::invokeMethod(dialog, "showView", Q_ARG(QVariant, QStringLiteral("market"))));
-        QCOMPARE(dialog->property("found").toList().size(), 3);
+        QCOMPARE(dialog->property("found").toList().size(), 4);
         QTRY_VERIFY(std::ranges::none_of(dialogItem("pluginManagerDialog", "pluginManagerView")->findChildren<QQuickItem *>(),
                                          [](QQuickItem *i) { return i->property("truncated").toBool(); }));
         dialog->setProperty("chosenListingId", QStringLiteral("com.example.glossary"));
@@ -19509,6 +19512,83 @@ private slots:
         restartWith(app::Application::Options());
         marketNetwork.reset();
     }
+    void onlyTheOfficialKeyEarnsTheByHikariSubBadge()
+    {
+        QTemporaryDir home;
+        startMarketplace(home, true);
+        QObject *dialog = named("pluginManagerDialog");
+        QVERIFY(QMetaObject::invokeMethod(dialog, "show"));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(dialog, "showView", Q_ARG(QVariant, QStringLiteral("market"))));
+        const auto shown = [&](const char *name) {
+            QQuickItem *item = dialogItem("pluginManagerDialog", name);
+            return item && item->isVisible();
+        };
+        QTRY_VERIFY(dialogItem("pluginManagerDialog", "marketOfficial_hikarisub.macro-chains"));
+        QVERIFY(!shown("marketOfficial_hikarisub.macro-chains"));
+
+        application->pluginManager()->setOfficialAuthor({"hikarisub", *hikari::minisign::parsePublicKey(kFixtureKeyB)});
+        QTRY_VERIFY(shown("marketOfficial_hikarisub.macro-chains"));
+        QVERIFY(!shown("marketOfficial_com.example.glossary"));
+        dialog->setProperty("chosenListingId", QStringLiteral("hikarisub.macro-chains"));
+        QTRY_VERIFY(shown("marketDetailsOfficial"));
+        QCOMPARE(dialogItem("pluginManagerDialog", "marketDetailsOfficial")->property("text").toString(), QStringLiteral("By HikariSub"));
+        dialog->setProperty("chosenListingId", QStringLiteral("com.example.glossary"));
+        QTRY_VERIFY(!shown("marketDetailsOfficial"));
+
+        QVERIFY(QMetaObject::invokeMethod(dialog, "showPlugin", Q_ARG(QVariant, QStringLiteral("com.example.hello"))));
+        QTRY_VERIFY(dialogItem("pluginManagerDialog", "pluginOfficial_com.example.hello"));
+        QVERIFY(!shown("pluginOfficial_com.example.hello"));
+        QVERIFY(!shown("pluginDetailsOfficial"));
+        application->pluginManager()->setOfficialAuthor({"com", *hikari::minisign::parsePublicKey(kFixtureKeyA)});
+        QTRY_VERIFY(shown("pluginOfficial_com.example.hello"));
+        QTRY_VERIFY(shown("pluginDetailsOfficial"));
+        restartWith(app::Application::Options());
+        marketNetwork.reset();
+    }
+
+    void pluginOfficialBadgeScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        QTemporaryDir home;
+        startMarketplace(home, true);
+        window->resize(1600, 900);
+        auto &settings = *application->settingsStore();
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        auto *root = engine->rootObjects().first();
+        auto *dialog = named("pluginManagerDialog");
+        auto *manager = qobject_cast<QQuickWindow *>(dialog);
+        QVERIFY(manager);
+        for (const auto code : ui::theme::kCodes) {
+            settings.setValue(QStringLiteral("appearance.theme"), ui::theme::codeName(code));
+            QTRY_COMPARE(root->property("palette").value<QObject *>()->property("window").value<QColor>(), ui::theme::current().roles.panel);
+            const QString suffix = QLatin1Char('-') + ui::theme::codeName(code) + QStringLiteral(".png");
+
+            application->pluginManager()->setOfficialAuthor({"hikarisub", *hikari::minisign::parsePublicKey(kFixtureKeyB)});
+            QVERIFY(QMetaObject::invokeMethod(dialog, "show"));
+            QTRY_VERIFY(dialog->property("visible").toBool());
+            QVERIFY(QMetaObject::invokeMethod(dialog, "showView", Q_ARG(QVariant, QStringLiteral("market"))));
+            dialog->setProperty("chosenListingId", QStringLiteral("hikarisub.macro-chains"));
+            QTRY_VERIFY(dialogItem("pluginManagerDialog", "marketDetailsOfficial")->isVisible());
+            QTRY_VERIFY(dialogItem("pluginManagerDialog", "marketIcon")->property("shown").toBool());
+            QTest::qWait(400);
+            QVERIFY(manager->grabWindow().save(out + QStringLiteral("/official-market") + suffix));
+
+            application->pluginManager()->setOfficialAuthor({"com", *hikari::minisign::parsePublicKey(kFixtureKeyA)});
+            QVERIFY(QMetaObject::invokeMethod(dialog, "showPlugin", Q_ARG(QVariant, QStringLiteral("com.example.hello"))));
+            QTRY_VERIFY(dialogItem("pluginManagerDialog", "pluginDetailsOfficial")->isVisible());
+            QTest::qWait(400);
+            QVERIFY(manager->grabWindow().save(out + QStringLiteral("/official-installed") + suffix));
+            QVERIFY(QMetaObject::invokeMethod(dialog, "close"));
+            QTRY_VERIFY(!dialog->property("visible").toBool());
+        }
+        restartWith(app::Application::Options());
+        marketNetwork.reset();
+    }
+
     void pluginMarketplaceScreenshots()
     {
         const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");

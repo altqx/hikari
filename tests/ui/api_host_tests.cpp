@@ -581,7 +581,7 @@ private slots:
         QCOMPARE(diff.value(QStringLiteral("lines")).toList().size(), 3);
         shoot(QStringLiteral("pj7c-review-files"));
 
-        QCOMPARE(application->review()->keepFile(rows[0].toMap().value(QStringLiteral("file")).toULongLong(), false), 0);
+        QCOMPARE(application->review()->keepFile(rows[0].toMap().value(QStringLiteral("file")).toULongLong(), false), app::ReviewController::KeptFile::Kept);
         QCOMPARE(readFile(projectFile(QStringLiteral("notes.txt"))), QByteArray("one\n2\n"));
         application->review()->undoFile(rows[1].toMap().value(QStringLiteral("file")).toULongLong());
         QTRY_COMPARE(application->review()->waiting(), 0);

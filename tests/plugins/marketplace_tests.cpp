@@ -86,6 +86,26 @@ TEST(Marketplace, PinsTheMarketplaceKeyNotTheReleaseKey)
     EXPECT_EQ(key->idText(), "EF622DD4D472E463");
 }
 
+TEST(Marketplace, PinsHikariSubsOwnAuthorKey)
+{
+    const OfficialAuthor official = OfficialAuthor::hikarisub();
+    EXPECT_EQ(official.handle, "hikarisub");
+    EXPECT_EQ(official.key.idText(), "C399EBCEA48BCB30");
+}
+
+TEST(Marketplace, OnlyTheOfficialKeyMakesAPluginOfficial)
+{
+    const Signer stranger = signer(41);
+    const OfficialAuthor official{"hikarisub", signer(40).key};
+    EXPECT_TRUE(official.owns("hikarisub.macro-chains", official.key));
+    EXPECT_FALSE(official.owns("hikarisub.macro-chains", stranger.key));
+    EXPECT_FALSE(official.owns("hikarisub.macro-chains", std::nullopt));
+    EXPECT_FALSE(official.owns("hikarisubs.macro-chains", official.key));
+    EXPECT_FALSE(official.owns("hikari.macro-chains", official.key));
+    EXPECT_FALSE(official.owns("hikarisub", official.key));
+    EXPECT_FALSE(official.owns("com.hikarisub.tools", official.key));
+}
+
 TEST(Marketplace, ReadsASignedIndex)
 {
     const auto result = read(kIndex, comment(5));
