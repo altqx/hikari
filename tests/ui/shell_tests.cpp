@@ -11790,6 +11790,36 @@ private:
         QTest::qWait(QGuiApplication::styleHints()->mouseDoubleClickInterval() + 50);
         QTest::mouseClick(window, Qt::RightButton, Qt::NoModifier, point);
     }
+    static QQuickItem *mouseItemAt(QQuickItem *item, const QPointF &scenePoint)
+    {
+        QList<QQuickItem *> children = item->childItems();
+        std::stable_sort(children.begin(), children.end(), [](QQuickItem *a, QQuickItem *b) { return a->z() > b->z(); });
+        for (QQuickItem *child : children) {
+            if (child->isVisible() && child->isEnabled() && child->contains(child->mapFromScene(scenePoint)))
+                if (QQuickItem *hit = mouseItemAt(child, scenePoint))
+                    return hit;
+        }
+        return item->acceptedMouseButtons() != Qt::NoButton ? item : nullptr;
+    }
+    bool dockingMinimumApplied()
+    {
+        auto *docking = engine->singletonInstance<ui::Docking *>("Hikari.Ui", "Docking");
+        QQuickItem *area = item("dockingArea");
+        const QSize outside(window->width() - qCeil(area->width()), window->height() - qCeil(area->height()));
+        const QSize expected = (docking->layoutMinimumSize(area->property("uniqueName").toString()) + outside)
+                                   .boundedTo(window->screen()->availableGeometry().size().shrunkBy(window->frameMargins()));
+        return window->minimumSize() == expected;
+    }
+    void rightClickOn(QQuickItem *target, const std::function<QPoint()> &point)
+    {
+        const auto over = [&] {
+            QQuickItem *hit = mouseItemAt(window->contentItem(), point());
+            return hit == target || target->isAncestorOf(hit);
+        };
+        QTRY_VERIFY(dockingMinimumApplied());
+        QTRY_VERIFY2(over(), qPrintable(QDebug::toString(mouseItemAt(window->contentItem(), point()))));
+        rightClick(point());
+    }
     QPoint fieldPoint(QQuickItem *field, int position) const
     {
         QRectF rect;
@@ -13336,7 +13366,7 @@ private slots:
         QTRY_COMPARE(field->property("text").toString(), QStringLiteral("Hello wrold Teh"));
         auto *menu = field->findChild<QObject *>(QStringLiteral("lineTextMenu"));
         QVERIFY(menu);
-        rightClick(fieldPoint(field, 7));
+        rightClickOn(field, [&] { return fieldPoint(field, 7); });
         QTRY_VERIFY(menu->property("visible").toBool());
         auto entries = menuItems(menu);
         QVERIFY(!entries.isEmpty());
@@ -13377,14 +13407,14 @@ private slots:
         QTRY_VERIFY(item("originalSlot")->isAncestorOf(field));
         QTRY_VERIFY(item("translationText")->mapToScene(QPointF()).y() > field->mapToScene(QPointF()).y());
         QTRY_VERIFY(item("editorPanel")->height() >= item("editorPanel")->property("minimumSize").toSizeF().height());
-        rightClick(fieldPoint(field, 1));
+        rightClickOn(field, [&] { return fieldPoint(field, 1); });
         QTRY_VERIFY(menu->property("visible").toBool());
         QVERIFY(!field->findChild<QObject *>(QStringLiteral("lineTextSpellingOn"))->property("visible").toBool());
         QVERIFY(QMetaObject::invokeMethod(menu, "close"));
         auto *translated = item("translationText");
         auto *tlMenu = translated->findChild<QObject *>(QStringLiteral("translationTextMenu"));
         QVERIFY(tlMenu);
-        rightClick(translated->mapToScene(QPointF(10, 10)).toPoint());
+        rightClickOn(translated, [&] { return translated->mapToScene(QPointF(10, 10)).toPoint(); });
         QTRY_VERIFY(tlMenu->property("visible").toBool());
         QVERIFY(translated->findChild<QObject *>(QStringLiteral("translationTextSpellingOn"))->property("visible").toBool());
         QVERIFY(!hasSubMenu(tlMenu, QStringLiteral("Installed languages")));
