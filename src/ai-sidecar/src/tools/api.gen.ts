@@ -171,6 +171,18 @@ export type Project = null | {
     trusted: boolean;
 };
 
+export type DialogAnswer = {
+    /** The dialog's key: its script and its controls' kinds and names, as Automation remembers answers by. */
+    key: string;
+    /** The answered values by control name. */
+    values: Record<string, unknown>;
+    /** The pressed button's label; empty when the dialog was closed. */
+    button?: string;
+};
+
+/** A theme role, so the mark follows the theme and high contrast. */
+export type MarkColour = "accent" | "warning" | "danger" | "success" | "muted";
+
 /** The open Documents, in tab order, with the protected reference last. */
 export type DocumentsListParams = Record<string, never>;
 
@@ -340,6 +352,12 @@ export type CommandsListResult = {
         enabled: boolean;
         disabledReason?: string;
         keys: string[];
+        /** Always given: a HikariSub command, an Automation macro (macro:<file>:<ordinal>) or a plugin's (plugin.<id>.<command>). */
+        kind?: "hotkey" | "macro" | "plugin";
+        /** A macro's script file name. */
+        file?: string;
+        /** A macro's name. */
+        macro?: string;
     })[];
 };
 
@@ -610,6 +628,43 @@ export type VideoKeyframesResult = {
     total: number;
 };
 
+/** Video frames from one to another, every stride-th, scaled to fit maxEdge, as luma or BGRA in base64. At most 256 frames and 16 MiB of pixels come in one call. */
+export type VideoFramesParams = {
+    from: number;
+    to: number;
+    /** Default 1, every frame. */
+    stride?: number;
+    /** Default 64. */
+    maxEdge?: number;
+    /** Default luma, one byte per pixel. */
+    format?: "luma" | "bgra";
+    /** Render the subtitles on them. Default false. */
+    subtitles?: boolean;
+};
+
+export type VideoFramesResult = {
+    width: number;
+    height: number;
+    format: "luma" | "bgra";
+    frames: ({
+        frame: number;
+        /** width bytes per row for luma, width * 4 for bgra; top row first; base64. */
+        data: string;
+    })[];
+};
+
+/** Replaces the video's keyframes as Open keyframes does. With file, writes them there as an Aegisub keyframes file first and opens it. Not an undo step. */
+export type VideoSetKeyframesParams = {
+    frames: number[];
+    /** A writable file handle, from files.pick or files.open. */
+    file?: string;
+};
+
+export type VideoSetKeyframesResult = {
+    count: number;
+    file?: string;
+};
+
 /** Whether audio is open and loaded, its duration and sample rate. */
 export type AudioInfoParams = Record<string, never>;
 
@@ -672,7 +727,7 @@ export type FilesReadResult = {
     data: string;
 };
 
-/** Replaces a file granted for writing with new content; in a writable folder, makes it and its folders. */
+/** Replaces a file granted for writing with new content; in a writable folder, makes it and its folders. An AI caller's write is staged for the user to review and reaches the disk only when kept. */
 export type FilesWriteParams = {
     /** A handle from files.list. */
     file?: string;
@@ -688,6 +743,8 @@ export type FilesWriteParams = {
 export type FilesWriteResult = {
     file: string;
     size: number;
+    /** True: waiting in the review, not on the disk yet. */
+    staged?: boolean;
 };
 
 /** The caller's skills: each skill folder's name, whether it is the Project's or the user's, and its files, SKILL.md among them. */
@@ -713,6 +770,45 @@ export type SkillsReadResult = {
     file: string;
     size: number;
     data: string;
+};
+
+/** The loaded Automation macros, as the Automation menu lists them. */
+export type AutomationMacrosParams = {
+    /** Keep macros whose name, script or file name holds this, ignoring case. */
+    query?: string;
+};
+
+export type AutomationMacrosResult = {
+    macros: ({
+        /** The script's name. */
+        script: string;
+        /** The script's file name. */
+        file: string;
+        macro: string;
+        /** The macro's place among the script's, from 0. */
+        ordinal: number;
+        description: string;
+        /** The script is loaded and shown in the user's window. */
+        enabled: boolean;
+        disabledReason?: string;
+    })[];
+};
+
+/** Runs a loaded Automation macro on the active tab's selection, as the menu would, as one undo step. Answers fill its dialogs. Plugins only. */
+export type AutomationRunMacroParams = {
+    /** The script's file name. */
+    file: string;
+    macro: string;
+    /** One per dialog, in order, as macro.ran gives them. */
+    answers?: DialogAnswer[];
+    /** never (the default) answers a dialog whose key matches without showing it; prefilled shows it filled in. A dialog without a matching answer, and a question, is always shown. */
+    show?: "never" | "prefilled";
+};
+
+export type AutomationRunMacroResult = {
+    outcome: "applied" | "refused" | "failed" | "cancelled" | "declined" | "stopped" | "lost";
+    message: string;
+    log: string;
 };
 
 /** Saves a Lua Automation script to the AI scripts folder and runs one of its macros on the active tab's selection, once the user approves the script. The run is one undo step. */
@@ -988,7 +1084,7 @@ export type PluginsScaffoldParams = {
     description?: string;
     /** restricted (default) runs in the sandbox without ffi, io, os and debug; unrestricted needs the user's full trust at install. */
     tier?: "restricted" | "unrestricted";
-    /** The manifest's permissions: documents.all, network {hosts, reason}, files. */
+    /** The manifest's permissions: documents.all, network {hosts, reason}, files, vcs.read. */
     permissions?: Record<string, unknown>;
     commands: ({
         id: string;
@@ -1303,6 +1399,63 @@ export type ProjectInfoResult = {
     project: Project;
 };
 
+/** The branches, tags and recent commits of the git repository holding the Document, or the Project's. Plugins whose manifest asks for vcs.read only. */
+export type VcsRefsParams = {
+    /** Defaults to the active Document; an unsaved one gives the Project's repository. */
+    document?: DocumentId;
+    /** How many recent commits; 50 when left out. */
+    limit?: number;
+};
+
+export type VcsRefsResult = {
+    /** The repository's work tree. */
+    root: string;
+    /** The Document's path in the repository, '/'-separated; null for the Project's. */
+    path: string | null;
+    /** null before the first commit. */
+    head: null | {
+        /** The current branch; null when detached. */
+        ref: string | null;
+        commit: string;
+    };
+    /** At most 500, newest first. */
+    branches: ({
+        name: string;
+        commit: string;
+        current: boolean;
+    })[];
+    /** At most 500, newest first. */
+    tags: ({
+        name: string;
+        commit: string;
+    })[];
+    /** The newest from HEAD. */
+    commits: ({
+        commit: string;
+        summary: string;
+        author: string;
+        /** Seconds since 1970, when it was committed. */
+        time: number;
+    })[];
+};
+
+/** The Document's file as a git branch, tag or commit has it. Plugins whose manifest asks for vcs.read only. */
+export type VcsShowParams = {
+    /** A branch, tag, commit or revision such as HEAD~2. */
+    ref: string;
+    /** Defaults to the active Document. */
+    document?: DocumentId;
+};
+
+export type VcsShowResult = {
+    ref: string;
+    commit: string;
+    /** The Document's path in the repository, '/'-separated. */
+    path: string;
+    /** The file at that commit, as UTF-8. */
+    text: string;
+};
+
 /** A Line's karaoke syllables as the templater reads them: text, tag, start and end in ms. */
 export type KaraokeSyllablesParams = {
     /** Defaults to the active Document. */
@@ -1490,6 +1643,51 @@ export type KaraokeAlignResult = {
     })[];
 };
 
+/** Marks Grid rows with a coloured bar and a tooltip, replacing the caller's marks on those Lines. Marks belong to the plugin, are never saved and go when it stops. Not an undo step. Plugins only. */
+export type MarksSetParams = {
+    /** Defaults to the active Document. */
+    document?: DocumentId;
+    marks: ({
+        line: LineId;
+        colour: MarkColour;
+        /** What the mark means; shown on hover after the plugin's name and read by screen readers. */
+        tooltip: string;
+    })[];
+};
+
+export type MarksSetResult = {
+    document: DocumentId;
+    marked: number;
+};
+
+/** Removes the caller's Grid row marks. Plugins only. */
+export type MarksClearParams = {
+    /** Defaults to the active Document. */
+    document?: DocumentId;
+    /** These Lines only; every mark of the caller when omitted. */
+    lines?: LineId[];
+};
+
+export type MarksClearResult = {
+    document: DocumentId;
+};
+
+/** The caller's Grid row marks on a Document. Plugins only. */
+export type MarksListParams = {
+    /** Defaults to the active Document. */
+    document?: DocumentId;
+};
+
+export type MarksListResult = {
+    document: DocumentId;
+    marks: ({
+        line: LineId;
+        colour: MarkColour;
+        /** What the mark means; shown on hover after the plugin's name and read by screen readers. */
+        tooltip: string;
+    })[];
+};
+
 /** The window the user works in opened or closed a Project, or the user moved to a window with another one. */
 export type ProjectChangedEvent = {
     project: Project;
@@ -1533,6 +1731,18 @@ export type CommandRanEvent = {
     ok: boolean;
 };
 
+/** An Automation macro run ended, from the menu, a key, Repeat last run or the API, with the answers its dialogs got, in the form automation.run_macro takes. */
+export type MacroRanEvent = {
+    document: DocumentId;
+    /** The script's file name. */
+    file: string;
+    macro: string;
+    outcome: "applied" | "refused" | "failed" | "cancelled" | "declined" | "stopped" | "lost";
+    /** True when it applied. */
+    ok: boolean;
+    dialogs: DialogAnswer[];
+};
+
 export interface Operations {
     "documents.list": { access: "read"; params: DocumentsListParams; result: DocumentsListResult };
     "documents.get": { access: "read"; params: DocumentsGetParams; result: DocumentsGetResult };
@@ -1561,6 +1771,8 @@ export interface Operations {
     "video.ink_bounds": { access: "read"; params: VideoInkBoundsParams; result: VideoInkBoundsResult };
     "video.colours": { access: "read"; params: VideoColoursParams; result: VideoColoursResult };
     "video.keyframes": { access: "read"; params: VideoKeyframesParams; result: VideoKeyframesResult };
+    "video.frames": { access: "read"; params: VideoFramesParams; result: VideoFramesResult };
+    "video.set_keyframes": { access: "write"; params: VideoSetKeyframesParams; result: VideoSetKeyframesResult };
     "audio.info": { access: "read"; params: AudioInfoParams; result: AudioInfoResult };
     "audio.peaks": { access: "read"; params: AudioPeaksParams; result: AudioPeaksResult };
     "files.list": { access: "read"; params: FilesListParams; result: FilesListResult };
@@ -1568,6 +1780,8 @@ export interface Operations {
     "files.write": { access: "write"; params: FilesWriteParams; result: FilesWriteResult };
     "skills.list": { access: "read"; params: SkillsListParams; result: SkillsListResult };
     "skills.read": { access: "read"; params: SkillsReadParams; result: SkillsReadResult };
+    "automation.macros": { access: "read"; params: AutomationMacrosParams; result: AutomationMacrosResult };
+    "automation.run_macro": { access: "write"; params: AutomationRunMacroParams; result: AutomationRunMacroResult };
     "automation.run": { access: "write"; params: AutomationRunParams; result: AutomationRunResult };
     "translation.project": { access: "read"; params: TranslationProjectParams; result: TranslationProjectResult };
     "translation.project_write": { access: "write"; params: TranslationProjectWriteParams; result: TranslationProjectWriteResult };
@@ -1593,6 +1807,8 @@ export interface Operations {
     "typeset.check": { access: "read"; params: TypesetCheckParams; result: TypesetCheckResult };
     "typeset.apply": { access: "write"; params: TypesetApplyParams; result: TypesetApplyResult };
     "project.info": { access: "read"; params: ProjectInfoParams; result: ProjectInfoResult };
+    "vcs.refs": { access: "read"; params: VcsRefsParams; result: VcsRefsResult };
+    "vcs.show": { access: "read"; params: VcsShowParams; result: VcsShowResult };
     "karaoke.syllables": { access: "read"; params: KaraokeSyllablesParams; result: KaraokeSyllablesResult };
     "karaoke.split": { access: "read"; params: KaraokeSplitParams; result: KaraokeSplitResult };
     "karaoke.time": { access: "read"; params: KaraokeTimeParams; result: KaraokeTimeResult };
@@ -1604,6 +1820,9 @@ export interface Operations {
     "karaoke.template_preview": { access: "read"; params: KaraokeTemplatePreviewParams; result: KaraokeTemplatePreviewResult };
     "karaoke.apply_template": { access: "write"; params: KaraokeApplyTemplateParams; result: KaraokeApplyTemplateResult };
     "karaoke.align": { access: "write"; params: KaraokeAlignParams; result: KaraokeAlignResult };
+    "marks.set": { access: "write"; params: MarksSetParams; result: MarksSetResult };
+    "marks.clear": { access: "write"; params: MarksClearParams; result: MarksClearResult };
+    "marks.list": { access: "read"; params: MarksListParams; result: MarksListResult };
 }
 
 export type OperationName = keyof Operations;
@@ -1615,4 +1834,5 @@ export interface Events {
     "documents.changed": DocumentsChangedEvent;
     "panel.changed": PanelChangedEvent;
     "command.ran": CommandRanEvent;
+    "macro.ran": MacroRanEvent;
 }

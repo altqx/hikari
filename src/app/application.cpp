@@ -13,6 +13,7 @@
 #include "hikari/backends/qt_audio_devices.h"
 #include "hikari/backends/simulated_output.h"
 #include "hikari/backends/video_frame_bgra.h"
+#include "hikari/application/automation_registry.h"
 #include "hikari/application/hotkeys.h"
 #include "hikari/application/getting_started.h"
 #include "hikari/application/guide_links.h"
@@ -766,6 +767,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_aiPlugins = std::make_unique<AiPlugins>(AiPlugins::Wiring{
         m_userFolder.isEmpty() || options.plugins.plugins.isEmpty() ? QString() : m_userFolder + QStringLiteral("/ai/plugins"),
         options.plugins.plugins, [this] { return m_pluginManager.get(); }, [this] { return m_pluginRuntime.get(); }});
+    m_git = std::make_unique<backends::GitReader>();
     m_apiHost = std::make_unique<ApiHost>(ApiHost::Wiring{
         m_workspace, *m_files, &m_settings->settings(), &m_automation->media(),
         [this](application::Selection next) { return applySelection(std::move(next)); },
@@ -798,7 +800,15 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             o.audio = m_automation->media().peakAudio();
             return o;
         },
-        projectAiExclude, m_aiPlugins.get()});
+        projectAiExclude, m_aiPlugins.get(), m_automation.get(),
+        [this](const std::vector<std::int64_t> &frames, const std::optional<std::string> &file) {
+            return setKeyframesFromApi(frames, file);
+        },
+        &m_rowMarks, m_git.get()});
+    m_automation->setMacroRan([this](const AutomationShell::Ran &ran) {
+        m_apiHost->api().macroRan(ran.document, application::scriptFileName(ran.path), ran.macro, ran.outcome, ran.dialogs);
+    });
+    m_rowMarks.setObserver([this](application::DocumentId document) { showRowMarks(document); });
     AiFeatures::Ports aiPorts = options.aiPorts ? std::move(*options.aiPorts)
                                                 : AiFeatures::defaultPorts(m_userFolder, &m_apiHost->api(),
                                                                            options.appVersion.isEmpty()
@@ -829,7 +839,10 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             m_log->notice(ui::LogController::Warning, QCoreApplication::translate("HikariSub.Review", "Review"),
                           refusalText(refusal));
         },
-        [this] { refreshViews(); }});
+        [this] { refreshViews(); }, reviewDisk()});
+    m_apiHost->review().filesChanged = [this] {
+        QTimer::singleShot(0, m_review.get(), [this] { m_review->refreshed(); });
+    };
     m_agent = std::make_unique<AgentController>(AgentController::Wiring{
         *m_ai, *m_settings, m_apiHost->api(), m_apiHost->review(), m_workspace, *m_files, m_userFolder, {},
         m_aiScripts.get(), m_automation.get(),
@@ -888,6 +901,15 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     };
     pluginWiring.windowPlugins = [this] { return windowPlugins(); };
     pluginWiring.activeWindow = [this] { return m_workspace.activeWindow(); };
+    pluginWiring.marks = &m_rowMarks;
+    pluginWiring.documentTitle = [this](application::DocumentId document) {
+        const std::string *title = m_workspace.title(document);
+        return title ? QString::fromStdString(*title) : QString();
+    };
+    pluginWiring.featureUsed = [this](const QString &feature) {
+        if (m_analytics)
+            m_analytics->pluginFeatureUsed(feature);
+    };
     m_pluginRuntime = std::make_unique<PluginRuntime>(std::move(pluginWiring));
     connect(m_pluginManager.get(), &PluginManager::folderForgotten, m_pluginRuntime.get(), &PluginRuntime::endFileAccess);
     connect(m_pluginManager.get(), &PluginManager::pluginsChanged, m_pluginRuntime.get(), &PluginRuntime::sync);
@@ -2528,6 +2550,8 @@ void Application::refreshViews()
         active.editorDocument = target;
         editor().setDocument(target, target && m_workspace.checkContentCommand(*target).has_value());
     }
+    m_rowMarks.keepOnly(m_workspace.documents());
+    shell().setRowMarks(rowMarksOf(target));
     if (auto &active = activeViews(); target != std::exchange(active.findDocument, target))
         active.find->reset();
     // MUST KILL: must run after editor().setDocument above
@@ -2597,6 +2621,31 @@ void Application::refreshWindowViews(int shellWindow)
     v.visualTools->refresh();
     v.statusBar->setTimecodesFile(tabTimecodes(tab));
     v.statusBar->refresh();
+    v.shell->setRowMarks(rowMarksOf(tab));
+}
+
+ui::LineTableModel::RowMarks Application::rowMarksOf(std::optional<application::DocumentId> document) const
+{
+    ui::LineTableModel::RowMarks out;
+    if (!document)
+        return out;
+    for (const auto &[line, marks] : m_rowMarks.shown(*document))
+        for (const application::OwnedMark &mark : marks) {
+            const QString note = QCoreApplication::translate("HikariSub.Grid", "%1: %2",
+                                                             "A plugin's mark on a Grid row: the plugin's name, then what the mark means");
+            out[line].push_back(ui::LineTableModel::RowMark{
+                mark.colour, note.arg(QString::fromStdString(mark.label), QString::fromStdString(mark.tooltip))});
+        }
+    return out;
+}
+
+void Application::showRowMarks(application::DocumentId document)
+{
+    for (WindowViews *v : allViews())
+        if (v->editorDocument == document)
+            v->shell->setRowMarks(rowMarksOf(document));
+    if (m_pluginRuntime)
+        m_pluginRuntime->rowMarksChanged();
 }
 
 bool Application::showVideoSubtitles()

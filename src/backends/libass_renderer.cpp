@@ -1,5 +1,6 @@
 #include "hikari/backends/libass_renderer.h"
 #include "hikari/backends/overlay_blend.h"
+#include "libass_log.h"
 
 extern "C" {
 #include <ass/ass.h>
@@ -13,14 +14,37 @@ extern "C" {
 #endif
 static_assert(LIBASS_VERSION >= 0x01705020, "the altqx libass fork is older than the pinned 0x01705020");
 
+#include <QLoggingCategory>
+
 #include <algorithm>
 #include <charconv>
 #include <chrono>
+#include <cstdarg>
+#include <cstdio>
 #include <cstring>
 #include <string_view>
 #include <utility>
 
 namespace hikari::backends {
+
+namespace {
+
+Q_LOGGING_CATEGORY(lcLibass, "hikari.libass")
+
+}
+
+// libass levels: 0 fatal to 7 debug; without a callback it prints every level under 5 to stderr.
+void logLibass(int level, const char *format, va_list args, void *)
+{
+    if (level >= 5)
+        return;
+    char text[512];
+    std::vsnprintf(text, sizeof text, format, args);
+    if (level <= 2)
+        qCWarning(lcLibass, "%s", text);
+    else
+        qCDebug(lcLibass, "%s", text);
+}
 
 using application::OverlayFrame;
 using application::OverlayPixels;
@@ -185,6 +209,7 @@ std::expected<std::uint64_t, RenderError> LibassRenderer::prepare(application::R
         fresh->library = ass_library_init();
         if (!fresh->library)
             return std::unexpected(RenderError::BackendFailure);
+        ass_set_message_cb(fresh->library, logLibass, nullptr);
         for (const auto &font : snapshot.fonts) {
             if (!font.bytes)
                 continue;

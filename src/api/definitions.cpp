@@ -135,6 +135,15 @@ void addDefinitions(Registry &registry)
         "trusted": {"type": "boolean", "description": "Whether the folder is in Trusted folders."}},
         "required": ["name", "trusted"], "additionalProperties": false}],
         "description": "The Project of the window the user works in; null without one."})"));
+    registry.define("DialogAnswer", schema(R"({"type": "object", "properties": {
+        "key": {"type": "string", "pattern": "^[0-9a-f]{16}$",
+            "description": "The dialog's key: its script and its controls' kinds and names, as Automation remembers answers by."},
+        "values": {"type": "object", "additionalProperties": {"type": ["string", "number", "boolean"]},
+            "description": "The answered values by control name."},
+        "button": {"type": "string", "description": "The pressed button's label; empty when the dialog was closed."}},
+        "required": ["key", "values"], "additionalProperties": false})"));
+    registry.define("MarkColour", schema(R"({"enum": ["accent", "warning", "danger", "success", "muted"],
+        "description": "A theme role, so the mark follows the theme and high contrast."})"));
 }
 
 }

@@ -16,7 +16,7 @@ namespace hikari::plugin_helper {
 enum class Tier { Restricted, Unrestricted };
 enum class Level { Info, Warning, Error };
 // What a request beyond the Hikari API is about: panels and dialogs, files, or the network.
-enum class Area { Ui, Files, Net };
+enum class Area { Ui, Files, Net, Job };
 
 // What a plugin asks of HikariSub. Each call blocks until HikariSub answers.
 class Host {

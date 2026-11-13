@@ -5,4 +5,4 @@
 {"call": "selection.get", "as": "plugin", "params": {"document": 2}, "error": "not_granted"}
 {"call": "documents.get", "as": "plugin", "params": {"document": 9}, "error": "not_granted"}
 {"call": "documents.get", "params": {"document": 9}, "error": "not_found", "errorData": {"document": 9}}
-{"call": "commands.list", "as": "plugin", "result": {"commands": [{"command": "GLOBAL_SAVE_SUBS"}, {"command": "GLOBAL_UNDO"}]}}
+{"call": "commands.list", "as": "plugin", "result": {"commands": [{"command": "GLOBAL_SAVE_SUBS"}, {"command": "GLOBAL_UNDO"}, {"command": "macro:fade.lua:0"}, {"command": "macro:fade.lua:1"}, {"command": "macro:dup.lua:0"}, {"command": "plugin.org.example.word-count.count"}]}}

@@ -108,6 +108,7 @@ class ProjectWindowsTests : public QObject {
         engine->setInitialProperties(application->qmlProperties());
         engine->loadFromModule("Hikari.Ui", "Main");
         QVERIFY(!engine->rootObjects().isEmpty());
+        QVERIFY(QMetaObject::invokeMethod(engine->rootObjects().first(), "buildMenus"));
         window = qobject_cast<QQuickWindow *>(engine->rootObjects().first());
         QVERIFY(window);
         QVERIFY(QTest::qWaitForWindowExposed(window));
@@ -1125,7 +1126,7 @@ private slots:
         QCOMPARE(styles.storeStyles(), QStringList{QStringLiteral("Project show")});
         QCOMPARE(application->settingsStore()->text("styles.lastCatalog"), QStringLiteral("Show"));
 
-        QVERIFY(QMetaObject::invokeMethod(named(shell(w), "styleManagerMenuItem"), "triggered"));
+        QVERIFY(QMetaObject::invokeMethod(named(shell(w), "styleManagerMenuItem")->property("action").value<QObject *>(), "trigger"));
         auto *manager = shell(w)->findChild<QQuickWindow *>(QStringLiteral("styleManager"));
         QTRY_VERIFY(manager && manager->isVisible());
         QQuickItem *content = manager->contentItem();

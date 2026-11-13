@@ -8,7 +8,7 @@ target_compile_definitions(hikari_ui_line_grid_tests PRIVATE HIKARI_TEST_ARTIFAC
 hikari_add_qttest(hikari_ui_line_grid_a11y_tests SOURCES line_grid_a11y_tests.cpp LIBRARIES hikari_ui)
 hikari_add_qttest(hikari_ui_wheel_scroll_tests SOURCES wheel_scroll_tests.cpp LIBRARIES hikari_ui Qt6::QuickControls2)
 # MUST KILL: each part runs from its named function up to the next part's, in shell_tests.cpp's order
-hikari_add_qttest(hikari_ui_shell_tests SOURCES shell_tests.cpp next_file_folder.cpp
+hikari_add_qttest(hikari_ui_shell_tests SOURCES shell_tests.cpp next_file_folder.cpp gui_thread_clock.cpp
     LIBRARIES hikari_composition Qt6::CorePrivate ZLIB::ZLIB Hikari::sodium
     PARTS documents
           panels=panelsFloatDockHideAndKeepTheirState
@@ -146,7 +146,7 @@ if(NOT WIN32)
         ENVIRONMENT "QT_QPA_PLATFORM=offscreen:configfile=${CMAKE_CURRENT_SOURCE_DIR}/fullscreen-two-screens.json"
         LABELS "ui;offscreen" TIMEOUT 120 RESOURCE_LOCK hikari_ui_video_fullscreen_workflow)
 endif()
-hikari_add_spix_test(hikari_ui_playback_workflow SOURCES playback_workflow.cpp LIBRARIES hikari_composition
+hikari_add_spix_test(hikari_ui_playback_workflow SOURCES playback_workflow.cpp gui_thread_clock.cpp LIBRARIES hikari_composition
     DEFINITIONS HIKARI_MEDIA_HELPER="$<TARGET_FILE:hikari_media_helper>"
                 HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures")
 add_dependencies(hikari_ui_playback_workflow hikari_media_helper hikari_media_fixtures)

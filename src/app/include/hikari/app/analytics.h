@@ -73,6 +73,8 @@ public:
     Q_INVOKABLE void panelOpened(const QString &dock);
     // Once per dialog per session.
     Q_INVOKABLE void dialogOpened(const QString &dialogId);
+    // Once per feature per session; `feature`: run_macro, set_keyframes, frames, job or row_marks. Never the plugin.
+    void pluginFeatureUsed(const QString &feature);
     // `layout`: a preset's name, or "saved" for a layout the user saved.
     Q_INVOKABLE void layoutChanged(const QString &layout);
     void gettingStartedFinished(const QStringList &pagesChanged);

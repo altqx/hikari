@@ -1,5 +1,7 @@
 #pragma once
 
+#include "hikari/application/row_marks.h"
+
 #include "hikari/app/ai_karaoke.h"
 #include "hikari/app/ai_plugins.h"
 #include "hikari/app/ai_scripts.h"
@@ -34,6 +36,7 @@
 #include "hikari/core/ass_attachments.h"
 #include "hikari/core/conversion.h"
 #include "hikari/core/grammar.h"
+#include "hikari/application/ai_review.h"
 #include "hikari/application/aegisub_frame_times.h"
 #include "hikari/application/timecodes_file.h"
 #include "hikari/application/associated_files.h"
@@ -54,6 +57,7 @@
 #include "hikari/application/translation_mode.h"
 #include "hikari/application/workspace.h"
 #include "hikari/backends/audio_box_player.h"
+#include "hikari/backends/git_reader.h"
 #include "hikari/backends/portaudio_output.h"
 #include "hikari/backends/ffms_indexed_source.h"
 #include "hikari/backends/harper_client.h"
@@ -381,6 +385,7 @@ public:
     QString projectOf(int shellWindow) const { return m_projects->root(shellWindow); }
     std::optional<api::ProjectState> activeProject() const;
     static std::vector<std::string> projectAiExclude(const std::string &root);
+    static application::AiReview::Disk reviewDisk();
     ProjectWindows &projects() { return *m_projects; }
     // "modified" when the target's file is newer than when last read or written;
     // "removed" once when it is gone (the Document becomes unsaved).
@@ -1167,6 +1172,10 @@ private:
     void rememberColumns(bool paste, int columns, const QString &tagNames);
     void protectReference();
     void refreshViews();
+    std::optional<std::string> setKeyframesFromApi(const std::vector<std::int64_t> &frames,
+                                                   const std::optional<std::string> &file);
+    void showRowMarks(application::DocumentId document);
+    ui::LineTableModel::RowMarks rowMarksOf(std::optional<application::DocumentId> document) const;
     void refreshVideo();
     void switchTabMedia(WindowMedia &media, std::optional<application::DocumentId> tab);
     bool changeResolution(int fromWidth, int fromHeight, int width, int height, bool resample, bool stretch,
@@ -1352,6 +1361,8 @@ private:
     std::unique_ptr<AiScripts> m_aiScripts;
     std::unique_ptr<AiKaraoke> m_aiKaraoke;
     std::unique_ptr<AiPlugins> m_aiPlugins;
+    application::RowMarks m_rowMarks;
+    std::unique_ptr<backends::GitReader> m_git;
     std::unique_ptr<ApiHost> m_apiHost;
     std::unique_ptr<AiFeatures> m_ai;
     std::unique_ptr<AiMcp> m_aiMcp;

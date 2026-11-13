@@ -2312,6 +2312,10 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Powtórz ostatnie uruchomienie: %1, przyciskiem %2 z tymi samymi odpowiedziami</translation>
     </message>
     <message>
+        <source>This dialog has changed since the plugin recorded it, so it is shown with its answers filled in.</source>
+        <translation>To okno dialogowe zmieniło się od czasu, gdy wtyczka je zapisała, więc jest wyświetlane z wypełnionymi odpowiedziami.</translation>
+    </message>
+    <message>
         <source>Repeat last run asks questions again rather than answering them for you.</source>
         <translation>Polecenie Powtórz ostatnie uruchomienie ponownie zadaje pytania, zamiast odpowiadać na nie za Ciebie.</translation>
     </message>
@@ -2326,6 +2330,10 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>The last run did not show this dialog, so it is shown with your last answers filled in.</source>
         <translation>Ostatnie uruchomienie nie pokazało tego okna dialogowego, więc jest ono pokazane z wypełnionymi ostatnimi odpowiedziami.</translation>
+    </message>
+    <message>
+        <source>This window’s project doesn’t show the script.</source>
+        <translation>Projekt tego okna nie pokazuje tego skryptu.</translation>
     </message>
     <message>
         <source>Open a document to run a macro on.</source>
@@ -6499,6 +6507,11 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Linijka %1</translation>
     </message>
     <message>
+        <source>%1: %2</source>
+        <comment>A plugin&apos;s mark on a Grid row: the plugin&apos;s name, then what the mark means</comment>
+        <translation>%1: %2</translation>
+    </message>
+    <message>
         <source>Layer</source>
         <translation>Warstwa</translation>
     </message>
@@ -6581,6 +6594,10 @@ Nie udało się skopiować czcionek: %2.</translation>
             <numerusform>%n notatki QC</numerusform>
             <numerusform>%n notatek QC</numerusform>
         </translation>
+    </message>
+    <message>
+        <source>marked by %1</source>
+        <translation>oznaczone przez %1</translation>
     </message>
     <message>
         <source>uncommitted</source>
@@ -16039,6 +16056,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Łączyć się z %1: %2</translation>
     </message>
     <message>
+        <source>Read the branches, tags and history of the git repository holding your subtitle files: %1</source>
+        <translation>Odczytywać gałęzie, tagi i historię repozytorium git z Twoimi plikami napisów: %1</translation>
+    </message>
+    <message>
         <source>Ask you for a folder to read and write, %1: %2</source>
         <translation>Prosić Cię o folder do odczytu i zapisu, %1: %2</translation>
     </message>
@@ -16223,6 +16244,22 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Zainstaluj z pełnym dostępem</translation>
     </message>
     <message>
+        <source>Cancelling…</source>
+        <translation>Anulowanie…</translation>
+    </message>
+    <message>
+        <source>Progress</source>
+        <translation>Postęp</translation>
+    </message>
+    <message>
+        <source>The plugin hasn’t stopped. Stop ends it now; work it hasn’t applied is lost.</source>
+        <translation>Wtyczka się nie zatrzymała. Zatrzymaj kończy ją od razu; praca, której nie zastosowała, przepadnie.</translation>
+    </message>
+    <message>
+        <source>Stop</source>
+        <translation>Zatrzymaj</translation>
+    </message>
+    <message>
         <source>Cancel</source>
         <translation>Anuluj</translation>
     </message>
@@ -16321,6 +16358,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>%1 waits for you</source>
         <translation>%1 czeka na Ciebie</translation>
+    </message>
+    <message>
+        <source>By HikariSub</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>New</source>
@@ -16516,6 +16557,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>%1: %2</source>
+        <extracomment>A plugin&apos;s background job: the plugin&apos;s name, then what the job does</extracomment>
         <translation>%1: %2</translation>
     </message>
     <message>
@@ -16525,6 +16567,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>%1 asks again the next time it needs this folder</source>
         <translation>%1 zapyta ponownie, gdy następnym razem będzie potrzebować tego folderu</translation>
+    </message>
+    <message>
+        <source>Marks</source>
+        <translation>Oznaczenia</translation>
+    </message>
+    <message>
+        <source>Clear marks</source>
+        <translation>Wyczyść oznaczenia</translation>
+    </message>
+    <message>
+        <source>Removes %1’s marks from the Grid of %2</source>
+        <translation>Usuwa oznaczenia %1 z listy napisów pliku %2</translation>
     </message>
     <message>
         <source>What it adds</source>
@@ -16553,6 +16607,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Install from file…</source>
         <translation>Zainstaluj z pliku…</translation>
+    </message>
+    <message numerus="yes">
+        <source>Marks %n line(s) in %1</source>
+        <translation>
+            <numerusform>Oznacza %n linijkę w %1</numerusform>
+            <numerusform>Oznacza %n linijki w %1</numerusform>
+            <numerusform>Oznacza %n linijek w %1</numerusform>
+        </translation>
     </message>
     <message>
         <source>Check for plugin updates</source>
@@ -17943,6 +18005,26 @@ Linijki [Sekcja] je grupują.</translation>
         </translation>
     </message>
     <message>
+        <source>Changed, %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New file, %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>New file, %n line(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Changed, +%1 −%2 lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Re&amp;view</source>
         <translation type="unfinished"></translation>
     </message>
@@ -18001,6 +18083,62 @@ Linijki [Sekcja] je grupują.</translation>
     <message>
         <source>Cancel</source>
         <translation type="unfinished">Anuluj</translation>
+    </message>
+    <message>
+        <source>Quit</source>
+        <translation type="unfinished">Zakończ</translation>
+    </message>
+    <message>
+        <source>Keep the AI’s file changes?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>and %n more</source>
+        <translation type="unfinished">
+            <numerusform>i %n inny</numerusform>
+            <numerusform>i %n inne</numerusform>
+            <numerusform>i %n innych</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Discard all</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Some files weren’t kept.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>They changed on disk after the AI wrote them, or couldn’t be written. They stay in the Review panel.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The file couldn’t be written.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>It stays in the review. Check that its folder exists and that you can write there, then keep it again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Project files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n file(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Also put back %n file(s) changed on disk after they were kept</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <source>Keep AI change</source>
@@ -18108,6 +18246,22 @@ Linijki [Sekcja] je grupują.</translation>
     </message>
     <message>
         <source>You changed it after this change. Undo puts it back as it was before the AI, which drops your edit.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1, changed on disk since</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The file changed on disk after the AI wrote its version. Keep replaces it with the AI’s version.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep anyway</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not a text file, or too large to compare.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -24808,6 +24962,14 @@ Usunięte style:
         <source>Play video</source>
         <extracomment>Title of the notice shown when Play cannot play the video</extracomment>
         <translation>Odtwarzanie wideo</translation>
+    </message>
+    <message>
+        <source>No video is open.</source>
+        <translation>Nie otwarto wideo.</translation>
+    </message>
+    <message>
+        <source>The keyframes file could not be written.</source>
+        <translation>Nie udało się zapisać pliku klatek kluczowych.</translation>
     </message>
     <message>
         <source>Invalid FPS value.</source>

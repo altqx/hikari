@@ -11,7 +11,7 @@ add_library(hikari_plugin_protocol STATIC plugin_protocol.cpp include/hikari/bac
 target_link_libraries(hikari_plugin_protocol PUBLIC hikari_helper_endpoint)
 hikari_module(hikari_plugin_protocol ALLOW hikari_helper_endpoint)
 
-add_library(hikari_backends STATIC module.cpp libass_renderer.cpp overlay_blend.cpp
+add_library(hikari_backends STATIC module.cpp libass_renderer.cpp libass_log.h overlay_blend.cpp
     include/hikari/backends/overlay_blend.h helper_host.cpp ffms_indexed_source.cpp
     audio_ring.cpp audio_output_engine.cpp portaudio_output.cpp lua_script_host.cpp qt_general_player.cpp
     video_frame_bgra.cpp include/hikari/backends/video_frame_bgra.h
@@ -94,6 +94,7 @@ if(WIN32)
     target_sources(hikari_ai PRIVATE ai_private_pipe.h ai_private_pipe_windows.cpp)
 endif()
 target_sources(hikari_backends PRIVATE external_aligner.cpp include/hikari/backends/external_aligner.h)
+target_sources(hikari_backends PRIVATE git_reader.cpp include/hikari/backends/git_reader.h)
 find_package(ZLIB REQUIRED)
 target_include_directories(hikari_ai PUBLIC include)
 target_link_libraries(hikari_ai PUBLIC hikari_application hikari_api hikari_sandbox Qt6::Core Qt6::Network

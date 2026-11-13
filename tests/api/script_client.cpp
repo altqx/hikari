@@ -17,7 +17,7 @@ Caller aiCaller()
 
 Caller pluginCaller()
 {
-    return Caller{"plugin.test", "Test plugin", false};
+    return Caller{"plugin:test", "Test plugin", false};
 }
 
 std::optional<std::string> mismatch(const Json &expected, const Json &actual, const std::string &path)

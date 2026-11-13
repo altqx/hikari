@@ -6,6 +6,7 @@
 
 #include <QObject>
 #include <QString>
+#include <QStringList>
 #include <QVariantList>
 #include <QVariantMap>
 
@@ -25,16 +26,22 @@ QString diffHtml(const QString &before, const QString &after);
 class ReviewController final : public QObject {
     Q_OBJECT
     Q_PROPERTY(bool on READ on NOTIFY changed FINAL)
-    // Lines with a waiting change in the editing target.
+    // Lines with a waiting change in the editing target, and the staged Project files.
     Q_PROPERTY(int waiting READ waiting NOTIFY changed FINAL)
+    // The staged Project files' paths relative to their Project, oldest first.
+    Q_PROPERTY(QStringList waitingFiles READ waitingFiles NOTIFY changed FINAL)
     // Newest turn first: {turn, number, label, restorable, changes: [{change, caller, name, document, title,
-    // target, waiting, items: [{item, title, detail, waiting, editedSince}]}]}.
+    // target, waiting, items: [{item, title, detail, waiting, editedSince}]}], files: [{file, caller, path, isNew,
+    // detail, changedOnDisk}]}.
     Q_PROPERTY(QVariantList turns READ turns NOTIFY changed FINAL)
     // The active Line's waiting change, empty when none: {caller, name, index, count, editedSince, inserted,
     // before (rich text)}.
     Q_PROPERTY(QVariantMap current READ current NOTIFY currentChanged FINAL)
 
 public:
+    enum class KeptFile { Kept, ChangedOnDisk, WriteFailed };
+    Q_ENUM(KeptFile)
+
     struct Wiring {
         application::AiReview &review;
         application::DocumentFiles &files;
@@ -44,6 +51,7 @@ public:
         std::function<void(application::DocumentId)> committed;
         std::function<void(application::CommandRefusal)> refused;
         std::function<void()> refresh;
+        application::AiReview::Disk disk;
     };
     struct Mark {
         bool editedSince = false;
@@ -55,6 +63,7 @@ public:
 
     bool on() const { return m_wiring.aiOn(); }
     int waiting() const;
+    QStringList waitingFiles() const;
     QVariantList turns() const;
     QVariantMap current() const;
 
@@ -74,9 +83,17 @@ public:
     Q_INVOKABLE bool undoLine(bool force);
     Q_INVOKABLE bool step(int direction);
     Q_INVOKABLE void show(qulonglong change, int item);
-    // [{title, lines, others, editedSince}] per Document the restore would change.
+    // [{title, lines, others, editedSince}] per Document the restore would change, then {files, filesChangedSince}
+    // for the Project files when it changes any.
     Q_INVOKABLE QVariantList checkpoint(qulonglong turn) const;
-    Q_INVOKABLE bool restore(qulonglong turn, bool force);
+    Q_INVOKABLE bool restore(qulonglong turn, bool force, bool forceFiles = false);
+    Q_INVOKABLE KeptFile keepFile(qulonglong file, bool force);
+    Q_INVOKABLE void undoFile(qulonglong file);
+    // {text, lines: [{kind: "same"|"removed"|"added"|"gap", text}]}; text false: only the sizes are known.
+    Q_INVOKABLE QVariantMap fileDiff(qulonglong file) const;
+    // False when some files stayed waiting, because they changed on disk or couldn't be written.
+    Q_INVOKABLE bool keepAllFiles();
+    Q_INVOKABLE void discardAllFiles();
     Q_INVOKABLE bool isAiStep(int step) const;
     Q_INVOKABLE int turnBefore(int step) const;
 

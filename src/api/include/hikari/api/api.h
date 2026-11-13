@@ -55,6 +55,7 @@ struct Caller {
     std::string project;
     // The user approved this call's Lua script; automation.run refuses without it.
     bool scriptApproved = false;
+    bool vcsRead = false;
     // The SHA-256 of the plugin package the user approved; plugins.install refuses any other.
     std::string approvedPackage;
 };
@@ -75,8 +76,7 @@ struct GrantedFolder {
     bool writable = false;
 };
 
-// The handle of an AI caller's Project folder, read-only, from Caller::project.
-inline constexpr std::string_view kProjectFolder = "project";
+inline constexpr std::string_view kProjectFolderHandle = "project";
 
 struct Context {
     const Host &host;
@@ -157,6 +157,9 @@ public:
     void panelChanged(std::string_view panel);
     void commandRan(std::string_view command, bool ok);
     void projectChanged(); // the Project that project.info answers changed
+    // An Automation macro run ended, however it was started.
+    void macroRan(application::DocumentId document, std::string_view file, std::string_view macro, std::string_view outcome,
+                  const std::vector<DialogAnswer> &dialogs);
 
     // The handle files.* use for `path`; granting a path again updates `writable`.
     std::string grantFile(const std::string &callerId, const std::string &path, bool writable);
@@ -166,6 +169,8 @@ public:
     void revokeFiles(const std::string &callerId);
     // The path behind a caller's handle, if the caller holds it.
     std::optional<std::string> grantedPath(const std::string &callerId, std::string_view handle) const;
+    // The file a files.write would change, from its file handle or its folder and path; nullopt: neither is granted.
+    std::optional<std::string> writeTarget(const Caller &caller, const Json &params) const;
 
 private:
     struct Subscription {
