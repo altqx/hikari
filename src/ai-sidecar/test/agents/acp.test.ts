@@ -10,7 +10,10 @@ import { AcpSession, hikariTool } from "../../src/agents/acp";
 import { McpServer } from "../../src/mcp/server";
 import type { SessionUpdate } from "../../src/protocol";
 import { HikariApi, sessionCalls } from "../../src/sidecar";
+import { Skills } from "../../src/skills/skills";
 import type { OperationName } from "../../src/tools/api.gen";
+import type { HikariCalls } from "../../src/tools/toolset";
+import { kMySkill, mySkillAnswers } from "../skills/my_skill";
 import { qtLink } from "./qt_link";
 
 const kFake = join(import.meta.dir, "..", "fixtures", "fake-acp.ts");
@@ -32,13 +35,16 @@ function harness(answers: Partial<Record<OperationName, unknown>> = {}, env: Rec
     let session: AcpSession | undefined;
     const params = { sessionId: "t1", agent: "acp:fake" as const, model: { providerId: "", model: "" }, system,
         ...(child ? { task: { parent: "p1", taskId: "k1", scope: { document: 1, lines: [1] } } } : {}) };
-    const mcp = new McpServer(() => whileTurnRuns(child ? sessionCalls(new HikariApi(child.peer, undefined, "t1"), params) : {
+    const fake: HikariCalls = {
         call: (operation, p) => {
-            calls.push({ operation, params: p });
+            if (!operation.startsWith("skills."))
+                calls.push({ operation, params: p });
             const answer = answers[operation];
-            return Promise.resolve((typeof answer === "function" ? answer() : answer) as never);
+            return Promise.resolve((typeof answer === "function" ? answer(p) : answer) as never);
         },
-    }, () => session), { name: "hikarisub", title: "HikariSub", version: "test" });
+    };
+    const mcp = new McpServer(() => whileTurnRuns(child ? sessionCalls(new HikariApi(child.peer, undefined, "t1"), params) : fake,
+        () => session), { name: "hikarisub", title: "HikariSub", version: "test" });
     const channel = Bun.serve({ port: 0, hostname: "127.0.0.1", fetch: async (request) => {
         if (request.headers.get("authorization") !== `Bearer ${kToken}`)
             return new Response("Unauthorized", { status: 401 });
@@ -66,6 +72,7 @@ function harness(answers: Partial<Record<OperationName, unknown>> = {}, env: Rec
         kindOf: (tool) => (tool === "document_apply" ? "edit" : "read"),
         send: (update) => updates.push(update),
         version: "test",
+        skills: new Skills(fake, []),
     });
     const script = (s: unknown) => [{ type: "text" as const, text: typeof s === "string" ? s : JSON.stringify(s) }];
     const logged = (method: string) => readFileSync(log, "utf8").split("\n").filter((l) => l.startsWith(`${method} `))
@@ -99,6 +106,20 @@ describe("an ACP agent", () => {
         expect(h.updates).toContainEqual({ sessionUpdate: "agent_message_chunk", content: { type: "text", text: "Fixed." } });
         expect(h.updates).toContainEqual({ sessionUpdate: "history",
             message: { author: "assistant", parts: [{ type: "text", text: "Fixed." }] } });
+    }, 30_000);
+
+    test("the first prompt opens with the thread's skills, and read_skill reads one over the channel", async () => {
+        const h = harness(mySkillAnswers);
+        const result = await h.session.prompt({ sessionId: "t1", prompt: h.script({ reply: "Read it.", calls: [
+            { tool: "read_skill", arguments: { name: kMySkill.name } },
+        ] }) });
+        h.session.close();
+
+        expect(result.stopReason).toBe("end_turn");
+        const prompt = h.logged("session/prompt")[0] as { prompt: { text: string }[] };
+        expect(prompt.prompt[0]!.text).toStartWith("Be brief.\n\n## Skills\n");
+        expect(prompt.prompt[0]!.text).toContain(`\n- ${kMySkill.name} (yours): ${kMySkill.description}\n`);
+        expect(h.updates.find((u) => u.sessionUpdate === "tool_call_update")).toMatchObject({ status: "completed" });
     }, 30_000);
 
     test("one agent process and one ACP session serve every turn", async () => {

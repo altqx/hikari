@@ -5,6 +5,7 @@ import { ErrorCode, type PlanStatus, type SessionNewParams, type SessionPromptPa
     type ToolCallStatus } from "../protocol";
 import type { Part } from "../providers/types";
 import { Peer, RpcError } from "../rpc";
+import { withSkills, type Skills } from "../skills/skills";
 
 export const kAcpServer = "hikari";
 export const kAcpProtocolVersion = 1;
@@ -23,6 +24,8 @@ export interface AcpDeps {
     kindOf: (tool: string) => ToolCallKind;
     send: (update: SessionUpdate) => void;
     version: string;
+    /** The session's skills, whose catalogue joins the instructions the first prompt opens with. */
+    skills?: Skills;
 }
 
 interface AgentCapabilities {
@@ -127,8 +130,10 @@ export class AcpSession {
     private async send(turn: Turn, params: SessionPromptParams): Promise<void> {
         this.deps.send({ sessionUpdate: "history", message: { author: "user", parts: params.prompt } });
         const prompt = blocks(params.prompt, this.capabilities.promptCapabilities?.image === true);
-        if (!this.introduced && this.params.system)
-            prompt.unshift({ type: "text", text: this.params.system });
+        const system = this.introduced ? undefined
+            : this.deps.skills ? await withSkills(this.params.system, this.deps.skills) : this.params.system;
+        if (system)
+            prompt.unshift({ type: "text", text: system });
         this.introduced = true;
         const answer = await this.peer!.request("session/prompt", { sessionId: this.agentSession, prompt });
         const reason = (answer as { stopReason?: unknown } | null)?.stopReason;

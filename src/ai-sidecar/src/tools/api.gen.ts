@@ -947,6 +947,137 @@ export type EffectsApplyResult = {
     changed: boolean;
 };
 
+/** The installed plugins with their state, trust tier and commands. */
+export type PluginsListParams = Record<string, never>;
+
+export type PluginsListResult = {
+    plugins: ({
+        id: string;
+        name: string;
+        version: string;
+        description: string;
+        source: "file" | "marketplace";
+        signed: boolean;
+        enabled: boolean;
+        tier: "restricted" | "unrestricted";
+        revoked: boolean;
+        /** While the plugin runs. */
+        commands: ({
+            /** plugin.<plugin id>.<command id> */
+            command: string;
+            title: string;
+        })[];
+    })[];
+};
+
+/** An installed plugin's hikari-plugin.json. */
+export type PluginsManifestParams = {
+    plugin: string;
+};
+
+export type PluginsManifestResult = {
+    plugin: string;
+    manifest: Record<string, unknown>;
+};
+
+/** Writes a plugin from the authoring guide's template into the AI plugins folder and packs it; nothing is installed. */
+export type PluginsScaffoldParams = {
+    /** Reverse-DNS, lowercase: com.example.sign-counter. An earlier scaffold of that id is replaced. */
+    plugin: string;
+    name: string;
+    /** Semantic version; default 0.1.0. */
+    version?: string;
+    description?: string;
+    /** restricted (default) runs in the sandbox without ffi, io, os and debug; unrestricted needs the user's full trust at install. */
+    tier?: "restricted" | "unrestricted";
+    /** The manifest's permissions: documents.all, network {hosts, reason}, files. */
+    permissions?: Record<string, unknown>;
+    commands: ({
+        id: string;
+        title: string;
+    })[];
+    /** main.lua, registering each command with hikari.commands.register; the guide's first plugin when omitted. */
+    code?: string;
+    /** More files beside main.lua and hikari-plugin.json. */
+    files?: ({
+        path: string;
+        text: string;
+    })[];
+};
+
+export type PluginsScaffoldResult = {
+    plugin: string;
+    folder: string;
+    /** The packed .hikariplugin. */
+    package: string;
+    files: string[];
+    manifest: Record<string, unknown>;
+};
+
+/** What installing a package would do, as the install question shows it: its trust tier, signing, permissions, commands and files. */
+export type PluginsReviewParams = unknown | unknown;
+
+export type PluginsReviewResult = {
+    plugin: string;
+    name: string;
+    version: string;
+    change: "install" | "update" | "reinstall" | "downgrade";
+    installedVersion: string;
+    /** unrestricted runs outside the sandbox and needs the user's full trust. */
+    tier: "restricted" | "unrestricted";
+    /** The signing key changed, or an unsigned package replaces a signed one. */
+    needsRetrust: boolean;
+    /** The signing key; empty when unsigned. */
+    keyId: string;
+    pinnedKeyId: string;
+    permissions: string[];
+    /** The titles of the commands it adds. */
+    commands: string[];
+    files: ({
+        path: string;
+        text: string;
+    })[];
+    digest: string;
+};
+
+/** Installs a scaffolded or granted plugin package and turns it on, once the user approves it in HikariSub; it asks every time. */
+export type PluginsInstallParams = unknown | unknown;
+
+export type PluginsInstallResult = {
+    plugin: string;
+    name: string;
+    version: string;
+    change: "install" | "update" | "reinstall" | "downgrade";
+    installedVersion: string;
+    /** unrestricted runs outside the sandbox and needs the user's full trust. */
+    tier: "restricted" | "unrestricted";
+    /** The signing key changed, or an unsigned package replaces a signed one. */
+    needsRetrust: boolean;
+    /** The signing key; empty when unsigned. */
+    keyId: string;
+    pinnedKeyId: string;
+    permissions: string[];
+    /** The titles of the commands it adds. */
+    commands: string[];
+    files: ({
+        path: string;
+        text: string;
+    })[];
+    digest: string;
+    installed: true;
+};
+
+/** Runs an installed plugin's command as its menu item would. */
+export type PluginsRunParams = {
+    plugin: string;
+    /** The command's id within the plugin, as in its manifest. */
+    command: string;
+};
+
+export type PluginsRunResult = {
+    ran: true;
+};
+
 /** The Line's text with the tags that render it on a quad (VT3's perspective solver): \pos, \org, \frx, \fry, \frz, \fax, \fscx and \fscy. */
 export type TypesetPerspectiveParams = {
     /** Defaults to the active Document. */
@@ -1450,6 +1581,12 @@ export interface Operations {
     "effects.preview": { access: "read"; params: EffectsPreviewParams; result: EffectsPreviewResult };
     "effects.save": { access: "write"; params: EffectsSaveParams; result: EffectsSaveResult };
     "effects.apply": { access: "write"; params: EffectsApplyParams; result: EffectsApplyResult };
+    "plugins.list": { access: "read"; params: PluginsListParams; result: PluginsListResult };
+    "plugins.manifest": { access: "read"; params: PluginsManifestParams; result: PluginsManifestResult };
+    "plugins.scaffold": { access: "write"; params: PluginsScaffoldParams; result: PluginsScaffoldResult };
+    "plugins.review": { access: "read"; params: PluginsReviewParams; result: PluginsReviewResult };
+    "plugins.install": { access: "write"; params: PluginsInstallParams; result: PluginsInstallResult };
+    "plugins.run": { access: "write"; params: PluginsRunParams; result: PluginsRunResult };
     "typeset.perspective": { access: "read"; params: TypesetPerspectiveParams; result: TypesetPerspectiveResult };
     "typeset.clip": { access: "read"; params: TypesetClipParams; result: TypesetClipResult };
     "typeset.drawing": { access: "read"; params: TypesetDrawingParams; result: TypesetDrawingResult };

@@ -69,8 +69,13 @@ public:
     /// Drops every connected agent; from now on only `token` connects.
     void setToken(QByteArray token);
 
+    /// The Project folder whose skills join the user's for MCP connections, empty for none; nullopt while they may
+    /// not read skills.
+    using SkillsFor = std::function<std::optional<std::string>()>;
+    void setSkills(SkillsFor skills) { m_skills = std::move(skills); }
+
     /// What an MCP connection's call runs as: every Document, under the client's name, with its edits in the
-    /// review (one turn per connection). document.apply is the only write it may call.
+    /// review (one turn per connection), and the skills setSkills allows. document.apply is the only write it may call.
     std::expected<api::Caller, api::Error> callerFor(const api::Json &mcp, const std::string &operation) const;
 
     std::size_t connections() const { return m_local.size() + m_http.size(); }
@@ -94,6 +99,7 @@ private:
     std::string httpConnection() const;
 
     SidecarFor m_sidecar;
+    SkillsFor m_skills;
     QByteArray m_token;
     std::string m_channel;
     QPointer<AiSidecarHost> m_host;

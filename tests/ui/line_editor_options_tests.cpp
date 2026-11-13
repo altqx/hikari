@@ -133,6 +133,16 @@ class LineEditorOptionsTest : public QObject {
         QTest::keyClick(window, Qt::Key_Home);
         return QTest::qWaitFor([&] { return application->editor().hasLine(); });
     }
+    void unfoldTheStrip()
+    {
+        QTRY_VERIFY(item("tagStrip") && item("tagStrip")->width() > 0);
+        auto *more = item("tagStripMore");
+        for (int width = window->width(); more->isVisible() && width < 4000; width += 200) {
+            window->resize(width + 200, window->height());
+            QTest::qWaitFor([&] { return !more->isVisible(); }, 500);
+        }
+        QVERIFY(!more->isVisible());
+    }
     QString shownText() const { return item("lineText")->property("text").toString(); }
     bool runGlobal(const QString &symbol)
     {
@@ -201,6 +211,7 @@ class LineEditorOptionsTest : public QObject {
     }
     void waitForStrip(int count)
     {
+        unfoldTheStrip();
         QTRY_VERIFY([&] {
             for (int i = 0; i < count; ++i) {
                 auto *b = item(qPrintable(QStringLiteral("tagButton%1").arg(i)));
@@ -343,6 +354,7 @@ private slots:
     void tagButtonsFromThePopoverAndTheMenu()
     {
         QVERIFY(showLine(tagged));
+        unfoldTheStrip();
         auto &buttons = application->tagButtons();
         QCOMPARE(buttons.count(), 0);
         QVERIFY(!item("manageTagButtons"));

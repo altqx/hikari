@@ -71,6 +71,8 @@ public:
         std::function<ProjectModels(application::DocumentId)> projectModels = {};
         /// The Project folder of the Document's window; empty without one.
         std::function<QString(application::DocumentId)> projectFolder = {};
+        /// The active window's `translation.targetLanguage`; empty uses `ai.inline.translateTo`.
+        std::function<QString()> targetLanguage = {};
     };
 
     static constexpr const char *kActionsSetting = "ai.inline.actions";
@@ -88,6 +90,7 @@ public:
     QVariantMap ready() const;
     QVariantList actions() const;
     QString translateTo() const;
+    void projectChanged();
     QStringList recentInstructions() const;
     QVariantMap last() const;
     int maxCps() const;

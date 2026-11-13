@@ -336,6 +336,8 @@ RiskCheck alwaysAsk(const std::string &operation, const Json &params,
             return {Risk::Programs, "It runs a plugin's command."};
         return named(kRiskyCommands, command);
     }
+    if (operation == "plugins.run")
+        return {Risk::Programs, "It runs a plugin's command."};
     if (operation != "settings.set")
         return {};
     const std::string setting = stringAt(params, "setting");
@@ -365,6 +367,8 @@ Decision decide(AgentMode mode, const std::string &operation, bool alwaysAsk, bo
 {
     if (operation == "automation.run")
         return Decision::Script;
+    if (operation == "plugins.install")
+        return Decision::Install;
     if (alwaysAsk)
         return Decision::AlwaysAsk;
     if (mode == AgentMode::Manual && operation == "document.apply")
@@ -555,7 +559,7 @@ std::optional<AgentThread> AgentThread::fromJson(const Json &json)
         t.items = *i;
     if (t.items.isArray())
         for (Json &item : t.items.asArray())
-            if (stringAt(item, "kind") == "script" &&
+            if ((stringAt(item, "kind") == "script" || stringAt(item, "kind") == "install") &&
                 (stringAt(item, "status") == "open" || stringAt(item, "status") == "running"))
                 item["status"] = "withdrawn";
     if (const Json *f = json.find("files"); f && f->isArray())
@@ -1474,6 +1478,8 @@ void AgentThreads::gate(const std::string &session, const std::string &operation
         return openProposal(*t, params, std::move(admit), std::move(onWithdraw));
     case Decision::Script:
         return openScript(*t, params, std::move(admit), std::move(onWithdraw));
+    case Decision::Install:
+        return openInstall(*t, params, std::move(admit), std::move(onWithdraw));
     }
 }
 
@@ -1501,6 +1507,7 @@ void AgentThreads::gateMcp(AgentThread &thread, const Json &params, AiSidecarHos
     case Decision::AlwaysAsk:
     case Decision::Propose:
     case Decision::Script:
+    case Decision::Install:
         return openAsk(thread, Decision::AlwaysAsk, operation, params,
                        "Its MCP server doesn't promise that it only reads or changes nothing it can't undo.",
                        std::move(admit), std::move(onWithdraw));
@@ -1690,6 +1697,43 @@ void AgentThreads::runScript(AgentThread &thread, std::uint64_t ask, AiSidecarHo
     admit(std::move(admission));
 }
 
+void AgentThreads::openInstall(AgentThread &thread, const Json &params, AiSidecarHost::Admit admit,
+                               std::function<void(std::function<void()>)> onWithdraw)
+{
+    std::optional<api::Result> review;
+    if (m_wiring.api)
+        m_wiring.api->call(callerOf(thread), "plugins.review", params,
+                           [&review](const api::Result &result) { review = result; });
+    if (!review)
+        return admit(std::unexpected(api::Error{std::string(api::errors::kUnavailable), "Plugins are not available.", {}}));
+    if (!*review)
+        return admit(std::unexpected(review->error()));
+    Json item = **review;
+    item["kind"] = "install";
+    item["status"] = "open";
+    wait(thread, Ask{0, thread.id, Decision::Install, "plugins.install", params, {}}, std::move(item), std::move(admit),
+         std::move(onWithdraw));
+}
+
+void AgentThreads::runInstall(AgentThread &thread, std::uint64_t ask, const std::string &digest, AiSidecarHost::Admit admit)
+{
+    AiSidecarHost::Admission admission{callerOf(thread), {}};
+    admission.caller.approvedPackage = digest;
+    admission.ran = [this, alive = std::weak_ptr(m_alive), id = thread.id, ask](const api::Result &result) {
+        if (!alive.lock())
+            return;
+        AgentThread *t = find(id);
+        Json *item = t ? itemWith(*t, "ask", Json(ask)) : nullptr;
+        if (!item)
+            return;
+        (*item)["status"] = result ? "installed" : "failed";
+        if (!result)
+            (*item)["result"] = result.error().message;
+        touch(*t);
+    };
+    admit(std::move(admission));
+}
+
 void AgentThreads::wait(AgentThread &thread, Ask ask, Json item, AiSidecarHost::Admit admit,
                         std::function<void(std::function<void()>)> onWithdraw)
 {
@@ -1736,11 +1780,12 @@ void AgentThreads::answer(std::uint64_t askId, Answer answer, const std::string 
         return;
     const bool proposal = it->second.kind == Decision::Propose;
     const bool script = it->second.kind == Decision::Script;
+    const bool install = it->second.kind == Decision::Install;
     if (proposal && (answer == Answer::AskAgain) != it->second.stale && answer != Answer::Deny)
         return;
     if (!proposal && answer == Answer::AskAgain)
         return;
-    if (script && answer == Answer::AllowInThread)
+    if ((script || install) && answer == Answer::AllowInThread)
         return;
     Ask ask = std::move(it->second);
     m_asks.erase(it);
@@ -1761,6 +1806,20 @@ void AgentThreads::answer(std::uint64_t askId, Answer answer, const std::string 
         if (Json *item = itemWith(*t, "ask", Json(askId)))
             (*item)["status"] = "running";
         runScript(*t, askId, std::move(admit));
+        return touch(*t);
+    } else if (install && answer == Answer::Deny) {
+        status = "declined";
+        std::string text = "The user didn't install the plugin; nothing changed.";
+        if (!message.empty())
+            text += " The user said: " + message;
+        admit(std::unexpected(
+            api::Error{std::string(api::errors::kRefused), std::move(text), Json::object({{"reason", "declined"}})}));
+    } else if (install) {
+        Json *item = itemWith(*t, "ask", Json(askId));
+        const std::string digest = item ? stringAt(*item, "digest") : std::string();
+        if (item)
+            (*item)["status"] = "running";
+        runInstall(*t, askId, digest, std::move(admit));
         return touch(*t);
     } else if (proposal && answer == Answer::Deny) {
         status = "declined";

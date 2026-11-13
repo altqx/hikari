@@ -2183,6 +2183,17 @@ ScrollView {
                 Layout.leftMargin: 48
                 text: qsTr("For agents that connect over HTTP. Only this computer can reach it, and only with the token.")
             }
+            AiCheck {
+                setting: "ai.mcp.skills"
+                visible: mcpSection.serverOn
+                Layout.leftMargin: 24
+                text: qsTr("Let them read your skills")
+            }
+            Note {
+                visible: mcpSection.serverOn
+                Layout.leftMargin: 48
+                text: qsTr("Yours, this project’s and the built-in ones. Skills guide the agent; they grant no permission.")
+            }
             RowLayout {
                 visible: mcpSection.serverOn
                 spacing: 8
