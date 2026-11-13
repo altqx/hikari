@@ -160,11 +160,13 @@ QJsonObject Application::grammarSettings() const
     for (const auto &[rule, on] : core::grammar::linterSwitches(groups, hunspellOn))
         linters.insert(latin(rule), on);
     const QDir dir(m_grammarDir);
+    const QString projectWords = projectDictionary(m_workspace.activeWindow());
     const auto path = [&](const char *name) { return QDir::toNativeSeparators(dir.filePath(QLatin1String(name))); };
     return {{QStringLiteral("dialect"), QLatin1String(kDialects[language - 1])},
             {QStringLiteral("linters"), linters},
             {QStringLiteral("userDictPath"), path("dictionary.txt")},
-            {QStringLiteral("workspaceDictPath"), path("workspace-dictionary.txt")},
+            {QStringLiteral("workspaceDictPath"),
+             projectWords.isEmpty() ? path("workspace-dictionary.txt") : QDir::toNativeSeparators(projectWords)},
             {QStringLiteral("fileDictPath"), path("file-dictionaries")},
             {QStringLiteral("ignoredLintsPath"), path("ignored-lints")},
             {QStringLiteral("statsPath"), path("stats.txt")}};
@@ -350,7 +352,14 @@ void Application::syncGrammarWords()
     if (!file.open(QIODevice::WriteOnly) || file.write(content.toUtf8()) < 0 || !file.commit())
         return;
     m_grammarWords = content;
-    // harper-ls rereads the dictionary file for each check: redo the checks in flight.
+    recheckGrammar();
+}
+
+// harper-ls rereads its dictionary files for each check: redo the checks in flight.
+void Application::recheckGrammar()
+{
+    if (!m_harper)
+        return;
     if (m_grammarTicket)
         m_harper->cancel(m_grammarTicket);
     m_grammarTicket = 0;
@@ -504,11 +513,22 @@ QVariantList Application::grammarGroups() const
     return out;
 }
 
-bool Application::addGrammarWord(const QString &word)
+bool Application::addGrammarWord(const QString &word, bool project)
 {
     const QString trimmed = word.trimmed();
     if (trimmed.isEmpty())
         return false;
+    if (project) {
+        auto *checker = startedSpellChecker(m_workspace.activeWindow());
+        const QString file = projectDictionary(m_workspace.activeWindow());
+        if (checker ? !checker->addProjectWord(trimmed.toStdU16String())
+                    : file.isEmpty() || !application::appendToWordList(file.toStdU16String(), trimmed.toStdU16String()))
+            return false;
+        projectWordsChanged(file.toStdU16String(), checker);
+        recheckGrammar();
+        spellingRefresh();
+        return true;
+    }
     if (auto *checker = anySpellChecker()) {
         if (!checker->addUserWord(trimmed.toStdU16String()))
             return false;
@@ -895,7 +915,7 @@ QVariantMap Application::grammarWalkIgnoreRule()
     return state;
 }
 
-QVariantMap Application::grammarWalkAddWord()
+QVariantMap Application::grammarWalkAddWord(bool project)
 {
     const int shellWindow = m_workspace.activeWindow();
     if (grammarWalkStale(shellWindow) || !grammarWalkOf(shellWindow)->current)
@@ -909,7 +929,7 @@ QVariantMap Application::grammarWalkAddWord()
         return text.substr(std::size_t(f.finding.start), std::size_t(f.finding.end - f.finding.start));
     };
     const std::u16string word = covered(found);
-    if (!addGrammarWord(QString::fromStdU16String(word)))
+    if (!addGrammarWord(QString::fromStdU16String(word), project))
         return grammarWalkProblem(QCoreApplication::translate("HikariSub.Spelling", "“%1” was not added to the dictionary.")
                                       .arg(QString::fromStdU16String(word)));
     for (auto &other : walk.findings)

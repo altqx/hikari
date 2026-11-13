@@ -289,6 +289,20 @@ ProjectFile::PluginTable ProjectFile::plugins() const
     return out;
 }
 
+std::string ProjectFile::exportJson() const
+{
+    if (!hasTable("export"))
+        return {};
+    toml::table merged;
+    for (const File file : {Shared, Local})
+        if (const auto *table = m_tables[file]["export"].as_table())
+            for (const auto &[key, node] : *table)
+                merged.insert_or_assign(key, node);
+    std::ostringstream json;
+    json << toml::json_formatter(merged, toml::format_flags::none);
+    return json.str();
+}
+
 std::optional<SettingValue> ProjectFile::read(const SettingDefinition &setting) const
 {
     const auto file = source(setting);

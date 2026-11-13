@@ -318,6 +318,24 @@ private slots:
         QVERIFY(glossary.open(QIODevice::ReadOnly));
         QCOMPARE(glossary.readAll(), QByteArray("# Glossary\n"));
     }
+
+    void translateSendsTheSourceLanguageOnlyWhenOneIsSet()
+    {
+        setMode("auto");
+        QVERIFY(application->turnOnTranslationMode());
+        selectAll();
+        const auto translate = [this] {
+            const std::size_t steps = session().historySize();
+            QVERIFY(inlineAi().start({{QStringLiteral("action"), QStringLiteral("translate")}}, false));
+            QTRY_COMPARE(session().historySize(), steps + 1);
+        };
+        translate();
+        QCOMPARE(session().document().lines()[0]->translation, u8"{\\i1}HELLO{\\i0} THERE");
+
+        application->settingsStore()->setValue(QStringLiteral("translation.sourceLanguage"), QStringLiteral(" Japanese "));
+        translate();
+        QCOMPARE(session().document().lines()[0]->translation, u8"Japanese: {\\i1}HELLO{\\i0} THERE");
+    }
 };
 
 QTEST_MAIN(InlineAiTest)

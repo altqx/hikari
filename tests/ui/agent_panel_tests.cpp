@@ -205,14 +205,15 @@ class AgentPanelTest : public QObject {
         auto *items = qobject_cast<QAbstractItemModel *>(agent().items());
         return items->index(items->rowCount() - 1, 0).data(app::AgentItemsModel::ItemRole).toMap();
     }
-    QVariantMap lastProposal() const
+    QVariantMap lastOf(QLatin1String kind) const
     {
         auto *items = qobject_cast<QAbstractItemModel *>(agent().items());
         for (int row = items->rowCount() - 1; row >= 0; --row)
-            if (items->index(row, 0).data(app::AgentItemsModel::KindRole).toString() == QLatin1String("proposal"))
+            if (items->index(row, 0).data(app::AgentItemsModel::KindRole).toString() == kind)
                 return items->index(row, 0).data(app::AgentItemsModel::ItemRole).toMap();
         return {};
     }
+    QVariantMap lastProposal() const { return lastOf(QLatin1String("proposal")); }
     QString applyScript(const char *say) const
     {
         const auto line = session().document().lines().front()->id;
@@ -378,6 +379,9 @@ private slots:
         options.userFolder = at(QStringLiteral("user"));
         options.playbackAudio = false;
         options.aiPorts = std::move(ports);
+        if (test == "anAgentsPluginInstallsOnlyWhenTheUserSaysSoInEveryMode")
+            options.plugins = {at(QStringLiteral("plugins")), at(QStringLiteral("plugin-data")), at(QStringLiteral("plugin-cache")),
+                               at(QStringLiteral("plugin-registry"))};
         application = std::make_unique<app::Application>(options);
         engine = std::make_unique<QQmlApplicationEngine>();
         QVERIFY(ui::attachDocking(*engine));
@@ -727,6 +731,52 @@ private slots:
         };
         QTRY_VERIFY(!aiScriptLoaded());
         QVERIFY(application->automation().autoloadScripts().filter(QStringLiteral("Shout")).isEmpty());
+    }
+
+    void anAgentsPluginInstallsOnlyWhenTheUserSaysSoInEveryMode()
+    {
+        openPanel();
+        QVERIFY(click(QStringLiteral("agentNewThread")));
+        agent().setFullAccessWarned();
+        agent().setMode(QStringLiteral("full"));
+        QTRY_COMPARE(agent().thread().value(QStringLiteral("mode")).toString(), QStringLiteral("full"));
+        const auto turn = [](const std::string &plugin, const std::string &name, const std::string &tier) {
+            const Json scaffold = Json::object(
+                {{"operation", "plugins.scaffold"},
+                 {"params", Json::object({{"plugin", plugin}, {"name", name}, {"tier", tier},
+                                          {"commands", Json::array({Json::object({{"id", "count"}, {"title", "Count lines"}})})}})}});
+            const Json install = Json::object({{"operation", "plugins.install"}, {"params", Json::object({{"plugin", plugin}})}});
+            return QString::fromStdString(
+                Json::object({{"say", "I made a plugin."}, {"calls", Json::array({scaffold, install})}}).dump());
+        };
+        const auto installed = [this](const QString &id) {
+            return std::ranges::any_of(application->pluginManager()->plugins(),
+                                       [&](const QVariant &row) { return row.toMap().value(QStringLiteral("id")) == id; });
+        };
+
+        type(turn("com.example.line-counter", "Line counter", "restricted"));
+        QTRY_VERIFY(kinds().contains(QStringLiteral("install")));
+        QTRY_VERIFY(item(QStringLiteral("agentInstallAccept")));
+        QVERIFY(!item(QStringLiteral("agentInstallRisky")));
+        QVERIFY(!item(QStringLiteral("agentAllowInThread")));
+        QVERIFY(QFileInfo::exists(at(QStringLiteral("user/ai/plugins/com.example.line-counter/main.lua"))));
+        QVERIFY(!installed(QStringLiteral("com.example.line-counter")));
+        shoot(QStringLiteral("agent-plugin-install"), QStringLiteral("Count the lines"));
+
+        QVERIFY(click(QStringLiteral("agentInstallAccept")));
+        QTRY_COMPARE(lastOf(QLatin1String("install")).value(QStringLiteral("status")).toString(), QStringLiteral("installed"));
+        QVERIFY(installed(QStringLiteral("com.example.line-counter")));
+        QTRY_VERIFY(item(QStringLiteral("agentInstallOpen")));
+        QTRY_VERIFY(!agent().thread().value(QStringLiteral("running")).toBool());
+
+        type(turn("com.example.full-counter", "Full counter", "unrestricted"));
+        QTRY_VERIFY(item(QStringLiteral("agentInstallRisky")));
+        QVERIFY(!item(QStringLiteral("agentInstallAccept")));
+        shoot(QStringLiteral("agent-plugin-install-full"), QStringLiteral("Count with full access"));
+        QVERIFY(click(QStringLiteral("agentInstallDecline")));
+        QTRY_COMPARE(lastOf(QLatin1String("install")).value(QStringLiteral("status")).toString(), QStringLiteral("declined"));
+        QTRY_VERIFY(!agent().thread().value(QStringLiteral("running")).toBool());
+        QVERIFY(!installed(QStringLiteral("com.example.full-counter")));
     }
 
     void aThreadAtItsCapStopsAndRaiseContinues()

@@ -35,6 +35,8 @@ public:
         /// The Document whose project folder the sidecar reads through `translation.project`; none reads no folder.
         std::optional<std::uint64_t> document;
         std::string language;
+        /// Empty lets the models detect it.
+        std::string sourceLanguage;
         application::ai::ModelRef translator;
         application::ai::ModelRef reviewer;
         /// The translated Lines before the run, oldest first.

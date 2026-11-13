@@ -5,7 +5,11 @@ import { kDefaultWaitMs, kMaxWaitMs, TaskTools } from "../../src/agent/tasks";
 import { ErrorCode, kProtocolVersion, Method, type TaskState } from "../../src/protocol";
 import { Peer, RpcError } from "../../src/rpc";
 import { Sidecar } from "../../src/sidecar";
-import type { HikariCalls } from "../../src/tools/toolset";
+import { type HikariCalls, ToolSet } from "../../src/tools/toolset";
+import { Harness as ProviderHarness } from "../providers/harness";
+import { answer, resultOf, scriptedTurn, toolNames, toolUse } from "./scripted";
+
+const provider = new ProviderHarness().install();
 
 const build = { buildId: "test", hikariApiVersion: 1, version: "0.0.0-test", packages: {} };
 const big = { maxOutstanding: 64, maxOutstandingBytes: 1 << 22, maxMessageBytes: 1 << 22 };
@@ -93,6 +97,30 @@ function link() {
     const feed = (message: unknown) => peer.feed(new TextEncoder().encode(JSON.stringify(message) + "\n"));
     return { peer, sent, feed };
 }
+
+describe("search_tools and the sub-agent tools", () => {
+    const kTools = ["agent_capabilities", "agent_delegate", "agent_task_cancel", "agent_task_status"];
+    const capabilities = { targets: [], running: 0, limit: 4, mode: "auto" };
+
+    test("a thread finds them by group and by words, and they stay in the cached prefix", async () => {
+        const r = recorder({ [Method.taskCapabilities]: [capabilities] });
+        const bodies = await scriptedTurn(provider, (id) => new ToolSet({ call: async () => ({}) as never }, undefined,
+            [new TaskTools(id, r.request)]), [
+            toolUse("s1", "search_tools", { group: "agent" }),
+            toolUse("s2", "search_tools", { query: "delegate task" }),
+            toolUse("c1", "agent_capabilities", {}),
+            answer("Four can run."),
+        ], true);
+        const prefix = JSON.stringify(bodies[0]!.tools);
+        expect(toolNames(bodies[0]!)).toEqual(expect.arrayContaining(kTools));
+        for (const body of bodies)
+            expect(JSON.stringify(body.tools)).toBe(prefix);
+        const byGroup = JSON.parse(resultOf(bodies[1]!, "s1")!.content);
+        expect(byGroup).toEqual({ tools: [], alreadyOffered: kTools });
+        expect(JSON.parse(resultOf(bodies[2]!, "s2")!.content).alreadyOffered[0]).toBe("agent_delegate");
+        expect(r.sent).toEqual([{ method: Method.taskCapabilities, params: { sessionId: "t1" } }]);
+    });
+});
 
 describe("which sessions delegate", () => {
     test("only a session opened with delegate offers the agent tools, from the start", () => {

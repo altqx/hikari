@@ -142,6 +142,7 @@ Automation > Plugins… (`GLOBAL_PLUGINS`, 5231) opens one resizable window with
 - **Actions.** Install from file… for a new plugin, then per plugin Update to <version> (a marketplace install with a newer listed version), Update from file…, Open data folder and Uninstall…. Update from file… refuses a package with a different id.
 - **Move to the marketplace.** A file install whose id the marketplace lists, signed with the listing's author key and not newer than the listed version, offers "Move to the marketplace", which installs the listed version as a marketplace install, or "Not now".
 - **Marketplace.** Search matches name, summary and author, and the box narrows to one category. A listing shows the newest version this HikariSub can run, its description, screenshots, permissions, what it needs ("HikariSub <version> or later"), licence, last update and source. Install or Update to <version> downloads it and opens the install question, which says it was signed by the author and checked against the marketplace. A plugin with full access warns that it gets full access to the computer and asks for Install with full access.
+- **From an agent.** An Agent thread can scaffold a plugin into `<user folder>/ai/plugins/` and ask to install it, or a `.hikariplugin` the user gave it. Every install asks in the Agent panel with the same facts as the install question, whatever the thread's mode ([AI-written plugins](ai-agent.md#ai-written-plugins)).
 
 ## Running a plugin
 

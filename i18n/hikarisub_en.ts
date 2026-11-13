@@ -39,6 +39,13 @@
         </translation>
     </message>
     <message numerus="yes">
+        <source>Show all %n files</source>
+        <translation>
+            <numerusform>Show the whole file</numerusform>
+            <numerusform>Show all %n files</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
         <source>%n sub-agent(s)</source>
         <translation>
             <numerusform>%n sub-agent</numerusform>

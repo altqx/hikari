@@ -70,8 +70,8 @@ public:
     enum class TabStart { Copy, Translation };
 
     static constexpr int kSchema = 1;
-    // MUST KILL: kPanelRegistry is a version int bumped per added panel (2 Timing ... 12 QcNotes, 13 Review, 14 Agent, 15-17 node effects)
-    static constexpr int kPanelRegistry = 17;
+    // MUST KILL: kPanelRegistry is a version int bumped per added panel (2 Timing ... 12 QcNotes, 13 Review, 14 Agent, 15-17 node effects, 18 Explorer)
+    static constexpr int kPanelRegistry = 18;
     static constexpr qsizetype kMaximumBytes = 4 * 1024 * 1024;
     static constexpr int kSavedLayoutsSchema = 1;
     static constexpr int kMaximumNameLength = 64;

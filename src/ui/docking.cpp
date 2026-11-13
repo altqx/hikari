@@ -628,6 +628,62 @@ QRect fitOnScreens(const QRect &frame, int strip, const QList<QRect> &screens, c
     return {QPoint(x, y), outer};
 }
 
+QRect wholeOnScreens(const QRect &frame, const QList<QRect> &screens, const QRect &fallback)
+{
+    if (std::ranges::any_of(screens, [&](const QRect &screen) { return screen.contains(frame); }))
+        return frame;
+    QRect target = fallback;
+    qint64 most = 0;
+    for (const QRect &screen : screens) {
+        const QRect on = screen.intersected(frame);
+        if (const qint64 area = qint64(on.width()) * on.height(); area > most) {
+            most = area;
+            target = screen;
+        }
+    }
+    const QSize outer = frame.size().boundedTo(target.size());
+    const int x = std::clamp(frame.x(), target.left(), target.right() + 1 - outer.width());
+    const int y = std::clamp(frame.y(), target.top(), target.bottom() + 1 - outer.height());
+    return {QPoint(x, y), outer};
+}
+
+QRect mostlyOnScreens(const QRect &frame, const QList<QRect> &screens, const QRect &fallback)
+{
+    qint64 on = 0;
+    for (const QRect &screen : screens) {
+        const QRect part = screen.intersected(frame);
+        on += qint64(part.width()) * part.height();
+    }
+    return 2 * on >= qint64(frame.width()) * frame.height() ? frame : wholeOnScreens(frame, screens, fallback);
+}
+
+namespace {
+
+QRect clientOnScreens(const QWindow &window, const QRect &client,
+                      QRect (*fit)(const QRect &, const QList<QRect> &, const QRect &))
+{
+    QScreen *primary = QGuiApplication::primaryScreen();
+    if (!primary)
+        return client;
+    QList<QRect> available;
+    for (QScreen *screen : QGuiApplication::screens())
+        available << screen->availableGeometry();
+    const QMargins margins = window.frameMargins();
+    return fit(client.marginsAdded(margins), available, primary->availableGeometry()).marginsRemoved(margins);
+}
+
+}
+
+QRect clientWholeOnScreens(const QWindow &window, const QRect &client)
+{
+    return clientOnScreens(window, client, wholeOnScreens);
+}
+
+QRect clientMostlyOnScreens(const QWindow &window, const QRect &client)
+{
+    return clientOnScreens(window, client, mostlyOnScreens);
+}
+
 void setLayoutLocked(bool locked)
 {
     if (locked == g_layoutLocked)
@@ -857,7 +913,7 @@ public:
                             std::max(0, window->height() - qCeil(m_view->height())));
         QSize least = m_main->layout()->layoutMinimumSize() + outside;
         if (QScreen *screen = window->screen())
-            least = least.boundedTo(screen->availableGeometry().size());
+            least = least.boundedTo(screen->availableGeometry().size().shrunkBy(window->frameMargins()));
         return least;
     }
 

@@ -309,6 +309,22 @@ TEST_F(AiMcpTest, CallsForAConnectionSeeEveryDocumentUnderTheClientsNameAndOnlyA
     EXPECT_FALSE(server->callerFor(Json::object(), "lines.list"));
 }
 
+TEST_F(AiMcpTest, ConnectionsReadSkillsOnlyWhileTheGrantAllowsAndSeeItsProjects)
+{
+    const Json local = *Json::parse(R"({"connection": "local-1"})");
+    EXPECT_FALSE(server->callerFor(local, "skills.list")->skills);
+    std::optional<std::string> grant;
+    server->setSkills([&grant] { return grant; });
+    EXPECT_FALSE(server->callerFor(local, "skills.list")->skills);
+    grant = "/work/show";
+    const auto granted = server->callerFor(local, "skills.list");
+    EXPECT_TRUE(granted->skills);
+    EXPECT_EQ(granted->project, "/work/show");
+    grant = std::string();
+    EXPECT_TRUE(server->callerFor(local, "skills.read")->skills);
+    EXPECT_EQ(server->callerFor(local, "skills.read")->project, "");
+}
+
 TEST_F(AiMcpTest, TheEndpointFileRoundTripsAndOnlyTheUserCanReadIt)
 {
     QTemporaryDir dir;

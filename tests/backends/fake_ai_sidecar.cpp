@@ -369,7 +369,8 @@ int main(int argc, char **argv)
             turns.erase(arg.find("sessionId")->asString());
             respond(*id, nullptr);
         } else if (name == "_hikari/translate") {
-            // Upper-cases each Line, markers kept; a Line with "?" needs review. Translator "hang" never answers.
+            // Upper-cases each Line, markers kept, after "<sourceLanguage>: " when one is sent; a Line with "?" needs
+            // review. Translator "hang" never answers.
             const Json *models = arg.find("models");
             const std::string translator = models->find("translator")->find("model")->asString();
             if (translator == "hang") {
@@ -380,11 +381,14 @@ int main(int argc, char **argv)
             send(Json::object({{"jsonrpc", "2.0"}, {"method", "_hikari/translate.progress"},
                                {"params", Json::object({{"stream", stream}, {"role", "translator"},
                                                         {"usage", Json::object({{"inputTokens", 1000000}, {"outputTokens", 0}})}})}}));
+            const Json *source = arg.find("sourceLanguage");
             Json lines = Json::array();
             for (const Json &line : arg.find("lines")->asArray()) {
                 std::string text = line.find("text")->asString();
                 for (char &c : text)
                     c = static_cast<char>(std::toupper(static_cast<unsigned char>(c)));
+                if (source)
+                    text = source->asString() + ": " + text;
                 const bool doubt = text.find('?') != std::string::npos;
                 lines.push(Json::object({{"key", *line.find("key")}, {"text", text},
                                          {"review", doubt ? "needsReview" : "approved"},

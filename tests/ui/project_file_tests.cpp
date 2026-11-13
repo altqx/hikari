@@ -177,6 +177,33 @@ private slots:
         QVERIFY(!readAll(project.path(ProjectFile::Shared)).contains("sk-or-v1-other"));
     }
 
+    void theLanguagePairAndExportFormatAreProjectSettings()
+    {
+        QTemporaryDir root;
+        writeAll(root.filePath(QStringLiteral(".hikari/project.toml")),
+                 "version = 1\n[translation]\nsourceLanguage = \"Japanese\"\ntargetLanguage = \"English\"\n"
+                 "[export]\nformat = \"vtt\"\n");
+        const ProjectFile project(root.path());
+        QVERIFY(project.problems().empty());
+        QVERIFY(project.refused().empty());
+        QVERIFY(project.credentials().empty());
+        QCOMPARE(project.read(setting("translation.sourceLanguage")), SettingValue(std::string("Japanese")));
+        QCOMPARE(project.read(setting("translation.targetLanguage")), SettingValue(std::string("English")));
+        QCOMPARE(project.read(setting("export.format")), SettingValue(std::string("vtt")));
+    }
+
+    void theExportTableGoesLocalOverSharedKeyByKey()
+    {
+        QTemporaryDir root;
+        QVERIFY(ProjectFile(root.path()).exportJson().empty());
+        writeAll(root.filePath(QStringLiteral(".hikari/project.toml")),
+                 "version = 1\n[export]\nformat = \"mdvd\"\nfps = 25\nmergeOverlaps = true\n");
+        writeAll(root.filePath(QStringLiteral(".hikari/project.local.toml")), "version = 1\n[export]\nfps = 30\n");
+        const ProjectFile project(root.path());
+        QVERIFY(project.refused().empty());
+        QCOMPARE(compact(project.exportJson()), std::string(R"({"format":"mdvd","fps":30,"mergeOverlaps":true})"));
+    }
+
     void fontFoldersAreRelativeToTheProjectFolder()
     {
         QTemporaryDir root;

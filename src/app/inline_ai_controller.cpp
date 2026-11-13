@@ -216,8 +216,16 @@ void InlineAiController::setActions(const QVariantList &list)
 
 QString InlineAiController::translateTo() const
 {
+    if (m_wiring.targetLanguage)
+        if (const QString project = m_wiring.targetLanguage().trimmed(); !project.isEmpty())
+            return project;
     const QString language = m_wiring.settings.text(kTranslateToSetting).trimmed();
     return language.isEmpty() ? QStringLiteral("English") : language;
+}
+
+void InlineAiController::projectChanged()
+{
+    emit changed();
 }
 
 QStringList InlineAiController::recentInstructions() const
@@ -572,6 +580,8 @@ std::unique_ptr<backends::ai::LineRun> InlineAiController::translationRun(std::v
     w.lines = std::move(lines);
     w.document = m_run->document.value;
     w.language = ask.language;
+    if (m_wiring.sourceLanguage)
+        w.sourceLanguage = m_wiring.sourceLanguage(m_run->document).trimmed().toStdString();
     const ai::Providers *providers = m_wiring.ai.providers();
     const ai::Config *config = providers ? &providers->config() : nullptr;
     const ProjectModels project = m_wiring.projectModels ? m_wiring.projectModels(m_run->document) : ProjectModels{};
