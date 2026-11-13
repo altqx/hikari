@@ -244,7 +244,7 @@ TRANSPORT, FULLSCREEN, AUDIOBOX, EDITOR, VISUAL, PICKER, TABS = (
 AUTOPANEL = "automation-panel"
 TEMPLATEPANEL = "template-editor"
 
-icon("open-subtitles", "Open subtitles", ["opensubs.png"], [FILE, "video-context-menu"], page(True) + plus_badge())
+icon("open-subtitles", "Open subtitles", ["opensubs.png"], [FILE, "video-context-menu", "explorer"], page(True) + plus_badge())
 icon("save", "Save", ["Save.png"], [FILE, "tab-menu", "shift-times-panel"], floppy())
 icon("save-all", "Save all subtitles", ["SaveAll.png"], [FILE, "tab-menu"],
      stroke("M4.5 3.5v-2h8l2 2v8h-2") + stroke("M1.5 4.5h9l2 2v8h-11z") + stroke("M4.5 4.5v2.5h4V4.5")
@@ -260,7 +260,7 @@ icon("save-with-video-name", "Save subtitles with video name", ["SaveWithVideoNa
 icon("last-session", "Load last session", ["Last Session.png"], [FILE],
      stroke("M5.5 4.5v-2h9v7h-2") + rect(1.5, 6.5, 11, 7, 1) + stroke("M1.5 8.5h11")
      + accent(stroke("M5 11.5h4M7.5 10l1.5 1.5L7.5 13")), mirror=True)
-icon("settings", "Settings", ["Settings.png"], [FILE, "settings-dialog", "font-catalog"], gear())
+icon("settings", "Settings", ["Settings.png"], [FILE, "settings-dialog", "font-catalog", "explorer"], gear())
 icon("exit", "Exit", ["Exit.png"], [FILE],
      stroke("M8 1.5v6") + stroke("M4.5 4a5.5 5.5 0 1 0 7 0"))
 
@@ -285,16 +285,16 @@ icon("select-lines", "Select lines", ["Sellines.png"], [EDIT, "select-lines"],
      stroke("M7.5 4h7M7.5 8h7M7.5 12h7") + accent(frect(2, 3, 3, 2), frect(2, 11, 3, 2)) + rect(2.5, 7, 2, 2, 0),
      mirror=True)
 
-icon("open-video", "Open video", ["openvideo.png"], [VIDEO, "video-context-menu", "dummy-video"],
+icon("open-video", "Open video", ["openvideo.png"], [VIDEO, "video-context-menu", "dummy-video", "explorer"],
      video_film() + accent(stroke("M12.5 10.5v4M10.5 12.5h4")))
 icon("recent-video", "Recently opened videos", ["RecentVideo.png"], [VIDEO, "video-context-menu"],
      video_film(7.5, 7.5, 8.5)
      + accent(stroke("M11.5 9.5h2a4 4 0 0 1 2 2v2a4 4 0 0 1-2 2h-2a4 4 0 0 1-2-2v-2a4 4 0 0 1 2-2z"),
               stroke("M12.5 11.5v1h1")))
-icon("open-keyframes", "Open keyframes", ["OpenKeyframes.png"], [VIDEO], diamond(6, 6.5, 4.5) + plus_badge())
+icon("open-keyframes", "Open keyframes", ["OpenKeyframes.png"], [VIDEO, "explorer"], diamond(6, 6.5, 4.5) + plus_badge())
 icon("recent-keyframes", "Recently opened keyframes", ["RecentKeyframes.png"], [VIDEO],
      diamond(6, 6.5, 4.5) + clock_badge())
-icon("open-timecodes", "Open timecodes", [], [VIDEO], timecodes_ruler() + plus_badge())
+icon("open-timecodes", "Open timecodes", [], [VIDEO, "explorer"], timecodes_ruler() + plus_badge())
 icon("recent-timecodes", "Recently opened timecodes", [], [VIDEO], timecodes_ruler() + clock_badge())
 icon("save-timecodes", "Save timecodes", [], [VIDEO], timecodes_ruler() + accent(stroke("M12 9.5v4.5M10 12l2 2 2-2")))
 icon("close-timecodes", "Close timecodes", [], [VIDEO], timecodes_ruler() + cross_badge())
@@ -339,7 +339,7 @@ icon("show-toolbar", "Full screen bar", [], [FULLSCREEN],
      layout(stroke("M1.5 9.5h13"), frect(3.5, 10.75, 2, 1.5, 0.25), frect(7, 10.75, 2, 1.5, 0.25),
             frect(10.5, 10.75, 2, 1.5, 0.25)))
 
-icon("open-audio", "Open audio", ["OpenAudio.png"], [AUDIO], note(6.5) + plus_badge())
+icon("open-audio", "Open audio", ["OpenAudio.png"], [AUDIO, "explorer"], note(6.5) + plus_badge())
 icon("recent-audio", "Recently opened audio", ["RecentAudio.png"], [AUDIO], note(6.5) + clock_badge())
 icon("audio-from-video", "Open audio from video", ["OpenAudioFromVideo.png"], [AUDIO],
      video_film() + accent(note(13.5, 12.5, 4.5, (1.5, .5))))
@@ -391,7 +391,7 @@ icon("link", "Link", ["button_link.png", "ScaleLink.png"], [AUDIOBOX, VISUAL, "s
      stroke("M7 4.5l1.5-1.5a2.5 2.5 0 0 1 3.5 3.5L10.5 8M9 11.5l-1.5 1.5a2.5 2.5 0 0 1-3.5-3.5L5.5 8")
      + stroke("M6.5 9.5l3-3"))
 
-icon("tag-font", "Font selection", ["Font.png"], [EDITOR, "font-dialog"],
+icon("tag-font", "Font selection", ["Font.png"], [EDITOR, "font-dialog", "explorer"],
      fill("M5 2h6v2H7v3h3v2H7v5H5z"))
 icon("tag-bold", "Bold", ["Bold.png"], [EDITOR],
      fill("M4 2h6a2 2 0 0 1 2 2v1.5c0 .75-.25 1.5-1 2 1.25.25 2 1.25 2 2.5v1.5a2.5 2.5 0 0 1-2.5 2.5H4z"
@@ -609,7 +609,7 @@ icon("eyedropper", "Pick a colour from the screen", ["eyedropper.png"], [PICKER]
      stroke("M10.5 3.5l1.75-1.75a1.75 1.75 0 0 1 2.5 2.5L13 6") + stroke("M9 3l4 4")
      + stroke("M10 4l-6.5 6.5-1 3 3-1L12 6") + accent(stroke("M4.75 11.25l3.25-3.25")))
 icon("tab-close", "Close tab", [], [TABS, FILE, "dock-headers"], stroke("M4.5 4.5l7 7M11.5 4.5l-7 7"))
-icon("tab-new", "Open new tab", [], [TABS], stroke("M8 3v10M3 8h10"))
+icon("tab-new", "Open new tab", [], [TABS, "explorer"], stroke("M8 3v10M3 8h10"))
 icon("document-modified", "Modified", [], [TABS], accent(dot(8, 8, 3)))
 
 FOLDER = stroke("M1.5 12.5v-9a1 1 0 0 1 1-1h3.5l1.5 1.5h6a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1h-11a1 1 0 0 1-1-1z") + stroke(
@@ -643,12 +643,12 @@ icon("panel-menu", "Panel options", [], ["dock-headers"], dot(3.5, 8, 1.25) + do
 
 icon("add", "Add", [], [SHIFTPANEL, LISTS, "font-catalog", GRIDMENU], stroke("M7.5 2.5v10M2.5 7.5h10"))
 icon("remove", "Remove", [], [SHIFTPANEL, EDITOR, AUTOPANEL], stroke("M2.5 7.5h10"))
-icon("edit", "Edit", [], [EDITOR, LISTS, GRIDMENU, VISUAL, AUTOPANEL],
+icon("edit", "Edit", [], [EDITOR, LISTS, GRIDMENU, VISUAL, AUTOPANEL, "explorer"],
      stroke("M11 2l3 3-8.5 8.5-3.5 1 1-3.5z") + accent(stroke("M9.5 3.5l3 3")))
 icon("duplicate", "Copy", [], [LISTS],
      stroke("M5.5 4.5v-2a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1h-2") + rect(2.5, 4.5, 8, 10, 1)
      + accent(stroke("M6.5 7.5v4M4.5 9.5h4")))
-icon("delete", "Delete", [], [LISTS, GRIDMENU, TEXTMENU],
+icon("delete", "Delete", [], [LISTS, GRIDMENU, TEXTMENU, "explorer"],
      stroke("M2.5 4h11M6 4V2.5h4V4") + stroke("M4 4.5l.75 9a1 1 0 0 0 1 1h4.5a1 1 0 0 0 1-1l.75-9")
      + stroke("M6.75 7v5M9.25 7v5"))
 icon("import", "Load", [], [LISTS, "settings-dialog"],
@@ -656,7 +656,7 @@ icon("import", "Load", [], [LISTS, "settings-dialog"],
      + accent(stroke("M7.5 4.5v10M4.5 11.5l3 3 3-3")))
 icon("clear", "Clear", [], [LISTS, VISUAL, GRIDMENU, AUTOPANEL],
      stroke("M9 2l5 5-6.5 6.5-5-5z") + accent(stroke("M5.5 5.5l5 5")) + stroke("M7.5 13.5h6"))
-icon("refresh", "Refresh", [], ["font-catalog", AUTOPANEL],
+icon("refresh", "Refresh", [], ["font-catalog", AUTOPANEL, "explorer"],
      stroke("M2.5 8a5.5 5.5 0 0 1 9.25-3.75") + solid("M12.75 3.25L13 5.5l-2.25-.25z")
      + stroke("M13.5 8a5.5 5.5 0 0 1-9.25 3.75") + solid("M3.25 12.75L3 10.5l2.25.25z"))
 icon("filter", "Filter", [], [GRIDMENU, "font-catalog"], stroke("M1.5 2.5h13L9.5 8.5V13l-3 1.5v-6z"))
@@ -672,7 +672,7 @@ icon("folder-open", "Choose a folder", [], [SEARCH, "font-collector", "settings-
      stroke("M1.5 13.5v-10a1 1 0 0 1 1-1h3l1.5 1.5h5a1 1 0 0 1 1 1v1.5") + stroke("M1.5 13.5l2.25-7h10.75l-2.25 7z"))
 icon("find-in-files", "Find in subtitles", [], [SEARCH], FOLDER_CUT + accent(circle(11.5, 11.5, 2),
                                                                              stroke("M13 13l1.5 1.5")))
-icon("show-in-folder", "Open the containing folder", [], [TABMENU, FILE, "settings-dialog", "plugin-manager"],
+icon("show-in-folder", "Open the containing folder", [], [TABMENU, FILE, "settings-dialog", "plugin-manager", "explorer"],
      FOLDER_CUT + accent(stroke("M10 14.5l4.5-4.5M11.5 10h3v3")))
 icon("compare", "Subtitle comparison", [], [TABMENU, "dock-headers"],
      rect(1.5, 2.5, 6, 11, 1) + rect(8.5, 2.5, 6, 11, 1) + stroke("M3.5 5.5h2M3.5 8h2M3.5 10.5h2M10.5 5.5h2M10.5 8h2")
@@ -782,7 +782,7 @@ icon("problem", "Problem", [], [TEMPLATEPANEL],
 icon("dummy-video", "Open dummy video", [], [VIDEO], video_film() + accent(frect(10, 10, 4.5, 4.5, 0.5)))
 icon("video-streams", "Streams", [], [VIDEO, VIDEOMENU],
      stroke("M1.5 3.5h6M1.5 7h6M1.5 10.5h3") + accent(note(10.5)))
-icon("chapters", "Chapters", [], [VIDEO, VIDEOMENU],
+icon("chapters", "Chapters", [], [VIDEO, VIDEOMENU, "explorer"],
      stroke("M1.5 13.5h13M3.5 13.5v-2M12.5 13.5v-2") + accent(stroke("M6.5 13.5v-10h5l-1.5 2 1.5 2h-5")))
 icon("video-details", "Video details", [], ["menu:video"],
      video_film() + accent(circle(12, 12, 3), stroke("M12 11.5v2"), dot(12, 10.25, 0.5)))
@@ -1049,7 +1049,7 @@ TABBED_WINDOW = (stroke("M8.5 13.5h-6a1 1 0 0 1-1-1v-10a1 1 0 0 1 1-1h11a1 1 0 0
                  + stroke("M3.5 4.5v-1h4v1"))
 SHIELD = stroke("M8 1.5l5.5 2v4.5c0 3.5-2.5 5.5-5.5 6.5-3-1-5.5-3-5.5-6.5V3.5z")
 
-icon("copy-path", "Copy path", [], [TABMENU, "home"],
+icon("copy-path", "Copy path", [], [TABMENU, "home", "explorer"],
      COPY_BACK + COPY_FRONT + accent(stroke("M4.5 12.5l1.5-5M7 12.5l1.5-5")))
 icon("timing-postprocessor", "Timing postprocessor", [], [SUBS],
      rect(5.5, 5.5, 5, 5, 1) + accent(stroke("M4 8H1.5M3 6.5L1.5 8 3 9.5M12 8h2.5M13 6.5l1.5 1.5L13 9.5")))
@@ -1089,6 +1089,16 @@ icon("show-all-files", "Show all files", [], ["explorer"],
 icon("group-by-name", "Group by name", [], ["explorer"],
      rect(1.5, 1.5, 6, 5, 1) + rect(1.5, 9.5, 6, 5, 1)
      + accent(stroke("M9.5 4h1.5a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1H9.5M12 8h2.5")), mirror=True)
+icon("file-folder", "Folder", [], ["explorer"], FOLDER)
+icon("file-subtitles", "Subtitle file", [], ["explorer"], page() + accent(stroke("M5.5 9.5h5M5.5 11.5h3.5")))
+icon("file-video", "Video file", [], ["explorer"],
+     rect(1.5, 2.5, 13, 11, 1) + stroke("M4.5 2.5v11M11.5 2.5v11") + accent(stroke("M7 6l2.5 2L7 10z")))
+icon("file-audio", "Audio file", [], ["explorer"], note(9.5))
+icon("file-keyframes", "Keyframes file", [], ["explorer"], diamond(8, 8, 5.5) + accent(dot(8, 8, 1.25)))
+icon("file-timecodes", "Timecodes file", [], ["explorer"],
+     stroke("M13.5 11.5h-11a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1h11a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1z")
+     + stroke("M3.5 3.5v3.5M8.5 3.5v3.5") + accent(stroke("M5.5 3.5v2M10.5 3.5v2M12.5 3.5v2")))
+icon("file-other", "File", [], ["explorer"], page())
 icon("tab-to-new-window", "Move tab to new window", [], [TABMENU, TABS], TABBED_WINDOW + plus_badge())
 icon("tab-to-window", "Move tab to window", [], [TABMENU, TABS],
      TABBED_WINDOW + accent(stroke("M9.5 12h5M12.5 10l2 2-2 2")))
@@ -1411,7 +1421,6 @@ NOT_REPLACED = {
 PENDING = {}
 for card, roles in {
     "AI2 #430": ["review-panel"],
-    "PJ4 #772": ["explorer", "new-subtitle-file", "show-all-files", "group-by-name"],
     "AI24 #744": ["update"],
     "PL7 #419": ["plugin-sandbox"],
     "AU6 #845": ["clip-to-shape", "shape-to-clip", "shape-merge"],

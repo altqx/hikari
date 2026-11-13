@@ -18,7 +18,8 @@
                 "Agent",
                 "NodeGraph",
                 "NodeInspector",
-                "NodeSources"
+                "NodeSources",
+                "Explorer"
             ],
             "floatingWindows": [
             ],
@@ -97,7 +98,8 @@
                 "Agent",
                 "NodeGraph",
                 "NodeInspector",
-                "NodeSources"
+                "NodeSources",
+                "Explorer"
             ],
             "floatingWindows": [
                 {
@@ -206,7 +208,8 @@
                 "Agent",
                 "NodeGraph",
                 "NodeInspector",
-                "NodeSources"
+                "NodeSources",
+                "Explorer"
             ],
             "floatingWindows": [
             ],
@@ -287,7 +290,8 @@
                 "Agent",
                 "NodeGraph",
                 "NodeInspector",
-                "NodeSources"
+                "NodeSources",
+                "Explorer"
             ],
             "floatingWindows": [
             ],
@@ -358,7 +362,8 @@
                 "Agent",
                 "NodeGraph",
                 "NodeInspector",
-                "NodeSources"
+                "NodeSources",
+                "Explorer"
             ],
             "floatingWindows": [
             ],
@@ -427,7 +432,8 @@
                 "Agent",
                 "NodeGraph",
                 "NodeInspector",
-                "NodeSources"
+                "NodeSources",
+                "Explorer"
             ],
             "floatingWindows": [
             ],
@@ -495,7 +501,8 @@
                 "Agent",
                 "NodeGraph",
                 "NodeInspector",
-                "NodeSources"
+                "NodeSources",
+                "Explorer"
             ],
             "floatingWindows": [
             ],
@@ -576,7 +583,8 @@
                 "Agent",
                 "NodeGraph",
                 "NodeInspector",
-                "NodeSources"
+                "NodeSources",
+                "Explorer"
             ],
             "floatingWindows": [
                 {
@@ -685,7 +693,8 @@
                 "Agent",
                 "NodeGraph",
                 "NodeInspector",
-                "NodeSources"
+                "NodeSources",
+                "Explorer"
             ],
             "floatingWindows": [
             ],
@@ -755,7 +764,8 @@
             "Agent",
             "NodeGraph",
             "NodeInspector",
-            "NodeSources"
+            "NodeSources",
+            "Explorer"
         ],
         "floatingWindows": [
             {
@@ -834,7 +844,8 @@
                 "Agent",
                 "NodeGraph",
                 "NodeInspector",
-                "NodeSources"
+                "NodeSources",
+                "Explorer"
             ],
             "floatingWindows": [
             ],
@@ -900,7 +911,8 @@
                 "Agent",
                 "NodeGraph",
                 "NodeInspector",
-                "NodeSources"
+                "NodeSources",
+                "Explorer"
             ],
             "floatingWindows": [
                 {

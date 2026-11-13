@@ -435,6 +435,7 @@ target_include_directories(hikari_ui_shell_tests PRIVATE "${PROJECT_SOURCE_DIR}/
 hikari_add_qttest(hikari_ui_settings_store_tests SOURCES settings_store_tests.cpp LIBRARIES hikari_ui)
 hikari_add_qttest(hikari_ui_preset_tiers_tests SOURCES preset_tiers_tests.cpp LIBRARIES hikari_ui)
 hikari_add_qttest(hikari_ui_project_file_tests SOURCES project_file_tests.cpp LIBRARIES hikari_ui)
+hikari_add_qttest(hikari_ui_explorer_model_tests SOURCES explorer_model_tests.cpp LIBRARIES hikari_ui)
 hikari_add_qttest(hikari_ui_list_files_tests SOURCES list_files_tests.cpp LIBRARIES hikari_composition)
 target_compile_definitions(hikari_ui_list_files_tests PRIVATE
     HIKARI_LIST_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/list-files"
@@ -468,6 +469,12 @@ target_compile_definitions(hikari_ui_forwarded_launches_tests PRIVATE
     HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures"
     HIKARI_PLUGIN_FIXTURES="${PROJECT_SOURCE_DIR}/tests/plugins/fixtures")
 add_dependencies(hikari_ui_forwarded_launches_tests hikari_media_fixtures hikari_media_helper)
+hikari_add_qttest(hikari_ui_explorer_panel_tests SOURCES explorer_panel_tests.cpp
+    LIBRARIES hikari_composition KDAB::kddockwidgets)
+target_compile_definitions(hikari_ui_explorer_panel_tests PRIVATE
+    HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures")
+add_dependencies(hikari_ui_explorer_panel_tests hikari_media_helper hikari_media_fixtures)
+set_tests_properties(hikari_ui_explorer_panel_tests.offscreen PROPERTIES TIMEOUT 300)
 hikari_add_qttest(hikari_ui_project_windows_tests SOURCES project_windows_tests.cpp LIBRARIES hikari_composition)
 target_include_directories(hikari_ui_project_windows_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
 target_compile_definitions(hikari_ui_project_windows_tests PRIVATE
@@ -563,6 +570,13 @@ target_compile_definitions(hikari_ui_language_tests PRIVATE
 foreach(mode offscreen xvfb)
     if(TEST hikari_ui_language_tests.${mode})
         set_tests_properties(hikari_ui_language_tests.${mode} PROPERTIES TIMEOUT 300)
+    endif()
+endforeach()
+
+hikari_add_qttest(hikari_ui_contrast_tests SOURCES contrast_tests.cpp LIBRARIES hikari_composition)
+foreach(mode offscreen xvfb native)
+    if(TEST hikari_ui_contrast_tests.${mode})
+        set_tests_properties(hikari_ui_contrast_tests.${mode} PROPERTIES TIMEOUT 600)
     endif()
 endforeach()
 

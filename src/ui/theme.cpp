@@ -570,6 +570,9 @@ public:
         if (type != QEvent::PlatformSurface && type != QEvent::Show && type != QEvent::ApplicationPaletteChange)
             return false;
         auto *window = qobject_cast<QWindow *>(object);
+        if (type == QEvent::Show && window && window->type() == Qt::Dialog)
+            if (auto *quick = qobject_cast<QQuickWindow *>(window))
+                adoptOne(quick);
         if (!window || !titlebars::themed(window))
             return false;
         if (type == QEvent::PlatformSurface) {
@@ -623,6 +626,17 @@ public:
         }
         if (added)
             themeTitleBars(windows);
+    }
+
+    // A dialog shown without focus never reaches adopt(); this palette change reaches only that window.
+    void adoptOne(QQuickWindow *quick)
+    {
+        if (!settings || quick->property(kAdopted).toBool())
+            return;
+        quick->setProperty(kAdopted, true);
+        quick->property("palette");
+        QEvent change(QEvent::ApplicationPaletteChange);
+        QCoreApplication::sendEvent(quick, &change);
     }
 
 signals:

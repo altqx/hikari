@@ -6455,6 +6455,8 @@ private slots:
         QVERIFY(openPanelMenu(QStringLiteral("Grid")));
         QVERIFY(QMetaObject::invokeMethod(named("panelOptionsMenu"), "close"));
         QTRY_VERIFY(!named("panelOptionsMenu")->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(named("showExplorer"), "triggered"));
+        QTRY_VERIFY(named("explorerRowMenu"));
         const std::vector<std::pair<QString, QObject *>> listed{
             {QStringLiteral("Line editor text"), named("lineTextMenu")},
             {QStringLiteral("Text field"), textMenu},
@@ -6473,6 +6475,7 @@ private slots:
             {QStringLiteral("Reference tray"), named("referenceOccurrenceMenu")},
             {QStringLiteral("Tag button"), named("tagButtonMenu")},
             {QStringLiteral("Tag list"), named("lineTextTagListOptions")},
+            {QStringLiteral("Explorer row"), named("explorerRowMenu")},
         };
         QStringList missing;
         for (const auto &[name, menu] : listed)
@@ -21991,7 +21994,7 @@ private slots:
                                      "Video", "Audio", "Conversion", "Script properties", "Automation", "Shortcuts",
                                      "AI", "Updates and privacy"}));
         QVERIFY(dialogItem("settingsDialog", "settingsPageHotkeys"));
-        QCOMPARE(hotkeyRows().size(), 387);
+        QCOMPARE(hotkeyRows().size(), 388);
         QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(),
                  QStringLiteral("Global Typesetting graph\u2026"));
         QCOMPARE(application->hotkeys().selected(), 0);

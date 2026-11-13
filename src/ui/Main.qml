@@ -154,6 +154,74 @@ ApplicationWindow {
         else
             closeReview.review(result.rows)
     }
+    function openFromExplorer(path, newTab) {
+        const open = root.app.tabOfFile(root.shellWindow, path)
+        if (open >= 0) {
+            root.app.selectTab(open)
+            return
+        }
+        if (!newTab) {
+            const result = root.app.reviewOpen(path, true)
+            if (result.ok && !result.done) {
+                if (result.rows.length === 0)
+                    root.app.finishClose()
+                else
+                    closeReview.review(result.rows)
+            }
+        } else if (root.matroska.opensAsMatroska(path)) {
+            matroskaSubtitles.beginFile(path)
+        } else {
+            root.app.openInTab(path)
+        }
+    }
+    function openMediaFromExplorer(path, kind) {
+        if (kind === "video") {
+            tabCommands.openVideoFile(path)
+        } else if (kind === "audio") {
+            root.audio.openAudio(path)
+        } else if (kind === "keyframes") {
+            const problem = root.app.openKeyframesFile(path)
+            if (problem.length > 0)
+                root.notices.post("error", qsTr("Open keyframes"), problem)
+        } else if (kind === "timecodes") {
+            root.openTimecodes(path)
+        }
+    }
+    ExplorerModel {
+        id: explorerModel
+        folder: root.projectRoot
+        excludes: {
+            root.projectRevision
+            return root.app.explorerExcludes(root.shellWindow)
+        }
+        allFiles: root.app.settings.value("explorer.allFiles")
+        groupByName: root.app.settings.value("explorer.groupByName")
+        onAllFilesChanged: if (root.app.settings.value("explorer.allFiles") !== allFiles)
+                               root.app.settings.setValue("explorer.allFiles", allFiles)
+        onGroupByNameChanged: if (root.app.settings.value("explorer.groupByName") !== groupByName)
+                                  root.app.settings.setValue("explorer.groupByName", groupByName)
+    }
+    readonly property string projectRoot: {
+        root.projectRevision
+        return root.app.projectRoot(root.shellWindow)
+    }
+    onProjectRootChanged: root.followProject()
+    function followProject() {
+        if (!root.arrangementSettled)
+            return
+        if (root.projectRoot.length === 0) {
+            if (explorerDock.isOpen)
+                explorerDock.close()
+        } else if (!explorerDock.isOpen && root.workspaceLayout.preset === "Editing" && !root.layoutLocked) {
+            root.openAtFirstPlace(explorerDock)
+        }
+    }
+    function addExplorer() {
+        const grid = gridDock.isOpen && !gridDock.isFloating
+        const width = Math.max(Docking.minimumSize(explorerDock.uniqueName).width,
+                               Math.round((grid ? root.workspaceLayout.panelSize(gridDock).width : dockingArea.width) / 5))
+        dockingArea.addDockWidget(explorerDock, KDDW.KDDockWidgets.Location_OnLeft, grid ? gridDock : null, Qt.size(width, 0))
+    }
     function openChosenSubtitles(path) {
         if (root.matroska.opensAsMatroska(path))
             matroskaSubtitles.beginFile(path)
@@ -332,11 +400,14 @@ ApplicationWindow {
         editorDock.setAsCurrentTab()
         stylesDock.close()
         templateDock.close()
+        root.addExplorer()
+        if (root.projectRoot.length === 0)
+            explorerDock.close()
     }
 
     function nodeEffectsLayout() {
         for (const dock of [gridDock, editorDock, audioDock, originalDock, referenceDock, postprocessorDock, stylesDock,
-                            templateDock, timingDock, searchDock, automationDock, spellDock, logDock])
+                            templateDock, timingDock, searchDock, automationDock, spellDock, logDock, explorerDock])
             if (dock.isOpen)
                 dock.close()
         const width = dockingArea.width
@@ -512,12 +583,13 @@ ApplicationWindow {
     readonly property list<Item> builtInPanels: [videoPanel, audioPanel, originalPanel, editorPanel, gridPanel, referencePanel,
                                                  timingPanel, postprocessorPanel, searchPanel, automationPanel, spellPanel,
                                                  logPanel, stylesPanel, templatePanel, qcNotesPanel, reviewPanel,
-                                                 agentPanel, nodeGraphPanel, nodeInspectorPanel, nodeSourcesPanel]
+                                                 agentPanel, nodeGraphPanel, nodeInspectorPanel, nodeSourcesPanel,
+                                                 explorerPanel]
     readonly property var builtInDocks: [videoDock, audioDock, originalDock, editorDock, gridDock, referenceDock, timingDock,
                                          postprocessorDock, searchDock, automationDock, spellDock, logDock, stylesDock,
                                          templateDock, qcNotesDock].concat(root.review.on ? [reviewDock] : [])
                                          .concat(root.agent.on ? [agentDock] : [])
-                                         .concat([nodeGraphDock, nodeInspectorDock, nodeSourcesDock])
+                                         .concat([nodeGraphDock, nodeInspectorDock, nodeSourcesDock, explorerDock])
     property var pluginDocks: []
     readonly property var panels: Array.from(builtInPanels).concat(pluginDocks.map(d => d.panel))
     readonly property var dockList: builtInDocks.concat(pluginDocks)
@@ -918,6 +990,8 @@ ApplicationWindow {
             root.addTemplate()
         else if (dock === agentDock && !Docking.hasPlace(root.engineName("Agent")))
             root.addAgent()
+        else if (dock === explorerDock && !Docking.hasPlace(root.engineName("Explorer")))
+            root.addExplorer()
         else if (root.isPluginDock(dock) && !Docking.hasPlace(dock.uniqueName))
             root.addPluginDock(dock)
         else if (!Docking.hasPlace(dock.uniqueName))
@@ -3392,6 +3466,16 @@ ApplicationWindow {
             }
             MenuSeparator {}
             ShellMenuItem {
+                command: "GLOBAL_SHOW_EXPLORER"
+                help: qsTranslate("HikariSub.Explorer", "Files in the project folder")
+                id: showExplorerItem
+                iconRole: "explorer"
+                objectName: "showExplorer"
+                text: qsTranslate("HikariSub.Explorer", "Explorer")
+                enabled: !root.layoutLocked
+                onTriggered: if (!root.hotkeyGesture("GLOBAL_SHOW_EXPLORER")) root.showPanel(explorerDock)
+            }
+            ShellMenuItem {
                 iconRole: "log"
                 objectName: "logMenuItem"
                 action: Action {
@@ -4234,12 +4318,37 @@ ApplicationWindow {
         Component.onCompleted: Qt.callLater(() => dropAreaCpp = Docking.mainDropArea(dockingArea.uniqueName))
     }
 
+    property real homeInset: 0
+    function placeHomeBesideExplorer() {
+        if (!explorerDock.isOpen || !explorerPanel.visible || explorerPanel.Window.window !== root) {
+            homeInset = 0
+            return
+        }
+        const at = explorerPanel.mapToItem(dockingArea, 0, 0)
+        const right = at.x + explorerPanel.width
+        homeInset = at.x < 8 && right < dockingArea.width / 2 ? right : 0
+    }
+    Connections {
+        target: explorerPanel
+        function onWidthChanged() { Qt.callLater(root.placeHomeBesideExplorer) }
+        function onVisibleChanged() { Qt.callLater(root.placeHomeBesideExplorer) }
+    }
+    Connections {
+        target: explorerDock
+        function onIsOpenChanged() { Qt.callLater(root.placeHomeBesideExplorer) }
+    }
+    Connections {
+        target: dockingArea
+        function onWidthChanged() { Qt.callLater(root.placeHomeBesideExplorer) }
+    }
+
     HomePage {
         id: homePage
         objectName: "homePage"
         app: root.app
         shellWindow: root.shellWindow
         anchors.fill: dockingArea
+        anchors.leftMargin: root.homeInset
         z: 1.5
         visible: root.windowHome
         spaceAbove: documentTabBar.height
@@ -4278,7 +4387,7 @@ ApplicationWindow {
         anchors.fill: parent
         uniqueName: root.engineName("Classic")
         affinities: root.dockAffinities
-        enabled: !homePage.visible
+        enabled: !homePage.visible || root.homeInset > 0
 
         PanelDock {
             id: videoDock
@@ -7257,6 +7366,39 @@ ApplicationWindow {
         }
 
         PanelDock {
+            id: explorerDock
+            objectName: "explorerDock"
+            uniqueName: root.engineName("Explorer")
+            affinities: root.dockAffinities
+            title: qsTranslate("HikariSub.Explorer", "Explorer")
+            Panel {
+                id: explorerPanel
+                objectName: "explorerPanel"
+                dockName: root.engineName("Explorer")
+                minimumBodySize: explorerTool.minimumBodySize
+                anchors.fill: parent
+                title: qsTranslate("HikariSub.Explorer", "Explorer")
+                ExplorerPanel {
+                    id: explorerTool
+                    anchors.fill: parent
+                    focus: true
+                    model: explorerModel
+                    messages: root.messages
+                    onEscaped: root.focusPanel(gridPanel, Qt.OtherFocusReason)
+                    onOpenSubtitles: (path, newTab) => root.openFromExplorer(path, newTab)
+                    onOpenMedia: (path, kind) => root.openMediaFromExplorer(path, kind)
+                    onOpenProjectSettings: {
+                        root.openSettings()
+                        root.settingsWindow().projectTab = true
+                    }
+                    onOpenFolder: projectFolderDialog.show()
+                    onShowInFolder: path => root.app.showInFolder(path)
+                    onCopyPath: path => root.app.copyText(path)
+                }
+            }
+        }
+
+        PanelDock {
             id: logDock
             objectName: "logDock"
             uniqueName: root.engineName("Log")
@@ -7290,6 +7432,7 @@ ApplicationWindow {
             Docking.setPanelHeader(root.engineName("NodeGraph"), true, nodeGraphTool.toolbar)
             Docking.setPanelHeader(root.engineName("NodeSources"), true, nodeSourcesTool.toolbar)
             Docking.setPanelHeader(root.engineName("NodeInspector"), true, null)
+            Docking.setPanelHeader(root.engineName("Explorer"), true, explorerTool.toolbar)
             root.defaultLayout()
         }
     }
@@ -7307,6 +7450,7 @@ ApplicationWindow {
         root.workspaceLayout.buildsArrangement("Karaoke")
         root.workspaceLayout.restoreSaved()
         root.placeOriginal()
+        root.followProject()
         Docking.guardClose(root, root.admitClose)
         Docking.followLayoutMinimum(dockingArea.uniqueName)
     }
@@ -9635,7 +9779,7 @@ ApplicationWindow {
         GLOBAL_OPEN_STYLE_MANAGER: styleManagerItem, GLOBAL_OPEN_SUBS_RESAMPLE: resampleItem,
         GLOBAL_OPEN_FONT_COLLECTOR: fontCollectorItem,
         GLOBAL_SHOW_SHIFT_TIMES: showShiftTimesItem, GLOBAL_SHOW_TIMING_POSTPROCESSOR: showPostprocessorItem,
-        GLOBAL_SHOW_QC_NOTES: showQcNotesItem,
+        GLOBAL_SHOW_QC_NOTES: showQcNotesItem, GLOBAL_SHOW_EXPLORER: showExplorerItem,
         GLOBAL_SNAP_START_TO_PREVIOUS_KEYFRAME: snapStartToPreviousKeyframeItem,
         GLOBAL_SNAP_START_TO_NEXT_KEYFRAME: snapStartToNextKeyframeItem,
         GLOBAL_SNAP_END_TO_PREVIOUS_KEYFRAME: snapEndToPreviousKeyframeItem,

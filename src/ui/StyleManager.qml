@@ -1389,7 +1389,8 @@ DialogWindow {
                                 spacing: 8
                                 Label {
                                     text: catalogRow.modelData.name
-                                    color: catalogRow.modelData.hidden ? Theme.muted : Theme.text
+                                    color: catalogRow.highlighted ? catalogRow.palette.highlightedText
+                                         : catalogRow.modelData.hidden ? Theme.muted : Theme.text
                                     font.italic: catalogRow.modelData.hidden
                                     elide: Text.ElideRight
                                     Layout.fillWidth: true
@@ -1398,6 +1399,7 @@ DialogWindow {
                                     visible: catalogBox.tiered
                                     tier: catalogRow.modelData.tier
                                     enabled: !catalogRow.modelData.hidden
+                                    onAccent: catalogRow.highlighted
                                 }
                             }
                         }

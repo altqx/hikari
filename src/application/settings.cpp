@@ -37,6 +37,7 @@ constexpr std::string_view kProjectable[] = {
     "scriptProperties.askForChange", "translation.autoMoveTagsFromOriginal", "translation.glossary",
     "translation.translator",        "translation.reviewer",         "ai.exclude",
     "translation.sourceLanguage",    "translation.targetLanguage",   "export.format",
+    "explorer.exclude",
 };
 // Projectable ids whose Project value waits for trust.
 constexpr std::string_view kWidening[] = {"translation.translator", "translation.reviewer"};
@@ -310,6 +311,9 @@ const std::vector<SettingDefinition> &definitions()
         // Controls the row shows: "playAround", the plays, "autoCommit", "nextCommit",
         // "goto", "sliders".
         {"audio.panelControls", "", StringList, Profile, Mapped, false, std::vector<std::string>{"playAround"}},
+        {"explorer.exclude", "", StringList, Profile, Mapped, false, std::vector<std::string>{"*.lwi", "*.ffindex"}},
+        {"explorer.allFiles", "", Bool, Profile, Mapped, false, false},
+        {"explorer.groupByName", "", Bool, Profile, Mapped, false, false},
         // On: so|ma|t|ta; off: so|mat|ta.
         {"audio.karaokeDoubleConsonantApart", "", Bool, Profile, Mapped, false, false},
         // On: กิ|น; off: a Thai word is one syllable.

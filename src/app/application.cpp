@@ -861,6 +861,11 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         },
         [this] {
             return QString::fromStdString(activeViews().settings->settings().text("translation.targetLanguage"));
+        },
+        [this](application::DocumentId document) {
+            return QString::fromStdString(views(m_workspace.window(document).value_or(m_workspace.activeWindow()))
+                                              .settings->settings()
+                                              .text("translation.sourceLanguage"));
         }});
     const auto hideAiCommands = [this] {
         m_hotkeys->setHidden([this](int id) { return !m_ai->on() && application::aiCommand(id); });
@@ -2388,12 +2393,16 @@ std::optional<application::DocumentId> Application::publish(application::StagedO
     return *id;
 }
 
+bool Application::targetUntouchedUntitled() const
+{
+    const auto target = m_workspace.editingTarget();
+    auto *session = target ? m_files->session(*target) : nullptr;
+    return session && targetUntitled() && !session->isDirty() && session->historySize() == 1;
+}
+
 bool Application::openFile(const QString &path)
 {
-    const auto previous = m_workspace.editingTarget();
-    auto *previousSession = previous ? m_files->session(*previous) : nullptr;
-    const bool emptyTab = previousSession && targetUntitled() && !previousSession->isDirty() &&
-                          previousSession->historySize() == 1;
+    const bool emptyTab = targetUntouchedUntitled();
     const auto id = open(path);
     if (!id)
         return false;
@@ -3341,7 +3350,7 @@ void Application::openUserFolder()
     backends::desktop::openUrl(QUrl::fromLocalFile(m_userFolder));
 }
 
-QVariantMap Application::reviewOpen(const QString &path)
+QVariantMap Application::reviewOpen(const QString &path, bool here)
 {
     auto staged = m_files->stageOpen({QFileInfo(path).absoluteFilePath().toStdString()});
     if (!staged) {
@@ -3349,7 +3358,7 @@ QVariantMap Application::reviewOpen(const QString &path)
         m_log->notice(ui::LogController::Error, QCoreApplication::translate("HikariSub.Video", "Open subtitles"), problem);
         return {{QStringLiteral("ok"), false}, {QStringLiteral("problem"), problem}, {QStringLiteral("rows"), QVariantList()}};
     }
-    if (!m_openFromVideo && m_settings->boolean("subtitles.openInNewTab") && !targetUntitled()) {
+    if (!here && !m_openFromVideo && m_settings->boolean("subtitles.openInNewTab") && !targetUntitled()) {
         const bool opened = openInNewTab(std::move(*staged), path);
         return {{QStringLiteral("ok"), opened}, {QStringLiteral("problem"), QString()},
                 {QStringLiteral("rows"), QVariantList()}, {QStringLiteral("done"), true}};

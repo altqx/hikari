@@ -73,6 +73,8 @@ public:
         std::function<QString(application::DocumentId)> projectFolder = {};
         /// The active window's `translation.targetLanguage`; empty uses `ai.inline.translateTo`.
         std::function<QString()> targetLanguage = {};
+        /// The Document's window's `translation.sourceLanguage`; empty lets the models detect it.
+        std::function<QString(application::DocumentId)> sourceLanguage = {};
     };
 
     static constexpr const char *kActionsSetting = "ai.inline.actions";

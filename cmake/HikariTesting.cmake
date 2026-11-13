@@ -35,6 +35,7 @@ set(HIKARI_XVFB_SUITES
     hikari_ui_popup_kit_tests
     hikari_ui_dialog_frame_tests
     hikari_ui_theme_startup_tests # the popups' palette at start
+    hikari_ui_contrast_tests # an X11 dialog shown without focus kept the light palette
     hikari_ui_window_frame_tests
     hikari_ui_title_bar_tests
     hikari_ui_docking_qualification_tests # floating panels' windows

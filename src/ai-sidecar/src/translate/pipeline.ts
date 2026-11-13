@@ -18,6 +18,7 @@ export type PipelineRole = "translator" | "reviewer";
 
 export interface TranslateOptions {
     language: string;
+    sourceLanguage?: string;
     models: Record<PipelineRole, SessionModel>;
     lines: TranslateLine[];
     /** Already translated Lines before the run, for continuity. */
@@ -171,7 +172,7 @@ export class TranslationPipeline {
         const step = Math.max(1, Math.ceil(lines.reduce((n, l) => n + tokensOf(l.text), 0) / kPrepassSampleTokens));
         const sample = lines.filter((_, i) => i % step === 0);
         const speakers = [...new Set(lines.flatMap((l) => (l.speaker ? [l.speaker] : [])))];
-        const answer = await this.ask("translator", prepassSystem(this.options.language),
+        const answer = await this.ask("translator", prepassSystem(this.options.language, this.options.sourceLanguage),
             { SYNOPSIS: this.reference.synopsis || undefined, SPEAKERS: speakers, LINES: sourceLines(sample) });
         if (!answer)
             return;
@@ -194,7 +195,7 @@ export class TranslationPipeline {
 
     private async attempt(chunk: TranslateLine[], feedback: Finding[]): Promise<Attempt> {
         const reference = scoped(this.reference, chunk);
-        const answer = await this.ask("translator", translatorSystem(this.options.language), {
+        const answer = await this.ask("translator", translatorSystem(this.options.language, this.options.sourceLanguage), {
             REFERENCE: { ...reference, style: this.reference.styleNotes || undefined, examples: this.styleExamples() },
             PREVIOUS: this.previous,
             ...(feedback.length ? { FEEDBACK: feedback.map((f) => ({ id: f.key, issue: f.issue })) } : {}),
@@ -211,7 +212,7 @@ export class TranslationPipeline {
         };
         if (findings.length > 0)
             return result;
-        const review = await this.ask("reviewer", reviewerSystem(this.options.language), {
+        const review = await this.ask("reviewer", reviewerSystem(this.options.language, this.options.sourceLanguage), {
             REFERENCE: reference,
             PREVIOUS: this.previous,
             AUDIT: [],
@@ -292,7 +293,7 @@ export class TranslationPipeline {
         let checked = 0;
         for (const window of windows) {
             this.hooks.progress?.("coherence", checked, lines.length);
-            const answer = await this.ask("reviewer", coherenceSystem(this.options.language), {
+            const answer = await this.ask("reviewer", coherenceSystem(this.options.language, this.options.sourceLanguage), {
                 REFERENCE: scoped(this.reference, window),
                 LINES: window.map((l) => ({ id: l.key, ...(l.speaker ? { speaker: l.speaker } : {}), source: l.text,
                     translation: this.translated.get(l.key)!.text })),
