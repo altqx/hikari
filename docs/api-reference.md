@@ -69,6 +69,8 @@ Version 1 of the Hikari API, generated from HikariSub's own registry: the same r
 | `typeset.check` | read | 1 | Renders one Line alone, with a proposed text, on its frame and compares its ink with a target. |
 | `typeset.apply` | write | 1 | Applies typeset Lines as one undo step after every one passes the render check; when one misses its target nothing is applied. |
 | `project.info` | read | 1 | The Project of the window the user works in, or null. |
+| `vcs.refs` | read | 1 | The branches, tags and recent commits of the git repository holding the Document, or the Project's. Plugins whose manifest asks for vcs.read only. |
+| `vcs.show` | read | 1 | The Document's file as a git branch, tag or commit has it. Plugins whose manifest asks for vcs.read only. |
 | `karaoke.syllables` | read | 1 | A Line's karaoke syllables as the templater reads them: text, tag, start and end in ms. |
 | `karaoke.split` | read | 1 | Splits Lines without \k tags into syllables as the audio editor's karaoke mode does, the time shared by character; Lines that already have \k tags keep them. |
 | `karaoke.time` | read | 1 | Times a Line's existing syllables: each syllable's end in ms, in order; the \k tags are rewritten. |
@@ -1276,7 +1278,7 @@ Writes a plugin from the authoring guide's template into the AI plugins folder a
 | `version` | string |  | Semantic version; default 0.1.0. At most 64 characters. |
 | `description` | string |  | At most 1000 characters. |
 | `tier` | one of `restricted` or `unrestricted` |  | restricted (default) runs in the sandbox without ffi, io, os and debug; unrestricted needs the user's full trust at install. |
-| `permissions` | object |  | The manifest's permissions: documents.all, network {hosts, reason}, files. |
+| `permissions` | object |  | The manifest's permissions: documents.all, network {hosts, reason}, files, vcs.read. |
 | `commands` | array of objects | yes | 1 to 256 items. |
 | `commands[].id` | string | yes | `pattern`: `"^[a-z0-9]+(-[a-z0-9]+)*$"`. |
 | `commands[].title` | string | yes | 1 to 80 characters. |
@@ -1595,6 +1597,61 @@ The Project of the window the user works in, or null.
 | Field | Type | Always | Meaning |
 | --- | --- | --- | --- |
 | `project` | [Project](#project) | yes |  |
+
+### `vcs.refs`
+
+Read. Since version 1.
+
+The branches, tags and recent commits of the git repository holding the Document, or the Project's. Plugins whose manifest asks for vcs.read only.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `document` | [DocumentId](#documentid) |  | Defaults to the active Document; an unsaved one gives the Project's repository. |
+| `limit` | integer |  | How many recent commits; 50 when left out. From 1 to 200. |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `root` | string | yes | The repository's work tree. |
+| `path` | string or null | yes | The Document's path in the repository, '/'-separated; null for the Project's. |
+| `head` | null or object | yes | null before the first commit. |
+| `branches` | array of objects | yes | At most 500, newest first. |
+| `branches[].name` | string | yes |  |
+| `branches[].commit` | string | yes |  |
+| `branches[].current` | boolean | yes |  |
+| `tags` | array of objects | yes | At most 500, newest first. |
+| `tags[].name` | string | yes |  |
+| `tags[].commit` | string | yes |  |
+| `commits` | array of objects | yes | The newest from HEAD. |
+| `commits[].commit` | string | yes |  |
+| `commits[].summary` | string | yes |  |
+| `commits[].author` | string | yes |  |
+| `commits[].time` | integer | yes | Seconds since 1970, when it was committed. |
+
+### `vcs.show`
+
+Read. Since version 1.
+
+The Document's file as a git branch, tag or commit has it. Plugins whose manifest asks for vcs.read only.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `ref` | string | yes | A branch, tag, commit or revision such as HEAD~2. 1 to 256 characters. `pattern`: `"^[A-Za-z0-9._/@{}~^][A-Za-z0-9._/@{}~^-]*$"`. |
+| `document` | [DocumentId](#documentid) |  | Defaults to the active Document. |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `ref` | string | yes |  |
+| `commit` | string | yes |  |
+| `path` | string | yes | The Document's path in the repository, '/'-separated. |
+| `text` | string | yes | The file at that commit, as UTF-8. |
 
 ### `karaoke.syllables`
 
