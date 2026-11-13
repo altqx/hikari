@@ -267,7 +267,7 @@ private slots:
     {
         userFolder = home.filePath(QStringLiteral("user"));
         start();
-        QCOMPARE(application->userFolder(), userFolder);
+        QCOMPARE(application->userFolder(), QDir::toNativeSeparators(userFolder));
         const QString mine = userFolder + QStringLiteral("/ai/skills");
         writeAll(mine + QStringLiteral("/signs/SKILL.md"), skillMd("Mine."));
         writeAll(mine + QStringLiteral("/typesetting/SKILL.md"), skillMd("Our way."));
