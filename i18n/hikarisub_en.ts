@@ -4,6 +4,13 @@
 <context>
     <name>HikariSub.Agent</name>
     <message numerus="yes">
+        <source>%1 · %n line(s)</source>
+        <translation>
+            <numerusform>%1 · %n line</numerusform>
+            <numerusform>%1 · %n lines</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
         <source>Show %n more</source>
         <translation>
             <numerusform>Show %n more</numerusform>
@@ -29,6 +36,41 @@
         <translation>
             <numerusform>Show the %n line</numerusform>
             <numerusform>Show all %n lines</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Show all %n files</source>
+        <translation>
+            <numerusform>Show the whole file</numerusform>
+            <numerusform>Show all %n files</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n sub-agent(s)</source>
+        <translation>
+            <numerusform>%n sub-agent</numerusform>
+            <numerusform>%n sub-agents</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n running</source>
+        <translation>
+            <numerusform>%n running</numerusform>
+            <numerusform>%n running</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n need(s) you</source>
+        <translation>
+            <numerusform>%n needs you</numerusform>
+            <numerusform>%n need you</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Estimate for %n sub-agent(s)</source>
+        <translation>
+            <numerusform>Estimate for %n sub-agent</numerusform>
+            <numerusform>Estimate for %n sub-agents</numerusform>
         </translation>
     </message>
 </context>
@@ -105,6 +147,13 @@
         <translation>
             <numerusform>This subtitle file wants to run %n script on your computer.</numerusform>
             <numerusform>This subtitle file wants to run %n scripts on your computer.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Reinstall %n script(s)</source>
+        <translation>
+            <numerusform>Reinstall %n script</numerusform>
+            <numerusform>Reinstall %n scripts</numerusform>
         </translation>
     </message>
 </context>
@@ -521,6 +570,20 @@
         </translation>
     </message>
     <message numerus="yes">
+        <source>The reviewer didn’t approve line %1, so it’s marked Unconfirmed.</source>
+        <translation>
+            <numerusform>The reviewer didn’t approve line %1, so it’s marked Unconfirmed.</numerusform>
+            <numerusform>The reviewer didn’t approve lines %1, so they’re marked Unconfirmed.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>The reviewer didn’t approve line %1. Check it before you use it.</source>
+        <translation>
+            <numerusform>The reviewer didn’t approve line %1. Check it before you use it.</numerusform>
+            <numerusform>The reviewer didn’t approve lines %1. Check them before you use them.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
         <source>%n line(s) weren’t sent.</source>
         <translation>
             <numerusform>%n line wasn’t sent.</numerusform>
@@ -740,6 +803,13 @@
         </translation>
     </message>
     <message numerus="yes">
+        <source>%n selected lines</source>
+        <translation>
+            <numerusform>%n selected line</numerusform>
+            <numerusform>%n selected lines</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
         <source>%n problems</source>
         <translation>
             <numerusform>%n problem</numerusform>
@@ -800,6 +870,13 @@
         </translation>
     </message>
     <message numerus="yes">
+        <source>%n file(s)</source>
+        <translation>
+            <numerusform>%n file</numerusform>
+            <numerusform>%n files</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
         <source>Connected · %n model(s)</source>
         <translation>
             <numerusform>Connected · %n model</numerusform>
@@ -811,6 +888,13 @@
         <translation>
             <numerusform>Not tested · %n model</numerusform>
             <numerusform>Not tested · %n models</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n skill(s) can’t be offered. Fix them in their folders, then read the folders again.</source>
+        <translation>
+            <numerusform>%n skill can’t be offered. Fix it in its folder, then read the folders again.</numerusform>
+            <numerusform>%n skills can’t be offered. Fix them in their folders, then read the folders again.</numerusform>
         </translation>
     </message>
     <message numerus="yes">
@@ -991,6 +1075,13 @@
         <translation>
             <numerusform>%n change</numerusform>
             <numerusform>%n changes</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%1: %n</source>
+        <translation>
+            <numerusform>%1: %n</numerusform>
+            <numerusform>%1: %n</numerusform>
         </translation>
     </message>
 </context>

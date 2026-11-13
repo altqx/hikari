@@ -3,10 +3,12 @@ import { Tiktoken } from "js-tiktoken/lite";
 import o200k from "js-tiktoken/ranks/o200k_base";
 
 import { kPlanTool } from "../../src/agent/session";
+import { TaskTools } from "../../src/agent/tasks";
+import { serverGroupDescription } from "../../src/mcp/client";
 import type { Request, ToolDefinition, Wire } from "../../src/providers/types";
 import { kReadSkillTool, Skills } from "../../src/skills/skills";
-import { kCatalogue } from "../../src/tools/catalogue";
-import { ToolSet, type HikariCalls } from "../../src/tools/toolset";
+import { kCatalogue, tool } from "../../src/tools/catalogue";
+import { ToolSet, type HikariCalls, type ToolSource } from "../../src/tools/toolset";
 import { WebSearch } from "../../src/tools/web";
 import { Harness, TestRelay } from "../providers/harness";
 import { data, sse } from "../providers/mock";
@@ -22,15 +24,34 @@ const kEnd: Record<Wire, string> = {
     gemini: data({ candidates: [{ content: { parts: [{ text: "ok" }] }, finishReason: "STOP" }] }),
 };
 
-function upFront(): ToolDefinition[] {
-    const tools = new ToolSet(kNoHa1, kCatalogue, [new WebSearch(new TestRelay(), () => "exa")]);
+function server(n: number): ToolSource {
+    const id = `server_${n}_with_a_long_id`;
+    return {
+        group: `mcp_${id}`,
+        description: serverGroupDescription(`A user's MCP server number ${n} with a name well past forty characters`),
+        tools: () => [tool(`${id}__lookup`, "Looks something up.", { type: "object", properties: {} }, "read", `mcp_${id}`)],
+        call: () => Promise.reject(new Error("not called")),
+    };
+}
+
+const kSources = {
+    thread: (): ToolSource[] => [new WebSearch(new TestRelay(), () => "exa")],
+    "root thread with 10 MCP servers": (): ToolSource[] => [new WebSearch(new TestRelay(), () => "exa"),
+        new TaskTools("t1", () => Promise.reject(new Error("not called"))), ...Array.from({ length: 10 }, (_, n) => server(n + 1))],
+};
+
+function upFront(sources: ToolSource[]): ToolDefinition[] {
+    const tools = new ToolSet(kNoHa1, kCatalogue, sources);
     return [...tools.list(), kPlanTool, kReadSkillTool].map((t) => ({ name: t.name, description: t.description ?? "", parametersJson: JSON.stringify(t.inputSchema) }));
 }
 
-test.each(Object.keys(kEnd) as Wire[])("the up-front tool block on %s stays within 5,000 tokens", async (wire) => {
+const kCases = (Object.keys(kEnd) as Wire[]).flatMap((wire) =>
+    (Object.keys(kSources) as (keyof typeof kSources)[]).map((sources): [Wire, keyof typeof kSources] => [wire, sources]));
+
+test.each(kCases)("the up-front tool block on %s stays within 5,000 tokens for a %s", async (wire, sources) => {
     const tokens = new Tiktoken(o200k);
     const request: Request = {
-        model: "m", tools: upFront(), webSearch: true,
+        model: "m", tools: upFront(kSources[sources]()), webSearch: true,
         messages: [{ author: "user", parts: [{ type: "text", text: "Hi" }] }],
     };
     h.mock.replies.push({ chunks: [kEnd[wire]] });

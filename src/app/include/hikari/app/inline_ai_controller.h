@@ -3,6 +3,7 @@
 #include "hikari/application/ai_inline.h"
 #include "hikari/application/ai_providers.h"
 #include "hikari/application/write_coordinator.h"
+#include "hikari/backends/ai_translation_run.h"
 #include "hikari/core/document.h"
 
 #include <QObject>
@@ -24,9 +25,6 @@ namespace hikari::application {
 class AiReview;
 class DocumentFiles;
 class Workspace;
-}
-namespace hikari::backends::ai {
-class InlineRun;
 }
 namespace hikari::ui {
 class SettingsStore;
@@ -53,6 +51,14 @@ class InlineAiController final : public QObject {
     Q_PROPERTY(QVariantMap notice READ notice NOTIFY runChanged)
 
 public:
+    /// The window's `translation.translator` and `translation.reviewer`, "<provider id>/<model>"; empty uses the role's
+    /// model. `waitingForTrust`: an untrusted Project sets one, so the user's models run instead.
+    struct ProjectModels {
+        QString translator;
+        QString reviewer;
+        bool waitingForTrust = false;
+    };
+
     struct Wiring {
         AiFeatures &ai;
         ui::SettingsStore &settings;
@@ -62,6 +68,13 @@ public:
         application::DocumentFiles &files;
         AgentController &agent;
         std::function<void(application::DocumentId, core::LineId)> select;
+        std::function<ProjectModels(application::DocumentId)> projectModels = {};
+        /// The Project folder of the Document's window; empty without one.
+        std::function<QString(application::DocumentId)> projectFolder = {};
+        /// The active window's `translation.targetLanguage`; empty uses `ai.inline.translateTo`.
+        std::function<QString()> targetLanguage = {};
+        /// The Document's window's `translation.sourceLanguage`; empty lets the models detect it.
+        std::function<QString(application::DocumentId)> sourceLanguage = {};
     };
 
     static constexpr const char *kActionsSetting = "ai.inline.actions";
@@ -79,6 +92,7 @@ public:
     QVariantMap ready() const;
     QVariantList actions() const;
     QString translateTo() const;
+    void projectChanged();
     QStringList recentInstructions() const;
     QVariantMap last() const;
     int maxCps() const;
@@ -132,6 +146,10 @@ private:
     std::optional<Picked> pick(const application::ai_inline::Ask &ask, application::DocumentId document,
                                std::vector<core::LineId> lines) const;
     bool launch(const QVariantMap &askMap, Picked picked, std::optional<std::pair<std::size_t, std::size_t>> span);
+    std::unique_ptr<backends::ai::LineRun> translationRun(std::vector<backends::ai::TranslationRun::Job> jobs,
+                                                          backends::ai::InlineRun::Wiring lines,
+                                                          const application::ai_inline::Ask &ask);
+    void writeProjectFiles();
     bool write(const std::vector<std::uint64_t> &keys);
     const core::Document *documentOf(application::DocumentId document) const;
     std::string mode() const;

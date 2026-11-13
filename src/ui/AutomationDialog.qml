@@ -85,9 +85,46 @@ DialogWindow {
         const changed = qsTr("Changed from the script’s %1.").arg(controller.scriptValueText(cell.controlIndex))
         return hint !== "" ? hint + " " + changed : changed
     }
-    function askDelete(name) {
+    function presetKey(row) {
+        return controller.hasProject ? row.tier + "_" + row.name : row.name
+    }
+    function transferPreset(name, from, move) {
+        const run = choices => move ? controller.movePreset(name, from, choices) : controller.copyPreset(name, from, choices)
+        const clashes = controller.presetClashes(name, from)
+        if (clashes.length === 0) {
+            run([])
+            return
+        }
+        clashReviewLoader.active = true
+        clashReviewLoader.item.review({
+            title: move ? qsTr("Move preset") : qsTr("Copy preset"),
+            text: from === "mine" ? qsTr("The project already has a preset named “%1”.").arg(name)
+                                  : qsTr("You already have a preset named “%1”.").arg(name),
+            rows: clashes.map(c => ({ name: c.name, difference: "", suggestion: c.suggestion })),
+            acceptText: count => move ? qsTr("Move") : qsTr("Copy"),
+            nameTaken: n => window.controller.presetRows.some(r => r.name === n && r.tier !== from)
+        }, results => {
+            if (results && window.controller.open)
+                run(results)
+        })
+    }
+    function placeTierMenus() {
+        const tierMenus = [copyToProjectMenu, copyToMineMenu, moveToProjectMenu, moveToMineMenu]
+        for (let i = presetsMenu.count - 1; i >= 0; --i)
+            if (presetsMenu.itemAt(i) && tierMenus.indexOf(presetsMenu.itemAt(i).subMenu) >= 0)
+                presetsMenu.takeMenu(i)
+        if (!controller.hasProject)
+            return
+        for (let i = 0; i < presetsMenu.count; ++i)
+            if (presetsMenu.itemAt(i) && presetsMenu.itemAt(i).subMenu === deleteMenu) {
+                tierMenus.forEach((m, k) => presetsMenu.insertMenu(i + 1 + k, m))
+                return
+            }
+    }
+    function askDelete(name) { askDeleteIn(name, "") }
+    function askDeleteIn(name, tier) {
         if (!messages) {
-            controller.deletePreset(name)
+            controller.deletePreset(name, tier)
             return
         }
         messages.ask({
@@ -99,7 +136,7 @@ DialogWindow {
                       { id: "cancel", text: qsTr("Cancel"), role: "reject", isDefault: true }]
         }, id => {
             if (id === "delete" && controller.open)
-                controller.deletePreset(name)
+                controller.deletePreset(name, tier)
         })
     }
     function pressEnterButton() {
@@ -244,20 +281,25 @@ DialogWindow {
             objectName: "dialogPresetsMenu"
             title: qsTr("Presets")
             iconRole: "dialog-memory"
+            onAboutToShow: window.placeTierMenus()
             Instantiator {
-                model: window.controller.presets
+                model: window.controller.presetRows
                 delegate: ShellMenuItem {
-                    required property string modelData
-                    objectName: "dialogPreset_" + modelData
-                    text: modelData
-                    onTriggered: window.fill(window.controller.presetValues(modelData))
+                    required property var modelData
+                    objectName: "dialogPreset_" + window.presetKey(modelData)
+                    text: modelData.name
+                    iconRole: window.controller.hasProject ? modelData.tier : ""
+                    detailText: !window.controller.hasProject ? "" : modelData.tier === "project" ? qsTr("Project") : qsTr("Mine")
+                    enabled: !modelData.hidden
+                    help: modelData.hidden ? qsTr("Hidden by the project’s copy") : ""
+                    onTriggered: window.fill(window.controller.presetValues(modelData.name, modelData.tier))
                 }
                 onObjectAdded: (index, object) => presetsMenu.insertItem(index, object)
                 onObjectRemoved: (index, object) => presetsMenu.removeItem(object)
             }
             MenuSeparator {
-                visible: window.controller.presets.length > 0
-                height: window.controller.presets.length > 0 ? implicitHeight : 0
+                visible: window.controller.presetRows.length > 0
+                height: window.controller.presetRows.length > 0 ? implicitHeight : 0
             }
             ShellMenuItem {
                 objectName: "dialogSavePreset"
@@ -273,12 +315,13 @@ DialogWindow {
                 iconRole: "delete"
                 enabled: window.controller.presets.length > 0
                 Instantiator {
-                    model: window.controller.presets
+                    model: window.controller.presetRows.filter(r => !r.hidden)
                     delegate: ShellMenuItem {
-                        required property string modelData
-                        objectName: "dialogDeletePreset_" + modelData
-                        text: modelData
-                        onTriggered: window.askDelete(modelData)
+                        required property var modelData
+                        objectName: "dialogDeletePreset_" + window.presetKey(modelData)
+                        text: modelData.name
+                        detailText: !window.controller.hasProject ? "" : modelData.tier === "project" ? qsTr("Project") : qsTr("Mine")
+                        onTriggered: window.askDeleteIn(modelData.name, modelData.tier)
                     }
                     onObjectAdded: (index, object) => deleteMenu.insertItem(index, object)
                     onObjectRemoved: (index, object) => deleteMenu.removeItem(object)
@@ -300,20 +343,23 @@ DialogWindow {
         showTitle: true
         initialFocus: presetName
         property bool saving: false
+        property string saveTier: ""
         readonly property string name: presetName.text.trim()
-        readonly property bool taken: window.controller.presets.indexOf(name) >= 0
+        readonly property bool taken: window.controller.presetRows.some(r => r.name === name && r.tier === presetSaveTier.tier)
         function openFor() {
             presetName.text = ""
             saving = false
             openAt(moreButton, window.contentItem)
         }
-        function save() {
+        function save() { saveTo(presetSaveTier.tier) }
+        function saveTo(tier) {
             if (name === "")
                 return
+            saveTier = tier
             saving = true
             keep()
         }
-        onKept: if (saving && name !== "") window.controller.savePreset(name, window.values())
+        onKept: if (saving && name !== "") window.controller.savePreset(name, window.values(), saveTier)
         TextField {
             id: presetName
             objectName: "presetName"
@@ -335,17 +381,57 @@ DialogWindow {
         RowLayout {
             spacing: 8
             Layout.alignment: Qt.AlignRight
-            PrimaryButton {
-                objectName: "presetSave"
-                text: savePopover.taken ? qsTr("Replace") : qsTr("Save")
-                enabled: savePopover.name !== ""
-                onClicked: savePopover.save()
+            TierSaveButton {
+                id: presetSaveTier
+                objectName: "presetSaveTier"
+                faceName: "presetSave"
+                listId: "dialogPresets"
+                settings: window.settings
+                hasProject: window.controller.hasProject
+                plainText: savePopover.taken ? qsTr("Replace") : qsTr("Save")
+                faceEnabled: savePopover.name !== ""
+                onSave: tier => savePopover.saveTo(tier)
             }
             Button {
                 objectName: "presetCancel"
                 text: qsTr("Cancel")
                 onClicked: savePopover.revert()
             }
+        }
+    }
+
+    TierPresetMenu { id: copyToProjectMenu; name: "dialogCopyToProjectMenu"; title: qsTr("Copy to project"); from: "mine"; move: false; host: window }
+    TierPresetMenu { id: copyToMineMenu; name: "dialogCopyToMineMenu"; title: qsTr("Copy to mine"); from: "project"; move: false; host: window }
+    TierPresetMenu { id: moveToProjectMenu; name: "dialogMoveToProjectMenu"; title: qsTr("Move to project"); from: "mine"; move: true; host: window }
+    TierPresetMenu { id: moveToMineMenu; name: "dialogMoveToMineMenu"; title: qsTr("Move to mine"); from: "project"; move: true; host: window }
+    component TierPresetMenu: ShellMenu {
+        id: tierMenu
+        required property string name
+        required property string from
+        required property bool move
+        required property var host
+        objectName: name
+        iconRole: move ? "move-to-tier" : "copy-to-tier"
+        enabled: tierMenu.host.controller.presetRows.some(r => r.tier === tierMenu.from)
+        Instantiator {
+            model: tierMenu.host.controller.presetRows.filter(r => r.tier === tierMenu.from)
+            delegate: ShellMenuItem {
+                required property var modelData
+                objectName: tierMenu.name + "_" + modelData.name
+                text: modelData.name
+                onTriggered: tierMenu.host.transferPreset(modelData.name, tierMenu.from, tierMenu.move)
+            }
+            onObjectAdded: (index, object) => tierMenu.insertItem(index, object)
+            onObjectRemoved: (index, object) => tierMenu.removeItem(object)
+        }
+    }
+    Loader {
+        id: clashReviewLoader
+        active: false
+        sourceComponent: ClashReview {
+            objectName: "dialogPresetClashReview"
+            dialogId: "presetClashes"
+            settings: window.settings
         }
     }
 

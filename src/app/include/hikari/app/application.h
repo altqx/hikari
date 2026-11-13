@@ -1,5 +1,7 @@
 #pragma once
 
+#include "hikari/app/ai_karaoke.h"
+#include "hikari/app/ai_plugins.h"
 #include "hikari/app/ai_scripts.h"
 #include "hikari/app/api_host.h"
 #include "hikari/app/automation_hotkeys_controller.h"
@@ -27,6 +29,7 @@
 #include "hikari/app/plugin_marketplace.h"
 #include "hikari/app/plugin_runtime.h"
 #include "hikari/app/user_folder.h"
+#include "hikari/app/automation_reset_notice.h"
 #include "hikari/app/project_windows.h"
 #include "hikari/core/ass_attachments.h"
 #include "hikari/core/conversion.h"
@@ -56,6 +59,8 @@
 #include "hikari/backends/harper_client.h"
 #include "hikari/backends/legacy_spelling.h"
 #include "hikari/backends/lua_node_helper.h"
+#include "hikari/backends/freetype_glyph_outlines.h"
+#include "hikari/backends/libass_font_service.h"
 #include "hikari/backends/libass_renderer.h"
 #include "hikari/backends/subtitle_renderer_selection.h"
 #include "hikari/backends/qt_general_player.h"
@@ -84,6 +89,7 @@
 #include "hikari/app/agent_controller.h"
 #include "hikari/app/inline_ai_controller.h"
 #include "hikari/app/review_controller.h"
+#include "hikari/app/skills_settings.h"
 #include "hikari/app/window_settings.h"
 #include "shell_controller.h"
 #include "video_controller.h"
@@ -242,6 +248,7 @@ public:
         QString userFolder;
         UserFolder::MoveReport userFolderMove;
         UserFolder::SeedReport userFolderSeed;
+        AutomationReset automationReset;
         // Empty: no plugins can be installed.
         PluginManager::Folders plugins;
         // Empty: no marketplace.
@@ -283,7 +290,8 @@ public:
     Q_INVOKABLE void cancelClose();
     // A failed open changes nothing. Returns {ok, problem, rows}: rows as reviewClose's;
     // ok without rows: call finishClose().
-    Q_INVOKABLE QVariantMap reviewOpen(const QString &path);
+    // here: open in the current tab even when subtitles.openInNewTab is on.
+    Q_INVOKABLE QVariantMap reviewOpen(const QString &path, bool here = false);
     Q_INVOKABLE QVariantMap reviewOpenUrl(const QUrl &url) { return reviewOpen(url.toLocalFile()); }
     // One file: {kind: "subtitles" (reviewOpen it), "video" (openVideoFile it),
     // "session", or "" when handled}. Several: {kind: "files", rows}, rows as
@@ -330,10 +338,30 @@ public:
     Q_INVOKABLE QStringList projectOverrides(int shellWindow) const;
     // Writes each value that differs from the window's to project.toml and removes `cleared` from it; false when a write failed.
     Q_INVOKABLE bool applyProjectSettings(int shellWindow, const QVariantMap &values, const QStringList &cleared);
-    // The Project is untrusted and holds scripts (.hikari/automation/) or a [plugins] table.
+    // The Project is untrusted and holds scripts (.hikari/automation/), a [plugins] table or AI keys it names.
     Q_INVOKABLE bool projectNeedsTrust(int shellWindow) const;
+    // Why projectNeedsTrust: "scripts" (scripts or plugin settings) and "keys".
+    Q_INVOKABLE QStringList projectTrustReasons(int shellWindow) const;
+    // Settings › Project › AI: {trusted, rows, valuesFound, credentialsExists, credentialsPath}. A row is {id, name,
+    // needsKey, known, env, entry, used, from}; used is "yours", "env", "file", "untrusted", "noFile", "notFound" or
+    // "noKey". No key is ever in it.
+    Q_INVOKABLE QVariantMap projectAiKeys(int shellWindow) const;
+    // `names` maps provider ids to {env, entry}; an empty pair removes the entry. False when a write failed.
+    Q_INVOKABLE bool applyProjectAiKeys(int shellWindow, const QVariantMap &names);
+    // .hikari/credentials.toml with an empty entry for each named one, and .hikari/.gitignore.
+    Q_INVOKABLE bool createProjectCredentials(int shellWindow);
+    Q_INVOKABLE void openProjectCredentials(int shellWindow);
+    // Providers (or "keys") whose key project.toml holds; the values are ignored.
+    Q_INVOKABLE QStringList projectKeyValuesFound(int shellWindow) const;
+    // Moves the keys project.toml holds into the credentials file, naming them there instead.
+    Q_INVOKABLE bool moveProjectKeysToCredentials(int shellWindow);
+    // The key the trusted Project open at `root` names for `providerId`.
+    std::optional<std::string> projectAiKey(const QString &root, std::string_view providerId) const;
     // Adds the window's Project folder to trust.folders, which applies the Project again.
     Q_INVOKABLE void trustProject(int shellWindow);
+    // {trusted, named: the ids its [plugins] table names, missing: those a trusted one enables that
+    // aren't installed}; empty without a Project.
+    Q_INVOKABLE QVariantMap projectPlugins(int shellWindow) const;
     Q_INVOKABLE void removeRecentProject(const QString &path) { m_projects->remove(path); }
     Q_INVOKABLE void removeMissingRecentProjects() { m_projects->removeMissing(); }
     // Close project: the rows to review before the window's tabs close; finishClose then closes
@@ -344,8 +372,15 @@ public:
     Q_INVOKABLE bool reopenProjectTabs(int shellWindow);
     // The toast for a tab moved into `shellWindow`; "" when that window has no Project.
     Q_INVOKABLE QString projectMoveText(int shellWindow) const;
+    // [explorer] exclude as the window's Project and the user set it.
+    Q_INVOKABLE QStringList explorerExcludes(int shellWindow) const;
+    // The index in windowTabs(shellWindow) of the tab saved at `path`; -1 when none is.
+    Q_INVOKABLE int tabOfFile(int shellWindow, const QString &path) const;
+    // Opens `path` in a new current tab, or in the current tab while it is an untouched Untitled one.
+    Q_INVOKABLE bool openInTab(const QString &path);
     QString projectOf(int shellWindow) const { return m_projects->root(shellWindow); }
     std::optional<api::ProjectState> activeProject() const;
+    static std::vector<std::string> projectAiExclude(const std::string &root);
     ProjectWindows &projects() { return *m_projects; }
     // "modified" when the target's file is newer than when last read or written;
     // "removed" once when it is gone (the Document becomes unsaved).
@@ -552,6 +587,8 @@ public:
     Q_INVOKABLE QString applyLayerBuilders(const QVariantMap &options);
     // With the options the dialog last built with; {ok, text}.
     Q_INVOKABLE QVariantMap repeatLayerBuilders();
+    // Hands the selected Lines to the window's node effects as a typesetting graph's targets.
+    Q_INVOKABLE bool targetTypesettingGraph();
     // choice 1 sets the video's value, 2 (missingLayoutRes) the PlayRes; false when the question is stale.
     Q_INVOKABLE bool answerVideoProperty(const QVariantMap &question, int choice);
     // The question's setting then does what `choice` did: 0 leaves things as they are.
@@ -591,8 +628,9 @@ public:
     // {word, start, end, suggestions}; empty when none.
     Q_INVOKABLE QVariantMap editorMisspellAt(int role, int position);
     Q_INVOKABLE bool replaceEditorMisspell(int role, int position, const QString &replacement);
-    Q_INVOKABLE bool addEditorWord(const QString &word);
-    // options: {ignoreComments, ignoreUpperCase}. Each returns {found, available, line,
+    // `project`: into the window's Project dictionary.txt instead of the user's.
+    Q_INVOKABLE bool addEditorWord(const QString &word, bool project = false);
+    // options: {ignoreComments, ignoreUpperCase, project (Add to dictionary's tier)}. Each returns {found, available, line,
     // before, after, word, suggestions, replacement, changed, problem, unchanged,
     // restarted}: found false: no errors; available false: no dictionary; line: the
     // Grid's number; unchanged: the action did nothing; restarted: the Line changed since
@@ -627,7 +665,7 @@ public:
     Q_INVOKABLE void setGrammarGroup(int group, bool on);
     // {id, name, description, rules}.
     Q_INVOKABLE QVariantList grammarGroups() const;
-    Q_INVOKABLE bool addGrammarWord(const QString &word);
+    Q_INVOKABLE bool addGrammarWord(const QString &word, bool project = false);
     // Each returns {on, walking, done, checked, total, count, index (1-based among
     // count), found, line, groupName, message, before, text, after, suggestions,
     // replacement, word, problem}; found false with done: no findings.
@@ -638,7 +676,7 @@ public:
     Q_INVOKABLE QVariantMap grammarWalkReplace(const QString &replacement);
     Q_INVOKABLE QVariantMap grammarWalkIgnore();
     Q_INVOKABLE QVariantMap grammarWalkIgnoreRule();
-    Q_INVOKABLE QVariantMap grammarWalkAddWord();
+    Q_INVOKABLE QVariantMap grammarWalkAddWord(bool project = false);
     Q_INVOKABLE void closeGrammarWalk(int shellWindow);
     // {rows, unlisted}: a row for each of the first core::kListedProblems ({document,
     // line (ids), number (the Grid's 1-based row), check, detail}), unlisted the rest.
@@ -699,6 +737,15 @@ public:
     // The keys the next save of `id` writes while askForChange is on; none skips them.
     Q_INVOKABLE void approveScriptInfo(qulonglong id, const QStringList &keys);
     Q_INVOKABLE bool shiftTranslation(int mode);
+    Q_INVOKABLE bool changeAlignment(int an);
+    // edge: 0 left, 1 centre, 2 right, 3 top, 4 middle, 5 bottom; grid.alignToVideoFrame picks the reference.
+    Q_INVOKABLE bool alignLines(int edge);
+    Q_INVOKABLE bool distributeLines(bool vertical);
+    Q_INVOKABLE bool positionToMargins();
+    Q_INVOKABLE bool marginsToPosition();
+    Q_INVOKABLE bool phantom(bool keepEnd);
+    // tag: 0 blur, 1 bord, 2 shad, 3 alpha, 4 an, 5 fsp.
+    Q_INVOKABLE bool cycleTag(int tag, bool back);
     Q_INVOKABLE bool makeGroups();
     // description: the id of the group's description Line.
     Q_INVOKABLE bool toggleGroup(qulonglong description);
@@ -721,8 +768,10 @@ public:
     // shownOnly: only those the filter shows.
     Q_INVOKABLE int selectedLineCount(bool shownOnly = false) const;
     // columns: bits OR'ed; the choice is remembered.
-    Q_INVOKABLE bool copyColumns(int columns);
-    Q_INVOKABLE bool pasteColumns(int columns);
+    // tagNames: the comma list of the NamedTags bit ("\blur, \3c").
+    Q_INVOKABLE bool copyColumns(int columns, const QString &tagNames = {});
+    Q_INVOKABLE bool pasteColumns(int columns, const QString &tagNames = {});
+    Q_INVOKABLE QString columnTagNames() const;
     void setChangeActiveOnSelection(bool on) { m_settings->set("grid.changeActiveOnSelection", on); }
 
     Q_PROPERTY(hikari::ui::SettingsStore *settings READ settingsStore CONSTANT)
@@ -855,6 +904,7 @@ public:
     AutomationShell &automation() { return *m_automation; }
     // Runs node effects' Lua nodes in their own sandboxed helper, started on first use.
     application::LuaNodePort &luaNodes();
+    application::shape::GlyphOutlinePort &glyphOutlines();
     AutomationHotkeysController &automationHotkeys() { return *m_automationHotkeys; }
     SettingsImportController &settingsImport() { return *m_settingsImport; }
     HotkeysController &hotkeys() { return *m_hotkeys; }
@@ -862,6 +912,7 @@ public:
     Analytics &analytics() { return *m_analytics; }
     DiscordPresence &presence() { return *m_presence; }
     StarPrompt &starPrompt() { return *m_starPrompt; }
+    AutomationResetNotice &automationReset() { return *m_automationReset; }
     CrashReports &crashReports() { return *m_crashReports; }
     WhatsNew &whatsNew() { return *m_whatsNew; }
     StyleManagerController &styleManager() { return *m_styleManager; }
@@ -912,6 +963,7 @@ public:
     AiSettings *aiSettings() const { return m_aiSettings.get(); }
     ReviewController *review() const { return m_review.get(); }
     AgentController *agent() const { return m_agent.get(); }
+    SkillsSettings *skillsSettings() const { return m_skillsSettings.get(); }
     InlineAiController *inlineAi() const { return m_inlineAi.get(); }
     Q_PROPERTY(hikari::app::PluginManager *pluginManager READ pluginManager CONSTANT)
     PluginManager *pluginManager() const { return m_pluginManager.get(); }
@@ -1112,7 +1164,7 @@ private:
     application::LineVisible actionLines(const application::EditSession &session) const;
     application::ShiftContext shiftContext(application::LegacyTimebase &timebase) const;
     application::ShiftTimesSettings shiftRunSettings(const QString &tool) const;
-    void rememberColumns(bool paste, int columns);
+    void rememberColumns(bool paste, int columns, const QString &tagNames);
     void protectReference();
     void refreshViews();
     void refreshVideo();
@@ -1153,6 +1205,7 @@ private:
     std::optional<PendingFiles> m_pendingFiles;
     void applyFiles(PendingFiles files, bool skipFirst);
     bool openInNewTab(application::StagedOpen staged, const QString &path);
+    bool targetUntouchedUntitled() const;
     PendingFiles stageFiles(const QStringList &files);
     bool targetUntouched() const;
     application::GridSelection gridSelection() const;
@@ -1289,12 +1342,16 @@ private:
     std::unique_ptr<AutomationShell> m_automation;
     QString m_luaHelper;
     std::unique_ptr<backends::LuaNodeHelper> m_luaNodes;
+    std::unique_ptr<backends::LibassFontService> m_glyphFonts;
+    std::unique_ptr<backends::FreetypeGlyphOutlines> m_glyphOutlines;
     std::optional<QVariantMap> m_layerPreview;
     std::map<core::LineId, std::u8string> m_interpolationPreview;
     std::unique_ptr<AutomationHotkeysController> m_automationHotkeys;
     // MUST KILL: must be declared after m_automationHotkeys, which it holds a reference to.
     std::unique_ptr<HotkeysController> m_hotkeys;
     std::unique_ptr<AiScripts> m_aiScripts;
+    std::unique_ptr<AiKaraoke> m_aiKaraoke;
+    std::unique_ptr<AiPlugins> m_aiPlugins;
     std::unique_ptr<ApiHost> m_apiHost;
     std::unique_ptr<AiFeatures> m_ai;
     std::unique_ptr<AiMcp> m_aiMcp;
@@ -1302,6 +1359,7 @@ private:
     std::unique_ptr<AiSettings> m_aiSettings;
     std::unique_ptr<ReviewController> m_review;
     std::unique_ptr<AgentController> m_agent;
+    std::unique_ptr<SkillsSettings> m_skillsSettings;
     std::unique_ptr<InlineAiController> m_inlineAi;
     std::unique_ptr<PluginManager> m_pluginManager;
     std::unique_ptr<PluginMarketplace> m_pluginMarketplace;
@@ -1313,6 +1371,7 @@ private:
     std::unique_ptr<StarPrompt> m_starPrompt;
     QString bundledScriptName(const QString &path) const;
     std::unique_ptr<WhatsNew> m_whatsNew;
+    std::unique_ptr<AutomationResetNotice> m_automationReset;
     std::unique_ptr<StyleManagerController> m_styleManager;
     std::unique_ptr<FontCollectorController> m_fontCollector;
     std::unique_ptr<AlignToVideoController> m_alignToVideo;
@@ -1439,6 +1498,8 @@ private:
     };
     std::map<int, ProjectFonts> m_projectFonts;
     void loadProjectFonts(int shellWindow);
+    std::map<int, std::optional<plugins::ProjectPlugins>> windowPlugins() const;
+    void projectScriptsAndPluginsChanged();
     void subtitleFontsChanged();
     bool setVideoFonts(std::optional<application::DocumentId> document);
     std::vector<std::pair<std::shared_ptr<const std::vector<std::byte>>, std::vector<std::string>>> m_leasedFontNames;
@@ -1501,6 +1562,7 @@ private:
     bool projectTrusted(const QString &root) const;
     void applyWindowProject(int shellWindow);
     QString projectFontFolder(int shellWindow) const;
+    std::optional<std::filesystem::path> honyaFolderOf(application::DocumentId document) const;
     application::Settings &windowSettings(int shellWindow);
     const application::Settings &windowSettings(int shellWindow) const;
     QString m_settingsFile;
@@ -1509,6 +1571,7 @@ private:
     void reportSettingsFiles();
     void noteRemovedRules();
     void convertListFiles();
+    void applyProjectTierFiles(int shellWindow, const QString &root);
     std::map<std::uint64_t, QDateTime> m_fileTimes;
     std::set<std::uint64_t> m_removedNoticed;
     int m_copyColumns = 0;
@@ -1518,6 +1581,8 @@ private:
     application::SpellChecker *startedSpellChecker(int shellWindow);
     application::SpellChecker *anySpellChecker() const;
     void userWordsChanged(const application::SpellChecker *by);
+    void projectWordsChanged(const std::filesystem::path &file, const application::SpellChecker *by);
+    QString projectDictionary(int shellWindow) const;
     void restartSpellChecker();
     void spellingRefresh();
     std::optional<std::u16string> editorRaw(int role) const;
@@ -1530,10 +1595,10 @@ private:
         // MUST KILL: set on first use even with spelling off; turning spelling on doesn't reset it.
         bool started = false;
     };
-    // By dictionary language; windows on one language share a checker.
+    // By dictionary language and Project folder; windows on both the same share a checker.
     std::map<QString, SpellSlot> m_spellCheckers;
     std::vector<std::filesystem::path> m_spellingFolders;
-    SpellSlot *spellSlot(const QString &language);
+    SpellSlot *spellSlot(const QString &language, const QString &projectRoot = {});
     // MUST KILL: the editor keeps the toggle's value after a failed start unless the Project sets it
     bool editorSpellingOn() const;
     application::SpellingText m_spellingText;
@@ -1587,6 +1652,7 @@ private:
     void grammarChecked(quint64 ticket, const QList<backends::GrammarFinding> &findings);
     void grammarFailed(const QString &message);
     void syncGrammarWords();
+    void recheckGrammar();
     const GrammarCheck *editorGrammarCheck(int role) const;
     core::SubtitleFormat editorFormat() const;
     std::optional<std::pair<int, int>> fieldSpan(int role, const core::grammar::CheckedText &text, int start,

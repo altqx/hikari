@@ -145,7 +145,8 @@ std::vector<NodeSpec> makeCatalogue()
                  {field("fx", FieldKind::Text, Json(""), "The inline-fx name; empty: units without one.")}});
     c.push_back({"units.info", "units",
                  "What the karaoke templater's $variables give for the current unit and its Line, rounded as the "
-                 "templater rounds them. Times of a syllable are from its Line's start.",
+                 "templater rounds them. Times of a syllable are from its Line's start. line_alignment is the "
+                 "Line's first \\an, or its Style's alignment.",
                  {},
                  {port("text", Text),          port("i", Number),           port("n", Number),
                   port("start", Time),         port("end", Time),           port("duration", Time),
@@ -161,7 +162,7 @@ std::vector<NodeSpec> makeCatalogue()
                   port("style_scale_x", Number), port("style_scale_y", Number), port("style_spacing", Number),
                   port("style_angle", Number), port("style_outline", Number), port("style_shadow", Number),
                   port("style_alignment", Number), port("style_primary", Colour), port("style_secondary", Colour),
-                  port("style_outline_colour", Colour), port("style_back", Colour)},
+                  port("style_outline_colour", Colour), port("style_back", Colour), port("line_alignment", Number)},
                  {}});
 
     c.push_back({"values.number", "values", "A number.", {}, {port("value", Number)},
@@ -184,12 +185,12 @@ std::vector<NodeSpec> makeCatalogue()
     c.push_back(std::move(chooseSpec));
 
     c.push_back({"math.calculate", "math",
-                 "Arithmetic in doubles, as Lua does it. modulo is a - floor(a/b)*b; round is floor(a + 0.5). "
-                 "One-input operations use a.",
+                 "Arithmetic in doubles, as Lua does it. modulo is a - floor(a/b)*b; round is floor(a + 0.5); "
+                 "sine and cosine take a in degrees and round to millionths. One-input operations use a.",
                  {port("a", Number), port("b", Number)},
                  {port("result", Number)},
                  {choice("op", {"add", "subtract", "multiply", "divide", "modulo", "power", "minimum", "maximum",
-                                "floor", "ceil", "round", "absolute", "negate"},
+                                "floor", "ceil", "round", "absolute", "negate", "sine", "cosine"},
                          "The operation."),
                   field("a", FieldKind::Number, Json(0), "The first operand."),
                   field("b", FieldKind::Number, Json(0), "The second operand.")}});
@@ -289,6 +290,18 @@ std::vector<NodeSpec> makeCatalogue()
     c.push_back({"drawings.shape", "drawings", "A vector drawing.", {}, {port("drawing", Drawing)},
                  {field("shape", FieldKind::Text, Json("m 0 0 l 10 0 10 10 0 10"), "The drawing commands."),
                   atLeast(field("scale", FieldKind::Integer, Json(1), "The \\p scale."), 1)}});
+    c.push_back({"drawings.text", "drawings",
+                 "The text (unwired, the unit's own) drawn in its Line's Style font, at \\p1 from the text's top "
+                 "left, as Yutils' text_to_shape draws it. width and height are the text's.",
+                 {port("text", Text)},
+                 {port("drawing", Drawing), port("width", Number), port("height", Number)},
+                 {}});
+    c.push_back({"drawings.combine", "drawings",
+                 "a and b combined, each filled as libass fills it: unite, subtract (b taken away from a), intersect, "
+                 "or exclude (what only one of them covers). Each one's \\p scale is kept; the result is at \\p1.",
+                 {port("a", Drawing), port("b", Drawing)},
+                 {port("drawing", Drawing)},
+                 {choice("op", {"unite", "subtract", "intersect", "exclude"}, "How to combine them.")}});
 
     c.push_back({"text.join", "text",
                  "The units of the current Line joined: each one's tags as an override block, then its text "

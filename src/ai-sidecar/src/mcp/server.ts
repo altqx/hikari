@@ -1,6 +1,7 @@
 import { RpcError } from "../rpc";
+import { kReadSkillTool, Skills } from "../skills/skills";
 import { kCatalogue, type Catalogue } from "../tools/catalogue";
-import { ToolSet, type HikariCalls } from "../tools/toolset";
+import { ToolSet, type HikariCalls, type ToolSource } from "../tools/toolset";
 import { httpStatus, McpError } from "./errors";
 import { Resources } from "./resources";
 
@@ -17,7 +18,7 @@ export const kMeta = {
 
 const kInstructions = "Tools and resources for the subtitle Documents open in HikariSub. documents_list lists them; "
     + "lines_find and lines_list read their Lines; hikari://documents/<id>/lines, /styles and /info hold each "
-    + "Document's state.";
+    + "Document's state. read_skill, when listed, reads skills: guidance for kinds of work that grants no permission.";
 
 /** The Streamable HTTP headers that must agree with the message. */
 export interface HttpHeaders {
@@ -40,6 +41,7 @@ export interface ServerInfo {
 
 /** The calls one connection's tools make into HA1, which Qt runs as that connection's caller. */
 export type CallsFor = (connection: string, client: () => string | undefined) => HikariCalls;
+export type SkillsFor = (calls: HikariCalls) => Skills;
 
 type Id = string | number;
 
@@ -50,7 +52,10 @@ class Failure extends RpcError {
 }
 
 interface Connection {
+    calls: HikariCalls;
     tools: ToolSet;
+    /** Looked up again on each tools/list, so read_skill reads what the list offered. */
+    skills?: Skills;
     resources: Resources;
     client?: string;
     running: Set<Id>;
@@ -97,7 +102,9 @@ export class McpServer {
     private readonly connections = new Map<string, Connection>();
 
     constructor(private readonly callsFor: CallsFor, private readonly info: ServerInfo,
-        private readonly catalogue: () => Catalogue = () => kCatalogue) {}
+        private readonly catalogue: () => Catalogue = () => kCatalogue,
+        private readonly sources: () => readonly ToolSource[] = () => [],
+        private readonly skillsFor: SkillsFor = (calls) => new Skills(calls)) {}
 
     async message(connection: string, text: string, http?: HttpHeaders): Promise<Answer> {
         let message: unknown;
@@ -150,7 +157,7 @@ export class McpServer {
         let state = this.connections.get(name);
         if (!state) {
             const calls = this.callsFor(name, () => state!.client);
-            state = { tools: new ToolSet(calls, this.catalogue()), resources: new Resources(calls), running: new Set(), cancelled: new Set() };
+            state = { calls, tools: new ToolSet(calls, this.catalogue(), this.sources), resources: new Resources(calls), running: new Set(), cancelled: new Set() };
             this.connections.set(name, state);
         }
         return state;
@@ -225,11 +232,16 @@ export class McpServer {
         switch (method) {
         case "ping":
             return {};
-        case "tools/list":
+        case "tools/list": {
             this.firstPage(params);
-            return { tools: state.tools.list(true) };
+            state.skills = this.skillsFor(state.calls);
+            const skill = await state.skills.tool();
+            return { tools: [...state.tools.list(true), ...(skill ? [skill] : [])] };
+        }
         case "tools/call": {
             const name = params?.name;
+            if (name === kReadSkillTool.name)
+                return { ...await this.readSkill(state, params?.arguments) };
             if (typeof name !== "string" || !state.tools.has(name))
                 throw new Failure(McpError.invalidParams, `Unknown tool: ${String(name)}`);
             return { ...await state.tools.call(name, params?.arguments) };
@@ -249,6 +261,13 @@ export class McpServer {
         default:
             throw new Failure(McpError.methodNotFound, `Method not found: ${method}`);
         }
+    }
+
+    private async readSkill(state: Connection, args: unknown) {
+        state.skills ??= this.skillsFor(state.calls);
+        if (!await state.skills.tool())
+            throw new Failure(McpError.invalidParams, `Unknown tool: ${kReadSkillTool.name}`);
+        return state.skills.read(isObject(args) ? args : {});
     }
 
     private async read(state: Connection, uri: string) {

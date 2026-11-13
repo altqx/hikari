@@ -638,7 +638,7 @@ export type AudioPeaksResult = {
 
 /** The files and folders the user granted this caller; with folder, also what that folder holds. */
 export type FilesListParams = {
-    /** A folder handle to list (since version 2). */
+    /** A folder handle to list. */
     folder?: string;
     /** A folder inside it; default the folder itself. */
     path?: string;
@@ -657,7 +657,7 @@ export type FilesListResult = {
 export type FilesReadParams = {
     /** A handle from files.list. */
     file?: string;
-    /** Instead of file, a folder handle from files.list (since version 2). */
+    /** Instead of file, a folder handle from files.list. */
     folder?: string;
     /** With folder, the file's path inside it, with / between its parts. */
     path?: string;
@@ -676,7 +676,7 @@ export type FilesReadResult = {
 export type FilesWriteParams = {
     /** A handle from files.list. */
     file?: string;
-    /** Instead of file, a folder handle from files.list (since version 2). */
+    /** Instead of file, a folder handle from files.list. */
     folder?: string;
     /** With folder, the file's path inside it, with / between its parts. */
     path?: string;
@@ -690,17 +690,18 @@ export type FilesWriteResult = {
     size: number;
 };
 
-/** The user's skills: each skill folder's name and its files, SKILL.md among them. */
+/** The caller's skills: each skill folder's name, whether it is the Project's or the user's, and its files, SKILL.md among them. */
 export type SkillsListParams = Record<string, never>;
 
 export type SkillsListResult = {
     skills: ({
         skill: SkillName;
+        origin: "project" | "yours";
         files: string[];
     })[];
 };
 
-/** One file of a user's skill, as UTF-8 text; at most 256 KiB. */
+/** One file of a skill skills.list gives, as UTF-8 text; at most 256 KiB. */
 export type SkillsReadParams = {
     skill: SkillName;
     /** A path skills.list gives, such as SKILL.md or references/tags.md. */
@@ -732,6 +733,33 @@ export type AutomationRunResult = {
     log: string;
 };
 
+/** The Document's Honya project files: PROJECT.md, GLOSSARY.md, CHARACTERS.md and STYLE.md, those that exist. folder is null when the Document has no project folder. */
+export type TranslationProjectParams = {
+    /** Defaults to the active Document. */
+    document?: DocumentId;
+};
+
+export type TranslationProjectResult = {
+    folder: string | null;
+    files: ({
+        name: "PROJECT.md" | "GLOSSARY.md" | "CHARACTERS.md" | "STYLE.md";
+        data: string;
+    })[];
+};
+
+/** Replaces one of the Document's Honya project files, keeping Honya's Markdown and honya:data format. */
+export type TranslationProjectWriteParams = {
+    /** Defaults to the active Document. */
+    document?: DocumentId;
+    file: "PROJECT.md" | "GLOSSARY.md" | "CHARACTERS.md" | "STYLE.md";
+    data: string;
+};
+
+export type TranslationProjectWriteResult = {
+    file: "PROJECT.md" | "GLOSSARY.md" | "CHARACTERS.md" | "STYLE.md";
+    size: number;
+};
+
 /** The node types the node-effect editor offers, with their ports and parameters. */
 export type NodesCatalogueParams = {
     category?: string;
@@ -761,6 +789,291 @@ export type NodesValidateResult = {
         port?: string;
         message: string;
     })[];
+};
+
+/** The Document's node-effect graphs, one per graph Line. */
+export type EffectsGraphsParams = {
+    /** Defaults to the active Document. */
+    document?: DocumentId;
+};
+
+export type EffectsGraphsResult = {
+    document: DocumentId;
+    revision: Revision;
+    graphs: ({
+        line: LineId;
+        name: string;
+        /** The Style whose karaoke Lines it runs on. */
+        style: string;
+        valid: boolean;
+    })[];
+};
+
+/** One graph Line's graph, with what keeps it from running. */
+export type EffectsGraphParams = {
+    /** Defaults to the active Document. */
+    document?: DocumentId;
+    line: LineId;
+};
+
+export type EffectsGraphResult = {
+    line: LineId;
+    name: string;
+    style: string;
+    revision: Revision;
+    /** Null when the Line's text is no graph. */
+    graph: Record<string, unknown> | null;
+    valid: boolean;
+    problems: ({
+        node?: string;
+        port?: string;
+        message: string;
+    })[];
+};
+
+/** Edits a graph in steps (add, connect, disconnect, remove, set) and gives the new graph with its problems; nothing in the Document changes. */
+export type EffectsEditParams = {
+    /** A graph as effects.graph gives it; {"format": 1, "nodes": [], "wires": []} starts an empty one. */
+    graph: Record<string, unknown>;
+    /** Applied in order; a refused step changes nothing. */
+    steps: ({
+        op: "add" | "connect" | "disconnect" | "remove" | "set";
+        /** add: a node type from nodes.catalogue. */
+        type?: string;
+        /** add: the new node's id, made from its type when omitted; remove, set: the node. */
+        node?: string;
+        /** add: the node's fields. */
+        fields?: Record<string, unknown>;
+        /** connect: an output, "node.port". */
+        from?: string;
+        /** connect, disconnect: an input, "node.port"; connect replaces a wire already there. */
+        to?: string;
+        /** set: the field. */
+        field?: string;
+        /** set: the field's value; null restores its default. */
+        value?: unknown;
+    })[];
+};
+
+export type EffectsEditResult = {
+    graph: Record<string, unknown>;
+    /** The ids of the nodes added, in step order. */
+    added: string[];
+    valid: boolean;
+    problems: ({
+        node?: string;
+        port?: string;
+        message: string;
+    })[];
+};
+
+/** Runs a graph on the Document's karaoke Lines and gives the Lines it would write; nothing is applied. Lua nodes don't run. */
+export type EffectsPreviewParams = {
+    /** Defaults to the active Document. */
+    document?: DocumentId;
+    /** A graph Line: its graph, name and Style. */
+    line?: LineId;
+    /** A graph to run in place of the Line's. */
+    graph?: Record<string, unknown>;
+    /** The Style whose karaoke Lines it runs on; needed without line. */
+    style?: string;
+    /** The graph's name, which the Lines' Effect "fx <name>" carries. */
+    name?: string;
+    /** Only these karaoke Lines; all of them when omitted. */
+    sources?: LineId[];
+    /** How many generated Lines to give; default 20. */
+    limit?: number;
+};
+
+export type EffectsPreviewResult = {
+    /** False when a problem stopped the run; applying it would change nothing. */
+    ran: boolean;
+    complete: boolean;
+    /** How many karaoke Lines ran. */
+    sources: number;
+    /** How many Lines the run made. */
+    generated: number;
+    /** The first generated Lines, as ASS Dialogue lines. */
+    lines: string[];
+    problems: ({
+        node?: string;
+        line?: LineId;
+        message: string;
+    })[];
+};
+
+/** Writes a graph to the Document as one undo step: into a new graph Line, or in place of a graph Line's. */
+export type EffectsSaveParams = {
+    /** Defaults to the active Document. */
+    document?: DocumentId;
+    graph: Record<string, unknown>;
+    /** The graph Line to replace; omit it to add a graph. */
+    line?: LineId;
+    /** A new graph's name. */
+    name?: string;
+    /** A new graph's Style: whose karaoke Lines it runs on. */
+    style?: string;
+};
+
+export type EffectsSaveResult = {
+    line: LineId;
+    revision: Revision;
+    graph: Record<string, unknown>;
+    valid: boolean;
+    problems: ({
+        node?: string;
+        port?: string;
+        message: string;
+    })[];
+};
+
+/** Runs a graph Line and writes its Lines as one undo step, replacing those it wrote before; the karaoke Lines it ran on become Comments. Lua nodes don't run, so a graph with one applies from the node-effect editor. */
+export type EffectsApplyParams = {
+    /** Defaults to the active Document. */
+    document?: DocumentId;
+    /** The graph Line. */
+    line: LineId;
+    /** Only these karaoke Lines; all of them when omitted. */
+    sources?: LineId[];
+};
+
+export type EffectsApplyResult = {
+    revision: Revision;
+    generated: number;
+    /** How many karaoke Lines got Lines. */
+    sources: number;
+    changed: boolean;
+};
+
+/** The installed plugins with their state, trust tier and commands. */
+export type PluginsListParams = Record<string, never>;
+
+export type PluginsListResult = {
+    plugins: ({
+        id: string;
+        name: string;
+        version: string;
+        description: string;
+        source: "file" | "marketplace";
+        signed: boolean;
+        enabled: boolean;
+        tier: "restricted" | "unrestricted";
+        revoked: boolean;
+        /** While the plugin runs. */
+        commands: ({
+            /** plugin.<plugin id>.<command id> */
+            command: string;
+            title: string;
+        })[];
+    })[];
+};
+
+/** An installed plugin's hikari-plugin.json. */
+export type PluginsManifestParams = {
+    plugin: string;
+};
+
+export type PluginsManifestResult = {
+    plugin: string;
+    manifest: Record<string, unknown>;
+};
+
+/** Writes a plugin from the authoring guide's template into the AI plugins folder and packs it; nothing is installed. */
+export type PluginsScaffoldParams = {
+    /** Reverse-DNS, lowercase: com.example.sign-counter. An earlier scaffold of that id is replaced. */
+    plugin: string;
+    name: string;
+    /** Semantic version; default 0.1.0. */
+    version?: string;
+    description?: string;
+    /** restricted (default) runs in the sandbox without ffi, io, os and debug; unrestricted needs the user's full trust at install. */
+    tier?: "restricted" | "unrestricted";
+    /** The manifest's permissions: documents.all, network {hosts, reason}, files. */
+    permissions?: Record<string, unknown>;
+    commands: ({
+        id: string;
+        title: string;
+    })[];
+    /** main.lua, registering each command with hikari.commands.register; the guide's first plugin when omitted. */
+    code?: string;
+    /** More files beside main.lua and hikari-plugin.json. */
+    files?: ({
+        path: string;
+        text: string;
+    })[];
+};
+
+export type PluginsScaffoldResult = {
+    plugin: string;
+    folder: string;
+    /** The packed .hikariplugin. */
+    package: string;
+    files: string[];
+    manifest: Record<string, unknown>;
+};
+
+/** What installing a package would do, as the install question shows it: its trust tier, signing, permissions, commands and files. */
+export type PluginsReviewParams = unknown | unknown;
+
+export type PluginsReviewResult = {
+    plugin: string;
+    name: string;
+    version: string;
+    change: "install" | "update" | "reinstall" | "downgrade";
+    installedVersion: string;
+    /** unrestricted runs outside the sandbox and needs the user's full trust. */
+    tier: "restricted" | "unrestricted";
+    /** The signing key changed, or an unsigned package replaces a signed one. */
+    needsRetrust: boolean;
+    /** The signing key; empty when unsigned. */
+    keyId: string;
+    pinnedKeyId: string;
+    permissions: string[];
+    /** The titles of the commands it adds. */
+    commands: string[];
+    files: ({
+        path: string;
+        text: string;
+    })[];
+    digest: string;
+};
+
+/** Installs a scaffolded or granted plugin package and turns it on, once the user approves it in HikariSub; it asks every time. */
+export type PluginsInstallParams = unknown | unknown;
+
+export type PluginsInstallResult = {
+    plugin: string;
+    name: string;
+    version: string;
+    change: "install" | "update" | "reinstall" | "downgrade";
+    installedVersion: string;
+    /** unrestricted runs outside the sandbox and needs the user's full trust. */
+    tier: "restricted" | "unrestricted";
+    /** The signing key changed, or an unsigned package replaces a signed one. */
+    needsRetrust: boolean;
+    /** The signing key; empty when unsigned. */
+    keyId: string;
+    pinnedKeyId: string;
+    permissions: string[];
+    /** The titles of the commands it adds. */
+    commands: string[];
+    files: ({
+        path: string;
+        text: string;
+    })[];
+    digest: string;
+    installed: true;
+};
+
+/** Runs an installed plugin's command as its menu item would. */
+export type PluginsRunParams = {
+    plugin: string;
+    /** The command's id within the plugin, as in its manifest. */
+    command: string;
+};
+
+export type PluginsRunResult = {
+    ran: true;
 };
 
 /** The Line's text with the tags that render it on a quad (VT3's perspective solver): \pos, \org, \frx, \fry, \frz, \fax, \fscx and \fscy. */
@@ -990,6 +1303,193 @@ export type ProjectInfoResult = {
     project: Project;
 };
 
+/** A Line's karaoke syllables as the templater reads them: text, tag, start and end in ms. */
+export type KaraokeSyllablesParams = {
+    /** Defaults to the active Document. */
+    document?: DocumentId;
+    line: LineId;
+};
+
+export type KaraokeSyllablesResult = {
+    line: LineId;
+    syllables: ({
+        text: string;
+        stripped: string;
+        tag: string;
+        start: number;
+        end: number;
+    })[];
+};
+
+/** Splits Lines without \k tags into syllables as the audio editor's karaoke mode does, the time shared by character; Lines that already have \k tags keep them. */
+export type KaraokeSplitParams = {
+    /** Defaults to the active Document. */
+    document?: DocumentId;
+    lines: LineId[];
+    /** Default true: by syllable, with the language rules the user set; false: at spaces. */
+    bySyllable?: boolean;
+};
+
+export type KaraokeSplitResult = {
+    /** The Lines that change, with their new text; nothing is applied. */
+    lines: ({
+        line: LineId;
+        text: string;
+    })[];
+};
+
+/** Times a Line's existing syllables: each syllable's end in ms, in order; the \k tags are rewritten. */
+export type KaraokeTimeParams = {
+    /** Defaults to the active Document. */
+    document?: DocumentId;
+    line: LineId;
+    /** One per syllable, ascending, in ms from the video's start. */
+    ends: number[];
+};
+
+export type KaraokeTimeResult = {
+    line: LineId;
+    /** The Line's text with the \k tags written; nothing is applied. */
+    text: string;
+};
+
+/** Where sung notes start in the open audio, in ms, within a range. */
+export type KaraokeOnsetsParams = {
+    start: number;
+    end: number;
+};
+
+export type KaraokeOnsetsResult = {
+    onsets: number[];
+};
+
+/** Moves each syllable boundary inside the Lines to the nearest vocal onset within the window, keeping every syllable at least 10 ms long. */
+export type KaraokeSnapParams = {
+    /** Defaults to the active Document. */
+    document?: DocumentId;
+    lines: LineId[];
+    /** Ms either side; default 100. */
+    window?: number;
+};
+
+export type KaraokeSnapResult = {
+    /** The Lines that change, with their new text; nothing is applied. */
+    lines: ({
+        line: LineId;
+        text: string;
+        /** Boundaries moved. */
+        moved?: number;
+    })[];
+};
+
+/** Copies a timed romaji Line's syllables onto its kanji Line as the Kanji timer suggests the groups. */
+export type KaraokeKanjiParams = {
+    /** Defaults to the active Document. */
+    document?: DocumentId;
+    romaji: LineId;
+    kanji: LineId;
+    /** Further syllables of a group become # syllables instead of joining the first. */
+    multi?: boolean;
+};
+
+export type KaraokeKanjiResult = {
+    line: LineId;
+    text: string;
+    /** False when a group came out blank or the characters ran out: check it. */
+    clean: boolean;
+};
+
+/** The readings the dictionary suggests for a Line's kanji runs, in hiragana. */
+export type KaraokeFuriganaParams = {
+    /** Defaults to the active Document. */
+    document?: DocumentId;
+    line: LineId;
+};
+
+export type KaraokeFuriganaResult = {
+    line: LineId;
+    runs: ({
+        base: string;
+        reading: string;
+    })[];
+};
+
+/** The Karaoke check's problems: unclosed tags, totals that differ from the Line, empty syllables and syllables outside the Line. */
+export type KaraokeCheckParams = {
+    /** Defaults to the active Document. */
+    document?: DocumentId;
+};
+
+export type KaraokeCheckResult = {
+    problems: ({
+        line: LineId;
+        kind: "unclosed" | "not_for_audio_editor" | "editor_only" | "total_not_duration" | "zero_length" | "outside_line";
+        totalMs?: number;
+        durationMs?: number;
+        /** Which ones, from 1. */
+        syllables?: number[];
+    })[];
+    /** Problems past the listed ones. */
+    unlisted: number;
+};
+
+/** The Lines the karaoke templater generates from one karaoke Line, without applying them. */
+export type KaraokeTemplatePreviewParams = {
+    /** Defaults to the active Document. */
+    document?: DocumentId;
+    line: LineId;
+};
+
+export type KaraokeTemplatePreviewResult = {
+    line: LineId;
+    lines: ({
+        layer: number;
+        start: number;
+        end: number;
+        style: string;
+        effect: string;
+        text: string;
+    })[];
+};
+
+/** Runs the karaoke templater on the karaoke Lines, or the Lines given, and applies what it generates as one undo step: old generated Lines are replaced. */
+export type KaraokeApplyTemplateParams = {
+    /** Defaults to the active Document. */
+    document?: DocumentId;
+    revision: Revision;
+    /** Default: every karaoke Line. */
+    lines?: LineId[];
+    /** Default "Apply karaoke template". */
+    name?: string;
+};
+
+export type KaraokeApplyTemplateResult = {
+    revision: Revision;
+    changed: boolean;
+};
+
+/** Runs the user's own WhisperX or Montreal Forced Aligner on the audio under the Lines and answers each word with its start and end in ms; the user approves every run, and nothing is applied. */
+export type KaraokeAlignParams = {
+    /** Defaults to the active Document. */
+    document?: DocumentId;
+    lines: LineId[];
+    program: "whisperx" | "mfa";
+    /** WhisperX: a language code such as ja; default: it detects. */
+    language?: string;
+    /** MFA: the pronunciation dictionary, such as english_mfa. */
+    dictionary?: string;
+    /** MFA: the acoustic model, such as english_mfa. */
+    acousticModel?: string;
+};
+
+export type KaraokeAlignResult = {
+    words: ({
+        text: string;
+        start: number;
+        end: number;
+    })[];
+};
+
 /** The window the user works in opened or closed a Project, or the user moved to a window with another one. */
 export type ProjectChangedEvent = {
     project: Project;
@@ -1069,8 +1569,22 @@ export interface Operations {
     "skills.list": { access: "read"; params: SkillsListParams; result: SkillsListResult };
     "skills.read": { access: "read"; params: SkillsReadParams; result: SkillsReadResult };
     "automation.run": { access: "write"; params: AutomationRunParams; result: AutomationRunResult };
+    "translation.project": { access: "read"; params: TranslationProjectParams; result: TranslationProjectResult };
+    "translation.project_write": { access: "write"; params: TranslationProjectWriteParams; result: TranslationProjectWriteResult };
     "nodes.catalogue": { access: "read"; params: NodesCatalogueParams; result: NodesCatalogueResult };
     "nodes.validate": { access: "read"; params: NodesValidateParams; result: NodesValidateResult };
+    "effects.graphs": { access: "read"; params: EffectsGraphsParams; result: EffectsGraphsResult };
+    "effects.graph": { access: "read"; params: EffectsGraphParams; result: EffectsGraphResult };
+    "effects.edit": { access: "read"; params: EffectsEditParams; result: EffectsEditResult };
+    "effects.preview": { access: "read"; params: EffectsPreviewParams; result: EffectsPreviewResult };
+    "effects.save": { access: "write"; params: EffectsSaveParams; result: EffectsSaveResult };
+    "effects.apply": { access: "write"; params: EffectsApplyParams; result: EffectsApplyResult };
+    "plugins.list": { access: "read"; params: PluginsListParams; result: PluginsListResult };
+    "plugins.manifest": { access: "read"; params: PluginsManifestParams; result: PluginsManifestResult };
+    "plugins.scaffold": { access: "write"; params: PluginsScaffoldParams; result: PluginsScaffoldResult };
+    "plugins.review": { access: "read"; params: PluginsReviewParams; result: PluginsReviewResult };
+    "plugins.install": { access: "write"; params: PluginsInstallParams; result: PluginsInstallResult };
+    "plugins.run": { access: "write"; params: PluginsRunParams; result: PluginsRunResult };
     "typeset.perspective": { access: "read"; params: TypesetPerspectiveParams; result: TypesetPerspectiveResult };
     "typeset.clip": { access: "read"; params: TypesetClipParams; result: TypesetClipResult };
     "typeset.drawing": { access: "read"; params: TypesetDrawingParams; result: TypesetDrawingResult };
@@ -1079,6 +1593,17 @@ export interface Operations {
     "typeset.check": { access: "read"; params: TypesetCheckParams; result: TypesetCheckResult };
     "typeset.apply": { access: "write"; params: TypesetApplyParams; result: TypesetApplyResult };
     "project.info": { access: "read"; params: ProjectInfoParams; result: ProjectInfoResult };
+    "karaoke.syllables": { access: "read"; params: KaraokeSyllablesParams; result: KaraokeSyllablesResult };
+    "karaoke.split": { access: "read"; params: KaraokeSplitParams; result: KaraokeSplitResult };
+    "karaoke.time": { access: "read"; params: KaraokeTimeParams; result: KaraokeTimeResult };
+    "karaoke.onsets": { access: "read"; params: KaraokeOnsetsParams; result: KaraokeOnsetsResult };
+    "karaoke.snap": { access: "read"; params: KaraokeSnapParams; result: KaraokeSnapResult };
+    "karaoke.kanji": { access: "read"; params: KaraokeKanjiParams; result: KaraokeKanjiResult };
+    "karaoke.furigana": { access: "read"; params: KaraokeFuriganaParams; result: KaraokeFuriganaResult };
+    "karaoke.check": { access: "read"; params: KaraokeCheckParams; result: KaraokeCheckResult };
+    "karaoke.template_preview": { access: "read"; params: KaraokeTemplatePreviewParams; result: KaraokeTemplatePreviewResult };
+    "karaoke.apply_template": { access: "write"; params: KaraokeApplyTemplateParams; result: KaraokeApplyTemplateResult };
+    "karaoke.align": { access: "write"; params: KaraokeAlignParams; result: KaraokeAlignResult };
 }
 
 export type OperationName = keyof Operations;

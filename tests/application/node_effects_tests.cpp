@@ -6,6 +6,8 @@
 #include "hikari/application/node_graph.h"
 #include "hikari/application/node_graph_editing.h"
 #include "hikari/application/node_graph_library.h"
+#include "hikari/application/typesetting_graphs.h"
+#include "hikari/application/typesetting_line.h"
 #include "hikari/core/ass_load.h"
 #include "hikari/core/ass_save.h"
 
@@ -14,11 +16,13 @@
 #include <algorithm>
 #include <cctype>
 #include <cmath>
+#include <cstdlib>
 #include <cstring>
 #include <filesystem>
 #include <random>
 #include <fstream>
 #include <map>
+#include <mutex>
 #include <set>
 #include <sstream>
 #include <string>
@@ -741,7 +745,7 @@ TEST(NodeGraphLibrary, KeepsTheUsersGraphsAsFiles)
 TEST(NodeCatalogue, EveryNodeHasAValidFieldSchemaAndUniqueId)
 {
     const std::set<std::string> kFromTheUnit = {"output.emit.start", "output.emit.end",
-                                                "output.emit.text", "text.join.text"};
+                                                "output.emit.text", "text.join.text", "drawings.text.text"};
     std::set<std::string> ids;
     for (const NodeSpec &spec : nodeCatalogue()) {
         EXPECT_TRUE(ids.insert(spec.id).second) << spec.id;
@@ -1055,6 +1059,48 @@ TEST(NodeEffectsAudioPeaks, TheCacheKeepsLinesOnlyForTheSameAudio)
     EXPECT_EQ(blursOfFirstLine(runOn(peakGraph(), options)), first);
 }
 
+namespace {
+
+std::string whole(double v)
+{
+    return std::to_string(static_cast<int>(v));
+}
+
+// Each character a 10 × size block, a gap of 2 after it.
+class BlockGlyphs final : public shape::GlyphOutlinePort {
+public:
+    std::optional<shape::TextOutline> outline(const shape::GlyphStyle &style, std::string_view utf8) override
+    {
+        if (style.family == "Missing")
+            return std::nullopt;
+        {
+            std::scoped_lock lock(m_mutex);
+            m_styles.push_back(style);
+        }
+        shape::TextOutline out;
+        for (std::size_t i = 0; i < utf8.size(); ++i) {
+            const double x = 12.0 * static_cast<double>(i);
+            out.drawing += (out.drawing.empty() ? "" : " ") + std::string("m ") + whole(x) + " 0 l " +
+                           whole(x + 10) + " 0 " + whole(x + 10) + " " + whole(style.size) + " " +
+                           whole(x) + " " + whole(style.size);
+        }
+        out.width = 12.0 * static_cast<double>(utf8.size());
+        out.height = out.ascent = style.size;
+        return out;
+    }
+    std::vector<shape::GlyphStyle> styles()
+    {
+        std::scoped_lock lock(m_mutex);
+        return m_styles;
+    }
+
+private:
+    std::mutex m_mutex;
+    std::vector<shape::GlyphStyle> m_styles;
+};
+
+}
+
 TEST(NodeEffectExamples, EachShowsItsNodeAndRunsTheSameEveryTime)
 {
     const std::map<std::string_view, std::string_view> nodeOf = {{"gradient-strips", "units.clip_gradient"},
@@ -1062,8 +1108,11 @@ TEST(NodeEffectExamples, EachShowsItsNodeAndRunsTheSameEveryTime)
                                                                  {"particle-burst", "units.particles"},
                                                                  {"audio-pulse", "audio.peaks"},
                                                                  {"highlight-flashes", "units.highlights"},
-                                                                 {"paint-and-cloud", "units.inline_fx"}};
+                                                                 {"paint-and-cloud", "units.inline_fx"},
+                                                                 {"text-outlines", "drawings.text"},
+                                                                 {"striped-letters", "drawings.combine"}};
     const DisplayAudio audio = loudAudio(1000, 1400);
+    BlockGlyphs glyphs;
     std::set<std::string_view> seen;
     for (const NodeGraphPreset &p : nodeGraphPresets()) {
         if (p.example.empty())
@@ -1078,6 +1127,7 @@ TEST(NodeEffectExamples, EachShowsItsNodeAndRunsTheSameEveryTime)
         one.threads = 1;
         many.threads = 8;
         one.audio = many.audio = &audio;
+        one.glyphs = many.glyphs = &glyphs;
         const auto lines = runOn(p.graph, one);
         EXPECT_FALSE(lines.empty()) << p.example;
         EXPECT_EQ(lines, runOn(p.graph, many)) << p.example;
@@ -1190,6 +1240,121 @@ std::string_view exampleGraph(std::string_view example)
             return p.graph;
     ADD_FAILURE() << "no example " << example;
     return {};
+}
+
+namespace {
+
+constexpr std::string_view kTextDrawing = R"({"format": 1, "nodes": [
+    {"id": "syl", "type": "units.for_each"},
+    {"id": "glyphs", "type": "drawings.text"},
+    {"id": "wide", "type": "tags.tag", "fields": {"tag": "fsp"}},
+    {"id": "emit", "type": "output.emit"}],
+  "wires": [
+    {"from": "syl.units", "to": "emit.units"}, {"from": "glyphs.width", "to": "wide.value"},
+    {"from": "wide.tags", "to": "emit.tags"}, {"from": "glyphs.drawing", "to": "emit.drawing"}]})";
+
+std::string combineGraph(std::string_view op, std::string_view b, int bScale)
+{
+    return R"({"format": 1, "nodes": [
+        {"id": "line", "type": "units.for_each", "fields": {"unit": "line"}},
+        {"id": "a", "type": "drawings.shape", "fields": {"shape": "m 0 0 l 10 0 10 10 0 10"}},
+        {"id": "b", "type": "drawings.shape", "fields": {"shape": ")" + std::string(b) + R"(", "scale": )" +
+           std::to_string(bScale) + R"(}},
+        {"id": "both", "type": "drawings.combine", "fields": {"op": ")" + std::string(op) + R"("}},
+        {"id": "emit", "type": "output.emit"}],
+      "wires": [
+        {"from": "line.units", "to": "emit.units"}, {"from": "a.drawing", "to": "both.a"},
+        {"from": "b.drawing", "to": "both.b"}, {"from": "both.drawing", "to": "emit.drawing"}]})";
+}
+
+double areaOf(const shape::Contours &contours)
+{
+    double area = 0;
+    for (const shape::Contour &c : contours)
+        for (std::size_t i = 0; i < c.size(); ++i) {
+            const shape::Point &p = c[i], &q = c[(i + 1) % c.size()];
+            area += p.x * q.y - q.x * p.y;
+        }
+    return std::fabs(area) / 2;
+}
+
+double drawnArea(const std::string &line)
+{
+    const auto at = line.find("\\p1}");
+    EXPECT_NE(at, std::string::npos) << line;
+    return at == std::string::npos ? 0 : areaOf(shape::readDrawing(line.substr(at + 4)));
+}
+
+}
+
+TEST(NodeEffectDrawings, TextToDrawingDrawsEachUnitInItsLinesStyleFont)
+{
+    BlockGlyphs glyphs;
+    NodeEffectOptions options;
+    options.glyphs = &glyphs;
+    const auto lines = runOn(kTextDrawing, options);
+    ASSERT_FALSE(lines.empty());
+    EXPECT_NE(lines.front().find("{\\fsp24\\p1}m 0 0 l 10 0 10 48 0 48 m 12 0 l 22 0 22 48 12 48"), std::string::npos)
+        << lines.front();
+    const auto styles = glyphs.styles();
+    ASSERT_FALSE(styles.empty());
+    EXPECT_TRUE(std::ranges::all_of(styles, [](const shape::GlyphStyle &g) { return g.family == "Arial"; }));
+    EXPECT_TRUE(std::ranges::all_of(styles, [](const shape::GlyphStyle &g) { return g.size == 48; }));
+    EXPECT_FALSE(styles.front().bold || styles.front().italic || styles.front().underline || styles.front().strikeOut);
+}
+
+TEST(NodeEffectDrawings, TextToDrawingWithoutAFontGivesAnEmptyDrawingAndSaysWhy)
+{
+    const core::Document doc = fixtureWith(commentLine("graph g", graphText(graphOf(kTextDrawing))));
+    FakeMeasure measure;
+    NodeEffectOptions options;
+    options.measure = &measure;
+    const auto none = runDocumentGraph(doc, graphLineOf(doc, u8"g"), options);
+    ASSERT_TRUE(none.has_value());
+    ASSERT_FALSE(none->problems.empty());
+    EXPECT_EQ(none->problems.front().node, "glyphs");
+    EXPECT_EQ(none->problems.front().message, "has no fonts to draw with, so it gives an empty drawing");
+
+    std::string fixture = readFile(HIKARI_KARAOKE_PRESET_FIXTURES "/fixture.ass");
+    fixture.replace(fixture.find("Romaji,Arial"), 12, "Romaji,Missing");
+    fixture.insert(fixture.find("Dialogue: "), commentLine("graph g", graphText(graphOf(kTextDrawing))));
+    const core::Document missing = load(fixture);
+    BlockGlyphs glyphs;
+    options.glyphs = &glyphs;
+    const auto unread = runDocumentGraph(missing, graphLineOf(missing, u8"g"), options);
+    ASSERT_TRUE(unread.has_value());
+    ASSERT_FALSE(unread->problems.empty());
+    EXPECT_EQ(unread->problems.front().message, "can't read the Style's font \"Missing\", so it gives an empty drawing");
+}
+
+TEST(NodeEffectDrawings, CombineUnitesSubtractsIntersectsAndExcludesWithEachScale)
+{
+    const std::string b = "m 5 5 l 15 5 15 15 5 15";
+    const std::map<std::string_view, double> areas{{"unite", 175}, {"subtract", 75}, {"intersect", 25}, {"exclude", 150}};
+    for (const auto &[op, area] : areas) {
+        const auto lines = runOn(combineGraph(op, b, 1));
+        ASSERT_EQ(lines.size(), 3u) << op;
+        EXPECT_NEAR(drawnArea(lines.front()), area, 1e-6) << op;
+    }
+    const auto scaled = runOn(combineGraph("intersect", "m 10 10 l 30 10 30 30 10 30", 2));
+    ASSERT_FALSE(scaled.empty());
+    EXPECT_NEAR(drawnArea(scaled.front()), 25, 1e-6);
+    EXPECT_TRUE(runOn(combineGraph("subtract", "m -5 -5 l 20 -5 20 20 -5 20", 1)).front().ends_with("\\p1}"));
+}
+
+TEST(NodeEffectExport, TextToDrawingAndCombineHaveNoTemplateForm)
+{
+    const std::map<std::string_view, std::string> reasonOf{
+        {"text-outlines", "glyphs: draws text with HikariSub's fonts, which the templater can't"},
+        {"striped-letters", "striped: combines drawings, which the templater can't"}};
+    for (const auto &[example, reason] : reasonOf) {
+        const auto lines = exportTemplateLines(graphOf(exampleGraph(example)), u8"g");
+        ASSERT_FALSE(lines.has_value()) << example;
+        std::set<std::string> reasons;
+        for (const NodeEffectProblem &p : lines.error())
+            reasons.insert(p.node + ": " + p.message);
+        EXPECT_TRUE(reasons.contains(reason)) << example;
+    }
 }
 
 TEST(NodeEffectExport, HighlightsBecomeMultiAndInlineFxBecomesFx)
@@ -1421,4 +1586,184 @@ TEST(NodeEffectExport, ExportAddsTheTemplateLinesAfterTheGraphInOneStep)
     EXPECT_EQ(session.history().back().name, "Export as template lines");
     ASSERT_TRUE(session.undo());
     EXPECT_EQ(text(core::encodeAss(session.document())), before);
+}
+
+namespace {
+
+constexpr std::string_view kTypewriter = R"({"format": 1, "seed": 0, "target": "lines", "nodes": [
+    {"id": "ch", "type": "units.for_each", "fields": {"unit": "char"}},
+    {"id": "info", "type": "units.info"},
+    {"id": "pos", "type": "tags.tag", "fields": {"tag": "pos"}},
+    {"id": "emit", "type": "output.emit"}],
+  "wires": [
+    {"from": "ch.units", "to": "emit.units"}, {"from": "info.position", "to": "pos.point"},
+    {"from": "pos.tags", "to": "emit.tags"}]})";
+
+constexpr std::string_view kWhole = R"({"format": 1, "seed": 0, "target": "lines", "nodes": [
+    {"id": "line", "type": "units.for_each", "fields": {"unit": "line"}},
+    {"id": "info", "type": "units.info"},
+    {"id": "pos", "type": "tags.tag", "fields": {"tag": "pos"}},
+    {"id": "emit", "type": "output.emit", "fields": {"unit_text": "raw"}}],
+  "wires": [
+    {"from": "line.units", "to": "emit.units"}, {"from": "info.position", "to": "pos.point"},
+    {"from": "pos.tags", "to": "emit.tags"}]})";
+
+core::Document typesettingDocument(std::string_view graphJson)
+{
+    std::string fixture = readFile(HIKARI_KARAOKE_PRESET_FIXTURES "/fixture.ass");
+    fixture.erase(fixture.find("Dialogue: "));
+    fixture += commentLine("graph ts", graphText(graphOf(graphJson)));
+    fixture += "Dialogue: 0,0:00:01.00,0:00:02.00,Other,,0,0,0,sign,{\\an7\\pos(100,200)\\fs20}ab\n";
+    fixture += "Dialogue: 0,0:00:03.00,0:00:04.00,Romaji,,0,0,0,,{\\k40}ki{\\k35}ra\n";
+    return load(fixture);
+}
+
+core::LineId lineWithText(const core::Document &doc, std::u8string_view needle)
+{
+    for (const core::LineRecord *l : doc.lines())
+        if (l->text.find(needle) != std::u8string::npos && !graphNameOf(*l))
+            return l->id;
+    ADD_FAILURE() << "no Line with " << narrow(std::u8string(needle));
+    return {};
+}
+
+NodeEffectOptions onlyLine(core::LineId id)
+{
+    NodeEffectOptions options;
+    options.sources = std::set<core::LineId>{id};
+    return options;
+}
+
+}
+
+TEST(TypesettingGraphs, RunOnTheChosenLinesOfAnyStyleAtTheirPosition)
+{
+    const core::Document doc = typesettingDocument(kTypewriter);
+    const NodeEffectRun run = runGraph(doc, u8"ts", onlyLine(lineWithText(doc, u8"ab")));
+    ASSERT_TRUE(run.typesetting);
+    const auto lines = linesOf(run);
+    ASSERT_EQ(lines.size(), 2u);
+    EXPECT_EQ(lines[0], "Dialogue: 0,0:00:01.00,0:00:02.00,Other,,0,0,0,fx ts,{\\pos(100,200)}a");
+    EXPECT_TRUE(lines[1].ends_with("}b"));
+    EXPECT_EQ(lines[1].find("{\\pos(100,"), std::string::npos);
+    EXPECT_NE(lines[1].find(",200)}b"), std::string::npos);
+}
+
+TEST(TypesettingGraphs, KeepTheLinesTagsWithoutItsPosition)
+{
+    const core::Document doc = typesettingDocument(kWhole);
+    const auto lines = linesOf(runGraph(doc, u8"ts", onlyLine(lineWithText(doc, u8"ab"))));
+    EXPECT_EQ(lines, (std::vector<std::string>{
+                         "Dialogue: 0,0:00:01.00,0:00:02.00,Other,,0,0,0,fx ts,{\\pos(100,200)}{\\an7\\fs20}ab"}));
+}
+
+TEST(TypesettingGraphs, NeedChosenLines)
+{
+    const core::Document doc = typesettingDocument(kWhole);
+    FakeMeasure measure;
+    NodeEffectOptions options;
+    options.measure = &measure;
+    const auto run = runDocumentGraph(doc, graphLineOf(doc, u8"ts"), options);
+    ASSERT_TRUE(run);
+    EXPECT_FALSE(run->ran);
+    ASSERT_EQ(run->problems.size(), 1u);
+    EXPECT_EQ(run->problems[0].message, "targets the Lines you choose, and none were chosen");
+}
+
+TEST(TypesettingGraphs, ApplyPutsTheLinesAfterTheirSourceAndARunAgainChangesNothing)
+{
+    core::Document doc = typesettingDocument(kTypewriter);
+    const core::LineId sign = lineWithText(doc, u8"ab");
+    const std::string untouched = "Dialogue: 0,0:00:03.00,0:00:04.00,Romaji,,0,0,0,,{\\k40}ki{\\k35}ra";
+    ASSERT_TRUE(applyNodeEffect(doc, runGraph(doc, u8"ts", onlyLine(sign))));
+    std::vector<std::string> order;
+    for (const core::LineRecord *l : doc.lines())
+        if (!graphNameOf(*l))
+            order.push_back(narrow(core::legacy::assLineText(*l)));
+    ASSERT_EQ(order.size(), 4u);
+    EXPECT_EQ(order[0], "Comment: 0,0:00:01.00,0:00:02.00,Other,,0,0,0,sign,{\\an7\\pos(100,200)\\fs20}ab");
+    EXPECT_TRUE(order[1].ends_with("}a"));
+    EXPECT_TRUE(order[2].ends_with("}b"));
+    EXPECT_EQ(order[3], untouched);
+
+    const std::string once = text(core::encodeAss(doc));
+    ASSERT_TRUE(applyNodeEffect(doc, runGraph(doc, u8"ts", onlyLine(sign))));
+    EXPECT_EQ(text(core::encodeAss(doc)), once);
+
+    core::Document reread = load(once);
+    ASSERT_TRUE(applyNodeEffect(reread, runGraph(reread, u8"ts", onlyLine(lineWithText(reread, u8"ab")))));
+    EXPECT_EQ(text(core::encodeAss(reread)), once);
+}
+
+TEST(TypesettingGraphs, TargetIsKaraokeOrLines)
+{
+    const NodeGraph graph = graphOf(kWhole);
+    EXPECT_EQ(graph.target, GraphTarget::Lines);
+    EXPECT_EQ(graphJson(graph), graphJson(graphOf(graphText(graph))));
+    EXPECT_EQ(graphJson(graph).find("format")->asInt(), kNodeGraphFormat);
+    EXPECT_EQ(graphJson(graph).find("target")->asString(), "lines");
+    EXPECT_EQ(graphJson(graphOf(kBounce)).find("target"), nullptr);
+    EXPECT_FALSE(parseGraph(R"({"format": 1, "target": "words", "nodes": []})"));
+}
+
+TEST(TypesettingGraphs, LinePlacementReadsTheFirstAnAndPosition)
+{
+    const LinePlacement p = linePlacement(R"({\fs20\move(10.5,20,30,40)\an9}a{\pos(1,2)\an1\b1}b)", 2);
+    EXPECT_EQ(p.align, 9);
+    ASSERT_TRUE(p.pos);
+    EXPECT_EQ(*p.pos, (std::pair{10.5, 20.0}));
+    EXPECT_EQ(p.rawWithoutPosition, R"({\fs20\an9}a{\an1\b1}b)");
+    const LinePlacement none = linePlacement("{\\pos(1)}x{}", 8);
+    EXPECT_EQ(none.align, 8);
+    EXPECT_FALSE(none.pos);
+    EXPECT_EQ(none.rawWithoutPosition, "x{}");
+}
+
+namespace {
+
+core::Document libraryDocument(const TypesettingGraph &g)
+{
+    std::string fixture = readFile(HIKARI_KARAOKE_PRESET_FIXTURES "/fixture.ass");
+    fixture.erase(fixture.find("Dialogue: "));
+    fixture += commentLine("graph lib", graphText(graphOf(g.graph)));
+    fixture += "Dialogue: 2,0:00:01.00,0:00:01.25,Other,,0,0,0,sign,{\\an8\\pos(640,100)\\bord3}Hi กิน\n";
+    fixture += "Dialogue: 0,0:00:03.00,0:00:04.00,Romaji,,0,0,0,,{\\k40}ki{\\k35}ra\n";
+    return load(fixture);
+}
+
+}
+
+TEST(TypesettingGraphs, LibraryGraphsGiveTheirGoldens)
+{
+    ASSERT_FALSE(typesettingGraphs().empty());
+    for (const TypesettingGraph &g : typesettingGraphs()) {
+        SCOPED_TRACE(std::string(g.id));
+        EXPECT_TRUE(validateGraph(graphOf(g.graph)).empty());
+        const core::Document doc = libraryDocument(g);
+        const core::LineId sign = lineWithText(doc, u8"Hi");
+        NodeEffectOptions oneThread = onlyLine(sign);
+        oneThread.threads = 1;
+        const auto lines = linesOf(runGraph(doc, u8"lib", onlyLine(sign)));
+        ASSERT_FALSE(lines.empty());
+        EXPECT_EQ(lines, linesOf(runGraph(doc, u8"lib", oneThread)));
+        std::string got;
+        for (const std::string &line : lines)
+            got += line + "\n";
+        const std::string golden = std::string(HIKARI_TYPESETTING_GOLDENS "/") + std::string(g.id) + ".txt";
+        if (std::getenv("HIKARI_WRITE_GOLDENS"))
+            std::ofstream(golden, std::ios::binary) << got;
+        EXPECT_EQ(got, readFile(golden));
+    }
+}
+
+TEST(TypesettingGraphs, KaraokeToAlphaKeepsTheSyllableTiming)
+{
+    const auto all = typesettingGraphs();
+    const auto it = std::ranges::find_if(all, [](const TypesettingGraph &g) { return g.id == "karaoke-to-alpha"; });
+    ASSERT_NE(it, all.end());
+    const core::Document doc = libraryDocument(*it);
+    std::vector<std::string> times;
+    for (const std::string &line : linesOf(runGraph(doc, u8"lib", onlyLine(lineWithText(doc, u8"ki")))))
+        times.push_back(line.substr(12, 21) + line.substr(line.rfind('}') + 1));
+    EXPECT_EQ(times, (std::vector<std::string>{"0:00:03.00,0:00:04.00ki", "0:00:03.40,0:00:04.00ra"}));
 }

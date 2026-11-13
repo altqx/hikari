@@ -68,6 +68,7 @@ ApplicationWindow {
     required property var automationHotkeys
     required property var updates
     required property var whatsNew
+    property var automationReset: null
     required property var analytics
     required property var starPrompt
     required property var crashReports
@@ -94,8 +95,9 @@ ApplicationWindow {
     readonly property var macroItems: {
         const out = []
         for (const script of root.automationManager.scripts)
-            for (const macro of script.macros)
-                out.push({ path: script.path, ordinal: macro.ordinal, name: macro.name })
+            if (root.automation.shownIn(script.path, root.shellWindow))
+                for (const macro of script.macros)
+                    out.push({ path: script.path, ordinal: macro.ordinal, name: macro.name })
         return out
     }
 
@@ -151,6 +153,74 @@ ApplicationWindow {
             root.app.finishClose()
         else
             closeReview.review(result.rows)
+    }
+    function openFromExplorer(path, newTab) {
+        const open = root.app.tabOfFile(root.shellWindow, path)
+        if (open >= 0) {
+            root.app.selectTab(open)
+            return
+        }
+        if (!newTab) {
+            const result = root.app.reviewOpen(path, true)
+            if (result.ok && !result.done) {
+                if (result.rows.length === 0)
+                    root.app.finishClose()
+                else
+                    closeReview.review(result.rows)
+            }
+        } else if (root.matroska.opensAsMatroska(path)) {
+            matroskaSubtitles.beginFile(path)
+        } else {
+            root.app.openInTab(path)
+        }
+    }
+    function openMediaFromExplorer(path, kind) {
+        if (kind === "video") {
+            tabCommands.openVideoFile(path)
+        } else if (kind === "audio") {
+            root.audio.openAudio(path)
+        } else if (kind === "keyframes") {
+            const problem = root.app.openKeyframesFile(path)
+            if (problem.length > 0)
+                root.notices.post("error", qsTr("Open keyframes"), problem)
+        } else if (kind === "timecodes") {
+            root.openTimecodes(path)
+        }
+    }
+    ExplorerModel {
+        id: explorerModel
+        folder: root.projectRoot
+        excludes: {
+            root.projectRevision
+            return root.app.explorerExcludes(root.shellWindow)
+        }
+        allFiles: root.app.settings.value("explorer.allFiles")
+        groupByName: root.app.settings.value("explorer.groupByName")
+        onAllFilesChanged: if (root.app.settings.value("explorer.allFiles") !== allFiles)
+                               root.app.settings.setValue("explorer.allFiles", allFiles)
+        onGroupByNameChanged: if (root.app.settings.value("explorer.groupByName") !== groupByName)
+                                  root.app.settings.setValue("explorer.groupByName", groupByName)
+    }
+    readonly property string projectRoot: {
+        root.projectRevision
+        return root.app.projectRoot(root.shellWindow)
+    }
+    onProjectRootChanged: root.followProject()
+    function followProject() {
+        if (!root.arrangementSettled)
+            return
+        if (root.projectRoot.length === 0) {
+            if (explorerDock.isOpen)
+                explorerDock.close()
+        } else if (!explorerDock.isOpen && root.workspaceLayout.preset === "Editing" && !root.layoutLocked) {
+            root.openAtFirstPlace(explorerDock)
+        }
+    }
+    function addExplorer() {
+        const grid = gridDock.isOpen && !gridDock.isFloating
+        const width = Math.max(Docking.minimumSize(explorerDock.uniqueName).width,
+                               Math.round((grid ? root.workspaceLayout.panelSize(gridDock).width : dockingArea.width) / 5))
+        dockingArea.addDockWidget(explorerDock, KDDW.KDDockWidgets.Location_OnLeft, grid ? gridDock : null, Qt.size(width, 0))
     }
     function openChosenSubtitles(path) {
         if (root.matroska.opensAsMatroska(path))
@@ -286,11 +356,14 @@ ApplicationWindow {
         editorDock.setAsCurrentTab()
         stylesDock.close()
         templateDock.close()
+        root.addExplorer()
+        if (root.projectRoot.length === 0)
+            explorerDock.close()
     }
 
     function nodeEffectsLayout() {
         for (const dock of [gridDock, editorDock, audioDock, originalDock, referenceDock, postprocessorDock, stylesDock,
-                            templateDock, timingDock, searchDock, automationDock, spellDock, logDock])
+                            templateDock, timingDock, searchDock, automationDock, spellDock, logDock, explorerDock])
             if (dock.isOpen)
                 dock.close()
         const width = dockingArea.width
@@ -466,18 +539,22 @@ ApplicationWindow {
     readonly property list<Item> builtInPanels: [videoPanel, audioPanel, originalPanel, editorPanel, gridPanel, referencePanel,
                                                  timingPanel, postprocessorPanel, searchPanel, automationPanel, spellPanel,
                                                  logPanel, stylesPanel, templatePanel, qcNotesPanel, reviewPanel,
-                                                 agentPanel, nodeGraphPanel, nodeInspectorPanel, nodeSourcesPanel]
+                                                 agentPanel, nodeGraphPanel, nodeInspectorPanel, nodeSourcesPanel,
+                                                 explorerPanel]
     readonly property var builtInDocks: [videoDock, audioDock, originalDock, editorDock, gridDock, referenceDock, timingDock,
                                          postprocessorDock, searchDock, automationDock, spellDock, logDock, stylesDock,
                                          templateDock, qcNotesDock].concat(root.review.on ? [reviewDock] : [])
                                          .concat(root.agent.on ? [agentDock] : [])
-                                         .concat([nodeGraphDock, nodeInspectorDock, nodeSourcesDock])
+                                         .concat([nodeGraphDock, nodeInspectorDock, nodeSourcesDock, explorerDock])
     property var pluginDocks: []
     readonly property var panels: Array.from(builtInPanels).concat(pluginDocks.map(d => d.panel))
     readonly property var dockList: builtInDocks.concat(pluginDocks)
     readonly property var pluginUi: root.app.pluginRuntime ? root.app.pluginRuntime.ui : null
     readonly property var pluginPanelRows: {
-        const rows = root.pluginUi ? root.pluginUi.panels.slice() : []
+        const runtime = root.app.pluginRuntime
+        if (runtime)
+            runtime.windowsRevision
+        const rows = root.pluginUi ? root.pluginUi.panels.filter(r => !runtime || runtime.onIn(r.plugin, root.shellWindow)) : []
         for (const dock of root.pluginDocks)
             if (!rows.some(r => r.dock === dock.storedName))
                 rows.push({ dock: dock.storedName, title: dock.title, pluginName: dock.pluginName, area: "right" })
@@ -869,6 +946,8 @@ ApplicationWindow {
             root.addTemplate()
         else if (dock === agentDock && !Docking.hasPlace(root.engineName("Agent")))
             root.addAgent()
+        else if (dock === explorerDock && !Docking.hasPlace(root.engineName("Explorer")))
+            root.addExplorer()
         else if (root.isPluginDock(dock) && !Docking.hasPlace(dock.uniqueName))
             root.addPluginDock(dock)
         else if (!Docking.hasPlace(dock.uniqueName))
@@ -1941,6 +2020,12 @@ ApplicationWindow {
             onTriggered: if (!root.hotkeyGesture("GLOBAL_BLUR_AND_GLOW_LAYERS")) root.openBlurAndGlowLayers()
         }
         Action {
+            id: typesettingGraphAction
+            text: qsTr("T&ypesetting graph…")
+            enabled: root.shell.hasEditingTarget && !root.layoutLocked
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_TYPESETTING_GRAPH")) root.openTypesettingGraph()
+        }
+        Action {
             id: showQcNotesAction
             text: qsTr("&QC notes…")
             onTriggered: if (!root.hotkeyGesture("GLOBAL_SHOW_QC_NOTES")) root.showPanel(qcNotesDock)
@@ -2284,6 +2369,12 @@ ApplicationWindow {
                     root.setNodeEffects(checked)
                 checked = Qt.binding(() => root.workspaceLayout.nodeEffects)
             }
+        }
+        Action {
+            id: showExplorerAction
+            text: qsTranslate("HikariSub.Explorer", "Explorer")
+            enabled: !root.layoutLocked
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_SHOW_EXPLORER")) root.showPanel(explorerDock)
         }
         Action {
             id: hideEditorTagsAction
@@ -2855,6 +2946,13 @@ ApplicationWindow {
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_BLUR_AND_GLOW_LAYERS_REPEAT")) root.repeatBlurAndGlowLayers()
                 }
                 ShellMenuItem {
+                    command: "GLOBAL_TYPESETTING_GRAPH"
+                    help: qsTranslate("HikariSub.NodeEffects", "Opens node effects with the selected lines as the sources of a typesetting graph")
+                    iconRole: "node-editor"
+                    objectName: "typesettingGraphMenuItem"
+                    action: typesettingGraphAction
+                }
+                ShellMenuItem {
                     command: "GLOBAL_SHOW_QC_NOTES"
                     help: qsTr("Notes from a QC pass, kept in the file, with the lines they mark")
                     iconRole: "qc-notes"
@@ -3397,7 +3495,13 @@ ApplicationWindow {
                 MacroMenuEntries {
                     menu: automationMenu
                     after: pluginsMenuItem
-                    macros: automationMenu.lazyItems?.placed && root.app.pluginRuntime ? root.app.pluginRuntime.commands : []
+                    macros: {
+                        const runtime = root.app.pluginRuntime
+                        if (!automationMenu.lazyItems?.placed || !runtime)
+                            return []
+                        runtime.windowsRevision
+                        return runtime.commands.filter(c => runtime.onIn(c.plugin, root.shellWindow))
+                    }
                     itemPrefix: "pluginCommand_"
                     menuPrefix: "pluginCommandMenu_"
                     onTriggered: command => root.app.pluginRuntime.run(command.id)
@@ -3554,6 +3658,13 @@ ApplicationWindow {
                     action: nodeEffectsAction
                 }
                 MenuSeparator {}
+                ShellMenuItem {
+                    command: "GLOBAL_SHOW_EXPLORER"
+                    help: qsTranslate("HikariSub.Explorer", "Files in the project folder")
+                    iconRole: "explorer"
+                    objectName: "showExplorer"
+                    action: showExplorerAction
+                }
                 ShellMenuItem {
                     iconRole: "log"
                     objectName: "logMenuItem"
@@ -3959,6 +4070,23 @@ ApplicationWindow {
             readonly property bool grammar: !!field.grammar.rule
             readonly property var suggestions: (grammar ? field.grammar.suggestions : field.misspell.suggestions) || []
             property bool headerShown: false
+            readonly property bool tiered: root.projectName.length > 0
+            property string dictionaryTier: "project"
+            onAboutToShow: {
+                const row = (root.app.settings.value("workspace.saveTiers") || []).find(r => r.startsWith("dictionary\t"))
+                dictionaryTier = row && row.endsWith("\tmine") ? "mine" : "project"
+            }
+            function addWord(word, tier) {
+                const project = tiered && tier === "project"
+                const added = grammar ? root.app.addGrammarWord(word, project) : root.app.addEditorWord(word, project)
+                if (!added)
+                    root.notices.post("error", qsTranslate("HikariSub.Editor", "Add word to dictionary"),
+                                      qsTranslate("HikariSub.Editor", "“%1” was not added to the dictionary.").arg(word))
+                else if (tiered && tier !== dictionaryTier) {
+                    const rows = (root.app.settings.value("workspace.saveTiers") || []).filter(r => !r.startsWith("dictionary\t"))
+                    root.app.settings.setValue("workspace.saveTiers", rows.concat(["dictionary\t" + tier]))
+                }
+            }
             Instantiator {
                 model: editMenu.grammar ? 1 : 0
                 delegate: ShellMenuItem {
@@ -4018,19 +4146,28 @@ ApplicationWindow {
                 onTriggered: field.ignoreGrammarRule()
             }
             ShellMenuItem {
+                id: addWordItem
                 readonly property string word: editMenu.grammar ? (field.grammar.word ? field.grammar.text || "" : "")
                                                                 : field.misspell.word || ""
                 iconRole: "dictionary-add"
                 objectName: field.objectName + "AddWord"
                 text: qsTranslate("HikariSub.Spelling", "Add “%1” to dictionary").arg(word)
+                detailText: !editMenu.tiered ? ""
+                    : editMenu.dictionaryTier === "project" ? qsTranslate("HikariSub.Spelling", "This project")
+                    : qsTranslate("HikariSub.Spelling", "Mine")
                 visible: word.length > 0
                 height: visible ? implicitHeight : 0
-                onTriggered: {
-                    const added = editMenu.grammar ? root.app.addGrammarWord(word) : root.app.addEditorWord(word)
-                    if (!added)
-                        root.notices.post("error", qsTranslate("HikariSub.Editor", "Add word to dictionary"),
-                                          qsTranslate("HikariSub.Editor", "“%1” was not added to the dictionary.").arg(word))
-                }
+                onTriggered: editMenu.addWord(word, editMenu.dictionaryTier)
+            }
+            ShellMenuItem {
+                readonly property string other: editMenu.dictionaryTier === "project" ? "mine" : "project"
+                iconRole: other
+                objectName: field.objectName + "AddWordOther"
+                text: other === "project" ? qsTranslate("HikariSub.Spelling", "Add to project dictionary")
+                                          : qsTranslate("HikariSub.Spelling", "Add to my dictionary")
+                visible: editMenu.tiered && addWordItem.visible
+                height: visible ? implicitHeight : 0
+                onTriggered: editMenu.addWord(addWordItem.word, other)
             }
             MenuSeparator {
                 visible: editMenu.suggestions.length > 0 || editMenu.grammar || !!field.misspell.word
@@ -4083,6 +4220,11 @@ ApplicationWindow {
                 onTriggered: root.openBlurAndGlowLayers()
             }
             ShellMenuItem { command: "GLOBAL_REMOVE_TAGS"; iconRole: "remove-tags"; objectName: field.objectName + "RemoveTags"; action: removeTagsAction }
+            PhantomMenu {
+                shellRoot: root
+                prefix: field.objectName
+                enabled: !field.readOnly && root.editor.hasLine
+            }
             MenuSeparator { visible: fieldAiMenu.shown; height: visible ? implicitHeight : 0 }
             InlineAiMenu {
                 id: fieldAiMenu
@@ -4326,12 +4468,37 @@ ApplicationWindow {
         Component.onCompleted: Qt.callLater(() => dropAreaCpp = Docking.mainDropArea(dockingArea.uniqueName))
     }
 
+    property real homeInset: 0
+    function placeHomeBesideExplorer() {
+        if (!explorerDock.isOpen || !explorerPanel.visible || explorerPanel.Window.window !== root) {
+            homeInset = 0
+            return
+        }
+        const at = explorerPanel.mapToItem(dockingArea, 0, 0)
+        const right = at.x + explorerPanel.width
+        homeInset = at.x < 8 && right < dockingArea.width / 2 ? right : 0
+    }
+    Connections {
+        target: explorerPanel
+        function onWidthChanged() { Qt.callLater(root.placeHomeBesideExplorer) }
+        function onVisibleChanged() { Qt.callLater(root.placeHomeBesideExplorer) }
+    }
+    Connections {
+        target: explorerDock
+        function onIsOpenChanged() { Qt.callLater(root.placeHomeBesideExplorer) }
+    }
+    Connections {
+        target: dockingArea
+        function onWidthChanged() { Qt.callLater(root.placeHomeBesideExplorer) }
+    }
+
     HomePage {
         id: homePage
         objectName: "homePage"
         app: root.app
         shellWindow: root.shellWindow
         anchors.fill: dockingArea
+        anchors.leftMargin: root.homeInset
         z: 1.5
         visible: root.windowHome
         spaceAbove: documentTabBar.height
@@ -4370,7 +4537,7 @@ ApplicationWindow {
         anchors.fill: parent
         uniqueName: root.engineName("Classic")
         affinities: root.dockAffinities
-        enabled: !homePage.visible
+        enabled: !homePage.visible || root.homeInset > 0
 
         PanelDock {
             id: videoDock
@@ -6674,6 +6841,14 @@ ApplicationWindow {
                             text: qsTranslate("HikariSub.Hotkeys", "Build layers with the last values")
                             onTriggered: if (!root.gridGesture(this, "GLOBAL_BLUR_AND_GLOW_LAYERS_REPEAT")) root.repeatBlurAndGlowLayers()
                         }
+                        ShellMenuItem {
+                            command: "GLOBAL_TYPESETTING_GRAPH"
+                            objectName: "gridTypesettingGraph"
+                            iconRole: "node-editor"
+                            text: qsTranslate("HikariSub.Hotkeys", "Typesetting graph…")
+                            enabled: !root.layoutLocked
+                            onTriggered: if (!root.gridGesture(this, "GLOBAL_TYPESETTING_GRAPH")) root.openTypesettingGraph()
+                        }
                         ShellMenuItem { command: "GRID_CUT"; iconRole: "edit-cut"; objectName: "cutLines"; standardKey: StandardKey.Cut; text: qsTranslate("HikariSub.Grid", "Cut"); onTriggered: if (!root.gridGesture(this, "GRID_CUT")) root.app.cutLines() }
                         ShellMenuItem { command: "GRID_COPY"; iconRole: "edit-copy"; objectName: "copyLines"; standardKey: StandardKey.Copy; text: qsTranslate("HikariSub.Grid", "Copy"); onTriggered: if (!root.gridGesture(this, "GRID_COPY")) root.app.copyLines() }
                         ShellMenuItem { command: "GRID_PASTE"; iconRole: "edit-paste"; objectName: "pasteLines"; standardKey: StandardKey.Paste; text: qsTranslate("HikariSub.Grid", "Paste"); onTriggered: if (!root.gridGesture(this, "GRID_PASTE")) root.app.pasteLines() }
@@ -6830,6 +7005,23 @@ ApplicationWindow {
                             objectName: "gridSwapAlternatives"
                             text: qsTranslate("HikariSub.Text", "Swap dialogue alternatives")
                             onTriggered: if (!root.hotkeyGesture(command)) root.app.textCommand("swapAlternatives")
+                        }
+                        MenuSeparator {}
+                        ChangeAlignmentMenu { shellRoot: root; prefix: "grid" }
+                        AlignDistributeMenu { shellRoot: root; prefix: "grid" }
+                        ShellMenuItem {
+                            command: "GLOBAL_POSITION_TO_MARGINS"
+                            iconRole: "pos-to-margins"
+                            objectName: "gridPositionToMargins"
+                            text: qsTranslate("HikariSub.Position", "Position to margins")
+                            onTriggered: if (!root.hotkeyGesture(command)) root.app.positionToMargins()
+                        }
+                        ShellMenuItem {
+                            command: "GLOBAL_MARGINS_TO_POSITION"
+                            iconRole: "margins-to-pos"
+                            objectName: "gridMarginsToPosition"
+                            text: qsTranslate("HikariSub.Position", "Margins to position")
+                            onTriggered: if (!root.hotkeyGesture(command)) root.app.marginsToPosition()
                         }
                         MenuSeparator {}
                         ShellMenuItem {
@@ -7081,6 +7273,7 @@ ApplicationWindow {
                         onSettingsRequested: root.openSettings("ai")
                         onLogRequested: root.showPanel(logDock)
                         onExportRequested: id => agentExportDialog.openFor(id)
+                        onPluginRequested: id => pluginManagerDialog.showPlugin(id)
                     }
                 }
                 Connections {
@@ -7138,6 +7331,13 @@ ApplicationWindow {
                     anchors.fill: parent
                     controller: root.automationManager
                     automation: root.automation
+                    shellWindow: root.shellWindow
+                    lockedScripts: {
+                        root.projectRevision
+                        root.automationManager.scripts
+                        return root.automation.lockedScripts(root.shellWindow)
+                    }
+                    onTrustRequested: root.app.trustProject(root.shellWindow)
                     macroHotkeys: root.automationHotkeys
                     hotkeys: root.hotkeys
                     loadAction: loadScriptAction
@@ -7310,6 +7510,39 @@ ApplicationWindow {
         }
 
         PanelDock {
+            id: explorerDock
+            objectName: "explorerDock"
+            uniqueName: root.engineName("Explorer")
+            affinities: root.dockAffinities
+            title: qsTranslate("HikariSub.Explorer", "Explorer")
+            Panel {
+                id: explorerPanel
+                objectName: "explorerPanel"
+                dockName: root.engineName("Explorer")
+                minimumBodySize: explorerTool.minimumBodySize
+                anchors.fill: parent
+                title: qsTranslate("HikariSub.Explorer", "Explorer")
+                ExplorerPanel {
+                    id: explorerTool
+                    anchors.fill: parent
+                    focus: true
+                    model: explorerModel
+                    messages: root.messages
+                    onEscaped: root.focusPanel(gridPanel, Qt.OtherFocusReason)
+                    onOpenSubtitles: (path, newTab) => root.openFromExplorer(path, newTab)
+                    onOpenMedia: (path, kind) => root.openMediaFromExplorer(path, kind)
+                    onOpenProjectSettings: {
+                        root.openSettings()
+                        root.settingsWindow().projectTab = true
+                    }
+                    onOpenFolder: projectFolderDialog.show()
+                    onShowInFolder: path => root.app.showInFolder(path)
+                    onCopyPath: path => root.app.copyText(path)
+                }
+            }
+        }
+
+        PanelDock {
             id: logDock
             objectName: "logDock"
             uniqueName: root.engineName("Log")
@@ -7343,6 +7576,7 @@ ApplicationWindow {
             Docking.setPanelHeader(root.engineName("NodeGraph"), true, nodeGraphTool.toolbar)
             Docking.setPanelHeader(root.engineName("NodeSources"), true, nodeSourcesTool.toolbar)
             Docking.setPanelHeader(root.engineName("NodeInspector"), true, null)
+            Docking.setPanelHeader(root.engineName("Explorer"), true, explorerTool.toolbar)
             root.defaultLayout()
         }
     }
@@ -7360,6 +7594,7 @@ ApplicationWindow {
         root.workspaceLayout.buildsArrangement("Karaoke")
         root.workspaceLayout.restoreSaved()
         root.placeOriginal()
+        root.followProject()
         Docking.guardClose(root, root.admitClose)
         Docking.followLayoutMinimum(dockingArea.uniqueName)
     }
@@ -7461,14 +7696,18 @@ ApplicationWindow {
                 root.projectRevision
                 return root.app.projectRoot(root.shellWindow)
             }
-            readonly property bool needed: {
+            readonly property var reasons: {
                 root.projectRevision
-                return root.app.projectNeedsTrust(root.shellWindow)
+                return root.app.projectTrustReasons(root.shellWindow)
             }
-            visible: needed && dismissed !== folder
+            visible: reasons.length > 0 && dismissed !== folder
             iconRole: "trust"
             closable: false
-            text: qsTranslate("HikariSub.Project", "This project has its own scripts or plugin settings. Trust “%1” to run them.")
+            text: (reasons.length > 1
+                   ? qsTranslate("HikariSub.Project", "This project has its own scripts, plugin settings or AI keys. Trust “%1” to use them.")
+                   : reasons[0] === "keys"
+                   ? qsTranslate("HikariSub.Project", "This project has its own AI keys. Trust “%1” to use them; until then Hikari AI uses yours.")
+                   : qsTranslate("HikariSub.Project", "This project has its own scripts or plugin settings. Trust “%1” to run them."))
                   .arg(root.projectName)
             Layout.fillWidth: true
             IconTextButton {
@@ -7481,6 +7720,30 @@ ApplicationWindow {
                 objectName: "projectTrustNotNow"
                 text: qsTranslate("HikariSub.MainWindow", "Not now")
                 onClicked: projectTrustBar.dismissed = projectTrustBar.folder
+            }
+        }
+        InlineBar {
+            id: projectKeyValuesBar
+            objectName: "projectKeyValuesBar"
+            property string dismissed: ""
+            readonly property string folder: {
+                root.projectRevision
+                return root.app.projectRoot(root.shellWindow)
+            }
+            readonly property var found: {
+                root.projectRevision
+                return root.app.projectKeyValuesFound(root.shellWindow)
+            }
+            visible: found.length > 0 && dismissed !== folder
+            severity: "warning"
+            text: qsTranslate("HikariSub.Project", "project.toml holds an AI key for %1. HikariSub ignores it: keys go in .hikari/credentials.toml, which git doesn’t share.")
+                  .arg(found.join(", "))
+            Layout.fillWidth: true
+            onClosed: dismissed = folder
+            Button {
+                objectName: "projectKeyValuesSettings"
+                text: qsTranslate("HikariSub.Project", "Project settings…")
+                onClicked: root.openProjectSettingsPage("ai")
             }
         }
         InlineBar {
@@ -7739,7 +8002,14 @@ ApplicationWindow {
         market: root.app.pluginMarketplace
         runtime: root.app.pluginRuntime
         settings: root.app.settings
+        project: {
+            root.projectRevision
+            if (root.app.pluginRuntime)
+                root.app.pluginRuntime.windowsRevision
+            return root.app.projectPlugins(root.shellWindow)
+        }
         onCopyRequested: text => root.app.copyText(text)
+        onTrustRequested: root.app.trustProject(root.shellWindow)
     }
     Connections {
         target: root.app.pluginManager
@@ -8634,6 +8904,15 @@ ApplicationWindow {
         }
     }
     Loader {
+        id: automationResetDialogLoader
+        objectName: "automationResetDialogLoader"
+        active: false
+        sourceComponent: AutomationResetDialog {
+            reset: root.automationReset
+            settings: root.app.settings
+        }
+    }
+    Loader {
         id: whatsNewDialogLoader
         objectName: "whatsNewDialogLoader"
         active: false
@@ -8794,6 +9073,13 @@ ApplicationWindow {
     function openBlurAndGlowLayers() {
         blurAndGlowLayersLoader.active = true
         blurAndGlowLayersLoader.item.openDialog()
+    }
+    function openTypesettingGraph() {
+        if (!root.app.targetTypesettingGraph()) {
+            root.notify("info", qsTranslate("HikariSub.NodeEffects", "Select the lines a typesetting graph should run on."), "")
+            return
+        }
+        root.setNodeEffects(true)
     }
     function repeatBlurAndGlowLayers() {
         const result = root.app.repeatLayerBuilders()
@@ -8994,6 +9280,7 @@ ApplicationWindow {
         return settingsLoader.item
     }
     function openSettings(page, filter) { settingsWindow().openDialog(page, filter) }
+    function openProjectSettingsPage(page) { settingsWindow().openDialog(undefined, undefined, page) }
     function repeatInlineAi(inEditor, field) {
         if (root.inlineAi.last.action)
             inlineAiBox.begin(Object.assign({}, root.inlineAi.last, {repeat: true}), inEditor, field)
@@ -9350,6 +9637,8 @@ ApplicationWindow {
             root.workspaceLayout.resumeMode("Karaoke")
         if (root.app.gettingStartedDue())
             Qt.callLater(() => root.lazy(gettingStartedDialogLoader).openSetup())
+        if (root.shellWindow === 0 && root.automationReset?.due)
+            Qt.callLater(() => root.lazy(automationResetDialogLoader).open())
         if (root.shellWindow === 0 && root.crashReports.pending.length > 0
                 && !(root.crashReports.canSend && root.app.settings.value("privacy.alwaysSendCrashReports") === true))
             Qt.callLater(() => crashReportWindow.showReport("start"))
@@ -9564,6 +9853,7 @@ ApplicationWindow {
         GLOBAL_PERSPECTIVE_TRACKING: perspectiveTrackingAction,
         GLOBAL_APPLY_MOTION_DATA: applyMotionDataAction,
         GLOBAL_BLUR_AND_GLOW_LAYERS: blurAndGlowLayersAction,
+        GLOBAL_TYPESETTING_GRAPH: typesettingGraphAction,
         GLOBAL_REVERT_MOTION_DATA: revertMotionDataAction,
         GLOBAL_COPY_MOTION_DATA: copyMotionDataAction,
         GLOBAL_COPY_POWER_PIN_TRACK: copyPowerPinTrackAction,
@@ -9601,7 +9891,7 @@ ApplicationWindow {
         GLOBAL_OPEN_STYLE_MANAGER: styleManagerAction, GLOBAL_OPEN_SUBS_RESAMPLE: resampleAction,
         GLOBAL_OPEN_FONT_COLLECTOR: fontCollectorAction,
         GLOBAL_SHOW_SHIFT_TIMES: showShiftTimesAction, GLOBAL_SHOW_TIMING_POSTPROCESSOR: showPostprocessorAction,
-        GLOBAL_SHOW_QC_NOTES: showQcNotesAction,
+        GLOBAL_SHOW_QC_NOTES: showQcNotesAction, GLOBAL_SHOW_EXPLORER: showExplorerAction,
         GLOBAL_SNAP_START_TO_PREVIOUS_KEYFRAME: snapStartToPreviousKeyframeAction,
         GLOBAL_SNAP_START_TO_NEXT_KEYFRAME: snapStartToNextKeyframeAction,
         GLOBAL_SNAP_END_TO_PREVIOUS_KEYFRAME: snapEndToPreviousKeyframeAction,
@@ -9759,6 +10049,39 @@ ApplicationWindow {
         case "GLOBAL_IMPORT_LEGACY_SETTINGS": root.importLegacySettings(); return true
         case "GLOBAL_CONVERT_FOLDS_TO_GROUPS": if (editing) root.app.convertFoldsToGroups(); return true
         case "GLOBAL_INTERPOLATE_LINES": if (editing) root.openInterpolateLines(); return true
+        case "GLOBAL_ALIGNMENT_KEEP_POSITION_AN1": if (editing) root.app.changeAlignment(1); return true
+        case "GLOBAL_ALIGNMENT_KEEP_POSITION_AN2": if (editing) root.app.changeAlignment(2); return true
+        case "GLOBAL_ALIGNMENT_KEEP_POSITION_AN3": if (editing) root.app.changeAlignment(3); return true
+        case "GLOBAL_ALIGNMENT_KEEP_POSITION_AN4": if (editing) root.app.changeAlignment(4); return true
+        case "GLOBAL_ALIGNMENT_KEEP_POSITION_AN5": if (editing) root.app.changeAlignment(5); return true
+        case "GLOBAL_ALIGNMENT_KEEP_POSITION_AN6": if (editing) root.app.changeAlignment(6); return true
+        case "GLOBAL_ALIGNMENT_KEEP_POSITION_AN7": if (editing) root.app.changeAlignment(7); return true
+        case "GLOBAL_ALIGNMENT_KEEP_POSITION_AN8": if (editing) root.app.changeAlignment(8); return true
+        case "GLOBAL_ALIGNMENT_KEEP_POSITION_AN9": if (editing) root.app.changeAlignment(9); return true
+        case "GLOBAL_ALIGN_LEFT_EDGES": if (editing) root.app.alignLines(0); return true
+        case "GLOBAL_ALIGN_CENTRES": if (editing) root.app.alignLines(1); return true
+        case "GLOBAL_ALIGN_RIGHT_EDGES": if (editing) root.app.alignLines(2); return true
+        case "GLOBAL_ALIGN_TOP_EDGES": if (editing) root.app.alignLines(3); return true
+        case "GLOBAL_ALIGN_MIDDLES": if (editing) root.app.alignLines(4); return true
+        case "GLOBAL_ALIGN_BOTTOM_EDGES": if (editing) root.app.alignLines(5); return true
+        case "GLOBAL_DISTRIBUTE_HORIZONTALLY": if (editing) root.app.distributeLines(false); return true
+        case "GLOBAL_DISTRIBUTE_VERTICALLY": if (editing) root.app.distributeLines(true); return true
+        case "GLOBAL_POSITION_TO_MARGINS": if (editing) root.app.positionToMargins(); return true
+        case "GLOBAL_MARGINS_TO_POSITION": if (editing) root.app.marginsToPosition(); return true
+        case "GLOBAL_PHANTOM_KEEP_START": if (editing) root.app.phantom(false); return true
+        case "GLOBAL_PHANTOM_KEEP_END": if (editing) root.app.phantom(true); return true
+        case "GLOBAL_CYCLE_BLUR": if (editing) root.app.cycleTag(0, false); return true
+        case "GLOBAL_CYCLE_BLUR_BACK": if (editing) root.app.cycleTag(0, true); return true
+        case "GLOBAL_CYCLE_BORD": if (editing) root.app.cycleTag(1, false); return true
+        case "GLOBAL_CYCLE_BORD_BACK": if (editing) root.app.cycleTag(1, true); return true
+        case "GLOBAL_CYCLE_SHAD": if (editing) root.app.cycleTag(2, false); return true
+        case "GLOBAL_CYCLE_SHAD_BACK": if (editing) root.app.cycleTag(2, true); return true
+        case "GLOBAL_CYCLE_ALPHA": if (editing) root.app.cycleTag(3, false); return true
+        case "GLOBAL_CYCLE_ALPHA_BACK": if (editing) root.app.cycleTag(3, true); return true
+        case "GLOBAL_CYCLE_AN": if (editing) root.app.cycleTag(4, false); return true
+        case "GLOBAL_CYCLE_AN_BACK": if (editing) root.app.cycleTag(4, true); return true
+        case "GLOBAL_CYCLE_FSP": if (editing) root.app.cycleTag(5, false); return true
+        case "GLOBAL_CYCLE_FSP_BACK": if (editing) root.app.cycleTag(5, true); return true
         case "GLOBAL_PLAY_ACTUAL_LINE":
             if (root.video.hasVideo) {
                 root.focusPanel(lineText, Qt.OtherFocusReason)

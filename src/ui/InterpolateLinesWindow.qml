@@ -74,7 +74,7 @@ DialogWindow {
             objectName: "interpolateLinesRange"
             text: (dialog.plan.count ?? 0) > 0
                   ? qsTr("%n line(s), from line %1 to line %2. The video shows the result while this is open.", "", dialog.plan.count)
-                        .arg(dialog.plan.firstRow).arg(dialog.plan.lastRow)
+                        .arg(dialog.plan.firstRow, dialog.plan.lastRow)
                   : ""
             visible: text.length > 0
             color: Theme.muted

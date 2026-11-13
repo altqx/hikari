@@ -24,10 +24,13 @@ export interface CallToolResult {
 
 /**
  * Tools from outside HA1 that search_tools finds as one more group, such as the web search service. A source with no
- * tools now is left out of search_tools.
+ * tools now is left out of search_tools. An offered source isn't listed in search_tools' description, and its tools come
+ * back by name under `alreadyOffered`, so they stay in the cached prefix.
  */
 export interface ToolSource {
     readonly group: string;
+    /** Its tools are offered from the start, not only once search_tools finds them. */
+    readonly offered?: boolean;
     readonly description: string;
     tools(): Tool[];
     call(name: string, args: Record<string, unknown>): Promise<CallToolResult>;
@@ -135,7 +138,8 @@ export class ToolSet {
         return [
             ...this.entries.filter((e) => all || this.offered.has(e.tool.name))
                 .map((e) => (e.tool.name === "search_tools" ? search : e.tool)),
-            ...this.sourceTools().filter(([tool]) => all || this.offered.has(tool.name)).map(([tool]) => tool),
+            ...this.sourceTools().filter(([tool, source]) => all || source.offered || this.offered.has(tool.name))
+                .map(([tool]) => tool),
         ];
     }
 
@@ -197,23 +201,25 @@ export class ToolSet {
         if (query === undefined && group === undefined)
             return failure("search_tools needs a query, a group or both.");
         const wanted = words((query as string | undefined) ?? "");
-        const candidates: [Tool, string][] = [
-            ...this.entries.filter((e) => e.group !== "core").map((e): [Tool, string] => [e.tool, e.group]),
-            ...this.sourceTools().map(([tool, source]): [Tool, string] => [tool, source.group]),
+        const candidates: [Tool, string, boolean][] = [
+            ...this.entries.filter((e) => e.group !== "core").map((e): [Tool, string, boolean] => [e.tool, e.group, false]),
+            ...this.sourceTools().map(([tool, source]): [Tool, string, boolean] => [tool, source.group, source.offered === true]),
         ];
-        const found = candidates
+        const matched = candidates
             .filter(([, g]) => group === undefined || g === group)
-            .map(([tool, g]): [Tool, number] => [tool, score(wanted, tool.name) * kNameWeight +
+            .map(([tool, g, upFront]): [Tool, boolean, number] => [tool, upFront, score(wanted, tool.name) * kNameWeight +
                 score(wanted, `${tool.name} ${tool.description} ${g}`)])
-            .filter(([, s]) => wanted.length === 0 || s > 0)
-            .sort(([a, sa], [b, sb]) => sb - sa || a.name.localeCompare(b.name))
-            .slice(0, 10)
-            .map(([tool]) => tool);
-        if (found.length === 0)
+            .filter(([, , s]) => wanted.length === 0 || s > 0)
+            .sort(([a, , sa], [b, , sb]) => sb - sa || a.name.localeCompare(b.name))
+            .slice(0, 10);
+        if (matched.length === 0)
             return failure(`No tool matches. The groups are ${this.groups().join(", ")}.`);
+        const found = matched.filter(([, upFront]) => !upFront).map(([tool]) => tool);
+        const offered = matched.filter(([, upFront]) => upFront).map(([tool]) => tool.name);
         for (const tool of found)
             this.offered.add(tool.name);
-        return text({ tools: found.map(({ name, description, inputSchema }) => ({ name, description, inputSchema })) });
+        return text({ tools: found.map(({ name, description, inputSchema }) => ({ name, description, inputSchema })),
+            ...(offered.length ? { alreadyOffered: offered } : {}) });
     }
 
     private async searchCommands(params: Record<string, unknown>): Promise<CallToolResult> {
@@ -231,7 +237,7 @@ export class ToolSet {
 
     private groups(): string[] {
         return [...[...new Set(this.entries.map((e) => e.group as string))].filter((g) => g !== "core"),
-            ...this.liveSources().map((s) => s.group)];
+            ...this.allSources().filter((s) => s.tools().length > 0).map((s) => s.group)];
     }
 
     private allSources(): readonly ToolSource[] {
@@ -239,7 +245,7 @@ export class ToolSet {
     }
 
     private liveSources(): ToolSource[] {
-        return this.allSources().filter((s) => s.tools().length > 0);
+        return this.allSources().filter((s) => !s.offered && s.tools().length > 0);
     }
 
     private sourceTools(): [Tool, ToolSource][] {

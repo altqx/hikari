@@ -401,6 +401,10 @@ TEST(UpdateInstall, StartupArguments)
     EXPECT_TRUE(channel.mcp);
     EXPECT_EQ(channel.mcpChannel, "hikarisub-ch-1");
     EXPECT_TRUE(channel.rest.empty());
+    const auto http = parseStartupArguments({"--mcp", "--channel-url", "http://127.0.0.1:9/mcp"});
+    EXPECT_EQ(http.mcpChannelUrl, "http://127.0.0.1:9/mcp");
+    EXPECT_TRUE(http.mcpChannel.empty());
+    EXPECT_TRUE(http.rest.empty());
 }
 
 TEST(StartupArguments, WindowFlagsLeaveTheFiles)

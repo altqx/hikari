@@ -46,7 +46,7 @@ Loader {
         IconToolButton {
             objectName: option.nameOf
             // MUST KILL: icon_tests parses this iconRole list from its single source line
-            iconRole: ["frame-to-scale", "scale-x", "link", "scale-y", "original-frame", "tool-scale-rotation", "resample", "two-points", "vector-drag", "vector-line", "vector-bezier", "vector-bspline", "vector-point", "vector-delete", "clip-invert", "shift-position", "shift-move-start", "shift-move-end", "shift-clips", "shift-drawings", "shift-origins", "tag-edit", "copy-position", "perspective-plane", "perspective-lock-outer", "perspective-grid", "gradient-rect", "gradient-rotated", "gradient-skew", "gradient-clip-edge", "gradient-vector", "gradient-by-char", "gradient-by-line", "gradient-merge", "remove", "commit"].includes(option.modelData.iconRole) ? option.modelData.iconRole : ""
+            iconRole: ["frame-to-scale", "scale-x", "link", "scale-y", "original-frame", "tool-scale-rotation", "resample", "two-points", "vector-drag", "vector-line", "vector-bezier", "vector-bspline", "vector-point", "vector-delete", "clip-invert", "shift-position", "shift-move-start", "shift-move-end", "shift-clips", "shift-drawings", "shift-origins", "tag-edit", "copy-position", "perspective-plane", "perspective-lock-outer", "perspective-grid", "gradient-rect", "gradient-rotated", "gradient-skew", "gradient-clip-edge", "gradient-vector", "gradient-by-char", "gradient-by-line", "gradient-merge", "align-left", "align-center", "align-right", "distribute-horizontal", "tool-rotate-z", "swap-lines", "media-play", "remove", "commit", "shape-offset"].includes(option.modelData.iconRole) ? option.modelData.iconRole : ""
             text: option.tooltip.split("\n")[0]
             tip: option.tooltip
             checkable: option.modelData.kind === "toggle"
@@ -104,7 +104,7 @@ Loader {
                     anchors.centerIn: parent
                     visible: !choice.asText
                     // MUST KILL: icon_tests parses this iconRole list from its single source line
-                    iconRole: ["shape-presets", "tag-list", "tag-change-option"].indexOf(choice.role) >= 0 ? choice.role : ""
+                    iconRole: ["shape-presets", "tag-list", "tag-change-option", "shape-unite"].indexOf(choice.role) >= 0 ? choice.role : ""
                 }
                 RowLayout {
                     id: textBox
@@ -161,6 +161,7 @@ Loader {
                 id: choiceMenu
                 objectName: choice.objectName.length > 0 ? choice.objectName + "_menu" : ""
                 closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutsideParent
+                onClosed: option.tools.previewOption(option.modelData.name, -1)
                 // Qt: made before the Loader puts it in the window, the menu does not inherit the window's palette.
                 palette: choice.palette
                 MenuSeparator {
@@ -173,8 +174,11 @@ Loader {
                         required property int index
                         required property string modelData
                         readonly property bool isAction: choice.listEnds && index === choice.model.length - 1 && index > 0
-                        iconRole: isAction ? "edit" : ""
+                        readonly property string entryRole: (option.modelData.choiceRoles || [])[index] || ""
+                        // MUST KILL: icon_tests parses this iconRole list from its single source line
+                        iconRole: isAction ? "edit" : ["shape-unite", "shape-subtract", "shape-intersect", "shape-exclude"].indexOf(entryRole) >= 0 ? entryRole : ""
                         objectName: choice.objectName.length > 0 ? choice.objectName + "_" + index : ""
+                        onHighlightedChanged: if (highlighted || choiceMenu.currentIndex < 0) option.tools.previewOption(option.modelData.name, highlighted ? index : -1)
                         text: choice.entryText(index)
                         checkable: !isAction
                         checked: index === choice.currentIndex

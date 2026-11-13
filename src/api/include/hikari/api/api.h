@@ -13,7 +13,7 @@
 namespace hikari::api {
 
 // Grows by one with each release that adds to the API.
-inline constexpr int kApiVersion = 2;
+inline constexpr int kApiVersion = 1;
 
 enum class Access { Read, Write };
 std::string_view accessName(Access access);
@@ -51,8 +51,12 @@ struct Caller {
     bool reviewed = false;
     // May read the user's skills (AI callers).
     bool skills = false;
+    // The caller's Project folder, UTF-8; its .hikari/skills join the user's. Empty: no Project.
+    std::string project;
     // The user approved this call's Lua script; automation.run refuses without it.
     bool scriptApproved = false;
+    // The SHA-256 of the plugin package the user approved; plugins.install refuses any other.
+    std::string approvedPackage;
 };
 
 // A file the user let one caller use; the caller sees the handle and name, never the path.
@@ -70,6 +74,9 @@ struct GrantedFolder {
     std::string path;
     bool writable = false;
 };
+
+// The handle of an AI caller's Project folder, read-only, from Caller::project.
+inline constexpr std::string_view kProjectFolder = "project";
 
 struct Context {
     const Host &host;

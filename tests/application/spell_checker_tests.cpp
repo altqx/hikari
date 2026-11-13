@@ -228,6 +228,60 @@ TEST_F(Spelling, UserWordsWithoutADictionary)
     EXPECT_EQ(names(checker->addedWords()), (std::vector<std::string>{"wrold", "zzyzx"}));
 }
 
+TEST_F(Spelling, ProjectWordsLoadBesideTheUsersAndAddToTheProjectFile)
+{
+    const fs::path project = folder / "show" / ".hikari" / "dictionary.txt";
+    writeFile(checker->userDictionary(), "\xEF\xBB\xBFkotek");
+    fs::create_directories(project.parent_path());
+    writeFile(project, "Haruhi\r\n  Kyon \n\nHaruhi\n");
+    checker->setProjectWords(project);
+    ASSERT_EQ(checker->initialize(u"en_US"), SpellChecker::Status::Ready);
+    EXPECT_TRUE(checker->checkWord(u"kotek"));
+    EXPECT_TRUE(checker->checkWord(u"Haruhi"));
+    EXPECT_TRUE(checker->checkWord(u"Kyon"));
+    EXPECT_FALSE(checker->checkWord(u"Mikuru"));
+
+    EXPECT_FALSE(checker->addWord(u"-12", Tier::Project));
+    EXPECT_TRUE(checker->addWord(u"Mikuru", Tier::Project));
+    EXPECT_TRUE(checker->checkWord(u"Mikuru"));
+    EXPECT_EQ(readFile(project), "Haruhi\nKyon\nMikuru\n");
+    EXPECT_EQ(names(checker->addedWords()), (std::vector<std::string>{"kotek"}));
+    EXPECT_TRUE(checker->addProjectWord(u"Kyon"));
+    EXPECT_EQ(readFile(project), "Haruhi\nKyon\nMikuru\n");
+
+    SpellChecker without(folder, fakes::FakeSpelling::loader());
+    EXPECT_FALSE(without.addProjectWord(u"Mikuru"));
+    ASSERT_EQ(without.initialize(u"en_US"), SpellChecker::Status::Ready);
+    EXPECT_FALSE(without.checkWord(u"Haruhi"));
+    EXPECT_FALSE(without.addWord(u"Itsuki", Tier::Project));
+}
+
+TEST_F(Spelling, AProjectWordListIsMadeOnTheFirstAdd)
+{
+    const fs::path list = folder / "fresh" / ".hikari" / "dictionary.txt";
+    EXPECT_TRUE(readWordList(list).empty());
+    EXPECT_TRUE(appendToWordList(list, u"Gdańsk"));
+    EXPECT_EQ(readFile(list), "Gda\xC5\x84sk\n");
+    EXPECT_EQ(names(readWordList(list)), (std::vector<std::string>{"Gda\xC5\x84sk"}));
+}
+
+TEST_F(Spelling, TheWalkAddsToTheChosenTier)
+{
+    const fs::path project = folder / "show" / ".hikari" / "dictionary.txt";
+    checker->setProjectWords(project);
+    ASSERT_EQ(checker->initialize(u"en_US"), SpellChecker::Status::Ready);
+    EditSession session{load(std::string(kHeader) + "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,aaa bbb\n")};
+    const auto first = session.document().lines()[0]->id;
+    session.setSelection(Selection{first, {first}, first, {}});
+    SpellCheckWalk walk(*checker, text);
+    const SpellCheckWalk::Options options;
+    ASSERT_TRUE(walk.next(session, options));
+    EXPECT_TRUE(walk.addWord(session, u"aaa", options, Tier::Project));
+    EXPECT_EQ(walk.current()->word, u"bbb");
+    EXPECT_EQ(readFile(project), "aaa\n");
+    EXPECT_TRUE(checker->addedWords().empty());
+}
+
 TEST_F(Spelling, UserDictionaryReadsPerPlatform)
 {
     writeFile(checker->userDictionary(), "\xEF\xBB\xBF" "alpha\r\n\r\nbeta\x1Agamma\r");

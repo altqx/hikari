@@ -8,10 +8,12 @@ export const kGroups = {
     typeset: "Typesetting: video frames as images, ink bounds, colours and keyframes; solvers that write the tags for " +
         "a quad, clip, drawing, shift or Hydra change; a render check before applying.",
     translate: "Translation passes, the glossary, characters and tag rules.",
-    karaoke: "Karaoke timing: audio peaks, syllables and onsets.",
+    karaoke: "Karaoke: audio peaks and vocal onsets; splitting, timing and snapping syllables; the kanji timer and " +
+        "furigana; the karaoke check; the templater's preview and apply; the user's own forced aligner.",
     automation: "Automation macros and AI-written Lua.",
     effects: "The node-effect editor's node types and graphs.",
-    plugins: "Installed plugins and what they offer.",
+    plugins: "Plugins: the installed ones, their manifests and commands; scaffolding a new one from the guide's " +
+        "template and installing it once the user approves.",
     app: "Workspace panels and settings.",
 } as const;
 export type Group = keyof typeof kGroups;
@@ -81,6 +83,17 @@ const kPlacements: Partial<Record<OperationName, Placement>> = {
     "typeset.check": { group: "typeset" },
     "typeset.apply": { group: "typeset" },
     "audio.peaks": { group: "karaoke" },
+    "karaoke.syllables": { group: "karaoke" },
+    "karaoke.split": { group: "karaoke" },
+    "karaoke.time": { group: "karaoke" },
+    "karaoke.onsets": { group: "karaoke" },
+    "karaoke.snap": { group: "karaoke" },
+    "karaoke.kanji": { group: "karaoke" },
+    "karaoke.furigana": { group: "karaoke" },
+    "karaoke.check": { group: "karaoke" },
+    "karaoke.template_preview": { group: "karaoke" },
+    "karaoke.apply_template": { group: "karaoke" },
+    "karaoke.align": { group: "karaoke" },
     "automation.run": {
         group: "automation",
         description: "Runs a Lua Automation script you write, as one macro on the active tab's selection, after the " +
@@ -88,8 +101,35 @@ const kPlacements: Partial<Record<OperationName, Placement>> = {
             "aegisub.register_macro(name, description, fn(subs, sel, active)), changing Lines through subs. " +
             "DependencyControl modules may be required. Prefer document_apply when no Lua is needed.",
     },
+    "translation.project": { group: "translate" },
     "nodes.catalogue": { group: "effects" },
     "nodes.validate": { group: "effects" },
+    "effects.graphs": { group: "effects" },
+    "effects.graph": { group: "effects" },
+    "effects.edit": {
+        group: "effects",
+        description: "Edits a node-effect graph in steps and answers the new graph with its problems; the Document " +
+            "doesn't change. Build from an empty graph with nodes from nodes_catalogue, check it with " +
+            "effects_preview, then write it with effects_save and effects_apply.",
+    },
+    "effects.preview": { group: "effects" },
+    "effects.save": { group: "effects" },
+    "effects.apply": { group: "effects" },
+    "plugins.list": { group: "plugins" },
+    "plugins.manifest": { group: "plugins" },
+    "plugins.scaffold": {
+        group: "plugins",
+        description: "Writes a plugin into the AI plugins folder from the plugin guide's template and packs it; " +
+            "nothing installs. Give its commands, and main.lua as code, or the template registers each command. " +
+            "It stays restricted (sandboxed) unless tier is unrestricted. Then plugins_install asks the user.",
+    },
+    "plugins.review": { group: "plugins" },
+    "plugins.install": {
+        group: "plugins",
+        description: "Asks the user to install a plugin plugins_scaffold made, or a .hikariplugin they granted; " +
+            "every install asks, in every mode. A declined install answers what the user said.",
+    },
+    "plugins.run": { group: "plugins" },
     "panels.list": { group: "app" },
     "panels.open": { group: "app" },
     "panels.close": { group: "app" },
@@ -101,9 +141,11 @@ const kPlacements: Partial<Record<OperationName, Placement>> = {
 
 /**
  * Operations no tool offers as they are: search_commands wraps commands.list, read_skill the skills, the sidecar
- * knows the version, and project.info answers for the window the user works in, not the thread's.
+ * knows the version, project.info answers for the window the user works in, not the thread's, and only a
+ * translation run Qt approved writes the project files.
  */
-const kUnoffered: readonly OperationName[] = ["commands.list", "skills.list", "skills.read", "api.version", "project.info"];
+const kUnoffered: readonly OperationName[] = ["commands.list", "skills.list", "skills.read", "api.version", "project.info",
+    "translation.project_write"];
 
 /** MCP's Tool, as `tools/list` gives it. */
 export interface Tool {

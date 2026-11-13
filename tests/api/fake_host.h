@@ -178,6 +178,100 @@ public:
     std::function<void(LuaRun)> pending;
 };
 
+class FakeEffects final : public EffectsHost {
+public:
+    class Measure final : public application::TextMeasurePort {
+    public:
+        std::optional<application::TextExtents> measure(const std::vector<std::string> &style,
+                                                        const std::string &text) override
+        {
+            const double size = style.size() > 2 ? std::stod(style[2]) : 0;
+            return application::TextExtents{double(text.size()) * size * 0.5, size, size * 0.2, 0};
+        }
+    };
+    application::NodeEffectOptions options() override
+    {
+        application::NodeEffectOptions o;
+        o.measure = &measure;
+        return o;
+    }
+    Measure measure;
+};
+
+class FakeTranslation final : public TranslationHost {
+public:
+    std::optional<std::string> projectFolder(application::DocumentId document) const override
+    {
+        const auto it = folders.find(document.value);
+        return it == folders.end() ? std::nullopt : std::optional(it->second);
+    }
+    std::map<std::uint64_t, std::string> folders;
+};
+
+// One installed restricted plugin, org.example.word-count with command count; the approved digest is kDigest.
+class FakePlugins final : public PluginHost {
+public:
+    std::vector<PluginState> plugins() const override { return installed; }
+    std::optional<std::string> manifest(std::string_view plugin) const override
+    {
+        if (plugin != "org.example.word-count")
+            return std::nullopt;
+        return std::string(R"({"id": "org.example.word-count"})");
+    }
+    PluginRun run(std::string_view plugin, std::string_view command) override
+    {
+        runs.emplace_back(std::string(plugin) + "/" + std::string(command));
+        return nextRun;
+    }
+    std::expected<ScaffoldedPlugin, std::string> scaffold(std::string_view plugin,
+                                                          const std::vector<PluginFile> &files) override
+    {
+        scaffolded = files;
+        package = "/user/ai/plugins/" + std::string(plugin) + ".hikariplugin";
+        return ScaffoldedPlugin{"/user/ai/plugins/" + std::string(plugin), package};
+    }
+    std::optional<std::string> scaffoldedPackage(std::string_view plugin) const override
+    {
+        return package.empty() || !package.contains(plugin) ? std::nullopt : std::optional(package);
+    }
+    std::expected<PluginReview, std::string> review(const std::string &path) override
+    {
+        reviewed.push_back(path);
+        return reviewOf();
+    }
+    std::expected<PluginReview, std::string> install(const std::string &path, const std::string &digest) override
+    {
+        if (digest != kDigest)
+            return std::unexpected(std::string("The package changed after the user approved it, so it wasn't installed."));
+        installs.push_back(path);
+        return reviewOf();
+    }
+
+    PluginReview reviewOf() const
+    {
+        PluginReview r;
+        r.id = "org.example.word-count";
+        r.name = "Word count";
+        r.version = "0.1.0";
+        r.change = "install";
+        r.fullTrust = fullTrust;
+        r.commands = {"Count words"};
+        r.files = {{"main.lua", "hikari.commands.register(\"count\", function() end)\n"}};
+        r.digest = kDigest;
+        return r;
+    }
+
+    static constexpr std::string_view kDigest = "ab12";
+    std::vector<PluginState> installed{PluginState{
+        "org.example.word-count", "Word count", "0.1.0", "Counts words.", "file", false, true, false, false,
+        {PluginCommand{"plugin.org.example.word-count.count", "Count words"}}}};
+    PluginRun nextRun = PluginRun::Ran;
+    bool fullTrust = false;
+    std::vector<std::string> runs, reviewed, installs;
+    std::vector<PluginFile> scaffolded;
+    std::string package;
+};
+
 // Document 1 "a.ass" (the editing target, Lines 1-3, Lines 1 and 3 selected,
 // 3 active) and document 2 "b.ass", never saved.
 class FakeHost final : public DocumentHost, public CommandHost, public PanelHost {
@@ -207,9 +301,29 @@ public:
         return id;
     }
 
-    FolderSkills skills{std::filesystem::path()};
+    SkillTiers skills{std::filesystem::path()};
     FakeAutomation automation;
-    Host host() { return Host{this, this, this, &settings, &media, &files, &review, render, &skills, &automation, typeset}; }
+    FakeTranslation translation;
+    Host host()
+    {
+        return Host{
+            .documents = this,
+            .commands = this,
+            .panels = this,
+            .settings = &settings,
+            .media = &media,
+            .files = &files,
+            .review = &review,
+            .render = render,
+            .skills = &skills,
+            .automation = &automation,
+            .typeset = typeset,
+            .translation = &translation,
+            .karaoke = karaoke,
+            .effects = effects,
+            .plugins = plugins,
+        };
+    }
 
     const application::Workspace &workspace() const override { return workspace_; }
     application::EditSession *session(application::DocumentId document) const override
@@ -309,6 +423,11 @@ public:
     FakeRender fakeRender;
     RenderHost *render = &fakeRender;
     TypesetHost *typeset = nullptr;
+    KaraokeHost *karaoke = nullptr;
+    FakeEffects fakeEffects;
+    EffectsHost *effects = &fakeEffects;
+    FakePlugins fakePlugins;
+    PluginHost *plugins = &fakePlugins;
     application::AiReview review;
 };
 

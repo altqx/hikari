@@ -16,6 +16,7 @@
 #include <QClipboard>
 #include <QColor>
 #include <QCursor>
+#include <QFileInfo>
 #include <QFontInfo>
 #include <QFontMetricsF>
 #include <QGuiApplication>
@@ -393,16 +394,33 @@ std::int64_t VisualToolsController::videoTimeMs() const
     return start ? start->microseconds() / 1000 : 0;
 }
 
+namespace {
+
+bool sameListName(const std::u16string &a, const std::u16string &b)
+{
+    return application::visual::sameNameIgnoringCase(a, b);
+}
+
+void writeTier(const std::shared_ptr<ListFile> &file, toml::array items, bool any)
+{
+    if (file && (any || QFileInfo::exists(file->path())))
+        file->write(std::move(items));
+}
+
+}
+
 const std::vector<ShapePreset> *VisualToolsController::shapePresets() const
 {
-    if (m_shapes.empty()) {
+    if (m_allShapes.empty()) {
         std::optional<toml::array> items;
         if (m_shapesFile)
             items = m_shapesFile->read();
-        if (items)
-            m_shapes = std::get<std::vector<ShapePreset>>(shapesFromToml(*items));
-        else
-            m_shapes = defaultShapePresets();
+        auto mine = items ? std::get<std::vector<ShapePreset>>(shapesFromToml(*items)) : defaultShapePresets();
+        std::vector<ShapePreset> project;
+        if (const auto own = m_projectShapesFile ? m_projectShapesFile->read() : std::nullopt)
+            project = std::get<std::vector<ShapePreset>>(shapesFromToml(*own));
+        m_allShapes = application::combineTiers(std::move(project), std::move(mine), &ShapePreset::name, sameListName);
+        m_shapes = application::visibleItems(m_allShapes);
     }
     return &m_shapes;
 }
@@ -410,16 +428,37 @@ const std::vector<ShapePreset> *VisualToolsController::shapePresets() const
 void VisualToolsController::saveShapes() const
 {
     if (m_shapesFile)
-        m_shapesFile->write(shapesToToml(m_shapes));
+        m_shapesFile->write(shapesToToml(application::itemsIn(m_allShapes, application::Tier::Mine)));
+    const auto project = application::itemsIn(m_allShapes, application::Tier::Project);
+    writeTier(m_projectShapesFile, shapesToToml(project), !project.empty());
+}
+
+void VisualToolsController::setProjectListFiles(std::shared_ptr<ListFile> shapes, std::shared_ptr<ListFile> tags)
+{
+    m_projectShapesFile = std::move(shapes);
+    m_projectTagsFile = std::move(tags);
+    m_allShapes.clear();
+    m_shapes.clear();
+    m_tieredTags.clear();
+    m_allTags.clear();
+    refreshOptions();
+    emit optionsChanged();
 }
 
 const std::vector<application::visual::AllTagsSetting> *VisualToolsController::allTagsSettings() const
 {
-    if (m_allTags.empty()) {
+    using application::visual::AllTagsSetting;
+    if (m_tieredTags.empty()) {
+        std::vector<AllTagsSetting> mine;
         if (const auto items = m_tagsFile ? m_tagsFile->read() : std::nullopt)
-            m_allTags = std::get<std::vector<application::visual::AllTagsSetting>>(tagsFromToml(*items));
-        if (m_allTags.empty())
-            m_allTags = application::visual::defaultAllTags();
+            mine = std::get<std::vector<AllTagsSetting>>(tagsFromToml(*items));
+        if (mine.empty())
+            mine = application::visual::defaultAllTags();
+        std::vector<AllTagsSetting> project;
+        if (const auto own = m_projectTagsFile ? m_projectTagsFile->read() : std::nullopt)
+            project = std::get<std::vector<AllTagsSetting>>(tagsFromToml(*own));
+        m_tieredTags = application::combineTiers(std::move(project), std::move(mine), &AllTagsSetting::name, sameListName);
+        m_allTags = application::visibleItems(m_tieredTags);
     }
     return &m_allTags;
 }
@@ -427,7 +466,9 @@ const std::vector<application::visual::AllTagsSetting> *VisualToolsController::a
 void VisualToolsController::saveAllTags() const
 {
     if (m_tagsFile)
-        m_tagsFile->write(tagsToToml(m_allTags));
+        m_tagsFile->write(tagsToToml(application::itemsIn(m_tieredTags, application::Tier::Mine)));
+    const auto project = application::itemsIn(m_tieredTags, application::Tier::Project);
+    writeTier(m_projectTagsFile, tagsToToml(project), !project.empty());
 }
 
 std::string VisualToolsController::editorHotkey(int id) const
@@ -491,9 +532,10 @@ void VisualToolsController::openTagsEditor()
         auto oldNames = application::visual::allTagsNames(*allTagsSettings());
         for (const auto &r : renamed)
             std::ranges::replace(oldNames, r.from, r.to);
-        m_allTags = tags;
-        if (m_allTags.empty())
-            m_allTags = application::visual::defaultAllTags();
+        m_tieredTags = tags;
+        if (m_tieredTags.empty())
+            m_tieredTags = application::visual::defaultAllTags();
+        m_allTags = application::visibleItems(m_tieredTags);
         saveAllTags();
         auto *hydra = dynamic_cast<application::visual::AllTagsTool *>(
             m_tools[static_cast<std::size_t>(Family::Hydra)].get());
@@ -509,7 +551,15 @@ void VisualToolsController::openTagsEditor()
         m_tagsEditor = nullptr;
         emit tagsEditorChanged();
     };
-    m_tagsEditor = new AllTagsEditor(*allTagsSettings(), allTags->toggled() & 0xFFFFF, std::move(hooks), this);
+    allTagsSettings();
+    int opened = allTags->toggled() & 0xFFFFF;
+    if (opened >= 0 && opened < static_cast<int>(m_allTags.size())) {
+        const auto &shown = m_allTags[static_cast<std::size_t>(opened)];
+        const auto at = std::ranges::find(m_tieredTags, shown);
+        opened = at == m_tieredTags.end() ? 0 : static_cast<int>(at - m_tieredTags.begin());
+    }
+    hooks.hasProject = m_projectTagsFile != nullptr;
+    m_tagsEditor = new AllTagsEditor(m_tieredTags, opened, std::move(hooks), this);
     emit tagsEditorChanged();
 }
 
@@ -531,16 +581,18 @@ void VisualToolsController::openShapeEditor()
     hooks.changed = [this](const std::vector<ShapePreset> &presets, const ShapeEditor::Renames &renamed) {
         auto *drawing = dynamic_cast<DrawingTool *>(m_tools[static_cast<std::size_t>(Family::Drawing)].get());
         int selection = drawing ? drawing->shapeSelection() : 0;
+        const auto visible = application::visibleItems(presets);
         if (selection > 0 && selection <= static_cast<int>(m_shapes.size())) {
             std::u16string chosen = m_shapes[static_cast<std::size_t>(selection - 1)].name;
             for (const auto &r : renamed)
                 if (chosen == r.from)
                     chosen = r.to;
-            const auto at = std::ranges::find(presets, chosen, &ShapePreset::name);
-            if (at != presets.end())
-                selection = static_cast<int>(at - presets.begin()) + 1;
+            const auto at = std::ranges::find(visible, chosen, &ShapePreset::name);
+            if (at != visible.end())
+                selection = static_cast<int>(at - visible.begin()) + 1;
         }
-        m_shapes = presets;
+        m_allShapes = presets;
+        m_shapes = visible;
         saveShapes();
         if (selection > static_cast<int>(m_shapes.size()))
             selection = static_cast<int>(m_shapes.size());
@@ -556,7 +608,15 @@ void VisualToolsController::openShapeEditor()
         m_shapeEditor = nullptr;
         emit shapeEditorChanged();
     };
-    m_shapeEditor = new ShapeEditor(*shapePresets(), selection - 1, std::move(hooks), this);
+    shapePresets();
+    int opened = selection - 1;
+    if (opened >= 0 && opened < static_cast<int>(m_shapes.size())) {
+        const auto &shown = m_shapes[static_cast<std::size_t>(opened)];
+        const auto at = std::ranges::find(m_allShapes, shown);
+        opened = at == m_allShapes.end() ? 0 : static_cast<int>(at - m_allShapes.begin());
+    }
+    hooks.hasProject = m_projectShapesFile != nullptr;
+    m_shapeEditor = new ShapeEditor(m_allShapes, opened, std::move(hooks), this);
     emit shapeEditorChanged();
 }
 
@@ -616,6 +676,9 @@ QVariantList VisualToolsController::optionMaps(const VisualTool &t) const
         QVariantList sections;
         for (const int section : o.sections)
             sections.append(section);
+        QStringList choiceRoles;
+        for (const auto &r : o.choiceRoles)
+            choiceRoles.append(QString::fromStdString(r));
         const QString kind = o.kind == ToolOption::Kind::Choice   ? QStringLiteral("choice")
                              : o.kind == ToolOption::Kind::Action ? QStringLiteral("action")
                              : o.kind == ToolOption::Kind::Switch ? QStringLiteral("switch")
@@ -634,6 +697,7 @@ QVariantList VisualToolsController::optionMaps(const VisualTool &t) const
                                {QStringLiteral("notes"), notes},
                                {QStringLiteral("sections"), sections},
                                {QStringLiteral("sectionNames"), sectionNames},
+                               {QStringLiteral("choiceRoles"), choiceRoles},
                                {QStringLiteral("afterValues"), o.afterValues}});
     }
     return out;
@@ -674,7 +738,11 @@ bool VisualToolsController::setOption(const QString &name, int value)
             if (m_tagsEditor) {
                 m_tagsEditor->setPlacingOf(QString::fromStdU16String(m_allTags[at].name), value);
             } else {
-                m_allTags[at].mode = static_cast<unsigned char>(value);
+                auto &shown = m_allTags[at];
+                const auto tiered = std::ranges::find(m_tieredTags, shown);
+                shown.mode = static_cast<unsigned char>(value);
+                if (tiered != m_tieredTags.end())
+                    tiered->mode = shown.mode;
                 saveAllTags();
             }
         }
@@ -684,6 +752,15 @@ bool VisualToolsController::setOption(const QString &name, int value)
     emit overlayChanged();
     refreshOptions();
     return done;
+}
+
+void VisualToolsController::previewOption(const QString &name, int index)
+{
+    auto *t = tool();
+    if (!t || !m_railEnabled || m_gesture)
+        return;
+    t->previewOption(name.toStdString(), index, *this);
+    emit overlayChanged();
 }
 
 bool VisualToolsController::previewDocument(const core::Document &document, core::Document &out) const
@@ -1157,7 +1234,8 @@ QVariantList VisualToolsController::valueMaps(const VisualTool &t) const
                                {QStringLiteral("unit"), visualToolText(v.unit)},
                                {QStringLiteral("step"), v.step},
                                {QStringLiteral("swatch"), v.swatch ? QColor::fromRgba(v.swatch).name() : QString()},
-                               {QStringLiteral("marked"), marks ? QVariant(v.marked) : QVariant()}});
+                               {QStringLiteral("marked"), marks ? QVariant(v.marked) : QVariant()},
+                               {QStringLiteral("iconRole"), QString::fromStdString(v.iconRole)}});
     return out;
 }
 

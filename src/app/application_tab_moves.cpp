@@ -1,5 +1,7 @@
 #include "hikari/app/application.h"
 
+#include "docking.h"
+
 #include <QCoreApplication>
 #include <QGuiApplication>
 #include <QQmlEngine>
@@ -73,9 +75,9 @@ bool Application::moveTabToNewWindow(qulonglong document, QPointF global, bool p
         return false;
     QQuickWindow &window = *shellQuickWindow(*opened);
     if (place && !size.isEmpty()) {
-        const QPoint at = global.toPoint() - kTabGrabbedAt;
+        const QRect at = ui::clientWholeOnScreens(window, QRect(global.toPoint() - kTabGrabbedAt, size));
         application::SessionWindow placed;
-        placed.geometry = application::SessionGeometry{at.x(), at.y(), size.width(), size.height()};
+        placed.geometry = application::SessionGeometry{at.x(), at.y(), at.width(), at.height()};
         placeShellWindow(window, placed);
     } else if (!size.isEmpty()) {
         window.resize(size);

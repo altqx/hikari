@@ -1,6 +1,7 @@
 #include "hikari/backends/ai_inline_run.h"
 #include "hikari/backends/ai_requests.h"
 #include "hikari/backends/ai_sidecar_host.h"
+#include "hikari/backends/ai_translation_run.h"
 
 #include <QCoreApplication>
 #include <QElapsedTimer>
@@ -248,4 +249,96 @@ TEST(InlineRequest, CarriesNoToolsAndOnlyThePreparedText)
     EXPECT_EQ(r.find("webSearch"), nullptr);
     EXPECT_EQ(r.find("system")->asString(), p.system);
     EXPECT_EQ(r.find("messages")->asArray().size(), 1u);
+}
+
+namespace {
+
+std::vector<TranslationRun::Job> translationJobs(std::initializer_list<std::u8string> texts)
+{
+    std::vector<TranslationRun::Job> out;
+    std::uint64_t key = 1;
+    for (const std::u8string &text : texts) {
+        core::LineRecord line;
+        line.text = text;
+        out.push_back({key, in::prepare({in::Action::Translate, {}, "English"}, line, {}), "Yui",
+                       static_cast<std::int64_t>(key) * 1000, static_cast<std::int64_t>(key) * 1000 + 900});
+        ++key;
+    }
+    return out;
+}
+
+}
+
+TEST_F(InlineRunTest, ThePipelineSendsEveryLineMaskedInOneRequestAndTagsComeBack)
+{
+    use("t");
+    TranslationRun::Wiring w;
+    w.lines = wiring();
+    w.document = 4;
+    w.language = "English";
+    w.translator = {"or", "t"};
+    w.reviewer = {"or", "t"};
+    std::vector<TranslationRun::ProjectFile> files;
+    std::size_t progressed = 0;
+    w.progressed = [&](std::size_t done, std::size_t) { progressed = done; };
+    w.projectChanged = [&](std::vector<TranslationRun::ProjectFile> f) { files = std::move(f); };
+    const Json params = translateParams(translationJobs({u8"{\\i1}one{\\i0} a", u8"two?"}), w);
+    EXPECT_EQ(params.find("lines")->asArray()[0].find("text")->asString(), "\xE2\x9F\xA6" "1\xE2\x9F\xA7one\xE2\x9F\xA6" "2\xE2\x9F\xA7 a");
+    EXPECT_EQ(params.find("lines")->asArray()[0].find("speaker")->asString(), "Yui");
+    EXPECT_EQ(params.find("document")->asInt(), 4);
+    EXPECT_EQ(params.find("sourceLanguage"), nullptr);
+
+    TranslationRun run(translationJobs({u8"{\\i1}one{\\i0} a", u8"two?"}), std::move(w));
+    run.start();
+    ASSERT_TRUE(waitFor([&] { return ended.has_value(); }));
+    EXPECT_EQ(*ended, InlineRun::End::Done);
+    ASSERT_EQ(results.size(), 2u);
+    EXPECT_EQ(s(results[0].answer.text), "{\\i1}ONE{\\i0} A");
+    EXPECT_FALSE(results[0].needsReview);
+    EXPECT_TRUE(results[1].needsReview);
+    EXPECT_EQ(results[1].issues, std::vector<std::string>{"Is this a question?"});
+    EXPECT_EQ(progressed, 2u);
+    ASSERT_EQ(files.size(), 1u);
+    EXPECT_EQ(files[0].name, "GLOSSARY.md");
+    EXPECT_DOUBLE_EQ(run.cost(), 1.0);
+    EXPECT_DOUBLE_EQ(spent, 1.0);
+}
+
+TEST_F(InlineRunTest, ThePipelineSendsTheSourceLanguageWhenOneIsSet)
+{
+    TranslationRun::Wiring w;
+    w.language = "English";
+    w.sourceLanguage = "Japanese";
+    const Json params = translateParams(translationJobs({u8"one"}), w);
+    EXPECT_EQ(params.find("language")->asString(), "English");
+    EXPECT_EQ(params.find("sourceLanguage")->asString(), "Japanese");
+}
+
+TEST_F(InlineRunTest, StoppingThePipelineCancelsItsOneRequest)
+{
+    use("hang");
+    TranslationRun::Wiring w;
+    w.lines = wiring();
+    w.language = "English";
+    w.translator = {"or", "hang"};
+    w.reviewer = {"or", "hang"};
+    TranslationRun run(translationJobs({u8"one"}), std::move(w));
+    run.start();
+    QCoreApplication::processEvents(QEventLoop::AllEvents, 50);
+    EXPECT_TRUE(run.running());
+    run.stop();
+    ASSERT_TRUE(waitFor([&] { return ended.has_value(); }));
+    EXPECT_EQ(*ended, InlineRun::End::Stopped);
+    EXPECT_TRUE(results.empty());
+}
+
+TEST_F(InlineRunTest, ThePipelineWithoutATranslatorModelEndsAtOnce)
+{
+    use("t");
+    TranslationRun::Wiring w;
+    w.lines = wiring();
+    TranslationRun run(translationJobs({u8"one"}), std::move(w));
+    run.start();
+    ASSERT_TRUE(ended.has_value());
+    EXPECT_EQ(*ended, InlineRun::End::NoModel);
 }

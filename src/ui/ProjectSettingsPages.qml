@@ -23,7 +23,9 @@ RowLayout {
     readonly property var pages: [
         {id: "spelling", name: qsTranslate("HikariSub.Options", "Spelling and grammar"), iconRole: "spellchecker"},
         {id: "subtitleProperties", name: qsTranslate("HikariSub.Options", "Script properties"), iconRole: "script-properties"},
-        {id: "translation", name: qsTranslate("HikariSub.Translation", "Translation"), iconRole: "translation-mode"}
+        {id: "translation", name: qsTranslate("HikariSub.Translation", "Translation"), iconRole: "translation-mode"},
+        {id: "export", name: qsTranslate("HikariSub.Export", "Export"), iconRole: "export"},
+        {id: "ai", name: qsTranslate("HikariSub.Options", "AI"), iconRole: "ai-assistant"}
     ]
     readonly property var scriptFields: [
         {id: "title", name: qsTranslate("HikariSub.ScriptProperties", "Title")},
@@ -34,6 +36,20 @@ RowLayout {
         {id: "update", name: qsTranslate("HikariSub.ScriptProperties", "Editing")}
     ]
 
+    readonly property var exportFormats: [
+        {id: "", text: qsTr("Not set")},
+        {id: "srt", text: "SubRip (SRT)"},
+        {id: "vtt", text: "WebVTT"},
+        {id: "sbv", text: "YouTube SBV"},
+        {id: "txt", text: qsTranslate("HikariSub.Export", "Plain text")},
+        {id: "mdvd", text: "MicroDVD"},
+        {id: "mpl2", text: "MPL2"},
+        {id: "tmp", text: "TMPlayer"},
+        {id: "ttml", text: "TTML (IMSC1)"},
+        {id: "dfxp", text: "DFXP"},
+        {id: "srv3", text: qsTranslate("HikariSub.Export", "YouTube timed text (srv3)")}
+    ]
+
     function load() {
         const r = app.openProjectSettings(shellWindow)
         values = r.values ?? {}
@@ -41,12 +57,18 @@ RowLayout {
         sources = r.sources ?? {}
         edited = {}
         cleared = []
+        aiKeys.load()
         reloaded()
     }
     function put(id, value) {
         values = Object.assign({}, values, {[id]: value})
         edited = Object.assign({}, edited, {[id]: true})
         cleared = cleared.filter(c => c !== id)
+    }
+    function showPage(id) {
+        const i = pages.findIndex(p => p.id === id)
+        if (i >= 0)
+            pageList.currentIndex = i
     }
     function useYours(id) {
         values = Object.assign({}, values, {[id]: yours[id]})
@@ -68,7 +90,8 @@ RowLayout {
         const changed = {}
         for (const id in edited)
             changed[id] = values[id]
-        const ok = app.applyProjectSettings(shellWindow, changed, cleared)
+        const keysOk = aiKeys.apply()
+        const ok = app.applyProjectSettings(shellWindow, changed, cleared) && keysOk
         problem = ok ? "" : qsTr("project.toml could not be written, so some Project settings were not saved.")
         load()
         return ok
@@ -145,6 +168,27 @@ RowLayout {
         }
         Item { Layout.fillWidth: true }
         RowState { key: choiceRow.key }
+    }
+    component ProjectField: RowLayout {
+        id: fieldRow
+        required property string key
+        property string text
+        property string placeholder
+        Layout.fillWidth: true
+        Label { text: fieldRow.text; Layout.preferredWidth: 160 }
+        TextField {
+            id: plain
+            objectName: "project_" + fieldRow.key
+            enabled: project.stateOf(fieldRow.key) !== "local"
+            placeholderText: fieldRow.placeholder
+            Layout.fillWidth: true
+            Accessible.name: fieldRow.text
+            function refresh() { text = project.values[fieldRow.key] ?? "" }
+            Component.onCompleted: refresh()
+            Connections { target: project; function onReloaded() { plain.refresh() } }
+            onTextEdited: project.put(fieldRow.key, text.trim())
+        }
+        RowState { key: fieldRow.key }
     }
     component ProjectText: RowLayout {
         id: textRow
@@ -324,7 +368,58 @@ RowLayout {
                         key: "translation.autoMoveTagsFromOriginal"
                         text: qsTranslate("HikariSub.Translation", "Tags from original")
                     }
+                    ProjectField {
+                        key: "translation.sourceLanguage"
+                        text: qsTr("Source language")
+                        placeholder: qsTr("Detect")
+                    }
+                    ProjectField {
+                        key: "translation.targetLanguage"
+                        text: qsTr("Target language")
+                        placeholder: project.yours["ai.inline.translateTo"] ?? ""
+                    }
                 }
+            }
+            ScrollView {
+                contentWidth: availableWidth
+                ColumnLayout {
+                    x: 24
+                    y: 20
+                    width: parent.width - 48
+                    spacing: 10
+                    RowLayout {
+                        Layout.fillWidth: true
+                        Label { text: qsTr("Export format"); Layout.preferredWidth: 160 }
+                        ComboBox {
+                            id: exportFormat
+                            objectName: "project_export.format"
+                            model: project.exportFormats
+                            textRole: "text"
+                            enabled: project.stateOf("export.format") !== "local"
+                            Layout.preferredWidth: 220
+                            Accessible.name: qsTr("Export format")
+                            function refresh() {
+                                currentIndex = Math.max(0, project.exportFormats.findIndex(f => f.id === (project.values["export.format"] ?? "")))
+                            }
+                            Component.onCompleted: refresh()
+                            Connections { target: project; function onReloaded() { exportFormat.refresh() } }
+                            onActivated: index => project.put("export.format", project.exportFormats[index].id)
+                        }
+                        Item { Layout.fillWidth: true }
+                        RowState { key: "export.format" }
+                    }
+                    Label {
+                        text: qsTr("Used for files that haven’t been exported yet.")
+                        color: Theme.muted
+                        wrapMode: Text.Wrap
+                        Layout.fillWidth: true
+                    }
+                }
+            }
+            ProjectAiKeysPage {
+                id: aiKeys
+                app: project.app
+                shellWindow: project.shellWindow
             }
         }
     }

@@ -6,6 +6,7 @@
 #include "hikari/application/node_graph_editing.h"
 #include "hikari/application/node_graph_library.h"
 #include "hikari/application/template_preview.h"
+#include "hikari/application/typesetting_graphs.h"
 
 #include <QCoreApplication>
 #include <QRandomGenerator>
@@ -54,6 +55,33 @@ constexpr NodeExampleText kExamples[] = {
      QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "An outline flashes on each syllable once for every highlight, as the templater’s multi does.")},
     {"paint-and-cloud", QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Paint and cloud"),
      QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Syllables marked {\\-paint} fill from red to white, those marked {\\-cloud} rise and blur, and the rest stay in place.")},
+    {"text-outlines", QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Text outlines"),
+     QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Each syllable is drawn as a hollow drawing in its style’s font, and its outline thickens while it is sung.")},
+    {"striped-letters", QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Striped letters"),
+     QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Each syllable’s letters are cut into thin horizontal stripes, which fade in as it is sung.")},
+};
+
+constexpr NodeExampleText kTypesettingTexts[] = {
+    {"shake", QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Shake"),
+     QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "One line per frame step, each moved a random distance up to the amplitude from the line’s position.")},
+    {"typewriter", QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Typewriter"),
+     QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Each character appears after the one before it, by grapheme cluster, and stays to the line’s end.")},
+    {"fade-by-letter", QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Fade by letter"),
+     QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Each character fades in after the one before it.")},
+    {"wobble", QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Wobble"),
+     QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "The characters rise and fall in a wave, one line per character and frame step.")},
+    {"bounce", QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Bounce"),
+     QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Each character jumps up after the one before it and comes part of the way back down, as myaa.Bounce does.")},
+    {"focus-lines", QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Focus lines"),
+     QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Spikes at random angles around the line’s position, drawn again on every frame step.")},
+    {"grain", QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Grain"),
+     QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Random characters in the Grain font over each character, in two colours. Needs the Grain font.")},
+    {"chromatic-aberration", QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Chromatic aberration"),
+     QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Two coloured copies offset either side of the line, under the line itself.")},
+    {"randomove", QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Random move"),
+     QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "The line moves from its position to a random point within the distance.")},
+    {"karaoke-to-alpha", QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Karaoke to alpha"),
+     QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Each syllable appears at its karaoke time and stays to the line’s end.")},
 };
 
 const NodeExampleText *exampleText(std::string_view example)
@@ -466,13 +494,59 @@ void NodeEffectsController::updateSources()
     m_sources.clear();
     const core::Document *doc = document();
     const application::DocumentGraph *g = currentGraph();
-    if (doc && g)
+    if (doc && g && typesetting()) {
+        std::optional<core::LineId> last;
+        for (const core::LineRecord *l : doc->lines()) {
+            if (application::isGeneratedBy(*l, g->name)) {
+                const auto owner = l->generatedFrom.value != 0 ? std::optional(l->generatedFrom) : last;
+                if (m_targets.contains(l->id) && owner && std::ranges::find(m_sources, *owner) == m_sources.end())
+                    m_sources.push_back(*owner);
+                continue;
+            }
+            last = application::isTypesettingSource(*l) ? std::optional(l->id) : std::nullopt;
+            if (last && m_targets.contains(l->id) && std::ranges::find(m_sources, l->id) == m_sources.end())
+                m_sources.push_back(l->id);
+        }
+        std::ranges::sort(m_sources, {}, [&](core::LineId id) {
+            const auto lines = doc->lines();
+            return std::ranges::find_if(lines, [&](const core::LineRecord *l) { return l->id == id; }) - lines.begin();
+        });
+    } else if (doc && g) {
         for (const core::LineRecord *l : doc->lines())
             if (application::isKaraokeLine(*l) && ((m_graph && m_graph->allStyles) || l->style == g->style))
                 m_sources.push_back(l->id);
+    }
     if (!m_source || std::ranges::find(m_sources, *m_source) == m_sources.end())
         m_source = m_sources.empty() ? std::nullopt : std::optional(m_sources.front());
     std::erase_if(m_sourceSelection, [&](core::LineId id) { return std::ranges::find(m_sources, id) == m_sources.end(); });
+    if (m_selectEveryTarget && typesetting() && !m_sources.empty()) {
+        m_selectEveryTarget = false;
+        if (m_sourceSelection.empty())
+            m_sourceSelection.insert(m_sources.begin(), m_sources.end());
+    }
+}
+
+void NodeEffectsController::selectEveryTarget()
+{
+    m_selectEveryTarget = true;
+    updateSources();
+}
+
+void NodeEffectsController::setTargetLines(std::set<core::LineId> lines)
+{
+    m_targets = std::move(lines);
+    m_sourceSelection.clear();
+    refresh();
+    if (!typesetting())
+        for (const application::DocumentGraph &g : m_graphs)
+            if (g.graph && g.graph->target == application::GraphTarget::Lines) {
+                setCurrent(g.line.value);
+                break;
+            }
+    updateSources();
+    selectEveryTarget();
+    emit changed();
+    schedulePreview();
 }
 
 QVariantList NodeEffectsController::graphs() const
@@ -498,6 +572,7 @@ void NodeEffectsController::setCurrent(qulonglong id)
     m_selection.clear();
     emit selectionChanged();
     reload();
+    selectEveryTarget();
 }
 
 QString NodeEffectsController::name() const
@@ -814,6 +889,23 @@ QVariantList NodeEffectsController::presets()
     return out;
 }
 
+QVariantList NodeEffectsController::typesettingPresets()
+{
+    QVariantList out;
+    const auto graphs = application::typesettingGraphs();
+    for (int i = 0; i < int(graphs.size()); ++i) {
+        const std::string_view id = graphs[std::size_t(i)].id;
+        const auto text = std::ranges::find_if(kTypesettingTexts, [&](const NodeExampleText &t) { return t.example == id; });
+        if (text == std::end(kTypesettingTexts))
+            continue;
+        out << QVariantMap{{QStringLiteral("index"), i},
+                           {QStringLiteral("title"), QCoreApplication::translate("HikariSub.NodeEffects", text->title)},
+                           {QStringLiteral("description"),
+                            QCoreApplication::translate("HikariSub.NodeEffects", text->description)}};
+    }
+    return out;
+}
+
 QStringList NodeEffectsController::library() const
 {
     QStringList out;
@@ -976,6 +1068,14 @@ bool NodeEffectsController::hasPluginNodes() const
            });
 }
 
+bool NodeEffectsController::drawsText() const
+{
+    if (!m_graph)
+        return false;
+    const auto flat = application::flattenGraph(*m_graph);
+    return flat && std::ranges::any_of(flat->nodes, [](const GraphNode &n) { return n.type == "drawings.text"; });
+}
+
 bool NodeEffectsController::trusted() const
 {
     return !hasLua() || (m_trustOwner && m_trustOwner->trusted());
@@ -1015,6 +1115,8 @@ application::NodeEffectOptions NodeEffectsController::options() const
         o.newDocument = s->isNewDocument();
     if (m_audio)
         o.audio = m_audio();
+    if (m_glyphs && drawsText())
+        o.glyphs = m_glyphs();
     return o;
 }
 
@@ -1412,6 +1514,32 @@ bool NodeEffectsController::addPreset(int index)
     return done;
 }
 
+bool NodeEffectsController::addTypesettingGraph(int index)
+{
+    const core::Document *doc = document();
+    const auto all = application::typesettingGraphs();
+    if (!doc || index < 0 || index >= int(all.size()))
+        return false;
+    const auto graph = application::parseGraph(all[std::size_t(index)].graph);
+    if (!graph)
+        return false;
+    QString title;
+    for (const QVariant &p : typesettingPresets())
+        if (p.toMap().value(QStringLiteral("index")).toInt() == index)
+            title = p.toMap().value(QStringLiteral("title")).toString();
+    const std::u8string name = application::freeGraphName(*doc, wide(title));
+    const std::u8string style = defaultStyle(*doc, m_sources, m_sources.empty() ? m_source : std::optional(m_sources.front()));
+    std::optional<core::LineId> added;
+    const bool done = runGraphCommand([&](application::EditSession &s) {
+        const auto line = application::addGraph(s, name, style, application::laidOutGraph(*graph));
+        added = line ? std::optional(*line) : std::nullopt;
+        return added.has_value();
+    });
+    if (done)
+        setCurrent(added->value);
+    return done;
+}
+
 bool NodeEffectsController::addFromLibrary(const QString &libraryName)
 {
     const core::Document *doc = document();
@@ -1541,7 +1669,9 @@ bool NodeEffectsController::apply(bool selectedOnly)
         return false;
     application::NodeEffectOptions o = options();
     std::optional<application::NodeEffectRun> owners;
-    if (selectedOnly) {
+    if (typesetting()) {
+        o.sources = selectedOnly ? m_sourceSelection : std::set<core::LineId>(m_sources.begin(), m_sources.end());
+    } else if (selectedOnly) {
         owners = application::runNodeEffect(s->document(), g->name, g->style, *m_graph, o);
         o.sources = m_sourceSelection;
     }

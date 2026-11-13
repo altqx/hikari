@@ -12,6 +12,7 @@
 #include <QString>
 
 #include <cstdint>
+#include <expected>
 #include <functional>
 #include <map>
 #include <memory>
@@ -30,11 +31,14 @@ enum class AgentMode { Manual, Auto, FullAccess };
 
 std::string_view agentModeId(AgentMode mode);
 std::optional<AgentMode> agentModeFromId(std::string_view id);
+/// Manual < Auto < Full access: a sub-agent's mode is never above its parent's.
+int agentModeRank(AgentMode mode);
 
 /// What Qt does with an agent's call before HA1 runs it.
 /// Propose: Manual subtitle edits wait as a proposal the user applies or declines.
 /// Script: AI-written Lua, which the user approves on every run in every mode (ADR 0024).
-enum class Decision { Run, Judge, Ask, AlwaysAsk, Propose, Script };
+/// Install: a plugin package, which the user approves on every install in every mode.
+enum class Decision { Run, Judge, Ask, AlwaysAsk, Propose, Script, Install };
 
 /// What makes a call ask in every mode: #410's always-ask categories, and AI settings (ADR 0024). docs/ai-agent.md
 /// maps each to its operations, commands and settings.
@@ -65,7 +69,9 @@ Decision decideMcp(AgentMode mode, bool readOnly, bool destructive, bool approve
 std::string allowanceKey(const std::string &operation, const api::Json &params);
 
 /// The judge's request without its model: the action and the user's messages, never file content or tool output.
-api::Json judgeRequest(const std::string &operation, const api::Json &params, const std::vector<std::string> &userMessages);
+/// A sub-agent's `brief` goes in marked as the agent's words, never as the user's consent.
+api::Json judgeRequest(const std::string &operation, const api::Json &params, const std::vector<std::string> &userMessages,
+                       std::string_view brief = {});
 
 struct Verdict {
     bool approved = false;
@@ -86,6 +92,84 @@ std::int64_t contextWindowOf(const application::ai::Config *config, const applic
 /// A model whose provider is "agent:<name>" runs the thread on that external agent ("claude").
 inline constexpr std::string_view kAgentProviderPrefix = "agent:";
 std::optional<std::string> externalAgentOf(const application::ai::ModelRef &model);
+
+/// The most of one AGENTS.md that reaches the model, in bytes.
+inline constexpr std::size_t kInstructionsCap = 32 * 1024;
+
+/// `<folder>/AGENTS.md`, cut to kInstructionsCap at a UTF-8 boundary; empty when it is missing or unreadable.
+std::string agentsFileText(const QString &folder);
+
+/// The user's AGENTS.md, then the Project's, each under its heading (ADR 0030); empty texts drop out.
+std::string joinInstructions(std::string_view user, std::string_view project);
+
+/// Where a sub-agent may write: one Document, and only these Lines when `lines` isn't empty.
+struct TaskScope {
+    application::DocumentId document;
+    std::vector<std::int64_t> lines;
+};
+
+bool scopesOverlap(const TaskScope &a, const TaskScope &b);
+
+/// Why a write from a sub-agent falls outside its scope; nullopt when it is inside.
+std::optional<std::string> outsideScope(const TaskScope &scope, const std::string &operation, const api::Json &params,
+                                        std::optional<application::DocumentId> editingTarget);
+
+inline constexpr std::size_t kMaxRunningChildren = 4;
+/// A child's result reaches its parent cut to about 8k tokens.
+inline constexpr std::size_t kTaskResultChars = 32'000;
+inline constexpr std::size_t kEstimateFrom = 3;
+
+enum class TaskRefusal {
+    Depth,
+    TooManyChildren,
+    ModeEscalation,
+    CostCap,
+    DailyCap,
+    ScopeOverlap,
+    InvalidScope,
+    NoTarget,
+    Declined,
+    NotFound,
+    Stopped,
+};
+std::string_view taskRefusalId(TaskRefusal refusal);
+
+struct TaskAsk {
+    bool fromChild = false;
+    std::size_t running = 0;
+    AgentMode parentMode = AgentMode::Auto;
+    std::optional<AgentMode> mode;
+    bool overCap = false;
+    bool overDailyCap = false;
+    TaskScope scope;
+    std::vector<TaskScope> runningScopes;
+};
+
+/// Qt's checks on `_hikari/task.request`, in the order the model reads them; gives the child's mode.
+std::expected<AgentMode, TaskRefusal> checkTask(const TaskAsk &ask);
+
+enum class TaskStatus { Running, Done, Failed, Stopped, Interrupted };
+std::string_view taskStatusId(TaskStatus status);
+std::optional<TaskStatus> taskStatusFromId(std::string_view id);
+
+/// A sub-agent's thread keeps what its parent gave it (AI22).
+struct AgentTask {
+    std::string parent;
+    std::string id;
+    std::string brief;
+    std::string role;
+    std::string clientRequestId;
+    /// The parent's review turn its changes group under.
+    std::uint64_t parentTurn = 0;
+    std::optional<TaskScope> scope; // only while the app runs: Document ids don't survive a restart
+    std::string documentTitle;
+    std::vector<std::int64_t> lines;
+    TaskStatus status = TaskStatus::Running;
+    /// "cap", "dailyCap", "stopped" or "parent" when status is Stopped.
+    std::string stoppedFor;
+    std::string summary;
+    std::string target; // "Hikari · <model>", "Claude Code", …
+};
 
 /// One conversation in the agent panel. Qt owns it and saves it in the user folder.
 struct AgentThread {
@@ -111,6 +195,9 @@ struct AgentThread {
     std::set<std::string> allowed;
     /// The globe; the thread searches only while Settings › AI lets AI search the web too.
     bool webSearch = true;
+    /// The Project folder of the window it was started in, UTF-8; its skills join the user's. Empty: none.
+    std::string project;
+    std::optional<AgentTask> task;
 
     api::Json toJson() const;
     static std::optional<AgentThread> fromJson(const api::Json &json);
@@ -156,15 +243,25 @@ public:
         std::function<const application::ai::Config *()> config;
         api::Api *api = nullptr;
         std::function<Defaults()> defaults;
-        /// Opens a review turn for the thread's caller, labelled with the user's message.
-        std::function<std::uint64_t(const std::string &caller, const std::string &label)> beginTurn;
+        /// Opens a review turn for the thread's caller, labelled with the user's message; a sub-agent's turn names
+        /// its parent's.
+        std::function<std::uint64_t(const std::string &caller, const std::string &label, std::uint64_t parentTurn)>
+            beginTurn;
         std::function<std::optional<application::DocumentId>()> editingTarget;
         std::function<std::string(application::DocumentId)> documentTitle;
         std::function<std::vector<std::string>()> safeFolders;
+        /// The active window's Project folder, UTF-8, which a new thread keeps; empty without one.
+        std::function<std::string()> project;
+        /// The joined AGENTS.md text for a thread's Project folder (empty: none), added to its system prompt.
+        std::function<std::string(const std::string &project)> instructions;
         std::function<std::int64_t()> now; // ms since the epoch
         std::function<QDate()> today;
         /// The DependencyControl modules a Lua script asks for: [{module, version?, installed?}].
         std::function<api::Json(const std::string &script)> scriptNeeds;
+        /// The external agents a sub-agent may run on now, as {id, label}: {"claude", "Claude Code"}, {"acp:x", …}.
+        std::function<std::vector<std::pair<std::string, std::string>>()> agents;
+        /// How many characters of text a scope holds, for the estimate before a bulk run.
+        std::function<std::size_t(const TaskScope &scope)> scopeChars;
     };
 
     /// A proposal takes AllowOnce (Apply), Deny (Decline) or AskAgain, once the document changed under it; a script
@@ -186,8 +283,12 @@ public:
     AgentThreads(Wiring wiring, ThreadStore *store, QObject *parent = nullptr);
     ~AgentThreads() override;
 
-    /// Newest first.
+    /// Newest first, without sub-agents.
     std::vector<const AgentThread *> threads() const;
+    /// A thread's sub-agents, oldest first.
+    std::vector<const AgentThread *> children(const std::string &parent) const;
+    /// A question of the thread's waits for the user.
+    bool needsYou(const AgentThread &thread) const;
     const AgentThread *thread(const std::string &id) const;
     std::string create();
     void rename(const std::string &id, std::string title);
@@ -234,10 +335,29 @@ signals:
 
 private:
     struct Run;
+    struct TaskWait;
+    struct Estimate;
     AiSidecarHost *host(bool externalAgent = false);
+    void handleTasks(AiSidecarHost &host);
+    void taskCapabilities(const api::Json &params, std::shared_ptr<SidecarRequest> request);
+    void taskRequest(const api::Json &params, std::shared_ptr<SidecarRequest> request);
+    void taskStatus(const api::Json &params, std::shared_ptr<SidecarRequest> request);
+    void taskWait(const api::Json &params, std::shared_ptr<SidecarRequest> request);
+    void answerWaits(const AgentThread &parent);
+    void taskCancel(const api::Json &params, std::shared_ptr<SidecarRequest> request);
+    void startChild(AgentThread &parent, const api::Json &params, AgentMode mode, application::ai::ModelRef model,
+                    std::string target, TaskScope scope, std::shared_ptr<SidecarRequest> request);
+    AgentThread *childOf(const AgentThread &parent, const std::string &task);
+    api::Json taskState(const AgentThread &child) const;
+    void childEnded(AgentThread &child, const std::string &notice, const std::string &detail);
+    void deliverResults(AgentThread &parent);
+    std::vector<std::pair<std::string, std::string>> targets() const;
+    void chargeParent(AgentThread &child, double cost);
     AgentThread *find(const std::string &id);
     void start(AgentThread &thread, std::string text, api::Json parts);
-    void openSession(AgentThread &thread, AiSidecarHost &host, const application::ai::ModelRef &model);
+    api::Json wireModel(const AgentThread &thread, const application::ai::ModelRef &model) const;
+    void openSession(AgentThread &thread, AiSidecarHost &host, const application::ai::ModelRef &model,
+                     const api::Json &wire);
     void startCompaction(AgentThread &thread, std::string instruction, bool apply);
     void compactionDone(const std::string &id, const SidecarResult &result, bool apply);
     void runQueued(AgentThread &thread);
@@ -256,6 +376,9 @@ private:
     void openScript(AgentThread &thread, const api::Json &params, AiSidecarHost::Admit admit,
                     std::function<void(std::function<void()>)> onWithdraw);
     void runScript(AgentThread &thread, std::uint64_t ask, AiSidecarHost::Admit admit);
+    void openInstall(AgentThread &thread, const api::Json &params, AiSidecarHost::Admit admit,
+                     std::function<void(std::function<void()>)> onWithdraw);
+    void runInstall(AgentThread &thread, std::uint64_t ask, const std::string &digest, AiSidecarHost::Admit admit);
     void wait(AgentThread &thread, Ask ask, api::Json item, AiSidecarHost::Admit admit,
               std::function<void(std::function<void()>)> onWithdraw);
     void documentChanged(application::DocumentId document, std::int64_t revision);
@@ -282,6 +405,11 @@ private:
     std::map<std::uint64_t, AiSidecarHost::Admit> m_waiting;
     std::map<std::string, std::string> m_queued;
     std::map<std::string, std::string> m_compactAfter; // the instruction, by thread
+    std::vector<std::unique_ptr<TaskWait>> m_taskWaits;
+    std::map<std::uint64_t, std::unique_ptr<Estimate>> m_estimates; // by ask id
+    std::map<std::string, std::vector<std::string>> m_results; // finished tasks the parent hasn't heard of, by parent
+    std::map<std::string, std::uint64_t> m_estimatedTurn;         // the parent's turn whose estimate the user answered
+    std::set<std::string> m_declinedTurns;                         // parent:turn the user said no to
     std::uint64_t m_nextAsk = 1;
     std::uint64_t m_documentEvents = 0;
     QPointer<AiSidecarHost> m_host;

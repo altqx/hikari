@@ -9,11 +9,15 @@ import type { JSONRPCMessage } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 
 import type { RelayedProcess } from "../../src/agents/relay";
-import { type Connector, McpClients, mcpFetch, namespacedTool } from "../../src/mcp/client";
+import { type Connector, kServerNameShown, McpClients, mcpFetch, namespacedTool, serverGroupDescription } from "../../src/mcp/client";
 import type { McpAdmitParams, McpServerConfig, McpServerStatusParams } from "../../src/protocol";
 import type { RelayRequest } from "../../src/providers/relay";
 import { RpcError } from "../../src/rpc";
 import { ToolSet } from "../../src/tools/toolset";
+import { answer, resultOf, scriptedTurn, toolNames, toolUse } from "../agent/scripted";
+import { Harness as ProviderHarness } from "../providers/harness";
+
+const provider = new ProviderHarness().install();
 
 /** A stdio server as Qt would relay it: the far end of the pipes runs an MCP SDK server in this process. */
 class FakeProcess extends EventEmitter {
@@ -162,6 +166,33 @@ describe("MCP client", () => {
         const found = await tools.call("search_tools", { group: "mcp_notes" });
         expect(found.content[0]!.type === "text" && found.content[0]!.text).toContain("notes__delete_note");
         expect(tools.list().map((t) => t.name)).toContain("notes__delete_note");
+    });
+
+    test("a thread finds a server's tool with search_tools after the cached prefix, as a tool_reference on Anthropic", async () => {
+        const h = harness();
+        await h.clients.set([kNotes]);
+        await h.clients.ensure();
+        const bodies = await scriptedTurn(provider,
+            (id) => new ToolSet({ call: async () => ({}) as never }, undefined, () => h.clients.sources(id)), [
+                toolUse("s1", "search_tools", { group: "mcp_notes" }),
+                toolUse("c1", "notes__read_note", { id: "7" }),
+                answer("Note 7 says hi."),
+            ]);
+        const [first, found] = bodies;
+        expect(toolNames(first!)).not.toContain("notes__read_note");
+        expect(JSON.stringify(first!.tools)).toContain("mcp_notes (Tools from the MCP server \\\"Notes\\\")");
+        expect(toolNames(found!).slice(0, toolNames(first!).length)).toEqual(toolNames(first!));
+        expect(found!.tools.slice(toolNames(first!).length).map((t: { name: string; defer_loading?: boolean }) =>
+            [t.name, t.defer_loading])).toEqual([["notes__delete_note", true], ["notes__read_note", true]]);
+        expect(resultOf(found!, "s1")!.content).toContainEqual({ type: "tool_reference", tool_name: "notes__read_note" });
+        expect(h.spawned[0]!.calls).toEqual(["read_note"]);
+        expect(JSON.stringify(resultOf(bodies[2]!, "c1")!.content)).toContain("note 7");
+    });
+
+    test("search_tools shows the first 40 characters of a server's name", () => {
+        const name = "é".repeat(kServerNameShown) + "cut";
+        expect(serverGroupDescription(name)).toBe(`Tools from the MCP server "${"é".repeat(kServerNameShown)}"`);
+        expect(serverGroupDescription("Notes")).toBe("Tools from the MCP server \"Notes\"");
     });
 
     test("a changed server stops and connects again; a removed one stops", async () => {

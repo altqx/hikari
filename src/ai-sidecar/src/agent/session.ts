@@ -23,7 +23,7 @@ import {
 import { ProviderError } from "../providers/errors";
 import type { CompleteParams, Finished, Message, Part, StopReason, ToolCall, ToolDefinition, Update } from "../providers/types";
 import { RpcError } from "../rpc";
-import { kReadSkillTool, Skills } from "../skills/skills";
+import { kReadSkillTool, Skills, withSkills } from "../skills/skills";
 import type { Tool } from "../tools/catalogue";
 import { type ImageBudget, kDefaultImageBudget } from "../tools/images";
 import type { CallToolResult, HikariCalls, ToolSet } from "../tools/toolset";
@@ -277,9 +277,8 @@ export class AgentSession {
         return results;
     }
 
-    private async instructions(): Promise<string> {
-        const skills = await this.skills.instructions();
-        return [this.params.system, skills].filter(Boolean).join("\n\n");
+    private instructions(): Promise<string> {
+        return withSkills(this.params.system, this.skills);
     }
 
     private sources(finished: Finished): void {
@@ -440,29 +439,32 @@ export type ExternalAgent = (id: string, params: SessionNewParams, send: (update
 /** The sessions Qt opened, by id. */
 export class AgentSessions {
     private readonly sessions = new Map<string, Session>();
+    private readonly opened = new Map<string, SessionNewParams>();
     private stream = 1 << 30;
 
     constructor(
-        private readonly tools: (sessionId: string, webSearch: () => boolean) => ToolSet,
+        private readonly tools: (sessionId: string, webSearch: () => boolean, params: SessionNewParams) => ToolSet,
         private readonly complete: Complete,
         private readonly notify: (method: string, params: SessionUpdateParams) => void,
         private readonly imageBudget: (providerId: string) => ImageBudget = () => kDefaultImageBudget,
-        private readonly agents: Partial<Record<NonNullable<SessionNewParams["agent"]>, ExternalAgent>> = {},
+        private readonly agents: Partial<Record<"claude" | "codex" | "acp", ExternalAgent>> = {},
         private readonly skills: (sessionId: string) => Skills = () => new Skills(),
     ) {}
 
     open(params: SessionNewParams): { sessionId: string } {
         this.end(params.sessionId);
         const id = params.sessionId;
+        this.opened.set(id, params);
         const send = (update: SessionUpdate) => this.notify(Method.sessionUpdate, { sessionId: id, update });
         if (params.agent !== undefined) {
-            const agent = this.agents[params.agent];
+            const agent = params.agent.startsWith("acp:") ? this.agents.acp
+                : this.agents[params.agent as "claude" | "codex"];
             if (!agent)
                 throw new RpcError(ErrorCode.invalidParams, `This sidecar can't run ${params.agent}`);
             this.sessions.set(id, agent(id, params, send));
             return { sessionId: id };
         }
-        this.sessions.set(id, new AgentSession(id, params, (webSearch) => this.tools(id, webSearch), this.complete, send,
+        this.sessions.set(id, new AgentSession(id, params, (webSearch) => this.tools(id, webSearch, params), this.complete, send,
             () => this.stream++,
             this.imageBudget, this.skills(id)));
         return { sessionId: id };
@@ -490,6 +492,12 @@ export class AgentSessions {
     close(sessionId: string): void {
         this.end(sessionId);
         this.sessions.delete(sessionId);
+        this.opened.delete(sessionId);
+    }
+
+    /** What Qt opened the session with. */
+    params(sessionId: string): SessionNewParams | undefined {
+        return this.opened.get(sessionId);
     }
 
     private end(sessionId: string): void {

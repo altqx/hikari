@@ -39,14 +39,23 @@ const Json &arrayAt(const Json &object, std::string_view key)
     return value && value->isArray() ? *value : empty;
 }
 
-Json providersJson(const app::Config &config, std::optional<app::SearchService> search)
+Json providerJson(const app::Provider &p, const std::string &id)
+{
+    return Json::object({{"id", id},
+                         {"preset", app::presetId(p.preset)},
+                         {"wire", app::wireId(p.wire)},
+                         {"baseUrl", p.baseUrl}});
+}
+
+Json providersJson(const app::Config &config, std::optional<app::SearchService> search,
+                   const std::vector<std::pair<std::string, std::string>> &aliases)
 {
     Json providers = Json::array();
     for (const app::Provider &p : config.providers)
-        providers.push(Json::object({{"id", p.id},
-                                     {"preset", app::presetId(p.preset)},
-                                     {"wire", app::wireId(p.wire)},
-                                     {"baseUrl", p.baseUrl}}));
+        providers.push(providerJson(p, p.id));
+    for (const auto &[alias, providerId] : aliases)
+        if (const app::Provider *p = config.provider(providerId))
+            providers.push(providerJson(*p, alias));
     Json params = Json::object({{"providers", std::move(providers)}});
     if (search)
         params["searchService"] = std::string(app::searchServiceId(*search));
@@ -163,6 +172,12 @@ struct AiRequests::Pending {
     bool sent = false;
 };
 
+struct AiRequests::Translation {
+    TranslateSink sink;
+    QPointer<AiSidecarHost> host;
+    std::uint64_t request = 0;
+};
+
 AiRequests::AiRequests(app::Providers &providers, HostFor host) : m_providers(providers), m_host(std::move(host)) {}
 
 AiRequests::~AiRequests()
@@ -171,6 +186,9 @@ AiRequests::~AiRequests()
     for (const auto &[id, pending] : m_pending)
         if (pending->sent && pending->host)
             pending->host->cancel(pending->request);
+    for (const auto &[id, translation] : m_translations)
+        if (translation->host)
+            translation->host->cancel(translation->request);
 }
 
 AiSidecarHost *AiRequests::connect(const app::Config &config)
@@ -182,11 +200,26 @@ AiSidecarHost *AiRequests::connect(const app::Config &config)
         if (alive.lock())
             receive(method, params);
     });
-    host->request("_hikari/providers.set", providersJson(config, searchService()), [](SidecarResult) {});
+    std::vector<std::pair<std::string, std::string>> aliases;
+    for (const auto &[alias, target] : m_aliases)
+        aliases.emplace_back(alias, target.providerId);
+    host->request("_hikari/providers.set", providersJson(config, searchService(), aliases), [](SidecarResult) {});
     return host;
 }
 
-app::StreamId AiRequests::complete(app::Role role, Json request, app::EventSink sink)
+std::string AiRequests::wireProvider(const std::string &providerId, const std::string &project)
+{
+    if (project.empty() || !m_projectKeys || !m_projectKeys(project, providerId))
+        return providerId;
+    auto scope = std::ranges::find(m_aliasProjects, project);
+    if (scope == m_aliasProjects.end())
+        scope = m_aliasProjects.insert(m_aliasProjects.end(), project);
+    std::string alias = providerId + "@p" + std::to_string(scope - m_aliasProjects.begin() + 1);
+    m_aliases.try_emplace(alias, Alias{project, providerId});
+    return alias;
+}
+
+app::StreamId AiRequests::complete(app::Role role, Json request, app::EventSink sink, const std::string &project)
 {
     const app::StreamId id = m_nextId++;
     if (!m_providers.enabled()) {
@@ -203,6 +236,7 @@ app::StreamId AiRequests::complete(app::Role role, Json request, app::EventSink 
         request["caching"] = false;
     if (!m_webSearch && request.isObject())
         std::erase_if(request.asObject(), [](const Json::Member &m) { return m.key == "webSearch"; });
+    const std::string provider = wireProvider(ref->providerId, project);
     AiSidecarHost *host = connect();
     if (!host) {
         sink(app::Failed{{.kind = app::ErrorKind::Network, .detail = "the AI sidecar is not installed"}});
@@ -213,7 +247,7 @@ app::StreamId AiRequests::complete(app::Role role, Json request, app::EventSink 
     pending->host = host;
     pending->sent = true;
     m_pending[id] = pending;
-    Json params = Json::object({{"stream", id}, {"providerId", ref->providerId}, {"request", std::move(request)}});
+    Json params = Json::object({{"stream", id}, {"providerId", provider}, {"request", std::move(request)}});
     pending->request = host->request("_hikari/complete", std::move(params),
                                      [this, alive = std::weak_ptr(m_alive), id](SidecarResult result) {
                                          if (!alive.lock())
@@ -223,6 +257,48 @@ app::StreamId AiRequests::complete(app::Role role, Json request, app::EventSink 
                                          else
                                              end(id, app::Failed{requestError(result.error())});
                                      });
+    return id;
+}
+
+app::StreamId AiRequests::requestTranslation(Json params, TranslateSink sink, const std::string &project)
+{
+    const app::StreamId id = m_nextId++;
+    if (!m_providers.enabled()) {
+        sink.done(std::unexpected(app::Error{.kind = app::ErrorKind::NoProvider}));
+        return id;
+    }
+    if (!m_caching)
+        params["caching"] = false;
+    if (const Json *models = params.find("models"); models && models->isObject())
+        for (Json::Member &model : params["models"].asObject())
+            if (const Json *provider = model.value.find("providerId"); provider && provider->isString()) {
+                const std::string own = provider->asString();
+                model.value["providerId"] = wireProvider(own, project);
+            }
+    AiSidecarHost *host = connect();
+    if (!host) {
+        sink.done(std::unexpected(app::Error{.kind = app::ErrorKind::Network, .detail = "the AI sidecar is not installed"}));
+        return id;
+    }
+    auto translation = std::make_shared<Translation>();
+    translation->sink = std::move(sink);
+    translation->host = host;
+    m_translations[id] = translation;
+    params["stream"] = id;
+    translation->request = host->request("_hikari/translate", std::move(params),
+                                         [this, alive = std::weak_ptr(m_alive), id](SidecarResult result) {
+                                             if (!alive.lock())
+                                                 return;
+                                             const auto it = m_translations.find(id);
+                                             if (it == m_translations.end())
+                                                 return;
+                                             const std::shared_ptr<Translation> done = it->second;
+                                             m_translations.erase(it);
+                                             if (result)
+                                                 done->sink.done(std::move(*result));
+                                             else
+                                                 done->sink.done(std::unexpected(requestError(result.error())));
+                                         });
     return id;
 }
 
@@ -264,6 +340,11 @@ std::optional<SearchAccess> AiRequests::searchAccess(app::SearchService service)
 
 void AiRequests::cancel(app::StreamId id)
 {
+    if (const auto t = m_translations.find(id); t != m_translations.end()) {
+        if (t->second->host)
+            t->second->host->cancel(t->second->request);
+        return;
+    }
     const auto it = m_pending.find(id);
     if (it == m_pending.end())
         return;
@@ -352,24 +433,48 @@ RelayTargets AiRequests::relayTargets()
     return [this, saved = providerTargets(m_providers)](const Json &target, std::function<void(RelayTargetResult)> done) {
         const Json *kind = target.find("kind");
         const Json *id = target.find("id");
-        if (kind && *kind == Json("provider") && id && id->isString())
+        if (kind && *kind == Json("provider") && id && id->isString()) {
             if (const auto it = m_drafts.find(id->asString()); it != m_drafts.end())
                 return done(RelayTarget{QUrl(QString::fromStdString(it->second.provider.baseUrl)), it->second.key});
+            if (const auto alias = m_aliases.find(id->asString()); alias != m_aliases.end()) {
+                const app::Provider *provider = m_providers.config().provider(alias->second.providerId);
+                if (!provider)
+                    return done(std::unexpected(app::Error{app::ErrorKind::NoProvider, 0, ""}));
+                if (auto key = m_projectKeys ? m_projectKeys(alias->second.project, provider->id) : std::nullopt)
+                    return done(RelayTarget{QUrl(QString::fromStdString(provider->baseUrl)), std::move(*key)});
+                Json own = target;
+                own["id"] = provider->id;
+                return saved(own, std::move(done));
+            }
+        }
         saved(target, std::move(done));
     };
 }
 
-void AiRequests::endConversation(const std::string &providerId, const std::string &cacheKey)
+void AiRequests::endConversation(const std::string &providerId, const std::string &cacheKey, const std::string &project)
 {
     if (!m_providers.config().provider(providerId) || cacheKey.empty())
         return;
+    std::string sent = providerId;
+    for (const auto &[alias, target] : m_aliases)
+        if (target.project == project && target.providerId == providerId)
+            sent = alias;
     if (AiSidecarHost *host = connect())
-        host->request("_hikari/conversation.end", Json::object({{"providerId", providerId}, {"cacheKey", cacheKey}}),
+        host->request("_hikari/conversation.end", Json::object({{"providerId", sent}, {"cacheKey", cacheKey}}),
                       [](SidecarResult) {});
 }
 
 void AiRequests::receive(const std::string &method, const Json &params)
 {
+    if (method == "_hikari/translate.progress") {
+        const Json *stream = params.find("stream");
+        if (!stream || !stream->isInt())
+            return;
+        if (const auto it = m_translations.find(static_cast<app::StreamId>(stream->asInt()));
+            it != m_translations.end() && it->second->sink.progress)
+            it->second->sink.progress(params);
+        return;
+    }
     if (method != "session/update")
         return;
     const Json *stream = params.find("stream");

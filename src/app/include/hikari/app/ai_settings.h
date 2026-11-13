@@ -25,6 +25,7 @@ struct SignInProgress;
 
 namespace hikari::app {
 
+class AiAcpSettings;
 class AiFeatures;
 class AiMcp;
 class AiMcpServers;
@@ -58,12 +59,14 @@ class AiSettings final : public QObject {
     /// staged, newerNeedsApp, checkedAt, state, received, total, error, policyOff, rollback}. state is "", "checking"
     /// or "downloading"; error is a download error's id; rollback is {version, to, reportSent} or empty.
     Q_PROPERTY(QVariantMap components READ components NOTIFY componentsChanged)
-    /// "claude" and "codex" to {found, path, version, latest, badge, method, minimum, canUpdate, command, session,
+    /// "claude", "codex", and where Hikari runs ACP agents "opencode" and "agy", to {found, missing, path, version, latest, badge, method, minimum, canUpdate, command, session,
     /// state, outcome, lastLine}. badge is "", "current", "update", "unsupported" or "broken"; state "" or "updating";
     /// outcome "", "updated", "unchanged", "failed", "timedOut" or "cancelled".
     Q_PROPERTY(QVariantMap agents READ agents NOTIFY agentsChanged)
     /// The MCP server's AiMcp, for its Copy setup; null without one.
     Q_PROPERTY(QObject *mcp READ mcp CONSTANT FINAL)
+    /// Antigravity's sign-in and the user's own ACP agents.
+    Q_PROPERTY(QObject *acp READ acp CONSTANT FINAL)
     /// The MCP servers the agent uses, an AiMcpServers; null without one.
     Q_PROPERTY(QObject *mcpServers READ mcpServers CONSTANT FINAL)
 
@@ -84,10 +87,13 @@ public:
     QVariantMap components() const;
     QVariantMap agents() const;
     QObject *mcp() const;
+    QObject *acp() const;
     QObject *mcpServers() const;
 
     /// {id, preset, name, baseUrl, wire, needsKey} of an added provider, for its edit form.
     Q_INVOKABLE QVariantMap form(const QString &providerId) const;
+    /// The id saving a new provider of `preset` gives it: the preset's id, then `-2`, `-3`. Projects name models by it.
+    Q_INVOKABLE QString newProviderId(const QString &preset) const;
     /// The add or edit form opened: reads what the download would be, without downloading.
     Q_INVOKABLE void openDraft();
     Q_INVOKABLE void closeDraft();
@@ -193,6 +199,7 @@ private:
 
     AiFeatures &m_features;
     AiMcp *m_mcp = nullptr;
+    AiAcpSettings *m_acp = nullptr;
     AiMcpServers *m_mcpServers = nullptr;
     std::map<std::string, Status, std::less<>> m_status;
     QVariantMap m_draft;

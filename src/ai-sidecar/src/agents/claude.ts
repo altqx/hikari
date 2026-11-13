@@ -4,6 +4,7 @@ import type { HookCallbackMatcher, HookInput, Options, Query, SDKMessage, SDKUse
     SpawnOptions } from "@anthropic-ai/claude-agent-sdk";
 
 import type { McpServer } from "../mcp/server";
+import { withSkills, type Skills } from "../skills/skills";
 import { ErrorCode, type SessionNewParams, type SessionPromptParams, type SessionPromptResult,
     type SessionStopReason, type SessionSteerResult, type SessionUpdate, type ToolCallKind } from "../protocol";
 import type { Part, Usage } from "../providers/types";
@@ -19,6 +20,8 @@ export interface ClaudeDeps {
     spawn: (options: SpawnOptions) => SpawnedProcess & { readonly stderr?: Readable };
     /** A server of its own, so Qt sees the session as the caller. */
     mcp: McpServer;
+    /** The session's skills, whose catalogue joins the system prompt. */
+    skills?: Skills;
     kindOf: (tool: string) => ToolCallKind;
     send: (update: SessionUpdate) => void;
 }
@@ -122,6 +125,9 @@ interface Turn {
  * A thread on the user's own `claude`, through the Claude Agent SDK: one long-running query, Claude's built-in tools
  * off, and only Hikari's tools allowed.
  */
+/** Claude's own sub-agent tool, named Task before Claude Code 2.1.63; Hikari's sub-agents replace it. */
+export const kNativeSubagentTools = ["Agent", "Task"];
+
 export class ClaudeSession {
     private query?: Query;
     private inbox?: Inbox;
@@ -129,6 +135,7 @@ export class ClaudeSession {
     private claudeSession?: string;
     private readonly calls = new Set<string>();
     private stderr = "";
+    private system?: string;
 
     constructor(readonly id: string, private readonly params: SessionNewParams, private readonly deps: ClaudeDeps) {}
 
@@ -151,12 +158,13 @@ export class ClaudeSession {
             strictMcpConfig: true,
             permissionMode: "dontAsk",
             allowedTools: [`mcp__${kServer}`],
+            disallowedTools: kNativeSubagentTools,
             mcpServers: { [kServer]: inProcessServer(this.deps.mcp, `claude:${this.id}`) as never },
             hooks: { PreToolUse: [this.hook((input) => this.before(input))],
                 PostToolUse: [this.hook((input) => this.after(input))],
                 PostToolUseFailure: [this.hook((input) => this.after(input))] },
             ...(model ? { model } : {}),
-            ...(this.params.system ? { systemPrompt: this.params.system } : {}),
+            ...(this.system ? { systemPrompt: this.system } : {}),
             ...(this.claudeSession ? { resume: this.claudeSession } : {}),
         };
     }
@@ -201,6 +209,7 @@ export class ClaudeSession {
         if (this.query)
             return;
         const sdk = await this.deps.sdk();
+        this.system ??= this.deps.skills ? await withSkills(this.params.system, this.deps.skills) : this.params.system;
         this.inbox = new Inbox();
         this.query = sdk.query({ prompt: this.inbox, options: this.options() });
         void this.read(this.query);

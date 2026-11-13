@@ -21,11 +21,15 @@
 namespace hikari::api {
 class Api;
 }
+namespace hikari::json {
+class Json;
+}
 namespace hikari::application {
 class AiReview;
 class DocumentFiles;
 }
 namespace hikari::backends::ai {
+struct AgentThread;
 class AgentThreads;
 class ThreadStore;
 }
@@ -99,6 +103,8 @@ public:
         std::function<std::int64_t()> now; // ms since the epoch; the clock when null
         AiScripts *scripts = nullptr;
         AutomationShell *automation = nullptr;
+        // The active window's Project folder; empty without one.
+        std::function<QString()> project;
     };
 
     static constexpr const char *kModeSetting = "ai.agent.mode";
@@ -143,6 +149,9 @@ public:
     /// Starts a turn, or queues the message while one runs; opens a thread first when none is open.
     Q_INVOKABLE void send(const QString &text);
     Q_INVOKABLE void stop();
+    Q_INVOKABLE void stopChild(const QString &id);
+    Q_INVOKABLE void stopChildren();
+    Q_INVOKABLE void openParent();
     Q_INVOKABLE void steer();
     Q_INVOKABLE void setQueued(const QString &text);
     Q_INVOKABLE void retry();
@@ -172,6 +181,10 @@ public:
     Q_INVOKABLE bool openLink(const QString &url) const;
     /// SearchSuggestions.qml's properties for Google's snippet.
     Q_INVOKABLE QVariantMap suggestions(const QString &html) const;
+    /// Opens the open thread's Project AGENTS.md in the system editor.
+    Q_INVOKABLE void openProjectInstructions() const;
+    /// The active window or its Project changed: the thread list puts that Project's threads first.
+    void projectChanged();
 
 signals:
     void switched();
@@ -190,8 +203,10 @@ private:
     void fallBackToAnAgent(const std::string &thread);
     void select(std::string id);
     void refreshThread();
+    json::Json childCard(const backends::ai::AgentThread &child) const;
     std::vector<std::string> safeFolders() const;
     std::optional<std::string> pathOf(application::DocumentId document) const;
+    QString projectInstructionsFile(const backends::ai::AgentThread &thread) const;
 
     Wiring m_wiring;
     std::unique_ptr<backends::ai::ThreadStore> m_store;

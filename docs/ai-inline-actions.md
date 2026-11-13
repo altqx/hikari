@@ -7,7 +7,7 @@ One-shot AI actions on the Lines you chose, with no agent thread ([AI8 #436](htt
 | Path | Holds |
 | --- | --- |
 | `src/application/ai_inline.{h,cpp}` | Pure rules: which Lines are skipped, tag masking, the prompt and reading the answer. |
-| `src/backends/ai_inline_run.{h,cpp}` | `InlineRun`: one `_hikari/complete` request per Line, at most 4 at once, with Stop, the daily cap and the cost. |
+| `src/backends/ai_inline_run.{h,cpp}` | `InlineRun`: one `_hikari/complete` request per Line, at most 4 at once, with Stop, the daily cap and the cost. Translate uses `TranslationRun` instead ([AI translation pipeline](ai-translation.md)). |
 | `src/app/inline_ai_controller.{h,cpp}` | `InlineAiController`: picks the Lines, starts runs, writes them into the review, and holds the actions and the Manual results. |
 | `src/ui/InlineAiMenu.qml`, `InlineAiBox.qml`, `InlineAiBar.qml` | The **AI** submenu, the box that asks for an instruction or a language, and the bar over the Grid with progress, notices and the Manual results. |
 
@@ -25,11 +25,11 @@ One-shot AI actions on the Lines you chose, with no agent thread ([AI8 #436](htt
 | Rewrite… | Chat | An instruction, with the last 5 as chips |
 | Shorten to 15 CPS | Chat | Nothing; sends only the Lines over 15 CPS |
 | Fix spelling and grammar | Reviewer | Nothing |
-| Translate to <language> | Translator | Nothing; the language is **Translate to** in Settings |
+| Translate to <language> | Translator | Nothing; the language is the Project's target language, else **Translate to** in Settings. Both Translate actions send the Project's source language when it has one |
 | Translate to… | Translator | A language |
 | Your actions | Their own role | Nothing, or their instruction when **Ask each time** is on |
 
-Each role falls back to Chat. Every action changes only the Text. 15 CPS is the limit the Grid and the Line editor already use; there is no setting for it.
+Each role falls back to Chat. Every action changes only the Text, except Translate in Translation mode, which writes the Translated text. Both Translate actions run the [translation pipeline](ai-translation.md) as one request, not one request per Line. 15 CPS is the limit the Grid and the Line editor already use; there is no setting for it.
 
 ## What is sent
 

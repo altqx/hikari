@@ -43,6 +43,8 @@ class NodeEffectsController : public QObject {
     Q_PROPERTY(QString name READ name NOTIFY changed)
     Q_PROPERTY(QString style READ style NOTIFY changed)
     Q_PROPERTY(bool allStyles READ allStyles NOTIFY changed)
+    Q_PROPERTY(bool typesetting READ typesetting NOTIFY changed)
+    Q_PROPERTY(QVariantList typesettingPresets READ typesettingPresets NOTIFY textsChanged)
     Q_PROPERTY(qint64 seed READ seed NOTIFY graphChanged)
     Q_PROPERTY(QStringList styles READ styles NOTIFY changed)
     Q_PROPERTY(QString unreadable READ unreadable NOTIFY changed)
@@ -79,6 +81,7 @@ class NodeEffectsController : public QObject {
 public:
     using SessionSource = std::function<application::EditSession *()>;
     using LuaNodesSource = std::function<application::LuaNodePort *()>;
+    using GlyphsSource = std::function<application::shape::GlyphOutlinePort *()>;
     using AudioSource = std::function<std::optional<const application::DisplayAudio *>()>;
 
     explicit NodeEffectsController(QObject *parent = nullptr);
@@ -90,6 +93,7 @@ public:
     // Called only when a graph with a Lua node runs, so the helper starts then.
     void setLuaNodes(LuaNodesSource source);
     void setAudio(AudioSource source) { m_audio = std::move(source); }
+    void setGlyphs(GlyphsSource source) { m_glyphs = std::move(source); }
     void setLibraryFolder(std::filesystem::path folder);
     void setSettings(application::Settings *settings);
     void setEditable(bool editable);
@@ -112,6 +116,11 @@ public:
     QString name() const;
     QString style() const;
     bool allStyles() const { return m_graph && m_graph->allStyles; }
+    bool typesetting() const { return m_graph && m_graph->target == application::GraphTarget::Lines; }
+    static QVariantList typesettingPresets();
+    // The Lines a typesetting graph runs on, from the Grid's selection; a graph's own Lines stand
+    // for their source. Shows the Document's first typesetting graph when the current one isn't.
+    void setTargetLines(std::set<core::LineId> lines);
     qint64 seed() const { return m_graph ? m_graph->seed : 0; }
     QStringList styles() const;
     QString unreadable() const { return m_unreadable; }
@@ -144,6 +153,7 @@ public:
     bool videoPreview() const;
     bool hasLua() const;
     bool hasPluginNodes() const;
+    bool drawsText() const;
     bool trusted() const;
     bool canApply() const;
     bool canApplySelected() const;
@@ -176,6 +186,7 @@ public:
 
     Q_INVOKABLE bool newGraph();
     Q_INVOKABLE bool addPreset(int index);
+    Q_INVOKABLE bool addTypesettingGraph(int index);
     Q_INVOKABLE bool addFromLibrary(const QString &name);
     Q_INVOKABLE bool saveToLibrary();
     Q_INVOKABLE QString graphNameProblem(const QString &name) const;
@@ -213,6 +224,7 @@ private:
     QVariantMap problemRow(const std::string &node, const std::string &port, const std::string &message) const;
     void reload();
     void updateSources();
+    void selectEveryTarget();
     void schedulePreview();
     void runPreview();
     application::NodeEffectOptions options() const;
@@ -224,6 +236,7 @@ private:
     QPointer<TemplateEditorController> m_trustOwner;
     LuaNodesSource m_luaNodes;
     AudioSource m_audio;
+    GlyphsSource m_glyphs;
     QtTextMeasurePort m_qtMeasure;
     application::TextMeasurePort *m_measure = &m_qtMeasure;
     application::Settings *m_settings = nullptr;
@@ -247,6 +260,8 @@ private:
     std::vector<core::LineId> m_sources;
     std::optional<core::LineId> m_source;
     std::set<core::LineId> m_sourceSelection;
+    std::set<core::LineId> m_targets;
+    bool m_selectEveryTarget = false;
 
     QTimer m_previewTimer, m_commitTimer;
     std::optional<application::NodeEffectRun> m_preview;

@@ -4,6 +4,7 @@
 #include "hikari/application/karaoke_templates.h"
 #include "hikari/application/macro_transaction.h"
 #include "hikari/application/template_preview.h"
+#include "hikari/application/typesetting_line.h"
 
 #include <boost/dynamic_bitset.hpp>
 
@@ -13,6 +14,7 @@
 #include <cctype>
 #include <chrono>
 #include <cmath>
+#include <cstdlib>
 #include <deque>
 #include <functional>
 #include <map>
@@ -54,9 +56,17 @@ NodeColour nodeColour(karaoke_layout::StyleColour c)
     return {c.r, c.g, c.b};
 }
 
+int lineAlignment(const karaoke_layout::Line &line, const karaoke_layout::StyleInfo &style)
+{
+    const std::string &h = line.kara.halign, &v = line.kara.valign;
+    if (h.empty() || v.empty())
+        return style.align;
+    return (h == "left" ? 1 : h == "center" ? 2 : 3) + (v == "bottom" ? 0 : v == "middle" ? 3 : 6);
+}
+
 enum class Kind {
     ForEach, Repeat, Frames, ClipGradient, Array, Particles, Highlights, InlineFx, Info, Number, Text, Colour, Point, Choose, Calculate, Compare, Progress, Random,
-    Retime, Stagger, Tag, Move, Fade, Transform, Gradient, Shape, AudioPeaks, Join, Emit, Lua
+    Retime, Stagger, Tag, Move, Fade, Transform, Gradient, Shape, TextShape, CombineShapes, AudioPeaks, Join, Emit, Lua
 };
 
 const std::map<std::string, Kind, std::less<>> kKinds{
@@ -69,6 +79,7 @@ const std::map<std::string, Kind, std::less<>> kKinds{
     {"math.random", Kind::Random},     {"time.retime", Kind::Retime},      {"time.stagger", Kind::Stagger},
     {"tags.tag", Kind::Tag},           {"tags.move", Kind::Move},          {"tags.fade", Kind::Fade},
     {"tags.transform", Kind::Transform}, {"colours.gradient", Kind::Gradient}, {"drawings.shape", Kind::Shape},
+    {"drawings.text", Kind::TextShape}, {"drawings.combine", Kind::CombineShapes},
     {"audio.peaks", Kind::AudioPeaks},
     {"text.join", Kind::Join},         {"output.emit", Kind::Emit},        {"lua.code", Kind::Lua}};
 
@@ -399,6 +410,7 @@ Compiled compile(const NodeGraph &flat)
             break;
         case Kind::Calculate:
         case Kind::Compare:
+        case Kind::CombineShapes:
             n.mode = text("op");
             break;
         case Kind::Progress:
@@ -474,6 +486,7 @@ Compiled compile(const NodeGraph &flat)
         case Kind::AudioPeaks:
         case Kind::Retime:
         case Kind::Lua:
+        case Kind::TextShape:
             l = Level::Element;
             break;
         case Kind::Random:
@@ -559,6 +572,7 @@ public:
               const NodeEffectOptions &options, std::atomic<bool> &luaStopped, Problems &problems,
               NodeValueTrace *trace)
         : m_c(c), m_line(line), m_name(name), m_seed(seed), m_lua(options.lua), m_audio(options.audio),
+          m_glyphs(options.glyphs),
           m_luaStopped(luaStopped), m_problems(problems), m_trace(trace),
           m_lineMemo(static_cast<std::size_t>(c.slots))
     {
@@ -940,6 +954,7 @@ private:
     NodeValue join(int node, const Element &e);
     NodeValue lua(int node, int port, const Element &e, Memo &memo);
     NodeValue audioPeak(int node, int port, const Element &e, Memo &memo);
+    NodeValue textShape(int node, int port, const Element &e, Memo &memo);
     bool luaBatch(int node, const std::vector<Element> &elements, std::vector<Memo> &memos);
 
     const Compiled &m_c;
@@ -948,6 +963,8 @@ private:
     std::int64_t m_seed;
     LuaNodePort *m_lua;
     std::optional<const DisplayAudio *> m_audio;
+    shape::GlyphOutlinePort *m_glyphs;
+    std::map<std::string, shape::TextOutline, std::less<>> m_outlines;
     std::atomic<bool> &m_luaStopped;
     Problems &m_problems;
     NodeValueTrace *m_trace;
@@ -1009,6 +1026,7 @@ NodeValue Evaluator::info(std::string_view port, const Element &e) const
             {"style_outline_colour",
              [](auto &, auto &, auto &s, auto &) { return NodeValue(nodeColour(s.outlineColour)); }},
             {"style_back", [](auto &, auto &, auto &s, auto &) { return NodeValue(nodeColour(s.back)); }},
+            {"line_alignment", [](auto &, auto &, auto &s, auto &line) { return NodeValue(double(lineAlignment(line, s))); }},
         };
     return kFields.at(port)(u, l, s, m_line);
 }
@@ -1056,7 +1074,55 @@ double calculated(std::string_view op, double a, double b)
         return std::floor(a + 0.5);
     if (op == "absolute")
         return std::fabs(a);
+    if (op == "sine" || op == "cosine") {
+        const double radians = a * std::numbers::pi / 180;
+        return std::floor((op == "sine" ? std::sin(radians) : std::cos(radians)) * 1e6 + 0.5) / 1e6;
+    }
     return -a;
+}
+
+shape::Contours contoursAt(const NodeDrawing &d)
+{
+    shape::Contours contours = shape::readDrawing(d.commands);
+    if (d.scale > 1) {
+        const double unit = std::ldexp(1.0, 1 - d.scale);
+        for (shape::Contour &c : contours)
+            for (shape::Point &p : c)
+                p = {p.x * unit, p.y * unit};
+    }
+    return contours;
+}
+
+NodeDrawing combinedShape(std::string_view op, const NodeDrawing &a, const NodeDrawing &b)
+{
+    const shape::Combine how = op == "subtract"    ? shape::Combine::Subtract
+                               : op == "intersect" ? shape::Combine::Intersect
+                               : op == "exclude"   ? shape::Combine::Exclude
+                                                   : shape::Combine::Unite;
+    return {shape::writeDrawing(shape::combine(contoursAt(a), contoursAt(b), how)), 1};
+}
+
+bool styleFlag(const std::vector<std::string> &fields, std::size_t at)
+{
+    if (at >= fields.size())
+        return false;
+    const double v = std::strtod(fields[at].c_str(), nullptr);
+    return v == -1 || v == 1 || v >= 700;
+}
+
+shape::GlyphStyle glyphStyleOf(const karaoke_layout::StyleInfo &s)
+{
+    shape::GlyphStyle g;
+    g.family = s.fields.size() > 1 ? s.fields[1] : std::string();
+    g.size = s.fontsize;
+    g.bold = styleFlag(s.fields, 7);
+    g.italic = styleFlag(s.fields, 8);
+    g.underline = styleFlag(s.fields, 9);
+    g.strikeOut = styleFlag(s.fields, 10);
+    g.scaleX = s.scaleX;
+    g.scaleY = s.scaleY;
+    g.spacing = s.spacing;
+    return g;
 }
 
 double eased(double t, std::string_view ease)
@@ -1224,6 +1290,10 @@ NodeValue Evaluator::compute(int node, int port, const Element &e, Memo &memo)
         return gradientAt(n.list, num("progress"));
     case Kind::Shape:
         return NodeDrawing{n.text, static_cast<int>(n.number)};
+    case Kind::TextShape:
+        return textShape(node, port, e, memo);
+    case Kind::CombineShapes:
+        return combinedShape(n.mode, get<NodeDrawing>(node, "a", e, memo), get<NodeDrawing>(node, "b", e, memo));
     case Kind::AudioPeaks:
         return audioPeak(node, port, e, memo);
     case Kind::Join:
@@ -1261,6 +1331,28 @@ NodeValue Evaluator::audioPeak(int node, int port, const Element &e, Memo &memo)
     }
     const double low = peaks->min.front() / 32768.0, high = peaks->max.front() / 32768.0;
     return port == 0 ? std::max(std::fabs(low), std::fabs(high)) : port == 1 ? low : high;
+}
+
+NodeValue Evaluator::textShape(int node, int port, const Element &e, Memo &memo)
+{
+    const CNode &n = m_c.nodes[node];
+    const std::string text = wired(node, "text") ? get<std::string>(node, "text", e, memo) : unitOf(e).text;
+    auto found = m_outlines.find(text);
+    if (found == m_outlines.end()) {
+        std::optional<shape::TextOutline> outline;
+        if (!m_glyphs)
+            m_problems.add(n.graph->id, "has no fonts to draw with, so it gives an empty drawing");
+        else if (outline = m_glyphs->outline(glyphStyleOf(*m_line.style), text); !outline)
+            m_problems.add(n.graph->id, "can't read the Style's font \"" + glyphStyleOf(*m_line.style).family +
+                                            "\", so it gives an empty drawing");
+        found = m_outlines.emplace(text, outline.value_or(shape::TextOutline{})).first;
+    }
+    const shape::TextOutline &o = found->second;
+    if (port == 1)
+        return o.width;
+    if (port == 2)
+        return o.height;
+    return NodeDrawing{o.drawing, 1};
 }
 
 NodeValue Evaluator::lua(int node, int port, const Element &e, Memo &memo)
@@ -1390,6 +1482,11 @@ std::string cacheKey(const Compiled &c, int emitRank, const karaoke_layout::Line
 
 }
 
+bool isTypesettingSource(const core::LineRecord &line)
+{
+    return !graphNameOf(line) && !templateKindOf(line) && !isGeneratedLine(line) && !line.effect.starts_with(u8"fx ");
+}
+
 NodeEffectRun runNodeEffect(const core::Document &document, std::u8string_view name, std::u8string_view style,
                             const NodeGraph &graph, const NodeEffectOptions &options)
 {
@@ -1397,6 +1494,7 @@ NodeEffectRun runNodeEffect(const core::Document &document, std::u8string_view n
     NodeEffectRun run;
     run.name = std::u8string(name);
     run.complete = !options.sources.has_value();
+    run.typesetting = graph.target == GraphTarget::Lines;
     const auto finish = [&]() -> NodeEffectRun {
         run.seconds = std::chrono::duration<double>(std::chrono::steady_clock::now() - began).count();
         return std::move(run);
@@ -1409,6 +1507,9 @@ NodeEffectRun runNodeEffect(const core::Document &document, std::u8string_view n
         run.problems.push_back({p.node, std::nullopt, p.port.empty() ? p.message : p.port + " " + p.message});
     if (!options.measure)
         run.problems.push_back({{}, std::nullopt, "no text measurement is available"});
+    const bool typesetting = graph.target == GraphTarget::Lines;
+    if (typesetting && !options.sources)
+        run.problems.push_back({{}, std::nullopt, "targets the Lines you choose, and none were chosen"});
     if (!run.problems.empty())
         return finish();
     const Compiled compiled = compile(*flattenGraph(graph));
@@ -1442,12 +1543,15 @@ NodeEffectRun runNodeEffect(const core::Document &document, std::u8string_view n
         if (isGeneratedBy(*l, name))
             continue;
         li += 1;
-        if (!isKaraokeLine(*l) || (!graph.allStyles && l->style != style))
+        if (typesetting ? !isTypesettingSource(*l)
+                        : !isKaraokeLine(*l) || (!graph.allStyles && l->style != style))
             continue;
         if (options.sources && !options.sources->contains(l->id))
             continue;
         std::vector<std::string> problems;
         lines.push_back(layout.line(macroLineOf(*l), li, {.chars = compiled.chars, .karaOK = karaOK}, problems));
+        if (typesetting)
+            placeTypesettingLine(lines.back());
         layoutProblems.push_back(std::move(problems));
         run.sources.push_back(l->id);
     }
@@ -1470,7 +1574,8 @@ NodeEffectRun runNodeEffect(const core::Document &document, std::u8string_view n
             const auto t0 = std::chrono::steady_clock::now();
             std::vector<Generated> out;
             const std::string key =
-                options.cache ? cacheKey(compiled, static_cast<int>(k), lines[i], name, audio) : "";
+                options.cache ? cacheKey(compiled, static_cast<int>(k), lines[i], name, audio) + (typesetting ? "\x1eL" : "")
+                              : "";
             bool cached = false;
             if (options.cache) {
                 auto &store = options.cache->store();
@@ -1569,12 +1674,48 @@ bool sameOutput(const core::LineRecord &a, const core::LineRecord &b)
            a.text == b.text;
 }
 
+bool applyTypesetting(core::Document &document, const NodeEffectRun &run)
+{
+    const std::set<core::LineId> sources(run.sources.begin(), run.sources.end());
+    std::set<core::LineId> old;
+    std::optional<core::LineId> following;
+    for (const core::LineRecord *l : document.lines()) {
+        if (!isGeneratedBy(*l, run.name)) {
+            following = sources.contains(l->id) ? std::optional(l->id) : std::nullopt;
+            continue;
+        }
+        const std::optional<core::LineId> owner =
+            l->generatedFrom.value != 0 ? std::optional(l->generatedFrom) : following;
+        if (owner && sources.contains(*owner))
+            old.insert(l->id);
+    }
+    if (old.empty() && run.lines.empty())
+        return false;
+    for (const auto &fields : run.styles)
+        document.appendStyle(fields);
+    std::map<core::LineId, core::LineId> lastOf;
+    for (const core::LineRecord &line : run.lines) {
+        const auto at = lastOf.find(line.generatedFrom);
+        const core::LineId after = at != lastOf.end() ? at->second : line.generatedFrom;
+        const auto id = document.insertLineAfter(after, line);
+        if (!id)
+            return false;
+        lastOf[line.generatedFrom] = *id;
+    }
+    document.removeLinesIf([&](const core::LineRecord &l) { return old.contains(l.id); });
+    for (const core::LineId id : run.applied)
+        document.editLine(id, [](core::LineRecord &line) { line.comment = true; });
+    return true;
+}
+
 }
 
 bool applyNodeEffect(core::Document &document, const NodeEffectRun &run, const NodeEffectRun *owners)
 {
     if (!run.ran)
         return false;
+    if (run.typesetting)
+        return applyTypesetting(document, run);
     std::map<core::LineId, core::LineId> ownerOf;
     if (owners) {
         boost::dynamic_bitset<> used(owners->lines.size());
@@ -1879,6 +2020,10 @@ private:
             return refuse(i, "runs in HikariSub's Lua helper, not in the templater");
         case Kind::AudioPeaks:
             return refuse(i, "reads the audio, which the templater can't");
+        case Kind::TextShape:
+            return refuse(i, "draws text with HikariSub's fonts, which the templater can't");
+        case Kind::CombineShapes:
+            return refuse(i, "combines drawings, which the templater can't");
         default:
             return refuse(i, "has no template form");
         }
@@ -1955,6 +2100,9 @@ private:
             return luaScalar(std::string(call->second) + "(" + x + (binary ? ", " + y : std::string()) + ")");
         if (op == "round")
             return luaScalar("math.floor(" + x + " + 0.5)");
+        if (op == "sine" || op == "cosine")
+            return luaScalar("(math.floor(math." + std::string(op == "sine" ? "sin" : "cos") + "(" + x +
+                             " * math.pi / 180) * 1e6 + 0.5) / 1e6)");
         return luaScalar("(-" + x + ")");
     }
 

@@ -33,6 +33,7 @@ HikariSub.Options	Sign in again with Edit	title-case	names the row’s Edit butt
 HikariSub.Options	Claude Code command	title-case	Claude Code is the product’s name
 HikariSub.Agent	Claude Code	title-case	Claude Code is the product’s name
 HikariSub.Plugins	Open Plugins…	title-case	Plugins is the window’s name
+HikariSub.Agent	Open in Plugins	title-case	Plugins is the window’s name
 HikariSub.Options	Google Search, and reads pages	title-case	Google Search is the product’s name
 HikariSub.Options	Brave Search (search only)	title-case	Brave Search is the product’s name
 HikariSub.QcNotes	The clipboard	leading-the	fills %1 at the start of a sentence
@@ -48,6 +49,10 @@ HikariSub.Agent	Turn on Full access	title-case	Full access is the agent mode’s
 HikariSub.Agent	Searched with Google	title-case	Google is the product name
 HikariSub.Documents	QQ Music QRC, decoded	title-case	QQ Music is the service’s name
 HikariSub.Tags	Clean Tags rules	title-case	the bundled Clean Tags script's name
+HikariSub.Options	Sign in with Google…	title-case	Google is the product’s name
+HikariSub.Options	Signed in with Google	title-case	Google is the product’s name
+HikariSub.Options	Starting Antigravity’s sign-in…	title-case	Antigravity is the product’s name
+HikariSub.Options	Code from Google’s page	title-case	Google is the product’s name
 HikariSub.Hotkeys	Change case to Title Case	title-case	Title Case is the case style’s name, shown in it
 HikariSub.Hotkeys	Change case to Sentence case	title-case	Sentence case is the case style’s name
 HikariSub.Text	Title Case	title-case	the Change case menu shows each case style in that style

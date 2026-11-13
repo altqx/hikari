@@ -221,6 +221,9 @@ Result settingsSet(const Context &context, const Json &params)
     const auto *definition = offered(id);
     if (!definition)
         return fail(errors::kNotFound, "No setting is named \"" + id + "\".", Json::object({{"setting", Json(id)}}));
+    if (context.caller.reviewed && id == "ai.exclude")
+        return fail(errors::kRefused, "AI callers can't change ai.exclude; only the user decides what is never sent.",
+                    Json::object({{"setting", Json(id)}, {"reason", Json("private")}}));
     const Json &value = *params.find("value");
     if (!fitsType(value, definition->type))
         return fail(errors::kInvalidParams, "Parameter /value: expected " + std::string(typeName(definition->type)) + ".",

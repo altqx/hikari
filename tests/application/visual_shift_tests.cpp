@@ -1,5 +1,6 @@
 #include "hikari/application/all_tags.h"
 #include "hikari/application/automation_services.h"
+#include "hikari/application/shape_presets.h"
 #include "hikari/application/visual_all_tags.h"
 #include "hikari/application/visual_shift.h"
 #include "hikari/application/visual_tools.h"
@@ -604,6 +605,36 @@ TEST(AllTagsEdition, AValueTheToolCannotUseIsRefusedAndTheLastKept)
     EXPECT_EQ(e.setNumber(Number::Step, u"127.5"), Check::Ok);
 }
 
+TEST(AllTagsEdition, TiersKeepTheirOwnNamesAndCopyOrMoveInOneStep)
+{
+    auto ours = AllTagsSetting::named(u"Blur");
+    ours.mark = {Tier::Project, false};
+    std::vector<AllTagsSetting> mine = defaultAllTags();
+    AllTagsEdition e(combineTiers(std::vector{ours}, mine, &AllTagsSetting::name, sameNameIgnoringCase), 1);
+    EXPECT_EQ(e.current().name, u"blur");
+    EXPECT_TRUE(e.readOnly());
+    EXPECT_EQ(e.setTag(u"be"), AllTagsEdition::Check::Ok);
+    EXPECT_FALSE(e.canUndo());
+    ASSERT_TRUE(e.tierClash());
+    EXPECT_TRUE(e.sendToOtherTier(false, {ClashAction::Replace, {}}));
+    EXPECT_EQ(e.undoStep(), AllTagsEdition::CopyToTier);
+    EXPECT_EQ(e.selection(), 0);
+    EXPECT_EQ(e.current().tag, u"blur");
+    EXPECT_EQ(itemsIn(e.tags(), Tier::Project).size(), 1u);
+    e.addTag(Tier::Project);
+    EXPECT_EQ(e.selection(), 1);
+    EXPECT_EQ(e.current().mark.tier, Tier::Project);
+    e.select(5);
+    EXPECT_FALSE(e.tierClash());
+    EXPECT_TRUE(e.sendToOtherTier(true, {}));
+    EXPECT_EQ(e.undoStep(), AllTagsEdition::MoveToTier);
+    EXPECT_EQ(e.current().mark.tier, Tier::Project);
+    EXPECT_EQ(itemsIn(e.tags(), Tier::Mine).size(), mine.size() - 1);
+    e.restoreDefaults();
+    EXPECT_EQ(itemsIn(e.tags(), Tier::Project).size(), 3u);
+    EXPECT_EQ(itemsIn(e.tags(), Tier::Mine).size(), mine.size());
+}
+
 TEST(AllTagsEdition, NewDuplicateDeleteReplaceAndRestore)
 {
     AllTagsEdition e(defaultAllTags(), 3);
@@ -808,6 +839,47 @@ TEST(VisualShiftEdit, EscEndsTheDragWithoutAStep)
         EXPECT_EQ(host.s->historySize(), steps);
         EXPECT_EQ(lineOf(*host.s, *host.s->selection().active)->text, u8"{\\pos(960,540)\\blur2}Hello");
     }
+}
+
+TEST(VisualShiftEdit, TheXAndYFieldsShiftTheToggledKindsAsOneStepEachEnter)
+{
+    TestHost host;
+    Case c;
+    c.clientW = 640;
+    c.clientH = 400;
+    c.panel = 40;
+    c.frame.width = 1280;
+    c.frame.height = 720;
+    c.frame.sarNum = 0;
+    c.frame.sarDen = 1;
+    c.scriptW = 1920;
+    c.scriptH = 1080;
+    c.time = 1500;
+    c.fps = 25;
+    c.styles.push_back("Style: Default,Garamond,40,&H00FFFFFF,&H00000000,&H00FF0000,&H00000000,0,0,0,0,100,100,0,0,0,2,"
+                       "2,2,20,20,20,1");
+    c.lines.push_back("Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\pos(960,540)\\clip(0,0,10,10)\\org(1,1)}Hello");
+    c.translations.push_back({});
+    setUp(host, c);
+    const std::size_t steps = host.s->historySize();
+    PositionShifterTool shifter;
+    shifter.selected(host);
+    shifter.reset(host);
+    shifter.setToggled(PositionShifterTool::Position | PositionShifterTool::Clip, &host);
+    const auto values = shifter.values(host);
+    ASSERT_EQ(values.size(), 2u);
+    EXPECT_EQ(values[0].iconRole, "shift-by-x");
+    EXPECT_EQ(values[1].text, u"0");
+    EXPECT_FALSE(shifter.setValue("shiftX", u"-12.5", host, ValueEdit::Sample));
+    ASSERT_TRUE(shifter.setValue("shiftX", u"-12.5", host));
+    EXPECT_EQ(lineOf(*host.s, *host.s->selection().active)->text,
+              u8"{\\pos(947.5,540)\\clip(-12.5,0,-2.5,10)\\org(1,1)}Hello");
+    EXPECT_EQ(host.s->historySize(), steps + 1);
+    ASSERT_TRUE(shifter.setValue("shiftY", u"2", host));
+    EXPECT_EQ(lineOf(*host.s, *host.s->selection().active)->text,
+              u8"{\\pos(935,542)\\clip(-25,2,-15,12)\\org(1,1)}Hello");
+    EXPECT_EQ(host.s->historySize(), steps + 2);
+    EXPECT_EQ(shifter.values(host)[0].text, u"-12.5");
 }
 
 TEST(VisualShiftEdit, ALargeBatchAsksForTheShownLinesOnce)

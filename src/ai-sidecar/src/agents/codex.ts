@@ -5,6 +5,7 @@ import { ErrorCode, type SessionNewParams, type SessionPromptParams, type Sessio
     type ToolCallKind } from "../protocol";
 import type { Part, Usage } from "../providers/types";
 import { RpcError } from "../rpc";
+import { withSkills, type Skills } from "../skills/skills";
 
 export const kCodexServer = "hikari";
 
@@ -22,6 +23,8 @@ export interface CodexDeps {
     kindOf: (tool: string) => ToolCallKind;
     send: (update: SessionUpdate) => void;
     version: string;
+    /** The session's skills, whose catalogue joins the developer instructions. */
+    skills?: Skills;
 }
 
 interface Breakdown {
@@ -235,10 +238,11 @@ export class CodexSession {
             capabilities: { experimentalApi: false, requestAttestation: false } });
         peer.notify("initialized");
         const model = this.params.model.model || undefined;
+        const system = this.deps.skills ? await withSkills(this.params.system, this.deps.skills) : this.params.system;
+        const settings = { ...(model ? { model } : {}), ...(system ? { developerInstructions: system } : {}) };
         const opened = this.thread
-            ? await peer.request("thread/resume", { threadId: this.thread, ...(model ? { model } : {}) })
-            : await peer.request("thread/start", { ...(model ? { model } : {}),
-                ...(this.params.system ? { developerInstructions: this.params.system } : {}) });
+            ? await peer.request("thread/resume", { threadId: this.thread, ...settings })
+            : await peer.request("thread/start", settings);
         this.thread = (opened as { thread: { id: string } }).thread.id;
     }
 

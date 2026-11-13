@@ -11,7 +11,10 @@
 #include "audio_controller.h"
 #include "status_bar_controller.h"
 #include "video_controller.h"
+#include "wiring_warnings.h"
 #include "workspace_layout.h"
+
+#include <kddockwidgets/core/DockRegistry.h>
 
 #include <QAccessible>
 #include <QDir>
@@ -34,6 +37,7 @@
 
 #include <functional>
 #include <memory>
+#include <optional>
 #include <string_view>
 
 using namespace hikari;
@@ -44,7 +48,7 @@ const char *const kPanels[] = {"videoDock",     "audioDock",      "originalDock"
                                "referenceDock", "timingDock",     "searchDock",    "automationDock",
                                "spellDock",     "stylesDock",     "templateDock",  "logDock",
                                "postprocessorDock", "qcNotesDock", "reviewDock", "agentDock", "nodeGraphDock",
-                               "nodeInspectorDock", "nodeSourcesDock"};
+                               "nodeInspectorDock", "nodeSourcesDock", "explorerDock"};
 
 QString writeSubtitles(const QString &path, const char *text, int width, const char *more = "")
 {
@@ -431,9 +435,12 @@ class ShellWindowsTest : public QObject {
         QTRY_VERIFY(second->property("arrangementSettled").toBool());
     }
 
+    std::optional<testing::WiringWarnings> wiring;
+
 private slots:
     void init()
     {
+        wiring.emplace();
         QVERIFY(QDir(dir.path()).mkpath(QStringLiteral("Dictionary")));
         for (const char *file : {"Dictionary/en_US.aff", "Dictionary/en_US.dic"}) {
             QFile f(dir.filePath(QLatin1String(file)));
@@ -460,6 +467,7 @@ private slots:
         QVERIFY(application->openFile(writeSubtitles(dir.filePath(QStringLiteral("second.ass")), "second", 1280)));
         secondTab = *target();
         QVERIFY(secondTab != firstTab);
+        QCOMPARE(wiring->take(), QStringList());
     }
     void cleanup()
     {
@@ -471,6 +479,7 @@ private slots:
         application->endSession();
         engine.reset();
         application.reset();
+        wiring.reset();
     }
 
     void theSecondWindowIsAFullShell()
@@ -1000,6 +1009,30 @@ private slots:
         QCOMPARE(titles(0), (QStringList{"first.ass*"}));
     }
 
+    void quittingFromTheSecondWindowBringsEachWindowBackToItsOwnPlace()
+    {
+        const QRect firstPlace(40, 60, 900, 600);
+        const QRect secondPlace(300, 200, 900, 650);
+        first()->setGeometry(firstPlace);
+        second->setGeometry(secondPlace);
+        QTRY_COMPARE(first()->geometry(), firstPlace);
+        QTRY_COMPARE(second->geometry(), secondPlace);
+        QCOMPARE(application->workspace().activeWindow(), 1);
+        application->setSessionRestore(2);
+        QVERIFY(application->reviewClose(QStringLiteral("quit")).isEmpty());
+        application->finishClose();
+        QVERIFY(application->quitApproved());
+        QTRY_VERIFY(!first()->isVisible());
+        QTRY_VERIFY(!second || !second->isVisible());
+        tearDownAfterQuit();
+
+        relaunch();
+        QTRY_VERIFY((second = otherShellWindow(first())));
+        QTRY_VERIFY(second->property("arrangementSettled").toBool());
+        QTRY_COMPARE(second->geometry(), secondPlace);
+        QTRY_COMPARE(first()->geometry(), firstPlace);
+    }
+
     void aCrashRestoreReopensEveryWindow()
     {
         const QRect secondPlace(100, 120, 900, 650);
@@ -1107,6 +1140,23 @@ private slots:
         QCOMPARE(application->workspace().allTabs(), (std::vector{firstTab}));
         QCOMPARE(application->workspace().activeWindow(), 0);
         QVERIFY(modified(firstTab));
+    }
+
+    void aClosedWindowLeavesNoneOfItsPanels()
+    {
+        const QString suffix = QStringLiteral("~%1").arg(shellId(second));
+        const auto panelsOfSecond = [&] {
+            QStringList out;
+            for (const auto *dock : KDDockWidgets::DockRegistry::self()->dockwidgets())
+                if (dock->uniqueName().endsWith(suffix))
+                    out << dock->uniqueName();
+            return out;
+        };
+        QVERIFY(panelsOfSecond().contains(QStringLiteral("Editor") + suffix));
+        QPointer<QQuickWindow> closing = second;
+        closeDiscarding(closing);
+        QTRY_VERIFY(!closing);
+        QTRY_COMPARE(panelsOfSecond(), QStringList());
     }
 
     void aClosedWindowLeavesTheCrashSession()
@@ -1426,6 +1476,62 @@ private slots:
         sendMouse(first(), QEvent::MouseButtonRelease, back, Qt::NoButton);
         QTRY_COMPARE(titles(0), (QStringList{"third.ass*", "first.ass"}));
         QCOMPARE(newestShellWindow(), second.data());
+    }
+
+    void aTabDraggedSidewaysOntoTheBarOfAWindowBesideItMovesThere()
+    {
+        first()->setWindowStates(Qt::WindowNoState);
+        first()->setGeometry(-400, 60, 790, 470);
+        second->setGeometry(420, 60, 790, 470);
+        QTRY_VERIFY(second->property("arrangementSettled").toBool());
+        const auto third = openTab(0, "third");
+        focus(0);
+        QTRY_COMPARE(tabCentre(second, 0).y(), tabCentre(first(), 1).y());
+        const QPoint from = tabCentre(first(), 1);
+        const QPoint to = tabCentre(second, 0) + QPoint(20, 0);
+        sendMouse(first(), QEvent::MouseButtonPress, from, Qt::LeftButton);
+        for (int i = 1; i <= 16; ++i)
+            sendMouse(first(), QEvent::MouseMove, from + (to - from) * i / 16, Qt::LeftButton);
+        sendMouse(first(), QEvent::MouseButtonRelease, to, Qt::NoButton);
+        QTRY_COMPARE(application->workspace().window(third), 1);
+        QCOMPARE(titles(0), (QStringList{"first.ass*"}));
+        QVERIFY(!newestShellWindow() || newestShellWindow() == second);
+    }
+
+    void aTabDraggedOutNearAScreenCornerOpensWholeOnThatScreen()
+    {
+        const QRect screen = QGuiApplication::primaryScreen()->availableGeometry();
+        first()->setWindowStates(Qt::WindowNoState);
+        first()->setGeometry(screen.left(), screen.top(), 800, 480);
+        second->setGeometry(screen.right() + 400, screen.top(), 800, 480);
+        QTRY_VERIFY(second->property("arrangementSettled").toBool());
+        openTab(0, "third");
+        dragTab(first(), tabCentre(first(), 1), screen.bottomRight() - QPoint(40, 40));
+        QQuickWindow *opened = nullptr;
+        QTRY_VERIFY((opened = newestShellWindow()) && opened != second);
+        QTRY_VERIFY(screen.contains(opened->frameGeometry()));
+    }
+
+    void wholeOnScreensMovesAFrameWholeOntoTheScreenItMostlyOverlaps()
+    {
+        const QRect left(0, 0, 1600, 1000);
+        const QRect right(1600, 0, 1600, 1000);
+        const QRect fallback(0, 0, 1024, 768);
+        QCOMPARE(ui::wholeOnScreens(QRect(100, 100, 800, 600), {left, right}, fallback), QRect(100, 100, 800, 600));
+        QCOMPARE(ui::wholeOnScreens(QRect(1473, 40, 1280, 800), {left}, fallback), QRect(320, 40, 1280, 800));
+        QCOMPARE(ui::wholeOnScreens(QRect(1400, 40, 800, 600), {left, right}, fallback), QRect(1600, 40, 800, 600));
+        QCOMPARE(ui::wholeOnScreens(QRect(5000, 40, 1280, 800), {left}, fallback), QRect(0, 0, 1024, 768));
+        QCOMPARE(ui::wholeOnScreens(QRect(-100, 900, 2000, 1200), {left}, fallback), QRect(0, 0, 1600, 1000));
+    }
+
+    void mostlyOnScreensKeepsAFrameHalfOnTheScreensAndMovesAMostlyGoneOne()
+    {
+        const QRect left(0, 0, 1600, 1000);
+        const QRect fallback(0, 0, 1024, 768);
+        QCOMPARE(ui::mostlyOnScreens(QRect(30, 60, 1700, 650), {left}, fallback), QRect(30, 60, 1700, 650));
+        QCOMPARE(ui::mostlyOnScreens(QRect(1000, 60, 1200, 650), {left}, fallback), QRect(1000, 60, 1200, 650));
+        QCOMPARE(ui::mostlyOnScreens(QRect(1473, 40, 1280, 800), {left}, fallback), QRect(320, 40, 1280, 800));
+        QCOMPARE(ui::mostlyOnScreens(QRect(5000, 40, 1280, 800), {left}, fallback), QRect(0, 0, 1024, 768));
     }
 
     void theMoveCommandsWorkFromTheTabMenuAndTheirHotkeys()
