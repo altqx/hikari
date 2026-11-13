@@ -74,6 +74,7 @@ class AnalyticsSessionTest : public QObject {
         engine->setInitialProperties(application->qmlProperties());
         engine->loadFromModule("Hikari.Ui", "Main");
         QVERIFY(!engine->rootObjects().isEmpty());
+        QVERIFY(QMetaObject::invokeMethod(engine->rootObjects().first(), "buildMenus"));
         QVERIFY(QTest::qWaitForWindowExposed(window()));
         QTRY_VERIFY(window()->property("arrangementSettled").toBool());
     }
@@ -187,7 +188,7 @@ private slots:
         QTRY_VERIFY_WITH_TIMEOUT(application->audio().loaded(), 30000);
 
         QVERIFY(shell(QStringLiteral("root.runGlobalHotkey(\"GLOBAL_OPEN_STYLE_MANAGER\")")).toBool());
-        shell(QStringLiteral("root.runItem(root.globalActions().GLOBAL_ABOUT)"));
+        shell(QStringLiteral("root.globalActions().GLOBAL_ABOUT.trigger()"));
         shell(QStringLiteral("root.showPanel(logDock)"));
         shell(QStringLiteral("root.applyPreset(\"Karaoke\")"));
         QVERIFY(application->workspaceLayout().saveLayoutAs(QStringLiteral("MySecretLayout")));

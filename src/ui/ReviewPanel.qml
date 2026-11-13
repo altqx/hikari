@@ -12,7 +12,7 @@ FocusScope {
     signal restoreRequested(var turn)
     readonly property var turns: review ? review.turns : []
     readonly property var here: turns.map(t => Object.assign({}, t, { changes: t.changes.filter(c => c.target) }))
-                                     .filter(t => t.changes.length > 0)
+                                     .filter(t => t.changes.length > 0 || t.files.length > 0)
     readonly property var elsewhere: {
         const byDocument = new Map()
         for (const t of turns)
@@ -26,7 +26,24 @@ FocusScope {
         return Array.from(byDocument.values())
     }
     property var confirming: null
+    property var openFile: 0
+    property var openDiff: ({})
+    property var keepingFile: 0
     objectName: "reviewPanel"
+
+    function toggleFile(file) {
+        openFile = openFile === file ? 0 : file
+        openDiff = openFile ? review.fileDiff(file) : ({})
+    }
+    function keepFile(file, force) {
+        keepingFile = 0
+        const kept = review.keepFile(file, force)
+        if (kept === 1)
+            keepingFile = file
+        else if (kept === 2)
+            panel.fileNotWritten(file)
+    }
+    signal fileNotWritten(var file)
 
     function undo(change, item) {
         const edited = review.editedSince(change, item)
@@ -285,6 +302,121 @@ FocusScope {
                                             Button {
                                                 text: qsTr("Cancel")
                                                 onClicked: panel.confirming = null
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        Repeater {
+                            model: turnBlock.modelData.files
+                            delegate: ColumnLayout {
+                                id: fileBlock
+                                required property var modelData
+                                readonly property bool open: panel.openFile === fileBlock.modelData.file
+                                Layout.fillWidth: true
+                                spacing: 0
+                                ItemDelegate {
+                                    objectName: "reviewFile"
+                                    Layout.fillWidth: true
+                                    leftPadding: 10
+                                    topPadding: 2
+                                    bottomPadding: 2
+                                    highlighted: fileBlock.open
+                                    Accessible.name: fileBlock.modelData.path
+                                    Accessible.description: fileBlock.modelData.detail
+                                    onClicked: panel.toggleFile(fileBlock.modelData.file)
+                                    ToolTip.visible: fileHover.hovered
+                                    ToolTip.text: qsTr("By %1").arg(fileBlock.modelData.caller)
+                                    HoverHandler { id: fileHover }
+                                    Rectangle {
+                                        width: 3
+                                        height: parent.height
+                                        color: fileBlock.modelData.changedOnDisk ? Theme.warning : Theme.accent
+                                    }
+                                    contentItem: RowLayout {
+                                        spacing: 8
+                                        Icon {
+                                            iconRole: fileBlock.modelData.isNew ? "review-new-file" : "review-file"
+                                            size: 16
+                                            color: IconTheme.normal
+                                            accentColor: IconTheme.accent
+                                        }
+                                        ColumnLayout {
+                                            Layout.fillWidth: true
+                                            spacing: 0
+                                            Label {
+                                                Layout.fillWidth: true
+                                                elide: Text.ElideMiddle
+                                                textFormat: Text.PlainText
+                                                text: fileBlock.modelData.path
+                                            }
+                                            Label {
+                                                objectName: "reviewFileDetail"
+                                                Layout.fillWidth: true
+                                                elide: Text.ElideRight
+                                                color: fileBlock.modelData.changedOnDisk ? Theme.warning : Theme.muted
+                                                text: fileBlock.modelData.changedOnDisk
+                                                      ? qsTr("%1, changed on disk since").arg(fileBlock.modelData.detail)
+                                                      : fileBlock.modelData.detail
+                                            }
+                                        }
+                                        RowButtons {
+                                            onUndo: panel.review.undoFile(fileBlock.modelData.file)
+                                            onKeep: panel.keepFile(fileBlock.modelData.file, false)
+                                        }
+                                    }
+                                }
+                                Question {
+                                    objectName: "reviewConfirmFile"
+                                    visible: panel.keepingFile === fileBlock.modelData.file
+                                    text: qsTr("The file changed on disk after the AI wrote its version. Keep replaces it with the AI’s version.")
+                                    Button {
+                                        objectName: "reviewKeepFileAnyway"
+                                        text: qsTr("Keep anyway")
+                                        onClicked: panel.keepFile(fileBlock.modelData.file, true)
+                                    }
+                                    Button {
+                                        text: qsTr("Cancel")
+                                        onClicked: panel.keepingFile = 0
+                                    }
+                                }
+                                Pane {
+                                    objectName: "reviewFileDiff"
+                                    visible: fileBlock.open
+                                    Layout.fillWidth: true
+                                    Layout.leftMargin: 10
+                                    padding: 4
+                                    background: Rectangle {
+                                        color: Theme.raised
+                                        border.color: Theme.line
+                                        radius: 4
+                                    }
+                                    ColumnLayout {
+                                        width: parent.width
+                                        spacing: 0
+                                        Label {
+                                            visible: fileBlock.open && panel.openDiff.text === false
+                                            color: Theme.muted
+                                            text: qsTr("Not a text file, or too large to compare.")
+                                        }
+                                        Repeater {
+                                            model: fileBlock.open ? (panel.openDiff.lines ?? []) : []
+                                            delegate: Label {
+                                                required property var modelData
+                                                Layout.fillWidth: true
+                                                elide: Text.ElideRight
+                                                textFormat: Text.PlainText
+                                                font.family: "monospace"
+                                                font.strikeout: modelData.kind === "removed"
+                                                color: modelData.kind === "same" || modelData.kind === "gap" ? Theme.muted
+                                                                                                             : Theme.text
+                                                text: modelData.kind === "gap" ? "⋯" : modelData.text
+                                                background: Rectangle {
+                                                    color: modelData.kind === "removed" ? Qt.rgba(Theme.danger.r, Theme.danger.g, Theme.danger.b, 0.22)
+                                                           : modelData.kind === "added" ? Qt.rgba(Theme.success.r, Theme.success.g, Theme.success.b, 0.22)
+                                                           : "transparent"
+                                                }
                                             }
                                         }
                                     }

@@ -86,6 +86,7 @@ class SavedLayoutsTest : public QObject {
         engine->setInitialProperties(application->qmlProperties());
         engine->loadFromModule("Hikari.Ui", "Main");
         QVERIFY(!engine->rootObjects().isEmpty());
+        QVERIFY(QMetaObject::invokeMethod(engine->rootObjects().first(), "buildMenus"));
         QVERIFY(QTest::qWaitForWindowExposed(window()));
         QTRY_VERIFY(window()->property("arrangementSettled").toBool());
         if (application->currentTab() < 0)

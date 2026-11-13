@@ -838,7 +838,10 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             m_log->notice(ui::LogController::Warning, QCoreApplication::translate("HikariSub.Review", "Review"),
                           refusalText(refusal));
         },
-        [this] { refreshViews(); }});
+        [this] { refreshViews(); }, reviewDisk()});
+    m_apiHost->review().filesChanged = [this] {
+        QTimer::singleShot(0, m_review.get(), [this] { m_review->refreshed(); });
+    };
     m_agent = std::make_unique<AgentController>(AgentController::Wiring{
         *m_ai, *m_settings, m_apiHost->api(), m_apiHost->review(), m_workspace, *m_files, m_userFolder, {},
         m_aiScripts.get(), m_automation.get(),

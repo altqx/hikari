@@ -53,12 +53,13 @@ This amends [ADR 0022](0022-hikarisub-plugins.md). Its "Hosting later" bullet ex
 
   A `README.md` at the package root is the plugin page's text.
 - **The changelog is the GitHub release notes,** which CI copies into the index.
-- **A plugin without an icon** shows a monogram, tinted by its id.
+- **A plugin without an icon** shows the generic plug icon, in the app and on the site (Q510, 2026-11-13).
 - **Categories:** Timing, Typesetting, Karaoke, Translation, Styles and fonts, Video and audio, Import and export, Quality checks, Utilities. A listing picks one or two.
 
 ## Website
 
 - **How it's built:** static, generated from `index.json` at build time and rebuilt whenever the index changes. Search runs in the browser, and the site is served by its own Worker.
+- **How it rebuilds** (Q495, 2026-11-13): when hikari-plugins' Publish uploads a new `index.json`, it sends a `repository_dispatch` (`index-published`) to hikari-marketplace, whose production deploy fetches and verifies the index and rebuilds from it. The dispatch token is a hikari-plugins secret that reaches the site's repository only. A deploy by hand stays possible.
 - **Its look:** it uses hikari-site's theme tokens, IBM Plex, header and footer, and links to hikarisub.org for guides and downloads.
   - **Header:** "HikariSub | Marketplace", then Browse, Publish a plugin, Guides and Download HikariSub. Search, the theme switch and a GitHub link to hikari-plugins are on the right.
   - **Footer:** says that plugins are made by their authors, and links Report a problem, Security, Listings on GitHub and Site source.
@@ -111,6 +112,19 @@ The plugin manager ([PL4 #416](https://github.com/altqx/hikari/issues/416), [PL6
   - When the marketplace lists the same id with the same author key, an info bar offers "Move to the marketplace" or "Not now".
   - "Not now" hides the offer until the marketplace has a newer version.
 
+## Official plugins
+
+On 2026-11-13 altqx settled how our own plugins ([ADR 0022](0022-hikarisub-plugins.md) § Plugin first) go through the marketplace ([PL11 #1096](https://github.com/altqx/hikari/issues/1096)).
+
+- **Handle** (Q496): our plugins use the handle `hikarisub`, as in `hikarisub.macro-chains`. Registry CI reserves it: a listing under `hikarisub` is accepted only with the `hikarisub` author key.
+- **Key** (Q498): official plugins have their own minisign author key, C399EBCEA48BCB30. It is separate from the marketplace key and from MS1's update key. Its secret half lives only in the source repository's Actions secrets and the owner's offline copy.
+- **Source** (Q497): one public repository, [altqx/hikari-official-plugins](https://github.com/altqx/hikari-official-plugins), holds them all. Each plugin has its own listing, and its releases are tagged `<id>-v<version>`. The registry accepts several listings from one repository, as long as they share one handle.
+- **Author:** their manifest `authors` and listing `authorName` are "altqx". The handle says who publishes them, and the author line says who wrote them.
+- **Badge** (Q503–Q505): the plugin manager and the site show "By HikariSub", with the `plugin-official` icon, for a plugin whose id is under the `hikarisub` handle *and* whose key is the `hikarisub` key. HikariSub pins that key next to the marketplace key, so a sideloaded `hikarisub.*` package signed with another key gets no badge and stays Unverified. There is no new index field.
+  - App: list rows show the icon alone, named on hover; the details show the icon and the text.
+  - Site: a pill beside the tier badge on cards, list rows and the plugin page.
+- **Look-alikes** (Q506): registry CI refuses any other handle that contains `hikarisub` once its hyphens are dropped, such as `hikari-sub` or `hikarisub-official`.
+
 ## Reports and revocation
 
 - **"Report a problem"** opens a pre-filled issue in hikari-plugins.
@@ -119,4 +133,4 @@ The plugin manager ([PL4 #416](https://github.com/altqx/hikari/issues/416), [PL6
 
 ## Launch
 
-We build now and deploy to a preview URL. marketplace.hikarisub.org goes public only with the HikariSub release that ships PL6 and MK1.
+We build now and deploy to a preview URL. marketplace.hikarisub.org goes public only with the HikariSub release that ships PL6 and MK1. That release is v0.1.0-beta.4 (Q494, 2026-11-13). The owner creates the `production` environment and the tokens for it.

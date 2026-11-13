@@ -2568,7 +2568,7 @@
     {
       "name": "files.write",
       "access": "write",
-      "summary": "Replaces a file granted for writing with new content; in a writable folder, makes it and its folders.",
+      "summary": "Replaces a file granted for writing with new content; in a writable folder, makes it and its folders. An AI caller's write is staged for the user to review and reaches the disk only when kept.",
       "since": 1,
       "params": {
         "type": "object",
@@ -2610,6 +2610,10 @@
           "size": {
             "type": "integer",
             "minimum": 0
+          },
+          "staged": {
+            "type": "boolean",
+            "description": "True: waiting in the review, not on the disk yet."
           }
         },
         "required": [

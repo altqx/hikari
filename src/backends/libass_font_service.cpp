@@ -1,4 +1,5 @@
 #include "hikari/backends/libass_font_service.h"
+#include "libass_log.h"
 
 #include <QCryptographicHash>
 #include <QFile>
@@ -698,6 +699,7 @@ LibassFontService::verifyReimport(const std::vector<std::byte> &script, const ap
     ASS_Library *library = ass_library_init();
     if (!library)
         return std::unexpected(FontError::RendererUnavailable);
+    ass_set_message_cb(library, logLibass, nullptr);
     auto rendering = renderDocument(library, script, clean, nullptr);
     ass_library_done(library);
     if (!rendering)

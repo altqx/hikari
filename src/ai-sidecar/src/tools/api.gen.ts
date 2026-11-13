@@ -727,7 +727,7 @@ export type FilesReadResult = {
     data: string;
 };
 
-/** Replaces a file granted for writing with new content; in a writable folder, makes it and its folders. */
+/** Replaces a file granted for writing with new content; in a writable folder, makes it and its folders. An AI caller's write is staged for the user to review and reaches the disk only when kept. */
 export type FilesWriteParams = {
     /** A handle from files.list. */
     file?: string;
@@ -743,6 +743,8 @@ export type FilesWriteParams = {
 export type FilesWriteResult = {
     file: string;
     size: number;
+    /** True: waiting in the review, not on the disk yet. */
+    staged?: boolean;
 };
 
 /** The caller's skills: each skill folder's name, whether it is the Project's or the user's, and its files, SKILL.md among them. */

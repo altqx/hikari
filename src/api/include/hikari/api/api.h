@@ -75,8 +75,7 @@ struct GrantedFolder {
     bool writable = false;
 };
 
-// The handle of an AI caller's Project folder, read-only, from Caller::project.
-inline constexpr std::string_view kProjectFolder = "project";
+inline constexpr std::string_view kProjectFolderHandle = "project";
 
 struct Context {
     const Host &host;
@@ -169,6 +168,8 @@ public:
     void revokeFiles(const std::string &callerId);
     // The path behind a caller's handle, if the caller holds it.
     std::optional<std::string> grantedPath(const std::string &callerId, std::string_view handle) const;
+    // The file a files.write would change, from its file handle or its folder and path; nullopt: neither is granted.
+    std::optional<std::string> writeTarget(const Caller &caller, const Json &params) const;
 
 private:
     struct Subscription {

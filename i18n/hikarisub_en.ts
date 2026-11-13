@@ -1036,6 +1036,13 @@
 <context>
     <name>HikariSub.Review</name>
     <message numerus="yes">
+        <source>and %n more</source>
+        <translation>
+            <numerusform>and %n more</numerusform>
+            <numerusform>and %n more</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
         <source>%n AI change(s) to review</source>
         <translation>
             <numerusform>%n AI change to review</numerusform>
@@ -1047,6 +1054,20 @@
         <translation>
             <numerusform>%n line</numerusform>
             <numerusform>%n lines</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n file(s)</source>
+        <translation>
+            <numerusform>%n file</numerusform>
+            <numerusform>%n files</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Also put back %n file(s) changed on disk after they were kept</source>
+        <translation>
+            <numerusform>Also put back %n file changed on disk after it was kept</numerusform>
+            <numerusform>Also put back %n files changed on disk after they were kept</numerusform>
         </translation>
     </message>
     <message numerus="yes">
@@ -1082,6 +1103,13 @@
         <translation>
             <numerusform>%n change</numerusform>
             <numerusform>%n changes</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>New file, %n line(s)</source>
+        <translation>
+            <numerusform>New file, %n line</numerusform>
+            <numerusform>New file, %n lines</numerusform>
         </translation>
     </message>
     <message numerus="yes">
