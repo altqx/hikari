@@ -1639,6 +1639,53 @@ private slots:
         QCOMPARE(titles(shellId(opened)), (QStringList{"first.ass", "second.ass*"}));
         QVERIFY(!application->quitApproved());
     }
+
+    void aTabMovesToANewWindowAfterAnotherWindowClosedWithAccessibilityOn()
+    {
+        const auto inactive = qScopeGuard([] { QAccessible::setActive(false); });
+        const std::function<int(QAccessibleInterface *)> read = [&](QAccessibleInterface *node) {
+            if (!node || !node->isValid())
+                return 0;
+            (void)node->text(QAccessible::Name);
+            (void)node->rect();
+            int count = 1;
+            for (int i = 0; i < node->childCount(); ++i)
+                count += read(node->child(i));
+            return count;
+        };
+        const auto readEveryWindow = [&] {
+            int count = 0;
+            for (QWindow *window : QGuiApplication::topLevelWindows())
+                if (window->isVisible())
+                    count += read(QAccessible::queryAccessibleInterface(window));
+            return count;
+        };
+
+        const auto third = openTab(0, "third");
+        edit(secondTab);
+        QPointer<QQuickWindow> closing = second;
+        closeDiscarding(closing);
+        QTRY_VERIFY(!closing);
+        QAccessible::setActive(true);
+        QVERIFY(readEveryWindow() > 0);
+
+        application->selectTab(1);
+        QTRY_VERIFY(target() == third);
+        QVariant ran;
+        QVERIFY(QMetaObject::invokeMethod(first(), "globalHotkey", Q_RETURN_ARG(QVariant, ran),
+                                          Q_ARG(QVariant, QStringLiteral("GLOBAL_MOVE_TAB_TO_NEW_WINDOW"))));
+        QVERIFY(ran.toBool());
+        QQuickWindow *opened = nullptr;
+        QTRY_VERIFY((opened = newestShellWindow()) && opened != first());
+        QTRY_VERIFY(opened->property("arrangementSettled").toBool());
+        QCOMPARE(titles(shellId(opened)), (QStringList{"third.ass*"}));
+        QCOMPARE(titles(0).size(), 1);
+        for (int i = 0; i < 4; ++i) {
+            QVERIFY(readEveryWindow() > 0);
+            QTest::qWait(250);
+        }
+        QCOMPARE(wiring->take(), QStringList());
+    }
 };
 
 HIKARI_QTEST_MAIN_IN_PARTS(ShellWindowsTest)
