@@ -1,3 +1,4 @@
+#include "side_bar_model.h"
 #include "theme.h"
 
 #include <QCoreApplication>
@@ -21,6 +22,12 @@ void chooseTheApplicationsControlsStyle()
     hikari::ui::theme::chooseControlsStyle();
 }
 
+void startWithTheSideBarsAway()
+{
+    hikari::ui::SideBarModel::setFirstStartHidden(true);
+}
+
 }
 
 Q_COREAPP_STARTUP_FUNCTION(chooseTheApplicationsControlsStyle)
+Q_COREAPP_STARTUP_FUNCTION(startWithTheSideBarsAway)

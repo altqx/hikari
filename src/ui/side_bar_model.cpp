@@ -19,6 +19,8 @@ SideBars parsed(const QString &json)
 
 QString text(const SideBars &bars) { return QString::fromStdString(application::sideBarsJson(bars)); }
 
+bool firstStartHidden = false;
+
 SideBarId id(bool second) { return second ? SideBarId::Second : SideBarId::First; }
 
 QVariantMap barMap(const application::SideBar &bar)
@@ -36,6 +38,8 @@ QVariantMap barMap(const application::SideBar &bar)
 
 int SideBarModel::minimumWidth() const { return application::kSideBarMinimumWidth; }
 
+void SideBarModel::setFirstStartHidden(bool hidden) { firstStartHidden = hidden; }
+
 QString SideBarModel::defaults(bool project) const { return text(application::defaultSideBars({.project = project})); }
 
 QString SideBarModel::migrated(bool project, const QStringList &rightOfGrid) const
@@ -43,7 +47,10 @@ QString SideBarModel::migrated(bool project, const QStringList &rightOfGrid) con
     std::vector<std::string> panels;
     for (const QString &panel : rightOfGrid)
         panels.push_back(panel.toStdString());
-    return text(application::migratedSideBars({.project = project}, panels));
+    SideBars bars = application::migratedSideBars({.project = project}, panels);
+    bars.first.hidden = bars.first.hidden || firstStartHidden;
+    bars.second.hidden = bars.second.hidden || firstStartHidden;
+    return text(bars);
 }
 
 QVariantMap SideBarModel::read(const QString &json) const

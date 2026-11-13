@@ -1,6 +1,7 @@
 #include "hikari/app/application.h"
 #include "docking.h"
 #include "settings_store.h"
+#include "side_bar_model.h"
 
 #include <QDir>
 #include <QJSValue>
@@ -110,6 +111,7 @@ class SideBarsShellTests : public QObject {
     QVariant dock(const char *name) const { return QVariant::fromValue(item<QObject>(name)); }
 
 private slots:
+    void initTestCase() { hikari::ui::SideBarModel::setFirstStartHidden(false); }
     void init()
     {
         home = std::make_unique<QTemporaryDir>();
