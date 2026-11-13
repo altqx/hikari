@@ -573,3 +573,5 @@ target_compile_definitions(hikari_backends_yutils_route_tests PRIVATE
     HIKARI_YUTILS_INCLUDE="${PROJECT_SOURCE_DIR}/Automation/automation/Include"
     HIKARI_SHAPE_GOLDEN_SCRIPT="${PROJECT_SOURCE_DIR}/tests/fixtures/shape-kernel/make_goldens.lua"
     HIKARI_SHAPE_GOLDENS="${PROJECT_SOURCE_DIR}/tests/fixtures/shape-kernel/yutils-goldens.txt")
+hikari_add_gtest(hikari_backends_git_reader_tests SOURCES git_reader_tests.cpp
+    LIBRARIES hikari_backends LABELS backends plugins)

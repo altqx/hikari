@@ -184,3 +184,24 @@ hikari.selection = {
         return call("selection.set", params)
     end,
 }
+
+hikari.vcs = {
+    refs = function(options)
+        if options ~= nil and type(options) ~= "table" then
+            error("hikari.vcs.refs takes a table of options", 2)
+        end
+        return call("vcs.refs", options or {})
+    end,
+    show = function(ref, document)
+        if type(ref) ~= "string" or ref == "" then
+            error("hikari.vcs.show needs a ref: a branch, tag or commit", 2)
+        end
+        local params = target(document)
+        params.ref = ref
+        local result, err = call("vcs.show", params)
+        if not result then
+            return nil, err
+        end
+        return result.text, result
+    end,
+}

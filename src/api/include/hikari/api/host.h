@@ -14,6 +14,7 @@
 #include "hikari/application/node_effects.h"
 #include "hikari/application/settings.h"
 #include "hikari/application/subtitle_render.h"
+#include "hikari/application/vcs.h"
 #include "hikari/application/visual_perspective.h"
 #include "hikari/application/workspace.h"
 
@@ -341,6 +342,7 @@ struct Host {
     MacroHost *macros = nullptr;
     KeyframeHost *keyframes = nullptr;
     application::RowMarks *marks = nullptr;
+    application::VcsPort *vcs = nullptr;
 };
 
 }

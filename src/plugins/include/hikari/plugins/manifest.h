@@ -28,6 +28,7 @@ struct Permissions {
     std::vector<std::string> networkHosts;
     std::string networkReason;
     std::vector<FileGrantRequest> files;
+    std::optional<std::string> vcsRead; // the reason, when asked for
 };
 
 struct Contribution {
@@ -123,8 +124,9 @@ struct PermissionIncrease {
     bool allDocuments = false;
     std::vector<std::string> networkHosts;
     std::vector<std::string> files; // file request ids
+    bool vcsRead = false;
 
-    bool any() const { return unrestricted || allDocuments || !networkHosts.empty() || !files.empty(); }
+    bool any() const { return unrestricted || allDocuments || !networkHosts.empty() || !files.empty() || vcsRead; }
 };
 PermissionIncrease permissionIncrease(const Manifest &current, const Manifest &next);
 
