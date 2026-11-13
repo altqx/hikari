@@ -76,6 +76,17 @@ void openStartVideo(QObject *mainWindow, const QString &path)
 
 namespace {
 
+QtMessageHandler qtMessageHandler = nullptr;
+
+// Qt logs this on every start when a family lacks a script's OpenType tables; it then falls back to another font.
+void dropOpenTypeFallbackNotes(QtMsgType type, const QMessageLogContext &context, const QString &message)
+{
+    if (type == QtInfoMsg && qstrcmp(context.category, "qt.text.font.db") == 0
+        && message.startsWith(QLatin1StringView("OpenType support missing for ")))
+        return;
+    qtMessageHandler(type, context, message);
+}
+
 constexpr bool automationResetBuild()
 {
 #ifdef HIKARI_AUTOMATION_RESET
@@ -436,6 +447,7 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
 int run(int argc, char **argv, StartupMode mode, const std::function<void()> &windowShown)
 {
     QLoggingCategory::setFilterRules(QStringLiteral("hikari.*.debug=false\nqt.multimedia.ffmpeg.info=false"));
+    qtMessageHandler = qInstallMessageHandler(dropOpenTypeFallbackNotes);
 #ifdef _WIN32
     if (argc >= 2 && std::string_view(argv[1]) == application::kApplyUpdateSwitch) {
         QCoreApplication core(argc, argv);
