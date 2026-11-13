@@ -789,7 +789,7 @@ private slots:
         QVERIFY(!none->windows.at(0).sideBars);
     }
 
-    void sideBarsAreSavedAtOnceAndComeBack()
+    void sideBarsGoToTheSettingsAtOnceAndToTheSessionWithIt()
     {
         QTemporaryDir home;
         auto bars = application::moved(application::defaultSideBars({}), "Agent", application::SideBarId::Second, 0);
@@ -799,11 +799,11 @@ private slots:
         QVERIFY(a->openFile(writeSubtitles(dir.filePath(QStringLiteral("s1.ass")), "s1")));
         a->setSideBars(0, json);
         QCOMPARE(a->sideBars(0), json);
-        QCOMPARE(readSession(a->lastSessionPath()).windows.at(0).sideBars, std::optional(bars));
         QCOMPARE(a->settingsStore()->text("workspace.sideBars"), json);
         a->setSideBars(0, QStringLiteral("not json"));
         QCOMPARE(a->sideBars(0), json);
         a->endSession();
+        QCOMPARE(readSession(a->lastSessionPath()).windows.at(0).sideBars, std::optional(bars));
         a.reset();
 
         app::Application b(options(home));
