@@ -48,7 +48,7 @@ const char *const kPanels[] = {"videoDock",     "audioDock",      "originalDock"
                                "referenceDock", "timingDock",     "searchDock",    "automationDock",
                                "spellDock",     "stylesDock",     "templateDock",  "logDock",
                                "postprocessorDock", "qcNotesDock", "reviewDock", "agentDock", "nodeGraphDock",
-                               "nodeInspectorDock", "nodeSourcesDock"};
+                               "nodeInspectorDock", "nodeSourcesDock", "explorerDock"};
 
 QString writeSubtitles(const QString &path, const char *text, int width, const char *more = "")
 {

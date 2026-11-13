@@ -128,7 +128,7 @@ std::expected<DocumentId, OpenError> DocumentFiles::activate(StagedOpen staged)
     return id;
 }
 
-DocumentId DocumentFiles::createNew()
+std::string_view defaultScript()
 {
     static constexpr std::string_view kDefault =
         "[Script Info]\r\n"
@@ -150,8 +150,14 @@ DocumentId DocumentFiles::createNew()
         "[Events]\r\n"
         "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\r\n"
         "Dialogue: 0,0:00:00.00,0:00:05.00,Default,,0,0,0,,\r\n";
-    std::vector<std::byte> bytes(kDefault.size());
-    std::memcpy(bytes.data(), kDefault.data(), kDefault.size());
+    return kDefault;
+}
+
+DocumentId DocumentFiles::createNew()
+{
+    const std::string_view script = defaultScript();
+    std::vector<std::byte> bytes(script.size());
+    std::memcpy(bytes.data(), script.data(), script.size());
     const DocumentId id{m_nextDocument++};
     Entry entry;
     entry.session = std::make_unique<EditSession>(core::loadAss(bytes).document);

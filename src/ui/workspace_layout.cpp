@@ -137,7 +137,7 @@ const QStringList &WorkspaceLayoutController::panelIds()
                                  QStringLiteral("Spellchecker"),
                                  QStringLiteral("Postprocessor"), QStringLiteral("QcNotes"), QStringLiteral("Review"),
                                  QStringLiteral("Agent"), QStringLiteral("NodeGraph"), QStringLiteral("NodeInspector"),
-                                 QStringLiteral("NodeSources")};
+                                 QStringLiteral("NodeSources"), QStringLiteral("Explorer")};
     return ids;
 }
 
