@@ -181,7 +181,7 @@ The helper framing ([`helper_protocol.h`](../src/backends/include/hikari/backend
 | `hikari.panels.post(panel, data)` | Sends `data` to a [QML panel](#qml-panels)'s `api.received`. It returns `true` when the panel is loaded, and `false` otherwise. |
 | `hikari.files.open(place, path)`, `hikari.files.entries(place, path)`, `hikari.files.pick(options)`, `hikari.files.folder(id)`, `hikari.files.list()`, `hikari.files.read(file, encoding)`, `hikari.files.write(file, data, encoding)` | Files in the plugin's own folders, in folders the user chose, and that the user picked or dropped. See [Files](#files). |
 | `hikari.net.fetch(request)` | An HTTPS request that HikariSub makes to a host from the manifest. See [Network](#network). |
-| `hikari.job.begin{title}`, `hikari.job.progress(fraction, text)`, `hikari.job.cancelled()` | Turns the running command into a job with a card and no time limit. See [Long jobs](#long-jobs). |
+| `hikari.job.begin{title}`, `hikari.job.progress(fraction, text)`, `hikari.job.cancelled()` | Turns the running command, or a click in the plugin's own panel or dialog, into a job with a card and no time limit. See [Long jobs](#long-jobs). |
 | `hikari.marks.set(marks, document)`, `hikari.marks.clear(lines, document)`, `hikari.marks.list(document)` | The plugin's Grid row marks. See [Grid row marks](#grid-row-marks). |
 | `hikari.vcs.refs(options)`, `hikari.vcs.show(ref, document)` | The git repository holding a Document, read-only, with `vcs.read`. See [Git](#git). |
 | `hikari.dialogs.show(dialog, spec)`, `hikari.dialogs.ask(dialog, spec)`, `hikari.dialogs.close(dialog)`, `hikari.dialogs.on(dialog, fn)` | Opens a dialog, or opens one and waits for its answer `button, values`; closes it; and calls `fn(event)` for its events. |
@@ -371,7 +371,7 @@ A plugin that stops, crashes or is turned off loses its handles, its folders for
 
 ## Long jobs
 
-A command that takes longer than 10 seconds, such as scanning a video, calls `hikari.job.begin` first:
+A command or a click that takes longer than 10 seconds, such as scanning a video, calls `hikari.job.begin` first:
 
 ```lua
 hikari.commands.register("scan", function()
@@ -387,7 +387,18 @@ hikari.commands.register("scan", function()
 end)
 ```
 
-From `begin` until the command returns, it has no time limit, and a card above the status bar shows the plugin's name, the title, the progress and **Cancel**. `hikari.job.progress(nil, text)` shows a bar that moves without a fraction. **Cancel** only makes `hikari.job.cancelled()` answer `true`, so check it often. When the plugin hasn't stopped 5 seconds later, the card says so and offers **Stop**, which force stops it; work it hasn't applied is lost. Only a command can become a job, once; outside one, the job calls answer `nil` and an error. Several plugins' jobs stack, the newest first.
+From `begin` until the command or the click's handler returns, it has no time limit, and a card above the status bar shows the plugin's name, the title, the progress and **Cancel**. `hikari.job.progress(nil, text)` shows a bar that moves without a fraction. **Cancel** only makes `hikari.job.cancelled()` answer `true`, so check it often. When the plugin hasn't stopped 5 seconds later, the card says so and offers **Stop**, which force stops it; work it hasn't applied is lost. Only a command, or a `click` in the plugin's own panel or dialog (a dialog's `button` press too), can become a job, once; anywhere else, such as other events, or a panel's `change` or `show`, the job calls answer `nil` and an error. A panel's button can so start a scan with the card and **Cancel**:
+
+```lua
+hikari.panels.on("scan", function(e)
+    if e.kind == "click" and e.widget == "find" then
+        hikari.job.begin{title = "Finding keyframes"}
+        -- …
+    end
+end)
+```
+
+While the job runs, the plugin's other events and commands wait behind it. Several plugins' jobs stack, the newest first.
 
 ## Grid row marks
 

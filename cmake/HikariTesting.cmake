@@ -41,7 +41,8 @@ set(HIKARI_XVFB_SUITES
     hikari_ui_window_frame_tests
     hikari_ui_title_bar_tests
     hikari_ui_docking_qualification_tests # floating panels' windows
-    hikari_ui_workspace_layout_tests # floating panels' windows
+    hikari_ui_workspace_layout_tests.envelope # floating panels' windows
+    hikari_ui_workspace_layout_tests.saving
     hikari_ui_layout_migration_tests # floating panels' windows
     hikari_ui_single_instance_tests # raising and activating the running window
     hikari_ui_tabs_workflow # focus and keys through the window
