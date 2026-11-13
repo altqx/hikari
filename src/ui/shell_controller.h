@@ -153,6 +153,7 @@ public:
     {
         m_lines.setQcMarks(std::move(marks), current);
     }
+    void setRowMarks(LineTableModel::RowMarks marks) { m_lines.setRowMarks(std::move(marks)); }
 
     bool foldGenerated() const { return m_lines.foldGenerated(); }
     // MUST KILL: setFoldGenerated emits foldGeneratedChanged before the rows fold; Application relies on that order

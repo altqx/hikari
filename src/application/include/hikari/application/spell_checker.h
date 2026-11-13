@@ -1,6 +1,7 @@
 #pragma once
 
 #include "hikari/application/edit_session.h"
+#include "hikari/application/tiers.h"
 #include "hikari/core/spelling.h"
 #include "hikari/core/spelling_scripts.h"
 
@@ -70,10 +71,16 @@ public:
     // each suggestion once. Waits for the script's dictionaries to load.
     std::vector<std::u16string> suggestions(std::u16string_view word,
                                             const std::vector<std::u16string> &neighbours = {});
-    // Refused for empty and number words or without a dictionary; appends to UserDic.udic.
-    bool addWord(std::u16string_view word);
+    // The Project's dictionary.txt, whose words load with UserDic.udic's; an empty path for none.
+    void setProjectWords(std::filesystem::path file);
+    const std::filesystem::path &projectWords() const { return m_projectWords; }
+    // Refused for empty and number words or without a dictionary; appends to UserDic.udic, or to the Project's
+    // dictionary.txt for Tier::Project.
+    bool addWord(std::u16string_view word, Tier tier = Tier::Mine);
     // Needs no dictionary; appends to UserDic.udic and to a loaded dictionary. Refused for empty and number words.
     bool addUserWord(std::u16string_view word);
+    // Needs no dictionary; refused without a Project file, and for empty and number words.
+    bool addProjectWord(std::u16string_view word);
     // Removes from UserDic.udic and the dictionary; false when none matched.
     bool removeWords(const std::vector<std::u16string> &words);
     std::vector<std::u16string> addedWords() const;
@@ -102,6 +109,7 @@ private:
     std::vector<Dictionary *> dictionariesFor(core::spelling::Scripts scripts, bool wait, bool *loading = nullptr);
 
     std::vector<std::filesystem::path> m_folders;
+    std::filesystem::path m_projectWords;
     SpellingBackendLoader m_loader;
     std::vector<Dictionary> m_dictionaries; // the primary first
     std::function<void()> m_loaded;
@@ -114,6 +122,10 @@ private:
 // Written as UTF-8 with a BOM; reading drops the BOM (and CRLF on Windows). nullopt when unreadable or empty.
 std::optional<std::u16string> readUserDictionary(const std::filesystem::path &file);
 bool writeUserDictionary(const std::filesystem::path &file, std::u16string_view text);
+// A Project's dictionary.txt: one word per line, UTF-8 without a BOM, as harper-ls reads it.
+std::vector<std::u16string> readWordList(const std::filesystem::path &file);
+// Creates the file; a word already listed is kept once.
+bool appendToWordList(const std::filesystem::path &file, std::u16string_view word);
 
 // Letter words outside override blocks and drawings.
 std::vector<std::u16string> lineWords(std::u16string_view text, core::SubtitleFormat format,
@@ -182,7 +194,7 @@ public:
     void ignore(EditSession &session, const Options &options);
     void ignoreAll(EditSession &session, std::u16string_view word, const Options &options);
     // Then moves to the next word.
-    bool addWord(EditSession &session, std::u16string_view word, const Options &options);
+    bool addWord(EditSession &session, std::u16string_view word, const Options &options, Tier tier = Tier::Mine);
 
 private:
     std::u16string findNextMisspell(EditSession &session, const Options &options);

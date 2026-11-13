@@ -27,6 +27,32 @@ namespace {
 
 using application::HostServiceReply;
 
+std::vector<std::string> buttonLabels(const application::DialogRequest &request)
+{
+    if (request.buttons.empty())
+        return {"OK", "Cancel"};
+    std::vector<std::string> labels;
+    for (std::string label : request.buttons) {
+        std::erase(label, '&');
+        labels.push_back(std::move(label));
+    }
+    return labels;
+}
+
+std::string buttonLabel(const application::DialogRequest &request, int pressed)
+{
+    const auto labels = buttonLabels(request);
+    return pressed >= 0 && std::size_t(pressed) < labels.size() ? labels[std::size_t(pressed)] : std::string();
+}
+
+int buttonIndex(const application::DialogRequest &request, std::string label)
+{
+    std::erase(label, '&');
+    const auto labels = buttonLabels(request);
+    const auto at = std::ranges::find(labels, label);
+    return label.empty() || at == labels.end() ? -1 : int(at - labels.begin());
+}
+
 bool windowsPaths()
 {
 #ifdef _WIN32
@@ -1183,30 +1209,53 @@ void AutomationShell::presentDialog(const application::DialogRequest &request, b
     const QString source = QString::fromStdString(m_run->path + '\n' + m_run->macro);
     const QString key = ui::ScriptDialogMemory::keyOf(QString::fromStdString(m_run->active), request);
     m_dialogMemory.setProjectRoot(m_run->projectRoot);
-    auto answered = [this, request, key, reply = std::move(reply)](application::DialogResult result) {
+    auto answered = [this, request, key, reply = std::move(reply)](application::DialogResult result, bool remember) {
         const bool cancelled = application::cancelAnswer(request, result.pressed);
         if (m_run) {
-            m_run->dialogs.push_back({request, result});
+            m_run->dialogs.push_back({request, result, key.toStdString()});
             m_run->cancelledAtDialog = m_run->cancelledAtDialog || cancelled;
         }
         auto last = application::lastDialogAnswer(request, result);
-        if (!cancelled && !last.answered.empty())
+        if (remember && !cancelled && !last.answered.empty())
             m_dialogMemory.remember(key, std::move(last));
         reply(std::move(result));
     };
+    auto byUser = [answered](application::DialogResult result) { answered(std::move(result), true); };
     ui::AutomationDialogController::Shown shown;
     shown.memoryKey = key;
+    if (m_run->answers) {
+        const auto &given = m_run->answers->dialogs;
+        const std::size_t at = m_run->dialogs.size();
+        const bool matches = at < given.size() && given[at].key == key.toStdString();
+        if (matches) {
+            const auto filled = application::filledByName(request, application::initialDialogResult(request), given[at].values);
+            const int pressed = buttonIndex(request, given[at].button);
+            if (!m_run->answers->showAnswered && !application::isQuestion(request) && pressed >= 0) {
+                auto result = filled;
+                result.pressed = pressed;
+                return answered(std::move(result), false);
+            }
+            shown.values = filled;
+        } else {
+            shown.notice = QCoreApplication::translate(
+                "HikariSub.Automation", "This dialog has changed since the plugin recorded it, so it is shown with its answers filled in.");
+            if (at < given.size())
+                shown.values = application::filledByName(request, application::initialDialogResult(request), given[at].values);
+        }
+        m_dialogs.present(m_title, request, std::move(byUser), source, std::move(shown));
+        return;
+    }
     if (m_run->repeat) {
         const std::size_t at = m_run->dialogs.size();
         const auto &recorded = *m_run->repeat;
         const bool inRecord = at < recorded.size();
         const bool same = m_run->replaying && inRecord && application::sameDialog(recorded[at].request, request);
         if (same && !application::isQuestion(request))
-            return answered(application::replayedAnswer(request, recorded[at].answer));
+            return answered(application::replayedAnswer(request, recorded[at].answer), true);
         if (same) {
             shown.notice = QCoreApplication::translate("HikariSub.Automation",
                                                        "Repeat last run asks questions again rather than answering them for you.");
-            m_dialogs.present(m_title, request, std::move(answered), source, std::move(shown));
+            m_dialogs.present(m_title, request, std::move(byUser), source, std::move(shown));
             return;
         }
         shown.notice =
@@ -1228,7 +1277,7 @@ void AutomationShell::presentDialog(const application::DialogRequest &request, b
         if (const auto last = m_dialogMemory.lastAnswer(key))
             shown.values = application::safePrefill(request, *last);
     }
-    m_dialogs.present(m_title, request, std::move(answered), source, std::move(shown));
+    m_dialogs.present(m_title, request, std::move(byUser), source, std::move(shown));
 }
 
 bool AutomationShell::forceStopOffered() const
@@ -1319,6 +1368,70 @@ bool AutomationShell::forceStopRun()
     if (m_task)
         return m_task->host->forceStop();
     return m_run && m_manager.forceStop(m_run->active);
+}
+
+std::vector<api::MacroInfo> AutomationShell::macros() const
+{
+    const int window = m_workspace.activeWindow();
+    std::vector<api::MacroInfo> out;
+    for (const auto &script : m_manager.scripts()) {
+        if (script.state != application::ScriptStatus::State::Ready && script.state != application::ScriptStatus::State::Running)
+            continue;
+        const bool shown = shownIn(QString::fromStdString(script.path), window);
+        for (std::size_t i = 0; i < script.info.macros.size(); ++i) {
+            api::MacroInfo info{script.info.name, application::scriptFileName(script.path), script.info.macros[i].name,
+                                script.info.macros[i].description, int(i), shown, {}};
+            if (!shown)
+                info.disabledReason = QCoreApplication::translate("HikariSub.Automation",
+                                                                  "This window’s project doesn’t show the script.")
+                                          .toStdString();
+            out.push_back(std::move(info));
+        }
+    }
+    return out;
+}
+
+api::MacroStart AutomationShell::runMacro(const api::MacroRequest &request, std::function<void(api::LuaRun)> done)
+{
+    std::optional<std::string> path;
+    int ordinal = -1;
+    bool shown = true;
+    int named = 0;
+    for (const auto &script : m_manager.scripts()) {
+        if (application::scriptFileName(script.path) != request.file)
+            continue;
+        if (++named > 1)
+            return api::MacroStart::Ambiguous;
+        for (std::size_t i = 0; i < script.info.macros.size(); ++i)
+            if (script.info.macros[i].name == request.macro) {
+                path = script.path;
+                ordinal = int(i);
+                shown = script.state != application::ScriptStatus::State::LoadFailed &&
+                        shownIn(QString::fromStdString(script.path), m_workspace.activeWindow());
+                break;
+            }
+    }
+    if (!path)
+        return api::MacroStart::NotFound;
+    if (!shown)
+        return api::MacroStart::Disabled;
+    if (busy())
+        return api::MacroStart::Busy;
+    if (!m_workspace.editingTarget())
+        return api::MacroStart::NoDocument;
+    if (!runAnswered(*path, ordinal, Answers{request.answers, request.showAnswered}, std::move(done)))
+        return api::MacroStart::Disabled;
+    return api::MacroStart::Started;
+}
+
+bool AutomationShell::runAnswered(const std::string &path, int ordinal, Answers answers, std::function<void(api::LuaRun)> done)
+{
+    if (!run(path, ordinal, RunOrigin::Menu))
+        return false;
+    if (!answers.dialogs.empty())
+        m_run->answers = std::move(answers);
+    m_run->done = std::move(done);
+    return true;
 }
 
 bool AutomationShell::run(const std::string &path, int ordinal, RunOrigin origin)
@@ -1490,6 +1603,10 @@ void AutomationShell::finished(const QString &, backends::LuaScriptHost::RunOutc
     }
     Run run = std::move(*m_run);
     m_run.reset();
+    std::vector<api::DialogAnswer> answers;
+    for (const AnsweredDialog &d : run.dialogs)
+        answers.push_back(api::DialogAnswer{d.key, application::namedDialogValues(d.request, d.answer),
+                                            buttonLabel(d.request, d.answer.pressed)});
     if (!run.cancelledAtDialog && (outcome == Outcome::Ok || outcome == Outcome::Failed))
         m_repeat = RepeatRecord{run.path, run.macro, run.ordinal, std::move(run.dialogs)};
     auto *s = session(run.target);
@@ -1578,6 +1695,11 @@ void AutomationShell::finished(const QString &, backends::LuaScriptHost::RunOutc
                      .left(ui::AutomationRuns::kMaxChars - m_log.size());
     m_lastMessage = text;
     m_lastOutcome = ended;
+    const std::string reported = ended == QLatin1String("invalid") ? "declined" : ended.toStdString();
+    if (m_macroRan)
+        m_macroRan(Ran{run.target, run.path, run.macro, reported, std::move(answers)});
+    if (run.done)
+        run.done(api::LuaRun{reported, text.toStdString(), m_log.toStdString(), application::scriptFileName(run.path)});
     finishCard(ended, text, outcome == Outcome::NotValid ? message : QString());
     m_editor().reloadFromSession();
     if (m_documentChanged)

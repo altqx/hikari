@@ -104,6 +104,18 @@
         <translation>Wczoraj</translation>
     </message>
     <message>
+        <source>This agent can’t start here</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not offered: its command is inside an open project, which it could read.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not offered: this system can’t keep it to its own folders.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>This project</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2296,6 +2308,10 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Powtórz ostatnie uruchomienie: %1, przyciskiem %2 z tymi samymi odpowiedziami</translation>
     </message>
     <message>
+        <source>This dialog has changed since the plugin recorded it, so it is shown with its answers filled in.</source>
+        <translation>To okno dialogowe zmieniło się od czasu, gdy wtyczka je zapisała, więc jest wyświetlane z wypełnionymi odpowiedziami.</translation>
+    </message>
+    <message>
         <source>Repeat last run asks questions again rather than answering them for you.</source>
         <translation>Polecenie Powtórz ostatnie uruchomienie ponownie zadaje pytania, zamiast odpowiadać na nie za Ciebie.</translation>
     </message>
@@ -2310,6 +2326,10 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>The last run did not show this dialog, so it is shown with your last answers filled in.</source>
         <translation>Ostatnie uruchomienie nie pokazało tego okna dialogowego, więc jest ono pokazane z wypełnionymi ostatnimi odpowiedziami.</translation>
+    </message>
+    <message>
+        <source>This window’s project doesn’t show the script.</source>
+        <translation>Projekt tego okna nie pokazuje tego skryptu.</translation>
     </message>
     <message>
         <source>Open a document to run a macro on.</source>
@@ -2628,7 +2648,7 @@ Urządzenie wyjściowe: %2</translation>
     </message>
     <message>
         <source>Moved</source>
-        <translation type="unfinished">Przeniesiona</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Backup</source>
@@ -4141,6 +4161,137 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>A tag starts with a backslash, for example \blur2</source>
         <translation>Tag zaczyna się od ukośnika odwrotnego, na przykład \blur2</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Explorer</name>
+    <message>
+        <source>Files in the project folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Explorer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>untitled</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to the trash</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move the folder “%1” and everything in it to the trash?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move “%1” to the trash?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">Anuluj</translation>
+    </message>
+    <message>
+        <source>New subtitle file name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>expanded</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>collapsed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New name for %1</source>
+        <translation type="unfinished">Nowa nazwa dla: %1</translation>
+    </message>
+    <message>
+        <source>No files to show here.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open a folder as a project to see its files here.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open folder…</source>
+        <translation type="unfinished">Otwórz folder…</translation>
+    </message>
+    <message>
+        <source>Show all files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New subtitle file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Group by name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Refresh</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open in a new tab</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open in this tab</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New subtitle file here</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rename</source>
+        <translation type="unfinished">Zmień nazwę</translation>
+    </message>
+    <message>
+        <source>Show in folder</source>
+        <translation type="unfinished">Pokaż w folderze</translation>
+    </message>
+    <message>
+        <source>Copy path</source>
+        <translation type="unfinished">Kopiuj ścieżkę</translation>
+    </message>
+    <message>
+        <source>Type a name.</source>
+        <translation type="unfinished">Wpisz nazwę.</translation>
+    </message>
+    <message>
+        <source>“%1” can’t be a name.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A name can’t contain %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>“%1” is already in this folder.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Couldn’t rename “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Couldn’t move “%1” to the trash.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Couldn’t create “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Project settings</source>
+        <translation type="unfinished">Ustawienia projektu</translation>
     </message>
 </context>
 <context>
@@ -6352,6 +6503,11 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Linijka %1</translation>
     </message>
     <message>
+        <source>%1: %2</source>
+        <comment>A plugin&apos;s mark on a Grid row: the plugin&apos;s name, then what the mark means</comment>
+        <translation>%1: %2</translation>
+    </message>
+    <message>
         <source>Layer</source>
         <translation>Warstwa</translation>
     </message>
@@ -6434,6 +6590,10 @@ Nie udało się skopiować czcionek: %2.</translation>
             <numerusform>%n notatki QC</numerusform>
             <numerusform>%n notatek QC</numerusform>
         </translation>
+    </message>
+    <message>
+        <source>marked by %1</source>
+        <translation>oznaczone przez %1</translation>
     </message>
     <message>
         <source>uncommitted</source>
@@ -8439,6 +8599,10 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Accept the timing assistant’s suggestion</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Explorer panel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -14997,6 +15161,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Nie znaleziono w PATH.</translation>
     </message>
     <message>
+        <source>Not offered: this system can’t keep it to its own folders.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not offered: its command is inside an open project, which it could read.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Found on PATH.</source>
         <translation>Znaleziono w PATH.</translation>
     </message>
@@ -15876,6 +16048,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Łączyć się z %1: %2</translation>
     </message>
     <message>
+        <source>Read the branches, tags and history of the git repository holding your subtitle files: %1</source>
+        <translation>Odczytywać gałęzie, tagi i historię repozytorium git z Twoimi plikami napisów: %1</translation>
+    </message>
+    <message>
         <source>Ask you for a folder to read and write, %1: %2</source>
         <translation>Prosić Cię o folder do odczytu i zapisu, %1: %2</translation>
     </message>
@@ -16060,6 +16236,22 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Zainstaluj z pełnym dostępem</translation>
     </message>
     <message>
+        <source>Cancelling…</source>
+        <translation>Anulowanie…</translation>
+    </message>
+    <message>
+        <source>Progress</source>
+        <translation>Postęp</translation>
+    </message>
+    <message>
+        <source>The plugin hasn’t stopped. Stop ends it now; work it hasn’t applied is lost.</source>
+        <translation>Wtyczka się nie zatrzymała. Zatrzymaj kończy ją od razu; praca, której nie zastosowała, przepadnie.</translation>
+    </message>
+    <message>
+        <source>Stop</source>
+        <translation>Zatrzymaj</translation>
+    </message>
+    <message>
         <source>Cancel</source>
         <translation>Anuluj</translation>
     </message>
@@ -16158,6 +16350,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>%1 waits for you</source>
         <translation>%1 czeka na Ciebie</translation>
+    </message>
+    <message>
+        <source>By HikariSub</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>New</source>
@@ -16353,6 +16549,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>%1: %2</source>
+        <extracomment>A plugin&apos;s background job: the plugin&apos;s name, then what the job does</extracomment>
         <translation>%1: %2</translation>
     </message>
     <message>
@@ -16362,6 +16559,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>%1 asks again the next time it needs this folder</source>
         <translation>%1 zapyta ponownie, gdy następnym razem będzie potrzebować tego folderu</translation>
+    </message>
+    <message>
+        <source>Marks</source>
+        <translation>Oznaczenia</translation>
+    </message>
+    <message>
+        <source>Clear marks</source>
+        <translation>Wyczyść oznaczenia</translation>
+    </message>
+    <message>
+        <source>Removes %1’s marks from the Grid of %2</source>
+        <translation>Usuwa oznaczenia %1 z listy napisów pliku %2</translation>
     </message>
     <message>
         <source>What it adds</source>
@@ -16390,6 +16599,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Install from file…</source>
         <translation>Zainstaluj z pliku…</translation>
+    </message>
+    <message numerus="yes">
+        <source>Marks %n line(s) in %1</source>
+        <translation>
+            <numerusform>Oznacza %n linijkę w %1</numerusform>
+            <numerusform>Oznacza %n linijki w %1</numerusform>
+            <numerusform>Oznacza %n linijek w %1</numerusform>
+        </translation>
     </message>
     <message>
         <source>Check for plugin updates</source>
@@ -16834,8 +17051,32 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Ustawione w project.local.toml</translation>
     </message>
     <message>
+        <source>Not set</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Use yours</source>
         <translation>Użyj Twoich</translation>
+    </message>
+    <message>
+        <source>Source language</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Detect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Target language</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Export format</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Used for files that haven’t been exported yet.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Overridden in this project</source>
@@ -17756,6 +17997,26 @@ Linijki [Sekcja] je grupują.</translation>
         </translation>
     </message>
     <message>
+        <source>Changed, %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New file, %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>New file, %n line(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Changed, +%1 −%2 lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Re&amp;view</source>
         <translation type="unfinished"></translation>
     </message>
@@ -17814,6 +18075,62 @@ Linijki [Sekcja] je grupują.</translation>
     <message>
         <source>Cancel</source>
         <translation type="unfinished">Anuluj</translation>
+    </message>
+    <message>
+        <source>Quit</source>
+        <translation type="unfinished">Zakończ</translation>
+    </message>
+    <message>
+        <source>Keep the AI’s file changes?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>and %n more</source>
+        <translation type="unfinished">
+            <numerusform>i %n inny</numerusform>
+            <numerusform>i %n inne</numerusform>
+            <numerusform>i %n innych</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Discard all</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Some files weren’t kept.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>They changed on disk after the AI wrote them, or couldn’t be written. They stay in the Review panel.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The file couldn’t be written.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>It stays in the review. Check that its folder exists and that you can write there, then keep it again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Project files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n file(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Also put back %n file(s) changed on disk after they were kept</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <source>Keep AI change</source>
@@ -17921,6 +18238,22 @@ Linijki [Sekcja] je grupują.</translation>
     </message>
     <message>
         <source>You changed it after this change. Undo puts it back as it was before the AI, which drops your edit.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1, changed on disk since</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The file changed on disk after the AI wrote its version. Keep replaces it with the AI’s version.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep anyway</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not a text file, or too large to compare.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -19453,6 +19786,22 @@ ponieważ została zmieniona.</translation>
         <translation>Dodaj “%1” do słownika</translation>
     </message>
     <message>
+        <source>This project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add to project dictionary</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add to my dictionary</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Fix suggestions</source>
         <translation>Sugestie poprawy</translation>
     </message>
@@ -19607,6 +19956,10 @@ ponieważ została zmieniona.</translation>
     <message>
         <source>Ignore all</source>
         <translation>Ignoruj wszystko</translation>
+    </message>
+    <message>
+        <source>Where to add</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Add to dictionary</source>
@@ -24601,6 +24954,14 @@ Usunięte style:
         <source>Play video</source>
         <extracomment>Title of the notice shown when Play cannot play the video</extracomment>
         <translation>Odtwarzanie wideo</translation>
+    </message>
+    <message>
+        <source>No video is open.</source>
+        <translation>Nie otwarto wideo.</translation>
+    </message>
+    <message>
+        <source>The keyframes file could not be written.</source>
+        <translation>Nie udało się zapisać pliku klatek kluczowych.</translation>
     </message>
     <message>
         <source>Invalid FPS value.</source>

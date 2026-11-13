@@ -55,7 +55,7 @@ The sidecar reads the folder with `translation.project`. It is a read tool in th
 
 ## What is sent
 
-What the other inline actions send, for each Line, without the context Lines, plus the speaker (Actor). It also sends the project files' glossary terms and characters that the chunk mentions, the style notes and examples, the synopsis from `PROJECT.md`, and the translations of the 5 Lines before the run in Translation mode.
+What the other inline actions send, for each Line, without the context Lines, plus the speaker (Actor). It also sends the project files' glossary terms and characters that the chunk mentions, the style notes and examples, the synopsis from `PROJECT.md`, and the translations of the 5 Lines before the run in Translation mode. When Settings › Project › Translation names a source language, the run also sends it; otherwise the models detect the source language from the Lines.
 
 ## Cost
 
@@ -63,9 +63,9 @@ The estimate before a run counts three passes over the Lines: translator, review
 
 ## Tests
 
-- `bun test test/translate`: the fixture episode end to end against a mock provider, covering locked terms, markers, feedback retries, Lines that need review, discoveries, the pre-pass, coherence and progress.
+- `bun test test/translate`: the fixture episode end to end against a mock provider, covering locked terms, markers, feedback retries, Lines that need review, discoveries, the pre-pass, coherence, progress, and the prompts with and without a source language.
 - `hikari_api_tests` (`Translation.*`): the two operations.
 - `hikari_application_project_tests` (`HonyaFolder.*`): where the folder is.
 - `hikari_ui_project_file_tests`: the model keys are read, and key-like entries are ignored and never written.
-- `hikari_backends_ai_inline_run_tests`: `TranslationRun`'s request, results, Stop and no model.
-- `hikari_ui_inline_ai_tests`: Translation mode writes the Translated text, marks Unconfirmed, and writes the glossary.
+- `hikari_backends_ai_inline_run_tests`: `TranslationRun`'s request with and without a source language, results, Stop and no model.
+- `hikari_ui_inline_ai_tests`: Translation mode writes the Translated text, marks Unconfirmed, and writes the glossary; the source language is sent only when one is set.

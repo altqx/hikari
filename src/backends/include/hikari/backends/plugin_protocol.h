@@ -18,6 +18,7 @@
 //   Ui: str operation, str JSON params, for the plugin's panels and dialogs. Ok: the Call envelope.
 //   Files: as Ui, for pickers and the plugin's folders.
 //   Net: as Ui, for HTTPS requests HikariSub makes.
+//   Job: as Ui, for job.begin, job.progress and job.cancelled while a command runs.
 
 #include "hikari/backends/helper_protocol.h"
 
@@ -32,7 +33,7 @@ inline constexpr std::uint32_t kProtocolVersion = 1;
 inline constexpr char kHelperName[] = "hikari-plugin-helper";
 
 enum class Command : std::int32_t { Load = 1, Run = 2 };
-enum class Service : std::int32_t { Call = 1, Notify = 2, SetSetting = 3, Subscribe = 4, Lock = 5, Unlock = 6, Ui = 7, Files = 8, Net = 9 };
+enum class Service : std::int32_t { Call = 1, Notify = 2, SetSetting = 3, Subscribe = 4, Lock = 5, Unlock = 6, Ui = 7, Files = 8, Net = 9, Job = 10 };
 enum class Level : std::int32_t { Info = 0, Warning = 1, Error = 2 };
 enum class Tier : std::int32_t { Restricted = 0, Unrestricted = 1 };
 

@@ -104,6 +104,18 @@
         <translation>நேற்று</translation>
     </message>
     <message>
+        <source>This agent can’t start here</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not offered: its command is inside an open project, which it could read.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not offered: this system can’t keep it to its own folders.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>This project</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2279,6 +2291,10 @@ Output device: %2</source>
         <translation>கடைசி இயக்கத்தை மீண்டும் செய்: %1, அதே பதில்களுடன் %2 ஆக</translation>
     </message>
     <message>
+        <source>This dialog has changed since the plugin recorded it, so it is shown with its answers filled in.</source>
+        <translation>செருகுநிரல் இதைப் பதிவுசெய்த பிறகு இந்த உரையாடல் மாறியுள்ளது, எனவே அதன் பதில்கள் நிரப்பப்பட்டுக் காட்டப்படுகிறது.</translation>
+    </message>
+    <message>
         <source>Repeat last run asks questions again rather than answering them for you.</source>
         <translation>கடைசி இயக்கத்தை மீண்டும் செய் உங்களுக்காகப் பதிலளிப்பதற்குப் பதிலாகக் கேள்விகளை மீண்டும் கேட்கும்.</translation>
     </message>
@@ -2293,6 +2309,10 @@ Output device: %2</source>
     <message>
         <source>The last run did not show this dialog, so it is shown with your last answers filled in.</source>
         <translation>கடைசி இயக்கம் இந்த உரையாடலைக் காட்டவில்லை, எனவே இது உங்கள் கடைசிப் பதில்கள் நிரப்பப்பட்டுக் காட்டப்படுகிறது.</translation>
+    </message>
+    <message>
+        <source>This window’s project doesn’t show the script.</source>
+        <translation>இந்தச் சாளரத்தின் திட்டப்பணி இந்த ச்கிரிப்டைக் காட்டாது.</translation>
     </message>
     <message>
         <source>Open a document to run a macro on.</source>
@@ -2608,7 +2628,7 @@ Output device: %2</source>
     </message>
     <message>
         <source>Moved</source>
-        <translation type="unfinished">நகர்த்தப்பட்டது</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Backup</source>
@@ -4105,6 +4125,137 @@ Output device: %2</source>
     <message>
         <source>A tag starts with a backslash, for example \blur2</source>
         <translation>குறிச்சொல் பின்சாய்வுக்கோட்டுடன் தொடங்கும், எடுத்துக்காட்டாக \blur2</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Explorer</name>
+    <message>
+        <source>Files in the project folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Explorer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>untitled</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to the trash</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move the folder “%1” and everything in it to the trash?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move “%1” to the trash?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">ரத்துசெய்</translation>
+    </message>
+    <message>
+        <source>New subtitle file name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>expanded</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>collapsed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New name for %1</source>
+        <translation type="unfinished">%1 க்கான புதிய பெயர்</translation>
+    </message>
+    <message>
+        <source>No files to show here.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open a folder as a project to see its files here.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open folder…</source>
+        <translation type="unfinished">கோப்புறையைத் திற…</translation>
+    </message>
+    <message>
+        <source>Show all files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New subtitle file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Group by name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Refresh</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open in a new tab</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open in this tab</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New subtitle file here</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rename</source>
+        <translation type="unfinished">மறுபெயரிடு</translation>
+    </message>
+    <message>
+        <source>Show in folder</source>
+        <translation type="unfinished">கோப்புறையில் காட்டு</translation>
+    </message>
+    <message>
+        <source>Copy path</source>
+        <translation type="unfinished">பாதையை நகலெடு</translation>
+    </message>
+    <message>
+        <source>Type a name.</source>
+        <translation type="unfinished">ஒரு பெயரைத் தட்டச்சு செய்யவும்.</translation>
+    </message>
+    <message>
+        <source>“%1” can’t be a name.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A name can’t contain %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>“%1” is already in this folder.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Couldn’t rename “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Couldn’t move “%1” to the trash.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Couldn’t create “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Project settings</source>
+        <translation type="unfinished">திட்டப்பணி அமைப்புகள்</translation>
     </message>
 </context>
 <context>
@@ -6294,6 +6445,11 @@ Failed to copy %2 fonts.</source>
         <translation>வரி %1</translation>
     </message>
     <message>
+        <source>%1: %2</source>
+        <comment>A plugin&apos;s mark on a Grid row: the plugin&apos;s name, then what the mark means</comment>
+        <translation>%1: %2</translation>
+    </message>
+    <message>
         <source>Layer</source>
         <translation>அடுக்கு</translation>
     </message>
@@ -6375,6 +6531,10 @@ Failed to copy %2 fonts.</source>
             <numerusform>%n QC குறிப்பு</numerusform>
             <numerusform>%n QC குறிப்புகள்</numerusform>
         </translation>
+    </message>
+    <message>
+        <source>marked by %1</source>
+        <translation>%1 குறித்தது</translation>
     </message>
     <message>
         <source>uncommitted</source>
@@ -8376,6 +8536,10 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Accept the timing assistant’s suggestion</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Explorer panel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -14877,6 +15041,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>PATH-இல் கிடைக்கவில்லை.</translation>
     </message>
     <message>
+        <source>Not offered: this system can’t keep it to its own folders.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not offered: its command is inside an open project, which it could read.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Found on PATH.</source>
         <translation>PATH-இல் கிடைத்தது.</translation>
     </message>
@@ -15754,6 +15926,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>%1 உடன் இணைதல்: %2</translation>
     </message>
     <message>
+        <source>Read the branches, tags and history of the git repository holding your subtitle files: %1</source>
+        <translation>உங்கள் வசனக் கோப்புகள் உள்ள git களஞ்சியத்தின் கிளைகள், குறிச்சொற்கள், வரலாற்றைப் படித்தல்: %1</translation>
+    </message>
+    <message>
         <source>Ask you for a folder to read and write, %1: %2</source>
         <translation>படிக்கவும் எழுதவும் ஒரு கோப்புறையை உங்களிடம் கேட்டல், %1: %2</translation>
     </message>
@@ -15938,6 +16114,22 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>முழு அணுகலுடன் நிறுவு</translation>
     </message>
     <message>
+        <source>Cancelling…</source>
+        <translation>ரத்துசெய்கிறது…</translation>
+    </message>
+    <message>
+        <source>Progress</source>
+        <translation>முன்னேற்றம்</translation>
+    </message>
+    <message>
+        <source>The plugin hasn’t stopped. Stop ends it now; work it hasn’t applied is lost.</source>
+        <translation>செருகுநிரல் நிற்கவில்லை. நிறுத்து அதை இப்போதே முடிக்கும்; அது பயன்படுத்தாத வேலை இழக்கப்படும்.</translation>
+    </message>
+    <message>
+        <source>Stop</source>
+        <translation>நிறுத்து</translation>
+    </message>
+    <message>
         <source>Cancel</source>
         <translation>ரத்துசெய்</translation>
     </message>
@@ -16036,6 +16228,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>%1 waits for you</source>
         <translation>%1 உங்களுக்காகக் காத்திருக்கிறது</translation>
+    </message>
+    <message>
+        <source>By HikariSub</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>New</source>
@@ -16231,6 +16427,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>%1: %2</source>
+        <extracomment>A plugin&apos;s background job: the plugin&apos;s name, then what the job does</extracomment>
         <translation>%1: %2</translation>
     </message>
     <message>
@@ -16240,6 +16437,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>%1 asks again the next time it needs this folder</source>
         <translation>அடுத்த முறை இந்தக் கோப்புறை தேவைப்படும்போது %1 மீண்டும் கேட்கும்</translation>
+    </message>
+    <message>
+        <source>Marks</source>
+        <translation>குறிகள்</translation>
+    </message>
+    <message>
+        <source>Clear marks</source>
+        <translation>குறிகளை அழி</translation>
+    </message>
+    <message>
+        <source>Removes %1’s marks from the Grid of %2</source>
+        <translation>%2 இன் கட்டத்திலிருந்து %1 இன் குறிகளை நீக்குகிறது</translation>
     </message>
     <message>
         <source>What it adds</source>
@@ -16268,6 +16477,13 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Install from file…</source>
         <translation>கோப்பிலிருந்து நிறுவு…</translation>
+    </message>
+    <message numerus="yes">
+        <source>Marks %n line(s) in %1</source>
+        <translation>
+            <numerusform>%1 இல் %n வரியைக் குறிக்கிறது</numerusform>
+            <numerusform>%1 இல் %n வரிகளைக் குறிக்கிறது</numerusform>
+        </translation>
     </message>
     <message>
         <source>Check for plugin updates</source>
@@ -16710,8 +16926,32 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>project.local.toml இல் அமைக்கப்பட்டது</translation>
     </message>
     <message>
+        <source>Not set</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Use yours</source>
         <translation>உங்களுடையதைப் பயன்படுத்து</translation>
+    </message>
+    <message>
+        <source>Source language</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Detect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Target language</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Export format</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Used for files that haven’t been exported yet.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Overridden in this project</source>
@@ -17617,6 +17857,25 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         </translation>
     </message>
     <message>
+        <source>Changed, %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New file, %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>New file, %n line(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Changed, +%1 −%2 lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Re&amp;view</source>
         <translation type="unfinished"></translation>
     </message>
@@ -17671,6 +17930,59 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Cancel</source>
         <translation type="unfinished">ரத்துசெய்</translation>
+    </message>
+    <message>
+        <source>Quit</source>
+        <translation type="unfinished">வெளியேறு</translation>
+    </message>
+    <message>
+        <source>Keep the AI’s file changes?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>and %n more</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Discard all</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Some files weren’t kept.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>They changed on disk after the AI wrote them, or couldn’t be written. They stay in the Review panel.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The file couldn’t be written.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>It stays in the review. Check that its folder exists and that you can write there, then keep it again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Project files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n file(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Also put back %n file(s) changed on disk after they were kept</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <source>Keep AI change</source>
@@ -17776,6 +18088,22 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>You changed it after this change. Undo puts it back as it was before the AI, which drops your edit.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1, changed on disk since</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The file changed on disk after the AI wrote its version. Keep replaces it with the AI’s version.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep anyway</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not a text file, or too large to compare.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -19293,6 +19621,22 @@ because it was edited.</source>
         <translation>“%1” ஐ அகராதியில் சேர்</translation>
     </message>
     <message>
+        <source>This project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add to project dictionary</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add to my dictionary</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Fix suggestions</source>
         <translation>திருத்தப் பரிந்துரைகள்</translation>
     </message>
@@ -19445,6 +19789,10 @@ because it was edited.</source>
     <message>
         <source>Ignore all</source>
         <translation>அனைத்தையும் புறக்கணிக்கவும்</translation>
+    </message>
+    <message>
+        <source>Where to add</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Add to dictionary</source>
@@ -24394,6 +24742,14 @@ Styles deleted:
         <source>Play video</source>
         <extracomment>Title of the notice shown when Play cannot play the video</extracomment>
         <translation>வீடியோவை இயக்கு</translation>
+    </message>
+    <message>
+        <source>No video is open.</source>
+        <translation>எந்த வீடியோவும் திறக்கப்படவில்லை.</translation>
+    </message>
+    <message>
+        <source>The keyframes file could not be written.</source>
+        <translation>கீஃப்ரேம் கோப்பை எழுத முடியவில்லை.</translation>
     </message>
     <message>
         <source>Invalid FPS value.</source>

@@ -48,7 +48,7 @@ const char *const kPanels[] = {"videoDock",     "audioDock",      "originalDock"
                                "referenceDock", "timingDock",     "searchDock",    "automationDock",
                                "spellDock",     "stylesDock",     "templateDock",  "logDock",
                                "postprocessorDock", "qcNotesDock", "reviewDock", "agentDock", "nodeGraphDock",
-                               "nodeInspectorDock", "nodeSourcesDock"};
+                               "nodeInspectorDock", "nodeSourcesDock", "explorerDock"};
 
 QString writeSubtitles(const QString &path, const char *text, int width, const char *more = "")
 {
@@ -270,6 +270,7 @@ class ShellWindowsTest : public QObject {
         engine->setInitialProperties(application->qmlProperties());
         engine->loadFromModule("Hikari.Ui", "Main");
         QVERIFY(!engine->rootObjects().isEmpty());
+        QVERIFY(QMetaObject::invokeMethod(engine->rootObjects().first(), "buildMenus"));
         QVERIFY(QTest::qWaitForWindowExposed(first()));
         QTRY_VERIFY(first()->property("arrangementSettled").toBool());
     }
@@ -777,6 +778,7 @@ private slots:
 
     void aHotkeyChangeAppliesToBothWindows()
     {
+        QVERIFY(QMetaObject::invokeMethod(second.get(), "buildMenus"));
         QObject *firstClose = first()->findChild<QObject *>(QStringLiteral("closeMenuItem"));
         QObject *secondClose = second->findChild<QObject *>(QStringLiteral("closeMenuItem"));
         QVERIFY(firstClose && secondClose);
@@ -1007,6 +1009,30 @@ private slots:
         QCOMPARE(titles(0), (QStringList{"first.ass*"}));
     }
 
+    void quittingFromTheSecondWindowBringsEachWindowBackToItsOwnPlace()
+    {
+        const QRect firstPlace(40, 60, 900, 600);
+        const QRect secondPlace(300, 200, 900, 650);
+        first()->setGeometry(firstPlace);
+        second->setGeometry(secondPlace);
+        QTRY_COMPARE(first()->geometry(), firstPlace);
+        QTRY_COMPARE(second->geometry(), secondPlace);
+        QCOMPARE(application->workspace().activeWindow(), 1);
+        application->setSessionRestore(2);
+        QVERIFY(application->reviewClose(QStringLiteral("quit")).isEmpty());
+        application->finishClose();
+        QVERIFY(application->quitApproved());
+        QTRY_VERIFY(!first()->isVisible());
+        QTRY_VERIFY(!second || !second->isVisible());
+        tearDownAfterQuit();
+
+        relaunch();
+        QTRY_VERIFY((second = otherShellWindow(first())));
+        QTRY_VERIFY(second->property("arrangementSettled").toBool());
+        QTRY_COMPARE(second->geometry(), secondPlace);
+        QTRY_COMPARE(first()->geometry(), firstPlace);
+    }
+
     void aCrashRestoreReopensEveryWindow()
     {
         const QRect secondPlace(100, 120, 900, 650);
@@ -1215,6 +1241,7 @@ private slots:
         hotkeys.optionsMap(QStringLiteral("Ctrl-Alt-Q"), 0, QStringLiteral("cancel"));
         hotkeys.commitOptions();
         QCOMPARE(hotkeys.accelOf(QStringLiteral("GLOBAL_QUIT"), 0), QStringLiteral("Ctrl-Alt-Q"));
+        QVERIFY(QMetaObject::invokeMethod(second, "buildMenus"));
         QObject *exitItem = second->findChild<QObject *>(QStringLiteral("exitMenuItem"));
         QVERIFY(exitItem);
         QTRY_COMPARE(exitItem->property("keysText").toString(), QStringLiteral("Ctrl+Alt+Q"));

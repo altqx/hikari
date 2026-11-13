@@ -1,6 +1,6 @@
 hikari_add_gtest(hikari_api_tests SOURCES json_tests.cpp schema_tests.cpp api_tests.cpp media_file_tests.cpp folder_tests.cpp
     reference_tests.cpp reference_markdown_tests.cpp skill_tests.cpp automation_tests.cpp effects_tests.cpp typeset_tests.cpp
-    translation_tests.cpp karaoke_tests.cpp plugin_tests.cpp script_client.cpp
+    translation_tests.cpp karaoke_tests.cpp plugin_tests.cpp plugin_feature_tests.cpp vcs_tests.cpp script_client.cpp
     LIBRARIES hikari_api hikari_regex LABELS api)
 target_compile_definitions(hikari_api_tests PRIVATE HIKARI_API_SCRIPTS_DIR="${CMAKE_CURRENT_SOURCE_DIR}/scripts"
     HIKARI_API_SKILLS_DIR="${CMAKE_CURRENT_SOURCE_DIR}/skills"

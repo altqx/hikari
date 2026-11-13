@@ -16,11 +16,13 @@ ShellMenu {
     iconRole: "change-alignment"
     title: qsTr("Change alignment, keep position")
     Instantiator {
+        id: rows
+        readonly property string prefix: menu.prefix
         model: menu.places
         delegate: ShellMenuItem {
             required property var modelData
             command: "GLOBAL_ALIGNMENT_KEEP_POSITION_AN" + modelData.an
-            objectName: menu.prefix + "ChangeAlignment" + modelData.an
+            objectName: rows.prefix + "ChangeAlignment" + modelData.an
             iconRole: modelData.icon
             text: modelData.text.arg("\\an" + modelData.an)
             onTriggered: if (!menu.shellRoot.hotkeyGesture(command)) menu.shellRoot.app.changeAlignment(modelData.an)

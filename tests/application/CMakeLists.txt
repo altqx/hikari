@@ -4,6 +4,8 @@ hikari_add_gtest(hikari_application_edit_tests SOURCES edit_session_tests.cpp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_ai_review_tests SOURCES ai_review_tests.cpp
     LIBRARIES hikari_application LABELS application)
+hikari_add_gtest(hikari_application_ai_review_files_tests SOURCES ai_review_files_tests.cpp
+    LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_ai_inline_tests SOURCES ai_inline_tests.cpp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_word_diff_tests SOURCES word_diff_tests.cpp
@@ -243,6 +245,8 @@ hikari_add_gtest(hikari_application_associated_files_tests SOURCES associated_fi
     LIBRARIES hikari_application LABELS application)
 target_compile_definitions(hikari_application_associated_files_tests PRIVATE
     HIKARI_ASSOCIATION_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/associations")
+hikari_add_gtest(hikari_application_explorer_tests SOURCES explorer_tests.cpp
+    LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_ai_providers_tests SOURCES ai_providers_tests.cpp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_ai_project_keys_tests SOURCES ai_project_keys_tests.cpp

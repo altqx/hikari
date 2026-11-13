@@ -1,5 +1,7 @@
 #pragma once
 
+#include "hikari/application/row_marks.h"
+
 #include "hikari/api/api.h"
 #include "hikari/app/plugin_files.h"
 #include "hikari/app/plugin_manager.h"
@@ -33,6 +35,9 @@ class PluginRuntime : public QObject {
     // [{id: "plugin.<plugin id>.<command>", plugin, pluginName, title, titles: [pluginName, title]}],
     // by plugin name, then in manifest order.
     Q_PROPERTY(QVariantList commands READ commands NOTIFY commandsChanged)
+    // Commands running as jobs, newest first: {plugin, name, title, fraction (< 0: unknown), text, cancelling, stuck}.
+    Q_PROPERTY(QVariantList jobs READ jobs NOTIFY jobsChanged)
+    Q_PROPERTY(int marksRevision READ marksRevision NOTIFY marksChanged)
     Q_PROPERTY(hikari::app::PluginUi *ui READ ui CONSTANT)
     // Restricted plugins run in an operating-system sandbox here.
     Q_PROPERTY(bool sandboxed READ sandboxed CONSTANT)
@@ -50,6 +55,8 @@ public:
         std::size_t memoryLimit = 256u << 20;
         // How long a plugin waits for another plugin's edit before it is told HikariSub is busy.
         int transactionWaitMs = 5000;
+        // How long a cancelled job may run on before Stop is offered.
+        int jobGraceMs = 5000;
         // The global plugin network switch; unset: off.
         std::function<bool()> networkAllowed;
         // Null: the runtime makes its own.
@@ -64,6 +71,12 @@ public:
         std::function<std::map<int, std::optional<plugins::ProjectPlugins>>()> windowPlugins;
         // The window the user works in.
         std::function<int()> activeWindow;
+        // Analytics: a plugin used one of the features plugin_feature_used counts.
+        std::function<void(const QString &feature)> featureUsed;
+        // Grid row marks; a plugin's go when it stops.
+        application::RowMarks *marks = nullptr;
+        // A Document's tab title, for the plugin manager's Marks row.
+        std::function<QString(application::DocumentId)> documentTitle;
     };
 
     explicit PluginRuntime(Wiring wiring, QObject *parent = nullptr);
@@ -81,6 +94,18 @@ public:
     // False when no running plugin has the command.
     Q_INVOKABLE bool run(const QString &commandId);
     Q_INVOKABLE void forceStop(const QString &pluginId);
+    QVariantList jobs() const;
+    // Asks the plugin's job to stop; when it hasn't 5 seconds later, the job is stuck and Stop is offered.
+    Q_INVOKABLE void cancelJob(const QString &pluginId);
+    // Per Document the plugin marks Lines in: {document, file, count}.
+    Q_INVOKABLE QVariantList marks(const QString &pluginId) const;
+    Q_INVOKABLE void clearMarks(const QString &pluginId, double document);
+    int marksRevision() const { return m_marksRevision; }
+    void rowMarksChanged()
+    {
+        ++m_marksRevision;
+        emit marksChanged();
+    }
     // Starts a stopped plugin, or one that didn't start, again.
     Q_INVOKABLE void restart(const QString &pluginId);
     // A setting the plugin manager changed, so that hikari.settings.get sees it at once.
@@ -96,6 +121,8 @@ public:
 signals:
     void commandsChanged();
     void windowsChanged();
+    void jobsChanged();
+    void marksChanged();
     // The plugin finished a command or an event, or stopped.
     void idle(const QString &pluginId);
 
@@ -134,6 +161,16 @@ private:
     std::map<int, std::optional<plugins::ProjectPlugins>> m_windows;
     std::set<std::string> m_userOn;
     std::map<int, std::set<std::string>> m_onIn; // by window, as of the last sync
+    struct Job {
+        std::string plugin;
+        QString name, title, text;
+        double fraction = -1;
+        bool cancelling = false, stuck = false;
+        std::unique_ptr<QTimer> grace;
+    };
+    std::vector<Job> m_jobs;
+    int m_marksRevision = 0;
+    void endJob(const std::string &plugin);
     int m_windowsRevision = 0;
 };
 

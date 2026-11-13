@@ -11,7 +11,7 @@ add_library(hikari_plugin_protocol STATIC plugin_protocol.cpp include/hikari/bac
 target_link_libraries(hikari_plugin_protocol PUBLIC hikari_helper_endpoint)
 hikari_module(hikari_plugin_protocol ALLOW hikari_helper_endpoint)
 
-add_library(hikari_backends STATIC module.cpp libass_renderer.cpp overlay_blend.cpp
+add_library(hikari_backends STATIC module.cpp libass_renderer.cpp libass_log.h overlay_blend.cpp
     include/hikari/backends/overlay_blend.h helper_host.cpp ffms_indexed_source.cpp
     audio_ring.cpp audio_output_engine.cpp portaudio_output.cpp lua_script_host.cpp qt_general_player.cpp
     video_frame_bgra.cpp include/hikari/backends/video_frame_bgra.h
@@ -91,6 +91,7 @@ add_library(hikari_ai STATIC ai_config_store.cpp include/hikari/backends/ai_conf
     ai_mcp_server.cpp include/hikari/backends/ai_mcp_server.h ai_mcp_clients.cpp include/hikari/backends/ai_mcp_clients.h ai_mcp_bridge.cpp include/hikari/backends/ai_mcp_bridge.h
     ai_inline_run.cpp ai_translation_run.cpp include/hikari/backends/ai_inline_run.h)
 target_sources(hikari_backends PRIVATE external_aligner.cpp include/hikari/backends/external_aligner.h)
+target_sources(hikari_backends PRIVATE git_reader.cpp include/hikari/backends/git_reader.h)
 find_package(ZLIB REQUIRED)
 target_include_directories(hikari_ai PUBLIC include)
 target_link_libraries(hikari_ai PUBLIC hikari_application hikari_api hikari_sandbox Qt6::Core Qt6::Network

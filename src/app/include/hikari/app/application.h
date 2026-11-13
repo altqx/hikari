@@ -1,5 +1,7 @@
 #pragma once
 
+#include "hikari/application/row_marks.h"
+
 #include "hikari/app/ai_karaoke.h"
 #include "hikari/app/ai_plugins.h"
 #include "hikari/app/ai_scripts.h"
@@ -34,6 +36,7 @@
 #include "hikari/core/ass_attachments.h"
 #include "hikari/core/conversion.h"
 #include "hikari/core/grammar.h"
+#include "hikari/application/ai_review.h"
 #include "hikari/application/aegisub_frame_times.h"
 #include "hikari/application/timecodes_file.h"
 #include "hikari/application/associated_files.h"
@@ -54,6 +57,7 @@
 #include "hikari/application/translation_mode.h"
 #include "hikari/application/workspace.h"
 #include "hikari/backends/audio_box_player.h"
+#include "hikari/backends/git_reader.h"
 #include "hikari/backends/portaudio_output.h"
 #include "hikari/backends/ffms_indexed_source.h"
 #include "hikari/backends/harper_client.h"
@@ -290,7 +294,8 @@ public:
     Q_INVOKABLE void cancelClose();
     // A failed open changes nothing. Returns {ok, problem, rows}: rows as reviewClose's;
     // ok without rows: call finishClose().
-    Q_INVOKABLE QVariantMap reviewOpen(const QString &path);
+    // here: open in the current tab even when subtitles.openInNewTab is on.
+    Q_INVOKABLE QVariantMap reviewOpen(const QString &path, bool here = false);
     Q_INVOKABLE QVariantMap reviewOpenUrl(const QUrl &url) { return reviewOpen(url.toLocalFile()); }
     // One file: {kind: "subtitles" (reviewOpen it), "video" (openVideoFile it),
     // "session", or "" when handled}. Several: {kind: "files", rows}, rows as
@@ -371,9 +376,16 @@ public:
     Q_INVOKABLE bool reopenProjectTabs(int shellWindow);
     // The toast for a tab moved into `shellWindow`; "" when that window has no Project.
     Q_INVOKABLE QString projectMoveText(int shellWindow) const;
+    // [explorer] exclude as the window's Project and the user set it.
+    Q_INVOKABLE QStringList explorerExcludes(int shellWindow) const;
+    // The index in windowTabs(shellWindow) of the tab saved at `path`; -1 when none is.
+    Q_INVOKABLE int tabOfFile(int shellWindow, const QString &path) const;
+    // Opens `path` in a new current tab, or in the current tab while it is an untouched Untitled one.
+    Q_INVOKABLE bool openInTab(const QString &path);
     QString projectOf(int shellWindow) const { return m_projects->root(shellWindow); }
     std::optional<api::ProjectState> activeProject() const;
     static std::vector<std::string> projectAiExclude(const std::string &root);
+    static application::AiReview::Disk reviewDisk();
     ProjectWindows &projects() { return *m_projects; }
     // "modified" when the target's file is newer than when last read or written;
     // "removed" once when it is gone (the Document becomes unsaved).
@@ -621,8 +633,9 @@ public:
     // {word, start, end, suggestions}; empty when none.
     Q_INVOKABLE QVariantMap editorMisspellAt(int role, int position);
     Q_INVOKABLE bool replaceEditorMisspell(int role, int position, const QString &replacement);
-    Q_INVOKABLE bool addEditorWord(const QString &word);
-    // options: {ignoreComments, ignoreUpperCase}. Each returns {found, available, line,
+    // `project`: into the window's Project dictionary.txt instead of the user's.
+    Q_INVOKABLE bool addEditorWord(const QString &word, bool project = false);
+    // options: {ignoreComments, ignoreUpperCase, project (Add to dictionary's tier)}. Each returns {found, available, line,
     // before, after, word, suggestions, replacement, changed, problem, unchanged,
     // restarted}: found false: no errors; available false: no dictionary; line: the
     // Grid's number; unchanged: the action did nothing; restarted: the Line changed since
@@ -657,7 +670,7 @@ public:
     Q_INVOKABLE void setGrammarGroup(int group, bool on);
     // {id, name, description, rules}.
     Q_INVOKABLE QVariantList grammarGroups() const;
-    Q_INVOKABLE bool addGrammarWord(const QString &word);
+    Q_INVOKABLE bool addGrammarWord(const QString &word, bool project = false);
     // Each returns {on, walking, done, checked, total, count, index (1-based among
     // count), found, line, groupName, message, before, text, after, suggestions,
     // replacement, word, problem}; found false with done: no findings.
@@ -668,7 +681,7 @@ public:
     Q_INVOKABLE QVariantMap grammarWalkReplace(const QString &replacement);
     Q_INVOKABLE QVariantMap grammarWalkIgnore();
     Q_INVOKABLE QVariantMap grammarWalkIgnoreRule();
-    Q_INVOKABLE QVariantMap grammarWalkAddWord();
+    Q_INVOKABLE QVariantMap grammarWalkAddWord(bool project = false);
     Q_INVOKABLE void closeGrammarWalk(int shellWindow);
     // {rows, unlisted}: a row for each of the first core::kListedProblems ({document,
     // line (ids), number (the Grid's 1-based row), check, detail}), unlisted the rest.
@@ -1159,6 +1172,10 @@ private:
     void rememberColumns(bool paste, int columns, const QString &tagNames);
     void protectReference();
     void refreshViews();
+    std::optional<std::string> setKeyframesFromApi(const std::vector<std::int64_t> &frames,
+                                                   const std::optional<std::string> &file);
+    void showRowMarks(application::DocumentId document);
+    ui::LineTableModel::RowMarks rowMarksOf(std::optional<application::DocumentId> document) const;
     void refreshVideo();
     void switchTabMedia(WindowMedia &media, std::optional<application::DocumentId> tab);
     bool changeResolution(int fromWidth, int fromHeight, int width, int height, bool resample, bool stretch,
@@ -1197,6 +1214,7 @@ private:
     std::optional<PendingFiles> m_pendingFiles;
     void applyFiles(PendingFiles files, bool skipFirst);
     bool openInNewTab(application::StagedOpen staged, const QString &path);
+    bool targetUntouchedUntitled() const;
     PendingFiles stageFiles(const QStringList &files);
     bool targetUntouched() const;
     application::GridSelection gridSelection() const;
@@ -1343,6 +1361,8 @@ private:
     std::unique_ptr<AiScripts> m_aiScripts;
     std::unique_ptr<AiKaraoke> m_aiKaraoke;
     std::unique_ptr<AiPlugins> m_aiPlugins;
+    application::RowMarks m_rowMarks;
+    std::unique_ptr<backends::GitReader> m_git;
     std::unique_ptr<ApiHost> m_apiHost;
     std::unique_ptr<AiFeatures> m_ai;
     std::unique_ptr<AiMcp> m_aiMcp;
@@ -1572,6 +1592,8 @@ private:
     application::SpellChecker *startedSpellChecker(int shellWindow);
     application::SpellChecker *anySpellChecker() const;
     void userWordsChanged(const application::SpellChecker *by);
+    void projectWordsChanged(const std::filesystem::path &file, const application::SpellChecker *by);
+    QString projectDictionary(int shellWindow) const;
     void restartSpellChecker();
     void spellingRefresh();
     std::optional<std::u16string> editorRaw(int role) const;
@@ -1584,10 +1606,10 @@ private:
         // MUST KILL: set on first use even with spelling off; turning spelling on doesn't reset it.
         bool started = false;
     };
-    // By dictionary language; windows on one language share a checker.
+    // By dictionary language and Project folder; windows on both the same share a checker.
     std::map<QString, SpellSlot> m_spellCheckers;
     std::vector<std::filesystem::path> m_spellingFolders;
-    SpellSlot *spellSlot(const QString &language);
+    SpellSlot *spellSlot(const QString &language, const QString &projectRoot = {});
     // MUST KILL: the editor keeps the toggle's value after a failed start unless the Project sets it
     bool editorSpellingOn() const;
     application::SpellingText m_spellingText;
@@ -1641,6 +1663,7 @@ private:
     void grammarChecked(quint64 ticket, const QList<backends::GrammarFinding> &findings);
     void grammarFailed(const QString &message);
     void syncGrammarWords();
+    void recheckGrammar();
     const GrammarCheck *editorGrammarCheck(int role) const;
     core::SubtitleFormat editorFormat() const;
     std::optional<std::pair<int, int>> fieldSpan(int role, const core::grammar::CheckedText &text, int start,
@@ -1758,6 +1781,7 @@ private:
     bool m_startedWithPaths = false;
     std::optional<application::Session> m_startSession;
     bool m_lastSessionWritable = true;
+    bool m_sessionHadTabs = false;
     void rememberStartSession();
     void convertLastSession();
     std::optional<application::Session> loadLastSession();

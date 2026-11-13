@@ -660,6 +660,19 @@ QVariant LineTableModel::data(const QModelIndex &index, int role) const
         return QStringList();
     case QcCurrentRole:
         return m_qcCurrent == line.id;
+    case RowMarkColoursRole:
+    case RowMarkNotesRole: {
+        const auto it = m_rowMarks.find(line.id.value);
+        if (it == m_rowMarks.end())
+            return role == RowMarkNotesRole ? QVariant(QStringList()) : QVariant(QVariantList());
+        QVariantList colours;
+        QStringList notes;
+        for (const RowMark &mark : it->second) {
+            colours.push_back(static_cast<int>(mark.colour));
+            notes.push_back(mark.note);
+        }
+        return role == RowMarkNotesRole ? QVariant(notes) : QVariant(colours);
+    }
     default:
         return {};
     }
@@ -676,6 +689,18 @@ void LineTableModel::setQcMarks(QcMarks marks, std::optional<core::LineId> curre
         emit headerDataChanged(Qt::Horizontal, NumberColumn, NumberColumn);
     if (!m_rows.empty())
         emit dataChanged(index(0, NumberColumn), index(rowCount() - 1, NumberColumn), {QcNotesRole, QcCurrentRole});
+}
+
+void LineTableModel::setRowMarks(RowMarks marks)
+{
+    if (marks == m_rowMarks)
+        return;
+    const bool marked = !m_rowMarks.empty();
+    m_rowMarks = std::move(marks);
+    if (marked != !m_rowMarks.empty())
+        emit headerDataChanged(Qt::Horizontal, NumberColumn, NumberColumn);
+    if (!m_rows.empty())
+        emit dataChanged(index(0, NumberColumn), index(rowCount() - 1, NumberColumn), {RowMarkColoursRole, RowMarkNotesRole});
 }
 
 QString LineTableModel::startText(const core::LineRecord &line) const
@@ -790,6 +815,8 @@ QVariant LineTableModel::headerData(int section, Qt::Orientation orientation, in
         return m_headerBlock;
     if (role == QcMarkedRole)
         return !m_qcMarks.empty();
+    if (role == RowMarkedRole)
+        return !m_rowMarks.empty();
     if (role == ComparisonColoursRole)
         return QVariantList(m_comparisonColours.begin(), m_comparisonColours.end());
     if (role == LabelColoursRole)
@@ -856,7 +883,9 @@ QHash<int, QByteArray> LineTableModel::roleNames() const
                   {FoldRole, "fold"},
                   {FoldCountRole, "foldCount"},
                   {QcNotesRole, "qcNotes"},
-                  {QcCurrentRole, "qcCurrent"}});
+                  {QcCurrentRole, "qcCurrent"},
+                  {RowMarkColoursRole, "rowMarkColours"},
+                  {RowMarkNotesRole, "rowMarkNotes"}});
     return roles;
 }
 

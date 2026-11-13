@@ -16,18 +16,23 @@ Json panelJson(const PanelState &panel)
                          {"focused", Json(panel.focused)}});
 }
 
-namespace {
-
-std::string lower(std::string_view s)
+std::string lowerAscii(std::string_view s)
 {
     std::string out(s);
     std::transform(out.begin(), out.end(), out.begin(), [](unsigned char c) { return char(std::tolower(c)); });
     return out;
 }
 
+namespace {
+
 Result apiVersion(const Context &, const Json &)
 {
     return Json::object({{"version", Json(kApiVersion)}});
+}
+
+std::string macroCommand(std::string_view file, int ordinal)
+{
+    return "macro:" + std::string(file) + ":" + std::to_string(ordinal);
 }
 
 Result commandsList(const Context &context, const Json &params)
@@ -35,17 +40,17 @@ Result commandsList(const Context &context, const Json &params)
     if (!context.host.commands)
         return fail(errors::kUnavailable, "No commands are available.");
     const Json *window = params.find("window");
-    const std::string query = params.find("query") ? lower(params.find("query")->asString()) : std::string();
+    const std::string query = params.find("query") ? lowerAscii(params.find("query")->asString()) : std::string();
     Json list = Json::array();
     for (const application::HotkeyAction &action : application::hotkeyActions()) {
         const std::string name = application::hotkeyName(action.id);
         if (name.empty() || application::isRetiredHotkey(action.id))
             continue;
-        const std::string windowName = lower(application::hotkeyWindowName(application::hotkeyType(action.id)));
+        const std::string windowName = lowerAscii(application::hotkeyWindowName(application::hotkeyType(action.id)));
         if (window && window->asString() != windowName)
             continue;
-        if (!query.empty() && lower(action.symbol).find(query) == std::string::npos &&
-            lower(name).find(query) == std::string::npos)
+        if (!query.empty() && lowerAscii(action.symbol).find(query) == std::string::npos &&
+            lowerAscii(name).find(query) == std::string::npos)
             continue;
         const auto state = context.host.commands->state(action.symbol);
         if (!state)
@@ -60,8 +65,41 @@ Result commandsList(const Context &context, const Json &params)
                                    {"keys", keys}});
         if (!state->enabled && !state->disabledReason.empty())
             entry["disabledReason"] = Json(state->disabledReason);
+        entry["kind"] = Json("hotkey");
         list.push(std::move(entry));
     }
+    const bool global = !window || window->asString() == "global";
+    const auto matches = [&](std::string_view command, std::string_view name) {
+        return query.empty() || lowerAscii(command).find(query) != std::string::npos ||
+               lowerAscii(name).find(query) != std::string::npos;
+    };
+    if (global && context.host.macros)
+        for (const MacroInfo &m : context.host.macros->macros()) {
+            const std::string command = macroCommand(m.file, m.ordinal);
+            if (!matches(command, m.macro))
+                continue;
+            Json entry = Json::object({{"command", Json(command)},
+                                       {"name", Json(m.macro)},
+                                       {"window", Json("global")},
+                                       {"enabled", Json(m.enabled)},
+                                       {"keys", Json::array()},
+                                       {"kind", Json("macro")},
+                                       {"file", Json(m.file)},
+                                       {"macro", Json(m.macro)}});
+            if (!m.enabled && !m.disabledReason.empty())
+                entry["disabledReason"] = Json(m.disabledReason);
+            list.push(std::move(entry));
+        }
+    if (global && context.host.plugins)
+        for (const PluginState &plugin : context.host.plugins->plugins())
+            for (const PluginCommand &c : plugin.commands)
+                if (matches(c.command, c.title))
+                    list.push(Json::object({{"command", Json(c.command)},
+                                            {"name", Json(c.title)},
+                                            {"window", Json("global")},
+                                            {"enabled", Json(true)},
+                                            {"keys", Json::array()},
+                                            {"kind", Json("plugin")}}));
     return Json::object({{"commands", list}});
 }
 
@@ -155,16 +193,56 @@ Result commandsRun(const Context &context, const Json &params)
     if (!context.host.commands)
         return fail(errors::kUnavailable, "No commands are available.");
     const std::string &command = params.find("command")->asString();
+    const auto ran = Json::object({{"command", Json(command)}, {"ran", Json(true)}});
+    const auto notFound = [&] {
+        return fail(errors::kNotFound, "No command is named \"" + command + "\".", Json::object({{"command", Json(command)}}));
+    };
+    if (command.starts_with("macro:")) {
+        if (!context.host.macros)
+            return notFound();
+        for (const MacroInfo &m : context.host.macros->macros())
+            if (macroCommand(m.file, m.ordinal) == command) {
+                if (!m.enabled)
+                    return fail(errors::kRefused, m.disabledReason.empty() ? "The macro is disabled." : m.disabledReason,
+                                Json::object({{"reason", Json("disabled")}}));
+                switch (context.host.macros->runMacro(MacroRequest{m.file, m.macro, {}, false}, [](LuaRun) {})) {
+                case MacroStart::Started:
+                    return ran;
+                case MacroStart::Busy:
+                    return fail(errors::kBusy, "Another macro is running; try again when it ends.");
+                default:
+                    return fail(errors::kRefused, "The command did not run.", Json::object({{"reason", Json("not_run")}}));
+                }
+            }
+        return notFound();
+    }
+    if (command.starts_with("plugin.")) {
+        const std::size_t dot = command.rfind('.');
+        if (!context.host.plugins || dot <= 7)
+            return notFound();
+        const std::string plugin = command.substr(7, dot - 7);
+        if (context.caller.id == "plugin:" + plugin)
+            return fail(errors::kRefused, "A plugin can't run its own command through commands.run.",
+                        Json::object({{"reason", Json("self")}}));
+        switch (context.host.plugins->run(plugin, command.substr(dot + 1))) {
+        case PluginRun::Ran:
+            return ran;
+        case PluginRun::NotRunning:
+            return fail(errors::kRefused, "The plugin isn't running.", Json::object({{"reason", Json("disabled")}}));
+        default:
+            return notFound();
+        }
+    }
     const int id = application::hotkeyIdOf(command);
     const auto state = id && !application::isRetiredHotkey(id) ? context.host.commands->state(command) : std::nullopt;
     if (!state)
-        return fail(errors::kNotFound, "No command is named \"" + command + "\".", Json::object({{"command", Json(command)}}));
+        return notFound();
     if (!state->enabled)
         return fail(errors::kRefused, state->disabledReason.empty() ? "The command is disabled." : state->disabledReason,
                     Json::object({{"reason", Json("disabled")}}));
     if (!context.host.commands->run(command))
         return fail(errors::kRefused, "The command did not run.", Json::object({{"reason", Json("not_run")}}));
-    return Json::object({{"command", Json(command)}, {"ran", Json(true)}});
+    return ran;
 }
 
 std::optional<PanelState> panelNamed(const PanelHost &panels, std::string_view id)
@@ -274,7 +352,11 @@ void addApplicationOperations(Registry &registry)
              "window": {"enum": ["global", "subtitles", "editor", "video", "audio"]},
              "enabled": {"type": "boolean"},
              "disabledReason": {"type": "string"},
-             "keys": {"type": "array", "items": {"type": "string"}}},
+             "keys": {"type": "array", "items": {"type": "string"}},
+             "kind": {"enum": ["hotkey", "macro", "plugin"],
+                 "description": "Always given: a HikariSub command, an Automation macro (macro:<file>:<ordinal>) or a plugin's (plugin.<id>.<command>)."},
+             "file": {"type": "string", "description": "A macro's script file name."},
+             "macro": {"type": "string", "description": "A macro's name."}},
              "required": ["command", "name", "window", "enabled", "keys"], "additionalProperties": false}}},
              "required": ["commands"], "additionalProperties": false})",
          commandsList);

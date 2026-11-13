@@ -12,7 +12,9 @@ ShellMenu {
     property bool hasProject: false
     property string itemPrefix: objectName
     readonly property string tier: hasProject ? remembered : "mine"
-    readonly property string saveText: tier === "project" ? qsTr("Save to project") : qsTr("Save to mine")
+    property string projectText: qsTr("Save to project")
+    property string mineText: qsTr("Save to mine")
+    readonly property string saveText: tier === "project" ? projectText : mineText
     property string remembered: readTier()
 
     function readTier() {
@@ -32,7 +34,7 @@ ShellMenu {
     ShellMenuItem {
         objectName: menu.itemPrefix + "Project"
         iconRole: "project"
-        text: qsTr("Save to project")
+        text: menu.projectText
         checkable: true
         keepsMenuOpen: false
         checked: menu.tier === "project"
@@ -41,7 +43,7 @@ ShellMenu {
     ShellMenuItem {
         objectName: menu.itemPrefix + "Mine"
         iconRole: "mine"
-        text: qsTr("Save to mine")
+        text: menu.mineText
         checkable: true
         keepsMenuOpen: false
         checked: menu.tier === "mine"

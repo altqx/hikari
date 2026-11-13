@@ -99,6 +99,7 @@ DialogWindow {
             return qsTr("Stopped")
         return row.unrestricted ? qsTr("Full trust") : ""
     }
+    readonly property string officialText: qsTr("By HikariSub")
     function signedText(row) {
         if (row.source === "marketplace")
             return qsTr("From the marketplace")
@@ -415,7 +416,8 @@ DialogWindow {
                             onClicked: dialog.choose(modelData.id)
                             Accessible.role: Accessible.ListItem
                             Accessible.name: modelData.name + " " + modelData.version
-                            Accessible.description: [dialog.signedText(modelData), rowState.text].filter(t => t.length > 0).join(", ")
+                            Accessible.description: [modelData.official ? dialog.officialText : "", dialog.signedText(modelData), rowState.text]
+                                .filter(t => t.length > 0).join(", ")
                             Accessible.selected: highlighted
                             background: Rectangle {
                                 color: row.highlighted ? Theme.select : "transparent"
@@ -432,12 +434,20 @@ DialogWindow {
                                 ColumnLayout {
                                     spacing: 0
                                     Layout.fillWidth: true
-                                    Label {
-                                        text: row.modelData.name + " " + row.modelData.version
-                                        textFormat: Text.PlainText
-                                        elide: Text.ElideRight
-                                        color: row.modelData.enabled ? Theme.text : Theme.muted
+                                    RowLayout {
+                                        spacing: 4
                                         Layout.fillWidth: true
+                                        Label {
+                                            text: row.modelData.name + " " + row.modelData.version
+                                            textFormat: Text.PlainText
+                                            elide: Text.ElideRight
+                                            color: row.modelData.enabled ? Theme.text : Theme.muted
+                                            Layout.fillWidth: true
+                                        }
+                                        OfficialMark {
+                                            objectName: "pluginOfficial_" + row.modelData.id
+                                            visible: row.modelData.official
+                                        }
                                     }
                                     Label {
                                         objectName: "pluginTrust_" + row.modelData.id
@@ -569,7 +579,8 @@ DialogWindow {
                             onClicked: dialog.chosenListingId = modelData.id
                             Accessible.role: Accessible.ListItem
                             Accessible.name: modelData.name
-                            Accessible.description: modelData.summary
+                            Accessible.description: [modelData.official ? dialog.officialText : "", modelData.summary]
+                                .filter(t => t.length > 0).join(", ")
                             Accessible.selected: highlighted
                             background: Rectangle {
                                 color: listed.highlighted ? Theme.select : "transparent"
@@ -589,6 +600,10 @@ DialogWindow {
                                             textFormat: Text.PlainText
                                             elide: Text.ElideRight
                                             Layout.fillWidth: true
+                                        }
+                                        OfficialMark {
+                                            objectName: "marketOfficial_" + listed.modelData.id
+                                            visible: listed.modelData.official
                                         }
                                         Badge {
                                             visible: listed.modelData.unrestricted
@@ -644,13 +659,22 @@ DialogWindow {
         id: badge
         property string iconRole
         property string text
+        property color color: Theme.warning
         spacing: 3
         Icon { iconRole: badge.iconRole; size: 12 }
         Label {
             text: badge.text
             font: dialog.fontAt(11)
-            color: Theme.warning
+            color: badge.color
         }
+    }
+
+    component OfficialMark: Icon {
+        iconRole: "plugin-official"
+        size: 14
+        HoverHandler { id: officialHover }
+        ToolTip.text: dialog.officialText
+        ToolTip.visible: officialHover.hovered
     }
 
     component Fact: Label {
@@ -670,19 +694,31 @@ DialogWindow {
                 Layout.fillWidth: true
                 RowLayout {
                     spacing: 6
+                    Layout.fillWidth: true
                     Label {
                         objectName: "marketDetailsName"
                         text: market.listing.name
                         textFormat: Text.PlainText
                         font: dialog.fontAt(15, Font.DemiBold)
                         elide: Text.ElideRight
+                        Layout.preferredWidth: implicitWidth
+                        Layout.minimumWidth: 40
                         Layout.fillWidth: true
+                        Layout.maximumWidth: implicitWidth
+                    }
+                    Badge {
+                        objectName: "marketDetailsOfficial"
+                        visible: market.listing.official
+                        iconRole: "plugin-official"
+                        text: dialog.officialText
+                        color: Theme.accent
                     }
                     Badge {
                         visible: market.listing.unrestricted
                         iconRole: "plugin-full-access"
                         text: qsTr("Full trust")
                     }
+                    Item { Layout.fillWidth: true }
                 }
                 Label {
                     text: market.listing.authorName + " · " + market.listing.version
@@ -911,6 +947,13 @@ DialogWindow {
                         Layout.preferredWidth: implicitWidth
                         Layout.minimumWidth: 40
                     }
+                    Badge {
+                        objectName: "pluginDetailsOfficial"
+                        visible: details.row.official
+                        iconRole: "plugin-official"
+                        text: dialog.officialText
+                        color: Theme.accent
+                    }
                     LinkButton {
                         objectName: "pluginRollBack"
                         iconRole: "undo"
@@ -1061,6 +1104,44 @@ DialogWindow {
                     text: qsTr("Forget")
                     tip: qsTr("%1 asks again the next time it needs this folder").arg(details.row.name)
                     onClicked: dialog.manager.forgetFolder(details.row.id, folderRow.modelData.id)
+                }
+            }
+        }
+        Heading {
+            visible: marksRepeater.count > 0
+            text: qsTr("Marks")
+        }
+        Repeater {
+            id: marksRepeater
+            model: {
+                dialog.runtime ? dialog.runtime.marksRevision : 0
+                return dialog.runtime ? dialog.runtime.marks(details.row.id) : []
+            }
+            RowLayout {
+                id: marksRow
+                required property var modelData
+                spacing: 8
+                Layout.fillWidth: true
+                Rectangle {
+                    implicitWidth: 4
+                    implicitHeight: 12
+                    color: Theme[marksRow.modelData.colour]
+                    border.width: Theme.highContrast ? 1 : 0
+                    border.color: Theme.text
+                }
+                Label {
+                    objectName: "pluginMarks_" + marksRow.modelData.document
+                    text: qsTr("Marks %n line(s) in %1", "", marksRow.modelData.count).arg(marksRow.modelData.file)
+                    textFormat: Text.PlainText
+                    elide: Text.ElideMiddle
+                    Layout.fillWidth: true
+                }
+                IconTextButton {
+                    objectName: "pluginClearMarks_" + marksRow.modelData.document
+                    iconRole: "remove"
+                    text: qsTr("Clear marks")
+                    tip: qsTr("Removes %1’s marks from the Grid of %2").arg(details.row.name, marksRow.modelData.file)
+                    onClicked: dialog.runtime.clearMarks(details.row.id, marksRow.modelData.document)
                 }
             }
         }

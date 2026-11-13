@@ -72,11 +72,22 @@ DialogWindow {
             x: 10
             width: parent.width - 24
             spacing: 10
-            Label { text: entry.modelData[0]; Layout.preferredWidth: 104; Layout.alignment: Qt.AlignTop; topPadding: 2 }
+            Label {
+                id: creditName
+                objectName: "creditName"
+                text: entry.modelData[0]
+                wrapMode: Text.Wrap
+                topPadding: 2
+                bottomPadding: 4
+                Layout.preferredWidth: 104
+                Layout.preferredHeight: creditName.contentHeight + creditName.topPadding + creditName.bottomPadding
+                Layout.alignment: Qt.AlignTop
+            }
             ColumnLayout {
                 spacing: 0
                 Layout.fillWidth: true
                 Label {
+                    objectName: "creditCopyright"
                     text: "© " + entry.modelData[1]
                     color: Theme.muted
                     wrapMode: Text.WordWrap

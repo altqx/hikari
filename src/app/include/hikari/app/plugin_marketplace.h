@@ -59,7 +59,7 @@ public:
     bool available() const { return !m_feed.base.isEmpty(); }
     QString status() const { return m_status; }
     QString problem() const { return m_problem; }
-    // Rows {id, name, summary, description, authorName, version, unrestricted, categories, permissions: [text], license,
+    // Rows {id, name, summary, description, authorName, official, version, unrestricted, categories, permissions: [text], license,
     // homepage, repo, published (yyyy-MM-dd), changelog, needs (the first HikariSub version with its API, or ""), icon,
     // screenshots: [{url, caption}], installedVersion, action ("install", "update", "installed" or "incompatible")},
     // icon and screenshot urls being image://marketplace/ sources for same-origin media only;

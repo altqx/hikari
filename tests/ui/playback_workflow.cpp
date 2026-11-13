@@ -1,6 +1,7 @@
 #include "hikari/app/application.h"
 #include "hikari/application/ycbcr_frame.h"
 #include "docking.h"
+#include "gui_thread_clock.h"
 #include "status_bar_controller.h"
 #include "visual_tools_controller.h"
 
@@ -26,16 +27,6 @@
 #include <string>
 #include <vector>
 
-#ifdef _WIN32
-#ifndef NOMINMAX
-#define NOMINMAX
-#endif
-#include <windows.h>
-#else
-#include <pthread.h>
-#include <time.h>
-#endif
-
 Q_IMPORT_QML_PLUGIN(Hikari_UiPlugin)
 
 using namespace std::chrono_literals;
@@ -58,52 +49,6 @@ int barcode(const hikari::application::IndexedFrame &shown)
         }
     return value;
 }
-
-class GuiThreadClock {
-public:
-    // MUST KILL: the constructor captures the calling thread, so it must be built on the GUI thread
-    GuiThreadClock()
-    {
-#ifdef _WIN32
-        DuplicateHandle(GetCurrentProcess(), GetCurrentThread(), GetCurrentProcess(), &m_thread,
-                        THREAD_QUERY_LIMITED_INFORMATION, FALSE, 0);
-#else
-        m_ok = pthread_getcpuclockid(pthread_self(), &m_clock) == 0;
-#endif
-    }
-    ~GuiThreadClock()
-    {
-#ifdef _WIN32
-        if (m_thread)
-            CloseHandle(m_thread);
-#endif
-    }
-    GuiThreadClock(const GuiThreadClock &) = delete;
-    GuiThreadClock &operator=(const GuiThreadClock &) = delete;
-    double ms() const
-    {
-#ifdef _WIN32
-        FILETIME created, exited, kernel, user;
-        if (!m_thread || !GetThreadTimes(m_thread, &created, &exited, &kernel, &user))
-            return -1;
-        auto ticks = [](FILETIME t) { return (static_cast<std::uint64_t>(t.dwHighDateTime) << 32) | t.dwLowDateTime; };
-        return static_cast<double>(ticks(kernel) + ticks(user)) / 10'000; // 100 ns units
-#else
-        timespec t{};
-        if (!m_ok || clock_gettime(m_clock, &t) != 0)
-            return -1;
-        return static_cast<double>(t.tv_sec) * 1000 + static_cast<double>(t.tv_nsec) / 1e6;
-#endif
-    }
-
-private:
-#ifdef _WIN32
-    HANDLE m_thread = nullptr;
-#else
-    clockid_t m_clock{};
-    bool m_ok = false;
-#endif
-};
 
 GuiThreadClock *g_guiClock = nullptr;
 

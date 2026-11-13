@@ -74,7 +74,7 @@ TEST(ApiRegistry, EveryEventIsWellFormed)
         EXPECT_FALSE(checkSchema(event.data, registry.defs())) << event.name;
     }
     EXPECT_EQ(names, (std::set<std::string>{"document.changed", "selection.changed", "documents.changed", "panel.changed",
-                                            "command.ran", "project.changed"}));
+                                            "command.ran", "project.changed", "macro.ran"}));
 }
 
 class ApiScripts : public ::testing::Test {
@@ -113,9 +113,12 @@ TEST_F(ApiScripts, WriteScope)
 
 TEST_F(ApiScripts, EveryOperationAnswersEmptyParams)
 {
+    Caller plugin = pluginCaller();
+    plugin.vcsRead = true;
     for (const Operation &op : Api::registry().operations()) {
+        const Result asPlugin = client.call(plugin, op.name, Json::object());
         const Result result = client.call(aiCaller(), op.name, Json::object());
-        if (!result) {
+        if (!result && !(asPlugin && result.error().code == errors::kNotGranted)) {
             EXPECT_EQ(result.error().code, errors::kInvalidParams) << op.name << ": " << result.error().message;
         }
     }

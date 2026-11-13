@@ -245,6 +245,9 @@ void AgentController::apply()
         };
         w.safeFolders = [this] { return safeFolders(); };
         w.project = [this] { return m_wiring.project ? m_wiring.project().toStdString() : std::string(); };
+        w.agentRefusal = [this](const std::string &agent) {
+            return m_wiring.ai.agentRefusal(QString::fromStdString(agent)).toStdString();
+        };
         w.instructions = [this](const std::string &project) {
             return backends::ai::joinInstructions(backends::ai::agentsFileText(m_wiring.userFolder),
                                                   backends::ai::agentsFileText(qs(project)));
@@ -390,7 +393,7 @@ bool AgentController::ready() const
 std::optional<ai::ModelRef> AgentController::foundAgent() const
 {
     for (const AgentModel &agent : kAgentModels)
-        if (m_wiring.ai.agentFound(QString::fromLatin1(agent.program)))
+        if (m_wiring.ai.offersAgent(QString::fromLatin1(agent.program)))
             return agent.ref();
     if (const auto acp = m_wiring.ai.acpAgents(); !acp.empty())
         return acpRef(acp.front());
@@ -547,7 +550,7 @@ QVariantList AgentController::models() const
 {
     QVariantList out;
     for (const AgentModel &agent : kAgentModels)
-        if (m_wiring.ai.agentFound(QString::fromLatin1(agent.program)))
+        if (m_wiring.ai.offersAgent(QString::fromLatin1(agent.program)))
             out.push_back(QVariantMap{{QStringLiteral("value"), modelValue(agent.ref())},
                                       {QStringLiteral("text"), agent.text()},
                                       {QStringLiteral("provider"), QString()}});
