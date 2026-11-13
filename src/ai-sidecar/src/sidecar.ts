@@ -1,4 +1,6 @@
+import { retryingStaleInScope } from "./agent/scope";
 import { AgentSessions, whileTurnRuns } from "./agent/session";
+import { TaskTools } from "./agent/tasks";
 import { AcpSession } from "./agents/acp";
 import { ClaudeSession } from "./agents/claude";
 import { CodexSession } from "./agents/codex";
@@ -17,13 +19,18 @@ import { checked, InvalidParams, ProviderService, type ServiceOptions } from "./
 import type { SearchService, UpdateParams } from "./providers/types";
 import { Peer, RpcError } from "./rpc";
 import type { OperationName, Operations } from "./tools/api.gen";
-import { Skills } from "./skills/skills";
+import { kReadSkillTool, Skills } from "./skills/skills";
 import { Catalogue, kCatalogue, type Reference } from "./tools/catalogue";
-import { ToolSet, type HikariCalls } from "./tools/toolset";
+import { ToolSet, type HikariCalls, type ToolSource } from "./tools/toolset";
 import { WebSearch, whileOn } from "./tools/web";
 import { checkedTranslate, translate } from "./translate/run";
 
 const kChannelPrefix = "channel:";
+
+/** A sub-agent's calls retry a stale write inside its scope. */
+export function sessionCalls(calls: HikariCalls, params: SessionNewParams | undefined): HikariCalls {
+    return params?.task ? retryingStaleInScope(calls, params.task.scope) : calls;
+}
 
 export interface Build {
     buildId: string;
@@ -70,6 +77,14 @@ function sessionId(method: string, params: unknown): string {
     return id;
 }
 
+function isTask(value: unknown): boolean {
+    if (!isObject(value) || typeof value.parent !== "string" || typeof value.taskId !== "string" || !isObject(value.scope))
+        return false;
+    const { document, lines } = value.scope;
+    return typeof document === "number" && (lines === undefined
+        || (Array.isArray(lines) && lines.every((line) => typeof line === "number")));
+}
+
 function checkedNew(params: unknown): SessionNewParams {
     sessionId(Method.sessionNew, params);
     const p = params as Record<string, unknown>;
@@ -79,6 +94,10 @@ function checkedNew(params: unknown): SessionNewParams {
         throw new RpcError(ErrorCode.invalidParams, "session/new's history is a list of messages");
     if (p.agent !== undefined && typeof p.agent !== "string")
         throw new RpcError(ErrorCode.invalidParams, "session/new's agent is a name");
+    if (p.delegate !== undefined && typeof p.delegate !== "boolean")
+        throw new RpcError(ErrorCode.invalidParams, "session/new's delegate is true or false");
+    if (p.task !== undefined && !isTask(p.task))
+        throw new RpcError(ErrorCode.invalidParams, "session/new's task needs a parent, a taskId and a scope with a document");
     return p as unknown as SessionNewParams;
 }
 
@@ -154,9 +173,11 @@ export class Sidecar {
             (server) => agentRelay.start(mcpAgent(server), { args: [], env: {} }), options.relay, info));
         this.mcp = new McpServer((connection, client) => new HikariApi(peer, () => ({ connection, client: client() })),
             info, () => this.catalogue);
-        this.sessions = new AgentSessions((id, webSearch) =>
-            new ToolSet(new HikariApi(peer, undefined, id), this.catalogue,
-                () => [whileOn(this.web, webSearch), ...this.mcpClients.sources(id)]),
+        this.sessions = new AgentSessions((id, webSearch, params) => {
+            const tasks = this.taskTools(id, params);
+            return new ToolSet(sessionCalls(new HikariApi(peer, undefined, id), params), this.catalogue,
+                () => [whileOn(this.web, webSearch), ...this.mcpClients.sources(id), ...tasks]);
+        },
             (params, signal, emit) => this.providers.complete(params, signal, emit),
             (method, params) => peer.notify(method, params),
             (providerId) => this.providers.imageBudget(providerId),
@@ -165,7 +186,9 @@ export class Sidecar {
                     ? loadClaudeAgentSdk(relayFetch(options.relay, { kind: "npm" }), agents.vendor)
                     : Promise.reject(new Error("Qt gave the sidecar no vendor folder"))),
                 spawn: (o) => agentRelay.start("claude", { args: o.args, env: o.env, signal: o.signal }),
-                mcp: new McpServer(() => new HikariApi(peer, undefined, id), info, () => this.catalogue),
+                mcp: new McpServer(() => sessionCalls(new HikariApi(peer, undefined, id), params), info, () => this.catalogue,
+                    () => this.taskTools(id, params)),
+                skills: new Skills(new HikariApi(peer, undefined, id)),
                 kindOf: (tool) => this.kindOf(tool),
                 send,
             }),
@@ -174,12 +197,14 @@ export class Sidecar {
                 kindOf: (tool) => this.kindOf(tool),
                 send,
                 version: build.version,
+                skills: new Skills(new HikariApi(peer, undefined, id)),
             }),
             acp: (id, params, send) => new AcpSession(id, params, {
                 spawn: (session) => agentRelay.start(params.agent!, { args: [], env: {}, session }),
                 kindOf: (tool) => this.kindOf(tool),
                 send,
                 version: build.version,
+                skills: new Skills(new HikariApi(peer, undefined, id)),
             }) },
             (id) => new Skills(new HikariApi(peer, undefined, id)));
         peer.onRequest(Method.initialize, (params) => this.initialize(params));
@@ -269,16 +294,24 @@ export class Sidecar {
             throw new RpcError(ErrorCode.invalidParams, `No session is named "${session}"`);
         let channel = this.channels.get(connection);
         if (!channel) {
-            channel = new McpServer(() => whileTurnRuns(new HikariApi(this.peer, undefined, session),
-                () => this.sessions.get(session)), info, () => this.catalogue);
+            const params = this.sessions.params(session);
+            const tasks = this.taskTools(session, params);
+            channel = new McpServer(() => whileTurnRuns(sessionCalls(new HikariApi(this.peer, undefined, session), params),
+                () => this.sessions.get(session)), info, () => this.catalogue, () => tasks);
             this.channels.set(connection, channel);
         }
         return channel;
     }
 
+    private taskTools(sessionId: string, params: SessionNewParams | undefined): ToolSource[] {
+        return params?.delegate ? [new TaskTools(sessionId, (method, p) => this.peer.request(method, p))] : [];
+    }
+
     private kindOf(tool: string): ToolCallKind {
         if (tool === "document_apply")
             return "edit";
+        if (tool === kReadSkillTool.name)
+            return "read";
         return this.tools.list(true).find((t) => t.name === tool)?.annotations.readOnlyHint ? "read" : "other";
     }
 

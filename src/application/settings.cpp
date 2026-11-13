@@ -414,6 +414,7 @@ const std::vector<SettingDefinition> &definitions()
         {"trust.folders", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {"ai.mcp.server", "", Bool, Profile, Mapped, false, false},
         {"ai.mcp.http", "", Bool, Profile, Mapped, false, false},
+        {"ai.mcp.skills", "", Bool, Profile, Mapped, false, false},
         // servers: one McpServerEntry JSON object per row; their secrets are in the keychain.
         {"ai.mcp.servers", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {"ai.exclude", "", StringList, Profile, Mapped, false, std::vector<std::string>()},

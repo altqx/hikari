@@ -236,6 +236,27 @@ TEST_F(AiFeaturesTest, ASidecarStartedForMcpServesAiActionsWithItsRelayAndAgents
     EXPECT_EQ(counts.agentLists, 1);
 }
 
+TEST_F(AiFeaturesTest, McpClientsReadSkillsOnlyWithTheGrantAndFromTheActiveWindowsProject)
+{
+    settings.set(app::AiMcp::kSetting, true);
+    app::AiFeatures features(settings, ports(false));
+    QString project = QStringLiteral("/work/show");
+    app::AiMcp mcp(settings, features, backends::ai::mcpEndpointFile(dir.path()), [&project] { return project; });
+    ASSERT_NE(mcp.server(), nullptr);
+    const api::Json connection = *api::Json::parse(R"({"connection": "local-1"})");
+    EXPECT_FALSE(mcp.server()->callerFor(connection, "skills.list")->skills);
+
+    settings.set(app::AiMcp::kSkillsSetting, true);
+    const auto granted = mcp.server()->callerFor(connection, "skills.list");
+    EXPECT_TRUE(granted->skills);
+    EXPECT_EQ(granted->project, "/work/show");
+    project.clear();
+    EXPECT_EQ(mcp.server()->callerFor(connection, "skills.list")->project, "");
+
+    settings.set(app::AiMcp::kSkillsSetting, false);
+    EXPECT_FALSE(mcp.server()->callerFor(connection, "skills.list")->skills);
+}
+
 #ifndef Q_OS_WIN
 TEST_F(AiFeaturesTest, TheAcpAgentsFoundAndTheUsersOwnAreAddedAgainWhenTheirListChanges)
 {

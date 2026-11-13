@@ -12,6 +12,7 @@ FocusScope {
     signal settingsRequested()
     signal logRequested()
     signal exportRequested(string id)
+    signal pluginRequested(string id)
 
     readonly property var thread: agent ? agent.thread : ({})
     readonly property bool hasThread: thread.id !== undefined
@@ -19,8 +20,14 @@ FocusScope {
     readonly property string mode: hasThread ? thread.mode : "auto"
     readonly property bool canCompact: hasThread && thread.external !== true
     readonly property real contextUsed: hasThread && thread.compactWindow > 0 ? thread.contextTokens / thread.compactWindow : 0
+    readonly property bool isChild: hasThread && (thread.child?.parent ?? "").length > 0
     property bool showingThreads: false
     objectName: "agentView"
+    Keys.onEscapePressed: event => {
+        event.accepted = panel.isChild && !panel.showingThreads
+        if (event.accepted)
+            panel.agent.openParent()
+    }
 
     function tokens(n) {
         return n >= 1000 ? Number(n / 1000).toLocaleString(Qt.locale(), "f", n >= 100000 ? 0 : 1) + "K"
@@ -33,6 +40,20 @@ FocusScope {
     }
     readonly property bool webSearchOn: !hasThread || thread.webSearch === true
     readonly property bool webSearchReady: hasThread ? thread.webSearchReady === true : true
+    function taskStateName(k) {
+        return k.status === "running" ? qsTr("running") : k.status === "needs_you" ? qsTr("needs you")
+             : k.status === "done" ? qsTr("done") : k.status === "failed" ? qsTr("failed")
+             : k.status === "interrupted" ? qsTr("interrupted")
+             : k.stoppedFor === "cap" || k.stoppedFor === "dailyCap" ? qsTr("stopped · cap") : qsTr("stopped")
+    }
+    function taskStateTint(status) {
+        return status === "needs_you" ? Theme.warning : status === "done" ? Theme.success
+             : status === "failed" || status === "interrupted" ? Theme.danger
+             : status === "running" ? Theme.accent : Theme.muted
+    }
+    function scopeName(document, lines) {
+        return lines.length > 0 ? qsTr("%1 · %n line(s)", "", lines.length).arg(document) : document
+    }
     function modeName(m) {
         return m === "manual" ? qsTr("Manual") : m === "full" ? qsTr("Full access") : qsTr("Auto")
     }
@@ -138,12 +159,19 @@ FocusScope {
             Layout.margins: 4
             spacing: 2
             IconToolButton {
+                objectName: "agentBackToParent"
+                iconRole: "chevron-left"
+                text: qsTr("Back to the parent thread")
+                visible: panel.agent.ready && panel.isChild && !panel.showingThreads
+                onClicked: panel.agent.openParent()
+            }
+            IconToolButton {
                 objectName: "agentThreadsButton"
                 iconRole: "history"
                 text: qsTr("Threads")
                 checkable: true
                 checked: panel.showingThreads
-                visible: panel.agent.ready
+                visible: panel.agent.ready && !panel.isChild
                 onClicked: panel.showingThreads = !panel.showingThreads
             }
             Label {
@@ -165,7 +193,7 @@ FocusScope {
                 objectName: "agentThreadMenuButton"
                 iconRole: "menu-more"
                 text: qsTr("Thread menu")
-                visible: panel.agent.ready && !panel.showingThreads
+                visible: panel.agent.ready && !panel.showingThreads && !panel.isChild
                 enabled: panel.hasThread
                 onClicked: threadMenu.popup(this, 0, height)
             }
@@ -182,6 +210,22 @@ FocusScope {
             }
         }
         Rectangle { Layout.fillWidth: true; implicitHeight: 1; color: Theme.line }
+
+        RowLayout {
+            objectName: "agentChildBanner"
+            visible: panel.agent.ready && panel.isChild && !panel.showingThreads
+            Layout.fillWidth: true
+            Layout.margins: 8
+            spacing: 6
+            Icon { iconRole: "notice-info"; size: 14 }
+            Label {
+                Layout.fillWidth: true
+                wrapMode: Text.Wrap
+                color: Theme.muted
+                text: qsTr("Sub-agent of “%1”. Read-only; talk to it through the parent.")
+                      .arg(panel.isChild ? panel.thread.child.parentTitle : "")
+            }
+        }
 
         ColumnLayout {
             objectName: "agentNoProvider"
@@ -349,7 +393,8 @@ FocusScope {
                                : kind === "change" ? changeItem : kind === "plan" ? planItem : kind === "ask" ? askItem
                                : kind === "proposal" ? (item.status === "applied" ? null : proposalItem)
                                : kind === "notice" ? noticeItem : kind === "search" ? searchItem
-                               : kind === "script" ? scriptItem
+                               : kind === "script" ? scriptItem : kind === "tasks" ? tasksItem
+                               : kind === "estimate" ? estimateItem : kind === "install" ? installItem
                                : kind === "compaction" ? compactionItem : null
                 readonly property bool last: index === timeline.count - 1
             }
@@ -357,7 +402,7 @@ FocusScope {
 
         Card {
             objectName: "agentCompactOffer"
-            visible: panel.agent.ready && !panel.showingThreads && panel.canCompact && !panel.agent.autoCompact
+            visible: panel.agent.ready && !panel.showingThreads && !panel.isChild && panel.canCompact && !panel.agent.autoCompact
                      && !panel.running && panel.contextUsed >= 0.97
             Layout.leftMargin: 8
             Layout.rightMargin: 8
@@ -389,7 +434,7 @@ FocusScope {
 
         Rectangle {
             objectName: "agentQueued"
-            visible: panel.agent.ready && !panel.showingThreads && panel.hasThread && panel.thread.queued.length > 0
+            visible: panel.agent.ready && !panel.showingThreads && !panel.isChild && panel.hasThread && panel.thread.queued.length > 0
             Layout.fillWidth: true
             Layout.leftMargin: 8
             Layout.rightMargin: 8
@@ -482,9 +527,33 @@ FocusScope {
             }
         }
 
+        RowLayout {
+            objectName: "agentChildFooter"
+            visible: panel.agent.ready && panel.isChild && !panel.showingThreads
+            Layout.fillWidth: true
+            Layout.margins: 8
+            spacing: 6
+            Chip {
+                objectName: "agentChildMode"
+                text: qsTr("%1 · capped by the parent").arg(panel.modeName(panel.mode))
+            }
+            Chip {
+                objectName: "agentChildScope"
+                text: panel.isChild ? qsTr("scope: %1").arg(panel.scopeName(panel.thread.child.document, panel.thread.child.lines)) : ""
+            }
+            Item { Layout.fillWidth: true }
+            IconTextButton {
+                objectName: "agentStopChild"
+                visible: panel.running
+                iconRole: "media-stop"
+                text: qsTr("Stop")
+                onClicked: panel.agent.stop()
+            }
+        }
+
         Rectangle {
             id: composerBox
-            visible: !panel.showingThreads
+            visible: !panel.showingThreads && !panel.isChild
             Layout.fillWidth: true
             Layout.margins: 8
             implicitHeight: composerColumn.implicitHeight + 12
@@ -825,16 +894,31 @@ FocusScope {
         id: userItem
         ColumnLayout {
             readonly property var item: parent ? parent.item : ({})
+            readonly property bool fromAgent: item.brief === true || item.results === true
             spacing: 2
             Label {
-                Layout.alignment: Qt.AlignRight
-                Layout.maximumWidth: parent.width * 0.85
-                text: parent.item.text ?? ""
+                visible: parent.fromAgent
+                Layout.alignment: parent.item.brief ? Qt.AlignLeft : Qt.AlignRight
+                color: Theme.muted
+                text: parent.item.brief ? qsTr("Brief, written by the agent") : qsTr("Results from your sub-agents")
+            }
+            Label {
+                Layout.alignment: parent.item.brief ? Qt.AlignLeft : Qt.AlignRight
+                Layout.fillWidth: parent.item.brief === true
+                Layout.maximumWidth: parent.item.brief ? parent.width : parent.width * 0.85
+                maximumLineCount: parent.item.results ? 12 : 100000
+                elide: Text.ElideRight
+                text: parent.item.results ? (parent.item.text ?? "").replace(/^[^\n]*\n+/, "") : parent.item.text ?? ""
                 wrapMode: Text.Wrap
                 padding: 8
-                background: Rectangle { radius: 6; color: Theme.select }
+                background: Rectangle {
+                    radius: 6
+                    color: parent.parent.fromAgent ? Theme.raised : Theme.select
+                    border.color: parent.parent.fromAgent ? Theme.line : "transparent"
+                }
             }
             RowLayout {
+                visible: !parent.item.brief
                 Layout.alignment: Qt.AlignRight
                 spacing: 6
                 Label {
@@ -843,7 +927,7 @@ FocusScope {
                           + (parent.parent.item.time ? Qt.formatTime(new Date(parent.parent.item.time), Locale.ShortFormat) : "")
                 }
                 LinkButton {
-                    visible: (parent.parent.item.turn ?? 0) > 0
+                    visible: (parent.parent.item.turn ?? 0) > 0 && !panel.isChild
                     iconRole: "checkpoint"
                     text: qsTr("Restore checkpoint")
                     onClicked: panel.restoreRequested(parent.parent.item.turn)
@@ -1196,7 +1280,8 @@ FocusScope {
                 Layout.fillWidth: true
                 CardTitle {
                     iconRole: proposal.stale ? "notice-warning" : "edit"
-                    text: qsTr("Proposed: %1").arg(proposal.item.name ?? "")
+                    text: (proposal.item.fromChild !== undefined ? qsTr("%1 proposes: %2").arg(proposal.item.fromChild, proposal.item.name ?? "")
+                                                                 : qsTr("Proposed: %1").arg(proposal.item.name ?? ""))
                           + (proposal.item.title ? " · " + proposal.item.title : "")
                 }
                 Chip {
@@ -1363,17 +1448,26 @@ FocusScope {
                 Layout.fillWidth: true
                 CardTitle {
                     iconRole: ask.always ? "notice-error" : "notice-warning"
-                    text: ask.item.type === "judge" ? qsTr("Judge asks you")
+                    text: ask.item.fromChild !== undefined ? qsTr("%1 asks you").arg(ask.item.fromChild)
+                          : ask.item.type === "judge" ? qsTr("Judge asks you")
                           : ask.item.type === "always" ? qsTr("Allow %1?").arg(ask.item.tool ?? "")
                           : qsTr("Run %1?").arg(ask.item.tool ?? "")
                 }
                 Chip {
-                    visible: ask.item.type === "always"
-                    text: qsTr("asks in every mode")
-                    tint: Theme.danger
+                    visible: ask.item.type === "always" || ask.item.fromChild !== undefined
+                    text: ask.item.fromChild === undefined ? qsTr("asks in every mode")
+                          : ask.item.type === "always" ? qsTr("sub-agent · asks in every mode") : qsTr("sub-agent")
+                    tint: ask.item.type === "always" ? Theme.danger : Theme.muted
                 }
             }
             Mono { text: ask.item.params ?? "" }
+            Label {
+                visible: ask.item.fromChild !== undefined && ask.open
+                Layout.fillWidth: true
+                wrapMode: Text.Wrap
+                color: Theme.muted
+                text: qsTr("Only you can answer; the parent agent can’t.")
+            }
             Label {
                 visible: (ask.item.reason ?? "").length > 0
                 Layout.fillWidth: true
@@ -1442,7 +1536,11 @@ FocusScope {
             RowLayout {
                 visible: lua.open
                 Layout.fillWidth: true
-                CardTitle { iconRole: "run-script"; text: qsTr("Run this Lua script?") }
+                CardTitle {
+                    iconRole: "run-script"
+                    text: lua.item.fromChild !== undefined ? qsTr("%1 asks to run this Lua script").arg(lua.item.fromChild)
+                                                           : qsTr("Run this Lua script?")
+                }
                 Chip { text: qsTr("asks in every mode"); tint: Theme.danger }
             }
             Label {
@@ -1592,6 +1690,220 @@ FocusScope {
     }
 
     Component {
+        id: installItem
+        Card {
+            id: install
+            readonly property var item: parent ? parent.item : ({})
+            readonly property bool open: item.status === "open"
+            readonly property bool fullTrust: item.tier === "unrestricted"
+            readonly property var files: item.files ?? []
+            readonly property var mainLines: files.length > 0 ? files[0].text.replace(/\n$/, "").split("\n") : []
+            property bool allFiles: false
+            property bool replying: false
+            objectName: "agentInstall"
+            edge: open ? Theme.danger : item.status === "installed" ? Theme.success : item.status === "running" ? Theme.accent : Theme.line
+            function trust() {
+                if (item.needsRetrust && (item.keyId ?? "").length > 0)
+                    return qsTr("The signing key changed. The installed copy was signed by key %1, and this one by key %2. Install it only if you trust that the author changed keys.")
+                        .arg(item.pinnedKeyId, item.keyId)
+                if (item.needsRetrust)
+                    return qsTr("This package isn’t signed, but the installed copy was signed by key %1. Install it only if you trust where it came from.")
+                        .arg(item.pinnedKeyId)
+                if ((item.keyId ?? "").length > 0)
+                    return qsTr("Unverified source, signed by key %1. Updates must be signed by the same key.").arg(item.keyId)
+                return qsTr("Unverified: the package isn’t signed, so HikariSub can’t tell who made it.")
+            }
+            RowLayout {
+                visible: install.open
+                Layout.fillWidth: true
+                CardTitle {
+                    iconRole: install.fullTrust ? "plugin-full-access" : "plugin-install"
+                    text: install.fullTrust ? qsTr("Install with full access?") : qsTr("Install this plugin?")
+                }
+                Chip { text: qsTr("asks in every mode"); tint: Theme.danger }
+            }
+            Label {
+                visible: install.open
+                Layout.fillWidth: true
+                wrapMode: Text.Wrap
+                color: Theme.muted
+                textFormat: Text.PlainText
+                text: qsTr("%1 %2 · %3").arg(install.item.name ?? "", install.item.version ?? "", install.item.plugin ?? "")
+            }
+            Repeater {
+                model: install.open ? [
+                    { icon: install.fullTrust ? "plugin-full-access" : "plugin-sandbox", danger: install.fullTrust,
+                      text: install.fullTrust ? qsTr("Full trust: it runs outside the sandbox and gets full access to your computer.")
+                                              : qsTr("Restricted: it runs in the sandbox.") },
+                    { icon: "notice-warning", danger: install.item.needsRetrust === true, text: install.trust() }
+                ] : []
+                delegate: RowLayout {
+                    required property var modelData
+                    Layout.fillWidth: true
+                    spacing: 6
+                    Icon { iconRole: parent.modelData.icon; size: 13 }
+                    Label {
+                        Layout.fillWidth: true
+                        wrapMode: Text.Wrap
+                        textFormat: Text.PlainText
+                        color: parent.modelData.danger ? Theme.danger : Theme.warning
+                        text: parent.modelData.text
+                    }
+                }
+            }
+            Label {
+                visible: install.open
+                Layout.fillWidth: true
+                wrapMode: Text.Wrap
+                textFormat: Text.PlainText
+                text: (install.item.permissions ?? []).length === 0
+                      ? qsTr("It asks for no permissions beyond the active subtitle file.")
+                      : qsTr("It asks for these permissions") + "\n• " + install.item.permissions.join("\n• ")
+            }
+            Label {
+                visible: install.open && (install.item.commands ?? []).length > 0
+                Layout.fillWidth: true
+                wrapMode: Text.Wrap
+                textFormat: Text.PlainText
+                text: ((install.item.commands ?? []).length === 1 ? qsTr("Adds the command %1.") : qsTr("Adds the commands %1."))
+                      .arg((install.item.commands ?? []).map(c => "“" + c + "”").join(", "))
+            }
+            Repeater {
+                model: install.open ? (install.allFiles ? install.files : install.files.slice(0, 1)) : []
+                delegate: ColumnLayout {
+                    id: file
+                    required property int index
+                    required property var modelData
+                    readonly property var lines: modelData.text.replace(/\n$/, "").split("\n")
+                    Layout.fillWidth: true
+                    spacing: 2
+                    Label { font.family: "monospace"; color: Theme.muted; textFormat: Text.PlainText; text: file.modelData.path }
+                    Rectangle {
+                        Layout.fillWidth: true
+                        implicitHeight: fileLines.implicitHeight + 8
+                        color: Theme.field
+                        border.color: Theme.line
+                        radius: 2
+                        ColumnLayout {
+                            id: fileLines
+                            x: 4
+                            y: 4
+                            width: parent.width - 8
+                            spacing: 0
+                            Repeater {
+                                model: install.allFiles ? file.lines : file.lines.slice(0, 12)
+                                delegate: RowLayout {
+                                    required property int index
+                                    required property string modelData
+                                    Layout.fillWidth: true
+                                    spacing: 8
+                                    Label {
+                                        Layout.preferredWidth: 24
+                                        horizontalAlignment: Text.AlignRight
+                                        font.family: "monospace"
+                                        color: Theme.muted
+                                        text: index + 1
+                                    }
+                                    Label {
+                                        Layout.fillWidth: true
+                                        font.family: "monospace"
+                                        textFormat: Text.PlainText
+                                        elide: Text.ElideRight
+                                        text: modelData
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            LinkButton {
+                objectName: "agentInstallShowAll"
+                iconRole: "chevron-down"
+                visible: install.open && !install.allFiles && (install.files.length > 1 || install.mainLines.length > 12)
+                text: qsTr("Show all %n files", "", install.files.length)
+                onClicked: install.allFiles = true
+            }
+            Label {
+                visible: install.open
+                Layout.fillWidth: true
+                wrapMode: Text.Wrap
+                color: Theme.muted
+                text: qsTr("Installs as Install from file… would: it turns on, and Plugins can turn it off or uninstall it.")
+            }
+            RowLayout {
+                visible: install.open && !install.replying
+                spacing: 6
+                Button {
+                    objectName: "agentInstallAccept"
+                    visible: !install.fullTrust && !install.item.needsRetrust
+                    text: qsTr("Install")
+                    highlighted: true
+                    onClicked: panel.agent.answer(install.item.ask, "allowOnce", "")
+                }
+                DangerButton {
+                    objectName: "agentInstallRisky"
+                    visible: install.fullTrust || install.item.needsRetrust === true
+                    text: install.item.needsRetrust ? qsTr("Trust and install") : qsTr("Install with full access")
+                    onClicked: panel.agent.answer(install.item.ask, "allowOnce", "")
+                }
+                Button {
+                    objectName: "agentInstallDecline"
+                    text: qsTr("Don’t install")
+                    onClicked: panel.agent.answer(install.item.ask, "deny", "")
+                }
+                Button {
+                    text: qsTr("Don’t install and tell the agent…")
+                    onClicked: {
+                        install.replying = true
+                        installReply.forceActiveFocus()
+                    }
+                }
+            }
+            RowLayout {
+                visible: install.open && install.replying
+                Layout.fillWidth: true
+                TextField {
+                    id: installReply
+                    objectName: "agentInstallReply"
+                    Layout.fillWidth: true
+                    placeholderText: qsTr("What should it do instead?")
+                    onAccepted: panel.agent.answer(install.item.ask, "deny", text)
+                }
+                Button { text: qsTr("Don’t install"); onClicked: panel.agent.answer(install.item.ask, "deny", installReply.text) }
+            }
+            RowLayout {
+                visible: !install.open
+                Layout.fillWidth: true
+                spacing: 6
+                Icon { iconRole: install.item.status === "installed" ? "plugin-installed" : "plugin-install"; size: 14 }
+                Label {
+                    objectName: "agentInstallStatus"
+                    Layout.fillWidth: true
+                    wrapMode: Text.Wrap
+                    textFormat: Text.PlainText
+                    color: install.item.status === "installed" || install.item.status === "running" ? Theme.text : Theme.muted
+                    text: install.item.status === "running" ? qsTr("Installing %1").arg(install.item.name ?? "")
+                          : install.item.status === "installed"
+                            ? (install.fullTrust ? qsTr("Installed %1 %2 · full trust") : qsTr("Installed %1 %2 · restricted"))
+                                  .arg(install.item.name ?? "", install.item.version ?? "")
+                          : install.item.status === "failed" ? qsTr("%1 didn’t install: %2").arg(install.item.name ?? "", install.item.result ?? "")
+                          : install.item.status === "declined" ? (install.item.message ? qsTr("Didn’t install %1 · “%2”").arg(install.item.name ?? "", install.item.message)
+                                                                                       : qsTr("Didn’t install %1").arg(install.item.name ?? ""))
+                          : qsTr("No longer needed")
+                }
+                LinkButton {
+                    objectName: "agentInstallOpen"
+                    iconRole: "plugins"
+                    visible: install.item.status === "installed"
+                    text: qsTr("Open in Plugins")
+                    onClicked: panel.pluginRequested(install.item.plugin)
+                }
+            }
+        }
+    }
+
+    Component {
         id: compactionItem
         ColumnLayout {
             id: compaction
@@ -1657,7 +1969,7 @@ FocusScope {
             readonly property var item: parent ? parent.item : ({})
             readonly property bool last: parent ? parent.last : false
             readonly property string kind: item.notice ?? ""
-            readonly property bool quiet: kind === "stopped" || kind === "maxTokens" || kind === "refusal" || kind === "maxRequests"
+            readonly property bool quiet: kind === "stopped" || kind === "parent" || kind === "maxTokens" || kind === "refusal" || kind === "maxRequests"
                                           || kind === "nothingToCompact"
             objectName: "agentNotice_" + kind
             readonly property bool searchFailed: kind === "searchUsedUp" || kind === "searchKey"
@@ -1669,6 +1981,7 @@ FocusScope {
                       : notice.kind === "lost" ? qsTr("AI component stopped")
                       : notice.kind === "failed" ? qsTr("Turn failed")
                       : notice.kind === "stopped" ? qsTr("You stopped the turn.")
+                      : notice.kind === "parent" ? qsTr("The parent thread stopped this sub-agent.")
                       : notice.kind === "maxTokens" ? qsTr("The answer reached the model’s length limit.")
                       : notice.kind === "refusal" ? qsTr("The model declined to answer.")
                       : notice.kind === "maxRequests" ? qsTr("The turn stopped after its most model requests.")
@@ -1684,7 +1997,9 @@ FocusScope {
                 Layout.fillWidth: true
                 wrapMode: Text.Wrap
                 color: Theme.muted
-                text: notice.kind === "cap" ? qsTr("The turn stopped after its last change. Raise the cap for this thread to go on.")
+                text: notice.kind === "cap" && !panel.isChild ? qsTr("The turn stopped after its last change. Raise the cap for this thread to go on.")
+                      : notice.kind === "cap" ? qsTr("The parent’s cost cap stopped this sub-agent. Its changes stay in the review.")
+                      : notice.kind === "lost" && panel.isChild ? qsTr("The sub-agent was interrupted and won’t rerun. The parent got its partial result. Changes it made stay in the review.")
                       : notice.kind === "dailyCap" ? qsTr("Every thread stops until tomorrow, or until you raise the cap in Settings › AI.")
                       : notice.kind === "lost" ? qsTr("The turn was interrupted and won’t rerun by itself. Changes it made stay in the review.")
                       : notice.kind === "failed" ? (notice.item.detail ?? "")
@@ -1698,7 +2013,7 @@ FocusScope {
                 spacing: 6
                 Button {
                     objectName: "agentRaiseCap"
-                    visible: notice.kind === "cap"
+                    visible: notice.kind === "cap" && !panel.isChild
                     highlighted: true
                     text: qsTr("Raise to %1 and continue").arg(panel.money(Math.max(panel.thread.cap ?? 0, panel.thread.cost ?? 0) + panel.agent.threadCap))
                     onClicked: {
@@ -1708,7 +2023,7 @@ FocusScope {
                 }
                 Button {
                     objectName: "agentRetry"
-                    visible: notice.kind === "lost" || notice.kind === "failed"
+                    visible: (notice.kind === "lost" || notice.kind === "failed") && !panel.isChild
                     highlighted: true
                     text: qsTr("Retry the turn")
                     onClicked: panel.agent.retry()
@@ -1736,6 +2051,150 @@ FocusScope {
                     text: qsTr("Open Settings › AI")
                     onClicked: panel.settingsRequested()
                 }
+            }
+        }
+    }
+
+    Component {
+        id: tasksItem
+        Card {
+            id: tasks
+            readonly property var item: parent ? parent.item : ({})
+            readonly property var kids: item.children ?? []
+            readonly property int needCount: kids.filter(k => k.status === "needs_you").length
+            readonly property int runningCount: kids.filter(k => k.status === "running").length + needCount
+            objectName: "agentTasks"
+            edge: needCount > 0 ? Theme.warning : Theme.line
+            RowLayout {
+                Layout.fillWidth: true
+                CardTitle {
+                    iconRole: "ai-assistant"
+                    text: [qsTr("%n sub-agent(s)", "", tasks.kids.length),
+                           tasks.runningCount > 0 ? qsTr("%n running", "", tasks.runningCount) : "",
+                           tasks.needCount > 0 ? qsTr("%n need(s) you", "", tasks.needCount) : ""]
+                          .filter(s => s.length > 0).join(" · ")
+                }
+                IconTextButton {
+                    objectName: "agentStopChildren"
+                    visible: tasks.runningCount > 0
+                    iconRole: "media-stop"
+                    text: qsTr("Stop all")
+                    onClicked: panel.agent.stopChildren()
+                }
+            }
+            Repeater {
+                model: tasks.kids
+                delegate: Rectangle {
+                    id: kid
+                    required property var modelData
+                    readonly property bool live: modelData.status === "running" || modelData.status === "needs_you"
+                    objectName: "agentTask_" + modelData.task
+                    Layout.fillWidth: true
+                    implicitHeight: kidColumn.implicitHeight + 8
+                    radius: 3
+                    color: "transparent"
+                    border.color: activeFocus ? Theme.focus : modelData.status === "needs_you" ? Theme.warning : Theme.line
+                    border.width: activeFocus ? 2 : 1
+                    activeFocusOnTab: true
+                    Accessible.role: Accessible.Grouping
+                    Accessible.name: qsTr("Sub-agent %1, %2").arg(modelData.title, panel.taskStateName(modelData))
+                    Keys.onReturnPressed: panel.agent.open(modelData.id)
+                    Keys.onEnterPressed: panel.agent.open(modelData.id)
+                    ColumnLayout {
+                        id: kidColumn
+                        x: 6
+                        y: 4
+                        width: parent.width - 12
+                        spacing: 1
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 6
+                            Label {
+                                Layout.fillWidth: true
+                                elide: Text.ElideRight
+                                font.bold: true
+                                text: kid.modelData.title
+                            }
+                            Label {
+                                color: Theme.muted
+                                text: kid.modelData.costUnknown && kid.modelData.cost === 0 ? qsTr("cost not reported")
+                                                                                            : panel.money(kid.modelData.cost)
+                            }
+                            Button {
+                                objectName: "agentOpenTask"
+                                text: qsTr("Open")
+                                activeFocusOnTab: false
+                                onClicked: panel.agent.open(kid.modelData.id)
+                            }
+                            Button {
+                                objectName: "agentStopTask"
+                                visible: kid.live
+                                text: qsTr("Stop")
+                                activeFocusOnTab: false
+                                onClicked: panel.agent.stopChild(kid.modelData.id)
+                            }
+                        }
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 0
+                            Label {
+                                color: panel.taskStateTint(kid.modelData.status)
+                                text: panel.taskStateName(kid.modelData)
+                            }
+                            Label {
+                                Layout.fillWidth: true
+                                elide: Text.ElideRight
+                                color: Theme.muted
+                                text: " · " + [kid.modelData.target, panel.scopeName(kid.modelData.document, kid.modelData.lines)]
+                                      .filter(s => s.length > 0).join(" · ")
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    Component {
+        id: estimateItem
+        Card {
+            id: estimate
+            readonly property var item: parent ? parent.item : ({})
+            readonly property bool open: item.status === "open"
+            objectName: "agentEstimate"
+            edge: open ? Theme.warning : Theme.line
+            CardTitle {
+                iconRole: "notice-info"
+                text: qsTr("Estimate for %n sub-agent(s)", "", estimate.item.children ?? 0)
+            }
+            Label {
+                Layout.fillWidth: true
+                wrapMode: Text.Wrap
+                text: estimate.item.cost !== undefined
+                      ? qsTr("About %1 tokens, %2.").arg(panel.tokens(estimate.item.tokens ?? 0), panel.money(estimate.item.cost))
+                      : qsTr("About %1 tokens. This agent doesn’t report cost.").arg(panel.tokens(estimate.item.tokens ?? 0))
+            }
+            RowLayout {
+                visible: estimate.open
+                spacing: 6
+                Button {
+                    objectName: "agentRunEstimate"
+                    text: qsTr("Run")
+                    highlighted: true
+                    onClicked: panel.agent.answer(estimate.item.ask, "allowOnce", "")
+                }
+                Button {
+                    objectName: "agentCancelEstimate"
+                    text: qsTr("Cancel")
+                    onClicked: panel.agent.answer(estimate.item.ask, "deny", "")
+                }
+            }
+            Label {
+                visible: !estimate.open
+                color: Theme.muted
+                text: estimate.item.status === "started" ? qsTr("Started")
+                      : estimate.item.status === "declined" ? qsTr("Cancelled. No more sub-agents start this turn.")
+                      : qsTr("No longer needed")
             }
         }
     }

@@ -8,6 +8,7 @@
 #include <chrono>
 #include <cstring>
 #include <fstream>
+#include <random>
 #include <sstream>
 
 using namespace hikari;
@@ -319,7 +320,9 @@ TEST(StyleCatalogFiles, LegacyFormatAndCatalogs)
 namespace {
 
 struct TierDirs {
-    std::filesystem::path root = std::filesystem::temp_directory_path() / "hikari-style-tiers-test";
+    std::filesystem::path root = std::filesystem::temp_directory_path() /
+                                 ("hikari-style-tiers-" + std::string(::testing::UnitTest::GetInstance()->current_test_info()->name()) +
+                                  "-" + std::to_string(std::random_device{}()));
     std::filesystem::path mine = root / "user" / "catalogs";
     std::filesystem::path project = root / "show" / ".hikari" / "catalogs";
     TierDirs()
@@ -335,6 +338,18 @@ struct TierDirs {
     }
 };
 
+}
+
+TEST(StyleCatalogTiers, NewCataloguesAreListedAfterTheOnesRead)
+{
+    TierDirs dirs;
+    dirs.write(dirs.mine, "Default", {named(u8"Mine default")});
+    dirs.write(dirs.project, "Ads", {named(u8"Project ads")});
+    StyleCatalogs catalogs(dirs.mine);
+    ASSERT_TRUE(catalogs.create(u8"Conv", Tier::Mine));
+    EXPECT_EQ(catalogs.names(), (std::vector<std::u8string>{u8"Default", u8"Conv"}));
+    catalogs.setProjectDirectory(dirs.project);
+    EXPECT_EQ(catalogs.names(), (std::vector<std::u8string>{u8"Default", u8"Conv", u8"Ads"}));
 }
 
 TEST(StyleCatalogTiers, TheProjectsCopyHidesMineByName)

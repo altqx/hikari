@@ -428,16 +428,31 @@ void AllTagsEdition::select(int index)
         m_history.select(index);
 }
 
+void AllTagsEdition::change(std::vector<AllTagsSetting> items, int selection, Step step, std::string mergeKey,
+                            Renames renamed)
+{
+    markHidden(items, &AllTagsSetting::name, sameNameIgnoringCase);
+    m_history.change(std::move(items), selection, step, std::move(mergeKey), std::move(renamed));
+}
+
+bool AllTagsEdition::takenInTier(u16v name, Tier tier, int except) const
+{
+    for (std::size_t i = 0; i < tags().size(); ++i)
+        if (static_cast<int>(i) != except && tags()[i].mark.tier == tier && sameNameIgnoringCase(tags()[i].name, name))
+            return true;
+    return false;
+}
+
 void AllTagsEdition::edit(AllTagsSetting tag, Step step, std::string mergeKey, Renames renamed)
 {
     const int i = selection();
-    if (i < 0 || i >= static_cast<int>(tags().size()) || tags()[static_cast<std::size_t>(i)] == tag)
+    if (i < 0 || i >= static_cast<int>(tags().size()) || tags()[static_cast<std::size_t>(i)] == tag || readOnly())
         return;
     std::vector<AllTagsSetting> items = tags();
     items[static_cast<std::size_t>(i)] = std::move(tag);
     if (!mergeKey.empty())
         mergeKey += ':' + std::to_string(i);
-    m_history.change(std::move(items), i, step, std::move(mergeKey), std::move(renamed));
+    change(std::move(items), i, step, std::move(mergeKey), std::move(renamed));
 }
 
 AllTagsEdition::Check AllTagsEdition::setName(u16v name, u16 *taken)
@@ -447,7 +462,8 @@ AllTagsEdition::Check AllTagsEdition::setName(u16v name, u16 *taken)
     if (name.find_first_of(u",\r\n") != u16v::npos)
         return Check::Separator;
     for (std::size_t i = 0; i < tags().size(); ++i) {
-        if (static_cast<int>(i) != selection() && sameNameIgnoringCase(tags()[i].name, name)) {
+        if (static_cast<int>(i) != selection() && tags()[i].mark.tier == current().mark.tier &&
+            sameNameIgnoringCase(tags()[i].name, name)) {
             if (taken)
                 *taken = tags()[i].name;
             return replacesLastUsable(i) ? Check::TakenLastUsable : Check::Taken;
@@ -544,11 +560,9 @@ void AllTagsEdition::setPlacing(int placing)
     edit(std::move(t), ChangePlacing);
 }
 
-u16 AllTagsEdition::freeName(u16 base, bool copy) const
+u16 AllTagsEdition::freeName(u16 base, bool copy, Tier tier) const
 {
-    const auto taken = [this](u16v name) {
-        return std::ranges::any_of(tags(), [&](const AllTagsSetting &t) { return sameNameIgnoringCase(t.name, name); });
-    };
+    const auto taken = [&](u16v name) { return takenInTier(name, tier, -1); };
     for (int n = 1;; ++n) {
         u16 name = base + (copy ? u16(u" copy") : u16());
         if (n > 1)
@@ -558,14 +572,37 @@ u16 AllTagsEdition::freeName(u16 base, bool copy) const
     }
 }
 
-void AllTagsEdition::addTag()
+void AllTagsEdition::addTag(Tier tier)
 {
-    AllTagsSetting t = AllTagsSetting::named(freeName(u"New tag", false));
+    AllTagsSetting t = AllTagsSetting::named(freeName(u"New tag", false, tier));
     t.tag.clear();
+    t.mark.tier = tier;
     std::vector<AllTagsSetting> items = tags();
-    items.push_back(std::move(t));
-    const int at = static_cast<int>(items.size()) - 1;
-    m_history.change(std::move(items), at, NewTag);
+    const auto at = tierEnd(items, tier);
+    items.insert(items.begin() + static_cast<std::ptrdiff_t>(at), std::move(t));
+    change(std::move(items), static_cast<int>(at), NewTag);
+}
+
+std::optional<u16> AllTagsEdition::tierClash() const
+{
+    const auto at = otherTierClash(tags(), static_cast<std::size_t>(std::max(selection(), 0)), &AllTagsSetting::name,
+                                   sameNameIgnoringCase);
+    return at ? std::optional(tags()[*at].name) : std::nullopt;
+}
+
+bool AllTagsEdition::sendToOtherTier(bool move, const ClashChoice &clash, u16v newName)
+{
+    if (selection() < 0 || selection() >= static_cast<int>(tags().size()))
+        return false;
+    std::vector<AllTagsSetting> items = tags();
+    const auto at = application::sendToOtherTier(
+        items, static_cast<std::size_t>(selection()), clash, u16(newName), move, &AllTagsSetting::name,
+        [](AllTagsSetting &t, const u16 &name) { t.name = name; },
+        [](const u16 &a, const u16 &b) { return sameNameIgnoringCase(a, b); });
+    if (!at)
+        return false;
+    change(std::move(items), static_cast<int>(*at), move ? MoveToTier : CopyToTier);
+    return true;
 }
 
 void AllTagsEdition::duplicate()
@@ -573,11 +610,12 @@ void AllTagsEdition::duplicate()
     if (tags().empty())
         return;
     AllTagsSetting t = current();
-    t.name = freeName(t.name, true);
+    t.name = freeName(t.name, true, t.mark.tier);
+    t.mark.hidden = false;
     std::vector<AllTagsSetting> items = tags();
     const int at = selection() + 1;
     items.insert(items.begin() + at, std::move(t));
-    m_history.change(std::move(items), at, DuplicateTag);
+    change(std::move(items), at, DuplicateTag);
 }
 
 bool AllTagsEdition::canRemove() const
@@ -596,7 +634,7 @@ bool AllTagsEdition::remove()
     items.erase(items.begin() + at);
     // Before the move below: argument evaluation order is unspecified.
     const int next = std::min(at, static_cast<int>(items.size()) - 1);
-    m_history.change(std::move(items), next, DeleteTag);
+    change(std::move(items), next, DeleteTag);
     return true;
 }
 
@@ -609,10 +647,11 @@ void AllTagsEdition::replaceNamed(u16v name)
 {
     std::vector<AllTagsSetting> items = tags();
     int at = selection();
-    if (at < 0 || at >= static_cast<int>(items.size()) || name.empty())
+    if (at < 0 || at >= static_cast<int>(items.size()) || name.empty() || readOnly())
         return;
     for (std::size_t i = 0; i < items.size(); ++i) {
-        if (static_cast<int>(i) != at && sameNameIgnoringCase(items[i].name, name)) {
+        if (static_cast<int>(i) != at && items[i].mark.tier == items[static_cast<std::size_t>(at)].mark.tier &&
+            sameNameIgnoringCase(items[i].name, name)) {
             if (replacesLastUsable(i))
                 return;
             items.erase(items.begin() + static_cast<std::ptrdiff_t>(i));
@@ -623,12 +662,15 @@ void AllTagsEdition::replaceNamed(u16v name)
     }
     Renames renamed{{items[static_cast<std::size_t>(at)].name, u16(name)}};
     items[static_cast<std::size_t>(at)].name = u16(name);
-    m_history.change(std::move(items), at, ReplaceTag, {}, std::move(renamed));
+    change(std::move(items), at, ReplaceTag, {}, std::move(renamed));
 }
 
 void AllTagsEdition::restoreDefaults()
 {
-    std::vector<AllTagsSetting> defaults = defaultAllTags();
+    std::vector<AllTagsSetting> defaults = itemsIn(tags(), Tier::Project);
+    const auto mine = defaultAllTags();
+    defaults.insert(defaults.end(), mine.begin(), mine.end());
+    markHidden(defaults, &AllTagsSetting::name, sameNameIgnoringCase);
     if (defaults == tags())
         return;
     const u16 name = current().name;

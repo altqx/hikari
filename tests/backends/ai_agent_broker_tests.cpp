@@ -133,7 +133,9 @@ TEST(AgentSpecs, CodexRunsTheNativeBinaryBehindNpmsLauncherWithHikarisOwnHome)
     const auto spec = codexAgent(launcher, dir.filePath(QStringLiteral("home")), dir.filePath(QStringLiteral("work")), lease);
     ASSERT_TRUE(spec);
     EXPECT_EQ(spec->program, QFileInfo(native).canonicalFilePath());
-    EXPECT_EQ(spec->arguments, QStringList{QStringLiteral("app-server")});
+    EXPECT_EQ(spec->arguments, (QStringList{QStringLiteral("app-server"), QStringLiteral("-c"),
+                                            QStringLiteral("features.multi_agent=false"), QStringLiteral("-c"),
+                                            QStringLiteral("features.multi_agent_v2=false")}));
     EXPECT_EQ(spec->environment.value(QStringLiteral("CODEX_HOME")),
               QDir::toNativeSeparators(dir.filePath(QStringLiteral("home"))));
     EXPECT_TRUE(QFileInfo(dir.filePath(QStringLiteral("home"))).isDir());

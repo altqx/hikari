@@ -55,6 +55,8 @@ struct Caller {
     std::string project;
     // The user approved this call's Lua script; automation.run refuses without it.
     bool scriptApproved = false;
+    // The SHA-256 of the plugin package the user approved; plugins.install refuses any other.
+    std::string approvedPackage;
 };
 
 // A file the user let one caller use; the caller sees the handle and name, never the path.

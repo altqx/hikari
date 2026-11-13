@@ -1,5 +1,7 @@
 #pragma once
 
+#include "hikari/application/tiers.h"
+
 #include <QByteArray>
 #include <QJsonObject>
 #include <QObject>
@@ -54,7 +56,10 @@ class WorkspaceLayoutController : public QObject {
     Q_PROPERTY(QString layout READ layout NOTIFY changed)
     Q_PROPERTY(QString layoutLabel READ layoutLabel NOTIFY changed)
     Q_PROPERTY(bool locked READ locked NOTIFY changed)
+    // [{name, usable, problem, tier: "project" | "mine", hidden}], the Project's first (ADR 0030). Name
+    // lookups resolve the Project first and skip the hidden ones.
     Q_PROPERTY(QVariantList savedLayouts READ savedLayouts NOTIFY savedLayoutsChanged)
+    Q_PROPERTY(bool hasProject READ hasProject NOTIFY savedLayoutsChanged)
     // QWindow::isActive is also true for the parent of an active floating panel.
     Q_PROPERTY(QObject *focusWindow READ focusWindow NOTIFY focusWindowChanged)
     // Qt Quick Controls menus are Popup.Item, so the focus window stays the shell's while one is open.
@@ -101,7 +106,16 @@ public:
     void reloadSavedLayouts();
     const QStringList &reservedPresetNames() const { return m_reservedNames; }
     Q_INVOKABLE bool resetCurrentLayout();
-    Q_INVOKABLE bool saveLayoutAs(const QString &name);
+    // `tier` "project" or "mine"; empty is Mine.
+    Q_INVOKABLE bool saveLayoutAs(const QString &name, const QString &tier = {});
+    // [{name, suggestion}] when the other tier has `name`, else [].
+    Q_INVOKABLE QVariantList layoutClashes(const QString &name, const QString &from) const;
+    // `choices` from the clash review. The name it landed under; empty when skipped or not written.
+    Q_INVOKABLE QString copyLayout(const QString &name, const QString &from, const QVariantList &choices = {});
+    Q_INVOKABLE QString moveLayout(const QString &name, const QString &from, const QVariantList &choices = {});
+    // The window's Project copy; empty without a Project. Rereads both tiers.
+    void setProjectLayoutsFile(const QString &file);
+    bool hasProject() const { return !m_projectSavedFile.isEmpty(); }
     Q_INVOKABLE bool applySavedLayout(const QString &name);
     Q_INVOKABLE bool renameSavedLayout(const QString &from, const QString &to);
     Q_INVOKABLE bool deleteSavedLayout(const QString &name);
@@ -190,17 +204,25 @@ private:
         std::optional<WorkspaceArrangement> arrangement;
         QString problem;
         QJsonObject record;
+        application::TierMark mark;
     };
     void readSavedLayouts();
-    void lockSavedLayouts();
+    std::vector<SavedLayout> readLayoutsFile(const QString &path, bool &locked);
+    void lockSavedLayouts(const QString &path, bool &locked);
     bool writeSavedLayouts();
+    bool writeLayoutsFile(const QString &path, application::Tier tier, bool &locked);
     int savedLayoutIndex(const QString &name) const;
+    int tierLayoutIndex(const QString &name, application::Tier tier) const;
+    void markHiddenLayouts();
+    QString sendLayout(const QString &name, const QString &from, const QVariantList &choices, bool move);
     void renameLayoutOrigin(const QString &from, const QString &to);
     QString knownLayout(const QString &name) const;
     QStringList m_reservedNames;
     std::vector<SavedLayout> m_saved;
     QString m_savedFile;
     bool m_savedLocked = false;
+    QString m_projectSavedFile;
+    bool m_projectLocked = false;
     QString m_writeFailure;
 
     struct Tab {

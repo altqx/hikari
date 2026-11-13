@@ -26,6 +26,9 @@ class ShapeEditor : public QObject {
     Q_PROPERTY(int nameMaxLength READ nameMaxLength CONSTANT)
     Q_PROPERTY(int ownCount READ ownCount NOTIFY changed)
     Q_PROPERTY(bool canRemove READ canRemove NOTIFY changed)
+    // The selected preset is a Mine one the Project's hides.
+    Q_PROPERTY(bool readOnly READ readOnly NOTIFY changed)
+    Q_PROPERTY(bool hasProject READ hasProject CONSTANT)
     Q_PROPERTY(bool canUndo READ canUndo NOTIFY changed)
     Q_PROPERTY(bool canRedo READ canRedo NOTIFY changed)
     // MUST KILL: undoStep and redoStep are ShapesEdition::Step ints, -1 for none
@@ -41,6 +44,7 @@ public:
         std::function<std::vector<application::visual::ShapePreset>()> defaults;
         std::function<void(const std::vector<application::visual::ShapePreset> &, const Renames &)> changed;
         std::function<void()> finished;
+        bool hasProject = false;
     };
     ShapeEditor(std::vector<application::visual::ShapePreset> presets, int curShape, Hooks hooks,
                 QObject *parent = nullptr);
@@ -57,6 +61,8 @@ public:
     int nameMaxLength() const { return application::visual::ShapesEdition::kNameMaxLength; }
     int ownCount() const;
     bool canRemove() const { return m_edition.canRemove(); }
+    bool readOnly() const { return m_edition.readOnly(); }
+    bool hasProject() const { return m_hooks.hasProject; }
     bool canUndo() const { return m_edition.canUndo(); }
     bool canRedo() const { return m_edition.canRedo(); }
     int undoStep() const { return m_edition.undoStep(); }
@@ -67,6 +73,12 @@ public:
     Q_INVOKABLE bool setShape(const QString &shape);
     Q_INVOKABLE void endTyping() { m_edition.endTyping(); }
     Q_INVOKABLE void addShape();
+    // `tier` "project" or "mine".
+    Q_INVOKABLE void addShapeTo(const QString &tier);
+    // [{name, suggestion}] when the other tier has the selected preset's name, else [].
+    Q_INVOKABLE QVariantList tierClashes() const;
+    // `choices` from the clash review; false when skipped.
+    Q_INVOKABLE bool sendToOtherTier(bool move, const QVariantList &choices = {});
     Q_INVOKABLE void duplicate();
     Q_INVOKABLE bool remove();
     Q_INVOKABLE bool takeFromLine();
