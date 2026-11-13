@@ -1,0 +1,67 @@
+{
+  "name": "fontconfig",
+  "version": "2.18.3",
+  "description": "Library for configuring and customizing font access (Hikari-owned overlay: 2.18.3 reads the 2.18 rules a newer host's /etc/fonts ships)",
+  "homepage": "https://www.freedesktop.org/wiki/Software/fontconfig",
+  "license": "MIT",
+  "supports": "linux",
+  "dependencies": [
+    "dirent",
+    "expat",
+    {
+      "name": "freetype",
+      "default-features": false
+    },
+    {
+      "name": "gperf",
+      "host": true
+    },
+    {
+      "name": "libuuid",
+      "platform": "!osx & !windows"
+    },
+    {
+      "name": "pthread",
+      "platform": "!emscripten & !windows"
+    },
+    {
+      "name": "vcpkg-tool-meson",
+      "host": true
+    }
+  ],
+  "default-features": [
+    {
+      "name": "iconv",
+      "platform": "!windows"
+    }
+  ],
+  "features": {
+    "iconv": {
+      "description": "Iconv support",
+      "dependencies": [
+        "libiconv"
+      ]
+    },
+    "nls": {
+      "description": "Native languages support",
+      "dependencies": [
+        {
+          "name": "gettext",
+          "host": true,
+          "default-features": false,
+          "features": [
+            "tools"
+          ]
+        },
+        "gettext-libintl"
+      ]
+    },
+    "tools": {
+      "description": "Build tools",
+      "supports": "!emscripten",
+      "dependencies": [
+        "getopt"
+      ]
+    }
+  }
+}
