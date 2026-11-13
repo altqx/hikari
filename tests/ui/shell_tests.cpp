@@ -18479,7 +18479,8 @@ private slots:
                 bai::SidecarSource::local(QUrl(QStringLiteral("http://127.0.0.1:%1/").arg(port))));
         };
         ports.findAgent = [clis](const QString &agent, std::function<void(std::optional<bai::AgentCli>, QString)> done) {
-            done(clis.at(agent), {});
+            const auto found = clis.find(agent);
+            done(found == clis.end() ? std::nullopt : std::optional(found->second), {});
         };
         ports.agentInstall = [](const bai::AgentCli &cli) {
             if (cli.agent == QLatin1String("claude"))
