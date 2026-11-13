@@ -104,6 +104,18 @@
         <translation>Wczoraj</translation>
     </message>
     <message>
+        <source>This agent can’t start here</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not offered: its command is inside an open project, which it could read.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not offered: this system can’t keep it to its own folders.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>This project</source>
         <translation type="unfinished"></translation>
     </message>
@@ -15130,6 +15142,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Not found on PATH.</source>
         <translation>Nie znaleziono w PATH.</translation>
+    </message>
+    <message>
+        <source>Not offered: this system can’t keep it to its own folders.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not offered: its command is inside an open project, which it could read.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Found on PATH.</source>

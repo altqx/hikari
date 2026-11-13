@@ -10,21 +10,22 @@ ColumnLayout {
     required property var hotkeys
     signal styleEditRequested(string style)
 
-    readonly property bool wide: (parent ? parent.width : width) >= wideMinimum
+    readonly property string step: {
+        const room = parent ? parent.width : width
+        return room >= wideMinimum ? "wide" : room >= mediumMinimum ? "medium" : "narrow"
+    }
+    readonly property bool wide: step === "wide"
     spacing: 6
     readonly property int slotSpacing: 8
     readonly property int timeWidth: 90
     readonly property int marginWidth: 56
     readonly property int marginMinimum: 48
-    readonly property real wideMinimum: Math.max(rowMinimum(wideFirst), rowMinimum(wideSecond))
-    function rowMinimum(slots) {
-        let w = (slots.length - 1) * slotSpacing
-        for (const slot of slots)
-            w += slot.wideMinimum
-        return w
+    readonly property real wideMinimum: rowsMinimum(wideRows)
+    readonly property real mediumMinimum: rowsMinimum(mediumRows)
+    readonly property real minimumWidth: rowsMinimum(narrowRows)
+    function rowsMinimum(rows) {
+        return Math.max(...rows.map(slots => slots.reduce((w, slot) => w + slot.smallest, (slots.length - 1) * slotSpacing)))
     }
-    readonly property real narrowColumn: Math.max(...narrowOrder.filter(s => s !== styleSlot).map(s => s.narrowMinimum))
-    readonly property real minimumWidth: Math.max(2 * narrowColumn + narrowGrid.columnSpacing, styleSlot.narrowMinimum)
 
     function commitKey(event, field, timeField) {
         const action = inspector.hotkeys.actionFor(2, event.key, event.modifiers, false)
@@ -217,23 +218,20 @@ ColumnLayout {
         ToolTip.text: tip
     }
 
-    component Slot: GridLayout {
+    component Slot: RowLayout {
         id: slot
         property string label
         property real minimum
         default property alias controls: box.data
-        readonly property real wideMinimum: (label.length > 0 ? name.implicitWidth + columnSpacing : 0) + minimum
-        readonly property real narrowMinimum: Math.max(name.implicitWidth, minimum)
-        columns: inspector.wide ? 2 : 1
-        columnSpacing: 5
-        rowSpacing: 2
+        readonly property real smallest: (label.length > 0 ? Math.ceil(name.implicitWidth) + spacing : 0) + Math.ceil(minimum)
+        spacing: 5
         Label {
             id: name
             objectName: slot.objectName + "Label"
             visible: slot.label.length > 0
             text: slot.label
             color: Theme.muted
-            Layout.alignment: inspector.wide ? Qt.AlignVCenter : Qt.AlignLeft
+            Layout.alignment: Qt.AlignVCenter
         }
         RowLayout {
             id: box
@@ -243,52 +241,49 @@ ColumnLayout {
         }
     }
 
-    RowLayout {
+    component Row: RowLayout {
+        Layout.fillWidth: true
+        visible: children.length > 0
+        spacing: inspector.slotSpacing
+    }
+    Row {
         id: firstRow
-        Layout.fillWidth: true
-        visible: inspector.wide
-        spacing: inspector.slotSpacing
     }
-    RowLayout {
+    Row {
         id: secondRow
-        Layout.fillWidth: true
-        visible: inspector.wide
-        spacing: inspector.slotSpacing
     }
-    GridLayout {
-        id: narrowGrid
-        Layout.fillWidth: true
-        visible: !inspector.wide
-        columns: 2
-        columnSpacing: 8
-        rowSpacing: 6
+    Row {
+        id: thirdRow
     }
-    readonly property var wideFirst: [startSlot, endSlot, durationSlot, styleSlot]
-    readonly property var wideSecond: [commentSlot, layerSlot, actorSlot, effectSlot, marginsSlot]
-    readonly property var narrowOrder: [startSlot, endSlot, durationSlot, layerSlot, styleSlot, actorSlot, effectSlot,
-                                        marginsSlot, commentSlot]
+    Row {
+        id: fourthRow
+    }
+    readonly property var wideRows: [[startSlot, endSlot, durationSlot, styleSlot],
+                                     [commentSlot, layerSlot, actorSlot, effectSlot, marginsSlot]]
+    readonly property var mediumRows: [[startSlot, endSlot, durationSlot], [styleSlot, actorSlot],
+                                       [layerSlot, effectSlot, commentSlot, marginsSlot]]
+    readonly property var narrowRows: [[startSlot, endSlot, durationSlot], [styleSlot, actorSlot],
+                                       [layerSlot, effectSlot, commentSlot], [marginsSlot]]
     // A layout orders its items by when they were parented, so every item goes through holder first.
     function arrange() {
-        for (const item of narrowOrder)
-            item.parent = holder
-        if (wide) {
-            for (const item of wideFirst)
-                item.parent = firstRow
-            for (const item of wideSecond)
-                item.parent = secondRow
-        } else {
-            for (const item of narrowOrder)
-                item.parent = narrowGrid
-        }
+        for (const slots of narrowRows)
+            for (const item of slots)
+                item.parent = holder
+        const rows = [firstRow, secondRow, thirdRow, fourthRow]
+        const shown = step === "wide" ? wideRows : step === "medium" ? mediumRows : narrowRows
+        shown.forEach((slots, i) => {
+            for (const item of slots)
+                item.parent = rows[i]
+        })
     }
-    onWideChanged: arrange()
+    onStepChanged: arrange()
     Component.onCompleted: arrange()
     component Half: Slot {
-        Layout.fillWidth: true
-        Layout.maximumWidth: inspector.wide && !grows ? implicitWidth : Number.POSITIVE_INFINITY
-        Layout.minimumWidth: inspector.wide ? wideMinimum : inspector.narrowColumn
-        Layout.preferredWidth: inspector.wide ? -1 : inspector.narrowColumn
         property bool grows: false
+        property bool stretches: false
+        Layout.fillWidth: true
+        Layout.maximumWidth: grows || (stretches && !inspector.wide) ? Number.POSITIVE_INFINITY : implicitWidth
+        Layout.minimumWidth: smallest
     }
     Item {
         id: holder
@@ -300,7 +295,6 @@ ColumnLayout {
             id: commentSlot
             objectName: "commentSlot"
             minimum: comment.implicitWidth
-            Layout.alignment: inspector.wide ? Qt.AlignVCenter : Qt.AlignBottom
             CheckBox {
                 id: comment
                 objectName: "commentBox"
@@ -345,6 +339,7 @@ ColumnLayout {
         Half {
             id: startSlot
             objectName: "startSlot"
+            stretches: true
             label: qsTr("Start")
             minimum: inspector.timeWidth
             TimeBox {
@@ -362,6 +357,7 @@ ColumnLayout {
         Half {
             id: endSlot
             objectName: "endSlot"
+            stretches: true
             label: qsTr("End")
             minimum: inspector.timeWidth
             TimeBox {
@@ -379,6 +375,7 @@ ColumnLayout {
         Half {
             id: durationSlot
             objectName: "durationSlot"
+            stretches: true
             label: qsTr("Duration")
             minimum: inspector.timeWidth
             TimeBox {
@@ -400,8 +397,7 @@ ColumnLayout {
             minimum: styleChoice.Layout.minimumWidth + 2 + styleEdit.implicitWidth
             Layout.fillWidth: true
             Layout.horizontalStretchFactor: 4
-            Layout.minimumWidth: inspector.wide ? wideMinimum : narrowMinimum
-            Layout.columnSpan: inspector.wide ? 1 : 2
+            Layout.minimumWidth: smallest
             ComboBox {
                 id: styleChoice
                 objectName: "styleChoice"
@@ -474,6 +470,7 @@ ColumnLayout {
         Half {
             id: marginsSlot
             objectName: "marginsSlot"
+            stretches: true
             label: qsTr("Margins")
             minimum: 3 * inspector.marginMinimum + 2 * 2
             Field {

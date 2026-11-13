@@ -8,16 +8,19 @@ target_compile_definitions(hikari_ui_line_grid_tests PRIVATE HIKARI_TEST_ARTIFAC
 hikari_add_qttest(hikari_ui_line_grid_a11y_tests SOURCES line_grid_a11y_tests.cpp LIBRARIES hikari_ui)
 hikari_add_qttest(hikari_ui_wheel_scroll_tests SOURCES wheel_scroll_tests.cpp LIBRARIES hikari_ui Qt6::QuickControls2)
 # MUST KILL: each part runs from its named function up to the next part's, in shell_tests.cpp's order
-hikari_add_qttest(hikari_ui_shell_tests SOURCES shell_tests.cpp next_file_folder.cpp
+hikari_add_qttest(hikari_ui_shell_tests SOURCES shell_tests.cpp next_file_folder.cpp gui_thread_clock.cpp
     LIBRARIES hikari_composition Qt6::CorePrivate ZLIB::ZLIB Hikari::sodium
     PARTS documents
           panels=panelsFloatDockHideAndKeepTheirState
+          panels2=saveAsOffersAssForADocumentOfAnotherFormat
+          panels3=spellCheckerWindowAndEditorMarks
           translation=translationModeStacksOriginalAboveTranslated
           hotkeys=hotkeysPageMapsAndOkInstalls
           visual=visualToolRailCrosshairAndCopyCoordinates
+          visual2=importLyricsAddsLinesToTheOpenFileInOneStep
           video=videoRecentListsAndDialogFolders
     PART_TIMEOUT 600)
-foreach(part documents visual)
+foreach(part documents visual visual2)
     foreach(mode offscreen xvfb)
         if(TEST hikari_ui_shell_tests.${part}.${mode})
             set_property(TEST hikari_ui_shell_tests.${part}.${mode} APPEND PROPERTY
@@ -143,7 +146,7 @@ if(NOT WIN32)
         ENVIRONMENT "QT_QPA_PLATFORM=offscreen:configfile=${CMAKE_CURRENT_SOURCE_DIR}/fullscreen-two-screens.json"
         LABELS "ui;offscreen" TIMEOUT 120 RESOURCE_LOCK hikari_ui_video_fullscreen_workflow)
 endif()
-hikari_add_spix_test(hikari_ui_playback_workflow SOURCES playback_workflow.cpp LIBRARIES hikari_composition
+hikari_add_spix_test(hikari_ui_playback_workflow SOURCES playback_workflow.cpp gui_thread_clock.cpp LIBRARIES hikari_composition
     DEFINITIONS HIKARI_MEDIA_HELPER="$<TARGET_FILE:hikari_media_helper>"
                 HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures")
 add_dependencies(hikari_ui_playback_workflow hikari_media_helper hikari_media_fixtures)
@@ -570,6 +573,13 @@ target_compile_definitions(hikari_ui_language_tests PRIVATE
 foreach(mode offscreen xvfb)
     if(TEST hikari_ui_language_tests.${mode})
         set_tests_properties(hikari_ui_language_tests.${mode} PROPERTIES TIMEOUT 300)
+    endif()
+endforeach()
+
+hikari_add_qttest(hikari_ui_contrast_tests SOURCES contrast_tests.cpp LIBRARIES hikari_composition)
+foreach(mode offscreen xvfb native)
+    if(TEST hikari_ui_contrast_tests.${mode})
+        set_tests_properties(hikari_ui_contrast_tests.${mode} PROPERTIES TIMEOUT 600)
     endif()
 endforeach()
 
