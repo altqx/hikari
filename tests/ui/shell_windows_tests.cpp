@@ -444,6 +444,7 @@ private slots:
     void init()
     {
         wiring.emplace();
+        QVERIFY(QDir(dir.path()).removeRecursively() && QDir().mkpath(dir.path()));
         QVERIFY(QDir(dir.path()).mkpath(QStringLiteral("Dictionary")));
         for (const char *file : {"Dictionary/en_US.aff", "Dictionary/en_US.dic"}) {
             QFile f(dir.filePath(QLatin1String(file)));
@@ -1349,6 +1350,27 @@ private slots:
         QTRY_VERIFY(floatingOf(first()));
         QCOMPARE(titles(0), (QStringList{"first.ass*"}));
         QCOMPARE(titles(shellId(second)), (QStringList{"second.ass*"}));
+    }
+
+    void aFirstWindowHiddenWithAFloatingPanelStartsWholeAgain()
+    {
+        QTest::failOnWarning(QRegularExpression(QStringLiteral("of null")));
+        QVERIFY(dock(first(), "audioDock")->setProperty("isFloating", true));
+        QTRY_VERIFY(floatingOf(first()));
+        hideFirst();
+        auto *layout = first()->property("workspaceLayout").value<ui::WorkspaceLayoutController *>();
+        layout->save();
+        tearDownAfterQuit();
+
+        relaunch();
+        QWindow *floating = nullptr;
+        QTRY_VERIFY((floating = floatingOf(first())));
+        QVERIFY(dock(first(), "audioDock")->property("isFloating").toBool());
+        QQuickItem *audio = floating->findChild<QQuickItem *>(QStringLiteral("audioPanel"));
+        QVERIFY(audio);
+        QTRY_VERIFY(audio->isVisible());
+        for (const char *name : {"gridDock", "editorDock", "videoDock"})
+            QVERIFY2(dock(first(), name)->property("isOpen").toBool(), name);
     }
 
     void theApiActsOnTheWindowLastUsed()
