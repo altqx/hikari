@@ -102,10 +102,11 @@ A caller subscribes to events by name and hears them only while subscribed.
 | Event | When |
 | --- | --- |
 | `document.changed` | A Document's revision moved: an edit, an undo, a write. |
+| `document.saved` | A Document was written to a file: Save, Save as, Save all or Save translation. It comes after the file is on disk, with the path and the revision written, and never for a cancelled or failed save. |
 | `selection.changed` | The selection or active Line of a Document changed. |
 | `documents.changed` | A Document opened or closed, or the editing target changed. Without `documents.all` the list holds the editing target and the caller's attached Documents only. |
 | `panel.changed` | A panel opened, closed or floated. |
-| `command.ran` | A command ran, from the API, a menu, a toolbar or a key. |
+| `command.ran` | A command was triggered, from the API, a menu, a toolbar or a key. It reports the trigger, not the outcome: a Save that opens a dialog or a question comes before anything is written, even when it is then cancelled. Use `document.saved` to know a file was written. |
 
 The application notices changes after each refresh of its views and each selection change, so a burst of edits gives one event per refresh, not one per edit.
 

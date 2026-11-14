@@ -2,6 +2,7 @@
 
 #include "hikari/api/host.h"
 #include "hikari/api/json.h"
+#include "hikari/api/undo_groups.h"
 
 #include <expected>
 #include <functional>
@@ -85,6 +86,7 @@ struct Context {
     std::vector<GrantedFolder> folders;
     // Grants the caller a file inside one of its folders and answers the handle.
     std::function<std::string(const std::string &path, bool writable)> grantFile;
+    UndoGroups *groups = nullptr;
 };
 
 // A handler replies exactly once, now or later, on the GUI thread.
@@ -152,6 +154,7 @@ public:
 
     // The host reports each change once, after it happened, whoever made it.
     void documentChanged(application::DocumentId document); // a commit, Undo or Redo
+    void documentSaved(application::DocumentId document, std::string_view path, std::uint64_t revision);
     void selectionChanged(application::DocumentId document);
     void documentsChanged(); // a tab opened or closed, or the editing target moved
     void panelChanged(std::string_view panel);
@@ -167,6 +170,8 @@ public:
     std::string grantFolder(const std::string &callerId, const std::string &path, bool writable);
     // Its files and its folders.
     void revokeFiles(const std::string &callerId);
+    // Ends the caller's document.group_begin group, as group_end would: its command returned or it stopped.
+    void endGroup(const std::string &callerId);
     // The path behind a caller's handle, if the caller holds it.
     std::optional<std::string> grantedPath(const std::string &callerId, std::string_view handle) const;
     // The file a files.write would change, from its file handle or its folder and path; nullopt: neither is granted.
@@ -186,6 +191,8 @@ private:
 
     Host m_host;
     bool m_writing = false;
+    std::string m_writingCaller;
+    UndoGroups m_groups;
     std::vector<Subscription> m_subscriptions;
     std::uint64_t m_nextSubscription = 1;
     std::vector<std::pair<std::string, GrantedFile>> m_grants; // by caller id

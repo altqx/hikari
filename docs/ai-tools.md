@@ -57,7 +57,7 @@ Hikari AI's threads also get `update_plan` ([AI agent](ai-agent.md)) and `read_s
 
 **The up-front budget.** The tools offered before any search, with `update_plan`, `read_skill`, a search service chosen and a provider's own search tools added, must stay within 5,000 tokens (`o200k_base`) on every wire, raised from 3,000 (owner Q123, 2026-11-09). A bun test measures the `tools` each wire sends, for a thread and for a root thread with the sub-agent tools and 10 MCP servers. The largest is Responses: 3,467 for a thread and 4,478 for the root thread. Each server adds about 40 tokens through its line in `search_tools`.
 
-**Placing operations.** `kPlacements` in `catalogue.ts` places every HA1 operation; only `commands.list` (behind `search_commands`), `skills.list` and `skills.read` (behind `read_skill`) and `api.version` are left out on purpose. A bun test fails when HA1 gains an operation that isn't placed, so each new operation is a decision. Deprecated operations aren't offered.
+**Placing operations.** `kPlacements` in `catalogue.ts` places every HA1 operation; only these are left out on purpose: `commands.list` (behind `search_commands`), `skills.list` and `skills.read` (behind `read_skill`), `api.version`, `project.info`, `translation.project_write`, `video.frames` (raw pixel batches; `video.frame` gives images), and the plugin-only `automation.run_macro`, `vcs.refs`, `vcs.show` and `marks.*`. A bun test fails when HA1 gains an operation that isn't placed, so each new operation is a decision. Deprecated operations aren't offered.
 
 ## Frames
 

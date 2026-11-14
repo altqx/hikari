@@ -22,6 +22,8 @@
 #include "visual_tools_controller.h"
 #include "workspace_layout.h"
 
+#include "qtest_parts.h"
+
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
@@ -1392,5 +1394,5 @@ private slots:
     }
 };
 
-QTEST_MAIN(ProjectWindowsTests)
+HIKARI_QTEST_MAIN_IN_PARTS(ProjectWindowsTests)
 #include "project_windows_tests.moc"
