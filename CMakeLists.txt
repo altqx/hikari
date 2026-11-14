@@ -34,7 +34,9 @@ endif()
 option(HIKARI_DEBUG_SYMBOLS "Build with debug info kept apart from the packages (package CI)" OFF)
 if(HIKARI_DEBUG_SYMBOLS)
     if(MSVC)
-        add_compile_options("$<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/Z7>" "$<$<COMPILE_LANG_AND_ID:C,MSVC>:/Z7>")
+        # /Z7 adds a .debug$S section per COMDAT, so big objects pass COFF's 65,279 section limit.
+        add_compile_options("$<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/Z7>" "$<$<COMPILE_LANG_AND_ID:C,MSVC>:/Z7>"
+            "$<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/bigobj>" "$<$<COMPILE_LANG_AND_ID:C,MSVC>:/bigobj>")
         add_link_options("$<$<LINK_LANG_AND_ID:CXX,MSVC>:/DEBUG:FULL>" "$<$<LINK_LANG_AND_ID:CXX,MSVC>:/OPT:REF>"
             "$<$<LINK_LANG_AND_ID:CXX,MSVC>:/OPT:ICF>")
     else()
