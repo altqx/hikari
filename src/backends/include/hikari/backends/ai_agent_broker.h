@@ -45,6 +45,13 @@ public:
     virtual Lines fromAgent(const QByteArray &line) = 0;
 };
 
+/// Where an agent session's private MCP channel listens: `url` on 127.0.0.1, or on Windows, where an AppContainer
+/// can't reach loopback, a `pipe` that only the agent's AppContainer may open.
+struct ChannelAddress {
+    QString url;
+    QString pipe;
+};
+
 /// An agent CLI Qt starts for the sidecar.
 struct AgentSpec {
     /// From Qt's settings or PATH, never from the sidecar.
@@ -62,16 +69,24 @@ struct AgentSpec {
     std::function<QString(const QStringList &arguments)> refuse;
     std::function<std::unique_ptr<AgentGuard>()> guard;
     /// Gives each process a private MCP channel for the session the sidecar names: the arguments that point the
-    /// agent at `url`. The token goes in HIKARI_MCP_TOKEN.
-    std::function<QStringList(const QString &url)> channelArguments;
+    /// agent at it. The token goes in HIKARI_MCP_TOKEN.
+    std::function<QStringList(const ChannelAddress &channel)> channelArguments;
     /// Gives each process a private MCP channel for the session the sidecar names, through a guard that names the
-    /// channel at `url` with `token` in the agent's own protocol.
-    std::function<std::unique_ptr<AgentGuard>(const QString &url, const QByteArray &token)> channelGuard;
+    /// channel with `token` in the agent's own protocol.
+    std::function<std::unique_ptr<AgentGuard>(const ChannelAddress &channel, const QByteArray &token)> channelGuard;
     /// Runs before the process starts, which it does once `go` gets no error.
     std::function<void(std::function<void(QString error)> go)> before;
     /// Runs after the process exits.
     std::function<void()> after;
 };
+
+/// The low-rights helper beside HikariSub's `bridge` on Windows, where Codex and ACP agents run through it; none
+/// elsewhere.
+std::optional<QString> lowRightsHelperBeside(const QString &bridge);
+
+/// Why agents started through the low-rights helper beside `bridge` can't have a private tools channel here; empty
+/// when they can, and always where the channel is loopback HTTP.
+QString channelProblem(const QString &bridge);
 
 /// Refuses permission bypass, extra folders, plugins, inline settings and any MCP server but the SDK's in-process
 /// ones, and requires Claude's built-in tools off (`--tools=`).
@@ -81,9 +96,11 @@ QString refusedClaudeArguments(const QStringList &arguments);
 std::unique_ptr<AgentGuard> codexGuard();
 
 /// Where an ACP agent finds Hikari's tools: the channel itself when the agent takes HTTP MCP servers, otherwise
-/// `bridge --mcp --channel-url <url>` over stdio, which reads the token from HIKARI_MCP_TOKEN.
+/// `bridge --mcp --channel-url <url>` over stdio, or `bridge --mcp --channel <pipe>` when there is a pipe; the bridge
+/// reads the token from HIKARI_MCP_TOKEN.
 struct AcpChannel {
     QString url;
+    QString pipe;
     QByteArray token;
     QString bridge;
     QString work;
@@ -111,9 +128,10 @@ AgentSpec customAcpAgent(const QString &program, const QStringList &arguments, c
 /// Claude Code at `program` with only its own state writable: `<home>/.claude`, `<home>/.claude.json` and `work`.
 AgentSpec claudeAgent(const QString &program, const QString &home, const QString &work);
 /// Codex app-server behind `program`, which may be npm's launcher, with Hikari's own `CODEX_HOME`, signed in through
-/// `lease` and given Hikari's tools on a private MCP channel. Empty when no native binary is found.
+/// `lease` and given Hikari's tools on a private MCP channel, reached through `bridge` where the channel is a pipe.
+/// Empty when no native binary is found.
 std::optional<AgentSpec> codexAgent(const QString &program, const QString &codexHome, const QString &work,
-                                    std::shared_ptr<CodexLease> lease);
+                                    std::shared_ptr<CodexLease> lease, const QString &bridge);
 
 /// Answers the sidecar's `_hikari/agent.*` requests: starts the agents Qt knows, each in its own sandbox and under
 /// the process number the sidecar picked, and relays their stdio as `_hikari/agent.output` and `_hikari/agent.exit`

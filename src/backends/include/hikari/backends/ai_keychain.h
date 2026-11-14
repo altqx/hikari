@@ -7,7 +7,8 @@
 namespace hikari::backends::ai {
 
 /// Provider keys in the OS keychain through QtKeychain: the Secret Service or KWallet on Linux, the Credential
-/// Store on Windows. Without one, every call fails with Unavailable; nothing falls back to a file.
+/// Store on Windows, where HikariSub reads it only to move keys to a FileKeyStore. Without one, every call fails with
+/// Unavailable; nothing falls back to a file.
 class KeychainKeyStore final : public hikari::application::ai::KeyStore {
 public:
     explicit KeychainKeyStore(QString service) : m_service(std::move(service)) {}

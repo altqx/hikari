@@ -151,6 +151,12 @@ target_compile_definitions(hikari_backends_lua_node_helper_tests PRIVATE
     HIKARI_FAKE_LUA_NODE_HELPER="$<TARGET_FILE:hikari_fake_lua_node_helper>"
     HIKARI_KARAOKE_PRESET_FIXTURES="${CMAKE_CURRENT_SOURCE_DIR}/karaoke-presets")
 add_dependencies(hikari_backends_lua_node_helper_tests hikari_lua_helper hikari_fake_lua_node_helper)
+if(WIN32)
+    target_compile_definitions(hikari_backends_lua_node_helper_tests PRIVATE
+        HIKARI_SANDBOX_PROBE="$<TARGET_FILE:hikari_sandbox_probe>"
+        HIKARI_TEST_CONFINE_HELPER="$<TARGET_FILE:hikarisub_confine>")
+    add_dependencies(hikari_backends_lua_node_helper_tests hikari_sandbox_probe hikarisub_confine)
+endif()
 
 hikari_add_gtest(hikari_backends_karaoke_templater_tests SOURCES karaoke_templater_tests.cpp
     LIBRARIES hikari_backends Qt6::Core LABELS backends)
@@ -472,6 +478,14 @@ hikari_add_gtest(hikari_backends_ai_config_store_tests SOURCES ai_config_store_t
     LIBRARIES hikari_ai Qt6::Core LABELS backends)
 hikari_add_gtest(hikari_backends_ai_keychain_tests SOURCES ai_keychain_tests.cpp
     LIBRARIES hikari_ai Qt6::Core LABELS backends)
+if(WIN32)
+    hikari_add_gtest(hikari_backends_ai_file_key_store_tests SOURCES ai_file_key_store_tests.cpp
+        LIBRARIES hikari_ai hikari_sandbox Qt6::Core LABELS backends)
+    target_compile_definitions(hikari_backends_ai_file_key_store_tests PRIVATE
+        HIKARI_SANDBOX_PROBE="$<TARGET_FILE:hikari_sandbox_probe>"
+        HIKARI_TEST_CONFINE_HELPER="$<TARGET_FILE:hikarisub_confine>")
+    add_dependencies(hikari_backends_ai_file_key_store_tests hikari_sandbox_probe hikarisub_confine)
+endif()
 add_executable(hikari_sandbox_probe sandbox_probe.cpp)
 if(WIN32)
     target_link_libraries(hikari_sandbox_probe PRIVATE ws2_32)
@@ -520,6 +534,15 @@ target_compile_definitions(hikari_backends_ai_agent_broker_tests PRIVATE
     HIKARI_FAKE_ACP_AGENT="$<TARGET_FILE:hikari_fake_acp_agent>"
     HIKARI_TEST_MCP_HTTP_BRIDGE="$<TARGET_FILE:hikari_test_mcp_http_bridge>")
 add_dependencies(hikari_backends_ai_agent_broker_tests hikari_fake_agent hikari_fake_acp_agent hikari_test_mcp_http_bridge)
+if(WIN32)
+    foreach(test hikari_backends_sandbox_tests hikari_backends_ai_agent_broker_tests)
+        target_compile_definitions(${test} PRIVATE HIKARI_TEST_CONFINE_HELPER="$<TARGET_FILE:hikarisub_confine>")
+        add_dependencies(${test} hikarisub_confine)
+    endforeach()
+    target_compile_definitions(hikari_backends_ai_agent_broker_tests PRIVATE
+        HIKARI_SANDBOX_PROBE="$<TARGET_FILE:hikari_sandbox_probe>")
+    add_dependencies(hikari_backends_ai_agent_broker_tests hikari_sandbox_probe)
+endif()
 hikari_add_gtest(hikari_backends_ai_antigravity_tests SOURCES ai_antigravity_tests.cpp
     LIBRARIES hikari_ai Qt6::Core Qt6::Network Qt6::Test LABELS backends)
 hikari_add_gtest(hikari_backends_ai_mcp_clients_tests SOURCES ai_mcp_clients_tests.cpp

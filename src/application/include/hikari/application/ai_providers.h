@@ -206,7 +206,8 @@ using EventSink = std::function<void(const Event &)>;
 
 using StreamId = std::uint64_t;
 
-enum class KeyError { Unavailable, Denied, NotFound, Other };
+/// `NotPrivate`: the keys' folder can't be made the user's alone, so nothing was written.
+enum class KeyError { Unavailable, Denied, NotFound, NotPrivate, Other };
 
 using KeyResult = std::variant<std::string, KeyError>;
 
@@ -228,7 +229,7 @@ public:
     virtual bool save(const Config &config) = 0;
 };
 
-enum class SaveError { Key, KeychainUnavailable, KeychainDenied, Config };
+enum class SaveError { Key, KeychainUnavailable, KeychainDenied, KeychainNotPrivate, Config };
 
 /// The providers the user added, their keys and their role models.
 class Providers {

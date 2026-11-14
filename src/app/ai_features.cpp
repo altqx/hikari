@@ -4,6 +4,9 @@
 #include "hikari/backends/ai_agent_broker.h"
 #include "hikari/backends/ai_antigravity.h"
 #include "hikari/backends/ai_config_store.h"
+#ifdef Q_OS_WIN
+#include "hikari/backends/ai_file_key_store.h"
+#endif
 #include "hikari/backends/ai_http_relay.h"
 #include "hikari/backends/ai_keychain.h"
 #include "hikari/backends/ai_mcp_clients.h"
@@ -96,15 +99,6 @@ std::vector<backends::ai::McpServerEntry> mcpServersOf(const ui::SettingsStore &
     return backends::ai::mcpServersFromJson(rows);
 }
 
-/// The agents Qt can start here. Codex needs a tools channel its AppContainer can reach on Windows (#931).
-QString agentCli(const QString &agent)
-{
-#ifdef Q_OS_WIN
-    if (agent == QLatin1String("codex"))
-        return {};
-#endif
-    return backends::ai::findAgentCli(agent);
-}
 
 QString acpBroker(const QString &id)
 {
@@ -117,7 +111,15 @@ AiFeatures::Ports AiFeatures::defaultPorts(const QString &userFolder, api::Api *
 {
     const QString ai = userFolder + QStringLiteral("/ai");
     Ports ports;
+#ifdef Q_OS_WIN
+    ports.keyStore = [ai, kept = !userFolder.isEmpty()] {
+        return std::make_unique<backends::ai::FileKeyStore>(
+            kept ? ai + QStringLiteral("/secrets") : QString(),
+            std::make_unique<backends::ai::KeychainKeyStore>(QStringLiteral("HikariSub")));
+    };
+#else
     ports.keyStore = [] { return std::make_unique<backends::ai::KeychainKeyStore>(QStringLiteral("HikariSub")); };
+#endif
     ports.configStore = [ai, kept = !userFolder.isEmpty()]() -> std::unique_ptr<application::ai::ConfigStore> {
         if (!kept)
             return std::make_unique<NoConfigStore>();
@@ -134,7 +136,7 @@ AiFeatures::Ports AiFeatures::defaultPorts(const QString &userFolder, api::Api *
         options.arguments = {install.bundle, QStringLiteral("--vendor"), QDir::toNativeSeparators(vendor)};
         options.workingDirectory = ai + QStringLiteral("/work");
         options.sandbox = backends::sandbox::Profile{
-            .name = QStringLiteral("HikariSub.AI.Sidecar"),
+            .name = backends::sandbox::profileName(backends::sandbox::OwnProfile::Sidecar),
             .readExecute = {QFileInfo(install.runtime).absolutePath(), QFileInfo(install.bundle).absolutePath()},
             .readWrite = {options.workingDirectory, vendor},
         };
@@ -158,16 +160,21 @@ AiFeatures::Ports AiFeatures::defaultPorts(const QString &userFolder, api::Api *
     };
     ports.agents = [ai](backends::ai::AgentBroker &broker, application::ai::KeyStore &keys) {
         const QString agents = ai + QStringLiteral("/agents");
-        if (const QString claude = agentCli(QStringLiteral("claude")); !claude.isEmpty())
+        if (const QString claude = backends::ai::findAgentCli(QStringLiteral("claude")); !claude.isEmpty())
             broker.add("claude", backends::ai::claudeAgent(claude, QDir::homePath(), agents + QStringLiteral("/claude")));
-        if (const QString codex = agentCli(QStringLiteral("codex")); !codex.isEmpty())
+        if (const QString codex = backends::ai::findAgentCli(QStringLiteral("codex")); !codex.isEmpty())
             if (auto spec = backends::ai::codexAgent(
                     codex, agents + QStringLiteral("/codex/home"), agents + QStringLiteral("/codex/work"),
-                    std::make_shared<backends::ai::CodexLease>(keys, agents + QStringLiteral("/codex/home"))))
+                    std::make_shared<backends::ai::CodexLease>(keys, agents + QStringLiteral("/codex/home")),
+                    QCoreApplication::applicationFilePath()))
                 broker.add("codex", std::move(*spec));
     };
-    ports.agentOnPath = [](const QString &agent) { return !agentCli(agent).isEmpty(); };
+    ports.agentOnPath = [](const QString &agent) { return !backends::ai::findAgentCli(agent).isEmpty(); };
     ports.filesConfined = [] { return backends::sandbox::systemCoverage(backends::sandbox::Network::Any).files; };
+    ports.channelProblem = [] { return backends::ai::channelProblem(QCoreApplication::applicationFilePath()); };
+    ports.lowRights = [] {
+        return backends::ai::lowRightsHelperBeside(QCoreApplication::applicationFilePath()).has_value();
+    };
     ports.acpCli = [](const QString &command) {
         if (QFileInfo(command).isAbsolute())
             return QFileInfo(command).isExecutable() ? command : QString();
@@ -435,7 +442,7 @@ backends::ai::AiSidecarHost *AiFeatures::buildHost()
                 m_live->agents = std::make_unique<backends::ai::AgentBroker>();
                 if (m_ports.agents)
                     m_ports.agents(*m_live->agents, *m_live->keys);
-                if (!confinesFiles())
+                if (!refusal(QStringLiteral("codex")).isEmpty())
                     m_live->agents->remove("codex");
                 addAcpAgents();
                 m_live->agents->attach(*m_live->host);
@@ -603,9 +610,6 @@ void AiFeatures::setCustomAgents(const std::vector<AcpAgent> &agents)
 
 std::vector<AiFeatures::AcpAgent> AiFeatures::acpAgents() const
 {
-#ifdef Q_OS_WIN
-    return {};
-#else
     std::vector<AcpAgent> out;
     if (!m_ports.acpCli)
         return out;
@@ -618,7 +622,6 @@ std::vector<AiFeatures::AcpAgent> AiFeatures::acpAgents() const
             out.push_back(std::move(agent));
     std::erase_if(out, [this](const AcpAgent &agent) { return !acpRefusal(agent.program).isEmpty(); });
     return out;
-#endif
 }
 
 void AiFeatures::setProjectRoots(std::function<QStringList()> roots)
@@ -652,9 +655,25 @@ bool AiFeatures::confinesFiles() const
     return !m_ports.filesConfined || m_ports.filesConfined();
 }
 
+bool AiFeatures::channelOpens() const
+{
+    if (!m_channelOpens)
+        m_channelOpens = !m_ports.channelProblem || m_ports.channelProblem().isEmpty();
+    return *m_channelOpens;
+}
+
+bool AiFeatures::runsWithLowRights(const QString &agent) const
+{
+    return agent != QLatin1String("claude") && m_ports.lowRights && m_ports.lowRights();
+}
+
 QString AiFeatures::refusal(const QString &agent) const
 {
-    return agent == QLatin1String("claude") || confinesFiles() ? QString() : QStringLiteral("sandbox");
+    if (agent == QLatin1String("claude"))
+        return {};
+    if (!confinesFiles())
+        return QStringLiteral("sandbox");
+    return channelOpens() ? QString() : QStringLiteral("channel");
 }
 
 QString AiFeatures::agentRefusal(const QString &agent) const
@@ -672,6 +691,8 @@ QString AiFeatures::acpRefusal(const QString &program) const
 {
     if (!confinesFiles())
         return QStringLiteral("sandbox");
+    if (!channelOpens())
+        return QStringLiteral("channel");
     const QString real = QFileInfo(program).canonicalFilePath();
     if (real.isEmpty() || !m_projectRoots)
         return {};

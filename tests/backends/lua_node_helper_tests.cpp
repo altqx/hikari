@@ -5,6 +5,10 @@
 #include "hikari/core/ass_load.h"
 
 #include <QCoreApplication>
+#include <QDir>
+#include <QFile>
+#include <QProcess>
+#include <QTemporaryDir>
 #include <gtest/gtest.h>
 
 #include <chrono>
@@ -379,3 +383,36 @@ TEST_F(LuaNodeHelperTest, AGraphWithALuaNodeRunsEndToEndInTheSandboxedHelper)
     EXPECT_EQ(layers(*run), layers(*inProcess));
     EXPECT_EQ(lua.starts(), 1);
 }
+
+#ifdef _WIN32
+TEST(LuaNodeSandbox, ALuaNodeRunInAPerUserInstallLeavesTheBridgeThereLoadableForLowRightsAgents)
+{
+    QTemporaryDir install;
+    ASSERT_TRUE(install.isValid());
+    const QString helper = install.filePath(QStringLiteral("hikari-lua-helper.exe"));
+    const QString bridge = install.filePath(QStringLiteral("hikarisub-mcp-bridge.exe"));
+    for (const QString &copy : {helper, bridge})
+        ASSERT_TRUE(QFile::copy(QStringLiteral(HIKARI_SANDBOX_PROBE), copy));
+    const auto run = [](backends::sandbox::Launcher &launcher, const QString &program) {
+        QProcess process;
+        process.setProgram(program);
+        process.setArguments({QStringLiteral("low")});
+        launcher.prepare(process);
+        process.start();
+        EXPECT_TRUE(process.waitForFinished(20'000)) << process.errorString().toStdString();
+        return QString::fromLocal8Bit(process.readAllStandardOutput() + process.readAllStandardError());
+    };
+    {
+        backends::sandbox::Launcher lua(backends::luaNodeProfile(helper));
+        ASSERT_TRUE(lua.coverage().missing.isEmpty()) << lua.coverage().missing.toStdString();
+        EXPECT_TRUE(run(lua, helper).startsWith(QStringLiteral("low: ")));
+    }
+    backends::sandbox::Launcher agent(backends::sandbox::Profile{
+        .name = backends::sandbox::profileName(backends::sandbox::OwnProfile::Acp),
+        .readExecute = {install.path()},
+        .lowRightsHelper = QStringLiteral(HIKARI_TEST_CONFINE_HELPER)});
+    ASSERT_TRUE(agent.coverage().missing.isEmpty()) << agent.coverage().missing.toStdString();
+    const QString said = run(agent, bridge);
+    EXPECT_TRUE(said.startsWith(QStringLiteral("low: ok"))) << said.toStdString();
+}
+#endif

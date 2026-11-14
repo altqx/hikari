@@ -154,6 +154,8 @@ void TokenFileLease::keep(std::function<void(QString error)> done)
                  [alive = std::weak_ptr(m_alive), done = std::move(done)](std::optional<app::KeyError> error) {
                      if (!alive.lock())
                          return;
+                     if (error == app::KeyError::NotPrivate)
+                         return done(agentSignInNotSaved(SecretWrite::NotPrivate));
                      done(error ? QStringLiteral("Google signed you in, but the keychain couldn't keep the sign-in. "
                                                  "Unlock your keychain, then sign in again.")
                                 : QString());
@@ -178,7 +180,7 @@ AgentSpec antigravityAgent(const QString &program, const QString &profile, const
     for (const QString &folder : {profile, profile + QStringLiteral("/gemini"), profile + QStringLiteral("/gemini/app-data"), home})
         makeForUserOnly(folder);
     AgentSpec spec = acpAgent(program, antigravityArguments(profile), {profile}, profile + QStringLiteral("/work"), bridge);
-    spec.profile->name = QStringLiteral("HikariSub.AI.Antigravity");
+    spec.profile->name = sandbox::profileName(sandbox::OwnProfile::Antigravity);
     spec.environment.insert(QStringLiteral("HOME"), QDir::toNativeSeparators(home));
     if (lease) {
         spec.before = [lease](std::function<void(QString)> go) { lease->acquire(std::move(go)); };

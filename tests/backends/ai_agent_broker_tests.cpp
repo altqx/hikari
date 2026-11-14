@@ -1,5 +1,6 @@
 #include "hikari/backends/ai_agent_broker.h"
 #include "hikari/backends/ai_mcp_bridge.h"
+#include "hikari/backends/ai_mcp_server.h"
 #include "hikari/backends/ai_sidecar_host.h"
 #include "hikari/backends/ai_signin.h"
 
@@ -10,6 +11,8 @@
 #include <QFileInfo>
 #include <QHostAddress>
 #include <QLibraryInfo>
+#include <QLocalSocket>
+#include <QProcess>
 #include <QTcpSocket>
 #include <QTemporaryDir>
 #include <QUrl>
@@ -19,10 +22,54 @@
 #include <string>
 #include <vector>
 
+#ifdef _WIN32
+#include <windows.h>
+#include <aclapi.h>
+#include <psapi.h>
+#include <sddl.h>
+#endif
+
 using namespace hikari::backends::ai;
 using hikari::api::Json;
 
 namespace {
+
+#ifdef _WIN32
+// MUST KILL: sandbox grants are never revoked, so a test can't grant Qt's own folder; agents load a copy instead.
+class QtCopy
+{
+public:
+    QtCopy() : m_path(qgetenv("PATH"))
+    {
+        HMODULE modules[1024];
+        DWORD bytes = 0;
+        if (!m_dir.isValid() || !EnumProcessModules(GetCurrentProcess(), modules, sizeof modules, &bytes))
+            return;
+        const QString qtBin = QDir::cleanPath(QLibraryInfo::path(QLibraryInfo::BinariesPath));
+        for (DWORD i = 0; i < bytes / sizeof(HMODULE); ++i) {
+            wchar_t name[MAX_PATH];
+            const DWORD length = GetModuleFileNameW(modules[i], name, MAX_PATH);
+            const QFileInfo module(QDir::fromNativeSeparators(QString::fromWCharArray(name, int(length))));
+            if (module.absolutePath().compare(qtBin, Qt::CaseInsensitive) == 0 &&
+                !QFile::copy(module.absoluteFilePath(), m_dir.filePath(module.fileName())))
+                return;
+        }
+        qputenv("PATH", QDir::toNativeSeparators(m_dir.path()).toLocal8Bit() + ';' + m_path);
+        m_ready = true;
+    }
+    ~QtCopy() { qputenv("PATH", m_path); }
+    QtCopy(const QtCopy &) = delete;
+    QtCopy &operator=(const QtCopy &) = delete;
+
+    bool ready() const { return m_ready; }
+    QString folder() const { return m_dir.path(); }
+
+private:
+    QTemporaryDir m_dir;
+    QByteArray m_path;
+    bool m_ready = false;
+};
+#endif
 
 void ensureApp()
 {
@@ -106,7 +153,11 @@ TEST(AgentSpecs, ClaudeMayWriteOnlyItsOwnStateAndTheSidecarSetsOnlyItsMarkers)
     writeFile(program, "ELF", true);
     const AgentSpec spec = claudeAgent(program, QStringLiteral("/h"), dir.filePath(QStringLiteral("work")));
     EXPECT_EQ(spec.program, QFileInfo(program).canonicalFilePath());
+#ifdef _WIN32
+    EXPECT_EQ(spec.profile->readExecute, QStringList{QFileInfo(program).canonicalFilePath()});
+#else
     EXPECT_EQ(spec.profile->readExecute, QStringList{QFileInfo(program).canonicalPath()});
+#endif
     EXPECT_EQ(spec.profile->readWrite,
               (QStringList{QStringLiteral("/h/.claude"), QStringLiteral("/h/.claude.json"), dir.filePath(QStringLiteral("work"))}));
     EXPECT_EQ(spec.profile->network, hikari::backends::sandbox::Network::Any);
@@ -116,6 +167,71 @@ TEST(AgentSpecs, ClaudeMayWriteOnlyItsOwnStateAndTheSidecarSetsOnlyItsMarkers)
     EXPECT_FALSE(spec.sidecarEnvironment.contains(QStringLiteral("ANTHROPIC_BASE_URL")));
     EXPECT_FALSE(spec.refuse(QStringList{QStringLiteral("--dangerously-skip-permissions")}).isEmpty());
 }
+
+#ifdef _WIN32
+bool everyAppContainerMayOpen(const QString &path)
+{
+    PSID any = nullptr;
+    ConvertStringSidToSidW(L"S-1-15-2-1", &any);
+    PACL acl = nullptr;
+    PSECURITY_DESCRIPTOR descriptor = nullptr;
+    bool found = false;
+    if (GetNamedSecurityInfoW(reinterpret_cast<LPCWSTR>(QDir::toNativeSeparators(path).utf16()), SE_FILE_OBJECT,
+                              DACL_SECURITY_INFORMATION, nullptr, nullptr, &acl, nullptr, &descriptor) == ERROR_SUCCESS &&
+        acl)
+        for (DWORD i = 0; i < acl->AceCount && !found; ++i) {
+            void *ace = nullptr;
+            found = GetAce(acl, i, &ace) && static_cast<ACE_HEADER *>(ace)->AceType == ACCESS_ALLOWED_ACE_TYPE &&
+                    EqualSid(&static_cast<ACCESS_ALLOWED_ACE *>(ace)->SidStart, any);
+        }
+    LocalFree(descriptor);
+    LocalFree(any);
+    return found;
+}
+
+TEST(AgentSpecs, ClaudeFromNpmOpensOnlyItsOwnProgramSoAgentsBesideItStillStartAtLowRights)
+{
+    ensureApp();
+    QTemporaryDir npm;
+    ASSERT_TRUE(npm.isValid());
+    const QString claude = npm.filePath(QStringLiteral("node_modules/@anthropic-ai/claude-code/bin/claude.exe"));
+    const QString neighbour = npm.filePath(QStringLiteral("node_modules/opencode-ai/bin/opencode.exe"));
+    for (const QString &copy : {claude, neighbour}) {
+        ASSERT_TRUE(QDir().mkpath(QFileInfo(copy).absolutePath()));
+        ASSERT_TRUE(QFile::copy(QStringLiteral(HIKARI_SANDBOX_PROBE), copy));
+    }
+    writeFile(npm.filePath(QStringLiteral("claude.cmd")), "@echo off\r\n", false);
+
+    const AgentSpec spec = claudeAgent(npm.filePath(QStringLiteral("claude.cmd")), npm.path(), npm.filePath(QStringLiteral("work")));
+    EXPECT_EQ(spec.program, QFileInfo(claude).canonicalFilePath());
+    EXPECT_EQ(spec.profile->readExecute, QStringList{QFileInfo(claude).canonicalFilePath()});
+    const auto said = [](hikari::backends::sandbox::Launcher &launcher, const QString &program) {
+        QProcess process;
+        process.setProgram(program);
+        process.setArguments({QStringLiteral("low")});
+        launcher.prepare(process);
+        process.start();
+        EXPECT_TRUE(process.waitForFinished(20'000)) << process.errorString().toStdString();
+        return QString::fromLocal8Bit(process.readAllStandardOutput());
+    };
+    {
+        hikari::backends::sandbox::Launcher run(spec.profile);
+        ASSERT_TRUE(run.coverage().missing.isEmpty()) << run.coverage().missing.toStdString();
+        EXPECT_TRUE(said(run, spec.program).startsWith(QStringLiteral("low: "))) << "Claude itself didn't start";
+    }
+    EXPECT_TRUE(everyAppContainerMayOpen(claude));
+    EXPECT_FALSE(everyAppContainerMayOpen(npm.path()));
+    EXPECT_FALSE(everyAppContainerMayOpen(QFileInfo(neighbour).absolutePath()));
+
+    hikari::backends::sandbox::Launcher agent(hikari::backends::sandbox::Profile{
+        .name = QStringLiteral("HikariSub.Test.Neighbour"),
+        .network = hikari::backends::sandbox::Network::Any,
+        .lowRightsHelper = QStringLiteral(HIKARI_TEST_CONFINE_HELPER)});
+    ASSERT_TRUE(agent.coverage().missing.isEmpty()) << agent.coverage().missing.toStdString();
+    const QString neighbourSaid = said(agent, neighbour);
+    EXPECT_TRUE(neighbourSaid.startsWith(QStringLiteral("low: ok"))) << neighbourSaid.toStdString();
+}
+#endif
 
 TEST(AgentSpecs, CodexRunsTheNativeBinaryBehindNpmsLauncherWithHikarisOwnHome)
 {
@@ -130,7 +246,9 @@ TEST(AgentSpecs, CodexRunsTheNativeBinaryBehindNpmsLauncherWithHikarisOwnHome)
     writeFile(native, "ELF", true);
     Keys keys;
     const auto lease = std::make_shared<CodexLease>(keys, dir.filePath(QStringLiteral("home")));
-    const auto spec = codexAgent(launcher, dir.filePath(QStringLiteral("home")), dir.filePath(QStringLiteral("work")), lease);
+    const QString bridge = dir.filePath(QStringLiteral("app/HikariSub.exe"));
+    const auto spec =
+        codexAgent(launcher, dir.filePath(QStringLiteral("home")), dir.filePath(QStringLiteral("work")), lease, bridge);
     ASSERT_TRUE(spec);
     EXPECT_EQ(spec->program, QFileInfo(native).canonicalFilePath());
     EXPECT_EQ(spec->arguments, (QStringList{QStringLiteral("app-server"), QStringLiteral("-c"),
@@ -142,18 +260,31 @@ TEST(AgentSpecs, CodexRunsTheNativeBinaryBehindNpmsLauncherWithHikarisOwnHome)
     EXPECT_TRUE(spec->guard);
     EXPECT_TRUE(spec->refuse({}).isEmpty());
     EXPECT_FALSE(spec->refuse(QStringList{QStringLiteral("--dangerously-bypass-approvals-and-sandbox")}).isEmpty());
-    EXPECT_EQ(spec->channelArguments(QStringLiteral("http://127.0.0.1:9/mcp")),
+    EXPECT_EQ(spec->channelArguments({.url = QStringLiteral("http://127.0.0.1:9/mcp")}),
               strings({"-c", R"(mcp_servers.hikari.url="http://127.0.0.1:9/mcp")", "-c",
                        R"(mcp_servers.hikari.bearer_token_env_var="HIKARI_MCP_TOKEN")", "-c",
                        R"(mcp_servers.hikari.default_tools_approval_mode="approve")", "-c",
                        "mcp_servers.hikari.tool_timeout_sec=86400"}));
+    const QString command = QStringLiteral("mcp_servers.hikari.command=\"%1\"")
+                                .arg(QDir::toNativeSeparators(bridge).replace(QLatin1Char('\\'), QLatin1String("\\\\")));
+    EXPECT_EQ(spec->channelArguments({.pipe = QStringLiteral(R"(\\.\pipe\hikarisub-ch-1)")}),
+              QStringList({QStringLiteral("-c"), command}) +
+                  strings({"-c", R"(mcp_servers.hikari.args=["--mcp","--channel","\\\\.\\pipe\\hikarisub-ch-1"])", "-c",
+                           R"(mcp_servers.hikari.env_vars=["HIKARI_MCP_TOKEN"])", "-c",
+                           R"(mcp_servers.hikari.default_tools_approval_mode="approve")", "-c",
+                           "mcp_servers.hikari.tool_timeout_sec=86400"}));
+#ifdef _WIN32
+    EXPECT_TRUE(spec->profile->readExecute.contains(dir.filePath(QStringLiteral("app"))));
+#else
+    EXPECT_FALSE(spec->profile->readExecute.contains(dir.filePath(QStringLiteral("app"))));
+#endif
     std::optional<QString> refused;
     spec->before([&](QString error) { refused = std::move(error); });
     EXPECT_TRUE(refused && !refused->isEmpty());
 
-    EXPECT_EQ(codexAgent(native, dir.path(), dir.path(), lease)->program, QFileInfo(native).canonicalFilePath());
+    EXPECT_EQ(codexAgent(native, dir.path(), dir.path(), lease, bridge)->program, QFileInfo(native).canonicalFilePath());
     QFile::remove(native);
-    EXPECT_FALSE(codexAgent(launcher, dir.path(), dir.path(), lease));
+    EXPECT_FALSE(codexAgent(launcher, dir.path(), dir.path(), lease, bridge));
 }
 
 TEST(AgentSpecs, AnAcpAgentWritesOnlyItsOwnStateAndTakesNoArgumentsFromTheSidecar)
@@ -252,6 +383,18 @@ TEST_F(AcpGuardTest, TheSessionRunsInItsWorkFolderWithHikarisToolsOverHttpWhenTh
     EXPECT_EQ(server(load), Json::object({{"type", "http"}, {"name", "hikari"}, {"url", "http://127.0.0.1:9/mcp"},
                                           {"headers", Json::array({Json::object({{"name", "Authorization"},
                                                                                  {"value", "Bearer tok"}})})}}));
+}
+
+TEST_F(AcpGuardTest, OnAPipeEveryAgentGetsTheBridgeToThePipeEvenWhenItTakesHttp)
+{
+    guard = acpGuard({.pipe = QStringLiteral(R"(\\.\pipe\hikarisub-ch-1)"), .token = "tok",
+                      .bridge = QStringLiteral("/app/hikarisub"), .work = QStringLiteral("/w")});
+    fromSidecar(R"({"jsonrpc":"2.0","id":1,"method":"initialize","params":{}})");
+    fromAgent(R"({"jsonrpc":"2.0","id":1,"result":{"agentCapabilities":{"mcpCapabilities":{"http":true}}}})");
+    EXPECT_EQ(server(R"({"jsonrpc":"2.0","id":2,"method":"session/new","params":{"cwd":"/","mcpServers":[]}})"),
+              Json::object({{"name", "hikari"}, {"command", QDir::toNativeSeparators(QStringLiteral("/app/hikarisub")).toStdString()},
+                            {"args", Json::array({"--mcp", "--channel", R"(\\.\pipe\hikarisub-ch-1)"})},
+                            {"env", Json::array({Json::object({{"name", "HIKARI_MCP_TOKEN"}, {"value", "tok"}})})}}));
 }
 
 TEST_F(AcpGuardTest, QtAllowsOnceOnlyHikarisToolsAndRejectsEveryOtherPermission)
@@ -538,7 +681,9 @@ TEST_F(AgentBrokerTest, QtDeclinesCodexsBuiltInFileChanges)
 TEST_F(AgentBrokerTest, AChannelAgentGetsItsOwnToolsChannelForTheSessionUntilItExits)
 {
     AgentSpec s = spec();
-    s.channelArguments = [](const QString &url) { return QStringList{QStringLiteral("--tools-url=") + url}; };
+    s.channelArguments = [](const ChannelAddress &channel) {
+        return QStringList{QStringLiteral("--tools=") + channel.url + channel.pipe};
+    };
     broker.add("fake", s);
     const auto refused = call(kAgentStart, Json::object({{"process", 1}, {"agent", "fake"}}));
     ASSERT_FALSE(*refused);
@@ -549,21 +694,40 @@ TEST_F(AgentBrokerTest, AChannelAgentGetsItsOwnToolsChannelForTheSessionUntilItE
     ASSERT_TRUE(started && *started);
     ASSERT_TRUE(waitFor([&] { return !lines(2).empty(); }));
     const Json report = *lines(2)[0].find("started");
-    const std::string url = report.find("args")->asArray()[1].asString();
-    ASSERT_TRUE(url.starts_with("--tools-url=http://127.0.0.1:")) << url;
+    const std::string tools = report.find("args")->asArray()[1].asString().substr(std::string_view("--tools=").size());
     EXPECT_EQ(report.find("args")->asArray()[2], Json("--x"));
     EXPECT_EQ(report.find("mcpToken")->asString().size(), 64u);
-    const QUrl tools(QString::fromStdString(url.substr(std::string_view("--tools-url=").size())));
-    EXPECT_EQ(tools.path(), QStringLiteral("/mcp"));
-
+#ifdef _WIN32
+    ASSERT_TRUE(tools.starts_with(R"(\\.\pipe\hikarisub-ch-)")) << tools;
+    EXPECT_EQ(tools.size(), std::string_view(R"(\\.\pipe\hikarisub-ch-)").size() + 32);
+    const auto outsiderAnswered = [&] {
+        QLocalSocket socket;
+        socket.connectToServer(QString::fromStdString(tools));
+        if (!socket.waitForConnected(2000))
+            return false;
+        socket.write(QByteArray::fromStdString(report.find("mcpToken")->asString()) +
+                     "\n{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}\n");
+        waitFor([&] { return socket.state() == QLocalSocket::UnconnectedState || socket.bytesAvailable() > 0; }, 5'000);
+        return socket.bytesAvailable() > 0 || socket.state() != QLocalSocket::UnconnectedState;
+    };
+    EXPECT_FALSE(outsiderAnswered());
+    ASSERT_TRUE(*call(kAgentKill, Json::object({{"process", 2}})));
+    QLocalSocket gone;
+    gone.connectToServer(QString::fromStdString(tools));
+    EXPECT_FALSE(gone.waitForConnected(2000));
+#else
+    ASSERT_TRUE(tools.starts_with("http://127.0.0.1:")) << tools;
+    const QUrl url(QString::fromStdString(tools));
+    EXPECT_EQ(url.path(), QStringLiteral("/mcp"));
     const auto opens = [&] {
         QTcpSocket socket;
-        socket.connectToHost(QHostAddress::LocalHost, quint16(tools.port()));
+        socket.connectToHost(QHostAddress::LocalHost, quint16(url.port()));
         return socket.waitForConnected(2000);
     };
     EXPECT_TRUE(opens());
     ASSERT_TRUE(*call(kAgentKill, Json::object({{"process", 2}})));
     EXPECT_FALSE(opens());
+#endif
 }
 
 TEST_F(AgentBrokerTest, AnAgentStartsOnlyAfterItsBeforeHookAndItsAfterHookRunsOnceItEnds)
@@ -604,7 +768,14 @@ TEST_F(AgentBrokerTest, AStdioOnlyAcpAgentReachesTheSessionsChannelThroughTheBri
 {
     const QString work = dir.filePath(QStringLiteral("work"));
     AgentSpec s = acpAgent(QStringLiteral(HIKARI_FAKE_ACP_AGENT), {}, {}, work, QStringLiteral(HIKARI_TEST_MCP_HTTP_BRIDGE));
+#ifdef _WIN32
+    const QtCopy qt;
+    ASSERT_TRUE(qt.ready());
+    s.profile->readExecute << qt.folder();
+    s.profile->lowRightsHelper = QStringLiteral(HIKARI_TEST_CONFINE_HELPER);
+#else
     s.profile->readExecute << QLibraryInfo::path(QLibraryInfo::LibrariesPath) << QLibraryInfo::path(QLibraryInfo::PluginsPath);
+#endif
     broker.add("acp:fake", s);
     ASSERT_FALSE(*call(kAgentStart, Json::object({{"process", 1}, {"agent", "acp:fake"}, {"args", Json::array({"--yolo"})},
                                                   {"session", "t1"}})));
@@ -615,10 +786,15 @@ TEST_F(AgentBrokerTest, AStdioOnlyAcpAgentReachesTheSessionsChannelThroughTheBri
     const auto said = [&](const std::string &prompt, int id) {
         send(2, R"({"jsonrpc":"2.0","id":)" + std::to_string(id) + R"(,"method":"session/prompt","params":{"sessionId":"s1","prompt":[{"type":"text","text":")" + prompt + R"("}]}})");
         EXPECT_TRUE(waitFor([&] { return withId(2, id).has_value(); }, 30'000));
+        std::string last;
         for (const Json &l : lines(2))
             if (const Json *p = l.find("params"); p && p->find("update") && l.find("method")->asString() == "session/update")
-                if (const Json *t = p->find("update")->find("content")->find("text"); t && t->asString().find(prompt == "close" ? "exit" : "jsonrpc") != std::string::npos)
-                    return t->asString();
+                if (const Json *t = p->find("update")->find("content")->find("text")) {
+                    if (t->asString().find(prompt == "close" ? "exit" : "jsonrpc") != std::string::npos)
+                        return t->asString();
+                    last = t->asString();
+                }
+        ADD_FAILURE() << prompt << ": " << last;
         return std::string();
     };
     const std::vector<Json> out = lines(2);
@@ -626,13 +802,119 @@ TEST_F(AgentBrokerTest, AStdioOnlyAcpAgentReachesTheSessionsChannelThroughTheBri
     ASSERT_NE(noted, out.end());
     const Json session = *noted->find("params");
     EXPECT_EQ(*session.find("cwd"), Json(QDir::toNativeSeparators(work).toStdString()));
+#ifdef _WIN32
+    EXPECT_EQ(session.find("server")->find("args")->asArray().at(1), Json("--channel"));
+#else
     EXPECT_EQ(session.find("server")->find("args")->asArray().at(1), Json("--channel-url"));
+#endif
     const std::string tools = said("tools", 3);
     ASSERT_FALSE(tools.empty());
     EXPECT_NE(tools.find("AI sidecar isn't installed"), std::string::npos) << tools;
     EXPECT_EQ(said("close", 4), "exited 0");
     ASSERT_TRUE(*call(kAgentKill, Json::object({{"process", 2}})));
 }
+
+TEST(PrivatePipe, AChannelOpensForLowRightsAgents)
+{
+    ensureApp();
+#ifdef _WIN32
+    EXPECT_EQ(channelProblem(QStringLiteral(HIKARI_TEST_CONFINE_HELPER)).toStdString(), "");
+#else
+    EXPECT_EQ(channelProblem(QStringLiteral(HIKARI_TEST_MCP_HTTP_BRIDGE)).toStdString(), "");
+#endif
+}
+
+#ifdef _WIN32
+TEST(PrivatePipe, WithoutTheLowRightsHelperNoChannelIsOffered)
+{
+    ensureApp();
+    QTemporaryDir empty;
+    ASSERT_TRUE(empty.isValid());
+    EXPECT_TRUE(channelProblem(empty.filePath(QStringLiteral("hikarisub-mcp-bridge.exe")))
+                    .contains(QStringLiteral("low-rights helper is missing")));
+}
+
+TEST_F(AgentBrokerTest, AnAgentWhoseLowRightsHelperIsMissingIsRefusedWithWhy)
+{
+    AgentSpec s = spec();
+    s.profile->lowRightsHelper = dir.filePath(QStringLiteral("missing/hikarisub-confine.exe"));
+    broker.add("fake", s);
+    const auto refused = call(kAgentStart, Json::object({{"process", 1}, {"agent", "fake"}}));
+    ASSERT_FALSE(*refused);
+    EXPECT_EQ(refused->error().first, rpc::kBusy);
+    EXPECT_TRUE(refused->error().second.starts_with(
+        "the agent can't start at low rights: HikariSub's low-rights helper is missing"))
+        << refused->error().second;
+    EXPECT_EQ(broker.running(), 0u);
+}
+
+TEST_F(AgentBrokerTest, AnAgentWhoseLowRightsHelperFailsEndsSayingWhy)
+{
+    AgentSpec s = spec();
+    s.program = dir.filePath(QStringLiteral("missing.exe"));
+    s.profile->lowRightsHelper = QStringLiteral(HIKARI_TEST_CONFINE_HELPER);
+    broker.add("fake", s);
+    const std::uint64_t process = start("fake");
+    ASSERT_TRUE(waitFor([&] { return exitCode(process).has_value(); }));
+    EXPECT_EQ(*exitCode(process), 0x4846);
+    QByteArray said;
+    for (const auto &[method, params] : notes)
+        if (method == kAgentOutput && params.find("stream")->asString() == "stderr")
+            said += QByteArray::fromBase64(QByteArray::fromStdString(params.find("data")->asString()));
+    EXPECT_TRUE(said.contains("hikarisub-confine: starting the command failed")) << said.toStdString();
+}
+#endif
+
+#ifdef _WIN32
+TEST(PrivatePipe, OnlyTheAgentsOwnAppContainerOpensItsChannel)
+{
+    ensureApp();
+    const QtCopy qt;
+    ASSERT_TRUE(qt.ready());
+    const auto profile = [&qt](const char *name) {
+        return hikari::backends::sandbox::Profile{
+            .name = QString::fromLatin1(name),
+            .readExecute = {QFileInfo(QStringLiteral(HIKARI_TEST_MCP_HTTP_BRIDGE)).absolutePath(), qt.folder()},
+            .network = hikari::backends::sandbox::Network::Any};
+    };
+    hikari::backends::sandbox::Launcher agent(profile("HikariSub.Test.Agent"));
+    hikari::backends::sandbox::Launcher other(profile("HikariSub.Test.Other"));
+    ASSERT_FALSE(agent.containerSid().isEmpty()) << agent.coverage().missing.toStdString();
+    McpServer channel([] { return nullptr; }, newMcpToken());
+    channel.setChannel("t1");
+    QString why;
+    ASSERT_TRUE(channel.listenPipe(agent.containerSid(), [&](qint64 pid) { return agent.runs(pid); }, &why))
+        << why.toStdString();
+
+    const auto bridge = [&](hikari::backends::sandbox::Launcher &launcher, QProcess &process) {
+        QProcessEnvironment environment = QProcessEnvironment::systemEnvironment();
+        environment.insert(QString::fromLatin1(kMcpTokenVariable), QString::fromLatin1(channel.token()));
+        process.setProcessEnvironment(environment);
+        process.setProgram(QStringLiteral(HIKARI_TEST_MCP_HTTP_BRIDGE));
+        process.setArguments({QStringLiteral("--channel"), channel.socketName()});
+        launcher.prepare(process);
+        process.start();
+        return process.waitForStarted(10'000);
+    };
+
+    QProcess outsider;
+    ASSERT_TRUE(bridge(other, outsider));
+    EXPECT_TRUE(outsider.waitForFinished(15'000));
+    EXPECT_EQ(outsider.exitCode(), 1);
+    EXPECT_TRUE(outsider.readAllStandardError().contains("isn't running"));
+
+    QProcess inside;
+    ASSERT_TRUE(bridge(agent, inside));
+    inside.write(R"({"jsonrpc":"2.0","id":1,"method":"initialize","params":{}})" "\n");
+    EXPECT_TRUE(waitFor([&] { return inside.bytesAvailable() > 0 || inside.state() == QProcess::NotRunning; }, 15'000));
+    const QByteArray reply = inside.readAllStandardOutput();
+    EXPECT_TRUE(reply.contains(R"("id":1)")) << reply.toStdString() << inside.readAllStandardError().toStdString();
+    inside.closeWriteChannel();
+    EXPECT_TRUE(inside.waitForFinished(10'000));
+    agent.killTree();
+    other.killTree();
+}
+#endif
 
 #ifndef _WIN32
 TEST_F(AgentBrokerTest, AnAgentRunsInItsOwnSandbox)
