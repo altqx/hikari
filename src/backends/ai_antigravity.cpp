@@ -38,33 +38,38 @@ constexpr QFileDevice::Permissions kUserOnlyFolder = QFileDevice::ReadOwner | QF
                                                     QFileDevice::ExeOwner | QFileDevice::ReadUser |
                                                     QFileDevice::WriteUser | QFileDevice::ExeUser;
 
-bool makeForUserOnly(const QString &folder)
+bool makeFolder(const QString &folder)
 {
     const QFileInfo info(folder);
-    if (!info.isDir()) {
-        const QString parent = info.absolutePath();
-        if (!(QFileInfo(parent).isDir() || QDir().mkpath(parent)) || !QDir().mkdir(folder, kUserOnlyFolder))
-            return false;
-    }
-    return isForUserAlone(folder) || keepForUserAlone(folder);
+    if (info.isDir())
+        return true;
+    const QString parent = info.absolutePath();
+    return (QFileInfo(parent).isDir() || QDir().mkpath(parent)) && QDir().mkdir(folder, kUserOnlyFolder);
 }
 
-bool writeForUserOnly(const QString &path, const QByteArray &data)
+SecretWrite makeForUserOnly(const QString &folder)
 {
-    if (!makeForUserOnly(QFileInfo(path).absolutePath()))
-        return false;
+    if (!makeFolder(folder))
+        return SecretWrite::Failed;
+    return isForUserAlone(folder) || keepForUserAlone(folder) ? SecretWrite::Saved : SecretWrite::NotPrivate;
+}
+
+SecretWrite writeForUserOnly(const QString &path, const QByteArray &data)
+{
+    if (const SecretWrite folder = makeForUserOnly(QFileInfo(path).absolutePath()); folder != SecretWrite::Saved)
+        return folder;
     const QString temporary = path + QStringLiteral(".new");
     QFile::remove(temporary);
     QFile file(temporary);
     if (!file.open(QIODevice::WriteOnly | QIODevice::NewOnly, QFileDevice::ReadOwner | QFileDevice::WriteOwner))
-        return false;
+        return SecretWrite::Failed;
     const bool written = file.write(data) == data.size() && file.flush();
     file.close();
     QFile::remove(path);
     if (written && QFile::rename(temporary, path))
-        return true;
+        return SecretWrite::Saved;
     QFile::remove(temporary);
-    return false;
+    return SecretWrite::Failed;
 }
 
 std::optional<QByteArray> stored(const app::KeyResult &result)
@@ -75,6 +80,14 @@ std::optional<QByteArray> stored(const app::KeyResult &result)
     return QByteArray::fromBase64(QByteArray::fromStdString(*text));
 }
 
+}
+
+QString agentSignInNotSaved(SecretWrite result)
+{
+    if (result == SecretWrite::NotPrivate)
+        return QStringLiteral("The agent's sign-in wasn't saved because its folder can't be made private to you, for "
+                              "example on a FAT32 or exFAT drive.");
+    return QStringLiteral("The sign-in couldn't be written for the agent");
 }
 
 TokenFileLease::TokenFileLease(app::KeyStore &keys, std::string secret, QString file, QString signInFirst)
@@ -101,8 +114,11 @@ void TokenFileLease::acquire(std::function<void(QString error)> done)
             QFile::remove(m_file);
             return done(m_signInFirst);
         }
-        if (readAll(m_file) != token && !writeForUserOnly(m_file, *token))
-            return done(QStringLiteral("The sign-in couldn't be written for the agent"));
+        if (readAll(m_file) != token) {
+            const SecretWrite written = writeForUserOnly(m_file, *token);
+            if (written != SecretWrite::Saved)
+                return done(agentSignInNotSaved(written));
+        }
         ++m_users;
         done({});
     });

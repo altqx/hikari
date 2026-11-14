@@ -17,6 +17,7 @@
 #include <string>
 
 using namespace hikari::backends::ai;
+using hikari::backends::SecretWrite;
 namespace app = hikari::application::ai;
 
 namespace {
@@ -178,6 +179,19 @@ TEST_F(TokenFileLeaseTest, ASignOutWhileAgyRunsStaysSignedOutAndACrashesFileGoes
     writeFile(file, "left by a crash");
     TokenFileLease next{keys, "agy", file, QStringLiteral("sign in first")};
     EXPECT_FALSE(QFileInfo::exists(file));
+}
+
+TEST_F(TokenFileLeaseTest, AFolderThatCantBeMadePrivateSaysSoAndAnyOtherFailureKeepsItsMessage)
+{
+    EXPECT_EQ(agentSignInNotSaved(SecretWrite::NotPrivate),
+              QStringLiteral("The agent's sign-in wasn't saved because its folder can't be made private to you, for "
+                             "example on a FAT32 or exFAT drive."));
+    EXPECT_EQ(agentSignInNotSaved(SecretWrite::Failed),
+              QStringLiteral("The sign-in couldn't be written for the agent"));
+
+    ASSERT_TRUE(QDir().mkpath(file));
+    keys.keys["agy"] = stored("first");
+    EXPECT_EQ(acquire(), agentSignInNotSaved(SecretWrite::Failed));
 }
 
 TEST_F(TokenFileLeaseTest, ALockedKeychainFailsTheSignInAndTheFileStillGoes)

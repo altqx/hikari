@@ -20,6 +20,7 @@
 #include <map>
 
 using namespace hikari::backends::ai;
+using hikari::backends::SecretWrite;
 namespace app = hikari::application::ai;
 namespace test = hikari::test;
 using test::FakeAuthServer;
@@ -502,7 +503,7 @@ TEST_F(CodexLeaseTest, CodexGetsTheKeychainSessionAndItsRefreshComesBackAfterThe
     keys.keys.clear();
     ASSERT_EQ(acquire(), QString());
     keys.keys[kCodexSecret] = sessionJson(signedIn("first"));
-    ASSERT_TRUE(writeCodexAuth(auth(), signedIn("rotated")));
+    ASSERT_EQ(writeCodexAuth(auth(), signedIn("rotated")), SecretWrite::Saved);
     lease.release();
     EXPECT_TRUE(QFileInfo::exists(auth()));
     EXPECT_EQ(sessionFromJson(keys.keys.at(kCodexSecret))->refresh, "first");
@@ -513,7 +514,7 @@ TEST_F(CodexLeaseTest, CodexGetsTheKeychainSessionAndItsRefreshComesBackAfterThe
 
 TEST_F(CodexLeaseTest, WithoutASessionCodexDoesntStartAndALeftoverFileGoes)
 {
-    ASSERT_TRUE(writeCodexAuth(auth(), signedIn("left")));
+    ASSERT_EQ(writeCodexAuth(auth(), signedIn("left")), SecretWrite::Saved);
     EXPECT_FALSE(acquire().isEmpty());
     EXPECT_FALSE(QFileInfo::exists(auth()));
     lease.release();
@@ -523,13 +524,13 @@ TEST_F(CodexLeaseTest, WithoutASessionCodexDoesntStartAndALeftoverFileGoes)
 TEST_F(CodexLeaseTest, AFileLeftForTheSameAccountIsNewerThanTheKeychainAndAnotherAccountsIsReplaced)
 {
     keys.keys[kCodexSecret] = sessionJson(signedIn("stored"));
-    ASSERT_TRUE(writeCodexAuth(auth(), signedIn("left")));
+    ASSERT_EQ(writeCodexAuth(auth(), signedIn("left")), SecretWrite::Saved);
     ASSERT_EQ(acquire(), QString());
     EXPECT_EQ(sessionFromCodexAuth(auth())->refresh, "left");
     lease.release();
     EXPECT_EQ(sessionFromJson(keys.keys.at(kCodexSecret))->refresh, "left");
 
-    ASSERT_TRUE(writeCodexAuth(auth(), signedIn("other", "acct-2")));
+    ASSERT_EQ(writeCodexAuth(auth(), signedIn("other", "acct-2")), SecretWrite::Saved);
     ASSERT_EQ(acquire(), QString());
     EXPECT_EQ(sessionFromCodexAuth(auth())->refresh, "left");
 }
@@ -542,6 +543,20 @@ TEST_F(CodexLeaseTest, SigningOutWhileCodexRunsKeepsItSignedOut)
     lease.release();
     EXPECT_TRUE(keys.keys.empty());
     EXPECT_FALSE(QFileInfo::exists(auth()));
+}
+
+TEST_F(CodexLeaseTest, AFolderThatCantBeMadePrivateSaysSoAndAnyOtherFailureKeepsItsMessage)
+{
+    EXPECT_EQ(codexAuthNotSaved(SecretWrite::NotPrivate),
+              QStringLiteral("Codex's sign-in wasn't saved because its folder can't be made private to you, for "
+                             "example on a FAT32 or exFAT drive."));
+    EXPECT_EQ(codexAuthNotSaved(SecretWrite::Failed), QStringLiteral("Codex's sign-in couldn't be written"));
+    const QString missing = dir.filePath(QStringLiteral("missing/auth.json"));
+    EXPECT_EQ(writeCodexAuth(missing, signedIn("first")), SecretWrite::Failed);
+
+    ASSERT_TRUE(QDir(dir.path()).mkdir(QStringLiteral("auth.json")));
+    keys.keys[kCodexSecret] = sessionJson(signedIn("first"));
+    EXPECT_EQ(acquire(), codexAuthNotSaved(SecretWrite::Failed));
 }
 
 TEST_F(AiSignInTest, TheRealDeviceSignInKeepsItsSessionForTheCodexEvidence)

@@ -4,6 +4,10 @@
 
 namespace hikari::backends {
 
+/// How writing a secret for the current user alone ended: `NotPrivate` when its folder can't be made theirs alone, as
+/// on a drive without permissions; `Failed` for anything else.
+enum class SecretWrite { Saved, NotPrivate, Failed };
+
 /// True when only the current user, and on Windows the app's own AppContainers, may open `path`: on Unix no group or
 /// other permission bit is set; on Windows no allow entry of its ACL names anyone else.
 bool isForUserAlone(const QString &path);
