@@ -3,6 +3,7 @@ import { type ChildProcess, spawn } from "node:child_process";
 import { mkdtempSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { PassThrough } from "node:stream";
 
 import { ClaudeSession } from "../../src/agents/claude";
 import { AgentRelay } from "../../src/agents/relay";
@@ -32,16 +33,21 @@ afterEach(() => {
     }
 });
 
-function endingStdoutAtExitLikeQtsRelay(child: ChildProcess): ChildProcess {
+function endingStdoutAtExitLikeQtsRelay(child: ChildProcess, childStdoutEnds = true): ChildProcess {
     children.push(child);
-    child.once("exit", () => {
-        if (child.stdout?.readableEnded)
-            return;
-        const drained = setTimeout(() => child.stdout?.destroy(), kStdoutDrainMs);
-        drained.unref();
-        child.stdout?.once("end", () => clearTimeout(drained));
+    const stdout = new PassThrough();
+    child.stdout!.on("data", (chunk: Buffer) => stdout.write(chunk));
+    if (childStdoutEnds)
+        child.stdout!.once("end", () => stdout.end());
+    child.once("exit", () => setTimeout(() => stdout.end(), kStdoutDrainMs).unref());
+    return new Proxy(child, {
+        get: (target, key) => {
+            if (key === "stdout")
+                return stdout;
+            const value = Reflect.get(target, key, target);
+            return typeof value === "function" ? value.bind(target) : value;
+        },
     });
-    return child;
 }
 
 function tracked(session: ClaudeSession): ClaudeSession {
