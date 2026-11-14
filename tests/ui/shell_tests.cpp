@@ -7938,6 +7938,67 @@ private slots:
                  qPrintable(QStringLiteral("%1 < %2").arg(place.height()).arg(minimum.height())));
     }
 
+    void everyDockedPanelsMenuButtonStaysInTheWindow_data()
+    {
+        QTest::addColumn<QSize>("size");
+        QTest::addColumn<bool>("defaultSideBars");
+        for (const QSize size : {QSize(1280, 800), QSize(1366, 768)})
+            for (const bool bars : {false, true})
+                QTest::addRow("%dx%d %s", size.width(), size.height(), bars ? "default side bars" : "no side bars") << size << bars;
+    }
+
+    void everyDockedPanelsMenuButtonStaysInTheWindow()
+    {
+        QFETCH(QSize, size);
+        QFETCH(bool, defaultSideBars);
+        window->resize(size);
+        QTRY_COMPARE(window->size(), size);
+        QObject *root = engine->rootObjects().first();
+        QTRY_VERIFY(root->property("sideBarsLoaded").toBool());
+        if (defaultSideBars)
+            QVERIFY(QMetaObject::invokeMethod(root, "resetSideBars"));
+        QVERIFY(application->openFile(episode));
+        QVERIFY(application->openReference(original));
+        QTRY_VERIFY(item<QObject>("referenceDock")->property("isOpen").toBool());
+        const QVariantList docks = root->property("dockList").value<QJSValue>().toVariant().toList();
+        QStringList shown;
+        for (const QVariant &value : docks) {
+            auto *dock = value.value<QObject *>();
+            QVariant available;
+            QVERIFY(QMetaObject::invokeMethod(root, "panelAvailable", Q_RETURN_ARG(QVariant, available),
+                                              Q_ARG(QVariant, QVariant::fromValue(dock))));
+            if (!available.toBool())
+                continue;
+            QVERIFY(QMetaObject::invokeMethod(root, "showPanel", Q_ARG(QVariant, QVariant::fromValue(dock))));
+            QTRY_VERIFY2(dock->property("isOpen").toBool(), qPrintable(dock->property("uniqueName").toString()));
+            if (!dock->property("isFloating").toBool())
+                shown << dock->property("uniqueName").toString();
+        }
+        QVERIFY(shown.contains(QStringLiteral("Reference")) && shown.contains(QStringLiteral("Spellchecker"))
+                && shown.contains(QStringLiteral("Log")));
+        QTRY_COMPARE(window->size(), size);
+        const QRectF inside(0, 0, window->width(), window->height());
+        QStringList outside;
+        QStringList checked;
+        const auto buttonsOutside = [&] {
+            outside.clear();
+            checked.clear();
+            for (const QString &panel : std::as_const(shown)) {
+                QQuickItem *header = dockHeader(panel);
+                QQuickItem *button = header ? findItem(header, QStringLiteral("dockMenuButton")) : nullptr;
+                if (!button || !button->isVisible() || button->window() != window)
+                    continue;
+                checked << panel;
+                const QRectF at = button->mapRectToScene(QRectF(0, 0, button->width(), button->height()));
+                if (!inside.contains(at))
+                    outside << QStringLiteral("%1 at %2,%3").arg(panel).arg(at.x()).arg(at.y());
+            }
+            return outside;
+        };
+        QTRY_VERIFY2(buttonsOutside().isEmpty(), qPrintable(outside.join(u"; ")));
+        QVERIFY2(checked.contains(QStringLiteral("Grid")) && checked.size() >= 4, qPrintable(checked.join(u", ")));
+    }
+
     void panelMenusReadInTheOrderTheyShow()
     {
         window->resize(1280, 1000);
