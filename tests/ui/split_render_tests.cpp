@@ -149,6 +149,8 @@ private slots:
         QFETCH(QString, text);
         const std::string dialogue = "Dialogue: 0,0:00:00.00,0:00:05.00,Default,,0,0,0,," + text.toStdString() + "\n";
         auto session = sessionOf(dialogue);
+        ui::GdiFontLeases leases;
+        leases.hold({FontLease{"Titillium Web", font()}});
         ui::QtTextMeasurePort measure;
         QVERIFY(splitByText(session, SplitText::TagBlocks, measure, noWords));
         QVERIFY(session.document().lines().size() > 1);
@@ -162,6 +164,26 @@ private slots:
                                 .arg(d.differing)
                                 .arg(d.ink)
                                 .arg(QString::fromStdString(events(session.document())))));
+    }
+
+    void aLeasedFontIsMeasuredInItsOwnFaceOnlyWhileHeld()
+    {
+#ifndef Q_OS_WIN
+        QSKIP("Only GDI, on Windows, measures without the lease");
+#else
+        const std::vector<std::string> style{"Default", "Titillium Web", "32", "&H00FFFFFF", "&H000000FF", "&H00000000",
+                                             "&H00000000", "0", "0", "0", "0", "100", "100", "0", "0", "1", "0", "0",
+                                             "2", "10", "10", "10", "1"};
+        ui::QtTextMeasurePort measure;
+        const auto width = [&] { return measure.measure(style, "Hello split world").value_or(TextExtents{}).width; };
+        const double fallback = width();
+        ui::GdiFontLeases leases;
+        leases.hold({FontLease{"Titillium Web", font()}});
+        const double own = width();
+        QVERIFY2(own > 0 && own != fallback, qPrintable(QStringLiteral("%1 vs %2").arg(own).arg(fallback)));
+        leases.hold({});
+        QCOMPARE(width(), fallback);
+#endif
     }
 
     void timedPiecesRenderAsTheLineDid()

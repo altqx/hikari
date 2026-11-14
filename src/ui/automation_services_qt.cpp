@@ -16,6 +16,7 @@
 #endif
 
 #include <algorithm>
+#include <atomic>
 #include <cstdlib>
 
 namespace hikari::ui {
@@ -39,6 +40,18 @@ bool flag(const std::vector<std::string> &style, std::size_t i)
 
 #ifdef _WIN32
 constexpr std::size_t kMaxGdiFonts = 64;
+
+std::atomic<unsigned> g_gdiFontsChanged{0};
+
+std::shared_ptr<void> addToGdi(const std::vector<std::byte> &bytes)
+{
+    DWORD faces = 0;
+    HANDLE handle = AddFontMemResourceEx(const_cast<std::byte *>(bytes.data()), static_cast<DWORD>(bytes.size()),
+                                         nullptr, &faces);
+    if (!handle)
+        return nullptr;
+    return std::shared_ptr<void>(handle, [](void *h) { RemoveFontMemResourceEx(h); });
+}
 #endif
 
 // ASS v4+ style field positions.
@@ -65,6 +78,32 @@ bool QtClipboardPort::setText(const std::string &text)
         return false;
     clipboard->setText(qs(text));
     return true;
+}
+
+void GdiFontLeases::hold(const std::vector<application::FontLease> &fonts)
+{
+#ifdef _WIN32
+    decltype(m_held) held;
+    bool changed = false;
+    for (const application::FontLease &font : fonts) {
+        if (!font.bytes || font.bytes->empty() ||
+            std::ranges::find(held, font.bytes, &decltype(held)::value_type::first) != held.end())
+            continue;
+        const auto kept = std::ranges::find(m_held, font.bytes, &decltype(held)::value_type::first);
+        if (kept != m_held.end()) {
+            held.push_back(*kept);
+        } else if (auto handle = addToGdi(*font.bytes)) {
+            held.emplace_back(font.bytes, std::move(handle));
+            changed = true;
+        }
+    }
+    changed = changed || held.size() != m_held.size();
+    m_held = std::move(held);
+    if (changed)
+        ++g_gdiFontsChanged;
+#else
+    (void)fonts;
+#endif
 }
 
 QtTextMeasurePort::~QtTextMeasurePort()
@@ -105,6 +144,10 @@ std::optional<application::TextExtents> QtTextMeasurePort::measure(const std::ve
         SetMapMode(static_cast<HDC>(m_dc), MM_TEXT);
     }
     HDC dc = static_cast<HDC>(m_dc);
+    if (const unsigned changed = g_gdiFontsChanged.load(); changed != m_gdiFontsSeen) {
+        dropFonts();
+        m_gdiFontsSeen = changed;
+    }
     LOGFONTW lf{};
     lf.lfHeight = static_cast<LONG>(fontsize);
     lf.lfWeight = flag(style, Bold) ? FW_BOLD : FW_NORMAL;
