@@ -1,7 +1,10 @@
-// One process owns one indexed source; requests run one at a time, so FFMS2 calls are serialized.
+// One process owns one indexed source and runs requests one at a time; only FrameBatch decodes on
+// other threads, with FFMS2 sources of its own.
 
 #include "hikari/backends/helper_endpoint.h"
 #include "hikari/backends/media_protocol.h"
+
+#include "frame_batch.h"
 
 #include <ffms.h>
 
@@ -39,6 +42,9 @@ struct AudioDeleter {
 };
 
 struct Source {
+    // MUST KILL: first member, so it is destroyed before the index its decoders borrow
+    std::unique_ptr<hikari::media::FrameBatcher> batcher;
+    hikari::media::BatchVideo batchVideo;
     std::string path;
     std::unique_ptr<FFMS_Index, IndexDeleter> index;
     std::unique_ptr<FFMS_VideoSource, VideoDeleter> video;
@@ -257,6 +263,10 @@ void open(Source &source, Reader &in, Responder &r)
             .i32(encoded->comp[0].depth);
     else
         out.str({}).u8(0).i32(0).i32(0).i32(0).i32(0);
+    source.batchVideo = {path, index.get(), track, first->EncodedWidth, first->EncodedHeight, props->NumFrames, {}, {}};
+    source.batchVideo.keyframeOf.resize(static_cast<std::size_t>(props->NumFrames));
+    for (int i = 0, keyframe = 0; i < props->NumFrames; ++i)
+        source.batchVideo.keyframeOf[static_cast<std::size_t>(i)] = keyframe = FFMS_GetFrameInfo(t, i)->KeyFrame ? i : keyframe;
     source.path = path;
     source.index = std::move(index);
     source.video = std::move(video);
@@ -300,7 +310,40 @@ void inputMatrix(Source &source, Reader &in, Responder &r)
     FFMS_ErrorInfo err{FFMS_ERROR_SUCCESS, FFMS_ERROR_SUCCESS, sizeof buffer, buffer};
     if (FFMS_SetInputFormatV(source.video.get(), colorSpace, colorRange, FFMS_GetPixFmt(""), &err) != 0)
         return r.terminal(Outcome::Failed, bytesOf(errorText(err)));
+    source.batchVideo.inputMatrix = std::pair{colorSpace, colorRange};
+    if (source.batcher)
+        source.batcher->setInputMatrix(colorSpace, colorRange);
     r.terminal(Outcome::Ok, {});
+}
+
+void frameBatch(Source &source, Reader &in, Responder &r)
+{
+    hikari::media::BatchRequest request;
+    request.from = in.i32();
+    request.to = in.i32();
+    request.stride = in.i32();
+    request.maxEdge = in.i32();
+    request.luma = in.u8() != 0;
+    request.decoders = in.i32();
+    request.idleMs = in.i32();
+    if (!in.ok() || !source.video)
+        return r.terminal(Outcome::InvalidInput, bytesOf("not open"));
+    if (request.from < 0 || request.to < request.from || request.to >= source.frames || request.stride < 1 ||
+        request.maxEdge < 1)
+        return r.terminal(Outcome::InvalidInput, bytesOf("EOF"));
+    if (!source.batcher)
+        source.batcher = std::make_unique<hikari::media::FrameBatcher>(source.batchVideo);
+    std::int32_t count = 0;
+    const auto failure = source.batcher->serve(
+        request,
+        [&](int frame, const hikari::core::ShrunkFrame &shrunk) {
+            r.reply(Writer().i32(frame).i32(shrunk.width).i32(shrunk.height).bytes(bytesOf(shrunk.bytes)).take());
+            ++count;
+        },
+        [&] { return r.cancelled(); });
+    if (failure)
+        return r.terminal(r.cancelled() ? Outcome::Cancelled : Outcome::Failed, bytesOf(*failure));
+    r.terminal(Outcome::Ok, Writer().i32(count).take());
 }
 
 void openAudio(Source &source, Reader &in, Responder &r)
@@ -831,6 +874,10 @@ int main()
             return subtitles(in, r);
         case media::Command::Attachments:
             return attachments(in, r);
+        case media::Command::FrameBatch:
+            return frameBatch(source, in, r);
+        case media::Command::FrameBatchDecoders:
+            return r.terminal(Outcome::Ok, Writer().i32(source.batcher ? source.batcher->openDecoders() : 0).take());
         case media::Command::Close:
             session.reset();
             source = {};

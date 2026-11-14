@@ -1,5 +1,6 @@
 #include "hikari/backends/ffms_indexed_source.h"
 #include "hikari/application/video_matrix.h"
+#include "hikari/core/frame_shrink.h"
 #include "open_files.h"
 
 #include <QCoreApplication>
@@ -10,6 +11,7 @@
 #include <cstdio>
 
 #include <algorithm>
+#include <cctype>
 #include <chrono>
 #include <cstring>
 #include <filesystem>
@@ -84,6 +86,35 @@ struct Fixture : ::testing::Test {
         source.frame(index, [&](auto r) { result = std::move(r); });
         EXPECT_TRUE(waitFor([&] { return result.has_value(); }));
         return result.value_or(std::unexpected(SourceError::BackendFailure));
+    }
+    std::expected<IndexedSourcePort::ShrunkFrames, SourceError> shrunk(int from, int to, int stride, int maxEdge, bool luma)
+    {
+        std::optional<std::expected<IndexedSourcePort::ShrunkFrames, SourceError>> result;
+        source.shrunkFrames(from, to, stride, maxEdge, luma, [&](auto r) { result = std::move(r); });
+        EXPECT_TRUE(waitFor([&] { return result.has_value(); }));
+        return result.value_or(std::unexpected(SourceError::BackendFailure));
+    }
+    void expectShrunkLikeFrames(int from, int to, int stride, int maxEdge, bool luma)
+    {
+        const auto batch = shrunk(from, to, stride, maxEdge, luma);
+        ASSERT_TRUE(batch) << int(batch.error());
+        ASSERT_EQ(batch->pixels.size(), std::size_t((to - from) / stride + 1));
+        for (std::size_t i = 0; i < batch->pixels.size(); ++i) {
+            const int index = from + int(i) * stride;
+            const auto f = frame(index);
+            ASSERT_TRUE(f) << "frame " << index;
+            const auto one = core::shrinkFrame(f->bgra.data(), f->width, f->height, std::size_t(f->stride), maxEdge, luma);
+            EXPECT_EQ(batch->width, one.width);
+            EXPECT_EQ(batch->height, one.height);
+            EXPECT_EQ(batch->pixels[i], one.bytes) << "frame " << index << (luma ? " luma" : " bgra");
+        }
+    }
+    int openBatchDecoders()
+    {
+        std::optional<std::expected<int, SourceError>> result;
+        source.openBatchDecoders([&](auto r) { result = r; });
+        EXPECT_TRUE(waitFor([&] { return result.has_value(); }));
+        return result && *result ? **result : -1;
     }
     void expectExactFrames(int count)
     {
@@ -525,6 +556,64 @@ TEST_F(Fixture, UntaggedHdTakesTheGuessedMatrixOnlyWhenSet)
     const auto as709 = frame(5);
     ASSERT_TRUE(as709);
     EXPECT_LE(frameColorError(*as709, {"colorhd as BT.709", 0.2126, 0.0722, false}), 3);
+}
+
+struct ShrunkFrames : Fixture, ::testing::WithParamInterface<std::string> {};
+
+TEST_P(ShrunkFrames, MatchFramesShrunkOneByOne)
+{
+    const std::string &file = GetParam();
+    const auto t = openPath(file.ends_with(".webm") ? webm(file.c_str()) : fixture(file.c_str()));
+    ASSERT_TRUE(t);
+    const int last = int(t->pts.size()) - 1;
+    expectShrunkLikeFrames(0, last, 1, 16, true);
+    expectShrunkLikeFrames(0, last, 1, 24, false);
+    expectShrunkLikeFrames(1, last, 3, 64, true);
+    expectShrunkLikeFrames(2, last, 5, 4000, false);
+}
+
+INSTANTIATE_TEST_SUITE_P(Fixtures, ShrunkFrames, ::testing::Values("cfr", "bframes", "longgop", "vp9-opus.webm"),
+                         [](const auto &info) {
+                             std::string name = info.param;
+                             std::ranges::replace_if(name, [](char c) { return !std::isalnum(static_cast<unsigned char>(c)); }, '_');
+                             return name;
+                         });
+
+TEST_F(Fixture, ShrunkFramesContinueAcrossRequestsAndFollowTheInputMatrix)
+{
+    const auto t = open("color709");
+    ASSERT_TRUE(t);
+    const int last = int(t->pts.size()) - 1;
+    for (int from = 0; from + 3 <= last; from += 4)
+        expectShrunkLikeFrames(from, from + 3, 1, 32, false);
+    std::optional<std::expected<void, SourceError>> set;
+    source.setInputMatrix(5, 1, [&](auto r) { set = r; });
+    ASSERT_TRUE(waitFor([&] { return set.has_value(); }));
+    ASSERT_TRUE(set->has_value());
+    expectShrunkLikeFrames(0, last, 2, 32, false);
+}
+
+TEST_F(Fixture, ShrunkFramesOutsideTheVideoFail)
+{
+    const auto t = open("cfr");
+    ASSERT_TRUE(t);
+    EXPECT_EQ(shrunk(0, int(t->pts.size()), 1, 16, true).error(), SourceError::EndOfStream);
+    EXPECT_EQ(shrunk(5, 4, 1, 16, true).error(), SourceError::EndOfStream);
+}
+
+TEST_F(Fixture, IdleBatchDecodersClose)
+{
+    source.setBatchIdle(std::chrono::milliseconds(3000));
+    const auto t = open("longgop");
+    ASSERT_TRUE(t);
+    EXPECT_EQ(openBatchDecoders(), 0);
+    ASSERT_TRUE(shrunk(0, int(t->pts.size()) - 1, 1, 16, true));
+    const int open = openBatchDecoders();
+    EXPECT_GE(open, 1);
+    EXPECT_LE(open, 4);
+    EXPECT_TRUE(waitFor([&] { return openBatchDecoders() == 0; }, 15'000));
+    expectShrunkLikeFrames(0, 7, 1, 16, true);
+    expectShrunkLikeFrames(0, 7, 1, 16, true);
 }
 
 TEST_F(Fixture, InputMatrixNeedsAnOpenVideo)

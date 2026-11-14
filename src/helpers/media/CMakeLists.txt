@@ -1,4 +1,4 @@
-add_executable(hikari_media_helper media_helper.cpp)
+add_executable(hikari_media_helper media_helper.cpp frame_batch.cpp)
 set_target_properties(hikari_media_helper PROPERTIES OUTPUT_NAME hikari-media-helper)
-target_link_libraries(hikari_media_helper PRIVATE hikari_helper_endpoint Hikari::media_deps)
-hikari_module(hikari_media_helper ALLOW hikari_helper_endpoint Hikari::media_deps)
+target_link_libraries(hikari_media_helper PRIVATE hikari_core hikari_helper_endpoint Hikari::media_deps)
+hikari_module(hikari_media_helper ALLOW hikari_core hikari_helper_endpoint Hikari::media_deps)

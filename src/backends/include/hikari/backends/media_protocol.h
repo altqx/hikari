@@ -96,6 +96,16 @@
 //                  OpenDisplayAudio opened, so the helper holds no file; reads answer
 //                  "not open"
 //         terminal Ok: empty
+// FrameBatch request: u8 FrameBatch, i32 from, i32 to, i32 stride, i32 maxEdge, u8 luma,
+//                  i32 decoders, i32 idleMs. The open video's frames from..to, every
+//                  stride-th, each converted as Frame converts it and then shrunk by
+//                  core::shrinkFrame, so the bytes equal Frame's shrunk. Decoded on up to
+//                  `decoders` FFMS2 sources of its own, one thread each, that read ahead;
+//                  each closes after idleMs without a FrameBatch.
+//         reply, per frame in order: i32 frame, i32 width, i32 height, bytes pixels
+//         terminal Ok: i32 count
+// FrameBatchDecoders request: u8 FrameBatchDecoders
+//         terminal Ok: i32 the FrameBatch sources open now
 
 #include <cstdint>
 
@@ -106,6 +116,7 @@ inline constexpr char kHelperName[] = "hikari-media-helper";
 
 enum class Command : std::uint8_t { Open = 1, Frame = 2, OpenAudio = 3, Audio = 4, Chapters = 5, PcmBegin = 6, PcmNext = 7,
                                  OpenDisplayAudio = 8, Probe = 9, DisplayRead = 11, SubtitleTracks = 12, Subtitles = 13,
-                                 Attachments = 14, InputMatrix = 15, Close = 16 };
+                                 Attachments = 14, InputMatrix = 15, Close = 16, FrameBatch = 17,
+                                 FrameBatchDecoders = 18 };
 
 }

@@ -2,6 +2,7 @@
 
 #include "hikari/application/audio_display.h"
 #include "hikari/application/document_overlay.h"
+#include "hikari/core/frame_shrink.h"
 
 #include <algorithm>
 #include <cmath>
@@ -334,42 +335,6 @@ Result videoKeyframes(const Context &context, const Json &params)
 constexpr std::int64_t kMostFrames = 256;
 constexpr std::int64_t kMostFrameBytes = 16 * 1024 * 1024;
 
-struct Shrunk {
-    int width = 0, height = 0;
-    std::string bytes;
-};
-
-Shrunk shrink(const MacroMediaPort::Frame &frame, int maxEdge, bool luma)
-{
-    const int edge = std::max(frame.width, frame.height);
-    const int w = edge <= maxEdge ? frame.width : std::max(1, int((std::int64_t(frame.width) * maxEdge + edge / 2) / edge));
-    const int h = edge <= maxEdge ? frame.height : std::max(1, int((std::int64_t(frame.height) * maxEdge + edge / 2) / edge));
-    Shrunk out{w, h, std::string(std::size_t(w) * h * (luma ? 1 : 4), '\0')};
-    for (int y = 0; y < h; ++y)
-        for (int x = 0; x < w; ++x) {
-            const int x0 = int(std::int64_t(x) * frame.width / w), x1 = std::max(x0 + 1, int(std::int64_t(x + 1) * frame.width / w));
-            const int y0 = int(std::int64_t(y) * frame.height / h), y1 = std::max(y0 + 1, int(std::int64_t(y + 1) * frame.height / h));
-            std::int64_t sum[4] = {0, 0, 0, 0};
-            for (int sy = y0; sy < y1; ++sy)
-                for (int sx = x0; sx < x1; ++sx) {
-                    const std::byte *p = frame.bgra.data() + (std::size_t(sy) * frame.width + sx) * 4;
-                    for (int c = 0; c < 4; ++c)
-                        sum[c] += std::to_integer<int>(p[c]);
-                }
-            const std::int64_t count = std::int64_t(x1 - x0) * (y1 - y0);
-            const auto mean = [&](int c) { return char((sum[c] + count / 2) / count); };
-            const std::size_t at = std::size_t(y) * w + x;
-            if (luma) {
-                const std::int64_t b = sum[0], g = sum[1], r = sum[2];
-                out.bytes[at] = char(((77 * r + 150 * g + 29 * b) / count + 128) >> 8);
-            } else {
-                for (int c = 0; c < 4; ++c)
-                    out.bytes[at * 4 + c] = mean(c);
-            }
-        }
-    return out;
-}
-
 struct FrameBatch : std::enable_shared_from_this<FrameBatch> {
     MacroMediaPort *media = nullptr;
     std::int64_t to = 0, stride = 1;
@@ -390,7 +355,8 @@ struct FrameBatch : std::enable_shared_from_this<FrameBatch> {
             if (!frame || frame->width <= 0 || frame->height <= 0)
                 return self->reply(fail(errors::kUnavailable, "Frame " + std::to_string(index) + " could not be decoded.",
                                         Json::object({{"frame", Json(index)}})));
-            Shrunk shrunk = shrink(*frame, self->maxEdge, self->luma);
+            const core::ShrunkFrame shrunk = core::shrinkFrame(frame->bgra.data(), frame->width, frame->height,
+                                                               std::size_t(frame->width) * 4, self->maxEdge, self->luma);
             self->width = shrunk.width;
             self->height = shrunk.height;
             self->frames.push(Json::object({{"frame", Json(index)}, {"data", Json(base64(shrunk.bytes))}}));
@@ -428,7 +394,20 @@ void videoFrames(const Context &context, const Json &params, Reply reply)
     batch->luma = luma;
     batch->subtitles = subtitles;
     batch->reply = std::move(reply);
-    batch->step(from);
+    const MacroMediaPort::SmallFramesRequest request{from, to, stride, maxEdge, luma};
+    const bool offered = !subtitles && media->smallFrames(request, [batch, from](std::optional<MacroMediaPort::SmallFrames> small) {
+        if (!small)
+            return batch->step(from);
+        Json frames = Json::array();
+        for (std::size_t i = 0; i < small->pixels.size(); ++i)
+            frames.push(Json::object({{"frame", Json(from + std::int64_t(i) * batch->stride)}, {"data", Json(base64(small->pixels[i]))}}));
+        batch->reply(Json::object({{"width", Json(small->width)},
+                                   {"height", Json(small->height)},
+                                   {"format", Json(batch->luma ? "luma" : "bgra")},
+                                   {"frames", std::move(frames)}}));
+    });
+    if (!offered)
+        batch->step(from);
 }
 
 constexpr std::size_t kMostKeyframes = 100000;

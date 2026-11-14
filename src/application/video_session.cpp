@@ -335,6 +335,19 @@ void VideoSession::requestFrame(int index, bool withSubtitles,
     });
 }
 
+void VideoSession::requestShrunkFrames(int from, int to, int stride, int maxEdge, bool luma,
+                                       std::function<void(std::optional<IndexedSourcePort::ShrunkFrames>)> done)
+{
+    if (m_state != State::Ready || from < 0 || to < from || to >= frameCount() || stride < 1)
+        return done(std::nullopt);
+    const std::weak_ptr<bool> alive = m_alive;
+    m_source.shrunkFrames(from, to, stride, maxEdge, luma, [alive, done](std::expected<IndexedSourcePort::ShrunkFrames, SourceError> frames) {
+        if (alive.expired() || !frames)
+            return done(std::nullopt);
+        done(std::move(*frames));
+    });
+}
+
 void VideoSession::render()
 {
     m_overlay.reset();
