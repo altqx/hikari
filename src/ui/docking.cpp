@@ -933,7 +933,7 @@ public:
         QQuickWindow *window = item()->window();
         if (!window || m_view->width() <= 0 || m_view->height() <= 0)
             return {};
-        const QSize outside(std::max(0, window->width() - qCeil(m_view->width())),
+        const QSize outside(std::max(0, window->width() - qCeil(m_view->width()) - m_shrinkableWidth),
                             std::max(0, window->height() - qCeil(m_view->height())));
         QSize least = m_main->layout()->layoutMinimumSize() + outside;
         if (QScreen *screen = window->screen())
@@ -971,6 +971,12 @@ public:
             window->setGeometry(fitted);
     }
 
+    void setShrinkableWidth(int width)
+    {
+        m_shrinkableWidth = std::max(0, width);
+        schedule();
+    }
+
 private:
     // KDDockWidgets' View hides QQuickItem::window() with its own.
     QQuickItem *item() const { return m_view; }
@@ -981,6 +987,7 @@ private:
     KDDockWidgets::Core::MainWindow *m_main;
     KDDockWidgets::QtQuick::View *m_view;
     QTimer m_settle;
+    int m_shrinkableWidth = 0;
 };
 
 KDDockWidgets::QtQuick::View *mainWindowView(KDDockWidgets::Core::MainWindow *main)
@@ -1002,10 +1009,25 @@ bool Docking::followLayoutMinimum(const QString &mainName)
     return true;
 }
 
+bool Docking::setShrinkableWidth(const QString &mainName, int width)
+{
+    LayoutMinimumKeeper *keeper = LayoutMinimumKeeper::of(mainWindowView(mainWindowByName(mainName)));
+    if (!keeper)
+        return false;
+    keeper->setShrinkableWidth(width);
+    return true;
+}
+
 QSize Docking::layoutMinimumSize(const QString &mainName) const
 {
     KDDockWidgets::Core::MainWindow *main = mainWindowByName(mainName);
     return main ? QSize(main->layout()->layoutMinimumSize()) : QSize();
+}
+
+int Docking::screenAvailableWidth(QQuickItem *item) const
+{
+    QScreen *screen = item && item->window() ? item->window()->screen() : nullptr;
+    return screen ? screen->availableGeometry().width() : 0;
 }
 
 namespace {

@@ -430,6 +430,9 @@ constexpr HotkeyAction kActions[] = {
         {"GLOBAL_CYCLE_FSP", 5316},
         {"GLOBAL_CYCLE_FSP_BACK", 5317},
         {"GLOBAL_SHOW_EXPLORER", 5337},
+        {"GLOBAL_TOGGLE_LEFT_SIDE_BAR", 5339},
+        {"GLOBAL_TOGGLE_RIGHT_SIDE_BAR", 5340},
+        {"GLOBAL_SWAP_SIDE_BARS", 5341},
 };
 
 struct NameRow {
@@ -826,6 +829,9 @@ constexpr NameRow kNames[] = {
         {5316, "Cycle \\fsp"},
         {5317, "Cycle \\fsp back"},
         {5337, "Explorer panel"},
+        {5339, "Toggle left side bar"},
+        {5340, "Toggle right side bar"},
+        {5341, "Swap side bars"},
 };
 
 struct DefaultRow {
@@ -872,6 +878,7 @@ constexpr DefaultRow kMainDefaults[] = {
         {5246, GlobalHotkey, "Undo AI change", "Ctrl-Shift-Backspace"},
         {5247, GlobalHotkey, "Next AI change", "Ctrl-Alt-Down"},
         {5248, GlobalHotkey, "Previous AI change", "Ctrl-Alt-Up"},
+        {5339, GlobalHotkey, "Toggle left side bar", "Ctrl-Alt-B"},
         {5112, GlobalHotkey, "User guide", "F1"},
         {4527, GridHotkey, "Duplicate lines", "Ctrl-D"},
         {4554, GridHotkey, "Copy columns", "Ctrl-Shift-C"},

@@ -13,6 +13,7 @@ Rectangle {
     required property TitleBarMenus menus
     required property LayoutSwitcher switcher
     property Item tools: null
+    property list<Item> sideBarTools
     readonly property Window window: frame.window
     readonly property bool custom: frame.custom
     readonly property bool active: window !== null && window.active
@@ -38,6 +39,8 @@ Rectangle {
         switcher.parent = lead
         if (tools)
             tools.parent = lead
+        for (const tool of sideBarTools)
+            tool.parent = trail
         frame.titleBar = bar
         frame.moveArea = moveArea
         frame.maximizeButton = maximizeButton
@@ -49,8 +52,8 @@ Rectangle {
     Binding { target: bar.menus; property: "windowActive"; value: bar.active || !bar.custom }
     Binding { target: bar.switcher; property: "keyboardCurrent"; value: bar.keyboardTarget === bar.switcher }
     Rectangle {
-        parent: bar.tools ?? bar
-        visible: bar.tools !== null && bar.keyboardTarget === bar.tools
+        parent: bar.keyboardTarget ?? bar
+        visible: bar.keyboardTarget !== null && (bar.keyboardTarget === bar.tools || bar.isSideBarTool(bar.keyboardTarget))
         anchors.fill: parent
         color: "transparent"
         border.width: 1
@@ -58,10 +61,17 @@ Rectangle {
         radius: 1
     }
 
+    function isSideBarTool(item: Item): bool {
+        for (const tool of sideBarTools)
+            if (tool === item)
+                return true
+        return false
+    }
+
     readonly property bool mirrored: LayoutMirroring.enabled
     function leadingOf(x: real, w: real): real { return mirrored ? width - x - w : x }
     readonly property real leadStart: leadingOf(lead.x, lead.width)
-    readonly property real buttonsStart: custom ? leadingOf(buttons.x, buttons.width) : width
+    readonly property real buttonsStart: leadingOf(trail.x, trail.width) - 6
 
     // MUST KILL: switcherGap copies Main.qml's Layout.leftMargin by hand
     readonly property int switcherGap: 8
@@ -113,6 +123,9 @@ Rectangle {
             stops.push(switcher)
         if (tools && tools.visible && tools.enabled)
             stops.push(tools)
+        for (const tool of sideBarTools)
+            if (tool.visible && tool.enabled)
+                stops.push(tool)
         return stops
     }
     function enterKeyboard() {
@@ -145,8 +158,8 @@ Rectangle {
             switcher.openMenu()
         else if (stop === more)
             more.openMenu()
-        else if (stop === tools)
-            tools.click()
+        else if (stop === tools || isSideBarTool(stop))
+            stop.click()
         else if (stop)
             stop.triggered()
     }
@@ -387,6 +400,14 @@ Rectangle {
         Accessible.name: text
     }
 
+    Row {
+        id: trail
+        objectName: "titleBarSideBarTools"
+        spacing: 2
+        anchors.right: bar.custom ? buttons.left : parent.right
+        anchors.rightMargin: 6
+        anchors.verticalCenter: parent.verticalCenter
+    }
     // On Windows the maximise button is the frame's HTMAXBUTTON (snap layouts); the system tracks its pointer.
     Row {
         id: buttons

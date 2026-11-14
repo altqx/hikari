@@ -6875,6 +6875,22 @@ application::SessionWindow Application::sessionWindow(int shellWindow)
     return place;
 }
 
+QString Application::sideBars(int shellWindow) const
+{
+    if (const auto found = m_windowPlaces.find(shellWindow); found != m_windowPlaces.end() && found->second.sideBars)
+        return QString::fromStdString(application::sideBarsJson(*found->second.sideBars));
+    return m_settings->text("workspace.sideBars");
+}
+
+void Application::setSideBars(int shellWindow, const QString &json)
+{
+    const auto bars = application::parseSideBars(json.toStdString());
+    if (!bars || m_windowPlaces[shellWindow].sideBars == bars)
+        return;
+    m_windowPlaces[shellWindow].sideBars = bars;
+    m_settings->set("workspace.sideBars", QString::fromStdString(application::sideBarsJson(*bars)));
+}
+
 void Application::placeShellWindow(QQuickWindow &window, const application::SessionWindow &saved)
 {
     if (window.windowStates() != Qt::WindowNoState)

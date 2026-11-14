@@ -1,3 +1,4 @@
+#include "side_bar_model.h"
 #include "theme.h"
 
 #include <QCoreApplication>
@@ -21,6 +22,13 @@ void chooseTheApplicationsControlsStyle()
     hikari::ui::theme::chooseControlsStyle();
 }
 
+void startWithEmptySideBars()
+{
+    if (!qEnvironmentVariableIsSet("HIKARI_TEST_SHIPPED_SIDE_BARS"))
+        hikari::ui::SideBarModel::setFirstStartEmpty(true);
+}
+
 }
 
 Q_COREAPP_STARTUP_FUNCTION(chooseTheApplicationsControlsStyle)
+Q_COREAPP_STARTUP_FUNCTION(startWithEmptySideBars)

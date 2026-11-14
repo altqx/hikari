@@ -8,7 +8,8 @@
 //     "closed": true,              <- last-session.json only
 //     "windows": [                 <- ADR 0025; absent: one window
 //       { "x": <dip>, "y": <dip>, "width": <dip>, "height": <dip>, "maximized": false,
-//         "project": "<folder>" }, ...   <- "project": ADR 0030, left out without one
+//         "project": "<folder>",       <- "project": ADR 0030, left out without one
+//         "sideBars": { <side bars> } }, ...   <- ADR 0032; one that does not read is dropped
 //     ],
 //     "tabs": [
 //       { "subtitles": "<path>", "video": "<path>", "position": <ms>,

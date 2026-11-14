@@ -154,6 +154,8 @@ hikari_add_gtest(hikari_application_session_file_tests SOURCES session_file_test
 target_compile_definitions(hikari_application_session_file_tests PRIVATE
     HIKARI_SESSION_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/sessions")
 target_include_directories(hikari_application_session_file_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
+hikari_add_gtest(hikari_application_side_bars_tests SOURCES side_bars_tests.cpp
+    LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_subtitle_comparison_tests SOURCES subtitle_comparison_tests.cpp
     LIBRARIES hikari_application Qt6::Core LABELS application)
 target_compile_definitions(hikari_application_subtitle_comparison_tests PRIVATE

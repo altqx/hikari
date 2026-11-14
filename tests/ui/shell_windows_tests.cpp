@@ -229,7 +229,10 @@ class ShellWindowsTest : public QObject {
     static QStringList styleRows(QQuickWindow *window)
     {
         QStringList out;
-        for (const QVariant &row : item(window, "stylesTool")->property("rows").toList())
+        QQuickItem *tool = item(window, "stylesTool");
+        if (!tool)
+            return {QStringLiteral("no stylesTool")};
+        for (const QVariant &row : tool->property("rows").toList())
             out << row.toMap().value(QStringLiteral("name")).toString() + u':' +
                        QString::number(row.toMap().value(QStringLiteral("lines")).toInt());
         return out;

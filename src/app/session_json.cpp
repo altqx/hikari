@@ -116,8 +116,11 @@ std::optional<application::Session> readJson(std::string_view bytes, application
             if (!project.isString() && !project.isUndefined())
                 return wrongType("project");
             window.project = project.toString().toStdString();
+            if (const QJsonValue bars = w.value(QStringLiteral("sideBars")); bars.isObject())
+                window.sideBars = application::parseSideBars(
+                    QJsonDocument(bars.toObject()).toJson(QJsonDocument::Compact).toStdString());
             QJsonObject unknown = w;
-            for (const char *key : {"x", "y", "width", "height", "maximized", "project"})
+            for (const char *key : {"x", "y", "width", "height", "maximized", "project", "sideBars"})
                 unknown.remove(QLatin1String(key));
             if (!unknown.isEmpty())
                 window.unknown = QJsonDocument(unknown).toJson(QJsonDocument::Compact).toStdString();
@@ -207,6 +210,9 @@ QByteArray writeSessionJson(const application::Session &session, std::optional<b
             w.insert(QStringLiteral("maximized"), window.maximized);
             if (!window.project.empty())
                 w.insert(QStringLiteral("project"), qs(window.project));
+            if (const auto &bars = window.sideBars)
+                w.insert(QStringLiteral("sideBars"),
+                         QJsonDocument::fromJson(QByteArray::fromStdString(application::sideBarsJson(*bars))).object());
             windows.append(w);
         }
         o.insert(QStringLiteral("windows"), windows);
