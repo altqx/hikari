@@ -237,6 +237,65 @@ private slots:
         QVERIFY(shown.isEmpty());
     }
 
+    static api::Json rekeyed(const api::Json &dialogs, const char *key)
+    {
+        api::Json out = api::Json::array();
+        for (const api::Json &d : dialogs.asArray()) {
+            api::Json answer = api::Json::object({{"values", *d.find("values")},
+                                                  {"button", *d.find("button")},
+                                                  {"controls", *d.find("controls")}});
+            if (key)
+                answer["key"] = api::Json(key);
+            out.push(std::move(answer));
+        }
+        return out;
+    }
+
+    void macroRanGivesTheDialogsValueBearingControls()
+    {
+        select(1);
+        answers = {{0, {}}, {0, {}}};
+        const api::Json dialogs = recordedDialogs([this] { run(); });
+        const auto &controls = dialogs.asArray().at(0).find("controls")->asArray();
+        QCOMPARE(controls.size(), 3u);
+        QCOMPARE(QString::fromStdString(controls[0].find("kind")->asString()), QStringLiteral("edit"));
+        QCOMPARE(QString::fromStdString(controls[0].find("name")->asString()), QStringLiteral("tags"));
+        QCOMPARE(QString::fromStdString(controls[1].find("kind")->asString()), QStringLiteral("intedit"));
+        QCOMPARE(controls[1].find("min")->asNumber(), 0.0);
+        QCOMPARE(controls[1].find("max")->asNumber(), 100.0);
+        QCOMPARE(QString::fromStdString(controls[2].find("label")->asString()), QStringLiteral("Flag"));
+    }
+
+    void aPluginAnswersByControlsWithoutAKey()
+    {
+        select(1);
+        answers = {{0, {{QStringLiteral("tags"), QStringLiteral("\\fs")}, {QStringLiteral("count"), 7}}}, {0, {}}};
+        const api::Json dialogs = recordedDialogs([this] { run(); });
+
+        shown.clear();
+        const api::Result result = runMacro(twoDialogs(rekeyed(dialogs, nullptr)));
+        QVERIFY2(result, result ? "" : result.error().message.c_str());
+        QCOMPARE(QString::fromStdString(result->find("log")->asString()),
+                 QStringLiteral("first button=Apply tags=\\fs count=7 flag=true clip=nil\n"
+                                "second button=Yes tags=nil count=nil flag=false clip=nil\n"));
+        QVERIFY(shown.isEmpty());
+    }
+
+    void aStaleKeyWinsOverControlsThatWouldMatch()
+    {
+        select(1);
+        answers = {{0, {{QStringLiteral("tags"), QStringLiteral("\\fs")}}}, {0, {}}};
+        const api::Json dialogs = recordedDialogs([this] { run(); });
+
+        shown.clear();
+        answers = {{1, {}}};
+        QVERIFY(runMacro(twoDialogs(rekeyed(dialogs, "ffffffffffffffff"))));
+        QCOMPARE(shown.size(), 1);
+        QCOMPARE(shown[0].value(QStringLiteral("tags")).toString(), QStringLiteral("\\fs"));
+        QCOMPARE(shown[0].notice, QStringLiteral("This dialog has changed since the plugin recorded it, so it is shown "
+                                                 "with its answers filled in."));
+    }
+
     void aPluginCanShowItsAnswersFilledInOrMeetAChangedDialog()
     {
         select(1);

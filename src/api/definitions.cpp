@@ -135,13 +135,27 @@ void addDefinitions(Registry &registry)
         "trusted": {"type": "boolean", "description": "Whether the folder is in Trusted folders."}},
         "required": ["name", "trusted"], "additionalProperties": false}],
         "description": "The Project of the window the user works in; null without one."})"));
+    registry.define("DialogControl", schema(R"({"type": "object", "properties": {
+        "name": {"type": "string"},
+        "kind": {"enum": ["edit", "textbox", "intedit", "floatedit", "dropdown", "checkbox", "color", "coloralpha", "alpha"],
+            "description": "The control's Lua class, lowercased."},
+        "label": {"type": "string", "description": "A checkbox's text."},
+        "hint": {"type": "string"},
+        "items": {"type": "array", "items": {"type": "string"}, "description": "A dropdown's choices."},
+        "min": {"type": "number"}, "max": {"type": "number"},
+        "step": {"type": "number", "description": "A floatedit's step; 0 for none."}},
+        "required": ["name", "kind"], "additionalProperties": false})"));
     registry.define("DialogAnswer", schema(R"({"type": "object", "properties": {
         "key": {"type": "string", "pattern": "^[0-9a-f]{16}$",
-            "description": "The dialog's key: its script and its controls' kinds and names, as Automation remembers answers by."},
+            "description": "The dialog's key: its script and its controls' kinds and names, as Automation remembers answers by. When given, the key alone decides which dialog the answer fills."},
+        "controls": {"type": "array", "maxItems": 256, "items": {"$ref": "#/$defs/DialogControl"},
+            "description": "The dialog's value-bearing controls, in order. Without a key, the answer fills the dialog of the script being run whose controls have these kinds and names; the other fields don't count."},
         "values": {"type": "object", "additionalProperties": {"type": ["string", "number", "boolean"]},
             "description": "The answered values by control name."},
         "button": {"type": "string", "description": "The pressed button's label; empty when the dialog was closed."}},
-        "required": ["key", "values"], "additionalProperties": false})"));
+        "required": ["values"],
+        "anyOf": [{"required": ["key"]}, {"required": ["controls"]}],
+        "additionalProperties": false})"));
     registry.define("MarkColour", schema(R"({"enum": ["accent", "warning", "danger", "success", "muted"],
         "description": "A theme role, so the mark follows the theme and high contrast."})"));
 }

@@ -26,6 +26,8 @@ Version 1 of the Hikari API, generated from HikariSub's own registry: the same r
 | `settings.set` | write | 1 | Changes a setting; the value must have the setting's type. |
 | `document.apply` | write | 1 | Applies edits prepared against a revision as one undo step; a stale revision changes nothing. |
 | `selection.set` | write | 1 | Selects Lines and makes one active, as a click in the Grid would; never an undo step. |
+| `document.group_begin` | write | 1 | Groups the steps the caller commits on the editing target from now on, by any write, into one undo step named after the caller and `name`. The group ends at document.group_end, when the plugin's command or event handler returns, when the plugin stops, or at the first step someone else makes. Plugins only. |
+| `document.group_end` | write | 1 | Ends the caller's group: its steps become one undo step. |
 | `video.info` | read | 1 | Whether a video is open, its size and aspect ratio, the frame shown and the keyframes. |
 | `video.frame_at_time` | read | 1 | The video frame shown at a time. |
 | `video.time_of_frame` | read | 1 | The time a video frame starts, in milliseconds. |
@@ -529,6 +531,38 @@ Selects Lines and makes one active, as a click in the Grid would; never an undo 
 | `active` | [LineId](#lineid) or null | yes |  |
 | `selected` | array of [LineId](#lineid) | yes |  |
 
+### `document.group_begin`
+
+Write. Since version 1.
+
+Groups the steps the caller commits on the editing target from now on, by any write, into one undo step named after the caller and `name`. The group ends at document.group_end, when the plugin's command or event handler returns, when the plugin stops, or at the first step someone else makes. Plugins only.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `name` | string | yes | A few words naming the grouped step, as the user reads it in History after the caller's name. 1 to 200 characters. |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `document` | [DocumentId](#documentid) | yes |  |
+
+### `document.group_end`
+
+Write. Since version 1.
+
+Ends the caller's group: its steps become one undo step.
+
+**Parameters**: none.
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `steps` | integer | yes | How many steps became one; 0 when the group made none. A group someone else's step ended earlier is no longer open. At least 0. |
+
 ### `video.info`
 
 Read. Since version 1.
@@ -936,6 +970,7 @@ Runs a loaded Automation macro on the active tab's selection, as the menu would,
 | `outcome` | one of `applied`, `refused`, `failed`, `cancelled`, `declined`, `stopped` or `lost` | yes |  |
 | `message` | string | yes |  |
 | `log` | string | yes |  |
+| `dialogs` | array of [DialogAnswer](#dialoganswer) |  | The answers its dialogs got, as macro.ran gives them; only when the caller sees the Document it ran on. |
 
 ### `automation.run`
 
@@ -2326,11 +2361,25 @@ One of:
 | `name` | string | yes | The Project folder's name. |
 | `trusted` | boolean | yes | Whether the folder is in Trusted folders. |
 
+### DialogControl
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `name` | string | yes |  |
+| `kind` | one of `edit`, `textbox`, `intedit`, `floatedit`, `dropdown`, `checkbox`, `color`, `coloralpha` or `alpha` | yes | The control's Lua class, lowercased. |
+| `label` | string |  | A checkbox's text. |
+| `hint` | string |  |  |
+| `items` | array of string |  | A dropdown's choices. |
+| `min` | number |  |  |
+| `max` | number |  |  |
+| `step` | number |  | A floatedit's step; 0 for none. |
+
 ### DialogAnswer
 
 | Field | Type | Required | Meaning |
 | --- | --- | --- | --- |
-| `key` | string | yes | The dialog's key: its script and its controls' kinds and names, as Automation remembers answers by. `pattern`: `"^[0-9a-f]{16}$"`. |
+| `key` | string |  | The dialog's key: its script and its controls' kinds and names, as Automation remembers answers by. When given, the key alone decides which dialog the answer fills. `pattern`: `"^[0-9a-f]{16}$"`. |
+| `controls` | array of [DialogControl](#dialogcontrol) |  | The dialog's value-bearing controls, in order. Without a key, the answer fills the dialog of the script being run whose controls have these kinds and names; the other fields don't count. At most 256 items. |
 | `values` | object of string, number or boolean by name | yes | The answered values by control name. |
 | `button` | string |  | The pressed button's label; empty when the dialog was closed. |
 

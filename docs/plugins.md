@@ -175,13 +175,13 @@ The helper framing ([`helper_protocol.h`](../src/backends/include/hikari/backend
 | `hikari.project.info()` | The [Project](adr/0030-open-a-folder-as-a-project.md) of the window the user works in, `{name, trusted}`, or `hikari.null` without one, as [`project.info`](api-reference.md#projectinfo) answers. `project.changed` comes when it changes. |
 | `hikari.plugin.id`, `hikari.plugin.version`, `hikari.api_version` | Who the plugin is, and the Hikari API number. |
 | `hikari.null`, `hikari.array(t)` | JSON `null`, and a table marked as a JSON array (so `{}` can be sent as `[]`). Arrays that come back from HikariSub are marked too. |
-| `hikari.document.list()`, `hikari.document.read(document)`, `hikari.document.edit(name, fn, options)` | The open Documents, a snapshot of one, and one edit applied as one undo step. See [Documents and selections](#documents-and-selections). |
+| `hikari.document.list()`, `hikari.document.read(document)`, `hikari.document.edit(name, fn, options)`, `hikari.document.group(name, fn)` | The open Documents, a snapshot of one, one edit applied as one undo step, and the steps `fn` makes as one undo step. See [Documents and selections](#documents-and-selections) and [Undo groups](#macros-keyframes-and-frames). |
 | `hikari.selection.get(document)`, `hikari.selection.set(selected, active, document)` | The selected Lines and the active Line, as `selection.get` and `selection.set` give and take them. |
 | `hikari.panels.render(panel, tree)`, `hikari.panels.show(panel)`, `hikari.panels.on(panel, fn)` | Draws a panel from `contributes.panels`, opens it, and calls `fn(event)` for its events. See [Panels and dialogs](#panels-and-dialogs). |
 | `hikari.panels.post(panel, data)` | Sends `data` to a [QML panel](#qml-panels)'s `api.received`. It returns `true` when the panel is loaded, and `false` otherwise. |
 | `hikari.files.open(place, path)`, `hikari.files.entries(place, path)`, `hikari.files.pick(options)`, `hikari.files.folder(id)`, `hikari.files.list()`, `hikari.files.read(file, encoding)`, `hikari.files.write(file, data, encoding)` | Files in the plugin's own folders, in folders the user chose, and that the user picked or dropped. See [Files](#files). |
 | `hikari.net.fetch(request)` | An HTTPS request that HikariSub makes to a host from the manifest. See [Network](#network). |
-| `hikari.job.begin{title}`, `hikari.job.progress(fraction, text)`, `hikari.job.cancelled()` | Turns the running command into a job with a card and no time limit. See [Long jobs](#long-jobs). |
+| `hikari.job.begin{title}`, `hikari.job.progress(fraction, text)`, `hikari.job.cancelled()` | Turns the running command, or a click in the plugin's own panel or dialog, into a job with a card and no time limit. See [Long jobs](#long-jobs). |
 | `hikari.marks.set(marks, document)`, `hikari.marks.clear(lines, document)`, `hikari.marks.list(document)` | The plugin's Grid row marks. See [Grid row marks](#grid-row-marks). |
 | `hikari.vcs.refs(options)`, `hikari.vcs.show(ref, document)` | The git repository holding a Document, read-only, with `vcs.read`. See [Git](#git). |
 | `hikari.dialogs.show(dialog, spec)`, `hikari.dialogs.ask(dialog, spec)`, `hikari.dialogs.close(dialog)`, `hikari.dialogs.on(dialog, fn)` | Opens a dialog, or opens one and waits for its answer `button, values`; closes it; and calls `fn(event)` for its events. |
@@ -371,7 +371,7 @@ A plugin that stops, crashes or is turned off loses its handles, its folders for
 
 ## Long jobs
 
-A command that takes longer than 10 seconds, such as scanning a video, calls `hikari.job.begin` first:
+A command or a click that takes longer than 10 seconds, such as scanning a video, calls `hikari.job.begin` first:
 
 ```lua
 hikari.commands.register("scan", function()
@@ -387,7 +387,18 @@ hikari.commands.register("scan", function()
 end)
 ```
 
-From `begin` until the command returns, it has no time limit, and a card above the status bar shows the plugin's name, the title, the progress and **Cancel**. `hikari.job.progress(nil, text)` shows a bar that moves without a fraction. **Cancel** only makes `hikari.job.cancelled()` answer `true`, so check it often. When the plugin hasn't stopped 5 seconds later, the card says so and offers **Stop**, which force stops it; work it hasn't applied is lost. Only a command can become a job, once; outside one, the job calls answer `nil` and an error. Several plugins' jobs stack, the newest first.
+From `begin` until the command or the click's handler returns, it has no time limit, and a card above the status bar shows the plugin's name, the title, the progress and **Cancel**. `hikari.job.progress(nil, text)` shows a bar that moves without a fraction. **Cancel** only makes `hikari.job.cancelled()` answer `true`, so check it often. When the plugin hasn't stopped 5 seconds later, the card says so and offers **Stop**, which force stops it; work it hasn't applied is lost. Only a command, or a `click` in the plugin's own panel or dialog (a dialog's `button` press too), can become a job, once; anywhere else, such as other events, or a panel's `change` or `show`, the job calls answer `nil` and an error. A panel's button can so start a scan with the card and **Cancel**:
+
+```lua
+hikari.panels.on("scan", function(e)
+    if e.kind == "click" and e.widget == "find" then
+        hikari.job.begin{title = "Finding keyframes"}
+        -- …
+    end
+end)
+```
+
+While the job runs, the plugin's other events and commands wait behind it. Several plugins' jobs stack, the newest first.
 
 ## Grid row marks
 
@@ -408,7 +419,9 @@ Marks are never saved and aren't undo steps. They go when the plugin stops or is
 
 Any plugin can use these through `hikari.call`; none needs a permission.
 
-- **`automation.macros` and `automation.run_macro`.** The Automation macros the user loaded, and a run of one on the active tab's selection, as the menu runs it, as one undo step. Set the selection first with `hikari.selection.set`. `answers` fills the macro's dialogs: one `{key, values, button}` per dialog, as the [`macro.ran`](api-reference.md#macroran) event gives them after the user runs a macro. A dialog whose key matches is answered without showing it, unless `show = "prefilled"`; a question and a dialog that changed are always shown. AI callers can't run installed macros.
+- **`automation.macros` and `automation.run_macro`.** The Automation macros the user loaded, and a run of one on the active tab's selection, as the menu runs it, as one undo step. Set the selection first with `hikari.selection.set`. `answers` fills the macro's dialogs: one `{key, values, button, controls}` per dialog, as the [`macro.ran`](api-reference.md#macroran) event gives them after the user runs a macro. A dialog whose key matches is answered without showing it, unless `show = "prefilled"`; a question and a dialog that changed are always shown. An answer without a key, such as one imported from another tool, gives the dialog's `controls` instead: it fills the dialog of the running script whose value-bearing controls have those kinds and names, in order. When an answer has both, the key wins, so an answer whose key no longer matches shows its dialog. The result gives the run's own `dialogs`, as `macro.ran` would, when the plugin sees the Document it ran on, so a plugin learns each run's answers even when several runs' `macro.ran` events reach it as one. AI callers can't run installed macros.
+- **`controls` on `macro.ran`.** Each dialog's value-bearing controls, in order: `name`, `kind`, a checkbox's `label`, the `hint`, a dropdown's `items`, and `min`, `max` and a floatedit's `step` when the script set them. That's enough to ask the same question in a dialog of the plugin's own.
+- **Undo groups.** `hikari.document.group(name, fn)` runs `fn`, and every step the plugin commits on the editing target meanwhile, by `document.apply`, `automation.run_macro`, `commands.run` or any other write, becomes one undo step named "<plugin name>: <name>". It returns `{steps}`, how many steps became one, then what `fn` returned; an error in `fn` ends the group and passes through. Underneath are `document.group_begin {name}` and `document.group_end`. A group also ends when the command or event handler returns, when the plugin stops, or at the first step someone else makes, such as the user typing or pressing Undo: the plugin's steps before it become one, and the later ones stay steps of their own. A plugin has one group open at a time (a second `group_begin` is `invalid_params`), and while one plugin groups a Document another's `group_begin` there answers `busy`.
 - **`video.set_keyframes`.** Replaces the video's keyframes as Open keyframes does, or with `file` (a writable handle from `hikari.files.pick`) writes an Aegisub keyframes file there first and opens it.
 - **`video.frames`.** Up to 256 frames at once, every `stride`-th, scaled down to `maxEdge` (16 to 512, 64 by default), as one byte of luma per pixel or as BGRA, in base64.
 

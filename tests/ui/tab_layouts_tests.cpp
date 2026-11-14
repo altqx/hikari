@@ -6,6 +6,8 @@
 #include "legacy_session.h"
 #include "workspace_layout.h"
 
+#include "qtest_parts.h"
+
 #include <kddockwidgets/core/DockRegistry.h>
 #include <kddockwidgets/core/FloatingWindow.h>
 
@@ -548,5 +550,5 @@ private slots:
     }
 };
 
-QTEST_MAIN(TabLayoutsTest)
+HIKARI_QTEST_MAIN_IN_PARTS(TabLayoutsTest)
 #include "tab_layouts_tests.moc"
