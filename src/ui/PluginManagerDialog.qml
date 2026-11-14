@@ -978,7 +978,8 @@ DialogWindow {
             }
             Switch {
                 objectName: "pluginEnabled_" + details.row.id
-                text: qsTr("On")
+                text: checked ? qsTr("On") : qsTr("Off")
+                Accessible.name: details.row.name
                 enabled: !details.row.revoked
                 checked: details.row.enabled
                 onToggled: {

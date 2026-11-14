@@ -12,6 +12,8 @@
 #include "theme.h"
 #include "workspace_layout.h"
 
+#include "qtest_parts.h"
+
 #include <QAbstractItemModel>
 #include <QDir>
 #include <QFile>
@@ -678,5 +680,5 @@ private slots:
     }
 };
 
-QTEST_MAIN(KaraokePresetTest)
+HIKARI_QTEST_MAIN_IN_PARTS(KaraokePresetTest)
 #include "karaoke_preset_tests.moc"

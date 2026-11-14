@@ -51,6 +51,7 @@ MenuItem {
         if (holdsMenu && menu)
             menu.dismiss()
     }
+    Component.onCompleted: ShellMenus.takeHoverOnlyFromMotion(control)
     Component.onDestruction: StatusHelp.hide(control)
     readonly property string shownIconRole: iconRole.length > 0 ? iconRole
         : subMenu && typeof subMenu.iconRole === "string" ? subMenu.iconRole : ""
