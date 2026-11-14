@@ -59,6 +59,15 @@ protected:
         return p;
     }
 
+#ifdef _WIN32
+    Profile lowRights() const
+    {
+        Profile p = profile(Network::Any);
+        p.lowRightsHelper = QStringLiteral(HIKARI_TEST_CONFINE_HELPER);
+        return p;
+    }
+#endif
+
     /// Runs the probe confined to `launcher`'s profile; answers its report lines.
     QStringList run(Launcher &launcher, const QStringList &arguments)
     {
@@ -333,6 +342,102 @@ TEST_F(Sandbox, AFolderTheUserCantChangeIsReportedAsRefused)
     EXPECT_TRUE(missing.contains(QStringLiteral("can't change its permissions"))) << missing.toStdString();
     EXPECT_FALSE(missing.contains(QDir::toNativeSeparators(path("readonly")))) << missing.toStdString();
     EXPECT_FALSE(aceFor(path("locked"), launcher.containerSid()));
+}
+
+TEST_F(Sandbox, HikariSubsOwnCodeOpensToEveryAppContainerRatherThanToOne)
+{
+    ASSERT_TRUE(QDir(m_root.path()).mkpath(QStringLiteral("runtime")));
+    Profile p = profile();
+    p.readExecute << path("runtime");
+    Launcher launcher(p);
+    ASSERT_FALSE(launcher.containerSid().isEmpty()) << launcher.coverage().missing.toStdString();
+    EXPECT_TRUE(aceFor(path("runtime"), QStringLiteral("S-1-15-2-1")));
+    EXPECT_FALSE(aceFor(path("runtime"), launcher.containerSid()));
+}
+
+TEST_F(Sandbox, ALowRightsProcessReadsTheUsersFilesButWritesOnlyItsOwnFolders)
+{
+    Launcher launcher(lowRights());
+    ASSERT_TRUE(launcher.coverage().missing.isEmpty()) << launcher.coverage().missing.toStdString();
+    EXPECT_TRUE(launcher.containerSid().isEmpty());
+    const QString secret = path("outside/secret.txt");
+    const QString mine = path("allowed/new.txt");
+    const QString elsewhere = path("outside/new.txt");
+    const QStringList lines = run(launcher, {QStringLiteral("low"), QStringLiteral("desktop"), QStringLiteral("read"),
+                                             secret, QStringLiteral("write"), mine, QStringLiteral("write"), elsewhere});
+    const std::string said = lines.join(QLatin1Char('\n')).toStdString();
+    EXPECT_TRUE(ok(lines, QStringLiteral("low"))) << said;
+    EXPECT_TRUE(ok(lines, QStringLiteral("desktop"))) << said;
+    EXPECT_TRUE(ok(lines, QStringLiteral("read ") + secret)) << said;
+    EXPECT_TRUE(ok(lines, QStringLiteral("write ") + mine)) << said;
+    EXPECT_TRUE(denied(lines, QStringLiteral("write ") + elsewhere)) << said;
+}
+
+TEST_F(Sandbox, ALowRightsProcessesFoldersCloseToLowRightsOnceItsLauncherEnds)
+{
+    const QString mine = path("allowed/mine.txt");
+    {
+        Launcher launcher(lowRights());
+        ASSERT_TRUE(ok(run(launcher, {QStringLiteral("read"), mine}), QStringLiteral("read ") + mine));
+    }
+    Profile other = lowRights();
+    other.readWrite = {path("readonly")};
+    Launcher launcher(other);
+    const QStringList lines = run(launcher, {QStringLiteral("read"), mine});
+    EXPECT_TRUE(denied(lines, QStringLiteral("read ") + mine)) << lines.join(QLatin1Char('\n')).toStdString();
+}
+
+TEST_F(Sandbox, AFolderGivenToTheUserAloneIsClosedToLowRights)
+{
+    ASSERT_TRUE(QDir(m_root.path()).mkpath(QStringLiteral("secrets")));
+    ASSERT_TRUE(hikari::backends::keepForUserAlone(path("secrets")));
+    QFile token(path("secrets/token"));
+    ASSERT_TRUE(token.open(QIODevice::WriteOnly));
+    token.close();
+    Launcher launcher(lowRights());
+    const QStringList lines = run(launcher, {QStringLiteral("read"), token.fileName()});
+    EXPECT_TRUE(denied(lines, QStringLiteral("read ") + token.fileName())) << lines.join(QLatin1Char('\n')).toStdString();
+}
+
+TEST_F(Sandbox, KillTreeEndsALowRightsProcessAndItsChildren)
+{
+    Launcher launcher(lowRights());
+    QProcess process;
+    process.setProgram(QStringLiteral(HIKARI_SANDBOX_PROBE));
+    process.setArguments({QStringLiteral("spawn"), QStringLiteral("sleep"), QStringLiteral("60")});
+    launcher.prepare(process);
+    process.start();
+    ASSERT_TRUE(process.waitForStarted(10'000));
+    EXPECT_TRUE(launcher.runs(process.processId()));
+    launcher.killTree();
+    EXPECT_TRUE(process.waitForFinished(5'000));
+}
+
+TEST_F(Sandbox, WithoutItsHelperALowRightsProcessDoesntStartAtAll)
+{
+    Profile p = lowRights();
+    p.lowRightsHelper = path("missing/hikarisub-confine.exe");
+    Launcher launcher(p);
+    EXPECT_TRUE(launcher.coverage().missing.contains(QStringLiteral("low-rights helper is missing")))
+        << launcher.coverage().missing.toStdString();
+    QProcess process;
+    process.setProgram(QStringLiteral(HIKARI_SANDBOX_PROBE));
+    process.setArguments({QStringLiteral("low")});
+    launcher.prepare(process);
+    process.start();
+    EXPECT_FALSE(process.waitForStarted(10'000));
+}
+
+TEST_F(Sandbox, AHelperThatCantStartTheCommandSaysWhyAndStartsNothing)
+{
+    Launcher launcher(lowRights());
+    QProcess process;
+    process.setProgram(path("outside/missing.exe"));
+    launcher.prepare(process);
+    process.start();
+    ASSERT_TRUE(process.waitForFinished(10'000)) << process.errorString().toStdString();
+    EXPECT_EQ(process.exitCode(), 0x4846);
+    EXPECT_TRUE(process.readAllStandardError().contains("hikarisub-confine: starting the command failed"));
 }
 #endif
 

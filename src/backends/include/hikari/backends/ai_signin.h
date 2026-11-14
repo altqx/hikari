@@ -77,8 +77,8 @@ struct SignInProgress {
     bool browserAvailable = true;
 };
 
-/// `kind` is denied, codeExpired, codesOff, portBusy, network, expired, timedOut, invalid, cancelled, keychain or
-/// import.
+/// `kind` is denied, codeExpired, codesOff, portBusy, network, expired, timedOut, invalid, cancelled, keychain,
+/// keychainNotPrivate or import.
 struct SignInFailure {
     std::string kind;
     std::string host;

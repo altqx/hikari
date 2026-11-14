@@ -73,7 +73,7 @@ endif()
 
 if(WIN32)
     add_library(hikari_sandbox STATIC sandbox_windows.cpp include/hikari/backends/sandbox.h user_alone_windows.cpp
-        include/hikari/backends/user_alone.h)
+        include/hikari/backends/user_alone.h integrity_label_windows.cpp integrity_label_windows.h)
     target_link_libraries(hikari_sandbox PRIVATE userenv advapi32)
 else()
     add_library(hikari_sandbox STATIC sandbox_linux.cpp include/hikari/backends/sandbox.h user_alone_posix.cpp
@@ -93,7 +93,9 @@ add_library(hikari_ai STATIC ai_config_store.cpp include/hikari/backends/ai_conf
     ai_mcp_server.cpp include/hikari/backends/ai_mcp_server.h ai_mcp_clients.cpp include/hikari/backends/ai_mcp_clients.h ai_mcp_bridge.cpp include/hikari/backends/ai_mcp_bridge.h
     ai_inline_run.cpp ai_translation_run.cpp include/hikari/backends/ai_inline_run.h)
 if(WIN32)
-    target_sources(hikari_ai PRIVATE ai_private_pipe.h ai_private_pipe_windows.cpp)
+    target_sources(hikari_ai PRIVATE ai_private_pipe.h ai_private_pipe_windows.cpp ai_file_key_store_windows.cpp
+        include/hikari/backends/ai_file_key_store.h)
+    target_link_libraries(hikari_ai PRIVATE crypt32)
 endif()
 target_sources(hikari_backends PRIVATE external_aligner.cpp include/hikari/backends/external_aligner.h)
 target_sources(hikari_backends PRIVATE git_reader.cpp include/hikari/backends/git_reader.h)

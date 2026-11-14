@@ -10,8 +10,9 @@ class QLocalSocket;
 
 namespace hikari::backends::ai {
 
-/// A named pipe that only the user and one AppContainer may open, at Low integrity, refusing remote clients: it
-/// hands its first client that `admits` accepts to `accepted` and then takes no other. Windows only.
+/// A named pipe that only the user, their Low-integrity processes and at most one AppContainer may open, refusing
+/// remote clients: it hands its first client that `admits` accepts to `accepted` and then takes no other. Windows
+/// only.
 class PrivatePipe {
 public:
     using Admits = std::function<bool(qint64 pid)>;
@@ -22,7 +23,8 @@ public:
     PrivatePipe(const PrivatePipe &) = delete;
     PrivatePipe &operator=(const PrivatePipe &) = delete;
 
-    /// `name` is the full `\\.\pipe\…` path. False with `error` set when the pipe can't be made exactly so.
+    /// `name` is the full `\\.\pipe\…` path; an empty `containerSid` admits no AppContainer. False with `error` set
+    /// when the pipe can't be made exactly so.
     bool listen(const QString &name, const QString &containerSid, QString *error);
 
 private:

@@ -63,9 +63,9 @@ public:
     /// A private channel for one agent session, relayed as `channel:<session>`: its calls carry the session and go
     /// through its thread's gate, not the MCP one. The local socket takes one connection at most.
     void setChannel(std::string session);
-    /// A private channel's pipe on Windows, at a random name only the user and `containerSid` may open, taking one
-    /// connection from a process `admits` accepts. False with `error` set where it can't be made exactly so, and
-    /// everywhere else.
+    /// A private channel's pipe on Windows, at a random name only the user, their Low-integrity processes and
+    /// `containerSid`, when given, may open, taking one connection from a process `admits` accepts. False with
+    /// `error` set where it can't be made exactly so, and everywhere else.
     bool listenPipe(const QString &containerSid, std::function<bool(qint64 pid)> admits, QString *error = nullptr);
     /// `port` 0 picks a free one.
     bool listenHttp(quint16 port, QString *error = nullptr);

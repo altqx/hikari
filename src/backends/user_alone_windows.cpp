@@ -1,6 +1,7 @@
 #include "hikari/backends/user_alone.h"
 
 #include "hikari/backends/sandbox.h"
+#include "integrity_label_windows.h"
 
 #include <QDir>
 #include <QFileInfo>
@@ -121,7 +122,7 @@ bool keepForUserAlone(const QString &path)
                                            DACL_SECURITY_INFORMATION | PROTECTED_DACL_SECURITY_INFORMATION, nullptr,
                                            nullptr, acl, nullptr) == ERROR_SUCCESS;
     LocalFree(acl);
-    return set;
+    return set && setIntegrityLabel(name, IntegrityLabel::LowRightsMayNotOpen) == ERROR_SUCCESS;
 }
 
 }

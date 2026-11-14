@@ -14,7 +14,8 @@ enum class SecretWrite { Saved, NotPrivate, Failed };
 bool isForUserAlone(const QString &path);
 
 /// Gives `path`, a file or folder, to the current user alone: mode 0600 or 0700 on Unix; on Windows a protected ACL
-/// with one entry for the user, which a folder's new files and folders inherit.
+/// with one entry for the user and a label no Low-integrity process may read through, which a folder's new files and
+/// folders inherit.
 bool keepForUserAlone(const QString &path);
 
 }

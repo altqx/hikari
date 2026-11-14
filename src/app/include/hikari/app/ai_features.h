@@ -103,6 +103,9 @@ public:
         /// Why agents' private tools channel can't open here, as on a Windows that can't make a pipe for their
         /// AppContainer; empty when it can. Codex and ACP agents need it. Unset counts as open.
         std::function<QString()> channelProblem;
+        /// Whether Codex and ACP agents run with low rights rather than in an AppContainer, as on Windows; Settings › AI
+        /// then warns on their rows. Unset counts as not.
+        std::function<bool()> lowRights;
         /// Finds an agent CLI ("claude" or "codex") and asks it for its version.
         std::function<void(const QString &agent, std::function<void(std::optional<backends::ai::AgentCli>, QString unresolvedShim)>)> findAgent;
         std::function<backends::ai::AgentInstall(const backends::ai::AgentCli &)> agentInstall;
@@ -137,6 +140,8 @@ public:
     bool confinesFiles() const;
     /// Whether Codex and ACP agents can have a private tools channel; asked once.
     bool channelOpens() const;
+    /// Whether `agent` ("codex", "opencode", "agy" or a custom ACP agent's) runs with low rights; never Claude.
+    bool runsWithLowRights(const QString &agent) const;
     /// Why `agent` ("codex", "opencode", "agy") isn't offered: "sandbox", "channel", or empty when it is. Claude never
     /// is refused.
     QString refusal(const QString &agent) const;

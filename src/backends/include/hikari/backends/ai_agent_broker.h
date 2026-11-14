@@ -80,9 +80,13 @@ struct AgentSpec {
     std::function<void()> after;
 };
 
-/// Why agents in the AppContainer `containerName` can't have a private tools channel here; empty when they can, and
-/// always where the channel is loopback HTTP.
-QString channelProblem(const QString &containerName);
+/// The low-rights helper beside HikariSub's `bridge` on Windows, where Codex and ACP agents run through it; none
+/// elsewhere.
+std::optional<QString> lowRightsHelperBeside(const QString &bridge);
+
+/// Why agents started through the low-rights helper beside `bridge` can't have a private tools channel here; empty
+/// when they can, and always where the channel is loopback HTTP.
+QString channelProblem(const QString &bridge);
 
 /// Refuses permission bypass, extra folders, plugins, inline settings and any MCP server but the SDK's in-process
 /// ones, and requires Claude's built-in tools off (`--tools=`).

@@ -15117,7 +15117,15 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>நகலெடு</translation>
     </message>
     <message>
+        <source>Nothing was saved because HikariSub’s keys folder can’t be made private to you, for example on a FAT32 or exFAT drive.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Not offered: HikariSub can’t open a private tools channel for it on this system.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>On Windows this agent runs with low rights. It can read your files and other apps’ saved passwords, but not HikariSub’s keys.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

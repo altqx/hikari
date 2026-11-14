@@ -24,7 +24,9 @@
 
 #ifdef _WIN32
 #include <windows.h>
+#include <aclapi.h>
 #include <psapi.h>
+#include <sddl.h>
 #endif
 
 using namespace hikari::backends::ai;
@@ -161,6 +163,71 @@ TEST(AgentSpecs, ClaudeMayWriteOnlyItsOwnStateAndTheSidecarSetsOnlyItsMarkers)
     EXPECT_FALSE(spec.sidecarEnvironment.contains(QStringLiteral("ANTHROPIC_BASE_URL")));
     EXPECT_FALSE(spec.refuse(QStringList{QStringLiteral("--dangerously-skip-permissions")}).isEmpty());
 }
+
+#ifdef _WIN32
+bool everyAppContainerMayOpen(const QString &path)
+{
+    PSID any = nullptr;
+    ConvertStringSidToSidW(L"S-1-15-2-1", &any);
+    PACL acl = nullptr;
+    PSECURITY_DESCRIPTOR descriptor = nullptr;
+    bool found = false;
+    if (GetNamedSecurityInfoW(reinterpret_cast<LPCWSTR>(QDir::toNativeSeparators(path).utf16()), SE_FILE_OBJECT,
+                              DACL_SECURITY_INFORMATION, nullptr, nullptr, &acl, nullptr, &descriptor) == ERROR_SUCCESS &&
+        acl)
+        for (DWORD i = 0; i < acl->AceCount && !found; ++i) {
+            void *ace = nullptr;
+            found = GetAce(acl, i, &ace) && static_cast<ACE_HEADER *>(ace)->AceType == ACCESS_ALLOWED_ACE_TYPE &&
+                    EqualSid(&static_cast<ACCESS_ALLOWED_ACE *>(ace)->SidStart, any);
+        }
+    LocalFree(descriptor);
+    LocalFree(any);
+    return found;
+}
+
+TEST(AgentSpecs, ClaudeFromNpmOpensOnlyItsOwnProgramSoAgentsBesideItStillStartAtLowRights)
+{
+    ensureApp();
+    QTemporaryDir npm;
+    ASSERT_TRUE(npm.isValid());
+    const QString claude = npm.filePath(QStringLiteral("node_modules/@anthropic-ai/claude-code/bin/claude.exe"));
+    const QString neighbour = npm.filePath(QStringLiteral("node_modules/opencode-ai/bin/opencode.exe"));
+    for (const QString &copy : {claude, neighbour}) {
+        ASSERT_TRUE(QDir().mkpath(QFileInfo(copy).absolutePath()));
+        ASSERT_TRUE(QFile::copy(QStringLiteral(HIKARI_SANDBOX_PROBE), copy));
+    }
+    writeFile(npm.filePath(QStringLiteral("claude.cmd")), "@echo off\r\n", false);
+
+    const AgentSpec spec = claudeAgent(npm.filePath(QStringLiteral("claude.cmd")), npm.path(), npm.filePath(QStringLiteral("work")));
+    EXPECT_EQ(spec.program, QFileInfo(claude).canonicalFilePath());
+    EXPECT_EQ(spec.profile->readExecute, QStringList{QFileInfo(claude).canonicalFilePath()});
+    const auto said = [](hikari::backends::sandbox::Launcher &launcher, const QString &program) {
+        QProcess process;
+        process.setProgram(program);
+        process.setArguments({QStringLiteral("low")});
+        launcher.prepare(process);
+        process.start();
+        EXPECT_TRUE(process.waitForFinished(20'000)) << process.errorString().toStdString();
+        return QString::fromLocal8Bit(process.readAllStandardOutput());
+    };
+    {
+        hikari::backends::sandbox::Launcher run(spec.profile);
+        ASSERT_TRUE(run.coverage().missing.isEmpty()) << run.coverage().missing.toStdString();
+        EXPECT_TRUE(said(run, spec.program).startsWith(QStringLiteral("low: "))) << "Claude itself didn't start";
+    }
+    EXPECT_TRUE(everyAppContainerMayOpen(claude));
+    EXPECT_FALSE(everyAppContainerMayOpen(npm.path()));
+    EXPECT_FALSE(everyAppContainerMayOpen(QFileInfo(neighbour).absolutePath()));
+
+    hikari::backends::sandbox::Launcher agent(hikari::backends::sandbox::Profile{
+        .name = QStringLiteral("HikariSub.Test.Neighbour"),
+        .network = hikari::backends::sandbox::Network::Any,
+        .lowRightsHelper = QStringLiteral(HIKARI_TEST_CONFINE_HELPER)});
+    ASSERT_TRUE(agent.coverage().missing.isEmpty()) << agent.coverage().missing.toStdString();
+    const QString neighbourSaid = said(agent, neighbour);
+    EXPECT_TRUE(neighbourSaid.startsWith(QStringLiteral("low: ok"))) << neighbourSaid.toStdString();
+}
+#endif
 
 TEST(AgentSpecs, CodexRunsTheNativeBinaryBehindNpmsLauncherWithHikarisOwnHome)
 {
@@ -701,6 +768,7 @@ TEST_F(AgentBrokerTest, AStdioOnlyAcpAgentReachesTheSessionsChannelThroughTheBri
     const QtCopy qt;
     ASSERT_TRUE(qt.ready());
     s.profile->readExecute << qt.folder();
+    s.profile->lowRightsHelper = QStringLiteral(HIKARI_TEST_CONFINE_HELPER);
 #else
     s.profile->readExecute << QLibraryInfo::path(QLibraryInfo::LibrariesPath) << QLibraryInfo::path(QLibraryInfo::PluginsPath);
 #endif
@@ -742,11 +810,56 @@ TEST_F(AgentBrokerTest, AStdioOnlyAcpAgentReachesTheSessionsChannelThroughTheBri
     ASSERT_TRUE(*call(kAgentKill, Json::object({{"process", 2}})));
 }
 
-TEST(PrivatePipe, AChannelOpensForAnAgentsAppContainer)
+TEST(PrivatePipe, AChannelOpensForLowRightsAgents)
 {
     ensureApp();
-    EXPECT_EQ(channelProblem(QStringLiteral("HikariSub.Test.Agent")).toStdString(), "");
+#ifdef _WIN32
+    EXPECT_EQ(channelProblem(QStringLiteral(HIKARI_TEST_CONFINE_HELPER)).toStdString(), "");
+#else
+    EXPECT_EQ(channelProblem(QStringLiteral(HIKARI_TEST_MCP_HTTP_BRIDGE)).toStdString(), "");
+#endif
 }
+
+#ifdef _WIN32
+TEST(PrivatePipe, WithoutTheLowRightsHelperNoChannelIsOffered)
+{
+    ensureApp();
+    QTemporaryDir empty;
+    ASSERT_TRUE(empty.isValid());
+    EXPECT_TRUE(channelProblem(empty.filePath(QStringLiteral("hikarisub-mcp-bridge.exe")))
+                    .contains(QStringLiteral("low-rights helper is missing")));
+}
+
+TEST_F(AgentBrokerTest, AnAgentWhoseLowRightsHelperIsMissingIsRefusedWithWhy)
+{
+    AgentSpec s = spec();
+    s.profile->lowRightsHelper = dir.filePath(QStringLiteral("missing/hikarisub-confine.exe"));
+    broker.add("fake", s);
+    const auto refused = call(kAgentStart, Json::object({{"process", 1}, {"agent", "fake"}}));
+    ASSERT_FALSE(*refused);
+    EXPECT_EQ(refused->error().first, rpc::kBusy);
+    EXPECT_TRUE(refused->error().second.starts_with(
+        "the agent can't start at low rights: HikariSub's low-rights helper is missing"))
+        << refused->error().second;
+    EXPECT_EQ(broker.running(), 0u);
+}
+
+TEST_F(AgentBrokerTest, AnAgentWhoseLowRightsHelperFailsEndsSayingWhy)
+{
+    AgentSpec s = spec();
+    s.program = dir.filePath(QStringLiteral("missing.exe"));
+    s.profile->lowRightsHelper = QStringLiteral(HIKARI_TEST_CONFINE_HELPER);
+    broker.add("fake", s);
+    const std::uint64_t process = start("fake");
+    ASSERT_TRUE(waitFor([&] { return exitCode(process).has_value(); }));
+    EXPECT_EQ(*exitCode(process), 0x4846);
+    QByteArray said;
+    for (const auto &[method, params] : notes)
+        if (method == kAgentOutput && params.find("stream")->asString() == "stderr")
+            said += QByteArray::fromBase64(QByteArray::fromStdString(params.find("data")->asString()));
+    EXPECT_TRUE(said.contains("hikarisub-confine: starting the command failed")) << said.toStdString();
+}
+#endif
 
 #ifdef _WIN32
 TEST(PrivatePipe, OnlyTheAgentsOwnAppContainerOpensItsChannel)

@@ -60,6 +60,8 @@ QString saveErrorId(ai::SaveError error)
         return QStringLiteral("keychainUnavailable");
     case ai::SaveError::KeychainDenied:
         return QStringLiteral("keychainDenied");
+    case ai::SaveError::KeychainNotPrivate:
+        return QStringLiteral("keychainNotPrivate");
     case ai::SaveError::Config:
         return QStringLiteral("config");
     }
@@ -1203,6 +1205,7 @@ QVariantMap AiSettings::agentRow(const QString &name) const
     const bool updating = a.update && a.update->running();
     return {{QStringLiteral("found"), true},
             {QStringLiteral("refused"), refused},
+            {QStringLiteral("lowRights"), m_features.runsWithLowRights(name)},
             {QStringLiteral("path"), shownPath(a.cli->path)},
             {QStringLiteral("version"), a.cli->version},
             {QStringLiteral("latest"), a.latest},

@@ -115,10 +115,10 @@ bool PrivatePipe::listen(const QString &name, const QString &containerSid, QStri
         return false;
     };
     const QString user = userSid();
-    if (user.isEmpty() || containerSid.isEmpty())
-        return fail(QStringLiteral("the agent has no AppContainer to grant the pipe to"));
-    const std::wstring sddl =
-        QStringLiteral("D:P(A;;GA;;;%1)(A;;GRGW;;;%2)S:(ML;;NW;;;LW)").arg(user, containerSid).toStdWString();
+    if (user.isEmpty())
+        return fail(QStringLiteral("the user's SID can't be read"));
+    const QString container = containerSid.isEmpty() ? QString() : QStringLiteral("(A;;GRGW;;;%1)").arg(containerSid);
+    const std::wstring sddl = QStringLiteral("D:P(A;;GA;;;%1)%2S:(ML;;NW;;;LW)").arg(user, container).toStdWString();
     PSECURITY_DESCRIPTOR descriptor = nullptr;
     if (!ConvertStringSecurityDescriptorToSecurityDescriptorW(sddl.c_str(), SDDL_REVISION_1, &descriptor, nullptr))
         return fail(lastError("ConvertStringSecurityDescriptorToSecurityDescriptor"));

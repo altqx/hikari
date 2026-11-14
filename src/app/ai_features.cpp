@@ -4,6 +4,9 @@
 #include "hikari/backends/ai_agent_broker.h"
 #include "hikari/backends/ai_antigravity.h"
 #include "hikari/backends/ai_config_store.h"
+#ifdef Q_OS_WIN
+#include "hikari/backends/ai_file_key_store.h"
+#endif
 #include "hikari/backends/ai_http_relay.h"
 #include "hikari/backends/ai_keychain.h"
 #include "hikari/backends/ai_mcp_clients.h"
@@ -108,7 +111,15 @@ AiFeatures::Ports AiFeatures::defaultPorts(const QString &userFolder, api::Api *
 {
     const QString ai = userFolder + QStringLiteral("/ai");
     Ports ports;
+#ifdef Q_OS_WIN
+    ports.keyStore = [ai, kept = !userFolder.isEmpty()] {
+        return std::make_unique<backends::ai::FileKeyStore>(
+            kept ? ai + QStringLiteral("/secrets") : QString(),
+            std::make_unique<backends::ai::KeychainKeyStore>(QStringLiteral("HikariSub")));
+    };
+#else
     ports.keyStore = [] { return std::make_unique<backends::ai::KeychainKeyStore>(QStringLiteral("HikariSub")); };
+#endif
     ports.configStore = [ai, kept = !userFolder.isEmpty()]() -> std::unique_ptr<application::ai::ConfigStore> {
         if (!kept)
             return std::make_unique<NoConfigStore>();
@@ -160,7 +171,10 @@ AiFeatures::Ports AiFeatures::defaultPorts(const QString &userFolder, api::Api *
     };
     ports.agentOnPath = [](const QString &agent) { return !backends::ai::findAgentCli(agent).isEmpty(); };
     ports.filesConfined = [] { return backends::sandbox::systemCoverage(backends::sandbox::Network::Any).files; };
-    ports.channelProblem = [] { return backends::ai::channelProblem(backends::sandbox::profileName(backends::sandbox::OwnProfile::Codex)); };
+    ports.channelProblem = [] { return backends::ai::channelProblem(QCoreApplication::applicationFilePath()); };
+    ports.lowRights = [] {
+        return backends::ai::lowRightsHelperBeside(QCoreApplication::applicationFilePath()).has_value();
+    };
     ports.acpCli = [](const QString &command) {
         if (QFileInfo(command).isAbsolute())
             return QFileInfo(command).isExecutable() ? command : QString();
@@ -646,6 +660,11 @@ bool AiFeatures::channelOpens() const
     if (!m_channelOpens)
         m_channelOpens = !m_ports.channelProblem || m_ports.channelProblem().isEmpty();
     return *m_channelOpens;
+}
+
+bool AiFeatures::runsWithLowRights(const QString &agent) const
+{
+    return agent != QLatin1String("claude") && m_ports.lowRights && m_ports.lowRights();
 }
 
 QString AiFeatures::refusal(const QString &agent) const

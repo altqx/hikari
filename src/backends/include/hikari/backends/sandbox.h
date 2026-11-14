@@ -15,10 +15,14 @@ enum class Network { None, Any };
 struct Profile {
     /// The AppContainer's name on Windows: letters, digits, '.', '-' and '_', at most 64 characters.
     QString name;
+    /// HikariSub's own code and runtimes only: on Windows every AppContainer may read and run them.
     QStringList readExecute;
     QStringList read;
     QStringList readWrite;
     Network network = Network::None;
+    /// On Windows, run through this helper with a restricted Low-integrity token on a private desktop instead of in
+    /// the AppContainer; the process may then read what the user can, and write only `readWrite`. Ignored elsewhere.
+    std::optional<QString> lowRightsHelper;
 };
 
 /// The fixed profiles HikariSub's agents, AI sidecar and Lua nodes run in; plugins' profiles aren't among them.
@@ -71,7 +75,8 @@ Coverage systemCoverage(Network network);
 /// Starts processes confined to a profile, plus what any process needs to run here: on Linux the runtime
 /// libraries, TLS roots, a few devices and its own /proc entry; on Windows what Windows grants every AppContainer.
 /// Without a profile nothing is confined. On Windows each process runs in a kill-on-close job it joins before its
-/// first instruction.
+/// first instruction; a low-rights profile's job also forbids UI access outside its desktop. While no process of a
+/// low-rights profile runs, its `readWrite` folders are closed to every low-rights process.
 class Launcher {
 public:
     explicit Launcher(std::optional<Profile> profile);
@@ -80,7 +85,8 @@ public:
     Launcher &operator=(const Launcher &) = delete;
 
     const Coverage &coverage() const;
-    /// The AppContainer's SID as text ("S-1-15-2-…") on Windows; empty without a container or elsewhere.
+    /// The AppContainer's SID as text ("S-1-15-2-…") on Windows; empty for a low-rights profile, without a container
+    /// or elsewhere.
     QString containerSid() const;
     /// Whether process `pid` runs in a job of a process this launcher started; false elsewhere.
     bool runs(qint64 pid) const;

@@ -35,8 +35,10 @@ constexpr qsizetype kMaxLineBytes = 64 << 20;
 constexpr int kCodexToolTimeoutSeconds = 24 * 60 * 60;
 #ifdef Q_OS_WIN
 constexpr bool kChannelsArePipes = true;
+constexpr bool kAgentsShareTheirGrants = true;
 #else
 constexpr bool kChannelsArePipes = false;
+constexpr bool kAgentsShareTheirGrants = false;
 #endif
 
 QString tomlString(QString text)
@@ -307,17 +309,26 @@ std::optional<std::string> acpHikariTool(const api::Json &toolCall)
     return std::nullopt;
 }
 
-QString channelProblem(const QString &containerName)
+std::optional<QString> lowRightsHelperBeside(const QString &bridge)
+{
+#ifdef Q_OS_WIN
+    return QFileInfo(bridge).absolutePath() + QStringLiteral("/hikarisub-confine.exe");
+#else
+    Q_UNUSED(bridge)
+    return std::nullopt;
+#endif
+}
+
+QString channelProblem(const QString &bridge)
 {
     if (!kChannelsArePipes)
         return {};
-    const sandbox::Launcher launcher(sandbox::Profile{.name = containerName});
-    McpServer probe([] { return nullptr; }, newMcpToken());
     QString why;
-    if (probe.listenPipe(launcher.containerSid(), [](qint64) { return false; }, &why))
+    if (const std::optional<QString> helper = lowRightsHelperBeside(bridge); helper && !QFileInfo(*helper).isFile())
+        why = QStringLiteral("HikariSub's low-rights helper is missing (%1)").arg(QDir::toNativeSeparators(*helper));
+    McpServer probe([] { return nullptr; }, newMcpToken());
+    if (why.isEmpty() && probe.listenPipe({}, [](qint64) { return false; }, &why))
         return {};
-    if (why.isEmpty())
-        why = launcher.coverage().missing;
     qCWarning(lcChannel) << "Codex and ACP agents aren't offered: their tools channel can't open:" << why;
     return why;
 }
@@ -377,6 +388,24 @@ bool isScript(const QString &path)
     return file.open(QIODevice::ReadOnly) && file.read(2) == "#!";
 }
 
+QString claudeBinary(const QString &program)
+{
+    const QFileInfo found(program);
+    if (found.suffix().compare(QLatin1String("cmd"), Qt::CaseInsensitive) == 0)
+        if (const QFileInfo binary(found.absolutePath() + QStringLiteral("/node_modules/@anthropic-ai/claude-code/bin/claude.exe"));
+            binary.isFile())
+            return binary.canonicalFilePath();
+    return found.canonicalFilePath();
+}
+
+QString claudeReadExecute(const QString &installed)
+{
+    // Windows grants every AppContainer this path, and a CLI's folder is often shared, as npm's is.
+    if (kAgentsShareTheirGrants)
+        return installed;
+    return QFileInfo(installed).absolutePath();
+}
+
 QString codexBinary(const QString &program)
 {
     const QFileInfo found(program);
@@ -408,11 +437,11 @@ QString codexBinary(const QString &program)
 
 AgentSpec claudeAgent(const QString &program, const QString &home, const QString &work)
 {
-    const QString installed = QFileInfo(program).canonicalFilePath();
+    const QString installed = claudeBinary(program);
     AgentSpec spec;
     spec.program = installed;
     spec.profile = sandbox::Profile{.name = sandbox::profileName(sandbox::OwnProfile::Claude),
-                                    .readExecute = {QFileInfo(installed).absolutePath()},
+                                    .readExecute = {claudeReadExecute(installed)},
                                     .readWrite = {home + QStringLiteral("/.claude"), home + QStringLiteral("/.claude.json"), work},
                                     .network = sandbox::Network::Any};
     spec.workingDirectory = work;
@@ -439,7 +468,8 @@ std::optional<AgentSpec> codexAgent(const QString &program, const QString &codex
     spec.profile = sandbox::Profile{.name = sandbox::profileName(sandbox::OwnProfile::Codex),
                                     .readExecute = {QFileInfo(binary).absolutePath()},
                                     .readWrite = {codexHome, work},
-                                    .network = sandbox::Network::Any};
+                                    .network = sandbox::Network::Any,
+                                    .lowRightsHelper = lowRightsHelperBeside(bridge)};
     if (kChannelsArePipes)
         spec.profile->readExecute << QFileInfo(bridge).absolutePath();
     spec.workingDirectory = work;
@@ -483,7 +513,8 @@ AgentSpec acpAgent(const QString &program, const QStringList &arguments, const Q
                     .readExecute = {QFileInfo(installed).absolutePath(), bridgeDir,
                                     QDir::cleanPath(bridgeDir + QStringLiteral("/../lib"))},
                     .readWrite = state + QStringList{work},
-                    .network = sandbox::Network::Any};
+                    .network = sandbox::Network::Any,
+                    .lowRightsHelper = lowRightsHelperBeside(bridge)};
     spec.workingDirectory = work;
     spec.environment = privateTemporary(work);
     spec.refuse = [](const QStringList &extra) {
@@ -691,8 +722,11 @@ void AgentBroker::start(const api::Json &params, const Answer &answer)
                 environment.insert(QString::fromStdString(name), QString::fromStdString(value.asString()));
 
     auto launcher = std::make_unique<sandbox::Launcher>(spec->second.profile);
-    if (spec->second.profile && !launcher->coverage().missing.isEmpty())
+    if (spec->second.profile && !launcher->coverage().missing.isEmpty()) {
+        if (spec->second.profile->lowRightsHelper)
+            return refuse(rpc::kBusy, "the agent can't start at low rights: " + launcher->coverage().missing.toStdString());
         qCWarning(lcChannel) << "the agent's sandbox is incomplete:" << launcher->coverage().missing;
+    }
     std::unique_ptr<McpServer> channel;
     ChannelAddress address;
     if (spec->second.channelArguments || spec->second.channelGuard) {

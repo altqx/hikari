@@ -154,6 +154,8 @@ void TokenFileLease::keep(std::function<void(QString error)> done)
                  [alive = std::weak_ptr(m_alive), done = std::move(done)](std::optional<app::KeyError> error) {
                      if (!alive.lock())
                          return;
+                     if (error == app::KeyError::NotPrivate)
+                         return done(agentSignInNotSaved(SecretWrite::NotPrivate));
                      done(error ? QStringLiteral("Google signed you in, but the keychain couldn't keep the sign-in. "
                                                  "Unlock your keychain, then sign in again.")
                                 : QString());
