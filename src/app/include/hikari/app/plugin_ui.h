@@ -151,6 +151,8 @@ class PluginFileRequest : public QObject {
     Q_PROPERTY(QStringList nameFilters READ nameFilters CONSTANT)
     // Where a save picker starts: the suggested name in Documents, or empty.
     Q_PROPERTY(QUrl file READ file CONSTANT)
+    // The plugin's suggested file name, or empty.
+    Q_PROPERTY(QString name READ name CONSTANT)
 
 public:
     using Answer = std::function<void(std::optional<QString> path, bool remember)>;
@@ -164,9 +166,11 @@ public:
     bool writable() const { return m_writable; }
     QStringList nameFilters() const { return m_nameFilters; }
     QUrl file() const { return m_file; }
+    QString name() const { return m_name; }
 
-    // `remember` keeps a folder for the plugin's later runs.
-    Q_INVOKABLE void accept(const QUrl &chosen, bool remember = false);
+    // `remember` keeps a folder for the plugin's later runs. `typed`, the dialog's file name as
+    // the user typed it, replaces `chosen` when it is an absolute path.
+    Q_INVOKABLE void accept(const QUrl &chosen, bool remember = false, const QString &typed = {});
     Q_INVOKABLE void reject();
 
 signals:
@@ -176,6 +180,7 @@ private:
     QString m_kind, m_pluginName, m_title, m_reason;
     bool m_writable = false;
     QStringList m_nameFilters;
+    QString m_name;
     QUrl m_file;
     Answer m_answer;
 };

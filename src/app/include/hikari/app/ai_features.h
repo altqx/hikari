@@ -100,6 +100,12 @@ public:
         /// Whether this system's sandbox keeps an agent to its own files; Codex and ACP agents need it (Q413). Unset
         /// counts as kept.
         std::function<bool()> filesConfined;
+        /// Why agents' private tools channel can't open here, as on a Windows that can't make a pipe for their
+        /// AppContainer; empty when it can. Codex and ACP agents need it. Unset counts as open.
+        std::function<QString()> channelProblem;
+        /// Whether Codex and ACP agents run with low rights rather than in an AppContainer, as on Windows; Settings › AI
+        /// then warns on their rows. Unset counts as not.
+        std::function<bool()> lowRights;
         /// Finds an agent CLI ("claude" or "codex") and asks it for its version.
         std::function<void(const QString &agent, std::function<void(std::optional<backends::ai::AgentCli>, QString unresolvedShim)>)> findAgent;
         std::function<backends::ai::AgentInstall(const backends::ai::AgentCli &)> agentInstall;
@@ -132,9 +138,15 @@ public:
     /// changed which agents are offered.
     void projectsChanged();
     bool confinesFiles() const;
-    /// Why `agent` ("codex", "opencode", "agy") isn't offered: "sandbox", or empty when it is. Claude never is refused.
+    /// Whether Codex and ACP agents can have a private tools channel; asked once.
+    bool channelOpens() const;
+    /// Whether `agent` ("codex", "opencode", "agy" or a custom ACP agent's) runs with low rights; never Claude.
+    bool runsWithLowRights(const QString &agent) const;
+    /// Why `agent` ("codex", "opencode", "agy") isn't offered: "sandbox", "channel", or empty when it is. Claude never
+    /// is refused.
     QString refusal(const QString &agent) const;
-    /// Why the ACP agent at `program` isn't offered: "sandbox", "project" when it lies inside an open Project, or empty.
+    /// Why the ACP agent at `program` isn't offered: "sandbox", "channel", "project" when it lies inside an open
+    /// Project, or empty.
     QString acpRefusal(const QString &program) const;
     /// Why a thread's external agent (`claude`, `codex` or `acp:<id>`, as in its `agent:` provider) can't start here.
     QString agentRefusal(const QString &agent) const;
@@ -171,7 +183,7 @@ public:
     /// The user's own ACP agents, found or not.
     std::vector<AcpAgent> customAgents() const;
     void setCustomAgents(const std::vector<AcpAgent> &agents);
-    /// OpenCode and Antigravity when found, then the user's own agents that are. None on Windows (#931).
+    /// OpenCode and Antigravity when found, then the user's own agents that are.
     std::vector<AcpAgent> acpAgents() const;
     /// `agy acp --login` in Hikari's Antigravity profile. Null with AI off or without agy.
     std::unique_ptr<backends::ai::AntigravitySignIn> antigravitySignIn();
@@ -202,6 +214,7 @@ private:
     std::function<std::optional<std::string>(const std::string &, const std::string &)> m_projectKeys;
     std::function<QStringList()> m_projectRoots;
     QStringList m_refusedInProjects;
+    mutable std::optional<bool> m_channelOpens;
     QStringList refusedInProjects() const;
     void apply();
     void startUpdates();

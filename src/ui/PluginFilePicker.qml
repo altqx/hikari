@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 pragma Translator: "HikariSub.Plugins"
 import QtQuick
+import QtQuick.Controls
 import QtQuick.Dialogs as Dialogs
 import Hikari.Ui
 
@@ -23,7 +24,33 @@ Item {
             return
         }
         files.owner = r
+        files.nameField = null
         files.open()
+        if (r.kind === "save")
+            Qt.callLater(suggestName, r)
+    }
+
+    function namedIn(item, name) {
+        if (!item)
+            return null
+        if (item.objectName === name)
+            return item
+        for (let i = 0; i < item.children.length; ++i) {
+            const found = namedIn(item.children[i], name)
+            if (found)
+                return found
+        }
+        return null
+    }
+
+    // Qt's own file dialog shows no name for a selectedFile that doesn't exist yet, and joins a
+    // typed absolute path onto the current folder; a platform dialog has no such field.
+    function suggestName(r) {
+        if (files.owner !== r)
+            return
+        files.nameField = namedIn(picker.Overlay.overlay, "fileNameTextField")
+        if (files.nameField && files.nameField.text.length === 0)
+            files.nameField.text = r.name
     }
 
     function ask(r) {
@@ -55,6 +82,7 @@ Item {
         id: files
         objectName: "pluginFileDialog"
         property var owner: null
+        property Item nameField: null
         readonly property bool saving: owner !== null && owner.kind === "save"
         title: !owner ? ""
              : owner.title.length > 0 ? qsTr("%1: %2").arg(owner.pluginName, owner.title)
@@ -66,7 +94,7 @@ Item {
             when: files.owner !== null && String(files.owner.file).length > 0
             value: files.owner ? files.owner.file : ""
         }
-        onAccepted: if (owner) owner.accept(selectedFile, false)
+        onAccepted: if (owner) owner.accept(selectedFile, false, saving && nameField ? nameField.text : "")
         onRejected: if (owner) owner.reject()
     }
 

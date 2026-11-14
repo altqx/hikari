@@ -2009,6 +2009,8 @@ FocusScope {
                       : notice.kind === "noSidecar" ? qsTr("HikariSub is still getting the AI component, or it couldn’t start.")
                       : notice.kind === "notOffered" && notice.item.detail === "project"
                         ? qsTr("Not offered: its command is inside an open project, which it could read.")
+                      : notice.kind === "notOffered" && notice.item.detail === "channel"
+                        ? qsTr("Not offered: HikariSub can’t open a private tools channel for it on this system.")
                       : notice.kind === "notOffered" ? qsTr("Not offered: this system can’t keep it to its own folders.")
                       : notice.searchFailed ? qsTr("The search service answered %1. The answer goes on without searching the web.").arg(notice.item.status ?? 0)
                       : ""

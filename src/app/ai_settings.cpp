@@ -60,6 +60,8 @@ QString saveErrorId(ai::SaveError error)
         return QStringLiteral("keychainUnavailable");
     case ai::SaveError::KeychainDenied:
         return QStringLiteral("keychainDenied");
+    case ai::SaveError::KeychainNotPrivate:
+        return QStringLiteral("keychainNotPrivate");
     case ai::SaveError::Config:
         return QStringLiteral("config");
     }
@@ -211,9 +213,8 @@ AiSettings::AiSettings(AiFeatures &features, AiMcp *mcp, AiMcpServers *mcpServer
 {
     for (const char *name : backends::ai::kAgentClis)
         m_agents.emplace(QLatin1String(name), std::make_unique<Agent>());
-    if (AiAcpSettings::available())
-        for (const char *name : kAcpClis)
-            m_agents.emplace(QLatin1String(name), std::make_unique<Agent>());
+    for (const char *name : kAcpClis)
+        m_agents.emplace(QLatin1String(name), std::make_unique<Agent>());
     m_acp = new AiAcpSettings(m_features, this);
     connect(&m_features, &AiFeatures::switched, this, [this] {
         reset();
@@ -1204,6 +1205,7 @@ QVariantMap AiSettings::agentRow(const QString &name) const
     const bool updating = a.update && a.update->running();
     return {{QStringLiteral("found"), true},
             {QStringLiteral("refused"), refused},
+            {QStringLiteral("lowRights"), m_features.runsWithLowRights(name)},
             {QStringLiteral("path"), shownPath(a.cli->path)},
             {QStringLiteral("version"), a.cli->version},
             {QStringLiteral("latest"), a.latest},

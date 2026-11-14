@@ -67,6 +67,37 @@ void tcp(const std::string &action, const char *host, const char *port)
     closesocket(s);
 }
 
+void lowIntegrity(const std::string &action)
+{
+    HANDLE token = nullptr;
+    BYTE buffer[TOKEN_INTEGRITY_LEVEL_MAX_SIZE]{};
+    DWORD size = 0;
+    const bool read = OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token) &&
+                      GetTokenInformation(token, TokenIntegrityLevel, buffer, sizeof buffer, &size);
+    if (token)
+        CloseHandle(token);
+    const PSID sid = reinterpret_cast<TOKEN_MANDATORY_LABEL *>(buffer)->Label.Sid;
+    const DWORD level = read ? *GetSidSubAuthority(sid, *GetSidSubAuthorityCount(sid) - 1) : 0;
+    report(action, read && level == SECURITY_MANDATORY_LOW_RID, static_cast<long>(level));
+}
+
+void list(const std::string &action, const char *folder)
+{
+    WIN32_FIND_DATAA found;
+    const HANDLE h = FindFirstFileA((std::string(folder) + "\\*").c_str(), &found);
+    report(action, h != INVALID_HANDLE_VALUE, static_cast<long>(GetLastError()));
+    if (h != INVALID_HANDLE_VALUE)
+        FindClose(h);
+}
+
+void ownDesktop(const std::string &action)
+{
+    wchar_t name[256]{};
+    DWORD size = 0;
+    GetUserObjectInformationW(GetThreadDesktop(GetCurrentThreadId()), UOI_NAME, name, sizeof name, &size);
+    report(action, std::wstring(name).starts_with(L"HikariSub.Agents."), static_cast<long>(GetLastError()));
+}
+
 int spawn(int first, int argc, char **argv)
 {
     std::string command = std::string("\"") + argv[0] + "\"";
@@ -170,7 +201,15 @@ int main(int argc, char **argv)
         } else if (action == "tcp" && i + 2 < argc) {
             tcp(action, argv[i + 1], argv[i + 2]);
             i += 2;
-#ifndef _WIN32
+#ifdef _WIN32
+        } else if (action == "low") {
+            lowIntegrity(action);
+        } else if (action == "desktop") {
+            ownDesktop(action);
+        } else if (action == "list" && i + 1 < argc) {
+            list(action + " " + argv[i + 1], argv[i + 1]);
+            ++i;
+#else
         } else if (action == "unix" && i + 1 < argc) {
             unixSocket(action, argv[i + 1]);
             ++i;

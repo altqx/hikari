@@ -22,7 +22,7 @@ using Failure = application::LuaNodePort::Failure;
 sandbox::Profile luaNodeProfile(const QString &helperPath)
 {
     return sandbox::Profile{
-        .name = QStringLiteral("HikariSub.Lua.Nodes"),
+        .name = sandbox::profileName(sandbox::OwnProfile::LuaNodes),
         .readExecute = {QFileInfo(helperPath).absolutePath()},
         .network = sandbox::Network::None,
     };

@@ -25,7 +25,7 @@ ScrollView {
     readonly property var codex: ai ? ai.codex : ({})
     readonly property var components: ai ? ai.components : ({})
     readonly property var agents: ai ? ai.agents : ({})
-    readonly property var acp: ai ? ai.acp : ({ available: false, antigravity: ({}) })
+    readonly property var acp: ai ? ai.acp : ({ antigravity: ({}) })
     readonly property bool autoUpdate: dialog.values["ai.autoUpdate"] === true && components.policyOff !== true
     readonly property bool webSearchOn: dialog.values["ai.webSearch"] === true
     readonly property string stagedService: dialog.values["ai.searchService"] ?? ""
@@ -229,6 +229,7 @@ ScrollView {
         case "key": return qsTr("Enter a key")
         case "keychainUnavailable": return qsTr("No system keychain is available")
         case "keychainDenied": return qsTr("Access to the keychain was refused")
+        case "keychainNotPrivate": return qsTr("Nothing was saved because HikariSub’s keys folder can’t be made private to you, for example on a FAT32 or exFAT drive.")
         case "config": return qsTr("Can’t save the provider list")
         case "form": return qsTr("Fill in the name and a valid address")
         case "downloadManifest":
@@ -304,7 +305,13 @@ ScrollView {
     function refusalText(refused) {
         return refused === "sandbox" ? qsTr("Not offered: this system can’t keep it to its own folders.")
              : refused === "project" ? qsTr("Not offered: its command is inside an open project, which it could read.")
+             : refused === "channel" ? qsTr("Not offered: HikariSub can’t open a private tools channel for it on this system.")
              : ""
+    }
+    function lowRightsText(row) {
+        return row.lowRights === true && !row.refused
+               ? qsTr("On Windows this agent runs with low rights. It can read your files and other apps’ saved passwords, but not HikariSub’s keys.")
+               : ""
     }
     function agentLine(row, name) {
         if (!row.found)
@@ -554,6 +561,14 @@ ScrollView {
             visible: text.length > 0
             text: page.refusalText(program.row.refused ?? "")
             color: Theme.warning
+            wrapMode: Text.Wrap
+            Layout.fillWidth: true
+        }
+        Label {
+            objectName: "aiAgentLowRights_" + program.agent
+            visible: text.length > 0
+            text: page.lowRightsText(program.row)
+            color: Theme.muted
             wrapMode: Text.Wrap
             Layout.fillWidth: true
         }
@@ -1864,7 +1879,7 @@ ScrollView {
                 }
             }
             Rectangle {
-                visible: page.acp.available
+                visible: !!page.ai
                 color: "transparent"
                 border.color: Theme.line
                 radius: 2
@@ -1880,7 +1895,7 @@ ScrollView {
                 }
             }
             Rectangle {
-                visible: page.acp.available
+                visible: !!page.ai
                 color: "transparent"
                 border.color: Theme.line
                 radius: 2
@@ -1994,7 +2009,7 @@ ScrollView {
             ColumnLayout {
                 id: customAgents
                 objectName: "aiCustomAgents"
-                visible: page.acp.available
+                visible: !!page.ai
                 readonly property var rows: (page.dialog.values["ai.agents.custom"] ?? []).map(entry => {
                     try { return JSON.parse(entry) } catch (e) { return null }
                 }).filter(row => row !== null && typeof row.id === "string")
@@ -2065,6 +2080,14 @@ ScrollView {
                                 textFormat: Text.PlainText
                                 color: refused.length > 0 ? Theme.warning : Theme.muted
                                 elide: Text.ElideMiddle
+                                Layout.fillWidth: true
+                            }
+                            Label {
+                                visible: customAgents.editing !== customRow.modelData.id && text.length > 0
+                                objectName: "aiCustomAgentLowRights"
+                                text: page.lowRightsText(customRow.found)
+                                color: Theme.muted
+                                wrapMode: Text.Wrap
                                 Layout.fillWidth: true
                             }
                             Loader {

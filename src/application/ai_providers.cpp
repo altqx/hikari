@@ -66,6 +66,8 @@ SaveError saveErrorOf(KeyError error)
         return SaveError::KeychainUnavailable;
     case KeyError::Denied:
         return SaveError::KeychainDenied;
+    case KeyError::NotPrivate:
+        return SaveError::KeychainNotPrivate;
     case KeyError::NotFound:
     case KeyError::Other:
         break;

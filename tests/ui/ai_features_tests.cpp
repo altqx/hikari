@@ -259,7 +259,6 @@ TEST_F(AiFeaturesTest, McpClientsReadSkillsOnlyWithTheGrantAndFromTheActiveWindo
     EXPECT_FALSE(mcp.server()->callerFor(connection, "skills.list")->skills);
 }
 
-#ifndef Q_OS_WIN
 TEST_F(AiFeaturesTest, TheAcpAgentsFoundAndTheUsersOwnAreAddedAgainWhenTheirListChanges)
 {
     app::AiFeatures::Ports p = ports(false);
@@ -292,7 +291,6 @@ TEST_F(AiFeaturesTest, TheAcpAgentsFoundAndTheUsersOwnAreAddedAgainWhenTheirList
     features.setCustomAgents({});
     EXPECT_EQ(added, (std::vector<QString>{QStringLiteral("opencode=/opt/opencode ")}));
 }
-#endif
 
 #ifndef Q_OS_WIN
 TEST_F(AiFeaturesTest, WithoutFileSandboxingOnlyClaudeIsOfferedAndCodexCantStart)
@@ -338,6 +336,49 @@ TEST_F(AiFeaturesTest, WithoutFileSandboxingOnlyClaudeIsOfferedAndCodexCantStart
     };
     EXPECT_EQ(start("codex"), "Hikari doesn't know that agent");
     EXPECT_NE(start("claude"), "Hikari doesn't know that agent");
+}
+
+TEST_F(AiFeaturesTest, WithoutAToolsChannelOnlyClaudeIsOfferedAndTheProblemIsAskedOnce)
+{
+    app::AiFeatures::Ports p = ports(false);
+    p.agentOnPath = [](const QString &) { return true; };
+    p.acpCli = [](const QString &command) { return QStringLiteral("/opt/") + command; };
+    std::vector<QString> added;
+    p.acpSpec = [&](const app::AiFeatures::AcpAgent &agent, std::shared_ptr<backends::ai::TokenFileLease>) {
+        added.push_back(agent.id);
+        return std::optional<backends::ai::AgentSpec>(backends::ai::AgentSpec{.program = agent.program});
+    };
+    backends::ai::AgentBroker *broker = nullptr;
+    p.agents = [&](backends::ai::AgentBroker &b, application::ai::KeyStore &) {
+        broker = &b;
+        b.add("claude", backends::ai::AgentSpec{.program = QStringLiteral("/opt/claude")});
+        b.add("codex", backends::ai::AgentSpec{.program = QStringLiteral("/opt/codex")});
+    };
+    int asked = 0;
+    p.channelProblem = [&] {
+        ++asked;
+        return QStringLiteral("CreateNamedPipe failed (5)");
+    };
+    app::AiFeatures features(settings, std::move(p));
+    features.setCustomAgents({{.id = QStringLiteral("custom-1"), .name = QStringLiteral("Mine"), .command = QStringLiteral("mine")}});
+
+    EXPECT_TRUE(features.offersAgent(QStringLiteral("claude")));
+    EXPECT_FALSE(features.offersAgent(QStringLiteral("codex")));
+    EXPECT_EQ(features.refusal(QStringLiteral("codex")), QStringLiteral("channel"));
+    EXPECT_EQ(features.refusal(QStringLiteral("opencode")), QStringLiteral("channel"));
+    EXPECT_EQ(features.acpRefusal(QStringLiteral("/opt/mine")), QStringLiteral("channel"));
+    EXPECT_TRUE(features.acpAgents().empty());
+    EXPECT_EQ(features.agentRefusal(QStringLiteral("acp:custom-1")), QStringLiteral("channel"));
+    EXPECT_EQ(features.agentRefusal(QStringLiteral("claude")), QString());
+
+    ASSERT_NE(features.sidecarForMcp(), nullptr);
+    EXPECT_TRUE(added.empty());
+    ASSERT_NE(broker, nullptr);
+    std::optional<std::string> refused;
+    broker->call("_hikari/agent.start", api::Json::object({{"process", 1}, {"agent", "codex"}}),
+                 [&](auto result) { refused = result ? std::string() : result.error().second; });
+    EXPECT_EQ(refused, "Hikari doesn't know that agent");
+    EXPECT_EQ(asked, 1);
 }
 
 TEST_F(AiFeaturesTest, ACustomAcpAgentInsideAnOpenProjectIsRefused)

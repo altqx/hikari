@@ -1113,6 +1113,12 @@ Section "-Program files" SecCore
   ${EndIf}
   Call HsDeleteOrphans
 
+  ; As Program Files does: HikariSub's sandboxes then write no entry here, and one naming a container shuts Low agents out.
+  ${If} $HsScope != "machine"
+    nsExec::ExecToLog '"$SYSDIR\icacls.exe" "$INSTDIR" /grant *S-1-15-2-1:(OI)(CI)(RX)'
+    Pop $0
+  ${EndIf}
+
   ; The package kind the app reads beside its executable.
   FileOpen $0 "$INSTDIR\package-kind.txt" w
   ${If} $HsScope == "machine"

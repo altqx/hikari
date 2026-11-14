@@ -107,6 +107,11 @@ QByteArray json(const QJsonObject &object)
     return QJsonDocument(object).toJson(QJsonDocument::Compact);
 }
 
+std::string keychainFailure(app::KeyError error)
+{
+    return error == app::KeyError::NotPrivate ? "keychainNotPrivate" : "keychain";
+}
+
 std::string keyErrorDetail(app::KeyError error)
 {
     switch (error) {
@@ -116,6 +121,8 @@ std::string keyErrorDetail(app::KeyError error)
         return "denied";
     case app::KeyError::NotFound:
         return "notFound";
+    case app::KeyError::NotPrivate:
+        return "notPrivate";
     case app::KeyError::Other:
         return "other";
     }
@@ -718,7 +725,7 @@ void AiSignIn::store(std::uint64_t serial, CodexSession session)
                      if (!alive.lock() || !live(serial))
                          return;
                      if (error)
-                         return fail("keychain", keyErrorDetail(*error));
+                         return fail(keychainFailure(*error), keyErrorDetail(*error));
                      finish(SignedIn{.email = email, .key = {}});
                  });
 }
@@ -766,7 +773,7 @@ void AiSignIn::importCodex(const QString &authJsonPath, Done done)
                      if (!alive.lock())
                          return;
                      if (error)
-                         done(std::unexpected(SignInFailure{.kind = "keychain", .detail = keyErrorDetail(*error)}));
+                         done(std::unexpected(SignInFailure{.kind = keychainFailure(*error), .detail = keyErrorDetail(*error)}));
                      else
                          done(SignedIn{.email = email, .key = {}});
                  });

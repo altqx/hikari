@@ -18953,11 +18953,50 @@ private slots:
         QVERIFY(!mcp->server());
     }
 
+    void settingsAiWarnsOnTheRowsOfAgentsThatRunWithLowRights()
+    {
+        const QString warning = QStringLiteral("On Windows this agent runs with low rights. It can read your files and "
+                                               "other apps’ saved passwords, but not HikariSub’s keys.");
+        const QString folder = dir.filePath(QStringLiteral("low-rights-page"));
+        for (const bool refused : {false, true}) {
+            auto stored = std::make_shared<MemoryAi>();
+            app::AiFeatures::Ports ports;
+            ports.keyStore = [stored] { return std::make_unique<MemoryAiKeys>(stored); };
+            ports.configStore = [stored] { return std::make_unique<MemoryAiConfigs>(stored); };
+            ports.localSidecar = backends::ai::SidecarInstall{QStringLiteral("0.0.0-dev"), {}, {}, {}};
+            ports.findAgent = [](const QString &agent, std::function<void(std::optional<backends::ai::AgentCli>, QString)> done) {
+                done(backends::ai::AgentCli{.agent = agent, .path = QStringLiteral("/opt/") + agent + QStringLiteral("/bin/") + agent,
+                                            .version = QStringLiteral("9.9.9")}, {});
+            };
+            ports.lowRights = [] { return true; };
+            ports.channelProblem = [refused] { return refused ? QStringLiteral("no pipe") : QString(); };
+            app::Application::Options options;
+            options.settingsFile = folder + QStringLiteral("/hikari.ini");
+            options.playbackAudio = false;
+            options.aiPorts = std::move(ports);
+            restartWith(options);
+            auto restart = qScopeGuard([&] { restartWith(app::Application::Options()); });
+
+            auto *dialog = openSettings();
+            QVERIFY(dialog);
+            QTRY_VERIFY(dialog->property("visible").toBool());
+            showSettingsPage("ai");
+            QTRY_VERIFY(dialogItem("settingsDialog", "aiExternalAgents")->isVisible());
+            QTRY_COMPARE(dialogItem("settingsDialog", "aiAgentLine_opencode")->property("text").toString(), QStringLiteral("9.9.9"));
+            const auto shown = [&](const char *agent) {
+                QQuickItem *note = dialogItem("settingsDialog", (QByteArray("aiAgentLowRights_") + agent).constData());
+                return note && note->isVisible() ? note->property("text").toString() : QString();
+            };
+            QCOMPARE(shown("claude"), QString());
+            for (const char *agent : {"codex", "opencode"})
+                QCOMPARE(shown(agent), refused ? QString() : warning);
+            if (refused)
+                QVERIFY(dialogItem("settingsDialog", "aiAgentRefused_opencode")->isVisible());
+        }
+    }
+
     void settingsAiPageListsTheAcpAgentsAndTheUsersOwn()
     {
-#ifdef Q_OS_WIN
-        QSKIP("Hikari runs no ACP agents on Windows (#931)");
-#else
         auto stored = std::make_shared<MemoryAi>();
         const QString realAgy = qEnvironmentVariable("HIKARI_REAL_AGY");
         const QString folder = dir.filePath(QStringLiteral("acp-page"));
@@ -19017,7 +19056,7 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "aiCustomAgentSave"), "click"));
         QQuickItem *line = nullptr;
         QTRY_VERIFY((line = dialogItem("settingsDialog", "aiCustomAgentLine")));
-        QCOMPARE(line->property("text").toString(), QStringLiteral("/opt/my-agent/bin/my-agent"));
+        QCOMPARE(line->property("text").toString(), QDir::toNativeSeparators(QStringLiteral("/opt/my-agent/bin/my-agent")));
         QVERIFY(!dialogItem("settingsDialog", "aiCustomAgentForm"));
 
         auto *window = qobject_cast<QQuickWindow *>(settingsWindow());
@@ -19067,7 +19106,6 @@ private slots:
         QCOMPARE(custom.size(), 1u);
         QCOMPARE(custom.front().name, QStringLiteral("My agent"));
         QCOMPARE(custom.front().arguments, QStringLiteral("--acp"));
-#endif
     }
 
     void settingsAiMcpServersAreAddedInPlaceWithTheirSecretsInTheKeychain()
@@ -20672,6 +20710,58 @@ private slots:
         QTRY_VERIFY(!box->isVisible());
         QTRY_VERIFY(!application->pluginRuntime()->ui()->fileRequest());
         restartWith(app::Application::Options());
+    }
+private:
+    std::shared_ptr<std::optional<std::optional<QString>>> askToSave(QQuickItem *&nameField)
+    {
+        auto answer = std::make_shared<std::optional<std::optional<QString>>>();
+        application->pluginRuntime()->ui()->askForFile(
+            "com.example.keyframes",
+            {QStringLiteral("save"), QStringLiteral("Save keyframes"), {}, true, {QStringLiteral("Keyframes (*.txt)")},
+             QStringLiteral("keyframes.txt")},
+            [answer](std::optional<QString> path, bool) { *answer = path; });
+        OpenChooser chooser;
+        [&] { QTRY_VERIFY((chooser = openFallbackChooser()).impl); }();
+        nameField = chooser.impl ? chooser.impl->findChild<QQuickItem *>(QStringLiteral("fileNameTextField")) : nullptr;
+        if (!nameField && chooser.host)
+            for (auto *item : chooser.host->contentItem()->findChildren<QQuickItem *>(QStringLiteral("fileNameTextField")))
+                if (item->isVisible())
+                    nameField = item;
+        return answer;
+    }
+
+private slots:
+    void aPluginSaveShowsTheSuggestedName()
+    {
+        const QString platform = QGuiApplication::platformName();
+        if (platform != QLatin1String("offscreen") && platform != QLatin1String("xcb"))
+            QSKIP("only offscreen and xcb are sure to use Qt Quick's own file dialog");
+        QQuickItem *nameField = nullptr;
+        const auto answer = askToSave(nameField);
+        QVERIFY(nameField);
+        QTRY_COMPARE(nameField->property("text").toString(), QStringLiteral("keyframes.txt"));
+        QVERIFY(QMetaObject::invokeMethod(named("pluginFileDialog"), "accept"));
+        QTRY_VERIFY(answer->has_value());
+        QVERIFY(answer->value().has_value());
+        QCOMPARE(QFileInfo(*answer->value()).fileName(), QStringLiteral("keyframes.txt"));
+        QTRY_VERIFY(!application->pluginRuntime()->ui()->fileRequest());
+    }
+    void aPluginSaveTakesATypedAbsolutePathAsIs()
+    {
+        const QString platform = QGuiApplication::platformName();
+        if (platform != QLatin1String("offscreen") && platform != QLatin1String("xcb"))
+            QSKIP("only offscreen and xcb are sure to use Qt Quick's own file dialog");
+        QTemporaryDir elsewhere;
+        const QString typed = elsewhere.filePath(QStringLiteral("cuts.txt"));
+        QQuickItem *nameField = nullptr;
+        const auto answer = askToSave(nameField);
+        QVERIFY(nameField);
+        QTRY_COMPARE(nameField->property("text").toString(), QStringLiteral("keyframes.txt"));
+        nameField->setProperty("text", typed);
+        QVERIFY(QMetaObject::invokeMethod(named("pluginFileDialog"), "accept"));
+        QTRY_VERIFY(answer->has_value());
+        QCOMPARE(answer->value(), std::optional<QString>(typed));
+        QTRY_VERIFY(!application->pluginRuntime()->ui()->fileRequest());
     }
     void pluginNetworkAndFolderScreenshots()
     {

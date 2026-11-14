@@ -342,4 +342,14 @@ void Launcher::prepare(QProcess &process, void (*inChild)())
 
 void Launcher::killTree() {}
 
+QString Launcher::containerSid() const
+{
+    return {};
+}
+
+bool Launcher::runs(qint64) const
+{
+    return false;
+}
+
 }

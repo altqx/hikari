@@ -6960,6 +6960,8 @@ void Application::hideFirstWindow()
     m_closeApproved.reset();
     m_windowPlaces.erase(0);
     closeShellWindowDocuments(0);
+    m_workspaceLayout->save();
+    m_workspaceLayout->setWindowHidden(true);
     m_hiddenFloating.clear();
     for (QWindow *floating : ui::hideFloatingPanelsOf(m_firstWindow))
         m_hiddenFloating << floating;
@@ -6973,6 +6975,7 @@ void Application::showFirstWindow()
     if (!m_firstWindowHidden)
         return;
     m_firstWindowHidden = false;
+    m_workspaceLayout->setWindowHidden(false);
     if (m_firstWindow)
         m_firstWindow->show();
     for (const auto &floating : std::exchange(m_hiddenFloating, {}))

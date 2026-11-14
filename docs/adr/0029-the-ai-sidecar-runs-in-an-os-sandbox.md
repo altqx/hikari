@@ -16,6 +16,10 @@ It adds to ADR 0026's Agents and Tests sections. The rest of ADR 0026 stands.
 
 Amended by [AI15c #443](https://github.com/altqx/hikari/issues/443) on 2026-11-12: ACP agents run in a profile of their own instead of unsandboxed. MCP servers stay unsandboxed in v1.
 
+Amended by [AI15d #931](https://github.com/altqx/hikari/issues/931) on 2026-11-13. On Windows, an agent's private tools channel is a named pipe that only the user and that agent's AppContainer may open, from a process in the agent's own job. Agents get no loopback exemption.
+
+Amended again by [AI15d #931](https://github.com/altqx/hikari/issues/931) on 2026-11-14 (owner Q532–Q535). Codex and ACP agents' Node and Rust runtimes can't run in an AppContainer, so on Windows those agents run at low integrity instead, as the Windows bullets below say. The owner accepted that they can then read the user's files. Claude and the sidecar stay in their AppContainers. A low-integrity process can read the user's Credential Manager entries and decrypt their DPAPI data, so on Windows HikariSub's keys and agents' sign-ins moved out of Credential Manager (owner Q536, option 1), as Keys says. Settings › AI warns on each such agent's row.
+
 ## The sandbox
 
 - **One shared module.** `hikari_sandbox` in `src/backends` starts a process under a `sandbox::Profile`: the paths it may read and execute, read, or read and write, and whether it gets the network. Plugins ([PL7 #419](https://github.com/altqx/hikari/issues/419)) reuse it.
@@ -27,6 +31,13 @@ Amended by [AI15c #443](https://github.com/altqx/hikari/issues/443) on 2026-11-1
 - **Windows: an AppContainer per profile,** with access entries on the listed paths.
   - The sidecar has no capabilities, so it has no network. Agents get `internetClient`. There is no WFP or firewall step.
   - The process starts inside its kill-on-close job (`PROC_THREAD_ATTRIBUTE_JOB_LIST`), so it never runs outside it.
+  - HikariSub's own code and runtimes get one entry for every AppContainer, never one for a single container. An entry naming one container shuts every low-integrity process out of the folder. The per-user installer gives its folder that entry, as Program Files already has. A folder of user data gets the container's own entry.
+- **Windows, Codex and ACP agents: low integrity.** `hikarisub-confine.exe` starts the agent with a restricted copy of HikariSub's token: administrator groups deny-only, privileges removed, Low label. The agent runs in the job and on a private desktop that HikariSub creates.
+  - The job forbids reaching other desktops, the clipboard, global atoms, other processes' window handles and system settings.
+  - The agent can read what the user can, and write only its `readWrite` folders, which HikariSub labels Low while one of its agents runs. When none runs, they are labelled Medium with no read-up, and so is every folder kept for the user alone.
+  - It gets the network, loopback included.
+  - It passes on only its three standard handles. It exits with the agent's code, and ends with the job.
+  - If the helper is missing or can't start the agent, the agent doesn't start, and the start fails with the reason. It never starts unconfined.
 - **Where the sandbox can't apply,** AI still runs. Examples are a kernel without Landlock or seccomp, or an AppContainer that can't be created. The host logs what is missing under `hikari.ai.sandbox`, and Settings › AI shows "not sandboxed on this system".
 - **macOS** isn't a target.
 
@@ -37,6 +48,7 @@ Amended by [AI15c #443](https://github.com/altqx/hikari/issues/443) on 2026-11-1
   - For a provider without a key, Qt drops that header.
   - Qt masks the key as `[key]` in everything it relays back.
 - **Qt opens the keychain,** as before. No key travels over the link, in either direction.
+- **On Windows the keychain is a folder of files,** not Credential Manager, which a low-integrity agent could read. Each key or sign-in is its own file, encrypted for the user with DPAPI and written atomically. The folder is kept for the user alone and labelled so no low-integrity process can read or list it. If it can't be made private, as on a FAT32 or exFAT drive, nothing is saved and Settings says why; nothing falls back to Credential Manager. A HikariSub entry still in Credential Manager moves to the folder the first time it is read. Linux keeps QtKeychain.
 - **OAuth tokens** ([AI6 #434](https://github.com/altqx/hikari/issues/434)) are keys under this rule. Qt runs the sign-ins and refreshes a token itself, and writes it straight to the keychain; the sidecar never sees it.
 - **Agent CLIs** use their own login. Claude keeps the user's `claude` login. Codex's Hikari session ([AI15 #443](https://github.com/altqx/hikari/issues/443)) goes in from Qt and never passes through the sidecar.
 
@@ -80,6 +92,8 @@ Amended by [AI15c #443](https://github.com/altqx/hikari/issues/443) on 2026-11-1
 ## Tests
 
 - **The sandbox:** a probe child shows that files outside the profile, sockets and new namespaces are refused.
+- **The Windows key folder:** keys round-trip encrypted and go when removed; a folder that can't be made private gets nothing; an entry left in Credential Manager moves once; a low-integrity probe can neither read a key nor list the folder.
+- **Low integrity on Windows:** the probe runs at Low on its own desktop. It reads the user's files, but writes only its own folders, and only while its launcher lives. It is shut out of a folder kept for the user alone. A missing or failing helper starts nothing. After a Lua node runs, a low-integrity agent can still load a program from a per-user install.
 - **The relay:**
   - the key is substituted and masked, also across chunk boundaries;
   - redirects, URLs outside the base and plain-HTTP keys are refused;

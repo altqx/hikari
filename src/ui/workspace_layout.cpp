@@ -1166,6 +1166,8 @@ bool WorkspaceLayoutController::restoreSavedFile()
 
 bool WorkspaceLayoutController::save()
 {
+    if (m_windowHidden)
+        return false;
     return write({m_preset, tabPayload(), m_layout, m_locked});
 }
 
@@ -1192,6 +1194,10 @@ bool WorkspaceLayoutController::write(const WorkspaceArrangement &arrangement)
 
 bool WorkspaceLayoutController::saveForQuit()
 {
+    if (m_windowHidden) {
+        m_quitting = true;
+        return false;
+    }
     return saveForQuit({m_preset, tabPayload(), m_layout, m_locked});
 }
 
