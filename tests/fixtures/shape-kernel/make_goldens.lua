@@ -126,8 +126,10 @@ for i, s in ipairs(shapes) do
 	local data = m.get_data()
 	local fields = {}
 	for i = 1, 16 do
+		data[i] = tonumber(string.format("%.12g", data[i]))
 		fields[i] = g(data[i])
 	end
+	m.set_data(data)
 	record("transform " .. table.concat(fields, " "), s, function() return Yutils.shape.transform(s, m) end)
 end
 local pixel_shapes = {"m 0 0 l 4 0 4 4 0 4", "m 0.5 0.5 l 3.5 0.5 3.5 3.5", "m -2.25 1 b 0 -3 3 -3 5.5 1", "m 0 0 l 6 0 6 6 0 6 m 2 2 l 2 4 4 4 4 2",
