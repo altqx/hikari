@@ -3043,8 +3043,10 @@ def mw_bar_point(win, wins):
     last = max((t["x"] + t["w"] for t in win["tabs"]), default=bar["x"])
     y = bar["y"] + bar["h"] // 2
     others = [w for w in wins if w["hwnd"] != win["hwnd"]]
+    edge = 16  # Windows keeps an invisible resize border outside each window
     for x in range(last + 60, bar["x"] + bar["w"] - 20, 20):
-        if not any(o["x"] <= x < o["x"] + o["w"] and o["y"] <= y < o["y"] + o["h"] for o in others):
+        if not any(o["x"] - edge <= x < o["x"] + o["w"] + edge and o["y"] - edge <= y < o["y"] + o["h"] + edge
+                   for o in others):
             return x, y
     return None
 
@@ -3105,7 +3107,10 @@ def step_windows():
     log(f"drag-out: drag c.ass from {start} to {drop}")
     if start:
         mw_drag(start, drop, low=drop[1])
-    wins = mw_wait(lambda ws: len(ws) == 2 and all(w["tabs"] for w in ws), timeout=20)
+    mw_wait(lambda ws: len(ws) == 2 and all(w["tabs"] for w in ws) and all(w["title"] != "HikariSub" for w in ws),
+            timeout=20)
+    time.sleep(1.5)
+    wins = mw_windows()
     ev1 = mw_evidence("windows-1-drag-out", wins)
     new = mw_holding(wins, "c.ass")
     out_ok = len(wins) == 2 and new is not None and [t["name"] for t in new["tabs"]] == ["c.ass"]
