@@ -124,8 +124,7 @@ public:
     Q_INVOKABLE bool setShrinkableWidth(const QString &mainName, int width);
     Q_INVOKABLE QSize layoutMinimumSize(const QString &mainName) const;
     /// For a panel just docked for the first time: when its docking area's layout minimum no longer fits the
-    /// area, the panel becomes a tab of the first group in groupsByNearness() that leaves it fitting, else of the
-    /// nearest. True when it moved.
+    /// area, the panel becomes a tab of the first group in groupsByNearness(). True when it moved.
     Q_INVOKABLE bool fitFirstPlacement(const QString &uniqueName);
     Q_INVOKABLE int screenAvailableWidth(QQuickItem *item) const;
 

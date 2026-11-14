@@ -1250,8 +1250,8 @@ bool Docking::fitFirstPlacement(const QString &uniqueName)
         return false;
     KDDockWidgets::Core::MainWindow *main = own->mainWindow();
     const QSize room(main->view()->size());
-    const auto fits = [&] { return QSize(main->layout()->layoutMinimumSize()).boundedTo(room) == QSize(main->layout()->layoutMinimumSize()); };
-    if (fits())
+    const QSize least(main->layout()->layoutMinimumSize());
+    if (least.boundedTo(room) == least)
         return false;
     QList<KDDockWidgets::Core::Group *> others;
     QList<QRect> places;
@@ -1264,15 +1264,7 @@ bool Docking::fitFirstPlacement(const QString &uniqueName)
     const QList<int> order = groupsByNearness(own->view()->geometry(), places);
     if (order.isEmpty())
         return false;
-    QList<KDDockWidgets::Core::DockWidget *> hosts;
-    for (int i : order)
-        hosts << others[i]->currentDockWidget();
-    for (KDDockWidgets::Core::DockWidget *host : std::as_const(hosts)) {
-        host->addDockWidgetAsTab(dock);
-        if (fits())
-            return true;
-    }
-    hosts.first()->addDockWidgetAsTab(dock);
+    others[order.first()]->currentDockWidget()->addDockWidgetAsTab(dock);
     return true;
 }
 
