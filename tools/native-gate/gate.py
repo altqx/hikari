@@ -3659,8 +3659,17 @@ def title_bar_start(choice="auto", theme="dark"):
     # gnome-shell would set these; the container runs mutter alone.
     env = {"kwin": {"XDG_CURRENT_DESKTOP": "KDE", "XDG_SESSION_DESKTOP": "KDE"},
            "mutter": {"XDG_CURRENT_DESKTOP": "GNOME", "XDG_SESSION_DESKTOP": "gnome"}}.get(B.name)
+    started = time.time()
     app("start", env=env)
     time.sleep(2)
+    shown = "HikariSub" in frames(wait_for(lambda st: "HikariSub" in frames(st), timeout=30))
+    log(f"title bar start ({choice}, {theme}): window {'shown' if shown else 'NOT shown'} after {time.time() - started:.1f} s, load {os.getloadavg()[0]:.1f}")
+    if not shown:
+        log(sh(["sh", "-c", 'ps -o pid,etimes,stat,wchan:20,args -C hikarisub; '
+                'for p in $(pgrep -x hikarisub); do for t in /proc/$p/task/*; do '
+                'echo "$t $(cat $t/comm) $(cat $t/wchan) syscall: $(cat $t/syscall 2>&1)"; done; '
+                'ls -l /proc/$p/fd 2>&1 | grep -v -e socket -e pipe -e anon_inode -e /dev/; done; '
+                'tail -n 15 "$XDG_RUNTIME_DIR/app.log"']))
     dismiss_notices()
     if B.name == "sway":
         # sway tiles the main window: floating, it can be moved, maximised and resized.
@@ -3674,6 +3683,10 @@ def title_bar_controls():
                        ("button", "Restore"), ("button", "Close"), ("button", "More menus"),
                        ("menu bar", "Application menu")):
         hits = where(role, name, "HikariSub")
+        if hits:
+            out[name] = hits[0]
+    for name in ("Toggle left side bar", "Toggle right side bar"):
+        hits = next((h for role in ("toggle button", "check box", "button") for h in [where(role, name, "HikariSub")] if h), [])
         if hits:
             out[name] = hits[0]
     dump = sh(["python3", f"{GATE}/atspi_tool.py", "dump"])
@@ -3693,8 +3706,8 @@ def main_at(x, y):
 
 
 def free_part(ctl):
-    m = ctl.get("Minimise")
-    return (m["x"] - 16, TITLE_BAR // 2) if m else (900, TITLE_BAR // 2)
+    trailing = [ctl[name]["x"] for name in ("Toggle left side bar", "Toggle right side bar", "Minimise") if name in ctl]
+    return (min(trailing) - 16, TITLE_BAR // 2) if trailing else (900, TITLE_BAR // 2)
 
 
 def system_frame(title="HikariSub"):
@@ -3781,9 +3794,10 @@ def step_title_bar():
     size_max = main_size()
     ev3, _ = B.snap("titlebar-3-maximised")
     rm = origin("HikariSub")
-    mx, my = ((rm[0] if rm else 0) + (ctl_max.get("Minimise", {}).get("x", fx + 16) - 16), (rm[1] if rm else 0) + fy)
+    free_max = free_part(ctl_max) if ctl_max.get("Minimise") else (fx, fy)
+    mx, my = ((rm[0] if rm else 0) + free_max[0], (rm[1] if rm else 0) + fy)
     if B.name == "mutter":
-        mx, my = ctl_max.get("Minimise", {}).get("x", 1600 - 3 * 46) - 16, fy
+        mx, my = (free_part(ctl_max)[0] if ctl_max.get("Minimise") else 1600 - 3 * 46 - 16), fy
     click(mx, my, double=True, wait=1500)
     ctl_back = title_bar_controls()
     size_back = main_size()

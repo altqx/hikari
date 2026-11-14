@@ -143,15 +143,17 @@ void PluginDialogState::present(const Json &spec, bool modal)
 PluginFileRequest::PluginFileRequest(QString kind, QString pluginName, QString title, QString reason, bool writable,
                                      QStringList nameFilters, QString name, Answer answer, QObject *parent)
     : QObject(parent), m_kind(std::move(kind)), m_pluginName(std::move(pluginName)), m_title(std::move(title)),
-      m_reason(std::move(reason)), m_writable(writable), m_nameFilters(std::move(nameFilters)), m_answer(std::move(answer))
+      m_reason(std::move(reason)), m_writable(writable), m_nameFilters(std::move(nameFilters)), m_name(std::move(name)),
+      m_answer(std::move(answer))
 {
-    if (!name.isEmpty())
-        m_file = QUrl::fromLocalFile(QDir(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation)).filePath(name));
+    if (!m_name.isEmpty())
+        m_file = QUrl::fromLocalFile(QDir(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation)).filePath(m_name));
 }
 
-void PluginFileRequest::accept(const QUrl &chosen, bool remember)
+void PluginFileRequest::accept(const QUrl &chosen, bool remember, const QString &typed)
 {
-    const QString path = chosen.toLocalFile();
+    const QString typedPath = QDir::fromNativeSeparators(typed.trimmed());
+    const QString path = QDir::isAbsolutePath(typedPath) ? QDir::cleanPath(typedPath) : chosen.toLocalFile();
     if (path.isEmpty()) {
         reject();
         return;

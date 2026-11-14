@@ -1087,9 +1087,13 @@ bool WorkspaceLayoutController::restorePayload(const QByteArray &payload, bool i
         inPlace ? KDDockWidgets::RestoreOptions(KDDockWidgets::RestoreOption_RelativeToMainWindow |
                                                 KDDockWidgets::RestoreOption_AbsoluteFloatingDockWindows)
                 : KDDockWidgets::RestoreOptions(KDDockWidgets::RestoreOption_None);
-    const bool restored = restoreWindow(payload, options.toInt());
-    if (!restored && !m_default.isEmpty())
-        restoreWindow(m_default, options.toInt());
+    bool restored = false;
+    {
+        const hikari::ui::DockedMinimums docked;
+        restored = restoreWindow(payload, options.toInt());
+        if (!restored && !m_default.isEmpty())
+            restoreWindow(m_default, options.toInt());
+    }
     m_restoring = false;
     // Floating windows come back short of their layouts on Wayland.
     hikari::ui::fitFloatingLayouts();

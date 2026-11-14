@@ -309,10 +309,10 @@ private slots:
         start();
         openEpisode();
         applyPreset("Typesetting");
-        QTRY_VERIFY(item<QObject>("stylesNew")->property("enabled").toBool());
+        QTRY_VERIFY(item<QObject>("stylesNew") && item<QObject>("stylesNew")->property("enabled").toBool());
         QVERIFY(application->closeEditingTarget());
         QTRY_VERIFY(!item<QObject>("stylesNew")->property("enabled").toBool());
-        QTRY_VERIFY(item("stylesEmpty")->property("text").toString().startsWith(QStringLiteral("No styles: the file")));
+        QTRY_VERIFY(item("stylesEmpty") && item("stylesEmpty")->property("text").toString().startsWith(QStringLiteral("No styles: the file")));
         stop();
     }
 

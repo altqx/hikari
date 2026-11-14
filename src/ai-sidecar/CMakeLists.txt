@@ -32,7 +32,7 @@ add_custom_target(hikari_ai_sidecar ALL DEPENDS "${HIKARI_AI_RUNTIME_FILE}" "${H
 
 if(BUILD_TESTING)
     add_test(NAME hikari_ai_sidecar_bun_tests COMMAND "${HIKARI_BUN}" test WORKING_DIRECTORY "${_hikari_ai_dir}")
-    set_tests_properties(hikari_ai_sidecar_bun_tests PROPERTIES LABELS ai-sidecar
+    set_tests_properties(hikari_ai_sidecar_bun_tests PROPERTIES LABELS ai-sidecar TIMEOUT 300
         ENVIRONMENT "HIKARI_AI_SIDECAR_RUNTIME=${HIKARI_BUN}")
     add_test(NAME hikari_ai_sidecar_types COMMAND "${HIKARI_BUN}" node_modules/typescript/bin/tsc --noEmit
         WORKING_DIRECTORY "${_hikari_ai_dir}")

@@ -3169,6 +3169,43 @@
    ]
   },
   {
+   "role": "side-bar-left",
+   "file": "side-bar-left.svg",
+   "label": "Toggle left side bar",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:view",
+    "dock-headers",
+    "title-bar"
+   ]
+  },
+  {
+   "role": "side-bar-right",
+   "file": "side-bar-right.svg",
+   "label": "Toggle right side bar",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:view",
+    "dock-headers",
+    "title-bar"
+   ]
+  },
+  {
+   "role": "side-bars-swap",
+   "file": "side-bars-swap.svg",
+   "label": "Swap side bars",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:view"
+   ]
+  },
+  {
    "role": "tab-move-left",
    "file": "tab-move-left.svg",
    "label": "Move tab left",

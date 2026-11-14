@@ -17,6 +17,7 @@
 #include "line_table_model.h"
 #include "settings_store.h"
 #include "shell_controller.h"
+#include "side_bar_model.h"
 #include "stale_temporary_dirs.h"
 #include "theme.h"
 
@@ -36,6 +37,8 @@
 #include <QtTest>
 
 #include <memory>
+#include <optional>
+#include <utility>
 
 using namespace hikari;
 namespace ai = application::ai;
@@ -144,6 +147,7 @@ private:
 class AgentPanelTest : public QObject {
     Q_OBJECT
     QTemporaryDir root;
+    std::optional<bool> firstStartEmptyBefore;
     std::unique_ptr<app::Application> application;
     QPointer<backends::ai::AiSidecarHost> realHost;
     std::unique_ptr<QQmlApplicationEngine> engine;
@@ -379,6 +383,8 @@ private slots:
         if (test == "theInstalledAntigravityRepliesAndItsSignInGoesOnSignOut")
             realAntigravity(ports);
 
+        if (test == "theAgentAndReviewOpenInTheAiSideBar")
+            firstStartEmptyBefore = ui::SideBarModel::setFirstStartEmpty(false);
         app::Application::Options options;
         options.settingsFile = at(QStringLiteral("settings.toml"));
         options.userFolder = at(QStringLiteral("user"));
@@ -410,6 +416,23 @@ private slots:
     {
         engine.reset();
         application.reset();
+        if (firstStartEmptyBefore)
+            ui::SideBarModel::setFirstStartEmpty(*std::exchange(firstStartEmptyBefore, std::nullopt));
+    }
+
+    void theAgentAndReviewOpenInTheAiSideBar()
+    {
+        QVERIFY(shell(QStringLiteral("root.inSideBar(agentDock) && root.inSideBar(reviewDock)")).toBool());
+        QVERIFY(!shell(QStringLiteral("showAiAgentAction.trigger(), agentDock.isOpen")).toBool());
+        QTRY_VERIFY(shell(QStringLiteral("agentPanel.visible && agentPanel.parent.objectName === 'sideBarSlot'"
+                                         " && root.sideBarOnLeft(root.sideBarOf(agentDock))")).toBool());
+        QTRY_VERIFY(item(QStringLiteral("agentView")));
+        auto *aiSlot = shell(QStringLiteral("agentPanel.parent")).value<QObject *>();
+        QVERIFY(aiSlot);
+        QVERIFY(!shell(QStringLiteral("root.showPanel(reviewDock), reviewDock.isOpen")).toBool());
+        QTRY_VERIFY(shell(QStringLiteral("reviewPanel.visible")).toBool());
+        QCOMPARE(shell(QStringLiteral("reviewPanel.parent")).value<QObject *>(), aiSlot);
+        QVERIFY(!shell(QStringLiteral("agentPanel.visible")).toBool());
     }
 
     void agentsAreModelsOnlyWhenTheyAreFound()

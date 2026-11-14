@@ -192,6 +192,11 @@ View > Layout > Manage layouts…
 View > Layout > -
 View > Layout > Lock layout [GLOBAL_TOGGLE_LOCK_LAYOUT]
 View > -
+View > Toggle left side bar [GLOBAL_TOGGLE_LEFT_SIDE_BAR]
+View > Toggle right side bar [GLOBAL_TOGGLE_RIGHT_SIDE_BAR]
+View > Swap side bars [GLOBAL_SWAP_SIDE_BARS]
+View > Reset side bars
+View > -
 View > Panels >
 View > Panels > Video >
 View > Panels > Audio >

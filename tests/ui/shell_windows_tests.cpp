@@ -229,7 +229,10 @@ class ShellWindowsTest : public QObject {
     static QStringList styleRows(QQuickWindow *window)
     {
         QStringList out;
-        for (const QVariant &row : item(window, "stylesTool")->property("rows").toList())
+        QQuickItem *tool = item(window, "stylesTool");
+        if (!tool)
+            return {QStringLiteral("no stylesTool")};
+        for (const QVariant &row : tool->property("rows").toList())
             out << row.toMap().value(QStringLiteral("name")).toString() + u':' +
                        QString::number(row.toMap().value(QStringLiteral("lines")).toInt());
         return out;
@@ -1506,10 +1509,15 @@ private slots:
         second->setGeometry(screen.right() + 400, screen.top(), 800, 480);
         QTRY_VERIFY(second->property("arrangementSettled").toBool());
         openTab(0, "third");
-        dragTab(first(), tabCentre(first(), 1), screen.bottomRight() - QPoint(40, 40));
+        const QPoint drop = screen.bottomRight() - QPoint(40, 40);
+        dragTab(first(), tabCentre(first(), 1), drop);
         QQuickWindow *opened = nullptr;
         QTRY_VERIFY((opened = newestShellWindow()) && opened != second);
-        QTRY_VERIFY(screen.contains(opened->frameGeometry()));
+        QTRY_VERIFY(!opened->minimumSize().isEmpty());
+        QTRY_VERIFY(opened->width() >= opened->minimumWidth() && opened->height() >= opened->minimumHeight());
+        QTest::qWait(500);
+        QCOMPARE(opened->frameGeometry().intersected(screen), opened->frameGeometry());
+        QVERIFY(opened->frameGeometry().contains(drop));
     }
 
     void wholeOnScreensMovesAFrameWholeOntoTheScreenItMostlyOverlaps()
@@ -1522,6 +1530,18 @@ private slots:
         QCOMPARE(ui::wholeOnScreens(QRect(1400, 40, 800, 600), {left, right}, fallback), QRect(1600, 40, 800, 600));
         QCOMPARE(ui::wholeOnScreens(QRect(5000, 40, 1280, 800), {left}, fallback), QRect(0, 0, 1024, 768));
         QCOMPARE(ui::wholeOnScreens(QRect(-100, 900, 2000, 1200), {left}, fallback), QRect(0, 0, 1600, 1000));
+    }
+
+    void wholeOnScreenAtMovesAFrameWholeOntoTheScreenHoldingThePoint()
+    {
+        const QRect primary(0, 0, 1024, 768);
+        const QRect second(1024, 0, 1024, 768);
+        const QList<QRect> both{primary, second};
+        QCOMPARE(ui::wholeOnScreenAt(QRect(870, 580, 877, 720), QPoint(900, 600), both, primary), QRect(147, 48, 877, 720));
+        QCOMPARE(ui::wholeOnScreenAt(QRect(100, 40, 800, 600), QPoint(130, 60), both, primary), QRect(100, 40, 800, 600));
+        QCOMPARE(ui::wholeOnScreenAt(QRect(1000, 100, 800, 600), QPoint(1100, 150), both, primary), QRect(1024, 100, 800, 600));
+        QCOMPARE(ui::wholeOnScreenAt(QRect(100, 100, 2000, 1000), QPoint(200, 200), both, primary), QRect(0, 0, 1024, 768));
+        QCOMPARE(ui::wholeOnScreenAt(QRect(5000, 40, 800, 600), QPoint(5050, 50), both, primary), QRect(224, 40, 800, 600));
     }
 
     void mostlyOnScreensKeepsAFrameHalfOnTheScreensAndMovesAMostlyGoneOne()

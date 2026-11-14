@@ -32,16 +32,32 @@ QRect fitOnScreens(const QRect &frame, int strip, const QList<QRect> &screens, c
 // `frame` when one of `screens` holds it whole; otherwise moved whole onto the screen it overlaps most, or onto
 // `fallback` when it overlaps none, shrunk to fit.
 QRect wholeOnScreens(const QRect &frame, const QList<QRect> &screens, const QRect &fallback);
+// `frame` moved whole onto the screen holding `point`, shrunk to fit; as wholeOnScreens when no screen holds it.
+QRect wholeOnScreenAt(const QRect &frame, QPoint point, const QList<QRect> &screens, const QRect &fallback);
 // `frame` when at least half of it is on `screens`; otherwise as wholeOnScreens.
 QRect mostlyOnScreens(const QRect &frame, const QList<QRect> &screens, const QRect &fallback);
 // The client rectangle of a top-level `window` placed at `client`, by the rules above, on the available
 // geometry of the screens there are.
 QRect clientWholeOnScreens(const QWindow &window, const QRect &client);
 QRect clientMostlyOnScreens(const QWindow &window, const QRect &client);
+QRect clientWholeOnScreenAt(const QWindow &window, const QRect &client, QPoint point);
 
 int fitFloatingLayouts();
 
 void refreshDockConstraints();
+
+// KDDW re-docks a panel at its live minimum, and a floating panel's can be larger than its docked one.
+// While alive, floating panels have the minimum they last had docked.
+class DockedMinimums {
+public:
+    DockedMinimums();
+    ~DockedMinimums();
+    DockedMinimums(const DockedMinimums &) = delete;
+    DockedMinimums &operator=(const DockedMinimums &) = delete;
+
+private:
+    QHash<QString, QSize> m_floating;
+};
 
 // While locked KDDW starts no panel drag and the header's float gestures do nothing.
 void setLayoutLocked(bool locked);
@@ -100,7 +116,10 @@ public:
     Q_INVOKABLE bool setMinimumSize(const QString &uniqueName, QSize size);
     Q_INVOKABLE QSize minimumSize(const QString &uniqueName) const;
     Q_INVOKABLE bool followLayoutMinimum(const QString &mainName);
+    /// Width beside the main's view that the window minimum leaves out, because it can shrink (the side bars past their minimum).
+    Q_INVOKABLE bool setShrinkableWidth(const QString &mainName, int width);
     Q_INVOKABLE QSize layoutMinimumSize(const QString &mainName) const;
+    Q_INVOKABLE int screenAvailableWidth(QQuickItem *item) const;
 
     // MUST KILL: `horizontal` means "keeps a one-tab bar even when alone", not an orientation
     Q_INVOKABLE void setPanelHeader(const QString &uniqueName, bool horizontal, QQuickItem *toolbar);

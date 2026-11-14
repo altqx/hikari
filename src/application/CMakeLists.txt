@@ -54,6 +54,7 @@ target_sources(hikari_application PRIVATE update_signature.cpp include/hikari/ap
 target_link_libraries(hikari_application PUBLIC hikari_core hikari_json hikari_minisign)
 hikari_module(hikari_application ALLOW hikari_core hikari_json hikari_minisign Hikari::clipper2)
 target_sources(hikari_application PRIVATE session_file.cpp)
+target_sources(hikari_application PRIVATE side_bars.cpp)
 target_sources(hikari_application PRIVATE document_scripts.cpp)
 target_sources(hikari_application PRIVATE macro_validation.cpp)
 target_sources(hikari_application PRIVATE subtitle_comparison.cpp)

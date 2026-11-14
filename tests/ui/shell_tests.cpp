@@ -741,6 +741,19 @@ class ShellTest : public QObject {
     }
     QQuickItem *visualItem(const char *name) const { return findItem(window->contentItem(), QLatin1String(name)); }
     void widenForTheInspectorBar() { window->resize(2400, std::max(window->height(), 900)); }
+    QRectF panelMenuRect() const
+    {
+        auto *list = qobject_cast<QQuickItem *>(named("panelOptionsMenu")->property("contentItem").value<QObject *>());
+        QQuickItem *popup = list ? list->parentItem() : nullptr;
+        return popup ? popup->mapRectToScene(QRectF(0, 0, popup->width(), popup->height())) : QRectF();
+    }
+    QRectF panelMenuButtonRect(const QString &panel) const
+    {
+        QQuickItem *header = dockHeader(panel);
+        QQuickItem *button = header ? findItem(header, QStringLiteral("dockMenuButton")) : nullptr;
+        return button ? button->mapRectToScene(QRectF(0, 0, button->width(), button->height())) : QRectF();
+    }
+
     QQuickItem *dockHeader(const QString &panel) const
     {
         std::function<QQuickItem *(QQuickItem *)> walk = [&](QQuickItem *from) -> QQuickItem * {
@@ -899,8 +912,16 @@ class ShellTest : public QObject {
         if (!view || !panels || !QMetaObject::invokeMethod(view, "open")
             || !QTest::qWaitFor([&] { return view->property("opened").toBool(); }))
             return {};
-        press(Qt::Key_Down);
-        press(Qt::Key_Down);
+        const auto atPanels = [&] {
+            const auto entries = menuItems(view);
+            const int index = view->property("currentIndex").toInt();
+            return index >= 0 && index < entries.size() && entries[index]->property("subMenu").value<QObject *>() == panels;
+        };
+        for (int presses = 0; !atPanels(); ++presses) {
+            if (presses == 10)
+                return {};
+            press(Qt::Key_Down);
+        }
         press(Qt::Key_Right);
         if (!QTest::qWaitFor([&] { return panels->property("opened").toBool(); }))
             return {};
@@ -985,6 +1006,7 @@ private slots:
         original = writeFile(dir, "original.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,ref\n");
         application = new app::Application;
         loadMainWindow();
+        QTRY_VERIFY(window->property("sideBarsLoaded").toBool());
     }
     void cleanup()
     {
@@ -1160,6 +1182,32 @@ private slots:
         application->finishClose();
         QTRY_VERIFY(item("homePage")->isVisible());
         QTRY_VERIFY(!item("homeSession")->isVisible());
+        restartWith(app::Application::Options());
+    }
+
+    void homePageRestoresTheLastSessionAfterTheSideBarsChange()
+    {
+        QVERIFY(QDir().mkpath(dir.filePath(QStringLiteral("home-side-bars"))));
+        app::Application::Options options;
+        options.settingsFile = dir.filePath(QStringLiteral("home-side-bars/hikari.ini"));
+        options.playbackAudio = false;
+        {
+            app::Application first(options);
+            QVERIFY(first.openFile(episode));
+        }
+        restartWith(options);
+        QTRY_VERIFY(item("homeSession")->isVisible());
+        auto *root = engine->rootObjects().first();
+        QTRY_VERIFY(root->property("sideBarsLoaded").toBool());
+        QVERIFY(QMetaObject::invokeMethod(root, "toggleSideBar", Q_ARG(QVariant, true)));
+        QVERIFY(QMetaObject::invokeMethod(root, "toggleSideBar", Q_ARG(QVariant, true)));
+        QVERIFY(QMetaObject::invokeMethod(root, "resizeSideBar", Q_ARG(QVariant, false), Q_ARG(QVariant, 300),
+                                          Q_ARG(QVariant, true)));
+        QVERIFY(QMetaObject::invokeMethod(item("homeRestore"), "clicked"));
+        QTRY_VERIFY(!item("homePage")->isVisible());
+        QCOMPARE(window->title(), QStringLiteral("episode.ass - HikariSub"));
+        QVERIFY(application->reviewCloseTab(0).isEmpty());
+        application->finishClose();
         restartWith(app::Application::Options());
     }
 
@@ -1487,6 +1535,10 @@ private slots:
         QTest::keyClick(window, Qt::Key_Right);
         QCOMPARE(target(), menuTitle(1));
         QTest::keyClick(window, Qt::Key_Left);
+        QTest::keyClick(window, Qt::Key_Left);
+        QCOMPARE(target(), visualItem("rightSideBarToggle"));
+        QTest::keyClick(window, Qt::Key_Left);
+        QCOMPARE(target(), visualItem("leftSideBarToggle"));
         QTest::keyClick(window, Qt::Key_Left);
         QCOMPARE(target(), switcher);
         QVERIFY(switcher->property("keyboardCurrent").toBool());
@@ -6830,7 +6882,8 @@ private slots:
         QVERIFY(application->openFile(writeFile(dir, "find-typing.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n")));
         item("editingGrid")->forceActiveFocus();
         press(Qt::Key_F, Qt::ControlModifier);
-        QTRY_VERIFY(item("findText")->hasActiveFocus());
+        QTRY_VERIFY(item("findText") && item("findText")->hasActiveFocus());
+        QVERIFY(item<QObject>("searchTool"));
         item<QObject>("searchTool")->setProperty("scope", QStringLiteral("folder"));
         QVERIFY(QMetaObject::invokeMethod(item("findOptionsButton"), "click"));
         QTRY_VERIFY(item("findFolder")->isVisible());
@@ -6950,8 +7003,15 @@ private slots:
         QVERIFY(root->property("menuHasKeys").toBool());
         press(Qt::Key_Down);
         QCOMPARE(current(view)->property("subMenu").value<QObject *>(), named("viewLayoutMenu"));
-        press(Qt::Key_Down);
-        QCOMPARE(current(view)->property("subMenu").value<QObject *>(), panels);
+        QStringList between;
+        for (int presses = 0; current(view)->property("subMenu").value<QObject *>() != panels; ++presses) {
+            QVERIFY2(presses < 10, qPrintable(QStringLiteral("no Panels after 10 presses, at ") + current(view)->objectName()));
+            press(Qt::Key_Down);
+            if (current(view)->property("subMenu").value<QObject *>() != panels)
+                between << current(view)->objectName();
+        }
+        QCOMPARE(between, (QStringList{QStringLiteral("viewToggleLeftSideBar"), QStringLiteral("viewToggleRightSideBar"),
+                                       QStringLiteral("viewSwapSideBars"), QStringLiteral("viewResetSideBars")}));
         QVERIFY(showsHighlight(current(view)));
         press(Qt::Key_Right);
         QTRY_VERIFY(panels->property("opened").toBool());
@@ -7536,6 +7596,38 @@ private slots:
         QTRY_VERIFY(!timingDock->property("isOpen").toBool());
     }
 
+    void panelMenusOpenWhereTheyLeaveTheirButtonFree()
+    {
+        window->resize(1280, 800);
+        QTRY_COMPARE(window->size(), QSize(1280, 800));
+        QVERIFY(application->openFile(episode));
+        QVERIFY(application->openReference(original));
+        auto *referenceDock = item<QObject>("referenceDock");
+        QTRY_VERIFY(referenceDock->property("isOpen").toBool());
+        auto *menu = named("panelOptionsMenu");
+
+        QVERIFY(openPanelMenu(QStringLiteral("Video")));
+        QTRY_VERIFY(menu->property("opened").toBool());
+        QVERIFY2(panelMenuRect().top() >= panelMenuButtonRect(QStringLiteral("Video")).bottom(),
+                 qPrintable(QStringLiteral("menu at %1, button bottom %2").arg(panelMenuRect().top()).arg(panelMenuButtonRect(QStringLiteral("Video")).bottom())));
+        QVERIFY(QMetaObject::invokeMethod(menu, "close"));
+        QTRY_VERIFY(!menu->property("visible").toBool());
+
+        const QRectF button = panelMenuButtonRect(QStringLiteral("Reference"));
+        QVERIFY(!button.isEmpty());
+        QVERIFY(openPanelMenu(QStringLiteral("Reference")));
+        QTRY_VERIFY(menu->property("opened").toBool());
+        const QRectF opened = panelMenuRect();
+        QVERIFY2(button.bottom() + opened.height() > window->height(), "the Reference menu should not fit below its button at 1280x800");
+        QVERIFY2(opened.bottom() <= button.top() && !opened.intersects(button),
+                 qPrintable(QStringLiteral("menu %1..%2, button %3..%4").arg(opened.top()).arg(opened.bottom()).arg(button.top()).arg(button.bottom())));
+        QTest::mouseClick(window, Qt::LeftButton, {}, button.center().toPoint());
+        QTRY_VERIFY(!menu->property("visible").toBool());
+        QVERIFY(referenceDock->property("isOpen").toBool());
+        QVERIFY(!referenceDock->property("isFloating").toBool());
+        QCOMPARE(engine->rootObjects().first()->property("sideBarsJson").toString().contains(QLatin1String("Reference")), false);
+    }
+
     void panelMenuHoldsMoveFloatAndClose()
     {
         QVERIFY(application->openFile(episode));
@@ -7547,7 +7639,8 @@ private slots:
         QVERIFY(openPanelMenu(QStringLiteral("Reference")));
         const QStringList referenceItems = panelMenuItems();
         QCOMPARE(referenceItems, (QStringList{QStringLiteral("Compare with reference"), QStringLiteral("|"),
-                                              QStringLiteral("Move panel…"), QStringLiteral("Float"), QStringLiteral("|"), QStringLiteral("Lock layout"), QStringLiteral("|"),
+                                              QStringLiteral("Move panel…"), QStringLiteral("Move to the left side bar"),
+                                              QStringLiteral("Move to the right side bar"), QStringLiteral("Float"), QStringLiteral("|"), QStringLiteral("Lock layout"), QStringLiteral("|"),
                                               QStringLiteral("Close")}));
         QQuickItem *referenceHeader = dockHeader(QStringLiteral("Reference"));
         std::function<void(QQuickItem *)> noRepeat = [&](QQuickItem *from) {
@@ -8207,6 +8300,44 @@ private slots:
                                     .arg((docked + minimumGrowthFromPanels().first).height())
                                     .arg(minimumGrowthFromPanels().second) + describe()));
         QTRY_VERIFY2(window->minimumSize() == expected(), qPrintable(describe()));
+    }
+
+    void resetLayoutRedocksAPanelAtItsFirstPlace()
+    {
+        QVERIFY(application->openFile(episode));
+        auto *docking = engine->singletonInstance<ui::Docking *>("Hikari.Ui", "Docking");
+        QVERIFY(docking);
+        const auto places = [&] {
+            QMap<QString, QRect> out;
+            for (QObject *dock : window->findChildren<QObject *>())
+                if (const QString name = dock->property("uniqueName").toString(); dock->objectName().endsWith(QLatin1String("Dock"))
+                    && !name.isEmpty() && dock->property("isOpen").toBool() && !dock->property("isFloating").toBool())
+                    out.insert(dock->objectName(), docking->placeInLayout(name));
+            return out;
+        };
+        const auto describe = [](const QMap<QString, QRect> &panels) {
+            QString out;
+            for (auto it = panels.begin(); it != panels.end(); ++it)
+                out += QStringLiteral(" %1 %2x%3+%4+%5;").arg(it.key()).arg(it->width()).arg(it->height()).arg(it->x()).arg(it->y());
+            return out;
+        };
+        const auto firstDock = places();
+        QQuickItem *editor = item("editorPanel");
+        const QString editorName = editor->property("dockName").toString();
+        const QSize dockedMinimum = docking->minimumSize(editorName);
+        QVERIFY(item<QObject>("editorDock")->setProperty("isFloating", true));
+        QTRY_VERIFY(editor->window() != window);
+        QWindow *floating = editor->window();
+        floating->resize(floating->minimumWidth(), floating->height());
+        QTRY_VERIFY2(docking->minimumSize(editorName).height() > dockedMinimum.height(),
+                     qPrintable(QStringLiteral("floating %1x%2, minimum %3x%4, docked minimum %5x%6")
+                                    .arg(floating->width()).arg(floating->height())
+                                    .arg(docking->minimumSize(editorName).width()).arg(docking->minimumSize(editorName).height())
+                                    .arg(dockedMinimum.width()).arg(dockedMinimum.height())));
+        application->workspaceLayout().resetLayout();
+        QTRY_VERIFY(editor->window() == window);
+        QTRY_VERIFY2(places() == firstDock,
+                     qPrintable(QStringLiteral("first dock:%1\nafter reset:%2").arg(describe(firstDock), describe(places()))));
     }
 
     void floatingPanelsOffEveryScreenComeBack()
@@ -20276,15 +20407,23 @@ private slots:
         const QString board = QStringLiteral("plugin:com.example.board/board");
         const QString notes = QStringLiteral("plugin:com.example.board/notes");
         const auto at = [](const char *prefix, const QString &dock) { return (QLatin1String(prefix) + dock).toUtf8(); };
-        for (const QString &dock : {board, notes}) {
+        const auto showPanel = [&](const QString &dock) {
             QObject *show = nullptr;
             QTRY_VERIFY((show = named(at("panelShow", dock).constData())));
             QVERIFY(QMetaObject::invokeMethod(show, "triggered"));
-        }
+        };
+        showPanel(board);
+        const auto dockIs = [&](const char *state, QObject *dock) {
+            QVariant result;
+            return dock && QMetaObject::invokeMethod(window, state, Q_RETURN_ARG(QVariant, result), Q_ARG(QVariant, QVariant::fromValue(dock)))
+                   && result.toBool();
+        };
         QPointer<QObject> boardDock;
-        QTRY_VERIFY((boardDock = item<QObject>(at("pluginDock_", board).constData())) && boardDock->property("isOpen").toBool());
+        QTRY_VERIFY((boardDock = item<QObject>(at("pluginDock_", board).constData())) && dockIs("panelShown", boardDock));
+        QVERIFY(dockIs("inSideBar", boardDock));
         QCOMPARE(boardDock->property("title").toString(), QStringLiteral("Board"));
-        QQuickItem *body = item(at("pluginPanelBody_", board).constData());
+        QQuickItem *body = visualItem(at("pluginPanelBody_", board).constData());
+        QVERIFY(body);
         QPointer<QQuickItem> root;
         QTRY_VERIFY((root = findItem(body, QStringLiteral("board"))));
         QCOMPARE(root->parentItem(), findItem(body, QStringLiteral("pluginQmlHost")));
@@ -20292,16 +20431,23 @@ private slots:
         QVERIFY(!findItem(body, QStringLiteral("pluginPanelPlaceholder"))->isVisible());
         QVERIFY(QMetaObject::invokeMethod(root, "countLines"));
         QTRY_COMPARE(root ? root->property("lines").toString() : QString(), QStringLiteral("2"));
+        showPanel(notes);
         QQuickItem *said = nullptr;
-        QQuickItem *notesBody = item(at("pluginPanelBody_", notes).constData());
+        QQuickItem *notesBody = nullptr;
+        QTRY_VERIFY((notesBody = visualItem(at("pluginPanelBody_", notes).constData())));
         QTRY_VERIFY((said = findItem(notesBody, QStringLiteral("pluginPanelTree"))) && said->isVisible());
         QCOMPARE(QFileInfo(home.filePath(QStringLiteral("plugin-panels.json"))).exists(), true);
 
-        QVERIFY(QMetaObject::invokeMethod(named(at("panelFloat", board).constData()), "triggered"));
-        QTRY_VERIFY(boardDock && boardDock->property("isFloating").toBool());
+        showPanel(board);
+        QTRY_VERIFY(dockIs("panelShown", boardDock));
+        QObject *floatItem = named(at("panelFloat", board).constData());
+        QCOMPARE(floatItem->property("text").toString(), QStringLiteral("Float"));
+        QVERIFY(floatItem->property("enabled").toBool());
+        QVERIFY(QMetaObject::invokeMethod(floatItem, "triggered"));
+        QTRY_VERIFY(dockIs("panelFloating", boardDock));
         QTRY_VERIFY(findItem(body, QStringLiteral("board")));
         QVERIFY(QMetaObject::invokeMethod(named(at("panelFloat", board).constData()), "triggered"));
-        QTRY_VERIFY(boardDock && !boardDock->property("isFloating").toBool());
+        QTRY_VERIFY(boardDock && !dockIs("panelFloating", boardDock) && dockIs("inSideBar", boardDock));
         QCOMPARE(findItem(body, QStringLiteral("board")), root.data());
 
         const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
@@ -20465,6 +20611,58 @@ private slots:
         QTRY_VERIFY(!box->isVisible());
         QTRY_VERIFY(!application->pluginRuntime()->ui()->fileRequest());
         restartWith(app::Application::Options());
+    }
+private:
+    std::shared_ptr<std::optional<std::optional<QString>>> askToSave(QQuickItem *&nameField)
+    {
+        auto answer = std::make_shared<std::optional<std::optional<QString>>>();
+        application->pluginRuntime()->ui()->askForFile(
+            "com.example.keyframes",
+            {QStringLiteral("save"), QStringLiteral("Save keyframes"), {}, true, {QStringLiteral("Keyframes (*.txt)")},
+             QStringLiteral("keyframes.txt")},
+            [answer](std::optional<QString> path, bool) { *answer = path; });
+        OpenChooser chooser;
+        [&] { QTRY_VERIFY((chooser = openFallbackChooser()).impl); }();
+        nameField = chooser.impl ? chooser.impl->findChild<QQuickItem *>(QStringLiteral("fileNameTextField")) : nullptr;
+        if (!nameField && chooser.host)
+            for (auto *item : chooser.host->contentItem()->findChildren<QQuickItem *>(QStringLiteral("fileNameTextField")))
+                if (item->isVisible())
+                    nameField = item;
+        return answer;
+    }
+
+private slots:
+    void aPluginSaveShowsTheSuggestedName()
+    {
+        const QString platform = QGuiApplication::platformName();
+        if (platform != QLatin1String("offscreen") && platform != QLatin1String("xcb"))
+            QSKIP("only offscreen and xcb are sure to use Qt Quick's own file dialog");
+        QQuickItem *nameField = nullptr;
+        const auto answer = askToSave(nameField);
+        QVERIFY(nameField);
+        QTRY_COMPARE(nameField->property("text").toString(), QStringLiteral("keyframes.txt"));
+        QVERIFY(QMetaObject::invokeMethod(named("pluginFileDialog"), "accept"));
+        QTRY_VERIFY(answer->has_value());
+        QVERIFY(answer->value().has_value());
+        QCOMPARE(QFileInfo(*answer->value()).fileName(), QStringLiteral("keyframes.txt"));
+        QTRY_VERIFY(!application->pluginRuntime()->ui()->fileRequest());
+    }
+    void aPluginSaveTakesATypedAbsolutePathAsIs()
+    {
+        const QString platform = QGuiApplication::platformName();
+        if (platform != QLatin1String("offscreen") && platform != QLatin1String("xcb"))
+            QSKIP("only offscreen and xcb are sure to use Qt Quick's own file dialog");
+        QTemporaryDir elsewhere;
+        const QString typed = elsewhere.filePath(QStringLiteral("cuts.txt"));
+        QQuickItem *nameField = nullptr;
+        const auto answer = askToSave(nameField);
+        QVERIFY(nameField);
+        QTRY_COMPARE(nameField->property("text").toString(), QStringLiteral("keyframes.txt"));
+        nameField->setProperty("text", typed);
+        QVERIFY(QMetaObject::invokeMethod(named("pluginFileDialog"), "accept"));
+        QTRY_VERIFY(answer->has_value());
+        QCOMPARE(answer->value(), std::optional<QString>(typed));
+        QTRY_VERIFY(!application->pluginRuntime()->ui()->fileRequest());
     }
     void pluginNetworkAndFolderScreenshots()
     {
@@ -22865,9 +23063,8 @@ private slots:
                                      "Video", "Audio", "Conversion", "Script properties", "Automation", "Shortcuts",
                                      "AI", "Updates and privacy"}));
         QVERIFY(dialogItem("settingsDialog", "settingsPageHotkeys"));
-        QCOMPARE(hotkeyRows().size(), 388);
-        QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(),
-                 QStringLiteral("Global Typesetting graph\u2026"));
+        QCOMPARE(hotkeyRows().size(), 391);
+        QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Global Swap side bars"));
         QCOMPARE(application->hotkeys().selected(), 0);
         QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "hotkeyFilter"), "activated", Q_ARG(int, 5)));
         QCOMPARE(hotkeyRows().size(), int(std::ranges::count_if(application::hotkeyNames(), [](const auto &n) {
@@ -23348,7 +23545,8 @@ private slots:
         QCOMPARE(table().value(QStringLiteral("GLOBAL_HISTORY")), QStringLiteral("Ctrl+Shift+H"));
         QCOMPARE(table().value(QStringLiteral("GLOBAL_ADD_PAGE")), QStringLiteral("Ctrl+T"));
         QVERIFY(!table().contains(QStringLiteral("GLOBAL_CONVERT_TO_TMP")));
-        QCOMPARE(table().size(), 38);
+        QCOMPARE(table().value(QStringLiteral("GLOBAL_TOGGLE_LEFT_SIDE_BAR")), QStringLiteral("Ctrl+Alt+B"));
+        QCOMPARE(table().size(), 39);
         h.beginOptions();
         h.select(hotkeyPosition(QStringLiteral("Subtitles Duplicate lines")));
         h.optionsMap(QStringLiteral("Ctrl-Alt-D"), 0, QStringLiteral("cancel"));

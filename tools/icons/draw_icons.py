@@ -811,6 +811,12 @@ icon("panel-dock", "Dock", [], [VIEW, PANELS],
      stroke("M8.5 2.5h-5a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-5") + accent(stroke("M14.5 1.5l-5 5M9.5 2.5v4h4")))
 icon("panel-move", "Move panel", [], [VIEW, PANELS],
      layout(stroke("M6.5 2.5v11")) + accent(stroke("M3.5 8h8M9.5 6l2 2-2 2")))
+icon("side-bar-left", "Toggle left side bar", [], [VIEW, PANELS, "title-bar"],
+     layout(stroke("M5.5 2.5v11")) + accent(stroke("M3.5 5.5v5")))
+icon("side-bar-right", "Toggle right side bar", [], [VIEW, PANELS, "title-bar"],
+     layout(stroke("M10.5 2.5v11")) + accent(stroke("M12.5 5.5v5")))
+icon("side-bars-swap", "Swap side bars", [], [VIEW],
+     layout(stroke("M4.5 2.5v11M11.5 2.5v11")) + accent(stroke("M6.5 6.5h3M8.5 5.5l1 1-1 1M9.5 9.5h-3M7.5 8.5l-1 1 1 1")))
 icon("tab-move-left", "Move tab left", [], [PANELS],
      stroke("M1.5 13.5h13M4.5 13.5v-5a1 1 0 0 1 1-1h5a1 1 0 0 1 1 1v5") + accent(stroke("M11.5 3.5h-8M5.5 1.5l-2 2 2 2")))
 icon("tab-move-right", "Move tab right", [], [PANELS],

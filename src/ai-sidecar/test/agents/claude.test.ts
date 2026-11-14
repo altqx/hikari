@@ -1,8 +1,9 @@
-import { describe, expect, test } from "bun:test";
-import { spawn } from "node:child_process";
+import { afterEach, describe, expect, test } from "bun:test";
+import { type ChildProcess, spawn } from "node:child_process";
 import { mkdtempSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { PassThrough } from "node:stream";
 
 import { ClaudeSession } from "../../src/agents/claude";
 import { AgentRelay } from "../../src/agents/relay";
@@ -17,6 +18,42 @@ import { kMySkill, mySkillAnswers } from "../skills/my_skill";
 import { kStale, qtLink } from "./qt_link";
 
 const kFake = join(import.meta.dir, "..", "fixtures", "fake-claude.ts");
+const kStdoutDrainMs = 2_000;
+
+const sessions: ClaudeSession[] = [];
+const children: ChildProcess[] = [];
+
+afterEach(() => {
+    for (const session of sessions.splice(0))
+        session.close();
+    for (const child of children.splice(0)) {
+        child.kill();
+        for (const stream of [child.stdin, child.stdout, child.stderr])
+            stream?.destroy();
+    }
+});
+
+function endingStdoutAtExitLikeQtsRelay(child: ChildProcess, childStdoutEnds = true): ChildProcess {
+    children.push(child);
+    const stdout = new PassThrough();
+    child.stdout!.on("data", (chunk: Buffer) => stdout.write(chunk));
+    if (childStdoutEnds)
+        child.stdout!.once("end", () => stdout.end());
+    child.once("exit", () => setTimeout(() => stdout.end(), kStdoutDrainMs).unref());
+    return new Proxy(child, {
+        get: (target, key) => {
+            if (key === "stdout")
+                return stdout;
+            const value = Reflect.get(target, key, target);
+            return typeof value === "function" ? value.bind(target) : value;
+        },
+    });
+}
+
+function tracked(session: ClaudeSession): ClaudeSession {
+    sessions.push(session);
+    return session;
+}
 
 const kJoined = "You are Hikari AI.\n\nInstructions from the user's AGENTS.md:\n\nUse Oxford commas.\n\n" +
     "Instructions from this Project's AGENTS.md:\n\nKeep honorifics.";
@@ -45,15 +82,15 @@ function harness(answers: Partial<Record<OperationName, unknown>> = {}, env: Rec
     };
     const mcp = new McpServer(() => (child ? sessionCalls(new HikariApi(child.peer, undefined, "t1"), params) : fake),
         { name: "hikarisub", title: "HikariSub", version: "test" });
-    const session = new ClaudeSession("t1", params, {
+    const session = tracked(new ClaudeSession("t1", params, {
         sdk: () => import("@anthropic-ai/claude-agent-sdk"),
-        spawn: (o) => spawn(process.execPath, [kFake, ...o.args],
-            { env: { ...o.env, FAKE_CLAUDE_LOG: log, ...env }, stdio: ["pipe", "pipe", "pipe"] }) as never,
+        spawn: (o) => endingStdoutAtExitLikeQtsRelay(spawn(process.execPath, [kFake, ...o.args],
+            { env: { ...o.env, FAKE_CLAUDE_LOG: log, ...env }, stdio: ["pipe", "pipe", "pipe"] })) as never,
         mcp,
         skills: new Skills(fake, []),
         kindOf: (tool) => (tool === "document_apply" ? "edit" : "read"),
         send: (update) => updates.push(update),
-    });
+    }));
     const script = (s: unknown) => [{ type: "text" as const, text: JSON.stringify(s) }];
     return { session, calls, updates, script, log: () => readFileSync(log, "utf8") };
 }
@@ -186,13 +223,13 @@ describe("Claude through the Agent SDK", () => {
             });
         }, () => {});
         const relay = new AgentRelay(peer);
-        const session = new ClaudeSession("t1", { sessionId: "t1", agent: "claude", model: { providerId: "", model: "" } }, {
+        const session = tracked(new ClaudeSession("t1", { sessionId: "t1", agent: "claude", model: { providerId: "", model: "" } }, {
             sdk: () => import("@anthropic-ai/claude-agent-sdk"),
             spawn: (o) => relay.start("claude", { args: o.args, env: o.env, signal: o.signal }),
             mcp: new McpServer(() => ({ call: () => Promise.reject(new Error("no")) }), { name: "hikarisub", title: "HikariSub", version: "test" }),
             kindOf: () => "read",
             send: () => {},
-        });
+        }));
         await expect(session.prompt({ sessionId: "t1", prompt: [{ type: "text", text: "hi" }] }))
             .rejects.toThrow("Claude said: mise ERROR Permission denied (os error 13)");
         session.close();

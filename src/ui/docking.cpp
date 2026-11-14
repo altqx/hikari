@@ -628,6 +628,18 @@ QRect fitOnScreens(const QRect &frame, int strip, const QList<QRect> &screens, c
     return {QPoint(x, y), outer};
 }
 
+namespace {
+
+QRect wholeOn(const QRect &frame, const QRect &target)
+{
+    const QSize outer = frame.size().boundedTo(target.size());
+    const int x = std::clamp(frame.x(), target.left(), target.right() + 1 - outer.width());
+    const int y = std::clamp(frame.y(), target.top(), target.bottom() + 1 - outer.height());
+    return {QPoint(x, y), outer};
+}
+
+}
+
 QRect wholeOnScreens(const QRect &frame, const QList<QRect> &screens, const QRect &fallback)
 {
     if (std::ranges::any_of(screens, [&](const QRect &screen) { return screen.contains(frame); }))
@@ -641,10 +653,15 @@ QRect wholeOnScreens(const QRect &frame, const QList<QRect> &screens, const QRec
             target = screen;
         }
     }
-    const QSize outer = frame.size().boundedTo(target.size());
-    const int x = std::clamp(frame.x(), target.left(), target.right() + 1 - outer.width());
-    const int y = std::clamp(frame.y(), target.top(), target.bottom() + 1 - outer.height());
-    return {QPoint(x, y), outer};
+    return wholeOn(frame, target);
+}
+
+QRect wholeOnScreenAt(const QRect &frame, QPoint point, const QList<QRect> &screens, const QRect &fallback)
+{
+    const auto holding = std::ranges::find_if(screens, [&](const QRect &screen) { return screen.contains(point); });
+    if (holding == screens.end())
+        return wholeOnScreens(frame, screens, fallback);
+    return holding->contains(frame) ? frame : wholeOn(frame, *holding);
 }
 
 QRect mostlyOnScreens(const QRect &frame, const QList<QRect> &screens, const QRect &fallback)
@@ -659,8 +676,8 @@ QRect mostlyOnScreens(const QRect &frame, const QList<QRect> &screens, const QRe
 
 namespace {
 
-QRect clientOnScreens(const QWindow &window, const QRect &client,
-                      QRect (*fit)(const QRect &, const QList<QRect> &, const QRect &))
+template <typename Fit>
+QRect clientOnScreens(const QWindow &window, const QRect &client, Fit fit)
 {
     QScreen *primary = QGuiApplication::primaryScreen();
     if (!primary)
@@ -682,6 +699,13 @@ QRect clientWholeOnScreens(const QWindow &window, const QRect &client)
 QRect clientMostlyOnScreens(const QWindow &window, const QRect &client)
 {
     return clientOnScreens(window, client, mostlyOnScreens);
+}
+
+QRect clientWholeOnScreenAt(const QWindow &window, const QRect &client, QPoint point)
+{
+    return clientOnScreens(window, client, [point](const QRect &frame, const QList<QRect> &screens, const QRect &fallback) {
+        return wholeOnScreenAt(frame, point, screens, fallback);
+    });
 }
 
 void setLayoutLocked(bool locked)
@@ -909,7 +933,7 @@ public:
         QQuickWindow *window = item()->window();
         if (!window || m_view->width() <= 0 || m_view->height() <= 0)
             return {};
-        const QSize outside(std::max(0, window->width() - qCeil(m_view->width())),
+        const QSize outside(std::max(0, window->width() - qCeil(m_view->width()) - m_shrinkableWidth),
                             std::max(0, window->height() - qCeil(m_view->height())));
         QSize least = m_main->layout()->layoutMinimumSize() + outside;
         if (QScreen *screen = window->screen())
@@ -927,12 +951,30 @@ public:
         const QSize least = wanted();
         if (!window || least.isEmpty())
             return;
+        QScreen *screen = window->screen();
+        const QMargins margins = window->frameMargins();
+        const bool whole = screen && !QGuiApplication::platformName().startsWith(QLatin1String("wayland"))
+            && screen->availableGeometry().contains(window->geometry().marginsAdded(margins));
         if (window->minimumSize() != least) {
             qCDebug(lcDocking) << "main window minimum" << window->minimumSize() << "->" << least;
             window->setMinimumSize(least);
         }
-        if (window->width() < least.width() || window->height() < least.height())
-            window->resize(window->size().expandedTo(least));
+        const QSize grown = window->size().expandedTo(least);
+        if (!whole) {
+            if (grown != window->size())
+                window->resize(grown);
+            return;
+        }
+        const QRect frame = QRect(window->geometry().topLeft(), grown).marginsAdded(margins);
+        const QRect fitted = wholeOn(frame, screen->availableGeometry()).marginsRemoved(margins);
+        if (fitted != window->geometry())
+            window->setGeometry(fitted);
+    }
+
+    void setShrinkableWidth(int width)
+    {
+        m_shrinkableWidth = std::max(0, width);
+        schedule();
     }
 
 private:
@@ -945,6 +987,7 @@ private:
     KDDockWidgets::Core::MainWindow *m_main;
     KDDockWidgets::QtQuick::View *m_view;
     QTimer m_settle;
+    int m_shrinkableWidth = 0;
 };
 
 KDDockWidgets::QtQuick::View *mainWindowView(KDDockWidgets::Core::MainWindow *main)
@@ -966,10 +1009,25 @@ bool Docking::followLayoutMinimum(const QString &mainName)
     return true;
 }
 
+bool Docking::setShrinkableWidth(const QString &mainName, int width)
+{
+    LayoutMinimumKeeper *keeper = LayoutMinimumKeeper::of(mainWindowView(mainWindowByName(mainName)));
+    if (!keeper)
+        return false;
+    keeper->setShrinkableWidth(width);
+    return true;
+}
+
 QSize Docking::layoutMinimumSize(const QString &mainName) const
 {
     KDDockWidgets::Core::MainWindow *main = mainWindowByName(mainName);
     return main ? QSize(main->layout()->layoutMinimumSize()) : QSize();
+}
+
+int Docking::screenAvailableWidth(QQuickItem *item) const
+{
+    QScreen *screen = item && item->window() ? item->window()->screen() : nullptr;
+    return screen ? screen->availableGeometry().width() : 0;
 }
 
 namespace {
@@ -1030,11 +1088,11 @@ void refreshDockConstraints()
     }
 }
 
-bool Docking::setMinimumSize(const QString &uniqueName, QSize size)
+namespace {
+QHash<QString, QSize> g_dockedMinimums;
+
+void applyMinimum(KDDockWidgets::Core::DockWidget *dock, QSize size)
 {
-    KDDockWidgets::Core::DockWidget *dock = dockByName(uniqueName);
-    if (!dock)
-        return false;
     // The QtQuick frontend propagates constraints by hand: the group must recompute its own.
     dock->view()->setMinimumSize(size);
     for (KDDockWidgets::Core::Group *group : KDDockWidgets::DockRegistry::self()->groups()) {
@@ -1043,6 +1101,37 @@ bool Docking::setMinimumSize(const QString &uniqueName, QSize size)
                 view->updateConstraints();
         }
     }
+}
+}
+
+DockedMinimums::DockedMinimums()
+{
+    if (!KDDockWidgets::Core::Platform::instance())
+        return;
+    for (KDDockWidgets::Core::DockWidget *dock : KDDockWidgets::DockRegistry::self()->dockwidgets()) {
+        const auto docked = g_dockedMinimums.constFind(dock->uniqueName());
+        if (!dock->isFloating() || docked == g_dockedMinimums.constEnd())
+            continue;
+        m_floating.insert(dock->uniqueName(), dock->view()->minSize());
+        applyMinimum(dock, *docked);
+    }
+}
+
+DockedMinimums::~DockedMinimums()
+{
+    for (auto it = m_floating.constBegin(); it != m_floating.constEnd(); ++it)
+        if (KDDockWidgets::Core::DockWidget *dock = dockByName(it.key()); dock && dock->isFloating())
+            applyMinimum(dock, it.value());
+}
+
+bool Docking::setMinimumSize(const QString &uniqueName, QSize size)
+{
+    KDDockWidgets::Core::DockWidget *dock = dockByName(uniqueName);
+    if (!dock)
+        return false;
+    if (!dock->isFloating())
+        g_dockedMinimums.insert(uniqueName, size);
+    applyMinimum(dock, size);
     return true;
 }
 
