@@ -36,7 +36,7 @@ if(NOT CMAKE_SCRIPT_MODE_FILE)
             "-DAUTOMATION=${HIKARI_AUTOMATION_STAGE}"
             "-DCRT=${_hikari_crt_arg}"
             "-DWINDEPLOYQT=${_hikari_windeployqt}"
-            "-DQMLDIR=${PROJECT_SOURCE_DIR}/src"
+            "-DQMLDIR=${PROJECT_SOURCE_DIR}/src/ui"
             "-DLICENSE=${PROJECT_SOURCE_DIR}/LICENSE"
             "-DUNIDIC=${HIKARI_UNIDIC_DIR}"
             "-DMECAB_LICENSE=${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/share/mecab/copyright"
