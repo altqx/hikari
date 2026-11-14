@@ -392,9 +392,8 @@ ApplicationWindow {
         originalDock.close()
         dockingArea.addDockWidget(postprocessorDock, KDDW.KDDockWidgets.Location_OnRight, audioDock, Qt.size(360, 0))
         postprocessorDock.close()
-        dockingArea.addDockWidget(referenceDock, KDDW.KDDockWidgets.Location_OnBottom, gridDock, Qt.size(0, 160))
-        if (!root.shell.hasReference)
-            referenceDock.close()
+        if (root.shell.hasReference)
+            root.addAtBottom(referenceDock)
         editorDock.addDockWidgetAsTab(stylesDock)
         editorDock.addDockWidgetAsTab(templateDock)
         editorDock.setAsCurrentTab()
@@ -501,7 +500,7 @@ ApplicationWindow {
         target: root.shell
         function onHasReferenceChanged() {
             if (root.shell.hasReference && gridDock.isOpen)
-                referenceDock.open()
+                root.openAtFirstPlace(referenceDock)
             else if (referenceDock.isOpen)
                 referenceDock.close()
         }
@@ -536,11 +535,23 @@ ApplicationWindow {
             dockingArea.addDockWidget(originalDock, KDDW.KDDockWidgets.Location_OnRight, null, Qt.size(400, 0))
     }
 
-    function addLog() {
-        dockingArea.addDockWidget(logDock, KDDW.KDDockWidgets.Location_OnBottom, null, Qt.size(0, 180))
+    readonly property var bottomDocks: [referenceDock, spellDock, logDock]
+    function atLayoutBottom(dock) {
+        const place = Docking.placeInLayout(dock.uniqueName)
+        if (!dock.isOpen || place.height <= 0)
+            return false
+        return root.dockList.every(other => other === dock || Docking.placeInLayout(other.uniqueName).height <= 0
+                                  || Docking.placeInLayout(other.uniqueName).y + Docking.placeInLayout(other.uniqueName).height
+                                     <= place.y + place.height)
     }
-    function addSpellChecker() {
-        dockingArea.addDockWidget(spellDock, KDDW.KDDockWidgets.Location_OnBottom, null, Qt.size(0, 180))
+    function addAtBottom(dock) {
+        const row = root.bottomDocks.find(other => other !== dock && root.atLayoutBottom(other))
+        if (row)
+            row.addDockWidgetAsTab(dock)
+        else if (dock === referenceDock && gridDock.isOpen)
+            dockingArea.addDockWidget(dock, KDDW.KDDockWidgets.Location_OnBottom, gridDock, Qt.size(0, 160))
+        else
+            dockingArea.addDockWidget(dock, KDDW.KDDockWidgets.Location_OnBottom, null, Qt.size(0, 180))
     }
     function openSpellChecker() {
         const checking = spellTool.checking
@@ -1153,7 +1164,7 @@ ApplicationWindow {
         target: root.workspaceLayout
         function onArrangementSwapped() {
             if (root.shell.hasReference && gridDock.isOpen)
-                referenceDock.open()
+                root.openAtFirstPlace(referenceDock)
             else if (referenceDock.isOpen)
                 referenceDock.close()
             if (!videoDock.isOpen && root.video.playing)
@@ -1274,6 +1285,7 @@ ApplicationWindow {
         } else {
             if (!target || target === dock || !target.isOpen)
                 return false
+            const first = !Docking.hasPlace(dock.uniqueName)
             if (kind === 0) {
                 target.addDockWidgetAsTab(dock)
             } else {
@@ -1283,6 +1295,8 @@ ApplicationWindow {
                     target.addDockWidgetToContainingWindow(dock, location, target)
                 else
                     dockingArea.addDockWidget(dock, location, target)
+                if (first && !target.isFloating)
+                    Docking.fitFirstPlacement(dock.uniqueName)
             }
         }
         root.showPanel(dock)
@@ -1338,14 +1352,13 @@ ApplicationWindow {
         root.focusPanel(panels[dockList.indexOf(dock)], Qt.OtherFocusReason)
     }
     function openAtFirstPlace(dock) {
+        const first = !Docking.hasPlace(dock.uniqueName)
         if (root.inSideBar(dock))
             root.showInSideBar(dock, false)
         else if (dock === originalDock)
             root.openOriginal()
-        else if (dock === logDock && !Docking.hasPlace(root.engineName("Log")))
-            root.addLog()
-        else if (dock === spellDock && !Docking.hasPlace(root.engineName("Spellchecker")))
-            root.addSpellChecker()
+        else if (root.bottomDocks.includes(dock) && !Docking.hasPlace(dock.uniqueName))
+            root.addAtBottom(dock)
         else if (dock === stylesDock && !Docking.hasPlace(root.engineName("Styles")))
             root.addStyles()
         else if (dock === templateDock && !Docking.hasPlace(root.engineName("Template")))
@@ -1360,6 +1373,8 @@ ApplicationWindow {
             root.addRightOfGrid(dock)
         else
             dock.open()
+        if (first && dock.isOpen && !dock.isFloating && !root.inSideBar(dock))
+            Docking.fitFirstPlacement(dock.uniqueName)
         if (root.layoutLocked && dock.isFloating)
             dock.isFloating = false
     }

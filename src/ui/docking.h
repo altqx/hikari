@@ -42,6 +42,10 @@ QRect clientWholeOnScreens(const QWindow &window, const QRect &client);
 QRect clientMostlyOnScreens(const QWindow &window, const QRect &client);
 QRect clientWholeOnScreenAt(const QWindow &window, const QRect &client, QPoint point);
 
+// The groups a panel placed at `place` may join as a tab, nearest first: those sharing an edge with `place`, the
+// longest edge first, then the rest, the largest first; ties keep their order.
+QList<int> groupsByNearness(const QRect &place, const QList<QRect> &groups);
+
 int fitFloatingLayouts();
 
 void refreshDockConstraints();
@@ -119,6 +123,10 @@ public:
     /// Width beside the main's view that the window minimum leaves out, because it can shrink (the side bars past their minimum).
     Q_INVOKABLE bool setShrinkableWidth(const QString &mainName, int width);
     Q_INVOKABLE QSize layoutMinimumSize(const QString &mainName) const;
+    /// For a panel just docked for the first time: when its docking area's layout minimum no longer fits the
+    /// area, the panel becomes a tab of the first group in groupsByNearness() that leaves it fitting, else of the
+    /// nearest. True when it moved.
+    Q_INVOKABLE bool fitFirstPlacement(const QString &uniqueName);
     Q_INVOKABLE int screenAvailableWidth(QQuickItem *item) const;
 
     // MUST KILL: `horizontal` means "keeps a one-tab bar even when alone", not an orientation
