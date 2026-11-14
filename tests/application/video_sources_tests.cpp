@@ -8,6 +8,7 @@
 #include <array>
 #include <climits>
 #include <cmath>
+#include <numeric>
 
 using namespace hikari;
 using namespace hikari::application;
@@ -560,6 +561,12 @@ struct TimelineMedia : IndexedSourcePort {
     void nextPcm(std::int64_t, PcmReady) override {}
     void cancelReads() override {}
     std::uint64_t generation() const override { return 1; }
+    void shrunkFrames(int from, int to, int stride, int maxEdge, bool, ShrunkFramesReady done) override
+    {
+        shrunkAsked.push_back({from, to, stride, maxEdge});
+        done(ShrunkFrames{maxEdge, maxEdge, std::vector<std::string>(std::size_t((to - from) / stride + 1))});
+    }
+    std::vector<std::array<int, 4>> shrunkAsked;
 };
 
 }
@@ -648,4 +655,37 @@ TEST(VideoDetails, DescribeTheOpenVideo)
     EXPECT_EQ(videoDetails(session)->lastFrameMs, 125);
     session.close();
     EXPECT_FALSE(videoDetails(session));
+}
+
+TEST(DummyVideo, ShrunkFramesComeFromTheVideoButNotFromADummy)
+{
+    TimelineMedia media;
+    media.timeline.pts = std::vector<std::int64_t>(10);
+    std::iota(media.timeline.pts.begin(), media.timeline.pts.end(), 0);
+    media.timeline.generation = 1;
+    media.timeline.timeBaseNumerator = 1;
+    media.timeline.timeBaseDenominator = 1000;
+    media.timeline.fpsNumerator = 1000;
+    media.timeline.fpsDenominator = 1;
+    media.timeline.width = 64;
+    media.timeline.height = 36;
+    NoRenderer renderer;
+    DummyVideoSource source(media);
+    VideoSession session(source, renderer);
+    session.open("clip.mkv");
+    ASSERT_EQ(session.state(), VideoSession::State::Ready);
+    std::optional<std::optional<IndexedSourcePort::ShrunkFrames>> shrunk;
+    session.requestShrunkFrames(2, 8, 3, 16, true, [&](auto r) { shrunk = std::move(r); });
+    ASSERT_TRUE(shrunk && *shrunk);
+    EXPECT_EQ((*shrunk)->pixels.size(), 3u);
+    ASSERT_EQ(media.shrunkAsked.size(), 1u);
+    EXPECT_EQ(media.shrunkAsked[0], (std::array<int, 4>{2, 8, 3, 16}));
+
+    session.open("?dummy:24000/1001:100:64:36:0:0:0:");
+    ASSERT_EQ(session.state(), VideoSession::State::Ready);
+    shrunk.reset();
+    session.requestShrunkFrames(0, 3, 1, 16, true, [&](auto r) { shrunk = std::move(r); });
+    ASSERT_TRUE(shrunk);
+    EXPECT_FALSE(*shrunk);
+    EXPECT_EQ(media.shrunkAsked.size(), 1u);
 }

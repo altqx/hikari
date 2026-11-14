@@ -120,6 +120,7 @@ public:
                               Opened done) override;
     void cancelOpen() override;
     void frame(int index, FrameReady done) override;
+    void shrunkFrames(int from, int to, int stride, int maxEdge, bool luma, ShrunkFramesReady done) override;
     void openAudio(int track, AudioOpened done) override;
     void audio(std::int64_t start, std::int64_t count, AudioReady done) override;
     void beginPcm(std::int64_t start, std::int64_t count, int outRate, int outChannels, PcmBegun done) override;
