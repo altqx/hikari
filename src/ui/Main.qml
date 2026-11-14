@@ -392,8 +392,9 @@ ApplicationWindow {
         originalDock.close()
         dockingArea.addDockWidget(postprocessorDock, KDDW.KDDockWidgets.Location_OnRight, audioDock, Qt.size(360, 0))
         postprocessorDock.close()
-        if (root.shell.hasReference)
-            root.addAtBottom(referenceDock)
+        dockingArea.addDockWidget(referenceDock, KDDW.KDDockWidgets.Location_OnBottom, gridDock, Qt.size(0, 160))
+        if (!root.shell.hasReference)
+            referenceDock.close()
         editorDock.addDockWidgetAsTab(stylesDock)
         editorDock.addDockWidgetAsTab(templateDock)
         editorDock.setAsCurrentTab()
@@ -411,9 +412,9 @@ ApplicationWindow {
                 dock.close()
         const width = dockingArea.width
         dockingArea.addDockWidget(nodeGraphDock, KDDW.KDDockWidgets.Location_OnRight, videoDock,
-                                  Qt.size(Math.round(width * 0.44), 0))
-        dockingArea.addDockWidget(nodeInspectorDock, KDDW.KDDockWidgets.Location_OnRight, nodeGraphDock,
-                                  Qt.size(Math.round(width * 0.22), 0))
+                                  Qt.size(Math.round(width * 0.5), 0))
+        dockingArea.addDockWidget(nodeInspectorDock, KDDW.KDDockWidgets.Location_OnBottom, nodeGraphDock,
+                                  Qt.size(0, Math.round(dockingArea.height * 0.4)))
         dockingArea.addDockWidget(nodeSourcesDock, KDDW.KDDockWidgets.Location_OnBottom, videoDock,
                                   Qt.size(0, Math.round(dockingArea.height * 0.42)))
     }

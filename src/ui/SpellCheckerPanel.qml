@@ -25,9 +25,14 @@ FocusScope {
 
     implicitWidth: 760
     implicitHeight: 150
-    readonly property size minimumSize: Qt.size(Math.ceil(wordColumn.Layout.minimumWidth + suggestionFrame.Layout.minimumWidth
-                                                          + actions.implicitWidth + 2 * columns.spacing) + 16,
-                                                Math.ceil(Math.max(actions.implicitHeight, wordColumn.implicitHeight)) + 16)
+    readonly property real lookupWidth: wordColumn.Layout.minimumWidth + columns.columnSpacing + suggestionFrame.Layout.minimumWidth
+    readonly property real lookupHeight: Math.max(wordColumn.implicitHeight, 96)
+    readonly property real margins: 2 * columns.anchors.margins
+    readonly property bool stacked: width > 0 && width < wordColumn.Layout.minimumWidth + 2 * columns.columnSpacing + suggestionFrame.sideBySideWidth
+                                    + actions.implicitWidth + margins
+    readonly property size minimumSize: Qt.size(Math.ceil(Math.max(lookupWidth, actions.implicitWidth) + margins),
+                                                Math.ceil(stacked ? lookupHeight + columns.rowSpacing + actions.implicitHeight
+                                                                  : Math.max(lookupHeight, actions.implicitHeight)) + margins)
 
     // A FocusScope has no font of its own; the hidden fontSource Label gives the body font.
     function fontAt(size, weight) {
@@ -294,12 +299,14 @@ FocusScope {
         }
     }
 
-    RowLayout {
+    GridLayout {
         id: columns
         objectName: "spellColumns"
         anchors.fill: parent
         anchors.margins: 8
-        spacing: 24
+        columns: panel.stacked ? 2 : 3
+        columnSpacing: 24
+        rowSpacing: 8
         visible: panel.found
         ColumnLayout {
             id: wordColumn
@@ -395,8 +402,10 @@ FocusScope {
         Frame {
             id: suggestionFrame
             Layout.fillHeight: true
+            Layout.minimumHeight: panel.stacked ? panel.lookupHeight : 0
             Layout.minimumWidth: 160
-            Layout.preferredWidth: 220
+            Layout.preferredWidth: panel.stacked ? Layout.minimumWidth : sideBySideWidth
+            readonly property int sideBySideWidth: 220
             padding: 1
             background: Rectangle { color: Theme.field; border.color: Theme.line }
             Label {
@@ -434,8 +443,12 @@ FocusScope {
         }
         GridLayout {
             id: actions
+            objectName: "spellActions"
             Layout.alignment: Qt.AlignTop
-            columns: 2
+            Layout.columnSpan: panel.stacked ? 2 : 1
+            Layout.fillWidth: panel.stacked
+            columns: 3
+            uniformCellWidths: true
             rowSpacing: 8
             columnSpacing: 8
             PrimaryButton {
@@ -443,7 +456,7 @@ FocusScope {
                 objectName: "spellReplace"
                 text: qsTr("Replace")
                 Layout.fillWidth: true
-                Layout.preferredWidth: 140
+                Layout.minimumWidth: implicitWidth
                 onClicked: panel.replace()
             }
             Button {
@@ -452,7 +465,7 @@ FocusScope {
                 visible: !panel.grammarMode
                 text: qsTr("Replace all")
                 Layout.fillWidth: true
-                Layout.preferredWidth: 140
+                Layout.minimumWidth: implicitWidth
                 onClicked: panel.replaceAll()
             }
             Button {
@@ -460,6 +473,7 @@ FocusScope {
                 objectName: "spellIgnore"
                 text: qsTr("Ignore")
                 Layout.fillWidth: true
+                Layout.minimumWidth: implicitWidth
                 onClicked: panel.ignore()
             }
             Button {
@@ -468,6 +482,7 @@ FocusScope {
                 visible: !panel.grammarMode
                 text: qsTr("Ignore all")
                 Layout.fillWidth: true
+                Layout.minimumWidth: implicitWidth
                 onClicked: panel.ignoreAll()
             }
             Button {
@@ -476,13 +491,14 @@ FocusScope {
                 visible: panel.grammarMode
                 text: qsTr("Ignore this rule")
                 Layout.fillWidth: true
-                Layout.preferredWidth: 140
+                Layout.minimumWidth: implicitWidth
                 onClicked: panel.ignoreRule()
             }
             RowLayout {
                 spacing: 1
                 Layout.columnSpan: panel.grammarMode ? 1 : 2
                 Layout.fillWidth: true
+                Layout.minimumWidth: implicitWidth
                 IconTextButton {
                     id: addWordButton
                     objectName: "spellAddWord"
