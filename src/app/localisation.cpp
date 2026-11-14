@@ -1,5 +1,7 @@
 #include "hikari/app/localisation.h"
 
+#include "shown_objects.h"
+
 #include <QCoreApplication>
 #include <QDir>
 #include <QEvent>
@@ -275,7 +277,7 @@ void Localisation::refreshWindows()
     // Qt sets standard button texts once, in the language of the moment, so they are set anew.
     QSet<QObject *> seen;
     for (QWindow *w : QGuiApplication::allWindows()) {
-        for (QObject *o : w->findChildren<QObject *>()) {
+        for (QObject *o : ui::shownObjects(w)) {
             if (seen.contains(o) || !(o->inherits("QQuickDialog") || o->inherits("QQuickDialogButtonBox")))
                 continue;
             seen.insert(o);

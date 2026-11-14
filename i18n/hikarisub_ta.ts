@@ -8543,6 +8543,18 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Toggle left side bar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Toggle right side bar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Swap side bars</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Global</source>
         <translation>உலகளாவிய</translation>
     </message>
@@ -13099,6 +13111,22 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Off by default on Windows, KDE Plasma and GNOME; on by default on tiling window managers.</source>
         <translation>Windows, KDE Plasma, GNOME இல் இயல்பாக முடக்கப்பட்டிருக்கும்; டைலிங் சாளர மேலாளர்களில் இயல்பாக இயக்கப்பட்டிருக்கும்.</translation>
+    </message>
+    <message>
+        <source>AI side bar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The other side bar holds the tools. Swap side bars in the View menu switches them.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Left</source>
+        <translation type="unfinished">இடது</translation>
+    </message>
+    <message>
+        <source>Right</source>
+        <translation type="unfinished">வலது</translation>
     </message>
     <message>
         <source>UI colours</source>
@@ -26724,6 +26752,18 @@ do not work on comments</source>
         <translation>பலகம்</translation>
     </message>
     <message>
+        <source>Toggle left side bar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Toggle right side bar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Swap side bars</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Dock floating panels to lock the layout</source>
         <translation type="unfinished"></translation>
     </message>
@@ -26741,6 +26781,30 @@ do not work on comments</source>
     </message>
     <message>
         <source>Unlock</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to the left side bar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to the right side bar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move out of the side bar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move left</source>
+        <translation type="unfinished">இடப்புறம் நகர்த்து</translation>
+    </message>
+    <message>
+        <source>Move right</source>
+        <translation type="unfinished">வலப்புறம் நகர்த்து</translation>
+    </message>
+    <message>
+        <source>Reset side bars</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -26762,6 +26826,14 @@ do not work on comments</source>
     <message>
         <source>Below</source>
         <translation>அதன் கீழே</translation>
+    </message>
+    <message>
+        <source>Left side bar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Right side bar</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Placement</source>
@@ -27082,6 +27154,14 @@ do not work on comments</source>
     <message>
         <source>Karaoke</source>
         <translation>கரோக்கி</translation>
+    </message>
+    <message>
+        <source>%1 (plugin)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drag a panel here</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

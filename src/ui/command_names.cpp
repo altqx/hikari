@@ -397,6 +397,9 @@ constexpr const char *kHotkeyCommands[] = {
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Timing assistant"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Accept the timing assistant’s suggestion"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Explorer panel"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Toggle left side bar"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Toggle right side bar"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Swap side bars"),
 };
 
 constexpr const char *kHotkeyWindows[] = {
