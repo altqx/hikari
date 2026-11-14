@@ -20574,6 +20574,58 @@ private slots:
         QTRY_VERIFY(!application->pluginRuntime()->ui()->fileRequest());
         restartWith(app::Application::Options());
     }
+private:
+    std::shared_ptr<std::optional<std::optional<QString>>> askToSave(QQuickItem *&nameField)
+    {
+        auto answer = std::make_shared<std::optional<std::optional<QString>>>();
+        application->pluginRuntime()->ui()->askForFile(
+            "com.example.keyframes",
+            {QStringLiteral("save"), QStringLiteral("Save keyframes"), {}, true, {QStringLiteral("Keyframes (*.txt)")},
+             QStringLiteral("keyframes.txt")},
+            [answer](std::optional<QString> path, bool) { *answer = path; });
+        OpenChooser chooser;
+        [&] { QTRY_VERIFY((chooser = openFallbackChooser()).impl); }();
+        nameField = chooser.impl ? chooser.impl->findChild<QQuickItem *>(QStringLiteral("fileNameTextField")) : nullptr;
+        if (!nameField && chooser.host)
+            for (auto *item : chooser.host->contentItem()->findChildren<QQuickItem *>(QStringLiteral("fileNameTextField")))
+                if (item->isVisible())
+                    nameField = item;
+        return answer;
+    }
+
+private slots:
+    void aPluginSaveShowsTheSuggestedName()
+    {
+        const QString platform = QGuiApplication::platformName();
+        if (platform != QLatin1String("offscreen") && platform != QLatin1String("xcb"))
+            QSKIP("only offscreen and xcb are sure to use Qt Quick's own file dialog");
+        QQuickItem *nameField = nullptr;
+        const auto answer = askToSave(nameField);
+        QVERIFY(nameField);
+        QTRY_COMPARE(nameField->property("text").toString(), QStringLiteral("keyframes.txt"));
+        QVERIFY(QMetaObject::invokeMethod(named("pluginFileDialog"), "accept"));
+        QTRY_VERIFY(answer->has_value());
+        QVERIFY(answer->value().has_value());
+        QCOMPARE(QFileInfo(*answer->value()).fileName(), QStringLiteral("keyframes.txt"));
+        QTRY_VERIFY(!application->pluginRuntime()->ui()->fileRequest());
+    }
+    void aPluginSaveTakesATypedAbsolutePathAsIs()
+    {
+        const QString platform = QGuiApplication::platformName();
+        if (platform != QLatin1String("offscreen") && platform != QLatin1String("xcb"))
+            QSKIP("only offscreen and xcb are sure to use Qt Quick's own file dialog");
+        QTemporaryDir elsewhere;
+        const QString typed = elsewhere.filePath(QStringLiteral("cuts.txt"));
+        QQuickItem *nameField = nullptr;
+        const auto answer = askToSave(nameField);
+        QVERIFY(nameField);
+        QTRY_COMPARE(nameField->property("text").toString(), QStringLiteral("keyframes.txt"));
+        nameField->setProperty("text", typed);
+        QVERIFY(QMetaObject::invokeMethod(named("pluginFileDialog"), "accept"));
+        QTRY_VERIFY(answer->has_value());
+        QCOMPARE(answer->value(), std::optional<QString>(typed));
+        QTRY_VERIFY(!application->pluginRuntime()->ui()->fileRequest());
+    }
     void pluginNetworkAndFolderScreenshots()
     {
         const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
