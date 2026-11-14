@@ -1014,7 +1014,7 @@ private slots:
 
     void quittingFromTheSecondWindowBringsEachWindowBackToItsOwnPlace()
     {
-        const QRect firstPlace(40, 60, 900, 600);
+        const QRect firstPlace(40, 60, 900, 650);
         const QRect secondPlace(300, 200, 900, 650);
         first()->setGeometry(firstPlace);
         second->setGeometry(secondPlace);
