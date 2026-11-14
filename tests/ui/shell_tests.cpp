@@ -773,6 +773,8 @@ class ShellTest : public QObject {
     }
     bool openPanelMenu(const QString &panel)
     {
+        // KDDockWidgets deletes a regrouped panel's old group later; until then its header still shows the panel, #1098.
+        QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
         QQuickItem *header = nullptr;
         if (!QTest::qWaitFor([&] { return (header = dockHeader(panel)) != nullptr; }))
             return false;
@@ -13645,6 +13647,46 @@ private slots:
         QTRY_COMPARE(field->property("cursorPosition").toInt(), 13);
         QCOMPARE(field->property("selectedText").toString(), QString());
         QVERIFY(!menu->property("visible").toBool());
+        application->editor().discard();
+    }
+
+    void clickInTheLeftPaddingPutsTheCaretAtTheLineStart()
+    {
+        const QString path = writeFile(dir, "left-padding-click.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,Hello wrold Teh\n");
+        QVERIFY(application->openFile(path));
+        auto *field = item("lineText");
+        QTRY_COMPARE(field->property("text").toString(), QStringLiteral("Hello wrold Teh"));
+        const auto inPadding = [&](qreal x) { return field->mapToScene(QPointF(x, field->property("topPadding").toReal() + 1)).toPoint(); };
+        const auto chainedClicksExpire = [] { QTest::qWait(QGuiApplication::styleHints()->mouseDoubleClickInterval() + 50); };
+
+        for (const qreal x : {qreal(1), field->property("leftPadding").toReal() - 3}) {
+            chainedClicksExpire();
+            field->setProperty("cursorPosition", 15);
+            waitUntilOver(field, [&] { return inPadding(x); });
+            QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, inPadding(x));
+            QTRY_COMPARE(field->property("cursorPosition").toInt(), 0);
+            QTest::qWait(50);
+            QCOMPARE(field->property("selectedText").toString(), QString());
+            QCOMPARE(field->property("cursorPosition").toInt(), 0);
+        }
+
+        chainedClicksExpire();
+        QTest::mouseDClick(window, Qt::LeftButton, Qt::NoModifier, fieldPoint(field, 8));
+        QTRY_COMPARE(field->property("selectedText").toString(), QStringLiteral("wrold"));
+
+        chainedClicksExpire();
+        QTest::mouseDClick(window, Qt::LeftButton, Qt::NoModifier, fieldPoint(field, 13));
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, fieldPoint(field, 13));
+        QTRY_COMPARE(field->property("selectedText").toString(), QStringLiteral("Hello wrold Teh"));
+
+        chainedClicksExpire();
+        auto *menu = field->findChild<QObject *>(QStringLiteral("lineTextMenu"));
+        QVERIFY(menu);
+        QTest::mouseClick(window, Qt::RightButton, Qt::NoModifier, fieldPoint(field, 8));
+        QTRY_VERIFY(menu->property("visible").toBool());
+        QCOMPARE(field->property("selectedText").toString(), QStringLiteral("Hello wrold Teh"));
+        QVERIFY(QMetaObject::invokeMethod(menu, "close"));
+        QTRY_VERIFY(!menu->property("visible").toBool());
         application->editor().discard();
     }
 
