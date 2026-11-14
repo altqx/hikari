@@ -7,6 +7,8 @@
 #include "fake_network.h"
 #include "settings_store.h"
 
+#include "qtest_parts.h"
+
 #include <QDir>
 #include <QFile>
 #include <QQmlApplicationEngine>
@@ -679,5 +681,5 @@ private slots:
     }
 };
 
-QTEST_MAIN(ForwardedLaunchesTests)
+HIKARI_QTEST_MAIN_IN_PARTS(ForwardedLaunchesTests)
 #include "forwarded_launches_tests.moc"

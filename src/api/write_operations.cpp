@@ -409,6 +409,37 @@ Result selectionSet(const Context &context, const Json &params)
     return out;
 }
 
+Result groupBegin(const Context &context, const Json &params)
+{
+    if (!context.caller.id.starts_with("plugin:"))
+        return fail(errors::kNotGranted, "Only plugins group their steps.", Json::object());
+    const auto document = context.host.documents->workspace().editingTarget();
+    EditSession *session = document ? context.host.documents->session(*document) : nullptr;
+    if (!session)
+        return fail(errors::kRefused, "Open a document to group the steps on.", Json::object({{"reason", Json("no_document")}}));
+    const std::string &name = params.find("name")->asString();
+    switch (context.groups->begin(context.caller.id, *document,
+                                  context.caller.label.empty() ? name : context.caller.label + ": " + name,
+                                  session->contentId())) {
+    case UndoGroups::Begin::Opened:
+        return Json::object({{"document", Json(document->value)}});
+    case UndoGroups::Begin::AlreadyOpen:
+        return fail(errors::kInvalidParams, "A group is already open; end it first.", Json::object());
+    case UndoGroups::Begin::OtherCaller:
+        return fail(errors::kBusy, "Another plugin is grouping its steps on this document; try again when it ends.",
+                    Json::object());
+    }
+    return Json::object();
+}
+
+Result groupEnd(const Context &context, const Json &)
+{
+    const auto steps = context.groups->end(context.caller.id, *context.host.documents);
+    if (!steps)
+        return fail(errors::kInvalidParams, "No group is open.", Json::object());
+    return Json::object({{"steps", Json(std::int64_t(*steps))}});
+}
+
 void write(Registry &registry, std::string name, std::string summary, std::string_view params, std::string_view result,
            SyncHandler handler)
 {
@@ -492,6 +523,22 @@ void addWriteOperations(Registry &registry)
               "selected": {"type": "array", "items": {"$ref": "#/$defs/LineId"}}},
               "required": ["document", "revision", "active", "selected"], "additionalProperties": false})",
           selectionSet);
+    write(registry, "document.group_begin",
+          "Groups the steps the caller commits on the editing target from now on, by any write, into one undo step "
+          "named after the caller and `name`. The group ends at document.group_end, when the plugin's command or event "
+          "handler returns, when the plugin stops, or at the first step someone else makes. Plugins only.",
+          R"({"type": "object", "properties": {
+              "name": {"type": "string", "minLength": 1, "maxLength": 200,
+                  "description": "A few words naming the grouped step, as the user reads it in History after the caller's name."}},
+              "required": ["name"], "additionalProperties": false})",
+          R"({"type": "object", "properties": {"document": {"$ref": "#/$defs/DocumentId"}},
+              "required": ["document"], "additionalProperties": false})",
+          groupBegin);
+    write(registry, "document.group_end", "Ends the caller's group: its steps become one undo step.", "{\"type\": \"object\", \"additionalProperties\": false}",
+          R"({"type": "object", "properties": {"steps": {"type": "integer", "minimum": 0,
+              "description": "How many steps became one; 0 when the group made none. A group someone else's step ended earlier is no longer open."}},
+              "required": ["steps"], "additionalProperties": false})",
+          groupEnd);
 }
 
 }

@@ -180,6 +180,9 @@ public:
     // Jumps to a step as a run of Undo or Redo would (the selection recorded
     // with it comes back); a pending draft is committed first. Redo steps stay.
     bool goTo(std::size_t step);
+    // Makes the steps after `base` up to `last` one step named `name`; the steps after `last` stay.
+    // False when either left history, `last` doesn't come after `base`, or the cursor is between them.
+    bool foldSteps(ContentId base, ContentId last, std::string name);
 
     // Save: commits the draft, then gives the exact snapshot to write and the
     // identity that becomes saved once the write is reported as Written.
