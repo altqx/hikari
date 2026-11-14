@@ -305,7 +305,7 @@ From the facts above:
    - The validator refuses more than one main window and floating parents other than `Classic` (`workspace_layout.cpp:883-893`, `:955-962`), which rules out nested `DockingArea`s as they stand.
    - A new panel id raises `kPanelRegistry`, and older builds then refuse the layout (`:869-870`).
    - The Session `Layout:` line, the `[Hikari]` section and `layouts.json` all store the same envelope ([docs/docking.md:18](../docking.md)). Side bar state kept outside the KDDW payload would need a field in the envelope, or a separate setting.
-   - The owner's rule that API and protocol versions stay at 1 until the first release (memory note "Versions stay at 1") covers `kApiVersion` and the plugin, Lua and media protocols. `kSchema` (`workspace_layout.h:67`) and `kPanelRegistry` are separate numbers.
+   - The owner's rule that API and protocol versions stay at 1 until the first release covers `kApiVersion` and the plugin, Lua and media protocols. `kSchema` (`workspace_layout.h:67`) and `kPanelRegistry` are separate numbers.
 5. **Existing presets.**
    - Editing, Timing, Translation, Typesetting, Karaoke and the node effects layout are built by hand around the Grid, Video and Line editor (`Main.qml:273-357`).
    - The DK2 rule places Shift times, Find, Automation and QC notes in a column **right of the Grid**, made on demand (§2.3). That column is already close to a right side bar, but it has no fixed slot, and Reset layout closes it.
