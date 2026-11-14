@@ -1,4 +1,5 @@
 #include "hikari/backends/sandbox.h"
+#include "hikari/backends/user_alone.h"
 
 #include <QCoreApplication>
 #include <QDir>
@@ -185,4 +186,24 @@ TEST_F(Sandbox, KillTreeEndsTheChildrenToo)
 }
 #endif
 
+}
+
+TEST(UserAlone, AFolderGivenToTheUserAloneKeepsEveryoneElseOut)
+{
+    QTemporaryDir root;
+    ASSERT_TRUE(root.isValid());
+    const QString folder = root.filePath(QStringLiteral("secret"));
+    ASSERT_TRUE(QDir().mkdir(folder, QFileDevice::ReadOwner | QFileDevice::WriteOwner | QFileDevice::ExeOwner |
+                                         QFileDevice::ReadGroup | QFileDevice::ExeGroup | QFileDevice::ReadOther |
+                                         QFileDevice::ExeOther));
+    EXPECT_FALSE(hikari::backends::isForUserAlone(folder));
+    ASSERT_TRUE(hikari::backends::keepForUserAlone(folder));
+    EXPECT_TRUE(hikari::backends::isForUserAlone(folder));
+    EXPECT_FALSE(hikari::backends::isForUserAlone(root.filePath(QStringLiteral("missing"))));
+#ifdef Q_OS_WIN
+    QFile file(folder + QStringLiteral("/token"));
+    ASSERT_TRUE(file.open(QIODevice::WriteOnly));
+    file.close();
+    EXPECT_TRUE(hikari::backends::isForUserAlone(file.fileName()));
+#endif
 }

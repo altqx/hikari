@@ -1,4 +1,5 @@
 #include "hikari/backends/ai_antigravity.h"
+#include "hikari/backends/user_alone.h"
 
 #include <QCoreApplication>
 #include <QDir>
@@ -16,6 +17,7 @@
 #include <string>
 
 using namespace hikari::backends::ai;
+using hikari::backends::SecretWrite;
 namespace app = hikari::application::ai;
 
 namespace {
@@ -65,12 +67,6 @@ void writeFile(const QString &path, const QByteArray &content)
     QFile file(path);
     ASSERT_TRUE(file.open(QIODevice::WriteOnly));
     file.write(content);
-}
-
-QFileDevice::Permissions othersAndGroup(const QString &path)
-{
-    return QFileInfo(path).permissions() & (QFileDevice::ReadGroup | QFileDevice::WriteGroup | QFileDevice::ExeGroup |
-                                            QFileDevice::ReadOther | QFileDevice::WriteOther | QFileDevice::ExeOther);
 }
 
 bool inside(const QString &path, const QString &dir)
@@ -126,7 +122,7 @@ TEST(AntigravitySpec, EveryPathAgyGetsStaysInsideItsProfile)
     EXPECT_FALSE(spec.before);
     for (const QString &folder : {profile, profile + QStringLiteral("/gemini"), profile + QStringLiteral("/gemini/app-data"),
                                   profile + QStringLiteral("/home")})
-        EXPECT_EQ(othersAndGroup(folder), QFileDevice::Permissions()) << folder.toStdString();
+        EXPECT_TRUE(hikari::backends::isForUserAlone(folder)) << folder.toStdString();
 }
 
 #ifndef Q_OS_WIN
@@ -140,7 +136,7 @@ TEST_F(TokenFileLeaseTest, TheLentFileAndItsFolderAreTheUsersAloneFromTheirFirst
     EXPECT_EQ(contents(file), "first");
     EXPECT_EQ(QFileInfo(file).permissions() & ~(QFile::ReadOwner | QFile::WriteOwner | QFile::ReadUser | QFile::WriteUser),
               QFileDevice::Permissions());
-    EXPECT_EQ(othersAndGroup(QFileInfo(file).absolutePath()), QFileDevice::Permissions());
+    EXPECT_TRUE(hikari::backends::isForUserAlone(QFileInfo(file).absolutePath()));
     EXPECT_FALSE(QFileInfo::exists(file + QStringLiteral(".new")));
 }
 #endif
@@ -183,6 +179,19 @@ TEST_F(TokenFileLeaseTest, ASignOutWhileAgyRunsStaysSignedOutAndACrashesFileGoes
     writeFile(file, "left by a crash");
     TokenFileLease next{keys, "agy", file, QStringLiteral("sign in first")};
     EXPECT_FALSE(QFileInfo::exists(file));
+}
+
+TEST_F(TokenFileLeaseTest, AFolderThatCantBeMadePrivateSaysSoAndAnyOtherFailureKeepsItsMessage)
+{
+    EXPECT_EQ(agentSignInNotSaved(SecretWrite::NotPrivate),
+              QStringLiteral("The agent's sign-in wasn't saved because its folder can't be made private to you, for "
+                             "example on a FAT32 or exFAT drive."));
+    EXPECT_EQ(agentSignInNotSaved(SecretWrite::Failed),
+              QStringLiteral("The sign-in couldn't be written for the agent"));
+
+    ASSERT_TRUE(QDir().mkpath(file));
+    keys.keys["agy"] = stored("first");
+    EXPECT_EQ(acquire(), agentSignInNotSaved(SecretWrite::Failed));
 }
 
 TEST_F(TokenFileLeaseTest, ALockedKeychainFailsTheSignInAndTheFileStillGoes)

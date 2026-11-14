@@ -2,6 +2,7 @@
 
 #include "hikari/application/ai_providers.h"
 #include "hikari/backends/ai_agent_broker.h"
+#include "hikari/backends/user_alone.h"
 
 #include <QByteArray>
 #include <QObject>
@@ -23,6 +24,9 @@ inline constexpr const char *kAntigravitySecret = "antigravity-google";
 inline constexpr const char *kAntigravityTokenFile = "gemini/app-data/antigravity-oauth-token";
 /// The first agy with `agy acp`.
 inline constexpr const char *kAntigravityMinimumVersion = "1.5.0";
+
+/// Why the agent can't start when its sign-in wasn't saved for the user alone.
+QString agentSignInNotSaved(SecretWrite result);
 
 /// Lends a sign-in kept in the keychain as `secret` to the processes that read it from `file`. The first `acquire`
 /// writes the file for the user only; after the last `release` a changed file goes back to the keychain, and the
