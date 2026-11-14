@@ -46,6 +46,19 @@ int fitFloatingLayouts();
 
 void refreshDockConstraints();
 
+// KDDW re-docks a panel at its live minimum, and a floating panel's can be larger than its docked one.
+// While alive, floating panels have the minimum they last had docked.
+class DockedMinimums {
+public:
+    DockedMinimums();
+    ~DockedMinimums();
+    DockedMinimums(const DockedMinimums &) = delete;
+    DockedMinimums &operator=(const DockedMinimums &) = delete;
+
+private:
+    QHash<QString, QSize> m_floating;
+};
+
 // While locked KDDW starts no panel drag and the header's float gestures do nothing.
 void setLayoutLocked(bool locked);
 bool layoutLocked();

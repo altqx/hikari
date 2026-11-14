@@ -8302,6 +8302,44 @@ private slots:
         QTRY_VERIFY2(window->minimumSize() == expected(), qPrintable(describe()));
     }
 
+    void resetLayoutRedocksAPanelAtItsFirstPlace()
+    {
+        QVERIFY(application->openFile(episode));
+        auto *docking = engine->singletonInstance<ui::Docking *>("Hikari.Ui", "Docking");
+        QVERIFY(docking);
+        const auto places = [&] {
+            QMap<QString, QRect> out;
+            for (QObject *dock : window->findChildren<QObject *>())
+                if (const QString name = dock->property("uniqueName").toString(); dock->objectName().endsWith(QLatin1String("Dock"))
+                    && !name.isEmpty() && dock->property("isOpen").toBool() && !dock->property("isFloating").toBool())
+                    out.insert(dock->objectName(), docking->placeInLayout(name));
+            return out;
+        };
+        const auto describe = [](const QMap<QString, QRect> &panels) {
+            QString out;
+            for (auto it = panels.begin(); it != panels.end(); ++it)
+                out += QStringLiteral(" %1 %2x%3+%4+%5;").arg(it.key()).arg(it->width()).arg(it->height()).arg(it->x()).arg(it->y());
+            return out;
+        };
+        const auto firstDock = places();
+        QQuickItem *editor = item("editorPanel");
+        const QString editorName = editor->property("dockName").toString();
+        const QSize dockedMinimum = docking->minimumSize(editorName);
+        QVERIFY(item<QObject>("editorDock")->setProperty("isFloating", true));
+        QTRY_VERIFY(editor->window() != window);
+        QWindow *floating = editor->window();
+        floating->resize(floating->minimumWidth(), floating->height());
+        QTRY_VERIFY2(docking->minimumSize(editorName).height() > dockedMinimum.height(),
+                     qPrintable(QStringLiteral("floating %1x%2, minimum %3x%4, docked minimum %5x%6")
+                                    .arg(floating->width()).arg(floating->height())
+                                    .arg(docking->minimumSize(editorName).width()).arg(docking->minimumSize(editorName).height())
+                                    .arg(dockedMinimum.width()).arg(dockedMinimum.height())));
+        application->workspaceLayout().resetLayout();
+        QTRY_VERIFY(editor->window() == window);
+        QTRY_VERIFY2(places() == firstDock,
+                     qPrintable(QStringLiteral("first dock:%1\nafter reset:%2").arg(describe(firstDock), describe(places()))));
+    }
+
     void floatingPanelsOffEveryScreenComeBack()
     {
         if (QGuiApplication::platformName().startsWith(QLatin1String("wayland")))

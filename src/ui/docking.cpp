@@ -1088,11 +1088,11 @@ void refreshDockConstraints()
     }
 }
 
-bool Docking::setMinimumSize(const QString &uniqueName, QSize size)
+namespace {
+QHash<QString, QSize> g_dockedMinimums;
+
+void applyMinimum(KDDockWidgets::Core::DockWidget *dock, QSize size)
 {
-    KDDockWidgets::Core::DockWidget *dock = dockByName(uniqueName);
-    if (!dock)
-        return false;
     // The QtQuick frontend propagates constraints by hand: the group must recompute its own.
     dock->view()->setMinimumSize(size);
     for (KDDockWidgets::Core::Group *group : KDDockWidgets::DockRegistry::self()->groups()) {
@@ -1101,6 +1101,37 @@ bool Docking::setMinimumSize(const QString &uniqueName, QSize size)
                 view->updateConstraints();
         }
     }
+}
+}
+
+DockedMinimums::DockedMinimums()
+{
+    if (!KDDockWidgets::Core::Platform::instance())
+        return;
+    for (KDDockWidgets::Core::DockWidget *dock : KDDockWidgets::DockRegistry::self()->dockwidgets()) {
+        const auto docked = g_dockedMinimums.constFind(dock->uniqueName());
+        if (!dock->isFloating() || docked == g_dockedMinimums.constEnd())
+            continue;
+        m_floating.insert(dock->uniqueName(), dock->view()->minSize());
+        applyMinimum(dock, *docked);
+    }
+}
+
+DockedMinimums::~DockedMinimums()
+{
+    for (auto it = m_floating.constBegin(); it != m_floating.constEnd(); ++it)
+        if (KDDockWidgets::Core::DockWidget *dock = dockByName(it.key()); dock && dock->isFloating())
+            applyMinimum(dock, it.value());
+}
+
+bool Docking::setMinimumSize(const QString &uniqueName, QSize size)
+{
+    KDDockWidgets::Core::DockWidget *dock = dockByName(uniqueName);
+    if (!dock)
+        return false;
+    if (!dock->isFloating())
+        g_dockedMinimums.insert(uniqueName, size);
+    applyMinimum(dock, size);
     return true;
 }
 
