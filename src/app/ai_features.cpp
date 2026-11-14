@@ -125,7 +125,7 @@ AiFeatures::Ports AiFeatures::defaultPorts(const QString &userFolder, api::Api *
         options.arguments = {install.bundle, QStringLiteral("--vendor"), QDir::toNativeSeparators(vendor)};
         options.workingDirectory = ai + QStringLiteral("/work");
         options.sandbox = backends::sandbox::Profile{
-            .name = QStringLiteral("HikariSub.AI.Sidecar"),
+            .name = backends::sandbox::profileName(backends::sandbox::OwnProfile::Sidecar),
             .readExecute = {QFileInfo(install.runtime).absolutePath(), QFileInfo(install.bundle).absolutePath()},
             .readWrite = {options.workingDirectory, vendor},
         };
@@ -160,7 +160,7 @@ AiFeatures::Ports AiFeatures::defaultPorts(const QString &userFolder, api::Api *
     };
     ports.agentOnPath = [](const QString &agent) { return !backends::ai::findAgentCli(agent).isEmpty(); };
     ports.filesConfined = [] { return backends::sandbox::systemCoverage(backends::sandbox::Network::Any).files; };
-    ports.channelProblem = [] { return backends::ai::channelProblem(QStringLiteral("HikariSub.AI.Codex")); };
+    ports.channelProblem = [] { return backends::ai::channelProblem(backends::sandbox::profileName(backends::sandbox::OwnProfile::Codex)); };
     ports.acpCli = [](const QString &command) {
         if (QFileInfo(command).isAbsolute())
             return QFileInfo(command).isExecutable() ? command : QString();

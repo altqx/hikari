@@ -45,14 +45,16 @@ DWORD fileAccess(DWORD access)
     return access;
 }
 
-/// Whether `acl` already gives an AppContainer `access`, through its own SID or ALL APPLICATION PACKAGES.
-bool covered(PACL acl, PSID sid, DWORD access)
+/// Whether `acl` already gives an AppContainer `access` through its own SID, or through ALL APPLICATION PACKAGES when
+/// `anyPackageCounts`.
+bool covered(PACL acl, PSID sid, DWORD access, bool anyPackageCounts)
 {
     if (!acl)
         return true;
     BYTE anyPackage[SECURITY_MAX_SID_SIZE]{};
     DWORD size = sizeof anyPackage;
-    const bool haveAnyPackage = CreateWellKnownSid(WinBuiltinAnyPackageSid, nullptr, anyPackage, &size);
+    const bool haveAnyPackage =
+        anyPackageCounts && CreateWellKnownSid(WinBuiltinAnyPackageSid, nullptr, anyPackage, &size);
     DWORD granted = 0, denied = 0;
     for (DWORD i = 0; i < acl->AceCount; ++i) {
         void *ace = nullptr;
@@ -86,7 +88,8 @@ DWORD grant(PSID sid, const Grant &g)
         return read;
     const DWORD mapped = fileAccess(g.access);
     DWORD result = ERROR_SUCCESS;
-    if (!covered(current, sid, mapped)) {
+    const bool writes = g.access & (GENERIC_ALL | GENERIC_WRITE);
+    if (!covered(current, sid, mapped, !writes)) {
         EXPLICIT_ACCESSW entry{};
         entry.grfAccessPermissions = mapped;
         entry.grfAccessMode = GRANT_ACCESS;

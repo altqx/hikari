@@ -8,8 +8,9 @@ namespace hikari::backends {
 /// on a drive without permissions; `Failed` for anything else.
 enum class SecretWrite { Saved, NotPrivate, Failed };
 
-/// True when only the current user, and on Windows the app's own AppContainers, may open `path`: on Unix no group or
-/// other permission bit is set; on Windows no allow entry of its ACL names anyone else.
+/// True when only the current user, and on Windows the AppContainers of sandbox::ownProfileNames(), may open `path`:
+/// on Unix no group or other permission bit is set; on Windows no allow entry of its ACL names anyone else, and ALL
+/// APPLICATION PACKAGES or another app's container counts as someone else.
 bool isForUserAlone(const QString &path);
 
 /// Gives `path`, a file or folder, to the current user alone: mode 0600 or 0700 on Unix; on Windows a protected ACL

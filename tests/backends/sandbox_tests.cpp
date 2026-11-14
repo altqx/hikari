@@ -124,6 +124,35 @@ bool setProtectedDacl(const QString &path, const wchar_t *sddl)
     LocalFree(descriptor);
     return ok;
 }
+
+bool allow(const QString &path, const wchar_t *sidText, DWORD access)
+{
+    PSID sid = nullptr;
+    if (!ConvertStringSidToSidW(sidText, &sid))
+        return false;
+    std::wstring native = QDir::toNativeSeparators(path).toStdWString();
+    PACL current = nullptr;
+    PSECURITY_DESCRIPTOR descriptor = nullptr;
+    bool ok = GetNamedSecurityInfoW(native.data(), SE_FILE_OBJECT, DACL_SECURITY_INFORMATION, nullptr, nullptr, &current,
+                                    nullptr, &descriptor) == ERROR_SUCCESS;
+    PACL updated = nullptr;
+    if (ok) {
+        EXPLICIT_ACCESSW entry{};
+        entry.grfAccessPermissions = access;
+        entry.grfAccessMode = GRANT_ACCESS;
+        entry.grfInheritance = SUB_CONTAINERS_AND_OBJECTS_INHERIT;
+        entry.Trustee.TrusteeForm = TRUSTEE_IS_SID;
+        entry.Trustee.TrusteeType = TRUSTEE_IS_WELL_KNOWN_GROUP;
+        entry.Trustee.ptstrName = static_cast<LPWSTR>(sid);
+        ok = SetEntriesInAclW(1, &entry, current, &updated) == ERROR_SUCCESS &&
+             SetNamedSecurityInfoW(native.data(), SE_FILE_OBJECT, DACL_SECURITY_INFORMATION, nullptr, nullptr, updated,
+                                   nullptr) == ERROR_SUCCESS;
+    }
+    LocalFree(updated);
+    LocalFree(descriptor);
+    LocalFree(sid);
+    return ok;
+}
 #endif
 
 TEST_F(Sandbox, TheSystemsCoverageIsWhatALauncherGets)
@@ -270,6 +299,18 @@ TEST_F(Sandbox, AFolderEveryAppContainerCanAlreadyReadGetsNoAceOfItsOwn)
     EXPECT_FALSE(aceFor(path("packages"), launcher.containerSid()));
 }
 
+TEST_F(Sandbox, AFolderEveryAppContainerCanWriteStillGetsTheContainersOwnAce)
+{
+    ASSERT_TRUE(QDir(m_root.path()).mkpath(QStringLiteral("shared")));
+    ASSERT_TRUE(setProtectedDacl(path("shared"), L"D:P(A;OICI;FA;;;OW)(A;OICI;FA;;;SY)(A;OICI;FA;;;AC)"));
+    Profile p = profile();
+    p.readWrite << path("shared");
+    Launcher launcher(p);
+    ASSERT_FALSE(launcher.containerSid().isEmpty()) << launcher.coverage().missing.toStdString();
+    EXPECT_TRUE(launcher.coverage().missing.isEmpty()) << launcher.coverage().missing.toStdString();
+    EXPECT_TRUE(aceFor(path("shared"), launcher.containerSid()));
+}
+
 TEST_F(Sandbox, AFolderTheContainerCantReachGetsItsAce)
 {
     Launcher launcher(profile());
@@ -315,4 +356,53 @@ TEST(UserAlone, AFolderGivenToTheUserAloneKeepsEveryoneElseOut)
     file.close();
     EXPECT_TRUE(hikari::backends::isForUserAlone(file.fileName()));
 #endif
+}
+
+#ifdef _WIN32
+TEST(UserAlone, AFolderEveryAppContainerCanOpenIsNotTheUsersAlone)
+{
+    for (const wchar_t *packages : {L"S-1-15-2-1", L"S-1-15-2-2"}) {
+        QTemporaryDir root;
+        ASSERT_TRUE(root.isValid());
+        const QString folder = root.filePath(QStringLiteral("secret"));
+        ASSERT_TRUE(QDir().mkdir(folder));
+        ASSERT_TRUE(hikari::backends::keepForUserAlone(folder));
+        ASSERT_TRUE(allow(folder, packages, FILE_GENERIC_READ | FILE_GENERIC_EXECUTE));
+        EXPECT_FALSE(hikari::backends::isForUserAlone(folder));
+        ASSERT_TRUE(hikari::backends::keepForUserAlone(folder));
+        EXPECT_TRUE(hikari::backends::isForUserAlone(folder));
+    }
+}
+
+TEST(UserAlone, OnlyHikariSubsOwnContainersKeepAFolderTheUsersAlone)
+{
+    QTemporaryDir root;
+    ASSERT_TRUE(root.isValid());
+    const QString own = root.filePath(QStringLiteral("own"));
+    const QString other = root.filePath(QStringLiteral("other"));
+    for (const QString &folder : {own, other}) {
+        ASSERT_TRUE(QDir().mkdir(folder));
+        ASSERT_TRUE(hikari::backends::keepForUserAlone(folder));
+    }
+    Launcher codex(Profile{.name = QStringLiteral("HikariSub.AI.Codex"), .readWrite = {own}});
+    Launcher stranger(Profile{.name = QStringLiteral("HikariSub.Test.Stranger"), .readWrite = {other}});
+    ASSERT_TRUE(aceFor(own, codex.containerSid())) << codex.coverage().missing.toStdString();
+    ASSERT_TRUE(aceFor(other, stranger.containerSid())) << stranger.coverage().missing.toStdString();
+    EXPECT_TRUE(hikari::backends::isForUserAlone(own));
+    EXPECT_FALSE(hikari::backends::isForUserAlone(other));
+}
+#endif
+
+TEST(OwnProfiles, EveryFixedProfileHasItsOwnValidName)
+{
+    const QStringList names = ownProfileNames();
+    ASSERT_EQ(names.size(), int(OwnProfile::Count));
+    for (const QString &name : names) {
+        EXPECT_TRUE(name.startsWith(QStringLiteral("HikariSub."))) << name.toStdString();
+        EXPECT_LE(name.size(), 64) << name.toStdString();
+        EXPECT_TRUE(std::ranges::all_of(name, [](QChar c) {
+            return c.isLetterOrNumber() || c == QLatin1Char('.') || c == QLatin1Char('-') || c == QLatin1Char('_');
+        })) << name.toStdString();
+        EXPECT_EQ(names.count(name), 1) << name.toStdString();
+    }
 }

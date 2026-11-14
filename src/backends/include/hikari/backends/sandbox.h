@@ -21,6 +21,40 @@ struct Profile {
     Network network = Network::None;
 };
 
+/// The fixed profiles HikariSub's agents, AI sidecar and Lua nodes run in; plugins' profiles aren't among them.
+enum class OwnProfile { Sidecar, Codex, Claude, Acp, OpenCode, Antigravity, LuaNodes, Count };
+
+inline QString profileName(OwnProfile profile)
+{
+    switch (profile) {
+    case OwnProfile::Sidecar:
+        return QStringLiteral("HikariSub.AI.Sidecar");
+    case OwnProfile::Codex:
+        return QStringLiteral("HikariSub.AI.Codex");
+    case OwnProfile::Claude:
+        return QStringLiteral("HikariSub.AI.Claude");
+    case OwnProfile::Acp:
+        return QStringLiteral("HikariSub.AI.Acp");
+    case OwnProfile::OpenCode:
+        return QStringLiteral("HikariSub.AI.OpenCode");
+    case OwnProfile::Antigravity:
+        return QStringLiteral("HikariSub.AI.Antigravity");
+    case OwnProfile::LuaNodes:
+        return QStringLiteral("HikariSub.Lua.Nodes");
+    case OwnProfile::Count:
+        break;
+    }
+    return {};
+}
+
+inline QStringList ownProfileNames()
+{
+    QStringList names;
+    for (int i = 0; i < int(OwnProfile::Count); ++i)
+        names << profileName(OwnProfile(i));
+    return names;
+}
+
 /// What this machine enforces of a profile.
 struct Coverage {
     bool files = false;

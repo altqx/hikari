@@ -1,14 +1,16 @@
 #include "hikari/backends/user_alone.h"
 
+#include "hikari/backends/sandbox.h"
+
 #include <QDir>
 #include <QFileInfo>
 
 #include <windows.h>
 
 #include <aclapi.h>
+#include <userenv.h>
 
 #include <algorithm>
-#include <iterator>
 #include <string>
 #include <vector>
 
@@ -40,12 +42,24 @@ std::wstring native(const QString &path)
     return QDir::toNativeSeparators(QFileInfo(path).absoluteFilePath()).toStdWString();
 }
 
-bool appContainer(PSID sid)
+bool ownContainer(PSID sid)
 {
-    const SID_IDENTIFIER_AUTHORITY appPackage = SECURITY_APP_PACKAGE_AUTHORITY;
-    const SID_IDENTIFIER_AUTHORITY *authority = GetSidIdentifierAuthority(sid);
-    return std::equal(std::begin(authority->Value), std::end(authority->Value), std::begin(appPackage.Value)) &&
-           *GetSidSubAuthorityCount(sid) > 0 && *GetSidSubAuthority(sid, 0) == SECURITY_APP_PACKAGE_BASE_RID;
+    static const std::vector<std::vector<BYTE>> own = [] {
+        std::vector<std::vector<BYTE>> sids;
+        for (const QString &name : sandbox::ownProfileNames()) {
+            PSID derived = nullptr;
+            if (SUCCEEDED(DeriveAppContainerSidFromAppContainerName(reinterpret_cast<LPCWSTR>(name.utf16()), &derived)) &&
+                derived) {
+                const auto *bytes = static_cast<const BYTE *>(derived);
+                sids.emplace_back(bytes, bytes + GetLengthSid(derived));
+                FreeSid(derived);
+            }
+        }
+        return sids;
+    }();
+    return std::ranges::any_of(own, [sid](const std::vector<BYTE> &o) {
+        return EqualSid(const_cast<BYTE *>(o.data()), sid) != FALSE;
+    });
 }
 
 bool othersAllowed(PACL acl, PSID user)
@@ -63,7 +77,7 @@ bool othersAllowed(PACL acl, PSID user)
             return true;
         const auto *allowed = static_cast<ACCESS_ALLOWED_ACE *>(ace);
         PSID sid = const_cast<DWORD *>(&allowed->SidStart);
-        if (allowed->Mask != 0 && !EqualSid(sid, user) && !appContainer(sid))
+        if (allowed->Mask != 0 && !EqualSid(sid, user) && !ownContainer(sid))
             return true;
     }
     return false;

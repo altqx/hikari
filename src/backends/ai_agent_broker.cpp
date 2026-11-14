@@ -411,7 +411,7 @@ AgentSpec claudeAgent(const QString &program, const QString &home, const QString
     const QString installed = QFileInfo(program).canonicalFilePath();
     AgentSpec spec;
     spec.program = installed;
-    spec.profile = sandbox::Profile{.name = QStringLiteral("HikariSub.AI.Claude"),
+    spec.profile = sandbox::Profile{.name = sandbox::profileName(sandbox::OwnProfile::Claude),
                                     .readExecute = {QFileInfo(installed).absolutePath()},
                                     .readWrite = {home + QStringLiteral("/.claude"), home + QStringLiteral("/.claude.json"), work},
                                     .network = sandbox::Network::Any};
@@ -436,7 +436,7 @@ std::optional<AgentSpec> codexAgent(const QString &program, const QString &codex
     spec.program = binary;
     spec.arguments = {QStringLiteral("app-server"), QStringLiteral("-c"), QStringLiteral("features.multi_agent=false"),
                       QStringLiteral("-c"), QStringLiteral("features.multi_agent_v2=false")};
-    spec.profile = sandbox::Profile{.name = QStringLiteral("HikariSub.AI.Codex"),
+    spec.profile = sandbox::Profile{.name = sandbox::profileName(sandbox::OwnProfile::Codex),
                                     .readExecute = {QFileInfo(binary).absolutePath()},
                                     .readWrite = {codexHome, work},
                                     .network = sandbox::Network::Any};
@@ -479,7 +479,7 @@ AgentSpec acpAgent(const QString &program, const QStringList &arguments, const Q
     AgentSpec spec;
     spec.program = installed;
     spec.arguments = arguments;
-    spec.profile = sandbox::Profile{.name = QStringLiteral("HikariSub.AI.Acp"),
+    spec.profile = sandbox::Profile{.name = sandbox::profileName(sandbox::OwnProfile::Acp),
                     .readExecute = {QFileInfo(installed).absolutePath(), bridgeDir,
                                     QDir::cleanPath(bridgeDir + QStringLiteral("/../lib"))},
                     .readWrite = state + QStringList{work},
@@ -501,7 +501,7 @@ AgentSpec openCodeAgent(const QString &program, const QString &home, const QStri
     for (const char *dir : {"/.config/opencode", "/.local/share/opencode", "/.cache/opencode", "/.local/state/opencode"})
         state << home + QLatin1String(dir);
     AgentSpec spec = acpAgent(program, {QStringLiteral("acp")}, state, work, bridge);
-    spec.profile->name = QStringLiteral("HikariSub.AI.OpenCode");
+    spec.profile->name = sandbox::profileName(sandbox::OwnProfile::OpenCode);
     return spec;
 }
 
