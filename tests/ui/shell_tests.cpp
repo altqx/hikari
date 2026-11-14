@@ -7948,11 +7948,8 @@ private slots:
         QTRY_VERIFY(item<QObject>("referenceDock")->property("isOpen").toBool());
         QObject *root = engine->rootObjects().first();
         auto *menu = named("panelOptionsMenu");
-        const auto readsAsShown = [&](const QString &panel, int clicks = 1) {
-            bool opened = false;
-            for (int click = 0; click < clicks && !opened; ++click)
-                opened = openPanelMenu(panel);
-            QVERIFY2(opened, qPrintable(panel));
+        const auto readsAsShown = [&](const QString &panel) {
+            QVERIFY2(openPanelMenu(panel), qPrintable(panel));
             QTRY_VERIFY2(shownMenuEntries(menu).size() > 1, qPrintable(panel));
             QTRY_COMPARE(menuToScreenReaders(menu).size(), shownMenuEntries(menu).size());
             QTRY_COMPARE(menuToScreenReaders(menu), menuOnScreen(menu));
@@ -7996,7 +7993,7 @@ private slots:
         QWindow *floating = dockHeader(QStringLiteral("Grid"))->window();
         floating->setHeight(std::max(floating->height(), 420));
         QTRY_VERIFY(floating->height() >= 420);
-        readsAsShown(QStringLiteral("Audio"), 2); // MUST KILL: first click after a panel floats is lost, #1098
+        readsAsShown(QStringLiteral("Audio"));
         QVERIFY(!QTest::currentTestFailed());
         readsAsShown(QStringLiteral("Grid"));
         QVERIFY(!QTest::currentTestFailed());
