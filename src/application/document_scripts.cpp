@@ -30,7 +30,7 @@ std::vector<std::string> scriptInfoScriptPaths(std::string_view value, std::stri
         std::string token(trimLeft(value.substr(start, end == std::string_view::npos ? end : end - start)));
         const fs::path path(token);
         if (besideSubtitle && !subtitleFolder.empty() && !token.empty() && path.is_relative())
-            token = (fs::path(subtitleFolder) / path).lexically_normal().string();
+            token = (fs::path(subtitleFolder) / path).lexically_normal().generic_string();
         tokens.push_back(std::move(token));
         if (end == std::string_view::npos)
             break;
@@ -54,7 +54,7 @@ std::string scriptInfoPathFor(const std::string &script, const std::string &subt
     namespace fs = std::filesystem;
     if (projectRoot.empty() || subtitleFolder.empty())
         return script;
-    const std::string automation = (fs::path(projectRoot) / ".hikari" / "automation").string();
+    const std::string automation = (fs::path(projectRoot) / ".hikari" / "automation").generic_string();
     if (!scriptInFolder(script, automation, windows))
         return script;
     const fs::path relative = fs::path(script).lexically_relative(subtitleFolder);
