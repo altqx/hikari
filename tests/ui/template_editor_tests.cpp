@@ -16,6 +16,8 @@
 #include "karaoke_marks.h"
 #include "hikari/core/editor_syntax.h"
 
+#include "qtest_parts.h"
+
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
@@ -3526,5 +3528,5 @@ private slots:
     }
 };
 
-QTEST_MAIN(TemplateEditorTests)
+HIKARI_QTEST_MAIN_IN_PARTS(TemplateEditorTests)
 #include "template_editor_tests.moc"

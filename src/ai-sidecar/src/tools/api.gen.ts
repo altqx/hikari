@@ -171,14 +171,22 @@ export type Project = null | {
     trusted: boolean;
 };
 
-export type DialogAnswer = {
-    /** The dialog's key: its script and its controls' kinds and names, as Automation remembers answers by. */
-    key: string;
-    /** The answered values by control name. */
-    values: Record<string, unknown>;
-    /** The pressed button's label; empty when the dialog was closed. */
-    button?: string;
+export type DialogControl = {
+    name: string;
+    /** The control's Lua class, lowercased. */
+    kind: "edit" | "textbox" | "intedit" | "floatedit" | "dropdown" | "checkbox" | "color" | "coloralpha" | "alpha";
+    /** A checkbox's text. */
+    label?: string;
+    hint?: string;
+    /** A dropdown's choices. */
+    items?: string[];
+    min?: number;
+    max?: number;
+    /** A floatedit's step; 0 for none. */
+    step?: number;
 };
+
+export type DialogAnswer = unknown | unknown;
 
 /** A theme role, so the mark follows the theme and high contrast. */
 export type MarkColour = "accent" | "warning" | "danger" | "success" | "muted";
@@ -499,6 +507,24 @@ export type SelectionSetResult = {
     selected: LineId[];
 };
 
+/** Groups the steps the caller commits on the editing target from now on, by any write, into one undo step named after the caller and `name`. The group ends at document.group_end, when the plugin's command or event handler returns, when the plugin stops, or at the first step someone else makes. Plugins only. */
+export type DocumentGroupBeginParams = {
+    /** A few words naming the grouped step, as the user reads it in History after the caller's name. */
+    name: string;
+};
+
+export type DocumentGroupBeginResult = {
+    document: DocumentId;
+};
+
+/** Ends the caller's group: its steps become one undo step. */
+export type DocumentGroupEndParams = Record<string, never>;
+
+export type DocumentGroupEndResult = {
+    /** How many steps became one; 0 when the group made none. A group someone else's step ended earlier is no longer open. */
+    steps: number;
+};
+
 /** Whether a video is open, its size and aspect ratio, the frame shown and the keyframes. */
 export type VideoInfoParams = Record<string, never>;
 
@@ -809,6 +835,8 @@ export type AutomationRunMacroResult = {
     outcome: "applied" | "refused" | "failed" | "cancelled" | "declined" | "stopped" | "lost";
     message: string;
     log: string;
+    /** The answers its dialogs got, as macro.ran gives them; only when the caller sees the Document it ran on. */
+    dialogs?: DialogAnswer[];
 };
 
 /** Saves a Lua Automation script to the AI scripts folder and runs one of its macros on the active tab's selection, once the user approves the script. The run is one undo step. */
@@ -1701,6 +1729,15 @@ export type DocumentChangedEvent = {
     step: string;
 };
 
+/** A Document was written to a file: Save, Save as, Save all or Save translation. Nothing comes for a save that was cancelled or failed. */
+export type DocumentSavedEvent = {
+    document: DocumentId;
+    /** The file it was written to, as documents.list gives paths. */
+    path: string;
+    /** The revision that was written. */
+    revision: Revision;
+};
+
 /** The selected or the active Line changed. */
 export type SelectionChangedEvent = {
     document: DocumentId;
@@ -1724,7 +1761,7 @@ export type PanelChangedEvent = {
     focused: boolean;
 };
 
-/** A command ran, from a menu, a key, the API or anywhere else. */
+/** A command was triggered, from a menu, a key, the API or anywhere else. It reports the trigger, not the outcome: a Save that opens a dialog or a question comes before anything is written, and even when it is then cancelled; document.saved reports the write. */
 export type CommandRanEvent = {
     command: string;
     /** False when it was refused or failed. */
@@ -1764,6 +1801,8 @@ export interface Operations {
     "settings.set": { access: "write"; params: SettingsSetParams; result: SettingsSetResult };
     "document.apply": { access: "write"; params: DocumentApplyParams; result: DocumentApplyResult };
     "selection.set": { access: "write"; params: SelectionSetParams; result: SelectionSetResult };
+    "document.group_begin": { access: "write"; params: DocumentGroupBeginParams; result: DocumentGroupBeginResult };
+    "document.group_end": { access: "write"; params: DocumentGroupEndParams; result: DocumentGroupEndResult };
     "video.info": { access: "read"; params: VideoInfoParams; result: VideoInfoResult };
     "video.frame_at_time": { access: "read"; params: VideoFrameAtTimeParams; result: VideoFrameAtTimeResult };
     "video.time_of_frame": { access: "read"; params: VideoTimeOfFrameParams; result: VideoTimeOfFrameResult };
@@ -1830,6 +1869,7 @@ export type OperationName = keyof Operations;
 export interface Events {
     "project.changed": ProjectChangedEvent;
     "document.changed": DocumentChangedEvent;
+    "document.saved": DocumentSavedEvent;
     "selection.changed": SelectionChangedEvent;
     "documents.changed": DocumentsChangedEvent;
     "panel.changed": PanelChangedEvent;

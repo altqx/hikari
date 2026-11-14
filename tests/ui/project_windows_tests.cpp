@@ -22,6 +22,8 @@
 #include "visual_tools_controller.h"
 #include "workspace_layout.h"
 
+#include "qtest_parts.h"
+
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
@@ -267,7 +269,7 @@ private slots:
     {
         userFolder = home.filePath(QStringLiteral("user"));
         start();
-        QCOMPARE(application->userFolder(), userFolder);
+        QCOMPARE(application->userFolder(), QDir::toNativeSeparators(userFolder));
         const QString mine = userFolder + QStringLiteral("/ai/skills");
         writeAll(mine + QStringLiteral("/signs/SKILL.md"), skillMd("Mine."));
         writeAll(mine + QStringLiteral("/typesetting/SKILL.md"), skillMd("Our way."));
@@ -1392,5 +1394,5 @@ private slots:
     }
 };
 
-QTEST_MAIN(ProjectWindowsTests)
+HIKARI_QTEST_MAIN_IN_PARTS(ProjectWindowsTests)
 #include "project_windows_tests.moc"

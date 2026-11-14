@@ -30,7 +30,7 @@ std::expected<std::optional<Folder>, Error> folderOf(const Context &context, con
 
 std::string fileOf(const std::filesystem::path &folder, std::string_view name)
 {
-    const std::u8string path = (folder / std::u8string_view(reinterpret_cast<const char8_t *>(name.data()), name.size())).u8string();
+    const std::u8string path = (folder / std::u8string_view(reinterpret_cast<const char8_t *>(name.data()), name.size())).generic_u8string();
     return {reinterpret_cast<const char *>(path.data()), path.size()};
 }
 

@@ -1185,12 +1185,12 @@ double area(const shape::Contours &contours)
     return std::abs(a) / 2;
 }
 
-const ToolOption *option(const std::vector<ToolOption> &options, const std::string &name)
+std::optional<ToolOption> option(const std::vector<ToolOption> &options, const std::string &name)
 {
     for (const auto &o : options)
         if (o.name == name)
-            return &o;
-    return nullptr;
+            return o;
+    return std::nullopt;
 }
 
 }
@@ -1203,10 +1203,10 @@ TEST(DrawingPathfinder, CombinesWithTheClipInOneStepAndDropsIt)
     host.tool = &tool;
     tool.reset(host);
     const auto id = ids(*host.s)[0];
-    const auto *pathfinder = option(tool.options(host), "pathfinder");
+    const auto pathfinder = option(tool.options(host), "pathfinder");
     ASSERT_TRUE(pathfinder);
     EXPECT_TRUE(pathfinder->enabled);
-    EXPECT_EQ(pathfinder->choices.size(), 4u);
+    ASSERT_EQ(pathfinder->choices.size(), 4u);
     EXPECT_EQ(pathfinder->choiceRoles[3], "shape-exclude");
 
     tool.previewOption("pathfinder", 0, host);

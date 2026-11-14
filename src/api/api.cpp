@@ -135,7 +135,8 @@ void Api::call(const Caller &caller, std::string_view name, const Json &params, 
     if (caller.reviewed && !caller.project.empty())
         folders.push_back(projectFolder(caller.project, m_host.review != nullptr));
     const Context context{m_host, caller, std::move(files), std::move(folders),
-                          [this, id = caller.id](const std::string &path, bool writable) { return grantFile(id, path, writable); }};
+                          [this, id = caller.id](const std::string &path, bool writable) { return grantFile(id, path, writable); },
+                          &m_groups};
     if (operation->access == Access::Read) {
         operation->handler(context, given, std::move(reply));
         return;
@@ -145,10 +146,20 @@ void Api::call(const Caller &caller, std::string_view name, const Json &params, 
         return;
     }
     m_writing = true;
-    operation->handler(context, given, [this, reply = std::move(reply)](Result result) {
+    m_writingCaller = caller.id;
+    operation->handler(context, given, [this, id = caller.id, reply = std::move(reply)](Result result) {
         m_writing = false;
+        m_writingCaller.clear();
+        if (m_host.documents)
+            m_groups.wrote(id, *m_host.documents);
         reply(std::move(result));
     });
+}
+
+void Api::endGroup(const std::string &callerId)
+{
+    if (m_host.documents)
+        m_groups.end(callerId, *m_host.documents);
 }
 
 std::string Api::grantFile(const std::string &callerId, const std::string &path, bool writable)
