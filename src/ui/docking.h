@@ -32,12 +32,15 @@ QRect fitOnScreens(const QRect &frame, int strip, const QList<QRect> &screens, c
 // `frame` when one of `screens` holds it whole; otherwise moved whole onto the screen it overlaps most, or onto
 // `fallback` when it overlaps none, shrunk to fit.
 QRect wholeOnScreens(const QRect &frame, const QList<QRect> &screens, const QRect &fallback);
+// `frame` moved whole onto the screen holding `point`, shrunk to fit; as wholeOnScreens when no screen holds it.
+QRect wholeOnScreenAt(const QRect &frame, QPoint point, const QList<QRect> &screens, const QRect &fallback);
 // `frame` when at least half of it is on `screens`; otherwise as wholeOnScreens.
 QRect mostlyOnScreens(const QRect &frame, const QList<QRect> &screens, const QRect &fallback);
 // The client rectangle of a top-level `window` placed at `client`, by the rules above, on the available
 // geometry of the screens there are.
 QRect clientWholeOnScreens(const QWindow &window, const QRect &client);
 QRect clientMostlyOnScreens(const QWindow &window, const QRect &client);
+QRect clientWholeOnScreenAt(const QWindow &window, const QRect &client, QPoint point);
 
 int fitFloatingLayouts();
 
