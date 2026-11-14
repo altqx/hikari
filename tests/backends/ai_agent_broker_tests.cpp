@@ -153,7 +153,11 @@ TEST(AgentSpecs, ClaudeMayWriteOnlyItsOwnStateAndTheSidecarSetsOnlyItsMarkers)
     writeFile(program, "ELF", true);
     const AgentSpec spec = claudeAgent(program, QStringLiteral("/h"), dir.filePath(QStringLiteral("work")));
     EXPECT_EQ(spec.program, QFileInfo(program).canonicalFilePath());
+#ifdef _WIN32
+    EXPECT_EQ(spec.profile->readExecute, QStringList{QFileInfo(program).canonicalFilePath()});
+#else
     EXPECT_EQ(spec.profile->readExecute, QStringList{QFileInfo(program).canonicalPath()});
+#endif
     EXPECT_EQ(spec.profile->readWrite,
               (QStringList{QStringLiteral("/h/.claude"), QStringLiteral("/h/.claude.json"), dir.filePath(QStringLiteral("work"))}));
     EXPECT_EQ(spec.profile->network, hikari::backends::sandbox::Network::Any);
