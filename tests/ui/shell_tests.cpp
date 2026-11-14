@@ -760,6 +760,8 @@ class ShellTest : public QObject {
     }
     bool openPanelMenu(const QString &panel)
     {
+        // KDDockWidgets deletes a regrouped panel's old group later; until then its header still shows the panel, #1098.
+        QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
         QQuickItem *header = nullptr;
         if (!QTest::qWaitFor([&] { return (header = dockHeader(panel)) != nullptr; }))
             return false;
@@ -7854,7 +7856,7 @@ private slots:
         QObject *root = engine->rootObjects().first();
         auto *menu = named("panelOptionsMenu");
         const auto readsAsShown = [&](const QString &panel) {
-            QTRY_VERIFY2(openPanelMenu(panel), qPrintable(panel));
+            QVERIFY2(openPanelMenu(panel), qPrintable(panel));
             QTRY_VERIFY2(shownMenuEntries(menu).size() > 1, qPrintable(panel));
             QTRY_COMPARE(menuToScreenReaders(menu).size(), shownMenuEntries(menu).size());
             QTRY_COMPARE(menuToScreenReaders(menu), menuOnScreen(menu));
