@@ -77,6 +77,10 @@ protected:
         launcher.prepare(process);
         process.start();
         EXPECT_TRUE(process.waitForFinished(20'000)) << process.errorString().toStdString();
+        m_ending = QStringLiteral("\nexit code 0x%1, stderr: %2")
+                       .arg(uint(process.exitCode()), 0, 16)
+                       .arg(QString::fromLocal8Bit(process.readAllStandardError()))
+                       .toStdString();
         const QString out = QString::fromLocal8Bit(process.readAllStandardOutput()).remove(QLatin1Char('\r'));
         return out.split(QLatin1Char('\n'), Qt::SkipEmptyParts);
     }
@@ -94,6 +98,7 @@ protected:
     }
 
     QTemporaryDir m_root;
+    std::string m_ending;
 };
 
 #ifdef _WIN32
@@ -365,7 +370,7 @@ TEST_F(Sandbox, ALowRightsProcessReadsTheUsersFilesButWritesOnlyItsOwnFolders)
     const QString elsewhere = path("outside/new.txt");
     const QStringList lines = run(launcher, {QStringLiteral("low"), QStringLiteral("desktop"), QStringLiteral("read"),
                                              secret, QStringLiteral("write"), mine, QStringLiteral("write"), elsewhere});
-    const std::string said = lines.join(QLatin1Char('\n')).toStdString();
+    const std::string said = lines.join(QLatin1Char('\n')).toStdString() + m_ending;
     EXPECT_TRUE(ok(lines, QStringLiteral("low"))) << said;
     EXPECT_TRUE(ok(lines, QStringLiteral("desktop"))) << said;
     EXPECT_TRUE(ok(lines, QStringLiteral("read ") + secret)) << said;
@@ -378,13 +383,14 @@ TEST_F(Sandbox, ALowRightsProcessesFoldersCloseToLowRightsOnceItsLauncherEnds)
     const QString mine = path("allowed/mine.txt");
     {
         Launcher launcher(lowRights());
-        ASSERT_TRUE(ok(run(launcher, {QStringLiteral("read"), mine}), QStringLiteral("read ") + mine));
+        const QStringList lines = run(launcher, {QStringLiteral("read"), mine});
+        ASSERT_TRUE(ok(lines, QStringLiteral("read ") + mine)) << lines.join(QLatin1Char('\n')).toStdString() << m_ending;
     }
     Profile other = lowRights();
     other.readWrite = {path("readonly")};
     Launcher launcher(other);
     const QStringList lines = run(launcher, {QStringLiteral("read"), mine});
-    EXPECT_TRUE(denied(lines, QStringLiteral("read ") + mine)) << lines.join(QLatin1Char('\n')).toStdString();
+    EXPECT_TRUE(denied(lines, QStringLiteral("read ") + mine)) << lines.join(QLatin1Char('\n')).toStdString() << m_ending;
 }
 
 TEST_F(Sandbox, AFolderGivenToTheUserAloneIsClosedToLowRights)
@@ -396,7 +402,7 @@ TEST_F(Sandbox, AFolderGivenToTheUserAloneIsClosedToLowRights)
     token.close();
     Launcher launcher(lowRights());
     const QStringList lines = run(launcher, {QStringLiteral("read"), token.fileName()});
-    EXPECT_TRUE(denied(lines, QStringLiteral("read ") + token.fileName())) << lines.join(QLatin1Char('\n')).toStdString();
+    EXPECT_TRUE(denied(lines, QStringLiteral("read ") + token.fileName())) << lines.join(QLatin1Char('\n')).toStdString() << m_ending;
 }
 
 TEST_F(Sandbox, KillTreeEndsALowRightsProcessAndItsChildren)

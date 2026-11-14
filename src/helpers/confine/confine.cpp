@@ -45,6 +45,30 @@ std::vector<BYTE> wellKnownSid(WELL_KNOWN_SID_TYPE type)
     return sid;
 }
 
+// An elevated token's default owner and default DACL name Administrators, which the low token holds deny-only.
+bool ownedByTheUser(HANDLE token)
+{
+    DWORD size = 0;
+    GetTokenInformation(token, TokenUser, nullptr, 0, &size);
+    std::vector<BYTE> userBuffer(size);
+    if (!GetTokenInformation(token, TokenUser, userBuffer.data(), size, &size))
+        return false;
+    const PSID user = reinterpret_cast<TOKEN_USER *>(userBuffer.data())->User.Sid;
+    std::vector<BYTE> system = wellKnownSid(WinLocalSystemSid);
+    if (system.empty())
+        return false;
+    const DWORD aclSize = DWORD(sizeof(ACL) + 2 * sizeof(ACCESS_ALLOWED_ACE) + GetLengthSid(user) + system.size());
+    std::vector<BYTE> aclBuffer(aclSize);
+    auto *acl = reinterpret_cast<PACL>(aclBuffer.data());
+    if (!InitializeAcl(acl, aclSize, ACL_REVISION) || !AddAccessAllowedAce(acl, ACL_REVISION, GENERIC_ALL, user) ||
+        !AddAccessAllowedAce(acl, ACL_REVISION, GENERIC_ALL, system.data()))
+        return false;
+    TOKEN_OWNER owner{user};
+    TOKEN_DEFAULT_DACL dacl{acl};
+    return SetTokenInformation(token, TokenOwner, &owner, DWORD(sizeof owner)) &&
+           SetTokenInformation(token, TokenDefaultDacl, &dacl, DWORD(sizeof dacl));
+}
+
 HANDLE lowRightsToken()
 {
     HANDLE self = nullptr;
@@ -68,7 +92,8 @@ HANDLE lowRightsToken()
         return nullptr;
     std::vector<BYTE> low = wellKnownSid(WinLowLabelSid);
     TOKEN_MANDATORY_LABEL label{{low.data(), SE_GROUP_INTEGRITY}};
-    if (low.empty() || !SetTokenInformation(token, TokenIntegrityLevel, &label, DWORD(sizeof label + low.size()))) {
+    if (low.empty() || !ownedByTheUser(token) ||
+        !SetTokenInformation(token, TokenIntegrityLevel, &label, DWORD(sizeof label + low.size()))) {
         CloseHandle(token);
         return nullptr;
     }

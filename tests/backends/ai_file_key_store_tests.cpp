@@ -158,7 +158,9 @@ TEST_F(FileKeyStoreTest, LowRightsAgentsCantReadOrListTheKeys)
     agent.prepare(probe);
     probe.start();
     ASSERT_TRUE(probe.waitForFinished(20'000)) << probe.errorString().toStdString();
-    const QString said = QString::fromLocal8Bit(probe.readAllStandardOutput()).remove(QLatin1Char('\r'));
+    const QString said = QString::fromLocal8Bit(probe.readAllStandardOutput() + probe.readAllStandardError())
+                             .remove(QLatin1Char('\r')) +
+                         QStringLiteral("\nexit code 0x%1").arg(uint(probe.exitCode()), 0, 16);
     EXPECT_TRUE(said.contains(QStringLiteral("low: ok"))) << said.toStdString();
     EXPECT_TRUE(said.contains(QStringLiteral("read ") + key + QStringLiteral(": denied"))) << said.toStdString();
     EXPECT_TRUE(said.contains(QStringLiteral("list ") + folder() + QStringLiteral(": denied"))) << said.toStdString();
