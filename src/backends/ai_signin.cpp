@@ -1,8 +1,11 @@
 #include "hikari/backends/ai_signin.h"
 
+#include "hikari/backends/user_alone.h"
+
 #include <QCryptographicHash>
 #include <QDateTime>
 #include <QFile>
+#include <QFileInfo>
 #include <QHostAddress>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -180,11 +183,16 @@ std::optional<CodexSession> sessionFromCodexAuth(const QString &authJsonPath)
     return s;
 }
 
-bool writeCodexAuth(const QString &authJsonPath, const CodexSession &session)
+SecretWrite writeCodexAuth(const QString &authJsonPath, const CodexSession &session)
 {
+    const QString home = QFileInfo(authJsonPath).absolutePath();
+    if (!QFileInfo(home).isDir())
+        return SecretWrite::Failed;
+    if (!isForUserAlone(home) && !keepForUserAlone(home))
+        return SecretWrite::NotPrivate;
     QSaveFile file(authJsonPath);
     if (!file.open(QIODevice::WriteOnly) || !file.setPermissions(QFileDevice::ReadOwner | QFileDevice::WriteOwner))
-        return false;
+        return SecretWrite::Failed;
     const QJsonObject tokens{{QStringLiteral("id_token"), QString::fromStdString(session.idToken)},
                              {QStringLiteral("access_token"), QString::fromStdString(session.access)},
                              {QStringLiteral("refresh_token"), QString::fromStdString(session.refresh)},
@@ -195,7 +203,15 @@ bool writeCodexAuth(const QString &authJsonPath, const CodexSession &session)
                            {QStringLiteral("last_refresh"),
                             QDateTime::currentDateTimeUtc().toString(Qt::ISODateWithMs)}};
     file.write(QJsonDocument(auth).toJson(QJsonDocument::Compact));
-    return file.commit();
+    return file.commit() ? SecretWrite::Saved : SecretWrite::Failed;
+}
+
+QString codexAuthNotSaved(SecretWrite result)
+{
+    if (result == SecretWrite::NotPrivate)
+        return QStringLiteral("Codex's sign-in wasn't saved because its folder can't be made private to you, for "
+                              "example on a FAT32 or exFAT drive.");
+    return QStringLiteral("Codex's sign-in couldn't be written");
 }
 
 CodexLease::CodexLease(app::KeyStore &keys, QString codexHome) : m_keys(keys), m_home(std::move(codexHome)) {}
@@ -225,8 +241,11 @@ void CodexLease::acquire(std::function<void(QString error)> done)
             return done(QStringLiteral("Sign in with ChatGPT for Codex in Settings first"));
         }
         const std::optional<CodexSession> left = sessionFromCodexAuth(authPath());
-        if (!(left && left->accountId == stored->accountId) && !writeCodexAuth(authPath(), *stored))
-            return done(QStringLiteral("Codex's sign-in couldn't be written"));
+        if (!(left && left->accountId == stored->accountId)) {
+            const SecretWrite written = writeCodexAuth(authPath(), *stored);
+            if (written != SecretWrite::Saved)
+                return done(codexAuthNotSaved(written));
+        }
         ++m_users;
         done({});
     });

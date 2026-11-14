@@ -4,6 +4,7 @@
 #include <QElapsedTimer>
 #include <QFile>
 #include <QTemporaryFile>
+#include <QThread>
 
 #include <algorithm>
 #include <cstring>
@@ -332,6 +333,79 @@ void FfmsIndexedSource::frame(int index, FrameReady done)
     if (!request)
         return finish(std::unexpected(errorOf(request.error())));
     m_reads[ticket].request = *request;
+}
+
+void FfmsIndexedSource::shrunkFrames(int from, int to, int stride, int maxEdge, bool luma, ShrunkFramesReady done)
+{
+    if (m_lost)
+        return done(std::unexpected(SourceError::HelperLost));
+    if (!m_open || !m_host)
+        return done(std::unexpected(SourceError::NotOpen));
+    const std::uint64_t generation = m_generation;
+    auto [ticket, finish] = this->track(std::move(done));
+    const int decoders = std::clamp(QThread::idealThreadCount() / 2, 1, 4);
+    auto frames = std::make_shared<application::IndexedSourcePort::ShrunkFrames>();
+    auto request = m_host->request(generation,
+        Writer()
+            .u8(static_cast<std::uint8_t>(media::Command::FrameBatch))
+            .i32(from)
+            .i32(to)
+            .i32(stride)
+            .i32(maxEdge)
+            .u8(luma ? 1 : 0)
+            .i32(decoders)
+            .i32(static_cast<std::int32_t>(m_batchIdle.count()))
+            .take(),
+        [generation, from, stride, frames, finish, this](std::expected<Event, HostError> e) {
+            if (!e)
+                return finish(std::unexpected(errorOf(e.error())));
+            if (generation != m_generation)
+                return finish(std::unexpected(SourceError::Stale));
+            if (e->kind == Kind::Reply) {
+                Reader in(e->payload);
+                const int frame = in.i32(), width = in.i32(), height = in.i32();
+                auto pixels = in.bytes();
+                const int expected = from + static_cast<int>(frames->pixels.size()) * stride;
+                if (!in.ok() || frame != expected || width <= 0 || height <= 0 ||
+                    (!frames->pixels.empty() && (width != frames->width || height != frames->height)))
+                    return finish(std::unexpected(SourceError::BackendFailure));
+                frames->width = width;
+                frames->height = height;
+                frames->pixels.emplace_back(reinterpret_cast<const char *>(pixels.data()), pixels.size());
+                return;
+            }
+            if (e->kind != Kind::Terminal)
+                return;
+            if (e->outcome != Outcome::Ok)
+                return finish(std::unexpected(errorOf(e->outcome, e->payload)));
+            Reader in(e->payload);
+            if (in.i32() != static_cast<int>(frames->pixels.size()) || !in.ok())
+                return finish(std::unexpected(SourceError::BackendFailure));
+            finish(std::move(*frames));
+        });
+    if (!request)
+        return finish(std::unexpected(errorOf(request.error())));
+    m_reads[ticket].request = *request;
+}
+
+void FfmsIndexedSource::openBatchDecoders(std::function<void(std::expected<int, SourceError>)> done)
+{
+    if (!m_open || !m_host)
+        return done(std::unexpected(SourceError::NotOpen));
+    auto request = m_host->request(m_generation,
+        Writer().u8(static_cast<std::uint8_t>(media::Command::FrameBatchDecoders)).take(),
+        [done](std::expected<Event, HostError> e) {
+            if (!e)
+                return done(std::unexpected(errorOf(e.error())));
+            if (e->kind != Kind::Terminal)
+                return;
+            if (e->outcome != Outcome::Ok)
+                return done(std::unexpected(errorOf(e->outcome, e->payload)));
+            Reader in(e->payload);
+            done(in.i32());
+        });
+    if (!request)
+        done(std::unexpected(errorOf(request.error())));
 }
 
 void FfmsIndexedSource::setInputMatrix(int colorSpace, int colorRange, MatrixSet done)

@@ -277,6 +277,24 @@ QString nativeFixture(const char *name)
 // QTest moves a null point (0, 0) to the window's centre, which a panel may cover.
 constexpr QPoint kOverNoPanel{1, 1};
 
+class HoverWatch : public QObject {
+public:
+    explicit HoverWatch(QObject *row)
+    {
+        if (row)
+            row->installEventFilter(this);
+    }
+    bool seen = false;
+
+protected:
+    bool eventFilter(QObject *, QEvent *event) override
+    {
+        if (event->type() == QEvent::HoverEnter || event->type() == QEvent::HoverMove)
+            seen = true;
+        return false;
+    }
+};
+
 struct DefaultBinding {
     char window;
     const char *symbol;
@@ -742,6 +760,8 @@ class ShellTest : public QObject {
     }
     bool openPanelMenu(const QString &panel)
     {
+        // KDDockWidgets deletes a regrouped panel's old group later; until then its header still shows the panel, #1098.
+        QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
         QQuickItem *header = nullptr;
         if (!QTest::qWaitFor([&] { return (header = dockHeader(panel)) != nullptr; }))
             return false;
@@ -849,6 +869,48 @@ class ShellTest : public QObject {
         application->shiftTimesSettings().setSettingsMap(map);
     }
 
+    // Xvfb starts its pointer at the screen's centre, so a window or menu mapping there takes real hover, #1109.
+    static void parkThePointerOffTheWindows()
+    {
+        if (QGuiApplication::platformName() == QLatin1String("xcb"))
+            QCursor::setPos(QGuiApplication::primaryScreen()->geometry().bottomRight());
+    }
+    void loadMainWindow()
+    {
+        parkThePointerOffTheWindows();
+        engine = new QQmlApplicationEngine;
+        hikari::ui::attachDocking(*engine);
+        engine->setInitialProperties(application->qmlProperties());
+        engine->loadFromModule("Hikari.Ui", "Main");
+        QVERIFY(!engine->rootObjects().isEmpty());
+        window = qobject_cast<QQuickWindow *>(engine->rootObjects().first());
+        QVERIFY(window);
+        window->requestActivate();
+        QVERIFY(QTest::qWaitForWindowExposed(window));
+        // Without a window manager, Xvfb activates a window late when the pointer isn't over it.
+        if (QGuiApplication::platformName() == QLatin1String("xcb"))
+            QVERIFY(QTest::qWaitForWindowActive(window));
+    }
+    static constexpr int kRestedRow = 3;
+    QPoint panelsRowOnScreen(int row)
+    {
+        auto *view = named("viewMenu");
+        auto *panels = named("panelsMenu");
+        if (!view || !panels || !QMetaObject::invokeMethod(view, "open")
+            || !QTest::qWaitFor([&] { return view->property("opened").toBool(); }))
+            return {};
+        press(Qt::Key_Down);
+        press(Qt::Key_Down);
+        press(Qt::Key_Right);
+        if (!QTest::qWaitFor([&] { return panels->property("opened").toBool(); }))
+            return {};
+        QQuickItem *entry = menuItems(panels).value(row);
+        const QPoint at = entry ? entry->mapToGlobal(entry->boundingRect().center()).toPoint() : QPoint();
+        press(Qt::Key_Left);
+        if (!QTest::qWaitFor([&] { return !panels->property("visible").toBool(); }))
+            return {};
+        return at;
+    }
     void press(Qt::Key key, Qt::KeyboardModifiers mods = Qt::NoModifier)
     {
         QTest::keyClick(window, key, mods);
@@ -922,15 +984,7 @@ private slots:
                             "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,second\n");
         original = writeFile(dir, "original.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,ref\n");
         application = new app::Application;
-        engine = new QQmlApplicationEngine;
-        hikari::ui::attachDocking(*engine);
-        engine->setInitialProperties(application->qmlProperties());
-        engine->loadFromModule("Hikari.Ui", "Main");
-        QVERIFY(!engine->rootObjects().isEmpty());
-        window = qobject_cast<QQuickWindow *>(engine->rootObjects().first());
-        QVERIFY(window);
-        window->requestActivate();
-        QVERIFY(QTest::qWaitForWindowExposed(window));
+        loadMainWindow();
     }
     void cleanup()
     {
@@ -6919,6 +6973,51 @@ private slots:
         QTRY_VERIFY(root->property("shellActive").toBool());
     }
 
+    void aStillPointerLeavesMenuRowsToTheKeyboard()
+    {
+        if (QGuiApplication::platformName() != QLatin1String("xcb"))
+            QSKIP("Needs the real pointer that QCursor::setPos moves on xcb");
+        QVERIFY(application->openFile(episode));
+        item("editingGrid")->forceActiveFocus();
+        auto *panels = named("panelsMenu");
+        const QPoint rest = panelsRowOnScreen(kRestedRow);
+        QVERIFY(!rest.isNull());
+        HoverWatch watch(menuItems(panels).value(kRestedRow));
+        QCursor::setPos(window->screen(), rest);
+        press(Qt::Key_Right);
+        QTRY_VERIFY(panels->property("opened").toBool());
+        QTRY_VERIFY(watch.seen);
+        QCOMPARE(panels->property("currentIndex").toInt(), 0);
+        auto *first = menuItems(panels).first()->property("subMenu").value<QObject *>();
+        QVERIFY(first);
+        press(Qt::Key_Right);
+        QTRY_VERIFY(first->property("opened").toBool());
+        QCOMPARE(panels->property("currentIndex").toInt(), 0);
+    }
+
+    void aMovingPointerStillPicksMenuRows()
+    {
+        if (QGuiApplication::platformName() != QLatin1String("xcb"))
+            QSKIP("Needs the real pointer that QCursor::setPos moves on xcb");
+        QVERIFY(application->openFile(episode));
+        item("editingGrid")->forceActiveFocus();
+        auto *panels = named("panelsMenu");
+        const QPoint rest = panelsRowOnScreen(kRestedRow);
+        QVERIFY(!rest.isNull());
+        HoverWatch watch(menuItems(panels).value(kRestedRow));
+        QCursor::setPos(window->screen(), rest);
+        press(Qt::Key_Right);
+        QTRY_VERIFY(panels->property("opened").toBool());
+        QTRY_VERIFY(watch.seen);
+        QQuickItem *target = menuItems(panels).value(kRestedRow + 2);
+        QVERIFY(target);
+        QCursor::setPos(window->screen(), target->mapToGlobal(target->boundingRect().center()).toPoint());
+        QTRY_COMPARE(panels->property("currentIndex").toInt(), kRestedRow + 2);
+        auto *sub = target->property("subMenu").value<QObject *>();
+        QVERIFY(sub);
+        QTRY_VERIFY(sub->property("opened").toBool());
+    }
+
     void everyMenuIsAShellMenu()
     {
         static const QRegularExpression plain(
@@ -7757,7 +7856,7 @@ private slots:
         QObject *root = engine->rootObjects().first();
         auto *menu = named("panelOptionsMenu");
         const auto readsAsShown = [&](const QString &panel) {
-            QTRY_VERIFY2(openPanelMenu(panel), qPrintable(panel));
+            QVERIFY2(openPanelMenu(panel), qPrintable(panel));
             QTRY_VERIFY2(shownMenuEntries(menu).size() > 1, qPrintable(panel));
             QTRY_COMPARE(menuToScreenReaders(menu).size(), shownMenuEntries(menu).size());
             QTRY_COMPARE(menuToScreenReaders(menu), menuOnScreen(menu));
@@ -11773,15 +11872,7 @@ private:
             options.spellingBackend = std::move(loader);
         options.bundledDictionaryDir = bundled;
         application = new app::Application(options);
-        engine = new QQmlApplicationEngine;
-        hikari::ui::attachDocking(*engine);
-        engine->setInitialProperties(application->qmlProperties());
-        engine->loadFromModule("Hikari.Ui", "Main");
-        QVERIFY(!engine->rootObjects().isEmpty());
-        window = qobject_cast<QQuickWindow *>(engine->rootObjects().first());
-        QVERIFY(window);
-        window->requestActivate();
-        QVERIFY(QTest::qWaitForWindowExposed(window));
+        loadMainWindow();
     }
     static void writeDictionary(const QString &home, const QString &folder = QStringLiteral("Dictionary"))
     {
@@ -11839,7 +11930,7 @@ private:
                                    .boundedTo(window->screen()->availableGeometry().size().shrunkBy(window->frameMargins()));
         return window->minimumSize() == expected;
     }
-    void rightClickOn(QQuickItem *target, const std::function<QPoint()> &point)
+    void waitUntilOver(QQuickItem *target, const std::function<QPoint()> &point)
     {
         const auto over = [&] {
             QQuickItem *hit = mouseItemAt(window->contentItem(), point());
@@ -11847,6 +11938,10 @@ private:
         };
         QTRY_VERIFY(dockingMinimumApplied());
         QTRY_VERIFY2(over(), qPrintable(QDebug::toString(mouseItemAt(window->contentItem(), point()))));
+    }
+    void rightClickOn(QQuickItem *target, const std::function<QPoint()> &point)
+    {
+        waitUntilOver(target, point);
         rightClick(point());
     }
     QPoint fieldPoint(QQuickItem *field, int position) const
@@ -11878,15 +11973,7 @@ private:
         options.settingsFile = file;
         options.spellingBackend = {};
         application = new app::Application(options);
-        engine = new QQmlApplicationEngine;
-        hikari::ui::attachDocking(*engine);
-        engine->setInitialProperties(application->qmlProperties());
-        engine->loadFromModule("Hikari.Ui", "Main");
-        QVERIFY(!engine->rootObjects().isEmpty());
-        window = qobject_cast<QQuickWindow *>(engine->rootObjects().first());
-        QVERIFY(window);
-        window->requestActivate();
-        QVERIFY(QTest::qWaitForWindowExposed(window));
+        loadMainWindow();
     }
 
     void restartWithoutSound()
@@ -11900,15 +11987,7 @@ private:
         delete engine;
         delete application;
         application = new app::Application(options);
-        engine = new QQmlApplicationEngine;
-        hikari::ui::attachDocking(*engine);
-        engine->setInitialProperties(application->qmlProperties());
-        engine->loadFromModule("Hikari.Ui", "Main");
-        QVERIFY(!engine->rootObjects().isEmpty());
-        window = qobject_cast<QQuickWindow *>(engine->rootObjects().first());
-        QVERIFY(window);
-        window->requestActivate();
-        QVERIFY(QTest::qWaitForWindowExposed(window));
+        loadMainWindow();
     }
 
     void restartWithMediaHelper(const QString &helper)
@@ -11919,15 +11998,7 @@ private:
         options.playbackAudio = false;
         options.mediaHelper = helper;
         application = new app::Application(options);
-        engine = new QQmlApplicationEngine;
-        hikari::ui::attachDocking(*engine);
-        engine->setInitialProperties(application->qmlProperties());
-        engine->loadFromModule("Hikari.Ui", "Main");
-        QVERIFY(!engine->rootObjects().isEmpty());
-        window = qobject_cast<QQuickWindow *>(engine->rootObjects().first());
-        QVERIFY(window);
-        window->requestActivate();
-        QVERIFY(QTest::qWaitForWindowExposed(window));
+        loadMainWindow();
     }
 
 private slots:
@@ -13448,6 +13519,86 @@ private slots:
         QVERIFY(translated->findChild<QObject *>(QStringLiteral("translationTextSpellingOn"))->property("visible").toBool());
         QVERIFY(!hasSubMenu(tlMenu, QStringLiteral("Installed languages")));
         QVERIFY(QMetaObject::invokeMethod(tlMenu, "close"));
+        application->editor().discard();
+    }
+
+    void rightClickMovesTheCaretToThePointerOutsideTheSelection()
+    {
+        QTemporaryDir home;
+        QVERIFY(home.isValid());
+        writeDictionary(home.path());
+        restartWithSpelling(home.path(), true);
+        const QString path = writeFile(dir, "right-click-caret.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,Hello wrold Teh\n");
+        QVERIFY(application->openFile(path));
+        auto *field = item("lineText");
+        QTRY_COMPARE(field->property("text").toString(), QStringLiteral("Hello wrold Teh"));
+        auto *menu = field->findChild<QObject *>(QStringLiteral("lineTextMenu"));
+        QVERIFY(menu);
+        const auto inWrold = [&] { return fieldPoint(field, 8); };
+
+        field->setProperty("cursorPosition", 0);
+        waitUntilOver(field, inWrold);
+        QTest::mouseClick(window, Qt::RightButton, Qt::NoModifier, inWrold());
+        QTRY_VERIFY(menu->property("visible").toBool());
+        QCOMPARE(field->property("cursorPosition").toInt(), 8);
+        const auto entries = menuItems(menu);
+        QVERIFY(!entries.isEmpty());
+        QCOMPARE(entries.first()->property("text").toString(), QStringLiteral("world"));
+        QVERIFY(QMetaObject::invokeMethod(menu, "close"));
+        QTRY_VERIFY(!menu->property("visible").toBool());
+
+        QVERIFY(QMetaObject::invokeMethod(field, "select", Q_ARG(int, 0), Q_ARG(int, 11)));
+        QTest::mouseClick(window, Qt::RightButton, Qt::NoModifier, inWrold());
+        QTRY_VERIFY(menu->property("visible").toBool());
+        QCOMPARE(field->property("selectionStart").toInt(), 0);
+        QCOMPARE(field->property("selectionEnd").toInt(), 11);
+        QVERIFY(QMetaObject::invokeMethod(menu, "close"));
+        QTRY_VERIFY(!menu->property("visible").toBool());
+
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, fieldPoint(field, 13));
+        QTRY_COMPARE(field->property("cursorPosition").toInt(), 13);
+        QCOMPARE(field->property("selectedText").toString(), QString());
+        QVERIFY(!menu->property("visible").toBool());
+        application->editor().discard();
+    }
+
+    void clickInTheLeftPaddingPutsTheCaretAtTheLineStart()
+    {
+        const QString path = writeFile(dir, "left-padding-click.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,Hello wrold Teh\n");
+        QVERIFY(application->openFile(path));
+        auto *field = item("lineText");
+        QTRY_COMPARE(field->property("text").toString(), QStringLiteral("Hello wrold Teh"));
+        const auto inPadding = [&](qreal x) { return field->mapToScene(QPointF(x, field->property("topPadding").toReal() + 1)).toPoint(); };
+        const auto chainedClicksExpire = [] { QTest::qWait(QGuiApplication::styleHints()->mouseDoubleClickInterval() + 50); };
+
+        for (const qreal x : {qreal(1), field->property("leftPadding").toReal() - 3}) {
+            chainedClicksExpire();
+            field->setProperty("cursorPosition", 15);
+            waitUntilOver(field, [&] { return inPadding(x); });
+            QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, inPadding(x));
+            QTRY_COMPARE(field->property("cursorPosition").toInt(), 0);
+            QTest::qWait(50);
+            QCOMPARE(field->property("selectedText").toString(), QString());
+            QCOMPARE(field->property("cursorPosition").toInt(), 0);
+        }
+
+        chainedClicksExpire();
+        QTest::mouseDClick(window, Qt::LeftButton, Qt::NoModifier, fieldPoint(field, 8));
+        QTRY_COMPARE(field->property("selectedText").toString(), QStringLiteral("wrold"));
+
+        chainedClicksExpire();
+        QTest::mouseDClick(window, Qt::LeftButton, Qt::NoModifier, fieldPoint(field, 13));
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, fieldPoint(field, 13));
+        QTRY_COMPARE(field->property("selectedText").toString(), QStringLiteral("Hello wrold Teh"));
+
+        chainedClicksExpire();
+        auto *menu = field->findChild<QObject *>(QStringLiteral("lineTextMenu"));
+        QVERIFY(menu);
+        QTest::mouseClick(window, Qt::RightButton, Qt::NoModifier, fieldPoint(field, 8));
+        QTRY_VERIFY(menu->property("visible").toBool());
+        QCOMPARE(field->property("selectedText").toString(), QStringLiteral("Hello wrold Teh"));
+        QVERIFY(QMetaObject::invokeMethod(menu, "close"));
+        QTRY_VERIFY(!menu->property("visible").toBool());
         application->editor().discard();
     }
 
@@ -19429,6 +19580,21 @@ private slots:
                      QStringLiteral("Chains: Finding keyframes"));
         QTRY_COMPARE(findItem(card, QStringLiteral("pluginJobText"))->property("text").toString(),
                      QStringLiteral("Frame 1008 of 2400"));
+        QQuickItem *bar = findItem(card, QStringLiteral("pluginJobBar"));
+        QTRY_VERIFY(!bar->property("indeterminate").toBool());
+        QCOMPARE(bar->property("value").toDouble(), 0.42);
+        QQuickItem *fill = findItem(card, QStringLiteral("pluginJobFill"));
+        QTRY_COMPARE(fill->x(), 0.0);
+        QTRY_COMPARE(fill->width(), bar->property("position").toDouble() * fill->parentItem()->width());
+        for (QObject *child : card->findChildren<QObject *>())
+            if (child->inherits("QQuickAbstractAnimation"))
+                QVERIFY2(!child->property("running").toBool(), child->metaObject()->className());
+        QAccessibleInterface *barFace = QAccessible::queryAccessibleInterface(bar);
+        QVERIFY(barFace);
+        QCOMPARE(barFace->role(), QAccessible::ProgressBar);
+        QCOMPARE(barFace->text(QAccessible::Name), QStringLiteral("Progress"));
+        QVERIFY(barFace->valueInterface());
+        QCOMPARE(barFace->valueInterface()->currentValue().toDouble(), 0.42);
         auto *grid = qobject_cast<ui::LineGrid *>(item("editingGrid"));
         QTRY_COMPARE(grid->rowStateText(1).count(QStringLiteral("marked by")), 2);
         QVERIFY(grid->rowStateText(1).contains(QStringLiteral("marked by Chains: Removed in v1.1")));
@@ -19529,8 +19695,17 @@ private slots:
         QCOMPARE(trust->property("text").toString(), QStringLiteral("Unverified, signed by key EFCDAB8967452301"));
         QVERIFY(!dialogItem("pluginManagerDialog", "pluginManagerEmpty")->isVisible());
 
-        QVERIFY(QMetaObject::invokeMethod(dialogItem("pluginManagerDialog", "pluginEnabled_com.example.hello"), "click"));
+        QQuickItem *enabled = dialogItem("pluginManagerDialog", "pluginEnabled_com.example.hello");
+        QAccessibleInterface *enabledFace = QAccessible::queryAccessibleInterface(enabled);
+        QVERIFY(enabledFace);
+        QCOMPARE(enabled->property("text").toString(), QStringLiteral("On"));
+        QCOMPARE(enabledFace->text(QAccessible::Name), QStringLiteral("Hello"));
+        QVERIFY(enabledFace->state().checked);
+        QVERIFY(QMetaObject::invokeMethod(enabled, "click"));
         QTRY_VERIFY(!rows().first().toMap().value(QStringLiteral("enabled")).toBool());
+        QTRY_COMPARE(enabled->property("text").toString(), QStringLiteral("Off"));
+        QVERIFY(!enabledFace->state().checked);
+        QCOMPARE(enabledFace->text(QAccessible::Name), QStringLiteral("Hello"));
 
         QVERIFY(QMetaObject::invokeMethod(dialog, "reviewFile", Q_ARG(QVariant, fixture("hello-2.0.0-other-key.hikariplugin"))));
         QQuickWindow *box = nullptr;
@@ -27143,14 +27318,9 @@ private slots:
             application = nullptr;
         });
         application = new app::Application(options);
-        engine = new QQmlApplicationEngine;
-        hikari::ui::attachDocking(*engine);
-        engine->setInitialProperties(application->qmlProperties());
-        engine->loadFromModule("Hikari.Ui", "Main");
-        QVERIFY(!engine->rootObjects().isEmpty());
-        window = qobject_cast<QQuickWindow *>(engine->rootObjects().first());
-        window->requestActivate();
-        QVERIFY(QTest::qWaitForWindowExposed(window));
+        loadMainWindow();
+        if (QTest::currentTestFailed())
+            return;
         QVERIFY(application->openFile(episode));
         auto &audio = application->audio();
         audio.openAudio(QStringLiteral(HIKARI_MEDIA_FIXTURES "/audioonly.mkv"));

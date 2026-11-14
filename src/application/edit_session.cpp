@@ -489,6 +489,24 @@ bool EditSession::redo()
     return true;
 }
 
+bool EditSession::foldSteps(ContentId base, ContentId last, std::string name)
+{
+    const auto indexOf = [this](ContentId content) {
+        return std::ranges::find(m_states, content, &State::content) - m_states.begin();
+    };
+    const auto from = indexOf(base);
+    const auto to = indexOf(last);
+    const auto end = std::ssize(m_states);
+    const auto cursor = std::ptrdiff_t(m_cursor);
+    if (from == end || to == end || to <= from || (cursor > from && cursor < to))
+        return false;
+    m_states[to].name = std::move(name);
+    m_states.erase(m_states.begin() + from + 1, m_states.begin() + to);
+    if (cursor >= to)
+        m_cursor -= std::size_t(to - from - 1);
+    return true;
+}
+
 std::vector<EditSession::HistoryStep> EditSession::history() const
 {
     std::vector<HistoryStep> out;

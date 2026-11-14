@@ -16276,6 +16276,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>켜기</translation>
     </message>
     <message>
+        <source>Off</source>
+        <translation>끔</translation>
+    </message>
+    <message>
         <source>Plugin not changed</source>
         <translation>플러그인을 변경하지 않음</translation>
     </message>

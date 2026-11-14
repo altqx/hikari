@@ -2747,6 +2747,13 @@ std::vector<application::FontLease> Application::subtitleFonts(std::optional<app
     return fonts;
 }
 
+void Application::holdMeasuredFonts()
+{
+    auto fonts = subtitleFonts(m_workspace.editingTarget());
+    fonts.insert(fonts.end(), activeMedia().videoFonts.begin(), activeMedia().videoFonts.end());
+    m_gdiFonts.hold(fonts);
+}
+
 bool Application::setVideoFonts(std::optional<application::DocumentId> document)
 {
     auto fonts = subtitleFonts(document);
@@ -2756,6 +2763,7 @@ bool Application::setVideoFonts(std::optional<application::DocumentId> document)
     if (std::ranges::equal(fonts, activeMedia().videoFonts, same))
         return false;
     activeMedia().videoFonts = fonts;
+    holdMeasuredFonts();
     if (m_mainViews.visualTools) {
         decltype(m_leasedFontNames) read;
         std::vector<std::string> names;
@@ -2994,6 +3002,8 @@ void Application::writeFinished(const application::WriteResult &result)
             destination && destination->value == result.destination.value)
             recordFileTime(result.document);
         emit documentWritten(result.document.value);
+        if (m_apiHost)
+            m_apiHost->api().documentSaved(result.document, result.destination.value, result.revision);
     } else if (result.outcome == application::WriteOutcome::Failed ||
                result.outcome == application::WriteOutcome::Cancelled) {
         if (result.outcome == application::WriteOutcome::Failed)
@@ -4424,6 +4434,7 @@ bool Application::splitLines(const QString &kind)
         }
         return segments;
     };
+    holdMeasuredFonts();
     ui::QtTextMeasurePort measure;
     return runFilter([&](application::EditSession &s) { return application::splitByText(s, *text, measure, words, shown); });
 }
@@ -4518,6 +4529,7 @@ std::expected<void, application::CommandRefusal> withGeometry(const application:
 
 bool Application::changeAlignment(int an)
 {
+    holdMeasuredFonts();
     const auto shown = shownLines();
     return runFilter([&](application::EditSession &s) {
         return withGeometry(s, [&](const auto &g) { return application::position::changeAlignment(s, an, g, shown); });
@@ -4530,6 +4542,7 @@ bool Application::alignLines(int edge)
         return false;
     const auto to = m_settings->boolean("grid.alignToVideoFrame") ? application::position::RelativeTo::VideoFrame
                                                                   : application::position::RelativeTo::ActiveLine;
+    holdMeasuredFonts();
     const auto shown = shownLines();
     return runFilter([&](application::EditSession &s) {
         return withGeometry(s, [&](const auto &g) {
@@ -4541,6 +4554,7 @@ bool Application::alignLines(int edge)
 bool Application::distributeLines(bool vertical)
 {
     const auto axis = vertical ? application::position::Axis::Vertical : application::position::Axis::Horizontal;
+    holdMeasuredFonts();
     const auto shown = shownLines();
     return runFilter([&](application::EditSession &s) {
         return withGeometry(s, [&](const auto &g) { return application::position::distribute(s, axis, g, shown); });
@@ -4549,6 +4563,7 @@ bool Application::distributeLines(bool vertical)
 
 bool Application::positionToMargins()
 {
+    holdMeasuredFonts();
     const auto shown = shownLines();
     return runFilter([&](application::EditSession &s) {
         return withGeometry(s, [&](const auto &g) { return application::position::positionToMargins(s, g, shown); });
@@ -4557,6 +4572,7 @@ bool Application::positionToMargins()
 
 bool Application::marginsToPosition()
 {
+    holdMeasuredFonts();
     const auto shown = shownLines();
     return runFilter([&](application::EditSession &s) {
         return withGeometry(s, [&](const auto &g) { return application::position::marginsToPosition(s, g, shown); });
@@ -6634,6 +6650,7 @@ bool Application::textCommand(const QString &command)
     if (!session || found == commands.end())
         return false;
     static const auto services = backends::icuTextServices();
+    holdMeasuredFonts();
     ui::QtTextMeasurePort measure;
     const bool done = application::text_commands::run(*session, found->second, services, measure, shownLines()).has_value();
     editor().reloadFromSession();

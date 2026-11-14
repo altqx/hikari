@@ -1,6 +1,7 @@
 #pragma once
 
 #include "hikari/application/automation_services.h"
+#include "hikari/application/subtitle_render.h"
 
 #include <QObject>
 #include <QStringList>
@@ -8,8 +9,11 @@
 #include <QtQml/qqmlregistration.h>
 
 #include <map>
+#include <memory>
 #include <string>
 #include <tuple>
+#include <utility>
+#include <vector>
 
 namespace hikari::ui {
 
@@ -17,6 +21,23 @@ class QtClipboardPort : public application::ClipboardPort {
 public:
     std::string text() const override;
     bool setText(const std::string &text) override;
+};
+
+/// Makes leased fonts measurable by QtTextMeasurePort while held. On Windows it measures with GDI, which sees only
+/// installed fonts and fonts added to it: hold() adds each new lease privately to this process and removes the ones
+/// it no longer lists. Elsewhere Qt measures and this holds nothing.
+class GdiFontLeases {
+public:
+    GdiFontLeases() = default;
+    GdiFontLeases(const GdiFontLeases &) = delete;
+    GdiFontLeases &operator=(const GdiFontLeases &) = delete;
+
+    void hold(const std::vector<application::FontLease> &fonts);
+
+private:
+#ifdef _WIN32
+    std::vector<std::pair<std::shared_ptr<const std::vector<std::byte>>, std::shared_ptr<void>>> m_held;
+#endif
 };
 
 class QtTextMeasurePort : public application::TextMeasurePort {
@@ -36,6 +57,7 @@ private:
         long descent = 0, externalLeading = 0;
     };
     void dropFonts();
+    unsigned m_gdiFontsSeen = 0;
     void *m_dc = nullptr;
     void *m_dcFont = nullptr;
     std::map<std::tuple<std::wstring, long, long, int, int, int, int>, GdiFont> m_fonts;

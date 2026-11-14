@@ -2,6 +2,7 @@
 
 #include "hikari/api/json.h"
 #include "hikari/application/ai_providers.h"
+#include "hikari/backends/user_alone.h"
 
 #include <QNetworkAccessManager>
 #include <QString>
@@ -40,7 +41,9 @@ std::optional<CodexSession> sessionFromJson(std::string_view json);
 /// The Codex CLI's own sign-in, read-only: `tokens` in its auth.json.
 std::optional<CodexSession> sessionFromCodexAuth(const QString &authJsonPath);
 /// Writes `session` as a Codex auth.json that only the user can read.
-bool writeCodexAuth(const QString &authJsonPath, const CodexSession &session);
+SecretWrite writeCodexAuth(const QString &authJsonPath, const CodexSession &session);
+/// Why Codex can't start when `writeCodexAuth` didn't save.
+QString codexAuthNotSaved(SecretWrite result);
 
 /// Lends HikariSub's ChatGPT sign-in to the Codex processes sharing a private CODEX_HOME. The first `acquire` writes
 /// its auth.json from the keychain; after the last `release`, Codex's refreshed tokens go back to the keychain and

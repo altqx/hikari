@@ -16520,6 +16520,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Włączona</translation>
     </message>
     <message>
+        <source>Off</source>
+        <translation>Wyłączona</translation>
+    </message>
+    <message>
         <source>Plugin not changed</source>
         <translation>Nie zmieniono wtyczki</translation>
     </message>

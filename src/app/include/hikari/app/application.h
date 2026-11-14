@@ -1513,7 +1513,9 @@ private:
     void projectScriptsAndPluginsChanged();
     void subtitleFontsChanged();
     bool setVideoFonts(std::optional<application::DocumentId> document);
+    void holdMeasuredFonts();
     std::vector<std::pair<std::shared_ptr<const std::vector<std::byte>>, std::vector<std::string>>> m_leasedFontNames;
+    ui::GdiFontLeases m_gdiFonts;
     bool runFilter(const std::function<std::expected<void, application::CommandRefusal>(application::EditSession &)> &command);
     std::uint64_t m_seenGroupBreaks = 0;
     std::unique_ptr<application::RecoveryStore> m_recovery;

@@ -579,6 +579,13 @@ void DummyVideoSource::nextPcm(std::int64_t maxFrames, PcmReady done)
     done(std::unexpected(SourceError::NotOpen));
 }
 
+void DummyVideoSource::shrunkFrames(int from, int to, int stride, int maxEdge, bool luma, ShrunkFramesReady done)
+{
+    if (!m_dummy)
+        return m_media.shrunkFrames(from, to, stride, maxEdge, luma, std::move(done));
+    done(std::unexpected(SourceError::Unsupported));
+}
+
 void DummyVideoSource::setInputMatrix(int colorSpace, int colorRange, MatrixSet done)
 {
     if (!m_dummy)

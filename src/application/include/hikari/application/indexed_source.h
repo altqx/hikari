@@ -167,6 +167,17 @@ public:
     // Read in the Opened callback; nullopt when the open did not fail or there is nothing more to say.
     virtual std::optional<OpenFailure> openFailure() const { return std::nullopt; }
     virtual void frame(int index, FrameReady done) = 0;
+    struct ShrunkFrames {
+        int width = 0, height = 0;
+        std::vector<std::string> pixels; // each frame asked for, as core::shrinkFrame makes it from frame()
+    };
+    using ShrunkFramesReady = std::function<void(std::expected<ShrunkFrames, SourceError>)>;
+    // from..to every stride-th frame, shrunk to maxEdge; Unsupported where the port can't.
+    virtual void shrunkFrames(int from, int to, int stride, int maxEdge, bool luma, ShrunkFramesReady done)
+    {
+        (void)from, (void)to, (void)stride, (void)maxEdge, (void)luma;
+        done(std::unexpected(SourceError::Unsupported));
+    }
     // Opens an audio track of the open source (its timeline's firstAudioTrack).
     virtual void openAudio(int track, AudioOpened done) = 0;
     // A half-open range [start, start + count) of sample frames.

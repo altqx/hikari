@@ -72,10 +72,12 @@ if(WIN32)
 endif()
 
 if(WIN32)
-    add_library(hikari_sandbox STATIC sandbox_windows.cpp include/hikari/backends/sandbox.h)
+    add_library(hikari_sandbox STATIC sandbox_windows.cpp include/hikari/backends/sandbox.h user_alone_windows.cpp
+        include/hikari/backends/user_alone.h)
     target_link_libraries(hikari_sandbox PRIVATE userenv advapi32)
 else()
-    add_library(hikari_sandbox STATIC sandbox_linux.cpp include/hikari/backends/sandbox.h)
+    add_library(hikari_sandbox STATIC sandbox_linux.cpp include/hikari/backends/sandbox.h user_alone_posix.cpp
+        include/hikari/backends/user_alone.h)
 endif()
 target_include_directories(hikari_sandbox PUBLIC include)
 target_link_libraries(hikari_sandbox PUBLIC Qt6::Core)

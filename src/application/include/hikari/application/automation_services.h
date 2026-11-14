@@ -39,6 +39,18 @@ public:
     virtual std::optional<VideoSize> videoSize() const = 0;
     virtual std::optional<std::vector<std::int64_t>> keyframes() const = 0;
     virtual void frame(std::int64_t frame, bool withSubtitles, std::function<void(std::optional<Frame>)> reply) = 0;
+    struct SmallFramesRequest {
+        std::int64_t from = 0, to = 0, stride = 1;
+        int maxEdge = 64;
+        bool luma = true;
+    };
+    struct SmallFrames {
+        int width = 0, height = 0;
+        std::vector<std::string> pixels; // each frame asked for, as core::shrinkFrame makes it from frame()
+    };
+    // Frames without subtitles, shrunk where they are decoded. false: not offered here, so ask
+    // frame() for each; a nullopt reply: a frame failed, and frame() tells which.
+    virtual bool smallFrames(const SmallFramesRequest &, std::function<void(std::optional<SmallFrames>)>) { return false; }
     virtual std::optional<std::pair<std::int64_t, std::int64_t>> audioSelection() const = 0;
     virtual std::optional<Project> project() const = 0;
     virtual std::optional<std::string> fileName() const = 0; // nullopt: the Document has no file

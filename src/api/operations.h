@@ -71,6 +71,7 @@ std::int64_t frameOf(const application::MacroMediaPort &media, const Json &param
 
 Json selectionJson(const application::EditSession &session);
 Json dialogValueJson(const application::DialogValue &value);
+Json dialogsJson(const std::vector<DialogAnswer> &dialogs);
 Json panelJson(const PanelState &panel);
 
 }

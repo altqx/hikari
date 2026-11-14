@@ -14,6 +14,14 @@ void addEvents(Registry &registry)
                                     "revision": {"$ref": "#/$defs/Revision"},
                                     "step": {"type": "string", "description": "The History step now current."}},
                                     "required": ["document", "revision", "step"], "additionalProperties": false})")});
+    registry.addEvent(EventType{"document.saved",
+                                "A Document was written to a file: Save, Save as, Save all or Save translation. Nothing "
+                                "comes for a save that was cancelled or failed.",
+                                schema(R"({"type": "object", "properties": {
+                                    "document": {"$ref": "#/$defs/DocumentId"},
+                                    "path": {"type": "string", "description": "The file it was written to, as documents.list gives paths."},
+                                    "revision": {"$ref": "#/$defs/Revision", "description": "The revision that was written."}},
+                                    "required": ["document", "path", "revision"], "additionalProperties": false})")});
     registry.addEvent(EventType{"selection.changed", "The selected or the active Line changed.",
                                 schema(R"({"type": "object", "properties": {
                                     "document": {"$ref": "#/$defs/DocumentId"},
@@ -33,7 +41,10 @@ void addEvents(Registry &registry)
                                     "floating": {"type": "boolean"}, "focused": {"type": "boolean"}},
                                     "required": ["panel", "title", "open", "floating", "focused"],
                                     "additionalProperties": false})")});
-    registry.addEvent(EventType{"command.ran", "A command ran, from a menu, a key, the API or anywhere else.",
+    registry.addEvent(EventType{"command.ran",
+                                "A command was triggered, from a menu, a key, the API or anywhere else. It reports the "
+                                "trigger, not the outcome: a Save that opens a dialog or a question comes before anything "
+                                "is written, and even when it is then cancelled; document.saved reports the write.",
                                 schema(R"({"type": "object", "properties": {"command": {"type": "string"},
                                     "ok": {"type": "boolean", "description": "False when it was refused or failed."}},
                                     "required": ["command", "ok"], "additionalProperties": false})")});
@@ -62,6 +73,40 @@ Json dialogValueJson(const application::DialogValue &value)
                 return Json(v);
         },
         value);
+}
+
+Json dialogsJson(const std::vector<DialogAnswer> &dialogs)
+{
+    Json answers = Json::array();
+    for (const DialogAnswer &d : dialogs) {
+        Json values = Json::object();
+        for (const auto &[name, value] : d.values)
+            if (!std::holds_alternative<std::monostate>(value))
+                values[name] = detail::dialogValueJson(value);
+        Json controls = Json::array();
+        for (const DialogControlInfo &c : d.controls) {
+            Json control = Json::object({{"name", Json(c.name)}, {"kind", Json(c.kind)}});
+            if (!c.label.empty())
+                control["label"] = Json(c.label);
+            if (!c.hint.empty())
+                control["hint"] = Json(c.hint);
+            if (c.kind == "dropdown") {
+                Json items = Json::array();
+                for (const std::string &item : c.items)
+                    items.push(Json(item));
+                control["items"] = std::move(items);
+            }
+            for (const auto &[field, value] : {std::pair{"min", c.min}, std::pair{"max", c.max}, std::pair{"step", c.step}})
+                if (value)
+                    control[field] = Json(*value);
+            controls.push(std::move(control));
+        }
+        answers.push(Json::object({{"key", Json(d.key)},
+                                   {"values", std::move(values)},
+                                   {"button", Json(d.button)},
+                                   {"controls", std::move(controls)}}));
+    }
+    return answers;
 }
 
 }
@@ -103,6 +148,7 @@ void Api::documentChanged(application::DocumentId document)
     const application::EditSession *session = m_host.documents ? m_host.documents->session(document) : nullptr;
     if (!session)
         return;
+    m_groups.changed(document, m_writing ? &m_writingCaller : nullptr, *m_host.documents);
     const auto history = session->history();
     const std::string step = session->historyCursor() < history.size() ? history[session->historyCursor()].name : "";
     publish(Event{"document.changed", Json::object({{"document", Json(document.value)},
@@ -154,20 +200,19 @@ void Api::panelChanged(std::string_view panel)
 void Api::macroRan(application::DocumentId document, std::string_view file, std::string_view macro,
                    std::string_view outcome, const std::vector<DialogAnswer> &dialogs)
 {
-    Json answers = Json::array();
-    for (const DialogAnswer &d : dialogs) {
-        Json values = Json::object();
-        for (const auto &[name, value] : d.values)
-            if (!std::holds_alternative<std::monostate>(value))
-                values[name] = detail::dialogValueJson(value);
-        answers.push(Json::object({{"key", Json(d.key)}, {"values", std::move(values)}, {"button", Json(d.button)}}));
-    }
     publish(Event{"macro.ran", Json::object({{"document", Json(document.value)},
                                              {"file", Json(file)},
                                              {"macro", Json(macro)},
                                              {"outcome", Json(outcome)},
                                              {"ok", Json(outcome == "applied")},
-                                             {"dialogs", std::move(answers)}})},
+                                             {"dialogs", detail::dialogsJson(dialogs)}})},
+            document);
+}
+
+void Api::documentSaved(application::DocumentId document, std::string_view path, std::uint64_t revision)
+{
+    publish(Event{"document.saved",
+                  Json::object({{"document", Json(document.value)}, {"path", Json(path)}, {"revision", Json(revision)}})},
             document);
 }
 
