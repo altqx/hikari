@@ -784,10 +784,9 @@ class ShellTest : public QObject {
         };
         return walk(window->contentItem());
     }
-    bool headerAndMenuButtonInView(QObject *dock)
+    bool headerAndMenuButtonInside(QObject *dock, const QRectF &view)
     {
         const QString panel = dock->property("uniqueName").toString();
-        const QRectF view(0, 0, window->width(), window->height());
         const auto inView = [&](QQuickItem *it) {
             return it && it->isVisible() && it->window() == window
                 && view.contains(it->mapRectToScene(QRectF(0, 0, it->width(), it->height())));
@@ -797,7 +796,7 @@ class ShellTest : public QObject {
             if (!inView(tab))
                 return false;
             QTest::mouseClick(window, Qt::LeftButton, {}, tab->mapToScene(QPointF(tab->width() / 2, tab->height() / 2)).toPoint());
-            if (!QTest::qWaitFor([&] { return dockHeader(panel) != nullptr; }))
+            if (!QTest::qWaitFor([&] { return dockHeader(panel) != nullptr; }, 1000))
                 return false;
         }
         QQuickItem *header = dockHeader(panel);
@@ -7958,19 +7957,9 @@ private slots:
             QVERIFY2(entry && entry->property("enabled").toBool(), qPrintable(panel));
         }
 
-        QStringList unreachable;
-        for (QObject *dock : std::as_const(docked)) {
-            QVariant inSideBar;
-            QVERIFY(QMetaObject::invokeMethod(root, "inSideBar", Q_RETURN_ARG(QVariant, inSideBar),
-                                              Q_ARG(QVariant, QVariant::fromValue(dock))));
-            if (!inSideBar.toBool() && !dock->property("isFloating").toBool() && !headerAndMenuButtonInView(dock))
-                unreachable << dock->property("uniqueName").toString();
-        }
-        QVERIFY2(unreachable.isEmpty(), qPrintable(unreachable.join(u", ")));
-
         const QString spelling = QStringLiteral("Spellchecker");
         QVERIFY(names.contains(spelling));
-        QVERIFY(headerAndMenuButtonInView(item<QObject>("spellDock")));
+        QVERIFY(QMetaObject::invokeMethod(item<QObject>("spellDock"), "setAsCurrentTab"));
         QQuickItem *header = nullptr;
         QTRY_VERIFY((header = dockHeader(spelling)) != nullptr);
         QTRY_VERIFY2(header->height() >= header->implicitHeight(),
@@ -7981,84 +7970,71 @@ private slots:
                  qPrintable(QStringLiteral("%1 < %2").arg(place.height()).arg(minimum.height())));
     }
 
-    void everyDockedPanelsMenuButtonStaysInTheWindow_data()
+    void everyPanelsMenuButtonStaysInTheDockingArea_data()
     {
+        QTest::addColumn<QString>("arrangement");
         QTest::addColumn<QSize>("size");
-        QTest::addColumn<bool>("defaultSideBars");
-        for (const QSize size : {QSize(1280, 800), QSize(1366, 768)})
-            for (const bool bars : {false, true})
-                QTest::addRow("%dx%d %s", size.width(), size.height(), bars ? "default side bars" : "no side bars") << size << bars;
+        for (const char *name : {"Editing", "Timing", "Translation", "Typesetting", "Karaoke", "NodeEffects"})
+            for (const QSize size : {QSize(1280, 800), QSize(1366, 768)})
+                QTest::addRow("%s %dx%d", name, size.width(), size.height()) << QString::fromLatin1(name) << size;
     }
 
-    void everyDockedPanelsMenuButtonStaysInTheWindow()
+    void everyPanelsMenuButtonStaysInTheDockingArea()
     {
+        QFETCH(QString, arrangement);
         QFETCH(QSize, size);
-        QFETCH(bool, defaultSideBars);
         window->resize(size);
         QTRY_COMPARE(window->size(), size);
         QObject *root = engine->rootObjects().first();
         QTRY_VERIFY(root->property("sideBarsLoaded").toBool());
-        if (defaultSideBars)
-            QVERIFY(QMetaObject::invokeMethod(root, "resetSideBars"));
+        QVERIFY(QMetaObject::invokeMethod(root, "resetSideBars"));
         QVERIFY(application->openFile(episode));
+        if (arrangement == QLatin1String("Translation"))
+            QVERIFY(application->turnOnTranslationMode());
+        else if (arrangement == QLatin1String("NodeEffects"))
+            QVERIFY(QMetaObject::invokeMethod(root, "setNodeEffects", Q_ARG(QVariant, true)));
+        else
+            QVERIFY(application->workspaceLayout().applyPreset(arrangement));
         QVERIFY(application->openReference(original));
-        QTRY_VERIFY(item<QObject>("referenceDock")->property("isOpen").toBool());
-        const QVariantList docks = root->property("dockList").value<QJSValue>().toVariant().toList();
-        QStringList shown;
-        for (const QVariant &value : docks) {
-            auto *dock = value.value<QObject *>();
-            QVariant available;
-            QVERIFY(QMetaObject::invokeMethod(root, "panelAvailable", Q_RETURN_ARG(QVariant, available),
-                                              Q_ARG(QVariant, QVariant::fromValue(dock))));
-            if (!available.toBool())
-                continue;
+        for (const char *name : {"referenceDock", "spellDock", "logDock"}) {
+            auto *dock = item<QObject>(name);
             QVERIFY(QMetaObject::invokeMethod(root, "showPanel", Q_ARG(QVariant, QVariant::fromValue(dock))));
-            QVariant inSideBar;
-            QVERIFY(QMetaObject::invokeMethod(root, "inSideBar", Q_RETURN_ARG(QVariant, inSideBar),
-                                              Q_ARG(QVariant, QVariant::fromValue(dock))));
-            if (inSideBar.toBool())
-                continue;
-            QTRY_VERIFY2(dock->property("isOpen").toBool(), qPrintable(dock->property("uniqueName").toString()));
-            if (!dock->property("isFloating").toBool())
-                shown << dock->property("uniqueName").toString();
+            QTRY_VERIFY2(dock->property("isOpen").toBool(), name);
         }
-        QVERIFY(shown.contains(QStringLiteral("Reference")) && shown.contains(QStringLiteral("Spellchecker"))
-                && shown.contains(QStringLiteral("Log")));
         QTRY_COMPARE(window->size(), size);
-        const QRectF inside(0, 0, window->width(), window->height());
-        QStringList outside;
-        QStringList checked;
-        const auto buttonsOutside = [&] {
-            outside.clear();
-            checked.clear();
-            for (const QString &panel : std::as_const(shown)) {
-                QQuickItem *header = dockHeader(panel);
-                QQuickItem *button = header ? findItem(header, QStringLiteral("dockMenuButton")) : nullptr;
-                if (!button || !button->isVisible() || button->window() != window)
+        QQuickItem *area = item("dockingArea");
+        QStringList docked;
+        QStringList unreachable;
+        const auto reach = [&] {
+            docked.clear();
+            unreachable.clear();
+            const QRectF areaRect = area->mapRectToScene(QRectF(0, 0, area->width(), area->height()));
+            for (const QVariant &value : root->property("dockList").value<QJSValue>().toVariant().toList()) {
+                auto *dock = value.value<QObject *>();
+                QVariant inSideBar;
+                QMetaObject::invokeMethod(root, "inSideBar", Q_RETURN_ARG(QVariant, inSideBar), Q_ARG(QVariant, QVariant::fromValue(dock)));
+                if (!dock->property("isOpen").toBool() || dock->property("isFloating").toBool() || inSideBar.toBool())
                     continue;
-                checked << panel;
-                const QRectF at = button->mapRectToScene(QRectF(0, 0, button->width(), button->height()));
-                if (!inside.contains(at))
-                    outside << QStringLiteral("%1 at %2,%3").arg(panel).arg(at.x()).arg(at.y());
+                const QString panel = dock->property("uniqueName").toString();
+                docked << panel;
+                if (!headerAndMenuButtonInside(dock, areaRect))
+                    unreachable << panel;
             }
-            return outside;
+            return unreachable.isEmpty();
         };
         const auto places = [&] {
-            QQuickItem *area = item("dockingArea");
             auto *docking = engine->singletonInstance<ui::Docking *>("Hikari.Ui", "Docking");
             const QSize least = docking->layoutMinimumSize(area->property("uniqueName").toString());
-            QString out = QStringLiteral("window %1x%2 area %3x%4 layout minimum %5x%6;").arg(window->width()).arg(window->height())
-                              .arg(area->width()).arg(area->height()).arg(least.width()).arg(least.height());
-            for (const QString &panel : std::as_const(shown)) {
-                const QRect place = ui::Docking().placeInLayout(panel);
-                const QSize minimum = ui::Docking().minimumSize(panel);
-                out += QStringLiteral(" %1 %2x%3+%4+%5 min %6x%7;").arg(panel).arg(place.width()).arg(place.height())
-                           .arg(place.x()).arg(place.y()).arg(minimum.width()).arg(minimum.height());
+            QString out = QStringLiteral("area %1x%2 layout minimum %3x%4;").arg(area->width()).arg(area->height())
+                              .arg(least.width()).arg(least.height());
+            for (const QString &panel : std::as_const(docked)) {
+                const QRect place = docking->placeInLayout(panel);
+                out += QStringLiteral(" %1 %2x%3+%4+%5;").arg(panel).arg(place.width()).arg(place.height()).arg(place.x()).arg(place.y());
             }
             return out;
         };
-        QTRY_VERIFY2(buttonsOutside().isEmpty(), qPrintable(outside.join(u"; ") + QLatin1Char('\n') + places()));
-        QVERIFY2(checked.contains(QStringLiteral("Grid")) && checked.size() >= 4, qPrintable(checked.join(u", ")));
+        QTRY_VERIFY2(reach(), qPrintable(unreachable.join(u", ") + QLatin1Char('\n') + places()));
+        QVERIFY2(docked.contains(QStringLiteral("Spellchecker")) && docked.size() >= 4, qPrintable(docked.join(u", ")));
     }
 
     void panelMenusReadInTheOrderTheyShow()
