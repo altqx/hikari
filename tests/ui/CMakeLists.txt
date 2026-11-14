@@ -492,17 +492,21 @@ foreach(mode offscreen xvfb)
         set_tests_properties(hikari_ui_side_bars_shell_tests.${mode} PROPERTIES TIMEOUT 300)
     endif()
 endforeach()
+# Qt splits the platform string at each ":", so a Windows drive path cannot follow configfile=.
+foreach(screen screen-2560x1440.json screen-1280x800.json)
+    configure_file(${screen} ${CMAKE_CURRENT_BINARY_DIR}/${screen} COPYONLY)
+endforeach()
 add_test(NAME hikari_ui_side_bars_shell_tests.screen2560
     COMMAND $<TARGET_FILE:hikari_ui_side_bars_shell_tests> theShippedMiddleKeepsItsAudioAndEditorControls
             swapPutsTheAiSideBarOnTheOtherEdge f6GoesFromTheLeftSideBarThroughTheMiddleToTheRight
             aNarrowWindowShrinksTheSideBarsBeforeTheMiddle)
 set_tests_properties(hikari_ui_side_bars_shell_tests.screen2560 PROPERTIES
-    ENVIRONMENT "QT_QPA_PLATFORM=offscreen:configfile=${CMAKE_CURRENT_SOURCE_DIR}/screen-2560x1440.json"
+    ENVIRONMENT "QT_QPA_PLATFORM=offscreen:configfile=screen-2560x1440.json" WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
     LABELS "qttest;offscreen" TIMEOUT 300)
 add_test(NAME hikari_ui_side_bars_shell_tests.screen1280
     COMMAND $<TARGET_FILE:hikari_ui_side_bars_shell_tests> aScreenTooNarrowForBothShowsOneSideBarAtATime)
 set_tests_properties(hikari_ui_side_bars_shell_tests.screen1280 PROPERTIES
-    ENVIRONMENT "QT_QPA_PLATFORM=offscreen:configfile=${CMAKE_CURRENT_SOURCE_DIR}/screen-1280x800.json"
+    ENVIRONMENT "QT_QPA_PLATFORM=offscreen:configfile=screen-1280x800.json" WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
     LABELS "qttest;offscreen" TIMEOUT 300)
 hikari_add_qttest(hikari_ui_single_instance_tests SOURCES single_instance_tests.cpp LIBRARIES hikari_composition)
 hikari_add_qttest(hikari_ui_user_folder_tests SOURCES user_folder_tests.cpp LIBRARIES hikari_composition)

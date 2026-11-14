@@ -93,6 +93,8 @@ public:
     Q_INVOKABLE void buildsArrangement(const QString &name);
     Q_INVOKABLE bool restoreSaved();
     Q_INVOKABLE bool save();
+    // A hidden window's layout lists every panel as closed, so it is never saved over the shown one.
+    void setWindowHidden(bool hidden) { m_windowHidden = hidden; }
     Q_INVOKABLE bool saveForQuit();
     // The file keeps `active`, another window's arrangement (ADR 0025); this window keeps its own.
     bool saveForQuit(const WorkspaceArrangement &active);
@@ -262,6 +264,7 @@ private:
     bool m_restoring = false;
     bool m_loaded = false;
     bool m_quitting = false;
+    bool m_windowHidden = false;
     bool m_fileLocked = false;
     bool m_menuHasFocus = false;
     bool m_modalOpen = false;
