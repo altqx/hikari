@@ -912,8 +912,16 @@ class ShellTest : public QObject {
         if (!view || !panels || !QMetaObject::invokeMethod(view, "open")
             || !QTest::qWaitFor([&] { return view->property("opened").toBool(); }))
             return {};
-        press(Qt::Key_Down);
-        press(Qt::Key_Down);
+        const auto atPanels = [&] {
+            const auto entries = menuItems(view);
+            const int index = view->property("currentIndex").toInt();
+            return index >= 0 && index < entries.size() && entries[index]->property("subMenu").value<QObject *>() == panels;
+        };
+        for (int presses = 0; !atPanels(); ++presses) {
+            if (presses == 10)
+                return {};
+            press(Qt::Key_Down);
+        }
         press(Qt::Key_Right);
         if (!QTest::qWaitFor([&] { return panels->property("opened").toBool(); }))
             return {};
