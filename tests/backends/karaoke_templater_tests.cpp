@@ -31,7 +31,6 @@
 #include <map>
 #include <optional>
 #include <set>
-#include <sstream>
 #include <string>
 #include <vector>
 
@@ -333,7 +332,7 @@ TEST_F(KaraokeTemplater, KaraOKDeparturesDifferFromUpstreamKaraOK)
 {
     const QString dir = karaOKDir() + QStringLiteral("/departures");
     const QStringList documents = corpus(dir);
-    ASSERT_EQ(documents.size(), 16);
+    ASSERT_EQ(documents.size(), 15);
     for (const QString &name : documents) {
         SCOPED_TRACE(name.toStdString());
         const QString document = dir + QLatin1Char('/') + name;
@@ -343,31 +342,6 @@ TEST_F(KaraokeTemplater, KaraOKDeparturesDifferFromUpstreamKaraOK)
         EXPECT_EQ(builtin, textOf(readBytes(goldenOf(document))));
         EXPECT_NE(templated(document, upstreamKaraOK(), kUpstreamKaraOKApply), builtin);
     }
-}
-
-TEST_F(KaraokeTemplater, AFuricharReadingSitsAboveTheBaseLine)
-{
-    const auto bytes = editedCorpus(QStringLiteral("karaok/departures/furichar-positions.ass"),
-                                    {{"{\\an5\\pos($center,$middle)}$top/$bottom/", "!$smiddle!/!$ltop!/!$sheight!"}});
-    const std::string out = templatedBytes(bytes, builtinScript());
-    ASSERT_FALSE(out.empty());
-    int readings = 0;
-    std::istringstream lines(out);
-    for (std::string line; std::getline(lines, line);) {
-        constexpr std::string_view reading = ",Default-furigana,,0,0,0,fx,";
-        const auto at = line.find(reading);
-        if (!line.starts_with("Dialogue: ") || at == std::string::npos || line.find("\\pos") != std::string::npos)
-            continue;
-        SCOPED_TRACE(line);
-        std::istringstream fields(line.substr(at + reading.size()));
-        double middle = 0, top = 0, height = 0;
-        char slash = 0;
-        fields >> middle >> slash >> top >> slash >> height;
-        EXPECT_NEAR(middle, top - height / 2, 0.05);
-        EXPECT_LT(middle, top);
-        ++readings;
-    }
-    EXPECT_EQ(readings, 6) << out;
 }
 
 TEST_F(KaraokeTemplater, LnKaraKanjiposIn322ModeIsAProblemNamingKaraOKMode)

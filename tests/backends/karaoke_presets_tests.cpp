@@ -513,7 +513,6 @@ const std::set<std::pair<QString, QString>> kKaraOKDepartures = {
     {QStringLiteral("12-word-wipe.ass"), QStringLiteral("fixture-thai.ass")},
     {QStringLiteral("13-letter-cascade.ass"), QStringLiteral("fixture-thai.ass")},
     {QStringLiteral("14-letter-shimmer.ass"), QStringLiteral("fixture-thai.ass")},
-    {QStringLiteral("15-furigana-rise.ass"), QStringLiteral("fixture-karaok.ass")},
     {QStringLiteral("19-line-gradient.ass"), QStringLiteral("fixture-thai.ass")},
     {QStringLiteral("20-thai-fade.ass"), QStringLiteral("fixture-thai.ass")},
 };

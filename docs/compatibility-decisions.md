@@ -296,10 +296,6 @@ In karaOK mode, `char`, `lchar`, `$ci`, `$slen`, `$llen` and `$len` count graphe
 
 Q161's seventh defect, text before the first `\k` shifting the character-to-syllable map, can't happen in HikariSub: that text belongs to syllable 1 for upstream and the built-in alike (corpus `karaok/leading-text.ass`), so it is not a departure.
 
-## CX7-karaok-furichar-positions
-
-Each furigana character of a `furichar` template sits above its kanji, as a whole `furi` reading does: `$top`, `$middle`, `$bottom` and `$y` come from the base Line's top. Upstream never marked the characters as furigana, so they took the base Line's own positions and each reading landed on its kanji. Corpus: `tests/backends/karaoke-corpus/karaok/departures/furichar-positions.ass`. [#1176](https://github.com/altqx/hikari/issues/1176), coordinator ruling 2026-11-16.
-
 ## TH5d1-stock-additions
 
 In 3.2.2 mode, karaOK's additions that don't clash with 3.2.2's syntax still work. Each one replaces a 3.2.2 warning or error:
@@ -365,7 +361,7 @@ A stock KE3 preset inserted into a karaOK Document has its Effects translated: `
 
 ## TH5d3-karaok-preset-departures
 
-The karaOK presets give upstream karaOK's bytes (with upstream's `ln/kara.lua`) except where they reach a defect HikariSub already fixed. Word pop and Word wipe on Lines with non-ASCII text reach TH5c-karaok-word-positions: upstream found the word's syllables by bytes and gave the last word the Line's absolute times. Letter cascade, Letter shimmer, Line gradient and Thai fade on Thai Lines reach TH5c-karaok-graphemes: upstream split `กิ` and `น้ำ` into code points. Furigana rise on the furigana Line reaches CX7-karaok-furichar-positions. Their goldens come from the built-in. [TH5d3 #833](https://github.com/altqx/hikari/issues/833). Thai support by Jibrill.
+The karaOK presets give upstream karaOK's bytes (with upstream's `ln/kara.lua`) except where they reach a defect HikariSub already fixed. Word pop and Word wipe on Lines with non-ASCII text reach TH5c-karaok-word-positions: upstream found the word's syllables by bytes and gave the last word the Line's absolute times. Letter cascade, Letter shimmer, Line gradient and Thai fade on Thai Lines reach TH5c-karaok-graphemes: upstream split `กิ` and `น้ำ` into code points. Their goldens come from the built-in. [TH5d3 #833](https://github.com/altqx/hikari/issues/833). Thai support by Jibrill.
 
 ## TH5d3-editor-follows-mode
 
