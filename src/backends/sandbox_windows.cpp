@@ -150,13 +150,35 @@ std::wstring quoted(const QString &path)
     return L"\"" + QDir::toNativeSeparators(path).toStdWString() + L"\"";
 }
 
+std::wstring userSid()
+{
+    HANDLE token = nullptr;
+    if (!OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token))
+        return {};
+    DWORD size = 0;
+    GetTokenInformation(token, TokenUser, nullptr, 0, &size);
+    std::vector<BYTE> user(size);
+    std::wstring out;
+    LPWSTR text = nullptr;
+    if (size && GetTokenInformation(token, TokenUser, user.data(), size, &size) &&
+        ConvertSidToStringSidW(reinterpret_cast<TOKEN_USER *>(user.data())->User.Sid, &text)) {
+        out = text;
+        LocalFree(text);
+    }
+    CloseHandle(token);
+    return out;
+}
+
 HDESK privateDesktop(std::wstring *name)
 {
     static std::atomic<unsigned> made = 0;
     *name = L"HikariSub.Agents." + std::to_wstring(GetCurrentProcessId()) + L"." + std::to_wstring(++made);
+    const std::wstring user = userSid();
+    if (user.empty())
+        return nullptr;
+    const std::wstring sddl = L"D:P(A;;GA;;;" + user + L")S:(ML;;NW;;;LW)";
     PSECURITY_DESCRIPTOR descriptor = nullptr;
-    if (!ConvertStringSecurityDescriptorToSecurityDescriptorW(L"D:P(A;;GA;;;OW)S:(ML;;NW;;;LW)", SDDL_REVISION_1,
-                                                              &descriptor, nullptr))
+    if (!ConvertStringSecurityDescriptorToSecurityDescriptorW(sddl.c_str(), SDDL_REVISION_1, &descriptor, nullptr))
         return nullptr;
     SECURITY_ATTRIBUTES attributes{sizeof attributes, descriptor, FALSE};
     const HDESK desktop = CreateDesktopW(name->c_str(), nullptr, nullptr, 0, GENERIC_ALL, &attributes);
