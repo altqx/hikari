@@ -635,6 +635,7 @@ class ShellTest : public QObject {
     Q_OBJECT
 
     QTemporaryDir dir;
+    QTemporaryDir noLegacyHere;
     QString episode, original;
     app::Application *application = nullptr;
     QQmlApplicationEngine *engine = nullptr;
@@ -741,6 +742,12 @@ class ShellTest : public QObject {
     }
     QQuickItem *visualItem(const char *name) const { return findItem(window->contentItem(), QLatin1String(name)); }
     void widenForTheInspectorBar() { window->resize(2400, std::max(window->height(), 900)); }
+    bool timingBesideTheLineEditor()
+    {
+        auto *timing = item<QQuickItem>("timingDock");
+        return timing && QMetaObject::invokeMethod(item<QObject>("editorDock"), "addDockWidgetAsTab", Q_ARG(QQuickItem *, timing))
+               && QTest::qWaitFor([&] { return timing->property("isOpen").toBool(); });
+    }
     QRectF panelMenuRect() const
     {
         auto *list = qobject_cast<QQuickItem *>(named("panelOptionsMenu")->property("contentItem").value<QObject *>());
@@ -1026,6 +1033,9 @@ private slots:
     void initTestCase()
     {
         QVERIFY(dir.isValid());
+        QVERIFY(noLegacyHere.isValid());
+        qputenv("XDG_DATA_HOME", noLegacyHere.path().toUtf8());
+        qputenv("LOCALAPPDATA", noLegacyHere.path().toUtf8());
         // The theme would follow the platform's colour scheme; Unknown keeps the chosen theme.
         ui::theme::forceSystemScheme(Qt::ColorScheme::Unknown);
     }
@@ -3579,6 +3589,7 @@ private slots:
         };
         window->resize(1280, 800);
         QVERIFY(application->openFile(episode));
+        QVERIFY(named("styleManager"));
         auto *stack = item<QObject>("toastStack");
         stack->setProperty("fadeAfter", 600000);
         const auto box = [](const QString &title, const QString &text, const QString &severity,
@@ -16285,7 +16296,11 @@ private slots:
             save(QStringLiteral("empty-") + code);
 
             const auto presets = effects.presets();
-            QVERIFY(effects.addPreset(presets.back().toMap().value(QStringLiteral("index")).toInt()));
+            const auto palette = std::ranges::find_if(presets, [](const QVariant &p) {
+                return p.toMap().value(QStringLiteral("title")).toString() == QStringLiteral("Colour per line");
+            });
+            QVERIFY(palette != presets.end());
+            QVERIFY(effects.addPreset(palette->toMap().value(QStringLiteral("index")).toInt()));
             QTRY_VERIFY(visualItem("node_palette") != nullptr);
             canvas->setProperty("refusal", QString());
             QTRY_VERIFY(canvas->property("zoom").toDouble() < 1.0);
@@ -16893,7 +16908,7 @@ private slots:
         };
         const auto windowNamed = [&](const char *name) { return qobject_cast<QQuickWindow *>(item<QObject>(name)); };
         const auto showAndShoot = [&](const char *name, const char *method, const QVariantList &args, const QString &file) {
-            auto *w = windowNamed(name);
+            auto *w = lazyWindow(name);
             QVERIFY2(w, name);
             themed([&](const QString &theme) {
                 if (args.isEmpty())
@@ -20933,10 +20948,11 @@ private slots:
         QVERIFY(application->openFile(writeFile(dir, "plugin-shots.ass", events.constData())));
         const QString dock = QStringLiteral("plugin:com.example.line-tools/timing-check");
         const auto at = [&](const char *prefix) { return (QLatin1String(prefix) + dock).toUtf8(); };
+        QTRY_VERIFY(engine->rootObjects().first()->property("sideBarsLoaded").toBool());
         QTRY_VERIFY(named(at("panelShow").constData()));
         QVERIFY(QMetaObject::invokeMethod(named(at("panelShow").constData()), "triggered"));
         QQuickItem *body = nullptr;
-        QTRY_VERIFY((body = item(at("pluginPanelBody_").constData())) && findItem(body, QStringLiteral("pluginWidget_chart")));
+        QTRY_VERIFY((body = visualItem(at("pluginPanelBody_").constData())) && findItem(body, QStringLiteral("pluginWidget_chart")));
         auto &settings = *application->settingsStore();
         settings.setValue(QStringLiteral("appearance.followSystem"), false);
         auto *root = engine->rootObjects().first();
@@ -24882,6 +24898,9 @@ private slots:
         QTRY_VERIFY(panel && panel->window() != window);
         QQuickWindow *floating = panel->window();
         floating->resize(460, 760);
+        QTRY_VERIFY(floating->isExposed());
+        floating->requestActivate();
+        QTRY_COMPARE(QGuiApplication::focusWindow(), floating);
         auto *tool = item<QObject>("automationTool");
         QVERIFY(QMetaObject::invokeMethod(tool, "record", Q_ARG(QVariant, QStringLiteral("Script shell-fixture.lua-1"))));
         auto *recorder = item("automationRecorder");
@@ -24911,7 +24930,7 @@ private slots:
         automation.dismissCard();
         auto *settingsDialog = settingsWindow();
         QVERIFY(QMetaObject::invokeMethod(settingsDialog, "openDialog", Q_ARG(QVariant, QStringLiteral("hotkeys")),
-                                          Q_ARG(QVariant, 7)));
+                                          Q_ARG(QVariant, 7), Q_ARG(QVariant, QVariant())));
         QTRY_VERIFY(settingsDialog->property("opened").toBool());
         QCOMPARE(application->hotkeys().filterMode(), 7);
         shoot(window, QStringLiteral("settings"));
@@ -31869,7 +31888,7 @@ private slots:
         auto &settings = *application->settingsStore();
         auto restore = qScopeGuard([&] { settings.setValue(QStringLiteral("appearance.theme"), QStringLiteral("dark")); });
         settings.setValue(QStringLiteral("appearance.followSystem"), false);
-        window->resize(1280, 1000);
+        widenForTheInspectorBar();
         auto &tools = application->visualTools();
         tools.setAllTagsFile({});
         QVERIFY(application->openFile(visualDocument(
@@ -32277,6 +32296,7 @@ private slots:
             QTRY_VERIFY(dialog->property("opened").toBool());
             showSettingsPage("appearance");
             QTRY_VERIFY(dialogItem("settingsDialog", "settingsPageAppearance")->isVisible());
+            QTRY_COMPARE(QGuiApplication::focusWindow(), qobject_cast<QQuickWindow *>(dialog));
             dialogItem("settingsDialog", "appearanceFollowSystem")->forceActiveFocus(Qt::TabFocusReason);
             QTRY_VERIFY(dialogItem("settingsDialog", "appearanceFollowSystem")->property("visualFocus").toBool());
             QTest::qWait(300);
@@ -32367,8 +32387,7 @@ private slots:
             QTRY_COMPARE(markedPanels(), QStringList{QStringLiteral("Grid")});
             QTest::qWait(200);
             QVERIFY(save(window->grabWindow(), QStringLiteral("grid"), theme));
-            QVERIFY(QMetaObject::invokeMethod(named("panelShowTiming"), "triggered"));
-            QTRY_VERIFY(item<QObject>("timingDock")->property("isOpen").toBool());
+            QVERIFY(timingBesideTheLineEditor());
             QQuickItem *timing = nullptr;
             QTRY_VERIFY((timing = dockHeader(QStringLiteral("Timing"))));
             QTRY_COMPARE(timing->property("count").toInt(), 2);
@@ -32420,6 +32439,7 @@ private slots:
             const char *subject = ui::theme::isHighContrast(code) ? "appearanceTheme_dark" : "accent_green";
             QQuickItem *control = dialogItem("settingsDialog", subject);
             QVERIFY2(control && control->isVisible(), subject);
+            QTRY_COMPARE(QGuiApplication::focusWindow(), qobject_cast<QQuickWindow *>(dialog));
             control->forceActiveFocus(Qt::TabFocusReason);
             QTRY_VERIFY2(control->property("visualFocus").toBool(), subject);
             QQuickItem *ring = control->property("background").value<QQuickItem *>()->findChild<QQuickItem *>(QStringLiteral("focusRing"));
@@ -32701,8 +32721,7 @@ private slots:
             QVERIFY(window->grabWindow()
                         .copy(cropOf(groupOf(grid)).united(cropOf(groupOf(reference))))
                         .save(prefix + QStringLiteral("bottom") + suffix));
-            QVERIFY(QMetaObject::invokeMethod(named("panelShowTiming"), "triggered"));
-            QTRY_VERIFY(item<QObject>("timingDock")->property("isOpen").toBool());
+            QVERIFY(timingBesideTheLineEditor());
             QQuickItem *timing = nullptr;
             QTRY_VERIFY((timing = dockHeader(QStringLiteral("Timing"))));
             QTRY_COMPARE(tabTitles(timing), (QStringList{QStringLiteral("Line editor"), QStringLiteral("Shift times")}));
@@ -35584,7 +35603,6 @@ private slots:
             QTest::qWait(300);
             QVERIFY(window->grabWindow().save(out + QLatin1Char('/') + file));
         };
-        const auto windowNamed = [&](const char *name) { return root->findChild<QQuickWindow *>(QLatin1String(name)); };
         const auto closeWindow = [&](QQuickWindow *window) {
             QVERIFY(window->close());
             QTRY_VERIFY(!window->isVisible());
@@ -35616,8 +35634,8 @@ private slots:
                                           std::pair{"update-aur-prerelease", release("aur", true, false)}}) {
                 QMetaObject::invokeMethod(&updates, "finished", Q_ARG(QString, QStringLiteral("available")), Q_ARG(QVariantMap, r),
                                           Q_ARG(bool, true));
-                grab(windowNamed("updateAvailable"), file(name));
-                closeWindow(windowNamed("updateAvailable"));
+                grab(lazyWindow("updateAvailable"), file(name));
+                closeWindow(lazyWindow("updateAvailable"));
             }
             {
                 std::unique_ptr<QQuickWindow> installing(installingWindow(QStringLiteral("1.4.0")));
@@ -35634,7 +35652,7 @@ private slots:
             QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
             QTRY_VERIFY(!settingsDialog->isVisible());
             QVERIFY(importLegacySettingsByHotkey());
-            auto *wizard = windowNamed("settingsImportDialog");
+            auto *wizard = lazyWindow("settingsImportDialog");
             QTRY_VERIFY(wizard && wizard->isVisible());
             QVERIFY(importer.addRoot(legacy.path()));
             QQuickItem *legacyRoot = nullptr;
@@ -35656,11 +35674,11 @@ private slots:
             QVERIFY(QMetaObject::invokeMethod(messageBox("settingsImportMessages"), "answer", Q_ARG(QVariant, QStringLiteral("rollback"))));
             closeWindow(wizard);
             QVERIFY(QMetaObject::invokeMethod(named("viewLayoutSaveAs"), "triggered"));
-            findItem(windowNamed("saveLayoutDialog")->contentItem(), QStringLiteral("saveLayoutName"))
+            findItem(lazyWindow("saveLayoutDialog")->contentItem(), QStringLiteral("saveLayoutName"))
                 ->setProperty("text", QStringLiteral("Subtitles only"));
-            grab(windowNamed("saveLayoutDialog"), file("save-layout"));
-            closeWindow(windowNamed("saveLayoutDialog"));
-            auto *manage = windowNamed("manageLayoutsDialog");
+            grab(lazyWindow("saveLayoutDialog"), file("save-layout"));
+            closeWindow(lazyWindow("saveLayoutDialog"));
+            auto *manage = lazyWindow("manageLayoutsDialog");
             QVERIFY(QMetaObject::invokeMethod(named("viewLayoutManage"), "triggered"));
             grab(manage, file("manage-layouts"));
             QVERIFY(QMetaObject::invokeMethod(manage, "startRename"));
@@ -35672,8 +35690,8 @@ private slots:
             closeWindow(manage);
             item("editingGrid")->forceActiveFocus();
             QVERIFY(QMetaObject::invokeMethod(named("movePanel"), "triggered"));
-            grab(windowNamed("placementWindow"), file("move-panel"));
-            closeWindow(windowNamed("placementWindow"));
+            grab(lazyWindow("placementWindow"), file("move-panel"));
+            closeWindow(lazyWindow("placementWindow"));
         }
     }
 
@@ -36227,13 +36245,10 @@ private slots:
         };
         window->resize(1280, 800);
         QVERIFY(application->openFile(episode));
+        settings.setValue(QStringLiteral("video.dontAskForBadResolution"), true);
         auto &video = application->video();
         video.openVideo(own.filePath(QStringLiteral("Frieren - 26 [1080p].mkv")));
         QTRY_VERIFY_WITH_TIMEOUT(video.hasVideo(), 20000);
-        auto *mismatch = named("mismatchDialog");
-        QTRY_VERIFY(mismatch->property("visible").toBool());
-        QVERIFY(QMetaObject::invokeMethod(mismatch, "reject"));
-        QTRY_VERIFY(!mismatch->property("visible").toBool());
         auto map = application->shiftTimesSettings().settingsMap();
         map.insert(QStringLiteral("whichTimes"), 1);
         application->shiftTimesSettings().setSettingsMap(map);
