@@ -26,6 +26,8 @@ set(HIKARI_XVFB_SUITES
     hikari_ui_shell_tests.panels2
     hikari_ui_shell_tests.panels3
     hikari_ui_shell_tests.hotkeys
+    hikari_ui_shell_tests.hotkeys2
+    hikari_ui_shell_tests.hotkeys3
     # On xcb the fullscreen rail took the hover from the picture.
     hikari_ui_shell_tests.video
     # A restart after Cancel stalled harper-ls under xcb.

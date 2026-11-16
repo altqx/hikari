@@ -27,6 +27,8 @@ hikari_add_qttest(hikari_ui_shell_tests SOURCES shell_tests.cpp next_file_folder
           translation11=findAndMultireplacerFollowLegacyOwnersThroughSetDefault
           translation12=audioPanelScreenshots
           hotkeys=hotkeysPageMapsAndOkInstalls
+          hotkeys2=audioBoxPlaybackModes
+          hotkeys3=audioTapToTime
           visual=visualToolRailCrosshairAndCopyCoordinates
           visual2=importLyricsAddsLinesToTheOpenFileInOneStep
           video=videoRecentListsAndDialogFolders
@@ -315,7 +317,9 @@ hikari_add_qttest(hikari_ui_shell_windows_tests SOURCES shell_windows_tests.cpp
           closing2=exitTakesAKeyInTheHotkeysSettingsAndItQuitsEveryWindow
           closing3=aSessionOpenedLaterShowsTheFirstWindowWithItsFloatingPanels
           moving=aTabDraggedOutOfEveryWindowOpensANewWindowHoldingIt
-          moving2=aTabDraggedOutNearAScreenCornerOpensWholeOnThatScreen)
+          moving2=aTabDraggedOutNearAScreenCornerOpensWholeOnThatScreen
+          moving3=theMoveCommandsWorkFromTheTabMenuAndTheirHotkeys
+          moving4=movingAWindowsLastTabAwayClosesIt)
 target_include_directories(hikari_ui_shell_windows_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
 target_compile_definitions(hikari_ui_shell_windows_tests PRIVATE
     HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures")
