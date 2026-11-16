@@ -293,6 +293,11 @@ QString UpdateChecker::versionLabel() const
     return QStringLiteral("%1 (%2)").arg(m_version, packageKindLabel(m_installer->environment().package.kind));
 }
 
+bool UpdateChecker::prereleaseBuild() const
+{
+    return a::isPrereleaseTag(m_version.toStdString());
+}
+
 bool UpdateChecker::stableOnlyOption() const
 {
     const PackageInfo &package = m_installer->environment().package;

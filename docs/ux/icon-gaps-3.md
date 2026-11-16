@@ -63,11 +63,10 @@ The manifest marks these `pending` until their card places them.
 | qc-notes | FA20 #577 | View › QC notes (panel 12), Subtitles › QC notes… (5241): the approved mockup's flag |
 | qc-done-reset | FA20 #577 | QC notes: Mark all as not done |
 | node-library | NE2 #424 | the graph menu's From the library |
-| compact | AI21 #725 | Compact conversation (the thread's ⋯ menu, the 97% offer) |
+| compact | AI21 #725 | Compact thread (the thread's ⋯ menu, the 97% offer) |
 | review-panel | AI2 #430 | View › Review panel, Show Review panel |
 | web-search | AI23 #742 | Let AI search the web, the composer's web toggle |
 | update | AI24 #744 | Update now for the sidecar and an agent's CLI |
-| network | PL5 #417 | Let plugins connect to the internet; MK1 #667's Turn off offline mode |
 | plugin-sandbox | PL7 #419 | a plugin whose helper runs in the OS sandbox |
 
 Reused for the open cards, no new role:
@@ -77,7 +76,7 @@ Reused for the open cards, no new role:
 | Reopen last tabs | PJ2 #770 | last-session |
 | Explorer: Open in a new tab; Show in folder; Move to trash; Rename; Project settings | PJ4 #772 | tab-new; show-in-folder; delete; edit (as every Rename); settings |
 | File › Quit | MW5 #629 | exit |
-| QC notes: Next, Previous; Add note; Import notes file…; from the clipboard; Export notes…; Remove all notes… | FA20 #577 | chevron-right, chevron-left; add; import; edit-paste; export; clear |
+| QC notes: Next, Previous; Add note; Import notes file…; from the clipboard; Export notes…; Delete all notes… | FA20 #577 | chevron-right, chevron-left; add; import; edit-paste; export; clear |
 | Node effects: Add node, New graph; Fit; Disconnect; Save to the library | NE2 #424 | add; zoom-reset; remove; save-as (as Save as preset…) |
 | Agent panel; New thread; Threads; Rename; Export as Markdown…; Delete; Stop, Stop all | AI7 #435, AI22 #730 | ai-assistant; add; history; edit; export; delete; media-stop |
 | Retry the turn, a failed compaction's Retry | AI7 #435, AI21 #725 | refresh (as the session bar's Retry) |

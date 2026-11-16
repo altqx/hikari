@@ -2270,19 +2270,19 @@ ScrollView {
                     objectName: "aiMcpCopyMenu"
                     ShellMenuItem {
                         objectName: "aiMcpCopyClaudeCode"
-                        iconRole: "run-script"
+                        iconRole: "edit-copy"
                         text: qsTr("Claude Code command")
                         onTriggered: mcpSection.copy("claudeCode")
                     }
                     ShellMenuItem {
                         objectName: "aiMcpCopyCodex"
-                        iconRole: "settings"
+                        iconRole: "edit-copy"
                         text: qsTr("Codex config.toml")
                         onTriggered: mcpSection.copy("codex")
                     }
                     ShellMenuItem {
                         objectName: "aiMcpCopyJson"
-                        iconRole: "network"
+                        iconRole: "edit-copy"
                         enabled: !!mcpSection.setup.json
                         text: qsTr("JSON with the address and token")
                         reason: qsTr("Holds your token; keep it private.")

@@ -130,20 +130,20 @@ FocusScope {
         editing = noEditor
         exporting = true
     }
-    function removeAll() {
+    function deleteAll() {
         if (!messages) {
             qcNotes.removeAll()
             return
         }
         messages.ask({
-            title: qsTr("Remove all notes"),
-            text: qsTr("Remove all %n QC note(s) from this file?", "", qcNotes.total),
+            title: qsTr("Delete all notes"),
+            text: qsTr("Delete all %n QC note(s) from this file?", "", qcNotes.total),
             detail: qsTr("Undo brings them back."),
             severity: "warning",
-            choices: [{ id: "remove", text: qsTr("Remove all"), role: "destructive" },
+            choices: [{ id: "delete", text: qsTr("Delete all"), role: "destructive" },
                       { id: "cancel", text: qsTr("Cancel"), role: "reject", isDefault: true }]
         }, id => {
-            if (id === "remove")
+            if (id === "delete")
                 qcNotes.removeAll()
         })
     }
@@ -478,7 +478,7 @@ FocusScope {
                 }
                 Button {
                     objectName: "qcNotesEmptyPaste"
-                    text: qsTr("Paste notes")
+                    text: qsTr("Import from the clipboard")
                     enabled: panel.qcNotes.editable && panel.qcNotes.clipboardHasNotes
                     onClicked: panel.importClipboard()
                 }
