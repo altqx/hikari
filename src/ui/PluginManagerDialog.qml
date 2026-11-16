@@ -816,11 +816,6 @@ DialogWindow {
             columnSpacing: 16
             rowSpacing: 4
             Layout.topMargin: 6
-            Fact { visible: market.listing.needs.length > 0; text: qsTr("Needs") }
-            Label {
-                visible: market.listing.needs.length > 0
-                text: qsTr("HikariSub %1 or later").arg(market.listing.needs)
-            }
             Fact { text: qsTr("Licence") }
             Label { text: market.listing.license; textFormat: Text.PlainText }
             Fact { text: qsTr("Updated") }
