@@ -2007,6 +2007,7 @@ FocusScope {
                       : notice.kind === "nothingToCompact" ? qsTr("There’s nothing to compact yet.")
                       : notice.kind === "searchUsedUp" ? qsTr("%1 has no searches left").arg(panel.serviceName(notice.item.service ?? ""))
                       : notice.kind === "searchKey" ? qsTr("%1 refused HikariSub’s key").arg(panel.serviceName(notice.item.service ?? ""))
+                      : panel.componentResult === "ready" ? qsTr("AI component is ready")
                       : qsTr("AI component isn’t ready")
             }
             Label {
