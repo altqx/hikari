@@ -635,6 +635,7 @@ class ShellTest : public QObject {
     Q_OBJECT
 
     QTemporaryDir dir;
+    QTemporaryDir noLegacyHere;
     QString episode, original;
     app::Application *application = nullptr;
     QQmlApplicationEngine *engine = nullptr;
@@ -1032,6 +1033,9 @@ private slots:
     void initTestCase()
     {
         QVERIFY(dir.isValid());
+        QVERIFY(noLegacyHere.isValid());
+        qputenv("XDG_DATA_HOME", noLegacyHere.path().toUtf8());
+        qputenv("LOCALAPPDATA", noLegacyHere.path().toUtf8());
         // The theme would follow the platform's colour scheme; Unknown keeps the chosen theme.
         ui::theme::forceSystemScheme(Qt::ColorScheme::Unknown);
     }
