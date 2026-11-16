@@ -27051,10 +27051,6 @@ do not work on comments</source>
         <source>Drag a panel here</source>
         <translation type="unfinished"></translation>
     </message>
-    <message>
-        <source>More options</source>
-        <translation>ตัวเลือกเพิ่มเติม</translation>
-    </message>
 </context>
 <context>
     <name>QGuiApplication</name>

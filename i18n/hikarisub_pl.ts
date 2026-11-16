@@ -27499,10 +27499,6 @@ nie działają na komentarzach</translation>
         <source>Drag a panel here</source>
         <translation type="unfinished"></translation>
     </message>
-    <message>
-        <source>More options</source>
-        <translation>Więcej opcji</translation>
-    </message>
 </context>
 <context>
     <name>QGuiApplication</name>
