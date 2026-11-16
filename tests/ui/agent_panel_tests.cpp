@@ -1,4 +1,6 @@
 #include "hikari/app/agent_controller.h"
+
+#include "qtest_parts.h"
 #include "hikari/app/ai_features.h"
 #include "hikari/app/ai_settings.h"
 #include "hikari/app/application.h"
@@ -1246,5 +1248,5 @@ private slots:
     }
 };
 
-QTEST_MAIN(AgentPanelTest)
+HIKARI_QTEST_MAIN_IN_PARTS(AgentPanelTest)
 #include "agent_panel_tests.moc"
