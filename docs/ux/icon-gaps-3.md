@@ -77,7 +77,7 @@ Reused for the open cards, no new role:
 | Reopen last tabs | PJ2 #770 | last-session |
 | Explorer: Open in a new tab; Show in folder; Move to trash; Rename; Project settings | PJ4 #772 | tab-new; show-in-folder; delete; edit (as every Rename); settings |
 | File › Quit | MW5 #629 | exit |
-| QC notes: Next, Previous; Add note; Import notes file…; from the clipboard; Export notes…; Remove all notes… | FA20 #577 | chevron-right, chevron-left; add; import; edit-paste; export; clear |
+| QC notes: Next, Previous; Add note; Import notes file…; from the clipboard; Export notes…; Delete all notes… | FA20 #577 | chevron-right, chevron-left; add; import; edit-paste; export; clear |
 | Node effects: Add node, New graph; Fit; Disconnect; Save to the library | NE2 #424 | add; zoom-reset; remove; save-as (as Save as preset…) |
 | Agent panel; New thread; Threads; Rename; Export as Markdown…; Delete; Stop, Stop all | AI7 #435, AI22 #730 | ai-assistant; add; history; edit; export; delete; media-stop |
 | Retry the turn, a failed compaction's Retry | AI7 #435, AI21 #725 | refresh (as the session bar's Retry) |

@@ -241,7 +241,7 @@ The panel's own items come first (`panelOwnItems`, `Main.qml:604-639`; `panelOwn
 | Audio, Line editor, Original text, Search, Log, Styles, Shift times, Template editor | none |
 | A plugin panel | the rows of its tree's `menu`, while the plugin runs ([plugins.md](../plugins.md), "Panels and dialogs") |
 
-Then `|` Move panel… (panel-move), Move tab left (tab-move-left), Move tab right (tab-move-right) (both only with 2+ tabs), Undock / Dock (panel-float / panel-dock), About <plugin>… (about; plugin panels whose plugin is installed), Close (tab-close), or "Close reference" for the Reference panel.
+Then `|` Move panel… (panel-move), Move tab left (tab-move-left), Move tab right (tab-move-right) (both only with 2+ tabs), Undock / Dock (panel-float / panel-dock), About <plugin> (about; plugin panels whose plugin is installed), Close (tab-close), or "Close reference" for the Reference panel.
 
 Items: 5 shared + 23 panel-owned = 28 (5–19 shown at a time).
 
@@ -623,6 +623,19 @@ The total is **28 menus with 257 items**: 16 right-click entries (two of them, R
 - **Automation.** A macro's Run shows its own shortcut and the run-script icon, with the shortcut rows in their own group. A right-click on a script row opens the script's ⋯ menu, and the Menu key opens it from the ⋯ button. In a script dialog, Presets ▸ takes dialog-memory, Delete preset ▸ sits behind a separator, and Reset takes restore-default.
 - **Reference tray.** The menu starts with Copy. Its “Also in” list comes from the right-clicked reference row, reads “title, line N”, and shows a disabled “No other occurrences” when there are none. Choosing a line in the edited document selects it there.
 - **Icons.** » (menu-more) marks only overflow; the layout switcher's dropdown uses a chevron. The visual tool rail's overflow rows are check items, as in the full-screen Tools menu.
+
+### What CX7 built: panels, tabs, Explorer and fonts
+
+[#810](https://github.com/altqx/hikari/issues/810) (the beta.4 audit, gate 1 approved 2026-11-16) built mockup sections 4–7 and 15 and the panel rows of rules 17–20:
+
+- **Explorer.** The row menu reads Open in a new tab, Open in this tab | Show in folder, Copy path | New subtitle file here, Rename | Move to the trash…, the destructive row alone at the end. The Explorer ⋯ holds the tool strip's New subtitle file, Refresh, Group by name and Show all files, so they stay reachable when a narrow header hides the strip.
+- **Empty tab bar.** Move tab to new window and Move tab to window ▸ show only on a tab; the empty bar is New tab, Save all, Switch to ▸ | Close all tabs again.
+- **QC notes ⋯.** Import notes from the clipboard… (it can ask Add or Replace) and Delete all notes…, alone after a separator; its question's button is “Delete all”. The empty panel's button is “Import from the clipboard”.
+- **Panel ⋯.** Show times / Show frames and both Video follow submenus are radio rows. The side bar rows read “Move left in the side bar” and “Move right in the side bar”, and Move out of the side bar takes side-bar-off. A missing plugin's last row is “Remove from the layout” (remove), as in View › Panels; “About %1” has no ellipsis. Shift+F10 opens a side bar icon's menu, like the Menu key.
+- **Floating window.** The title bar ⋯'s Close closes each panel of the window through `closePanel`, so a Reference panel unloads its reference and a missing plugin's panel leaves the layout.
+- **Fonts and layouts.** The Style editor's + takes the font picker's order (catalogues | New catalogue…, Add fonts from subtitles…), with New catalogue… always shown. The catalogue chooser, the layout presets and the saved layouts are radio rows. “Manage font catalogues” names its window; “Manage layouts” has no ellipsis, in the switcher and in View › Layout ▸. The Menu key and Shift+F10 open the tier menu of a saved layout or a font catalogue, and Manage layouts' ⋯ takes Tab focus.
+- **Tooltips.** Every panel-area ⋯ says “More options” (the panel's or row's name goes to `Accessible.description`), and the Styles » too. Keys are no longer written into labels: Manage layouts' Rename and the Style manager's Move up and Move down show their key in the tooltip only.
+- **Ledger.** `context_menus.txt` adds one “Panel options (<panel>)” section per panel with own rows and a “Document tab bar” section. These are listed while open, so they show only the rows that panel or the empty bar shows.
 
 Proposal for [#578](https://github.com/altqx/hikari/issues/578), from the 2026-10-31 decisions in the card and the round-2 decisions of 2026-11-02 (round 2 wins where they differ). The mockup draws each menu before and after in Light, Dark and high contrast with the theme roles and the icons from `src/ui/icons`: `cx2/index.html` and the screenshots on the orphan branch `evidence/w8-cx2`. The owner approved every menu and every flagged point on 2026-11-02 ([#578 decision](https://github.com/altqx/hikari/issues/578)); CX3–CX6 build this.
 

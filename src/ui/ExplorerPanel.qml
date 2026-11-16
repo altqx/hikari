@@ -411,6 +411,19 @@ FocusScope {
         }
         MenuSeparator {}
         ShellMenuItem {
+            objectName: "explorerMenuShowInFolder"
+            iconRole: "show-in-folder"
+            text: qsTr("Show in folder")
+            onTriggered: panel.showInFolder(panel.model.nativePath(rowMenu.row.path))
+        }
+        ShellMenuItem {
+            objectName: "explorerMenuCopyPath"
+            iconRole: "copy-path"
+            text: qsTr("Copy path")
+            onTriggered: panel.copyPath(panel.model.nativePath(rowMenu.row.path))
+        }
+        MenuSeparator {}
+        ShellMenuItem {
             objectName: "explorerMenuNewFile"
             iconRole: "new-subtitle-file"
             text: qsTr("New subtitle file here")
@@ -424,26 +437,14 @@ FocusScope {
             enabled: rowMenu.editable
             onTriggered: panel.startRename(rowMenu.at)
         }
+        MenuSeparator {}
         ShellMenuItem {
             objectName: "explorerMenuTrash"
             iconRole: "delete"
-            text: qsTr("Move to the trash")
+            text: qsTr("Move to the trash…")
             shortcutText: ShellMenus.keyText("Del")
             enabled: rowMenu.editable
             onTriggered: panel.trash(rowMenu.at)
-        }
-        MenuSeparator {}
-        ShellMenuItem {
-            objectName: "explorerMenuShowInFolder"
-            iconRole: "show-in-folder"
-            text: qsTr("Show in folder")
-            onTriggered: panel.showInFolder(panel.model.nativePath(rowMenu.row.path))
-        }
-        ShellMenuItem {
-            objectName: "explorerMenuCopyPath"
-            iconRole: "copy-path"
-            text: qsTr("Copy path")
-            onTriggered: panel.copyPath(panel.model.nativePath(rowMenu.row.path))
         }
     }
 }

@@ -28,15 +28,13 @@ ShellMenu {
         QT_TRANSLATE_NOOP("HikariSub.Workspace", "Typesetting"), QT_TRANSLATE_NOOP("HikariSub.Workspace", "Karaoke")]
     Instantiator {
         model: layoutMenu.presets
-        delegate: ShellMenuItem {
+        delegate: MenuRadioItem {
             id: presetItem
             required property string modelData
             objectName: layoutMenu.prefix + "Preset" + modelData
             text: qsTranslate("HikariSub.Workspace", modelData)
-            checkable: true
             checked: layoutMenu.layouts.layout.length === 0 && layoutMenu.layouts.preset === modelData
             enabled: !layoutMenu.layouts.locked
-            keepsMenuOpen: false
             onTriggered: {
                 checked = Qt.binding(() => layoutMenu.layouts.layout.length === 0 && layoutMenu.layouts.preset === modelData)
                 layoutMenu.presetChosen(modelData)
@@ -53,7 +51,7 @@ ShellMenu {
     }
     Instantiator {
         model: layoutMenu.layouts.savedLayouts
-        delegate: ShellMenuItem {
+        delegate: MenuRadioItem {
             required property var modelData
             required property int index
             objectName: layoutMenu.prefix + "Saved" + index
@@ -61,9 +59,7 @@ ShellMenu {
             iconRole: layoutMenu.layouts.hasProject ? (modelData.tier === "project" ? "project" : "mine") : ""
             reason: modelData.hidden ? qsTr("Hidden by the project’s copy") : ""
             enabled: modelData.usable && !modelData.hidden && !layoutMenu.layouts.locked
-            checkable: true
             checked: !modelData.hidden && layoutMenu.layouts.layout === modelData.name
-            keepsMenuOpen: false
             onTriggered: {
                 checked = Qt.binding(() => !modelData.hidden && layoutMenu.layouts.layout === modelData.name)
                 layoutMenu.savedLayoutChosen(modelData.name)
@@ -89,7 +85,7 @@ ShellMenu {
     ShellMenuItem {
         objectName: layoutMenu.prefix + "Manage"
         iconRole: "layout-manage"
-        text: qsTr("Manage layouts…")
+        text: qsTr("Manage layouts")
         enabled: layoutMenu.layouts.savedLayouts.length > 0
         onTriggered: layoutMenu.manageRequested()
     }

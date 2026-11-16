@@ -1422,10 +1422,10 @@ ApplicationWindow {
     // Item flags are functions: a new model list makes the Instantiator remake every entry, the open one too.
     function panelOwnItems(dock) {
         if (dock === editorDock)
-            return [{ name: "showTimes", text: qsTranslate("HikariSub.Editor", "Show times"), checkable: true, radio: true,
+            return [{ name: "showTimes", text: qsTranslate("HikariSub.Editor", "Show times"), radio: true,
                       checked: () => !root.editor.showFrames, enabled: () => root.editor.framesAvailable,
                       run: () => root.editor.showFrames = false },
-                    { name: "showFrames", text: qsTranslate("HikariSub.Editor", "Show frames"), checkable: true, radio: true,
+                    { name: "showFrames", text: qsTranslate("HikariSub.Editor", "Show frames"), radio: true,
                       checked: () => root.editor.showFrames, enabled: () => root.editor.framesAvailable,
                       run: () => root.editor.showFrames = true }]
         if (dock === referenceDock)
@@ -1458,16 +1458,26 @@ ApplicationWindow {
         if (dock === qcNotesDock)
             return [{ name: "qcNotesImport", text: qsTranslate("HikariSub.QcNotes", "Import notes file…"), iconRole: "import",
                       enabled: () => root.qcNotes.editable, run: () => qcNotesTool.openImport() },
-                    { name: "qcNotesImportClipboard", text: qsTranslate("HikariSub.QcNotes", "Import notes from the clipboard"),
+                    { name: "qcNotesImportClipboard", text: qsTranslate("HikariSub.QcNotes", "Import notes from the clipboard…"),
                       iconRole: "edit-paste", enabled: () => root.qcNotes.editable && root.qcNotes.clipboardHasNotes,
                       run: () => qcNotesTool.importClipboard() },
                     { name: "qcNotesExport", text: qsTranslate("HikariSub.QcNotes", "Export notes…"), iconRole: "export",
                       enabled: () => root.qcNotes.total > 0, run: () => qcNotesTool.openExport() },
                     { name: "qcNotesMarkAllNotDone", text: qsTranslate("HikariSub.QcNotes", "Mark all as not done"), iconRole: "qc-done-reset",
                       enabled: () => root.qcNotes.editable && root.qcNotes.sections.some(s => s.open < s.count),
-                      run: () => root.qcNotes.markAllNotDone() },
-                    { name: "qcNotesRemoveAll", text: qsTranslate("HikariSub.QcNotes", "Remove all notes…"), iconRole: "delete",
-                      enabled: () => root.qcNotes.editable && root.qcNotes.total > 0, run: () => qcNotesTool.removeAll() }]
+                      run: () => root.qcNotes.markAllNotDone() }]
+        if (dock === explorerDock)
+            return [{ name: "explorerNewFile", text: qsTranslate("HikariSub.Explorer", "New subtitle file"),
+                      iconRole: "new-subtitle-file", enabled: () => explorerTool.hasProject,
+                      run: () => explorerTool.startNewFile(explorerModel.folderAt(explorerModel.currentRow)) },
+                    { name: "explorerRefresh", text: qsTranslate("HikariSub.Explorer", "Refresh"), iconRole: "refresh",
+                      enabled: () => explorerTool.hasProject, run: () => explorerModel.refresh() },
+                    { name: "explorerGroupByName", text: qsTranslate("HikariSub.Explorer", "Group by name"), checkable: true,
+                      enabled: () => explorerTool.hasProject, checked: () => explorerModel.groupByName,
+                      run: () => explorerModel.groupByName = !explorerModel.groupByName },
+                    { name: "explorerAllFiles", text: qsTranslate("HikariSub.Explorer", "Show all files"), checkable: true,
+                      enabled: () => explorerTool.hasProject, checked: () => explorerModel.allFiles,
+                      run: () => explorerModel.allFiles = !explorerModel.allFiles }]
         if (root.isPluginDock(dock))
             return root.pluginPanelItems(dock)
         return []
@@ -1477,6 +1487,9 @@ ApplicationWindow {
             return [{ name: "automationClearRuns", text: qsTranslate("HikariSub.Automation", "Clear runs"),
                       iconRole: "remove", enabled: () => root.automation.runs.count > (root.automation.running ? 1 : 0),
                       run: () => root.automation.runs.clear() }]
+        if (dock === qcNotesDock)
+            return [{ name: "qcNotesDeleteAll", text: qsTranslate("HikariSub.QcNotes", "Delete all notes…"), iconRole: "delete",
+                      enabled: () => root.qcNotes.editable && root.qcNotes.total > 0, run: () => qcNotesTool.deleteAll() }]
         return []
     }
     function pluginPanelItems(dock) {
@@ -1586,7 +1599,8 @@ ApplicationWindow {
         Instantiator {
             id: panelOwnItemsInstantiator
             model: panelOptionsMenu.ownItems
-            delegate: panelOwnItem
+            delegate: panelOptionsMenu.ownItems.length > 0 && panelOptionsMenu.ownItems.every(item => item.radio === true)
+                      ? panelOwnChoice : panelOwnItem
             onObjectAdded: (index, object) => panelOptionsMenu.insertItem(index, object)
             onObjectRemoved: (index, object) => panelOptionsMenu.removeItem(object)
         }
@@ -1600,7 +1614,6 @@ ApplicationWindow {
                 command: modelData.command ?? ""
                 checkable: modelData.checkable === true
                 checked: typeof modelData.checked === "function" ? modelData.checked() : modelData.checked === true
-                keepsMenuOpen: checkable && modelData.radio !== true
                 enabled: typeof modelData.enabled === "function" ? modelData.enabled() : modelData.enabled !== false
                 onTriggered: {
                     if (!command || !root.hotkeyGesture(command, commandWindow))
@@ -1608,6 +1621,20 @@ ApplicationWindow {
                     // Clicking a checkable item assigns checked and breaks its binding; restore it.
                     if (typeof modelData.checked === "function")
                         checked = Qt.binding(() => modelData.checked())
+                }
+            }
+        }
+        Component {
+            id: panelOwnChoice
+            MenuRadioItem {
+                required property var modelData
+                objectName: "panelOptions_" + modelData.name
+                text: modelData.text
+                checked: modelData.checked()
+                enabled: modelData.enabled()
+                onTriggered: {
+                    modelData.run()
+                    checked = Qt.binding(() => modelData.checked())
                 }
             }
         }
@@ -1622,14 +1649,12 @@ ApplicationWindow {
                 title: modelData.text
                 Instantiator {
                     model: ownMenu.modelData.items
-                    delegate: ShellMenuItem {
+                    delegate: MenuRadioItem {
                         required property var modelData
                         required property int index
                         objectName: ownMenu.objectName + "_" + index
                         text: modelData.text
-                        checkable: true
                         checked: modelData.checked()
-                        keepsMenuOpen: false
                         onTriggered: {
                             modelData.run()
                             checked = Qt.binding(() => modelData.checked())
@@ -1685,7 +1710,7 @@ ApplicationWindow {
             onTriggered: root.moveToSideBar(panelOptionsMenu.dock, false)
         }
         ShellMenuItem {
-            iconRole: "panel-move"
+            iconRole: "side-bar-off"
             objectName: "panelOptionsOutOfSideBar"
             text: qsTranslate("HikariSub.Workspace", "Move out of the side bar")
             visible: panelOptionsMenu.sideBar !== ""
@@ -1696,7 +1721,7 @@ ApplicationWindow {
         ShellMenuItem {
             iconRole: "tab-move-left"
             objectName: "panelOptionsSideBarLeft"
-            text: qsTranslate("HikariSub.Workspace", "Move left")
+            text: qsTranslate("HikariSub.Workspace", "Move left in the side bar")
             visible: panelOptionsMenu.sideBarPanels.length > 1
             height: visible ? implicitHeight : 0
             enabled: !root.layoutLocked && panelOptionsMenu.sideBarIndex > 0
@@ -1705,7 +1730,7 @@ ApplicationWindow {
         ShellMenuItem {
             iconRole: "tab-move-right"
             objectName: "panelOptionsSideBarRight"
-            text: qsTranslate("HikariSub.Workspace", "Move right")
+            text: qsTranslate("HikariSub.Workspace", "Move right in the side bar")
             visible: panelOptionsMenu.sideBarPanels.length > 1
             height: visible ? implicitHeight : 0
             enabled: !root.layoutLocked && panelOptionsMenu.sideBarIndex < panelOptionsMenu.sideBarPanels.length - 1
@@ -1758,7 +1783,7 @@ ApplicationWindow {
                 required property var modelData
                 iconRole: "about"
                 objectName: "panelOptionsAbout"
-                text: qsTranslate("HikariSub.Plugins", "About %1…").arg(panelOptionsMenu.dock?.pluginName ?? "")
+                text: qsTranslate("HikariSub.Plugins", "About %1").arg(panelOptionsMenu.dock?.pluginName ?? "")
                 onTriggered: pluginManagerDialog.showPlugin(modelData.pluginId)
             }
             onObjectAdded: (index, object) => panelOptionsMenu.insertItem(panelOptionsMenu.count - 2, object)
@@ -1769,9 +1794,11 @@ ApplicationWindow {
             height: panelOptionsAbout.count > 0 ? implicitHeight : 0
         }
         ShellMenuItem {
-            iconRole: "tab-close"
+            readonly property bool forgets: root.isPluginDock(panelOptionsMenu.dock)
+                                            && panelOptionsMenu.dock.body?.status === "missing"
+            iconRole: forgets ? "remove" : "tab-close"
             objectName: "panelOptionsClose"
-            text: qsTranslate("HikariSub.Workspace", "Close")
+            text: forgets ? qsTr("Remove from the layout") : qsTranslate("HikariSub.Workspace", "Close")
             enabled: panelOptionsMenu.closable && !root.layoutLocked
             onTriggered: root.closePanel(panelOptionsMenu.dock)
         }

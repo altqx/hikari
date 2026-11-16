@@ -2,6 +2,7 @@
 #include "hikari/application/hotkeys.h"
 #include "docking.h"
 #include "explorer_model.h"
+#include "menu_rows.h"
 #include "settings_store.h"
 
 #include <QClipboard>
@@ -376,6 +377,46 @@ private slots:
         answer(QStringLiteral("trash"));
         QTRY_VERIFY(!QFileInfo::exists(at("ep02.ass")));
         QTRY_VERIFY(!row(QStringLiteral("ep02.ass")));
+    }
+
+    void theRowMenuEndsWithTheTrashAndThePanelMenuHoldsTheTools()
+    {
+        openProject();
+        QTRY_VERIFY(row(QStringLiteral("ep01.ass")));
+        QVERIFY(QMetaObject::invokeMethod(named("explorerTool"), "showMenu", Q_ARG(QVariant, rowOf(QStringLiteral("ep01.ass"))),
+                                          Q_ARG(QVariant, QVariant::fromValue(row(QStringLiteral("ep01.ass")))),
+                                          Q_ARG(QVariant, 4), Q_ARG(QVariant, 4)));
+        QObject *rowMenu = named("explorerRowMenu");
+        QTRY_VERIFY(rowMenu->property("visible").toBool());
+        QCOMPARE(menu_rows::shown(rowMenu),
+                 (QStringList{"explorerMenuOpenNewTab", "explorerMenuOpenHere", "|", "explorerMenuShowInFolder",
+                              "explorerMenuCopyPath", "|", "explorerMenuNewFile", "explorerMenuRename", "|", "explorerMenuTrash"}));
+        QCOMPARE(named("explorerMenuTrash")->property("text").toString(), QStringLiteral("Move to the trash…"));
+        QVERIFY(QMetaObject::invokeMethod(rowMenu, "close"));
+        QTRY_VERIFY(!rowMenu->property("visible").toBool());
+
+        QObject *panelMenu = named("panelOptionsMenu");
+        QVERIFY(QMetaObject::invokeMethod(panelMenu, "openFor", Q_ARG(QVariant, QVariant::fromValue(named("explorerDock"))),
+                                          Q_ARG(QVariant, QVariant::fromValue(named("explorerPanel")))));
+        QTRY_VERIFY(panelMenu->property("visible").toBool());
+        QCOMPARE(menu_rows::shown(panelMenu).mid(0, 5),
+                 (QStringList{"panelOptions_explorerNewFile", "panelOptions_explorerRefresh", "panelOptions_explorerGroupByName",
+                              "panelOptions_explorerAllFiles", "|"}));
+        QVERIFY(!model()->groupByName());
+        QVERIFY(QMetaObject::invokeMethod(named("panelOptions_explorerGroupByName"), "triggered"));
+        QTRY_VERIFY(model()->groupByName());
+        QVERIFY(QMetaObject::invokeMethod(named("panelOptions_explorerAllFiles"), "triggered"));
+        QTRY_VERIFY(row(QStringLiteral("ep01.mkv.lwi")));
+        QVERIFY(QMetaObject::invokeMethod(panelMenu, "close"));
+        QTRY_VERIFY(!panelMenu->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(panelMenu, "openFor", Q_ARG(QVariant, QVariant::fromValue(named("explorerDock"))),
+                                          Q_ARG(QVariant, QVariant::fromValue(named("explorerPanel")))));
+        QTRY_VERIFY(panelMenu->property("visible").toBool());
+        QVERIFY(named("panelOptions_explorerGroupByName")->property("checked").toBool());
+        QVERIFY(QMetaObject::invokeMethod(named("panelOptions_explorerNewFile"), "triggered"));
+        QVERIFY(QMetaObject::invokeMethod(panelMenu, "close"));
+        QQuickItem *field = nullptr;
+        QTRY_VERIFY((field = shown("explorerNewFileName")) && field->hasActiveFocus());
     }
 
     void newSubtitleFileHereCreatesAndOpensIt()
