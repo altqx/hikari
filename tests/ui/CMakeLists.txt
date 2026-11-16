@@ -181,7 +181,9 @@ hikari_add_spix_test(hikari_ui_clipboard_workflow SOURCES clipboard_workflow.cpp
 hikari_add_spix_test(hikari_ui_history_workflow SOURCES history_workflow.cpp LIBRARIES hikari_composition)
 hikari_add_spix_test(hikari_ui_audio_timing_workflow SOURCES audio_timing_workflow.cpp LIBRARIES hikari_composition)
 hikari_add_qttest(hikari_ui_close_review_tests SOURCES close_review_tests.cpp LIBRARIES hikari_composition)
-hikari_add_qttest(hikari_ui_file_session_popups_tests SOURCES file_session_popups_tests.cpp LIBRARIES hikari_composition)
+hikari_add_qttest(hikari_ui_file_session_popups_tests SOURCES file_session_popups_tests.cpp LIBRARIES hikari_composition
+    PARTS bars bars2=aFileGoneAfterItsBarKeepsTheBar)
+target_include_directories(hikari_ui_file_session_popups_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
 hikari_add_qttest(hikari_ui_cold_start_tests SOURCES cold_start_tests.cpp LIBRARIES hikari_composition)
 hikari_add_qttest(hikari_ui_grammar_tests SOURCES grammar_ui_tests.cpp LIBRARIES hikari_composition)
 target_compile_definitions(hikari_ui_grammar_tests PRIVATE HIKARI_HARPER_LS="${HIKARI_HARPER_LS}")
@@ -255,7 +257,9 @@ target_compile_definitions(hikari_ui_node_effects_controller_tests PRIVATE
     HIKARI_KARAOKE_PRESET_FIXTURES="${PROJECT_SOURCE_DIR}/tests/backends/karaoke-presets")
 target_include_directories(hikari_ui_node_effects_controller_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/ui")
 hikari_add_qttest(hikari_ui_template_editor_shell_tests SOURCES template_editor_shell_tests.cpp
-    LIBRARIES hikari_composition)
+    LIBRARIES hikari_composition
+    PARTS editing previews=aFileRunsNoCodeUntilTheUserPreviewsIt)
+target_include_directories(hikari_ui_template_editor_shell_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
 target_compile_definitions(hikari_ui_template_editor_shell_tests PRIVATE
     HIKARI_KARAOKE_CORPUS="${PROJECT_SOURCE_DIR}/tests/backends/karaoke-corpus")
 add_dependencies(hikari_ui_template_editor_shell_tests hikari_lua_helper hikari_automation_stage)
@@ -357,7 +361,9 @@ target_include_directories(hikari_ui_saved_layouts_tests PRIVATE "${PROJECT_SOUR
 target_compile_definitions(hikari_ui_saved_layouts_tests PRIVATE
     HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures")
 add_dependencies(hikari_ui_saved_layouts_tests hikari_media_helper hikari_media_fixtures)
-hikari_add_qttest(hikari_ui_line_editor_options_tests SOURCES line_editor_options_tests.cpp LIBRARIES hikari_composition)
+hikari_add_qttest(hikari_ui_line_editor_options_tests SOURCES line_editor_options_tests.cpp LIBRARIES hikari_composition
+    PARTS options buttons=tagButtonMovesFollowTheLayoutDirection)
+target_include_directories(hikari_ui_line_editor_options_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
 hikari_add_qttest(hikari_ui_update_checker_tests SOURCES update_checker_tests.cpp LIBRARIES hikari_composition)
 target_include_directories(hikari_ui_update_checker_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
 target_link_libraries(hikari_ui_update_checker_tests PRIVATE Hikari::sodium)
