@@ -789,6 +789,7 @@ void AiSettings::signOutCodex()
             m_codex.signedIn = false;
             m_codex.email.clear();
             m_codex.error.clear();
+            m_features.endAgent(QStringLiteral("codex"));
         }
         emit codexChanged();
     });

@@ -5,6 +5,7 @@
 
 #include "docking.h"
 #include "line_editor_controller.h"
+#include "qtest_parts.h"
 #include "settings_store.h"
 #include "tag_buttons_controller.h"
 
@@ -609,5 +610,5 @@ private slots:
     }
 };
 
-QTEST_MAIN(LineEditorOptionsTest)
+HIKARI_QTEST_MAIN_IN_PARTS(LineEditorOptionsTest)
 #include "line_editor_options_tests.moc"

@@ -436,6 +436,26 @@
         <translation>ปฏิเสธและบอกเอเจนต์…</translation>
     </message>
     <message>
+        <source>Withdrawn: the agent stopped waiting for your answer.</source>
+        <translation>ถอนแล้ว: เอเจนต์หยุดรอคำตอบของคุณ</translation>
+    </message>
+    <message>
+        <source>Withdrawn: the turn ended before you answered.</source>
+        <translation>ถอนแล้ว: รอบนี้จบก่อนที่คุณจะตอบ</translation>
+    </message>
+    <message>
+        <source>Withdrawn: you stopped the turn.</source>
+        <translation>ถอนแล้ว: คุณหยุดรอบนี้</translation>
+    </message>
+    <message>
+        <source>Withdrawn: you signed out of Codex.</source>
+        <translation>ถอนแล้ว: คุณออกจากระบบ Codex</translation>
+    </message>
+    <message>
+        <source>Withdrawn: the cost cap stopped the turn.</source>
+        <translation>ถอนแล้ว: เพดานค่าใช้จ่ายหยุดรอบนี้</translation>
+    </message>
+    <message>
         <source>The signing key changed. The installed copy was signed by key %1, and this one by key %2. Install it only if you trust that the author changed keys.</source>
         <translation type="unfinished">คีย์ลงนามเปลี่ยนไป สำเนาที่ติดตั้งไว้ลงนามด้วยคีย์ %1 และสำเนานี้ลงนามด้วยคีย์ %2 ติดตั้งเฉพาะเมื่อคุณเชื่อถือว่าผู้สร้างเปลี่ยนคีย์จริง</translation>
     </message>
@@ -546,8 +566,36 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Signed out of Codex. This session ended.</source>
+        <translation>ออกจากระบบ Codex แล้ว เซสชันนี้สิ้นสุดแล้ว</translation>
+    </message>
+    <message>
+        <source>AI component is ready</source>
+        <translation>คอมโพเนนต์ AI พร้อมแล้ว</translation>
+    </message>
+    <message>
+        <source>Getting the AI component: %1 of %2 MB</source>
+        <translation>กำลังรับคอมโพเนนต์ AI: %1 จาก %2 MB</translation>
+    </message>
+    <message>
+        <source>The AI component is ready. Send your message again.</source>
+        <translation>คอมโพเนนต์ AI พร้อมแล้ว ส่งข้อความของคุณอีกครั้ง</translation>
+    </message>
+    <message>
+        <source>The AI component didn’t download. Check your connection and try again.</source>
+        <translation>ดาวน์โหลดคอมโพเนนต์ AI ไม่สำเร็จ ตรวจสอบการเชื่อมต่อแล้วลองอีกครั้ง</translation>
+    </message>
+    <message>
+        <source>Agents need the AI component, which HikariSub downloads once.</source>
+        <translation>เอเจนต์ต้องใช้คอมโพเนนต์ AI ซึ่ง HikariSub ดาวน์โหลดเพียงครั้งเดียว</translation>
+    </message>
+    <message>
         <source>Not offered: HikariSub can’t open a private tools channel for it on this system.</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Get the AI component</source>
+        <translation>รับคอมโพเนนต์ AI</translation>
     </message>
     <message numerus="yes">
         <source>%n sub-agent(s)</source>
@@ -771,7 +819,7 @@
     </message>
     <message>
         <source>HikariSub is still getting the AI component, or it couldn’t start.</source>
-        <translation>HikariSub ยังดาวน์โหลดคอมโพเนนต์ AI อยู่ หรือเริ่มคอมโพเนนต์ไม่ได้</translation>
+        <translation type="vanished">HikariSub ยังดาวน์โหลดคอมโพเนนต์ AI อยู่ หรือเริ่มคอมโพเนนต์ไม่ได้</translation>
     </message>
     <message>
         <source>The search service answered %1. The answer goes on without searching the web.</source>
@@ -980,8 +1028,12 @@
         <translation>อุปกรณ์เอาต์พุต</translation>
     </message>
     <message>
+        <source>Audio settings</source>
+        <translation>การตั้งค่าเสียง</translation>
+    </message>
+    <message>
         <source>Audio settings…</source>
-        <translation>การตั้งค่าเสียง…</translation>
+        <translation type="vanished">การตั้งค่าเสียง…</translation>
     </message>
     <message>
         <source>Link the volume and stretch sliders</source>
@@ -1025,7 +1077,7 @@
     </message>
     <message>
         <source>Play 500 ms after the start time</source>
-        <translation>เล่นเสียง 500 มิลลิวินาทีหลังเวลาเริ่มต้น</translation>
+        <translation type="vanished">เล่นเสียง 500 มิลลิวินาทีหลังเวลาเริ่มต้น</translation>
     </message>
     <message>
         <source>Play to the end</source>
@@ -1065,7 +1117,7 @@
     </message>
     <message>
         <source>Enable / Disable automatic splitting of syllables</source>
-        <translation>เปิดหรือปิดการแบ่งพยางค์อัตโนมัติ</translation>
+        <translation type="vanished">เปิดหรือปิดการแบ่งพยางค์อัตโนมัติ</translation>
     </message>
     <message>
         <source>Auto-scroll</source>
@@ -1073,7 +1125,7 @@
     </message>
     <message>
         <source>Auto-scroll to the active line</source>
-        <translation>เลื่อนอัตโนมัติไปยังบรรทัดปัจจุบัน</translation>
+        <translation type="vanished">เลื่อนอัตโนมัติไปยังบรรทัดปัจจุบัน</translation>
     </message>
     <message>
         <source>Spectrum</source>
@@ -1098,7 +1150,7 @@
     </message>
     <message>
         <source>Play 500 ms before the start time</source>
-        <translation>เล่นเสียง 500 มิลลิวินาทีก่อนเวลาเริ่มต้น</translation>
+        <translation type="vanished">เล่นเสียง 500 มิลลิวินาทีก่อนเวลาเริ่มต้น</translation>
     </message>
     <message>
         <source>Play the first 500 ms</source>
@@ -1106,7 +1158,7 @@
     </message>
     <message>
         <source>Play 500 ms before the end time</source>
-        <translation>เล่นเสียง 500 มิลลิวินาทีก่อนเวลาสิ้นสุด</translation>
+        <translation type="vanished">เล่นเสียง 500 มิลลิวินาทีก่อนเวลาสิ้นสุด</translation>
     </message>
     <message>
         <source>Play the last 500 ms</source>
@@ -1114,7 +1166,7 @@
     </message>
     <message>
         <source>Play 500 ms after the end time</source>
-        <translation>เล่นเสียง 500 มิลลิวินาทีหลังเวลาสิ้นสุด</translation>
+        <translation type="vanished">เล่นเสียง 500 มิลลิวินาทีหลังเวลาสิ้นสุด</translation>
     </message>
     <message>
         <source>Play 500 ms after the end</source>
@@ -1210,11 +1262,11 @@
     </message>
     <message>
         <source>Waveform mode</source>
-        <translation>โหมดรูปคลื่น</translation>
+        <translation type="vanished">โหมดรูปคลื่น</translation>
     </message>
     <message>
         <source>Spectrum mode</source>
-        <translation>โหมดสเปกตรัม</translation>
+        <translation type="vanished">โหมดสเปกตรัม</translation>
     </message>
     <message>
         <source>Sync with video</source>
@@ -1222,7 +1274,7 @@
     </message>
     <message>
         <source>Sync the video and audio cursors</source>
-        <translation>ซิงค์เคอร์เซอร์วิดีโอและเสียง</translation>
+        <translation type="vanished">ซิงค์เคอร์เซอร์วิดีโอและเสียง</translation>
     </message>
     <message>
         <source>Speech</source>
@@ -1230,7 +1282,7 @@
     </message>
     <message>
         <source>More audio options</source>
-        <translation>ตัวเลือกเสียงเพิ่มเติม</translation>
+        <translation type="vanished">ตัวเลือกเสียงเพิ่มเติม</translation>
     </message>
     <message>
         <source>Go to selection start</source>
@@ -1299,6 +1351,10 @@ Output device: %2</source>
     <message>
         <source>Speech spectrum</source>
         <translation>สเปกตรัมเสียงพูด</translation>
+    </message>
+    <message>
+        <source>More options</source>
+        <translation>ตัวเลือกเพิ่มเติม</translation>
     </message>
     <message>
         <source>Zoom and volume sliders</source>
@@ -4134,6 +4190,10 @@ Output device: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Move to the trash…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Move the folder “%1” and everything in it to the trash?</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4868,8 +4928,8 @@ Output device: %2</source>
         <translation>เปลี่ยนชื่อ</translation>
     </message>
     <message>
-        <source>Catalogue tiers</source>
-        <translation type="unfinished"></translation>
+        <source>More options</source>
+        <translation>ตัวเลือกเพิ่มเติม</translation>
     </message>
     <message>
         <source>Load from a file</source>
@@ -5258,10 +5318,6 @@ Output device: %2</source>
     <message>
         <source>Style editor sample</source>
         <translation>ตัวอย่างในตัวแก้ไขสไตล์</translation>
-    </message>
-    <message>
-        <source>Manage catalogues</source>
-        <translation>จัดการแคตตาล็อก</translation>
     </message>
     <message>
         <source>No catalogues yet</source>
@@ -7065,11 +7121,11 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Play before the marker</source>
-        <translation>เล่นก่อนเครื่องหมาย</translation>
+        <translation type="vanished">เล่นก่อนเครื่องหมาย</translation>
     </message>
     <message>
         <source>Play after the marker</source>
-        <translation>เล่นหลังเครื่องหมาย</translation>
+        <translation type="vanished">เล่นหลังเครื่องหมาย</translation>
     </message>
     <message>
         <source>Play to the end</source>
@@ -7641,11 +7697,11 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Open subtitles</source>
-        <translation>เปิดคำบรรยาย</translation>
+        <translation type="vanished">เปิดคำบรรยาย</translation>
     </message>
     <message>
         <source>Open video</source>
-        <translation>เปิดวิดีโอ</translation>
+        <translation type="vanished">เปิดวิดีโอ</translation>
     </message>
     <message>
         <source>Play or pause</source>
@@ -7733,19 +7789,19 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Play first 500 ms</source>
-        <translation>เล่น 500 มิลลิวินาทีแรก</translation>
+        <translation type="vanished">เล่น 500 มิลลิวินาทีแรก</translation>
     </message>
     <message>
         <source>Play last 500 ms</source>
-        <translation>เล่น 500 มิลลิวินาทีสุดท้าย</translation>
+        <translation type="vanished">เล่น 500 มิลลิวินาทีสุดท้าย</translation>
     </message>
     <message>
         <source>Play 500 ms before</source>
-        <translation>เล่น 500 มิลลิวินาทีก่อนจุดเริ่มต้น</translation>
+        <translation type="vanished">เล่น 500 มิลลิวินาทีก่อนจุดเริ่มต้น</translation>
     </message>
     <message>
         <source>Play 500 ms after</source>
-        <translation>เล่น 500 มิลลิวินาทีหลังจุดสิ้นสุด</translation>
+        <translation type="vanished">เล่น 500 มิลลิวินาทีหลังจุดสิ้นสุด</translation>
     </message>
     <message>
         <source>Paste the selected text</source>
@@ -7837,7 +7893,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Change aspect ratio</source>
-        <translation>เปลี่ยนอัตราส่วนภาพ</translation>
+        <translation type="vanished">เปลี่ยนอัตราส่วนภาพ</translation>
     </message>
     <message>
         <source>5 seconds forward</source>
@@ -8162,6 +8218,42 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Perspective tracking…</source>
         <translation>การติดตามเพอร์สเปกทีฟ…</translation>
+    </message>
+    <message>
+        <source>Play before the mark</source>
+        <translation>เล่นก่อนเครื่องหมาย</translation>
+    </message>
+    <message>
+        <source>Play after the mark</source>
+        <translation>เล่นหลังเครื่องหมาย</translation>
+    </message>
+    <message>
+        <source>Play the first 500 ms</source>
+        <translation>เล่น 500 มิลลิวินาทีแรก</translation>
+    </message>
+    <message>
+        <source>Play the last 500 ms</source>
+        <translation>เล่น 500 มิลลิวินาทีสุดท้าย</translation>
+    </message>
+    <message>
+        <source>Play 500 ms before the start</source>
+        <translation>เล่น 500 มิลลิวินาทีก่อนจุดเริ่มต้น</translation>
+    </message>
+    <message>
+        <source>Play 500 ms after the end</source>
+        <translation>เล่น 500 มิลลิวินาทีหลังจุดสิ้นสุด</translation>
+    </message>
+    <message>
+        <source>Open subtitles…</source>
+        <translation>เปิดคำบรรยาย…</translation>
+    </message>
+    <message>
+        <source>Open video…</source>
+        <translation>เปิดวิดีโอ…</translation>
+    </message>
+    <message>
+        <source>Change aspect ratio…</source>
+        <translation>เปลี่ยนอัตราส่วนภาพ…</translation>
     </message>
     <message>
         <source>Apply motion data…</source>
@@ -10185,6 +10277,10 @@ Failed to copy %2 fonts.</source>
         <translation>เปิด</translation>
     </message>
     <message>
+        <source>Open %1</source>
+        <translation>เปิด %1</translation>
+    </message>
+    <message>
         <source>Remove subtitles from the editor</source>
         <translation>นำคำบรรยายออกจากตัวแก้ไข</translation>
     </message>
@@ -11702,7 +11798,7 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished">จากพรีเซ็ต</translation>
     </message>
     <message>
-        <source>From the library…</source>
+        <source>From the library</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -11986,10 +12082,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Graph menu</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Target: selected lines</source>
         <translation type="unfinished"></translation>
     </message>
@@ -12089,6 +12181,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Apply to the selected lines</source>
         <translation type="unfinished">นำไปใช้กับบรรทัดที่เลือก</translation>
+    </message>
+    <message>
+        <source>More options</source>
+        <translation>ตัวเลือกเพิ่มเติม</translation>
     </message>
     <message>
         <source>Only the lines selected in “Source lines” are regenerated; the others keep their output.</source>
@@ -12329,6 +12425,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Each syllable’s letters are cut into thin horizontal stripes, which fade in as it is sung.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>For karaoke lines</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -16527,8 +16627,8 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>%1 จาก %2</translation>
     </message>
     <message>
-        <source>About %1…</source>
-        <translation>เกี่ยวกับ %1…</translation>
+        <source>About %1</source>
+        <translation>เกี่ยวกับ %1</translation>
     </message>
     <message>
         <source>%1 rolled back to %2</source>
@@ -17088,8 +17188,8 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>นำเข้าไฟล์โน้ต…</translation>
     </message>
     <message>
-        <source>Import notes from the clipboard</source>
-        <translation>นำเข้าโน้ตจากคลิปบอร์ด</translation>
+        <source>Import notes from the clipboard…</source>
+        <translation>นำเข้าโน้ตจากคลิปบอร์ด…</translation>
     </message>
     <message>
         <source>Export notes…</source>
@@ -17100,7 +17200,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>ทำเครื่องหมายทั้งหมดว่ายังไม่เสร็จ</translation>
     </message>
     <message>
-        <source>Remove all notes…</source>
+        <source>Delete all notes…</source>
         <translation>ลบโน้ตทั้งหมด…</translation>
     </message>
     <message>
@@ -17184,11 +17284,11 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>อ่าน %1 ไม่ได้: %2</translation>
     </message>
     <message>
-        <source>Remove all notes</source>
+        <source>Delete all notes</source>
         <translation>ลบโน้ตทั้งหมด</translation>
     </message>
     <message numerus="yes">
-        <source>Remove all %n QC note(s) from this file?</source>
+        <source>Delete all %n QC note(s) from this file?</source>
         <translation>
             <numerusform>ลบโน้ต QC ทั้ง %n รายการออกจากไฟล์นี้หรือไม่</numerusform>
         </translation>
@@ -17198,7 +17298,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>เลิกทำเพื่อนำกลับมาได้</translation>
     </message>
     <message>
-        <source>Remove all</source>
+        <source>Delete all</source>
         <translation>ลบทั้งหมด</translation>
     </message>
     <message>
@@ -17304,8 +17404,8 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>เฉพาะไฟล์ ASS และ SSA เท่านั้นที่เก็บโน้ต QC ได้ บันทึกไฟล์นี้เป็น ASS เพื่อเพิ่มโน้ต</translation>
     </message>
     <message>
-        <source>Paste notes</source>
-        <translation>วางโน้ต</translation>
+        <source>Import from the clipboard</source>
+        <translation>นำเข้าจากคลิปบอร์ด</translation>
     </message>
     <message>
         <source>Notes start with a time: 3:24 - …
@@ -20356,24 +20456,16 @@ because it was edited.</source>
         <translation>ย้ายขึ้น</translation>
     </message>
     <message>
-        <source>Move up (Alt+Up)</source>
-        <translation>ย้ายขึ้น (Alt+Up)</translation>
-    </message>
-    <message>
         <source>Move down</source>
         <translation>ย้ายลง</translation>
-    </message>
-    <message>
-        <source>Move down (Alt+Down)</source>
-        <translation>ย้ายลง (Alt+Down)</translation>
     </message>
     <message>
         <source>Load from a file…</source>
         <translation>โหลดจากไฟล์…</translation>
     </message>
     <message>
-        <source>More</source>
-        <translation>เพิ่มเติม</translation>
+        <source>More options</source>
+        <translation>ตัวเลือกเพิ่มเติม</translation>
     </message>
     <message>
         <source>Move to top</source>
@@ -20409,10 +20501,6 @@ because it was edited.</source>
     </message>
     <message>
         <source>Mine</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Catalogue tiers</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -24446,12 +24534,16 @@ Styles deleted:
         <translation>ต้นทุนการเรนเดอร์</translation>
     </message>
     <message>
+        <source>Change aspect ratio…</source>
+        <translation>เปลี่ยนอัตราส่วนภาพ…</translation>
+    </message>
+    <message>
         <source>Exit full screen</source>
         <translation>ออกจากโหมดเต็มหน้าจอ</translation>
     </message>
     <message>
         <source>Escape</source>
-        <translation>Escape</translation>
+        <translation type="vanished">Escape</translation>
     </message>
     <message>
         <source>Full screen</source>
@@ -26556,8 +26648,8 @@ do not work on comments</source>
 <context>
     <name>HikariSub.Workspace</name>
     <message>
-        <source>%1 options</source>
-        <translation>ตัวเลือกของ %1</translation>
+        <source>More options</source>
+        <translation>ตัวเลือกเพิ่มเติม</translation>
     </message>
     <message>
         <source>Panels</source>
@@ -26660,12 +26752,12 @@ do not work on comments</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Move left</source>
-        <translation type="unfinished">ย้ายไปทางซ้าย</translation>
+        <source>Move left in the side bar</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Move right</source>
-        <translation type="unfinished">ย้ายไปทางขวา</translation>
+        <source>Move right in the side bar</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Reset side bars</source>
@@ -26892,8 +26984,8 @@ do not work on comments</source>
         <translation>รีเซ็ตเค้าโครงนี้</translation>
     </message>
     <message>
-        <source>Manage layouts…</source>
-        <translation>จัดการเค้าโครง…</translation>
+        <source>Manage layouts</source>
+        <translation>จัดการเค้าโครง</translation>
     </message>
     <message>
         <source>Save layout as</source>
@@ -26934,10 +27026,6 @@ do not work on comments</source>
     <message>
         <source>Cancel</source>
         <translation>ยกเลิก</translation>
-    </message>
-    <message>
-        <source>Manage layouts</source>
-        <translation>จัดการเค้าโครง</translation>
     </message>
     <message>
         <source>Delete layout</source>
@@ -27004,12 +27092,8 @@ do not work on comments</source>
         <translation>ใช้ไม่ได้: %1</translation>
     </message>
     <message>
-        <source>Layout tiers</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Rename (F2)</source>
-        <translation>เปลี่ยนชื่อ (F2)</translation>
+        <source>Rename</source>
+        <translation>เปลี่ยนชื่อ</translation>
     </message>
     <message>
         <source>Delete</source>
@@ -27026,10 +27110,6 @@ do not work on comments</source>
     <message>
         <source>Drag a panel here</source>
         <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>More options</source>
-        <translation>ตัวเลือกเพิ่มเติม</translation>
     </message>
 </context>
 <context>

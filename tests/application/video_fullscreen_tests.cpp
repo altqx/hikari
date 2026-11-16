@@ -31,12 +31,12 @@ TEST(VideoFullscreenMonitor, AnIndexTakesThatMonitor)
     EXPECT_EQ(fullscreenMonitor(0, {}, {0, 0, 800, 600}), -1);
 }
 
-TEST(VideoFullscreenMonitor, OneMenuEntryPerMonitorAfterTheFirst)
+TEST(VideoFullscreenMonitor, OneMenuEntryPerMonitorTheFirstIncluded)
 {
     EXPECT_EQ(fullscreenMonitorEntries(0), 0);
     EXPECT_EQ(fullscreenMonitorEntries(1), 0);
-    EXPECT_EQ(fullscreenMonitorEntries(2), 1);
-    EXPECT_EQ(fullscreenMonitorEntries(3), 2);
+    EXPECT_EQ(fullscreenMonitorEntries(2), 2);
+    EXPECT_EQ(fullscreenMonitorEntries(3), 3);
 }
 
 TEST(VideoFullscreenWindow, OwnedByTheMainWindowExceptOnWayland)

@@ -241,7 +241,7 @@ The panel's own items come first (`panelOwnItems`, `Main.qml:604-639`; `panelOwn
 | Audio, Line editor, Original text, Search, Log, Styles, Shift times, Template editor | none |
 | A plugin panel | the rows of its tree's `menu`, while the plugin runs ([plugins.md](../plugins.md), "Panels and dialogs") |
 
-Then `|` Move panel… (panel-move), Move tab left (tab-move-left), Move tab right (tab-move-right) (both only with 2+ tabs), Undock / Dock (panel-float / panel-dock), About <plugin>… (about; plugin panels whose plugin is installed), Close (tab-close), or "Close reference" for the Reference panel.
+Then `|` Move panel… (panel-move), Move tab left (tab-move-left), Move tab right (tab-move-right) (both only with 2+ tabs), Undock / Dock (panel-float / panel-dock), About <plugin> (about; plugin panels whose plugin is installed), Close (tab-close), or "Close reference" for the Reference panel.
 
 Items: 5 shared + 23 panel-owned = 28 (5–19 shown at a time).
 
@@ -635,6 +635,28 @@ The total is **28 menus with 257 items**: 16 right-click entries (two of them, R
 - **Strip » and Original text ».** Both take Tab focus and the tooltip “More options”, as does the tag list's ⋯. Text position ▸ is nine radio rows named as in the Grid (“Top left (\an7)” … “Middle centre (\an5)”), and so are the strip's picker and its tooltip. Original text » shows the bound keys. “Add a tag button…” takes the ellipsis, on the strip and in the » menu.
 - **Align and distribute ▸ and Phantom ▸.** Headings “Align” and “Distribute” carry the verb, so the rows read “Left edges” … “Vertically”; Settings › Shortcuts keeps the full names. The submenu takes align-distribute and the Phantom rows phantom-keep-start and phantom-keep-end.
 - **AI actions ▸.** One name for the submenu, the strip button and the command (no “…”: it opens a menu). Custom actions follow the built-in ones after a separator, and one that asks each time ends in “…”. “Edit actions” and “Add a model in Settings › AI” lose the ellipsis (rule 19.2). The command list says “Add QC note…”, as the menu does.
+
+### What CX7 built: video, audio and node effects
+
+[#810](https://github.com/altqx/hikari/issues/810) (gate 1, 2026-11-16) changed the area-B menus:
+
+- **Video.** Full screen on ▸ lists every monitor, Monitor 1 included, as radio rows; in full screen the current monitor is checked. Recently opened ▸ hides a heading whose list is empty and the separator between them, and the submenu itself when both lists are empty. Change aspect ratio… takes the ellipsis, and Settings › Shortcuts names it, Open video… and Open subtitles… the same way. Chapter times in the video menus have no brackets. Filters ▸ is listed in `context_menus.txt` and takes the menu's own `itemPrefix`.
+- **Audio.** Each play command has one name, the menu's, in the menus, the toolbar tooltips and Settings › Shortcuts. The bar's tooltips are the names of the rows they fold into (Waveform, Spectrum, Auto-scroll, Sync with video, Auto split), and the » tooltip is “More options”. Customise rows show or hide a button, so they show no key; Zoom and volume sliders takes audio-sliders and its heading is a `MenuHeading`. In Tap options, Snap to vocal onsets, Speed ▸ and Calibrate latency… are one group. The full-screen speaker's last row is “Audio settings” (no “…”: it opens Settings at a page, rule 19.2).
+- **Node effects.** The graph menu button shows ⋯ (panel-menu) with the tooltip “More options”. “From the library” opens a submenu, so it has no “…”, on the empty canvas button too. From a preset ▸ heads its first group “For karaoke lines”. The Export as template lines ▸ rows are plain actions with the export icon.
+- **Full screen bar.** The exit button's tooltip shows the bound key (Esc when none) through `bitmapTip`, and Shift+click sets its shortcut.
+
+### What CX7 built: panels, tabs, Explorer and fonts
+
+[#810](https://github.com/altqx/hikari/issues/810) (the beta.4 audit, gate 1 approved 2026-11-16) built mockup sections 4–7 and 15 and the panel rows of rules 17–20:
+
+- **Explorer.** The row menu reads Open in a new tab, Open in this tab | Show in folder, Copy path | New subtitle file here, Rename | Move to the trash…, the destructive row alone at the end. The Explorer ⋯ holds the tool strip's New subtitle file, Refresh, Group by name and Show all files, so they stay reachable when a narrow header hides the strip.
+- **Empty tab bar.** Move tab to new window and Move tab to window ▸ show only on a tab; the empty bar is New tab, Save all, Switch to ▸ | Close all tabs again.
+- **QC notes ⋯.** Import notes from the clipboard… (it can ask Add or Replace) and Delete all notes…, alone after a separator; its question's button is “Delete all”. The empty panel's button is “Import from the clipboard”.
+- **Panel ⋯.** Show times / Show frames and both Video follow submenus are radio rows. The side bar rows read “Move left in the side bar” and “Move right in the side bar”, and Move out of the side bar takes side-bar-off. A missing plugin's last row is “Remove from the layout” (remove), as in View › Panels; “About %1” has no ellipsis. Shift+F10 opens a side bar icon's menu, like the Menu key.
+- **Floating window.** The title bar ⋯'s Close closes each panel of the window through `closePanel`, so a Reference panel unloads its reference and a missing plugin's panel leaves the layout.
+- **Fonts and layouts.** The Style editor's + takes the font picker's order (catalogues | New catalogue…, Add fonts from subtitles…), with New catalogue… always shown. The catalogue chooser, the layout presets and the saved layouts are radio rows. “Manage font catalogues” names its window; “Manage layouts” has no ellipsis, in the switcher and in View › Layout ▸. The Menu key and Shift+F10 open the tier menu of a saved layout or a font catalogue, and Manage layouts' ⋯ takes Tab focus.
+- **Tooltips.** Every panel-area ⋯ says “More options” (the panel's or row's name goes to `Accessible.description`), and the Styles » too. Keys are no longer written into labels: Manage layouts' Rename and the Style manager's Move up and Move down show their key in the tooltip only.
+- **Ledger.** `context_menus.txt` adds one “Panel options (<panel>)” section per panel with own rows and a “Document tab bar” section. These are listed while open, so they show only the rows that panel or the empty bar shows.
 
 ### What CX7 built: Automation, Hikari AI and presets
 

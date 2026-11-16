@@ -223,9 +223,9 @@ QString codexAuthNotSaved(SecretWrite result)
 
 CodexLease::CodexLease(app::KeyStore &keys, QString codexHome) : m_keys(keys), m_home(std::move(codexHome)) {}
 
-QString CodexLease::authPath() const
+QString codexAuthPath(const QString &codexHome)
 {
-    return m_home + QStringLiteral("/auth.json");
+    return codexHome + QStringLiteral("/auth.json");
 }
 
 void CodexLease::acquire(std::function<void(QString error)> done)
@@ -244,12 +244,12 @@ void CodexLease::acquire(std::function<void(QString error)> done)
         const auto *json = std::get_if<std::string>(&result);
         const std::optional<CodexSession> stored = json ? sessionFromJson(*json) : std::nullopt;
         if (!stored) {
-            QFile::remove(authPath());
+            QFile::remove(codexAuthPath(m_home));
             return done(QStringLiteral("Sign in with ChatGPT for Codex in Settings first"));
         }
-        const std::optional<CodexSession> left = sessionFromCodexAuth(authPath());
+        const std::optional<CodexSession> left = sessionFromCodexAuth(codexAuthPath(m_home));
         if (!(left && left->accountId == stored->accountId)) {
-            const SecretWrite written = writeCodexAuth(authPath(), *stored);
+            const SecretWrite written = writeCodexAuth(codexAuthPath(m_home), *stored);
             if (written != SecretWrite::Saved)
                 return done(codexAuthNotSaved(written));
         }
@@ -271,15 +271,15 @@ void CodexLease::giveBack()
             return;
         const auto *json = std::get_if<std::string>(&result);
         const std::optional<CodexSession> stored = json ? sessionFromJson(*json) : std::nullopt;
-        const std::optional<CodexSession> refreshed = sessionFromCodexAuth(authPath());
+        const std::optional<CodexSession> refreshed = sessionFromCodexAuth(codexAuthPath(m_home));
         if (!stored || !refreshed || refreshed->accountId != stored->accountId || *refreshed == *stored) {
-            QFile::remove(authPath());
+            QFile::remove(codexAuthPath(m_home));
             return;
         }
         m_keys.write(kCodexSecret, sessionJson(*refreshed),
                      [this, alive](std::optional<app::KeyError> error) {
                          if (alive.lock() && !error && m_users == 0)
-                             QFile::remove(authPath());
+                             QFile::remove(codexAuthPath(m_home));
                      });
     });
 }
@@ -781,9 +781,26 @@ void AiSignIn::importCodex(const QString &authJsonPath, Done done)
 
 void AiSignIn::signOutCodex(std::function<void(std::optional<app::KeyError>)> done)
 {
-    m_keys.remove(kCodexSecret, [alive = std::weak_ptr(m_alive), done = std::move(done)](std::optional<app::KeyError> error) {
+    const QString lent = m_codexHome.isEmpty() ? QString() : codexAuthPath(m_codexHome);
+    m_keys.remove(kCodexSecret, [alive = std::weak_ptr(m_alive), done = std::move(done),
+                                 lent](std::optional<app::KeyError> error) {
+        if (error == app::KeyError::NotFound)
+            error.reset();
+        if (!error && !lent.isEmpty())
+            QFile::remove(lent);
         if (alive.lock())
-            done(error == app::KeyError::NotFound ? std::nullopt : error);
+            done(error);
+    });
+}
+
+void AiSignIn::lendsCodexTo(QString codexHome)
+{
+    m_codexHome = std::move(codexHome);
+    m_keys.read(kCodexSecret, [lent = codexAuthPath(m_codexHome)](app::KeyResult result) {
+        const auto *json = std::get_if<std::string>(&result);
+        const auto *error = std::get_if<app::KeyError>(&result);
+        if ((error && *error == app::KeyError::NotFound) || (json && !sessionFromJson(*json)))
+            QFile::remove(lent);
     });
 }
 

@@ -31,6 +31,7 @@
 #include <map>
 #include <optional>
 #include <set>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -332,7 +333,7 @@ TEST_F(KaraokeTemplater, KaraOKDeparturesDifferFromUpstreamKaraOK)
 {
     const QString dir = karaOKDir() + QStringLiteral("/departures");
     const QStringList documents = corpus(dir);
-    ASSERT_EQ(documents.size(), 15);
+    ASSERT_EQ(documents.size(), 16);
     for (const QString &name : documents) {
         SCOPED_TRACE(name.toStdString());
         const QString document = dir + QLatin1Char('/') + name;
@@ -342,6 +343,31 @@ TEST_F(KaraokeTemplater, KaraOKDeparturesDifferFromUpstreamKaraOK)
         EXPECT_EQ(builtin, textOf(readBytes(goldenOf(document))));
         EXPECT_NE(templated(document, upstreamKaraOK(), kUpstreamKaraOKApply), builtin);
     }
+}
+
+TEST_F(KaraokeTemplater, AFuricharReadingSitsAboveTheBaseLine)
+{
+    const auto bytes = editedCorpus(QStringLiteral("karaok/departures/furichar-positions.ass"),
+                                    {{"{\\an5\\pos($center,$middle)}$top/$bottom/", "!$smiddle!/!$ltop!/!$sheight!"}});
+    const std::string out = templatedBytes(bytes, builtinScript());
+    ASSERT_FALSE(out.empty());
+    int readings = 0;
+    std::istringstream lines(out);
+    for (std::string line; std::getline(lines, line);) {
+        constexpr std::string_view reading = ",Default-furigana,,0,0,0,fx,";
+        const auto at = line.find(reading);
+        if (!line.starts_with("Dialogue: ") || at == std::string::npos || line.find("\\pos") != std::string::npos)
+            continue;
+        SCOPED_TRACE(line);
+        std::istringstream fields(line.substr(at + reading.size()));
+        double middle = 0, top = 0, height = 0;
+        char slash = 0;
+        fields >> middle >> slash >> top >> slash >> height;
+        EXPECT_NEAR(middle, top - height / 2, 0.05);
+        EXPECT_LT(middle, top);
+        ++readings;
+    }
+    EXPECT_EQ(readings, 6) << out;
 }
 
 TEST_F(KaraokeTemplater, LnKaraKanjiposIn322ModeIsAProblemNamingKaraOKMode)
@@ -697,6 +723,17 @@ Comment: 0,0:00:00.00,0:00:05.00,Default,,0,0,0,template char,{\pos($x,$y)}
 Dialogue: 0,0:00:01.00,0:00:03.00,Default,,0,0,0,karaoke,{\k20}ka{\k20}ra{\k20}o{\k20}ke
 Dialogue: 0,0:00:04.00,0:00:06.00,Default,,0,0,0,karaoke,{\k20}ka{\k20}ra{\k20}ka{\k20}ra
 )";
+
+TEST_F(KaraokeTemplater, LineKaraOnAnUntaggedLineIsLineRelative)
+{
+    std::string document = kCharTemplateDocument;
+    document.replace(document.find("karaoke,{\\k20}ka{\\k20}ra{\\k20}o{\\k20}ke"), 39, "karaoke,no tags");
+    document.replace(document.find("0:00:01.00,0:00:03.00"), 21, "0:00:06.31,0:00:09.31");
+    hikari::application::EditSession session(hikari::core::loadAss(bytesOf(document)).document);
+    ASSERT_TRUE(apply(session, karaskelDir() + QStringLiteral("/untagged.lua"), "Kara times"));
+    EXPECT_EQ(stringsOf(report[QStringLiteral("times")]).join(u' ').toStdString(),
+              "0:0-0 1:0-5000 0:0-0 1:0-3000 0:0-0 1:0-200 2:200-400 3:400-600 4:600-800");
+}
 
 TEST_F(KaraokeTemplater, CharTemplatesMeasureEachTextOnceARun)
 {

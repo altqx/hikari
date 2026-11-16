@@ -559,7 +559,8 @@ private slots:
         QAccessibleInterface *menu = QAccessible::queryAccessibleInterface(childNamed(video, QStringLiteral("dockMenuButton")));
         QVERIFY(menu);
         QCOMPARE(menu->role(), QAccessible::Button);
-        QCOMPARE(menu->text(QAccessible::Name), QStringLiteral("Video options"));
+        QCOMPARE(menu->text(QAccessible::Name), QStringLiteral("More options"));
+        QCOMPARE(menu->text(QAccessible::Description), QStringLiteral("Video"));
         QVERIFY(menu->actionInterface());
         QVERIFY(menu->state().expandable);
         QVERIFY(!menu->state().expanded);
@@ -583,8 +584,9 @@ private slots:
         QCOMPARE(tab->role(), QAccessible::PageTab);
         QCOMPARE(tab->text(QAccessible::Name), QStringLiteral("Grid"));
         QVERIFY(tab->state().checked);
-        QCOMPARE(QAccessible::queryAccessibleInterface(childNamed(grid, QStringLiteral("dockMenuButton")))->text(QAccessible::Name),
-                 QStringLiteral("Grid options"));
+        QAccessibleInterface *gridMenu = QAccessible::queryAccessibleInterface(childNamed(grid, QStringLiteral("dockMenuButton")));
+        QCOMPARE(gridMenu->text(QAccessible::Name), QStringLiteral("More options"));
+        QCOMPARE(gridMenu->text(QAccessible::Description), QStringLiteral("Grid"));
     }
 
     void theMenuIsReachedByPointerAndKeyboard()

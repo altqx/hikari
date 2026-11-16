@@ -440,6 +440,26 @@
         <translation>Odmów i powiedz agentowi…</translation>
     </message>
     <message>
+        <source>Withdrawn: the agent stopped waiting for your answer.</source>
+        <translation>Wycofano: agent przestał czekać na odpowiedź.</translation>
+    </message>
+    <message>
+        <source>Withdrawn: the turn ended before you answered.</source>
+        <translation>Wycofano: tura skończyła się przed odpowiedzią.</translation>
+    </message>
+    <message>
+        <source>Withdrawn: you stopped the turn.</source>
+        <translation>Wycofano: zatrzymano turę.</translation>
+    </message>
+    <message>
+        <source>Withdrawn: you signed out of Codex.</source>
+        <translation>Wycofano: wylogowano z Codex.</translation>
+    </message>
+    <message>
+        <source>Withdrawn: the cost cap stopped the turn.</source>
+        <translation>Wycofano: limit kosztów zatrzymał turę.</translation>
+    </message>
+    <message>
         <source>The signing key changed. The installed copy was signed by key %1, and this one by key %2. Install it only if you trust that the author changed keys.</source>
         <translation type="unfinished">Klucz podpisu się zmienił. Zainstalowana kopia była podpisana kluczem %1, a ta kluczem %2. Instaluj ją tylko wtedy, gdy ufasz, że autor zmienił klucze.</translation>
     </message>
@@ -552,8 +572,36 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Signed out of Codex. This session ended.</source>
+        <translation>Wylogowano z Codex. Ta sesja się zakończyła.</translation>
+    </message>
+    <message>
+        <source>AI component is ready</source>
+        <translation>Komponent AI jest gotowy</translation>
+    </message>
+    <message>
+        <source>Getting the AI component: %1 of %2 MB</source>
+        <translation>Pobieranie komponentu AI: %1 z %2 MB</translation>
+    </message>
+    <message>
+        <source>The AI component is ready. Send your message again.</source>
+        <translation>Komponent AI jest gotowy. Wyślij wiadomość ponownie.</translation>
+    </message>
+    <message>
+        <source>The AI component didn’t download. Check your connection and try again.</source>
+        <translation>Nie udało się pobrać komponentu AI. Sprawdź połączenie i spróbuj ponownie.</translation>
+    </message>
+    <message>
+        <source>Agents need the AI component, which HikariSub downloads once.</source>
+        <translation>Agenci potrzebują komponentu AI, który HikariSub pobiera jeden raz.</translation>
+    </message>
+    <message>
         <source>Not offered: HikariSub can’t open a private tools channel for it on this system.</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Get the AI component</source>
+        <translation>Pobierz komponent AI</translation>
     </message>
     <message numerus="yes">
         <source>%n sub-agent(s)</source>
@@ -785,7 +833,7 @@
     </message>
     <message>
         <source>HikariSub is still getting the AI component, or it couldn’t start.</source>
-        <translation>HikariSub nadal pobiera komponent AI albo nie udało się go uruchomić.</translation>
+        <translation type="vanished">HikariSub nadal pobiera komponent AI albo nie udało się go uruchomić.</translation>
     </message>
     <message>
         <source>The search service answered %1. The answer goes on without searching the web.</source>
@@ -1000,8 +1048,12 @@
         <translation>Urządzenie wyjściowe</translation>
     </message>
     <message>
+        <source>Audio settings</source>
+        <translation>Ustawienia audio</translation>
+    </message>
+    <message>
         <source>Audio settings…</source>
-        <translation>Ustawienia audio…</translation>
+        <translation type="vanished">Ustawienia audio…</translation>
     </message>
     <message>
         <source>Link the volume and stretch sliders</source>
@@ -1045,7 +1097,7 @@
     </message>
     <message>
         <source>Play 500 ms after the start time</source>
-        <translation>Odtwórz 500 ms po czasie początkowym</translation>
+        <translation type="vanished">Odtwórz 500 ms po czasie początkowym</translation>
     </message>
     <message>
         <source>Play to the end</source>
@@ -1085,7 +1137,7 @@
     </message>
     <message>
         <source>Enable / Disable automatic splitting of syllables</source>
-        <translation>Włącz / Wyłącz automatyczne dzielenie sylab</translation>
+        <translation type="vanished">Włącz / Wyłącz automatyczne dzielenie sylab</translation>
     </message>
     <message>
         <source>Auto-scroll</source>
@@ -1093,7 +1145,7 @@
     </message>
     <message>
         <source>Auto-scroll to the active line</source>
-        <translation>Automatyczne przewijanie do aktywnej linijki</translation>
+        <translation type="vanished">Automatyczne przewijanie do aktywnej linijki</translation>
     </message>
     <message>
         <source>Spectrum</source>
@@ -1118,7 +1170,7 @@
     </message>
     <message>
         <source>Play 500 ms before the start time</source>
-        <translation>Odtwórz 500 ms przed czasem początkowym</translation>
+        <translation type="vanished">Odtwórz 500 ms przed czasem początkowym</translation>
     </message>
     <message>
         <source>Play the first 500 ms</source>
@@ -1126,7 +1178,7 @@
     </message>
     <message>
         <source>Play 500 ms before the end time</source>
-        <translation>Odtwórz 500 ms przed czasem końcowym</translation>
+        <translation type="vanished">Odtwórz 500 ms przed czasem końcowym</translation>
     </message>
     <message>
         <source>Play the last 500 ms</source>
@@ -1134,7 +1186,7 @@
     </message>
     <message>
         <source>Play 500 ms after the end time</source>
-        <translation>Odtwórz 500 ms po czasie końcowym</translation>
+        <translation type="vanished">Odtwórz 500 ms po czasie końcowym</translation>
     </message>
     <message>
         <source>Play 500 ms after the end</source>
@@ -1230,11 +1282,11 @@
     </message>
     <message>
         <source>Waveform mode</source>
-        <translation>Tryb przebiegu fali</translation>
+        <translation type="vanished">Tryb przebiegu fali</translation>
     </message>
     <message>
         <source>Spectrum mode</source>
-        <translation>Tryb spektrum</translation>
+        <translation type="vanished">Tryb spektrum</translation>
     </message>
     <message>
         <source>Sync with video</source>
@@ -1242,7 +1294,7 @@
     </message>
     <message>
         <source>Sync the video and audio cursors</source>
-        <translation>Synchronizuj kursory wideo i audio</translation>
+        <translation type="vanished">Synchronizuj kursory wideo i audio</translation>
     </message>
     <message>
         <source>Speech</source>
@@ -1250,7 +1302,7 @@
     </message>
     <message>
         <source>More audio options</source>
-        <translation>Więcej opcji audio</translation>
+        <translation type="vanished">Więcej opcji audio</translation>
     </message>
     <message>
         <source>Go to selection start</source>
@@ -1319,6 +1371,10 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>Speech spectrum</source>
         <translation>Spektrum mowy</translation>
+    </message>
+    <message>
+        <source>More options</source>
+        <translation>Więcej opcji</translation>
     </message>
     <message>
         <source>Zoom and volume sliders</source>
@@ -4206,6 +4262,10 @@ Urządzenie wyjściowe: %2</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Move to the trash…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Move the folder “%1” and everything in it to the trash?</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4960,8 +5020,8 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Zmień nazwę</translation>
     </message>
     <message>
-        <source>Catalogue tiers</source>
-        <translation type="unfinished"></translation>
+        <source>More options</source>
+        <translation>Więcej opcji</translation>
     </message>
     <message>
         <source>Load from a file</source>
@@ -5358,10 +5418,6 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>Style editor sample</source>
         <translation>Próbka edytora stylu</translation>
-    </message>
-    <message>
-        <source>Manage catalogues</source>
-        <translation>Zarządzaj katalogami</translation>
     </message>
     <message>
         <source>No catalogues yet</source>
@@ -7191,11 +7247,11 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Play before the marker</source>
-        <translation>Odtwórz przed znacznikiem</translation>
+        <translation type="vanished">Odtwórz przed znacznikiem</translation>
     </message>
     <message>
         <source>Play after the marker</source>
-        <translation>Odtwórz po znaczniku</translation>
+        <translation type="vanished">Odtwórz po znaczniku</translation>
     </message>
     <message>
         <source>Play to the end</source>
@@ -7767,11 +7823,11 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Open subtitles</source>
-        <translation>Otwórz napisy</translation>
+        <translation type="vanished">Otwórz napisy</translation>
     </message>
     <message>
         <source>Open video</source>
-        <translation>Otwórz wideo</translation>
+        <translation type="vanished">Otwórz wideo</translation>
     </message>
     <message>
         <source>Play or pause</source>
@@ -7859,19 +7915,19 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Play first 500 ms</source>
-        <translation>Odtwórz pierwsze 500 ms</translation>
+        <translation type="vanished">Odtwórz pierwsze 500 ms</translation>
     </message>
     <message>
         <source>Play last 500 ms</source>
-        <translation>Odtwórz ostatnie 500 ms</translation>
+        <translation type="vanished">Odtwórz ostatnie 500 ms</translation>
     </message>
     <message>
         <source>Play 500 ms before</source>
-        <translation>Odtwórz 500 ms przed</translation>
+        <translation type="vanished">Odtwórz 500 ms przed</translation>
     </message>
     <message>
         <source>Play 500 ms after</source>
-        <translation>Odtwórz 500 ms po</translation>
+        <translation type="vanished">Odtwórz 500 ms po</translation>
     </message>
     <message>
         <source>Paste the selected text</source>
@@ -7963,7 +8019,7 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Change aspect ratio</source>
-        <translation>Zmień proporcje obrazu</translation>
+        <translation type="vanished">Zmień proporcje obrazu</translation>
     </message>
     <message>
         <source>5 seconds forward</source>
@@ -8288,6 +8344,42 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Perspective tracking…</source>
         <translation>Śledzenie perspektywy…</translation>
+    </message>
+    <message>
+        <source>Play before the mark</source>
+        <translation>Odtwórz przed znacznikiem</translation>
+    </message>
+    <message>
+        <source>Play after the mark</source>
+        <translation>Odtwórz po znaczniku</translation>
+    </message>
+    <message>
+        <source>Play the first 500 ms</source>
+        <translation>Odtwórz pierwsze 500 ms</translation>
+    </message>
+    <message>
+        <source>Play the last 500 ms</source>
+        <translation>Odtwórz ostatnie 500 ms</translation>
+    </message>
+    <message>
+        <source>Play 500 ms before the start</source>
+        <translation>Odtwórz 500 ms przed początkiem</translation>
+    </message>
+    <message>
+        <source>Play 500 ms after the end</source>
+        <translation>Odtwórz 500 ms po końcu</translation>
+    </message>
+    <message>
+        <source>Open subtitles…</source>
+        <translation>Otwórz napisy…</translation>
+    </message>
+    <message>
+        <source>Open video…</source>
+        <translation>Otwórz wideo…</translation>
+    </message>
+    <message>
+        <source>Change aspect ratio…</source>
+        <translation>Zmień proporcje obrazu…</translation>
     </message>
     <message>
         <source>Apply motion data…</source>
@@ -10377,6 +10469,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Otwórz</translation>
     </message>
     <message>
+        <source>Open %1</source>
+        <translation>Otwórz %1</translation>
+    </message>
+    <message>
         <source>Remove subtitles from the editor</source>
         <translation>Usuń napisy z edytora</translation>
     </message>
@@ -11910,7 +12006,7 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation type="unfinished">Z presetu</translation>
     </message>
     <message>
-        <source>From the library…</source>
+        <source>From the library</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -12204,10 +12300,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Graph menu</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Target: selected lines</source>
         <translation type="unfinished"></translation>
     </message>
@@ -12311,6 +12403,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Apply to the selected lines</source>
         <translation type="unfinished">Zastosuj do zaznaczonych linijek</translation>
+    </message>
+    <message>
+        <source>More options</source>
+        <translation>Więcej opcji</translation>
     </message>
     <message>
         <source>Only the lines selected in “Source lines” are regenerated; the others keep their output.</source>
@@ -12551,6 +12647,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Each syllable’s letters are cut into thin horizontal stripes, which fade in as it is sung.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>For karaoke lines</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -16777,8 +16877,8 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>%1, z %2</translation>
     </message>
     <message>
-        <source>About %1…</source>
-        <translation>O wtyczce %1…</translation>
+        <source>About %1</source>
+        <translation>O wtyczce %1</translation>
     </message>
     <message>
         <source>%1 rolled back to %2</source>
@@ -17338,8 +17438,8 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Importuj plik notatek…</translation>
     </message>
     <message>
-        <source>Import notes from the clipboard</source>
-        <translation>Importuj notatki ze schowka</translation>
+        <source>Import notes from the clipboard…</source>
+        <translation>Importuj notatki ze schowka…</translation>
     </message>
     <message>
         <source>Export notes…</source>
@@ -17350,7 +17450,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Oznacz wszystkie jako niegotowe</translation>
     </message>
     <message>
-        <source>Remove all notes…</source>
+        <source>Delete all notes…</source>
         <translation>Usuń wszystkie notatki…</translation>
     </message>
     <message>
@@ -17450,11 +17550,11 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Nie można odczytać %1: %2</translation>
     </message>
     <message>
-        <source>Remove all notes</source>
+        <source>Delete all notes</source>
         <translation>Usuń wszystkie notatki</translation>
     </message>
     <message numerus="yes">
-        <source>Remove all %n QC note(s) from this file?</source>
+        <source>Delete all %n QC note(s) from this file?</source>
         <translation>
             <numerusform>Usunąć %n notatkę QC z tego pliku?</numerusform>
             <numerusform>Usunąć wszystkie %n notatki QC z tego pliku?</numerusform>
@@ -17466,7 +17566,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Cofnięcie je przywróci.</translation>
     </message>
     <message>
-        <source>Remove all</source>
+        <source>Delete all</source>
         <translation>Usuń wszystkie</translation>
     </message>
     <message>
@@ -17578,8 +17678,8 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Notatki QC można przechowywać tylko w plikach ASS i SSA. Zapisz ten plik jako ASS, aby dodać notatki.</translation>
     </message>
     <message>
-        <source>Paste notes</source>
-        <translation>Wklej notatki</translation>
+        <source>Import from the clipboard</source>
+        <translation>Importuj ze schowka</translation>
     </message>
     <message>
         <source>Notes start with a time: 3:24 - …
@@ -20704,24 +20804,16 @@ ponieważ została zmieniona.</translation>
         <translation>Przenieś w górę</translation>
     </message>
     <message>
-        <source>Move up (Alt+Up)</source>
-        <translation>Przenieś w górę (Alt+Up)</translation>
-    </message>
-    <message>
         <source>Move down</source>
         <translation>Przenieś w dół</translation>
-    </message>
-    <message>
-        <source>Move down (Alt+Down)</source>
-        <translation>Przenieś w dół (Alt+Down)</translation>
     </message>
     <message>
         <source>Load from a file…</source>
         <translation>Wczytaj z pliku…</translation>
     </message>
     <message>
-        <source>More</source>
-        <translation>Więcej</translation>
+        <source>More options</source>
+        <translation>Więcej opcji</translation>
     </message>
     <message>
         <source>Move to top</source>
@@ -20757,10 +20849,6 @@ ponieważ została zmieniona.</translation>
     </message>
     <message>
         <source>Mine</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Catalogue tiers</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -24870,12 +24958,16 @@ Usunięte style:
         <translation>Koszt renderowania</translation>
     </message>
     <message>
+        <source>Change aspect ratio…</source>
+        <translation>Zmień proporcje obrazu…</translation>
+    </message>
+    <message>
         <source>Exit full screen</source>
         <translation>Wyłącz pełny ekran</translation>
     </message>
     <message>
         <source>Escape</source>
-        <translation>Escape</translation>
+        <translation type="vanished">Escape</translation>
     </message>
     <message>
         <source>Full screen</source>
@@ -27004,8 +27096,8 @@ nie działają na komentarzach</translation>
 <context>
     <name>HikariSub.Workspace</name>
     <message>
-        <source>%1 options</source>
-        <translation>Opcje: %1</translation>
+        <source>More options</source>
+        <translation>Więcej opcji</translation>
     </message>
     <message>
         <source>Panels</source>
@@ -27108,12 +27200,12 @@ nie działają na komentarzach</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Move left</source>
-        <translation type="unfinished">Przesuń w lewo</translation>
+        <source>Move left in the side bar</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Move right</source>
-        <translation type="unfinished">Przesuń w prawo</translation>
+        <source>Move right in the side bar</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Reset side bars</source>
@@ -27340,8 +27432,8 @@ nie działają na komentarzach</translation>
         <translation>Resetuj ten układ</translation>
     </message>
     <message>
-        <source>Manage layouts…</source>
-        <translation>Zarządzaj układami…</translation>
+        <source>Manage layouts</source>
+        <translation>Zarządzaj układami</translation>
     </message>
     <message>
         <source>Save layout as</source>
@@ -27382,10 +27474,6 @@ nie działają na komentarzach</translation>
     <message>
         <source>Cancel</source>
         <translation>Anuluj</translation>
-    </message>
-    <message>
-        <source>Manage layouts</source>
-        <translation>Zarządzaj układami</translation>
     </message>
     <message>
         <source>Delete layout</source>
@@ -27452,12 +27540,8 @@ nie działają na komentarzach</translation>
         <translation>Nie można użyć: %1</translation>
     </message>
     <message>
-        <source>Layout tiers</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Rename (F2)</source>
-        <translation>Zmień nazwę (F2)</translation>
+        <source>Rename</source>
+        <translation>Zmień nazwę</translation>
     </message>
     <message>
         <source>Delete</source>
@@ -27474,10 +27558,6 @@ nie działają na komentarzach</translation>
     <message>
         <source>Drag a panel here</source>
         <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>More options</source>
-        <translation>Więcej opcji</translation>
     </message>
 </context>
 <context>

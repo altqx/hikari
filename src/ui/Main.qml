@@ -1422,10 +1422,10 @@ ApplicationWindow {
     // Item flags are functions: a new model list makes the Instantiator remake every entry, the open one too.
     function panelOwnItems(dock) {
         if (dock === editorDock)
-            return [{ name: "showTimes", text: qsTranslate("HikariSub.Editor", "Show times"), checkable: true, radio: true,
+            return [{ name: "showTimes", text: qsTranslate("HikariSub.Editor", "Show times"), radio: true,
                       checked: () => !root.editor.showFrames, enabled: () => root.editor.framesAvailable,
                       run: () => root.editor.showFrames = false },
-                    { name: "showFrames", text: qsTranslate("HikariSub.Editor", "Show frames"), checkable: true, radio: true,
+                    { name: "showFrames", text: qsTranslate("HikariSub.Editor", "Show frames"), radio: true,
                       checked: () => root.editor.showFrames, enabled: () => root.editor.framesAvailable,
                       run: () => root.editor.showFrames = true }]
         if (dock === referenceDock)
@@ -1458,16 +1458,26 @@ ApplicationWindow {
         if (dock === qcNotesDock)
             return [{ name: "qcNotesImport", text: qsTranslate("HikariSub.QcNotes", "Import notes file…"), iconRole: "import",
                       enabled: () => root.qcNotes.editable, run: () => qcNotesTool.openImport() },
-                    { name: "qcNotesImportClipboard", text: qsTranslate("HikariSub.QcNotes", "Import notes from the clipboard"),
+                    { name: "qcNotesImportClipboard", text: qsTranslate("HikariSub.QcNotes", "Import notes from the clipboard…"),
                       iconRole: "edit-paste", enabled: () => root.qcNotes.editable && root.qcNotes.clipboardHasNotes,
                       run: () => qcNotesTool.importClipboard() },
                     { name: "qcNotesExport", text: qsTranslate("HikariSub.QcNotes", "Export notes…"), iconRole: "export",
                       enabled: () => root.qcNotes.total > 0, run: () => qcNotesTool.openExport() },
                     { name: "qcNotesMarkAllNotDone", text: qsTranslate("HikariSub.QcNotes", "Mark all as not done"), iconRole: "qc-done-reset",
                       enabled: () => root.qcNotes.editable && root.qcNotes.sections.some(s => s.open < s.count),
-                      run: () => root.qcNotes.markAllNotDone() },
-                    { name: "qcNotesRemoveAll", text: qsTranslate("HikariSub.QcNotes", "Remove all notes…"), iconRole: "delete",
-                      enabled: () => root.qcNotes.editable && root.qcNotes.total > 0, run: () => qcNotesTool.removeAll() }]
+                      run: () => root.qcNotes.markAllNotDone() }]
+        if (dock === explorerDock)
+            return [{ name: "explorerNewFile", text: qsTranslate("HikariSub.Explorer", "New subtitle file"),
+                      iconRole: "new-subtitle-file", enabled: () => explorerTool.hasProject,
+                      run: () => explorerTool.startNewFile(explorerModel.folderAt(explorerModel.currentRow)) },
+                    { name: "explorerRefresh", text: qsTranslate("HikariSub.Explorer", "Refresh"), iconRole: "refresh",
+                      enabled: () => explorerTool.hasProject, run: () => explorerModel.refresh() },
+                    { name: "explorerGroupByName", text: qsTranslate("HikariSub.Explorer", "Group by name"), checkable: true,
+                      enabled: () => explorerTool.hasProject, checked: () => explorerModel.groupByName,
+                      run: () => explorerModel.groupByName = !explorerModel.groupByName },
+                    { name: "explorerAllFiles", text: qsTranslate("HikariSub.Explorer", "Show all files"), checkable: true,
+                      enabled: () => explorerTool.hasProject, checked: () => explorerModel.allFiles,
+                      run: () => explorerModel.allFiles = !explorerModel.allFiles }]
         if (root.isPluginDock(dock))
             return root.pluginPanelItems(dock)
         return []
@@ -1477,6 +1487,9 @@ ApplicationWindow {
             return [{ name: "automationClearRuns", text: qsTranslate("HikariSub.Automation", "Clear runs"),
                       iconRole: "remove", enabled: () => root.automation.runs.count > (root.automation.running ? 1 : 0),
                       run: () => root.automation.runs.clear() }]
+        if (dock === qcNotesDock)
+            return [{ name: "qcNotesDeleteAll", text: qsTranslate("HikariSub.QcNotes", "Delete all notes…"), iconRole: "delete",
+                      enabled: () => root.qcNotes.editable && root.qcNotes.total > 0, run: () => qcNotesTool.deleteAll() }]
         return []
     }
     function pluginPanelItems(dock) {
@@ -1517,6 +1530,9 @@ ApplicationWindow {
             const dock = root.dockList.find(d => d.uniqueName === name)
             if (dock && anchor)
                 panelOptionsMenu.openFor(dock, anchor)
+        }
+        function onCloseRequested(names) {
+            root.dockList.filter(d => names.includes(d.uniqueName)).forEach(d => root.closePanel(d))
         }
     }
     ShellMenu {
@@ -1586,7 +1602,8 @@ ApplicationWindow {
         Instantiator {
             id: panelOwnItemsInstantiator
             model: panelOptionsMenu.ownItems
-            delegate: panelOwnItem
+            delegate: panelOptionsMenu.ownItems.length > 0 && panelOptionsMenu.ownItems.every(item => item.radio === true)
+                      ? panelOwnChoice : panelOwnItem
             onObjectAdded: (index, object) => panelOptionsMenu.insertItem(index, object)
             onObjectRemoved: (index, object) => panelOptionsMenu.removeItem(object)
         }
@@ -1600,7 +1617,6 @@ ApplicationWindow {
                 command: modelData.command ?? ""
                 checkable: modelData.checkable === true
                 checked: typeof modelData.checked === "function" ? modelData.checked() : modelData.checked === true
-                keepsMenuOpen: checkable && modelData.radio !== true
                 enabled: typeof modelData.enabled === "function" ? modelData.enabled() : modelData.enabled !== false
                 onTriggered: {
                     if (!command || !root.hotkeyGesture(command, commandWindow))
@@ -1608,6 +1624,20 @@ ApplicationWindow {
                     // Clicking a checkable item assigns checked and breaks its binding; restore it.
                     if (typeof modelData.checked === "function")
                         checked = Qt.binding(() => modelData.checked())
+                }
+            }
+        }
+        Component {
+            id: panelOwnChoice
+            MenuRadioItem {
+                required property var modelData
+                objectName: "panelOptions_" + modelData.name
+                text: modelData.text
+                checked: modelData.checked()
+                enabled: modelData.enabled()
+                onTriggered: {
+                    modelData.run()
+                    checked = Qt.binding(() => modelData.checked())
                 }
             }
         }
@@ -1622,14 +1652,12 @@ ApplicationWindow {
                 title: modelData.text
                 Instantiator {
                     model: ownMenu.modelData.items
-                    delegate: ShellMenuItem {
+                    delegate: MenuRadioItem {
                         required property var modelData
                         required property int index
                         objectName: ownMenu.objectName + "_" + index
                         text: modelData.text
-                        checkable: true
                         checked: modelData.checked()
-                        keepsMenuOpen: false
                         onTriggered: {
                             modelData.run()
                             checked = Qt.binding(() => modelData.checked())
@@ -1685,7 +1713,7 @@ ApplicationWindow {
             onTriggered: root.moveToSideBar(panelOptionsMenu.dock, false)
         }
         ShellMenuItem {
-            iconRole: "panel-move"
+            iconRole: "side-bar-off"
             objectName: "panelOptionsOutOfSideBar"
             text: qsTranslate("HikariSub.Workspace", "Move out of the side bar")
             visible: panelOptionsMenu.sideBar !== ""
@@ -1696,7 +1724,7 @@ ApplicationWindow {
         ShellMenuItem {
             iconRole: "tab-move-left"
             objectName: "panelOptionsSideBarLeft"
-            text: qsTranslate("HikariSub.Workspace", "Move left")
+            text: qsTranslate("HikariSub.Workspace", "Move left in the side bar")
             visible: panelOptionsMenu.sideBarPanels.length > 1
             height: visible ? implicitHeight : 0
             enabled: !root.layoutLocked && panelOptionsMenu.sideBarIndex > 0
@@ -1705,7 +1733,7 @@ ApplicationWindow {
         ShellMenuItem {
             iconRole: "tab-move-right"
             objectName: "panelOptionsSideBarRight"
-            text: qsTranslate("HikariSub.Workspace", "Move right")
+            text: qsTranslate("HikariSub.Workspace", "Move right in the side bar")
             visible: panelOptionsMenu.sideBarPanels.length > 1
             height: visible ? implicitHeight : 0
             enabled: !root.layoutLocked && panelOptionsMenu.sideBarIndex < panelOptionsMenu.sideBarPanels.length - 1
@@ -1752,26 +1780,28 @@ ApplicationWindow {
         MenuSeparator {}
         Instantiator {
             id: panelOptionsAbout
-            readonly property var panelState: root.isPluginDock(panelOptionsMenu.dock) ? (panelOptionsMenu.dock.body?.panelState ?? null) : null
-            model: panelState !== null && panelState.status !== "missing" ? [panelState] : []
+            readonly property bool shown: root.isPluginDock(panelOptionsMenu.dock) && panelOptionsMenu.dock.body?.status !== "missing"
+            model: shown ? [panelOptionsMenu.dock.body.panelState] : []
             delegate: ShellMenuItem {
                 required property var modelData
                 iconRole: "about"
                 objectName: "panelOptionsAbout"
-                text: qsTranslate("HikariSub.Plugins", "About %1…").arg(panelOptionsMenu.dock?.pluginName ?? "")
+                text: qsTranslate("HikariSub.Plugins", "About %1").arg(panelOptionsMenu.dock?.pluginName ?? "")
                 onTriggered: pluginManagerDialog.showPlugin(modelData.pluginId)
             }
             onObjectAdded: (index, object) => panelOptionsMenu.insertItem(panelOptionsMenu.count - 2, object)
             onObjectRemoved: (index, object) => panelOptionsMenu.removeItem(object)
         }
         MenuSeparator {
-            visible: panelOptionsAbout.count > 0
-            height: panelOptionsAbout.count > 0 ? implicitHeight : 0
+            visible: panelOptionsAbout.shown
+            height: visible ? implicitHeight : 0
         }
         ShellMenuItem {
-            iconRole: "tab-close"
+            readonly property bool forgets: root.isPluginDock(panelOptionsMenu.dock)
+                                            && panelOptionsMenu.dock.body?.status === "missing"
+            iconRole: forgets ? "remove" : "tab-close"
             objectName: "panelOptionsClose"
-            text: qsTranslate("HikariSub.Workspace", "Close")
+            text: forgets ? qsTr("Remove from the layout") : qsTranslate("HikariSub.Workspace", "Close")
             enabled: panelOptionsMenu.closable && !root.layoutLocked
             onTriggered: root.closePanel(panelOptionsMenu.dock)
         }
@@ -5782,25 +5812,18 @@ ApplicationWindow {
                 }
                 readonly property var playArounds: [
                     { id: "before", symbol: "AUDIO_PLAY_500MS_BEFORE", icon: "play-before-start",
-                      tip: qsTranslate("HikariSub.Audio", "Play 500 ms before the start time"),
                       label: qsTranslate("HikariSub.Audio", "Play 500 ms before the start") },
                     { id: "first", symbol: "AUDIO_PLAY_500MS_FIRST", icon: "play-after-start",
-                      tip: qsTranslate("HikariSub.Audio", "Play 500 ms after the start time"),
                       label: qsTranslate("HikariSub.Audio", "Play the first 500 ms") },
                     { id: "last", symbol: "AUDIO_PLAY_500MS_LAST", icon: "play-before-end",
-                      tip: qsTranslate("HikariSub.Audio", "Play 500 ms before the end time"),
                       label: qsTranslate("HikariSub.Audio", "Play the last 500 ms") },
                     { id: "after", symbol: "AUDIO_PLAY_500MS_AFTER", icon: "play-after-end",
-                      tip: qsTranslate("HikariSub.Audio", "Play 500 ms after the end time"),
                       label: qsTranslate("HikariSub.Audio", "Play 500 ms after the end") },
                     { id: "toEnd", symbol: "AUDIO_PLAY_TO_END", icon: "play-to-end",
-                      tip: qsTranslate("HikariSub.Audio", "Play to the end"),
                       label: qsTranslate("HikariSub.Audio", "Play to the end") },
                     { id: "beforeMark", symbol: "AUDIO_PLAY_BEFORE_MARK", icon: "play-before-mark",
-                      tip: qsTranslate("HikariSub.Audio", "Play before the mark"),
                       label: qsTranslate("HikariSub.Audio", "Play before the mark") },
                     { id: "afterMark", symbol: "AUDIO_PLAY_AFTER_MARK", icon: "play-after-mark",
-                      tip: qsTranslate("HikariSub.Audio", "Play after the mark"),
                       label: qsTranslate("HikariSub.Audio", "Play after the mark") }
                 ]
                 property string playAroundSetting: root.app.settings.value("audio.playAround")
@@ -6152,7 +6175,6 @@ ApplicationWindow {
                                 checked = Qt.binding(() => root.audio.onsetSnap)
                             }
                         }
-                        MenuSeparator {}
                         ShellMenu {
                             id: speedMenu
                             objectName: tapMenu.names + "TapSpeedMenu"
@@ -6242,7 +6264,7 @@ ApplicationWindow {
                             visible: audioPanel.shows("playAround")
                             iconRole: audioPanel.playAround.icon
                             symbol: audioPanel.playAround.symbol
-                            tip: audioPanel.playAround.tip
+                            tip: audioPanel.playAround.label
                             menuTip: qsTranslate("HikariSub.Audio", "Play around")
                             menu: audioPlayAroundMenu
                             onRun: root.audio.runHotkey(audioPanel.playAround.symbol)
@@ -6287,7 +6309,7 @@ ApplicationWindow {
                             iconRole: modelData.icon
                             text: modelData.label
                             symbol: modelData.symbol
-                            tip: modelData.tip
+                            tip: modelData.label
                             onRun: root.audio.runHotkey(modelData.symbol)
                         }
                         AudioSeparator {
@@ -6451,7 +6473,7 @@ ApplicationWindow {
                             faceText: qsTranslate("HikariSub.Audio", "Auto split")
                             checkable: true
                             checked: root.audio.karaokeSplitMode
-                            tip: qsTranslate("HikariSub.Audio", "Enable / Disable automatic splitting of syllables")
+                            tip: faceText
                             menuTip: qsTranslate("HikariSub.Audio", "Syllable commands")
                             menu: audioKaraokeMenu
                             arrowWidth: 9
@@ -6499,7 +6521,7 @@ ApplicationWindow {
                                 objectName: "audioWaveformMode"
                                 iconRole: "audio-waveform"
                                 text: qsTranslate("HikariSub.Audio", "Waveform")
-                                tip: qsTranslate("HikariSub.Audio", "Waveform mode")
+                                tip: text
                                 checked: !root.audio.spectrumOn
                                 onRun: { root.audio.setSpectrumOn(false); audioDisplay.forceActiveFocus() }
                             }
@@ -6508,7 +6530,7 @@ ApplicationWindow {
                                 iconRole: "spectrum"
                                 divider: true
                                 text: qsTranslate("HikariSub.Audio", "Spectrum")
-                                tip: qsTranslate("HikariSub.Audio", "Spectrum mode")
+                                tip: text
                                 checked: root.audio.spectrumOn
                                 onRun: { root.audio.setSpectrumOn(true); audioDisplay.forceActiveFocus() }
                             }
@@ -6523,7 +6545,7 @@ ApplicationWindow {
                             text: qsTranslate("HikariSub.Audio", "Auto-scroll")
                             checkable: true
                             checked: root.audio.autoScroll
-                            tip: qsTranslate("HikariSub.Audio", "Auto-scroll to the active line")
+                            tip: text
                             onToggled: { root.audio.setAutoScroll(checked); audioDisplay.forceActiveFocus() }
                         }
                         AudioButton {
@@ -6533,7 +6555,7 @@ ApplicationWindow {
                             text: qsTranslate("HikariSub.Audio", "Sync with video")
                             checkable: true
                             checked: root.audio.syncVideo
-                            tip: qsTranslate("HikariSub.Audio", "Sync the video and audio cursors")
+                            tip: text
                             onToggled: root.audio.setSyncVideo(checked)
                         }
                         AudioButton {
@@ -6556,7 +6578,7 @@ ApplicationWindow {
                             id: audioMoreButton
                             objectName: "audioMore"
                             iconRole: "menu-more"
-                            text: qsTranslate("HikariSub.Audio", "More audio options")
+                            text: qsTranslate("HikariSub.Audio", "More options")
                             tip: text
                             down: audioMoreMenu.visible
                             onRun: audioMoreMenu.popup(audioMoreButton, 0, audioMoreButton.height)
@@ -6936,15 +6958,8 @@ ApplicationWindow {
                                     objectName: "audioCustomise" + play.id[0].toUpperCase() + play.id.slice(1)
                                     iconRole: play.icon
                                     text: play.label
-                                    command: play.symbol
                                 }
-                                Label {
-                                    leftPadding: 12
-                                    rightPadding: 12
-                                    topPadding: 4
-                                    bottomPadding: 2
-                                    color: Theme.muted
-                                    font.bold: true
+                                MenuHeading {
                                     text: qsTranslate("HikariSub.Audio", "Show on the panel")
                                 }
                                 ShownItem {
@@ -6979,13 +6994,12 @@ ApplicationWindow {
                                     control: "goto"
                                     iconRole: "go-to-selection"
                                     text: qsTranslate("HikariSub.Audio", "Go to selection")
-                                    command: "AUDIO_GOTO"
                                 }
                                 MenuSeparator {}
                                 ShownItem {
                                     objectName: "audioCustomiseSliders"
                                     control: "sliders"
-                                    iconRole: "link"
+                                    iconRole: "audio-sliders"
                                     text: qsTranslate("HikariSub.Audio", "Zoom and volume sliders")
                                 }
                                 MenuSeparator {}
@@ -7960,6 +7974,7 @@ ApplicationWindow {
                     focus: true
                     sourceComponent: AgentPanel {
                         agent: root.agent
+                        aiSettings: root.aiSettings
                         onReviewRequested: root.showPanel(reviewDock)
                         onRestoreRequested: turn => restoreCheckpointDialog.openFor(turn)
                         onSettingsRequested: root.openSettings("ai")
@@ -10379,8 +10394,8 @@ ApplicationWindow {
         const key = root.boundKeys(symbol, window)
         return (key.length ? text + " (" + key + ")" : text) + "\n" + qsTranslate("HikariSub.Hotkeys", "Shift+click to set a shortcut")
     }
-    function bitmapTip(text, symbol, window) {
-        const key = root.boundKeys(symbol, window)
+    function bitmapTip(text, symbol, window, unboundKey) {
+        const key = root.boundKeys(symbol, window) || (unboundKey ?? "")
         return (key.length ? text + " (" + key + ")" : text) + "\n" + qsTranslate("HikariSub.Hotkeys", "Shift+click to set a shortcut")
     }
     // MUST KILL: kind is true or a string ("menu", "mapped", "macro", "bitmap"); two maps the second (id - 10) hotkey

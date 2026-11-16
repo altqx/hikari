@@ -282,8 +282,7 @@ private slots:
         QVERIFY(!named("tabMenuCloseRight")->property("enabled").toBool());
         closeTabMenu();
         openTabMenu(-1);
-        QCOMPARE(menu_rows::shown(menu), (QStringList{"tabMenuNewTab", "tabMenuSaveAll", "tabMenuSwitchTo", "|", "tabMenuMoveToNewWindow",
-                                                      "moveTabToWindowMenu", "|", "tabMenuCloseAll"}));
+        QCOMPARE(menu_rows::shown(menu), (QStringList{"tabMenuNewTab", "tabMenuSaveAll", "tabMenuSwitchTo", "|", "tabMenuCloseAll"}));
         QCOMPARE(named("tabMenuTab1")->property("text").toString(), QStringLiteral("b.ass"));
     }
 

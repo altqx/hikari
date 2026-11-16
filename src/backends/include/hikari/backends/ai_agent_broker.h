@@ -152,6 +152,8 @@ public:
     void call(const std::string &method, const api::Json &params, const Answer &answer);
     void setNotify(Notify notify) { m_notify = std::move(notify); }
     void killAll();
+    /// Kills every process of `agent` and reports each exit, as agent/kill does for one.
+    void killAgent(const std::string &agent);
     std::size_t running() const { return m_running.size(); }
     std::size_t running(const std::string &agent) const;
 

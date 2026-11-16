@@ -17,7 +17,7 @@ ShellMenu {
             required property int index
             objectName: recentMenu.prefix + index
             text: modelData.label
-            ToolTip.text: qsTr("Open") + " " + modelData.path
+            ToolTip.text: qsTr("Open %1").arg(modelData.path)
             ToolTip.visible: hovered
             onTriggered: recentMenu.chosen(modelData.path)
         }
