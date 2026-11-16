@@ -10,6 +10,11 @@ ShellMenu {
     required property NodeEffectsController controller
     title: qsTr("From a preset")
     iconRole: "node-editor"
+    MenuHeading {
+        id: karaokeHeading
+        objectName: "nodeKaraokeHeading"
+        text: qsTr("For karaoke lines")
+    }
     Instantiator {
         model: presetMenu.controller.presets
         delegate: ShellMenuItem {
@@ -23,7 +28,12 @@ ShellMenu {
             ToolTip.text: modelData.description
             onTriggered: presetMenu.controller.addPreset(modelData.index)
         }
-        onObjectAdded: (index, object) => presetMenu.insertItem(index, object)
+        onObjectAdded: (index, object) => {
+            let at = 0
+            while (at < presetMenu.count && presetMenu.itemAt(at) !== karaokeHeading)
+                ++at
+            presetMenu.insertItem(at + 1 + index, object)
+        }
         onObjectRemoved: (index, object) => presetMenu.removeItem(object)
     }
     MenuSeparator {}

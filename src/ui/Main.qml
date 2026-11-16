@@ -5782,25 +5782,18 @@ ApplicationWindow {
                 }
                 readonly property var playArounds: [
                     { id: "before", symbol: "AUDIO_PLAY_500MS_BEFORE", icon: "play-before-start",
-                      tip: qsTranslate("HikariSub.Audio", "Play 500 ms before the start time"),
                       label: qsTranslate("HikariSub.Audio", "Play 500 ms before the start") },
                     { id: "first", symbol: "AUDIO_PLAY_500MS_FIRST", icon: "play-after-start",
-                      tip: qsTranslate("HikariSub.Audio", "Play 500 ms after the start time"),
                       label: qsTranslate("HikariSub.Audio", "Play the first 500 ms") },
                     { id: "last", symbol: "AUDIO_PLAY_500MS_LAST", icon: "play-before-end",
-                      tip: qsTranslate("HikariSub.Audio", "Play 500 ms before the end time"),
                       label: qsTranslate("HikariSub.Audio", "Play the last 500 ms") },
                     { id: "after", symbol: "AUDIO_PLAY_500MS_AFTER", icon: "play-after-end",
-                      tip: qsTranslate("HikariSub.Audio", "Play 500 ms after the end time"),
                       label: qsTranslate("HikariSub.Audio", "Play 500 ms after the end") },
                     { id: "toEnd", symbol: "AUDIO_PLAY_TO_END", icon: "play-to-end",
-                      tip: qsTranslate("HikariSub.Audio", "Play to the end"),
                       label: qsTranslate("HikariSub.Audio", "Play to the end") },
                     { id: "beforeMark", symbol: "AUDIO_PLAY_BEFORE_MARK", icon: "play-before-mark",
-                      tip: qsTranslate("HikariSub.Audio", "Play before the mark"),
                       label: qsTranslate("HikariSub.Audio", "Play before the mark") },
                     { id: "afterMark", symbol: "AUDIO_PLAY_AFTER_MARK", icon: "play-after-mark",
-                      tip: qsTranslate("HikariSub.Audio", "Play after the mark"),
                       label: qsTranslate("HikariSub.Audio", "Play after the mark") }
                 ]
                 property string playAroundSetting: root.app.settings.value("audio.playAround")
@@ -6152,7 +6145,6 @@ ApplicationWindow {
                                 checked = Qt.binding(() => root.audio.onsetSnap)
                             }
                         }
-                        MenuSeparator {}
                         ShellMenu {
                             id: speedMenu
                             objectName: tapMenu.names + "TapSpeedMenu"
@@ -6242,7 +6234,7 @@ ApplicationWindow {
                             visible: audioPanel.shows("playAround")
                             iconRole: audioPanel.playAround.icon
                             symbol: audioPanel.playAround.symbol
-                            tip: audioPanel.playAround.tip
+                            tip: audioPanel.playAround.label
                             menuTip: qsTranslate("HikariSub.Audio", "Play around")
                             menu: audioPlayAroundMenu
                             onRun: root.audio.runHotkey(audioPanel.playAround.symbol)
@@ -6287,7 +6279,7 @@ ApplicationWindow {
                             iconRole: modelData.icon
                             text: modelData.label
                             symbol: modelData.symbol
-                            tip: modelData.tip
+                            tip: modelData.label
                             onRun: root.audio.runHotkey(modelData.symbol)
                         }
                         AudioSeparator {
@@ -6451,7 +6443,7 @@ ApplicationWindow {
                             faceText: qsTranslate("HikariSub.Audio", "Auto split")
                             checkable: true
                             checked: root.audio.karaokeSplitMode
-                            tip: qsTranslate("HikariSub.Audio", "Enable / Disable automatic splitting of syllables")
+                            tip: faceText
                             menuTip: qsTranslate("HikariSub.Audio", "Syllable commands")
                             menu: audioKaraokeMenu
                             arrowWidth: 9
@@ -6499,7 +6491,7 @@ ApplicationWindow {
                                 objectName: "audioWaveformMode"
                                 iconRole: "audio-waveform"
                                 text: qsTranslate("HikariSub.Audio", "Waveform")
-                                tip: qsTranslate("HikariSub.Audio", "Waveform mode")
+                                tip: text
                                 checked: !root.audio.spectrumOn
                                 onRun: { root.audio.setSpectrumOn(false); audioDisplay.forceActiveFocus() }
                             }
@@ -6508,7 +6500,7 @@ ApplicationWindow {
                                 iconRole: "spectrum"
                                 divider: true
                                 text: qsTranslate("HikariSub.Audio", "Spectrum")
-                                tip: qsTranslate("HikariSub.Audio", "Spectrum mode")
+                                tip: text
                                 checked: root.audio.spectrumOn
                                 onRun: { root.audio.setSpectrumOn(true); audioDisplay.forceActiveFocus() }
                             }
@@ -6523,7 +6515,7 @@ ApplicationWindow {
                             text: qsTranslate("HikariSub.Audio", "Auto-scroll")
                             checkable: true
                             checked: root.audio.autoScroll
-                            tip: qsTranslate("HikariSub.Audio", "Auto-scroll to the active line")
+                            tip: text
                             onToggled: { root.audio.setAutoScroll(checked); audioDisplay.forceActiveFocus() }
                         }
                         AudioButton {
@@ -6533,7 +6525,7 @@ ApplicationWindow {
                             text: qsTranslate("HikariSub.Audio", "Sync with video")
                             checkable: true
                             checked: root.audio.syncVideo
-                            tip: qsTranslate("HikariSub.Audio", "Sync the video and audio cursors")
+                            tip: text
                             onToggled: root.audio.setSyncVideo(checked)
                         }
                         AudioButton {
@@ -6556,7 +6548,7 @@ ApplicationWindow {
                             id: audioMoreButton
                             objectName: "audioMore"
                             iconRole: "menu-more"
-                            text: qsTranslate("HikariSub.Audio", "More audio options")
+                            text: qsTranslate("HikariSub.Audio", "More options")
                             tip: text
                             down: audioMoreMenu.visible
                             onRun: audioMoreMenu.popup(audioMoreButton, 0, audioMoreButton.height)
@@ -6936,15 +6928,8 @@ ApplicationWindow {
                                     objectName: "audioCustomise" + play.id[0].toUpperCase() + play.id.slice(1)
                                     iconRole: play.icon
                                     text: play.label
-                                    command: play.symbol
                                 }
-                                Label {
-                                    leftPadding: 12
-                                    rightPadding: 12
-                                    topPadding: 4
-                                    bottomPadding: 2
-                                    color: Theme.muted
-                                    font.bold: true
+                                MenuHeading {
                                     text: qsTranslate("HikariSub.Audio", "Show on the panel")
                                 }
                                 ShownItem {
@@ -6979,13 +6964,12 @@ ApplicationWindow {
                                     control: "goto"
                                     iconRole: "go-to-selection"
                                     text: qsTranslate("HikariSub.Audio", "Go to selection")
-                                    command: "AUDIO_GOTO"
                                 }
                                 MenuSeparator {}
                                 ShownItem {
                                     objectName: "audioCustomiseSliders"
                                     control: "sliders"
-                                    iconRole: "link"
+                                    iconRole: "audio-sliders"
                                     text: qsTranslate("HikariSub.Audio", "Zoom and volume sliders")
                                 }
                                 MenuSeparator {}
@@ -10379,8 +10363,8 @@ ApplicationWindow {
         const key = root.boundKeys(symbol, window)
         return (key.length ? text + " (" + key + ")" : text) + "\n" + qsTranslate("HikariSub.Hotkeys", "Shift+click to set a shortcut")
     }
-    function bitmapTip(text, symbol, window) {
-        const key = root.boundKeys(symbol, window)
+    function bitmapTip(text, symbol, window, unboundKey) {
+        const key = root.boundKeys(symbol, window) || (unboundKey ?? "")
         return (key.length ? text + " (" + key + ")" : text) + "\n" + qsTranslate("HikariSub.Hotkeys", "Shift+click to set a shortcut")
     }
     // MUST KILL: kind is true or a string ("menu", "mapped", "macro", "bitmap"); two maps the second (id - 10) hotkey

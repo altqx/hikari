@@ -1343,12 +1343,20 @@ TEST_F(LuaHelper, ParseKaraokeDataFollowsTheLegacyParser)
     ASSERT_EQ(run.log.size(), 8);
     EXPECT_EQ(run.log[0].toStdString(), "0:0,0,0,,| 1:100,0,100,k,a|a 2:200,100,300,k,b|b 3:300,300,600,kf,c|c");
     EXPECT_EQ(run.log[1].toStdString(), "0:0,0,0,,| 1:100,0,100,k,{\\b1}ab{\\i1}c|abc 2:50,100,150,k,d|d");
-    EXPECT_EQ(run.log[2].toStdString(), "0:0,0,0,,| 1:2500,1000,3500,k,Hello {\\b1}world|Hello world");
+    EXPECT_EQ(run.log[2].toStdString(), "0:0,0,0,,| 1:2500,0,2500,k,Hello {\\b1}world|Hello world");
     EXPECT_EQ(run.log[3].toStdString(), "0:0,0,0,,| 1:50,0,50,k,x|x");
     EXPECT_EQ(run.log[4].toStdString(), "true,dialogue,a");
     EXPECT_EQ(run.log[5].toStdString(), "You try to parse karaoke from non dialogue line");
     EXPECT_EQ(run.log[6].toStdString(), "You try to parse karaoke from non dialogue line");
     EXPECT_EQ(run.log[7].toStdString(), "Cannot convert non table value");
+}
+
+TEST_F(LuaHelper, AnUntaggedLinesSyllableRunsFromZeroToTheDuration)
+{
+    auto host = load(fixture("karaoke.lua"));
+    ASSERT_TRUE(runMacro(*host, macro(*host, "Untagged"), {}, run));
+    ASSERT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
+    EXPECT_EQ(run.log, QStringList{"0,2500,2500"});
 }
 
 TEST_F(LuaHelper, TheAudioBoxKaraokeTextParses)

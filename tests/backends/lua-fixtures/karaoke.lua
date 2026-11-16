@@ -44,6 +44,11 @@ aegisub.register_macro("Karaoke", "", function()
     end
 end)
 
+aegisub.register_macro("Untagged", "", function()
+    local line = aegisub.parse_karaoke_data(dialogue("no tags"))
+    show(line[1].start_time, line[1].end_time, line.end_time - line.start_time)
+end)
+
 -- A5: the text the audio box's karaoke mode writes (legacy Karaoke::GetText)
 -- parses into the same syllables and times.
 aegisub.register_macro("Karaoke text", "", function()

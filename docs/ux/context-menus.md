@@ -636,6 +636,15 @@ The total is **28 menus with 257 items**: 16 right-click entries (two of them, R
 - **Align and distribute ▸ and Phantom ▸.** Headings “Align” and “Distribute” carry the verb, so the rows read “Left edges” … “Vertically”; Settings › Shortcuts keeps the full names. The submenu takes align-distribute and the Phantom rows phantom-keep-start and phantom-keep-end.
 - **AI actions ▸.** One name for the submenu, the strip button and the command (no “…”: it opens a menu). Custom actions follow the built-in ones after a separator, and one that asks each time ends in “…”. “Edit actions” and “Add a model in Settings › AI” lose the ellipsis (rule 19.2). The command list says “Add QC note…”, as the menu does.
 
+### What CX7 built: video, audio and node effects
+
+[#810](https://github.com/altqx/hikari/issues/810) (gate 1, 2026-11-16) changed the area-B menus:
+
+- **Video.** Full screen on ▸ lists every monitor, Monitor 1 included, as radio rows; in full screen the current monitor is checked. Recently opened ▸ hides a heading whose list is empty and the separator between them, and the submenu itself when both lists are empty. Change aspect ratio… takes the ellipsis, and Settings › Shortcuts names it, Open video… and Open subtitles… the same way. Chapter times in the video menus have no brackets. Filters ▸ is listed in `context_menus.txt` and takes the menu's own `itemPrefix`.
+- **Audio.** Each play command has one name, the menu's, in the menus, the toolbar tooltips and Settings › Shortcuts. The bar's tooltips are the names of the rows they fold into (Waveform, Spectrum, Auto-scroll, Sync with video, Auto split), and the » tooltip is “More options”. Customise rows show or hide a button, so they show no key; Zoom and volume sliders takes audio-sliders and its heading is a `MenuHeading`. In Tap options, Snap to vocal onsets, Speed ▸ and Calibrate latency… are one group. The full-screen speaker's last row is “Audio settings” (no “…”: it opens Settings at a page, rule 19.2).
+- **Node effects.** The graph menu button shows ⋯ (panel-menu) with the tooltip “More options”. “From the library” opens a submenu, so it has no “…”, on the empty canvas button too. From a preset ▸ heads its first group “For karaoke lines”. The Export as template lines ▸ rows are plain actions with the export icon.
+- **Full screen bar.** The exit button's tooltip shows the bound key (Esc when none) through `bitmapTip`, and Shift+click sets its shortcut.
+
 Proposal for [#578](https://github.com/altqx/hikari/issues/578), from the 2026-10-31 decisions in the card and the round-2 decisions of 2026-11-02 (round 2 wins where they differ). The mockup draws each menu before and after in Light, Dark and high contrast with the theme roles and the icons from `src/ui/icons`: `cx2/index.html` and the screenshots on the orphan branch `evidence/w8-cx2`. The owner approved every menu and every flagged point on 2026-11-02 ([#578 decision](https://github.com/altqx/hikari/issues/578)); CX3–CX6 build this.
 
 Notation as above, plus: `{keys}` is the default binding shown in the key column; an icon role that is not in `src/ui/icons` yet is a new icon CX3 draws.

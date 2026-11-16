@@ -223,6 +223,16 @@ bool VideoFullscreenController::showOn(int monitor)
     return enter(monitor);
 }
 
+bool VideoFullscreenController::showOnScreen(int screen)
+{
+    return showOn(screen == 0 ? -1 : screen);
+}
+
+int VideoFullscreenController::monitorEntries() const
+{
+    return application::fullscreenMonitorEntries(monitorCount());
+}
+
 void VideoFullscreenController::enterWhenShown(const QString &path)
 {
     m_pendingPath = path;
