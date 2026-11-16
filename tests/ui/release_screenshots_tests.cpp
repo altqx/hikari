@@ -31,6 +31,7 @@
 #include <QQuickItem>
 #include <QQuickWindow>
 #include <QTemporaryDir>
+#include <QTranslator>
 #include <QtQml/qqmlextensionplugin.h>
 #include <QtTest>
 
@@ -100,6 +101,7 @@ class ReleaseScreenshotsTests : public QObject {
     QString video;
     QString song;
     std::unique_ptr<test::FakeNetwork> marketplace;
+    QTranslator english;
 
     QObject *root() const { return engine->rootObjects().first(); }
 
@@ -176,6 +178,20 @@ class ReleaseScreenshotsTests : public QObject {
                 marketplace->files.insert(feed.resolved(QUrl(copy.relativeFilePath(file.fileName()))).toString(), file.readAll());
         }
         return marketplace.get();
+    }
+
+    auto dumpTemplateEditorOnFailure()
+    {
+        return qScopeGuard([this] {
+            if (!QTest::currentTestFailed())
+                return;
+            auto &t = application->templateEditor();
+            qWarning() << "template editor: available" << t.available() << "editable" << t.editable() << "templates"
+                       << t.templateCount() << "karaoke" << t.karaokeCount() << "trusted" << t.trusted() << "pending"
+                       << t.previewPending() << "problem" << t.problem() << "source" << t.sourceNumber() << "unknown"
+                       << t.sourceUnknown() << "preview" << t.hasPreview() << "video" << t.videoPreview() << "canApply"
+                       << t.canApply();
+        });
     }
 
     QVariant evaluate(const QString &code)
@@ -463,6 +479,14 @@ class ReleaseScreenshotsTests : public QObject {
     }
 
 private slots:
+    void initTestCase()
+    {
+        QVERIFY(english.load(QStringLiteral(HIKARI_EN_CATALOG)));
+        QVERIFY(QCoreApplication::installTranslator(&english));
+    }
+
+    void cleanupTestCase() { QCoreApplication::removeTranslator(&english); }
+
     void init()
     {
         out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
@@ -679,9 +703,11 @@ private slots:
         QVERIFY(loadTemplater());
         auto &templates = application->templateEditor();
         templates.setShown(true);
+        const auto dumpOnFailure = dumpTemplateEditorOnFailure();
         QVERIFY(templates.insertPreset(kFuriganaRisePreset));
-        QTRY_VERIFY_WITH_TIMEOUT(templates.videoPreview() && !templates.previewPending(), 20000);
+        templates.trustDocument();
         selectAt(kKaraokeFrame);
+        QTRY_VERIFY_WITH_TIMEOUT(templates.videoPreview() && !templates.previewPending(), 20000);
         QTest::qWait(1500);
         shoot(QStringLiteral("karaoke"), QStringLiteral("furigana-video"), "videoPanel");
     }
@@ -693,9 +719,12 @@ private slots:
         QVERIFY(loadTemplater());
         auto &templates = application->templateEditor();
         templates.setShown(true);
+        const auto dumpOnFailure = dumpTemplateEditorOnFailure();
         QVERIFY(templates.insertPreset(kColourSweepPreset));
         templates.trustDocument();
+        QTRY_VERIFY_WITH_TIMEOUT(templates.canApply(), 20000);
         QVERIFY(templates.apply(false));
+        QTRY_VERIFY_WITH_TIMEOUT(!templates.lastApply().isEmpty(), 20000);
         selectAt(kKaraokeFrame);
         QTest::qWait(1500);
         shoot(QStringLiteral("karaoke"), QStringLiteral("templater-result"));
