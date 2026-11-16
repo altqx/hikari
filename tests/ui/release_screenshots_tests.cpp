@@ -84,6 +84,7 @@ class ReleaseScreenshotsTests : public QObject {
     static constexpr int kHiddenLineFrame = 1360;
     static constexpr int kPerspectiveTool = 11;
     static constexpr int kKaraokeFrame = 1818;
+    static constexpr int kFuriganaFrame = 1824;
     static constexpr int kMushroomFrame = 3270;
     static constexpr int kNodeEffectsSourceFrame = 165;
     static constexpr int kFallingLettersPreset = 8;
@@ -706,7 +707,7 @@ private slots:
         const auto dumpOnFailure = dumpTemplateEditorOnFailure();
         QVERIFY(templates.insertPreset(kFuriganaRisePreset));
         templates.trustDocument();
-        selectAt(kKaraokeFrame);
+        selectAt(kFuriganaFrame);
         QTRY_VERIFY_WITH_TIMEOUT(templates.videoPreview() && !templates.previewPending(), 20000);
         QTest::qWait(1500);
         shoot(QStringLiteral("karaoke"), QStringLiteral("furigana-video"), "videoPanel");
