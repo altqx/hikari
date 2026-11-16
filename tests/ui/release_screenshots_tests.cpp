@@ -10,6 +10,7 @@
 #include "audio_controller.h"
 #include "docking.h"
 #include "explorer_model.h"
+#include "fake_network.h"
 #include "line_grid.h"
 #include "node_effects_controller.h"
 #include "settings_store.h"
@@ -20,6 +21,7 @@
 #include "workspace_layout.h"
 
 #include <QDir>
+#include <QDirIterator>
 #include <QFile>
 #include <QFontDatabase>
 #include <QGuiApplication>
@@ -97,6 +99,7 @@ class ReleaseScreenshotsTests : public QObject {
     QString out;
     QString video;
     QString song;
+    std::unique_ptr<test::FakeNetwork> marketplace;
 
     QObject *root() const { return engine->rootObjects().first(); }
 
@@ -113,6 +116,12 @@ class ReleaseScreenshotsTests : public QObject {
         o.grammarDir = home->filePath(QStringLiteral("Harper"));
         if (QTest::currentTestFunction() == QByteArrayLiteral("homeAiReview"))
             o.aiPorts = standInAi();
+        if (QTest::currentTestFunction() == QByteArrayLiteral("homePlugins")) {
+            o.plugins = {home->filePath(QStringLiteral("plugins")), home->filePath(QStringLiteral("plugin-data")),
+                         home->filePath(QStringLiteral("plugin-cache")), home->filePath(QStringLiteral("plugins.json"))};
+            o.marketplace = app::MarketplaceFeed::hikarisub();
+            o.marketplaceNetwork = liveMarketplaceCopy(o.marketplace.base);
+        }
         application = new app::Application(o);
         application->settingsStore()->setValue(QStringLiteral("appearance.followSystem"), false);
         application->setAskForBadResolution(false);
@@ -154,6 +163,19 @@ class ReleaseScreenshotsTests : public QObject {
         ports.agents = [](backends::ai::AgentBroker &, ai::KeyStore &) {};
         ports.agentOnPath = [](const QString &) { return false; };
         return ports;
+    }
+
+    test::FakeNetwork *liveMarketplaceCopy(const QUrl &feed)
+    {
+        marketplace = std::make_unique<test::FakeNetwork>();
+        const QDir copy(qEnvironmentVariable("HIKARI_SHOT_MARKETPLACE"));
+        QDirIterator files(copy.path(), QDir::Files, QDirIterator::Subdirectories);
+        while (files.hasNext()) {
+            QFile file(files.next());
+            if (file.open(QIODevice::ReadOnly))
+                marketplace->files.insert(feed.resolved(QUrl(copy.relativeFilePath(file.fileName()))).toString(), file.readAll());
+        }
+        return marketplace.get();
     }
 
     QVariant evaluate(const QString &code)
@@ -470,6 +492,7 @@ private slots:
         engine = nullptr;
         delete application;
         application = nullptr;
+        marketplace.reset();
         home.reset();
     }
 
@@ -740,6 +763,7 @@ private slots:
         QVERIFY(controller.session().seekFrame(kSignFrame));
         QTRY_VERIFY_WITH_TIMEOUT(controller.session().shownFrame() == std::optional<int>(kSignFrame), 60000);
         QVERIFY(application->selectLinesVisibleOnVideo());
+        QTRY_VERIFY_WITH_TIMEOUT(application->audio().ready(), 180000);
         for (const char *code : {"light", "dark"}) {
             setTheme(QString::fromLatin1(code));
             save(window->grabWindow(), QStringLiteral("home"), QStringLiteral("windows-dialogue-") + QLatin1String(code));
@@ -813,6 +837,26 @@ private slots:
         QTRY_VERIFY(item("grammarMessage") && item("grammarMessage")->isVisible());
         QTest::mouseMove(window, QPoint(1, 1));
         shoot(QStringLiteral("home"), QStringLiteral("checking-window"));
+    }
+
+    void homePlugins()
+    {
+        if (!marketplace || marketplace->files.isEmpty())
+            QSKIP("HIKARI_SHOT_MARKETPLACE is not set to a copy of the marketplace");
+        app::attachMarketplaceImages(*engine, *application->pluginMarketplace());
+        application->pluginMarketplace()->start();
+        QTRY_COMPARE(application->pluginMarketplace()->status(), QStringLiteral("ready"));
+        auto *dialog = root()->findChild<QObject *>(QStringLiteral("pluginManagerDialog"));
+        auto *manager = qobject_cast<QQuickWindow *>(dialog);
+        QVERIFY(manager);
+        QVERIFY(QMetaObject::invokeMethod(dialog, "show"));
+        QTRY_VERIFY(manager->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(dialog, "showView", Q_ARG(QVariant, QStringLiteral("market"))));
+        dialog->setProperty("chosenListingId", QStringLiteral("hikarisub.macro-chains"));
+        QTRY_VERIFY(item("marketDetailsOfficial") && item("marketDetailsOfficial")->isVisible());
+        QTRY_VERIFY(item("marketIcon") && item("marketIcon")->property("shown").toBool());
+        QTest::qWait(400);
+        shoot(QStringLiteral("home"), QStringLiteral("plugins-window"), nullptr, manager);
     }
 
     void homeAiReview()
