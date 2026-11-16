@@ -391,7 +391,10 @@ add_dependencies(hikari_ui_analytics_session_tests hikari_media_helper hikari_me
 hikari_add_qttest(hikari_ui_api_host_tests SOURCES api_host_tests.cpp
     LIBRARIES hikari_composition KDAB::kddockwidgets Qt6::QuickTest)
 hikari_add_qttest(hikari_ui_agent_panel_tests SOURCES agent_panel_tests.cpp
-    LIBRARIES hikari_composition KDAB::kddockwidgets Qt6::QuickTest)
+    LIBRARIES hikari_composition KDAB::kddockwidgets Qt6::QuickTest
+    PARTS panel proposals=aProposalTakesTheFocusFromThePanelButNotFromTheComposer
+          timeline=compactionShowsTheMeterTheDividerTheOfferAndAFailure
+          models=theModelButtonNamesTheModelTheNextMessageUses)
 target_compile_definitions(hikari_ui_agent_panel_tests PRIVATE
     HIKARI_FAKE_AI_SIDECAR="$<TARGET_FILE:hikari_fake_ai_sidecar>")
 add_dependencies(hikari_ui_agent_panel_tests hikari_fake_ai_sidecar)
