@@ -31,12 +31,14 @@ Menu {
         const list = contentItem as ListView
         list?.forceLayout()
     }
+    // Qt misplaces an in-window popup inside a KDDockWidgets floating window (#1186).
+    popupType: parent && parent.Window.window && parent.Window.window.transientParent ? Popup.Window : Popup.Item
     function keepOnScreen() {
-        if (!parent || (parent as MenuItem)?.subMenu === menu)
+        if (!parent || !background || (parent as MenuItem)?.subMenu === menu)
             return
-        const at = ShellMenus.onScreen(parent, Qt.point(x, y), Qt.size(implicitWidth, implicitHeight))
-        x = at.x
-        y = at.y
+        const by = ShellMenus.shiftOnScreen(background, parent)
+        x += by.x
+        y += by.y
     }
     onOpened: {
         layOut()
@@ -45,7 +47,6 @@ Menu {
     onAboutToShow: {
         ShellMenus.menuShowing()
         build()
-        keepOnScreen()
         StatusHelp.menuOpened()
     }
     onAboutToHide: StatusHelp.menuClosed()

@@ -67,21 +67,21 @@ public:
     {
         return QGuiApplication::keyboardModifiers().testFlag(Qt::ShiftModifier);
     }
-    /// Where a menu of `size` asked to open at `at` (in `parent`'s coordinates) goes so it stays on `parent`'s screen,
-    /// above `parent` when it was asked to open below it and doesn't fit.
-    Q_INVOKABLE QPointF onScreen(QQuickItem *parent, QPointF at, QSizeF size) const
+    /// How far a shown menu, drawn by `face`, moves to stay on its screen: above `anchor` when it opened below it and
+    /// doesn't fit.
+    Q_INVOKABLE QPointF shiftOnScreen(QQuickItem *face, QQuickItem *anchor) const
     {
-        QQuickWindow *window = parent ? parent->window() : nullptr;
-        if (!window)
-            return at;
-        const QRectF anchor(parent->mapToGlobal(QPointF(0, 0)), parent->size());
-        const QPointF global = parent->mapToGlobal(at);
-        QScreen *screen = QGuiApplication::screenAt(global.toPoint());
+        QQuickWindow *window = anchor ? anchor->window() : nullptr;
+        if (!face || !window)
+            return {};
+        const QPointF shown = face->mapToGlobal(QPointF(0, 0));
+        QScreen *screen = QGuiApplication::screenAt(anchor->mapToGlobal(QPointF(0, 0)).toPoint());
         if (!screen)
             screen = window->screen();
         if (!screen)
-            return at;
-        return parent->mapFromGlobal(fitted(screen->availableGeometry().toRectF(), anchor, global, size));
+            return {};
+        const QRectF anchored(anchor->mapToGlobal(QPointF(0, 0)), anchor->size());
+        return fitted(screen->availableGeometry().toRectF(), anchored, shown, face->size()) - shown;
     }
     static QPointF fitted(const QRectF &available, const QRectF &anchor, QPointF at, QSizeF size)
     {
