@@ -964,6 +964,28 @@ private slots:
         QVERIFY(videoOf(first())->pause());
     }
 
+    void audioOpeningInAnInactiveWindowShowsItsPanelWithoutTakingTheFocus()
+    {
+        focus(1);
+        audioOf(first())->openAudio(QStringLiteral(HIKARI_MEDIA_FIXTURES "/longaudio.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(audioOf(first())->ready(), 30000);
+        QCoreApplication::processEvents();
+        QVERIFY(dock(first(), "audioDock")->property("isOpen").toBool());
+        QCOMPARE(QGuiApplication::focusWindow(), second.data());
+        QCOMPARE(application->workspace().activeWindow(), shellId(second));
+    }
+
+    void audioOpeningBehindItsWindowsQuestionLeavesTheQuestionFocused()
+    {
+        openVideoIn(0, "long.mkv", 30);
+        QTRY_VERIFY(QGuiApplication::focusWindow() && QGuiApplication::focusWindow()->transientParent() == first());
+        QWindow *question = QGuiApplication::focusWindow();
+        audioOf(first())->openAudio(QStringLiteral(HIKARI_MEDIA_FIXTURES "/longaudio.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(audioOf(first())->ready(), 30000);
+        QCoreApplication::processEvents();
+        QCOMPARE(QGuiApplication::focusWindow(), question);
+    }
+
     void aSessionReopensEachWindowWithItsTabsAndPlace()
     {
         const QRect firstPlace(30, 60, 900, 650);
