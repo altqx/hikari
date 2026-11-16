@@ -42,7 +42,7 @@ Commons: **yes** = the picture shows lines from the Wikimedia Commons TimedText 
 | karaoke/ne-mode | 2 (node effects mode) | homeNodeEffectsOnRayMv | Ray MV (karaoke) | - | taken |
 | karaoke/ne-preview (videoPanel crop) | 2 (node effects preview) | homeNodeEffectsOnRayMv | Ray MV (karaoke) | - | taken |
 | readme/audio | 1c audio | karaokeKaraokeModeOnRayMv (spectrum on) | Ray MV (karaoke) | - | taken |
-| karaoke/furigana-video | 2 (furigana) | karaokeFuriganaOnRayMv | Ray MV (karaoke) | - | taken (hk-cx7-k7, frame 1824), not usable: the readings are generated but drawn on top of their kanji (possible app bug: furichar units get the base line's $middle; reported to the coordinator) |
+| karaoke/furigana-video | 2 (furigana) | karaokeFuriganaOnRayMv | Ray MV (karaoke) | - | taken (hk-cx7-k7, and again after a clean rebuild in hk-cx7-k8; frame 1824), not usable: the readings are generated but drawn on top of their kanji (possible app bug: furichar units get the base line's $middle; reported to the coordinator) |
 | karaoke/templater-result | 1a/2 templater | karaokeTemplaterOnRayMv | Ray MV (karaoke) | - | taken (hk-cx7-k6): Colour sweep, 14 lines generated from our own line (harness fix: wait for canApply before apply) |
 | karaoke/agent-karaoke | 2 | - | Ray MV (karaoke) | - | skipped: needs a real agent run; stand-in AI only (Q551) |
 | customize/layouts clip | 1a customize/layouts-*.mp4 | - | Sprite Fright + Ray MV (karaoke) | yes | deferred: clip not made; only the Karaoke still exists |
