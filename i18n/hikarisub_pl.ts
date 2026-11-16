@@ -988,8 +988,12 @@
         <translation>Urządzenie wyjściowe</translation>
     </message>
     <message>
+        <source>Audio settings</source>
+        <translation>Ustawienia audio</translation>
+    </message>
+    <message>
         <source>Audio settings…</source>
-        <translation>Ustawienia audio…</translation>
+        <translation type="vanished">Ustawienia audio…</translation>
     </message>
     <message>
         <source>Link the volume and stretch sliders</source>
@@ -1033,7 +1037,7 @@
     </message>
     <message>
         <source>Play 500 ms after the start time</source>
-        <translation>Odtwórz 500 ms po czasie początkowym</translation>
+        <translation type="vanished">Odtwórz 500 ms po czasie początkowym</translation>
     </message>
     <message>
         <source>Play to the end</source>
@@ -1073,7 +1077,7 @@
     </message>
     <message>
         <source>Enable / Disable automatic splitting of syllables</source>
-        <translation>Włącz / Wyłącz automatyczne dzielenie sylab</translation>
+        <translation type="vanished">Włącz / Wyłącz automatyczne dzielenie sylab</translation>
     </message>
     <message>
         <source>Auto-scroll</source>
@@ -1081,7 +1085,7 @@
     </message>
     <message>
         <source>Auto-scroll to the active line</source>
-        <translation>Automatyczne przewijanie do aktywnej linijki</translation>
+        <translation type="vanished">Automatyczne przewijanie do aktywnej linijki</translation>
     </message>
     <message>
         <source>Spectrum</source>
@@ -1106,7 +1110,7 @@
     </message>
     <message>
         <source>Play 500 ms before the start time</source>
-        <translation>Odtwórz 500 ms przed czasem początkowym</translation>
+        <translation type="vanished">Odtwórz 500 ms przed czasem początkowym</translation>
     </message>
     <message>
         <source>Play the first 500 ms</source>
@@ -1114,7 +1118,7 @@
     </message>
     <message>
         <source>Play 500 ms before the end time</source>
-        <translation>Odtwórz 500 ms przed czasem końcowym</translation>
+        <translation type="vanished">Odtwórz 500 ms przed czasem końcowym</translation>
     </message>
     <message>
         <source>Play the last 500 ms</source>
@@ -1122,7 +1126,7 @@
     </message>
     <message>
         <source>Play 500 ms after the end time</source>
-        <translation>Odtwórz 500 ms po czasie końcowym</translation>
+        <translation type="vanished">Odtwórz 500 ms po czasie końcowym</translation>
     </message>
     <message>
         <source>Play 500 ms after the end</source>
@@ -1218,11 +1222,11 @@
     </message>
     <message>
         <source>Waveform mode</source>
-        <translation>Tryb przebiegu fali</translation>
+        <translation type="vanished">Tryb przebiegu fali</translation>
     </message>
     <message>
         <source>Spectrum mode</source>
-        <translation>Tryb spektrum</translation>
+        <translation type="vanished">Tryb spektrum</translation>
     </message>
     <message>
         <source>Sync with video</source>
@@ -1230,7 +1234,7 @@
     </message>
     <message>
         <source>Sync the video and audio cursors</source>
-        <translation>Synchronizuj kursory wideo i audio</translation>
+        <translation type="vanished">Synchronizuj kursory wideo i audio</translation>
     </message>
     <message>
         <source>Speech</source>
@@ -1238,7 +1242,7 @@
     </message>
     <message>
         <source>More audio options</source>
-        <translation>Więcej opcji audio</translation>
+        <translation type="vanished">Więcej opcji audio</translation>
     </message>
     <message>
         <source>Go to selection start</source>
@@ -1307,6 +1311,10 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>Speech spectrum</source>
         <translation>Spektrum mowy</translation>
+    </message>
+    <message>
+        <source>More options</source>
+        <translation>Więcej opcji</translation>
     </message>
     <message>
         <source>Zoom and volume sliders</source>
@@ -7167,11 +7175,11 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Play before the marker</source>
-        <translation>Odtwórz przed znacznikiem</translation>
+        <translation type="vanished">Odtwórz przed znacznikiem</translation>
     </message>
     <message>
         <source>Play after the marker</source>
-        <translation>Odtwórz po znaczniku</translation>
+        <translation type="vanished">Odtwórz po znaczniku</translation>
     </message>
     <message>
         <source>Play to the end</source>
@@ -7743,11 +7751,11 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Open subtitles</source>
-        <translation>Otwórz napisy</translation>
+        <translation type="vanished">Otwórz napisy</translation>
     </message>
     <message>
         <source>Open video</source>
-        <translation>Otwórz wideo</translation>
+        <translation type="vanished">Otwórz wideo</translation>
     </message>
     <message>
         <source>Play or pause</source>
@@ -7835,19 +7843,19 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Play first 500 ms</source>
-        <translation>Odtwórz pierwsze 500 ms</translation>
+        <translation type="vanished">Odtwórz pierwsze 500 ms</translation>
     </message>
     <message>
         <source>Play last 500 ms</source>
-        <translation>Odtwórz ostatnie 500 ms</translation>
+        <translation type="vanished">Odtwórz ostatnie 500 ms</translation>
     </message>
     <message>
         <source>Play 500 ms before</source>
-        <translation>Odtwórz 500 ms przed</translation>
+        <translation type="vanished">Odtwórz 500 ms przed</translation>
     </message>
     <message>
         <source>Play 500 ms after</source>
-        <translation>Odtwórz 500 ms po</translation>
+        <translation type="vanished">Odtwórz 500 ms po</translation>
     </message>
     <message>
         <source>Paste the selected text</source>
@@ -7939,7 +7947,7 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Change aspect ratio</source>
-        <translation>Zmień proporcje obrazu</translation>
+        <translation type="vanished">Zmień proporcje obrazu</translation>
     </message>
     <message>
         <source>5 seconds forward</source>
@@ -8264,6 +8272,42 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Perspective tracking…</source>
         <translation>Śledzenie perspektywy…</translation>
+    </message>
+    <message>
+        <source>Play before the mark</source>
+        <translation>Odtwórz przed znacznikiem</translation>
+    </message>
+    <message>
+        <source>Play after the mark</source>
+        <translation>Odtwórz po znaczniku</translation>
+    </message>
+    <message>
+        <source>Play the first 500 ms</source>
+        <translation>Odtwórz pierwsze 500 ms</translation>
+    </message>
+    <message>
+        <source>Play the last 500 ms</source>
+        <translation>Odtwórz ostatnie 500 ms</translation>
+    </message>
+    <message>
+        <source>Play 500 ms before the start</source>
+        <translation>Odtwórz 500 ms przed początkiem</translation>
+    </message>
+    <message>
+        <source>Play 500 ms after the end</source>
+        <translation>Odtwórz 500 ms po końcu</translation>
+    </message>
+    <message>
+        <source>Open subtitles…</source>
+        <translation>Otwórz napisy…</translation>
+    </message>
+    <message>
+        <source>Open video…</source>
+        <translation>Otwórz wideo…</translation>
+    </message>
+    <message>
+        <source>Change aspect ratio…</source>
+        <translation>Zmień proporcje obrazu…</translation>
     </message>
     <message>
         <source>Apply motion data…</source>
@@ -11878,7 +11922,7 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation type="unfinished">Z presetu</translation>
     </message>
     <message>
-        <source>From the library…</source>
+        <source>From the library</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -12172,10 +12216,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Graph menu</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Target: selected lines</source>
         <translation type="unfinished"></translation>
     </message>
@@ -12279,6 +12319,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Apply to the selected lines</source>
         <translation type="unfinished">Zastosuj do zaznaczonych linijek</translation>
+    </message>
+    <message>
+        <source>More options</source>
+        <translation>Więcej opcji</translation>
     </message>
     <message>
         <source>Only the lines selected in “Source lines” are regenerated; the others keep their output.</source>
@@ -12519,6 +12563,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Each syllable’s letters are cut into thin horizontal stripes, which fade in as it is sung.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>For karaoke lines</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -24798,12 +24846,16 @@ Usunięte style:
         <translation>Koszt renderowania</translation>
     </message>
     <message>
+        <source>Change aspect ratio…</source>
+        <translation>Zmień proporcje obrazu…</translation>
+    </message>
+    <message>
         <source>Exit full screen</source>
         <translation>Wyłącz pełny ekran</translation>
     </message>
     <message>
         <source>Escape</source>
-        <translation>Escape</translation>
+        <translation type="vanished">Escape</translation>
     </message>
     <message>
         <source>Full screen</source>

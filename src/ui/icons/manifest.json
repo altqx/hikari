@@ -2864,8 +2864,7 @@
    "legacy": [],
    "surfaces": [
     "audio-box"
-   ],
-   "pending": "CX7 #810"
+   ]
   },
   {
    "role": "autosave",

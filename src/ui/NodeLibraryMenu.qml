@@ -7,7 +7,7 @@ ShellMenu {
     id: libraryMenu
     objectName: "nodeLibraryMenu"
     required property NodeEffectsController controller
-    title: qsTr("From the library…")
+    title: qsTr("From the library")
     iconRole: "node-library"
     enabled: controller.library.length > 0
     Instantiator {

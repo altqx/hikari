@@ -17,7 +17,7 @@ ShellMenu {
             required property var modelData
             required property int index
             objectName: "videoChapter" + index
-            text: modelData.label + "  " + modelData.time
+            text: modelData.label + "  [" + modelData.time + "]"
             checkable: true
             checked: modelData.checked
             keepsMenuOpen: false

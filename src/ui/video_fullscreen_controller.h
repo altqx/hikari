@@ -65,11 +65,13 @@ public:
 
     static QList<QScreen *> monitors();
     Q_INVOKABLE int monitorCount() const { return static_cast<int>(monitors().size()); }
+    Q_INVOKABLE int monitorEntries() const;
     Q_INVOKABLE static bool ownedByMainWindow();
     Q_INVOKABLE int monitorFor(int monitor) const;
 
     Q_INVOKABLE bool toggle(int monitor = 0);
     Q_INVOKABLE bool showOn(int monitor);
+    Q_INVOKABLE bool showOnScreen(int screen);
     Q_INVOKABLE bool leave();
     // MUST KILL: enterWhenShown claims the next open request, so it must be called right before that openVideo
     Q_INVOKABLE void enterWhenShown(const QString &path);
