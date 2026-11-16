@@ -4735,7 +4735,7 @@
   {
    "role": "compact",
    "file": "compact.svg",
-   "label": "Compact conversation",
+   "label": "Compact thread",
    "accent": true,
    "mirror": false,
    "legacy": [],
@@ -4792,7 +4792,8 @@
    "surfaces": [
     "settings-dialog",
     "plugin-manager"
-   ]
+   ],
+   "pending": "PL5 #417"
   },
   {
    "role": "marketplace",

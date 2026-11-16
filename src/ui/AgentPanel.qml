@@ -191,8 +191,8 @@ FocusScope {
             }
             IconToolButton {
                 objectName: "agentThreadMenuButton"
-                iconRole: "menu-more"
-                text: qsTr("Thread menu")
+                iconRole: "panel-menu"
+                text: qsTranslate("HikariSub.Workspace", "More options")
                 visible: panel.agent.ready && !panel.showingThreads && !panel.isChild
                 enabled: panel.hasThread
                 onClicked: threadMenu.popup(this, 0, height)
@@ -311,6 +311,15 @@ FocusScope {
                         panel.agent.open(modelData.id)
                         panel.showingThreads = false
                     }
+                    function openMenu(x, y) {
+                        panel.agent.open(modelData.id)
+                        threadMenu.popup(threadRow, x, y)
+                    }
+                    MenuKey.onRequested: at => openMenu(at.x, at.y)
+                    TapHandler {
+                        acceptedButtons: Qt.RightButton
+                        onTapped: point => threadRow.openMenu(point.position.x, point.position.y)
+                    }
                     contentItem: RowLayout {
                         spacing: 6
                         ColumnLayout {
@@ -422,7 +431,7 @@ FocusScope {
                     objectName: "agentOfferCompact"
                     iconRole: "compact"
                     highlighted: true
-                    text: qsTr("Compact conversation")
+                    text: qsTr("Compact thread")
                     onClicked: panel.agent.compact("")
                 }
                 Button {
@@ -680,10 +689,24 @@ FocusScope {
 
     ShellMenu {
         id: threadMenu
+        objectName: "agentThreadMenu"
+        ShellMenuItem {
+            objectName: "agentRenameThread"
+            iconRole: "edit"
+            text: qsTr("Rename thread…")
+            onTriggered: renameLoader.active = true
+        }
+        ShellMenuItem {
+            objectName: "agentExportThread"
+            iconRole: "export"
+            text: qsTr("Export as Markdown…")
+            onTriggered: panel.exportRequested(panel.thread.id)
+        }
+        MenuSeparator {}
         ShellMenuItem {
             objectName: "agentCompactThread"
             iconRole: "compact"
-            text: qsTr("Compact conversation")
+            text: qsTr("Compact thread")
             enabled: panel.canCompact && !(panel.thread.compacting ?? false)
             onTriggered: panel.agent.compact("")
         }
@@ -694,21 +717,11 @@ FocusScope {
             enabled: panel.canCompact && !panel.running
             onTriggered: panel.agent.newThreadFromSummary()
         }
-        ShellMenuItem {
-            objectName: "agentRenameThread"
-            iconRole: "edit"
-            text: qsTr("Rename thread…")
-            onTriggered: renameLoader.active = true
-        }
-        ShellMenuItem {
-            iconRole: "export"
-            text: qsTr("Export as Markdown…")
-            onTriggered: panel.exportRequested(panel.thread.id)
-        }
         MenuSeparator {}
         ShellMenuItem {
+            objectName: "agentDeleteThread"
             iconRole: "delete"
-            text: qsTr("Delete thread")
+            text: qsTr("Delete thread…")
             onTriggered: deleteQuestion.ask({
                 title: qsTr("Delete this thread?"),
                 severity: "warning",
@@ -720,6 +733,19 @@ FocusScope {
                     panel.agent.remove(panel.thread.id)
             })
         }
+    }
+
+    ShellMenu {
+        id: answerMenu
+        objectName: "agentAnswerMenu"
+        property Item editor: null
+        function openFor(answer, at) {
+            editor = answer
+            popup(answer, at.x, at.y)
+        }
+        TextMenuItem { kind: TextMenuItem.Copy; editor: answerMenu.editor }
+        MenuSeparator {}
+        TextMenuItem { kind: TextMenuItem.SelectAll; editor: answerMenu.editor }
     }
 
     ShellMenu {
@@ -744,7 +770,7 @@ FocusScope {
         id: slashMenu
         ShellMenuItem {
             iconRole: "compact"
-            text: qsTr("Compact conversation")
+            text: qsTr("Compact thread")
             detailText: "/compact"
             enabled: panel.canCompact
             onTriggered: {
@@ -775,12 +801,14 @@ FocusScope {
 
     ShellMenu {
         id: modelMenu
+        objectName: "agentModelMenu"
         Repeater {
             model: panel.agent.models
-            delegate: ShellMenuItem {
+            delegate: MenuRadioItem {
                 required property var modelData
-                text: modelData.text + "   " + modelData.provider
-                checkable: true
+                objectName: "agentModel_" + modelData.value
+                text: modelData.text
+                detailText: modelData.provider
                 checked: panel.hasThread && panel.thread.model === modelData.value
                 onTriggered: {
                     if (!panel.hasThread)
@@ -792,7 +820,8 @@ FocusScope {
         MenuSeparator {}
         ShellMenuItem {
             iconRole: "settings"
-            text: qsTr("Settings › AI…")
+            objectName: "agentModelSettings"
+            text: qsTr("Settings › AI")
             onTriggered: panel.settingsRequested()
         }
     }
@@ -805,11 +834,10 @@ FocusScope {
             model: [{id: "manual", name: qsTr("Manual"), detail: qsTr("You approve each subtitle edit before it’s made, and every other change. Reading never asks.")},
                     {id: "auto", name: qsTr("Auto"), detail: qsTr("The judge model approves each action, or asks you. It sees the action and your messages, never your files.")},
                     {id: "full", name: qsTr("Full access"), detail: qsTr("Nothing asks except the always-ask list. Edits apply at once and stay undoable.")}]
-            delegate: ShellMenuItem {
+            delegate: MenuRadioItem {
                 id: modeItem
                 required property var modelData
                 objectName: "agentMode_" + modelData.id
-                checkable: true
                 checked: panel.mode === modelData.id
                 text: modelData.name
                 contentItem: ColumnLayout {
@@ -836,7 +864,8 @@ FocusScope {
         MenuSeparator {}
         ShellMenuItem {
             iconRole: "settings"
-            text: qsTr("Default for new threads…")
+            objectName: "agentModeDefault"
+            text: qsTr("Default for new threads")
             onTriggered: panel.settingsRequested()
         }
     }
@@ -969,6 +998,11 @@ FocusScope {
                         panel.agent.openLink(c.url)
                 }
                 HoverHandler { cursorShape: parent.hoveredLink.length > 0 ? Qt.PointingHandCursor : Qt.IBeamCursor }
+                TapHandler {
+                    acceptedButtons: Qt.RightButton
+                    onTapped: point => answerMenu.openFor(parent, point.position)
+                }
+                MenuKey.onRequested: position => answerMenu.openFor(this, position)
             }
             SearchSuggestions {
                 id: suggestionsStrip

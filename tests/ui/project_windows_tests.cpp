@@ -14,6 +14,7 @@
 #include "hikari/application/all_tags.h"
 #include "hikari/application/shape_presets.h"
 #include "list_files.h"
+#include "menu_rows.h"
 #include "line_table_model.h"
 #include "settings_store.h"
 #include "shell_controller.h"
@@ -1324,6 +1325,14 @@ private slots:
         QTRY_VERIFY(!named(shell(w), "shiftRenamePreset")->property("enabled").toBool());
         QVERIFY(!named(shell(w), "shiftDeletePreset")->property("enabled").toBool());
         QCOMPARE(named(shell(w), "shiftCopyPresetToTier")->property("text").toString(), QStringLiteral("Copy to project"));
+        QObject *presetMenu = named(shell(w), "shiftPresetMenu");
+        QVERIFY(QMetaObject::invokeMethod(field("shiftPresetMenuButton"), "clicked"));
+        QTRY_VERIFY(presetMenu->property("opened").toBool());
+        QCOMPARE(menu_rows::shown(presetMenu).join(u','),
+                 QStringLiteral("shiftSavePreset,shiftRenamePreset,|,shiftCopyPresetToTier,shiftMovePresetToTier,|,shiftDeletePreset"));
+        QVERIFY(QMetaObject::invokeMethod(presetMenu, "close"));
+        QTRY_VERIFY(!presetMenu->property("visible").toBool());
+        QCOMPARE(field("shiftPresetMenuButton")->property("text").toString(), QStringLiteral("More options"));
 
         QVERIFY(QMetaObject::invokeMethod(field("shiftPresetBar"), "transfer", Q_ARG(QVariant, false)));
         auto *review = shell(w)->findChild<QObject *>(QStringLiteral("shiftPresetClashReview"));

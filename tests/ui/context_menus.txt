@@ -359,6 +359,11 @@ Automation macro > Run
 Automation macro > -
 Automation macro > Set shortcut…
 Automation macro > Clear shortcut
+Automation script
+Automation script > Reload
+Automation script > Edit script
+Automation script > -
+Automation script > Unload
 Automation recommended script
 Automation recommended script > Show in Scripts
 Automation recommended script > Open project page

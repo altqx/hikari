@@ -1119,7 +1119,7 @@ icon("qc-notes", "QC notes", [], [VIEW, SUBS, "qc-notes"],
 icon("qc-done-reset", "Mark all as not done", [], ["qc-notes"], stroke("M1.5 7.5l3 3 6-7") + RELOAD_BADGE)
 icon("node-library", "From the library", [], ["node-editor"],
      stroke(BOOK) + accent(dot(7, 4.5, 1.25), dot(10, 8, 1.25), stroke("M7.75 5.5l1.5 1.5")))
-icon("compact", "Compact conversation", [], ["agent-panel", "grid-menu"],
+icon("compact", "Compact thread", [], ["agent-panel", "grid-menu"],
      stroke("M2.5 1.5h11M2.5 13.5h11M4.5 7.5h7")
      + accent(stroke("M8 3v2.5M6.5 4L8 5.5 9.5 4M8 12V9.5M6.5 11L8 9.5 9.5 11")))
 icon("review-panel", "Review panel", [], [VIEW, EDIT, "review-panel"],
@@ -1446,7 +1446,8 @@ for card, roles in {
     "AI24 #744": ["update"],
     "PL7 #419": ["plugin-sandbox"],
     "AU6 #845": ["clip-to-shape", "shape-to-clip", "shape-merge"],
-    "CX7 #810": ["align-distribute", "phantom-keep-start", "phantom-keep-end", "audio-sliders", "side-bar-off"],
+    "CX7 #810": ["audio-sliders", "side-bar-off"],
+    "PL5 #417": ["network"],
 }.items():
     for role in roles:
         PENDING[role] = card

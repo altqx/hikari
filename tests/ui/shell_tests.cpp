@@ -2048,6 +2048,46 @@ private slots:
         }
     }
 
+    void shiftPresetMenuScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        window->resize(1400, 860);
+        QVERIFY(application->openFile(episode));
+        auto &settings = *application->settingsStore();
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        auto *root = engine->rootObjects().first();
+        auto &shift = application->shiftTimesSettings();
+        QVERIFY(shift.savePreset(QStringLiteral("shift"), QStringLiteral("Late")));
+        QVERIFY(shift.applyPreset(QStringLiteral("shift"), QStringLiteral("Late")));
+        const auto grab = [&](QWindow *on, const QString &name) {
+            QTest::qWait(300);
+            QRect area = on->frameGeometry();
+            for (QWindow *w : QGuiApplication::topLevelWindows())
+                if (w->isVisible() && w->screen() == on->screen())
+                    area |= w->frameGeometry();
+            area = area.intersected(on->screen()->geometry());
+            QVERIFY(on->screen()->grabWindow(0, area.x(), area.y(), area.width(), area.height()).save(out + name));
+        };
+        QVERIFY(QMetaObject::invokeMethod(named("panelShowTiming"), "triggered"));
+        QTRY_VERIFY(item<QObject>("timingDock")->property("isOpen").toBool());
+        QTRY_VERIFY(item("shiftPresetMenuButton") && item("shiftPresetMenuButton")->isVisible());
+        QObject *presetMenu = named("shiftPresetMenu");
+        for (const auto code : ui::theme::kCodes) {
+            const QString theme = ui::theme::codeName(code);
+            settings.setValue(QStringLiteral("appearance.theme"), theme);
+            auto *controls = root->property("palette").value<QObject *>();
+            QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+            QVERIFY(QMetaObject::invokeMethod(item("shiftPresetMenuButton"), "clicked"));
+            QTRY_VERIFY(presetMenu->property("opened").toBool());
+            grab(window, QStringLiteral("/cx7-shift-preset-") + theme + QStringLiteral(".png"));
+            QVERIFY(QMetaObject::invokeMethod(presetMenu, "close"));
+            QTRY_VERIFY(!presetMenu->property("visible").toBool());
+        }
+    }
+
     void gridAndLineEditorMenuScreenshots()
     {
         const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
@@ -6692,6 +6732,7 @@ private slots:
             {QStringLiteral("Document tab"), named("documentTabMenu")},
             {QStringLiteral("Styles row"), named("stylesRowMenu")},
             {QStringLiteral("Automation macro"), named("automationMacroMenu")},
+            {QStringLiteral("Automation script"), named("automationScriptMenu")},
             {QStringLiteral("Automation recommended script"), named("recommendedMenu")},
             {QStringLiteral("Home row"), named("homeRowMenu")},
             {QStringLiteral("Home project row"), named("homeProjectsRowMenu")},
@@ -19057,6 +19098,31 @@ private slots:
 
         const auto copyEntry = [&](const char *name) { return page->findChild<QObject *>(QLatin1String(name)); };
         QVERIFY(copyEntry("aiMcpCopyClaudeCode") && copyEntry("aiMcpCopyCodex") && copyEntry("aiMcpCopyJson"));
+        for (const char *entry : {"aiMcpCopyClaudeCode", "aiMcpCopyCodex", "aiMcpCopyJson"})
+            QCOMPARE(copyEntry(entry)->property("iconRole").toString(), QStringLiteral("edit-copy"));
+        if (const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR"); !out.isEmpty()) {
+            QVERIFY(QDir().mkpath(out));
+            QObject *copyMenu = copySetup->window()->findChild<QObject *>(QStringLiteral("aiMcpCopyMenu"));
+            QVERIFY(copyMenu);
+            auto endPreview = qScopeGuard([] { ui::theme::endPreview(); });
+            for (const auto code : ui::theme::kCodes) {
+                ui::theme::preview({{QStringLiteral("appearance.theme"), ui::theme::codeName(code)},
+                                    {QStringLiteral("appearance.followSystem"), false}});
+                QVERIFY(QMetaObject::invokeMethod(copySetup, "click"));
+                QTRY_VERIFY(copyMenu->property("opened").toBool());
+                QTest::qWait(300);
+                QWindow *on = copySetup->window();
+                QRect area = on->frameGeometry();
+                for (QWindow *w : QGuiApplication::topLevelWindows())
+                    if (w->isVisible() && w->screen() == on->screen())
+                        area |= w->frameGeometry();
+                area = area.intersected(on->screen()->geometry());
+                QVERIFY(on->screen()->grabWindow(0, area.x(), area.y(), area.width(), area.height())
+                            .save(out + QStringLiteral("/cx7-mcp-copy-setup-") + ui::theme::codeName(code) + QStringLiteral(".png")));
+                QVERIFY(QMetaObject::invokeMethod(copyMenu, "close"));
+                QTRY_VERIFY(!copyMenu->property("visible").toBool());
+            }
+        }
         QVERIFY(!copyEntry("aiMcpCopyJson")->property("enabled").toBool());
         QVERIFY(QMetaObject::invokeMethod(copyEntry("aiMcpCopyClaudeCode"), "triggered"));
         QCOMPARE(QGuiApplication::clipboard()->text(),
@@ -30108,6 +30174,8 @@ private slots:
         }
         QCOMPARE(editor->selection(), 2);
         QTRY_COMPARE(shapeList->property("currentIndex").toInt(), 2);
+        QCOMPARE(named("shapesMore")->property("text").toString(), QStringLiteral("More options"));
+        QCOMPARE(menu_rows::shown(named("shapesMoreMenu")), (QStringList{"shapesRestoreDefault", "|", "shapesUndoAll"}));
         editor->select(1);
         QVERIFY(QMetaObject::invokeMethod(named("shapesClose"), "clicked"));
         QTRY_VERIFY(!dialog->isVisible());
@@ -31074,6 +31142,8 @@ private slots:
             QVERIFY(editor->selection() != chosen);
             QTRY_VERIFY(tagList->property("currentIndex").toInt() > at);
         }
+        QCOMPARE(named("tagsMore")->property("text").toString(), QStringLiteral("More options"));
+        QCOMPARE(menu_rows::shown(named("tagsMoreMenu")), (QStringList{"tagsRestoreDefault", "|", "tagsUndoAll"}));
         QVERIFY(QMetaObject::invokeMethod(named("tagsUndoAll"), "triggered"));
         QCOMPARE(editor->items().size(), 22);
         QTRY_COMPARE(option("tag")->property("model").toStringList().size(), 22);
