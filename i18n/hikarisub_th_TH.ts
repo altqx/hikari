@@ -570,6 +570,10 @@
         <translation>ออกจากระบบ Codex แล้ว เซสชันนี้สิ้นสุดแล้ว</translation>
     </message>
     <message>
+        <source>AI component is ready</source>
+        <translation>คอมโพเนนต์ AI พร้อมแล้ว</translation>
+    </message>
+    <message>
         <source>Getting the AI component: %1 of %2 MB</source>
         <translation>กำลังรับคอมโพเนนต์ AI: %1 จาก %2 MB</translation>
     </message>

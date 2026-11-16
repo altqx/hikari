@@ -570,6 +570,10 @@
         <translation>Codex에서 로그아웃했습니다. 이 세션은 끝났습니다.</translation>
     </message>
     <message>
+        <source>AI component is ready</source>
+        <translation>AI 구성 요소가 준비되었습니다</translation>
+    </message>
+    <message>
         <source>Getting the AI component: %1 of %2 MB</source>
         <translation>AI 구성 요소 받는 중: %1/%2MB</translation>
     </message>

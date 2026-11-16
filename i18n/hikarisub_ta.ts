@@ -573,6 +573,10 @@
         <translation>Codex இலிருந்து வெளியேறினீர்கள். இந்த அமர்வு முடிந்தது.</translation>
     </message>
     <message>
+        <source>AI component is ready</source>
+        <translation>AI கூறு தயார்</translation>
+    </message>
+    <message>
         <source>Getting the AI component: %1 of %2 MB</source>
         <translation>AI கூறைப் பெறுகிறது: %2 MB இல் %1</translation>
     </message>

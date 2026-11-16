@@ -576,6 +576,10 @@
         <translation>Wylogowano z Codex. Ta sesja się zakończyła.</translation>
     </message>
     <message>
+        <source>AI component is ready</source>
+        <translation>Komponent AI jest gotowy</translation>
+    </message>
+    <message>
         <source>Getting the AI component: %1 of %2 MB</source>
         <translation>Pobieranie komponentu AI: %1 z %2 MB</translation>
     </message>
