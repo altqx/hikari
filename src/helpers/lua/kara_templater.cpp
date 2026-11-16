@@ -1622,6 +1622,10 @@ void Run::pushUnits(int line, const application::karaoke_layout::KaraOKUnits &u)
         lua_pushvalue(L, part);
         lua_setfield(L, t, "syll");
         setNumber(L, t, "si", k.syl + 1);
+        lua_pushboolean(L, true);
+        lua_setfield(L, t, "isfuri");
+        lua_getfield(L, part, "height");
+        lua_setfield(L, t, "height");
         lua_getfield(L, part, "highlights");
         lua_setfield(L, t, "highlights");
         lua_getfield(L, part, "inline_fx");
