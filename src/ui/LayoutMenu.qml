@@ -83,6 +83,14 @@ ShellMenu {
         onTriggered: layoutMenu.resetRequested()
     }
     ShellMenuItem {
+        objectName: layoutMenu.prefix + "RestoreBackup"
+        iconRole: "layout-restore"
+        text: qsTr("Restore the previous layout")
+        enabled: layoutMenu.layouts.hasBackup && !layoutMenu.layouts.locked
+        reason: layoutMenu.layouts.hasBackup && layoutMenu.layouts.locked ? qsTr("Layout is locked") : ""
+        onTriggered: layoutMenu.layouts.restoreBackup()
+    }
+    ShellMenuItem {
         objectName: layoutMenu.prefix + "Manage"
         iconRole: "layout-manage"
         text: qsTr("Manage layouts")

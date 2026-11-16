@@ -1,34 +1,62 @@
 File
-File > Open… [GLOBAL_OPEN_SUBS]
+File > Open subtitles… [GLOBAL_OPEN_SUBS]
+File > Open video… [GLOBAL_OPEN_VIDEO]
 File > Open folder… [GLOBAL_OPEN_FOLDER]
 File > Recently opened subtitles >
 File > Recently opened subtitles > None
-File > Remove subtitles from the editor [GLOBAL_REMOVE_SUBS]
-File > Close [GLOBAL_CLOSE_PAGE]
-File > Close project [GLOBAL_CLOSE_PROJECT]
-File > Open video… [GLOBAL_OPEN_VIDEO]
+File > -
 File > Import subtitles from MKV… [GRID_SUBS_FROM_MKV]
 File > Import lyrics… [GLOBAL_IMPORT_LYRICS]
+File > -
 File > Save [GLOBAL_SAVE_SUBS]
-File > Save all [GLOBAL_SAVE_ALL_SUBS]
 File > Save as… [GLOBAL_SAVE_SUBS_AS]
+File > Save all [GLOBAL_SAVE_ALL_SUBS]
+File > Save translation… [GLOBAL_SAVE_TRANSLATION]
 File > Export as… [GLOBAL_EXPORT_SUBS_AS]
-File > Save translation [GLOBAL_SAVE_TRANSLATION]
-File > Save subtitles using the video name [GLOBAL_SAVE_WITH_VIDEO_NAME]
+File > Name new files after the video [GLOBAL_SAVE_WITH_VIDEO_NAME]
+File > -
 File > Open autosave… [GLOBAL_OPEN_AUTO_SAVE]
-File > Remove temporary files [GLOBAL_DELETE_TEMPORARY_FILES]
+File > Delete old autosaves… [GLOBAL_DELETE_TEMPORARY_FILES]
 File > Last session >
 File > Last session > Load last session [GLOBAL_LOAD_LAST_SESSION]
-File > Last session > Load session from file [GLOBAL_LOAD_EXTERNAL_SESSION]
-File > Last session > Save session to file [GLOBAL_SAVE_EXTERNAL_SESSION]
-File > Last session > Ask whether to load the last session at program startup
-File > Last session > Load last session after program start
+File > Last session > Load session from file… [GLOBAL_LOAD_EXTERNAL_SESSION]
+File > Last session > Save session to file… [GLOBAL_SAVE_EXTERNAL_SESSION]
+File > Last session > -
+File > Last session > Don’t load the last session
+File > Last session > Ask
+File > Last session > Load the last session
+File > -
+File > Remove subtitles from the editor [GLOBAL_REMOVE_SUBS]
+File > Close tab [GLOBAL_CLOSE_PAGE]
+File > Close project [GLOBAL_CLOSE_PROJECT]
+File > -
 File > Settings [GLOBAL_SETTINGS]
+File > -
 File > Close window [GLOBAL_CLOSE_WINDOW]
 File > Exit [GLOBAL_QUIT]
 Edit
 Edit > Undo [GLOBAL_UNDO]
 Edit > Redo [GLOBAL_REDO]
+Edit > Undo to last save [GLOBAL_UNDO_TO_LAST_SAVE]
+Edit > History [GLOBAL_HISTORY]
+Edit > -
+Edit > Review >
+Edit > Review > Keep AI change [GLOBAL_KEEP_AI_CHANGE]
+Edit > Review > Undo AI change [GLOBAL_UNDO_AI_CHANGE]
+Edit > Review > Next AI change [GLOBAL_NEXT_AI_CHANGE]
+Edit > Review > Previous AI change [GLOBAL_PREVIOUS_AI_CHANGE]
+Edit > Review > -
+Edit > Review > Keep all [GLOBAL_KEEP_ALL_AI_CHANGES]
+Edit > Review > Undo all [GLOBAL_UNDO_ALL_AI_CHANGES]
+Edit > Review > -
+Edit > Review > Show in Review panel [GLOBAL_SHOW_AI_REVIEW]
+Edit > -
+Edit > Find… [GLOBAL_SEARCH]
+Edit > Replace… [GLOBAL_FIND_REPLACE]
+Edit > Find next [GLOBAL_FIND_NEXT]
+Edit > Find previous [GLOBAL_FIND_PREVIOUS]
+Edit > Select lines… [GLOBAL_OPEN_SELECT_LINES]
+Edit > -
 Edit > Sort all lines >
 Edit > Sort all lines > Start time [GLOBAL_SORT_ALL_BY_START_TIMES]
 Edit > Sort all lines > End time [GLOBAL_SORT_ALL_BY_END_TIMES]
@@ -47,136 +75,132 @@ Edit > Sort selected lines > Effect [GLOBAL_SORT_SELECTED_BY_EFFECT]
 Edit > Sort selected lines > Layer [GLOBAL_SORT_SELECTED_BY_LAYER]
 Edit > Sort selected lines > Text [GLOBAL_SORT_SELECTED_BY_TEXT]
 Edit > Sort selected lines > Text without tags [GLOBAL_SORT_SELECTED_BY_TEXT_WITHOUT_TAGS]
-Edit > Undo to last save [GLOBAL_UNDO_TO_LAST_SAVE]
-Edit > History [GLOBAL_HISTORY]
-Edit > Review >
-Edit > Review > Keep AI change [GLOBAL_KEEP_AI_CHANGE]
-Edit > Review > Undo AI change [GLOBAL_UNDO_AI_CHANGE]
-Edit > Review > Next AI change [GLOBAL_NEXT_AI_CHANGE]
-Edit > Review > Previous AI change [GLOBAL_PREVIOUS_AI_CHANGE]
-Edit > Review > -
-Edit > Review > Keep all [GLOBAL_KEEP_ALL_AI_CHANGES]
-Edit > Review > Undo all [GLOBAL_UNDO_ALL_AI_CHANGES]
-Edit > Review > -
-Edit > Review > Show panel [GLOBAL_SHOW_AI_REVIEW]
-Edit > Select lines [GLOBAL_OPEN_SELECT_LINES]
-Edit > Find… [GLOBAL_SEARCH]
-Edit > Replace… [GLOBAL_FIND_REPLACE]
-Edit > Find next [GLOBAL_FIND_NEXT]
-Edit > Find previous [GLOBAL_FIND_PREVIOUS]
 Edit > -
 Edit > Insert hard space [GLOBAL_INSERT_HARD_SPACE]
 Subtitles
 Subtitles > Shift times… [GLOBAL_SHOW_SHIFT_TIMES]
 Subtitles > Timing postprocessor… [GLOBAL_SHOW_TIMING_POSTPROCESSOR]
 Subtitles > Timing helpers >
-Subtitles > Timing helpers > Start to previous keyframe [GLOBAL_SNAP_START_TO_PREVIOUS_KEYFRAME]
-Subtitles > Timing helpers > Start to next keyframe [GLOBAL_SNAP_START_TO_NEXT_KEYFRAME]
-Subtitles > Timing helpers > End to previous keyframe [GLOBAL_SNAP_END_TO_PREVIOUS_KEYFRAME]
-Subtitles > Timing helpers > End to next keyframe [GLOBAL_SNAP_END_TO_NEXT_KEYFRAME]
+Subtitles > Timing helpers > Snap start to the previous keyframe [GLOBAL_SNAP_START_TO_PREVIOUS_KEYFRAME]
+Subtitles > Timing helpers > Snap start to the next keyframe [GLOBAL_SNAP_START_TO_NEXT_KEYFRAME]
+Subtitles > Timing helpers > Snap end to the previous keyframe [GLOBAL_SNAP_END_TO_PREVIOUS_KEYFRAME]
+Subtitles > Timing helpers > Snap end to the next keyframe [GLOBAL_SNAP_END_TO_NEXT_KEYFRAME]
 Subtitles > Timing helpers > -
 Subtitles > Timing helpers > Add lead-in [GLOBAL_ADD_LEAD_IN]
 Subtitles > Timing helpers > Remove lead-in [GLOBAL_REMOVE_LEAD_IN]
 Subtitles > Timing helpers > Add lead-out [GLOBAL_ADD_LEAD_OUT]
 Subtitles > Timing helpers > Remove lead-out [GLOBAL_REMOVE_LEAD_OUT]
 Subtitles > Timing helpers > -
-Subtitles > Timing helpers > Start one frame earlier [GLOBAL_START_FRAME_EARLIER]
-Subtitles > Timing helpers > Start one frame later [GLOBAL_START_FRAME_LATER]
-Subtitles > Timing helpers > End one frame earlier [GLOBAL_END_FRAME_EARLIER]
-Subtitles > Timing helpers > End one frame later [GLOBAL_END_FRAME_LATER]
+Subtitles > Timing helpers > Move start one frame earlier [GLOBAL_START_FRAME_EARLIER]
+Subtitles > Timing helpers > Move start one frame later [GLOBAL_START_FRAME_LATER]
+Subtitles > Timing helpers > Move end one frame earlier [GLOBAL_END_FRAME_EARLIER]
+Subtitles > Timing helpers > Move end one frame later [GLOBAL_END_FRAME_LATER]
 Subtitles > Timing helpers > -
-Subtitles > Timing helpers > Extend previous line to this start [GLOBAL_EXTEND_PREVIOUS_TO_START]
-Subtitles > Timing helpers > Extend next line to this end [GLOBAL_EXTEND_NEXT_TO_END]
+Subtitles > Timing helpers > Extend the previous line to this start [GLOBAL_EXTEND_PREVIOUS_TO_START]
+Subtitles > Timing helpers > Extend the next line to this end [GLOBAL_EXTEND_NEXT_TO_END]
 Subtitles > Timing helpers > -
 Subtitles > Timing helpers > Timing assistant [GLOBAL_TIMING_ASSISTANT]
-Subtitles > Timing helpers > Accept assistant suggestion [GLOBAL_TIMING_ASSISTANT_ACCEPT]
+Subtitles > Timing helpers > Accept the timing assistant’s suggestion [GLOBAL_TIMING_ASSISTANT_ACCEPT]
+Subtitles > -
 Subtitles > Blur and glow layers… [GLOBAL_BLUR_AND_GLOW_LAYERS]
 Subtitles > Build layers with the last values [GLOBAL_BLUR_AND_GLOW_LAYERS_REPEAT]
 Subtitles > Typesetting graph… [GLOBAL_TYPESETTING_GRAPH]
-Subtitles > Convert Aegisub folds to line groups [GLOBAL_CONVERT_FOLDS_TO_GROUPS]
-Subtitles > QC notes… [GLOBAL_SHOW_QC_NOTES]
+Subtitles > -
 Subtitles > Style manager [GLOBAL_OPEN_STYLE_MANAGER]
 Subtitles > Script properties [GLOBAL_OPEN_ASS_PROPERTIES]
 Subtitles > Font collector [GLOBAL_OPEN_FONT_COLLECTOR]
-Subtitles > Resample subtitles [GLOBAL_OPEN_SUBS_RESAMPLE]
+Subtitles > Resample subtitles… [GLOBAL_OPEN_SUBS_RESAMPLE]
 Subtitles > Set FPS >
 Subtitles > Set FPS > Set new FPS… [GRID_SET_NEW_FPS]
 Subtitles > Set FPS > Set FPS from video [GRID_SET_FPS_FROM_VIDEO]
+Subtitles > Convert Aegisub folds to line groups [GLOBAL_CONVERT_FOLDS_TO_GROUPS]
+Subtitles > -
 Subtitles > Check spelling [GLOBAL_OPEN_SPELLCHECKER]
 Subtitles > Check karaoke [GLOBAL_CHECK_KARAOKE]
 Subtitles > Kanji timer [GLOBAL_KANJI_TIMER]
+Subtitles > QC notes [GLOBAL_SHOW_QC_NOTES]
 Subtitles > -
 Subtitles > Translation mode [GLOBAL_TRANSLATION_MODE]
 Video
 Video > Open video… [GLOBAL_OPEN_VIDEO]
 Video > Recently opened videos >
 Video > Recently opened videos > None
-Video > Open keyframes [GLOBAL_OPEN_KEYFRAMES]
+Video > Open dummy video… [GLOBAL_OPEN_DUMMY_VIDEO]
+Video > Reload video [GLOBAL_RELOAD_VIDEO]
+Video > Unload video
+Video > -
+Video > Open keyframes… [GLOBAL_OPEN_KEYFRAMES]
 Video > Recently opened keyframes >
 Video > Recently opened keyframes > None
-Video > Open timecodes [GLOBAL_OPEN_TIMECODES]
+Video > Open timecodes… [GLOBAL_OPEN_TIMECODES]
 Video > Recently opened timecodes >
 Video > Recently opened timecodes > None
-Video > Save timecodes [GLOBAL_SAVE_TIMECODES]
+Video > Save timecodes… [GLOBAL_SAVE_TIMECODES]
 Video > Close timecodes [GLOBAL_CLOSE_TIMECODES]
-Video > Open dummy video [GLOBAL_OPEN_DUMMY_VIDEO]
-Video > Centre times within frames [GLOBAL_CENTER_TIMES_IN_FRAMES]
-Video > Align to video… [GLOBAL_ALIGN_TO_VIDEO]
-Video > Track colour… [GLOBAL_TRACK_COLOUR]
-Video > Find fade… [GLOBAL_FIND_FADE]
-Video > Insert start time from video [GLOBAL_SET_START_TIME]
-Video > Insert end time from video [GLOBAL_SET_END_TIME]
+Video > -
+Video > Play or pause [GLOBAL_PLAY_PAUSE]
+Video > Go to previous frame [GLOBAL_PREVIOUS_FRAME]
+Video > Go to next frame [GLOBAL_NEXT_FRAME]
+Video > Go to previous keyframe [GLOBAL_GO_TO_PREVIOUS_KEYFRAME]
+Video > Go to next keyframe [GLOBAL_GO_TO_NEXT_KEYFRAME]
+Video > Go to start time of line [GLOBAL_SET_VIDEO_AT_START_TIME]
+Video > Go to end time of line [GLOBAL_SET_VIDEO_AT_END_TIME]
+Video > -
+Video > Set start time from video [GLOBAL_SET_START_TIME]
+Video > Set end time from video [GLOBAL_SET_END_TIME]
 Video > Shift by frames to video >
 Video > Shift by frames to video > Selected lines, start at video [GLOBAL_SHIFT_FRAMES_TO_VIDEO_START]
 Video > Shift by frames to video > Selected lines, end at video [GLOBAL_SHIFT_FRAMES_TO_VIDEO_END]
 Video > Shift by frames to video > Following lines, start at video [GLOBAL_SHIFT_FOLLOWING_FRAMES_TO_VIDEO_START]
 Video > Shift by frames to video > Following lines, end at video [GLOBAL_SHIFT_FOLLOWING_FRAMES_TO_VIDEO_END]
+Video > Centre times within frames [GLOBAL_CENTER_TIMES_IN_FRAMES]
+Video > -
+Video > Align to video… [GLOBAL_ALIGN_TO_VIDEO]
+Video > Track colour… [GLOBAL_TRACK_COLOUR]
+Video > Find fade… [GLOBAL_FIND_FADE]
 Video > Tracking >
 Video > Tracking > Apply motion data… [GLOBAL_APPLY_MOTION_DATA]
-Video > Tracking > Perspective tracking… [GLOBAL_PERSPECTIVE_TRACKING]
-Video > Tracking > Revert motion data [GLOBAL_REVERT_MOTION_DATA]
+Video > Tracking > Apply Power-Pin data… [GLOBAL_PERSPECTIVE_TRACKING]
 Video > Tracking > -
 Video > Tracking > Copy motion data from lines [GLOBAL_COPY_MOTION_DATA]
-Video > Tracking > Copy Power-Pin track from lines [GLOBAL_COPY_POWER_PIN_TRACK]
+Video > Tracking > Copy Power-Pin data from lines [GLOBAL_COPY_POWER_PIN_TRACK]
 Video > Tracking > -
 Video > Tracking > Extend tracked lines… [GLOBAL_EXTEND_TRACKED_LINES]
 Video > Tracking > Extrapolate \move to the line [GLOBAL_EXTRAPOLATE_MOVE]
-Video > Previous frame [GLOBAL_PREVIOUS_FRAME]
-Video > Next frame [GLOBAL_NEXT_FRAME]
-Video > Go to start time of line [GLOBAL_SET_VIDEO_AT_START_TIME]
-Video > Go to end time of line [GLOBAL_SET_VIDEO_AT_END_TIME]
-Video > Play or pause [GLOBAL_PLAY_PAUSE]
-Video > Go to previous keyframe [GLOBAL_GO_TO_PREVIOUS_KEYFRAME]
-Video > Go to next keyframe [GLOBAL_GO_TO_NEXT_KEYFRAME]
+Video > Tracking > -
+Video > Tracking > Revert motion data [GLOBAL_REVERT_MOTION_DATA]
 Video > -
-Video > Unload video
-Video > Reload video [GLOBAL_RELOAD_VIDEO]
-Video > Streams >
+Video > Full screen [VIDEO_FULL_SCREEN]
+Video > Change aspect ratio… [VIDEO_ASPECT_RATIO]
+Video > Audio track >
 Video > Chapters >
-Video > Video details… [GLOBAL_VIDEO_DETAILS]
 Video > Zoom video [GLOBAL_VIDEO_ZOOM]
 Video > Reset zoom and pan [GLOBAL_RESET_VIDEO_ZOOM]
 Video > Render cost [GLOBAL_VIDEO_RENDER_COST]
+Video > Video details [GLOBAL_VIDEO_DETAILS]
 Audio
-Audio > Open audio [GLOBAL_OPEN_AUDIO]
+Audio > Open audio… [GLOBAL_OPEN_AUDIO]
 Audio > Recently opened audio >
 Audio > Recently opened audio > None
 Audio > Open audio from video [GLOBAL_AUDIO_FROM_VIDEO]
-Audio > Close audio [GLOBAL_CLOSE_AUDIO]
 Audio > Reload audio [GLOBAL_RELOAD_AUDIO]
+Audio > Close audio [GLOBAL_CLOSE_AUDIO]
 Audio > -
 Audio > Set audio position to video time [GLOBAL_SET_AUDIO_FROM_VIDEO]
-Audio > Set audio marker to video time [GLOBAL_SET_AUDIO_MARK_FROM_VIDEO]
-Audio > Join with previous line using the audio selection [GLOBAL_JOIN_PREVIOUS_AUDIO_SELECTION]
+Audio > Set audio mark to video time [GLOBAL_SET_AUDIO_MARK_FROM_VIDEO]
+Audio > Apply the audio selection and end the previous line there [GLOBAL_JOIN_PREVIOUS_AUDIO_SELECTION]
 Automation
 Automation > Load script… [GLOBAL_AUTOMATION_LOAD_SCRIPT]
 Automation > Refresh autoload scripts [GLOBAL_AUTOMATION_RELOAD_AUTOLOAD]
+Automation > -
 Automation > Run the last loaded script [GLOBAL_AUTOMATION_LOAD_LAST_SCRIPT]
-Automation > Rerun last macro
+Automation > Run the last macro again [GLOBAL_AUTOMATION_RERUN_LAST_MACRO]
 Automation > Repeat last run [GLOBAL_AUTOMATION_REPEAT_LAST_RUN]
 Automation > Cancel macro
+Automation > -
 Automation > Show panel
-Automation > Plugins… [GLOBAL_PLUGINS]
+Automation > Plugins [GLOBAL_PLUGINS]
+Automation > -
 Automation > -
 View
 View > Layout >
@@ -189,53 +213,63 @@ View > Layout > -
 View > Layout > -
 View > Layout > Save layout as…
 View > Layout > Reset this layout
+View > Layout > Restore the previous layout
 View > Layout > Manage layouts
 View > Layout > -
 View > Layout > Lock layout [GLOBAL_TOGGLE_LOCK_LAYOUT]
 View > -
-View > Toggle left side bar [GLOBAL_TOGGLE_LEFT_SIDE_BAR]
-View > Toggle right side bar [GLOBAL_TOGGLE_RIGHT_SIDE_BAR]
+View > Left side bar [GLOBAL_TOGGLE_LEFT_SIDE_BAR]
+View > Right side bar [GLOBAL_TOGGLE_RIGHT_SIDE_BAR]
 View > Swap side bars [GLOBAL_SWAP_SIDE_BARS]
 View > Reset side bars
 View > -
 View > Panels >
 View > Panels > Video >
+View > Panels > Video > Show
+View > Panels > Video > Float
+View > Panels > Video > -
+View > Panels > Video > Close
 View > Panels > Audio >
-View > Panels > Original text >
-View > Panels > Line editor >
 View > Panels > Grid >
+View > Panels > Line editor >
+View > Panels > Original text >
 View > Panels > Reference >
+View > Panels > -
 View > Panels > Shift times >
 View > Panels > Timing postprocessor >
 View > Panels > Find >
-View > Panels > Automation >
 View > Panels > Spellchecker >
-View > Panels > Log >
 View > Panels > Styles >
-View > Panels > Template editor >
 View > Panels > QC notes >
+View > Panels > Template editor >
+View > Panels > Automation >
+View > Panels > Explorer >
+View > Panels > Log >
+View > Panels > -
 View > Panels > Review >
 View > Panels > Agent >
+View > Panels > -
 View > Panels > Graph >
 View > Panels > Node >
 View > Panels > Source lines >
-View > Panels > Explorer >
 View > Panels > -
 View > Move panel…
-View > Restore the previous layout
+View > Explorer [GLOBAL_SHOW_EXPLORER]
+View > Log
 View > -
 View > Node effects [GLOBAL_NODE_EFFECTS]
 View > -
-View > Explorer [GLOBAL_SHOW_EXPLORER]
-View > Log
-View > Hide tags [GLOBAL_HIDE_TAGS]
+View > Hide tags in the Grid [GLOBAL_HIDE_TAGS]
 View > Hide tags in the line editor [GLOBAL_EDITOR_HIDE_TAGS]
 Help
 Help > Getting started [GLOBAL_GETTING_STARTED]
 Help > User guide [GLOBAL_HELP]
-Help > Report an issue [GLOBAL_ANSI]
-Help > Check for updates [GLOBAL_CHECK_FOR_UPDATES]
-Help > Open user folder
 Help > What’s new
+Help > -
+Help > Report an issue… [GLOBAL_ANSI]
+Help > Open user folder
+Help > -
+Help > Check for updates [GLOBAL_CHECK_FOR_UPDATES]
+Help > -
 Help > About [GLOBAL_ABOUT]
 Help > Credits [GLOBAL_HELPERS]
