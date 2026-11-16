@@ -193,8 +193,6 @@ struct AgentThread {
     /// The soft cap in US dollars; 0 means none.
     double cap = 0;
     std::set<std::string> allowed;
-    /// The globe; the thread searches only while Settings › AI lets AI search the web too.
-    bool webSearch = true;
     /// The Project folder of the window it was started in, UTF-8; its skills join the user's. Empty: none.
     std::string project;
     std::optional<AgentTask> task;
@@ -297,8 +295,8 @@ public:
     void remove(const std::string &id);
     void setMode(const std::string &id, AgentMode mode);
     void setModel(const std::string &id, application::ai::ModelRef model);
-    void setWebSearch(const std::string &id, bool on);
-    bool searches(const AgentThread &thread) const;
+    /// Every thread searches the web while Settings › AI lets AI search it.
+    bool searches() const;
     /// Tabs the user attached with @, besides the editing target.
     void setAttached(const std::string &id, std::vector<application::DocumentId> documents);
     /// The model a thread's next turn runs on: its own, else the chat model.

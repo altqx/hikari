@@ -157,8 +157,6 @@ AgentController::AgentController(Wiring wiring, QObject *parent) : QObject(paren
     connect(&m_wiring.settings, &ui::SettingsStore::changed, this, [this](const QString &id) {
         if (id.startsWith(QLatin1String("ai.agent.")))
             emit settingsChanged();
-        if (id == QLatin1String(AiFeatures::kWebSearchSetting) || id == QLatin1String(AiFeatures::kSearchServiceSetting))
-            emit threadChanged();
         if (id.startsWith(QLatin1String("ai.")))
             emit modelsChanged();
     });
@@ -387,7 +385,9 @@ void AgentController::openParent()
 bool AgentController::ready() const
 {
     const ai::Providers *providers = m_wiring.ai.providers();
-    return (providers && providers->config().modelFor(ai::Role::Chat).has_value()) || foundAgent().has_value();
+    const bool anyModel = providers && std::ranges::any_of(providers->config().providers,
+                                                           [](const ai::Provider &p) { return !p.models.empty(); });
+    return anyModel || foundAgent().has_value();
 }
 
 std::optional<ai::ModelRef> AgentController::foundAgent() const
@@ -492,11 +492,6 @@ QVariantMap AgentController::thread() const
         if (const ai::Model *m = providers ? modelIn(providers->config(), *ref) : nullptr)
             window = m->contextTokens.value_or(0);
     }
-    const ai::Provider *provider = nullptr;
-    if (const auto ref = m_threads->modelOf(*t); ref && providers)
-        provider = providers->config().provider(ref->providerId);
-    const backends::ai::AiRequests *requests = m_wiring.ai.requests();
-    const bool searchReady = (provider && ai::searchesNatively(*provider)) || (requests && requests->searchService());
     QVariantList attached;
     if (const auto it = m_attached.find(m_current); it != m_attached.end())
         for (const application::DocumentId d : it->second)
@@ -534,9 +529,6 @@ QVariantMap AgentController::thread() const
             {QStringLiteral("model"), model},
             {QStringLiteral("modelText"), modelText},
             {QStringLiteral("attached"), attached},
-            {QStringLiteral("webSearch"), t->webSearch},
-            {QStringLiteral("webSearchReady"), searchReady},
-            {QStringLiteral("webSearchCacheMiss"), provider && provider->preset == ai::Preset::Anthropic},
             {QStringLiteral("projectInstructions"), !projectInstructionsFile(*t).isEmpty()}};
 }
 
@@ -679,17 +671,6 @@ void AgentController::remove(const QString &id)
         return;
     m_attached.erase(id.toStdString());
     m_threads->remove(id.toStdString());
-}
-
-bool AgentController::webSearchShown() const
-{
-    return m_wiring.settings.boolean(AiFeatures::kWebSearchSetting);
-}
-
-void AgentController::setWebSearch(bool on)
-{
-    if (m_threads && !m_current.empty())
-        m_threads->setWebSearch(m_current, on);
 }
 
 QString AgentController::citedText(const QVariantMap &item, const QColor &chip, const QColor &ink) const

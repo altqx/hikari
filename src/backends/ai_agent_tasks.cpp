@@ -573,7 +573,6 @@ void AgentThreads::startChild(AgentThread &parent, const Json &params, AgentMode
     child.mode = mode;
     child.model = std::move(model);
     child.project = parent.project;
-    child.webSearch = parent.webSearch;
     child.renamed = true;
     const std::string brief = stringAt(params, "task");
     const std::string title = stringAt(params, "title");

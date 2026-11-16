@@ -39,6 +39,7 @@
 #include <QtTest>
 
 #include <memory>
+#include <cmath>
 #include <optional>
 #include <utility>
 
@@ -382,12 +383,15 @@ private slots:
     void init()
     {
         const QByteArray test(QTest::currentTestFunction());
-        const bool chatModel = test != "withoutAChatModelThePanelPointsToSettings" && test != "withOnlyClaudeCodeThePanelRunsOnIt";
+        const bool nothing = test == "withNothingToChooseThePanelPointsToSettings";
+        const bool chatModel = !nothing && test != "withAModelButNoChatModelTheButtonAsksForOne"
+                               && test != "withOnlyClaudeCodeThePanelRunsOnIt";
         QVERIFY(QDir(root.path()).mkpath(QString::fromLatin1(QTest::currentTestFunction())));
         ai::Config config;
         ai::Provider provider = ai::presetProvider(ai::Preset::OpenRouter, "or", "OpenRouter");
         provider.models = {{.id = "m", .name = "Fake model", .price = ai::Price{.input = 0, .output = 0}}};
-        config.providers.push_back(provider);
+        if (!nothing && test != "withOnlyClaudeCodeThePanelRunsOnIt")
+            config.providers.push_back(provider);
         if (chatModel)
             config.roles[ai::Role::Chat] = {"or", "m"};
 
@@ -988,7 +992,7 @@ private slots:
         shoot(QStringLiteral("agent-compact-failed"), QStringLiteral("QC Ep01–Ep12"));
     }
 
-    void theGlobeSearchesPerThreadAndAnAnswerShowsItsSourcesAndSearches()
+    void anAnswerShowsItsSourcesAndSearchesWithNoGlobe()
     {
         QStringList opened;
         const auto previous = backends::desktop::replaceRoutes({.openUrl = [&](const QUrl &url) {
@@ -998,15 +1002,9 @@ private slots:
         auto restore = qScopeGuard([&] { backends::desktop::replaceRoutes(previous); });
         openPanel();
         QVERIFY(click(QStringLiteral("agentNewThread")));
-        QQuickItem *globe = item(QStringLiteral("agentWebSearch"));
-        QVERIFY(globe);
-        QVERIFY(globe->property("checked").toBool());
-        QCOMPARE(globe->property("tip").toString(), QStringLiteral("Search the web: on for this thread"));
-        QVERIFY(click(QStringLiteral("agentWebSearch")));
-        QVERIFY(!agent().thread().value(QStringLiteral("webSearch")).toBool());
-        QTRY_COMPARE(globe->property("tip").toString(), QStringLiteral("Search the web: off for this thread"));
-        QVERIFY(click(QStringLiteral("agentWebSearch")));
-        QVERIFY(agent().thread().value(QStringLiteral("webSearch")).toBool());
+        QVERIFY(item(QStringLiteral("agentModelButton")));
+        QVERIFY(!item(QStringLiteral("agentWebSearch")));
+        QVERIFY(!agent().thread().contains(QStringLiteral("webSearch")));
 
         const std::string say = "Aimer sings it. The single came out in 2011.";
         Json citations = Json::array();
@@ -1059,11 +1057,26 @@ private slots:
         QCOMPARE(opened.size(), 1);
         shoot(QStringLiteral("agent-web-search"), QStringLiteral("Who sings it?"));
 
-        application->settingsStore()->set(app::AiFeatures::kWebSearchSetting, false);
-        QTRY_VERIFY(!item(QStringLiteral("agentWebSearch")));
     }
 
-    void withoutAChatModelThePanelPointsToSettings()
+    void withAModelButNoChatModelTheButtonAsksForOne()
+    {
+        openPanel();
+        QVERIFY(agent().ready());
+        QVERIFY(!item(QStringLiteral("agentNoProvider")));
+        QCOMPARE(agent().defaultModelText(), QString());
+        QQuickItem *button = item(QStringLiteral("agentModelButton"));
+        QVERIFY(button);
+        QCOMPARE(button->property("text").toString(), QStringLiteral("Choose a model"));
+        QVERIFY(click(QStringLiteral("agentModelButton")));
+        QTRY_VERIFY(item(QStringLiteral("agentModelSettings")));
+        QTRY_VERIFY(item(QStringLiteral("agentModel_or/m")));
+        QVERIFY(click(QStringLiteral("agentModel_or/m")));
+        QTRY_COMPARE(agent().thread().value(QStringLiteral("model")).toString(), QStringLiteral("or\tm"));
+        QTRY_COMPARE(button->property("text").toString(), QStringLiteral("Fake model"));
+    }
+
+    void withNothingToChooseThePanelPointsToSettings()
     {
         openPanel();
         QVERIFY(!agent().ready());
@@ -1082,7 +1095,7 @@ private slots:
         QVERIFY(agent().current().isEmpty());
         QQuickItem *button = item(QStringLiteral("agentModelButton"));
         QVERIFY(button);
-        QCOMPARE(button->property("text").toString(), QStringLiteral("Fake model  ⌄"));
+        QCOMPARE(button->property("text").toString(), QStringLiteral("Fake model"));
         QCOMPARE(QQmlProperty::read(button, QStringLiteral("Accessible.name"), qmlContext(button)).toString(),
                  QStringLiteral("Model"));
         QCOMPARE(QQmlProperty::read(button, QStringLiteral("ToolTip.text"), qmlContext(button)).toString(),
@@ -1090,7 +1103,21 @@ private slots:
 
         agent().newThread();
         agent().setModel(QStringLiteral("or\tm"));
-        QTRY_COMPARE(button->property("text").toString(), QStringLiteral("Fake model  ⌄"));
+        QTRY_COMPARE(button->property("text").toString(), QStringLiteral("Fake model"));
+
+        std::optional<qreal> gap;
+        for (const QString &name : {QStringLiteral("agentModelButton"), QStringLiteral("agentModeButton")}) {
+            QQuickItem *label = item(name + QStringLiteral("Label"));
+            QQuickItem *chevron = item(name + QStringLiteral("Chevron"));
+            QVERIFY2(label && chevron, qPrintable(name));
+            const QRectF text = label->mapRectToScene(QRectF(0, 0, label->width(), label->height()));
+            const QRectF mark = chevron->mapRectToScene(QRectF(0, 0, chevron->width(), chevron->height()));
+            QVERIFY2(std::abs(text.center().y() - mark.center().y()) <= 1, qPrintable(name));
+            QCOMPARE(mark.size(), QSizeF(12, 12));
+            if (!gap)
+                gap = mark.left() - text.right();
+            QCOMPARE(mark.left() - text.right(), *gap);
+        }
     }
 
     void theComposerMenusOpenInsideTheScreenOfAWindowFillingIt()
@@ -1121,7 +1148,7 @@ private slots:
         QVERIFY(agent().ready());
         QVERIFY(!item(QStringLiteral("agentNoProvider")));
         QCOMPARE(agent().defaultModelText(), QStringLiteral("Claude Code"));
-        QCOMPARE(item(QStringLiteral("agentModelButton"))->property("text").toString(), QStringLiteral("Claude Code  ⌄"));
+        QCOMPARE(item(QStringLiteral("agentModelButton"))->property("text").toString(), QStringLiteral("Claude Code"));
         agent().newThread();
         QTRY_COMPARE(agent().thread().value(QStringLiteral("model")).toString(), QStringLiteral("agent:claude\t"));
         QCOMPARE(agent().thread().value(QStringLiteral("modelText")).toString(), QStringLiteral("Claude Code"));

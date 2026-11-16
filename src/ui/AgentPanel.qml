@@ -38,8 +38,6 @@ FocusScope {
         return id === "brave" ? "Brave Search" : id === "tavily" ? "Tavily" : id === "exa" ? "Exa"
              : id === "firecrawl" ? "Firecrawl" : id
     }
-    readonly property bool webSearchOn: !hasThread || thread.webSearch === true
-    readonly property bool webSearchReady: hasThread ? thread.webSearchReady === true : true
     function taskStateName(k) {
         return k.status === "running" ? qsTr("running") : k.status === "needs_you" ? qsTr("needs you")
              : k.status === "done" ? qsTr("done") : k.status === "failed" ? qsTr("failed")
@@ -95,6 +93,26 @@ FocusScope {
         composer.text = ""
     }
 
+    component ChooserButton: Button {
+        id: chooser
+        flat: true
+        contentItem: RowLayout {
+            spacing: 4
+            Label {
+                objectName: chooser.objectName + "Label"
+                Layout.alignment: Qt.AlignVCenter
+                text: chooser.text
+                color: chooser.palette.buttonText
+                elide: Text.ElideRight
+            }
+            Icon {
+                objectName: chooser.objectName + "Chevron"
+                Layout.alignment: Qt.AlignVCenter
+                size: 12
+                iconRole: "chevron-down"
+            }
+        }
+    }
     component Card: Rectangle {
         id: card
         property color edge: Theme.line
@@ -628,45 +646,21 @@ FocusScope {
                         enabled: attachMenu.count > 0
                         onClicked: attachMenu.popup(this, 0, -attachMenu.implicitHeight)
                     }
-                    IconToolButton {
-                        objectName: "agentWebSearch"
-                        visible: panel.agent.webSearchShown
-                        iconRole: "web-search"
-                        text: qsTr("Search the web")
-                        checkable: panel.webSearchReady
-                        checked: panel.webSearchReady && panel.webSearchOn
-                        opacity: panel.webSearchReady ? 1 : 0.45
-                        tip: !panel.webSearchReady
-                             ? qsTr("This provider can’t search the web on its own. Choose a search service in Settings › AI › Web search.")
-                             : (panel.webSearchOn ? qsTr("Search the web: on for this thread") : qsTr("Search the web: off for this thread"))
-                               + (panel.hasThread && panel.thread.webSearchCacheMiss
-                                  ? "\n" + qsTr("Changing it mid-thread costs one cache miss on Anthropic.") : "")
-                        onClicked: {
-                            if (!panel.webSearchReady)
-                                return
-                            const on = !panel.webSearchOn
-                            if (!panel.hasThread)
-                                panel.agent.newThread()
-                            panel.agent.setWebSearch(on)
-                        }
-                    }
-                    Button {
+                    ChooserButton {
                         id: modelButton
                         objectName: "agentModelButton"
-                        flat: true
                         readonly property string modelText: (panel.hasThread && panel.thread.modelText) || panel.agent.defaultModelText
-                        text: (modelText || qsTr("Choose a model")) + "  ⌄"
+                        text: modelText || qsTr("Choose a model")
                         Accessible.name: qsTr("Model")
                         Accessible.description: modelText
                         ToolTip.visible: hovered
                         ToolTip.text: qsTr("Model")
                         onClicked: modelMenu.popup(this, 0, -modelMenu.implicitHeight)
                     }
-                    Button {
+                    ChooserButton {
                         id: modeButton
                         objectName: "agentModeButton"
-                        flat: true
-                        text: panel.modeName(panel.mode) + "  ⌄"
+                        text: panel.modeName(panel.mode)
                         palette.buttonText: panel.mode === "full" ? Theme.danger : Theme.text
                         onClicked: modeMenu.popup(this, 0, -modeMenu.implicitHeight)
                     }
