@@ -3,12 +3,16 @@
 #include "audio_controller.h"
 #include "docking.h"
 #include "line_grid.h"
+#include "node_effects_controller.h"
 #include "settings_store.h"
 #include "theme.h"
 #include "video_controller.h"
+#include "visual_tools_controller.h"
+#include "workspace_layout.h"
 
 #include <QDir>
 #include <QFile>
+#include <QFontDatabase>
 #include <QGuiApplication>
 #include <QPainter>
 #include <QQmlApplicationEngine>
@@ -31,6 +35,8 @@ class ReleaseScreenshotsTests : public QObject {
     static constexpr int kSignFrame = 1440;
     static constexpr int kTopRowOfTheGridRange = 7;
     static constexpr int kItalicLineFrame = 1550;
+    static constexpr int kHiddenLineFrame = 1360;
+    static constexpr int kPerspectiveTool = 11;
 
     std::unique_ptr<QTemporaryDir> home;
     app::Application *application = nullptr;
@@ -209,6 +215,21 @@ class ReleaseScreenshotsTests : public QObject {
         selectAt(frame);
     }
 
+    void openKaraokeSong()
+    {
+        const QString song = qEnvironmentVariable("HIKARI_SHOT_KARAOKE_SUBTITLES");
+        const QString fonts = qEnvironmentVariable("HIKARI_SHOT_KARAOKE_FONTS");
+        video = qEnvironmentVariable("HIKARI_SHOT_KARAOKE_VIDEO");
+        const int frame = qEnvironmentVariableIntValue("HIKARI_SHOT_KARAOKE_FRAME");
+        if (video.isEmpty() || song.isEmpty() || fonts.isEmpty() || frame <= 0)
+            QSKIP("HIKARI_SHOT_KARAOKE_VIDEO, _SUBTITLES, _FONTS and _FRAME are not all set");
+        for (const QFileInfo &font : QDir(fonts).entryInfoList(QDir::Files))
+            QFontDatabase::addApplicationFont(font.absoluteFilePath());
+        QVERIFY(application->openFile(song));
+        applyLayout("Editing");
+        showVideoAt(frame);
+    }
+
     bool openDialogue()
     {
         const QString commons = qEnvironmentVariable("HIKARI_SHOT_SUBTITLES");
@@ -361,6 +382,66 @@ private slots:
         applyLayout("Translation");
         selectAt(kEditingFrame);
         shoot(QStringLiteral("translation"), QStringLiteral("translation-mode"));
+    }
+    void basicsGridHiddenLines()
+    {
+        openCommonsDialogue(kEditingFrame);
+        selectAt(kHiddenLineFrame);
+        QVERIFY(application->hideSelectedLines());
+        QTRY_VERIFY(application->shell().filtered());
+        selectAt(kEditingFrame);
+        grid()->scrollToTopRow(kTopRowOfTheGridRange - 1);
+        shoot(QStringLiteral("basics"), QStringLiteral("hidden-lines"), "gridPanel");
+    }
+
+    void checkingSubtitleComparison()
+    {
+        openCommonsDialogue(kEditingFrame);
+        const std::pair<int, const char *> ourEdits[] = {
+            {1700, "Wow, look!"},
+            {kEditingFrame, "Finally! Time to get the barbecue going."},
+        };
+        for (const auto &[frame, text] : ourEdits) {
+            selectAt(frame);
+            const QString edited = QString::fromUtf8(text);
+            application->editor().textEdited(edited, int(edited.size()));
+            QVERIFY(application->editor().commit());
+        }
+        QVERIFY(application->openFile(qEnvironmentVariable("HIKARI_SHOT_SUBTITLES")));
+        application->selectTab(0);
+        QVERIFY(application->compareWithTab(1));
+        selectAt(kEditingFrame);
+        shoot(QStringLiteral("checking"), QStringLiteral("comparison-grid"));
+    }
+
+    void homeTypesetting()
+    {
+        const QString file = writeFile(QStringLiteral("Sprite Fright signs.ass"),
+                                       signsScript("Dialogue: 0,0:00:59.50,0:01:00.50,Sign,,0,0,0,,"
+                                                   "{\\an5\\pos(1180,150)\\org(1180,150)\\frx14\\fry-22\\frz-4\\blur1}"
+                                                   "Brambleden Woods\n"));
+        QVERIFY(!file.isEmpty());
+        QVERIFY(application->openFile(file));
+        applyLayout("Typesetting");
+        showVideoAt(kSignFrame);
+        application->visualTools().selectFamily(kPerspectiveTool);
+        QTRY_VERIFY(item("visualOption_plane"));
+        QTest::mouseMove(window, QPoint(1, 1));
+        shoot(QStringLiteral("home"), QStringLiteral("typesetting"), "videoPanel");
+    }
+
+    void homeNodeEffects()
+    {
+        openKaraokeSong();
+        QVERIFY(QMetaObject::invokeMethod(item("nodeEffectsMenuItem")->property("action").value<QObject *>(), "trigger"));
+        QTRY_VERIFY(application->workspaceLayout().nodeEffects());
+        auto &effects = application->nodeEffects();
+        const auto presets = effects.presets();
+        QVERIFY(effects.addPreset(presets.back().toMap().value(QStringLiteral("index")).toInt()));
+        effects.setPreviewOnVideo(true);
+        QTRY_VERIFY_WITH_TIMEOUT(effects.videoPreview(), 20000);
+        QTest::mouseMove(window, QPoint(1, 1));
+        shoot(QStringLiteral("home"), QStringLiteral("node-effects"));
     }
 };
 
