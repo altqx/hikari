@@ -10,7 +10,7 @@ Commons: **yes** = the picture shows lines from the Wikimedia Commons TimedText 
 | --- | --- | --- | --- | --- | --- |
 | home/projects | #244 tile 1 (Explorer, episode group open) | homeProjects (crop 0,291–1600,960 → 1200×502) | Sprite Fright | yes (row 18 dialogue in grid and video) | taken |
 | home/windows | #244 tile 2 (two windows, own videos) | homeWindows (two window grabs composed on a backdrop; waits for the audio to finish loading) | Sprite Fright | yes (dialogue window) | taken (retake 2026-11-16, unit hk-cx7-r1) |
-| home/ai-review | #244 tile 3 (Agent thread + Review) | homeAiReview (1920×1080, crop 0,62–1920,865) | Sprite Fright | no (our own lines; stand-in AI) | taken: line 3 kept, line 4 undone, line 5 still waiting in Review |
+| home/ai-review | #244 tile 3 (Agent thread + Review) | homeAiReview (1920×1080, crop 0,62–1920,865) | Sprite Fright | no (our own lines; stand-in AI) | taken (retake hk-cx7-a7, English catalog): line 3 kept, line 4 undone, line 5 still waiting in Review |
 | home/node-effects | #244 tile 4 / 1b Plus "Node effects" tile | homeNodeEffectsOnRayMv (Falling letters, frame 165; crop 0,62–1600,731) | Ray MV (karaoke) | - (credit "Subtitles: Jibrill") | taken |
 | home/motion-tracking | #244 tile 5 | homeMotionTracking | Sprite Fright | no (our own sign, no dialogue) | taken |
 | home/checking | #244 tile 6 | homeChecking | Sprite Fright | no (our own lines) | taken |
@@ -56,6 +56,10 @@ Commons: **yes** = the picture shows lines from the Wikimedia Commons TimedText 
 ## ai-review note
 
 Kept and undone items leave the Review panel, which lists only waiting items. So the change has three lines: line 3 kept (new text in the grid), line 4 undone (original text in the grid and video), line 5 still waiting in Review. The stand-in is the fake sidecar with a new `--replies` file that maps a plain prompt to its scripted turn. The agent runs in Manual mode, because in Auto the judge stopped the edit at Allow. Units hk-cx7-a1…a6; a6 is the shot.
+
+## English numerus catalog (2026-11-16)
+
+Before 1379602c4's follow-up, release_screenshots_tests didn't install `i18n/qm/hikarisub_en.qm`, so `%n` strings showed as "(s)". The suite now loads it in initTestCase and keeps it for the whole run. I checked every picture from this harness (OCR of each light raw, then by eye: checking, projects, windows, node effects, karaoke, translation, guide shots). Only home/ai-review showed "(s)": "1 change(s) to review" in Review and in the status bar. It's the only retake (unit hk-cx7-a7), and it now reads "1 change to review". home/plugins (homePlugins, hk-cx7-r1) has no `%n` string. Other suites' shots (batch A/G) come from their own harnesses and aren't in this check.
 
 ## Failing existing shot functions
 
