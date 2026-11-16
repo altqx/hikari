@@ -5,7 +5,7 @@ A native version of arch1t3cht's Note Browser 1.3.6, whose notes live in the sub
 ## Where it opens
 
 - Subtitles › QC notes… (5241, no default key) and View › Panels › QC notes. The dock id is `QcNotes` (panel registry 12). No built-in layout holds it; it first opens to the right of the Grid.
-- Next QC note (5242), Previous QC note (5243) and Add QC note (5254) work from anywhere and have no default keys. Add QC note… is also in the Grid's context menu, at that line's start.
+- Next QC note (5242), Previous QC note (5243) and Add QC note… (5254) work from anywhere and have no default keys. Add QC note… is also in the Grid's context menu, in the group with Translation matching…, at that line's start.
 
 ## Storage
 
