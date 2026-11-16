@@ -79,6 +79,8 @@ class AgentController final : public QObject {
     Q_PROPERTY(QObject *items READ items CONSTANT FINAL)
     // [{value, text, provider}] from Settings › AI.
     Q_PROPERTY(QVariantList models READ models NOTIFY modelsChanged FINAL)
+    /// The model a new thread starts with, or empty when none is configured.
+    Q_PROPERTY(QString defaultModelText READ defaultModelText NOTIFY modelsChanged FINAL)
     // The open tabs @ can attach: [{id, title}], without the active one.
     Q_PROPERTY(QVariantList attachable READ attachable NOTIFY threadChanged FINAL)
     Q_PROPERTY(QString activeTitle READ activeTitle NOTIFY threadChanged FINAL)
@@ -124,6 +126,7 @@ public:
     QVariantMap thread() const;
     QObject *items() { return &m_items; }
     QVariantList models() const;
+    QString defaultModelText() const;
     QVariantList attachable() const;
     QString activeTitle() const;
     bool costMeter() const;
@@ -200,6 +203,7 @@ private:
     void apply();
     /// The first installed agent, which a thread falls back to when no provider has a Chat model.
     std::optional<application::ai::ModelRef> foundAgent() const;
+    QString modelTextOf(const application::ai::ModelRef &ref) const;
     void fallBackToAnAgent(const std::string &thread);
     void select(std::string id);
     void refreshThread();

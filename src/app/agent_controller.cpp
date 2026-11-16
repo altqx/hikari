@@ -400,6 +400,27 @@ std::optional<ai::ModelRef> AgentController::foundAgent() const
     return std::nullopt;
 }
 
+QString AgentController::modelTextOf(const ai::ModelRef &ref) const
+{
+    const ai::Providers *providers = m_wiring.ai.providers();
+    if (const ai::Model *m = providers ? modelIn(providers->config(), ref) : nullptr)
+        return qs(m->name.empty() ? m->id : m->name);
+    for (const AiFeatures::AcpAgent &acp : m_wiring.ai.acpAgents())
+        if (acpRef(acp) == ref)
+            return acp.name;
+    const auto agent = std::ranges::find_if(kAgentModels, [&](const AgentModel &a) { return a.ref() == ref; });
+    return agent != kAgentModels.end() ? agent->text() : qs(ref.modelId);
+}
+
+QString AgentController::defaultModelText() const
+{
+    const ai::Providers *providers = m_wiring.ai.providers();
+    if (const auto chat = providers ? providers->config().modelFor(ai::Role::Chat) : std::nullopt)
+        return modelTextOf(*chat);
+    const auto agent = foundAgent();
+    return agent ? modelTextOf(*agent) : QString();
+}
+
 void AgentController::fallBackToAnAgent(const std::string &thread)
 {
     const AgentThread *t = m_threads->thread(thread);
@@ -467,15 +488,9 @@ QVariantMap AgentController::thread() const
     qint64 window = 0;
     if (const auto ref = m_threads->modelOf(*t)) {
         model = modelValue(*ref);
-        const auto agent = std::ranges::find_if(kAgentModels, [&](const AgentModel &a) { return a.ref() == *ref; });
-        modelText = agent != kAgentModels.end() ? agent->text() : qs(ref->modelId);
-        for (const AiFeatures::AcpAgent &acp : m_wiring.ai.acpAgents())
-            if (acpRef(acp) == *ref)
-                modelText = acp.name;
-        if (const ai::Model *m = providers ? modelIn(providers->config(), *ref) : nullptr) {
-            modelText = qs(m->name.empty() ? m->id : m->name);
+        modelText = modelTextOf(*ref);
+        if (const ai::Model *m = providers ? modelIn(providers->config(), *ref) : nullptr)
             window = m->contextTokens.value_or(0);
-        }
     }
     const ai::Provider *provider = nullptr;
     if (const auto ref = m_threads->modelOf(*t); ref && providers)

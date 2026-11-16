@@ -31,6 +31,7 @@
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QQmlExpression>
+#include <QQmlProperty>
 #include <QQuickWindow>
 #include <QtQuickTest/quicktest.h>
 #include <QTemporaryDir>
@@ -1034,11 +1035,30 @@ private slots:
         QTRY_VERIFY(shell(QStringLiteral("settingsLoader.item !== null && settingsLoader.item.visible")).toBool());
     }
 
+    void theModelButtonNamesTheModelTheNextMessageUses()
+    {
+        openPanel();
+        QVERIFY(agent().current().isEmpty());
+        QQuickItem *button = item(QStringLiteral("agentModelButton"));
+        QVERIFY(button);
+        QCOMPARE(button->property("text").toString(), QStringLiteral("Fake model  ⌄"));
+        QCOMPARE(QQmlProperty::read(button, QStringLiteral("Accessible.name"), qmlContext(button)).toString(),
+                 QStringLiteral("Model"));
+        QCOMPARE(QQmlProperty::read(button, QStringLiteral("ToolTip.text"), qmlContext(button)).toString(),
+                 QStringLiteral("Model"));
+
+        agent().newThread();
+        agent().setModel(QStringLiteral("or\tm"));
+        QTRY_COMPARE(button->property("text").toString(), QStringLiteral("Fake model  ⌄"));
+    }
+
     void withOnlyClaudeCodeThePanelRunsOnIt()
     {
         openPanel();
         QVERIFY(agent().ready());
         QVERIFY(!item(QStringLiteral("agentNoProvider")));
+        QCOMPARE(agent().defaultModelText(), QStringLiteral("Claude Code"));
+        QCOMPARE(item(QStringLiteral("agentModelButton"))->property("text").toString(), QStringLiteral("Claude Code  ⌄"));
         agent().newThread();
         QTRY_COMPARE(agent().thread().value(QStringLiteral("model")).toString(), QStringLiteral("agent:claude\t"));
         QCOMPARE(agent().thread().value(QStringLiteral("modelText")).toString(), QStringLiteral("Claude Code"));

@@ -654,7 +654,12 @@ FocusScope {
                         id: modelButton
                         objectName: "agentModelButton"
                         flat: true
-                        text: (panel.hasThread ? panel.thread.modelText : "") + "  ⌄"
+                        readonly property string modelText: (panel.hasThread && panel.thread.modelText) || panel.agent.defaultModelText
+                        text: (modelText || qsTr("Choose a model")) + "  ⌄"
+                        Accessible.name: qsTr("Model")
+                        Accessible.description: modelText
+                        ToolTip.visible: hovered
+                        ToolTip.text: qsTr("Model")
                         onClicked: modelMenu.popup(this, 0, -modelMenu.implicitHeight)
                     }
                     Button {
