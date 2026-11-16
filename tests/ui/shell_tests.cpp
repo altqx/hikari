@@ -21231,6 +21231,38 @@ private slots:
         QCOMPARE(code(), other);
     }
 
+    void aPrereleaseBuildShowsStableVersionsOnlyUnticked()
+    {
+        const LegacyHere none({});
+        QTemporaryDir home;
+        QVERIFY(home.isValid());
+        app::Application::Options options;
+        options.settingsFile = home.filePath(QStringLiteral("hikari.ini"));
+        options.userFolder = home.path();
+        options.gettingStarted = true;
+        options.spellingBackend = {};
+        options.appVersion = QStringLiteral("0.1.0-beta.4");
+        restartWith(options);
+        QTRY_VERIFY(gettingStarted()->property("visible").toBool());
+        while (setupPage() != u"updates")
+            setupNext();
+        QCOMPARE(setupValues().value(QStringLiteral("updater.checkForStable")).toBool(), false);
+        QVERIFY(setupItem("gettingStartedPrereleases")->property("checked").toBool());
+        QVERIFY(!setupItem("gettingStartedStable")->property("checked").toBool());
+        QVERIFY(QMetaObject::invokeMethod(setupItem("gettingStartedSkip"), "click"));
+        QTRY_VERIFY(!gettingStarted()->property("visible").toBool());
+        QVERIFY(!application->updates().stableOnly());
+        auto *dialog = openSettings();
+        QVERIFY(dialog);
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        showSettingsPage("updates");
+        QTRY_VERIFY(dialogItem("settingsDialog", "settingsPageUpdates")->isVisible());
+        QVERIFY(!dialogItem("settingsDialog", "setting_updater.checkForStable")->property("checked").toBool());
+        options.appVersion = QStringLiteral("0.1.0");
+        restartWith(options);
+        QVERIFY(application->updates().stableOnly());
+    }
+
     void gettingStartedImportFillsThePagesAndAPageWins()
     {
         QByteArray config = "[HikariSub v0.0.1-rc.1]\r\n";
