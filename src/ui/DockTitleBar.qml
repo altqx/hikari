@@ -68,7 +68,7 @@ KDDWViews.TitleBarBase {
             objectName: "dockWindowClose"
             text: qsTr("Close")
             enabled: root.closeButtonEnabled
-            onTriggered: root.closeButtonClicked()
+            onTriggered: if (!Docking.requestClose(Docking.titleBarPanels(root.titleBarCpp))) root.closeButtonClicked()
         }
     }
 

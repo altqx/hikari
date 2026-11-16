@@ -1531,6 +1531,9 @@ ApplicationWindow {
             if (dock && anchor)
                 panelOptionsMenu.openFor(dock, anchor)
         }
+        function onCloseRequested(names) {
+            root.dockList.filter(d => names.includes(d.uniqueName)).forEach(d => root.closePanel(d))
+        }
     }
     ShellMenu {
         id: panelOptionsMenu
