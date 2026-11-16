@@ -216,6 +216,9 @@ TEST(SettingsImport, EveryWorksheetOptionReachesADestinationOrADisposition)
         } else if (key == "TOOLBAR_IDS" || key == "TOOLBAR_ALIGNMENT") {
             EXPECT_EQ(row.disposition, Disposition::Retired) << key;
             EXPECT_NE(row.reason.find("no main toolbar"), std::string::npos);
+        } else if (key == "UPDATER_CHECK_FOR_STABLE") {
+            EXPECT_EQ(row.disposition, Disposition::Retired);
+            EXPECT_NE(row.reason.find("build's default"), std::string::npos);
         } else {
             EXPECT_EQ(row.disposition, Disposition::Change) << key << " " << row.reason;
             EXPECT_TRUE(row.selectable) << key;
@@ -272,6 +275,22 @@ TEST(SettingsImport, OptionsTheFilesLeaveOutAreMissingWithTheCurrentValueKept)
         EXPECT_FALSE(row.selectable) << def.id;
         EXPECT_FALSE(row.value.has_value()) << def.id;
     }
+}
+
+TEST(SettingsImport, LegacyStableOnlyLeavesTheBuildsDefault)
+{
+    setInstalledVersion("0.1.0-beta.4");
+    const Plan plan =
+        buildPlan({config(padding() + "UPDATER_CHECK_FOR_STABLE=true\r\n")}, linuxHost(), readBy(ReadBy::Windows));
+    EXPECT_EQ(rowOf(plan, "setting:UPDATER_CHECK_FOR_STABLE").disposition, Disposition::Retired);
+    const Profile profile = applyPlan(plan, proposedRows(plan), linuxHost());
+    EXPECT_FALSE(profile.values.contains("updater.checkForStable"));
+    MemorySettingsStorage storage;
+    Settings settings(storage);
+    for (const auto &[id, value] : profile.values)
+        settings.set(id, value);
+    EXPECT_FALSE(settings.boolean("updater.checkForStable"));
+    setInstalledVersion("0.1.0");
 }
 
 TEST(SettingsImport, DictionaryLanguageBecomesThePrimaryLanguage)

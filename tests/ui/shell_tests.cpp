@@ -21213,6 +21213,8 @@ private slots:
         setupNext();
         setupPut("autosave.maxFiles", 7);
         setupNext();
+        QVERIFY(setupItem("gettingStartedStable")->property("checked").toBool());
+        QCOMPARE(setupItem("gettingStartedStable")->property("badge").toString(), QStringLiteral("Recommended"));
         QVERIFY(QMetaObject::invokeMethod(setupItem("gettingStartedPrereleases"), "click"));
         setupPut("updater.autoCheck", true);
         setupNext();
@@ -21233,7 +21235,10 @@ private slots:
 
     void aPrereleaseBuildShowsStableVersionsOnlyUnticked()
     {
-        const LegacyHere none({});
+        QByteArray config = "[HikariSub v0.0.1-rc.1]\r\n";
+        for (int i = 1; i <= 11; ++i)
+            config += "EDITBOX_TAG_BUTTON_VALUE" + QByteArray::number(i) + "=\r\n";
+        const LegacyHere legacy(config + "UPDATER_CHECK_FOR_STABLE=true\r\n");
         QTemporaryDir home;
         QVERIFY(home.isValid());
         app::Application::Options options;
@@ -21249,6 +21254,7 @@ private slots:
         QCOMPARE(setupValues().value(QStringLiteral("updater.checkForStable")).toBool(), false);
         QVERIFY(setupItem("gettingStartedPrereleases")->property("checked").toBool());
         QVERIFY(!setupItem("gettingStartedStable")->property("checked").toBool());
+        QCOMPARE(setupItem("gettingStartedStable")->property("badge").toString(), QString());
         QVERIFY(QMetaObject::invokeMethod(setupItem("gettingStartedSkip"), "click"));
         QTRY_VERIFY(!gettingStarted()->property("visible").toBool());
         QVERIFY(!application->updates().stableOnly());
@@ -21282,21 +21288,21 @@ private slots:
         QVERIFY(importer.chosen().contains("setting:autosave.maxFiles"));
         setupNext();
         QCOMPARE(setupValues().value(QStringLiteral("autosave.maxFiles")).toInt(), 10);
-        QCOMPARE(setupValues().value(QStringLiteral("updater.checkForStable")).toBool(), false);
+        QCOMPARE(setupValues().value(QStringLiteral("updater.checkForStable")).toBool(), true);
         auto *store = application->settingsStore();
         QVERIFY(!store->isSet(QStringLiteral("autosave.maxFiles")));
         setupPut("autosave.maxFiles", 6);
         QVERIFY(QMetaObject::invokeMethod(setupItem("gettingStartedBack"), "click"));
         setupNext();
         QCOMPARE(setupValues().value(QStringLiteral("autosave.maxFiles")).toInt(), 6);
-        QCOMPARE(setupValues().value(QStringLiteral("updater.checkForStable")).toBool(), false);
+        QCOMPARE(setupValues().value(QStringLiteral("updater.checkForStable")).toBool(), true);
         while (setupPage() != u"files")
             setupNext();
         QVERIFY(!store->isSet(QStringLiteral("grid.font")));
         setupNext();
         QTRY_VERIFY(!gettingStarted()->property("visible").toBool());
         QCOMPARE(store->integer("autosave.maxFiles"), 6);
-        QCOMPARE(store->boolean("updater.checkForStable"), false);
+        QCOMPARE(store->boolean("updater.checkForStable"), true);
         QVERIFY(!store->isSet(QStringLiteral("program.tabTextMaxChars")));
         QVERIFY(importer.pending());
         restartWithSpelling(home.path(), false, {}, true);
@@ -21304,7 +21310,7 @@ private slots:
         QCOMPARE(store->text("grid.font"), QStringLiteral("Arial"));
         QCOMPARE(store->integer("program.tabTextMaxChars"), 25);
         QCOMPARE(store->integer("autosave.maxFiles"), 6);
-        QCOMPARE(store->boolean("updater.checkForStable"), false);
+        QCOMPARE(store->boolean("updater.checkForStable"), true);
         QTest::qWait(100);
         QVERIFY(!gettingStarted()->property("visible").toBool());
     }
