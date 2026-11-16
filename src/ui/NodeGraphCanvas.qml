@@ -793,7 +793,7 @@ Pane {
             Button {
                 id: libraryButton
                 objectName: "nodeGraphFromLibrary"
-                text: qsTr("From the library…")
+                text: qsTr("From the library")
                 icon.source: IconTheme.image("node-library", enabled ? IconTheme.normal : IconTheme.disabled,
                                              enabled ? IconTheme.accent : IconTheme.disabled, false)
                 icon.color: "transparent"

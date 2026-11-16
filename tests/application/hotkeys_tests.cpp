@@ -611,7 +611,7 @@ TEST(Hotkeys, ResetAllIsOneStep)
     const auto live = defaultHotkeys();
     list.build(live);
     const int history = list.find("Global History");
-    const int open = list.find("Global Open subtitles");
+    const int open = list.find("Global Open subtitles…");
     list.map(history, "Ctrl-Shift-J", GlobalHotkey, HotkeyAnswer::Cancel, live);
     list.remove(open, live);
     list.filter(5);
@@ -713,7 +713,7 @@ TEST(Hotkeys, ConflictsPerWindow)
         EXPECT_EQ(list.row(history).accel, "Ctrl-S");
         EXPECT_EQ(rowNamed(list, "Global Save").accel, "Ctrl-Shift-H");
         EXPECT_EQ(copy.at(HotkeyId{kSave, GlobalHotkey}).accel, "Ctrl-Shift-H");
-        const int open = list.find("Global Open subtitles");
+        const int open = list.find("Global Open subtitles…");
         list.map(open, "Ctrl-S", GlobalHotkey, HotkeyAnswer::Delete, live);
         EXPECT_EQ(list.row(history).accel, "");
         EXPECT_EQ(copy.at(HotkeyId{kHistory, GlobalHotkey}).accel, "");
@@ -756,10 +756,10 @@ TEST(Hotkeys, ConflictsPerWindow)
         auto c = list.mapConflict(stop, "E", VideoHotkey, live);
         ASSERT_TRUE(c);
         EXPECT_TRUE(c->doubled);
-        EXPECT_EQ(c->message, "This hotkey already exists for \"Play first 500 ms\".\nWhat to do?");
+        EXPECT_EQ(c->message, "This hotkey already exists for \"Play the first 500 ms\".\nWhat to do?");
         list.map(stop, "E", VideoHotkey, HotkeyAnswer::Delete, live);
         EXPECT_EQ(list.row(stop).accel, "E");
-        EXPECT_EQ(rowNamed(list, "Audio Play first 500 ms").accel, "E");
+        EXPECT_EQ(rowNamed(list, "Audio Play the first 500 ms").accel, "E");
         const int insert = list.find("Subtitles Insert before");
         c = list.mapConflict(insert, "L", GridHotkey, live);
         ASSERT_TRUE(c);
@@ -814,7 +814,7 @@ TEST(Hotkeys, ResetDeleteUndoRedo)
     const auto live = defaultHotkeys();
     list.build(live);
     const int history = list.find("Global History");
-    const int open = list.find("Global Open subtitles");
+    const int open = list.find("Global Open subtitles…");
     list.map(history, "Ctrl-Shift-J", GlobalHotkey, HotkeyAnswer::Cancel, live);
     list.map(open, "Ctrl-Shift-J", GlobalHotkey, HotkeyAnswer::Switch, live);
     EXPECT_EQ(list.row(history).accel, "Ctrl-O");
@@ -880,17 +880,17 @@ TEST(Hotkeys, TheCopyOutlivesTheDialogAndSetDefault)
 
     HotkeyList third(copy);
     third.build(*committed);
-    third.map(third.find("Global Open subtitles"), "F7", GlobalHotkey, HotkeyAnswer::Cancel, *committed);
+    third.map(third.find("Global Open subtitles…"), "F7", GlobalHotkey, HotkeyAnswer::Cancel, *committed);
     third.filter(2);
     auto reset = defaultHotkeys();
     third.clear();
     third.build(reset);
     EXPECT_EQ(third.shown().size(), 391u);
     EXPECT_EQ(third.filterMode(), 2);
-    EXPECT_EQ(rowNamed(third, "Global Open subtitles").accel, "Ctrl-O");
+    EXPECT_EQ(rowNamed(third, "Global Open subtitles…").accel, "Ctrl-O");
     EXPECT_TRUE(third.modified());
     third.undo();
-    EXPECT_EQ(rowNamed(third, "Global Open subtitles").accel, "Ctrl-O");
+    EXPECT_EQ(rowNamed(third, "Global Open subtitles…").accel, "Ctrl-O");
     third.remove(third.find("Global Find"), reset);
     third.undo();
     EXPECT_EQ(rowNamed(third, "Global Find").accel, "Ctrl-F");
@@ -910,8 +910,8 @@ TEST(Hotkeys, GestureMapsAtOnce)
     c = mapHotkeyNowConflict(live, ids().at("VIDEO_STOP"), "E", VideoHotkey);
     ASSERT_TRUE(c);
     EXPECT_FALSE(c->doubled);
-    EXPECT_EQ(c->message, "This shortcut already exists in another window as a shortcut for \"Audio Play first 500 "
-                          "ms\".\nWhat would you like to do?");
+    EXPECT_EQ(c->message, "This shortcut already exists in another window as a shortcut for \"Audio Play the first "
+                          "500 ms\".\nWhat would you like to do?");
     auto r = mapHotkeyNow(live, ids().at("VIDEO_STOP"), "Stop", "E", VideoHotkey, HotkeyAnswer::SetAnyway);
     EXPECT_TRUE(r.changed);
     EXPECT_TRUE(r.saveAudio);

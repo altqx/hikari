@@ -978,8 +978,12 @@
         <translation>வெளியீட்டுச் சாதனம்</translation>
     </message>
     <message>
+        <source>Audio settings</source>
+        <translation>ஆடியோ அமைப்புகள்</translation>
+    </message>
+    <message>
         <source>Audio settings…</source>
-        <translation>ஆடியோ அமைப்புகள்…</translation>
+        <translation type="vanished">ஆடியோ அமைப்புகள்…</translation>
     </message>
     <message>
         <source>Link the volume and stretch sliders</source>
@@ -1023,7 +1027,7 @@
     </message>
     <message>
         <source>Play 500 ms after the start time</source>
-        <translation>தொடக்க நேரத்திற்குப் பிறகு 500 ms இயக்கவும்</translation>
+        <translation type="vanished">தொடக்க நேரத்திற்குப் பிறகு 500 ms இயக்கவும்</translation>
     </message>
     <message>
         <source>Play to the end</source>
@@ -1063,7 +1067,7 @@
     </message>
     <message>
         <source>Enable / Disable automatic splitting of syllables</source>
-        <translation>அசைகளின் தானியங்கு பிரிப்பை இயக்கவும் / முடக்கவும்</translation>
+        <translation type="vanished">அசைகளின் தானியங்கு பிரிப்பை இயக்கவும் / முடக்கவும்</translation>
     </message>
     <message>
         <source>Auto-scroll</source>
@@ -1071,7 +1075,7 @@
     </message>
     <message>
         <source>Auto-scroll to the active line</source>
-        <translation>செயலில் உள்ள வரிக்குத் தானாக உருட்டு</translation>
+        <translation type="vanished">செயலில் உள்ள வரிக்குத் தானாக உருட்டு</translation>
     </message>
     <message>
         <source>Spectrum</source>
@@ -1096,7 +1100,7 @@
     </message>
     <message>
         <source>Play 500 ms before the start time</source>
-        <translation>தொடக்க நேரத்திற்கு முன் 500 ms இயக்கவும்</translation>
+        <translation type="vanished">தொடக்க நேரத்திற்கு முன் 500 ms இயக்கவும்</translation>
     </message>
     <message>
         <source>Play the first 500 ms</source>
@@ -1104,7 +1108,7 @@
     </message>
     <message>
         <source>Play 500 ms before the end time</source>
-        <translation>இறுதி நேரத்திற்கு முன் 500 ms இயக்கவும்</translation>
+        <translation type="vanished">இறுதி நேரத்திற்கு முன் 500 ms இயக்கவும்</translation>
     </message>
     <message>
         <source>Play the last 500 ms</source>
@@ -1112,7 +1116,7 @@
     </message>
     <message>
         <source>Play 500 ms after the end time</source>
-        <translation>இறுதி நேரத்திற்குப் பிறகு 500 ms இயக்கவும்</translation>
+        <translation type="vanished">இறுதி நேரத்திற்குப் பிறகு 500 ms இயக்கவும்</translation>
     </message>
     <message>
         <source>Play 500 ms after the end</source>
@@ -1208,11 +1212,11 @@
     </message>
     <message>
         <source>Waveform mode</source>
-        <translation>அலைவடிவப் பயன்முறை</translation>
+        <translation type="vanished">அலைவடிவப் பயன்முறை</translation>
     </message>
     <message>
         <source>Spectrum mode</source>
-        <translation>ச்பெக்ட்ரம் பயன்முறை</translation>
+        <translation type="vanished">ச்பெக்ட்ரம் பயன்முறை</translation>
     </message>
     <message>
         <source>Sync with video</source>
@@ -1220,7 +1224,7 @@
     </message>
     <message>
         <source>Sync the video and audio cursors</source>
-        <translation>வீடியோ மற்றும் ஆடியோ கர்சர்களை ஒத்திசை</translation>
+        <translation type="vanished">வீடியோ மற்றும் ஆடியோ கர்சர்களை ஒத்திசை</translation>
     </message>
     <message>
         <source>Speech</source>
@@ -1228,7 +1232,7 @@
     </message>
     <message>
         <source>More audio options</source>
-        <translation>மேலும் ஆடியோ விருப்பங்கள்</translation>
+        <translation type="vanished">மேலும் ஆடியோ விருப்பங்கள்</translation>
     </message>
     <message>
         <source>Go to selection start</source>
@@ -1297,6 +1301,10 @@ Output device: %2</source>
     <message>
         <source>Speech spectrum</source>
         <translation>பேச்சு ச்பெக்ட்ரம்</translation>
+    </message>
+    <message>
+        <source>More options</source>
+        <translation>மேலும் விருப்பங்கள்</translation>
     </message>
     <message>
         <source>Zoom and volume sliders</source>
@@ -7116,11 +7124,11 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Play before the marker</source>
-        <translation>குறிப்பானுக்கு முன் இயக்கு</translation>
+        <translation type="vanished">குறிப்பானுக்கு முன் இயக்கு</translation>
     </message>
     <message>
         <source>Play after the marker</source>
-        <translation>குறிப்பானுக்குப் பின் இயக்கு</translation>
+        <translation type="vanished">குறிப்பானுக்குப் பின் இயக்கு</translation>
     </message>
     <message>
         <source>Play to the end</source>
@@ -7692,11 +7700,11 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Open subtitles</source>
-        <translation>வசன வரிகளைத் திற</translation>
+        <translation type="vanished">வசன வரிகளைத் திற</translation>
     </message>
     <message>
         <source>Open video</source>
-        <translation>வீடியோவைத் திற</translation>
+        <translation type="vanished">வீடியோவைத் திற</translation>
     </message>
     <message>
         <source>Play or pause</source>
@@ -7784,19 +7792,19 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Play first 500 ms</source>
-        <translation>முதல் 500 ms இயக்கு</translation>
+        <translation type="vanished">முதல் 500 ms இயக்கு</translation>
     </message>
     <message>
         <source>Play last 500 ms</source>
-        <translation>கடைசி 500 ms இயக்கு</translation>
+        <translation type="vanished">கடைசி 500 ms இயக்கு</translation>
     </message>
     <message>
         <source>Play 500 ms before</source>
-        <translation>முன் 500 ms இயக்கு</translation>
+        <translation type="vanished">முன் 500 ms இயக்கு</translation>
     </message>
     <message>
         <source>Play 500 ms after</source>
-        <translation>பின் 500 ms இயக்கு</translation>
+        <translation type="vanished">பின் 500 ms இயக்கு</translation>
     </message>
     <message>
         <source>Paste the selected text</source>
@@ -7888,7 +7896,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Change aspect ratio</source>
-        <translation>தோற்ற விகிதத்தை மாற்றவும்</translation>
+        <translation type="vanished">தோற்ற விகிதத்தை மாற்றவும்</translation>
     </message>
     <message>
         <source>5 seconds forward</source>
@@ -8213,6 +8221,42 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Perspective tracking…</source>
         <translation>பார்வைக்கோணக் கண்காணிப்பு…</translation>
+    </message>
+    <message>
+        <source>Play before the mark</source>
+        <translation>குறிக்கு முன் இயக்கு</translation>
+    </message>
+    <message>
+        <source>Play after the mark</source>
+        <translation>குறிக்குப் பின் இயக்கு</translation>
+    </message>
+    <message>
+        <source>Play the first 500 ms</source>
+        <translation>முதல் 500 ms ஐ இயக்கு</translation>
+    </message>
+    <message>
+        <source>Play the last 500 ms</source>
+        <translation>கடைசி 500 ms ஐ இயக்கு</translation>
+    </message>
+    <message>
+        <source>Play 500 ms before the start</source>
+        <translation>தொடக்கத்துக்கு 500 ms முன் இயக்கு</translation>
+    </message>
+    <message>
+        <source>Play 500 ms after the end</source>
+        <translation>முடிவுக்கு 500 ms பின் இயக்கு</translation>
+    </message>
+    <message>
+        <source>Open subtitles…</source>
+        <translation>வசன வரிகளைத் திற…</translation>
+    </message>
+    <message>
+        <source>Open video…</source>
+        <translation>வீடியோவைத் திற…</translation>
+    </message>
+    <message>
+        <source>Change aspect ratio…</source>
+        <translation>தோற்ற விகிதத்தை மாற்றவும்…</translation>
     </message>
     <message>
         <source>Apply motion data…</source>
@@ -11794,7 +11838,7 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished">ஒரு முன்னமைவிலிருந்து</translation>
     </message>
     <message>
-        <source>From the library…</source>
+        <source>From the library</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -12083,10 +12127,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Graph menu</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Target: selected lines</source>
         <translation type="unfinished"></translation>
     </message>
@@ -12188,6 +12228,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Apply to the selected lines</source>
         <translation type="unfinished">தேர்ந்தெடுத்த வரிகளுக்குப் பயன்படுத்து</translation>
+    </message>
+    <message>
+        <source>More options</source>
+        <translation>மேலும் விருப்பங்கள்</translation>
     </message>
     <message>
         <source>Only the lines selected in “Source lines” are regenerated; the others keep their output.</source>
@@ -12428,6 +12472,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Each syllable’s letters are cut into thin horizontal stripes, which fade in as it is sung.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>For karaoke lines</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -24646,12 +24694,16 @@ Styles deleted:
         <translation>ரெண்டர் செலவு</translation>
     </message>
     <message>
+        <source>Change aspect ratio…</source>
+        <translation>தோற்ற விகிதத்தை மாற்றவும்…</translation>
+    </message>
+    <message>
         <source>Exit full screen</source>
         <translation>முழுத் திரையிலிருந்து வெளியேறு</translation>
     </message>
     <message>
         <source>Escape</source>
-        <translation>Escape</translation>
+        <translation type="vanished">Escape</translation>
     </message>
     <message>
         <source>Full screen</source>
