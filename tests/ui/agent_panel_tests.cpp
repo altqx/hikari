@@ -29,6 +29,7 @@
 
 #include <QAccessible>
 #include <QFile>
+#include <QJsonDocument>
 #include <QFileInfo>
 #include <QProcess>
 #include <QPointer>
@@ -413,6 +414,105 @@ class AgentPanelTest : public QObject {
         ports.antigravityTokenFile = antigravityProfile() + u'/' + QLatin1String(backends::ai::kAntigravityTokenFile);
     }
 
+    static QRectF onScene(const QQuickItem *at) { return at->mapRectToScene(QRectF(0, 0, at->width(), at->height())); }
+    static QStringList sticksOut(QQuickItem *from, const QRectF &bounds)
+    {
+        QStringList out;
+        std::function<void(QQuickItem *)> walk = [&](QQuickItem *at) {
+            if (!at->isVisible() || at->opacity() == 0)
+                return;
+            const QRectF r = onScene(at);
+            if (r.width() > 0 && (r.left() < bounds.left() - 1 || r.right() > bounds.right() + 1))
+                out << QStringLiteral("%1 \"%2\" spans %3..%4, room %5..%6")
+                           .arg(QString::fromLatin1(at->metaObject()->className()), at->objectName())
+                           .arg(r.left()).arg(r.right()).arg(bounds.left()).arg(bounds.right());
+            for (QQuickItem *child : at->childItems())
+                walk(child);
+        };
+        walk(from);
+        return out;
+    }
+    QQuickItem *newest(const QString &name) const
+    {
+        QQuickItem *last = nullptr;
+        std::function<void(QQuickItem *)> walk = [&](QQuickItem *at) {
+            if (!at->isVisible())
+                return;
+            if (at->objectName() == name)
+                last = at;
+            for (QQuickItem *c : at->childItems())
+                walk(c);
+        };
+        walk(window()->contentItem());
+        return last;
+    }
+    QQuickItem *child(QQuickItem *in, const QString &name) const
+    {
+        for (QQuickItem *at : in->childItems()) {
+            if (at->objectName() == name)
+                return at;
+            if (QQuickItem *found = child(at, name))
+                return found;
+        }
+        return nullptr;
+    }
+    QObject *popup(const QString &name) const
+    {
+        for (QObject *at : window()->findChildren<QObject *>(name))
+            if (at->inherits("QQuickPopup"))
+                return at;
+        return nullptr;
+    }
+    QRectF popupOnScene(const QString &name) const
+    {
+        QObject *at = popup(name);
+        auto *background = qobject_cast<QQuickItem *>(at->property("background").value<QObject *>());
+        QQuickItem *body = background ? background->parentItem()
+                                      : qobject_cast<QQuickItem *>(at->property("contentItem").value<QObject *>())->parentItem();
+        return onScene(body);
+    }
+    void panelOnScreen()
+    {
+        const QRect available = window()->screen()->availableGeometry();
+        QQuickItem *view = item(QStringLiteral("agentView"));
+        window()->setPosition(available.right() - 8 - qRound(onScene(view).right()), available.top());
+        QTRY_VERIFY(QRectF(available).contains(QRectF(view->mapToGlobal(QPointF(0, 0)), view->size())));
+    }
+    void narrowPanel(int width)
+    {
+        QVERIFY(shell(QStringLiteral("agentLoader.anchors.fill = undefined, agentLoader.width = %1,"
+                                     " agentLoader.height = agentLoader.parent.height, true").arg(width)).toBool());
+        QQuickTest::qWaitForPolish(window());
+    }
+    QList<qulonglong> openTabs(const QStringList &names)
+    {
+        for (const QString &name : names) {
+            QFile file(at(name));
+            if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate))
+                return {};
+            file.write("[Script Info]\nScriptType: v4.00+\n\n[Events]\n"
+                       "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                       "Dialogue: 0,0:00:01.00,0:00:03.00,Default,Ellie,0,0,0,,Ellie, wait up! The trail splits here.\n");
+            file.close();
+            if (!application->openFile(at(name)))
+                return {};
+        }
+        QList<qulonglong> ids;
+        for (const QVariant &tab : agent().attachable())
+            ids << tab.toMap().value(QStringLiteral("id")).toULongLong();
+        return ids;
+    }
+    void keys(const QString &text)
+    {
+        for (const QChar c : text)
+            QTest::keyClick(window(), c.toLatin1());
+    }
+    QString autoTurn(const Json &call) const
+    {
+        return QString::fromStdString(
+            Json::object({{"say", "On it."}, {"calls", Json::array({call})}}).dump());
+    }
+
 private slots:
     void initTestCase() { testing::removeStaleTemporaryDirs(); }
 
@@ -426,6 +526,9 @@ private slots:
         ai::Config config;
         ai::Provider provider = ai::presetProvider(ai::Preset::OpenRouter, "or", "OpenRouter");
         provider.models = {{.id = "m", .name = "Fake model", .price = ai::Price{.input = 0, .output = 0}}};
+        if (test == "aLongModelListOpensAboveTheModelButtonInAShortPanel")
+            for (int i = 1; i <= 14; ++i)
+                provider.models.push_back({.id = "m" + std::to_string(i), .name = "Sprite model " + std::to_string(i)});
         if (!nothing && test != "withOnlyClaudeCodeThePanelRunsOnIt")
             config.providers.push_back(provider);
         if (chatModel)
@@ -465,7 +568,8 @@ private slots:
         }
         ports.agents = [](backends::ai::AgentBroker &, application::ai::KeyStore &) {};
         const bool found = test == "agentsAreModelsOnlyWhenTheyAreFound" || test == "anAgentsModelsLoadWhenItsSubmenuOpensOnlyOnce"
-                           || test == "anAgentsLastModelsShowAtOnceAndAFailureKeepsThem";
+                           || test == "anAgentsLastModelsShowAtOnceAndAFailureKeepsThem"
+                           || test == "aLongModelListOpensAboveTheModelButtonInAShortPanel";
         const bool onlyClaude = QTest::currentTestFunction() == QByteArrayLiteral("withOnlyClaudeCodeThePanelRunsOnIt");
         ports.agentOnPath = [found, onlyClaude](const QString &agent) {
             return found || (onlyClaude && agent == QStringLiteral("claude"));
@@ -492,7 +596,7 @@ private slots:
         options.userFolder = at(QStringLiteral("user"));
         options.playbackAudio = false;
         options.aiPorts = std::move(ports);
-        if (test == "anAgentsPluginInstallsOnlyWhenTheUserSaysSoInEveryMode")
+        if (test == "anAgentsPluginInstallsOnlyWhenTheUserSaysSoInEveryMode" || test == "cardsFitANarrowPanel")
             options.plugins = {at(QStringLiteral("plugins")), at(QStringLiteral("plugin-data")), at(QStringLiteral("plugin-cache")),
                                at(QStringLiteral("plugin-registry"))};
         application = std::make_unique<app::Application>(options);
@@ -658,8 +762,8 @@ private slots:
         QTRY_VERIFY(item(QStringLiteral("agentView")));
         QVERIFY(agent().ready());
         QCOMPARE(agent().thread().value(QStringLiteral("mode")).toString(), QStringLiteral("manual"));
-        QCOMPARE(item(QStringLiteral("agentActiveTab"))->property("text").toString(),
-                 QStringLiteral("episode.ass · active tab"));
+        QCOMPARE(item(QStringLiteral("agentActiveTab"))->property("name").toString(), QStringLiteral("episode.ass"));
+        QCOMPARE(item(QStringLiteral("agentActiveTab"))->property("note").toString(), QStringLiteral("active tab"));
 
         type(applyScript("I tightened the first line."));
         QTRY_COMPARE(kinds().last(), QStringLiteral("proposal"));
@@ -1407,6 +1511,518 @@ private slots:
         QVERIFY(agent().on());
         QVERIFY(agent().engine() != nullptr);
         QVERIFY(shell(QStringLiteral("root.builtInDocks.indexOf(agentDock) >= 0")).toBool());
+    }
+
+    void theComposerGrowsToSixLinesThenScrollsAndTheTimelineKeepsItsRoom()
+    {
+        window()->resize(1920, 1080);
+        openPanel();
+        QVERIFY(click(QStringLiteral("agentNewThread")));
+        QTRY_VERIFY(agent().thread().contains(QStringLiteral("id")));
+        QQuickItem *composer = item(QStringLiteral("agentComposer"));
+        QQuickItem *scroll = item(QStringLiteral("agentComposerScroll"));
+        QQuickItem *box = item(QStringLiteral("agentComposerBox"));
+        const qreal oneLine = scroll->height();
+        composer->setProperty("text", QStringLiteral("One\nTwo"));
+        QTRY_VERIFY2(scroll->height() > oneLine,
+                     qPrintable(QStringLiteral("one %1 now %2 max %3 implicit %4 panel %5")
+                                    .arg(oneLine).arg(scroll->height()).arg(box->property("maxFieldHeight").toReal())
+                                    .arg(composer->implicitHeight()).arg(item(QStringLiteral("agentView"))->height())));
+        QStringList lines;
+        for (int i = 1; i <= 12; ++i)
+            lines << QStringLiteral("Line %1").arg(i);
+        composer->setProperty("text", lines.join(QLatin1Char('\n')));
+        QQuickTest::qWaitForPolish(window());
+        QTRY_COMPARE(scroll->height(), box->property("maxFieldHeight").toReal());
+        QVERIFY(composer->implicitHeight() > scroll->height());
+        const QRectF view = onScene(item(QStringLiteral("agentView")));
+        QVERIFY(onScene(item(QStringLiteral("agentAttach"))).bottom() <= view.bottom());
+        QVERIFY(onScene(item(QStringLiteral("agentModeButton"))).bottom() <= view.bottom());
+        QVERIFY(item(QStringLiteral("agentTimeline"))->height() >= 80);
+
+        window()->resize(1280, 720);
+        QQuickTest::qWaitForPolish(window());
+        QTRY_VERIFY(scroll->height() <= box->property("maxFieldHeight").toReal());
+        const QRectF small = onScene(item(QStringLiteral("agentView")));
+        QVERIFY(onScene(item(QStringLiteral("agentModeButton"))).bottom() <= small.bottom());
+        QVERIFY(item(QStringLiteral("agentTimeline"))->height() >= 80);
+    }
+
+    void theComposerRingShowsOnlyForTheKeyboard()
+    {
+        openPanel();
+        QQuickItem *composer = item(QStringLiteral("agentComposer"));
+        composer->setProperty("focus", false);
+        QVERIFY(QMetaObject::invokeMethod(composer, "forceActiveFocus", Q_ARG(Qt::FocusReason, Qt::MouseFocusReason)));
+        QTRY_VERIFY(composer->hasActiveFocus());
+        QVERIFY(!item(QStringLiteral("agentComposerFocusRing")));
+        QCOMPARE(item(QStringLiteral("agentComposerBox"))->property("border").value<QObject *>()->property("color"),
+                 shell(QStringLiteral("Theme.accent")));
+        item(QStringLiteral("agentAttach"))->forceActiveFocus();
+        QVERIFY(QMetaObject::invokeMethod(composer, "forceActiveFocus", Q_ARG(Qt::FocusReason, Qt::TabFocusReason)));
+        QTRY_VERIFY(item(QStringLiteral("agentComposerFocusRing")));
+    }
+
+    void fileChipsRemoveOnlyFromTheirButtonAndFoldAfterThree()
+    {
+        openPanel();
+        QVERIFY(click(QStringLiteral("agentNewThread")));
+        QTRY_VERIFY(agent().thread().contains(QStringLiteral("id")));
+        const QList<qulonglong> tabs = openTabs({QStringLiteral("Sprite Fright - 01 - The Forest Path [Dialogue].ass"),
+                                                 QStringLiteral("Sprite Fright - 02 - Mushroom Hunt [Signs].ass"),
+                                                 QStringLiteral("Sprite Fright - 03 - Tiny Footsteps [Dialogue].ass"),
+                                                 QStringLiteral("Sprite Fright - OP [Karaoke].ass")});
+        QCOMPARE(tabs.size(), 4);
+        for (const qulonglong id : tabs)
+            agent().attach(id);
+        const auto attached = [this] { return agent().thread().value(QStringLiteral("attached")).toList().size(); };
+        QTRY_COMPARE(attached(), 4);
+        QTRY_VERIFY(item(QStringLiteral("agentMoreFiles")));
+        QCOMPARE(item(QStringLiteral("agentMoreFiles"))->property("text").toString(), QStringLiteral("+2 more"));
+        QQuickItem *first = item(QStringLiteral("agentChip_%1").arg(tabs[0]));
+        QVERIFY(first);
+        QVERIFY(item(QStringLiteral("agentChip_%1").arg(tabs[1])));
+        QVERIFY(!item(QStringLiteral("agentChip_%1").arg(tabs[2])));
+        QTest::mouseClick(window(), Qt::LeftButton, {}, onScene(child(first, QStringLiteral("fileChipName"))).center().toPoint());
+        QCOMPARE(attached(), 4);
+
+        QQuickItem *remove = child(first, QStringLiteral("fileChipRemove"));
+        QVERIFY(remove);
+        QCOMPARE(remove->property("text").toString(), QStringLiteral("Remove Sprite Fright - 01 - The Forest Path [Dialogue].ass"));
+        QVERIFY(remove->property("activeFocusOnTab").toBool());
+        QVERIFY(QMetaObject::invokeMethod(remove, "click"));
+        QTRY_COMPARE(attached(), 3);
+        QTRY_VERIFY(item(QStringLiteral("agentChip_%1").arg(tabs[2])));
+        QQuickItem *next = child(item(QStringLiteral("agentChip_%1").arg(tabs[1])), QStringLiteral("fileChipRemove"));
+        next->forceActiveFocus();
+        QTest::keyClick(window(), Qt::Key_Delete);
+        QTRY_COMPARE(attached(), 2);
+        QTRY_VERIFY(!item(QStringLiteral("agentMoreFiles")));
+    }
+
+    void attachHasItsOwnIconAndItsMenuOpensAboveTheComposerShowingWhatIsAttached()
+    {
+        window()->resize(1280, 720);
+        openPanel();
+        panelOnScreen();
+        QVERIFY(click(QStringLiteral("agentNewThread")));
+        QTRY_VERIFY(agent().thread().contains(QStringLiteral("id")));
+        QCOMPARE(item(QStringLiteral("agentAttach"))->property("iconRole").toString(), QStringLiteral("attach"));
+        QVERIFY(item(QStringLiteral("agentAttach"))->property("iconRole") != item(QStringLiteral("agentNewThread"))->property("iconRole"));
+        QStringList names;
+        for (int i = 1; i <= 12; ++i)
+            names << QStringLiteral("Sprite Fright - %1 - The Long Way Home Through the Very Dark Forest [Dialogue].ass").arg(i, 2, 10, QLatin1Char('0'));
+        const QList<qulonglong> tabs = openTabs(names);
+        QCOMPARE(tabs.size(), 12);
+        agent().attach(tabs[3]);
+        QTRY_COMPARE(agent().thread().value(QStringLiteral("attached")).toList().size(), 1);
+
+        QQuickItem *composer = item(QStringLiteral("agentComposer"));
+        composer->forceActiveFocus();
+        keys(QStringLiteral("@"));
+        QTRY_VERIFY(popup(QStringLiteral("agentAttachMenu"))->property("opened").toBool());
+        const QRectF menu = popupOnScene(QStringLiteral("agentAttachMenu"));
+        const QRectF box = onScene(item(QStringLiteral("agentComposerBox")));
+        QVERIFY2(menu.left() >= box.left() - 1 && menu.right() <= box.right() + 1, qPrintable(QStringLiteral("%1..%2").arg(menu.left()).arg(menu.right())));
+        QVERIFY2(menu.bottom() <= box.top() + 1,
+                 qPrintable(QStringLiteral("menu %1..%2 box top %3").arg(menu.top()).arg(menu.bottom()).arg(box.top())));
+        QVERIFY(menu.top() >= 0);
+        QQuickItem *current = nullptr;
+        QObject *attachMenu = popup(QStringLiteral("agentAttachMenu"));
+        QMetaObject::invokeMethod(attachMenu, "itemAt", Q_RETURN_ARG(QQuickItem *, current),
+                                  Q_ARG(int, attachMenu->property("currentIndex").toInt()));
+        QVERIFY(current && current->isEnabled());
+        QQuickItem *activeTab = item(QStringLiteral("agentAttachActiveTab"));
+        QVERIFY(activeTab->property("checked").toBool());
+        QVERIFY(!activeTab->isEnabled());
+        QQuickItem *row = item(QStringLiteral("agentAttach_%1").arg(tabs[3]));
+        QVERIFY(row->property("checked").toBool());
+        QCOMPARE(row->property("help").toString(), names[3]);
+        QVERIFY(!item(QStringLiteral("agentAttach_%1").arg(tabs[4]))->property("checked").toBool());
+        QVERIFY(QMetaObject::invokeMethod(row, "triggered"));
+        QTRY_COMPARE(agent().thread().value(QStringLiteral("attached")).toList().size(), 0);
+        QCOMPARE(composer->property("text").toString(), QString());
+    }
+
+    void aShortPanelKeepsTheWholeComposerWithLongFileNamesAttached()
+    {
+        window()->resize(1280, 720);
+        openPanel();
+        panelOnScreen();
+        QVERIFY(click(QStringLiteral("agentNewThread")));
+        QTRY_VERIFY(agent().thread().contains(QStringLiteral("id")));
+        QStringList names;
+        for (int i = 1; i <= 5; ++i)
+            names << QStringLiteral("Sprite Fright - %1 - The Long Way Home Through the Very Dark Forest [Dialogue].ass").arg(i, 2, 10, QLatin1Char('0'));
+        const QList<qulonglong> tabs = openTabs(names);
+        for (const qulonglong tab : tabs)
+            agent().attach(tab);
+        QTRY_COMPARE(agent().thread().value(QStringLiteral("attached")).toList().size(), 5);
+        QTRY_VERIFY(item(QStringLiteral("agentMoreFiles"))->isVisible());
+        QQuickTest::qWaitForPolish(window());
+        const QRectF view = onScene(item(QStringLiteral("agentView")));
+        const QRectF box = onScene(item(QStringLiteral("agentComposerBox")));
+        const QRectF send = onScene(item(QStringLiteral("agentModelButton")));
+        QVERIFY2(box.bottom() <= view.bottom() + 1 && send.bottom() <= box.bottom(),
+                 qPrintable(QStringLiteral("box %1..%2 button bottom %3 view bottom %4")
+                                .arg(box.top()).arg(box.bottom()).arg(send.bottom()).arg(view.bottom())));
+        QVERIFY(onScene(item(QStringLiteral("agentTimeline"))).height() >= 80 - 1);
+        QQuickItem *activeTab = item(QStringLiteral("agentActiveTab"));
+        QCOMPARE(activeTab->property("note").toString(), QString());
+        QCOMPARE(QQmlProperty::read(activeTab, QStringLiteral("Accessible.name"), qmlContext(activeTab)).toString(),
+                 QStringLiteral("episode.ass, active tab"));
+        QVERIFY(!child(activeTab, QStringLiteral("fileChipName"))->property("truncated").toBool());
+        const qreal fileChip = item(QStringLiteral("agentChip_%1").arg(tabs[0]))->width();
+        QVERIFY2(fileChip >= 100, qPrintable(QString::number(fileChip)));
+    }
+
+    void aLongModelListOpensAboveTheModelButtonInAShortPanel()
+    {
+        window()->resize(1280, 720);
+        openPanel();
+        panelOnScreen();
+        QVERIFY(click(QStringLiteral("agentNewThread")));
+        QTRY_VERIFY(agent().thread().contains(QStringLiteral("id")));
+        const QRectF at = onScene(item(QStringLiteral("agentModelButton")));
+        QVERIFY(click(QStringLiteral("agentModelButton")));
+        QTRY_VERIFY(popup(QStringLiteral("agentModelMenu"))->property("opened").toBool());
+        QTRY_VERIFY(item(QStringLiteral("agentModel_or/m14")));
+        QQuickTest::qWaitForPolish(window());
+        QTest::qWait(100);
+        const QRectF r = popupOnScene(QStringLiteral("agentModelMenu"));
+        QVERIFY2(r.bottom() <= at.top() + 1 && r.top() >= 0,
+                 qPrintable(QStringLiteral("menu %1..%2 button top %3").arg(r.top()).arg(r.bottom()).arg(at.top())));
+    }
+
+    void theModelAndModeMenusOpenAboveTheirButtonsAndModeChecksSitBesideTheirWords()
+    {
+        window()->resize(1280, 720);
+        openPanel();
+        panelOnScreen();
+        QVERIFY(click(QStringLiteral("agentNewThread")));
+        QTRY_VERIFY(agent().thread().contains(QStringLiteral("id")));
+        const QRectF view = onScene(item(QStringLiteral("agentView")));
+        for (const auto &[button, menu] : {std::pair{"agentModelButton", "agentModelMenu"}, std::pair{"agentModeButton", "agentModeMenu"}}) {
+            const QRectF at = onScene(item(QLatin1String(button)));
+            QVERIFY(click(QLatin1String(button)));
+            QTRY_VERIFY(popup(QLatin1String(menu))->property("opened").toBool());
+            const QRectF r = popupOnScene(QLatin1String(menu));
+            QVERIFY2(r.left() >= view.left() - 1 && r.right() <= view.right() + 1,
+                     qPrintable(QStringLiteral("%1 %2..%3 view %4..%5").arg(QLatin1String(menu)).arg(r.left()).arg(r.right()).arg(view.left()).arg(view.right())));
+            QVERIFY2(r.bottom() <= at.top() + 1,
+                     qPrintable(QStringLiteral("%1 bottom %2 button top %3").arg(QLatin1String(menu)).arg(r.bottom()).arg(at.top())));
+            if (QLatin1String(menu) == QLatin1String("agentModeMenu")) {
+                for (const char *mode : {"agentMode_manual", "agentMode_auto", "agentMode_full"}) {
+                    QQuickItem *row = item(QLatin1String(mode));
+                    QQuickItem *check = row->property("indicator").value<QQuickItem *>();
+                    QQuickItem *words = child(row, QStringLiteral("menuItemReason"));
+                    QVERIFY(check && words && words->isVisible());
+                    QVERIFY2(onScene(check).right() <= onScene(words).left(), mode);
+                    QVERIFY2(onScene(words).right() <= r.right(), mode);
+                }
+                QVERIFY(item(QStringLiteral("agentMode_auto"))->property("checked").toBool());
+            }
+            QVERIFY(QMetaObject::invokeMethod(popup(QLatin1String(menu)), "close"));
+            QTRY_VERIFY(!popup(QLatin1String(menu))->property("visible").toBool());
+        }
+    }
+
+    void cardsFitANarrowPanel()
+    {
+        application->settingsStore()->set(app::AgentController::kModeSetting, QStringLiteral("manual"));
+        openPanel();
+        QVERIFY(click(QStringLiteral("agentNewThread")));
+        QTRY_VERIFY(agent().thread().contains(QStringLiteral("id")));
+        agent().setModel(agent().thread().value(QStringLiteral("model")).toString());
+        narrowPanel(300);
+        const auto fits = [this](const char *card) {
+            QQuickTest::qWaitForPolish(window());
+            const QRectF view = onScene(item(QStringLiteral("agentView")));
+            QVERIFY2(onScene(item(QStringLiteral("agentTimeline"))).right() <= view.right() + 1, card);
+            const QStringList out = sticksOut(item(QLatin1String(card)), view);
+            QVERIFY2(out.isEmpty(), qPrintable(out.join(QLatin1Char('\n'))));
+        };
+        type(applyScript("I tightened the first line."));
+        QTRY_VERIFY(item(QStringLiteral("agentProposalApply")));
+        fits("agentProposal");
+        QVERIFY(click(QStringLiteral("agentProposalTell")));
+        QTRY_VERIFY(item(QStringLiteral("agentProposalReply")));
+        fits("agentProposal");
+        QVERIFY(click(QStringLiteral("agentProposalDecline")) || (QTest::keyClick(window(), Qt::Key_Return), true));
+        QTRY_VERIFY(!agent().thread().value(QStringLiteral("running")).toBool());
+
+        agent().setFullAccessWarned();
+        agent().setMode(QStringLiteral("full"));
+        QTRY_COMPARE(agent().thread().value(QStringLiteral("mode")).toString(), QStringLiteral("full"));
+        const Json scaffold = Json::object(
+            {{"operation", "plugins.scaffold"},
+             {"params", Json::object({{"plugin", "com.example.sign-counter"}, {"name", "Sign counter"},
+                                      {"permissions", Json::object({{"network", Json::object({{"hosts", Json::array({"api.example.com"})},
+                                                                                              {"reason", "Looks up sign translations"}})}})},
+                                      {"commands", Json::array({Json::object({{"id", "count"}, {"title", "Count signs"}})})}})}});
+        const Json install = Json::object({{"operation", "plugins.install"}, {"params", Json::object({{"plugin", "com.example.sign-counter"}})}});
+        type(QString::fromStdString(Json::object({{"say", "I made a plugin."}, {"calls", Json::array({scaffold, install})}}).dump()));
+        QTRY_VERIFY2(item(QStringLiteral("agentInstallAccept")),
+                     qPrintable(QString::fromUtf8(QJsonDocument::fromVariant(QVariantList{lastOf(QLatin1String("tool"))}).toJson(QJsonDocument::Compact)) +
+                                [this] {
+                                    auto *items = qobject_cast<QAbstractItemModel *>(agent().items());
+                                    QString all;
+                                    for (int row = 0; row < items->rowCount(); ++row)
+                                        all += QString::fromUtf8(QJsonDocument::fromVariant(items->index(row, 0).data(app::AgentItemsModel::ItemRole)).toJson(QJsonDocument::Compact)).left(400) + QLatin1Char('\n');
+                                    return all;
+                                }()));
+        QVERIFY(item(QStringLiteral("agentInstallPermission_0")));
+        fits("agentInstall");
+        QVERIFY(click(QStringLiteral("agentInstallTell")));
+        QTRY_VERIFY(item(QStringLiteral("agentInstallReply"))->hasActiveFocus());
+        QTest::keyClick(window(), Qt::Key_Escape);
+        QTRY_VERIFY(!item(QStringLiteral("agentInstallReply")));
+        QVERIFY(item(QStringLiteral("agentInstallDecline"))->hasActiveFocus());
+        QVERIFY(click(QStringLiteral("agentInstallDecline")));
+        QTRY_VERIFY(!agent().thread().value(QStringLiteral("running")).toBool());
+    }
+
+    void anApprovalSaysWhatItDoesAndKeepsItsArgumentsUnderDetails()
+    {
+        application->settingsStore()->set(app::AgentController::kModeSetting, QStringLiteral("manual"));
+        openPanel();
+        QVERIFY(click(QStringLiteral("agentNewThread")));
+        QTRY_VERIFY(agent().thread().contains(QStringLiteral("id")));
+        narrowPanel(300);
+        type(autoTurn(Json::object({{"operation", "settings.set"},
+                                     {"params", Json::object({{"setting", "audio.autoScroll"}, {"value", false}})}})));
+        QTRY_VERIFY(item(QStringLiteral("agentAllowOnce")));
+        QCOMPARE(item(QStringLiteral("agentAskTitle"))->property("text").toString(), QStringLiteral("Change a setting"));
+        QCOMPARE(item(QStringLiteral("agentAskSetting"))->property("text").toString(), QStringLiteral("audio.autoScroll → false"));
+        QVERIFY(!item(QStringLiteral("agentAskSummary")));
+        QVERIFY(!item(QStringLiteral("agentDetailsText")));
+        QVERIFY(click(QStringLiteral("agentDetailsToggle")));
+        QTRY_VERIFY(item(QStringLiteral("agentDetailsText")));
+        QQuickTest::qWaitForPolish(window());
+        QVERIFY(item(QStringLiteral("agentDetailsText"))->property("text").toString().startsWith(QLatin1String("settings.set\n{")));
+        QVERIFY(!item(QStringLiteral("agentAskTitle"))->property("text").toString().contains(QLatin1String("audio.")));
+        const QRectF view = onScene(item(QStringLiteral("agentView")));
+        QStringList out = sticksOut(item(QStringLiteral("agentAsk")), view);
+        QVERIFY2(out.isEmpty(), qPrintable(out.join(QLatin1Char('\n'))));
+        QVERIFY(!item(QStringLiteral("agentDetailsText"))->property("truncated").toBool());
+
+        QVERIFY(click(QStringLiteral("agentAskTell")));
+        QTRY_VERIFY(item(QStringLiteral("agentAskReply")));
+        QTRY_VERIFY(item(QStringLiteral("agentAskReply"))->hasActiveFocus());
+        QTest::keyClick(window(), Qt::Key_Escape);
+        QTRY_VERIFY(!item(QStringLiteral("agentAskReply")));
+        QVERIFY(item(QStringLiteral("agentAllowOnce"))->hasActiveFocus());
+        QVERIFY(click(QStringLiteral("agentAskTell")));
+        QTRY_VERIFY(item(QStringLiteral("agentAskReply"))->hasActiveFocus());
+        keys(QStringLiteral("Keep them"));
+        QTest::keyClick(window(), Qt::Key_Return);
+        QTRY_COMPARE(lastOf(QLatin1String("ask")).value(QStringLiteral("status")).toString(), QStringLiteral("denied"));
+        QTRY_VERIFY(!agent().thread().value(QStringLiteral("running")).toBool());
+
+        type(autoTurn(Json::object({{"operation", "settings.set"},
+                                     {"params", Json::object({{"setting", "editor.spellchecker"}, {"value", false}})}})));
+        QTRY_VERIFY(newest(QStringLiteral("agentAllowOnce")));
+        QCOMPARE(newest(QStringLiteral("agentAskTitle"))->property("text").toString(), QStringLiteral("Turn off “Check spelling”"));
+        QVERIFY(!child(newest(QStringLiteral("agentAsk")), QStringLiteral("agentAskSetting"))->isVisible());
+        QVERIFY(click(QStringLiteral("agentDeny")));
+        QTRY_VERIFY(!agent().thread().value(QStringLiteral("running")).toBool());
+
+        agent().setMode(QStringLiteral("auto"));
+        QTRY_COMPARE(agent().thread().value(QStringLiteral("mode")).toString(), QStringLiteral("auto"));
+        type(applyScript("Tightened."));
+        QTRY_VERIFY(item(QStringLiteral("agentAllowOnce")));
+        QCOMPARE(newest(QStringLiteral("agentAskTitle"))->property("text").toString(), QStringLiteral("Change the subtitles?"));
+        QCOMPARE(newest(QStringLiteral("agentAskSummary"))->property("text").toString(), QStringLiteral("Change line 1 to “Shorter.”"));
+        QQuickItem *reason = newest(QStringLiteral("agentAskReason"));
+        if (reason)
+            QVERIFY(!reason->property("truncated").toBool());
+        QQuickTest::qWaitForPolish(window());
+        out = sticksOut(newest(QStringLiteral("agentAsk")), onScene(item(QStringLiteral("agentView"))));
+        QVERIFY2(out.isEmpty(), qPrintable(out.join(QLatin1Char('\n'))));
+    }
+
+    void aScriptReplyTakesTheKeyboardAndEscGoesBack()
+    {
+        openPanel();
+        QVERIFY(click(QStringLiteral("agentNewThread")));
+        QTRY_VERIFY(agent().thread().contains(QStringLiteral("id")));
+        type(autoTurn(Json::object({{"operation", "automation.run"},
+                                     {"params", Json::object({{"name", "Shout"}, {"script", "script_name = \"Shout\"\n"}})}})));
+        QTRY_VERIFY(item(QStringLiteral("agentScriptRun")));
+        QVERIFY(click(QStringLiteral("agentScriptTell")));
+        QTRY_VERIFY(item(QStringLiteral("agentScriptReply"))->hasActiveFocus());
+        QTest::keyClick(window(), Qt::Key_Escape);
+        QTRY_VERIFY(!item(QStringLiteral("agentScriptReply")));
+        QVERIFY(item(QStringLiteral("agentScriptRun"))->hasActiveFocus());
+        QVERIFY(click(QStringLiteral("agentScriptTell")));
+        QTRY_VERIFY(item(QStringLiteral("agentScriptReply"))->hasActiveFocus());
+        keys(QStringLiteral("Use a macro"));
+        QTest::keyClick(window(), Qt::Key_Return);
+        QTRY_COMPARE(lastOf(QLatin1String("script")).value(QStringLiteral("status")).toString(), QStringLiteral("declined"));
+    }
+
+    void aSourceCardStaysWhileThePointerMovesToItAndOpensAtTheCitation()
+    {
+        openPanel();
+        QVERIFY(click(QStringLiteral("agentNewThread")));
+        const std::string say = "Aimer sings it. The single came out in 2011.";
+        const Json citations = Json::array({Json::object({{"index", 1}, {"url", "https://site1.example/page"}, {"title", "Page 1"},
+                                                          {"quote", "Aimer is the singer."}, {"start", 0}, {"end", 15}})});
+        const Json updates = Json::array({Json::object({{"sessionUpdate", "sources"}, {"textLength", static_cast<std::int64_t>(say.size())},
+                                                        {"citations", citations}, {"searches", Json::array()}})});
+        type(QString::fromStdString(Json::object({{"say", say}, {"calls", Json::array()}, {"updates", updates}}).dump()));
+        QTRY_VERIFY(item(QStringLiteral("agentSource_1")));
+        QQuickItem *source = item(QStringLiteral("agentSource_1"));
+        QObject *card = popup(QStringLiteral("agentCitationHover"));
+        QVERIFY(QMetaObject::invokeMethod(card, "show", Q_ARG(QVariant, QVariant(QVariantMap{{QStringLiteral("index"), 1},
+                                                                                           {QStringLiteral("title"), QStringLiteral("Page 1")},
+                                                                                           {QStringLiteral("url"), QStringLiteral("https://site1.example/page")}})),
+                                          Q_ARG(QVariant, QVariant::fromValue(source)), Q_ARG(QVariant, QVariant())));
+        QTRY_VERIFY(card->property("opened").toBool());
+        QVERIFY(QMetaObject::invokeMethod(card, "leave"));
+        QTest::qWait(150);
+        QVERIFY(card->property("visible").toBool());
+        QVERIFY(item(QStringLiteral("agentCitationOpen")));
+        QTRY_VERIFY2(!card->property("visible").toBool(), card->property("pointerInside").toBool() ? "pointer inside" : "pointer outside");
+
+        QQuickItem *answer = item(QStringLiteral("agentAnswer"));
+        const QRectF word = answer->property("cursorRectangle").toRectF();
+        QVERIFY(QMetaObject::invokeMethod(card, "show", Q_ARG(QVariant, QVariant(QVariantMap{{QStringLiteral("index"), 1}})),
+                                          Q_ARG(QVariant, QVariant::fromValue(answer)), Q_ARG(QVariant, QVariant(QRectF(40, 0, 1, word.height())))));
+        QTRY_VERIFY(card->property("opened").toBool());
+        const QRectF at = popupOnScene(QStringLiteral("agentCitationHover"));
+        QVERIFY(at.top() < onScene(answer).top() + word.height() + 12);
+        QTest::keyClick(window(), Qt::Key_Escape);
+        QTRY_VERIFY(!card->property("visible").toBool());
+    }
+
+    void renamingNeedsANameAndDeletingNamesTheThread()
+    {
+        openPanel();
+        QVERIFY(click(QStringLiteral("agentNewThread")));
+        QTRY_VERIFY(agent().thread().contains(QStringLiteral("id")));
+        agent().rename(agent().current(), QStringLiteral("Honorifics pass"));
+        QTRY_COMPARE(agent().thread().value(QStringLiteral("title")).toString(), QStringLiteral("Honorifics pass"));
+        QVERIFY(click(QStringLiteral("agentThreadMenuButton")));
+        QTRY_VERIFY(item(QStringLiteral("agentRenameThread")));
+        QVERIFY(QMetaObject::invokeMethod(item(QStringLiteral("agentRenameThread")), "triggered"));
+        QTRY_VERIFY(item(QStringLiteral("agentRenameField")));
+        QQuickItem *field = item(QStringLiteral("agentRenameField"));
+        QCOMPARE(field->property("selectedText").toString(), QStringLiteral("Honorifics pass"));
+        QVERIFY(!item(QStringLiteral("agentRenameOk"))->isEnabled());
+        field->setProperty("text", QStringLiteral("   "));
+        QVERIFY(!item(QStringLiteral("agentRenameOk"))->isEnabled());
+        field->setProperty("text", QStringLiteral("Honorifics, second pass"));
+        QVERIFY(item(QStringLiteral("agentRenameOk"))->isEnabled());
+        field->setProperty("text", QString());
+        QTest::keyClick(field->window(), Qt::Key_Return);
+        QTest::qWait(100);
+        QCOMPARE(agent().thread().value(QStringLiteral("title")).toString(), QStringLiteral("Honorifics pass"));
+        QVERIFY(QMetaObject::invokeMethod(field->window(), "reject"));
+        QTRY_VERIFY(!item(QStringLiteral("agentRenameField")));
+
+        for (QObject *open : window()->findChildren<QObject *>())
+            if (open->inherits("QQuickPopup") && open->property("visible").toBool())
+                QMetaObject::invokeMethod(open, "close");
+        QTest::qWait(200);
+        QVERIFY(click(QStringLiteral("agentThreadMenuButton")));
+        QTRY_VERIFY(item(QStringLiteral("agentDeleteThread")));
+        QVERIFY(QMetaObject::invokeMethod(item(QStringLiteral("agentDeleteThread")), "triggered"));
+        const auto question = [] {
+            for (QWindow *top : QGuiApplication::topLevelWindows())
+                if (top->objectName() == QLatin1String("agentDeleteQuestion") && top->isVisible())
+                    return top;
+            return static_cast<QWindow *>(nullptr);
+        };
+        QTRY_VERIFY(question());
+        QWindow *box = question();
+        QCOMPARE(box->title(), QStringLiteral("Delete thread"));
+        QCOMPARE(box->property("text").toString(), QStringLiteral("Delete “Honorifics pass”?"));
+        QCOMPARE(box->property("detail").toString(),
+                 QStringLiteral("Its messages are deleted. Changes it made stay in your subtitles and in the review."));
+        QVERIFY(click(QStringLiteral("messageBoxChoice_cancel")));
+        QTest::qWait(100);
+        QVERIFY(agent().thread().contains(QStringLiteral("id")));
+    }
+
+    void escLeavesTheThreadsListAndASearchWithoutMatchesSaysSo()
+    {
+        openPanel();
+        QVERIFY(click(QStringLiteral("agentNewThread")));
+        QTRY_VERIFY(agent().thread().contains(QStringLiteral("id")));
+        agent().rename(agent().current(), QStringLiteral("Honorifics pass"));
+        QVERIFY(click(QStringLiteral("agentThreadsButton")));
+        QTRY_VERIFY(item(QStringLiteral("agentThreadRow")));
+        QQuickItem *search = item(QStringLiteral("agentThreadSearch"));
+        search->forceActiveFocus();
+        keys(QStringLiteral("karaoke"));
+        QTRY_VERIFY(item(QStringLiteral("agentNoThreadsMatch")));
+        QCOMPARE(item(QStringLiteral("agentNoThreadsMatch"))->property("text").toString(), QStringLiteral("No threads match “karaoke”"));
+        QVERIFY(!item(QStringLiteral("agentThreadRow")));
+        QTest::keyClick(window(), Qt::Key_Escape);
+        QTRY_VERIFY(item(QStringLiteral("agentThreadRow")));
+        QCOMPARE(search->property("text").toString(), QString());
+        QTest::keyClick(window(), Qt::Key_Escape);
+        QTRY_VERIFY(!item(QStringLiteral("agentThreadsList")));
+        QVERIFY(item(QStringLiteral("agentTimeline")));
+        QVERIFY(click(QStringLiteral("agentThreadsButton")));
+        QTRY_VERIFY(item(QStringLiteral("agentThreadRow")));
+        item(QStringLiteral("agentView"))->forceActiveFocus();
+        QTest::keyClick(window(), Qt::Key_Escape);
+        QTRY_VERIFY(!item(QStringLiteral("agentThreadsList")));
+    }
+
+    void aFloatingPanelsMenusOpenAboveTheirButtonsWithinThePanel()
+    {
+        openPanel();
+        QVERIFY(click(QStringLiteral("agentNewThread")));
+        QTRY_VERIFY(agent().thread().contains(QStringLiteral("id")));
+        QVERIFY(!openTabs({QStringLiteral("Sprite Fright - 02 - Mushroom Hunt [Signs].ass")}).isEmpty());
+        QVERIFY(shell(QStringLiteral("agentDock.isFloating = true, agentDock.isFloating")).toBool());
+        QQuickItem *view = nullptr;
+        QTRY_VERIFY((view = item(QStringLiteral("agentView"))) && view->window() != window());
+        QWindow *floating = view->window();
+        const QRect available = floating->screen()->availableGeometry();
+        floating->setGeometry(available.left() + 200, available.top() + 200, 420, 640);
+        QTRY_COMPARE(floating->width(), 420);
+        QQuickTest::qWaitForPolish(view->window());
+        const auto onScreen = [](const QQuickItem *at) {
+            return QRectF(at->mapToGlobal(QPointF(0, 0)), at->size());
+        };
+        const auto menuOnScreen = [&](const QString &name) -> QRectF {
+            for (QWindow *top : QGuiApplication::topLevelWindows())
+                for (QObject *at : top->findChildren<QObject *>(name))
+                    if (at->inherits("QQuickPopup") && at->property("opened").toBool())
+                        if (auto *background = qobject_cast<QQuickItem *>(at->property("background").value<QObject *>()))
+                            return onScreen(background->parentItem());
+            return {};
+        };
+        const auto closeMenu = [](const QString &name) {
+            for (QWindow *top : QGuiApplication::topLevelWindows())
+                for (QObject *at : top->findChildren<QObject *>(name))
+                    if (at->inherits("QQuickPopup"))
+                        QMetaObject::invokeMethod(at, "close");
+        };
+        const QRectF panel = onScreen(view);
+        for (const auto &[anchor, name] : {std::pair{"agentModelButton", "agentModelMenu"}, std::pair{"agentModeButton", "agentModeMenu"},
+                                           std::pair{"agentComposerBox", "agentAttachMenu"}}) {
+            const QRectF at = onScreen(item(QLatin1String(anchor)));
+            if (QLatin1String(name) == QLatin1String("agentAttachMenu")) {
+                item(QStringLiteral("agentComposer"))->forceActiveFocus();
+                item(QStringLiteral("agentComposer"))->setProperty("text", QStringLiteral("@"));
+            } else {
+                QVERIFY(click(QLatin1String(anchor)));
+            }
+            QRectF menu;
+            QTRY_VERIFY((menu = menuOnScreen(QLatin1String(name))).isValid());
+            QVERIFY2(menu.bottom() <= at.top() + 1, qPrintable(QStringLiteral("%1 bottom %2, %3 top %4").arg(QLatin1String(name)).arg(menu.bottom()).arg(QLatin1String(anchor)).arg(at.top())));
+            QVERIFY2(menu.left() >= panel.left() - 1 && menu.right() <= panel.right() + 1,
+                     qPrintable(QStringLiteral("%1 %2..%3, panel %4..%5").arg(QLatin1String(name)).arg(menu.left()).arg(menu.right()).arg(panel.left()).arg(panel.right())));
+            QVERIFY(available.contains(menu.toAlignedRect()));
+            closeMenu(QLatin1String(name));
+            item(QStringLiteral("agentComposer"))->setProperty("text", QString());
+            QTest::qWait(100);
+        }
     }
 };
 

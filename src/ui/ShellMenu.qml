@@ -38,8 +38,10 @@ Menu {
         if (!parent || !background || (parent as MenuItem)?.subMenu === menu)
             return
         const by = ShellMenus.shiftOnScreen(background, parent)
-        x += by.x
-        y += by.y
+        if (by.x !== 0)
+            x += by.x
+        if (by.y !== 0)
+            y += by.y
     }
     onOpened: {
         layOut()

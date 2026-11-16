@@ -382,6 +382,12 @@ private:
                std::function<void(std::function<void()>)> onWithdraw);
     void openAsk(AgentThread &thread, Decision kind, const std::string &operation, const api::Json &params,
                  std::string reason, AiSidecarHost::Admit admit, std::function<void(std::function<void()>)> onWithdraw);
+    struct ProposedEdits {
+        std::optional<application::DocumentId> document;
+        api::Json rows;
+        bool stale = false;
+    };
+    ProposedEdits readEdits(AgentThread &thread, const api::Json &params);
     void openProposal(AgentThread &thread, const api::Json &params, AiSidecarHost::Admit admit,
                       std::function<void(std::function<void()>)> onWithdraw);
     void openScript(AgentThread &thread, const api::Json &params, AiSidecarHost::Admit admit,
