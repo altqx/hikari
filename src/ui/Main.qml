@@ -723,7 +723,7 @@ ApplicationWindow {
         root.sideBarsLoaded = true
         root.placeSideBarPanels()
         for (const shown of root.shownBeforeSideBarsLoad.splice(0))
-            root.showPanel(shown.dock, shown.focus)
+            root.revealPanel(shown.dock, shown.focus)
     }
     property var shownBeforeSideBarsLoad: []
     property bool sideBarsMigrated: false
@@ -1331,7 +1331,8 @@ ApplicationWindow {
         root.showPanel(qcNotesDock)
         qcNotesTool.startAdding(ms)
     }
-    function showPanel(dock, focus = true) {
+    function showPanel(dock) { root.revealPanel(dock, true) }
+    function revealPanel(dock, focus) {
         if (!root.sideBarsLoaded && SideBarModel.mayHold(root.panelName(dock))) {
             root.shownBeforeSideBarsLoad.push({ dock: dock, focus: focus })
             return
@@ -7052,7 +7053,7 @@ ApplicationWindow {
                     target: root.audio
                     function onOpened(path, created) {
                         if (created)
-                            root.showPanel(audioDock, notices.activeWindow)
+                            root.revealPanel(audioDock, notices.activeWindow)
                     }
                 }
             }
