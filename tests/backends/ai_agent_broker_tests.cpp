@@ -365,6 +365,34 @@ TEST_F(AcpGuardTest, OnlyASessionsMethodsPassAndTheAgentGetsNoFilesOrTerminal)
     EXPECT_EQ(fromAgent(update).toSidecar, std::vector{QByteArray::fromStdString(update)});
 }
 
+TEST_F(AcpGuardTest, OnlyTheAgentsOwnModelOptionCanBeSetAndOnlyToAValueItLists)
+{
+    const auto set = [&](int id, const std::string &configId, const std::string &value) {
+        return fromSidecar(R"({"jsonrpc":"2.0","id":)" + std::to_string(id) +
+                           R"(,"method":"session/set_config_option","params":{"sessionId":"a","configId":")" + configId +
+                           R"(","value":")" + value + R"("}})");
+    };
+    EXPECT_TRUE(set(1, "model", "fast").toAgent.empty());
+    ASSERT_EQ(fromSidecar(R"({"jsonrpc":"2.0","id":2,"method":"session/new","params":{}})").toAgent.size(), 1u);
+    fromAgent(R"({"jsonrpc":"2.0","id":2,"result":{"sessionId":"a","configOptions":[
+        {"id":"mode","name":"Mode","category":"mode","type":"select","currentValue":"ask",
+         "options":[{"value":"ask","name":"Ask"},{"value":"yolo","name":"Yolo"}]},
+        {"id":"model","name":"Model","category":"model","type":"select","currentValue":"fast",
+         "options":[{"group":"g","name":"G","options":[{"value":"fast","name":"Fast"},{"value":"deep","name":"Deep"}]}]}]}})");
+    EXPECT_EQ(set(3, "model", "deep").toAgent.size(), 1u);
+    const auto mode = set(4, "mode", "yolo");
+    EXPECT_TRUE(mode.toAgent.empty());
+    EXPECT_EQ(*parse(mode.toSidecar).at(0).find("error")->find("message"),
+              Json("Hikari lets the AI set only the agent's model, to one it lists"));
+    EXPECT_TRUE(set(5, "model", "unlisted").toAgent.empty());
+
+    fromAgent(R"({"jsonrpc":"2.0","method":"session/update","params":{"sessionId":"a","update":{
+        "sessionUpdate":"config_option_update","configOptions":[{"id":"model","name":"Model","category":"model",
+        "type":"select","currentValue":"fast","options":[{"value":"fast","name":"Fast"},{"value":"new","name":"New"}]}]}}})");
+    EXPECT_EQ(set(6, "model", "new").toAgent.size(), 1u);
+    EXPECT_TRUE(set(7, "model", "deep").toAgent.empty());
+}
+
 TEST_F(AcpGuardTest, TheSessionRunsInItsWorkFolderWithHikarisToolsOverHttpWhenTheAgentTakesIt)
 {
     const std::string newSession =
@@ -626,6 +654,28 @@ TEST_F(AgentBrokerTest, KillingEndsTheAgentAndReportsItsExit)
     ASSERT_TRUE(waitFor([&] { return !lines(second).empty(); }));
     broker.killAll();
     EXPECT_EQ(broker.running(), 0u);
+}
+
+TEST_F(AgentBrokerTest, KillingAnAgentEndsOnlyItsOwnProcessesAndRunsTheirAfterHooks)
+{
+    int afters = 0;
+    AgentSpec signedIn = spec();
+    signedIn.after = [&] { ++afters; };
+    broker.add("signedIn", signedIn);
+    broker.add("other", spec());
+    const std::uint64_t first = start("signedIn");
+    const std::uint64_t second = start("signedIn");
+    const std::uint64_t other = start("other");
+    ASSERT_TRUE(waitFor([&] { return !lines(first).empty() && !lines(second).empty() && !lines(other).empty(); }));
+
+    broker.killAgent("signedIn");
+    EXPECT_EQ(exitCode(first), -1);
+    EXPECT_EQ(exitCode(second), -1);
+    EXPECT_EQ(afters, 2);
+    EXPECT_EQ(broker.running("signedIn"), 0u);
+    EXPECT_EQ(broker.running("other"), 1u);
+    EXPECT_FALSE(exitCode(other));
+    broker.killAll();
 }
 
 TEST_F(AgentBrokerTest, CodexThreadsAreReadOnlyAndOtherMethodsAreRefused)

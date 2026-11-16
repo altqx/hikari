@@ -16,6 +16,7 @@
 #include "hikari/app/update_apply.h"
 #include "hikari/app/user_folder.h"
 #include "hikari/application/recent_files.h"
+#include "hikari/application/settings.h"
 #include "hikari/application/update_check.h"
 #include "hikari/backends/ai_mcp_bridge.h"
 #include "hikari/backends/legacy_spelling.h"
@@ -446,6 +447,7 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
 
 int run(int argc, char **argv, StartupMode mode, const std::function<void()> &windowShown)
 {
+    application::setInstalledVersion(HIKARI_VERSION);
     QLoggingCategory::setFilterRules(QStringLiteral("hikari.*.debug=false\nqt.multimedia.ffmpeg.info=false"));
     qtMessageHandler = qInstallMessageHandler(dropOpenTypeFallbackNotes);
 #ifdef _WIN32

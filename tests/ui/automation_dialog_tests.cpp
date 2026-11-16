@@ -1055,6 +1055,8 @@ private slots:
         QCOMPARE(menu_rows::shown(window->findChild<QObject *>(QStringLiteral("automationDialogMenu"))),
                  (QStringList{QStringLiteral("dialogLastUsed"), QStringLiteral("dialogPresetsMenu"), QStringLiteral("|"),
                               QStringLiteral("dialogReset")}));
+        QCOMPARE(window->findChild<QObject *>(QStringLiteral("automationDialogMore"))->property("text").toString(),
+                 QStringLiteral("More options"));
         QCOMPARE(menu_rows::shown(window->findChild<QObject *>(QStringLiteral("dialogPresetsMenu"))),
                  (QStringList{QStringLiteral("dialogPreset_Mine"), QStringLiteral("|"), QStringLiteral("dialogSavePreset"),
                               QStringLiteral("|"), QStringLiteral("dialogDeletePresetMenu")}));
@@ -1163,15 +1165,52 @@ private slots:
         QCOMPARE(menu_rows::shown(window->findChild<QObject *>(QStringLiteral("dialogDeletePresetMenu"))),
                  QStringList{QStringLiteral("dialogDeletePreset_project_Soft")});
 
-        const QStringList tierMenus{QStringLiteral("dialogDeletePresetMenu"), QStringLiteral("dialogCopyToProjectMenu"),
-                                    QStringLiteral("dialogCopyToMineMenu"), QStringLiteral("dialogMoveToProjectMenu"),
-                                    QStringLiteral("dialogMoveToMineMenu")};
+        const QStringList tierMenus{QStringLiteral("dialogSavePreset"),       QStringLiteral("|"),
+                                    QStringLiteral("dialogCopyToProjectMenu"), QStringLiteral("dialogCopyToMineMenu"),
+                                    QStringLiteral("dialogMoveToProjectMenu"), QStringLiteral("dialogMoveToMineMenu"),
+                                    QStringLiteral("|"),                      QStringLiteral("dialogDeletePresetMenu")};
         for (int twice = 0; twice < 2; ++twice) {
             QVERIFY(QMetaObject::invokeMethod(window, "placeTierMenus"));
-            QVERIFY(menu_rows::shown(presetsMenu).join(QLatin1Char(',')).endsWith(tierMenus.join(QLatin1Char(','))));
+            const QString shown = menu_rows::shown(presetsMenu).join(QLatin1Char(','));
+            QVERIFY2(shown.endsWith(tierMenus.join(QLatin1Char(','))), qPrintable(shown));
         }
         QCOMPARE(menu_rows::shown(window->findChild<QObject *>(QStringLiteral("dialogCopyToMineMenu"))),
                  QStringList{QStringLiteral("dialogCopyToMineMenu_Soft")});
+        if (const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR"); !out.isEmpty()) {
+            QVERIFY(QDir().mkpath(out));
+            hikari::ui::theme::useSettings(&store);
+            auto endPreview = qScopeGuard([] {
+                hikari::ui::theme::endPreview();
+                hikari::ui::theme::useSettings(nullptr);
+            });
+            auto *menu = window->findChild<QObject *>(QStringLiteral("automationDialogMenu"));
+            for (const auto code : hikari::ui::theme::kCodes) {
+                const QString theme = hikari::ui::theme::codeName(code);
+                hikari::ui::theme::preview(
+                    {{QStringLiteral("appearance.theme"), theme}, {QStringLiteral("appearance.followSystem"), false}});
+                QVERIFY(QMetaObject::invokeMethod(named(QStringLiteral("automationDialogMore")), "clicked"));
+                QTRY_VERIFY(menu->property("opened").toBool());
+                QQuickItem *presetsEntry = nullptr;
+                QVERIFY(QMetaObject::invokeMethod(menu, "itemAt", Q_RETURN_ARG(QQuickItem *, presetsEntry), Q_ARG(int, 1)));
+                QVERIFY(presetsEntry && QMetaObject::invokeMethod(presetsEntry, "triggered"));
+                QTRY_VERIFY(presetsMenu->property("opened").toBool());
+                QCOMPARE(menu_rows::shown(presetsMenu).join(u','), QStringLiteral("dialogPreset_project_Soft,dialogPreset_mine_Soft,|,")
+                                                                    + tierMenus.join(u','));
+                QTest::qWait(400);
+                QRect area = window->frameGeometry();
+                for (QWindow *w : QGuiApplication::topLevelWindows())
+                    if (w->isVisible() && w->screen() == window->screen())
+                        area |= w->frameGeometry();
+                area = area.adjusted(-8, -8, 8, 8).intersected(window->screen()->geometry());
+                const QImage image = QGuiApplication::platformName() == QLatin1String("xcb")
+                                         ? window->screen()->grabWindow(0, area.x(), area.y(), area.width(), area.height()).toImage()
+                                         : window->grabWindow();
+                QVERIFY(image.save(out + QStringLiteral("/cx7-script-presets-") + theme + QStringLiteral(".png")));
+                QVERIFY(QMetaObject::invokeMethod(presetsMenu, "close"));
+                QVERIFY(QMetaObject::invokeMethod(menu, "close"));
+                QTRY_VERIFY(!menu->property("visible").toBool());
+            }
+        }
 
         auto *popover = window->findChild<QObject *>(QStringLiteral("savePresetPopover"));
         QVERIFY(QMetaObject::invokeMethod(popover, "openFor"));

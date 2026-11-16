@@ -241,7 +241,7 @@ The panel's own items come first (`panelOwnItems`, `Main.qml:604-639`; `panelOwn
 | Audio, Line editor, Original text, Search, Log, Styles, Shift times, Template editor | none |
 | A plugin panel | the rows of its tree's `menu`, while the plugin runs ([plugins.md](../plugins.md), "Panels and dialogs") |
 
-Then `|` Move panel… (panel-move), Move tab left (tab-move-left), Move tab right (tab-move-right) (both only with 2+ tabs), Undock / Dock (panel-float / panel-dock), About <plugin>… (about; plugin panels whose plugin is installed), Close (tab-close), or "Close reference" for the Reference panel.
+Then `|` Move panel… (panel-move), Move tab left (tab-move-left), Move tab right (tab-move-right) (both only with 2+ tabs), Undock / Dock (panel-float / panel-dock), About <plugin> (about; plugin panels whose plugin is installed), Close (tab-close), or "Close reference" for the Reference panel.
 
 Items: 5 shared + 23 panel-owned = 28 (5–19 shown at a time).
 
@@ -644,6 +644,29 @@ The total is **28 menus with 257 items**: 16 right-click entries (two of them, R
 - **Audio.** Each play command has one name, the menu's, in the menus, the toolbar tooltips and Settings › Shortcuts. The bar's tooltips are the names of the rows they fold into (Waveform, Spectrum, Auto-scroll, Sync with video, Auto split), and the » tooltip is “More options”. Customise rows show or hide a button, so they show no key; Zoom and volume sliders takes audio-sliders and its heading is a `MenuHeading`. In Tap options, Snap to vocal onsets, Speed ▸ and Calibrate latency… are one group. The full-screen speaker's last row is “Audio settings” (no “…”: it opens Settings at a page, rule 19.2).
 - **Node effects.** The graph menu button shows ⋯ (panel-menu) with the tooltip “More options”. “From the library” opens a submenu, so it has no “…”, on the empty canvas button too. From a preset ▸ heads its first group “For karaoke lines”. The Export as template lines ▸ rows are plain actions with the export icon.
 - **Full screen bar.** The exit button's tooltip shows the bound key (Esc when none) through `bitmapTip`, and Shift+click sets its shortcut.
+
+### What CX7 built: panels, tabs, Explorer and fonts
+
+[#810](https://github.com/altqx/hikari/issues/810) (the beta.4 audit, gate 1 approved 2026-11-16) built mockup sections 4–7 and 15 and the panel rows of rules 17–20:
+
+- **Explorer.** The row menu reads Open in a new tab, Open in this tab | Show in folder, Copy path | New subtitle file here, Rename | Move to the trash…, the destructive row alone at the end. The Explorer ⋯ holds the tool strip's New subtitle file, Refresh, Group by name and Show all files, so they stay reachable when a narrow header hides the strip.
+- **Empty tab bar.** Move tab to new window and Move tab to window ▸ show only on a tab; the empty bar is New tab, Save all, Switch to ▸ | Close all tabs again.
+- **QC notes ⋯.** Import notes from the clipboard… (it can ask Add or Replace) and Delete all notes…, alone after a separator; its question's button is “Delete all”. The empty panel's button is “Import from the clipboard”.
+- **Panel ⋯.** Show times / Show frames and both Video follow submenus are radio rows. The side bar rows read “Move left in the side bar” and “Move right in the side bar”, and Move out of the side bar takes side-bar-off. A missing plugin's last row is “Remove from the layout” (remove), as in View › Panels; “About %1” has no ellipsis. Shift+F10 opens a side bar icon's menu, like the Menu key.
+- **Floating window.** The title bar ⋯'s Close closes each panel of the window through `closePanel`, so a Reference panel unloads its reference and a missing plugin's panel leaves the layout.
+- **Fonts and layouts.** The Style editor's + takes the font picker's order (catalogues | New catalogue…, Add fonts from subtitles…), with New catalogue… always shown. The catalogue chooser, the layout presets and the saved layouts are radio rows. “Manage font catalogues” names its window; “Manage layouts” has no ellipsis, in the switcher and in View › Layout ▸. The Menu key and Shift+F10 open the tier menu of a saved layout or a font catalogue, and Manage layouts' ⋯ takes Tab focus.
+- **Tooltips.** Every panel-area ⋯ says “More options” (the panel's or row's name goes to `Accessible.description`), and the Styles » too. Keys are no longer written into labels: Manage layouts' Rename and the Style manager's Move up and Move down show their key in the tooltip only.
+- **Ledger.** `context_menus.txt` adds one “Panel options (<panel>)” section per panel with own rows and a “Document tab bar” section. These are listed while open, so they show only the rows that panel or the empty bar shows.
+
+### What CX7 built: Automation, Hikari AI and presets
+
+- **Preset ⋯ (Shift times, Timing postprocessor).** Save as preset…, Rename preset… | Copy to …, Move to … (with a Project) | Use in the Timing layout (postprocessor) | Delete preset…: the destructive row is last, alone.
+- **Script dialog ⋯ › Presets ▸.** {presets} | Save as preset… | Copy to project ▸, Copy to mine ▸, Move to project ▸, Move to mine ▸ (with a Project) | Delete preset ▸.
+- **Agent panel.** The thread button shows ⋯ (panel-menu). Its menu is Rename thread…, Export as Markdown… | Compact thread, New thread from summary | Delete thread… (it asks). A thread row opens the same menu on right-click and the Menu key, for that thread. An answer gets Copy | Select all. Model and Mode are radio rows, the provider in the detail column; their Settings rows (“Settings › AI”, “Default for new threads”) take no “…” (rule 19.2). “Thread” is the one name: Compact thread in the menu, the slash menu, the 97% offer and the compact icon's label (rule 21).
+- **One ⋯ tooltip.** “More options” on the Automation script and recommended rows (the row's name goes to the accessible description), the script dialog, the preset bar, Shapes, All tags and the Agent thread button.
+- **Shapes and All tags.** The Menu key on the list opens the row's tier menu with a Project open; the hidden tier rows in the ⋯ take no height without one.
+- **Icons.** The three MCP Copy setup rows use edit-copy (rule 18).
+- **Ledger.** `context_menus.txt` lists the Automation script row menu.
 
 Proposal for [#578](https://github.com/altqx/hikari/issues/578), from the 2026-10-31 decisions in the card and the round-2 decisions of 2026-11-02 (round 2 wins where they differ). The mockup draws each menu before and after in Light, Dark and high contrast with the theme roles and the icons from `src/ui/icons`: `cx2/index.html` and the screenshots on the orphan branch `evidence/w8-cx2`. The owner approved every menu and every flagged point on 2026-11-02 ([#578 decision](https://github.com/altqx/hikari/issues/578)); CX3–CX6 build this.
 

@@ -32,6 +32,8 @@ HikariSub.Options	Replace the key with Edit	title-case	names the row’s Edit bu
 HikariSub.Options	Sign in again with Edit	title-case	names the row’s Edit button
 HikariSub.Options	Claude Code command	title-case	Claude Code is the product’s name
 HikariSub.Agent	Claude Code	title-case	Claude Code is the product’s name
+HikariSub.Agent	Signed out of Codex. This session ended.	title-case	Codex is the product’s name
+HikariSub.Agent	Withdrawn: you signed out of Codex.	title-case	Codex is the product’s name
 HikariSub.Plugins	Open Plugins…	title-case	Plugins is the window’s name
 HikariSub.Agent	Open in Plugins	title-case	Plugins is the window’s name
 HikariSub.Options	Google Search, and reads pages	title-case	Google Search is the product’s name

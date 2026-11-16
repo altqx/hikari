@@ -1,4 +1,6 @@
 #include "hikari/app/agent_controller.h"
+
+#include "qtest_parts.h"
 #include "hikari/app/ai_features.h"
 #include "hikari/app/ai_settings.h"
 #include "hikari/app/application.h"
@@ -11,11 +13,14 @@
 #include "hikari/backends/ai_agent_cli.h"
 #include "hikari/backends/ai_sidecar_host.h"
 #include "hikari/backends/ai_signin.h"
+#include "hikari/backends/ai_sidecar_updater.h"
 #include "hikari/backends/desktop_handoff.h"
 
 #include "docking.h"
 #include "line_table_model.h"
-#include "qtest_parts.h"
+#include "local_release.h"
+#include "menu_rows.h"
+#include "minisign_signer.h"
 #include "settings_store.h"
 #include "shell_controller.h"
 #include "side_bar_model.h"
@@ -29,16 +34,19 @@
 #include <QProcess>
 #include <QPointer>
 #include <QSaveFile>
+#include <QScreen>
 #include <QStandardPaths>
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QQmlExpression>
+#include <QQmlProperty>
 #include <QQuickWindow>
 #include <QtQuickTest/quicktest.h>
 #include <QTemporaryDir>
 #include <QtTest>
 
 #include <memory>
+#include <cmath>
 #include <optional>
 #include <utility>
 
@@ -153,6 +161,9 @@ class AgentPanelTest : public QObject {
     std::unique_ptr<app::Application> application;
     QPointer<backends::ai::AiSidecarHost> realHost;
     std::unique_ptr<QQmlApplicationEngine> engine;
+    std::unique_ptr<hikari::test::LocalRelease> release;
+    std::unique_ptr<hikari::test::FakeChannel> channel;
+    hikari::test::MinisignSigner signer;
 
     QString at(const QString &name) const
     {
@@ -241,6 +252,46 @@ class AgentPanelTest : public QObject {
         composer->forceActiveFocus();
         QTest::keyClick(window(), Qt::Key_Return);
     }
+    QObject *menu(const QString &name) const
+    {
+        for (QWindow *top : QGuiApplication::topLevelWindows())
+            if (auto *quick = qobject_cast<QQuickWindow *>(top))
+                if (QObject *found = quick->contentItem()->findChild<QObject *>(name))
+                    return found;
+        return window()->findChild<QObject *>(name);
+    }
+    void typeOpensInside(const QString &text, const QString &menuName, const QRect &available)
+    {
+        QQuickItem *composer = item(QStringLiteral("agentComposer"));
+        QVERIFY(composer);
+        composer->forceActiveFocus();
+        composer->setProperty("text", text);
+        QObject *opened = menu(menuName);
+        QVERIFY(opened);
+        QTRY_VERIFY(opened->property("opened").toBool());
+        auto *face = qobject_cast<QQuickItem *>(opened->property("background").value<QObject *>());
+        QVERIFY(face);
+        const QRectF shown(face->mapToGlobal(QPointF(0, 0)), face->size());
+        QVERIFY2(QRectF(available).contains(shown),
+                 qPrintable(QStringLiteral("%1 at %2,%3 %4x%5 leaves %6,%7 %8x%9")
+                                .arg(menuName).arg(shown.x()).arg(shown.y()).arg(shown.width()).arg(shown.height())
+                                .arg(available.x()).arg(available.y()).arg(available.width()).arg(available.height())));
+        QMetaObject::invokeMethod(opened, "close");
+        QTRY_VERIFY(!opened->property("visible").toBool());
+        composer->setProperty("text", QString());
+    }
+    void composerMenusFit(const QRect &available)
+    {
+        const QString second = at(QStringLiteral("second.ass"));
+        QFile file(second);
+        QVERIFY(file.open(QIODevice::WriteOnly | QIODevice::Truncate));
+        file.write("[Script Info]\nScriptType: v4.00+\n");
+        file.close();
+        QVERIFY(application->openFile(second));
+        QTRY_VERIFY(!agent().attachable().isEmpty());
+        typeOpensInside(QStringLiteral("/"), QStringLiteral("agentSlashMenu"), available);
+        typeOpensInside(QStringLiteral("Look at @"), QStringLiteral("agentAttachMenu"), available);
+    }
     void openPanel()
     {
         QVERIFY(shell(QStringLiteral("root.showPanel(agentDock), agentDock.isOpen")).toBool());
@@ -269,6 +320,33 @@ class AgentPanelTest : public QObject {
             QTest::qWait(200);
             QVERIFY(window()->grabWindow().save(out + QLatin1Char('/') + name + QLatin1Char('-') +
                                                 ui::theme::codeName(code) + QStringLiteral(".png")));
+        }
+    }
+
+    void shootMenu(const QString &name, QObject *menu)
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            return;
+        QVERIFY(QDir().mkpath(out));
+        QQuickItem *toasts = item(QStringLiteral("toastStack"));
+        QVERIFY(toasts);
+        toasts->setVisible(false);
+        auto restore = qScopeGuard([toasts] {
+            ui::theme::endPreview();
+            toasts->setVisible(true);
+        });
+        for (const auto code : ui::theme::kCodes) {
+            ui::theme::preview({{QStringLiteral("appearance.theme"), ui::theme::codeName(code)},
+                                {QStringLiteral("appearance.followSystem"), false}});
+            QQuickTest::qWaitForPolish(window());
+            QTest::qWait(300);
+            QTRY_VERIFY(menu->property("opened").toBool());
+            const QRect frame = window()->frameGeometry();
+            const QImage image = QGuiApplication::platformName() == QLatin1String("xcb")
+                                     ? window()->screen()->grabWindow(0, frame.x(), frame.y(), frame.width(), frame.height()).toImage()
+                                     : window()->grabWindow();
+            QVERIFY(image.save(out + QLatin1Char('/') + name + QLatin1Char('-') + ui::theme::codeName(code) + QStringLiteral(".png")));
         }
     }
 
@@ -393,6 +471,13 @@ class AgentPanelTest : public QObject {
                                       : qobject_cast<QQuickItem *>(at->property("contentItem").value<QObject *>())->parentItem();
         return onScene(body);
     }
+    void panelOnScreen()
+    {
+        const QRect available = window()->screen()->availableGeometry();
+        QQuickItem *view = item(QStringLiteral("agentView"));
+        window()->setPosition(available.right() - 8 - qRound(onScene(view).right()), available.top());
+        QTRY_VERIFY(QRectF(available).contains(QRectF(view->mapToGlobal(QPointF(0, 0)), view->size())));
+    }
     void narrowPanel(int width)
     {
         QVERIFY(shell(QStringLiteral("agentLoader.anchors.fill = undefined, agentLoader.width = %1,"
@@ -434,12 +519,15 @@ private slots:
     void init()
     {
         const QByteArray test(QTest::currentTestFunction());
-        const bool chatModel = test != "withoutAChatModelThePanelPointsToSettings" && test != "withOnlyClaudeCodeThePanelRunsOnIt";
+        const bool nothing = test == "withNothingToChooseThePanelPointsToSettings";
+        const bool chatModel = !nothing && test != "withAModelButNoChatModelTheButtonAsksForOne"
+                               && test != "withOnlyClaudeCodeThePanelRunsOnIt";
         QVERIFY(QDir(root.path()).mkpath(QString::fromLatin1(QTest::currentTestFunction())));
         ai::Config config;
         ai::Provider provider = ai::presetProvider(ai::Preset::OpenRouter, "or", "OpenRouter");
         provider.models = {{.id = "m", .name = "Fake model", .price = ai::Price{.input = 0, .output = 0}}};
-        config.providers.push_back(provider);
+        if (!nothing && test != "withOnlyClaudeCodeThePanelRunsOnIt")
+            config.providers.push_back(provider);
         if (chatModel)
             config.roles[ai::Role::Chat] = {"or", "m"};
 
@@ -461,9 +549,23 @@ private slots:
             return std::make_unique<backends::ai::AiSidecarHost>(std::move(o), &application->apiHost()->api(),
                                                                  api::Caller{.id = "ai", .label = "AI", .reviewed = true});
         };
-        ports.localSidecar = backends::ai::SidecarInstall{QStringLiteral("0.0.0-dev"), {}, flags, {}};
+        if (test == "withoutTheAiComponentThePanelGetsItAndTheNextTurnRuns") {
+            release = std::make_unique<hikari::test::LocalRelease>();
+            channel = std::make_unique<hikari::test::FakeChannel>(*release);
+            channel->addRuntime(QStringLiteral("1.4.4-0123abcd"), QByteArray("#!/bin/sh\necho sidecar\n").repeated(4000));
+            channel->addRelease({QStringLiteral("1.1.0")});
+            channel->publish(signer);
+            ports.sidecarUpdater = [this] {
+                return std::make_unique<backends::ai::AiSidecarUpdater>(
+                    at(QStringLiteral("ai/sidecar")), backends::ai::SidecarCompat{1, api::kApiVersion},
+                    backends::ai::SidecarSource::local(release->base(), {signer.publicKey()}));
+            };
+        } else {
+            ports.localSidecar = backends::ai::SidecarInstall{QStringLiteral("0.0.0-dev"), {}, flags, {}};
+        }
         ports.agents = [](backends::ai::AgentBroker &, application::ai::KeyStore &) {};
-        const bool found = QTest::currentTestFunction() == QByteArrayLiteral("agentsAreModelsOnlyWhenTheyAreFound");
+        const bool found = test == "agentsAreModelsOnlyWhenTheyAreFound" || test == "anAgentsModelsLoadWhenItsSubmenuOpensOnlyOnce"
+                           || test == "anAgentsLastModelsShowAtOnceAndAFailureKeepsThem";
         const bool onlyClaude = QTest::currentTestFunction() == QByteArrayLiteral("withOnlyClaudeCodeThePanelRunsOnIt");
         ports.agentOnPath = [found, onlyClaude](const QString &agent) {
             return found || (onlyClaude && agent == QStringLiteral("claude"));
@@ -479,6 +581,12 @@ private slots:
 
         if (test == "theAgentAndReviewOpenInTheAiSideBar")
             firstStartEmptyBefore = ui::SideBarModel::setFirstStartEmpty(false);
+        if (test == "anAgentsLastModelsShowAtOnceAndAFailureKeepsThem") {
+            ui::SettingsStore seed(at(QStringLiteral("settings.toml")));
+            seed.set(app::AgentController::kAgentModelsSetting,
+                     QStringList{QStringLiteral(R"({"agent":"codex","models":[{"id":"gpt-x","name":"GPT X"}]})")});
+            seed.sync();
+        }
         app::Application::Options options;
         options.settingsFile = at(QStringLiteral("settings.toml"));
         options.userFolder = at(QStringLiteral("user"));
@@ -510,6 +618,8 @@ private slots:
     {
         engine.reset();
         application.reset();
+        channel.reset();
+        release.reset();
         if (firstStartEmptyBefore)
             ui::SideBarModel::setFirstStartEmpty(*std::exchange(firstStartEmptyBefore, std::nullopt));
     }
@@ -777,6 +887,91 @@ private slots:
         QTRY_VERIFY(!item(QStringLiteral("agentRenameField")));
     }
 
+    void threadMenusFollowTheThreadRulesAndRowsAndAnswersHaveMenus()
+    {
+        openPanel();
+        QVERIFY(click(QStringLiteral("agentNewThread")));
+        QTRY_VERIFY(agent().thread().contains(QStringLiteral("id")));
+        QQuickItem *button = item(QStringLiteral("agentThreadMenuButton"));
+        QVERIFY(button);
+        QCOMPARE(button->property("iconRole").toString(), QStringLiteral("panel-menu"));
+        QCOMPARE(button->property("text").toString(), QStringLiteral("More options"));
+        auto *menu = window()->findChild<QObject *>(QStringLiteral("agentThreadMenu"));
+        QVERIFY(menu);
+        QVERIFY(click(QStringLiteral("agentThreadMenuButton")));
+        QTRY_VERIFY(menu->property("opened").toBool());
+        QCOMPARE(menu_rows::shown(menu), (QStringList{"agentRenameThread", "agentExportThread", "|", "agentCompactThread",
+                                                      "agentThreadFromSummary", "|", "agentDeleteThread"}));
+        QCOMPARE(item(QStringLiteral("agentCompactThread"))->property("text").toString(), QStringLiteral("Compact thread"));
+        QCOMPARE(item(QStringLiteral("agentDeleteThread"))->property("text").toString(), QStringLiteral("Delete thread…"));
+        shootMenu(QStringLiteral("cx7-agent-thread-menu"), menu);
+        QVERIFY(QMetaObject::invokeMethod(menu, "close"));
+        QTRY_VERIFY(!menu->property("visible").toBool());
+
+        QVERIFY(click(QStringLiteral("agentModeButton")));
+        QTRY_VERIFY(item(QStringLiteral("agentMode_manual")));
+        QVERIFY(!item(QStringLiteral("agentMode_manual"))->property("keepsMenuOpen").toBool());
+        QCOMPARE(QAccessible::queryAccessibleInterface(item(QStringLiteral("agentMode_manual")))->role(), QAccessible::RadioButton);
+        QCOMPARE(item(QStringLiteral("agentModeDefault"))->property("text").toString(), QStringLiteral("Default for new threads"));
+        shootMenu(QStringLiteral("cx7-agent-mode"), window()->findChild<QObject *>(QStringLiteral("agentModeMenu")));
+        QVERIFY(QMetaObject::invokeMethod(window()->findChild<QObject *>(QStringLiteral("agentModeMenu")), "close"));
+        auto *models = window()->findChild<QObject *>(QStringLiteral("agentModelMenu"));
+        QVERIFY(models);
+        QTRY_VERIFY(!window()->findChild<QObject *>(QStringLiteral("agentModeMenu"))->property("visible").toBool());
+        QVERIFY(click(QStringLiteral("agentModelButton")));
+        QTRY_VERIFY(item(QStringLiteral("agentModelSettings")));
+        QCOMPARE(item(QStringLiteral("agentModelSettings"))->property("text").toString(), QStringLiteral("Settings › AI"));
+        shootMenu(QStringLiteral("cx7-agent-model"), models);
+        QVERIFY(QMetaObject::invokeMethod(models, "close"));
+        QTRY_VERIFY(!models->property("visible").toBool());
+
+        type(QString::fromStdString(Json::object({{"say", "Keep the honorifics."}}).dump()));
+        QQuickItem *answer = nullptr;
+        QTRY_VERIFY((answer = item(QStringLiteral("agentAnswer"))) && answer->property("text").toString().contains(QStringLiteral("honorifics")));
+        QTRY_VERIFY(!agent().thread().value(QStringLiteral("running")).toBool());
+        auto *answerMenu = window()->findChild<QObject *>(QStringLiteral("agentAnswerMenu"));
+        QVERIFY(answerMenu);
+        QTest::mouseClick(window(), Qt::RightButton, {}, answer->mapToScene(QPointF(4, answer->height() / 2)).toPoint());
+        QTRY_VERIFY(answerMenu->property("opened").toBool());
+        QCOMPARE(menu_rows::shown(answerMenu), (QStringList{"textCopy", "|", "textSelectAll"}));
+        shootMenu(QStringLiteral("cx7-agent-answer"), answerMenu);
+        QVERIFY(QMetaObject::invokeMethod(item(QStringLiteral("textSelectAll")), "triggered"));
+        QTRY_VERIFY(answer->property("selectedText").toString().contains(QStringLiteral("honorifics")));
+        QTRY_VERIFY(!answerMenu->property("visible").toBool());
+
+        const QString first = agent().current();
+        QVERIFY(click(QStringLiteral("agentNewThread")));
+        QTRY_VERIFY(agent().current() != first);
+        QVERIFY(click(QStringLiteral("agentThreadsButton")));
+        QQuickItem *row = nullptr;
+        QTRY_VERIFY((row = item(QStringLiteral("agentThreadRow"))));
+        const auto rowOf = [&](const QString &id) -> QQuickItem * {
+            for (QQuickItem *r : row->parentItem()->childItems())
+                if (r->objectName() == QLatin1String("agentThreadRow")
+                    && r->property("modelData").toMap().value(QStringLiteral("id")).toString() == id)
+                    return r;
+            return nullptr;
+        };
+        QQuickItem *firstRow = nullptr;
+        QTRY_VERIFY2((firstRow = rowOf(first)), qPrintable(first + QStringLiteral(" not in ") + [&] {
+                         QStringList ids;
+                         for (const QVariant &t : agent().threads())
+                             ids << t.toMap().value(QStringLiteral("id")).toString();
+                         return ids.join(u' ');
+                     }()));
+        QTest::mouseClick(window(), Qt::RightButton, {}, firstRow->mapToScene(QPointF(20, firstRow->height() / 2)).toPoint());
+        QTRY_VERIFY(menu->property("opened").toBool());
+        QCOMPARE(agent().current(), first);
+        shootMenu(QStringLiteral("cx7-agent-thread-row"), menu);
+        QVERIFY(item(QStringLiteral("agentThreadsList")));
+        QVERIFY(QMetaObject::invokeMethod(menu, "close"));
+        QTRY_VERIFY(!menu->property("visible").toBool());
+        firstRow->forceActiveFocus();
+        QTest::keyClick(window(), Qt::Key_Menu);
+        QTRY_VERIFY(menu->property("opened").toBool());
+        QVERIFY(QMetaObject::invokeMethod(menu, "close"));
+    }
+
     void fullAccessWarnsOnceAndTheAlwaysAskListStillAsks()
     {
         openPanel();
@@ -1040,7 +1235,7 @@ private slots:
         shoot(QStringLiteral("agent-compact-failed"), QStringLiteral("QC Ep01–Ep12"));
     }
 
-    void theGlobeSearchesPerThreadAndAnAnswerShowsItsSourcesAndSearches()
+    void anAnswerShowsItsSourcesAndSearchesWithNoGlobe()
     {
         QStringList opened;
         const auto previous = backends::desktop::replaceRoutes({.openUrl = [&](const QUrl &url) {
@@ -1050,15 +1245,9 @@ private slots:
         auto restore = qScopeGuard([&] { backends::desktop::replaceRoutes(previous); });
         openPanel();
         QVERIFY(click(QStringLiteral("agentNewThread")));
-        QQuickItem *globe = item(QStringLiteral("agentWebSearch"));
-        QVERIFY(globe);
-        QVERIFY(globe->property("checked").toBool());
-        QCOMPARE(globe->property("tip").toString(), QStringLiteral("Search the web: on for this thread"));
-        QVERIFY(click(QStringLiteral("agentWebSearch")));
-        QVERIFY(!agent().thread().value(QStringLiteral("webSearch")).toBool());
-        QTRY_COMPARE(globe->property("tip").toString(), QStringLiteral("Search the web: off for this thread"));
-        QVERIFY(click(QStringLiteral("agentWebSearch")));
-        QVERIFY(agent().thread().value(QStringLiteral("webSearch")).toBool());
+        QVERIFY(item(QStringLiteral("agentModelButton")));
+        QVERIFY(!item(QStringLiteral("agentWebSearch")));
+        QVERIFY(!agent().thread().contains(QStringLiteral("webSearch")));
 
         const std::string say = "Aimer sings it. The single came out in 2011.";
         Json citations = Json::array();
@@ -1111,11 +1300,26 @@ private slots:
         QCOMPARE(opened.size(), 1);
         shoot(QStringLiteral("agent-web-search"), QStringLiteral("Who sings it?"));
 
-        application->settingsStore()->set(app::AiFeatures::kWebSearchSetting, false);
-        QTRY_VERIFY(!item(QStringLiteral("agentWebSearch")));
     }
 
-    void withoutAChatModelThePanelPointsToSettings()
+    void withAModelButNoChatModelTheButtonAsksForOne()
+    {
+        openPanel();
+        QVERIFY(agent().ready());
+        QVERIFY(!item(QStringLiteral("agentNoProvider")));
+        QCOMPARE(agent().defaultModelText(), QString());
+        QQuickItem *button = item(QStringLiteral("agentModelButton"));
+        QVERIFY(button);
+        QCOMPARE(button->property("text").toString(), QStringLiteral("Choose a model"));
+        QVERIFY(click(QStringLiteral("agentModelButton")));
+        QTRY_VERIFY(item(QStringLiteral("agentModelSettings")));
+        QTRY_VERIFY(item(QStringLiteral("agentModel_or/m")));
+        QVERIFY(click(QStringLiteral("agentModel_or/m")));
+        QTRY_COMPARE(agent().thread().value(QStringLiteral("model")).toString(), QStringLiteral("or\tm"));
+        QTRY_COMPARE(button->property("text").toString(), QStringLiteral("Fake model"));
+    }
+
+    void withNothingToChooseThePanelPointsToSettings()
     {
         openPanel();
         QVERIFY(!agent().ready());
@@ -1128,11 +1332,158 @@ private slots:
         QTRY_VERIFY(shell(QStringLiteral("settingsLoader.item !== null && settingsLoader.item.visible")).toBool());
     }
 
+    void theModelButtonNamesTheModelTheNextMessageUses()
+    {
+        openPanel();
+        QVERIFY(agent().current().isEmpty());
+        QQuickItem *button = item(QStringLiteral("agentModelButton"));
+        QVERIFY(button);
+        QCOMPARE(button->property("text").toString(), QStringLiteral("Fake model"));
+        QCOMPARE(QQmlProperty::read(button, QStringLiteral("Accessible.name"), qmlContext(button)).toString(),
+                 QStringLiteral("Model"));
+        QCOMPARE(QQmlProperty::read(button, QStringLiteral("ToolTip.text"), qmlContext(button)).toString(),
+                 QStringLiteral("Model"));
+
+        agent().newThread();
+        agent().setModel(QStringLiteral("or\tm"));
+        QTRY_COMPARE(button->property("text").toString(), QStringLiteral("Fake model"));
+
+        std::optional<qreal> gap;
+        for (const QString &name : {QStringLiteral("agentModelButton"), QStringLiteral("agentModeButton")}) {
+            QQuickItem *label = item(name + QStringLiteral("Label"));
+            QQuickItem *chevron = item(name + QStringLiteral("Chevron"));
+            QVERIFY2(label && chevron, qPrintable(name));
+            const QRectF text = label->mapRectToScene(QRectF(0, 0, label->width(), label->height()));
+            const QRectF mark = chevron->mapRectToScene(QRectF(0, 0, chevron->width(), chevron->height()));
+            QVERIFY2(std::abs(text.center().y() - mark.center().y()) <= 1, qPrintable(name));
+            QCOMPARE(mark.size(), QSizeF(12, 12));
+            if (!gap)
+                gap = mark.left() - text.right();
+            QCOMPARE(mark.left() - text.right(), *gap);
+        }
+    }
+
+    void theComposerMenusOpenInsideTheScreenOfAWindowFillingIt()
+    {
+        openPanel();
+        const QRect available = window()->screen()->availableGeometry();
+        window()->setGeometry(available);
+        QTRY_VERIFY(window()->geometry().bottom() >= available.bottom());
+        composerMenusFit(available);
+    }
+
+    void theComposerMenusOpenInsideTheScreenOfAFloatingPanelAtItsBottomEdge()
+    {
+        openPanel();
+        QVERIFY(shell(QStringLiteral("agentDock.isFloating = true, agentDock.isFloating")).toBool());
+        QQuickItem *composer = nullptr;
+        QTRY_VERIFY((composer = item(QStringLiteral("agentComposer"))) && composer->window() != window());
+        QWindow *floating = composer->window();
+        const QRect available = floating->screen()->availableGeometry();
+        floating->setPosition(available.left() + 40, available.bottom() + 1 - floating->height());
+        QTRY_COMPARE(floating->geometry().bottom(), available.bottom());
+        composerMenusFit(available);
+    }
+
+    static QObject *row(QObject *menu, const QString &name)
+    {
+        const int count = menu ? menu->property("count").toInt() : 0;
+        for (int i = 0; i < count; ++i) {
+            QQuickItem *at = nullptr;
+            QMetaObject::invokeMethod(menu, "itemAt", Q_RETURN_ARG(QQuickItem *, at), Q_ARG(int, i));
+            if (at && at->objectName() == name)
+                return at;
+        }
+        return nullptr;
+    }
+    QObject *openAgentModels(const QString &agentKey)
+    {
+        QObject *submenu = menu(QStringLiteral("agentModelMenu_") + agentKey);
+        if (submenu)
+            QMetaObject::invokeMethod(submenu, "open");
+        return submenu;
+    }
+
+    void anAgentsModelsLoadWhenItsSubmenuOpensOnlyOnce()
+    {
+        openPanel();
+        QCOMPARE(agent().agents().size(), 2);
+        QVERIFY(click(QStringLiteral("agentModelButton")));
+        QTRY_VERIFY(menu(QStringLiteral("agentModelMenu"))->property("opened").toBool());
+        QCOMPARE(agent().agentModelsRevision(), 0);
+        QVERIFY(!agent().agentModels(QStringLiteral("claude")).value(QStringLiteral("loading")).toBool());
+
+        QObject *claude = openAgentModels(QStringLiteral("claude"));
+        QVERIFY(claude);
+        QVERIFY(agent().agentModels(QStringLiteral("claude")).value(QStringLiteral("loading")).toBool());
+        QObject *loading = row(claude, QStringLiteral("agentModelsLoading_claude"));
+        QVERIFY(loading);
+        QVERIFY(loading->property("visible").toBool());
+        QVERIFY(!loading->property("enabled").toBool());
+        QVERIFY(!agent().agentModels(QStringLiteral("codex")).value(QStringLiteral("loading")).toBool());
+        QTRY_COMPARE(agent().agentModels(QStringLiteral("claude")).value(QStringLiteral("models")).toList().size(), 2);
+        QVERIFY(!loading->property("visible").toBool());
+        QVERIFY(row(claude, QStringLiteral("agentModel_agent:claude/")));
+        QObject *opus = nullptr;
+        QTRY_VERIFY((opus = row(claude, QStringLiteral("agentModel_agent:claude/opus"))));
+        QVERIFY(QMetaObject::invokeMethod(opus, "click"));
+        QTRY_COMPARE(agent().thread().value(QStringLiteral("model")).toString(), QStringLiteral("agent:claude\topus"));
+        QCOMPARE(agent().thread().value(QStringLiteral("modelText")).toString(), QStringLiteral("Claude Code · Opus"));
+        QTRY_COMPARE(item(QStringLiteral("agentModelButton"))->property("text").toString(), QStringLiteral("Claude Code · Opus"));
+        QVERIFY(application->settingsStore()->list(app::AgentController::kAgentModelsSetting).join(QString()).contains(QLatin1String("opus")));
+
+        const int revision = agent().agentModelsRevision();
+        QMetaObject::invokeMethod(claude, "close");
+        QVERIFY(openAgentModels(QStringLiteral("claude")));
+        QVERIFY(!agent().agentModels(QStringLiteral("claude")).value(QStringLiteral("loading")).toBool());
+        QCOMPARE(agent().agentModelsRevision(), revision);
+
+        agent().setModel(QStringLiteral("agent:claude\t"));
+        QTRY_COMPARE(agent().thread().value(QStringLiteral("modelText")).toString(), QStringLiteral("Claude Code"));
+    }
+
+    void anAgentsLastModelsShowAtOnceAndAFailureKeepsThem()
+    {
+        openPanel();
+        const auto codexModels = [this] {
+            return agent().agentModels(QStringLiteral("codex")).value(QStringLiteral("models")).toList();
+        };
+        QCOMPARE(codexModels().size(), 1);
+        QCOMPARE(codexModels().at(0).toMap().value(QStringLiteral("text")).toString(), QStringLiteral("GPT X"));
+        QVERIFY(click(QStringLiteral("agentModelButton")));
+        QObject *codex = openAgentModels(QStringLiteral("codex"));
+        QVERIFY(codex);
+        QVERIFY(agent().agentModels(QStringLiteral("codex")).value(QStringLiteral("loading")).toBool());
+        QVERIFY(row(codex, QStringLiteral("agentModel_agent:codex/gpt-x")));
+        QTRY_VERIFY(!agent().agentModels(QStringLiteral("codex")).value(QStringLiteral("loading")).toBool());
+        QCOMPARE(codexModels().size(), 1);
+        QVERIFY(row(codex, QStringLiteral("agentModel_agent:codex/")));
+    }
+
+    void withoutTheAiComponentThePanelGetsItAndTheNextTurnRuns()
+    {
+        application->settingsStore()->set(app::AgentController::kModeSetting, QStringLiteral("manual"));
+        openPanel();
+        agent().newThread();
+        type(applyScript("I tightened the first line."));
+        QTRY_COMPARE(lastItem().value(QStringLiteral("notice")).toString(), QStringLiteral("noSidecar"));
+        QTRY_VERIFY(item(QStringLiteral("agentGetComponent")));
+        QVERIFY(click(QStringLiteral("agentGetComponent")));
+        QTRY_COMPARE_WITH_TIMEOUT(item(QStringLiteral("agentView"))->property("componentResult").toString(), QStringLiteral("ready"), 20'000);
+        QVERIFY(!item(QStringLiteral("agentGetComponent")));
+        QVERIFY(application->ai()->updater()->current());
+
+        type(applyScript("I tightened the first line."));
+        QTRY_COMPARE_WITH_TIMEOUT(kinds().last(), QStringLiteral("proposal"), 20'000);
+    }
+
     void withOnlyClaudeCodeThePanelRunsOnIt()
     {
         openPanel();
         QVERIFY(agent().ready());
         QVERIFY(!item(QStringLiteral("agentNoProvider")));
+        QCOMPARE(agent().defaultModelText(), QStringLiteral("Claude Code"));
+        QCOMPARE(item(QStringLiteral("agentModelButton"))->property("text").toString(), QStringLiteral("Claude Code"));
         agent().newThread();
         QTRY_COMPARE(agent().thread().value(QStringLiteral("model")).toString(), QStringLiteral("agent:claude\t"));
         QCOMPARE(agent().thread().value(QStringLiteral("modelText")).toString(), QStringLiteral("Claude Code"));
@@ -1249,6 +1600,7 @@ private slots:
     {
         window()->resize(1280, 720);
         openPanel();
+        panelOnScreen();
         QVERIFY(click(QStringLiteral("agentNewThread")));
         QTRY_VERIFY(agent().thread().contains(QStringLiteral("id")));
         QCOMPARE(item(QStringLiteral("agentAttach"))->property("iconRole").toString(), QStringLiteral("attach"));
@@ -1287,6 +1639,7 @@ private slots:
     {
         window()->resize(1280, 720);
         openPanel();
+        panelOnScreen();
         QVERIFY(click(QStringLiteral("agentNewThread")));
         QTRY_VERIFY(agent().thread().contains(QStringLiteral("id")));
         const QRectF view = onScene(item(QStringLiteral("agentView")));
@@ -1558,6 +1911,59 @@ private slots:
         item(QStringLiteral("agentView"))->forceActiveFocus();
         QTest::keyClick(window(), Qt::Key_Escape);
         QTRY_VERIFY(!item(QStringLiteral("agentThreadsList")));
+    }
+
+    void aFloatingPanelsMenusOpenAboveTheirButtonsWithinThePanel()
+    {
+        openPanel();
+        QVERIFY(click(QStringLiteral("agentNewThread")));
+        QTRY_VERIFY(agent().thread().contains(QStringLiteral("id")));
+        QVERIFY(!openTabs({QStringLiteral("Sprite Fright - 02 - Mushroom Hunt [Signs].ass")}).isEmpty());
+        QVERIFY(shell(QStringLiteral("agentDock.isFloating = true, agentDock.isFloating")).toBool());
+        QQuickItem *view = nullptr;
+        QTRY_VERIFY((view = item(QStringLiteral("agentView"))) && view->window() != window());
+        QWindow *floating = view->window();
+        const QRect available = floating->screen()->availableGeometry();
+        floating->setGeometry(available.left() + 200, available.top() + 200, 420, 640);
+        QTRY_COMPARE(floating->width(), 420);
+        QQuickTest::qWaitForPolish(view->window());
+        const auto onScreen = [](const QQuickItem *at) {
+            return QRectF(at->mapToGlobal(QPointF(0, 0)), at->size());
+        };
+        const auto menuOnScreen = [&](const QString &name) -> QRectF {
+            for (QWindow *top : QGuiApplication::topLevelWindows())
+                for (QObject *at : top->findChildren<QObject *>(name))
+                    if (at->inherits("QQuickPopup") && at->property("opened").toBool())
+                        if (auto *background = qobject_cast<QQuickItem *>(at->property("background").value<QObject *>()))
+                            return onScreen(background->parentItem());
+            return {};
+        };
+        const auto closeMenu = [](const QString &name) {
+            for (QWindow *top : QGuiApplication::topLevelWindows())
+                for (QObject *at : top->findChildren<QObject *>(name))
+                    if (at->inherits("QQuickPopup"))
+                        QMetaObject::invokeMethod(at, "close");
+        };
+        const QRectF panel = onScreen(view);
+        for (const auto &[anchor, name] : {std::pair{"agentModelButton", "agentModelMenu"}, std::pair{"agentModeButton", "agentModeMenu"},
+                                           std::pair{"agentComposerBox", "agentAttachMenu"}}) {
+            const QRectF at = onScreen(item(QLatin1String(anchor)));
+            if (QLatin1String(name) == QLatin1String("agentAttachMenu")) {
+                item(QStringLiteral("agentComposer"))->forceActiveFocus();
+                item(QStringLiteral("agentComposer"))->setProperty("text", QStringLiteral("@"));
+            } else {
+                QVERIFY(click(QLatin1String(anchor)));
+            }
+            QRectF menu;
+            QTRY_VERIFY((menu = menuOnScreen(QLatin1String(name))).isValid());
+            QVERIFY2(menu.bottom() <= at.top() + 1, qPrintable(QStringLiteral("%1 bottom %2, %3 top %4").arg(QLatin1String(name)).arg(menu.bottom()).arg(QLatin1String(anchor)).arg(at.top())));
+            QVERIFY2(menu.left() >= panel.left() - 1 && menu.right() <= panel.right() + 1,
+                     qPrintable(QStringLiteral("%1 %2..%3, panel %4..%5").arg(QLatin1String(name)).arg(menu.left()).arg(menu.right()).arg(panel.left()).arg(panel.right())));
+            QVERIFY(available.contains(menu.toAlignedRect()));
+            closeMenu(QLatin1String(name));
+            item(QStringLiteral("agentComposer"))->setProperty("text", QString());
+            QTest::qWait(100);
+        }
     }
 };
 

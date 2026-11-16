@@ -1009,10 +1009,10 @@
         </translation>
     </message>
     <message numerus="yes">
-        <source>Remove all %n QC note(s) from this file?</source>
+        <source>Delete all %n QC note(s) from this file?</source>
         <translation>
-            <numerusform>Remove the %n QC note from this file?</numerusform>
-            <numerusform>Remove all %n QC notes from this file?</numerusform>
+            <numerusform>Delete the %n QC note from this file?</numerusform>
+            <numerusform>Delete all %n QC notes from this file?</numerusform>
         </translation>
     </message>
     <message numerus="yes">

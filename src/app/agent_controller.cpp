@@ -17,6 +17,7 @@
 #include <QDateTime>
 #include <QDir>
 #include <QFileInfo>
+#include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QSaveFile>
@@ -154,11 +155,21 @@ void AgentItemsModel::update(std::vector<std::string> items)
 AgentController::AgentController(Wiring wiring, QObject *parent) : QObject(parent), m_wiring(std::move(wiring))
 {
     connect(&m_wiring.ai, &AiFeatures::switched, this, &AgentController::apply);
+    for (const QString &saved : m_wiring.settings.list(kAgentModelsSetting)) {
+        const QJsonObject entry = QJsonDocument::fromJson(saved.toUtf8()).object();
+        AgentModelList &list = m_agentModels[entry.value(QStringLiteral("agent")).toString().toStdString()];
+        for (const QJsonValue &m : entry.value(QStringLiteral("models")).toArray())
+            list.models.emplace_back(m[QStringLiteral("id")].toString(), m[QStringLiteral("name")].toString());
+    }
+    connect(&m_wiring.ai, &AiFeatures::agentEnding, this, [this](const QString &agent) {
+        if (m_threads)
+            m_threads->endAgent(agent.toStdString());
+    });
     connect(&m_wiring.settings, &ui::SettingsStore::changed, this, [this](const QString &id) {
+        if (id == QLatin1String(kAgentModelsSetting))
+            return;
         if (id.startsWith(QLatin1String("ai.agent.")))
             emit settingsChanged();
-        if (id == QLatin1String(AiFeatures::kWebSearchSetting) || id == QLatin1String(AiFeatures::kSearchServiceSetting))
-            emit threadChanged();
         if (id.startsWith(QLatin1String("ai.")))
             emit modelsChanged();
     });
@@ -181,6 +192,8 @@ void AgentController::apply()
 {
     if (m_wiring.ai.on() == on())
         return;
+    for (auto &[agent, list] : m_agentModels)
+        list.loading = list.asked = false;
     if (!m_wiring.ai.on()) {
         m_threads.reset();
         m_store.reset();
@@ -387,7 +400,9 @@ void AgentController::openParent()
 bool AgentController::ready() const
 {
     const ai::Providers *providers = m_wiring.ai.providers();
-    return (providers && providers->config().modelFor(ai::Role::Chat).has_value()) || foundAgent().has_value();
+    const bool anyModel = providers && std::ranges::any_of(providers->config().providers,
+                                                           [](const ai::Provider &p) { return !p.models.empty(); });
+    return anyModel || foundAgent().has_value();
 }
 
 std::optional<ai::ModelRef> AgentController::foundAgent() const
@@ -398,6 +413,114 @@ std::optional<ai::ModelRef> AgentController::foundAgent() const
     if (const auto acp = m_wiring.ai.acpAgents(); !acp.empty())
         return acpRef(acp.front());
     return std::nullopt;
+}
+
+QString AgentController::modelTextOf(const ai::ModelRef &ref) const
+{
+    const ai::Providers *providers = m_wiring.ai.providers();
+    if (const ai::Model *m = providers ? modelIn(providers->config(), ref) : nullptr)
+        return qs(m->name.empty() ? m->id : m->name);
+    for (const AiFeatures::AcpAgent &acp : m_wiring.ai.acpAgents())
+        if (acpRef(acp) == ref)
+            return acp.name;
+    const auto program = backends::ai::externalAgentOf(ref);
+    if (!program)
+        return qs(ref.modelId);
+    QString name = qs(*program);
+    for (const AiFeatures::AcpAgent &acp : m_wiring.ai.acpAgents())
+        if (acpRef(acp).providerId == ref.providerId)
+            name = acp.name;
+    if (const auto agent = std::ranges::find(kAgentModels, *program, [](const AgentModel &a) { return std::string(a.program); });
+        agent != kAgentModels.end())
+        name = agent->text();
+    if (ref.modelId.empty())
+        return name;
+    QString model = qs(ref.modelId);
+    if (const auto known = m_agentModels.find(*program); known != m_agentModels.end())
+        for (const auto &[id, text] : known->second.models)
+            if (id == model)
+                model = text;
+    return name + QStringLiteral(" · ") + model;
+}
+
+bool AgentController::agentFound(const std::string &agent) const
+{
+    if (agent.starts_with("acp:"))
+        return std::ranges::any_of(m_wiring.ai.acpAgents(),
+                                   [&](const AiFeatures::AcpAgent &a) { return "acp:" + a.id.toStdString() == agent; });
+    return m_wiring.ai.offersAgent(qs(agent));
+}
+
+QVariantList AgentController::agents() const
+{
+    QVariantList out;
+    for (const QVariant &row : models())
+        if (const QVariantMap m = row.toMap(); !m.value(QStringLiteral("agent")).toString().isEmpty())
+            out.push_back(m);
+    return out;
+}
+
+QVariantMap AgentController::agentModels(const QString &agent) const
+{
+    const auto it = m_agentModels.find(agent.toStdString());
+    if (it == m_agentModels.end())
+        return {{QStringLiteral("loading"), false}, {QStringLiteral("models"), QVariantList()}};
+    const std::string provider = std::string(backends::ai::kAgentProviderPrefix) + agent.toStdString();
+    QVariantList models;
+    for (const auto &[id, name] : it->second.models)
+        models.push_back(QVariantMap{{QStringLiteral("value"), modelValue({provider, id.toStdString()})},
+                                     {QStringLiteral("text"), name}});
+    return {{QStringLiteral("loading"), it->second.loading}, {QStringLiteral("models"), models}};
+}
+
+void AgentController::loadAgentModels(const QString &agent)
+{
+    const std::string key = agent.toStdString();
+    if (!m_threads || !agentFound(key))
+        return;
+    AgentModelList &list = m_agentModels[key];
+    if (list.asked)
+        return;
+    list.asked = list.loading = true;
+    ++m_agentModelsRevision;
+    emit agentModelsChanged();
+    m_threads->listAgentModels(key, [this, key](std::optional<std::vector<AgentThreads::AgentModel>> models) {
+        AgentModelList &done = m_agentModels[key];
+        done.loading = false;
+        if (models) {
+            done.models.clear();
+            for (const AgentThreads::AgentModel &m : *models)
+                done.models.emplace_back(qs(m.id), qs(m.name));
+            saveAgentModels();
+        }
+        ++m_agentModelsRevision;
+        emit agentModelsChanged();
+        emit threadChanged();
+    });
+}
+
+void AgentController::saveAgentModels()
+{
+    QStringList out;
+    for (const auto &[agent, list] : m_agentModels) {
+        if (list.models.empty())
+            continue;
+        QJsonArray models;
+        for (const auto &[id, name] : list.models)
+            models.append(QJsonObject{{QStringLiteral("id"), id}, {QStringLiteral("name"), name}});
+        out << QString::fromUtf8(QJsonDocument(QJsonObject{{QStringLiteral("agent"), qs(agent)}, {QStringLiteral("models"), models}})
+                                     .toJson(QJsonDocument::Compact));
+    }
+    m_wiring.settings.set(kAgentModelsSetting, out);
+}
+
+QString AgentController::defaultModelText() const
+{
+    const ai::Providers *providers = m_wiring.ai.providers();
+    if (const auto chat = providers ? providers->config().modelFor(ai::Role::Chat) : std::nullopt)
+        return modelTextOf(*chat);
+    const auto agent = foundAgent();
+    return agent ? modelTextOf(*agent) : QString();
 }
 
 void AgentController::fallBackToAnAgent(const std::string &thread)
@@ -467,21 +590,10 @@ QVariantMap AgentController::thread() const
     qint64 window = 0;
     if (const auto ref = m_threads->modelOf(*t)) {
         model = modelValue(*ref);
-        const auto agent = std::ranges::find_if(kAgentModels, [&](const AgentModel &a) { return a.ref() == *ref; });
-        modelText = agent != kAgentModels.end() ? agent->text() : qs(ref->modelId);
-        for (const AiFeatures::AcpAgent &acp : m_wiring.ai.acpAgents())
-            if (acpRef(acp) == *ref)
-                modelText = acp.name;
-        if (const ai::Model *m = providers ? modelIn(providers->config(), *ref) : nullptr) {
-            modelText = qs(m->name.empty() ? m->id : m->name);
+        modelText = modelTextOf(*ref);
+        if (const ai::Model *m = providers ? modelIn(providers->config(), *ref) : nullptr)
             window = m->contextTokens.value_or(0);
-        }
     }
-    const ai::Provider *provider = nullptr;
-    if (const auto ref = m_threads->modelOf(*t); ref && providers)
-        provider = providers->config().provider(ref->providerId);
-    const backends::ai::AiRequests *requests = m_wiring.ai.requests();
-    const bool searchReady = (provider && ai::searchesNatively(*provider)) || (requests && requests->searchService());
     QVariantList attached;
     if (const auto it = m_attached.find(m_current); it != m_attached.end())
         for (const application::DocumentId d : it->second)
@@ -519,9 +631,6 @@ QVariantMap AgentController::thread() const
             {QStringLiteral("model"), model},
             {QStringLiteral("modelText"), modelText},
             {QStringLiteral("attached"), attached},
-            {QStringLiteral("webSearch"), t->webSearch},
-            {QStringLiteral("webSearchReady"), searchReady},
-            {QStringLiteral("webSearchCacheMiss"), provider && provider->preset == ai::Preset::Anthropic},
             {QStringLiteral("projectInstructions"), !projectInstructionsFile(*t).isEmpty()}};
 }
 
@@ -553,11 +662,13 @@ QVariantList AgentController::models() const
         if (m_wiring.ai.offersAgent(QString::fromLatin1(agent.program)))
             out.push_back(QVariantMap{{QStringLiteral("value"), modelValue(agent.ref())},
                                       {QStringLiteral("text"), agent.text()},
-                                      {QStringLiteral("provider"), QString()}});
+                                      {QStringLiteral("provider"), QString()},
+                                      {QStringLiteral("agent"), QString::fromLatin1(agent.program)}});
     for (const AiFeatures::AcpAgent &acp : m_wiring.ai.acpAgents())
         out.push_back(QVariantMap{{QStringLiteral("value"), modelValue(acpRef(acp))},
                                   {QStringLiteral("text"), acp.name},
-                                  {QStringLiteral("provider"), QString()}});
+                                  {QStringLiteral("provider"), QString()},
+                                  {QStringLiteral("agent"), QStringLiteral("acp:") + acp.id}});
     const ai::Providers *providers = m_wiring.ai.providers();
     if (!providers)
         return out;
@@ -664,17 +775,6 @@ void AgentController::remove(const QString &id)
         return;
     m_attached.erase(id.toStdString());
     m_threads->remove(id.toStdString());
-}
-
-bool AgentController::webSearchShown() const
-{
-    return m_wiring.settings.boolean(AiFeatures::kWebSearchSetting);
-}
-
-void AgentController::setWebSearch(bool on)
-{
-    if (m_threads && !m_current.empty())
-        m_threads->setWebSearch(m_current, on);
 }
 
 QString AgentController::citedText(const QVariantMap &item, const QColor &chip, const QColor &ink) const

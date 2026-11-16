@@ -42,7 +42,7 @@ HikariSub keeps its settings in the platform's user folders (`QStandardPaths`), 
 
 ## Update check
 
-The check reads GitHub's release list, 50 releases to a page and four pages at most. It keeps the releases that are not drafts, have a `v` + SemVer tag, are newer than the running version and fit the channel ("Stable versions only" skips GitHub prereleases and SemVer prerelease tags on a stable build; a prerelease build always takes prereleases, as legacy does). It walks at most five of them, highest version first:
+The check reads GitHub's release list, 50 releases to a page and four pages at most. It keeps the releases that are not drafts, have a `v` + SemVer tag, are newer than the running version and fit the channel ("Stable versions only" skips GitHub prereleases and SemVer prerelease tags on every build; it defaults to on for a stable build and off for a prerelease build). It walks at most five of them, highest version first:
 
 - A release with `hikarisub-update.json` has its manifest read (64 KiB at most), then its signature `hikarisub-update.json.minisig` (64 KiB at most, the same URL rules). A manifest that does not arrive or breaks its rules skips the release. So does a missing or bad signature ([Integrity](#integrity)), and the `hikari.updates` log says why; there is no toast. A signed manifest with an unknown schema counts as no manifest.
 - A release without a manifest is offered to the codebase its version names, but only named: the notice and the release page, never a download ([ADR 0027](adr/0027-the-update-manifest-is-signed-with-minisign.md)). Its packages come from the assets' GitHub digests only to tell which kinds it has.

@@ -41,6 +41,7 @@ class UpdateChecker : public QObject {
     Q_PROPERTY(bool installsUpdates READ installsUpdates CONSTANT)
     // False for an AUR install with a channel (aur-channel.txt), whose package decides.
     Q_PROPERTY(bool stableOnlyOption READ stableOnlyOption CONSTANT)
+    Q_PROPERTY(bool prereleaseBuild READ prereleaseBuild CONSTANT)
     Q_PROPERTY(QObject *installer READ installerObject CONSTANT)
     // Without "v"; empty for none.
     Q_PROPERTY(QString skippedVersion READ skippedVersion WRITE skipVersion NOTIFY optionsChanged)
@@ -67,6 +68,7 @@ public:
     QString versionLabel() const;
     bool installsUpdates() const;
     bool stableOnlyOption() const;
+    bool prereleaseBuild() const;
     QString skippedVersion() const { return m_skippedVersion; }
     // The automatic check stays quiet about `version` until a newer release is found; "" clears it.
     Q_INVOKABLE void skipVersion(const QString &version);

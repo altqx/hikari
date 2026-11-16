@@ -41,6 +41,7 @@ export const Method = {
     sessionSteer: "_hikari/session.steer",
     sessionClose: "_hikari/session.close",
     sessionCompact: "_hikari/session.compact",
+    sessionModels: "_hikari/session.models",
     requestPermission: "session/request_permission",
     providersSet: "_hikari/providers.set",
     modelsList: "_hikari/models.list",
@@ -234,6 +235,21 @@ export interface SessionCompactParams {
 export interface SessionCompactResult {
     compacted: boolean;
     summary?: string;
+}
+
+/** A model an external agent offers; `id` is what the agent takes back as the session's model. */
+export interface AgentModelInfo {
+    id: string;
+    name: string;
+}
+
+/** Starts the agent session if needed and lists the models the agent offers. */
+export interface SessionModelsParams {
+    sessionId: string;
+}
+
+export interface SessionModelsResult {
+    models: AgentModelInfo[];
 }
 
 /**

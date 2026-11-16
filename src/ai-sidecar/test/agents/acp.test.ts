@@ -27,13 +27,13 @@ afterEach(() => {
 
 /** Qt's side: a tools channel for the session, and a guard that names it in `session/new`. */
 function harness(answers: Partial<Record<OperationName, unknown>> = {}, env: Record<string, string> = {},
-    system = "Be brief.", child?: ReturnType<typeof qtLink>) {
+    system = "Be brief.", child?: ReturnType<typeof qtLink>, model = "") {
     const log = join(mkdtempSync(join(tmpdir(), "fake-acp-")), "log");
     const calls: { operation: string; params: unknown }[] = [];
     const updates: SessionUpdate[] = [];
     const spawned: string[] = [];
     let session: AcpSession | undefined;
-    const params = { sessionId: "t1", agent: "acp:fake" as const, model: { providerId: "", model: "" }, system,
+    const params = { sessionId: "t1", agent: "acp:fake" as const, model: { providerId: "", model }, system,
         ...(child ? { task: { parent: "p1", taskId: "k1", scope: { document: 1, lines: [1] } } } : {}) };
     const fake: HikariCalls = {
         call: (operation, p) => {
@@ -81,6 +81,53 @@ function harness(answers: Partial<Record<OperationName, unknown>> = {}, env: Rec
 }
 
 describe("an ACP agent", () => {
+    const kModels = { FAKE_ACP_MODELS: "1" };
+    const values = (h: ReturnType<typeof harness>) =>
+        h.logged("session/set_config_option").map((p) => (p as { sessionId: string; configId: string; value: string }));
+
+    test("it lists the agent's model option, flattening its groups, and leaves its mode alone", async () => {
+        const h = harness({}, kModels);
+        expect(await h.session.models()).toEqual([{ id: "fake-small", name: "Fake Small" }, { id: "fake-large", name: "Fake Large" }]);
+        h.session.close();
+        expect(values(h)).toEqual([]);
+    }, 30_000);
+
+    test("an agent without a model option lists none and ignores a chosen model", async () => {
+        const h = harness({}, {}, "Be brief.", undefined, "fake-small");
+        expect(await h.session.models()).toEqual([]);
+        await h.session.prompt({ sessionId: "t1", prompt: h.script({ reply: "hi" }) });
+        h.session.close();
+        expect(values(h)).toEqual([]);
+    }, 30_000);
+
+    test("the agent's default sets nothing, and a chosen model is set on the agent's session before the prompt", async () => {
+        const plain = harness({}, kModels);
+        await plain.session.prompt({ sessionId: "t1", prompt: plain.script({ reply: "hi" }) });
+        plain.session.close();
+        expect(values(plain)).toEqual([]);
+        const chosen = harness({}, kModels, "Be brief.", undefined, "fake-small");
+        await chosen.session.prompt({ sessionId: "t1", prompt: chosen.script({ reply: "hi" }) });
+        chosen.session.close();
+        expect(values(chosen)).toEqual([{ sessionId: "session-1", configId: "model", value: "fake-small" }]);
+        const unknown = harness({}, kModels, "Be brief.", undefined, "gone");
+        await unknown.session.prompt({ sessionId: "t1", prompt: unknown.script({ reply: "hi" }) });
+        unknown.session.close();
+        expect(values(unknown)).toEqual([]);
+    }, 30_000);
+
+    test("a model chosen mid-thread is set in the same session, and the agent's default sets its first model back", async () => {
+        const h = harness({}, kModels);
+        const turn = (reply: string, model?: string) => h.session.prompt({ sessionId: "t1", prompt: h.script({ reply }),
+            ...(model === undefined ? {} : { model: { providerId: "", model } }) });
+        await turn("one");
+        await turn("two", "fake-small");
+        await turn("three", "fake-small");
+        await turn("four", "");
+        h.session.close();
+        expect(values(h).map((v) => v.value)).toEqual(["fake-small", "fake-large"]);
+        expect(h.spawned).toHaveLength(1);
+    }, 30_000);
+
     test("an edit task runs on Hikari's tools over the session's channel", async () => {
         const h = harness({ "lines.find": { revision: 3, total: 1, lines: [{ id: 1, text: "Helo" }] },
             "document.apply": { revision: 4 } });

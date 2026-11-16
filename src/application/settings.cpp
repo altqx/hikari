@@ -1,6 +1,7 @@
 #include "hikari/application/settings.h"
 
 #include "hikari/application/position_commands.h"
+#include "hikari/application/update_check.h"
 
 #include <algorithm>
 #include <cctype>
@@ -58,9 +59,9 @@ std::vector<SettingDefinition> withProjectFlags(std::vector<SettingDefinition> t
     return table;
 }
 
-const std::vector<SettingDefinition> &definitions()
+std::vector<SettingDefinition> &definitions()
 {
-    static const std::vector<SettingDefinition> table = withProjectFlags({
+    static std::vector<SettingDefinition> table = withProjectFlags({
         {"audio.autoCommit", "AUDIO_AUTO_COMMIT", Bool, Profile, Mapped, true, true},
         {"audio.autoFocus", "AUDIO_AUTO_FOCUS", Bool, Profile, Mapped, true, true},
         {"audio.autoScroll", "AUDIO_AUTO_SCROLL", Bool, Profile, Mapped, true, true},
@@ -434,6 +435,7 @@ const std::vector<SettingDefinition> &definitions()
         {"ai.agent.costMeter", "", Bool, Profile, Mapped, false, true},
         {"ai.agent.autoCompact", "", Bool, Profile, Mapped, false, true},
         {"ai.agent.fullAccessWarned", "", Bool, Profile, Mapped, false, false},
+        {"ai.agent.models", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         // actions: one {"name", "instruction", "role", "ask"} JSON object per row.
         {"ai.agents.custom", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {"ai.inline.actions", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
@@ -532,6 +534,12 @@ std::span<const std::string_view> retiredSettings()
         "icons.highContrast.normal", "icons.highContrast.accent", "icons.highContrast.active",
         "icons.highContrast.disabled", "workspace.editorOn"};
     return ids;
+}
+
+void setInstalledVersion(std::string_view version)
+{
+    auto &all = definitions();
+    std::ranges::find(all, "updater.checkForStable", &SettingDefinition::id)->defaultValue = !isPrereleaseTag(version);
 }
 
 std::span<const SettingDefinition> settingDefinitions()

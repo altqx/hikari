@@ -26,7 +26,8 @@ Show all files and Group by name are the user's (`explorer.allFiles`, `explorer.
 ## Actions
 
 - Double-click or Enter: a folder or group opens or closes; a subtitle file opens in a new tab (or goes to its tab if one has it); a video, audio, keyframes or timecodes file becomes the current tab's.
-- Right-click, or the Menu key: Open in a new tab, Open in this tab, New subtitle file here, Rename (F2), Move to the trash (Del, after a question), Show in folder, Copy path.
+- Right-click, or the Menu key: Open in a new tab, Open in this tab | Show in folder, Copy path | New subtitle file here, Rename (F2) | Move to the trash… (Del, after a question).
+- The Explorer ⋯ holds the tool strip's commands too (New subtitle file, Refresh, Group by name, Show all files), for a header too narrow to show the strip.
 - New subtitle file writes the Untitled file's default script under the folder and opens it.
 - Keys: ↑ ↓ Home End move, → opens or goes in, ← closes or goes to the folder above, Esc goes back to the Grid.
 

@@ -13,6 +13,7 @@
 
 #include <functional>
 #include <map>
+#include <utility>
 #include <memory>
 #include <optional>
 #include <string>
@@ -67,18 +68,23 @@ private:
 class AgentController final : public QObject {
     Q_OBJECT
     Q_PROPERTY(bool on READ on NOTIFY switched FINAL)
-    // A chat model exists, so a thread can run.
+    // A provider model or an agent exists, so the composer can choose one.
     Q_PROPERTY(bool ready READ ready NOTIFY modelsChanged FINAL)
     // Newest first: {id, title, files, model, cost, costUnknown, state ("running", "cap", "full" or ""), day}.
     Q_PROPERTY(QVariantList threads READ threads NOTIFY threadsChanged FINAL)
     Q_PROPERTY(QString current READ current NOTIFY currentChanged FINAL)
     // The open thread: {id, title, mode, running, queued, cost, cap, costUnknown, contextTokens, contextWindow,
-    // model, modelText, attached: [{id, title}], webSearch (the globe), webSearchReady (the provider or a search
-    // service can search), webSearchCacheMiss (Anthropic)}; empty with none open.
+    // model, modelText, attached: [{id, title}]}; empty with none open.
     Q_PROPERTY(QVariantMap thread READ thread NOTIFY threadChanged FINAL)
     Q_PROPERTY(QObject *items READ items CONSTANT FINAL)
-    // [{value, text, provider}] from Settings › AI.
+    // [{value, text, provider, agent}]: the found agents (agent: its program) at their default, then Settings › AI's.
     Q_PROPERTY(QVariantList models READ models NOTIFY modelsChanged FINAL)
+    // The found agents: [{agent, text, value}], value being the agent at its own default model.
+    Q_PROPERTY(QVariantList agents READ agents NOTIFY modelsChanged FINAL)
+    // Bumps whenever an agent's model list or its loading changes.
+    Q_PROPERTY(int agentModelsRevision READ agentModelsRevision NOTIFY agentModelsChanged FINAL)
+    /// The model a new thread starts with, or empty when none is configured.
+    Q_PROPERTY(QString defaultModelText READ defaultModelText NOTIFY modelsChanged FINAL)
     // The open tabs @ can attach: [{id, title}], without the active one.
     Q_PROPERTY(QVariantList attachable READ attachable NOTIFY threadChanged FINAL)
     Q_PROPERTY(QString activeTitle READ activeTitle NOTIFY threadChanged FINAL)
@@ -88,8 +94,6 @@ class AgentController final : public QObject {
     Q_PROPERTY(double spentToday READ spentToday NOTIFY threadChanged FINAL)
     Q_PROPERTY(double dailyCap READ dailyCap NOTIFY settingsChanged FINAL)
     Q_PROPERTY(double threadCap READ threadCap NOTIFY settingsChanged FINAL)
-    // Settings › AI lets AI search the web, so the composer shows the globe.
-    Q_PROPERTY(bool webSearchShown READ webSearchShown NOTIFY threadChanged FINAL)
 
 public:
     struct Wiring {
@@ -113,6 +117,7 @@ public:
     static constexpr const char *kCostMeterSetting = "ai.agent.costMeter";
     static constexpr const char *kAutoCompactSetting = "ai.agent.autoCompact";
     static constexpr const char *kFullAccessWarnedSetting = "ai.agent.fullAccessWarned";
+    static constexpr const char *kAgentModelsSetting = "ai.agent.models";
 
     explicit AgentController(Wiring wiring, QObject *parent = nullptr);
     ~AgentController() override;
@@ -124,6 +129,13 @@ public:
     QVariantMap thread() const;
     QObject *items() { return &m_items; }
     QVariantList models() const;
+    QString defaultModelText() const;
+    QVariantList agents() const;
+    int agentModelsRevision() const { return m_agentModelsRevision; }
+    /// {loading, models: [{value, text}]}: the agent's last known list, while a fresh one may be loading.
+    Q_INVOKABLE QVariantMap agentModels(const QString &agent) const;
+    /// Asks a found agent for its models, once per run.
+    Q_INVOKABLE void loadAgentModels(const QString &agent);
     QVariantList attachable() const;
     QString activeTitle() const;
     bool costMeter() const;
@@ -134,7 +146,6 @@ public:
     void spend(double dollars);
     double dailyCap() const;
     double threadCap() const;
-    bool webSearchShown() const;
     bool running() const;
     backends::ai::AgentThreads *engine() const { return m_threads.get(); }
     /// The tabs or the editing target changed.
@@ -173,7 +184,6 @@ public:
     Q_INVOKABLE void attach(qulonglong document);
     Q_INVOKABLE void detach(qulonglong document);
     Q_INVOKABLE void setFullAccessWarned();
-    Q_INVOKABLE void setWebSearch(bool on);
     /// A text item's answer with its citation chips, as rich text.
     Q_INVOKABLE QString citedText(const QVariantMap &item, const QColor &chip, const QColor &ink) const;
     Q_INVOKABLE QString siteOf(const QString &url) const;
@@ -192,6 +202,7 @@ signals:
     void currentChanged();
     void threadChanged();
     void modelsChanged();
+    void agentModelsChanged();
     void settingsChanged();
     /// A question needs the user, maybe in a thread that isn't open.
     void asked(QString thread);
@@ -200,6 +211,7 @@ private:
     void apply();
     /// The first installed agent, which a thread falls back to when no provider has a Chat model.
     std::optional<application::ai::ModelRef> foundAgent() const;
+    QString modelTextOf(const application::ai::ModelRef &ref) const;
     void fallBackToAnAgent(const std::string &thread);
     void select(std::string id);
     void refreshThread();
@@ -212,6 +224,16 @@ private:
     std::unique_ptr<backends::ai::ThreadStore> m_store;
     std::unique_ptr<backends::ai::AgentThreads> m_threads;
     std::map<std::string, std::vector<application::DocumentId>> m_attached;
+    struct AgentModelList {
+        std::vector<std::pair<QString, QString>> models;
+        bool loading = false;
+        bool asked = false;
+    };
+    AgentModelList &agentModelList(const std::string &agent);
+    bool agentFound(const std::string &agent) const;
+    void saveAgentModels();
+    std::map<std::string, AgentModelList> m_agentModels;
+    int m_agentModelsRevision = 0;
     std::string m_current;
     AgentItemsModel m_items;
     int m_busySource = 0;

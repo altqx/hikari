@@ -73,7 +73,7 @@
     </message>
     <message>
         <source>Thread menu</source>
-        <translation>இழை மெனு</translation>
+        <translation type="vanished">இழை மெனு</translation>
     </message>
     <message>
         <source>Add a provider to use the agent</source>
@@ -185,23 +185,23 @@
     </message>
     <message>
         <source>Search the web</source>
-        <translation>இணையத்தில் தேடு</translation>
+        <translation type="vanished">இணையத்தில் தேடு</translation>
     </message>
     <message>
         <source>This provider can’t search the web on its own. Choose a search service in Settings › AI › Web search.</source>
-        <translation>இந்த வழங்குநரால் தானாக இணையத்தில் தேட முடியாது. அமைப்புகள் › AI › இணையத் தேடல் இல் ஒரு தேடல் சேவையைத் தேர்ந்தெடு.</translation>
+        <translation type="vanished">இந்த வழங்குநரால் தானாக இணையத்தில் தேட முடியாது. அமைப்புகள் › AI › இணையத் தேடல் இல் ஒரு தேடல் சேவையைத் தேர்ந்தெடு.</translation>
     </message>
     <message>
         <source>Search the web: on for this thread</source>
-        <translation>இணையத் தேடல்: இந்த இழையில் இயக்கத்தில்</translation>
+        <translation type="vanished">இணையத் தேடல்: இந்த இழையில் இயக்கத்தில்</translation>
     </message>
     <message>
         <source>Search the web: off for this thread</source>
-        <translation>இணையத் தேடல்: இந்த இழையில் அணைக்கப்பட்டது</translation>
+        <translation type="vanished">இணையத் தேடல்: இந்த இழையில் அணைக்கப்பட்டது</translation>
     </message>
     <message>
         <source>Changing it mid-thread costs one cache miss on Anthropic.</source>
-        <translation>இழையின் நடுவில் இதை மாற்றினால் Anthropic இல் ஒரு தற்காலிக நினைவக இழப்பு ஏற்படும்.</translation>
+        <translation type="vanished">இழையின் நடுவில் இதை மாற்றினால் Anthropic இல் ஒரு தற்காலிக நினைவக இழப்பு ஏற்படும்.</translation>
     </message>
     <message>
         <source>Stop</source>
@@ -255,6 +255,14 @@
         <translation>வரம்பெல்லை: %1</translation>
     </message>
     <message>
+        <source>Choose a model</source>
+        <translation>ஒரு மாதிரியைத் தேர்ந்தெடு</translation>
+    </message>
+    <message>
+        <source>Model</source>
+        <translation>மாதிரி</translation>
+    </message>
+    <message>
         <source>Send</source>
         <translation>அனுப்பு</translation>
     </message>
@@ -287,8 +295,16 @@
         <translation>பயன்முறையை மாற்று</translation>
     </message>
     <message>
+        <source>Agent default</source>
+        <translation>முகவரின் இயல்புநிலை</translation>
+    </message>
+    <message>
+        <source>Loading models…</source>
+        <translation>மாதிரிகளை ஏற்றுகிறது…</translation>
+    </message>
+    <message>
         <source>Settings › AI…</source>
-        <translation>அமைப்புகள் › AI…</translation>
+        <translation type="vanished">அமைப்புகள் › AI…</translation>
     </message>
     <message>
         <source>You approve each subtitle edit before it’s made, and every other change. Reading never asks.</source>
@@ -304,7 +320,7 @@
     </message>
     <message>
         <source>Default for new threads…</source>
-        <translation>புதிய இழைகளுக்கான இயல்புநிலை…</translation>
+        <translation type="vanished">புதிய இழைகளுக்கான இயல்புநிலை…</translation>
     </message>
     <message>
         <source>Rename thread</source>
@@ -438,6 +454,26 @@
         <translation type="vanished">மறுத்து முகவரிடம் சொல்…</translation>
     </message>
     <message>
+        <source>Withdrawn: the agent stopped waiting for your answer.</source>
+        <translation>திரும்பப் பெறப்பட்டது: முகவர் உங்கள் பதிலுக்குக் காத்திருப்பதை நிறுத்தியது.</translation>
+    </message>
+    <message>
+        <source>Withdrawn: the turn ended before you answered.</source>
+        <translation>திரும்பப் பெறப்பட்டது: நீங்கள் பதிலளிப்பதற்கு முன் சுற்று முடிந்தது.</translation>
+    </message>
+    <message>
+        <source>Withdrawn: you stopped the turn.</source>
+        <translation>திரும்பப் பெறப்பட்டது: நீங்கள் சுற்றை நிறுத்தினீர்கள்.</translation>
+    </message>
+    <message>
+        <source>Withdrawn: you signed out of Codex.</source>
+        <translation>திரும்பப் பெறப்பட்டது: நீங்கள் Codex இலிருந்து வெளியேறினீர்கள்.</translation>
+    </message>
+    <message>
+        <source>Withdrawn: the cost cap stopped the turn.</source>
+        <translation>திரும்பப் பெறப்பட்டது: செலவு வரம்பு சுற்றை நிறுத்தியது.</translation>
+    </message>
+    <message>
         <source>The signing key changed. The installed copy was signed by key %1, and this one by key %2. Install it only if you trust that the author changed keys.</source>
         <translation type="unfinished">கையொப்ப விசை மாறிவிட்டது. நிறுவப்பட்ட பிரதி %1 விசையாலும், இது %2 விசையாலும் கையொப்பமிடப்பட்டுள்ளன. உருவாக்கியவர் விசையை மாற்றினார் என்று நீங்கள் நம்பினால் மட்டுமே இதை நிறுவவும்.</translation>
     </message>
@@ -545,8 +581,36 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Signed out of Codex. This session ended.</source>
+        <translation>Codex இலிருந்து வெளியேறினீர்கள். இந்த அமர்வு முடிந்தது.</translation>
+    </message>
+    <message>
+        <source>AI component is ready</source>
+        <translation>AI கூறு தயார்</translation>
+    </message>
+    <message>
+        <source>Getting the AI component: %1 of %2 MB</source>
+        <translation>AI கூறைப் பெறுகிறது: %2 MB இல் %1</translation>
+    </message>
+    <message>
+        <source>The AI component is ready. Send your message again.</source>
+        <translation>AI கூறு தயார். உங்கள் செய்தியை மீண்டும் அனுப்புங்கள்.</translation>
+    </message>
+    <message>
+        <source>The AI component didn’t download. Check your connection and try again.</source>
+        <translation>AI கூறு பதிவிறங்கவில்லை. உங்கள் இணைப்பைச் சரிபார்த்து மீண்டும் முயலுங்கள்.</translation>
+    </message>
+    <message>
+        <source>Agents need the AI component, which HikariSub downloads once.</source>
+        <translation>முகவர்களுக்கு AI கூறு தேவை; HikariSub அதை ஒருமுறை பதிவிறக்கும்.</translation>
+    </message>
+    <message>
         <source>Not offered: HikariSub can’t open a private tools channel for it on this system.</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Get the AI component</source>
+        <translation>AI கூறைப் பெறு</translation>
     </message>
     <message numerus="yes">
         <source>%n sub-agent(s)</source>
@@ -693,6 +757,10 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Compact thread</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>active tab</source>
         <translation type="unfinished"></translation>
     </message>
@@ -719,12 +787,24 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Delete thread…</source>
+        <translation>இழையை நீக்கு…</translation>
+    </message>
+    <message>
         <source>Delete “%1”?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Its messages are deleted. Changes it made stay in your subtitles and in the review.</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Settings › AI</source>
+        <translation>அமைப்புகள் › AI</translation>
+    </message>
+    <message>
+        <source>Default for new threads</source>
+        <translation>புதிய இழைகளுக்கான இயல்புநிலை</translation>
     </message>
     <message>
         <source>Name</source>
@@ -751,6 +831,22 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Change a setting</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Turn on “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Turn off “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Set “%1” to %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Change line %1 to “%2”</source>
         <translation type="unfinished"></translation>
     </message>
@@ -764,22 +860,6 @@
             <numerusform></numerusform>
             <numerusform></numerusform>
         </translation>
-    </message>
-    <message>
-        <source>Set “%1” to %2</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Change a setting</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Turn on “%1”</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Turn off “%1”</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>%1 asks to run this Lua script</source>
@@ -859,7 +939,7 @@
     </message>
     <message>
         <source>HikariSub is still getting the AI component, or it couldn’t start.</source>
-        <translation>HikariSub இன்னும் AI கூறைப் பெற்றுக்கொண்டிருக்கிறது, அல்லது அதைத் தொடங்க முடியவில்லை.</translation>
+        <translation type="vanished">HikariSub இன்னும் AI கூறைப் பெற்றுக்கொண்டிருக்கிறது, அல்லது அதைத் தொடங்க முடியவில்லை.</translation>
     </message>
     <message>
         <source>The search service answered %1. The answer goes on without searching the web.</source>
@@ -976,10 +1056,6 @@
     </message>
     <message>
         <source>%1 of %2 tokens. Automatic compaction is off in Settings › AI.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Compact conversation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1628,7 +1704,7 @@ Output device: %2</source>
     </message>
     <message>
         <source>Answers and presets</source>
-        <translation>பதில்களும் முன்னமைவுகளும்</translation>
+        <translation type="vanished">பதில்களும் முன்னமைவுகளும்</translation>
     </message>
     <message>
         <source>Last used</source>
@@ -2118,7 +2194,7 @@ Output device: %2</source>
     </message>
     <message>
         <source>%1 options</source>
-        <translation>%1 விருப்பங்கள்</translation>
+        <translation type="vanished">%1 விருப்பங்கள்</translation>
     </message>
     <message>
         <source>The script’s process ended. Reload to start it again; its macro is not rerun.</source>
@@ -4263,6 +4339,10 @@ Output device: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Move to the trash…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Move the folder “%1” and everything in it to the trash?</source>
         <translation type="unfinished"></translation>
     </message>
@@ -5007,8 +5087,8 @@ Output device: %2</source>
         <translation>மறுபெயரிடு</translation>
     </message>
     <message>
-        <source>Catalogue tiers</source>
-        <translation type="unfinished"></translation>
+        <source>More options</source>
+        <translation>மேலும் விருப்பங்கள்</translation>
     </message>
     <message>
         <source>Load from a file</source>
@@ -5401,10 +5481,6 @@ Output device: %2</source>
     <message>
         <source>Style editor sample</source>
         <translation>பாணி திருத்தி மாதிரி</translation>
-    </message>
-    <message>
-        <source>Manage catalogues</source>
-        <translation>பட்டியல்களை நிர்வகி</translation>
     </message>
     <message>
         <source>No catalogues yet</source>
@@ -10408,6 +10484,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Open</source>
         <translation>திற</translation>
+    </message>
+    <message>
+        <source>Open %1</source>
+        <translation>%1 ஐத் திற</translation>
     </message>
     <message>
         <source>Remove subtitles from the editor</source>
@@ -15622,7 +15702,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Model</source>
-        <translation type="unfinished"></translation>
+        <translation>மாதிரி</translation>
     </message>
     <message>
         <source>Ask each time, starting from this instruction</source>
@@ -16785,8 +16865,8 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>%1, %2 இலிருந்து</translation>
     </message>
     <message>
-        <source>About %1…</source>
-        <translation>%1 பற்றி…</translation>
+        <source>About %1</source>
+        <translation>%1 பற்றி</translation>
     </message>
     <message>
         <source>%1 rolled back to %2</source>
@@ -17346,8 +17426,8 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>குறிப்புக் கோப்பை இறக்குமதி செய்…</translation>
     </message>
     <message>
-        <source>Import notes from the clipboard</source>
-        <translation>இடைநிலைப்பலகையிலிருந்து குறிப்புகளை இறக்குமதி செய்</translation>
+        <source>Import notes from the clipboard…</source>
+        <translation>இடைநிலைப்பலகையிலிருந்து குறிப்புகளை இறக்குமதி செய்…</translation>
     </message>
     <message>
         <source>Export notes…</source>
@@ -17358,7 +17438,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>அனைத்தையும் முடியாதவை எனக் குறி</translation>
     </message>
     <message>
-        <source>Remove all notes…</source>
+        <source>Delete all notes…</source>
         <translation>எல்லாக் குறிப்புகளையும் நீக்கு…</translation>
     </message>
     <message>
@@ -17450,11 +17530,11 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>%1 ஐப் படிக்க முடியவில்லை: %2</translation>
     </message>
     <message>
-        <source>Remove all notes</source>
+        <source>Delete all notes</source>
         <translation>எல்லாக் குறிப்புகளையும் நீக்கு</translation>
     </message>
     <message numerus="yes">
-        <source>Remove all %n QC note(s) from this file?</source>
+        <source>Delete all %n QC note(s) from this file?</source>
         <translation>
             <numerusform>இந்தக் கோப்பிலிருந்து %n QC குறிப்பை நீக்கவா?</numerusform>
             <numerusform>இந்தக் கோப்பிலிருந்து எல்லா %n QC குறிப்புகளையும் நீக்கவா?</numerusform>
@@ -17465,7 +17545,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>செயல்தவிர்த்தால் அவை திரும்பும்.</translation>
     </message>
     <message>
-        <source>Remove all</source>
+        <source>Delete all</source>
         <translation>அனைத்தையும் நீக்கு</translation>
     </message>
     <message>
@@ -17574,8 +17654,8 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>ASS மற்றும் SSA கோப்புகள் மட்டுமே QC குறிப்புகளை வைத்திருக்க முடியும். குறிப்புகளைச் சேர்க்க இந்தக் கோப்பை ASS ஆகச் சேமிக்கவும்.</translation>
     </message>
     <message>
-        <source>Paste notes</source>
-        <translation>குறிப்புகளை ஒட்டு</translation>
+        <source>Import from the clipboard</source>
+        <translation>இடைநிலைப்பலகையிலிருந்து இறக்குமதி செய்</translation>
     </message>
     <message>
         <source>Notes start with a time: 3:24 - …
@@ -20663,24 +20743,16 @@ because it was edited.</source>
         <translation>மேலே நகர்த்து</translation>
     </message>
     <message>
-        <source>Move up (Alt+Up)</source>
-        <translation>மேலே நகர்த்து (Alt+Up)</translation>
-    </message>
-    <message>
         <source>Move down</source>
         <translation>கீழே நகர்த்து</translation>
-    </message>
-    <message>
-        <source>Move down (Alt+Down)</source>
-        <translation>கீழே நகர்த்து (Alt+Down)</translation>
     </message>
     <message>
         <source>Load from a file…</source>
         <translation>ஒரு கோப்பிலிருந்து ஏற்று…</translation>
     </message>
     <message>
-        <source>More</source>
-        <translation>மேலும்</translation>
+        <source>More options</source>
+        <translation>மேலும் விருப்பங்கள்</translation>
     </message>
     <message>
         <source>Move to top</source>
@@ -20716,10 +20788,6 @@ because it was edited.</source>
     </message>
     <message>
         <source>Mine</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Catalogue tiers</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -23572,7 +23640,7 @@ Styles deleted:
     </message>
     <message>
         <source>Preset commands</source>
-        <translation>முன்னமைவுக் கட்டளைகள்</translation>
+        <translation type="vanished">முன்னமைவுக் கட்டளைகள்</translation>
     </message>
     <message>
         <source>Save as preset…</source>
@@ -26917,8 +26985,8 @@ do not work on comments</source>
 <context>
     <name>HikariSub.Workspace</name>
     <message>
-        <source>%1 options</source>
-        <translation>%1 விருப்பங்கள்</translation>
+        <source>More options</source>
+        <translation>மேலும் விருப்பங்கள்</translation>
     </message>
     <message>
         <source>Panels</source>
@@ -27021,12 +27089,12 @@ do not work on comments</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Move left</source>
-        <translation type="unfinished">இடப்புறம் நகர்த்து</translation>
+        <source>Move left in the side bar</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Move right</source>
-        <translation type="unfinished">வலப்புறம் நகர்த்து</translation>
+        <source>Move right in the side bar</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Reset side bars</source>
@@ -27253,8 +27321,8 @@ do not work on comments</source>
         <translation>இந்தத் தளவமைப்பை மீட்டமை</translation>
     </message>
     <message>
-        <source>Manage layouts…</source>
-        <translation>தளவமைப்புகளை நிர்வகி…</translation>
+        <source>Manage layouts</source>
+        <translation>தளவமைப்புகளை நிர்வகி</translation>
     </message>
     <message>
         <source>Save layout as</source>
@@ -27295,10 +27363,6 @@ do not work on comments</source>
     <message>
         <source>Cancel</source>
         <translation>ரத்துசெய்</translation>
-    </message>
-    <message>
-        <source>Manage layouts</source>
-        <translation>தளவமைப்புகளை நிர்வகி</translation>
     </message>
     <message>
         <source>Delete layout</source>
@@ -27365,12 +27429,8 @@ do not work on comments</source>
         <translation>பயன்படுத்த முடியாது: %1</translation>
     </message>
     <message>
-        <source>Layout tiers</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Rename (F2)</source>
-        <translation>மறுபெயரிடு (F2)</translation>
+        <source>Rename</source>
+        <translation>மறுபெயரிடு</translation>
     </message>
     <message>
         <source>Delete</source>
@@ -27387,10 +27447,6 @@ do not work on comments</source>
     <message>
         <source>Drag a panel here</source>
         <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>More options</source>
-        <translation>மேலும் விருப்பங்கள்</translation>
     </message>
 </context>
 <context>
