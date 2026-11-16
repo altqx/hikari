@@ -1,5 +1,7 @@
 #pragma once
 
+#include <algorithm>
+
 #include <QCoreApplication>
 #include <QCursor>
 #include <QGuiApplication>
@@ -9,6 +11,9 @@
 #include <QKeySequence>
 #include <QObject>
 #include <QQuickItem>
+#include <QQuickWindow>
+#include <QRectF>
+#include <QScreen>
 #include <QtQml/qqmlregistration.h>
 
 namespace hikari::ui {
@@ -61,6 +66,32 @@ public:
     Q_INVOKABLE bool shiftHeld() const
     {
         return QGuiApplication::keyboardModifiers().testFlag(Qt::ShiftModifier);
+    }
+    /// Where a menu of `size` asked to open at `at` (in `parent`'s coordinates) goes so it stays on `parent`'s screen,
+    /// above `parent` when it was asked to open below it and doesn't fit.
+    Q_INVOKABLE QPointF onScreen(QQuickItem *parent, QPointF at, QSizeF size) const
+    {
+        QQuickWindow *window = parent ? parent->window() : nullptr;
+        if (!window)
+            return at;
+        const QRectF anchor(parent->mapToGlobal(QPointF(0, 0)), parent->size());
+        const QPointF global = parent->mapToGlobal(at);
+        QScreen *screen = QGuiApplication::screenAt(global.toPoint());
+        if (!screen)
+            screen = window->screen();
+        if (!screen)
+            return at;
+        return parent->mapFromGlobal(fitted(screen->availableGeometry().toRectF(), anchor, global, size));
+    }
+    static QPointF fitted(const QRectF &available, const QRectF &anchor, QPointF at, QSizeF size)
+    {
+        if (at.y() + size.height() > available.bottom()) {
+            const qreal above = (at.y() >= anchor.bottom() ? anchor.top() : at.y()) - size.height();
+            at.setY(above >= available.top() ? above : available.bottom() - size.height());
+        }
+        at.setY(std::max(at.y(), available.top()));
+        at.setX(std::max(std::min(at.x(), available.right() - size.width()), available.left()));
+        return at;
     }
     Q_INVOKABLE void menuShowing()
     {

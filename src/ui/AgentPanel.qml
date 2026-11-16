@@ -729,6 +729,7 @@ FocusScope {
 
     ShellMenu {
         id: attachMenu
+        objectName: "agentAttachMenu"
         Repeater {
             model: panel.agent.attachable
             delegate: ShellMenuItem {
@@ -747,6 +748,7 @@ FocusScope {
 
     ShellMenu {
         id: slashMenu
+        objectName: "agentSlashMenu"
         ShellMenuItem {
             iconRole: "compact"
             text: qsTr("Compact conversation")

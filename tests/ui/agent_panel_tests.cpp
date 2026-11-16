@@ -27,6 +27,7 @@
 #include <QProcess>
 #include <QPointer>
 #include <QSaveFile>
+#include <QScreen>
 #include <QStandardPaths>
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
@@ -239,6 +240,46 @@ class AgentPanelTest : public QObject {
         composer->setProperty("text", text);
         composer->forceActiveFocus();
         QTest::keyClick(window(), Qt::Key_Return);
+    }
+    QObject *menu(const QString &name) const
+    {
+        for (QWindow *top : QGuiApplication::topLevelWindows())
+            if (auto *quick = qobject_cast<QQuickWindow *>(top))
+                if (QObject *found = quick->contentItem()->findChild<QObject *>(name))
+                    return found;
+        return window()->findChild<QObject *>(name);
+    }
+    void typeOpensInside(const QString &text, const QString &menuName, const QRect &available)
+    {
+        QQuickItem *composer = item(QStringLiteral("agentComposer"));
+        QVERIFY(composer);
+        composer->forceActiveFocus();
+        composer->setProperty("text", text);
+        QObject *opened = menu(menuName);
+        QVERIFY(opened);
+        QTRY_VERIFY(opened->property("opened").toBool());
+        auto *popupItem = qobject_cast<QQuickItem *>(opened->property("popupItem").value<QObject *>());
+        QVERIFY(popupItem);
+        const QRectF shown(popupItem->mapToGlobal(QPointF(0, 0)), popupItem->size());
+        QVERIFY2(QRectF(available).contains(shown),
+                 qPrintable(QStringLiteral("%1 at %2,%3 %4x%5 leaves %6,%7 %8x%9")
+                                .arg(menuName).arg(shown.x()).arg(shown.y()).arg(shown.width()).arg(shown.height())
+                                .arg(available.x()).arg(available.y()).arg(available.width()).arg(available.height())));
+        QMetaObject::invokeMethod(opened, "close");
+        QTRY_VERIFY(!opened->property("visible").toBool());
+        composer->setProperty("text", QString());
+    }
+    void composerMenusFit(const QRect &available)
+    {
+        const QString second = at(QStringLiteral("second.ass"));
+        QFile file(second);
+        QVERIFY(file.open(QIODevice::WriteOnly | QIODevice::Truncate));
+        file.write("[Script Info]\nScriptType: v4.00+\n");
+        file.close();
+        QVERIFY(application->openFile(second));
+        QTRY_VERIFY(!agent().attachable().isEmpty());
+        typeOpensInside(QStringLiteral("/"), QStringLiteral("agentSlashMenu"), available);
+        typeOpensInside(QStringLiteral("Look at @"), QStringLiteral("agentAttachMenu"), available);
     }
     void openPanel()
     {
@@ -1050,6 +1091,28 @@ private slots:
         agent().newThread();
         agent().setModel(QStringLiteral("or\tm"));
         QTRY_COMPARE(button->property("text").toString(), QStringLiteral("Fake model  ⌄"));
+    }
+
+    void theComposerMenusOpenInsideTheScreenOfAWindowFillingIt()
+    {
+        openPanel();
+        const QRect available = window()->screen()->availableGeometry();
+        window()->setGeometry(available);
+        QTRY_COMPARE(window()->geometry(), available);
+        composerMenusFit(available);
+    }
+
+    void theComposerMenusOpenInsideTheScreenOfAFloatingPanelAtItsBottomEdge()
+    {
+        openPanel();
+        QVERIFY(shell(QStringLiteral("agentDock.isFloating = true, agentDock.isFloating")).toBool());
+        QQuickItem *composer = nullptr;
+        QTRY_VERIFY((composer = item(QStringLiteral("agentComposer"))) && composer->window() != window());
+        QWindow *floating = composer->window();
+        const QRect available = floating->screen()->availableGeometry();
+        floating->setPosition(available.left() + 40, available.bottom() + 1 - floating->height());
+        QTRY_COMPARE(floating->geometry().bottom(), available.bottom());
+        composerMenusFit(available);
     }
 
     void withOnlyClaudeCodeThePanelRunsOnIt()

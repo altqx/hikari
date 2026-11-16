@@ -31,10 +31,21 @@ Menu {
         const list = contentItem as ListView
         list?.forceLayout()
     }
-    onOpened: layOut()
+    function keepOnScreen() {
+        if (!parent || (parent as MenuItem)?.subMenu === menu)
+            return
+        const at = ShellMenus.onScreen(parent, Qt.point(x, y), Qt.size(implicitWidth, implicitHeight))
+        x = at.x
+        y = at.y
+    }
+    onOpened: {
+        layOut()
+        keepOnScreen()
+    }
     onAboutToShow: {
         ShellMenus.menuShowing()
         build()
+        keepOnScreen()
         StatusHelp.menuOpened()
     }
     onAboutToHide: StatusHelp.menuClosed()
