@@ -781,6 +781,14 @@ FocusScope {
             readonly property bool hasActiveTab: panel.agent.activeTitle.length > 0
             readonly property int chipRoom: Math.max(0, 3 - (hasActiveTab ? 1 : 0))
             readonly property int foldedFiles: Math.max(0, attached.length - chipRoom)
+            readonly property int chipCount: (hasActiveTab ? 1 : 0) + Math.min(attached.length, chipRoom) + (foldedFiles > 0 ? 1 : 0)
+            readonly property real chipRowHeight: 22 + chips.spacing
+            readonly property real roomForChips: panel.height - timeline.y - timeline.Layout.minimumHeight - lineHeight - fieldPadding
+                                                 - buttonRow.implicitHeight - 64
+            readonly property int chipRows: Math.max(1, Math.floor(roomForChips / chipRowHeight))
+            readonly property int chipsPerRow: Math.ceil(chipCount / chipRows)
+            readonly property real chipWidth: chipsPerRow <= 1 ? chips.width
+                : (chips.width - (chipsPerRow - 1) * chips.spacing) / chipsPerRow
             readonly property real lineHeight: composerMetrics.lineSpacing
             readonly property real fieldPadding: composer.topPadding + composer.bottomPadding
             readonly property real maxFieldHeight: Math.max(lineHeight + fieldPadding,
@@ -824,7 +832,7 @@ FocusScope {
                         name: panel.agent.activeTitle
                         note: qsTr("active tab")
                         active: true
-                        maxWidth: chips.width
+                        maxWidth: composerBox.chipWidth
                     }
                     Repeater {
                         model: composerBox.attached.slice(0, composerBox.chipRoom)
@@ -833,7 +841,7 @@ FocusScope {
                             objectName: "agentChip_" + modelData.id
                             name: modelData.title
                             removable: true
-                            maxWidth: chips.width
+                            maxWidth: composerBox.chipWidth
                             onRemoved: {
                                 composer.forceActiveFocus()
                                 panel.agent.detach(modelData.id)
@@ -1015,7 +1023,7 @@ FocusScope {
         function openFor(typedAt) {
             openAbove(composerBox)
             if (typedAt)
-                currentIndex = 0
+                currentIndex = Array.from({ length: count }, (_, i) => itemAt(i)).findIndex(row => row?.enabled && row.visible)
         }
         readonly property real nameRoom: maxWidth - 120
         ShellMenuItem {

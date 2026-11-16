@@ -526,6 +526,9 @@ private slots:
         ai::Config config;
         ai::Provider provider = ai::presetProvider(ai::Preset::OpenRouter, "or", "OpenRouter");
         provider.models = {{.id = "m", .name = "Fake model", .price = ai::Price{.input = 0, .output = 0}}};
+        if (test == "aLongModelListOpensAboveTheModelButtonInAShortPanel")
+            for (int i = 1; i <= 14; ++i)
+                provider.models.push_back({.id = "m" + std::to_string(i), .name = "Sprite model " + std::to_string(i)});
         if (!nothing && test != "withOnlyClaudeCodeThePanelRunsOnIt")
             config.providers.push_back(provider);
         if (chatModel)
@@ -565,7 +568,8 @@ private slots:
         }
         ports.agents = [](backends::ai::AgentBroker &, application::ai::KeyStore &) {};
         const bool found = test == "agentsAreModelsOnlyWhenTheyAreFound" || test == "anAgentsModelsLoadWhenItsSubmenuOpensOnlyOnce"
-                           || test == "anAgentsLastModelsShowAtOnceAndAFailureKeepsThem";
+                           || test == "anAgentsLastModelsShowAtOnceAndAFailureKeepsThem"
+                           || test == "aLongModelListOpensAboveTheModelButtonInAShortPanel";
         const bool onlyClaude = QTest::currentTestFunction() == QByteArrayLiteral("withOnlyClaudeCodeThePanelRunsOnIt");
         ports.agentOnPath = [found, onlyClaude](const QString &agent) {
             return found || (onlyClaude && agent == QStringLiteral("claude"));
@@ -1623,6 +1627,11 @@ private slots:
         QVERIFY2(menu.bottom() <= box.top() + 1,
                  qPrintable(QStringLiteral("menu %1..%2 box top %3").arg(menu.top()).arg(menu.bottom()).arg(box.top())));
         QVERIFY(menu.top() >= 0);
+        QQuickItem *current = nullptr;
+        QObject *attachMenu = popup(QStringLiteral("agentAttachMenu"));
+        QMetaObject::invokeMethod(attachMenu, "itemAt", Q_RETURN_ARG(QQuickItem *, current),
+                                  Q_ARG(int, attachMenu->property("currentIndex").toInt()));
+        QVERIFY(current && current->isEnabled());
         QQuickItem *activeTab = item(QStringLiteral("agentAttachActiveTab"));
         QVERIFY(activeTab->property("checked").toBool());
         QVERIFY(!activeTab->isEnabled());
@@ -1633,6 +1642,49 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(row, "triggered"));
         QTRY_COMPARE(agent().thread().value(QStringLiteral("attached")).toList().size(), 0);
         QCOMPARE(composer->property("text").toString(), QString());
+    }
+
+    void aShortPanelKeepsTheWholeComposerWithLongFileNamesAttached()
+    {
+        window()->resize(1280, 720);
+        openPanel();
+        panelOnScreen();
+        QVERIFY(click(QStringLiteral("agentNewThread")));
+        QTRY_VERIFY(agent().thread().contains(QStringLiteral("id")));
+        QStringList names;
+        for (int i = 1; i <= 5; ++i)
+            names << QStringLiteral("Sprite Fright - %1 - The Long Way Home Through the Very Dark Forest [Dialogue].ass").arg(i, 2, 10, QLatin1Char('0'));
+        const QList<qulonglong> tabs = openTabs(names);
+        for (const qulonglong tab : tabs)
+            agent().attach(tab);
+        QTRY_COMPARE(agent().thread().value(QStringLiteral("attached")).toList().size(), 5);
+        QTRY_VERIFY(item(QStringLiteral("agentMoreFiles"))->isVisible());
+        QQuickTest::qWaitForPolish(window());
+        const QRectF view = onScene(item(QStringLiteral("agentView")));
+        const QRectF box = onScene(item(QStringLiteral("agentComposerBox")));
+        const QRectF send = onScene(item(QStringLiteral("agentModelButton")));
+        QVERIFY2(box.bottom() <= view.bottom() + 1 && send.bottom() <= box.bottom(),
+                 qPrintable(QStringLiteral("box %1..%2 button bottom %3 view bottom %4")
+                                .arg(box.top()).arg(box.bottom()).arg(send.bottom()).arg(view.bottom())));
+        QVERIFY(onScene(item(QStringLiteral("agentTimeline"))).height() >= 80 - 1);
+    }
+
+    void aLongModelListOpensAboveTheModelButtonInAShortPanel()
+    {
+        window()->resize(1280, 720);
+        openPanel();
+        panelOnScreen();
+        QVERIFY(click(QStringLiteral("agentNewThread")));
+        QTRY_VERIFY(agent().thread().contains(QStringLiteral("id")));
+        const QRectF at = onScene(item(QStringLiteral("agentModelButton")));
+        QVERIFY(click(QStringLiteral("agentModelButton")));
+        QTRY_VERIFY(popup(QStringLiteral("agentModelMenu"))->property("opened").toBool());
+        QTRY_VERIFY(item(QStringLiteral("agentModel_or/m14")));
+        QQuickTest::qWaitForPolish(window());
+        QTest::qWait(100);
+        const QRectF r = popupOnScene(QStringLiteral("agentModelMenu"));
+        QVERIFY2(r.bottom() <= at.top() + 1 && r.top() >= 0,
+                 qPrintable(QStringLiteral("menu %1..%2 button top %3").arg(r.top()).arg(r.bottom()).arg(at.top())));
     }
 
     void theModelAndModeMenusOpenAboveTheirButtonsAndModeChecksSitBesideTheirWords()
