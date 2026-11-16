@@ -521,6 +521,7 @@ target_compile_definitions(hikari_ui_forwarded_launches_tests PRIVATE
     HIKARI_PLUGIN_FIXTURES="${PROJECT_SOURCE_DIR}/tests/plugins/fixtures")
 target_include_directories(hikari_ui_forwarded_launches_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
 add_dependencies(hikari_ui_forwarded_launches_tests hikari_media_fixtures hikari_media_helper)
+hikari_add_qttest(hikari_ui_release_screenshots_tests SOURCES release_screenshots_tests.cpp LIBRARIES hikari_composition)
 hikari_add_qttest(hikari_ui_explorer_panel_tests SOURCES explorer_panel_tests.cpp
     LIBRARIES hikari_composition KDAB::kddockwidgets)
 target_compile_definitions(hikari_ui_explorer_panel_tests PRIVATE

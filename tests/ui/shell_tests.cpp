@@ -1252,15 +1252,15 @@ private slots:
         app::Application::Options options;
         options.settingsFile = dir.filePath(QStringLiteral("shots/hikari.ini"));
         options.playbackAudio = false;
-        const QString gone = writeFile(dir, "shots/Frieren - 26 signs.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,g\n");
+        const QString gone = writeFile(dir, "shots/Episode 01 signs.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,g\n");
         {
             app::Application first(options);
             QVERIFY(first.openFile(gone));
-            QVERIFY(first.openFile(writeFile(dir, "shots/Dandadan OP karaoke.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,d\n")));
+            QVERIFY(first.openFile(writeFile(dir, "shots/Opening karaoke.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,d\n")));
             first.addPage();
-            QVERIFY(first.openFile(writeFile(dir, "shots/Frieren - 26 [1080p].ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,f\n")));
+            QVERIFY(first.openFile(writeFile(dir, "shots/Episode 01 [1080p].ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,f\n")));
             first.addPage();
-            QVERIFY(first.openFile(writeFile(dir, "shots/Frieren - 27 [1080p].ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,f\n")));
+            QVERIFY(first.openFile(writeFile(dir, "shots/Episode 02 [1080p].ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,f\n")));
         }
         QVERIFY(QFile::remove(gone));
         restartWith(options);
@@ -35865,7 +35865,7 @@ private slots:
         restartWithoutSound();
         QTemporaryDir &own = testFolder();
         QVERIFY(own.isValid());
-        for (const char *name : {"Frieren - 26 [1080p].mkv", "Frieren - 27 [1080p].mkv"})
+        for (const char *name : {"Episode 01 [1080p].mkv", "Episode 02 [1080p].mkv"})
             QVERIFY(QFile::copy(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"), own.filePath(QLatin1String(name))));
         auto &settings = *application->settingsStore();
         auto *root = engine->rootObjects().first();
@@ -35884,7 +35884,7 @@ private slots:
         window->resize(1280, 800);
         QVERIFY(application->openFile(episode));
         auto &video = application->video();
-        video.openVideo(own.filePath(QStringLiteral("Frieren - 26 [1080p].mkv")));
+        video.openVideo(own.filePath(QStringLiteral("Episode 01 [1080p].mkv")));
         QTRY_VERIFY_WITH_TIMEOUT(video.hasVideo(), 20000);
         auto *mismatch = named("mismatchDialog");
         QTRY_VERIFY(mismatch->property("visible").toBool());
