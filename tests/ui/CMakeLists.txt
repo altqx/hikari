@@ -522,6 +522,9 @@ target_compile_definitions(hikari_ui_forwarded_launches_tests PRIVATE
 target_include_directories(hikari_ui_forwarded_launches_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
 add_dependencies(hikari_ui_forwarded_launches_tests hikari_media_fixtures hikari_media_helper)
 hikari_add_qttest(hikari_ui_release_screenshots_tests SOURCES release_screenshots_tests.cpp LIBRARIES hikari_composition)
+target_compile_definitions(hikari_ui_release_screenshots_tests PRIVATE HIKARI_HARPER_LS="${HIKARI_HARPER_LS}"
+    HIKARI_FAKE_AI_SIDECAR="$<TARGET_FILE:hikari_fake_ai_sidecar>")
+add_dependencies(hikari_ui_release_screenshots_tests hikari_fake_ai_sidecar)
 hikari_add_qttest(hikari_ui_explorer_panel_tests SOURCES explorer_panel_tests.cpp
     LIBRARIES hikari_composition KDAB::kddockwidgets)
 target_compile_definitions(hikari_ui_explorer_panel_tests PRIVATE

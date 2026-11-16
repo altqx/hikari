@@ -35,6 +35,17 @@ int g_requiredApi = 1;
 Json g_initialize;
 int g_apiVersion = 0;
 std::string g_self;
+std::string g_replies;
+
+std::expected<Json, Json::ParseError> scriptedReply(const std::string &prompt)
+{
+    std::ifstream file(g_replies);
+    if (!file)
+        return Json();
+    const auto replies = Json::parse(std::string(std::istreambuf_iterator<char>(file), {}));
+    const Json *reply = replies && replies->isObject() ? replies->find(prompt) : nullptr;
+    return reply ? *reply : Json();
+}
 
 void send(const Json &message)
 {
@@ -156,6 +167,8 @@ int main(int argc, char **argv)
             g_apiVersion = std::atoi(args[i + 1].c_str());
         else if (flag == "--required-api")
             g_requiredApi = std::atoi(args[i + 1].c_str());
+        else if (flag == "--replies")
+            g_replies = args[i + 1];
     }
     if (g_mode == "sleep")
         sleepForever();
@@ -311,7 +324,7 @@ int main(int argc, char **argv)
             keep(session, Json::object({{"author", "user"}, {"parts", prompt}}));
             FakeTurn turn;
             turn.promptId = *id;
-            const auto script = text.starts_with("{") ? Json::parse(text) : std::expected<Json, Json::ParseError>{};
+            const auto script = text.starts_with("{") ? Json::parse(text) : scriptedReply(text);
             if (script && script->isObject()) {
                 if (const Json *marker = script->find("crashUnless")) {
                     if (!std::filesystem::exists(marker->asString())) {
