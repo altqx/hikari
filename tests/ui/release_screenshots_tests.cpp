@@ -1,4 +1,5 @@
 #include "hikari/app/application.h"
+#include "hikari/app/style_manager_controller.h"
 #include "audio_controller.h"
 #include "docking.h"
 #include "line_grid.h"
@@ -27,6 +28,7 @@ class ReleaseScreenshotsTests : public QObject {
 
     static constexpr int kEditingFrame = 1812;
     static constexpr int kSignFrame = 1440;
+    static constexpr int kTopRowWithoutTheCrudeLine = 6;
 
     std::unique_ptr<QTemporaryDir> home;
     app::Application *application = nullptr;
@@ -135,6 +137,42 @@ class ReleaseScreenshotsTests : public QObject {
         return !own.isEmpty() && application->openFile(own);
     }
 
+    void resampleToTheVideo()
+    {
+        const QVariantMap v = application->resampleValues();
+        QVERIFY(v.value(QStringLiteral("hasVideo")).toBool());
+        const int width = v.value(QStringLiteral("videoWidth")).toInt();
+        const int height = v.value(QStringLiteral("videoHeight")).toInt();
+        QVERIFY(application->resample(v.value(QStringLiteral("subsWidth")).toInt(),
+                                      v.value(QStringLiteral("subsHeight")).toInt(), width, height, false));
+        QCOMPARE(application->resampleValues().value(QStringLiteral("subsHeight")).toInt(), height);
+    }
+
+    void giveDefaultAFilmSubtitleLook()
+    {
+        auto &styles = application->styleManager();
+        QVariantMap values = styles.beginEdit(false, 0);
+        QCOMPARE(values.value(QStringLiteral("name")).toString(), QStringLiteral("Default"));
+        const auto colour = [](int r, int g, int b, int a) {
+            return QVariantMap{{QStringLiteral("r"), r}, {QStringLiteral("g"), g}, {QStringLiteral("b"), b}, {QStringLiteral("a"), a}};
+        };
+        values.insert(QStringLiteral("fontname"), QStringLiteral("Noto Sans Medium"));
+        values.insert(QStringLiteral("fontsize"), QStringLiteral("48"));
+        values.insert(QStringLiteral("bold"), false);
+        values.insert(QStringLiteral("primary"), colour(246, 244, 238, 0));
+        values.insert(QStringLiteral("outline"), colour(18, 18, 22, 0));
+        values.insert(QStringLiteral("back"), colour(0, 0, 0, 140));
+        values.insert(QStringLiteral("borderStyle"), 1);
+        values.insert(QStringLiteral("outlineWidth"), QStringLiteral("2.5"));
+        values.insert(QStringLiteral("shadow"), QStringLiteral("1.5"));
+        values.insert(QStringLiteral("alignment"), QStringLiteral("2"));
+        values.insert(QStringLiteral("marginLeft"), QStringLiteral("120"));
+        values.insert(QStringLiteral("marginRight"), QStringLiteral("120"));
+        values.insert(QStringLiteral("marginVertical"), QStringLiteral("40"));
+        QCOMPARE(styles.commitEdit(values, {}, false, false), QString());
+        styles.endEdit();
+    }
+
     static QByteArray signsScript(const QByteArray &events)
     {
         return QByteArrayLiteral("[Script Info]\nScriptType: v4.00+\nPlayResX: 2048\nPlayResY: 858\n\n"
@@ -175,6 +213,9 @@ private slots:
         QVERIFY(openDialogue());
         applyLayout("Editing");
         showVideoAt(kEditingFrame);
+        resampleToTheVideo();
+        giveDefaultAFilmSubtitleLook();
+        root()->findChild<ui::LineGrid *>(QStringLiteral("editingGrid"))->scrollToTopRow(kTopRowWithoutTheCrudeLine);
         shootThemes(QStringLiteral("editing"));
     }
 
