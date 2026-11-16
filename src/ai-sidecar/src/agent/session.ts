@@ -3,6 +3,7 @@ import {
     prefixChars, summaryMessage, summaryRequest, TokenCount, withStubs,
 } from "./compaction";
 import {
+    type AgentModelInfo,
     type CompactedUpdate,
     ErrorCode,
     Method,
@@ -421,6 +422,8 @@ export interface Session {
     cancel(): void;
     close?(): void;
     compact?(params: SessionCompactParams): Promise<SessionCompactResult>;
+    /** The models an external agent offers, starting it if it isn't running. */
+    models?(): Promise<AgentModelInfo[]>;
     /** False once the user stopped the turn, or when none runs: an agent's late calls then change nothing. */
     takesToolCalls?(): boolean;
 }
@@ -483,6 +486,13 @@ export class AgentSessions {
         if (!session.compact)
             throw new RpcError(ErrorCode.invalidParams, "This agent compacts its own conversation");
         return session.compact(params);
+    }
+
+    models(sessionId: string): Promise<AgentModelInfo[]> {
+        const session = this.session(sessionId);
+        if (!session.models)
+            throw new RpcError(ErrorCode.invalidParams, "This session lists no agent models");
+        return session.models();
     }
 
     cancel(sessionId: string): void {

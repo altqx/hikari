@@ -1,6 +1,6 @@
 import type { Readable, Writable } from "node:stream";
 
-import { ErrorCode, type PlanStatus, type SessionNewParams, type SessionPromptParams, type SessionPromptResult,
+import { type AgentModelInfo, ErrorCode, type PlanStatus, type SessionNewParams, type SessionPromptParams, type SessionPromptResult,
     type SessionStopReason, type SessionSteerResult, type SessionUpdate, type ToolCallKind,
     type ToolCallStatus } from "../protocol";
 import type { Part } from "../providers/types";
@@ -93,6 +93,31 @@ function contentText(content: unknown): string {
         c.content.type === "text" && typeof c.content.text === "string" ? [c.content.text] : [])).join("\n");
 }
 
+interface ModelOption {
+    id: string;
+    currentValue: string;
+    values: AgentModelInfo[];
+}
+
+function selectValues(options: unknown): AgentModelInfo[] {
+    if (!Array.isArray(options))
+        return [];
+    return options.filter(isObject).flatMap((o): AgentModelInfo[] => Array.isArray(o.options)
+        ? selectValues(o.options)
+        : typeof o.value === "string" ? [{ id: o.value, name: typeof o.name === "string" && o.name ? o.name : o.value }] : []);
+}
+
+/** The agent's model selector among its session config options: the first `select` in the `model` category. */
+export function modelOption(configOptions: unknown): ModelOption | undefined {
+    if (!Array.isArray(configOptions))
+        return undefined;
+    const option = configOptions.find((o) => isObject(o) && o.category === "model" && o.type === "select");
+    if (!isObject(option) || typeof option.id !== "string")
+        return undefined;
+    return { id: option.id, currentValue: typeof option.currentValue === "string" ? option.currentValue : "",
+        values: selectValues(option.options) };
+}
+
 /** A thread on an agent that speaks ACP, with Hikari's tools as its only MCP server. */
 export class AcpSession {
     private process?: AcpProcess;
@@ -103,8 +128,32 @@ export class AcpSession {
     private turn?: Turn;
     private introduced = false;
     private readonly calls = new Set<string>();
+    private model: string;
+    private configOptions: unknown;
+    private agentDefault?: string;
 
-    constructor(readonly id: string, private readonly params: SessionNewParams, private readonly deps: AcpDeps) {}
+    constructor(readonly id: string, private readonly params: SessionNewParams, private readonly deps: AcpDeps) {
+        this.model = params.model.model;
+    }
+
+    async models(): Promise<AgentModelInfo[]> {
+        await this.start();
+        return modelOption(this.configOptions)?.values ?? [];
+    }
+
+    private took(result: unknown): void {
+        if (isObject(result) && Array.isArray(result.configOptions))
+            this.configOptions = result.configOptions;
+    }
+
+    private async applyModel(): Promise<void> {
+        const option = modelOption(this.configOptions);
+        const wanted = this.model || this.agentDefault;
+        if (!option || !wanted || wanted === option.currentValue || !option.values.some((v) => v.id === wanted))
+            return;
+        this.took(await this.peer!.request("session/set_config_option",
+            { sessionId: this.agentSession, configId: option.id, value: wanted }));
+    }
 
     async prompt(params: SessionPromptParams): Promise<SessionPromptResult> {
         if (this.turn)
@@ -112,7 +161,10 @@ export class AcpSession {
         const result = new Promise<SessionStopReason | Error>((done) => (this.turn = { done, text: "", cancelled: false }));
         const turn = this.turn!;
         try {
+            if (params.model)
+                this.model = params.model.model;
             await this.start();
+            await this.applyModel();
             if (turn.cancelled)
                 this.finish("cancelled");
             else
@@ -187,14 +239,17 @@ export class AcpSession {
             { agentCapabilities?: AgentCapabilities } | null;
         this.capabilities = initialized?.agentCapabilities ?? {};
         if (this.agentSession && this.capabilities.loadSession) {
-            await peer.request("session/load", { sessionId: this.agentSession, cwd: ".", mcpServers: [] });
-            return;
+            this.took(await peer.request("session/load", { sessionId: this.agentSession, cwd: ".", mcpServers: [] }));
+        } else {
+            const opened = await peer.request("session/new", { cwd: ".", mcpServers: [] }) as { sessionId?: unknown } | null;
+            if (typeof opened?.sessionId !== "string")
+                throw new Error("The agent opened no session");
+            this.agentSession = opened.sessionId;
+            this.introduced = false;
+            this.took(opened);
         }
-        const opened = await peer.request("session/new", { cwd: ".", mcpServers: [] }) as { sessionId?: unknown } | null;
-        if (typeof opened?.sessionId !== "string")
-            throw new Error("The agent opened no session");
-        this.agentSession = opened.sessionId;
-        this.introduced = false;
+        this.agentDefault ??= modelOption(this.configOptions)?.currentValue;
+        await this.applyModel();
     }
 
     private update(params: unknown): void {
@@ -213,6 +268,8 @@ export class AcpSession {
             return this.toolCall(u);
         case "tool_call_update":
             return this.toolCallUpdate(u);
+        case "config_option_update":
+            return this.took(u);
         case "plan":
             if (Array.isArray(u.entries))
                 this.deps.send({ sessionUpdate: "plan", entries: u.entries.filter(isObject).map((e) => ({

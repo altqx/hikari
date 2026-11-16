@@ -10,7 +10,7 @@ import { connector, mcpAgent, McpClients } from "./mcp/client";
 import { McpServer, type ServerInfo } from "./mcp/server";
 import { ErrorCode, kProtocolVersion, kRequiredApiVersion, Method, type ApiCallParams, type InitializeParams,
     type InitializeResult, type McpClosedParams, type McpMessageParams, type McpServerConfig, type McpServersSetParams, type McpMessageResult, type McpVia,
-    type SessionCompactParams, type SessionIdParams, type SessionNewParams, type SessionPromptParams, type SessionSteerParams,
+    type SessionCompactParams, type SessionIdParams, type SessionModelsResult, type SessionNewParams, type SessionPromptParams, type SessionSteerParams,
     type ToolCallKind, type ToolsCallParams, type ToolsListParams } from "./protocol";
 import { ProviderError } from "./providers/errors";
 import { LinkRelay, relayFetch } from "./providers/relay";
@@ -239,6 +239,16 @@ export class Sidecar {
             if (p.instruction !== undefined && typeof p.instruction !== "string")
                 throw new RpcError(ErrorCode.invalidParams, `${Method.sessionCompact}'s instruction is text`);
             return this.sessions.compact({ ...p, sessionId: sessionId(Method.sessionCompact, params) });
+        }));
+        this.handle(Method.sessionModels, (params) => wire(async (): Promise<SessionModelsResult> => {
+            const id = sessionId(Method.sessionModels, params);
+            try {
+                return { models: await this.sessions.models(id) };
+            } catch (error) {
+                if (error instanceof RpcError)
+                    throw error;
+                throw new RpcError(ErrorCode.providerFailed, error instanceof Error ? error.message : String(error));
+            }
         }));
         this.handle(Method.sessionClose, (params) => {
             this.sessions.close(sessionId(Method.sessionClose, params));

@@ -5,7 +5,7 @@ import type { HookCallbackMatcher, HookInput, Options, Query, SDKMessage, SDKUse
 
 import type { McpServer } from "../mcp/server";
 import { withSkills, type Skills } from "../skills/skills";
-import { ErrorCode, type SessionNewParams, type SessionPromptParams, type SessionPromptResult,
+import { type AgentModelInfo, ErrorCode, type SessionNewParams, type SessionPromptParams, type SessionPromptResult,
     type SessionStopReason, type SessionSteerResult, type SessionUpdate, type ToolCallKind } from "../protocol";
 import type { Part, Usage } from "../providers/types";
 import { RpcError } from "../rpc";
@@ -136,8 +136,11 @@ export class ClaudeSession {
     private readonly calls = new Set<string>();
     private stderr = "";
     private system?: string;
+    private model: string;
 
-    constructor(readonly id: string, private readonly params: SessionNewParams, private readonly deps: ClaudeDeps) {}
+    constructor(readonly id: string, private readonly params: SessionNewParams, private readonly deps: ClaudeDeps) {
+        this.model = params.model.model;
+    }
 
     /** What Claude last wrote on stderr, which the sidecar also logs. */
     get stderrTail(): string {
@@ -149,7 +152,7 @@ export class ClaudeSession {
     }
 
     options(): Options {
-        const model = this.params.model.model;
+        const model = this.model;
         return {
             pathToClaudeCodeExecutable: "claude",
             spawnClaudeCodeProcess: (options) => this.spawn(options),
@@ -174,7 +177,13 @@ export class ClaudeSession {
             throw new RpcError(ErrorCode.busy, "A turn is already running in this session");
         const result = new Promise<SessionStopReason | Error>((done) => (this.turn = { done, cancelled: false }));
         try {
+            const switched = params.model !== undefined && params.model.model !== this.model;
+            if (params.model)
+                this.model = params.model.model;
+            const live = this.query !== undefined;
             await this.start();
+            if (switched && live)
+                await this.query!.setModel(this.model || undefined);
             this.deps.send({ sessionUpdate: "history", message: { author: "user", parts: params.prompt } });
             this.inbox!.push({ type: "user", message: { role: "user", content: content(params.prompt) },
                 parent_tool_use_id: null } as SDKUserMessage);
@@ -185,6 +194,12 @@ export class ClaudeSession {
         if (stop instanceof Error)
             throw new RpcError(ErrorCode.providerFailed, stop.message);
         return { stopReason: stop };
+    }
+
+    async models(): Promise<AgentModelInfo[]> {
+        await this.start();
+        const listed = await this.query!.supportedModels();
+        return listed.map((m) => ({ id: m.value, name: m.displayName || m.value }));
     }
 
     steer(): Promise<SessionSteerResult> {
