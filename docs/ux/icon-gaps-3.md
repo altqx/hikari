@@ -67,7 +67,6 @@ The manifest marks these `pending` until their card places them.
 | review-panel | AI2 #430 | View › Review panel, Show Review panel |
 | web-search | AI23 #742 | Let AI search the web, the composer's web toggle |
 | update | AI24 #744 | Update now for the sidecar and an agent's CLI |
-| network | PL5 #417 | Let plugins connect to the internet; MK1 #667's Turn off offline mode |
 | plugin-sandbox | PL7 #419 | a plugin whose helper runs in the OS sandbox |
 
 Reused for the open cards, no new role:

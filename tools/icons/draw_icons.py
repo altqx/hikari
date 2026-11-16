@@ -1130,8 +1130,6 @@ icon("web-search", "Search the web", [], ["agent-panel", "settings-dialog"],
               stroke("M6.5 2c-1.25 1.25-1.75 2.75-1.75 4.5s.5 3.25 1.75 4.5c1.25-1.25 1.75-2.75 1.75-4.5S7.75 3.25 6.5 2z")))
 icon("update", "Update now", [], ["settings-dialog"],
      stroke("M2.5 4.5L8 1.5l5.5 3V8M2.5 4.5V11L8 14M2.5 4.5L8 7.5l5.5-3M8 7.5V14") + UP_BADGE)
-icon("network", "Internet access", [], ["settings-dialog", "plugin-manager"],
-     stroke("M1.5 6a9 9 0 0 1 13 0M3.75 8.5a6 6 0 0 1 8.5 0M6 11a3 3 0 0 1 4 0") + accent(dot(8, 13, 1)))
 icon("marketplace", "Marketplace", [], ["plugin-manager"],
      stroke("M2.5 8v5.5h11V8") + stroke("M6.5 13.5V10h3v3.5")
      + accent(stroke("M1.5 6.5l1-4h11l1 4c0 1-.75 1.5-1.5 1.5S12 7.5 11.5 6.5c-.25 1-1 1.5-1.75 1.5s-1.5-.5-1.75-1.5"
@@ -1447,7 +1445,6 @@ for card, roles in {
     "PL7 #419": ["plugin-sandbox"],
     "AU6 #845": ["clip-to-shape", "shape-to-clip", "shape-merge"],
     "CX7 #810": ["audio-sliders", "side-bar-off"],
-    "PL5 #417": ["network"],
 }.items():
     for role in roles:
         PENDING[role] = card

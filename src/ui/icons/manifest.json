@@ -4783,19 +4783,6 @@
    "pending": "AI24 #744"
   },
   {
-   "role": "network",
-   "file": "network.svg",
-   "label": "Internet access",
-   "accent": true,
-   "mirror": false,
-   "legacy": [],
-   "surfaces": [
-    "settings-dialog",
-    "plugin-manager"
-   ],
-   "pending": "PL5 #417"
-  },
-  {
    "role": "marketplace",
    "file": "marketplace.svg",
    "label": "Marketplace",
