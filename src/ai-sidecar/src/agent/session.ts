@@ -418,6 +418,8 @@ export class AgentSession {
 
 export interface Session {
     prompt(params: SessionPromptParams): Promise<SessionPromptResult>;
+    /** The model the next turn runs on; "" is the agent's own default. */
+    useModel?(model: string): void;
     steer(params: SessionSteerParams): Promise<SessionSteerResult>;
     cancel(): void;
     close?(): void;
@@ -474,7 +476,10 @@ export class AgentSessions {
     }
 
     prompt(params: SessionPromptParams): Promise<SessionPromptResult> {
-        return this.session(params.sessionId).prompt(params);
+        const session = this.session(params.sessionId);
+        if (params.model)
+            session.useModel?.(params.model.model);
+        return session.prompt(params);
     }
 
     steer(params: SessionSteerParams): Promise<SessionSteerResult> {

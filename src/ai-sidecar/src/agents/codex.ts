@@ -189,6 +189,10 @@ export class CodexSession {
         return out;
     }
 
+    useModel(model: string): void {
+        this.model = model;
+    }
+
     private async turnModel(): Promise<{ model?: string }> {
         if (this.running === this.model)
             return {};
@@ -206,14 +210,11 @@ export class CodexSession {
             (this.turn = { done, cancelled: false, streamed: new Set() }));
         const turn = this.turn!;
         try {
-            if (params.model)
-                this.model = params.model.model;
             await this.start();
-            const model = await this.turnModel();
             this.deps.send({ sessionUpdate: "history", message: { author: "user", parts: params.prompt } });
             this.atTurnStart = this.total;
             const started = await this.peer!.request("turn/start",
-                { threadId: this.thread, input: input(params.prompt), ...model }) as { turn: { id: string } };
+                { threadId: this.thread, input: input(params.prompt), ...await this.turnModel() }) as { turn: { id: string } };
             turn.id = started.turn.id;
             if (turn.cancelled)
                 this.interrupt(turn);

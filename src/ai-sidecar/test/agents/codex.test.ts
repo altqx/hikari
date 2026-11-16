@@ -97,8 +97,11 @@ describe("Codex through its app-server", () => {
 
     test("a model chosen mid-thread goes on the next turn, and the agent's default sends Codex's default", async () => {
         const h = harness();
-        const turn = (reply: string, model?: string) => h.session.prompt({ sessionId: "t1", prompt: h.script({ reply }),
-            ...(model === undefined ? {} : { model: { providerId: "", model } }) });
+        const turn = (reply: string, model?: string) => {
+            if (model !== undefined)
+                h.session.useModel(model);
+            return h.session.prompt({ sessionId: "t1", prompt: h.script({ reply }) });
+        };
         await turn("one");
         await turn("two", "gpt-fake-mini");
         await turn("three", "gpt-fake-mini");
