@@ -3664,39 +3664,39 @@ Output device: %2</source>
     <name>HikariSub.Editor</name>
     <message>
         <source>Bottom-left</source>
-        <translation>இடது கீழ்</translation>
+        <translation type="vanished">இடது கீழ்</translation>
     </message>
     <message>
         <source>Bottom-centre</source>
-        <translation>மையம்-கீழ்</translation>
+        <translation type="vanished">மையம்-கீழ்</translation>
     </message>
     <message>
         <source>Bottom-right</source>
-        <translation>வலது கீழ்</translation>
+        <translation type="vanished">வலது கீழ்</translation>
     </message>
     <message>
         <source>Middle-left</source>
-        <translation>இடது-மையம்</translation>
+        <translation type="vanished">இடது-மையம்</translation>
     </message>
     <message>
         <source>Centre</source>
-        <translation>மையம்</translation>
+        <translation type="vanished">மையம்</translation>
     </message>
     <message>
         <source>Middle-right</source>
-        <translation>வலது-மையம்</translation>
+        <translation type="vanished">வலது-மையம்</translation>
     </message>
     <message>
         <source>Top-left</source>
-        <translation>இடது-மேல்</translation>
+        <translation type="vanished">இடது-மேல்</translation>
     </message>
     <message>
         <source>Top-centre</source>
-        <translation>மையம்-மேல்</translation>
+        <translation type="vanished">மையம்-மேல்</translation>
     </message>
     <message>
         <source>Top-right</source>
-        <translation>வலது மேல்</translation>
+        <translation type="vanished">வலது மேல்</translation>
     </message>
     <message>
         <source>Text position</source>
@@ -3839,6 +3839,10 @@ Output device: %2</source>
         <translation>“%1” என்ற சொல் அகராதியில் சேர்க்கப்படவில்லை.</translation>
     </message>
     <message>
+        <source>Check spelling as you type</source>
+        <translation>தட்டச்சு செய்யும்போது எழுத்துப்பிழை சரிபார்ப்பு</translation>
+    </message>
+    <message>
         <source>Line editor</source>
         <translation>வரி திருத்தி</translation>
     </message>
@@ -3887,8 +3891,12 @@ Output device: %2</source>
         <translation>தேர்ந்தெடுக்கப்பட்ட உரையை ஒட்டவும்</translation>
     </message>
     <message>
+        <source>Add a tag button…</source>
+        <translation>குறிச்சொல் பொத்தானைச் சேர்…</translation>
+    </message>
+    <message>
         <source>Add a tag button</source>
-        <translation>குறிச்சொல் பொத்தானைச் சேர்</translation>
+        <translation type="vanished">குறிச்சொல் பொத்தானைச் சேர்</translation>
     </message>
     <message>
         <source>Edit…</source>
@@ -3908,7 +3916,7 @@ Output device: %2</source>
     </message>
     <message>
         <source>Check spelling</source>
-        <translation>எழுத்துப்பிழை சரிபார்ப்பு</translation>
+        <translation type="vanished">எழுத்துப்பிழை சரிபார்ப்பு</translation>
     </message>
     <message>
         <source>Original text</source>
@@ -6286,6 +6294,10 @@ Failed to copy %2 fonts.</source>
         <translation>வரி மடக்குகளின்படி</translation>
     </message>
     <message>
+        <source>Typesetting</source>
+        <translation>டைப்செட்டிங்</translation>
+    </message>
+    <message>
         <source>Interpolate across lines…</source>
         <translation>வரிகளுக்கு இடையே இடைக்கணிப்பு…</translation>
     </message>
@@ -6959,7 +6971,7 @@ Failed to copy %2 fonts.</source>
         <translation>குறுக்குவிசையை அமைக்க Shift+சொடுக்கு</translation>
     </message>
     <message>
-        <source>AI actions…</source>
+        <source>AI actions</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -8196,7 +8208,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Add QC note</source>
-        <translation>QC குறிப்பைச் சேர்</translation>
+        <translation type="vanished">QC குறிப்பைச் சேர்</translation>
     </message>
     <message>
         <source>Perspective tracking…</source>
@@ -8413,6 +8425,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Cycle \fsp back</source>
         <translation>\fsp பின்னோக்கிச் சுழற்சி</translation>
+    </message>
+    <message>
+        <source>Add QC note…</source>
+        <translation>QC குறிப்பைச் சேர்…</translation>
     </message>
     <message>
         <source>Move tab to new window</source>
@@ -8634,7 +8650,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>AI</source>
-        <translation type="unfinished">AI</translation>
+        <translation type="obsolete">AI</translation>
     </message>
     <message>
         <source>Rewrite…</source>
@@ -8668,11 +8684,15 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Edit actions…</source>
+        <source>%1…</source>
+        <translation>%1…</translation>
+    </message>
+    <message>
+        <source>Edit actions</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Add a model in Settings › AI…</source>
+        <source>Add a model in Settings › AI</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -16831,6 +16851,46 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>எதைப் பொறுத்து</translation>
     </message>
     <message>
+        <source>Align</source>
+        <translation>சீரமை</translation>
+    </message>
+    <message>
+        <source>Left edges</source>
+        <translation>இடது விளிம்புகள்</translation>
+    </message>
+    <message>
+        <source>Centres</source>
+        <translation>மையங்கள்</translation>
+    </message>
+    <message>
+        <source>Right edges</source>
+        <translation>வலது விளிம்புகள்</translation>
+    </message>
+    <message>
+        <source>Top edges</source>
+        <translation>மேல் விளிம்புகள்</translation>
+    </message>
+    <message>
+        <source>Middles</source>
+        <translation>செங்குத்து மையங்கள்</translation>
+    </message>
+    <message>
+        <source>Bottom edges</source>
+        <translation>கீழ் விளிம்புகள்</translation>
+    </message>
+    <message>
+        <source>Distribute</source>
+        <translation>பரப்பு</translation>
+    </message>
+    <message>
+        <source>Horizontally</source>
+        <translation>கிடைமட்டமாக</translation>
+    </message>
+    <message>
+        <source>Vertically</source>
+        <translation>செங்குத்தாக</translation>
+    </message>
+    <message>
         <source>The active line</source>
         <translation type="vanished">செயலில் உள்ள வரி</translation>
     </message>
@@ -16848,35 +16908,35 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Align left edges</source>
-        <translation>இடது விளிம்புகளை சீரமை</translation>
+        <translation type="vanished">இடது விளிம்புகளை சீரமை</translation>
     </message>
     <message>
         <source>Align centres</source>
-        <translation>மையங்களை சீரமை</translation>
+        <translation type="vanished">மையங்களை சீரமை</translation>
     </message>
     <message>
         <source>Align right edges</source>
-        <translation>வலது விளிம்புகளை சீரமை</translation>
+        <translation type="vanished">வலது விளிம்புகளை சீரமை</translation>
     </message>
     <message>
         <source>Align top edges</source>
-        <translation>மேல் விளிம்புகளை சீரமை</translation>
+        <translation type="vanished">மேல் விளிம்புகளை சீரமை</translation>
     </message>
     <message>
         <source>Align middles</source>
-        <translation>செங்குத்து மையங்களை சீரமை</translation>
+        <translation type="vanished">செங்குத்து மையங்களை சீரமை</translation>
     </message>
     <message>
         <source>Align bottom edges</source>
-        <translation>கீழ் விளிம்புகளை சீரமை</translation>
+        <translation type="vanished">கீழ் விளிம்புகளை சீரமை</translation>
     </message>
     <message>
         <source>Distribute horizontally</source>
-        <translation>கிடைமட்டமாகப் பரப்பு</translation>
+        <translation type="vanished">கிடைமட்டமாகப் பரப்பு</translation>
     </message>
     <message>
         <source>Distribute vertically</source>
-        <translation>செங்குத்தாகப் பரப்பு</translation>
+        <translation type="vanished">செங்குத்தாகப் பரப்பு</translation>
     </message>
     <message>
         <source>Phantom</source>
@@ -19653,6 +19713,14 @@ because it was edited.</source>
         <translation>இலக்கண அமைப்புகள்…</translation>
     </message>
     <message>
+        <source>Add “%1” to project dictionary</source>
+        <translation>“%1” ஐ திட்ட அகராதியில் சேர்</translation>
+    </message>
+    <message>
+        <source>Add “%1” to my dictionary</source>
+        <translation>“%1” ஐ என் அகராதியில் சேர்</translation>
+    </message>
+    <message>
         <source>Grammar · %1</source>
         <translation>இலக்கணம் · %1</translation>
     </message>
@@ -19667,14 +19735,6 @@ because it was edited.</source>
     <message>
         <source>Add “%1” to dictionary</source>
         <translation>“%1” ஐ அகராதியில் சேர்</translation>
-    </message>
-    <message>
-        <source>This project</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Mine</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Add to project dictionary</source>
@@ -21392,7 +21452,7 @@ Styles deleted:
     </message>
     <message>
         <source>Tag list options</source>
-        <translation>குறிச்சொல் பட்டியல் விருப்பங்கள்</translation>
+        <translation type="vanished">குறிச்சொல் பட்டியல் விருப்பங்கள்</translation>
     </message>
     <message>
         <source>Tag list</source>
@@ -24111,7 +24171,7 @@ Styles deleted:
     </message>
     <message>
         <source>More</source>
-        <translation>மேலும்</translation>
+        <translation type="vanished">மேலும்</translation>
     </message>
     <message>
         <source>Run %1: %2, %3</source>
@@ -27178,6 +27238,10 @@ do not work on comments</source>
     <message>
         <source>Drag a panel here</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>More options</source>
+        <translation>மேலும் விருப்பங்கள்</translation>
     </message>
 </context>
 <context>
