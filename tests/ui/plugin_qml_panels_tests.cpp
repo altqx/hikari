@@ -100,10 +100,11 @@ class PluginQmlPanelTests : public QObject {
         QQmlComponent component(&engine);
         component.setData("import QtQuick\nimport Hikari.Ui\nPluginPanelBody { width: 400; height: 300 }\n",
                           QUrl(QStringLiteral("qrc:/pl8-test.qml")));
-        QObject *made = component.createWithInitialProperties(
-            {{QStringLiteral("ui"), QVariant::fromValue(ui)}, {QStringLiteral("dock"), kBoard}, {QStringLiteral("shown"), shown}});
+        QObject *made = component.createWithInitialProperties({{QStringLiteral("ui"), QVariant::fromValue(ui)}, {QStringLiteral("dock"), kBoard}});
         if (!made)
             qWarning() << component.errors();
+        else
+            made->setProperty("shown", shown);
         return std::unique_ptr<QQuickItem>(qobject_cast<QQuickItem *>(made));
     }
 
