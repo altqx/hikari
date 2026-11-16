@@ -48,6 +48,8 @@ QString codexAuthNotSaved(SecretWrite result);
 /// Lends HikariSub's ChatGPT sign-in to the Codex processes sharing a private CODEX_HOME. The first `acquire` writes
 /// its auth.json from the keychain; after the last `release`, Codex's refreshed tokens go back to the keychain and
 /// the file goes. A file left behind for the same account is newer than the keychain, so it is kept.
+QString codexAuthPath(const QString &codexHome);
+
 class CodexLease {
 public:
     CodexLease(application::ai::KeyStore &keys, QString codexHome);
@@ -57,7 +59,6 @@ public:
     void release();
 
 private:
-    QString authPath() const;
     void giveBack();
 
     application::ai::KeyStore &m_keys;
@@ -141,8 +142,10 @@ public:
     void refreshCodex(Done done);
     /// Copies the Codex CLI's sign-in into HikariSub's; never writes `authJsonPath`.
     void importCodex(const QString &authJsonPath, Done done);
-    /// Deletes HikariSub's ChatGPT sign-in; the Codex CLI's stays.
+    /// Deletes HikariSub's ChatGPT sign-in and the copy lent to the Codex home given to `lendsCodexTo`; the Codex CLI's stays.
     void signOutCodex(std::function<void(std::optional<application::ai::KeyError>)> done);
+    /// The Codex home a CodexLease lends to; a copy left there without a stored sign-in is deleted now.
+    void lendsCodexTo(QString codexHome);
 
 private:
     struct Running;
@@ -173,6 +176,7 @@ private:
     SignInClock m_clock;
     QNetworkAccessManager m_nam;
     std::unique_ptr<Running> m_running;
+    QString m_codexHome;
     std::uint64_t m_serial = 0;
     std::shared_ptr<bool> m_alive = std::make_shared<bool>(true);
 };

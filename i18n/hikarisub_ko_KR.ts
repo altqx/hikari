@@ -436,6 +436,26 @@
         <translation>거부하고 에이전트에게 알리기…</translation>
     </message>
     <message>
+        <source>Withdrawn: the agent stopped waiting for your answer.</source>
+        <translation>철회됨: 에이전트가 답을 더 기다리지 않았습니다.</translation>
+    </message>
+    <message>
+        <source>Withdrawn: the turn ended before you answered.</source>
+        <translation>철회됨: 답하기 전에 턴이 끝났습니다.</translation>
+    </message>
+    <message>
+        <source>Withdrawn: you stopped the turn.</source>
+        <translation>철회됨: 턴을 멈췄습니다.</translation>
+    </message>
+    <message>
+        <source>Withdrawn: you signed out of Codex.</source>
+        <translation>철회됨: Codex에서 로그아웃했습니다.</translation>
+    </message>
+    <message>
+        <source>Withdrawn: the cost cap stopped the turn.</source>
+        <translation>철회됨: 비용 한도로 턴이 멈췄습니다.</translation>
+    </message>
+    <message>
         <source>The signing key changed. The installed copy was signed by key %1, and this one by key %2. Install it only if you trust that the author changed keys.</source>
         <translation type="unfinished">서명 키가 바뀌었습니다. 설치된 사본은 키 %1(으)로, 이 패키지는 키 %2(으)로 서명되었습니다. 작성자가 키를 바꾼 것이 확실한 경우에만 설치하십시오.</translation>
     </message>
@@ -546,8 +566,36 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Signed out of Codex. This session ended.</source>
+        <translation>Codex에서 로그아웃했습니다. 이 세션은 끝났습니다.</translation>
+    </message>
+    <message>
+        <source>AI component is ready</source>
+        <translation>AI 구성 요소가 준비되었습니다</translation>
+    </message>
+    <message>
+        <source>Getting the AI component: %1 of %2 MB</source>
+        <translation>AI 구성 요소 받는 중: %1/%2MB</translation>
+    </message>
+    <message>
+        <source>The AI component is ready. Send your message again.</source>
+        <translation>AI 구성 요소가 준비되었습니다. 메시지를 다시 보내세요.</translation>
+    </message>
+    <message>
+        <source>The AI component didn’t download. Check your connection and try again.</source>
+        <translation>AI 구성 요소를 내려받지 못했습니다. 연결을 확인하고 다시 시도하세요.</translation>
+    </message>
+    <message>
+        <source>Agents need the AI component, which HikariSub downloads once.</source>
+        <translation>에이전트에는 AI 구성 요소가 필요하며, HikariSub가 한 번 내려받습니다.</translation>
+    </message>
+    <message>
         <source>Not offered: HikariSub can’t open a private tools channel for it on this system.</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Get the AI component</source>
+        <translation>AI 구성 요소 받기</translation>
     </message>
     <message numerus="yes">
         <source>%n sub-agent(s)</source>
@@ -755,7 +803,7 @@
     </message>
     <message>
         <source>HikariSub is still getting the AI component, or it couldn’t start.</source>
-        <translation>HikariSub가 아직 AI 구성 요소를 받는 중이거나 구성 요소를 시작하지 못했습니다.</translation>
+        <translation type="vanished">HikariSub가 아직 AI 구성 요소를 받는 중이거나 구성 요소를 시작하지 못했습니다.</translation>
     </message>
     <message>
         <source>The search service answered %1. The answer goes on without searching the web.</source>

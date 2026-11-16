@@ -7944,6 +7944,7 @@ ApplicationWindow {
                     focus: true
                     sourceComponent: AgentPanel {
                         agent: root.agent
+                        aiSettings: root.aiSettings
                         onReviewRequested: root.showPanel(reviewDock)
                         onRestoreRequested: turn => restoreCheckpointDialog.openFor(turn)
                         onSettingsRequested: root.openSettings("ai")

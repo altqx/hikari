@@ -7,8 +7,3 @@ NSIS_ZIP_URL=https://downloads.sourceforge.net/project/nsis/NSIS%203/3.13/nsis-3
 NSIS_ZIP_SHA256=ba63dffc4410ee89193e1cb5a41989991bd77c61068da17e3156d136b7b0b3d8
 NSIS_SRC_URL=https://downloads.sourceforge.net/project/nsis/NSIS%203/3.13/nsis-3.13-src.tar.bz2
 NSIS_SRC_SHA256=a8ffe024602d46b6d766f9e1ce30c324ad2a24daeacd3efc2642d436a0c157ac
-
-# StdUtils, for ExecShellAsUser (relaunching the app unelevated).
-STDUTILS_VERSION=1.14
-STDUTILS_URL=https://github.com/lordmulder/stdutils/releases/download/1.14/StdUtils.2018-10-27.zip
-STDUTILS_SHA256=3ffe893dc7477fdb1cac551a86ae017509e1f2d0ebdc7185fd0fbaf20870688c
