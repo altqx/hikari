@@ -2130,6 +2130,110 @@ private slots:
         settings.setValue(QStringLiteral("appearance.followSystem"), true);
     }
 
+    void cx7PanelMenuScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        window->resize(1400, 860);
+        usePickerFonts();
+        QVERIFY(application->openFile(fontAss("cx7-shots.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,first\n"
+                                                                "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,second\n")));
+        application->addPage(true);
+        QVERIFY(application->openFile(writeFile(dir, "cx7-second.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,two\n")));
+        application->selectTab(0);
+        auto &qc = application->qcNotes();
+        QVERIFY(qc.add(1000, QStringLiteral("General"), QStringLiteral("Too early")));
+        QVERIFY(qc.add(3000, QStringLiteral("TLC"), QStringLiteral("Typo")));
+        QVERIFY(qc.setDone(1, true));
+        auto *root = engine->rootObjects().first();
+        auto &settings = *application->settingsStore();
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        const auto grabWindow = [&](QWindow *w, const QString &name) {
+            QTest::qWait(300);
+            const QRect frame = w->frameGeometry();
+            QVERIFY(w->screen()->grabWindow(0, frame.x(), frame.y(), frame.width(), frame.height()).save(out + name));
+        };
+        const auto closed = [&](QObject *menu) {
+            QMetaObject::invokeMethod(menu, "close");
+            QTRY_VERIFY(!menu->property("visible").toBool());
+        };
+        auto *panelMenu = named("panelOptionsMenu");
+        const auto panelShot = [&](const char *dock, QQuickItem *anchor, const QString &name, QObject *sub = nullptr) {
+            QVERIFY(QMetaObject::invokeMethod(panelMenu, "openFor", Q_ARG(QVariant, QVariant::fromValue(item<QObject>(dock))),
+                                              Q_ARG(QVariant, QVariant::fromValue<QObject *>(anchor))));
+            QTRY_VERIFY(panelMenu->property("opened").toBool());
+            if (sub) {
+                QVERIFY(QMetaObject::invokeMethod(sub, "open"));
+                QTRY_VERIFY(sub->property("opened").toBool());
+            }
+            grabWindow(window, name);
+            if (sub)
+                closed(sub);
+            closed(panelMenu);
+        };
+        for (const char *dock : {"qcNotesDock", "searchDock"})
+            QVERIFY(QMetaObject::invokeMethod(root, "showPanel", Q_ARG(QVariant, QVariant::fromValue(item<QObject>(dock)))));
+        for (const char *code : {"light", "dark", "highContrastWhite", "highContrastBlack"}) {
+            settings.setValue(QStringLiteral("appearance.theme"), QString::fromLatin1(code));
+            auto *controls = root->property("palette").value<QObject *>();
+            QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+            const QString suffix = QLatin1Char('-') + QLatin1String(code) + QStringLiteral(".png");
+            QTRY_VERIFY(item("qcNotesTool") && item("qcNotesTool")->isVisible());
+            panelShot("qcNotesDock", item("qcNotesTool"), QStringLiteral("/cx7-qc-notes") + suffix);
+            panelShot("editorDock", item("lineText"), QStringLiteral("/cx7-line-editor") + suffix);
+            panelShot("videoDock", item("videoPanel"), QStringLiteral("/cx7-video-follow") + suffix, named("panelOptions_videoSeekOn"));
+            QQuickItem *searchIcon = nullptr;
+            QTRY_VERIFY((searchIcon = visualItem("sideBarIcon_Search")) && searchIcon->isVisible());
+            panelShot("searchDock", searchIcon, QStringLiteral("/cx7-side-bar") + suffix);
+
+            auto *bar = qobject_cast<QQuickItem *>(named("documentTabBar"));
+            QVERIFY(QMetaObject::invokeMethod(bar, "openTabMenu", Q_ARG(QVariant, -1), Q_ARG(QVariant, QVariant::fromValue(bar)),
+                                              Q_ARG(QVariant, bar->width() - 300), Q_ARG(QVariant, bar->height())));
+            auto *tabMenu = named("documentTabMenu");
+            QTRY_VERIFY(tabMenu->property("opened").toBool());
+            grabWindow(window, QStringLiteral("/cx7-tab-bar") + suffix);
+            closed(tabMenu);
+
+            auto *switcher = qobject_cast<QQuickItem *>(named("layoutSwitcher"));
+            QVERIFY(QMetaObject::invokeMethod(switcher, "click"));
+            QTRY_VERIFY(named("layoutSwitcherMenu")->property("opened").toBool());
+            grabWindow(window, QStringLiteral("/cx7-layout-switcher") + suffix);
+            closed(named("layoutSwitcherMenu"));
+        }
+        QVERIFY(application->workspaceLayout().saveLayoutAs(QStringLiteral("Signs QC")));
+        auto *picker = qobject_cast<QQuickWindow *>(openFontPicker(fontAss("cx7-picker.ass",
+                                                                       "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,abc\n")));
+        QVERIFY(picker);
+        for (const char *code : {"light", "dark", "highContrastWhite", "highContrastBlack"}) {
+            settings.setValue(QStringLiteral("appearance.theme"), QString::fromLatin1(code));
+            const QString suffix = QLatin1Char('-') + QLatin1String(code) + QStringLiteral(".png");
+            QVERIFY(QMetaObject::invokeMethod(dialogItem("fontPicker", "fontPickerCatalog"), "click"));
+            QTRY_VERIFY(named("fontPickerCatalogMenu")->property("opened").toBool());
+            grabWindow(picker, QStringLiteral("/cx7-font-catalogue-chip") + suffix);
+            closed(named("fontPickerCatalogMenu"));
+        }
+        QVERIFY(QMetaObject::invokeMethod(picker, "reject"));
+        QTRY_VERIFY(!picker->isVisible());
+        auto *manager = lazyWindow("styleManager");
+        QVERIFY(QMetaObject::invokeMethod(named("styleManagerMenuItem")->property("action").value<QObject *>(), "trigger"));
+        QTRY_VERIFY(manager->isVisible());
+        const QVariantMap values = application->styleManager().beginEdit(false, 0);
+        QVERIFY(QMetaObject::invokeMethod(manager, "beginEditing", Q_ARG(QVariant, values), Q_ARG(QVariant, false)));
+        auto *catalogBar = findItem(manager->contentItem(), QStringLiteral("styleEditorCatalogBar"));
+        auto *addMenu = catalogBar->findChild<QObject *>(QStringLiteral("styleEditorCatalogAddMenu"));
+        for (const char *code : {"light", "dark", "highContrastWhite", "highContrastBlack"}) {
+            settings.setValue(QStringLiteral("appearance.theme"), QString::fromLatin1(code));
+            QVERIFY(QMetaObject::invokeMethod(catalogBar, "addToCatalog"));
+            QTRY_VERIFY(addMenu->property("opened").toBool());
+            grabWindow(manager, QStringLiteral("/cx7-style-editor-add-") + QLatin1String(code) + QStringLiteral(".png"));
+            closed(addMenu);
+        }
+        QVERIFY(QMetaObject::invokeMethod(manager, "closeManager"));
+        settings.setValue(QStringLiteral("appearance.followSystem"), true);
+    }
+
     void videoAndAudioMenuScreenshots()
     {
         const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");

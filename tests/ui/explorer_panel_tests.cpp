@@ -12,6 +12,7 @@
 #include <QQmlApplicationEngine>
 #include <QQuickItem>
 #include <QQuickWindow>
+#include <QScreen>
 #include <QStyleHints>
 #include <QTemporaryDir>
 #include <QtQml/qqmlextensionplugin.h>
@@ -417,6 +418,45 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(panelMenu, "close"));
         QQuickItem *field = nullptr;
         QTRY_VERIFY((field = shown("explorerNewFileName")) && field->hasActiveFocus());
+    }
+
+    void explorerMenuScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        window->resize(1200, 800);
+        openProject();
+        QTRY_VERIFY(row(QStringLiteral("ep01.ass")));
+        auto &settings = *application->settingsStore();
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        const auto grab = [&](const QString &name) {
+            QTest::qWait(300);
+            const QRect frame = window->frameGeometry();
+            QVERIFY(window->screen()->grabWindow(0, frame.x(), frame.y(), frame.width(), frame.height()).save(out + name));
+        };
+        QObject *rowMenu = named("explorerRowMenu");
+        QObject *panelMenu = named("panelOptionsMenu");
+        for (const char *code : {"light", "dark", "highContrastWhite", "highContrastBlack"}) {
+            settings.setValue(QStringLiteral("appearance.theme"), QString::fromLatin1(code));
+            QTest::qWait(200);
+            const QString suffix = QLatin1Char('-') + QLatin1String(code) + QStringLiteral(".png");
+            QVERIFY(QMetaObject::invokeMethod(named("explorerTool"), "showMenu", Q_ARG(QVariant, rowOf(QStringLiteral("ep01.ass"))),
+                                              Q_ARG(QVariant, QVariant::fromValue(row(QStringLiteral("ep01.ass")))),
+                                              Q_ARG(QVariant, 40), Q_ARG(QVariant, 12)));
+            QTRY_VERIFY(rowMenu->property("opened").toBool());
+            grab(QStringLiteral("/cx7-explorer-row") + suffix);
+            QVERIFY(QMetaObject::invokeMethod(rowMenu, "close"));
+            QTRY_VERIFY(!rowMenu->property("visible").toBool());
+            QVERIFY(QMetaObject::invokeMethod(panelMenu, "openFor", Q_ARG(QVariant, QVariant::fromValue(named("explorerDock"))),
+                                              Q_ARG(QVariant, QVariant::fromValue(row(QStringLiteral("ep01.ass"))))));
+            QTRY_VERIFY(panelMenu->property("opened").toBool());
+            grab(QStringLiteral("/cx7-explorer-options") + suffix);
+            QVERIFY(QMetaObject::invokeMethod(panelMenu, "close"));
+            QTRY_VERIFY(!panelMenu->property("visible").toBool());
+        }
+        settings.setValue(QStringLiteral("appearance.followSystem"), true);
     }
 
     void newSubtitleFileHereCreatesAndOpensIt()
