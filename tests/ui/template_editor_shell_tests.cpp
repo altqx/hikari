@@ -2,6 +2,7 @@
 #include "hikari/app/application.h"
 #include "hikari/application/generated_runs.h"
 #include "docking.h"
+#include "qtest_parts.h"
 #include "shell_controller.h"
 #include "template_editor_controller.h"
 #include "video_view_controller.h"
@@ -680,5 +681,5 @@ private slots:
     }
 };
 
-QTEST_MAIN(TemplateEditorShellTests)
+HIKARI_QTEST_MAIN_IN_PARTS(TemplateEditorShellTests)
 #include "template_editor_shell_tests.moc"
