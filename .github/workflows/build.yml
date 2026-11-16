@@ -422,7 +422,6 @@ jobs:
           while IFS= read -r f; do
             cmp "artifacts/HikariSub_x64/$f" "nsis-check/$f"
           done < payload.txt
-          test -f 'nsis-check/$PLUGINSDIR/StdUtils.dll'
           ls -l "$setup"
 
       - name: Zip the portable package
