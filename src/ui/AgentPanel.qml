@@ -2023,7 +2023,7 @@ FocusScope {
                       : notice.kind === "failed" ? (notice.item.detail ?? "")
                       : notice.kind === "compactFailed" ? qsTr("The summary request failed twice (%1). Nothing was removed.").arg(notice.item.detail ?? "")
                       : notice.kind === "noSidecar" && panel.download.active
-                        ? qsTr("Getting the AI component: %1 of %2 MB").arg(Math.round((panel.download.received || 0) / 1000000)).arg(Math.round((panel.download.size || 0) / 1000000))
+                        ? qsTr("Getting the AI component: %1 of %2 MB").arg(Math.round((panel.download.received || 0) / 1000000), Math.round((panel.download.size || 0) / 1000000))
                       : notice.kind === "noSidecar" && panel.componentResult === "ready" ? qsTr("The AI component is ready. Send your message again.")
                       : notice.kind === "noSidecar" && panel.componentResult === "failed" ? qsTr("The AI component didn’t download. Check your connection and try again.")
                       : notice.kind === "noSidecar" ? qsTr("Agents need the AI component, which HikariSub downloads once.")
