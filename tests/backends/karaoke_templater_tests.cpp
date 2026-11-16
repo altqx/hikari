@@ -698,7 +698,7 @@ Dialogue: 0,0:00:01.00,0:00:03.00,Default,,0,0,0,karaoke,{\k20}ka{\k20}ra{\k20}o
 Dialogue: 0,0:00:04.00,0:00:06.00,Default,,0,0,0,karaoke,{\k20}ka{\k20}ra{\k20}ka{\k20}ra
 )";
 
-TEST_F(KaraokeTemplater, LineKaraKeepsAbsoluteTimesOnAnUntaggedLine)
+TEST_F(KaraokeTemplater, LineKaraOnAnUntaggedLineIsLineRelative)
 {
     std::string document = kCharTemplateDocument;
     document.replace(document.find("karaoke,{\\k20}ka{\\k20}ra{\\k20}o{\\k20}ke"), 39, "karaoke,no tags");
@@ -706,7 +706,7 @@ TEST_F(KaraokeTemplater, LineKaraKeepsAbsoluteTimesOnAnUntaggedLine)
     hikari::application::EditSession session(hikari::core::loadAss(bytesOf(document)).document);
     ASSERT_TRUE(apply(session, karaskelDir() + QStringLiteral("/untagged.lua"), "Kara times"));
     EXPECT_EQ(stringsOf(report[QStringLiteral("times")]).join(u' ').toStdString(),
-              "0:0-0 1:0-5000 0:0-0 1:6310-9310 0:0-0 1:0-200 2:200-400 3:400-600 4:600-800");
+              "0:0-0 1:0-5000 0:0-0 1:0-3000 0:0-0 1:0-200 2:200-400 3:400-600 4:600-800");
 }
 
 TEST_F(KaraokeTemplater, CharTemplatesMeasureEachTextOnceARun)

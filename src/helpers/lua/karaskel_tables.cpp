@@ -19,8 +19,6 @@ namespace {
 
 namespace kl = application::karaoke_layout;
 
-constexpr kl::LineOptions kBeforeQ558{.untagged = application::UntaggedLine::BeforeQ558};
-
 int absolute(lua_State *L, int index)
 {
     return index > 0 || index <= LUA_REGISTRYINDEX ? index : lua_gettop(L) + index + 1;
@@ -181,7 +179,7 @@ kl::Line layLine(lua_State *L, kl::Layout &layout, const application::MacroDialo
 {
     kl::Line out;
     lua_helper::raiseOnHostFailure(L, "text_extents", [&] {
-        out = layout.line(lua_helper::karaokeSource(dialogue), li, kBeforeQ558, problems);
+        out = layout.line(lua_helper::karaokeSource(dialogue), li, {}, problems);
     });
     return out;
 }
@@ -695,13 +693,13 @@ int prepareLine(lua_State *L)
         kl::Layout::Measures measures;
         std::vector<std::string> unused;
         layout.listMeasures(&measures);
-        layout.line(source, 0, kBeforeQ558, unused);
+        layout.line(source, 0, {}, unused);
         layout.listMeasures(nullptr);
         for (const auto &[style, texts] : measures)
             for (const auto &r : lua_host::runExtents().measureMany(style, texts))
                 if (!r.extents)
                     problems.push_back("could not measure text");
-        prepared.layout = layout.line(source, 0, kBeforeQ558, problems);
+        prepared.layout = layout.line(source, 0, {}, problems);
     });
     if (!problems.empty())
         return luaL_error(L, "%s", problems.front().c_str());

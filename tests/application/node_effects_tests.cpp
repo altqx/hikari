@@ -1434,10 +1434,6 @@ TEST(KaraokeSyllables, SplitsAsTheAutomationHelperDoes)
     EXPECT_EQ(plain[1].start, 0);
     EXPECT_EQ(plain[1].end, 3000);
     EXPECT_EQ(plain[1].duration, 3000);
-    const auto beforeQ558 = karaokeSyllables("no tags", 1000, 4000, UntaggedLine::BeforeQ558);
-    ASSERT_EQ(beforeQ558.size(), 2u);
-    EXPECT_EQ(beforeQ558[1].start, 1000);
-    EXPECT_EQ(beforeQ558[1].end, 4000);
 }
 
 namespace {

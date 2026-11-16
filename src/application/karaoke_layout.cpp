@@ -419,7 +419,7 @@ Line Layout::line(const MacroDialogueLine &source, double li, const LineOptions 
     const bool chars = options.chars;
     const bool tenths = options.karaOK;
     const MacroDialogueLine &d = out.macro;
-    const auto kara = karaokeSyllables(d.text, d.startMs, d.endMs, options.untagged);
+    const auto kara = karaokeSyllables(d.text, d.startMs, d.endMs);
 
     std::vector<Work> syls;
     std::vector<Furi> furi;

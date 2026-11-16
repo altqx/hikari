@@ -146,8 +146,7 @@ std::string utf8Of(const u16 &s)
 
 }
 
-std::vector<KaraokeSyllable> karaokeSyllables(std::string_view raw, std::int64_t startMs, std::int64_t endMs,
-                                              UntaggedLine untagged)
+std::vector<KaraokeSyllable> karaokeSyllables(std::string_view raw, std::int64_t startMs, std::int64_t endMs)
 {
     const u16 text = core::toUtf16(std::u8string_view(reinterpret_cast<const char8_t *>(raw.data()), raw.size()));
     std::vector<KaraokeSyllable> out;
@@ -194,8 +193,7 @@ std::vector<KaraokeSyllable> karaokeSyllables(std::string_view raw, std::int64_t
     }
     if (kcount < 2) {
         const int duration = static_cast<int>(endMs - startMs);
-        const int start = untagged == UntaggedLine::BeforeQ558 ? static_cast<int>(startMs) : 0;
-        out.push_back({duration, start, start + duration, "k", utf8Of(text), utf8Of(withoutBlocks(text))});
+        out.push_back({duration, 0, duration, "k", utf8Of(text), utf8Of(withoutBlocks(text))});
     }
     return out;
 }

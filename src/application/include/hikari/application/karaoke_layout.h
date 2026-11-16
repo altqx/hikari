@@ -3,7 +3,6 @@
 #include "hikari/application/automation.h"
 #include "hikari/application/automation_services.h"
 #include "hikari/application/extents_cache.h"
-#include "hikari/application/karaoke_syllables.h"
 #include "hikari/application/resample.h"
 #include "hikari/core/document.h"
 
@@ -58,7 +57,6 @@ struct LineOptions {
     bool chars = false;
     CharSplit split = CharSplit::Graphemes;
     bool karaOK = false; // karaOK's rules: places to 0.1 px, and a unit with no duration isn't blank
-    UntaggedLine untagged = UntaggedLine::Relative;
 };
 
 struct Highlight {
