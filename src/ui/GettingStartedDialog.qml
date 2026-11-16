@@ -854,7 +854,7 @@ DialogWindow {
                         objectName: "gettingStartedStable"
                         iconRole: "check-updates"
                         text: qsTr("Stable versions only")
-                        badge: qsTr("Recommended")
+                        badge: setup.updates && setup.updates.prereleaseBuild ? "" : qsTr("Recommended")
                         description: qsTr("Tested releases.")
                         checked: setup.values["updater.checkForStable"] === true
                         onClicked: setup.put("updater.checkForStable", true)

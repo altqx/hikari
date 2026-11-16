@@ -78,11 +78,15 @@ TEST(WhatsNew, TheChannelPicksWhatShows)
     EXPECT_EQ(shown.more, 0u);
     shown = whatsNewShown(releases, "0.1.3", false);
     EXPECT_EQ(tags(shown.releases), (std::vector<std::string>{"v0.1.3", "v0.1.3-beta.2", "v0.1.2", "v0.1.2-rc.1"}));
+    std::vector<ReleaseEntry> tagged{release("v0.1.3"), release("v0.1.3-rc.1")};
+    EXPECT_EQ(tags(whatsNewShown(tagged, "0.1.3", true).releases), (std::vector<std::string>{"v0.1.3"}));
+}
+
+TEST(WhatsNew, ABetaShowsItsBetaNotesEvenWithStableVersionsOnly)
+{
     const auto toBeta = whatsNewReleases(feed(), "0.1.1", "0.1.3-beta.2");
     EXPECT_EQ(tags(whatsNewShown(toBeta, "0.1.3-beta.2", true).releases),
               (std::vector<std::string>{"v0.1.3-beta.2", "v0.1.2", "v0.1.2-rc.1"}));
-    std::vector<ReleaseEntry> tagged{release("v0.1.3"), release("v0.1.3-rc.1")};
-    EXPECT_EQ(tags(whatsNewShown(tagged, "0.1.3", true).releases), (std::vector<std::string>{"v0.1.3"}));
 }
 
 TEST(WhatsNew, AtMostTenVersionsThenHowManyMore)

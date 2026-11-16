@@ -465,10 +465,8 @@ std::vector<ReleaseEntry> updateCandidates(const std::vector<ReleaseEntry> &rele
     std::vector<std::pair<SemVer, const ReleaseEntry *>> found;
     if (!installed)
         return {};
-    // A prerelease build always takes prereleases, so a beta is offered the next beta.
-    const bool skipPrereleases = stableOnly && installed->prerelease.empty();
     for (const auto &release : releases) {
-        if (release.draft || (skipPrereleases && isPrerelease(release)))
+        if (release.draft || (stableOnly && isPrerelease(release)))
             continue;
         const auto version = candidateVersion(release.tag);
         if (!version || compareSemVer(*version, *installed) <= 0)

@@ -1,4 +1,5 @@
 #include "hikari/application/settings.h"
+#include "hikari/application/update_check.h"
 
 #include <gtest/gtest.h>
 
@@ -192,6 +193,57 @@ TEST(Settings, TheOldPreviewTextDefaultReadsAsTheNewOne)
     EXPECT_EQ(settings.text("styles.previewText"), "Mine");
     settings.set("styles.editFilterText", std::string(reinterpret_cast<const char *>(u8"Podgląd")));
     EXPECT_EQ(settings.text("styles.editFilterText"), std::string(reinterpret_cast<const char *>(u8"Podgląd")));
+}
+
+TEST(Settings, StableOnlyDefaultsOnForAStableBuildAndOffForAPrerelease)
+{
+    MemorySettingsStorage storage;
+    Settings settings(storage);
+    EXPECT_TRUE(settings.boolean("updater.checkForStable"));
+    setInstalledVersion("0.1.0-beta.4");
+    EXPECT_FALSE(settings.boolean("updater.checkForStable"));
+    EXPECT_EQ(findSetting("updater.checkForStable")->defaultValue, SettingValue(false));
+    setInstalledVersion("0.1.0-rc.1");
+    EXPECT_FALSE(settings.boolean("updater.checkForStable"));
+    setInstalledVersion("0.1.0");
+    EXPECT_TRUE(settings.boolean("updater.checkForStable"));
+    EXPECT_EQ(findSetting("updater.checkForStable")->defaultValue, SettingValue(true));
+    setInstalledVersion("0.2.3");
+    EXPECT_TRUE(settings.boolean("updater.checkForStable"));
+    setInstalledVersion("0.1.0");
+}
+
+TEST(Settings, ABeta3SettingsFileStillGetsTheNextBeta)
+{
+    const std::vector<ReleaseEntry> feed{{"v0.1.0-beta.5", "", "u", "", false, true, {}}};
+    const auto offered = [&](Settings &settings) {
+        return updateCandidates(feed, "0.1.0-beta.4", settings.boolean("updater.checkForStable")).size();
+    };
+    setInstalledVersion("0.1.0-beta.4");
+    MemorySettingsStorage untouched;
+    Settings fresh(untouched);
+    EXPECT_EQ(offered(fresh), 1u);
+    MemorySettingsStorage unticked;
+    Settings off(unticked);
+    off.set("updater.checkForStable", false);
+    EXPECT_EQ(offered(off), 1u);
+    setInstalledVersion("0.1.0");
+}
+
+TEST(Settings, AnExplicitStableOnlyChoiceOutlivesTheBuild)
+{
+    MemorySettingsStorage storage;
+    Settings settings(storage);
+    setInstalledVersion("0.1.0-beta.4");
+    settings.set("updater.checkForStable", true);
+    setInstalledVersion("0.1.0-beta.5");
+    EXPECT_TRUE(settings.boolean("updater.checkForStable"));
+    setInstalledVersion("0.1.0");
+    EXPECT_TRUE(settings.boolean("updater.checkForStable"));
+    settings.set("updater.checkForStable", false);
+    setInstalledVersion("0.1.1-beta.1");
+    EXPECT_FALSE(settings.boolean("updater.checkForStable"));
+    setInstalledVersion("0.1.0");
 }
 
 TEST(SettingsRegistry, NoColourSettingOutsideHighContrast)
