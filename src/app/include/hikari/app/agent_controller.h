@@ -13,6 +13,7 @@
 
 #include <functional>
 #include <map>
+#include <utility>
 #include <memory>
 #include <optional>
 #include <string>
@@ -76,8 +77,12 @@ class AgentController final : public QObject {
     // model, modelText, attached: [{id, title}]}; empty with none open.
     Q_PROPERTY(QVariantMap thread READ thread NOTIFY threadChanged FINAL)
     Q_PROPERTY(QObject *items READ items CONSTANT FINAL)
-    // [{value, text, provider}] from Settings › AI.
+    // [{value, text, provider, agent}]: the found agents (agent: its program) at their default, then Settings › AI's.
     Q_PROPERTY(QVariantList models READ models NOTIFY modelsChanged FINAL)
+    // The found agents: [{agent, text, value}], value being the agent at its own default model.
+    Q_PROPERTY(QVariantList agents READ agents NOTIFY modelsChanged FINAL)
+    // Bumps whenever an agent's model list or its loading changes.
+    Q_PROPERTY(int agentModelsRevision READ agentModelsRevision NOTIFY agentModelsChanged FINAL)
     /// The model a new thread starts with, or empty when none is configured.
     Q_PROPERTY(QString defaultModelText READ defaultModelText NOTIFY modelsChanged FINAL)
     // The open tabs @ can attach: [{id, title}], without the active one.
@@ -112,6 +117,7 @@ public:
     static constexpr const char *kCostMeterSetting = "ai.agent.costMeter";
     static constexpr const char *kAutoCompactSetting = "ai.agent.autoCompact";
     static constexpr const char *kFullAccessWarnedSetting = "ai.agent.fullAccessWarned";
+    static constexpr const char *kAgentModelsSetting = "ai.agent.models";
 
     explicit AgentController(Wiring wiring, QObject *parent = nullptr);
     ~AgentController() override;
@@ -124,6 +130,12 @@ public:
     QObject *items() { return &m_items; }
     QVariantList models() const;
     QString defaultModelText() const;
+    QVariantList agents() const;
+    int agentModelsRevision() const { return m_agentModelsRevision; }
+    /// {loading, models: [{value, text}]}: the agent's last known list, while a fresh one may be loading.
+    Q_INVOKABLE QVariantMap agentModels(const QString &agent) const;
+    /// Asks a found agent for its models, once per run.
+    Q_INVOKABLE void loadAgentModels(const QString &agent);
     QVariantList attachable() const;
     QString activeTitle() const;
     bool costMeter() const;
@@ -190,6 +202,7 @@ signals:
     void currentChanged();
     void threadChanged();
     void modelsChanged();
+    void agentModelsChanged();
     void settingsChanged();
     /// A question needs the user, maybe in a thread that isn't open.
     void asked(QString thread);
@@ -211,6 +224,16 @@ private:
     std::unique_ptr<backends::ai::ThreadStore> m_store;
     std::unique_ptr<backends::ai::AgentThreads> m_threads;
     std::map<std::string, std::vector<application::DocumentId>> m_attached;
+    struct AgentModelList {
+        std::vector<std::pair<QString, QString>> models;
+        bool loading = false;
+        bool asked = false;
+    };
+    AgentModelList &agentModelList(const std::string &agent);
+    bool agentFound(const std::string &agent) const;
+    void saveAgentModels();
+    std::map<std::string, AgentModelList> m_agentModels;
+    int m_agentModelsRevision = 0;
     std::string m_current;
     AgentItemsModel m_items;
     int m_busySource = 0;

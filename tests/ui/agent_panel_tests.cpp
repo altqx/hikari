@@ -415,7 +415,8 @@ private slots:
         };
         ports.localSidecar = backends::ai::SidecarInstall{QStringLiteral("0.0.0-dev"), {}, flags, {}};
         ports.agents = [](backends::ai::AgentBroker &, application::ai::KeyStore &) {};
-        const bool found = QTest::currentTestFunction() == QByteArrayLiteral("agentsAreModelsOnlyWhenTheyAreFound");
+        const bool found = test == "agentsAreModelsOnlyWhenTheyAreFound" || test == "anAgentsModelsLoadWhenItsSubmenuOpensOnlyOnce"
+                           || test == "anAgentsLastModelsShowAtOnceAndAFailureKeepsThem";
         const bool onlyClaude = QTest::currentTestFunction() == QByteArrayLiteral("withOnlyClaudeCodeThePanelRunsOnIt");
         ports.agentOnPath = [found, onlyClaude](const QString &agent) {
             return found || (onlyClaude && agent == QStringLiteral("claude"));
@@ -431,6 +432,12 @@ private slots:
 
         if (test == "theAgentAndReviewOpenInTheAiSideBar")
             firstStartEmptyBefore = ui::SideBarModel::setFirstStartEmpty(false);
+        if (test == "anAgentsLastModelsShowAtOnceAndAFailureKeepsThem") {
+            ui::SettingsStore seed(at(QStringLiteral("settings.toml")));
+            seed.set(app::AgentController::kAgentModelsSetting,
+                     QStringList{QStringLiteral(R"({"agent":"codex","models":[{"id":"gpt-x","name":"GPT X"}]})")});
+            seed.sync();
+        }
         app::Application::Options options;
         options.settingsFile = at(QStringLiteral("settings.toml"));
         options.userFolder = at(QStringLiteral("user"));
@@ -1140,6 +1147,70 @@ private slots:
         floating->setPosition(available.left() + 40, available.bottom() + 1 - floating->height());
         QTRY_COMPARE(floating->geometry().bottom(), available.bottom());
         composerMenusFit(available);
+    }
+
+    QObject *openAgentModels(const QString &agentKey)
+    {
+        QObject *submenu = menu(QStringLiteral("agentModelMenu_") + agentKey);
+        if (submenu)
+            QMetaObject::invokeMethod(submenu, "open");
+        return submenu;
+    }
+
+    void anAgentsModelsLoadWhenItsSubmenuOpensOnlyOnce()
+    {
+        openPanel();
+        QCOMPARE(agent().agents().size(), 2);
+        QVERIFY(click(QStringLiteral("agentModelButton")));
+        QTRY_VERIFY(menu(QStringLiteral("agentModelMenu"))->property("opened").toBool());
+        QCOMPARE(agent().agentModelsRevision(), 0);
+        QVERIFY(!agent().agentModels(QStringLiteral("claude")).value(QStringLiteral("loading")).toBool());
+
+        QObject *claude = openAgentModels(QStringLiteral("claude"));
+        QVERIFY(claude);
+        QVERIFY(agent().agentModels(QStringLiteral("claude")).value(QStringLiteral("loading")).toBool());
+        QObject *loading = claude->findChild<QObject *>(QStringLiteral("agentModelsLoading_claude"));
+        QVERIFY(loading);
+        QVERIFY(loading->property("visible").toBool());
+        QVERIFY(!loading->property("enabled").toBool());
+        QVERIFY(!agent().agentModels(QStringLiteral("codex")).value(QStringLiteral("loading")).toBool());
+        QTRY_COMPARE(agent().agentModels(QStringLiteral("claude")).value(QStringLiteral("models")).toList().size(), 2);
+        QVERIFY(!loading->property("visible").toBool());
+        QVERIFY(claude->findChild<QObject *>(QStringLiteral("agentModel_agent:claude/")));
+        QObject *opus = nullptr;
+        QTRY_VERIFY((opus = claude->findChild<QObject *>(QStringLiteral("agentModel_agent:claude/opus"))));
+        QVERIFY(QMetaObject::invokeMethod(opus, "click"));
+        QTRY_COMPARE(agent().thread().value(QStringLiteral("model")).toString(), QStringLiteral("agent:claude\topus"));
+        QCOMPARE(agent().thread().value(QStringLiteral("modelText")).toString(), QStringLiteral("Claude Code · Opus"));
+        QTRY_COMPARE(item(QStringLiteral("agentModelButton"))->property("text").toString(), QStringLiteral("Claude Code · Opus"));
+        QVERIFY(application->settingsStore()->list(app::AgentController::kAgentModelsSetting).join(QString()).contains(QLatin1String("opus")));
+
+        const int revision = agent().agentModelsRevision();
+        QMetaObject::invokeMethod(claude, "close");
+        QVERIFY(openAgentModels(QStringLiteral("claude")));
+        QVERIFY(!agent().agentModels(QStringLiteral("claude")).value(QStringLiteral("loading")).toBool());
+        QCOMPARE(agent().agentModelsRevision(), revision);
+
+        agent().setModel(QStringLiteral("agent:claude\t"));
+        QTRY_COMPARE(agent().thread().value(QStringLiteral("modelText")).toString(), QStringLiteral("Claude Code"));
+    }
+
+    void anAgentsLastModelsShowAtOnceAndAFailureKeepsThem()
+    {
+        openPanel();
+        const auto codexModels = [this] {
+            return agent().agentModels(QStringLiteral("codex")).value(QStringLiteral("models")).toList();
+        };
+        QCOMPARE(codexModels().size(), 1);
+        QCOMPARE(codexModels().at(0).toMap().value(QStringLiteral("text")).toString(), QStringLiteral("GPT X"));
+        QVERIFY(click(QStringLiteral("agentModelButton")));
+        QObject *codex = openAgentModels(QStringLiteral("codex"));
+        QVERIFY(codex);
+        QVERIFY(agent().agentModels(QStringLiteral("codex")).value(QStringLiteral("loading")).toBool());
+        QVERIFY(codex->findChild<QObject *>(QStringLiteral("agentModel_agent:codex/gpt-x")));
+        QTRY_VERIFY(!agent().agentModels(QStringLiteral("codex")).value(QStringLiteral("loading")).toBool());
+        QCOMPARE(codexModels().size(), 1);
+        QVERIFY(codex->findChild<QObject *>(QStringLiteral("agentModel_agent:codex/")));
     }
 
     void withOnlyClaudeCodeThePanelRunsOnIt()

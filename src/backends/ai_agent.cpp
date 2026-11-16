@@ -10,7 +10,9 @@
 #include <QDir>
 #include <QFile>
 #include <QRandomGenerator>
+#include <QPointer>
 #include <QSaveFile>
+#include <QTimer>
 
 #include <algorithm>
 #include <array>
@@ -787,6 +789,9 @@ void AgentThreads::setMode(const std::string &id, AgentMode mode)
 void AgentThreads::setModel(const std::string &id, app::ModelRef model)
 {
     if (AgentThread *t = find(id)) {
+        const auto before = modelOf(*t);
+        if (!before || externalAgentOf(*before) != externalAgentOf(model))
+            m_live.erase(id);
         t->model = std::move(model);
         touch(*t);
     }
@@ -885,6 +890,53 @@ void AgentThreads::send(const std::string &id, std::string text, Json extraParts
     if (running(id))
         return setQueued(id, std::move(text));
     start(*t, std::move(text), std::move(extraParts));
+}
+
+void AgentThreads::listAgentModels(const std::string &agent, AgentModelsDone done, int timeoutMs)
+{
+    if (m_wiring.agentRefusal && !m_wiring.agentRefusal(agent).empty())
+        return done(std::nullopt);
+    AiSidecarHost *h = host(true);
+    if (!h)
+        return done(std::nullopt);
+    const std::string session = "models:" + agent;
+    h->request("session/new",
+               Json::object({{"sessionId", session},
+                             {"agent", agent},
+                             {"model", modelJson({std::string(kAgentProviderPrefix) + agent, ""})},
+                             {"system", ""},
+                             {"history", Json::array()}}),
+               [](SidecarResult) {});
+    auto answered = std::make_shared<bool>(false);
+    auto answer = [this, alive = std::weak_ptr(m_alive), h = QPointer(h), session, answered,
+                   done = std::move(done)](std::optional<std::vector<AgentModel>> models) {
+        if (*answered || !alive.lock())
+            return;
+        *answered = true;
+        if (h)
+            h->request("_hikari/session.close", Json::object({{"sessionId", session}}), [](SidecarResult) {});
+        done(std::move(models));
+    };
+    const std::uint64_t request = h->request(
+        "_hikari/session.models", Json::object({{"sessionId", session}}), [answer](SidecarResult result) {
+            const Json *list = result ? result->find("models") : nullptr;
+            if (!list || !list->isArray())
+                return answer(std::nullopt);
+            std::vector<AgentModel> models;
+            for (const Json &m : list->asArray()) {
+                std::string id = stringAt(m, "id");
+                if (id.empty())
+                    continue;
+                std::string name = stringAt(m, "name");
+                models.push_back({id, name.empty() ? id : std::move(name)});
+            }
+            answer(std::move(models));
+        });
+    QTimer::singleShot(timeoutMs, this, [h = QPointer(h), request, answer] {
+        if (h)
+            h->cancel(request);
+        answer(std::nullopt);
+    });
 }
 
 AiSidecarHost *AgentThreads::host(bool externalAgent)

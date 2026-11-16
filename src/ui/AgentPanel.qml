@@ -77,6 +77,12 @@ FocusScope {
         }
         panel.agent.setMode(m)
     }
+    function modelItemName(value) { return "agentModel_" + value.replace("\t", "/") }
+    function chooseModel(value) {
+        if (!hasThread)
+            agent.newThread()
+        agent.setModel(value)
+    }
     function send() {
         const text = composer.text.trim()
         if (text.length === 0)
@@ -776,22 +782,59 @@ FocusScope {
 
     ShellMenu {
         id: modelMenu
+        objectName: "agentModelMenu"
+        Instantiator {
+            model: panel.agent.agents
+            delegate: ShellMenu {
+                id: agentModelMenu
+                required property var modelData
+                readonly property var listed: panel.agent.agentModelsRevision >= 0 ? panel.agent.agentModels(modelData.agent) : ({})
+                objectName: "agentModelMenu_" + modelData.agent
+                title: modelData.text
+                onAboutToShow: panel.agent.loadAgentModels(modelData.agent)
+                ShellMenuItem {
+                    objectName: panel.modelItemName(agentModelMenu.modelData.value)
+                    text: qsTr("Agent default")
+                    checkable: true
+                    checked: panel.hasThread && panel.thread.model === agentModelMenu.modelData.value
+                    onTriggered: panel.chooseModel(agentModelMenu.modelData.value)
+                }
+                Repeater {
+                    model: agentModelMenu.listed.models ?? []
+                    delegate: ShellMenuItem {
+                        required property var modelData
+                        objectName: panel.modelItemName(modelData.value)
+                        text: modelData.text
+                        checkable: true
+                        checked: panel.hasThread && panel.thread.model === modelData.value
+                        onTriggered: panel.chooseModel(modelData.value)
+                    }
+                }
+                ShellMenuItem {
+                    objectName: "agentModelsLoading_" + agentModelMenu.modelData.agent
+                    text: qsTr("Loading models…")
+                    enabled: false
+                    visible: agentModelMenu.listed.loading === true
+                    height: visible ? implicitHeight : 0
+                }
+            }
+            onObjectAdded: (index, object) => modelMenu.insertMenu(index, object)
+            onObjectRemoved: (index, object) => modelMenu.removeMenu(object)
+        }
         Repeater {
-            model: panel.agent.models
+            model: panel.agent.models.filter(m => !m.agent)
             delegate: ShellMenuItem {
                 required property var modelData
+                objectName: panel.modelItemName(modelData.value)
                 text: modelData.text + "   " + modelData.provider
                 checkable: true
                 checked: panel.hasThread && panel.thread.model === modelData.value
-                onTriggered: {
-                    if (!panel.hasThread)
-                        panel.agent.newThread()
-                    panel.agent.setModel(modelData.value)
-                }
+                onTriggered: panel.chooseModel(modelData.value)
             }
         }
         MenuSeparator {}
         ShellMenuItem {
+            objectName: "agentModelSettings"
             iconRole: "settings"
             text: qsTr("Settings › AI…")
             onTriggered: panel.settingsRequested()

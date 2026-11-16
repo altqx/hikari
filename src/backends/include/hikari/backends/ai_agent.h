@@ -302,6 +302,15 @@ public:
     /// The model a thread's next turn runs on: its own, else the chat model.
     std::optional<application::ai::ModelRef> modelOf(const AgentThread &thread) const;
 
+    struct AgentModel {
+        std::string id;
+        std::string name;
+    };
+    using AgentModelsDone = std::function<void(std::optional<std::vector<AgentModel>>)>;
+    /// Starts `agent` through the sidecar and the broker to ask which models it offers, then stops it. Answers
+    /// nullopt when the agent isn't offered, refuses, fails or takes longer than `timeoutMs`.
+    void listAgentModels(const std::string &agent, AgentModelsDone done, int timeoutMs = 30'000);
+
     /// Starts a turn with `parts` (protocol Parts: text, and images for attachments), or queues it while one runs.
     void send(const std::string &id, std::string text, api::Json extraParts = api::Json::array());
     bool running(const std::string &id) const;
