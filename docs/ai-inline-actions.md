@@ -9,14 +9,14 @@ One-shot AI actions on the Lines you chose, with no agent thread ([AI8 #436](htt
 | `src/application/ai_inline.{h,cpp}` | Pure rules: which Lines are skipped, tag masking, the prompt and reading the answer. |
 | `src/backends/ai_inline_run.{h,cpp}` | `InlineRun`: one `_hikari/complete` request per Line, at most 4 at once, with Stop, the daily cap and the cost. Translate uses `TranslationRun` instead ([AI translation pipeline](ai-translation.md)). |
 | `src/app/inline_ai_controller.{h,cpp}` | `InlineAiController`: picks the Lines, starts runs, writes them into the review, and holds the actions and the Manual results. |
-| `src/ui/InlineAiMenu.qml`, `InlineAiBox.qml`, `InlineAiBar.qml` | The **AI** submenu, the box that asks for an instruction or a language, and the bar over the Grid with progress, notices and the Manual results. |
+| `src/ui/InlineAiMenu.qml`, `InlineAiBox.qml`, `InlineAiBar.qml` | The **AI actions** submenu, the box that asks for an instruction or a language, and the bar over the Grid with progress, notices and the Manual results. |
 
 ## Where it shows
 
-- **AI** in the Grid's menu, after Paste special, for the selected Lines.
-- **AI** in the Line editor's text menu and the AI button at the end of its tag strip, for the active Line. With text selected in the field, only that span changes and the rest of the Line goes as context.
-- **AI actions…** (Global 5283) opens the submenu at the active row, or at the Line editor's AI button when its text has focus. **Repeat last AI action** (Global 5284) runs the last action again on the current Lines. Neither has a default key. Both are AI commands, so they hide with AI off.
-- An action is on only when a provider model serves its role (`InlineAiController::ready`); Claude Code or Codex on `PATH` doesn't count, as inline actions don't run agents. With no model at all the submenu's last entry is **Add a model in Settings › AI…**.
+- **AI actions** in the Grid's menu, in a group of its own before Select lines visible on video, for the selected Lines.
+- **AI actions** in the Line editor's text menu and the AI button at the end of its tag strip, for the active Line. With text selected in the field, only that span changes and the rest of the Line goes as context.
+- **AI actions** (Global 5283) opens the submenu at the active row, or at the Line editor's AI button when its text has focus. **Repeat last AI action** (Global 5284) runs the last action again on the current Lines. Neither has a default key. Both are AI commands, so they hide with AI off.
+- An action is on only when a provider model serves its role (`InlineAiController::ready`); Claude Code or Codex on `PATH` doesn't count, as inline actions don't run agents. With no model at all the submenu's last entry is **Add a model in Settings › AI**; with one it is **Edit actions**. Neither has an ellipsis: both open Settings at the AI page. Your actions follow the built-in ones after a separator, and an action with **Ask each time** on ends in “…”.
 
 ## Actions
 

@@ -366,6 +366,21 @@ private slots:
         const QString text = QStringLiteral("Their going to the store tomorow.");
         QVERIFY(application->openFile(writeAss(show + QStringLiteral("/ep01.ass"), dialogue(text.toUtf8()))));
         QTRY_VERIFY_WITH_TIMEOUT(marked(text, QStringLiteral("tomorow")), kHarperWait);
+        auto *field = item("lineText");
+        auto *menu = field->findChild<QObject *>(QStringLiteral("lineTextMenu"));
+        rightClick(fieldPoint(field, text.indexOf(QStringLiteral("tomorow"))));
+        QTRY_VERIFY(menu->property("visible").toBool());
+        auto *project = field->findChild<QQuickItem *>(QStringLiteral("lineTextAddWord"));
+        auto *my = field->findChild<QQuickItem *>(QStringLiteral("lineTextAddWordOther"));
+        QVERIFY(project && project->isVisible() && my && my->isVisible());
+        QCOMPARE(project->property("text").toString(), QStringLiteral("Add “tomorow” to project dictionary"));
+        QCOMPARE(my->property("text").toString(), QStringLiteral("Add “tomorow” to my dictionary"));
+        for (QQuickItem *row : {project, my}) {
+            QCOMPARE(row->property("iconRole").toString(), QStringLiteral("dictionary-add"));
+            QCOMPARE(row->property("detailText").toString(), QString());
+        }
+        QVERIFY(QMetaObject::invokeMethod(menu, "close"));
+        QTRY_VERIFY(!menu->property("visible").toBool());
         QVERIFY(application->addGrammarWord(QStringLiteral("tomorow"), true));
         QFile words(show + QStringLiteral("/.hikari/dictionary.txt"));
         QVERIFY(words.open(QIODevice::ReadOnly));

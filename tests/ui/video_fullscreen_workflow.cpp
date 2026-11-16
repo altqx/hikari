@@ -142,7 +142,9 @@ protected:
             sync();
             callMenu(QStringLiteral("videoMenuFullScreenOn"), "open");
             note(waitForItem("mainWindow/videoMenuMonitor1", 3s)
-                                   ? getStringProperty("mainWindow/videoMenuMonitor1", "text") : "no monitor entry");
+                     ? getStringProperty("mainWindow/videoMenuMonitor0", "text") + ", "
+                           + getStringProperty("mainWindow/videoMenuMonitor1", "text")
+                     : "no monitor entry");
             invokeMethod("mainWindow/videoMenuMonitor1", "triggered", {});
             note(waitFor([&] { return changes() >= 3; }) ? "on monitor 2" : "not on monitor 2");
             wait(800ms);
@@ -151,8 +153,9 @@ protected:
             sync();
             callMenu(QStringLiteral("fullscreenMenuFullScreenOn"), "open");
             note(waitForItem("videoFullscreen/fullscreenMenuMonitor1", 3s)
-                                   ? getStringProperty("videoFullscreen/fullscreenMenuMonitor1", "text")
-                                   : "no monitor entry");
+                     ? getStringProperty("videoFullscreen/fullscreenMenuMonitor1", "text")
+                           + (getStringProperty("videoFullscreen/fullscreenMenuMonitor1", "checked") == "true" ? " (current)" : "")
+                     : "no monitor entry");
             callMenu(QStringLiteral("fullscreenMenuFullScreenOn"), "close");
             callMenu(QStringLiteral("videoFullscreenMenu"), "close");
             wait(300ms);
@@ -338,9 +341,9 @@ int main(int argc, char **argv)
         expect(o[10] == "paused, shown", "paused, the bar is back");
         expect(o[11] == "left", "Esc leaves");
         if (monitors > 1) {
-            expect(o[12] == "Monitor 2", "Full screen on offers the second monitor");
+            expect(o[12] == "Monitor 1, Monitor 2", "Full screen on lists every monitor");
             expect(o[13] == "on monitor 2", "fullscreen on the second monitor");
-            expect(o[14] == "Monitor 2", "in fullscreen Full screen on offers it again");
+            expect(o[14] == "Monitor 2 (current)", "in fullscreen Full screen on marks the current monitor");
             expect(o[15] == "left monitor 2", "Esc leaves the second monitor");
         }
     }

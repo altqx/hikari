@@ -624,6 +624,27 @@ The total is **28 menus with 257 items**: 16 right-click entries (two of them, R
 - **Reference tray.** The menu starts with Copy. Its “Also in” list comes from the right-clicked reference row, reads “title, line N”, and shows a disabled “No other occurrences” when there are none. Choosing a line in the edited document selects it there.
 - **Icons.** » (menu-more) marks only overflow; the layout switcher's dropdown uses a chevron. The visual tool rail's overflow rows are check items, as in the full-screen Tools menu.
 
+### What CX7 built: Grid and Line editor
+
+[#810](https://github.com/altqx/hikari/issues/810) (gate Q542, option A) regrouped the menus wave 8 had grown:
+
+- **Grid row menu.** 25 rows in 7 groups, at most two levels deep: clipboard (Insert ▸ … Paste special ▸) | structure (Join ▸, Split ▸, Swap lines, Make times continuous ▸, Make line group) | text (Line breaks ▸, Change case ▸, Swap dialogue alternatives, Remove tags…) | Typesetting ▸ (layers, Blur and glow layers…, Build layers with the last values, Typesetting graph… | Interpolate across lines… | Position to margins, Margins to position), Change alignment, keep position ▸, Align and distribute ▸ | AI actions ▸ | view (Select lines visible on video, Show subtitles preview, Translation matching…, Add QC note…) | Delete text, Delete N lines. The Review rows are four static rows shown while Review is on, so `context_menus.txt` lists them.
+- **Aegisub folds.** Convert Aegisub folds to line groups is hidden, not greyed, in the row and line group menus unless the file has folds; Subtitles › Convert Aegisub folds to line groups is its permanent home.
+- **Reasons.** Interpolate across lines…, Paste translation from a file… and Typesetting graph… show why they are disabled in their `reason` line, as Lock layout does.
+- **Line editor text menu.** The shared rows take the Grid's order (text rows with Remove tags… | Blur and glow layers…, Phantom ▸ | AI actions ▸), a read-only field keeps the separator after Select all, the check item reads “Check spelling as you type”, and with a Project open the two dictionary rows read “Add “word” to project dictionary” and “Add “word” to my dictionary” (dictionary-add, the default tier first).
+- **Strip » and Original text ».** Both take Tab focus and the tooltip “More options”, as does the tag list's ⋯. Text position ▸ is nine radio rows named as in the Grid (“Top left (\an7)” … “Middle centre (\an5)”), and so are the strip's picker and its tooltip. Original text » shows the bound keys. “Add a tag button…” takes the ellipsis, on the strip and in the » menu.
+- **Align and distribute ▸ and Phantom ▸.** Headings “Align” and “Distribute” carry the verb, so the rows read “Left edges” … “Vertically”; Settings › Shortcuts keeps the full names. The submenu takes align-distribute and the Phantom rows phantom-keep-start and phantom-keep-end.
+- **AI actions ▸.** One name for the submenu, the strip button and the command (no “…”: it opens a menu). Custom actions follow the built-in ones after a separator, and one that asks each time ends in “…”. “Edit actions” and “Add a model in Settings › AI” lose the ellipsis (rule 19.2). The command list says “Add QC note…”, as the menu does.
+
+### What CX7 built: video, audio and node effects
+
+[#810](https://github.com/altqx/hikari/issues/810) (gate 1, 2026-11-16) changed the area-B menus:
+
+- **Video.** Full screen on ▸ lists every monitor, Monitor 1 included, as radio rows; in full screen the current monitor is checked. Recently opened ▸ hides a heading whose list is empty and the separator between them, and the submenu itself when both lists are empty. Change aspect ratio… takes the ellipsis, and Settings › Shortcuts names it, Open video… and Open subtitles… the same way. Chapter times in the video menus have no brackets. Filters ▸ is listed in `context_menus.txt` and takes the menu's own `itemPrefix`.
+- **Audio.** Each play command has one name, the menu's, in the menus, the toolbar tooltips and Settings › Shortcuts. The bar's tooltips are the names of the rows they fold into (Waveform, Spectrum, Auto-scroll, Sync with video, Auto split), and the » tooltip is “More options”. Customise rows show or hide a button, so they show no key; Zoom and volume sliders takes audio-sliders and its heading is a `MenuHeading`. In Tap options, Snap to vocal onsets, Speed ▸ and Calibrate latency… are one group. The full-screen speaker's last row is “Audio settings” (no “…”: it opens Settings at a page, rule 19.2).
+- **Node effects.** The graph menu button shows ⋯ (panel-menu) with the tooltip “More options”. “From the library” opens a submenu, so it has no “…”, on the empty canvas button too. From a preset ▸ heads its first group “For karaoke lines”. The Export as template lines ▸ rows are plain actions with the export icon.
+- **Full screen bar.** The exit button's tooltip shows the bound key (Esc when none) through `bitmapTip`, and Shift+click sets its shortcut.
+
 ### What CX7 built: panels, tabs, Explorer and fonts
 
 [#810](https://github.com/altqx/hikari/issues/810) (the beta.4 audit, gate 1 approved 2026-11-16) built mockup sections 4–7 and 15 and the panel rows of rules 17–20:

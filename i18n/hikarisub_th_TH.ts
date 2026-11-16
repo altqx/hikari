@@ -968,8 +968,12 @@
         <translation>อุปกรณ์เอาต์พุต</translation>
     </message>
     <message>
+        <source>Audio settings</source>
+        <translation>การตั้งค่าเสียง</translation>
+    </message>
+    <message>
         <source>Audio settings…</source>
-        <translation>การตั้งค่าเสียง…</translation>
+        <translation type="vanished">การตั้งค่าเสียง…</translation>
     </message>
     <message>
         <source>Link the volume and stretch sliders</source>
@@ -1013,7 +1017,7 @@
     </message>
     <message>
         <source>Play 500 ms after the start time</source>
-        <translation>เล่นเสียง 500 มิลลิวินาทีหลังเวลาเริ่มต้น</translation>
+        <translation type="vanished">เล่นเสียง 500 มิลลิวินาทีหลังเวลาเริ่มต้น</translation>
     </message>
     <message>
         <source>Play to the end</source>
@@ -1053,7 +1057,7 @@
     </message>
     <message>
         <source>Enable / Disable automatic splitting of syllables</source>
-        <translation>เปิดหรือปิดการแบ่งพยางค์อัตโนมัติ</translation>
+        <translation type="vanished">เปิดหรือปิดการแบ่งพยางค์อัตโนมัติ</translation>
     </message>
     <message>
         <source>Auto-scroll</source>
@@ -1061,7 +1065,7 @@
     </message>
     <message>
         <source>Auto-scroll to the active line</source>
-        <translation>เลื่อนอัตโนมัติไปยังบรรทัดปัจจุบัน</translation>
+        <translation type="vanished">เลื่อนอัตโนมัติไปยังบรรทัดปัจจุบัน</translation>
     </message>
     <message>
         <source>Spectrum</source>
@@ -1086,7 +1090,7 @@
     </message>
     <message>
         <source>Play 500 ms before the start time</source>
-        <translation>เล่นเสียง 500 มิลลิวินาทีก่อนเวลาเริ่มต้น</translation>
+        <translation type="vanished">เล่นเสียง 500 มิลลิวินาทีก่อนเวลาเริ่มต้น</translation>
     </message>
     <message>
         <source>Play the first 500 ms</source>
@@ -1094,7 +1098,7 @@
     </message>
     <message>
         <source>Play 500 ms before the end time</source>
-        <translation>เล่นเสียง 500 มิลลิวินาทีก่อนเวลาสิ้นสุด</translation>
+        <translation type="vanished">เล่นเสียง 500 มิลลิวินาทีก่อนเวลาสิ้นสุด</translation>
     </message>
     <message>
         <source>Play the last 500 ms</source>
@@ -1102,7 +1106,7 @@
     </message>
     <message>
         <source>Play 500 ms after the end time</source>
-        <translation>เล่นเสียง 500 มิลลิวินาทีหลังเวลาสิ้นสุด</translation>
+        <translation type="vanished">เล่นเสียง 500 มิลลิวินาทีหลังเวลาสิ้นสุด</translation>
     </message>
     <message>
         <source>Play 500 ms after the end</source>
@@ -1198,11 +1202,11 @@
     </message>
     <message>
         <source>Waveform mode</source>
-        <translation>โหมดรูปคลื่น</translation>
+        <translation type="vanished">โหมดรูปคลื่น</translation>
     </message>
     <message>
         <source>Spectrum mode</source>
-        <translation>โหมดสเปกตรัม</translation>
+        <translation type="vanished">โหมดสเปกตรัม</translation>
     </message>
     <message>
         <source>Sync with video</source>
@@ -1210,7 +1214,7 @@
     </message>
     <message>
         <source>Sync the video and audio cursors</source>
-        <translation>ซิงค์เคอร์เซอร์วิดีโอและเสียง</translation>
+        <translation type="vanished">ซิงค์เคอร์เซอร์วิดีโอและเสียง</translation>
     </message>
     <message>
         <source>Speech</source>
@@ -1218,7 +1222,7 @@
     </message>
     <message>
         <source>More audio options</source>
-        <translation>ตัวเลือกเสียงเพิ่มเติม</translation>
+        <translation type="vanished">ตัวเลือกเสียงเพิ่มเติม</translation>
     </message>
     <message>
         <source>Go to selection start</source>
@@ -1287,6 +1291,10 @@ Output device: %2</source>
     <message>
         <source>Speech spectrum</source>
         <translation>สเปกตรัมเสียงพูด</translation>
+    </message>
+    <message>
+        <source>More options</source>
+        <translation>ตัวเลือกเพิ่มเติม</translation>
     </message>
     <message>
         <source>Zoom and volume sliders</source>
@@ -3628,39 +3636,39 @@ Output device: %2</source>
     <name>HikariSub.Editor</name>
     <message>
         <source>Bottom-left</source>
-        <translation>ล่างซ้าย</translation>
+        <translation type="vanished">ล่างซ้าย</translation>
     </message>
     <message>
         <source>Bottom-centre</source>
-        <translation>ล่างกึ่งกลาง</translation>
+        <translation type="vanished">ล่างกึ่งกลาง</translation>
     </message>
     <message>
         <source>Bottom-right</source>
-        <translation>ล่างขวา</translation>
+        <translation type="vanished">ล่างขวา</translation>
     </message>
     <message>
         <source>Middle-left</source>
-        <translation>กึ่งกลางซ้าย</translation>
+        <translation type="vanished">กึ่งกลางซ้าย</translation>
     </message>
     <message>
         <source>Centre</source>
-        <translation>กลาง</translation>
+        <translation type="vanished">กลาง</translation>
     </message>
     <message>
         <source>Middle-right</source>
-        <translation>กึ่งกลางขวา</translation>
+        <translation type="vanished">กึ่งกลางขวา</translation>
     </message>
     <message>
         <source>Top-left</source>
-        <translation>บนซ้าย</translation>
+        <translation type="vanished">บนซ้าย</translation>
     </message>
     <message>
         <source>Top-centre</source>
-        <translation>บนกึ่งกลาง</translation>
+        <translation type="vanished">บนกึ่งกลาง</translation>
     </message>
     <message>
         <source>Top-right</source>
-        <translation>บนขวา</translation>
+        <translation type="vanished">บนขวา</translation>
     </message>
     <message>
         <source>Text position</source>
@@ -3803,6 +3811,10 @@ Output device: %2</source>
         <translation>ไม่ได้เพิ่มคำว่า “%1” ลงในพจนานุกรม</translation>
     </message>
     <message>
+        <source>Check spelling as you type</source>
+        <translation>ตรวจการสะกดขณะพิมพ์</translation>
+    </message>
+    <message>
         <source>Line editor</source>
         <translation>ตัวแก้ไขบรรทัด</translation>
     </message>
@@ -3851,8 +3863,12 @@ Output device: %2</source>
         <translation>วางข้อความที่เลือก</translation>
     </message>
     <message>
+        <source>Add a tag button…</source>
+        <translation>เพิ่มปุ่มแท็ก…</translation>
+    </message>
+    <message>
         <source>Add a tag button</source>
-        <translation>เพิ่มปุ่มแท็ก</translation>
+        <translation type="vanished">เพิ่มปุ่มแท็ก</translation>
     </message>
     <message>
         <source>Edit…</source>
@@ -3872,7 +3888,7 @@ Output device: %2</source>
     </message>
     <message>
         <source>Check spelling</source>
-        <translation>ตรวจการสะกด</translation>
+        <translation type="vanished">ตรวจการสะกด</translation>
     </message>
     <message>
         <source>Original text</source>
@@ -6233,6 +6249,10 @@ Failed to copy %2 fonts.</source>
         <translation>ตามจุดแบ่งบรรทัด</translation>
     </message>
     <message>
+        <source>Typesetting</source>
+        <translation>ไทป์เซ็ต</translation>
+    </message>
+    <message>
         <source>Interpolate across lines…</source>
         <translation>ประมาณค่าระหว่างบรรทัด…</translation>
     </message>
@@ -6896,7 +6916,7 @@ Failed to copy %2 fonts.</source>
         <translation>Shift+คลิกเพื่อกำหนดปุ่มลัด</translation>
     </message>
     <message>
-        <source>AI actions…</source>
+        <source>AI actions</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -7041,11 +7061,11 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Play before the marker</source>
-        <translation>เล่นก่อนเครื่องหมาย</translation>
+        <translation type="vanished">เล่นก่อนเครื่องหมาย</translation>
     </message>
     <message>
         <source>Play after the marker</source>
-        <translation>เล่นหลังเครื่องหมาย</translation>
+        <translation type="vanished">เล่นหลังเครื่องหมาย</translation>
     </message>
     <message>
         <source>Play to the end</source>
@@ -7617,11 +7637,11 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Open subtitles</source>
-        <translation>เปิดคำบรรยาย</translation>
+        <translation type="vanished">เปิดคำบรรยาย</translation>
     </message>
     <message>
         <source>Open video</source>
-        <translation>เปิดวิดีโอ</translation>
+        <translation type="vanished">เปิดวิดีโอ</translation>
     </message>
     <message>
         <source>Play or pause</source>
@@ -7709,19 +7729,19 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Play first 500 ms</source>
-        <translation>เล่น 500 มิลลิวินาทีแรก</translation>
+        <translation type="vanished">เล่น 500 มิลลิวินาทีแรก</translation>
     </message>
     <message>
         <source>Play last 500 ms</source>
-        <translation>เล่น 500 มิลลิวินาทีสุดท้าย</translation>
+        <translation type="vanished">เล่น 500 มิลลิวินาทีสุดท้าย</translation>
     </message>
     <message>
         <source>Play 500 ms before</source>
-        <translation>เล่น 500 มิลลิวินาทีก่อนจุดเริ่มต้น</translation>
+        <translation type="vanished">เล่น 500 มิลลิวินาทีก่อนจุดเริ่มต้น</translation>
     </message>
     <message>
         <source>Play 500 ms after</source>
-        <translation>เล่น 500 มิลลิวินาทีหลังจุดสิ้นสุด</translation>
+        <translation type="vanished">เล่น 500 มิลลิวินาทีหลังจุดสิ้นสุด</translation>
     </message>
     <message>
         <source>Paste the selected text</source>
@@ -7813,7 +7833,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Change aspect ratio</source>
-        <translation>เปลี่ยนอัตราส่วนภาพ</translation>
+        <translation type="vanished">เปลี่ยนอัตราส่วนภาพ</translation>
     </message>
     <message>
         <source>5 seconds forward</source>
@@ -8133,11 +8153,47 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Add QC note</source>
-        <translation>เพิ่มโน้ต QC</translation>
+        <translation type="vanished">เพิ่มโน้ต QC</translation>
     </message>
     <message>
         <source>Perspective tracking…</source>
         <translation>การติดตามเพอร์สเปกทีฟ…</translation>
+    </message>
+    <message>
+        <source>Play before the mark</source>
+        <translation>เล่นก่อนเครื่องหมาย</translation>
+    </message>
+    <message>
+        <source>Play after the mark</source>
+        <translation>เล่นหลังเครื่องหมาย</translation>
+    </message>
+    <message>
+        <source>Play the first 500 ms</source>
+        <translation>เล่น 500 มิลลิวินาทีแรก</translation>
+    </message>
+    <message>
+        <source>Play the last 500 ms</source>
+        <translation>เล่น 500 มิลลิวินาทีสุดท้าย</translation>
+    </message>
+    <message>
+        <source>Play 500 ms before the start</source>
+        <translation>เล่น 500 มิลลิวินาทีก่อนจุดเริ่มต้น</translation>
+    </message>
+    <message>
+        <source>Play 500 ms after the end</source>
+        <translation>เล่น 500 มิลลิวินาทีหลังจุดสิ้นสุด</translation>
+    </message>
+    <message>
+        <source>Open subtitles…</source>
+        <translation>เปิดคำบรรยาย…</translation>
+    </message>
+    <message>
+        <source>Open video…</source>
+        <translation>เปิดวิดีโอ…</translation>
+    </message>
+    <message>
+        <source>Change aspect ratio…</source>
+        <translation>เปลี่ยนอัตราส่วนภาพ…</translation>
     </message>
     <message>
         <source>Apply motion data…</source>
@@ -8350,6 +8406,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Cycle \fsp back</source>
         <translation>วนรอบ \fsp ย้อนกลับ</translation>
+    </message>
+    <message>
+        <source>Add QC note…</source>
+        <translation>เพิ่มโน้ต QC…</translation>
     </message>
     <message>
         <source>Move tab to new window</source>
@@ -8570,7 +8630,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>AI</source>
-        <translation type="unfinished">AI</translation>
+        <translation type="obsolete">AI</translation>
     </message>
     <message>
         <source>Rewrite…</source>
@@ -8603,11 +8663,15 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Edit actions…</source>
+        <source>%1…</source>
+        <translation>%1…</translation>
+    </message>
+    <message>
+        <source>Edit actions</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Add a model in Settings › AI…</source>
+        <source>Add a model in Settings › AI</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -11674,7 +11738,7 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished">จากพรีเซ็ต</translation>
     </message>
     <message>
-        <source>From the library…</source>
+        <source>From the library</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -11958,10 +12022,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Graph menu</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Target: selected lines</source>
         <translation type="unfinished"></translation>
     </message>
@@ -12061,6 +12121,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Apply to the selected lines</source>
         <translation type="unfinished">นำไปใช้กับบรรทัดที่เลือก</translation>
+    </message>
+    <message>
+        <source>More options</source>
+        <translation>ตัวเลือกเพิ่มเติม</translation>
     </message>
     <message>
         <source>Only the lines selected in “Source lines” are regenerated; the others keep their output.</source>
@@ -12301,6 +12365,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Each syllable’s letters are cut into thin horizontal stripes, which fade in as it is sung.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>For karaoke lines</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -16710,6 +16778,46 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>อ้างอิงกับ</translation>
     </message>
     <message>
+        <source>Align</source>
+        <translation>จัดแนว</translation>
+    </message>
+    <message>
+        <source>Left edges</source>
+        <translation>ขอบซ้าย</translation>
+    </message>
+    <message>
+        <source>Centres</source>
+        <translation>กึ่งกลางแนวนอน</translation>
+    </message>
+    <message>
+        <source>Right edges</source>
+        <translation>ขอบขวา</translation>
+    </message>
+    <message>
+        <source>Top edges</source>
+        <translation>ขอบบน</translation>
+    </message>
+    <message>
+        <source>Middles</source>
+        <translation>กึ่งกลางแนวตั้ง</translation>
+    </message>
+    <message>
+        <source>Bottom edges</source>
+        <translation>ขอบล่าง</translation>
+    </message>
+    <message>
+        <source>Distribute</source>
+        <translation>กระจาย</translation>
+    </message>
+    <message>
+        <source>Horizontally</source>
+        <translation>แนวนอน</translation>
+    </message>
+    <message>
+        <source>Vertically</source>
+        <translation>แนวตั้ง</translation>
+    </message>
+    <message>
         <source>The active line</source>
         <translation type="vanished">บรรทัดที่ใช้งาน</translation>
     </message>
@@ -16727,35 +16835,35 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Align left edges</source>
-        <translation>จัดขอบซ้าย</translation>
+        <translation type="vanished">จัดขอบซ้าย</translation>
     </message>
     <message>
         <source>Align centres</source>
-        <translation>จัดกึ่งกลางแนวนอน</translation>
+        <translation type="vanished">จัดกึ่งกลางแนวนอน</translation>
     </message>
     <message>
         <source>Align right edges</source>
-        <translation>จัดขอบขวา</translation>
+        <translation type="vanished">จัดขอบขวา</translation>
     </message>
     <message>
         <source>Align top edges</source>
-        <translation>จัดขอบบน</translation>
+        <translation type="vanished">จัดขอบบน</translation>
     </message>
     <message>
         <source>Align middles</source>
-        <translation>จัดกึ่งกลางแนวตั้ง</translation>
+        <translation type="vanished">จัดกึ่งกลางแนวตั้ง</translation>
     </message>
     <message>
         <source>Align bottom edges</source>
-        <translation>จัดขอบล่าง</translation>
+        <translation type="vanished">จัดขอบล่าง</translation>
     </message>
     <message>
         <source>Distribute horizontally</source>
-        <translation>กระจายแนวนอน</translation>
+        <translation type="vanished">กระจายแนวนอน</translation>
     </message>
     <message>
         <source>Distribute vertically</source>
-        <translation>กระจายแนวตั้ง</translation>
+        <translation type="vanished">กระจายแนวตั้ง</translation>
     </message>
     <message>
         <source>Phantom</source>
@@ -19492,6 +19600,14 @@ because it was edited.</source>
         <translation>การตั้งค่าไวยากรณ์…</translation>
     </message>
     <message>
+        <source>Add “%1” to project dictionary</source>
+        <translation>เพิ่ม “%1” ไปยังพจนานุกรมโปรเจกต์</translation>
+    </message>
+    <message>
+        <source>Add “%1” to my dictionary</source>
+        <translation>เพิ่ม “%1” ไปยังพจนานุกรมของฉัน</translation>
+    </message>
+    <message>
         <source>Grammar · %1</source>
         <translation>ไวยากรณ์ · %1</translation>
     </message>
@@ -19506,14 +19622,6 @@ because it was edited.</source>
     <message>
         <source>Add “%1” to dictionary</source>
         <translation>เพิ่ม “%1” ไปยังพจนานุกรม</translation>
-    </message>
-    <message>
-        <source>This project</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Mine</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Add to project dictionary</source>
@@ -21207,7 +21315,7 @@ Styles deleted:
     </message>
     <message>
         <source>Tag list options</source>
-        <translation>ตัวเลือกรายการแท็ก</translation>
+        <translation type="vanished">ตัวเลือกรายการแท็ก</translation>
     </message>
     <message>
         <source>Tag list</source>
@@ -23891,7 +23999,7 @@ Styles deleted:
     </message>
     <message>
         <source>More</source>
-        <translation>เพิ่มเติม</translation>
+        <translation type="vanished">เพิ่มเติม</translation>
     </message>
     <message>
         <source>Run %1: %2, %3</source>
@@ -24366,12 +24474,16 @@ Styles deleted:
         <translation>ต้นทุนการเรนเดอร์</translation>
     </message>
     <message>
+        <source>Change aspect ratio…</source>
+        <translation>เปลี่ยนอัตราส่วนภาพ…</translation>
+    </message>
+    <message>
         <source>Exit full screen</source>
         <translation>ออกจากโหมดเต็มหน้าจอ</translation>
     </message>
     <message>
         <source>Escape</source>
-        <translation>Escape</translation>
+        <translation type="vanished">Escape</translation>
     </message>
     <message>
         <source>Full screen</source>
@@ -26938,6 +27050,10 @@ do not work on comments</source>
     <message>
         <source>Drag a panel here</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>More options</source>
+        <translation>ตัวเลือกเพิ่มเติม</translation>
     </message>
 </context>
 <context>

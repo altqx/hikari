@@ -3352,6 +3352,7 @@ ApplicationWindow {
             }
         }
         ShellMenu {
+            id: subtitlesMenu
             objectName: "subtitlesMenu"
             title: qsTr("&Subtitles")
             onBuilt: root.applyMenuShortcuts()
@@ -3513,6 +3514,14 @@ ApplicationWindow {
                     iconRole: "node-editor"
                     objectName: "typesettingGraphMenuItem"
                     action: typesettingGraphAction
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_CONVERT_FOLDS_TO_GROUPS"
+                    iconRole: "convert-folds"
+                    objectName: "convertFoldsMenuItem"
+                    text: qsTranslate("HikariSub.Grid", "Convert Aegisub folds to line groups")
+                    enabled: subtitlesMenu.visible && root.app.canConvertFolds()
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_CONVERT_FOLDS_TO_GROUPS")) root.app.convertFoldsToGroups()
                 }
                 ShellMenuItem {
                     command: "GLOBAL_SHOW_QC_NOTES"
@@ -4747,6 +4756,11 @@ ApplicationWindow {
                 const row = (root.app.settings.value("workspace.saveTiers") || []).find(r => r.startsWith("dictionary\t"))
                 dictionaryTier = row && row.endsWith("\tmine") ? "mine" : "project"
             }
+            function wordToTier(word, tier) {
+                return tier === "project" ? qsTranslate("HikariSub.Spelling", "Add “%1” to project dictionary").arg(word)
+                     : tier === "mine" ? qsTranslate("HikariSub.Spelling", "Add “%1” to my dictionary").arg(word)
+                     : qsTranslate("HikariSub.Spelling", "Add “%1” to dictionary").arg(word)
+            }
             function addWord(word, tier) {
                 const project = tiered && tier === "project"
                 const added = grammar ? root.app.addGrammarWord(word, project) : root.app.addEditorWord(word, project)
@@ -4822,20 +4836,16 @@ ApplicationWindow {
                                                                 : field.misspell.word || ""
                 iconRole: "dictionary-add"
                 objectName: field.objectName + "AddWord"
-                text: qsTranslate("HikariSub.Spelling", "Add “%1” to dictionary").arg(word)
-                detailText: !editMenu.tiered ? ""
-                    : editMenu.dictionaryTier === "project" ? qsTranslate("HikariSub.Spelling", "This project")
-                    : qsTranslate("HikariSub.Spelling", "Mine")
+                text: editMenu.wordToTier(word, editMenu.tiered ? editMenu.dictionaryTier : "")
                 visible: word.length > 0
                 height: visible ? implicitHeight : 0
                 onTriggered: editMenu.addWord(word, editMenu.dictionaryTier)
             }
             ShellMenuItem {
                 readonly property string other: editMenu.dictionaryTier === "project" ? "mine" : "project"
-                iconRole: other
+                iconRole: "dictionary-add"
                 objectName: field.objectName + "AddWordOther"
-                text: other === "project" ? qsTranslate("HikariSub.Spelling", "Add to project dictionary")
-                                          : qsTranslate("HikariSub.Spelling", "Add to my dictionary")
+                text: editMenu.wordToTier(addWordItem.word, other)
                 visible: editMenu.tiered && addWordItem.visible
                 height: visible ? implicitHeight : 0
                 onTriggered: editMenu.addWord(addWordItem.word, other)
@@ -4861,7 +4871,7 @@ ApplicationWindow {
             TextMenuItem { kind: TextMenuItem.Delete; editor: field }
             MenuSeparator {}
             TextMenuItem { kind: TextMenuItem.SelectAll; editor: field }
-            MenuSeparator { visible: !field.readOnly; height: visible ? implicitHeight : 0 }
+            MenuSeparator { objectName: field.objectName + "TextRowsSeparator" }
             LineBreaksMenu {
                 shellRoot: root
                 prefix: field.objectName
@@ -4880,6 +4890,7 @@ ApplicationWindow {
                 enabled: !field.readOnly && root.editor.hasLine
                 onTriggered: if (!root.hotkeyGesture(command)) root.app.textCommand("swapAlternatives")
             }
+            ShellMenuItem { command: "GLOBAL_REMOVE_TAGS"; iconRole: "remove-tags"; objectName: field.objectName + "RemoveTags"; action: removeTagsAction }
             MenuSeparator {}
             ShellMenuItem {
                 command: "GLOBAL_BLUR_AND_GLOW_LAYERS"
@@ -4890,7 +4901,6 @@ ApplicationWindow {
                 keepsMenuOpen: false
                 onTriggered: root.openBlurAndGlowLayers()
             }
-            ShellMenuItem { command: "GLOBAL_REMOVE_TAGS"; iconRole: "remove-tags"; objectName: field.objectName + "RemoveTags"; action: removeTagsAction }
             PhantomMenu {
                 shellRoot: root
                 prefix: field.objectName
@@ -4911,7 +4921,7 @@ ApplicationWindow {
             ShellMenuItem {
                 iconRole: "spellchecker"
                 objectName: field.objectName + "SpellingOn"
-                text: qsTranslate("HikariSub.Editor", "Check spelling")
+                text: qsTranslate("HikariSub.Editor", "Check spelling as you type")
                 checkable: true
                 checked: root.app.spellingOn
                 keepsMenuOpen: false
@@ -5802,25 +5812,18 @@ ApplicationWindow {
                 }
                 readonly property var playArounds: [
                     { id: "before", symbol: "AUDIO_PLAY_500MS_BEFORE", icon: "play-before-start",
-                      tip: qsTranslate("HikariSub.Audio", "Play 500 ms before the start time"),
                       label: qsTranslate("HikariSub.Audio", "Play 500 ms before the start") },
                     { id: "first", symbol: "AUDIO_PLAY_500MS_FIRST", icon: "play-after-start",
-                      tip: qsTranslate("HikariSub.Audio", "Play 500 ms after the start time"),
                       label: qsTranslate("HikariSub.Audio", "Play the first 500 ms") },
                     { id: "last", symbol: "AUDIO_PLAY_500MS_LAST", icon: "play-before-end",
-                      tip: qsTranslate("HikariSub.Audio", "Play 500 ms before the end time"),
                       label: qsTranslate("HikariSub.Audio", "Play the last 500 ms") },
                     { id: "after", symbol: "AUDIO_PLAY_500MS_AFTER", icon: "play-after-end",
-                      tip: qsTranslate("HikariSub.Audio", "Play 500 ms after the end time"),
                       label: qsTranslate("HikariSub.Audio", "Play 500 ms after the end") },
                     { id: "toEnd", symbol: "AUDIO_PLAY_TO_END", icon: "play-to-end",
-                      tip: qsTranslate("HikariSub.Audio", "Play to the end"),
                       label: qsTranslate("HikariSub.Audio", "Play to the end") },
                     { id: "beforeMark", symbol: "AUDIO_PLAY_BEFORE_MARK", icon: "play-before-mark",
-                      tip: qsTranslate("HikariSub.Audio", "Play before the mark"),
                       label: qsTranslate("HikariSub.Audio", "Play before the mark") },
                     { id: "afterMark", symbol: "AUDIO_PLAY_AFTER_MARK", icon: "play-after-mark",
-                      tip: qsTranslate("HikariSub.Audio", "Play after the mark"),
                       label: qsTranslate("HikariSub.Audio", "Play after the mark") }
                 ]
                 property string playAroundSetting: root.app.settings.value("audio.playAround")
@@ -6172,7 +6175,6 @@ ApplicationWindow {
                                 checked = Qt.binding(() => root.audio.onsetSnap)
                             }
                         }
-                        MenuSeparator {}
                         ShellMenu {
                             id: speedMenu
                             objectName: tapMenu.names + "TapSpeedMenu"
@@ -6262,7 +6264,7 @@ ApplicationWindow {
                             visible: audioPanel.shows("playAround")
                             iconRole: audioPanel.playAround.icon
                             symbol: audioPanel.playAround.symbol
-                            tip: audioPanel.playAround.tip
+                            tip: audioPanel.playAround.label
                             menuTip: qsTranslate("HikariSub.Audio", "Play around")
                             menu: audioPlayAroundMenu
                             onRun: root.audio.runHotkey(audioPanel.playAround.symbol)
@@ -6307,7 +6309,7 @@ ApplicationWindow {
                             iconRole: modelData.icon
                             text: modelData.label
                             symbol: modelData.symbol
-                            tip: modelData.tip
+                            tip: modelData.label
                             onRun: root.audio.runHotkey(modelData.symbol)
                         }
                         AudioSeparator {
@@ -6471,7 +6473,7 @@ ApplicationWindow {
                             faceText: qsTranslate("HikariSub.Audio", "Auto split")
                             checkable: true
                             checked: root.audio.karaokeSplitMode
-                            tip: qsTranslate("HikariSub.Audio", "Enable / Disable automatic splitting of syllables")
+                            tip: faceText
                             menuTip: qsTranslate("HikariSub.Audio", "Syllable commands")
                             menu: audioKaraokeMenu
                             arrowWidth: 9
@@ -6519,7 +6521,7 @@ ApplicationWindow {
                                 objectName: "audioWaveformMode"
                                 iconRole: "audio-waveform"
                                 text: qsTranslate("HikariSub.Audio", "Waveform")
-                                tip: qsTranslate("HikariSub.Audio", "Waveform mode")
+                                tip: text
                                 checked: !root.audio.spectrumOn
                                 onRun: { root.audio.setSpectrumOn(false); audioDisplay.forceActiveFocus() }
                             }
@@ -6528,7 +6530,7 @@ ApplicationWindow {
                                 iconRole: "spectrum"
                                 divider: true
                                 text: qsTranslate("HikariSub.Audio", "Spectrum")
-                                tip: qsTranslate("HikariSub.Audio", "Spectrum mode")
+                                tip: text
                                 checked: root.audio.spectrumOn
                                 onRun: { root.audio.setSpectrumOn(true); audioDisplay.forceActiveFocus() }
                             }
@@ -6543,7 +6545,7 @@ ApplicationWindow {
                             text: qsTranslate("HikariSub.Audio", "Auto-scroll")
                             checkable: true
                             checked: root.audio.autoScroll
-                            tip: qsTranslate("HikariSub.Audio", "Auto-scroll to the active line")
+                            tip: text
                             onToggled: { root.audio.setAutoScroll(checked); audioDisplay.forceActiveFocus() }
                         }
                         AudioButton {
@@ -6553,7 +6555,7 @@ ApplicationWindow {
                             text: qsTranslate("HikariSub.Audio", "Sync with video")
                             checkable: true
                             checked: root.audio.syncVideo
-                            tip: qsTranslate("HikariSub.Audio", "Sync the video and audio cursors")
+                            tip: text
                             onToggled: root.audio.setSyncVideo(checked)
                         }
                         AudioButton {
@@ -6576,7 +6578,7 @@ ApplicationWindow {
                             id: audioMoreButton
                             objectName: "audioMore"
                             iconRole: "menu-more"
-                            text: qsTranslate("HikariSub.Audio", "More audio options")
+                            text: qsTranslate("HikariSub.Audio", "More options")
                             tip: text
                             down: audioMoreMenu.visible
                             onRun: audioMoreMenu.popup(audioMoreButton, 0, audioMoreButton.height)
@@ -6956,15 +6958,8 @@ ApplicationWindow {
                                     objectName: "audioCustomise" + play.id[0].toUpperCase() + play.id.slice(1)
                                     iconRole: play.icon
                                     text: play.label
-                                    command: play.symbol
                                 }
-                                Label {
-                                    leftPadding: 12
-                                    rightPadding: 12
-                                    topPadding: 4
-                                    bottomPadding: 2
-                                    color: Theme.muted
-                                    font.bold: true
+                                MenuHeading {
                                     text: qsTranslate("HikariSub.Audio", "Show on the panel")
                                 }
                                 ShownItem {
@@ -6999,13 +6994,12 @@ ApplicationWindow {
                                     control: "goto"
                                     iconRole: "go-to-selection"
                                     text: qsTranslate("HikariSub.Audio", "Go to selection")
-                                    command: "AUDIO_GOTO"
                                 }
                                 MenuSeparator {}
                                 ShownItem {
                                     objectName: "audioCustomiseSliders"
                                     control: "sliders"
-                                    iconRole: "link"
+                                    iconRole: "audio-sliders"
                                     text: qsTranslate("HikariSub.Audio", "Zoom and volume sliders")
                                 }
                                 MenuSeparator {}
@@ -7379,6 +7373,8 @@ ApplicationWindow {
                         objectName: "groupMenu"
                         property var description: 0
                         property point at: Qt.point(0, 0)
+                        property bool hasFolds: false
+                        onAboutToShow: hasFolds = root.app.canConvertFolds()
                         ShellMenuItem { iconRole: "tree-select"; objectName: "groupSelect"; text: qsTranslate("HikariSub.Grid", "Select the group’s lines"); onTriggered: root.app.selectGroup(groupMenu.description) }
                         ShellMenuItem {
                             iconRole: "tree-add-lines"
@@ -7397,7 +7393,8 @@ ApplicationWindow {
                             iconRole: "convert-folds"
                             objectName: "groupConvertFolds"
                             text: qsTranslate("HikariSub.Grid", "Convert Aegisub folds to line groups")
-                            enabled: groupMenu.visible && root.app.canConvertFolds()
+                            visible: groupMenu.hasFolds
+                            height: visible ? implicitHeight : 0
                             onTriggered: if (!root.hotkeyGesture("GLOBAL_CONVERT_FOLDS_TO_GROUPS")) root.app.convertFoldsToGroups()
                         }
                         MenuSeparator {}
@@ -7435,29 +7432,45 @@ ApplicationWindow {
                         property bool canShiftTranslation: false
                         readonly property int lineCount: Math.max(1, root.shell.selectedCount)
                         property bool reviewShown: false
+                        property bool hasFolds: false
                         onAboutToShow: {
                             canPasteTranslation = root.app.canPasteTranslation()
                             canShiftTranslation = root.app.canShiftTranslation()
                             reviewShown = root.review.on && root.review.current.count !== undefined
+                            hasFolds = root.app.canConvertFolds()
                         }
-                        Instantiator {
-                            model: gridMenu.reviewShown ? [
-                                { command: "GLOBAL_KEEP_AI_CHANGE", icon: "review-keep", action: keepAiChangeAction },
-                                { command: "GLOBAL_UNDO_AI_CHANGE", icon: "undo", action: undoAiChangeAction },
-                                { command: "GLOBAL_NEXT_AI_CHANGE", icon: "chevron-down", action: nextAiChangeAction },
-                                { command: "GLOBAL_SHOW_AI_REVIEW", icon: "show", action: showAiReviewAction,
-                                  text: qsTranslate("HikariSub.Review", "Show in Review panel") }
-                            ] : []
-                            delegate: ShellMenuItem {
-                                required property var modelData
-                                objectName: "gridReview_" + modelData.command
-                                command: modelData.command
-                                iconRole: modelData.icon
-                                action: modelData.action
-                                text: modelData.text ?? modelData.action.text
-                            }
-                            onObjectAdded: (index, object) => gridMenu.insertItem(index, object)
-                            onObjectRemoved: (index, object) => gridMenu.removeItem(object)
+                        ShellMenuItem {
+                            objectName: "gridReview_GLOBAL_KEEP_AI_CHANGE"
+                            command: "GLOBAL_KEEP_AI_CHANGE"
+                            iconRole: "review-keep"
+                            action: keepAiChangeAction
+                            visible: gridMenu.reviewShown
+                            height: visible ? implicitHeight : 0
+                        }
+                        ShellMenuItem {
+                            objectName: "gridReview_GLOBAL_UNDO_AI_CHANGE"
+                            command: "GLOBAL_UNDO_AI_CHANGE"
+                            iconRole: "undo"
+                            action: undoAiChangeAction
+                            visible: gridMenu.reviewShown
+                            height: visible ? implicitHeight : 0
+                        }
+                        ShellMenuItem {
+                            objectName: "gridReview_GLOBAL_NEXT_AI_CHANGE"
+                            command: "GLOBAL_NEXT_AI_CHANGE"
+                            iconRole: "chevron-down"
+                            action: nextAiChangeAction
+                            visible: gridMenu.reviewShown
+                            height: visible ? implicitHeight : 0
+                        }
+                        ShellMenuItem {
+                            objectName: "gridReview_GLOBAL_SHOW_AI_REVIEW"
+                            command: "GLOBAL_SHOW_AI_REVIEW"
+                            iconRole: "show"
+                            action: showAiReviewAction
+                            text: qsTranslate("HikariSub.Review", "Show in Review panel")
+                            visible: gridMenu.reviewShown
+                            height: visible ? implicitHeight : 0
                         }
                         MenuSeparator {
                             objectName: "gridReviewSeparator"
@@ -7504,28 +7517,6 @@ ApplicationWindow {
                             readonly property string docsText: qsTranslate("HikariSub.Hotkeys", "Duplicate lines")
                             onTriggered: if (!root.gridGesture(this, "GRID_DUPLICATE_LINES")) root.app.duplicateLines()
                         }
-                        ShellMenuItem {
-                            command: "GLOBAL_BLUR_AND_GLOW_LAYERS"
-                            objectName: "gridBlurAndGlowLayers"
-                            iconRole: "layers"
-                            text: qsTranslate("HikariSub.Hotkeys", "Blur and glow layers…")
-                            onTriggered: if (!root.gridGesture(this, "GLOBAL_BLUR_AND_GLOW_LAYERS")) root.openBlurAndGlowLayers()
-                        }
-                        ShellMenuItem {
-                            command: "GLOBAL_BLUR_AND_GLOW_LAYERS_REPEAT"
-                            objectName: "gridBlurAndGlowLayersRepeat"
-                            iconRole: "layers-repeat"
-                            text: qsTranslate("HikariSub.Hotkeys", "Build layers with the last values")
-                            onTriggered: if (!root.gridGesture(this, "GLOBAL_BLUR_AND_GLOW_LAYERS_REPEAT")) root.repeatBlurAndGlowLayers()
-                        }
-                        ShellMenuItem {
-                            command: "GLOBAL_TYPESETTING_GRAPH"
-                            objectName: "gridTypesettingGraph"
-                            iconRole: "node-editor"
-                            text: qsTranslate("HikariSub.Hotkeys", "Typesetting graph…")
-                            enabled: !root.layoutLocked
-                            onTriggered: if (!root.gridGesture(this, "GLOBAL_TYPESETTING_GRAPH")) root.openTypesettingGraph()
-                        }
                         ShellMenuItem { command: "GRID_CUT"; iconRole: "edit-cut"; objectName: "cutLines"; standardKey: StandardKey.Cut; text: qsTranslate("HikariSub.Grid", "Cut"); onTriggered: if (!root.gridGesture(this, "GRID_CUT")) root.app.cutLines() }
                         ShellMenuItem { command: "GRID_COPY"; iconRole: "edit-copy"; objectName: "copyLines"; standardKey: StandardKey.Copy; text: qsTranslate("HikariSub.Grid", "Copy"); onTriggered: if (!root.gridGesture(this, "GRID_COPY")) root.app.copyLines() }
                         ShellMenuItem { command: "GRID_PASTE"; iconRole: "edit-paste"; objectName: "pasteLines"; standardKey: StandardKey.Paste; text: qsTranslate("HikariSub.Grid", "Paste"); onTriggered: if (!root.gridGesture(this, "GRID_PASTE")) root.app.pasteLines() }
@@ -7542,7 +7533,7 @@ ApplicationWindow {
                                 objectName: "pasteTranslation"
                                 text: qsTranslate("HikariSub.Grid", "Paste translation from a file…")
                                 enabled: gridMenu.canPasteTranslation
-                                help: root.app.translationHint
+                                reason: root.app.translationHint
                                 onTriggered: {
                                     if (root.gridGesture(this, "GRID_PASTE_TRANSLATION"))
                                         return
@@ -7550,14 +7541,6 @@ ApplicationWindow {
                                     translationFileDialog.open()
                                 }
                             }
-                        }
-                        InlineAiMenu {
-                            objectName: "gridAiMenu"
-                            controller: root.inlineAi
-                            lineCount: gridMenu.lineCount
-                            onChosen: ask => inlineAiBox.begin(ask, false, null)
-                            onRepeatRequested: root.repeatInlineAi(false, null)
-                            onSettingsRequested: root.openSettings("ai")
                         }
                         MenuSeparator {}
                         ShellMenu {
@@ -7634,18 +7617,6 @@ ApplicationWindow {
                                 onTriggered: if (!root.gridGesture(this, "GRID_SPLIT_EVERY_N")) root.openSplitEvery()
                             }
                         }
-                        ShellMenuItem { command: "GLOBAL_REMOVE_TAGS"; iconRole: "remove-tags"; objectName: "gridRemoveTags"; action: removeTagsAction }
-                        ShellMenuItem {
-                            command: "GLOBAL_INTERPOLATE_LINES"
-                            iconRole: "interpolate-lines"
-                            objectName: "interpolateLines"
-                            text: qsTranslate("HikariSub.Grid", "Interpolate across lines…")
-                            help: root.shell.selectedCount < 3
-                                  ? qsTranslate("HikariSub.Grid", "Select at least three lines: the first, the last and the lines between them.")
-                                  : qsTranslate("HikariSub.Grid", "Fills the lines between the first and last selected line with the tag values between theirs")
-                            enabled: root.shell.hasEditingTarget && root.shell.selectedCount >= 3
-                            onTriggered: if (!root.hotkeyGesture("GLOBAL_INTERPOLATE_LINES")) root.openInterpolateLines()
-                        }
                         ShellMenuItem { command: "GRID_SWAP_LINES"; iconRole: "swap-lines"; objectName: "swapLines"; text: qsTranslate("HikariSub.Grid", "Swap lines"); onTriggered: if (!root.gridGesture(this, "GRID_SWAP_LINES")) root.app.swapLines() }
                         ShellMenu {
                             objectName: "gridContinuousMenu"
@@ -7670,7 +7641,8 @@ ApplicationWindow {
                             iconRole: "convert-folds"
                             objectName: "convertFolds"
                             text: qsTranslate("HikariSub.Grid", "Convert Aegisub folds to line groups")
-                            enabled: gridMenu.visible && root.app.canConvertFolds()
+                            visible: gridMenu.hasFolds
+                            height: visible ? implicitHeight : 0
                             onTriggered: if (!root.hotkeyGesture("GLOBAL_CONVERT_FOLDS_TO_GROUPS")) root.app.convertFoldsToGroups()
                         }
                         MenuSeparator {}
@@ -7683,24 +7655,76 @@ ApplicationWindow {
                             text: qsTranslate("HikariSub.Text", "Swap dialogue alternatives")
                             onTriggered: if (!root.hotkeyGesture(command)) root.app.textCommand("swapAlternatives")
                         }
+                        ShellMenuItem { command: "GLOBAL_REMOVE_TAGS"; iconRole: "remove-tags"; objectName: "gridRemoveTags"; action: removeTagsAction }
                         MenuSeparator {}
+                        ShellMenu {
+                            objectName: "gridTypesettingMenu"
+                            iconRole: "layers"
+                            title: qsTranslate("HikariSub.Grid", "Typesetting")
+                            ShellMenuItem {
+                                command: "GLOBAL_BLUR_AND_GLOW_LAYERS"
+                                objectName: "gridBlurAndGlowLayers"
+                                iconRole: "layers"
+                                text: qsTranslate("HikariSub.Hotkeys", "Blur and glow layers…")
+                                onTriggered: if (!root.gridGesture(this, "GLOBAL_BLUR_AND_GLOW_LAYERS")) root.openBlurAndGlowLayers()
+                            }
+                            ShellMenuItem {
+                                command: "GLOBAL_BLUR_AND_GLOW_LAYERS_REPEAT"
+                                objectName: "gridBlurAndGlowLayersRepeat"
+                                iconRole: "layers-repeat"
+                                text: qsTranslate("HikariSub.Hotkeys", "Build layers with the last values")
+                                onTriggered: if (!root.gridGesture(this, "GLOBAL_BLUR_AND_GLOW_LAYERS_REPEAT")) root.repeatBlurAndGlowLayers()
+                            }
+                            ShellMenuItem {
+                                command: "GLOBAL_TYPESETTING_GRAPH"
+                                objectName: "gridTypesettingGraph"
+                                iconRole: "node-editor"
+                                text: qsTranslate("HikariSub.Hotkeys", "Typesetting graph…")
+                                enabled: !root.layoutLocked
+                                reason: root.layoutLocked ? qsTranslate("HikariSub.Workspace", "The layout is locked") : ""
+                                onTriggered: if (!root.gridGesture(this, "GLOBAL_TYPESETTING_GRAPH")) root.openTypesettingGraph()
+                            }
+                            MenuSeparator {}
+                            ShellMenuItem {
+                                command: "GLOBAL_INTERPOLATE_LINES"
+                                iconRole: "interpolate-lines"
+                                objectName: "interpolateLines"
+                                text: qsTranslate("HikariSub.Grid", "Interpolate across lines…")
+                                help: qsTranslate("HikariSub.Grid", "Fills the lines between the first and last selected line with the tag values between theirs")
+                                reason: root.shell.selectedCount < 3
+                                        ? qsTranslate("HikariSub.Grid", "Select at least three lines: the first, the last and the lines between them.") : ""
+                                enabled: root.shell.hasEditingTarget && root.shell.selectedCount >= 3
+                                onTriggered: if (!root.hotkeyGesture("GLOBAL_INTERPOLATE_LINES")) root.openInterpolateLines()
+                            }
+                            MenuSeparator {}
+                            ShellMenuItem {
+                                command: "GLOBAL_POSITION_TO_MARGINS"
+                                iconRole: "pos-to-margins"
+                                objectName: "gridPositionToMargins"
+                                text: qsTranslate("HikariSub.Position", "Position to margins")
+                                onTriggered: if (!root.hotkeyGesture(command)) root.app.positionToMargins()
+                            }
+                            ShellMenuItem {
+                                command: "GLOBAL_MARGINS_TO_POSITION"
+                                iconRole: "margins-to-pos"
+                                objectName: "gridMarginsToPosition"
+                                text: qsTranslate("HikariSub.Position", "Margins to position")
+                                onTriggered: if (!root.hotkeyGesture(command)) root.app.marginsToPosition()
+                            }
+                        }
                         ChangeAlignmentMenu { shellRoot: root; prefix: "grid" }
                         AlignDistributeMenu { shellRoot: root; prefix: "grid" }
-                        ShellMenuItem {
-                            command: "GLOBAL_POSITION_TO_MARGINS"
-                            iconRole: "pos-to-margins"
-                            objectName: "gridPositionToMargins"
-                            text: qsTranslate("HikariSub.Position", "Position to margins")
-                            onTriggered: if (!root.hotkeyGesture(command)) root.app.positionToMargins()
-                        }
-                        ShellMenuItem {
-                            command: "GLOBAL_MARGINS_TO_POSITION"
-                            iconRole: "margins-to-pos"
-                            objectName: "gridMarginsToPosition"
-                            text: qsTranslate("HikariSub.Position", "Margins to position")
-                            onTriggered: if (!root.hotkeyGesture(command)) root.app.marginsToPosition()
-                        }
                         MenuSeparator {}
+                        InlineAiMenu {
+                            id: gridAiMenu
+                            objectName: "gridAiMenu"
+                            controller: root.inlineAi
+                            lineCount: gridMenu.lineCount
+                            onChosen: ask => inlineAiBox.begin(ask, false, null)
+                            onRepeatRequested: root.repeatInlineAi(false, null)
+                            onSettingsRequested: root.openSettings("ai")
+                        }
+                        MenuSeparator { visible: gridAiMenu.shown; height: visible ? implicitHeight : 0 }
                         ShellMenuItem {
                             command: "GRID_SELECT_VISIBLE_LINES"
                             iconRole: "select-visible"
@@ -7723,6 +7747,14 @@ ApplicationWindow {
                             enabled: gridMenu.canShiftTranslation
                             onTriggered: if (!root.gridGesture(this, "GRID_TRANSLATION_DIALOG")) root.lazy(translationShiftWindowLoader).open()
                         }
+                        ShellMenuItem {
+                            command: "GLOBAL_ADD_QC_NOTE"
+                            iconRole: "qc-notes"
+                            objectName: "addQcNote"
+                            text: qsTranslate("HikariSub.QcNotes", "Add QC note…")
+                            enabled: root.qcNotes.editable
+                            onTriggered: if (!root.gridGesture(this, "GLOBAL_ADD_QC_NOTE")) root.addQcNote(root.qcNotes.lineStart())
+                        }
                         MenuSeparator {}
                         ShellMenuItem { command: "GLOBAL_REMOVE_TEXT"; iconRole: "clear"; objectName: "deleteText"; text: qsTranslate("HikariSub.Grid", "Delete text"); onTriggered: if (!root.gridGesture(this, "GLOBAL_REMOVE_TEXT")) root.app.deleteText() }
                         ShellMenuItem {
@@ -7732,15 +7764,6 @@ ApplicationWindow {
                             text: qsTranslate("HikariSub.Grid", "Delete %n line(s)", "", gridMenu.lineCount)
                             readonly property string docsText: qsTranslate("HikariSub.Hotkeys", "Delete line")
                             onTriggered: if (!root.gridGesture(this, "GLOBAL_REMOVE_LINES")) root.app.deleteLines()
-                        }
-                        MenuSeparator {}
-                        ShellMenuItem {
-                            command: "GLOBAL_ADD_QC_NOTE"
-                            iconRole: "qc-notes"
-                            objectName: "addQcNote"
-                            text: qsTranslate("HikariSub.QcNotes", "Add QC note…")
-                            enabled: root.qcNotes.editable
-                            onTriggered: if (!root.gridGesture(this, "GLOBAL_ADD_QC_NOTE")) root.addQcNote(root.qcNotes.lineStart())
                         }
                     }
                     GridColumnsMenu {
@@ -10370,8 +10393,8 @@ ApplicationWindow {
         const key = root.boundKeys(symbol, window)
         return (key.length ? text + " (" + key + ")" : text) + "\n" + qsTranslate("HikariSub.Hotkeys", "Shift+click to set a shortcut")
     }
-    function bitmapTip(text, symbol, window) {
-        const key = root.boundKeys(symbol, window)
+    function bitmapTip(text, symbol, window, unboundKey) {
+        const key = root.boundKeys(symbol, window) || (unboundKey ?? "")
         return (key.length ? text + " (" + key + ")" : text) + "\n" + qsTranslate("HikariSub.Hotkeys", "Shift+click to set a shortcut")
     }
     // MUST KILL: kind is true or a string ("menu", "mapped", "macro", "bitmap"); two maps the second (id - 10) hotkey
@@ -10494,7 +10517,7 @@ ApplicationWindow {
     }
     Action {
         id: aiActionsAction
-        text: qsTranslate("HikariSub.Hotkeys", "AI actions…")
+        text: qsTranslate("HikariSub.Hotkeys", "AI actions")
         enabled: root.inlineAi.on
         onTriggered: if (!root.hotkeyGesture("GLOBAL_AI_ACTIONS")) root.openInlineAiMenu()
     }

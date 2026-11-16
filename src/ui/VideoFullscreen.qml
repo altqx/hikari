@@ -482,12 +482,9 @@ Window {
                         objectName: "fullscreenExit"
                         iconRole: "fullscreen-exit"
                         text: qsTr("Exit full screen")
-                        tip: {
-                            const key = fs.shell.boundKeys("VIDEO_FULL_SCREEN", 3)
-                            return qsTr("Exit full screen") + " (" + (key.length ? key : qsTr("Escape")) + ")"
-                        }
+                        tip: fs.shell.bitmapTip(text, "VIDEO_FULL_SCREEN", 3, ShellMenus.keyText("Esc"))
                         focusPolicy: Qt.NoFocus
-                        onClicked: fs.controller.leave()
+                        onClicked: if (!fs.shell.hotkeyGesture("VIDEO_FULL_SCREEN", 3, "bitmap")) fs.controller.leave()
                     }
                 }
             }

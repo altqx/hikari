@@ -62,7 +62,7 @@ The manifest marks these `pending` until their card places them.
 | tab-to-window | MW2 #630 | Move tab to window ▸ (5222; the windows are entries named by data) |
 | qc-notes | FA20 #577 | View › QC notes (panel 12), Subtitles › QC notes… (5241): the approved mockup's flag |
 | qc-done-reset | FA20 #577 | QC notes: Mark all as not done |
-| node-library | NE2 #424 | the graph menu's From the library… |
+| node-library | NE2 #424 | the graph menu's From the library |
 | compact | AI21 #725 | Compact conversation (the thread's ⋯ menu, the 97% offer) |
 | review-panel | AI2 #430 | View › Review panel, Show Review panel |
 | web-search | AI23 #742 | Let AI search the web, the composer's web toggle |

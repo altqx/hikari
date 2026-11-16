@@ -164,6 +164,16 @@ TEST_F(Karaoke, AFixtureSongIsSplitSnappedAndTimedThroughTheTools)
     EXPECT_TRUE(checked->find("problems")->asArray().empty()) << checked->dump();
 }
 
+TEST_F(Karaoke, AnUntaggedLineIsOneSyllableWithTheLinesTimes)
+{
+    const Result syllables = call("karaoke.syllables", R"({"line": 1})");
+    ASSERT_TRUE(syllables) << syllables.error().message;
+    const auto &list = syllables->find("syllables")->asArray();
+    ASSERT_EQ(list.size(), 1u);
+    EXPECT_EQ(list[0].find("start")->asInt(), 1000);
+    EXPECT_EQ(list[0].find("end")->asInt(), 3000);
+}
+
 TEST_F(Karaoke, TimingNeedsOneAscendingEndPerSyllable)
 {
     const Result count = call("karaoke.time", R"({"line": 3, "ends": [5500]})");
