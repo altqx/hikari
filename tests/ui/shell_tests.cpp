@@ -771,6 +771,37 @@ class ShellTest : public QObject {
                     return found;
         return nullptr;
     }
+    QQuickItem *tabTitled(const QString &title) const
+    {
+        std::function<QQuickItem *(QQuickItem *)> walk = [&](QQuickItem *from) -> QQuickItem * {
+            if (from->objectName().startsWith(QLatin1String("dockTab")) && from->property("text").toString() == title
+                && from->isVisible())
+                return from;
+            for (QQuickItem *child : from->childItems())
+                if (QQuickItem *found = walk(child))
+                    return found;
+            return nullptr;
+        };
+        return walk(window->contentItem());
+    }
+    bool headerAndMenuButtonInside(QObject *dock, const QRectF &view)
+    {
+        const QString panel = dock->property("uniqueName").toString();
+        const auto inView = [&](QQuickItem *it) {
+            return it && it->isVisible() && it->window() == window
+                && view.contains(it->mapRectToScene(QRectF(0, 0, it->width(), it->height())));
+        };
+        if (!dockHeader(panel)) {
+            QQuickItem *tab = tabTitled(dock->property("title").toString());
+            if (!inView(tab))
+                return false;
+            QTest::mouseClick(window, Qt::LeftButton, {}, tab->mapToScene(QPointF(tab->width() / 2, tab->height() / 2)).toPoint());
+            if (!QTest::qWaitFor([&] { return dockHeader(panel) != nullptr; }, 1000))
+                return false;
+        }
+        QQuickItem *header = dockHeader(panel);
+        return inView(header) && inView(findItem(header, QStringLiteral("dockMenuButton")));
+    }
     bool openPanelMenu(const QString &panel)
     {
         // KDDockWidgets deletes a regrouped panel's old group later; until then its header still shows the panel, #1098.
@@ -7928,6 +7959,7 @@ private slots:
 
         const QString spelling = QStringLiteral("Spellchecker");
         QVERIFY(names.contains(spelling));
+        QVERIFY(QMetaObject::invokeMethod(item<QObject>("spellDock"), "setAsCurrentTab"));
         QQuickItem *header = nullptr;
         QTRY_VERIFY((header = dockHeader(spelling)) != nullptr);
         QTRY_VERIFY2(header->height() >= header->implicitHeight(),
@@ -7936,6 +7968,73 @@ private slots:
         const QSize minimum = ui::Docking().minimumSize(spelling);
         QVERIFY2(place.height() >= minimum.height(),
                  qPrintable(QStringLiteral("%1 < %2").arg(place.height()).arg(minimum.height())));
+    }
+
+    void everyPanelsMenuButtonStaysInTheDockingArea_data()
+    {
+        QTest::addColumn<QString>("arrangement");
+        QTest::addColumn<QSize>("size");
+        for (const char *name : {"Editing", "Timing", "Translation", "Typesetting", "Karaoke", "NodeEffects"})
+            for (const QSize size : {QSize(1280, 800), QSize(1366, 768)})
+                QTest::addRow("%s %dx%d", name, size.width(), size.height()) << QString::fromLatin1(name) << size;
+    }
+
+    void everyPanelsMenuButtonStaysInTheDockingArea()
+    {
+        QFETCH(QString, arrangement);
+        QFETCH(QSize, size);
+        window->resize(size);
+        QTRY_COMPARE(window->size(), size);
+        QObject *root = engine->rootObjects().first();
+        QTRY_VERIFY(root->property("sideBarsLoaded").toBool());
+        QVERIFY(QMetaObject::invokeMethod(root, "resetSideBars"));
+        QVERIFY(application->openFile(episode));
+        if (arrangement == QLatin1String("Translation"))
+            QVERIFY(application->turnOnTranslationMode());
+        else if (arrangement == QLatin1String("NodeEffects"))
+            QVERIFY(QMetaObject::invokeMethod(root, "setNodeEffects", Q_ARG(QVariant, true)));
+        else
+            QVERIFY(application->workspaceLayout().applyPreset(arrangement));
+        QVERIFY(application->openReference(original));
+        for (const char *name : {"referenceDock", "spellDock", "logDock"}) {
+            auto *dock = item<QObject>(name);
+            QVERIFY(QMetaObject::invokeMethod(root, "showPanel", Q_ARG(QVariant, QVariant::fromValue(dock))));
+            QTRY_VERIFY2(dock->property("isOpen").toBool(), name);
+        }
+        QTRY_COMPARE(window->size(), size);
+        QQuickItem *area = item("dockingArea");
+        QStringList docked;
+        QStringList unreachable;
+        const auto reach = [&] {
+            docked.clear();
+            unreachable.clear();
+            const QRectF areaRect = area->mapRectToScene(QRectF(0, 0, area->width(), area->height()));
+            for (const QVariant &value : root->property("dockList").value<QJSValue>().toVariant().toList()) {
+                auto *dock = value.value<QObject *>();
+                QVariant inSideBar;
+                QMetaObject::invokeMethod(root, "inSideBar", Q_RETURN_ARG(QVariant, inSideBar), Q_ARG(QVariant, QVariant::fromValue(dock)));
+                if (!dock->property("isOpen").toBool() || dock->property("isFloating").toBool() || inSideBar.toBool())
+                    continue;
+                const QString panel = dock->property("uniqueName").toString();
+                docked << panel;
+                if (!headerAndMenuButtonInside(dock, areaRect))
+                    unreachable << panel;
+            }
+            return unreachable.isEmpty();
+        };
+        const auto places = [&] {
+            auto *docking = engine->singletonInstance<ui::Docking *>("Hikari.Ui", "Docking");
+            const QSize least = docking->layoutMinimumSize(area->property("uniqueName").toString());
+            QString out = QStringLiteral("area %1x%2 layout minimum %3x%4;").arg(area->width()).arg(area->height())
+                              .arg(least.width()).arg(least.height());
+            for (const QString &panel : std::as_const(docked)) {
+                const QRect place = docking->placeInLayout(panel);
+                out += QStringLiteral(" %1 %2x%3+%4+%5;").arg(panel).arg(place.width()).arg(place.height()).arg(place.x()).arg(place.y());
+            }
+            return out;
+        };
+        QTRY_VERIFY2(reach(), qPrintable(unreachable.join(u", ") + QLatin1Char('\n') + places()));
+        QVERIFY2(docked.contains(QStringLiteral("Spellchecker")) && docked.size() >= 4, qPrintable(docked.join(u", ")));
     }
 
     void panelMenusReadInTheOrderTheyShow()

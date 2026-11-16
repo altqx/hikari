@@ -1542,6 +1542,19 @@ private slots:
         QVERIFY(opened->frameGeometry().contains(drop));
     }
 
+    void groupsByNearnessPutsTheLongestSharedEdgeFirstThenTheLargest()
+    {
+        const QRect row(0, 600, 1000, 100);
+        QCOMPARE(ui::groupsByNearness(row, {QRect(601, 0, 399, 599), QRect(0, 0, 600, 599)}), (QList<int>{1, 0}));
+        QCOMPARE(ui::groupsByNearness(row, {QRect(0, 0, 500, 599), QRect(500, 0, 500, 599)}), (QList<int>{0, 1}));
+        const QRect column(800, 0, 200, 600);
+        QCOMPARE(ui::groupsByNearness(column, {QRect(0, 0, 400, 600), QRect(0, 0, 799, 600)}), (QList<int>{1, 0}));
+        QCOMPARE(ui::groupsByNearness(column, {QRect(0, 0, 100, 100), QRect(0, 700, 300, 300), QRect(0, 0, 799, 50)}),
+                 (QList<int>{2, 1, 0}));
+        QCOMPARE(ui::groupsByNearness(column, {QRect(0, 0, 100, 100), QRect(0, 700, 100, 100)}), (QList<int>{0, 1}));
+        QCOMPARE(ui::groupsByNearness(column, {}), QList<int>{});
+    }
+
     void wholeOnScreensMovesAFrameWholeOntoTheScreenItMostlyOverlaps()
     {
         const QRect left(0, 0, 1600, 1000);

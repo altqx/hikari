@@ -40,6 +40,8 @@
 #include <qpa/qplatformnativeinterface.h>
 
 #include <algorithm>
+#include <cstdlib>
+#include <numeric>
 
 #ifdef Q_OS_WIN
 #include <qt_windows.h>
@@ -664,6 +666,32 @@ QRect wholeOnScreenAt(const QRect &frame, QPoint point, const QList<QRect> &scre
     return holding->contains(frame) ? frame : wholeOn(frame, *holding);
 }
 
+QList<int> groupsByNearness(const QRect &place, const QList<QRect> &groups)
+{
+    constexpr int kSeparatorSlack = 8;
+    const auto touches = [](int a, int b) { return std::abs(a - b) <= kSeparatorSlack; };
+    const auto overlap = [](int from, int to, int otherFrom, int otherTo) { return std::min(to, otherTo) - std::max(from, otherFrom) + 1; };
+    const auto sharedEdge = [&](const QRect &group) {
+        int edge = 0;
+        if (touches(group.left(), place.right() + 1) || touches(place.left(), group.right() + 1))
+            edge = overlap(place.top(), place.bottom(), group.top(), group.bottom());
+        if (touches(group.top(), place.bottom() + 1) || touches(place.top(), group.bottom() + 1))
+            edge = std::max(edge, overlap(place.left(), place.right(), group.left(), group.right()));
+        return std::max(edge, 0);
+    };
+    QList<int> order(groups.size());
+    std::iota(order.begin(), order.end(), 0);
+    const auto key = [&](int i) { return std::pair{qint64(sharedEdge(groups[i])), qint64(groups[i].width()) * groups[i].height()}; };
+    std::stable_sort(order.begin(), order.end(), [&](int a, int b) {
+        const auto [edgeA, areaA] = key(a);
+        const auto [edgeB, areaB] = key(b);
+        if ((edgeA > 0) != (edgeB > 0))
+            return edgeA > 0;
+        return edgeA > 0 ? edgeA > edgeB : areaA > areaB;
+    });
+    return order;
+}
+
 QRect mostlyOnScreens(const QRect &frame, const QList<QRect> &screens, const QRect &fallback)
 {
     qint64 on = 0;
@@ -1212,6 +1240,32 @@ KDDockWidgets::Core::Group *groupOf(KDDockWidgets::Core::DockWidget *dock)
             return group;
     return nullptr;
 }
+}
+
+bool Docking::fitFirstPlacement(const QString &uniqueName)
+{
+    KDDockWidgets::Core::DockWidget *dock = dockByName(uniqueName);
+    KDDockWidgets::Core::Group *own = groupOf(dock);
+    if (!own || !own->isInMainWindow() || own->dockWidgetCount() > 1)
+        return false;
+    KDDockWidgets::Core::MainWindow *main = own->mainWindow();
+    const QSize room(main->view()->size());
+    const QSize least(main->layout()->layoutMinimumSize());
+    if (least.boundedTo(room) == least)
+        return false;
+    QList<KDDockWidgets::Core::Group *> others;
+    QList<QRect> places;
+    for (KDDockWidgets::Core::Group *group : KDDockWidgets::DockRegistry::self()->groups()) {
+        if (group == own || !group->isInMainWindow() || group->mainWindow() != main || !group->currentDockWidget())
+            continue;
+        others << group;
+        places << group->view()->geometry();
+    }
+    const QList<int> order = groupsByNearness(own->view()->geometry(), places);
+    if (order.isEmpty())
+        return false;
+    others[order.first()]->currentDockWidget()->addDockWidgetAsTab(dock);
+    return true;
 }
 
 QRect Docking::placeInLayout(const QString &uniqueName) const

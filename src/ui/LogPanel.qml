@@ -93,7 +93,10 @@ Pane {
                 placeholderText: qsTr("Filter")
                 text: panel.entries.filterText
                 selectByMouse: true
-                Layout.preferredWidth: 220
+                Layout.fillWidth: true
+                Layout.minimumWidth: 120
+                Layout.preferredWidth: 120
+                Layout.maximumWidth: 220
                 Accessible.name: qsTr("Filter the Log")
                 onTextEdited: panel.entries.filterText = text
                 Keys.onEscapePressed: event => {
