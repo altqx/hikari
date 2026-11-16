@@ -19,7 +19,6 @@
 
 #include <QCoreApplication>
 #include <QDir>
-#include <QSslConfiguration>
 #include <QElapsedTimer>
 #include <QFile>
 #include <QFileInfo>
@@ -171,10 +170,9 @@ AiFeatures::Ports AiFeatures::defaultPorts(const QString &userFolder, api::Api *
                     std::make_shared<backends::ai::CodexLease>(keys, codexHome),
                     QCoreApplication::applicationFilePath())) {
 #ifdef Q_OS_WIN
-                // A low-rights token can't open the user's root store, so Codex gets its roots as a file (#1193).
-                if (const QString roots = codexHome + QStringLiteral("/system-roots.pem");
-                    backends::ai::writeCaBundle(roots, QSslConfiguration::systemCaCertificates()))
-                    spec->environment.insert(QStringLiteral("CODEX_CA_CERTIFICATE"), QDir::toNativeSeparators(roots));
+                // A low-rights token can't load the native roots, so Codex reads the user's own as a file (#1193).
+                if (!backends::ai::userAndMachineRoots().isEmpty())
+                    backends::ai::lendRoots(*spec, agents + QStringLiteral("/codex/roots"));
 #endif
                 broker.add("codex", std::move(*spec));
             }

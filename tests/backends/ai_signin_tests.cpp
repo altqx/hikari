@@ -14,6 +14,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QSaveFile>
+#include <QSet>
 #include <QTcpServer>
 #include <QSslCertificate>
 #include <QSslConfiguration>
@@ -21,6 +22,11 @@
 #include <gtest/gtest.h>
 
 #include <map>
+
+#ifdef Q_OS_WIN
+#include <windows.h>
+#include <wincrypt.h>
+#endif
 
 using namespace hikari::backends::ai;
 using hikari::backends::SecretWrite;
@@ -642,3 +648,81 @@ TEST(CaBundle, TheSystemRootsRoundTripAsOnePemFileAndNoneWritesNothing)
     EXPECT_FALSE(hikari::backends::ai::writeCaBundle(dir.filePath(QStringLiteral("none.pem")), {}));
     EXPECT_FALSE(QFileInfo::exists(dir.filePath(QStringLiteral("none.pem"))));
 }
+
+TEST(CaBundle, LentRootsAreWrittenAfreshAtEachStartReadOnlyAndGoWithTheLastExit)
+{
+    const QList<QSslCertificate> system = QSslConfiguration::systemCaCertificates();
+    if (system.size() < 2)
+        GTEST_SKIP() << "This system has too few CA certificates";
+    QTemporaryDir dir;
+    const QString folder = dir.filePath(QStringLiteral("roots"));
+    const QString pem = folder + QStringLiteral("/roots.pem");
+    QDir().mkpath(folder);
+    QFile left(pem);
+    ASSERT_TRUE(left.open(QIODevice::WriteOnly));
+    left.close();
+
+    QList<QSslCertificate> roots{system[0]};
+    int befores = 0, afters = 0;
+    QString innerError;
+    AgentSpec spec;
+    spec.profile = hikari::backends::sandbox::Profile{.readWrite = {dir.filePath(QStringLiteral("home"))}};
+    spec.before = [&](std::function<void(QString)> go) {
+        ++befores;
+        go(innerError);
+    };
+    spec.after = [&] { ++afters; };
+    lendRoots(spec, folder, [&] { return roots; });
+    EXPECT_FALSE(QFileInfo::exists(pem));
+    EXPECT_EQ(spec.environment.value(QStringLiteral("CODEX_CA_CERTIFICATE")), QDir::toNativeSeparators(pem));
+    EXPECT_EQ(spec.profile->read, QStringList{folder});
+    EXPECT_FALSE(spec.profile->readWrite.contains(folder));
+
+    const auto start = [&] {
+        std::optional<QString> answer;
+        spec.before([&](QString error) { answer = error; });
+        return answer.value_or(QStringLiteral("no answer"));
+    };
+    EXPECT_EQ(start(), QString());
+    EXPECT_EQ(QSslCertificate::fromPath(pem, QSsl::Pem), roots);
+    roots = {system[1]};
+    EXPECT_EQ(start(), QString());
+    EXPECT_EQ(QSslCertificate::fromPath(pem, QSsl::Pem), roots);
+    EXPECT_EQ(befores, 2);
+
+    spec.after();
+    EXPECT_TRUE(QFileInfo::exists(pem));
+    spec.after();
+    EXPECT_FALSE(QFileInfo::exists(pem));
+    EXPECT_EQ(afters, 2);
+
+    innerError = QStringLiteral("Sign in first");
+    EXPECT_EQ(start(), innerError);
+    EXPECT_FALSE(QFileInfo::exists(pem));
+    innerError.clear();
+    roots.clear();
+    EXPECT_FALSE(start().isEmpty());
+    EXPECT_EQ(befores, 3);
+}
+
+#ifdef Q_OS_WIN
+TEST(CaBundle, TheExportIsTheUserAndMachineRootStoresAndNothingElse)
+{
+    QSet<QByteArray> stores;
+    for (const DWORD location : {CERT_SYSTEM_STORE_CURRENT_USER, CERT_SYSTEM_STORE_LOCAL_MACHINE}) {
+        HCERTSTORE store = CertOpenStore(CERT_STORE_PROV_SYSTEM_W, 0, 0,
+                                         location | CERT_STORE_READONLY_FLAG | CERT_STORE_OPEN_EXISTING_FLAG, L"ROOT");
+        ASSERT_NE(store, nullptr);
+        for (PCCERT_CONTEXT c = CertEnumCertificatesInStore(store, nullptr); c; c = CertEnumCertificatesInStore(store, c))
+            stores.insert(QByteArray(reinterpret_cast<const char *>(c->pbCertEncoded), c->cbCertEncoded));
+        CertCloseStore(store, 0);
+    }
+    QSet<QByteArray> exported;
+    const QList<QSslCertificate> roots = userAndMachineRoots();
+    for (const QSslCertificate &root : roots)
+        exported.insert(root.toDer());
+    ASSERT_FALSE(stores.isEmpty());
+    EXPECT_EQ(exported.size(), roots.size());
+    EXPECT_EQ(exported, stores);
+}
+#endif
