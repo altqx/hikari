@@ -15,8 +15,12 @@ struct KaraokeSyllable {
     std::string stripped; // without them
 };
 
+// MUST KILL: untagged Lines keep absolute times until Q558 (#1174)
+enum class UntaggedLine { Relative, BeforeQ558 };
+
 // Index 0 is an empty syllable; without a karaoke tag, index 1 is the whole Line as one "k"
-// syllable timed from `startMs` to `endMs`.
-std::vector<KaraokeSyllable> karaokeSyllables(std::string_view text, std::int64_t startMs, std::int64_t endMs);
+// syllable timed from 0 to the Line's duration.
+std::vector<KaraokeSyllable> karaokeSyllables(std::string_view text, std::int64_t startMs, std::int64_t endMs,
+                                              UntaggedLine untagged = UntaggedLine::Relative);
 
 }

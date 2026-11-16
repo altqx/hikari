@@ -41,13 +41,14 @@ Each change is a named departure in the [compatibility decisions](compatibility-
 | TH5c-karaok-k-retime | `k_retime` shifts this loop iteration's syllable only. |
 | TH5c-karaok-style-text | `style X` matches X as plain text, not as a Lua pattern. |
 | TH5c-karaok-furichar-tags | Each `furichar` character takes its own syllable's tags, without `\k`; upstream took tags by index. |
+| CX7-karaok-furichar-positions | Each `furichar` character sits above its kanji; upstream put it on the kanji. |
 | TH5c-karaok-no-leaked-globals | A karaOK run leaves no `textbuffer` or `w` global. |
 | TH5c-karaok-graphemes | karaOK's `char`, `lchar` and `$ci`/`$slen`/`$llen`/`$len` count grapheme clusters. Thai support by Jibrill. |
 | TH5d1-stock-additions | In 3.2.2 mode, karaOK's `style`, `lsyl`/`lword`/`lchar`/`word`/`furichar`, `code word`/`char`/`furichar`, `k_retime` and `table`/`pairs`/`ipairs`/`tonumber`/`tostring`/`type` work in place of 3.2.2's warnings. `$ci`/`$slen`/`$llen`/`$len` stay text, as in 3.2.2 (Q346). |
 | TH5d1-furigana-styles-false | `furigana_styles = false` in a `code once` Line adds no "-furigana" Styles, as upstream's "(modded)" macro does. |
 | TH5d3-new-documents-karaok | A Document made with File › New is in karaOK mode until a mode line or a template or code Line decides. The first template inserted from the Template editor (New, a preset) or exported from a node graph writes `Karaoke Templater: karaOK` in the same undo step; saving writes nothing. |
 | TH5d3-stock-presets-translated | A stock preset inserted into a karaOK Document has its Effects translated to karaOK's words (`pre-line` → `line`, `line` → `lsyl`, `syl char` → `char`). |
-| TH5d3-karaok-preset-departures | The karaOK presets give upstream karaOK's Lines except where they reach TH5c-karaok-word-positions or TH5c-karaok-graphemes. |
+| TH5d3-karaok-preset-departures | The karaOK presets give upstream karaOK's Lines except where they reach TH5c-karaok-word-positions, TH5c-karaok-graphemes or CX7-karaok-furichar-positions. |
 | TH5d3-editor-follows-mode | In karaOK mode, the Template editor's New and Effect picker use karaOK's words. |
 | TH5d2-ln-kara | `require "ln.kara"` loads the [ln.kara](#lnkara) HikariSub ships, before a copy in the user's Include. |
 | TH5d2-ln-kara-tags | `ln.line.tags`, `ln.syl.tags`, `gc` and `ga` read the Line's tags; upstream always gave the defaults. |

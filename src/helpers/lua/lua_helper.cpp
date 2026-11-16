@@ -2654,7 +2654,8 @@ application::MacroDialogueLine karaokeSource(application::MacroDialogueLine dial
 void fillKaraokeData(lua_State *L, int line, const application::MacroDialogueLine &dialogue)
 {
     const MacroDialogueLine source = karaokeSource(dialogue);
-    const auto syllables = application::karaokeSyllables(source.text, source.startMs, source.endMs);
+    const auto syllables = application::karaokeSyllables(source.text, source.startMs, source.endMs,
+                                                            application::UntaggedLine::BeforeQ558);
     lua_pushvalue(L, line);
     for (std::size_t i = 0; i < syllables.size(); ++i) {
         pushSyllable(L, syllables[i]);
