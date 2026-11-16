@@ -10,6 +10,7 @@
 #include <QDir>
 #include <QFile>
 #include <QGuiApplication>
+#include <QPainter>
 #include <QQmlApplicationEngine>
 #include <QQuickItem>
 #include <QQuickWindow>
@@ -28,7 +29,8 @@ class ReleaseScreenshotsTests : public QObject {
 
     static constexpr int kEditingFrame = 1812;
     static constexpr int kSignFrame = 1440;
-    static constexpr int kTopRowWithoutTheCrudeLine = 6;
+    static constexpr int kTopRowOfTheGridRange = 7;
+    static constexpr int kItalicLineFrame = 1550;
 
     std::unique_ptr<QTemporaryDir> home;
     app::Application *application = nullptr;
@@ -110,17 +112,101 @@ class ReleaseScreenshotsTests : public QObject {
         QVERIFY(QMetaObject::invokeMethod(root(), "applyPreset", Q_ARG(QVariant, QString::fromLatin1(name))));
     }
 
-    void shootThemes(const QString &name)
+    static QQuickItem *findItem(QQuickItem *from, const QString &name)
     {
-        auto &settings = *application->settingsStore();
+        if (!from)
+            return nullptr;
+        if (from->objectName() == name)
+            return from;
+        for (QQuickItem *child : from->childItems())
+            if (QQuickItem *found = findItem(child, name))
+                return found;
+        return nullptr;
+    }
+
+    QQuickItem *item(const char *name) const
+    {
+        for (QWindow *w : QGuiApplication::allWindows())
+            if (auto *quick = qobject_cast<QQuickWindow *>(w))
+                if (QQuickItem *found = findItem(quick->contentItem(), QLatin1String(name)))
+                    return found;
+        return nullptr;
+    }
+
+    ui::LineGrid *grid() const { return root()->findChild<ui::LineGrid *>(QStringLiteral("editingGrid")); }
+
+    void setTheme(const QString &code)
+    {
+        application->settingsStore()->setValue(QStringLiteral("appearance.theme"), code);
+        auto *controls = root()->property("palette").value<QObject *>();
+        QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+        QTest::qWait(300);
+    }
+
+    static QRect cropOf(QQuickItem *of)
+    {
+        const qreal dpr = of->window()->effectiveDevicePixelRatio();
+        const QRectF r = of->mapRectToScene(QRectF(0, 0, of->width(), of->height()));
+        return QRectF(r.topLeft() * dpr, r.size() * dpr).toAlignedRect();
+    }
+
+    QImage grab(QQuickWindow *from, const char *crop) const
+    {
+        const QImage whole = from->grabWindow();
+        if (!crop)
+            return whole;
+        QQuickItem *part = item(crop);
+        return part ? whole.copy(cropOf(part)) : QImage();
+    }
+
+    void save(const QImage &image, const QString &page, const QString &name)
+    {
+        QVERIFY(!image.isNull());
+        QVERIFY(QDir().mkpath(out + QLatin1Char('/') + page));
+        QVERIFY(image.save(out + QLatin1Char('/') + page + QLatin1Char('/') + name + QStringLiteral(".png")));
+    }
+
+    void shoot(const QString &page, const QString &name, const char *crop = nullptr, QQuickWindow *from = nullptr)
+    {
         for (const char *code : {"light", "dark"}) {
-            settings.setValue(QStringLiteral("appearance.theme"), QString::fromLatin1(code));
-            auto *controls = root()->property("palette").value<QObject *>();
-            QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
-            QTest::qWait(300);
-            QVERIFY(window->grabWindow().save(out + QLatin1Char('/') + name + QLatin1Char('-') + QLatin1String(code)
-                                              + QStringLiteral(".png")));
+            setTheme(QString::fromLatin1(code));
+            save(grab(from ? from : window, crop), page, name + QLatin1Char('-') + QLatin1String(code));
         }
+    }
+
+    void shootFourThemesTiled(const QString &page, const QString &name)
+    {
+        QImage tiled(window->width() * 2, window->height() * 2, QImage::Format_RGB32);
+        QPainter painter(&tiled);
+        int i = 0;
+        for (const char *code : {"light", "dark", "highContrastWhite", "highContrastBlack"}) {
+            setTheme(QString::fromLatin1(code));
+            const QImage shot = window->grabWindow().scaled(window->size());
+            painter.drawImage(QPoint((i % 2) * window->width(), (i / 2) * window->height()), shot);
+            ++i;
+        }
+        painter.end();
+        save(tiled, page, name);
+    }
+
+    void selectAt(int frame)
+    {
+        auto &controller = application->video();
+        QVERIFY(controller.session().seekFrame(frame));
+        QTRY_VERIFY_WITH_TIMEOUT(controller.session().shownFrame() == std::optional<int>(frame), 60000);
+        QVERIFY(application->selectLinesVisibleOnVideo());
+        QTRY_VERIFY(grid()->activeLine().has_value());
+        grid()->scrollToTopRow(kTopRowOfTheGridRange);
+    }
+
+    void openCommonsDialogue(int frame)
+    {
+        QVERIFY(openDialogue());
+        applyLayout("Editing");
+        showVideoAt(frame);
+        resampleToTheVideo();
+        giveDefaultAFilmSubtitleLook();
+        selectAt(frame);
     }
 
     bool openDialogue()
@@ -208,18 +294,18 @@ private slots:
         home.reset();
     }
 
-    void editingLayoutWithDialogue()
+    void getStartedTour()
     {
-        QVERIFY(openDialogue());
-        applyLayout("Editing");
-        showVideoAt(kEditingFrame);
-        resampleToTheVideo();
-        giveDefaultAFilmSubtitleLook();
-        root()->findChild<ui::LineGrid *>(QStringLiteral("editingGrid"))->scrollToTopRow(kTopRowWithoutTheCrudeLine);
-        shootThemes(QStringLiteral("editing"));
+        openCommonsDialogue(kEditingFrame);
+        shoot(QStringLiteral("get-started"), QStringLiteral("window"));
+        shoot(QStringLiteral("basics"), QStringLiteral("grid"), "gridPanel");
+        shoot(QStringLiteral("basics"), QStringLiteral("video-panel"), "videoPanel");
+        shootFourThemesTiled(QStringLiteral("customize"), QStringLiteral("themes"));
+        application->audio().setSpectrumOn(true);
+        shoot(QStringLiteral("basics"), QStringLiteral("audio-spectrum"), "audioPanel");
     }
 
-    void typesettingLayoutWithOwnSign()
+    void getStartedTypesetting()
     {
         const QString file = writeFile(QStringLiteral("Sprite Fright signs.ass"),
                                        signsScript("Dialogue: 0,0:00:59.50,0:01:00.50,Sign,,0,0,0,,"
@@ -228,7 +314,53 @@ private slots:
         QVERIFY(application->openFile(file));
         applyLayout("Typesetting");
         showVideoAt(kSignFrame);
-        shootThemes(QStringLiteral("typesetting"));
+        shoot(QStringLiteral("get-started"), QStringLiteral("typesetting"));
+    }
+
+    void basicsLineEditor()
+    {
+        openCommonsDialogue(kItalicLineFrame);
+        shoot(QStringLiteral("basics"), QStringLiteral("line-editor"), "editorPanel");
+    }
+
+    void basicsVideoFullscreen()
+    {
+        openCommonsDialogue(kEditingFrame);
+        application->settingsStore()->setValue(QStringLiteral("video.fullscreenBar"), 1);
+        QVERIFY(application->videoFullscreen().toggle(0));
+        const auto fullscreenWindow = [] {
+            for (QWindow *w : QGuiApplication::allWindows())
+                if (w->objectName() == QLatin1String("videoFullscreen") && w->isExposed())
+                    return qobject_cast<QQuickWindow *>(w);
+            return static_cast<QQuickWindow *>(nullptr);
+        };
+        QTRY_VERIFY(fullscreenWindow());
+        QQuickWindow *fullscreen = fullscreenWindow();
+        QTest::mouseMove(fullscreen, QPoint(fullscreen->width() / 2, fullscreen->height() - 4));
+        QTRY_VERIFY_WITH_TIMEOUT(!item("videoFullscreenHintText")->isVisible(), 5000);
+        shoot(QStringLiteral("basics"), QStringLiteral("fullscreen"), nullptr, fullscreen);
+    }
+
+    void translationTranslationMode()
+    {
+        openCommonsDialogue(kEditingFrame);
+        QVERIFY(application->turnOnTranslationMode());
+        const std::pair<int, const char *> ourThai[] = {
+            {1680, "โอ้! ดูเธอบินไปสิ!"},
+            {1700, "ว้าว!"},
+            {1750, "หลีกไป เจ้าเนิร์ด! พวกเราจะตั้งแคมป์ตรงนี้"},
+            {kEditingFrame, "ในที่สุด! ได้เวลาจุดเตาบาร์บีคิวแล้ว"},
+            {1900, "โอ้ แย่แล้ว"},
+        };
+        for (const auto &[frame, thai] : ourThai) {
+            selectAt(frame);
+            const QString text = QString::fromUtf8(thai);
+            application->editor().translationEdited(text, int(text.size()));
+            QVERIFY(application->editor().commit());
+        }
+        applyLayout("Translation");
+        selectAt(kEditingFrame);
+        shoot(QStringLiteral("translation"), QStringLiteral("translation-mode"));
     }
 };
 
