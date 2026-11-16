@@ -400,7 +400,10 @@ hikari_add_qttest(hikari_ui_api_host_tests SOURCES api_host_tests.cpp
     LIBRARIES hikari_composition KDAB::kddockwidgets Qt6::QuickTest)
 find_package(Qt6 ${HIKARI_QT_VERSION} EXACT REQUIRED COMPONENTS CorePrivate)
 hikari_add_qttest(hikari_ui_agent_panel_tests SOURCES agent_panel_tests.cpp
-    LIBRARIES hikari_composition KDAB::kddockwidgets Qt6::QuickTest Qt6::CorePrivate ZLIB::ZLIB Hikari::sodium)
+    LIBRARIES hikari_composition KDAB::kddockwidgets Qt6::QuickTest Qt6::CorePrivate ZLIB::ZLIB Hikari::sodium
+    PARTS panel proposals=aProposalTakesTheFocusFromThePanelButNotFromTheComposer
+          timeline=compactionShowsTheMeterTheDividerTheOfferAndAFailure
+          models=theModelButtonNamesTheModelTheNextMessageUses)
 target_compile_definitions(hikari_ui_agent_panel_tests PRIVATE
     HIKARI_FAKE_AI_SIDECAR="$<TARGET_FILE:hikari_fake_ai_sidecar>")
 add_dependencies(hikari_ui_agent_panel_tests hikari_fake_ai_sidecar)
@@ -468,6 +471,7 @@ target_include_directories(hikari_ui_spelling_tests PRIVATE "${PROJECT_SOURCE_DI
 target_include_directories(hikari_ui_shell_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
 hikari_add_qttest(hikari_ui_settings_store_tests SOURCES settings_store_tests.cpp LIBRARIES hikari_ui)
 hikari_add_qttest(hikari_ui_preset_tiers_tests SOURCES preset_tiers_tests.cpp LIBRARIES hikari_ui)
+hikari_add_qttest(hikari_ui_shell_menu_placement_tests SOURCES shell_menu_placement_tests.cpp LIBRARIES hikari_ui)
 hikari_add_qttest(hikari_ui_project_file_tests SOURCES project_file_tests.cpp LIBRARIES hikari_ui)
 hikari_add_qttest(hikari_ui_explorer_model_tests SOURCES explorer_model_tests.cpp LIBRARIES hikari_ui)
 hikari_add_qttest(hikari_ui_list_files_tests SOURCES list_files_tests.cpp LIBRARIES hikari_composition)

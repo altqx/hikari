@@ -185,23 +185,23 @@
     </message>
     <message>
         <source>Search the web</source>
-        <translation>웹 검색</translation>
+        <translation type="vanished">웹 검색</translation>
     </message>
     <message>
         <source>This provider can’t search the web on its own. Choose a search service in Settings › AI › Web search.</source>
-        <translation>이 공급자는 자체적으로 웹을 검색할 수 없습니다. 설정 › AI › 웹 검색에서 검색 서비스를 선택하세요.</translation>
+        <translation type="vanished">이 공급자는 자체적으로 웹을 검색할 수 없습니다. 설정 › AI › 웹 검색에서 검색 서비스를 선택하세요.</translation>
     </message>
     <message>
         <source>Search the web: on for this thread</source>
-        <translation>웹 검색: 이 스레드에서 켜짐</translation>
+        <translation type="vanished">웹 검색: 이 스레드에서 켜짐</translation>
     </message>
     <message>
         <source>Search the web: off for this thread</source>
-        <translation>웹 검색: 이 스레드에서 꺼짐</translation>
+        <translation type="vanished">웹 검색: 이 스레드에서 꺼짐</translation>
     </message>
     <message>
         <source>Changing it mid-thread costs one cache miss on Anthropic.</source>
-        <translation>스레드 중간에 바꾸면 Anthropic에서 캐시 미스가 한 번 발생합니다.</translation>
+        <translation type="vanished">스레드 중간에 바꾸면 Anthropic에서 캐시 미스가 한 번 발생합니다.</translation>
     </message>
     <message>
         <source>Stop</source>
@@ -254,6 +254,14 @@
         <translation>범위: %1</translation>
     </message>
     <message>
+        <source>Choose a model</source>
+        <translation>모델 선택</translation>
+    </message>
+    <message>
+        <source>Model</source>
+        <translation>모델</translation>
+    </message>
+    <message>
         <source>Send</source>
         <translation>보내기</translation>
     </message>
@@ -284,6 +292,14 @@
     <message>
         <source>Change mode</source>
         <translation>모드 변경</translation>
+    </message>
+    <message>
+        <source>Agent default</source>
+        <translation>에이전트 기본값</translation>
+    </message>
+    <message>
+        <source>Loading models…</source>
+        <translation>모델을 불러오는 중…</translation>
     </message>
     <message>
         <source>Settings › AI…</source>
@@ -15468,7 +15484,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Model</source>
-        <translation type="unfinished"></translation>
+        <translation>모델</translation>
     </message>
     <message>
         <source>Ask each time, starting from this instruction</source>

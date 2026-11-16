@@ -185,23 +185,23 @@
     </message>
     <message>
         <source>Search the web</source>
-        <translation>ค้นหาเว็บ</translation>
+        <translation type="vanished">ค้นหาเว็บ</translation>
     </message>
     <message>
         <source>This provider can’t search the web on its own. Choose a search service in Settings › AI › Web search.</source>
-        <translation>ผู้ให้บริการนี้ค้นหาเว็บเองไม่ได้ เลือกบริการค้นหาในการตั้งค่า › AI › การค้นหาเว็บ</translation>
+        <translation type="vanished">ผู้ให้บริการนี้ค้นหาเว็บเองไม่ได้ เลือกบริการค้นหาในการตั้งค่า › AI › การค้นหาเว็บ</translation>
     </message>
     <message>
         <source>Search the web: on for this thread</source>
-        <translation>ค้นหาเว็บ: เปิดสำหรับเธรดนี้</translation>
+        <translation type="vanished">ค้นหาเว็บ: เปิดสำหรับเธรดนี้</translation>
     </message>
     <message>
         <source>Search the web: off for this thread</source>
-        <translation>ค้นหาเว็บ: ปิดสำหรับเธรดนี้</translation>
+        <translation type="vanished">ค้นหาเว็บ: ปิดสำหรับเธรดนี้</translation>
     </message>
     <message>
         <source>Changing it mid-thread costs one cache miss on Anthropic.</source>
-        <translation>การเปลี่ยนระหว่างเธรดทำให้แคชพลาดหนึ่งครั้งบน Anthropic</translation>
+        <translation type="vanished">การเปลี่ยนระหว่างเธรดทำให้แคชพลาดหนึ่งครั้งบน Anthropic</translation>
     </message>
     <message>
         <source>Stop</source>
@@ -254,6 +254,14 @@
         <translation>ขอบเขต: %1</translation>
     </message>
     <message>
+        <source>Choose a model</source>
+        <translation>เลือกโมเดล</translation>
+    </message>
+    <message>
+        <source>Model</source>
+        <translation>โมเดล</translation>
+    </message>
+    <message>
         <source>Send</source>
         <translation>ส่ง</translation>
     </message>
@@ -284,6 +292,14 @@
     <message>
         <source>Change mode</source>
         <translation>เปลี่ยนโหมด</translation>
+    </message>
+    <message>
+        <source>Agent default</source>
+        <translation>ค่าเริ่มต้นของเอเจนต์</translation>
+    </message>
+    <message>
+        <source>Loading models…</source>
+        <translation>กำลังโหลดโมเดล…</translation>
     </message>
     <message>
         <source>Settings › AI…</source>
@@ -15468,7 +15484,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Model</source>
-        <translation type="unfinished"></translation>
+        <translation>โมเดล</translation>
     </message>
     <message>
         <source>Ask each time, starting from this instruction</source>

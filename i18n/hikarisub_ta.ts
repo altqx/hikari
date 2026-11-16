@@ -185,23 +185,23 @@
     </message>
     <message>
         <source>Search the web</source>
-        <translation>இணையத்தில் தேடு</translation>
+        <translation type="vanished">இணையத்தில் தேடு</translation>
     </message>
     <message>
         <source>This provider can’t search the web on its own. Choose a search service in Settings › AI › Web search.</source>
-        <translation>இந்த வழங்குநரால் தானாக இணையத்தில் தேட முடியாது. அமைப்புகள் › AI › இணையத் தேடல் இல் ஒரு தேடல் சேவையைத் தேர்ந்தெடு.</translation>
+        <translation type="vanished">இந்த வழங்குநரால் தானாக இணையத்தில் தேட முடியாது. அமைப்புகள் › AI › இணையத் தேடல் இல் ஒரு தேடல் சேவையைத் தேர்ந்தெடு.</translation>
     </message>
     <message>
         <source>Search the web: on for this thread</source>
-        <translation>இணையத் தேடல்: இந்த இழையில் இயக்கத்தில்</translation>
+        <translation type="vanished">இணையத் தேடல்: இந்த இழையில் இயக்கத்தில்</translation>
     </message>
     <message>
         <source>Search the web: off for this thread</source>
-        <translation>இணையத் தேடல்: இந்த இழையில் அணைக்கப்பட்டது</translation>
+        <translation type="vanished">இணையத் தேடல்: இந்த இழையில் அணைக்கப்பட்டது</translation>
     </message>
     <message>
         <source>Changing it mid-thread costs one cache miss on Anthropic.</source>
-        <translation>இழையின் நடுவில் இதை மாற்றினால் Anthropic இல் ஒரு தற்காலிக நினைவக இழப்பு ஏற்படும்.</translation>
+        <translation type="vanished">இழையின் நடுவில் இதை மாற்றினால் Anthropic இல் ஒரு தற்காலிக நினைவக இழப்பு ஏற்படும்.</translation>
     </message>
     <message>
         <source>Stop</source>
@@ -255,6 +255,14 @@
         <translation>வரம்பெல்லை: %1</translation>
     </message>
     <message>
+        <source>Choose a model</source>
+        <translation>ஒரு மாதிரியைத் தேர்ந்தெடு</translation>
+    </message>
+    <message>
+        <source>Model</source>
+        <translation>மாதிரி</translation>
+    </message>
+    <message>
         <source>Send</source>
         <translation>அனுப்பு</translation>
     </message>
@@ -285,6 +293,14 @@
     <message>
         <source>Change mode</source>
         <translation>பயன்முறையை மாற்று</translation>
+    </message>
+    <message>
+        <source>Agent default</source>
+        <translation>முகவரின் இயல்புநிலை</translation>
+    </message>
+    <message>
+        <source>Loading models…</source>
+        <translation>மாதிரிகளை ஏற்றுகிறது…</translation>
     </message>
     <message>
         <source>Settings › AI…</source>
@@ -15589,7 +15605,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Model</source>
-        <translation type="unfinished"></translation>
+        <translation>மாதிரி</translation>
     </message>
     <message>
         <source>Ask each time, starting from this instruction</source>

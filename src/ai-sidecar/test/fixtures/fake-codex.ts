@@ -121,6 +121,14 @@ process.stdin.on("data", (chunk: Buffer) => {
             void run(String(message.params!.threadId), turnId, JSON.parse(text) as Script);
             break;
         }
+        case "model/list":
+            answer(message.params!.cursor === "page-2"
+                ? { data: [{ id: "m-mini", model: "gpt-fake-mini", displayName: "GPT Fake Mini", hidden: false, isDefault: false }],
+                    nextCursor: null }
+                : { data: [{ id: "m-main", model: "gpt-fake", displayName: "GPT Fake", hidden: false, isDefault: true },
+                    { id: "m-hidden", model: "gpt-hidden", displayName: "Hidden", hidden: true, isDefault: false }],
+                    nextCursor: "page-2" });
+            break;
         case "turn/steer":
             answer({ turnId: message.params!.expectedTurnId });
             break;

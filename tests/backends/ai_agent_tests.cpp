@@ -574,6 +574,59 @@ TEST_F(AgentThreadsTest, AThreadOnClaudeOpensItsSessionOnTheAgentWithoutAProvide
     EXPECT_EQ(notice(plain), "noSidecar");
 }
 
+TEST_F(AgentThreadsTest, AChosenAgentModelReachesItsSessionAndTheAgentsDefaultPassesNone)
+{
+    threads = makeThreads(true);
+    const std::string id = threads->create();
+    const auto model = [](const Json &sent) { return at(*sent.find("model"), "model"); };
+    threads->setModel(id, {"agent:claude", "opus"});
+    threads->send(id, "a");
+    ASSERT_TRUE(idle(id));
+    ASSERT_EQ(receivedAs("session/new").size(), 1u);
+    EXPECT_EQ(model(receivedAs("session/new").back()), "opus");
+    EXPECT_EQ(model(receivedAs("session/prompt").back()), "opus");
+
+    threads->setModel(id, {"agent:claude", ""});
+    threads->send(id, "b");
+    ASSERT_TRUE(idle(id));
+    EXPECT_EQ(receivedAs("session/new").size(), 1u);
+    EXPECT_EQ(model(receivedAs("session/prompt").back()), "");
+
+    threads->setModel(id, {"agent:codex", ""});
+    threads->send(id, "c");
+    ASSERT_TRUE(idle(id));
+    ASSERT_EQ(receivedAs("session/new").size(), 2u);
+    EXPECT_EQ(at(receivedAs("session/new").back(), "agent"), "codex");
+}
+
+TEST_F(AgentThreadsTest, AnAgentListsItsModelsInAProbeSessionThatClosesAndAFailureListsNone)
+{
+    threads = makeThreads(true);
+    using Listed = std::optional<std::vector<AgentThreads::AgentModel>>;
+    const auto list = [&](const std::string &agent, int timeoutMs = 30'000) {
+        std::optional<Listed> out;
+        threads->listAgentModels(agent, [&](Listed models) { out = std::move(models); }, timeoutMs);
+        EXPECT_TRUE(waitFor([&] { return out.has_value(); }));
+        return out.value_or(Listed());
+    };
+    const Listed claude = list("claude");
+    ASSERT_TRUE(claude);
+    ASSERT_EQ(claude->size(), 2u);
+    EXPECT_EQ((*claude)[1].id, "opus");
+    EXPECT_EQ((*claude)[1].name, "Opus");
+    const auto opened = receivedAs("session/new");
+    ASSERT_EQ(opened.size(), 1u);
+    EXPECT_EQ(at(opened[0], "sessionId"), "models:claude");
+    EXPECT_EQ(at(opened[0], "agent"), "claude");
+    EXPECT_TRUE(waitFor([&] { return !receivedAs("_hikari/session.close").empty(); }));
+
+    EXPECT_FALSE(list("codex"));
+    EXPECT_FALSE(list("hang", 100));
+    refusedAgent = "acp:x";
+    EXPECT_FALSE(list("acp:x"));
+    EXPECT_EQ(receivedAs("session/new").size(), 3u);
+}
+
 TEST_F(AgentThreadsTest, AThreadOnAnAgentThisSystemWontStartSaysWhyAndOpensNoSession)
 {
     threads = makeThreads(true);
@@ -1272,7 +1325,7 @@ TEST_F(AgentThreadsTest, AReopenedThreadReplaysItsHistoryIntoANewSession)
     EXPECT_FALSE(threads->thread(id));
 }
 
-TEST_F(AgentThreadsTest, AThreadSearchesWhileSettingsAndItsGlobeBothSaySoAndKeepsItsGlobe)
+TEST_F(AgentThreadsTest, EveryThreadFollowsTheWebSearchSettingFromItsNextMessage)
 {
     const auto searched = [&](std::string_view method) {
         const auto sent = receivedAs(method);
@@ -1281,20 +1334,21 @@ TEST_F(AgentThreadsTest, AThreadSearchesWhileSettingsAndItsGlobeBothSaySoAndKeep
     };
     requests->setWebSearch(true, std::nullopt);
     const std::string id = threads->create();
-    EXPECT_TRUE(thread(id).webSearch);
     threads->send(id, "a");
     ASSERT_TRUE(idle(id));
     EXPECT_TRUE(searched("session/new"));
     EXPECT_TRUE(searched("session/prompt"));
-    threads->setWebSearch(id, false);
+    requests->setWebSearch(false, std::nullopt);
     threads->send(id, "b");
     ASSERT_TRUE(idle(id));
     EXPECT_FALSE(searched("session/prompt"));
-    threads = makeThreads();
-    EXPECT_FALSE(thread(id).webSearch);
-    threads->setWebSearch(id, true);
-    requests->setWebSearch(false, std::nullopt);
+    requests->setWebSearch(true, std::nullopt);
     threads->send(id, "c");
+    ASSERT_TRUE(idle(id));
+    EXPECT_TRUE(searched("session/prompt"));
+    threads = makeThreads();
+    requests->setWebSearch(false, std::nullopt);
+    threads->send(id, "d");
     ASSERT_TRUE(idle(id));
     EXPECT_FALSE(searched("session/new"));
     EXPECT_FALSE(searched("session/prompt"));

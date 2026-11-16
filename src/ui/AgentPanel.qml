@@ -46,8 +46,6 @@ FocusScope {
         return id === "brave" ? "Brave Search" : id === "tavily" ? "Tavily" : id === "exa" ? "Exa"
              : id === "firecrawl" ? "Firecrawl" : id
     }
-    readonly property bool webSearchOn: !hasThread || thread.webSearch === true
-    readonly property bool webSearchReady: hasThread ? thread.webSearchReady === true : true
     function taskStateName(k) {
         return k.status === "running" ? qsTr("running") : k.status === "needs_you" ? qsTr("needs you")
              : k.status === "done" ? qsTr("done") : k.status === "failed" ? qsTr("failed")
@@ -87,6 +85,12 @@ FocusScope {
         }
         panel.agent.setMode(m)
     }
+    function modelItemName(value) { return "agentModel_" + value.replace("\t", "/") }
+    function chooseModel(value) {
+        if (!hasThread)
+            agent.newThread()
+        agent.setModel(value)
+    }
     function send() {
         const text = composer.text.trim()
         if (text.length === 0)
@@ -103,6 +107,25 @@ FocusScope {
         composer.text = ""
     }
 
+    component ChooserButton: Button {
+        id: chooser
+        flat: true
+        contentItem: Row {
+            spacing: 4
+            Label {
+                objectName: chooser.objectName + "Label"
+                anchors.verticalCenter: parent.verticalCenter
+                text: chooser.text
+                color: chooser.palette.buttonText
+            }
+            Icon {
+                objectName: chooser.objectName + "Chevron"
+                anchors.verticalCenter: parent.verticalCenter
+                size: 12
+                iconRole: "chevron-down"
+            }
+        }
+    }
     component Card: Rectangle {
         id: card
         property color edge: Theme.line
@@ -645,40 +668,21 @@ FocusScope {
                         enabled: attachMenu.count > 0
                         onClicked: attachMenu.popup(this, 0, -attachMenu.implicitHeight)
                     }
-                    IconToolButton {
-                        objectName: "agentWebSearch"
-                        visible: panel.agent.webSearchShown
-                        iconRole: "web-search"
-                        text: qsTr("Search the web")
-                        checkable: panel.webSearchReady
-                        checked: panel.webSearchReady && panel.webSearchOn
-                        opacity: panel.webSearchReady ? 1 : 0.45
-                        tip: !panel.webSearchReady
-                             ? qsTr("This provider can’t search the web on its own. Choose a search service in Settings › AI › Web search.")
-                             : (panel.webSearchOn ? qsTr("Search the web: on for this thread") : qsTr("Search the web: off for this thread"))
-                               + (panel.hasThread && panel.thread.webSearchCacheMiss
-                                  ? "\n" + qsTr("Changing it mid-thread costs one cache miss on Anthropic.") : "")
-                        onClicked: {
-                            if (!panel.webSearchReady)
-                                return
-                            const on = !panel.webSearchOn
-                            if (!panel.hasThread)
-                                panel.agent.newThread()
-                            panel.agent.setWebSearch(on)
-                        }
-                    }
-                    Button {
+                    ChooserButton {
                         id: modelButton
                         objectName: "agentModelButton"
-                        flat: true
-                        text: (panel.hasThread ? panel.thread.modelText : "") + "  ⌄"
+                        readonly property string modelText: (panel.hasThread && panel.thread.modelText) || panel.agent.defaultModelText
+                        text: modelText || qsTr("Choose a model")
+                        Accessible.name: qsTr("Model")
+                        Accessible.description: modelText
+                        ToolTip.visible: hovered
+                        ToolTip.text: qsTr("Model")
                         onClicked: modelMenu.popup(this, 0, -modelMenu.implicitHeight)
                     }
-                    Button {
+                    ChooserButton {
                         id: modeButton
                         objectName: "agentModeButton"
-                        flat: true
-                        text: panel.modeName(panel.mode) + "  ⌄"
+                        text: panel.modeName(panel.mode)
                         palette.buttonText: panel.mode === "full" ? Theme.danger : Theme.text
                         onClicked: modeMenu.popup(this, 0, -modeMenu.implicitHeight)
                     }
@@ -758,6 +762,8 @@ FocusScope {
 
     ShellMenu {
         id: attachMenu
+        ownWindowWhenFloating: true
+        objectName: "agentAttachMenu"
         Repeater {
             model: panel.agent.attachable
             delegate: ShellMenuItem {
@@ -776,6 +782,8 @@ FocusScope {
 
     ShellMenu {
         id: slashMenu
+        ownWindowWhenFloating: true
+        objectName: "agentSlashMenu"
         ShellMenuItem {
             iconRole: "compact"
             text: qsTr("Compact thread")
@@ -809,20 +817,54 @@ FocusScope {
 
     ShellMenu {
         id: modelMenu
+        ownWindowWhenFloating: true
         objectName: "agentModelMenu"
+        Instantiator {
+            model: panel.agent.agents
+            delegate: ShellMenu {
+                id: agentModelMenu
+                required property var modelData
+                readonly property var listed: panel.agent.agentModelsRevision >= 0 ? panel.agent.agentModels(modelData.agent) : ({})
+                objectName: "agentModelMenu_" + modelData.agent
+                iconRole: "ai-assistant"
+                title: modelData.text
+                onAboutToShow: panel.agent.loadAgentModels(modelData.agent)
+                MenuRadioItem {
+                    objectName: panel.modelItemName(agentModelMenu.modelData.value)
+                    text: qsTr("Agent default")
+                    checked: panel.hasThread && panel.thread.model === agentModelMenu.modelData.value
+                    onTriggered: panel.chooseModel(agentModelMenu.modelData.value)
+                }
+                Repeater {
+                    model: agentModelMenu.listed.models ?? []
+                    delegate: MenuRadioItem {
+                        required property var modelData
+                        objectName: panel.modelItemName(modelData.value)
+                        text: modelData.text
+                        checked: panel.hasThread && panel.thread.model === modelData.value
+                        onTriggered: panel.chooseModel(modelData.value)
+                    }
+                }
+                ShellMenuItem {
+                    objectName: "agentModelsLoading_" + agentModelMenu.modelData.agent
+                    text: qsTr("Loading models…")
+                    enabled: false
+                    visible: agentModelMenu.listed.loading === true
+                    height: visible ? implicitHeight : 0
+                }
+            }
+            onObjectAdded: (index, object) => modelMenu.insertMenu(index, object)
+            onObjectRemoved: (index, object) => modelMenu.removeMenu(object)
+        }
         Repeater {
-            model: panel.agent.models
+            model: panel.agent.models.filter(m => !m.agent)
             delegate: MenuRadioItem {
                 required property var modelData
-                objectName: "agentModel_" + modelData.value
+                objectName: panel.modelItemName(modelData.value)
                 text: modelData.text
                 detailText: modelData.provider
                 checked: panel.hasThread && panel.thread.model === modelData.value
-                onTriggered: {
-                    if (!panel.hasThread)
-                        panel.agent.newThread()
-                    panel.agent.setModel(modelData.value)
-                }
+                onTriggered: panel.chooseModel(modelData.value)
             }
         }
         MenuSeparator {}
@@ -836,6 +878,7 @@ FocusScope {
 
     ShellMenu {
         id: modeMenu
+        ownWindowWhenFloating: true
         objectName: "agentModeMenu"
         width: 300
         Repeater {

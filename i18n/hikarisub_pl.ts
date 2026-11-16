@@ -185,23 +185,23 @@
     </message>
     <message>
         <source>Search the web</source>
-        <translation>Wyszukaj w sieci</translation>
+        <translation type="vanished">Wyszukaj w sieci</translation>
     </message>
     <message>
         <source>This provider can’t search the web on its own. Choose a search service in Settings › AI › Web search.</source>
-        <translation>Ten dostawca nie potrafi sam wyszukiwać w sieci. Wybierz usługę wyszukiwania w Ustawienia › AI › Wyszukiwanie w sieci.</translation>
+        <translation type="vanished">Ten dostawca nie potrafi sam wyszukiwać w sieci. Wybierz usługę wyszukiwania w Ustawienia › AI › Wyszukiwanie w sieci.</translation>
     </message>
     <message>
         <source>Search the web: on for this thread</source>
-        <translation>Wyszukiwanie w sieci: włączone w tym wątku</translation>
+        <translation type="vanished">Wyszukiwanie w sieci: włączone w tym wątku</translation>
     </message>
     <message>
         <source>Search the web: off for this thread</source>
-        <translation>Wyszukiwanie w sieci: wyłączone w tym wątku</translation>
+        <translation type="vanished">Wyszukiwanie w sieci: wyłączone w tym wątku</translation>
     </message>
     <message>
         <source>Changing it mid-thread costs one cache miss on Anthropic.</source>
-        <translation>Zmiana w trakcie wątku kosztuje jedno chybienie pamięci podręcznej w Anthropic.</translation>
+        <translation type="vanished">Zmiana w trakcie wątku kosztuje jedno chybienie pamięci podręcznej w Anthropic.</translation>
     </message>
     <message>
         <source>Stop</source>
@@ -256,6 +256,14 @@
         <translation>zakres: %1</translation>
     </message>
     <message>
+        <source>Choose a model</source>
+        <translation>Wybierz model</translation>
+    </message>
+    <message>
+        <source>Model</source>
+        <translation>Model</translation>
+    </message>
+    <message>
         <source>Send</source>
         <translation>Wyślij</translation>
     </message>
@@ -286,6 +294,14 @@
     <message>
         <source>Change mode</source>
         <translation>Zmień tryb</translation>
+    </message>
+    <message>
+        <source>Agent default</source>
+        <translation>Domyślny model agenta</translation>
+    </message>
+    <message>
+        <source>Loading models…</source>
+        <translation>Wczytywanie modeli…</translation>
     </message>
     <message>
         <source>Settings › AI…</source>
@@ -15710,7 +15726,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Model</source>
-        <translation type="unfinished"></translation>
+        <translation>Model</translation>
     </message>
     <message>
         <source>Ask each time, starting from this instruction</source>

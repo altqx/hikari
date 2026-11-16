@@ -66,11 +66,11 @@ function nativeSubagentsOff(log: string) {
 }
 
 function harness(answers: Partial<Record<OperationName, unknown>> = {}, env: Record<string, string> = {}, system?: string,
-    child?: ReturnType<typeof qtLink>) {
+    child?: ReturnType<typeof qtLink>, model = "") {
     const log = join(mkdtempSync(join(tmpdir(), "fake-claude-")), "log");
     const calls: { operation: string; params: unknown }[] = [];
     const updates: SessionUpdate[] = [];
-    const params = { sessionId: "t1", agent: "claude" as const, model: { providerId: "", model: "" },
+    const params = { sessionId: "t1", agent: "claude" as const, model: { providerId: "", model },
         ...(system ? { system } : {}), ...(child ? { task: { parent: "p1", taskId: "k1", scope: { document: 1, lines: [1] } } } : {}) };
     const fake: HikariCalls = {
         call: (operation, p) => {
@@ -95,7 +95,43 @@ function harness(answers: Partial<Record<OperationName, unknown>> = {}, env: Rec
     return { session, calls, updates, script, log: () => readFileSync(log, "utf8") };
 }
 
+function modelFlag(log: string): string | undefined {
+    const args = JSON.parse(log.split("\n")[0]!.slice("args ".length)) as string[];
+    const at = args.indexOf("--model");
+    return at >= 0 ? args[at + 1] : args.find((a) => a.startsWith("--model="))?.slice("--model=".length);
+}
+
 describe("Claude through the Agent SDK", () => {
+    test("it lists the models Claude offers without a turn", async () => {
+        const h = harness({}, { FAKE_CLAUDE_MODELS: JSON.stringify([
+            { value: "default", displayName: "Default (recommended)", description: "" },
+            { value: "sonnet", displayName: "Sonnet", description: "" },
+            { value: "haiku", displayName: "", description: "" }]) });
+        expect(await h.session.models()).toEqual([{ id: "default", name: "Default (recommended)" },
+            { id: "sonnet", name: "Sonnet" }, { id: "haiku", name: "haiku" }]);
+    }, 30_000);
+
+    test("the agent's default passes no model, and a chosen one reaches Claude's launch", async () => {
+        const plain = harness();
+        await plain.session.prompt({ sessionId: "t1", prompt: plain.script({ reply: "hi" }) });
+        expect(modelFlag(plain.log())).toBeUndefined();
+        const chosen = harness({}, {}, undefined, undefined, "sonnet");
+        await chosen.session.prompt({ sessionId: "t1", prompt: chosen.script({ reply: "hi" }) });
+        expect(modelFlag(chosen.log())).toBe("sonnet");
+        expect(chosen.log()).not.toContain("set_model");
+    }, 30_000);
+
+    test("a model chosen mid-thread switches the live query, and the agent's default switches back", async () => {
+        const h = harness();
+        await h.session.prompt({ sessionId: "t1", prompt: h.script({ reply: "one" }) });
+        await h.session.prompt({ sessionId: "t1", prompt: h.script({ reply: "two" }), model: { providerId: "", model: "opus" } });
+        await h.session.prompt({ sessionId: "t1", prompt: h.script({ reply: "three" }), model: { providerId: "", model: "opus" } });
+        await h.session.prompt({ sessionId: "t1", prompt: h.script({ reply: "four" }), model: { providerId: "", model: "" } });
+        const log = h.log();
+        expect(log.split("\n").filter((l) => l.startsWith("args"))).toHaveLength(1);
+        expect(log.split("\n").filter((l) => l.startsWith("set_model"))).toEqual(['set_model "opus"', "set_model null"]);
+    }, 30_000);
+
     test("an edit task runs on Hikari's tools only, with Claude's own tools, settings and permissions off", async () => {
         const h = harness({ "lines.find": { revision: 3, total: 1, lines: [{ id: 1, text: "Helo" }] },
             "document.apply": { revision: 4 } });
