@@ -1231,13 +1231,13 @@ DialogWindow {
         ToolSeparator { padding: 2 }
         IconToolButton {
             objectName: tools.prefix + "MoveUp"; iconRole: "move-up"; text: qsTr("Move up")
-            tip: qsTr("Move up (Alt+Up)")
+            tip: text + " (" + ShellMenus.keyText("Alt+Up") + ")"
             enabled: tools.selected.length > 0
             onClicked: manager.moveSelected(tools.store, 1)
         }
         IconToolButton {
             objectName: tools.prefix + "MoveDown"; iconRole: "move-down"; text: qsTr("Move down")
-            tip: qsTr("Move down (Alt+Down)")
+            tip: text + " (" + ShellMenus.keyText("Alt+Down") + ")"
             enabled: tools.selected.length > 0
             onClicked: manager.moveSelected(tools.store, 2)
         }
@@ -1254,7 +1254,7 @@ DialogWindow {
             id: moreButton
             objectName: tools.prefix + "More"
             iconRole: "panel-menu"
-            text: qsTr("More")
+            text: qsTr("More options")
             onClicked: moreMenu.popup(moreButton, moreButton.width - moreMenu.implicitWidth, moreButton.height)
         }
         ShellMenu {
@@ -1429,7 +1429,7 @@ DialogWindow {
                         objectName: "catalogTierMenuButton"
                         visible: manager.styles.hasProject
                         iconRole: "panel-menu"
-                        text: qsTr("Catalogue tiers")
+                        text: qsTr("More options")
                         onClicked: catalogTierMenu.popup(catalogTierButton, catalogTierButton.width - catalogTierMenu.implicitWidth,
                                                          catalogTierButton.height)
                     }

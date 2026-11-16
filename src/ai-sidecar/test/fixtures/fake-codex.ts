@@ -7,6 +7,8 @@ interface Script {
     calls?: { tool: string; arguments: unknown }[];
     /** A built-in file change, which Codex asks the client to approve first. */
     fileChange?: string;
+    /** The turn fails with this error after printing `stderr`. */
+    fail?: { message: string; codexErrorInfo?: unknown; stderr?: string };
 }
 
 const log = (line: string) => process.env.FAKE_CODEX_LOG && appendFileSync(process.env.FAKE_CODEX_LOG, line + "\n");
@@ -73,6 +75,13 @@ async function run(threadId: string, turnId: string, script: Script): Promise<vo
     usage = { ...usage, inputTokens: usage.inputTokens + 10, cachedInputTokens: usage.cachedInputTokens + 4,
         outputTokens: usage.outputTokens + 2 };
     notify("thread/tokenUsage/updated", { threadId, turnId, tokenUsage: { total: usage, last: usage, modelContextWindow: null } });
+    if (script.fail) {
+        if (script.fail.stderr)
+            process.stderr.write(script.fail.stderr + "\n");
+        notify("turn/completed", { threadId, turn: { id: turnId, status: "failed",
+            error: { message: script.fail.message, codexErrorInfo: script.fail.codexErrorInfo ?? null }, items: [] } });
+        return;
+    }
     notify("turn/completed", { threadId, turn: { id: turnId, status: interrupted ? "interrupted" : "completed", error: null,
         items: [] } });
 }

@@ -3,7 +3,7 @@ import type { Readable, Writable } from "node:stream";
 import { type AgentModelInfo, ErrorCode, type SessionNewParams, type SessionPromptParams, type SessionPromptResult,
     type SessionStopReason, type SessionSteerParams, type SessionSteerResult, type SessionUpdate,
     type ToolCallKind } from "../protocol";
-import type { Part, Usage } from "../providers/types";
+import type { ErrorData, ErrorKind, Part, Usage } from "../providers/types";
 import { RpcError } from "../rpc";
 import { withSkills, type Skills } from "../skills/skills";
 
@@ -12,6 +12,7 @@ export const kCodexServer = "hikari";
 export interface CodexProcess {
     readonly stdin: Writable;
     readonly stdout: Readable;
+    readonly stderr?: Readable;
     on(event: "exit", listener: () => void): unknown;
     on(event: "error", listener: (error: Error) => void): unknown;
     kill(): boolean;
@@ -45,6 +46,45 @@ interface CodexModel {
 }
 
 const kModelPages = 10;
+const kStderrLines = 20;
+
+const kCodexErrorKinds: Record<string, ErrorKind> = {
+    unauthorized: "unauthorized",
+    usageLimitExceeded: "rateLimited",
+    badRequest: "rejected",
+    contextWindowExceeded: "rejected",
+    httpConnectionFailed: "network",
+    responseStreamConnectionFailed: "network",
+    responseStreamDisconnected: "network",
+    internalServerError: "server",
+};
+
+/** A failed Codex turn, with Codex's own message for the user. */
+export class CodexFailure extends Error {
+    constructor(message: string, readonly kind: ErrorKind = "server") {
+        super(message);
+    }
+
+    get data(): ErrorData {
+        return { kind: this.kind, httpStatus: 0, detail: this.message };
+    }
+}
+
+export function codexErrorKind(info: unknown): ErrorKind {
+    const name = typeof info === "string" ? info
+        : info && typeof info === "object" ? Object.keys(info)[0] : undefined;
+    return (name && kCodexErrorKinds[name]) || "server";
+}
+
+/** Drops what may carry a secret before a line of Codex's stderr is kept. */
+export function redacted(line: string): string {
+    return line
+        .replace(/\b(authorization|cookie|set-cookie|x-api-key|api[-_]?key|token|access_token|refresh_token|id_token)(["']?\s*[:=]\s*)((?:bearer|basic)\s+)?("[^"]*"|'[^']*'|[^\s,;]+)/gi, "$1$2$3<redacted>")
+        .replace(/\b(bearer|basic)\s+(?!<redacted>)[^\s"',;]+/gi, "$1 <redacted>")
+        .replace(/\beyJ[\w-]+\.[\w-]+(\.[\w-]+)?/g, "<redacted>")
+        .replace(/(\w+:\/\/[^\s?#"']*)\?[^\s#"']*/g, "$1?<redacted>")
+        .replace(/[A-Za-z0-9_\-+=]{40,}/g, "<redacted>");
+}
 
 interface Turn {
     id?: string;
@@ -165,6 +205,7 @@ export class CodexSession {
     private readonly calls = new Set<string>();
     private model: string;
     private running?: string;
+    private stderr: string[] = [];
 
     constructor(readonly id: string, private readonly params: SessionNewParams, private readonly deps: CodexDeps) {
         this.model = params.model.model;
@@ -223,8 +264,10 @@ export class CodexSession {
                 this.finish(error instanceof Error ? error : new Error(String(error)));
         }
         const stop = await result;
-        if (stop instanceof Error)
-            throw new RpcError(ErrorCode.providerFailed, stop.message);
+        if (stop instanceof Error) {
+            const failure = stop instanceof CodexFailure ? stop : new CodexFailure(stop.message);
+            throw new RpcError(ErrorCode.providerFailed, failure.message, failure.data);
+        }
         return { stopReason: stop };
     }
 
@@ -278,6 +321,7 @@ export class CodexSession {
         this.process = process;
         this.peer = peer;
         process.stdout.on("data", (chunk: Buffer) => peer.feed(chunk));
+        process.stderr?.on("data", (chunk: Buffer) => this.keepStderr(chunk));
         process.on("exit", () => this.ended(process));
         process.on("error", (error) => this.ended(process, error));
         this.listen(peer);
@@ -306,7 +350,9 @@ export class CodexSession {
             this.total = (p as { tokenUsage: { total: Breakdown } }).tokenUsage.total;
         });
         peer.onNotification("turn/completed", (p) => {
-            const { turn } = p as { turn: { id: string; status: string; error: { message: string } | null } };
+            const { turn } = p as {
+                turn: { id: string; status: string; error: { message: string; codexErrorInfo?: unknown } | null };
+            };
             if (!this.turn || (this.turn.id && this.turn.id !== turn.id))
                 return;
             this.deps.send({ sessionUpdate: "usage", usage: usage(this.total, this.atTurnStart) });
@@ -314,7 +360,7 @@ export class CodexSession {
                 return this.finish("cancelled");
             if (turn.status === "completed")
                 return this.finish("end_turn");
-            this.finish(new Error(turn.error?.message ?? "Codex's turn failed"));
+            this.finish(new CodexFailure(turn.error?.message ?? "Codex's turn failed", codexErrorKind(turn.error?.codexErrorInfo)));
         });
         peer.onRequest("mcpServer/elicitation/request", () => ({ action: "decline", content: null }));
     }
@@ -358,9 +404,16 @@ export class CodexSession {
             this.finish(error ?? new Error("Codex ended the session"));
     }
 
+    private keepStderr(chunk: Buffer): void {
+        this.stderr.push(...chunk.toString("utf8").split(/\r?\n/).filter((l) => l.trim()).map(redacted));
+        this.stderr.splice(0, Math.max(0, this.stderr.length - kStderrLines));
+    }
+
     private finish(stop: SessionStopReason | Error): void {
         const turn = this.turn;
         this.turn = undefined;
+        if (stop instanceof Error)
+            console.error([`Codex turn failed: ${redacted(stop.message)}`, ...this.stderr].join("\n"));
         for (const call of this.calls)
             this.deps.send({ sessionUpdate: "tool_call_update", toolCallId: call, status: "failed", content: [] });
         this.calls.clear();

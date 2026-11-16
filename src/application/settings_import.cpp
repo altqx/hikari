@@ -352,6 +352,8 @@ std::string_view retiredOptionReason(std::string_view legacyKey)
 {
     if (legacyKey == "TOOLBAR_IDS" || legacyKey == "TOOLBAR_ALIGNMENT")
         return "retired: HikariSub has no main toolbar (user decision, 2026-10-05)";
+    if (legacyKey == "UPDATER_CHECK_FOR_STABLE")
+        return "retired: legacy always wrote it, so the installed build's default applies (owner decision, 2026-11-17, #1183)";
     if (legacyKey == "EDITOR_ON")
         return "retired: the editor is always shown, layouts replace the editor switch (owner decision, 2026-10-18)";
     return {};

@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import { whileTurnRuns } from "../../src/agent/session";
-import { CodexSession } from "../../src/agents/codex";
+import { CodexSession, redacted } from "../../src/agents/codex";
 import { McpServer } from "../../src/mcp/server";
 import type { SessionUpdate } from "../../src/protocol";
 import { HikariApi, sessionCalls } from "../../src/sidecar";
@@ -13,6 +13,7 @@ import { Skills } from "../../src/skills/skills";
 import type { OperationName } from "../../src/tools/api.gen";
 import type { HikariCalls } from "../../src/tools/toolset";
 import { kMySkill, mySkillAnswers } from "../skills/my_skill";
+import { RpcError } from "../../src/rpc";
 import { qtLink } from "./qt_link";
 
 const kFake = join(import.meta.dir, "..", "fixtures", "fake-codex.ts");
@@ -59,7 +60,7 @@ function harness(answers: Partial<Record<OperationName, unknown>> = {}, system =
             spawned.push(id);
             return spawn(process.execPath, [kFake, "app-server", "-c", `mcp_servers.hikari.url="${channel.url}mcp"`,
                 "-c", 'mcp_servers.hikari.bearer_token_env_var="HIKARI_MCP_TOKEN"'],
-            { env: { ...process.env, HIKARI_MCP_TOKEN: kToken, FAKE_CODEX_LOG: log }, stdio: ["pipe", "pipe", "inherit"] });
+            { env: { ...process.env, HIKARI_MCP_TOKEN: kToken, FAKE_CODEX_LOG: log }, stdio: ["pipe", "pipe", "pipe"] });
         },
         kindOf: (tool) => (tool === "document_apply" ? "edit" : "read"),
         send: (update) => updates.push(update),
@@ -195,6 +196,38 @@ describe("Codex through its app-server", () => {
         expect(h.spawned).toHaveLength(2);
         expect(h.logged("thread/resume")).toEqual([{ threadId: "thread-1", developerInstructions: "Be brief." }]);
     }, 30_000);
+
+    test("a failed turn carries Codex's own message and kind, and only the log gets its redacted stderr", async () => {
+        const h = harness();
+        const logged: string[] = [];
+        const error = console.error;
+        console.error = (...args: unknown[]) => void logged.push(args.join(" "));
+        try {
+            const failed = await h.session.prompt({ sessionId: "t1", prompt: h.script({ fail: {
+                message: "You've hit your usage limit.", codexErrorInfo: "usageLimitExceeded",
+                stderr: `ERROR stream failed: authorization: Bearer ${"s".repeat(48)} url=https://chatgpt.com/backend-api?token=abc` } }) })
+                .catch((e: unknown) => e);
+            expect(failed).toBeInstanceOf(RpcError);
+            expect((failed as RpcError).message).toBe("You've hit your usage limit.");
+            expect((failed as RpcError).data).toEqual({ kind: "rateLimited", httpStatus: 0, detail: "You've hit your usage limit." });
+        } finally {
+            console.error = error;
+            h.session.close();
+        }
+        const text = logged.join("\n");
+        expect(text).toContain("Codex turn failed: You've hit your usage limit.");
+        expect(text).toContain("ERROR stream failed");
+        expect(text).not.toContain("s".repeat(48));
+        expect(text).not.toContain("token=abc");
+    }, 30_000);
+
+    test("redaction keeps the words and drops tokens, auth headers, cookies, JWTs and URL queries", () => {
+        expect(redacted("Authorization: Bearer abc.def")).toBe("Authorization: Bearer <redacted>");
+        expect(redacted('cookie=session=1; other "refresh_token":"r1"')).toBe('cookie=<redacted>; other "refresh_token":<redacted>');
+        expect(redacted("id eyJhbGciOi.eyJzdWIiOi.c2ln end")).toBe("id <redacted> end");
+        expect(redacted("GET https://h.example/p?code=1&state=2 done")).toBe("GET https://h.example/p?<redacted> done");
+        expect(redacted("C:\\Users\\winix\\AppData\\Roaming\\HikariSub\\ai\\agents\\codex\\home")).toContain("codex");
+    });
 
     test("a built-in file change is refused, and the thread keeps its AGENTS.md text after Codex restarts", async () => {
         const h = harness({}, kJoined);

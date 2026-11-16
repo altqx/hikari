@@ -73,7 +73,7 @@
     </message>
     <message>
         <source>Thread menu</source>
-        <translation>เมนูเธรด</translation>
+        <translation type="vanished">เมนูเธรด</translation>
     </message>
     <message>
         <source>Add a provider to use the agent</source>
@@ -275,7 +275,7 @@
     </message>
     <message>
         <source>Delete thread</source>
-        <translation>ลบเธรด</translation>
+        <translation type="vanished">ลบเธรด</translation>
     </message>
     <message>
         <source>Delete this thread?</source>
@@ -303,7 +303,7 @@
     </message>
     <message>
         <source>Settings › AI…</source>
-        <translation>การตั้งค่า › AI…</translation>
+        <translation type="vanished">การตั้งค่า › AI…</translation>
     </message>
     <message>
         <source>You approve each subtitle edit before it’s made, and every other change. Reading never asks.</source>
@@ -319,7 +319,7 @@
     </message>
     <message>
         <source>Default for new threads…</source>
-        <translation>ค่าเริ่มต้นสำหรับเธรดใหม่…</translation>
+        <translation type="vanished">ค่าเริ่มต้นสำหรับเธรดใหม่…</translation>
     </message>
     <message>
         <source>Rename thread</source>
@@ -452,6 +452,26 @@
         <translation>ปฏิเสธและบอกเอเจนต์…</translation>
     </message>
     <message>
+        <source>Withdrawn: the agent stopped waiting for your answer.</source>
+        <translation>ถอนแล้ว: เอเจนต์หยุดรอคำตอบของคุณ</translation>
+    </message>
+    <message>
+        <source>Withdrawn: the turn ended before you answered.</source>
+        <translation>ถอนแล้ว: รอบนี้จบก่อนที่คุณจะตอบ</translation>
+    </message>
+    <message>
+        <source>Withdrawn: you stopped the turn.</source>
+        <translation>ถอนแล้ว: คุณหยุดรอบนี้</translation>
+    </message>
+    <message>
+        <source>Withdrawn: you signed out of Codex.</source>
+        <translation>ถอนแล้ว: คุณออกจากระบบ Codex</translation>
+    </message>
+    <message>
+        <source>Withdrawn: the cost cap stopped the turn.</source>
+        <translation>ถอนแล้ว: เพดานค่าใช้จ่ายหยุดรอบนี้</translation>
+    </message>
+    <message>
         <source>The signing key changed. The installed copy was signed by key %1, and this one by key %2. Install it only if you trust that the author changed keys.</source>
         <translation type="unfinished">คีย์ลงนามเปลี่ยนไป สำเนาที่ติดตั้งไว้ลงนามด้วยคีย์ %1 และสำเนานี้ลงนามด้วยคีย์ %2 ติดตั้งเฉพาะเมื่อคุณเชื่อถือว่าผู้สร้างเปลี่ยนคีย์จริง</translation>
     </message>
@@ -562,8 +582,36 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Signed out of Codex. This session ended.</source>
+        <translation>ออกจากระบบ Codex แล้ว เซสชันนี้สิ้นสุดแล้ว</translation>
+    </message>
+    <message>
+        <source>AI component is ready</source>
+        <translation>คอมโพเนนต์ AI พร้อมแล้ว</translation>
+    </message>
+    <message>
+        <source>Getting the AI component: %1 of %2 MB</source>
+        <translation>กำลังรับคอมโพเนนต์ AI: %1 จาก %2 MB</translation>
+    </message>
+    <message>
+        <source>The AI component is ready. Send your message again.</source>
+        <translation>คอมโพเนนต์ AI พร้อมแล้ว ส่งข้อความของคุณอีกครั้ง</translation>
+    </message>
+    <message>
+        <source>The AI component didn’t download. Check your connection and try again.</source>
+        <translation>ดาวน์โหลดคอมโพเนนต์ AI ไม่สำเร็จ ตรวจสอบการเชื่อมต่อแล้วลองอีกครั้ง</translation>
+    </message>
+    <message>
+        <source>Agents need the AI component, which HikariSub downloads once.</source>
+        <translation>เอเจนต์ต้องใช้คอมโพเนนต์ AI ซึ่ง HikariSub ดาวน์โหลดเพียงครั้งเดียว</translation>
+    </message>
+    <message>
         <source>Not offered: HikariSub can’t open a private tools channel for it on this system.</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Get the AI component</source>
+        <translation>รับคอมโพเนนต์ AI</translation>
     </message>
     <message numerus="yes">
         <source>%n sub-agent(s)</source>
@@ -694,6 +742,22 @@
         <translation type="unfinished">เปิด</translation>
     </message>
     <message>
+        <source>Compact thread</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete thread…</source>
+        <translation>ลบเธรด…</translation>
+    </message>
+    <message>
+        <source>Settings › AI</source>
+        <translation>การตั้งค่า › AI</translation>
+    </message>
+    <message>
+        <source>Default for new threads</source>
+        <translation>ค่าเริ่มต้นสำหรับเธรดใหม่</translation>
+    </message>
+    <message>
         <source>%1 asks to run this Lua script</source>
         <translation>%1 ขอเรียกใช้สคริปต์ Lua นี้</translation>
     </message>
@@ -771,7 +835,7 @@
     </message>
     <message>
         <source>HikariSub is still getting the AI component, or it couldn’t start.</source>
-        <translation>HikariSub ยังดาวน์โหลดคอมโพเนนต์ AI อยู่ หรือเริ่มคอมโพเนนต์ไม่ได้</translation>
+        <translation type="vanished">HikariSub ยังดาวน์โหลดคอมโพเนนต์ AI อยู่ หรือเริ่มคอมโพเนนต์ไม่ได้</translation>
     </message>
     <message>
         <source>The search service answered %1. The answer goes on without searching the web.</source>
@@ -885,10 +949,6 @@
     </message>
     <message>
         <source>%1 of %2 tokens. Automatic compaction is off in Settings › AI.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Compact conversation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1537,7 +1597,7 @@ Output device: %2</source>
     </message>
     <message>
         <source>Answers and presets</source>
-        <translation>คำตอบและพรีเซ็ต</translation>
+        <translation type="vanished">คำตอบและพรีเซ็ต</translation>
     </message>
     <message>
         <source>Last used</source>
@@ -2021,7 +2081,7 @@ Output device: %2</source>
     </message>
     <message>
         <source>%1 options</source>
-        <translation>ตัวเลือก %1</translation>
+        <translation type="vanished">ตัวเลือก %1</translation>
     </message>
     <message>
         <source>The script’s process ended. Reload to start it again; its macro is not rerun.</source>
@@ -4146,6 +4206,10 @@ Output device: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Move to the trash…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Move the folder “%1” and everything in it to the trash?</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4880,8 +4944,8 @@ Output device: %2</source>
         <translation>เปลี่ยนชื่อ</translation>
     </message>
     <message>
-        <source>Catalogue tiers</source>
-        <translation type="unfinished"></translation>
+        <source>More options</source>
+        <translation>ตัวเลือกเพิ่มเติม</translation>
     </message>
     <message>
         <source>Load from a file</source>
@@ -5270,10 +5334,6 @@ Output device: %2</source>
     <message>
         <source>Style editor sample</source>
         <translation>ตัวอย่างในตัวแก้ไขสไตล์</translation>
-    </message>
-    <message>
-        <source>Manage catalogues</source>
-        <translation>จัดการแคตตาล็อก</translation>
     </message>
     <message>
         <source>No catalogues yet</source>
@@ -10231,6 +10291,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Open</source>
         <translation>เปิด</translation>
+    </message>
+    <message>
+        <source>Open %1</source>
+        <translation>เปิด %1</translation>
     </message>
     <message>
         <source>Remove subtitles from the editor</source>
@@ -16579,8 +16643,8 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>%1 จาก %2</translation>
     </message>
     <message>
-        <source>About %1…</source>
-        <translation>เกี่ยวกับ %1…</translation>
+        <source>About %1</source>
+        <translation>เกี่ยวกับ %1</translation>
     </message>
     <message>
         <source>%1 rolled back to %2</source>
@@ -17140,8 +17204,8 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>นำเข้าไฟล์โน้ต…</translation>
     </message>
     <message>
-        <source>Import notes from the clipboard</source>
-        <translation>นำเข้าโน้ตจากคลิปบอร์ด</translation>
+        <source>Import notes from the clipboard…</source>
+        <translation>นำเข้าโน้ตจากคลิปบอร์ด…</translation>
     </message>
     <message>
         <source>Export notes…</source>
@@ -17152,7 +17216,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>ทำเครื่องหมายทั้งหมดว่ายังไม่เสร็จ</translation>
     </message>
     <message>
-        <source>Remove all notes…</source>
+        <source>Delete all notes…</source>
         <translation>ลบโน้ตทั้งหมด…</translation>
     </message>
     <message>
@@ -17236,11 +17300,11 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>อ่าน %1 ไม่ได้: %2</translation>
     </message>
     <message>
-        <source>Remove all notes</source>
+        <source>Delete all notes</source>
         <translation>ลบโน้ตทั้งหมด</translation>
     </message>
     <message numerus="yes">
-        <source>Remove all %n QC note(s) from this file?</source>
+        <source>Delete all %n QC note(s) from this file?</source>
         <translation>
             <numerusform>ลบโน้ต QC ทั้ง %n รายการออกจากไฟล์นี้หรือไม่</numerusform>
         </translation>
@@ -17250,7 +17314,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>เลิกทำเพื่อนำกลับมาได้</translation>
     </message>
     <message>
-        <source>Remove all</source>
+        <source>Delete all</source>
         <translation>ลบทั้งหมด</translation>
     </message>
     <message>
@@ -17356,8 +17420,8 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>เฉพาะไฟล์ ASS และ SSA เท่านั้นที่เก็บโน้ต QC ได้ บันทึกไฟล์นี้เป็น ASS เพื่อเพิ่มโน้ต</translation>
     </message>
     <message>
-        <source>Paste notes</source>
-        <translation>วางโน้ต</translation>
+        <source>Import from the clipboard</source>
+        <translation>นำเข้าจากคลิปบอร์ด</translation>
     </message>
     <message>
         <source>Notes start with a time: 3:24 - …
@@ -20408,24 +20472,16 @@ because it was edited.</source>
         <translation>ย้ายขึ้น</translation>
     </message>
     <message>
-        <source>Move up (Alt+Up)</source>
-        <translation>ย้ายขึ้น (Alt+Up)</translation>
-    </message>
-    <message>
         <source>Move down</source>
         <translation>ย้ายลง</translation>
-    </message>
-    <message>
-        <source>Move down (Alt+Down)</source>
-        <translation>ย้ายลง (Alt+Down)</translation>
     </message>
     <message>
         <source>Load from a file…</source>
         <translation>โหลดจากไฟล์…</translation>
     </message>
     <message>
-        <source>More</source>
-        <translation>เพิ่มเติม</translation>
+        <source>More options</source>
+        <translation>ตัวเลือกเพิ่มเติม</translation>
     </message>
     <message>
         <source>Move to top</source>
@@ -20461,10 +20517,6 @@ because it was edited.</source>
     </message>
     <message>
         <source>Mine</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Catalogue tiers</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -23293,7 +23345,7 @@ Styles deleted:
     </message>
     <message>
         <source>Preset commands</source>
-        <translation>คำสั่งพรีเซ็ต</translation>
+        <translation type="vanished">คำสั่งพรีเซ็ต</translation>
     </message>
     <message>
         <source>Save as preset…</source>
@@ -26612,8 +26664,8 @@ do not work on comments</source>
 <context>
     <name>HikariSub.Workspace</name>
     <message>
-        <source>%1 options</source>
-        <translation>ตัวเลือกของ %1</translation>
+        <source>More options</source>
+        <translation>ตัวเลือกเพิ่มเติม</translation>
     </message>
     <message>
         <source>Panels</source>
@@ -26716,12 +26768,12 @@ do not work on comments</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Move left</source>
-        <translation type="unfinished">ย้ายไปทางซ้าย</translation>
+        <source>Move left in the side bar</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Move right</source>
-        <translation type="unfinished">ย้ายไปทางขวา</translation>
+        <source>Move right in the side bar</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Reset side bars</source>
@@ -26948,8 +27000,8 @@ do not work on comments</source>
         <translation>รีเซ็ตเค้าโครงนี้</translation>
     </message>
     <message>
-        <source>Manage layouts…</source>
-        <translation>จัดการเค้าโครง…</translation>
+        <source>Manage layouts</source>
+        <translation>จัดการเค้าโครง</translation>
     </message>
     <message>
         <source>Save layout as</source>
@@ -26990,10 +27042,6 @@ do not work on comments</source>
     <message>
         <source>Cancel</source>
         <translation>ยกเลิก</translation>
-    </message>
-    <message>
-        <source>Manage layouts</source>
-        <translation>จัดการเค้าโครง</translation>
     </message>
     <message>
         <source>Delete layout</source>
@@ -27060,12 +27108,8 @@ do not work on comments</source>
         <translation>ใช้ไม่ได้: %1</translation>
     </message>
     <message>
-        <source>Layout tiers</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Rename (F2)</source>
-        <translation>เปลี่ยนชื่อ (F2)</translation>
+        <source>Rename</source>
+        <translation>เปลี่ยนชื่อ</translation>
     </message>
     <message>
         <source>Delete</source>
@@ -27082,10 +27126,6 @@ do not work on comments</source>
     <message>
         <source>Drag a panel here</source>
         <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>More options</source>
-        <translation>ตัวเลือกเพิ่มเติม</translation>
     </message>
 </context>
 <context>

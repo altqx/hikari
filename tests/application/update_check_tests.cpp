@@ -85,7 +85,11 @@ TEST(UpdateCheck, CandidatesBySemVerSkippingDraftsPrereleasesAndOtherTags)
     EXPECT_EQ(findNewerRelease(feed, "0.1.0", true)->url, "u3");
     EXPECT_FALSE(findNewerRelease(feed, "0.1.2", true));
     EXPECT_FALSE(findNewerRelease({}, "0.1.0", false));
-    const auto fromBeta = updateCandidates(feed, "0.1.0-beta.1", true);
+    const auto stableFromBeta = updateCandidates(feed, "0.1.0-beta.1", true);
+    ASSERT_EQ(stableFromBeta.size(), 2u);
+    EXPECT_EQ(stableFromBeta[0].tag, "v0.1.2");
+    EXPECT_EQ(stableFromBeta[1].tag, "v0.1.1");
+    const auto fromBeta = updateCandidates(feed, "0.1.0-beta.1", false);
     ASSERT_EQ(fromBeta.size(), 4u);
     EXPECT_EQ(fromBeta[0].tag, "v0.2.0-rc.1");
     EXPECT_EQ(fromBeta[3].tag, "v0.1.1");
@@ -147,6 +151,14 @@ TEST(UpdateCheck, AurChannel)
     EXPECT_EQ(offered(true, PackageKind::Arch, std::nullopt), 0u);
     EXPECT_EQ(offered(false, PackageKind::Arch, std::nullopt), 1u);
     EXPECT_EQ(offered(true, PackageKind::Deb, AurChannel::Beta), 0u);
+
+    const auto offeredToBeta = [&](bool option, PackageKind kind, std::optional<AurChannel> channel) {
+        return updateCandidates(feed, "0.1.0-beta.4", stableOnlyFor(option, kind, channel)).size();
+    };
+    EXPECT_EQ(offeredToBeta(true, PackageKind::Arch, AurChannel::Beta), 2u);
+    EXPECT_EQ(offeredToBeta(false, PackageKind::Arch, AurChannel::Stable), 1u);
+    EXPECT_EQ(offeredToBeta(true, PackageKind::AppImage, std::nullopt), 1u);
+    EXPECT_EQ(offeredToBeta(false, PackageKind::AppImage, std::nullopt), 2u);
 
     EXPECT_FALSE(hasStableOnlyOption(PackageKind::Arch, AurChannel::Beta));
     EXPECT_FALSE(hasStableOnlyOption(PackageKind::Arch, AurChannel::Stable));

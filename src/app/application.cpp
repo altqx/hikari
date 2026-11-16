@@ -15,6 +15,7 @@
 #include "hikari/backends/video_frame_bgra.h"
 #include "hikari/application/automation_registry.h"
 #include "hikari/application/hotkeys.h"
+#include "hikari/application/settings.h"
 #include "hikari/application/getting_started.h"
 #include "hikari/application/guide_links.h"
 #include "hikari/application/grid_clipboard.h"
@@ -609,6 +610,8 @@ Application::Application(QObject *parent) : Application(Options{}, parent) {}
 
 Application::Application(Options options, QObject *parent) : QObject(parent)
 {
+    application::setInstalledVersion(
+        (options.appVersion.isEmpty() ? QStringLiteral(HIKARI_VERSION) : options.appVersion).toStdString());
     // MUST KILL: read before anything below may write a settings file
     const bool firstStart = !options.settingsFile.isEmpty() && !ui::SettingsStore::filesExist(options.settingsFile);
     m_reader = backends::makeFileReader();

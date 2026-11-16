@@ -7,6 +7,7 @@ import Hikari.Ui
 FocusScope {
     id: panel
     required property QtObject agent
+    property QtObject aiSettings: null
     signal reviewRequested()
     signal restoreRequested(var turn)
     signal settingsRequested()
@@ -22,6 +23,13 @@ FocusScope {
     readonly property real contextUsed: hasThread && thread.compactWindow > 0 ? thread.contextTokens / thread.compactWindow : 0
     readonly property bool isChild: hasThread && (thread.child?.parent ?? "").length > 0
     property bool showingThreads: false
+    property string componentResult: ""
+    readonly property var download: aiSettings ? aiSettings.download : ({})
+    Connections {
+        target: panel.aiSettings
+        ignoreUnknownSignals: true
+        function onComponentReady(ready) { panel.componentResult = ready ? "ready" : "failed" }
+    }
     objectName: "agentView"
     Keys.onEscapePressed: event => {
         event.accepted = panel.isChild && !panel.showingThreads
@@ -214,8 +222,8 @@ FocusScope {
             }
             IconToolButton {
                 objectName: "agentThreadMenuButton"
-                iconRole: "menu-more"
-                text: qsTr("Thread menu")
+                iconRole: "panel-menu"
+                text: qsTranslate("HikariSub.Workspace", "More options")
                 visible: panel.agent.ready && !panel.showingThreads && !panel.isChild
                 enabled: panel.hasThread
                 onClicked: threadMenu.popup(this, 0, height)
@@ -334,6 +342,15 @@ FocusScope {
                         panel.agent.open(modelData.id)
                         panel.showingThreads = false
                     }
+                    function openMenu(x, y) {
+                        panel.agent.open(modelData.id)
+                        threadMenu.popup(threadRow, x, y)
+                    }
+                    MenuKey.onRequested: at => openMenu(at.x, at.y)
+                    TapHandler {
+                        acceptedButtons: Qt.RightButton
+                        onTapped: point => threadRow.openMenu(point.position.x, point.position.y)
+                    }
                     contentItem: RowLayout {
                         spacing: 6
                         ColumnLayout {
@@ -445,7 +462,7 @@ FocusScope {
                     objectName: "agentOfferCompact"
                     iconRole: "compact"
                     highlighted: true
-                    text: qsTr("Compact conversation")
+                    text: qsTr("Compact thread")
                     onClicked: panel.agent.compact("")
                 }
                 Button {
@@ -684,10 +701,24 @@ FocusScope {
 
     ShellMenu {
         id: threadMenu
+        objectName: "agentThreadMenu"
+        ShellMenuItem {
+            objectName: "agentRenameThread"
+            iconRole: "edit"
+            text: qsTr("Rename thread…")
+            onTriggered: renameLoader.active = true
+        }
+        ShellMenuItem {
+            objectName: "agentExportThread"
+            iconRole: "export"
+            text: qsTr("Export as Markdown…")
+            onTriggered: panel.exportRequested(panel.thread.id)
+        }
+        MenuSeparator {}
         ShellMenuItem {
             objectName: "agentCompactThread"
             iconRole: "compact"
-            text: qsTr("Compact conversation")
+            text: qsTr("Compact thread")
             enabled: panel.canCompact && !(panel.thread.compacting ?? false)
             onTriggered: panel.agent.compact("")
         }
@@ -698,21 +729,11 @@ FocusScope {
             enabled: panel.canCompact && !panel.running
             onTriggered: panel.agent.newThreadFromSummary()
         }
-        ShellMenuItem {
-            objectName: "agentRenameThread"
-            iconRole: "edit"
-            text: qsTr("Rename thread…")
-            onTriggered: renameLoader.active = true
-        }
-        ShellMenuItem {
-            iconRole: "export"
-            text: qsTr("Export as Markdown…")
-            onTriggered: panel.exportRequested(panel.thread.id)
-        }
         MenuSeparator {}
         ShellMenuItem {
+            objectName: "agentDeleteThread"
             iconRole: "delete"
-            text: qsTr("Delete thread")
+            text: qsTr("Delete thread…")
             onTriggered: deleteQuestion.ask({
                 title: qsTr("Delete this thread?"),
                 severity: "warning",
@@ -724,6 +745,19 @@ FocusScope {
                     panel.agent.remove(panel.thread.id)
             })
         }
+    }
+
+    ShellMenu {
+        id: answerMenu
+        objectName: "agentAnswerMenu"
+        property Item editor: null
+        function openFor(answer, at) {
+            editor = answer
+            popup(answer, at.x, at.y)
+        }
+        TextMenuItem { kind: TextMenuItem.Copy; editor: answerMenu.editor }
+        MenuSeparator {}
+        TextMenuItem { kind: TextMenuItem.SelectAll; editor: answerMenu.editor }
     }
 
     ShellMenu {
@@ -752,7 +786,7 @@ FocusScope {
         objectName: "agentSlashMenu"
         ShellMenuItem {
             iconRole: "compact"
-            text: qsTr("Compact conversation")
+            text: qsTr("Compact thread")
             detailText: "/compact"
             enabled: panel.canCompact
             onTriggered: {
@@ -795,20 +829,18 @@ FocusScope {
                 iconRole: "ai-assistant"
                 title: modelData.text
                 onAboutToShow: panel.agent.loadAgentModels(modelData.agent)
-                ShellMenuItem {
+                MenuRadioItem {
                     objectName: panel.modelItemName(agentModelMenu.modelData.value)
                     text: qsTr("Agent default")
-                    checkable: true
                     checked: panel.hasThread && panel.thread.model === agentModelMenu.modelData.value
                     onTriggered: panel.chooseModel(agentModelMenu.modelData.value)
                 }
                 Repeater {
                     model: agentModelMenu.listed.models ?? []
-                    delegate: ShellMenuItem {
+                    delegate: MenuRadioItem {
                         required property var modelData
                         objectName: panel.modelItemName(modelData.value)
                         text: modelData.text
-                        checkable: true
                         checked: panel.hasThread && panel.thread.model === modelData.value
                         onTriggered: panel.chooseModel(modelData.value)
                     }
@@ -826,20 +858,20 @@ FocusScope {
         }
         Repeater {
             model: panel.agent.models.filter(m => !m.agent)
-            delegate: ShellMenuItem {
+            delegate: MenuRadioItem {
                 required property var modelData
                 objectName: panel.modelItemName(modelData.value)
-                text: modelData.text + "   " + modelData.provider
-                checkable: true
+                text: modelData.text
+                detailText: modelData.provider
                 checked: panel.hasThread && panel.thread.model === modelData.value
                 onTriggered: panel.chooseModel(modelData.value)
             }
         }
         MenuSeparator {}
         ShellMenuItem {
-            objectName: "agentModelSettings"
             iconRole: "settings"
-            text: qsTr("Settings › AI…")
+            objectName: "agentModelSettings"
+            text: qsTr("Settings › AI")
             onTriggered: panel.settingsRequested()
         }
     }
@@ -853,11 +885,10 @@ FocusScope {
             model: [{id: "manual", name: qsTr("Manual"), detail: qsTr("You approve each subtitle edit before it’s made, and every other change. Reading never asks.")},
                     {id: "auto", name: qsTr("Auto"), detail: qsTr("The judge model approves each action, or asks you. It sees the action and your messages, never your files.")},
                     {id: "full", name: qsTr("Full access"), detail: qsTr("Nothing asks except the always-ask list. Edits apply at once and stay undoable.")}]
-            delegate: ShellMenuItem {
+            delegate: MenuRadioItem {
                 id: modeItem
                 required property var modelData
                 objectName: "agentMode_" + modelData.id
-                checkable: true
                 checked: panel.mode === modelData.id
                 text: modelData.name
                 contentItem: ColumnLayout {
@@ -884,7 +915,8 @@ FocusScope {
         MenuSeparator {}
         ShellMenuItem {
             iconRole: "settings"
-            text: qsTr("Default for new threads…")
+            objectName: "agentModeDefault"
+            text: qsTr("Default for new threads")
             onTriggered: panel.settingsRequested()
         }
     }
@@ -1017,6 +1049,11 @@ FocusScope {
                         panel.agent.openLink(c.url)
                 }
                 HoverHandler { cursorShape: parent.hoveredLink.length > 0 ? Qt.PointingHandCursor : Qt.IBeamCursor }
+                TapHandler {
+                    acceptedButtons: Qt.RightButton
+                    onTapped: point => answerMenu.openFor(parent, point.position)
+                }
+                MenuKey.onRequested: position => answerMenu.openFor(this, position)
             }
             SearchSuggestions {
                 id: suggestionsStrip
@@ -1564,7 +1601,13 @@ FocusScope {
                 color: Theme.muted
                 text: ask.item.status === "allowed" ? qsTr("Allowed")
                       : ask.item.status === "allowedInThread" ? qsTr("Allowed in this thread")
-                      : ask.item.status === "denied" ? qsTr("Denied") : qsTr("No longer needed")
+                      : ask.item.status === "denied" ? qsTr("Denied")
+                      : ask.item.withdrawnFor === "agent" ? qsTr("Withdrawn: the agent stopped waiting for your answer.")
+                      : ask.item.withdrawnFor === "turnEnded" ? qsTr("Withdrawn: the turn ended before you answered.")
+                      : ask.item.withdrawnFor === "stopped" ? qsTr("Withdrawn: you stopped the turn.")
+                      : ask.item.withdrawnFor === "signedOut" ? qsTr("Withdrawn: you signed out of Codex.")
+                      : ask.item.withdrawnFor === "cap" || ask.item.withdrawnFor === "dailyCap" ? qsTr("Withdrawn: the cost cap stopped the turn.")
+                      : qsTr("No longer needed")
             }
         }
     }
@@ -2018,7 +2061,7 @@ FocusScope {
             readonly property var item: parent ? parent.item : ({})
             readonly property bool last: parent ? parent.last : false
             readonly property string kind: item.notice ?? ""
-            readonly property bool quiet: kind === "stopped" || kind === "parent" || kind === "maxTokens" || kind === "refusal" || kind === "maxRequests"
+            readonly property bool quiet: kind === "stopped" || kind === "parent" || kind === "signedOut" || kind === "maxTokens" || kind === "refusal" || kind === "maxRequests"
                                           || kind === "nothingToCompact"
             objectName: "agentNotice_" + kind
             readonly property bool searchFailed: kind === "searchUsedUp" || kind === "searchKey"
@@ -2031,6 +2074,7 @@ FocusScope {
                       : notice.kind === "failed" ? qsTr("Turn failed")
                       : notice.kind === "stopped" ? qsTr("You stopped the turn.")
                       : notice.kind === "parent" ? qsTr("The parent thread stopped this sub-agent.")
+                      : notice.kind === "signedOut" ? qsTr("Signed out of Codex. This session ended.")
                       : notice.kind === "maxTokens" ? qsTr("The answer reached the model’s length limit.")
                       : notice.kind === "refusal" ? qsTr("The model declined to answer.")
                       : notice.kind === "maxRequests" ? qsTr("The turn stopped after its most model requests.")
@@ -2040,6 +2084,7 @@ FocusScope {
                       : notice.kind === "nothingToCompact" ? qsTr("There’s nothing to compact yet.")
                       : notice.kind === "searchUsedUp" ? qsTr("%1 has no searches left").arg(panel.serviceName(notice.item.service ?? ""))
                       : notice.kind === "searchKey" ? qsTr("%1 refused HikariSub’s key").arg(panel.serviceName(notice.item.service ?? ""))
+                      : panel.componentResult === "ready" ? qsTr("AI component is ready")
                       : qsTr("AI component isn’t ready")
             }
             Label {
@@ -2054,7 +2099,11 @@ FocusScope {
                       : notice.kind === "lost" ? qsTr("The turn was interrupted and won’t rerun by itself. Changes it made stay in the review.")
                       : notice.kind === "failed" ? (notice.item.detail ?? "")
                       : notice.kind === "compactFailed" ? qsTr("The summary request failed twice (%1). Nothing was removed.").arg(notice.item.detail ?? "")
-                      : notice.kind === "noSidecar" ? qsTr("HikariSub is still getting the AI component, or it couldn’t start.")
+                      : notice.kind === "noSidecar" && panel.download.active
+                        ? qsTr("Getting the AI component: %1 of %2 MB").arg(Math.round((panel.download.received || 0) / 1000000), Math.round((panel.download.size || 0) / 1000000))
+                      : notice.kind === "noSidecar" && panel.componentResult === "ready" ? qsTr("The AI component is ready. Send your message again.")
+                      : notice.kind === "noSidecar" && panel.componentResult === "failed" ? qsTr("The AI component didn’t download. Check your connection and try again.")
+                      : notice.kind === "noSidecar" ? qsTr("Agents need the AI component, which HikariSub downloads once.")
                       : notice.kind === "notOffered" && notice.item.detail === "project"
                         ? qsTr("Not offered: its command is inside an open project, which it could read.")
                       : notice.kind === "notOffered" && notice.item.detail === "channel"
@@ -2100,6 +2149,16 @@ FocusScope {
                     visible: notice.kind === "lost"
                     text: qsTr("Show the log")
                     onClicked: panel.logRequested()
+                }
+                Button {
+                    objectName: "agentGetComponent"
+                    visible: notice.kind === "noSidecar" && !!panel.aiSettings && !panel.download.active && panel.componentResult !== "ready"
+                    highlighted: true
+                    text: qsTr("Get the AI component")
+                    onClicked: {
+                        panel.componentResult = ""
+                        panel.aiSettings.installComponent()
+                    }
                 }
                 Button {
                     visible: notice.kind === "dailyCap" || notice.kind === "noModel" || notice.kind === "noSidecar"

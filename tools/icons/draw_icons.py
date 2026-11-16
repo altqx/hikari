@@ -1119,7 +1119,7 @@ icon("qc-notes", "QC notes", [], [VIEW, SUBS, "qc-notes"],
 icon("qc-done-reset", "Mark all as not done", [], ["qc-notes"], stroke("M1.5 7.5l3 3 6-7") + RELOAD_BADGE)
 icon("node-library", "From the library", [], ["node-editor"],
      stroke(BOOK) + accent(dot(7, 4.5, 1.25), dot(10, 8, 1.25), stroke("M7.75 5.5l1.5 1.5")))
-icon("compact", "Compact conversation", [], ["agent-panel", "grid-menu"],
+icon("compact", "Compact thread", [], ["agent-panel", "grid-menu"],
      stroke("M2.5 1.5h11M2.5 13.5h11M4.5 7.5h7")
      + accent(stroke("M8 3v2.5M6.5 4L8 5.5 9.5 4M8 12V9.5M6.5 11L8 9.5 9.5 11")))
 icon("review-panel", "Review panel", [], [VIEW, EDIT, "review-panel"],
@@ -1130,8 +1130,6 @@ icon("web-search", "Search the web", [], ["agent-panel", "settings-dialog"],
               stroke("M6.5 2c-1.25 1.25-1.75 2.75-1.75 4.5s.5 3.25 1.75 4.5c1.25-1.25 1.75-2.75 1.75-4.5S7.75 3.25 6.5 2z")))
 icon("update", "Update now", [], ["settings-dialog"],
      stroke("M2.5 4.5L8 1.5l5.5 3V8M2.5 4.5V11L8 14M2.5 4.5L8 7.5l5.5-3M8 7.5V14") + UP_BADGE)
-icon("network", "Internet access", [], ["settings-dialog", "plugin-manager"],
-     stroke("M1.5 6a9 9 0 0 1 13 0M3.75 8.5a6 6 0 0 1 8.5 0M6 11a3 3 0 0 1 4 0") + accent(dot(8, 13, 1)))
 icon("marketplace", "Marketplace", [], ["plugin-manager"],
      stroke("M2.5 8v5.5h11V8") + stroke("M6.5 13.5V10h3v3.5")
      + accent(stroke("M1.5 6.5l1-4h11l1 4c0 1-.75 1.5-1.5 1.5S12 7.5 11.5 6.5c-.25 1-1 1.5-1.75 1.5s-1.5-.5-1.75-1.5"
@@ -1446,7 +1444,6 @@ for card, roles in {
     "AI24 #744": ["update"],
     "PL7 #419": ["plugin-sandbox"],
     "AU6 #845": ["clip-to-shape", "shape-to-clip", "shape-merge"],
-    "CX7 #810": ["align-distribute", "phantom-keep-start", "phantom-keep-end", "side-bar-off"],
 }.items():
     for role in roles:
         PENDING[role] = card

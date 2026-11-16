@@ -150,6 +150,8 @@ DialogWindow {
             highlightMoveDuration: 0
             Accessible.role: Accessible.List
             Accessible.name: qsTr("Saved layouts")
+            MenuKey.enabled: dialog.layouts.hasProject && dialog.current !== null && !dialog.renaming
+            MenuKey.onRequested: tierMenu.popup(list.currentItem, 0, list.currentItem.height)
             Keys.onShortcutOverride: event => event.accepted = event.modifiers === Qt.NoModifier
                                                                && (event.key === Qt.Key_Delete || event.key === Qt.Key_F2)
             Keys.onPressed: event => {
@@ -255,15 +257,17 @@ DialogWindow {
                             objectName: row.highlighted ? "manageLayoutsTiers" : ""
                             visible: row.highlighted && !row.editing && dialog.layouts.hasProject
                             iconRole: "panel-menu"
-                            text: qsTr("Layout tiers")
-                            focusPolicy: Qt.NoFocus
+                            text: qsTr("More options")
+                            focusPolicy: Qt.TabFocus
+                            Accessible.description: row.modelData.name
                             onClicked: tierMenu.popup(tierButton, 0, tierButton.height)
                         }
                         IconToolButton {
                             objectName: row.highlighted ? "manageLayoutsRename" : ""
                             visible: row.highlighted && !row.editing && !row.modelData.hidden
                             iconRole: "edit"
-                            text: qsTr("Rename (F2)")
+                            text: qsTr("Rename")
+                            tip: text + " (" + ShellMenus.keyText("F2") + ")"
                             focusPolicy: Qt.NoFocus
                             onClicked: dialog.startRename()
                         }

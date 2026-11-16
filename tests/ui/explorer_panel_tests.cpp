@@ -2,6 +2,7 @@
 #include "hikari/application/hotkeys.h"
 #include "docking.h"
 #include "explorer_model.h"
+#include "menu_rows.h"
 #include "settings_store.h"
 
 #include <QClipboard>
@@ -11,6 +12,7 @@
 #include <QQmlApplicationEngine>
 #include <QQuickItem>
 #include <QQuickWindow>
+#include <QScreen>
 #include <QStyleHints>
 #include <QTemporaryDir>
 #include <QtQml/qqmlextensionplugin.h>
@@ -196,6 +198,8 @@ private slots:
 
     void cleanup()
     {
+        application->settingsStore()->setValue(QStringLiteral("explorer.allFiles"), false);
+        application->settingsStore()->setValue(QStringLiteral("explorer.groupByName"), false);
         stop();
         QDir(project).removeRecursively();
     }
@@ -376,6 +380,88 @@ private slots:
         answer(QStringLiteral("trash"));
         QTRY_VERIFY(!QFileInfo::exists(at("ep02.ass")));
         QTRY_VERIFY(!row(QStringLiteral("ep02.ass")));
+    }
+
+    void theRowMenuEndsWithTheTrashAndThePanelMenuHoldsTheTools()
+    {
+        writeAll(at(".hikari/project.toml"), "version = 1\n[explorer]\nexclude = [\"*.md\"]\n");
+        openProject();
+        QTRY_VERIFY(row(QStringLiteral("ep01.ass")));
+        QVERIFY(QMetaObject::invokeMethod(named("explorerTool"), "showMenu", Q_ARG(QVariant, rowOf(QStringLiteral("ep01.ass"))),
+                                          Q_ARG(QVariant, QVariant::fromValue(row(QStringLiteral("ep01.ass")))),
+                                          Q_ARG(QVariant, 4), Q_ARG(QVariant, 4)));
+        QObject *rowMenu = named("explorerRowMenu");
+        QTRY_VERIFY(rowMenu->property("visible").toBool());
+        QCOMPARE(menu_rows::shown(rowMenu),
+                 (QStringList{"explorerMenuOpenNewTab", "explorerMenuOpenHere", "|", "explorerMenuShowInFolder",
+                              "explorerMenuCopyPath", "|", "explorerMenuNewFile", "explorerMenuRename", "|", "explorerMenuTrash"}));
+        QCOMPARE(named("explorerMenuTrash")->property("text").toString(), QStringLiteral("Move to the trash…"));
+        QVERIFY(QMetaObject::invokeMethod(rowMenu, "close"));
+        QTRY_VERIFY(!rowMenu->property("visible").toBool());
+
+        QObject *panelMenu = named("panelOptionsMenu");
+        QVERIFY(QMetaObject::invokeMethod(panelMenu, "openFor", Q_ARG(QVariant, QVariant::fromValue(named("explorerDock"))),
+                                          Q_ARG(QVariant, QVariant::fromValue(named("explorerPanel")))));
+        QTRY_VERIFY(panelMenu->property("visible").toBool());
+        QCOMPARE(menu_rows::shown(panelMenu).mid(0, 5),
+                 (QStringList{"panelOptions_explorerNewFile", "panelOptions_explorerRefresh", "panelOptions_explorerGroupByName",
+                              "panelOptions_explorerAllFiles", "|"}));
+        QVERIFY(!model()->allFiles());
+        QVERIFY(QMetaObject::invokeMethod(named("panelOptions_explorerAllFiles"), "triggered"));
+        QTRY_VERIFY(model()->allFiles());
+        QTRY_VERIFY(row(QStringLiteral("ep01.mkv.lwi")));
+        QVERIFY(!model()->groupByName());
+        QVERIFY(QMetaObject::invokeMethod(named("panelOptions_explorerGroupByName"), "triggered"));
+        QTRY_VERIFY(model()->groupByName());
+        QVERIFY(QMetaObject::invokeMethod(panelMenu, "close"));
+        QTRY_VERIFY(!panelMenu->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(panelMenu, "openFor", Q_ARG(QVariant, QVariant::fromValue(named("explorerDock"))),
+                                          Q_ARG(QVariant, QVariant::fromValue(named("explorerPanel")))));
+        QTRY_VERIFY(panelMenu->property("visible").toBool());
+        QVERIFY(named("panelOptions_explorerGroupByName")->property("checked").toBool());
+        QVERIFY(QMetaObject::invokeMethod(named("panelOptions_explorerNewFile"), "triggered"));
+        QVERIFY(QMetaObject::invokeMethod(panelMenu, "close"));
+        QQuickItem *field = nullptr;
+        QTRY_VERIFY((field = shown("explorerNewFileName")) && field->hasActiveFocus());
+    }
+
+    void explorerMenuScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        window->resize(1200, 800);
+        openProject();
+        QTRY_VERIFY(row(QStringLiteral("ep01.ass")));
+        auto &settings = *application->settingsStore();
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        const auto grab = [&](const QString &name) {
+            QTest::qWait(300);
+            const QRect frame = window->frameGeometry();
+            QVERIFY(window->screen()->grabWindow(0, frame.x(), frame.y(), frame.width(), frame.height()).save(out + name));
+        };
+        QObject *rowMenu = named("explorerRowMenu");
+        QObject *panelMenu = named("panelOptionsMenu");
+        for (const char *code : {"light", "dark", "highContrastWhite", "highContrastBlack"}) {
+            settings.setValue(QStringLiteral("appearance.theme"), QString::fromLatin1(code));
+            QTest::qWait(200);
+            const QString suffix = QLatin1Char('-') + QLatin1String(code) + QStringLiteral(".png");
+            QVERIFY(QMetaObject::invokeMethod(named("explorerTool"), "showMenu", Q_ARG(QVariant, rowOf(QStringLiteral("ep01.ass"))),
+                                              Q_ARG(QVariant, QVariant::fromValue(row(QStringLiteral("ep01.ass")))),
+                                              Q_ARG(QVariant, 40), Q_ARG(QVariant, 12)));
+            QTRY_VERIFY(rowMenu->property("opened").toBool());
+            grab(QStringLiteral("/cx7-explorer-row") + suffix);
+            QVERIFY(QMetaObject::invokeMethod(rowMenu, "close"));
+            QTRY_VERIFY(!rowMenu->property("visible").toBool());
+            QVERIFY(QMetaObject::invokeMethod(panelMenu, "openFor", Q_ARG(QVariant, QVariant::fromValue(named("explorerDock"))),
+                                              Q_ARG(QVariant, QVariant::fromValue(row(QStringLiteral("ep01.ass"))))));
+            QTRY_VERIFY(panelMenu->property("opened").toBool());
+            grab(QStringLiteral("/cx7-explorer-options") + suffix);
+            QVERIFY(QMetaObject::invokeMethod(panelMenu, "close"));
+            QTRY_VERIFY(!panelMenu->property("visible").toBool());
+        }
+        settings.setValue(QStringLiteral("appearance.followSystem"), true);
     }
 
     void newSubtitleFileHereCreatesAndOpensIt()

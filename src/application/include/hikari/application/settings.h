@@ -36,6 +36,8 @@ struct SettingDefinition {
 
 // HikariSub legacy's settings first, then HikariSub's own.
 std::span<const SettingDefinition> settingDefinitions();
+// Call before any setting is read: a prerelease defaults updater.checkForStable to false.
+void setInstalledVersion(std::string_view version);
 const SettingDefinition *findSetting(std::string_view id);
 const SettingDefinition *findLegacySetting(std::string_view legacyKey);
 std::string_view scopeName(SettingScope scope);

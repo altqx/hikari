@@ -166,6 +166,7 @@ DialogWindow {
                         dialog.editor.select(index)
                         dialog.showFields()
                     }
+                    MenuKey.onRequested: if (dialog.tiered && currentItem) tierMenu.popup(currentItem, 0, currentItem.height)
                     Keys.onUpPressed: if (dialog.editor) selectRow(dialog.editor.selection - 1)
                     Keys.onDownPressed: if (dialog.editor) selectRow(dialog.editor.selection + 1)
                     ScrollBar.vertical: ScrollBar {}
@@ -282,7 +283,7 @@ DialogWindow {
                         id: moreButton
                         objectName: "shapesMore"
                         iconRole: "panel-menu"
-                        text: qsTr("More")
+                        text: qsTranslate("HikariSub.Workspace", "More options")
                         down: moreMenu.visible
                         onClicked: moreMenu.popup(moreButton, 0, moreButton.height)
                     }
@@ -524,6 +525,7 @@ DialogWindow {
         ShellMenuItem {
             objectName: "shapesCopyToTier"
             visible: dialog.tiered
+            height: visible ? implicitHeight : 0
             iconRole: "copy-to-tier"
             text: tierMenu.fromMine ? qsTr("Copy to project") : qsTr("Copy to mine")
             onTriggered: dialog.transfer(false)
@@ -531,11 +533,12 @@ DialogWindow {
         ShellMenuItem {
             objectName: "shapesMoveToTier"
             visible: dialog.tiered
+            height: visible ? implicitHeight : 0
             iconRole: "move-to-tier"
             text: tierMenu.fromMine ? qsTr("Move to project") : qsTr("Move to mine")
             onTriggered: dialog.transfer(true)
         }
-        MenuSeparator { visible: dialog.tiered }
+        MenuSeparator { visible: dialog.tiered; height: visible ? implicitHeight : 0 }
         ShellMenuItem {
             objectName: "shapesRestoreDefault"
             iconRole: "restore-default"

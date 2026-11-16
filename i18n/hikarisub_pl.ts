@@ -73,7 +73,7 @@
     </message>
     <message>
         <source>Thread menu</source>
-        <translation>Menu wątku</translation>
+        <translation type="vanished">Menu wątku</translation>
     </message>
     <message>
         <source>Add a provider to use the agent</source>
@@ -277,7 +277,7 @@
     </message>
     <message>
         <source>Delete thread</source>
-        <translation>Usuń wątek</translation>
+        <translation type="vanished">Usuń wątek</translation>
     </message>
     <message>
         <source>Delete this thread?</source>
@@ -305,7 +305,7 @@
     </message>
     <message>
         <source>Settings › AI…</source>
-        <translation>Ustawienia › AI…</translation>
+        <translation type="vanished">Ustawienia › AI…</translation>
     </message>
     <message>
         <source>You approve each subtitle edit before it’s made, and every other change. Reading never asks.</source>
@@ -321,7 +321,7 @@
     </message>
     <message>
         <source>Default for new threads…</source>
-        <translation>Domyślny dla nowych wątków…</translation>
+        <translation type="vanished">Domyślny dla nowych wątków…</translation>
     </message>
     <message>
         <source>Rename thread</source>
@@ -456,6 +456,26 @@
         <translation>Odmów i powiedz agentowi…</translation>
     </message>
     <message>
+        <source>Withdrawn: the agent stopped waiting for your answer.</source>
+        <translation>Wycofano: agent przestał czekać na odpowiedź.</translation>
+    </message>
+    <message>
+        <source>Withdrawn: the turn ended before you answered.</source>
+        <translation>Wycofano: tura skończyła się przed odpowiedzią.</translation>
+    </message>
+    <message>
+        <source>Withdrawn: you stopped the turn.</source>
+        <translation>Wycofano: zatrzymano turę.</translation>
+    </message>
+    <message>
+        <source>Withdrawn: you signed out of Codex.</source>
+        <translation>Wycofano: wylogowano z Codex.</translation>
+    </message>
+    <message>
+        <source>Withdrawn: the cost cap stopped the turn.</source>
+        <translation>Wycofano: limit kosztów zatrzymał turę.</translation>
+    </message>
+    <message>
         <source>The signing key changed. The installed copy was signed by key %1, and this one by key %2. Install it only if you trust that the author changed keys.</source>
         <translation type="unfinished">Klucz podpisu się zmienił. Zainstalowana kopia była podpisana kluczem %1, a ta kluczem %2. Instaluj ją tylko wtedy, gdy ufasz, że autor zmienił klucze.</translation>
     </message>
@@ -568,8 +588,36 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Signed out of Codex. This session ended.</source>
+        <translation>Wylogowano z Codex. Ta sesja się zakończyła.</translation>
+    </message>
+    <message>
+        <source>AI component is ready</source>
+        <translation>Komponent AI jest gotowy</translation>
+    </message>
+    <message>
+        <source>Getting the AI component: %1 of %2 MB</source>
+        <translation>Pobieranie komponentu AI: %1 z %2 MB</translation>
+    </message>
+    <message>
+        <source>The AI component is ready. Send your message again.</source>
+        <translation>Komponent AI jest gotowy. Wyślij wiadomość ponownie.</translation>
+    </message>
+    <message>
+        <source>The AI component didn’t download. Check your connection and try again.</source>
+        <translation>Nie udało się pobrać komponentu AI. Sprawdź połączenie i spróbuj ponownie.</translation>
+    </message>
+    <message>
+        <source>Agents need the AI component, which HikariSub downloads once.</source>
+        <translation>Agenci potrzebują komponentu AI, który HikariSub pobiera jeden raz.</translation>
+    </message>
+    <message>
         <source>Not offered: HikariSub can’t open a private tools channel for it on this system.</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Get the AI component</source>
+        <translation>Pobierz komponent AI</translation>
     </message>
     <message numerus="yes">
         <source>%n sub-agent(s)</source>
@@ -708,6 +756,22 @@
         <translation type="unfinished">Otwórz</translation>
     </message>
     <message>
+        <source>Compact thread</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete thread…</source>
+        <translation>Usuń wątek…</translation>
+    </message>
+    <message>
+        <source>Settings › AI</source>
+        <translation>Ustawienia › AI</translation>
+    </message>
+    <message>
+        <source>Default for new threads</source>
+        <translation>Domyślny dla nowych wątków</translation>
+    </message>
+    <message>
         <source>%1 asks to run this Lua script</source>
         <translation>%1 prosi o uruchomienie tego skryptu Lua</translation>
     </message>
@@ -785,7 +849,7 @@
     </message>
     <message>
         <source>HikariSub is still getting the AI component, or it couldn’t start.</source>
-        <translation>HikariSub nadal pobiera komponent AI albo nie udało się go uruchomić.</translation>
+        <translation type="vanished">HikariSub nadal pobiera komponent AI albo nie udało się go uruchomić.</translation>
     </message>
     <message>
         <source>The search service answered %1. The answer goes on without searching the web.</source>
@@ -905,10 +969,6 @@
     </message>
     <message>
         <source>%1 of %2 tokens. Automatic compaction is off in Settings › AI.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Compact conversation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1557,7 +1617,7 @@ Urządzenie wyjściowe: %2</translation>
     </message>
     <message>
         <source>Answers and presets</source>
-        <translation>Odpowiedzi i presety</translation>
+        <translation type="vanished">Odpowiedzi i presety</translation>
     </message>
     <message>
         <source>Last used</source>
@@ -2053,7 +2113,7 @@ Urządzenie wyjściowe: %2</translation>
     </message>
     <message>
         <source>%1 options</source>
-        <translation>Opcje: %1</translation>
+        <translation type="vanished">Opcje: %1</translation>
     </message>
     <message>
         <source>The script’s process ended. Reload to start it again; its macro is not rerun.</source>
@@ -4218,6 +4278,10 @@ Urządzenie wyjściowe: %2</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Move to the trash…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Move the folder “%1” and everything in it to the trash?</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4972,8 +5036,8 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Zmień nazwę</translation>
     </message>
     <message>
-        <source>Catalogue tiers</source>
-        <translation type="unfinished"></translation>
+        <source>More options</source>
+        <translation>Więcej opcji</translation>
     </message>
     <message>
         <source>Load from a file</source>
@@ -5370,10 +5434,6 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>Style editor sample</source>
         <translation>Próbka edytora stylu</translation>
-    </message>
-    <message>
-        <source>Manage catalogues</source>
-        <translation>Zarządzaj katalogami</translation>
     </message>
     <message>
         <source>No catalogues yet</source>
@@ -10423,6 +10483,10 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Open</source>
         <translation>Otwórz</translation>
+    </message>
+    <message>
+        <source>Open %1</source>
+        <translation>Otwórz %1</translation>
     </message>
     <message>
         <source>Remove subtitles from the editor</source>
@@ -16829,8 +16893,8 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>%1, z %2</translation>
     </message>
     <message>
-        <source>About %1…</source>
-        <translation>O wtyczce %1…</translation>
+        <source>About %1</source>
+        <translation>O wtyczce %1</translation>
     </message>
     <message>
         <source>%1 rolled back to %2</source>
@@ -17390,8 +17454,8 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Importuj plik notatek…</translation>
     </message>
     <message>
-        <source>Import notes from the clipboard</source>
-        <translation>Importuj notatki ze schowka</translation>
+        <source>Import notes from the clipboard…</source>
+        <translation>Importuj notatki ze schowka…</translation>
     </message>
     <message>
         <source>Export notes…</source>
@@ -17402,7 +17466,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Oznacz wszystkie jako niegotowe</translation>
     </message>
     <message>
-        <source>Remove all notes…</source>
+        <source>Delete all notes…</source>
         <translation>Usuń wszystkie notatki…</translation>
     </message>
     <message>
@@ -17502,11 +17566,11 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Nie można odczytać %1: %2</translation>
     </message>
     <message>
-        <source>Remove all notes</source>
+        <source>Delete all notes</source>
         <translation>Usuń wszystkie notatki</translation>
     </message>
     <message numerus="yes">
-        <source>Remove all %n QC note(s) from this file?</source>
+        <source>Delete all %n QC note(s) from this file?</source>
         <translation>
             <numerusform>Usunąć %n notatkę QC z tego pliku?</numerusform>
             <numerusform>Usunąć wszystkie %n notatki QC z tego pliku?</numerusform>
@@ -17518,7 +17582,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Cofnięcie je przywróci.</translation>
     </message>
     <message>
-        <source>Remove all</source>
+        <source>Delete all</source>
         <translation>Usuń wszystkie</translation>
     </message>
     <message>
@@ -17630,8 +17694,8 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Notatki QC można przechowywać tylko w plikach ASS i SSA. Zapisz ten plik jako ASS, aby dodać notatki.</translation>
     </message>
     <message>
-        <source>Paste notes</source>
-        <translation>Wklej notatki</translation>
+        <source>Import from the clipboard</source>
+        <translation>Importuj ze schowka</translation>
     </message>
     <message>
         <source>Notes start with a time: 3:24 - …
@@ -20756,24 +20820,16 @@ ponieważ została zmieniona.</translation>
         <translation>Przenieś w górę</translation>
     </message>
     <message>
-        <source>Move up (Alt+Up)</source>
-        <translation>Przenieś w górę (Alt+Up)</translation>
-    </message>
-    <message>
         <source>Move down</source>
         <translation>Przenieś w dół</translation>
-    </message>
-    <message>
-        <source>Move down (Alt+Down)</source>
-        <translation>Przenieś w dół (Alt+Down)</translation>
     </message>
     <message>
         <source>Load from a file…</source>
         <translation>Wczytaj z pliku…</translation>
     </message>
     <message>
-        <source>More</source>
-        <translation>Więcej</translation>
+        <source>More options</source>
+        <translation>Więcej opcji</translation>
     </message>
     <message>
         <source>Move to top</source>
@@ -20809,10 +20865,6 @@ ponieważ została zmieniona.</translation>
     </message>
     <message>
         <source>Mine</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Catalogue tiers</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -23689,7 +23741,7 @@ Usunięte style:
     </message>
     <message>
         <source>Preset commands</source>
-        <translation>Polecenia presetów</translation>
+        <translation type="vanished">Polecenia presetów</translation>
     </message>
     <message>
         <source>Save as preset…</source>
@@ -27060,8 +27112,8 @@ nie działają na komentarzach</translation>
 <context>
     <name>HikariSub.Workspace</name>
     <message>
-        <source>%1 options</source>
-        <translation>Opcje: %1</translation>
+        <source>More options</source>
+        <translation>Więcej opcji</translation>
     </message>
     <message>
         <source>Panels</source>
@@ -27164,12 +27216,12 @@ nie działają na komentarzach</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Move left</source>
-        <translation type="unfinished">Przesuń w lewo</translation>
+        <source>Move left in the side bar</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Move right</source>
-        <translation type="unfinished">Przesuń w prawo</translation>
+        <source>Move right in the side bar</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Reset side bars</source>
@@ -27396,8 +27448,8 @@ nie działają na komentarzach</translation>
         <translation>Resetuj ten układ</translation>
     </message>
     <message>
-        <source>Manage layouts…</source>
-        <translation>Zarządzaj układami…</translation>
+        <source>Manage layouts</source>
+        <translation>Zarządzaj układami</translation>
     </message>
     <message>
         <source>Save layout as</source>
@@ -27438,10 +27490,6 @@ nie działają na komentarzach</translation>
     <message>
         <source>Cancel</source>
         <translation>Anuluj</translation>
-    </message>
-    <message>
-        <source>Manage layouts</source>
-        <translation>Zarządzaj układami</translation>
     </message>
     <message>
         <source>Delete layout</source>
@@ -27508,12 +27556,8 @@ nie działają na komentarzach</translation>
         <translation>Nie można użyć: %1</translation>
     </message>
     <message>
-        <source>Layout tiers</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Rename (F2)</source>
-        <translation>Zmień nazwę (F2)</translation>
+        <source>Rename</source>
+        <translation>Zmień nazwę</translation>
     </message>
     <message>
         <source>Delete</source>
@@ -27530,10 +27574,6 @@ nie działają na komentarzach</translation>
     <message>
         <source>Drag a panel here</source>
         <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>More options</source>
-        <translation>Więcej opcji</translation>
     </message>
 </context>
 <context>

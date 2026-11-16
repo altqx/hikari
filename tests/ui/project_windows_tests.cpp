@@ -14,6 +14,7 @@
 #include "hikari/application/all_tags.h"
 #include "hikari/application/shape_presets.h"
 #include "list_files.h"
+#include "menu_rows.h"
 #include "line_table_model.h"
 #include "settings_store.h"
 #include "shell_controller.h"
@@ -39,6 +40,8 @@
 #include <QTemporaryDir>
 #include <QtQml/qqmlextensionplugin.h>
 #include <QtTest>
+
+#include <functional>
 
 Q_IMPORT_QML_PLUGIN(Hikari_UiPlugin)
 
@@ -1259,6 +1262,73 @@ private slots:
         QCOMPARE(rowKeys(layouts->savedLayouts()), QStringList{QStringLiteral("mine:review")});
     }
 
+    void theTierMenusOpenWithTheMenuKey()
+    {
+        start();
+        const QString show = folder("tierkeys", true);
+        auto &fonts = application->fontCatalogs();
+        const int w = openProjectWindow(show);
+        QVERIFY(w >= 0);
+        QTRY_VERIFY(fonts.hasProject());
+        QVERIFY(fonts.addCatalog(QStringLiteral("Signs"), false));
+        QQuickWindow *main = shell(w);
+        auto *layouts = qobject_cast<ui::WorkspaceLayoutController *>(main->property("workspaceLayout").value<QObject *>());
+        QTRY_VERIFY(layouts && layouts->hasProject());
+        QVERIFY(layouts->saveLayoutAs(QStringLiteral("Review")));
+
+        QVariant manage;
+        QVERIFY(QMetaObject::invokeMethod(main, "lazy", Q_RETURN_ARG(QVariant, manage),
+                                          Q_ARG(QVariant, QVariant::fromValue(named(main, "manageLayoutsDialogLoader")))));
+        auto *dialog = qobject_cast<QQuickWindow *>(manage.value<QObject *>());
+        QVERIFY(dialog);
+        QVERIFY(QMetaObject::invokeMethod(dialog, "show"));
+        QTRY_VERIFY(dialog->isVisible());
+        auto *list = qobject_cast<QQuickItem *>(dialog->findChild<QObject *>(QStringLiteral("manageLayoutsList")));
+        QVERIFY(list);
+        QTRY_COMPARE(list->property("count").toInt(), 1);
+        list->setProperty("currentIndex", 0);
+        std::function<QQuickItem *(QQuickItem *, QLatin1String)> inDialog = [&](QQuickItem *from, QLatin1String name) -> QQuickItem * {
+            if (from->objectName() == name)
+                return from;
+            for (QQuickItem *child : from->childItems())
+                if (QQuickItem *found = inDialog(child, name))
+                    return found;
+            return nullptr;
+        };
+        QQuickItem *tiers = nullptr;
+        QTRY_VERIFY((tiers = inDialog(dialog->contentItem(), QLatin1String("manageLayoutsTiers"))));
+        QCOMPARE(tiers->property("text").toString(), QStringLiteral("More options"));
+        QCOMPARE(tiers->property("focusPolicy").toInt(), int(Qt::TabFocus));
+        QCOMPARE(inDialog(dialog->contentItem(), QLatin1String("manageLayoutsRename"))->property("text").toString(),
+                 QStringLiteral("Rename"));
+        list->forceActiveFocus();
+        QTRY_VERIFY(list->hasActiveFocus());
+        QObject *layoutTiers = dialog->findChild<QObject *>(QStringLiteral("layoutTierMenu"));
+        QTest::keyClick(dialog, Qt::Key_F10, Qt::ShiftModifier);
+        QTRY_VERIFY(layoutTiers->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(layoutTiers, "close"));
+        QTRY_VERIFY(!layoutTiers->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(dialog, "close"));
+
+        QObject *catalogsObject = named(main, "fontCatalogWindow");
+        auto *catalogs = qobject_cast<QQuickWindow *>(catalogsObject ? catalogsObject : named("fontCatalogWindow"));
+        QVERIFY(catalogs);
+        QVERIFY(QMetaObject::invokeMethod(catalogs, "openFor", Q_ARG(QVariant, QStringLiteral("Arial")),
+                                          Q_ARG(QVariant, QVariant::fromValue<QObject *>(main))));
+        QTRY_VERIFY(catalogs->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(catalogs, "choose", Q_ARG(QVariant, QStringLiteral("Signs")), Q_ARG(QVariant, false)));
+        QCOMPARE(catalogs->findChild<QObject *>(QStringLiteral("fontCatalogTiers"))->property("text").toString(),
+                 QStringLiteral("More options"));
+        auto *catalogList = qobject_cast<QQuickItem *>(catalogs->findChild<QObject *>(QStringLiteral("fontCatalogCatalogs")));
+        catalogList->forceActiveFocus();
+        QTRY_VERIFY(catalogList->hasActiveFocus());
+        QObject *catalogTiers = catalogs->findChild<QObject *>(QStringLiteral("fontCatalogTierMenu"));
+        QTest::keyClick(catalogs, Qt::Key_Menu);
+        QTRY_VERIFY(catalogTiers->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(catalogTiers, "close"));
+        QVERIFY(QMetaObject::invokeMethod(catalogs, "reject"));
+    }
+
     void shapesAndTagsReadTheProjectsLists()
     {
         start();
@@ -1324,6 +1394,14 @@ private slots:
         QTRY_VERIFY(!named(shell(w), "shiftRenamePreset")->property("enabled").toBool());
         QVERIFY(!named(shell(w), "shiftDeletePreset")->property("enabled").toBool());
         QCOMPARE(named(shell(w), "shiftCopyPresetToTier")->property("text").toString(), QStringLiteral("Copy to project"));
+        QObject *presetMenu = named(shell(w), "shiftPresetMenu");
+        QVERIFY(QMetaObject::invokeMethod(field("shiftPresetMenuButton"), "clicked"));
+        QTRY_VERIFY(presetMenu->property("opened").toBool());
+        QCOMPARE(menu_rows::shown(presetMenu).join(u','),
+                 QStringLiteral("shiftSavePreset,shiftRenamePreset,|,shiftCopyPresetToTier,shiftMovePresetToTier,|,shiftDeletePreset"));
+        QVERIFY(QMetaObject::invokeMethod(presetMenu, "close"));
+        QTRY_VERIFY(!presetMenu->property("visible").toBool());
+        QCOMPARE(field("shiftPresetMenuButton")->property("text").toString(), QStringLiteral("More options"));
 
         QVERIFY(QMetaObject::invokeMethod(field("shiftPresetBar"), "transfer", Q_ARG(QVariant, false)));
         auto *review = shell(w)->findChild<QObject *>(QStringLiteral("shiftPresetClashReview"));

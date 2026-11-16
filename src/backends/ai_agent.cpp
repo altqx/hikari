@@ -55,6 +55,8 @@ struct RiskyName {
 };
 
 constexpr std::string_view kRunsScript = "It runs an Automation script.";
+constexpr std::string_view kSignedOut = "signedOut";
+constexpr std::string_view kNoJudge = "Auto has no judge model without a provider, so it asks you.";
 
 constexpr std::array kRiskyCommands{
     RiskyName{"GLOBAL_DELETE_TEMPORARY_FILES", Risk::Files, "It deletes files."},
@@ -1227,7 +1229,7 @@ void AgentThreads::finished(const std::string &id, const SidecarResult &result)
     const std::string compactionFailure = it->second->compactionFailure;
     const std::set<std::string> webCalls = std::move(it->second->webCalls);
     m_runs.erase(it);
-    closeAsks(id, "The turn ended.");
+    closeAsks(id, "The turn ended.", "turnEnded");
     AgentThread *t = find(id);
     if (!t)
         return;
@@ -1256,6 +1258,8 @@ void AgentThreads::finished(const std::string &id, const SidecarResult &result)
             m_live.clear();
         } else if (failure.error == SidecarError::Cancelled) {
             notice = stop.empty() ? "stopped" : stop;
+        } else if (stop == kSignedOut) {
+            notice = stop;
         } else {
             const app::Error error = requestError(failure);
             notice = "failed";
@@ -1567,7 +1571,7 @@ void AgentThreads::judge(AgentThread &thread, const std::string &operation, cons
 {
     AiRequests *requests = m_wiring.requests ? m_wiring.requests() : nullptr;
     if (!requests)
-        return openAsk(thread, Decision::Judge, operation, params, "The judge isn't available.", std::move(admit),
+        return openAsk(thread, Decision::Ask, operation, params, std::string(kNoJudge), std::move(admit),
                        std::move(onWithdraw));
     const AgentThread *root = thread.task ? find(thread.task->parent) : &thread;
     std::vector<std::string> messages;
@@ -1622,6 +1626,9 @@ void AgentThreads::judge(AgentThread &thread, const std::string &operation, cons
                 return openAsk(*t, Decision::Judge, operation, params, verdict.reason, std::move(admit),
                                std::move(onWithdraw));
             }
+            if (failed->error.kind == app::ErrorKind::NoProvider)
+                return openAsk(*t, Decision::Ask, operation, params, std::string(kNoJudge), std::move(admit),
+                               std::move(onWithdraw));
             const std::string why = failed->error.detail.empty() ? std::string(app::errorKindId(failed->error.kind))
                                                                  : failed->error.detail;
             openAsk(*t, Decision::Judge, operation, params, "The judge couldn't answer: " + clipped(why, 200),
@@ -1801,8 +1808,10 @@ void AgentThreads::wait(AgentThread &thread, Ask ask, Json item, AiSidecarHost::
         m_asks.erase(it);
         m_waiting.erase(id);
         if (AgentThread *t = find(threadId)) {
-            if (Json *item = itemWith(*t, "ask", Json(id)))
+            if (Json *item = itemWith(*t, "ask", Json(id))) {
                 (*item)["status"] = "withdrawn";
+                (*item)["withdrawnFor"] = "agent";
+            }
             touch(*t);
         }
     });
@@ -1989,13 +1998,33 @@ void AgentThreads::stopFor(AgentThread &thread, const std::string &why)
         return m_host->cancel(run->second->request);
     if (m_host)
         m_host->notify("session/cancel", Json::object({{"sessionId", thread.id}}));
-    closeAsks(thread.id, why == "stopped" ? "The user stopped the turn." : "The cost cap stopped the turn.");
+    closeAsks(thread.id,
+              why == "stopped"    ? "The user stopped the turn."
+              : why == kSignedOut ? "The user signed out of the agent."
+                                  : "The cost cap stopped the turn.",
+              why);
 }
 
 void AgentThreads::stop(const std::string &id)
 {
     if (AgentThread *t = find(id))
         stopFor(*t, "stopped");
+}
+
+void AgentThreads::endAgent(const std::string &agent)
+{
+    for (auto &[id, thread] : m_threads) {
+        const auto model = modelOf(thread);
+        if (!model || externalAgentOf(*model) != agent)
+            continue;
+        const bool held = m_live.erase(id) > 0;
+        if (m_runs.contains(id))
+            stopFor(thread, std::string(kSignedOut));
+        else if (held) {
+            push(thread, Json::object({{"kind", "notice"}, {"notice", std::string(kSignedOut)}}));
+            touch(thread);
+        }
+    }
 }
 
 void AgentThreads::steer(const std::string &id)
@@ -2073,7 +2102,7 @@ void AgentThreads::documentChanged(application::DocumentId document, std::int64_
     }
 }
 
-void AgentThreads::closeAsks(const std::string &thread, const std::string &why)
+void AgentThreads::closeAsks(const std::string &thread, const std::string &why, const std::string &withdrawnFor)
 {
     std::vector<std::uint64_t> estimates;
     for (const auto &[id, estimate] : m_estimates)
@@ -2083,8 +2112,10 @@ void AgentThreads::closeAsks(const std::string &thread, const std::string &why)
         std::unique_ptr<Estimate> estimate = std::move(m_estimates.at(id));
         m_estimates.erase(id);
         if (AgentThread *t = find(thread))
-            if (Json *item = itemWith(*t, "ask", Json(id)))
+            if (Json *item = itemWith(*t, "ask", Json(id))) {
                 (*item)["status"] = "withdrawn";
+                (*item)["withdrawnFor"] = withdrawnFor;
+            }
         estimate->answered(false);
     }
     std::vector<std::uint64_t> open;
@@ -2099,8 +2130,10 @@ void AgentThreads::closeAsks(const std::string &thread, const std::string &why)
         if (admit)
             admit(std::unexpected(api::Error{std::string(api::errors::kRefused), why, {}}));
         if (AgentThread *t = find(thread))
-            if (Json *item = itemWith(*t, "ask", Json(id)))
+            if (Json *item = itemWith(*t, "ask", Json(id))) {
                 (*item)["status"] = "withdrawn";
+                (*item)["withdrawnFor"] = withdrawnFor;
+            }
     }
 }
 

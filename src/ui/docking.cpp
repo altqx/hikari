@@ -15,6 +15,7 @@
 #include <kddockwidgets/core/MainWindow.h>
 #include <kddockwidgets/core/Platform.h>
 #include <kddockwidgets/core/TabBar.h>
+#include <kddockwidgets/core/TitleBar.h>
 #include <kddockwidgets/core/indicators/ClassicDropIndicatorOverlay.h>
 #include <kddockwidgets/core/views/ClassicIndicatorWindowViewInterface.h>
 #include <kddockwidgets/qtquick/Platform.h>
@@ -23,11 +24,13 @@
 #include <kddockwidgets/qtquick/views/FloatingWindow.h>
 #include <kddockwidgets/qtquick/views/Group.h>
 #include <kddockwidgets/qtquick/views/TabBar.h>
+#include <kddockwidgets/qtquick/views/TitleBar.h>
 
 #include <QDeadlineTimer>
 #include <QDragEnterEvent>
 #include <QGuiApplication>
 #include <QLoggingCategory>
+#include <QMetaMethod>
 #include <QMimeData>
 #include <QMouseEvent>
 #include <QPointer>
@@ -1212,6 +1215,25 @@ void Docking::requestMenu(const QString &uniqueName, QQuickItem *anchor)
 {
     if (!uniqueName.isEmpty())
         emit menuRequested(uniqueName, anchor);
+}
+
+QStringList Docking::titleBarPanels(QObject *titleBarView) const
+{
+    auto *view = qobject_cast<KDDockWidgets::QtQuick::TitleBar *>(titleBarView);
+    KDDockWidgets::Core::TitleBar *bar = view ? view->asTitleBarController() : nullptr;
+    QStringList names;
+    if (bar)
+        for (KDDockWidgets::Core::DockWidget *dock : bar->dockWidgets())
+            names << dock->uniqueName();
+    return names;
+}
+
+bool Docking::requestClose(const QStringList &uniqueNames)
+{
+    if (uniqueNames.isEmpty() || !isSignalConnected(QMetaMethod::fromSignal(&Docking::closeRequested)))
+        return false;
+    emit closeRequested(uniqueNames);
+    return true;
 }
 
 void Docking::setOpenMenu(const QString &uniqueName)

@@ -431,7 +431,7 @@ DialogWindow {
         IconTextButton {
             iconRole: "font-catalogs"
             objectName: "fontPickerManage"
-            text: qsTr("Manage catalogues")
+            text: qsTr("Manage font catalogues")
             onClicked: if (FontWindows.catalogWindow) FontWindows.catalogWindow.openFor(picker.family, picker)
         }
     ]
@@ -467,15 +467,13 @@ DialogWindow {
         }
         Instantiator {
             model: picker.choices
-            delegate: ShellMenuItem {
+            delegate: MenuRadioItem {
                 required property string modelData
                 required property int index
                 objectName: "fontPickerCatalogItem"
                 text: modelData
                 detailText: catalogMenu.counts.length > index ? String(catalogMenu.counts[index]) : ""
-                checkable: true
                 checked: picker.choice === index
-                keepsMenuOpen: false
                 onTriggered: picker.chooseCatalog(index)
             }
             onObjectAdded: (index, object) => catalogMenu.insertItem(index, object)
@@ -485,7 +483,7 @@ DialogWindow {
         ShellMenuItem {
             objectName: "fontPickerCatalogManage"
             iconRole: "font-catalogs"
-            text: qsTr("Manage catalogues")
+            text: qsTr("Manage font catalogues")
             onTriggered: if (FontWindows.catalogWindow) FontWindows.catalogWindow.openFor(picker.family, picker)
         }
     }

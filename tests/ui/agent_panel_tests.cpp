@@ -13,10 +13,14 @@
 #include "hikari/backends/ai_agent_cli.h"
 #include "hikari/backends/ai_sidecar_host.h"
 #include "hikari/backends/ai_signin.h"
+#include "hikari/backends/ai_sidecar_updater.h"
 #include "hikari/backends/desktop_handoff.h"
 
 #include "docking.h"
 #include "line_table_model.h"
+#include "local_release.h"
+#include "menu_rows.h"
+#include "minisign_signer.h"
 #include "settings_store.h"
 #include "shell_controller.h"
 #include "side_bar_model.h"
@@ -156,6 +160,9 @@ class AgentPanelTest : public QObject {
     std::unique_ptr<app::Application> application;
     QPointer<backends::ai::AiSidecarHost> realHost;
     std::unique_ptr<QQmlApplicationEngine> engine;
+    std::unique_ptr<hikari::test::LocalRelease> release;
+    std::unique_ptr<hikari::test::FakeChannel> channel;
+    hikari::test::MinisignSigner signer;
 
     QString at(const QString &name) const
     {
@@ -315,6 +322,33 @@ class AgentPanelTest : public QObject {
         }
     }
 
+    void shootMenu(const QString &name, QObject *menu)
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            return;
+        QVERIFY(QDir().mkpath(out));
+        QQuickItem *toasts = item(QStringLiteral("toastStack"));
+        QVERIFY(toasts);
+        toasts->setVisible(false);
+        auto restore = qScopeGuard([toasts] {
+            ui::theme::endPreview();
+            toasts->setVisible(true);
+        });
+        for (const auto code : ui::theme::kCodes) {
+            ui::theme::preview({{QStringLiteral("appearance.theme"), ui::theme::codeName(code)},
+                                {QStringLiteral("appearance.followSystem"), false}});
+            QQuickTest::qWaitForPolish(window());
+            QTest::qWait(300);
+            QTRY_VERIFY(menu->property("opened").toBool());
+            const QRect frame = window()->frameGeometry();
+            const QImage image = QGuiApplication::platformName() == QLatin1String("xcb")
+                                     ? window()->screen()->grabWindow(0, frame.x(), frame.y(), frame.width(), frame.height()).toImage()
+                                     : window()->grabWindow();
+            QVERIFY(image.save(out + QLatin1Char('/') + name + QLatin1Char('-') + ui::theme::codeName(code) + QStringLiteral(".png")));
+        }
+    }
+
     auto keepTranscriptIn(const QString &variable)
     {
         return qScopeGuard([this, path = qEnvironmentVariable(variable.toLatin1().constData())] {
@@ -415,7 +449,20 @@ private slots:
             return std::make_unique<backends::ai::AiSidecarHost>(std::move(o), &application->apiHost()->api(),
                                                                  api::Caller{.id = "ai", .label = "AI", .reviewed = true});
         };
-        ports.localSidecar = backends::ai::SidecarInstall{QStringLiteral("0.0.0-dev"), {}, flags, {}};
+        if (test == "withoutTheAiComponentThePanelGetsItAndTheNextTurnRuns") {
+            release = std::make_unique<hikari::test::LocalRelease>();
+            channel = std::make_unique<hikari::test::FakeChannel>(*release);
+            channel->addRuntime(QStringLiteral("1.4.4-0123abcd"), QByteArray("#!/bin/sh\necho sidecar\n").repeated(4000));
+            channel->addRelease({QStringLiteral("1.1.0")});
+            channel->publish(signer);
+            ports.sidecarUpdater = [this] {
+                return std::make_unique<backends::ai::AiSidecarUpdater>(
+                    at(QStringLiteral("ai/sidecar")), backends::ai::SidecarCompat{1, api::kApiVersion},
+                    backends::ai::SidecarSource::local(release->base(), {signer.publicKey()}));
+            };
+        } else {
+            ports.localSidecar = backends::ai::SidecarInstall{QStringLiteral("0.0.0-dev"), {}, flags, {}};
+        }
         ports.agents = [](backends::ai::AgentBroker &, application::ai::KeyStore &) {};
         const bool found = test == "agentsAreModelsOnlyWhenTheyAreFound" || test == "anAgentsModelsLoadWhenItsSubmenuOpensOnlyOnce"
                            || test == "anAgentsLastModelsShowAtOnceAndAFailureKeepsThem";
@@ -471,6 +518,8 @@ private slots:
     {
         engine.reset();
         application.reset();
+        channel.reset();
+        release.reset();
         if (firstStartEmptyBefore)
             ui::SideBarModel::setFirstStartEmpty(*std::exchange(firstStartEmptyBefore, std::nullopt));
     }
@@ -736,6 +785,91 @@ private slots:
         QVERIFY(click(QStringLiteral("agentRenameOk")));
         QTRY_COMPARE(agent().thread().value(QStringLiteral("title")).toString(), QStringLiteral("Honorifics pass"));
         QTRY_VERIFY(!item(QStringLiteral("agentRenameField")));
+    }
+
+    void threadMenusFollowTheThreadRulesAndRowsAndAnswersHaveMenus()
+    {
+        openPanel();
+        QVERIFY(click(QStringLiteral("agentNewThread")));
+        QTRY_VERIFY(agent().thread().contains(QStringLiteral("id")));
+        QQuickItem *button = item(QStringLiteral("agentThreadMenuButton"));
+        QVERIFY(button);
+        QCOMPARE(button->property("iconRole").toString(), QStringLiteral("panel-menu"));
+        QCOMPARE(button->property("text").toString(), QStringLiteral("More options"));
+        auto *menu = window()->findChild<QObject *>(QStringLiteral("agentThreadMenu"));
+        QVERIFY(menu);
+        QVERIFY(click(QStringLiteral("agentThreadMenuButton")));
+        QTRY_VERIFY(menu->property("opened").toBool());
+        QCOMPARE(menu_rows::shown(menu), (QStringList{"agentRenameThread", "agentExportThread", "|", "agentCompactThread",
+                                                      "agentThreadFromSummary", "|", "agentDeleteThread"}));
+        QCOMPARE(item(QStringLiteral("agentCompactThread"))->property("text").toString(), QStringLiteral("Compact thread"));
+        QCOMPARE(item(QStringLiteral("agentDeleteThread"))->property("text").toString(), QStringLiteral("Delete thread…"));
+        shootMenu(QStringLiteral("cx7-agent-thread-menu"), menu);
+        QVERIFY(QMetaObject::invokeMethod(menu, "close"));
+        QTRY_VERIFY(!menu->property("visible").toBool());
+
+        QVERIFY(click(QStringLiteral("agentModeButton")));
+        QTRY_VERIFY(item(QStringLiteral("agentMode_manual")));
+        QVERIFY(!item(QStringLiteral("agentMode_manual"))->property("keepsMenuOpen").toBool());
+        QCOMPARE(QAccessible::queryAccessibleInterface(item(QStringLiteral("agentMode_manual")))->role(), QAccessible::RadioButton);
+        QCOMPARE(item(QStringLiteral("agentModeDefault"))->property("text").toString(), QStringLiteral("Default for new threads"));
+        shootMenu(QStringLiteral("cx7-agent-mode"), window()->findChild<QObject *>(QStringLiteral("agentModeMenu")));
+        QVERIFY(QMetaObject::invokeMethod(window()->findChild<QObject *>(QStringLiteral("agentModeMenu")), "close"));
+        auto *models = window()->findChild<QObject *>(QStringLiteral("agentModelMenu"));
+        QVERIFY(models);
+        QTRY_VERIFY(!window()->findChild<QObject *>(QStringLiteral("agentModeMenu"))->property("visible").toBool());
+        QVERIFY(click(QStringLiteral("agentModelButton")));
+        QTRY_VERIFY(item(QStringLiteral("agentModelSettings")));
+        QCOMPARE(item(QStringLiteral("agentModelSettings"))->property("text").toString(), QStringLiteral("Settings › AI"));
+        shootMenu(QStringLiteral("cx7-agent-model"), models);
+        QVERIFY(QMetaObject::invokeMethod(models, "close"));
+        QTRY_VERIFY(!models->property("visible").toBool());
+
+        type(QString::fromStdString(Json::object({{"say", "Keep the honorifics."}}).dump()));
+        QQuickItem *answer = nullptr;
+        QTRY_VERIFY((answer = item(QStringLiteral("agentAnswer"))) && answer->property("text").toString().contains(QStringLiteral("honorifics")));
+        QTRY_VERIFY(!agent().thread().value(QStringLiteral("running")).toBool());
+        auto *answerMenu = window()->findChild<QObject *>(QStringLiteral("agentAnswerMenu"));
+        QVERIFY(answerMenu);
+        QTest::mouseClick(window(), Qt::RightButton, {}, answer->mapToScene(QPointF(4, answer->height() / 2)).toPoint());
+        QTRY_VERIFY(answerMenu->property("opened").toBool());
+        QCOMPARE(menu_rows::shown(answerMenu), (QStringList{"textCopy", "|", "textSelectAll"}));
+        shootMenu(QStringLiteral("cx7-agent-answer"), answerMenu);
+        QVERIFY(QMetaObject::invokeMethod(item(QStringLiteral("textSelectAll")), "triggered"));
+        QTRY_VERIFY(answer->property("selectedText").toString().contains(QStringLiteral("honorifics")));
+        QTRY_VERIFY(!answerMenu->property("visible").toBool());
+
+        const QString first = agent().current();
+        QVERIFY(click(QStringLiteral("agentNewThread")));
+        QTRY_VERIFY(agent().current() != first);
+        QVERIFY(click(QStringLiteral("agentThreadsButton")));
+        QQuickItem *row = nullptr;
+        QTRY_VERIFY((row = item(QStringLiteral("agentThreadRow"))));
+        const auto rowOf = [&](const QString &id) -> QQuickItem * {
+            for (QQuickItem *r : row->parentItem()->childItems())
+                if (r->objectName() == QLatin1String("agentThreadRow")
+                    && r->property("modelData").toMap().value(QStringLiteral("id")).toString() == id)
+                    return r;
+            return nullptr;
+        };
+        QQuickItem *firstRow = nullptr;
+        QTRY_VERIFY2((firstRow = rowOf(first)), qPrintable(first + QStringLiteral(" not in ") + [&] {
+                         QStringList ids;
+                         for (const QVariant &t : agent().threads())
+                             ids << t.toMap().value(QStringLiteral("id")).toString();
+                         return ids.join(u' ');
+                     }()));
+        QTest::mouseClick(window(), Qt::RightButton, {}, firstRow->mapToScene(QPointF(20, firstRow->height() / 2)).toPoint());
+        QTRY_VERIFY(menu->property("opened").toBool());
+        QCOMPARE(agent().current(), first);
+        shootMenu(QStringLiteral("cx7-agent-thread-row"), menu);
+        QVERIFY(item(QStringLiteral("agentThreadsList")));
+        QVERIFY(QMetaObject::invokeMethod(menu, "close"));
+        QTRY_VERIFY(!menu->property("visible").toBool());
+        firstRow->forceActiveFocus();
+        QTest::keyClick(window(), Qt::Key_Menu);
+        QTRY_VERIFY(menu->property("opened").toBool());
+        QVERIFY(QMetaObject::invokeMethod(menu, "close"));
     }
 
     void fullAccessWarnsOnceAndTheAlwaysAskListStillAsks()
@@ -1224,6 +1358,23 @@ private slots:
         QTRY_VERIFY(!agent().agentModels(QStringLiteral("codex")).value(QStringLiteral("loading")).toBool());
         QCOMPARE(codexModels().size(), 1);
         QVERIFY(row(codex, QStringLiteral("agentModel_agent:codex/")));
+    }
+
+    void withoutTheAiComponentThePanelGetsItAndTheNextTurnRuns()
+    {
+        application->settingsStore()->set(app::AgentController::kModeSetting, QStringLiteral("manual"));
+        openPanel();
+        agent().newThread();
+        type(applyScript("I tightened the first line."));
+        QTRY_COMPARE(lastItem().value(QStringLiteral("notice")).toString(), QStringLiteral("noSidecar"));
+        QTRY_VERIFY(item(QStringLiteral("agentGetComponent")));
+        QVERIFY(click(QStringLiteral("agentGetComponent")));
+        QTRY_COMPARE_WITH_TIMEOUT(item(QStringLiteral("agentView"))->property("componentResult").toString(), QStringLiteral("ready"), 20'000);
+        QVERIFY(!item(QStringLiteral("agentGetComponent")));
+        QVERIFY(application->ai()->updater()->current());
+
+        type(applyScript("I tightened the first line."));
+        QTRY_COMPARE_WITH_TIMEOUT(kinds().last(), QStringLiteral("proposal"), 20'000);
     }
 
     void withOnlyClaudeCodeThePanelRunsOnIt()

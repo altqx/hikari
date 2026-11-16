@@ -161,6 +161,10 @@ AgentController::AgentController(Wiring wiring, QObject *parent) : QObject(paren
         for (const QJsonValue &m : entry.value(QStringLiteral("models")).toArray())
             list.models.emplace_back(m[QStringLiteral("id")].toString(), m[QStringLiteral("name")].toString());
     }
+    connect(&m_wiring.ai, &AiFeatures::agentEnding, this, [this](const QString &agent) {
+        if (m_threads)
+            m_threads->endAgent(agent.toStdString());
+    });
     connect(&m_wiring.settings, &ui::SettingsStore::changed, this, [this](const QString &id) {
         if (id == QLatin1String(kAgentModelsSetting))
             return;

@@ -422,6 +422,29 @@ private slots:
         QCOMPARE(store.list("grid.filterStyles"), QStringList{QStringLiteral("Sign")});
     }
 
+    void aBeta3FileTakesThePrereleaseDefaultForStableOnly()
+    {
+        QTemporaryDir dir;
+        const QString file = dir.filePath(QStringLiteral("settings.toml"));
+        writeAll(file, "version = 1\n[updater]\nautoCheck = true\n");
+        application::setInstalledVersion("0.1.0-beta.4");
+        {
+            SettingsStore store(file);
+            QVERIFY(!store.boolean("updater.checkForStable"));
+            store.set("updater.checkForStable", false);
+        }
+        QCOMPARE(readAll(file), QByteArray("version = 1\n\n[updater]\nautoCheck = true\n"));
+        {
+            SettingsStore store(file);
+            store.set("updater.checkForStable", true);
+        }
+        QCOMPARE(readAll(file), QByteArray("version = 1\n\n[updater]\nautoCheck = true\ncheckForStable = true\n"));
+        application::setInstalledVersion("0.1.0");
+        writeAll(file, "version = 1\n[updater]\nautoCheck = true\n");
+        SettingsStore store(file);
+        QVERIFY(store.boolean("updater.checkForStable"));
+    }
+
     void hikariIniConvertsIntoTheThreeFiles()
     {
         using namespace application;

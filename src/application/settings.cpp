@@ -1,6 +1,7 @@
 #include "hikari/application/settings.h"
 
 #include "hikari/application/position_commands.h"
+#include "hikari/application/update_check.h"
 
 #include <algorithm>
 #include <cctype>
@@ -58,9 +59,9 @@ std::vector<SettingDefinition> withProjectFlags(std::vector<SettingDefinition> t
     return table;
 }
 
-const std::vector<SettingDefinition> &definitions()
+std::vector<SettingDefinition> &definitions()
 {
-    static const std::vector<SettingDefinition> table = withProjectFlags({
+    static std::vector<SettingDefinition> table = withProjectFlags({
         {"audio.autoCommit", "AUDIO_AUTO_COMMIT", Bool, Profile, Mapped, true, true},
         {"audio.autoFocus", "AUDIO_AUTO_FOCUS", Bool, Profile, Mapped, true, true},
         {"audio.autoScroll", "AUDIO_AUTO_SCROLL", Bool, Profile, Mapped, true, true},
@@ -533,6 +534,12 @@ std::span<const std::string_view> retiredSettings()
         "icons.highContrast.normal", "icons.highContrast.accent", "icons.highContrast.active",
         "icons.highContrast.disabled", "workspace.editorOn"};
     return ids;
+}
+
+void setInstalledVersion(std::string_view version)
+{
+    auto &all = definitions();
+    std::ranges::find(all, "updater.checkForStable", &SettingDefinition::id)->defaultValue = !isPrereleaseTag(version);
 }
 
 std::span<const SettingDefinition> settingDefinitions()

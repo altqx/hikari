@@ -320,6 +320,8 @@ public:
     /// Sends the queued message into the running turn at its next tool call.
     void steer(const std::string &id);
     void stop(const std::string &id);
+    /// Stops every turn and drops every session on `agent` after its sign-out; each thread says so.
+    void endAgent(const std::string &agent);
     /// Sends the interrupted turn's message again.
     void retry(const std::string &id);
     /// Compacts what the thread replays to the model; while a turn runs, it waits for the turn to end.
@@ -398,7 +400,7 @@ private:
     void addSources(AgentThread &thread, Run *run, const api::Json &update);
     void searchFailed(AgentThread &thread, Run *run, const api::Json &update);
     void stopFor(AgentThread &thread, const std::string &notice);
-    void closeAsks(const std::string &thread, const std::string &why);
+    void closeAsks(const std::string &thread, const std::string &why, const std::string &withdrawnFor);
     void push(AgentThread &thread, api::Json item);
     void touch(AgentThread &thread);
     void sessionsLost();

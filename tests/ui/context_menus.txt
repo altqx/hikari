@@ -307,8 +307,8 @@ Grid panel options > Move panel…
 Grid panel options > Move to the left side bar
 Grid panel options > Move to the right side bar
 Grid panel options > Move out of the side bar
-Grid panel options > Move left
-Grid panel options > Move right
+Grid panel options > Move left in the side bar
+Grid panel options > Move right in the side bar
 Grid panel options > Move tab left
 Grid panel options > Move tab right
 Grid panel options > Float
@@ -361,6 +361,11 @@ Automation macro > Run
 Automation macro > -
 Automation macro > Set shortcut…
 Automation macro > Clear shortcut
+Automation script
+Automation script > Reload
+Automation script > Edit script
+Automation script > -
+Automation script > Unload
 Automation recommended script
 Automation recommended script > Show in Scripts
 Automation recommended script > Open project page
@@ -398,9 +403,117 @@ Explorer row
 Explorer row > Open in a new tab
 Explorer row > Open in this tab
 Explorer row > -
-Explorer row > New subtitle file here
-Explorer row > Rename
-Explorer row > Move to the trash
-Explorer row > -
 Explorer row > Show in folder
 Explorer row > Copy path
+Explorer row > -
+Explorer row > New subtitle file here
+Explorer row > Rename
+Explorer row > -
+Explorer row > Move to the trash…
+Panel options (Line editor)
+Panel options (Line editor) > Show times
+Panel options (Line editor) > Show frames
+Panel options (Line editor) > -
+Panel options (Line editor) > Move panel…
+Panel options (Line editor) > Move tab left
+Panel options (Line editor) > Move tab right
+Panel options (Line editor) > Float
+Panel options (Line editor) > -
+Panel options (Line editor) > Lock layout [GLOBAL_TOGGLE_LOCK_LAYOUT]
+Panel options (Line editor) > -
+Panel options (Line editor) > Close
+Panel options (Video)
+Panel options (Video) > Move video to the selected line >
+Panel options (Video) > Move video to the selected line > Double-clicking a line (always on)
+Panel options (Video) > Move video to the selected line > Every line change
+Panel options (Video) > Move video to the selected line > Clicking a line or editing when paused
+Panel options (Video) > Move video to the selected line > Clicking a line or editing
+Panel options (Video) > Move video to the selected line > Editing line when paused
+Panel options (Video) > Move video to the selected line > Editing
+Panel options (Video) > After moving, play >
+Panel options (Video) > After moving, play > Nothing
+Panel options (Video) > After moving, play > Audio to the line end time
+Panel options (Video) > After moving, play > Video and audio to the line end time
+Panel options (Video) > After moving, play > Video and audio to the next line start time
+Panel options (Video) > -
+Panel options (Video) > Move panel…
+Panel options (Video) > Float
+Panel options (Video) > -
+Panel options (Video) > Lock layout [GLOBAL_TOGGLE_LOCK_LAYOUT]
+Panel options (Video) > -
+Panel options (Video) > Close
+Panel options (Reference)
+Panel options (Reference) > Compare with reference
+Panel options (Reference) > -
+Panel options (Reference) > Move panel…
+Panel options (Reference) > Move to the left side bar
+Panel options (Reference) > Move to the right side bar
+Panel options (Reference) > Float
+Panel options (Reference) > -
+Panel options (Reference) > Lock layout [GLOBAL_TOGGLE_LOCK_LAYOUT]
+Panel options (Reference) > -
+Panel options (Reference) > Close
+Panel options (Automation)
+Panel options (Automation) > Load script…
+Panel options (Automation) > Refresh autoload scripts
+Panel options (Automation) > Shortcuts in Settings…
+Panel options (Automation) > -
+Panel options (Automation) > Clear runs
+Panel options (Automation) > -
+Panel options (Automation) > Move panel…
+Panel options (Automation) > Move to the left side bar
+Panel options (Automation) > Move to the right side bar
+Panel options (Automation) > Float
+Panel options (Automation) > -
+Panel options (Automation) > Lock layout [GLOBAL_TOGGLE_LOCK_LAYOUT]
+Panel options (Automation) > -
+Panel options (Automation) > Close
+Panel options (Spellchecker)
+Panel options (Spellchecker) > Ignore comments
+Panel options (Spellchecker) > Ignore words in capitals
+Panel options (Spellchecker) > Words added to dictionary…
+Panel options (Spellchecker) > -
+Panel options (Spellchecker) > Move panel…
+Panel options (Spellchecker) > Move to the left side bar
+Panel options (Spellchecker) > Move to the right side bar
+Panel options (Spellchecker) > Dock
+Panel options (Spellchecker) > -
+Panel options (Spellchecker) > Lock layout [GLOBAL_TOGGLE_LOCK_LAYOUT]
+Panel options (Spellchecker) > -
+Panel options (Spellchecker) > Close
+Panel options (QC notes)
+Panel options (QC notes) > Import notes file…
+Panel options (QC notes) > Import notes from the clipboard…
+Panel options (QC notes) > Export notes…
+Panel options (QC notes) > Mark all as not done
+Panel options (QC notes) > -
+Panel options (QC notes) > Delete all notes…
+Panel options (QC notes) > -
+Panel options (QC notes) > Move panel…
+Panel options (QC notes) > Move to the left side bar
+Panel options (QC notes) > Move to the right side bar
+Panel options (QC notes) > Dock
+Panel options (QC notes) > -
+Panel options (QC notes) > Lock layout [GLOBAL_TOGGLE_LOCK_LAYOUT]
+Panel options (QC notes) > -
+Panel options (QC notes) > Close
+Panel options (Explorer)
+Panel options (Explorer) > New subtitle file
+Panel options (Explorer) > Refresh
+Panel options (Explorer) > Group by name
+Panel options (Explorer) > Show all files
+Panel options (Explorer) > -
+Panel options (Explorer) > Move panel…
+Panel options (Explorer) > Move to the left side bar
+Panel options (Explorer) > Move to the right side bar
+Panel options (Explorer) > Float
+Panel options (Explorer) > -
+Panel options (Explorer) > Lock layout [GLOBAL_TOGGLE_LOCK_LAYOUT]
+Panel options (Explorer) > -
+Panel options (Explorer) > Close
+Document tab bar
+Document tab bar > New tab
+Document tab bar > Save all
+Document tab bar > Switch to >
+Document tab bar > -
+Document tab bar > Close all tabs
