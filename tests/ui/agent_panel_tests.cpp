@@ -1378,15 +1378,17 @@ private slots:
         QTRY_VERIFY(agent().thread().contains(QStringLiteral("id")));
         narrowPanel(300);
         type(autoTurn(Json::object({{"operation", "settings.set"},
-                                     {"params", Json::object({{"setting", "spelling.language"}, {"value", "en_GB"}})}})));
+                                     {"params", Json::object({{"setting", "audio.autoScroll"}, {"value", false}})}})));
         QTRY_VERIFY(item(QStringLiteral("agentAllowOnce")));
-        QCOMPARE(item(QStringLiteral("agentAskTitle"))->property("text").toString(), QStringLiteral("Change a setting?"));
-        QCOMPARE(item(QStringLiteral("agentAskSummary"))->property("text").toString(), QStringLiteral("Set “spelling.language” to en_GB"));
+        QCOMPARE(item(QStringLiteral("agentAskTitle"))->property("text").toString(), QStringLiteral("Change a setting"));
+        QCOMPARE(item(QStringLiteral("agentAskSetting"))->property("text").toString(), QStringLiteral("audio.autoScroll → false"));
+        QVERIFY(!item(QStringLiteral("agentAskSummary")));
         QVERIFY(!item(QStringLiteral("agentDetailsText")));
         QVERIFY(click(QStringLiteral("agentDetailsToggle")));
         QTRY_VERIFY(item(QStringLiteral("agentDetailsText")));
         QQuickTest::qWaitForPolish(window());
         QVERIFY(item(QStringLiteral("agentDetailsText"))->property("text").toString().startsWith(QLatin1String("settings.set\n{")));
+        QVERIFY(!item(QStringLiteral("agentAskTitle"))->property("text").toString().contains(QLatin1String("audio.")));
         const QRectF view = onScene(item(QStringLiteral("agentView")));
         QStringList out = sticksOut(item(QStringLiteral("agentAsk")), view);
         QVERIFY2(out.isEmpty(), qPrintable(out.join(QLatin1Char('\n'))));
@@ -1400,9 +1402,17 @@ private slots:
         QVERIFY(item(QStringLiteral("agentAllowOnce"))->hasActiveFocus());
         QVERIFY(click(QStringLiteral("agentAskTell")));
         QTRY_VERIFY(item(QStringLiteral("agentAskReply"))->hasActiveFocus());
-        keys(QStringLiteral("Keep American English"));
+        keys(QStringLiteral("Keep them"));
         QTest::keyClick(window(), Qt::Key_Return);
         QTRY_COMPARE(lastOf(QLatin1String("ask")).value(QStringLiteral("status")).toString(), QStringLiteral("denied"));
+        QTRY_VERIFY(!agent().thread().value(QStringLiteral("running")).toBool());
+
+        type(autoTurn(Json::object({{"operation", "settings.set"},
+                                     {"params", Json::object({{"setting", "editor.spellchecker"}, {"value", false}})}})));
+        QTRY_VERIFY(newest(QStringLiteral("agentAllowOnce")));
+        QCOMPARE(newest(QStringLiteral("agentAskTitle"))->property("text").toString(), QStringLiteral("Turn off “Check spelling”"));
+        QVERIFY(!child(newest(QStringLiteral("agentAsk")), QStringLiteral("agentAskSetting"))->isVisible());
+        QVERIFY(click(QStringLiteral("agentDeny")));
         QTRY_VERIFY(!agent().thread().value(QStringLiteral("running")).toBool());
 
         agent().setMode(QStringLiteral("auto"));

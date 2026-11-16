@@ -1707,11 +1707,20 @@ FocusScope {
         if (item.fromChild !== undefined)
             return qsTr("%1 asks you").arg(item.fromChild)
         const area = item.area ?? ""
+        if (area === "setting")
+            return settingTitle(item)
         return area === "subtitles" ? qsTr("Change the subtitles?")
-             : area === "setting" ? qsTr("Change a setting?")
              : area === "plugin" ? qsTr("Use a plugin?")
              : area === "mcp" ? qsTr("Use %1?").arg(item.tool ?? "")
              : qsTr("Allow this action?")
+    }
+    function settingTitle(item) {
+        const name = SettingLabels.of(item.setting ?? "")
+        if (name.length === 0)
+            return qsTr("Change a setting")
+        return item.value === "true" ? qsTr("Turn on “%1”").arg(name)
+             : item.value === "false" ? qsTr("Turn off “%1”").arg(name)
+             : qsTr("Set “%1” to %2").arg(name, item.value ?? "")
     }
     function askSummary(item) {
         const rows = item.rows ?? []
@@ -1720,8 +1729,8 @@ FocusScope {
                                              : qsTr("Change a line to “%1”").arg(rows[0].after)
         if (rows.length > 0)
             return qsTr("Change %n line(s)", "", rows.length) + ((item.title ?? "").length > 0 ? " · " + item.title : "")
-        if ((item.setting ?? "").length > 0)
-            return qsTr("Set “%1” to %2").arg(item.setting, item.value ?? "")
+        if ((item.area ?? "") === "setting")
+            return ""
         return item.summary ?? ""
     }
 
@@ -1757,6 +1766,17 @@ FocusScope {
                 wrapMode: Text.Wrap
                 textFormat: Text.PlainText
                 text: panel.askSummary(ask.item)
+            }
+            Label {
+                objectName: "agentAskSetting"
+                visible: ask.item.area === "setting" && SettingLabels.of(ask.item.setting ?? "").length === 0
+                Layout.fillWidth: true
+                wrapMode: Text.WrapAnywhere
+                textFormat: Text.PlainText
+                font.family: "monospace"
+                font.pixelSize: Math.round(Qt.application.font.pixelSize * 0.9)
+                color: Theme.muted
+                text: (ask.item.setting ?? "") + " → " + (ask.item.value ?? "")
             }
             DiffRows {
                 visible: ask.open && ask.rows.length > 1

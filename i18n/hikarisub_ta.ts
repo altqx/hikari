@@ -739,10 +739,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Change a setting?</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Use a plugin?</source>
         <translation type="unfinished"></translation>
     </message>
@@ -771,6 +767,18 @@
     </message>
     <message>
         <source>Set “%1” to %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change a setting</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Turn on “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Turn off “%1”</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
