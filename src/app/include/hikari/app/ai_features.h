@@ -155,6 +155,8 @@ public:
     /// Null with AI off, or in builds that run their own sidecar.
     backends::ai::AiSidecarUpdater *updater() const;
     backends::ai::AiSignIn *signIn() const;
+    /// Ends `agent`'s threads, then its processes, after the user signs out of it.
+    void endAgent(const QString &agent);
     const Ports &ports() const { return m_ports; }
     /// The sidecar for an AI action: built on the first one once a provider exists. Null with AI off, without a
     /// provider, or without an installed sidecar.
@@ -209,6 +211,8 @@ signals:
     /// again and `version` is skipped.
     void rolledBack(QString version, QString reason);
     void agentsChanged();
+    /// Comes before `agent`'s processes are killed, so its threads stop first.
+    void agentEnding(QString agent);
 
 private:
     std::function<std::optional<std::string>(const std::string &, const std::string &)> m_projectKeys;

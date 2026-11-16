@@ -438,6 +438,26 @@
         <translation>மறுத்து முகவரிடம் சொல்…</translation>
     </message>
     <message>
+        <source>Withdrawn: the agent stopped waiting for your answer.</source>
+        <translation>திரும்பப் பெறப்பட்டது: முகவர் உங்கள் பதிலுக்குக் காத்திருப்பதை நிறுத்தியது.</translation>
+    </message>
+    <message>
+        <source>Withdrawn: the turn ended before you answered.</source>
+        <translation>திரும்பப் பெறப்பட்டது: நீங்கள் பதிலளிப்பதற்கு முன் சுற்று முடிந்தது.</translation>
+    </message>
+    <message>
+        <source>Withdrawn: you stopped the turn.</source>
+        <translation>திரும்பப் பெறப்பட்டது: நீங்கள் சுற்றை நிறுத்தினீர்கள்.</translation>
+    </message>
+    <message>
+        <source>Withdrawn: you signed out of Codex.</source>
+        <translation>திரும்பப் பெறப்பட்டது: நீங்கள் Codex இலிருந்து வெளியேறினீர்கள்.</translation>
+    </message>
+    <message>
+        <source>Withdrawn: the cost cap stopped the turn.</source>
+        <translation>திரும்பப் பெறப்பட்டது: செலவு வரம்பு சுற்றை நிறுத்தியது.</translation>
+    </message>
+    <message>
         <source>The signing key changed. The installed copy was signed by key %1, and this one by key %2. Install it only if you trust that the author changed keys.</source>
         <translation type="unfinished">கையொப்ப விசை மாறிவிட்டது. நிறுவப்பட்ட பிரதி %1 விசையாலும், இது %2 விசையாலும் கையொப்பமிடப்பட்டுள்ளன. உருவாக்கியவர் விசையை மாற்றினார் என்று நீங்கள் நம்பினால் மட்டுமே இதை நிறுவவும்.</translation>
     </message>
@@ -549,8 +569,36 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Signed out of Codex. This session ended.</source>
+        <translation>Codex இலிருந்து வெளியேறினீர்கள். இந்த அமர்வு முடிந்தது.</translation>
+    </message>
+    <message>
+        <source>AI component is ready</source>
+        <translation>AI கூறு தயார்</translation>
+    </message>
+    <message>
+        <source>Getting the AI component: %1 of %2 MB</source>
+        <translation>AI கூறைப் பெறுகிறது: %2 MB இல் %1</translation>
+    </message>
+    <message>
+        <source>The AI component is ready. Send your message again.</source>
+        <translation>AI கூறு தயார். உங்கள் செய்தியை மீண்டும் அனுப்புங்கள்.</translation>
+    </message>
+    <message>
+        <source>The AI component didn’t download. Check your connection and try again.</source>
+        <translation>AI கூறு பதிவிறங்கவில்லை. உங்கள் இணைப்பைச் சரிபார்த்து மீண்டும் முயலுங்கள்.</translation>
+    </message>
+    <message>
+        <source>Agents need the AI component, which HikariSub downloads once.</source>
+        <translation>முகவர்களுக்கு AI கூறு தேவை; HikariSub அதை ஒருமுறை பதிவிறக்கும்.</translation>
+    </message>
+    <message>
         <source>Not offered: HikariSub can’t open a private tools channel for it on this system.</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Get the AI component</source>
+        <translation>AI கூறைப் பெறு</translation>
     </message>
     <message numerus="yes">
         <source>%n sub-agent(s)</source>
@@ -762,7 +810,7 @@
     </message>
     <message>
         <source>HikariSub is still getting the AI component, or it couldn’t start.</source>
-        <translation>HikariSub இன்னும் AI கூறைப் பெற்றுக்கொண்டிருக்கிறது, அல்லது அதைத் தொடங்க முடியவில்லை.</translation>
+        <translation type="vanished">HikariSub இன்னும் AI கூறைப் பெற்றுக்கொண்டிருக்கிறது, அல்லது அதைத் தொடங்க முடியவில்லை.</translation>
     </message>
     <message>
         <source>The search service answered %1. The answer goes on without searching the web.</source>

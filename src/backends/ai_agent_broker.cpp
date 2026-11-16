@@ -883,6 +883,20 @@ void AgentBroker::exited(std::uint64_t id, int code)
     running->process.release()->deleteLater();
 }
 
+void AgentBroker::killAgent(const std::string &agent)
+{
+    std::vector<std::uint64_t> ids;
+    for (const auto &[id, running] : m_running)
+        if (running->agent == agent)
+            ids.push_back(id);
+    for (const std::uint64_t id : ids) {
+        if (const auto it = m_running.find(id); it != m_running.end()) {
+            it->second->kill();
+            exited(id, -1);
+        }
+    }
+}
+
 void AgentBroker::killAll()
 {
     auto running = std::exchange(m_running, {});

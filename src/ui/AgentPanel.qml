@@ -7,6 +7,7 @@ import Hikari.Ui
 FocusScope {
     id: panel
     required property QtObject agent
+    property QtObject aiSettings: null
     signal reviewRequested()
     signal restoreRequested(var turn)
     signal settingsRequested()
@@ -22,6 +23,13 @@ FocusScope {
     readonly property real contextUsed: hasThread && thread.compactWindow > 0 ? thread.contextTokens / thread.compactWindow : 0
     readonly property bool isChild: hasThread && (thread.child?.parent ?? "").length > 0
     property bool showingThreads: false
+    property string componentResult: ""
+    readonly property var download: aiSettings ? aiSettings.download : ({})
+    Connections {
+        target: panel.aiSettings
+        ignoreUnknownSignals: true
+        function onComponentReady(ready) { panel.componentResult = ready ? "ready" : "failed" }
+    }
     objectName: "agentView"
     Keys.onEscapePressed: event => {
         event.accepted = panel.isChild && !panel.showingThreads
@@ -1516,7 +1524,13 @@ FocusScope {
                 color: Theme.muted
                 text: ask.item.status === "allowed" ? qsTr("Allowed")
                       : ask.item.status === "allowedInThread" ? qsTr("Allowed in this thread")
-                      : ask.item.status === "denied" ? qsTr("Denied") : qsTr("No longer needed")
+                      : ask.item.status === "denied" ? qsTr("Denied")
+                      : ask.item.withdrawnFor === "agent" ? qsTr("Withdrawn: the agent stopped waiting for your answer.")
+                      : ask.item.withdrawnFor === "turnEnded" ? qsTr("Withdrawn: the turn ended before you answered.")
+                      : ask.item.withdrawnFor === "stopped" ? qsTr("Withdrawn: you stopped the turn.")
+                      : ask.item.withdrawnFor === "signedOut" ? qsTr("Withdrawn: you signed out of Codex.")
+                      : ask.item.withdrawnFor === "cap" || ask.item.withdrawnFor === "dailyCap" ? qsTr("Withdrawn: the cost cap stopped the turn.")
+                      : qsTr("No longer needed")
             }
         }
     }
@@ -1970,7 +1984,7 @@ FocusScope {
             readonly property var item: parent ? parent.item : ({})
             readonly property bool last: parent ? parent.last : false
             readonly property string kind: item.notice ?? ""
-            readonly property bool quiet: kind === "stopped" || kind === "parent" || kind === "maxTokens" || kind === "refusal" || kind === "maxRequests"
+            readonly property bool quiet: kind === "stopped" || kind === "parent" || kind === "signedOut" || kind === "maxTokens" || kind === "refusal" || kind === "maxRequests"
                                           || kind === "nothingToCompact"
             objectName: "agentNotice_" + kind
             readonly property bool searchFailed: kind === "searchUsedUp" || kind === "searchKey"
@@ -1983,6 +1997,7 @@ FocusScope {
                       : notice.kind === "failed" ? qsTr("Turn failed")
                       : notice.kind === "stopped" ? qsTr("You stopped the turn.")
                       : notice.kind === "parent" ? qsTr("The parent thread stopped this sub-agent.")
+                      : notice.kind === "signedOut" ? qsTr("Signed out of Codex. This session ended.")
                       : notice.kind === "maxTokens" ? qsTr("The answer reached the model’s length limit.")
                       : notice.kind === "refusal" ? qsTr("The model declined to answer.")
                       : notice.kind === "maxRequests" ? qsTr("The turn stopped after its most model requests.")
@@ -1992,6 +2007,7 @@ FocusScope {
                       : notice.kind === "nothingToCompact" ? qsTr("There’s nothing to compact yet.")
                       : notice.kind === "searchUsedUp" ? qsTr("%1 has no searches left").arg(panel.serviceName(notice.item.service ?? ""))
                       : notice.kind === "searchKey" ? qsTr("%1 refused HikariSub’s key").arg(panel.serviceName(notice.item.service ?? ""))
+                      : panel.componentResult === "ready" ? qsTr("AI component is ready")
                       : qsTr("AI component isn’t ready")
             }
             Label {
@@ -2006,7 +2022,11 @@ FocusScope {
                       : notice.kind === "lost" ? qsTr("The turn was interrupted and won’t rerun by itself. Changes it made stay in the review.")
                       : notice.kind === "failed" ? (notice.item.detail ?? "")
                       : notice.kind === "compactFailed" ? qsTr("The summary request failed twice (%1). Nothing was removed.").arg(notice.item.detail ?? "")
-                      : notice.kind === "noSidecar" ? qsTr("HikariSub is still getting the AI component, or it couldn’t start.")
+                      : notice.kind === "noSidecar" && panel.download.active
+                        ? qsTr("Getting the AI component: %1 of %2 MB").arg(Math.round((panel.download.received || 0) / 1000000)).arg(Math.round((panel.download.size || 0) / 1000000))
+                      : notice.kind === "noSidecar" && panel.componentResult === "ready" ? qsTr("The AI component is ready. Send your message again.")
+                      : notice.kind === "noSidecar" && panel.componentResult === "failed" ? qsTr("The AI component didn’t download. Check your connection and try again.")
+                      : notice.kind === "noSidecar" ? qsTr("Agents need the AI component, which HikariSub downloads once.")
                       : notice.kind === "notOffered" && notice.item.detail === "project"
                         ? qsTr("Not offered: its command is inside an open project, which it could read.")
                       : notice.kind === "notOffered" && notice.item.detail === "channel"
@@ -2052,6 +2072,16 @@ FocusScope {
                     visible: notice.kind === "lost"
                     text: qsTr("Show the log")
                     onClicked: panel.logRequested()
+                }
+                Button {
+                    objectName: "agentGetComponent"
+                    visible: notice.kind === "noSidecar" && !!panel.aiSettings && !panel.download.active && panel.componentResult !== "ready"
+                    highlighted: true
+                    text: qsTr("Get the AI component")
+                    onClicked: {
+                        panel.componentResult = ""
+                        panel.aiSettings.installComponent()
+                    }
                 }
                 Button {
                     visible: notice.kind === "dailyCap" || notice.kind === "noModel" || notice.kind === "noSidecar"

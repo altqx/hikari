@@ -595,6 +595,37 @@ TEST_F(AgentThreadsTest, AThreadOnAnAgentThisSystemWontStartSaysWhyAndOpensNoSes
     EXPECT_EQ(receivedAs("session/new").size(), 1u);
 }
 
+TEST_F(AgentThreadsTest, SigningOutOfAnAgentStopsItsTurnsAndEndsItsSessionsButLeavesOtherAgentsAlone)
+{
+    const std::string idle = threads->create();
+    threads->setModel(idle, {"agent:codex", ""});
+    threads->send(idle, "Hello");
+    ASSERT_TRUE(this->idle(idle));
+    const std::string claude = threads->create();
+    threads->setModel(claude, {"agent:claude", ""});
+    threads->send(claude, "Hello");
+    ASSERT_TRUE(this->idle(claude));
+    const std::string running = withMode(AgentMode::Manual);
+    threads->setModel(running, {"agent:codex", ""});
+    threads->send(running, script(Json::array({call("commands.run", Json::object({{"command", "GLOBAL_UNDO"}}))})));
+    openAsk();
+
+    threads->endAgent("codex");
+    ASSERT_TRUE(this->idle(running));
+    EXPECT_EQ(notice(running), "signedOut");
+    EXPECT_EQ(at(items(running, "ask")[0], "status"), "withdrawn");
+    EXPECT_EQ(at(items(running, "ask")[0], "withdrawnFor"), "signedOut");
+    EXPECT_TRUE(threads->asks().empty());
+    EXPECT_EQ(receivedAs("session/cancel").size(), 1u);
+    EXPECT_EQ(notice(idle), "signedOut");
+    EXPECT_TRUE(items(claude, "notice").empty());
+
+    const std::size_t opened = receivedAs("session/new").size();
+    threads->send(idle, "Hello again");
+    ASSERT_TRUE(this->idle(idle));
+    EXPECT_EQ(receivedAs("session/new").size(), opened + 1);
+}
+
 TEST_F(AgentThreadsTest, FullAccessRunsAWriteIntoTheReviewAndShowsTheChange)
 {
     const std::string id = withMode(AgentMode::FullAccess);
@@ -632,6 +663,27 @@ TEST_F(AgentThreadsTest, ManualAsksForOtherWritesUntilAllowedInTheThread)
     ASSERT_EQ(asks.size(), 1u);
     EXPECT_EQ(at(asks[0], "status"), "allowedInThread");
     EXPECT_TRUE(thread(id).allowed.contains("commands.run:GLOBAL_SAVE_SUBS"));
+    for (const Json &answer : receivedAs("answer"))
+        EXPECT_TRUE(answer.find("result")) << answer.dump();
+}
+
+TEST_F(AgentThreadsTest, AutoWithoutAJudgeModelAsksTheUserAsManualDoesAndSaysWhy)
+{
+    threads = makeThreads(true);
+    const std::string id = threads->create();
+    ASSERT_EQ(thread(id).mode, AgentMode::Auto);
+    threads->setModel(id, {"agent:claude", ""});
+    threads->send(id, script(Json::array({call("commands.run", Json::object({{"command", "GLOBAL_SAVE_SUBS"}}))})));
+    const std::uint64_t ask = openAsk();
+    ASSERT_NE(ask, 0u);
+    EXPECT_EQ(threads->asks().at(ask).kind, Decision::Ask);
+    const auto asks = items(id, "ask");
+    ASSERT_EQ(asks.size(), 1u);
+    EXPECT_EQ(at(asks[0], "type"), "ask");
+    EXPECT_EQ(at(asks[0], "reason"), "Auto has no judge model without a provider, so it asks you.");
+    threads->answer(ask, Answer::AllowOnce);
+    ASSERT_TRUE(idle(id));
+    EXPECT_EQ(at(items(id, "ask")[0], "status"), "allowed");
     for (const Json &answer : receivedAs("answer"))
         EXPECT_TRUE(answer.find("result")) << answer.dump();
 }
@@ -1106,6 +1158,7 @@ TEST_F(AgentThreadsTest, StopWithdrawsTheOpenAskAndEndsTheTurn)
     ASSERT_TRUE(idle(id));
     EXPECT_TRUE(threads->asks().empty());
     EXPECT_EQ(at(items(id, "ask")[0], "status"), "withdrawn");
+    EXPECT_EQ(at(items(id, "ask")[0], "withdrawnFor"), "stopped");
     EXPECT_EQ(notice(id), "stopped");
     EXPECT_EQ(receivedAs("session/cancel").size(), 1u);
 }
