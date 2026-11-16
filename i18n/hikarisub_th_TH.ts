@@ -73,7 +73,7 @@
     </message>
     <message>
         <source>Thread menu</source>
-        <translation>เมนูเธรด</translation>
+        <translation type="vanished">เมนูเธรด</translation>
     </message>
     <message>
         <source>Add a provider to use the agent</source>
@@ -267,7 +267,7 @@
     </message>
     <message>
         <source>Delete thread</source>
-        <translation>ลบเธรด</translation>
+        <translation type="vanished">ลบเธรด</translation>
     </message>
     <message>
         <source>Delete this thread?</source>
@@ -287,7 +287,7 @@
     </message>
     <message>
         <source>Settings › AI…</source>
-        <translation>การตั้งค่า › AI…</translation>
+        <translation type="vanished">การตั้งค่า › AI…</translation>
     </message>
     <message>
         <source>You approve each subtitle edit before it’s made, and every other change. Reading never asks.</source>
@@ -303,7 +303,7 @@
     </message>
     <message>
         <source>Default for new threads…</source>
-        <translation>ค่าเริ่มต้นสำหรับเธรดใหม่…</translation>
+        <translation type="vanished">ค่าเริ่มต้นสำหรับเธรดใหม่…</translation>
     </message>
     <message>
         <source>Rename thread</source>
@@ -726,6 +726,22 @@
         <translation type="unfinished">เปิด</translation>
     </message>
     <message>
+        <source>Compact thread</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete thread…</source>
+        <translation>ลบเธรด…</translation>
+    </message>
+    <message>
+        <source>Settings › AI</source>
+        <translation>การตั้งค่า › AI</translation>
+    </message>
+    <message>
+        <source>Default for new threads</source>
+        <translation>ค่าเริ่มต้นสำหรับเธรดใหม่</translation>
+    </message>
+    <message>
         <source>%1 asks to run this Lua script</source>
         <translation>%1 ขอเรียกใช้สคริปต์ Lua นี้</translation>
     </message>
@@ -917,10 +933,6 @@
     </message>
     <message>
         <source>%1 of %2 tokens. Automatic compaction is off in Settings › AI.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Compact conversation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1569,7 +1581,7 @@ Output device: %2</source>
     </message>
     <message>
         <source>Answers and presets</source>
-        <translation>คำตอบและพรีเซ็ต</translation>
+        <translation type="vanished">คำตอบและพรีเซ็ต</translation>
     </message>
     <message>
         <source>Last used</source>
@@ -2053,7 +2065,7 @@ Output device: %2</source>
     </message>
     <message>
         <source>%1 options</source>
-        <translation>ตัวเลือก %1</translation>
+        <translation type="vanished">ตัวเลือก %1</translation>
     </message>
     <message>
         <source>The script’s process ended. Reload to start it again; its macro is not rerun.</source>
@@ -23317,7 +23329,7 @@ Styles deleted:
     </message>
     <message>
         <source>Preset commands</source>
-        <translation>คำสั่งพรีเซ็ต</translation>
+        <translation type="vanished">คำสั่งพรีเซ็ต</translation>
     </message>
     <message>
         <source>Save as preset…</source>

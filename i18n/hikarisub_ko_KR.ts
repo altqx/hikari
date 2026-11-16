@@ -73,7 +73,7 @@
     </message>
     <message>
         <source>Thread menu</source>
-        <translation>스레드 메뉴</translation>
+        <translation type="vanished">스레드 메뉴</translation>
     </message>
     <message>
         <source>Add a provider to use the agent</source>
@@ -267,7 +267,7 @@
     </message>
     <message>
         <source>Delete thread</source>
-        <translation>스레드 삭제</translation>
+        <translation type="vanished">스레드 삭제</translation>
     </message>
     <message>
         <source>Delete this thread?</source>
@@ -287,7 +287,7 @@
     </message>
     <message>
         <source>Settings › AI…</source>
-        <translation>설정 › AI…</translation>
+        <translation type="vanished">설정 › AI…</translation>
     </message>
     <message>
         <source>You approve each subtitle edit before it’s made, and every other change. Reading never asks.</source>
@@ -303,7 +303,7 @@
     </message>
     <message>
         <source>Default for new threads…</source>
-        <translation>새 스레드 기본값…</translation>
+        <translation type="vanished">새 스레드 기본값…</translation>
     </message>
     <message>
         <source>Rename thread</source>
@@ -726,6 +726,22 @@
         <translation type="unfinished">열기</translation>
     </message>
     <message>
+        <source>Compact thread</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete thread…</source>
+        <translation>스레드 삭제…</translation>
+    </message>
+    <message>
+        <source>Settings › AI</source>
+        <translation>설정 › AI</translation>
+    </message>
+    <message>
+        <source>Default for new threads</source>
+        <translation>새 스레드 기본값</translation>
+    </message>
+    <message>
         <source>%1 asks to run this Lua script</source>
         <translation>%1이(가) 이 Lua 스크립트 실행을 요청합니다</translation>
     </message>
@@ -917,10 +933,6 @@
     </message>
     <message>
         <source>%1 of %2 tokens. Automatic compaction is off in Settings › AI.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Compact conversation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1569,7 +1581,7 @@ Output device: %2</source>
     </message>
     <message>
         <source>Answers and presets</source>
-        <translation>답변 및 프리셋</translation>
+        <translation type="vanished">답변 및 프리셋</translation>
     </message>
     <message>
         <source>Last used</source>
@@ -2053,7 +2065,7 @@ Output device: %2</source>
     </message>
     <message>
         <source>%1 options</source>
-        <translation>%1 설정</translation>
+        <translation type="vanished">%1 설정</translation>
     </message>
     <message>
         <source>The script’s process ended. Reload to start it again; its macro is not rerun.</source>
@@ -23317,7 +23329,7 @@ Styles deleted:
     </message>
     <message>
         <source>Preset commands</source>
-        <translation>프리셋 명령</translation>
+        <translation type="vanished">프리셋 명령</translation>
     </message>
     <message>
         <source>Save as preset…</source>

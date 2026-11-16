@@ -116,8 +116,8 @@ DialogWindow {
         if (!controller.hasProject)
             return
         for (let i = 0; i < presetsMenu.count; ++i)
-            if (presetsMenu.itemAt(i) && presetsMenu.itemAt(i).subMenu === deleteMenu) {
-                tierMenus.forEach((m, k) => presetsMenu.insertMenu(i + 1 + k, m))
+            if (presetsMenu.itemAt(i) === tierSeparator) {
+                tierMenus.forEach((m, k) => presetsMenu.insertMenu(i + k, m))
                 return
             }
     }
@@ -247,7 +247,7 @@ DialogWindow {
         id: moreButton
         objectName: "automationDialogMore"
         visible: window.controller.remembers
-        text: qsTr("Answers and presets")
+        text: qsTranslate("HikariSub.Workspace", "More options")
         display: AbstractButton.IconOnly
         implicitWidth: implicitHeight
         down: pressed || moreMenu.visible
@@ -308,6 +308,12 @@ DialogWindow {
                 onTriggered: savePopover.openFor()
             }
             MenuSeparator {}
+            MenuSeparator {
+                id: tierSeparator
+                objectName: "dialogTierSeparator"
+                visible: window.controller.hasProject
+                height: window.controller.hasProject ? implicitHeight : 0
+            }
             ShellMenu {
                 id: deleteMenu
                 objectName: "dialogDeletePresetMenu"

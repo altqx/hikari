@@ -13,6 +13,7 @@
 #include <QQmlComponent>
 #include <QQmlEngine>
 #include <QQuickItem>
+#include <QQuickWindow>
 #include <QRegularExpression>
 #include <QScopeGuard>
 #include <QSignalSpy>
@@ -99,10 +100,11 @@ class PluginQmlPanelTests : public QObject {
         QQmlComponent component(&engine);
         component.setData("import QtQuick\nimport Hikari.Ui\nPluginPanelBody { width: 400; height: 300 }\n",
                           QUrl(QStringLiteral("qrc:/pl8-test.qml")));
-        QObject *made = component.createWithInitialProperties(
-            {{QStringLiteral("ui"), QVariant::fromValue(ui)}, {QStringLiteral("dock"), kBoard}, {QStringLiteral("shown"), shown}});
+        QObject *made = component.createWithInitialProperties({{QStringLiteral("ui"), QVariant::fromValue(ui)}, {QStringLiteral("dock"), kBoard}});
         if (!made)
             qWarning() << component.errors();
+        else
+            made->setProperty("shown", shown);
         return std::unique_ptr<QQuickItem>(qobject_cast<QQuickItem *>(made));
     }
 
@@ -369,6 +371,48 @@ private slots:
         QCOMPARE(lines.size(), app::PluginUi::kQmlWarningsPerMinute);
         for (const QString &line : lines)
             QVERIFY2(line.startsWith(QStringLiteral("qml/Noisy.qml:9: ReferenceError: missingName")), qPrintable(line));
+    }
+
+    void aPanelIconWithAnUnknownNameDrawsNothingAndWarnsNothing()
+    {
+        install();
+        edit(QStringLiteral("qml/Board.qml"), "name: \"plugins\"", "objectName: \"unknownIcon\"\n            name: \"network\"");
+        static QStringList warnings;
+        warnings.clear();
+        static QtMessageHandler previous = nullptr;
+        previous = qInstallMessageHandler([](QtMsgType type, const QMessageLogContext &context, const QString &message) {
+            if (type != QtDebugMsg && type != QtInfoMsg)
+                warnings << message;
+            previous(type, context, message);
+        });
+        auto restore = qScopeGuard([] { qInstallMessageHandler(previous); });
+        QSignalSpy added(&m_app->log(), &ui::LogController::added);
+        app::PluginRuntime runtime(wiring());
+        runtime.sync();
+        app::PluginUi *ui = runtime.ui();
+        QTRY_VERIFY(runtime.process(kPlugin)->state() == PluginProcess::State::Ready);
+        QQmlEngine engine;
+        auto host = body(engine, ui, false);
+        QQuickWindow window;
+        window.resize(400, 300);
+        host->setParentItem(window.contentItem());
+        window.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&window));
+        host->setProperty("shown", true);
+        QTRY_VERIFY(ui->panel(kBoard)->item());
+        auto *icon = ui->panel(kBoard)->item()->findChild<QQuickItem *>(QStringLiteral("unknownIcon"));
+        QVERIFY(icon);
+        QCOMPARE(icon->property("iconRole").toString(), QStringLiteral("network"));
+        QVERIFY(!icon->property("valid").toBool());
+        QCOMPARE(icon->width(), 16.0);
+        for (int i = 0; i < 10; ++i) {
+            icon->setProperty("size", 16 + i);
+            icon->setProperty("color", i % 2 ? QColor(Qt::red) : QColor(Qt::blue));
+            icon->update();
+            QVERIFY(!window.grabWindow().isNull());
+        }
+        QVERIFY2(warnings.isEmpty(), qPrintable(warnings.join(QLatin1Char('\n'))));
+        QVERIFY2(logged(added).isEmpty(), qPrintable(logged(added).join(QLatin1Char('\n'))));
     }
 };
 

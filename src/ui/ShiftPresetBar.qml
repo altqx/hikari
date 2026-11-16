@@ -133,7 +133,7 @@ RowLayout {
         id: moreButton
         objectName: bar.tool + "PresetMenuButton"
         iconRole: "panel-menu"
-        text: qsTr("Preset commands")
+        text: qsTranslate("HikariSub.Workspace", "More options")
         onClicked: moreMenu.popup(moreButton, 0, moreButton.height)
     }
     ShellMenu {
@@ -151,13 +151,6 @@ RowLayout {
             text: qsTr("Rename preset…")
             enabled: bar.current !== "" && !bar.readOnly
             onTriggered: namePopover.openFor(bar.current)
-        }
-        ShellMenuItem {
-            objectName: bar.tool + "DeletePreset"
-            iconRole: "delete"
-            text: qsTr("Delete preset…")
-            enabled: bar.current !== "" && !bar.readOnly
-            onTriggered: bar.askDelete(bar.current)
         }
         MenuSeparator { visible: bar.tiered; height: visible ? implicitHeight : 0 }
         ShellMenuItem {
@@ -188,6 +181,14 @@ RowLayout {
             enabled: bar.current !== ""
             text: qsTr("Use in the Timing layout")
             onTriggered: bar.shiftTimes.timingPreset = checked ? bar.current : ""
+        }
+        MenuSeparator {}
+        ShellMenuItem {
+            objectName: bar.tool + "DeletePreset"
+            iconRole: "delete"
+            text: qsTr("Delete preset…")
+            enabled: bar.current !== "" && !bar.readOnly
+            onTriggered: bar.askDelete(bar.current)
         }
     }
     Popover {

@@ -73,7 +73,7 @@
     </message>
     <message>
         <source>Thread menu</source>
-        <translation>இழை மெனு</translation>
+        <translation type="vanished">இழை மெனு</translation>
     </message>
     <message>
         <source>Add a provider to use the agent</source>
@@ -268,7 +268,7 @@
     </message>
     <message>
         <source>Delete thread</source>
-        <translation>இழையை நீக்கு</translation>
+        <translation type="vanished">இழையை நீக்கு</translation>
     </message>
     <message>
         <source>Delete this thread?</source>
@@ -288,7 +288,7 @@
     </message>
     <message>
         <source>Settings › AI…</source>
-        <translation>அமைப்புகள் › AI…</translation>
+        <translation type="vanished">அமைப்புகள் › AI…</translation>
     </message>
     <message>
         <source>You approve each subtitle edit before it’s made, and every other change. Reading never asks.</source>
@@ -304,7 +304,7 @@
     </message>
     <message>
         <source>Default for new threads…</source>
-        <translation>புதிய இழைகளுக்கான இயல்புநிலை…</translation>
+        <translation type="vanished">புதிய இழைகளுக்கான இயல்புநிலை…</translation>
     </message>
     <message>
         <source>Rename thread</source>
@@ -733,6 +733,22 @@
         <translation type="unfinished">திற</translation>
     </message>
     <message>
+        <source>Compact thread</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete thread…</source>
+        <translation>இழையை நீக்கு…</translation>
+    </message>
+    <message>
+        <source>Settings › AI</source>
+        <translation>அமைப்புகள் › AI</translation>
+    </message>
+    <message>
+        <source>Default for new threads</source>
+        <translation>புதிய இழைகளுக்கான இயல்புநிலை</translation>
+    </message>
+    <message>
         <source>%1 asks to run this Lua script</source>
         <translation>%1 இந்த Lua ஸ்கிரிப்டை இயக்கக் கேட்கிறது</translation>
     </message>
@@ -927,10 +943,6 @@
     </message>
     <message>
         <source>%1 of %2 tokens. Automatic compaction is off in Settings › AI.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Compact conversation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1579,7 +1591,7 @@ Output device: %2</source>
     </message>
     <message>
         <source>Answers and presets</source>
-        <translation>பதில்களும் முன்னமைவுகளும்</translation>
+        <translation type="vanished">பதில்களும் முன்னமைவுகளும்</translation>
     </message>
     <message>
         <source>Last used</source>
@@ -2069,7 +2081,7 @@ Output device: %2</source>
     </message>
     <message>
         <source>%1 options</source>
-        <translation>%1 விருப்பங்கள்</translation>
+        <translation type="vanished">%1 விருப்பங்கள்</translation>
     </message>
     <message>
         <source>The script’s process ended. Reload to start it again; its macro is not rerun.</source>
@@ -23515,7 +23527,7 @@ Styles deleted:
     </message>
     <message>
         <source>Preset commands</source>
-        <translation>முன்னமைவுக் கட்டளைகள்</translation>
+        <translation type="vanished">முன்னமைவுக் கட்டளைகள்</translation>
     </message>
     <message>
         <source>Save as preset…</source>

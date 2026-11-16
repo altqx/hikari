@@ -4733,7 +4733,7 @@
   {
    "role": "compact",
    "file": "compact.svg",
-   "label": "Compact conversation",
+   "label": "Compact thread",
    "accent": true,
    "mirror": false,
    "legacy": [],
@@ -4779,18 +4779,6 @@
     "settings-dialog"
    ],
    "pending": "AI24 #744"
-  },
-  {
-   "role": "network",
-   "file": "network.svg",
-   "label": "Internet access",
-   "accent": true,
-   "mirror": false,
-   "legacy": [],
-   "surfaces": [
-    "settings-dialog",
-    "plugin-manager"
-   ]
   },
   {
    "role": "marketplace",

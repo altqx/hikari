@@ -73,7 +73,7 @@
     </message>
     <message>
         <source>Thread menu</source>
-        <translation>Menu wątku</translation>
+        <translation type="vanished">Menu wątku</translation>
     </message>
     <message>
         <source>Add a provider to use the agent</source>
@@ -269,7 +269,7 @@
     </message>
     <message>
         <source>Delete thread</source>
-        <translation>Usuń wątek</translation>
+        <translation type="vanished">Usuń wątek</translation>
     </message>
     <message>
         <source>Delete this thread?</source>
@@ -289,7 +289,7 @@
     </message>
     <message>
         <source>Settings › AI…</source>
-        <translation>Ustawienia › AI…</translation>
+        <translation type="vanished">Ustawienia › AI…</translation>
     </message>
     <message>
         <source>You approve each subtitle edit before it’s made, and every other change. Reading never asks.</source>
@@ -305,7 +305,7 @@
     </message>
     <message>
         <source>Default for new threads…</source>
-        <translation>Domyślny dla nowych wątków…</translation>
+        <translation type="vanished">Domyślny dla nowych wątków…</translation>
     </message>
     <message>
         <source>Rename thread</source>
@@ -740,6 +740,22 @@
         <translation type="unfinished">Otwórz</translation>
     </message>
     <message>
+        <source>Compact thread</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete thread…</source>
+        <translation>Usuń wątek…</translation>
+    </message>
+    <message>
+        <source>Settings › AI</source>
+        <translation>Ustawienia › AI</translation>
+    </message>
+    <message>
+        <source>Default for new threads</source>
+        <translation>Domyślny dla nowych wątków</translation>
+    </message>
+    <message>
         <source>%1 asks to run this Lua script</source>
         <translation>%1 prosi o uruchomienie tego skryptu Lua</translation>
     </message>
@@ -937,10 +953,6 @@
     </message>
     <message>
         <source>%1 of %2 tokens. Automatic compaction is off in Settings › AI.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Compact conversation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1589,7 +1601,7 @@ Urządzenie wyjściowe: %2</translation>
     </message>
     <message>
         <source>Answers and presets</source>
-        <translation>Odpowiedzi i presety</translation>
+        <translation type="vanished">Odpowiedzi i presety</translation>
     </message>
     <message>
         <source>Last used</source>
@@ -2085,7 +2097,7 @@ Urządzenie wyjściowe: %2</translation>
     </message>
     <message>
         <source>%1 options</source>
-        <translation>Opcje: %1</translation>
+        <translation type="vanished">Opcje: %1</translation>
     </message>
     <message>
         <source>The script’s process ended. Reload to start it again; its macro is not rerun.</source>
@@ -23713,7 +23725,7 @@ Usunięte style:
     </message>
     <message>
         <source>Preset commands</source>
-        <translation>Polecenia presetów</translation>
+        <translation type="vanished">Polecenia presetów</translation>
     </message>
     <message>
         <source>Save as preset…</source>

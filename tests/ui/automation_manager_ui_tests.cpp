@@ -3,6 +3,7 @@
 #include "hikari/backends/automation_manager.h"
 #include "menu_rows.h"
 
+#include <QAccessible>
 #include <QDir>
 #include <QQmlExtensionPlugin>
 #include <QQuickItem>
@@ -104,6 +105,12 @@ private slots:
         QTRY_VERIFY(!scriptMenu->property("visible").toBool());
         auto *options = qobject_cast<QQuickItem *>(item(QStringLiteral("scriptMenu_0")));
         QVERIFY(options);
+        QCOMPARE(options->property("text").toString(), QStringLiteral("More options"));
+        QAccessibleInterface *accessible = QAccessible::queryAccessibleInterface(options);
+        QVERIFY(accessible);
+        const QVariantMap script = controller->scripts().value(0).toMap();
+        QCOMPARE(accessible->text(QAccessible::Description),
+                 script.value("name").toString().isEmpty() ? script.value("fileName").toString() : script.value("name").toString());
         QTest::mouseClick(view.get(), Qt::LeftButton, {},
                           options->mapToScene(QPointF(options->width() / 2, options->height() / 2)).toPoint());
         QTRY_VERIFY(scriptMenu->property("opened").toBool());
