@@ -4186,6 +4186,10 @@ Urządzenie wyjściowe: %2</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Move to the trash…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Move the folder “%1” and everything in it to the trash?</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4940,8 +4944,8 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Zmień nazwę</translation>
     </message>
     <message>
-        <source>Catalogue tiers</source>
-        <translation type="unfinished"></translation>
+        <source>More options</source>
+        <translation>Więcej opcji</translation>
     </message>
     <message>
         <source>Load from a file</source>
@@ -5338,10 +5342,6 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>Style editor sample</source>
         <translation>Próbka edytora stylu</translation>
-    </message>
-    <message>
-        <source>Manage catalogues</source>
-        <translation>Zarządzaj katalogami</translation>
     </message>
     <message>
         <source>No catalogues yet</source>
@@ -10343,6 +10343,10 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Open</source>
         <translation>Otwórz</translation>
+    </message>
+    <message>
+        <source>Open %1</source>
+        <translation>Otwórz %1</translation>
     </message>
     <message>
         <source>Remove subtitles from the editor</source>
@@ -16745,8 +16749,8 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>%1, z %2</translation>
     </message>
     <message>
-        <source>About %1…</source>
-        <translation>O wtyczce %1…</translation>
+        <source>About %1</source>
+        <translation>O wtyczce %1</translation>
     </message>
     <message>
         <source>%1 rolled back to %2</source>
@@ -17266,8 +17270,8 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Importuj plik notatek…</translation>
     </message>
     <message>
-        <source>Import notes from the clipboard</source>
-        <translation>Importuj notatki ze schowka</translation>
+        <source>Import notes from the clipboard…</source>
+        <translation>Importuj notatki ze schowka…</translation>
     </message>
     <message>
         <source>Export notes…</source>
@@ -17278,7 +17282,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Oznacz wszystkie jako niegotowe</translation>
     </message>
     <message>
-        <source>Remove all notes…</source>
+        <source>Delete all notes…</source>
         <translation>Usuń wszystkie notatki…</translation>
     </message>
     <message>
@@ -17378,11 +17382,11 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Nie można odczytać %1: %2</translation>
     </message>
     <message>
-        <source>Remove all notes</source>
+        <source>Delete all notes</source>
         <translation>Usuń wszystkie notatki</translation>
     </message>
     <message numerus="yes">
-        <source>Remove all %n QC note(s) from this file?</source>
+        <source>Delete all %n QC note(s) from this file?</source>
         <translation>
             <numerusform>Usunąć %n notatkę QC z tego pliku?</numerusform>
             <numerusform>Usunąć wszystkie %n notatki QC z tego pliku?</numerusform>
@@ -17394,7 +17398,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Cofnięcie je przywróci.</translation>
     </message>
     <message>
-        <source>Remove all</source>
+        <source>Delete all</source>
         <translation>Usuń wszystkie</translation>
     </message>
     <message>
@@ -17506,8 +17510,8 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Notatki QC można przechowywać tylko w plikach ASS i SSA. Zapisz ten plik jako ASS, aby dodać notatki.</translation>
     </message>
     <message>
-        <source>Paste notes</source>
-        <translation>Wklej notatki</translation>
+        <source>Import from the clipboard</source>
+        <translation>Importuj ze schowka</translation>
     </message>
     <message>
         <source>Notes start with a time: 3:24 - …
@@ -20632,24 +20636,16 @@ ponieważ została zmieniona.</translation>
         <translation>Przenieś w górę</translation>
     </message>
     <message>
-        <source>Move up (Alt+Up)</source>
-        <translation>Przenieś w górę (Alt+Up)</translation>
-    </message>
-    <message>
         <source>Move down</source>
         <translation>Przenieś w dół</translation>
-    </message>
-    <message>
-        <source>Move down (Alt+Down)</source>
-        <translation>Przenieś w dół (Alt+Down)</translation>
     </message>
     <message>
         <source>Load from a file…</source>
         <translation>Wczytaj z pliku…</translation>
     </message>
     <message>
-        <source>More</source>
-        <translation>Więcej</translation>
+        <source>More options</source>
+        <translation>Więcej opcji</translation>
     </message>
     <message>
         <source>Move to top</source>
@@ -20685,10 +20681,6 @@ ponieważ została zmieniona.</translation>
     </message>
     <message>
         <source>Mine</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Catalogue tiers</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -26932,8 +26924,8 @@ nie działają na komentarzach</translation>
 <context>
     <name>HikariSub.Workspace</name>
     <message>
-        <source>%1 options</source>
-        <translation>Opcje: %1</translation>
+        <source>More options</source>
+        <translation>Więcej opcji</translation>
     </message>
     <message>
         <source>Panels</source>
@@ -27036,12 +27028,12 @@ nie działają na komentarzach</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Move left</source>
-        <translation type="unfinished">Przesuń w lewo</translation>
+        <source>Move left in the side bar</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Move right</source>
-        <translation type="unfinished">Przesuń w prawo</translation>
+        <source>Move right in the side bar</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Reset side bars</source>
@@ -27268,8 +27260,8 @@ nie działają na komentarzach</translation>
         <translation>Resetuj ten układ</translation>
     </message>
     <message>
-        <source>Manage layouts…</source>
-        <translation>Zarządzaj układami…</translation>
+        <source>Manage layouts</source>
+        <translation>Zarządzaj układami</translation>
     </message>
     <message>
         <source>Save layout as</source>
@@ -27380,12 +27372,8 @@ nie działają na komentarzach</translation>
         <translation>Nie można użyć: %1</translation>
     </message>
     <message>
-        <source>Layout tiers</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Rename (F2)</source>
-        <translation>Zmień nazwę (F2)</translation>
+        <source>Rename</source>
+        <translation>Zmień nazwę</translation>
     </message>
     <message>
         <source>Delete</source>

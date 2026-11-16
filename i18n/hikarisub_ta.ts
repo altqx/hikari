@@ -4150,6 +4150,10 @@ Output device: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Move to the trash…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Move the folder “%1” and everything in it to the trash?</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4894,8 +4898,8 @@ Output device: %2</source>
         <translation>மறுபெயரிடு</translation>
     </message>
     <message>
-        <source>Catalogue tiers</source>
-        <translation type="unfinished"></translation>
+        <source>More options</source>
+        <translation>மேலும் விருப்பங்கள்</translation>
     </message>
     <message>
         <source>Load from a file</source>
@@ -5288,10 +5292,6 @@ Output device: %2</source>
     <message>
         <source>Style editor sample</source>
         <translation>பாணி திருத்தி மாதிரி</translation>
-    </message>
-    <message>
-        <source>Manage catalogues</source>
-        <translation>பட்டியல்களை நிர்வகி</translation>
     </message>
     <message>
         <source>No catalogues yet</source>
@@ -10247,6 +10247,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Open</source>
         <translation>திற</translation>
+    </message>
+    <message>
+        <source>Open %1</source>
+        <translation>%1 ஐத் திற</translation>
     </message>
     <message>
         <source>Remove subtitles from the editor</source>
@@ -16620,8 +16624,8 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>%1, %2 இலிருந்து</translation>
     </message>
     <message>
-        <source>About %1…</source>
-        <translation>%1 பற்றி…</translation>
+        <source>About %1</source>
+        <translation>%1 பற்றி</translation>
     </message>
     <message>
         <source>%1 rolled back to %2</source>
@@ -17141,8 +17145,8 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>குறிப்புக் கோப்பை இறக்குமதி செய்…</translation>
     </message>
     <message>
-        <source>Import notes from the clipboard</source>
-        <translation>இடைநிலைப்பலகையிலிருந்து குறிப்புகளை இறக்குமதி செய்</translation>
+        <source>Import notes from the clipboard…</source>
+        <translation>இடைநிலைப்பலகையிலிருந்து குறிப்புகளை இறக்குமதி செய்…</translation>
     </message>
     <message>
         <source>Export notes…</source>
@@ -17153,7 +17157,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>அனைத்தையும் முடியாதவை எனக் குறி</translation>
     </message>
     <message>
-        <source>Remove all notes…</source>
+        <source>Delete all notes…</source>
         <translation>எல்லாக் குறிப்புகளையும் நீக்கு…</translation>
     </message>
     <message>
@@ -17245,11 +17249,11 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>%1 ஐப் படிக்க முடியவில்லை: %2</translation>
     </message>
     <message>
-        <source>Remove all notes</source>
+        <source>Delete all notes</source>
         <translation>எல்லாக் குறிப்புகளையும் நீக்கு</translation>
     </message>
     <message numerus="yes">
-        <source>Remove all %n QC note(s) from this file?</source>
+        <source>Delete all %n QC note(s) from this file?</source>
         <translation>
             <numerusform>இந்தக் கோப்பிலிருந்து %n QC குறிப்பை நீக்கவா?</numerusform>
             <numerusform>இந்தக் கோப்பிலிருந்து எல்லா %n QC குறிப்புகளையும் நீக்கவா?</numerusform>
@@ -17260,7 +17264,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>செயல்தவிர்த்தால் அவை திரும்பும்.</translation>
     </message>
     <message>
-        <source>Remove all</source>
+        <source>Delete all</source>
         <translation>அனைத்தையும் நீக்கு</translation>
     </message>
     <message>
@@ -17369,8 +17373,8 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>ASS மற்றும் SSA கோப்புகள் மட்டுமே QC குறிப்புகளை வைத்திருக்க முடியும். குறிப்புகளைச் சேர்க்க இந்தக் கோப்பை ASS ஆகச் சேமிக்கவும்.</translation>
     </message>
     <message>
-        <source>Paste notes</source>
-        <translation>குறிப்புகளை ஒட்டு</translation>
+        <source>Import from the clipboard</source>
+        <translation>இடைநிலைப்பலகையிலிருந்து இறக்குமதி செய்</translation>
     </message>
     <message>
         <source>Notes start with a time: 3:24 - …
@@ -20458,24 +20462,16 @@ because it was edited.</source>
         <translation>மேலே நகர்த்து</translation>
     </message>
     <message>
-        <source>Move up (Alt+Up)</source>
-        <translation>மேலே நகர்த்து (Alt+Up)</translation>
-    </message>
-    <message>
         <source>Move down</source>
         <translation>கீழே நகர்த்து</translation>
-    </message>
-    <message>
-        <source>Move down (Alt+Down)</source>
-        <translation>கீழே நகர்த்து (Alt+Down)</translation>
     </message>
     <message>
         <source>Load from a file…</source>
         <translation>ஒரு கோப்பிலிருந்து ஏற்று…</translation>
     </message>
     <message>
-        <source>More</source>
-        <translation>மேலும்</translation>
+        <source>More options</source>
+        <translation>மேலும் விருப்பங்கள்</translation>
     </message>
     <message>
         <source>Move to top</source>
@@ -20511,10 +20507,6 @@ because it was edited.</source>
     </message>
     <message>
         <source>Mine</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Catalogue tiers</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -26708,8 +26700,8 @@ do not work on comments</source>
 <context>
     <name>HikariSub.Workspace</name>
     <message>
-        <source>%1 options</source>
-        <translation>%1 விருப்பங்கள்</translation>
+        <source>More options</source>
+        <translation>மேலும் விருப்பங்கள்</translation>
     </message>
     <message>
         <source>Panels</source>
@@ -26812,12 +26804,12 @@ do not work on comments</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Move left</source>
-        <translation type="unfinished">இடப்புறம் நகர்த்து</translation>
+        <source>Move left in the side bar</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Move right</source>
-        <translation type="unfinished">வலப்புறம் நகர்த்து</translation>
+        <source>Move right in the side bar</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Reset side bars</source>
@@ -27044,8 +27036,8 @@ do not work on comments</source>
         <translation>இந்தத் தளவமைப்பை மீட்டமை</translation>
     </message>
     <message>
-        <source>Manage layouts…</source>
-        <translation>தளவமைப்புகளை நிர்வகி…</translation>
+        <source>Manage layouts</source>
+        <translation>தளவமைப்புகளை நிர்வகி</translation>
     </message>
     <message>
         <source>Save layout as</source>
@@ -27156,12 +27148,8 @@ do not work on comments</source>
         <translation>பயன்படுத்த முடியாது: %1</translation>
     </message>
     <message>
-        <source>Layout tiers</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Rename (F2)</source>
-        <translation>மறுபெயரிடு (F2)</translation>
+        <source>Rename</source>
+        <translation>மறுபெயரிடு</translation>
     </message>
     <message>
         <source>Delete</source>

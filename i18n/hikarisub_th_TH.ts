@@ -4114,6 +4114,10 @@ Output device: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Move to the trash…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Move the folder “%1” and everything in it to the trash?</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4848,8 +4852,8 @@ Output device: %2</source>
         <translation>เปลี่ยนชื่อ</translation>
     </message>
     <message>
-        <source>Catalogue tiers</source>
-        <translation type="unfinished"></translation>
+        <source>More options</source>
+        <translation>ตัวเลือกเพิ่มเติม</translation>
     </message>
     <message>
         <source>Load from a file</source>
@@ -5238,10 +5242,6 @@ Output device: %2</source>
     <message>
         <source>Style editor sample</source>
         <translation>ตัวอย่างในตัวแก้ไขสไตล์</translation>
-    </message>
-    <message>
-        <source>Manage catalogues</source>
-        <translation>จัดการแคตตาล็อก</translation>
     </message>
     <message>
         <source>No catalogues yet</source>
@@ -10151,6 +10151,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Open</source>
         <translation>เปิด</translation>
+    </message>
+    <message>
+        <source>Open %1</source>
+        <translation>เปิด %1</translation>
     </message>
     <message>
         <source>Remove subtitles from the editor</source>
@@ -16495,8 +16499,8 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>%1 จาก %2</translation>
     </message>
     <message>
-        <source>About %1…</source>
-        <translation>เกี่ยวกับ %1…</translation>
+        <source>About %1</source>
+        <translation>เกี่ยวกับ %1</translation>
     </message>
     <message>
         <source>%1 rolled back to %2</source>
@@ -17016,8 +17020,8 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>นำเข้าไฟล์โน้ต…</translation>
     </message>
     <message>
-        <source>Import notes from the clipboard</source>
-        <translation>นำเข้าโน้ตจากคลิปบอร์ด</translation>
+        <source>Import notes from the clipboard…</source>
+        <translation>นำเข้าโน้ตจากคลิปบอร์ด…</translation>
     </message>
     <message>
         <source>Export notes…</source>
@@ -17028,7 +17032,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>ทำเครื่องหมายทั้งหมดว่ายังไม่เสร็จ</translation>
     </message>
     <message>
-        <source>Remove all notes…</source>
+        <source>Delete all notes…</source>
         <translation>ลบโน้ตทั้งหมด…</translation>
     </message>
     <message>
@@ -17112,11 +17116,11 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>อ่าน %1 ไม่ได้: %2</translation>
     </message>
     <message>
-        <source>Remove all notes</source>
+        <source>Delete all notes</source>
         <translation>ลบโน้ตทั้งหมด</translation>
     </message>
     <message numerus="yes">
-        <source>Remove all %n QC note(s) from this file?</source>
+        <source>Delete all %n QC note(s) from this file?</source>
         <translation>
             <numerusform>ลบโน้ต QC ทั้ง %n รายการออกจากไฟล์นี้หรือไม่</numerusform>
         </translation>
@@ -17126,7 +17130,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>เลิกทำเพื่อนำกลับมาได้</translation>
     </message>
     <message>
-        <source>Remove all</source>
+        <source>Delete all</source>
         <translation>ลบทั้งหมด</translation>
     </message>
     <message>
@@ -17232,8 +17236,8 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>เฉพาะไฟล์ ASS และ SSA เท่านั้นที่เก็บโน้ต QC ได้ บันทึกไฟล์นี้เป็น ASS เพื่อเพิ่มโน้ต</translation>
     </message>
     <message>
-        <source>Paste notes</source>
-        <translation>วางโน้ต</translation>
+        <source>Import from the clipboard</source>
+        <translation>นำเข้าจากคลิปบอร์ด</translation>
     </message>
     <message>
         <source>Notes start with a time: 3:24 - …
@@ -20284,24 +20288,16 @@ because it was edited.</source>
         <translation>ย้ายขึ้น</translation>
     </message>
     <message>
-        <source>Move up (Alt+Up)</source>
-        <translation>ย้ายขึ้น (Alt+Up)</translation>
-    </message>
-    <message>
         <source>Move down</source>
         <translation>ย้ายลง</translation>
-    </message>
-    <message>
-        <source>Move down (Alt+Down)</source>
-        <translation>ย้ายลง (Alt+Down)</translation>
     </message>
     <message>
         <source>Load from a file…</source>
         <translation>โหลดจากไฟล์…</translation>
     </message>
     <message>
-        <source>More</source>
-        <translation>เพิ่มเติม</translation>
+        <source>More options</source>
+        <translation>ตัวเลือกเพิ่มเติม</translation>
     </message>
     <message>
         <source>Move to top</source>
@@ -20337,10 +20333,6 @@ because it was edited.</source>
     </message>
     <message>
         <source>Mine</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Catalogue tiers</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -26484,8 +26476,8 @@ do not work on comments</source>
 <context>
     <name>HikariSub.Workspace</name>
     <message>
-        <source>%1 options</source>
-        <translation>ตัวเลือกของ %1</translation>
+        <source>More options</source>
+        <translation>ตัวเลือกเพิ่มเติม</translation>
     </message>
     <message>
         <source>Panels</source>
@@ -26588,12 +26580,12 @@ do not work on comments</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Move left</source>
-        <translation type="unfinished">ย้ายไปทางซ้าย</translation>
+        <source>Move left in the side bar</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Move right</source>
-        <translation type="unfinished">ย้ายไปทางขวา</translation>
+        <source>Move right in the side bar</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Reset side bars</source>
@@ -26820,8 +26812,8 @@ do not work on comments</source>
         <translation>รีเซ็ตเค้าโครงนี้</translation>
     </message>
     <message>
-        <source>Manage layouts…</source>
-        <translation>จัดการเค้าโครง…</translation>
+        <source>Manage layouts</source>
+        <translation>จัดการเค้าโครง</translation>
     </message>
     <message>
         <source>Save layout as</source>
@@ -26932,12 +26924,8 @@ do not work on comments</source>
         <translation>ใช้ไม่ได้: %1</translation>
     </message>
     <message>
-        <source>Layout tiers</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Rename (F2)</source>
-        <translation>เปลี่ยนชื่อ (F2)</translation>
+        <source>Rename</source>
+        <translation>เปลี่ยนชื่อ</translation>
     </message>
     <message>
         <source>Delete</source>
