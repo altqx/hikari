@@ -27304,10 +27304,6 @@ nie działają na komentarzach</translation>
         <translation>Anuluj</translation>
     </message>
     <message>
-        <source>Manage layouts</source>
-        <translation>Zarządzaj układami</translation>
-    </message>
-    <message>
         <source>Delete layout</source>
         <translation>Usuń układ</translation>
     </message>

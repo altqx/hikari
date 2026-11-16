@@ -26856,10 +26856,6 @@ do not work on comments</source>
         <translation>취소</translation>
     </message>
     <message>
-        <source>Manage layouts</source>
-        <translation>레이아웃 관리</translation>
-    </message>
-    <message>
         <source>Delete layout</source>
         <translation>레이아웃 삭제</translation>
     </message>

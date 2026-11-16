@@ -26856,10 +26856,6 @@ do not work on comments</source>
         <translation>ยกเลิก</translation>
     </message>
     <message>
-        <source>Manage layouts</source>
-        <translation>จัดการเค้าโครง</translation>
-    </message>
-    <message>
         <source>Delete layout</source>
         <translation>ลบเค้าโครง</translation>
     </message>

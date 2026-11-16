@@ -27080,10 +27080,6 @@ do not work on comments</source>
         <translation>ரத்துசெய்</translation>
     </message>
     <message>
-        <source>Manage layouts</source>
-        <translation>தளவமைப்புகளை நிர்வகி</translation>
-    </message>
-    <message>
         <source>Delete layout</source>
         <translation>தளவமைப்பை நீக்கு</translation>
     </message>
