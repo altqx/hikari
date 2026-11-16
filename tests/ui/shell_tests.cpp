@@ -2173,17 +2173,20 @@ private slots:
                 closed(sub);
             closed(panelMenu);
         };
-        for (const char *dock : {"qcNotesDock", "searchDock"})
+        const auto show = [&](const char *dock) {
             QVERIFY(QMetaObject::invokeMethod(root, "showPanel", Q_ARG(QVariant, QVariant::fromValue(item<QObject>(dock)))));
+        };
         for (const char *code : {"light", "dark", "highContrastWhite", "highContrastBlack"}) {
             settings.setValue(QStringLiteral("appearance.theme"), QString::fromLatin1(code));
             auto *controls = root->property("palette").value<QObject *>();
             QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
             const QString suffix = QLatin1Char('-') + QLatin1String(code) + QStringLiteral(".png");
+            show("qcNotesDock");
             QTRY_VERIFY(item("qcNotesTool") && item("qcNotesTool")->isVisible());
             panelShot("qcNotesDock", item("qcNotesTool"), QStringLiteral("/cx7-qc-notes") + suffix);
             panelShot("editorDock", item("lineText"), QStringLiteral("/cx7-line-editor") + suffix);
             panelShot("videoDock", item("videoPanel"), QStringLiteral("/cx7-video-follow") + suffix, named("panelOptions_videoSeekOn"));
+            show("searchDock");
             QQuickItem *searchIcon = nullptr;
             QTRY_VERIFY((searchIcon = visualItem("sideBarIcon_Search")) && searchIcon->isVisible());
             panelShot("searchDock", searchIcon, QStringLiteral("/cx7-side-bar") + suffix);
@@ -6711,7 +6714,7 @@ private slots:
     void contextMenusAreTheListedOnes()
     {
         static const QRegularExpression byData(
-            QStringLiteral(R"((^macro_|Recent\w*\d+$|Stream\d+$|Chapter\d+$|Filter\d+$|Monitor\d+$))"));
+            QStringLiteral(R"((^macro_|Recent\w*\d+$|Stream\d+$|Chapter\d+$|Filter\d+$|Monitor\d+$|^tabMenuTab\d+$))"));
         QVERIFY(application->openFile(episode));
         QQuickItem *field = stylesFilter();
         QVERIFY(field);
