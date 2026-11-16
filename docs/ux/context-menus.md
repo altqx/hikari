@@ -636,6 +636,16 @@ The total is **28 menus with 257 items**: 16 right-click entries (two of them, R
 - **Align and distribute ▸ and Phantom ▸.** Headings “Align” and “Distribute” carry the verb, so the rows read “Left edges” … “Vertically”; Settings › Shortcuts keeps the full names. The submenu takes align-distribute and the Phantom rows phantom-keep-start and phantom-keep-end.
 - **AI actions ▸.** One name for the submenu, the strip button and the command (no “…”: it opens a menu). Custom actions follow the built-in ones after a separator, and one that asks each time ends in “…”. “Edit actions” and “Add a model in Settings › AI” lose the ellipsis (rule 19.2). The command list says “Add QC note…”, as the menu does.
 
+### What CX7 built: Automation, Hikari AI and presets
+
+- **Preset ⋯ (Shift times, Timing postprocessor).** Save as preset…, Rename preset… | Copy to …, Move to … (with a Project) | Use in the Timing layout (postprocessor) | Delete preset…: the destructive row is last, alone.
+- **Script dialog ⋯ › Presets ▸.** {presets} | Save as preset… | Copy to project ▸, Copy to mine ▸, Move to project ▸, Move to mine ▸ (with a Project) | Delete preset ▸.
+- **Agent panel.** The thread button shows ⋯ (panel-menu). Its menu is Rename thread…, Export as Markdown… | Compact thread, New thread from summary | Delete thread… (it asks). A thread row opens the same menu on right-click and the Menu key, for that thread. An answer gets Copy | Select all. Model and Mode are radio rows, the provider in the detail column; their Settings rows (“Settings › AI”, “Default for new threads”) take no “…” (rule 19.2). “Thread” is the one name: Compact thread in the menu, the slash menu, the 97% offer and the compact icon's label (rule 21).
+- **One ⋯ tooltip.** “More options” on the Automation script and recommended rows (the row's name goes to the accessible description), the script dialog, the preset bar, Shapes, All tags and the Agent thread button.
+- **Shapes and All tags.** The Menu key on the list opens the row's tier menu with a Project open; the hidden tier rows in the ⋯ take no height without one.
+- **Icons.** The three MCP Copy setup rows use edit-copy (rule 18).
+- **Ledger.** `context_menus.txt` lists the Automation script row menu.
+
 Proposal for [#578](https://github.com/altqx/hikari/issues/578), from the 2026-10-31 decisions in the card and the round-2 decisions of 2026-11-02 (round 2 wins where they differ). The mockup draws each menu before and after in Light, Dark and high contrast with the theme roles and the icons from `src/ui/icons`: `cx2/index.html` and the screenshots on the orphan branch `evidence/w8-cx2`. The owner approved every menu and every flagged point on 2026-11-02 ([#578 decision](https://github.com/altqx/hikari/issues/578)); CX3–CX6 build this.
 
 Notation as above, plus: `{keys}` is the default binding shown in the key column; an icon role that is not in `src/ui/icons` yet is a new icon CX3 draws.
