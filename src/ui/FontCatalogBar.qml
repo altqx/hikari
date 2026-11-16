@@ -130,26 +130,11 @@ RowLayout {
         property string targetFont: ""
         property var names: []
         ShellMenuItem {
-            iconRole: "fonts-from-subtitles"
-            objectName: "styleEditorFromSubtitlesItem"
-            text: qsTr("Add fonts from subtitles…")
-            onTriggered: if (FontWindows.fromSubtitles)
-                             FontWindows.fromSubtitles.openFor("", catalog => bar.collectedInto(catalog), bar.Window.window)
-        }
-        ShellMenuItem {
             objectName: "styleEditorNoCatalogs"
             text: qsTr("No catalogues yet")
             enabled: false
             visible: addMenu.names.length === 0
             height: visible ? implicitHeight : 0
-        }
-        ShellMenuItem {
-            objectName: "styleEditorNewCatalog"
-            iconRole: "add"
-            text: qsTr("New catalogue…")
-            visible: addMenu.names.length === 0
-            height: visible ? implicitHeight : 0
-            onTriggered: if (FontWindows.catalogWindow) FontWindows.catalogWindow.startNew(bar.fontName, bar.Window.window)
         }
         Instantiator {
             model: addMenu.names
@@ -164,6 +149,20 @@ RowLayout {
             }
             onObjectAdded: (index, object) => addMenu.insertItem(index + 1, object)
             onObjectRemoved: (index, object) => addMenu.removeItem(object)
+        }
+        MenuSeparator {}
+        ShellMenuItem {
+            objectName: "styleEditorNewCatalog"
+            iconRole: "add"
+            text: qsTr("New catalogue…")
+            onTriggered: if (FontWindows.catalogWindow) FontWindows.catalogWindow.startNew(bar.fontName, bar.Window.window)
+        }
+        ShellMenuItem {
+            iconRole: "fonts-from-subtitles"
+            objectName: "styleEditorFromSubtitlesItem"
+            text: qsTr("Add fonts from subtitles…")
+            onTriggered: if (FontWindows.fromSubtitles)
+                             FontWindows.fromSubtitles.openFor("", catalog => bar.collectedInto(catalog), bar.Window.window)
         }
     }
     Connections {

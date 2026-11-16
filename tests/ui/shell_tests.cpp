@@ -2211,6 +2211,109 @@ private slots:
         settings.setValue(QStringLiteral("appearance.followSystem"), true);
     }
 
+    void cx7PanelMenuScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        window->resize(1400, 860);
+        usePickerFonts();
+        QVERIFY(application->openFile(fontAss("cx7-shots.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,first\n"
+                                                                "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,second\n")));
+        application->addPage(true);
+        QVERIFY(application->openFile(writeFile(dir, "cx7-second.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,two\n")));
+        application->selectTab(0);
+        auto &qc = application->qcNotes();
+        QVERIFY(qc.add(1000, QStringLiteral("General"), QStringLiteral("Too early")));
+        QVERIFY(qc.add(3000, QStringLiteral("TLC"), QStringLiteral("Typo")));
+        QVERIFY(qc.setDone(1, true));
+        auto *root = engine->rootObjects().first();
+        auto &settings = *application->settingsStore();
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        const auto grabWindow = [&](QWindow *w, const QString &name) {
+            QTest::qWait(300);
+            const QRect frame = w->frameGeometry();
+            QVERIFY(w->screen()->grabWindow(0, frame.x(), frame.y(), frame.width(), frame.height()).save(out + name));
+        };
+        const auto closed = [&](QObject *menu) {
+            QMetaObject::invokeMethod(menu, "close");
+            QTRY_VERIFY(!menu->property("visible").toBool());
+        };
+        auto *panelMenu = named("panelOptionsMenu");
+        const auto panelShot = [&](const char *dock, QQuickItem *anchor, const QString &name, QObject *sub = nullptr) {
+            QVERIFY(QMetaObject::invokeMethod(panelMenu, "openFor", Q_ARG(QVariant, QVariant::fromValue(item<QObject>(dock))),
+                                              Q_ARG(QVariant, QVariant::fromValue<QObject *>(anchor))));
+            QTRY_VERIFY(panelMenu->property("opened").toBool());
+            if (sub) {
+                QVERIFY(QMetaObject::invokeMethod(sub, "open"));
+                QTRY_VERIFY(sub->property("opened").toBool());
+            }
+            grabWindow(window, name);
+            if (sub)
+                closed(sub);
+            closed(panelMenu);
+        };
+        const auto show = [&](const char *dock) {
+            QVERIFY(QMetaObject::invokeMethod(root, "showPanel", Q_ARG(QVariant, QVariant::fromValue(item<QObject>(dock)))));
+        };
+        for (const char *code : {"light", "dark", "highContrastWhite", "highContrastBlack"}) {
+            settings.setValue(QStringLiteral("appearance.theme"), QString::fromLatin1(code));
+            auto *controls = root->property("palette").value<QObject *>();
+            QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+            const QString suffix = QLatin1Char('-') + QLatin1String(code) + QStringLiteral(".png");
+            show("qcNotesDock");
+            QTRY_VERIFY(item("qcNotesTool") && item("qcNotesTool")->isVisible());
+            panelShot("qcNotesDock", item("qcNotesTool"), QStringLiteral("/cx7-qc-notes") + suffix);
+            panelShot("editorDock", item("lineText"), QStringLiteral("/cx7-line-editor") + suffix);
+            panelShot("videoDock", item("videoPanel"), QStringLiteral("/cx7-video-follow") + suffix, named("panelOptions_videoSeekOn"));
+
+            auto *bar = qobject_cast<QQuickItem *>(named("documentTabBar"));
+            QVERIFY(QMetaObject::invokeMethod(bar, "openTabMenu", Q_ARG(QVariant, -1), Q_ARG(QVariant, QVariant::fromValue(bar)),
+                                              Q_ARG(QVariant, bar->width() - 300), Q_ARG(QVariant, bar->height())));
+            auto *tabMenu = named("documentTabMenu");
+            QTRY_VERIFY(tabMenu->property("opened").toBool());
+            grabWindow(window, QStringLiteral("/cx7-tab-bar") + suffix);
+            closed(tabMenu);
+
+            auto *switcher = qobject_cast<QQuickItem *>(named("layoutSwitcher"));
+            QVERIFY(QMetaObject::invokeMethod(switcher, "click"));
+            QTRY_VERIFY(named("layoutSwitcherMenu")->property("opened").toBool());
+            grabWindow(window, QStringLiteral("/cx7-layout-switcher") + suffix);
+            closed(named("layoutSwitcherMenu"));
+        }
+        QVERIFY(application->workspaceLayout().saveLayoutAs(QStringLiteral("Signs QC")));
+        auto *picker = qobject_cast<QQuickWindow *>(openFontPicker(fontAss("cx7-picker.ass",
+                                                                       "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,abc\n")));
+        QVERIFY(picker);
+        for (const char *code : {"light", "dark", "highContrastWhite", "highContrastBlack"}) {
+            settings.setValue(QStringLiteral("appearance.theme"), QString::fromLatin1(code));
+            const QString suffix = QLatin1Char('-') + QLatin1String(code) + QStringLiteral(".png");
+            QVERIFY(QMetaObject::invokeMethod(dialogItem("fontPicker", "fontPickerCatalog"), "click"));
+            QTRY_VERIFY(named("fontPickerCatalogMenu")->property("opened").toBool());
+            grabWindow(picker, QStringLiteral("/cx7-font-catalogue-chip") + suffix);
+            closed(named("fontPickerCatalogMenu"));
+        }
+        QVERIFY(QMetaObject::invokeMethod(picker, "reject"));
+        QTRY_VERIFY(!picker->isVisible());
+        auto *manager = lazyWindow("styleManager");
+        QVERIFY(QMetaObject::invokeMethod(named("styleManagerMenuItem")->property("action").value<QObject *>(), "trigger"));
+        QTRY_VERIFY(manager->isVisible());
+        const QVariantMap values = application->styleManager().beginEdit(false, 0);
+        QVERIFY(QMetaObject::invokeMethod(manager, "beginEditing", Q_ARG(QVariant, values), Q_ARG(QVariant, false)));
+        auto *catalogBar = findItem(manager->contentItem(), QStringLiteral("styleEditorCatalogBar"));
+        auto *addMenu = catalogBar->findChild<QObject *>(QStringLiteral("styleEditorCatalogAddMenu"));
+        for (const char *code : {"light", "dark", "highContrastWhite", "highContrastBlack"}) {
+            settings.setValue(QStringLiteral("appearance.theme"), QString::fromLatin1(code));
+            QVERIFY(QMetaObject::invokeMethod(catalogBar, "addToCatalog"));
+            QTRY_VERIFY(addMenu->property("opened").toBool());
+            grabWindow(manager, QStringLiteral("/cx7-style-editor-add-") + QLatin1String(code) + QStringLiteral(".png"));
+            closed(addMenu);
+        }
+        QVERIFY(QMetaObject::invokeMethod(manager, "closeManager"));
+        settings.setValue(QStringLiteral("appearance.followSystem"), true);
+    }
+
     void videoAndAudioMenuScreenshots()
     {
         const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
@@ -3942,7 +4045,9 @@ private slots:
             if (entry && entry->objectName() == QLatin1String("fontPickerCatalogItem"))
                 sizes << entry->property("text").toString() + QLatin1Char(' ') + entry->property("detailText").toString();
         QCOMPARE(sizes, (QStringList{"All fonts 5", "Without catalogue 2", "A 3", "B 1"}));
-        QVERIFY(menuEntry(menu, QStringLiteral("fontPickerCatalogManage")));
+        QCOMPARE(menuEntry(menu, QStringLiteral("fontPickerCatalogManage"))->property("text").toString(),
+                 QStringLiteral("Manage font catalogues"));
+        QVERIFY(menu_rows::isRadio(menuEntry(menu, QStringLiteral("fontPickerCatalogItem"), QStringLiteral("A"))));
         QVERIFY(QMetaObject::invokeMethod(menuEntry(menu, QStringLiteral("fontPickerCatalogItem"), QStringLiteral("A")), "triggered"));
         QTRY_VERIFY(!menu->property("visible").toBool());
         QCOMPARE(shown(), (QStringList{"Arial", "Verdana"}));
@@ -4399,6 +4504,19 @@ private slots:
         const QVariantMap values = application->styleManager().beginEdit(false, 0);
         QVERIFY(QMetaObject::invokeMethod(manager, "beginEditing", Q_ARG(QVariant, values), Q_ARG(QVariant, false)));
         auto *bar = findItem(manager->contentItem(), QStringLiteral("styleEditorCatalogBar"));
+        QVERIFY(QMetaObject::invokeMethod(bar, "addToCatalog"));
+        auto *addMenu = bar->findChild<QObject *>(QStringLiteral("styleEditorCatalogAddMenu"));
+        QTRY_VERIFY(addMenu && addMenu->property("visible").toBool());
+        QCOMPARE(menu_rows::shown(addMenu),
+                 (QStringList{"fontCatalogAddItem", "fontCatalogAddItem", "|", "styleEditorNewCatalog", "styleEditorFromSubtitlesItem"}));
+        QVERIFY(QMetaObject::invokeMethod(addMenu, "close"));
+        QTRY_VERIFY(!addMenu->property("visible").toBool());
+        for (const char *more : {"assMore", "storeMore"})
+            QCOMPARE(findItem(manager->contentItem(), QLatin1String(more))->property("text").toString(), QStringLiteral("More options"));
+        auto *moveUp = findItem(manager->contentItem(), QStringLiteral("assMoveUp"));
+        QCOMPARE(moveUp->property("text").toString(), QStringLiteral("Move up"));
+        QCOMPARE(moveUp->property("tip").toString(),
+                 QStringLiteral("Move up (%1)").arg(QKeySequence(QStringLiteral("Alt+Up")).toString(QKeySequence::NativeText)));
         QVERIFY(QMetaObject::invokeMethod(findItem(bar, QStringLiteral("fontCatalogManage")), "click"));
         QTRY_VERIFY(window->isVisible());
         QCOMPARE(window->transientParent(), manager);
@@ -6753,8 +6871,9 @@ private slots:
     static void outlineMenu(QObject *menu, const QString &path, int depth, const QRegularExpression &byData,
                             QStringList &shown)
     {
+        const bool onlyShownRows = menu->property("visible").toBool();
         for (QQuickItem *entry : menuItems(menu)) {
-            if (!entry)
+            if (!entry || (onlyShownRows && (!entry->isVisible() || entry->height() <= 0)))
                 continue;
             if (entry->inherits("QQuickMenuSeparator"))
                 shown << path + QStringLiteral(" > -");
@@ -6813,7 +6932,7 @@ private slots:
     void contextMenusAreTheListedOnes()
     {
         static const QRegularExpression byData(
-            QStringLiteral(R"((^macro_|Recent\w*\d+$|Stream\d+$|Chapter\d+$|Filter\d+$|Monitor\d+$))"));
+            QStringLiteral(R"((^macro_|Recent\w*\d+$|Stream\d+$|Chapter\d+$|Filter\d+$|Monitor\d+$|^tabMenuTab\d+$))"));
         QVERIFY(application->openFile(episode));
         QQuickItem *field = stylesFilter();
         QVERIFY(field);
@@ -6866,6 +6985,33 @@ private slots:
             shown << name;
             outlineMenu(menu, name, 0, byData, shown);
         }
+        const auto outlineOpen = [&](const QString &name, QObject *menu, const std::function<void()> &open) {
+            open();
+            QTRY_VERIFY(menu->property("visible").toBool());
+            shown << name;
+            outlineMenu(menu, name, 0, byData, shown);
+            QVERIFY(QMetaObject::invokeMethod(menu, "close"));
+            QTRY_VERIFY(!menu->property("visible").toBool());
+        };
+        QObject *panelMenu = named("panelOptionsMenu");
+        const std::vector<std::pair<QString, const char *>> panels{
+            {QStringLiteral("Line editor"), "editorDock"}, {QStringLiteral("Video"), "videoDock"},
+            {QStringLiteral("Reference"), "referenceDock"}, {QStringLiteral("Automation"), "automationDock"},
+            {QStringLiteral("Spellchecker"), "spellDock"}, {QStringLiteral("QC notes"), "qcNotesDock"},
+            {QStringLiteral("Explorer"), "explorerDock"},
+        };
+        for (const auto &[title, dock] : panels)
+            outlineOpen(QStringLiteral("Panel options (%1)").arg(title), panelMenu, [&] {
+                QVERIFY(QMetaObject::invokeMethod(panelMenu, "openFor", Q_ARG(QVariant, QVariant::fromValue(named(dock))),
+                                                  Q_ARG(QVariant, QVariant::fromValue<QObject *>(window->contentItem()))));
+            });
+        QObject *tabBar = named("documentTabBar");
+        QVERIFY(tabBar);
+        outlineOpen(QStringLiteral("Document tab bar"), named("documentTabMenu"), [&] {
+            QVERIFY(QMetaObject::invokeMethod(tabBar, "openTabMenu", Q_ARG(QVariant, -1),
+                                              Q_ARG(QVariant, QVariant::fromValue<QObject *>(tabBar)), Q_ARG(QVariant, 0),
+                                              Q_ARG(QVariant, 0)));
+        });
         compareWithListed(shown, QStringLiteral("context_menus.txt"));
     }
 
@@ -7839,6 +7985,20 @@ private slots:
             }
             return nullptr;
         };
+        std::function<QAccessibleInterface *(QAccessibleInterface *, const QString &)> options =
+            [&](QAccessibleInterface *from, const QString &panel) -> QAccessibleInterface * {
+            for (int i = 0; i < from->childCount(); ++i) {
+                QAccessibleInterface *child = from->child(i);
+                if (!child || child->role() == QAccessible::Cell)
+                    continue;
+                if (child->role() == QAccessible::Button && child->text(QAccessible::Name) == QStringLiteral("More options")
+                    && child->text(QAccessible::Description) == panel)
+                    return child;
+                if (QAccessibleInterface *found = options(child, panel))
+                    return found;
+            }
+            return nullptr;
+        };
         QAccessibleInterface *gridPanel = find(top, QAccessible::Pane, QStringLiteral("Grid"));
         QVERIFY(gridPanel);
         QCOMPARE(gridPanel->text(QAccessible::Description), QStringLiteral("Editing: episode.ass"));
@@ -7848,7 +8008,7 @@ private slots:
         QCOMPARE(table->parent()->text(QAccessible::Name), QStringLiteral("Grid"));
         QAccessibleInterface *audioBar = find(top, QAccessible::TitleBar, QStringLiteral("Audio"));
         QVERIFY(audioBar);
-        QAccessibleInterface *audioOptions = find(top, QAccessible::Button, QStringLiteral("Audio options"));
+        QAccessibleInterface *audioOptions = options(top, QStringLiteral("Audio"));
         QVERIFY(audioOptions);
         QVERIFY(audioOptions->actionInterface());
         QVERIFY(audioOptions->actionInterface()->actionNames().contains(QAccessibleActionInterface::pressAction()));
@@ -7865,7 +8025,7 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(menu, "close"));
         QAccessibleInterface *floatingTop = QAccessible::queryAccessibleInterface(item("audioPanel")->window());
         QAccessibleInterface *floatingOptions = nullptr;
-        QTRY_VERIFY((floatingOptions = find(floatingTop, QAccessible::Button, QStringLiteral("Audio options"))));
+        QTRY_VERIFY((floatingOptions = options(floatingTop, QStringLiteral("Audio"))));
         floatingOptions->actionInterface()->doAction(QAccessibleActionInterface::pressAction());
         QTRY_VERIFY(menu->property("visible").toBool());
         QWindow *floatingWindow = item("audioPanel")->window();
@@ -7900,17 +8060,16 @@ private slots:
         QVERIFY(find(top, QAccessible::PageTabList, QStringLiteral("Panels")));
         QVERIFY(!find(top, QAccessible::TitleBar, QStringLiteral("Find")));
         QVERIFY(!find(top, QAccessible::TitleBar, QStringLiteral("Shift times")));
-        QAccessibleInterface *timingOptions = find(top, QAccessible::Button, QStringLiteral("Shift times options"));
+        QAccessibleInterface *timingOptions = options(top, QStringLiteral("Shift times"));
         QVERIFY(timingOptions);
-        QVERIFY(!find(top, QAccessible::Button, QStringLiteral("Find options")));
+        QVERIFY(!options(top, QStringLiteral("Find")));
         QVERIFY(searchTab->actionInterface());
         searchTab->actionInterface()->doAction(QAccessibleActionInterface::pressAction());
-        QTRY_VERIFY(find(QAccessible::queryAccessibleInterface(window), QAccessible::Button, QStringLiteral("Find options")));
+        QTRY_VERIFY(options(QAccessible::queryAccessibleInterface(window), QStringLiteral("Find")));
         timingTab = find(QAccessible::queryAccessibleInterface(window), QAccessible::PageTab, QStringLiteral("Shift times"));
         timingTab->actionInterface()->doAction(QAccessibleActionInterface::pressAction());
         QAccessibleInterface *closeFrom = nullptr;
-        QTRY_VERIFY((closeFrom = find(QAccessible::queryAccessibleInterface(window), QAccessible::Button,
-                                      QStringLiteral("Shift times options"))));
+        QTRY_VERIFY((closeFrom = options(QAccessible::queryAccessibleInterface(window), QStringLiteral("Shift times"))));
         closeFrom->actionInterface()->doAction(QAccessibleActionInterface::pressAction());
         QTRY_VERIFY(menu->property("visible").toBool());
         QVERIFY(QMetaObject::invokeMethod(named("panelOptionsClose"), "triggered"));
@@ -7947,6 +8106,40 @@ private slots:
         QVERIFY(referenceDock->property("isOpen").toBool());
         QVERIFY(!referenceDock->property("isFloating").toBool());
         QCOMPARE(engine->rootObjects().first()->property("sideBarsJson").toString().contains(QLatin1String("Reference")), false);
+    }
+
+    void floatingWindowCloseUnloadsTheReference()
+    {
+        QVERIFY(application->openFile(episode));
+        QVERIFY(application->openReference(original));
+        auto *referenceDock = item<QObject>("referenceDock");
+        QTRY_VERIFY(referenceDock->property("isOpen").toBool());
+        QVERIFY(referenceDock->setProperty("isFloating", true));
+        QTRY_VERIFY(dockHeader(QStringLiteral("Reference")) && dockHeader(QStringLiteral("Reference"))->window() != window);
+        QWindow *floating = dockHeader(QStringLiteral("Reference"))->window();
+        auto *root = engine->rootObjects().first();
+        QQmlExpression pair(qmlContext(root), root,
+                            QStringLiteral("referenceDock.addDockWidgetToContainingWindow(logDock, KDDW.KDDockWidgets.Location_OnRight)"));
+        pair.evaluate();
+        QVERIFY2(!pair.hasError(), qPrintable(pair.error().toString()));
+        QTRY_VERIFY(dockHeader(QStringLiteral("Log")) && dockHeader(QStringLiteral("Log"))->window() == floating);
+        QQuickItem *titleBar = nullptr;
+        const std::function<void(QQuickItem *)> find = [&](QQuickItem *from) {
+            if (from->objectName() == QLatin1String("dockTitleBar") && from->isVisible())
+                titleBar = from;
+            for (QQuickItem *child : from->childItems())
+                find(child);
+        };
+        QTRY_VERIFY((find(qobject_cast<QQuickWindow *>(floating)->contentItem()), titleBar));
+        QObject *close = nullptr;
+        for (QObject *o : titleBar->findChildren<QObject *>())
+            if (o->objectName() == QLatin1String("dockWindowClose"))
+                close = o;
+        QVERIFY(close && close->property("enabled").toBool());
+        QVERIFY(QMetaObject::invokeMethod(close, "triggered"));
+        QTRY_VERIFY(!referenceDock->property("isOpen").toBool());
+        QTRY_VERIFY(!item<QObject>("logDock")->property("isOpen").toBool());
+        QTRY_VERIFY(!application->workspace().reference());
     }
 
     void panelMenuHoldsMoveFloatAndClose()
@@ -12968,6 +13161,41 @@ private slots:
         QVERIFY(item("qcNotesEmptyImport")->isVisible());
         QVERIFY(qc.add(1000, QStringLiteral("General"), QStringLiteral("too late")));
         QCOMPARE(application::documentQcNotes(session->document()).size(), std::size_t(1));
+    }
+
+    void qcNotesMenuDeletesAllNotesInItsOwnGroupAfterAsking()
+    {
+        QTemporaryDir &folder = testFolder();
+        QVERIFY(application->openFile(writeFile(folder, "qc-menu.ass",
+                                                "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,first\n")));
+        auto &qc = application->qcNotes();
+        QVERIFY(QMetaObject::invokeMethod(named("showQcNotes")->property("action").value<QObject *>(), "trigger"));
+        QTRY_VERIFY(item("qcNotesEmptyPaste") && item("qcNotesEmptyPaste")->isVisible());
+        QCOMPARE(item("qcNotesEmptyPaste")->property("text").toString(), QStringLiteral("Import from the clipboard"));
+        QVERIFY(qc.add(1000, QStringLiteral("General"), QStringLiteral("one")));
+        QVERIFY(qc.add(1500, QStringLiteral("General"), QStringLiteral("two")));
+        QGuiApplication::clipboard()->setText(QStringLiteral("not notes"));
+        QTRY_VERIFY(!qc.clipboardHasNotes());
+        auto *menu = named("panelOptionsMenu");
+        QVERIFY(QMetaObject::invokeMethod(menu, "openFor", Q_ARG(QVariant, QVariant::fromValue(named("qcNotesDock"))),
+                                          Q_ARG(QVariant, QVariant::fromValue(item<QObject>("qcNotesTool")))));
+        QTRY_VERIFY(menu->property("visible").toBool());
+        QCOMPARE(panelMenuItems().mid(0, 8),
+                 (QStringList{QStringLiteral("Import notes file…"), QStringLiteral("Import notes from the clipboard… (off)"),
+                              QStringLiteral("Export notes…"), QStringLiteral("Mark all as not done (off)"), QStringLiteral("|"),
+                              QStringLiteral("Delete all notes…"), QStringLiteral("|"), QStringLiteral("Move panel…")}));
+        QVERIFY(QMetaObject::invokeMethod(named("panelOptions_qcNotesDeleteAll"), "triggered"));
+        QVERIFY(QMetaObject::invokeMethod(menu, "close"));
+        answerMessage("messages", QStringLiteral("Delete all notes"), QStringLiteral("Delete all 2 QC note(s) from this file?"),
+                      QStringLiteral("cancel"));
+        QCOMPARE(qc.total(), 2);
+        QVERIFY(QMetaObject::invokeMethod(item("qcNotesTool"), "deleteAll"));
+        QQuickWindow *box = nullptr;
+        QTRY_VERIFY((box = messageBox("messages")) && box->isVisible());
+        QCOMPARE(box->property("choices").toList().value(0).toMap().value(QStringLiteral("text")).toString(),
+                 QStringLiteral("Delete all"));
+        QVERIFY(QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QStringLiteral("delete"))));
+        QTRY_COMPARE(qc.total(), 0);
     }
 
     void qcNotesPanelKeepsNotesInTheFile()
@@ -20694,7 +20922,7 @@ private slots:
         QCOMPARE(rows.first(), QStringLiteral("Clear"));
         QCOMPARE(rows.mid(rows.size() - 7),
                  (QStringList{QStringLiteral("Float"), QStringLiteral("|"), QStringLiteral("Lock layout"), QStringLiteral("|"),
-                              QStringLiteral("About Notes helper…"), QStringLiteral("|"), QStringLiteral("Close")}));
+                              QStringLiteral("About Notes helper"), QStringLiteral("|"), QStringLiteral("Close")}));
         QVERIFY(QMetaObject::invokeMethod(named("panelOptions_pluginMenu_clear"), "triggered"));
         QVERIFY(QMetaObject::invokeMethod(named("panelOptionsMenu"), "close"));
         QTRY_COMPARE(findItem(body, QStringLiteral("pluginWidget_said"))->property("text").toString(), QStringLiteral("cleared"));
@@ -20736,6 +20964,15 @@ private slots:
         QCOMPARE(notes->property("title").toString(), QStringLiteral("Notes"));
         QTRY_VERIFY(named(at("panelMenu").constData()) && named(at("panelMenu").constData())->property("kept").toBool());
         QVERIFY(!named(at("panelShow").constData())->property("enabled").toBool());
+        QVERIFY(openPanelMenu(dock));
+        const QStringList missingRows = panelMenuItems();
+        QVERIFY2(missingRows.mid(missingRows.size() - 3)
+                     == (QStringList{QStringLiteral("Lock layout"), QStringLiteral("|"), QStringLiteral("Remove from the layout")}),
+                 qPrintable(missingRows.join(QLatin1Char(','))));
+        QCOMPARE(named("panelOptionsClose")->property("iconRole").toString(), QStringLiteral("remove"));
+        QCOMPARE(named(at("panelForget").constData())->property("text"), named("panelOptionsClose")->property("text"));
+        QVERIFY(QMetaObject::invokeMethod(named("panelOptionsMenu"), "close"));
+        QTRY_VERIFY(!named("panelOptionsMenu")->property("visible").toBool());
         QVERIFY(QMetaObject::invokeMethod(named(at("panelForget").constData()), "triggered"));
         QTRY_VERIFY(!item<QObject>(at("pluginDock_").constData()));
         QTRY_VERIFY(!named(at("panelShow").constData()));
@@ -33405,6 +33642,8 @@ private slots:
         QVERIFY2(!items.contains(QStringLiteral("Show frames (off)")), qPrintable(items.join(u", ")));
         QCOMPARE(choices("panelOptions_videoSeekOn"), marked(seekChoices, 3));
         QCOMPARE(choices("panelOptions_videoThenPlay"), marked(playChoices, 0));
+        for (const char *row : {"panelOptions_videoSeekOn_0", "panelOptions_videoSeekOn_5", "panelOptions_videoThenPlay_3"})
+            QVERIFY2(menu_rows::isRadio(named(row)), row);
         QVERIFY(QMetaObject::invokeMethod(named("panelOptions_videoThenPlay_2"), "triggered"));
         QCOMPARE(settings.integer("video.playAfterSelection"), 2);
         QTRY_COMPARE(choices("panelOptions_videoThenPlay"), marked(playChoices, 2));
@@ -35249,6 +35488,10 @@ private slots:
                               entry->mapToScene(QPointF(entry->width() / 2, entry->height() / 2)).toPoint());
             QTRY_VERIFY(!menu->property("visible").toBool());
         };
+        QVERIFY(openPanelMenu(QStringLiteral("Editor")));
+        QVERIFY(menu_rows::isRadio(named("panelOptions_showTimes")) && menu_rows::isRadio(named("panelOptions_showFrames")));
+        QVERIFY(QMetaObject::invokeMethod(menu, "close"));
+        QTRY_VERIFY(!menu->property("visible").toBool());
         choose("panelOptions_showFrames");
         QTRY_VERIFY(application->editor().showFrames());
         QVERIFY(openPanelMenu(QStringLiteral("Editor")));

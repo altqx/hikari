@@ -3214,8 +3214,7 @@
    "legacy": [],
    "surfaces": [
     "dock-headers"
-   ],
-   "pending": "CX7 #810"
+   ]
   },
   {
    "role": "side-bars-swap",

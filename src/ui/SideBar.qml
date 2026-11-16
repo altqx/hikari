@@ -85,7 +85,7 @@ Rectangle {
                     onClicked: bar.iconClicked(modelData.name)
                     Keys.onLeftPressed: bar.stepIcon(index, LayoutMirroring.enabled ? 1 : -1)
                     Keys.onRightPressed: bar.stepIcon(index, LayoutMirroring.enabled ? -1 : 1)
-                    Keys.onMenuPressed: bar.iconMenu(modelData.name, icon)
+                    MenuKey.onRequested: bar.iconMenu(modelData.name, icon)
                     TapHandler {
                         acceptedButtons: Qt.RightButton
                         onTapped: bar.iconMenu(icon.modelData.name, icon)

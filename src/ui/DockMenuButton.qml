@@ -14,7 +14,7 @@ ToolButton {
     padding: 2
     display: AbstractButton.IconOnly
     down: pressed || menuOpen
-    text: qsTr("%1 options").arg(panelTitle)
+    text: qsTr("More options")
     contentItem: Icon {
         iconRole: "panel-menu"
         size: 16
@@ -22,6 +22,7 @@ ToolButton {
     // Qt Quick gives a menu button role no press action.
     Accessible.role: Accessible.Button
     Accessible.name: text
+    Accessible.description: panelTitle
     Accessible.expandable: true
     Accessible.expanded: menuOpen
     ToolTip.visible: hovered && !menuOpen

@@ -4178,6 +4178,10 @@ Output device: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Move to the trash…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Move the folder “%1” and everything in it to the trash?</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4912,8 +4916,8 @@ Output device: %2</source>
         <translation>이름 바꾸기</translation>
     </message>
     <message>
-        <source>Catalogue tiers</source>
-        <translation type="unfinished"></translation>
+        <source>More options</source>
+        <translation>옵션 더 보기</translation>
     </message>
     <message>
         <source>Load from a file</source>
@@ -5302,10 +5306,6 @@ Output device: %2</source>
     <message>
         <source>Style editor sample</source>
         <translation>스타일 편집기 견본</translation>
-    </message>
-    <message>
-        <source>Manage catalogues</source>
-        <translation>목록 관리</translation>
     </message>
     <message>
         <source>No catalogues yet</source>
@@ -10263,6 +10263,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Open</source>
         <translation>열기</translation>
+    </message>
+    <message>
+        <source>Open %1</source>
+        <translation>%1 열기</translation>
     </message>
     <message>
         <source>Remove subtitles from the editor</source>
@@ -16611,8 +16615,8 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>%1, %2 제공</translation>
     </message>
     <message>
-        <source>About %1…</source>
-        <translation>%1 정보…</translation>
+        <source>About %1</source>
+        <translation>%1 정보</translation>
     </message>
     <message>
         <source>%1 rolled back to %2</source>
@@ -17172,8 +17176,8 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>메모 파일 가져오기…</translation>
     </message>
     <message>
-        <source>Import notes from the clipboard</source>
-        <translation>클립보드에서 메모 가져오기</translation>
+        <source>Import notes from the clipboard…</source>
+        <translation>클립보드에서 메모 가져오기…</translation>
     </message>
     <message>
         <source>Export notes…</source>
@@ -17184,8 +17188,8 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>모두 완료 안 됨으로 표시</translation>
     </message>
     <message>
-        <source>Remove all notes…</source>
-        <translation>모든 메모 제거…</translation>
+        <source>Delete all notes…</source>
+        <translation>모든 메모 삭제…</translation>
     </message>
     <message>
         <source>Add QC note…</source>
@@ -17268,13 +17272,13 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>%1을(를) 읽을 수 없습니다: %2</translation>
     </message>
     <message>
-        <source>Remove all notes</source>
-        <translation>모든 메모 제거</translation>
+        <source>Delete all notes</source>
+        <translation>모든 메모 삭제</translation>
     </message>
     <message numerus="yes">
-        <source>Remove all %n QC note(s) from this file?</source>
+        <source>Delete all %n QC note(s) from this file?</source>
         <translation>
-            <numerusform>이 파일에서 QC 메모 %n개를 모두 제거할까요?</numerusform>
+            <numerusform>이 파일에서 QC 메모 %n개를 모두 삭제할까요?</numerusform>
         </translation>
     </message>
     <message>
@@ -17282,8 +17286,8 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>실행 취소하면 되돌아옵니다.</translation>
     </message>
     <message>
-        <source>Remove all</source>
-        <translation>모두 제거</translation>
+        <source>Delete all</source>
+        <translation>모두 삭제</translation>
     </message>
     <message>
         <source>Import notes file</source>
@@ -17388,8 +17392,8 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>ASS 및 SSA 파일만 QC 메모를 담을 수 있습니다. 메모를 추가하려면 이 파일을 ASS로 저장하세요.</translation>
     </message>
     <message>
-        <source>Paste notes</source>
-        <translation>메모 붙여 넣기</translation>
+        <source>Import from the clipboard</source>
+        <translation>클립보드에서 가져오기</translation>
     </message>
     <message>
         <source>Notes start with a time: 3:24 - …
@@ -20440,24 +20444,16 @@ because it was edited.</source>
         <translation>위로 이동</translation>
     </message>
     <message>
-        <source>Move up (Alt+Up)</source>
-        <translation>위로 이동 (Alt+Up)</translation>
-    </message>
-    <message>
         <source>Move down</source>
         <translation>아래로 이동</translation>
-    </message>
-    <message>
-        <source>Move down (Alt+Down)</source>
-        <translation>아래로 이동 (Alt+Down)</translation>
     </message>
     <message>
         <source>Load from a file…</source>
         <translation>파일에서 불러오기…</translation>
     </message>
     <message>
-        <source>More</source>
-        <translation>더 보기</translation>
+        <source>More options</source>
+        <translation>옵션 더 보기</translation>
     </message>
     <message>
         <source>Move to top</source>
@@ -20493,10 +20489,6 @@ because it was edited.</source>
     </message>
     <message>
         <source>Mine</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Catalogue tiers</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -26644,8 +26636,8 @@ do not work on comments</source>
 <context>
     <name>HikariSub.Workspace</name>
     <message>
-        <source>%1 options</source>
-        <translation>%1 설정</translation>
+        <source>More options</source>
+        <translation>옵션 더 보기</translation>
     </message>
     <message>
         <source>Panels</source>
@@ -26748,12 +26740,12 @@ do not work on comments</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Move left</source>
-        <translation type="unfinished">왼쪽으로 이동</translation>
+        <source>Move left in the side bar</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Move right</source>
-        <translation type="unfinished">오른쪽으로 이동</translation>
+        <source>Move right in the side bar</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Reset side bars</source>
@@ -26980,8 +26972,8 @@ do not work on comments</source>
         <translation>이 레이아웃 재설정</translation>
     </message>
     <message>
-        <source>Manage layouts…</source>
-        <translation>레이아웃 관리…</translation>
+        <source>Manage layouts</source>
+        <translation>레이아웃 관리</translation>
     </message>
     <message>
         <source>Save layout as</source>
@@ -27022,10 +27014,6 @@ do not work on comments</source>
     <message>
         <source>Cancel</source>
         <translation>취소</translation>
-    </message>
-    <message>
-        <source>Manage layouts</source>
-        <translation>레이아웃 관리</translation>
     </message>
     <message>
         <source>Delete layout</source>
@@ -27092,12 +27080,8 @@ do not work on comments</source>
         <translation>사용할 수 없음: %1</translation>
     </message>
     <message>
-        <source>Layout tiers</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Rename (F2)</source>
-        <translation>이름 바꾸기 (F2)</translation>
+        <source>Rename</source>
+        <translation>이름 바꾸기</translation>
     </message>
     <message>
         <source>Delete</source>
@@ -27114,10 +27098,6 @@ do not work on comments</source>
     <message>
         <source>Drag a panel here</source>
         <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>More options</source>
-        <translation>옵션 더 보기</translation>
     </message>
 </context>
 <context>
