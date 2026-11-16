@@ -1,3 +1,5 @@
+cmake_minimum_required(VERSION 3.29)
+
 set(context "HikariSub.Options")
 string(ASCII 59 semicolon)
 string(REPLACE "|" ";" pages "${PAGES}")
