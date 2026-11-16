@@ -42,11 +42,11 @@ Dialogue: 0,0:00:09.70,0:00:12.30,Romaji,,0,0,0,fx,{\an5\pos(613.6,54)\fad(300,3
 Dialogue: 0,0:00:09.70,0:00:12.30,Romaji,,0,0,0,fx,{\an5\pos(692.8,54)\fad(300,300)\t(1300,1800,\1c&HFFC8A0&)}to
 Dialogue: 0,0:00:09.70,0:00:12.30,Romaji,,0,0,0,fx,{\an5\pos(758.8,54)\fad(300,300)\t(1800,2300,\1c&HFFC8A0&)}chu
 Dialogue: 0,0:00:09.70,0:00:12.30,Romaji,,0,0,0,fx,{\an5\pos(811.6,54)\fad(300,300)\t(2300,2300,\1c&HFFC8A0&)}u
-Dialogue: 0,0:00:12.70,0:00:16.30,Romaji-furigana,,0,0,0,fx,{\an5\move(530.8,66,530.8,54,150,300)\alpha&HFF&\t(150,300,\alpha&H00&)\fad(0,300)}よ
-Dialogue: 0,0:00:12.70,0:00:16.30,Romaji-furigana,,0,0,0,fx,{\an5\move(554.8,66,554.8,54,550,700)\alpha&HFF&\t(550,700,\alpha&H00&)\fad(0,300)}ぞ
-Dialogue: 0,0:00:12.70,0:00:16.30,Romaji-furigana,,0,0,0,fx,{\an5\move(578.8,66,578.8,54,550,700)\alpha&HFF&\t(550,700,\alpha&H00&)\fad(0,300)}ら
-Dialogue: 0,0:00:12.70,0:00:16.30,Romaji-furigana,,0,0,0,fx,{\an5\move(689.2,66,689.2,54,1250,1400)\alpha&HFF&\t(1250,1400,\alpha&H00&)\fad(0,300)}ほ
-Dialogue: 0,0:00:12.70,0:00:16.30,Romaji-furigana,,0,0,0,fx,{\an5\move(713.2,66,713.2,54,1250,1400)\alpha&HFF&\t(1250,1400,\alpha&H00&)\fad(0,300)}し
+Dialogue: 0,0:00:12.70,0:00:16.30,Romaji-furigana,,0,0,0,fx,{\an5\move(530.8,30,530.8,18,150,300)\alpha&HFF&\t(150,300,\alpha&H00&)\fad(0,300)}よ
+Dialogue: 0,0:00:12.70,0:00:16.30,Romaji-furigana,,0,0,0,fx,{\an5\move(554.8,30,554.8,18,550,700)\alpha&HFF&\t(550,700,\alpha&H00&)\fad(0,300)}ぞ
+Dialogue: 0,0:00:12.70,0:00:16.30,Romaji-furigana,,0,0,0,fx,{\an5\move(578.8,30,578.8,18,550,700)\alpha&HFF&\t(550,700,\alpha&H00&)\fad(0,300)}ら
+Dialogue: 0,0:00:12.70,0:00:16.30,Romaji-furigana,,0,0,0,fx,{\an5\move(689.2,30,689.2,18,1250,1400)\alpha&HFF&\t(1250,1400,\alpha&H00&)\fad(0,300)}ほ
+Dialogue: 0,0:00:12.70,0:00:16.30,Romaji-furigana,,0,0,0,fx,{\an5\move(713.2,30,713.2,18,1250,1400)\alpha&HFF&\t(1250,1400,\alpha&H00&)\fad(0,300)}し
 Dialogue: 0,0:00:12.70,0:00:16.30,Romaji,,0,0,0,fx,{\an5\pos(530.8,54)\fad(300,300)\t(300,700,\1c&HFFC8A0&)}夜
 Dialogue: 0,0:00:12.70,0:00:16.30,Romaji,,0,0,0,fx,{\an5\pos(578.8,54)\fad(300,300)\t(700,1100,\1c&HFFC8A0&)}空
 Dialogue: 0,0:00:12.70,0:00:16.30,Romaji,,0,0,0,fx,{\an5\pos(626.8,54)\fad(300,300)\t(1100,1400,\1c&HFFC8A0&)}に

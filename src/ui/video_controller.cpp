@@ -192,7 +192,7 @@ QVariantList VideoController::chapters() const
                                  .arg(ms / 1000 % 60, 2, 10, QLatin1Char('0'))
                                  .arg(ms / 10 % 100, 2, 10, QLatin1Char('0'));
         rows << QVariantMap{{QStringLiteral("label"), QString::fromStdString(m_chapters[j].title)},
-                            {QStringLiteral("time"), QStringLiteral("[%1]").arg(time)},
+                            {QStringLiteral("time"), time},
                             {QStringLiteral("checked"), static_cast<int>(j) == current}};
     }
     return rows;

@@ -1138,12 +1138,13 @@ TEST(NodeEffectExamples, EachShowsItsNodeAndRunsTheSameEveryTime)
 
 namespace {
 
-std::vector<std::string> runOnKaraoke(std::string_view graphJson, std::string_view karaoke)
+std::vector<std::string> runOnKaraoke(std::string_view graphJson, std::string_view karaoke,
+                                      std::string_view times = "0:00:01.00,0:00:04.00")
 {
     std::string fixture = readFile(HIKARI_KARAOKE_PRESET_FIXTURES "/fixture.ass");
     fixture.erase(fixture.find("Dialogue: "));
     fixture += commentLine("graph g", graphText(graphOf(graphJson)));
-    fixture += "Dialogue: 0,0:00:01.00,0:00:04.00,Romaji,,0,0,0,," + std::string(karaoke) + "\n";
+    fixture += "Dialogue: 0," + std::string(times) + ",Romaji,,0,0,0,," + std::string(karaoke) + "\n";
     return linesOf(runGraph(load(fixture), u8"g"));
 }
 
@@ -1183,6 +1184,26 @@ std::vector<std::string> textsOf(const std::vector<std::string> &lines)
     return out;
 }
 
+}
+
+TEST(NodeEffectsUntaggedLine, RetimeSylKeepsTheLinesStart)
+{
+    constexpr std::string_view graph = R"({"format": 1, "nodes": [
+        {"id": "syl", "type": "units.for_each"},
+        {"id": "time", "type": "time.retime", "fields": {"mode": "syl"}},
+        {"id": "emit", "type": "output.emit"}],
+      "wires": [{"from": "syl.units", "to": "emit.units"}, {"from": "time.start", "to": "emit.start"},
+                {"from": "time.end", "to": "emit.end"}]})";
+    EXPECT_EQ(runOnKaraoke(graph, "no tags", "0:00:06.31,0:00:09.31"),
+              std::vector<std::string>{"Dialogue: 0,0:00:06.31,0:00:09.31,Romaji,,0,0,0,fx g,no tags"});
+}
+
+TEST(NodeEffectsUntaggedLine, FallingLettersColourTheWholeLine)
+{
+    const auto lines = runOnKaraoke(kFallingLetters, "ab", "0:00:06.31,0:00:09.31");
+    ASSERT_EQ(lines.size(), 2u);
+    for (const std::string &line : lines)
+        EXPECT_NE(line.find(R"(\t(800,3800,\1c&H90E0A0&))"), std::string::npos) << line;
 }
 
 TEST(NodeEffectsHighlights, GiveEachSyllableOncePerHighlightWithItsTimes)
@@ -1410,7 +1431,8 @@ TEST(KaraokeSyllables, SplitsAsTheAutomationHelperDoes)
     EXPECT_EQ(syls[2].end, 750);
     const auto plain = karaokeSyllables("no tags", 1000, 4000);
     ASSERT_EQ(plain.size(), 2u);
-    EXPECT_EQ(plain[1].start, 1000);
+    EXPECT_EQ(plain[1].start, 0);
+    EXPECT_EQ(plain[1].end, 3000);
     EXPECT_EQ(plain[1].duration, 3000);
 }
 

@@ -400,7 +400,8 @@ TEST(LuaNodeSandbox, ALuaNodeRunInAPerUserInstallLeavesTheBridgeThereLoadableFor
         launcher.prepare(process);
         process.start();
         EXPECT_TRUE(process.waitForFinished(20'000)) << process.errorString().toStdString();
-        return QString::fromLocal8Bit(process.readAllStandardOutput() + process.readAllStandardError());
+        return QString::fromLocal8Bit(process.readAllStandardOutput() + process.readAllStandardError()) +
+               QStringLiteral("\nexit code 0x%1").arg(uint(process.exitCode()), 0, 16);
     };
     {
         backends::sandbox::Launcher lua(backends::luaNodeProfile(helper));

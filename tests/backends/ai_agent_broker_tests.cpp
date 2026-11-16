@@ -18,6 +18,7 @@
 #include <QUrl>
 #include <gtest/gtest.h>
 
+#include <format>
 #include <optional>
 #include <string>
 #include <vector>
@@ -212,7 +213,8 @@ TEST(AgentSpecs, ClaudeFromNpmOpensOnlyItsOwnProgramSoAgentsBesideItStillStartAt
         launcher.prepare(process);
         process.start();
         EXPECT_TRUE(process.waitForFinished(20'000)) << process.errorString().toStdString();
-        return QString::fromLocal8Bit(process.readAllStandardOutput());
+        return QString::fromLocal8Bit(process.readAllStandardOutput() + process.readAllStandardError()) +
+               QStringLiteral("\nexit code 0x%1").arg(uint(process.exitCode()), 0, 16);
     };
     {
         hikari::backends::sandbox::Launcher run(spec.profile);
@@ -515,16 +517,28 @@ protected:
                                                      {"data", QByteArray::fromStdString(text + "\n").toBase64().toStdString()}})));
     }
 
-    /// The lines the agent printed on stdout so far.
-    std::vector<Json> lines(std::uint64_t process)
+    QByteArray output(std::uint64_t process, const std::string &stream)
     {
         QByteArray all;
         for (const auto &[method, params] : notes)
             if (method == kAgentOutput && params.find("process")->asInt() == static_cast<std::int64_t>(process) &&
-                params.find("stream")->asString() == "stdout")
+                params.find("stream")->asString() == stream)
                 all += QByteArray::fromBase64(QByteArray::fromStdString(params.find("data")->asString()));
+        return all;
+    }
+
+    std::string ending(std::uint64_t process)
+    {
+        const std::optional<int> code = exitCode(process);
+        return "exit code " + (code ? std::format("{:#x}", unsigned(*code)) : std::string("none")) +
+               ", stderr: " + output(process, "stderr").toStdString();
+    }
+
+    /// The lines the agent printed on stdout so far.
+    std::vector<Json> lines(std::uint64_t process)
+    {
         std::vector<Json> out;
-        for (const QByteArray &l : all.split('\n'))
+        for (const QByteArray &l : output(process, "stdout").split('\n'))
             if (auto parsed = Json::parse(l.toStdString()))
                 out.push_back(*parsed);
         return out;
@@ -782,7 +796,7 @@ TEST_F(AgentBrokerTest, AStdioOnlyAcpAgentReachesTheSessionsChannelThroughTheBri
     ASSERT_TRUE(*call(kAgentStart, Json::object({{"process", 2}, {"agent", "acp:fake"}, {"session", "t1"}})));
     send(2, R"({"jsonrpc":"2.0","id":1,"method":"initialize","params":{}})");
     send(2, R"({"jsonrpc":"2.0","id":2,"method":"session/new","params":{"cwd":".","mcpServers":[]}})");
-    ASSERT_TRUE(waitFor([&] { return withId(2, 2).has_value(); }));
+    ASSERT_TRUE(waitFor([&] { return withId(2, 2).has_value(); })) << output(2, "stdout").toStdString() << ending(2);
     const auto said = [&](const std::string &prompt, int id) {
         send(2, R"({"jsonrpc":"2.0","id":)" + std::to_string(id) + R"(,"method":"session/prompt","params":{"sessionId":"s1","prompt":[{"type":"text","text":")" + prompt + R"("}]}})");
         EXPECT_TRUE(waitFor([&] { return withId(2, id).has_value(); }, 30'000));
@@ -857,10 +871,7 @@ TEST_F(AgentBrokerTest, AnAgentWhoseLowRightsHelperFailsEndsSayingWhy)
     const std::uint64_t process = start("fake");
     ASSERT_TRUE(waitFor([&] { return exitCode(process).has_value(); }));
     EXPECT_EQ(*exitCode(process), 0x4846);
-    QByteArray said;
-    for (const auto &[method, params] : notes)
-        if (method == kAgentOutput && params.find("stream")->asString() == "stderr")
-            said += QByteArray::fromBase64(QByteArray::fromStdString(params.find("data")->asString()));
+    const QByteArray said = output(process, "stderr");
     EXPECT_TRUE(said.contains("hikarisub-confine: starting the command failed")) << said.toStdString();
 }
 #endif

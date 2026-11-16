@@ -186,7 +186,7 @@ ShellMenu {
     ShellMenuItem {
         objectName: "audioOutputSettings"
         iconRole: "settings-audio"
-        text: qsTr("Audio settings…")
+        text: qsTr("Audio settings")
         onTriggered: outputMenu.settingsRequested()
     }
 }

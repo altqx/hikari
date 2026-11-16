@@ -968,8 +968,12 @@
         <translation>출력 장치</translation>
     </message>
     <message>
+        <source>Audio settings</source>
+        <translation>소리 설정</translation>
+    </message>
+    <message>
         <source>Audio settings…</source>
-        <translation>소리 설정…</translation>
+        <translation type="vanished">소리 설정…</translation>
     </message>
     <message>
         <source>Link the volume and stretch sliders</source>
@@ -1013,7 +1017,7 @@
     </message>
     <message>
         <source>Play 500 ms after the start time</source>
-        <translation>시작 후 0.5초 재생</translation>
+        <translation type="vanished">시작 후 0.5초 재생</translation>
     </message>
     <message>
         <source>Play to the end</source>
@@ -1053,7 +1057,7 @@
     </message>
     <message>
         <source>Enable / Disable automatic splitting of syllables</source>
-        <translation>음절 자동 분할 활성화 / 비활성화</translation>
+        <translation type="vanished">음절 자동 분할 활성화 / 비활성화</translation>
     </message>
     <message>
         <source>Auto-scroll</source>
@@ -1061,7 +1065,7 @@
     </message>
     <message>
         <source>Auto-scroll to the active line</source>
-        <translation>활성 줄 자동 스크롤</translation>
+        <translation type="vanished">활성 줄 자동 스크롤</translation>
     </message>
     <message>
         <source>Spectrum</source>
@@ -1086,7 +1090,7 @@
     </message>
     <message>
         <source>Play 500 ms before the start time</source>
-        <translation>시작 전 0.5초 재생</translation>
+        <translation type="vanished">시작 전 0.5초 재생</translation>
     </message>
     <message>
         <source>Play the first 500 ms</source>
@@ -1094,7 +1098,7 @@
     </message>
     <message>
         <source>Play 500 ms before the end time</source>
-        <translation>종료 전 0.5초 재생</translation>
+        <translation type="vanished">종료 전 0.5초 재생</translation>
     </message>
     <message>
         <source>Play the last 500 ms</source>
@@ -1102,7 +1106,7 @@
     </message>
     <message>
         <source>Play 500 ms after the end time</source>
-        <translation>종료 후 0.5초 재생</translation>
+        <translation type="vanished">종료 후 0.5초 재생</translation>
     </message>
     <message>
         <source>Play 500 ms after the end</source>
@@ -1198,11 +1202,11 @@
     </message>
     <message>
         <source>Waveform mode</source>
-        <translation>파형 모드</translation>
+        <translation type="vanished">파형 모드</translation>
     </message>
     <message>
         <source>Spectrum mode</source>
-        <translation>스펙트럼 모드</translation>
+        <translation type="vanished">스펙트럼 모드</translation>
     </message>
     <message>
         <source>Sync with video</source>
@@ -1210,7 +1214,7 @@
     </message>
     <message>
         <source>Sync the video and audio cursors</source>
-        <translation>영상 커서와 소리 커서 동기화</translation>
+        <translation type="vanished">영상 커서와 소리 커서 동기화</translation>
     </message>
     <message>
         <source>Speech</source>
@@ -1218,7 +1222,7 @@
     </message>
     <message>
         <source>More audio options</source>
-        <translation>소리 옵션 더 보기</translation>
+        <translation type="vanished">소리 옵션 더 보기</translation>
     </message>
     <message>
         <source>Go to selection start</source>
@@ -1287,6 +1291,10 @@ Output device: %2</source>
     <message>
         <source>Speech spectrum</source>
         <translation>음성 스펙트럼</translation>
+    </message>
+    <message>
+        <source>More options</source>
+        <translation>옵션 더 보기</translation>
     </message>
     <message>
         <source>Zoom and volume sliders</source>
@@ -7053,11 +7061,11 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Play before the marker</source>
-        <translation>표시선 이전 재생</translation>
+        <translation type="vanished">표시선 이전 재생</translation>
     </message>
     <message>
         <source>Play after the marker</source>
-        <translation>표시선 이후 재생</translation>
+        <translation type="vanished">표시선 이후 재생</translation>
     </message>
     <message>
         <source>Play to the end</source>
@@ -7629,11 +7637,11 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Open subtitles</source>
-        <translation>자막 열기</translation>
+        <translation type="vanished">자막 열기</translation>
     </message>
     <message>
         <source>Open video</source>
-        <translation>영상 파일 열기</translation>
+        <translation type="vanished">영상 파일 열기</translation>
     </message>
     <message>
         <source>Play or pause</source>
@@ -7721,19 +7729,19 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Play first 500 ms</source>
-        <translation>처음 500 ms 재생</translation>
+        <translation type="vanished">처음 500 ms 재생</translation>
     </message>
     <message>
         <source>Play last 500 ms</source>
-        <translation>마지막 500 ms 재생</translation>
+        <translation type="vanished">마지막 500 ms 재생</translation>
     </message>
     <message>
         <source>Play 500 ms before</source>
-        <translation>시작 전 500 ms 재생</translation>
+        <translation type="vanished">시작 전 500 ms 재생</translation>
     </message>
     <message>
         <source>Play 500 ms after</source>
-        <translation>종료 후 500 ms 재생</translation>
+        <translation type="vanished">종료 후 500 ms 재생</translation>
     </message>
     <message>
         <source>Paste the selected text</source>
@@ -7825,7 +7833,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Change aspect ratio</source>
-        <translation>가로 세로 비율 변경</translation>
+        <translation type="vanished">가로 세로 비율 변경</translation>
     </message>
     <message>
         <source>5 seconds forward</source>
@@ -8150,6 +8158,42 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Perspective tracking…</source>
         <translation>원근 추적…</translation>
+    </message>
+    <message>
+        <source>Play before the mark</source>
+        <translation>표시선 이전 재생</translation>
+    </message>
+    <message>
+        <source>Play after the mark</source>
+        <translation>표시선 이후 재생</translation>
+    </message>
+    <message>
+        <source>Play the first 500 ms</source>
+        <translation>처음 0.5초 재생</translation>
+    </message>
+    <message>
+        <source>Play the last 500 ms</source>
+        <translation>마지막 0.5초 재생</translation>
+    </message>
+    <message>
+        <source>Play 500 ms before the start</source>
+        <translation>시작 전 0.5초 재생</translation>
+    </message>
+    <message>
+        <source>Play 500 ms after the end</source>
+        <translation>종료 후 0.5초 재생</translation>
+    </message>
+    <message>
+        <source>Open subtitles…</source>
+        <translation>자막 열기…</translation>
+    </message>
+    <message>
+        <source>Open video…</source>
+        <translation>영상 열기…</translation>
+    </message>
+    <message>
+        <source>Change aspect ratio…</source>
+        <translation>가로 세로 비율 변경…</translation>
     </message>
     <message>
         <source>Apply motion data…</source>
@@ -11690,7 +11734,7 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished">프리셋에서</translation>
     </message>
     <message>
-        <source>From the library…</source>
+        <source>From the library</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -11974,10 +12018,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Graph menu</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Target: selected lines</source>
         <translation type="unfinished"></translation>
     </message>
@@ -12077,6 +12117,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Apply to the selected lines</source>
         <translation type="unfinished">선택한 줄에 적용</translation>
+    </message>
+    <message>
+        <source>More options</source>
+        <translation>옵션 더 보기</translation>
     </message>
     <message>
         <source>Only the lines selected in “Source lines” are regenerated; the others keep their output.</source>
@@ -12317,6 +12361,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Each syllable’s letters are cut into thin horizontal stripes, which fade in as it is sung.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>For karaoke lines</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -24434,12 +24482,16 @@ Styles deleted:
         <translation>렌더링 비용</translation>
     </message>
     <message>
+        <source>Change aspect ratio…</source>
+        <translation>가로 세로 비율 변경…</translation>
+    </message>
+    <message>
         <source>Exit full screen</source>
         <translation>전체 화면 종료</translation>
     </message>
     <message>
         <source>Escape</source>
-        <translation>Esc</translation>
+        <translation type="vanished">Esc</translation>
     </message>
     <message>
         <source>Full screen</source>

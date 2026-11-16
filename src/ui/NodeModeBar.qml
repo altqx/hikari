@@ -15,8 +15,7 @@ Rectangle {
     color: Theme.panel
     readonly property bool editable: controller.editable && !controller.newerFormat
 
-    function exportAs(karaOK, item) {
-        item.checked = Qt.binding(() => root.controller.exportKaraOK === karaOK)
+    function exportAs(karaOK) {
         const blockers = root.controller.exportAsTemplate(karaOK)
         if (blockers.length > 0)
             exportPopup.openWith(blockers)
@@ -70,8 +69,8 @@ Rectangle {
             IconToolButton {
                 id: graphMenuButton
                 objectName: "nodeGraphMenuButton"
-                iconRole: "menu-more"
-                text: qsTr("Graph menu")
+                iconRole: "panel-menu"
+                text: qsTr("More options")
                 enabled: root.controller.available
                 down: graphMenu.visible
                 onClicked: graphMenu.popup(graphMenuButton, 0, graphMenuButton.height)
@@ -269,6 +268,7 @@ Rectangle {
             onTriggered: root.controller.newGraph()
         }
         NodePresetMenu {
+            objectName: "nodeGraphPresetMenu"
             controller: root.controller
             enabled: root.controller.editable
         }
@@ -306,22 +306,17 @@ Rectangle {
             enabled: root.controller.hasGraph && root.controller.editable
             ShellMenuItem {
                 objectName: "nodeExportKaraOK"
-                iconRole: "notice-info"
+                iconRole: "export"
                 text: qsTr("karaOK templates")
                 help: qsTr("Uses karaOK template syntax. Runs in HikariSub; in Aegisub it needs the karaOK templater.")
-                checkable: true
-                keepsMenuOpen: false
-                checked: root.controller.exportKaraOK
-                onTriggered: root.exportAs(true, this)
+                onTriggered: root.exportAs(true)
             }
             ShellMenuItem {
                 objectName: "nodeExportStock"
+                iconRole: "export"
                 text: qsTr("Aegisub 3.2.2 templates")
                 help: qsTr("Adds template lines after the graph line that make the same lines in Aegisub’s karaoke templater.")
-                checkable: true
-                keepsMenuOpen: false
-                checked: !root.controller.exportKaraOK
-                onTriggered: root.exportAs(false, this)
+                onTriggered: root.exportAs(false)
             }
         }
         MenuSeparator {}
