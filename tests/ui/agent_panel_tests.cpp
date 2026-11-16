@@ -1667,6 +1667,13 @@ private slots:
                  qPrintable(QStringLiteral("box %1..%2 button bottom %3 view bottom %4")
                                 .arg(box.top()).arg(box.bottom()).arg(send.bottom()).arg(view.bottom())));
         QVERIFY(onScene(item(QStringLiteral("agentTimeline"))).height() >= 80 - 1);
+        QQuickItem *activeTab = item(QStringLiteral("agentActiveTab"));
+        QCOMPARE(activeTab->property("note").toString(), QString());
+        QCOMPARE(QQmlProperty::read(activeTab, QStringLiteral("Accessible.name"), qmlContext(activeTab)).toString(),
+                 QStringLiteral("episode.ass, active tab"));
+        QVERIFY(!child(activeTab, QStringLiteral("fileChipName"))->property("truncated").toBool());
+        const qreal fileChip = item(QStringLiteral("agentChip_%1").arg(tabs[0]))->width();
+        QVERIFY2(fileChip >= 100, qPrintable(QString::number(fileChip)));
     }
 
     void aLongModelListOpensAboveTheModelButtonInAShortPanel()

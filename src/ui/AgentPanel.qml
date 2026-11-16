@@ -787,8 +787,10 @@ FocusScope {
                                                  - buttonRow.implicitHeight - 64
             readonly property int chipRows: Math.max(1, Math.floor(roomForChips / chipRowHeight))
             readonly property int chipsPerRow: Math.ceil(chipCount / chipRows)
-            readonly property real chipWidth: chipsPerRow <= 1 ? chips.width
-                : (chips.width - (chipsPerRow - 1) * chips.spacing) / chipsPerRow
+            readonly property bool chipsShareRows: chipsPerRow > 1
+            readonly property real moreWidth: foldedFiles > 0 ? moreFiles.implicitWidth + chips.spacing : 0
+            readonly property real chipWidth: !chipsShareRows ? chips.width
+                : (chips.width - moreWidth - (chipsPerRow - 1) * chips.spacing) / (chipsPerRow - (foldedFiles > 0 ? 1 : 0))
             readonly property real lineHeight: composerMetrics.lineSpacing
             readonly property real fieldPadding: composer.topPadding + composer.bottomPadding
             readonly property real maxFieldHeight: Math.max(lineHeight + fieldPadding,
@@ -830,7 +832,9 @@ FocusScope {
                         objectName: "agentActiveTab"
                         visible: composerBox.hasActiveTab
                         name: panel.agent.activeTitle
-                        note: qsTr("active tab")
+                        note: composerBox.chipsShareRows ? "" : activeTabNote
+                        readonly property string activeTabNote: qsTr("active tab")
+                        Accessible.name: qsTr("%1, %2").arg(name, activeTabNote)
                         active: true
                         maxWidth: composerBox.chipWidth
                     }
@@ -849,6 +853,7 @@ FocusScope {
                         }
                     }
                     ToolButton {
+                        id: moreFiles
                         objectName: "agentMoreFiles"
                         visible: composerBox.foldedFiles > 0
                         implicitHeight: 22
