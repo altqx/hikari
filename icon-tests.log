@@ -1,0 +1,20 @@
+Test project /home/altq/.t3/worktrees/hikari/t3-ee4dec8d-b18d083c955e3f27/out/build/remote
+    Start 488: hikari_ui_icon_tests.offscreen
+    Start 502: hikari_ui_icon_tests.scale200
+    Start 503: hikari_ui_icon_tests.pages
+    Start 501: hikari_ui_icon_tests.scale150
+    Start 523: tools.draw-icons
+1/5 Test #523: tools.draw-icons .................   Passed    0.30 sec
+2/5 Test #501: hikari_ui_icon_tests.scale150 ....   Passed    3.08 sec
+3/5 Test #502: hikari_ui_icon_tests.scale200 ....   Passed    3.51 sec
+4/5 Test #488: hikari_ui_icon_tests.offscreen ...   Passed    4.54 sec
+5/5 Test #503: hikari_ui_icon_tests.pages .......   Passed    8.47 sec
+
+100% tests passed out of 5
+
+Label Time Summary:
+offscreen    =  19.59 sec*proc (4 tests)
+qttest       =  19.59 sec*proc (4 tests)
+tools        =   0.30 sec*proc (1 test)
+
+Total Test time (real) =   8.50 sec
