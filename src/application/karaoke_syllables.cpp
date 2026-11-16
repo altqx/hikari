@@ -192,8 +192,8 @@ std::vector<KaraokeSyllable> karaokeSyllables(std::string_view raw, std::int64_t
         lastPosition = static_cast<std::size_t>(nextKstart + 1);
     }
     if (kcount < 2) {
-        const int start = static_cast<int>(startMs), end = static_cast<int>(endMs);
-        out.push_back({end - start, start, end, "k", utf8Of(text), utf8Of(withoutBlocks(text))});
+        const int duration = static_cast<int>(endMs - startMs);
+        out.push_back({duration, 0, duration, "k", utf8Of(text), utf8Of(withoutBlocks(text))});
     }
     return out;
 }

@@ -33,7 +33,7 @@ bool fullscreenOwnedByMainWindow(std::string_view platformName)
 
 int fullscreenMonitorEntries(int monitors)
 {
-    return monitors > 1 ? monitors - 1 : 0;
+    return monitors > 1 ? monitors : 0;
 }
 
 FullscreenBarMode fullscreenBarMode(std::int64_t setting)

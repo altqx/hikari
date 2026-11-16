@@ -26,7 +26,7 @@ int fullscreenMonitor(int monitor, const std::vector<MonitorRect> &monitors, con
 // the main window's output.
 bool fullscreenOwnedByMainWindow(std::string_view platformName);
 
-// One context menu entry per monitor after the first.
+// One context menu entry per monitor, or none with a single monitor.
 int fullscreenMonitorEntries(int monitors);
 
 // video.fullscreenBar. Auto: shown on pointer movement, hidden after kFullscreenBarIdleMs without;

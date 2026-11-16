@@ -968,8 +968,12 @@
         <translation>อุปกรณ์เอาต์พุต</translation>
     </message>
     <message>
+        <source>Audio settings</source>
+        <translation>การตั้งค่าเสียง</translation>
+    </message>
+    <message>
         <source>Audio settings…</source>
-        <translation>การตั้งค่าเสียง…</translation>
+        <translation type="vanished">การตั้งค่าเสียง…</translation>
     </message>
     <message>
         <source>Link the volume and stretch sliders</source>
@@ -1013,7 +1017,7 @@
     </message>
     <message>
         <source>Play 500 ms after the start time</source>
-        <translation>เล่นเสียง 500 มิลลิวินาทีหลังเวลาเริ่มต้น</translation>
+        <translation type="vanished">เล่นเสียง 500 มิลลิวินาทีหลังเวลาเริ่มต้น</translation>
     </message>
     <message>
         <source>Play to the end</source>
@@ -1053,7 +1057,7 @@
     </message>
     <message>
         <source>Enable / Disable automatic splitting of syllables</source>
-        <translation>เปิดหรือปิดการแบ่งพยางค์อัตโนมัติ</translation>
+        <translation type="vanished">เปิดหรือปิดการแบ่งพยางค์อัตโนมัติ</translation>
     </message>
     <message>
         <source>Auto-scroll</source>
@@ -1061,7 +1065,7 @@
     </message>
     <message>
         <source>Auto-scroll to the active line</source>
-        <translation>เลื่อนอัตโนมัติไปยังบรรทัดปัจจุบัน</translation>
+        <translation type="vanished">เลื่อนอัตโนมัติไปยังบรรทัดปัจจุบัน</translation>
     </message>
     <message>
         <source>Spectrum</source>
@@ -1086,7 +1090,7 @@
     </message>
     <message>
         <source>Play 500 ms before the start time</source>
-        <translation>เล่นเสียง 500 มิลลิวินาทีก่อนเวลาเริ่มต้น</translation>
+        <translation type="vanished">เล่นเสียง 500 มิลลิวินาทีก่อนเวลาเริ่มต้น</translation>
     </message>
     <message>
         <source>Play the first 500 ms</source>
@@ -1094,7 +1098,7 @@
     </message>
     <message>
         <source>Play 500 ms before the end time</source>
-        <translation>เล่นเสียง 500 มิลลิวินาทีก่อนเวลาสิ้นสุด</translation>
+        <translation type="vanished">เล่นเสียง 500 มิลลิวินาทีก่อนเวลาสิ้นสุด</translation>
     </message>
     <message>
         <source>Play the last 500 ms</source>
@@ -1102,7 +1106,7 @@
     </message>
     <message>
         <source>Play 500 ms after the end time</source>
-        <translation>เล่นเสียง 500 มิลลิวินาทีหลังเวลาสิ้นสุด</translation>
+        <translation type="vanished">เล่นเสียง 500 มิลลิวินาทีหลังเวลาสิ้นสุด</translation>
     </message>
     <message>
         <source>Play 500 ms after the end</source>
@@ -1198,11 +1202,11 @@
     </message>
     <message>
         <source>Waveform mode</source>
-        <translation>โหมดรูปคลื่น</translation>
+        <translation type="vanished">โหมดรูปคลื่น</translation>
     </message>
     <message>
         <source>Spectrum mode</source>
-        <translation>โหมดสเปกตรัม</translation>
+        <translation type="vanished">โหมดสเปกตรัม</translation>
     </message>
     <message>
         <source>Sync with video</source>
@@ -1210,7 +1214,7 @@
     </message>
     <message>
         <source>Sync the video and audio cursors</source>
-        <translation>ซิงค์เคอร์เซอร์วิดีโอและเสียง</translation>
+        <translation type="vanished">ซิงค์เคอร์เซอร์วิดีโอและเสียง</translation>
     </message>
     <message>
         <source>Speech</source>
@@ -1218,7 +1222,7 @@
     </message>
     <message>
         <source>More audio options</source>
-        <translation>ตัวเลือกเสียงเพิ่มเติม</translation>
+        <translation type="vanished">ตัวเลือกเสียงเพิ่มเติม</translation>
     </message>
     <message>
         <source>Go to selection start</source>
@@ -1287,6 +1291,10 @@ Output device: %2</source>
     <message>
         <source>Speech spectrum</source>
         <translation>สเปกตรัมเสียงพูด</translation>
+    </message>
+    <message>
+        <source>More options</source>
+        <translation>ตัวเลือกเพิ่มเติม</translation>
     </message>
     <message>
         <source>Zoom and volume sliders</source>
@@ -7053,11 +7061,11 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Play before the marker</source>
-        <translation>เล่นก่อนเครื่องหมาย</translation>
+        <translation type="vanished">เล่นก่อนเครื่องหมาย</translation>
     </message>
     <message>
         <source>Play after the marker</source>
-        <translation>เล่นหลังเครื่องหมาย</translation>
+        <translation type="vanished">เล่นหลังเครื่องหมาย</translation>
     </message>
     <message>
         <source>Play to the end</source>
@@ -7629,11 +7637,11 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Open subtitles</source>
-        <translation>เปิดคำบรรยาย</translation>
+        <translation type="vanished">เปิดคำบรรยาย</translation>
     </message>
     <message>
         <source>Open video</source>
-        <translation>เปิดวิดีโอ</translation>
+        <translation type="vanished">เปิดวิดีโอ</translation>
     </message>
     <message>
         <source>Play or pause</source>
@@ -7721,19 +7729,19 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Play first 500 ms</source>
-        <translation>เล่น 500 มิลลิวินาทีแรก</translation>
+        <translation type="vanished">เล่น 500 มิลลิวินาทีแรก</translation>
     </message>
     <message>
         <source>Play last 500 ms</source>
-        <translation>เล่น 500 มิลลิวินาทีสุดท้าย</translation>
+        <translation type="vanished">เล่น 500 มิลลิวินาทีสุดท้าย</translation>
     </message>
     <message>
         <source>Play 500 ms before</source>
-        <translation>เล่น 500 มิลลิวินาทีก่อนจุดเริ่มต้น</translation>
+        <translation type="vanished">เล่น 500 มิลลิวินาทีก่อนจุดเริ่มต้น</translation>
     </message>
     <message>
         <source>Play 500 ms after</source>
-        <translation>เล่น 500 มิลลิวินาทีหลังจุดสิ้นสุด</translation>
+        <translation type="vanished">เล่น 500 มิลลิวินาทีหลังจุดสิ้นสุด</translation>
     </message>
     <message>
         <source>Paste the selected text</source>
@@ -7825,7 +7833,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Change aspect ratio</source>
-        <translation>เปลี่ยนอัตราส่วนภาพ</translation>
+        <translation type="vanished">เปลี่ยนอัตราส่วนภาพ</translation>
     </message>
     <message>
         <source>5 seconds forward</source>
@@ -8150,6 +8158,42 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Perspective tracking…</source>
         <translation>การติดตามเพอร์สเปกทีฟ…</translation>
+    </message>
+    <message>
+        <source>Play before the mark</source>
+        <translation>เล่นก่อนเครื่องหมาย</translation>
+    </message>
+    <message>
+        <source>Play after the mark</source>
+        <translation>เล่นหลังเครื่องหมาย</translation>
+    </message>
+    <message>
+        <source>Play the first 500 ms</source>
+        <translation>เล่น 500 มิลลิวินาทีแรก</translation>
+    </message>
+    <message>
+        <source>Play the last 500 ms</source>
+        <translation>เล่น 500 มิลลิวินาทีสุดท้าย</translation>
+    </message>
+    <message>
+        <source>Play 500 ms before the start</source>
+        <translation>เล่น 500 มิลลิวินาทีก่อนจุดเริ่มต้น</translation>
+    </message>
+    <message>
+        <source>Play 500 ms after the end</source>
+        <translation>เล่น 500 มิลลิวินาทีหลังจุดสิ้นสุด</translation>
+    </message>
+    <message>
+        <source>Open subtitles…</source>
+        <translation>เปิดคำบรรยาย…</translation>
+    </message>
+    <message>
+        <source>Open video…</source>
+        <translation>เปิดวิดีโอ…</translation>
+    </message>
+    <message>
+        <source>Change aspect ratio…</source>
+        <translation>เปลี่ยนอัตราส่วนภาพ…</translation>
     </message>
     <message>
         <source>Apply motion data…</source>
@@ -11690,7 +11734,7 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished">จากพรีเซ็ต</translation>
     </message>
     <message>
-        <source>From the library…</source>
+        <source>From the library</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -11974,10 +12018,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Graph menu</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Target: selected lines</source>
         <translation type="unfinished"></translation>
     </message>
@@ -12077,6 +12117,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Apply to the selected lines</source>
         <translation type="unfinished">นำไปใช้กับบรรทัดที่เลือก</translation>
+    </message>
+    <message>
+        <source>More options</source>
+        <translation>ตัวเลือกเพิ่มเติม</translation>
     </message>
     <message>
         <source>Only the lines selected in “Source lines” are regenerated; the others keep their output.</source>
@@ -12317,6 +12361,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Each syllable’s letters are cut into thin horizontal stripes, which fade in as it is sung.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>For karaoke lines</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -24434,12 +24482,16 @@ Styles deleted:
         <translation>ต้นทุนการเรนเดอร์</translation>
     </message>
     <message>
+        <source>Change aspect ratio…</source>
+        <translation>เปลี่ยนอัตราส่วนภาพ…</translation>
+    </message>
+    <message>
         <source>Exit full screen</source>
         <translation>ออกจากโหมดเต็มหน้าจอ</translation>
     </message>
     <message>
         <source>Escape</source>
-        <translation>Escape</translation>
+        <translation type="vanished">Escape</translation>
     </message>
     <message>
         <source>Full screen</source>

@@ -69,7 +69,7 @@ Dialogue: 0,0:00:05.00,0:00:06.00,Romaji,,0,0,0,fx,{\an5\move(673,0,673,20,0,200
 Dialogue: 0,0:00:05.00,0:00:06.00,Romaji,,0,0,0,fx,{\an5\move(695,0,695,20,0,200)}6/6/i
 Dialogue: 0,0:00:06.70,0:00:08.30,Romaji,,0,0,0,fx,{\fad(300,300)}plain words here
 Dialogue: 0,0:00:07.00,0:00:08.00,Romaji,,0,0,0,fx,{\kf100}plain words here
-Dialogue: 0,0:00:07.00,0:00:08.00,Romaji,,0,0,0,fx,{\t(7000,8000,\1c&H00FFFF&)}plain {\t(7000,8000,\1c&H00FFFF&)}words {\t(7000,8000,\1c&H00FFFF&)}here
+Dialogue: 0,0:00:07.00,0:00:08.00,Romaji,,0,0,0,fx,{\t(0,1000,\1c&H00FFFF&)}plain {\t(7000,8000,\1c&H00FFFF&)}words {\t(7000,8000,\1c&H00FFFF&)}here
 Dialogue: 0,0:00:07.00,0:00:08.00,Romaji,,0,0,0,fx,{\alpha&HFF&\t(30,230,\alpha&H00&)}p{\alpha&HFF&\t(60,260,\alpha&H00&)}l{\alpha&HFF&\t(90,290,\alpha&H00&)}a{\alpha&HFF&\t(120,320,\alpha&H00&)}i{\alpha&HFF&\t(150,350,\alpha&H00&)}n{\alpha&HFF&\t(180,380,\alpha&H00&)} {\alpha&HFF&\t(210,410,\alpha&H00&)}w{\alpha&HFF&\t(240,440,\alpha&H00&)}o{\alpha&HFF&\t(270,470,\alpha&H00&)}r{\alpha&HFF&\t(300,500,\alpha&H00&)}d{\alpha&HFF&\t(330,530,\alpha&H00&)}s{\alpha&HFF&\t(360,560,\alpha&H00&)} {\alpha&HFF&\t(390,590,\alpha&H00&)}h{\alpha&HFF&\t(420,620,\alpha&H00&)}e{\alpha&HFF&\t(450,650,\alpha&H00&)}r{\alpha&HFF&\t(480,680,\alpha&H00&)}e
 Dialogue: 0,0:00:07.00,0:00:08.00,Romaji,,0,0,0,fx,{\an7\pos(0,0)\p1}m 0 0 l 10 0 l 10 10
 Dialogue: 0,0:00:07.00,0:00:08.00,Romaji,,0,0,0,fx,{\an5\pos(519,40)\fad(150,150)}plain 

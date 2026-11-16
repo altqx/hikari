@@ -46,6 +46,10 @@ A failing `include()` reports `Error loading Lua include "<name>":` or `Error ru
 
 `aegisub.util.deep_copy` makes a table that refers to itself refer to the copy, as Aegisub 3.5 does. It used to point the copy back at the original. [FA4 #561](https://github.com/altqx/hikari/issues/561).
 
+## CX7-untagged-karaoke-times
+
+A Line without karaoke tags is one syllable timed from 0 to the Line's duration, in Lua macros (`aegisub.parse_karaoke_data`, `line.kara`), the karaoke templaters and node effects, as Aegisub 3.5's `parse_karaoke_data` does. beta.3 gave that syllable the Line's absolute start and end times. [#1174](https://github.com/altqx/hikari/issues/1174), owner Q558.
+
 ## XD1-karaoke-marks
 
 A templater Apply's save is no longer byte for byte Aegisub 3.2.2's. Each generated Line and its karaoke Line get a `_hikari_kara_from` or `_hikari_kara_source` entry in `[Aegisub Extradata]`, so a reopened file still knows which karaoke Line each Line came from. There's no setting to turn this off. Aegisub 3.5.1 keeps the entries through its own load and save. Apart from them, the output is still 3.2.2's. [XD1 #659](https://github.com/altqx/hikari/issues/659), owner decision 2026-11-03.
