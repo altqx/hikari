@@ -121,6 +121,21 @@ std::string toolName(std::string operation)
     return operation;
 }
 
+std::string askArea(const std::string &operation)
+{
+    if (operation == kMcpCallOperation)
+        return "mcp";
+    const std::string family = operation.substr(0, operation.find('.'));
+    if (family == "settings")
+        return "setting";
+    if (family == "plugins")
+        return "plugin";
+    for (const char *subtitles : {"document", "lines", "styles", "typeset", "karaoke", "marks", "translation", "effects", "node", "nodes"})
+        if (family == subtitles)
+            return "subtitles";
+    return "other";
+}
+
 std::string firstLine(const std::string &text)
 {
     std::string line = text.substr(0, text.find('\n'));
@@ -1601,20 +1616,35 @@ void AgentThreads::openAsk(AgentThread &thread, Decision kind, const std::string
                                            : toolName(operation)},
                               {"operation", operation},
                               {"params", Json(clipped(params.dump(), kOutputChars))},
+                              {"area", askArea(operation)},
                               {"reason", reason},
                               {"status", "open"}});
+    if (const api::Operation *op = api::Api::registry().find(operation))
+        item["summary"] = op->summary;
+    if (operation == "document.apply") {
+        ProposedEdits edits = readEdits(thread, params);
+        item["rows"] = std::move(edits.rows);
+        if (edits.document) {
+            item["document"] = static_cast<std::int64_t>(edits.document->value);
+            if (m_wiring.documentTitle)
+                item["title"] = m_wiring.documentTitle(*edits.document);
+        }
+    } else if (operation == "settings.set") {
+        item["setting"] = stringAt(params, "setting");
+        if (const Json *value = params.find("value"))
+            item["value"] = clipped(value->isString() ? value->asString() : value->dump(), kTitleChars);
+    }
     wait(thread, Ask{0, thread.id, kind, operation, params, std::move(reason)}, std::move(item), std::move(admit),
          std::move(onWithdraw));
 }
 
-void AgentThreads::openProposal(AgentThread &thread, const Json &params, AiSidecarHost::Admit admit,
-                                std::function<void(std::function<void()>)> onWithdraw)
+AgentThreads::ProposedEdits AgentThreads::readEdits(AgentThread &thread, const Json &params)
 {
-    std::optional<application::DocumentId> document;
+    ProposedEdits out;
     if (const Json *d = params.find("document"); d && d->isInt())
-        document = application::DocumentId{static_cast<std::uint64_t>(d->asInt())};
+        out.document = application::DocumentId{static_cast<std::uint64_t>(d->asInt())};
     else if (m_wiring.editingTarget)
-        document = m_wiring.editingTarget();
+        out.document = m_wiring.editingTarget();
     const Json *edits = params.find("edits");
     const Json noEdits = Json::array();
     if (!edits || !edits->isArray())
@@ -1630,8 +1660,8 @@ void AgentThreads::openProposal(AgentThread &thread, const Json &params, AiSidec
         Json ask = Json::object({{"ids", Json::array()}, {"fields", Json::array({Json("text")})}});
         for (const std::int64_t id : ids)
             ask["ids"].push(Json(id));
-        if (document)
-            ask["document"] = static_cast<std::int64_t>(document->value);
+        if (out.document)
+            ask["document"] = static_cast<std::int64_t>(out.document->value);
         const Json *proposedAt = params.find("revision");
         m_wiring.api->call(callerOf(thread), "lines.get", ask,
                            [read, proposedAt = proposedAt ? *proposedAt : Json()](const api::Result &result) {
@@ -1644,21 +1674,28 @@ void AgentThreads::openProposal(AgentThread &thread, const Json &params, AiSidec
                                read->stale = now && !proposedAt.isNull() && !(*now == proposedAt);
                            });
     }
-    const std::map<std::int64_t, Json> &lines = read->lines;
-    const bool stale = read->stale;
-    Json rows = Json::array();
+    out.stale = read->stale;
+    out.rows = Json::array();
     for (const Json &edit : edits->asArray())
-        rows.push(proposalRow(edit, lines));
+        out.rows.push(proposalRow(edit, read->lines));
+    return out;
+}
+
+void AgentThreads::openProposal(AgentThread &thread, const Json &params, AiSidecarHost::Admit admit,
+                                std::function<void(std::function<void()>)> onWithdraw)
+{
+    ProposedEdits edits = readEdits(thread, params);
+    const auto document = edits.document;
     Json item = Json::object({{"kind", "proposal"},
                               {"name", stringAt(params, "name")},
                               {"title", document && m_wiring.documentTitle ? m_wiring.documentTitle(*document) : std::string()},
-                              {"rows", std::move(rows)},
-                              {"status", stale ? "stale" : "open"}});
+                              {"rows", std::move(edits.rows)},
+                              {"status", edits.stale ? "stale" : "open"}});
     if (document)
         item["document"] = static_cast<std::int64_t>(document->value);
     Ask ask{0, thread.id, Decision::Propose, "document.apply", params, {}};
     ask.document = document;
-    ask.stale = stale;
+    ask.stale = edits.stale;
     wait(thread, std::move(ask), std::move(item), std::move(admit), std::move(onWithdraw));
 }
 

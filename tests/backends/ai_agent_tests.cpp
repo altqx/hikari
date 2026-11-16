@@ -770,6 +770,37 @@ TEST_F(AgentThreadsTest, AnEscalatingJudgeAsksTheUserWithItsReason)
     EXPECT_TRUE(thread(id).allowed.empty());
 }
 
+TEST_F(AgentThreadsTest, AnAskCarriesWhatTheCardNeedsToSayItInPlainWords)
+{
+    ASSERT_TRUE(providers->assign(app::Role::Judge, {"or", "escalate"}));
+    const std::string id = withMode(AgentMode::Auto);
+    const std::u8string before = fake.target()->document().lines()[0]->text;
+    threads->send(id, script(Json::array({apply("Hi"), call("settings.set", Json::object({{"setting", "spelling.language"},
+                                                                                         {"value", "en_GB"}}))})));
+    std::uint64_t ask = openAsk();
+    auto asks = items(id, "ask");
+    ASSERT_EQ(asks.size(), 1u);
+    EXPECT_EQ(at(asks[0], "area"), "subtitles");
+    EXPECT_FALSE(at(asks[0], "summary").empty());
+    EXPECT_EQ(at(asks[0], "title"), "a.ass");
+    const Json &row = asks[0].find("rows")->asArray().at(0);
+    EXPECT_EQ(at(row, "change"), "edited");
+    EXPECT_EQ(at(row, "before"), std::string(before.begin(), before.end()));
+    EXPECT_EQ(at(row, "after"), "Hi");
+    EXPECT_EQ(*row.find("row"), Json(1));
+    threads->answer(ask, Answer::AllowOnce);
+
+    ASSERT_TRUE(waitFor([&] { return !threads->asks().empty() && threads->asks().begin()->first != ask; }));
+    asks = items(id, "ask");
+    ASSERT_EQ(asks.size(), 2u);
+    EXPECT_EQ(at(asks[1], "area"), "setting");
+    EXPECT_EQ(at(asks[1], "setting"), "spelling.language");
+    EXPECT_EQ(at(asks[1], "value"), "en_GB");
+    EXPECT_FALSE(asks[1].find("rows"));
+    threads->answer(threads->asks().begin()->first, Answer::Deny);
+    ASSERT_TRUE(idle(id));
+}
+
 TEST_F(AgentThreadsTest, TheAlwaysAskListAsksEvenInFullAccessAndCantBeAllowedForTheThread)
 {
     const std::string id = withMode(AgentMode::FullAccess);

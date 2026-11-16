@@ -38,7 +38,11 @@ MenuItem {
     property string help
     // Shown under the row: a disabled row gets no hover, so a tooltip would never show.
     property string reason
-    Accessible.description: reason
+    property string description
+    property bool danger: false
+    readonly property string underText: reason || description
+    readonly property real rowHeight: contentItem ? contentItem.rowHeight : implicitHeight
+    Accessible.description: underText
     readonly property string shownHelp: help.length > 0 ? help
         : subMenu && typeof subMenu.help === "string" ? subMenu.help
         : action && typeof action.help === "string" ? action.help : ""
@@ -70,8 +74,10 @@ MenuItem {
         readonly property real arrowPadding: control.subMenu && control.arrow ? control.arrow.width + control.spacing : 0
         readonly property real checkGutter: control.indicator ? control.indicator.width + control.spacing : 0
         readonly property real iconGutter: control.icon.source.toString().length > 0 ? 0 : control.icon.width + control.spacing
-        readonly property color textColour: control.enabled && (control.down || control.highlighted)
-            ? control.palette.highlightedText : control.palette.text
+        readonly property bool lit: control.enabled && (control.down || control.highlighted)
+        readonly property color textColour: lit ? control.palette.highlightedText
+            : control.danger && control.enabled ? Theme.danger : control.palette.text
+        readonly property real rowHeight: Math.max(label.implicitHeight, plainText.implicitHeight, keys.implicitHeight)
         readonly property real iconRoom: control.icon.source.toString().length > 0 ? control.icon.width + control.spacing : 0
         readonly property real leadPadding: control.mirrored ? arrowPadding : checkGutter + iconGutter
         readonly property real trailPadding: control.mirrored ? checkGutter + iconGutter : arrowPadding
@@ -79,8 +85,7 @@ MenuItem {
         readonly property real textEnd: trailPadding + (control.mirrored ? iconRoom : 0)
         implicitWidth: (control.plainLabel ? textStart + plainText.implicitWidth + textEnd : label.implicitWidth)
             + (keys.text.length > 0 ? keys.implicitWidth + 24 : 0)
-        implicitHeight: Math.max(label.implicitHeight, plainText.implicitHeight, keys.implicitHeight)
-                        + (reasonText.visible ? reasonText.implicitHeight : 0)
+        implicitHeight: rowHeight + (reasonText.visible ? reasonText.implicitHeight : 0)
         IconLabel {
             id: label
             width: parent.width - (keys.text.length > 0 ? keys.implicitWidth + 24 : 0)
@@ -114,8 +119,8 @@ MenuItem {
         Text {
             id: reasonText
             objectName: "menuItemReason"
-            visible: control.reason.length > 0
-            text: control.reason
+            visible: control.underText.length > 0
+            text: control.underText
             textFormat: Text.PlainText
             x: control.mirrored ? parent.textEnd : parent.textStart
             width: Math.max(0, parent.width - parent.textStart - parent.textEnd)
@@ -124,7 +129,7 @@ MenuItem {
             wrapMode: Text.Wrap
             font.family: control.font.family
             font.pointSize: control.font.pointSize * 0.85
-            color: Theme.muted
+            color: parent.lit ? control.palette.highlightedText : Theme.muted
         }
         Text {
             id: keys

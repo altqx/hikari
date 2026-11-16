@@ -24,8 +24,10 @@ FocusScope {
     property bool showingThreads: false
     objectName: "agentView"
     Keys.onEscapePressed: event => {
-        event.accepted = panel.isChild && !panel.showingThreads
-        if (event.accepted)
+        event.accepted = panel.showingThreads || panel.isChild
+        if (panel.showingThreads)
+            panel.showingThreads = false
+        else if (panel.isChild)
             panel.agent.openParent()
     }
 
@@ -88,13 +90,27 @@ FocusScope {
         } else if (text === "/new") {
             panel.agent.newThread()
         } else if (text === "/mode") {
-            modeMenu.popup(modeButton, 0, -modeMenu.implicitHeight)
+            modeMenu.openAbove(modeButton)
         } else {
             panel.agent.send(text)
         }
         composer.text = ""
     }
 
+    component PanelMenu: ShellMenu {
+        id: panelMenu
+        property int maxRows: 12
+        property real maxWidth: panel.width - 16
+        readonly property real rowHeight: count > 0 && itemAt(0) ? itemAt(0).implicitHeight : 24
+        width: Math.max(Math.min(200, maxWidth), Math.min(implicitWidth, maxWidth))
+        height: Math.min(implicitHeight, topPadding + bottomPadding + maxRows * rowHeight)
+        function openAbove(item) {
+            const at = item.mapToItem(panel, 0, 0)
+            popup(item, 0, -height)
+            x = Qt.binding(() => Math.max(8 - at.x, Math.min(0, panel.width - 8 - at.x - width)))
+            y = Qt.binding(() => -height)
+        }
+    }
     component Card: Rectangle {
         id: card
         property color edge: Theme.line
@@ -138,6 +154,152 @@ FocusScope {
         font.pixelSize: Math.round(Qt.application.font.pixelSize * 0.85)
         color: tint
         background: Rectangle { radius: height / 2; color: "transparent"; border.color: parent.tint; border.width: 1 }
+    }
+    component FileChip: Rectangle {
+        id: fileChip
+        property string name
+        property string note
+        property bool removable: false
+        property bool active: false
+        property real maxWidth: 280
+        signal removed()
+        implicitHeight: 22
+        implicitWidth: Math.min(chipRow.implicitWidth + chipRow.anchors.leftMargin + chipRow.anchors.rightMargin, maxWidth)
+        radius: 3
+        color: Theme.raised
+        border.color: active ? Theme.accent : Theme.line
+        Accessible.role: Accessible.StaticText
+        Accessible.name: note.length > 0 ? qsTr("%1, %2").arg(name, note) : name
+        RowLayout {
+            id: chipRow
+            anchors.fill: parent
+            anchors.leftMargin: 6
+            anchors.rightMargin: fileChip.removable ? 2 : 6
+            spacing: 4
+            Icon { iconRole: "file-subtitles"; size: 14 }
+            Label {
+                objectName: "fileChipName"
+                Layout.fillWidth: true
+                text: fileChip.name
+                textFormat: Text.PlainText
+                elide: Text.ElideMiddle
+                font.pixelSize: Math.round(Qt.application.font.pixelSize * 0.9)
+            }
+            Label {
+                visible: fileChip.note.length > 0
+                text: fileChip.note
+                color: Theme.muted
+                font.pixelSize: Math.round(Qt.application.font.pixelSize * 0.9)
+            }
+            IconToolButton {
+                objectName: "fileChipRemove"
+                visible: fileChip.removable
+                implicitWidth: 18
+                implicitHeight: 18
+                padding: 0
+                iconRole: "tab-close"
+                iconSize: 12
+                text: qsTr("Remove %1").arg(fileChip.name)
+                onClicked: fileChip.removed()
+                Keys.onDeletePressed: fileChip.removed()
+            }
+        }
+    }
+    component CardButtons: Flow {
+        Layout.fillWidth: true
+        spacing: 6
+    }
+    component TellButton: Button {
+        flat: true
+        text: qsTr("Tell the agent instead…")
+    }
+    component ReplyRow: RowLayout {
+        id: replyRow
+        property alias fieldName: replyField.objectName
+        property string action
+        signal sent(string text)
+        signal cancelled()
+        function begin() { replyField.forceActiveFocus() }
+        Layout.fillWidth: true
+        spacing: 6
+        TextField {
+            id: replyField
+            Layout.fillWidth: true
+            Layout.minimumWidth: 80
+            placeholderText: qsTr("What should it do instead?")
+            onAccepted: replyRow.sent(text)
+            Keys.onEscapePressed: replyRow.cancelled()
+        }
+        Button { text: replyRow.action; onClicked: replyRow.sent(replyField.text) }
+    }
+    component DiffRows: ColumnLayout {
+        id: diffRows
+        property var rows: []
+        property var document
+        property bool all: false
+        property int shown: 5
+        property string rowName: "agentProposalRow_"
+        Layout.fillWidth: true
+        spacing: 2
+        Repeater {
+            model: diffRows.all ? diffRows.rows : diffRows.rows.slice(0, diffRows.shown)
+            delegate: ItemDelegate {
+                id: change
+                required property var modelData
+                required property int index
+                objectName: diffRows.rowName + index
+                Layout.fillWidth: true
+                padding: 4
+                enabled: modelData.line !== undefined && diffRows.document !== undefined
+                onClicked: panel.agent.selectLine(diffRows.document, modelData.line)
+                background: Rectangle {
+                    color: Theme.field
+                    border.color: change.visualFocus || change.hovered ? Theme.focus : Theme.line
+                    border.width: change.visualFocus ? 2 : 1
+                }
+                contentItem: RowLayout {
+                    spacing: 6
+                    Label {
+                        text: change.modelData.row !== undefined ? "#" + change.modelData.row : ""
+                        color: Theme.muted
+                        Layout.preferredWidth: 34
+                        Layout.alignment: Qt.AlignTop
+                    }
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 1
+                        Label {
+                            visible: (change.modelData.before ?? "").length > 0
+                            Layout.fillWidth: true
+                            wrapMode: Text.Wrap
+                            textFormat: Text.PlainText
+                            font.strikeout: true
+                            color: Theme.danger
+                            text: change.modelData.before ?? ""
+                        }
+                        Label {
+                            visible: (change.modelData.after ?? "").length > 0
+                            Layout.fillWidth: true
+                            wrapMode: Text.Wrap
+                            textFormat: Text.PlainText
+                            color: Theme.success
+                            text: change.modelData.after ?? ""
+                        }
+                        Label {
+                            visible: text.length > 0
+                            Layout.fillWidth: true
+                            wrapMode: Text.Wrap
+                            color: Theme.muted
+                            text: change.modelData.change === "deleted" ? qsTr("Deleted")
+                                  : change.modelData.change === "moved" ? qsTr("Moved")
+                                  : change.modelData.change === "inserted" ? qsTr("Inserted")
+                                  : change.modelData.change === "other" ? (change.modelData.what ?? "")
+                                  : change.modelData.fields ? qsTr("Changes %1").arg(change.modelData.fields) : ""
+                        }
+                    }
+                }
+            }
+        }
     }
     component Mono: Label {
         Layout.fillWidth: true
@@ -280,9 +442,27 @@ FocusScope {
                 objectName: "agentThreadSearch"
                 Layout.fillWidth: true
                 placeholderText: qsTr("Search threads")
+                Keys.onEscapePressed: event => {
+                    if (text.length > 0)
+                        clear()
+                    else
+                        panel.showingThreads = false
+                }
+            }
+            Label {
+                objectName: "agentNoThreadsMatch"
+                visible: threadList.count === 0 && threadSearch.text.trim().length > 0
+                Layout.fillWidth: true
+                Layout.topMargin: 12
+                horizontalAlignment: Text.AlignHCenter
+                wrapMode: Text.Wrap
+                textFormat: Text.PlainText
+                color: Theme.muted
+                text: qsTr("No threads match “%1”").arg(threadSearch.text.trim())
             }
             ListView {
                 id: threadList
+                visible: count > 0
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 clip: true
@@ -374,6 +554,7 @@ FocusScope {
             visible: panel.agent.ready && !panel.showingThreads
             Layout.fillWidth: true
             Layout.fillHeight: true
+            Layout.minimumHeight: 80
             clip: true
             spacing: 8
             topMargin: 8
@@ -553,15 +734,36 @@ FocusScope {
 
         Rectangle {
             id: composerBox
+            objectName: "agentComposerBox"
+            readonly property var attached: panel.hasThread ? panel.thread.attached : []
+            readonly property bool hasActiveTab: panel.agent.activeTitle.length > 0
+            readonly property int chipRoom: Math.max(0, 3 - (hasActiveTab ? 1 : 0))
+            readonly property int foldedFiles: Math.max(0, attached.length - chipRoom)
+            readonly property real lineHeight: composerMetrics.lineSpacing
+            readonly property real fieldPadding: composer.topPadding + composer.bottomPadding
+            readonly property real maxFieldHeight: Math.max(lineHeight + fieldPadding,
+                Math.min(6 * lineHeight + fieldPadding,
+                         panel.height * 0.4 - chips.height - buttonRow.height - 3 * composerColumn.spacing - 12))
             visible: !panel.showingThreads && !panel.isChild
             Layout.fillWidth: true
             Layout.margins: 8
             implicitHeight: composerColumn.implicitHeight + 12
-            radius: 4
+            radius: 2
             color: Theme.field
-            border.color: composer.activeFocus ? Theme.focus : Theme.line
-            border.width: composer.activeFocus ? 2 : 1
+            border.color: composer.activeFocus ? Theme.accent : Theme.control
+            border.width: 1
             enabled: panel.agent.ready
+            FontMetrics { id: composerMetrics; font: composer.font }
+            Rectangle {
+                objectName: "agentComposerFocusRing"
+                anchors.fill: parent
+                anchors.margins: -2
+                radius: 3
+                color: "transparent"
+                border.color: Theme.focus
+                visible: composer.activeFocus && [Qt.TabFocusReason, Qt.BacktabFocusReason, Qt.ShortcutFocusReason]
+                         .includes(composer.focusReason)
+            }
             ColumnLayout {
                 id: composerColumn
                 x: 6
@@ -569,33 +771,56 @@ FocusScope {
                 width: parent.width - 12
                 spacing: 4
                 Flow {
+                    id: chips
+                    objectName: "agentChips"
                     Layout.fillWidth: true
+                    visible: composerBox.hasActiveTab || composerBox.attached.length > 0
                     spacing: 4
-                    Chip {
+                    FileChip {
                         objectName: "agentActiveTab"
-                        visible: panel.agent.activeTitle.length > 0
-                        text: qsTr("%1 · active tab").arg(panel.agent.activeTitle)
-                        tint: Theme.accent
+                        visible: composerBox.hasActiveTab
+                        name: panel.agent.activeTitle
+                        note: qsTr("active tab")
+                        active: true
+                        maxWidth: chips.width
                     }
                     Repeater {
-                        model: panel.hasThread ? panel.thread.attached : []
-                        delegate: Chip {
+                        model: composerBox.attached.slice(0, composerBox.chipRoom)
+                        delegate: FileChip {
                             required property var modelData
-                            text: modelData.title + "  ×"
-                            tint: Theme.text
-                            TapHandler { onTapped: panel.agent.detach(parent.modelData.id) }
+                            objectName: "agentChip_" + modelData.id
+                            name: modelData.title
+                            removable: true
+                            maxWidth: chips.width
+                            onRemoved: {
+                                composer.forceActiveFocus()
+                                panel.agent.detach(modelData.id)
+                            }
                         }
+                    }
+                    ToolButton {
+                        objectName: "agentMoreFiles"
+                        visible: composerBox.foldedFiles > 0
+                        implicitHeight: 22
+                        topPadding: 0
+                        bottomPadding: 0
+                        font.pixelSize: Math.round(Qt.application.font.pixelSize * 0.9)
+                        text: qsTr("+%n more", "", composerBox.foldedFiles)
+                        Accessible.name: qsTr("%n more attached file(s)", "", composerBox.foldedFiles)
+                        onClicked: attachMenu.openFor(false)
+                        background: Rectangle { radius: 3; color: Theme.raised; border.color: Theme.line }
                     }
                 }
                 ScrollView {
+                    objectName: "agentComposerScroll"
                     Layout.fillWidth: true
-                    Layout.preferredHeight: Math.min(composer.implicitHeight, 140)
+                    Layout.preferredHeight: Math.min(composer.implicitHeight, composerBox.maxFieldHeight)
                     TextArea {
                         id: composer
                         objectName: "agentComposer"
                         focus: true
                         wrapMode: TextEdit.Wrap
-                        placeholderText: panel.agent.ready ? qsTr("Ask, or type @ to attach, / for commands")
+                        placeholderText: panel.agent.ready ? qsTr("Ask, or type @ to attach a file, / for commands")
                                                            : qsTr("Add a provider first")
                         background: null
                         Accessible.name: qsTr("Message")
@@ -611,22 +836,23 @@ FocusScope {
                             }
                         }
                         onTextChanged: {
-                            if (text.endsWith("@") && attachMenu.count > 0)
-                                attachMenu.popup(composer, 0, composer.height)
+                            if (text.endsWith("@") && panel.agent.attachable.length > 0)
+                                attachMenu.openFor(true)
                             if (text === "/")
-                                slashMenu.popup(composer, 0, composer.height)
+                                slashMenu.openAbove(composerBox)
                         }
                     }
                 }
                 RowLayout {
+                    id: buttonRow
                     Layout.fillWidth: true
                     spacing: 4
                     IconToolButton {
                         objectName: "agentAttach"
-                        iconRole: "add"
-                        text: qsTr("Attach")
-                        enabled: attachMenu.count > 0
-                        onClicked: attachMenu.popup(this, 0, -attachMenu.implicitHeight)
+                        iconRole: "attach"
+                        text: qsTr("Attach a file")
+                        enabled: panel.agent.attachable.length > 0
+                        onClicked: attachMenu.openFor(false)
                     }
                     IconToolButton {
                         objectName: "agentWebSearch"
@@ -655,7 +881,7 @@ FocusScope {
                         objectName: "agentModelButton"
                         flat: true
                         text: (panel.hasThread ? panel.thread.modelText : "") + "  ⌄"
-                        onClicked: modelMenu.popup(this, 0, -modelMenu.implicitHeight)
+                        onClicked: modelMenu.openAbove(this)
                     }
                     Button {
                         id: modeButton
@@ -663,15 +889,31 @@ FocusScope {
                         flat: true
                         text: panel.modeName(panel.mode) + "  ⌄"
                         palette.buttonText: panel.mode === "full" ? Theme.danger : Theme.text
-                        onClicked: modeMenu.popup(this, 0, -modeMenu.implicitHeight)
+                        onClicked: modeMenu.openAbove(this)
                     }
                     Item { Layout.fillWidth: true }
                     IconToolButton {
+                        id: sendButton
+                        readonly property bool stops: panel.running && composer.text.trim().length === 0
+                        readonly property bool filled: !stops && enabled
                         objectName: panel.running ? "agentStop" : "agentSend"
-                        iconRole: panel.running && composer.text.trim().length === 0 ? "media-stop" : "ai-send"
-                        text: panel.running && composer.text.trim().length === 0 ? qsTr("Stop") : qsTr("Send")
+                        iconRole: stops ? "media-stop" : "ai-send"
+                        text: stops ? qsTr("Stop") : qsTr("Send")
                         enabled: panel.running || composer.text.trim().length > 0
-                        onClicked: panel.running && composer.text.trim().length === 0 ? panel.agent.stop() : panel.send()
+                        implicitWidth: 28
+                        implicitHeight: 28
+                        contentItem: Icon {
+                            iconRole: sendButton.iconRole
+                            color: sendButton.filled ? Theme.onAccent : sendButton.enabled ? IconTheme.normal : IconTheme.disabled
+                            accentColor: sendButton.filled ? Theme.onAccent : sendButton.enabled ? IconTheme.accent : IconTheme.disabled
+                        }
+                        background: Rectangle {
+                            radius: 2
+                            color: sendButton.filled ? (sendButton.down ? Qt.darker(Theme.accent, 1.15) : Theme.accent)
+                                 : sendButton.stops ? Theme.raised : "transparent"
+                            border.color: sendButton.visualFocus ? Theme.focus : sendButton.stops ? Theme.control : "transparent"
+                        }
+                        onClicked: stops ? panel.agent.stop() : panel.send()
                     }
                 }
             }
@@ -707,12 +949,15 @@ FocusScope {
         }
         MenuSeparator {}
         ShellMenuItem {
+            objectName: "agentDeleteThread"
             iconRole: "delete"
             text: qsTr("Delete thread")
             onTriggered: deleteQuestion.ask({
-                title: qsTr("Delete this thread?"),
+                title: qsTr("Delete thread"),
                 severity: "warning",
-                text: qsTr("The conversation goes. Changes it made stay in your subtitles and in the review."),
+                plainText: true,
+                text: qsTr("Delete “%1”?").arg(panel.thread.title.length > 0 ? panel.thread.title : qsTr("New thread")),
+                detail: qsTr("Its messages are deleted. Changes it made stay in your subtitles and in the review."),
                 choices: [{ id: "delete", text: qsTr("Delete"), role: "destructive" },
                           { id: "cancel", text: qsTr("Cancel"), role: "reject", isDefault: true }]
             }, id => {
@@ -722,16 +967,50 @@ FocusScope {
         }
     }
 
-    ShellMenu {
+    PanelMenu {
         id: attachMenu
+        objectName: "agentAttachMenu"
+        maxRows: 8
+        maxWidth: composerBox.width
+        readonly property var attachedIds: panel.hasThread ? panel.thread.attached.map(a => a.id) : []
+        function openFor(typedAt) {
+            openAbove(composerBox)
+            if (typedAt)
+                currentIndex = 0
+        }
+        readonly property real nameRoom: maxWidth - 120
+        ShellMenuItem {
+            objectName: "agentAttachActiveTab"
+            visible: panel.agent.activeTitle.length > 0
+            height: visible ? implicitHeight : 0
+            enabled: false
+            checkable: true
+            checked: true
+            iconRole: "file-subtitles"
+            text: activeName.elidedText
+            detailText: qsTr("active tab")
+            Accessible.name: panel.agent.activeTitle
+            TextMetrics { id: activeName; font: attachMenu.font; elide: Text.ElideMiddle; elideWidth: attachMenu.nameRoom - 70; text: panel.agent.activeTitle }
+        }
         Repeater {
             model: panel.agent.attachable
             delegate: ShellMenuItem {
                 required property var modelData
-                text: modelData.title
-                iconRole: "open-subtitles"
+                readonly property bool attached: attachMenu.attachedIds.indexOf(modelData.id) >= 0
+                objectName: "agentAttach_" + modelData.id
+                text: fileName.elidedText
+                iconRole: "file-subtitles"
+                checkable: true
+                keepsMenuOpen: false
+                checked: attached
+                help: modelData.title
+                Accessible.name: modelData.title
+                TextMetrics { id: fileName; font: attachMenu.font; elide: Text.ElideMiddle; elideWidth: attachMenu.nameRoom; text: modelData.title }
                 onTriggered: {
-                    panel.agent.attach(modelData.id)
+                    if (attached)
+                        panel.agent.detach(modelData.id)
+                    else
+                        panel.agent.attach(modelData.id)
                     if (composer.text.endsWith("@"))
                         composer.text = composer.text.slice(0, -1)
                     composer.forceActiveFocus()
@@ -740,12 +1019,13 @@ FocusScope {
         }
     }
 
-    ShellMenu {
+    PanelMenu {
         id: slashMenu
+        objectName: "agentSlashMenu"
         ShellMenuItem {
             iconRole: "compact"
             text: qsTr("Compact conversation")
-            detailText: "/compact"
+            shortcutText: "/compact"
             enabled: panel.canCompact
             onTriggered: {
                 composer.text = "/compact "
@@ -756,7 +1036,7 @@ FocusScope {
         ShellMenuItem {
             iconRole: "add"
             text: qsTr("New thread")
-            detailText: "/new"
+            shortcutText: "/new"
             onTriggered: {
                 composer.text = ""
                 panel.agent.newThread()
@@ -765,16 +1045,17 @@ FocusScope {
         ShellMenuItem {
             iconRole: "ai-assistant"
             text: qsTr("Change mode")
-            detailText: "/mode"
+            shortcutText: "/mode"
             onTriggered: {
                 composer.text = ""
-                modeMenu.popup(modeButton, 0, -modeMenu.implicitHeight)
+                modeMenu.openAbove(modeButton)
             }
         }
     }
 
-    ShellMenu {
+    PanelMenu {
         id: modelMenu
+        objectName: "agentModelMenu"
         Repeater {
             model: panel.agent.models
             delegate: ShellMenuItem {
@@ -797,35 +1078,22 @@ FocusScope {
         }
     }
 
-    ShellMenu {
+    PanelMenu {
         id: modeMenu
         objectName: "agentModeMenu"
-        width: 300
+        width: Math.min(320, panel.width - 16)
         Repeater {
             model: [{id: "manual", name: qsTr("Manual"), detail: qsTr("You approve each subtitle edit before it’s made, and every other change. Reading never asks.")},
                     {id: "auto", name: qsTr("Auto"), detail: qsTr("The judge model approves each action, or asks you. It sees the action and your messages, never your files.")},
                     {id: "full", name: qsTr("Full access"), detail: qsTr("Nothing asks except the always-ask list. Edits apply at once and stay undoable.")}]
-            delegate: ShellMenuItem {
-                id: modeItem
+            delegate: MenuRadioItem {
                 required property var modelData
                 objectName: "agentMode_" + modelData.id
-                checkable: true
                 checked: panel.mode === modelData.id
                 text: modelData.name
-                contentItem: ColumnLayout {
-                    spacing: 1
-                    Label {
-                        text: modeItem.modelData.name
-                        font.bold: true
-                        color: modeItem.modelData.id === "full" ? Theme.danger : Theme.text
-                    }
-                    Label {
-                        text: modeItem.modelData.detail
-                        color: Theme.muted
-                        wrapMode: Text.Wrap
-                        Layout.preferredWidth: 250
-                    }
-                }
+                description: modelData.detail
+                danger: modelData.id === "full"
+                font.weight: Font.DemiBold
                 onTriggered: {
                     if (!panel.hasThread)
                         panel.agent.newThread()
@@ -861,23 +1129,28 @@ FocusScope {
             modal: true
             initialFocus: renameField
             defaultButton: renameOk
-            onAccepted: panel.agent.rename(panel.thread.id, renameField.text)
+            onAccepted: if (renameOk.enabled) panel.agent.rename(panel.thread.id, renameField.text.trim())
             onVisibleChanged: if (!visible) Qt.callLater(() => renameLoader.active = false)
             Component.onCompleted: {
                 renameField.text = panel.thread.title
+                renameField.selectAll()
                 open()
+            }
+            Label {
+                text: qsTr("Name")
             }
             TextField {
                 id: renameField
                 objectName: "agentRenameField"
                 Accessible.name: qsTr("Thread name")
-                Layout.preferredWidth: 280
+                Layout.preferredWidth: 360
             }
             buttons: [
                 PrimaryButton {
                     id: renameOk
                     objectName: "agentRenameOk"
                     text: qsTr("Rename")
+                    enabled: renameField.text.trim().length > 0 && renameField.text.trim() !== panel.thread.title
                     DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
                     onClicked: renameDialog.accept()
                 },
@@ -958,17 +1231,23 @@ FocusScope {
                 text: answer.cited ? panel.agent.citedText(answer.item, Theme.select, Theme.text)
                                    : (answer.item.text ?? "") + (answer.row && answer.row.last && panel.running ? " ▍" : "")
                 onLinkHovered: link => {
-                    if (link.startsWith("cite:"))
-                        citationHover.show(answer.citations.find(c => "cite:" + c.index === link), this)
-                    else
-                        citationHover.close()
+                    if (link.startsWith("cite:")) {
+                        const p = answerHover.point.position
+                        citationHover.show(answer.citations.find(c => "cite:" + c.index === link), this,
+                                           positionToRectangle(positionAt(p.x, p.y)))
+                    } else {
+                        citationHover.leave()
+                    }
                 }
                 onLinkActivated: link => {
                     const c = answer.citations.find(c => "cite:" + c.index === link)
                     if (c)
                         panel.agent.openLink(c.url)
                 }
-                HoverHandler { cursorShape: parent.hoveredLink.length > 0 ? Qt.PointingHandCursor : Qt.IBeamCursor }
+                HoverHandler {
+                    id: answerHover
+                    cursorShape: parent.hoveredLink.length > 0 ? Qt.PointingHandCursor : Qt.IBeamCursor
+                }
             }
             SearchSuggestions {
                 id: suggestionsStrip
@@ -1001,7 +1280,7 @@ FocusScope {
                             text: source.modelData.title
                             Layout.maximumWidth: answer.width * 0.65
                             onClicked: panel.agent.openLink(source.modelData.url)
-                            onHoveredChanged: hovered ? citationHover.show(source.modelData, this) : citationHover.close()
+                            onHoveredChanged: hovered ? citationHover.show(source.modelData, this) : citationHover.leave()
                         }
                         Label {
                             Layout.fillWidth: true
@@ -1026,25 +1305,45 @@ FocusScope {
         id: citationHover
         objectName: "agentCitationHover"
         property var citation: ({})
-        function show(c, over) {
+        readonly property bool pointerInside: cardHover.hovered
+        function show(c, over, at) {
             if (!c)
                 return
+            leaveTimer.stop()
             citation = c
             parent = over
-            x = 0
-            y = over.height + 2
+            x = at ? at.x : 0
+            y = at ? at.y + at.height + 2 : over.height + 2
             open()
         }
-        width: 300
-        padding: 8
+        function leave() { leaveTimer.restart() }
+        width: Math.min(320, panel.width - 16)
+        padding: 12
+        margins: 8
         closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
-        background: Rectangle { color: Theme.raised; border.color: Theme.line; radius: 4 }
+        onClosed: leaveTimer.stop()
+        background: PopoverBackground {}
+        Shortcut {
+            sequence: "Esc"
+            enabled: citationHover.visible
+            onActivated: citationHover.close()
+        }
+        Timer {
+            id: leaveTimer
+            interval: 300
+            onTriggered: if (!citationHover.pointerInside) citationHover.close()
+        }
         contentItem: ColumnLayout {
             spacing: 4
+            HoverHandler {
+                id: cardHover
+                onHoveredChanged: hovered ? leaveTimer.stop() : citationHover.leave()
+            }
             Label {
                 Layout.fillWidth: true
                 wrapMode: Text.Wrap
                 font.bold: true
+                textFormat: Text.PlainText
                 text: citationHover.citation.title ?? ""
             }
             Label {
@@ -1060,6 +1359,7 @@ FocusScope {
                 maximumLineCount: 6
                 elide: Text.ElideRight
                 font.italic: true
+                textFormat: Text.PlainText
                 text: "“" + (citationHover.citation.quote ?? "") + "”"
             }
             LinkButton {
@@ -1289,64 +1589,11 @@ FocusScope {
                     tint: proposal.stale ? Theme.warning : Theme.muted
                 }
             }
-            Repeater {
-                model: proposal.open || proposal.stale ? (proposal.allRows ? proposal.rows : proposal.rows.slice(0, 5)) : []
-                delegate: ItemDelegate {
-                    id: change
-                    required property var modelData
-                    required property int index
-                    objectName: "agentProposalRow_" + index
-                    Layout.fillWidth: true
-                    padding: 4
-                    enabled: modelData.line !== undefined && proposal.item.document !== undefined
-                    onClicked: panel.agent.selectLine(proposal.item.document, modelData.line)
-                    background: Rectangle {
-                        color: Theme.field
-                        border.color: change.visualFocus || change.hovered ? Theme.focus : Theme.line
-                        border.width: change.visualFocus ? 2 : 1
-                    }
-                    contentItem: RowLayout {
-                        spacing: 6
-                        Label {
-                            text: change.modelData.row !== undefined ? "#" + change.modelData.row : ""
-                            color: Theme.muted
-                            Layout.preferredWidth: 34
-                            Layout.alignment: Qt.AlignTop
-                        }
-                        ColumnLayout {
-                            Layout.fillWidth: true
-                            spacing: 1
-                            Label {
-                                visible: (change.modelData.before ?? "").length > 0
-                                Layout.fillWidth: true
-                                wrapMode: Text.Wrap
-                                textFormat: Text.PlainText
-                                font.strikeout: true
-                                color: Theme.danger
-                                text: change.modelData.before ?? ""
-                            }
-                            Label {
-                                visible: (change.modelData.after ?? "").length > 0
-                                Layout.fillWidth: true
-                                wrapMode: Text.Wrap
-                                textFormat: Text.PlainText
-                                color: Theme.success
-                                text: change.modelData.after ?? ""
-                            }
-                            Label {
-                                visible: text.length > 0
-                                Layout.fillWidth: true
-                                wrapMode: Text.Wrap
-                                color: Theme.muted
-                                text: change.modelData.change === "deleted" ? qsTr("Deleted")
-                                      : change.modelData.change === "moved" ? qsTr("Moved")
-                                      : change.modelData.change === "inserted" ? qsTr("Inserted")
-                                      : change.modelData.change === "other" ? (change.modelData.what ?? "")
-                                      : change.modelData.fields ? qsTr("Changes %1").arg(change.modelData.fields) : ""
-                            }
-                        }
-                    }
-                }
+            DiffRows {
+                visible: proposal.open || proposal.stale
+                rows: proposal.open || proposal.stale ? proposal.rows : []
+                document: proposal.item.document
+                all: proposal.allRows
             }
             LinkButton {
                 objectName: "agentProposalAll"
@@ -1363,9 +1610,8 @@ FocusScope {
                 text: proposal.stale ? qsTr("The subtitles changed after the agent read them.")
                                      : qsTr("Click a row to select its line. Applying adds one undoable step to the review.")
             }
-            RowLayout {
+            CardButtons {
                 visible: (proposal.open || proposal.stale) && !proposal.replying
-                spacing: 6
                 Button {
                     id: applyButton
                     objectName: "agentProposalApply"
@@ -1392,31 +1638,25 @@ FocusScope {
                     Keys.onReturnPressed: clicked()
                     Keys.onEnterPressed: clicked()
                 }
-                Button {
+                TellButton {
                     objectName: "agentProposalTell"
                     visible: proposal.open
-                    text: qsTr("Decline and tell the agent…")
                     onClicked: {
                         proposal.replying = true
-                        proposalReply.forceActiveFocus()
+                        proposalReply.begin()
                     }
                 }
             }
-            RowLayout {
+            ReplyRow {
+                id: proposalReply
                 visible: (proposal.open || proposal.stale) && proposal.replying
-                Layout.fillWidth: true
-                TextField {
-                    id: proposalReply
-                    objectName: "agentProposalReply"
-                    Layout.fillWidth: true
-                    placeholderText: qsTr("What should it do instead?")
-                    onAccepted: panel.agent.answer(proposal.item.ask, "decline", text)
-                    Keys.onEscapePressed: {
-                        proposal.replying = false
-                        applyButton.forceActiveFocus()
-                    }
+                fieldName: "agentProposalReply"
+                action: qsTr("Decline")
+                onSent: text => panel.agent.answer(proposal.item.ask, "decline", text)
+                onCancelled: {
+                    proposal.replying = false
+                    applyButton.forceActiveFocus()
                 }
-                Button { text: qsTr("Decline"); onClicked: panel.agent.answer(proposal.item.ask, "decline", proposalReply.text) }
             }
             RowLayout {
                 visible: !proposal.open && !proposal.stale
@@ -1434,6 +1674,57 @@ FocusScope {
         }
     }
 
+    component Details: ColumnLayout {
+        id: details
+        property string text
+        property bool open: false
+        Layout.fillWidth: true
+        spacing: 2
+        LinkButton {
+            objectName: "agentDetailsToggle"
+            iconRole: details.open ? "chevron-down" : "chevron-right"
+            text: qsTr("Details")
+            Accessible.role: Accessible.ButtonDropDown
+            onClicked: details.open = !details.open
+        }
+        Label {
+            objectName: "agentDetailsText"
+            visible: details.open
+            Layout.fillWidth: true
+            Layout.maximumHeight: 12 * fontMetrics.lineSpacing + 8
+            clip: true
+            font.family: "monospace"
+            textFormat: Text.PlainText
+            wrapMode: Text.WrapAnywhere
+            padding: 4
+            text: details.text
+            background: Rectangle { color: Theme.field; border.color: Theme.line }
+            FontMetrics { id: fontMetrics; font.family: "monospace" }
+        }
+    }
+
+    function askTitle(item) {
+        if (item.fromChild !== undefined)
+            return qsTr("%1 asks you").arg(item.fromChild)
+        const area = item.area ?? ""
+        return area === "subtitles" ? qsTr("Change the subtitles?")
+             : area === "setting" ? qsTr("Change a setting?")
+             : area === "plugin" ? qsTr("Use a plugin?")
+             : area === "mcp" ? qsTr("Use %1?").arg(item.tool ?? "")
+             : qsTr("Allow this action?")
+    }
+    function askSummary(item) {
+        const rows = item.rows ?? []
+        if (rows.length === 1 && rows[0].change === "edited" && rows[0].after !== undefined)
+            return rows[0].row !== undefined ? qsTr("Change line %1 to “%2”").arg(rows[0].row, rows[0].after)
+                                             : qsTr("Change a line to “%1”").arg(rows[0].after)
+        if (rows.length > 0)
+            return qsTr("Change %n line(s)", "", rows.length) + ((item.title ?? "").length > 0 ? " · " + item.title : "")
+        if ((item.setting ?? "").length > 0)
+            return qsTr("Set “%1” to %2").arg(item.setting, item.value ?? "")
+        return item.summary ?? ""
+    }
+
     Component {
         id: askItem
         Card {
@@ -1441,26 +1732,38 @@ FocusScope {
             readonly property var item: parent ? parent.item : ({})
             readonly property bool open: item.status === "open"
             readonly property bool always: item.type === "always"
+            readonly property var rows: item.rows ?? []
             property bool replying: false
             objectName: "agentAsk"
-            edge: item.type === "always" ? Theme.danger : Theme.warning
+            edge: always ? Theme.danger : Theme.warning
             RowLayout {
                 Layout.fillWidth: true
                 CardTitle {
+                    objectName: "agentAskTitle"
                     iconRole: ask.always ? "notice-error" : "notice-warning"
-                    text: ask.item.fromChild !== undefined ? qsTr("%1 asks you").arg(ask.item.fromChild)
-                          : ask.item.type === "judge" ? qsTr("Judge asks you")
-                          : ask.item.type === "always" ? qsTr("Allow %1?").arg(ask.item.tool ?? "")
-                          : qsTr("Run %1?").arg(ask.item.tool ?? "")
+                    text: panel.askTitle(ask.item)
                 }
                 Chip {
-                    visible: ask.item.type === "always" || ask.item.fromChild !== undefined
+                    visible: ask.always || ask.item.fromChild !== undefined
                     text: ask.item.fromChild === undefined ? qsTr("asks in every mode")
-                          : ask.item.type === "always" ? qsTr("sub-agent · asks in every mode") : qsTr("sub-agent")
-                    tint: ask.item.type === "always" ? Theme.danger : Theme.muted
+                          : ask.always ? qsTr("sub-agent · asks in every mode") : qsTr("sub-agent")
+                    tint: ask.always ? Theme.danger : Theme.muted
                 }
             }
-            Mono { text: ask.item.params ?? "" }
+            Label {
+                objectName: "agentAskSummary"
+                visible: text.length > 0
+                Layout.fillWidth: true
+                wrapMode: Text.Wrap
+                textFormat: Text.PlainText
+                text: panel.askSummary(ask.item)
+            }
+            DiffRows {
+                visible: ask.open && ask.rows.length > 1
+                rows: visible ? ask.rows : []
+                document: ask.item.document
+                rowName: "agentAskRow_"
+            }
             Label {
                 visible: ask.item.fromChild !== undefined && ask.open
                 Layout.fillWidth: true
@@ -1469,15 +1772,21 @@ FocusScope {
                 text: qsTr("Only you can answer; the parent agent can’t.")
             }
             Label {
+                objectName: "agentAskReason"
                 visible: (ask.item.reason ?? "").length > 0
                 Layout.fillWidth: true
                 wrapMode: Text.Wrap
+                textFormat: Text.PlainText
                 text: ask.item.type === "judge" ? qsTr("Why: %1").arg(ask.item.reason) : ask.item.reason
             }
-            RowLayout {
+            Details {
+                visible: ask.open
+                text: (ask.item.operation ?? "") + "\n" + (ask.item.params ?? "")
+            }
+            CardButtons {
                 visible: ask.open && !ask.replying
-                spacing: 6
                 Button {
+                    id: allowButton
                     objectName: "agentAllowOnce"
                     text: ask.item.type === "judge" ? qsTr("Allow") : qsTr("Allow once")
                     highlighted: true
@@ -1485,7 +1794,7 @@ FocusScope {
                 }
                 Button {
                     objectName: "agentAllowInThread"
-                    visible: ask.item.type !== "always"
+                    visible: !ask.always
                     text: qsTr("Allow in this thread")
                     onClicked: panel.agent.answer(ask.item.ask, "allowInThread", "")
                 }
@@ -1494,22 +1803,25 @@ FocusScope {
                     text: qsTr("Deny")
                     onClicked: panel.agent.answer(ask.item.ask, "deny", "")
                 }
-                Button {
-                    visible: ask.item.type !== "always"
-                    text: qsTr("Deny and tell the agent…")
-                    onClicked: ask.replying = true
+                TellButton {
+                    objectName: "agentAskTell"
+                    visible: !ask.always
+                    onClicked: {
+                        ask.replying = true
+                        askReply.begin()
+                    }
                 }
             }
-            RowLayout {
+            ReplyRow {
+                id: askReply
                 visible: ask.open && ask.replying
-                Layout.fillWidth: true
-                TextField {
-                    id: reply
-                    Layout.fillWidth: true
-                    placeholderText: qsTr("What should it do instead?")
-                    onAccepted: panel.agent.answer(ask.item.ask, "deny", text)
+                fieldName: "agentAskReply"
+                action: qsTr("Deny")
+                onSent: text => panel.agent.answer(ask.item.ask, "deny", text)
+                onCancelled: {
+                    ask.replying = false
+                    allowButton.forceActiveFocus()
                 }
-                Button { text: qsTr("Deny"); onClicked: panel.agent.answer(ask.item.ask, "deny", reply.text) }
             }
             Label {
                 visible: !ask.open
@@ -1622,10 +1934,10 @@ FocusScope {
                 color: Theme.muted
                 text: qsTr("Runs as an Automation macro: one undo step, and Force stop while it runs. Saved in the AI scripts folder, never added to Autoload.")
             }
-            RowLayout {
+            CardButtons {
                 visible: lua.open && !lua.replying
-                spacing: 6
                 Button {
+                    id: runButton
                     objectName: "agentScriptRun"
                     text: qsTr("Run")
                     highlighted: true
@@ -1636,24 +1948,24 @@ FocusScope {
                     text: qsTr("Don’t run")
                     onClicked: panel.agent.answer(lua.item.ask, "deny", "")
                 }
-                Button {
-                    text: qsTr("Don’t run and tell the agent…")
+                TellButton {
+                    objectName: "agentScriptTell"
                     onClicked: {
                         lua.replying = true
-                        scriptReply.forceActiveFocus()
+                        scriptReply.begin()
                     }
                 }
             }
-            RowLayout {
+            ReplyRow {
+                id: scriptReply
                 visible: lua.open && lua.replying
-                Layout.fillWidth: true
-                TextField {
-                    id: scriptReply
-                    Layout.fillWidth: true
-                    placeholderText: qsTr("What should it do instead?")
-                    onAccepted: panel.agent.answer(lua.item.ask, "deny", text)
+                fieldName: "agentScriptReply"
+                action: qsTr("Don’t run")
+                onSent: text => panel.agent.answer(lua.item.ask, "deny", text)
+                onCancelled: {
+                    lua.replying = false
+                    runButton.forceActiveFocus()
                 }
-                Button { text: qsTr("Don’t run"); onClicked: panel.agent.answer(lua.item.ask, "deny", scriptReply.text) }
             }
             RowLayout {
                 visible: !lua.open
@@ -1759,7 +2071,25 @@ FocusScope {
                 textFormat: Text.PlainText
                 text: (install.item.permissions ?? []).length === 0
                       ? qsTr("It asks for no permissions beyond the active subtitle file.")
-                      : qsTr("It asks for these permissions") + "\n• " + install.item.permissions.join("\n• ")
+                      : qsTr("It asks for these permissions")
+            }
+            Repeater {
+                model: install.open ? (install.item.permissions ?? []) : []
+                delegate: RowLayout {
+                    required property int index
+                    required property string modelData
+                    objectName: "agentInstallPermission_" + index
+                    Layout.fillWidth: true
+                    Layout.leftMargin: 4
+                    spacing: 6
+                    Icon { iconRole: "notice-info"; size: 13; Layout.alignment: Qt.AlignTop }
+                    Label {
+                        Layout.fillWidth: true
+                        wrapMode: Text.Wrap
+                        textFormat: Text.PlainText
+                        text: parent.modelData
+                    }
+                }
             }
             Label {
                 visible: install.open && (install.item.commands ?? []).length > 0
@@ -1832,10 +2162,10 @@ FocusScope {
                 color: Theme.muted
                 text: qsTr("Installs as Install from file… would: it turns on, and Plugins can turn it off or uninstall it.")
             }
-            RowLayout {
+            CardButtons {
                 visible: install.open && !install.replying
-                spacing: 6
                 Button {
+                    id: installAccept
                     objectName: "agentInstallAccept"
                     visible: !install.fullTrust && !install.item.needsRetrust
                     text: qsTr("Install")
@@ -1843,35 +2173,36 @@ FocusScope {
                     onClicked: panel.agent.answer(install.item.ask, "allowOnce", "")
                 }
                 DangerButton {
+                    id: installRisky
                     objectName: "agentInstallRisky"
                     visible: install.fullTrust || install.item.needsRetrust === true
                     text: install.item.needsRetrust ? qsTr("Trust and install") : qsTr("Install with full access")
                     onClicked: panel.agent.answer(install.item.ask, "allowOnce", "")
                 }
                 Button {
+                    id: installDecline
                     objectName: "agentInstallDecline"
                     text: qsTr("Don’t install")
                     onClicked: panel.agent.answer(install.item.ask, "deny", "")
                 }
-                Button {
-                    text: qsTr("Don’t install and tell the agent…")
+                TellButton {
+                    objectName: "agentInstallTell"
                     onClicked: {
                         install.replying = true
-                        installReply.forceActiveFocus()
+                        installReply.begin()
                     }
                 }
             }
-            RowLayout {
+            ReplyRow {
+                id: installReply
                 visible: install.open && install.replying
-                Layout.fillWidth: true
-                TextField {
-                    id: installReply
-                    objectName: "agentInstallReply"
-                    Layout.fillWidth: true
-                    placeholderText: qsTr("What should it do instead?")
-                    onAccepted: panel.agent.answer(install.item.ask, "deny", text)
+                fieldName: "agentInstallReply"
+                action: qsTr("Don’t install")
+                onSent: text => panel.agent.answer(install.item.ask, "deny", text)
+                onCancelled: {
+                    install.replying = false
+                    installDecline.forceActiveFocus()
                 }
-                Button { text: qsTr("Don’t install"); onClicked: panel.agent.answer(install.item.ask, "deny", installReply.text) }
             }
             RowLayout {
                 visible: !install.open

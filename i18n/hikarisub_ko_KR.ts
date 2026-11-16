@@ -165,11 +165,11 @@
     </message>
     <message>
         <source>%1 · active tab</source>
-        <translation>%1 · 활성 탭</translation>
+        <translation type="vanished">%1 · 활성 탭</translation>
     </message>
     <message>
         <source>Ask, or type @ to attach, / for commands</source>
-        <translation>질문하거나 @로 첨부, /로 명령</translation>
+        <translation type="vanished">질문하거나 @로 첨부, /로 명령</translation>
     </message>
     <message>
         <source>Add a provider first</source>
@@ -181,7 +181,7 @@
     </message>
     <message>
         <source>Attach</source>
-        <translation>첨부</translation>
+        <translation type="vanished">첨부</translation>
     </message>
     <message>
         <source>Search the web</source>
@@ -271,11 +271,11 @@
     </message>
     <message>
         <source>Delete this thread?</source>
-        <translation>이 스레드를 삭제하시겠습니까?</translation>
+        <translation type="vanished">이 스레드를 삭제하시겠습니까?</translation>
     </message>
     <message>
         <source>The conversation goes. Changes it made stay in your subtitles and in the review.</source>
-        <translation>대화는 삭제됩니다. 대화에서 한 변경은 자막과 검토에 그대로 남습니다.</translation>
+        <translation type="vanished">대화는 삭제됩니다. 대화에서 한 변경은 자막과 검토에 그대로 남습니다.</translation>
     </message>
     <message>
         <source>Delete</source>
@@ -385,15 +385,15 @@
     </message>
     <message>
         <source>Judge asks you</source>
-        <translation>판정자가 묻습니다</translation>
+        <translation type="vanished">판정자가 묻습니다</translation>
     </message>
     <message>
         <source>Allow %1?</source>
-        <translation>%1을(를) 허용하시겠습니까?</translation>
+        <translation type="vanished">%1을(를) 허용하시겠습니까?</translation>
     </message>
     <message>
         <source>Run %1?</source>
-        <translation>%1을(를) 실행하시겠습니까?</translation>
+        <translation type="vanished">%1을(를) 실행하시겠습니까?</translation>
     </message>
     <message>
         <source>asks in every mode</source>
@@ -433,7 +433,7 @@
     </message>
     <message>
         <source>Deny and tell the agent…</source>
-        <translation>거부하고 에이전트에게 알리기…</translation>
+        <translation type="vanished">거부하고 에이전트에게 알리기…</translation>
     </message>
     <message>
         <source>The signing key changed. The installed copy was signed by key %1, and this one by key %2. Install it only if you trust that the author changed keys.</source>
@@ -511,10 +511,6 @@
     </message>
     <message>
         <source>Don’t install</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Don’t install and tell the agent…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -646,10 +642,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Don’t run and tell the agent…</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Running %1</source>
         <translation type="unfinished"></translation>
     </message>
@@ -676,6 +668,100 @@
     <message>
         <source>Open</source>
         <translation type="unfinished">열기</translation>
+    </message>
+    <message>
+        <source>%1, %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tell the agent instead…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No threads match “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>active tab</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>+%n more</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n more attached file(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Ask, or type @ to attach a file, / for commands</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Attach a file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete “%1”?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Its messages are deleted. Changes it made stay in your subtitles and in the review.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Details</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change the subtitles?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change a setting?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use a plugin?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use %1?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Allow this action?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change line %1 to “%2”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change a line to “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Change %n line(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Set “%1” to %2</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>%1 asks to run this Lua script</source>
@@ -831,7 +917,7 @@
     </message>
     <message>
         <source>Decline and tell the agent…</source>
-        <translation>거절하고 에이전트에게 알리기…</translation>
+        <translation type="vanished">거절하고 에이전트에게 알리기…</translation>
     </message>
     <message>
         <source>Sent back to the agent: %1</source>
