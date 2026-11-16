@@ -2856,6 +2856,18 @@
    ]
   },
   {
+   "role": "audio-sliders",
+   "file": "audio-sliders.svg",
+   "label": "Zoom and volume sliders",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "audio-box"
+   ],
+   "pending": "CX7 #810"
+  },
+  {
    "role": "autosave",
    "file": "autosave.svg",
    "label": "Open auto save",
@@ -3193,6 +3205,18 @@
     "dock-headers",
     "title-bar"
    ]
+  },
+  {
+   "role": "side-bar-off",
+   "file": "side-bar-off.svg",
+   "label": "Move out of the side bar",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "dock-headers"
+   ],
+   "pending": "CX7 #810"
   },
   {
    "role": "side-bars-swap",
@@ -5573,6 +5597,18 @@
    ]
   },
   {
+   "role": "align-distribute",
+   "file": "align-distribute.svg",
+   "label": "Align and distribute",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "grid-menu"
+   ],
+   "pending": "CX7 #810"
+  },
+  {
    "role": "pos-to-margins",
    "file": "pos-to-margins.svg",
    "label": "Position to margins",
@@ -5607,6 +5643,30 @@
     "line-editor",
     "grid-menu"
    ]
+  },
+  {
+   "role": "phantom-keep-start",
+   "file": "phantom-keep-start.svg",
+   "label": "Keep the start aligned",
+   "accent": true,
+   "mirror": true,
+   "legacy": [],
+   "surfaces": [
+    "line-editor"
+   ],
+   "pending": "CX7 #810"
+  },
+  {
+   "role": "phantom-keep-end",
+   "file": "phantom-keep-end.svg",
+   "label": "Keep the end aligned",
+   "accent": true,
+   "mirror": true,
+   "legacy": [],
+   "surfaces": [
+    "line-editor"
+   ],
+   "pending": "CX7 #810"
   },
   {
    "role": "cycle-values",

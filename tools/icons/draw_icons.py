@@ -732,6 +732,8 @@ icon("tap-calibrate", "Calibrate tap latency", [], [AUDIOBOX],
      stroke("M5.5 2.5h5l2.5 11h-10z") + stroke("M4 10.5h8") + accent(stroke("M8 10.5l3.5-6.5")))
 icon("playback-speed", "Playback speed", [], [AUDIOBOX],
      stroke("M2.5 12a5.5 5.5 0 1 1 11 0") + accent(stroke("M8 12L5.5 8")) + dot(8, 12, 1.25))
+icon("audio-sliders", "Zoom and volume sliders", [], [AUDIOBOX],
+     stroke("M4.5 1.5v8M4.5 11.5v3M11.5 1.5v3M11.5 6.5v8") + accent(rect(2.5, 9.5, 4, 2, .5), rect(9.5, 4.5, 4, 2, .5)))
 
 PANELS = "dock-headers"
 ROWS3 = stroke("M1.5 3.5h7M1.5 8h7M1.5 12.5h7")
@@ -815,6 +817,8 @@ icon("side-bar-left", "Toggle left side bar", [], [VIEW, PANELS, "title-bar"],
      layout(stroke("M5.5 2.5v11")) + accent(stroke("M3.5 5.5v5")))
 icon("side-bar-right", "Toggle right side bar", [], [VIEW, PANELS, "title-bar"],
      layout(stroke("M10.5 2.5v11")) + accent(stroke("M12.5 5.5v5")))
+icon("side-bar-off", "Move out of the side bar", [], [PANELS],
+     rect(1.5, 1.5, 4, 13, 1) + stroke("M3.5 4.5v1M3.5 7.5v1") + accent(stroke("M7.5 8h6M11.5 6l2 2-2 2")))
 icon("side-bars-swap", "Swap side bars", [], [VIEW],
      layout(stroke("M4.5 2.5v11M11.5 2.5v11")) + accent(stroke("M6.5 6.5h3M8.5 5.5l1 1-1 1M9.5 9.5h-3M7.5 8.5l-1 1 1 1")))
 icon("tab-move-left", "Move tab left", [], [PANELS],
@@ -1367,6 +1371,10 @@ icon("distribute-horizontal", "Distribute horizontally", [], [VISUAL],
      accent(stroke("M1.5 1.5v13M14.5 1.5v13")) + frect(3, 4, 2, 8, .5) + frect(7, 3, 2, 10, .5) + frect(11, 5, 2, 6, .5))
 icon("distribute-vertical", "Distribute vertically", [], [VISUAL],
      accent(stroke("M1.5 1.5h13M1.5 14.5h13")) + frect(4, 3, 8, 2, .5) + frect(3, 7, 10, 2, .5) + frect(5, 11, 6, 2, .5))
+icon("align-distribute", "Align and distribute", [], ["grid-menu"],
+     frect(3, 1.5, 10, 2, .5) + frect(3, 5, 6, 2, .5)
+     + frect(4, 10, 2, 4, .5) + frect(7, 9.5, 2, 5, .5) + frect(10, 10.5, 2, 3, .5)
+     + accent(stroke("M1.5 1v6.5M1.5 9.5v5M14.5 9.5v5")))
 icon("pos-to-margins", "Position to margins", [], [EDITOR, GRIDMENU],
      rect(1.5, 1.5, 13, 13, 1) + dot(8, 6, 1.5)
      + accent(stroke("M4.5 10.5h7M6 9l-1.5 1.5L6 12M10 9l1.5 1.5L10 12")))
@@ -1375,6 +1383,12 @@ icon("margins-to-pos", "Margins to position", [], [EDITOR, GRIDMENU],
 icon("phantom", "Phantom", [], [EDITOR, GRIDMENU],
      letters("A", 1.5, 5.5) + accent(stroke("M7.5 6V4.5H9M13 4.5h1.5V6M14.5 10v1.5H13M9 11.5H7.5V10"
                                            "M10.5 4.5h1M10.5 11.5h1M7.5 7.5v1M14.5 7.5v1")), mirror=True)
+icon("phantom-keep-start", "Keep the start aligned", [], [EDITOR],
+     letters("A", 3, 5.5) + stroke("M8.5 6V4.5H10M13 4.5h1.5V6M14.5 10v1.5H13M10 11.5H8.5V10"
+                                   "M11 4.5h1M11 11.5h1M8.5 7.5v1M14.5 7.5v1") + accent(stroke("M1.5 2v12")), mirror=True)
+icon("phantom-keep-end", "Keep the end aligned", [], [EDITOR],
+     letters("A", 10, 5.5) + stroke("M1.5 6V4.5H3M6 4.5h1.5V6M7.5 10v1.5H6M3 11.5H1.5V10"
+                                    "M4 4.5h1M4 11.5h1M1.5 7.5v1M7.5 7.5v1") + accent(stroke("M14.5 2v12")), mirror=True)
 icon("cycle-values", "Cycle values", [], [EDITOR, "settings-dialog"],
      ROWS3 + accent(stroke("M10.5 12.5h2a2 2 0 0 0 2-2v-5a2 2 0 0 0-2-2h-2M12 2l-1.5 1.5L12 5")), mirror=True)
 icon("shift-by-x", "Shift X", [], [VISUAL], letters("X", 2, 2) + accent(stroke("M1.5 11.5h12M11.5 9.5l2 2-2 2")))
@@ -1432,6 +1446,7 @@ for card, roles in {
     "AI24 #744": ["update"],
     "PL7 #419": ["plugin-sandbox"],
     "AU6 #845": ["clip-to-shape", "shape-to-clip", "shape-merge"],
+    "CX7 #810": ["align-distribute", "phantom-keep-start", "phantom-keep-end", "audio-sliders", "side-bar-off"],
 }.items():
     for role in roles:
         PENDING[role] = card

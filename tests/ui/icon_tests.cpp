@@ -246,7 +246,7 @@ private slots:
                 QVERIFY2(referenced.contains(role), qPrintable(role + QStringLiteral(" has no surface and is not pending")));
             }
         }
-        QCOMPARE(pending, 6);
+        QCOMPARE(pending, 11);
     }
 
     static bool isStandInGlyph(const QString &literal)
@@ -813,7 +813,8 @@ Rectangle {
             QStringLiteral("split-tag-blocks"), QStringLiteral("line-break-insert"),
             QStringLiteral("line-break-left"), QStringLiteral("line-break-right"),
             QStringLiteral("line-break-remove"), QStringLiteral("case-title"), QStringLiteral("case-sentence"),
-            QStringLiteral("dialogue-swap"), QStringLiteral("phantom"), QStringLiteral("cycle-values"),
+            QStringLiteral("dialogue-swap"), QStringLiteral("phantom"), QStringLiteral("phantom-keep-start"),
+            QStringLiteral("phantom-keep-end"), QStringLiteral("cycle-values"),
             QStringLiteral("interpolate-lines"), QStringLiteral("citations")};
         QSet<QString> mirrored;
         for (const auto &value : manifest.value(QLatin1String("icons")).toArray()) {
