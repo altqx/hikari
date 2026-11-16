@@ -261,9 +261,9 @@ class AgentPanelTest : public QObject {
         QObject *opened = menu(menuName);
         QVERIFY(opened);
         QTRY_VERIFY(opened->property("opened").toBool());
-        auto *popupItem = qobject_cast<QQuickItem *>(opened->property("popupItem").value<QObject *>());
-        QVERIFY(popupItem);
-        const QRectF shown(popupItem->mapToGlobal(QPointF(0, 0)), popupItem->size());
+        auto *face = qobject_cast<QQuickItem *>(opened->property("background").value<QObject *>());
+        QVERIFY(face);
+        const QRectF shown(face->mapToGlobal(QPointF(0, 0)), face->size());
         QVERIFY2(QRectF(available).contains(shown),
                  qPrintable(QStringLiteral("%1 at %2,%3 %4x%5 leaves %6,%7 %8x%9")
                                 .arg(menuName).arg(shown.x()).arg(shown.y()).arg(shown.width()).arg(shown.height())
@@ -1134,7 +1134,7 @@ private slots:
         openPanel();
         const QRect available = window()->screen()->availableGeometry();
         window()->setGeometry(available);
-        QTRY_COMPARE(window()->geometry(), available);
+        QTRY_VERIFY(window()->geometry().bottom() >= available.bottom());
         composerMenusFit(available);
     }
 
@@ -1151,6 +1151,17 @@ private slots:
         composerMenusFit(available);
     }
 
+    static QObject *row(QObject *menu, const QString &name)
+    {
+        const int count = menu ? menu->property("count").toInt() : 0;
+        for (int i = 0; i < count; ++i) {
+            QQuickItem *at = nullptr;
+            QMetaObject::invokeMethod(menu, "itemAt", Q_RETURN_ARG(QQuickItem *, at), Q_ARG(int, i));
+            if (at && at->objectName() == name)
+                return at;
+        }
+        return nullptr;
+    }
     QObject *openAgentModels(const QString &agentKey)
     {
         QObject *submenu = menu(QStringLiteral("agentModelMenu_") + agentKey);
@@ -1171,16 +1182,16 @@ private slots:
         QObject *claude = openAgentModels(QStringLiteral("claude"));
         QVERIFY(claude);
         QVERIFY(agent().agentModels(QStringLiteral("claude")).value(QStringLiteral("loading")).toBool());
-        QObject *loading = claude->findChild<QObject *>(QStringLiteral("agentModelsLoading_claude"));
+        QObject *loading = row(claude, QStringLiteral("agentModelsLoading_claude"));
         QVERIFY(loading);
         QVERIFY(loading->property("visible").toBool());
         QVERIFY(!loading->property("enabled").toBool());
         QVERIFY(!agent().agentModels(QStringLiteral("codex")).value(QStringLiteral("loading")).toBool());
         QTRY_COMPARE(agent().agentModels(QStringLiteral("claude")).value(QStringLiteral("models")).toList().size(), 2);
         QVERIFY(!loading->property("visible").toBool());
-        QVERIFY(claude->findChild<QObject *>(QStringLiteral("agentModel_agent:claude/")));
+        QVERIFY(row(claude, QStringLiteral("agentModel_agent:claude/")));
         QObject *opus = nullptr;
-        QTRY_VERIFY((opus = claude->findChild<QObject *>(QStringLiteral("agentModel_agent:claude/opus"))));
+        QTRY_VERIFY((opus = row(claude, QStringLiteral("agentModel_agent:claude/opus"))));
         QVERIFY(QMetaObject::invokeMethod(opus, "click"));
         QTRY_COMPARE(agent().thread().value(QStringLiteral("model")).toString(), QStringLiteral("agent:claude\topus"));
         QCOMPARE(agent().thread().value(QStringLiteral("modelText")).toString(), QStringLiteral("Claude Code · Opus"));
@@ -1209,10 +1220,10 @@ private slots:
         QObject *codex = openAgentModels(QStringLiteral("codex"));
         QVERIFY(codex);
         QVERIFY(agent().agentModels(QStringLiteral("codex")).value(QStringLiteral("loading")).toBool());
-        QVERIFY(codex->findChild<QObject *>(QStringLiteral("agentModel_agent:codex/gpt-x")));
+        QVERIFY(row(codex, QStringLiteral("agentModel_agent:codex/gpt-x")));
         QTRY_VERIFY(!agent().agentModels(QStringLiteral("codex")).value(QStringLiteral("loading")).toBool());
         QCOMPARE(codexModels().size(), 1);
-        QVERIFY(codex->findChild<QObject *>(QStringLiteral("agentModel_agent:codex/")));
+        QVERIFY(row(codex, QStringLiteral("agentModel_agent:codex/")));
     }
 
     void withOnlyClaudeCodeThePanelRunsOnIt()

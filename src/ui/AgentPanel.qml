@@ -102,18 +102,17 @@ FocusScope {
     component ChooserButton: Button {
         id: chooser
         flat: true
-        contentItem: RowLayout {
+        contentItem: Row {
             spacing: 4
             Label {
                 objectName: chooser.objectName + "Label"
-                Layout.alignment: Qt.AlignVCenter
+                anchors.verticalCenter: parent.verticalCenter
                 text: chooser.text
                 color: chooser.palette.buttonText
-                elide: Text.ElideRight
             }
             Icon {
                 objectName: chooser.objectName + "Chevron"
-                Layout.alignment: Qt.AlignVCenter
+                anchors.verticalCenter: parent.verticalCenter
                 size: 12
                 iconRole: "chevron-down"
             }
