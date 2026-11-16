@@ -42,8 +42,8 @@ Commons: **yes** = the picture shows lines from the Wikimedia Commons TimedText 
 | karaoke/ne-mode | 2 (node effects mode) | homeNodeEffectsOnRayMv | Ray MV (karaoke) | - | taken |
 | karaoke/ne-preview (videoPanel crop) | 2 (node effects preview) | homeNodeEffectsOnRayMv | Ray MV (karaoke) | - | taken |
 | readme/audio | 1c audio | karaokeKaraokeModeOnRayMv (spectrum on) | Ray MV (karaoke) | - | taken |
-| karaoke/furigana-video | 2 (furigana) | karaokeFuriganaOnRayMv | Ray MV (karaoke) | - | pending: the furigana preview never arrives |
-| karaoke/templater-result | 1a/2 templater | karaokeTemplaterOnRayMv | Ray MV (karaoke) | - | pending: templater apply returns false |
+| karaoke/furigana-video | 2 (furigana) | karaokeFuriganaOnRayMv | Ray MV (karaoke) | - | taken (hk-cx7-k6), not usable yet: the preview now arrives (harness fix: trust the template first), but no furigana reading shows at frame 1818; needs a frame or position choice |
+| karaoke/templater-result | 1a/2 templater | karaokeTemplaterOnRayMv | Ray MV (karaoke) | - | taken (hk-cx7-k6): Colour sweep, 14 lines generated from our own line (harness fix: wait for canApply before apply) |
 | karaoke/agent-karaoke | 2 | - | Ray MV (karaoke) | - | skipped: needs a real agent run; stand-in AI only (Q551) |
 | customize/layouts clip | 1a customize/layouts-*.mp4 | - | Sprite Fright + Ray MV (karaoke) | yes | deferred: clip not made; only the Karaoke still exists |
 | Menu-dependent rows | see out/cx7/audit.md, menubar/audit-1b.md | - | - | - | deferred: every menu changes |
@@ -59,7 +59,7 @@ Kept and undone items leave the Review panel, which lists only waiting items. So
 
 ## English numerus catalog (2026-11-16)
 
-Before 1379602c4's follow-up, release_screenshots_tests didn't install `i18n/qm/hikarisub_en.qm`, so `%n` strings showed as "(s)". The suite now loads it in initTestCase and keeps it for the whole run. I checked every picture from this harness (OCR of each light raw, then by eye: checking, projects, windows, node effects, karaoke, translation, guide shots). Only home/ai-review showed "(s)": "1 change(s) to review" in Review and in the status bar. It's the only retake (unit hk-cx7-a7), and it now reads "1 change to review". home/plugins (homePlugins, hk-cx7-r1) has no `%n` string. Other suites' shots (batch A/G) come from their own harnesses and aren't in this check.
+Before 04a787e6c, release_screenshots_tests didn't install `i18n/qm/hikarisub_en.qm`, so `%n` strings showed as "(s)". The suite now loads it in initTestCase and keeps it for the whole run. I checked every picture from this harness (OCR of each light raw, then by eye: checking, projects, windows, node effects, karaoke, translation, guide shots). Only home/ai-review showed "(s)": "1 change(s) to review" in Review and in the status bar. It's the only retake (unit hk-cx7-a7), and it now reads "1 change to review". home/plugins (homePlugins, hk-cx7-r1) has no `%n` string. Other suites' shots (batch A/G) come from their own harnesses and aren't in this check.
 
 ## Failing existing shot functions
 
