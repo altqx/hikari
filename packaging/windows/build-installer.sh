@@ -6,7 +6,7 @@
 #                      --out <setup.exe> [--icon <file.ico>]
 #                      [--icon-header <FileTypeIcons.h>] [--work <dir>]
 #
-# HS_MAKENSIS overrides the makensis tools.lock names (same version); HS_STDUTILS_ZIP names a local StdUtils zip.
+# HS_MAKENSIS overrides the makensis tools.lock names (same version).
 set -euo pipefail
 
 here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
@@ -49,15 +49,6 @@ if [[ $have_nsis != "v$want_nsis" ]]; then
   exit 1
 fi
 
-stdutils_zip=${HS_STDUTILS_ZIP:-$work/$(basename "$(lock_value STDUTILS_URL)")}
-if [[ ! -f $stdutils_zip ]]; then
-  curl -fsSL --retry 3 -o "$stdutils_zip.part" "$(lock_value STDUTILS_URL)"
-  mv "$stdutils_zip.part" "$stdutils_zip"
-fi
-echo "$(lock_value STDUTILS_SHA256)  $stdutils_zip" | sha256sum -c --quiet -
-rm -rf "$work/stdutils"
-unzip -q "$stdutils_zip" 'Include/*' 'Plugins/Unicode/*' -d "$work/stdutils"
-
 args=(--payload "$payload" --version "$version" --codebase "$codebase" --out "$work/gen")
 [[ -n $icon ]] && args+=(--icon "$icon")
 [[ -n $icon_header ]] && args+=(--icon-header "$icon_header")
@@ -66,7 +57,6 @@ python3 "$here/make-payload-nsh.py" "${args[@]}"
 rm -f "$out"
 "$makensis" -V2 -WX -INPUTCHARSET UTF8 \
   "-DHS_PAYLOAD_NSH=$work/gen/payload.nsh" \
-  "-DHS_STDUTILS=$work/stdutils" \
   "-DHS_OUTFILE=$out" \
   "$here/hikarisub.nsi"
 test -s "$out"
