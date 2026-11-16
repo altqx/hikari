@@ -13,14 +13,14 @@ ShellMenu {
     ShellMenuItem {
         command: "GLOBAL_PHANTOM_KEEP_START"
         objectName: menu.prefix + "PhantomKeepStart"
-        iconRole: "align-left"
+        iconRole: "phantom-keep-start"
         text: qsTr("Keep the start aligned")
         onTriggered: if (!menu.shellRoot.hotkeyGesture(command)) menu.shellRoot.app.phantom(false)
     }
     ShellMenuItem {
         command: "GLOBAL_PHANTOM_KEEP_END"
         objectName: menu.prefix + "PhantomKeepEnd"
-        iconRole: "align-right"
+        iconRole: "phantom-keep-end"
         text: qsTr("Keep the end aligned")
         onTriggered: if (!menu.shellRoot.hotkeyGesture(command)) menu.shellRoot.app.phantom(true)
     }

@@ -3636,39 +3636,39 @@ Output device: %2</source>
     <name>HikariSub.Editor</name>
     <message>
         <source>Bottom-left</source>
-        <translation>왼쪽 아래</translation>
+        <translation type="vanished">왼쪽 아래</translation>
     </message>
     <message>
         <source>Bottom-centre</source>
-        <translation>중앙 아래</translation>
+        <translation type="vanished">중앙 아래</translation>
     </message>
     <message>
         <source>Bottom-right</source>
-        <translation>오른쪽 아래</translation>
+        <translation type="vanished">오른쪽 아래</translation>
     </message>
     <message>
         <source>Middle-left</source>
-        <translation>왼쪽 중앙</translation>
+        <translation type="vanished">왼쪽 중앙</translation>
     </message>
     <message>
         <source>Centre</source>
-        <translation>중앙</translation>
+        <translation type="vanished">중앙</translation>
     </message>
     <message>
         <source>Middle-right</source>
-        <translation>오른쪽 중앙</translation>
+        <translation type="vanished">오른쪽 중앙</translation>
     </message>
     <message>
         <source>Top-left</source>
-        <translation>왼쪽 위</translation>
+        <translation type="vanished">왼쪽 위</translation>
     </message>
     <message>
         <source>Top-centre</source>
-        <translation>중앙 위</translation>
+        <translation type="vanished">중앙 위</translation>
     </message>
     <message>
         <source>Top-right</source>
-        <translation>오른쪽 위</translation>
+        <translation type="vanished">오른쪽 위</translation>
     </message>
     <message>
         <source>Text position</source>
@@ -3811,6 +3811,10 @@ Output device: %2</source>
         <translation>“%1” 단어를 사전에 추가하지 못했습니다.</translation>
     </message>
     <message>
+        <source>Check spelling as you type</source>
+        <translation>입력하는 동안 철자 검사</translation>
+    </message>
+    <message>
         <source>Line editor</source>
         <translation>줄 편집기</translation>
     </message>
@@ -3859,8 +3863,12 @@ Output device: %2</source>
         <translation>선택한 텍스트 붙여 넣기</translation>
     </message>
     <message>
+        <source>Add a tag button…</source>
+        <translation>태그 버튼 추가…</translation>
+    </message>
+    <message>
         <source>Add a tag button</source>
-        <translation>태그 버튼 추가</translation>
+        <translation type="vanished">태그 버튼 추가</translation>
     </message>
     <message>
         <source>Edit…</source>
@@ -3880,7 +3888,7 @@ Output device: %2</source>
     </message>
     <message>
         <source>Check spelling</source>
-        <translation>철자 검사</translation>
+        <translation type="vanished">철자 검사</translation>
     </message>
     <message>
         <source>Original text</source>
@@ -6241,6 +6249,10 @@ Failed to copy %2 fonts.</source>
         <translation>줄 바꿈 기준으로</translation>
     </message>
     <message>
+        <source>Typesetting</source>
+        <translation>식자</translation>
+    </message>
+    <message>
         <source>Interpolate across lines…</source>
         <translation>여러 줄에 걸쳐 보간…</translation>
     </message>
@@ -6904,7 +6916,7 @@ Failed to copy %2 fonts.</source>
         <translation>Shift+클릭으로 단축키를 설정합니다</translation>
     </message>
     <message>
-        <source>AI actions…</source>
+        <source>AI actions</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -8141,7 +8153,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Add QC note</source>
-        <translation>QC 메모 추가</translation>
+        <translation type="vanished">QC 메모 추가</translation>
     </message>
     <message>
         <source>Perspective tracking…</source>
@@ -8396,6 +8408,10 @@ Failed to copy %2 fonts.</source>
         <translation>\fsp 거꾸로 순환</translation>
     </message>
     <message>
+        <source>Add QC note…</source>
+        <translation>QC 메모 추가…</translation>
+    </message>
+    <message>
         <source>Move tab to new window</source>
         <translation>탭을 새 창으로 이동</translation>
     </message>
@@ -8614,7 +8630,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>AI</source>
-        <translation type="unfinished">AI</translation>
+        <translation type="obsolete">AI</translation>
     </message>
     <message>
         <source>Rewrite…</source>
@@ -8647,11 +8663,15 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Edit actions…</source>
+        <source>%1…</source>
+        <translation>%1…</translation>
+    </message>
+    <message>
+        <source>Edit actions</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Add a model in Settings › AI…</source>
+        <source>Add a model in Settings › AI</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -16754,6 +16774,46 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>기준</translation>
     </message>
     <message>
+        <source>Align</source>
+        <translation>맞춤</translation>
+    </message>
+    <message>
+        <source>Left edges</source>
+        <translation>왼쪽 가장자리</translation>
+    </message>
+    <message>
+        <source>Centres</source>
+        <translation>가로 가운데</translation>
+    </message>
+    <message>
+        <source>Right edges</source>
+        <translation>오른쪽 가장자리</translation>
+    </message>
+    <message>
+        <source>Top edges</source>
+        <translation>위쪽 가장자리</translation>
+    </message>
+    <message>
+        <source>Middles</source>
+        <translation>세로 가운데</translation>
+    </message>
+    <message>
+        <source>Bottom edges</source>
+        <translation>아래쪽 가장자리</translation>
+    </message>
+    <message>
+        <source>Distribute</source>
+        <translation>균등 분배</translation>
+    </message>
+    <message>
+        <source>Horizontally</source>
+        <translation>가로로</translation>
+    </message>
+    <message>
+        <source>Vertically</source>
+        <translation>세로로</translation>
+    </message>
+    <message>
         <source>The active line</source>
         <translation type="vanished">활성 줄</translation>
     </message>
@@ -16771,35 +16831,35 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Align left edges</source>
-        <translation>왼쪽 가장자리 맞추기</translation>
+        <translation type="vanished">왼쪽 가장자리 맞추기</translation>
     </message>
     <message>
         <source>Align centres</source>
-        <translation>가로 가운데 맞추기</translation>
+        <translation type="vanished">가로 가운데 맞추기</translation>
     </message>
     <message>
         <source>Align right edges</source>
-        <translation>오른쪽 가장자리 맞추기</translation>
+        <translation type="vanished">오른쪽 가장자리 맞추기</translation>
     </message>
     <message>
         <source>Align top edges</source>
-        <translation>위쪽 가장자리 맞추기</translation>
+        <translation type="vanished">위쪽 가장자리 맞추기</translation>
     </message>
     <message>
         <source>Align middles</source>
-        <translation>세로 가운데 맞추기</translation>
+        <translation type="vanished">세로 가운데 맞추기</translation>
     </message>
     <message>
         <source>Align bottom edges</source>
-        <translation>아래쪽 가장자리 맞추기</translation>
+        <translation type="vanished">아래쪽 가장자리 맞추기</translation>
     </message>
     <message>
         <source>Distribute horizontally</source>
-        <translation>가로로 균등 분배</translation>
+        <translation type="vanished">가로로 균등 분배</translation>
     </message>
     <message>
         <source>Distribute vertically</source>
-        <translation>세로로 균등 분배</translation>
+        <translation type="vanished">세로로 균등 분배</translation>
     </message>
     <message>
         <source>Phantom</source>
@@ -19536,6 +19596,14 @@ because it was edited.</source>
         <translation>문법 설정…</translation>
     </message>
     <message>
+        <source>Add “%1” to project dictionary</source>
+        <translation>프로젝트 사전에 “%1” 추가</translation>
+    </message>
+    <message>
+        <source>Add “%1” to my dictionary</source>
+        <translation>내 사전에 “%1” 추가</translation>
+    </message>
+    <message>
         <source>Grammar · %1</source>
         <translation>문법 · %1</translation>
     </message>
@@ -19550,14 +19618,6 @@ because it was edited.</source>
     <message>
         <source>Add “%1” to dictionary</source>
         <translation>사전에 “%1” 추가</translation>
-    </message>
-    <message>
-        <source>This project</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Mine</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Add to project dictionary</source>
@@ -21263,7 +21323,7 @@ Styles deleted:
     </message>
     <message>
         <source>Tag list options</source>
-        <translation>태그 목록 옵션</translation>
+        <translation type="vanished">태그 목록 옵션</translation>
     </message>
     <message>
         <source>Tag list</source>
@@ -23947,7 +24007,7 @@ Styles deleted:
     </message>
     <message>
         <source>More</source>
-        <translation>더 보기</translation>
+        <translation type="vanished">더 보기</translation>
     </message>
     <message>
         <source>Run %1: %2, %3</source>
@@ -27006,6 +27066,10 @@ do not work on comments</source>
     <message>
         <source>Drag a panel here</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>More options</source>
+        <translation>옵션 더 보기</translation>
     </message>
 </context>
 <context>

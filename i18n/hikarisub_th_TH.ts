@@ -3636,39 +3636,39 @@ Output device: %2</source>
     <name>HikariSub.Editor</name>
     <message>
         <source>Bottom-left</source>
-        <translation>ล่างซ้าย</translation>
+        <translation type="vanished">ล่างซ้าย</translation>
     </message>
     <message>
         <source>Bottom-centre</source>
-        <translation>ล่างกึ่งกลาง</translation>
+        <translation type="vanished">ล่างกึ่งกลาง</translation>
     </message>
     <message>
         <source>Bottom-right</source>
-        <translation>ล่างขวา</translation>
+        <translation type="vanished">ล่างขวา</translation>
     </message>
     <message>
         <source>Middle-left</source>
-        <translation>กึ่งกลางซ้าย</translation>
+        <translation type="vanished">กึ่งกลางซ้าย</translation>
     </message>
     <message>
         <source>Centre</source>
-        <translation>กลาง</translation>
+        <translation type="vanished">กลาง</translation>
     </message>
     <message>
         <source>Middle-right</source>
-        <translation>กึ่งกลางขวา</translation>
+        <translation type="vanished">กึ่งกลางขวา</translation>
     </message>
     <message>
         <source>Top-left</source>
-        <translation>บนซ้าย</translation>
+        <translation type="vanished">บนซ้าย</translation>
     </message>
     <message>
         <source>Top-centre</source>
-        <translation>บนกึ่งกลาง</translation>
+        <translation type="vanished">บนกึ่งกลาง</translation>
     </message>
     <message>
         <source>Top-right</source>
-        <translation>บนขวา</translation>
+        <translation type="vanished">บนขวา</translation>
     </message>
     <message>
         <source>Text position</source>
@@ -3811,6 +3811,10 @@ Output device: %2</source>
         <translation>ไม่ได้เพิ่มคำว่า “%1” ลงในพจนานุกรม</translation>
     </message>
     <message>
+        <source>Check spelling as you type</source>
+        <translation>ตรวจการสะกดขณะพิมพ์</translation>
+    </message>
+    <message>
         <source>Line editor</source>
         <translation>ตัวแก้ไขบรรทัด</translation>
     </message>
@@ -3859,8 +3863,12 @@ Output device: %2</source>
         <translation>วางข้อความที่เลือก</translation>
     </message>
     <message>
+        <source>Add a tag button…</source>
+        <translation>เพิ่มปุ่มแท็ก…</translation>
+    </message>
+    <message>
         <source>Add a tag button</source>
-        <translation>เพิ่มปุ่มแท็ก</translation>
+        <translation type="vanished">เพิ่มปุ่มแท็ก</translation>
     </message>
     <message>
         <source>Edit…</source>
@@ -3880,7 +3888,7 @@ Output device: %2</source>
     </message>
     <message>
         <source>Check spelling</source>
-        <translation>ตรวจการสะกด</translation>
+        <translation type="vanished">ตรวจการสะกด</translation>
     </message>
     <message>
         <source>Original text</source>
@@ -6241,6 +6249,10 @@ Failed to copy %2 fonts.</source>
         <translation>ตามจุดแบ่งบรรทัด</translation>
     </message>
     <message>
+        <source>Typesetting</source>
+        <translation>ไทป์เซ็ต</translation>
+    </message>
+    <message>
         <source>Interpolate across lines…</source>
         <translation>ประมาณค่าระหว่างบรรทัด…</translation>
     </message>
@@ -6904,7 +6916,7 @@ Failed to copy %2 fonts.</source>
         <translation>Shift+คลิกเพื่อกำหนดปุ่มลัด</translation>
     </message>
     <message>
-        <source>AI actions…</source>
+        <source>AI actions</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -8141,7 +8153,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Add QC note</source>
-        <translation>เพิ่มโน้ต QC</translation>
+        <translation type="vanished">เพิ่มโน้ต QC</translation>
     </message>
     <message>
         <source>Perspective tracking…</source>
@@ -8396,6 +8408,10 @@ Failed to copy %2 fonts.</source>
         <translation>วนรอบ \fsp ย้อนกลับ</translation>
     </message>
     <message>
+        <source>Add QC note…</source>
+        <translation>เพิ่มโน้ต QC…</translation>
+    </message>
+    <message>
         <source>Move tab to new window</source>
         <translation>ย้ายแท็บไปหน้าต่างใหม่</translation>
     </message>
@@ -8614,7 +8630,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>AI</source>
-        <translation type="unfinished">AI</translation>
+        <translation type="obsolete">AI</translation>
     </message>
     <message>
         <source>Rewrite…</source>
@@ -8647,11 +8663,15 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Edit actions…</source>
+        <source>%1…</source>
+        <translation>%1…</translation>
+    </message>
+    <message>
+        <source>Edit actions</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Add a model in Settings › AI…</source>
+        <source>Add a model in Settings › AI</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -16754,6 +16774,46 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>อ้างอิงกับ</translation>
     </message>
     <message>
+        <source>Align</source>
+        <translation>จัดแนว</translation>
+    </message>
+    <message>
+        <source>Left edges</source>
+        <translation>ขอบซ้าย</translation>
+    </message>
+    <message>
+        <source>Centres</source>
+        <translation>กึ่งกลางแนวนอน</translation>
+    </message>
+    <message>
+        <source>Right edges</source>
+        <translation>ขอบขวา</translation>
+    </message>
+    <message>
+        <source>Top edges</source>
+        <translation>ขอบบน</translation>
+    </message>
+    <message>
+        <source>Middles</source>
+        <translation>กึ่งกลางแนวตั้ง</translation>
+    </message>
+    <message>
+        <source>Bottom edges</source>
+        <translation>ขอบล่าง</translation>
+    </message>
+    <message>
+        <source>Distribute</source>
+        <translation>กระจาย</translation>
+    </message>
+    <message>
+        <source>Horizontally</source>
+        <translation>แนวนอน</translation>
+    </message>
+    <message>
+        <source>Vertically</source>
+        <translation>แนวตั้ง</translation>
+    </message>
+    <message>
         <source>The active line</source>
         <translation type="vanished">บรรทัดที่ใช้งาน</translation>
     </message>
@@ -16771,35 +16831,35 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Align left edges</source>
-        <translation>จัดขอบซ้าย</translation>
+        <translation type="vanished">จัดขอบซ้าย</translation>
     </message>
     <message>
         <source>Align centres</source>
-        <translation>จัดกึ่งกลางแนวนอน</translation>
+        <translation type="vanished">จัดกึ่งกลางแนวนอน</translation>
     </message>
     <message>
         <source>Align right edges</source>
-        <translation>จัดขอบขวา</translation>
+        <translation type="vanished">จัดขอบขวา</translation>
     </message>
     <message>
         <source>Align top edges</source>
-        <translation>จัดขอบบน</translation>
+        <translation type="vanished">จัดขอบบน</translation>
     </message>
     <message>
         <source>Align middles</source>
-        <translation>จัดกึ่งกลางแนวตั้ง</translation>
+        <translation type="vanished">จัดกึ่งกลางแนวตั้ง</translation>
     </message>
     <message>
         <source>Align bottom edges</source>
-        <translation>จัดขอบล่าง</translation>
+        <translation type="vanished">จัดขอบล่าง</translation>
     </message>
     <message>
         <source>Distribute horizontally</source>
-        <translation>กระจายแนวนอน</translation>
+        <translation type="vanished">กระจายแนวนอน</translation>
     </message>
     <message>
         <source>Distribute vertically</source>
-        <translation>กระจายแนวตั้ง</translation>
+        <translation type="vanished">กระจายแนวตั้ง</translation>
     </message>
     <message>
         <source>Phantom</source>
@@ -19536,6 +19596,14 @@ because it was edited.</source>
         <translation>การตั้งค่าไวยากรณ์…</translation>
     </message>
     <message>
+        <source>Add “%1” to project dictionary</source>
+        <translation>เพิ่ม “%1” ไปยังพจนานุกรมโปรเจกต์</translation>
+    </message>
+    <message>
+        <source>Add “%1” to my dictionary</source>
+        <translation>เพิ่ม “%1” ไปยังพจนานุกรมของฉัน</translation>
+    </message>
+    <message>
         <source>Grammar · %1</source>
         <translation>ไวยากรณ์ · %1</translation>
     </message>
@@ -19550,14 +19618,6 @@ because it was edited.</source>
     <message>
         <source>Add “%1” to dictionary</source>
         <translation>เพิ่ม “%1” ไปยังพจนานุกรม</translation>
-    </message>
-    <message>
-        <source>This project</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Mine</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Add to project dictionary</source>
@@ -21263,7 +21323,7 @@ Styles deleted:
     </message>
     <message>
         <source>Tag list options</source>
-        <translation>ตัวเลือกรายการแท็ก</translation>
+        <translation type="vanished">ตัวเลือกรายการแท็ก</translation>
     </message>
     <message>
         <source>Tag list</source>
@@ -23947,7 +24007,7 @@ Styles deleted:
     </message>
     <message>
         <source>More</source>
-        <translation>เพิ่มเติม</translation>
+        <translation type="vanished">เพิ่มเติม</translation>
     </message>
     <message>
         <source>Run %1: %2, %3</source>
@@ -27006,6 +27066,10 @@ do not work on comments</source>
     <message>
         <source>Drag a panel here</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>More options</source>
+        <translation>ตัวเลือกเพิ่มเติม</translation>
     </message>
 </context>
 <context>

@@ -51,7 +51,7 @@ private slots:
         const auto nodes = accessibleTree(window);
         const QString tree = describe(nodes);
         const auto expect = [&](QAccessible::Role role, const char *name) {
-            QVERIFY2(hasNode(nodes, role, QLatin1String(name)), qPrintable(QStringLiteral("%1\n%2").arg(QLatin1String(name), tree)));
+            QVERIFY2(hasNode(nodes, role, QString::fromUtf8(name)), qPrintable(QStringLiteral("%1\n%2").arg(QString::fromUtf8(name), tree)));
         };
         expect(QAccessible::CheckBox, "Comment");
         expect(QAccessible::EditableText, "Layer");
@@ -66,7 +66,7 @@ private slots:
         expect(QAccessible::EditableText, "Vertical margin");
         expect(QAccessible::ComboBox, "Effect");
         expect(QAccessible::Button, "Text position");
-        expect(QAccessible::Button, "Add a tag button");
+        expect(QAccessible::Button, "Add a tag button…");
         QVERIFY2(!hasNode(nodes, QAccessible::RadioButton, QStringLiteral("Show times")), qPrintable(tree));
         QVERIFY2(!hasNode(nodes, QAccessible::RadioButton, QStringLiteral("Show frames")), qPrintable(tree));
         expect(QAccessible::StaticText, "Wraps 5/43");

@@ -9,7 +9,7 @@ ShellMenu {
     required property string prefix
     property bool toVideoFrame: false
     objectName: prefix + "AlignDistributeMenu"
-    iconRole: "align-center"
+    iconRole: "align-distribute"
     title: qsTr("Align and distribute")
     onAboutToShow: toVideoFrame = shellRoot.app.settings.value("grid.alignToVideoFrame")
     function run(symbol, action) {
@@ -34,25 +34,26 @@ ShellMenu {
         onTriggered: menu.relativeTo(true)
     }
     MenuSeparator {}
+    MenuHeading { text: qsTr("Align") }
     ShellMenuItem {
         command: "GLOBAL_ALIGN_LEFT_EDGES"
         iconRole: "align-left"
         objectName: menu.prefix + "AlignLeftEdges"
-        text: qsTr("Align left edges")
+        text: qsTr("Left edges")
         onTriggered: menu.run(command, () => menu.shellRoot.app.alignLines(0))
     }
     ShellMenuItem {
         command: "GLOBAL_ALIGN_CENTRES"
         iconRole: "align-center"
         objectName: menu.prefix + "AlignCentres"
-        text: qsTr("Align centres")
+        text: qsTr("Centres")
         onTriggered: menu.run(command, () => menu.shellRoot.app.alignLines(1))
     }
     ShellMenuItem {
         command: "GLOBAL_ALIGN_RIGHT_EDGES"
         iconRole: "align-right"
         objectName: menu.prefix + "AlignRightEdges"
-        text: qsTr("Align right edges")
+        text: qsTr("Right edges")
         onTriggered: menu.run(command, () => menu.shellRoot.app.alignLines(2))
     }
     MenuSeparator {}
@@ -60,36 +61,37 @@ ShellMenu {
         command: "GLOBAL_ALIGN_TOP_EDGES"
         iconRole: "align-top"
         objectName: menu.prefix + "AlignTopEdges"
-        text: qsTr("Align top edges")
+        text: qsTr("Top edges")
         onTriggered: menu.run(command, () => menu.shellRoot.app.alignLines(3))
     }
     ShellMenuItem {
         command: "GLOBAL_ALIGN_MIDDLES"
         iconRole: "align-middle"
         objectName: menu.prefix + "AlignMiddles"
-        text: qsTr("Align middles")
+        text: qsTr("Middles")
         onTriggered: menu.run(command, () => menu.shellRoot.app.alignLines(4))
     }
     ShellMenuItem {
         command: "GLOBAL_ALIGN_BOTTOM_EDGES"
         iconRole: "align-bottom"
         objectName: menu.prefix + "AlignBottomEdges"
-        text: qsTr("Align bottom edges")
+        text: qsTr("Bottom edges")
         onTriggered: menu.run(command, () => menu.shellRoot.app.alignLines(5))
     }
     MenuSeparator {}
+    MenuHeading { text: qsTr("Distribute") }
     ShellMenuItem {
         command: "GLOBAL_DISTRIBUTE_HORIZONTALLY"
         iconRole: "distribute-horizontal"
         objectName: menu.prefix + "DistributeHorizontally"
-        text: qsTr("Distribute horizontally")
+        text: qsTr("Horizontally")
         onTriggered: menu.run(command, () => menu.shellRoot.app.distributeLines(false))
     }
     ShellMenuItem {
         command: "GLOBAL_DISTRIBUTE_VERTICALLY"
         iconRole: "distribute-vertical"
         objectName: menu.prefix + "DistributeVertically"
-        text: qsTr("Distribute vertically")
+        text: qsTr("Vertically")
         onTriggered: menu.run(command, () => menu.shellRoot.app.distributeLines(true))
     }
 }

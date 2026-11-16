@@ -2048,6 +2048,77 @@ private slots:
         }
     }
 
+    void gridAndLineEditorMenuScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        window->resize(1400, 860);
+        QVERIFY(application->openFile(episode));
+        auto &settings = *application->settingsStore();
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        auto *root = engine->rootObjects().first();
+        QTranslator english;
+        QVERIFY(english.load(QStringLiteral(HIKARI_EN_CATALOG)));
+        QCoreApplication::installTranslator(&english);
+        auto removeEnglish = qScopeGuard([&] { QCoreApplication::removeTranslator(&english); });
+        QVERIFY(application->tagButtons().add(QStringLiteral("Blur"), QStringLiteral("\\blur2"), 0));
+        const auto grab = [&](const QString &name) {
+            QTest::qWait(300);
+            const QRect frame = window->frameGeometry();
+            QVERIFY(window->screen()->grabWindow(0, frame.x(), frame.y(), frame.width(), frame.height()).save(out + name));
+        };
+        const auto closeAll = [&](std::initializer_list<QObject *> menus) {
+            for (QObject *open : menus)
+                QMetaObject::invokeMethod(open, "close");
+            for (QObject *open : menus)
+                QTRY_VERIFY(!open->property("visible").toBool());
+        };
+        const auto openSub = [&](const char *name) {
+            QObject *sub = named(name);
+            QVERIFY(sub && QMetaObject::invokeMethod(sub, "open"));
+            QTRY_VERIFY(sub->property("opened").toBool());
+        };
+        for (const auto code : ui::theme::kCodes) {
+            const QString theme = ui::theme::codeName(code);
+            settings.setValue(QStringLiteral("appearance.theme"), theme);
+            auto *controls = root->property("palette").value<QObject *>();
+            QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+            const QString suffix = QLatin1Char('-') + theme + QStringLiteral(".png");
+            auto *grid = item("editingGrid");
+            grid->forceActiveFocus();
+            press(Qt::Key_Home);
+            press(Qt::Key_Down, Qt::ShiftModifier);
+            press(Qt::Key_Down, Qt::ShiftModifier);
+            for (const char *sub : {"gridTypesettingMenu", "gridAlignDistributeMenu"}) {
+                grid->forceActiveFocus();
+                QTest::keyClick(window, Qt::Key_Menu);
+                QTRY_VERIFY(named("gridMenu")->property("opened").toBool());
+                openSub(sub);
+                grab(QStringLiteral("/cx7-grid-") + QLatin1String(sub) + suffix);
+                closeAll({named(sub), named("gridMenu")});
+            }
+            auto *lineText = item("lineText");
+            lineText->forceActiveFocus();
+            QTRY_VERIFY(lineText->hasActiveFocus());
+            QTest::keyClick(window, Qt::Key_Menu);
+            QTRY_VERIFY(named("lineTextMenu")->property("opened").toBool());
+            openSub("lineTextPhantomMenu");
+            grab(QStringLiteral("/cx7-line-editor") + suffix);
+            closeAll({named("lineTextPhantomMenu"), named("lineTextMenu")});
+            squeezeTheLineEditor();
+            QTRY_VERIFY(item("tagStripMore")->isVisible());
+            QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(item("tagStripMore")));
+            QTRY_VERIFY(named("tagStripMoreMenu")->property("opened").toBool());
+            if (named("tagStripMoreMenu")->property("align").toBool())
+                openSub("foldedAlignment");
+            grab(QStringLiteral("/cx7-strip-more") + suffix);
+            closeAll({named("foldedAlignment"), named("tagStripMoreMenu")});
+            application->workspaceLayout().resetLayout();
+        }
+    }
+
     void panelTabAndListMenuScreenshots()
     {
         const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
@@ -2496,7 +2567,7 @@ private slots:
         QVERIFY(list->open());
         auto *optionsButton = item("lineTextTagListOptionsButton");
         QTRY_VERIFY(optionsButton && optionsButton->isVisible());
-        QCOMPARE(optionsButton->property("text").toString(), QStringLiteral("Tag list options"));
+        QCOMPARE(optionsButton->property("text").toString(), QStringLiteral("More options"));
         QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier,
                           optionsButton->mapToScene(QPointF(optionsButton->width() / 2, optionsButton->height() / 2)).toPoint());
         QTRY_VERIFY(options->property("opened").toBool());
@@ -6787,6 +6858,69 @@ private slots:
         compareWithListed(shown, QStringLiteral("context_menus.txt"));
     }
 
+    void disabledGridRowsSayWhy()
+    {
+        QVERIFY(application->openFile(episode));
+        auto *grid = item("editingGrid");
+        grid->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_COMPARE(application->shell().selectedCount(), 1);
+        auto *interpolate = named("interpolateLines");
+        QVERIFY(!interpolate->property("enabled").toBool());
+        QVERIFY(interpolate->property("reason").toString().contains(QStringLiteral("three")));
+        auto *graph = named("gridTypesettingGraph");
+        QCOMPARE(graph->property("reason").toString(), QString());
+        application->workspaceLayout().setLocked(true);
+        QTRY_VERIFY(!graph->property("enabled").toBool());
+        QCOMPARE(graph->property("reason").toString(), QStringLiteral("The layout is locked"));
+        application->workspaceLayout().setLocked(false);
+        QTRY_COMPARE(graph->property("reason").toString(), QString());
+        QCOMPARE(named("pasteTranslation")->property("reason").toString(), application->translationHint());
+
+        const QString plain = dir.filePath(QStringLiteral("cx7-plain.txt"));
+        QFile file(plain);
+        QVERIFY(file.open(QIODevice::WriteOnly));
+        file.write("one\ntwo\n");
+        file.close();
+        application->addPage();
+        QVERIFY(application->openFile(plain));
+        QTRY_VERIFY(!application->translationHint().isEmpty());
+        QTRY_COMPARE(named("pasteTranslation")->property("reason").toString(), application->translationHint());
+    }
+
+    void lineEditorMenusKeepTheirShapeAndTheGridsNames()
+    {
+        QVERIFY(application->openFile(episode));
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_VERIFY(application->editor().hasLine());
+        auto *lineText = item("lineText");
+        auto *menu = named("lineTextMenu");
+        auto *separator = lineText->findChild<QObject *>(QStringLiteral("lineTextTextRowsSeparator"));
+        QVERIFY(separator);
+        lineText->setProperty("readOnly", true);
+        QVERIFY(QMetaObject::invokeMethod(menu, "open"));
+        QTRY_VERIFY(menu->property("opened").toBool());
+        QVERIFY(separator->property("visible").toBool());
+        QCOMPARE(lineText->findChild<QObject *>(QStringLiteral("lineTextSpellingOn"))->property("text").toString(),
+                 QStringLiteral("Check spelling as you type"));
+        QVERIFY(QMetaObject::invokeMethod(menu, "close"));
+        QTRY_VERIFY(!menu->property("visible").toBool());
+
+        QCOMPARE(named("tagStripMore")->property("text").toString(), QStringLiteral("More options"));
+        QCOMPARE(named("tagStripMore")->property("focusPolicy").toInt(), int(Qt::TabFocus));
+        QCOMPARE(named("addTagButton")->property("text").toString(), QStringLiteral("Add a tag button…"));
+        QCOMPARE(named("foldedAddTagButton")->property("text").toString(), QStringLiteral("Add a tag button…"));
+        auto *centre = named("foldedAlignment8");
+        QVERIFY(centre);
+        QCOMPARE(centre->property("text").toString(), QStringLiteral("Top centre (\\an8)"));
+        QCOMPARE(named("foldedAlignment5")->property("text").toString(), QStringLiteral("Middle centre (\\an5)"));
+        QVERIFY(!centre->property("keepsMenuOpen").toBool());
+        QCOMPARE(named("gridAlignDistributeMenu")->property("iconRole").toString(), QStringLiteral("align-distribute"));
+        QCOMPARE(named("lineTextPhantomKeepStart")->property("iconRole").toString(), QStringLiteral("phantom-keep-start"));
+        QCOMPARE(named("lineTextPhantomKeepEnd")->property("iconRole").toString(), QStringLiteral("phantom-keep-end"));
+    }
+
     void menuKeyOpensTheFocusedItemsMenu()
     {
         QVERIFY(application->openFile(episode));
@@ -10103,7 +10237,7 @@ private slots:
         QVERIFY(item);
         select(2);
         QTRY_VERIFY(!item->property("enabled").toBool());
-        QVERIFY(item->property("help").toString().contains(QStringLiteral("three")));
+        QVERIFY(item->property("reason").toString().contains(QStringLiteral("three")));
         select(4);
         QTRY_VERIFY(item->property("enabled").toBool());
 
@@ -15704,6 +15838,12 @@ private slots:
         QVERIFY(application->openFile(path));
         QTRY_VERIFY(toastWith(QStringLiteral("This file has 1 Aegisub fold")));
         QVERIFY(application->canConvertFolds());
+        auto *gridMenu = named("gridMenu");
+        QVERIFY(QMetaObject::invokeMethod(gridMenu, "open"));
+        QTRY_VERIFY(gridMenu->property("opened").toBool());
+        QVERIFY(named("convertFolds")->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(gridMenu, "close"));
+        QTRY_VERIFY(!gridMenu->property("visible").toBool());
         QQuickItem *toast = toastWith(QStringLiteral("This file has 1 Aegisub fold"));
         QQuickItem *convert = nullptr;
         const std::function<void(QQuickItem *)> findButton = [&](QQuickItem *from) {
@@ -15734,9 +15874,14 @@ private slots:
         emit grid->groupMenuRequested(lines[0]->id.value, 120, grid->property("rowHeight").toDouble() / 2);
         QTRY_VERIFY(groupMenu->property("visible").toBool());
         QCOMPARE(named("groupConvertFolds")->property("text").toString(), QStringLiteral("Convert Aegisub folds to line groups"));
-        QVERIFY(!named("groupConvertFolds")->property("enabled").toBool());
+        QVERIFY(!named("groupConvertFolds")->property("visible").toBool());
         QVERIFY(QMetaObject::invokeMethod(groupMenu, "close"));
         QTRY_VERIFY(!groupMenu->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(gridMenu, "open"));
+        QTRY_VERIFY(gridMenu->property("opened").toBool());
+        QVERIFY(!named("convertFolds")->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(gridMenu, "close"));
+        QTRY_VERIFY(!gridMenu->property("visible").toBool());
         QVERIFY(application->editor().undo());
         QCOMPARE(session->document().lines().size(), std::size_t(3));
         QVERIFY(application->canConvertFolds());
@@ -16296,7 +16441,7 @@ private slots:
         QCOMPARE(paste->property("text").toString(), QStringLiteral("Paste translation from a file…"));
         QVERIFY(paste);
         QVERIFY(!paste->property("enabled").toBool());
-        QCOMPARE(paste->property("help").toString(), hint);
+        QCOMPARE(paste->property("reason").toString(), hint);
         QVERIFY(QMetaObject::invokeMethod(menu, "close"));
         QVERIFY(!session->document().scriptInfo(u8"TLMode"));
     }
@@ -23686,6 +23831,7 @@ private slots:
         QCOMPARE(application->hotkeys().actionFor(1, Qt::Key_D, Qt::ControlModifier | Qt::ShiftModifier),
                  QStringLiteral("GRID_DUPLICATE_LINES"));
         grid->forceActiveFocus();
+        QTest::mouseMove(window, grid->mapToScene(QPointF(grid->width() / 2, grid->height() / 2)).toPoint());
         press(Qt::Key_D, Qt::ControlModifier | Qt::ShiftModifier);
         QTRY_COMPARE(int(application->files().session(*application->workspace().editingTarget())->document().lines().size()),
                      lines + 1);
@@ -34894,7 +35040,7 @@ private slots:
         auto *grid = named("alignmentGrid");
         QVERIFY(choice && grid);
         QCOMPARE(choice->property("iconRole").toString(), QStringLiteral("alignment-8"));
-        QCOMPARE(choice->property("tip").toString(), QStringLiteral("Text position: Top-centre (an8)"));
+        QCOMPARE(choice->property("tip").toString(), QStringLiteral("Text position: Top centre (\\an8)"));
         const auto cell = [&](int n) {
             return findItem(grid->property("contentItem").value<QQuickItem *>(), QStringLiteral("alignmentCell%1").arg(n));
         };
