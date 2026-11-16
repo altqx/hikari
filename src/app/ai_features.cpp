@@ -2,6 +2,7 @@
 
 #include "hikari/api/api.h"
 #include "hikari/backends/ai_agent_broker.h"
+#include "hikari/backends/ai_ca_bundle.h"
 #include "hikari/backends/ai_antigravity.h"
 #include "hikari/backends/ai_config_store.h"
 #ifdef Q_OS_WIN
@@ -18,6 +19,7 @@
 
 #include <QCoreApplication>
 #include <QDir>
+#include <QSslConfiguration>
 #include <QElapsedTimer>
 #include <QFile>
 #include <QFileInfo>
@@ -110,6 +112,7 @@ QString acpBroker(const QString &id)
 AiFeatures::Ports AiFeatures::defaultPorts(const QString &userFolder, api::Api *api, const QString &)
 {
     const QString ai = userFolder + QStringLiteral("/ai");
+    const QString codexHome = ai + QStringLiteral("/agents/codex/home");
     Ports ports;
 #ifdef Q_OS_WIN
     ports.keyStore = [ai, kept = !userFolder.isEmpty()] {
@@ -158,16 +161,23 @@ AiFeatures::Ports AiFeatures::defaultPorts(const QString &userFolder, api::Api *
         return aiAutoUpdateOffByPolicy(qEnvironmentVariable("HIKARI_AI_AUTO_UPDATE"),
                                        QStringLiteral("/etc/hikarisub/policy.json"));
     };
-    ports.agents = [ai](backends::ai::AgentBroker &broker, application::ai::KeyStore &keys) {
+    ports.agents = [ai, codexHome](backends::ai::AgentBroker &broker, application::ai::KeyStore &keys) {
         const QString agents = ai + QStringLiteral("/agents");
         if (const QString claude = backends::ai::findAgentCli(QStringLiteral("claude")); !claude.isEmpty())
             broker.add("claude", backends::ai::claudeAgent(claude, QDir::homePath(), agents + QStringLiteral("/claude")));
         if (const QString codex = backends::ai::findAgentCli(QStringLiteral("codex")); !codex.isEmpty())
             if (auto spec = backends::ai::codexAgent(
-                    codex, agents + QStringLiteral("/codex/home"), agents + QStringLiteral("/codex/work"),
-                    std::make_shared<backends::ai::CodexLease>(keys, agents + QStringLiteral("/codex/home")),
-                    QCoreApplication::applicationFilePath()))
+                    codex, codexHome, agents + QStringLiteral("/codex/work"),
+                    std::make_shared<backends::ai::CodexLease>(keys, codexHome),
+                    QCoreApplication::applicationFilePath())) {
+#ifdef Q_OS_WIN
+                // A low-rights token can't open the user's root store, so Codex gets its roots as a file (#1193).
+                if (const QString roots = codexHome + QStringLiteral("/system-roots.pem");
+                    backends::ai::writeCaBundle(roots, QSslConfiguration::systemCaCertificates()))
+                    spec->environment.insert(QStringLiteral("CODEX_CA_CERTIFICATE"), QDir::toNativeSeparators(roots));
+#endif
                 broker.add("codex", std::move(*spec));
+            }
     };
     ports.agentOnPath = [](const QString &agent) { return !backends::ai::findAgentCli(agent).isEmpty(); };
     ports.filesConfined = [] { return backends::sandbox::systemCoverage(backends::sandbox::Network::Any).files; };
@@ -194,7 +204,11 @@ AiFeatures::Ports AiFeatures::defaultPorts(const QString &userFolder, api::Api *
         return backends::ai::customAcpAgent(agent.program, QProcess::splitCommand(agent.arguments),
                                             agents + QStringLiteral("/custom/") + agent.id, bridge);
     };
-    ports.signIn = [](application::ai::KeyStore &keys) { return std::make_unique<backends::ai::AiSignIn>(keys); };
+    ports.signIn = [codexHome](application::ai::KeyStore &keys) {
+        auto signIn = std::make_unique<backends::ai::AiSignIn>(keys);
+        signIn->lendsCodexTo(codexHome);
+        return signIn;
+    };
     ports.findAgent = [](const QString &agent, std::function<void(std::optional<backends::ai::AgentCli>, QString)> done) {
         backends::ai::probeAgentCli(agent, std::move(done));
     };
@@ -737,6 +751,13 @@ std::unique_ptr<backends::ai::AntigravitySignIn> AiFeatures::antigravitySignIn()
 backends::ai::AiSignIn *AiFeatures::signIn() const
 {
     return m_live ? m_live->signIn.get() : nullptr;
+}
+
+void AiFeatures::endAgent(const QString &agent)
+{
+    emit agentEnding(agent);
+    if (m_live && m_live->agents)
+        m_live->agents->killAgent(agent.toStdString());
 }
 
 bool AiFeatures::sandboxed() const

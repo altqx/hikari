@@ -154,6 +154,10 @@ void AgentItemsModel::update(std::vector<std::string> items)
 AgentController::AgentController(Wiring wiring, QObject *parent) : QObject(parent), m_wiring(std::move(wiring))
 {
     connect(&m_wiring.ai, &AiFeatures::switched, this, &AgentController::apply);
+    connect(&m_wiring.ai, &AiFeatures::agentEnding, this, [this](const QString &agent) {
+        if (m_threads)
+            m_threads->endAgent(agent.toStdString());
+    });
     connect(&m_wiring.settings, &ui::SettingsStore::changed, this, [this](const QString &id) {
         if (id.startsWith(QLatin1String("ai.agent.")))
             emit settingsChanged();

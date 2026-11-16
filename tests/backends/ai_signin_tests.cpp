@@ -1,3 +1,4 @@
+#include "hikari/backends/ai_ca_bundle.h"
 #include "hikari/backends/ai_signin.h"
 #include "hikari/backends/user_alone.h"
 
@@ -14,6 +15,8 @@
 #include <QJsonObject>
 #include <QSaveFile>
 #include <QTcpServer>
+#include <QSslCertificate>
+#include <QSslConfiguration>
 #include <QTemporaryDir>
 #include <gtest/gtest.h>
 
@@ -44,10 +47,13 @@ bool waitFor(const std::function<bool()> &done, int ms = 10'000)
 struct Keys final : app::KeyStore {
     std::map<std::string, std::string> keys;
     std::optional<app::KeyError> writeError;
+    std::optional<app::KeyError> unavailable;
 
     void read(const std::string &id, std::function<void(app::KeyResult)> done) override
     {
-        if (const auto it = keys.find(id); it != keys.end())
+        if (unavailable)
+            done(*unavailable);
+        else if (const auto it = keys.find(id); it != keys.end())
             done(it->second);
         else
             done(app::KeyError::NotFound);
@@ -60,6 +66,8 @@ struct Keys final : app::KeyStore {
     }
     void remove(const std::string &id, std::function<void(std::optional<app::KeyError>)> done) override
     {
+        if (unavailable)
+            return done(unavailable);
         done(keys.erase(id) ? std::nullopt : std::optional(app::KeyError::NotFound));
     }
 };
@@ -545,6 +553,46 @@ TEST_F(CodexLeaseTest, SigningOutWhileCodexRunsKeepsItSignedOut)
     EXPECT_FALSE(QFileInfo::exists(auth()));
 }
 
+TEST_F(CodexLeaseTest, SigningOutDeletesTheCopyLentToCodexWhileItStillRuns)
+{
+    keys.keys[kCodexSecret] = sessionJson(signedIn("first"));
+    signIn.lendsCodexTo(dir.path());
+    ASSERT_EQ(acquire(), QString());
+    ASSERT_TRUE(QFileInfo::exists(auth()));
+
+    std::optional<std::optional<app::KeyError>> result;
+    signIn.signOutCodex([&](std::optional<app::KeyError> e) { result = e; });
+    ASSERT_TRUE(result);
+    EXPECT_EQ(*result, std::nullopt);
+    EXPECT_FALSE(QFileInfo::exists(auth()));
+
+    ASSERT_EQ(writeCodexAuth(auth(), signedIn("rotated")), SecretWrite::Saved);
+    lease.release();
+    EXPECT_FALSE(QFileInfo::exists(auth()));
+    EXPECT_TRUE(keys.keys.empty());
+}
+
+TEST_F(CodexLeaseTest, ACopyLeftWithoutAStoredSignInGoesWhenAiStartsButAnUnreadableKeychainKeepsIt)
+{
+    ASSERT_EQ(writeCodexAuth(auth(), signedIn("left")), SecretWrite::Saved);
+    keys.unavailable = app::KeyError::Unavailable;
+    signIn.lendsCodexTo(dir.path());
+    EXPECT_TRUE(QFileInfo::exists(auth()));
+    std::optional<std::optional<app::KeyError>> result;
+    signIn.signOutCodex([&](std::optional<app::KeyError> e) { result = e; });
+    EXPECT_EQ(*result, app::KeyError::Unavailable);
+    EXPECT_TRUE(QFileInfo::exists(auth()));
+
+    keys.unavailable.reset();
+    keys.keys[kCodexSecret] = sessionJson(signedIn("stored"));
+    signIn.lendsCodexTo(dir.path());
+    EXPECT_TRUE(QFileInfo::exists(auth()));
+
+    keys.keys.clear();
+    signIn.lendsCodexTo(dir.path());
+    EXPECT_FALSE(QFileInfo::exists(auth()));
+}
+
 TEST_F(CodexLeaseTest, AFolderThatCantBeMadePrivateSaysSoAndAnyOtherFailureKeepsItsMessage)
 {
     EXPECT_EQ(codexAuthNotSaved(SecretWrite::NotPrivate),
@@ -580,4 +628,17 @@ TEST_F(AiSignInTest, TheRealDeviceSignInKeepsItsSessionForTheCodexEvidence)
     QFile::remove(codeFile);
     ASSERT_TRUE(*done) << done->error().kind << " " << done->error().detail;
     ASSERT_TRUE(writePrivate(sessionFile, QByteArray::fromStdString(keys.keys.at(kCodexSecret))));
+}
+
+TEST(CaBundle, TheSystemRootsRoundTripAsOnePemFileAndNoneWritesNothing)
+{
+    const QList<QSslCertificate> roots = QSslConfiguration::systemCaCertificates();
+    if (roots.isEmpty())
+        GTEST_SKIP() << "This system has no CA certificates";
+    QTemporaryDir dir;
+    const QString path = dir.filePath(QStringLiteral("roots.pem"));
+    ASSERT_TRUE(hikari::backends::ai::writeCaBundle(path, roots));
+    EXPECT_EQ(QSslCertificate::fromPath(path, QSsl::Pem), roots);
+    EXPECT_FALSE(hikari::backends::ai::writeCaBundle(dir.filePath(QStringLiteral("none.pem")), {}));
+    EXPECT_FALSE(QFileInfo::exists(dir.filePath(QStringLiteral("none.pem"))));
 }

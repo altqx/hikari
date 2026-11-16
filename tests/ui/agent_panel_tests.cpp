@@ -11,10 +11,13 @@
 #include "hikari/backends/ai_agent_cli.h"
 #include "hikari/backends/ai_sidecar_host.h"
 #include "hikari/backends/ai_signin.h"
+#include "hikari/backends/ai_sidecar_updater.h"
 #include "hikari/backends/desktop_handoff.h"
 
 #include "docking.h"
 #include "line_table_model.h"
+#include "local_release.h"
+#include "minisign_signer.h"
 #include "settings_store.h"
 #include "shell_controller.h"
 #include "side_bar_model.h"
@@ -151,6 +154,9 @@ class AgentPanelTest : public QObject {
     std::unique_ptr<app::Application> application;
     QPointer<backends::ai::AiSidecarHost> realHost;
     std::unique_ptr<QQmlApplicationEngine> engine;
+    std::unique_ptr<hikari::test::LocalRelease> release;
+    std::unique_ptr<hikari::test::FakeChannel> channel;
+    hikari::test::MinisignSigner signer;
 
     QString at(const QString &name) const
     {
@@ -367,7 +373,20 @@ private slots:
             return std::make_unique<backends::ai::AiSidecarHost>(std::move(o), &application->apiHost()->api(),
                                                                  api::Caller{.id = "ai", .label = "AI", .reviewed = true});
         };
-        ports.localSidecar = backends::ai::SidecarInstall{QStringLiteral("0.0.0-dev"), {}, flags, {}};
+        if (test == "withoutTheAiComponentThePanelGetsItAndTheNextTurnRuns") {
+            release = std::make_unique<hikari::test::LocalRelease>();
+            channel = std::make_unique<hikari::test::FakeChannel>(*release);
+            channel->addRuntime(QStringLiteral("1.4.4-0123abcd"), QByteArray("#!/bin/sh\necho sidecar\n").repeated(4000));
+            channel->addRelease({QStringLiteral("1.1.0")});
+            channel->publish(signer);
+            ports.sidecarUpdater = [this] {
+                return std::make_unique<backends::ai::AiSidecarUpdater>(
+                    at(QStringLiteral("ai/sidecar")), backends::ai::SidecarCompat{1, api::kApiVersion},
+                    backends::ai::SidecarSource::local(release->base(), {signer.publicKey()}));
+            };
+        } else {
+            ports.localSidecar = backends::ai::SidecarInstall{QStringLiteral("0.0.0-dev"), {}, flags, {}};
+        }
         ports.agents = [](backends::ai::AgentBroker &, application::ai::KeyStore &) {};
         const bool found = QTest::currentTestFunction() == QByteArrayLiteral("agentsAreModelsOnlyWhenTheyAreFound");
         const bool onlyClaude = QTest::currentTestFunction() == QByteArrayLiteral("withOnlyClaudeCodeThePanelRunsOnIt");
@@ -416,6 +435,8 @@ private slots:
     {
         engine.reset();
         application.reset();
+        channel.reset();
+        release.reset();
         if (firstStartEmptyBefore)
             ui::SideBarModel::setFirstStartEmpty(*std::exchange(firstStartEmptyBefore, std::nullopt));
     }
@@ -1032,6 +1053,23 @@ private slots:
         shoot(QStringLiteral("agent-no-provider"));
         QVERIFY(click(QStringLiteral("agentOpenSettings")));
         QTRY_VERIFY(shell(QStringLiteral("settingsLoader.item !== null && settingsLoader.item.visible")).toBool());
+    }
+
+    void withoutTheAiComponentThePanelGetsItAndTheNextTurnRuns()
+    {
+        application->settingsStore()->set(app::AgentController::kModeSetting, QStringLiteral("manual"));
+        openPanel();
+        agent().newThread();
+        type(applyScript("I tightened the first line."));
+        QTRY_COMPARE(lastItem().value(QStringLiteral("notice")).toString(), QStringLiteral("noSidecar"));
+        QTRY_VERIFY(item(QStringLiteral("agentGetComponent")));
+        QVERIFY(click(QStringLiteral("agentGetComponent")));
+        QTRY_COMPARE_WITH_TIMEOUT(item(QStringLiteral("agentView"))->property("componentResult").toString(), QStringLiteral("ready"), 20'000);
+        QVERIFY(!item(QStringLiteral("agentGetComponent")));
+        QVERIFY(application->ai()->updater()->current());
+
+        type(applyScript("I tightened the first line."));
+        QTRY_COMPARE_WITH_TIMEOUT(kinds().last(), QStringLiteral("proposal"), 20'000);
     }
 
     void withOnlyClaudeCodeThePanelRunsOnIt()

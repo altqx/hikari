@@ -440,6 +440,26 @@
         <translation>Odmów i powiedz agentowi…</translation>
     </message>
     <message>
+        <source>Withdrawn: the agent stopped waiting for your answer.</source>
+        <translation>Wycofano: agent przestał czekać na odpowiedź.</translation>
+    </message>
+    <message>
+        <source>Withdrawn: the turn ended before you answered.</source>
+        <translation>Wycofano: tura skończyła się przed odpowiedzią.</translation>
+    </message>
+    <message>
+        <source>Withdrawn: you stopped the turn.</source>
+        <translation>Wycofano: zatrzymano turę.</translation>
+    </message>
+    <message>
+        <source>Withdrawn: you signed out of Codex.</source>
+        <translation>Wycofano: wylogowano z Codex.</translation>
+    </message>
+    <message>
+        <source>Withdrawn: the cost cap stopped the turn.</source>
+        <translation>Wycofano: limit kosztów zatrzymał turę.</translation>
+    </message>
+    <message>
         <source>The signing key changed. The installed copy was signed by key %1, and this one by key %2. Install it only if you trust that the author changed keys.</source>
         <translation type="unfinished">Klucz podpisu się zmienił. Zainstalowana kopia była podpisana kluczem %1, a ta kluczem %2. Instaluj ją tylko wtedy, gdy ufasz, że autor zmienił klucze.</translation>
     </message>
@@ -552,8 +572,32 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Signed out of Codex. This session ended.</source>
+        <translation>Wylogowano z Codex. Ta sesja się zakończyła.</translation>
+    </message>
+    <message>
+        <source>Getting the AI component: %1 of %2 MB</source>
+        <translation>Pobieranie komponentu AI: %1 z %2 MB</translation>
+    </message>
+    <message>
+        <source>The AI component is ready. Send your message again.</source>
+        <translation>Komponent AI jest gotowy. Wyślij wiadomość ponownie.</translation>
+    </message>
+    <message>
+        <source>The AI component didn’t download. Check your connection and try again.</source>
+        <translation>Nie udało się pobrać komponentu AI. Sprawdź połączenie i spróbuj ponownie.</translation>
+    </message>
+    <message>
+        <source>Agents need the AI component, which HikariSub downloads once.</source>
+        <translation>Agenci potrzebują komponentu AI, który HikariSub pobiera jeden raz.</translation>
+    </message>
+    <message>
         <source>Not offered: HikariSub can’t open a private tools channel for it on this system.</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Get the AI component</source>
+        <translation>Pobierz komponent AI</translation>
     </message>
     <message numerus="yes">
         <source>%n sub-agent(s)</source>
@@ -769,7 +813,7 @@
     </message>
     <message>
         <source>HikariSub is still getting the AI component, or it couldn’t start.</source>
-        <translation>HikariSub nadal pobiera komponent AI albo nie udało się go uruchomić.</translation>
+        <translation type="vanished">HikariSub nadal pobiera komponent AI albo nie udało się go uruchomić.</translation>
     </message>
     <message>
         <source>The search service answered %1. The answer goes on without searching the web.</source>

@@ -628,6 +628,28 @@ TEST_F(AgentBrokerTest, KillingEndsTheAgentAndReportsItsExit)
     EXPECT_EQ(broker.running(), 0u);
 }
 
+TEST_F(AgentBrokerTest, KillingAnAgentEndsOnlyItsOwnProcessesAndRunsTheirAfterHooks)
+{
+    int afters = 0;
+    AgentSpec signedIn = spec();
+    signedIn.after = [&] { ++afters; };
+    broker.add("signedIn", signedIn);
+    broker.add("other", spec());
+    const std::uint64_t first = start("signedIn");
+    const std::uint64_t second = start("signedIn");
+    const std::uint64_t other = start("other");
+    ASSERT_TRUE(waitFor([&] { return !lines(first).empty() && !lines(second).empty() && !lines(other).empty(); }));
+
+    broker.killAgent("signedIn");
+    EXPECT_EQ(exitCode(first), -1);
+    EXPECT_EQ(exitCode(second), -1);
+    EXPECT_EQ(afters, 2);
+    EXPECT_EQ(broker.running("signedIn"), 0u);
+    EXPECT_EQ(broker.running("other"), 1u);
+    EXPECT_FALSE(exitCode(other));
+    broker.killAll();
+}
+
 TEST_F(AgentBrokerTest, CodexThreadsAreReadOnlyAndOtherMethodsAreRefused)
 {
     broker.add("codex", spec(true));
