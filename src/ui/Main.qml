@@ -7053,7 +7053,7 @@ ApplicationWindow {
                     target: root.audio
                     function onOpened(path, created) {
                         if (created)
-                            root.revealPanel(audioDock, notices.activeWindow)
+                            root.revealPanel(audioDock, root.workspaceLayout.focusWindow === root)
                     }
                 }
             }
