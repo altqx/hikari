@@ -262,6 +262,32 @@ private slots:
         QTRY_VERIFY(!menu->property("visible").toBool());
     }
 
+    void cx7SideBarMenuScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        start(QStringLiteral(R"({"first":{"panels":[]},"second":{"panels":["Search","Timing","Styles"],"shown":"Timing"}})"));
+        QQuickItem *icon = in("rightSideBar", QStringLiteral("sideBarIcon_Timing"));
+        QVERIFY(icon);
+        auto *menu = item<QObject>("panelOptionsMenu");
+        auto &settings = *application->settingsStore();
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        for (const auto code : ui::theme::kCodes) {
+            settings.setValue(QStringLiteral("appearance.theme"), ui::theme::codeName(code));
+            icon->forceActiveFocus();
+            QTRY_VERIFY(icon->hasActiveFocus());
+            QTest::keyClick(window, Qt::Key_F10, Qt::ShiftModifier);
+            QTRY_VERIFY(menu->property("opened").toBool());
+            QTest::qWait(300);
+            QVERIFY(window->grabWindow().save(out + QStringLiteral("/cx7-side-bar-") + ui::theme::codeName(code) + QStringLiteral(".png")));
+            QVERIFY(QMetaObject::invokeMethod(menu, "close"));
+            QTRY_VERIFY(!menu->property("visible").toBool());
+        }
+        settings.setValue(QStringLiteral("appearance.followSystem"), true);
+    }
+
     void theMiddlePanelsNeverGoInASideBar()
     {
         start();

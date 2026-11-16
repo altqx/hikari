@@ -2186,10 +2186,6 @@ private slots:
             panelShot("qcNotesDock", item("qcNotesTool"), QStringLiteral("/cx7-qc-notes") + suffix);
             panelShot("editorDock", item("lineText"), QStringLiteral("/cx7-line-editor") + suffix);
             panelShot("videoDock", item("videoPanel"), QStringLiteral("/cx7-video-follow") + suffix, named("panelOptions_videoSeekOn"));
-            show("searchDock");
-            QQuickItem *searchIcon = nullptr;
-            QTRY_VERIFY((searchIcon = visualItem("sideBarIcon_Search")) && searchIcon->isVisible());
-            panelShot("searchDock", searchIcon, QStringLiteral("/cx7-side-bar") + suffix);
 
             auto *bar = qobject_cast<QQuickItem *>(named("documentTabBar"));
             QVERIFY(QMetaObject::invokeMethod(bar, "openTabMenu", Q_ARG(QVariant, -1), Q_ARG(QVariant, QVariant::fromValue(bar)),
@@ -7699,6 +7695,20 @@ private slots:
             }
             return nullptr;
         };
+        std::function<QAccessibleInterface *(QAccessibleInterface *, const QString &)> options =
+            [&](QAccessibleInterface *from, const QString &panel) -> QAccessibleInterface * {
+            for (int i = 0; i < from->childCount(); ++i) {
+                QAccessibleInterface *child = from->child(i);
+                if (!child || child->role() == QAccessible::Cell)
+                    continue;
+                if (child->role() == QAccessible::Button && child->text(QAccessible::Name) == QStringLiteral("More options")
+                    && child->text(QAccessible::Description) == panel)
+                    return child;
+                if (QAccessibleInterface *found = options(child, panel))
+                    return found;
+            }
+            return nullptr;
+        };
         QAccessibleInterface *gridPanel = find(top, QAccessible::Pane, QStringLiteral("Grid"));
         QVERIFY(gridPanel);
         QCOMPARE(gridPanel->text(QAccessible::Description), QStringLiteral("Editing: episode.ass"));
@@ -7708,7 +7718,7 @@ private slots:
         QCOMPARE(table->parent()->text(QAccessible::Name), QStringLiteral("Grid"));
         QAccessibleInterface *audioBar = find(top, QAccessible::TitleBar, QStringLiteral("Audio"));
         QVERIFY(audioBar);
-        QAccessibleInterface *audioOptions = find(top, QAccessible::Button, QStringLiteral("Audio options"));
+        QAccessibleInterface *audioOptions = options(top, QStringLiteral("Audio"));
         QVERIFY(audioOptions);
         QVERIFY(audioOptions->actionInterface());
         QVERIFY(audioOptions->actionInterface()->actionNames().contains(QAccessibleActionInterface::pressAction()));
@@ -7725,7 +7735,7 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(menu, "close"));
         QAccessibleInterface *floatingTop = QAccessible::queryAccessibleInterface(item("audioPanel")->window());
         QAccessibleInterface *floatingOptions = nullptr;
-        QTRY_VERIFY((floatingOptions = find(floatingTop, QAccessible::Button, QStringLiteral("Audio options"))));
+        QTRY_VERIFY((floatingOptions = options(floatingTop, QStringLiteral("Audio"))));
         floatingOptions->actionInterface()->doAction(QAccessibleActionInterface::pressAction());
         QTRY_VERIFY(menu->property("visible").toBool());
         QWindow *floatingWindow = item("audioPanel")->window();
@@ -7760,17 +7770,16 @@ private slots:
         QVERIFY(find(top, QAccessible::PageTabList, QStringLiteral("Panels")));
         QVERIFY(!find(top, QAccessible::TitleBar, QStringLiteral("Find")));
         QVERIFY(!find(top, QAccessible::TitleBar, QStringLiteral("Shift times")));
-        QAccessibleInterface *timingOptions = find(top, QAccessible::Button, QStringLiteral("Shift times options"));
+        QAccessibleInterface *timingOptions = options(top, QStringLiteral("Shift times"));
         QVERIFY(timingOptions);
-        QVERIFY(!find(top, QAccessible::Button, QStringLiteral("Find options")));
+        QVERIFY(!options(top, QStringLiteral("Find")));
         QVERIFY(searchTab->actionInterface());
         searchTab->actionInterface()->doAction(QAccessibleActionInterface::pressAction());
-        QTRY_VERIFY(find(QAccessible::queryAccessibleInterface(window), QAccessible::Button, QStringLiteral("Find options")));
+        QTRY_VERIFY(options(QAccessible::queryAccessibleInterface(window), QStringLiteral("Find")));
         timingTab = find(QAccessible::queryAccessibleInterface(window), QAccessible::PageTab, QStringLiteral("Shift times"));
         timingTab->actionInterface()->doAction(QAccessibleActionInterface::pressAction());
         QAccessibleInterface *closeFrom = nullptr;
-        QTRY_VERIFY((closeFrom = find(QAccessible::queryAccessibleInterface(window), QAccessible::Button,
-                                      QStringLiteral("Shift times options"))));
+        QTRY_VERIFY((closeFrom = options(QAccessible::queryAccessibleInterface(window), QStringLiteral("Shift times"))));
         closeFrom->actionInterface()->doAction(QAccessibleActionInterface::pressAction());
         QTRY_VERIFY(menu->property("visible").toBool());
         QVERIFY(QMetaObject::invokeMethod(named("panelOptionsClose"), "triggered"));
@@ -20619,8 +20628,10 @@ private slots:
         QTRY_VERIFY(named(at("panelMenu").constData()) && named(at("panelMenu").constData())->property("kept").toBool());
         QVERIFY(!named(at("panelShow").constData())->property("enabled").toBool());
         QVERIFY(openPanelMenu(dock));
-        QCOMPARE(panelMenuItems().mid(panelMenuItems().size() - 3),
-                 (QStringList{QStringLiteral("Lock layout"), QStringLiteral("|"), QStringLiteral("Remove from the layout")}));
+        const QStringList missingRows = panelMenuItems();
+        QVERIFY2(missingRows.mid(missingRows.size() - 3)
+                     == (QStringList{QStringLiteral("Lock layout"), QStringLiteral("|"), QStringLiteral("Remove from the layout")}),
+                 qPrintable(missingRows.join(QLatin1Char(','))));
         QCOMPARE(named("panelOptionsClose")->property("iconRole").toString(), QStringLiteral("remove"));
         QCOMPARE(named(at("panelForget").constData())->property("text"), named("panelOptionsClose")->property("text"));
         QVERIFY(QMetaObject::invokeMethod(named("panelOptionsMenu"), "close"));

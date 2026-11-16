@@ -1780,8 +1780,8 @@ ApplicationWindow {
         MenuSeparator {}
         Instantiator {
             id: panelOptionsAbout
-            readonly property var panelState: root.isPluginDock(panelOptionsMenu.dock) ? (panelOptionsMenu.dock.body?.panelState ?? null) : null
-            model: panelState !== null && panelState.status !== "missing" ? [panelState] : []
+            readonly property bool shown: root.isPluginDock(panelOptionsMenu.dock) && panelOptionsMenu.dock.body?.status !== "missing"
+            model: shown ? [panelOptionsMenu.dock.body.panelState] : []
             delegate: ShellMenuItem {
                 required property var modelData
                 iconRole: "about"
@@ -1793,8 +1793,8 @@ ApplicationWindow {
             onObjectRemoved: (index, object) => panelOptionsMenu.removeItem(object)
         }
         MenuSeparator {
-            visible: panelOptionsAbout.count > 0
-            height: panelOptionsAbout.count > 0 ? implicitHeight : 0
+            visible: panelOptionsAbout.shown
+            height: visible ? implicitHeight : 0
         }
         ShellMenuItem {
             readonly property bool forgets: root.isPluginDock(panelOptionsMenu.dock)

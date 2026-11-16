@@ -198,6 +198,8 @@ private slots:
 
     void cleanup()
     {
+        application->settingsStore()->setValue(QStringLiteral("explorer.allFiles"), false);
+        application->settingsStore()->setValue(QStringLiteral("explorer.groupByName"), false);
         stop();
         QDir(project).removeRecursively();
     }
@@ -382,6 +384,7 @@ private slots:
 
     void theRowMenuEndsWithTheTrashAndThePanelMenuHoldsTheTools()
     {
+        writeAll(at(".hikari/project.toml"), "version = 1\n[explorer]\nexclude = [\"*.md\"]\n");
         openProject();
         QTRY_VERIFY(row(QStringLiteral("ep01.ass")));
         QVERIFY(QMetaObject::invokeMethod(named("explorerTool"), "showMenu", Q_ARG(QVariant, rowOf(QStringLiteral("ep01.ass"))),
@@ -403,11 +406,13 @@ private slots:
         QCOMPARE(menu_rows::shown(panelMenu).mid(0, 5),
                  (QStringList{"panelOptions_explorerNewFile", "panelOptions_explorerRefresh", "panelOptions_explorerGroupByName",
                               "panelOptions_explorerAllFiles", "|"}));
+        QVERIFY(!model()->allFiles());
+        QVERIFY(QMetaObject::invokeMethod(named("panelOptions_explorerAllFiles"), "triggered"));
+        QTRY_VERIFY(model()->allFiles());
+        QTRY_VERIFY(row(QStringLiteral("ep01.mkv.lwi")));
         QVERIFY(!model()->groupByName());
         QVERIFY(QMetaObject::invokeMethod(named("panelOptions_explorerGroupByName"), "triggered"));
         QTRY_VERIFY(model()->groupByName());
-        QVERIFY(QMetaObject::invokeMethod(named("panelOptions_explorerAllFiles"), "triggered"));
-        QTRY_VERIFY(row(QStringLiteral("ep01.mkv.lwi")));
         QVERIFY(QMetaObject::invokeMethod(panelMenu, "close"));
         QTRY_VERIFY(!panelMenu->property("visible").toBool());
         QVERIFY(QMetaObject::invokeMethod(panelMenu, "openFor", Q_ARG(QVariant, QVariant::fromValue(named("explorerDock"))),

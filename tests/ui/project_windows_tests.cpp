@@ -40,6 +40,8 @@
 #include <QtQml/qqmlextensionplugin.h>
 #include <QtTest>
 
+#include <functional>
+
 Q_IMPORT_QML_PLUGIN(Hikari_UiPlugin)
 
 using namespace hikari;
@@ -1282,11 +1284,21 @@ private slots:
         QTRY_VERIFY(dialog->isVisible());
         auto *list = qobject_cast<QQuickItem *>(dialog->findChild<QObject *>(QStringLiteral("manageLayoutsList")));
         QVERIFY(list);
-        QTRY_VERIFY(dialog->findChild<QObject *>(QStringLiteral("manageLayoutsTiers")));
-        auto *tiers = dialog->findChild<QObject *>(QStringLiteral("manageLayoutsTiers"));
+        QTRY_COMPARE(list->property("count").toInt(), 1);
+        list->setProperty("currentIndex", 0);
+        std::function<QQuickItem *(QQuickItem *, QLatin1String)> inDialog = [&](QQuickItem *from, QLatin1String name) -> QQuickItem * {
+            if (from->objectName() == name)
+                return from;
+            for (QQuickItem *child : from->childItems())
+                if (QQuickItem *found = inDialog(child, name))
+                    return found;
+            return nullptr;
+        };
+        QQuickItem *tiers = nullptr;
+        QTRY_VERIFY((tiers = inDialog(dialog->contentItem(), QLatin1String("manageLayoutsTiers"))));
         QCOMPARE(tiers->property("text").toString(), QStringLiteral("More options"));
         QCOMPARE(tiers->property("focusPolicy").toInt(), int(Qt::TabFocus));
-        QCOMPARE(dialog->findChild<QObject *>(QStringLiteral("manageLayoutsRename"))->property("text").toString(),
+        QCOMPARE(inDialog(dialog->contentItem(), QLatin1String("manageLayoutsRename"))->property("text").toString(),
                  QStringLiteral("Rename"));
         list->forceActiveFocus();
         QTRY_VERIFY(list->hasActiveFocus());
