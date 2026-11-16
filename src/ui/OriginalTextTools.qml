@@ -107,8 +107,8 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         visible: tools.folded
         iconRole: "menu-more"
-        text: qsTr("More")
-        focusPolicy: Qt.NoFocus
+        text: qsTranslate("HikariSub.Workspace", "More options")
+        focusPolicy: Qt.TabFocus
         onClicked: moreMenu.popup(more, 0, more.height)
     }
     ShellMenu {
@@ -118,6 +118,7 @@ Item {
             objectName: "originalPasteAllItem"
             iconRole: "paste-translation"
             text: qsTranslate("HikariSub.Editor", "Paste all")
+            shortcutText: tools.shellRoot.boundKeys("EDITBOX_PASTE_ALL_TO_TRANSLATION", 2)
             enabled: tools.editor.editable
             onTriggered: tools.pasteAll()
         }
@@ -125,6 +126,7 @@ Item {
             objectName: "originalPasteSelectionItem"
             iconRole: "paste-selection-translation"
             text: qsTranslate("HikariSub.Editor", "Paste the selected text")
+            shortcutText: tools.shellRoot.boundKeys("EDITBOX_PASTE_SELECTION_TO_TRANSLATION", 2)
             enabled: tools.editor.editable
             onTriggered: tools.pasteSelection()
         }
@@ -132,6 +134,7 @@ Item {
             objectName: "originalCommentOutItem"
             iconRole: "comment-original"
             text: qsTranslate("HikariSub.Editor", "Comment out original")
+            shortcutText: tools.shellRoot.boundKeys("EDITBOX_HIDE_ORIGINAL", 2)
             enabled: tools.editor.editable
             onTriggered: tools.commentOut()
         }

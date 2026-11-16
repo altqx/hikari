@@ -46,7 +46,7 @@ Popup {
             height: popup.headerHeight
             iconRole: "panel-menu"
             iconSize: 14
-            text: qsTr("Tag list options")
+            text: qsTranslate("HikariSub.Workspace", "More options")
             focusPolicy: Qt.NoFocus
             down: optionsMenu.visible
             onClicked: popup.openOptions()

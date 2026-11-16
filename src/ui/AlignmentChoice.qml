@@ -10,11 +10,12 @@ IconToolButton {
     required property LineEditorController editor
     signal chosen()
 
-    readonly property var names: ["", qsTr("Bottom-left") + " (an1)", qsTr("Bottom-centre") + " (an2)",
-                                  qsTr("Bottom-right") + " (an3)", qsTr("Middle-left") + " (an4)",
-                                  qsTr("Centre") + " (an5)", qsTr("Middle-right") + " (an6)",
-                                  qsTr("Top-left") + " (an7)", qsTr("Top-centre") + " (an8)",
-                                  qsTr("Top-right") + " (an9)"]
+    readonly property var names: ["",
+        qsTranslate("HikariSub.Position", "Bottom left (%1)").arg("\\an1"), qsTranslate("HikariSub.Position", "Bottom centre (%1)").arg("\\an2"),
+        qsTranslate("HikariSub.Position", "Bottom right (%1)").arg("\\an3"), qsTranslate("HikariSub.Position", "Middle left (%1)").arg("\\an4"),
+        qsTranslate("HikariSub.Position", "Middle centre (%1)").arg("\\an5"), qsTranslate("HikariSub.Position", "Middle right (%1)").arg("\\an6"),
+        qsTranslate("HikariSub.Position", "Top left (%1)").arg("\\an7"), qsTranslate("HikariSub.Position", "Top centre (%1)").arg("\\an8"),
+        qsTranslate("HikariSub.Position", "Top right (%1)").arg("\\an9")]
     readonly property int current: editor.alignmentMixed || editor.alignmentIndex < 0 ? 0 : editor.alignmentIndex + 1
     readonly property alias gridOpen: grid.opened
 

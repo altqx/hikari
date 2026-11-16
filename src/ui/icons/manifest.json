@@ -5605,8 +5605,7 @@
    "legacy": [],
    "surfaces": [
     "grid-menu"
-   ],
-   "pending": "CX7 #810"
+   ]
   },
   {
    "role": "pos-to-margins",
@@ -5653,8 +5652,7 @@
    "legacy": [],
    "surfaces": [
     "line-editor"
-   ],
-   "pending": "CX7 #810"
+   ]
   },
   {
    "role": "phantom-keep-end",
@@ -5665,8 +5663,7 @@
    "legacy": [],
    "surfaces": [
     "line-editor"
-   ],
-   "pending": "CX7 #810"
+   ]
   },
   {
    "role": "cycle-values",

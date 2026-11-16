@@ -3700,39 +3700,39 @@ Urządzenie wyjściowe: %2</translation>
     <name>HikariSub.Editor</name>
     <message>
         <source>Bottom-left</source>
-        <translation>Lewo-dół</translation>
+        <translation type="vanished">Lewo-dół</translation>
     </message>
     <message>
         <source>Bottom-centre</source>
-        <translation>Środek-dół</translation>
+        <translation type="vanished">Środek-dół</translation>
     </message>
     <message>
         <source>Bottom-right</source>
-        <translation>Prawo-dół</translation>
+        <translation type="vanished">Prawo-dół</translation>
     </message>
     <message>
         <source>Middle-left</source>
-        <translation>Lewo-środek</translation>
+        <translation type="vanished">Lewo-środek</translation>
     </message>
     <message>
         <source>Centre</source>
-        <translation>Środek</translation>
+        <translation type="vanished">Środek</translation>
     </message>
     <message>
         <source>Middle-right</source>
-        <translation>Prawo-środek</translation>
+        <translation type="vanished">Prawo-środek</translation>
     </message>
     <message>
         <source>Top-left</source>
-        <translation>Lewo-góra</translation>
+        <translation type="vanished">Lewo-góra</translation>
     </message>
     <message>
         <source>Top-centre</source>
-        <translation>Środek-góra</translation>
+        <translation type="vanished">Środek-góra</translation>
     </message>
     <message>
         <source>Top-right</source>
-        <translation>Prawo-góra</translation>
+        <translation type="vanished">Prawo-góra</translation>
     </message>
     <message>
         <source>Text position</source>
@@ -3875,6 +3875,10 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Słowo “%1” nie zostało dodane do słownika.</translation>
     </message>
     <message>
+        <source>Check spelling as you type</source>
+        <translation>Sprawdzaj pisownię podczas pisania</translation>
+    </message>
+    <message>
         <source>Line editor</source>
         <translation>Edytor linijki</translation>
     </message>
@@ -3923,8 +3927,12 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Wklej zaznaczony tekst</translation>
     </message>
     <message>
+        <source>Add a tag button…</source>
+        <translation>Dodaj przycisk tagu…</translation>
+    </message>
+    <message>
         <source>Add a tag button</source>
-        <translation>Dodaj przycisk tagu</translation>
+        <translation type="vanished">Dodaj przycisk tagu</translation>
     </message>
     <message>
         <source>Edit…</source>
@@ -3944,7 +3952,7 @@ Urządzenie wyjściowe: %2</translation>
     </message>
     <message>
         <source>Check spelling</source>
-        <translation>Sprawdzaj pisownię</translation>
+        <translation type="vanished">Sprawdzaj pisownię</translation>
     </message>
     <message>
         <source>Original text</source>
@@ -6339,6 +6347,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Według łamań wierszy</translation>
     </message>
     <message>
+        <source>Typesetting</source>
+        <translation>Typesetting</translation>
+    </message>
+    <message>
         <source>Interpolate across lines…</source>
         <translation>Interpoluj między wierszami…</translation>
     </message>
@@ -7022,7 +7034,7 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Shift+kliknięcie ustawia skrót</translation>
     </message>
     <message>
-        <source>AI actions…</source>
+        <source>AI actions</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -8259,7 +8271,7 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Add QC note</source>
-        <translation>Dodaj notatkę QC</translation>
+        <translation type="vanished">Dodaj notatkę QC</translation>
     </message>
     <message>
         <source>Perspective tracking…</source>
@@ -8476,6 +8488,10 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Cycle \fsp back</source>
         <translation>Cykl \fsp wstecz</translation>
+    </message>
+    <message>
+        <source>Add QC note…</source>
+        <translation>Dodaj notatkę QC…</translation>
     </message>
     <message>
         <source>Move tab to new window</source>
@@ -8698,7 +8714,7 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>AI</source>
-        <translation type="unfinished">AI</translation>
+        <translation type="obsolete">AI</translation>
     </message>
     <message>
         <source>Rewrite…</source>
@@ -8733,11 +8749,15 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Edit actions…</source>
+        <source>%1…</source>
+        <translation>%1…</translation>
+    </message>
+    <message>
+        <source>Edit actions</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Add a model in Settings › AI…</source>
+        <source>Add a model in Settings › AI</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -16956,6 +16976,46 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Względem</translation>
     </message>
     <message>
+        <source>Align</source>
+        <translation>Wyrównaj</translation>
+    </message>
+    <message>
+        <source>Left edges</source>
+        <translation>Lewe krawędzie</translation>
+    </message>
+    <message>
+        <source>Centres</source>
+        <translation>Środki</translation>
+    </message>
+    <message>
+        <source>Right edges</source>
+        <translation>Prawe krawędzie</translation>
+    </message>
+    <message>
+        <source>Top edges</source>
+        <translation>Górne krawędzie</translation>
+    </message>
+    <message>
+        <source>Middles</source>
+        <translation>Środki w pionie</translation>
+    </message>
+    <message>
+        <source>Bottom edges</source>
+        <translation>Dolne krawędzie</translation>
+    </message>
+    <message>
+        <source>Distribute</source>
+        <translation>Rozłóż</translation>
+    </message>
+    <message>
+        <source>Horizontally</source>
+        <translation>Poziomo</translation>
+    </message>
+    <message>
+        <source>Vertically</source>
+        <translation>Pionowo</translation>
+    </message>
+    <message>
         <source>The active line</source>
         <translation type="vanished">Aktywnego wiersza</translation>
     </message>
@@ -16973,35 +17033,35 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Align left edges</source>
-        <translation>Wyrównaj lewe krawędzie</translation>
+        <translation type="vanished">Wyrównaj lewe krawędzie</translation>
     </message>
     <message>
         <source>Align centres</source>
-        <translation>Wyrównaj środki</translation>
+        <translation type="vanished">Wyrównaj środki</translation>
     </message>
     <message>
         <source>Align right edges</source>
-        <translation>Wyrównaj prawe krawędzie</translation>
+        <translation type="vanished">Wyrównaj prawe krawędzie</translation>
     </message>
     <message>
         <source>Align top edges</source>
-        <translation>Wyrównaj górne krawędzie</translation>
+        <translation type="vanished">Wyrównaj górne krawędzie</translation>
     </message>
     <message>
         <source>Align middles</source>
-        <translation>Wyrównaj środki w pionie</translation>
+        <translation type="vanished">Wyrównaj środki w pionie</translation>
     </message>
     <message>
         <source>Align bottom edges</source>
-        <translation>Wyrównaj dolne krawędzie</translation>
+        <translation type="vanished">Wyrównaj dolne krawędzie</translation>
     </message>
     <message>
         <source>Distribute horizontally</source>
-        <translation>Rozłóż poziomo</translation>
+        <translation type="vanished">Rozłóż poziomo</translation>
     </message>
     <message>
         <source>Distribute vertically</source>
-        <translation>Rozłóż pionowo</translation>
+        <translation type="vanished">Rozłóż pionowo</translation>
     </message>
     <message>
         <source>Phantom</source>
@@ -19818,6 +19878,14 @@ ponieważ została zmieniona.</translation>
         <translation>Ustawienia gramatyki…</translation>
     </message>
     <message>
+        <source>Add “%1” to project dictionary</source>
+        <translation>Dodaj “%1” do słownika projektu</translation>
+    </message>
+    <message>
+        <source>Add “%1” to my dictionary</source>
+        <translation>Dodaj “%1” do mojego słownika</translation>
+    </message>
+    <message>
         <source>Grammar · %1</source>
         <translation>Gramatyka · %1</translation>
     </message>
@@ -19832,14 +19900,6 @@ ponieważ została zmieniona.</translation>
     <message>
         <source>Add “%1” to dictionary</source>
         <translation>Dodaj “%1” do słownika</translation>
-    </message>
-    <message>
-        <source>This project</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Mine</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Add to project dictionary</source>
@@ -21569,7 +21629,7 @@ Usunięte style:
     </message>
     <message>
         <source>Tag list options</source>
-        <translation>Opcje listy tagów</translation>
+        <translation type="vanished">Opcje listy tagów</translation>
     </message>
     <message>
         <source>Tag list</source>
@@ -24323,7 +24383,7 @@ Usunięte style:
     </message>
     <message>
         <source>More</source>
-        <translation>Więcej</translation>
+        <translation type="vanished">Więcej</translation>
     </message>
     <message>
         <source>Run %1: %2, %3</source>
@@ -27402,6 +27462,10 @@ nie działają na komentarzach</translation>
     <message>
         <source>Drag a panel here</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>More options</source>
+        <translation>Więcej opcji</translation>
     </message>
 </context>
 <context>

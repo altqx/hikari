@@ -276,7 +276,7 @@ RowLayout {
             // MUST KILL: stripHidden is read by name in groupWidth to leave the button out
             readonly property bool stripHidden: strip.tagButtons.count >= strip.tagButtons.maximum
             iconRole: "add"
-            text: qsTr("Add a tag button")
+            text: qsTr("Add a tag button…")
             focusPolicy: Qt.NoFocus
             visible: !stripHidden
             onClicked: tagButtonEditor.openFor(addTagButton, -1, null)
@@ -342,8 +342,8 @@ RowLayout {
         id: more
         objectName: "tagStripMore"
         iconRole: "menu-more"
-        text: qsTranslate("HikariSub.Translation", "More")
-        focusPolicy: Qt.NoFocus
+        text: qsTranslate("HikariSub.Workspace", "More options")
+        focusPolicy: Qt.TabFocus
         visible: strip.foldable.some(g => strip.isFolded(g))
         onClicked: {
             // The menu takes the focus, so the edited field is read before it opens.
@@ -488,7 +488,7 @@ RowLayout {
             objectName: "foldedAddTagButton"
             visible: moreMenu.custom && !addTagButton.stripHidden
             iconRole: "add"
-            text: qsTr("Add a tag button")
+            text: qsTr("Add a tag button…")
             onTriggered: tagButtonEditor.openFor(more, -1, null)
         }
         onAboutToShow: placeAlignment()
@@ -525,12 +525,11 @@ RowLayout {
         enabled: alignment.enabled
         Instantiator {
             model: [7, 8, 9, 4, 5, 6, 1, 2, 3] // the numpad's rows
-            delegate: ShellMenuItem {
+            delegate: MenuRadioItem {
                 required property int modelData
                 objectName: "foldedAlignment" + modelData
                 iconRole: alignment.roleFor(modelData)
                 text: alignment.names[modelData]
-                checkable: true
                 checked: alignment.current === modelData
                 onTriggered: alignment.choose(modelData)
             }
