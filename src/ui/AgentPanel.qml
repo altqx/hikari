@@ -728,6 +728,7 @@ FocusScope {
 
     ShellMenu {
         id: attachMenu
+        ownWindowWhenFloating: true
         objectName: "agentAttachMenu"
         Repeater {
             model: panel.agent.attachable
@@ -747,6 +748,7 @@ FocusScope {
 
     ShellMenu {
         id: slashMenu
+        ownWindowWhenFloating: true
         objectName: "agentSlashMenu"
         ShellMenuItem {
             iconRole: "compact"
@@ -781,6 +783,7 @@ FocusScope {
 
     ShellMenu {
         id: modelMenu
+        ownWindowWhenFloating: true
         objectName: "agentModelMenu"
         Instantiator {
             model: panel.agent.agents
@@ -789,6 +792,7 @@ FocusScope {
                 required property var modelData
                 readonly property var listed: panel.agent.agentModelsRevision >= 0 ? panel.agent.agentModels(modelData.agent) : ({})
                 objectName: "agentModelMenu_" + modelData.agent
+                iconRole: "ai-assistant"
                 title: modelData.text
                 onAboutToShow: panel.agent.loadAgentModels(modelData.agent)
                 ShellMenuItem {
@@ -842,6 +846,7 @@ FocusScope {
 
     ShellMenu {
         id: modeMenu
+        ownWindowWhenFloating: true
         objectName: "agentModeMenu"
         width: 300
         Repeater {

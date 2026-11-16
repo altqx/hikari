@@ -32,7 +32,8 @@ Menu {
         list?.forceLayout()
     }
     // Qt misplaces an in-window popup inside a KDDockWidgets floating window (#1186).
-    popupType: parent && parent.Window.window && parent.Window.window.transientParent ? Popup.Window : Popup.Item
+    property bool ownWindowWhenFloating: false
+    popupType: ownWindowWhenFloating && parent?.Window.window?.transientParent ? Popup.Window : Popup.Item
     function keepOnScreen() {
         if (!parent || !background || (parent as MenuItem)?.subMenu === menu)
             return
