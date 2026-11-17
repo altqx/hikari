@@ -966,15 +966,15 @@ void drawRect(Overlay &out, PointF pos, bool sel, float rcsize)
                              {pos.x + rcsize, pos.y - rcsize},
                              {pos.x + rcsize, pos.y + rcsize},
                              {pos.x - rcsize, pos.y + rcsize}},
-                            sel ? kHandleSelectedFill : kHandleFill,
-                            kHandleBorder});
+                            sel ? out.handles.selectedFill : out.handles.fill,
+                            out.handles.border});
 }
 
 void drawCircle(Overlay &out, PointF pos, bool sel, float crsize)
 {
     crsize *= out.unit;
-    out.circles.push_back({pos, crsize, sel ? kHandleSelectedFill : kHandleFill, true});
-    out.circles.push_back({pos, crsize, kHandleBorder, false});
+    out.circles.push_back({pos, crsize, sel ? out.handles.selectedFill : out.handles.fill, true});
+    out.circles.push_back({pos, crsize, out.handles.border, false});
 }
 
 void drawCross(Overlay &out, PointF position, std::uint32_t colour)
@@ -996,8 +996,8 @@ PointF drawArrow(Overlay &out, PointF from, PointF to, int diff)
     out.polygons.push_back({{{pend.x - units.x * 12 * u, pend.y - units.y * 12 * u},
                              {pend.x + halfbase.x, pend.y + halfbase.y},
                              {pend.x - halfbase.x, pend.y - halfbase.y}},
-                            kHandleFill,
-                            kHandleBorder});
+                            out.handles.fill,
+                            out.handles.border});
     return pend;
 }
 
