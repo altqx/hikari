@@ -800,11 +800,13 @@ class ShellTest : public QObject {
                 && view.contains(it->mapRectToScene(QRectF(0, 0, it->width(), it->height())));
         };
         if (!dockHeader(panel)) {
+            if (!QQuickTest::qWaitForPolish(window))
+                return false;
             QQuickItem *tab = tabTitled(dock->property("title").toString());
             if (!inView(tab))
                 return false;
             QTest::mouseClick(window, Qt::LeftButton, {}, tab->mapToScene(QPointF(tab->width() / 2, tab->height() / 2)).toPoint());
-            if (!QTest::qWaitFor([&] { return dockHeader(panel) != nullptr; }, 1000))
+            if (!QTest::qWaitFor([&] { return dockHeader(panel) != nullptr; }))
                 return false;
         }
         QQuickItem *header = dockHeader(panel);
@@ -8669,29 +8671,8 @@ private slots:
                     continue;
                 const QString panel = dock->property("uniqueName").toString();
                 docked << panel;
-                if (!headerAndMenuButtonInside(dock, areaRect)) {
-                    const auto r = [](QQuickItem *it) {
-                        if (!it)
-                            return QStringLiteral("none");
-                        const QRectF g = it->mapRectToScene(QRectF(0, 0, it->width(), it->height()));
-                        return QStringLiteral("%1x%2+%3+%4%5").arg(g.width()).arg(g.height()).arg(g.x()).arg(g.y())
-                            .arg(it->isVisible() ? QString() : QStringLiteral(" hidden"));
-                    };
-                    QQuickItem *h = dockHeader(panel);
-                    QQuickItem *t = tabTitled(dock->property("title").toString());
-                    QQuickItem *bar = t;
-                    while (bar && bar->objectName() != QLatin1String("dockHeader"))
-                        bar = bar->parentItem();
-                    if (t && bar)
-                        unreachable << QStringLiteral("{bar current %1 count %2 slot %3 tabs %4 width %5; tab cutOff %6 selected %7}")
-                                           .arg(bar->property("currentTitle").toString()).arg(bar->property("count").toInt())
-                                           .arg(bar->property("slotWidth").toReal()).arg(bar->property("naturalTabsWidth").toReal())
-                                           .arg(bar->width()).arg(t->property("cutOff").toBool()).arg(t->property("selected").toBool());
-                    unreachable << QStringLiteral("%1 [tab %2, header %3, menu %4, area %5x%6+%7+%8]").arg(panel)
-                                       .arg(r(tabTitled(dock->property("title").toString()))).arg(r(h))
-                                       .arg(r(h ? findItem(h, QStringLiteral("dockMenuButton")) : nullptr))
-                                       .arg(areaRect.width()).arg(areaRect.height()).arg(areaRect.x()).arg(areaRect.y());
-                }
+                if (!headerAndMenuButtonInside(dock, areaRect))
+                    unreachable << panel;
             }
             return unreachable.isEmpty();
         };

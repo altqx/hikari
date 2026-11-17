@@ -21527,10 +21527,6 @@ Usunięte style:
         <translation>Style</translation>
     </message>
     <message>
-        <source>Styles: %1</source>
-        <translation>Style: %1</translation>
-    </message>
-    <message>
         <source>Delete unused styles</source>
         <translation>Usuń nieużywane style</translation>
     </message>
