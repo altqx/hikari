@@ -168,6 +168,16 @@ QJsonArray entriesOf(QQuickItem *item, const application::OptionsBinding *bindin
 }
 
 // Qt makes the Accessible attached object the item's child.
+QQuickItem *itemNamed(QQuickItem *item, const QString &name)
+{
+    if (item->objectName() == name)
+        return item;
+    for (QQuickItem *child : item->childItems())
+        if (QQuickItem *found = itemNamed(child, name))
+            return found;
+    return nullptr;
+}
+
 QString shownName(const QQuickItem *item)
 {
     for (QObject *child : item->children())
@@ -200,7 +210,8 @@ struct SettingsExport {
 
     QQuickItem *control(const QString &key) const
     {
-        return dialog->findChild<QQuickItem *>(QStringLiteral("setting_") + key);
+        auto *window = qobject_cast<QQuickWindow *>(dialog);
+        return window ? itemNamed(window->contentItem(), QStringLiteral("setting_") + key) : nullptr;
     }
 
     void add(const QString &key, const QString &section, QQuickItem *item, const QJsonObject &extra = {})

@@ -19268,17 +19268,17 @@ private slots:
               {"convert.resolutionHeight", nullptr},
               {"convert.assTagsToInsertInLine", nullptr}}},
             {"settingsPageSubtitleProperties",
-             {{"scriptProperties.titleOn", "Title"},
+             {{"scriptProperties.titleOn", "Write"},
               {"scriptProperties.title", nullptr},
-              {"scriptProperties.scriptOn", "Author"},
+              {"scriptProperties.scriptOn", "Write"},
               {"scriptProperties.script", nullptr},
-              {"scriptProperties.translationOn", "Translator"},
+              {"scriptProperties.translationOn", "Write"},
               {"scriptProperties.translation", nullptr},
-              {"scriptProperties.editingOn", "Proofreading"},
+              {"scriptProperties.editingOn", "Write"},
               {"scriptProperties.editing", nullptr},
-              {"scriptProperties.timingOn", "Timer"},
+              {"scriptProperties.timingOn", "Write"},
               {"scriptProperties.timing", nullptr},
-              {"scriptProperties.updateOn", "Editing"},
+              {"scriptProperties.updateOn", "Write"},
               {"scriptProperties.update", nullptr},
               {"scriptProperties.askForChange", "Ask before changing them on save"},
               {"subtitles.layoutInFile", "Save the panel layout in subtitle files"}}},
@@ -20183,7 +20183,7 @@ private slots:
         answerSettingsQuestion("reset");
         QTRY_COMPARE(settings.integer("updater.nextCheck"), 0);
         QCOMPARE(settingsValues(dialog).value(QStringLiteral("automation.loadingMethod")).toInt(), -1);
-        QCOMPARE(dialogItem("settingsDialog", "setting_video.ffms2Seeking")->property("currentIndex").toInt(), -1);
+        QCOMPARE(dialogItem("settingsDialog", "setting_video.ffms2Seeking")->property("currentIndex").toInt(), 2);
         QCOMPARE(dialogItem("settingsDialog", "setting_audio.inactiveLinesDisplayMode")->property("currentIndex").toInt(), -1);
         QCOMPARE(dialogItem("settingsDialog", "setting_program.tabTextMaxChars")->property("value").toInt(), 20);
         QCOMPARE(dialogItem("settingsDialog", "setting_video.zoomPercent")->property("text").toString(), QString());
@@ -20194,7 +20194,7 @@ private slots:
         QCOMPARE(application->shiftTimesSettings().settings().timeMs, 750);
         QVERIFY(!settings.contains("shiftTimes.time"));
         QCOMPARE(settings.integer("automation.loadingMethod"), -1);
-        QCOMPARE(settings.integer("video.ffms2Seeking"), -1);
+        QCOMPARE(settings.integer("video.ffms2Seeking"), 2);
         QCOMPARE(settings.integer("audio.inactiveLinesDisplayMode"), -1);
         QCOMPARE(settings.integer("program.tabTextMaxChars"), 20);
         QVERIFY(!settings.contains("video.zoomPercent"));
