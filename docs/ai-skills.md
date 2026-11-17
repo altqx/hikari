@@ -58,7 +58,7 @@ The folders are read when a thread starts its first turn, so a new or changed sk
 
 **Settings › AI › Skills** lists the skills a window's threads get ([#941](https://github.com/altqx/hikari/issues/941), owner Q349). It's on the Yours tab, and sets nothing.
 
-- The groups are **This project** (in a Project window, `.hikari/skills`), **Mine** (`ai/skills`) and **Built in**. Each row has a Project, Mine or Built in chip.
+- The groups are **This project** (in a Project window, `.hikari/skills`), **Yours** (`ai/skills`) and **Built in**. Each row has a Project, Yours or Built in chip.
 - A skill another hides stays in the list, struck through: "Hidden by this project's" or "Replaced by yours".
 - A folder that can't be offered stays with a warning and why: a folder name that isn't a skill name, no `SKILL.md`, a `SKILL.md` that isn't UTF-8 text or is over 256 KiB, no frontmatter, a `name` other than the folder's, or no description. A skill past the file limit says how many of its files are offered.
 - **Open folder** makes `ai/skills` when it isn't there and opens it. **Open project folder**, in a Project window, does the same for `.hikari/skills`; only you write there, never the AI. **Read the folders again** refreshes the list, which is read when the page opens.
