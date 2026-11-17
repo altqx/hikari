@@ -2,9 +2,9 @@
 
 One box to run any command and jump anywhere, as in VS Code ([#1236](https://github.com/altqx/hikari/issues/1236)). The palette and Quick Open are two faces of one popup, the **quick pick**: a field over a list. App flows and plugins use the same popup, and its input-only form, the **input box**. It is drawn in [Quiet](visual-language.md).
 
-The owner asked for it on 2026-11-17. Command conditions come from [#1224](https://github.com/altqx/hikari/issues/1224) (Q629). The plugin API's names for these popups are fixed in [ADR 0034](../adr/0034-plugins-grow-into-an-extension-system.md) (#1221), not here. This document only says how the popups look and behave.
+The owner asked for it on 2026-11-17 and chose this design from a board the same day ("lgtm", Q660–Q670; see [Decisions](#decisions)). Command conditions come from [#1224](https://github.com/altqx/hikari/issues/1224) (Q629). The plugin API's names for these popups are fixed in [ADR 0034](../adr/0034-plugins-grow-into-an-extension-system.md) (#1221), not here. This document only says how the popups look and behave.
 
-The app doesn't change until the code card lands after the beta.4 tag. Parts marked **Proposed** wait for the owner.
+The app doesn't change until the code card lands after the beta.4 tag.
 
 ## Opening it
 
@@ -15,12 +15,13 @@ The app doesn't change until the code card lands after the beta.4 tag. Parts mar
 
 - Both are Global, so they work from every panel, the line editor's text included. Both keys are free on main in every context, and in Aegisub 3.5's defaults.
 - Both are in the hotkey list, and the user can change or clear them like any other.
+- **`>` is the command palette (Q664).** Typing `>` at the start of Quick Open's field switches it to the command palette in place. Ctrl+Shift+P opens Quick Open with `>` already typed, so the two are one popup. Deleting the `>` goes back to files.
 - Pressing either key while the quick pick is open switches it to that mode and keeps what was typed after the prefix.
 - A dialog keeps its keys. Neither opens over a dialog.
 
 ## Placement and look
 
-The quick pick hangs from the top centre of the active shell window, 8 under the title bar.
+The quick pick hangs from the top centre of the active shell window, 8 under the title bar (Q660).
 
 | Part | Size | Look |
 | --- | --- | --- |
@@ -42,7 +43,7 @@ It isn't modal. The window behind it keeps drawing and the video keeps playing. 
 
 The description elides first, then the name. The current row is `select`. Under the pointer a row takes `hover`. In high contrast the current row also has a 1-unit `accent` boundary, as the rail's active tool does.
 
-**Matched letters** are semibold, in the row's own colour. Colour alone never marks them, so they read the same in all four themes.
+**Matched letters** are semibold, in the row's own colour (Q662). Colour alone never marks them, so they read the same in all four themes.
 
 **Disabled rows** (#1224) keep their place and are drawn in `disabled`. The reason ("Needs a selection", one phrase per failing condition, as `commands.list` gives it) replaces the description, in `muted`. The arrows can land on a disabled row, so the reason can be read and announced. Enter on one does nothing; the reason stays shown.
 
@@ -68,13 +69,13 @@ The placeholder says: "Search files by name. Type ? for the other searches."
 
 A prefix at the start of the field switches what is searched. A space after the prefix is allowed and ignored. Backspace on a field holding only the prefix removes it and goes back to files.
 
-| Prefix | Searches | Enter | Status |
+| Prefix | Searches | Enter | Note |
 | --- | --- | --- | --- |
-| `>` | Commands (see [The command palette](#the-command-palette)) | Runs the command | As VS Code |
-| `:` | Lines by number: `:46` | Makes line 46 the active Line, selects it and scrolls the Grid to it. The video seeks to its start when it follows the active Line. | Proposed |
-| `@` | A time or a frame, in Jump to's grammar ([video-controls.md](video-controls.md#jump-to)): `@3:40`, `@5200`, `@+5s`, `@-12f` | Seeks the video, as Jump to does | Proposed |
-| `#` | The Document's styles | Applies the style to the selected Lines, as one undo step | Proposed |
-| `view ` | Panels and layouts | Shows and focuses the panel, or switches to the layout | Proposed; the same word as VS Code |
+| `>` | Commands (see [The command palette](#the-command-palette)) | Runs the command | As VS Code; Q664 |
+| `:` | Lines by number: `:46` | Makes line 46 the active Line, selects it and scrolls the Grid to it. The video seeks to its start when it follows the active Line. | Q664 |
+| `@` | A time or a frame, in Jump to's grammar ([video-controls.md](video-controls.md#jump-to)): `@3:40`, `@5200`, `@+5s`, `@-12f` | Seeks the video, as Jump to does | Q664 |
+| `#` | The Document's styles | Applies the style to the selected Lines, as one undo step | Q664 |
+| `view ` | Panels and layouts | Shows and focuses the panel, or switches to the layout | Q664; the same word as VS Code |
 | `?` | The prefixes themselves, one row each | Puts that prefix in the field | As VS Code |
 
 **`:` Lines.** The row shows the Line's number, its start time in `muted` monospace and its text, elided. A number past the end is the validation line "Not a line: 500. This Document has 412 lines." With no number yet, the foot says "Type a line number, 1 to 412."
@@ -144,8 +145,8 @@ A flow of several questions (a name, then a place) keeps one frame. The title ro
 
 ### When a plugin opens it
 
-- **The plugin is named.** The title row is always shown, with the plugin's name in `muted` at its trailing end, even when the plugin gives no title. That way a plugin's question never looks like HikariSub's own.
-- **Only when the user asked.** A plugin can open one only while a command, menu item, key, status item or panel click of its own that the user started is running, or from its job. Otherwise the call is refused. It can never open over the user's typing on its own.
+- **The plugin is named (Q663).** The title row is always shown, with the plugin's name in `muted` at its trailing end, even when the plugin gives no title. That way a plugin's question never looks like HikariSub's own.
+- **Only when the user asked (Q667).** A plugin can open one only while a command, menu item, key, status item or panel click of its own that the user started is running, or from its job. Otherwise the call is refused. It can never open over the user's typing on its own.
 - **Plain text.** Names, descriptions, details, the prompt and the validation message are plain text, never markup, as notices are.
 - **Within the Quiet look.** Plugins choose the words, the icons (from the K1 set and the plugin's own icons, as its commands use), the groups and the validation level. They don't choose colours, sizes or placement.
 - **Closed with the plugin.** When the plugin stops, is turned off or crashes, its quick pick closes.
@@ -154,7 +155,7 @@ How the plugin asks for these things (the operation, its parameters and its answ
 
 ## App flows that move to the quick pick
 
-The PK1 rule changes. A single list or a single line of text asked for from a menu, a hotkey or a flow is now the quick pick or the input box, not a compact window. Asked from a control on screen, it stays a popover at that control.
+The PK1 rule changes (Q668). A single list or a single line of text asked for from a menu, a hotkey or a flow is now the quick pick or the input box, not a compact window. Asked from a control on screen, it stays a popover at that control.
 
 | Today | Kind today | Becomes |
 | --- | --- | --- |
@@ -214,11 +215,20 @@ The pointer works throughout: a click chooses, the wheel scrolls, and a press ou
 - Group headings are announced with the first row under them, never as rows.
 - Everything above holds in all four themes. The current row in high contrast has the `accent` boundary as well as `select`, so it isn't told by fill alone. The keyboard focus ring stays on the field.
 
-## Open questions for the owner
+## Decisions
 
-1. **Prefixes.** Are `:` (a Line by number), `@` (a time or frame), `#` (a style) and `view ` (panels and layouts) right, as well as VS Code's `>` and `?`?
-2. **`#` Enter.** Should choosing a style apply it to the selected Lines (Shift+Enter selects every Line using it), or the other way round?
-3. **`@` without a video.** Should a time select the Line showing at that time, or should `@` need a video?
-4. **Plugins only when the user asked.** Can a plugin open a quick pick or input box only while a command or click the user started is running (or its job), and is it always titled with the plugin's name?
-5. **Rename thread and the node Rename.** Should they move to the input box, and the two track choosers to the quick pick, as the table says?
-6. **Menu rows.** Should Quick Open go under File and Command palette under View?
+The owner said "lgtm" to the #1236 board on 2026-11-17, taking the recommended option for every question (tracking [#1209](https://github.com/altqx/hikari/issues/1209)):
+
+| Q | Decision |
+| --- | --- |
+| Q660 | The quick pick hangs from the top centre of the window, 8 under the title bar |
+| Q661 | One-line rows: name, the path or reason in `muted`, the shortcut at the end |
+| Q662 | Matched letters are semibold; colour alone never marks them |
+| Q663 | A plugin's popup always has the title row, with the plugin's name |
+| Q664 | Prefixes `>`, `?`, `:`, `@`, `#` and `view `; typing `>` in Quick Open switches to the command palette, and Ctrl+Shift+P opens with `>` typed |
+| Q665 | In `#`, Enter applies the style to the selected Lines; Shift+Enter selects every Line using it |
+| Q666 | Without a video, `@` with a time selects the Line showing then; frames and steps need a video |
+| Q667 | A plugin opens a quick pick or input box only while a command or click the user started runs, or from its job |
+| Q668 | Rename thread and the node Rename become input boxes; the audio and Matroska track choosers become quick picks |
+| Q669 | File › Quick Open… and View › Command palette… |
+| Q670 | In Simple mode the popup follows the app's theme over the black picture |
