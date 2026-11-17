@@ -332,6 +332,30 @@ TEST(PluginManifest, StyleCataloguesAndKaraokePresetsRead)
     EXPECT_EQ(problem(json).kind, Kind::Schema);
 }
 
+TEST(PluginManifest, DictionariesReadAndALanguageRepeatsNot)
+{
+    Json json = minimal();
+    json["contributes"] = *Json::parse(R"({"dictionaries": [
+        {"language": "ca_ES-valencia", "title": "Valencian", "aff": "dict/ca.aff", "dic": "dict/ca.dic"}]})");
+    const auto m = parse(json);
+    ASSERT_TRUE(m) << m.error().at << ": " << m.error().detail;
+    ASSERT_EQ(m->dictionaries.size(), 1u);
+    EXPECT_EQ(m->dictionaries[0].language, "ca_ES-valencia");
+    EXPECT_EQ(m->dictionaries[0].title, "Valencian");
+    EXPECT_EQ(m->dictionaries[0].aff, "dict/ca.aff");
+    EXPECT_EQ(m->dictionaries[0].dic, "dict/ca.dic");
+
+    json["contributes"] = *Json::parse(R"({"dictionaries": [
+        {"language": "pl", "title": "A", "aff": "a.aff", "dic": "a.dic"},
+        {"language": "pl", "title": "B", "aff": "b.aff", "dic": "b.dic"}]})");
+    const ManifestProblem repeated = problem(json);
+    EXPECT_EQ(repeated.kind, Kind::DuplicateId);
+    EXPECT_EQ(repeated.at, "/contributes/dictionaries/1/language");
+    EXPECT_EQ(repeated.detail, "pl");
+    json["contributes"] = *Json::parse(R"({"dictionaries": [{"language": "pl", "title": "A", "aff": "a.dic", "dic": "a.aff"}]})");
+    EXPECT_EQ(problem(json).kind, Kind::Schema);
+}
+
 TEST(PluginManifest, ANodeReadsItsPortsAndDefaults)
 {
     Json json = minimal();

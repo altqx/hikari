@@ -934,6 +934,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_pluginMarketplace->setBusy([this](const QString &id) { return m_pluginRuntime->busy(id); });
     connect(m_pluginRuntime.get(), &PluginRuntime::idle, m_pluginMarketplace.get(), &PluginMarketplace::pluginIdle);
     QMetaObject::invokeMethod(m_pluginRuntime.get(), &PluginRuntime::sync, Qt::QueuedConnection);
+    connect(m_pluginManager.get(), &PluginManager::pluginsChanged, this, &Application::readPluginDictionaries);
+    QMetaObject::invokeMethod(this, &Application::readPluginDictionaries, Qt::QueuedConnection);
     m_analytics = std::make_unique<Analytics>(*m_settings, options.analytics);
     m_analytics->setAiVersions([this] { return m_ai->versionProperties(); });
     m_crashReports = std::make_unique<CrashReports>(*m_settings, *m_analytics, *m_log, options.crashReports);
@@ -5247,8 +5249,12 @@ application::SpellChecker *Application::spellChecker(int shellWindow)
     if (!slot->started) {
         slot->started = true;
         if (settings.boolean("editor.spellchecker")) {
+            slot->checker->setPluginDictionaries(m_pluginDictionaries);
             const auto status = slot->checker->initialize(language.toStdU16String());
-            if (status != application::SpellChecker::Status::Ready) {
+            if (status == application::SpellChecker::Status::NoDictionary && !m_pluginDictionariesRead) {
+                slot->started = false;
+                m_spellingWaitsForPlugins = true;
+            } else if (status != application::SpellChecker::Status::Ready) {
                 if (!views(shellWindow).settings->overridden("editor.dictionaryLanguage"))
                     m_settings->set("editor.spellchecker", false);
                 const bool noDictionary = status == application::SpellChecker::Status::NoDictionary;
@@ -5314,6 +5320,18 @@ void Application::restartSpellChecker()
         slot.started = false;
     }
     emit spellCheckerRestarted();
+}
+
+void Application::readPluginDictionaries()
+{
+    auto dictionaries = application::pluginContent().dictionaries;
+    m_pluginDictionariesRead = true;
+    if (!std::exchange(m_spellingWaitsForPlugins, false) && dictionaries == m_pluginDictionaries)
+        return;
+    m_pluginDictionaries = std::move(dictionaries);
+    m_sampleChecker.reset();
+    restartSpellChecker();
+    spellingRefresh();
 }
 
 void Application::spellingRefresh()
@@ -7234,6 +7252,11 @@ QString qs(std::string_view s)
     return QString::fromUtf8(s.data(), qsizetype(s.size()));
 }
 
+QString qs(std::u8string_view s)
+{
+    return QString::fromUtf8(s.data(), qsizetype(s.size()));
+}
+
 QStringList qList(const std::vector<std::string> &list)
 {
     QStringList out;
@@ -7334,6 +7357,16 @@ QVariantMap Application::openSettingsDialog()
             const QString name = qstr(symbol);
             lists.dictionarySymbols.push_back(name.toStdString());
             lists.dictionaryNames.push_back(languageName(name).toStdString());
+        }
+        for (const auto &dictionary : m_pluginDictionaries) {
+            const std::string symbol = qstr(dictionary.language).toStdString();
+            if (std::ranges::find(lists.dictionarySymbols, symbol) != lists.dictionarySymbols.end())
+                continue;
+            lists.dictionarySymbols.push_back(symbol);
+            //: A plugin's spelling dictionary: %1 is its title, %2 the plugin's name.
+            lists.dictionaryNames.push_back(QCoreApplication::translate("HikariSub.Options", "%1 (%2)")
+                                                .arg(qs(dictionary.title), qs(dictionary.pluginName))
+                                                .toStdString());
         }
     }
     {
@@ -7666,6 +7699,7 @@ QVariantList Application::sampleSpellingMarks(const QString &text, bool on, int 
         for (const QString &folder : std::as_const(m_dictionaryDirs))
             folders.emplace_back(folder.toStdU16String());
         m_sampleChecker = std::make_unique<application::SpellChecker>(std::move(folders), m_spellingLoader);
+        m_sampleChecker->setPluginDictionaries(m_pluginDictionaries);
         m_sampleCheckerLanguage = language;
         m_sampleCheckerReady = m_sampleChecker->initialize(language.toStdU16String()) == application::SpellChecker::Status::Ready;
     }

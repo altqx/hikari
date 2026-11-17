@@ -22,7 +22,8 @@ void add(std::vector<application::PluginContentFile> &into, const std::vector<pl
 
 plugins::ContentFileChecks contentFileChecks()
 {
-    return {application::styleCatalogueProblem, application::karaokePresetProblem};
+    return {application::styleCatalogueProblem, application::karaokePresetProblem, application::dictionaryAffProblem,
+            application::dictionaryDicProblem};
 }
 
 bool pluginContentShows(const plugins::InstalledPlugin &entry, const plugins::Manifest &manifest)
@@ -35,6 +36,11 @@ void addPluginContent(application::PluginContent &into, const std::string &id, c
 {
     add(into.styleCatalogues, manifest.styles, id, manifest, root);
     add(into.karaokePresets, manifest.karaokePresets, id, manifest, root);
+    for (const plugins::Dictionary &dictionary : manifest.dictionaries)
+        into.dictionaries.push_back({id, u8(manifest.name), u8(dictionary.title),
+                                     std::u16string(dictionary.language.begin(), dictionary.language.end()),
+                                     root / std::filesystem::path(u8(dictionary.aff)),
+                                     root / std::filesystem::path(u8(dictionary.dic))});
 }
 
 }

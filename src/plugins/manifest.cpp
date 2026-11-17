@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <cctype>
 #include <charconv>
+#include <functional>
 #include <set>
 
 namespace hikari::plugins {
@@ -86,6 +87,15 @@ std::vector<ContentFile> contentFiles(const Json *list)
     if (list && list->isArray())
         for (const Json &item : list->asArray())
             out.push_back({text(item, "id"), text(item, "title"), text(item, "path")});
+    return out;
+}
+
+std::vector<Dictionary> dictionaries(const Json *list)
+{
+    std::vector<Dictionary> out;
+    if (list && list->isArray())
+        for (const Json &item : list->asArray())
+            out.push_back({text(item, "language"), text(item, "title"), text(item, "aff"), text(item, "dic")});
     return out;
 }
 
@@ -209,14 +219,20 @@ std::optional<ManifestProblem> badProgram(const Manifest &m, std::size_t index)
     return std::nullopt;
 }
 
-template <typename Items>
-std::optional<ManifestProblem> repeated(const Items &items, const std::string &at)
+template <typename Items, typename Key>
+std::optional<ManifestProblem> repeated(const Items &items, const std::string &at, Key key, std::string_view field)
 {
     std::set<std::string> seen;
     for (std::size_t i = 0; i < items.size(); ++i)
-        if (!seen.insert(items[i].id).second)
-            return ManifestProblem{Kind::DuplicateId, at + "/" + std::to_string(i) + "/id", items[i].id, 0};
+        if (const std::string &value = std::invoke(key, items[i]); !seen.insert(value).second)
+            return ManifestProblem{Kind::DuplicateId, at + "/" + std::to_string(i) + "/" + std::string(field), value, 0};
     return std::nullopt;
+}
+
+template <typename Items>
+std::optional<ManifestProblem> repeated(const Items &items, const std::string &at)
+{
+    return repeated(items, at, &Items::value_type::id, "id");
 }
 
 SettingType settingType(std::string_view type)
@@ -348,6 +364,7 @@ std::expected<Manifest, ManifestProblem> parseManifest(std::string_view source, 
         m.nodes = nodes(contributes->find("nodes"));
         m.styles = contentFiles(contributes->find("styles"));
         m.karaokePresets = contentFiles(contributes->find("karaokePresets"));
+        m.dictionaries = dictionaries(contributes->find("dictionaries"));
         m.programs = programs(contributes->find("programs"));
     }
 
@@ -355,7 +372,8 @@ std::expected<Manifest, ManifestProblem> parseManifest(std::string_view source, 
                          repeated(m.commands, "/contributes/commands"), repeated(m.panels, "/contributes/panels"),
                          repeated(m.settings, "/contributes/settings"), repeated(m.nodes, "/contributes/nodes"),
                          repeated(m.programs, "/contributes/programs"), repeated(m.styles, "/contributes/styles"),
-                         repeated(m.karaokePresets, "/contributes/karaokePresets")})
+                         repeated(m.karaokePresets, "/contributes/karaokePresets"),
+                         repeated(m.dictionaries, "/contributes/dictionaries", &Dictionary::language, "language")})
         if (problem)
             return std::unexpected(*problem);
     for (std::size_t i = 0; i < m.permissions.files.size(); ++i)
