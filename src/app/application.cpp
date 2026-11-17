@@ -4773,7 +4773,7 @@ QVariantMap Application::shiftPreview(const QString &tool, int shellWindow)
     }
     const auto &selected = session->selection().selected;
     const auto lines = session->document().lines();
-    int changed = 0, leadIn = 0, leadOut = 0, gaps = 0, snapped = 0;
+    int changed = 0, leadIn = 0, leadOut = 0, gaps = 0, overlaps = 0, snapped = 0;
     std::vector<const application::ShiftedLine *> shown;
     for (const auto &l : plan->lines) {
         if (!l.changed())
@@ -4782,6 +4782,7 @@ QVariantMap Application::shiftPreview(const QString &tool, int shellWindow)
         leadIn += (l.rules & application::LeadIn) != 0;
         leadOut += (l.rules & application::LeadOut) != 0;
         gaps += (l.rules & application::GapClosed) != 0;
+        overlaps += (l.rules & application::OverlapClosed) != 0;
         snapped += (l.rules & (application::SnappedStart | application::SnappedEnd)) != 0;
     }
     for (const auto &l : plan->lines)
@@ -4800,6 +4801,8 @@ QVariantMap Application::shiftPreview(const QString &tool, int shellWindow)
             rules << QStringLiteral("leadIn");
         if (l->rules & application::GapClosed)
             rules << QStringLiteral("gapClosed");
+        if (l->rules & application::OverlapClosed)
+            rules << QStringLiteral("overlapClosed");
         if (l->rules & application::SnappedStart)
             rules << QStringLiteral("snappedStart");
         if (l->rules & application::LeadOut)
@@ -4826,6 +4829,7 @@ QVariantMap Application::shiftPreview(const QString &tool, int shellWindow)
     out.insert(QStringLiteral("ruleCounts"), QVariantMap{{QStringLiteral("leadIn"), leadIn},
                                                          {QStringLiteral("leadOut"), leadOut},
                                                          {QStringLiteral("gapClosed"), gaps},
+                                                         {QStringLiteral("overlapClosed"), overlaps},
                                                          {QStringLiteral("snapped"), snapped}});
     return out;
 }

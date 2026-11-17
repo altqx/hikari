@@ -523,8 +523,9 @@ public:
     Q_INVOKABLE QString applyShift(const QString &tool);
     // What applyShift would do: {problem (empty when it can run), changed, total, amount (ms, or frames
     // when byFrames), targetMs (the video or audio mark time, -1 without), rows: [{line (1-based),
-    // startBefore, endBefore, start, end, text, rules: ["leadIn", "leadOut", "gapClosed", "snappedStart",
-    // "snappedEnd"]}], more (changed lines not in rows), ruleCounts: {leadIn, leadOut, gapClosed, snapped}}.
+    // startBefore, endBefore, start, end, text, rules: ["leadIn", "leadOut", "gapClosed", "overlapClosed",
+    // "snappedStart", "snappedEnd"]}], more (changed lines not in rows), ruleCounts: {leadIn, leadOut, gapClosed,
+    // overlapClosed, snapped}}.
     Q_INVOKABLE QVariantMap shiftPreview(const QString &tool, int shellWindow);
     Q_INVOKABLE bool hasKeyframes() const;
     // 0: none. Ids are never reused.

@@ -197,6 +197,7 @@ std::vector<SettingDefinition> &definitions()
         {"postprocessor.leadOut", "POSTPROCESSOR_LEAD_OUT", Int, Profile, Mapped, false, std::int64_t{0}},
         {"postprocessor.thresholdStart", "POSTPROCESSOR_THRESHOLD_START", Int, Profile, Mapped, false, std::int64_t{0}},
         {"postprocessor.thresholdEnd", "POSTPROCESSOR_THRESHOLD_END", Int, Profile, Mapped, false, std::int64_t{0}},
+        {"postprocessor.maxOverlap", "", Int, Profile, Mapped, false, std::int64_t{0}},
         {"styles.previewText", "STYLE_PREVIEW_TEXT", String, Profile, Mapped, false, utf8(u8"光 Hikari 日本")},
         {"program.font", "PROGRAM_FONT", String, Profile, Mapped, false, std::string("Tahoma")},
         {"program.fontSize", "PROGRAM_FONT_SIZE", Int, Profile, Mapped, false, std::int64_t{10}},
