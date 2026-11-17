@@ -19451,7 +19451,22 @@ private slots:
               {"privacy.usageData", "Send anonymous usage data"},
               {"privacy.alwaysSendCrashReports", "Always send crash reports"},
               {"privacy.discordPresence", "Show what I am doing in Discord"},
-              {"privacy.discordFileName", "Include the file name"},
+              {"privacy.discordMode", "The mode"},
+              {"privacy.discordModeIcon", "The mode’s icon"},
+              {"privacy.discordProjectName", "The project’s name"},
+              {"privacy.discordFileName", "The file name"},
+              {"privacy.discordText", nullptr},
+              {"privacy.discordDetails", nullptr},
+              {"privacy.discordState", nullptr},
+              {"privacy.discordPlugin", nullptr},
+              {"privacy.discordTime", nullptr},
+              {"privacy.discordIdleMinutes", nullptr},
+              {"privacy.discordIdle", nullptr},
+              {"privacy.discordIdleBackground", "Do the same while HikariSub is in the background"},
+              {"privacy.discordGetButton", "“Get HikariSub”"},
+              {"privacy.discordLink", "A link of your own"},
+              {"privacy.discordLinkLabel", nullptr},
+              {"privacy.discordLinkUrl", nullptr},
               {"plugins.network", "Let plugins connect to the internet"}}},
         };
         std::set<std::string> shown;
@@ -19500,6 +19515,7 @@ private slots:
         bound.insert("automation.dialogAnswers");
         bound.insert("trust.folders");
         bound.insert("ai.agents.custom");
+        bound.insert("privacy.discordActivities");
 #ifndef HIKARI_WITH_VSFILTERMOD
         bound.erase("video.subtitleProvider");
 #endif

@@ -1487,6 +1487,14 @@ export type VcsShowResult = {
     text: string;
 };
 
+/** Sets or clears the caller's text for {plugin} in the user's Discord status. Plugins whose manifest asks for presence only. */
+export type PresenceSetTextParams = {
+    /** Plain text; empty clears it. */
+    text: string;
+};
+
+export type PresenceSetTextResult = Record<string, never>;
+
 /** A Line's karaoke syllables as the templater reads them: text, tag, start and end in ms. */
 export type KaraokeSyllablesParams = {
     /** Defaults to the active Document. */
@@ -1921,6 +1929,7 @@ export interface Operations {
     "project.info": { access: "read"; params: ProjectInfoParams; result: ProjectInfoResult };
     "vcs.refs": { access: "read"; params: VcsRefsParams; result: VcsRefsResult };
     "vcs.show": { access: "read"; params: VcsShowParams; result: VcsShowResult };
+    "presence.set_text": { access: "write"; params: PresenceSetTextParams; result: PresenceSetTextResult };
     "karaoke.syllables": { access: "read"; params: KaraokeSyllablesParams; result: KaraokeSyllablesResult };
     "karaoke.split": { access: "read"; params: KaraokeSplitParams; result: KaraokeSplitResult };
     "karaoke.time": { access: "read"; params: KaraokeTimeParams; result: KaraokeTimeResult };

@@ -375,6 +375,14 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
         ASSERT_NE(findSetting(cycle.setting), nullptr) << tag;
     }
     EXPECT_EQ(std::get<std::string>(findSetting("editing.cycleValues.an")->defaultValue), "1, 2, 3, 4, 5, 6, 7, 8, 9");
+    for (std::size_t i = 0; const char *id : {"privacy.discordMode", "privacy.discordModeIcon", "privacy.discordProjectName", "privacy.discordText", "privacy.discordDetails", "privacy.discordState", "privacy.discordPlugin", "privacy.discordTime", "privacy.discordIdle", "privacy.discordIdleMinutes", "privacy.discordIdleBackground", "privacy.discordGetButton", "privacy.discordLink", "privacy.discordLinkLabel", "privacy.discordLinkUrl"}) {
+        const auto &discord = all[std::size(kLegacy) + 76 + i++];
+        EXPECT_EQ(discord.setting, id);
+        EXPECT_EQ(discord.page, OptionsPage::Updates) << id;
+        ASSERT_NE(findSetting(id), nullptr) << id;
+    }
+    EXPECT_EQ(findOptionsBinding("privacy.discordIdleMinutes")->min, 1);
+    EXPECT_EQ(findOptionsBinding("privacy.discordIdleMinutes")->max, 120);
     const std::tuple<std::string_view, OptionsControl, int> fullscreen[] = {
         {"video.fullscreenBarPosition", OptionsControl::IndexChoice, 2},
         {"video.fullscreenBar", OptionsControl::IndexChoice, 3},
@@ -382,7 +390,7 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
         {"video.fullscreenOverlays", OptionsControl::Check, 0},
         {"video.fullscreenOpensIn", OptionsControl::IndexChoice, 2}};
     for (std::size_t i = 0; const auto &[id, control, entries] : fullscreen) {
-        const auto &binding = all[std::size(kLegacy) + 77 + i++];
+        const auto &binding = all[std::size(kLegacy) + 92 + i++];
         EXPECT_EQ(binding.setting, id);
         EXPECT_EQ(binding.control, control) << id;
         EXPECT_EQ(binding.page, OptionsPage::Video) << id;
@@ -395,8 +403,8 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     EXPECT_TRUE(std::get<bool>(findSetting("video.fullscreenOverlays")->defaultValue));
     EXPECT_EQ(std::get<std::int64_t>(findSetting("video.fullscreenOpensIn")->defaultValue), 0);
 #ifdef _WIN32
-    ASSERT_EQ(all.size(), std::size(kLegacy) + 84);
-    const auto &hostApi = all[std::size(kLegacy) + 82];
+    ASSERT_EQ(all.size(), std::size(kLegacy) + 99);
+    const auto &hostApi = all[std::size(kLegacy) + 97];
     EXPECT_EQ(hostApi.setting, "audio.outputHostApi");
     EXPECT_EQ(hostApi.control, OptionsControl::IndexChoice);
     EXPECT_EQ(hostApi.page, OptionsPage::Audio);
@@ -407,7 +415,7 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     EXPECT_EQ(all.back().entries, 2);
     const auto bindings = all.first(std::size(kLegacy));
 #else
-    ASSERT_EQ(all.size(), std::size(kLegacy) + 82);
+    ASSERT_EQ(all.size(), std::size(kLegacy) + 97);
     EXPECT_EQ(findOptionsBinding("audio.outputHostApi"), nullptr);
     EXPECT_EQ(findOptionsBinding("video.playbackPlayer"), nullptr);
     const auto bindings = all.first(std::size(kLegacy));

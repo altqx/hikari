@@ -62,7 +62,8 @@ TEST(PluginManifest, EveryFieldReads)
     json["permissions"] = *Json::parse(R"({"documents.all": "Compares scripts",
         "network": {"hosts": ["api.example.com"], "reason": "Looks words up"},
         "files": [{"id": "fonts", "title": "Fonts", "writable": true, "reason": "Reads fonts"}],
-        "vcs.read": "Marks Lines changed since a tag", "background": "Checks the feed"})");
+        "vcs.read": "Marks Lines changed since a tag", "background": "Checks the feed",
+        "presence": "Shows the episode the tracker knows"})");
     json["contributes"] = *Json::parse(R"({"commands": [{"id": "greet", "title": "Greet"}],
         "panels": [{"id": "board", "title": "Board"}, {"id": "notes", "title": "Notes", "area": "bottom"}],
         "settings": [{"id": "loud", "title": "Loud", "type": "boolean", "default": false},
@@ -79,6 +80,7 @@ TEST(PluginManifest, EveryFieldReads)
     EXPECT_TRUE(m->permissions.files[0].writable);
     EXPECT_EQ(m->permissions.vcsRead, "Marks Lines changed since a tag");
     EXPECT_EQ(m->permissions.background, "Checks the feed");
+    EXPECT_EQ(m->permissions.presence, "Shows the episode the tracker knows");
     ASSERT_EQ(m->commands.size(), 1u);
     EXPECT_EQ(m->commands[0].title, "Greet");
     ASSERT_EQ(m->panels.size(), 2u);
@@ -262,6 +264,50 @@ TEST(PluginManifest, RepeatedIdsAndBadDefaultsAreRefused)
     EXPECT_EQ(problem(json).kind, Kind::Schema);
 }
 
+TEST(PluginManifest, SecretAndListSettingsRead)
+{
+    Json json = minimal();
+    json["contributes"] = *Json::parse(R"({"settings": [
+        {"id": "token", "title": "Token", "type": "secret", "projectable": false},
+        {"id": "hosts", "title": "Hosts", "type": "list", "default": ["a", "b"], "maxItems": 3}]})");
+    const auto m = parse(json);
+    ASSERT_TRUE(m) << m.error().at << ": " << m.error().detail;
+    ASSERT_EQ(m->settings.size(), 2u);
+    EXPECT_EQ(m->settings[0].type, SettingType::Secret);
+    EXPECT_TRUE(m->settings[0].secret());
+    EXPECT_TRUE(m->settings[0].fallback().isNull());
+    EXPECT_EQ(m->settings[1].type, SettingType::List);
+    EXPECT_EQ(m->settings[1].fallback(), *Json::parse(R"(["a", "b"])"));
+
+    EXPECT_EQ(settingValues(*m, Json::object()), *Json::parse(R"({"token": null, "hosts": ["a", "b"]})"));
+    EXPECT_EQ(settingValues(*m, *Json::parse(R"({"token": "kept in plugins.json", "hosts": ["c"]})")),
+              *Json::parse(R"({"token": null, "hosts": ["c"]})"));
+    EXPECT_EQ(settingValues(*m, *Json::parse(R"({"hosts": ["c", "d", "e", "f"]})")),
+              *Json::parse(R"({"token": null, "hosts": ["a", "b"]})"));
+
+    EXPECT_EQ(settingRefusal(m->settings[0], Json(4)), "“token” takes text");
+    EXPECT_EQ(settingRefusal(m->settings[0], Json("s3cret")), std::nullopt);
+    EXPECT_EQ(settingRefusal(m->settings[1], Json("a")), "“hosts” takes a list of text");
+    EXPECT_EQ(settingRefusal(m->settings[1], *Json::parse(R"(["a", 1])")), "“hosts” takes a list of text");
+    EXPECT_EQ(settingRefusal(m->settings[1], *Json::parse(R"(["a", "b", "c", "d"])")), "“hosts” takes at most 3 items");
+    EXPECT_EQ(settingRefusal(m->settings[1], *Json::parse(R"(["a", "b", "c"])")), std::nullopt);
+}
+
+TEST(PluginManifest, SecretAndListSettingsFollowTheirRules)
+{
+    Json json = minimal();
+    json["contributes"] = *Json::parse(R"({"settings": [{"id": "t", "title": "T", "type": "secret", "default": "x"}]})");
+    EXPECT_EQ(problem(json).kind, Kind::Schema);
+    json["contributes"] = *Json::parse(R"({"settings": [{"id": "t", "title": "T", "type": "secret", "projectable": true}]})");
+    EXPECT_EQ(problem(json).kind, Kind::Schema);
+    json["contributes"] = *Json::parse(R"({"settings": [{"id": "l", "title": "L", "type": "list", "default": ["a", "b"], "maxItems": 1}]})");
+    const ManifestProblem tooMany = problem(json);
+    EXPECT_EQ(tooMany.kind, Kind::BadDefault);
+    EXPECT_EQ(tooMany.at, "/contributes/settings/0/default");
+    json["contributes"] = *Json::parse(R"({"settings": [{"id": "l", "title": "L", "type": "list", "default": [1]}]})");
+    EXPECT_EQ(problem(json).kind, Kind::Schema);
+}
+
 TEST(PluginManifest, ANodeReadsItsPortsAndDefaults)
 {
     Json json = minimal();
@@ -371,6 +417,7 @@ TEST(PluginManifest, AnUpdateAsksForMoreOnlyWhenItAddsAPermission)
     more.permissions.allDocuments = "Compares scripts";
     more.permissions.vcsRead = "Marks changed Lines";
     more.permissions.background = "Checks the feed";
+    more.permissions.presence = "Shows the episode";
     more.permissions.networkHosts = {"api.example.com", "cdn.example.com"};
     more.permissions.files = {{"fonts", "Fonts", true, "r"}, {"out", "Out", true, "r"}, {"logs", "Logs", false, "r"}};
     const PermissionIncrease increase = permissionIncrease(current, more);
@@ -379,6 +426,7 @@ TEST(PluginManifest, AnUpdateAsksForMoreOnlyWhenItAddsAPermission)
     EXPECT_TRUE(increase.allDocuments);
     EXPECT_TRUE(increase.vcsRead);
     EXPECT_TRUE(increase.background);
+    EXPECT_TRUE(increase.presence);
     EXPECT_EQ(increase.networkHosts, std::vector<std::string>{"cdn.example.com"});
     EXPECT_EQ(increase.files, (std::vector<std::string>{"fonts", "logs"}));
     EXPECT_FALSE(permissionIncrease(more, more).any());
@@ -434,6 +482,13 @@ TEST(PluginManifest, ProgramsAreRefusedWithoutThePermissionOrInAShapeTheyCantRun
 
     json["contributes"] = *Json::parse(R"({"settings": [{"id": "key", "title": "Key", "type": "string", "default": ""}],
         "programs": [{"id": "x", "title": "X", "platforms": {"linux-x64": {"path": "x", "args": ["${setting:key}"]}}}]})");
+    EXPECT_TRUE(parse(json));
+
+    json["contributes"] = *Json::parse(R"({"settings": [{"id": "key", "title": "Key", "type": "secret"}],
+        "programs": [{"id": "x", "title": "X", "platforms": {"linux-x64": {"path": "x", "args": ["-k", "${setting:key}"]}}}]})");
+    EXPECT_EQ(problem(json).at, "/contributes/programs/0/platforms/linux-x64/args/1");
+    json["contributes"] = *Json::parse(R"({"settings": [{"id": "key", "title": "Key", "type": "secret"}],
+        "programs": [{"id": "x", "title": "X", "platforms": {"linux-x64": {"path": "x", "env": {"KEY": "${setting:key}"}}}}]})");
     EXPECT_TRUE(parse(json));
 }
 

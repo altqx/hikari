@@ -22,6 +22,7 @@
 
 using hikari::app::DiscordIpc;
 using hikari::app::DiscordPresence;
+namespace discord = hikari::app::discord;
 
 namespace {
 
@@ -111,6 +112,39 @@ private:
 QString text(const QJsonObject &o)
 {
     return QString::fromUtf8(QJsonDocument(o).toJson(QJsonDocument::Compact));
+}
+
+DiscordPresence::Tab tab(const QString &fileName = {}, quint64 id = 1)
+{
+    return {true, id, fileName, {}, {}};
+}
+
+discord::Scene scene(const QString &fileName = QStringLiteral("[Team] Show - 03.ass"))
+{
+    discord::Scene s;
+    s.tabOpen = true;
+    s.layoutMode = QStringLiteral("Timing");
+    s.fileName = fileName;
+    s.title = QStringLiteral("Show title");
+    s.projectName = QStringLiteral("Show S1");
+    s.since = 100;
+    return s;
+}
+
+QString field(const QJsonObject &activity, const char *name)
+{
+    return activity.value(QLatin1String(name)).toString();
+}
+
+QString lastField(const FakeDiscord &discord, const char *name)
+{
+    const auto sent = discord.activities();
+    return sent.isEmpty() ? QString() : field(sent.last(), name);
+}
+
+QString smallImage(const QJsonObject &activity)
+{
+    return activity.value(QStringLiteral("assets")).toObject().value(QStringLiteral("small_image")).toString();
 }
 
 }
@@ -204,7 +238,7 @@ private slots:
         hikari::ui::SettingsStore settings;
         DiscordPresence presence(settings, config(discord));
         presence.setMode(QStringLiteral("Timing"));
-        presence.setFileName(QStringLiteral("episode01.ass"));
+        presence.setTab(tab(QStringLiteral("episode01.ass")));
         const qint64 before = QDateTime::currentSecsSinceEpoch();
         settings.set("privacy.discordPresence", true);
         QTRY_COMPARE(discord.activities().size(), 1);
@@ -251,6 +285,7 @@ private slots:
         c.clientId = QStringLiteral("1");
         c.candidates = {dir.filePath(QStringLiteral("none"))};
         DiscordPresence presence(settings, c);
+        presence.setTab(tab());
         presence.setMode(preset);
         const QJsonObject assets = presence.activity().value(QStringLiteral("assets")).toObject();
         QCOMPARE(assets.value(QStringLiteral("small_image")).toString(), image);
@@ -264,15 +299,15 @@ private slots:
         settings.set("privacy.discordPresence", true);
         DiscordPresence presence(settings, config(discord));
         presence.setMode(QStringLiteral("Karaoke"));
-        presence.setFileName(QStringLiteral("episode01.ass"));
+        presence.setTab(tab(QStringLiteral("episode01.ass")));
         QTRY_VERIFY(!discord.activities().isEmpty());
         QVERIFY(!text(discord.activities().last()).contains(QLatin1String("episode01")));
         settings.set("privacy.discordFileName", true);
         QTRY_COMPARE(discord.activities().last().value(QStringLiteral("state")).toString(),
                      QStringLiteral("Karaoke · episode01.ass"));
-        presence.setFileName(QString());
+        presence.setTab(tab());
         QTRY_COMPARE(discord.activities().last().value(QStringLiteral("state")).toString(), QStringLiteral("Karaoke"));
-        presence.setFileName(QString(300, QLatin1Char('x')));
+        presence.setTab(tab(QString(300, QLatin1Char('x'))));
         QTRY_COMPARE(discord.activities().last().value(QStringLiteral("state")).toString().size(), 128);
     }
 
@@ -300,6 +335,7 @@ private slots:
         hikari::ui::SettingsStore settings;
         settings.set("privacy.discordPresence", true);
         DiscordPresence presence(settings, config(discord, 600));
+        presence.setTab(tab());
         QTRY_COMPARE(discord.activities().size(), 1);
         QElapsedTimer clock;
         clock.start();
@@ -401,6 +437,254 @@ private slots:
         settings.set("privacy.discordPresence", false);
     }
 
+    void theStandardStateJoinsWhatTheUserAllows()
+    {
+        discord::Choices c;
+        QCOMPARE(field(discord::compose(c, scene()), "state"), QStringLiteral("Timing"));
+        c.fileName = true;
+        c.projectName = true;
+        QCOMPARE(field(discord::compose(c, scene()), "state"), QStringLiteral("Timing · [Team] Show - 03.ass · Show S1"));
+        c.mode = false;
+        QCOMPARE(field(discord::compose(c, scene()), "state"), QStringLiteral("[Team] Show - 03.ass · Show S1"));
+        c.fileName = c.projectName = false;
+        QVERIFY(!discord::compose(c, scene()).contains(QStringLiteral("state")));
+        QCOMPARE(field(discord::compose(c, scene()), "details"), QStringLiteral("Editing subtitles"));
+    }
+
+    void ownTextFillsOnlyAllowedPlaceholders()
+    {
+        discord::Choices c;
+        c.ownText = true;
+        c.details = QStringLiteral("{show} ep {episode}");
+        c.state = QStringLiteral("{mode} {file} {project} {title} {unknown}");
+        QJsonObject a = discord::compose(c, scene());
+        QCOMPARE(field(a, "details"), QStringLiteral("Show title ep"));
+        QCOMPARE(field(a, "state"), QStringLiteral("Timing   Show title {unknown}"));
+        c.fileName = c.projectName = true;
+        a = discord::compose(c, scene());
+        QCOMPARE(field(a, "details"), QStringLiteral("Show title ep 03"));
+        QCOMPARE(field(a, "state"), QStringLiteral("Timing [Team] Show - 03.ass Show S1 Show title {unknown}"));
+    }
+
+    void ownLinesAreCutAndShortOnesLeftOut()
+    {
+        discord::Choices c;
+        c.ownText = true;
+        c.details = QStringLiteral("{file}x");
+        c.state = QString(200, QLatin1Char('y'));
+        const QJsonObject a = discord::compose(c, scene());
+        QVERIFY(!a.contains(QStringLiteral("details")));
+        QCOMPARE(field(a, "state").size(), 128);
+        QVERIFY(field(a, "state").endsWith(QChar(0x2026)));
+    }
+
+    void findsTheEpisode_data()
+    {
+        QTest::addColumn<QString>("file");
+        QTest::addColumn<QString>("episode");
+        QTest::newRow("dash") << QStringLiteral("[Group] Show - 03 [1080p].ass") << QStringLiteral("03");
+        QTest::newRow("E") << QStringLiteral("Show E12.ass") << QStringLiteral("12");
+        QTest::newRow("SxxEyy") << QStringLiteral("Show.S01E07.ass") << QStringLiteral("07");
+        QTest::newRow("none") << QStringLiteral("Movie 2024.ass") << QString();
+        QTest::newRow("in a word") << QStringLiteral("Episode.ass") << QString();
+    }
+    void findsTheEpisode()
+    {
+        QFETCH(QString, file);
+        QFETCH(QString, episode);
+        QCOMPARE(discord::episodeIn(file), episode);
+    }
+
+    void pluginTextShowsOnlyInItsPlaceholder()
+    {
+        discord::Choices c;
+        discord::Scene s = scene();
+        s.pluginText = QStringLiteral("Ep 5 of 12");
+        QVERIFY(!text(discord::compose(c, s)).contains(QLatin1String("Ep 5")));
+        c.ownText = true;
+        c.details = QStringLiteral("Tracker: {plugin}");
+        QCOMPARE(field(discord::compose(c, s), "details"), QStringLiteral("Tracker: Ep 5 of 12"));
+    }
+
+    void buttonsFollowTheirRows()
+    {
+        discord::Choices c;
+        c.link = true;
+        c.linkLabel = QStringLiteral("Our fansub team and all its many shows");
+        c.linkUrl = QStringLiteral("http://example.org");
+        QJsonArray buttons = discord::compose(c, scene()).value(QStringLiteral("buttons")).toArray();
+        QCOMPARE(buttons.size(), 1);
+        c.linkUrl = QStringLiteral("https://example.org/team");
+        buttons = discord::compose(c, scene()).value(QStringLiteral("buttons")).toArray();
+        QCOMPARE(buttons.size(), 2);
+        QCOMPARE(buttons.at(1).toObject().value(QStringLiteral("label")).toString().size(), 32);
+        QCOMPARE(buttons.at(1).toObject().value(QStringLiteral("url")).toString(), QStringLiteral("https://example.org/team"));
+        c.getButton = c.link = false;
+        QVERIFY(!discord::compose(c, scene()).contains(QStringLiteral("buttons")));
+    }
+
+    void homeHasNoSmallImage()
+    {
+        discord::Choices c;
+        discord::Scene s;
+        const QJsonObject a = discord::compose(c, s);
+        QCOMPARE(field(a, "details"), QStringLiteral("In HikariSub"));
+        QCOMPARE(field(a, "state"), QStringLiteral("Home"));
+        QVERIFY(smallImage(a).isEmpty());
+        c.modeIcon = false;
+        QVERIFY(smallImage(discord::compose(c, scene())).isEmpty());
+    }
+
+    void idleShowsClearsOrKeeps()
+    {
+        discord::Choices c;
+        discord::Scene s = scene();
+        s.idle = true;
+        const QJsonObject idle = discord::compose(c, s);
+        QCOMPARE(field(idle, "details"), QStringLiteral("Idle"));
+        QVERIFY(!idle.contains(QStringLiteral("state")));
+        QVERIFY(!idle.contains(QStringLiteral("timestamps")));
+        QVERIFY(smallImage(idle).isEmpty());
+        c.idle = QStringLiteral("clear");
+        QVERIFY(discord::compose(c, s).isEmpty());
+        c.idle = QStringLiteral("keep");
+        QCOMPARE(field(discord::compose(c, s), "state"), QStringLiteral("Timing"));
+    }
+
+    void aProjectHidesOrSetsItsText()
+    {
+        discord::Choices c;
+        discord::Scene s = scene();
+        s.project.kind = discord::ProjectChoice::Hide;
+        QVERIFY(discord::compose(c, s).isEmpty());
+        s.project = {discord::ProjectChoice::Own, QStringLiteral("Secret show"), QStringLiteral("Working on {show}"), {}};
+        const QJsonObject a = discord::compose(c, s);
+        QCOMPARE(field(a, "details"), QStringLiteral("Working on Secret show"));
+        QCOMPARE(field(a, "state"), QStringLiteral("Timing"));
+    }
+
+    void activitiesShowInOrderAndCanBeUnticked()
+    {
+        discord::Choices c;
+        c.activities = {QStringLiteral("watching"), QStringLiteral("effects"), QStringLiteral("styling"),
+                        QStringLiteral("spelling"), QStringLiteral("reviewing"), QStringLiteral("exporting")};
+        const auto going = [](std::initializer_list<discord::Activity> on) {
+            return [on](discord::Activity a) { return std::ranges::find(on, a) != on.end(); };
+        };
+        using enum discord::Activity;
+        QCOMPARE(discord::shownActivity(c, going({Exporting, Styling})), std::optional(Styling));
+        QCOMPARE(discord::shownActivity(c, going({Agent})), std::nullopt);
+        c.activities.removeAll(QStringLiteral("styling"));
+        QCOMPARE(discord::shownActivity(c, going({Exporting, Styling})), std::optional(Exporting));
+        discord::Scene s = scene();
+        s.activity = Spelling;
+        const QJsonObject a = discord::compose(c, s);
+        QCOMPARE(field(a, "state"), QStringLiteral("Spell-checking"));
+        QCOMPARE(smallImage(a), QStringLiteral("spelling"));
+    }
+
+    void theAgentIsOffByDefaultAndTheRestOn()
+    {
+        hikari::ui::SettingsStore settings;
+        const discord::Choices c = discord::Choices::fromStore(settings);
+        QCOMPARE(c.activities, (QStringList{QStringLiteral("watching"), QStringLiteral("effects"), QStringLiteral("styling"),
+                                            QStringLiteral("spelling"), QStringLiteral("reviewing"), QStringLiteral("exporting")}));
+        QVERIFY(c.mode && c.modeIcon && c.getButton && !c.fileName && !c.projectName && !c.ownText && !c.link);
+        QCOMPARE(c.time, QStringLiteral("started"));
+        QCOMPARE(c.idle, QStringLiteral("idle"));
+        QCOMPARE(settings.value(QStringLiteral("privacy.discordIdleMinutes")).toInt(), 10);
+    }
+
+    void goesIdleWithoutInputAndBackOnInput()
+    {
+        FakeDiscord discord(dir);
+        QVERIFY(discord.listen());
+        hikari::ui::SettingsStore settings;
+        settings.set("privacy.discordPresence", true);
+        settings.set("privacy.discordIdleMinutes", 2);
+        DiscordPresence::Config c = config(discord);
+        c.minuteMs = 100;
+        DiscordPresence presence(settings, c);
+        presence.setTab(tab());
+        QTRY_COMPARE(lastField(discord, "state"), QStringLiteral("Editing"));
+        QTRY_COMPARE(lastField(discord, "details"), QStringLiteral("Idle"));
+        presence.noteInput();
+        QVERIFY(!presence.idle());
+        QTRY_COMPARE(lastField(discord, "state"), QStringLiteral("Editing"));
+    }
+
+    void theBackgroundCountsOnlyWhenAsked()
+    {
+        hikari::ui::SettingsStore settings;
+        settings.set("privacy.discordPresence", true);
+        settings.set("privacy.discordIdleMinutes", 1);
+        DiscordPresence::Config c;
+        c.clientId = QStringLiteral("1");
+        c.candidates = {dir.filePath(QStringLiteral("none"))};
+        c.minuteMs = 50;
+        DiscordPresence presence(settings, c);
+        presence.setInBackground(true);
+        QTest::qWait(200);
+        QVERIFY(!presence.idle());
+        settings.set("privacy.discordIdleBackground", true);
+        QTRY_VERIFY(presence.idle());
+    }
+
+    void timeFollowsItsChoice()
+    {
+        hikari::ui::SettingsStore settings;
+        settings.set("privacy.discordPresence", true);
+        DiscordPresence::Config c;
+        c.clientId = QStringLiteral("1");
+        c.candidates = {dir.filePath(QStringLiteral("none"))};
+        DiscordPresence presence(settings, c);
+        presence.setTab(tab());
+        QVERIFY(presence.activity().contains(QStringLiteral("timestamps")));
+        settings.set("privacy.discordTime", QStringLiteral("hidden"));
+        QVERIFY(!presence.activity().contains(QStringLiteral("timestamps")));
+        settings.set("privacy.discordTime", QStringLiteral("file"));
+        QTest::qWait(1100);
+        const qint64 opened = QDateTime::currentSecsSinceEpoch();
+        presence.setTab(tab({}, 2));
+        const qint64 start = presence.activity().value(QStringLiteral("timestamps")).toObject().value(QStringLiteral("start")).toInteger();
+        QVERIFY(start >= opened);
+    }
+
+    void onlyThePickedPluginsTextShows()
+    {
+        hikari::ui::SettingsStore settings;
+        settings.set("privacy.discordPresence", true);
+        settings.set("privacy.discordText", QStringLiteral("own"));
+        settings.set("privacy.discordDetails", QStringLiteral("Ep: {plugin}"));
+        DiscordPresence::Config c;
+        c.clientId = QStringLiteral("1");
+        c.candidates = {dir.filePath(QStringLiteral("none"))};
+        DiscordPresence presence(settings, c);
+        presence.setTab(tab());
+        presence.setPluginText("tracker", "5 of 12");
+        presence.setPluginText("other", "nope");
+        QCOMPARE(field(presence.activity(), "details"), QStringLiteral("Ep:"));
+        settings.set("privacy.discordPlugin", QStringLiteral("tracker"));
+        QCOMPARE(field(presence.activity(), "details"), QStringLiteral("Ep: 5 of 12"));
+        presence.keepPluginTexts({QStringLiteral("other")});
+        QCOMPARE(field(presence.activity(), "details"), QStringLiteral("Ep:"));
+        QVERIFY(!text(presence.activity()).contains(QLatin1String("nope")));
+    }
+
+    void thePreviewUsesStagedValues()
+    {
+        hikari::ui::SettingsStore settings;
+        DiscordPresence::Config c;
+        c.clientId = QStringLiteral("1");
+        c.candidates = {dir.filePath(QStringLiteral("none"))};
+        DiscordPresence presence(settings, c);
+        presence.setTab(tab());
+        const QVariantMap staged{{QStringLiteral("privacy.discordText"), QStringLiteral("own")},
+                                 {QStringLiteral("privacy.discordDetails"), QStringLiteral("Typesetting OP")}};
+        QCOMPARE(presence.preview(staged).value(QStringLiteral("details")).toString(), QStringLiteral("Typesetting OP"));
+        QVERIFY(presence.activity().isEmpty());
+    }
+
     void followsTheWorkspaceAndTheDocument()
     {
         FakeDiscord discord(dir);
@@ -414,9 +698,9 @@ private slots:
         application.settingsStore()->set("privacy.discordPresence", true);
         application.settingsStore()->set("privacy.discordFileName", true);
         QTRY_COMPARE(discord.activities().size(), 1);
-        QCOMPARE(discord.activities().last().value(QStringLiteral("state")).toString(), QStringLiteral("Editing"));
+        QCOMPARE(discord.activities().last().value(QStringLiteral("state")).toString(), QStringLiteral("Home"));
+        QVERIFY(smallImage(discord.activities().last()).isEmpty());
         application.workspaceLayout().setPreset(QStringLiteral("Typesetting"));
-        QTRY_COMPARE(discord.activities().last().value(QStringLiteral("state")).toString(), QStringLiteral("Typesetting"));
         const QString path = home.filePath(QStringLiteral("episode02.ass"));
         QFile f(path);
         QVERIFY(f.open(QIODevice::WriteOnly));
@@ -426,6 +710,22 @@ private slots:
         QVERIFY(application.openFile(path));
         QTRY_COMPARE(discord.activities().last().value(QStringLiteral("state")).toString(),
                      QStringLiteral("Typesetting · episode02.ass"));
+        application.presenceActivity(0, QStringLiteral("styling"), true);
+        QTRY_COMPARE(discord.activities().last().value(QStringLiteral("state")).toString(),
+                     QStringLiteral("Styling · episode02.ass"));
+        QCOMPARE(smallImage(discord.activities().last()), QStringLiteral("styling"));
+        application.presenceActivity(0, QStringLiteral("styling"), false);
+        QTRY_COMPARE(discord.activities().last().value(QStringLiteral("state")).toString(),
+                     QStringLiteral("Typesetting · episode02.ass"));
+        application.workspaceLayout().setPreset(QStringLiteral("Editing"));
+        QTRY_COMPARE(discord.activities().last().value(QStringLiteral("state")).toString(),
+                     QStringLiteral("Editing · episode02.ass"));
+        application.presenceActivity(0, QStringLiteral("typesetting"), true);
+        QTRY_COMPARE(discord.activities().last().value(QStringLiteral("state")).toString(),
+                     QStringLiteral("Typesetting · episode02.ass"));
+        application.presenceActivity(0, QStringLiteral("typesetting"), false);
+        QTRY_COMPARE(discord.activities().last().value(QStringLiteral("state")).toString(),
+                     QStringLiteral("Editing · episode02.ass"));
         application.endSession();
     }
 };
