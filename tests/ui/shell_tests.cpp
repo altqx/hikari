@@ -15813,20 +15813,24 @@ private slots:
             return -1;
         };
         QTest::mouseMove(window, kOverNoPanel);
+        QTest::qWait(200);
         item("editingGrid")->forceActiveFocus();
         QTRY_VERIFY(item("editingGrid")->hasActiveFocus());
         const int start = activeRow();
         QVERIFY(start >= 0 && start + 1 < int(lines.size()));
 
         settings.set("audio.timingKeysEverywhere", 0);
+        QVERIFY(item("editingGrid")->hasActiveFocus());
         QTest::keyClick(window, Qt::Key_X);
         QCOMPARE(activeRow(), start);
         settings.set("audio.timingKeysEverywhere", 1);
         QVERIFY(application->workspaceLayout().preset() != QStringLiteral("Timing"));
+        QVERIFY(item("editingGrid")->hasActiveFocus());
         QTest::keyClick(window, Qt::Key_X);
         QCOMPARE(activeRow(), start);
 
         settings.set("audio.timingKeysEverywhere", 2);
+        QVERIFY(item("editingGrid")->hasActiveFocus());
         QTest::keyClick(window, Qt::Key_X);
         QTRY_COMPARE(activeRow(), start + 1);
         QVERIFY(item("editingGrid")->hasActiveFocus());
