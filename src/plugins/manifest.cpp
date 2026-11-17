@@ -43,12 +43,25 @@ std::string text(const Json &object, std::string_view key)
     return value && value->isString() ? value->asString() : std::string();
 }
 
-std::vector<Contribution> contributions(const Json *list)
+std::vector<std::string> strings(const Json *list)
 {
-    std::vector<Contribution> out;
-    if (list)
+    std::vector<std::string> out;
+    if (list && list->isArray())
         for (const Json &item : list->asArray())
-            out.push_back({text(item, "id"), text(item, "title")});
+            if (item.isString())
+                out.push_back(item.asString());
+    return out;
+}
+
+std::vector<Command> commands(const Json *list)
+{
+    std::vector<Command> out;
+    if (list)
+        for (const Json &item : list->asArray()) {
+            const Json *palette = item.find("palette");
+            out.push_back({text(item, "id"), text(item, "title"), text(item, "icon"), strings(item.find("when")),
+                           text(item, "description"), !palette || !palette->isBool() || palette->asBool()});
+        }
     return out;
 }
 
@@ -246,7 +259,7 @@ std::expected<Manifest, ManifestProblem> parseManifest(std::string_view source, 
     if (const Json *permissions = json.find("permissions"))
         m.permissions = readPermissions(*permissions);
     if (const Json *contributes = json.find("contributes")) {
-        m.commands = contributions(contributes->find("commands"));
+        m.commands = commands(contributes->find("commands"));
         m.panels = panels(contributes->find("panels"));
         if (const Json *settings = contributes->find("settings"))
             for (const Json &s : settings->asArray())
