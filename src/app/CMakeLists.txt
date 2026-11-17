@@ -21,6 +21,7 @@ add_library(hikari_composition STATIC composition.cpp application.cpp include/hi
     update_installer.cpp include/hikari/app/update_installer.h
     update_apply.cpp include/hikari/app/update_apply.h
     whats_new.cpp include/hikari/app/whats_new.h
+    qt_workarounds.cpp include/hikari/app/qt_workarounds.h
     package_kind.cpp include/hikari/app/package_kind.h
     user_folder.cpp include/hikari/app/user_folder.h
     automation_reset.cpp include/hikari/app/automation_reset.h
