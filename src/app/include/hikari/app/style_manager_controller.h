@@ -21,7 +21,7 @@ class StyleManagerController : public QObject {
     Q_OBJECT
     Q_PROPERTY(QStringList catalogs READ catalogs NOTIFY changed)
     Q_PROPERTY(QString catalog READ catalog NOTIFY changed)
-    // [{name, tier ("project", "mine"), hidden}]: the Project's catalogs, then the user's.
+    // [{name, tier ("project", "mine", "plugin"), hidden}]: the Project's catalogs, the user's, then the plugins'.
     Q_PROPERTY(QVariantList catalogRows READ catalogRows NOTIFY changed)
     Q_PROPERTY(QString catalogTier READ catalogTier NOTIFY changed)
     // A Mine catalog the Project's copy hides.
@@ -88,6 +88,8 @@ public:
     Q_INVOKABLE QVariantList catalogClashes(const QString &name, const QString &tier) const;
     // `choices` as for addToStore. Returns the name the catalog landed under, "" when skipped.
     Q_INVOKABLE QString copyCatalog(const QString &name, const QString &tier, const QVariantList &choices = {});
+    // Copies the plugin catalog shown into Mine and shows the copy; returns its name, "" when it can't.
+    Q_INVOKABLE QString copyPluginCatalog();
     Q_INVOKABLE QString moveCatalog(const QString &name, const QString &tier, const QVariantList &choices = {});
     Q_INVOKABLE void saveCatalog();
     // Emits targetEdited; `switched` when the target is another Document.
