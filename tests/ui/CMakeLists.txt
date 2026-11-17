@@ -9,7 +9,7 @@ hikari_add_qttest(hikari_ui_line_grid_a11y_tests SOURCES line_grid_a11y_tests.cp
 hikari_add_qttest(hikari_ui_wheel_scroll_tests SOURCES wheel_scroll_tests.cpp LIBRARIES hikari_ui Qt6::QuickControls2)
 # MUST KILL: each part runs from its named function up to the next part's, in shell_tests.cpp's order
 hikari_add_qttest(hikari_ui_shell_tests SOURCES shell_tests.cpp next_file_folder.cpp gui_thread_clock.cpp
-    LIBRARIES hikari_composition Qt6::CorePrivate ZLIB::ZLIB Hikari::sodium
+    LIBRARIES hikari_composition Qt6::CorePrivate Qt6::QuickTest ZLIB::ZLIB Hikari::sodium
     PARTS documents
           panels=panelsFloatDockHideAndKeepTheirState
           panels2=saveAsOffersAssForADocumentOfAnotherFormat

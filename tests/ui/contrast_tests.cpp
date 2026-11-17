@@ -312,7 +312,7 @@ private slots:
         } else {
             settings.setValue(QStringLiteral("appearance.theme"), theme::codeName(theme::Code(code)));
         }
-        QCOMPARE(theme::current().code, theme::Code(code));
+        QCOMPARE(theme::current().id, theme::codeName(theme::Code(code)));
         QTRY_COMPARE(controls->property("window").value<QColor>(), theme::current().roles.panel);
         activateDialogLoaders();
         const QStringList problems = sweep();
