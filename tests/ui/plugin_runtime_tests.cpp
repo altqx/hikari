@@ -1535,7 +1535,9 @@ private slots:
 
         shortcuts.clearKeys(greet);
         QVERIFY(!shortcuts.keys().contains(greet));
-        QCOMPARE(a.settingsStore()->list(application::kAutomationHotkeysSetting.data()), QStringList{greet + u'\t'});
+        const QStringList rows = a.settingsStore()->list(application::kAutomationHotkeysSetting.data());
+        QCOMPARE(rows.size(), qsizetype(1));
+        QCOMPARE(rows.first().split(u'\t').mid(0, 2), (QStringList{greet, QString()}));
     }
 };
 

@@ -17536,6 +17536,82 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>Its panel “%1” couldn’t load: %2</source>
         <translation>패널 “%1”을(를) 불러오지 못했습니다: %2</translation>
     </message>
+    <message>
+        <source>hikari-plugin.json names the command “%1” at %2, which it doesn’t declare.</source>
+        <translation>hikari-plugin.json이 %2에서 선언하지 않은 명령 “%1”을(를) 가리킵니다.</translation>
+    </message>
+    <message>
+        <source>hikari-plugin.json binds %1 twice, at %2.</source>
+        <translation>hikari-plugin.json이 %2에서 %1을(를) 두 번 지정합니다.</translation>
+    </message>
+    <message>
+        <source>Status bar item: %1</source>
+        <translation>상태 표시줄 항목: %1</translation>
+    </message>
+    <message>
+        <source>Shortcut: %1 for %2</source>
+        <translation>단축키: %2에 %1</translation>
+    </message>
+    <message>
+        <source>%1 is taken by %2</source>
+        <translation>%1은(는) %2에서 사용 중입니다</translation>
+    </message>
+    <message>
+        <source>Needs an open file</source>
+        <translation>열린 파일이 필요합니다</translation>
+    </message>
+    <message>
+        <source>Works only without an open file</source>
+        <translation>열린 파일이 없을 때만 작동합니다</translation>
+    </message>
+    <message>
+        <source>Needs a selection</source>
+        <translation>선택이 필요합니다</translation>
+    </message>
+    <message>
+        <source>Works only without a selection</source>
+        <translation>선택이 없을 때만 작동합니다</translation>
+    </message>
+    <message>
+        <source>Needs two or more selected lines</source>
+        <translation>두 줄 이상을 선택해야 합니다</translation>
+    </message>
+    <message>
+        <source>Works only with one line selected or none</source>
+        <translation>한 줄만 선택했거나 선택이 없을 때만 작동합니다</translation>
+    </message>
+    <message>
+        <source>Needs an open video</source>
+        <translation>열린 영상이 필요합니다</translation>
+    </message>
+    <message>
+        <source>Works only without an open video</source>
+        <translation>열린 영상이 없을 때만 작동합니다</translation>
+    </message>
+    <message>
+        <source>Needs open audio</source>
+        <translation>열린 소리가 필요합니다</translation>
+    </message>
+    <message>
+        <source>Works only without open audio</source>
+        <translation>열린 소리가 없을 때만 작동합니다</translation>
+    </message>
+    <message>
+        <source>Needs a karaoke line</source>
+        <translation>노래방 줄이 필요합니다</translation>
+    </message>
+    <message>
+        <source>Works only on a line without karaoke</source>
+        <translation>노래방이 없는 줄에서만 작동합니다</translation>
+    </message>
+    <message>
+        <source>Needs Translation mode</source>
+        <translation>번역 모드가 필요합니다</translation>
+    </message>
+    <message>
+        <source>Works only outside Translation mode</source>
+        <translation>번역 모드가 아닐 때만 작동합니다</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Position</name>
