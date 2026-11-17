@@ -3,3 +3,4 @@ hikari_add_gtest(hikari_plugins_tests SOURCES archive_tests.cpp manifest_tests.c
     LIBRARIES hikari_plugins Hikari::sodium ZLIB::ZLIB LABELS plugins)
 hikari_add_gtest(hikari_plugin_state_tests SOURCES plugin_state_tests.cpp
     LIBRARIES hikari_plugin_state Hikari::luajit LABELS plugins)
+target_compile_definitions(hikari_plugin_state_tests PRIVATE HIKARI_LUA_TYPES="${PROJECT_SOURCE_DIR}/docs/types/hikari.lua")

@@ -218,9 +218,25 @@ The marketplace lists plugins from [altqx/hikari-plugins](https://github.com/alt
 4. **Releases.** Publish a GitHub release with `<id>-<version>.hikariplugin` and its `.minisig`. The registry checks it, publishes it within half an hour, and uses the release notes as its changelog. Users who installed it from the marketplace get the update automatically.
 5. **More permissions.** An update that asks for more permissions waits for review. The users who installed the plugin then confirm the new permissions.
 
+## Type hints
+
+Your editor can check your calls and complete them. [docs/types/](types/) has two files, generated from the API of this version. `hikarisub --export-docs <folder>` writes them too.
+
+- **Lua.** Put [`hikari.lua`](types/hikari.lua) where [LuaLS](https://luals.github.io/) finds it, such as `Lua.workspace.library` in your workspace settings. `hikari.call("lines.list", {})` then gives you `hikari.LinesListResult`, and `hikari.events.on("document.changed", fn)` gives `fn` its data's type.
+- **TypeScript.** A [program plugin](plugins.md#program-plugins) can be written in TypeScript and compiled into one program with `bun build --compile`. Import the types from [`hikari.d.ts`](types/hikari.d.ts): `ProgramCalls` gives each method's params and result, and `HostRequest` is what HikariSub asks. The [Word count](examples/word-count/) sample answers `initialize` and its `count` command, and calls `lines.list` and `hikari/notify`:
+
+  ```ts
+  const { lines } = await call("lines.list", { fields: ["text"] });
+  ```
+
+  ```sh
+  bun build --compile src/main.ts --outfile bin/word-count
+  ```
+
 ## Next
 
 - **[Plugins](plugins.md).** Dialogs, events, files, the network, QML panels and the plugin manager.
 - **[Hikari API reference](api-reference.md).** Every operation, event and type, with its parameters and results. It is generated from HikariSub itself, so it matches the API version that HikariSub reports in `hikari.api_version`.
 - **[Line tools](examples/line-tools/).** A larger example with a chart, a list, a menu and a dialog.
 - **[Zigzag](examples/zigzag/).** A plugin that adds one node-effects node.
+- **[Word count](examples/word-count/).** A program plugin in TypeScript.
