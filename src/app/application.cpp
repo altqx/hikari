@@ -14,6 +14,7 @@
 #include "hikari/backends/simulated_output.h"
 #include "hikari/backends/video_frame_bgra.h"
 #include "hikari/application/automation_registry.h"
+#include "hikari/application/export_format_ids.h"
 #include "hikari/application/hotkeys.h"
 #include "hikari/application/settings.h"
 #include "hikari/application/getting_started.h"
@@ -7536,6 +7537,8 @@ void insertExtras(QVariantMap &values, const application::Settings &settings)
 {
     for (const auto id : kProjectExtras)
         values.insert(qs(id), ui::SettingsStore::toVariant(settings.value(id)));
+    const QString format = values.value(QStringLiteral("export.format")).toString();
+    values.insert(QStringLiteral("export.format"), qs(application::currentExportFormat(format.toStdString())));
 }
 
 application::OptionsState projectableOnly(application::OptionsState state)

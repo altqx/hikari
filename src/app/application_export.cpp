@@ -1,6 +1,7 @@
 #include "hikari/app/application.h"
 
 #include "hikari/application/edit_session.h"
+#include "hikari/application/export_format_ids.h"
 #include "hikari/application/style_manager.h"
 #include "hikari/core/export.h"
 #include "hikari/core/srv3.h"
@@ -65,6 +66,21 @@ const ExportFormatRow *exportFormatNamed(const QString &id)
 QString rowKey(const QString &row)
 {
     return row.left(row.indexOf(u'\t'));
+}
+
+QStringList currentChoices(QStringList rows)
+{
+    for (QString &row : rows) {
+        const qsizetype tab = row.indexOf(u'\t');
+        QJsonObject choice = QJsonDocument::fromJson(row.mid(tab + 1).toUtf8()).object();
+        const QString format = choice.value(QStringLiteral("format")).toString();
+        const std::string current(application::currentExportFormat(format.toStdString()));
+        if (tab < 0 || current == format.toStdString())
+            continue;
+        choice.insert(QStringLiteral("format"), QString::fromStdString(current));
+        row = row.left(tab + 1) + QString::fromUtf8(QJsonDocument(choice).toJson(QJsonDocument::Compact));
+    }
+    return rows;
 }
 
 QJsonObject rememberedRow(const QStringList &rows, const QString &key)
@@ -308,7 +324,7 @@ QVariantMap Application::exportSetup() const
     const QString key = exportKey(*target);
     const auto *project = views(m_workspace.window(*target).value_or(m_workspace.activeWindow())).settings->project();
     const QJsonObject saved =
-        startingExport(m_settings->list("export.choices"), key, project ? project->exportJson() : std::string());
+        startingExport(currentChoices(m_settings->list("export.choices")), key, project ? project->exportJson() : std::string());
 
     const core::ExportOptions defaults;
     QVariantMap options;
@@ -453,7 +469,7 @@ QVariantMap Application::exportTo(const QUrl &file, const QString &formatId, con
     for (const auto &[name, flag] : kExportFlags)
         choice.insert(QLatin1String(name), options.*flag);
     choice.insert(QStringLiteral("ttmlNetflix"), options.ttmlProfile == core::TtmlProfile::Netflix);
-    const QJsonObject before = rememberedExport(m_settings->list("export.choices"), exportKey(*target));
+    const QJsonObject before = rememberedExport(currentChoices(m_settings->list("export.choices")), exportKey(*target));
     choice.insert(QStringLiteral("language"),
                   isTtml(format->format) ? language : before.value(QStringLiteral("language")).toString());
     if (framesIn(format->format, options))
@@ -461,7 +477,7 @@ QVariantMap Application::exportTo(const QUrl &file, const QString &formatId, con
     else if (const double kept = before.value(QStringLiteral("fps")).toDouble(); kept >= 1)
         choice.insert(QStringLiteral("fps"), kept);
     m_settings->setValue(QStringLiteral("export.choices"),
-                         rememberedWith(m_settings->list("export.choices"), exportKey(*target), choice));
+                         rememberedWith(currentChoices(m_settings->list("export.choices")), exportKey(*target), choice));
 
     std::map<std::uint64_t, int> rows;
     int row = 0;
@@ -499,11 +515,11 @@ QVariantMap Application::exportPluginFormat(application::DocumentId target, cons
         const auto shown = shell().actionLines();
         only = std::set<core::LineId>(shown.begin(), shown.end());
     }
-    QJsonObject choice = rememberedExport(m_settings->list("export.choices"), exportKey(target));
+    QJsonObject choice = rememberedExport(currentChoices(m_settings->list("export.choices")), exportKey(target));
     choice.insert(QStringLiteral("format"), QString::fromStdString(format.id));
     choice.insert(QStringLiteral("lines"), lines.isEmpty() ? QStringLiteral("all") : lines);
     m_settings->setValue(QStringLiteral("export.choices"),
-                         rememberedWith(m_settings->list("export.choices"), exportKey(target), choice));
+                         rememberedWith(currentChoices(m_settings->list("export.choices")), exportKey(target), choice));
     return exportThroughPlugin(target, format, path, only, values.value(QStringLiteral("fps")).toDouble());
 }
 

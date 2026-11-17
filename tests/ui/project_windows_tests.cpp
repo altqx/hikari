@@ -702,6 +702,42 @@ private slots:
         QVERIFY(!readAll(show + QStringLiteral("/.hikari/project.toml")).contains("microdvd"));
     }
 
+    void beta4ExportChoicesKeepTheirFormat_data()
+    {
+        QTest::addColumn<QString>("old");
+        QTest::addColumn<QString>("current");
+        QTest::newRow("txt") << QStringLiteral("txt") << QStringLiteral("text");
+        QTest::newRow("mdvd") << QStringLiteral("mdvd") << QStringLiteral("microdvd");
+        QTest::newRow("tmp") << QStringLiteral("tmp") << QStringLiteral("tmplayer");
+    }
+
+    void beta4ExportChoicesKeepTheirFormat()
+    {
+        QFETCH(QString, old);
+        QFETCH(QString, current);
+        start();
+        const QString plain = folder("plain");
+        const QString episode = QFileInfo(writeAss(plain + QStringLiteral("/ep01.ass"), "one")).absoluteFilePath();
+        const QString other = QFileInfo(plain + QStringLiteral("/ep02.ass")).absoluteFilePath();
+        const QString row = QStringLiteral("\t{\"format\":\"%1\",\"fps\":25}").arg(old);
+        application->settingsStore()->setValue(QStringLiteral("export.choices"), QStringList{episode + row, other + row, row});
+        QCOMPARE(application->openFolder(plain, 0).value(QStringLiteral("window")).toInt(), 0);
+        QVERIFY(application->openFile(episode));
+        const QVariantMap setup = application->exportSetup();
+        QCOMPARE(setup.value(QStringLiteral("format")).toString(), current);
+
+        const QString out = plain + QStringLiteral("/ep01.") + setup.value(QStringLiteral("extensions")).toMap().value(current).toString();
+        const QVariantMap result =
+            application->exportTo(QUrl::fromLocalFile(out), current, setup.value(QStringLiteral("options")).toMap());
+        QVERIFY2(result.value(QStringLiteral("ok")).toBool(), qPrintable(result.value(QStringLiteral("problem")).toString()));
+        const QStringList saved = application->settingsStore()->list("export.choices");
+        QCOMPARE(saved.size(), 3);
+        for (const QString &entry : saved) {
+            QVERIFY2(entry.contains(QStringLiteral("\"format\":\"%1\"").arg(current)), qPrintable(entry));
+            QVERIFY2(!entry.contains(QStringLiteral("\"format\":\"%1\"").arg(old)), qPrintable(entry));
+        }
+    }
+
     void theProjectsTargetLanguageIsInlineTranslatesDefault()
     {
         start();
