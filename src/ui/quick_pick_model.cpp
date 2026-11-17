@@ -67,14 +67,14 @@ std::optional<FuzzyMatch> fuzzyMatch(const QString &query, const QString &text)
         return FuzzyMatch{};
     if (n > m)
         return std::nullopt;
-    std::vector<QChar> t(std::size_t(m));
-    std::vector<int> bonus(std::size_t(m));
+    std::vector<QChar> t(static_cast<std::size_t>(m));
+    std::vector<int> bonus(static_cast<std::size_t>(m));
     for (int j = 0; j < m; ++j) {
         t[std::size_t(j)] = text.at(j).toCaseFolded();
         bonus[std::size_t(j)] = kLetter + (wordStart(text, j) ? kWordStart : 0) + (j == 0 ? kTextStart : 0);
     }
-    std::vector<std::vector<int>> score(std::size_t(n), std::vector<int>(std::size_t(m), kNone));
-    std::vector<std::vector<int>> from(std::size_t(n), std::vector<int>(std::size_t(m), -1));
+    std::vector<std::vector<int>> score(static_cast<std::size_t>(n), std::vector<int>(static_cast<std::size_t>(m), kNone));
+    std::vector<std::vector<int>> from(static_cast<std::size_t>(n), std::vector<int>(static_cast<std::size_t>(m), -1));
     for (int j = 0; j < m; ++j)
         if (t[std::size_t(j)] == q.at(0))
             score[0][std::size_t(j)] = bonus[std::size_t(j)];
@@ -107,7 +107,7 @@ std::optional<FuzzyMatch> fuzzyMatch(const QString &query, const QString &text)
         return std::nullopt;
     FuzzyMatch match;
     match.score = *end;
-    match.positions.resize(std::size_t(n));
+    match.positions.resize(static_cast<std::size_t>(n));
     int j = int(end - last.begin());
     for (int i = n - 1; i >= 0; --i) {
         match.positions[std::size_t(i)] = j;
