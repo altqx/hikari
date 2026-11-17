@@ -15466,6 +15466,13 @@ private slots:
         QCOMPARE(session->history().back().name, std::string("Snapping to the scene"));
         auto *scene = item<QObject>("snapToSceneItem");
         QVERIFY(scene && scene->property("enabled").toBool());
+
+        const auto below = frames(1);
+        QVERIFY(QMetaObject::invokeMethod(window, "runGlobalHotkey", Q_RETURN_ARG(QVariant, ran),
+                                          Q_ARG(QVariant, QStringLiteral("GLOBAL_END_LATER_SHIFT_FOLLOWING"))));
+        QTRY_COMPARE(frames(0), (Frames{0, 11}));
+        QCOMPARE(frames(1), (Frames{below.first + 1, below.second + 1}));
+        QCOMPARE(session->history().back().name, std::string("Moving the end by frames"));
     }
 
     void theTimingLayoutOpensThePostprocessorWithItsPreset()
