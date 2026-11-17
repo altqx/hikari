@@ -60,3 +60,5 @@ The new frame reruns the ADR 0017 native gate on sway, KWin and mutter, and on W
 - `CONTEXT.md` gains **Side bar**.
 
 The owner approved the mockup and every recommended answer to DK3-Q1–Q14 (Q451–Q464) on 2026-11-12 ([#1040](https://github.com/altqx/hikari/issues/1040#issuecomment-6826953073)). Among them: the AI side bar's edge is one app-wide setting that Swap side bars flips; clicking the shown panel's icon hides its side bar, and two title bar toggles bring it back; a 240 px minimum; icons that don't fit go under a "More panels" chevron; no drag between a side bar and the middle docking yet.
+
+Amended by [ADR 0033](0033-quiet-visual-language.md): a side bar's icon strip is the header of the panel it shows, with that panel's ⋯ at the strip's trailing end; the panel's second title row goes.

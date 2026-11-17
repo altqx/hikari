@@ -6,7 +6,7 @@ This is HikariSub's specification, on the `main` branch. It began as the map of 
 | --- | --- | --- |
 | Application foundation | Hikari-owned Qt layer; no wholesale Muse framework adoption | [Architecture](architecture.md), [ADR](adr/0001-hikari-owned-qt-layer.md) |
 | Localisation | Full TS authoring migration with QM runtime | [Localisation](localisation.md), [ADR](adr/0002-ts-localisation.md) |
-| Visual language | Compact Studio styling; current-program default panel arrangement | [Visual language](ux/visual-language.md) |
+| Visual language | Quiet styling (replaced Compact Studio); current-program default panel arrangement | [Visual language](ux/visual-language.md), [ADR](adr/0033-quiet-visual-language.md) |
 | Icon set | In-house vector UI icons on a 16-unit grid, tinted per appearance with user icon colours (K1; contact sheet awaiting review) | [Icon set](ux/icons.md) |
 | Workspace and shell | A Workspace per Document tab ([ADR 0020](adr/0020-per-document-tab-layouts.md)); optional protected comparison/Home; movable/floating tools with follow/pin; Classic controls and optional task presets | [Workspaces](ux/workspaces.md); detailed surfaces continue in their own prototypes |
 | Subtitle grid | Custom-painted renderer; accepted toolbar/task review, range/group and selected-only Join outcomes | [Grid contract](ux/subtitle-grid.md), [operations and History](ux/grid-operations.md), [ADR](adr/0003-painted-subtitle-grid.md) |
