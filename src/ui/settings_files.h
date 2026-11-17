@@ -32,6 +32,14 @@ public:
 
     void flush();
 
+    struct Reloaded {
+        std::vector<std::string> changed; // setting ids whose value changed
+        std::optional<application::ParseFailure> failure;
+    };
+    // Reads settings.toml again after a hand edit. Changes not yet written are kept over it. While the file
+    // can't be read, the values stay and settings.toml isn't written.
+    Reloaded reloadSettings();
+
     static File fileOf(const application::SettingDefinition &setting);
     static QString fileName(File file);
     QString path(File file) const;
@@ -69,6 +77,7 @@ private:
     std::vector<application::FileProblem> m_problems;
     std::vector<std::string> m_ignored;
     bool m_converted = false;
+    bool m_settingsUnreadable = false;
 };
 
 // `[automation.dialogPresets]`: one "<dialog key>\t<JSON array of presets>" row per table entry.

@@ -7370,6 +7370,33 @@ QVariantMap Application::openSettingsDialog()
             {QStringLiteral("warnings"), warnings}};
 }
 
+QVariantMap Application::currentSettings()
+{
+    auto values = toVariant(application::openOptionsDialog(m_settings->settings(), m_optionsLists).state);
+    addAppearance(values);
+    for (const char *id : {"notices.hiddenQuestions", "automation.dialogAnswers", "trust.folders"})
+        values.insert(QLatin1String(id), m_settings->list(id));
+    values.insert(QLatin1String(AiFeatures::kCustomAgentsSetting), m_settings->list(AiFeatures::kCustomAgentsSetting));
+    return values;
+}
+
+void Application::openSettingsFile(int shellWindow, const QString &file)
+{
+    QString path;
+    if (file == QLatin1String("plugins"))
+        path = m_pluginManager ? m_pluginManager->registryFile() : QString();
+    else if (file == QLatin1String("project") || file == QLatin1String("local")) {
+        if (const auto *project = views(shellWindow).settings->project())
+            path = project->path(file == QLatin1String("local") ? ui::ProjectFile::Local : ui::ProjectFile::Shared);
+    } else
+        path = m_settings->filePath(file);
+    if (path.isEmpty())
+        return;
+    if (!QFileInfo::exists(path))
+        m_settings->sync();
+    backends::desktop::openUrl(QUrl::fromLocalFile(QFileInfo::exists(path) ? path : QFileInfo(path).absolutePath()));
+}
+
 QString Application::outputDeviceLabel(const application::OutputDeviceChoice &choice)
 {
     using Kind = application::OutputDeviceChoice::Kind;

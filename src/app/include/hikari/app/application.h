@@ -792,6 +792,11 @@ public:
     // Writes only controls whose value differs from the stored one. resetAll: every
     // setting but the appearance, hotkeys and recent files goes back to its default first.
     Q_INVOKABLE void applySettings(const QVariantMap &values, bool resetAll = false);
+    // The controls' values as openSettingsDialog() gives them, after a change from outside the window.
+    Q_INVOKABLE QVariantMap currentSettings();
+    // Opens in the system's editor: "settings" (settings.toml), "hotkeys", "plugins" (plugins.json) or
+    // "project" (the window's .hikari/project.toml), or "local" (project.local.toml).
+    Q_INVOKABLE void openSettingsFile(int shellWindow, const QString &file);
     // Due after the first start; Finish, Skip setup, Close and Esc mark it done.
     Q_INVOKABLE bool gettingStartedDue() const;
     // As openSettingsDialog(), plus legacy: whether a HikariSub legacy installation was

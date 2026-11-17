@@ -308,7 +308,7 @@ QStringList permissionLines(bool unrestricted, const plugins::Permissions &p, bo
     return lines;
 }
 
-PluginManager::PluginManager(Folders folders, QObject *parent) : QObject(parent)
+PluginManager::PluginManager(Folders folders, QObject *parent) : QObject(parent), m_registryFile(folders.registry)
 {
     if (!folders.plugins.isEmpty())
         m_installer.emplace(plugins::PluginFolders{path(folders.plugins), path(folders.data), path(folders.cache),

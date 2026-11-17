@@ -2,6 +2,8 @@
 
 #include "settings_files.h"
 
+#include <QCoreApplication>
+#include <QFileInfo>
 #include <QJSValue>
 
 namespace hikari::ui {
@@ -31,6 +33,64 @@ SettingsStore::SettingsStore(QString file, QObject *parent) : QObject(parent), m
         m_storage = m_files = SettingsFiles::open(m_file);
     m_settings = std::make_unique<application::Settings>(*m_storage);
     m_settings->setObserver([this](const SettingDefinition &setting) { emit changed(qs(setting.id)); });
+    if (!m_files)
+        return;
+    m_reload.setSingleShot(true);
+    m_reload.setInterval(150);
+    connect(&m_reload, &QTimer::timeout, this, &SettingsStore::reloadFile);
+    // An atomic save replaces the file, which drops it from the watch; the folder's change brings it back.
+    const QString path = m_files->path(SettingsFiles::Settings);
+    m_watcher.addPath(QFileInfo(path).absolutePath());
+    if (QFileInfo::exists(path))
+        m_watcher.addPath(path);
+    connect(&m_watcher, &QFileSystemWatcher::fileChanged, &m_reload, qOverload<>(&QTimer::start));
+    connect(&m_watcher, &QFileSystemWatcher::directoryChanged, this, [this, path] {
+        if (!m_watcher.files().contains(path) && QFileInfo::exists(path)) {
+            m_watcher.addPath(path);
+            m_reload.start();
+        }
+    });
+}
+
+void SettingsStore::reloadFile()
+{
+    const QString path = m_files->path(SettingsFiles::Settings);
+    if (!m_watcher.files().contains(path) && QFileInfo::exists(path))
+        m_watcher.addPath(path);
+    const SettingsFiles::Reloaded reloaded = m_files->reloadSettings();
+    const QString problem = reloaded.failure
+                                ? QCoreApplication::translate("HikariSub.Options", "settings.toml has an error on line %1.")
+                                      .arg(reloaded.failure->line)
+                                : QString();
+    if (problem != m_fileProblem) {
+        m_fileProblem = problem;
+        emit fileProblemChanged();
+    }
+    for (const std::string &id : reloaded.changed)
+        emit changed(qs(id));
+}
+
+bool SettingsStore::differs(const QString &id) const
+{
+    const auto *setting = application::findSetting(str(id));
+    return setting && m_settings->isSet(setting->id) && m_settings->value(setting->id) != setting->defaultValue;
+}
+
+QStringList SettingsStore::changedSettings() const
+{
+    QStringList out;
+    for (const auto &setting : application::settingDefinitions())
+        if (setting.disposition == application::SettingDisposition::Mapped && m_settings->isSet(setting.id) &&
+            m_settings->value(setting.id) != setting.defaultValue)
+            out << qs(setting.id);
+    return out;
+}
+
+QString SettingsStore::filePath(const QString &file) const
+{
+    if (!m_files)
+        return {};
+    return m_files->path(file == QLatin1String("hotkeys") ? SettingsFiles::Hotkeys : SettingsFiles::Settings);
 }
 
 SettingsStore::~SettingsStore() = default;

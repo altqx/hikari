@@ -34,6 +34,8 @@ public:
     explicit PluginManager(Folders folders, QObject *parent = nullptr);
 
     bool available() const { return m_installer.has_value(); }
+    // plugins.json; empty without a user folder.
+    const QString &registryFile() const { return m_registryFile; }
     const plugins::OfficialAuthor &officialAuthor() const { return m_official; }
     void setOfficialAuthor(plugins::OfficialAuthor official);
     // Rows {id, name, version, description, enabled, keyId ("" when unsigned), source ("file" or "marketplace"),
@@ -110,6 +112,7 @@ private:
     plugins::OfficialAuthor m_official = plugins::OfficialAuthor::hikarisub();
     QVariantList m_rows;
     QString m_problem;
+    QString m_registryFile;
 };
 
 }
