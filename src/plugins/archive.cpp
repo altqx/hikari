@@ -171,7 +171,7 @@ std::string normalised(std::string path)
 
 class TarReader {
 public:
-    TarReader(Gunzip &in, const fs::path &into, UnpackLimits limits) : m_in(in), m_into(into), m_limits(limits) {}
+    TarReader(Gunzip &in, const fs::path &into, UnpackLimits limits) : m_in(in), m_into(into), m_claims(limits) {}
 
     std::expected<void, UnpackProblem> run()
     {
@@ -254,24 +254,11 @@ private:
         return pad == 0 || m_in.read(sink.data(), pad);
     }
 
-    std::expected<void, UnpackProblem> claimFolders(const std::string &path)
-    {
-        for (std::size_t slash = path.find('/'); slash != std::string::npos; slash = path.find('/', slash + 1)) {
-            const std::string folder = api::lowered(path.substr(0, slash));
-            if (m_files.contains(folder))
-                return fail(UnpackProblem::Kind::BadPath, path);
-            m_folders.insert(folder);
-        }
-        return {};
-    }
-
     std::expected<void, UnpackProblem> directory(const std::string &path)
     {
         if (path.empty())
             return {};
-        if (!goodPackagePath(path) || m_files.contains(api::lowered(path)))
-            return fail(UnpackProblem::Kind::BadPath, path);
-        if (auto claimed = claimFolders(path + "/"); !claimed)
+        if (auto claimed = m_claims.folder(path); !claimed)
             return claimed;
         std::error_code error;
         fs::create_directories(m_into / fs::path(std::u8string(path.begin(), path.end())), error);
@@ -280,14 +267,8 @@ private:
 
     std::expected<void, UnpackProblem> file(const std::string &path, std::uint64_t size, bool executable)
     {
-        const std::string key = api::lowered(path);
-        if (!goodPackagePath(path) || m_folders.contains(key) || !m_files.insert(key).second)
-            return fail(UnpackProblem::Kind::BadPath, path);
-        if (auto claimed = claimFolders(path); !claimed)
+        if (auto claimed = m_claims.file(path, size); !claimed)
             return claimed;
-        if (m_files.size() > m_limits.files || size > m_limits.bytes - m_total)
-            return fail(UnpackProblem::Kind::TooLarge, path);
-        m_total += size;
         const fs::path target = m_into / fs::path(std::u8string(path.begin(), path.end()));
         std::error_code error;
         fs::create_directories(target.parent_path(), error);
@@ -313,9 +294,7 @@ private:
 
     Gunzip &m_in;
     fs::path m_into;
-    UnpackLimits m_limits;
-    std::uint64_t m_total = 0;
-    std::set<std::string> m_files, m_folders;
+    UnpackClaims m_claims;
 };
 
 }
@@ -332,6 +311,37 @@ bool goodPackagePath(std::string_view path)
             return true;
         path.remove_prefix(slash + 1);
     }
+}
+
+std::expected<void, UnpackProblem> UnpackClaims::parents(const std::string &path)
+{
+    for (std::size_t slash = path.find('/'); slash != std::string::npos; slash = path.find('/', slash + 1)) {
+        const std::string folder = api::lowered(path.substr(0, slash));
+        if (m_files.contains(folder))
+            return std::unexpected(UnpackProblem{UnpackProblem::Kind::BadPath, path});
+        m_folders.insert(folder);
+    }
+    return {};
+}
+
+std::expected<void, UnpackProblem> UnpackClaims::folder(const std::string &path)
+{
+    if (!goodPackagePath(path) || m_files.contains(api::lowered(path)))
+        return std::unexpected(UnpackProblem{UnpackProblem::Kind::BadPath, path});
+    return parents(path + "/");
+}
+
+std::expected<void, UnpackProblem> UnpackClaims::file(const std::string &path, std::uint64_t size)
+{
+    const std::string key = api::lowered(path);
+    if (!goodPackagePath(path) || m_folders.contains(key) || !m_files.insert(key).second)
+        return std::unexpected(UnpackProblem{UnpackProblem::Kind::BadPath, path});
+    if (auto claimed = parents(path); !claimed)
+        return claimed;
+    if (m_files.size() > m_limits.files || size > m_limits.bytes - m_total)
+        return std::unexpected(UnpackProblem{UnpackProblem::Kind::TooLarge, path});
+    m_total += size;
+    return {};
 }
 
 std::expected<void, UnpackProblem> unpackTarGz(const fs::path &archive, const fs::path &into, UnpackLimits limits)

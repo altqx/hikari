@@ -40,7 +40,7 @@ std::expected<Package, PackageProblem> openPackage(std::vector<PackageFile> file
     const PackageFile *manifestFile = nullptr;
     for (const PackageFile &file : files) {
         total += file.data.size();
-        if (total > kMaxPackageBytes)
+        if (total > kMaxPlatformPackageBytes)
             return std::unexpected(PackageProblem{Kind::TooLarge, {}, {}});
         if (!goodPackagePath(file.path) || !seen.insert(api::lowered(file.path)).second)
             return std::unexpected(PackageProblem{Kind::BadPath, file.path, {}});
@@ -61,8 +61,22 @@ std::expected<Package, PackageProblem> openPackage(std::vector<PackageFile> file
     auto manifest = parseManifest(std::string_view(reinterpret_cast<const char *>(bytes.data()), bytes.size()), apiVersion);
     if (!manifest)
         return std::unexpected(PackageProblem{Kind::Manifest, std::string(kManifestName), manifest.error()});
-    if (std::none_of(files.begin(), files.end(), [&](const PackageFile &f) { return f.path == manifest->main; }))
+    const auto holds = [&](const std::string &path) {
+        return std::ranges::any_of(files, [&](const PackageFile &f) { return f.path == path; });
+    };
+    if (!holds(manifest->main))
         return std::unexpected(PackageProblem{Kind::MissingMain, manifest->main, {}});
+    bool forOnePlatform = false;
+    for (const Program &program : manifest->programs)
+        for (const auto &[platform, run] : program.platforms) {
+            if (run.download || holds(run.path))
+                continue;
+            if (platform == thisPlatform())
+                return std::unexpected(PackageProblem{Kind::MissingProgram, run.path, {}});
+            forOnePlatform = true;
+        }
+    if (total > kMaxPackageBytes && !forOnePlatform)
+        return std::unexpected(PackageProblem{Kind::TooLarge, {}, {}});
     if (auto problem = mediaProblem(*manifest, files))
         return std::unexpected(std::move(*problem));
     if (auto problem = qmlProblem(*manifest, files))

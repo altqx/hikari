@@ -33,6 +33,7 @@ public:
         std::function<void(const std::string &pluginId, const QString &line)> log;
         api::Api *api = nullptr;
         QString lowRightsHelper;
+        std::function<QString(const std::string &pluginId, const plugins::ProgramRun &run)> downloaded;
     };
 
     explicit PluginPrograms(QObject *parent = nullptr);

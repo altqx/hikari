@@ -29,6 +29,7 @@ public:
         QString data;
         QString cache;
         QString registry;
+        QString programs;
     };
     // Empty folders: nothing can be installed.
     explicit PluginManager(Folders folders, QObject *parent = nullptr);
