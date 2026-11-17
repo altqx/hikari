@@ -2062,18 +2062,18 @@ DialogWindow {
                             setting: "scriptProperties.askForChange"
                         }
                     }
+                    Section {
+                        key: "subtitleProperties.files"
+                        SettingCheck { setting: "subtitles.layoutInFile" }
+                    }
                 }
 
                 SettingsPage {
                     page: "automation"
                     objectName: "settingsPageAutomation"
                     Section {
-                        key: "automation.files"
-                        ruled: false
-                        SettingCheck { setting: "subtitles.layoutInFile" }
-                    }
-                    Section {
                         key: "automation.debugging"
+                        ruled: false
                         SettingsRow {
                             host: dialog
                             setting: "automation.traceLevel"
@@ -2378,7 +2378,6 @@ DialogWindow {
 
                 SettingsPage {
                     page: "ai"
-                    objectName: "settingsPageAi"
                     SettingsAiPage { id: aiPage; dialog: dialog }
                 }
 

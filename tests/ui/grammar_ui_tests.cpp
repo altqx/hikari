@@ -527,7 +527,7 @@ private slots:
         QQuickItem *group = nullptr;
         QTRY_VERIFY((group = item("setting_grammar.group.properNouns")) && group->isVisible());
         auto *dialog = named(QStringLiteral("settingsDialog"));
-        QCOMPARE(dialog->property("currentPage").toString(), QStringLiteral("spelling"));
+        QTRY_COMPARE(dialog->property("currentPage").toString(), QStringLiteral("spelling"));
         QVERIFY(!group->isEnabled());
         QVERIFY(group->property("checked").toBool());
         QCOMPARE(group->property("text").toString(), QStringLiteral("Proper nouns"));

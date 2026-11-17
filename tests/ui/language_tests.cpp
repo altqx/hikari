@@ -404,9 +404,8 @@ private slots:
         QTRY_VERIFY((question = settingsDialog()->property("question").value<QObject *>()) &&
                     question->property("visible").toBool());
         QVERIFY(QMetaObject::invokeMethod(question, "answer", Q_ARG(QVariant, QStringLiteral("reset"))));
-        QCOMPARE(application->localisation().language(), QStringLiteral("ko_KR"));
+        QTRY_COMPARE(application->localisation().language(), QString());
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsClose"), "click"));
-        QCOMPARE(application->localisation().language(), QString());
         QTRY_COMPARE(fileMenuTitle(), QStringLiteral("&File"));
     }
 

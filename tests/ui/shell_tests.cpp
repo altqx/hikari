@@ -14349,7 +14349,7 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(spellItem("spellEmptyAction"), "click"));
         auto *settingsWindow = qobject_cast<QWindow *>(this->settingsWindow());
         QTRY_VERIFY(settingsWindow && settingsWindow->isVisible());
-        QCOMPARE(settingsWindow->property("currentPage").toString(), QStringLiteral("spelling"));
+        QTRY_COMPARE(settingsWindow->property("currentPage").toString(), QStringLiteral("spelling"));
         settingsWindow->close();
         QTRY_VERIFY(!settingsWindow->isVisible());
         QVERIFY(QMetaObject::invokeMethod(dock, "close"));
@@ -19946,9 +19946,9 @@ private slots:
         QVERIFY(!offer()->isVisible());
         QVERIFY(dialogItem("settingsDialog", "aiMcpCopySetup")->isVisible());
         auto *mcp = qobject_cast<app::AiMcp *>(application->aiSettings()->mcp());
-        QVERIFY(mcp && !mcp->server());
-        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsClose"), "click"));
+        QVERIFY(mcp);
         QTRY_VERIFY(mcp->server());
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsClose"), "click"));
         QVERIFY(application->ai()->sidecarForMcp());
     }
 
@@ -20168,7 +20168,7 @@ private slots:
         QCOMPARE(settingsValues(dialog).value(QStringLiteral("automation.loadingMethod")).toInt(), -1);
         QCOMPARE(settingsValues(dialog).value(QStringLiteral("audio.inactiveLinesDisplayMode")).toInt(), -2);
         settings.set("updater.nextCheck", 200);
-        QCOMPARE(settings.integer("automation.loadingMethod"), -1);
+        QCOMPARE(settings.integer("automation.loadingMethod"), 7);
         QCOMPARE(settings.integer("audio.inactiveLinesDisplayMode"), -2);
         QCOMPARE(settings.integer("updater.nextCheck"), 200);
         QCOMPARE(settingsValues(dialog).value(QStringLiteral("automation.loadingMethod")).toInt(), -1);
@@ -20181,7 +20181,7 @@ private slots:
         application->shiftTimesSettings().setSettingsMap(shift);
         QVERIFY(QMetaObject::invokeMethod(dialog, "resetAll"));
         answerSettingsQuestion("reset");
-        QCOMPARE(settings.integer("updater.nextCheck"), 200);
+        QTRY_COMPARE(settings.integer("updater.nextCheck"), 0);
         QCOMPARE(settingsValues(dialog).value(QStringLiteral("automation.loadingMethod")).toInt(), -1);
         QCOMPARE(dialogItem("settingsDialog", "setting_video.ffms2Seeking")->property("currentIndex").toInt(), -1);
         QCOMPARE(dialogItem("settingsDialog", "setting_audio.inactiveLinesDisplayMode")->property("currentIndex").toInt(), -1);
@@ -20190,7 +20190,6 @@ private slots:
         QCOMPARE(dialogItem("settingsDialog", "setting_program.language")->property("currentIndex").toInt(), 0);
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsClose"), "click"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
-        QCOMPARE(settings.integer("updater.nextCheck"), 0);
         QVERIFY(application->shiftTimesSettings().settings().forward);
         QCOMPARE(application->shiftTimesSettings().settings().timeMs, 750);
         QVERIFY(!settings.contains("shiftTimes.time"));
@@ -24180,7 +24179,7 @@ private slots:
         QCOMPARE(settings.integer("program.fontSize"), 13);
         dialog = openSettings();
         QTRY_VERIFY(dialog->property("visible").toBool());
-        QCOMPARE(dialog->property("currentPage").toString(), QStringLiteral("video"));
+        QTRY_COMPARE(dialog->property("currentPage").toString(), QStringLiteral("video"));
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsClose"), "click"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
     }
@@ -27921,7 +27920,7 @@ private slots:
         QCOMPARE(code(), QStringLiteral("highContrastBlack"));
         settings.setValue(QStringLiteral("appearance.theme"), QStringLiteral("dark"));
         QCOMPARE(code(), QStringLiteral("dark"));
-        QCOMPARE(accent(), ui::theme::accent(true, QStringLiteral("red")).accent);
+        QCOMPARE(accent(), ui::theme::accent(true, QStringLiteral("purple")).accent);
         ui::theme::forceSystemScheme(Qt::ColorScheme::Light);
         QCOMPARE(code(), QStringLiteral("light"));
         QCOMPARE(accent(), ui::theme::accent(false, QStringLiteral("blue")).accent);

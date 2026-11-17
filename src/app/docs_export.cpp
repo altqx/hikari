@@ -240,7 +240,7 @@ struct SettingsExport {
                 o.insert(it.key(), it.value());
         settings.append(o);
         if (kind == QLatin1String("font") && binding && !binding->sizeSetting.empty())
-            add(qs(binding->sizeSetting), section, nullptr, {{QStringLiteral("control"), QStringLiteral("number")}});
+            add(qs(binding->sizeSetting), section, control(qs(binding->sizeSetting)), {{QStringLiteral("control"), QStringLiteral("number")}});
     }
 
     // MUST KILL: values the catalogue doesn't hold yet (theme lists, Windows-only rows) come from docs* properties.
