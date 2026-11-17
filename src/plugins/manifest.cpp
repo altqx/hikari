@@ -80,6 +80,15 @@ std::vector<Panel> panels(const Json *list)
     return out;
 }
 
+std::vector<ContentFile> contentFiles(const Json *list)
+{
+    std::vector<ContentFile> out;
+    if (list && list->isArray())
+        for (const Json &item : list->asArray())
+            out.push_back({text(item, "id"), text(item, "title"), text(item, "path")});
+    return out;
+}
+
 std::vector<NodePort> nodePorts(const Json *list)
 {
     std::vector<NodePort> out;
@@ -337,13 +346,16 @@ std::expected<Manifest, ManifestProblem> parseManifest(std::string_view source, 
             for (const Json &s : settings->asArray())
                 m.settings.push_back({text(s, "id"), text(s, "title"), s, settingType(text(s, "type"))});
         m.nodes = nodes(contributes->find("nodes"));
+        m.styles = contentFiles(contributes->find("styles"));
+        m.karaokePresets = contentFiles(contributes->find("karaokePresets"));
         m.programs = programs(contributes->find("programs"));
     }
 
     for (auto problem : {repeated(m.permissions.files, "/permissions/files"),
                          repeated(m.commands, "/contributes/commands"), repeated(m.panels, "/contributes/panels"),
                          repeated(m.settings, "/contributes/settings"), repeated(m.nodes, "/contributes/nodes"),
-                         repeated(m.programs, "/contributes/programs")})
+                         repeated(m.programs, "/contributes/programs"), repeated(m.styles, "/contributes/styles"),
+                         repeated(m.karaokePresets, "/contributes/karaokePresets")})
         if (problem)
             return std::unexpected(*problem);
     for (std::size_t i = 0; i < m.permissions.files.size(); ++i)

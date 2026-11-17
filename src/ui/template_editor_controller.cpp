@@ -4,6 +4,7 @@
 #include "hikari/application/karaoke_templates.h"
 #include "hikari/application/macro_transaction.h"
 #include "hikari/application/node_graph.h"
+#include "hikari/application/plugin_content.h"
 #include "hikari/core/ass_save.h"
 #include "hikari/core/editor_syntax.h"
 
@@ -1528,6 +1529,35 @@ bool TemplateEditorController::insertTemplate(const QString &effect)
     return insertLines("New template", {d}, karaOKMode() && modeUndecided());
 }
 
+namespace {
+
+std::optional<application::KaraokePreset> readPreset(const QByteArray &bytes)
+{
+    return application::readKaraokePreset(std::as_bytes(std::span(bytes.constData(), static_cast<std::size_t>(bytes.size()))));
+}
+
+QByteArray presetBytes(int index)
+{
+    const int builtIn = static_cast<int>(std::size(kPresets));
+    QFile file;
+    if (index >= 0 && index < builtIn) {
+        file.setFileName(QStringLiteral(":/hikari/ui/karaoke-presets/") + QLatin1String(kPresets[index].file));
+    } else {
+        const auto plugins = application::pluginContent().karaokePresets;
+        if (index < builtIn || index - builtIn >= static_cast<int>(plugins.size()))
+            return {};
+        file.setFileName(QString::fromStdU16String(plugins[std::size_t(index - builtIn)].file.u16string()));
+    }
+    return file.open(QIODevice::ReadOnly) ? file.readAll() : QByteArray();
+}
+
+QString fromU8(const std::u8string &s)
+{
+    return QString::fromUtf8(reinterpret_cast<const char *>(s.data()), static_cast<qsizetype>(s.size()));
+}
+
+}
+
 QVariantList TemplateEditorController::presets()
 {
     QVariantList out;
@@ -1536,18 +1566,24 @@ QVariantList TemplateEditorController::presets()
                            {QStringLiteral("description"), translated(p.description)},
                            {QStringLiteral("file"), QLatin1String(p.file)},
                            {QStringLiteral("karaOK"), p.karaOK}};
+    int index = static_cast<int>(std::size(kPresets));
+    for (const auto &plugin : application::pluginContent().karaokePresets) {
+        const auto preset = readPreset(presetBytes(index++));
+        const QString title = preset ? fromU8(preset->title) : QString::fromStdU16String(plugin.file.filename().u16string());
+        out << QVariantMap{
+            //: A plugin's karaoke preset in the Template editor: the preset's title, then the plugin's name.
+            {QStringLiteral("title"), QCoreApplication::translate("HikariSub.TemplateEditor", "%1 (%2)").arg(title, fromU8(plugin.pluginName))},
+            {QStringLiteral("description"), preset ? fromU8(preset->description) : QString()},
+            {QStringLiteral("karaOK"), preset && preset->karaOK},
+            {QStringLiteral("plugin"), fromU8(plugin.pluginName)}};
+    }
     return out;
 }
 
 bool TemplateEditorController::insertPreset(int index)
 {
-    if (index < 0 || index >= static_cast<int>(std::size(kPresets)))
-        return false;
-    QFile file(QStringLiteral(":/hikari/ui/karaoke-presets/") + QLatin1String(kPresets[index].file));
-    if (!file.open(QIODevice::ReadOnly))
-        return false;
-    const QByteArray bytes = file.readAll();
-    const auto preset = application::readKaraokePreset(std::as_bytes(std::span(bytes.constData(), static_cast<std::size_t>(bytes.size()))));
+    const QByteArray bytes = presetBytes(index);
+    const auto preset = readPreset(bytes);
     if (!preset || (preset->karaOK && !karaOKPresetsUsable()))
         return false;
     const bool translate = karaOKMode() && !preset->karaOK;

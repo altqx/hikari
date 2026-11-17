@@ -170,6 +170,9 @@ private slots:
         QCOMPARE(refusal(manager, "bad-icon.hikariplugin"),
                  QStringLiteral("The package breaks the media rules: icon.png is 128x128 px, not 256x256 px."));
         QVERIFY(refusal(manager, "missing.hikariplugin").contains(QStringLiteral("can’t read")));
+        QCOMPARE(refusal(manager, "bad-preset.hikariplugin"),
+                 QStringLiteral("The package’s content file presets/glow.ass can’t be read: it isn’t a karaoke preset: "
+                                "it needs a Title, a Description and only template or code lines."));
         QCOMPARE(refusal(manager, "board-restricted-qml.hikariplugin"), QStringLiteral("Only Full trust plugins can ship QML panels."));
         QCOMPARE(refusal(manager, "board-ui-import.hikariplugin"),
                  QStringLiteral("qml/parts/Badge.qml imports Hikari.Ui, which plugin panels can’t use."));
