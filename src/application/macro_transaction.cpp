@@ -110,7 +110,13 @@ std::vector<std::optional<std::size_t>> matchInOrder(const std::vector<T> &befor
     return from;
 }
 
-bool applyInfoAndStyles(core::Document &doc, const MacroSnapshot &snapshot, const MacroResult &result)
+struct MacroLists {
+    const std::vector<MacroInfoLine> &info;
+    const std::vector<MacroStyleLine> &styles;
+    const std::vector<MacroDialogueLine> &dialogues;
+};
+
+bool applyInfoAndStyles(core::Document &doc, const MacroSnapshot &snapshot, const MacroLists &result)
 {
     if (result.info != snapshot.info) {
         const auto from = matchInOrder(snapshot.info, result.info);
@@ -207,11 +213,29 @@ MacroSnapshot macroSnapshotOf(const core::Document &doc, const Selection &sel)
     return s;
 }
 
-std::expected<void, MacroApplyFailure> applyMacroResult(EditSession &session, const MacroSnapshot &snapshot,
-                                                        const MacroResult &result, const std::string &name)
+namespace {
+
+std::vector<MacroDialogueLine> withIdsOfLinesAddedEarlier(std::vector<MacroDialogueLine> lines,
+                                              const std::vector<MacroDialogueLine> &addedEarlier)
 {
-    if (!result.valid)
-        return std::unexpected(MacroApplyFailure{MacroApplyError::Refused, CommandRefusal::Invalid});
+    std::size_t next = 0;
+    for (auto &line : lines) {
+        if (line.id != 0)
+            continue;
+        for (std::size_t k = next; k < addedEarlier.size(); ++k) {
+            if (sameFields(line, addedEarlier[k])) {
+                line.id = addedEarlier[k].id;
+                next = k + 1;
+                break;
+            }
+        }
+    }
+    return lines;
+}
+
+std::expected<bool, MacroApplyFailure> applyListsAsAStep(EditSession &session, const MacroSnapshot &snapshot,
+                                                  const MacroLists &result, const std::string &commandName)
+{
     std::map<std::uint64_t, const MacroDialogueLine *> before;
     for (const auto &d : snapshot.dialogues)
         before[d.id] = &d;
@@ -229,48 +253,92 @@ std::expected<void, MacroApplyFailure> applyMacroResult(EditSession &session, co
             changed = true;
     }
 
-    if (changed) {
-        Command command;
-        command.keepGroups = false;
-        command.name = "Automation: " + name;
-        command.expectedRevision = snapshot.revision;
-        for (const auto &d : snapshot.dialogues)
-            command.touches.insert(core::LineId{d.id});
-        command.apply = [&](core::Document &doc) {
-            if (headerChanged && !applyInfoAndStyles(doc, snapshot, result))
-                return false;
-            doc.removeLinesIf([&](const core::LineRecord &l) {
-                return before.contains(l.id.value) && !kept.contains(l.id.value);
-            });
-            std::map<std::uint64_t, const MacroDialogueLine *> edits;
-            std::vector<std::variant<core::LineId, core::LineRecord>> order;
-            std::set<std::uint64_t> placed;
-            for (const auto &d : result.dialogues) {
-                if (kept.contains(d.id) && placed.insert(d.id).second) {
-                    if (!sameFields(d, *before[d.id]))
-                        edits[d.id] = &d;
-                    order.emplace_back(core::LineId{d.id});
-                } else {
-                    order.emplace_back(lineOfMacro(d));
-                }
-            }
-            doc.editLines([&](core::LineRecord &l) {
-                const auto edit = edits.find(l.id.value);
-                if (edit == edits.end())
-                    return false;
-                assign(l, *edit->second);
-                return true;
-            });
-            if (!doc.arrangeLines(std::move(order)))
-                return false;
-            core::markGeneratedLines(doc);
-            return true;
-        };
-        if (auto ran = session.run(command); !ran)
-            return std::unexpected(MacroApplyFailure{MacroApplyError::Refused, ran.error()});
-    } else if (session.revision() != snapshot.revision) {
-        return std::unexpected(MacroApplyFailure{MacroApplyError::Refused, CommandRefusal::StaleRevision});
+    if (!changed) {
+        if (session.revision() != snapshot.revision)
+            return std::unexpected(MacroApplyFailure{MacroApplyError::Refused, CommandRefusal::StaleRevision});
+        return false;
     }
+    Command command;
+    command.keepGroups = false;
+    command.name = commandName;
+    command.expectedRevision = snapshot.revision;
+    for (const auto &d : snapshot.dialogues)
+        command.touches.insert(core::LineId{d.id});
+    command.apply = [&](core::Document &doc) {
+        if (headerChanged && !applyInfoAndStyles(doc, snapshot, result))
+            return false;
+        doc.removeLinesIf([&](const core::LineRecord &l) {
+            return before.contains(l.id.value) && !kept.contains(l.id.value);
+        });
+        std::map<std::uint64_t, const MacroDialogueLine *> edits;
+        std::vector<std::variant<core::LineId, core::LineRecord>> order;
+        std::set<std::uint64_t> placed;
+        for (const auto &d : result.dialogues) {
+            if (kept.contains(d.id) && placed.insert(d.id).second) {
+                if (!sameFields(d, *before[d.id]))
+                    edits[d.id] = &d;
+                order.emplace_back(core::LineId{d.id});
+            } else {
+                order.emplace_back(lineOfMacro(d));
+            }
+        }
+        doc.editLines([&](core::LineRecord &l) {
+            const auto edit = edits.find(l.id.value);
+            if (edit == edits.end())
+                return false;
+            assign(l, *edit->second);
+            return true;
+        });
+        if (!doc.arrangeLines(std::move(order)))
+            return false;
+        core::markGeneratedLines(doc);
+        return true;
+    };
+    if (auto ran = session.run(command); !ran)
+        return std::unexpected(MacroApplyFailure{MacroApplyError::Refused, ran.error()});
+    return true;
+}
+
+}
+
+std::expected<void, MacroApplyFailure> applyMacroResult(EditSession &session, const MacroSnapshot &snapshot,
+                                                        const MacroResult &result, const std::string &name,
+                                                        const std::string &caller)
+{
+    if (!result.valid)
+        return std::unexpected(MacroApplyFailure{MacroApplyError::Refused, CommandRefusal::Invalid});
+    MacroSnapshot from = snapshot;
+    std::vector<MacroDialogueLine> addedEarlier;
+    int steps = 0;
+    auto applyStep = [&](const std::vector<MacroInfoLine> &info, const std::vector<MacroStyleLine> &styles,
+                         const std::vector<MacroDialogueLine> &dialogues,
+                         const std::string &description) -> std::expected<void, MacroApplyFailure> {
+        const auto lines = withIdsOfLinesAddedEarlier(dialogues, addedEarlier);
+        const auto addedAStep =
+            applyListsAsAStep(session, from, {info, styles, lines}, "Automation: " + caller + description);
+        if (!addedAStep) {
+            for (; steps > 0; --steps)
+                session.undo();
+            return std::unexpected(addedAStep.error());
+        }
+        if (!*addedAStep)
+            return {};
+        ++steps;
+        from = macroSnapshotOf(session.document(), session.selection());
+        from.revision = session.revision();
+        addedEarlier.clear();
+        for (std::size_t i = 0; i < dialogues.size() && i < from.dialogues.size(); ++i)
+            if (dialogues[i].id == 0)
+                addedEarlier.push_back(from.dialogues[i]);
+        return {};
+    };
+    for (const auto &step : result.undoSteps)
+        if (auto applied = applyStep(step.info, step.styles, step.dialogues, step.description); !applied)
+            return applied;
+    if (auto applied = applyStep(result.info, result.styles, result.dialogues,
+                                 result.undoDescription.empty() ? name : result.undoDescription);
+        !applied)
+        return applied;
 
     // Script indices count from the header lists the macro left; selected
     // rows stop at the first out of range.
