@@ -78,7 +78,7 @@ Presence shows **Effects** (`effects`) while the mode or the Template editor is 
 
 ## Decisions
 
-The owner said "Lgtm" to the mode gate board on 2026-11-17 ([#1209](https://github.com/altqx/hikari/issues/1209)):
+The owner said "Lgtm" to the mode gate board on 2026-11-17 ([#1209](https://github.com/altqx/hikari/issues/1209#issuecomment-6941093771)):
 
 | Q | Decision |
 | --- | --- |
