@@ -815,7 +815,7 @@ Rectangle {
             QStringLiteral("line-break-remove"), QStringLiteral("case-title"), QStringLiteral("case-sentence"),
             QStringLiteral("dialogue-swap"), QStringLiteral("phantom"), QStringLiteral("phantom-keep-start"),
             QStringLiteral("phantom-keep-end"), QStringLiteral("cycle-values"),
-            QStringLiteral("interpolate-lines"), QStringLiteral("citations")};
+            QStringLiteral("interpolate-lines"), QStringLiteral("citations"), QStringLiteral("command-palette")};
         QSet<QString> mirrored;
         for (const auto &value : manifest.value(QLatin1String("icons")).toArray()) {
             const auto icon = value.toObject();
