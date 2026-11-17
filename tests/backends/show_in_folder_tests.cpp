@@ -5,6 +5,7 @@
 #include <QProcess>
 #include <QStandardPaths>
 #include <QTemporaryDir>
+#include <QUuid>
 #include <QtTest>
 
 #ifdef _WIN32
@@ -213,7 +214,8 @@ private slots:
             QVERIFY(f.open(QIODevice::WriteOnly));
             f.write("<!DOCTYPE busconfig PUBLIC \"-//freedesktop//DTD D-Bus Bus Configuration 1.0//EN\"\n"
                     " \"http://www.freedesktop.org/standards/dbus/1.0/busconfig.dtd\">\n"
-                    "<busconfig><type>session</type><listen>unix:dir=" + busDir.path().toUtf8() + "</listen>"
+                    "<busconfig><type>session</type><listen>unix:abstract=hikari-show-in-folder-"
+                    + QUuid::createUuid().toByteArray(QUuid::WithoutBraces) + "</listen>"
                     "<policy context=\"default\"><allow send_destination=\"*\" eavesdrop=\"true\"/>"
                     "<allow eavesdrop=\"true\"/><allow own=\"*\"/></policy></busconfig>\n");
         }

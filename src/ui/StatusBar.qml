@@ -13,6 +13,9 @@ Rectangle {
     property string selectionText
     property string saveText
     property string reviewText
+    property var pluginRuntime: null
+    readonly property var workingPlugins: pluginRuntime ? pluginRuntime.working.filter(w => w.background) : []
+    onWorkingPluginsChanged: if (workingPlugins.length === 0) workingPopover.revert()
     signal reviewClicked()
     readonly property color warningColour: Theme.warning
     default property alias trailing: trailingItems.data
@@ -67,6 +70,32 @@ Rectangle {
         anchors.rightMargin: 12
         spacing: 16
 
+        ToolButton {
+            id: pluginsWorking
+            objectName: "statusPluginsWorking"
+            visible: bar.workingPlugins.length > 0
+            padding: 0
+            Layout.fillHeight: true
+            //: The status bar's busy icon: how many background plugins are working
+            text: qsTr("%n plugin(s) working", "", bar.workingPlugins.length)
+            contentItem: Row {
+                spacing: 4
+                Icon {
+                    iconRole: "run-busy"
+                    accentColor: IconTheme.accent
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+                Label {
+                    text: bar.workingPlugins.length
+                    font: bar.statusFont
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+            }
+            Accessible.name: text
+            ToolTip.visible: hovered
+            ToolTip.text: text
+            onClicked: workingPopover.openAt(pluginsWorking)
+        }
         Field {
             objectName: "statusText"
             text: bar.shell.statusText
@@ -118,6 +147,47 @@ Rectangle {
             objectName: "statusTrailing"
             visible: children.length > 0
             Layout.alignment: Qt.AlignVCenter
+        }
+    }
+
+    Popover {
+        id: workingPopover
+        objectName: "pluginsWorkingPopover"
+        title: qsTr("Plugins working")
+        showTitle: true
+        Repeater {
+            model: bar.workingPlugins
+            RowLayout {
+                id: workingRow
+                required property var modelData
+                objectName: "pluginWorking_" + modelData.plugin
+                spacing: 12
+                Layout.fillWidth: true
+                Layout.minimumWidth: 280
+                ColumnLayout {
+                    spacing: 2
+                    Layout.fillWidth: true
+                    Label {
+                        text: workingRow.modelData.name
+                        textFormat: Text.PlainText
+                        elide: Text.ElideRight
+                        Layout.fillWidth: true
+                    }
+                    Label {
+                        text: workingRow.modelData.what
+                        textFormat: Text.PlainText
+                        color: Theme.muted
+                        elide: Text.ElideRight
+                        Layout.fillWidth: true
+                    }
+                }
+                DangerButton {
+                    objectName: "pluginWorkingStop"
+                    text: qsTr("Stop")
+                    Accessible.description: workingRow.modelData.name
+                    onClicked: bar.pluginRuntime.stopWorking(workingRow.modelData.plugin)
+                }
+            }
         }
     }
 }

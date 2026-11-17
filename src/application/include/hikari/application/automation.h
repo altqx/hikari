@@ -129,6 +129,15 @@ struct MacroSnapshot {
     bool canModify = true;
 };
 
+// The lists as they stood when aegisub.set_undo_point(description) closed a step.
+struct MacroUndoStep {
+    std::string description;
+    std::vector<MacroInfoLine> info;
+    std::vector<MacroStyleLine> styles;
+    std::vector<MacroDialogueLine> dialogues;
+    bool operator==(const MacroUndoStep &) const = default;
+};
+
 struct MacroResult {
     std::vector<MacroInfoLine> info;
     std::vector<MacroStyleLine> styles;
@@ -141,6 +150,10 @@ struct MacroResult {
     std::string validationError;
     // What the script attached with aegisub.hikari.report; empty for none.
     std::string report;
+    // The steps before the last one, oldest first; the lists above are the last step.
+    std::vector<MacroUndoStep> undoSteps;
+    // The last step's set_undo_point description; empty names it after the macro.
+    std::string undoDescription;
 };
 
 // Answered asynchronously, once. Per service (positions are 0-based UTF-16 offsets in the Line editor):

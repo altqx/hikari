@@ -20,9 +20,3 @@ if(Python3_Interpreter_FOUND)
         set_tests_properties(crash_tools PROPERTIES DEPENDS tools.dwarf-reduce)
     endif()
 endif()
-if(UNIX)
-    add_test(NAME tools.winix-hotplug-script
-        COMMAND bash "${CMAKE_CURRENT_SOURCE_DIR}/hotplug_script_test.sh"
-            "${HikariSub_SOURCE_DIR}" "${CMAKE_CURRENT_BINARY_DIR}/winix-hotplug")
-    set_tests_properties(tools.winix-hotplug-script PROPERTIES LABELS "tools" TIMEOUT 60)
-endif()

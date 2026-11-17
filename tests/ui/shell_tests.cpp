@@ -15784,6 +15784,105 @@ private slots:
         QCOMPARE(application->video().session().keyframes(), (std::vector<int>{0, 10, 20}));
     }
 
+    void keyframeFilesSaveAndClose()
+    {
+        const QString kf = dir.filePath(QStringLiteral("kf-close.txt"));
+        {
+            QFile f(kf);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("# keyframe format v1\nfps 25\n0\n10\n20\n");
+        }
+        const QString subtitles = dir.filePath(QStringLiteral("kf-close.ass"));
+        {
+            QFile f(subtitles);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[Script Info]\nScriptType: v4.00+\n\n[Aegisub Project Garbage]\nKeyframes File: missing-kf.txt\n\n"
+                    "[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                    "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n");
+        }
+        QVERIFY(application->openFile(subtitles));
+        application->setAskForBadResolution(false);
+        application->video().openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().session().state() == application::VideoSession::State::Ready, 20000);
+        const auto own = application->video().session().keyframes();
+        QCOMPARE(application->keyframesFile(), QString());
+        QVERIFY(!item<QObject>("closeKeyframesMenuItem")->property("enabled").toBool());
+        QVERIFY(item<QObject>("saveKeyframesMenuItem")->property("enabled").toBool());
+
+        QVERIFY(application->openKeyframes(QUrl::fromLocalFile(kf)).isEmpty());
+        QCOMPARE(application->video().session().keyframes(), (std::vector<int>{0, 10, 20}));
+        QCOMPARE(application->keyframesFile(), QDir::toNativeSeparators(kf));
+        QTRY_VERIFY(item<QObject>("closeKeyframesMenuItem")->property("enabled").toBool());
+
+        const QString saved = dir.filePath(QStringLiteral("kf-saved.txt"));
+        QCOMPARE(application->saveKeyframesFile(QUrl::fromLocalFile(saved)), QString());
+        QFile f(saved);
+        QVERIFY(f.open(QIODevice::ReadOnly));
+        QCOMPARE(f.readAll(), QByteArray("# keyframe format v1\nfps 0\n0\n10\n20\n"));
+
+        application->closeKeyframes();
+        QCOMPARE(application->video().session().keyframes(), own);
+        QCOMPARE(application->keyframesFile(), QString());
+        QTRY_VERIFY(!item<QObject>("closeKeyframesMenuItem")->property("enabled").toBool());
+        const QString resaved = dir.filePath(QStringLiteral("kf-close-saved.ass"));
+        QVERIFY(application->saveAs(resaved));
+        QTRY_VERIFY_WITH_TIMEOUT(QFileInfo::exists(resaved), 20000);
+        QFile written(resaved);
+        QVERIFY(written.open(QIODevice::ReadOnly));
+        QVERIFY(!written.readAll().contains("Keyframes File"));
+        QVERIFY(application->video().unloadVideo());
+        QVERIFY(!application->saveKeyframesFile(QUrl::fromLocalFile(saved)).isEmpty());
+    }
+
+    void timingKeysWorkInEveryPanelWhenAsked()
+    {
+        QVERIFY(application->openFile(episode));
+        auto &audio = application->audio();
+        audio.openDummy();
+        QVERIFY(audio.ready());
+        auto &settings = *application->settingsStore();
+        const bool followed = settings.boolean("audio.autoFocus");
+        settings.set("audio.autoFocus", false);
+        auto restore = qScopeGuard([&] {
+            settings.set("audio.timingKeysEverywhere", 1);
+            settings.set("audio.autoFocus", followed);
+        });
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const auto lines = session->document().lines();
+        const auto activeRow = [&] {
+            for (std::size_t i = 0; i < lines.size(); ++i)
+                if (session->selection().active == lines[i]->id)
+                    return int(i);
+            return -1;
+        };
+        QVERIFY(lines.size() >= 2);
+        application->selectLine(lines[1]->id.value);
+        QTRY_COMPARE(activeRow(), 1);
+        QTest::mouseMove(window, kOverNoPanel);
+        QTest::qWait(200);
+        auto *video = item("videoPanel");
+        const auto pressInVideo = [&](Qt::Key key) {
+            video->forceActiveFocus();
+            QTRY_VERIFY(video->hasActiveFocus());
+            QTest::keyClick(window, key);
+        };
+
+        settings.set("audio.timingKeysEverywhere", 0);
+        pressInVideo(Qt::Key_Z);
+        QCOMPARE(activeRow(), 1);
+        settings.set("audio.timingKeysEverywhere", 1);
+        QVERIFY(application->workspaceLayout().preset() != QStringLiteral("Timing"));
+        pressInVideo(Qt::Key_Z);
+        QCOMPARE(activeRow(), 1);
+
+        settings.set("audio.timingKeysEverywhere", 2);
+        pressInVideo(Qt::Key_Z);
+        QTRY_COMPARE(activeRow(), 0);
+        pressInVideo(Qt::Key_Right);
+        QCOMPARE(activeRow(), 0);
+        audio.closeAudio();
+    }
+
     void hideColumnsMenuTogglesGridColumns()
     {
         application->shell().setAutoHideColumns(false);
@@ -19303,6 +19402,7 @@ private slots:
               {"audio.lockScrollOnCursor", "Follow audio during playback"},
               {"audio.dontPlayWhenLineChanges", "Don’t play after changing the line"},
               {"audio.autoFocus", "Focus the panel under the pointer"},
+              {"audio.timingKeysEverywhere", nullptr},
               {"audio.playMono", "Play in mono"},
               {"audio.drawTimeCursor", "Show the time beside the cursor"},
               {"audio.drawSecondaryLines", "Show seconds markers"},
@@ -20727,6 +20827,73 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(stop, "click"));
         QTRY_VERIFY(!item("pluginJobCards")->isVisible());
         QVERIFY(runtime->jobs().isEmpty());
+    }
+
+    void pluginsAtWorkShowAStillWorkingCardAndInTheStatusBar()
+    {
+        QTemporaryDir home;
+        app::Application::Options options;
+        options.playbackAudio = false;
+        options.pluginStillWorkingMs = 300;
+        options.plugins = {home.filePath(QStringLiteral("plugins")), home.filePath(QStringLiteral("plugin-data")),
+                           home.filePath(QStringLiteral("cache")), home.filePath(QStringLiteral("plugins.json"))};
+        QJsonObject registry;
+        const auto install = [&](const char *id, const char *name, const char *permissions, const char *main) {
+            const QString folder = options.plugins.plugins + u'/' + QLatin1String(id);
+            QDir().mkpath(folder);
+            QFile manifest(folder + QStringLiteral("/hikari-plugin.json"));
+            QVERIFY(manifest.open(QIODevice::WriteOnly));
+            manifest.write(QStringLiteral(R"({"id": "%1", "name": "%2", "version": "1.0.0", "api": 1, "main": "main.lua",)"
+                                          R"( "authors": ["Ana"], "permissions": %3,)"
+                                          R"( "contributes": {"commands": [{"id": "spin", "title": "Count frames"}]}})")
+                               .arg(QLatin1String(id), QLatin1String(name), QLatin1String(permissions))
+                               .toUtf8());
+            QFile lua(folder + QStringLiteral("/main.lua"));
+            QVERIFY(lua.open(QIODevice::WriteOnly));
+            lua.write(main);
+            registry[QLatin1String(id)] =
+                QJsonObject{{QStringLiteral("version"), QStringLiteral("1.0.0")}, {QStringLiteral("enabled"), true}};
+        };
+        install("example.counter", "Counter", "{}", "hikari.commands.register('spin', function() while true do end end)");
+        install("example.feed", "Feed", R"({"background": "Checks the feed"})",
+                "hikari.timer.after(100, function() while true do end end) hikari.commands.register('spin', function() end)");
+        QFile json(options.plugins.registry);
+        QVERIFY(json.open(QIODevice::WriteOnly));
+        json.write(QJsonDocument(QJsonObject{{QStringLiteral("format"), 1}, {QStringLiteral("plugins"), registry}}).toJson());
+        json.close();
+        QTranslator english;
+        QVERIFY(english.load(QStringLiteral(HIKARI_EN_CATALOG)));
+        QCoreApplication::installTranslator(&english);
+        auto removeEnglish = qScopeGuard([&] { QCoreApplication::removeTranslator(&english); });
+        restartWith(options);
+        app::PluginRuntime *runtime = application->pluginRuntime();
+
+        QQuickItem *busy = item("statusPluginsWorking");
+        QTRY_VERIFY_WITH_TIMEOUT(busy->isVisible(), 10'000);
+        QCOMPARE(busy->property("text").toString(), QStringLiteral("1 plugin working"));
+        QVERIFY(QMetaObject::invokeMethod(busy, "click"));
+        auto *popover = item("statusBar")->findChild<QObject *>(QStringLiteral("pluginsWorkingPopover"));
+        QVERIFY(popover);
+        QTRY_VERIFY(popover->property("visible").toBool());
+        QQuickItem *row = nullptr;
+        QTRY_VERIFY((row = findItem(popover->property("contentItem").value<QQuickItem *>(),
+                                    QStringLiteral("pluginWorking_example.feed"))) &&
+                    row->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(findItem(row, QStringLiteral("pluginWorkingStop")), "click"));
+        QTRY_VERIFY(!busy->isVisible());
+        QVERIFY(!runtime->run(QStringLiteral("plugin.example.feed.spin")));
+
+        QTRY_VERIFY_WITH_TIMEOUT(runtime->run(QStringLiteral("plugin.example.counter.spin")), 10'000);
+        QQuickItem *card = nullptr;
+        QTRY_VERIFY_WITH_TIMEOUT((card = findItem(item("pluginJobCards"), QStringLiteral("pluginStillWorking_example.counter"))) &&
+                                     card->isVisible(),
+                                 10'000);
+        QCOMPARE(findItem(card, QStringLiteral("pluginStillWorkingTitle"))->property("text").toString(),
+                 QStringLiteral("Counter is still working"));
+        QVERIFY(!busy->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(findItem(card, QStringLiteral("pluginStillWorkingStop")), "click"));
+        QTRY_VERIFY(!item("pluginJobCards")->isVisible());
+        QVERIFY(runtime->working().isEmpty());
     }
 
     void pluginsInstallFromTheAutomationMenu()
@@ -24002,8 +24169,8 @@ private slots:
                                      "Video", "Audio", "Conversion", "Script properties", "Automation", "Shortcuts",
                                      "AI", "Updates and privacy"}));
         QVERIFY(dialogItem("settingsDialog", "settingsPageHotkeys"));
-        QCOMPARE(hotkeyRows().size(), 396);
-        QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Global Run the last macro again"));
+        QCOMPARE(hotkeyRows().size(), 399);
+        QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Global Clear command history"));
         QCOMPARE(application->hotkeys().selected(), 0);
         QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "hotkeyFilter"), "activated", Q_ARG(int, 5)));
         QCOMPARE(hotkeyRows().size(), int(std::ranges::count_if(application::hotkeyNames(), [](const auto &n) {
@@ -24486,7 +24653,7 @@ private slots:
         QCOMPARE(table().value(QStringLiteral("GLOBAL_ADD_PAGE")), QStringLiteral("Ctrl+T"));
         QVERIFY(!table().contains(QStringLiteral("GLOBAL_CONVERT_TO_TMP")));
         QCOMPARE(table().value(QStringLiteral("GLOBAL_TOGGLE_LEFT_SIDE_BAR")), QStringLiteral("Ctrl+Alt+B"));
-        QCOMPARE(table().size(), 39);
+        QCOMPARE(table().size(), 41);
         h.beginOptions();
         h.select(hotkeyPosition(QStringLiteral("Subtitles Duplicate lines")));
         h.optionsMap(QStringLiteral("Ctrl-Alt-D"), 0, QStringLiteral("cancel"));
