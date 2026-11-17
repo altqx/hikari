@@ -20,6 +20,8 @@ Amended by [AI15d #931](https://github.com/altqx/hikari/issues/931) on 2026-11-1
 
 Amended again by [AI15d #931](https://github.com/altqx/hikari/issues/931) on 2026-11-14 (owner Q532–Q535). Codex and ACP agents' Node and Rust runtimes can't run in an AppContainer, so on Windows those agents run at low integrity instead, as the Windows bullets below say. The owner accepted that they can then read the user's files. Claude and the sidecar stay in their AppContainers. A low-integrity process can read the user's Credential Manager entries and decrypt their DPAPI data, so on Windows HikariSub's keys and agents' sign-ins moved out of Credential Manager (owner Q536, option 1), as Keys says. Settings › AI warns on each such agent's row.
 
+Amended by [ADR 0034](0034-plugins-grow-into-an-extension-system.md) on 2026-11-17. `hikari_sandbox` also runs plugin programs, Full trust plugins' included, each in a profile of its own: `HikariSub.Program.<the first 32 hex digits of the SHA-256 of "<plugin id>/<program id>">`. On Windows a program runs in an AppContainer unless its manifest asks for low integrity, which the install question names. A plugin's MCP server runs sandboxed as a program; servers the user adds stay unsandboxed.
+
 ## The sandbox
 
 - **One shared module.** `hikari_sandbox` in `src/backends` starts a process under a `sandbox::Profile`: the paths it may read and execute, read, or read and write, and whether it gets the network. Plugins ([PL7 #419](https://github.com/altqx/hikari/issues/419)) reuse it.

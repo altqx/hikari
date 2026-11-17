@@ -472,3 +472,414 @@ end
 HikariSub runs the git on PATH (Git for Windows on Windows) without the system config, with no pager, hooks, fsmonitor, signature checks, filters, textconv or external diff, and with every transport off, so nothing is fetched. The user's own git config still counts, for `safe.directory`. Each git run has 10 seconds, and a file at most 16 MiB.
 
 The errors carry a `reason`: `unavailable` with `no_git` (git isn't installed or on PATH), `timed_out` or `failed`; `not_found` with `no_repository`, `no_ref`, `no_file` (the file isn't in that ref, as after a rename) or `no_path` (the Document was never saved); and `refused` with `unsafe_repository` (git distrusts a repository another user owns; add it to `safe.directory`), `too_large` or `not_text`.
+
+## Extensions
+
+[ADR 0034](adr/0034-plugins-grow-into-an-extension-system.md) grows plugins into an extension system. Everything here ships in API 1 on beta.5, through the cards [#1222](https://github.com/altqx/hikari/issues/1222)–[#1231](https://github.com/altqx/hikari/issues/1231). The [manifest schema](schemas/hikari-plugin.schema.json) already holds every key below and still refuses unknown ones. When a card lands, it replaces the text it changes above, such as the 10-second limit, the 256 MB cap and "a plugin can't run programs". New operations and events are in [api.md](api.md#extension-operations).
+
+### Kinds of package
+
+| `main` | `programs` | Kind | Runs |
+| --- | --- | --- | --- |
+| a `.lua` file | any | Lua plugin | A helper, as today. |
+| `{"program": "<id>"}` | must hold `<id>`, with `"api": true` | Program plugin | The program, speaking the [plugin protocol over JSON-RPC](#program-plugins). |
+| none | some | Program package | Only its programs, such as a language server or an MCP server. |
+| none | none | Data-only | Nothing. |
+
+A data-only package never starts a helper. It may hold only `themes`, `iconThemes`, `icons`, `styles`, `karaokePresets`, `graphs`, `snippets`, `dictionaries`, `layouts` and `nodes`, which run in the node sandbox as today. It can't be `unrestricted` and has no `permissions`. Its install question shows what it adds and who signed it, with no permission list. Signatures, the marketplace, automatic updates, roll back and revocation are the same for every kind.
+
+### The manifest, continued
+
+| Field | Meaning |
+| --- | --- |
+| `main` | A `.lua` file, or `{"program": "<id>"}`. Optional now. |
+| `permissions.programs` | The reason for running the plugin's programs. Needed when `programs` isn't empty. Shown as **Run programs**: "Runs programs that come with it: <titles>: <reason>". |
+| `permissions.background` | The reason for working in the background. Shown as "Works in the background while HikariSub is open: <reason>". |
+| `contributes.commands[]` | Gains `description` (one line for the command palette and the AI), `icon` and `when`. A handler is now `fn(args, context)`: `args` is the table a caller passed (`{}` from a menu or key), `context.via` is `menu`, `key`, `palette`, `status`, `api` or `ai`, and what it returns is the command's result. |
+| `contributes.panels[]` | Gains `icon`, shown on the panel's tab and in a side bar. |
+| `contributes.themes`, `iconThemes`, `icons` | [Themes and icons](#themes-and-icons). |
+| `contributes.styles`, `karaokePresets`, `graphs`, `snippets`, `dictionaries`, `layouts` | [Content packs](#content-packs). |
+| `contributes.menus`, `statusItems`, `keybindings` | [Menus, status items and shortcuts](#menus-status-items-and-shortcuts). |
+| `contributes.programs` | [Programs](#programs). |
+| `contributes.languageServers`, `providers` | [Language features](#language-features-and-problems). |
+| `contributes.aiTools`, `mcpServers` | [AI tools and MCP servers](#ai-tools-and-mcp-servers). |
+| `contributes.formats` | [Formats](#formats). |
+| `contributes.settings[]` | Gains `description`, `group`, `order`, `scope`, and the types `list` and `secret`. See [Settings](#settings-grown). |
+
+Beyond the schema, HikariSub refuses a manifest where:
+
+- **A reference doesn't resolve.** A `menus`, `keybindings`, `statusItems` or `aiTools` entry names a command that `contributes.commands` doesn't declare. A `languageServers`, `mcpServers` or `main` entry names a program that `contributes.programs` doesn't declare. An `own:` icon names an id that `contributes.icons` doesn't declare.
+- **An id repeats.** Ids are unique within each new list: `themes`, `iconThemes`, `icons`, `styles`, `karaokePresets`, `graphs`, `snippets`, `layouts`, `statusItems`, `programs`, `languageServers`, `mcpServers` and `formats`. So are a dictionary's `language`, a command's `aiTools` entry, and a `menus` entry's command within one `location`.
+- **A kind is broken.**
+  - A data-only package or a program package holds something that needs code: `commands`, `panels`, `menus`, `statusItems`, `keybindings`, `providers`, `aiTools`, `formats` or `permissions.background`.
+  - A data-only package has `settings` or `permissions`.
+  - A program plugin or a program package is `unrestricted`. `tier` concerns only a Lua `main`: programs always run sandboxed, and only a Full trust Lua plugin ships QML panels.
+  - A program package has `settings` without a language server or MCP server that reads them.
+- **A permission is missing.**
+  - `programs` isn't empty without `permissions.programs`.
+  - `main` names a program without `"api": true`.
+  - An `mcpServers` or `languageServers` entry names a program with `"api": true`.
+- **A file is wrong.**
+  - A file the manifest names isn't in the package, with the case matching. Bundled program `path`s count only for this platform, since a [per-platform package](#programs) holds only its own.
+  - A program's bundled `path` for this platform isn't in the package.
+  - An icon-theme folder misses a role.
+  - A theme fails its schema or the [contrast check](#themes-and-icons).
+  - A content file fails its own reader.
+- **A value is out of range.**
+  - A format has neither `import` nor `export`.
+  - An `aiTools` `parameters` or `result` isn't a schema in the [API's subset](api.md#operations), or `parameters`' root isn't an object with `additionalProperties: false`.
+  - A key has neither Ctrl nor Alt and isn't F1 to F24.
+  - A download has `archive` without `entry`, or `entry` without `archive`.
+  - An `args` value names a `secret` setting.
+  - Two `keybindings` of one plugin take the same key.
+  - A `list` setting's default has more than its `maxItems`.
+
+**Asking for more.** An update also [asks for more](#updates-roll-back-and-revocation), and is held, when it:
+
+- adds `permissions.programs` or `permissions.background`;
+- adds a program;
+- gives a program `network`;
+- moves a program to `lowIntegrity`;
+- adds an `mcpServers` entry.
+
+A new download URL or hash for an existing program is not more, since the signed manifest pins it.
+
+### Themes and icons
+
+**Colour themes** (#1222). Each `contributes.themes` entry is `{id, title, appearance, path}`. `appearance` is `light` or `dark`, and `path` is a JSON file in the package that follows [`hikari-theme.schema.json`](schemas/hikari-theme.schema.json).
+
+- **What a theme sets.** It must set every role:
+  - the 15 interface roles of the [visual language](ux/visual-language.md);
+  - `spellcheck` and `grammar`;
+  - the Grid's `alternate`, `warning`, `comment` and five `comparison` colours;
+  - the line editor's 12 `syntax` colours;
+  - the 8 node `ports`;
+  - 20 `audio` display colours;
+  - 5 `visualTools` colours.
+- **What a theme doesn't set.** `focus`, `hover`, `pressed` and the selection colours of the compare view and the audio display follow from `text` and `accent`, as for the built-ins. Interface roles are opaque `#RRGGBB`. The Grid, audio and visual-tool colours may add alpha (`#RRGGBBAA`).
+- **The contrast check.** HikariSub checks a theme at install, and registry CI checks it at listing, against the floors `hikari_ui_theme_tests` holds the built-ins to. A theme below any floor is refused with the role pair and the ratio it measured:
+  - `text`, `muted`, `danger`, `warning` and `accent` reach 4.5:1 against `background`, `panel`, `raised` and `field`, and so does `success` in a dark theme (a light theme's `success` is exempt, as built-in Light's is);
+  - `focus`, `disabled` and `control` reach 3:1;
+  - `onAccent` on `accent` and `text` on `select` reach 4.5:1;
+  - `disabled` against `text` reaches 2:1;
+  - `spellcheck` and `grammar` reach 3:1 on `field`;
+  - the waveform reaches 3:1 on the audio background, the timescale text 4.5:1 on its background, and the cursor 3:1.
+- **Choosing one.** A plugin theme's id is `plugin:<plugin id>/<theme id>`, and `appearance.theme` takes it. While Follow system theme is on, two new settings, `appearance.lightTheme` (`light` by default) and `appearance.darkTheme` (`dark` by default), say which theme each side shows. The Appearance page lists plugin themes after the built-ins, with the plugin's name. A plugin theme brings its own accent, so the accent presets are hidden while it shows.
+- **High contrast.** The two high-contrast themes stay built-in, and no plugin theme can replace them or be high contrast.
+- **When a theme goes.** When the plugin is turned off, uninstalled or revoked, a window showing its theme falls back to the built-in of the same appearance.
+
+**Icon themes** (#1222). Each `contributes.iconThemes` entry is `{id, title, path}`, where `path` is a package folder holding `<role>.svg` for every role in `src/ui/icons/manifest.json`. Settings › Appearance › Icons picks one, as `appearance.iconTheme` (`hikarisub` by default, or `plugin:<plugin id>/<theme id>`). Each SVG:
+
+- keeps the [SVG rules](#media-and-readme);
+- has a `viewBox` of `0 0 16 16`;
+- draws in `currentColor` only, with an optional `<g id="accent">` layer that HikariSub paints in the accent.
+
+Other colours are refused, so the icons follow the theme and high contrast. A role that a later HikariSub adds shows the built-in icon until the theme covers it, and the plugin manager says how many roles the theme covers. Registry review checks the icons against the [icon grid](ux/icons.md).
+
+**Own icons** (#1222). `contributes.icons` is a list of `{id, path}` SVGs with the same rules. `own:<id>` names one wherever an icon is asked for: a command's, panel's or status item's `icon`, a widget's `icon`, and `Icon { name: "own:<id>" }` in a QML panel. Without an icon, a command shows the plugin's own `icon` in menus, or the `plugins` role.
+
+### Content packs
+
+#1223. Every item lands beside its built-in counterpart with the plugin's name, is read-only, and goes when the plugin is turned off or uninstalled. A file that fails its reader refuses the package at install and names the file.
+
+| Key | Each entry | Lands in |
+| --- | --- | --- |
+| `styles` | `{id, title, path}`, a `.sty` catalogue of `Style:` lines | The Style manager's catalogue list, as `<title> (<plugin>)`. Copy to my catalogues makes an editable copy. |
+| `karaokePresets` | `{id, path}`, one preset `.ass` in the [preset format](karaoke-presets.md), whose Title and Description show | The Template editor's presets, after the built-in ones. |
+| `graphs` | `{id, title, path}`, a graph `.json` in the [graph format](node-effects.md#the-graph-format) | The node-effect graph library, in a group per plugin. |
+| `snippets` | `{id, title, insert, prefix, description}`. `insert` is ASS text with `$1` to `$9`, `${1:default}` and `$0` tab stops. | The line editor's tag completion, after the built-in tags, when the typed text starts `prefix`, such as `\fad`. Tab moves between stops. |
+| `dictionaries` | `{language, title, aff, dic}`, a Hunspell pair such as `en_US` | The spell checker's languages, after the user's and the bundled ones. A plugin dictionary never replaces a language the user already has. |
+| `layouts` | `{id, title, path}`, a `.json` holding one arrangement envelope as in [docking](docking.md) | Manage layouts, in a group per plugin. Applying it works like applying a saved layout. |
+
+### Menus, status items and shortcuts
+
+#1224.
+
+**Menus.** Each `contributes.menus` entry is `{command, location, group}`:
+
+| `location` | Where |
+| --- | --- |
+| `grid.context` | The Grid's right-click menu (`gridMenu`), in a section after HikariSub's own items. |
+| `lineEditor.context` | The line editor text's right-click menu (`lineTextMenu`), in a section after HikariSub's own items. |
+| `menuBar` | The plugin section of the menu bar: the Automation menu, after Plugins… and before the per-plugin submenus. |
+
+- **Order and groups.** Items keep manifest order. Items of one `group` sit together, and a separator parts groups and plugins. Each item shows its command's title and icon, with the plugin's name on hover.
+- **What stays.** Every command still sits in Automation › <plugin> and the command palette.
+- **Items.** They are `ShellMenuItem`s named `pluginMenu_<plugin id>_<command>`, and the listed-menu tests skip that prefix as they skip `macro_`.
+
+**Conditions.** A command's `when` is a list of conditions that must all hold. `!` in front negates one, as in `["selection", "!video"]`.
+
+| Condition | Holds while |
+| --- | --- |
+| `document` | The window has an editing target. |
+| `selection` | One or more Lines are selected. |
+| `multipleLines` | Two or more Lines are selected. |
+| `video` | A video is open. |
+| `audio` | Audio is open. |
+| `karaoke` | The active Line has karaoke tags (`\k`, `\K`, `\kf`, `\ko`). |
+| `translation` | The Document is in Translation mode. |
+
+A command whose conditions fail is disabled in every menu and the palette, and its keys do nothing. `commands.list` gives `enabled: false` with the `disabledReason` "Needs a selection" (one phrase per condition), and `commands.run` and `plugins.run` answer `refused` with reason `disabled`.
+
+**Status items.** Each `contributes.statusItems` entry is `{id, title, text, icon, tooltip, command}`, with `text`, `icon` or both. A plugin has at most 4. They sit in the status bar's trailing part (`statusTrailing`), in plugin order and then manifest order, as text, an icon, or both. `command` makes the item a button. The plugin changes an item with `hikari.status.set(item, {text, icon, tooltip, tone, visible})`, which is [`status_items.set`](api.md#status_itemsset). `tone` is `normal`, `warning` or `danger`, drawn in those roles. The status bar's right-click menu lists every plugin item by `title`, with a check box to hide it, kept as `statusBar.hiddenItems`. Items go when the plugin stops.
+
+**Default shortcuts.** Each `contributes.keybindings` entry is `{command, key}`, with one chord in Qt's portable text and modifiers in the order Ctrl, Alt, Shift, Meta, such as `Ctrl+Alt+K`.
+
+- **When a default applies.** It applies while the plugin runs, unless the user bound or cleared that command's shortcut, or the key is taken.
+- **When the key is taken.** A key that the user, HikariSub or an earlier-installed plugin already binds stays theirs, in any context. The plugin's default is dropped, and Settings › Shortcuts and the plugin's details say "Ctrl+Alt+K is taken by <owner>".
+- **Changing it.** The user changes or clears a plugin default like any shortcut, and the change is kept in the hotkeys file with the other plugin shortcuts. A default never overwrites a kept row. Plugin shortcuts stay global.
+
+### Background plugins and time
+
+#1225. These replace the time and memory rules under [Running a plugin](#running-a-plugin).
+
+- **No time limit.** A load, command, event, timer callback, provider call or format call that runs longer than 10 seconds and isn't a job isn't stopped. A card above the status bar says "<plugin> is still working", with Stop. Stop force stops the helper, as the job card's Stop does, and the plugin's next command starts a new one. Jobs keep their own cards.
+- **Memory.** The Lua heap cap is 2 GB: "the plugin ran out of memory: it may hold 2 GB".
+- **Background.** A plugin with `permissions.background` starts with HikariSub and can use timers:
+  - `hikari.timer.after(ms, fn)` calls `fn` once after `ms` milliseconds, and `hikari.timer.every(ms, fn)` every `ms` milliseconds, at least 100. Both return an id.
+  - `hikari.timer.cancel(id)` stops one.
+  - A timer callback runs in turn with the plugin's other work. An `every` timer that comes due while its last callback still runs is skipped once, not queued.
+  - A timer callback may begin a [job](#long-jobs).
+  - Without the permission, the timer calls answer `nil` and the error `not_granted`.
+- **Showing what runs.** While a background plugin works (a timer callback, a job, or an event or command past 10 seconds), the status bar's leading part shows a busy icon with the count. Its popover lists each working plugin with what it does and Stop. Stop ends that helper. A background plugin stopped this way starts again at the next HikariSub start or with Start again in its details.
+- **The edit turn.** With no time limit, the app-wide edit turn still ends when the handler that took it returns: `hikari.document.edit` and `hikari.document.group` hold it only while `fn` runs. Another plugin waiting for it still gives up after 5 seconds with `busy`.
+- **Unchanged.** Each plugin still has its own helper, its work still runs one thing at a time, and the restricted tier and the sandbox don't change.
+
+### Programs
+
+#1226. Each `contributes.programs` entry is:
+
+```json
+{
+  "id": "ltex",
+  "title": "LTeX language server",
+  "network": false,
+  "api": false,
+  "confinement": "container",
+  "platforms": {
+    "linux-x64": {"path": "bin/linux-x64/ltex-ls", "args": ["--stdio"]},
+    "windows-x64": {
+      "download": {
+        "url": "https://github.com/example/ltex/releases/download/v1/ltex-windows-x64.zip",
+        "sha256": "<64 hex digits>",
+        "size": 81234567,
+        "archive": "zip",
+        "entry": "ltex-ls/bin/ltex-ls.exe"
+      },
+      "args": ["--stdio"],
+      "env": {"LTEX_TOKEN": "${setting:token}"}
+    }
+  }
+}
+```
+
+- **Platforms.**
+  - Keys are `windows-x64`, `linux-x64`, `windows-arm64`, `linux-arm64`, `macos-x64` and `macos-arm64`, and HikariSub uses the one it runs on.
+  - A program with no entry for this platform is unavailable, and so is what needs it. The plugin manager says "<title> isn't available for this computer". The plugin still installs, unless it is a program plugin whose `main` program is missing.
+- **Bundled.** `path` is the program's file in the package. Its folder and the files beside it are readable by the program.
+- **Downloaded.**
+  - **When.** HikariSub downloads the file at install, or at the first start after an update, with the same request rules as [`hikari.net.fetch`](#network): HTTPS, at most 5 redirects, no cookies.
+  - **The check.** It checks `size` (at most 1 GiB) and `sha256` before unpacking. A `zip` or `tar.gz` archive is unpacked with the [package path rules](#the-package), and `entry` names the program inside it.
+  - **Where it goes.** It is kept in `<user folder>/plugin-programs/<plugin id>/<sha256>/` until neither the installed version nor the one kept for Roll back names that hash, or the plugin is uninstalled.
+  - **The install question** shows each download's host and size.
+  - **When it can't.** The download obeys "Let plugins connect to the internet". With that off, or offline, the program is "not downloaded", and the plugin's details offer Download now.
+- **Arguments and environment.** In `args` and `env` values:
+  - `${package}`, `${data}` and `${cache}` become the plugin's folders.
+  - `${setting:<id>}` becomes a setting's value. A `list` setting written as a whole `args` value becomes one argument per item, and in `env` its items joined by `\n`. A `secret` may be named in `env` only, never in `args`, which other processes can read.
+  - `${file:N}` (in `programs.run` and `programs.start` only) becomes the path of the call's `files[N]`.
+
+  The program gets no other environment from HikariSub than `PATH`, `HOME` or `USERPROFILE`, `TEMP`, `LANG` and these. It starts in `${data}`.
+- **The sandbox.** HikariSub starts every program in `hikari_sandbox` with the profile `HikariSub.Program.<the first 32 hex digits of the SHA-256 of "<plugin id>/<program id>">`. That holds for Full trust plugins too.
+  - **Access.** The program may read and run its own folder, read and write `${data}` and `${cache}`, and use the files handed to it.
+  - **Network.** It has network only with `"network": true`, and the install question then says "Connects to the internet", since the sandbox can't limit a program to some hosts. While "Let plugins connect to the internet" is off, a program with `network` starts without it on Linux and in an AppContainer, and a `lowIntegrity` one doesn't start at all.
+  - **Windows.** By default (`"confinement": "container"`) the program runs in an AppContainer. `"lowIntegrity"` runs it at low integrity through `hikarisub-confine.exe` instead, as [ADR 0029](adr/0029-the-ai-sidecar-runs-in-an-os-sandbox.md) does for Codex. That is for runtimes an AppContainer stops, such as Node and some Rust programs. A low-integrity process always has the network, so `lowIntegrity` needs `"network": true`, and the install question adds "Can read your files". Linux ignores `confinement`.
+  - **Where the sandbox can't apply.** The program doesn't start, and its details say why. A program never runs unconfined.
+- **Lifetime.** A program ends when its plugin stops, is turned off, or is updated. Its stderr goes to the Log panel under the plugin's name, at most 20 lines a minute.
+
+**Downloads kept.** In `<user folder>/plugin-programs/<plugin id>/<sha256>/`, HikariSub keeps the hashes the installed version and the version kept for [Roll back](#updates-roll-back-and-revocation) name, so a roll back needs no download.
+
+**From Lua.** These are the [`programs.*`](api.md#programsrun) operations:
+
+```lua
+local out = hikari.programs.run("ffprobe", {args = {"-show_streams", "${file:0}"}, files = {picked.file}})
+local p = hikari.programs.start("server")
+hikari.events.on("program.output", function(e) if e.process == p then print(e.data) end end)
+hikari.programs.send(p, "ping\n")
+hikari.programs.stop(p)
+```
+
+**Packages per platform.** A package whose programs are bundled may be built per platform: the same signed manifest, with only that platform's files.
+
+- **The index.** A version in the marketplace index then has `packages` instead of `url`, `sha256` and `size`: `{"linux-x64": {url, sha256, size}, "windows-x64": {…}}`.
+- **Installing.** HikariSub takes its own platform's package. A listing without one shows "Not available for this computer".
+- **Size.** Each per-platform package may be 256 MB unpacked. A package for every platform stays at 64 MB.
+- **Registry CI** builds each platform's listing from the release's `<id>-<version>-<platform>.hikariplugin` files. It checks that their manifests are byte for byte the same, and downloads and checks every declared download.
+
+This changes the index schema, `docs/schemas/marketplace-index.schema.json` and the registry's copy, in #1226.
+
+### Program plugins
+
+#1226. A program plugin's `main` program speaks JSON-RPC 2.0 with HikariSub on its stdin and stdout. Each message is one line of UTF-8 JSON, ended by `\n`, at most 96 MiB, as MCP's stdio transport frames it. The operations, events, permissions, limits and errors are those of a Lua plugin.
+
+- **When it runs.** It starts with HikariSub, as a Lua helper does. Without `permissions.background`, its calls to HikariSub are refused with `not_granted` and reason `not_background` unless a request from HikariSub to it is unanswered or a job of its own runs. So, like a Lua plugin, it works only inside a command, event, provider or format call.
+- **Working.** For the still-working card and the status bar, it is working while a request from HikariSub is unanswered or a job runs.
+
+- **HikariSub calls the program:**
+
+  | Method | Params | Answer |
+  | --- | --- | --- |
+  | `initialize` | `{protocol: 1, api: 1, plugin: {id, version}, locale, settings}` | `{}` once it is ready. A program that doesn't answer in 30 seconds didn't start. |
+  | `command` | `{command, args, via}` | What the command gives back, or `null`. `via` is `menu`, `key`, `palette`, `status`, `api` or `ai`. |
+  | `event` | `{name, data}` | `null`, for each event it subscribed to. |
+  | `panel`, `dialog` | `{panel or dialog, event}` | `null`, as `hikari.panels.on` and `hikari.dialogs.on` get them. |
+  | `complete`, `hover` | As for [Lua providers](#language-features-and-problems) | The items, or the hover. |
+  | `export`, `import` | As for [Lua formats](#formats) | The bytes, or the Lines. |
+  | `shutdown` | `{}` | `null`, after which HikariSub sends the notification `exit` and closes stdin. It ends the program 5 seconds later. |
+
+- **The program calls HikariSub:**
+  - **Operations.** Every [Hikari API](api.md) operation is a method of its own name with its own params, such as `{"jsonrpc": "2.0", "id": 7, "method": "lines.list", "params": {}}`. So are the plugin services: `panels.*`, `dialogs.*`, `files.*`, `net.fetch`, `job.begin`, `job.progress` and `job.cancelled`.
+  - **What Lua's members do.** `hikari/notify` `{text, level}`, `hikari/settings.get` `{id}`, `hikari/settings.set` `{id, value}`, `hikari/subscribe` `{events}`, `hikari/unsubscribe` `{events}`, `hikari/edit.begin` `{document, name}` and `hikari/edit.end` `{}`. The last two take and give back the app-wide edit turn that `hikari.document.edit` holds. Every step the program commits between them is one undo step, "<plugin name>: <name>", as `document.group_begin` makes. The turn also ends when the request from HikariSub it was taken in is answered.
+- **Errors.** A Hikari API error comes back as `{"code": -32000, "message", "data": {"code": "not_granted", "data": {…}}}`. An unknown method is `-32601`, and parameters that break the schema are `-32602` with `data.pointer`.
+- **Other output.** stderr goes to the Log panel.
+- **Types.** #1231's TypeScript types cover the protocol, and a sample program plugin in TypeScript (built into one file with `bun build --compile`) proves it.
+
+### Language features and problems
+
+#1227. These are one provider system for the line editor's text and translation fields.
+
+**Problems.** A plugin sets problems with `hikari.problems.set(problems, {revision, set, document})`, which is [`problems.set`](api.md#problemsset). A problem names a Line, a field, an optional `from`–`to` range in UTF-16 offsets, a `severity` (`error`, `warning`, `info` or `hint`), a `message`, an optional `code` and up to 8 quick `fixes`. A plugin usually sets them again on `document.changed`.
+
+- **Ranges.** `to` comes with `from`, and `from` ≤ `to` ≤ the field's length at `revision`, or the call is `invalid_params`.
+- **Edits.** Offsets never move. When a Line's field changes, every plugin's and server's problems on that field of that Line go, until they are set again.
+
+**The problems list.** It is the QC notes panel grown, titled **Problems** with dock id `QcNotes` and panel registry 12 unchanged.
+
+- **What it holds.** The open QC notes as the `QC notes` source, and every plugin's and language server's problems, grouped by Line in Document order.
+- **QC notes.** A note sits on the Line the QC notes panel already matches it to (the latest start at its time, else the nearest within 15 seconds), or under No line. Its section is its source's `set`. QC notes keep their own Grid flags and get no problem marks.
+- **The toolbar.** It filters by severity and source and keeps QC notes' own Add note and import and export.
+- **Using a row.** Choosing a row selects its Line and seeks the video to its start. A row's quick fixes are in its menu and under Ctrl+. in the line editor.
+- **A quick fix** is one undo step named "<source>: <fix>".
+- **QC notes** keep their editor, times, sections and done state.
+
+**Where problems show.**
+
+- **Squiggles.** In the line editor, a wavy underline under each problem's range: `danger` for errors, `warning` for warnings, `accent` for info, and a dotted `muted` line for hints, beside today's spelling marks. Hovering one shows its message and source.
+- **Grid.** A Grid row with plugins' or servers' problems shows a mark in its row-mark bar, in the colour of its worst severity, and its tooltip counts them. These marks are apart from `marks.*` and don't count toward a plugin's 20000.
+
+**Lua providers.** `contributes.providers` declares `completion` (`triggers` and `fields`) and `hover` (`fields`), and the plugin answers through handlers:
+
+```lua
+hikari.providers.completion(function(r)
+    -- r = {document, line, field, text, offset, trigger}
+    return {{label = "\\fad", insert = "\\fad(${1:200},${2:200})", detail = "Fade in and out", from = r.offset - 3, to = r.offset}}
+end)
+hikari.providers.hover(function(r)
+    return {text = "Fade: 200 ms in, 200 ms out", from = 4, to = 18}
+end)
+```
+
+- **Completion.** It is asked when the user types a trigger character, or Ctrl+Space. An item is `{label, insert, detail, from, to, snippet}`, at most 200, where `snippet = true` reads `insert`'s tab stops.
+- **Hover.** It is asked when the pointer rests on text for 500 ms. A hover is `{text, from, to}` or `nil`.
+- **Late answers.** Each gets 1 second. A later answer is dropped, without stopping the plugin.
+- **Order.** Completions from every plugin and server, and from the built-in tag list and snippets, show in one list, built-ins first.
+
+**Language servers.** Each `contributes.languageServers` entry names a program that speaks LSP 3.17 on stdio. HikariSub owns the client:
+
+- **Scope `document`** (the default) is one text document per Document and field, `hikari://document/<document id>/<field>`. LSP line *n* is the *n*-th Line in Document order. Comment Lines and graph Lines are empty lines, so the numbers still match.
+- **Scope `line`** is one text document for the line editor's Line alone, `hikari://document/<document id>/line/<line id>/<field>`. It is opened when the line editor shows that Line and closed when it leaves.
+- **`tags: "blank"`** (the default) turns each override block, `\N`, `\n` and `\h` into as many spaces, so offsets still match. `keep` sends the text as it is, for servers that check tags.
+- **Sync.** The text goes as full text (`TextDocumentSyncKind.Full`), 250 ms after the last change, with the Document's revision as the `version`. The position encoding is UTF-16.
+- **What HikariSub uses.** `publishDiagnostics` become problems of the source `plugin:<plugin id>/<server id>`. HikariSub also uses `completion`, `hover` and `codeAction`, of kind `quickfix`. A `WorkspaceEdit` is a fix only when it stays inside one Line and touches no range that `tags: "blank"` blanked, so a fix never erases tags. `workspace/configuration` is answered with the plugin's settings. `window/logMessage` and `window/showMessage` go to the Log panel.
+- **Lifetime.** The server starts when its first text document opens. After a crash it starts again, up to 3 times in 5 minutes. After that the plugin's details say it stopped, with Start again. `languageId` and `initializationOptions` go as declared.
+
+### AI tools and MCP servers
+
+#1228.
+
+**AI tools.** Each `contributes.aiTools` entry is `{command, description, parameters, result, mark}`.
+
+- **What the AI sees.** The tool's name is `p_<the first 8 hex digits of the SHA-256 of "<plugin id>/<command>">_<command>`, with `-` as `_` and cut to 64 characters, so it fits every provider. Its description starts with the plugin's name, then `description`, and its input is `parameters`.
+- **A call** runs the command through a tool gate of its own, not `plugins.run`, with `args` checked against `parameters` and `context.via = "ai"`. The handler's return value, checked against `result` when given, is the tool's answer.
+- **Trust.** Like an MCP server's, a plugin's marks count only once the user turns on "Trust <plugin>'s tool marks" in its details, off by default. Until then every tool of the plugin counts as a write.
+- **Approval.** A trusted `read` tool runs without asking, like HikariSub's own reads. A `write` tool asks or runs by the thread's mode, like other writes.
+- **The read mark is enforced.** While a `read` tool runs, every write operation the plugin makes, and `net.fetch`, `files.write`, `hikari/settings.set` and `programs.*`, answer `refused` with reason `read_tool`.
+- **Who runs it.** The command runs as the plugin, with the plugin's grants, never the AI's.
+- **What stays always-ask.** `plugins.run`, `commands.run` of a `plugin.` command, and plugin commands without an `aiTools` entry stay on the always-ask list.
+- **Over MCP.** HikariSub's MCP server lists a plugin's trusted `read` tools with `readOnlyHint`. It lists no `write` tool, as it refuses every write but `document.apply`.
+- **Docs.** #1228 amends [ai-agent.md](ai-agent.md)'s always-ask list and classification, [ai-mcp.md](ai-mcp.md) and [ai-mcp-clients.md](ai-mcp-clients.md) to match. `problems.fix` is a write that asks by the thread's mode.
+
+**MCP servers.** Each `contributes.mcpServers` entry is `{id, title, description, program}`.
+
+- **In Settings › AI › MCP servers** it shows as `<title> (<plugin>)`, off until the user turns it on. The user can't edit its command; its environment comes from the plugin's settings through `${setting:<id>}`.
+- **Its tools** follow the [MCP rules](ai-mcp-clients.md), with trust off by default.
+- **Sandboxed.** It runs in the sandbox as a program, unlike a server the user adds.
+- **When it goes.** Turning the plugin off or uninstalling it removes the server from every thread.
+
+### Formats
+
+#1229. Each `contributes.formats` entry is `{id, title, extensions, import, export}`. Its id in `formats.list` and `documents.list`'s `format` is `plugin:<plugin id>/<format id>`.
+
+```lua
+hikari.formats.exporter("ebu-stl", function(doc, options)
+    -- doc = a hikari.document.read snapshot; options = {frameRate, video, path}
+    return bytes, "base64"
+end)
+hikari.formats.importer("ebu-stl", function(data, name)
+    -- data = the file's bytes in base64
+    return {lines = {...}, styles = {...}, info = {...}}
+end)
+```
+
+- **Export.** It shows in File › Export subtitles and in Save as, as `<title> (<plugin>)` with its extensions. HikariSub gives the snapshot and gets back at most 48 MiB, then writes the file itself.
+- **Import.** It shows in Open subtitles' filter and in drag and drop for its extensions, and takes files of at most 48 MiB. A built-in format of the same extension is tried first, then plugins' formats in the order their plugins were installed; the first that reads the file wins. Open subtitles' filter lists each format, so choosing one there tries only it.
+- **What an import gives.** Lines in the shape of `document.apply`'s `insert_line` fields, Styles as `set_style` fields, and Script Info. HikariSub builds the Document from them, and a result that breaks those shapes fails the open with the plugin's name.
+- **Saving.** A Document opened from a plugin format saves back through the plugin when the format has `export`, and through Save as otherwise.
+- **Format calls** are treated like commands: no time limit, the still-working card, and a job when the plugin begins one.
+
+### Settings, grown
+
+#1230. Every setting may add:
+
+| Field | Meaning |
+| --- | --- |
+| `description` | Up to 500 characters under the title. |
+| `group` | A heading. Groups show in the order of their first setting. |
+| `order` | 0 to 9999. Settings sort by it, then by manifest order. |
+| `scope` | `project` (the default): a trusted Project may override it. `user`: a Project can't. |
+
+- **`list`** is an array of strings, edited as rows with Add and Remove, with `default` and `maxItems` (256 at most).
+- **`secret`** has no default.
+  - **Where it's kept.** In the system keychain under the service `HikariSub` as `plugin/<plugin id>/<setting id>`: QtKeychain on Linux, and the DPAPI key store on Windows, as for AI provider keys ([AI providers](ai-providers.md)). Never in `plugins.json` or a Project.
+  - **Scope.** It is always `user`.
+  - **The field** shows dots, with Show and Clear. `hikari.settings.get` returns the text, or `nil` when unset. Uninstalling the plugin removes it.
+  - **No keychain.** On a system with no keychain, setting one fails with "No system keychain to keep it in".
+- **In Settings.** Each plugin with settings gets a page under Settings › Plugins, named after it, with the same form as the plugin manager's. The plugin manager's Settings opens that page.
+- **Changes.** A change from either place, or from a Project, sends `plugin_settings.changed` to the plugin.
+
+### Developer tools
+
+#1231.
+
+**Install dev plugin.**
+
+- **Loading.** Install dev plugin… in the plugin manager's tool strip picks a folder holding `hikari-plugin.json` and runs it in place, without packing or signing. `plugins.json` keeps `"source": "dev"` and the folder's path.
+- **Its own data.** A dev plugin never shares an installed plugin's data, secrets or folder grants: it has `plugin-data/.dev/<id>/`, `<cache>/plugins/.dev/<id>/`, keychain entries under `plugin-dev/<id>/` and grants of its own.
+- **How it shows.** It carries a Dev badge and never updates by itself. While loaded, it overrides an installed plugin of the same id, which shows "Overridden by a dev plugin".
+- **Reloading.** When a file in the folder changes, HikariSub waits 300 ms, checks the manifest and package rules again, and restarts the plugin, keeping its data, settings and grants.
+- **Permissions.** A dev plugin gets the install question once. A reload that asks for more asks again.
+- **Errors** show in its details and the Log panel, like any plugin's.
+
+**The test harness.** `hikarisub --test-plugin <folder> <tests.jsonl> [--document <fixture.ass>]` runs headless, prints each failed step, and exits with 0 when every step passed and 1 otherwise. Each line of the script is one step:
+
+- `{"run": "<command>", "args": {…}, "expect": …}`
+- `{"event": "<name>", "data": {…}}`
+- `{"call": "<operation>", "params": {…}, "expect": …}`
+- `{"complete": {…}, "expect": …}`
+- `{"export": "<format>", "expectFile": "<path>"}`
+- `{"expectDocument": "<fixture.ass>"}`
+
+It builds on `tests/api/scripts/`. Dialogs answer from `{"answer": {…}}` steps.
+
+**Type hints.** `hikarisub --export-docs <dir>` also writes `hikari.lua`, LuaLS `---@meta` annotations for the `hikari` global and every operation, and `hikari.d.ts`, TypeScript types for every operation, event and protocol message, both generated from `api.json`.
+
+**The guide.** [plugin-guide.md](plugin-guide.md) gains a page for each capability above.

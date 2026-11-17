@@ -1,0 +1,142 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://hikarisub.altqx.com/schemas/hikari-theme.schema.json",
+  "title": "HikariSub colour theme (contributes.themes)",
+  "description": "Every role is required. focus is text, hover and pressed are overlays of text, and the selection colours of the Grid's compare view and the audio display come from accent, so a theme doesn't set them.",
+  "type": "object",
+  "required": ["roles", "content"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {"type": "string"},
+    "roles": {
+      "description": "The interface roles of docs/ux/visual-language.md.",
+      "type": "object",
+      "required": ["background", "panel", "raised", "field", "text", "muted", "disabled", "line", "control", "accent", "onAccent", "select", "danger", "warning", "success"],
+      "additionalProperties": false,
+      "properties": {
+        "background": {"$ref": "#/$defs/Opaque"},
+        "panel": {"$ref": "#/$defs/Opaque"},
+        "raised": {"$ref": "#/$defs/Opaque"},
+        "field": {"$ref": "#/$defs/Opaque"},
+        "text": {"$ref": "#/$defs/Opaque"},
+        "muted": {"$ref": "#/$defs/Opaque"},
+        "disabled": {"$ref": "#/$defs/Opaque"},
+        "line": {"$ref": "#/$defs/Opaque"},
+        "control": {"$ref": "#/$defs/Opaque"},
+        "accent": {"$ref": "#/$defs/Opaque"},
+        "onAccent": {"$ref": "#/$defs/Opaque"},
+        "select": {"$ref": "#/$defs/Opaque"},
+        "danger": {"$ref": "#/$defs/Opaque"},
+        "warning": {"$ref": "#/$defs/Opaque"},
+        "success": {"$ref": "#/$defs/Opaque"}
+      }
+    },
+    "content": {
+      "type": "object",
+      "required": ["spellcheck", "grammar", "grid", "syntax", "ports", "audio", "visualTools"],
+      "additionalProperties": false,
+      "properties": {
+        "spellcheck": {"$ref": "#/$defs/Opaque"},
+        "grammar": {"$ref": "#/$defs/Opaque"},
+        "grid": {
+          "type": "object",
+          "required": ["alternate", "warning", "comment", "comparison"],
+          "additionalProperties": false,
+          "properties": {
+            "alternate": {"$ref": "#/$defs/Colour"},
+            "warning": {"$ref": "#/$defs/Colour"},
+            "comment": {"$ref": "#/$defs/Colour"},
+            "comparison": {
+              "description": "The five Compare colours, in order.",
+              "type": "array",
+              "minItems": 5,
+              "maxItems": 5,
+              "items": {"$ref": "#/$defs/Colour"}
+            }
+          }
+        },
+        "syntax": {
+          "description": "Line editor highlighting; plain text is roles.text.",
+          "type": "object",
+          "required": ["curlyBraces", "operators", "names", "values", "splitAndDrawings", "templateVariables", "templateCodeMarks", "templateFunctions", "templateKeywords", "templateStrings", "drawingX", "drawingY"],
+          "additionalProperties": false,
+          "properties": {
+            "curlyBraces": {"$ref": "#/$defs/Opaque"},
+            "operators": {"$ref": "#/$defs/Opaque"},
+            "names": {"$ref": "#/$defs/Opaque"},
+            "values": {"$ref": "#/$defs/Opaque"},
+            "splitAndDrawings": {"$ref": "#/$defs/Opaque"},
+            "templateVariables": {"$ref": "#/$defs/Opaque"},
+            "templateCodeMarks": {"$ref": "#/$defs/Opaque"},
+            "templateFunctions": {"$ref": "#/$defs/Opaque"},
+            "templateKeywords": {"$ref": "#/$defs/Opaque"},
+            "templateStrings": {"$ref": "#/$defs/Opaque"},
+            "drawingX": {"$ref": "#/$defs/Opaque"},
+            "drawingY": {"$ref": "#/$defs/Opaque"}
+          }
+        },
+        "ports": {
+          "description": "Node-effect port types.",
+          "type": "object",
+          "required": ["units", "tags", "number", "text", "colour", "point", "bool", "drawing"],
+          "additionalProperties": false,
+          "properties": {
+            "units": {"$ref": "#/$defs/Opaque"},
+            "tags": {"$ref": "#/$defs/Opaque"},
+            "number": {"$ref": "#/$defs/Opaque"},
+            "text": {"$ref": "#/$defs/Opaque"},
+            "colour": {"$ref": "#/$defs/Opaque"},
+            "point": {"$ref": "#/$defs/Opaque"},
+            "bool": {"$ref": "#/$defs/Opaque"},
+            "drawing": {"$ref": "#/$defs/Opaque"}
+          }
+        },
+        "audio": {
+          "description": "The audio display.",
+          "type": "object",
+          "required": ["background", "lineStart", "lineEnd", "inactiveBoundary", "cursor", "secondBoundaries", "keyframe", "inactiveBackground", "waveform", "waveformInactive", "waveformModified", "waveformSelected", "timescaleBackground", "timescaleText", "spectrumBackground", "spectrumEcho", "spectrumInner", "lineBoundaryMark", "syllableBoundaries", "syllableText"],
+          "additionalProperties": false,
+          "properties": {
+            "background": {"$ref": "#/$defs/Colour"},
+            "lineStart": {"$ref": "#/$defs/Colour"},
+            "lineEnd": {"$ref": "#/$defs/Colour"},
+            "inactiveBoundary": {"$ref": "#/$defs/Colour"},
+            "cursor": {"$ref": "#/$defs/Colour"},
+            "secondBoundaries": {"$ref": "#/$defs/Colour"},
+            "keyframe": {"$ref": "#/$defs/Colour"},
+            "inactiveBackground": {"$ref": "#/$defs/Colour"},
+            "waveform": {"$ref": "#/$defs/Colour"},
+            "waveformInactive": {"$ref": "#/$defs/Colour"},
+            "waveformModified": {"$ref": "#/$defs/Colour"},
+            "waveformSelected": {"$ref": "#/$defs/Colour"},
+            "timescaleBackground": {"$ref": "#/$defs/Colour"},
+            "timescaleText": {"$ref": "#/$defs/Colour"},
+            "spectrumBackground": {"$ref": "#/$defs/Colour"},
+            "spectrumEcho": {"$ref": "#/$defs/Colour"},
+            "spectrumInner": {"$ref": "#/$defs/Colour"},
+            "lineBoundaryMark": {"$ref": "#/$defs/Colour"},
+            "syllableBoundaries": {"$ref": "#/$defs/Colour"},
+            "syllableText": {"$ref": "#/$defs/Colour"}
+          }
+        },
+        "visualTools": {
+          "description": "What visual tools draw over the video: handles, a chosen handle, handle borders, guides and crosses.",
+          "type": "object",
+          "required": ["handle", "handleSelected", "handleBorder", "helper", "cross"],
+          "additionalProperties": false,
+          "properties": {
+            "handle": {"$ref": "#/$defs/Colour"},
+            "handleSelected": {"$ref": "#/$defs/Colour"},
+            "handleBorder": {"$ref": "#/$defs/Colour"},
+            "helper": {"$ref": "#/$defs/Colour"},
+            "cross": {"$ref": "#/$defs/Colour"}
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "Opaque": {"type": "string", "pattern": "^#[0-9A-Fa-f]{6}$"},
+    "Colour": {"description": "#RRGGBB, or #RRGGBBAA with alpha.", "type": "string", "pattern": "^#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?$"}
+  }
+}

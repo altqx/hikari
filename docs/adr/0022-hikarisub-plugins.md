@@ -9,6 +9,8 @@ On 2026-10-28 altqx settled HikariSub plugins in the wave-8 grilling session ([#
 
 This supersedes, for plugins only, the [architecture](../architecture.md) rule that the foundation needs no third-party plugin SDK, the map's exclusion of a general plugin ecosystem, and the [backends](../backends.md) rule against a general extension SDK. Backend adapters and the Qt plugins a build ships are unchanged.
 
+Amended by [ADR 0034](0034-plugins-grow-into-an-extension-system.md) on 2026-11-17. A package may also be data-only, with no code, or a program plugin whose code is a declared program speaking JSON-RPC. A plugin also reaches declared programs in the sandbox, background timers, problems, status items, menus, default shortcuts, themes and formats, and "Plugin first" counts all of these. QC notes stay native and become one source in the problems list.
+
 ## Automation stays as it is
 
 Plugins are a second runtime beside Aegisub automation, not a replacement. Automation scripts and DependencyControl keep running in today's host, unchanged ([ADR 0006](0006-isolated-lua-automation-host.md), [automation](../automation.md)). A plugin has no `aegisub` global and no access to automation scripts.
