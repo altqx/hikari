@@ -83,7 +83,7 @@ The accepted [backend contract](backends.md) now supplies the value/capability/g
 - Actions and shortcuts: discoverable commands, contextual routing, disabled reasons, localisation and accessible labels.
 - Navigation: predictable panel traversal and focus restoration, native input/IME ownership, and semantic representations for custom views.
 - Workspaces: one shared application layout, movable/floating panels, follow/pin tool targets and optional protected comparison, as [accepted in the workspace review](ux/workspaces.md). Classic menus/local controls and optional task presets are accepted; the [KDDockWidgets adapter/persistence contract](docking.md) is accepted; native qualification and detailed surface behavior remain required.
-- Appearance: reusable Qt Quick Controls styled through the [accepted Compact Studio visual language](ux/visual-language.md). UI appearance never changes ASS style data.
+- Appearance: reusable Qt Quick Controls styled through the [accepted Quiet visual language](ux/visual-language.md). UI appearance never changes ASS style data.
 - Settings: explicit scopes, stable persisted identities and a one-shot legacy importer. Legacy theme files and theme selection are excluded from import.
 - Tasks/dialogs: owned progress/cancellation and errors; synchronous script-dialog semantics are implemented without allowing a worker to manipulate QML directly.
 - Localisation: TS authoring and QM runtime with unchanged script-facing lookup behavior, as specified in [localisation](localisation.md).
