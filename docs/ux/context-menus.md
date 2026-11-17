@@ -46,7 +46,8 @@ Opens on a right press anywhere in the grid viewport except a group description 
 | 9.6 | Split lines by wraps | GRID_SPLIT_BY_WRAPS | | split-wraps |
 | 9a | Interpolate across lines… (AU22) | GLOBAL_INTERPOLATE_LINES | 3 or more lines selected; opens a window | interpolate-lines |
 | 10 | Select all lines visible on video | GRID_SELECT_VISIBLE_LINES | | select-visible |
-| 10.1 | Save audio of selected lines… (PT #1212) | GLOBAL_SAVE_SELECTED_AUDIO | audio open; opens a file dialog | save-audio |
+| 10.1 | Snap to the scene (PT #1212) | GLOBAL_SNAP_TO_SCENE | video loaded | snap-to-scene |
+| 10.2 | Save audio of selected lines… (PT #1212) | GLOBAL_SAVE_SELECTED_AUDIO | audio open; opens a file dialog | save-audio |
 | 11 | Make line group | GRID_TREE_MAKE | | make-tree |
 | 11.1 | Convert Aegisub folds to line groups (FA5) | GLOBAL_CONVERT_FOLDS_TO_GROUPS | `canConvertFolds()` | convert-folds |
 | 12 | Show subtitles preview | GRID_SHOW_PREVIEW | `canShowPreview()`; key bound | reference |
