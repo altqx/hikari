@@ -5,6 +5,7 @@
 
 #include <cstdint>
 #include <expected>
+#include <map>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -30,6 +31,7 @@ struct Permissions {
     std::vector<FileGrantRequest> files;
     std::optional<std::string> vcsRead; // the reason, when asked for
     std::optional<std::string> background; // the reason, when asked for
+    std::optional<std::string> programs;   // the reason, when asked for
     std::optional<std::string> presence; // the reason, when asked for
 };
 
@@ -71,6 +73,35 @@ struct NodeContribution {
     std::vector<NodePort> inputs, outputs;
 };
 
+struct ProgramDownload {
+    std::string url;
+    std::string sha256;
+    std::int64_t size = 0;
+    std::string archive; // "zip", "tar.gz", or empty for the program itself
+    std::string entry;   // with archive: the program's path inside it
+};
+
+struct ProgramRun {
+    std::string path; // bundled: a package path; empty when downloaded
+    std::optional<ProgramDownload> download;
+    std::vector<std::string> args;
+    std::vector<std::pair<std::string, std::string>> env;
+};
+
+enum class Confinement { Container, LowIntegrity };
+
+struct Program {
+    std::string id;
+    std::string title;
+    std::map<std::string, ProgramRun> platforms; // by "linux-x64", "windows-x64", …
+    bool network = false;
+    bool api = false;
+    Confinement confinement = Confinement::Container;
+};
+
+// "linux-x64", "windows-arm64", …: the platform key of the computer HikariSub runs on.
+std::string_view thisPlatform();
+
 struct Screenshot {
     std::string path;
     std::string caption;
@@ -96,8 +127,10 @@ struct Manifest {
     std::vector<Panel> panels;
     std::vector<Setting> settings;
     std::vector<NodeContribution> nodes;
+    std::vector<Program> programs;
 
     bool hasQmlPanels() const;
+    const Program *program(std::string_view id) const;
 };
 
 // The published JSON Schema, docs/schemas/hikari-plugin.schema.json.
@@ -132,11 +165,15 @@ struct PermissionIncrease {
     std::vector<std::string> files; // file request ids
     bool vcsRead = false;
     bool background = false;
+    bool runPrograms = false;
+    // Programs that are new, gain network, or move to lowIntegrity.
+    std::vector<std::string> programs;
     bool presence = false;
 
     bool any() const
     {
-        return unrestricted || allDocuments || !networkHosts.empty() || !files.empty() || vcsRead || background || presence;
+        return unrestricted || allDocuments || !networkHosts.empty() || !files.empty() || vcsRead || background ||
+               runPrograms || !programs.empty() || presence;
     }
 };
 PermissionIncrease permissionIncrease(const Manifest &current, const Manifest &next);

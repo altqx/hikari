@@ -56,6 +56,8 @@ struct Caller {
     std::string project;
     // The user approved this call's Lua script; automation.run refuses without it.
     bool scriptApproved = false;
+    // A plugin whose manifest asks for permissions.programs: programs.* answer it.
+    bool programs = false;
     bool vcsRead = false;
     bool presence = false;
     // The SHA-256 of the plugin package the user approved; plugins.install refuses any other.
@@ -92,6 +94,35 @@ struct Context {
 
 // A handler replies exactly once, now or later, on the GUI thread.
 using Handler = std::function<void(const Context &, const Json &params, Reply)>;
+
+// A file or folder a plugin handed to its program, by path.
+struct ProgramFile {
+    std::string path;
+    bool writable = false;
+};
+
+struct ProgramCall {
+    std::string program;
+    std::vector<std::string> args; // after the declared ones; ${file:N} not yet replaced
+    std::vector<ProgramFile> files;
+    std::string input; // bytes for stdin (run) or nothing
+    bool base64 = false;
+    int timeoutMs = 60'000;
+};
+
+// Plugins' declared programs, started in their sandbox.
+class ProgramHost {
+public:
+    virtual ~ProgramHost() = default;
+    // Answers {exitCode, stdout, stderr, encoding} once the program ends.
+    virtual void run(const Caller &caller, ProgramCall call, Reply reply) = 0;
+    // Answers {process}.
+    virtual Result start(const Caller &caller, ProgramCall call) = 0;
+    // data is in the encoding the process was started with.
+    virtual Result send(const Caller &caller, const std::string &process, const std::string &data, bool close) = 0;
+    virtual Result stop(const Caller &caller, const std::string &process) = 0;
+};
+
 
 struct Operation {
     std::string name;
@@ -153,6 +184,8 @@ public:
     std::uint64_t subscribe(const Caller &caller, std::vector<std::string> events, Listener listener);
     void unsubscribe(std::uint64_t subscription);
 
+    // Only the caller with this id hears it, as program.output and program.exited are heard.
+    void publishTo(std::string_view callerId, const Event &event);
     // The host reports each change once, after it happened, whoever made it.
     void documentChanged(application::DocumentId document); // a commit, Undo or Redo
     void documentSaved(application::DocumentId document, std::string_view path, std::uint64_t revision);

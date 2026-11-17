@@ -149,6 +149,59 @@ std::optional<std::string> restrictedQml(const Json &json)
     return std::nullopt;
 }
 
+ProgramRun programRun(const Json &run)
+{
+    ProgramRun out;
+    out.path = text(run, "path");
+    if (const Json *download = run.find("download"))
+        out.download = ProgramDownload{text(*download, "url"), text(*download, "sha256"), download->find("size")->asInt(),
+                                       text(*download, "archive"), text(*download, "entry")};
+    out.args = strings(run.find("args"));
+    if (const Json *env = run.find("env"))
+        for (const auto &[name, value] : env->asObject())
+            out.env.emplace_back(name, value.asString());
+    return out;
+}
+
+std::vector<Program> programs(const Json *list)
+{
+    std::vector<Program> out;
+    if (!list)
+        return out;
+    for (const Json &item : list->asArray()) {
+        Program p{text(item, "id"), text(item, "title"), {}, false, false, Confinement::Container};
+        for (const auto &[platform, run] : item.find("platforms")->asObject())
+            p.platforms.emplace(platform, programRun(run));
+        const Json *network = item.find("network");
+        p.network = network && network->asBool();
+        const Json *api = item.find("api");
+        p.api = api && api->asBool();
+        p.confinement = text(item, "confinement") == "lowIntegrity" ? Confinement::LowIntegrity : Confinement::Container;
+        out.push_back(std::move(p));
+    }
+    return out;
+}
+
+std::optional<ManifestProblem> badProgram(const Manifest &m, std::size_t index)
+{
+    const Program &program = m.programs[index];
+    const std::string at = "/contributes/programs/" + std::to_string(index) + "/platforms/";
+    for (const auto &[platform, run] : program.platforms) {
+        if (run.download && run.download->archive.empty() != run.download->entry.empty())
+            return ManifestProblem{Kind::Schema, at + platform + "/download",
+                                   "archive and entry come together, or neither", 0};
+        for (std::size_t i = 0; i < run.args.size(); ++i)
+            for (const Setting &setting : m.settings) {
+                const Json *type = setting.definition.find("type");
+                if (type && type->isString() && type->asString() == "secret" &&
+                    run.args[i].find("${setting:" + setting.id + "}") != std::string::npos)
+                    return ManifestProblem{Kind::Schema, at + platform + "/args/" + std::to_string(i),
+                                           "a secret setting may be named in env only", 0};
+            }
+    }
+    return std::nullopt;
+}
+
 template <typename Items>
 std::optional<ManifestProblem> repeated(const Items &items, const std::string &at)
 {
@@ -265,11 +318,13 @@ std::expected<Manifest, ManifestProblem> parseManifest(std::string_view source, 
             for (const Json &s : settings->asArray())
                 m.settings.push_back({text(s, "id"), text(s, "title"), s});
         m.nodes = nodes(contributes->find("nodes"));
+        m.programs = programs(contributes->find("programs"));
     }
 
     for (auto problem : {repeated(m.permissions.files, "/permissions/files"),
                          repeated(m.commands, "/contributes/commands"), repeated(m.panels, "/contributes/panels"),
-                         repeated(m.settings, "/contributes/settings"), repeated(m.nodes, "/contributes/nodes")})
+                         repeated(m.settings, "/contributes/settings"), repeated(m.nodes, "/contributes/nodes"),
+                         repeated(m.programs, "/contributes/programs")})
         if (problem)
             return std::unexpected(*problem);
     for (std::size_t i = 0; i < m.permissions.files.size(); ++i)
@@ -282,9 +337,37 @@ std::expected<Manifest, ManifestProblem> parseManifest(std::string_view source, 
     for (std::size_t i = 0; i < m.nodes.size(); ++i)
         if (auto problem = badNode(m.nodes[i], i))
             return std::unexpected(*problem);
+    if (!m.programs.empty() && !m.permissions.programs)
+        return std::unexpected(ManifestProblem{Kind::Schema, "/permissions/programs", "programs need permissions.programs", 0});
+    for (std::size_t i = 0; i < m.programs.size(); ++i)
+        if (auto problem = badProgram(m, i))
+            return std::unexpected(*problem);
     if (m.api > apiVersion)
         return std::unexpected(ManifestProblem{Kind::NeedsNewerApi, "/api", "", m.api});
     return m;
+}
+
+std::string_view thisPlatform()
+{
+#if defined(_WIN32) && (defined(_M_ARM64) || defined(__aarch64__))
+    return "windows-arm64";
+#elif defined(_WIN32)
+    return "windows-x64";
+#elif defined(__APPLE__) && defined(__aarch64__)
+    return "macos-arm64";
+#elif defined(__APPLE__)
+    return "macos-x64";
+#elif defined(__aarch64__)
+    return "linux-arm64";
+#else
+    return "linux-x64";
+#endif
+}
+
+const Program *Manifest::program(std::string_view id) const
+{
+    const auto it = std::ranges::find(programs, id, &Program::id);
+    return it == programs.end() ? nullptr : &*it;
 }
 
 bool Manifest::hasQmlPanels() const
@@ -299,6 +382,13 @@ PermissionIncrease permissionIncrease(const Manifest &current, const Manifest &n
     more.allDocuments = next.permissions.allDocuments && !current.permissions.allDocuments;
     more.vcsRead = next.permissions.vcsRead && !current.permissions.vcsRead;
     more.background = next.permissions.background && !current.permissions.background;
+    more.runPrograms = next.permissions.programs && !current.permissions.programs;
+    for (const Program &program : next.programs) {
+        const Program *had = current.program(program.id);
+        const bool lowIntegrity = program.confinement == Confinement::LowIntegrity;
+        if (!had || (program.network && !had->network) || (lowIntegrity && had->confinement != Confinement::LowIntegrity))
+            more.programs.push_back(program.id);
+    }
     more.presence = next.permissions.presence && !current.permissions.presence;
     for (const std::string &host : next.permissions.networkHosts)
         if (std::ranges::find(current.permissions.networkHosts, host) == current.permissions.networkHosts.end())
@@ -327,6 +417,8 @@ Permissions readPermissions(const Json &permissions)
         out.vcsRead = vcs->asString();
     if (const Json *background = permissions.find("background"); background && background->isString())
         out.background = background->asString();
+    if (const Json *programs = permissions.find("programs"); programs && programs->isString())
+        out.programs = programs->asString();
     if (const Json *presence = permissions.find("presence"); presence && presence->isString())
         out.presence = presence->asString();
     for (const Json &f : list(permissions.find("files"))) {

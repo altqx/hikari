@@ -2,6 +2,10 @@
 
 Where HikariSub's automation API and file formats knowingly differ from what they were, or from Aegisub 3.5.1, and why. HikariSub follows Aegisub 3.5.1 and the Lua API additions of arch1t3cht's fork, so scripts written for them run unchanged. Each entry names its card. This is not the legacy parity ledger that wave 7 removed.
 
+## C06-set-undo-point
+
+`aegisub.set_undo_point(description)` closes an undo step, as in Aegisub 3.5.1. A run applies as one history step for each undo point that closed changes, named "Automation: <description>", then one for the changes after the last point, named after the macro. An undo point with no changes since the last one adds nothing. A run that errors or is cancelled applies no step. Validation and anything outside a macro run raise Aegisub's "Attempt to set an undo point in a context where it makes no sense to do so." It used to do nothing, so every run was one step. Steps keep HikariSub's "Automation: " prefix, which Aegisub doesn't add. [#1216](https://github.com/altqx/hikari/issues/1216), owner Q586 (2026-11-17).
+
 ## FA4-getpixel-rgb
 
 `frame:getPixel(x, y)` returns three integers, r, g and b, as arch1t3cht's fork does. It used to return one packed integer (`b * 65536 + g * 256 + r`). Outside the frame it returns nil. [FA4 #561](https://github.com/altqx/hikari/issues/561), owner decision 2026-10-31.

@@ -325,6 +325,7 @@ public:
     virtual application::NodeEffectOptions options() = 0;
 };
 
+class ProgramHost;
 // The text a plugin sets for {plugin} in the user's Discord status.
 class PresenceHost {
 public:
@@ -355,6 +356,7 @@ struct Host {
     KeyframeHost *keyframes = nullptr;
     application::RowMarks *marks = nullptr;
     application::VcsPort *vcs = nullptr;
+    ProgramHost *programs = nullptr;
     PresenceHost *presence = nullptr;
 };
 

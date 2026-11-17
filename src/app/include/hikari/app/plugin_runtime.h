@@ -6,6 +6,7 @@
 #include "hikari/app/plugin_files.h"
 #include "hikari/app/plugin_manager.h"
 #include "hikari/app/plugin_network.h"
+#include "hikari/app/plugin_programs.h"
 #include "hikari/app/plugin_ui.h"
 #include "hikari/backends/plugin_process.h"
 #include "hikari/plugins/installer.h"
@@ -82,6 +83,8 @@ public:
         application::RowMarks *marks = nullptr;
         // A Document's tab title, for the plugin manager's Marks row.
         std::function<QString(application::DocumentId)> documentTitle;
+        PluginPrograms *programs = nullptr;
+        QString lowRightsHelper;
     };
 
     explicit PluginRuntime(Wiring wiring, QObject *parent = nullptr);
@@ -151,6 +154,7 @@ private:
     void releaseLock(Running &plugin);
     void endAccess(Running &plugin);
     void wireQmlPanels();
+    void wirePrograms();
     std::optional<std::string> setSetting(const std::string &plugin, const std::string &setting, const api::Json &value);
     const plugins::ProjectPlugins *windowProject(int shellWindow) const;
     api::Json storedSettings(const std::string &plugin) const;

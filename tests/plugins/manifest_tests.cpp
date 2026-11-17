@@ -388,4 +388,75 @@ TEST(PluginManifest, AnUpdateAsksForMoreOnlyWhenItAddsAPermission)
     EXPECT_FALSE(permissionIncrease(more, more).any());
 }
 
+
+TEST(PluginManifest, ProgramsReadWithTheirPlatforms)
+{
+    Json json = minimal();
+    json["permissions"] = *Json::parse(R"({"programs": "Checks grammar"})");
+    json["contributes"] = *Json::parse(R"({"settings": [{"id": "lang", "title": "Language", "type": "string", "default": "en"}],
+        "programs": [{"id": "ltex", "title": "LTeX", "network": true, "confinement": "lowIntegrity", "platforms": {
+            "linux-x64": {"path": "bin/ltex", "args": ["--stdio", "${setting:lang}"], "env": {"LTEX_HOME": "${data}"}},
+            "windows-x64": {"download": {"url": "https://example.com/ltex.zip", "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "size": 10,
+                "archive": "zip", "entry": "ltex/bin/ltex.exe"}}}}]})");
+    const auto m = parse(json);
+    ASSERT_TRUE(m) << m.error().at << " " << m.error().detail;
+    EXPECT_EQ(m->permissions.programs, "Checks grammar");
+    const Program *ltex = m->program("ltex");
+    ASSERT_NE(ltex, nullptr);
+    EXPECT_EQ(ltex->title, "LTeX");
+    EXPECT_TRUE(ltex->network);
+    EXPECT_EQ(ltex->confinement, Confinement::LowIntegrity);
+    const ProgramRun &linux = ltex->platforms.at("linux-x64");
+    EXPECT_EQ(linux.path, "bin/ltex");
+    EXPECT_EQ(linux.args, (std::vector<std::string>{"--stdio", "${setting:lang}"}));
+    EXPECT_EQ(linux.env, (std::vector<std::pair<std::string, std::string>>{{"LTEX_HOME", "${data}"}}));
+    const ProgramRun &windows = ltex->platforms.at("windows-x64");
+    ASSERT_TRUE(windows.download);
+    EXPECT_EQ(windows.download->size, 10);
+    EXPECT_EQ(windows.download->entry, "ltex/bin/ltex.exe");
+    EXPECT_EQ(m->program("nope"), nullptr);
+}
+
+TEST(PluginManifest, ProgramsAreRefusedWithoutThePermissionOrInAShapeTheyCantRun)
+{
+    Json json = minimal();
+    json["contributes"] = *Json::parse(R"({"programs": [{"id": "x", "title": "X", "platforms": {"linux-x64": {"path": "x"}}}]})");
+    EXPECT_EQ(problem(json).at, "/permissions/programs");
+
+    json["permissions"] = *Json::parse(R"({"programs": "Runs X"})");
+    json["contributes"] = *Json::parse(R"({"programs": [{"id": "x", "title": "X", "platforms": {"linux-x64": {"path": "x"}}},
+        {"id": "x", "title": "Y", "platforms": {"linux-x64": {"path": "y"}}}]})");
+    EXPECT_EQ(problem(json).kind, Kind::DuplicateId);
+
+    json["contributes"] = *Json::parse(R"({"programs": [{"id": "x", "title": "X", "confinement": "lowIntegrity",
+        "platforms": {"windows-x64": {"path": "x.exe"}}}]})");
+    EXPECT_EQ(problem(json).at, "/contributes/programs/0");
+
+    json["contributes"] = *Json::parse(std::string(R"({"programs": [{"id": "x", "title": "X", "platforms": {"linux-x64":
+        {"download": {"url": "https://example.com/x.zip", "sha256": ")") + std::string(64, 'a') + R"(", "size": 1, "archive": "zip"}}}}]})");
+    EXPECT_EQ(problem(json).at, "/contributes/programs/0/platforms/linux-x64/download");
+
+    json["contributes"] = *Json::parse(R"({"settings": [{"id": "key", "title": "Key", "type": "string", "default": ""}],
+        "programs": [{"id": "x", "title": "X", "platforms": {"linux-x64": {"path": "x", "args": ["${setting:key}"]}}}]})");
+    EXPECT_TRUE(parse(json));
+}
+
+TEST(PluginManifest, AnUpdateAsksAgainForANewProgramOrOneThatGainsTheNetwork)
+{
+    Manifest current;
+    current.permissions.programs = "Runs tools";
+    current.programs = {Program{"a", "A", {}, false, false, Confinement::Container}};
+    EXPECT_FALSE(permissionIncrease(current, current).any());
+
+    Manifest next = current;
+    next.programs[0].network = true;
+    next.programs.push_back(Program{"b", "B", {}, false, false, Confinement::Container});
+    const PermissionIncrease increase = permissionIncrease(current, next);
+    EXPECT_FALSE(increase.runPrograms);
+    EXPECT_EQ(increase.programs, (std::vector<std::string>{"a", "b"}));
+
+    Manifest none;
+    EXPECT_TRUE(permissionIncrease(none, current).runPrograms);
+}
+
 }

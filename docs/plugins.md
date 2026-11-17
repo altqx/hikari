@@ -456,7 +456,7 @@ Redirects are followed up to 5 times, each checked the same way. HikariSub sends
 
 ## Git
 
-A plugin can't run programs, so HikariSub runs git for it, read-only. The manifest asks with `"vcs.read": "<reason>"`, and the install question, the plugin manager and the marketplace show it as "Read the branches, tags and history of the git repository holding your subtitle files: <reason>". Every plugin that asks gets it on the same terms; AI and MCP callers never do.
+HikariSub runs git for a plugin, read-only, so the plugin needs no [program](#programs) of its own for it. The manifest asks with `"vcs.read": "<reason>"`, and the install question, the plugin manager and the marketplace show it as "Read the branches, tags and history of the git repository holding your subtitle files: <reason>". Every plugin that asks gets it on the same terms; AI and MCP callers never do.
 
 ```lua
 local refs = hikari.vcs.refs({ limit = 20 })
