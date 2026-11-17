@@ -262,6 +262,50 @@ TEST(PluginManifest, RepeatedIdsAndBadDefaultsAreRefused)
     EXPECT_EQ(problem(json).kind, Kind::Schema);
 }
 
+TEST(PluginManifest, SecretAndListSettingsRead)
+{
+    Json json = minimal();
+    json["contributes"] = *Json::parse(R"({"settings": [
+        {"id": "token", "title": "Token", "type": "secret", "projectable": false},
+        {"id": "hosts", "title": "Hosts", "type": "list", "default": ["a", "b"], "maxItems": 3}]})");
+    const auto m = parse(json);
+    ASSERT_TRUE(m) << m.error().at << ": " << m.error().detail;
+    ASSERT_EQ(m->settings.size(), 2u);
+    EXPECT_EQ(m->settings[0].type, SettingType::Secret);
+    EXPECT_TRUE(m->settings[0].secret());
+    EXPECT_TRUE(m->settings[0].fallback().isNull());
+    EXPECT_EQ(m->settings[1].type, SettingType::List);
+    EXPECT_EQ(m->settings[1].fallback(), *Json::parse(R"(["a", "b"])"));
+
+    EXPECT_EQ(settingValues(*m, Json::object()), *Json::parse(R"({"token": null, "hosts": ["a", "b"]})"));
+    EXPECT_EQ(settingValues(*m, *Json::parse(R"({"token": "kept in plugins.json", "hosts": ["c"]})")),
+              *Json::parse(R"({"token": null, "hosts": ["c"]})"));
+    EXPECT_EQ(settingValues(*m, *Json::parse(R"({"hosts": ["c", "d", "e", "f"]})")),
+              *Json::parse(R"({"token": null, "hosts": ["a", "b"]})"));
+
+    EXPECT_EQ(settingRefusal(m->settings[0], Json(4)), "“token” takes text");
+    EXPECT_EQ(settingRefusal(m->settings[0], Json("s3cret")), std::nullopt);
+    EXPECT_EQ(settingRefusal(m->settings[1], Json("a")), "“hosts” takes a list of text");
+    EXPECT_EQ(settingRefusal(m->settings[1], *Json::parse(R"(["a", 1])")), "“hosts” takes a list of text");
+    EXPECT_EQ(settingRefusal(m->settings[1], *Json::parse(R"(["a", "b", "c", "d"])")), "“hosts” takes at most 3 items");
+    EXPECT_EQ(settingRefusal(m->settings[1], *Json::parse(R"(["a", "b", "c"])")), std::nullopt);
+}
+
+TEST(PluginManifest, SecretAndListSettingsFollowTheirRules)
+{
+    Json json = minimal();
+    json["contributes"] = *Json::parse(R"({"settings": [{"id": "t", "title": "T", "type": "secret", "default": "x"}]})");
+    EXPECT_EQ(problem(json).kind, Kind::Schema);
+    json["contributes"] = *Json::parse(R"({"settings": [{"id": "t", "title": "T", "type": "secret", "projectable": true}]})");
+    EXPECT_EQ(problem(json).kind, Kind::Schema);
+    json["contributes"] = *Json::parse(R"({"settings": [{"id": "l", "title": "L", "type": "list", "default": ["a", "b"], "maxItems": 1}]})");
+    const ManifestProblem tooMany = problem(json);
+    EXPECT_EQ(tooMany.kind, Kind::BadDefault);
+    EXPECT_EQ(tooMany.at, "/contributes/settings/0/default");
+    json["contributes"] = *Json::parse(R"({"settings": [{"id": "l", "title": "L", "type": "list", "default": [1]}]})");
+    EXPECT_EQ(problem(json).kind, Kind::Schema);
+}
+
 TEST(PluginManifest, ANodeReadsItsPortsAndDefaults)
 {
     Json json = minimal();
