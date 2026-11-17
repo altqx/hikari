@@ -92,6 +92,7 @@ set_source_files_properties(video_controls.cpp PROPERTIES COMPILE_OPTIONS
 target_sources(hikari_application PRIVATE video_fullscreen.cpp)
 target_sources(hikari_application PRIVATE video_timing.cpp line_retime.h timing_helpers.cpp)
 target_sources(hikari_application PRIVATE center_times.cpp)
+target_sources(hikari_application PRIVATE jump_target.cpp include/hikari/application/jump_target.h)
 target_sources(hikari_application PRIVATE align_to_video.cpp)
 target_sources(hikari_application PRIVATE video_analysis.cpp)
 target_sources(hikari_application PRIVATE qc_notes.cpp)

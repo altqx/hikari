@@ -88,6 +88,21 @@ TEST(PluginManifest, EveryFieldReads)
     EXPECT_EQ(m->settings.size(), 3u);
 }
 
+TEST(PluginManifest, ACommandsPaletteFieldsRead)
+{
+    Json json = minimal();
+    json["contributes"] = *Json::parse(R"({"commands": [
+        {"id": "greet", "title": "Greet", "description": "Says hello to the selected Lines"},
+        {"id": "status", "title": "Status", "palette": false}]})");
+    const auto m = parse(json);
+    ASSERT_TRUE(m) << m.error().at << " " << m.error().detail;
+    ASSERT_EQ(m->commands.size(), 2u);
+    EXPECT_EQ(m->commands[0].description, "Says hello to the selected Lines");
+    EXPECT_TRUE(m->commands[0].palette);
+    EXPECT_EQ(m->commands[1].description, "");
+    EXPECT_FALSE(m->commands[1].palette);
+}
+
 TEST(PluginManifest, APanelDocksInTheAreaItNames)
 {
     for (const auto &[area, expected] : {std::pair{"left", PanelArea::Left}, std::pair{"right", PanelArea::Right},

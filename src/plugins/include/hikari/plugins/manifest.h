@@ -32,9 +32,13 @@ struct Permissions {
     std::optional<std::string> background; // the reason, when asked for
 };
 
-struct Contribution {
+struct Command {
     std::string id;
     std::string title;
+    std::string icon;              // an icon role or own:<id>, or empty
+    std::vector<std::string> when; // conditions that must all hold; "!" negates one
+    std::string description;
+    bool palette = true;
 };
 
 enum class PanelArea { Left, Right, Bottom };
@@ -87,7 +91,7 @@ struct Manifest {
     std::vector<Screenshot> screenshots;
     std::optional<minisign::PublicKey> publicKey;
     Permissions permissions;
-    std::vector<Contribution> commands;
+    std::vector<Command> commands;
     std::vector<Panel> panels;
     std::vector<Setting> settings;
     std::vector<NodeContribution> nodes;
