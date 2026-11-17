@@ -717,6 +717,15 @@ private slots:
         application.presenceActivity(0, QStringLiteral("styling"), false);
         QTRY_COMPARE(discord.activities().last().value(QStringLiteral("state")).toString(),
                      QStringLiteral("Typesetting · episode02.ass"));
+        application.workspaceLayout().setPreset(QStringLiteral("Editing"));
+        QTRY_COMPARE(discord.activities().last().value(QStringLiteral("state")).toString(),
+                     QStringLiteral("Editing · episode02.ass"));
+        application.presenceActivity(0, QStringLiteral("typesetting"), true);
+        QTRY_COMPARE(discord.activities().last().value(QStringLiteral("state")).toString(),
+                     QStringLiteral("Typesetting · episode02.ass"));
+        application.presenceActivity(0, QStringLiteral("typesetting"), false);
+        QTRY_COMPARE(discord.activities().last().value(QStringLiteral("state")).toString(),
+                     QStringLiteral("Editing · episode02.ass"));
         application.endSession();
     }
 };

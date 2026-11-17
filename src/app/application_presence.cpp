@@ -108,8 +108,12 @@ void Application::refreshPresence()
     const int window = m_workspace.activeWindow();
     const WindowViews &v = activeViews();
     ui::WorkspaceLayoutController &layout = layoutOf(window);
+    const std::set<QString> &reported = m_presenceGoing[window];
     const bool kanji = v.kanjiTimer && v.kanjiTimer->isOpen();
-    m_presence->setMode(kanji ? QStringLiteral("Timing") : layout.preset());
+    const bool fullScreenTypesetting = reported.contains(QStringLiteral("typesetting"));
+    m_presence->setMode(kanji                    ? QStringLiteral("Timing")
+                        : fullScreenTypesetting ? QStringLiteral("Typesetting")
+                                                : layout.preset());
 
     DiscordPresence::Tab tab;
     if (const auto target = m_workspace.editingTarget()) {
@@ -128,7 +132,6 @@ void Application::refreshPresence()
     }
     m_presence->setTab(tab);
 
-    const std::set<QString> &reported = m_presenceGoing[window];
     const auto qml = [&](discord::Activity a) { return reported.contains(discord::activityKey(a)); };
     using enum discord::Activity;
     m_presence->setGoing(Watching, qml(Watching));

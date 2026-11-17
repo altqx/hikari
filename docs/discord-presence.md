@@ -53,7 +53,7 @@ The texts are in HikariSub's interface language.
 
 - `src/app/discord_ipc.cpp`: the IPC client (frames, candidate paths, handshake, ping).
 - `src/app/discord_activity.cpp`: what is sent, from the `privacy.discord*` settings and the current scene; the Settings preview uses it too.
-- `src/app/discord_presence.cpp`: the connection, idle, the activities going, plugin texts and the rate limit. `src/app/application_presence.cpp` feeds it from the windows; a window that knows of an activity calls `presenceActivity(shellWindow, key, going)`.
+- `src/app/discord_presence.cpp`: the connection, idle, the activities going, plugin texts and the rate limit. `src/app/application_presence.cpp` feeds it from the windows; a window that knows of an activity calls `presenceActivity(shellWindow, key, going)`. The key `typesetting` shows the Typesetting mode whatever the layout, for full-screen typesetting.
 - `presence.set_text` is in `src/api/presence_operations.cpp`.
 - The application id is the CMake cache variable `HIKARI_DISCORD_CLIENT_ID`; empty turns presence off in that build.
 - `hikari_ui_discord_presence_tests` runs against a fake Discord (`QLocalServer`) on both platforms.
