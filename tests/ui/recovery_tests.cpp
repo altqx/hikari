@@ -403,7 +403,8 @@ private slots:
         connect(&tick, &QTimer::timeout, this, [&] { longest = std::max(longest, gap.restart()); });
         gap.start();
         tick.start();
-        edit(a, u8"changed on a busy disk");
+        a.editor().textEdited(QStringLiteral("changed on a busy disk"), 22);
+        QVERIFY(a.editor().commit());
         QTRY_VERIFY_WITH_TIMEOUT(started > 0, 5000);
         QVERIFY(!manifestWritten());
         QTRY_VERIFY_WITH_TIMEOUT(manifestWritten(), 10000);
