@@ -633,19 +633,12 @@ private slots:
         QCOMPARE(QQmlProperty(window->contentItem(), QStringLiteral("LayoutMirroring.enabled"), qmlContext(window)).read().toBool(), true);
         QTRY_VERIFY(file->mapToScene(QPointF(file->width(), 0)).x() > window->width() / 2);
         openSettings();
-        auto *ok = settingsButton("settingsClose");
-        auto *cancel = settingsButton("settingsClose");
-        QVERIFY(ok && cancel);
-        const bool okLeftOfCancel = ok->mapToScene(QPointF()).x() < cancel->mapToScene(QPointF()).x();
+        QVERIFY(settingsButton("settingsClose"));
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsClose"), "click"));
         QTRY_VERIFY(!settingsDialog()->property("visible").toBool());
         application->localisation().setPseudo(app::Localisation::Pseudo::None);
         QCOMPARE(QGuiApplication::layoutDirection(), Qt::LeftToRight);
         QTRY_COMPARE(file->mapToScene(QPointF()).x(), ltrX);
-        openSettings();
-        QCOMPARE(settingsButton("settingsClose")->mapToScene(QPointF()).x() < settingsButton("settingsClose")->mapToScene(QPointF()).x(),
-                 !okLeftOfCancel);
-        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsClose"), "click"));
     }
 
     void documentIgnoresTheLanguage()

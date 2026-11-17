@@ -3,6 +3,7 @@
 #include "hikari/application/settings.h"
 
 #include <QCoreApplication>
+#include <QEvent>
 
 #include <algorithm>
 #include <span>
@@ -344,6 +345,21 @@ void count(QVariantMap &map, const QString &key)
     map.insert(key, map.value(key).toInt() + 1);
 }
 
+}
+
+SettingsCatalogue::SettingsCatalogue(QObject *parent) : QObject(parent)
+{
+    if (QCoreApplication *app = QCoreApplication::instance())
+        app->installEventFilter(this);
+}
+
+bool SettingsCatalogue::eventFilter(QObject *watched, QEvent *event)
+{
+    if (watched == QCoreApplication::instance() && event->type() == QEvent::LanguageChange) {
+        ++m_revision;
+        emit revisionChanged();
+    }
+    return QObject::eventFilter(watched, event);
 }
 
 QString SettingsCatalogue::label(const QString &setting)

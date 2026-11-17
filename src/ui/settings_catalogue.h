@@ -13,8 +13,11 @@ class SettingsCatalogue : public QObject {
     Q_OBJECT
     QML_ELEMENT
     QML_SINGLETON
+    // Grows when the interface language changes; read it in a binding that shows catalogue text.
+    Q_PROPERTY(int revision READ revision NOTIFY revisionChanged)
 public:
-    using QObject::QObject;
+    explicit SettingsCatalogue(QObject *parent = nullptr);
+    int revision() const { return m_revision; }
 
     // In the interface language; empty for a setting the window has no row for.
     Q_INVOKABLE static QString label(const QString &setting);
@@ -37,6 +40,15 @@ public:
                                           const QStringList &changed = {}, bool project = false);
 
     static QStringList settings();
+
+signals:
+    void revisionChanged();
+
+protected:
+    bool eventFilter(QObject *watched, QEvent *event) override;
+
+private:
+    int m_revision = 0;
 };
 
 }

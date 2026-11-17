@@ -6,7 +6,7 @@ import QtQuick.Layouts
 import Hikari.Ui
 
 ColumnLayout {
-    id: project
+    id: pages
     objectName: "projectSettings"
     required property var dialog
     readonly property var app: dialog.app
@@ -42,11 +42,11 @@ ColumnLayout {
         id: page
         required property string page
         default property alias content: pageColumn.data
-        visible: project.dialog.pageShown(page)
+        visible: pages.dialog.pageShown(page)
         spacing: 12
         Layout.fillWidth: true
         Label {
-            text: project.dialog.catalogue.find(p => p.id === page.page)?.name ?? ""
+            text: pages.dialog.catalogue.find(p => p.id === page.page)?.name ?? ""
             font.pixelSize: 20
             font.weight: Font.DemiBold
             color: Theme.text
@@ -60,12 +60,12 @@ ColumnLayout {
         }
     }
     component Section: SettingsSection {
-        host: project.dialog
+        host: pages.dialog
         project: true
     }
     component ProjectCheck: SettingsRow {
         id: checkRow
-        host: project.dialog
+        host: pages.dialog
         project: true
         inline: true
         CheckBox {
@@ -76,16 +76,16 @@ ColumnLayout {
             spacing: 9
             Accessible.name: text
             Accessible.description: checkRow.note
-            function refresh() { checked = project.dialog.projectValues[checkRow.setting] === true }
+            function refresh() { checked = pages.dialog.projectValues[checkRow.setting] === true }
             Component.onCompleted: refresh()
-            Connections { target: project.dialog; function onProjectValuesChanged() { check.refresh() } }
-            onToggled: project.dialog.projectPut(checkRow.setting, checked)
+            Connections { target: pages.dialog; function onProjectValuesChanged() { check.refresh() } }
+            onToggled: pages.dialog.projectPut(checkRow.setting, checked)
         }
     }
     component ProjectChoice: SettingsRow {
         id: choiceRow
         property var model: []
-        host: project.dialog
+        host: pages.dialog
         project: true
         ComboBox {
             id: choice
@@ -95,19 +95,19 @@ ColumnLayout {
             Layout.preferredWidth: 260
             Accessible.name: choiceRow.text
             function refresh() {
-                const v = project.dialog.projectValues[choiceRow.setting] ?? -1
+                const v = pages.dialog.projectValues[choiceRow.setting] ?? -1
                 currentIndex = v >= 0 && v < count ? v : -1
             }
             Component.onCompleted: refresh()
             onCountChanged: refresh()
-            Connections { target: project.dialog; function onProjectValuesChanged() { choice.refresh() } }
-            onActivated: index => project.dialog.projectPut(choiceRow.setting, index)
+            Connections { target: pages.dialog; function onProjectValuesChanged() { choice.refresh() } }
+            onActivated: index => pages.dialog.projectPut(choiceRow.setting, index)
         }
     }
     component ProjectField: SettingsRow {
         id: fieldRow
         property string placeholder
-        host: project.dialog
+        host: pages.dialog
         project: true
         TextField {
             id: plain
@@ -115,15 +115,15 @@ ColumnLayout {
             placeholderText: fieldRow.placeholder
             Layout.fillWidth: true
             Accessible.name: fieldRow.text
-            function refresh() { text = project.dialog.projectValues[fieldRow.setting] ?? "" }
+            function refresh() { text = pages.dialog.projectValues[fieldRow.setting] ?? "" }
             function commit() {
                 typing.stop()
-                if ((project.dialog.projectValues[fieldRow.setting] ?? "") !== text.trim())
-                    project.dialog.projectPut(fieldRow.setting, text.trim())
+                if ((pages.dialog.projectValues[fieldRow.setting] ?? "") !== text.trim())
+                    pages.dialog.projectPut(fieldRow.setting, text.trim())
             }
             Component.onCompleted: refresh()
             Connections {
-                target: project.dialog
+                target: pages.dialog
                 function onProjectValuesChanged() { if (!plain.activeFocus) plain.refresh() }
             }
             onTextEdited: typing.restart()
@@ -137,14 +137,14 @@ ColumnLayout {
     }
     component ProjectValue: SettingsRow {
         id: valueRow
-        host: project.dialog
+        host: pages.dialog
         project: true
         TextField {
             objectName: "project_" + valueRow.setting
             readOnly: true
             selectByMouse: true
             text: {
-                const v = project.dialog.projectValues[valueRow.setting]
+                const v = pages.dialog.projectValues[valueRow.setting]
                 return Array.isArray(v) ? v.join(", ") : String(v ?? "")
             }
             Layout.fillWidth: true
@@ -153,14 +153,14 @@ ColumnLayout {
         IconTextButton {
             iconRole: "open"
             text: qsTranslate("HikariSub.Options", "Open settings file")
-            onClicked: project.dialog.openSettingsFile(valueRow.setting)
+            onClicked: pages.dialog.openSettingsFile(valueRow.setting)
         }
     }
     component ProjectText: SettingsRow {
         id: textRow
         required property var modelData
         readonly property string key: "scriptProperties." + modelData.id
-        host: project.dialog
+        host: pages.dialog
         project: true
         setting: key
         settings: [key, key + "On"]
@@ -171,25 +171,25 @@ ColumnLayout {
             objectName: "project_" + textRow.key + "On"
             text: qsTranslate("HikariSub.Options", "Write")
             Accessible.name: qsTranslate("HikariSub.Options", "Write %1").arg(textRow.modelData.name)
-            function refresh() { checked = project.dialog.projectValues[textRow.key + "On"] === true }
+            function refresh() { checked = pages.dialog.projectValues[textRow.key + "On"] === true }
             Component.onCompleted: refresh()
-            Connections { target: project.dialog; function onProjectValuesChanged() { on.refresh() } }
-            onToggled: project.dialog.projectPut(textRow.key + "On", checked)
+            Connections { target: pages.dialog; function onProjectValuesChanged() { on.refresh() } }
+            onToggled: pages.dialog.projectPut(textRow.key + "On", checked)
         }
         TextField {
             id: field
             objectName: "project_" + textRow.key
             Layout.fillWidth: true
             Accessible.name: textRow.modelData.name
-            function refresh() { text = project.dialog.projectValues[textRow.key] ?? "" }
+            function refresh() { text = pages.dialog.projectValues[textRow.key] ?? "" }
             function commit() {
                 typing.stop()
-                if ((project.dialog.projectValues[textRow.key] ?? "") !== text)
-                    project.dialog.projectPut(textRow.key, text)
+                if ((pages.dialog.projectValues[textRow.key] ?? "") !== text)
+                    pages.dialog.projectPut(textRow.key, text)
             }
             Component.onCompleted: refresh()
             Connections {
-                target: project.dialog
+                target: pages.dialog
                 function onProjectValuesChanged() { if (!field.activeFocus) field.refresh() }
             }
             onTextEdited: typing.restart()
@@ -210,7 +210,7 @@ ColumnLayout {
             ProjectField { setting: "translation.sourceLanguage"; placeholder: qsTr("Detect") }
             ProjectField {
                 setting: "translation.targetLanguage"
-                placeholder: project.dialog.projectYours["ai.inline.translateTo"] ?? ""
+                placeholder: pages.dialog.projectYours["ai.inline.translateTo"] ?? ""
             }
             ProjectValue { setting: "translation.glossary" }
         }
@@ -220,7 +220,7 @@ ColumnLayout {
         Section {
             key: "spelling.spelling"
             ProjectCheck { setting: "editor.spellchecker" }
-            ProjectChoice { setting: "editor.dictionaryLanguage"; model: project.dialog.dictionaries }
+            ProjectChoice { setting: "editor.dictionaryLanguage"; model: pages.dialog.dictionaries }
         }
         Section {
             key: "spelling.grammar"
@@ -234,7 +234,7 @@ ColumnLayout {
         Section {
             key: "spelling.ruleGroups"
             Repeater {
-                model: project.app.grammarGroups()
+                model: pages.app.grammarGroups()
                 ProjectCheck {
                     required property var modelData
                     setting: "grammar.group." + modelData.id
@@ -248,22 +248,22 @@ ColumnLayout {
         Section {
             key: "conversion.export"
             SettingsRow {
-                host: project.dialog
-        project: true
+                host: pages.dialog
+                project: true
                 setting: "export.format"
                 ComboBox {
                     id: exportFormat
                     objectName: "project_export.format"
-                    model: project.exportFormats
+                    model: pages.exportFormats
                     textRole: "text"
                     Layout.preferredWidth: 260
                     Accessible.name: SettingsCatalogue.label("export.format")
                     function refresh() {
-                        currentIndex = Math.max(0, project.exportFormats.findIndex(f => f.id === (project.dialog.projectValues["export.format"] ?? "")))
+                        currentIndex = Math.max(0, pages.exportFormats.findIndex(f => f.id === (pages.dialog.projectValues["export.format"] ?? "")))
                     }
                     Component.onCompleted: refresh()
-                    Connections { target: project.dialog; function onProjectValuesChanged() { exportFormat.refresh() } }
-                    onActivated: index => project.dialog.projectPut("export.format", project.exportFormats[index].id)
+                    Connections { target: pages.dialog; function onProjectValuesChanged() { exportFormat.refresh() } }
+                    onActivated: index => pages.dialog.projectPut("export.format", pages.exportFormats[index].id)
                 }
             }
         }
@@ -279,7 +279,7 @@ ColumnLayout {
                 Layout.fillWidth: true
             }
             Repeater {
-                model: project.scriptFields
+                model: pages.scriptFields
                 ProjectText {}
             }
             ProjectCheck { setting: "scriptProperties.askForChange" }
@@ -300,8 +300,8 @@ ColumnLayout {
             key: "ai.keys"
             ProjectAiKeysPage {
                 id: aiKeys
-                app: project.app
-                shellWindow: project.shellWindow
+                app: pages.app
+                shellWindow: pages.shellWindow
             }
         }
     }

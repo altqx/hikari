@@ -1189,7 +1189,7 @@ private slots:
         auto *mine = popover->findChild<QObject *>(QStringLiteral("newCatalogSaveMine"));
         QVERIFY(mine);
         QVERIFY(QMetaObject::invokeMethod(mine, "triggered"));
-        QCOMPARE(create->property("text").toString(), QStringLiteral("Save to mine"));
+        QCOMPARE(create->property("text").toString(), QStringLiteral("Save to yours"));
         QVERIFY(application->settingsStore()->list("workspace.saveTiers").contains(QStringLiteral("styleCatalogs\tmine")));
         item(popoverContent, QStringLiteral("newCatalogName"))->setProperty("text", QStringLiteral("Personal"));
         QVERIFY(QMetaObject::invokeMethod(create, "click"));
@@ -1200,7 +1200,7 @@ private slots:
 
         QVERIFY(QMetaObject::invokeMethod(field("newCatalog"), "click"));
         QTRY_VERIFY(popover->property("opened").toBool());
-        QCOMPARE(create->property("text").toString(), QStringLiteral("Save to mine"));
+        QCOMPARE(create->property("text").toString(), QStringLiteral("Save to yours"));
     }
 
     void fontCatalogsAndLayoutsHaveAProjectTier()
@@ -1395,7 +1395,7 @@ private slots:
 
         QVERIFY(shift.applyPreset(QStringLiteral("shift"), QStringLiteral("Late"), QStringLiteral("mine")));
         QCOMPARE(shift.settings().timeMs, 100);
-        QCOMPARE(field("shiftPresetTier")->property("text").toString(), QStringLiteral("Mine"));
+        QCOMPARE(field("shiftPresetTier")->property("text").toString(), QStringLiteral("Yours"));
         QTRY_VERIFY(!named(shell(w), "shiftRenamePreset")->property("enabled").toBool());
         QVERIFY(!named(shell(w), "shiftDeletePreset")->property("enabled").toBool());
         QCOMPARE(named(shell(w), "shiftCopyPresetToTier")->property("text").toString(), QStringLiteral("Copy to project"));
@@ -1429,7 +1429,7 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(popover, "openFor", Q_ARG(QVariant, QString())));
         QTRY_VERIFY(popover->property("opened").toBool());
         QVERIFY(QMetaObject::invokeMethod(popover->findChild<QObject *>(QStringLiteral("shiftPresetSaveTierMine")), "triggered"));
-        QCOMPARE(save->property("text").toString(), QStringLiteral("Save to mine"));
+        QCOMPARE(save->property("text").toString(), QStringLiteral("Save to yours"));
         QVERIFY(application->settingsStore()->list("workspace.saveTiers").contains(QStringLiteral("shiftPresets\tmine")));
         QVERIFY(QMetaObject::invokeMethod(popover, "revert"));
     }

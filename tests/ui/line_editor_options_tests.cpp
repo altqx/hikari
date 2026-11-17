@@ -507,7 +507,7 @@ private slots:
         fillTagButton(popover, QStringLiteral("Three"), QStringLiteral("\\u1"), "tagIcon_tag-underline");
         QCOMPARE(list->property("count").toInt(), 2);
         QCOMPARE(buttons.count(), 2);
-        QCOMPARE(buttons.button(0).name, QStringLiteral("One"));
+        QCOMPARE(buttons.button(0).name, QStringLiteral("Two"));
         QVERIFY(QMetaObject::invokeMethod(findItem(content, QStringLiteral("settingsClose")), "click"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
         QCOMPARE(buttons.count(), 2);

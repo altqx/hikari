@@ -167,6 +167,21 @@ QJsonArray entriesOf(QQuickItem *item, const application::OptionsBinding *bindin
     return out;
 }
 
+// Qt makes the Accessible attached object the item's child.
+QString shownName(const QQuickItem *item)
+{
+    for (QObject *child : item->children())
+        if (child->inherits("QQuickAccessibleAttached"))
+            if (QString name = text(child, "name"); !name.isEmpty())
+                return name;
+    if (has(item, "text") && !text(item, "text").isEmpty())
+        return text(item, "text");
+    for (const QQuickItem *p = item->parentItem(); p; p = p->parentItem())
+        if (has(p, "labelWidth") && has(p, "text"))
+            return text(p, "text");
+    return {};
+}
+
 QString sectionKeyAbove(QQuickItem *item)
 {
     for (QQuickItem *p = item->parentItem(); p; p = p->parentItem())
@@ -218,6 +233,8 @@ struct SettingsExport {
         }
         if (kind == QLatin1String("choice"))
             o.insert(QStringLiteral("values"), entriesOf(item, binding, languages));
+        if (o.value(QStringLiteral("label")).toString().isEmpty() && item)
+            o.insert(QStringLiteral("label"), shownName(item));
         for (auto it = extra.begin(); it != extra.end(); ++it)
             if (!it.value().toString().isEmpty() || !it.value().isString())
                 o.insert(it.key(), it.value());

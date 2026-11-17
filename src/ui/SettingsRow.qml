@@ -13,8 +13,8 @@ Item {
     property string setting
     property var settings: setting.length > 0 ? [setting] : []
     property string iconRole
-    property string text: setting.length > 0 ? SettingsCatalogue.label(setting) : ""
-    property string note: setting.length > 0 ? SettingsCatalogue.description(setting) : ""
+    property string text: setting.length > 0 ? (SettingsCatalogue.revision, SettingsCatalogue.label(setting)) : ""
+    property string note: setting.length > 0 ? (SettingsCatalogue.revision, SettingsCatalogue.description(setting)) : ""
     property int labelWidth: 220
     // The controls sit in the label's place, as a check box does.
     property bool inline: false

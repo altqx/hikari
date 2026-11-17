@@ -22,7 +22,7 @@ DialogWindow {
     title: qsTr("Settings")
     dialogId: "settings"
     settings: app ? app.settings : null
-    modal: false
+    modal: true
     resizable: true
     flush: true
     defaultButton: closeButton
@@ -65,7 +65,7 @@ DialogWindow {
     }
     readonly property var pluginsWithSettings: (pluginManager ? pluginManager.plugins : []).filter(p => (p.settings ?? []).length > 0)
     readonly property var found: SettingsCatalogue.search(query, pluginRows, projectTab ? Object.keys(projectSources).filter(id => projectSources[id] === "project") : changedIds, projectTab)
-    readonly property var catalogue: SettingsCatalogue.pages()
+    readonly property var catalogue: (SettingsCatalogue.revision, SettingsCatalogue.pages())
     signal reloaded()
     signal creditsRequested()
     signal legacyImportRequested()
@@ -117,7 +117,7 @@ DialogWindow {
         landingNote = ""
         const projectOk = project && hasProject && (setting.length === 0 || isProjectable(setting))
         if (project && !projectOk)
-            landingNote = hasProject ? qsTr("A project can't set “%1”, so it opens on the Yours tab.").arg(setting)
+            landingNote = hasProject ? qsTr("A project can’t set “%1”, so it opens on the Yours tab.").arg(setting)
                                      : qsTr("This window has no project, so the link opens the Yours tab.")
         projectTab = projectOk
         if (setting.length === 0)
@@ -515,6 +515,8 @@ DialogWindow {
         if (item)
             scrollTo(item, 0)
         currentNode = id
+        if (settings && !projectTab)
+            settings.setValue("workspace.settingsPage", page)
     }
     readonly property var pageItems: ({})
     function scrollTo(item, offset) {
@@ -601,12 +603,13 @@ DialogWindow {
         text: modelData.name
         note: ""
         CheckBox {
+            id: creditOn
             objectName: "setting_" + creditRow.key + "On"
             text: qsTr("Write")
             Accessible.name: qsTr("Write %1").arg(creditRow.modelData.name)
             function refresh() { checked = dialog.values[creditRow.key + "On"] === true }
             Component.onCompleted: refresh()
-            Connections { target: dialog; function onReloaded() { parent.refresh() } }
+            Connections { target: dialog; function onReloaded() { creditOn.refresh() } }
             onToggled: dialog.put(creditRow.key + "On", checked)
         }
         SettingText {
@@ -663,8 +666,8 @@ DialogWindow {
             from: numberRow.from
             to: numberRow.to
             editable: true
-            Accessible.name: numberRow.name || SettingsCatalogue.label(numberRow.setting)
-            Accessible.description: SettingsCatalogue.description(numberRow.setting)
+            Accessible.name: numberRow.name || (SettingsCatalogue.revision, SettingsCatalogue.label(numberRow.setting))
+            Accessible.description: (SettingsCatalogue.revision, SettingsCatalogue.description(numberRow.setting))
             Layout.preferredWidth: 120
             ToolTip.text: numberRow.tip
             ToolTip.visible: hovered && numberRow.tip !== ""
@@ -692,7 +695,7 @@ DialogWindow {
         property string before: ""
         objectName: "setting_" + setting
         Layout.preferredWidth: 260
-        Accessible.description: SettingsCatalogue.description(setting)
+        Accessible.description: (SettingsCatalogue.revision, SettingsCatalogue.description(setting))
         function refresh() { text = dialog.values[setting] ?? "" }
         function commit() {
             typing.stop()
@@ -724,7 +727,7 @@ DialogWindow {
         required property string setting
         objectName: "setting_" + setting
         Layout.preferredWidth: 260
-        Accessible.description: SettingsCatalogue.description(setting)
+        Accessible.description: (SettingsCatalogue.revision, SettingsCatalogue.description(setting))
         signal chosen(int index)
         function refresh() {
             const v = dialog.values[setting] ?? -1
@@ -2013,7 +2016,7 @@ DialogWindow {
                                 model: projectPages.exportFormats
                                 textRole: "text"
                                 Layout.preferredWidth: 260
-                                Accessible.name: SettingsCatalogue.label("export.format")
+                                Accessible.name: (SettingsCatalogue.revision, SettingsCatalogue.label("export.format"))
                                 currentIndex: {
                                     dialog.changedIds
                                     const v = dialog.settings ? dialog.settings.value("export.format") : ""
@@ -2495,7 +2498,7 @@ DialogWindow {
                             LinkButton {
                                 objectName: "settingsShowAllShortcuts"
                                 iconRole: "hotkeys"
-                                text: qsTr("Show all %n in Shortcuts", "", dialog.commandMatches.length)
+                                text: qsTr("Show all %n shortcuts", "", dialog.commandMatches.length)
                                 onClicked: dialog.showShortcutsFor(dialog.query)
                             }
                         }
@@ -2591,7 +2594,7 @@ DialogWindow {
         }
         Label {
             visible: pluginSection.modelData.enabled !== true
-            text: qsTr("%1 is turned off. Its settings apply when it's on.").arg(pluginSection.modelData.name)
+            text: qsTr("%1 is turned off. Its settings apply when it’s on.").arg(pluginSection.modelData.name)
             color: Theme.muted
             wrapMode: Text.Wrap
             Layout.fillWidth: true

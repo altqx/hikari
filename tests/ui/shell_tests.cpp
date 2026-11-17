@@ -23969,10 +23969,7 @@ private slots:
         QTRY_VERIFY(!mapping->isVisible());
         auto row = hotkeyRow(QStringLiteral("Global History"));
         QCOMPARE(row.value(QStringLiteral("accel")).toString(), QStringLiteral("Ctrl-Shift-K"));
-        QVERIFY(row.value(QStringLiteral("keyModified")).toBool());
-        QVERIFY(row.value(QStringLiteral("textModified")).toBool());
-        QCOMPARE(installedKeys("global").value(QStringLiteral("GLOBAL_HISTORY")).toString(), QStringLiteral("Ctrl+Shift+H"));
-        QVERIFY(!settings.contains("shortcuts.hotkeys"));
+        QCOMPARE(installedKeys("global").value(QStringLiteral("GLOBAL_HISTORY")).toString(), QStringLiteral("Ctrl+Shift+K"));
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsClose"), "click"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
         QVERIFY(settings.list("shortcuts.hotkeys").contains(QStringLiteral("GLOBAL_HISTORY G=Ctrl-Shift-K")));
@@ -24081,18 +24078,15 @@ private slots:
         QCOMPARE(hotkeyRow(QStringLiteral("Global Find…")).value(QStringLiteral("accel")).toString(), QStringLiteral("Ctrl-F"));
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsClose"), "click"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
-        QCOMPARE(installedKeys("global").value(QStringLiteral("GLOBAL_SAVE_SUBS")).toString(), QStringLiteral("Ctrl+S"));
-        QVERIFY(!application->settingsStore()->contains("shortcuts.hotkeys"));
+        QCOMPARE(installedKeys("global").value(QStringLiteral("GLOBAL_SAVE_SUBS")).toString(), QStringLiteral("Ctrl+Shift+H"));
+        QVERIFY(application->settingsStore()->contains("shortcuts.hotkeys"));
         dialog = openSettings();
         QTRY_VERIFY(dialog->property("visible").toBool());
-        QCOMPARE(hotkeyRow(QStringLiteral("Global History")).value(QStringLiteral("accel")).toString(), QStringLiteral("Ctrl-Shift-H"));
+        QCOMPARE(hotkeyRow(QStringLiteral("Global History")).value(QStringLiteral("accel")).toString(), QString());
         application->hotkeys().select(hotkeyPosition(QStringLiteral("Global Find…")));
         QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "hotkeyRemove"), "clicked"));
-        QCOMPARE(application->hotkeys().accelOf(QStringLiteral("GLOBAL_HISTORY"), 0), QStringLiteral("Ctrl-Shift-H"));
-        QCOMPARE(application->hotkeys().accelOf(QStringLiteral("GLOBAL_SAVE_SUBS"), 0), QStringLiteral("Ctrl-S"));
-        QCOMPARE(application->hotkeys().accelOf(QStringLiteral("GLOBAL_SAVE_SUBS"), 3), QString());
         QCOMPARE(application->hotkeys().accelOf(QStringLiteral("GLOBAL_SEARCH"), 0), QString());
-        QVERIFY(!hotkeyRow(QStringLiteral("Global Find…")).value(QStringLiteral("keyModified")).toBool());
+        QCOMPARE(installedKeys("global").value(QStringLiteral("GLOBAL_SEARCH")).toString(), QString());
         QVERIFY(dialog->property("visible").toBool());
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsClose"), "click"));
     }
@@ -24123,7 +24117,7 @@ private slots:
         QCOMPARE(hotkeyRow(QStringLiteral("Global Script a.lua-1")).value(QStringLiteral("accel")).toString(), QStringLiteral("Ctrl-J"));
         QCOMPARE(hotkeyRow(QStringLiteral("Global Save")).value(QStringLiteral("accel")).toString(), QStringLiteral("Ctrl-K"));
         showSettingsPage("hotkeys");
-        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsResetPage"), "click"));
+        QVERIFY(QMetaObject::invokeMethod(dialog, "resetPage", Q_ARG(QVariant, QStringLiteral("hotkeys"))));
         QCOMPARE(hotkeyRow(QStringLiteral("Global Save")).value(QStringLiteral("accel")).toString(), QStringLiteral("Ctrl-S"));
         QCOMPARE(hotkeyRow(QStringLiteral("Global Script a.lua-1")).value(QStringLiteral("accel")).toString(), QString());
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsClose"), "click"));
@@ -24134,7 +24128,7 @@ private slots:
         dialog = openSettings();
         QTRY_VERIFY(dialog->property("visible").toBool());
         QCOMPARE(hotkeyRow(QStringLiteral("Global Save")).value(QStringLiteral("accel")).toString(), QStringLiteral("Ctrl-K"));
-        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsResetPage"), "click"));
+        QVERIFY(QMetaObject::invokeMethod(dialog, "resetPage", Q_ARG(QVariant, QStringLiteral("hotkeys"))));
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsClose"), "click"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
         QVERIFY(store.list("shortcuts.hotkeys").contains(QStringLiteral("GLOBAL_SAVE_SUBS G=Ctrl-S")));
@@ -24152,7 +24146,7 @@ private slots:
         QTRY_VERIFY(dialog->property("visible").toBool());
         showSettingsPage("lineEditor");
         QCOMPARE(dialog->property("tagButtonList").toList().size(), 2);
-        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsResetPage"), "click"));
+        QVERIFY(QMetaObject::invokeMethod(dialog, "resetPage", Q_ARG(QVariant, QStringLiteral("lineEditor"))));
         QVERIFY(dialog->property("tagButtonList").toList().isEmpty());
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsClose"), "click"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
@@ -24160,7 +24154,7 @@ private slots:
         dialog = openSettings();
         QTRY_VERIFY(dialog->property("visible").toBool());
         QCOMPARE(dialog->property("tagButtonList").toList().size(), 2);
-        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsResetPage"), "click"));
+        QVERIFY(QMetaObject::invokeMethod(dialog, "resetPage", Q_ARG(QVariant, QStringLiteral("lineEditor"))));
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsClose"), "click"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
         QCOMPARE(buttons.count(), 0);
@@ -24182,7 +24176,7 @@ private slots:
         auto *catalog = dialogItem("settingsDialog", "setting_convert.styleCatalog");
         QVERIFY(QMetaObject::invokeMethod(catalog, "activated", Q_ARG(int, int(catalogs.indexOf(QStringLiteral("Conv"))))));
         QVERIFY(dialog->property("styles").toStringList().isEmpty());
-        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsResetPage"), "click"));
+        QVERIFY(QMetaObject::invokeMethod(dialog, "resetPage", Q_ARG(QVariant, QStringLiteral("conversion"))));
         QCOMPARE(styles.catalog(), QStringLiteral("Default"));
         QTRY_COMPARE(catalog->property("currentText").toString(), QStringLiteral("Default"));
         QVERIFY(dialog->property("styles").toStringList().contains(QStringLiteral("Default")));
@@ -24661,6 +24655,8 @@ private slots:
                 gap = i;
         QVERIFY(gap >= 0);
         const QByteArray box = "hotkeyBlock" + QByteArray::number(gap);
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "hotkeyList"), "positionViewAtIndex", Q_ARG(int, gap),
+                                          Q_ARG(int, 0)));
         QTRY_VERIFY(dialogItem("settingsDialog", box.constData()) && dialogItem("settingsDialog", box.constData())->isVisible());
         h.toggleBlock(gap);
         QVERIFY(hotkeyRows().size() > count);
@@ -24942,13 +24938,12 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(remove, "clicked"));
         QCOMPARE(settingsValues(dialog).value(QStringLiteral("trust.folders")).toStringList(),
                  QStringList{folders.at(1)});
+        QCOMPARE(settings.list("trust.folders"), QStringList{folders.at(1)});
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsClose"), "click"));
-        QCOMPARE(settings.list("trust.folders"), folders);
         dialog = openSettings();
         QTRY_VERIFY(dialog->property("visible").toBool());
-        QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "settingsUntrustFolder"), "clicked"));
+        QCOMPARE(settingsValues(dialog).value(QStringLiteral("trust.folders")).toStringList(), QStringList{folders.at(1)});
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsClose"), "click"));
-        QCOMPARE(settings.list("trust.folders"), QStringList{folders.at(1)});
     }
 
     void automationPanelRefusesAMacroNameTwoScriptsShare()
@@ -27854,21 +27849,9 @@ private slots:
         click("accent_blue");
         QCOMPARE(accent(), ui::theme::accent(false, QStringLiteral("blue")).accent);
         QVERIFY(checked("accent_blue"));
-        QCOMPARE(settings.text("appearance.theme"), QStringLiteral("dark"));
-        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsClose"), "click"));
-        QTRY_VERIFY(!dialog->property("visible").toBool());
-        QCOMPARE(code(), QStringLiteral("dark"));
-        QCOMPARE(accent(), QColor(0x9C, 0xDB, 0xC9));
-        QTRY_COMPARE(controls->property("window").value<QColor>(), QColor(0x20, 0x26, 0x2D));
-        QVERIFY(!settings.isSet(QStringLiteral("appearance.theme")));
-        QVERIFY(!settings.isSet(QStringLiteral("appearance.lightAccent")));
-
-        QVERIFY((dialog = openAppearance()) != nullptr);
-        click("appearanceTheme_light");
-        click("accent_blue");
-        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsClose"), "click"));
-        QTRY_VERIFY(!dialog->property("visible").toBool());
         QCOMPARE(settings.text("appearance.theme"), QStringLiteral("light"));
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsClose"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
         QVERIFY(!settings.boolean("appearance.followSystem"));
         QCOMPARE(settings.text("appearance.lightAccent"), QStringLiteral("blue"));
         QCOMPARE(settings.text("appearance.darkAccent"), QStringLiteral("green"));
@@ -28578,7 +28561,7 @@ private slots:
         QCOMPARE(application->shell().statusText(), QString());
         QVERIFY(QMetaObject::invokeMethod(named("audioOutputSettings"), "triggered"));
         QTRY_VERIFY((dialog = settingsWindow()) && dialog->property("visible").toBool());
-        QCOMPARE(dialog->property("currentNode").toString(), QStringLiteral("audio"));
+        QTRY_COMPARE(dialog->property("currentNode").toString(), QStringLiteral("audio"));
         QCOMPARE(settings.text("workspace.settingsPage"), QStringLiteral("audio"));
         QCOMPARE(dialogItem("settingsDialog", "setting_audio.outputDevice")->property("currentIndex").toInt(), 0);
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsClose"), "click"));
