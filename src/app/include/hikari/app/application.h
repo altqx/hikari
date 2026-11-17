@@ -875,7 +875,7 @@ public:
     Q_INVOKABLE bool snapToScene();
     // The amounts are audio.leadInValue / audio.leadOutValue.
     Q_INVOKABLE bool changeLead(bool end, bool add);
-    Q_INVOKABLE bool nudgeEdge(bool end, int frames);
+    Q_INVOKABLE bool nudgeEdge(bool end, int steps, bool shiftFollowing = false);
     Q_INVOKABLE bool extendNeighbour(bool next);
     // The Timing assistant's suggestion for the active Line, from the postprocessor rules:
     // {ok, line, index, count, style, text, startBefore, endBefore, start, end, startReason,

@@ -97,6 +97,8 @@ Subtitles > Timing helpers > Move start one frame earlier [GLOBAL_START_FRAME_EA
 Subtitles > Timing helpers > Move start one frame later [GLOBAL_START_FRAME_LATER]
 Subtitles > Timing helpers > Move end one frame earlier [GLOBAL_END_FRAME_EARLIER]
 Subtitles > Timing helpers > Move end one frame later [GLOBAL_END_FRAME_LATER]
+Subtitles > Timing helpers > Lengthen and shift what follows [GLOBAL_END_LATER_SHIFT_FOLLOWING]
+Subtitles > Timing helpers > Shorten and shift what follows [GLOBAL_END_EARLIER_SHIFT_FOLLOWING]
 Subtitles > Timing helpers > -
 Subtitles > Timing helpers > Extend the previous line to this start [GLOBAL_EXTEND_PREVIOUS_TO_START]
 Subtitles > Timing helpers > Extend the next line to this end [GLOBAL_EXTEND_NEXT_TO_END]

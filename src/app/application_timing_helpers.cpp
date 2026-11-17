@@ -88,14 +88,21 @@ bool Application::changeLead(bool end, bool add)
     return done;
 }
 
-bool Application::nudgeEdge(bool end, int frames)
+bool Application::nudgeEdge(bool end, int steps, bool shiftFollowing)
 {
+    constexpr int kStepMs = 10;
     auto *session = targetSession();
-    if (!session || !exactTimebase())
+    if (!session)
         return false;
-    const bool done = application::nudgeEdgeByFrames(*session, activeMedia().video->session().legacyTimebase(),
-                                                     end ? TimingEdge::End : TimingEdge::Start, frames)
-                          .has_value();
+    if (end)
+        if (const auto syllable = audio().nudgeSyllableEnd(steps * kStepMs, shiftFollowing))
+            return *syllable;
+    const auto edge = end ? TimingEdge::End : TimingEdge::Start;
+    const bool done =
+        (exactTimebase() ? application::nudgeEdgeByFrames(*session, activeMedia().video->session().legacyTimebase(),
+                                                          edge, steps, shiftFollowing)
+                         : application::nudgeEdgeByMs(*session, edge, steps * kStepMs, shiftFollowing))
+            .has_value();
     editor().reloadFromSession();
     refreshViews();
     return done;

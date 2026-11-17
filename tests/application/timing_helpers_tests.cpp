@@ -250,6 +250,48 @@ TEST_P(TimingHelpers, NudgesOneEdgeByWholeFrames)
     EXPECT_FALSE(nudgeEdgeByFrames(*session, tb(), TimingEdge::Start, -1));
 }
 
+TEST_P(TimingHelpers, ShiftingWhatFollowsMovesEveryLineBelowTheSelectionInTheSameStep)
+{
+    load(standard);
+    select({1}, 1);
+    const auto before = steps();
+    ASSERT_TRUE(nudgeEdgeByFrames(*session, tb(), TimingEdge::End, 2, true));
+    EXPECT_EQ(steps(), before + 1);
+    EXPECT_EQ(frames(0), (F{24, 72}));
+    EXPECT_EQ(frames(1), (F{100, 162}));
+    EXPECT_EQ(frames(2), (F{162, 172}));
+    EXPECT_EQ(frames(3), (F{177, 232}));
+    ASSERT_TRUE(nudgeEdgeByFrames(*session, tb(), TimingEdge::End, -1, true));
+    EXPECT_EQ(frames(1), (F{100, 161}));
+    EXPECT_EQ(frames(3), (F{176, 231}));
+}
+
+TEST(TimingHelpersMs, WithoutAnExactTimebaseTheEdgeMovesByMilliseconds)
+{
+    std::string text = "[Events]\n"
+                       "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n"
+                       "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,b\n";
+    std::vector<std::byte> bytes(text.size());
+    std::memcpy(bytes.data(), text.data(), text.size());
+    EditSession session(core::loadAss(bytes).document);
+    const auto a = session.document().lines()[0]->id;
+    session.setSelection(Selection{a, {a}, a, {}});
+    const auto ms = [&](std::size_t row, bool end) {
+        const auto &l = *session.document().lines()[row];
+        return static_cast<int>((end ? l.end : l.start).value.microseconds() / 1000);
+    };
+    ASSERT_TRUE(nudgeEdgeByMs(session, TimingEdge::End, 10, false));
+    EXPECT_EQ(ms(0, true), 2010);
+    EXPECT_EQ(ms(1, false), 3000);
+    ASSERT_TRUE(nudgeEdgeByMs(session, TimingEdge::End, -20, true));
+    EXPECT_EQ(ms(0, true), 1990);
+    EXPECT_EQ(ms(1, false), 2980);
+    EXPECT_EQ(ms(1, true), 3980);
+    ASSERT_TRUE(nudgeEdgeByMs(session, TimingEdge::Start, 5000, false));
+    EXPECT_EQ(ms(0, false), 1980);
+    EXPECT_FALSE(nudgeEdgeByMs(session, TimingEdge::End, -10, false));
+}
+
 TEST_P(TimingHelpers, ExtendsTheUncommentedNeighbourToTheActiveLine)
 {
     load(standard);

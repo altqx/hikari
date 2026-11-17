@@ -4202,6 +4202,28 @@
    ]
   },
   {
+   "role": "end-later-shift-following",
+   "file": "end-later-shift-following.svg",
+   "label": "Lengthen and shift what follows",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:timing"
+   ]
+  },
+  {
+   "role": "end-earlier-shift-following",
+   "file": "end-earlier-shift-following.svg",
+   "label": "Shorten and shift what follows",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:timing"
+   ]
+  },
+  {
    "role": "preview-resolution",
    "file": "preview-resolution.svg",
    "label": "Preview subtitles at",

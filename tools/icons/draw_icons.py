@@ -1063,6 +1063,10 @@ icon("end-frame-earlier", "Move end one frame earlier", [], [TIMING],
      rect(1.5, 8.5, 7, 5, 1) + accent(stroke("M10.5 7.5v7M13.5 4.5h-6M9 3L7.5 4.5 9 6")))
 icon("end-frame-later", "Move end one frame later", [], [TIMING],
      rect(1.5, 8.5, 7, 5, 1) + accent(stroke("M10.5 7.5v7M7.5 4.5h6M12 3l1.5 1.5L12 6")))
+icon("end-later-shift-following", "Lengthen and shift what follows", [], [TIMING],
+     rect(1.5, 8.5, 5, 5, 1) + rect(10.5, 8.5, 4, 5, 1) + accent(stroke("M3.5 4.5h9M11 3l1.5 1.5L11 6")))
+icon("end-earlier-shift-following", "Shorten and shift what follows", [], [TIMING],
+     rect(1.5, 8.5, 5, 5, 1) + rect(10.5, 8.5, 4, 5, 1) + accent(stroke("M12.5 4.5h-9M5 3L3.5 4.5 5 6")))
 icon("preview-resolution", "Preview subtitles at", [], ["settings-dialog"],
      rect(1.5, 2.5, 13, 9, 1) + stroke("M6.5 11.5v2M9.5 11.5v2M4.5 13.5h7")
      + accent(stroke("M4.5 9.5l2-2M4.5 9.5V8M4.5 9.5H6M11.5 4.5l-2 2M11.5 4.5V6M11.5 4.5H10")))

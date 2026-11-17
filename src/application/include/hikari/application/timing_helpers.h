@@ -38,9 +38,15 @@ std::expected<void, CommandRefusal> changeLead(EditSession &session, const Legac
                                                bool add, int amountMs);
 
 // Each selected Line's start (or end) moves by `frames` whole frames; at least
-// one frame stays and a start stays at frame 0 or later.
+// one frame stays and a start stays at frame 0 or later. `shiftFollowing` moves
+// every Line below the last selected one by the same frames.
 std::expected<void, CommandRefusal> nudgeEdgeByFrames(EditSession &session, const LegacyTimebase &timebase,
-                                                      TimingEdge edge, int frames);
+                                                      TimingEdge edge, int frames, bool shiftFollowing = false);
+
+// As nudgeEdgeByFrames, by `ms`, for a Document with no exact timebase; at least
+// 10 ms stay.
+std::expected<void, CommandRefusal> nudgeEdgeByMs(EditSession &session, TimingEdge edge, int ms,
+                                                  bool shiftFollowing);
 
 // The previous uncommented Line's end becomes the active Line's start (or the
 // next one's start becomes its end); the active Line keeps its times.

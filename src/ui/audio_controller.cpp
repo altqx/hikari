@@ -1125,6 +1125,17 @@ void AudioController::commitWithDefaultTiming()
     update();
 }
 
+std::optional<bool> AudioController::nudgeSyllableEnd(int deltaMs, bool shiftFollowing)
+{
+    if (tapBusy() || !m_hasKara || !loaded() || !m_karaoke.count())
+        return std::nullopt;
+    if (!m_karaoke.moveSyllableEnd(m_karaoke.current, deltaMs, shiftFollowing, committedStart()))
+        return false;
+    commitKaraoke();
+    redraw();
+    return true;
+}
+
 void AudioController::changeLine(int delta)
 {
     const int count = static_cast<int>(m_lines.size());
