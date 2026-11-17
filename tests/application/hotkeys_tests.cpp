@@ -118,6 +118,9 @@ TEST(Hotkeys, ActionTableIsLegacyIdsAndTheMigrationMap)
     EXPECT_EQ(hotkeyIdOf("GLOBAL_TOGGLE_RIGHT_SIDE_BAR"), 5340);
     EXPECT_EQ(hotkeyIdOf("GLOBAL_SWAP_SIDE_BARS"), 5341);
     EXPECT_EQ(hotkeyIdOf("GLOBAL_AUTOMATION_RERUN_LAST_MACRO"), 5342);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_QUICK_OPEN"), 5343);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_COMMAND_PALETTE"), 5344);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_CLEAR_COMMAND_HISTORY"), 5345);
     EXPECT_EQ(hotkeyIdOf("GLOBAL_JOIN_PREVIOUS_AUDIO_SELECTION"), 5216);
     EXPECT_EQ(hotkeyIdOf("GLOBAL_SHIFT_FRAMES_TO_VIDEO_START"), 5217);
     EXPECT_EQ(hotkeyIdOf("GLOBAL_SHIFT_FRAMES_TO_VIDEO_END"), 5218);
@@ -311,7 +314,7 @@ TEST(Hotkeys, StoredLinesAreSaveHkeys)
     map[HotkeyId{ids().at("AUDIO_PLAY"), GlobalHotkey}] = Hotkey{"", "Ctrl-P"};
     const auto main = hotkeyLines(map, false);
     const auto audio = hotkeyLines(map, true);
-    EXPECT_EQ(main.size(), 62u + 2u - 1u + 1u + 12u + 9u + 1u + 1u + 4u - 4u + 1u + 1u);
+    EXPECT_EQ(main.size(), 62u + 2u - 1u + 1u + 12u + 9u + 1u + 1u + 4u - 4u + 1u + 1u + 2u);
     EXPECT_EQ(audio.size(), 23u + 3u + 2u);
     EXPECT_EQ(main.front(), "AUDIO_PLAY G=Ctrl-P");
     EXPECT_NE(std::ranges::find(main, "GLOBAL_SAVE_SUBS G=Ctrl-S"), main.end());
