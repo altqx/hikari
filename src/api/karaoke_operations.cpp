@@ -434,8 +434,9 @@ void applyTemplate(const Context &context, const Json &params, Reply reply)
             before = session->document();
         const application::ContentId previous = session->contentId();
         const std::uint64_t was = session->revision();
-        const std::string label = caller.label.empty() ? name : caller.label + ": " + name;
-        if (auto applied = application::applyMacroResult(*session, snapshot, *preview.result, label); !applied)
+        const std::string prefix = caller.label.empty() ? std::string() : caller.label + ": ";
+        if (auto applied = application::applyMacroResult(*session, snapshot, *preview.result, name, prefix);
+            !applied)
             return reply(fail(errors::kStaleRevision, "The Document changed while the templater ran; read it again.",
                               Json::object({{"current", Json(session->revision())}})));
         const bool changed = session->revision() != was;
