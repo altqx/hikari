@@ -114,6 +114,7 @@ std::vector<SettingDefinition> &definitions()
         {"scriptProperties.updateOn", "ASS_PROPERTIES_UPDATE_ON", Bool, Profile, Mapped, false, false},
         {"scriptProperties.askForChange", "ASS_PROPERTIES_ASK_FOR_CHANGE", Bool, Profile, Mapped, false, false},
         {"recent.audio", "AUDIO_RECENT_FILES", StringList, Profile, Mapped, false, std::vector<std::string>()},
+        {"recent.commands", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {"automation.loadingMethod", "AUTOMATION_LOADING_METHOD", Int, Profile, Mapped, false, std::int64_t{0}},
         {"automation.oldScriptsCompatibility", "AUTOMATION_OLD_SCRIPTS_COMPATIBILITY", Bool, Profile, Mapped, false, false},
         {"automation.lastScript", "AUTOMATION_RECENT_FILES", String, Profile, Mapped, false, std::string()},

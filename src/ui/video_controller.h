@@ -93,6 +93,9 @@ public:
     QString times() const;
     bool keyframeShown() const;
     Q_INVOKABLE bool showFrameAt(int frame);
+    // Jump to's grammar: {} when unreadable, else {kind, value} (kind time, frame, timeStep or frameStep; value in
+    // milliseconds or frames), plus with video the target's {frame, time}.
+    Q_INVOKABLE QVariantMap jumpTarget(const QString &text) const;
     Q_INVOKABLE void seekBarMoved(int frame, bool held);
     Q_INVOKABLE void seekBarReleased();
     Q_INVOKABLE bool seekBy(int ms);
