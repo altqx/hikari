@@ -3,6 +3,7 @@
 #include "video_presenter.h"
 
 #include "hikari/application/jump_target.h"
+#include "hikari/application/subtitle_boundary.h"
 #include "hikari/application/video_details.h"
 
 #include <QCoreApplication>
@@ -529,6 +530,18 @@ bool VideoController::goToLineEnd()
         return false;
     m_session.seekToEnd(m_lineTimes->second);
     return true;
+}
+
+int VideoController::boundaryInLine(int direction) const
+{
+    const auto shown = m_session.reportedFrame();
+    if (!hasVideo() || !m_lineTimes || !shown || direction == 0)
+        return -1;
+    const application::LineFrames line{m_session.frameAtOrAfter(m_lineTimes->first).value_or(frameCount() - 1),
+                                       m_session.lastFrameBefore(m_lineTimes->second).value_or(0)};
+    const auto target = direction > 0 ? application::nextBoundaryInLine(line, *shown)
+                                      : application::previousBoundaryInLine(line, *shown);
+    return target ? int(*target) : -1;
 }
 
 void VideoController::setActiveLineTimes(std::optional<std::pair<core::DocumentTime, core::DocumentTime>> times)

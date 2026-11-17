@@ -103,6 +103,9 @@ public:
     Q_INVOKABLE bool previousKeyframe() { return m_session.previousKeyframe(); }
     Q_INVOKABLE bool goToLineStart();
     Q_INVOKABLE bool goToLineEnd();
+    // The frame of the next (direction > 0) or previous subtitle boundary inside the active Line;
+    // -1 when the step leaves the Line.
+    Q_INVOKABLE int boundaryInLine(int direction) const;
     void setActiveLineTimes(std::optional<std::pair<core::DocumentTime, core::DocumentTime>> times);
 
     void setMediaInfo(application::DisplayAudioPort *tracks, application::ChapterPort *chapters);
