@@ -25,10 +25,13 @@ struct MacroApplyFailure {
     std::optional<CommandRefusal> refusal;
 };
 
-// One history step named "Automation: <name>", or refused without changes
-// (stale revision, Line gone, MacroResult::valid false). Unchanged entries
-// keep their bytes; a result equal to the snapshot adds no step.
+// One history step for each undo step that changed something, then the last
+// one, each named "Automation: <caller><description>"; the last step without a
+// description takes `name`. Refused without changes (stale revision, Line
+// gone, MacroResult::valid false). Unchanged entries keep their bytes; a
+// result equal to the snapshot adds no step.
 std::expected<void, MacroApplyFailure> applyMacroResult(EditSession &session, const MacroSnapshot &snapshot,
-                                                        const MacroResult &result, const std::string &name);
+                                                        const MacroResult &result, const std::string &name,
+                                                        const std::string &caller = {});
 
 }

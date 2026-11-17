@@ -133,6 +133,8 @@ Video > -
 Video > Open keyframes… [GLOBAL_OPEN_KEYFRAMES]
 Video > Recently opened keyframes >
 Video > Recently opened keyframes > None
+Video > Save keyframes… [GLOBAL_SAVE_KEYFRAMES]
+Video > Close keyframes [GLOBAL_CLOSE_KEYFRAMES]
 Video > Open timecodes… [GLOBAL_OPEN_TIMECODES]
 Video > Recently opened timecodes >
 Video > Recently opened timecodes > None

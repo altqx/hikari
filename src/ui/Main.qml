@@ -2663,6 +2663,18 @@ ApplicationWindow {
             onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_KEYFRAMES")) keyframesDialog.show()
         }
         Action {
+            id: saveKeyframesAction
+            text: qsTr("Save keyframes…")
+            enabled: root.video.hasVideo
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_SAVE_KEYFRAMES")) saveKeyframesDialog.show()
+        }
+        Action {
+            id: closeKeyframesAction
+            text: qsTr("Close keyframes")
+            enabled: root.app.keyframesFile.length > 0
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_CLOSE_KEYFRAMES")) root.app.closeKeyframes()
+        }
+        Action {
             id: openTimecodesAction
             text: qsTr("Open timecodes…")
             onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_TIMECODES")) timecodesDialog.show()
@@ -3804,6 +3816,20 @@ ApplicationWindow {
                         if (problem.length > 0)
                             root.notices.post("error", qsTr("Open keyframes"), problem)
                     }
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_SAVE_KEYFRAMES"
+                    objectName: "saveKeyframesMenuItem"
+                    help: qsTr("Saves the video’s keyframes as a keyframes file")
+                    iconRole: "save-keyframes"
+                    action: saveKeyframesAction
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_CLOSE_KEYFRAMES"
+                    objectName: "closeKeyframesMenuItem"
+                    help: qsTr("Closes the open keyframes file and goes back to the video’s own keyframes")
+                    iconRole: "close-keyframes"
+                    action: closeKeyframesAction
                 }
                 ShellMenuItem {
                     command: "GLOBAL_OPEN_TIMECODES"
@@ -5240,6 +5266,7 @@ ApplicationWindow {
         }
         Keys.onShortcutOverride: event => event.accepted = field.compositionKey(event) || hotkeyAction(event) !== ""
                                                            || tagListPopup.takesKey(event) || field.undoRedoKey(event)
+                                                           || root.timingKey(event, true) !== ""
         Keys.onPressed: event => {
             if (field.compositionKey(event)) {
                 field.endComposition(event.key === Qt.Key_Escape)
@@ -5257,6 +5284,7 @@ ApplicationWindow {
             if (action !== "") {
                 root.runEditorHotkey(action, field)
                 event.accepted = true
+            } else if (root.runTimingKey(event, true)) {
             } else if (plain && field.role === 1 && event.key === Qt.Key_Tab && root.editor.acceptSuggestedRuns()) {
                 event.accepted = true
             } else if (plain && field.role === 1 && event.key === Qt.Key_Escape && root.editor.dismissSuggestedRuns()) {
@@ -5545,6 +5573,7 @@ ApplicationWindow {
                 Keys.onShortcutOverride: event => event.accepted = (event.key === Qt.Key_Escape && root.visualTools.escapable)
                                                   || root.visualTools.takesKey(event.key, event.modifiers)
                                                   || videoPanel.panelAction(event) !== ""
+                                                  || root.timingKey(event, false) !== ""
                 Keys.onPressed: event => {
                     if (event.key === Qt.Key_Escape && root.visualTools.escape()) {
                         event.accepted = true
@@ -5559,6 +5588,7 @@ ApplicationWindow {
                     if (action !== "") {
                         root.runVideoHotkey(action)
                         event.accepted = true
+                    } else if (root.runTimingKey(event, false)) {
                     } else if (event.key === Qt.Key_F) {
                         root.videoFullscreen.toggle(0)
                         event.accepted = true
@@ -7349,10 +7379,15 @@ ApplicationWindow {
                     return action === "EDITBOX_COMMIT" || action === "EDITBOX_COMMIT_GO_NEXT_LINE" ? "" : action
                 }
                 Keys.onShortcutOverride: event => event.accepted = panelAction(event) !== ""
+                                                  || (!lineText.activeFocus && !translationText.activeFocus
+                                                      && root.timingKey(event, false) !== "")
                 Keys.onPressed: event => {
                     const action = panelAction(event)
-                    if (action === "")
+                    if (action === "") {
+                        if (!lineText.activeFocus && !translationText.activeFocus)
+                            root.runTimingKey(event, false)
                         return
+                    }
                     root.runEditorHotkey(action, root.editedField())
                     event.accepted = true
                 }
@@ -9785,6 +9820,24 @@ ApplicationWindow {
         }
     }
     FileChooser {
+        id: saveKeyframesDialog
+        objectName: "saveKeyframesDialog"
+        fileMode: FileDialog.SaveFile
+        title: qsTranslate("HikariSub.Video", "Save keyframes file")
+        defaultSuffix: "txt"
+        nameFilters: [qsTranslate("HikariSub.Video", "Keyframes file (*.txt)"), qsTranslate("HikariSub.Video", "All files (*)")]
+        onAccepted: {
+            root.rememberPickerFolder("keyframes", selectedFile)
+            const problem = root.app.saveKeyframesFile(selectedFile)
+            if (problem.length > 0)
+                root.notices.post("error", qsTranslate("HikariSub.Video", "Save keyframes file"), problem)
+        }
+        function show() {
+            currentFolder = root.startFolder("keyframes", root.app.keyframesDialogFolder())
+            open()
+        }
+    }
+    FileChooser {
         id: saveTimecodesDialog
         objectName: "saveTimecodesDialog"
         fileMode: FileDialog.SaveFile
@@ -10842,7 +10895,8 @@ ApplicationWindow {
         GLOBAL_OPEN_SUBS: openAction, GLOBAL_OPEN_VIDEO: openVideoAction, GLOBAL_OPEN_KEYFRAMES: openKeyframesAction,
         GLOBAL_OPEN_FOLDER: openFolderAction, GLOBAL_CLOSE_PROJECT: closeProjectAction,
         GLOBAL_OPEN_TIMECODES: openTimecodesAction, GLOBAL_SAVE_TIMECODES: saveTimecodesAction,
-        GLOBAL_CLOSE_TIMECODES: closeTimecodesAction,
+        GLOBAL_CLOSE_TIMECODES: closeTimecodesAction, GLOBAL_SAVE_KEYFRAMES: saveKeyframesAction,
+        GLOBAL_CLOSE_KEYFRAMES: closeKeyframesAction,
         GLOBAL_OPEN_AUTO_SAVE: openAutoSaveAction,
         GLOBAL_OPEN_DUMMY_VIDEO: dummyVideoAction,
         GLOBAL_DELETE_TEMPORARY_FILES: removeTemporaryAction, GLOBAL_SETTINGS: settingsAction,
@@ -10980,6 +11034,27 @@ ApplicationWindow {
     function runAudioHotkey(action) {
         return root.hotkeys.report(action, root.hotkeys.rehearsing() || root.byKey(() => root.audioHotkey(action)))
     }
+    readonly property var panelNavigationKeys: [Qt.Key_Left, Qt.Key_Right, Qt.Key_Up, Qt.Key_Down, Qt.Key_PageUp,
+                                                Qt.Key_PageDown, Qt.Key_Home, Qt.Key_End, Qt.Key_Return, Qt.Key_Enter,
+                                                Qt.Key_Tab, Qt.Key_Backtab, Qt.Key_Escape]
+    function timingKey(event, typing) {
+        const everywhere = Number(root.app.settings.value("audio.timingKeysEverywhere"))
+        if (!root.audio.loaded || everywhere === 0 || (everywhere === 1 && root.workspaceLayout.preset !== "Timing"))
+            return ""
+        if (typing && !(event.modifiers & (Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier)))
+            return ""
+        if (root.panelNavigationKeys.includes(event.key))
+            return ""
+        return root.hotkeys.actionFor(4, event.key, event.modifiers)
+    }
+    function runTimingKey(event, typing) {
+        const action = root.timingKey(event, typing)
+        if (action === "")
+            return false
+        root.runAudioHotkey(action)
+        event.accepted = true
+        return true
+    }
     property int keyRuns: 0
     function byKey(run) {
         ++root.keyRuns
@@ -11000,7 +11075,7 @@ ApplicationWindow {
         if (symbol.startsWith("GRID_"))
             return root.runGridHotkey(symbol)
         const menuSelected1 = ["GLOBAL_OPEN_SUBS", "GLOBAL_OPEN_VIDEO", "GLOBAL_OPEN_KEYFRAMES", "GLOBAL_OPEN_DUMMY_VIDEO",
-                               "GLOBAL_OPEN_TIMECODES", "GLOBAL_SAVE_TIMECODES",
+                               "GLOBAL_OPEN_TIMECODES", "GLOBAL_SAVE_TIMECODES", "GLOBAL_SAVE_KEYFRAMES",
                                "GLOBAL_OPEN_AUTO_SAVE", "GLOBAL_DELETE_TEMPORARY_FILES",
                                "GLOBAL_SETTINGS", "GLOBAL_QUIT", "GLOBAL_ABOUT", "GLOBAL_HELPERS",
                                "GLOBAL_HELP", "GLOBAL_ANSI", "GLOBAL_CHECK_FOR_UPDATES", "GLOBAL_SELECT_FROM_VIDEO",
