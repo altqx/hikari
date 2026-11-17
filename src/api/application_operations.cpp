@@ -161,7 +161,7 @@ std::string pluginSettingId(const PluginSettingState &setting)
 
 std::string_view pluginTypeName(std::string_view type)
 {
-    if (type == "boolean" || type == "integer" || type == "number")
+    if (type == "boolean" || type == "integer")
         return type;
     return type == "list" ? "stringList" : "string";
 }
@@ -211,18 +211,16 @@ Result settingsList(const Context &context, const Json &params)
     }
     for (const PluginSettingState &setting : pluginSettings(context)) {
         const std::string id = pluginSettingId(setting);
-        if (!id.starts_with(prefix))
+        if (!id.starts_with(prefix) || setting.type == "secret" || setting.type == "number")
             continue;
         Json entry = Json::object({{"setting", Json(id)},
                                    {"type", Json(pluginTypeName(setting.type))},
                                    {"scope", Json("profile")},
                                    {"title", Json(setting.title)},
                                    {"source", Json(setting.plugin)},
-                                   {"projectable", Json(setting.projectable)}});
-        if (setting.type != "secret") {
-            entry["default"] = setting.defaultValue;
-            entry["value"] = setting.value;
-        }
+                                   {"projectable", Json(setting.projectable)},
+                                   {"default", setting.defaultValue},
+                                   {"value", setting.value}});
         list.push(std::move(entry));
     }
     return Json::object({{"settings", list}});
@@ -461,14 +459,14 @@ void addApplicationOperations(Registry &registry)
              "additionalProperties": false})",
          R"({"type": "object", "properties": {"settings": {"type": "array", "items": {"type": "object", "properties": {
              "setting": {"type": "string"},
-             "type": {"enum": ["boolean", "integer", "number", "string", "stringList"]},
+             "type": {"enum": ["boolean", "integer", "string", "stringList"]},
              "scope": {"enum": ["profile", "collections", "workspace"]},
              "default": {"$ref": "#/$defs/SettingValue"},
-             "value": {"$ref": "#/$defs/SettingValue", "description": "Left out for a plugin's secret."},
+             "value": {"$ref": "#/$defs/SettingValue"},
              "title": {"type": "string", "description": "The name the Settings window shows, in the UI language."},
              "source": {"type": "string", "description": "app, or the id of the plugin whose setting it is."},
              "projectable": {"type": "boolean", "description": "Whether a Project can override it on the Project tab."}},
-             "required": ["setting", "type", "scope"], "additionalProperties": false}}},
+             "required": ["setting", "type", "scope", "default", "value"], "additionalProperties": false}}},
              "required": ["settings"], "additionalProperties": false})",
          settingsList);
     read(registry, "settings.get", "The current values of the settings named.",
