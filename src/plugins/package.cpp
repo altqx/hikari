@@ -3,6 +3,7 @@
 #include "media.h"
 #include "hikari/api/file_names.h"
 
+#include "hikari/plugins/archive.h"
 #include "hikari/plugins/qml_imports.h"
 
 #include <algorithm>
@@ -11,33 +12,6 @@
 namespace hikari::plugins {
 
 namespace {
-
-bool allowedChar(char c)
-{
-    return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == ' ' || c == '_' ||
-           c == '.' || c == '-' || c == '+';
-}
-
-bool goodPart(std::string_view part)
-{
-    return !part.empty() && part != "." && part != ".." && part.size() <= 255 &&
-           std::all_of(part.begin(), part.end(), allowedChar) && !part.ends_with('.') && !part.ends_with(' ') &&
-           !api::reservedOnWindows(part);
-}
-
-bool goodPath(std::string_view path)
-{
-    if (path.empty() || path.size() > 400)
-        return false;
-    while (true) {
-        const std::size_t slash = path.find('/');
-        if (!goodPart(path.substr(0, slash)))
-            return false;
-        if (slash == std::string_view::npos)
-            return true;
-        path.remove_prefix(slash + 1);
-    }
-}
 
 std::optional<PackageProblem> qmlProblem(const Manifest &manifest, const std::vector<PackageFile> &files)
 {
@@ -68,7 +42,7 @@ std::expected<Package, PackageProblem> openPackage(std::vector<PackageFile> file
         total += file.data.size();
         if (total > kMaxPackageBytes)
             return std::unexpected(PackageProblem{Kind::TooLarge, {}, {}});
-        if (!goodPath(file.path) || !seen.insert(api::lowered(file.path)).second)
+        if (!goodPackagePath(file.path) || !seen.insert(api::lowered(file.path)).second)
             return std::unexpected(PackageProblem{Kind::BadPath, file.path, {}});
         if (file.path == kManifestName)
             manifestFile = &file;
