@@ -1,6 +1,7 @@
 #include "hikari/app/api_host.h"
 
 #include "hikari/backends/subtitle_renderer_selection.h"
+#include "settings_catalogue.h"
 
 #include <QCoreApplication>
 #include <QFile>
@@ -49,6 +50,7 @@ ApiHost::ApiHost(Wiring wiring, QObject *parent)
           .keyframes = this,
           .marks = m_wiring.marks,
           .vcs = m_wiring.vcs,
+          .settingsWindow = this,
       }),
       m_seenProject(project())
 {
@@ -217,6 +219,28 @@ bool ApiHost::setOpen(std::string_view panel, bool open)
 bool ApiHost::focus(std::string_view panel)
 {
     return callPanels(panel, "focus").toBool();
+}
+
+std::string ApiHost::title(std::string_view setting) const
+{
+    return ui::SettingsCatalogue::label(QString::fromUtf8(setting.data(), qsizetype(setting.size()))).toStdString();
+}
+
+std::vector<api::PluginSettingState> ApiHost::pluginSettings() const
+{
+    return m_wiring.pluginSettings ? m_wiring.pluginSettings() : std::vector<api::PluginSettingState>{};
+}
+
+std::optional<std::string> ApiHost::setPluginSetting(std::string_view plugin, std::string_view setting, const api::Json &value)
+{
+    if (!m_wiring.setPluginSetting)
+        return "No plugin settings are available.";
+    return m_wiring.setPluginSetting(plugin, setting, value);
+}
+
+void ApiHost::open(std::string_view setting, bool project)
+{
+    emit settingsOpenRequested(QString::fromUtf8(setting.data(), qsizetype(setting.size())), project);
 }
 
 std::optional<std::string> ApiHost::read(const std::string &path, std::size_t atMost) const

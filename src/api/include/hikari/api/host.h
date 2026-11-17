@@ -17,6 +17,7 @@
 #include "hikari/application/vcs.h"
 #include "hikari/application/visual_perspective.h"
 #include "hikari/application/workspace.h"
+#include "hikari/api/json.h"
 
 #include <filesystem>
 #include <expected>
@@ -318,6 +319,28 @@ public:
     virtual std::expected<PluginReview, std::string> install(const std::string &package, const std::string &digest) = 0;
 };
 
+// A running plugin's setting, as plugin.<plugin>.<setting>.
+struct PluginSettingState {
+    std::string plugin, setting, title;
+    std::string type; // the manifest's type
+    bool projectable = true;
+    Json defaultValue, value; // value is null for a secret
+};
+
+// The Settings window and plugins' settings.
+class SettingsHost {
+public:
+    virtual ~SettingsHost() = default;
+    // The name the Settings window shows, in the UI language; empty for a setting without a row.
+    virtual std::string title(std::string_view setting) const = 0;
+    virtual std::vector<PluginSettingState> pluginSettings() const = 0;
+    // Why the value was refused; nullopt once it is kept.
+    virtual std::optional<std::string> setPluginSetting(std::string_view plugin, std::string_view setting,
+                                                        const Json &value) = 0;
+    // Empty `setting`: the window alone.
+    virtual void open(std::string_view setting, bool project) = 0;
+};
+
 // Runs node-effect graphs as the node-effect editor does, but never trusts a Document's Lua.
 class EffectsHost {
 public:
@@ -347,6 +370,7 @@ struct Host {
     KeyframeHost *keyframes = nullptr;
     application::RowMarks *marks = nullptr;
     application::VcsPort *vcs = nullptr;
+    SettingsHost *settingsWindow = nullptr;
 };
 
 }

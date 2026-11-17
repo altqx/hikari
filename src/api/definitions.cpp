@@ -115,7 +115,7 @@ void addDefinitions(Registry &registry)
             "properties": {"op": {"const": "set_info"}, "key": {"type": "string", "minLength": 1},
             "value": {"type": ["string", "null"]}}, "required": ["op", "key", "value"], "additionalProperties": false}
     ]})"));
-    registry.define("SettingValue", schema(R"({"anyOf": [{"type": "boolean"}, {"type": "integer"}, {"type": "string"},
+    registry.define("SettingValue", schema(R"({"anyOf": [{"type": "boolean"}, {"type": "integer"}, {"type": "number"}, {"type": "string"},
         {"type": "array", "items": {"type": "string"}}]})"));
     registry.define("NodePort", schema(R"({"type": "object", "properties": {"name": {"type": "string"},
         "type": {"type": "string"}}, "required": ["name", "type"], "additionalProperties": false})"));

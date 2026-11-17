@@ -807,7 +807,16 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         [this](const std::vector<std::int64_t> &frames, const std::optional<std::string> &file) {
             return setKeyframesFromApi(frames, file);
         },
-        &m_rowMarks, m_git.get()});
+        &m_rowMarks, m_git.get(),
+        [this] { return m_pluginManager ? m_pluginManager->settingStates() : std::vector<api::PluginSettingState>{}; },
+        [this](std::string_view plugin, std::string_view setting, const api::Json &value) -> std::optional<std::string> {
+            if (!m_pluginManager)
+                return "No plugin settings are available.";
+            const QString refused = m_pluginManager->setSetting(QString::fromUtf8(plugin.data(), qsizetype(plugin.size())),
+                                                                QString::fromUtf8(setting.data(), qsizetype(setting.size())),
+                                                                QString::fromStdString(value.dump()));
+            return refused.isEmpty() ? std::nullopt : std::optional(refused.toStdString());
+        }});
     m_automation->setMacroRan([this](const AutomationShell::Ran &ran) {
         m_apiHost->api().macroRan(ran.document, application::scriptFileName(ran.path), ran.macro, ran.outcome, ran.dialogs);
     });

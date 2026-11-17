@@ -84,13 +84,7 @@ list(APPEND hikari_ui_qml_files PluginManagerDialog.qml PluginWidget.qml PluginL
     PluginDialog.qml PluginFilePicker.qml)
 target_sources(hikari_ui PRIVATE status_bar_controller.cpp status_bar_controller.h menu_key.cpp menu_key.h)
 target_sources(hikari_ui PRIVATE shown_objects.cpp shown_objects.h)
-set(hikari_setting_pages ${CMAKE_CURRENT_SOURCE_DIR}/SettingsDialog.qml ${CMAKE_CURRENT_SOURCE_DIR}/SettingsAiPage.qml)
-list(JOIN hikari_setting_pages "|" hikari_setting_pages_arg)
-add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/setting_labels.cpp
-    COMMAND "${CMAKE_COMMAND}" "-DPAGES=${hikari_setting_pages_arg}" -DOUT=${CMAKE_CURRENT_BINARY_DIR}/setting_labels.cpp
-        -P ${CMAKE_CURRENT_SOURCE_DIR}/setting_labels.cmake
-    DEPENDS ${hikari_setting_pages} ${CMAKE_CURRENT_SOURCE_DIR}/setting_labels.cmake VERBATIM)
-target_sources(hikari_ui PRIVATE setting_labels.h ${CMAKE_CURRENT_BINARY_DIR}/setting_labels.cpp)
+target_sources(hikari_ui PRIVATE settings_catalogue.cpp settings_catalogue.h)
 set_source_files_properties(StatusHelp.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 list(APPEND hikari_ui_qml_files StatusBar.qml StatusHelp.qml)
 set_source_files_properties(MenuKeys.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
