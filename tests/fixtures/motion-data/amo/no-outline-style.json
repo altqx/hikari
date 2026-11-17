@@ -28,7 +28,7 @@
                 "text": "{\\alpha&H00&\\frz-1.41\\fscx95.14\\fscy95.14\\pos(606.18,371.52)}No outline"
             },
             {
-                "end": 4270,
+                "end": 4280,
                 "extra": {
                     "a-mo": {
                         "originalText": "{\\pos(640,360)}No outline",
@@ -41,7 +41,7 @@
                 "text": "{\\alpha&H00&\\frz-0.94\\fscx96.76\\fscy96.76\\pos(616.36,367.61)}No outline"
             },
             {
-                "end": 4310,
+                "end": 4320,
                 "extra": {
                     "a-mo": {
                         "originalText": "{\\pos(640,360)}No outline",
@@ -49,12 +49,12 @@
                     }
                 },
                 "layer": 0,
-                "start": 4270,
+                "start": 4280,
                 "style": "Flat",
                 "text": "{\\alpha&H00&\\frz-0.47\\fscx98.38\\fscy98.38\\pos(627.64,363.77)}No outline"
             },
             {
-                "end": 4350,
+                "end": 4360,
                 "extra": {
                     "a-mo": {
                         "originalText": "{\\pos(640,360)}No outline",
@@ -62,7 +62,7 @@
                     }
                 },
                 "layer": 0,
-                "start": 4310,
+                "start": 4320,
                 "style": "Flat",
                 "text": "{\\alpha&H00&\\frz0\\fscx100\\fscy100\\pos(640,360)}No outline"
             },
@@ -75,7 +75,7 @@
                     }
                 },
                 "layer": 0,
-                "start": 4350,
+                "start": 4360,
                 "style": "Flat",
                 "text": "{\\alpha&H00&\\frz0.47\\fscx101.62\\fscy101.62\\pos(653.46,356.29)}No outline"
             },
@@ -106,7 +106,7 @@
                 "text": "{\\alpha&H00&\\frz1.41\\fscx104.86\\fscy104.86\\pos(683.65,349.06)}No outline"
             },
             {
-                "end": 4520,
+                "end": 4530,
                 "extra": {
                     "a-mo": {
                         "originalText": "{\\pos(640,360)}No outline",
@@ -119,7 +119,7 @@
                 "text": "{\\alpha&H00&\\frz1.88\\fscx106.48\\fscy106.48\\pos(700.38,345.54)}No outline"
             },
             {
-                "end": 4560,
+                "end": 4570,
                 "extra": {
                     "a-mo": {
                         "originalText": "{\\pos(640,360)}No outline",
@@ -127,12 +127,12 @@
                     }
                 },
                 "layer": 0,
-                "start": 4520,
+                "start": 4530,
                 "style": "Flat",
                 "text": "{\\alpha&H00&\\frz2.35\\fscx108.09\\fscy108.09\\pos(718.2,342.09)}No outline"
             },
             {
-                "end": 4600,
+                "end": 4610,
                 "extra": {
                     "a-mo": {
                         "originalText": "{\\pos(640,360)}No outline",
@@ -140,7 +140,7 @@
                     }
                 },
                 "layer": 0,
-                "start": 4560,
+                "start": 4570,
                 "style": "Flat",
                 "text": "{\\alpha&H00&\\frz2.82\\fscx109.71\\fscy109.71\\pos(737.12,338.69)}No outline"
             },
@@ -153,7 +153,7 @@
                     }
                 },
                 "layer": 0,
-                "start": 4600,
+                "start": 4610,
                 "style": "Flat",
                 "text": "{\\alpha&H00&\\frz3.29\\fscx111.33\\fscy111.33\\pos(757.13,335.36)}No outline"
             },

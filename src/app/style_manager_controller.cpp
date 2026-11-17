@@ -1,5 +1,6 @@
 #include "hikari/app/style_manager_controller.h"
 
+#include "hikari/application/plugin_content.h"
 #include "hikari/core/ass_load.h"
 #include "tiered_presets.h"
 
@@ -230,11 +231,22 @@ StyleList chosenInFile(const QUrl &url, const QStringList &names)
     return chosen;
 }
 
+std::vector<application::PluginCatalog> pluginCatalogs()
+{
+    std::vector<application::PluginCatalog> out;
+    for (const auto &c : application::pluginContent().styleCatalogues)
+        //: A plugin's style catalogue in the Style manager: the catalogue's title, then the plugin's name.
+        out.push_back({u8(QCoreApplication::translate("HikariSub.Styles", "%1 (%2)").arg(qs(c.title), qs(c.pluginName))),
+                       c.file});
+    return out;
+}
+
 }
 
 StyleManagerController::StyleManagerController(std::filesystem::path catalogDir, Hooks hooks, QObject *parent)
     : QObject(parent), m_catalogs(std::move(catalogDir)), m_hooks(std::move(hooks))
 {
+    m_catalogs.setPluginCatalogs(pluginCatalogs());
     if (m_hooks.lastCatalog)
         if (const QString last = m_hooks.lastCatalog(); !last.isEmpty())
             m_catalogs.choose(u8(last));
@@ -260,12 +272,16 @@ QVariantList StyleManagerController::catalogRows() const
         out << QVariantMap{{QStringLiteral("name"), qs(row.name)},
                            {QStringLiteral("tier"), ui::tierText(row.tier)},
                            {QStringLiteral("hidden"), row.hidden}};
+    for (const auto &catalog : m_catalogs.pluginCatalogs())
+        out << QVariantMap{{QStringLiteral("name"), qs(catalog.name)},
+                           {QStringLiteral("tier"), QStringLiteral("plugin")},
+                           {QStringLiteral("hidden"), false}};
     return out;
 }
 
 QString StyleManagerController::catalogTier() const
 {
-    return ui::tierText(m_catalogs.currentTier());
+    return m_catalogs.fromPlugin() ? QStringLiteral("plugin") : ui::tierText(m_catalogs.currentTier());
 }
 
 void StyleManagerController::projectChanged()
@@ -363,6 +379,7 @@ QString StyleManagerController::followedCatalog() const
 
 void StyleManagerController::refreshLists()
 {
+    m_catalogs.setPluginCatalogs(pluginCatalogs());
     projectChanged();
     if (const QString name = followedCatalog(); name != catalog() && m_catalogs.choose(u8(name)))
         catalogChosen();
@@ -372,7 +389,9 @@ void StyleManagerController::refreshLists()
 bool StyleManagerController::chooseCatalog(const QString &name, const QString &tier)
 {
     const auto chosen = ui::tierFromText(tier);
-    const bool ok = chosen ? m_catalogs.choose(u8(name), *chosen) : m_catalogs.choose(u8(name));
+    const bool ok = tier == QLatin1String("plugin") ? m_catalogs.choosePlugin(u8(name))
+                    : chosen                        ? m_catalogs.choose(u8(name), *chosen)
+                                                    : m_catalogs.choose(u8(name));
     emit changed();
     if (ok)
         catalogChosen();
@@ -397,6 +416,8 @@ bool StyleManagerController::createCatalog(const QString &name, const QString &t
 
 bool StyleManagerController::deleteCatalog(const QString &name, const QString &tier)
 {
+    if (tier == QLatin1String("plugin"))
+        return false;
     const auto from = ui::tierFromText(tier);
     const bool ok = from ? m_catalogs.remove(u8(name), *from) : m_catalogs.remove(u8(name));
     if (ok)
@@ -446,6 +467,16 @@ std::optional<QString> StyleManagerController::landed(const QString &name, const
 QString StyleManagerController::copyCatalog(const QString &name, const QString &tier, const QVariantList &choices)
 {
     return landed(name, tier, choices, false).value_or(QString());
+}
+
+QString StyleManagerController::copyPluginCatalog()
+{
+    const auto landed = m_catalogs.copyPluginToMine();
+    emit changed();
+    if (!landed)
+        return {};
+    catalogChosen();
+    return qs(*landed);
 }
 
 QString StyleManagerController::moveCatalog(const QString &name, const QString &tier, const QVariantList &choices)

@@ -6,6 +6,7 @@
 #include "hikari/app/plugin_ui.h"
 #include "hikari/app/project_windows.h"
 #include "hikari/application/node_catalogue.h"
+#include "hikari/application/plugin_content.h"
 #include "hikari/application/recent_files.h"
 #include "hikari/application/row_marks.h"
 #include "hikari/plugins/registry.h"
@@ -200,6 +201,7 @@ private slots:
         QDir().mkpath(m_dir.path());
         m_registry = {};
         application::setPluginNodes({}, {});
+        application::setPluginContent({});
     }
 
     void enabledPluginsStartAndListTheirCommands()
@@ -819,6 +821,41 @@ private slots:
         QVERIFY(!application::pluginNode(type));
         QCOMPARE(application::pluginNodeProblem(type).value_or(""),
                  std::string(R"(comes from the plugin "Zigzag", which is turned off or not trusted)"));
+    }
+
+    void aTurnedOnPluginsContentPacksAreListedAndGoWhenItIsTurnedOff()
+    {
+        const QString folder = folders().plugins + QStringLiteral("/com.example.kit");
+        write(folder + QStringLiteral("/hikari-plugin.json"),
+              R"({"id": "com.example.kit", "name": "Kit", "version": "1.0.0", "api": 1, "main": "main.lua", "authors": ["Ana"],
+                  "contributes": {"styles": [{"id": "signs", "title": "Signs", "path": "styles/signs.sty"}],
+                                  "karaokePresets": [{"id": "glow", "path": "presets/glow.ass"}]}})");
+        write(folder + QStringLiteral("/main.lua"), "");
+        const auto turn = [&](bool on) {
+            m_registry[QStringLiteral("com.example.kit")] =
+                QJsonObject{{QStringLiteral("version"), QStringLiteral("1.0.0")}, {QStringLiteral("enabled"), on}};
+            write(folders().registry,
+                  QJsonDocument(QJsonObject{{QStringLiteral("format"), 1}, {QStringLiteral("plugins"), m_registry}}).toJson());
+        };
+        turn(true);
+        auto a = openEpisodes(1);
+        QVERIFY(a);
+        app::PluginRuntime runtime(wiring(*a));
+        runtime.sync();
+        const application::PluginContent content = application::pluginContent();
+        QCOMPARE(content.styleCatalogues.size(), 1u);
+        QCOMPARE(content.styleCatalogues[0].plugin, std::string("com.example.kit"));
+        QVERIFY(content.styleCatalogues[0].pluginName == u8"Kit");
+        QVERIFY(content.styleCatalogues[0].title == u8"Signs");
+        QCOMPARE(QString::fromStdU16String(content.styleCatalogues[0].file.u16string()),
+                 QDir::cleanPath(folder + QStringLiteral("/styles/signs.sty")));
+        QCOMPARE(content.karaokePresets.size(), 1u);
+        QVERIFY(content.karaokePresets[0].title.empty());
+
+        turn(false);
+        runtime.sync();
+        QVERIFY(application::pluginContent().styleCatalogues.empty());
+        QVERIFY(application::pluginContent().karaokePresets.empty());
     }
 
     void theFirstPluginGuideRunsAtEveryStep()

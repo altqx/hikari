@@ -123,6 +123,13 @@ struct Screenshot {
     std::string caption;
 };
 
+// A content pack file, shown beside its built-in counterpart (docs/plugins.md, Content packs).
+struct ContentFile {
+    std::string id;
+    std::string title; // empty for a karaoke preset, whose file holds its title
+    std::string path;  // a package path
+};
+
 struct Manifest {
     std::string id;
     std::string name;
@@ -145,6 +152,8 @@ struct Manifest {
     std::vector<NodeContribution> nodes;
     std::vector<FormatContribution> formats;
     std::vector<Program> programs;
+    std::vector<ContentFile> styles;
+    std::vector<ContentFile> karaokePresets;
 
     bool hasQmlPanels() const;
     const Program *program(std::string_view id) const;

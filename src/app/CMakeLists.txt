@@ -48,6 +48,7 @@ add_library(hikari_composition STATIC composition.cpp application.cpp include/hi
     plugin_programs.cpp include/hikari/app/plugin_programs.h
     plugin_files.cpp include/hikari/app/plugin_files.h plugin_network.cpp include/hikari/app/plugin_network.h
     plugin_nodes.cpp include/hikari/app/plugin_nodes.h
+    plugin_content.cpp include/hikari/app/plugin_content.h
     plugin_ui.cpp include/hikari/app/plugin_ui.h plugin_qml_panels.cpp plugin_panel_api.cpp include/hikari/app/plugin_panel_api.h
     plugin_variant.h)
 set_target_properties(hikari_composition PROPERTIES AUTOMOC ON)
