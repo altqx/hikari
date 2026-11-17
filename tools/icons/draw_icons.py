@@ -973,6 +973,8 @@ icon("audio-device", "Audio output", [], ["settings-dialog"],
      rect(3.5, 1.5, 9, 13, 1) + circle(8, 10, 2.5) + accent(dot(8, 5, 1.25)))
 icon("audio-delay", "Audio delay", [], ["settings-dialog"],
      stroke("M1.5 7v2M3.5 5v6M5.5 6v4M7.5 4.5v7") + clock_badge())
+icon("audio-commit-default", "Default line duration", [], ["settings-dialog"],
+     stroke("M1.5 6.5l2.5 2.5 5-5.5") + accent(stroke("M1.5 12.5h13M1.5 11v3M14.5 11v3")))
 icon("theme", "Theme", [], ["settings-dialog"],
      stroke("M13.5 10A6 6 0 1 1 6 2.5a5 5 0 0 0 7.5 7.5z") + accent(stroke("M11.5 1.5v2M10.5 2.5h2")))
 icon("accent-colour", "Accent color", [], ["settings-dialog"],
@@ -1066,6 +1068,10 @@ icon("end-frame-earlier", "Move end one frame earlier", [], [TIMING],
      rect(1.5, 8.5, 7, 5, 1) + accent(stroke("M10.5 7.5v7M13.5 4.5h-6M9 3L7.5 4.5 9 6")))
 icon("end-frame-later", "Move end one frame later", [], [TIMING],
      rect(1.5, 8.5, 7, 5, 1) + accent(stroke("M10.5 7.5v7M7.5 4.5h6M12 3l1.5 1.5L12 6")))
+icon("end-later-shift-following", "Lengthen and shift what follows", [], [TIMING],
+     rect(1.5, 8.5, 5, 5, 1) + rect(10.5, 8.5, 4, 5, 1) + accent(stroke("M3.5 4.5h9M11 3l1.5 1.5L11 6")))
+icon("end-earlier-shift-following", "Shorten and shift what follows", [], [TIMING],
+     rect(1.5, 8.5, 5, 5, 1) + rect(10.5, 8.5, 4, 5, 1) + accent(stroke("M12.5 4.5h-9M5 3L3.5 4.5 5 6")))
 icon("preview-resolution", "Preview subtitles at", [], ["settings-dialog"],
      rect(1.5, 2.5, 13, 9, 1) + stroke("M6.5 11.5v2M9.5 11.5v2M4.5 13.5h7")
      + accent(stroke("M4.5 9.5l2-2M4.5 9.5V8M4.5 9.5H6M11.5 4.5l-2 2M11.5 4.5V6M11.5 4.5H10")))
@@ -1359,6 +1365,8 @@ icon("layers", "Blur and glow layers", [], [GRIDMENU, SUBS, "text-field-menu"],
 icon("layers-repeat", "Repeat blur and glow layers", [], [GRIDMENU, SUBS],
      solid("M6 1.5l4.5 2.5L6 6.5 1.5 4z") + stroke("M1.5 6.5l4.5 2.5 2.5-1.25M1.5 9l4.5 2.5 1.5-.75") + REPEAT_BADGE)
 
+icon("snap-to-scene", "Snap to scene", [], [TIMING],
+     diamond(3, 8, 2.25) + diamond(13, 8, 2.25) + accent(stroke("M6 5.5h4v5H6z")))
 icon("snap-start-to-previous-keyframe", "Snap start to previous keyframe", [], [TIMING],
      KEY_DIAMOND_L + START_EDGE_R + ARROW_TO_LEFT)
 icon("snap-start-to-next-keyframe", "Snap start to next keyframe", [], [TIMING],

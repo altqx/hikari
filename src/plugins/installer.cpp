@@ -102,7 +102,7 @@ std::expected<Registry, std::string> Installer::registry() const
 std::expected<InstallReview, InstallRefusal> Installer::open(std::vector<PackageFile> files) const
 {
     using Kind = InstallRefusal::Kind;
-    auto package = openPackage(std::move(files), m_apiVersion);
+    auto package = openPackage(std::move(files), m_apiVersion, m_contentChecks);
     if (!package)
         return std::unexpected(InstallRefusal{Kind::Package, package.error(), {}, {}});
     auto registry = loadRegistry(m_folders.registry);
@@ -219,7 +219,8 @@ std::expected<void, std::string> Installer::install(const InstallReview &review,
         entry.previous = otherVersion ? old.version : old.previous;
         entry.held = compareVersions(old.held, manifest.version) > 0 ? old.held : std::string();
         for (const Setting &setting : manifest.settings)
-            if (const api::Json *value = existing->second.settings.find(setting.id); value && !settingRefusal(setting, *value))
+            if (const api::Json *value = setting.secret() ? nullptr : existing->second.settings.find(setting.id);
+                value && !settingRefusal(setting, *value))
                 entry.settings[setting.id] = *value;
         for (const FileGrantRequest &request : manifest.permissions.files)
             if (const auto grant = existing->second.grants.find(request.id); grant != existing->second.grants.end())
@@ -320,6 +321,8 @@ std::expected<void, std::string> Installer::setSetting(std::string_view id, std:
     const auto declared = std::ranges::find(manifest->settings, setting, &Setting::id);
     if (declared == manifest->settings.end())
         return std::unexpected("\xE2\x80\x9C" + std::string(setting) + "\xE2\x80\x9D isn't a setting of " + std::string(id));
+    if (declared->secret())
+        return std::unexpected("\xE2\x80\x9C" + std::string(setting) + "\xE2\x80\x9D is kept in the system keychain");
     if (auto refused = settingRefusal(*declared, value))
         return std::unexpected(*refused);
     auto registry = loadRegistry(m_folders.registry);

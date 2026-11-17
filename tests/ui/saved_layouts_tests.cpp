@@ -71,8 +71,10 @@ class SavedLayoutsTest : public QObject {
 
     QString settingsFile() const { return dir.filePath(QStringLiteral("settings.toml")); }
     QString layoutsFile() const { return dir.filePath(QStringLiteral("layouts.json")); }
-    QJsonObject layoutEnvelope() const
+    QJsonObject layoutEnvelope()
     {
+        if (application)
+            application->workspaceLayout().fileWrites().finishWrites();
         return QJsonDocument::fromJson(readAll(dir.filePath(QStringLiteral("layout.json")))).object();
     }
     void start()
@@ -533,11 +535,11 @@ private slots:
         QVERIFY(QDir().mkdir(layoutFile));
         close("audioDock");
         saveAs(QStringLiteral("Quiet"));
-        QVERIFY2(l.notice().contains(QStringLiteral("panel layout could not be written")), qPrintable(l.notice()));
+        QTRY_VERIFY2(l.notice().contains(QStringLiteral("panel layout could not be written")), qPrintable(l.notice()));
         QCOMPARE(namesInFile(layoutsFile()), QStringList{QStringLiteral("Quiet")});
         QVERIFY(QDir().rmdir(layoutFile));
         QVERIFY(l.save());
-        QVERIFY2(!l.notice().contains(QStringLiteral("panel layout could not be written")), qPrintable(l.notice()));
+        QTRY_VERIFY2(!l.notice().contains(QStringLiteral("panel layout could not be written")), qPrintable(l.notice()));
         QCOMPARE(layoutEnvelope().value(QStringLiteral("layout")).toString(), QStringLiteral("Quiet"));
         stop();
     }

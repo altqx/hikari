@@ -65,7 +65,8 @@ class TemplateEditorController : public QObject {
     Q_PROPERTY(int changedCount READ changedCount NOTIFY changed)
     Q_PROPERTY(QVariantMap lastApply READ lastApply NOTIFY changed)
     Q_PROPERTY(QVariantMap values READ values NOTIFY valuesChanged)
-    Q_PROPERTY(QVariantList presets READ presets CONSTANT)
+    // The built-in presets, then the turned-on plugins'; {title, description, karaOK, file (built-in only), plugin}.
+    Q_PROPERTY(QVariantList presets READ presets NOTIFY presetsChanged)
     Q_PROPERTY(bool karaOKMode READ karaOKMode NOTIFY changed)
     Q_PROPERTY(bool karaOKPresetsUsable READ karaOKPresetsUsable NOTIFY changed)
     Q_PROPERTY(bool modeInFile READ modeInFile NOTIFY changed)
@@ -158,6 +159,8 @@ public:
     Q_INVOKABLE bool apply(bool selectedOnly);
     Q_INVOKABLE bool insertTemplate(const QString &effect);
     Q_INVOKABLE bool insertPreset(int index);
+    // Re-reads the plugins' presets, which come and go as plugins are turned on and off.
+    Q_INVOKABLE void refreshPresets() { emit presetsChanged(); }
     Q_INVOKABLE void requestValues();
     Q_INVOKABLE QVariantList completions(const QString &text, int cursor) const;
     Q_INVOKABLE QVariantList colourRuns(const QString &text) const;
@@ -171,6 +174,7 @@ signals:
     void changed();
     void previewChanged();
     void valuesChanged();
+    void presetsChanged();
     void documentEdited();
     void otherDocumentEdited(std::pair<std::uint64_t, std::uint64_t> document);
     void videoChanged();

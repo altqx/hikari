@@ -517,7 +517,51 @@ std::vector<std::u8string> StyleCatalogs::names() const
 
 bool StyleCatalogs::readOnly() const
 {
-    return m_currentTier == Tier::Mine && listed(m_projectNames, m_current);
+    return m_fromPlugin || (m_currentTier == Tier::Mine && listed(m_projectNames, m_current));
+}
+
+void StyleCatalogs::setPluginCatalogs(std::vector<PluginCatalog> catalogs)
+{
+    m_pluginCatalogs = std::move(catalogs);
+    if (!m_fromPlugin)
+        return;
+    const auto shown = std::ranges::find(m_pluginCatalogs, m_current, &PluginCatalog::name);
+    if (shown == m_pluginCatalogs.end())
+        loadDefault();
+    else
+        m_styles = readCatalogFile(shown->file);
+}
+
+bool StyleCatalogs::choosePlugin(const std::u8string &name)
+{
+    const auto chosen = std::ranges::find(m_pluginCatalogs, name, &PluginCatalog::name);
+    if (chosen == m_pluginCatalogs.end())
+        return false;
+    save();
+    m_current = name;
+    m_fromPlugin = true;
+    m_styles = readCatalogFile(chosen->file);
+    m_changed = false;
+    return true;
+}
+
+std::optional<std::u8string> StyleCatalogs::copyPluginToMine()
+{
+    if (!m_fromPlugin)
+        return std::nullopt;
+    const auto landed = landingName(names(), m_current, {ClashAction::Rename, {}});
+    if (!landed)
+        return std::nullopt;
+    {
+        std::ofstream out(file(*landed, Tier::Mine), std::ios::binary | std::ios::trunc);
+        out << writeCatalog(m_styles);
+        if (!out.good())
+            return std::nullopt;
+    }
+    if (!listed(m_names, *landed))
+        m_names.insert(std::upper_bound(m_names.begin(), m_names.end(), *landed), *landed);
+    load(*landed, Tier::Mine);
+    return landed;
 }
 
 std::filesystem::path StyleCatalogs::file(const std::u8string &name, Tier tier) const
@@ -534,6 +578,7 @@ void StyleCatalogs::load(const std::u8string &name, Tier tier)
 {
     m_current = name;
     m_currentTier = tier;
+    m_fromPlugin = false;
     m_styles = readCatalogFile(file(name, tier));
     m_changed = false;
 }
@@ -561,6 +606,7 @@ bool StyleCatalogs::create(const std::u8string &name, Tier tier)
     namesIn(tier).push_back(name);
     m_current = name;
     m_currentTier = tier;
+    m_fromPlugin = false;
     m_styles.clear();
     m_changed = true;
     return true;
@@ -643,7 +689,7 @@ std::optional<StyleList> StyleCatalogs::list(const std::u8string &catalog) const
 
 std::optional<StyleList> StyleCatalogs::list(const std::u8string &catalog, Tier tier) const
 {
-    if (catalog == m_current && tier == m_currentTier)
+    if (!m_fromPlugin && catalog == m_current && tier == m_currentTier)
         return m_styles;
     if (!listed(names(tier), catalog))
         return std::nullopt;

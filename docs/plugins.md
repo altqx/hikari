@@ -185,6 +185,7 @@ The helper framing ([`helper_protocol.h`](../src/backends/include/hikari/backend
 | `hikari.timer.after(ms, fn)`, `hikari.timer.every(ms, fn)`, `hikari.timer.cancel(id)` | A background plugin's timers. See [Background plugins and time](#background-plugins-and-time). |
 | `hikari.marks.set(marks, document)`, `hikari.marks.clear(lines, document)`, `hikari.marks.list(document)` | The plugin's Grid row marks. See [Grid row marks](#grid-row-marks). |
 | `hikari.vcs.refs(options)`, `hikari.vcs.show(ref, document)` | The git repository holding a Document, read-only, with `vcs.read`. See [Git](#git). |
+| `hikari.presence.set_text(text)` | The plugin's text for `{plugin}` in the user's Discord status, with `presence`. See [Discord status text](#discord-status-text). |
 | `hikari.dialogs.show(dialog, spec)`, `hikari.dialogs.ask(dialog, spec)`, `hikari.dialogs.close(dialog)`, `hikari.dialogs.on(dialog, fn)` | Opens a dialog, or opens one and waits for its answer `button, values`; closes it; and calls `fn(event)` for its events. |
 
 Tables go to HikariSub as JSON: a table with keys 1 to n is an array, one with text keys an object. Numbers must be finite, text must be UTF-8, and a table that holds itself is refused.
@@ -455,7 +456,7 @@ Redirects are followed up to 5 times, each checked the same way. HikariSub sends
 
 ## Git
 
-A plugin can't run programs, so HikariSub runs git for it, read-only. The manifest asks with `"vcs.read": "<reason>"`, and the install question, the plugin manager and the marketplace show it as "Read the branches, tags and history of the git repository holding your subtitle files: <reason>". Every plugin that asks gets it on the same terms; AI and MCP callers never do.
+HikariSub runs git for a plugin, read-only, so the plugin needs no [program](#programs) of its own for it. The manifest asks with `"vcs.read": "<reason>"`, and the install question, the plugin manager and the marketplace show it as "Read the branches, tags and history of the git repository holding your subtitle files: <reason>". Every plugin that asks gets it on the same terms; AI and MCP callers never do.
 
 ```lua
 local refs = hikari.vcs.refs({ limit = 20 })
@@ -759,7 +760,7 @@ The palette itself is #1236's, in the command palette spec (`docs/ux/command-pal
   - A timer callback runs in turn with the plugin's other work. An `every` timer that comes due while its last callback still runs is skipped once, not queued.
   - A timer callback may begin a [job](#long-jobs).
   - Without the permission, the timer calls answer `nil` and the error `not_granted`.
-- **Showing what runs.** While a background plugin works (a timer callback, a job, or an event or command past 10 seconds), the status bar's leading part shows a busy icon with the count. Its popover lists each working plugin with what it does and Stop. Stop ends that helper. A background plugin stopped this way starts again at the next HikariSub start or with Start again in its details.
+- **Showing what runs.** While a background plugin works (a timer callback, a job, or an event or command past 10 seconds), the status bar's leading part shows a busy icon with the count. Its popover lists each working plugin with what it does and Stop. Like the other status bar fields, the icon isn't in the Tab order; from the keyboard, turn the plugin off in the plugin manager. Stop ends that helper. A background plugin stopped this way starts again at the next HikariSub start or with Start again in its details.
 - **The edit turn.** With no time limit, the app-wide edit turn still ends when the handler that took it returns: `hikari.document.edit` and `hikari.document.group` hold it only while `fn` runs. Another plugin waiting for it still gives up after 5 seconds with `busy`.
 - **Unchanged.** Each plugin still has its own helper, its work still runs one thing at a time, and the restricted tier and the sandbox don't change.
 
@@ -982,6 +983,7 @@ end)
   - **Projectable.** Never: `projectable` is always `false`.
   - **The field** shows dots, with Show and Clear. `hikari.settings.get` returns the text, or `nil` when unset. Uninstalling the plugin removes it.
   - **No keychain.** On a system with no keychain, setting one fails with "No system keychain to keep it in".
+  - **Until #1230** wires the keychain, `hikari.settings.get` returns `nil` for a secret and `hikari.settings.set` refuses it with "“<id>” is kept in the system keychain". A value in `plugins.json` or a Project is never read, and an update that turns a setting into a secret drops its kept value.
 
 **Ids and links** (Q644). A plugin setting's id outside the plugin is `plugin.<plugin id>.<setting id>`. The link `hikarisub://settings/<id>` opens the Settings window at a setting, HikariSub's own (`hikarisub://settings/appearance.theme`) or a plugin's. `?scope=project` opens it on the Project tab.
 

@@ -126,6 +126,19 @@ TEST_F(PluginProcessTest, HikariVcsCallsTheGitOperationsForTheDocument)
     EXPECT_EQ(m_notices, (std::vector<std::string>{"1 1", "false"}));
 }
 
+TEST_F(PluginProcessTest, HikariPresenceSetsAndClearsTheText)
+{
+    auto p = process(plugin("tracker", "hikari.commands.register('greet', function() "
+                                       "hikari.presence.set_text('Ep 5') "
+                                       "hikari.presence.set_text(nil) "
+                                       "hikari.notify(tostring(pcall(hikari.presence.set_text, 5))) end)"));
+    QSignalSpy finished(p.get(), &PluginProcess::finished);
+    ASSERT_TRUE(p->run("greet"));
+    ASSERT_TRUE(waitFor([&] { return finished.count() == 1; }));
+    EXPECT_EQ(m_calls, (std::vector<std::string>{R"(presence.set_text {"text":"Ep 5"})", R"(presence.set_text {"text":""})"}));
+    EXPECT_EQ(m_notices, std::vector<std::string>{"false"});
+}
+
 TEST_F(PluginProcessTest, ALongCommandIsStillWorkingAndRunsOnUntilForceStopped)
 {
     auto p = process(plugin("spin", "hikari.commands.register('spin', function() while true do end end) "

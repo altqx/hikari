@@ -2,6 +2,10 @@
 
 Where HikariSub's automation API and file formats knowingly differ from what they were, or from Aegisub 3.5.1, and why. HikariSub follows Aegisub 3.5.1 and the Lua API additions of arch1t3cht's fork, so scripts written for them run unchanged. Each entry names its card. This is not the legacy parity ledger that wave 7 removed.
 
+## C06-set-undo-point
+
+`aegisub.set_undo_point(description)` closes an undo step, as in Aegisub 3.5.1. A run applies as one history step for each undo point that closed changes, named "Automation: <description>", then one for the changes after the last point, named after the macro. An undo point with no changes since the last one adds nothing. A run that errors or is cancelled applies no step. Validation and anything outside a macro run raise Aegisub's "Attempt to set an undo point in a context where it makes no sense to do so." It used to do nothing, so every run was one step. Steps keep HikariSub's "Automation: " prefix, which Aegisub doesn't add. [#1216](https://github.com/altqx/hikari/issues/1216), owner Q586 (2026-11-17).
+
 ## FA4-getpixel-rgb
 
 `frame:getPixel(x, y)` returns three integers, r, g and b, as arch1t3cht's fork does. It used to return one packed integer (`b * 65536 + g * 256 + r`). Outside the frame it returns nil. [FA4 #561](https://github.com/altqx/hikari/issues/561), owner decision 2026-10-31.
@@ -164,13 +168,13 @@ Line breaks, Change case and Swap dialogue alternatives do natively what these s
 
 ## AU8-motion-data
 
-Video › Tracking does natively what Aegisub-Motion 1.0.9, 0x.DeriveTrack, arch.DerivePerspTrack, petzku.ExtrapolateMove and phos.ExtrapolateTracking do. On the 35-case corpus it matches Aegisub-Motion's output where that output is stable (`docs/research/motion-data-parity.md`). The bundled scripts still ship unchanged. The departures below were accepted by the owner on 2026-11-09 (Q201–Q206). [AU8 #842](https://github.com/altqx/hikari/issues/842).
+Video › Tracking does natively what Aegisub-Motion 1.0.9, 0x.DeriveTrack, arch.DerivePerspTrack, petzku.ExtrapolateMove and phos.ExtrapolateTracking do. On the 35-case corpus it matches Aegisub-Motion's output where that output is stable (`docs/research/motion-data-parity.md`). The bundled scripts still ship unchanged. The departures below were accepted by the owner on 2026-11-09 (Q201–Q206). [AU8 #842](https://github.com/altqx/hikari/issues/842). Since [#1216](https://github.com/altqx/hikari/issues/1216) the bundled Aegisub-Motion is 1.1.2 (upstream `ce44cf9131de`): D14 was added (owner Q773), interpolated transform values are written at full precision, as 1.1.2 writes them (Q774), and D5 no longer differs from it.
 
 - **D1, relative frame.** The relative frame is 1 to the number of frames. Aegisub-Motion's 0, negative and absolute frames aren't offered.
 - **D2, data from a file.** **Open file…** loads a data file into the text box. A path typed in the box isn't read.
 - **D3, Shake rotoshape.** SRS data isn't read. Aegisub-Motion still reads it.
 - **D4, `\move`.** A `\move` is clamped to its times before it is tracked, as renderers show it. Aegisub-Motion extrapolates past them, so the sign overshoots. A 4-argument `\move` runs over the whole Line.
-- **D5, shifted transforms.** With Bake transforms off, every shifted `\t` and every tag is kept. Aegisub-Motion's dedupe keeps one `\t` a block, and sometimes drops `\fscx`.
+- **D5, shifted transforms.** With Bake transforms off, every shifted `\t` and every tag is kept. Aegisub-Motion 1.0.9's dedupe kept one `\t` a block, and sometimes dropped `\fscx`; 1.1.2 keeps them too (upstream #78).
 - **D6, empty clip.** Linear mode writes no `\clip()\t(…,\clip())`.
 - **D7, Linear with `\move`.** The Line's `\move` is read at the first and last frames' mid-times. Aegisub-Motion reads it at the absolute time, which puts the sign far off.
 - **D8, Linear with karaoke.** It works. Aegisub-Motion fails with "attempt to compare number with nil".
@@ -179,6 +183,7 @@ Video › Tracking does natively what Aegisub-Motion 1.0.9, 0x.DeriveTrack, arch
 - **D11, one Power-Pin command.** Copy Power-Pin data from lines uses each Line's saved plane, else its tags' quad. arch.DerivePerspTrack has two macros, From Outer Quad and From Tags.
 - **D12, frame rate.** The two copy commands write the video's frame rate. The scripts write 23.976.
 - **D13, alphas.** With Bake transforms on, the Style's `\1a` `\3a` `\4a` (or `\alpha&H00&`) are added only when the Line has a fade to bake. Aegisub-Motion adds them to every Line.
+- **D14, frame times.** Each frame's Line starts and ends at the frame's time truncated to the centisecond, as every ASS time is (`docs/time-semantics.md`). Aegisub-Motion since upstream #87 rounds to the nearest centisecond, so some of its Lines start and end 10 ms later, and the karaoke `\k` durations, shifted `\t` and `\fade` times and `\move` positions that follow from those times differ with them. Owner Q773 (2026-11-18), [#1216](https://github.com/altqx/hikari/issues/1216).
 
 ## AU4-remove-tags
 

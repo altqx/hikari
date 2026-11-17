@@ -3829,6 +3829,17 @@
    ]
   },
   {
+   "role": "audio-commit-default",
+   "file": "audio-commit-default.svg",
+   "label": "Default line duration",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "settings-dialog"
+   ]
+  },
+  {
    "role": "theme",
    "file": "theme.svg",
    "label": "Theme",
@@ -4229,6 +4240,28 @@
    "role": "end-frame-later",
    "file": "end-frame-later.svg",
    "label": "Move end one frame later",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:timing"
+   ]
+  },
+  {
+   "role": "end-later-shift-following",
+   "file": "end-later-shift-following.svg",
+   "label": "Lengthen and shift what follows",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:timing"
+   ]
+  },
+  {
+   "role": "end-earlier-shift-following",
+   "file": "end-earlier-shift-following.svg",
+   "label": "Shorten and shift what follows",
    "accent": true,
    "mirror": false,
    "legacy": [],
@@ -5381,6 +5414,17 @@
    "surfaces": [
     "grid-menu",
     "menu:subtitles"
+   ]
+  },
+  {
+   "role": "snap-to-scene",
+   "file": "snap-to-scene.svg",
+   "label": "Snap to scene",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:timing"
    ]
   },
   {

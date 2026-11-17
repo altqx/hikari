@@ -1339,6 +1339,11 @@ DialogWindow {
                             SettingNumber { setting: "audio.leadInValue"; from: 0; to: 10000; unit: qsTr("ms"); name: qsTr("Lead-in") }
                             SettingNumber { setting: "audio.leadOutValue"; from: 0; to: 10000; unit: qsTr("ms"); name: qsTr("Lead-out") }
                         }
+                        SettingsRow {
+                            iconRole: "audio-commit-default"
+                            text: qsTr("Default line duration")
+                            SettingNumber { setting: "audio.defaultDuration"; from: 100; to: 60000; unit: qsTr("ms"); name: qsTr("Default line duration") }
+                        }
                         SettingCheck { setting: "audio.lockScrollOnCursor"; text: qsTr("Follow audio during playback") }
                         SettingCheck { setting: "audio.dontPlayWhenLineChanges"; text: qsTr("Don’t play after changing the line") }
                         SettingCheck { setting: "audio.autoFocus"; text: qsTr("Focus the panel under the pointer") }
@@ -1854,14 +1859,7 @@ DialogWindow {
                             visible: !dialog.crashReports || dialog.crashReports.canSend
                             text: qsTr("After a crash or a freeze, the report is sent without asking: what crashed, your system, settings and the last Log lines. Never your subtitles, files or their names.")
                         }
-                        SettingCheck { setting: "privacy.discordPresence"; text: qsTr("Show what I am doing in Discord") }
-                        SettingNote { text: qsTr("Your Discord status shows Editing subtitles, the mode and for how long. Never the video, your subtitles or line counts.") }
-                        SettingCheck {
-                            setting: "privacy.discordFileName"
-                            enabled: dialog.values["privacy.discordPresence"] === true
-                            text: qsTr("Include the file name")
-                            Layout.leftMargin: 22
-                        }
+                        DiscordSettingsSection { dialog: dialog }
                         SettingCheck { setting: "plugins.network"; text: qsTr("Let plugins connect to the internet") }
                         SettingNote { text: qsTr("HikariSub makes each request, over HTTPS and only to the hosts the plugin listed when you installed it. Off: HikariSub refuses every request a plugin makes through it. A Full trust plugin can still connect on its own.") }
                     }

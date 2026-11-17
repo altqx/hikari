@@ -325,6 +325,15 @@ public:
     virtual application::NodeEffectOptions options() = 0;
 };
 
+class ProgramHost;
+// The text a plugin sets for {plugin} in the user's Discord status.
+class PresenceHost {
+public:
+    virtual ~PresenceHost() = default;
+    // Empty `text` clears it.
+    virtual void setPluginText(std::string_view plugin, std::string_view text) = 0;
+};
+
 // A missing port makes its operations answer unavailable.
 struct Host {
     DocumentHost *documents = nullptr;
@@ -347,6 +356,8 @@ struct Host {
     KeyframeHost *keyframes = nullptr;
     application::RowMarks *marks = nullptr;
     application::VcsPort *vcs = nullptr;
+    ProgramHost *programs = nullptr;
+    PresenceHost *presence = nullptr;
 };
 
 }
