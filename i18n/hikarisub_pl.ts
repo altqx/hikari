@@ -2870,6 +2870,10 @@ Urządzenie wyjściowe: %2</translation>
         <source>Open backup folder</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Run the last macro again</source>
+        <translation>Uruchom ponownie ostatnie makro</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Colours</name>
@@ -8901,6 +8905,162 @@ Nie udało się skopiować czcionek: %2.</translation>
         <source>Split lines every N frames or seconds…</source>
         <translation>Dziel linijki co N klatek lub sekund…</translation>
     </message>
+    <message>
+        <source>Import subtitles from MKV…</source>
+        <translation>Importuj napisy z MKV…</translation>
+    </message>
+    <message>
+        <source>Set new FPS…</source>
+        <translation>Ustaw nowy FPS…</translation>
+    </message>
+    <message>
+        <source>Report an issue…</source>
+        <translation>Zgłoś problem…</translation>
+    </message>
+    <message>
+        <source>Load script…</source>
+        <translation>Wczytaj skrypt…</translation>
+    </message>
+    <message>
+        <source>Shift times…</source>
+        <translation>Przesuń czasy…</translation>
+    </message>
+    <message>
+        <source>Replace…</source>
+        <translation>Zamień…</translation>
+    </message>
+    <message>
+        <source>Hide tags in the Grid</source>
+        <translation>Ukryj tagi na liście napisów</translation>
+    </message>
+    <message>
+        <source>Open keyframes…</source>
+        <translation>Otwórz klatki kluczowe…</translation>
+    </message>
+    <message>
+        <source>Sort all lines by style</source>
+        <translation>Sortuj wszystkie linijki według stylu</translation>
+    </message>
+    <message>
+        <source>Sort selected lines by style</source>
+        <translation>Sortuj zaznaczone linijki według stylu</translation>
+    </message>
+    <message>
+        <source>Timing postprocessor…</source>
+        <translation>Postprocesor timingu…</translation>
+    </message>
+    <message>
+        <source>Resample subtitles…</source>
+        <translation>Zmień rozdzielczość napisów…</translation>
+    </message>
+    <message>
+        <source>Close tab</source>
+        <translation>Zamknij zakładkę</translation>
+    </message>
+    <message>
+        <source>Go to next frame</source>
+        <translation>Przejdź do następnej klatki</translation>
+    </message>
+    <message>
+        <source>Open audio…</source>
+        <translation>Otwórz audio…</translation>
+    </message>
+    <message>
+        <source>Go to previous frame</source>
+        <translation>Przejdź do poprzedniej klatki</translation>
+    </message>
+    <message>
+        <source>Save all</source>
+        <translation>Zapisz wszystko</translation>
+    </message>
+    <message>
+        <source>Save translation…</source>
+        <translation>Zapisz tłumaczenie…</translation>
+    </message>
+    <message>
+        <source>Name new files after the video</source>
+        <translation>Nazywaj nowe pliki jak wideo</translation>
+    </message>
+    <message>
+        <source>Find…</source>
+        <translation>Znajdź…</translation>
+    </message>
+    <message>
+        <source>Select lines…</source>
+        <translation>Zaznacz linijki…</translation>
+    </message>
+    <message>
+        <source>Set audio mark to video time</source>
+        <translation>Ustaw znacznik audio na czas wideo</translation>
+    </message>
+    <message>
+        <source>Set end time from video</source>
+        <translation>Ustaw czas końcowy z wideo</translation>
+    </message>
+    <message>
+        <source>Set start time from video</source>
+        <translation>Ustaw czas początkowy z wideo</translation>
+    </message>
+    <message>
+        <source>Export as…</source>
+        <translation>Eksportuj jako…</translation>
+    </message>
+    <message>
+        <source>Apply the audio selection and end the previous line there</source>
+        <translation>Zastosuj zaznaczenie audio i zakończ tam poprzednią linijkę</translation>
+    </message>
+    <message>
+        <source>Open timecodes…</source>
+        <translation>Otwórz kody czasowe…</translation>
+    </message>
+    <message>
+        <source>Save timecodes…</source>
+        <translation>Zapisz kody czasowe…</translation>
+    </message>
+    <message>
+        <source>Video details</source>
+        <translation>Szczegóły wideo</translation>
+    </message>
+    <message>
+        <source>Apply Power-Pin data…</source>
+        <translation>Zastosuj dane Power-Pin…</translation>
+    </message>
+    <message>
+        <source>Copy Power-Pin data from lines</source>
+        <translation>Kopiuj dane Power-Pin z linijek</translation>
+    </message>
+    <message>
+        <source>QC notes</source>
+        <translation>Notatki QC</translation>
+    </message>
+    <message>
+        <source>Show in Review panel</source>
+        <translation>Pokaż w panelu Przegląd</translation>
+    </message>
+    <message>
+        <source>Explorer</source>
+        <translation>Eksplorator</translation>
+    </message>
+    <message>
+        <source>Load session from file…</source>
+        <translation>Wczytaj sesję z pliku…</translation>
+    </message>
+    <message>
+        <source>Save session to file…</source>
+        <translation>Zapisz sesję do pliku…</translation>
+    </message>
+    <message>
+        <source>Delete old autosaves…</source>
+        <translation>Usuń stare autozapisy…</translation>
+    </message>
+    <message>
+        <source>Open dummy video…</source>
+        <translation>Otwórz atrapę wideo…</translation>
+    </message>
+    <message>
+        <source>Run the last macro again</source>
+        <translation>Uruchom ponownie ostatnie makro</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.InlineAi</name>
@@ -9749,6 +9909,10 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Accept all suggestions</source>
         <translation>Akceptuj wszystkie sugestie</translation>
+    </message>
+    <message>
+        <source>Check karaoke</source>
+        <translation>Sprawdź karaoke</translation>
     </message>
 </context>
 <context>
@@ -11943,6 +12107,490 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Where to save</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;Open subtitles…</source>
+        <translation>&amp;Otwórz napisy…</translation>
+    </message>
+    <message>
+        <source>&amp;Close tab</source>
+        <translation>&amp;Zamknij zakładkę</translation>
+    </message>
+    <message>
+        <source>Save a&amp;ll</source>
+        <translation>Zapisz &amp;wszystko</translation>
+    </message>
+    <message>
+        <source>Save &amp;translation…</source>
+        <translation>Zapisz &amp;tłumaczenie…</translation>
+    </message>
+    <message>
+        <source>Name new files after the video</source>
+        <translation>Nazywaj nowe pliki jak wideo</translation>
+    </message>
+    <message>
+        <source>Delete old autosaves…</source>
+        <translation>Usuń stare autozapisy…</translation>
+    </message>
+    <message>
+        <source>Load session from file…</source>
+        <translation>Wczytaj sesję z pliku…</translation>
+    </message>
+    <message>
+        <source>Save session to file…</source>
+        <translation>Zapisz sesję do pliku…</translation>
+    </message>
+    <message>
+        <source>Setti&amp;ngs</source>
+        <translation>&amp;Ustawienia</translation>
+    </message>
+    <message>
+        <source>Select &amp;lines…</source>
+        <translation>Zaznacz &amp;linijki…</translation>
+    </message>
+    <message>
+        <source>Snap start to the previous keyframe</source>
+        <translation>Przyklej początek do poprzedniej klatki kluczowej</translation>
+    </message>
+    <message>
+        <source>Snap start to the next keyframe</source>
+        <translation>Przyklej początek do następnej klatki kluczowej</translation>
+    </message>
+    <message>
+        <source>Snap end to the previous keyframe</source>
+        <translation>Przyklej koniec do poprzedniej klatki kluczowej</translation>
+    </message>
+    <message>
+        <source>Snap end to the next keyframe</source>
+        <translation>Przyklej koniec do następnej klatki kluczowej</translation>
+    </message>
+    <message>
+        <source>Move start one frame earlier</source>
+        <translation>Przesuń początek o klatkę wcześniej</translation>
+    </message>
+    <message>
+        <source>Move start one frame later</source>
+        <translation>Przesuń początek o klatkę później</translation>
+    </message>
+    <message>
+        <source>Move end one frame earlier</source>
+        <translation>Przesuń koniec o klatkę wcześniej</translation>
+    </message>
+    <message>
+        <source>Move end one frame later</source>
+        <translation>Przesuń koniec o klatkę później</translation>
+    </message>
+    <message>
+        <source>Extend the previous line to this start</source>
+        <translation>Przedłuż poprzednią linijkę do tego początku</translation>
+    </message>
+    <message>
+        <source>Extend the next line to this end</source>
+        <translation>Przedłuż następną linijkę do tego końca</translation>
+    </message>
+    <message>
+        <source>Accept the timing assistant’s suggestion</source>
+        <translation>Przyjmij sugestię asystenta timingu</translation>
+    </message>
+    <message>
+        <source>&amp;QC notes</source>
+        <translation>Notatki &amp;QC</translation>
+    </message>
+    <message>
+        <source>Sc&amp;ript properties</source>
+        <translation>Właściwości &amp;skryptu</translation>
+    </message>
+    <message>
+        <source>&amp;Font collector</source>
+        <translation>&amp;Kolekcjoner czcionek</translation>
+    </message>
+    <message>
+        <source>R&amp;esample subtitles…</source>
+        <translation>Zmień &amp;rozdzielczość napisów…</translation>
+    </message>
+    <message>
+        <source>Check spellin&amp;g</source>
+        <translation>Sprawdź &amp;pisownię</translation>
+    </message>
+    <message>
+        <source>Check &amp;karaoke</source>
+        <translation>Sprawdź &amp;karaoke</translation>
+    </message>
+    <message>
+        <source>Kanji t&amp;imer</source>
+        <translation>&amp;Timer kanji</translation>
+    </message>
+    <message>
+        <source>Open &amp;keyframes…</source>
+        <translation>Otwórz &amp;klatki kluczowe…</translation>
+    </message>
+    <message>
+        <source>Open timecodes…</source>
+        <translation>Otwórz kody czasowe…</translation>
+    </message>
+    <message>
+        <source>Save timecodes…</source>
+        <translation>Zapisz kody czasowe…</translation>
+    </message>
+    <message>
+        <source>Open dummy video…</source>
+        <translation>Otwórz atrapę wideo…</translation>
+    </message>
+    <message>
+        <source>Align to &amp;video…</source>
+        <translation>Dopasuj do &amp;wideo…</translation>
+    </message>
+    <message>
+        <source>Set &amp;start time from video</source>
+        <translation>Ustaw czas &amp;początkowy z wideo</translation>
+    </message>
+    <message>
+        <source>Set end time from video</source>
+        <translation>Ustaw czas końcowy z wideo</translation>
+    </message>
+    <message>
+        <source>Apply Power-Pin data…</source>
+        <translation>Zastosuj dane Power-Pin…</translation>
+    </message>
+    <message>
+        <source>Copy Power-Pin data from lines</source>
+        <translation>Kopiuj dane Power-Pin z linijek</translation>
+    </message>
+    <message>
+        <source>&amp;Play or pause</source>
+        <translation>&amp;Odtwórz lub wstrzymaj</translation>
+    </message>
+    <message>
+        <source>Video details</source>
+        <translation>Szczegóły wideo</translation>
+    </message>
+    <message>
+        <source>&amp;Open audio…</source>
+        <translation>&amp;Otwórz audio…</translation>
+    </message>
+    <message>
+        <source>Open audio from &amp;video</source>
+        <translation>Otwórz audio z &amp;wideo</translation>
+    </message>
+    <message>
+        <source>&amp;Close audio</source>
+        <translation>&amp;Zamknij audio</translation>
+    </message>
+    <message>
+        <source>&amp;Reload audio</source>
+        <translation>&amp;Wczytaj ponownie audio</translation>
+    </message>
+    <message>
+        <source>Set audio mark to video time</source>
+        <translation>Ustaw znacznik audio na czas wideo</translation>
+    </message>
+    <message>
+        <source>Apply the audio selection and end the previous line there</source>
+        <translation>Zastosuj zaznaczenie audio i zakończ tam poprzednią linijkę</translation>
+    </message>
+    <message>
+        <source>Run the last macro again</source>
+        <translation>Uruchom ponownie ostatnie makro</translation>
+    </message>
+    <message>
+        <source>Pl&amp;ugins</source>
+        <translation>W&amp;tyczki</translation>
+    </message>
+    <message>
+        <source>Getting &amp;started</source>
+        <translation>Pierwsze &amp;kroki</translation>
+    </message>
+    <message>
+        <source>&amp;Report an issue…</source>
+        <translation>&amp;Zgłoś problem…</translation>
+    </message>
+    <message>
+        <source>Only in Translation mode</source>
+        <translation>Tylko w trybie tłumaczenia</translation>
+    </message>
+    <message>
+        <source>Opens a subtitle file</source>
+        <translation>Otwiera plik napisów</translation>
+    </message>
+    <message>
+        <source>Opens a video file</source>
+        <translation>Otwiera plik wideo</translation>
+    </message>
+    <message>
+        <source>Opens a folder as a project</source>
+        <translation>Otwiera folder jako projekt</translation>
+    </message>
+    <message>
+        <source>Lists the subtitle files opened lately</source>
+        <translation>Wyświetla ostatnio otwierane pliki napisów</translation>
+    </message>
+    <message>
+        <source>&amp;Recently opened subtitles</source>
+        <translation>&amp;Ostatnio otwarte napisy</translation>
+    </message>
+    <message>
+        <source>Opens %1</source>
+        <translation>Otwiera %1</translation>
+    </message>
+    <message>
+        <source>Saves the document</source>
+        <translation>Zapisuje dokument</translation>
+    </message>
+    <message>
+        <source>Saves the document under a new name or format</source>
+        <translation>Zapisuje dokument pod nową nazwą lub w innym formacie</translation>
+    </message>
+    <message>
+        <source>Saves every open document</source>
+        <translation>Zapisuje wszystkie otwarte dokumenty</translation>
+    </message>
+    <message>
+        <source>Saves the translation as a new file</source>
+        <translation>Zapisuje tłumaczenie jako nowy plik</translation>
+    </message>
+    <message>
+        <source>Names new files after the video</source>
+        <translation>Nadaje nowym plikom nazwę wideo</translation>
+    </message>
+    <message>
+        <source>Deletes autosaves older than a date you choose</source>
+        <translation>Usuwa autozapisy starsze niż wybrana data</translation>
+    </message>
+    <message>
+        <source>Loads or saves the open files as a session</source>
+        <translation>Wczytuje lub zapisuje otwarte pliki jako sesję</translation>
+    </message>
+    <message>
+        <source>At startup</source>
+        <translation>Przy starcie</translation>
+    </message>
+    <message>
+        <source>Starts with no files open</source>
+        <translation>Uruchamia program bez otwartych plików</translation>
+    </message>
+    <message>
+        <source>Don’t load the last session</source>
+        <translation>Nie wczytuj ostatniej sesji</translation>
+    </message>
+    <message>
+        <source>Asks whether to load the last session at startup</source>
+        <translation>Pyta przy starcie, czy wczytać ostatnią sesję</translation>
+    </message>
+    <message>
+        <source>Ask</source>
+        <translation>Pytaj</translation>
+    </message>
+    <message>
+        <source>Loads the last session at startup</source>
+        <translation>Wczytuje ostatnią sesję przy starcie</translation>
+    </message>
+    <message>
+        <source>Load the last session</source>
+        <translation>Wczytaj ostatnią sesję</translation>
+    </message>
+    <message>
+        <source>Empties the editor and starts a new document</source>
+        <translation>Czyści edytor i zaczyna nowy dokument</translation>
+    </message>
+    <message>
+        <source>Closes the current tab</source>
+        <translation>Zamyka bieżącą zakładkę</translation>
+    </message>
+    <message>
+        <source>Closes this window’s tabs and its project</source>
+        <translation>Zamyka zakładki tego okna i jego projekt</translation>
+    </message>
+    <message>
+        <source>Opens Settings</source>
+        <translation>Otwiera Ustawienia</translation>
+    </message>
+    <message>
+        <source>Closes this window; closing the last window exits the program</source>
+        <translation>Zamyka to okno; zamknięcie ostatniego okna kończy działanie programu</translation>
+    </message>
+    <message>
+        <source>Exits the program</source>
+        <translation>Kończy działanie programu</translation>
+    </message>
+    <message>
+        <source>Undoes the last change</source>
+        <translation>Cofa ostatnią zmianę</translation>
+    </message>
+    <message>
+        <source>Redoes the last undone change</source>
+        <translation>Ponawia ostatnio cofniętą zmianę</translation>
+    </message>
+    <message>
+        <source>Undoes every change since the last save</source>
+        <translation>Cofa wszystkie zmiany od ostatniego zapisu</translation>
+    </message>
+    <message>
+        <source>Shows the list of changes</source>
+        <translation>Pokazuje listę zmian</translation>
+    </message>
+    <message>
+        <source>Sorts every line in the document</source>
+        <translation>Sortuje wszystkie linijki w dokumencie</translation>
+    </message>
+    <message>
+        <source>Sor&amp;t all lines</source>
+        <translation>Sor&amp;tuj wszystkie linijki</translation>
+    </message>
+    <message>
+        <source>Sorts the selected lines</source>
+        <translation>Sortuje zaznaczone linijki</translation>
+    </message>
+    <message>
+        <source>Sort s&amp;elected lines</source>
+        <translation>Sortuj &amp;zaznaczone linijki</translation>
+    </message>
+    <message>
+        <source>Shows the Shift times panel</source>
+        <translation>Pokazuje panel Przesuwanie czasów</translation>
+    </message>
+    <message>
+        <source>Timing &amp;helpers</source>
+        <translation>&amp;Narzędzia timingu</translation>
+    </message>
+    <message>
+        <source>Opens Style manager for the active line’s style</source>
+        <translation>Otwiera Menedżer stylów dla stylu aktywnej linijki</translation>
+    </message>
+    <message>
+        <source>Collects the fonts the document uses into a folder or archive</source>
+        <translation>Zbiera czcionki używane w dokumencie do folderu lub archiwum</translation>
+    </message>
+    <message>
+        <source>Resamples the document to a new script resolution</source>
+        <translation>Przelicza dokument na nową rozdzielczość skryptu</translation>
+    </message>
+    <message>
+        <source>Set FP&amp;S</source>
+        <translation>Ustaw FP&amp;S</translation>
+    </message>
+    <message>
+        <source>Convert Aegisub fol&amp;ds to line groups</source>
+        <translation>Konwertuj &amp;zwinięcia Aegisub na grupy linijek</translation>
+    </message>
+    <message>
+        <source>No Aegisub folds in this file</source>
+        <translation>Ten plik nie ma zwinięć Aegisub</translation>
+    </message>
+    <message>
+        <source>Opens the Spellchecker panel</source>
+        <translation>Otwiera panel Sprawdzanie pisowni</translation>
+    </message>
+    <message>
+        <source>&amp;Open video…</source>
+        <translation>&amp;Otwórz wideo…</translation>
+    </message>
+    <message>
+        <source>Opens a keyframes file</source>
+        <translation>Otwiera plik klatek kluczowych</translation>
+    </message>
+    <message>
+        <source>Opens a VFR timecodes v1, v2 or v4 file</source>
+        <translation>Otwiera plik kodów czasowych VFR v1, v2 lub v4</translation>
+    </message>
+    <message>
+        <source>Saves the timecodes as a VFR v2 file</source>
+        <translation>Zapisuje kody czasowe jako plik VFR v2</translation>
+    </message>
+    <message>
+        <source>Closes the open timecodes file</source>
+        <translation>Zamyka otwarty plik kodów czasowych</translation>
+    </message>
+    <message>
+        <source>Goes one frame back</source>
+        <translation>Przechodzi o jedną klatkę w tył</translation>
+    </message>
+    <message>
+        <source>Goes one frame forward</source>
+        <translation>Przechodzi o jedną klatkę w przód</translation>
+    </message>
+    <message>
+        <source>Sets the selected lines’ start to the video frame’s time</source>
+        <translation>Ustawia początek zaznaczonych linijek na czas klatki wideo</translation>
+    </message>
+    <message>
+        <source>Sets the selected lines’ end to the video frame’s time</source>
+        <translation>Ustawia koniec zaznaczonych linijek na czas klatki wideo</translation>
+    </message>
+    <message>
+        <source>Open a video first</source>
+        <translation>Najpierw otwórz wideo</translation>
+    </message>
+    <message>
+        <source>&amp;Full screen</source>
+        <translation>&amp;Pełny ekran</translation>
+    </message>
+    <message>
+        <source>Change aspect ratio…</source>
+        <translation>Zmień proporcje obrazu…</translation>
+    </message>
+    <message>
+        <source>Opens an audio file</source>
+        <translation>Otwiera plik audio</translation>
+    </message>
+    <message>
+        <source>Lists the audio files opened lately</source>
+        <translation>Wyświetla ostatnio otwierane pliki audio</translation>
+    </message>
+    <message>
+        <source>Closes the audio</source>
+        <translation>Zamyka audio</translation>
+    </message>
+    <message>
+        <source>Loads an Automation script from a file</source>
+        <translation>Wczytuje skrypt automatyzacji z pliku</translation>
+    </message>
+    <message>
+        <source>Loads the autoload folder’s scripts again</source>
+        <translation>Ponownie wczytuje skrypty z folderu autoload</translation>
+    </message>
+    <message>
+        <source>Runs the last macro again, showing its dialogs</source>
+        <translation>Uruchamia ponownie ostatnie makro, pokazując jego okna dialogowe</translation>
+    </message>
+    <message>
+        <source>Runs the last macro again with the same answers, without its dialogs when they are unchanged</source>
+        <translation>Uruchamia ponownie ostatnie makro z tymi samymi odpowiedziami, bez jego okien dialogowych, jeśli się nie zmieniły</translation>
+    </message>
+    <message>
+        <source>Installs, turns on and off, and uninstalls plugins</source>
+        <translation>Instaluje, włącza, wyłącza i odinstalowuje wtyczki</translation>
+    </message>
+    <message>
+        <source>Switches, saves and locks the window’s layout</source>
+        <translation>Przełącza, zapisuje i blokuje układ okna</translation>
+    </message>
+    <message>
+        <source>Shows, floats or closes each panel</source>
+        <translation>Pokazuje, odczepia lub zamyka każdy panel</translation>
+    </message>
+    <message>
+        <source>Moves the focused panel to another place in the window</source>
+        <translation>Przenosi aktywny panel w inne miejsce okna</translation>
+    </message>
+    <message>
+        <source>Shows or hides the Log</source>
+        <translation>Pokazuje lub ukrywa Dziennik</translation>
+    </message>
+    <message>
+        <source>Open a file first</source>
+        <translation>Najpierw otwórz plik</translation>
+    </message>
+    <message>
+        <source>Shows or hides tags in the Grid</source>
+        <translation>Pokazuje lub ukrywa tagi na liście napisów</translation>
+    </message>
+    <message>
+        <source>Hide tags in the Grid</source>
+        <translation>Ukryj tagi na liście napisów</translation>
+    </message>
+    <message>
+        <source>Shows or hides tags in the line editor</source>
+        <translation>Pokazuje lub ukrywa tagi w edytorze linijki</translation>
     </message>
 </context>
 <context>
@@ -18632,6 +19280,38 @@ Linijki [Sekcja] je grupują.</translation>
         <source>Sub-agents: %1</source>
         <translation>Podagenci: %1</translation>
     </message>
+    <message>
+        <source>Keeps or undoes the AI’s changes</source>
+        <translation>Zachowuje lub cofa zmiany AI</translation>
+    </message>
+    <message>
+        <source>Keeps the AI’s change to this line</source>
+        <translation>Zachowuje zmianę AI w tej linijce</translation>
+    </message>
+    <message>
+        <source>Undoes the AI’s change to this line</source>
+        <translation>Cofa zmianę AI w tej linijce</translation>
+    </message>
+    <message>
+        <source>Goes to the next line with an AI change</source>
+        <translation>Przechodzi do następnej linijki ze zmianą AI</translation>
+    </message>
+    <message>
+        <source>Goes to the previous line with an AI change</source>
+        <translation>Przechodzi do poprzedniej linijki ze zmianą AI</translation>
+    </message>
+    <message>
+        <source>Keeps every waiting AI change</source>
+        <translation>Zachowuje wszystkie oczekujące zmiany AI</translation>
+    </message>
+    <message>
+        <source>Undoes every waiting AI change</source>
+        <translation>Cofa wszystkie oczekujące zmiany AI</translation>
+    </message>
+    <message>
+        <source>Shows the Review panel</source>
+        <translation>Pokazuje panel Przegląd</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.ScriptProperties</name>
@@ -24478,6 +25158,10 @@ Usunięte style:
         <source>Extend</source>
         <translation>Przedłuż</translation>
     </message>
+    <message>
+        <source>Apply Power-Pin data</source>
+        <translation>Zastosuj dane Power-Pin</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Translation</name>
@@ -24728,6 +25412,14 @@ Usunięte style:
     <message>
         <source>Formatting</source>
         <translation>Formatowanie</translation>
+    </message>
+    <message>
+        <source>Tra&amp;nslation mode</source>
+        <translation>Tryb &amp;tłumaczenia</translation>
+    </message>
+    <message>
+        <source>Shows and saves the original text and the translation of each line</source>
+        <translation>Wyświetla i zapisuje tekst oryginalny i tłumaczenie każdej linijki</translation>
     </message>
 </context>
 <context>
@@ -27674,6 +28366,26 @@ nie działają na komentarzach</translation>
     <message>
         <source>Drag a panel here</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Layout is locked</source>
+        <translation>Układ jest zablokowany</translation>
+    </message>
+    <message>
+        <source>Shows or hides the side bar on the window’s left</source>
+        <translation>Pokazuje lub ukrywa pasek boczny po lewej stronie okna</translation>
+    </message>
+    <message>
+        <source>Shows or hides the side bar on the window’s right</source>
+        <translation>Pokazuje lub ukrywa pasek boczny po prawej stronie okna</translation>
+    </message>
+    <message>
+        <source>Swaps the panels of the left and right side bars</source>
+        <translation>Zamienia panele lewego i prawego paska bocznego</translation>
+    </message>
+    <message>
+        <source>Puts the side bars back as they started</source>
+        <translation>Przywraca paski boczne do stanu początkowego</translation>
     </message>
 </context>
 <context>

@@ -2822,6 +2822,10 @@ Output device: %2</source>
         <source>Open backup folder</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Run the last macro again</source>
+        <translation>마지막 매크로 다시 실행</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Colours</name>
@@ -8769,6 +8773,162 @@ Failed to copy %2 fonts.</source>
         <source>Split lines every N frames or seconds…</source>
         <translation>N 프레임 또는 N초마다 줄 나누기…</translation>
     </message>
+    <message>
+        <source>Import subtitles from MKV…</source>
+        <translation>MKV에서 자막 가져오기…</translation>
+    </message>
+    <message>
+        <source>Set new FPS…</source>
+        <translation>새 프레임 속도 설정…</translation>
+    </message>
+    <message>
+        <source>Report an issue…</source>
+        <translation>문제 보고…</translation>
+    </message>
+    <message>
+        <source>Load script…</source>
+        <translation>스크립트 불러오기…</translation>
+    </message>
+    <message>
+        <source>Shift times…</source>
+        <translation>시간 이동…</translation>
+    </message>
+    <message>
+        <source>Replace…</source>
+        <translation>바꾸기…</translation>
+    </message>
+    <message>
+        <source>Hide tags in the Grid</source>
+        <translation>자막 목록에서 태그 숨기기</translation>
+    </message>
+    <message>
+        <source>Open keyframes…</source>
+        <translation>키 프레임 열기…</translation>
+    </message>
+    <message>
+        <source>Sort all lines by style</source>
+        <translation>모든 줄 정렬 / 스타일</translation>
+    </message>
+    <message>
+        <source>Sort selected lines by style</source>
+        <translation>선택한 줄 정렬 / 스타일</translation>
+    </message>
+    <message>
+        <source>Timing postprocessor…</source>
+        <translation>타이밍 후처리기…</translation>
+    </message>
+    <message>
+        <source>Resample subtitles…</source>
+        <translation>자막 해상도 변경…</translation>
+    </message>
+    <message>
+        <source>Close tab</source>
+        <translation>탭 닫기</translation>
+    </message>
+    <message>
+        <source>Go to next frame</source>
+        <translation>다음 프레임으로 이동</translation>
+    </message>
+    <message>
+        <source>Open audio…</source>
+        <translation>소리 파일 열기…</translation>
+    </message>
+    <message>
+        <source>Go to previous frame</source>
+        <translation>이전 프레임으로 이동</translation>
+    </message>
+    <message>
+        <source>Save all</source>
+        <translation>모두 저장</translation>
+    </message>
+    <message>
+        <source>Save translation…</source>
+        <translation>번역본 저장…</translation>
+    </message>
+    <message>
+        <source>Name new files after the video</source>
+        <translation>새 파일 이름을 영상 이름으로 정하기</translation>
+    </message>
+    <message>
+        <source>Find…</source>
+        <translation>찾기…</translation>
+    </message>
+    <message>
+        <source>Select lines…</source>
+        <translation>줄 선택…</translation>
+    </message>
+    <message>
+        <source>Set audio mark to video time</source>
+        <translation>소리 표시선을 영상 시간으로 설정</translation>
+    </message>
+    <message>
+        <source>Set end time from video</source>
+        <translation>영상에서 종료 시간 설정</translation>
+    </message>
+    <message>
+        <source>Set start time from video</source>
+        <translation>영상에서 시작 시간 설정</translation>
+    </message>
+    <message>
+        <source>Export as…</source>
+        <translation>다른 형식으로 내보내기…</translation>
+    </message>
+    <message>
+        <source>Apply the audio selection and end the previous line there</source>
+        <translation>소리 선택 영역을 적용하고 이전 줄을 그 위치에서 끝내기</translation>
+    </message>
+    <message>
+        <source>Open timecodes…</source>
+        <translation>타임코드 열기…</translation>
+    </message>
+    <message>
+        <source>Save timecodes…</source>
+        <translation>타임코드 저장…</translation>
+    </message>
+    <message>
+        <source>Video details</source>
+        <translation>영상 정보</translation>
+    </message>
+    <message>
+        <source>Apply Power-Pin data…</source>
+        <translation>Power-Pin 데이터 적용…</translation>
+    </message>
+    <message>
+        <source>Copy Power-Pin data from lines</source>
+        <translation>줄에서 Power-Pin 데이터 복사</translation>
+    </message>
+    <message>
+        <source>QC notes</source>
+        <translation>QC 메모</translation>
+    </message>
+    <message>
+        <source>Show in Review panel</source>
+        <translation>검토 패널에 표시</translation>
+    </message>
+    <message>
+        <source>Explorer</source>
+        <translation>탐색기</translation>
+    </message>
+    <message>
+        <source>Load session from file…</source>
+        <translation>파일에서 세션 불러오기…</translation>
+    </message>
+    <message>
+        <source>Save session to file…</source>
+        <translation>파일로 세션 저장…</translation>
+    </message>
+    <message>
+        <source>Delete old autosaves…</source>
+        <translation>오래된 자동 저장 파일 삭제…</translation>
+    </message>
+    <message>
+        <source>Open dummy video…</source>
+        <translation>더미 영상 열기…</translation>
+    </message>
+    <message>
+        <source>Run the last macro again</source>
+        <translation>마지막 매크로 다시 실행</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.InlineAi</name>
@@ -9569,6 +9729,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Accept all suggestions</source>
         <translation>모든 제안 수락</translation>
+    </message>
+    <message>
+        <source>Check karaoke</source>
+        <translation>노래방 검사</translation>
     </message>
 </context>
 <context>
@@ -11735,6 +11899,490 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Where to save</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;Open subtitles…</source>
+        <translation>자막 열기…[&amp;O]</translation>
+    </message>
+    <message>
+        <source>&amp;Close tab</source>
+        <translation>탭 닫기[&amp;C]</translation>
+    </message>
+    <message>
+        <source>Save a&amp;ll</source>
+        <translation>모두 저장[&amp;L]</translation>
+    </message>
+    <message>
+        <source>Save &amp;translation…</source>
+        <translation>번역본 저장…[&amp;T]</translation>
+    </message>
+    <message>
+        <source>Name new files after the video</source>
+        <translation>새 파일 이름을 영상 이름으로 정하기</translation>
+    </message>
+    <message>
+        <source>Delete old autosaves…</source>
+        <translation>오래된 자동 저장 파일 삭제…</translation>
+    </message>
+    <message>
+        <source>Load session from file…</source>
+        <translation>파일에서 세션 불러오기…</translation>
+    </message>
+    <message>
+        <source>Save session to file…</source>
+        <translation>파일로 세션 저장…</translation>
+    </message>
+    <message>
+        <source>Setti&amp;ngs</source>
+        <translation>설정[&amp;N]</translation>
+    </message>
+    <message>
+        <source>Select &amp;lines…</source>
+        <translation>줄 선택…[&amp;L]</translation>
+    </message>
+    <message>
+        <source>Snap start to the previous keyframe</source>
+        <translation>시작 시간을 이전 키 프레임에 맞추기</translation>
+    </message>
+    <message>
+        <source>Snap start to the next keyframe</source>
+        <translation>시작 시간을 다음 키 프레임에 맞추기</translation>
+    </message>
+    <message>
+        <source>Snap end to the previous keyframe</source>
+        <translation>종료 시간을 이전 키 프레임에 맞추기</translation>
+    </message>
+    <message>
+        <source>Snap end to the next keyframe</source>
+        <translation>종료 시간을 다음 키 프레임에 맞추기</translation>
+    </message>
+    <message>
+        <source>Move start one frame earlier</source>
+        <translation>시작 시간을 한 프레임 앞으로</translation>
+    </message>
+    <message>
+        <source>Move start one frame later</source>
+        <translation>시작 시간을 한 프레임 뒤로</translation>
+    </message>
+    <message>
+        <source>Move end one frame earlier</source>
+        <translation>종료 시간을 한 프레임 앞으로</translation>
+    </message>
+    <message>
+        <source>Move end one frame later</source>
+        <translation>종료 시간을 한 프레임 뒤로</translation>
+    </message>
+    <message>
+        <source>Extend the previous line to this start</source>
+        <translation>이전 줄을 이 시작 시간까지 늘이기</translation>
+    </message>
+    <message>
+        <source>Extend the next line to this end</source>
+        <translation>다음 줄을 이 종료 시간까지 늘이기</translation>
+    </message>
+    <message>
+        <source>Accept the timing assistant’s suggestion</source>
+        <translation>타이밍 도우미의 제안 수락</translation>
+    </message>
+    <message>
+        <source>&amp;QC notes</source>
+        <translation>QC 메모[&amp;Q]</translation>
+    </message>
+    <message>
+        <source>Sc&amp;ript properties</source>
+        <translation>스크립트 속성[&amp;R]</translation>
+    </message>
+    <message>
+        <source>&amp;Font collector</source>
+        <translation>글꼴 수집기[&amp;F]</translation>
+    </message>
+    <message>
+        <source>R&amp;esample subtitles…</source>
+        <translation>자막 해상도 변경…[&amp;E]</translation>
+    </message>
+    <message>
+        <source>Check spellin&amp;g</source>
+        <translation>철자 검사[&amp;G]</translation>
+    </message>
+    <message>
+        <source>Check &amp;karaoke</source>
+        <translation>노래방 검사[&amp;K]</translation>
+    </message>
+    <message>
+        <source>Kanji t&amp;imer</source>
+        <translation>한자 타이머[&amp;I]</translation>
+    </message>
+    <message>
+        <source>Open &amp;keyframes…</source>
+        <translation>키 프레임 열기…[&amp;K]</translation>
+    </message>
+    <message>
+        <source>Open timecodes…</source>
+        <translation>타임코드 열기…</translation>
+    </message>
+    <message>
+        <source>Save timecodes…</source>
+        <translation>타임코드 저장…</translation>
+    </message>
+    <message>
+        <source>Open dummy video…</source>
+        <translation>더미 영상 열기…</translation>
+    </message>
+    <message>
+        <source>Align to &amp;video…</source>
+        <translation>영상에 맞추기…[&amp;V]</translation>
+    </message>
+    <message>
+        <source>Set &amp;start time from video</source>
+        <translation>영상에서 시작 시간 설정[&amp;S]</translation>
+    </message>
+    <message>
+        <source>Set end time from video</source>
+        <translation>영상에서 종료 시간 설정</translation>
+    </message>
+    <message>
+        <source>Apply Power-Pin data…</source>
+        <translation>Power-Pin 데이터 적용…</translation>
+    </message>
+    <message>
+        <source>Copy Power-Pin data from lines</source>
+        <translation>줄에서 Power-Pin 데이터 복사</translation>
+    </message>
+    <message>
+        <source>&amp;Play or pause</source>
+        <translation>재생 또는 일시 정지[&amp;P]</translation>
+    </message>
+    <message>
+        <source>Video details</source>
+        <translation>영상 정보</translation>
+    </message>
+    <message>
+        <source>&amp;Open audio…</source>
+        <translation>소리 파일 열기…[&amp;O]</translation>
+    </message>
+    <message>
+        <source>Open audio from &amp;video</source>
+        <translation>영상에서 소리 열기[&amp;V]</translation>
+    </message>
+    <message>
+        <source>&amp;Close audio</source>
+        <translation>소리 닫기[&amp;C]</translation>
+    </message>
+    <message>
+        <source>&amp;Reload audio</source>
+        <translation>소리 다시 불러오기[&amp;R]</translation>
+    </message>
+    <message>
+        <source>Set audio mark to video time</source>
+        <translation>소리 표시선을 영상 시간으로 설정</translation>
+    </message>
+    <message>
+        <source>Apply the audio selection and end the previous line there</source>
+        <translation>소리 선택 영역을 적용하고 이전 줄을 그 위치에서 끝내기</translation>
+    </message>
+    <message>
+        <source>Run the last macro again</source>
+        <translation>마지막 매크로 다시 실행</translation>
+    </message>
+    <message>
+        <source>Pl&amp;ugins</source>
+        <translation>플러그인[&amp;U]</translation>
+    </message>
+    <message>
+        <source>Getting &amp;started</source>
+        <translation>시작하기[&amp;S]</translation>
+    </message>
+    <message>
+        <source>&amp;Report an issue…</source>
+        <translation>문제 보고…[&amp;R]</translation>
+    </message>
+    <message>
+        <source>Only in Translation mode</source>
+        <translation>번역 모드에서만</translation>
+    </message>
+    <message>
+        <source>Opens a subtitle file</source>
+        <translation>자막 파일을 엽니다</translation>
+    </message>
+    <message>
+        <source>Opens a video file</source>
+        <translation>영상 파일을 엽니다</translation>
+    </message>
+    <message>
+        <source>Opens a folder as a project</source>
+        <translation>폴더를 프로젝트로 엽니다</translation>
+    </message>
+    <message>
+        <source>Lists the subtitle files opened lately</source>
+        <translation>최근에 연 자막 파일 목록을 표시합니다</translation>
+    </message>
+    <message>
+        <source>&amp;Recently opened subtitles</source>
+        <translation>열었던 자막[&amp;R]</translation>
+    </message>
+    <message>
+        <source>Opens %1</source>
+        <translation>%1을(를) 엽니다</translation>
+    </message>
+    <message>
+        <source>Saves the document</source>
+        <translation>문서를 저장합니다</translation>
+    </message>
+    <message>
+        <source>Saves the document under a new name or format</source>
+        <translation>문서를 새 이름이나 형식으로 저장합니다</translation>
+    </message>
+    <message>
+        <source>Saves every open document</source>
+        <translation>열린 문서를 모두 저장합니다</translation>
+    </message>
+    <message>
+        <source>Saves the translation as a new file</source>
+        <translation>번역본을 새 파일로 저장합니다</translation>
+    </message>
+    <message>
+        <source>Names new files after the video</source>
+        <translation>새 파일 이름을 영상 이름으로 정합니다</translation>
+    </message>
+    <message>
+        <source>Deletes autosaves older than a date you choose</source>
+        <translation>선택한 날짜보다 오래된 자동 저장 파일을 삭제합니다</translation>
+    </message>
+    <message>
+        <source>Loads or saves the open files as a session</source>
+        <translation>열린 파일을 세션으로 불러오거나 저장합니다</translation>
+    </message>
+    <message>
+        <source>At startup</source>
+        <translation>시작할 때</translation>
+    </message>
+    <message>
+        <source>Starts with no files open</source>
+        <translation>파일을 열지 않고 시작합니다</translation>
+    </message>
+    <message>
+        <source>Don’t load the last session</source>
+        <translation>마지막 세션 불러오지 않기</translation>
+    </message>
+    <message>
+        <source>Asks whether to load the last session at startup</source>
+        <translation>시작할 때 마지막 세션을 불러올지 묻습니다</translation>
+    </message>
+    <message>
+        <source>Ask</source>
+        <translation>묻기</translation>
+    </message>
+    <message>
+        <source>Loads the last session at startup</source>
+        <translation>시작할 때 마지막 세션을 불러옵니다</translation>
+    </message>
+    <message>
+        <source>Load the last session</source>
+        <translation>마지막 세션 불러오기</translation>
+    </message>
+    <message>
+        <source>Empties the editor and starts a new document</source>
+        <translation>편집기를 비우고 새 문서를 시작합니다</translation>
+    </message>
+    <message>
+        <source>Closes the current tab</source>
+        <translation>현재 탭을 닫습니다</translation>
+    </message>
+    <message>
+        <source>Closes this window’s tabs and its project</source>
+        <translation>이 창의 탭과 프로젝트를 닫습니다</translation>
+    </message>
+    <message>
+        <source>Opens Settings</source>
+        <translation>설정을 엽니다</translation>
+    </message>
+    <message>
+        <source>Closes this window; closing the last window exits the program</source>
+        <translation>이 창을 닫습니다. 마지막 창을 닫으면 프로그램이 종료됩니다</translation>
+    </message>
+    <message>
+        <source>Exits the program</source>
+        <translation>프로그램을 종료합니다</translation>
+    </message>
+    <message>
+        <source>Undoes the last change</source>
+        <translation>마지막 변경을 실행 취소합니다</translation>
+    </message>
+    <message>
+        <source>Redoes the last undone change</source>
+        <translation>마지막으로 실행 취소한 변경을 다시 실행합니다</translation>
+    </message>
+    <message>
+        <source>Undoes every change since the last save</source>
+        <translation>마지막 저장 이후의 모든 변경을 실행 취소합니다</translation>
+    </message>
+    <message>
+        <source>Shows the list of changes</source>
+        <translation>변경 목록을 표시합니다</translation>
+    </message>
+    <message>
+        <source>Sorts every line in the document</source>
+        <translation>문서의 모든 줄을 정렬합니다</translation>
+    </message>
+    <message>
+        <source>Sor&amp;t all lines</source>
+        <translation>모든 줄 정렬[&amp;T]</translation>
+    </message>
+    <message>
+        <source>Sorts the selected lines</source>
+        <translation>선택한 줄을 정렬합니다</translation>
+    </message>
+    <message>
+        <source>Sort s&amp;elected lines</source>
+        <translation>선택 줄 정렬[&amp;E]</translation>
+    </message>
+    <message>
+        <source>Shows the Shift times panel</source>
+        <translation>시간 이동 패널을 표시합니다</translation>
+    </message>
+    <message>
+        <source>Timing &amp;helpers</source>
+        <translation>타이밍 보조 도구[&amp;H]</translation>
+    </message>
+    <message>
+        <source>Opens Style manager for the active line’s style</source>
+        <translation>활성 줄의 스타일로 스타일 관리를 엽니다</translation>
+    </message>
+    <message>
+        <source>Collects the fonts the document uses into a folder or archive</source>
+        <translation>문서에 쓰인 글꼴을 폴더나 압축 파일로 모읍니다</translation>
+    </message>
+    <message>
+        <source>Resamples the document to a new script resolution</source>
+        <translation>문서를 새 스크립트 해상도에 맞게 변경합니다</translation>
+    </message>
+    <message>
+        <source>Set FP&amp;S</source>
+        <translation>프레임 속도 설정[&amp;S]</translation>
+    </message>
+    <message>
+        <source>Convert Aegisub fol&amp;ds to line groups</source>
+        <translation>Aegisub 접기를 줄 그룹으로 변환[&amp;D]</translation>
+    </message>
+    <message>
+        <source>No Aegisub folds in this file</source>
+        <translation>이 파일에는 Aegisub 접기가 없습니다</translation>
+    </message>
+    <message>
+        <source>Opens the Spellchecker panel</source>
+        <translation>철자 검사기 패널을 엽니다</translation>
+    </message>
+    <message>
+        <source>&amp;Open video…</source>
+        <translation>영상 열기…[&amp;O]</translation>
+    </message>
+    <message>
+        <source>Opens a keyframes file</source>
+        <translation>키 프레임 파일을 엽니다</translation>
+    </message>
+    <message>
+        <source>Opens a VFR timecodes v1, v2 or v4 file</source>
+        <translation>VFR 타임코드 v1, v2, v4 파일을 엽니다</translation>
+    </message>
+    <message>
+        <source>Saves the timecodes as a VFR v2 file</source>
+        <translation>타임코드를 VFR v2 파일로 저장합니다</translation>
+    </message>
+    <message>
+        <source>Closes the open timecodes file</source>
+        <translation>열린 타임코드 파일을 닫습니다</translation>
+    </message>
+    <message>
+        <source>Goes one frame back</source>
+        <translation>이전 프레임으로 이동합니다</translation>
+    </message>
+    <message>
+        <source>Goes one frame forward</source>
+        <translation>다음 프레임으로 이동합니다</translation>
+    </message>
+    <message>
+        <source>Sets the selected lines’ start to the video frame’s time</source>
+        <translation>선택한 줄의 시작 시간을 영상 프레임 시간으로 설정합니다</translation>
+    </message>
+    <message>
+        <source>Sets the selected lines’ end to the video frame’s time</source>
+        <translation>선택한 줄의 종료 시간을 영상 프레임 시간으로 설정합니다</translation>
+    </message>
+    <message>
+        <source>Open a video first</source>
+        <translation>먼저 영상을 여세요</translation>
+    </message>
+    <message>
+        <source>&amp;Full screen</source>
+        <translation>전체 화면[&amp;F]</translation>
+    </message>
+    <message>
+        <source>Change aspect ratio…</source>
+        <translation>가로 세로 비율 변경…</translation>
+    </message>
+    <message>
+        <source>Opens an audio file</source>
+        <translation>소리 파일을 엽니다</translation>
+    </message>
+    <message>
+        <source>Lists the audio files opened lately</source>
+        <translation>최근에 연 소리 파일 목록을 표시합니다</translation>
+    </message>
+    <message>
+        <source>Closes the audio</source>
+        <translation>소리를 닫습니다</translation>
+    </message>
+    <message>
+        <source>Loads an Automation script from a file</source>
+        <translation>파일에서 자동화 스크립트를 불러옵니다</translation>
+    </message>
+    <message>
+        <source>Loads the autoload folder’s scripts again</source>
+        <translation>자동 불러오기 폴더의 스크립트를 다시 불러옵니다</translation>
+    </message>
+    <message>
+        <source>Runs the last macro again, showing its dialogs</source>
+        <translation>대화 상자를 표시하며 마지막 매크로를 다시 실행합니다</translation>
+    </message>
+    <message>
+        <source>Runs the last macro again with the same answers, without its dialogs when they are unchanged</source>
+        <translation>바뀌지 않은 대화 상자는 건너뛰고 마지막 매크로를 같은 답변으로 다시 실행합니다</translation>
+    </message>
+    <message>
+        <source>Installs, turns on and off, and uninstalls plugins</source>
+        <translation>플러그인을 설치하고, 켜고 끄고, 설치 제거합니다</translation>
+    </message>
+    <message>
+        <source>Switches, saves and locks the window’s layout</source>
+        <translation>창 레이아웃을 전환하고 저장하고 잠급니다</translation>
+    </message>
+    <message>
+        <source>Shows, floats or closes each panel</source>
+        <translation>각 패널을 표시하거나 띄우거나 닫습니다</translation>
+    </message>
+    <message>
+        <source>Moves the focused panel to another place in the window</source>
+        <translation>포커스된 패널을 창의 다른 위치로 옮깁니다</translation>
+    </message>
+    <message>
+        <source>Shows or hides the Log</source>
+        <translation>로그를 표시하거나 숨깁니다</translation>
+    </message>
+    <message>
+        <source>Open a file first</source>
+        <translation>먼저 파일을 여세요</translation>
+    </message>
+    <message>
+        <source>Shows or hides tags in the Grid</source>
+        <translation>자막 목록에서 태그를 표시하거나 숨깁니다</translation>
+    </message>
+    <message>
+        <source>Hide tags in the Grid</source>
+        <translation>자막 목록에서 태그 숨기기</translation>
+    </message>
+    <message>
+        <source>Shows or hides tags in the line editor</source>
+        <translation>줄 편집기에서 태그를 표시하거나 숨깁니다</translation>
     </message>
 </context>
 <context>
@@ -18324,6 +18972,38 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>Sub-agents: %1</source>
         <translation>하위 에이전트: %1</translation>
     </message>
+    <message>
+        <source>Keeps or undoes the AI’s changes</source>
+        <translation>AI의 변경을 유지하거나 실행 취소합니다</translation>
+    </message>
+    <message>
+        <source>Keeps the AI’s change to this line</source>
+        <translation>이 줄에 대한 AI의 변경을 유지합니다</translation>
+    </message>
+    <message>
+        <source>Undoes the AI’s change to this line</source>
+        <translation>이 줄에 대한 AI의 변경을 실행 취소합니다</translation>
+    </message>
+    <message>
+        <source>Goes to the next line with an AI change</source>
+        <translation>AI 변경이 있는 다음 줄로 이동합니다</translation>
+    </message>
+    <message>
+        <source>Goes to the previous line with an AI change</source>
+        <translation>AI 변경이 있는 이전 줄로 이동합니다</translation>
+    </message>
+    <message>
+        <source>Keeps every waiting AI change</source>
+        <translation>대기 중인 AI 변경을 모두 유지합니다</translation>
+    </message>
+    <message>
+        <source>Undoes every waiting AI change</source>
+        <translation>대기 중인 AI 변경을 모두 실행 취소합니다</translation>
+    </message>
+    <message>
+        <source>Shows the Review panel</source>
+        <translation>검토 패널을 표시합니다</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.ScriptProperties</name>
@@ -24048,6 +24728,10 @@ Styles deleted:
         <source>Extend</source>
         <translation>연장</translation>
     </message>
+    <message>
+        <source>Apply Power-Pin data</source>
+        <translation>Power-Pin 데이터 적용</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Translation</name>
@@ -24298,6 +24982,14 @@ Styles deleted:
     <message>
         <source>Formatting</source>
         <translation>서식</translation>
+    </message>
+    <message>
+        <source>Tra&amp;nslation mode</source>
+        <translation>번역 모드[&amp;N]</translation>
+    </message>
+    <message>
+        <source>Shows and saves the original text and the translation of each line</source>
+        <translation>각 줄의 원문과 번역문을 표시하고 저장합니다</translation>
     </message>
 </context>
 <context>
@@ -27220,6 +27912,26 @@ do not work on comments</source>
     <message>
         <source>Drag a panel here</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Layout is locked</source>
+        <translation>레이아웃이 잠겨 있습니다</translation>
+    </message>
+    <message>
+        <source>Shows or hides the side bar on the window’s left</source>
+        <translation>창 왼쪽의 사이드바를 표시하거나 숨깁니다</translation>
+    </message>
+    <message>
+        <source>Shows or hides the side bar on the window’s right</source>
+        <translation>창 오른쪽의 사이드바를 표시하거나 숨깁니다</translation>
+    </message>
+    <message>
+        <source>Swaps the panels of the left and right side bars</source>
+        <translation>왼쪽과 오른쪽 사이드바의 패널을 맞바꿉니다</translation>
+    </message>
+    <message>
+        <source>Puts the side bars back as they started</source>
+        <translation>사이드바를 처음 상태로 되돌립니다</translation>
     </message>
 </context>
 <context>

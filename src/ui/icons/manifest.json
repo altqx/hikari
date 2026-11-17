@@ -489,6 +489,28 @@
    ]
   },
   {
+   "role": "audio-to-selection-start",
+   "file": "audio-to-selection-start.svg",
+   "label": "Go to selection start",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "audio-box"
+   ]
+  },
+  {
+   "role": "audio-to-selection-end",
+   "file": "audio-to-selection-end.svg",
+   "label": "Go to selection end",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "audio-box"
+   ]
+  },
+  {
    "role": "audio-to-video-time",
    "file": "audio-to-video-time.svg",
    "label": "Set audio position to video time",
@@ -1543,6 +1565,17 @@
    "surfaces": [
     "dialogs",
     "status-bar"
+   ]
+  },
+  {
+   "role": "chevron-up",
+   "file": "chevron-up.svg",
+   "label": "Previous AI change",
+   "accent": false,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:edit"
    ]
   },
   {
@@ -4114,6 +4147,50 @@
    ]
   },
   {
+   "role": "start-frame-earlier",
+   "file": "start-frame-earlier.svg",
+   "label": "Move start one frame earlier",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:timing"
+   ]
+  },
+  {
+   "role": "start-frame-later",
+   "file": "start-frame-later.svg",
+   "label": "Move start one frame later",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:timing"
+   ]
+  },
+  {
+   "role": "end-frame-earlier",
+   "file": "end-frame-earlier.svg",
+   "label": "Move end one frame earlier",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:timing"
+   ]
+  },
+  {
+   "role": "end-frame-later",
+   "file": "end-frame-later.svg",
+   "label": "Move end one frame later",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:timing"
+   ]
+  },
+  {
    "role": "preview-resolution",
    "file": "preview-resolution.svg",
    "label": "Preview subtitles at",
@@ -4403,6 +4480,17 @@
    "role": "shift-end-to-video",
    "file": "shift-end-to-video.svg",
    "label": "End at video",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:video"
+   ]
+  },
+  {
+   "role": "shift-frames-to-video",
+   "file": "shift-frames-to-video.svg",
+   "label": "Shift by frames to video",
    "accent": true,
    "mirror": false,
    "legacy": [],
@@ -4764,8 +4852,7 @@
     "menu:view",
     "menu:edit",
     "review-panel"
-   ],
-   "pending": "AI2 #430"
+   ]
   },
   {
    "role": "web-search",
@@ -5350,6 +5437,17 @@
    ]
   },
   {
+   "role": "timing-helpers",
+   "file": "timing-helpers.svg",
+   "label": "Timing helpers",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:subtitles"
+   ]
+  },
+  {
    "role": "line-break-insert",
    "file": "line-break-insert.svg",
    "label": "Insert line break",
@@ -5755,6 +5853,17 @@
    "role": "motion-apply",
    "file": "motion-apply.svg",
    "label": "Apply motion data",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:video"
+   ]
+  },
+  {
+   "role": "tracking",
+   "file": "tracking.svg",
+   "label": "Tracking",
    "accent": true,
    "mirror": false,
    "legacy": [],

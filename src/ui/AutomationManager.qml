@@ -304,7 +304,7 @@ Pane {
             IconToolButton {
                 objectName: "automationRerun"
                 iconRole: "rerun-macro"
-                text: qsTr("Rerun last macro")
+                text: qsTr("Run the last macro again")
                 enabled: root.automation !== null && root.automation.canRerun
                 onClicked: root.automation.rerunLast()
             }

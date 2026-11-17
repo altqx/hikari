@@ -314,6 +314,10 @@ icon("video-to-start-time", "Go to start time", ["videoonstime.png"], [VIDEO, AU
      stroke("M5.5 2.5h-2v11h2") + accent(stroke("M14.5 8h-8M9 5.5L6.5 8 9 10.5")))
 icon("video-to-end-time", "Go to end time of line", ["videoonetime.png"], [VIDEO, AUDIOBOX],
      stroke("M10.5 2.5h2v11h-2") + accent(stroke("M1.5 8h8M7 5.5L9.5 8 7 10.5")))
+icon("audio-to-selection-start", "Go to selection start", [], [AUDIOBOX],
+     stroke("M6.5 7v2M8.5 5v6M10.5 6v4M12.5 4.5v7M14.5 6.5v3") + accent(stroke("M3.5 2.5v11M1.5 2.5h4M1.5 13.5h4")))
+icon("audio-to-selection-end", "Go to selection end", [], [AUDIOBOX],
+     stroke("M1.5 6.5v3M3.5 4.5v7M5.5 6v4M7.5 5v6M9.5 7v2") + accent(stroke("M12.5 2.5v11M10.5 2.5h4M10.5 13.5h4")))
 icon("audio-to-video-time", "Set audio position to video time", ["SetVideoTimeOnAudio.png"], [VIDEO],
      waveform(1.5, 4.5, 11.5) + accent(stroke("M8 1.5v13")))
 icon("audio-marker-to-video-time", "Set audio marker to video time", ["SetVideoTimeOnAudioMark.png"],
@@ -484,6 +488,7 @@ icon("calendar", "Choose a date", [], ["date-picker"],
 icon("chevron-left", "Previous", [], ["date-picker"], stroke("M9.5 4.5L6 8l3.5 3.5"), mirror=True)
 icon("chevron-right", "Next", [], ["date-picker", "dialogs"], stroke("M6.5 4.5L10 8l-3.5 3.5"), mirror=True)
 icon("chevron-down", "Expanded", [], ["dialogs", "status-bar"],stroke("M4.5 6.5L8 10l3.5-3.5"))
+icon("chevron-up", "Previous AI change", [], [EDIT], stroke("M4.5 9.5L8 6l3.5 3.5"))
 
 icon("run-busy", "Running", [], ["automation", "notices"],
      stroke("M8 1.5a6.5 6.5 0 1 0 6.5 6.5") + accent(stroke("M8 1.5a6.5 6.5 0 0 1 6.5 6.5")))
@@ -1010,6 +1015,14 @@ icon("time-offset-start", "Start frame offset", [], ["settings-dialog", VIDEO],
      rect(7.5, 8.5, 7, 5, 1) + accent(stroke("M5.5 7.5v7M2.5 4.5h6M4 3L2.5 4.5 4 6M7 3l1.5 1.5L7 6")))
 icon("time-offset-end", "End frame offset", [], ["settings-dialog", VIDEO],
      rect(1.5, 8.5, 7, 5, 1) + accent(stroke("M10.5 7.5v7M7.5 4.5h6M9 3L7.5 4.5 9 6M12 3l1.5 1.5L12 6")))
+icon("start-frame-earlier", "Move start one frame earlier", [], [TIMING],
+     rect(7.5, 8.5, 7, 5, 1) + accent(stroke("M5.5 7.5v7M8.5 4.5h-6M4 3L2.5 4.5 4 6")))
+icon("start-frame-later", "Move start one frame later", [], [TIMING],
+     rect(7.5, 8.5, 7, 5, 1) + accent(stroke("M5.5 7.5v7M2.5 4.5h6M7 3l1.5 1.5L7 6")))
+icon("end-frame-earlier", "Move end one frame earlier", [], [TIMING],
+     rect(1.5, 8.5, 7, 5, 1) + accent(stroke("M10.5 7.5v7M13.5 4.5h-6M9 3L7.5 4.5 9 6")))
+icon("end-frame-later", "Move end one frame later", [], [TIMING],
+     rect(1.5, 8.5, 7, 5, 1) + accent(stroke("M10.5 7.5v7M7.5 4.5h6M12 3l1.5 1.5L12 6")))
 icon("preview-resolution", "Preview subtitles at", [], ["settings-dialog"],
      rect(1.5, 2.5, 13, 9, 1) + stroke("M6.5 11.5v2M9.5 11.5v2M4.5 13.5h7")
      + accent(stroke("M4.5 9.5l2-2M4.5 9.5V8M4.5 9.5H6M11.5 4.5l-2 2M11.5 4.5V6M11.5 4.5H10")))
@@ -1073,6 +1086,9 @@ icon("shift-start-to-video", "Start at video", [], [VIDEO],
 icon("shift-end-to-video", "End at video", [], [VIDEO],
      rect(3.5, 7.5, 9, 5, 1) + stroke("M2.5 4.5h7M8 3l1.5 1.5L8 6")
      + accent(solid("M11 1.5h3L12.5 3z"), stroke("M12.5 3v11")))
+icon("shift-frames-to-video", "Shift by frames to video", [], [VIDEO],
+     rect(1.5, 7.5, 9, 6, 1) + stroke("M4.5 7.5v6M7.5 7.5v6")
+     + accent(stroke("M2.5 4.5h8M9 3l1.5 1.5L9 6"), stroke("M13.5 1.5v13")))
 icon("center-times", "Centre times within frames", [], [VIDEO],
      stroke("M1.5 3.5v9M13.5 3.5v9") + stroke("M3 8h3M4.5 6.5L6 8 4.5 9.5M12 8H9M10.5 6.5L9 8l1.5 1.5")
      + accent(stroke("M7.5 2.5v11")))
@@ -1319,6 +1335,8 @@ icon("extend-next-to-end", "Extend next line to this end", [], [TIMING],
 icon("timing-assistant", "Assistant", [], ["timing-postprocessor"],
      stroke("M6 9.5C4.75 8.75 4 7.5 4 6a4 4 0 0 1 8 0c0 1.5-.75 2.75-2 3.5V11H6z") + stroke("M6.5 13.5h3")
      + accent(stroke("M2.5 3.5h-1v9h1M13.5 3.5h1v9h-1")))
+icon("timing-helpers", "Timing helpers", [], [SUBS],
+     circle(6.5, 6.5, 5) + stroke("M6.5 4v2.5l2 1.5") + accent(stroke("M10.5 10.5v4M14.5 10.5v4M10.5 12.5h4")))
 
 icon("line-break-insert", "Insert line break", [], [EDITOR, GRIDMENU],
      stroke("M3.5 2.5h9M3.5 13.5h9") + accent(stroke(BREAK_MARK)), mirror=True)
@@ -1412,6 +1430,8 @@ icon("citations", "Sources", [], ["agent-panel"],
 icon("web-page-read", "Read a page", [], ["agent-panel"], page(True) + GLOBE_BADGE)
 
 icon("motion-apply", "Apply motion data", [], [VIDEO], TRACK + accent(rect(11.5, 1.5, 3, 3, .5)))
+icon("tracking", "Tracking", [], [VIDEO],
+     TRACK + accent(circle(11.5, 4.5, 2.5), stroke("M11.5 .5v1.5M11.5 7v1.5M7.5 4.5H9M14 4.5h1.5")))
 icon("motion-revert", "Revert motion data", [], [VIDEO],
      stroke("M2.5 9L4.5 4.5 8.5 3") + dot(2.5, 9, 1.5) + dot(4.5, 4.5, 1.5) + dot(8.5, 3, 1.5)
      + accent(stroke("M11.5 9.5l-2 2 2 2M9.5 11.5h3a1.5 1.5 0 0 1 0 3H11")))
@@ -1442,7 +1462,6 @@ NOT_REPLACED = {
 
 PENDING = {}
 for card, roles in {
-    "AI2 #430": ["review-panel"],
     "AI24 #744": ["update"],
     "PL7 #419": ["plugin-sandbox"],
     "AU6 #845": ["clip-to-shape", "shape-to-clip", "shape-merge"],

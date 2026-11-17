@@ -9,7 +9,7 @@ DialogWindow {
     id: dialog
     objectName: "perspectiveTrackingDialog"
     required property var app
-    title: qsTr("Perspective tracking")
+    title: qsTr("Apply Power-Pin data")
     dialogId: "perspectiveTracking"
     modal: true
     defaultButton: applyButton

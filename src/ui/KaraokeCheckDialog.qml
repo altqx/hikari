@@ -8,7 +8,7 @@ DialogWindow {
     id: dialog
     objectName: "karaokeCheckDialog"
     required property var app
-    title: qsTr("Karaoke check")
+    title: qsTr("Check karaoke")
     dialogId: "karaokeCheck"
     resizable: true
     initialFocus: problemList

@@ -8,19 +8,17 @@ ShellMenu {
     required property VideoController video
     property var rows: []
     iconRole: "video-streams"
-    title: qsTr("Streams")
+    title: qsTr("Audio track")
     enabled: video.hasVideo && video.streamCount > 0
     onAboutToShow: rows = video.streams()
     Instantiator {
         model: menu.rows
-        delegate: ShellMenuItem {
+        delegate: MenuRadioItem {
             required property var modelData
             required property int index
             objectName: "videoStream" + index
             text: modelData.label
-            checkable: true
             checked: modelData.checked
-            keepsMenuOpen: false
             onTriggered: {
                 menu.video.selectStream(index)
                 menu.rows = menu.video.streams()

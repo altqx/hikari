@@ -63,6 +63,7 @@ constexpr std::array kRiskyCommands{
     RiskyName{"GLOBAL_AUTOMATION_LOAD_SCRIPT", Risk::Programs, kRunsScript},
     RiskyName{"GLOBAL_AUTOMATION_LOAD_LAST_SCRIPT", Risk::Programs, kRunsScript},
     RiskyName{"GLOBAL_AUTOMATION_REPEAT_LAST_RUN", Risk::Programs, kRunsScript},
+    RiskyName{"GLOBAL_AUTOMATION_RERUN_LAST_MACRO", Risk::Programs, kRunsScript},
     RiskyName{"GLOBAL_AUTOMATION_RELOAD_AUTOLOAD", Risk::Programs, "It runs the Autoload scripts."},
 };
 

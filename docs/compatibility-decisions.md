@@ -168,7 +168,7 @@ Video › Tracking does natively what Aegisub-Motion 1.0.9, 0x.DeriveTrack, arch
 - **D8, Linear with karaoke.** It works. Aegisub-Motion fails with "attempt to compare number with nil".
 - **D9, selection.** Apply selects the new Lines, and Revert selects the restored Lines. Aegisub-Motion returns no selection, so the deleted Lines stay selected after its Revert.
 - **D10, fixed order.** The added tags and the callbacks run in a fixed order. Aegisub-Motion runs them in Lua `pairs()` order: tag order varies between runs, and five cases differ in their values (rect clips can drop the rotation, Absolute moves a clip by another frame's offset).
-- **D11, one Power-Pin command.** Copy Power-Pin track from lines uses each Line's saved plane, else its tags' quad. arch.DerivePerspTrack has two macros, From Outer Quad and From Tags.
+- **D11, one Power-Pin command.** Copy Power-Pin data from lines uses each Line's saved plane, else its tags' quad. arch.DerivePerspTrack has two macros, From Outer Quad and From Tags.
 - **D12, frame rate.** The two copy commands write the video's frame rate. The scripts write 23.976.
 - **D13, alphas.** With Bake transforms on, the Style's `\1a` `\3a` `\4a` (or `\alpha&H00&`) are added only when the Line has a fade to bake. Aegisub-Motion adds them to every Line.
 

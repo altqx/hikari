@@ -668,6 +668,22 @@ The total is **28 menus with 257 items**: 16 right-click entries (two of them, R
 - **Icons.** The three MCP Copy setup rows use edit-copy (rule 18).
 - **Ledger.** `context_menus.txt` lists the Automation script row menu.
 
+### What CX7 built: menu bar
+
+[#810](https://github.com/altqx/hikari/issues/810) (PR 6, audit 1b) regrouped the eight menus and the title bar's » the same way:
+
+- **One name per command.** A menu row, its Settings › Shortcuts name and its window title read the same: Close tab, Save all, Save translation…, Name new files after the video, Select lines…, Shift times…, Set new FPS…, Open keyframes…, Open timecodes…, Video details, Apply Power-Pin data…, Copy Power-Pin data from lines, Check karaoke, QC notes, Explorer, Hide tags in the Grid, Report an issue…. Load session from file…, Save session to file…, Delete old autosaves… and Open dummy video… are now named in Settings › Shortcuts too (391 → 396 named rows with Run the last macro again).
+- **File.** Open | Recently opened subtitles ▸ (each row's status text names its path) | MKV and lyrics imports | Save rows and [x] Name new files after the video | autosaves and Last session ▸ | Remove subtitles from the editor, Close tab, Close project | Settings | Close window, Exit. Last session ▸ puts its startup choice under the heading “At startup” as three radio rows.
+- **Edit.** Review ▸ follows History when Review is on. Sort all lines ▸ and Sort selected lines ▸ have their own group.
+- **Subtitles.** Timing helpers ▸ gathers the keyframe snaps, lead-in and lead-out, the one-frame moves, the two extends and the timing assistant. Convert Aegisub folds to line groups follows Set FPS ▸ and, with a file open, is greyed with “No Aegisub folds in this file”. Typesetting graph… shows “Layout is locked”.
+- **Video.** Tracking ▸ rows that need a video show “Open a video first”, and Revert motion data is last. Full screen and Change aspect ratio… are rows here too. Audio track ▸ and Chapters ▸ are radio rows; a chapter's time is in the detail column, without brackets.
+- **Audio.** Recently opened audio ▸ follows Open audio…, and the join row reads “Apply the audio selection and end the previous line there”.
+- **Automation.** Run the last macro again (GLOBAL_AUTOMATION_RERUN_LAST_MACRO, 5342) joins Run last loaded script and Repeat last run, whose detail column names the macro it repeats. Macro and plugin command rows show their own shortcut in the key column, and plugin commands and macros each have their own separator.
+- **View.** Layout ▸ ends with Restore the previous layout. Left side bar and Right side bar are check items, and Reset side bars and every panel row show “Layout is locked” when the layout is locked. Panels ▸ lists the built-in panels in four groups (editing, tools, AI, node effects) with plugin panels after; each panel's submenu is Show, Float or Dock | Close. Explorer and Log are check items, as is Hide tags in the Grid. Show stays enabled on a panel that is already shown and raises it (VW15, kept).
+- **Help.** Getting started, User guide, What's new | Report an issue…, Open user folder | Check for updates | About, Credits.
+- **Icons.** Ten new roles: chevron-up, audio-to-selection-start, audio-to-selection-end, start-frame-earlier, start-frame-later, end-frame-earlier, end-frame-later, shift-frames-to-video, timing-helpers and tracking; review-panel is now placed.
+- **Ledger.** `menu_bar.txt` lists View › Panels › Video in full, as an example of the panel rows.
+
 Proposal for [#578](https://github.com/altqx/hikari/issues/578), from the 2026-10-31 decisions in the card and the round-2 decisions of 2026-11-02 (round 2 wins where they differ). The mockup draws each menu before and after in Light, Dark and high contrast with the theme roles and the icons from `src/ui/icons`: `cx2/index.html` and the screenshots on the orphan branch `evidence/w8-cx2`. The owner approved every menu and every flagged point on 2026-11-02 ([#578 decision](https://github.com/altqx/hikari/issues/578)); CX3–CX6 build this.
 
 Notation as above, plus: `{keys}` is the default binding shown in the key column; an icon role that is not in `src/ui/icons` yet is a new icon CX3 draws.

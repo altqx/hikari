@@ -9,7 +9,7 @@ Left without an icon, as IC1 and IC2 decided: check items, entries named by thei
 | Role | Place | Verdict |
 | --- | --- | --- |
 | open-timecodes, recent-timecodes, save-timecodes, close-timecodes | Video › Timecodes | redrawn: the ruler filled only the top half of the box; it is now a ruler body with uneven ticks, cut at its lower right for the family's badge |
-| video-details | Video › Video details… | redrawn: the open-video film frame with an info badge the size of the set's other badges (the old one reached the box's edge) |
+| video-details | Video › Video details | redrawn: the open-video film frame with an info badge the size of the set's other badges (the old one reached the box's edge) |
 | tab-close-others | Document tab menu: Close other tabs | redrawn: the kept tab with a cross on each side |
 | tab-close-right | Document tab menu: Close tabs to the right | redrawn: the kept tab with a cross on its right only; the arrow over the cross was too busy at 16 px |
 | convert-folds | Grid › Line group: Convert Aegisub folds to line groups | redrawn: the fold's bracket beside make-tree's group; the old one read as the letters "LE" |
