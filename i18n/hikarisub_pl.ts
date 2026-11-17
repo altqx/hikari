@@ -6783,6 +6783,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <source>Frames need a video.</source>
         <translation>Klatki wymagają wideo.</translation>
     </message>
+    <message>
+        <source>Snap to the scene</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Home</name>
@@ -8712,6 +8716,22 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Run the last macro again</source>
         <translation>Uruchom ponownie ostatnie makro</translation>
+    </message>
+    <message>
+        <source>Commit and use the default timing for the next line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Snap to the scene</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lengthen and shift what follows</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shorten and shift what follows</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Save keyframes…</source>
@@ -11895,6 +11915,46 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Shows or hides tags in the line editor</source>
         <translation>Pokazuje lub ukrywa tagi w edytorze linijki</translation>
+    </message>
+    <message>
+        <source>Snap to the scene</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lengthen and shift what follows</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shorten and shift what follows</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sets each selected line to the keyframes around it: one line takes the scene at the video frame, several lines each take the scene of their own start</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moves the start of each selected line one frame earlier, or 10 ms without video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moves the start of each selected line one frame later, or 10 ms without video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moves the end of each selected line one frame earlier, or 10 ms without video. In karaoke mode, moves the current syllable’s end</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moves the end of each selected line one frame later, or 10 ms without video. In karaoke mode, moves the current syllable’s end</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moves the end of each selected line one step later and every line below by the same amount. In karaoke mode, moves the current syllable’s end and every later one</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moves the end of each selected line one step earlier and every line below by the same amount. In karaoke mode, moves the current syllable’s end and every later one</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Save keyframes…</source>
@@ -16226,6 +16286,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Antigravity isn’t on PATH.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Default line duration</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

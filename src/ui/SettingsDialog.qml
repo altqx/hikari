@@ -1339,6 +1339,11 @@ DialogWindow {
                             SettingNumber { setting: "audio.leadInValue"; from: 0; to: 10000; unit: qsTr("ms"); name: qsTr("Lead-in") }
                             SettingNumber { setting: "audio.leadOutValue"; from: 0; to: 10000; unit: qsTr("ms"); name: qsTr("Lead-out") }
                         }
+                        SettingsRow {
+                            iconRole: "audio-commit-default"
+                            text: qsTr("Default line duration")
+                            SettingNumber { setting: "audio.defaultDuration"; from: 100; to: 60000; unit: qsTr("ms"); name: qsTr("Default line duration") }
+                        }
                         SettingCheck { setting: "audio.lockScrollOnCursor"; text: qsTr("Follow audio during playback") }
                         SettingCheck { setting: "audio.dontPlayWhenLineChanges"; text: qsTr("Don’t play after changing the line") }
                         SettingCheck { setting: "audio.autoFocus"; text: qsTr("Focus the panel under the pointer") }

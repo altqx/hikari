@@ -154,6 +154,8 @@ struct AudioCommitRequest {
     // Only the active Line takes this request's fields; other pending edits still go to every
     // selected Line.
     bool activeOnly = false;
+    // How long the Line that nextLine appends after the last one runs.
+    int appendDurationMs = 5000;
 };
 struct AudioCommitOutcome {
     bool stepped = false;

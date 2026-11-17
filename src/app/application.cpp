@@ -1801,7 +1801,9 @@ bool Application::commitAudioTimes(const application::AudioCommitRequest &reques
         return false;
     const bool before = std::exchange(m_audioCommitting, true);
     editor().timesFromAudio(request.startMs, request.endMs, request.duration);
-    const auto outcome = application::commitAudioTimes(*session, request, shownLines());
+    auto timed = request;
+    timed.appendDurationMs = static_cast<int>(m_settings->integer("audio.defaultDuration"));
+    const auto outcome = application::commitAudioTimes(*session, timed, shownLines());
     if (request.save)
         editor().audioSent();
     editor().reloadFromSession();

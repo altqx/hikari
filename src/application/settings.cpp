@@ -312,6 +312,7 @@ std::vector<SettingDefinition> &definitions()
         {"audio.syncVideo", "", Bool, Profile, Mapped, false, true},
         // PortAudio output only: general playback keeps the file's channels.
         {"audio.playMono", "", Bool, Profile, Mapped, false, false},
+        {"audio.defaultDuration", "", Int, Profile, Mapped, false, std::int64_t{5000}},
         {"audio.timingKeysEverywhere", "", Int, Profile, Mapped, false, std::int64_t{1}},
         // An AUDIO_HOTKEY symbol.
         {"audio.playAround", "", String, Profile, Mapped, false, std::string("AUDIO_PLAY_500MS_BEFORE")},
