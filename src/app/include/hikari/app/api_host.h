@@ -93,6 +93,8 @@ public:
     const application::Workspace &workspace() const override { return m_wiring.workspace; }
     application::EditSession *session(application::DocumentId document) const override;
     std::optional<std::string> path(application::DocumentId document) const override;
+    std::optional<std::string> pluginFormat(application::DocumentId document) const override;
+    void setPluginFormat(std::function<std::optional<std::string>(application::DocumentId)> format) { m_pluginFormat = std::move(format); }
     bool select(application::DocumentId document, const application::Selection &selection) override;
     void committed(application::DocumentId document) override;
 
@@ -125,6 +127,7 @@ private:
     QJSValue callPanels(std::string_view panel, const char *action) const;
 
     Wiring m_wiring;
+    std::function<std::optional<std::string>(application::DocumentId)> m_pluginFormat;
     application::AiReview m_review;
     std::unique_ptr<api::SkillTiers> m_skills;
     api::Api m_api;

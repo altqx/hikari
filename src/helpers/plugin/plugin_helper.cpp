@@ -140,6 +140,8 @@ void load(Reader &in, Responder &r)
     options.locale = request->locale;
     options.settings = std::move(*settings);
     options.commands = std::move(request->commands);
+    options.exporters = std::move(request->exporters);
+    options.importers = std::move(request->importers);
     ServiceHost host(r);
     auto state = PluginState::load(std::move(options), host);
     if (!state)
@@ -156,6 +158,34 @@ void finish(Responder &r, const std::expected<void, std::string> &done)
         r.terminal(Outcome::Failed, bytesOf(done.error()));
 }
 
+void exportDocument(Reader &in, Responder &r)
+{
+    const std::string format = in.str();
+    const auto snapshot = Json::parse(in.str());
+    const auto options = Json::parse(in.str());
+    if (!in.ok() || !in.atEnd() || !snapshot || !options)
+        return r.terminal(Outcome::InvalidInput);
+    ServiceHost host(r);
+    auto bytes = g_state->exportDocument(format, *snapshot, *options, host);
+    if (!bytes)
+        return r.terminal(Outcome::Failed, bytesOf(bytes.error()));
+    r.terminal(Outcome::Ok, bytesOf(*bytes));
+}
+
+void importFile(Reader &in, Responder &r)
+{
+    const std::string format = in.str();
+    const std::string data = in.str();
+    const std::string name = in.str();
+    if (!in.ok() || !in.atEnd())
+        return r.terminal(Outcome::InvalidInput);
+    ServiceHost host(r);
+    auto result = g_state->importFile(format, data, name, host);
+    if (!result)
+        return r.terminal(Outcome::Failed, bytesOf(result.error()));
+    r.terminal(Outcome::Ok, bytesOf(result->dump()));
+}
+
 }
 
 int main()
@@ -165,7 +195,13 @@ int main()
         const auto command = static_cast<protocol::Command>(in.i32());
         if (command == protocol::Command::Load)
             return load(in, r);
-        if (command != protocol::Command::Run || !g_state)
+        if (!g_state)
+            return r.terminal(Outcome::Unsupported);
+        if (command == protocol::Command::Export)
+            return exportDocument(in, r);
+        if (command == protocol::Command::Import)
+            return importFile(in, r);
+        if (command != protocol::Command::Run)
             return r.terminal(Outcome::Unsupported);
         const std::string id = in.str();
         if (!in.ok() || !in.atEnd())

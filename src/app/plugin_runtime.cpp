@@ -249,6 +249,7 @@ void PluginRuntime::sync()
     for (const auto &[window, project] : m_windows)
         onIn[window];
     std::map<std::string, plugins::Manifest> wanted;
+    std::vector<std::pair<std::int64_t, std::string>> order;
     std::vector<PluginUi::Plugin> installed;
     std::vector<application::PluginNode> nodes;
     std::map<std::string, std::string> unavailable;
@@ -284,8 +285,10 @@ void PluginRuntime::sync()
                         m_wiring.log->log(QCoreApplication::translate("HikariSub.Plugins", "Its nodes can’t run: %1").arg(qs(own.error())),
                                           ui::LogController::Error, qs(manifest->name));
                 }
-                if (runs)
+                if (runs) {
+                    order.emplace_back(entry.installed, id);
                     wanted.emplace(id, std::move(*manifest));
+                }
             }
     }
     for (auto it = m_plugins.begin(); it != m_plugins.end();) {
@@ -305,11 +308,53 @@ void PluginRuntime::sync()
     for (auto &[id, manifest] : wanted)
         if (!m_plugins.contains(id))
             m_plugins.emplace(id, launch(id, std::move(manifest)));
+    std::ranges::sort(order);
+    m_installOrder.clear();
+    for (auto &[installed, id] : order)
+        m_installOrder.push_back(std::move(id));
     m_userOn = std::move(userOn);
     m_onIn = std::move(onIn);
     application::setPluginNodes(std::move(nodes), std::move(unavailable));
     m_ui->setPlugins(std::move(installed));
     relist();
+}
+
+std::vector<PluginRuntime::Format> PluginRuntime::formats() const
+{
+    std::vector<Format> out;
+    for (const std::string &id : m_installOrder) {
+        const auto it = m_plugins.find(id);
+        if (it == m_plugins.end())
+            continue;
+        const plugins::Manifest &m = it->second->manifest;
+        for (const auto &format : m.formats)
+            out.push_back({"plugin:" + id + "/" + format.id, id, m.name, format});
+    }
+    return out;
+}
+
+std::optional<PluginRuntime::Format> PluginRuntime::format(const std::string &id) const
+{
+    for (Format &f : formats())
+        if (f.id == id)
+            return std::move(f);
+    return std::nullopt;
+}
+
+bool PluginRuntime::exportDocument(const Format &format, const api::Json &snapshot, const api::Json &options,
+                                   PluginProcess::FormatDone done)
+{
+    const auto it = m_plugins.find(format.plugin);
+    return it != m_plugins.end() && format.format.exports &&
+           it->second->process->exportDocument(format.format.id, snapshot.dump(), options.dump(), std::move(done));
+}
+
+bool PluginRuntime::importFile(const Format &format, std::string bytes, const std::string &fileName,
+                               PluginProcess::FormatDone done)
+{
+    const auto it = m_plugins.find(format.plugin);
+    return it != m_plugins.end() && format.format.imports &&
+           it->second->process->importFile(format.format.id, std::move(bytes), fileName, std::move(done));
 }
 
 std::unique_ptr<PluginRuntime::Running> PluginRuntime::launch(const std::string &id, plugins::Manifest manifest)
@@ -334,6 +379,12 @@ std::unique_ptr<PluginRuntime::Running> PluginRuntime::launch(const std::string 
         request.settings = plugins::settingValues(m, storedSettings(raw->id)).dump();
         for (const auto &command : m.commands)
             request.commands.push_back(command.id);
+        for (const auto &format : m.formats) {
+            if (format.exports)
+                request.exporters.push_back(format.id);
+            if (format.imports)
+                request.importers.push_back(format.id);
+        }
         return request;
     };
     raw->process = std::make_unique<PluginProcess>(m_wiring.helperPath, load, m_wiring.limits);

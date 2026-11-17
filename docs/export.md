@@ -37,6 +37,8 @@ Spaces at the start and end of each row are trimmed, and empty rows are dropped,
 | DFXP | `.dfxp` | as TTML | as TTML, without the IMSC1 profile designator | as TTML |
 | YouTube timed text (srv3) | `.ytt` | milliseconds, YTSubConverter's own conversion (below) | what YTSubConverter 1.6.5 carries | per-style options |
 
+Plugins add formats of their own ([Formats](plugins.md#formats)). Each shows after the built-in ones as `<title> (<plugin>)`, with the Lines choice and the frame rate, and the plugin writes the file. Its report says only whether the file was written.
+
 **Merge overlaps** cuts time at every Line start and end that falls inside a run of overlapping Lines. Each piece becomes one cue holding the Lines on screen during it: top-aligned Lines first, then middle, then bottom, then document order.
 
 ## TTML and DFXP
@@ -105,7 +107,7 @@ Export as leaves the Document alone. To turn an SRT, WebVTT, SBV, MicroDVD, MPL2
 Subtitles › Conversion and its five commands (5020–5024, `GLOBAL_CONVERT_TO_*`) were removed in [#611](https://github.com/altqx/hikari/issues/611). Shortcut files and imported settings that bind them still load. The bindings are dropped with a Log notice that points to Save as (ASS) or Export as (other formats).
 
 ## Memory
-The last format and options are kept per document file in `export.choices` (at most 100 rows, last used first). A document without a remembered choice, or without a file, gets its Project's `[export]` default over the last export's ([Project tiers](project-tiers.md)).
+The last format and options are kept per document file in `export.choices` (at most 100 rows, last used first). Format ids are the ones `formats.list` gives (`plugin:<plugin id>/<format>` for a plugin's). A remembered id that names no format today, including the older `txt`, `mdvd` and `tmp`, falls back to SubRip. A document without a remembered choice, or without a file, gets its Project's `[export]` default over the last export's ([Project tiers](project-tiers.md)).
 
 ## Tests
 - `hikari_core_export_tests`: goldens for every format on `tests/fixtures/export/{plain,karaoke,typesetting}.ass`, TTML in three variants (`.ttml`, `.dfxp` in frames, `.netflix.ttml`) (`HIKARI_WRITE_EXPORT_GOLDENS=1` rewrites them); read-back through the SRT and line-format loaders; every option; the report; and the TTML layout rules.

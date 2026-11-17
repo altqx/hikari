@@ -35,11 +35,11 @@ struct ExportFormatRow {
 };
 
 constexpr ExportFormatRow kExportFormats[] = {
-    {"srt", ExportFormat::Srt, "srt"},      {"vtt", ExportFormat::WebVtt, "vtt"},
-    {"sbv", ExportFormat::Sbv, "sbv"},      {"txt", ExportFormat::PlainText, "txt"},
-    {"mdvd", ExportFormat::MicroDvd, "sub"}, {"mpl2", ExportFormat::Mpl2, "txt"},
-    {"tmp", ExportFormat::TMPlayer, "txt"}, {"ttml", ExportFormat::Ttml, "ttml"},
-    {"dfxp", ExportFormat::Dfxp, "dfxp"},   {"srv3", ExportFormat::Srv3, "ytt"},
+    {"srt", ExportFormat::Srt, "srt"},           {"vtt", ExportFormat::WebVtt, "vtt"},
+    {"sbv", ExportFormat::Sbv, "sbv"},           {"text", ExportFormat::PlainText, "txt"},
+    {"microdvd", ExportFormat::MicroDvd, "sub"}, {"mpl2", ExportFormat::Mpl2, "txt"},
+    {"tmplayer", ExportFormat::TMPlayer, "txt"}, {"ttml", ExportFormat::Ttml, "ttml"},
+    {"dfxp", ExportFormat::Dfxp, "dfxp"},        {"srv3", ExportFormat::Srv3, "ytt"},
 };
 
 constexpr std::pair<const char *, bool core::ExportOptions::*> kExportFlags[] = {
@@ -340,16 +340,23 @@ QVariantMap Application::exportSetup() const
         shown += shownSet.contains(line->id) ? 1 : 0;
     }
 
-    QString format = saved.value(QStringLiteral("format")).toString();
-    if (!exportFormatNamed(format))
-        format = QStringLiteral("srt");
     QVariantMap extensions;
     for (const auto &row : kExportFormats)
         extensions.insert(QLatin1String(row.id), QLatin1String(row.extension));
+    QVariantList plugins;
+    for (const auto &f : pluginFormats(false)) {
+        const QString id = QString::fromStdString(f.id);
+        extensions.insert(id, QString::fromStdString(f.format.extensions.front()));
+        plugins << QVariantMap{{QStringLiteral("id"), id}, {QStringLiteral("text"), formatText(f)}};
+    }
+    QString format = saved.value(QStringLiteral("format")).toString();
+    if (!extensions.contains(format))
+        format = QStringLiteral("srt");
     const QFileInfo file(key);
     return {{QStringLiteral("format"), format},
             {QStringLiteral("options"), options},
             {QStringLiteral("extensions"), extensions},
+            {QStringLiteral("pluginFormats"), plugins},
             {QStringLiteral("all"), all},
             {QStringLiteral("selected"), selected},
             {QStringLiteral("shown"), shown},
@@ -364,19 +371,22 @@ QVariantMap Application::exportTo(const QUrl &file, const QString &formatId, con
     const auto target = m_workspace.editingTarget();
     const auto *session = target ? m_files->session(*target) : nullptr;
     const auto *format = exportFormatNamed(formatId);
+    const auto plugin = format || !m_pluginRuntime ? std::nullopt : m_pluginRuntime->format(formatId.toStdString());
     QString path = file.toLocalFile();
-    if (!session || !format || path.isEmpty())
+    if (!session || (!format && !(plugin && plugin->format.exports)) || path.isEmpty())
         return problem(QCoreApplication::translate("HikariSub.Export", "There is nothing to export."));
     if (QFileInfo(path).isRelative())
         return problem(QCoreApplication::translate("HikariSub.Export", "Enter the file’s full path, or choose it with Browse…"));
     if (QFileInfo(path).suffix().isEmpty())
-        path += u'.' + QLatin1String(format->extension);
+        path += u'.' + (format ? QLatin1String(format->extension) : QString::fromStdString(plugin->format.extensions.front()));
     if (QFileInfo(path).isDir())
         return problem(QCoreApplication::translate("HikariSub.Export", "“%1” is a folder.").arg(QDir::toNativeSeparators(path)));
     if (QFileInfo::exists(path) && !values.value(QStringLiteral("replace")).toBool())
         return {{QStringLiteral("ok"), false},
                 {QStringLiteral("exists"), true},
                 {QStringLiteral("name"), QFileInfo(path).fileName()}};
+    if (plugin)
+        return exportPluginFormat(*target, *plugin, path, values);
 
     core::ExportOptions options;
     for (const auto &[name, flag] : kExportFlags)
@@ -475,6 +485,26 @@ QVariantMap Application::exportTo(const QUrl &file, const QString &formatId, con
             {QStringLiteral("empty"), result.emptySkipped},
             {QStringLiteral("srv3Styles"), srv3Styles},
             {QStringLiteral("notes"), notes}};
+}
+
+QVariantMap Application::exportPluginFormat(application::DocumentId target, const PluginRuntime::Format &format,
+                                            const QString &path, const QVariantMap &values)
+{
+    const auto *session = m_files->session(target);
+    const QString lines = values.value(QStringLiteral("lines")).toString();
+    std::optional<std::set<core::LineId>> only;
+    if (lines == QLatin1String("selected")) {
+        only = session->selection().selected;
+    } else if (lines == QLatin1String("shown")) {
+        const auto shown = shell().actionLines();
+        only = std::set<core::LineId>(shown.begin(), shown.end());
+    }
+    QJsonObject choice = rememberedExport(m_settings->list("export.choices"), exportKey(target));
+    choice.insert(QStringLiteral("format"), QString::fromStdString(format.id));
+    choice.insert(QStringLiteral("lines"), lines.isEmpty() ? QStringLiteral("all") : lines);
+    m_settings->setValue(QStringLiteral("export.choices"),
+                         rememberedWith(m_settings->list("export.choices"), exportKey(target), choice));
+    return exportThroughPlugin(target, format, path, only, values.value(QStringLiteral("fps")).toDouble());
 }
 
 }

@@ -673,7 +673,7 @@ private slots:
         const QString exported = show + QStringLiteral("/done.ass");
         application->settingsStore()->setValue(
             QStringLiteral("export.choices"),
-            QStringList{QFileInfo(exported).absoluteFilePath() + QStringLiteral("\t{\"format\":\"mdvd\",\"fps\":25}"),
+            QStringList{QFileInfo(exported).absoluteFilePath() + QStringLiteral("\t{\"format\":\"microdvd\",\"fps\":25}"),
                         QStringLiteral("\t{\"format\":\"sbv\",\"lines\":\"selected\"}")});
         const auto setup = [&] { return application->exportSetup(); };
         const auto format = [&] { return setup().value(QStringLiteral("format")).toString(); };
@@ -697,9 +697,9 @@ private slots:
             if (tabs[i].toMap().value(QStringLiteral("title")).toString().contains(QStringLiteral("done.ass")))
                 application->selectTab(i);
         QTRY_COMPARE(setup().value(QStringLiteral("name")).toString(), QStringLiteral("done"));
-        QCOMPARE(format(), QStringLiteral("mdvd"));
+        QCOMPARE(format(), QStringLiteral("microdvd"));
         QCOMPARE(option("fps").toDouble(), 25.0);
-        QVERIFY(!readAll(show + QStringLiteral("/.hikari/project.toml")).contains("mdvd"));
+        QVERIFY(!readAll(show + QStringLiteral("/.hikari/project.toml")).contains("microdvd"));
     }
 
     void theProjectsTargetLanguageIsInlineTranslatesDefault()

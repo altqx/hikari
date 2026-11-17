@@ -14,7 +14,9 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
+#include <expected>
 #include <fstream>
+#include <optional>
 
 using hikari::backends::PluginProcess;
 using hikari::backends::pluginProfile;
@@ -72,6 +74,8 @@ protected:
             request.memoryLimit = 64 << 20;
             request.settings = "{}";
             request.commands = {"greet", "spin", "wait", "crash", "scan"};
+            request.exporters = {"csv", "bin", "spin"};
+            request.importers = {"csv"};
             return request;
         };
         auto p = std::make_unique<PluginProcess>(QStringLiteral(HIKARI_PLUGIN_HELPER), load, limits);
@@ -209,7 +213,7 @@ TEST_F(PluginProcessTest, OnlyACommandBecomesAJob)
     ASSERT_TRUE(p->run("greet"));
     ASSERT_TRUE(waitFor([&] { return finished.count() == 1; }));
     ASSERT_EQ(m_notices.size(), 2u);
-    EXPECT_EQ(m_notices[0], "nil Only a command or a click in the plugin's own panel or dialog can become a job.");
+    EXPECT_EQ(m_notices[0], "nil Only a command, a format call or a click in the plugin's own panel or dialog can become a job.");
     EXPECT_EQ(m_notices[1], "nil");
 }
 
@@ -252,7 +256,7 @@ TEST_F(PluginProcessTest, OtherEventsDontBecomeAJob)
     ASSERT_TRUE(p->deliver("panel:scan", R"({"kind": "show", "panel": "scan", "values": {}})", {}));
     ASSERT_TRUE(p->deliver("document.changed", R"({"kind": "click"})", {}));
     ASSERT_TRUE(waitFor([&] { return m_notices.size() == 3; }));
-    const std::string no = "nil Only a command or a click in the plugin's own panel or dialog can become a job.";
+    const std::string no = "nil Only a command, a format call or a click in the plugin's own panel or dialog can become a job.";
     EXPECT_EQ(m_notices, (std::vector<std::string>{no, no, no}));
     EXPECT_EQ(began.count(), 0);
 }
@@ -458,4 +462,82 @@ TEST_F(PluginProcessTest, ThePluginProfileRefusesWhatItLeavesOut)
     EXPECT_TRUE(denied(QStringLiteral("read ") + outside)) << report;
     EXPECT_TRUE(denied(QStringLiteral("write ") + fresh)) << report;
     EXPECT_TRUE(denied(QStringLiteral("tcp"))) << report;
+}
+
+namespace {
+
+struct FormatResult {
+    std::optional<std::expected<std::string, QString>> value;
+    PluginProcess::FormatDone done()
+    {
+        return [this](std::expected<std::string, QString> v) { value = std::move(v); };
+    }
+};
+
+}
+
+TEST_F(PluginProcessTest, AnExporterTurnsTheSnapshotIntoTheFilesBytes)
+{
+    auto p = process(plugin("formats", R"(
+hikari.formats.exporter("csv", function(doc, options)
+    local rows = {}
+    for _, line in ipairs(doc.lines) do rows[#rows + 1] = line.start .. "," .. line.text end
+    return table.concat(rows, "\n") .. "\n" .. options.path
+end)
+hikari.formats.exporter("bin", function() return "AAH/", "base64" end)
+)"));
+    FormatResult csv, bin;
+    ASSERT_TRUE(p->exportDocument("csv", R"({"lines": [{"start": 0, "text": "Hi"}, {"start": 1500, "text": "Bye"}]})",
+                                  R"({"path": "/x/a.csv"})", csv.done()));
+    ASSERT_TRUE(p->exportDocument("bin", "{}", "{}", bin.done()));
+    ASSERT_TRUE(waitFor([&] { return csv.value && bin.value; }));
+    ASSERT_TRUE(csv.value->has_value()) << csv.value->error().toStdString();
+    EXPECT_EQ(**csv.value, "0,Hi\n1500,Bye\n/x/a.csv");
+    ASSERT_TRUE(bin.value->has_value());
+    EXPECT_EQ(**bin.value, std::string("\0\x01\xff", 3));
+}
+
+TEST_F(PluginProcessTest, AnImporterGetsTheBytesInBase64AndItsTableComesBackAsJson)
+{
+    auto p = process(plugin("formats", R"(
+hikari.formats.importer("csv", function(data, name)
+    return {lines = {{text = data}}, info = {Title = name}}
+end)
+)"));
+    FormatResult read;
+    ASSERT_TRUE(p->importFile("csv", std::string("\0\x01\xff", 3), "a.csv", read.done()));
+    ASSERT_TRUE(waitFor([&] { return read.value.has_value(); }));
+    ASSERT_TRUE(read.value->has_value()) << read.value->error().toStdString();
+    EXPECT_EQ(**read.value, R"({"info":{"Title":"a.csv"},"lines":[{"text":"AAH/"}]})");
+}
+
+TEST_F(PluginProcessTest, FormatCallsThatGoWrongSayWhy)
+{
+    auto p = process(plugin("formats", R"(
+hikari.formats.exporter("csv", function() return 42 end)
+hikari.formats.exporter("bin", function() return "\255" end)
+hikari.formats.exporter("spin", function() while true do end end)
+)"), PluginProcess::Limits{.timeLimitMs = 300});
+    FormatResult number, notText, missing, spin;
+    ASSERT_TRUE(p->exportDocument("csv", "{}", "{}", number.done()));
+    ASSERT_TRUE(p->exportDocument("bin", "{}", "{}", notText.done()));
+    ASSERT_TRUE(p->importFile("csv", "x", "a.csv", missing.done()));
+    ASSERT_TRUE(waitFor([&] { return number.value && notText.value && missing.value; }));
+    EXPECT_EQ(number.value->error(), QStringLiteral("an exporter must return the file as a string, not a number"));
+    EXPECT_EQ(notText.value->error(), QStringLiteral("the exporter's file isn't UTF-8 text; return it with \"base64\""));
+    EXPECT_TRUE(missing.value->error().startsWith(QStringLiteral("format “csv” has no importer")));
+    ASSERT_TRUE(p->exportDocument("spin", "{}", "{}", spin.done()));
+    ASSERT_TRUE(waitFor([&] { return spin.value.has_value(); }));
+    EXPECT_EQ(spin.value->error(), QStringLiteral("the plugin ran past its time limit and was stopped"));
+}
+
+TEST_F(PluginProcessTest, OnlyDeclaredFormatsTakeAHandler)
+{
+    auto p = process(plugin("formats", "hikari.formats.importer('bin', function() end)"));
+    QSignalSpy failed(p.get(), &PluginProcess::loadFailed);
+    FormatResult never;
+    ASSERT_TRUE(p->exportDocument("csv", "{}", "{}", never.done()));
+    ASSERT_TRUE(waitFor([&] { return failed.count() == 1 && never.value; }));
+    EXPECT_TRUE(failed.at(0).at(0).toString().contains(QStringLiteral("“bin” isn't a format with import in hikari-plugin.json")));
+    EXPECT_FALSE(never.value->has_value());
 }

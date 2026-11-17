@@ -41,10 +41,10 @@ RowLayout {
         {id: "srt", text: "SubRip (SRT)"},
         {id: "vtt", text: "WebVTT"},
         {id: "sbv", text: "YouTube SBV"},
-        {id: "txt", text: qsTranslate("HikariSub.Export", "Plain text")},
-        {id: "mdvd", text: "MicroDVD"},
+        {id: "text", text: qsTranslate("HikariSub.Export", "Plain text")},
+        {id: "microdvd", text: "MicroDVD"},
         {id: "mpl2", text: "MPL2"},
-        {id: "tmp", text: "TMPlayer"},
+        {id: "tmplayer", text: "TMPlayer"},
         {id: "ttml", text: "TTML (IMSC1)"},
         {id: "dfxp", text: "DFXP"},
         {id: "srv3", text: qsTranslate("HikariSub.Export", "YouTube timed text (srv3)")}

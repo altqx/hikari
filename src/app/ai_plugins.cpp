@@ -152,6 +152,15 @@ std::vector<api::PluginState> AiPlugins::plugins() const
     return out;
 }
 
+std::vector<api::FormatInfo> AiPlugins::formats() const
+{
+    std::vector<api::FormatInfo> out;
+    if (PluginRuntime *runtime = m_wiring.runtime ? m_wiring.runtime() : nullptr)
+        for (auto &f : runtime->formats())
+            out.push_back({f.id, f.format.title, f.format.extensions, f.format.imports, f.format.exports, f.plugin});
+    return out;
+}
+
 std::optional<std::string> AiPlugins::manifest(std::string_view plugin) const
 {
     if (!isPluginId(plugin) || m_wiring.installed.isEmpty())

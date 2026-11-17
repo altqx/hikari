@@ -65,6 +65,14 @@ struct NodeContribution {
     std::vector<NodePort> inputs, outputs;
 };
 
+struct FormatContribution {
+    std::string id;
+    std::string title;
+    std::vector<std::string> extensions; // lower case, without the dot
+    bool imports = false;
+    bool exports = false;
+};
+
 struct Screenshot {
     std::string path;
     std::string caption;
@@ -90,6 +98,7 @@ struct Manifest {
     std::vector<Panel> panels;
     std::vector<Setting> settings;
     std::vector<NodeContribution> nodes;
+    std::vector<FormatContribution> formats;
 
     bool hasQmlPanels() const;
 };
