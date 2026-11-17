@@ -778,7 +778,7 @@ void AudioController::setSpectrumCurve(int curve)
 {
     m_spectrumCurve = std::clamp(curve, 0, 2);
     if (m_store)
-        m_store->set("audio.spectrumCurve", std::int64_t{m_spectrumCurve});
+        m_store->set("audio.spectrumCurve", m_spectrumCurve);
     emit boxControlsChanged();
     redraw();
 }
