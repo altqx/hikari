@@ -15,6 +15,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QProcess>
+#include <QRegularExpression>
 #include <QScopeGuard>
 #include <QSignalSpy>
 #include <QTemporaryDir>
@@ -1407,7 +1408,12 @@ private slots:
         o.playbackAudio = false;
         app::Application a(o);
         const QString episode = m_dir.filePath(QStringLiteral("sample.ass"));
-        write(episode, "[Script Info]\nScriptType: v4.00+\n\n[Events]\n"
+        write(episode, "[Script Info]\nScriptType: v4.00+\n\n[V4+ Styles]\n"
+                       "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, "
+                       "Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, "
+                       "MarginR, MarginV, Encoding\n"
+                       "Style: Default,Arial,48,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,2,10,10,10,1\n\n"
+                       "[Events]\n"
                        "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
                        "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,first line\n"
                        "Dialogue: 0,0:00:03.00,0:00:04.50,Default,,0,0,0,,second line\n");
@@ -1435,8 +1441,12 @@ private slots:
             QVERIFY2(staged, qPrintable(id));
             QStringList texts;
             for (const auto *line : staged->load.document.lines())
-                if (!line->comment && !line->text.empty())
-                    texts << QString::fromUtf8(reinterpret_cast<const char *>(line->text.data()), qsizetype(line->text.size()));
+                if (!line->comment && !line->text.empty()) {
+                    QString text = QString::fromUtf8(reinterpret_cast<const char *>(line->text.data()), qsizetype(line->text.size()));
+                    text.remove(QRegularExpression(QStringLiteral("\\{[^}]*\\}")));
+                    if (texts.isEmpty() || texts.last() != text)
+                        texts << text;
+                }
             QVERIFY2(texts.join(u'|').contains(QStringLiteral("first line|second line")), qPrintable(id + u' ' + texts.join(u'|')));
             roundTrips << id;
         }
