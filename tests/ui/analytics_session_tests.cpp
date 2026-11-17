@@ -288,13 +288,12 @@ private slots:
         QObject *settings = settingsWindow();
         QVERIFY(settings);
         QTRY_VERIFY(settings->property("visible").toBool());
-        auto *pages = in(settings, "settingsPages");
-        const auto list = settings->property("pages").toList();
+        QVERIFY(in(settings, "settingsPages"));
+        const auto list = settings->property("catalogue").toList();
         for (qsizetype i = 0; i < list.size(); ++i)
-            if (list[i].toMap().value(QStringLiteral("id")).toString() == QLatin1String("updates")) {
+            if (list[i].toMap().value(QStringLiteral("id")).toString() == QLatin1String("updates"))
                 QCOMPARE(list[i].toMap().value(QStringLiteral("name")).toString(), QStringLiteral("Updates and privacy"));
-                pages->setProperty("currentIndex", int(i));
-            }
+        QVERIFY(QMetaObject::invokeMethod(settings, "showNode", Q_ARG(QVariant, QStringLiteral("updates"))));
         auto *settingsSwitch = in(settings, "setting_privacy.usageData");
         QVERIFY(settingsSwitch);
         QTRY_VERIFY(settingsSwitch->isVisible());
@@ -305,7 +304,7 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(settingsSwitch, "click"));
         QTRY_VERIFY(settingsSwitch->property("checked").toBool());
         shoot(settings, QStringLiteral("an1-settings"));
-        QVERIFY(QMetaObject::invokeMethod(in(settings, "settingsOk"), "click"));
+        QVERIFY(QMetaObject::invokeMethod(in(settings, "settingsClose"), "click"));
         QTRY_VERIFY(!settings->property("visible").toBool());
         QCOMPARE(application->settingsStore()->boolean("privacy.usageData"), true);
         QVERIFY(analytics.active());
@@ -322,15 +321,12 @@ private slots:
         QObject *settings = settingsWindow();
         QVERIFY(settings);
         QTRY_VERIFY(settings->property("visible").toBool());
-        const auto list = settings->property("pages").toList();
-        for (qsizetype i = 0; i < list.size(); ++i)
-            if (list[i].toMap().value(QStringLiteral("id")).toString() == QLatin1String("updates"))
-                in(settings, "settingsPages")->setProperty("currentIndex", int(i));
+        QVERIFY(QMetaObject::invokeMethod(settings, "showNode", Q_ARG(QVariant, QStringLiteral("updates"))));
         QTRY_VERIFY(in(settings, "setting_privacy.usageData")->isVisible());
         auto *always = in(settings, "setting_privacy.alwaysSendCrashReports");
         QVERIFY(always);
         QVERIFY(!always->isVisible());
-        QVERIFY(QMetaObject::invokeMethod(in(settings, "settingsCancel"), "click"));
+        QVERIFY(QMetaObject::invokeMethod(in(settings, "settingsClose"), "click"));
         QTRY_VERIFY(!settings->property("visible").toBool());
     }
 };
