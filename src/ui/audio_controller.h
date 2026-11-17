@@ -289,6 +289,9 @@ public:
     const application::AudioTiming &timing() const { return m_timing; }
     bool tapBusy() const { return m_tapState == TapTapping; }
     Q_INVOKABLE void commit();
+    Q_INVOKABLE void commitWithDefaultTiming();
+    // Whether the current syllable's end moved; nullopt outside karaoke mode.
+    std::optional<bool> nudgeSyllableEnd(int deltaMs, bool shiftFollowing);
     Q_INVOKABLE void nextLine();
     Q_INVOKABLE void previousLine();
     Q_INVOKABLE void goToSelection();
