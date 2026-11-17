@@ -1753,7 +1753,7 @@ Output device: %2</source>
     </message>
     <message>
         <source>Rerun last macro</source>
-        <translation type="vanished">கடைசி குறுநிரலை மீண்டும் இயக்கு</translation>
+        <translation>கடைசி குறுநிரலை மீண்டும் இயக்கு</translation>
     </message>
     <message>
         <source>%1 cancelled</source>
@@ -1911,10 +1911,6 @@ Output device: %2</source>
     <message>
         <source>Recommended</source>
         <translation>பரிந்துரைக்கப்படுவது</translation>
-    </message>
-    <message>
-        <source>Run the last macro again</source>
-        <translation type="unfinished">கடைசி குறுநிரலை மீண்டும் இயக்கு</translation>
     </message>
     <message>
         <source>Filter scripts</source>
@@ -2736,6 +2732,10 @@ Output device: %2</source>
     <message>
         <source>Open backup folder</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Run the last macro again</source>
+        <translation>கடைசி குறுநிரலை மீண்டும் இயக்கு</translation>
     </message>
 </context>
 <context>
@@ -7508,7 +7508,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Load subtitles from an MKV file</source>
-        <translation type="vanished">MKV கோப்பிலிருந்து வசன வரிகளை ஏற்று</translation>
+        <translation>MKV கோப்பிலிருந்து வசன வரிகளை ஏற்று</translation>
     </message>
     <message>
         <source>Swap lines</source>
@@ -7516,7 +7516,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Set new FPS</source>
-        <translation type="vanished">புதிய FPS ஐ அமை</translation>
+        <translation>புதிய FPS ஐ அமை</translation>
     </message>
     <message>
         <source>Show subtitles preview</source>
@@ -7556,7 +7556,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Report an issue</source>
-        <translation type="vanished">சிக்கலைப் புகாரளி</translation>
+        <translation>சிக்கலைப் புகாரளி</translation>
     </message>
     <message>
         <source>Open audio from video</source>
@@ -7564,7 +7564,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Load script</source>
-        <translation type="vanished">ச்கிரிப்டை ஏற்றவும்</translation>
+        <translation>ச்கிரிப்டை ஏற்றவும்</translation>
     </message>
     <message>
         <source>Refresh autoload scripts</source>
@@ -7572,7 +7572,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Time shift window</source>
-        <translation type="vanished">நேர நகர்த்தல் சாளரம்</translation>
+        <translation>நேர நகர்த்தல் சாளரம்</translation>
     </message>
     <message>
         <source>Close audio</source>
@@ -7580,7 +7580,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Find and replace</source>
-        <translation type="vanished">கண்டுபிடித்து மாற்றவும்</translation>
+        <translation>கண்டுபிடித்து மாற்றவும்</translation>
     </message>
     <message>
         <source>Font collector</source>
@@ -7596,7 +7596,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Hide tags</source>
-        <translation type="vanished">குறிச்சொற்களை மறைக்கவும்</translation>
+        <translation>குறிச்சொற்களை மறைக்கவும்</translation>
     </message>
     <message>
         <source>History</source>
@@ -7612,7 +7612,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Open keyframes</source>
-        <translation type="vanished">கீஃப்ரேம்களைத் திறக்கவும்</translation>
+        <translation>கீஃப்ரேம்களைத் திறக்கவும்</translation>
     </message>
     <message>
         <source>Open autosave…</source>
@@ -7632,7 +7632,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Sort all lines by styles</source>
-        <translation type="vanished">அனைத்து வரிகளையும் பாணிகளின்படி வரிசைப்படுத்து</translation>
+        <translation>அனைத்து வரிகளையும் பாணிகளின்படி வரிசைப்படுத்து</translation>
     </message>
     <message>
         <source>Sort all lines by actor</source>
@@ -7664,7 +7664,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Sort selected lines by styles</source>
-        <translation type="vanished">தேர்ந்தெடுத்த வரிகளைப் பாணிகளின்படி வரிசைப்படுத்து</translation>
+        <translation>தேர்ந்தெடுத்த வரிகளைப் பாணிகளின்படி வரிசைப்படுத்து</translation>
     </message>
     <message>
         <source>Sort selected lines by actor</source>
@@ -7692,7 +7692,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Timing postprocessor panel</source>
-        <translation type="vanished">நேரப் பின்செயலாக்கி பலகம்</translation>
+        <translation>நேரப் பின்செயலாக்கி பலகம்</translation>
     </message>
     <message>
         <source>Timing postprocessor with the last values</source>
@@ -7708,7 +7708,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Resample subtitles</source>
-        <translation type="vanished">வசன வரிகளை மறுமாதிரியாக்கு</translation>
+        <translation>வசன வரிகளை மறுமாதிரியாக்கு</translation>
     </message>
     <message>
         <source>Undo</source>
@@ -7732,7 +7732,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Close current tab</source>
-        <translation type="vanished">தற்போதைய தாவலை மூடு</translation>
+        <translation>தற்போதைய தாவலை மூடு</translation>
     </message>
     <message>
         <source>Clean styles of ASS file</source>
@@ -7752,7 +7752,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Next frame</source>
-        <translation type="vanished">அடுத்த சட்டகம்</translation>
+        <translation>அடுத்த சட்டகம்</translation>
     </message>
     <message>
         <source>Next tab</source>
@@ -7760,7 +7760,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Open audio</source>
-        <translation type="vanished">ஆடியோவைத் திற</translation>
+        <translation>ஆடியோவைத் திற</translation>
     </message>
     <message>
         <source>Open subtitles</source>
@@ -7780,7 +7780,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Previous frame</source>
-        <translation type="vanished">முந்தைய சட்டகம்</translation>
+        <translation>முந்தைய சட்டகம்</translation>
     </message>
     <message>
         <source>Previous tab</source>
@@ -7808,7 +7808,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Save all subtitles</source>
-        <translation type="vanished">அனைத்து வசன வரிகளையும் சேமி</translation>
+        <translation>அனைத்து வசன வரிகளையும் சேமி</translation>
     </message>
     <message>
         <source>Save</source>
@@ -7816,15 +7816,15 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Save translation</source>
-        <translation type="vanished">மொழிபெயர்ப்பைச் சேமிக்கவும்</translation>
+        <translation>மொழிபெயர்ப்பைச் சேமிக்கவும்</translation>
     </message>
     <message>
         <source>Save subtitles using the video name</source>
-        <translation type="vanished">வீடியோவின் பெயருடன் வசன வரிகளைச் சேமிக்கவும்</translation>
+        <translation>வீடியோவின் பெயருடன் வசன வரிகளைச் சேமிக்கவும்</translation>
     </message>
     <message>
         <source>Find</source>
-        <translation type="vanished">கண்டுபிடி</translation>
+        <translation>கண்டுபிடி</translation>
     </message>
     <message>
         <source>Select line at current video position</source>
@@ -7832,7 +7832,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Select lines</source>
-        <translation type="vanished">வரிகளைத் தேர்ந்தெடுக்கவும்</translation>
+        <translation>வரிகளைத் தேர்ந்தெடுக்கவும்</translation>
     </message>
     <message>
         <source>Set audio position to video time</source>
@@ -7840,15 +7840,15 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Set audio marker to video time</source>
-        <translation type="vanished">வீடியோ நேரத்துடன் ஆடியோ மார்க்கரை அமைக்கவும்</translation>
+        <translation>வீடியோ நேரத்துடன் ஆடியோ மார்க்கரை அமைக்கவும்</translation>
     </message>
     <message>
         <source>Insert end time from video</source>
-        <translation type="vanished">வீடியோவிலிருந்து இறுதி நேரத்தை செருகவும்</translation>
+        <translation>வீடியோவிலிருந்து இறுதி நேரத்தை செருகவும்</translation>
     </message>
     <message>
         <source>Insert start time from video</source>
-        <translation type="vanished">வீடியோவிலிருந்து தொடக்க நேரத்தை செருகவும்</translation>
+        <translation>வீடியோவிலிருந்து தொடக்க நேரத்தை செருகவும்</translation>
     </message>
     <message>
         <source>Settings</source>
@@ -7895,108 +7895,12 @@ Failed to copy %2 fonts.</source>
         <translation>கோப்பிலிருந்து மொழிபெயர்ப்பை ஒட்டவும்…</translation>
     </message>
     <message>
-        <source>Import subtitles from MKV…</source>
-        <translation type="unfinished">MKV இலிருந்து வசன வரிகளை இறக்குமதி செய்…</translation>
-    </message>
-    <message>
         <source>Translation matching…</source>
         <translation>மொழிபெயர்ப்புப் பொருத்தம்…</translation>
     </message>
     <message>
-        <source>Set new FPS…</source>
-        <translation type="unfinished">புதிய FPS ஐ அமைக்கவும்…</translation>
-    </message>
-    <message>
-        <source>Report an issue…</source>
-        <translation type="unfinished">சிக்கலைப் புகாரளி…</translation>
-    </message>
-    <message>
-        <source>Load script…</source>
-        <translation type="unfinished">ச்கிரிப்டை ஏற்று…</translation>
-    </message>
-    <message>
-        <source>Shift times…</source>
-        <translation type="unfinished">நேரங்களை நகர்த்து…</translation>
-    </message>
-    <message>
-        <source>Replace…</source>
-        <translation type="unfinished">மாற்று…</translation>
-    </message>
-    <message>
-        <source>Hide tags in the Grid</source>
-        <translation type="unfinished">கட்டத்தில் குறிச்சொற்களை மறை</translation>
-    </message>
-    <message>
-        <source>Open keyframes…</source>
-        <translation type="unfinished">கீஃப்ரேம்களைத் திற…</translation>
-    </message>
-    <message>
-        <source>Sort all lines by style</source>
-        <translation type="unfinished">அனைத்து வரிகளையும் பாணியின்படி வரிசைப்படுத்து</translation>
-    </message>
-    <message>
-        <source>Sort selected lines by style</source>
-        <translation type="unfinished">தேர்ந்தெடுத்த வரிகளைப் பாணியின்படி வரிசைப்படுத்து</translation>
-    </message>
-    <message>
-        <source>Timing postprocessor…</source>
-        <translation type="unfinished">நேரப் பின்செயலாக்கி…</translation>
-    </message>
-    <message>
-        <source>Resample subtitles…</source>
-        <translation type="unfinished">வசன வரிகளை மறுமாதிரியாக்கு…</translation>
-    </message>
-    <message>
-        <source>Close tab</source>
-        <translation type="unfinished">தாவலை மூடு</translation>
-    </message>
-    <message>
-        <source>Go to next frame</source>
-        <translation type="unfinished">அடுத்த சட்டகத்திற்குச் செல்லுங்கள்</translation>
-    </message>
-    <message>
-        <source>Open audio…</source>
-        <translation type="unfinished">ஆடியோவைத் திற…</translation>
-    </message>
-    <message>
-        <source>Go to previous frame</source>
-        <translation type="unfinished">முந்தைய சட்டகத்திற்குச் செல்லுங்கள்</translation>
-    </message>
-    <message>
-        <source>Save all</source>
-        <translation type="unfinished">அனைத்தையும் சேமி</translation>
-    </message>
-    <message>
         <source>Save as…</source>
         <translation>எனச் சேமி…</translation>
-    </message>
-    <message>
-        <source>Save translation…</source>
-        <translation type="unfinished">மொழிபெயர்ப்பைச் சேமி…</translation>
-    </message>
-    <message>
-        <source>Name new files after the video</source>
-        <translation type="unfinished">புதிய கோப்புகளுக்கு வீடியோவின் பெயரை இடு</translation>
-    </message>
-    <message>
-        <source>Find…</source>
-        <translation type="unfinished">கண்டுபிடி…</translation>
-    </message>
-    <message>
-        <source>Select lines…</source>
-        <translation type="unfinished">வரிகளைத் தேர்ந்தெடு…</translation>
-    </message>
-    <message>
-        <source>Set audio mark to video time</source>
-        <translation type="unfinished">வீடியோ நேரத்துடன் ஆடியோ மார்க்கரை அமை</translation>
-    </message>
-    <message>
-        <source>Set end time from video</source>
-        <translation type="unfinished">வீடியோவிலிருந்து இறுதி நேரத்தை அமை</translation>
-    </message>
-    <message>
-        <source>Set start time from video</source>
-        <translation type="unfinished">வீடியோவிலிருந்து தொடக்க நேரத்தை அமை</translation>
     </message>
     <message>
         <source>Go to start time of line</source>
@@ -8288,11 +8192,11 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Export as</source>
-        <translation type="vanished">வேறு வடிவில் ஏற்றுமதி</translation>
+        <translation>வேறு வடிவில் ஏற்றுமதி</translation>
     </message>
     <message>
         <source>Join with previous line using the audio selection</source>
-        <translation type="vanished">ஆடியோ தேர்வைக் கொண்டு முந்தைய வரியுடன் இணை</translation>
+        <translation>ஆடியோ தேர்வைக் கொண்டு முந்தைய வரியுடன் இணை</translation>
     </message>
     <message>
         <source>Shift selected lines by frames: start at video</source>
@@ -8344,7 +8248,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Video details…</source>
-        <translation type="vanished">வீடியோ விவரங்கள்…</translation>
+        <translation>வீடியோ விவரங்கள்…</translation>
     </message>
     <message>
         <source>Convert Aegisub folds to line groups</source>
@@ -8352,11 +8256,11 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Open timecodes</source>
-        <translation type="vanished">நேரக்குறியீடுகளைத் திற</translation>
+        <translation>நேரக்குறியீடுகளைத் திற</translation>
     </message>
     <message>
         <source>Save timecodes</source>
-        <translation type="vanished">நேரக்குறியீடுகளைச் சேமி</translation>
+        <translation>நேரக்குறியீடுகளைச் சேமி</translation>
     </message>
     <message>
         <source>Close timecodes</source>
@@ -8364,7 +8268,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>QC notes panel</source>
-        <translation type="vanished">QC குறிப்புகள் பலகம்</translation>
+        <translation>QC குறிப்புகள் பலகம்</translation>
     </message>
     <message>
         <source>Next QC note</source>
@@ -8380,7 +8284,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Perspective tracking…</source>
-        <translation type="vanished">பார்வைக்கோணக் கண்காணிப்பு…</translation>
+        <translation>பார்வைக்கோணக் கண்காணிப்பு…</translation>
     </message>
     <message>
         <source>Play before the mark</source>
@@ -8419,30 +8323,6 @@ Failed to copy %2 fonts.</source>
         <translation>தோற்ற விகிதத்தை மாற்றவும்…</translation>
     </message>
     <message>
-        <source>Export as…</source>
-        <translation type="unfinished">வேறு வடிவில் ஏற்றுமதி…</translation>
-    </message>
-    <message>
-        <source>Apply the audio selection and end the previous line there</source>
-        <translation type="unfinished">ஆடியோ தேர்வைப் பயன்படுத்தி, முந்தைய வரியை அங்கே முடி</translation>
-    </message>
-    <message>
-        <source>Open timecodes…</source>
-        <translation type="unfinished">நேரக்குறியீடுகளைத் திற…</translation>
-    </message>
-    <message>
-        <source>Save timecodes…</source>
-        <translation type="unfinished">நேரக்குறியீடுகளைச் சேமி…</translation>
-    </message>
-    <message>
-        <source>Video details</source>
-        <translation type="unfinished">வீடியோ விவரங்கள்</translation>
-    </message>
-    <message>
-        <source>Apply Power-Pin data…</source>
-        <translation type="unfinished">Power-Pin தரவைப் பயன்படுத்து…</translation>
-    </message>
-    <message>
         <source>Apply motion data…</source>
         <translation>அசைவுத் தரவைப் பயன்படுத்து…</translation>
     </message>
@@ -8456,11 +8336,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Copy Power-Pin track from lines</source>
-        <translation type="vanished">வரிகளிலிருந்து Power-Pin தடத்தை நகலெடு</translation>
-    </message>
-    <message>
-        <source>Copy Power-Pin data from lines</source>
-        <translation type="unfinished">வரிகளிலிருந்து Power-Pin தரவை நகலெடு</translation>
+        <translation>வரிகளிலிருந்து Power-Pin தடத்தை நகலெடு</translation>
     </message>
     <message>
         <source>Extend tracked lines…</source>
@@ -8659,10 +8535,6 @@ Failed to copy %2 fonts.</source>
         <translation>\fsp பின்னோக்கிச் சுழற்சி</translation>
     </message>
     <message>
-        <source>QC notes</source>
-        <translation type="unfinished">QC குறிப்புகள்</translation>
-    </message>
-    <message>
         <source>Add QC note…</source>
         <translation>QC குறிப்பைச் சேர்…</translation>
     </message>
@@ -8707,12 +8579,8 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Show in Review panel</source>
-        <translation type="unfinished">மதிப்பாய்வு பலகத்தில் காட்டு</translation>
-    </message>
-    <message>
-        <source>Explorer</source>
-        <translation type="unfinished">எக்ஸ்ப்ளோரர்</translation>
+        <source>Review panel</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Agent panel</source>
@@ -8799,6 +8667,10 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Explorer panel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Toggle left side bar</source>
         <translation type="unfinished"></translation>
     </message>
@@ -8809,26 +8681,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Swap side bars</source>
         <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Load session from file…</source>
-        <translation type="unfinished">கோப்பிலிருந்து அமர்வை ஏற்று…</translation>
-    </message>
-    <message>
-        <source>Save session to file…</source>
-        <translation type="unfinished">அமர்வைக் கோப்பில் சேமி…</translation>
-    </message>
-    <message>
-        <source>Delete old autosaves…</source>
-        <translation type="unfinished">பழைய தானியங்கு சேமிப்புகளை நீக்கு…</translation>
-    </message>
-    <message>
-        <source>Open dummy video…</source>
-        <translation type="unfinished">போலி வீடியோவைத் திற…</translation>
-    </message>
-    <message>
-        <source>Run the last macro again</source>
-        <translation type="unfinished">கடைசி குறுநிரலை மீண்டும் இயக்கு</translation>
     </message>
     <message>
         <source>Global</source>
@@ -8873,6 +8725,162 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Split lines every N frames or seconds…</source>
         <translation>ஒவ்வொரு N சட்டகம் அல்லது வினாடிக்கும் வரிகளைப் பிரி…</translation>
+    </message>
+    <message>
+        <source>Import subtitles from MKV…</source>
+        <translation>MKV இலிருந்து வசன வரிகளை இறக்குமதி செய்…</translation>
+    </message>
+    <message>
+        <source>Set new FPS…</source>
+        <translation>புதிய FPS ஐ அமைக்கவும்…</translation>
+    </message>
+    <message>
+        <source>Report an issue…</source>
+        <translation>சிக்கலைப் புகாரளி…</translation>
+    </message>
+    <message>
+        <source>Load script…</source>
+        <translation>ச்கிரிப்டை ஏற்று…</translation>
+    </message>
+    <message>
+        <source>Shift times…</source>
+        <translation>நேரங்களை நகர்த்து…</translation>
+    </message>
+    <message>
+        <source>Replace…</source>
+        <translation>மாற்று…</translation>
+    </message>
+    <message>
+        <source>Hide tags in the Grid</source>
+        <translation>கட்டத்தில் குறிச்சொற்களை மறை</translation>
+    </message>
+    <message>
+        <source>Open keyframes…</source>
+        <translation>கீஃப்ரேம்களைத் திற…</translation>
+    </message>
+    <message>
+        <source>Sort all lines by style</source>
+        <translation>அனைத்து வரிகளையும் பாணியின்படி வரிசைப்படுத்து</translation>
+    </message>
+    <message>
+        <source>Sort selected lines by style</source>
+        <translation>தேர்ந்தெடுத்த வரிகளைப் பாணியின்படி வரிசைப்படுத்து</translation>
+    </message>
+    <message>
+        <source>Timing postprocessor…</source>
+        <translation>நேரப் பின்செயலாக்கி…</translation>
+    </message>
+    <message>
+        <source>Resample subtitles…</source>
+        <translation>வசன வரிகளை மறுமாதிரியாக்கு…</translation>
+    </message>
+    <message>
+        <source>Close tab</source>
+        <translation>தாவலை மூடு</translation>
+    </message>
+    <message>
+        <source>Go to next frame</source>
+        <translation>அடுத்த சட்டகத்திற்குச் செல்லுங்கள்</translation>
+    </message>
+    <message>
+        <source>Open audio…</source>
+        <translation>ஆடியோவைத் திற…</translation>
+    </message>
+    <message>
+        <source>Go to previous frame</source>
+        <translation>முந்தைய சட்டகத்திற்குச் செல்லுங்கள்</translation>
+    </message>
+    <message>
+        <source>Save all</source>
+        <translation>அனைத்தையும் சேமி</translation>
+    </message>
+    <message>
+        <source>Save translation…</source>
+        <translation>மொழிபெயர்ப்பைச் சேமி…</translation>
+    </message>
+    <message>
+        <source>Name new files after the video</source>
+        <translation>புதிய கோப்புகளுக்கு வீடியோவின் பெயரை இடு</translation>
+    </message>
+    <message>
+        <source>Find…</source>
+        <translation>கண்டுபிடி…</translation>
+    </message>
+    <message>
+        <source>Select lines…</source>
+        <translation>வரிகளைத் தேர்ந்தெடு…</translation>
+    </message>
+    <message>
+        <source>Set audio mark to video time</source>
+        <translation>வீடியோ நேரத்துடன் ஆடியோ மார்க்கரை அமை</translation>
+    </message>
+    <message>
+        <source>Set end time from video</source>
+        <translation>வீடியோவிலிருந்து இறுதி நேரத்தை அமை</translation>
+    </message>
+    <message>
+        <source>Set start time from video</source>
+        <translation>வீடியோவிலிருந்து தொடக்க நேரத்தை அமை</translation>
+    </message>
+    <message>
+        <source>Export as…</source>
+        <translation>வேறு வடிவில் ஏற்றுமதி…</translation>
+    </message>
+    <message>
+        <source>Apply the audio selection and end the previous line there</source>
+        <translation>ஆடியோ தேர்வைப் பயன்படுத்தி, முந்தைய வரியை அங்கே முடி</translation>
+    </message>
+    <message>
+        <source>Open timecodes…</source>
+        <translation>நேரக்குறியீடுகளைத் திற…</translation>
+    </message>
+    <message>
+        <source>Save timecodes…</source>
+        <translation>நேரக்குறியீடுகளைச் சேமி…</translation>
+    </message>
+    <message>
+        <source>Video details</source>
+        <translation>வீடியோ விவரங்கள்</translation>
+    </message>
+    <message>
+        <source>Apply Power-Pin data…</source>
+        <translation>Power-Pin தரவைப் பயன்படுத்து…</translation>
+    </message>
+    <message>
+        <source>Copy Power-Pin data from lines</source>
+        <translation>வரிகளிலிருந்து Power-Pin தரவை நகலெடு</translation>
+    </message>
+    <message>
+        <source>QC notes</source>
+        <translation>QC குறிப்புகள்</translation>
+    </message>
+    <message>
+        <source>Show in Review panel</source>
+        <translation>மதிப்பாய்வு பலகத்தில் காட்டு</translation>
+    </message>
+    <message>
+        <source>Explorer</source>
+        <translation>எக்ஸ்ப்ளோரர்</translation>
+    </message>
+    <message>
+        <source>Load session from file…</source>
+        <translation>கோப்பிலிருந்து அமர்வை ஏற்று…</translation>
+    </message>
+    <message>
+        <source>Save session to file…</source>
+        <translation>அமர்வைக் கோப்பில் சேமி…</translation>
+    </message>
+    <message>
+        <source>Delete old autosaves…</source>
+        <translation>பழைய தானியங்கு சேமிப்புகளை நீக்கு…</translation>
+    </message>
+    <message>
+        <source>Open dummy video…</source>
+        <translation>போலி வீடியோவைத் திற…</translation>
+    </message>
+    <message>
+        <source>Run the last macro again</source>
+        <translation>கடைசி குறுநிரலை மீண்டும் இயக்கு</translation>
     </message>
 </context>
 <context>
@@ -9367,11 +9375,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Karaoke check</source>
-        <translation type="vanished">கரோக்கி சரிபார்ப்பு</translation>
-    </message>
-    <message>
-        <source>Check karaoke</source>
-        <translation type="unfinished">கரோக்கியைச் சரிபார்</translation>
+        <translation>கரோக்கி சரிபார்ப்பு</translation>
     </message>
     <message>
         <source>No karaoke problems found</source>
@@ -9703,6 +9707,10 @@ Failed to copy %2 fonts.</source>
         <source>Accept all suggestions</source>
         <translation>எல்லாப் பரிந்துரைகளையும் ஏற்றுக்கொள்</translation>
     </message>
+    <message>
+        <source>Check karaoke</source>
+        <translation>கரோக்கியைச் சரிபார்</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Layers</name>
@@ -10006,212 +10014,16 @@ Failed to copy %2 fonts.</source>
         <translation>அடுக்கு</translation>
     </message>
     <message>
-        <source>&amp;Open subtitles…</source>
-        <translation type="unfinished">வசன வரிகளைத் திற… (&amp;o)</translation>
-    </message>
-    <message>
-        <source>&amp;Close tab</source>
-        <translation type="unfinished">தாவலை மூடு (&amp;c)</translation>
-    </message>
-    <message>
-        <source>Save a&amp;ll</source>
-        <translation type="unfinished">அனைத்தையும் சேமி (&amp;l)</translation>
-    </message>
-    <message>
-        <source>Save &amp;translation…</source>
-        <translation type="unfinished">மொழிபெயர்ப்பைச் சேமி… (&amp;t)</translation>
-    </message>
-    <message>
-        <source>Name new files after the video</source>
-        <translation type="unfinished">புதிய கோப்புகளுக்கு வீடியோவின் பெயரை இடு</translation>
-    </message>
-    <message>
-        <source>Delete old autosaves…</source>
-        <translation type="unfinished">பழைய தானியங்கு சேமிப்புகளை நீக்கு…</translation>
-    </message>
-    <message>
-        <source>Load session from file…</source>
-        <translation type="unfinished">கோப்பிலிருந்து அமர்வை ஏற்று…</translation>
-    </message>
-    <message>
-        <source>Save session to file…</source>
-        <translation type="unfinished">அமர்வைக் கோப்பில் சேமி…</translation>
-    </message>
-    <message>
-        <source>Setti&amp;ngs</source>
-        <translation type="unfinished">அமைப்புகள் (&amp;n)</translation>
-    </message>
-    <message>
-        <source>Select &amp;lines…</source>
-        <translation type="unfinished">வரிகளைத் தேர்ந்தெடு… (&amp;l)</translation>
-    </message>
-    <message>
-        <source>Snap start to the previous keyframe</source>
-        <translation type="unfinished">தொடக்கத்தை முந்தைய கீஃப்ரேமுடன் ஒட்டிப் பொருத்து</translation>
-    </message>
-    <message>
-        <source>Snap start to the next keyframe</source>
-        <translation type="unfinished">தொடக்கத்தை அடுத்த கீஃப்ரேமுடன் ஒட்டிப் பொருத்து</translation>
-    </message>
-    <message>
-        <source>Snap end to the previous keyframe</source>
-        <translation type="unfinished">முடிவை முந்தைய கீஃப்ரேமுடன் ஒட்டிப் பொருத்து</translation>
-    </message>
-    <message>
-        <source>Snap end to the next keyframe</source>
-        <translation type="unfinished">முடிவை அடுத்த கீஃப்ரேமுடன் ஒட்டிப் பொருத்து</translation>
-    </message>
-    <message>
-        <source>Move start one frame earlier</source>
-        <translation type="unfinished">தொடக்கத்தை ஒரு சட்டகம் முன்னதாக நகர்த்து</translation>
-    </message>
-    <message>
-        <source>Move start one frame later</source>
-        <translation type="unfinished">தொடக்கத்தை ஒரு சட்டகம் பின்னதாக நகர்த்து</translation>
-    </message>
-    <message>
-        <source>Move end one frame earlier</source>
-        <translation type="unfinished">முடிவை ஒரு சட்டகம் முன்னதாக நகர்த்து</translation>
-    </message>
-    <message>
-        <source>Move end one frame later</source>
-        <translation type="unfinished">முடிவை ஒரு சட்டகம் பின்னதாக நகர்த்து</translation>
-    </message>
-    <message>
-        <source>Extend the previous line to this start</source>
-        <translation type="unfinished">முந்தைய வரியை இந்தத் தொடக்கம் வரை நீட்டு</translation>
-    </message>
-    <message>
-        <source>Extend the next line to this end</source>
-        <translation type="unfinished">அடுத்த வரியை இந்த முடிவு வரை நீட்டு</translation>
-    </message>
-    <message>
-        <source>Accept the timing assistant’s suggestion</source>
-        <translation type="unfinished">நேர உதவியாளரின் பரிந்துரையை ஏற்று</translation>
-    </message>
-    <message>
-        <source>&amp;QC notes</source>
-        <translation type="unfinished">QC குறிப்புகள் (&amp;q)</translation>
-    </message>
-    <message>
-        <source>Sc&amp;ript properties</source>
-        <translation type="unfinished">ஸ்கிரிப்ட் பண்புகள் (&amp;r)</translation>
-    </message>
-    <message>
-        <source>&amp;Font collector</source>
-        <translation type="unfinished">எழுத்துருக்கள் சேகரிப்பான் (&amp;f)</translation>
-    </message>
-    <message>
-        <source>R&amp;esample subtitles…</source>
-        <translation type="unfinished">வசன வரிகளை மறுமாதிரியாக்கு… (&amp;e)</translation>
-    </message>
-    <message>
-        <source>Check spellin&amp;g</source>
-        <translation type="unfinished">எழுத்துப்பிழை சரிபார்ப்பு (&amp;g)</translation>
-    </message>
-    <message>
-        <source>Check &amp;karaoke</source>
-        <translation type="unfinished">கரோக்கியைச் சரிபார் (&amp;k)</translation>
-    </message>
-    <message>
-        <source>Kanji t&amp;imer</source>
-        <translation type="unfinished">காஞ்சி நேரமிடுபவர் (&amp;i)</translation>
-    </message>
-    <message>
-        <source>Open &amp;keyframes…</source>
-        <translation type="unfinished">கீஃப்ரேம்களைத் திற… (&amp;k)</translation>
-    </message>
-    <message>
-        <source>Open timecodes…</source>
-        <translation type="unfinished">நேரக்குறியீடுகளைத் திற…</translation>
-    </message>
-    <message>
-        <source>Save timecodes…</source>
-        <translation type="unfinished">நேரக்குறியீடுகளைச் சேமி…</translation>
-    </message>
-    <message>
-        <source>Open dummy video…</source>
-        <translation type="unfinished">போலி வீடியோவைத் திற…</translation>
-    </message>
-    <message>
-        <source>Align to &amp;video…</source>
-        <translation type="unfinished">வீடியோவுடன் சீரமை… (&amp;v)</translation>
-    </message>
-    <message>
-        <source>Set &amp;start time from video</source>
-        <translation type="unfinished">வீடியோவிலிருந்து தொடக்க நேரத்தை அமை (&amp;s)</translation>
-    </message>
-    <message>
-        <source>Set end time from video</source>
-        <translation type="unfinished">வீடியோவிலிருந்து இறுதி நேரத்தை அமை</translation>
-    </message>
-    <message>
-        <source>Apply Power-Pin data…</source>
-        <translation type="unfinished">Power-Pin தரவைப் பயன்படுத்து…</translation>
-    </message>
-    <message>
-        <source>Copy Power-Pin data from lines</source>
-        <translation type="unfinished">வரிகளிலிருந்து Power-Pin தரவை நகலெடு</translation>
-    </message>
-    <message>
-        <source>&amp;Play or pause</source>
-        <translation type="unfinished">இயக்கு அல்லது இடைநிறுத்து (&amp;p)</translation>
-    </message>
-    <message>
-        <source>Video details</source>
-        <translation type="unfinished">வீடியோ விவரங்கள்</translation>
-    </message>
-    <message>
-        <source>&amp;Open audio…</source>
-        <translation type="unfinished">ஆடியோவைத் திற… (&amp;o)</translation>
-    </message>
-    <message>
-        <source>Open audio from &amp;video</source>
-        <translation type="unfinished">வீடியோவிலிருந்து ஆடியோவைத் திற (&amp;v)</translation>
-    </message>
-    <message>
-        <source>&amp;Close audio</source>
-        <translation type="unfinished">ஆடியோவை மூடு (&amp;c)</translation>
-    </message>
-    <message>
-        <source>&amp;Reload audio</source>
-        <translation type="unfinished">ஆடியோவை மீண்டும் ஏற்று (&amp;r)</translation>
-    </message>
-    <message>
-        <source>Set audio mark to video time</source>
-        <translation type="unfinished">வீடியோ நேரத்துடன் ஆடியோ மார்க்கரை அமை</translation>
-    </message>
-    <message>
-        <source>Apply the audio selection and end the previous line there</source>
-        <translation type="unfinished">ஆடியோ தேர்வைப் பயன்படுத்தி, முந்தைய வரியை அங்கே முடி</translation>
-    </message>
-    <message>
-        <source>Run the last macro again</source>
-        <translation type="unfinished">கடைசி குறுநிரலை மீண்டும் இயக்கு</translation>
-    </message>
-    <message>
-        <source>Pl&amp;ugins</source>
-        <translation type="unfinished">செருகுநிரல்கள் (&amp;u)</translation>
-    </message>
-    <message>
-        <source>Getting &amp;started</source>
-        <translation type="unfinished">தொடங்குதல் (&amp;s)</translation>
-    </message>
-    <message>
-        <source>&amp;Report an issue…</source>
-        <translation type="unfinished">சிக்கலைப் புகாரளி… (&amp;r)</translation>
-    </message>
-    <message>
         <source>&amp;File</source>
         <translation>கோப்பு (&amp;f)</translation>
     </message>
     <message>
         <source>&amp;Open…</source>
-        <translation type="vanished">திற… (&amp;o)</translation>
+        <translation>திற… (&amp;o)</translation>
     </message>
     <message>
         <source>Recently opened &amp;subtitles</source>
-        <translation type="vanished">அண்மைக் காலத்தில் திறக்கப்பட்ட வசன வரிகள் (&amp;s)</translation>
+        <translation>அண்மைக் காலத்தில் திறக்கப்பட்ட வசன வரிகள் (&amp;s)</translation>
     </message>
     <message>
         <source>None</source>
@@ -10219,11 +10031,11 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Remove subtitles from the &amp;editor</source>
-        <translation type="vanished">திருத்தியிலிருந்து வசன வரிகளை அகற்று (&amp;e)</translation>
+        <translation>திருத்தியிலிருந்து வசன வரிகளை அகற்று (&amp;e)</translation>
     </message>
     <message>
         <source>&amp;Close</source>
-        <translation type="vanished">மூடு (&amp;c)</translation>
+        <translation>மூடு (&amp;c)</translation>
     </message>
     <message>
         <source>&amp;Save</source>
@@ -10231,7 +10043,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Save &amp;all</source>
-        <translation type="vanished">அனைத்தையும் சேமி (&amp;a)</translation>
+        <translation>அனைத்தையும் சேமி (&amp;a)</translation>
     </message>
     <message>
         <source>Save &amp;as…</source>
@@ -10239,11 +10051,11 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Save &amp;translation</source>
-        <translation type="vanished">மொழிபெயர்ப்பைச் சேமிக்கவும் (&amp;t)</translation>
+        <translation>மொழிபெயர்ப்பைச் சேமிக்கவும் (&amp;t)</translation>
     </message>
     <message>
         <source>Save subtitles using the video name</source>
-        <translation type="vanished">வீடியோவின் பெயருடன் வசன வரிகள் சேமிக்கவும்</translation>
+        <translation>வீடியோவின் பெயருடன் வசன வரிகள் சேமிக்கவும்</translation>
     </message>
     <message>
         <source>Open autosave…</source>
@@ -10251,7 +10063,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Remove temporary files</source>
-        <translation type="vanished">தற்காலிக கோப்புகளை அகற்று</translation>
+        <translation>தற்காலிக கோப்புகளை அகற்று</translation>
     </message>
     <message>
         <source>Last session</source>
@@ -10267,19 +10079,19 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Save session to file</source>
-        <translation type="vanished">அமர்வைக் கோப்பில் சேமிக்கவும்</translation>
+        <translation>அமர்வைக் கோப்பில் சேமிக்கவும்</translation>
     </message>
     <message>
         <source>Ask whether to load the last session at program startup</source>
-        <translation type="vanished">நிரல் தொடங்கும்போது கடைசி அமர்வை ஏற்றவா எனக் கேட்கவும்</translation>
+        <translation>நிரல் தொடங்கும்போது கடைசி அமர்வை ஏற்றவா எனக் கேட்கவும்</translation>
     </message>
     <message>
         <source>Load last session after program start</source>
-        <translation type="vanished">நிரல் தொடக்கத்திற்குப் பிறகு கடைசி அமர்வை ஏற்றவும்</translation>
+        <translation>நிரல் தொடக்கத்திற்குப் பிறகு கடைசி அமர்வை ஏற்றவும்</translation>
     </message>
     <message>
         <source>&amp;Settings</source>
-        <translation type="vanished">அமைப்புகள் (&amp;s)</translation>
+        <translation>அமைப்புகள் (&amp;s)</translation>
     </message>
     <message>
         <source>E&amp;xit</source>
@@ -10299,11 +10111,11 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>So&amp;rt all lines</source>
-        <translation type="vanished">அனைத்து வரிகளையும் வரிசைப்படுத்து (&amp;r)</translation>
+        <translation>அனைத்து வரிகளையும் வரிசைப்படுத்து (&amp;r)</translation>
     </message>
     <message>
         <source>So&amp;rt selected lines</source>
-        <translation type="vanished">தேர்ந்தெடுத்த வரிகளை வரிசைப்படுத்து (&amp;r)</translation>
+        <translation>தேர்ந்தெடுத்த வரிகளை வரிசைப்படுத்து (&amp;r)</translation>
     </message>
     <message>
         <source>Undo to last save</source>
@@ -10315,7 +10127,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Select &amp;lines</source>
-        <translation type="vanished">வரிகளைத் தேர்ந்தெடு (&amp;l)</translation>
+        <translation>வரிகளைத் தேர்ந்தெடு (&amp;l)</translation>
     </message>
     <message>
         <source>Find next</source>
@@ -10351,7 +10163,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Rerun last macro</source>
-        <translation type="vanished">கடைசி குறுநிரலை மீண்டும் இயக்கு</translation>
+        <translation>கடைசி குறுநிரலை மீண்டும் இயக்கு</translation>
     </message>
     <message>
         <source>&amp;Video</source>
@@ -10363,11 +10175,11 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Previous frame</source>
-        <translation type="vanished">முந்தைய சட்டகம்</translation>
+        <translation>முந்தைய சட்டகம்</translation>
     </message>
     <message>
         <source>Next frame</source>
-        <translation type="vanished">அடுத்த சட்டகம்</translation>
+        <translation>அடுத்த சட்டகம்</translation>
     </message>
     <message>
         <source>Go to end time of line</source>
@@ -10375,7 +10187,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Play or pause</source>
-        <translation type="vanished">இயக்கு அல்லது இடைநிறுத்து</translation>
+        <translation>இயக்கு அல்லது இடைநிறுத்து</translation>
     </message>
     <message>
         <source>Go to previous keyframe</source>
@@ -10407,11 +10219,11 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Insert start time from video</source>
-        <translation type="vanished">வீடியோவிலிருந்து தொடக்க நேரத்தை செருகவும்</translation>
+        <translation>வீடியோவிலிருந்து தொடக்க நேரத்தை செருகவும்</translation>
     </message>
     <message>
         <source>Insert end time from video</source>
-        <translation type="vanished">வீடியோவிலிருந்து இறுதி நேரத்தை செருகவும்</translation>
+        <translation>வீடியோவிலிருந்து இறுதி நேரத்தை செருகவும்</translation>
     </message>
     <message>
         <source>Set audio position to video time</source>
@@ -10419,7 +10231,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Set audio marker to video time</source>
-        <translation type="vanished">வீடியோ நேரத்துடன் ஆடியோ மார்க்கரை அமைக்கவும்</translation>
+        <translation>வீடியோ நேரத்துடன் ஆடியோ மார்க்கரை அமைக்கவும்</translation>
     </message>
     <message>
         <source>Unload video</source>
@@ -10447,11 +10259,11 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Open audio from video</source>
-        <translation type="vanished">வீடியோவிலிருந்து ஆடியோவைத் திறக்கவும்</translation>
+        <translation>வீடியோவிலிருந்து ஆடியோவைத் திறக்கவும்</translation>
     </message>
     <message>
         <source>Close audio</source>
-        <translation type="vanished">ஆடியோவை மூடு</translation>
+        <translation>ஆடியோவை மூடு</translation>
     </message>
     <message>
         <source>Vie&amp;w</source>
@@ -10515,7 +10327,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Restore the previous layout</source>
-        <translation type="vanished">முந்தைய தளவமைப்பை மீட்டமை</translation>
+        <translation>முந்தைய தளவமைப்பை மீட்டமை</translation>
     </message>
     <message>
         <source>&amp;Subtitles</source>
@@ -10555,19 +10367,19 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Script properties</source>
-        <translation type="vanished">ஸ்கிரிப்ட் பண்புகள்</translation>
+        <translation>ஸ்கிரிப்ட் பண்புகள்</translation>
     </message>
     <message>
         <source>Font collector</source>
-        <translation type="vanished">எழுத்துருக்கள் சேகரிப்பான்</translation>
+        <translation>எழுத்துருக்கள் சேகரிப்பான்</translation>
     </message>
     <message>
         <source>Resample subtitles</source>
-        <translation type="vanished">வசன வரிகளை மறுமாதிரியாக்கு</translation>
+        <translation>வசன வரிகளை மறுமாதிரியாக்கு</translation>
     </message>
     <message>
         <source>Check spelling</source>
-        <translation type="vanished">எழுத்துப்பிழை சரிபார்ப்பு</translation>
+        <translation>எழுத்துப்பிழை சரிபார்ப்பு</translation>
     </message>
     <message>
         <source>Carries each selected line’s timed %1 on at the same speed from its start to its end</source>
@@ -10579,11 +10391,11 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Install, turn on and off, and uninstall plugins</source>
-        <translation type="vanished">செருகுநிரல்களை நிறுவு, இயக்கு அல்லது முடக்கு, நிறுவலை நீக்கு</translation>
+        <translation>செருகுநிரல்களை நிறுவு, இயக்கு அல்லது முடக்கு, நிறுவலை நீக்கு</translation>
     </message>
     <message>
         <source>Pl&amp;ugins…</source>
-        <translation type="vanished">செருகுநிரல்கள்… (&amp;u)</translation>
+        <translation>செருகுநிரல்கள்… (&amp;u)</translation>
     </message>
     <message>
         <source>Remove from the layout</source>
@@ -10591,7 +10403,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Hide tags</source>
-        <translation type="vanished">குறிச்சொற்களை மறைக்கவும்</translation>
+        <translation>குறிச்சொற்களை மறைக்கவும்</translation>
     </message>
     <message>
         <source>&amp;Help</source>
@@ -10599,7 +10411,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>&amp;Report an issue</source>
-        <translation type="vanished">சிக்கலைப் புகாரளி (&amp;r)</translation>
+        <translation>சிக்கலைப் புகாரளி (&amp;r)</translation>
     </message>
     <message>
         <source>Check for &amp;updates</source>
@@ -10706,11 +10518,11 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Open subtitle file</source>
-        <translation type="vanished">வசனக் கோப்பைத் திற</translation>
+        <translation>வசனக் கோப்பைத் திற</translation>
     </message>
     <message>
         <source>Open a folder as a project</source>
-        <translation type="vanished">ஒரு கோப்புறையைத் திட்டப்பணியாகத் திற</translation>
+        <translation>ஒரு கோப்புறையைத் திட்டப்பணியாகத் திற</translation>
     </message>
     <message>
         <source>Open &amp;folder…</source>
@@ -10718,11 +10530,11 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Recently opened subtitles</source>
-        <translation type="vanished">அண்மைக் காலத்தில் திறக்கப்பட்ட வசன வரிகள்</translation>
+        <translation>அண்மைக் காலத்தில் திறக்கப்பட்ட வசன வரிகள்</translation>
     </message>
     <message>
         <source>Open</source>
-        <translation type="vanished">திற</translation>
+        <translation>திற</translation>
     </message>
     <message>
         <source>Open %1</source>
@@ -10734,7 +10546,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Close this window’s tabs and its project</source>
-        <translation type="vanished">இந்தச் சாளரத்தின் தாவல்களையும் அதன் திட்டப்பணியையும் மூடு</translation>
+        <translation>இந்தச் சாளரத்தின் தாவல்களையும் அதன் திட்டப்பணியையும் மூடு</translation>
     </message>
     <message>
         <source>Close pro&amp;ject</source>
@@ -10742,7 +10554,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Opens video file</source>
-        <translation type="vanished">வீடியோ கோப்பைத் திறக்கவும்</translation>
+        <translation>வீடியோ கோப்பைத் திறக்கவும்</translation>
     </message>
     <message>
         <source>Imports a subtitle track from a Matroska file</source>
@@ -10762,15 +10574,15 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Save current file</source>
-        <translation type="vanished">தற்போதைய கோப்பை சேமிக்கவும்</translation>
+        <translation>தற்போதைய கோப்பை சேமிக்கவும்</translation>
     </message>
     <message>
         <source>Save all subtitles</source>
-        <translation type="vanished">அனைத்து வசன வரிகளையும் சேமிக்கவும்</translation>
+        <translation>அனைத்து வசன வரிகளையும் சேமிக்கவும்</translation>
     </message>
     <message>
         <source>Save as</source>
-        <translation type="vanished">எனச் சேமி</translation>
+        <translation>எனச் சேமி</translation>
     </message>
     <message>
         <source>Writes a copy of the document in another format</source>
@@ -10782,7 +10594,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Save translation</source>
-        <translation type="vanished">மொழிபெயர்ப்பைச் சேமிக்கவும்</translation>
+        <translation>மொழிபெயர்ப்பைச் சேமிக்கவும்</translation>
     </message>
     <message>
         <source>Opens the selected autosave from the list</source>
@@ -10790,11 +10602,11 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Opens the temporary file removal window</source>
-        <translation type="vanished">தற்காலிகக் கோப்புகளை அகற்றும் சாளரத்தைத் திறக்கிறது</translation>
+        <translation>தற்காலிகக் கோப்புகளை அகற்றும் சாளரத்தைத் திறக்கிறது</translation>
     </message>
     <message>
         <source>Last session options</source>
-        <translation type="vanished">கடைசி அமர்வு விருப்பங்கள்</translation>
+        <translation>கடைசி அமர்வு விருப்பங்கள்</translation>
     </message>
     <message>
         <source>Loads previously loaded files</source>
@@ -10810,19 +10622,19 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Asks whether to load previously loaded files at program startup</source>
-        <translation type="vanished">நிரல் தொடக்கத்தில் அண்மைக் காலத்தில் படித்த கோப்புகளை ஏற்றலாமா என்று கேட்கிறது</translation>
+        <translation>நிரல் தொடக்கத்தில் அண்மைக் காலத்தில் படித்த கோப்புகளை ஏற்றலாமா என்று கேட்கிறது</translation>
     </message>
     <message>
         <source>Loads previously loaded files at program startup</source>
-        <translation type="vanished">நிரல் தொடக்கத்தில் முன்பு ஏற்றிய கோப்புகளை ஏற்றுகிறது</translation>
+        <translation>நிரல் தொடக்கத்தில் முன்பு ஏற்றிய கோப்புகளை ஏற்றுகிறது</translation>
     </message>
     <message>
         <source>Program settings</source>
-        <translation type="vanished">நிரல் அமைப்புகள்</translation>
+        <translation>நிரல் அமைப்புகள்</translation>
     </message>
     <message>
         <source>Close this window; closing the last window exits the program</source>
-        <translation type="vanished">இந்தச் சாளரத்தை மூடும்; கடைசிச் சாளரத்தை மூடினால் நிரல் வெளியேறும்</translation>
+        <translation>இந்தச் சாளரத்தை மூடும்; கடைசிச் சாளரத்தை மூடினால் நிரல் வெளியேறும்</translation>
     </message>
     <message>
         <source>Close &amp;window</source>
@@ -10830,23 +10642,23 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Exit the program</source>
-        <translation type="vanished">நிரலில் இருந்து வெளியேறவும்</translation>
+        <translation>நிரலில் இருந்து வெளியேறவும்</translation>
     </message>
     <message>
         <source>Undo</source>
-        <translation type="vanished">செயல்தவிர்</translation>
+        <translation>செயல்தவிர்</translation>
     </message>
     <message>
         <source>Redo</source>
-        <translation type="vanished">மீண்டும்செய்</translation>
+        <translation>மீண்டும்செய்</translation>
     </message>
     <message>
         <source>Sorts all lines in ASS file</source>
-        <translation type="vanished">ASS கோப்பில் அனைத்து வரிகளையும் வரிசைப்படுத்துகிறது</translation>
+        <translation>ASS கோப்பில் அனைத்து வரிகளையும் வரிசைப்படுத்துகிறது</translation>
     </message>
     <message>
         <source>Sorts selected lines in ASS file</source>
-        <translation type="vanished">ASS கோப்பில் தேர்ந்தெடுக்கப்பட்ட வரிகளை வரிசைப்படுத்துகிறது</translation>
+        <translation>ASS கோப்பில் தேர்ந்தெடுக்கப்பட்ட வரிகளை வரிசைப்படுத்துகிறது</translation>
     </message>
     <message>
         <source>History</source>
@@ -10857,7 +10669,15 @@ Failed to copy %2 fonts.</source>
         <translation>வெளிப்பாடுகளால் வரிகளைத் தேர்ந்தெடுக்கிறது</translation>
     </message>
     <message>
+        <source>Timing helpers</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Moves the start of each selected line to the keyframe before it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start to previous keyframe</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -10865,11 +10685,23 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Start to next keyframe</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Moves the end of each selected line to the keyframe before it, staying after its start</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>End to previous keyframe</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Moves the end of each selected line to the keyframe after it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>End to next keyframe</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -10909,7 +10741,15 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Start one frame earlier</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Moves the start of each selected line one frame later</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start one frame later</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -10917,7 +10757,15 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>End one frame earlier</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Moves the end of each selected line one frame later</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>End one frame later</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -10925,7 +10773,15 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Extend previous line to this start</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Starts the line after the active line where the active line ends</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Extend next line to this end</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -10938,6 +10794,10 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Applies the timing assistant’s suggestion to the active line and goes to the next one</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Accept assistant suggestion</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -10966,7 +10826,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>&amp;QC notes…</source>
-        <translation type="vanished">QC குறிப்புகள்(&amp;Q)…</translation>
+        <translation>QC குறிப்புகள்(&amp;Q)…</translation>
     </message>
     <message>
         <source>Changes the frame rate of the subtitle times</source>
@@ -10974,7 +10834,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Set FPS</source>
-        <translation type="vanished">FPS ஐ அமைக்கவும்</translation>
+        <translation>FPS ஐ அமைக்கவும்</translation>
     </message>
     <message>
         <source>Set new FPS…</source>
@@ -10986,11 +10846,11 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Open a VFR timecodes v1, v2 or v4 file</source>
-        <translation type="vanished">VFR நேரக்குறியீடுகள் v1, v2 அல்லது v4 கோப்பைத் திறக்கிறது</translation>
+        <translation>VFR நேரக்குறியீடுகள் v1, v2 அல்லது v4 கோப்பைத் திறக்கிறது</translation>
     </message>
     <message>
         <source>Open timecodes</source>
-        <translation type="vanished">நேரக்குறியீடுகளைத் திற</translation>
+        <translation>நேரக்குறியீடுகளைத் திற</translation>
     </message>
     <message>
         <source>Recently opened timecodes</source>
@@ -10998,15 +10858,15 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Save a VFR timecodes v2 file</source>
-        <translation type="vanished">VFR நேரக்குறியீடுகள் v2 கோப்பாகச் சேமிக்கிறது</translation>
+        <translation>VFR நேரக்குறியீடுகள் v2 கோப்பாகச் சேமிக்கிறது</translation>
     </message>
     <message>
         <source>Save timecodes</source>
-        <translation type="vanished">நேரக்குறியீடுகளைச் சேமி</translation>
+        <translation>நேரக்குறியீடுகளைச் சேமி</translation>
     </message>
     <message>
         <source>Close the currently open timecodes file</source>
-        <translation type="vanished">இப்போது திறந்துள்ள நேரக்குறியீட்டுக் கோப்பை மூடுகிறது</translation>
+        <translation>இப்போது திறந்துள்ள நேரக்குறியீட்டுக் கோப்பை மூடுகிறது</translation>
     </message>
     <message>
         <source>Close timecodes</source>
@@ -11081,10 +10941,6 @@ Failed to copy %2 fonts.</source>
         <translation>தேர்ந்தெடுத்த வரிகளுக்கு Power-Pin கண்காணிப்புத் தரவைப் பயன்படுத்தும், ஒரு சட்டகத்துக்கு ஒரு வரி</translation>
     </message>
     <message>
-        <source>Only in Translation mode</source>
-        <translation type="unfinished">மொழிபெயர்ப்பு பயன்முறையில் மட்டும்</translation>
-    </message>
-    <message>
         <source>Find fade</source>
         <translation>மங்கலைக் கண்டறி</translation>
     </message>
@@ -11094,15 +10950,15 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Open a video first: tracking data is per frame.</source>
-        <translation type="vanished">முதலில் ஒரு வீடியோவைத் திறக்கவும்: கண்காணிப்புத் தரவு சட்டகம் வாரியானது.</translation>
+        <translation>முதலில் ஒரு வீடியோவைத் திறக்கவும்: கண்காணிப்புத் தரவு சட்டகம் வாரியானது.</translation>
     </message>
     <message>
         <source>Perspective tracking…</source>
-        <translation type="vanished">பார்வைக்கோணக் கண்காணிப்பு…</translation>
+        <translation>பார்வைக்கோணக் கண்காணிப்பு…</translation>
     </message>
     <message>
         <source>Video details…</source>
-        <translation type="vanished">வீடியோ விவரங்கள்…</translation>
+        <translation>வீடியோ விவரங்கள்…</translation>
     </message>
     <message>
         <source>Reload video</source>
@@ -11130,7 +10986,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Copy Power-Pin track from lines</source>
-        <translation type="vanished">வரிகளிலிருந்து Power-Pin தடத்தை நகலெடு</translation>
+        <translation>வரிகளிலிருந்து Power-Pin தடத்தை நகலெடு</translation>
     </message>
     <message>
         <source>Fits the selected frame-by-frame lines’ motion and carries it on for more frames</source>
@@ -11146,7 +11002,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Reload audio</source>
-        <translation type="vanished">ஆடியோவை மீண்டும் ஏற்று</translation>
+        <translation>ஆடியோவை மீண்டும் ஏற்று</translation>
     </message>
     <message>
         <source>Gives the active line the audio selection and ends the line before it where the selection starts</source>
@@ -11154,7 +11010,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Join with previous line using the audio selection</source>
-        <translation type="vanished">ஆடியோ தேர்வைக் கொண்டு முந்தைய வரியுடன் இணை</translation>
+        <translation>ஆடியோ தேர்வைக் கொண்டு முந்தைய வரியுடன் இணை</translation>
     </message>
     <message>
         <source>Untagged video</source>
@@ -11270,11 +11126,11 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Load script</source>
-        <translation type="vanished">ச்கிரிப்டை ஏற்றவும்</translation>
+        <translation>ச்கிரிப்டை ஏற்றவும்</translation>
     </message>
     <message>
         <source>Run the last macro again with the same answers, without its dialogs when they are unchanged</source>
-        <translation type="vanished">கடைசி குறுநிரலை அதே பதில்களுடன் மீண்டும் இயக்குகிறது; பதில்கள் மாறாதபோது அதன் உரையாடல்கள் திறக்காது</translation>
+        <translation>கடைசி குறுநிரலை அதே பதில்களுடன் மீண்டும் இயக்குகிறது; பதில்கள் மாறாதபோது அதன் உரையாடல்கள் திறக்காது</translation>
     </message>
     <message>
         <source>Repeat last run</source>
@@ -11310,7 +11166,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Opens audio file</source>
-        <translation type="vanished">ஆடியோ கோப்பைத் திறக்கிறது</translation>
+        <translation>ஆடியோ கோப்பைத் திறக்கிறது</translation>
     </message>
     <message>
         <source>Opens audio from video</source>
@@ -11322,7 +11178,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Kanji timer</source>
-        <translation type="vanished">காஞ்சி நேரமிடுபவர்</translation>
+        <translation>காஞ்சி நேரமிடுபவர்</translation>
     </message>
     <message>
         <source>Walks through the settings most people change first</source>
@@ -11330,7 +11186,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>&amp;Getting started</source>
-        <translation type="vanished">தொடங்குதல் (&amp;g)</translation>
+        <translation>தொடங்குதல் (&amp;g)</translation>
     </message>
     <message>
         <source>Opens the user guide in the default browser</source>
@@ -11370,15 +11226,15 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Closes audio</source>
-        <translation type="vanished">ஆடியோவை மூடுகிறது</translation>
+        <translation>ஆடியோவை மூடுகிறது</translation>
     </message>
     <message>
         <source>Shifting subtitle times</source>
-        <translation type="vanished">வசன வரிகளின் நேரங்களை நகர்த்துகிறது</translation>
+        <translation>வசன வரிகளின் நேரங்களை நகர்த்துகிறது</translation>
     </message>
     <message>
         <source>Is used to manage ASS styles</source>
-        <translation type="vanished">ASS பாணிகளை நிர்வகிக்கப் பயன்படுகிறது</translation>
+        <translation>ASS பாணிகளை நிர்வகிக்கப் பயன்படுகிறது</translation>
     </message>
     <message>
         <source>Opens Script properties</source>
@@ -11390,295 +11246,11 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Check karaoke</source>
-        <translation type="vanished">கரோக்கியைச் சரிபார்</translation>
+        <translation>கரோக்கியைச் சரிபார்</translation>
     </message>
     <message>
         <source>Hide tags in the line editor</source>
         <translation>வரி திருத்தியில் குறிச்சொற்களை மறை</translation>
-    </message>
-    <message>
-        <source>Opens a subtitle file</source>
-        <translation type="unfinished">வசனக் கோப்பைத் திறக்கிறது</translation>
-    </message>
-    <message>
-        <source>Opens a video file</source>
-        <translation type="unfinished">வீடியோ கோப்பைத் திறக்கிறது</translation>
-    </message>
-    <message>
-        <source>Opens a folder as a project</source>
-        <translation type="unfinished">ஒரு கோப்புறையைத் திட்டப்பணியாகத் திறக்கிறது</translation>
-    </message>
-    <message>
-        <source>Lists the subtitle files opened lately</source>
-        <translation type="unfinished">அண்மையில் திறந்த வசனக் கோப்புகளைப் பட்டியலிடுகிறது</translation>
-    </message>
-    <message>
-        <source>&amp;Recently opened subtitles</source>
-        <translation type="unfinished">அண்மைக் காலத்தில் திறக்கப்பட்ட வசன வரிகள் (&amp;r)</translation>
-    </message>
-    <message>
-        <source>Opens %1</source>
-        <translation type="unfinished">%1 ஐத் திறக்கிறது</translation>
-    </message>
-    <message>
-        <source>Saves the document</source>
-        <translation type="unfinished">ஆவணத்தைச் சேமிக்கிறது</translation>
-    </message>
-    <message>
-        <source>Saves the document under a new name or format</source>
-        <translation type="unfinished">ஆவணத்தைப் புதிய பெயரில் அல்லது வடிவத்தில் சேமிக்கிறது</translation>
-    </message>
-    <message>
-        <source>Saves every open document</source>
-        <translation type="unfinished">திறந்துள்ள எல்லா ஆவணங்களையும் சேமிக்கிறது</translation>
-    </message>
-    <message>
-        <source>Saves the translation as a new file</source>
-        <translation type="unfinished">மொழிபெயர்ப்பைப் புதிய கோப்பாகச் சேமிக்கிறது</translation>
-    </message>
-    <message>
-        <source>Names new files after the video</source>
-        <translation type="unfinished">புதிய கோப்புகளுக்கு வீடியோவின் பெயரை இடுகிறது</translation>
-    </message>
-    <message>
-        <source>Deletes autosaves older than a date you choose</source>
-        <translation type="unfinished">நீங்கள் தேர்ந்தெடுக்கும் தேதியைவிடப் பழைய தானியங்கு சேமிப்புகளை நீக்குகிறது</translation>
-    </message>
-    <message>
-        <source>Loads or saves the open files as a session</source>
-        <translation type="unfinished">திறந்துள்ள கோப்புகளை ஓர் அமர்வாக ஏற்றுகிறது அல்லது சேமிக்கிறது</translation>
-    </message>
-    <message>
-        <source>At startup</source>
-        <translation type="unfinished">தொடக்கத்தில்</translation>
-    </message>
-    <message>
-        <source>Starts with no files open</source>
-        <translation type="unfinished">கோப்புகள் எதுவும் திறக்காமல் தொடங்குகிறது</translation>
-    </message>
-    <message>
-        <source>Don’t load the last session</source>
-        <translation type="unfinished">கடைசி அமர்வை ஏற்ற வேண்டாம்</translation>
-    </message>
-    <message>
-        <source>Asks whether to load the last session at startup</source>
-        <translation type="unfinished">தொடக்கத்தில் கடைசி அமர்வை ஏற்றவா எனக் கேட்கிறது</translation>
-    </message>
-    <message>
-        <source>Ask</source>
-        <translation type="unfinished">கேள்</translation>
-    </message>
-    <message>
-        <source>Loads the last session at startup</source>
-        <translation type="unfinished">தொடக்கத்தில் கடைசி அமர்வை ஏற்றுகிறது</translation>
-    </message>
-    <message>
-        <source>Load the last session</source>
-        <translation type="unfinished">கடைசி அமர்வை ஏற்று</translation>
-    </message>
-    <message>
-        <source>Empties the editor and starts a new document</source>
-        <translation type="unfinished">திருத்தியைக் காலியாக்கிப் புதிய ஆவணத்தைத் தொடங்குகிறது</translation>
-    </message>
-    <message>
-        <source>Closes the current tab</source>
-        <translation type="unfinished">தற்போதைய தாவலை மூடுகிறது</translation>
-    </message>
-    <message>
-        <source>Closes this window’s tabs and its project</source>
-        <translation type="unfinished">இந்தச் சாளரத்தின் தாவல்களையும் அதன் திட்டப்பணியையும் மூடுகிறது</translation>
-    </message>
-    <message>
-        <source>Opens Settings</source>
-        <translation type="unfinished">அமைப்புகளைத் திறக்கிறது</translation>
-    </message>
-    <message>
-        <source>Closes this window; closing the last window exits the program</source>
-        <translation type="unfinished">இந்தச் சாளரத்தை மூடுகிறது; கடைசிச் சாளரத்தை மூடினால் நிரல் வெளியேறும்</translation>
-    </message>
-    <message>
-        <source>Exits the program</source>
-        <translation type="unfinished">நிரலிலிருந்து வெளியேறுகிறது</translation>
-    </message>
-    <message>
-        <source>Undoes the last change</source>
-        <translation type="unfinished">கடைசி மாற்றத்தைச் செயல்தவிர்க்கிறது</translation>
-    </message>
-    <message>
-        <source>Redoes the last undone change</source>
-        <translation type="unfinished">கடைசியாகச் செயல்தவிர்த்த மாற்றத்தை மீண்டும் செய்கிறது</translation>
-    </message>
-    <message>
-        <source>Undoes every change since the last save</source>
-        <translation type="unfinished">கடைசிச் சேமிப்புக்குப் பிறகான எல்லா மாற்றங்களையும் செயல்தவிர்க்கிறது</translation>
-    </message>
-    <message>
-        <source>Shows the list of changes</source>
-        <translation type="unfinished">மாற்றங்களின் பட்டியலைக் காட்டுகிறது</translation>
-    </message>
-    <message>
-        <source>Sorts every line in the document</source>
-        <translation type="unfinished">ஆவணத்தில் உள்ள அனைத்து வரிகளையும் வரிசைப்படுத்துகிறது</translation>
-    </message>
-    <message>
-        <source>Sor&amp;t all lines</source>
-        <translation type="unfinished">அனைத்து வரிகளையும் வரிசைப்படுத்து (&amp;t)</translation>
-    </message>
-    <message>
-        <source>Sorts the selected lines</source>
-        <translation type="unfinished">தேர்ந்தெடுத்த வரிகளை வரிசைப்படுத்துகிறது</translation>
-    </message>
-    <message>
-        <source>Sort s&amp;elected lines</source>
-        <translation type="unfinished">தேர்ந்தெடுத்த வரிகளை வரிசைப்படுத்து (&amp;e)</translation>
-    </message>
-    <message>
-        <source>Shows the Shift times panel</source>
-        <translation type="unfinished">நேர நகர்த்தல் பலகத்தைக் காட்டுகிறது</translation>
-    </message>
-    <message>
-        <source>Timing &amp;helpers</source>
-        <translation type="unfinished">நேர உதவிக் கருவிகள் (&amp;h)</translation>
-    </message>
-    <message>
-        <source>Opens Style manager for the active line’s style</source>
-        <translation type="unfinished">செயலில் உள்ள வரியின் பாணிக்காகப் பாணி மேலாளரைத் திறக்கிறது</translation>
-    </message>
-    <message>
-        <source>Collects the fonts the document uses into a folder or archive</source>
-        <translation type="unfinished">ஆவணம் பயன்படுத்தும் எழுத்துருக்களை ஒரு கோப்புறையில் அல்லது காப்பகத்தில் சேகரிக்கிறது</translation>
-    </message>
-    <message>
-        <source>Resamples the document to a new script resolution</source>
-        <translation type="unfinished">ஆவணத்தைப் புதிய ச்கிரிப்ட் தெளிவுத்திறனுக்கு மறுமாதிரியாக்குகிறது</translation>
-    </message>
-    <message>
-        <source>Set FP&amp;S</source>
-        <translation type="unfinished">FPS ஐ அமை (&amp;s)</translation>
-    </message>
-    <message>
-        <source>Convert Aegisub fol&amp;ds to line groups</source>
-        <translation type="unfinished">Aegisub மடிப்புகளை வரிக் குழுக்களாக மாற்று (&amp;d)</translation>
-    </message>
-    <message>
-        <source>No Aegisub folds in this file</source>
-        <translation type="unfinished">இந்தக் கோப்பில் Aegisub மடிப்புகள் இல்லை</translation>
-    </message>
-    <message>
-        <source>Opens the Spellchecker panel</source>
-        <translation type="unfinished">எழுத்துப்பிழை சரிபார்ப்பி பலகத்தைத் திறக்கிறது</translation>
-    </message>
-    <message>
-        <source>&amp;Open video…</source>
-        <translation type="unfinished">வீடியோவைத் திற… (&amp;o)</translation>
-    </message>
-    <message>
-        <source>Opens a keyframes file</source>
-        <translation type="unfinished">கீஃப்ரேம் கோப்பைத் திறக்கிறது</translation>
-    </message>
-    <message>
-        <source>Opens a VFR timecodes v1, v2 or v4 file</source>
-        <translation type="unfinished">VFR நேரக்குறியீடுகள் v1, v2 அல்லது v4 கோப்பைத் திறக்கிறது</translation>
-    </message>
-    <message>
-        <source>Saves the timecodes as a VFR v2 file</source>
-        <translation type="unfinished">நேரக்குறியீடுகளை VFR v2 கோப்பாகச் சேமிக்கிறது</translation>
-    </message>
-    <message>
-        <source>Closes the open timecodes file</source>
-        <translation type="unfinished">திறந்துள்ள நேரக்குறியீட்டுக் கோப்பை மூடுகிறது</translation>
-    </message>
-    <message>
-        <source>Goes one frame back</source>
-        <translation type="unfinished">ஒரு சட்டகம் பின்னோக்கிச் செல்கிறது</translation>
-    </message>
-    <message>
-        <source>Goes one frame forward</source>
-        <translation type="unfinished">ஒரு சட்டகம் முன்னோக்கிச் செல்கிறது</translation>
-    </message>
-    <message>
-        <source>Sets the selected lines’ start to the video frame’s time</source>
-        <translation type="unfinished">தேர்ந்தெடுத்த வரிகளின் தொடக்கத்தை வீடியோ சட்டகத்தின் நேரத்துக்கு அமைக்கிறது</translation>
-    </message>
-    <message>
-        <source>Sets the selected lines’ end to the video frame’s time</source>
-        <translation type="unfinished">தேர்ந்தெடுத்த வரிகளின் முடிவை வீடியோ சட்டகத்தின் நேரத்துக்கு அமைக்கிறது</translation>
-    </message>
-    <message>
-        <source>Open a video first</source>
-        <translation type="unfinished">முதலில் ஒரு வீடியோவைத் திறக்கவும்</translation>
-    </message>
-    <message>
-        <source>&amp;Full screen</source>
-        <translation type="unfinished">முழுத் திரை (&amp;f)</translation>
-    </message>
-    <message>
-        <source>Change aspect ratio…</source>
-        <translation type="unfinished">தோற்ற விகிதத்தை மாற்றவும்…</translation>
-    </message>
-    <message>
-        <source>Opens an audio file</source>
-        <translation type="unfinished">ஆடியோ கோப்பைத் திறக்கிறது</translation>
-    </message>
-    <message>
-        <source>Lists the audio files opened lately</source>
-        <translation type="unfinished">அண்மையில் திறந்த ஆடியோ கோப்புகளைப் பட்டியலிடுகிறது</translation>
-    </message>
-    <message>
-        <source>Closes the audio</source>
-        <translation type="unfinished">ஆடியோவை மூடுகிறது</translation>
-    </message>
-    <message>
-        <source>Loads an Automation script from a file</source>
-        <translation type="unfinished">ஒரு கோப்பிலிருந்து தானியங்கு ச்கிரிப்டை ஏற்றுகிறது</translation>
-    </message>
-    <message>
-        <source>Loads the autoload folder’s scripts again</source>
-        <translation type="unfinished">தானியங்கு ஏற்றக் கோப்புறையின் ச்கிரிப்ட்களை மீண்டும் ஏற்றுகிறது</translation>
-    </message>
-    <message>
-        <source>Runs the last macro again, showing its dialogs</source>
-        <translation type="unfinished">கடைசி குறுநிரலை அதன் உரையாடல்களைக் காட்டி மீண்டும் இயக்குகிறது</translation>
-    </message>
-    <message>
-        <source>Runs the last macro again with the same answers, without its dialogs when they are unchanged</source>
-        <translation type="unfinished">கடைசி குறுநிரலை அதே பதில்களுடன் மீண்டும் இயக்குகிறது; பதில்கள் மாறாதபோது அதன் உரையாடல்கள் திறக்காது</translation>
-    </message>
-    <message>
-        <source>Installs, turns on and off, and uninstalls plugins</source>
-        <translation type="unfinished">செருகுநிரல்களை நிறுவுகிறது, இயக்குகிறது அல்லது முடக்குகிறது, நிறுவல் நீக்குகிறது</translation>
-    </message>
-    <message>
-        <source>Switches, saves and locks the window’s layout</source>
-        <translation type="unfinished">சாளரத்தின் தளவமைப்பை மாற்றுகிறது, சேமிக்கிறது, பூட்டுகிறது</translation>
-    </message>
-    <message>
-        <source>Shows, floats or closes each panel</source>
-        <translation type="unfinished">ஒவ்வொரு பலகத்தையும் காட்டுகிறது, மிதக்கவிடுகிறது அல்லது மூடுகிறது</translation>
-    </message>
-    <message>
-        <source>Moves the focused panel to another place in the window</source>
-        <translation type="unfinished">குவிக்கப்பட்ட பலகத்தைச் சாளரத்தில் வேறு இடத்திற்கு நகர்த்துகிறது</translation>
-    </message>
-    <message>
-        <source>Shows or hides the Log</source>
-        <translation type="unfinished">பதிவைக் காட்டுகிறது அல்லது மறைக்கிறது</translation>
-    </message>
-    <message>
-        <source>Open a file first</source>
-        <translation type="unfinished">முதலில் ஒரு கோப்பைத் திறக்கவும்</translation>
-    </message>
-    <message>
-        <source>Shows or hides tags in the Grid</source>
-        <translation type="unfinished">கட்டத்தில் குறிச்சொற்களைக் காட்டுகிறது அல்லது மறைக்கிறது</translation>
-    </message>
-    <message>
-        <source>Hide tags in the Grid</source>
-        <translation type="unfinished">கட்டத்தில் குறிச்சொற்களை மறை</translation>
-    </message>
-    <message>
-        <source>Shows or hides tags in the line editor</source>
-        <translation type="unfinished">வரி திருத்தியில் குறிச்சொற்களைக் காட்டுகிறது அல்லது மறைக்கிறது</translation>
     </message>
     <message>
         <source>Opens a form for a bug, feature request or question on GitHub</source>
@@ -12281,7 +11853,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Align to video…</source>
-        <translation type="vanished">வீடியோவுடன் சீரமை…</translation>
+        <translation>வீடியோவுடன் சீரமை…</translation>
     </message>
     <message>
         <source>Align to video</source>
@@ -12318,6 +11890,490 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Where to save</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;Open subtitles…</source>
+        <translation>வசன வரிகளைத் திற… (&amp;o)</translation>
+    </message>
+    <message>
+        <source>&amp;Close tab</source>
+        <translation>தாவலை மூடு (&amp;c)</translation>
+    </message>
+    <message>
+        <source>Save a&amp;ll</source>
+        <translation>அனைத்தையும் சேமி (&amp;l)</translation>
+    </message>
+    <message>
+        <source>Save &amp;translation…</source>
+        <translation>மொழிபெயர்ப்பைச் சேமி… (&amp;t)</translation>
+    </message>
+    <message>
+        <source>Name new files after the video</source>
+        <translation>புதிய கோப்புகளுக்கு வீடியோவின் பெயரை இடு</translation>
+    </message>
+    <message>
+        <source>Delete old autosaves…</source>
+        <translation>பழைய தானியங்கு சேமிப்புகளை நீக்கு…</translation>
+    </message>
+    <message>
+        <source>Load session from file…</source>
+        <translation>கோப்பிலிருந்து அமர்வை ஏற்று…</translation>
+    </message>
+    <message>
+        <source>Save session to file…</source>
+        <translation>அமர்வைக் கோப்பில் சேமி…</translation>
+    </message>
+    <message>
+        <source>Setti&amp;ngs</source>
+        <translation>அமைப்புகள் (&amp;n)</translation>
+    </message>
+    <message>
+        <source>Select &amp;lines…</source>
+        <translation>வரிகளைத் தேர்ந்தெடு… (&amp;l)</translation>
+    </message>
+    <message>
+        <source>Snap start to the previous keyframe</source>
+        <translation>தொடக்கத்தை முந்தைய கீஃப்ரேமுடன் ஒட்டிப் பொருத்து</translation>
+    </message>
+    <message>
+        <source>Snap start to the next keyframe</source>
+        <translation>தொடக்கத்தை அடுத்த கீஃப்ரேமுடன் ஒட்டிப் பொருத்து</translation>
+    </message>
+    <message>
+        <source>Snap end to the previous keyframe</source>
+        <translation>முடிவை முந்தைய கீஃப்ரேமுடன் ஒட்டிப் பொருத்து</translation>
+    </message>
+    <message>
+        <source>Snap end to the next keyframe</source>
+        <translation>முடிவை அடுத்த கீஃப்ரேமுடன் ஒட்டிப் பொருத்து</translation>
+    </message>
+    <message>
+        <source>Move start one frame earlier</source>
+        <translation>தொடக்கத்தை ஒரு சட்டகம் முன்னதாக நகர்த்து</translation>
+    </message>
+    <message>
+        <source>Move start one frame later</source>
+        <translation>தொடக்கத்தை ஒரு சட்டகம் பின்னதாக நகர்த்து</translation>
+    </message>
+    <message>
+        <source>Move end one frame earlier</source>
+        <translation>முடிவை ஒரு சட்டகம் முன்னதாக நகர்த்து</translation>
+    </message>
+    <message>
+        <source>Move end one frame later</source>
+        <translation>முடிவை ஒரு சட்டகம் பின்னதாக நகர்த்து</translation>
+    </message>
+    <message>
+        <source>Extend the previous line to this start</source>
+        <translation>முந்தைய வரியை இந்தத் தொடக்கம் வரை நீட்டு</translation>
+    </message>
+    <message>
+        <source>Extend the next line to this end</source>
+        <translation>அடுத்த வரியை இந்த முடிவு வரை நீட்டு</translation>
+    </message>
+    <message>
+        <source>Accept the timing assistant’s suggestion</source>
+        <translation>நேர உதவியாளரின் பரிந்துரையை ஏற்று</translation>
+    </message>
+    <message>
+        <source>&amp;QC notes</source>
+        <translation>QC குறிப்புகள் (&amp;q)</translation>
+    </message>
+    <message>
+        <source>Sc&amp;ript properties</source>
+        <translation>ஸ்கிரிப்ட் பண்புகள் (&amp;r)</translation>
+    </message>
+    <message>
+        <source>&amp;Font collector</source>
+        <translation>எழுத்துருக்கள் சேகரிப்பான் (&amp;f)</translation>
+    </message>
+    <message>
+        <source>R&amp;esample subtitles…</source>
+        <translation>வசன வரிகளை மறுமாதிரியாக்கு… (&amp;e)</translation>
+    </message>
+    <message>
+        <source>Check spellin&amp;g</source>
+        <translation>எழுத்துப்பிழை சரிபார்ப்பு (&amp;g)</translation>
+    </message>
+    <message>
+        <source>Check &amp;karaoke</source>
+        <translation>கரோக்கியைச் சரிபார் (&amp;k)</translation>
+    </message>
+    <message>
+        <source>Kanji t&amp;imer</source>
+        <translation>காஞ்சி நேரமிடுபவர் (&amp;i)</translation>
+    </message>
+    <message>
+        <source>Open &amp;keyframes…</source>
+        <translation>கீஃப்ரேம்களைத் திற… (&amp;k)</translation>
+    </message>
+    <message>
+        <source>Open timecodes…</source>
+        <translation>நேரக்குறியீடுகளைத் திற…</translation>
+    </message>
+    <message>
+        <source>Save timecodes…</source>
+        <translation>நேரக்குறியீடுகளைச் சேமி…</translation>
+    </message>
+    <message>
+        <source>Open dummy video…</source>
+        <translation>போலி வீடியோவைத் திற…</translation>
+    </message>
+    <message>
+        <source>Align to &amp;video…</source>
+        <translation>வீடியோவுடன் சீரமை… (&amp;v)</translation>
+    </message>
+    <message>
+        <source>Set &amp;start time from video</source>
+        <translation>வீடியோவிலிருந்து தொடக்க நேரத்தை அமை (&amp;s)</translation>
+    </message>
+    <message>
+        <source>Set end time from video</source>
+        <translation>வீடியோவிலிருந்து இறுதி நேரத்தை அமை</translation>
+    </message>
+    <message>
+        <source>Apply Power-Pin data…</source>
+        <translation>Power-Pin தரவைப் பயன்படுத்து…</translation>
+    </message>
+    <message>
+        <source>Copy Power-Pin data from lines</source>
+        <translation>வரிகளிலிருந்து Power-Pin தரவை நகலெடு</translation>
+    </message>
+    <message>
+        <source>&amp;Play or pause</source>
+        <translation>இயக்கு அல்லது இடைநிறுத்து (&amp;p)</translation>
+    </message>
+    <message>
+        <source>Video details</source>
+        <translation>வீடியோ விவரங்கள்</translation>
+    </message>
+    <message>
+        <source>&amp;Open audio…</source>
+        <translation>ஆடியோவைத் திற… (&amp;o)</translation>
+    </message>
+    <message>
+        <source>Open audio from &amp;video</source>
+        <translation>வீடியோவிலிருந்து ஆடியோவைத் திற (&amp;v)</translation>
+    </message>
+    <message>
+        <source>&amp;Close audio</source>
+        <translation>ஆடியோவை மூடு (&amp;c)</translation>
+    </message>
+    <message>
+        <source>&amp;Reload audio</source>
+        <translation>ஆடியோவை மீண்டும் ஏற்று (&amp;r)</translation>
+    </message>
+    <message>
+        <source>Set audio mark to video time</source>
+        <translation>வீடியோ நேரத்துடன் ஆடியோ மார்க்கரை அமை</translation>
+    </message>
+    <message>
+        <source>Apply the audio selection and end the previous line there</source>
+        <translation>ஆடியோ தேர்வைப் பயன்படுத்தி, முந்தைய வரியை அங்கே முடி</translation>
+    </message>
+    <message>
+        <source>Run the last macro again</source>
+        <translation>கடைசி குறுநிரலை மீண்டும் இயக்கு</translation>
+    </message>
+    <message>
+        <source>Pl&amp;ugins</source>
+        <translation>செருகுநிரல்கள் (&amp;u)</translation>
+    </message>
+    <message>
+        <source>Getting &amp;started</source>
+        <translation>தொடங்குதல் (&amp;s)</translation>
+    </message>
+    <message>
+        <source>&amp;Report an issue…</source>
+        <translation>சிக்கலைப் புகாரளி… (&amp;r)</translation>
+    </message>
+    <message>
+        <source>Only in Translation mode</source>
+        <translation>மொழிபெயர்ப்பு பயன்முறையில் மட்டும்</translation>
+    </message>
+    <message>
+        <source>Opens a subtitle file</source>
+        <translation>வசனக் கோப்பைத் திறக்கிறது</translation>
+    </message>
+    <message>
+        <source>Opens a video file</source>
+        <translation>வீடியோ கோப்பைத் திறக்கிறது</translation>
+    </message>
+    <message>
+        <source>Opens a folder as a project</source>
+        <translation>ஒரு கோப்புறையைத் திட்டப்பணியாகத் திறக்கிறது</translation>
+    </message>
+    <message>
+        <source>Lists the subtitle files opened lately</source>
+        <translation>அண்மையில் திறந்த வசனக் கோப்புகளைப் பட்டியலிடுகிறது</translation>
+    </message>
+    <message>
+        <source>&amp;Recently opened subtitles</source>
+        <translation>அண்மைக் காலத்தில் திறக்கப்பட்ட வசன வரிகள் (&amp;r)</translation>
+    </message>
+    <message>
+        <source>Opens %1</source>
+        <translation>%1 ஐத் திறக்கிறது</translation>
+    </message>
+    <message>
+        <source>Saves the document</source>
+        <translation>ஆவணத்தைச் சேமிக்கிறது</translation>
+    </message>
+    <message>
+        <source>Saves the document under a new name or format</source>
+        <translation>ஆவணத்தைப் புதிய பெயரில் அல்லது வடிவத்தில் சேமிக்கிறது</translation>
+    </message>
+    <message>
+        <source>Saves every open document</source>
+        <translation>திறந்துள்ள எல்லா ஆவணங்களையும் சேமிக்கிறது</translation>
+    </message>
+    <message>
+        <source>Saves the translation as a new file</source>
+        <translation>மொழிபெயர்ப்பைப் புதிய கோப்பாகச் சேமிக்கிறது</translation>
+    </message>
+    <message>
+        <source>Names new files after the video</source>
+        <translation>புதிய கோப்புகளுக்கு வீடியோவின் பெயரை இடுகிறது</translation>
+    </message>
+    <message>
+        <source>Deletes autosaves older than a date you choose</source>
+        <translation>நீங்கள் தேர்ந்தெடுக்கும் தேதியைவிடப் பழைய தானியங்கு சேமிப்புகளை நீக்குகிறது</translation>
+    </message>
+    <message>
+        <source>Loads or saves the open files as a session</source>
+        <translation>திறந்துள்ள கோப்புகளை ஓர் அமர்வாக ஏற்றுகிறது அல்லது சேமிக்கிறது</translation>
+    </message>
+    <message>
+        <source>At startup</source>
+        <translation>தொடக்கத்தில்</translation>
+    </message>
+    <message>
+        <source>Starts with no files open</source>
+        <translation>கோப்புகள் எதுவும் திறக்காமல் தொடங்குகிறது</translation>
+    </message>
+    <message>
+        <source>Don’t load the last session</source>
+        <translation>கடைசி அமர்வை ஏற்ற வேண்டாம்</translation>
+    </message>
+    <message>
+        <source>Asks whether to load the last session at startup</source>
+        <translation>தொடக்கத்தில் கடைசி அமர்வை ஏற்றவா எனக் கேட்கிறது</translation>
+    </message>
+    <message>
+        <source>Ask</source>
+        <translation>கேள்</translation>
+    </message>
+    <message>
+        <source>Loads the last session at startup</source>
+        <translation>தொடக்கத்தில் கடைசி அமர்வை ஏற்றுகிறது</translation>
+    </message>
+    <message>
+        <source>Load the last session</source>
+        <translation>கடைசி அமர்வை ஏற்று</translation>
+    </message>
+    <message>
+        <source>Empties the editor and starts a new document</source>
+        <translation>திருத்தியைக் காலியாக்கிப் புதிய ஆவணத்தைத் தொடங்குகிறது</translation>
+    </message>
+    <message>
+        <source>Closes the current tab</source>
+        <translation>தற்போதைய தாவலை மூடுகிறது</translation>
+    </message>
+    <message>
+        <source>Closes this window’s tabs and its project</source>
+        <translation>இந்தச் சாளரத்தின் தாவல்களையும் அதன் திட்டப்பணியையும் மூடுகிறது</translation>
+    </message>
+    <message>
+        <source>Opens Settings</source>
+        <translation>அமைப்புகளைத் திறக்கிறது</translation>
+    </message>
+    <message>
+        <source>Closes this window; closing the last window exits the program</source>
+        <translation>இந்தச் சாளரத்தை மூடுகிறது; கடைசிச் சாளரத்தை மூடினால் நிரல் வெளியேறும்</translation>
+    </message>
+    <message>
+        <source>Exits the program</source>
+        <translation>நிரலிலிருந்து வெளியேறுகிறது</translation>
+    </message>
+    <message>
+        <source>Undoes the last change</source>
+        <translation>கடைசி மாற்றத்தைச் செயல்தவிர்க்கிறது</translation>
+    </message>
+    <message>
+        <source>Redoes the last undone change</source>
+        <translation>கடைசியாகச் செயல்தவிர்த்த மாற்றத்தை மீண்டும் செய்கிறது</translation>
+    </message>
+    <message>
+        <source>Undoes every change since the last save</source>
+        <translation>கடைசிச் சேமிப்புக்குப் பிறகான எல்லா மாற்றங்களையும் செயல்தவிர்க்கிறது</translation>
+    </message>
+    <message>
+        <source>Shows the list of changes</source>
+        <translation>மாற்றங்களின் பட்டியலைக் காட்டுகிறது</translation>
+    </message>
+    <message>
+        <source>Sorts every line in the document</source>
+        <translation>ஆவணத்தில் உள்ள அனைத்து வரிகளையும் வரிசைப்படுத்துகிறது</translation>
+    </message>
+    <message>
+        <source>Sor&amp;t all lines</source>
+        <translation>அனைத்து வரிகளையும் வரிசைப்படுத்து (&amp;t)</translation>
+    </message>
+    <message>
+        <source>Sorts the selected lines</source>
+        <translation>தேர்ந்தெடுத்த வரிகளை வரிசைப்படுத்துகிறது</translation>
+    </message>
+    <message>
+        <source>Sort s&amp;elected lines</source>
+        <translation>தேர்ந்தெடுத்த வரிகளை வரிசைப்படுத்து (&amp;e)</translation>
+    </message>
+    <message>
+        <source>Shows the Shift times panel</source>
+        <translation>நேர நகர்த்தல் பலகத்தைக் காட்டுகிறது</translation>
+    </message>
+    <message>
+        <source>Timing &amp;helpers</source>
+        <translation>நேர உதவிக் கருவிகள் (&amp;h)</translation>
+    </message>
+    <message>
+        <source>Opens Style manager for the active line’s style</source>
+        <translation>செயலில் உள்ள வரியின் பாணிக்காகப் பாணி மேலாளரைத் திறக்கிறது</translation>
+    </message>
+    <message>
+        <source>Collects the fonts the document uses into a folder or archive</source>
+        <translation>ஆவணம் பயன்படுத்தும் எழுத்துருக்களை ஒரு கோப்புறையில் அல்லது காப்பகத்தில் சேகரிக்கிறது</translation>
+    </message>
+    <message>
+        <source>Resamples the document to a new script resolution</source>
+        <translation>ஆவணத்தைப் புதிய ச்கிரிப்ட் தெளிவுத்திறனுக்கு மறுமாதிரியாக்குகிறது</translation>
+    </message>
+    <message>
+        <source>Set FP&amp;S</source>
+        <translation>FPS ஐ அமை (&amp;s)</translation>
+    </message>
+    <message>
+        <source>Convert Aegisub fol&amp;ds to line groups</source>
+        <translation>Aegisub மடிப்புகளை வரிக் குழுக்களாக மாற்று (&amp;d)</translation>
+    </message>
+    <message>
+        <source>No Aegisub folds in this file</source>
+        <translation>இந்தக் கோப்பில் Aegisub மடிப்புகள் இல்லை</translation>
+    </message>
+    <message>
+        <source>Opens the Spellchecker panel</source>
+        <translation>எழுத்துப்பிழை சரிபார்ப்பி பலகத்தைத் திறக்கிறது</translation>
+    </message>
+    <message>
+        <source>&amp;Open video…</source>
+        <translation>வீடியோவைத் திற… (&amp;o)</translation>
+    </message>
+    <message>
+        <source>Opens a keyframes file</source>
+        <translation>கீஃப்ரேம் கோப்பைத் திறக்கிறது</translation>
+    </message>
+    <message>
+        <source>Opens a VFR timecodes v1, v2 or v4 file</source>
+        <translation>VFR நேரக்குறியீடுகள் v1, v2 அல்லது v4 கோப்பைத் திறக்கிறது</translation>
+    </message>
+    <message>
+        <source>Saves the timecodes as a VFR v2 file</source>
+        <translation>நேரக்குறியீடுகளை VFR v2 கோப்பாகச் சேமிக்கிறது</translation>
+    </message>
+    <message>
+        <source>Closes the open timecodes file</source>
+        <translation>திறந்துள்ள நேரக்குறியீட்டுக் கோப்பை மூடுகிறது</translation>
+    </message>
+    <message>
+        <source>Goes one frame back</source>
+        <translation>ஒரு சட்டகம் பின்னோக்கிச் செல்கிறது</translation>
+    </message>
+    <message>
+        <source>Goes one frame forward</source>
+        <translation>ஒரு சட்டகம் முன்னோக்கிச் செல்கிறது</translation>
+    </message>
+    <message>
+        <source>Sets the selected lines’ start to the video frame’s time</source>
+        <translation>தேர்ந்தெடுத்த வரிகளின் தொடக்கத்தை வீடியோ சட்டகத்தின் நேரத்துக்கு அமைக்கிறது</translation>
+    </message>
+    <message>
+        <source>Sets the selected lines’ end to the video frame’s time</source>
+        <translation>தேர்ந்தெடுத்த வரிகளின் முடிவை வீடியோ சட்டகத்தின் நேரத்துக்கு அமைக்கிறது</translation>
+    </message>
+    <message>
+        <source>Open a video first</source>
+        <translation>முதலில் ஒரு வீடியோவைத் திறக்கவும்</translation>
+    </message>
+    <message>
+        <source>&amp;Full screen</source>
+        <translation>முழுத் திரை (&amp;f)</translation>
+    </message>
+    <message>
+        <source>Change aspect ratio…</source>
+        <translation>தோற்ற விகிதத்தை மாற்றவும்…</translation>
+    </message>
+    <message>
+        <source>Opens an audio file</source>
+        <translation>ஆடியோ கோப்பைத் திறக்கிறது</translation>
+    </message>
+    <message>
+        <source>Lists the audio files opened lately</source>
+        <translation>அண்மையில் திறந்த ஆடியோ கோப்புகளைப் பட்டியலிடுகிறது</translation>
+    </message>
+    <message>
+        <source>Closes the audio</source>
+        <translation>ஆடியோவை மூடுகிறது</translation>
+    </message>
+    <message>
+        <source>Loads an Automation script from a file</source>
+        <translation>ஒரு கோப்பிலிருந்து தானியங்கு ச்கிரிப்டை ஏற்றுகிறது</translation>
+    </message>
+    <message>
+        <source>Loads the autoload folder’s scripts again</source>
+        <translation>தானியங்கு ஏற்றக் கோப்புறையின் ச்கிரிப்ட்களை மீண்டும் ஏற்றுகிறது</translation>
+    </message>
+    <message>
+        <source>Runs the last macro again, showing its dialogs</source>
+        <translation>கடைசி குறுநிரலை அதன் உரையாடல்களைக் காட்டி மீண்டும் இயக்குகிறது</translation>
+    </message>
+    <message>
+        <source>Runs the last macro again with the same answers, without its dialogs when they are unchanged</source>
+        <translation>கடைசி குறுநிரலை அதே பதில்களுடன் மீண்டும் இயக்குகிறது; பதில்கள் மாறாதபோது அதன் உரையாடல்கள் திறக்காது</translation>
+    </message>
+    <message>
+        <source>Installs, turns on and off, and uninstalls plugins</source>
+        <translation>செருகுநிரல்களை நிறுவுகிறது, இயக்குகிறது அல்லது முடக்குகிறது, நிறுவல் நீக்குகிறது</translation>
+    </message>
+    <message>
+        <source>Switches, saves and locks the window’s layout</source>
+        <translation>சாளரத்தின் தளவமைப்பை மாற்றுகிறது, சேமிக்கிறது, பூட்டுகிறது</translation>
+    </message>
+    <message>
+        <source>Shows, floats or closes each panel</source>
+        <translation>ஒவ்வொரு பலகத்தையும் காட்டுகிறது, மிதக்கவிடுகிறது அல்லது மூடுகிறது</translation>
+    </message>
+    <message>
+        <source>Moves the focused panel to another place in the window</source>
+        <translation>குவிக்கப்பட்ட பலகத்தைச் சாளரத்தில் வேறு இடத்திற்கு நகர்த்துகிறது</translation>
+    </message>
+    <message>
+        <source>Shows or hides the Log</source>
+        <translation>பதிவைக் காட்டுகிறது அல்லது மறைக்கிறது</translation>
+    </message>
+    <message>
+        <source>Open a file first</source>
+        <translation>முதலில் ஒரு கோப்பைத் திறக்கவும்</translation>
+    </message>
+    <message>
+        <source>Shows or hides tags in the Grid</source>
+        <translation>கட்டத்தில் குறிச்சொற்களைக் காட்டுகிறது அல்லது மறைக்கிறது</translation>
+    </message>
+    <message>
+        <source>Hide tags in the Grid</source>
+        <translation>கட்டத்தில் குறிச்சொற்களை மறை</translation>
+    </message>
+    <message>
+        <source>Shows or hides tags in the line editor</source>
+        <translation>வரி திருத்தியில் குறிச்சொற்களைக் காட்டுகிறது அல்லது மறைக்கிறது</translation>
     </message>
 </context>
 <context>
@@ -18771,38 +18827,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Keeps or undoes the AI’s changes</source>
-        <translation type="unfinished">AI இன் மாற்றங்களைத் தக்கவைக்கிறது அல்லது செயல்தவிர்க்கிறது</translation>
-    </message>
-    <message>
-        <source>Keeps the AI’s change to this line</source>
-        <translation type="unfinished">இந்த வரியில் AI செய்த மாற்றத்தைத் தக்கவைக்கிறது</translation>
-    </message>
-    <message>
-        <source>Undoes the AI’s change to this line</source>
-        <translation type="unfinished">இந்த வரியில் AI செய்த மாற்றத்தைச் செயல்தவிர்க்கிறது</translation>
-    </message>
-    <message>
-        <source>Goes to the next line with an AI change</source>
-        <translation type="unfinished">AI மாற்றம் உள்ள அடுத்த வரிக்குச் செல்கிறது</translation>
-    </message>
-    <message>
-        <source>Goes to the previous line with an AI change</source>
-        <translation type="unfinished">AI மாற்றம் உள்ள முந்தைய வரிக்குச் செல்கிறது</translation>
-    </message>
-    <message>
-        <source>Keeps every waiting AI change</source>
-        <translation type="unfinished">காத்திருக்கும் எல்லா AI மாற்றங்களையும் தக்கவைக்கிறது</translation>
-    </message>
-    <message>
-        <source>Undoes every waiting AI change</source>
-        <translation type="unfinished">காத்திருக்கும் எல்லா AI மாற்றங்களையும் செயல்தவிர்க்கிறது</translation>
-    </message>
-    <message>
-        <source>Shows the Review panel</source>
-        <translation type="unfinished">மதிப்பாய்வு பலகத்தைக் காட்டுகிறது</translation>
-    </message>
-    <message>
         <source>The file couldn’t be written.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -18850,6 +18874,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Undo all</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show panel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -18984,6 +19012,38 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Sub-agents: %1</source>
         <translation>துணை முகவர்கள்: %1</translation>
+    </message>
+    <message>
+        <source>Keeps or undoes the AI’s changes</source>
+        <translation>AI இன் மாற்றங்களைத் தக்கவைக்கிறது அல்லது செயல்தவிர்க்கிறது</translation>
+    </message>
+    <message>
+        <source>Keeps the AI’s change to this line</source>
+        <translation>இந்த வரியில் AI செய்த மாற்றத்தைத் தக்கவைக்கிறது</translation>
+    </message>
+    <message>
+        <source>Undoes the AI’s change to this line</source>
+        <translation>இந்த வரியில் AI செய்த மாற்றத்தைச் செயல்தவிர்க்கிறது</translation>
+    </message>
+    <message>
+        <source>Goes to the next line with an AI change</source>
+        <translation>AI மாற்றம் உள்ள அடுத்த வரிக்குச் செல்கிறது</translation>
+    </message>
+    <message>
+        <source>Goes to the previous line with an AI change</source>
+        <translation>AI மாற்றம் உள்ள முந்தைய வரிக்குச் செல்கிறது</translation>
+    </message>
+    <message>
+        <source>Keeps every waiting AI change</source>
+        <translation>காத்திருக்கும் எல்லா AI மாற்றங்களையும் தக்கவைக்கிறது</translation>
+    </message>
+    <message>
+        <source>Undoes every waiting AI change</source>
+        <translation>காத்திருக்கும் எல்லா AI மாற்றங்களையும் செயல்தவிர்க்கிறது</translation>
+    </message>
+    <message>
+        <source>Shows the Review panel</source>
+        <translation>மதிப்பாய்வு பலகத்தைக் காட்டுகிறது</translation>
     </message>
 </context>
 <context>
@@ -24389,11 +24449,7 @@ Styles deleted:
     </message>
     <message>
         <source>Perspective tracking</source>
-        <translation type="vanished">பார்வைக்கோணக் கண்காணிப்பு</translation>
-    </message>
-    <message>
-        <source>Apply Power-Pin data</source>
-        <translation type="unfinished">Power-Pin தரவைப் பயன்படுத்து</translation>
+        <translation>பார்வைக்கோணக் கண்காணிப்பு</translation>
     </message>
     <message>
         <source>Power-Pin data</source>
@@ -24774,6 +24830,10 @@ Styles deleted:
         <source>Extend</source>
         <translation>நீட்டு</translation>
     </message>
+    <message>
+        <source>Apply Power-Pin data</source>
+        <translation>Power-Pin தரவைப் பயன்படுத்து</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Translation</name>
@@ -24784,14 +24844,6 @@ Styles deleted:
     <message>
         <source>Translation mode</source>
         <translation>மொழிபெயர்ப்பு பயன்முறை</translation>
-    </message>
-    <message>
-        <source>Tra&amp;nslation mode</source>
-        <translation type="unfinished">மொழிபெயர்ப்பு பயன்முறை (&amp;n)</translation>
-    </message>
-    <message>
-        <source>Shows and saves the original text and the translation of each line</source>
-        <translation type="unfinished">ஒவ்வொரு வரியின் அசல் உரையையும் மொழிபெயர்ப்பையும் காட்டிச் சேமிக்கிறது</translation>
     </message>
     <message>
         <source>Original text</source>
@@ -24887,7 +24939,7 @@ Styles deleted:
     </message>
     <message>
         <source>Translator mode displays and saves both foreign text and translation text</source>
-        <translation type="vanished">மொழிபெயர்ப்பாளர் பயன்முறை வெளிநாட்டு உரை மற்றும் மொழிபெயர்ப்பு உரை இரண்டையும் காண்பிக்கும் மற்றும் சேமிக்கிறது</translation>
+        <translation>மொழிபெயர்ப்பாளர் பயன்முறை வெளிநாட்டு உரை மற்றும் மொழிபெயர்ப்பு உரை இரண்டையும் காண்பிக்கும் மற்றும் சேமிக்கிறது</translation>
     </message>
     <message>
         <source>Paste translation</source>
@@ -25032,6 +25084,14 @@ Styles deleted:
     <message>
         <source>Formatting</source>
         <translation>வடிவமைப்பு</translation>
+    </message>
+    <message>
+        <source>Tra&amp;nslation mode</source>
+        <translation>மொழிபெயர்ப்பு பயன்முறை (&amp;n)</translation>
+    </message>
+    <message>
+        <source>Shows and saves the original text and the translation of each line</source>
+        <translation>ஒவ்வொரு வரியின் அசல் உரையையும் மொழிபெயர்ப்பையும் காட்டிச் சேமிக்கிறது</translation>
     </message>
 </context>
 <context>
@@ -25546,7 +25606,7 @@ Styles deleted:
     </message>
     <message>
         <source>Streams</source>
-        <translation type="vanished">ஓடைகள்</translation>
+        <translation>ஓடைகள்</translation>
     </message>
     <message>
         <source>Volume</source>
@@ -27564,16 +27624,20 @@ do not work on comments</source>
         <translation>பலகம்</translation>
     </message>
     <message>
+        <source>Toggle left side bar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Toggle right side bar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Swap side bars</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Dock floating panels to lock the layout</source>
         <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Layout is locked</source>
-        <translation type="unfinished">தளவமைப்பு பூட்டப்பட்டுள்ளது</translation>
     </message>
     <message>
         <source>Lock layout</source>
@@ -27610,22 +27674,6 @@ do not work on comments</source>
     <message>
         <source>Move right in the side bar</source>
         <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Shows or hides the side bar on the window’s left</source>
-        <translation type="unfinished">சாளரத்தின் இடப்பக்கப் பக்கப்பட்டியைக் காட்டுகிறது அல்லது மறைக்கிறது</translation>
-    </message>
-    <message>
-        <source>Shows or hides the side bar on the window’s right</source>
-        <translation type="unfinished">சாளரத்தின் வலப்பக்கப் பக்கப்பட்டியைக் காட்டுகிறது அல்லது மறைக்கிறது</translation>
-    </message>
-    <message>
-        <source>Swaps the panels of the left and right side bars</source>
-        <translation type="unfinished">இடது மற்றும் வலது பக்கப்பட்டிகளின் பலகங்களை இடமாற்றுகிறது</translation>
-    </message>
-    <message>
-        <source>Puts the side bars back as they started</source>
-        <translation type="unfinished">பக்கப்பட்டிகளை அவை தொடங்கிய நிலைக்குத் திருப்புகிறது</translation>
     </message>
     <message>
         <source>Reset side bars</source>
@@ -27978,6 +28026,26 @@ do not work on comments</source>
     <message>
         <source>Drag a panel here</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Layout is locked</source>
+        <translation>தளவமைப்பு பூட்டப்பட்டுள்ளது</translation>
+    </message>
+    <message>
+        <source>Shows or hides the side bar on the window’s left</source>
+        <translation>சாளரத்தின் இடப்பக்கப் பக்கப்பட்டியைக் காட்டுகிறது அல்லது மறைக்கிறது</translation>
+    </message>
+    <message>
+        <source>Shows or hides the side bar on the window’s right</source>
+        <translation>சாளரத்தின் வலப்பக்கப் பக்கப்பட்டியைக் காட்டுகிறது அல்லது மறைக்கிறது</translation>
+    </message>
+    <message>
+        <source>Swaps the panels of the left and right side bars</source>
+        <translation>இடது மற்றும் வலது பக்கப்பட்டிகளின் பலகங்களை இடமாற்றுகிறது</translation>
+    </message>
+    <message>
+        <source>Puts the side bars back as they started</source>
+        <translation>பக்கப்பட்டிகளை அவை தொடங்கிய நிலைக்குத் திருப்புகிறது</translation>
     </message>
 </context>
 <context>

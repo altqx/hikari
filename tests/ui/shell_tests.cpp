@@ -2440,6 +2440,83 @@ private slots:
         QTRY_VERIFY(item("audioPanel")->window() == window);
     }
 
+    void cx7MenuBarScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        ui::windowframe::overrideDesktop(ui::windowframe::Desktop::Kde);
+        const auto systemDesktop = qScopeGuard([] { ui::windowframe::overrideDesktop(std::nullopt); });
+        window->resize(1280, 1000);
+        application->setAskForBadResolution(false);
+        QVERIFY(application->openFile(writeFile(dir, "cx7-menu-bar.ass",
+                                                "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,first\n"
+                                                "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,second\n")));
+        application->video().openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().hasVideo(), 20000);
+        QVERIFY(buildMenus());
+        auto *root = engine->rootObjects().first();
+        auto &settings = *application->settingsStore();
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        auto *menus = named("appMenus");
+        auto *bar = named("mainTitleBar");
+        const int count = menus->property("count").toInt();
+        const auto grab = [&](const QString &name) {
+            QTest::qWait(300);
+            const QRect frame = window->frameGeometry();
+            QVERIFY(window->screen()->grabWindow(0, frame.x(), frame.y(), frame.width(), frame.height()).save(out + name));
+        };
+        const auto shut = [&](QObject *menu) {
+            QMetaObject::invokeMethod(menu, "close");
+            QTRY_VERIFY(!menu->property("visible").toBool());
+        };
+        const QStringList themes{QStringLiteral("light"), QStringLiteral("dark"), QStringLiteral("highContrastBlack"),
+                                 QStringLiteral("highContrastWhite")};
+        for (const QString &code : themes) {
+            settings.setValue(QStringLiteral("appearance.theme"), code);
+            auto *controls = root->property("palette").value<QObject *>();
+            QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+            window->resize(1280, 1000);
+            QTRY_COMPARE(bar->property("foldFrom").toInt(), count);
+            for (int i = 0; i < count; ++i) {
+                QQuickItem *title = nullptr;
+                QVERIFY(QMetaObject::invokeMethod(menus, "itemAt", Q_RETURN_ARG(QQuickItem *, title), Q_ARG(int, i)));
+                auto *menu = title->property("menu").value<QObject *>();
+                QVERIFY(QMetaObject::invokeMethod(menu, "popup", Q_ARG(QQuickItem *, title),
+                                                  Q_ARG(QPointF, QPointF(0, title->height()))));
+                QTRY_VERIFY(menu->property("opened").toBool());
+                grab(QStringLiteral("/menu-%1-%2-%3.png").arg(i).arg(plainLabel(menu->property("title").toString()).toLower(), code));
+                shut(menu);
+            }
+        }
+        QStringList folds;
+        for (QObject *dock : {item<QObject>("videoDock"), item<QObject>("editorDock"), item<QObject>("audioDock")})
+            QMetaObject::invokeMethod(dock, "close");
+        QTRY_VERIFY(window->minimumWidth() <= 660);
+        for (const QString &code : themes) {
+            settings.setValue(QStringLiteral("appearance.theme"), code);
+            for (int width : {1280, 1100, 960, 860, 800, 760, 700, 660}) {
+                window->resize(width, 1000);
+                QTRY_COMPARE(qRound(bar->property("width").toReal()), window->width());
+                QTest::qWait(300);
+                const int from = bar->property("foldFrom").toInt();
+                if (code == themes.first())
+                    folds << QStringLiteral("%1\t%2\t%3").arg(window->width()).arg(from).arg(count - from);
+                if (from >= count)
+                    continue;
+                QVERIFY(QMetaObject::invokeMethod(visualItem("titleBarMore"), "click"));
+                auto *more = named("titleBarMoreMenu");
+                QTRY_VERIFY(more->property("opened").toBool());
+                grab(QStringLiteral("/more-%1-%2.png").arg(window->width()).arg(code));
+                shut(more);
+            }
+        }
+        QFile list(out + QStringLiteral("/fold-widths.tsv"));
+        QVERIFY(list.open(QIODevice::WriteOnly | QIODevice::Text));
+        list.write("window width\tmenus shown\tmenus under more\n" + folds.join(QLatin1Char('\n')).toUtf8() + '\n');
+    }
+
     void cx7VideoAudioNodeMenuScreenshots()
     {
         const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
