@@ -464,6 +464,6 @@ TEST(PluginManifest, KeysAndConditionsFollowTheSchema)
         EXPECT_TRUE(parse(json)) << key;
     }
     Json json = withCommands();
-    json["contributes"]["commands"][0]["when"] = Json::array({Json("lines")});
+    json["contributes"]["commands"] = *Json::parse(R"([{"id": "count", "title": "Count", "when": ["lines"]}])");
     EXPECT_EQ(problem(json).kind, Kind::Schema);
 }
