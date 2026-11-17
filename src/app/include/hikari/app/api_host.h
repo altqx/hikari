@@ -92,6 +92,8 @@ public:
     Q_INVOKABLE void panelChanged(const QString &panel);
     // commands.list's commands, for the command palette.
     Q_INVOKABLE QVariantList commands();
+    // An operation as the command palette's caller; the result, or undefined when it failed or answers later.
+    Q_INVOKABLE QVariant call(const QString &operation, const QVariantMap &params = {});
 
     const application::Workspace &workspace() const override { return m_wiring.workspace; }
     application::EditSession *session(application::DocumentId document) const override;

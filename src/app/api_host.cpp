@@ -9,6 +9,9 @@
 #include <QJSValueIterator>
 #include <QSaveFile>
 
+#include <memory>
+#include <optional>
+
 namespace hikari::app {
 
 namespace {
@@ -185,13 +188,20 @@ void ApiHost::commandRan(const QString &command, bool ok)
 
 QVariantList ApiHost::commands()
 {
-    QVariantList out;
-    m_api.call(api::Caller{"palette", "Command palette", true}, "commands.list", api::Json::object(),
-               [&out](const api::Result &result) {
-                   if (result)
-                       out = toVariant(*result).toMap().value(QStringLiteral("commands")).toList();
+    return call(QStringLiteral("commands.list")).toMap().value(QStringLiteral("commands")).toList();
+}
+
+QVariant ApiHost::call(const QString &operation, const QVariantMap &params)
+{
+    const auto out = std::make_shared<std::optional<QVariant>>(QVariant());
+    m_api.call(api::Caller{"palette", "Command palette", true}, operation.toStdString(), fromVariant(params),
+               [out](const api::Result &result) {
+                   if (*out && result)
+                       *out = toVariant(*result);
                });
-    return out;
+    const QVariant answer = **out;
+    out->reset();
+    return answer;
 }
 
 void ApiHost::panelChanged(const QString &panel)
