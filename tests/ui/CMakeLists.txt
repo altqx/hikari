@@ -304,6 +304,7 @@ if(Python3_Interpreter_FOUND)
             "${PROJECT_SOURCE_DIR}")
     set_tests_properties(hikari_native_gate_windows_declared_skips PROPERTIES LABELS "native-gate" TIMEOUT 60)
 endif()
+hikari_add_qttest(hikari_ui_file_write_queue_tests SOURCES file_write_queue_tests.cpp LIBRARIES hikari_ui OFFSCREEN_ONLY)
 hikari_add_qttest(hikari_ui_workspace_layout_tests SOURCES workspace_layout_tests.cpp
     LIBRARIES hikari_composition KDAB::kddockwidgets
     PARTS envelope saving=aSaveBeforeTheSavedLayoutIsRestoredKeepsIt)

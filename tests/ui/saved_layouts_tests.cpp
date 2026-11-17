@@ -533,11 +533,11 @@ private slots:
         QVERIFY(QDir().mkdir(layoutFile));
         close("audioDock");
         saveAs(QStringLiteral("Quiet"));
-        QVERIFY2(l.notice().contains(QStringLiteral("panel layout could not be written")), qPrintable(l.notice()));
+        QTRY_VERIFY2(l.notice().contains(QStringLiteral("panel layout could not be written")), qPrintable(l.notice()));
         QCOMPARE(namesInFile(layoutsFile()), QStringList{QStringLiteral("Quiet")});
         QVERIFY(QDir().rmdir(layoutFile));
         QVERIFY(l.save());
-        QVERIFY2(!l.notice().contains(QStringLiteral("panel layout could not be written")), qPrintable(l.notice()));
+        QTRY_VERIFY2(!l.notice().contains(QStringLiteral("panel layout could not be written")), qPrintable(l.notice()));
         QCOMPARE(layoutEnvelope().value(QStringLiteral("layout")).toString(), QStringLiteral("Quiet"));
         stop();
     }
