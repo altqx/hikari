@@ -8,6 +8,7 @@
 #include "hikari/app/launcher.h"
 #include "hikari/app/local_only_network.h"
 #include "hikari/app/plugin_marketplace.h"
+#include "hikari/app/qt_workarounds.h"
 #include "hikari/app/docs_export.h"
 #include "hikari/app/forwarded_launches.h"
 #include "hikari/app/single_instance.h"
@@ -229,6 +230,7 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
     started.start();
     // Read before QGuiApplication, which takes and unsets XDG_ACTIVATION_TOKEN.
     const QString activationToken = qEnvironmentVariable("XDG_ACTIVATION_TOKEN");
+    avoidQtRendererCrashes();
     QGuiApplication app(argc, argv);
     QGuiApplication::setApplicationName(QStringLiteral("HikariSub"));
     QGuiApplication::setOrganizationName(QStringLiteral("HikariSub"));

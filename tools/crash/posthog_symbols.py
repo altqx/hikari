@@ -1,18 +1,20 @@
 #!/usr/bin/env python3
 """Uploads a symbols folder (ELF .debug files, or modules beside their PDBs) to PostHog error tracking.
 
-posthog_symbols.py DIR [--dry-run]
+posthog_symbols.py DIR [--dry-run] [--fail-above BYTES] [--dwarf-reduce PATH]
 
 Each goes up as the symbol set posthog-cli makes for an ELF, under the debug id the app sends in `$debug_images`,
 unless PostHog already has one under that id.
-posthog-cli takes no PDB, and packs at a zstd level that leaves hikarisub.debug over PostHog's 100 MB.
-Needs objcopy, dwz and zstd. Reads POSTHOG_CLI_API_KEY, POSTHOG_CLI_PROJECT_ID and POSTHOG_CLI_HOST.
+posthog-cli takes no PDB, and uploads hikarisub.debug's full DWARF, which is over PostHog's limits.
+Needs objcopy, zstd and dwarf-reduce (`cargo build --release` in tools/crash/dwarf_reduce).
+Reads POSTHOG_CLI_API_KEY, POSTHOG_CLI_PROJECT_ID and POSTHOG_CLI_HOST.
 """
 
 import argparse
 import hashlib
 import io
 import json
+import mmap
 import os
 import shutil
 import struct
@@ -30,8 +32,13 @@ CONTAINER_VERSION = 2
 ELF_DEBUG_INFO = 6
 ZSTD = 1
 MAX_UPLOAD = 100 * 1024 * 1024
+MAX_PAYLOAD = 512 * 1024 * 1024
 DEFAULT_HOST = "https://eu.posthog.com"
-NOT_FOR_SYMBOLS = (".debug_loc", ".debug_loclists")
+MAIN_BINARIES = ("hikarisub.debug", "HikariSub.pdb")
+DWARF_REDUCE = Path(os.environ.get("HIKARI_DWARF_REDUCE")
+                    or Path(__file__).resolve().parent / "dwarf_reduce" / "target" / "release" / "dwarf-reduce")
+NOT_FOR_SYMBOLS = (".debug_loc", ".debug_loclists", ".debug_aranges", ".debug_names", ".gdb_index", ".debug_pubnames",
+                   ".debug_pubtypes", ".debug_gnu_pubnames", ".debug_gnu_pubtypes", ".debug_types")
 
 
 def debug_id(guid, age=0):
@@ -126,30 +133,53 @@ def symbol_sets(folder):
     return sorted(found.items())
 
 
-def debug_data(path):
-    """The file's bytes; an ELF's uncompressed, so zstd can pack them, deduplicated by dwz, and without location lists."""
+def debug_data(path, dwarf_reduce=DWARF_REDUCE):
+    """The file's bytes; an ELF's uncompressed, so zstd can pack them, with only the DWARF cymbal reads."""
     if path.suffix.lower() == ".pdb":
         return path.read_bytes()
     with tempfile.TemporaryDirectory() as scratch:
-        plain, shared, out = (Path(scratch) / name for name in ("plain", "shared", "out"))
+        plain, info, abbrev, out = (Path(scratch) / name for name in ("plain", "info", "abbrev", "out"))
         subprocess.run(["objcopy", "--decompress-debug-sections", str(path), str(plain)], check=True)
-        # dwz refuses a file whose location lists are already gone, and leaves one it cannot shrink as it was.
-        deduplicated = subprocess.run(["dwz", "-q", "-L", "none", "-l", "none", "-o", str(shared), str(plain)],
-                                      stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode == 0
-        removed = [arg for name in NOT_FOR_SYMBOLS for arg in ("--remove-section", name)]
-        source = shared if deduplicated and shared.is_file() else plain
-        subprocess.run(["objcopy", *removed, str(source), str(out)], check=True)
+        updated = []
+        with plain.open("rb") as file, mmap.mmap(file.fileno(), 0, access=mmap.ACCESS_READ) as data:
+            has_dwarf = ".debug_info" in elf_section_names(data)
+        if has_dwarf:
+            subprocess.run([str(dwarf_reduce), str(plain), str(info), str(abbrev)], check=True)
+            updated = [f"--update-section=.debug_info={info}", f"--update-section=.debug_abbrev={abbrev}"]
+        removed = [f"--remove-section={name}" for name in NOT_FOR_SYMBOLS]
+        subprocess.run(["objcopy", *updated, *removed, str(plain), str(out)], check=True)
         return out.read_bytes()
 
 
-def container(data):
-    """The symbol set cymbal reads: its zstd container around a zip holding the debug file as `dwarf`."""
+def elf_section_names(data):
+    sections_at, = struct.unpack_from("<Q", data, 0x28)
+    entry_size, count, names = struct.unpack_from("<HHH", data, 0x3A)
+    names_at, = struct.unpack_from("<Q", data, sections_at + names * entry_size + 0x18)
+    found = set()
+    for i in range(count):
+        name, = struct.unpack_from("<I", data, sections_at + i * entry_size)
+        end = data.find(b"\0", names_at + name)
+        found.add(data[names_at + name:end].decode(errors="replace"))
+    return found
+
+
+def payload(data):
+    """The zip cymbal unpacks, holding the debug file as `dwarf`."""
     buffer = io.BytesIO()
     with zipfile.ZipFile(buffer, "w", zipfile.ZIP_STORED) as archive:
         archive.writestr("dwarf", data)
-    packed = subprocess.run(["zstd", "-q", "-19", "-T0", "-c"], input=buffer.getvalue(), stdout=subprocess.PIPE,
+    return buffer.getvalue()
+
+
+def container(data):
+    packed = subprocess.run(["zstd", "-q", "-19", "-T0", "-c"], input=payload(data), stdout=subprocess.PIPE,
                             check=True).stdout
     return MAGIC + struct.pack("<II", CONTAINER_VERSION, ELF_DEBUG_INFO) + bytes([ZSTD]) + packed
+
+
+def skipped(name, reason):
+    level = "error" if name.name in MAIN_BINARIES else "warning"
+    print(f"::{level}::{name} {reason}; skipped")
 
 
 class Api:
@@ -203,6 +233,9 @@ def main(argv):
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("folder", type=Path)
     parser.add_argument("--dry-run", action="store_true", help="pack and list the symbol sets, upload nothing")
+    parser.add_argument("--fail-above", type=int, metavar="BYTES",
+                        help="fail when the main binary's set packs to more than this")
+    parser.add_argument("--dwarf-reduce", type=Path, default=DWARF_REDUCE, help="the dwarf-reduce program")
     args = parser.parse_args(argv)
     sets = symbol_sets(args.folder)
     if not sets:
@@ -215,7 +248,7 @@ def main(argv):
             print("::warning::POSTHOG_CLI_API_KEY and POSTHOG_CLI_PROJECT_ID are needed")
             return 1
         api = Api(os.environ.get("POSTHOG_CLI_HOST") or DEFAULT_HOST, project, key)
-    for tool in ("zstd", "objcopy", "dwz"):
+    for tool in ("zstd", "objcopy", str(args.dwarf_reduce)):
         if not shutil.which(tool):
             print(f"::warning::{tool} is needed")
             return 1
@@ -226,16 +259,25 @@ def main(argv):
             if api is not None and api.has(chunk_id):
                 print(f"{chunk_id} {name}: already there")
                 continue
-            data = container(debug_data(path))
+            debug = debug_data(path, args.dwarf_reduce)
+            unpacked = len(payload(debug))
+            if unpacked > MAX_PAYLOAD:
+                skipped(name, f"unpacks to {unpacked} bytes, over cymbal's {MAX_PAYLOAD}")
+                failed += 1
+                continue
+            data = container(debug)
             if len(data) > MAX_UPLOAD:
-                print(f"::warning::{name} packs to {len(data)} bytes, over PostHog's {MAX_UPLOAD}; skipped")
+                skipped(name, f"packs to {len(data)} bytes, over PostHog's {MAX_UPLOAD}")
+                failed += 1
+            elif args.fail_above is not None and name.name in MAIN_BINARIES and len(data) > args.fail_above:
+                print(f"::error::{name} packs to {len(data)} bytes, over the {args.fail_above} the release allows")
                 failed += 1
             elif api is None:
                 print(f"{chunk_id} {name}: {len(data)} bytes")
             else:
                 print(f"{chunk_id} {name}: {'uploaded' if api.upload(chunk_id, data) else 'already there'}")
         except (OSError, subprocess.CalledProcessError) as error:
-            print(f"::warning::{name}: {error}")
+            skipped(name, f"failed: {error}")
             failed += 1
     return 1 if failed else 0
 
