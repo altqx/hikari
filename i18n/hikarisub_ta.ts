@@ -10326,22 +10326,6 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Moves the start of each selected line one frame earlier</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Moves the start of each selected line one frame later</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Moves the end of each selected line one frame earlier</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Moves the end of each selected line one frame later</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Ends the line before the active line where the active line starts</source>
         <translation type="unfinished"></translation>
     </message>
