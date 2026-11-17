@@ -479,6 +479,13 @@ TEST(PluginManifest, ProgramsAreRefusedWithoutThePermissionOrInAShapeTheyCantRun
     json["contributes"] = *Json::parse(R"({"settings": [{"id": "key", "title": "Key", "type": "string", "default": ""}],
         "programs": [{"id": "x", "title": "X", "platforms": {"linux-x64": {"path": "x", "args": ["${setting:key}"]}}}]})");
     EXPECT_TRUE(parse(json));
+
+    json["contributes"] = *Json::parse(R"({"settings": [{"id": "key", "title": "Key", "type": "secret"}],
+        "programs": [{"id": "x", "title": "X", "platforms": {"linux-x64": {"path": "x", "args": ["-k", "${setting:key}"]}}}]})");
+    EXPECT_EQ(problem(json).at, "/contributes/programs/0/platforms/linux-x64/args/1");
+    json["contributes"] = *Json::parse(R"({"settings": [{"id": "key", "title": "Key", "type": "secret"}],
+        "programs": [{"id": "x", "title": "X", "platforms": {"linux-x64": {"path": "x", "env": {"KEY": "${setting:key}"}}}}]})");
+    EXPECT_TRUE(parse(json));
 }
 
 TEST(PluginManifest, AnUpdateAsksAgainForANewProgramOrOneThatGainsTheNetwork)
