@@ -434,6 +434,9 @@ constexpr HotkeyAction kActions[] = {
         {"GLOBAL_TOGGLE_RIGHT_SIDE_BAR", 5340},
         {"GLOBAL_SWAP_SIDE_BARS", 5341},
         {"GLOBAL_AUTOMATION_RERUN_LAST_MACRO", 5342},
+        {"GLOBAL_QUICK_OPEN", 5343},
+        {"GLOBAL_COMMAND_PALETTE", 5344},
+        {"GLOBAL_CLEAR_COMMAND_HISTORY", 5345},
 };
 
 struct NameRow {
@@ -838,6 +841,9 @@ constexpr NameRow kNames[] = {
         {5106, "Delete old autosaves…"},
         {5103, "Open dummy video…"},
         {5342, "Run the last macro again"},
+        {5343, "Quick Open…"},
+        {5344, "Command palette…"},
+        {5345, "Clear command history"},
 };
 
 struct DefaultRow {
@@ -853,6 +859,8 @@ constexpr DefaultRow kMainDefaults[] = {
         {5030, GlobalHotkey, "Shift times…", "Ctrl-I"},
         {5026, GlobalHotkey, "Style manager", "Ctrl-M"},
         {5101, GlobalHotkey, "Open video…", "Ctrl-Shift-O"},
+        {5343, GlobalHotkey, "Quick Open…", "Ctrl-P"},
+        {5344, GlobalHotkey, "Command palette…", "Ctrl-Shift-P"},
         {5009, GlobalHotkey, "Find…", "Ctrl-F"},
         {5010, GlobalHotkey, "Replace…", "Ctrl-H"},
         {5006, GlobalHotkey, "Undo", "Ctrl-Z"},

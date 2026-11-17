@@ -62,3 +62,6 @@ HikariSub.Hotkeys	Change case to Sentence case	title-case	Sentence case is the c
 HikariSub.Text	Title Case	title-case	the Change case menu shows each case style in that style
 HikariSub.Video	The clipboard holds no After Effects tracking data.	title-case	After Effects is the product’s name
 HikariSub.Video	After Effects data, %n frames, from the clipboard	title-case	After Effects is the product’s name
+HikariSub.Hotkeys	Quick Open…	title-case	Quick Open is the surface’s name (docs/ux/command-palette.md)
+HikariSub.QuickPick	Quick Open…	title-case	Quick Open is the surface’s name (docs/ux/command-palette.md)
+HikariSub.QuickPick	Quick Open	title-case	Quick Open is the surface’s name (docs/ux/command-palette.md)

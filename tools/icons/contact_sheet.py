@@ -15,43 +15,24 @@ import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 ICONS = os.path.join(ROOT, "src", "ui", "icons")
-THEME = os.path.join(ROOT, "src", "ui", "theme.cpp")
-THEME_H = os.path.join(ROOT, "src", "ui", "theme.h")
+THEMES = os.path.join(ROOT, "src", "ui", "themes")
 
 APPEARANCES = [
-    # theme::codeName, name, theme::Code
-    ("light", "Light", "Light"),
-    ("dark", "Dark", "Dark"),
-    ("highContrastWhite", "High contrast white", "HighContrastWhite"),
-    ("highContrastBlack", "High contrast black", "HighContrastBlack"),
+    ("light", "Light"),
+    ("dark", "Dark"),
+    ("highContrastWhite", "High contrast white"),
+    ("highContrastBlack", "High contrast black"),
 ]
 SLOTS = ["normal", "accent", "disabled"]
 SIZES = [int(s) for s in os.environ.get("HIKARI_ICON_SHEET_SIZES", "16,32").split(",") if s]
-RGB = r'rgb\(0x([0-9A-Fa-f]{6})\)'
 
 
 def theme_colours():
-    """Each theme's background, text and icon colours, parsed from theme.cpp."""
-    source = open(THEME, encoding="utf-8").read()
-    header = open(THEME_H, encoding="utf-8").read()
-    names = re.search(r'kRoleNames\{([^}]*)\}', header)
-    default = re.search(r'kDefaultAccent = "(\w+)"', header)
-    if not names or not default:
-        sys.exit("expected kRoleNames and kDefaultAccent in theme.h")
-    names = re.findall(r'"(\w+)"', names.group(1))
+    """Each built-in theme's background, text and icon colours, from its theme file."""
     out = {}
-    for aid, _, code in APPEARANCES:
-        body = re.search(r'case Code::%s:\s*return \{(.*?)\};' % code, source, re.S)
-        values = re.findall(r'%s|\{\}' % RGB, body.group(1)) if body else []
-        if len(values) != len(names):
-            sys.exit("expected the %d roles of Code::%s in theme.cpp's baseRoles" % (len(names), code))
-        roles = {n: ("#" + v.upper() if v else None) for n, v in zip(names, values)}
-        if roles["accent"] is None:
-            table = "kDarkAccents" if code == "Dark" else "kLightAccents"
-            preset = re.search(r'%s\{\{.*?\{"%s",[^}]*?%s' % (table, default.group(1), RGB), source, re.S)
-            if not preset:
-                sys.exit("expected the %s preset in theme.cpp's %s" % (default.group(1), table))
-            roles["accent"] = "#" + preset.group(1).upper()
+    for aid, _ in APPEARANCES:
+        with open(os.path.join(THEMES, aid + ".json"), encoding="utf-8") as f:
+            roles = json.load(f)["roles"]
         out[aid] = {
             "background": roles["background"], "text": roles["text"],
             "normal": roles["text"], "accent": roles["accent"], "disabled": roles["disabled"],
@@ -68,7 +49,7 @@ def row(role, meta, svg, surfaces, cls=""):
     cells = "".join(
         '<td class="sw %s">%s<span class="off">%s</span></td>'
         % (aid, "".join("<span>%s</span>" % inline(svg, size) for size in SIZES), inline(svg, 16))
-        for aid, _, _ in APPEARANCES)
+        for aid, _ in APPEARANCES)
     return "<tr%s><td><code>%s</code><div class=meta>%s</div></td>%s<td class=meta>%s</td></tr>" % (
         cls, html.escape(role), meta, cells, html.escape(surfaces))
 
@@ -106,7 +87,7 @@ def main():
     before_dir = os.environ.get("HIKARI_ICON_SHEET_BEFORE")
     colours = theme_colours()
     css = []
-    for aid, _, _ in APPEARANCES:
+    for aid, _ in APPEARANCES:
         c = colours[aid]
         bg, fg = c["background"], c["text"]
         css.append(
@@ -124,12 +105,12 @@ def main():
             rows.extend(rows_for(by_role[role], before_dir))
             count += 1
     sheets = []
-    for aid, name, _ in APPEARANCES:
+    for aid, name in APPEARANCES:
         for pct in (100, 150, 200):
             png = "k1-%s-%d.png" % (aid, pct)
             sheets.append('<a href="%s">%s %d%%</a>' % (png, name, pct))
     swatches = []
-    for aid, name, _ in APPEARANCES:
+    for aid, name in APPEARANCES:
         items = "".join('<span class=chip><i style="background:%s"></i>%s %s</span>' % (
             colours[aid][s], s, colours[aid][s]) for s in SLOTS)
         swatches.append("<div><b>%s</b> on %s: %s</div>" % (name, colours[aid]["background"], items))

@@ -6,6 +6,7 @@
 //   Load: a LoadRequest. Runs the main file once. Terminal Ok carries an i32 count and the
 //         command ids that have handlers; Failed carries the error text. A helper loads once.
 //   Run:  str command id, as the manifest declares it. Terminal Ok, or Failed with the error text.
+//   Timer: i64 timer id, u8 last (the timer won't fire again). Runs its callback; Terminal as Run.
 //   Export: str format id, str JSON snapshot, str JSON options. Terminal Ok carries the file's bytes;
 //         Failed carries the error text.
 //   Import: str format id, bytes of the file, str file name. Terminal Ok carries str JSON
@@ -23,6 +24,7 @@
 //   Files: as Ui, for pickers and the plugin's folders.
 //   Net: as Ui, for HTTPS requests HikariSub makes.
 //   Job: as Ui, for job.begin, job.progress and job.cancelled while a command runs.
+//   Timer: as Ui, for timer.after and timer.every ({ms}, answering {id}) and timer.cancel ({id}).
 
 #include "hikari/backends/helper_protocol.h"
 
@@ -36,8 +38,8 @@ namespace hikari::backends::plugin {
 inline constexpr std::uint32_t kProtocolVersion = 1;
 inline constexpr char kHelperName[] = "hikari-plugin-helper";
 
-enum class Command : std::int32_t { Load = 1, Run = 2, Export = 3, Import = 4 };
-enum class Service : std::int32_t { Call = 1, Notify = 2, SetSetting = 3, Subscribe = 4, Lock = 5, Unlock = 6, Ui = 7, Files = 8, Net = 9, Job = 10 };
+enum class Command : std::int32_t { Load = 1, Run = 2, Timer = 3, Export = 4, Import = 5 };
+enum class Service : std::int32_t { Call = 1, Notify = 2, SetSetting = 3, Subscribe = 4, Lock = 5, Unlock = 6, Ui = 7, Files = 8, Net = 9, Job = 10, Timer = 11 };
 enum class Level : std::int32_t { Info = 0, Warning = 1, Error = 2 };
 enum class Tier : std::int32_t { Restricted = 0, Unrestricted = 1 };
 
