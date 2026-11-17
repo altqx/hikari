@@ -150,6 +150,59 @@ TEST(PluginPackage, OversizePackagesAreRefused)
     EXPECT_EQ(problem(plugin({{"big.bin", std::vector<std::byte>(kMaxPackageBytes)}})).kind, Kind::TooLarge);
 }
 
+std::vector<PackageFile> withPrograms(std::vector<PackageFile> extra)
+{
+    const std::string other = thisPlatform() == "linux-x64" ? "windows-x64" : "linux-x64";
+    const std::string manifest = R"({"id": "com.example.hello", "name": "Hello", "version": "1.0.0", "api": 1,
+        "main": "lua/main.lua", "authors": ["Ana"], "permissions": {"programs": "Checks"},
+        "contributes": {"programs": [{"id": "tool", "title": "Tool", "platforms": {
+            ")" + std::string(thisPlatform()) + R"(": {"path": "bin/here/tool"}, ")" + other + R"(": {"path": "bin/other/tool"}}}]}})";
+    std::vector<PackageFile> files{{"hikari-plugin.json", bytes(manifest)}, {"lua/main.lua", bytes("return {}")}};
+    files.insert(files.end(), extra.begin(), extra.end());
+    return files;
+}
+
+TEST(PluginPackage, APackageBuiltForOnePlatformMayHold256Megabytes)
+{
+    const std::vector<std::byte> big(kMaxPackageBytes + 1);
+    EXPECT_TRUE(openPackage(withPrograms({{"bin/here/tool", bytes("x")}, {"big.bin", big}}), 1));
+    EXPECT_EQ(problem(withPrograms({{"bin/here/tool", bytes("x")}, {"bin/other/tool", bytes("y")}, {"big.bin", big}})).kind,
+              Kind::TooLarge);
+    EXPECT_EQ(problem(withPrograms({{"bin/here/tool", bytes("x")}, {"big.bin", std::vector<std::byte>(kMaxPlatformPackageBytes)}}))
+                  .kind,
+              Kind::TooLarge);
+}
+
+TEST(PluginPackage, APackageWithoutMainOpens)
+{
+    const std::string manifest = R"({"id": "com.example.hello", "name": "Hello", "version": "1.0.0", "api": 1, "authors": ["Ana"]})";
+    const auto opened = openPackage({{"hikari-plugin.json", bytes(manifest)}}, 1);
+    ASSERT_TRUE(opened);
+    EXPECT_TRUE(opened->manifest.main.empty());
+}
+
+TEST(PluginPackage, AProgramPluginNeedsItsProgramForThisComputer)
+{
+    const std::string other = thisPlatform() == "linux-x64" ? "windows-x64" : "linux-x64";
+    auto manifest = [](const std::string &platform) {
+        return R"({"id": "com.example.hello", "name": "Hello", "version": "1.0.0", "api": 1, "authors": ["Ana"],
+            "main": {"program": "core"}, "permissions": {"programs": "Is the plugin"},
+            "contributes": {"programs": [{"id": "core", "title": "Core", "api": true, "platforms": {")" + platform +
+               R"(": {"path": "bin/core"}}}]}})";
+    };
+    EXPECT_TRUE(openPackage({{"hikari-plugin.json", bytes(manifest(std::string(thisPlatform())))}, {"bin/core", bytes("x")}}, 1));
+    const PackageProblem elsewhere = problem({{"hikari-plugin.json", bytes(manifest(other))}, {"bin/core", bytes("x")}});
+    EXPECT_EQ(elsewhere.kind, Kind::MainProgramUnavailable);
+    EXPECT_EQ(elsewhere.path, "Core");
+}
+
+TEST(PluginPackage, ABundledProgramForThisComputerMustBeInThePackage)
+{
+    const PackageProblem missing = problem(withPrograms({{"bin/other/tool", bytes("y")}}));
+    EXPECT_EQ(missing.kind, Kind::MissingProgram);
+    EXPECT_EQ(missing.path, "bin/here/tool");
+}
+
 TEST(PluginPackage, MediaThatFollowsTheRulesOpens)
 {
     EXPECT_TRUE(opens(R"("icon": "media/icon.png", "screenshots": [{"path": "media/a.png", "caption": "A"},

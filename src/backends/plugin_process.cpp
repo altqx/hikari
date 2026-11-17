@@ -34,12 +34,16 @@ PluginProcess::PluginProcess(QString helperPath, LoadSource load, Limits limits,
     : QObject(parent), m_helperPath(std::move(helperPath)), m_load(std::move(load)), m_limits(limits)
 {
     m_watchdog.setSingleShot(true);
-    connect(&m_watchdog, &QTimer::timeout, this, [this] { stopHelper(StopReason::TimeLimit); });
+    connect(&m_watchdog, &QTimer::timeout, this, [this] {
+        m_stillWorking = true;
+        emit workChanged();
+    });
 }
 
 PluginProcess::~PluginProcess()
 {
     m_watchdog.stop();
+    m_timers.clear();
     if (m_host)
         disconnect(m_host.get(), nullptr, this, nullptr);
 }
@@ -49,6 +53,19 @@ qint64 PluginProcess::processId() const
     return m_host ? m_host->processId() : 0;
 }
 
+QString PluginProcess::work() const
+{
+    if (!m_running)
+        return {};
+    switch (m_running->kind) {
+    case Unit::Kind::Load: return QStringLiteral("load");
+    case Unit::Kind::Timer: return QStringLiteral("timer");
+    case Unit::Kind::Command:
+    case Unit::Kind::Event: break;
+    }
+    return QString::fromStdString(m_running->name);
+}
+
 QByteArray PluginProcess::diagnostics() const
 {
     return m_host ? m_host->diagnostics() : m_lastDiagnostics;
@@ -56,12 +73,13 @@ QByteArray PluginProcess::diagnostics() const
 
 void PluginProcess::dropHelper(bool kill)
 {
+    m_timers.clear();
     if (!m_host)
         return;
-    HelperHost *host = m_host.release();
+    PluginLink *host = m_host.release();
     disconnect(host, nullptr, this, nullptr);
     if (kill)
-        host->stop();
+        host->stop(true);
     m_lastDiagnostics = host->diagnostics();
     host->deleteLater();
 }
@@ -76,12 +94,6 @@ void PluginProcess::startHelper()
 {
     m_state = State::Starting;
     m_handled.clear();
-    m_host = std::make_unique<HelperHost>(m_helperPath, QStringList(), plugin::kProtocolVersion);
-    HelperHost *host = m_host.get();
-    // Windows grants a Launcher's access entries when it is made, and an update replaces the package folder.
-    m_launcher = m_sandbox ? std::make_unique<sandbox::Launcher>(m_sandbox) : nullptr;
-    if (m_launcher)
-        host->setPrepare([launcher = m_launcher.get()](QProcess &process) { launcher->prepare(process); });
     auto loadFailure = [this](const QString &message) {
         m_state = State::LoadFailed;
         m_loadError = message;
@@ -89,17 +101,34 @@ void PluginProcess::startHelper()
         dropHelper(false);
         emit loadFailed(message);
     };
-    connect(host, &HelperHost::ready, this, [this] {
+    if (m_linkFactory) {
+        auto link = m_linkFactory();
+        if (!link) {
+            loadFailure(link.error());
+            return;
+        }
+        m_host = std::move(*link);
+    } else {
+        auto helper = std::make_unique<HelperHost>(m_helperPath, QStringList(), plugin::kProtocolVersion);
+        // Windows grants a Launcher's access entries when it is made, and an update replaces the package folder.
+        m_launcher = m_sandbox ? std::make_unique<sandbox::Launcher>(m_sandbox) : nullptr;
+        if (m_launcher)
+            helper->setPrepare([launcher = m_launcher.get()](QProcess &process) { launcher->prepare(process); });
+        m_host = std::make_unique<HelperPluginLink>(std::move(helper));
+    }
+    PluginLink *host = m_host.get();
+    connect(host, &PluginLink::started, this, [this] {
         m_queue.push_front(Unit{Unit::Kind::Load, {}, {}, {}});
         next();
     });
-    connect(host, &HelperHost::refused, this,
-            [loadFailure] { loadFailure(QStringLiteral("hikari-plugin-helper speaks another protocol version")); });
-    connect(host, &HelperHost::lost, this, [this, host, loadFailure] {
+    connect(host, &PluginLink::refused, this, [loadFailure](const QString &message) { loadFailure(message); });
+    connect(host, &PluginLink::outsideService, this,
+            [this](std::uint64_t call, const std::vector<std::byte> &payload) { serve(0, call, payload); });
+    connect(host, &PluginLink::lost, this, [this, host, loadFailure] {
         if (m_host.get() != host)
             return;
         if (m_state == State::Starting) {
-            loadFailure(QStringLiteral("hikari-plugin-helper didn't start"));
+            loadFailure(host->name() + QStringLiteral(" didn't start"));
             return;
         }
         m_state = State::Stopped;
@@ -147,9 +176,24 @@ void PluginProcess::forceStop()
         stopHelper(StopReason::ForceStopped);
 }
 
+void PluginProcess::end()
+{
+    m_queue.clear();
+    m_running.reset();
+    m_watchdog.stop();
+    m_timers.clear();
+    if (!m_host)
+        return;
+    PluginLink *host = m_host.release();
+    disconnect(host, nullptr, this, nullptr);
+    host->stop(false);
+    host->deleteLater();
+    m_state = State::Stopped;
+}
+
 void PluginProcess::next()
 {
-    if (m_running || !m_host || m_host->state() != HelperHost::State::Ready || m_queue.empty())
+    if (m_running || !m_host || !m_host->ready() || m_queue.empty())
         return;
     if (m_state != State::Ready && m_queue.front().kind != Unit::Kind::Load)
         return;
@@ -162,12 +206,16 @@ void PluginProcess::next()
         Writer w;
         w.i32(static_cast<std::int32_t>(plugin::Command::Run)).str(unit.name);
         payload = w.take();
+    } else if (unit.kind == Unit::Kind::Timer) {
+        Writer w;
+        w.i32(static_cast<std::int32_t>(plugin::Command::Timer)).i64(unit.timer).u8(unit.last ? 1 : 0);
+        payload = w.take();
     } else {
         Writer w;
         w.str(unit.name).str(unit.json);
         payload = w.take();
     }
-    HelperHost *host = m_host.get();
+    PluginLink *host = m_host.get();
     auto handler = [this, host](std::expected<helper::Event, helper::HostError> event) {
         if (m_host.get() == host)
             onEvent(std::move(event));
@@ -180,7 +228,9 @@ void PluginProcess::next()
     m_running = std::move(unit);
     m_spentMs = 0;
     m_openServices = 0;
+    m_stillWorking = false;
     resumeWatchdog();
+    emit workChanged();
 }
 
 void PluginProcess::pauseWatchdog()
@@ -194,13 +244,14 @@ void PluginProcess::resumeWatchdog()
     m_clock.start();
     if (m_job)
         return;
-    m_watchdog.start(static_cast<int>(std::max<qint64>(0, m_limits.timeLimitMs - m_spentMs)));
+    m_watchdog.start(static_cast<int>(std::max<qint64>(0, m_limits.stillWorkingMs - m_spentMs)));
 }
 
 void PluginProcess::onEvent(std::expected<helper::Event, helper::HostError> event)
 {
     if (!event) {
         m_watchdog.stop();
+        m_stillWorking = false;
         endJob();
         const bool loading = m_running && m_running->kind == Unit::Kind::Load;
         m_running.reset();
@@ -208,7 +259,7 @@ void PluginProcess::onEvent(std::expected<helper::Event, helper::HostError> even
         dropHelper(false);
         if (loading) {
             m_state = State::LoadFailed;
-            m_loadError = QStringLiteral("hikari-plugin-helper stopped while the plugin loaded");
+            m_loadError = (m_host ? m_host->name() : QStringLiteral("The plugin")) + QStringLiteral(" stopped while the plugin loaded");
             emit loadFailed(m_loadError);
         } else {
             m_state = State::Stopped;
@@ -224,7 +275,12 @@ void PluginProcess::onEvent(std::expected<helper::Event, helper::HostError> even
 
 void PluginProcess::onService(const helper::Event &event)
 {
-    Reader in(event.payload);
+    serve(m_request, event.call, event.payload);
+}
+
+void PluginProcess::serve(std::uint64_t requestId, std::uint64_t call, const std::vector<std::byte> &payload)
+{
+    Reader in(payload);
     ServiceRequest request;
     request.service = static_cast<plugin::Service>(in.i32());
     switch (request.service) {
@@ -233,6 +289,7 @@ void PluginProcess::onService(const helper::Event &event)
     case plugin::Service::Files:
     case plugin::Service::Net:
     case plugin::Service::Job:
+    case plugin::Service::Timer:
     case plugin::Service::SetSetting:
         request.name = in.str();
         request.json = in.str();
@@ -251,27 +308,26 @@ void PluginProcess::onService(const helper::Event &event)
     case plugin::Service::Unlock:
         break;
     default:
-        m_host->answer(m_request, event.call, Outcome::Unsupported);
+        m_host->answer(requestId, call, Outcome::Unsupported);
         return;
     }
     if (!in.ok() || !in.atEnd()) {
-        m_host->answer(m_request, event.call, Outcome::InvalidInput);
+        m_host->answer(requestId, call, Outcome::InvalidInput);
         return;
     }
-    if (request.service == plugin::Service::Job) {
+    if (request.service == plugin::Service::Job || request.service == plugin::Service::Timer) {
         Writer w;
-        w.str(job(request.name, request.json));
-        m_host->answer(m_request, event.call, Outcome::Ok, w.take());
+        w.str(request.service == plugin::Service::Job ? job(request.name, request.json) : timer(request.name, request.json));
+        m_host->answer(requestId, call, Outcome::Ok, w.take());
         return;
     }
-    if (m_openServices++ == 0)
+    const bool inUnit = requestId != 0;
+    if (inUnit && m_openServices++ == 0)
         pauseWatchdog();
-    HelperHost *host = m_host.get();
-    const std::uint64_t requestId = m_request;
-    const std::uint64_t call = event.call;
+    PluginLink *host = m_host.get();
     const bool carriesText = request.service != plugin::Service::Notify && request.service != plugin::Service::Unlock;
-    ServiceReply reply = [this, host, requestId, call, carriesText](std::string text) {
-        if (m_host.get() != host || m_request != requestId)
+    ServiceReply reply = [this, host, requestId, call, carriesText, inUnit](std::string text) {
+        if (m_host.get() != host || (inUnit && m_request != requestId))
             return;
         std::vector<std::byte> payload;
         if (carriesText) {
@@ -280,7 +336,7 @@ void PluginProcess::onService(const helper::Event &event)
             payload = w.take();
         }
         m_host->answer(requestId, call, Outcome::Ok, std::move(payload));
-        if (--m_openServices == 0 && m_running)
+        if (inUnit && --m_openServices == 0 && m_running)
             resumeWatchdog();
     };
     if (m_services)
@@ -315,14 +371,17 @@ std::string PluginProcess::job(const std::string &operation, const std::string &
     if (operation == "job.cancelled")
         return result({{QStringLiteral("cancelled"), m_jobCancelled}});
     if (operation == "job.begin") {
-        if (!m_running || !(m_running->kind == Unit::Kind::Command || userClick(*m_running)))
-            return refused("Only a command or a click in the plugin's own panel or dialog can become a job.");
+        if (!m_running ||
+            !(m_running->kind == Unit::Kind::Command || m_running->kind == Unit::Kind::Timer || userClick(*m_running)))
+            return refused("Only a command, a timer callback or a click in the plugin's own panel or dialog can become a job.");
         if (m_job)
             return refused("This is a job already.");
         m_job = true;
         m_jobCancelled = false;
+        m_stillWorking = false;
         m_watchdog.stop();
         emit jobBegan(QString::fromStdString(m_running->name), params.value(QStringLiteral("title")).toString());
+        emit workChanged();
         return result({});
     }
     if (operation == "job.progress") {
@@ -350,15 +409,69 @@ void PluginProcess::endJob()
     emit jobEnded();
 }
 
+std::string PluginProcess::timer(const std::string &operation, const std::string &json)
+{
+    const QJsonObject params = QJsonDocument::fromJson(QByteArray::fromStdString(json)).object();
+    const auto envelope = [](QJsonObject body) { return QJsonDocument(body).toJson(QJsonDocument::Compact).toStdString(); };
+    const auto error = [&](const char *code, const char *message) {
+        return envelope({{QStringLiteral("error"), QJsonObject{{QStringLiteral("code"), QString::fromLatin1(code)},
+                                                               {QStringLiteral("message"), QString::fromUtf8(message)}}}});
+    };
+    if (!m_background)
+        return error("not_granted", "Timers need the background permission in hikari-plugin.json.");
+    if (operation == "timer.cancel") {
+        const auto id = static_cast<std::int64_t>(params.value(QStringLiteral("id")).toDouble());
+        m_timers.erase(id);
+        std::erase_if(m_queue, [id](const Unit &u) { return u.kind == Unit::Kind::Timer && u.timer == id; });
+        return envelope({{QStringLiteral("result"), QJsonObject{}}});
+    }
+    const bool repeat = operation == "timer.every";
+    if (!repeat && operation != "timer.after")
+        return error("invalid_params", "No such timer operation.");
+    const QJsonValue ms = params.value(QStringLiteral("ms"));
+    constexpr double kLongest = 2'147'483'647.0;
+    if (!ms.isDouble() || !(ms.toDouble() >= 0) || ms.toDouble() > kLongest)
+        return error("invalid_params", "A timer takes 0 to 2147483647 milliseconds.");
+    const int interval = static_cast<int>(repeat ? std::max(ms.toDouble(), 100.0) : ms.toDouble());
+    const std::int64_t id = m_nextTimer++;
+    Timer &entry = m_timers[id];
+    entry.repeat = repeat;
+    entry.clock = std::make_unique<QTimer>();
+    entry.clock->setSingleShot(!repeat);
+    entry.clock->setTimerType(Qt::PreciseTimer);
+    connect(entry.clock.get(), &QTimer::timeout, this, [this, id] { fire(id); });
+    entry.clock->start(interval);
+    return envelope({{QStringLiteral("result"), QJsonObject{{QStringLiteral("id"), double(id)}}}});
+}
+
+void PluginProcess::fire(std::int64_t id)
+{
+    const auto it = m_timers.find(id);
+    if (it == m_timers.end())
+        return;
+    const bool last = !it->second.repeat;
+    if (last)
+        m_timers.erase(it);
+    const auto same = [id](const Unit &u) { return u.kind == Unit::Kind::Timer && u.timer == id; };
+    if (!last && ((m_running && same(*m_running)) || std::ranges::any_of(m_queue, same)))
+        return;
+    if (m_state != State::Ready || m_queue.size() >= m_limits.maxQueued)
+        return;
+    m_queue.push_back(Unit{Unit::Kind::Timer, {}, {}, {}, id, last});
+    next();
+}
+
 void PluginProcess::endUnit(Outcome outcome, const std::vector<std::byte> &payload)
 {
     m_watchdog.stop();
+    m_stillWorking = false;
     endJob();
     if (!m_running)
         return;
     const Unit unit = std::move(*m_running);
     m_running.reset();
     emit unitEnded();
+    emit workChanged();
     const QString name = QString::fromStdString(unit.name);
     QString message = QString::fromStdString(helper::textOf(payload));
     if (outcome != Outcome::Ok && outcome != Outcome::Failed)
@@ -381,6 +494,8 @@ void PluginProcess::endUnit(Outcome outcome, const std::vector<std::byte> &paylo
             emit finished(name);
     } else if (unit.kind == Unit::Kind::Command) {
         emit commandFailed(name, message);
+    } else if (unit.kind == Unit::Kind::Timer) {
+        emit eventFailed(QStringLiteral("timer"), message);
     } else {
         emit eventFailed(name, message);
     }
@@ -390,6 +505,7 @@ void PluginProcess::endUnit(Outcome outcome, const std::vector<std::byte> &paylo
 void PluginProcess::stopHelper(StopReason reason)
 {
     m_watchdog.stop();
+    m_stillWorking = false;
     endJob();
     m_running.reset();
     m_queue.clear();

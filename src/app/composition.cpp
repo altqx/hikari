@@ -272,7 +272,8 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
         options.automationReset = resetAutomationFolder(userFolder.root(), QDate::currentDate());
     options.userFolderSeed = userFolder.seed(bundledFolder());
     options.userFolder = userFolder.root();
-    options.plugins = {userFolder.plugins(), userFolder.pluginData(), userFolder.pluginCache(), userFolder.pluginRegistry()};
+    options.plugins = {userFolder.plugins(), userFolder.pluginData(), userFolder.pluginCache(), userFolder.pluginRegistry(),
+                       userFolder.pluginPrograms()};
     options.gettingStarted = true;
     options.askVideoProperties = true;
     options.settingsFile = userFolder.settingsFile();

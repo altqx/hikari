@@ -14,6 +14,21 @@ void addEvents(Registry &registry)
                                     "revision": {"$ref": "#/$defs/Revision"},
                                     "step": {"type": "string", "description": "The History step now current."}},
                                     "required": ["document", "revision", "step"], "additionalProperties": false})")});
+    registry.addEvent(EventType{"program.output",
+                                "A started program wrote to stdout or stderr. Only its plugin hears it, in order and never "
+                                "merged.",
+                                schema(R"({"type": "object", "properties": {
+                                    "process": {"$ref": "#/$defs/ProgramProcess"},
+                                    "stream": {"enum": ["stdout", "stderr"]},
+                                    "data": {"type": "string"},
+                                    "encoding": {"enum": ["utf8", "base64"]}},
+                                    "required": ["process", "stream", "data", "encoding"], "additionalProperties": false})")});
+    registry.addEvent(EventType{"program.exited", "A started program ended. Only its plugin hears it.",
+                                schema(R"({"type": "object", "properties": {
+                                    "process": {"$ref": "#/$defs/ProgramProcess"},
+                                    "exitCode": {"type": "integer"},
+                                    "stopped": {"type": "boolean", "description": "true when programs.stop or the plugin's end stopped it."}},
+                                    "required": ["process", "exitCode", "stopped"], "additionalProperties": false})")});
     registry.addEvent(EventType{"document.saved",
                                 "A Document was written to a file: Save, Save as, Save all or Save translation. Nothing "
                                 "comes for a save that was cancelled or failed.",
@@ -140,6 +155,17 @@ void Api::publish(const Event &event, std::optional<application::DocumentId> doc
                                       [&](const Subscription &l) { return l.id == s.id; });
         if (live)
             s.listener(narrowed && !s.caller.allDocuments ? narrowed(s.caller) : event);
+    }
+}
+
+void Api::publishTo(std::string_view callerId, const Event &event)
+{
+    const std::vector<Subscription> current = m_subscriptions;
+    for (const Subscription &s : current) {
+        if (s.caller.id != callerId || std::find(s.events.begin(), s.events.end(), event.name) == s.events.end())
+            continue;
+        if (std::any_of(m_subscriptions.begin(), m_subscriptions.end(), [&](const Subscription &l) { return l.id == s.id; }))
+            s.listener(event);
     }
 }
 

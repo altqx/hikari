@@ -1,10 +1,11 @@
 #pragma once
 
-// One plugin in its own hikari-plugin-helper. Work runs one unit at a time: the load, a command
-// or an event. A unit that runs longer than the time limit, not counting time HikariSub spends
-// answering it, is force stopped. After a stop or a crash the next command starts a new helper.
+// One plugin in its own hikari-plugin-helper. Work runs one unit at a time: the load, a command,
+// an event or a timer callback. A unit that runs longer than stillWorkingMs, not counting time
+// HikariSub spends answering it, is reported as still working; nothing stops it but forceStop.
+// After a stop or a crash the next command starts a new helper.
 
-#include "hikari/backends/helper_host.h"
+#include "hikari/backends/plugin_link.h"
 #include "hikari/backends/plugin_protocol.h"
 #include "hikari/backends/sandbox.h"
 
@@ -13,6 +14,7 @@
 #include <QTimer>
 
 #include <deque>
+#include <map>
 #include <functional>
 #include <memory>
 #include <optional>
@@ -28,11 +30,11 @@ class PluginProcess : public QObject {
     Q_OBJECT
 public:
     enum class State { Idle, Starting, Ready, LoadFailed, Stopped };
-    enum class StopReason { TimeLimit, ForceStopped, Crashed };
+    enum class StopReason { ForceStopped, Crashed };
     Q_ENUM(StopReason)
 
     struct Limits {
-        int timeLimitMs = 10'000;
+        int stillWorkingMs = 10'000;
         std::size_t maxQueued = 64;
     };
 
@@ -50,6 +52,8 @@ public:
     using ServiceHandler = std::function<void(const ServiceRequest &, ServiceReply)>;
     // Asked at each start, so a restart sees the current settings and language.
     using LoadSource = std::function<plugin::LoadRequest()>;
+    // Makes what a start talks to, or says why it can't. Without one, a start runs helperPath.
+    using LinkFactory = std::function<std::expected<std::unique_ptr<PluginLink>, QString>()>;
 
     PluginProcess(QString helperPath, LoadSource load, QObject *parent = nullptr);
     PluginProcess(QString helperPath, LoadSource load, Limits limits, QObject *parent = nullptr);
@@ -58,7 +62,10 @@ public:
     void setServiceHandler(ServiceHandler handler) { m_services = std::move(handler); }
     // Every later helper starts confined to `profile`; where that can't be enforced it still runs.
     void setSandbox(std::optional<sandbox::Profile> profile) { m_sandbox = std::move(profile); }
+    void setLinkFactory(LinkFactory factory) { m_linkFactory = std::move(factory); }
     bool sandboxed() const { return m_sandbox.has_value(); }
+    // The background permission: timers answer not_granted without it.
+    void setBackground(bool background) { m_background = background; }
 
     // Also tries again after a failed load.
     void start();
@@ -70,9 +77,17 @@ public:
     // As push, but a queued event takes the newer data only when both carry the same non-empty key.
     bool deliver(const std::string &event, const std::string &json, const std::string &coalesceKey);
     void forceStop();
+    // As forceStop without a stopped signal, and a program plugin is asked to shut down first.
+    void end();
     // The running command's job, after hikari.job.begin: hikari.job.cancelled answers true from now on.
     void cancelJob();
     bool inJob() const { return m_job; }
+    // The running unit passed stillWorkingMs and isn't a job.
+    bool stillWorking() const { return m_stillWorking; }
+    bool inTimer() const { return m_running && m_running->kind == Unit::Kind::Timer; }
+    // What the running unit is: "load", "timer", or the command's or event's name; empty when idle.
+    QString work() const;
+    std::size_t timerCount() const { return m_timers.size(); }
 
     State state() const { return m_state; }
     QString loadError() const { return m_loadError; }
@@ -92,7 +107,9 @@ signals:
     // crash gives stopped or loadFailed instead.
     void unitEnded();
     void stopped(hikari::backends::PluginProcess::StopReason reason);
-    // A command called hikari.job.begin: from then it has no time limit, until it ends.
+    // The running unit passed stillWorkingMs, a job began or ended, or a unit started or ended.
+    void workChanged();
+    // A command called hikari.job.begin.
     void jobBegan(const QString &command, const QString &title);
     // fraction < 0: it can't tell how far it is.
     void jobProgress(double fraction, const QString &text);
@@ -100,21 +117,30 @@ signals:
 
 private:
     struct Unit {
-        enum class Kind { Load, Command, Event } kind = Kind::Command;
+        enum class Kind { Load, Command, Event, Timer } kind = Kind::Command;
         std::string name;
         std::string json;
         std::string key;
+        std::int64_t timer = 0;
+        bool last = false;
+    };
+    struct Timer {
+        std::unique_ptr<QTimer> clock;
+        bool repeat = false;
     };
     void startHelper();
     void next();
     void onEvent(std::expected<helper::Event, helper::HostError> event);
     void onService(const helper::Event &event);
+    void serve(std::uint64_t request, std::uint64_t call, const std::vector<std::byte> &payload);
     void endUnit(helper::Outcome outcome, const std::vector<std::byte> &payload);
     void stopHelper(StopReason reason);
     void dropHelper(bool kill);
     void pauseWatchdog();
     void resumeWatchdog();
     std::string job(const std::string &operation, const std::string &json);
+    std::string timer(const std::string &operation, const std::string &json);
+    void fire(std::int64_t id);
     void endJob();
 
     QString m_helperPath;
@@ -122,8 +148,9 @@ private:
     Limits m_limits;
     ServiceHandler m_services;
     std::optional<sandbox::Profile> m_sandbox;
+    LinkFactory m_linkFactory;
     std::unique_ptr<sandbox::Launcher> m_launcher;
-    std::unique_ptr<helper::HelperHost> m_host;
+    std::unique_ptr<PluginLink> m_host;
     State m_state = State::Idle;
     QString m_loadError;
     QByteArray m_lastDiagnostics;
@@ -138,6 +165,10 @@ private:
     QTimer m_watchdog;
     bool m_job = false;
     bool m_jobCancelled = false;
+    bool m_stillWorking = false;
+    bool m_background = false;
+    std::map<std::int64_t, Timer> m_timers;
+    std::int64_t m_nextTimer = 1;
 };
 
 }

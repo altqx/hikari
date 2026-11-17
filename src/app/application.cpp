@@ -771,6 +771,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         m_userFolder.isEmpty() || options.plugins.plugins.isEmpty() ? QString() : m_userFolder + QStringLiteral("/ai/plugins"),
         options.plugins.plugins, [this] { return m_pluginManager.get(); }, [this] { return m_pluginRuntime.get(); }});
     m_git = std::make_unique<backends::GitReader>();
+    m_pluginPrograms = std::make_unique<PluginPrograms>();
     m_apiHost = std::make_unique<ApiHost>(ApiHost::Wiring{
         m_workspace, *m_files, &m_settings->settings(), &m_automation->media(),
         [this](application::Selection next) { return applySelection(std::move(next)); },
@@ -807,7 +808,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         [this](const std::vector<std::int64_t> &frames, const std::optional<std::string> &file) {
             return setKeyframesFromApi(frames, file);
         },
-        &m_rowMarks, m_git.get()});
+        &m_rowMarks, m_git.get(), m_pluginPrograms.get()});
     m_automation->setMacroRan([this](const AutomationShell::Ran &ran) {
         m_apiHost->api().macroRan(ran.document, application::scriptFileName(ran.path), ran.macro, ran.outcome, ran.dialogs);
     });
@@ -896,6 +897,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         options.appVersion.isEmpty() ? QStringLiteral(HIKARI_VERSION) : options.appVersion, options.marketplaceNetwork);
     PluginRuntime::Wiring pluginWiring{pluginHelperPath(options.pluginHelper), options.plugins, &m_apiHost->api(), m_log.get(),
                                        [this] { return m_localisation ? m_localisation->language() : QString(); }};
+    pluginWiring.limits.stillWorkingMs = options.pluginStillWorkingMs;
     pluginWiring.networkAllowed = [this] { return m_settings->boolean("plugins.network"); };
     pluginWiring.project = [this] { return activeProject(); };
     pluginWiring.sandbox = true;
@@ -905,6 +907,10 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     pluginWiring.windowPlugins = [this] { return windowPlugins(); };
     pluginWiring.activeWindow = [this] { return m_workspace.activeWindow(); };
     pluginWiring.marks = &m_rowMarks;
+    pluginWiring.programs = m_pluginPrograms.get();
+#ifdef Q_OS_WIN
+    pluginWiring.lowRightsHelper = QCoreApplication::applicationDirPath() + QStringLiteral("/hikarisub-confine.exe");
+#endif
     pluginWiring.documentTitle = [this](application::DocumentId document) {
         const std::string *title = m_workspace.title(document);
         return title ? QString::fromStdString(*title) : QString();
