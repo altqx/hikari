@@ -16574,7 +16574,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message numerus="yes">
         <source>It ran for more than %n second(s).</source>
-        <translation>
+        <translation type="vanished">
             <numerusform>%n초 넘게 실행되었습니다.</numerusform>
         </translation>
     </message>
@@ -16608,7 +16608,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message numerus="yes">
         <source>The plugin ran for more than %n second(s), so HikariSub stopped it. Its next command starts it again.</source>
-        <translation>
+        <translation type="vanished">
             <numerusform>플러그인이 %n초 넘게 실행되어 HikariSub가 중지했습니다. 다음 명령을 실행하면 다시 시작됩니다.</numerusform>
         </translation>
     </message>
@@ -16779,6 +16779,27 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Its panel “%1” couldn’t load: %2</source>
         <translation>패널 “%1”을(를) 불러오지 못했습니다: %2</translation>
+    </message>
+    <message>
+        <source>Works in the background while HikariSub is open: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 is still working</source>
+        <extracomment>A plugin&apos;s command or event has run for more than 10 seconds</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A timer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Starting</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The plugin is stopped. Start it again in its details.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -20089,6 +20110,21 @@ because it was edited.</source>
     <message>
         <source>Video file name</source>
         <translation>영상 파일 이름</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n plugin(s) working</source>
+        <extracomment>The status bar&apos;s busy icon: how many background plugins are working</extracomment>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Plugins working</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stop</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
