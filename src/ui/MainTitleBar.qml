@@ -28,8 +28,8 @@ Rectangle {
     property Item keyboardTarget: null
     property Item returnFocus: null
 
-    implicitHeight: custom ? 32 : 27
-    color: Theme.panel
+    implicitHeight: custom ? Theme.titleBarHeight : 30
+    color: Theme.background
     Accessible.role: Accessible.TitleBar
     Accessible.name: custom ? title : qsTr("Menus")
 
@@ -301,10 +301,9 @@ Rectangle {
         id: appIcon
         objectName: "titleBarAppIcon"
         visible: bar.custom
-        width: visible ? 32 : 0
-        height: 32
+        width: visible ? Theme.titleBarHeight : 0
+        height: Theme.titleBarHeight
         anchors.left: parent.left
-        anchors.leftMargin: visible ? 2 : 0
         anchors.verticalCenter: parent.verticalCenter
         Image {
             anchors.centerIn: parent
@@ -342,7 +341,7 @@ Rectangle {
         focusPolicy: Qt.NoFocus
         leftPadding: 5
         rightPadding: 5
-        implicitHeight: 24
+        implicitHeight: 26
         Layout.alignment: Qt.AlignVCenter
         contentItem: Item {
             implicitWidth: 14
@@ -350,7 +349,7 @@ Rectangle {
             Icon { anchors.centerIn: parent; iconRole: "menu-more"; size: 14 }
         }
         background: Rectangle {
-            radius: 1
+            radius: Theme.radius
             readonly property bool current: bar.keyboardTarget === more
             color: more.down || more.hovered || moreMenu.visible || current ? Theme.raised : "transparent"
             border.width: current ? 1 : 0

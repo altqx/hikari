@@ -952,6 +952,7 @@ bool AudioController::runHotkey(const QString &symbol)
         {QStringLiteral("AUDIO_PLAY_500MS_LAST"), [](AudioController &c) { c.focusAndPlay(PlayMode::Last500); }},
         {QStringLiteral("AUDIO_PLAY_TO_END"), [](AudioController &c) { c.focusAndPlay(PlayMode::ToEnd); }},
         {QStringLiteral("AUDIO_COMMIT"), [](AudioController &c) { c.commit(); }},
+        {QStringLiteral("AUDIO_COMMIT_DEFAULT"), [](AudioController &c) { c.commitWithDefaultTiming(); }},
         {QStringLiteral("AUDIO_GOTO"), [](AudioController &c) { c.goToSelection(); }},
         {QStringLiteral("AUDIO_GOTO_START"), [](AudioController &c) { c.goToSelectionStart(); }},
         {QStringLiteral("AUDIO_GOTO_END"), [](AudioController &c) { c.goToSelectionEnd(); }},
@@ -1098,6 +1099,41 @@ void AudioController::commit()
         return;
     emit focusRequested();
     commitChanges(!m_store || m_store->boolean("audio.nextLineOnCommit"), true, false);
+}
+
+void AudioController::commitWithDefaultTiming()
+{
+    if (tapBusy())
+        return;
+    emit focusRequested();
+    const int before = m_active, end = m_endMs;
+    if (!commitChanges(true, true, false) || m_active == before || m_hasKara)
+        return;
+    m_startMs = end;
+    m_endMs = end + static_cast<int>(m_store ? m_store->integer("audio.defaultDuration") : 5000);
+    if (m_hooks.commit)
+        m_hooks.commit({.startMs = m_startMs,
+                        .endMs = m_endMs,
+                        .save = false,
+                        .nextLine = false,
+                        .holding = m_timing.hold() != 0,
+                        .adjacent = application::AudioAdjacent::None});
+    syncCommittedStart();
+    m_needCommit = true;
+    if (timingOptions().autoCommit)
+        commitChanges(false, true, false);
+    update();
+}
+
+std::optional<bool> AudioController::nudgeSyllableEnd(int deltaMs, bool shiftFollowing)
+{
+    if (tapBusy() || !m_hasKara || !loaded() || !m_karaoke.count())
+        return std::nullopt;
+    if (!m_karaoke.moveSyllableEnd(m_karaoke.current, deltaMs, shiftFollowing, committedStart()))
+        return false;
+    commitKaraoke();
+    redraw();
+    return true;
 }
 
 void AudioController::changeLine(int delta)

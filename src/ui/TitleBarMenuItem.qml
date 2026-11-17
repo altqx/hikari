@@ -29,7 +29,7 @@ MenuBarItem {
     topPadding: 3
     bottomPadding: 3
     implicitWidth: implicitContentWidth + leftPadding + rightPadding
-    implicitHeight: Math.max(24, implicitContentHeight + topPadding + bottomPadding)
+    implicitHeight: Math.max(26, implicitContentHeight + topPadding + bottomPadding)
     contentItem: Text {
         objectName: item.objectName + "Title"
         text: item.titleText(item.letterShown)
@@ -40,7 +40,7 @@ MenuBarItem {
         Accessible.ignored: true
     }
     background: Rectangle {
-        radius: 1
+        radius: Theme.radius
         color: item.highlighted || item.down || item.keyboardCurrent ? Theme.raised : "transparent"
         border.width: item.keyboardCurrent ? 1 : 0
         border.color: Theme.focus

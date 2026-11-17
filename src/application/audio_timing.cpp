@@ -711,7 +711,7 @@ std::expected<AudioCommitOutcome, CommandRefusal> commitAudioTimes(EditSession &
                 core::LineRecord copy = *now[static_cast<std::size_t>(shownBefore)];
                 const auto eend = copy.end.value;
                 copy.start.value = eend;
-                copy.end.value = core::DocumentTime(eend.microseconds() + 5'000'000);
+                copy.end.value = core::DocumentTime(eend.microseconds() + std::int64_t{request.appendDurationMs} * 1000);
                 copy.text.clear();
                 copy.translation.clear();
                 if (d.format() == core::SubtitleFormat::MicroDvd) {

@@ -9,10 +9,8 @@ AbstractButton {
     // Windows tracks the Maximise button's hover and press itself (snap layouts).
     property bool shownHover: hovered
     property bool shownDown: down
-    readonly property color pressColor: Theme.highContrast
-        ? Theme.select : Color.tint(Theme.raised, Color.transparent(Theme.text, 0.06))
     implicitWidth: 46
-    implicitHeight: 32
+    implicitHeight: Theme.titleBarHeight
     focusPolicy: Qt.NoFocus
     hoverEnabled: true
     contentItem: Item {
@@ -23,9 +21,15 @@ AbstractButton {
         }
     }
     background: Rectangle {
-        color: windowButton.shownDown ? windowButton.pressColor : windowButton.shownHover ? Theme.raised : "transparent"
+        color: !windowButton.shownDown && !windowButton.shownHover ? "transparent"
+            : Theme.highContrast ? Theme.select : Theme.raised
         border.width: Theme.highContrast && (windowButton.shownDown || windowButton.shownHover) ? 1 : 0
         border.color: Theme.line
+        Rectangle {
+            anchors.fill: parent
+            visible: windowButton.shownDown && !Theme.highContrast
+            color: Theme.pressed
+        }
     }
     Accessible.role: Accessible.Button
     Accessible.name: text
