@@ -278,6 +278,16 @@ TEST_F(PluginStateTest, TheMemoryLimitStopsAGreedyPlugin)
     EXPECT_EQ(state.error(), "the plugin ran out of memory: it may hold 8 MB");
 }
 
+TEST_F(PluginStateTest, APluginMayHoldTwoGigabytes)
+{
+    EXPECT_EQ(Options{}.memoryLimit, std::size_t(2) << 30);
+    Options o = options();
+    o.memoryLimit = std::size_t(1) << 30;
+    auto state = load("local s = string.rep('x', 1100000000)", o);
+    ASSERT_FALSE(state);
+    EXPECT_EQ(state.error(), "the plugin ran out of memory: it may hold 1 GB");
+}
+
 TEST_F(PluginStateTest, AMemoryErrorInACommandLeavesThePluginUsable)
 {
     Options o = options();

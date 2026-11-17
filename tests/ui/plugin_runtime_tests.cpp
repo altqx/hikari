@@ -296,7 +296,7 @@ private slots:
         QVERIFY(!unconfined.sandboxed());
     }
 
-    void aRunawayPluginIsStoppedAndACrashTakesDownOnlyItsHelper()
+    void aLongCommandShowsStillWorkingUntilStoppedAndACrashTakesDownOnlyItsHelper()
     {
         install(QStringLiteral("com.example.hello"), QStringLiteral("Hello"),
                 "hikari.commands.register('greet', function() hikari.notify('still here') end)");
@@ -308,24 +308,29 @@ private slots:
         app::Localisation english;
         ui::LogController log;
         QSignalSpy noticed(&log, &ui::LogController::noticed);
-        app::PluginRuntime runtime({QStringLiteral(HIKARI_PLUGIN_HELPER), folders(), nullptr, &log, {}, {.timeLimitMs = 1000}});
+        app::PluginRuntime runtime({QStringLiteral(HIKARI_PLUGIN_HELPER), folders(), nullptr, &log, {}, {.stillWorkingMs = 300}});
         runtime.sync();
         QVERIFY(runtime.run(QStringLiteral("plugin.com.example.spin.spin")));
-        QTRY_VERIFY_WITH_TIMEOUT(noticed.size() >= 1, 10'000);
-        QCOMPARE(noticed.size(), 1);
-        QCOMPARE(notices(noticed).at(0).severity, ui::LogController::Warning);
-        QCOMPARE(notices(noticed).at(0).title, QStringLiteral("Spinner"));
-        QCOMPARE(notices(noticed).at(0).text,
-                 QStringLiteral("The plugin ran for more than 1 second, so HikariSub stopped it. Its next command starts it again."));
+        QTRY_COMPARE_WITH_TIMEOUT(runtime.working().size(), 1, 10'000);
+        const QVariantMap spinning = runtime.working().at(0).toMap();
+        QCOMPARE(spinning.value(QStringLiteral("name")).toString(), QStringLiteral("Spinner"));
+        QCOMPARE(spinning.value(QStringLiteral("what")).toString(), QStringLiteral("Spin"));
+        QVERIFY(spinning.value(QStringLiteral("stillWorking")).toBool());
+        QVERIFY(!spinning.value(QStringLiteral("background")).toBool());
+        QTest::qWait(700);
+        QVERIFY(runtime.busy(QStringLiteral("com.example.spin")));
+        QCOMPARE(noticed.size(), 0);
+        runtime.forceStop(QStringLiteral("com.example.spin"));
+        QCOMPARE(runtime.working().size(), 0);
 
         const qint64 steady = runtime.process(QStringLiteral("com.example.hello"))->processId();
         QVERIFY(runtime.run(QStringLiteral("plugin.com.example.crash.greet")));
-        QTRY_COMPARE_WITH_TIMEOUT(noticed.size(), 2, 10'000);
-        QCOMPARE(notices(noticed).at(1).severity, ui::LogController::Error);
-        QCOMPARE(notices(noticed).at(1).text, QStringLiteral("The plugin stopped unexpectedly. Its next command starts it again."));
+        QTRY_COMPARE_WITH_TIMEOUT(noticed.size(), 1, 10'000);
+        QCOMPARE(notices(noticed).at(0).severity, ui::LogController::Error);
+        QCOMPARE(notices(noticed).at(0).text, QStringLiteral("The plugin stopped unexpectedly. Its next command starts it again."));
         QVERIFY(runtime.run(kGreet));
-        QTRY_COMPARE(noticed.size(), 3);
-        QCOMPARE(notices(noticed).at(2).text, QStringLiteral("still here"));
+        QTRY_COMPARE(noticed.size(), 2);
+        QCOMPARE(notices(noticed).at(1).text, QStringLiteral("still here"));
         QCOMPARE(runtime.process(QStringLiteral("com.example.hello"))->processId(), steady);
     }
 
@@ -339,7 +344,7 @@ private slots:
         ui::LogController log;
         application::RowMarks marks;
         QStringList used;
-        app::PluginRuntime::Wiring w{QStringLiteral(HIKARI_PLUGIN_HELPER), folders(), nullptr, &log, {}, {.timeLimitMs = 500}};
+        app::PluginRuntime::Wiring w{QStringLiteral(HIKARI_PLUGIN_HELPER), folders(), nullptr, &log, {}, {.stillWorkingMs = 500}};
         w.jobGraceMs = 200;
         w.marks = &marks;
         w.featureUsed = [&](const QString &feature) { used << feature; };
@@ -375,6 +380,34 @@ private slots:
         QVERIFY(marks.counts("plugin:example.chains").empty());
         runtime.forceStop(QStringLiteral("com.example.other"));
         QTRY_VERIFY(runtime.jobs().isEmpty());
+    }
+
+    void aBackgroundPluginsTimerShowsInTheStatusBarAndStopKeepsItStopped()
+    {
+        install(QStringLiteral("com.example.ticker"), QStringLiteral("Ticker"),
+                "hikari.timer.after(50, function() while true do end end) "
+                "hikari.commands.register('greet', function() hikari.notify('ticked') end)",
+                true, R"(, "permissions": {"background": "Checks the feed"})");
+        ui::LogController log;
+        QSignalSpy noticed(&log, &ui::LogController::noticed);
+        app::PluginRuntime runtime({QStringLiteral(HIKARI_PLUGIN_HELPER), folders(), nullptr, &log, {}, {}});
+        runtime.sync();
+        QTRY_COMPARE_WITH_TIMEOUT(runtime.working().size(), 1, 10'000);
+        const QVariantMap ticking = runtime.working().at(0).toMap();
+        QCOMPARE(ticking.value(QStringLiteral("what")).toString(), QStringLiteral("A timer"));
+        QVERIFY(ticking.value(QStringLiteral("background")).toBool());
+        QVERIFY(!ticking.value(QStringLiteral("stillWorking")).toBool());
+
+        runtime.stopWorking(QStringLiteral("com.example.ticker"));
+        QCOMPARE(runtime.working().size(), 0);
+        QVERIFY(!runtime.run(QStringLiteral("plugin.com.example.ticker.greet")));
+        QCOMPARE(notices(noticed).last().text, QStringLiteral("The plugin is stopped. Start it again in its details."));
+        QCOMPARE(runtime.process(QStringLiteral("com.example.ticker"))->state(), backends::PluginProcess::State::Stopped);
+
+        runtime.restart(QStringLiteral("com.example.ticker"));
+        QTRY_COMPARE_WITH_TIMEOUT(runtime.working().size(), 1, 10'000);
+        runtime.forceStop(QStringLiteral("com.example.ticker"));
+        QVERIFY(runtime.run(QStringLiteral("plugin.com.example.ticker.greet")));
     }
 
     void loadAndCommandErrorsAreNoticed()
