@@ -826,7 +826,8 @@ private slots:
         write(folder + QStringLiteral("/hikari-plugin.json"),
               R"({"id": "com.example.kit", "name": "Kit", "version": "1.0.0", "api": 1, "main": "main.lua", "authors": ["Ana"],
                   "contributes": {"styles": [{"id": "signs", "title": "Signs", "path": "styles/signs.sty"}],
-                                  "karaokePresets": [{"id": "glow", "path": "presets/glow.ass"}]}})");
+                                  "karaokePresets": [{"id": "glow", "path": "presets/glow.ass"}],
+                                  "dictionaries": [{"language": "pl", "title": "Polski", "aff": "dict/pl.aff", "dic": "dict/pl.dic"}]}})");
         write(folder + QStringLiteral("/main.lua"), "");
         const auto turn = [&](bool on) {
             m_registry[QStringLiteral("com.example.kit")] =
@@ -848,11 +849,46 @@ private slots:
                  QDir::cleanPath(folder + QStringLiteral("/styles/signs.sty")));
         QCOMPARE(content.karaokePresets.size(), 1u);
         QVERIFY(content.karaokePresets[0].title.empty());
+        QCOMPARE(content.dictionaries.size(), 1u);
+        QVERIFY(content.dictionaries[0].language == u"pl");
+        QVERIFY(content.dictionaries[0].title == u8"Polski");
+        QCOMPARE(QString::fromStdU16String(content.dictionaries[0].dic.u16string()),
+                 QDir::cleanPath(folder + QStringLiteral("/dict/pl.dic")));
 
         turn(false);
         runtime.sync();
         QVERIFY(application::pluginContent().styleCatalogues.empty());
         QVERIFY(application::pluginContent().karaokePresets.empty());
+        QVERIFY(application::pluginContent().dictionaries.empty());
+    }
+
+    void aPluginsDictionaryIsASpellingLanguageFromTheStart()
+    {
+        QTemporaryDir home;
+        const auto at = [&](const char *path) { return home.filePath(QLatin1String(path)); };
+        write(at("plugins/com.example.words/hikari-plugin.json"),
+              R"({"id": "com.example.words", "name": "Words", "version": "1.0.0", "api": 1, "main": "main.lua", "authors": ["Ana"],
+                  "contributes": {"dictionaries": [{"language": "xx_TEST", "title": "Test words", "aff": "dict/xx.aff", "dic": "dict/xx.dic"}]}})");
+        write(at("plugins/com.example.words/main.lua"), "");
+        write(at("plugins/com.example.words/dict/xx.aff"), "SET UTF-8\n");
+        write(at("plugins/com.example.words/dict/xx.dic"), "1\nfirst\n");
+        write(at("plugins.json"), R"({"format": 1, "plugins": {"com.example.words": {"version": "1.0.0", "enabled": true}}})");
+        write(at("episode.ass"), "[Script Info]\nScriptType: v4.00+\n\n[Events]\n"
+                                 "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                                 "Dialogue: 0,0:00:00.00,0:00:01.00,Default,,0,0,0,,first secnod\n");
+        app::Application::Options o;
+        o.settingsFile = at("settings.toml");
+        o.playbackAudio = false;
+        o.plugins = {at("plugins"), at("plugin-data"), at("plugin-cache"), at("plugins.json")};
+        o.pluginHelper = QStringLiteral(HIKARI_PLUGIN_HELPER);
+        app::Application a(o);
+        a.settingsStore()->set("editor.dictionaryLanguage", QStringLiteral("xx_TEST"));
+        QVERIFY(a.openFile(at("episode.ass")));
+        QVERIFY(a.settingsStore()->boolean("editor.spellchecker"));
+        QTRY_COMPARE(a.editorSpellingMarks(0), (QVariantList{6, 12}));
+        QVERIFY(a.settingsStore()->boolean("editor.spellchecker"));
+        QCOMPARE(a.openSettingsDialog().value(QStringLiteral("dictionaries")).toStringList(),
+                 QStringList{QStringLiteral("Test words (Words)")});
     }
 
     void theFirstPluginGuideRunsAtEveryStep()

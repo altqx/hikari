@@ -14772,6 +14772,11 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>기본 제공 테마를 읽을 수 없어 어둡게 테마를 표시합니다.</translation>
     </message>
     <message>
+        <source>%1 (%2)</source>
+        <extracomment>A plugin&apos;s spelling dictionary: %1 is its title, %2 the plugin&apos;s name.</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Put .dic and .aff files in the “Dictionary” folder</source>
         <translation>.dic 및 .aff 파일을 “Dictionary” 폴더에 넣으십시오</translation>
     </message>
