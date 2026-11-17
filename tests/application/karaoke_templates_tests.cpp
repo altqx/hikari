@@ -5,6 +5,7 @@
 #include <gtest/gtest.h>
 
 #include <charconv>
+#include <chrono>
 #include <span>
 #include <string>
 
@@ -281,4 +282,58 @@ TEST(KaraokeTemplates, ADocumentWithoutTemplatesTakesTheGivenMode)
                                             std::string(karaoke));
     EXPECT_EQ(documentMode(stock, Mode::KaraOK), Mode::Stock);
     EXPECT_EQ(documentMode(load("Karaoke Templater: Aegisub 3.2.2", karaoke), Mode::KaraOK), Mode::Stock);
+}
+
+namespace {
+
+hikari::core::Document assDocument(std::string_view info, std::string_view events)
+{
+    const std::string text = "[Script Info]\n" + std::string(info) +
+                             "\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, "
+                             "Effect, Text\n" +
+                             std::string(events);
+    return hikari::core::loadAss(std::as_bytes(std::span(text))).document;
+}
+
+std::string commentLine(std::string_view effect, std::string_view text)
+{
+    return "Comment: 0,0:00:00.00,0:00:00.00,Default,,0,0,0," + std::string(effect) + "," + std::string(text) + "\n";
+}
+
+std::string karaokeLines(int count)
+{
+    std::string events;
+    for (int i = 0; i < count; ++i)
+        events += "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\k20}ka{\\k20}ra{\\k20}o{\\k20}ke "
+                  "{\\k20}lyrics {\\k20}long {\\k20}enough {\\k20}to {\\k20}copy\n";
+    return events;
+}
+
+}
+
+TEST(KaraokeTemplates, OnlyAModeLineOrATemplateLineDecidesTheMode)
+{
+    EXPECT_EQ(decidedMode(assDocument("Title: t", "")), std::nullopt);
+    const std::string_view dialogueTemplate = "Dialogue: 0,0:00:00.00,0:00:00.00,Default,,0,0,0,template lsyl,a\n";
+    EXPECT_EQ(decidedMode(assDocument("Title: t", dialogueTemplate)), std::nullopt);
+    EXPECT_EQ(decidedMode(assDocument("Title: t", commentLine("Template lsyl", "a"))), Mode::KaraOK);
+    EXPECT_EQ(decidedMode(assDocument("Title: t", commentLine("template syl", "a"))), Mode::Stock);
+    const std::string stockThenKaraOK = commentLine("template syl", "a") + commentLine("Code char", "x = 1");
+    EXPECT_EQ(decidedMode(assDocument("Title: t", stockThenKaraOK)), Mode::KaraOK);
+    EXPECT_EQ(decidedMode(assDocument("Karaoke Templater: other", commentLine("fx", "a"))), Mode::Stock);
+    EXPECT_EQ(decidedMode(assDocument("Karaoke Templater: other", "")), Mode::Stock);
+    EXPECT_EQ(decidedMode(assDocument("Karaoke Templater: karaOK", commentLine("template syl", "a"))), Mode::KaraOK);
+}
+
+TEST(KaraokeTemplates, TheModeOfALargeDocumentIsQuickToWorkOut)
+{
+    const auto plain = assDocument("Title: t", karaokeLines(20000));
+    const auto decidedFirst = assDocument("Title: t", commentLine("template lsyl", "a") + karaokeLines(20000));
+    const auto started = std::chrono::steady_clock::now();
+    for (int i = 0; i < 100; ++i) {
+        EXPECT_EQ(documentMode(plain), Mode::Stock);
+        EXPECT_EQ(documentMode(decidedFirst), Mode::KaraOK);
+    }
+    EXPECT_LT(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - started).count(),
+              100);
 }

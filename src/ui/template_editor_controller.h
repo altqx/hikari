@@ -1,6 +1,7 @@
 #pragma once
 
 #include "hikari/application/edit_session.h"
+#include "hikari/application/karaoke_templates.h"
 #include "hikari/application/template_preview.h"
 
 #include <QObject>
@@ -201,6 +202,7 @@ private:
     bool insertLines(const char *commandName, std::vector<application::MacroDialogueLine> made,
                      bool writeKaraOKMode = false);
     bool modeUndecided() const;
+    std::optional<application::karaoke_templates::Mode> decidedMode() const;
     QString stockEffectOf(const QString &effect) const;
     application::EditSession *session() const;
     const core::Document *document() const;
@@ -280,6 +282,9 @@ private:
     std::map<core::LineId, std::string> m_matched;
     std::uint64_t m_generation = 0;
     bool m_running = false;
+    using ModeSeen = std::pair<DocumentKey, std::uint64_t>;
+    mutable std::optional<ModeSeen> m_modeSeen;
+    mutable std::optional<application::karaoke_templates::Mode> m_decidedMode;
     bool m_previewing = false;
     bool m_wantValues = false;
     std::optional<application::MacroSnapshot> m_previewSnapshot;
