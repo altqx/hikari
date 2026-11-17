@@ -760,7 +760,7 @@ The palette itself is #1236's, in the command palette spec (`docs/ux/command-pal
   - A timer callback runs in turn with the plugin's other work. An `every` timer that comes due while its last callback still runs is skipped once, not queued.
   - A timer callback may begin a [job](#long-jobs).
   - Without the permission, the timer calls answer `nil` and the error `not_granted`.
-- **Showing what runs.** While a background plugin works (a timer callback, a job, or an event or command past 10 seconds), the status bar's leading part shows a busy icon with the count. Its popover lists each working plugin with what it does and Stop. Stop ends that helper. A background plugin stopped this way starts again at the next HikariSub start or with Start again in its details.
+- **Showing what runs.** While a background plugin works (a timer callback, a job, or an event or command past 10 seconds), the status bar's leading part shows a busy icon with the count. Its popover lists each working plugin with what it does and Stop. Like the other status bar fields, the icon isn't in the Tab order; from the keyboard, turn the plugin off in the plugin manager. Stop ends that helper. A background plugin stopped this way starts again at the next HikariSub start or with Start again in its details.
 - **The edit turn.** With no time limit, the app-wide edit turn still ends when the handler that took it returns: `hikari.document.edit` and `hikari.document.group` hold it only while `fn` runs. Another plugin waiting for it still gives up after 5 seconds with `busy`.
 - **Unchanged.** Each plugin still has its own helper, its work still runs one thing at a time, and the restricted tier and the sandbox don't change.
 
