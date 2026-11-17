@@ -124,6 +124,12 @@ struct OverlayPolygon {
     std::vector<std::vector<PointF>> more;
     bool above = false;
 };
+struct HandleColours {
+    std::uint32_t fill = 0xAA121150;
+    std::uint32_t selectedFill = 0xAAFCE6B1;
+    std::uint32_t border = 0xFFBB0000;
+    bool operator==(const HandleColours &) const = default;
+};
 // Drawn in this order: polygons, lines, circles, polygons `above`, texts.
 struct Overlay {
     std::vector<OverlayLine> lines;
@@ -132,6 +138,7 @@ struct Overlay {
     std::vector<OverlayPolygon> polygons;
     // Device pixels per HikariSub legacy pixel, so handles keep their on-screen size.
     float unit = 1;
+    HandleColours handles;
     bool empty() const { return lines.empty() && circles.empty() && texts.empty() && polygons.empty(); }
 };
 
@@ -292,6 +299,8 @@ public:
     void setPointerShape(PointerShape shape) { m_pointerShape = shape; }
     PointerShape pointerShape() const { return m_pointerShape; }
     bool hasArrow() const { return m_pointerShape == PointerShape::Arrow; }
+    void setHandleColours(HandleColours colours) { m_handleColours = colours; }
+    const HandleColours &handleColours() const { return m_handleColours; }
     virtual const VideoView &view() const = 0;
     // The editing target (null without one) and its active Line.
     virtual const EditSession *session() const = 0;
@@ -369,6 +378,7 @@ public:
 
 private:
     PointerShape m_pointerShape = PointerShape::Arrow;
+    HandleColours m_handleColours;
 };
 
 // Device pixels per HikariSub legacy pixel, times the handle size setting:
