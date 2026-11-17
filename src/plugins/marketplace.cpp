@@ -75,9 +75,14 @@ ListedVersion versionOf(const Json &v)
     out.homepage = text(v, "homepage");
     out.authors = texts(v, "authors");
     out.permissions = *v.find("permissions");
-    out.url = text(v, "url");
-    out.sha256 = text(v, "sha256");
-    out.size = v.find("size")->asInt();
+    const Json *packages = v.find("packages");
+    const Json *package = packages ? packages->find(thisPlatform()) : &v;
+    out.forThisComputer = package != nullptr;
+    if (package) {
+        out.url = text(*package, "url");
+        out.sha256 = text(*package, "sha256");
+        out.size = package->find("size")->asInt();
+    }
     out.published = text(v, "published");
     out.changelog = text(v, "changelog");
     out.icon = text(v, "icon");
@@ -111,7 +116,7 @@ const ListedVersion *Listing::newest(std::int64_t apiVersion) const
     if (revoked)
         return nullptr;
     const auto it =
-        std::ranges::find_if(versions, [&](const ListedVersion &v) { return !v.revoked && v.api <= apiVersion; });
+        std::ranges::find_if(versions, [&](const ListedVersion &v) { return !v.revoked && v.api <= apiVersion && v.forThisComputer; });
     return it == versions.end() ? nullptr : &*it;
 }
 

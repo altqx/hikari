@@ -14,7 +14,8 @@
 namespace hikari::app {
 
 // The plugin manager's permission lines, as the install question lists them.
-QStringList permissionLines(bool unrestricted, const plugins::Permissions &permissions, bool qmlPanels = false);
+QStringList permissionLines(bool unrestricted, const plugins::Permissions &permissions, bool qmlPanels = false,
+                            const std::vector<plugins::Program> &programs = {});
 
 class PluginManager : public QObject {
     Q_OBJECT
@@ -28,6 +29,7 @@ public:
         QString data;
         QString cache;
         QString registry;
+        QString programs;
     };
     // Empty folders: nothing can be installed.
     explicit PluginManager(Folders folders, QObject *parent = nullptr);

@@ -8799,6 +8799,7 @@ ApplicationWindow {
         reviewText: root.review.on && root.review.waiting > 0
                     ? qsTranslate("HikariSub.Review", "%n AI change(s) to review", "", root.review.waiting) : ""
         onReviewClicked: root.showPanel(reviewDock)
+        pluginRuntime: root.app.pluginRuntime
     }
     function currentTab() {
         const tabs = root.app.tabs

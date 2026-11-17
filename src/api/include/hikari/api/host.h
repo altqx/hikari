@@ -325,6 +325,8 @@ public:
     virtual application::NodeEffectOptions options() = 0;
 };
 
+class ProgramHost;
+
 // A missing port makes its operations answer unavailable.
 struct Host {
     DocumentHost *documents = nullptr;
@@ -347,6 +349,7 @@ struct Host {
     KeyframeHost *keyframes = nullptr;
     application::RowMarks *marks = nullptr;
     application::VcsPort *vcs = nullptr;
+    ProgramHost *programs = nullptr;
 };
 
 }

@@ -189,6 +189,8 @@ public:
         QString luaHelper;
         // Empty: next to the application, else the build tree's.
         QString pluginHelper;
+        // How long a plugin's command, event or timer callback runs before its "still working" card shows.
+        int pluginStillWorkingMs = 10'000;
         QString automationDir;
         // Empty: automationDir.
         QString userAutomationDir;
@@ -1380,6 +1382,7 @@ private:
     std::unique_ptr<InlineAiController> m_inlineAi;
     std::unique_ptr<PluginManager> m_pluginManager;
     std::unique_ptr<PluginMarketplace> m_pluginMarketplace;
+    std::unique_ptr<PluginPrograms> m_pluginPrograms;
     std::unique_ptr<PluginRuntime> m_pluginRuntime;
     std::unique_ptr<UpdateChecker> m_updates;
     std::unique_ptr<Analytics> m_analytics;

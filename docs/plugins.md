@@ -107,6 +107,7 @@ The marketplace website's Install in HikariSub opens `hikarisub://plugin/install
 | `<user folder>/plugin-data/<id>/` | The plugin's data. It survives updates; uninstall asks whether to remove it. |
 | `<cache>/plugins/<id>/` | The plugin's cache, cleared on every install and on uninstall. |
 | `<user folder>/plugins/.previous/<id>/` | The version the last update replaced, for Roll back. |
+| `<user folder>/plugin-programs/<id>/<sha256>/` | Its [downloaded programs](#programs), one folder per download. |
 | `<user folder>/plugins.json` | Per id: `version`, `enabled`, the pinned `key`, the remembered folder `grants`, the `settings` a plugin or the user changed, and `source`; for [updates](#updates-roll-back-and-revocation), `autoUpdate` (only when off), `skip`, `previous`, `held` and `revoked` (`reason`, `lastGood`). |
 | `<user folder>/marketplace.json` | `serial`: the highest marketplace index serial accepted. |
 
@@ -139,7 +140,7 @@ Automation > Plugins… (`GLOBAL_PLUGINS`, 5231) opens one resizable window with
 - **The details.** What the plugin is and who made it, with the By HikariSub badge for HikariSub's own plugins, its trust, its permissions with their reasons, and what it adds (commands and panels). On turns it on or off. A marketplace plugin has its own "Install updates automatically", and Roll back to <version> sits beside the version when a replaced copy is kept. A held update shows a bar with Review…; a revoked plugin shows a red bar with Install <last good> and Uninstall….
 - **Remembered folders.** Each folder the user let the plugin keep, with Forget. A forgotten folder is asked for again, and the plugin's open files in it close.
 - **Settings.** A form built from `contributes.settings`: a check box for `boolean`, a field for `integer`, `number` and `string`, and a drop-down for `choice`. A change is kept at once, the same way `hikari.settings.set` keeps it, and a running plugin's `hikari.settings.get` sees it.
-- **Errors.** A plugin that didn't start, crashed or hit the time limit shows the error and its traceback, with Start again and Copy.
+- **Errors.** A plugin that didn't start, crashed or was stopped shows the error and its traceback, with Start again and Copy.
 - **Actions.** Install from file… for a new plugin, then per plugin Update to <version> (a marketplace install with a newer listed version), Update from file…, Open data folder and Uninstall…. Update from file… refuses a package with a different id.
 - **Move to the marketplace.** A file install whose id the marketplace lists, signed with the listing's author key and not newer than the listed version, offers "Move to the marketplace", which installs the listed version as a marketplace install, or "Not now".
 - **Marketplace.** Search matches name, summary and author, and the box narrows to one category. A listing shows the newest version this HikariSub can run, its description, screenshots, permissions, what it needs ("HikariSub <version> or later"), licence, last update and source. Install or Update to <version> downloads it and opens the install question, which says it was signed by the author and checked against the marketplace. A plugin with full access warns that it gets full access to the computer and asks for Install with full access.
@@ -151,8 +152,8 @@ Each enabled plugin runs in its own `hikari-plugin-helper` process, started when
 
 - **Restricted (the default).** A fresh LuaJIT state with `string` (without `dump`), `table`, `math`, `bit`, `coroutine` and the base functions, minus `dofile`, `loadfile` and `module`. `load` and `loadstring` take text only, so bytecode never loads. There's no `ffi`, `io`, `os`, `debug`, `jit` or `package`, so no `package.loadlib` either. `require "a.b"` reads only `lua/a/b.lua` or `lua/a/b/init.lua` in the package, and only as text.
 - **Unrestricted.** The full LuaJIT libraries, with `package.path` pointed at the package's `lua/` folder and `package.cpath` at its `lib/`. Installing one shows the full-trust warning. Only these plugins can ship [QML panels](#qml-panels), and the warning then adds "Shows its own panels inside HikariSub".
-- **Memory.** A counting allocator caps the state at 256 MB. A command or event that hits the cap fails with "the plugin ran out of memory: it may hold 256 MB", and the plugin keeps running.
-- **Time.** The load, each command and each event runs one at a time. One that runs longer than 10 seconds, and isn't a [job](#long-jobs), is force stopped: HikariSub ends the helper and says so in a toast. Time HikariSub spends answering the plugin (an API call, a setting) doesn't count. The plugin's next command starts a new helper.
+- **Memory.** A counting allocator caps the state at 2 GB. A command or event that hits the cap fails with "the plugin ran out of memory: it may hold 2 GB", and the plugin keeps running.
+- **Time.** The load, each command, each event and each timer callback runs one at a time, with no time limit. One that runs longer than 10 seconds, and isn't a [job](#long-jobs), shows a "still working" card with Stop ([Background plugins and time](#background-plugins-and-time)). Time HikariSub spends answering the plugin (an API call, a setting) doesn't count toward the 10 seconds.
 - **The sandbox.** A restricted plugin's helper starts in an operating-system sandbox, `hikari_sandbox` ([ADR 0029](adr/0029-the-ai-sidecar-runs-in-an-os-sandbox.md)): Landlock and seccomp on Linux, an AppContainer on Windows. Its profile is `HikariSub.Plugin.<the first 32 hex digits of the id's SHA-256>`: the helper's folder to read and execute, the plugin's package folder to read, nothing else, and no network. The helper needs no more, because HikariSub itself opens the files a plugin was granted (`hikari.files`) and makes its requests (`hikari.net.fetch`).
 - **Full trust plugins run outside the sandbox,** with the same access as HikariSub.
 - **Where the sandbox can't apply,** for example on a kernel without Landlock or seccomp, restricted plugins still run under the limits above. HikariSub logs what is missing under `hikari.plugins.sandbox`, and the plugin's details say "HikariSub keeps it to these permissions, but it isn’t sandboxed on this system."
@@ -181,7 +182,8 @@ The helper framing ([`helper_protocol.h`](../src/backends/include/hikari/backend
 | `hikari.panels.post(panel, data)` | Sends `data` to a [QML panel](#qml-panels)'s `api.received`. It returns `true` when the panel is loaded, and `false` otherwise. |
 | `hikari.files.open(place, path)`, `hikari.files.entries(place, path)`, `hikari.files.pick(options)`, `hikari.files.folder(id)`, `hikari.files.list()`, `hikari.files.read(file, encoding)`, `hikari.files.write(file, data, encoding)` | Files in the plugin's own folders, in folders the user chose, and that the user picked or dropped. See [Files](#files). |
 | `hikari.net.fetch(request)` | An HTTPS request that HikariSub makes to a host from the manifest. See [Network](#network). |
-| `hikari.job.begin{title}`, `hikari.job.progress(fraction, text)`, `hikari.job.cancelled()` | Turns the running command, or a click in the plugin's own panel or dialog, into a job with a card and no time limit. See [Long jobs](#long-jobs). |
+| `hikari.job.begin{title}`, `hikari.job.progress(fraction, text)`, `hikari.job.cancelled()` | Turns the running command, a background plugin's timer callback, or a click in the plugin's own panel or dialog, into a job with a progress card and Cancel. See [Long jobs](#long-jobs). |
+| `hikari.timer.after(ms, fn)`, `hikari.timer.every(ms, fn)`, `hikari.timer.cancel(id)` | A background plugin's timers. See [Background plugins and time](#background-plugins-and-time). |
 | `hikari.marks.set(marks, document)`, `hikari.marks.clear(lines, document)`, `hikari.marks.list(document)` | The plugin's Grid row marks. See [Grid row marks](#grid-row-marks). |
 | `hikari.vcs.refs(options)`, `hikari.vcs.show(ref, document)` | The git repository holding a Document, read-only, with `vcs.read`. See [Git](#git). |
 | `hikari.dialogs.show(dialog, spec)`, `hikari.dialogs.ask(dialog, spec)`, `hikari.dialogs.close(dialog)`, `hikari.dialogs.on(dialog, fn)` | Opens a dialog, or opens one and waits for its answer `button, values`; closes it; and calls `fn(event)` for its events. |
@@ -387,7 +389,7 @@ hikari.commands.register("scan", function()
 end)
 ```
 
-From `begin` until the command or the click's handler returns, it has no time limit, and a card above the status bar shows the plugin's name, the title, the progress and **Cancel**. `hikari.job.progress(nil, text)` shows a bar that moves without a fraction. **Cancel** only makes `hikari.job.cancelled()` answer `true`, so check it often. When the plugin hasn't stopped 5 seconds later, the card says so and offers **Stop**, which force stops it; work it hasn't applied is lost. Only a command, or a `click` in the plugin's own panel or dialog (a dialog's `button` press too), can become a job, once; anywhere else, such as other events, or a panel's `change` or `show`, the job calls answer `nil` and an error. A panel's button can so start a scan with the card and **Cancel**:
+From `begin` until the command or the click's handler returns, a card above the status bar shows the plugin's name, the title, the progress and **Cancel**. `hikari.job.progress(nil, text)` shows a bar that moves without a fraction. **Cancel** only makes `hikari.job.cancelled()` answer `true`, so check it often. When the plugin hasn't stopped 5 seconds later, the card says so and offers **Stop**, which force stops it; work it hasn't applied is lost. Only a command, a background plugin's timer callback, or a `click` in the plugin's own panel or dialog (a dialog's `button` press too), can become a job, once; anywhere else, such as other events, or a panel's `change` or `show`, the job calls answer `nil` and an error. A panel's button can so start a scan with the card and **Cancel**:
 
 ```lua
 hikari.panels.on("scan", function(e)
@@ -454,7 +456,7 @@ Redirects are followed up to 5 times, each checked the same way. HikariSub sends
 
 ## Git
 
-A plugin can't run programs, so HikariSub runs git for it, read-only. The manifest asks with `"vcs.read": "<reason>"`, and the install question, the plugin manager and the marketplace show it as "Read the branches, tags and history of the git repository holding your subtitle files: <reason>". Every plugin that asks gets it on the same terms; AI and MCP callers never do.
+HikariSub runs git for a plugin, read-only, so the plugin needs no [program](#programs) of its own for it. The manifest asks with `"vcs.read": "<reason>"`, and the install question, the plugin manager and the marketplace show it as "Read the branches, tags and history of the git repository holding your subtitle files: <reason>". Every plugin that asks gets it on the same terms; AI and MCP callers never do.
 
 ```lua
 local refs = hikari.vcs.refs({ limit = 20 })
@@ -475,7 +477,7 @@ The errors carry a `reason`: `unavailable` with `no_git` (git isn't installed or
 
 ## Extensions
 
-[ADR 0034](adr/0034-plugins-grow-into-an-extension-system.md) grows plugins into an extension system. Everything here ships in API 1 on beta.5, through the cards [#1222](https://github.com/altqx/hikari/issues/1222)–[#1231](https://github.com/altqx/hikari/issues/1231). The [manifest schema](schemas/hikari-plugin.schema.json) already holds every key below and still refuses unknown ones. When a card lands, it replaces the text it changes above, such as the 10-second limit, the 256 MB cap and "a plugin can't run programs". New operations and events are in [api.md](api.md#extension-operations).
+[ADR 0034](adr/0034-plugins-grow-into-an-extension-system.md) grows plugins into an extension system. Everything here ships in API 1 on beta.5, through the cards [#1222](https://github.com/altqx/hikari/issues/1222)–[#1231](https://github.com/altqx/hikari/issues/1231). The [manifest schema](schemas/hikari-plugin.schema.json) already holds every key below and still refuses unknown ones. When a card lands, it replaces the text it changes above, such as "a plugin can't run programs". New operations and events are in [api.md](api.md#extension-operations).
 
 ### Kinds of package
 
@@ -750,8 +752,6 @@ The palette itself is #1236's, in the command palette spec (`docs/ux/command-pal
 
 ### Background plugins and time
 
-#1225. These replace the time and memory rules under [Running a plugin](#running-a-plugin).
-
 - **No time limit.** A load, command, event, timer callback, provider call or format call that runs longer than 10 seconds and isn't a job isn't stopped. A card above the status bar says "<plugin> is still working", with Stop. Stop force stops the helper, as the job card's Stop does, and the plugin's next command starts a new one. Jobs keep their own cards.
 - **Memory.** The Lua heap cap is 2 GB: "the plugin ran out of memory: it may hold 2 GB".
 - **Background.** A plugin with `permissions.background` starts with HikariSub and can use timers:
@@ -797,8 +797,8 @@ The palette itself is #1236's, in the command palette spec (`docs/ux/command-pal
   - A program with no entry for this platform is unavailable, and so is what needs it. The plugin manager says "<title> isn't available for this computer". The plugin still installs, unless it is a program plugin whose `main` program is missing.
 - **Bundled.** `path` is the program's file in the package. Its folder and the files beside it are readable by the program.
 - **Downloaded.**
-  - **When.** HikariSub downloads the file at install, or at the first start after an update, with the same request rules as [`hikari.net.fetch`](#network): HTTPS, at most 5 redirects, no cookies.
-  - **The check.** It checks `size` (at most 1 GiB) and `sha256` before unpacking. A `zip` or `tar.gz` archive is unpacked with the [package path rules](#the-package), and `entry` names the program inside it.
+  - **When.** HikariSub downloads the file when the plugin starts and lacks it: after an install, after an update, or after a download that failed. It uses the same request rules as [`hikari.net.fetch`](#network): HTTPS, at most 5 redirects, no cookies.
+  - **The check.** It checks `size` (at most 1 GiB) and `sha256` before unpacking. A `zip` or `tar.gz` archive is unpacked with the [package path rules](#the-package), into at most 16384 files and 1 GiB, with no links. `entry` names the program inside it. A file that isn't an archive keeps the name its URL ends in.
   - **Where it goes.** It is kept in `<user folder>/plugin-programs/<plugin id>/<sha256>/` until neither the installed version nor the one kept for Roll back names that hash, or the plugin is uninstalled.
   - **The install question** shows each download's host and size.
   - **When it can't.** The download obeys "Let plugins connect to the internet". With that off, or offline, the program is "not downloaded", and the plugin's details offer Download now.

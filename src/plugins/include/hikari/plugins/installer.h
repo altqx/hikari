@@ -71,6 +71,8 @@ public:
     std::expected<void, std::string> setEnabled(std::string_view id, bool enabled);
     // The manifest of the installed copy.
     std::expected<Manifest, std::string> installedManifest(std::string_view id) const;
+    // The manifest of the copy kept for rollBack().
+    std::expected<Manifest, std::string> previousManifest(std::string_view id) const;
     // Checks the value against the installed manifest, then keeps it in plugins.json.
     std::expected<void, std::string> setSetting(std::string_view id, std::string_view setting, const api::Json &value);
     // Remembers the folder for one of the manifest's file requests in plugins.json; nullopt forgets it.
@@ -80,6 +82,7 @@ public:
 private:
     std::expected<InstallReview, InstallRefusal> open(std::vector<PackageFile> files) const;
     std::filesystem::path previousFolder(std::string_view id) const;
+    std::expected<Manifest, std::string> manifestIn(const std::filesystem::path &folder, std::string_view id) const;
 
     PluginFolders m_folders;
     std::int64_t m_apiVersion;

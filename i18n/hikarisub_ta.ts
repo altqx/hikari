@@ -17456,7 +17456,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message numerus="yes">
         <source>It ran for more than %n second(s).</source>
-        <translation>
+        <translation type="vanished">
             <numerusform>அது %n வினாடிக்கு மேல் இயங்கியது.</numerusform>
             <numerusform>அது %n வினாடிகளுக்கு மேல் இயங்கியது.</numerusform>
         </translation>
@@ -17491,7 +17491,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message numerus="yes">
         <source>The plugin ran for more than %n second(s), so HikariSub stopped it. Its next command starts it again.</source>
-        <translation>
+        <translation type="vanished">
             <numerusform>செருகுநிரல் %n வினாடிக்கு மேல் இயங்கியதால் HikariSub அதை நிறுத்தியது. அதன் அடுத்த கட்டளை அதை மீண்டும் தொடங்கும்.</numerusform>
             <numerusform>செருகுநிரல் %n வினாடிகளுக்கு மேல் இயங்கியதால் HikariSub அதை நிறுத்தியது. அதன் அடுத்த கட்டளை அதை மீண்டும் தொடங்கும்.</numerusform>
         </translation>
@@ -17663,6 +17663,103 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Its panel “%1” couldn’t load: %2</source>
         <translation>இதன் பலகம் “%1” ஐ ஏற்ற முடியவில்லை: %2</translation>
+    </message>
+    <message>
+        <source>Works in the background while HikariSub is open: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 is still working</source>
+        <extracomment>A plugin&apos;s command or event has run for more than 10 seconds</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A timer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Starting</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The plugin is stopped. Start it again in its details.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Runs programs that come with it: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Runs programs that come with it: %1: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Connects to the internet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Can read your files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The package lacks its program for this computer, %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Downloads %1 from %2 (%3)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not available for this computer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Programs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 isn’t available for this computer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 isn’t downloaded</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Downloading %1…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Download now</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Downloads the programs %1 needs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Its programs aren’t downloaded: “Let plugins connect to the internet” is off.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 couldn’t be downloaded: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>it isn’t the file the plugin names.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>it couldn’t be unpacked (%1).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>it doesn’t hold %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>it couldn’t be kept.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -21060,6 +21157,22 @@ because it was edited.</source>
     <message>
         <source>Video file name</source>
         <translation>வீடியோ கோப்பு பெயர்</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n plugin(s) working</source>
+        <extracomment>The status bar&apos;s busy icon: how many background plugins are working</extracomment>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Plugins working</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stop</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
