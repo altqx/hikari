@@ -477,6 +477,7 @@ hikari_add_qttest(hikari_ui_preset_tiers_tests SOURCES preset_tiers_tests.cpp LI
 hikari_add_qttest(hikari_ui_shell_menu_placement_tests SOURCES shell_menu_placement_tests.cpp LIBRARIES hikari_ui)
 hikari_add_qttest(hikari_ui_project_file_tests SOURCES project_file_tests.cpp LIBRARIES hikari_ui)
 hikari_add_qttest(hikari_ui_explorer_model_tests SOURCES explorer_model_tests.cpp LIBRARIES hikari_ui)
+hikari_add_qttest(hikari_ui_quick_pick_model_tests SOURCES quick_pick_model_tests.cpp LIBRARIES hikari_ui)
 hikari_add_qttest(hikari_ui_list_files_tests SOURCES list_files_tests.cpp LIBRARIES hikari_composition)
 target_compile_definitions(hikari_ui_list_files_tests PRIVATE
     HIKARI_LIST_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/list-files"
@@ -548,6 +549,8 @@ target_compile_definitions(hikari_ui_explorer_panel_tests PRIVATE
     HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures")
 add_dependencies(hikari_ui_explorer_panel_tests hikari_media_helper hikari_media_fixtures)
 set_tests_properties(hikari_ui_explorer_panel_tests.offscreen PROPERTIES TIMEOUT 300)
+hikari_add_qttest(hikari_ui_quick_open_tests SOURCES quick_open_tests.cpp
+    LIBRARIES hikari_composition KDAB::kddockwidgets)
 hikari_add_qttest(hikari_ui_project_windows_tests SOURCES project_windows_tests.cpp LIBRARIES hikari_composition
     PARTS skills spelling=eachWindowSpellsWithItsProjectsDictionary trust=aNamedKeyNobodyHasAsksNoTrust)
 target_include_directories(hikari_ui_project_windows_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
