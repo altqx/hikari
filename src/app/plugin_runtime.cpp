@@ -117,6 +117,10 @@ PluginRuntime::PluginRuntime(Wiring wiring, QObject *parent) : QObject(parent), 
             return it != m_plugins.end() && it->second->process->deliver(event, json, key);
         },
         this);
+    m_ui->popups()->setUserAsked([this](const std::string &plugin) {
+        const auto it = m_plugins.find(plugin);
+        return it != m_plugins.end() && it->second->process->answersUser();
+    });
     const auto &f = m_wiring.folders;
     if (!f.plugins.isEmpty())
         m_installer.emplace(plugins::PluginFolders{path(f.plugins), path(f.data), path(f.cache), path(f.registry)},

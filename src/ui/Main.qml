@@ -10549,6 +10549,20 @@ ApplicationWindow {
         explorer: explorerModel
         hangFrom: (titleBar.visible ? titleBar.height : 0) + 8
     }
+    Connections {
+        target: quickOpen.popup
+        function onOpened() {
+            if (root.pluginUi)
+                root.pluginUi.popups.dismissShown()
+        }
+    }
+    PluginQuickInput {
+        id: pluginQuickInput
+        objectName: "pluginQuickInput"
+        popups: root.pluginUi ? root.pluginUi.popups : null
+        hangFrom: quickOpen.hangFrom
+        onShowing: quickOpen.close()
+    }
     function apiCommand(symbol, run) {
         const target = root.globalActions()[symbol]
         if (!target) {

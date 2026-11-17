@@ -459,7 +459,7 @@ Result: `{"type": "object", "additionalProperties": false}`.
 {"type": "object", "properties": {
   "cancelled": {"type": "boolean"},
   "items": {"type": "array", "items": {"type": "string"}, "description": "The picked ids in list order; absent when cancelled."},
-  "button": {"type": "string", "description": "A title button the user pressed instead of picking; cancelled is then true."},
+  "button": {"type": "string", "description": "A title or item button the user pressed instead of picking; cancelled is then true."},
   "back": {"type": "boolean", "description": "true when the user pressed Back; cancelled is then true."}},
  "required": ["cancelled"], "additionalProperties": false}
 ```

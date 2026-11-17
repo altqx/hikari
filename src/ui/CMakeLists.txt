@@ -25,7 +25,7 @@ list(APPEND hikari_ui_qml_files ShiftTimesPanel.qml TimingPostprocessorPanel.qml
     ShiftLines.qml ShiftNeed.qml FormSection.qml SegmentedButtons.qml PrimaryButton.qml)
 list(APPEND hikari_ui_qml_files HomePage.qml RecentList.qml)
 list(APPEND hikari_ui_qml_files StylesPanel.qml)
-list(APPEND hikari_ui_qml_files QuickPick.qml QuickPickRow.qml QuickOpen.qml)
+list(APPEND hikari_ui_qml_files QuickPick.qml QuickPickRow.qml QuickOpen.qml InputBox.qml PluginQuickInput.qml)
 list(APPEND hikari_ui_qml_files ChangeAlignmentMenu.qml AlignDistributeMenu.qml PhantomMenu.qml CycleValuesPage.qml)
 list(APPEND hikari_ui_qml_files TagListPopup.qml EditorTagList.qml)
 list(APPEND hikari_ui_qml_files TagButton.qml TagButtonEditor.qml)
