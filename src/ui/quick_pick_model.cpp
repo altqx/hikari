@@ -205,6 +205,7 @@ QHash<int, QByteArray> QuickPickModel::roleNames() const
 
 void QuickPickModel::setItems(const QVariantList &items)
 {
+    const QString previous = currentId();
     m_items = items;
     m_groups.assign(std::size_t(items.size()), QString());
     QString group;
@@ -226,7 +227,7 @@ void QuickPickModel::setItems(const QVariantList &items)
         emit pickedChanged();
     }
     emit itemsChanged();
-    rebuild();
+    rebuild(previous);
 }
 
 void QuickPickModel::setFilter(const QString &filter)
@@ -275,7 +276,11 @@ void QuickPickModel::setMany(bool many)
 
 void QuickPickModel::rebuild()
 {
-    const QString previous = currentId();
+    rebuild(currentId());
+}
+
+void QuickPickModel::rebuild(const QString &previous)
+{
     struct Hit {
         int item;
         long long score;

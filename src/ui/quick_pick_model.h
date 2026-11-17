@@ -112,6 +112,7 @@ private:
         std::vector<int> descriptionMatch;
     };
     void rebuild();
+    void rebuild(const QString &previous);
     bool isItem(int row) const;
 
     QVariantList m_items;

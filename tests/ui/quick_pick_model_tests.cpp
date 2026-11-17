@@ -216,6 +216,19 @@ private slots:
         model.move(1);
         QCOMPARE(model.current(), -1);
     }
+
+    void newItemsKeepTheCurrentIdOrStartAtTheTop()
+    {
+        QuickPickModel model;
+        model.setItems({item(QStringLiteral("a"), QStringLiteral("Alpha")), item(QStringLiteral("b"), QStringLiteral("Beta")),
+                        item(QStringLiteral("c"), QStringLiteral("Gamma"))});
+        model.last();
+        QCOMPARE(model.currentId(), QStringLiteral("c"));
+        model.setItems({item(QStringLiteral("x"), QStringLiteral("Other"))});
+        QCOMPARE(model.currentId(), QStringLiteral("x"));
+        model.setItems({item(QStringLiteral("y"), QStringLiteral("Why")), item(QStringLiteral("x"), QStringLiteral("Other"))});
+        QCOMPARE(model.currentId(), QStringLiteral("x"));
+    }
 };
 
 QTEST_GUILESS_MAIN(QuickPickModelTests)

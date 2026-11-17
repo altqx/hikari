@@ -165,7 +165,7 @@ Item {
                                                                                    : qsTr("Not available here")
             const at = recent.indexOf(c.command)
             const item = { id: c.command, label: c.title, description: description, tooltip: tooltip, icon: icon,
-                           shortcut: c.kind === "hotkey" ? quick.shell.hotkeys.accelOf(c.command, c.windowIndex) : "",
+                           shortcut: c.kind === "hotkey" ? MenuKeys.text(c.command, c.windowIndex).replace(/(Ctrl|Shift|Alt|Meta|Win|Cmd)-/g, "$1+") : "",
                            disabled: disabled, commandKind: c.kind, rank: at >= 0 ? at : 1000 }
             if (at >= 0)
                 recentItems.push(item)
