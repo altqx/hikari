@@ -56,9 +56,10 @@ AiMcpServers::AiMcpServers(ui::SettingsStore &settings, AiFeatures &ai, QObject 
     : QObject(parent), m_settings(settings), m_ai(ai)
 {
     connect(&m_settings, &ui::SettingsStore::changed, this, [this](const QString &id) {
-        if (id == QLatin1String(AiFeatures::kMcpServersSetting))
+        if (id == QLatin1String(AiFeatures::kMcpServersSetting) || id == QLatin1String(AiFeatures::kPluginMcpServersSetting))
             emit serversChanged();
     });
+    connect(&m_ai, &AiFeatures::pluginMcpServersChanged, this, &AiMcpServers::serversChanged);
     connect(&m_ai, &AiFeatures::switched, this, [this] {
         watch();
         emit serversChanged();
@@ -98,8 +99,17 @@ void AiMcpServers::store(const std::vector<McpServerEntry> &servers)
 QVariantList AiMcpServers::servers() const
 {
     const backends::ai::McpClients *clients = m_ai.mcpClients();
+    const std::vector<McpServerEntry> chosen = choices();
+    std::vector<McpServerEntry> listed = entries();
+    for (McpServerEntry server : m_ai.pluginMcpServers()) {
+        if (const auto choice = std::ranges::find(chosen, server.id, &McpServerEntry::id); choice != chosen.end()) {
+            server.trusted = choice->trusted;
+            server.approved = choice->approved;
+        }
+        listed.push_back(std::move(server));
+    }
     QVariantList out;
-    for (const McpServerEntry &server : entries()) {
+    for (const McpServerEntry &server : listed) {
         QStringList approved;
         for (const std::string &tool : server.approved)
             approved << QString::fromStdString(tool);
@@ -113,10 +123,13 @@ QVariantList AiMcpServers::servers() const
             }
         const auto status = clients ? clients->status(server.id) : std::nullopt;
         const bool stdio = server.transport == McpServerEntry::Transport::Stdio;
+        const bool plugin = !server.plugin.empty();
         out << QVariantMap{{QStringLiteral("id"), QString::fromStdString(server.id)},
+                           {QStringLiteral("plugin"), plugin},
+                           {QStringLiteral("on"), !plugin || std::ranges::contains(chosen, server.id, &McpServerEntry::id)},
                            {QStringLiteral("name"), QString::fromStdString(server.name)},
                            {QStringLiteral("transport"), stdio ? QStringLiteral("stdio") : QStringLiteral("http")},
-                           {QStringLiteral("command"), stdio ? commandLine(server) : QString()},
+                           {QStringLiteral("command"), stdio && !plugin ? commandLine(server) : QString()},
                            {QStringLiteral("url"), server.url},
                            {QStringLiteral("trusted"), server.trusted},
                            {QStringLiteral("approved"), approved},
@@ -218,8 +231,51 @@ void AiMcpServers::remove(const QString &id)
         keys->remove(backends::ai::mcpSecretEntry(id.toStdString()), [](std::optional<application::ai::KeyError>) {});
 }
 
+std::vector<McpServerEntry> AiMcpServers::choices() const
+{
+    return pluginMcpChoices(m_settings.list(AiFeatures::kPluginMcpServersSetting));
+}
+
+void AiMcpServers::storeChoices(const std::vector<McpServerEntry> &chosen)
+{
+    QStringList rows;
+    for (const McpServerEntry &choice : chosen)
+        rows << pluginMcpChoiceRow(choice);
+    m_settings.set(AiFeatures::kPluginMcpServersSetting, rows);
+}
+
+bool AiMcpServers::changeChoice(const QString &id, const std::function<void(McpServerEntry &)> &change)
+{
+    std::vector<McpServerEntry> chosen = choices();
+    const auto choice = std::ranges::find(chosen, id.toStdString(), &McpServerEntry::id);
+    if (choice == chosen.end())
+        return std::ranges::contains(m_ai.pluginMcpServers(), id.toStdString(), &McpServerEntry::id);
+    change(*choice);
+    storeChoices(chosen);
+    return true;
+}
+
+void AiMcpServers::setOn(const QString &id, bool on)
+{
+    const auto &available = m_ai.pluginMcpServers();
+    const auto server = std::ranges::find(available, id.toStdString(), &McpServerEntry::id);
+    std::vector<McpServerEntry> chosen = choices();
+    const bool was = std::erase_if(chosen, [&](const McpServerEntry &c) { return c.id == id.toStdString(); }) > 0;
+    if (on && server != available.end()) {
+        McpServerEntry choice;
+        choice.id = server->id;
+        choice.plugin = server->plugin;
+        chosen.push_back(std::move(choice));
+    } else if (!was) {
+        return;
+    }
+    storeChoices(chosen);
+}
+
 void AiMcpServers::setTrusted(const QString &id, bool trusted)
 {
+    if (changeChoice(id, [trusted](McpServerEntry &c) { c.trusted = trusted; }))
+        return;
     std::vector<McpServerEntry> servers = entries();
     for (McpServerEntry &s : servers)
         if (s.id == id.toStdString())
@@ -229,14 +285,18 @@ void AiMcpServers::setTrusted(const QString &id, bool trusted)
 
 void AiMcpServers::setApproved(const QString &id, const QString &tool, bool approved)
 {
+    const auto approve = [&](McpServerEntry &s) {
+        if (approved)
+            s.approved.insert(tool.toStdString());
+        else
+            s.approved.erase(tool.toStdString());
+    };
+    if (changeChoice(id, approve))
+        return;
     std::vector<McpServerEntry> servers = entries();
     for (McpServerEntry &s : servers)
-        if (s.id == id.toStdString()) {
-            if (approved)
-                s.approved.insert(tool.toStdString());
-            else
-                s.approved.erase(tool.toStdString());
-        }
+        if (s.id == id.toStdString())
+            approve(s);
     store(servers);
 }
 

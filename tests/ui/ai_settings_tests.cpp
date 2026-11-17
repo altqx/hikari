@@ -498,6 +498,53 @@ TEST_F(AiSettingsTest, AnMcpServerIsSavedWithoutItsSecretsWhichGoToTheKeychain)
     EXPECT_FALSE(chain.keys.contains("mcp-server:my-notes"));
 }
 
+TEST_F(AiSettingsTest, APluginMcpServerIsOffUntilTurnedOnAndGoesWithItsPlugin)
+{
+    app::AiFeatures features(settings, ports());
+    app::AiMcpServers servers(settings, features);
+    backends::ai::McpServerEntry offered;
+    offered.id = backends::ai::pluginMcpServerId("dict", "lookup");
+    offered.name = "Lookup (Dictionary)";
+    offered.plugin = "dict";
+    offered.pluginServer = "lookup";
+    features.setPluginMcpServers({offered});
+    EXPECT_EQ(offered.id.substr(0, 2), "p-");
+    EXPECT_TRUE(offered.id.ends_with("-lookup"));
+
+    QVariantList rows = servers.servers();
+    ASSERT_EQ(rows.size(), 1);
+    EXPECT_TRUE(rows[0].toMap()[QStringLiteral("plugin")].toBool());
+    EXPECT_FALSE(rows[0].toMap()[QStringLiteral("on")].toBool());
+    EXPECT_EQ(rows[0].toMap()[QStringLiteral("command")].toString(), QString());
+    EXPECT_TRUE(features.mcpClients()->servers().empty());
+
+    const QString id = QString::fromStdString(offered.id);
+    servers.setOn(id, true);
+    servers.setTrusted(id, true);
+    servers.setApproved(id, QStringLiteral("define"), true);
+    rows = servers.servers();
+    EXPECT_TRUE(rows[0].toMap()[QStringLiteral("on")].toBool());
+    EXPECT_TRUE(rows[0].toMap()[QStringLiteral("trusted")].toBool());
+    ASSERT_EQ(features.mcpClients()->servers().size(), 1u);
+    EXPECT_EQ(features.mcpClients()->servers()[0].plugin, "dict");
+    EXPECT_TRUE(features.mcpClients()->servers()[0].trusted);
+    EXPECT_EQ(features.mcpClients()->servers()[0].approved, std::set<std::string>{"define"});
+    EXPECT_TRUE(settings.list(app::AiFeatures::kMcpServersSetting).isEmpty());
+
+    features.setPluginMcpServers({});
+    EXPECT_TRUE(features.mcpClients()->servers().empty());
+    EXPECT_TRUE(servers.servers().isEmpty());
+    features.setPluginMcpServers({offered});
+    EXPECT_EQ(features.mcpClients()->servers().size(), 1u);
+
+    features.keepPluginMcpChoices({"other"});
+    EXPECT_TRUE(settings.list(app::AiFeatures::kPluginMcpServersSetting).isEmpty());
+    EXPECT_TRUE(features.mcpClients()->servers().empty());
+    servers.setOn(id, true);
+    servers.setOn(id, false);
+    EXPECT_TRUE(features.mcpClients()->servers().empty());
+}
+
 TEST_F(AiSettingsTest, AnMcpServerNeedsANameACommandOrAUrlAndWellFormedVariables)
 {
     app::AiFeatures features(settings, ports());

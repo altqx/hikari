@@ -16634,6 +16634,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>Antigravity isn’t on PATH.</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>From a plugin, in its sandbox</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>On</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Plugins</name>
@@ -17635,6 +17643,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>The plugin is the program %1, which isn’t available for this computer.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Offers MCP servers in Settings › AI, off until you turn them on: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 (%2)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The plugin isn’t on.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

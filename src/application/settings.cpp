@@ -423,6 +423,8 @@ std::vector<SettingDefinition> &definitions()
         {"ai.mcp.skills", "", Bool, Profile, Mapped, false, false},
         // servers: one McpServerEntry JSON object per row; their secrets are in the keychain.
         {"ai.mcp.servers", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
+        // pluginServers: the plugin servers the user turned on, one {id, plugin, trusted, approved} object per row.
+        {"ai.mcp.pluginServers", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {"ai.exclude", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {"ai.off", "", Bool, Profile, Mapped, false, false},
         {"ai.autoUpdate", "", Bool, Profile, Mapped, false, true},
