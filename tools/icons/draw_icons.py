@@ -186,6 +186,10 @@ def cross_badge():
     return accent(stroke("M10 10l4 4M14 10l-4 4"))
 
 
+def save_badge():
+    return accent(stroke("M12 9v5M9.75 11.75L12 14l2.25-2.25"))
+
+
 def clock_badge():
     return accent(circle(12, 12, 3), stroke("M12 10.5V12l1 1"))
 
@@ -391,6 +395,7 @@ icon("recent-audio", "Recently opened audio", ["RecentAudio.png"], [AUDIO], note
 icon("audio-from-video", "Open audio from video", ["OpenAudioFromVideo.png"], [AUDIO],
      video_film() + accent(note(8.5, 8, 6.5)))
 icon("close-audio", "Close audio", ["CloseAudio.png"], [AUDIO], note(.75, 1, 10) + cross_badge())
+icon("save-audio", "Save audio of selected lines", [], [AUDIO, "grid-menu"], note(.75, 1, 10) + save_badge())
 
 icon("audio-previous-line", "Previous line", ["button_prev.png"], [AUDIOBOX],
      solid("M7.5 3.5v9L2 8z") + solid("M14 3.5v9L8.5 8z"))

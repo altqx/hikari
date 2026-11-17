@@ -4,7 +4,7 @@
 export script_name        = "Aegisub-Motion"
 export script_description = "A set of tools for simplifying the process of creating and applying motion tracking data with Aegisub."
 export script_author      = "torque"
-export script_version     = "1.0.9"
+export script_version     = "1.1.2"
 export script_namespace   = "a-mo.Aegisub-Motion"
 
 local interface, setProgress, setTask
@@ -22,13 +22,13 @@ if haveDepCtrl
 			'json'
 			{ 'a-mo.ConfigHandler',  version: '1.1.4'  }
 			{ 'a-mo.DataWrapper',    version: '1.0.2'    }
-			{ 'a-mo.LineCollection', version: '1.3.0' }
+			{ 'a-mo.LineCollection', version: '1.4.1' }
 			{ 'a-mo.Log' ,           version: '1.0.0'            }
 			{ 'a-mo.Math' ,          version: '1.0.0'           }
-			{ 'a-mo.MotionHandler',  version: '1.1.8'  }
+			{ 'a-mo.MotionHandler',  version: '1.1.10'  }
 			{ 'a-mo.Statistics' ,    version: '0.1.3'     }
-			{ 'a-mo.TrimHandler',    version: '1.0.5'    }
-			{ 'a-mo.Tags',           version: '1.3.4'           }
+			{ 'a-mo.TrimHandler',    version: '1.2.4'    }
+			{ 'a-mo.Tags',           version: '1.3.6'           }
 		}
 	}
 	clipboard, json, ConfigHandler, DataWrapper, LineCollection, log, Math, MotionHandler, Statistics, TrimHandler, Tags = versionRecord\requireModules!
@@ -142,8 +142,8 @@ If you want to use a custom encoding command, write it here. Leave this
 blank to use the built-in presets (probably what you want).]] }
 			prefix:   { config: true, value: "?video", class: "textbox",  x: 0, y: 1, width: 10, height: 1,                                                             hint: "Prefix the encoded video is written. Useful values are ?video for the directory of the currently loaded video and ?script for the directory of the currently open script." }
 			makePfix: { config: true, value: true,     class: "checkbox", x: 0, y: 2, width: 10, height: 1, label: "Try to create prefix directory.",                   hint: "Try to create prefix directory." }
-			preset:   { config: true, value: "x264",   class: "dropdown", x: 0, y: 4, width: 10, height: 1, label: "Sort lines by", items: TrimHandler.existingPresets, hint: "Choose an existing preset by name." }
-			encBin:   { config: true, value: "",       class: "textbox",  x: 0, y: 6, width: 10, height: 1,                                                             hint: "The full path to your encoding binary (x264.exe if you're using the default preset)" }
+			preset:   { config: true, value: "ffmpeg", class: "dropdown", x: 0, y: 4, width: 10, height: 1, label: "Sort lines by", items: TrimHandler.existingPresets, hint: "Choose an existing preset by name." }
+			encBin:   { config: true, value: "",       class: "textbox",  x: 0, y: 6, width: 10, height: 1,                                                             hint: "The full path to your encoding binary (ffmpeg.exe if you're using the default preset)" }
 			command:  { config: true, value: "",       class: "textbox",  x: 0, y: 8, width: 10, height: 4,                                                             hint: "If you want to use a custom encoding command, write it here." }
 		}
 	}
@@ -588,6 +588,17 @@ trimConfigurator = ->
 	options\read!
 	trimConfigDialog options
 
+-- Comments define the trim range only when no uncommented dialogue is
+-- selected, so a stray comment can't distort the timing of the
+-- surrounding dialogue.
+trimValidationCallback = ( subtitles, selectedLines ) ->
+	for index in *selectedLines
+		line = subtitles[index]
+		if line.class == "dialogue" and not line.comment
+			return nil
+
+	return ( line ) -> line.class == "dialogue"
+
 trimProcessor = ( subtitles, selectedLines, activeLine, eachFlag ) ->
 	setTask     = aegisub.progress.task
 	setProgress = aegisub.progress.set
@@ -607,20 +618,21 @@ You must specify the path to your encoding binary.
 		trimConfigDialog options
 
 	trim = TrimHandler options.configuration.trim
+	trimValidation = trimValidationCallback subtitles, selectedLines
 	if eachFlag
 		seenRanges = { }
 		for lineIndex in *selectedLines
-			lineCollection = LineCollection subtitles, { lineIndex }
+			lineCollection = LineCollection subtitles, { lineIndex }, trimValidation
+			continue unless trim\calculateTrimLength lineCollection
 			collectionRange = "#{lineCollection.startFrame}-#{lineCollection.endFrame}"
 			unless seenRanges[collectionRange]
 				seenRanges[collectionRange] = true
-				trim\calculateTrimLength lineCollection
 				trim\performTrim!
 				stats\incrementValue "trim.clipsCreated"
 		stats\incrementValue "trimEach.runCount"
 
 	else
-		lineCollection = LineCollection subtitles, selectedLines
+		lineCollection = LineCollection subtitles, selectedLines, trimValidation
 		trim\calculateTrimLength lineCollection
 		trim\performTrim!
 		stats\incrementValue "trim.clipsCreated"
@@ -650,7 +662,7 @@ revertProcessor = ( subtitles, selectedLines ) ->
 				unless uuids[data.uuid]
 					.text = data.originalText
 					.number = index
-					.extra = {}
+					.extra['a-mo'] = nil
 					uuids[data.uuid] = line
 
 	indicesToNuke = { }
@@ -700,14 +712,35 @@ canRun = ( sub, selectedLines ) ->
 		return false, "You must have a video loaded to run this macro."
 	elseif 0 == #selectedLines
 		return false, "You must have lines selected to use this macro."
-	true
+
+	for index in *selectedLines
+		line = sub[index]
+		if line.class == "dialogue" and not line.comment
+			return true
+
+	return false, "You must have at least one uncommented dialogue line selected to use this macro."
+
+-- Trimming only needs a time range, which commented dialogue lines still
+-- provide, so trim macros accept selections that contain only comments.
+canTrim = ( sub, selectedLines ) ->
+	if not aegisub.frame_from_ms 0
+		return false, "You must have a video loaded to run this macro."
+	elseif 0 == #selectedLines
+		return false, "You must have lines selected to use this macro."
+
+	for index in *selectedLines
+		line = sub[index]
+		if line.class == "dialogue"
+			return true
+
+	return false, "You must have at least one dialogue line selected to use this macro."
 
 if haveDepCtrl
 	versionRecord\registerMacros {
 		{ "Apply", "Applies properly formatted motion tracking data to selected subtitles.", applyProcessor, canRun }
 		{ "Revert", "Removes properly formatted motion tracking data from selected subtitles.", revertProcessor }
-		{ "Trim", "Cuts and encodes the current scene for use with motion tracking software.", trimProcessor, canRun }
-		{ "Trim Each", "Cuts and encodes selected scenes for use with motion tracking software.", trimProcessorEach, canRun }
+		{ "Trim", "Cuts and encodes the current scene for use with motion tracking software.", trimProcessor, canTrim }
+		{ "Trim Each", "Cuts and encodes selected scenes for use with motion tracking software.", trimProcessorEach, canTrim }
 		{ "Trim Settings", "Opens a gui to configure the trim tool.", trimConfigurator }
 	}
 else
@@ -718,10 +751,10 @@ else
 		revertProcessor
 
 	aegisub.register_macro "#{script_name}/Trim", "Cuts and encodes the current scene for use with motion tracking software.",
-		trimProcessor, canRun
+		trimProcessor, canTrim
 
 	aegisub.register_macro "#{script_name}/Trim Each", "Cuts and encodes selected scenes for use with motion tracking software.",
-		trimProcessorEach, canRun
+		trimProcessorEach, canTrim
 
 	aegisub.register_macro "#{script_name}/Trim Settings", "Opens a gui to configure the trim tool.",
 		trimConfigurator

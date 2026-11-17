@@ -96,6 +96,13 @@ A dummy video's frame rate may be a fraction, such as `24000/1001`, and its path
 
 A dummy video can be up to 100000 pixels on each side, as in Aegisub 3.5. The smallest is still 300×200. When a side is over 8192, the frames are drawn scaled down to fit 8192×8192, so a huge dummy doesn't need gigabytes of memory per frame. The size you asked for is what the visual tools, the PlayRes and LayoutRes checks, Script properties and Lua (`aegisub.video_size()`) see. Only the picture and `aegisub.get_frame()` have the smaller size. [FA9 #566](https://github.com/altqx/hikari/issues/566), coordinator decision 2026-11-03.
 
+## PT-dummy-noise
+
+A file or session that stores a blank-audio path with `noise` in it (`dummy-audio:noise?sr=…&ln=…`, as Aegisub writes for its noise audio) opens as white noise of that length, as Aegisub does, not as silence. The noise is computed per sample, so it takes no memory and plays the same every time. There is still no command that makes noise audio (owner, 2026-10-18). [PT #1212](https://github.com/altqx/hikari/issues/1212).
+
+## PT-spectrum-curve
+
+The audio spectrum has a frequency curve: Linear (legacy's spectrum, unchanged), Speech (legacy's non-linear spectrum) and Logarithmic. Speech and Logarithmic draw power in decibels over 60 dB; Linear keeps legacy's linear power. Legacy's `AUDIO_SPECTRUM_NON_LINEAR_ON=true` imports as Speech. [PT #1212](https://github.com/altqx/hikari/issues/1212).
 ## PT-timing-keys
 
 Settings › Audio › "Timing keys work in every panel" (Never, In the Timing layout, Always; In the Timing layout by default) is HikariSub's version of Aegisub's Medusa timing keys. When it applies, the audio panel's shortcuts also work in the video and the line editor. The grid already takes every audio shortcut but the five primary ones (Enter and the arrows), as legacy does, whatever the setting. Unlike Aegisub, arrows, Page Up and Down, Home, End, Enter, Tab and Escape keep their panel's meaning, and in a text box only shortcuts with Ctrl, Alt or Meta take part (coordinator, 2026-11-17). Switching layouts never changes the setting. [PT #1212](https://github.com/altqx/hikari/issues/1212).
@@ -168,13 +175,13 @@ Line breaks, Change case and Swap dialogue alternatives do natively what these s
 
 ## AU8-motion-data
 
-Video › Tracking does natively what Aegisub-Motion 1.0.9, 0x.DeriveTrack, arch.DerivePerspTrack, petzku.ExtrapolateMove and phos.ExtrapolateTracking do. On the 35-case corpus it matches Aegisub-Motion's output where that output is stable (`docs/research/motion-data-parity.md`). The bundled scripts still ship unchanged. The departures below were accepted by the owner on 2026-11-09 (Q201–Q206). [AU8 #842](https://github.com/altqx/hikari/issues/842).
+Video › Tracking does natively what Aegisub-Motion 1.0.9, 0x.DeriveTrack, arch.DerivePerspTrack, petzku.ExtrapolateMove and phos.ExtrapolateTracking do. On the 35-case corpus it matches Aegisub-Motion's output where that output is stable (`docs/research/motion-data-parity.md`). The bundled scripts still ship unchanged. The departures below were accepted by the owner on 2026-11-09 (Q201–Q206). [AU8 #842](https://github.com/altqx/hikari/issues/842). Since [#1216](https://github.com/altqx/hikari/issues/1216) the bundled Aegisub-Motion is 1.1.2 (upstream `ce44cf9131de`): D14 was added (owner Q773), interpolated transform values are written at full precision, as 1.1.2 writes them (Q774), and D5 no longer differs from it.
 
 - **D1, relative frame.** The relative frame is 1 to the number of frames. Aegisub-Motion's 0, negative and absolute frames aren't offered.
 - **D2, data from a file.** **Open file…** loads a data file into the text box. A path typed in the box isn't read.
 - **D3, Shake rotoshape.** SRS data isn't read. Aegisub-Motion still reads it.
 - **D4, `\move`.** A `\move` is clamped to its times before it is tracked, as renderers show it. Aegisub-Motion extrapolates past them, so the sign overshoots. A 4-argument `\move` runs over the whole Line.
-- **D5, shifted transforms.** With Bake transforms off, every shifted `\t` and every tag is kept. Aegisub-Motion's dedupe keeps one `\t` a block, and sometimes drops `\fscx`.
+- **D5, shifted transforms.** With Bake transforms off, every shifted `\t` and every tag is kept. Aegisub-Motion 1.0.9's dedupe kept one `\t` a block, and sometimes dropped `\fscx`; 1.1.2 keeps them too (upstream #78).
 - **D6, empty clip.** Linear mode writes no `\clip()\t(…,\clip())`.
 - **D7, Linear with `\move`.** The Line's `\move` is read at the first and last frames' mid-times. Aegisub-Motion reads it at the absolute time, which puts the sign far off.
 - **D8, Linear with karaoke.** It works. Aegisub-Motion fails with "attempt to compare number with nil".
@@ -183,6 +190,7 @@ Video › Tracking does natively what Aegisub-Motion 1.0.9, 0x.DeriveTrack, arch
 - **D11, one Power-Pin command.** Copy Power-Pin data from lines uses each Line's saved plane, else its tags' quad. arch.DerivePerspTrack has two macros, From Outer Quad and From Tags.
 - **D12, frame rate.** The two copy commands write the video's frame rate. The scripts write 23.976.
 - **D13, alphas.** With Bake transforms on, the Style's `\1a` `\3a` `\4a` (or `\alpha&H00&`) are added only when the Line has a fade to bake. Aegisub-Motion adds them to every Line.
+- **D14, frame times.** Each frame's Line starts and ends at the frame's time truncated to the centisecond, as every ASS time is (`docs/time-semantics.md`). Aegisub-Motion since upstream #87 rounds to the nearest centisecond, so some of its Lines start and end 10 ms later, and the karaoke `\k` durations, shifted `\t` and `\fade` times and `\move` positions that follow from those times differ with them. Owner Q773 (2026-11-18), [#1216](https://github.com/altqx/hikari/issues/1216).
 
 ## AU4-remove-tags
 

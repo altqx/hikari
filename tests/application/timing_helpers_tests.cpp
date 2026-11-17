@@ -408,6 +408,18 @@ TEST_P(TimingHelpers, AssistantAcceptRefusesAnEndBeforeTheStart)
     EXPECT_FALSE(acceptTiming(*session, s));
 }
 
+TEST_P(TimingHelpers, TheSelectedSpanRunsFromTheEarliestStartToTheLatestEnd)
+{
+    load(standard);
+    select({3, 1}, 3);
+    const auto span = selectedLinesSpan(*session);
+    ASSERT_TRUE(span.has_value());
+    EXPECT_EQ(span->startMs, startMs(1));
+    EXPECT_EQ(span->endMs, endMs(3));
+    session->setSelection(Selection{});
+    EXPECT_FALSE(selectedLinesSpan(*session).has_value());
+}
+
 INSTANTIATE_TEST_SUITE_P(Timebases, TimingHelpers,
                          ::testing::Values(Timebase{"Ntsc23976", LegacyTimebase(ntscTimecodes(), 0.0)},
                                            Timebase{"Vfr", LegacyTimebase(vfrTimecodes(), 0.0)}),

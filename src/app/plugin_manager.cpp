@@ -1,5 +1,7 @@
 #include "hikari/app/plugin_manager.h"
 
+#include "hikari/app/plugin_content.h"
+
 #include "hikari/api/api.h"
 #include "hikari/backends/desktop_handoff.h"
 
@@ -136,6 +138,11 @@ QString packageMessage(const PackageProblem &problem)
         return QCoreApplication::translate("HikariSub.Plugins", "The package lacks its panel file, %1.").arg(text(problem.path));
     case PackageProblem::Kind::QmlImport:
         return QCoreApplication::translate("HikariSub.Plugins", "%1 imports %2, which plugin panels can’t use.")
+            .arg(text(problem.path), text(problem.detail));
+    case PackageProblem::Kind::MissingContent:
+        return QCoreApplication::translate("HikariSub.Plugins", "The package lacks its content file, %1.").arg(text(problem.path));
+    case PackageProblem::Kind::BadContent:
+        return QCoreApplication::translate("HikariSub.Plugins", "The package’s content file %1 can’t be read: it %2.")
             .arg(text(problem.path), text(problem.detail));
     case PackageProblem::Kind::Manifest:
         break;
@@ -353,6 +360,8 @@ PluginManager::PluginManager(Folders folders, QObject *parent) : QObject(parent)
         m_installer.emplace(plugins::PluginFolders{path(folders.plugins), path(folders.data), path(folders.cache),
                                                    path(folders.registry)},
                             api::kApiVersion);
+    if (m_installer)
+        m_installer->checkContentWith(contentFileChecks());
     refresh();
 }
 

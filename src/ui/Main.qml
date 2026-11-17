@@ -2907,6 +2907,12 @@ ApplicationWindow {
             onTriggered: if (!root.hotkeyGesture("GLOBAL_AUDIO_FROM_VIDEO")) root.app.openAudioFromVideo()
         }
         Action {
+            id: saveSelectedAudioAction
+            text: qsTr("Save audio of selected lines…")
+            enabled: root.audio.hasAudio && root.shell.selectedCount > 0
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_SAVE_SELECTED_AUDIO")) saveSelectedAudioDialog.show()
+        }
+        Action {
             id: closeAudioAction
             text: qsTr("&Close audio")
             enabled: root.audio.hasAudio
@@ -4185,6 +4191,13 @@ ApplicationWindow {
                     iconRole: "close-audio"
                     objectName: "closeAudioMenuItem"
                     action: closeAudioAction
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_SAVE_SELECTED_AUDIO"
+                    help: qsTr("Saves the audio from the first selected line’s start to the last one’s end as a WAV file")
+                    iconRole: "save-audio"
+                    objectName: "saveSelectedAudioMenuItem"
+                    action: saveSelectedAudioAction
                 }
                 MenuSeparator {}
                 ShellMenuItem {
@@ -7063,17 +7076,39 @@ ApplicationWindow {
                                         root.audio.setSpectrumOn(true)
                                     }
                                 }
-                                FoldedToggle {
-                                    objectName: "audioMoreSpeechSpectrum"
+                                ShellMenu {
+                                    objectName: "audioMoreFrequencyCurve"
                                     iconRole: "spectrum-nonlinear"
-                                    text: qsTranslate("HikariSub.Audio", "Speech spectrum")
-                                    checked: root.audio.spectrumNonLinear
-                                    onToggled: {
-                                        root.audio.setSpectrumNonLinear(checked)
-                                        checked = Qt.binding(() => root.audio.spectrumNonLinear)
+                                    title: qsTranslate("HikariSub.Audio", "Frequency curve")
+                                    MenuRadioItem {
+                                        objectName: "audioMoreFrequencyCurveLinear"
+                                        text: qsTranslate("HikariSub.Audio", "Linear")
+                                        checked: root.audio.spectrumCurve === 0
+                                        onTriggered: {
+                                            checked = Qt.binding(() => root.audio.spectrumCurve === 0)
+                                            root.audio.setSpectrumCurve(0)
+                                        }
+                                    }
+                                    MenuRadioItem {
+                                        objectName: "audioMoreFrequencyCurveSpeech"
+                                        text: qsTranslate("HikariSub.Audio", "Speech")
+                                        checked: root.audio.spectrumCurve === 1
+                                        onTriggered: {
+                                            checked = Qt.binding(() => root.audio.spectrumCurve === 1)
+                                            root.audio.setSpectrumCurve(1)
+                                        }
+                                    }
+                                    MenuRadioItem {
+                                        objectName: "audioMoreFrequencyCurveLogarithmic"
+                                        text: qsTranslate("HikariSub.Audio", "Logarithmic")
+                                        checked: root.audio.spectrumCurve === 2
+                                        onTriggered: {
+                                            checked = Qt.binding(() => root.audio.spectrumCurve === 2)
+                                            root.audio.setSpectrumCurve(2)
+                                        }
                                     }
                                 }
-                                FoldedToggleSeparator {}
+                                MenuSeparator {}
                                 ShellMenuItem {
                                     objectName: "audioMoreGotoStart"
                                     iconRole: "audio-to-selection-start"
@@ -7951,6 +7986,14 @@ ApplicationWindow {
                             text: qsTranslate("HikariSub.Grid", "Snap to the scene")
                             enabled: root.video.hasVideo
                             onTriggered: if (!root.hotkeyGesture("GLOBAL_SNAP_TO_SCENE")) root.runTimingHelper("GLOBAL_SNAP_TO_SCENE")
+                        }
+                        ShellMenuItem {
+                            command: "GLOBAL_SAVE_SELECTED_AUDIO"
+                            iconRole: "save-audio"
+                            objectName: "gridSaveSelectedAudio"
+                            text: qsTranslate("HikariSub.Grid", "Save audio of selected lines…")
+                            enabled: root.audio.hasAudio
+                            onTriggered: if (!root.hotkeyGesture("GLOBAL_SAVE_SELECTED_AUDIO")) saveSelectedAudioDialog.show()
                         }
                         ShellMenuItem { command: "GRID_TREE_MAKE"; iconRole: "make-tree"; objectName: "makeTree"; text: qsTranslate("HikariSub.Grid", "Make line group"); onTriggered: if (!root.gridGesture(this, "GRID_TREE_MAKE")) root.app.makeGroups() }
                         ShellMenuItem {
@@ -9912,6 +9955,24 @@ ApplicationWindow {
         }
     }
     FileChooser {
+        id: saveSelectedAudioDialog
+        objectName: "saveSelectedAudioDialog"
+        fileMode: FileDialog.SaveFile
+        title: qsTranslate("HikariSub.Audio", "Save audio of selected lines")
+        defaultSuffix: "wav"
+        nameFilters: [qsTranslate("HikariSub.Audio", "WAV audio (*.wav)")]
+        onAccepted: {
+            root.rememberPickerFolder("audioClip", selectedFile)
+            const problem = root.app.saveSelectedAudio(selectedFile)
+            if (problem.length > 0)
+                root.notices.post("error", qsTranslate("HikariSub.Audio", "Save audio of selected lines"), problem)
+        }
+        function show() {
+            currentFolder = root.startFolder("audioClip", root.app.audioDialogFolder())
+            open()
+        }
+    }
+    FileChooser {
         id: agentExportDialog
         objectName: "agentExportDialog"
         property string thread
@@ -10921,7 +10982,7 @@ ApplicationWindow {
         GLOBAL_RELOAD_AUDIO: reloadAudioAction, GLOBAL_RELOAD_VIDEO: reloadVideoAction,
         GLOBAL_AUTOMATION_LOAD_SCRIPT: loadScriptAction, GLOBAL_AUTOMATION_RELOAD_AUTOLOAD: reloadAutoloadAction,
         GLOBAL_AUTOMATION_LOAD_LAST_SCRIPT: loadLastScriptAction,
-        GLOBAL_AUTOMATION_REPEAT_LAST_RUN: repeatRunAction, GLOBAL_AUTOMATION_RERUN_LAST_MACRO: rerunLastMacroAction,
+        GLOBAL_AUTOMATION_REPEAT_LAST_RUN: repeatRunAction, GLOBAL_AUTOMATION_RERUN_LAST_MACRO: rerunLastMacroAction, GLOBAL_SAVE_SELECTED_AUDIO: saveSelectedAudioAction,
         GLOBAL_PLAY_PAUSE: playPauseAction,
         GLOBAL_PREVIOUS_FRAME: previousFrameAction, GLOBAL_NEXT_FRAME: nextFrameAction,
         GLOBAL_SET_VIDEO_AT_START_TIME: goToStartAction, GLOBAL_SET_VIDEO_AT_END_TIME: goToEndAction,

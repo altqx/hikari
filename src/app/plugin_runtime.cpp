@@ -1,5 +1,6 @@
 #include "hikari/app/plugin_runtime.h"
 
+#include "hikari/app/plugin_content.h"
 #include "hikari/app/plugin_nodes.h"
 
 #include "log_controller.h"
@@ -289,6 +290,7 @@ void PluginRuntime::sync()
     std::vector<PluginUi::Plugin> installed;
     std::vector<application::PluginNode> nodes;
     std::map<std::string, std::string> unavailable;
+    application::PluginContent content;
     if (m_installer) {
         if (const auto registry = m_installer->registry())
             for (const auto &[id, entry] : *registry) {
@@ -309,6 +311,8 @@ void PluginRuntime::sync()
                 installed.push_back({id, manifest->name, runs, manifest->panels,
                                      QUrl::fromLocalFile(QString::fromStdU16String(root.u16string())),
                                      manifest->tier == plugins::Tier::Unrestricted, manifest->version});
+                if (pluginContentShows(entry, *manifest))
+                    addPluginContent(content, id, *manifest, root);
                 if (!manifest->nodes.empty()) {
                     std::expected<std::vector<application::PluginNode>, std::string> own = std::unexpected(std::string());
                     if (pluginNodesRun(entry, *manifest))
@@ -345,6 +349,7 @@ void PluginRuntime::sync()
     m_userOn = std::move(userOn);
     m_onIn = std::move(onIn);
     application::setPluginNodes(std::move(nodes), std::move(unavailable));
+    application::setPluginContent(std::move(content));
     m_ui->setPlugins(std::move(installed));
     relist();
 }

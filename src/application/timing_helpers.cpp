@@ -361,4 +361,19 @@ std::expected<void, CommandRefusal> acceptTiming(EditSession &session, const Tim
     return {};
 }
 
+std::optional<TimeSpanMs> selectedLinesSpan(const EditSession &session)
+{
+    const auto &selected = session.selection().selected;
+    std::optional<TimeSpanMs> span;
+    for (const auto *l : linesOf(session)) {
+        if (!selected.contains(l->id))
+            continue;
+        const int start = msOf(l->start.value), end = msOf(l->end.value);
+        span = span ? TimeSpanMs{std::min(span->startMs, start), std::max(span->endMs, end)} : TimeSpanMs{start, end};
+    }
+    if (span && span->endMs <= span->startMs)
+        return std::nullopt;
+    return span;
+}
+
 }

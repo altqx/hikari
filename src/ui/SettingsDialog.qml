@@ -1415,6 +1415,15 @@ DialogWindow {
                                 Accessible.name: qsTr("Inactive lines")
                             }
                         }
+                        SettingsRow {
+                            iconRole: "spectrum-nonlinear"
+                            text: qsTr("Frequency curve")
+                            SettingChoice {
+                                setting: "audio.spectrumCurve"
+                                model: [qsTr("Linear"), qsTr("Speech"), qsTr("Logarithmic")]
+                                Accessible.name: qsTr("Frequency curve")
+                            }
+                        }
                     }
                     SettingsSection {
                         title: qsTr("Snapping")

@@ -422,11 +422,11 @@ void CrashReports::entryAdded(const QString &time, int severity, const QString &
 
 void CrashReports::writeTail()
 {
-    QSaveFile file(m_config.logTail);
-    if (inPrivateFolder(m_config.logTail) && file.open(QIODevice::WriteOnly)) {
-        file.write(m_tail.join(u'\n').toUtf8());
-        file.commit();
-    }
+    m_writes.put(m_config.logTail, [path = m_config.logTail, bytes = m_tail.join(u'\n').toUtf8()] {
+        QSaveFile file(path);
+        return inPrivateFolder(path) && file.open(QIODevice::WriteOnly) && file.write(bytes) == bytes.size() &&
+               file.commit();
+    });
 }
 
 QString CrashReports::issueSystemText() const

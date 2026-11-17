@@ -410,19 +410,24 @@ std::expected<ShiftPlan, ShiftFailure> planShift(const EditSession &session, con
                 const int cdiff = s.thresholdEnd + s.thresholdStart;
                 const int tdiff = cur.start - it->end;
                 newstarttime = -1;
-                if (tdiff <= cdiff && tdiff > 0 && !previousIsKeyFrame) {
-                    const int coeff = static_cast<int>((static_cast<float>(tdiff) / static_cast<float>(cdiff)) *
-                                                       static_cast<float>(s.thresholdEnd));
+                const bool gap = tdiff <= cdiff && tdiff > 0;
+                const bool overlap = tdiff < 0 && -tdiff <= s.maxOverlap;
+                const unsigned rule = gap ? GapClosed : OverlapClosed;
+                if ((gap || overlap) && !previousIsKeyFrame) {
+                    const int coeff =
+                        cdiff > 0 ? static_cast<int>((static_cast<float>(tdiff) / static_cast<float>(cdiff)) *
+                                                     static_cast<float>(s.thresholdEnd))
+                                  : tdiff / 2;
                     it->end = std::max(0, it->end + zeroIt(coeff));
                     newstarttime = it->end;
                     it->marked = true;
-                    it->rules |= GapClosed;
+                    it->rules |= rule;
                 }
                 if (!foundStartKeyframe && newstarttime != -1) {
                     cur.start = std::max(0, newstarttime);
                     newstarttime = -1;
                     ++startMods;
-                    cur.rules |= GapClosed;
+                    cur.rules |= rule;
                 }
             }
             if (startMods > 0 || endMods > 0)

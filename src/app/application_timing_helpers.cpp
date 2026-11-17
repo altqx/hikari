@@ -1,7 +1,12 @@
 #include "hikari/app/application.h"
+#include "audio_controller.h"
 #include "hikari/application/timing_helpers.h"
+#include "hikari/backends/external_aligner.h"
 
+#include <QCoreApplication>
+#include <QSaveFile>
 #include <QStringList>
+#include <QUrl>
 #include <QVariantList>
 
 #include <algorithm>
@@ -42,6 +47,33 @@ bool styleChosen(const application::ShiftTimesSettings &settings, const core::Li
     return std::any_of(styles.begin(), styles.end(), [&](const QString &s) { return s.trimmed() == style; });
 }
 
+}
+
+bool Application::canSaveSelectedAudio()
+{
+    auto *session = targetSession();
+    return session && activeMedia().audio && activeMedia().audio->box().sharedAudio() &&
+           application::selectedLinesSpan(*session).has_value();
+}
+
+QString Application::saveSelectedAudio(const QUrl &file)
+{
+    auto *session = targetSession();
+    const auto span = session ? application::selectedLinesSpan(*session) : std::nullopt;
+    const auto audio = activeMedia().audio ? activeMedia().audio->box().sharedAudio() : nullptr;
+    if (!span || !audio || audio->sampleRate() <= 0)
+        return QCoreApplication::translate("HikariSub.Audio", "Open audio and select lines with some length first.");
+    if (!audio->finished())
+        return QCoreApplication::translate("HikariSub.Audio", "The audio is still loading.");
+    const int rate = audio->sampleRate();
+    const std::int64_t first = std::int64_t{span->startMs} * rate / 1000;
+    const std::int64_t count = std::int64_t{span->endMs - span->startMs} * rate / 1000;
+    std::vector<std::int16_t> samples(static_cast<std::size_t>(count));
+    audio->read(first, count, samples.data());
+    QSaveFile out(file.isLocalFile() ? file.toLocalFile() : file.toString());
+    if (!out.open(QIODevice::WriteOnly) || out.write(backends::wavBytes(samples, rate)) < 0 || !out.commit())
+        return QCoreApplication::translate("HikariSub.Audio", "The audio couldn’t be saved there.");
+    return {};
 }
 
 bool Application::snapToAdjacentKeyframe(bool end, bool next)

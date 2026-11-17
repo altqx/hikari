@@ -188,6 +188,7 @@ constexpr OptionsBinding kBindings[] = {
     {"privacy.discordLink", Check, Updates},
     {"privacy.discordLinkLabel", Text, Updates},
     {"privacy.discordLinkUrl", Text, Updates},
+    {"audio.spectrumCurve", IndexChoice, Audio, 0, 0, 3},
     {"audio.timingKeysEverywhere", IndexChoice, Audio, 0, 0, 3},
     {"video.fullscreenBarPosition", IndexChoice, Video, 0, 0, 2},
     {"video.fullscreenBar", IndexChoice, Video, 0, 0, 3},

@@ -1544,6 +1544,38 @@ Urządzenie wyjściowe: %2</translation>
         <source>Apply</source>
         <translation>Zastosuj</translation>
     </message>
+    <message>
+        <source>Frequency curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Linear</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Logarithmic</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save audio of selected lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>WAV audio (*.wav)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open audio and select lines with some length first.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The audio is still loading.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The audio couldn’t be saved there.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Automation</name>
@@ -6872,6 +6904,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Klatki wymagają wideo.</translation>
     </message>
     <message>
+        <source>Save audio of selected lines…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Snap to the scene</source>
         <translation type="unfinished"></translation>
     </message>
@@ -8806,6 +8842,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Uruchom ponownie ostatnie makro</translation>
     </message>
     <message>
+        <source>Save audio of selected lines…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Commit and use the default timing for the next line</source>
         <translation type="unfinished"></translation>
     </message>
@@ -10473,22 +10513,6 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Moves the start of each selected line one frame earlier</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Moves the start of each selected line one frame later</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Moves the end of each selected line one frame earlier</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Moves the end of each selected line one frame later</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Ends the line before the active line where the active line starts</source>
         <translation type="unfinished"></translation>
     </message>
@@ -12003,6 +12027,14 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Shows or hides tags in the line editor</source>
         <translation>Pokazuje lub ukrywa tagi w edytorze linijki</translation>
+    </message>
+    <message>
+        <source>Save audio of selected lines…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saves the audio from the first selected line’s start to the last one’s end as a WAV file</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Snap to the scene</source>
@@ -16597,6 +16629,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Frequency curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Speech</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Logarithmic</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Default line duration</source>
         <translation type="unfinished"></translation>
     </message>
@@ -16670,6 +16714,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>%1 imports %2, which plugin panels can’t use.</source>
         <translation>%1 importuje %2, czego panele wtyczek nie mogą używać.</translation>
+    </message>
+    <message>
+        <source>The package lacks its content file, %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The package’s content file %1 can’t be read: it %2.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>The package has a signature, but its manifest names no publicKey to check it with.</source>
@@ -21609,6 +21661,10 @@ ponieważ została zmieniona.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>From plugins</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Copy to project</source>
         <translation type="unfinished"></translation>
     </message>
@@ -21626,6 +21682,14 @@ ponieważ została zmieniona.</translation>
     </message>
     <message>
         <source>Hidden by the project’s copy. Copy it to the project to use it there.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This catalogue comes with a plugin, so it can’t be changed here.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy to my catalogues</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -21907,6 +21971,11 @@ ponieważ została zmieniona.</translation>
     <message>
         <source>Choose ASS file</source>
         <translation>Wybierz plik ASS</translation>
+    </message>
+    <message>
+        <source>%1 (%2)</source>
+        <extracomment>A plugin&apos;s style catalogue in the Style manager: the catalogue&apos;s title, then the plugin&apos;s name.</extracomment>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Copy of %1</source>
@@ -23616,6 +23685,11 @@ Usunięte style:
         <translation>wszystkie zmienne globalne, w tym te z karaskel</translation>
     </message>
     <message>
+        <source>%1 (%2)</source>
+        <extracomment>A plugin&apos;s karaoke preset in the Template editor: the preset&apos;s title, then the plugin&apos;s name.</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>The templater stopped before it finished.</source>
         <translation>Templater zatrzymał się przed zakończeniem.</translation>
     </message>
@@ -24655,6 +24729,22 @@ Usunięte style:
     <message>
         <source>Accepted %1, skipped %2. Each accepted line is one undo step.</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Join lines that overlap by up to</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>overlap closed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n overlap(s) closed</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
 </context>
 <context>
