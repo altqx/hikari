@@ -74,6 +74,7 @@ Version 1 of the Hikari API, generated from HikariSub's own registry: the same r
 | `project.info` | read | 1 | The Project of the window the user works in, or null. |
 | `vcs.refs` | read | 1 | The branches, tags and recent commits of the git repository holding the Document, or the Project's. Plugins whose manifest asks for vcs.read only. |
 | `vcs.show` | read | 1 | The Document's file as a git branch, tag or commit has it. Plugins whose manifest asks for vcs.read only. |
+| `presence.set_text` | write | 1 | Sets or clears the caller's text for {plugin} in the user's Discord status. Plugins whose manifest asks for presence only. |
 | `karaoke.syllables` | read | 1 | A Line's karaoke syllables as the templater reads them: text, tag, start and end in ms. |
 | `karaoke.split` | read | 1 | Splits Lines without \k tags into syllables as the audio editor's karaoke mode does, the time shared by character; Lines that already have \k tags keep them. |
 | `karaoke.time` | read | 1 | Times a Line's existing syllables: each syllable's end in ms, in order; the \k tags are rewritten. |
@@ -88,6 +89,10 @@ Version 1 of the Hikari API, generated from HikariSub's own registry: the same r
 | `marks.set` | write | 1 | Marks Grid rows with a coloured bar and a tooltip, replacing the caller's marks on those Lines. Marks belong to the plugin, are never saved and go when it stops. Not an undo step. Plugins only. |
 | `marks.clear` | write | 1 | Removes the caller's Grid row marks. Plugins only. |
 | `marks.list` | read | 1 | The caller's Grid row marks on a Document. Plugins only. |
+| `programs.run` | write | 1 | Runs one of the plugin's declared programs with its declared arguments, then args, and answers once it ends. Output is capped at 16 MiB per stream. Plugins with the programs permission only. |
+| `programs.start` | write | 1 | Starts one of the plugin's declared programs and keeps it running; its output comes as program.output and its end as program.exited. A plugin keeps at most 8 running. Plugins with the programs permission only. |
+| `programs.send` | write | 1 | Writes to a started program's stdin; close: true closes stdin after data. Plugins with the programs permission only. |
+| `programs.stop` | write | 1 | Ends a started program and its children. Plugins with the programs permission only. |
 
 ### `documents.list`
 
@@ -1709,6 +1714,20 @@ The Document's file as a git branch, tag or commit has it. Plugins whose manifes
 | `path` | string | yes | The Document's path in the repository, '/'-separated. |
 | `text` | string | yes | The file at that commit, as UTF-8. |
 
+### `presence.set_text`
+
+Write. Since version 1.
+
+Sets or clears the caller's text for {plugin} in the user's Discord status. Plugins whose manifest asks for presence only.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `text` | string | yes | Plain text; empty clears it. At most 64 characters. `pattern`: `"^[^\\u0000-\\u001F\\u007F]*$"`. |
+
+**Result**: none.
+
 ### `karaoke.syllables`
 
 Read. Since version 1.
@@ -2026,6 +2045,91 @@ The caller's Grid row marks on a Document. Plugins only.
 | `marks[].colour` | [MarkColour](#markcolour) | yes |  |
 | `marks[].tooltip` | string | yes | What the mark means; shown on hover after the plugin's name and read by screen readers. 1 to 200 characters. |
 
+### `programs.run`
+
+Write. Since version 1.
+
+Runs one of the plugin's declared programs with its declared arguments, then args, and answers once it ends. Output is capped at 16 MiB per stream. Plugins with the programs permission only.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `program` | string | yes | At most 64 characters. `pattern`: `"^[a-z0-9]+(-[a-z0-9]+)*$"`. |
+| `args` | array of string |  | ${file:N} becomes the path of files[N], which the program may then open. At most 256 items. |
+| `files` | array of string |  | Read-only unless the handle is writable. At most 16 items. |
+| `stdin` | string |  | At most 16777216 characters. |
+| `encoding` | one of `utf8` or `base64` |  | Of stdin, stdout and stderr; utf8 when omitted. |
+| `timeout` | integer |  | Milliseconds; 60000 when omitted. From 1000 to 86400000. |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `exitCode` | integer | yes |  |
+| `stdout` | string | yes |  |
+| `stderr` | string | yes |  |
+| `encoding` | one of `utf8` or `base64` | yes |  |
+
+### `programs.start`
+
+Write. Since version 1.
+
+Starts one of the plugin's declared programs and keeps it running; its output comes as program.output and its end as program.exited. A plugin keeps at most 8 running. Plugins with the programs permission only.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `program` | string | yes | At most 64 characters. `pattern`: `"^[a-z0-9]+(-[a-z0-9]+)*$"`. |
+| `args` | array of string |  | At most 256 items. |
+| `files` | array of string |  | At most 16 items. |
+| `encoding` | one of `utf8` or `base64` |  | Of what program.output carries and programs.send takes. |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `process` | [ProgramProcess](#programprocess) | yes |  |
+
+### `programs.send`
+
+Write. Since version 1.
+
+Writes to a started program's stdin; close: true closes stdin after data. Plugins with the programs permission only.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `process` | [ProgramProcess](#programprocess) | yes |  |
+| `data` | string |  | At most 16777216 characters. |
+| `close` | boolean |  |  |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `process` | [ProgramProcess](#programprocess) | yes |  |
+
+### `programs.stop`
+
+Write. Since version 1.
+
+Ends a started program and its children. Plugins with the programs permission only.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `process` | [ProgramProcess](#programprocess) | yes |  |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `process` | [ProgramProcess](#programprocess) | yes |  |
+
 ## Events
 
 ### `project.changed`
@@ -2053,6 +2157,35 @@ A Document's content changed: a commit, Undo or Redo.
 | `document` | [DocumentId](#documentid) | yes |  |
 | `revision` | [Revision](#revision) | yes |  |
 | `step` | string | yes | The History step now current. |
+
+### `program.output`
+
+Since version 1.
+
+A started program wrote to stdout or stderr. Only its plugin hears it, in order and never merged.
+
+**Data**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `process` | [ProgramProcess](#programprocess) | yes |  |
+| `stream` | one of `stdout` or `stderr` | yes |  |
+| `data` | string | yes |  |
+| `encoding` | one of `utf8` or `base64` | yes |  |
+
+### `program.exited`
+
+Since version 1.
+
+A started program ended. Only its plugin hears it.
+
+**Data**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `process` | [ProgramProcess](#programprocess) | yes |  |
+| `exitCode` | integer | yes |  |
+| `stopped` | boolean | yes | true when programs.stop or the plugin's end stopped it. |
 
 ### `document.saved`
 
@@ -2407,3 +2540,7 @@ One of:
 ### MarkColour
 
 Type: one of `accent`, `warning`, `danger`, `success` or `muted`. A theme role, so the mark follows the theme and high contrast.
+
+### ProgramProcess
+
+Type: string. A started program, such as p1. `pattern`: `"^p[0-9]{1,9}$"`.

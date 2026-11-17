@@ -776,6 +776,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         m_userFolder.isEmpty() || options.plugins.plugins.isEmpty() ? QString() : m_userFolder + QStringLiteral("/ai/plugins"),
         options.plugins.plugins, [this] { return m_pluginManager.get(); }, [this] { return m_pluginRuntime.get(); }});
     m_git = std::make_unique<backends::GitReader>();
+    m_pluginPrograms = std::make_unique<PluginPrograms>();
+    m_presence = std::make_unique<DiscordPresence>(*m_settings, options.presence);
     m_apiHost = std::make_unique<ApiHost>(ApiHost::Wiring{
         m_workspace, *m_files, &m_settings->settings(), &m_automation->media(),
         [this](application::Selection next) { return applySelection(std::move(next)); },
@@ -812,7 +814,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         [this](const std::vector<std::int64_t> &frames, const std::optional<std::string> &file) {
             return setKeyframesFromApi(frames, file);
         },
-        &m_rowMarks, m_git.get()});
+        &m_rowMarks, m_git.get(), m_pluginPrograms.get(), m_presence.get()});
     m_apiHost->setPluginFormat([this](application::DocumentId document) { return fileFormat(document); });
     m_automation->setMacroRan([this](const AutomationShell::Ran &ran) {
         m_apiHost->api().macroRan(ran.document, application::scriptFileName(ran.path), ran.macro, ran.outcome, ran.dialogs);
@@ -912,6 +914,10 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     pluginWiring.windowPlugins = [this] { return windowPlugins(); };
     pluginWiring.activeWindow = [this] { return m_workspace.activeWindow(); };
     pluginWiring.marks = &m_rowMarks;
+    pluginWiring.programs = m_pluginPrograms.get();
+#ifdef Q_OS_WIN
+    pluginWiring.lowRightsHelper = QCoreApplication::applicationDirPath() + QStringLiteral("/hikarisub-confine.exe");
+#endif
     pluginWiring.documentTitle = [this](application::DocumentId document) {
         const std::string *title = m_workspace.title(document);
         return title ? QString::fromStdString(*title) : QString();
@@ -936,15 +942,6 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_analytics = std::make_unique<Analytics>(*m_settings, options.analytics);
     m_analytics->setAiVersions([this] { return m_ai->versionProperties(); });
     m_crashReports = std::make_unique<CrashReports>(*m_settings, *m_analytics, *m_log, options.crashReports);
-    m_presence = std::make_unique<DiscordPresence>(*m_settings, options.presence);
-    m_presence->setMode(m_workspaceLayout->preset());
-    connect(m_workspaceLayout.get(), &ui::WorkspaceLayoutController::changed, m_presence.get(),
-            [this] { m_presence->setMode(m_workspaceLayout->preset()); });
-    connect(this, &Application::tabsChanged, m_presence.get(), [this] {
-        const auto target = m_workspace.editingTarget();
-        const std::string *title = target ? m_workspace.title(*target) : nullptr;
-        m_presence->setFileName(title ? QString::fromStdString(*title) : QString());
-    });
     m_crashReports->setKnown(
         [this] {
             QStringList names;
@@ -1345,6 +1342,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     reportUserFolder(options.userFolderMove, options.userFolderSeed);
     reportSettingsFiles();
     convertListFiles();
+    wirePresence();
     refreshViews();
 }
 
@@ -1801,7 +1799,9 @@ bool Application::commitAudioTimes(const application::AudioCommitRequest &reques
         return false;
     const bool before = std::exchange(m_audioCommitting, true);
     editor().timesFromAudio(request.startMs, request.endMs, request.duration);
-    const auto outcome = application::commitAudioTimes(*session, request, shownLines());
+    auto timed = request;
+    timed.appendDurationMs = static_cast<int>(m_settings->integer("audio.defaultDuration"));
+    const auto outcome = application::commitAudioTimes(*session, timed, shownLines());
     if (request.save)
         editor().audioSent();
     editor().reloadFromSession();
@@ -2087,6 +2087,7 @@ void Application::makeViews(WindowViews &v, int shellWindow)
     makeNodeEffects(v, shellWindow);
     makeKanjiTimer(v, shellWindow);
     createFindReplace(v, shellWindow);
+    watchPresence(v);
 }
 
 void Application::makeTemplateEditor(WindowViews &v, int shellWindow)
@@ -4706,8 +4707,11 @@ bool Application::shiftTranslation(int mode)
 QString Application::openKeyframes(const QUrl &file)
 {
     const QString path = file.isLocalFile() ? file.toLocalFile() : file.toString();
-    if (const auto target = m_workspace.editingTarget())
+    if (const auto target = m_workspace.editingTarget()) {
         m_tabMedia[target->value].keyframes = QDir::toNativeSeparators(path);
+        m_tabMedia[target->value].keyframesDropped = false;
+    }
+    emit keyframesChanged();
     auto &video = activeMedia().video->session();
     if (video.state() != application::VideoSession::State::Ready) {
         if (QString problem; keyframesWithoutVideo(path, problem))
@@ -6791,6 +6795,7 @@ QQuickWindow *Application::openShellWindow(QQmlEngine &engine)
         connect(layout.get(), &ui::WorkspaceLayoutController::savedLayoutsWritten, other,
                 &ui::WorkspaceLayoutController::reloadSavedLayouts);
     }
+    connect(layout.get(), &ui::WorkspaceLayoutController::changed, this, &Application::refreshPresence);
     m_shellWindows[id].layout = std::move(layout);
     auto media = std::make_unique<WindowMedia>();
     media->window = id;
@@ -6848,6 +6853,7 @@ bool Application::eventFilter(QObject *watched, QEvent *event)
     case QEvent::FocusIn:
     case QEvent::ShortcutOverride:
     case QEvent::KeyPress: {
+        m_presence->noteInput();
         const QWindow *window = qobject_cast<QWindow *>(watched);
         if (!window)
             if (const auto *item = qobject_cast<QQuickItem *>(watched))
@@ -6856,6 +6862,10 @@ bool Application::eventFilter(QObject *watched, QEvent *event)
             activateShellWindow(*shellWindow);
         break;
     }
+    case QEvent::MouseMove:
+    case QEvent::Wheel:
+        m_presence->noteInput();
+        break;
     default:
         break;
     }
@@ -7409,6 +7419,7 @@ QVariantMap Application::openSettingsDialog()
     values.insert(QStringLiteral("notices.hiddenQuestions"), m_settings->list("notices.hiddenQuestions"));
     values.insert(QStringLiteral("automation.dialogAnswers"), m_settings->list("automation.dialogAnswers"));
     values.insert(QStringLiteral("trust.folders"), m_settings->list("trust.folders"));
+    values.insert(QStringLiteral("privacy.discordActivities"), m_settings->list("privacy.discordActivities"));
     values.insert(QLatin1String(AiFeatures::kCustomAgentsSetting), m_settings->list(AiFeatures::kCustomAgentsSetting));
     QStringList rendererLabels;
     for (const auto &name : lists.renderers)
@@ -7514,6 +7525,9 @@ void Application::applySettings(const QVariantMap &values, bool resetAll)
         if (list != kept)
             m_settings->setValue(QStringLiteral("trust.folders"), list);
     }
+    if (const auto activities = values.constFind(QStringLiteral("privacy.discordActivities")); activities != values.cend())
+        if (const QStringList list = activities->toStringList(); list != m_settings->list("privacy.discordActivities"))
+            m_settings->setValue(QStringLiteral("privacy.discordActivities"), list);
     if (const auto custom = values.constFind(QLatin1String(AiFeatures::kCustomAgentsSetting)); custom != values.cend()) {
         const QStringList list = custom->toStringList();
         if (list != m_settings->list(AiFeatures::kCustomAgentsSetting))
@@ -7540,7 +7554,8 @@ namespace {
 
 // Projectable settings the Options dialog doesn't hold.
 constexpr std::string_view kProjectExtras[] = {"translation.autoMoveTagsFromOriginal", "translation.sourceLanguage",
-                                               "translation.targetLanguage", "export.format"};
+                                               "translation.targetLanguage", "export.format", "privacy.discordProject",
+                                               "privacy.discordShow"};
 
 void insertExtras(QVariantMap &values, const application::Settings &settings)
 {
@@ -7831,6 +7846,8 @@ QVariantMap Application::resetSettings(const QVariantMap &values)
         }
     refreshed.insert(QStringLiteral("notices.hiddenQuestions"), QStringList());
     refreshed.insert(QStringLiteral("trust.folders"), QStringList());
+    refreshed.insert(QStringLiteral("privacy.discordActivities"),
+                     ui::SettingsStore::toVariant(defaults.value("privacy.discordActivities")));
     refreshed.insert(QLatin1String(AiFeatures::kCustomAgentsSetting), QStringList());
     keep("automation.dialogAnswers");
     return refreshed;
@@ -7861,6 +7878,9 @@ QVariantMap Application::resetSettingsPage(const QVariantMap &values, const QStr
         out.insert(QStringLiteral("notices.hiddenQuestions"), QStringList());
     if (*which == application::OptionsPage::Automation)
         out.insert(QStringLiteral("trust.folders"), QStringList());
+    if (*which == application::OptionsPage::Updates)
+        out.insert(QStringLiteral("privacy.discordActivities"),
+                   ui::SettingsStore::toVariant(defaults.value("privacy.discordActivities")));
     return out;
 }
 

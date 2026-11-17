@@ -2334,3 +2334,73 @@ TEST_F(LuaHelper, ADocumentOverTheFrameLimitIsRefusedWithItsSize)
     EXPECT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
     EXPECT_FALSE(host->refusedSize());
 }
+
+TEST_F(LuaHelper, UndoPointsSplitTheRunIntoNamedSteps)
+{
+    using namespace hikari::application;
+    auto session = macroSession();
+    auto host = load(fixture("undo_points.lua"));
+    ASSERT_EQ(host->state(), LuaScriptHost::State::Ready) << host->lastError().toStdString();
+    auto runNamed = [&](const char *name) -> std::optional<MacroSnapshot> {
+        run = {};
+        auto snapshot = snapshotForMacro(session);
+        if (!snapshot || !host->run(macro(*host, name), *snapshot, true) ||
+            !waitFor([&] { return run.outcome.has_value(); }))
+            return std::nullopt;
+        return *snapshot;
+    };
+    const auto steps = session.historySize();
+
+    auto snapshot = runNamed("Two steps");
+    ASSERT_TRUE(snapshot);
+    ASSERT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
+    ASSERT_EQ(host->lastResult()->undoSteps.size(), 1u);
+    ASSERT_TRUE(applyMacroResult(session, *snapshot, *host->lastResult(), "Two steps"));
+    EXPECT_EQ(texts(session), (std::vector<std::string>{"first", "second", "three", "added"}));
+    ASSERT_EQ(session.historySize(), steps + 2);
+    EXPECT_EQ(session.history()[steps].name, "Automation: First step");
+    EXPECT_EQ(session.history()[steps + 1].name, "Automation: Two steps");
+    ASSERT_TRUE(session.undo());
+    EXPECT_EQ(texts(session), (std::vector<std::string>{"first", "two", "three", "added"}));
+    ASSERT_TRUE(session.undo());
+    EXPECT_EQ(texts(session), (std::vector<std::string>{"one", "two", "three"}));
+
+    snapshot = runNamed("Named last");
+    ASSERT_TRUE(snapshot);
+    ASSERT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
+    EXPECT_TRUE(host->lastResult()->undoSteps.empty());
+    ASSERT_TRUE(applyMacroResult(session, *snapshot, *host->lastResult(), "Named last"));
+    EXPECT_EQ(session.history().back().name, "Automation: Named step");
+    ASSERT_TRUE(session.undo());
+
+    const auto before = session.historySize();
+    snapshot = runNamed("Only an undo point");
+    ASSERT_TRUE(snapshot);
+    ASSERT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
+    ASSERT_TRUE(applyMacroResult(session, *snapshot, *host->lastResult(), "Only an undo point"));
+    EXPECT_EQ(session.historySize(), before);
+}
+
+TEST_F(LuaHelper, UndoPointsAreDroppedWithAFailedRunAndRefusedInValidation)
+{
+    using namespace hikari::application;
+    auto session = macroSession();
+    auto host = load(fixture("undo_points.lua"));
+    ASSERT_EQ(host->state(), LuaScriptHost::State::Ready) << host->lastError().toStdString();
+    const auto snapshot = snapshotForMacro(session);
+    ASSERT_TRUE(snapshot);
+
+    run = {};
+    ASSERT_TRUE(host->run(macro(*host, "Step then error"), *snapshot, true));
+    ASSERT_TRUE(waitFor([&] { return run.outcome.has_value(); }));
+    EXPECT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Failed);
+    EXPECT_TRUE(run.message.contains(QStringLiteral("broke after a step"))) << run.message.toStdString();
+
+    run = {};
+    ASSERT_TRUE(host->run(macro(*host, "Undo point while validating"), *snapshot, true));
+    ASSERT_TRUE(waitFor([&] { return run.outcome.has_value(); }));
+    EXPECT_EQ(*run.outcome, LuaScriptHost::RunOutcome::NotValid);
+    EXPECT_TRUE(run.message.contains(
+        QStringLiteral("Attempt to set an undo point in a context where it makes no sense to do so.")))
+        << run.message.toStdString();
+}

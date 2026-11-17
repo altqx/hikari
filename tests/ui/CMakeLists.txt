@@ -455,6 +455,10 @@ hikari_add_qttest(hikari_ui_plugin_runtime_tests OFFSCREEN_ONLY SOURCES plugin_r
 target_compile_definitions(hikari_ui_plugin_runtime_tests PRIVATE HIKARI_PLUGIN_HELPER="$<TARGET_FILE:hikari_plugin_helper>"
     HIKARI_PLUGIN_EXAMPLES="${PROJECT_SOURCE_DIR}/docs/examples")
 add_dependencies(hikari_ui_plugin_runtime_tests hikari_plugin_helper)
+add_executable(hikari_plugin_test_program plugin_test_program.cpp)
+hikari_add_qttest(hikari_ui_plugin_programs_tests SOURCES plugin_programs_tests.cpp LIBRARIES hikari_composition)
+target_compile_definitions(hikari_ui_plugin_programs_tests PRIVATE HIKARI_TEST_PROGRAM="$<TARGET_FILE:hikari_plugin_test_program>")
+add_dependencies(hikari_ui_plugin_programs_tests hikari_plugin_test_program)
 hikari_add_qttest(hikari_ui_plugin_qml_panels_tests OFFSCREEN_ONLY SOURCES plugin_qml_panels_tests.cpp LIBRARIES hikari_composition)
 target_compile_definitions(hikari_ui_plugin_qml_panels_tests PRIVATE HIKARI_PLUGIN_HELPER="$<TARGET_FILE:hikari_plugin_helper>"
     HIKARI_PLUGIN_FIXTURES="${PROJECT_SOURCE_DIR}/tests/plugins/fixtures")

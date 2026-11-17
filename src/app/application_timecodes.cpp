@@ -96,6 +96,7 @@ void Application::showTabTimecodes(WindowMedia &media, std::optional<application
     if (times || video.replacedFrameTimes())
         video.setFrameTimes(std::move(times));
     emit timecodesChanged();
+    emit keyframesChanged();
 }
 
 QString Application::openTimecodesFile(const QString &path)
@@ -151,17 +152,20 @@ void Application::closeTimecodes()
     refreshViews();
 }
 
-std::vector<application::ProjectGarbageEdit> Application::timecodesGarbage(application::DocumentId document,
+std::vector<application::ProjectGarbageEdit> Application::mediaFileGarbage(application::DocumentId document,
                                                                           const application::DestinationKey &destination) const
 {
     const auto it = m_tabMedia.find(document.value);
     if (it == m_tabMedia.end())
         return {};
     const TabMedia &media = it->second;
+    std::vector<application::ProjectGarbageEdit> edits;
+    if (media.keyframesDropped && media.keyframes.isEmpty())
+        edits.push_back({std::u8string(application::kKeyframesFileKey), std::nullopt});
     if (media.timecodes.isEmpty()) {
-        if (!media.timecodesDropped)
-            return {};
-        return {{std::u8string(application::kTimecodesFileKey), std::nullopt}};
+        if (media.timecodesDropped)
+            edits.push_back({std::u8string(application::kTimecodesFileKey), std::nullopt});
+        return edits;
     }
     QString path = QDir::fromNativeSeparators(media.timecodes);
     if (!destination.value.empty()) {
@@ -170,8 +174,9 @@ std::vector<application::ProjectGarbageEdit> Application::timecodesGarbage(appli
             path = relative;
     }
     const QByteArray utf8 = path.toUtf8();
-    return {{std::u8string(application::kTimecodesFileKey),
-             std::u8string(reinterpret_cast<const char8_t *>(utf8.constData()), static_cast<std::size_t>(utf8.size()))}};
+    edits.push_back({std::u8string(application::kTimecodesFileKey),
+                     std::u8string(reinterpret_cast<const char8_t *>(utf8.constData()), static_cast<std::size_t>(utf8.size()))});
+    return edits;
 }
 
 QString Application::tabTimecodes(std::optional<application::DocumentId> document) const

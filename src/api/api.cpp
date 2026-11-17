@@ -101,8 +101,10 @@ const Registry &Api::registry()
         detail::addTypesetOperations(r);
         detail::addProjectOperations(r);
         detail::addVcsOperations(r);
+        detail::addPresenceOperations(r);
         detail::addKaraokeOperations(r);
         detail::addMarkOperations(r);
+        detail::addProgramOperations(r);
         detail::addEvents(r);
         return r;
     }();

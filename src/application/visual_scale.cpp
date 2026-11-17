@@ -787,7 +787,7 @@ void ScaleTool::setSecondRectScale(const VideoView &view)
 
 Overlay ScaleTool::overlay(const VisualHost &host) const
 {
-    Overlay out;
+    Overlay out{.handles = host.handleColours()};
     out.unit = unitOf(host);
     const VideoView &view = host.view();
     if (m_hasScaleToRectangle) {
@@ -825,9 +825,9 @@ Overlay ScaleTool::overlay(const VisualHost &host) const
     v4[5] = {m_from.x, m_to.y};
     for (int i = 1; i < 6; i += 2)
         v4[i] = drawArrow(out, v4[0], v4[i]);
-    out.lines.push_back({v4[0], v4[1], 2, kHandleBorder});
-    out.lines.push_back({v4[2], v4[3], 2, kHandleBorder});
-    out.lines.push_back({v4[4], v4[5], 2, kHandleBorder});
+    out.lines.push_back({v4[0], v4[1], 2, out.handles.border});
+    out.lines.push_back({v4[2], v4[3], 2, out.handles.border});
+    out.lines.push_back({v4[4], v4[5], 2, out.handles.border});
     return out;
 }
 

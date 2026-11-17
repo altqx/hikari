@@ -82,6 +82,8 @@ Subtitles
 Subtitles > Shift times… [GLOBAL_SHOW_SHIFT_TIMES]
 Subtitles > Timing postprocessor… [GLOBAL_SHOW_TIMING_POSTPROCESSOR]
 Subtitles > Timing helpers >
+Subtitles > Timing helpers > Snap to the scene [GLOBAL_SNAP_TO_SCENE]
+Subtitles > Timing helpers > -
 Subtitles > Timing helpers > Snap start to the previous keyframe [GLOBAL_SNAP_START_TO_PREVIOUS_KEYFRAME]
 Subtitles > Timing helpers > Snap start to the next keyframe [GLOBAL_SNAP_START_TO_NEXT_KEYFRAME]
 Subtitles > Timing helpers > Snap end to the previous keyframe [GLOBAL_SNAP_END_TO_PREVIOUS_KEYFRAME]
@@ -96,6 +98,8 @@ Subtitles > Timing helpers > Move start one frame earlier [GLOBAL_START_FRAME_EA
 Subtitles > Timing helpers > Move start one frame later [GLOBAL_START_FRAME_LATER]
 Subtitles > Timing helpers > Move end one frame earlier [GLOBAL_END_FRAME_EARLIER]
 Subtitles > Timing helpers > Move end one frame later [GLOBAL_END_FRAME_LATER]
+Subtitles > Timing helpers > Lengthen and shift what follows [GLOBAL_END_LATER_SHIFT_FOLLOWING]
+Subtitles > Timing helpers > Shorten and shift what follows [GLOBAL_END_EARLIER_SHIFT_FOLLOWING]
 Subtitles > Timing helpers > -
 Subtitles > Timing helpers > Extend the previous line to this start [GLOBAL_EXTEND_PREVIOUS_TO_START]
 Subtitles > Timing helpers > Extend the next line to this end [GLOBAL_EXTEND_NEXT_TO_END]
@@ -133,6 +137,8 @@ Video > -
 Video > Open keyframes… [GLOBAL_OPEN_KEYFRAMES]
 Video > Recently opened keyframes >
 Video > Recently opened keyframes > None
+Video > Save keyframes… [GLOBAL_SAVE_KEYFRAMES]
+Video > Close keyframes [GLOBAL_CLOSE_KEYFRAMES]
 Video > Open timecodes… [GLOBAL_OPEN_TIMECODES]
 Video > Recently opened timecodes >
 Video > Recently opened timecodes > None

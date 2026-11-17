@@ -137,6 +137,33 @@ PluginRuntime::PluginRuntime(Wiring wiring, QObject *parent) : QObject(parent), 
         return it == m_plugins.end() ? api::Json() : m_files->grantDropped(it->second->files, file);
     });
     wireQmlPanels();
+    wirePrograms();
+}
+
+void PluginRuntime::wirePrograms()
+{
+    if (!m_wiring.programs)
+        return;
+    m_wiring.programs->bind({
+        [this](const std::string &id) -> std::optional<PluginPrograms::Plugin> {
+            const auto it = m_plugins.find(id);
+            if (it == m_plugins.end() || !m_installer)
+                return std::nullopt;
+            const plugins::PluginFolders &f = m_installer->folders();
+            const fs::path own(std::u8string(id.begin(), id.end()));
+            auto folder = [&own](const fs::path &base) { return QString::fromStdU16String((base / own).u16string()); };
+            return PluginPrograms::Plugin{&it->second->manifest, folder(f.plugins), folder(f.data), folder(f.cache),
+                                          plugins::settingValues(it->second->manifest, storedSettings(id))};
+        },
+        m_wiring.networkAllowed,
+        [this](const std::string &id, const QString &line) {
+            const auto it = m_plugins.find(id);
+            if (m_wiring.log && it != m_plugins.end())
+                m_wiring.log->log(line, ui::LogController::Info, qs(it->second->manifest.name));
+        },
+        m_wiring.api,
+        m_wiring.lowRightsHelper,
+    });
 }
 
 void PluginRuntime::wireQmlPanels()
@@ -375,6 +402,8 @@ std::unique_ptr<PluginRuntime::Running> PluginRuntime::launch(const std::string 
     raw->manifest = std::move(manifest);
     raw->caller = api::Caller{"plugin:" + id, raw->manifest.name, raw->manifest.permissions.allDocuments.has_value()};
     raw->caller.vcsRead = raw->manifest.permissions.vcsRead.has_value();
+    raw->caller.programs = raw->manifest.permissions.programs.has_value();
+    raw->caller.presence = raw->manifest.permissions.presence.has_value();
     raw->files = PluginFiles::Plugin{id, raw->caller.id, raw->manifest.permissions.files};
     auto load = [this, raw] {
         protocol::LoadRequest request;
@@ -524,7 +553,9 @@ void PluginRuntime::serve(Running &plugin, const PluginProcess::ServiceRequest &
         PluginProcess *process = plugin.process.get();
         const std::uint64_t subscription =
             m_wiring.api->subscribe(plugin.caller, {request.name}, [this, process, id = plugin.id](const api::Event &event) {
-                if (onIn(qs(id), m_wiring.activeWindow ? m_wiring.activeWindow() : 0))
+                if (event.name.starts_with("program."))
+                    process->deliver(event.name, event.data.dump(), {});
+                else if (onIn(qs(id), m_wiring.activeWindow ? m_wiring.activeWindow() : 0))
                     process->push(event.name, event.data.dump());
             });
         if (subscription == 0) {
@@ -683,6 +714,8 @@ void PluginRuntime::endAccess(Running &plugin)
 {
     m_network->cancel(plugin.id);
     m_files->end(plugin.id, plugin.caller.id);
+    if (m_wiring.programs)
+        m_wiring.programs->end(plugin.id);
     if (m_wiring.marks)
         m_wiring.marks->clearOwner(plugin.caller.id);
     endJob(plugin.id);
@@ -844,6 +877,24 @@ bool PluginRuntime::busy(const QString &pluginId) const
 {
     const PluginProcess *running = process(pluginId);
     return running && running->busy();
+}
+
+QSet<QString> PluginRuntime::runningIds() const
+{
+    QSet<QString> ids;
+    for (const auto &[id, plugin] : m_plugins)
+        ids.insert(QString::fromStdString(id));
+    return ids;
+}
+
+QVariantList PluginRuntime::presencePlugins() const
+{
+    QVariantList found;
+    for (const auto &[id, plugin] : m_plugins)
+        if (plugin->manifest.permissions.presence)
+            found << QVariantMap{{QStringLiteral("id"), QString::fromStdString(id)},
+                                 {QStringLiteral("name"), QString::fromStdString(plugin->manifest.name)}};
+    return found;
 }
 
 }

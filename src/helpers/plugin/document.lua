@@ -185,6 +185,15 @@ hikari.selection = {
     end,
 }
 
+hikari.presence = {
+    set_text = function(text)
+        if text ~= nil and type(text) ~= "string" then
+            error("hikari.presence.set_text takes a string, or nil to clear it", 2)
+        end
+        return call("presence.set_text", { text = text or "" })
+    end,
+}
+
 hikari.vcs = {
     refs = function(options)
         if options ~= nil and type(options) ~= "table" then

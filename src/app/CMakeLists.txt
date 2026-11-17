@@ -45,6 +45,7 @@ add_library(hikari_composition STATIC composition.cpp application.cpp include/hi
     inline_ai_controller.cpp include/hikari/app/inline_ai_controller.h
     plugin_manager.cpp include/hikari/app/plugin_manager.h
     plugin_marketplace.cpp include/hikari/app/plugin_marketplace.h plugin_runtime.cpp include/hikari/app/plugin_runtime.h
+    plugin_programs.cpp include/hikari/app/plugin_programs.h
     plugin_files.cpp include/hikari/app/plugin_files.h plugin_network.cpp include/hikari/app/plugin_network.h
     plugin_nodes.cpp include/hikari/app/plugin_nodes.h
     plugin_ui.cpp include/hikari/app/plugin_ui.h plugin_qml_panels.cpp plugin_panel_api.cpp include/hikari/app/plugin_panel_api.h
@@ -137,7 +138,7 @@ if(NOT WIN32)
 endif()
 set(HIKARI_DISCORD_CLIENT_ID "1566681222510411967" CACHE STRING "Discord application id for Rich Presence; empty turns it off")
 target_sources(hikari_composition PRIVATE discord_ipc.cpp include/hikari/app/discord_ipc.h
-    discord_presence.cpp include/hikari/app/discord_presence.h)
+    discord_activity.cpp include/hikari/app/discord_activity.h discord_presence.cpp include/hikari/app/discord_presence.h)
 target_sources(hikari_composition PRIVATE star_prompt.cpp include/hikari/app/star_prompt.h)
 set_source_files_properties(discord_presence.cpp PROPERTIES COMPILE_DEFINITIONS "HIKARI_DISCORD_CLIENT_ID=\"${HIKARI_DISCORD_CLIENT_ID}\"")
 target_sources(hikari_composition PRIVATE font_collector_controller.cpp include/hikari/app/font_collector_controller.h)
@@ -151,7 +152,7 @@ target_sources(hikari_composition PRIVATE application_video_timing.cpp applicati
 target_sources(hikari_composition PRIVATE application_tracking.cpp application_motion.cpp application_layers.cpp application_tag_removal.cpp application_interpolate.cpp)
 target_sources(hikari_composition PRIVATE application_translation.cpp)
 target_sources(hikari_composition PRIVATE localisation.cpp include/hikari/app/localisation.h application_language.cpp)
-target_sources(hikari_composition PRIVATE application_grammar.cpp)
+target_sources(hikari_composition PRIVATE application_grammar.cpp application_presence.cpp)
 target_sources(hikari_composition PRIVATE application_audio.cpp)
 target_sources(hikari_composition PRIVATE application_directshow.cpp)
 if(WIN32)
