@@ -337,10 +337,10 @@ private slots:
         std::unique_ptr<Answer> named(serve(*p, "input_box.ask", R"({"prompt": "A name", "validation": {"min_length": 2, "message": "Too short"}})"));
         QTRY_VERIFY(box->property("visible").toBool());
         QCOMPARE(box->property("message").toString(), QStringLiteral("Too short"));
-        QTest::keyClicks(window, QStringLiteral("B"));
+        QTest::keyClick(window, 'B');
         QTest::keyClick(window, Qt::Key_Return);
         QVERIFY(!named->json);
-        QTest::keyClicks(window, QStringLiteral("o"));
+        QTest::keyClick(window, 'o');
         QCOMPARE(box->property("message").toString(), QString());
         QTest::keyClick(window, Qt::Key_Return);
         QCOMPARE(named->result().find("value")->asString(), std::string("Bo"));
