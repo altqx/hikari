@@ -72,6 +72,7 @@
 #include "hikari/backends/directshow_player.h"
 #endif
 #include "hikari/backends/platform_files.h"
+#include "file_write_queue.h"
 #include "line_editor_controller.h"
 #include "node_effects_controller.h"
 #include "template_editor_controller.h"
@@ -208,6 +209,7 @@ public:
         QStringList systemUiLanguages;
         // Empty: no autosave.
         QString recoveryDir;
+        int autosaveIntervalMs = 20'000;
         // Whether video playback may open an audio device.
         bool playbackAudio = true;
         // Unset: PortAudio, or with playbackAudio off an output without a device.
@@ -511,6 +513,7 @@ public:
     // count removed.
     Q_INVOKABLE int removeAutosavesOlderThan(const QDate &date);
     bool autosaveNow();
+    ui::FileWriteQueue &recoveryWrites() { return m_recoveryWrites; }
     bool autosavePending(application::DocumentId document) const;
     // kind: "videoTime", "frames", "chars", "words", "wraps" or "tagBlocks".
     Q_INVOKABLE bool splitLines(const QString &kind);
@@ -1531,8 +1534,10 @@ private:
     QString m_recoveryDir;
     QString m_sessionId;
     std::map<std::uint64_t, QTimer *> m_autosaveTimers;
+    int m_autosaveIntervalMs = 20'000;
+    ui::FileWriteQueue m_recoveryWrites;
     void scheduleAutosave(std::optional<application::DocumentId> document = std::nullopt);
-    bool autosave(application::DocumentId document);
+    bool autosave(application::DocumentId document, bool now);
     void discardRecovery(application::DocumentId document);
     std::string recoveryKey(application::DocumentId document) const;
     void reportGroupBreak();
