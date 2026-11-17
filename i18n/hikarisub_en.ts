@@ -1312,6 +1312,17 @@
     </message>
 </context>
 <context>
+    <name>HikariSub.StatusBar</name>
+    <message numerus="yes">
+        <source>%n plugin(s) working</source>
+        <extracomment>The status bar&apos;s busy icon: how many background plugins are working</extracomment>
+        <translation>
+            <numerusform>%n plugin working</numerusform>
+            <numerusform>%n plugins working</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.Styles</name>
     <message numerus="yes">
         <source>Apply the changes to the %n selected styles?</source>
@@ -1726,17 +1737,6 @@
         <translation>
             <numerusform>The tag takes %n value.</numerusform>
             <numerusform>The tag takes %n values.</numerusform>
-        </translation>
-    </message>
-</context>
-<context>
-    <name>HikariSub.StatusBar</name>
-    <message numerus="yes">
-        <source>%n plugin(s) working</source>
-        <extracomment>The status bar&apos;s busy icon: how many background plugins are working</extracomment>
-        <translation>
-            <numerusform>%n plugin working</numerusform>
-            <numerusform>%n plugins working</numerusform>
         </translation>
     </message>
 </context>
