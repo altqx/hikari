@@ -129,6 +129,11 @@ public:
         if (changed)
             emit hideTagsChanged();
     }
+    void setReadingLimits(const application::ReadingLimits &profile)
+    {
+        m_lines.setReadingLimits(profile);
+        m_referenceLines.setReadingLimits(profile);
+    }
     void setRunMarks(bool on)
     {
         m_lines.setRunMarks(on);

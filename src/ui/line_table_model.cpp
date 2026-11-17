@@ -177,12 +177,13 @@ const LineTableModel::Measures &LineTableModel::measuresOf(const Row &row) const
     const core::LineRecord &line = row.line;
     if (!line.comment) {
         const auto &text = m_translationMode && !line.translation.empty() ? line.translation : line.text;
-        const LineMeasures measured = measureLine(qs(text), m_format);
+        const LineMeasures measured =
+            measureLine(qs(text), m_format, MeasureOptions{.lineLength = m_limits.lineLength, .maxLines = m_limits.maxLines});
         if (m_format != core::SubtitleFormat::TMPlayer) {
             const int cps = legacyCps(measured.chars, line.start.value.microseconds() / 1000,
                                       line.end.value.microseconds() / 1000);
             m.cps = QString::number(cps);
-            m.cpsTooHigh = cps > 15;
+            m.cpsSeverity = application::cpsSeverity(m_limits, cps);
         }
         m.wraps = measured.wraps;
         m.badWraps = measured.badWraps;
@@ -269,6 +270,21 @@ void LineTableModel::setHideTags(bool hide, const QString &swap)
     }
     if (!m_rows.empty())
         emit dataChanged(index(0, TextColumn), index(rowCount() - 1, TextColumn), {Qt::DisplayRole, SpellMarksRole});
+}
+
+void LineTableModel::setReadingLimits(const application::ReadingLimits &profile)
+{
+    m_profileLimits = profile;
+    const auto limits = m_scriptLimits.over(profile);
+    if (limits == m_limits)
+        return;
+    m_limits = limits;
+    for (const Row &row : m_rows)
+        row.measures.reset();
+    if (m_draft)
+        m_draft->measures.reset();
+    if (!m_rows.empty())
+        emit dataChanged(index(0, CpsColumn), index(rowCount() - 1, WrapsColumn), {CpsSeverityRole, BadWrapsRole});
 }
 
 int LineTableModel::labelSlot(int state)
@@ -361,6 +377,8 @@ void LineTableModel::setDocument(const core::Document &document,
     m_draft.reset();
     m_draftRow = -1;
     m_format = document.format();
+    m_scriptLimits = application::scriptReadingLimits(document);
+    m_limits = m_scriptLimits.over(m_profileLimits);
     m_translationMode = document.scriptInfo(u8"TLMode") == u8"Yes";
     m_styles.clear();
     m_tooManyStyles = false;
@@ -567,8 +585,8 @@ QVariant LineTableModel::data(const QModelIndex &index, int role) const
         case Qt::DisplayRole: return foldedData(run, index.column());
         case HiddenBlockRole: return m_rows[std::size_t(run.blockRow)].blockMark;
         case HiddenBlockRowRole: return run.blockRow;
+        case CpsSeverityRole: return 0.0;
         case CommentRole:
-        case CpsTooHighRole:
         case BadWrapsRole:
         case DraftRole:
         case UnplacedRunsRole: return false;
@@ -630,8 +648,8 @@ QVariant LineTableModel::data(const QModelIndex &index, int role) const
         return r.groupClosed;
     case GroupDepthRole:
         return static_cast<int>(core::groupDepth(line));
-    case CpsTooHighRole:
-        return measuresOf(r).cpsTooHigh;
+    case CpsSeverityRole:
+        return measuresOf(r).cpsSeverity;
     case BadWrapsRole:
         return measuresOf(r).badWraps;
     case SpellMarksRole:
@@ -868,7 +886,7 @@ QHash<int, QByteArray> LineTableModel::roleNames() const
                   {AnchorRole, "anchor"},
                   {StartMicrosecondsRole, "startMicroseconds"},
                   {EndMicrosecondsRole, "endMicroseconds"},
-                  {CpsTooHighRole, "cpsTooHigh"},
+                  {CpsSeverityRole, "cpsSeverity"},
                   {BadWrapsRole, "badWraps"},
                   {SpellMarksRole, "spellMarks"},
                   {ComparisonRole, "comparison"},
