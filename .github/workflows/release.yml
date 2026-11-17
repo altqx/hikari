@@ -313,7 +313,8 @@ jobs:
           fi
           mkdir -p posthog-symbols/linux posthog-symbols/windows
           failed=0
-          sudo apt-get install -y --no-install-recommends dwz p7zip-full || failed=1
+          sudo apt-get install -y --no-install-recommends p7zip-full || failed=1
+          cargo build --release --locked --manifest-path tools/crash/dwarf_reduce/Cargo.toml || failed=1
           tar -xJf "release/hikarisub-symbols-$VERSION-linux-x86_64.tar.xz" -C posthog-symbols/linux || failed=1
           unzip -q "release/HikariSub-$VERSION-windows-x64-symbols.zip" -d posthog-symbols/windows || failed=1
           python3 tools/crash/qt_symbols.py linux scan/tar posthog-symbols/qt-linux || failed=1
@@ -497,6 +498,9 @@ jobs:
     needs: release-version
     if: inputs.dry_run
     runs-on: ubuntu-24.04
+    permissions:
+      actions: read
+      contents: read
     env:
       VERSION: ${{ needs.release-version.outputs.version }}
       OFFER_CHANNEL: ${{ needs.release-version.outputs.offer_channel }}
@@ -513,10 +517,28 @@ jobs:
         run: |
           set -euo pipefail
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends dwz p7zip-full
+          sudo apt-get install -y --no-install-recommends p7zip-full
+          cargo test --release --locked --manifest-path tools/crash/dwarf_reduce/Cargo.toml
           mkdir symbols-check
           printf 'int main(void) { return 0; }\n' | gcc -g -Wl,--build-id -x c - -o symbols-check/probe
           python3 tools/crash/posthog_symbols.py symbols-check --dry-run
+
+      - name: Check the main binary's symbols fit with room to grow
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          run=$(gh run list -w package-linux.yml -b "$GITHUB_REF_NAME" -s success -L 1 --json databaseId,headSha \
+            -q '.[0] | "\(.databaseId) \(.headSha)"')
+          if [[ -z "$run" ]] || ! gh run download "${run% *}" -n hikarisub-linux-symbols -D main-symbols; then
+            echo "::warning::No Linux symbols from a package-linux run on $GITHUB_REF_NAME to measure."
+            exit 0
+          fi
+          echo "Measuring the symbols of ${run#* } (dry run on $GITHUB_SHA)"
+          mkdir main-symbols/tree
+          tar -xJf main-symbols/hikarisub-symbols-*-linux-x86_64.tar.xz -C main-symbols/tree
+          python3 tools/crash/posthog_symbols.py main-symbols/tree --dry-run --fail-above $((90 * 1024 * 1024))
 
       - name: Check Qt's pinned debug archives are still there
         run: |
