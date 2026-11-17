@@ -319,19 +319,19 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     EXPECT_EQ(mono.page, OptionsPage::Audio);
     ASSERT_NE(findSetting("audio.playMono"), nullptr);
     EXPECT_EQ(std::get<bool>(findSetting("audio.playMono")->defaultValue), false);
-    const auto &pluginNetwork = all[std::size(kLegacy) + 55];
+    const auto &pluginNetwork = all[std::size(kLegacy) + 56];
     EXPECT_EQ(pluginNetwork.setting, "plugins.network");
     EXPECT_EQ(pluginNetwork.control, OptionsControl::Check);
     EXPECT_EQ(pluginNetwork.page, OptionsPage::Updates);
     ASSERT_NE(findSetting("plugins.network"), nullptr);
     EXPECT_EQ(std::get<bool>(findSetting("plugins.network")->defaultValue), true);
-    const auto &webSearch = all[std::size(kLegacy) + 56];
+    const auto &webSearch = all[std::size(kLegacy) + 57];
     EXPECT_EQ(webSearch.setting, "ai.webSearch");
     EXPECT_EQ(webSearch.control, OptionsControl::Check);
     EXPECT_EQ(webSearch.page, OptionsPage::Ai);
     ASSERT_NE(findSetting("ai.webSearch"), nullptr);
     EXPECT_EQ(std::get<bool>(findSetting("ai.webSearch")->defaultValue), true);
-    const auto &searchService = all[std::size(kLegacy) + 57];
+    const auto &searchService = all[std::size(kLegacy) + 58];
     EXPECT_EQ(searchService.setting, "ai.searchService");
     EXPECT_EQ(searchService.control, OptionsControl::Text);
     EXPECT_EQ(searchService.page, OptionsPage::Ai);
@@ -345,7 +345,7 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
         ASSERT_NE(findSetting(id), nullptr);
         EXPECT_EQ(std::get<bool>(findSetting(id)->defaultValue), false) << id;
     }
-    const auto &thai = all[std::size(kLegacy) + 61];
+    const auto &thai = all[std::size(kLegacy) + 62];
     EXPECT_EQ(thai.setting, "audio.karaokeThaiClusters");
     EXPECT_EQ(thai.control, OptionsControl::Check);
     EXPECT_EQ(thai.page, OptionsPage::Audio);
@@ -376,7 +376,7 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     EXPECT_EQ(std::get<std::string>(findSetting("editing.cycleValues.an")->defaultValue), "1, 2, 3, 4, 5, 6, 7, 8, 9");
 #ifdef _WIN32
     ASSERT_EQ(all.size(), std::size(kLegacy) + 77);
-    const auto &hostApi = all[std::size(kLegacy) + 75];
+    const auto &hostApi = all[std::size(kLegacy) + 76];
     EXPECT_EQ(hostApi.setting, "audio.outputHostApi");
     EXPECT_EQ(hostApi.control, OptionsControl::IndexChoice);
     EXPECT_EQ(hostApi.page, OptionsPage::Audio);

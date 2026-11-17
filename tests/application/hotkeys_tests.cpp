@@ -437,12 +437,12 @@ TEST(Hotkeys, ListOrderIsAddHotkeysOnList)
     auto live = defaultHotkeys();
     list.build(live);
     ASSERT_EQ(list.rowCount(), 400u);
-    EXPECT_EQ(list.row(0).text, "Global Run the last macro again");
-    EXPECT_EQ(list.row(1).text, "Global Swap side bars");
-    EXPECT_EQ(list.row(4).text, "Global Typesetting graph…");
-    EXPECT_EQ(list.row(5).text, "Global Explorer");
-    EXPECT_EQ(list.row(6).text, "Global Position to margins");
-    EXPECT_EQ(list.row(0).accel, "");
+    EXPECT_EQ(list.row(3).text, "Global Run the last macro again");
+    EXPECT_EQ(list.row(4).text, "Global Swap side bars");
+    EXPECT_EQ(list.row(7).text, "Global Typesetting graph…");
+    EXPECT_EQ(list.row(8).text, "Global Explorer");
+    EXPECT_EQ(list.row(9).text, "Global Position to margins");
+    EXPECT_EQ(list.row(3).accel, "");
     EXPECT_EQ(rowNamed(list, "Global Close tab").accel, "Ctrl-W");
     EXPECT_EQ(rowNamed(list, "Global Load session from file…").accel, "");
     EXPECT_EQ(rowNamed(list, "Global Save session to file…").accel, "");
@@ -805,16 +805,16 @@ TEST(Hotkeys, MapToAnotherWindowAddsOrUpdatesItsRow)
     list.map(save, "F7", VideoHotkey, HotkeyAnswer::Cancel, live);
     EXPECT_EQ(list.row(save).accel, "Ctrl-S");
     ASSERT_EQ(list.rowCount(), 401u);
-    const auto &added = list.row(396);
+    const auto &added = list.row(400);
     EXPECT_EQ(added.text, "Video Save");
     EXPECT_EQ((added.key), (HotkeyId{kSave, VideoHotkey}));
     EXPECT_EQ(added.accel, "F7");
     EXPECT_EQ(list.selection(), -1);
     EXPECT_EQ(copy.at(HotkeyId{kSave, VideoHotkey}).accel, "F7");
     list.map(save, "F6", VideoHotkey, HotkeyAnswer::Cancel, live);
-    EXPECT_EQ(list.rowCount(), 397u);
-    EXPECT_EQ(list.row(396).accel, "F6");
-    EXPECT_EQ(list.selection(), 396);
+    EXPECT_EQ(list.rowCount(), 401u);
+    EXPECT_EQ(list.row(400).accel, "F6");
+    EXPECT_EQ(list.selection(), 400);
 }
 
 TEST(Hotkeys, ResetDeleteUndoRedo)
