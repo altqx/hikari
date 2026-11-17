@@ -848,7 +848,7 @@ icon("video-filters", "Filters", [], [VIDEOMENU, FULLSCREEN],
      + accent(stroke("M5 8h1.25M9.75 8H11")))
 
 icon("panels", "Panels", [], [VIEW], layout(stroke("M6.5 2.5v11M6.5 8h8")))
-icon("show", "Show", [], [VIEW], EYE + accent(dot(8, 8, 2)))
+icon("show", "Show", [], [VIEW, FULLSCREEN], EYE + accent(dot(8, 8, 2)))
 icon("hide", "Hide", [], [VIEW, GRIDMENU, TEXTMENU], EYE + circle(8, 8, 2) + accent(stroke("M2.5 13.5l11-11")))
 icon("panel-float", "Float", [], [VIEW, PANELS],
      stroke("M8.5 2.5h-5a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-5") + accent(stroke("M9.5 6.5l5-5M10.5 1.5h4v4")))
@@ -1421,7 +1421,7 @@ icon("align-top", "Align top", [], [VISUAL],
      accent(stroke("M1 1.5h14")) + rect(2.5, 3.5, 4, 10, 1) + rect(9.5, 3.5, 4, 6, 1))
 icon("align-middle", "Align middle", [], [VISUAL],
      accent(stroke("M1 8h14")) + rect(2.5, 2.5, 4, 11, 1) + rect(9.5, 4.5, 4, 7, 1))
-icon("align-bottom", "Align bottom", [], [VISUAL],
+icon("align-bottom", "Align bottom", [], [VISUAL, FULLSCREEN],
      accent(stroke("M1 14.5h14")) + rect(2.5, 2.5, 4, 10, 1) + rect(9.5, 6.5, 4, 6, 1))
 icon("distribute-horizontal", "Distribute horizontally", [], [VISUAL],
      accent(stroke("M1.5 1.5v13M14.5 1.5v13")) + frect(3, 4, 2, 8, .5) + frect(7, 3, 2, 10, .5) + frect(11, 5, 2, 6, .5))

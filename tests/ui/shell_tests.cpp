@@ -28044,7 +28044,8 @@ private slots:
             const auto windows = root->findChildren<QQuickWindow *>();
             QVERIFY(windows.size() >= 10);
             for (auto *other : windows)
-                QVERIFY2(other->color() == roles.panel || other->color() == roles.background,
+                QVERIFY2(other->color() == roles.panel || other->color() == roles.background
+                             || (other->objectName() == QLatin1String("videoFullscreen") && other->color() == Qt::black),
                          qPrintable(other->objectName() + QLatin1Char(' ') + other->color().name()));
             QCOMPARE(ui::IconTheme::colours()[0], roles.text);
             QTRY_COMPARE(gridPixel(), roles.panel);

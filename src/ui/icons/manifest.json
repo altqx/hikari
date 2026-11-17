@@ -3164,7 +3164,8 @@
    "mirror": false,
    "legacy": [],
    "surfaces": [
-    "menu:view"
+    "menu:view",
+    "video-fullscreen"
    ]
   },
   {
@@ -5670,7 +5671,8 @@
    "mirror": false,
    "legacy": [],
    "surfaces": [
-    "visual-tools"
+    "visual-tools",
+    "video-fullscreen"
    ]
   },
   {

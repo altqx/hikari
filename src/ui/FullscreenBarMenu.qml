@@ -12,6 +12,7 @@ ShellMenu {
 
     ShellMenu {
         objectName: barMenu.itemPrefix + "Position"
+        iconRole: "align-bottom"
         title: qsTr("Bar position")
         MenuRadioItem {
             objectName: barMenu.itemPrefix + "PositionBelow"
@@ -35,6 +36,7 @@ ShellMenu {
     ShellMenu {
         id: showMenu
         objectName: barMenu.itemPrefix + "Show"
+        iconRole: "show"
         title: qsTr("Show bar")
         Instantiator {
             model: [qsTr("Show it when the pointer moves or a key is pressed; hide it 2 seconds later while playing"),
