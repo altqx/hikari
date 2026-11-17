@@ -138,11 +138,12 @@ DialogWindow {
         if (setting.startsWith("appearance."))
             Theme.preview(values)
     }
-    function pickThemeColour(setting, colour, anchor, name) {
+    function pickThemeColour(theme, role, colour, anchor, name) {
         themeColourPopover.openFor(anchor, themeColourTarget, () => {
-            const now = values[setting] ?? colour
-            themeColourTarget.setting = setting
-            themeColourTarget.before = now
+            const now = colour
+            themeColourTarget.theme = theme
+            themeColourTarget.role = role
+            themeColourTarget.before = values["appearance.colours"] ?? []
             colourPicker.opened("settings")
             const c = colourPicker.htmlColour(now)
             return { r: c.r, g: c.g, b: c.b, a: 0 }
@@ -1899,15 +1900,17 @@ DialogWindow {
 
     QtObject {
         id: themeColourTarget
-        property string setting: ""
-        property string before: ""
+        property string theme: ""
+        property string role: ""
+        property var before: []
         function changeColour(c) {
-            dialog.put(setting, dialog.colourPicker.htmlText(c))
+            dialog.put("appearance.colours", Theme.withUserColour(dialog.values["appearance.colours"] ?? [], theme, role,
+                                                                  dialog.colourPicker.htmlText(c)))
             return true
         }
         function endDialog(accepted) {
             if (!accepted)
-                dialog.put(setting, before)
+                dialog.put("appearance.colours", before)
         }
     }
     ColourPopover {

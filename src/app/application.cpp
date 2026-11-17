@@ -727,6 +727,10 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_renderer.select(m_settings->text("video.subtitleProvider").toStdString());
     m_renderer.countCost(m_settings->boolean("video.renderCost"));
     ui::theme::useSettings(m_settings.get());
+    for (const QString &problem : ui::theme::loadProblems())
+        m_log->notice(ui::LogController::Error, QCoreApplication::translate("HikariSub.Options", "Themes"),
+                      QCoreApplication::translate("HikariSub.Options", "A built-in theme could not be read, so Dark is shown."),
+                      problem);
     m_tagButtons = std::make_unique<ui::TagButtonsController>(*m_settings);
     m_colourPicker = std::make_unique<ui::ColourPickerController>(*m_settings);
     m_shiftTimes = std::make_unique<ui::ShiftTimesController>(*m_settings);
@@ -7399,14 +7403,15 @@ bool validAppearance(std::string_view id, const QVariant &value)
     if (id == ui::windowframe::kTitleBarSetting)
         return QStringList{QStringLiteral("auto"), QStringLiteral("system"), QStringLiteral("custom")}.contains(value.toString());
     if (id == ui::theme::kThemeSetting)
-        return ui::theme::codeFromName(value.toString()).has_value();
+        return ui::theme::find(value.toString()) != nullptr;
     if (id == ui::theme::kFollowSystemSetting)
         return value.typeId() == QMetaType::Bool;
-    if (id == ui::theme::kLightAccentSetting || id == ui::theme::kDarkAccentSetting) {
-        const bool dark = id == ui::theme::kDarkAccentSetting;
-        return ui::theme::accent(dark, value.toString()).key == value.toString();
-    }
-    return application::parseSettingColour(value.toString().toStdString()).has_value();
+    for (std::size_t i = 0; i < ui::theme::kPairSettings.size(); ++i)
+        if (id == ui::theme::kPairSettings[i])
+            return ui::theme::find(value.toString()) && ui::theme::typeOf(value.toString()) == ui::theme::Type(i);
+    if (id == ui::theme::kAccentsSetting || id == ui::theme::kColoursSetting)
+        return value.canConvert<QStringList>();
+    return false;
 }
 }
 
@@ -7422,9 +7427,12 @@ void Application::applySettings(const QVariantMap &values, bool resetAll)
         resetAllSettings();
     for (const auto id : appearanceSettings()) {
         const auto found = values.constFind(qs(id));
-        if (found == values.cend() || !validAppearance(id, *found) || *found == m_settings->value(qs(id)))
+        if (found == values.cend() || !validAppearance(id, *found))
             continue;
-        m_settings->setValue(qs(id), *found);
+        const bool list = id == ui::theme::kAccentsSetting || id == ui::theme::kColoursSetting;
+        const QVariant value = list ? QVariant(found->toStringList()) : *found;
+        if (value != m_settings->value(qs(id)))
+            m_settings->setValue(qs(id), value);
     }
     if (const auto hidden = values.constFind(QStringLiteral("notices.hiddenQuestions")); hidden != values.cend()) {
         const QStringList list = hidden->toStringList();
