@@ -140,7 +140,7 @@ private slots:
         application->settingsStore()->setValue(QStringLiteral("recent.commands"), QStringList{QStringLiteral("GLOBAL_UNDO")});
         QTest::keyClick(window, Qt::Key_Return);
         QTRY_VERIFY(!shown());
-        QTRY_COMPARE(application->settingsStore()->list(QStringLiteral("recent.commands")),
+        QTRY_COMPARE(application->settingsStore()->list("recent.commands"),
                      QStringList{QStringLiteral("GLOBAL_CLEAR_COMMAND_HISTORY")});
     }
 
