@@ -1,3 +1,4 @@
+#include "hikari/app/qt_workarounds.h"
 #include "hikari/app/update_checker.h"
 #include "hikari/app/update_installer.h"
 #include "hikari/app/whats_new.h"
@@ -11,6 +12,9 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QQmlComponent>
+#include <QQuickItem>
+#include <QQuickView>
 #include <QSignalSpy>
 #include <QTemporaryDir>
 #include <QtTest>
@@ -691,6 +695,37 @@ private slots:
                               QUrl::fromLocalFile(copy->root + QStringLiteral("/feed/releases"))}));
         QCOMPARE(WhatsNew::allReleaseNotesUrl(UpdateFeed::github()),
                  QUrl(QStringLiteral("https://github.com/altqx/hikari/releases")));
+    }
+
+    void notesWithALongTableKeepRenderingAsTheyChange()
+    {
+        hikari::app::avoidQtRendererCrashes();
+        auto copy = start(QStringLiteral("table"), QStringLiteral("0.1.3"), false);
+        QVERIFY(copy);
+        auto notes = [&](int tick) {
+            QString markdown = QStringLiteral("| Change | Where |\n|---|---|\n");
+            for (int row = 0; row < 40; ++row)
+                markdown += QStringLiteral("| `change %1` | place %2 |\n").arg(row).arg(row + tick);
+            return copy->whatsNew->render(markdown, Qt::gray, Qt::blue, Qt::lightGray);
+        };
+        QQuickView view;
+        QQmlComponent component(view.engine());
+        component.setData("import QtQuick\n"
+                          "Flickable { width: 400; height: 300; contentHeight: notes.height; clip: true\n"
+                          "    Text { id: notes; objectName: \"notes\"; width: 400; textFormat: Text.RichText;"
+                          " wrapMode: Text.Wrap } }",
+                          QUrl());
+        view.setContent(QUrl(), &component, component.create());
+        QVERIFY2(view.rootObject(), qPrintable(component.errorString()));
+        view.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&view));
+        QQuickItem *text = view.rootObject()->findChild<QQuickItem *>(QStringLiteral("notes"));
+        QVERIFY(text);
+        for (int tick = 0; tick < 4; ++tick) {
+            text->setProperty("text", notes(tick));
+            QVERIFY(!view.grabWindow().isNull());
+        }
+        QVERIFY(text->height() > 300);
     }
 };
 
