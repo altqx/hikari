@@ -206,6 +206,7 @@ export class CodexSession {
     private model: string;
     private running?: string;
     private stderr: string[] = [];
+    private stderrAfterFailure = false;
 
     constructor(readonly id: string, private readonly params: SessionNewParams, private readonly deps: CodexDeps) {
         this.model = params.model.model;
@@ -250,6 +251,7 @@ export class CodexSession {
         const result = new Promise<SessionStopReason | Error>((done) =>
             (this.turn = { done, cancelled: false, streamed: new Set() }));
         const turn = this.turn!;
+        this.stderrAfterFailure = false;
         try {
             await this.start();
             this.deps.send({ sessionUpdate: "history", message: { author: "user", parts: params.prompt } });
@@ -405,15 +407,24 @@ export class CodexSession {
     }
 
     private keepStderr(chunk: Buffer): void {
-        this.stderr.push(...chunk.toString("utf8").split(/\r?\n/).filter((l) => l.trim()).map(redacted));
+        const lines = chunk.toString("utf8").split(/\r?\n/).filter((l) => l.trim()).map(redacted);
+        if (this.stderrAfterFailure) {
+            if (lines.length)
+                console.error(lines.join("\n"));
+            return;
+        }
+        this.stderr.push(...lines);
         this.stderr.splice(0, Math.max(0, this.stderr.length - kStderrLines));
     }
 
     private finish(stop: SessionStopReason | Error): void {
         const turn = this.turn;
         this.turn = undefined;
-        if (stop instanceof Error)
+        if (stop instanceof Error) {
             console.error([`Codex turn failed: ${redacted(stop.message)}`, ...this.stderr].join("\n"));
+            this.stderr = [];
+            this.stderrAfterFailure = true;
+        }
         for (const call of this.calls)
             this.deps.send({ sessionUpdate: "tool_call_update", toolCallId: call, status: "failed", content: [] });
         this.calls.clear();

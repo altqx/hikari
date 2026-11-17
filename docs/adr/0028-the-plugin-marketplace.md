@@ -9,6 +9,8 @@ On 2026-11-02 altqx settled the hosted HikariSub plugin marketplace in two grill
 
 This amends [ADR 0022](0022-hikarisub-plugins.md). Its "Hosting later" bullet expected author accounts, web upload and a review queue. Instead, the marketplace is Git-first with no accounts. The rest of ADR 0022's "Distribution and signatures" section stands: the one signed index, the author keys pinned at first install, the review of permission increases, automatic updates, revocation, privacy, sideloads and the v1 scope.
 
+Amended by [ADR 0034](0034-plugins-grow-into-an-extension-system.md) on 2026-11-17. A version may have one package per platform, listed under `packages`. A release that adds Run programs, background work, a program, a program's network, low integrity or an MCP server goes back to us. Registry CI also checks every platform's package, downloads and checks each declared program, runs the theme contrast check and checks that icon themes cover every role.
+
 ## Address and repositories
 
 - **Address:** https://marketplace.hikarisub.org, on Cloudflare, in the same account as hikarisub.org.
