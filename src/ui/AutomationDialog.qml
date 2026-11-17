@@ -289,7 +289,7 @@ DialogWindow {
                     objectName: "dialogPreset_" + window.presetKey(modelData)
                     text: modelData.name
                     iconRole: window.controller.hasProject ? modelData.tier : ""
-                    detailText: !window.controller.hasProject ? "" : modelData.tier === "project" ? qsTr("Project") : qsTr("Mine")
+                    detailText: !window.controller.hasProject ? "" : modelData.tier === "project" ? qsTr("Project") : qsTr("Yours")
                     enabled: !modelData.hidden
                     help: modelData.hidden ? qsTr("Hidden by the project’s copy") : ""
                     onTriggered: window.fill(window.controller.presetValues(modelData.name, modelData.tier))
@@ -326,7 +326,7 @@ DialogWindow {
                         required property var modelData
                         objectName: "dialogDeletePreset_" + window.presetKey(modelData)
                         text: modelData.name
-                        detailText: !window.controller.hasProject ? "" : modelData.tier === "project" ? qsTr("Project") : qsTr("Mine")
+                        detailText: !window.controller.hasProject ? "" : modelData.tier === "project" ? qsTr("Project") : qsTr("Yours")
                         onTriggered: window.askDeleteIn(modelData.name, modelData.tier)
                     }
                     onObjectAdded: (index, object) => deleteMenu.insertItem(index, object)
@@ -407,9 +407,9 @@ DialogWindow {
     }
 
     TierPresetMenu { id: copyToProjectMenu; name: "dialogCopyToProjectMenu"; title: qsTr("Copy to project"); from: "mine"; move: false; host: window }
-    TierPresetMenu { id: copyToMineMenu; name: "dialogCopyToMineMenu"; title: qsTr("Copy to mine"); from: "project"; move: false; host: window }
+    TierPresetMenu { id: copyToMineMenu; name: "dialogCopyToMineMenu"; title: qsTr("Copy to yours"); from: "project"; move: false; host: window }
     TierPresetMenu { id: moveToProjectMenu; name: "dialogMoveToProjectMenu"; title: qsTr("Move to project"); from: "mine"; move: true; host: window }
-    TierPresetMenu { id: moveToMineMenu; name: "dialogMoveToMineMenu"; title: qsTr("Move to mine"); from: "project"; move: true; host: window }
+    TierPresetMenu { id: moveToMineMenu; name: "dialogMoveToMineMenu"; title: qsTr("Move to yours"); from: "project"; move: true; host: window }
     component TierPresetMenu: ShellMenu {
         id: tierMenu
         required property string name

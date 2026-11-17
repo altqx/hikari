@@ -448,7 +448,7 @@ Item {
     component TierChip: Rectangle {
         id: chipItem
         property string origin
-        readonly property string text: origin === "project" ? qsTr("Project") : origin === "mine" ? qsTr("Mine") : qsTr("Built in")
+        readonly property string text: origin === "project" ? qsTr("Project") : origin === "mine" ? qsTr("Yours") : qsTr("Built in")
         implicitWidth: 86
         implicitHeight: 20
         radius: 10
@@ -2578,7 +2578,7 @@ Item {
                                     anchors.rightMargin: 10
                                     Label {
                                         text: group.modelData.group === "project" ? qsTr("This project")
-                                            : group.modelData.group === "mine" ? qsTr("Mine") : qsTr("Built in")
+                                            : group.modelData.group === "mine" ? qsTr("Yours") : qsTr("Built in")
                                         font.bold: true
                                         font.pixelSize: 11
                                         color: Theme.muted

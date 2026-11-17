@@ -57,7 +57,7 @@ DialogWindow {
             id: tierButton
             objectName: "saveLayoutTier"
             iconRole: saveTier.tier === "project" ? "project" : "mine"
-            text: saveTier.tier === "project" ? qsTr("This project") : qsTr("Mine")
+            text: saveTier.tier === "project" ? qsTr("This project") : qsTr("Yours")
             tip: qsTr("Where to save")
             Accessible.role: Accessible.ButtonMenu
             onClicked: saveTier.popup(tierButton, 0, tierButton.height)
