@@ -4644,8 +4644,11 @@ bool Application::shiftTranslation(int mode)
 QString Application::openKeyframes(const QUrl &file)
 {
     const QString path = file.isLocalFile() ? file.toLocalFile() : file.toString();
-    if (const auto target = m_workspace.editingTarget())
+    if (const auto target = m_workspace.editingTarget()) {
         m_tabMedia[target->value].keyframes = QDir::toNativeSeparators(path);
+        m_tabMedia[target->value].keyframesDropped = false;
+    }
+    emit keyframesChanged();
     auto &video = activeMedia().video->session();
     if (video.state() != application::VideoSession::State::Ready) {
         if (QString problem; keyframesWithoutVideo(path, problem))

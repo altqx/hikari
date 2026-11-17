@@ -8933,6 +8933,14 @@ Failed to copy %2 fonts.</source>
         <source>Run the last macro again</source>
         <translation>เรียกใช้แมโครล่าสุดอีกครั้ง</translation>
     </message>
+    <message>
+        <source>Save keyframes…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Close keyframes</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.InlineAi</name>
@@ -12347,6 +12355,22 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Shows or hides tags in the line editor</source>
         <translation>แสดงหรือซ่อนแท็กในตัวแก้ไขบรรทัด</translation>
+    </message>
+    <message>
+        <source>Save keyframes…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Close keyframes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saves the video’s keyframes as a keyframes file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Closes the open keyframes file and goes back to the video’s own keyframes</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -16648,6 +16672,26 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Antigravity isn’t on PATH.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Timing keys work in every panel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Never</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In the Timing layout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Always</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The audio panel’s shortcuts also work in the video and the line editor, as most already do in the grid. Unlike Aegisub’s Medusa keys, arrows, Page Up and Down, Home, End, Enter, Tab and Escape keep their panel’s meaning. In a text box only shortcuts with Ctrl, Alt or Meta work.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -26261,6 +26305,22 @@ or codecs or a splitter may be missing</source>
     <message>
         <source>Arrow keys move the point; Enter applies</source>
         <translation>ปุ่มลูกศรย้ายจุด กด Enter เพื่อนำไปใช้</translation>
+    </message>
+    <message>
+        <source>Save keyframes file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keyframes file (*.txt)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>There are no keyframes to save</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not save the keyframes file %1</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
