@@ -405,6 +405,10 @@ constexpr const char *kHotkeyCommands[] = {
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Delete old autosaves…"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Open dummy video…"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Run the last macro again"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Commit and use the default timing for the next line"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Snap to the scene"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Lengthen and shift what follows"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Shorten and shift what follows"),
 };
 
 constexpr const char *kHotkeyWindows[] = {
