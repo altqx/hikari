@@ -437,6 +437,8 @@ constexpr HotkeyAction kActions[] = {
         {"GLOBAL_QUICK_OPEN", 5343},
         {"GLOBAL_COMMAND_PALETTE", 5344},
         {"GLOBAL_CLEAR_COMMAND_HISTORY", 5345},
+        {"GLOBAL_SAVE_KEYFRAMES", 5350},
+        {"GLOBAL_CLOSE_KEYFRAMES", 5351},
 };
 
 struct NameRow {
@@ -844,6 +846,8 @@ constexpr NameRow kNames[] = {
         {5343, "Quick Open…"},
         {5344, "Command palette…"},
         {5345, "Clear command history"},
+        {5350, "Save keyframes…"},
+        {5351, "Close keyframes"},
 };
 
 struct DefaultRow {

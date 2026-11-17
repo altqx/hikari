@@ -154,9 +154,6 @@ void mapClip(TagFind &find, std::u16string &text, const std::function<PointF(Poi
 std::u16string moveText(PointF pos, const double *tbl, int lineStartMs);
 
 // In device pixels; drawArrow returns where the line should end.
-inline constexpr std::uint32_t kHandleFill = 0xAA121150;
-inline constexpr std::uint32_t kHandleSelectedFill = 0xAAFCE6B1;
-inline constexpr std::uint32_t kHandleBorder = 0xFFBB0000;
 PointF drawArrow(Overlay &out, PointF from, PointF to, int diff = 0);
 void drawRect(Overlay &out, PointF pos, bool selected, float size);
 

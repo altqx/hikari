@@ -181,7 +181,7 @@ void CrosshairTool::putPosition(int x, int y, VisualHost &host)
 
 Overlay CrosshairTool::overlay(const VisualHost &host) const
 {
-    Overlay out;
+    Overlay out{.handles = host.handleColours()};
     if (!shown() || !host.view().hasVideo())
         return out;
     out.unit = unitOf(host);
