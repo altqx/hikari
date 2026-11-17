@@ -60,6 +60,20 @@ bool Application::snapToAdjacentKeyframe(bool end, bool next)
     return done;
 }
 
+bool Application::snapToScene()
+{
+    auto *session = targetSession();
+    if (!session || !exactTimebase())
+        return false;
+    const auto &video = activeMedia().video->session();
+    const bool done = application::snapToScene(*session, video.legacyTimebase(), video.keyframes(),
+                                               video.reportedFrame().value_or(0))
+                          .has_value();
+    editor().reloadFromSession();
+    refreshViews();
+    return done;
+}
+
 bool Application::changeLead(bool end, bool add)
 {
     auto *session = targetSession();
@@ -74,14 +88,21 @@ bool Application::changeLead(bool end, bool add)
     return done;
 }
 
-bool Application::nudgeEdge(bool end, int frames)
+bool Application::nudgeEdge(bool end, int steps, bool shiftFollowing)
 {
+    constexpr int kStepMs = 10;
     auto *session = targetSession();
-    if (!session || !exactTimebase())
+    if (!session)
         return false;
-    const bool done = application::nudgeEdgeByFrames(*session, activeMedia().video->session().legacyTimebase(),
-                                                     end ? TimingEdge::End : TimingEdge::Start, frames)
-                          .has_value();
+    if (end)
+        if (const auto syllable = audio().nudgeSyllableEnd(steps * kStepMs, shiftFollowing))
+            return *syllable;
+    const auto edge = end ? TimingEdge::End : TimingEdge::Start;
+    const bool done =
+        (exactTimebase() ? application::nudgeEdgeByFrames(*session, activeMedia().video->session().legacyTimebase(),
+                                                          edge, steps, shiftFollowing)
+                         : application::nudgeEdgeByMs(*session, edge, steps * kStepMs, shiftFollowing))
+            .has_value();
     editor().reloadFromSession();
     refreshViews();
     return done;

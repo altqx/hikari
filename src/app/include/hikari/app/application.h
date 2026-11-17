@@ -284,6 +284,12 @@ public:
     Q_INVOKABLE bool openReference(const QString &path);
     // No review: callers review first.
     Q_INVOKABLE bool closeEditingTarget();
+    // A window or panel in `shellWindow` reports a presence activity key (docs/ux/discord-presence.md#modes).
+    Q_INVOKABLE void presenceActivity(int shellWindow, const QString &key, bool going);
+    Q_INVOKABLE QVariantMap presencePreview(const QVariantMap &values) const { return m_presence->preview(values); }
+    Q_INVOKABLE QVariantList presencePlugins() const;
+    // {key, name, when, layout} for each mode, in Settings order.
+    Q_INVOKABLE QVariantList presenceModes() const;
 
     // then: "close", "new" or "quit". One row per Document with unsaved work: {id,
     // title, untitled, folder (native; "" when untitled)}; none: call finishClose().
@@ -881,9 +887,10 @@ public:
     Q_INVOKABLE bool snapToKeyframe(bool start);
     // Timing helpers on the selection; false (nothing done) without an exact timebase or when no Line changes.
     Q_INVOKABLE bool snapToAdjacentKeyframe(bool end, bool next);
+    Q_INVOKABLE bool snapToScene();
     // The amounts are audio.leadInValue / audio.leadOutValue.
     Q_INVOKABLE bool changeLead(bool end, bool add);
-    Q_INVOKABLE bool nudgeEdge(bool end, int frames);
+    Q_INVOKABLE bool nudgeEdge(bool end, int steps, bool shiftFollowing = false);
     Q_INVOKABLE bool extendNeighbour(bool next);
     // The Timing assistant's suggestion for the active Line, from the postprocessor rules:
     // {ok, line, index, count, style, text, startBefore, endBefore, start, end, startReason,
@@ -1188,6 +1195,8 @@ private:
     void rememberColumns(bool paste, int columns, const QString &tagNames);
     void protectReference();
     void refreshViews();
+    void wirePresence();
+    void refreshPresence();
     std::optional<std::string> setKeyframesFromApi(const std::vector<std::int64_t> &frames,
                                                    const std::optional<std::string> &file);
     void showRowMarks(application::DocumentId document);
@@ -1343,6 +1352,7 @@ private:
     WindowViews &views(int shellWindow);
     const WindowViews &views(int shellWindow) const;
     WindowViews &activeViews() { return views(m_workspace.activeWindow()); }
+    void watchPresence(WindowViews &v);
     const WindowViews &activeViews() const { return views(m_workspace.activeWindow()); }
     std::vector<WindowViews *> allViews();
     void makeViews(WindowViews &views, int shellWindow);
@@ -1390,11 +1400,14 @@ private:
     std::unique_ptr<InlineAiController> m_inlineAi;
     std::unique_ptr<PluginManager> m_pluginManager;
     std::unique_ptr<PluginMarketplace> m_pluginMarketplace;
+    std::unique_ptr<PluginPrograms> m_pluginPrograms;
     std::unique_ptr<PluginRuntime> m_pluginRuntime;
     std::unique_ptr<UpdateChecker> m_updates;
     std::unique_ptr<Analytics> m_analytics;
     std::unique_ptr<CrashReports> m_crashReports;
     std::unique_ptr<DiscordPresence> m_presence;
+    std::map<int, std::set<QString>> m_presenceGoing;
+    int m_presenceNotes = 0;
     std::unique_ptr<StarPrompt> m_starPrompt;
     QString bundledScriptName(const QString &path) const;
     std::unique_ptr<WhatsNew> m_whatsNew;
