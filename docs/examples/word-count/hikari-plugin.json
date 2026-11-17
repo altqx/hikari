@@ -1,0 +1,26 @@
+{
+  "$schema": "../../schemas/hikari-plugin.schema.json",
+  "id": "com.example.word-count",
+  "name": "Word count",
+  "version": "1.0.0",
+  "api": 1,
+  "main": {"program": "main"},
+  "authors": ["HikariSub"],
+  "description": "Counts the words in the active file: a program plugin in TypeScript.",
+  "license": "MIT",
+  "permissions": {"programs": "The plugin is this program"},
+  "contributes": {
+    "commands": [{"id": "count", "title": "Count words"}],
+    "programs": [{
+      "id": "main",
+      "title": "Word count",
+      "api": true,
+      "platforms": {
+        "linux-x64": {"path": "bin/word-count"},
+        "linux-arm64": {"path": "bin/word-count"},
+        "windows-x64": {"path": "bin/word-count.exe"},
+        "macos-arm64": {"path": "bin/word-count"}
+      }
+    }]
+  }
+}
