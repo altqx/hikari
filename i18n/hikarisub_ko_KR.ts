@@ -16107,15 +16107,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Never</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>In the Timing layout</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Always</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -24989,10 +24981,6 @@ Styles deleted:
         <translation>가로 세로 비율 변경…</translation>
     </message>
     <message>
-        <source>Exit full screen</source>
-        <translation type="vanished">전체 화면 종료</translation>
-    </message>
-    <message>
         <source>Full screen</source>
         <translation>전체 화면</translation>
     </message>
@@ -25112,15 +25100,6 @@ Styles deleted:
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Previous video file</source>
-        <translation type="vanished">이전 영상 파일</translation>
-    </message>
-    <message>
-        <source>Line %1, %2: %3</source>
-        <extracomment>The full screen bar&apos;s current line: %1 its number, %2 its times, %3 its text</extracomment>
-        <translation type="vanished">줄 %1, %2: %3</translation>
-    </message>
-    <message>
         <source>Visual tools</source>
         <translation>시각 도구</translation>
     </message>
@@ -25156,30 +25135,6 @@ Styles deleted:
     <message>
         <source>Full screen bar</source>
         <translation>전체 화면 막대</translation>
-    </message>
-    <message>
-        <source>Full screen bar: %1</source>
-        <translation type="vanished">전체 화면 막대: %1</translation>
-    </message>
-    <message>
-        <source>Show when the pointer moves</source>
-        <translation type="vanished">포인터를 움직일 때 표시</translation>
-    </message>
-    <message>
-        <source>Always show</source>
-        <translation type="vanished">항상 표시</translation>
-    </message>
-    <message>
-        <source>Never show</source>
-        <translation type="vanished">표시 안 함</translation>
-    </message>
-    <message>
-        <source>Show on pointer movement, hide when idle</source>
-        <translation type="vanished">포인터를 움직이면 표시하고 움직임이 없으면 숨김</translation>
-    </message>
-    <message>
-        <source>Keep the bar; the picture ends above it</source>
-        <translation type="vanished">막대를 유지하고 화면은 그 위까지 표시</translation>
     </message>
     <message>
         <source>Auto-hide</source>

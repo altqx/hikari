@@ -16357,15 +16357,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Never</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>In the Timing layout</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Always</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -25431,10 +25423,6 @@ Usunięte style:
         <translation>Zmień proporcje obrazu…</translation>
     </message>
     <message>
-        <source>Exit full screen</source>
-        <translation type="vanished">Wyłącz pełny ekran</translation>
-    </message>
-    <message>
         <source>Full screen</source>
         <translation>Pełny ekran</translation>
     </message>
@@ -25554,15 +25542,6 @@ Usunięte style:
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Previous video file</source>
-        <translation type="vanished">Poprzedni plik wideo</translation>
-    </message>
-    <message>
-        <source>Line %1, %2: %3</source>
-        <extracomment>The full screen bar&apos;s current line: %1 its number, %2 its times, %3 its text</extracomment>
-        <translation type="vanished">Linijka %1, %2: %3</translation>
-    </message>
-    <message>
         <source>Visual tools</source>
         <translation>Narzędzia wizualne</translation>
     </message>
@@ -25598,30 +25577,6 @@ Usunięte style:
     <message>
         <source>Full screen bar</source>
         <translation>Pasek pełnego ekranu</translation>
-    </message>
-    <message>
-        <source>Full screen bar: %1</source>
-        <translation type="vanished">Pasek pełnego ekranu: %1</translation>
-    </message>
-    <message>
-        <source>Show when the pointer moves</source>
-        <translation type="vanished">Pokazuj przy ruchu wskaźnika</translation>
-    </message>
-    <message>
-        <source>Always show</source>
-        <translation type="vanished">Zawsze pokazuj</translation>
-    </message>
-    <message>
-        <source>Never show</source>
-        <translation type="vanished">Nigdy nie pokazuj</translation>
-    </message>
-    <message>
-        <source>Show on pointer movement, hide when idle</source>
-        <translation type="vanished">Pokazuj przy ruchu wskaźnika, ukrywaj przy bezczynności</translation>
-    </message>
-    <message>
-        <source>Keep the bar; the picture ends above it</source>
-        <translation type="vanished">Zachowaj pasek; obraz kończy się nad nim</translation>
     </message>
     <message>
         <source>Auto-hide</source>

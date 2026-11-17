@@ -16232,15 +16232,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Never</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>In the Timing layout</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Always</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -25210,10 +25202,6 @@ Styles deleted:
         <translation>தோற்ற விகிதத்தை மாற்றவும்…</translation>
     </message>
     <message>
-        <source>Exit full screen</source>
-        <translation type="vanished">முழுத் திரையிலிருந்து வெளியேறு</translation>
-    </message>
-    <message>
         <source>Full screen</source>
         <translation>முழுத் திரை</translation>
     </message>
@@ -25333,15 +25321,6 @@ Styles deleted:
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Previous video file</source>
-        <translation type="vanished">முந்தைய வீடியோ கோப்பு</translation>
-    </message>
-    <message>
-        <source>Line %1, %2: %3</source>
-        <extracomment>The full screen bar&apos;s current line: %1 its number, %2 its times, %3 its text</extracomment>
-        <translation type="vanished">வரி %1, %2: %3</translation>
-    </message>
-    <message>
         <source>Visual tools</source>
         <translation>காட்சிக் கருவிகள்</translation>
     </message>
@@ -25377,30 +25356,6 @@ Styles deleted:
     <message>
         <source>Full screen bar</source>
         <translation>முழுத் திரைப் பட்டி</translation>
-    </message>
-    <message>
-        <source>Full screen bar: %1</source>
-        <translation type="vanished">முழுத் திரைப் பட்டி: %1</translation>
-    </message>
-    <message>
-        <source>Show when the pointer moves</source>
-        <translation type="vanished">சுட்டி நகரும்போது காட்டு</translation>
-    </message>
-    <message>
-        <source>Always show</source>
-        <translation type="vanished">எப்போதும் காட்டு</translation>
-    </message>
-    <message>
-        <source>Never show</source>
-        <translation type="vanished">ஒருபோதும் காட்டாதே</translation>
-    </message>
-    <message>
-        <source>Show on pointer movement, hide when idle</source>
-        <translation type="vanished">சுட்டி நகரும்போது காட்டு, செயலற்றபோது மறை</translation>
-    </message>
-    <message>
-        <source>Keep the bar; the picture ends above it</source>
-        <translation type="vanished">பட்டியை வை; படம் அதற்கு மேலே முடியும்</translation>
     </message>
     <message>
         <source>Auto-hide</source>
