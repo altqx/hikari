@@ -210,7 +210,7 @@ QString authorsText(const plugins::Manifest &manifest)
 QStringList contributionLines(const plugins::Manifest &manifest)
 {
     QStringList lines;
-    for (const plugins::Contribution &command : manifest.commands)
+    for (const plugins::Command &command : manifest.commands)
         lines << QCoreApplication::translate("HikariSub.Plugins", "Command: %1").arg(text(command.title));
     for (const plugins::Panel &panel : manifest.panels)
         lines << QCoreApplication::translate("HikariSub.Plugins", "Panel: %1").arg(text(panel.title));

@@ -704,7 +704,10 @@ void PluginRuntime::relist()
                                     {QStringLiteral("plugin"), qs(plugin->id)},
                                     {QStringLiteral("pluginName"), name},
                                     {QStringLiteral("title"), qs(command.title)},
-                                    {QStringLiteral("titles"), QStringList{name, qs(command.title)}}};
+                                    {QStringLiteral("titles"), QStringList{name, qs(command.title)}},
+                                    {QStringLiteral("icon"), qs(command.icon)},
+                                    {QStringLiteral("description"), qs(command.description)},
+                                    {QStringLiteral("palette"), command.palette}};
     }
     if (commands == m_commands)
         return;
@@ -723,7 +726,7 @@ bool PluginRuntime::run(const QString &commandId)
         return false;
     const std::string command = id.substr(cut + 1);
     const auto &declared = it->second->manifest.commands;
-    if (std::ranges::find(declared, command, &plugins::Contribution::id) == declared.end())
+    if (std::ranges::find(declared, command, &plugins::Command::id) == declared.end())
         return false;
     PluginProcess &process = *it->second->process;
     if (it->second->held) {
