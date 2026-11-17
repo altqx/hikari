@@ -195,7 +195,6 @@ private:
     std::map<int, plugins::ConditionFacts> m_conditions;
     int m_conditionsRevision = 0;
     const plugins::Command *command(const QString &commandId, Running **plugin = nullptr) const;
-    std::vector<const Running *> byName() const;
     std::map<std::string, std::int64_t> m_installOrder;
     PluginUi *m_ui = nullptr;
     std::unique_ptr<QNetworkAccessManager> m_ownNetwork;
