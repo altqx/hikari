@@ -92,6 +92,10 @@ A dummy video's frame rate may be a fraction, such as `24000/1001`, and its path
 
 A dummy video can be up to 100000 pixels on each side, as in Aegisub 3.5. The smallest is still 300×200. When a side is over 8192, the frames are drawn scaled down to fit 8192×8192, so a huge dummy doesn't need gigabytes of memory per frame. The size you asked for is what the visual tools, the PlayRes and LayoutRes checks, Script properties and Lua (`aegisub.video_size()`) see. Only the picture and `aegisub.get_frame()` have the smaller size. [FA9 #566](https://github.com/altqx/hikari/issues/566), coordinator decision 2026-11-03.
 
+## PT-dummy-noise
+
+A file or session that stores a blank-audio path with `noise` in it (`dummy-audio:noise?sr=…&ln=…`, as Aegisub writes for its noise audio) opens as white noise of that length, as Aegisub does, not as silence. The noise is computed per sample, so it takes no memory and plays the same every time. There is still no command that makes noise audio (owner, 2026-10-18). [PT #1212](https://github.com/altqx/hikari/issues/1212).
+
 ## FA9-clip-places
 
 Vector clips are written with up to two decimal places, as Aegisub 3.5 writes them, by the vector clip tool and the Position shifter. They used to be rounded to whole pixels. Rectangle clips, and the clips the scale and rotation tools rewrite, keep whole pixels. Files from older versions read back unchanged. [FA9 #566](https://github.com/altqx/hikari/issues/566).
