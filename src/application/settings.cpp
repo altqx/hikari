@@ -91,7 +91,7 @@ std::vector<SettingDefinition> &definitions()
         {"audio.snapToKeyframes", "AUDIO_SNAP_TO_KEYFRAMES", Bool, Profile, Mapped, true, false},
         {"audio.snapToOtherLines", "AUDIO_SNAP_TO_OTHER_LINES", Bool, Profile, Mapped, true, false},
         {"audio.spectrumOn", "AUDIO_SPECTRUM_ON", Bool, Profile, Mapped, true, false},
-        {"audio.spectrumNonLinearOn", "AUDIO_SPECTRUM_NON_LINEAR_ON", Bool, Profile, Mapped, true, false},
+        {"audio.spectrumCurve", "AUDIO_SPECTRUM_NON_LINEAR_ON", Int, Profile, Mapped, true, std::int64_t{0}},
         {"audio.startDragSensitivity", "AUDIO_START_DRAG_SENSITIVITY", Int, Profile, Mapped, true, std::int64_t{6}},
         {"audio.verticalZoom", "AUDIO_VERTICAL_ZOOM", Int, Profile, Mapped, true, std::int64_t{50}},
         {"audio.volume", "AUDIO_VOLUME", Int, Profile, Mapped, true, std::int64_t{50}},

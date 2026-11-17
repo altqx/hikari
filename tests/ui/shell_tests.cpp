@@ -19277,6 +19277,7 @@ private slots:
               {"audio.drawKeyframes", "Show keyframes"},
               {"audio.lineBoundariesThickness", nullptr},
               {"audio.inactiveLinesDisplayMode", nullptr},
+              {"audio.spectrumCurve", nullptr},
               {"audio.snapToKeyframes", "Snap to keyframes"},
               {"audio.snapToOtherLines", "Snap to other lines"},
               {"audio.mergeEveryNWithSyllable", "Merge every “n” with the previous syllable"},
@@ -22388,6 +22389,7 @@ private slots:
         QVERIFY(audio.autoScroll());
         QVERIFY(!audio.spectrumOn());
         QVERIFY(!audio.spectrumNonLinear());
+        QCOMPARE(audio.spectrumCurve(), 0);
         audio.openDummy();
         QVERIFY(audio.ready());
         QVERIFY(item("audioZoom")->isVisible());
@@ -22786,7 +22788,7 @@ private slots:
         openMore();
         QVERIFY(item("audioMoreGotoStart")->isVisible());
         QVERIFY(item("audioMoreGotoEnd")->isVisible());
-        for (const char *twice : {"audioMoreSpeechSpectrum", "audioMoreAutoScroll", "audioMoreSyncVideo", "audioMoreWaveform",
+        for (const char *twice : {"audioMoreAutoScroll", "audioMoreSyncVideo", "audioMoreWaveform",
                                   "audioMoreLineTiming", "audioMoreExtraGoto"})
             QVERIFY2(!item(twice)->isVisible(), twice);
         closeMore();
@@ -22820,7 +22822,12 @@ private slots:
         openMore();
         QVERIFY(item("audioMoreAutoScroll")->isVisible());
         QVERIFY(item("audioMoreSyncVideo")->isVisible());
-        QVERIFY(item("audioMoreSpeechSpectrum")->isVisible());
+        QVERIFY(named("audioMoreFrequencyCurve")->property("shown").toBool());
+        QCOMPARE(named("audioMoreFrequencyCurveLinear")->property("checked").toBool(), audio.spectrumCurve() == 0);
+        QVERIFY(QMetaObject::invokeMethod(named("audioMoreFrequencyCurveLogarithmic"), "triggered"));
+        QCOMPARE(audio.spectrumCurve(), 2);
+        QVERIFY(named("audioMoreFrequencyCurveLogarithmic")->property("checked").toBool());
+        audio.setSpectrumCurve(0);
         QVERIFY(item("audioMoreGotoStart")->isVisible());
         QVERIFY(!item("audioMoreKaraoke")->isVisible());
         QVERIFY(!item("audioMoreTap")->isVisible());
@@ -23451,11 +23458,22 @@ private slots:
         QVERIFY(lit > 0);
 
         audio.setSpectrumNonLinear(true);
-        QVERIFY(settings.boolean("audio.spectrumNonLinearOn"));
+        QCOMPARE(settings.integer("audio.spectrumCurve"), 1);
+        QCOMPARE(audio.spectrumCurve(), 1);
         const auto speech = audio.spectrumImage();
         QVERIFY(speech != picture);
         QVERIFY(speech->bgra != picture->bgra);
         QCOMPARE(audio.spectrum()->transformedLines(), lines);
+
+        audio.setSpectrumCurve(2);
+        QCOMPARE(settings.integer("audio.spectrumCurve"), 2);
+        QVERIFY(!audio.spectrumNonLinear());
+        const auto logarithmic = audio.spectrumImage();
+        QVERIFY(logarithmic->bgra != speech->bgra);
+        QVERIFY(logarithmic->bgra != picture->bgra);
+        QCOMPARE(audio.spectrum()->transformedLines(), lines);
+        audio.setSpectrumCurve(1);
+        QVERIFY(audio.spectrumNonLinear());
 
         audio.setVerticalZoom(100);
         QVERIFY(audio.spectrumImage()->bgra != speech->bgra);

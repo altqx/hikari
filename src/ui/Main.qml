@@ -6958,17 +6958,39 @@ ApplicationWindow {
                                         root.audio.setSpectrumOn(true)
                                     }
                                 }
-                                FoldedToggle {
-                                    objectName: "audioMoreSpeechSpectrum"
+                                ShellMenu {
+                                    objectName: "audioMoreFrequencyCurve"
                                     iconRole: "spectrum-nonlinear"
-                                    text: qsTranslate("HikariSub.Audio", "Speech spectrum")
-                                    checked: root.audio.spectrumNonLinear
-                                    onToggled: {
-                                        root.audio.setSpectrumNonLinear(checked)
-                                        checked = Qt.binding(() => root.audio.spectrumNonLinear)
+                                    title: qsTranslate("HikariSub.Audio", "Frequency curve")
+                                    MenuRadioItem {
+                                        objectName: "audioMoreFrequencyCurveLinear"
+                                        text: qsTranslate("HikariSub.Audio", "Linear")
+                                        checked: root.audio.spectrumCurve === 0
+                                        onTriggered: {
+                                            checked = Qt.binding(() => root.audio.spectrumCurve === 0)
+                                            root.audio.setSpectrumCurve(0)
+                                        }
+                                    }
+                                    MenuRadioItem {
+                                        objectName: "audioMoreFrequencyCurveSpeech"
+                                        text: qsTranslate("HikariSub.Audio", "Speech")
+                                        checked: root.audio.spectrumCurve === 1
+                                        onTriggered: {
+                                            checked = Qt.binding(() => root.audio.spectrumCurve === 1)
+                                            root.audio.setSpectrumCurve(1)
+                                        }
+                                    }
+                                    MenuRadioItem {
+                                        objectName: "audioMoreFrequencyCurveLogarithmic"
+                                        text: qsTranslate("HikariSub.Audio", "Logarithmic")
+                                        checked: root.audio.spectrumCurve === 2
+                                        onTriggered: {
+                                            checked = Qt.binding(() => root.audio.spectrumCurve === 2)
+                                            root.audio.setSpectrumCurve(2)
+                                        }
                                     }
                                 }
-                                FoldedToggleSeparator {}
+                                MenuSeparator {}
                                 ShellMenuItem {
                                     objectName: "audioMoreGotoStart"
                                     iconRole: "audio-to-selection-start"

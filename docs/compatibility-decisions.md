@@ -96,6 +96,10 @@ A dummy video can be up to 100000 pixels on each side, as in Aegisub 3.5. The sm
 
 A file or session that stores a blank-audio path with `noise` in it (`dummy-audio:noise?sr=…&ln=…`, as Aegisub writes for its noise audio) opens as white noise of that length, as Aegisub does, not as silence. The noise is computed per sample, so it takes no memory and plays the same every time. There is still no command that makes noise audio (owner, 2026-10-18). [PT #1212](https://github.com/altqx/hikari/issues/1212).
 
+## PT-spectrum-curve
+
+The audio spectrum has a frequency curve: Linear (legacy's spectrum, unchanged), Speech (legacy's non-linear spectrum) and Logarithmic. Speech and Logarithmic draw power in decibels over 60 dB; Linear keeps legacy's linear power. Legacy's `AUDIO_SPECTRUM_NON_LINEAR_ON=true` imports as Speech. [PT #1212](https://github.com/altqx/hikari/issues/1212).
+
 ## FA9-clip-places
 
 Vector clips are written with up to two decimal places, as Aegisub 3.5 writes them, by the vector clip tool and the Position shifter. They used to be rounded to whole pixels. Rectangle clips, and the clips the scale and rotation tools rewrite, keep whole pixels. Files from older versions read back unchanged. [FA9 #566](https://github.com/altqx/hikari/issues/566).

@@ -18,6 +18,7 @@ namespace {
 
 // MUST KILL: float/double mix kept so magnitudes match HikariSub legacy to the bit
 constexpr float kPi = 3.1415926535897932384626433832795f;
+constexpr double kDecibelRange = 60;
 
 template <unsigned M, unsigned N, unsigned B, unsigned A> struct SinCosSeries {
     static double value() { return 1 - (A * kPi / B) * (A * kPi / B) / M / (M + 1) * SinCosSeries<M + 2, N, B, A>::value(); }
@@ -329,6 +330,12 @@ void AudioSpectrum::render(const DisplayAudio &audio, std::int64_t range_start, 
         pixel[0] = m_palette[std::size_t(intensity) * 3 + 2];
     };
     auto band = [&](const float *line, int index) { return index < lineLength ? line[index] : 0.f; };
+    const bool decibels = m_curve != SpectrumCurve::Linear;
+    auto decibelIntensity = [&](float value) {
+        const double r = value * upscale / maxpower;
+        return r > 0 ? int(256 * (1 + 20 * std::log10(r) / kDecibelRange)) : 0;
+    };
+    auto logBand = [&](int y) { return std::pow(double(maxband), double(y) / imgheight); };
 
     const std::uint64_t sampleRange = (last_line - first_line + 1);
     for (std::uint64_t i = first_line, k = 0; i <= last_line; ++i, ++k) {
@@ -345,7 +352,10 @@ void AudioSpectrum::render(const DisplayAudio &audio, std::int64_t range_start, 
                 int sample1 = 0;
                 float samplecounter = 1.f;
                 for (int y = 0; y < imgheight; ++y) {
-                    if (m_nonLinear) {
+                    if (m_curve == SpectrumCurve::Logarithmic) {
+                        sample1 = std::min(lineLength - 1, int(logBand(y)) - 1);
+                        sample2 = std::clamp(int(logBand(y + 1)) - 1, sample1, lineLength - 1);
+                    } else if (m_curve == SpectrumCurve::Speech) {
                         if (sample2 >= (int)samplecounter)
                             sample2++;
                         else
@@ -364,17 +374,17 @@ void AudioSpectrum::render(const DisplayAudio &audio, std::int64_t range_start, 
                         if (line[samp] > maxval)
                             maxval = line[samp];
                     sample1 = sample2 + 1;
-                    const int intensity = int(256 * (maxval * upscale) / maxpower);
-                    writePixel(x, y, intensity);
+                    writePixel(x, y, decibels ? decibelIntensity(maxval) : int(256 * (maxval * upscale) / maxpower));
                 }
             } else {
                 for (int y = 0; y < imgheight; ++y) {
-                    const float ideal = (float)(y + 1.) / imgheight * maxband;
+                    const float ideal = m_curve == SpectrumCurve::Logarithmic ? float(logBand(y + 1)) - 1
+                                                                              : (float)(y + 1.) / imgheight * maxband;
                     const float sample1 = band(line, (int)std::floor(ideal) + minband);
                     const float sample2 = band(line, (int)std::ceil(ideal) + minband);
                     const float frac = ideal - std::floor(ideal);
-                    const int intensity = int(((1 - frac) * sample1 + frac * sample2) * upscale / maxpower * 256);
-                    writePixel(x, y, intensity);
+                    const float value = (1 - frac) * sample1 + frac * sample2;
+                    writePixel(x, y, decibels ? decibelIntensity(value) : int(value * upscale / maxpower * 256));
                 }
             }
         }

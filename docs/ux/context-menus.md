@@ -342,7 +342,7 @@ Dock (panel-dock), Close (tab-close). Items: 2.
 
 The ⋯ on the audio toolbar when the toolbar folds (`Main.qml:4116-4123`). Defined at `src/ui/Main.qml:4124-4320`. Rows only appear for controls that folded out.
 
-Folded plays (7, keys bound: Play before the mark … Play to the end), Automatically apply changes [x], Go to the next line after applying changes [x], Go to selection (AUDIO_GOTO, key bound) | Line timing (•), Karaoke (•), [x] Auto split, Split syllable at the cursor, Switch long syllables between \k and \kf, [x] Tap to time (AUDIO_TAP), Tap options | Waveform (•), Spectrum (•) | [x] Auto-scroll, [x] Sync with video, [x] Speech (non-linear spectrum).
+Folded plays (7, keys bound: Play before the mark … Play to the end), Automatically apply changes [x], Go to the next line after applying changes [x], Go to selection (AUDIO_GOTO, key bound) | Line timing (•), Karaoke (•), [x] Auto split, Split syllable at the cursor, Switch long syllables between \k and \kf, [x] Tap to time (AUDIO_TAP), Tap options | Waveform (•), Spectrum (•), Frequency curve ▸ (Linear •, Speech •, Logarithmic •) | [x] Auto-scroll, [x] Sync with video.
 
 Items: up to 22.
 
@@ -526,7 +526,7 @@ Takeaways for Hikari:
 | Auto-commit | Audio Commit menu and M3 "Automatically apply changes" | Audio toolbar toggle and Customise "Auto-commit" |
 | Next line after commit | Commit menu and M3 "Go to the next line after applying changes" | Toolbar "Next after commit"; Customise "Go to the next line after commit" |
 | Line timing mode | Audio toolbar "Line" | M3 "Line timing" |
-| Non-linear spectrum | Audio toolbar "Speech" | M3 "Speech (non-linear spectrum)" |
+| Non-linear spectrum | Audio toolbar "Speech" | M3 "Frequency curve ▸ Speech" |
 | Add to dictionary | R3 grammar "Add “x” to dictionary" | R3 spelling "Add word "x" to dictionary" |
 | Hide selected lines | R1 item 15 (GRID_HIDE_SELECTED, action) | R1 Filtering › "Hide selected lines" (GRID_FILTER_BY_SELECTIONS, check) |
 | Line groups | R1 "Make line group" | R2 "Copy line group", "Delete" (which only ungroups); icon roles say "tree" |
@@ -608,8 +608,8 @@ The total is **28 menus with 257 items**: 16 right-click entries (two of them, R
 - **Zoom.** The video menu gains GLOBAL_RESET_VIDEO_ZOOM, “Reset zoom and pan”, the name the menu bar took in 10.2.
 - **Full screen bar.** The modes are “Show when the pointer moves”, “Always show” and “Never show”, in the menu, on the bar's mode button and in the hotkey row.
 - **Speaker.** Shift+Tab in full screen focuses the bar's speaker, and the bar stays up while it has focus; the Menu key opens its output menu, which now always shows the “Output device” heading.
-- **Audio overflow.** » (menu-more) icon; the folded play buttons have their own group; Tap options ▸ is a real submenu (without its own Tap to time row, which sits just above it); Speech spectrum sits with Waveform and Spectrum.
-- **Names.** Auto-commit, Go to the next line after commit, Karaoke and Speech spectrum read the same in the menus, the dropdowns, Customise and the tooltips.
+- **Audio overflow.** » (menu-more) icon; the folded play buttons have their own group; Tap options ▸ is a real submenu (without its own Tap to time row, which sits just above it); Frequency curve ▸ (Linear, Speech, Logarithmic) sits with Waveform and Spectrum and is always shown; the toolbar Speech toggle switches Linear ↔ Speech.
+- **Names.** Auto-commit, Go to the next line after commit, Karaoke and Speech read the same in the menus, the dropdowns, Customise and the tooltips.
 
 ### What CX6 built
 

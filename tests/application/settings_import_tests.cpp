@@ -450,6 +450,18 @@ TEST(SettingsImport, LaterRecordsAndTheAudioResetSupersede)
     EXPECT_EQ(rowOf(reset, "setting:audio.volume").value, SettingValue(std::int64_t{20}));
 }
 
+TEST(SettingsImport, TheNonLinearSpectrumSwitchBecomesTheSpeechCurve)
+{
+    const Plan plan =
+        buildPlan({config(padding() + "AUDIO_SPECTRUM_NON_LINEAR_ON=true\r\n")}, linuxHost(), readBy(ReadBy::Windows));
+    const PlanRow &curve = rowOf(plan, "setting:audio.spectrumCurve");
+    EXPECT_EQ(curve.disposition, Disposition::Change);
+    EXPECT_EQ(curve.value, SettingValue(std::int64_t{1}));
+    const Plan off =
+        buildPlan({config(padding() + "AUDIO_SPECTRUM_NON_LINEAR_ON=false\r\n")}, linuxHost(), readBy(ReadBy::Windows));
+    EXPECT_EQ(rowOf(off, "setting:audio.spectrumCurve").value, SettingValue(std::int64_t{0}));
+}
+
 TEST(SettingsImport, MalformedValuesStayUnresolvedWithLegacysReading)
 {
     const Plan plan = buildPlan({config(padding() + "SPELLCHECKER_ON=yes\r\nGRID_FONT_SIZE=12px\r\nSUBS_RECENT_FILES=a.ass\r\n"

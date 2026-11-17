@@ -604,6 +604,15 @@ void AudioController::setSettingsStore(SettingsStore *store)
                 QStringLiteral("audio.drawSelectionBackground"), QStringLiteral("audio.drawVideoPosition"),
                 QStringLiteral("audio.drawKeyframes"),          QStringLiteral("audio.lineBoundariesThickness"),
                 QStringLiteral("audio.inactiveLinesDisplayMode")};
+            if (id == QStringLiteral("audio.spectrumCurve")) {
+                const int curve = std::clamp(static_cast<int>(m_store->integer("audio.spectrumCurve")), 0, 2);
+                if (curve != m_spectrumCurve) {
+                    m_spectrumCurve = curve;
+                    emit boxControlsChanged();
+                    redraw();
+                }
+                return;
+            }
             if (!kDisplay.contains(id))
                 return;
             loadDisplayOptions();
@@ -645,7 +654,7 @@ void AudioController::loadBoxControls()
         link = m_store->boolean("audio.link");
         m_autoScroll = m_store->boolean("audio.autoScroll");
         m_spectrumOn = m_store->boolean("audio.spectrumOn");
-        m_spectrumNonLinear = m_store->boolean("audio.spectrumNonLinearOn");
+        m_spectrumCurve = std::clamp(static_cast<int>(m_store->integer("audio.spectrumCurve")), 0, 2);
         m_hasKara = m_store->boolean("audio.karaoke");
         m_karaAuto = m_store->boolean("audio.karaokeSplitMode");
         m_syncVideo = m_store->boolean("audio.syncVideo");
@@ -762,9 +771,14 @@ void AudioController::setSpectrumOn(bool on)
 
 void AudioController::setSpectrumNonLinear(bool on)
 {
-    m_spectrumNonLinear = on;
+    setSpectrumCurve(int(on ? application::SpectrumCurve::Speech : application::SpectrumCurve::Linear));
+}
+
+void AudioController::setSpectrumCurve(int curve)
+{
+    m_spectrumCurve = std::clamp(curve, 0, 2);
     if (m_store)
-        m_store->set("audio.spectrumNonLinearOn", on);
+        m_store->set("audio.spectrumCurve", std::int64_t{m_spectrumCurve});
     emit boxControlsChanged();
     redraw();
 }
@@ -798,12 +812,12 @@ std::shared_ptr<const application::AudioImage> AudioController::spectrumImage()
         m_spectrumImage.reset();
     }
     const SpectrumKey key{m_box.serial(), m_view.position() * m_view.samples(), w, h, m_view.samples(),
-                          m_view.samplesPercent(), m_view.scale(), m_spectrumNonLinear};
+                          m_view.samplesPercent(), m_view.scale(), m_spectrumCurve};
     if (m_spectrumImage && key == m_spectrumKey)
         return m_spectrumImage;
     m_spectrumKey = key;
     m_spectrum->setScaling(key.scale);
-    m_spectrum->setNonLinear(key.nonLinear);
+    m_spectrum->setCurve(static_cast<application::SpectrumCurve>(key.curve));
     auto image = std::make_shared<application::AudioImage>();
     image->width = w;
     image->height = h;

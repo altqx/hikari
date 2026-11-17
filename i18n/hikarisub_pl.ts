@@ -1664,6 +1664,18 @@ Urządzenie wyjściowe: %2</translation>
         <source>Apply</source>
         <translation>Zastosuj</translation>
     </message>
+    <message>
+        <source>Frequency curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Linear</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Logarithmic</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Automation</name>
@@ -16884,6 +16896,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>Antigravity isn’t on PATH.</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Frequency curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Speech</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Logarithmic</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Plugins</name>
@@ -24702,6 +24726,22 @@ Usunięte style:
     <message>
         <source>Accepted %1, skipped %2. Each accepted line is one undo step.</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Join lines that overlap by up to</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>overlap closed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n overlap(s) closed</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
 </context>
 <context>
