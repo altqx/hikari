@@ -5,10 +5,11 @@ One Settings window for everything, as in VS Code ([#1238](https://github.com/al
 **Where the decisions come from.**
 
 - The owner said yes to Q638–Q649 on 2026-11-17, on tracking [#1209](https://github.com/altqx/hikari/issues/1209).
+- The owner chose this design from a board the same day ("lgtm", Q650–Q659; see [Decisions](#decisions)).
 - The research with sources is [unified-settings.md](../research/unified-settings.md).
 - The plugin side (manifest keys, `settings.open` and the `settings.list` fields) is fixed in [ADR 0034](../adr/0034-plugins-grow-into-an-extension-system.md) and built in #1230. This document only says how it looks and behaves.
 
-The app doesn't change until the code card lands after the beta.4 tag. Parts marked **Proposed** wait for the owner.
+The app doesn't change until the code card lands after the beta.4 tag.
 
 ## The window
 
@@ -17,17 +18,17 @@ One DG1 window ([visual-language.md](visual-language.md#hikari-theme-layer-k2)),
 | Region | Size | Holds |
 | --- | --- | --- |
 | Search row | 40 high, on `panel`, 12 inside | The search field across the width, the Filter button (a tool button with a menu), then **Open settings file** at the trailing end |
-| Tabs | 30 high, only in a Project window | **Yours** and **Project: <folder name>**, as a tab strip |
+| Tabs | 30 high, only in a Project window | **Yours** and **Project: <folder name>**, as a tab strip (Q651) |
 | Contents | 220 wide, on `bg` | The tree (see [The contents tree](#the-contents-tree)) |
 | Rows | The rest, on `panel`, 24 inside | Every page's rows as one scrolling list, under page and section headings |
-| Footer | DG1's | **Reset all…** at the leading edge, **Close** at the trailing edge, the default button |
+| Footer | DG1's | **Reset all…** at the leading edge, which leaves shortcuts and appearance alone as today (Q657); **Close** at the trailing edge, the default button |
 
 Splits are 1-unit `line`. There's no OK, Cancel or Apply (Q638).
 
 ## Changes apply at once
 
 - **Check boxes, choices, sliders and pickers** apply as they change.
-- **A text or number field** applies on Enter, when it loses focus, or after the user stops typing for 500 ms. Esc while typing puts back the value the field had when it took focus.
+- **A text or number field** applies on Enter, when it loses focus, or after the user stops typing for 500 ms (Q656). Esc while typing puts back the value the field had when it took focus.
 - **A value it can't take** shows a `danger` boundary and one `danger` line under the field, with the warning icon. The setting keeps its last good value.
 - **Appearance** previews and applies as one step. There's no preview to take back.
 - **Destructive actions** (Remove key, Delete provider, Delete MCP server, Reset all) keep their message boxes.
@@ -37,12 +38,12 @@ Nothing is staged, so closing the window loses nothing. Each change is written t
 
 ## Rows
 
-A row is the setting's label in `text`, its description under it in 12-unit `muted` (wrapping), and its control, at the label's end for a check box or under the description otherwise. Rows are 12 apart and sections 24, as in the Style manager.
+A row is stacked (Q652): the setting's label in `text`, its description under it in 12-unit `muted` (wrapping), and its control, at the label's end for a check box or under the description otherwise. Rows are 12 apart and sections 24, as in the Style manager.
 
 - **Reset.** While a row's value differs from where it would otherwise come from, a reset tool button (K1's `restore-default`, 16 units) shows at the label's end, as in the Style manager. On the Yours tab it goes back to the default. On the Project tab it removes the key from `project.toml`, so the row uses yours again; its tooltip says "Use yours".
 - **The row's ⋯ menu,** shown on hover and on focus within the row: Reset · Copy setting id · Copy link · Open settings file.
 - **Hover** is the `hover` fill across the row. The accent is never used for a changed row.
-- **Changed** shows in `muted` text after the label, so it isn't told by the reset button alone.
+- **Changed** shows in `muted` text after the label, so it isn't told by the reset button alone (Q654).
 
 ### Set elsewhere
 
@@ -70,7 +71,7 @@ The two tabs (Q640) show the same tree and the same search.
 
 ## The contents tree
 
-The tree lists the pages, each page's sections as its children, then **Plugins** with one child per plugin with settings.
+The tree sits on the left, under the search (Q650). It lists the pages, each page's sections as its children, then **Plugins** with one child per plugin with settings.
 
 - Pages start folded, except the one in view. A click on a node scrolls the rows to its heading. The tree follows the scroll: the node whose heading is at the top of the rows is `select`.
 - Rows are 24 high, indented 12 per level, with K1's page icons on the pages only.
@@ -99,8 +100,8 @@ The 14 Settings pages keep their names and order. Their sections become tree chi
 | Updates and privacy | Checking, Installing, **Plugins** (new), Privacy | Updates and privacy | — |
 | Plugins | One child per plugin | The plugin manager's Settings forms | Plugins whose settings a Project can set |
 
-- **Translation and Export** leave the Project tab as pages of their own. Their rows join the sections above, and the Yours tab shows them too, as the user's defaults.
-- **Updates and privacy › Plugins** holds "Check for plugin updates" and "Install updates automatically", which today are only in the plugin manager. The plugin manager keeps them and links here.
+- **Translation and Export** (Q655) leave the Project tab as pages of their own. Their rows join the sections above, and the Yours tab shows them too, as the user's defaults.
+- **Updates and privacy › Plugins** (Q658) holds "Check for plugin updates" and "Install updates automatically", which today are only in the plugin manager. The plugin manager keeps them and links here.
 - **Bespoke sections stay bespoke.** That covers the theme cards, the tag buttons, the cycle values, the AI providers and the Shortcuts table. Each registers a title and keywords, so search finds the section even where it can't find a single row.
 - **A setting with no control** yet is a row showing its value read-only, with **Open settings file**.
 
@@ -108,7 +109,7 @@ The 14 Settings pages keep their names and order. Their sections become tree chi
 
 Plugin settings live only under Settings › Plugins › *plugin name* (Q643). Plugins can't add rows to the app's own pages.
 
-- **The plugin's page** is headed by its icon and name, with **Manage plugin…** at the trailing end, which opens its details in the plugin manager. The plugin manager's Settings opens this page.
+- **The plugin's page** (Q653) is headed by its icon, its name, and its version and one-line description in `muted`, with **Manage plugin…** at the trailing end, which opens its details in the plugin manager. The plugin manager's Settings opens this page.
 - **Its sections** are the plugin's groups, in its order.
 - **The rows** use the same controls as the app's:
   - a choice shows its options' titles;
@@ -172,7 +173,7 @@ There's no text editor in the app.
 1. The window opens for the active shell window, or is raised. The search is cleared, and the tab is picked.
 2. The row's page and section unfold in the tree, and the node is `select`.
 3. The row scrolls to the top third of the list.
-4. The row is highlighted: the `select` fill, fading to none over 2 seconds. In high contrast, a 1-unit `accent` boundary that goes with it.
+4. The row is highlighted (Q659): the `select` fill, fading to none over 2 seconds. In high contrast, a 1-unit `accent` boundary that goes with it.
 5. Keyboard focus goes to the row's control, with its focus ring.
 
 **When it can't land.**
@@ -214,9 +215,19 @@ Q649 keeps these out; each has its own future card:
 - settings sync (#1242);
 - per-language settings (#1243).
 
-## Open questions for the owner
+## Decisions
 
-1. **Translation and Export.** Should they fold into Line editor › Translation mode and a new Conversion › Export section, with the Yours tab showing those rows too as the user's defaults?
-2. **When text applies.** Should a text field apply after 500 ms without typing, as well as on Enter and on leaving it, or only on Enter and on leaving it?
-3. **Reset all…** Should it stay in the footer, keeping today's rule that shortcuts and appearance aren't touched?
-4. **Plugin update settings.** Should "Check for plugin updates" and "Install updates automatically" appear under Updates and privacy › Plugins as well as in the plugin manager?
+The owner said "lgtm" to the #1238 board on 2026-11-17, taking the recommended option for every question (tracking [#1209](https://github.com/altqx/hikari/issues/1209)):
+
+| Q | Decision |
+| --- | --- |
+| Q650 | The search runs across the top; the contents tree is on the left, with sections as children |
+| Q651 | Yours and Project are a tab strip under the search |
+| Q652 | Rows are stacked: label, description, then the control |
+| Q653 | A plugin's page has a plain header with its icon, name, version and Manage plugin… |
+| Q654 | A changed row shows "Changed" in `muted` text and the Reset button |
+| Q655 | Translation and Export fold into Line editor › Translation mode and Conversion › Export; the Yours tab shows them as the user's defaults |
+| Q656 | Text applies on Enter, on leaving the field, and after 500 ms without typing |
+| Q657 | Reset all… stays in the footer and leaves shortcuts and appearance alone |
+| Q658 | The plugin update rows are also under Updates and privacy › Plugins, linked both ways with the plugin manager |
+| Q659 | A link's row takes the `select` fill, fading over 2 seconds, and keyboard focus goes to its control |
