@@ -9,6 +9,7 @@ This is HikariSub's specification, on the `main` branch. It began as the map of 
 | Visual language | Quiet styling (replaced Compact Studio); current-program default panel arrangement | [Visual language](ux/visual-language.md), [ADR](adr/0033-quiet-visual-language.md) |
 | Video controls | One minimal transport row; the time is the Jump to field; zoom readout; subtitle boundary commands (#1206) | [Video controls](ux/video-controls.md) |
 | Full-screen typesetting | A named rail, a plain-word inspector, an editable line with stepping and a style step mode, beside a letterboxed frame (#1208) | [Full-screen typesetting](ux/full-screen-typesetting.md) |
+| Settings | One window with search, a contents tree, Yours and Project tabs and a Plugins node; changes apply at once; setting links (#1238) | [Settings](ux/settings.md), [research](research/unified-settings.md) |
 | Command palette | Quick Open (Ctrl+P) with prefixes, the command palette (Ctrl+Shift+P), and the one quick pick and input box that app flows and plugins share (#1236) | [Command palette](ux/command-palette.md) |
 | Icon set | In-house vector UI icons on a 16-unit grid, tinted per appearance with user icon colours (K1; contact sheet awaiting review) | [Icon set](ux/icons.md) |
 | Workspace and shell | A Workspace per Document tab ([ADR 0020](adr/0020-per-document-tab-layouts.md)); optional protected comparison/Home; movable/floating tools with follow/pin; Classic controls and optional task presets | [Workspaces](ux/workspaces.md); detailed surfaces continue in their own prototypes |

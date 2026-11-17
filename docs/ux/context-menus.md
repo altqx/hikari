@@ -661,7 +661,7 @@ The total is **28 menus with 257 items**: 16 right-click entries (two of them, R
 ### What CX7 built: Automation, Hikari AI and presets
 
 - **Preset ⋯ (Shift times, Timing postprocessor).** Save as preset…, Rename preset… | Copy to …, Move to … (with a Project) | Use in the Timing layout (postprocessor) | Delete preset…: the destructive row is last, alone.
-- **Script dialog ⋯ › Presets ▸.** {presets} | Save as preset… | Copy to project ▸, Copy to mine ▸, Move to project ▸, Move to mine ▸ (with a Project) | Delete preset ▸.
+- **Script dialog ⋯ › Presets ▸.** {presets} | Save as preset… | Copy to project ▸, Copy to yours ▸, Move to project ▸, Move to yours ▸ (with a Project) | Delete preset ▸.
 - **Agent panel.** The thread button shows ⋯ (panel-menu). Its menu is Rename thread…, Export as Markdown… | Compact thread, New thread from summary | Delete thread… (it asks). A thread row opens the same menu on right-click and the Menu key, for that thread. An answer gets Copy | Select all. Model and Mode are radio rows, the provider in the detail column; their Settings rows (“Settings › AI”, “Default for new threads”) take no “…” (rule 19.2). “Thread” is the one name: Compact thread in the menu, the slash menu, the 97% offer and the compact icon's label (rule 21).
 - **One ⋯ tooltip.** “More options” on the Automation script and recommended rows (the row's name goes to the accessible description), the script dialog, the preset bar, Shapes, All tags and the Agent thread button.
 - **Shapes and All tags.** The Menu key on the list opens the row's tier menu with a Project open; the hidden tier rows in the ⋯ take no height without one.

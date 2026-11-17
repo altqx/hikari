@@ -38,7 +38,8 @@ Quiet answers these with fewer, flatter parts, and stays at least as dense.
   - Light and Dark get new surface, text, `line`, `control` and `disabled` values, and every contrast floor of K2 holds.
   - New `hover` and `pressed` overlay roles mean hover is never the accent.
   - HikariStyle draws the check box, radio button, spin box and combo box itself.
-  - High contrast black and white keep K2's fixed values, and the live Omarchy theme following stays.
+  - High contrast black and white keep K2's fixed values.
+  - The four built-in themes become theme files that carry Quiet's tokens (Q672, Q682). The file format is ADR 0034's ([#1235](https://github.com/altqx/hikari/pull/1235)).
 - **From C (Q581).**
   - The transport timecode is 20-unit monospace, and the second time readout goes.
   - Full screen draws its controls as one strip in the bottom letterbox, or over the picture's bottom on a dark gradient when there is no letterbox. It is always on black.

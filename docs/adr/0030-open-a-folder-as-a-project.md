@@ -62,7 +62,7 @@ The Explorer is core, not a plugin ([ADR 0022](0022-hikarisub-plugins.md), "Plug
   - "Use yours" removes the key from project.toml. Apply writes only the keys that changed, and only to project.toml.
   - A Yours row the Project sets says "Overridden in this project".
 - **The allowlist** is the dictionary language and spelling switch, grammar, the Script Info values written on save ([#892](https://github.com/altqx/hikari/issues/892)), and moving tags from the original in translation mode, plus `ai.exclude`. Lists are replaced, not merged, except `ai.exclude`: the paths never sent to AI are the built-in defaults, the user's list and the Project's list together, so neither list can drop a default and widen what is sent (coordinator, 2026-11-12, [PJ7b #902](https://github.com/altqx/hikari/issues/902)).
-- **A setting that widens** what a Project may do applies only once its folder is trusted. None of today's allowlisted settings widens.
+- **A setting that widens** what a Project may do applies only once its folder is trusted. Two allowlisted settings widen: `translation.translator` and `translation.reviewer`, which pick the models a translation run sends Lines to ([ai-translation.md](../ai-translation.md)). Until the folder is trusted, the user's role models run, and Settings marks the rows "Waits for trust".
 
 ## Shared things with a Project tier
 
@@ -89,7 +89,7 @@ The Explorer is core, not a plugin ([ADR 0022](0022-hikarisub-plugins.md), "Plug
 
 **In the UI:**
 
-- Each row has a **Project** or **Mine** chip with an icon. Lists group "This project" first, then "Mine".
+- Each row has a **Project** or **Yours** chip with an icon. Lists group "This project" first, then "Yours".
 - Rows offer Copy to and Move to either tier. A name clash goes through the Replace / Rename / Skip review.
 - While a Project is open, New and Save as default to **Save to project**. They are split buttons, and the choice is remembered per list.
 

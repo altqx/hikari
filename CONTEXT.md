@@ -201,5 +201,5 @@ The optional `.hikari/project.toml` in a Project. A Project exists without one; 
 _Avoid_: Session file.
 
 **Project tier**:
-Where a shared thing (a Style catalogue, a layout, dictionary words, a preset or a setting) is kept in the Project's `.hikari/` folder rather than the User folder. The UI marks the two tiers **Project** and **Mine**.
-_Avoid_: Workspace settings.
+Where a shared thing (a Style catalogue, a layout, dictionary words, a preset or a setting) is kept in the Project's `.hikari/` folder rather than the User folder. The UI marks the two tiers **Project** and **Yours**.
+_Avoid_: Workspace settings; Mine or User as the UI's name for the user's tier.
