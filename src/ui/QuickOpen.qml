@@ -10,7 +10,7 @@ Item {
     property real hangFrom: 8
     readonly property alias popup: pick
     readonly property string mode: parsed.mode
-    readonly property var parsed: quick.parse(pick.text)
+    property var parsed: quick.parse("")
     property var projectFiles: []
     property string builtMode: ""
     property string foot: ""
@@ -78,7 +78,8 @@ Item {
     }
 
     function refresh() {
-        const p = quick.parsed
+        const p = quick.parse(pick.text)
+        quick.parsed = p
         const changed = p.mode !== quick.builtMode
         quick.builtMode = p.mode
         pick.model.keepOrder = p.mode === "help"
