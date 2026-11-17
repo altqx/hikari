@@ -2,7 +2,7 @@
 
 More control over what HikariSub shows in a Discord status ([#1245](https://github.com/altqx/hikari/issues/1245)). [Discord presence](../discord-presence.md) describes what ships today (#599): two switches, a fixed text, five modes. This document adds a Settings section with a preview, separate switches, the user's own text, per-project choices, idle handling, time and button choices, more modes, and a narrow plugin hook. It is drawn in [Quiet](visual-language.md) on the [Settings](settings.md) layout.
 
-The owner chose this design from a board on 2026-11-17 ("lgtm", Q684–Q697; see [Decisions](#decisions)). The plugin API's names are fixed in [ADR 0034](../adr/0034-plugins-grow-into-an-extension-system.md) (#1221); the names below follow Q693 until then.
+The owner chose this design from a board on 2026-11-17 ("lgtm", Q684–Q697; see [Decisions](#decisions)). The plugin API's names are fixed in [ADR 0034](../adr/0034-plugins-grow-into-an-extension-system.md) (#1221).
 
 The app doesn't change until the code card lands after the beta.4 tag.
 
@@ -16,7 +16,7 @@ The page has one switch, then the rows in five groups, with the preview beside t
 | --- | --- |
 | — | **Show what I am doing in Discord** (`privacy.discordPresence`, off) |
 | What shows | The mode; the mode's icon; the project's name; the file name (Q685) |
-| Text | Standard, or My own with Details and State lines (Q686) |
+| Text | Standard, or My own with Details and State lines (Q686); Text from plugin (Q693) |
 | Time | Time shown: Since HikariSub started, Since the file opened, Hidden (Q690) |
 | Idle and away | After no input for *n* min: Show "Idle", Clear the status, Keep it; Do the same while HikariSub is in the background (Q689) |
 | Buttons | "Get HikariSub"; A link of your own, with Label and Address (Q691) |
@@ -60,7 +60,7 @@ Q687:
 | `{show}` | The Project tab's Show name, else the file's Script Info Title | Neither is set |
 | `{episode}` | An episode number found in the file name (`- 03`, `E03`, `S01E03`) | None found, or the file name is off |
 | `{title}` | The file's Script Info Title | Not set |
-| `{plugin}` | The text of the plugin chosen under {plugin} comes from | No plugin is chosen, or it set nothing; see [Plugins](#plugins) |
+| `{plugin}` | The text of the plugin picked under Text from plugin | No plugin is picked, or it set nothing; see [Plugins](#plugins) |
 
 An unknown `{name}` is sent as typed.
 
@@ -142,14 +142,14 @@ The list under The mode has one row per mode: a check box (disabled and ticked f
 
 ## Plugins
 
-Q693. A plugin can set one short text that shows in presence, and nothing else:
+Q693. A plugin can set one short text that shows in presence, and nothing else. The names are ADR 0034's ([Discord status text](../plugins.md#discord-status-text)):
 
-- **Permission** `presence`, shown at install and update as "Set text in your Discord status: *reason*".
-- **Operation** `presence.set_text {text}`, in Lua `hikari.presence.set_text(text)`. `nil` or an empty string clears it. Plain text, at most 64 characters; longer is cut.
-- The text shows only where the user puts `{plugin}`, from the one plugin the user picks under **{plugin} comes from** (`privacy.discordPlugin`), listing the plugins with the permission. It is sent only while presence is on, within the 4-second limit.
+- **Permission** `permissions.presence`, shown at install and update as "Set text in your Discord status: *reason*".
+- **Operation** [`presence.set_text {text}`](../api.md#presenceset_text), in Lua `hikari.presence.set_text(text)`. `nil` or an empty string clears it. Plain text of at most 64 characters, with no line breaks or other control characters; anything else is `invalid_params`.
+- **Where it shows.** Only where the user puts `{plugin}` in My own text, and only from the plugin picked in the row **Text from plugin** (`privacy.discordPlugin`, a plugin id, empty by default). Its list offers the installed plugins that hold the permission.
+- **When it's sent.** Only while presence is on, within the 4-second limit. A call from a plugin that isn't picked, or made while presence is off, succeeds but isn't sent.
+- **How long it lasts.** Until the plugin sets or clears it, or is turned off, uninstalled or revoked. It isn't kept after HikariSub quits.
 - Since API 1, like every operation before the first release.
-
-The permission, operation and Lua names are placeholders that match Q693. ADR 0034 ([#1235](https://github.com/altqx/hikari/pull/1235)) freezes the final names; this section follows them.
 
 ## Art
 
@@ -182,7 +182,7 @@ The owner said "lgtm" to the #1245 board on 2026-11-17, taking the recommended o
 | Q690 | Time since HikariSub started (as today), since the file opened, or hidden; the first by default |
 | Q691 | "Get HikariSub" on by default and hideable, plus one link of the user's own: a label of at most 32 characters and an https:// address |
 | Q692 | Presence, the file name and the project name off by default; paths, subtitle text, video names and line counts never sent |
-| Q693 | Plugins may set one short text through a `presence` permission and `presence.set_text`, shown only in `{plugin}` from the one plugin the user picks; final names in ADR 0034 |
+| Q693 | Plugins may set one short text through `permissions.presence` and `presence.set_text`, shown only in `{plugin}` from the one plugin the user picks |
 | Q694 | Seven activity modes (Watching, Effects, Styling, Spell-checking, Reviewing, Exporting, With the AI agent off by default) plus Home with no icon |
 | Q695 | An activity shows over the layout's mode while it's going, in a fixed order, and each can be unticked |
 | Q696 | A saved layout shows the mode of the built-in layout it came from |
