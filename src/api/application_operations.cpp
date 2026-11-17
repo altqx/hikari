@@ -161,7 +161,7 @@ std::string pluginSettingId(const PluginSettingState &setting)
 
 std::string_view pluginTypeName(std::string_view type)
 {
-    if (type == "boolean" || type == "integer")
+    if (type == "boolean" || type == "integer" || type == "number")
         return type;
     return type == "list" ? "stringList" : "string";
 }
@@ -211,7 +211,7 @@ Result settingsList(const Context &context, const Json &params)
     }
     for (const PluginSettingState &setting : pluginSettings(context)) {
         const std::string id = pluginSettingId(setting);
-        if (!id.starts_with(prefix) || setting.type == "secret" || setting.type == "number")
+        if (!id.starts_with(prefix) || setting.type == "secret")
             continue;
         Json entry = Json::object({{"setting", Json(id)},
                                    {"type", Json(pluginTypeName(setting.type))},
@@ -459,7 +459,7 @@ void addApplicationOperations(Registry &registry)
              "additionalProperties": false})",
          R"({"type": "object", "properties": {"settings": {"type": "array", "items": {"type": "object", "properties": {
              "setting": {"type": "string"},
-             "type": {"enum": ["boolean", "integer", "string", "stringList"]},
+             "type": {"enum": ["boolean", "integer", "number", "string", "stringList"]},
              "scope": {"enum": ["profile", "collections", "workspace"]},
              "default": {"$ref": "#/$defs/SettingValue"},
              "value": {"$ref": "#/$defs/SettingValue"},

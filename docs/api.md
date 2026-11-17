@@ -407,7 +407,7 @@ Each setting in their results gains three optional fields:
 "projectable": {"type": "boolean", "description": "Whether a Project can override it on the Project tab."}
 ```
 
-They also list each running plugin's settings, as `plugin.<plugin id>.<setting id>` with that plugin as `source`. `secret` and `number` settings are left out of the list. `settings.get` and `settings.set` refuse a `secret` with reason `private` for every caller; its plugin reads it with `hikari.settings.get`. For AI callers, `settings.set` of a `plugin.` setting joins the always-ask list beside `plugins.*` (#1228 amends [ai-agent.md](ai-agent.md)).
+They also list each running plugin's settings, as `plugin.<plugin id>.<setting id>` with that plugin as `source`. A `secret` setting is left out of the list. `settings.get` and `settings.set` refuse a `secret` with reason `private` for every caller; its plugin reads it with `hikari.settings.get`. For AI callers, `settings.set` of a `plugin.` setting joins the always-ask list beside `plugins.*` (#1228 amends [ai-agent.md](ai-agent.md)).
 
 ### `presence.set_text`
 

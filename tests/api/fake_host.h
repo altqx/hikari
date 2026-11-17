@@ -399,6 +399,7 @@ public:
 
     std::vector<PluginSettingState> states{
         {"org.example.word-count", "countSpaces", "Count spaces", "boolean", true, Json(false), Json(true)},
+        {"org.example.word-count", "goal", "Goal", "number", false, Json(1.5), Json(2.5)},
         {"org.example.word-count", "token", "Token", "secret", false, Json(), Json()}};
     std::vector<std::pair<std::string, bool>> opened;
 };
