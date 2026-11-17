@@ -14498,6 +14498,66 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>การแทนที่แท็ก ASS</translation>
     </message>
     <message>
+        <source>Full screen</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bar position</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Below keeps the whole picture in view; the bar sits in the black strip under it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Below the picture (letterbox)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Over the picture</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show bar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Auto-hide shows it when the pointer moves or a key is pressed, and hides it 2 seconds later while playing. Below the picture, the strip stays reserved.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Auto-hide</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Always</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Never</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hide the pointer with the bar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show the render time and position overlays</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Opens in</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Simple</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Typesetting</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Open video from the context menu in full screen</source>
         <translation>เปิดวิดีโอจากเมนูบริบทในโหมดเต็มหน้าจอ</translation>
     </message>
@@ -25341,7 +25401,7 @@ Styles deleted:
     </message>
     <message>
         <source>Exit full screen</source>
-        <translation>ออกจากโหมดเต็มหน้าจอ</translation>
+        <translation type="vanished">ออกจากโหมดเต็มหน้าจอ</translation>
     </message>
     <message>
         <source>Escape</source>
@@ -25432,22 +25492,68 @@ Styles deleted:
         <translation>วิดีโอเต็มหน้าจอ</translation>
     </message>
     <message>
+        <source>Seeking…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Can’t decode frame %1 of %2. Playback stopped.</source>
+        <extracomment>Full screen, when a frame can&apos;t be decoded: %1 the frame number, %2 the video&apos;s file name</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Seek to another time, or press Esc to leave full screen.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Press Esc to exit full screen</source>
         <extracomment>Shown for two seconds on entering full screen video</extracomment>
         <translation>กด Esc เพื่อออกจากโหมดเต็มหน้าจอ</translation>
     </message>
     <message>
+        <source>Seek bar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No line at this time</source>
+        <extracomment>The full screen strip when no Line is at the current time</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Video time, %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Leave full screen</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Previous video file</source>
-        <translation>ไฟล์วิดีโอก่อนหน้า</translation>
+        <translation type="vanished">ไฟล์วิดีโอก่อนหน้า</translation>
     </message>
     <message>
         <source>Line %1, %2: %3</source>
         <extracomment>The full screen bar&apos;s current line: %1 its number, %2 its times, %3 its text</extracomment>
-        <translation>บรรทัด %1 %2: %3</translation>
+        <translation type="vanished">บรรทัด %1 %2: %3</translation>
     </message>
     <message>
         <source>Visual tools</source>
         <translation>เครื่องมือภาพ</translation>
+    </message>
+    <message>
+        <source>Simple</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Typeset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Simple: switch to full-screen watching · the frame keeps its place</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Typeset: switch to full-screen typesetting · the frame keeps its place</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Unmute</source>
@@ -25468,31 +25574,71 @@ Styles deleted:
     </message>
     <message>
         <source>Full screen bar: %1</source>
-        <translation>แถบเต็มหน้าจอ: %1</translation>
+        <translation type="vanished">แถบเต็มหน้าจอ: %1</translation>
     </message>
     <message>
         <source>Show when the pointer moves</source>
-        <translation>แสดงเมื่อขยับตัวชี้</translation>
+        <translation type="vanished">แสดงเมื่อขยับตัวชี้</translation>
     </message>
     <message>
         <source>Always show</source>
-        <translation>แสดงเสมอ</translation>
+        <translation type="vanished">แสดงเสมอ</translation>
     </message>
     <message>
         <source>Never show</source>
-        <translation>ไม่แสดง</translation>
+        <translation type="vanished">ไม่แสดง</translation>
     </message>
     <message>
         <source>Show on pointer movement, hide when idle</source>
-        <translation>แสดงเมื่อขยับตัวชี้ ซ่อนเมื่อไม่มีการใช้งาน</translation>
+        <translation type="vanished">แสดงเมื่อขยับตัวชี้ ซ่อนเมื่อไม่มีการใช้งาน</translation>
     </message>
     <message>
         <source>Keep the bar; the picture ends above it</source>
-        <translation>คงแถบไว้ ภาพจะสิ้นสุดเหนือแถบ</translation>
+        <translation type="vanished">คงแถบไว้ ภาพจะสิ้นสุดเหนือแถบ</translation>
+    </message>
+    <message>
+        <source>Auto-hide</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Always</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Never</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bar position</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Below the picture (letterbox)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Over the picture</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show bar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show it when the pointer moves or a key is pressed; hide it 2 seconds later while playing</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Picture only</source>
         <translation>ภาพเท่านั้น</translation>
+    </message>
+    <message>
+        <source>Keep the bar shown</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Full-screen settings…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Indexing video</source>

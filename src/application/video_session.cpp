@@ -172,6 +172,7 @@ void VideoSession::close()
     m_state = State::Closed;
     m_path.clear();
     m_error.reset();
+    m_failedFrame.reset();
     m_starts.clear();
     m_streamStarts.clear();
     m_streamTimeline.reset();
@@ -291,16 +292,18 @@ bool VideoSession::step(int frames)
 void VideoSession::showFrame(int index)
 {
     m_requested = index;
+    m_failedFrame.reset();
     if (m_state != State::Ready || index < 0 || index >= frameCount())
         return notify();
     const std::uint64_t request = ++m_request;
     const std::weak_ptr<bool> alive = m_alive;
-    m_source.frame(index, [this, alive, request](std::expected<IndexedFrame, SourceError> frame) {
+    m_source.frame(index, [this, alive, request, index](std::expected<IndexedFrame, SourceError> frame) {
         if (alive.expired() || request != m_request)
             return;
         if (!frame) {
             if (frame.error() != SourceError::Stale && frame.error() != SourceError::Cancelled) {
                 m_error = frame.error();
+                m_failedFrame = index;
                 notify();
             }
             return;
