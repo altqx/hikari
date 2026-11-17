@@ -91,9 +91,9 @@ QString conditionPhrase(std::string_view condition)
     else if (condition == "!selection")
         phrase = QT_TRANSLATE_NOOP("HikariSub.Plugins", "Works only without a selection");
     else if (condition == "multipleLines")
-        phrase = QT_TRANSLATE_NOOP("HikariSub.Plugins", "Needs two or more selected Lines");
+        phrase = QT_TRANSLATE_NOOP("HikariSub.Plugins", "Needs two or more selected lines");
     else if (condition == "!multipleLines")
-        phrase = QT_TRANSLATE_NOOP("HikariSub.Plugins", "Works only with one Line selected or none");
+        phrase = QT_TRANSLATE_NOOP("HikariSub.Plugins", "Works only with one line selected or none");
     else if (condition == "video")
         phrase = QT_TRANSLATE_NOOP("HikariSub.Plugins", "Needs an open video");
     else if (condition == "!video")
@@ -103,9 +103,9 @@ QString conditionPhrase(std::string_view condition)
     else if (condition == "!audio")
         phrase = QT_TRANSLATE_NOOP("HikariSub.Plugins", "Works only without open audio");
     else if (condition == "karaoke")
-        phrase = QT_TRANSLATE_NOOP("HikariSub.Plugins", "Needs a karaoke Line");
+        phrase = QT_TRANSLATE_NOOP("HikariSub.Plugins", "Needs a karaoke line");
     else if (condition == "!karaoke")
-        phrase = QT_TRANSLATE_NOOP("HikariSub.Plugins", "Works only on a Line without karaoke");
+        phrase = QT_TRANSLATE_NOOP("HikariSub.Plugins", "Works only on a line without karaoke");
     else if (condition == "translation")
         phrase = QT_TRANSLATE_NOOP("HikariSub.Plugins", "Needs Translation mode");
     else
