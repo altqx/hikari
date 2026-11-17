@@ -14642,14 +14642,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Your Discord status shows Editing subtitles, the mode and for how long. Never the video, your subtitles or line counts.</source>
-        <translation type="vanished">สถานะ Discord ของคุณจะแสดง กำลังแก้ไขคำบรรยาย โหมด และระยะเวลา ไม่แสดงวิดีโอ คำบรรยาย หรือจำนวนบรรทัดของคุณ</translation>
-    </message>
-    <message>
-        <source>Include the file name</source>
-        <translation type="vanished">รวมชื่อไฟล์</translation>
-    </message>
-    <message>
         <source>Let plugins connect to the internet</source>
         <translation>อนุญาตให้ปลั๊กอินเชื่อมต่ออินเทอร์เน็ต</translation>
     </message>

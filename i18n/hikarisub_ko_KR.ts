@@ -14642,14 +14642,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Your Discord status shows Editing subtitles, the mode and for how long. Never the video, your subtitles or line counts.</source>
-        <translation type="vanished">Discord 상태에 자막 편집 중, 모드와 경과 시간이 표시됩니다. 동영상, 자막 내용이나 줄 수는 표시되지 않습니다.</translation>
-    </message>
-    <message>
-        <source>Include the file name</source>
-        <translation type="vanished">파일 이름 포함</translation>
-    </message>
-    <message>
         <source>Let plugins connect to the internet</source>
         <translation>플러그인의 인터넷 연결 허용</translation>
     </message>

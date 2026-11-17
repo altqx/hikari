@@ -14872,14 +14872,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Your Discord status shows Editing subtitles, the mode and for how long. Never the video, your subtitles or line counts.</source>
-        <translation type="vanished">Twój status w Discordzie pokazuje Edytuje napisy, tryb i czas pracy. Nigdy wideo, napisów ani liczby wierszy.</translation>
-    </message>
-    <message>
-        <source>Include the file name</source>
-        <translation type="vanished">Dołącz nazwę pliku</translation>
-    </message>
-    <message>
         <source>Let plugins connect to the internet</source>
         <translation>Pozwól wtyczkom łączyć się z internetem</translation>
     </message>

@@ -14757,14 +14757,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Your Discord status shows Editing subtitles, the mode and for how long. Never the video, your subtitles or line counts.</source>
-        <translation type="vanished">உங்கள் Discord நிலையில் வசனங்களைத் திருத்துகிறார், பயன்முறை மற்றும் எவ்வளவு நேரம் என்பது காட்டப்படும். காணொளி, உங்கள் வசனங்கள் அல்லது வரி எண்ணிக்கை ஒருபோதும் காட்டப்படாது.</translation>
-    </message>
-    <message>
-        <source>Include the file name</source>
-        <translation type="vanished">கோப்பின் பெயரைச் சேர்</translation>
-    </message>
-    <message>
         <source>Let plugins connect to the internet</source>
         <translation>செருகுநிரல்கள் இணையத்துடன் இணைய அனுமதி</translation>
     </message>
