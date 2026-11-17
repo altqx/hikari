@@ -410,6 +410,7 @@ Explorer row > New subtitle file here
 Explorer row > Rename
 Explorer row > -
 Explorer row > Move to the trash…
+Status bar
 Panel options (Line editor)
 Panel options (Line editor) > Show times
 Panel options (Line editor) > Show frames

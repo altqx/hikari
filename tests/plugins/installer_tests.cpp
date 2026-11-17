@@ -528,3 +528,20 @@ TEST_F(PluginInstaller, InstallingOverARevokedCopyTurnsItBackOn)
 }
 
 }
+
+TEST_F(PluginInstaller, TheInstallOrderComesAfterEveryOtherPluginAndSurvivesAnUpdate)
+{
+    Registry registry;
+    registry["com.example.first"] = {"1.0.0", true};
+    registry["com.example.first"].installed = 4;
+    fs::create_directories(folders().registry.parent_path());
+    ASSERT_TRUE(saveRegistry(folders().registry, registry));
+    ASSERT_TRUE(installer.install(reviewed(plugin("1.0.0")), false));
+    EXPECT_EQ(installed().installed, 5);
+    ASSERT_TRUE(installer.install(reviewed(plugin("1.1.0")), false));
+    EXPECT_EQ(installed().installed, 5);
+    EXPECT_EQ(installer.registry()->at("com.example.first").installed, 4);
+
+    std::ofstream(folders().registry) << R"({"format": 1, "plugins": {"com.example.hello": {"version": "1.0.0", "enabled": true, "installed": 0}}})";
+    EXPECT_FALSE(loadRegistry(folders().registry));
+}

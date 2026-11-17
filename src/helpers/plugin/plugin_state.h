@@ -55,7 +55,8 @@ public:
     PluginState &operator=(const PluginState &) = delete;
 
     std::vector<std::string> handledCommands() const;
-    std::expected<void, std::string> run(const std::string &command, Host &host);
+    // `call` is {args, context}; a missing one reaches the handler as an empty table.
+    std::expected<void, std::string> run(const std::string &command, const api::Json &call, Host &host);
     // Runs every handler for `event`; the error is the first handler's.
     std::expected<void, std::string> dispatch(const std::string &event, const api::Json &data, Host &host);
     std::size_t memoryInUse() const { return m_budget.used; }

@@ -111,11 +111,11 @@ void PluginProcess::startHelper()
     host->start();
 }
 
-bool PluginProcess::run(const std::string &command)
+bool PluginProcess::run(const std::string &command, const std::string &call)
 {
     if (m_state == State::LoadFailed || m_queue.size() >= m_limits.maxQueued)
         return false;
-    m_queue.push_back(Unit{Unit::Kind::Command, command, {}, {}});
+    m_queue.push_back(Unit{Unit::Kind::Command, command, call, {}});
     if (m_state == State::Idle || m_state == State::Stopped)
         startHelper();
     else
@@ -160,7 +160,7 @@ void PluginProcess::next()
         payload = plugin::encodeLoad(m_load());
     } else if (unit.kind == Unit::Kind::Command) {
         Writer w;
-        w.i32(static_cast<std::int32_t>(plugin::Command::Run)).str(unit.name);
+        w.i32(static_cast<std::int32_t>(plugin::Command::Run)).str(unit.name).str(unit.json);
         payload = w.take();
     } else {
         Writer w;

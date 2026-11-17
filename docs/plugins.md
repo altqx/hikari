@@ -107,7 +107,7 @@ The marketplace website's Install in HikariSub opens `hikarisub://plugin/install
 | `<user folder>/plugin-data/<id>/` | The plugin's data. It survives updates; uninstall asks whether to remove it. |
 | `<cache>/plugins/<id>/` | The plugin's cache, cleared on every install and on uninstall. |
 | `<user folder>/plugins/.previous/<id>/` | The version the last update replaced, for Roll back. |
-| `<user folder>/plugins.json` | Per id: `version`, `enabled`, the pinned `key`, the remembered folder `grants`, the `settings` a plugin or the user changed, and `source`; for [updates](#updates-roll-back-and-revocation), `autoUpdate` (only when off), `skip`, `previous`, `held` and `revoked` (`reason`, `lastGood`). |
+| `<user folder>/plugins.json` | Per id: `version`, `enabled`, the pinned `key`, the remembered folder `grants`, the `settings` a plugin or the user changed, and `source`; for [updates](#updates-roll-back-and-revocation), `autoUpdate` (only when off), `skip`, `previous`, `held` and `revoked` (`reason`, `lastGood`); and `installed`, the install order from 1, which settles which plugin keeps a [default shortcut](#menus-status-items-and-shortcuts). |
 | `<user folder>/marketplace.json` | `serial`: the highest marketplace index serial accepted. |
 
 An update keeps the enabled state, the grants whose ids the new manifest still asks for, and the setting values that still fit the new manifest. A `plugins.json` HikariSub can't read stops installs rather than forgetting pinned keys.
@@ -165,7 +165,7 @@ The helper framing ([`helper_protocol.h`](../src/backends/include/hikari/backend
 
 | Member | What it does |
 | --- | --- |
-| `hikari.commands.register(id, fn)` | Gives a command from the manifest's `contributes.commands` its handler, once. An id the manifest doesn't declare is refused. |
+| `hikari.commands.register(id, fn)` | Gives a command from the manifest's `contributes.commands` its handler, once. An id the manifest doesn't declare is refused. The handler is `fn(args, context)`: `args` is a table (`{}` from a menu, key or status item) and `context.via` says what ran it: `menu`, `key`, `status`, `api` or `ai`. |
 | `hikari.commands.run(id)` | Runs a HikariSub command (`GLOBAL_SAVE_SUBS`), as `commands.run` does. |
 | `hikari.call(operation, params)` | Calls any [Hikari API](api.md) operation as the plugin. It returns the result, or `nil` and the error `{code, message, data}`. Without `documents.all` the plugin sees the editing target only. |
 | `hikari.events.on(name, fn)` | Calls `fn(data)` for each Hikari API event of that name (`document.changed`, `document.saved`, `selection.changed`, `documents.changed`, `panel.changed`, `command.ran`, `project.changed`, `macro.ran`). An unknown name is refused. `document.saved` comes once the file is on disk; `command.ran` only says a command was triggered, so a Save that asks first reports before anything is written. |
@@ -212,7 +212,7 @@ Only one plugin edits at a time, app-wide. An edit waits for another plugin's ed
 
 ## Commands and shortcuts
 
-A command `greet` of `com.example.hello` is `plugin.com.example.hello.greet`. While the plugin runs, its commands sit in the Automation menu after Plugins…, in a submenu named after the plugin. In Settings › Shortcuts, the **Plugin shortcuts** filter lists them. A plugin command's shortcut is global, and it is kept with the macro shortcuts in the hotkeys file. A shortcut whose plugin isn't installed or turned on stays listed with a note, ready for when it comes back.
+A command `greet` of `com.example.hello` is `plugin.com.example.hello.greet`. While the plugin runs, its commands sit in the Automation menu after Plugins…, in a submenu named after the plugin. In Settings › Shortcuts, the **Plugin shortcuts** filter lists them. A plugin command's shortcut is global, and it is kept with the macro shortcuts in the hotkeys file. A shortcut whose plugin isn't installed or turned on stays listed with a note, ready for when it comes back. A plugin can also place its commands in right-click menus and the menu bar, show status bar items, suggest default shortcuts and disable a command under conditions; see [Menus, status items and shortcuts](#menus-status-items-and-shortcuts).
 
 When a command fails, its error shows in a toast. When a plugin fails to load, the toast says it didn't start, and its details hold the error. Errors in event handlers go to the Log panel only.
 
@@ -667,7 +667,7 @@ A command whose conditions fail is disabled in every menu and the palette, and i
 
 - **When a default applies.** It applies while the plugin runs, unless the user bound or cleared that command's shortcut, or the key is taken.
 - **When the key is taken.** A key that the user, HikariSub or an earlier-installed plugin already binds stays theirs, in any context. The plugin's default is dropped, and Settings › Shortcuts and the plugin's details say "Ctrl+Alt+K is taken by <owner>".
-- **Changing it.** The user changes or clears a plugin default like any shortcut, and the change is kept in the hotkeys file with the other plugin shortcuts. A default never overwrites a kept row. Plugin shortcuts stay global.
+- **Changing it.** The user changes or clears a plugin default like any shortcut, and the change is kept in the hotkeys file with the other plugin shortcuts. A cleared default is kept as a row without keys, so it stays cleared. A default never overwrites a kept row. Plugin shortcuts stay global.
 
 ### Quick picks and input boxes
 

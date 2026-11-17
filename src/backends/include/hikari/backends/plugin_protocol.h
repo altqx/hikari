@@ -5,7 +5,8 @@
 // Requests start with an i32 Command:
 //   Load: a LoadRequest. Runs the main file once. Terminal Ok carries an i32 count and the
 //         command ids that have handlers; Failed carries the error text. A helper loads once.
-//   Run:  str command id, as the manifest declares it. Terminal Ok, or Failed with the error text.
+//   Run:  str command id, as the manifest declares it; str JSON {args, context}, the handler's two
+//         arguments. Terminal Ok, or Failed with the error text.
 // Events carry str name and str JSON data. Each handler for the name runs in turn; Terminal Ok,
 // or Failed with the first error text.
 // Service payloads start with an i32 Service. HikariSub answers Ok unless the request has ended:

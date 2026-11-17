@@ -814,7 +814,7 @@ std::vector<std::string> PluginState::handledCommands() const
     return out;
 }
 
-std::expected<void, std::string> PluginState::run(const std::string &command, Host &host)
+std::expected<void, std::string> PluginState::run(const std::string &command, const Json &call, Host &host)
 {
     lua_State *L = m_lua;
     lua_getfield(L, LUA_REGISTRYINDEX, kCommandsKey);
@@ -825,7 +825,11 @@ std::expected<void, std::string> PluginState::run(const std::string &command, Ho
         return std::unexpected("command " + inQuotes(command) + " has no handler: the plugin must call "
                                "hikari.commands.register for it");
     }
-    return protectedCall(0, host);
+    for (const char *key : {"args", "context"}) {
+        const Json *value = call.isObject() ? call.find(key) : nullptr;
+        pushJson(L, value && value->isObject() ? *value : Json::object());
+    }
+    return protectedCall(2, host);
 }
 
 std::expected<void, std::string> PluginState::dispatch(const std::string &event, const Json &data, Host &host)

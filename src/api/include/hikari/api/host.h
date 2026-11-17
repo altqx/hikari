@@ -267,6 +267,8 @@ public:
 struct PluginCommand {
     std::string command; // "plugin.<plugin id>.<command id>"
     std::string title;
+    bool enabled = true; // false while its `when` conditions fail in the window the user works in
+    std::string disabledReason;
 };
 
 struct PluginState {
@@ -285,7 +287,16 @@ struct ScaffoldedPlugin {
     std::string folder, package;
 };
 
-enum class PluginRun { Ran, NotInstalled, NotRunning, UnknownCommand };
+enum class PluginRun { Ran, NotInstalled, NotRunning, UnknownCommand, Disabled };
+
+// A status_items.set change; unset fields keep their value.
+struct StatusItemChange {
+    std::string item;
+    std::optional<std::string> text, icon, tooltip, tone;
+    std::optional<bool> visible;
+};
+
+enum class StatusItemSet { Set, NotRunning, UnknownItem, Empty };
 
 // What the install question shows for a package.
 struct PluginReview {
@@ -307,7 +318,9 @@ public:
     virtual std::vector<PluginState> plugins() const = 0;
     // The installed hikari-plugin.json; nullopt when the plugin isn't installed.
     virtual std::optional<std::string> manifest(std::string_view plugin) const = 0;
-    virtual PluginRun run(std::string_view plugin, std::string_view command) = 0;
+    // `via` is the handler's context.via: "api" or "ai".
+    virtual PluginRun run(std::string_view plugin, std::string_view command, std::string_view via) = 0;
+    virtual StatusItemSet setStatusItem(std::string_view plugin, const StatusItemChange &change) = 0;
     // Replaces the plugin's folder in the AI plugins folder with the files and packs them; or why it could not.
     virtual std::expected<ScaffoldedPlugin, std::string> scaffold(std::string_view plugin,
                                                                  const std::vector<PluginFile> &files) = 0;
