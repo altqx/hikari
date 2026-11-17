@@ -126,6 +126,16 @@ TEST(Hotkeys, ActionTableIsLegacyIdsAndTheMigrationMap)
     EXPECT_EQ(hotkeyIdOf("GLOBAL_CLOSE_KEYFRAMES"), 5351);
     EXPECT_EQ(hotkeyIdOf("GLOBAL_FULL_SCREEN_TYPESETTING"), 5374);
     EXPECT_EQ(hotkeyIdOf("GLOBAL_SAVE_SELECTED_AUDIO"), 5349);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_JUMP_TO"), 5361);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_VIDEO_ZOOM_50"), 5362);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_VIDEO_ZOOM_100"), 5363);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_VIDEO_ZOOM_200"), 5364);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_VIDEO_ZOOM_IN"), 5365);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_VIDEO_ZOOM_OUT"), 5366);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_VIDEO_ZOOM_FIT"), 5367);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_VIDEO_ZOOM_DEVICE_PIXELS"), 5368);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_NEXT_SUBTITLE_BOUNDARY"), 5369);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_PREVIOUS_SUBTITLE_BOUNDARY"), 5370);
     EXPECT_EQ(hotkeyIdOf("GLOBAL_JOIN_PREVIOUS_AUDIO_SELECTION"), 5216);
     EXPECT_EQ(hotkeyIdOf("GLOBAL_SHIFT_FRAMES_TO_VIDEO_START"), 5217);
     EXPECT_EQ(hotkeyIdOf("GLOBAL_SHIFT_FRAMES_TO_VIDEO_END"), 5218);
@@ -720,6 +730,18 @@ TEST(Hotkeys, MapSetsTheBindingAndCommitWritesTheCopy)
     EXPECT_FALSE(list.row(history).keyModified);
     EXPECT_FALSE(list.modified());
     EXPECT_FALSE(list.commit());
+}
+
+TEST(Hotkeys, VideoControlDefaultsShareNoKeyWithAGlobalOrEditboxDefault)
+{
+    const auto defaults = defaultHotkeys();
+    for (const int id : {5361, 5365, 5366, 5369, 5370}) {
+        const std::string accel = defaultHotkey(HotkeyId{id, GlobalHotkey});
+        ASSERT_FALSE(accel.empty()) << id;
+        for (const auto &[key, hotkey] : defaults)
+            if (key.id != id && (key.type == GlobalHotkey || key.type == EditorHotkey))
+                EXPECT_NE(hotkey.accel, accel) << id << " and " << key.id;
+    }
 }
 
 TEST(Hotkeys, ConflictsPerWindow)

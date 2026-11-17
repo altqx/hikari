@@ -446,6 +446,16 @@ constexpr HotkeyAction kActions[] = {
         {"GLOBAL_SAVE_KEYFRAMES", 5350},
         {"GLOBAL_CLOSE_KEYFRAMES", 5351},
         {"GLOBAL_FULL_SCREEN_TYPESETTING", 5374},
+        {"GLOBAL_JUMP_TO", 5361},
+        {"GLOBAL_VIDEO_ZOOM_50", 5362},
+        {"GLOBAL_VIDEO_ZOOM_100", 5363},
+        {"GLOBAL_VIDEO_ZOOM_200", 5364},
+        {"GLOBAL_VIDEO_ZOOM_IN", 5365},
+        {"GLOBAL_VIDEO_ZOOM_OUT", 5366},
+        {"GLOBAL_VIDEO_ZOOM_FIT", 5367},
+        {"GLOBAL_VIDEO_ZOOM_DEVICE_PIXELS", 5368},
+        {"GLOBAL_NEXT_SUBTITLE_BOUNDARY", 5369},
+        {"GLOBAL_PREVIOUS_SUBTITLE_BOUNDARY", 5370},
 };
 
 struct NameRow {
@@ -861,6 +871,16 @@ constexpr NameRow kNames[] = {
         {5350, "Save keyframes…"},
         {5351, "Close keyframes"},
         {5374, "Full screen typesetting"},
+        {5361, "Jump to"},
+        {5362, "Zoom 50 %"},
+        {5363, "Zoom 100 %"},
+        {5364, "Zoom 200 %"},
+        {5365, "Zoom in"},
+        {5366, "Zoom out"},
+        {5367, "Zoom to fit"},
+        {5368, "Zoom to 1:1 device pixels"},
+        {5369, "Next subtitle boundary"},
+        {5370, "Previous subtitle boundary"},
 };
 
 struct DefaultRow {
@@ -890,6 +910,11 @@ constexpr DefaultRow kMainDefaults[] = {
         {5156, GlobalHotkey, "Delete line", "Shift-Delete"},
         {5045, GlobalHotkey, "Set start time from video", "Ctrl-Left"},
         {5046, GlobalHotkey, "Set end time from video", "Ctrl-Right"},
+        {5361, GlobalHotkey, "Jump to", "Ctrl-G"},
+        {5365, GlobalHotkey, "Zoom in", "Ctrl-Num +"},
+        {5366, GlobalHotkey, "Zoom out", "Ctrl-Num -"},
+        {5369, GlobalHotkey, "Next subtitle boundary", "Ctrl-Shift-Right"},
+        {5370, GlobalHotkey, "Previous subtitle boundary", "Ctrl-Shift-Left"},
         {5040, GlobalHotkey, "Play or pause", "Alt-Space"},
         {5041, GlobalHotkey, "Go to previous frame", "Left"},
         {5042, GlobalHotkey, "Go to next frame", "Right"},
