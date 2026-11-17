@@ -1650,6 +1650,26 @@ Output device: %2</source>
         <source>Logarithmic</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Save audio of selected lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>WAV audio (*.wav)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open audio and select lines with some length first.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The audio is still loading.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The audio couldn’t be saved there.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Automation</name>
@@ -6849,6 +6869,10 @@ Failed to copy %2 fonts.</source>
         <source>Frames need a video.</source>
         <translation>프레임 단위는 영상이 있어야 합니다.</translation>
     </message>
+    <message>
+        <source>Save audio of selected lines…</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Home</name>
@@ -8940,6 +8964,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Run the last macro again</source>
         <translation>마지막 매크로 다시 실행</translation>
+    </message>
+    <message>
+        <source>Save audio of selected lines…</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -12395,6 +12423,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Shows or hides tags in the line editor</source>
         <translation>줄 편집기에서 태그를 표시하거나 숨깁니다</translation>
+    </message>
+    <message>
+        <source>Save audio of selected lines…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saves the audio from the first selected line’s start to the last one’s end as a WAV file</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

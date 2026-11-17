@@ -434,6 +434,7 @@ constexpr HotkeyAction kActions[] = {
         {"GLOBAL_TOGGLE_RIGHT_SIDE_BAR", 5340},
         {"GLOBAL_SWAP_SIDE_BARS", 5341},
         {"GLOBAL_AUTOMATION_RERUN_LAST_MACRO", 5342},
+        {"GLOBAL_SAVE_SELECTED_AUDIO", 5349},
 };
 
 struct NameRow {
@@ -838,6 +839,7 @@ constexpr NameRow kNames[] = {
         {5106, "Delete old autosaves…"},
         {5103, "Open dummy video…"},
         {5342, "Run the last macro again"},
+        {5349, "Save audio of selected lines…"},
 };
 
 struct DefaultRow {

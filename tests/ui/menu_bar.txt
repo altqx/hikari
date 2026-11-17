@@ -185,6 +185,7 @@ Audio > Recently opened audio > None
 Audio > Open audio from video [GLOBAL_AUDIO_FROM_VIDEO]
 Audio > Reload audio [GLOBAL_RELOAD_AUDIO]
 Audio > Close audio [GLOBAL_CLOSE_AUDIO]
+Audio > Save audio of selected lines… [GLOBAL_SAVE_SELECTED_AUDIO]
 Audio > -
 Audio > Set audio position to video time [GLOBAL_SET_AUDIO_FROM_VIDEO]
 Audio > Set audio mark to video time [GLOBAL_SET_AUDIO_MARK_FROM_VIDEO]

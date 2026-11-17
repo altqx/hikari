@@ -873,6 +873,10 @@ public:
     Q_INVOKABLE bool snapToKeyframe(bool start);
     // Timing helpers on the selection; false (nothing done) without an exact timebase or when no Line changes.
     Q_INVOKABLE bool snapToAdjacentKeyframe(bool end, bool next);
+    // Writes the audio from the earliest selected start to the latest selected
+    // end as a mono 16-bit WAV; the problem, or empty when saved.
+    Q_INVOKABLE QString saveSelectedAudio(const QUrl &file);
+    Q_INVOKABLE bool canSaveSelectedAudio();
     // The amounts are audio.leadInValue / audio.leadOutValue.
     Q_INVOKABLE bool changeLead(bool end, bool add);
     Q_INVOKABLE bool nudgeEdge(bool end, int frames);

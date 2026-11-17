@@ -46,6 +46,7 @@ Opens on a right press anywhere in the grid viewport except a group description 
 | 9.6 | Split lines by wraps | GRID_SPLIT_BY_WRAPS | | split-wraps |
 | 9a | Interpolate across lines… (AU22) | GLOBAL_INTERPOLATE_LINES | 3 or more lines selected; opens a window | interpolate-lines |
 | 10 | Select all lines visible on video | GRID_SELECT_VISIBLE_LINES | | select-visible |
+| 10.1 | Save audio of selected lines… (PT #1212) | GLOBAL_SAVE_SELECTED_AUDIO | audio open; opens a file dialog | save-audio |
 | 11 | Make line group | GRID_TREE_MAKE | | make-tree |
 | 11.1 | Convert Aegisub folds to line groups (FA5) | GLOBAL_CONVERT_FOLDS_TO_GROUPS | `canConvertFolds()` | convert-folds |
 | 12 | Show subtitles preview | GRID_SHOW_PREVIEW | `canShowPreview()`; key bound | reference |
@@ -677,7 +678,7 @@ The total is **28 menus with 257 items**: 16 right-click entries (two of them, R
 - **Edit.** Review ▸ follows History when Review is on. Sort all lines ▸ and Sort selected lines ▸ have their own group.
 - **Subtitles.** Timing helpers ▸ gathers the keyframe snaps, lead-in and lead-out, the one-frame moves, the two extends and the timing assistant. Convert Aegisub folds to line groups follows Set FPS ▸ and, with a file open, is greyed with “No Aegisub folds in this file”. Typesetting graph… shows “Layout is locked”.
 - **Video.** Tracking ▸ rows that need a video show “Open a video first”, and Revert motion data is last. Full screen and Change aspect ratio… are rows here too. Audio track ▸ and Chapters ▸ are radio rows; a chapter's time is in the detail column, without brackets.
-- **Audio.** Recently opened audio ▸ follows Open audio…, and the join row reads “Apply the audio selection and end the previous line there”.
+- **Audio.** Recently opened audio ▸ follows Open audio…, Save audio of selected lines… (GLOBAL_SAVE_SELECTED_AUDIO, 5349) follows Close audio, and the join row reads “Apply the audio selection and end the previous line there”.
 - **Automation.** Run the last macro again (GLOBAL_AUTOMATION_RERUN_LAST_MACRO, 5342) joins Run last loaded script and Repeat last run, whose detail column names the macro it repeats. Macro and plugin command rows show their own shortcut in the key column, and plugin commands and macros each have their own separator.
 - **View.** Layout ▸ ends with Restore the previous layout. Left side bar and Right side bar are check items, and Reset side bars and every panel row show “Layout is locked” when the layout is locked. Panels ▸ lists the built-in panels in four groups (editing, tools, AI, node effects) with plugin panels after; each panel's submenu is Show, Float or Dock | Close. Explorer and Log are check items, as is Hide tags in the Grid. Show stays enabled on a panel that is already shown and raises it (VW15, kept).
 - **Help.** Getting started, User guide, What's new | Report an issue…, Open user folder | Check for updates | About, Credits.

@@ -76,4 +76,12 @@ std::optional<TimingSuggestion> suggestTiming(const core::Document &document, co
 // when the end is before the start.
 std::expected<void, CommandRefusal> acceptTiming(EditSession &session, const TimingSuggestion &suggestion);
 
+struct TimeSpanMs {
+    int startMs = 0, endMs = 0;
+};
+
+// From the earliest selected Line start to the latest selected Line end; none
+// when nothing is selected or the span is empty.
+std::optional<TimeSpanMs> selectedLinesSpan(const EditSession &session);
+
 }

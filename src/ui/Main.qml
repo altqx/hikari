@@ -2874,6 +2874,12 @@ ApplicationWindow {
             onTriggered: if (!root.hotkeyGesture("GLOBAL_AUDIO_FROM_VIDEO")) root.app.openAudioFromVideo()
         }
         Action {
+            id: saveSelectedAudioAction
+            text: qsTr("Save audio of selected lines…")
+            enabled: root.audio.hasAudio && root.shell.selectedCount > 0
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_SAVE_SELECTED_AUDIO")) saveSelectedAudioDialog.show()
+        }
+        Action {
             id: closeAudioAction
             text: qsTr("&Close audio")
             enabled: root.audio.hasAudio
@@ -4094,6 +4100,13 @@ ApplicationWindow {
                     iconRole: "close-audio"
                     objectName: "closeAudioMenuItem"
                     action: closeAudioAction
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_SAVE_SELECTED_AUDIO"
+                    help: qsTr("Saves the audio from the first selected line’s start to the last one’s end as a WAV file")
+                    iconRole: "save-audio"
+                    objectName: "saveSelectedAudioMenuItem"
+                    action: saveSelectedAudioAction
                 }
                 MenuSeparator {}
                 ShellMenuItem {
@@ -7856,6 +7869,14 @@ ApplicationWindow {
                                 onTriggered: if (!root.gridGesture(this, "GRID_MAKE_CONTINOUS_NEXT_LINE")) root.app.makeContinuous(false)
                             }
                         }
+                        ShellMenuItem {
+                            command: "GLOBAL_SAVE_SELECTED_AUDIO"
+                            iconRole: "save-audio"
+                            objectName: "gridSaveSelectedAudio"
+                            text: qsTranslate("HikariSub.Grid", "Save audio of selected lines…")
+                            enabled: root.audio.hasAudio
+                            onTriggered: if (!root.hotkeyGesture("GLOBAL_SAVE_SELECTED_AUDIO")) saveSelectedAudioDialog.show()
+                        }
                         ShellMenuItem { command: "GRID_TREE_MAKE"; iconRole: "make-tree"; objectName: "makeTree"; text: qsTranslate("HikariSub.Grid", "Make line group"); onTriggered: if (!root.gridGesture(this, "GRID_TREE_MAKE")) root.app.makeGroups() }
                         ShellMenuItem {
                             command: "GLOBAL_CONVERT_FOLDS_TO_GROUPS"
@@ -9793,6 +9814,24 @@ ApplicationWindow {
         }
     }
     FileChooser {
+        id: saveSelectedAudioDialog
+        objectName: "saveSelectedAudioDialog"
+        fileMode: FileDialog.SaveFile
+        title: qsTranslate("HikariSub.Audio", "Save audio of selected lines")
+        defaultSuffix: "wav"
+        nameFilters: [qsTranslate("HikariSub.Audio", "WAV audio (*.wav)")]
+        onAccepted: {
+            root.rememberPickerFolder("audioClip", selectedFile)
+            const problem = root.app.saveSelectedAudio(selectedFile)
+            if (problem.length > 0)
+                root.notices.post("error", qsTranslate("HikariSub.Audio", "Save audio of selected lines"), problem)
+        }
+        function show() {
+            currentFolder = root.startFolder("audioClip", root.app.audioDialogFolder())
+            open()
+        }
+    }
+    FileChooser {
         id: agentExportDialog
         objectName: "agentExportDialog"
         property string thread
@@ -10790,7 +10829,7 @@ ApplicationWindow {
         GLOBAL_RELOAD_AUDIO: reloadAudioAction, GLOBAL_RELOAD_VIDEO: reloadVideoAction,
         GLOBAL_AUTOMATION_LOAD_SCRIPT: loadScriptAction, GLOBAL_AUTOMATION_RELOAD_AUTOLOAD: reloadAutoloadAction,
         GLOBAL_AUTOMATION_LOAD_LAST_SCRIPT: loadLastScriptAction,
-        GLOBAL_AUTOMATION_REPEAT_LAST_RUN: repeatRunAction, GLOBAL_AUTOMATION_RERUN_LAST_MACRO: rerunLastMacroAction,
+        GLOBAL_AUTOMATION_REPEAT_LAST_RUN: repeatRunAction, GLOBAL_AUTOMATION_RERUN_LAST_MACRO: rerunLastMacroAction, GLOBAL_SAVE_SELECTED_AUDIO: saveSelectedAudioAction,
         GLOBAL_PLAY_PAUSE: playPauseAction,
         GLOBAL_PREVIOUS_FRAME: previousFrameAction, GLOBAL_NEXT_FRAME: nextFrameAction,
         GLOBAL_SET_VIDEO_AT_START_TIME: goToStartAction, GLOBAL_SET_VIDEO_AT_END_TIME: goToEndAction,
