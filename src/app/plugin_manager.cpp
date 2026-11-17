@@ -76,9 +76,8 @@ Unpacked unpack(const QByteArray &data)
     }
     if (total > qint64(plugins::kMaxPlatformPackageBytes) || count > plugins::kMaxPackageFiles)
         return Unpacked{{}, QCoreApplication::translate("HikariSub.Plugins",
-                                                        "The package is too large: more than %1 files, or %2 MB unpacked (%3 MB for a package built for one platform).")
+                                                        "The package is too large: more than %1 files or %2 MB unpacked.")
                                 .arg(plugins::kMaxPackageFiles)
-                                .arg(plugins::kMaxPackageBytes / (1024 * 1024))
                                 .arg(plugins::kMaxPlatformPackageBytes / (1024 * 1024))};
     Unpacked out;
     for (const QZipReader::FileInfo &entry : entries) {
@@ -121,10 +120,9 @@ QString packageMessage(const PackageProblem &problem)
 {
     switch (problem.kind) {
     case PackageProblem::Kind::TooLarge:
-        return QCoreApplication::translate("HikariSub.Plugins", "The package is too large: more than %1 files, or %2 MB unpacked (%3 MB for a package built for one platform).")
+        return QCoreApplication::translate("HikariSub.Plugins", "The package is too large: more than %1 files or %2 MB unpacked.")
             .arg(plugins::kMaxPackageFiles)
-            .arg(plugins::kMaxPackageBytes / (1024 * 1024))
-            .arg(plugins::kMaxPlatformPackageBytes / (1024 * 1024));
+            .arg(problem.limit / (1024 * 1024));
     case PackageProblem::Kind::BadPath:
         return QCoreApplication::translate("HikariSub.Plugins", "The package holds a file name HikariSub won’t install: %1")
             .arg(text(problem.path));
@@ -451,7 +449,7 @@ QVariantMap PluginManager::review(const QUrl &url)
     const QString file = url.isLocalFile() ? url.toLocalFile() : url.toString();
     QFile package(file);
     if (QFileInfo(file).size() > qint64(plugins::kMaxPlatformPackageBytes))
-        return refused(packageMessage({PackageProblem::Kind::TooLarge, {}, {}}));
+        return refused(packageMessage({PackageProblem::Kind::TooLarge, {}, {}, {}, plugins::kMaxPlatformPackageBytes}));
     if (!package.open(QIODevice::ReadOnly))
         return refused(QCoreApplication::translate("HikariSub.Plugins", "HikariSub can’t read %1.").arg(QDir::toNativeSeparators(file)));
     const QByteArray data = package.readAll();

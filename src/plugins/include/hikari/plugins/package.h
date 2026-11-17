@@ -25,6 +25,7 @@ struct PackageProblem {
     std::string path;
     ManifestProblem manifest;
     std::string detail; // Media: English, technical; QmlImport: the import as written
+    std::size_t limit = kMaxPackageBytes; // TooLarge: the unpacked bytes allowed
 };
 
 struct Package {

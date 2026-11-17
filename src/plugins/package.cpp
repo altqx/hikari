@@ -41,7 +41,7 @@ std::expected<Package, PackageProblem> openPackage(std::vector<PackageFile> file
     for (const PackageFile &file : files) {
         total += file.data.size();
         if (total > kMaxPlatformPackageBytes)
-            return std::unexpected(PackageProblem{Kind::TooLarge, {}, {}});
+            return std::unexpected(PackageProblem{Kind::TooLarge, {}, {}, {}, kMaxPlatformPackageBytes});
         if (!goodPackagePath(file.path) || !seen.insert(api::lowered(file.path)).second)
             return std::unexpected(PackageProblem{Kind::BadPath, file.path, {}});
         if (file.path == kManifestName)

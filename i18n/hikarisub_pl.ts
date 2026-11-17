@@ -17829,6 +17829,66 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>Can read your files</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>The package lacks its program for this computer, %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Downloads %1 from %2 (%3)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not available for this computer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Programs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 isn’t available for this computer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 isn’t downloaded</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Downloading %1…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Download now</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Downloads the programs %1 needs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Its programs aren’t downloaded: “Let plugins connect to the internet” is off.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 couldn’t be downloaded: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>it isn’t the file the plugin names.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>it couldn’t be unpacked (%1).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>it doesn’t hold %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>it couldn’t be kept.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Position</name>
