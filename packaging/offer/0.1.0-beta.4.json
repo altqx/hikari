@@ -1,0 +1,13 @@
+{
+  "en": {
+    "title": "Try the new HikariSub 0.1 beta",
+    "highlights": [
+      "Projects: open a show's folder and its fonts, catalogues, presets and scripts are shared, with several windows and dockable layouts.",
+      "Hikari AI times karaoke, typesets signs and translates, and every edit waits for you to keep or undo it. You can turn it all off.",
+      "Plugins from a marketplace, including Macro chains, Keyframe generator and Git line marks, each in a sandbox.",
+      "Visual typesetting with perspective, gradients, text on a path and motion tracking, and karaoke effects built as node graphs.",
+      "Spelling and grammar checks, QC notes, export to SRT, WebVTT, TTML and more, and signed updates."
+    ],
+    "note": "This is a beta. It installs over 0.0.x and only reads its settings, so you can go back by reinstalling 0.0.x at any time."
+  }
+}
