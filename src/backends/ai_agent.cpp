@@ -10,7 +10,9 @@
 #include <QDir>
 #include <QFile>
 #include <QRandomGenerator>
+#include <QPointer>
 #include <QSaveFile>
+#include <QTimer>
 
 #include <algorithm>
 #include <array>
@@ -122,6 +124,21 @@ std::string toolName(std::string operation)
 {
     std::replace(operation.begin(), operation.end(), '.', '_');
     return operation;
+}
+
+std::string askArea(const std::string &operation)
+{
+    if (operation == kMcpCallOperation)
+        return "mcp";
+    const std::string family = operation.substr(0, operation.find('.'));
+    if (family == "settings")
+        return "setting";
+    if (family == "plugins")
+        return "plugin";
+    for (const char *subtitles : {"document", "lines", "styles", "typeset", "karaoke", "marks", "translation", "effects", "node", "nodes"})
+        if (family == subtitles)
+            return "subtitles";
+    return "other";
 }
 
 std::string firstLine(const std::string &text)
@@ -527,8 +544,7 @@ Json AgentThread::toJson() const
                              {"costUnknown", costUnknown},
                              {"contextTokens", contextTokens},
                              {"cap", cap},
-                             {"allowed", std::move(allowedJson)},
-                             {"webSearch", webSearch}});
+                             {"allowed", std::move(allowedJson)}});
     if (model)
         out["model"] = modelJson(*model);
     if (!project.empty())
@@ -580,8 +596,6 @@ std::optional<AgentThread> AgentThread::fromJson(const Json &json)
         for (const Json &key : a->asArray())
             if (key.isString())
                 t.allowed.insert(key.asString());
-    if (const Json *w = json.find("webSearch"); w && w->isBool())
-        t.webSearch = w->asBool();
     t.project = stringAt(json, "project");
     if (const Json *task = json.find("task"))
         t.task = taskFromJson(*task);
@@ -793,23 +807,18 @@ void AgentThreads::setMode(const std::string &id, AgentMode mode)
 void AgentThreads::setModel(const std::string &id, app::ModelRef model)
 {
     if (AgentThread *t = find(id)) {
+        const auto before = modelOf(*t);
+        if (!before || externalAgentOf(*before) != externalAgentOf(model))
+            m_live.erase(id);
         t->model = std::move(model);
         touch(*t);
     }
 }
 
-void AgentThreads::setWebSearch(const std::string &id, bool on)
-{
-    if (AgentThread *t = find(id); t && t->webSearch != on) {
-        t->webSearch = on;
-        touch(*t);
-    }
-}
-
-bool AgentThreads::searches(const AgentThread &thread) const
+bool AgentThreads::searches() const
 {
     AiRequests *requests = m_wiring.requests ? m_wiring.requests() : nullptr;
-    return thread.webSearch && requests && requests->webSearch();
+    return requests && requests->webSearch();
 }
 
 void AgentThreads::setAttached(const std::string &id, std::vector<application::DocumentId> documents)
@@ -899,6 +908,53 @@ void AgentThreads::send(const std::string &id, std::string text, Json extraParts
     if (running(id))
         return setQueued(id, std::move(text));
     start(*t, std::move(text), std::move(extraParts));
+}
+
+void AgentThreads::listAgentModels(const std::string &agent, AgentModelsDone done, int timeoutMs)
+{
+    if (m_wiring.agentRefusal && !m_wiring.agentRefusal(agent).empty())
+        return done(std::nullopt);
+    AiSidecarHost *h = host(true);
+    if (!h)
+        return done(std::nullopt);
+    const std::string session = "models:" + agent;
+    h->request("session/new",
+               Json::object({{"sessionId", session},
+                             {"agent", agent},
+                             {"model", modelJson({std::string(kAgentProviderPrefix) + agent, ""})},
+                             {"system", ""},
+                             {"history", Json::array()}}),
+               [](SidecarResult) {});
+    auto answered = std::make_shared<bool>(false);
+    auto answer = [this, alive = std::weak_ptr(m_alive), h = QPointer(h), session, answered,
+                   done = std::move(done)](std::optional<std::vector<AgentModel>> models) {
+        if (*answered || !alive.lock())
+            return;
+        *answered = true;
+        if (h)
+            h->request("_hikari/session.close", Json::object({{"sessionId", session}}), [](SidecarResult) {});
+        done(std::move(models));
+    };
+    const std::uint64_t request = h->request(
+        "_hikari/session.models", Json::object({{"sessionId", session}}), [answer](SidecarResult result) {
+            const Json *list = result ? result->find("models") : nullptr;
+            if (!list || !list->isArray())
+                return answer(std::nullopt);
+            std::vector<AgentModel> models;
+            for (const Json &m : list->asArray()) {
+                std::string id = stringAt(m, "id");
+                if (id.empty())
+                    continue;
+                std::string name = stringAt(m, "name");
+                models.push_back({id, name.empty() ? id : std::move(name)});
+            }
+            answer(std::move(models));
+        });
+    QTimer::singleShot(timeoutMs, this, [h = QPointer(h), request, answer] {
+        if (h)
+            h->cancel(request);
+        answer(std::nullopt);
+    });
 }
 
 AiSidecarHost *AgentThreads::host(bool externalAgent)
@@ -1002,7 +1058,7 @@ void AgentThreads::start(AgentThread &thread, std::string text, Json parts)
             prompt.push(std::move(part));
     AiRequests *requests = m_wiring.requests ? m_wiring.requests() : nullptr;
     const bool caching = requests && requests->caching();
-    const bool search = searches(thread);
+    const bool search = searches();
     openSession(thread, *h, *model, wire);
     auto run = std::make_unique<Run>();
     run->request = h->request("session/prompt",
@@ -1046,7 +1102,7 @@ void AgentThreads::openSession(AgentThread &thread, AiSidecarHost &host, const a
                               {"history", thread.history},
                               {"cacheKey", thread.id},
                               {"caching", requests && requests->caching()},
-                              {"webSearch", searches(thread)},
+                              {"webSearch", searches()},
                               {"contextTokens", contextWindowOf(m_wiring.config ? m_wiring.config() : nullptr, model)},
                               {"autoCompact", defaults.autoCompact}});
     if (const auto agent = externalAgentOf(model))
@@ -1152,7 +1208,6 @@ void AgentThreads::compactionDone(const std::string &id, const SidecarResult &re
         next.title = t->title;
         next.mode = t->mode;
         next.model = t->model;
-        next.webSearch = t->webSearch;
         next.history = Json::array({Json::object({{"author", "user"},
                                                   {"parts", Json::array({Json::object({{"type", "text"},
                                                                                        {"text", std::string(kFromSummary)}})})}}),
@@ -1609,20 +1664,35 @@ void AgentThreads::openAsk(AgentThread &thread, Decision kind, const std::string
                                            : toolName(operation)},
                               {"operation", operation},
                               {"params", Json(clipped(params.dump(), kOutputChars))},
+                              {"area", askArea(operation)},
                               {"reason", reason},
                               {"status", "open"}});
+    if (const api::Operation *op = api::Api::registry().find(operation))
+        item["summary"] = op->summary;
+    if (operation == "document.apply") {
+        ProposedEdits edits = readEdits(thread, params);
+        item["rows"] = std::move(edits.rows);
+        if (edits.document) {
+            item["document"] = static_cast<std::int64_t>(edits.document->value);
+            if (m_wiring.documentTitle)
+                item["title"] = m_wiring.documentTitle(*edits.document);
+        }
+    } else if (operation == "settings.set") {
+        item["setting"] = stringAt(params, "setting");
+        if (const Json *value = params.find("value"))
+            item["value"] = clipped(value->isString() ? value->asString() : value->dump(), kTitleChars);
+    }
     wait(thread, Ask{0, thread.id, kind, operation, params, std::move(reason)}, std::move(item), std::move(admit),
          std::move(onWithdraw));
 }
 
-void AgentThreads::openProposal(AgentThread &thread, const Json &params, AiSidecarHost::Admit admit,
-                                std::function<void(std::function<void()>)> onWithdraw)
+AgentThreads::ProposedEdits AgentThreads::readEdits(AgentThread &thread, const Json &params)
 {
-    std::optional<application::DocumentId> document;
+    ProposedEdits out;
     if (const Json *d = params.find("document"); d && d->isInt())
-        document = application::DocumentId{static_cast<std::uint64_t>(d->asInt())};
+        out.document = application::DocumentId{static_cast<std::uint64_t>(d->asInt())};
     else if (m_wiring.editingTarget)
-        document = m_wiring.editingTarget();
+        out.document = m_wiring.editingTarget();
     const Json *edits = params.find("edits");
     const Json noEdits = Json::array();
     if (!edits || !edits->isArray())
@@ -1638,8 +1708,8 @@ void AgentThreads::openProposal(AgentThread &thread, const Json &params, AiSidec
         Json ask = Json::object({{"ids", Json::array()}, {"fields", Json::array({Json("text")})}});
         for (const std::int64_t id : ids)
             ask["ids"].push(Json(id));
-        if (document)
-            ask["document"] = static_cast<std::int64_t>(document->value);
+        if (out.document)
+            ask["document"] = static_cast<std::int64_t>(out.document->value);
         const Json *proposedAt = params.find("revision");
         m_wiring.api->call(callerOf(thread), "lines.get", ask,
                            [read, proposedAt = proposedAt ? *proposedAt : Json()](const api::Result &result) {
@@ -1652,21 +1722,28 @@ void AgentThreads::openProposal(AgentThread &thread, const Json &params, AiSidec
                                read->stale = now && !proposedAt.isNull() && !(*now == proposedAt);
                            });
     }
-    const std::map<std::int64_t, Json> &lines = read->lines;
-    const bool stale = read->stale;
-    Json rows = Json::array();
+    out.stale = read->stale;
+    out.rows = Json::array();
     for (const Json &edit : edits->asArray())
-        rows.push(proposalRow(edit, lines));
+        out.rows.push(proposalRow(edit, read->lines));
+    return out;
+}
+
+void AgentThreads::openProposal(AgentThread &thread, const Json &params, AiSidecarHost::Admit admit,
+                                std::function<void(std::function<void()>)> onWithdraw)
+{
+    ProposedEdits edits = readEdits(thread, params);
+    const auto document = edits.document;
     Json item = Json::object({{"kind", "proposal"},
                               {"name", stringAt(params, "name")},
                               {"title", document && m_wiring.documentTitle ? m_wiring.documentTitle(*document) : std::string()},
-                              {"rows", std::move(rows)},
-                              {"status", stale ? "stale" : "open"}});
+                              {"rows", std::move(edits.rows)},
+                              {"status", edits.stale ? "stale" : "open"}});
     if (document)
         item["document"] = static_cast<std::int64_t>(document->value);
     Ask ask{0, thread.id, Decision::Propose, "document.apply", params, {}};
     ask.document = document;
-    ask.stale = stale;
+    ask.stale = edits.stale;
     wait(thread, std::move(ask), std::move(item), std::move(admit), std::move(onWithdraw));
 }
 

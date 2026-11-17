@@ -1062,6 +1062,8 @@ icon("ai-assistant", "Assistant", [], ["agent-panel", "settings-dialog"],
      + accent(stroke("M12.5 1.5c.25 1.25.75 1.75 2 2-1.25.25-1.75.75-2 2-.25-1.25-.75-1.75-2-2 1.25-.25 1.75-.75 2-2z")))
 icon("ai-send", "Send", [], ["agent-panel"],
      stroke("M1.5 7.5l13-6-4 13-3-5.5z") + accent(stroke("M7.5 9l7-7.5")), mirror=True)
+icon("attach", "Attach a file", [], ["agent-panel"],
+     stroke("M10.5 5v6a2.5 2.5 0 0 1-5 0V3.5a1.75 1.75 0 0 1 3.5 0V10.5a1 1 0 0 1-2 0V5.5"))
 icon("review-keep", "Keep", [], ["agent-panel", "grid", EDITOR],
      stroke("M1.5 4.5h9M1.5 8h6") + accent(stroke("M8.5 12l2 2 4-4.5")), mirror=True)
 icon("checkpoint", "Checkpoint", [], ["agent-panel"],

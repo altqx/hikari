@@ -365,6 +365,34 @@ TEST_F(AcpGuardTest, OnlyASessionsMethodsPassAndTheAgentGetsNoFilesOrTerminal)
     EXPECT_EQ(fromAgent(update).toSidecar, std::vector{QByteArray::fromStdString(update)});
 }
 
+TEST_F(AcpGuardTest, OnlyTheAgentsOwnModelOptionCanBeSetAndOnlyToAValueItLists)
+{
+    const auto set = [&](int id, const std::string &configId, const std::string &value) {
+        return fromSidecar(R"({"jsonrpc":"2.0","id":)" + std::to_string(id) +
+                           R"(,"method":"session/set_config_option","params":{"sessionId":"a","configId":")" + configId +
+                           R"(","value":")" + value + R"("}})");
+    };
+    EXPECT_TRUE(set(1, "model", "fast").toAgent.empty());
+    ASSERT_EQ(fromSidecar(R"({"jsonrpc":"2.0","id":2,"method":"session/new","params":{}})").toAgent.size(), 1u);
+    fromAgent(R"({"jsonrpc":"2.0","id":2,"result":{"sessionId":"a","configOptions":[
+        {"id":"mode","name":"Mode","category":"mode","type":"select","currentValue":"ask",
+         "options":[{"value":"ask","name":"Ask"},{"value":"yolo","name":"Yolo"}]},
+        {"id":"model","name":"Model","category":"model","type":"select","currentValue":"fast",
+         "options":[{"group":"g","name":"G","options":[{"value":"fast","name":"Fast"},{"value":"deep","name":"Deep"}]}]}]}})");
+    EXPECT_EQ(set(3, "model", "deep").toAgent.size(), 1u);
+    const auto mode = set(4, "mode", "yolo");
+    EXPECT_TRUE(mode.toAgent.empty());
+    EXPECT_EQ(*parse(mode.toSidecar).at(0).find("error")->find("message"),
+              Json("Hikari lets the AI set only the agent's model, to one it lists"));
+    EXPECT_TRUE(set(5, "model", "unlisted").toAgent.empty());
+
+    fromAgent(R"({"jsonrpc":"2.0","method":"session/update","params":{"sessionId":"a","update":{
+        "sessionUpdate":"config_option_update","configOptions":[{"id":"model","name":"Model","category":"model",
+        "type":"select","currentValue":"fast","options":[{"value":"fast","name":"Fast"},{"value":"new","name":"New"}]}]}}})");
+    EXPECT_EQ(set(6, "model", "new").toAgent.size(), 1u);
+    EXPECT_TRUE(set(7, "model", "deep").toAgent.empty());
+}
+
 TEST_F(AcpGuardTest, TheSessionRunsInItsWorkFolderWithHikarisToolsOverHttpWhenTheAgentTakesIt)
 {
     const std::string newSession =

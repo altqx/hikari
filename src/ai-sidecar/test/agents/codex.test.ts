@@ -29,13 +29,14 @@ afterEach(() => {
 const kJoined = "You are Hikari AI.\n\nInstructions from the user's AGENTS.md:\n\nUse Oxford commas.\n\n" +
     "Instructions from this Project's AGENTS.md:\n\nKeep honorifics.";
 
-function harness(answers: Partial<Record<OperationName, unknown>> = {}, system = "Be brief.", child?: ReturnType<typeof qtLink>) {
+function harness(answers: Partial<Record<OperationName, unknown>> = {}, system = "Be brief.", child?: ReturnType<typeof qtLink>,
+    model = "") {
     const log = join(mkdtempSync(join(tmpdir(), "fake-codex-")), "log");
     const calls: { operation: string; params: unknown }[] = [];
     const updates: SessionUpdate[] = [];
     const spawned: string[] = [];
     let session: CodexSession | undefined;
-    const params = { sessionId: "t1", agent: "codex" as const, model: { providerId: "", model: "" }, system,
+    const params = { sessionId: "t1", agent: "codex" as const, model: { providerId: "", model }, system,
         ...(child ? { task: { parent: "p1", taskId: "k1", scope: { document: 1, lines: [1] } } } : {}) };
     const fake: HikariCalls = {
         call: (operation, p) => {
@@ -73,6 +74,45 @@ function harness(answers: Partial<Record<OperationName, unknown>> = {}, system =
 }
 
 describe("Codex through its app-server", () => {
+    test("it lists the models Codex offers across pages, without hidden ones", async () => {
+        const h = harness();
+        expect(await h.session.models()).toEqual([{ id: "gpt-fake", name: "GPT Fake" },
+            { id: "gpt-fake-mini", name: "GPT Fake Mini" }]);
+        h.session.close();
+        expect(h.logged("model/list")).toEqual([{ includeHidden: false, cursor: null },
+            { includeHidden: false, cursor: "page-2" }]);
+    }, 30_000);
+
+    test("the agent's default sends no model, and a chosen one starts the thread with it", async () => {
+        const plain = harness();
+        await plain.session.prompt({ sessionId: "t1", prompt: plain.script({ reply: "hi" }) });
+        plain.session.close();
+        expect(plain.logged("thread/start")).toEqual([{ developerInstructions: "Be brief." }]);
+        expect((plain.logged("turn/start")[0] as Record<string, unknown>).model).toBeUndefined();
+        const chosen = harness({}, "Be brief.", undefined, "gpt-fake-mini");
+        await chosen.session.prompt({ sessionId: "t1", prompt: chosen.script({ reply: "hi" }) });
+        chosen.session.close();
+        expect(chosen.logged("thread/start")).toEqual([{ model: "gpt-fake-mini", developerInstructions: "Be brief." }]);
+        expect((chosen.logged("turn/start")[0] as Record<string, unknown>).model).toBeUndefined();
+    }, 30_000);
+
+    test("a model chosen mid-thread goes on the next turn, and the agent's default sends Codex's default", async () => {
+        const h = harness();
+        const turn = (reply: string, model?: string) => {
+            if (model !== undefined)
+                h.session.useModel(model);
+            return h.session.prompt({ sessionId: "t1", prompt: h.script({ reply }) });
+        };
+        await turn("one");
+        await turn("two", "gpt-fake-mini");
+        await turn("three", "gpt-fake-mini");
+        await turn("four", "");
+        h.session.close();
+        expect(h.logged("turn/start").map((p) => (p as Record<string, unknown>).model))
+            .toEqual([undefined, "gpt-fake-mini", undefined, "gpt-fake"]);
+        expect(h.spawned).toHaveLength(1);
+    }, 30_000);
+
     test("an edit task runs on Hikari's tools over the session's channel", async () => {
         const h = harness({ "lines.find": { revision: 3, total: 1, lines: [{ id: 1, text: "Helo" }] },
             "document.apply": { revision: 4 } });

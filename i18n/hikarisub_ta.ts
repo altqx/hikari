@@ -165,11 +165,11 @@
     </message>
     <message>
         <source>%1 · active tab</source>
-        <translation>%1 · செயலில் உள்ள தாவல்</translation>
+        <translation type="vanished">%1 · செயலில் உள்ள தாவல்</translation>
     </message>
     <message>
         <source>Ask, or type @ to attach, / for commands</source>
-        <translation>கேளுங்கள், அல்லது இணைக்க @, கட்டளைகளுக்கு / தட்டச்சிடுங்கள்</translation>
+        <translation type="vanished">கேளுங்கள், அல்லது இணைக்க @, கட்டளைகளுக்கு / தட்டச்சிடுங்கள்</translation>
     </message>
     <message>
         <source>Add a provider first</source>
@@ -181,27 +181,27 @@
     </message>
     <message>
         <source>Attach</source>
-        <translation>இணை</translation>
+        <translation type="vanished">இணை</translation>
     </message>
     <message>
         <source>Search the web</source>
-        <translation>இணையத்தில் தேடு</translation>
+        <translation type="vanished">இணையத்தில் தேடு</translation>
     </message>
     <message>
         <source>This provider can’t search the web on its own. Choose a search service in Settings › AI › Web search.</source>
-        <translation>இந்த வழங்குநரால் தானாக இணையத்தில் தேட முடியாது. அமைப்புகள் › AI › இணையத் தேடல் இல் ஒரு தேடல் சேவையைத் தேர்ந்தெடு.</translation>
+        <translation type="vanished">இந்த வழங்குநரால் தானாக இணையத்தில் தேட முடியாது. அமைப்புகள் › AI › இணையத் தேடல் இல் ஒரு தேடல் சேவையைத் தேர்ந்தெடு.</translation>
     </message>
     <message>
         <source>Search the web: on for this thread</source>
-        <translation>இணையத் தேடல்: இந்த இழையில் இயக்கத்தில்</translation>
+        <translation type="vanished">இணையத் தேடல்: இந்த இழையில் இயக்கத்தில்</translation>
     </message>
     <message>
         <source>Search the web: off for this thread</source>
-        <translation>இணையத் தேடல்: இந்த இழையில் அணைக்கப்பட்டது</translation>
+        <translation type="vanished">இணையத் தேடல்: இந்த இழையில் அணைக்கப்பட்டது</translation>
     </message>
     <message>
         <source>Changing it mid-thread costs one cache miss on Anthropic.</source>
-        <translation>இழையின் நடுவில் இதை மாற்றினால் Anthropic இல் ஒரு தற்காலிக நினைவக இழப்பு ஏற்படும்.</translation>
+        <translation type="vanished">இழையின் நடுவில் இதை மாற்றினால் Anthropic இல் ஒரு தற்காலிக நினைவக இழப்பு ஏற்படும்.</translation>
     </message>
     <message>
         <source>Stop</source>
@@ -255,6 +255,14 @@
         <translation>வரம்பெல்லை: %1</translation>
     </message>
     <message>
+        <source>Choose a model</source>
+        <translation>ஒரு மாதிரியைத் தேர்ந்தெடு</translation>
+    </message>
+    <message>
+        <source>Model</source>
+        <translation>மாதிரி</translation>
+    </message>
+    <message>
         <source>Send</source>
         <translation>அனுப்பு</translation>
     </message>
@@ -268,15 +276,15 @@
     </message>
     <message>
         <source>Delete thread</source>
-        <translation type="vanished">இழையை நீக்கு</translation>
+        <translation>இழையை நீக்கு</translation>
     </message>
     <message>
         <source>Delete this thread?</source>
-        <translation>இந்த இழையை நீக்கவா?</translation>
+        <translation type="vanished">இந்த இழையை நீக்கவா?</translation>
     </message>
     <message>
         <source>The conversation goes. Changes it made stay in your subtitles and in the review.</source>
-        <translation>உரையாடல் நீக்கப்படும். அது செய்த மாற்றங்கள் உங்கள் வசனங்களிலும் மதிப்பாய்விலும் இருக்கும்.</translation>
+        <translation type="vanished">உரையாடல் நீக்கப்படும். அது செய்த மாற்றங்கள் உங்கள் வசனங்களிலும் மதிப்பாய்விலும் இருக்கும்.</translation>
     </message>
     <message>
         <source>Delete</source>
@@ -285,6 +293,14 @@
     <message>
         <source>Change mode</source>
         <translation>பயன்முறையை மாற்று</translation>
+    </message>
+    <message>
+        <source>Agent default</source>
+        <translation>முகவரின் இயல்புநிலை</translation>
+    </message>
+    <message>
+        <source>Loading models…</source>
+        <translation>மாதிரிகளை ஏற்றுகிறது…</translation>
     </message>
     <message>
         <source>Settings › AI…</source>
@@ -387,15 +403,15 @@
     </message>
     <message>
         <source>Judge asks you</source>
-        <translation>நடுவர் உங்களைக் கேட்கிறது</translation>
+        <translation type="vanished">நடுவர் உங்களைக் கேட்கிறது</translation>
     </message>
     <message>
         <source>Allow %1?</source>
-        <translation>%1 ஐ அனுமதிக்கவா?</translation>
+        <translation type="vanished">%1 ஐ அனுமதிக்கவா?</translation>
     </message>
     <message>
         <source>Run %1?</source>
-        <translation>%1 ஐ இயக்கவா?</translation>
+        <translation type="vanished">%1 ஐ இயக்கவா?</translation>
     </message>
     <message>
         <source>asks in every mode</source>
@@ -435,7 +451,7 @@
     </message>
     <message>
         <source>Deny and tell the agent…</source>
-        <translation>மறுத்து முகவரிடம் சொல்…</translation>
+        <translation type="vanished">மறுத்து முகவரிடம் சொல்…</translation>
     </message>
     <message>
         <source>Withdrawn: the agent stopped waiting for your answer.</source>
@@ -534,10 +550,6 @@
     </message>
     <message>
         <source>Don’t install</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Don’t install and tell the agent…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -701,10 +713,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Don’t run and tell the agent…</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Running %1</source>
         <translation type="unfinished"></translation>
     </message>
@@ -733,12 +741,62 @@
         <translation type="unfinished">திற</translation>
     </message>
     <message>
+        <source>%1, %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tell the agent instead…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No threads match “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Compact thread</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>active tab</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>+%n more</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n more attached file(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Ask, or type @ to attach a file, / for commands</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Attach a file</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Delete thread…</source>
         <translation>இழையை நீக்கு…</translation>
+    </message>
+    <message>
+        <source>Delete “%1”?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Its messages are deleted. Changes it made stay in your subtitles and in the review.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Settings › AI</source>
@@ -747,6 +805,61 @@
     <message>
         <source>Default for new threads</source>
         <translation>புதிய இழைகளுக்கான இயல்புநிலை</translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Details</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change the subtitles?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use a plugin?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use %1?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Allow this action?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change a setting</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Turn on “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Turn off “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Set “%1” to %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change line %1 to “%2”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change a line to “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Change %n line(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <source>%1 asks to run this Lua script</source>
@@ -902,7 +1015,7 @@
     </message>
     <message>
         <source>Decline and tell the agent…</source>
-        <translation>நிராகரித்து முகவரிடம் சொல்…</translation>
+        <translation type="vanished">நிராகரித்து முகவரிடம் சொல்…</translation>
     </message>
     <message>
         <source>Sent back to the agent: %1</source>
@@ -16237,7 +16350,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Model</source>
-        <translation type="unfinished"></translation>
+        <translation>மாதிரி</translation>
     </message>
     <message>
         <source>Ask each time, starting from this instruction</source>

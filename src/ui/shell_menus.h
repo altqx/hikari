@@ -1,5 +1,7 @@
 #pragma once
 
+#include <algorithm>
+
 #include <QCoreApplication>
 #include <QCursor>
 #include <QGuiApplication>
@@ -9,6 +11,9 @@
 #include <QKeySequence>
 #include <QObject>
 #include <QQuickItem>
+#include <QQuickWindow>
+#include <QRectF>
+#include <QScreen>
 #include <QtQml/qqmlregistration.h>
 
 namespace hikari::ui {
@@ -61,6 +66,32 @@ public:
     Q_INVOKABLE bool shiftHeld() const
     {
         return QGuiApplication::keyboardModifiers().testFlag(Qt::ShiftModifier);
+    }
+    /// How far a shown menu, drawn by `face`, moves to stay on its screen: above `anchor` when it opened below it and
+    /// doesn't fit.
+    Q_INVOKABLE QPointF shiftOnScreen(QQuickItem *face, QQuickItem *anchor) const
+    {
+        QQuickWindow *window = anchor ? anchor->window() : nullptr;
+        if (!face || !window)
+            return {};
+        const QPointF shown = face->mapToGlobal(QPointF(0, 0));
+        QScreen *screen = QGuiApplication::screenAt(anchor->mapToGlobal(QPointF(0, 0)).toPoint());
+        if (!screen)
+            screen = window->screen();
+        if (!screen)
+            return {};
+        const QRectF anchored(anchor->mapToGlobal(QPointF(0, 0)), anchor->size());
+        return fitted(screen->availableGeometry().toRectF(), anchored, shown, face->size()) - shown;
+    }
+    static QPointF fitted(const QRectF &available, const QRectF &anchor, QPointF at, QSizeF size)
+    {
+        if (at.y() + size.height() > available.bottom()) {
+            const qreal above = (at.y() >= anchor.bottom() ? anchor.top() : at.y()) - size.height();
+            at.setY(above >= available.top() ? above : available.bottom() - size.height());
+        }
+        at.setY(std::max(at.y(), available.top()));
+        at.setX(std::max(std::min(at.x(), available.right() - size.width()), available.left()));
+        return at;
     }
     Q_INVOKABLE void menuShowing()
     {

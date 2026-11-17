@@ -87,6 +87,10 @@ for await (const line of createInterface({ input: process.stdin })) {
         log && appendFileSync(log, `system ${JSON.stringify(message.request.systemPrompt ?? null)}\n`);
         hooks = Object.fromEntries(Object.entries(message.request.hooks ?? {}).map(([event, matchers]) =>
             [event, (matchers as { hookCallbackIds: string[] }[]).flatMap((m) => m.hookCallbackIds)]));
+        const models = process.env.FAKE_CLAUDE_MODELS ? { models: JSON.parse(process.env.FAKE_CLAUDE_MODELS) } : {};
+        send({ type: "control_response", response: { subtype: "success", request_id: message.request_id, response: models } });
+    } else if (message.type === "control_request" && message.request.subtype === "set_model") {
+        log && appendFileSync(log, `set_model ${JSON.stringify(message.request.model ?? null)}\n`);
         send({ type: "control_response", response: { subtype: "success", request_id: message.request_id, response: {} } });
     } else if (message.type === "control_request" && message.request.subtype === "interrupt") {
         interrupted = true;

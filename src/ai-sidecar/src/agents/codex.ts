@@ -1,6 +1,6 @@
 import type { Readable, Writable } from "node:stream";
 
-import { ErrorCode, type SessionNewParams, type SessionPromptParams, type SessionPromptResult,
+import { type AgentModelInfo, ErrorCode, type SessionNewParams, type SessionPromptParams, type SessionPromptResult,
     type SessionStopReason, type SessionSteerParams, type SessionSteerResult, type SessionUpdate,
     type ToolCallKind } from "../protocol";
 import type { ErrorData, ErrorKind, Part, Usage } from "../providers/types";
@@ -37,6 +37,15 @@ interface Breakdown {
 
 type Item = { type: string; id: string } & Record<string, unknown>;
 
+interface CodexModel {
+    id: string;
+    model?: string;
+    displayName?: string;
+    hidden?: boolean;
+    isDefault?: boolean;
+}
+
+const kModelPages = 10;
 const kStderrLines = 20;
 
 const kCodexErrorKinds: Record<string, ErrorKind> = {
@@ -194,9 +203,46 @@ export class CodexSession {
     private total: Breakdown = kZero;
     private atTurnStart: Breakdown = kZero;
     private readonly calls = new Set<string>();
+    private model: string;
+    private running?: string;
     private stderr: string[] = [];
 
-    constructor(readonly id: string, private readonly params: SessionNewParams, private readonly deps: CodexDeps) {}
+    constructor(readonly id: string, private readonly params: SessionNewParams, private readonly deps: CodexDeps) {
+        this.model = params.model.model;
+    }
+
+    async models(): Promise<AgentModelInfo[]> {
+        await this.start();
+        return (await this.listed()).map((m) => ({ id: m.model || m.id, name: m.displayName || m.model || m.id }));
+    }
+
+    private async listed(): Promise<CodexModel[]> {
+        const out: CodexModel[] = [];
+        let cursor: string | null = null;
+        for (let page = 0; page < kModelPages; ++page) {
+            const listed = await this.peer!.request("model/list", { includeHidden: false, cursor }) as
+                { data?: CodexModel[]; nextCursor?: string | null } | null;
+            out.push(...(listed?.data ?? []).filter((m) => !m.hidden));
+            cursor = listed?.nextCursor ?? null;
+            if (!cursor)
+                break;
+        }
+        return out;
+    }
+
+    useModel(model: string): void {
+        this.model = model;
+    }
+
+    private async turnModel(): Promise<{ model?: string }> {
+        if (this.running === this.model)
+            return {};
+        this.running = this.model;
+        if (this.model)
+            return { model: this.model };
+        const fallback = (await this.listed()).find((m) => m.isDefault);
+        return fallback ? { model: fallback.model || fallback.id } : {};
+    }
 
     async prompt(params: SessionPromptParams): Promise<SessionPromptResult> {
         if (this.turn)
@@ -209,7 +255,7 @@ export class CodexSession {
             this.deps.send({ sessionUpdate: "history", message: { author: "user", parts: params.prompt } });
             this.atTurnStart = this.total;
             const started = await this.peer!.request("turn/start",
-                { threadId: this.thread, input: input(params.prompt) }) as { turn: { id: string } };
+                { threadId: this.thread, input: input(params.prompt), ...await this.turnModel() }) as { turn: { id: string } };
             turn.id = started.turn.id;
             if (turn.cancelled)
                 this.interrupt(turn);
@@ -282,13 +328,14 @@ export class CodexSession {
         await peer.request("initialize", { clientInfo: { name: "hikarisub", title: "HikariSub", version: this.deps.version },
             capabilities: { experimentalApi: false, requestAttestation: false } });
         peer.notify("initialized");
-        const model = this.params.model.model || undefined;
+        const model = this.model || undefined;
         const system = this.deps.skills ? await withSkills(this.params.system, this.deps.skills) : this.params.system;
         const settings = { ...(model ? { model } : {}), ...(system ? { developerInstructions: system } : {}) };
         const opened = this.thread
             ? await peer.request("thread/resume", { threadId: this.thread, ...settings })
             : await peer.request("thread/start", settings);
         this.thread = (opened as { thread: { id: string } }).thread.id;
+        this.running = this.model;
     }
 
     private listen(peer: Lines): void {

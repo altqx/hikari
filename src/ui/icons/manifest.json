@@ -4385,6 +4385,17 @@
    ]
   },
   {
+   "role": "attach",
+   "file": "attach.svg",
+   "label": "Attach a file",
+   "accent": false,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "agent-panel"
+   ]
+  },
+  {
    "role": "review-keep",
    "file": "review-keep.svg",
    "label": "Keep",

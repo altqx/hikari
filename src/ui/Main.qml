@@ -722,8 +722,8 @@ ApplicationWindow {
         }
         root.sideBarsLoaded = true
         root.placeSideBarPanels()
-        for (const dock of root.shownBeforeSideBarsLoad.splice(0))
-            root.showPanel(dock)
+        for (const shown of root.shownBeforeSideBarsLoad.splice(0))
+            root.revealPanel(shown.dock, shown.focus)
     }
     property var shownBeforeSideBarsLoad: []
     property bool sideBarsMigrated: false
@@ -1338,16 +1338,17 @@ ApplicationWindow {
         root.showPanel(qcNotesDock)
         qcNotesTool.startAdding(ms)
     }
-    function showPanel(dock) {
+    function showPanel(dock) { root.revealPanel(dock, true) }
+    function revealPanel(dock, focus) {
         if (!root.sideBarsLoaded && SideBarModel.mayHold(root.panelName(dock))) {
-            root.shownBeforeSideBarsLoad.push(dock)
+            root.shownBeforeSideBarsLoad.push({ dock: dock, focus: focus })
             return
         }
         if (!root.panelAvailable(dock))
             return
         root.analytics.panelOpened(root.panelName(dock))
         if (root.inSideBar(dock)) {
-            root.showInSideBar(dock, true)
+            root.showInSideBar(dock, focus)
             if (dock === spellDock && !spellTool.checking)
                 spellTool.start()
             return
@@ -1357,7 +1358,8 @@ ApplicationWindow {
         dock.raise()
         if (dock === spellDock && !spellTool.checking)
             spellTool.start()
-        root.focusPanel(panels[dockList.indexOf(dock)], Qt.OtherFocusReason)
+        if (focus)
+            root.focusPanel(panels[dockList.indexOf(dock)], Qt.OtherFocusReason)
     }
     function openAtFirstPlace(dock) {
         const first = !Docking.hasPlace(dock.uniqueName)
@@ -7249,7 +7251,7 @@ ApplicationWindow {
                     target: root.audio
                     function onOpened(path, created) {
                         if (created)
-                            root.showPanel(audioDock)
+                            root.revealPanel(audioDock, root.workspaceLayout.focusWindow === root)
                     }
                 }
             }

@@ -24,6 +24,14 @@ let nextId = 1;
 let sessions = 0;
 let cancelled = false;
 const waiting = new Map<number, (result: unknown) => void>();
+let model = "fake-large";
+const configOptions = () => process.env.FAKE_ACP_MODELS !== "1" ? undefined : [
+    { id: "mode", name: "Mode", category: "mode", type: "select", currentValue: "ask",
+        options: [{ value: "ask", name: "Ask" }, { value: "yolo", name: "Yolo" }] },
+    { id: "model", name: "Model", category: "model", type: "select", currentValue: model, options: [
+        { group: "fast", name: "Fast", options: [{ value: "fake-small", name: "Fake Small" }] },
+        { group: "smart", name: "Smart", options: [{ value: "fake-large", name: "Fake Large" }] }] },
+];
 
 const send = (message: object) => process.stdout.write(JSON.stringify({ jsonrpc: "2.0", ...message }) + "\n");
 const update = (sessionId: string, u: object) => send({ method: "session/update", params: { sessionId, update: u } });
@@ -91,7 +99,9 @@ process.stdin.on("data", (chunk: Buffer) => {
         case "session/new":
         case "session/load": {
             server = (message.params!.mcpServers as Server[]).find((s) => s.name === "hikari");
-            answer(message.method === "session/new" ? { sessionId: `session-${++sessions}` } : null);
+            const options = configOptions();
+            answer(message.method === "session/new" ? { sessionId: `session-${++sessions}`, ...(options ? { configOptions: options } : {}) }
+                : options ? { configOptions: options } : null);
             break;
         }
         case "session/prompt": {
@@ -103,6 +113,11 @@ process.stdin.on("data", (chunk: Buffer) => {
             void run(String(message.params!.sessionId), JSON.parse(text) as Script).then((stopReason) => answer({ stopReason }));
             break;
         }
+        case "session/set_config_option":
+            if (message.params!.configId === "model")
+                model = String(message.params!.value);
+            answer({ configOptions: configOptions() });
+            break;
         case "session/cancel":
             cancelled = true;
             break;

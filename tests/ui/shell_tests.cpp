@@ -7877,6 +7877,8 @@ private slots:
              QStringLiteral("the empty list's placeholder")},
             {QStringLiteral("ReferenceTray.qml"), QStringLiteral(R"(text: qsTr("No other occurrences"))"),
              QStringLiteral("the empty list's placeholder")},
+            {QStringLiteral("AgentPanel.qml"), QStringLiteral(R"("agentModelsLoading_" + agentModelMenu.modelData.agent)"),
+             QStringLiteral("the loading list's placeholder")},
         };
         const QStringList problems = menu_icon_scan::itemsWithoutIcons(QStringLiteral(HIKARI_UI_SOURCE_DIR), exemptions);
         if (!problems.isEmpty())
