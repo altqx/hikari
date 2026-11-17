@@ -73,6 +73,7 @@ Version 1 of the Hikari API, generated from HikariSub's own registry: the same r
 | `project.info` | read | 1 | The Project of the window the user works in, or null. |
 | `vcs.refs` | read | 1 | The branches, tags and recent commits of the git repository holding the Document, or the Project's. Plugins whose manifest asks for vcs.read only. |
 | `vcs.show` | read | 1 | The Document's file as a git branch, tag or commit has it. Plugins whose manifest asks for vcs.read only. |
+| `presence.set_text` | write | 1 | Sets or clears the caller's text for {plugin} in the user's Discord status. Plugins whose manifest asks for presence only. |
 | `karaoke.syllables` | read | 1 | A Line's karaoke syllables as the templater reads them: text, tag, start and end in ms. |
 | `karaoke.split` | read | 1 | Splits Lines without \k tags into syllables as the audio editor's karaoke mode does, the time shared by character; Lines that already have \k tags keep them. |
 | `karaoke.time` | read | 1 | Times a Line's existing syllables: each syllable's end in ms, in order; the \k tags are rewritten. |
@@ -1691,6 +1692,20 @@ The Document's file as a git branch, tag or commit has it. Plugins whose manifes
 | `commit` | string | yes |  |
 | `path` | string | yes | The Document's path in the repository, '/'-separated. |
 | `text` | string | yes | The file at that commit, as UTF-8. |
+
+### `presence.set_text`
+
+Write. Since version 1.
+
+Sets or clears the caller's text for {plugin} in the user's Discord status. Plugins whose manifest asks for presence only.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `text` | string | yes | Plain text; empty clears it. At most 64 characters. `pattern`: `"^[^\\u0000-\\u001F\\u007F]*$"`. |
+
+**Result**: none.
 
 ### `karaoke.syllables`
 

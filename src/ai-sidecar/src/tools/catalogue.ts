@@ -149,8 +149,8 @@ const kPlacements: Partial<Record<OperationName, Placement>> = {
  */
 const kUnoffered: readonly OperationName[] = ["commands.list", "skills.list", "skills.read", "api.version", "project.info",
     "translation.project_write", "video.frames", "automation.run_macro", "vcs.refs", "vcs.show", "marks.set",
-    "marks.clear", "marks.list", "document.group_begin", "document.group_end", "programs.run", "programs.start",
-    "programs.send", "programs.stop"];
+    "marks.clear", "marks.list", "presence.set_text", "document.group_begin", "document.group_end", "programs.run",
+    "programs.start", "programs.send", "programs.stop"];
 
 /** MCP's Tool, as `tools/list` gives it. */
 export interface Tool {

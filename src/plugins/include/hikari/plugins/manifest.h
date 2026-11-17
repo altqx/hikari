@@ -32,6 +32,7 @@ struct Permissions {
     std::optional<std::string> vcsRead; // the reason, when asked for
     std::optional<std::string> background; // the reason, when asked for
     std::optional<std::string> programs;   // the reason, when asked for
+    std::optional<std::string> presence; // the reason, when asked for
 };
 
 struct Command {
@@ -185,11 +186,12 @@ struct PermissionIncrease {
     bool runPrograms = false;
     // Programs that are new, gain network, or move to lowIntegrity.
     std::vector<std::string> programs;
+    bool presence = false;
 
     bool any() const
     {
         return unrestricted || allDocuments || !networkHosts.empty() || !files.empty() || vcsRead || background ||
-               runPrograms || !programs.empty();
+               runPrograms || !programs.empty() || presence;
     }
 };
 PermissionIncrease permissionIncrease(const Manifest &current, const Manifest &next);

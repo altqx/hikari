@@ -3120,12 +3120,100 @@ Output device: %2</source>
 <context>
     <name>HikariSub.Discord</name>
     <message>
+        <source>Watching</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Styling</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Spell-checking</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reviewing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Exporting</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>With the AI agent</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Idle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In HikariSub</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Home</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Editing subtitles</source>
         <translation>자막 편집 중</translation>
     </message>
     <message>
         <source>Get HikariSub</source>
         <translation>HikariSub 받기</translation>
+    </message>
+    <message>
+        <source>In the Editing layout, or when no other mode applies</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In the Timing layout, and in kanji timing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In the Translation layout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In the Typesetting layout, and in full-screen typesetting</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In the Karaoke layout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>While Simple mode is open</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>While the node-effects mode or the Template editor is open</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>While the Style manager is open</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>While the Spellchecker panel is checking</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>While QC notes has focus, or for 5 minutes after a QC note is added</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>While an export, Collect fonts or a muxing run is going</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>While an agent turn runs in the current tab</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -14426,16 +14514,176 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>이 사본은 업데이트를 직접 설치하지 않으며, 업데이트 창에서 다운로드 페이지를 엽니다.</translation>
     </message>
     <message>
+        <source>The mode</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The file name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The project’s name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>{%1} stays empty while %2 is off.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1/128</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Show what I am doing in Discord</source>
         <translation>Discord에 내 활동 표시</translation>
     </message>
     <message>
-        <source>Your Discord status shows Editing subtitles, the mode and for how long. Never the video, your subtitles or line counts.</source>
-        <translation>Discord 상태에 자막 편집 중, 모드와 경과 시간이 표시됩니다. 동영상, 자막 내용이나 줄 수는 표시되지 않습니다.</translation>
+        <source>Your Discord status shows what you choose below. Never folders, your subtitles, the video or line counts.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Include the file name</source>
-        <translation>파일 이름 포함</translation>
+        <source>What shows</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The mode follows your layout. While one of the activities below is going, it shows instead.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unticked activities show the layout’s mode. A layout you saved shows the mode of the layout it came from.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The mode’s icon</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Standard</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>My own</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Details (first line)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>State (second line)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Insert</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text from plugin</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shows only where you put {plugin} in your own text.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Time shown</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Since HikariSub started</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Since the file opened</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hidden</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Idle and away</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>After no input for</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Minutes without input</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>min</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>When idle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show “Idle”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clear the status</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Do the same while HikariSub is in the background</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Buttons</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>“Get HikariSub”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A link of your own</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Label</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Address</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Needs an https:// address.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Preview</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing is shown in Discord. Presence is off.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>12:34 elapsed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Roughly how Discord shows it to people who can see your status. Buttons show to them, not to you.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Let plugins connect to the internet</source>
@@ -16162,6 +16410,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>자막 파일이 들어 있는 git 저장소의 브랜치, 태그, 기록 읽기: %1</translation>
     </message>
     <message>
+        <source>Set text in your Discord status: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Ask you for a folder to read and write, %1: %2</source>
         <translation>읽고 쓸 폴더 요청, %1: %2</translation>
     </message>
@@ -17325,6 +17577,42 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Creates the file and .hikari/.gitignore, which keeps it and project.local.toml out of git. Keys never reach Hikari AI or the model.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hide presence while this project is open</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use this project’s text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Discord</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In this project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Details (first line)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>State (second line)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>An empty line uses yours. Until you trust this folder, your own presence shows.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>What shows stays yours: a project can’t show the file or project name.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
