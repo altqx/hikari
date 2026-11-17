@@ -17813,6 +17813,22 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>The plugin is stopped. Start it again in its details.</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Runs programs that come with it: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Runs programs that come with it: %1: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Connects to the internet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Can read your files</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Position</name>

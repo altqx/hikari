@@ -1382,6 +1382,7 @@ private:
     std::unique_ptr<InlineAiController> m_inlineAi;
     std::unique_ptr<PluginManager> m_pluginManager;
     std::unique_ptr<PluginMarketplace> m_pluginMarketplace;
+    std::unique_ptr<PluginPrograms> m_pluginPrograms;
     std::unique_ptr<PluginRuntime> m_pluginRuntime;
     std::unique_ptr<UpdateChecker> m_updates;
     std::unique_ptr<Analytics> m_analytics;

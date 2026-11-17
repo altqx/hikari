@@ -408,6 +408,7 @@ std::string PluginProcess::timer(const std::string &operation, const std::string
     entry.repeat = repeat;
     entry.clock = std::make_unique<QTimer>();
     entry.clock->setSingleShot(!repeat);
+    entry.clock->setTimerType(Qt::PreciseTimer);
     connect(entry.clock.get(), &QTimer::timeout, this, [this, id] { fire(id); });
     entry.clock->start(interval);
     return envelope({{QStringLiteral("result"), QJsonObject{{QStringLiteral("id"), double(id)}}}});
