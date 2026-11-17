@@ -141,6 +141,7 @@ DialogWindow {
     // On Wayland the window hides while its frame is remade; that is no closing.
     function shown() { return visible || WindowFrame.remaking(manager) }
     onVisibleChanged: {
+        app.presenceActivity(shellWindow, "styling", shown())
         if (shown())
             return
         styles.saveCatalog()

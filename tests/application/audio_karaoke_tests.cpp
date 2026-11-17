@@ -354,6 +354,31 @@ TEST(AudioKaraoke, KTagsGiveTheTimesAndTagKinds)
     EXPECT_EQ(split("{\\K15}ka", 0, 500).times(), std::vector<int>{150});
 }
 
+TEST(AudioKaraoke, ASyllableEndMovesBetweenItsNeighbours)
+{
+    auto k = split("{\\k20}ka{\\k30}ra{\\k50}o{\\k40}ke", 1000, 2400);
+    EXPECT_TRUE(k.moveSyllableEnd(1, 10, false, 1000));
+    EXPECT_EQ(k.times(), (std::vector<int>{1200, 1510, 2000, 2400}));
+    EXPECT_TRUE(k.moveSyllableEnd(0, -500, false, 1000));
+    EXPECT_EQ(k.times(), (std::vector<int>{1000, 1510, 2000, 2400}));
+    EXPECT_FALSE(k.moveSyllableEnd(0, -10, false, 1000));
+    EXPECT_TRUE(k.moveSyllableEnd(1, 900, false, 1000));
+    EXPECT_EQ(k.times(), (std::vector<int>{1000, 2000, 2000, 2400}));
+    EXPECT_FALSE(k.moveSyllableEnd(3, 10, false, 1000));
+    EXPECT_EQ(s(k.text(1000)), "{\\k0}ka{\\k100}ra{\\k0}o{\\k40}ke");
+}
+
+TEST(AudioKaraoke, ShiftingAlsoMovesEveryLaterSyllableEndButNotTheLineEnd)
+{
+    auto k = split("{\\k20}ka{\\k30}ra{\\k50}o{\\k40}ke", 1000, 2400);
+    EXPECT_TRUE(k.moveSyllableEnd(1, 10, true, 1000));
+    EXPECT_EQ(k.times(), (std::vector<int>{1200, 1510, 2010, 2400}));
+    EXPECT_TRUE(k.moveSyllableEnd(0, 900, true, 1000));
+    EXPECT_EQ(k.times(), (std::vector<int>{1590, 1900, 2400, 2400}));
+    EXPECT_TRUE(k.moveSyllableEnd(1, -2000, true, 1000));
+    EXPECT_EQ(k.times(), (std::vector<int>{1590, 1590, 2090, 2400}));
+}
+
 TEST(AudioKaraoke, TagsAndDrawingsStayWithTheirSyllables)
 {
     auto k = split("{\\k20\\p1}m 0 0 l 10 0 10 10{\\p0\\k30}ra", 0, 1000);

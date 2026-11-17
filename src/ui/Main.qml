@@ -1240,6 +1240,7 @@ ApplicationWindow {
     function runTimingHelper(symbol) {
         const app = root.app
         const helpers = {
+            GLOBAL_SNAP_TO_SCENE: () => app.snapToScene(),
             GLOBAL_SNAP_START_TO_PREVIOUS_KEYFRAME: () => app.snapToAdjacentKeyframe(false, false),
             GLOBAL_SNAP_START_TO_NEXT_KEYFRAME: () => app.snapToAdjacentKeyframe(false, true),
             GLOBAL_SNAP_END_TO_PREVIOUS_KEYFRAME: () => app.snapToAdjacentKeyframe(true, false),
@@ -1252,6 +1253,8 @@ ApplicationWindow {
             GLOBAL_START_FRAME_LATER: () => app.nudgeEdge(false, 1),
             GLOBAL_END_FRAME_EARLIER: () => app.nudgeEdge(true, -1),
             GLOBAL_END_FRAME_LATER: () => app.nudgeEdge(true, 1),
+            GLOBAL_END_LATER_SHIFT_FOLLOWING: () => app.nudgeEdge(true, 1, true),
+            GLOBAL_END_EARLIER_SHIFT_FOLLOWING: () => app.nudgeEdge(true, -1, true),
             GLOBAL_EXTEND_PREVIOUS_TO_START: () => app.extendNeighbour(false),
             GLOBAL_EXTEND_NEXT_TO_END: () => app.extendNeighbour(true),
             GLOBAL_TIMING_ASSISTANT: () => {
@@ -2486,6 +2489,12 @@ ApplicationWindow {
             onTriggered: if (!root.hotkeyGesture("GLOBAL_SHOW_TIMING_POSTPROCESSOR")) root.showPanel(postprocessorDock)
         }
         Action {
+            id: snapToSceneAction
+            text: qsTr("Snap to the scene")
+            enabled: root.video.hasVideo && root.shell.hasEditingTarget
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_SNAP_TO_SCENE")) root.runTimingHelper("GLOBAL_SNAP_TO_SCENE")
+        }
+        Action {
             id: snapStartToPreviousKeyframeAction
             text: qsTr("Snap start to the previous keyframe")
             enabled: root.video.hasVideo && root.shell.hasEditingTarget
@@ -2536,26 +2545,38 @@ ApplicationWindow {
         Action {
             id: startFrameEarlierAction
             text: qsTr("Move start one frame earlier")
-            enabled: root.video.hasVideo && root.shell.hasEditingTarget
+            enabled: root.shell.hasEditingTarget
             onTriggered: if (!root.hotkeyGesture("GLOBAL_START_FRAME_EARLIER")) root.runTimingHelper("GLOBAL_START_FRAME_EARLIER")
         }
         Action {
             id: startFrameLaterAction
             text: qsTr("Move start one frame later")
-            enabled: root.video.hasVideo && root.shell.hasEditingTarget
+            enabled: root.shell.hasEditingTarget
             onTriggered: if (!root.hotkeyGesture("GLOBAL_START_FRAME_LATER")) root.runTimingHelper("GLOBAL_START_FRAME_LATER")
         }
         Action {
             id: endFrameEarlierAction
             text: qsTr("Move end one frame earlier")
-            enabled: root.video.hasVideo && root.shell.hasEditingTarget
+            enabled: root.shell.hasEditingTarget
             onTriggered: if (!root.hotkeyGesture("GLOBAL_END_FRAME_EARLIER")) root.runTimingHelper("GLOBAL_END_FRAME_EARLIER")
         }
         Action {
             id: endFrameLaterAction
             text: qsTr("Move end one frame later")
-            enabled: root.video.hasVideo && root.shell.hasEditingTarget
+            enabled: root.shell.hasEditingTarget
             onTriggered: if (!root.hotkeyGesture("GLOBAL_END_FRAME_LATER")) root.runTimingHelper("GLOBAL_END_FRAME_LATER")
+        }
+        Action {
+            id: endLaterShiftFollowingAction
+            text: qsTr("Lengthen and shift what follows")
+            enabled: root.shell.hasEditingTarget
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_END_LATER_SHIFT_FOLLOWING")) root.runTimingHelper("GLOBAL_END_LATER_SHIFT_FOLLOWING")
+        }
+        Action {
+            id: endEarlierShiftFollowingAction
+            text: qsTr("Shorten and shift what follows")
+            enabled: root.shell.hasEditingTarget
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_END_EARLIER_SHIFT_FOLLOWING")) root.runTimingHelper("GLOBAL_END_EARLIER_SHIFT_FOLLOWING")
         }
         Action {
             id: extendPreviousToStartAction
@@ -3514,6 +3535,14 @@ ApplicationWindow {
                     title: qsTr("Timing &helpers")
                     iconRole: "timing-helpers"
                     ShellMenuItem {
+                        command: "GLOBAL_SNAP_TO_SCENE"
+                        help: qsTr("Sets each selected line to the keyframes around it: one line takes the scene at the video frame, several lines each take the scene of their own start")
+                        iconRole: "snap-to-scene"
+                        objectName: "snapToSceneItem"
+                        action: snapToSceneAction
+                    }
+                    MenuSeparator {}
+                    ShellMenuItem {
                         command: "GLOBAL_SNAP_START_TO_PREVIOUS_KEYFRAME"
                         help: qsTr("Moves the start of each selected line to the keyframe before it")
                         iconRole: "snap-start-to-previous-keyframe"
@@ -3573,31 +3602,45 @@ ApplicationWindow {
                     MenuSeparator {}
                     ShellMenuItem {
                         command: "GLOBAL_START_FRAME_EARLIER"
-                        help: qsTr("Moves the start of each selected line one frame earlier")
+                        help: qsTr("Moves the start of each selected line one frame earlier, or 10 ms without video")
                         iconRole: "start-frame-earlier"
                         objectName: "startFrameEarlierItem"
                         action: startFrameEarlierAction
                     }
                     ShellMenuItem {
                         command: "GLOBAL_START_FRAME_LATER"
-                        help: qsTr("Moves the start of each selected line one frame later")
+                        help: qsTr("Moves the start of each selected line one frame later, or 10 ms without video")
                         iconRole: "start-frame-later"
                         objectName: "startFrameLaterItem"
                         action: startFrameLaterAction
                     }
                     ShellMenuItem {
                         command: "GLOBAL_END_FRAME_EARLIER"
-                        help: qsTr("Moves the end of each selected line one frame earlier")
+                        help: qsTr("Moves the end of each selected line one frame earlier, or 10 ms without video. In karaoke mode, moves the current syllable’s end")
                         iconRole: "end-frame-earlier"
                         objectName: "endFrameEarlierItem"
                         action: endFrameEarlierAction
                     }
                     ShellMenuItem {
                         command: "GLOBAL_END_FRAME_LATER"
-                        help: qsTr("Moves the end of each selected line one frame later")
+                        help: qsTr("Moves the end of each selected line one frame later, or 10 ms without video. In karaoke mode, moves the current syllable’s end")
                         iconRole: "end-frame-later"
                         objectName: "endFrameLaterItem"
                         action: endFrameLaterAction
+                    }
+                    ShellMenuItem {
+                        command: "GLOBAL_END_LATER_SHIFT_FOLLOWING"
+                        help: qsTr("Moves the end of each selected line one step later and every line below by the same amount. In karaoke mode, moves the current syllable’s end and every later one")
+                        iconRole: "end-later-shift-following"
+                        objectName: "endLaterShiftFollowingItem"
+                        action: endLaterShiftFollowingAction
+                    }
+                    ShellMenuItem {
+                        command: "GLOBAL_END_EARLIER_SHIFT_FOLLOWING"
+                        help: qsTr("Moves the end of each selected line one step earlier and every line below by the same amount. In karaoke mode, moves the current syllable’s end and every later one")
+                        iconRole: "end-earlier-shift-following"
+                        objectName: "endEarlierShiftFollowingItem"
+                        action: endEarlierShiftFollowingAction
                     }
                     MenuSeparator {}
                     ShellMenuItem {
@@ -7899,6 +7942,14 @@ ApplicationWindow {
                                 onTriggered: if (!root.gridGesture(this, "GRID_MAKE_CONTINOUS_NEXT_LINE")) root.app.makeContinuous(false)
                             }
                         }
+                        ShellMenuItem {
+                            command: "GLOBAL_SNAP_TO_SCENE"
+                            iconRole: "snap-to-scene"
+                            objectName: "gridSnapToScene"
+                            text: qsTranslate("HikariSub.Grid", "Snap to the scene")
+                            enabled: root.video.hasVideo
+                            onTriggered: if (!root.hotkeyGesture("GLOBAL_SNAP_TO_SCENE")) root.runTimingHelper("GLOBAL_SNAP_TO_SCENE")
+                        }
                         ShellMenuItem { command: "GRID_TREE_MAKE"; iconRole: "make-tree"; objectName: "makeTree"; text: qsTranslate("HikariSub.Grid", "Make line group"); onTriggered: if (!root.gridGesture(this, "GRID_TREE_MAKE")) root.app.makeGroups() }
                         ShellMenuItem {
                             command: "GLOBAL_CONVERT_FOLDS_TO_GROUPS"
@@ -8158,6 +8209,7 @@ ApplicationWindow {
                 id: qcNotesPanel
                 objectName: "qcNotesPanel"
                 dockName: root.engineName("QcNotes")
+                onActiveFocusChanged: root.app.presenceActivity(root.shellWindow, "reviewing", activeFocus)
                 minimumBodySize: qcNotesTool.minimumBodySize
                 anchors.fill: parent
                 title: qsTranslate("HikariSub.QcNotes", "QC notes")
@@ -10922,6 +10974,7 @@ ApplicationWindow {
         GLOBAL_OPEN_FONT_COLLECTOR: fontCollectorAction,
         GLOBAL_SHOW_SHIFT_TIMES: showShiftTimesAction, GLOBAL_SHOW_TIMING_POSTPROCESSOR: showPostprocessorAction,
         GLOBAL_SHOW_QC_NOTES: showQcNotesAction, GLOBAL_SHOW_EXPLORER: showExplorerAction,
+        GLOBAL_SNAP_TO_SCENE: snapToSceneAction,
         GLOBAL_QUICK_OPEN: quickOpenAction, GLOBAL_COMMAND_PALETTE: commandPaletteAction,
         GLOBAL_CLEAR_COMMAND_HISTORY: clearCommandHistoryAction,
         GLOBAL_SNAP_START_TO_PREVIOUS_KEYFRAME: snapStartToPreviousKeyframeAction,
@@ -10936,6 +10989,8 @@ ApplicationWindow {
         GLOBAL_START_FRAME_LATER: startFrameLaterAction,
         GLOBAL_END_FRAME_EARLIER: endFrameEarlierAction,
         GLOBAL_END_FRAME_LATER: endFrameLaterAction,
+        GLOBAL_END_LATER_SHIFT_FOLLOWING: endLaterShiftFollowingAction,
+        GLOBAL_END_EARLIER_SHIFT_FOLLOWING: endEarlierShiftFollowingAction,
         GLOBAL_EXTEND_PREVIOUS_TO_START: extendPreviousToStartAction,
         GLOBAL_EXTEND_NEXT_TO_END: extendNextToEndAction,
         GLOBAL_TIMING_ASSISTANT: timingAssistantAction,
