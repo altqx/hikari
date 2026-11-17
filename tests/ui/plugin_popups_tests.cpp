@@ -11,6 +11,7 @@
 
 #include <optional>
 #include <string>
+#include <string_view>
 #include <vector>
 
 Q_IMPORT_QML_PLUGIN(Hikari_UiPlugin)
@@ -166,7 +167,8 @@ private slots:
         auto p = popups();
         m_userAsked = false;
         for (const char *operation : {"quick_pick.ask", "quick_pick.open", "input_box.ask", "input_box.open"}) {
-            std::unique_ptr<Answer> answer(serve(*p, operation, R"({"items": []})"));
+            const bool pick = std::string_view(operation).starts_with("quick_pick");
+            std::unique_ptr<Answer> answer(serve(*p, operation, pick ? R"({"items": []})" : R"({})"));
             QCOMPARE(answer->error(), std::string("refused"));
             QCOMPARE(answer->reason(), std::string("not_user_initiated"));
         }
