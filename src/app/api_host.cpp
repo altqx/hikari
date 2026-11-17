@@ -1,5 +1,7 @@
 #include "hikari/app/api_host.h"
 
+#include "plugin_variant.h"
+
 #include "hikari/backends/subtitle_renderer_selection.h"
 
 #include <QCoreApplication>
@@ -179,6 +181,17 @@ bool ApiHost::run(std::string_view command)
 void ApiHost::commandRan(const QString &command, bool ok)
 {
     m_api.commandRan(command.toStdString(), ok);
+}
+
+QVariantList ApiHost::commands()
+{
+    QVariantList out;
+    m_api.call(api::Caller{"palette", "Command palette", true}, "commands.list", api::Json::object(),
+               [&out](const api::Result &result) {
+                   if (result)
+                       out = toVariant(*result).toMap().value(QStringLiteral("commands")).toList();
+               });
+    return out;
 }
 
 void ApiHost::panelChanged(const QString &panel)

@@ -8,6 +8,7 @@
 
 #include <QJSValue>
 #include <QObject>
+#include <QVariantList>
 
 #include <functional>
 #include <map>
@@ -89,6 +90,8 @@ public:
     void setPanelHandler(const QJSValue &handler) { m_panelHandler = handler; }
     Q_INVOKABLE void commandRan(const QString &command, bool ok);
     Q_INVOKABLE void panelChanged(const QString &panel);
+    // commands.list's commands, for the command palette.
+    Q_INVOKABLE QVariantList commands();
 
     const application::Workspace &workspace() const override { return m_wiring.workspace; }
     application::EditSession *session(application::DocumentId document) const override;
