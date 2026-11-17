@@ -9,6 +9,10 @@ ShellMenu {
     readonly property var ready: controller ? controller.ready : ({})
     property bool editor: false
     property int lineCount: 1
+    property var field: null
+    property var wordAt: ({start: -1, end: -1, text: ""})
+    property string synonymWord: ""
+    readonly property var synonyms: controller ? controller.synonyms : ({})
     signal chosen(var ask)
     signal settingsRequested()
     signal repeatRequested()
@@ -17,6 +21,11 @@ ShellMenu {
     shown: !!controller && controller.on
     readonly property var customActions: controller ? controller.actions : []
     readonly property var lastAsk: controller ? controller.last : ({})
+    onAboutToShow: {
+        wordAt = field ? {start: field.selectionStart, end: field.selectionEnd, text: field.text} : {start: -1, end: -1, text: ""}
+        synonymWord = editor && field && controller ? controller.synonymWord(wordAt.start, wordAt.end, wordAt.text) : ""
+    }
+    onClosed: if (controller) controller.cancelSynonyms()
 
     ShellMenuItem {
         objectName: "inlineAiRewrite"
@@ -40,6 +49,40 @@ ShellMenu {
         text: qsTr("Fix spelling and grammar")
         enabled: !!menu.ready.reviewer
         onTriggered: menu.chosen({action: "spelling"})
+    }
+    ShellMenu {
+        id: synonymsMenu
+        objectName: "inlineAiSynonyms"
+        iconRole: "dictionary"
+        title: qsTr("Suggest synonyms")
+        shown: menu.synonymWord !== ""
+        enabled: !!menu.ready.chat
+        onAboutToShow: menu.controller.suggestSynonyms(menu.wordAt.start, menu.wordAt.end, menu.wordAt.text)
+        ShellMenuItem {
+            objectName: "inlineAiSynonymsState"
+            iconRole: menu.synonyms.state === "finding" || !menu.synonyms.state ? "run-busy"
+                : menu.synonyms.state === "none" ? "notice-info" : "notice-warning"
+            enabled: false
+            visible: menu.synonyms.state !== "found"
+            height: visible ? implicitHeight : 0
+            text: menu.synonyms.state === "none" ? qsTr("No synonyms for “%1”").arg(menu.synonyms.word)
+                : menu.synonyms.state === "failed" ? qsTr("Couldn’t suggest synonyms: %1").arg(menu.synonyms.error)
+                : menu.synonyms.state === "dailyCap" ? qsTr("Today’s cost cap is reached.")
+                : qsTr("Finding synonyms…")
+        }
+        Instantiator {
+            model: menu.synonyms.words || []
+            delegate: ShellMenuItem {
+                required property var modelData
+                required property int index
+                objectName: "inlineAiSynonym" + index
+                iconRole: "dictionary"
+                text: modelData
+                onTriggered: menu.controller.useSynonym(modelData)
+            }
+            onObjectAdded: (index, object) => synonymsMenu.insertItem(index + 1, object)
+            onObjectRemoved: (index, object) => synonymsMenu.removeItem(object)
+        }
     }
     ShellMenuItem {
         objectName: "inlineAiTranslate"

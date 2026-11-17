@@ -11,6 +11,7 @@
 #include "hikari/backends/ai_agent.h"
 #include "hikari/application/grid_clipboard.h"
 #include "hikari/backends/ai_inline_run.h"
+#include "hikari/backends/ai_requests.h"
 #include "hikari/backends/ai_translation_run.h"
 #include "line_measures.h"
 #include "settings_store.h"
@@ -18,6 +19,7 @@
 #include <QCoreApplication>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QPointer>
 
 #include <algorithm>
 #include <map>
@@ -107,9 +109,54 @@ in::Neighbours neighboursOf(const core::Document &document, std::size_t row, int
     return out;
 }
 
+std::optional<std::pair<qsizetype, qsizetype>> wordToReplace(const QString &text, qsizetype start, qsizetype end)
+{
+    if (start < 0 || end < start || end > text.size())
+        return std::nullopt;
+    const auto escaped = [&](qsizetype i) { return i > 0 && text[i - 1] == u'\\'; };
+    const auto letter = [&](qsizetype i) { return (text[i].isLetterOrNumber() || text[i].isMark()) && !escaped(i); };
+    const auto inWord = [&](qsizetype i) {
+        if (letter(i))
+            return true;
+        const QChar c = text[i];
+        return (c == u'\'' || c == u'\u2019' || c == u'-') && i > 0 && i + 1 < text.size() && letter(i - 1) &&
+               letter(i + 1);
+    };
+    if (start == end) {
+        while (start > 0 && inWord(start - 1))
+            --start;
+        while (end < text.size() && inWord(end))
+            ++end;
+    } else if ((start > 0 && inWord(start - 1)) || (end < text.size() && inWord(end))) {
+        return std::nullopt;
+    }
+    if (start == end)
+        return std::nullopt;
+    for (qsizetype i = start; i < end; ++i)
+        if (!inWord(i))
+            return std::nullopt;
+    const qsizetype open = text.lastIndexOf(u'{', start);
+    if (open >= 0) {
+        const qsizetype close = text.indexOf(u'}', open);
+        if (close < 0 || close >= start)
+            return std::nullopt;
+    }
+    return std::pair{start, end};
+}
+
 }
 
 enum class LineState { Waiting, Changed, Same, DroppedTag, Empty, Failed, Edited, Written, Dropped };
+
+struct InlineAiController::Synonyms {
+    SynonymTarget target;
+    std::u8string lineTextWhenAsked;
+    QString word;
+    QString state;
+    QStringList words;
+    QString error;
+    ai::StreamId stream = 0;
+};
 
 struct InlineAiController::Line {
     std::uint64_t key = 0;
@@ -889,6 +936,143 @@ QVariantMap InlineAiController::notice() const
     out[QStringLiteral("end")] = m_run->end;
     out[QStringLiteral("label")] = QString::fromStdString(m_run->label);
     return out;
+}
+
+std::optional<InlineAiController::SynonymTarget> InlineAiController::synonymTarget(int selectionStart, int selectionEnd,
+                                                                                 const QString &fieldText) const
+{
+    const auto document = m_wiring.workspace.editingTarget();
+    const application::EditSession *session = document ? m_wiring.files.session(*document) : nullptr;
+    const auto active = session ? session->selection().active : std::nullopt;
+    const core::LineRecord *line = active ? lineOf(session->document(), *active) : nullptr;
+    if (!line || line->comment || qs(line->text) != fieldText)
+        return std::nullopt;
+    const auto word = wordToReplace(fieldText, selectionStart, selectionEnd);
+    if (!word)
+        return std::nullopt;
+    const auto bytes = [&](qsizetype at) { return static_cast<std::size_t>(fieldText.left(at).toUtf8().size()); };
+    return SynonymTarget{*document, *active, {bytes(word->first), bytes(word->second)}};
+}
+
+QString InlineAiController::synonymWord(int selectionStart, int selectionEnd, const QString &fieldText) const
+{
+    const auto target = synonymTarget(selectionStart, selectionEnd, fieldText);
+    if (!target)
+        return {};
+    const std::u8string_view text = lineOf(*documentOf(target->document), target->line)->text;
+    return qs(text.substr(target->bytes.first, target->bytes.second - target->bytes.first));
+}
+
+bool InlineAiController::suggestSynonyms(int selectionStart, int selectionEnd, const QString &fieldText)
+{
+    cancelSynonyms();
+    const auto target = synonymTarget(selectionStart, selectionEnd, fieldText);
+    backends::ai::AiRequests *requests = on() ? m_wiring.ai.requests() : nullptr;
+    if (!target || !requests || !ready().value(QStringLiteral("chat")).toBool())
+        return false;
+    const core::Document &doc = *documentOf(target->document);
+    const core::LineRecord &line = *lineOf(doc, target->line);
+    auto asked = std::make_unique<Synonyms>();
+    asked->target = *target;
+    asked->lineTextWhenAsked = line.text;
+    asked->word = qs(std::u8string_view(line.text).substr(target->bytes.first, target->bytes.second - target->bytes.first));
+    asked->state = QStringLiteral("finding");
+    const double cap = m_wiring.agent.dailyCap();
+    if (cap > 0 && m_wiring.agent.spentToday() >= cap) {
+        asked->state = QStringLiteral("dailyCap");
+        m_synonyms = std::move(asked);
+        emit synonymsChanged();
+        return true;
+    }
+    const int context = static_cast<int>(m_wiring.settings.integer(kContextLinesSetting));
+    const in::Prepared prepared = in::prepareSynonyms(line, neighboursOf(doc, rowOf(doc, line.id), context), target->bytes);
+    m_synonyms = std::move(asked);
+    Synonyms *pending = m_synonyms.get();
+    const std::string project = m_wiring.projectFolder ? m_wiring.projectFolder(target->document).toStdString() : std::string();
+    const QPointer<InlineAiController> self(this);
+    const ai::StreamId stream = requests->complete(
+        ai::Role::Chat, backends::ai::inlineRequest(prepared),
+        [self, pending](const ai::Event &event) {
+            if (!self || self->m_synonyms.get() != pending)
+                return;
+            const auto *finished = std::get_if<ai::Finished>(&event);
+            const auto *failed = std::get_if<ai::Failed>(&event);
+            if (!finished && !failed)
+                return;
+            if (finished) {
+                const ai::Providers *providers = self->m_wiring.ai.providers();
+                const ai::Config *config = providers ? &providers->config() : nullptr;
+                const auto model = config ? config->modelFor(ai::Role::Chat) : std::nullopt;
+                if (const auto cost = model ? ai::costOf(finished->usage, backends::ai::priceOf(config, *model)) : std::nullopt)
+                    self->m_wiring.agent.spend(*cost);
+                const std::u8string word(reinterpret_cast<const char8_t *>(pending->word.toUtf8().constData()),
+                                         static_cast<std::size_t>(pending->word.toUtf8().size()));
+                for (const std::u8string &synonym : in::readSynonyms(finished->text, word))
+                    pending->words << qs(synonym);
+                pending->state = pending->words.isEmpty() ? QStringLiteral("none") : QStringLiteral("found");
+            } else {
+                pending->state = QStringLiteral("failed");
+                pending->error = failed->error.detail.empty() ? QString::fromLatin1(ai::errorKindId(failed->error.kind))
+                                                              : QString::fromStdString(failed->error.detail);
+            }
+            pending->stream = 0;
+            emit self->synonymsChanged();
+        },
+        project);
+    if (m_synonyms.get() == pending && pending->state == QLatin1String("finding"))
+        pending->stream = stream;
+    emit synonymsChanged();
+    return true;
+}
+
+QVariantMap InlineAiController::synonyms() const
+{
+    if (!m_synonyms)
+        return {};
+    return {{QStringLiteral("state"), m_synonyms->state},
+            {QStringLiteral("word"), m_synonyms->word},
+            {QStringLiteral("words"), m_synonyms->words},
+            {QStringLiteral("error"), m_synonyms->error}};
+}
+
+bool InlineAiController::useSynonym(const QString &word)
+{
+    if (!m_synonyms || !m_synonyms->words.contains(word))
+        return false;
+    const Synonyms asked = std::move(*m_synonyms);
+    m_synonyms.reset();
+    emit synonymsChanged();
+    application::EditSession *session = m_wiring.files.session(asked.target.document);
+    const core::LineRecord *line = session ? lineOf(session->document(), asked.target.line) : nullptr;
+    if (!line || line->text != asked.lineTextWhenAsked)
+        return false;
+    const std::u8string_view before = asked.lineTextWhenAsked;
+    const std::string text = str(before.substr(0, asked.target.bytes.first)) + word.toStdString() +
+                             str(before.substr(asked.target.bytes.second));
+    const QString name = QCoreApplication::translate("HikariSub.InlineAi", "Synonym");
+    m_wiring.review.beginTurn(kCallerId, (name + QStringLiteral(" · ") + asked.word + QStringLiteral(" → ") + word).toStdString());
+    api::Caller caller{kCallerId, "AI", false, {asked.target.document}, true};
+    bool ok = false;
+    m_wiring.api.call(caller, "document.apply",
+                      Json::object({{"document", Json(asked.target.document.value)},
+                                    {"revision", Json(session->revision())},
+                                    {"name", name.toStdString()},
+                                    {"edits", Json::array({Json::object({{"op", "set_line"},
+                                                                         {"line", Json(asked.target.line.value)},
+                                                                         {"fields", Json::object({{"text", text}})}})})}}),
+                      [&ok](api::Result result) { ok = result.has_value(); });
+    return ok;
+}
+
+void InlineAiController::cancelSynonyms()
+{
+    if (!m_synonyms)
+        return;
+    const ai::StreamId stream = m_synonyms->stream;
+    m_synonyms.reset();
+    if (backends::ai::AiRequests *requests = stream ? m_wiring.ai.requests() : nullptr)
+        requests->cancel(stream);
+    emit synonymsChanged();
 }
 
 }
