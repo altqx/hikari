@@ -18,7 +18,7 @@ Timing, Translation and Typesetting were subsequently accepted as optional prese
 
 | Optional task preset | Visible core panels | Initially open auxiliary tools |
 | --- | --- | --- |
-| Timing | Audio, Editor, Grid; Video can be opened | Timing, History |
+| Timing | Audio, Editor, Grid; Video can be opened | Timing postprocessor, Shift times, History in the right side bar ([Timing layout](timing-layout.md)) |
 | Translation | Video, Editor, Grid; Audio/comparison can be opened | Search |
 | Typesetting | Video, Styles, Editor, Grid; Audio can be opened | — (its own arrangement, below) |
 | Karaoke | Video, Template editor, Audio, Grid; the Line editor the tab behind the Template editor | — (its own arrangement, below) |
