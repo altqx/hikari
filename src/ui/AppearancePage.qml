@@ -5,31 +5,27 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Hikari.Ui
 
-ScrollView {
+Item {
     id: page
     objectName: "settingsPageAppearance"
     required property var dialog
-    // Set later from the column: reading its minimum width in this binding loops.
-    property real narrowest: 0
-    contentWidth: narrowest
-    ScrollBar.horizontal.policy: contentWidth > availableWidth + 0.5 ? ScrollBar.AlwaysOn : ScrollBar.AsNeeded
+    implicitHeight: appearanceColumn.implicitHeight
+    Layout.fillWidth: true
 
     function staged(setting) { return page.dialog.values[setting] }
     readonly property string shownTheme: Theme.code
     readonly property string accentSetting: Theme.dark ? "appearance.darkAccent" : "appearance.lightAccent"
 
     ColumnLayout {
-        width: Math.max(page.contentWidth, page.availableWidth)
-        spacing: 16
-        onImplicitWidthChanged: Qt.callLater(() => page.narrowest = Layout.minimumWidth)
+        id: appearanceColumn
+        width: page.width
+        spacing: 24
 
         SettingsSection {
             objectName: "appearanceTheme"
-            title: qsTr("Theme")
+            host: page.dialog
+            key: "appearance.theme"
             ruled: false
-            Layout.leftMargin: 24
-            Layout.rightMargin: 24
-            Layout.topMargin: 20
             SettingsRow {
                 iconRole: "theme"
                 text: qsTr("Interface theme")
@@ -127,10 +123,9 @@ ScrollView {
 
         SettingsSection {
             objectName: "appearanceAccents"
-            title: qsTr("Accent colour")
+            host: page.dialog
+            key: "appearance.accentColour"
             visible: !Theme.highContrast
-            Layout.leftMargin: 24
-            Layout.rightMargin: 24
             SettingsRow {
                 iconRole: "accent-colour"
                 text: qsTr("Accent")
@@ -175,10 +170,9 @@ ScrollView {
 
         SettingsSection {
             objectName: "appearanceHighContrast"
-            title: qsTr("UI colours")
+            host: page.dialog
+            key: "appearance.uiColours"
             visible: Theme.highContrast
-            Layout.leftMargin: 24
-            Layout.rightMargin: 24
             Repeater {
                 readonly property var docsEntries: [].concat(...Theme.themes().filter(t => t.highContrast).map(
                     t => Theme.picks(t.code).map(p => ({setting: p.setting, control: "colour", label: p.name + " (" + t.name + ")"}))))
@@ -222,9 +216,8 @@ ScrollView {
 
         SettingsSection {
             objectName: "appearanceFont"
-            title: qsTr("Font")
-            Layout.leftMargin: 24
-            Layout.rightMargin: 24
+            host: page.dialog
+            key: "appearance.font"
             SettingsRow {
                 iconRole: "ui-font"
                 text: qsTr("Program font")
@@ -271,9 +264,8 @@ ScrollView {
 
         SettingsSection {
             objectName: "appearanceWindow"
-            title: qsTr("Window")
-            Layout.leftMargin: 24
-            Layout.rightMargin: 24
+            host: page.dialog
+            key: "appearance.window"
             Layout.bottomMargin: 24
             CheckBox {
                 objectName: "appearanceSystemTitleBar"

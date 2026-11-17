@@ -5,7 +5,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Hikari.Ui
 
-ScrollView {
+Item {
     id: page
     objectName: "settingsPageAi"
     required property var dialog
@@ -61,8 +61,8 @@ ScrollView {
         {id: "openrouter", name: "OpenRouter", iconRole: "ai-assistant"},
         {id: "custom", name: qsTr("Custom endpoint…"), iconRole: "link"}
     ]
-    contentWidth: availableWidth
-    contentHeight: column.implicitHeight + 44
+    implicitHeight: column.implicitHeight
+    Layout.fillWidth: true
 
     function reload() {
         stagedRoles = ai ? Object.assign({}, ai.roles) : {}
@@ -1170,13 +1170,12 @@ ScrollView {
 
     ColumnLayout {
         id: column
-        x: 24
-        y: 20
-        width: page.availableWidth - 48
-        spacing: 16
+        width: page.width
+        spacing: 24
 
         SettingsSection {
-            title: qsTr("AI features")
+            host: page.dialog
+            key: "ai.aiFeatures"
             ruled: false
             AiCheck { setting: "ai.off"; text: qsTr("Turn off all AI features"); font.bold: true }
             Note { text: qsTr("Nothing AI-related shows, downloads, starts or reads your keychain. Providers, keys and threads are kept, and turning AI back on brings them back without a restart.") }
@@ -1239,7 +1238,8 @@ ScrollView {
         SettingsSection {
             objectName: "aiProviders"
             visible: page.live
-            title: qsTr("Providers")
+            host: page.dialog
+            key: "ai.providers"
             Rectangle {
                 color: "transparent"
                 border.color: Theme.line
@@ -1394,7 +1394,50 @@ ScrollView {
         SettingsSection {
             objectName: "aiModels"
             visible: page.live
-            title: qsTr("Models")
+            host: page.dialog
+            key: "ai.models"
+            SettingsRow {
+                host: page.dialog
+                setting: "translation.translator"
+                TextField {
+                    objectName: "setting_translation.translator"
+                    readOnly: true
+                    selectByMouse: true
+                    text: {
+                        page.dialog.changedIds
+                        const v = page.dialog.settings ? page.dialog.settings.value("translation.translator") : ""
+                        return Array.isArray(v) ? v.join(", ") : String(v ?? "")
+                    }
+                    Layout.fillWidth: true
+                    Accessible.name: SettingsCatalogue.label("translation.translator")
+                }
+                IconTextButton {
+                    iconRole: "open"
+                    text: qsTr("Open settings file")
+                    onClicked: page.dialog.openSettingsFile("translation.translator")
+                }
+            }
+            SettingsRow {
+                host: page.dialog
+                setting: "translation.reviewer"
+                TextField {
+                    objectName: "setting_translation.reviewer"
+                    readOnly: true
+                    selectByMouse: true
+                    text: {
+                        page.dialog.changedIds
+                        const v = page.dialog.settings ? page.dialog.settings.value("translation.reviewer") : ""
+                        return Array.isArray(v) ? v.join(", ") : String(v ?? "")
+                    }
+                    Layout.fillWidth: true
+                    Accessible.name: SettingsCatalogue.label("translation.reviewer")
+                }
+                IconTextButton {
+                    iconRole: "open"
+                    text: qsTr("Open settings file")
+                    onClicked: page.dialog.openSettingsFile("translation.reviewer")
+                }
+            }
             IconTextButton {
                 objectName: "aiRefreshModels"
                 iconRole: "refresh"
@@ -1447,7 +1490,8 @@ ScrollView {
         SettingsSection {
             objectName: "aiWebSearch"
             visible: page.live
-            title: qsTr("Web search")
+            host: page.dialog
+            key: "ai.webSearch"
             AiCheck { setting: "ai.webSearch"; text: qsTr("Let AI search the web") }
             Note { text: qsTr("The agent can look up names, terms, lyrics and references, and says where it found them. The provider or your search service gets each search the agent writes and the pages it opens.") }
             Rectangle {
@@ -1622,7 +1666,8 @@ ScrollView {
         SettingsSection {
             objectName: "aiExternalAgents"
             visible: page.live
-            title: qsTr("External agents")
+            host: page.dialog
+            key: "ai.externalAgents"
             Timer {
                 interval: 2000
                 repeat: true
@@ -2144,7 +2189,8 @@ ScrollView {
                 copiedTimer.restart()
             }
             visible: page.live
-            title: qsTr("MCP")
+            host: page.dialog
+            key: "ai.mcp"
             Connections {
                 target: page.dialog
                 function onReloaded() {
@@ -2429,7 +2475,8 @@ ScrollView {
         SettingsSection {
             objectName: "aiAgent"
             visible: page.live
-            title: qsTr("Agent")
+            host: page.dialog
+            key: "ai.agent"
             SettingsRow {
                 text: qsTr("Mode for new threads")
                 ComboBox {
@@ -2485,7 +2532,8 @@ ScrollView {
             id: skillsSection
             objectName: "aiSkills"
             visible: page.live && !!page.skills
-            title: qsTr("Skills")
+            host: page.dialog
+            key: "ai.skills"
             property var groups: []
             function read() { groups = page.skills ? page.skills.groups(page.dialog.shellWindow) : [] }
             Component.onCompleted: read()
@@ -2608,7 +2656,8 @@ ScrollView {
             id: inlineSection
             objectName: "aiInline"
             visible: page.live && !!page.inlineAi
-            title: qsTr("Inline actions")
+            host: page.dialog
+            key: "ai.inlineActions"
             readonly property var actions: page.inlineAi ? page.inlineAi.actions : []
             readonly property var roles: [{id: "chat", name: qsTr("Chat")}, {id: "translator", name: qsTr("Translator")},
                                           {id: "reviewer", name: qsTr("Reviewer")}]
@@ -2800,7 +2849,8 @@ ScrollView {
             readonly property var status: page.componentStatus(c)
             readonly property var rollback: c.rollback ?? ({})
             visible: page.live && c.present === true
-            title: qsTr("AI components")
+            host: page.dialog
+            key: "ai.aiComponents"
             trailing: LinkButton {
                 objectName: "aiWhatsNew"
                 iconRole: "open-link"
@@ -2928,7 +2978,29 @@ ScrollView {
         SettingsSection {
             objectName: "aiPrivacy"
             visible: page.live
-            title: qsTr("Privacy")
+            host: page.dialog
+            key: "ai.privacy"
+            SettingsRow {
+                host: page.dialog
+                setting: "ai.exclude"
+                TextField {
+                    objectName: "setting_ai.exclude"
+                    readOnly: true
+                    selectByMouse: true
+                    text: {
+                        page.dialog.changedIds
+                        const v = page.dialog.settings ? page.dialog.settings.value("ai.exclude") : ""
+                        return Array.isArray(v) ? v.join(", ") : String(v ?? "")
+                    }
+                    Layout.fillWidth: true
+                    Accessible.name: SettingsCatalogue.label("ai.exclude")
+                }
+                IconTextButton {
+                    iconRole: "open"
+                    text: qsTr("Open settings file")
+                    onClicked: page.dialog.openSettingsFile("ai.exclude")
+                }
+            }
             AiCheck { setting: "ai.promptCaching"; text: qsTr("Use prompt caching") }
             Note { text: qsTr("The provider keeps the start of a conversation for a few minutes, so the next turn costs less. Nothing is stored on this computer.") }
             LinkButton {

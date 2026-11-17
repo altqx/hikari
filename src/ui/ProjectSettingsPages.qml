@@ -5,28 +5,14 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Hikari.Ui
 
-RowLayout {
+ColumnLayout {
     id: project
     objectName: "projectSettings"
-    required property var app
-    required property int shellWindow
-    property var dictionaries: []
-    property var values: ({})
-    property var yours: ({})
-    property var sources: ({})
-    property var edited: ({})
-    property var cleared: []
-    property string problem: ""
-    signal reloaded()
-    spacing: 0
+    required property var dialog
+    readonly property var app: dialog.app
+    readonly property int shellWindow: dialog.shellWindow
+    spacing: 24
 
-    readonly property var pages: [
-        {id: "spelling", name: qsTranslate("HikariSub.Options", "Spelling and grammar"), iconRole: "spellchecker"},
-        {id: "subtitleProperties", name: qsTranslate("HikariSub.Options", "Script properties"), iconRole: "script-properties"},
-        {id: "translation", name: qsTranslate("HikariSub.Translation", "Translation"), iconRole: "translation-mode"},
-        {id: "export", name: qsTranslate("HikariSub.Export", "Export"), iconRole: "export"},
-        {id: "ai", name: qsTranslate("HikariSub.Options", "AI"), iconRole: "ai-assistant"}
-    ]
     readonly property var scriptFields: [
         {id: "title", name: qsTranslate("HikariSub.ScriptProperties", "Title")},
         {id: "script", name: qsTranslate("HikariSub.ScriptProperties", "Author")},
@@ -50,372 +36,268 @@ RowLayout {
         {id: "srv3", text: qsTranslate("HikariSub.Export", "YouTube timed text (srv3)")}
     ]
 
-    function load() {
-        const r = app.openProjectSettings(shellWindow)
-        values = r.values ?? {}
-        yours = r.yours ?? {}
-        sources = r.sources ?? {}
-        edited = {}
-        cleared = []
-        aiKeys.load()
-        reloaded()
-    }
-    function put(id, value) {
-        values = Object.assign({}, values, {[id]: value})
-        edited = Object.assign({}, edited, {[id]: true})
-        cleared = cleared.filter(c => c !== id)
-    }
-    function showPage(id) {
-        const i = pages.findIndex(p => p.id === id)
-        if (i >= 0)
-            pageList.currentIndex = i
-    }
-    function useYours(id) {
-        values = Object.assign({}, values, {[id]: yours[id]})
-        const e = Object.assign({}, edited)
-        delete e[id]
-        edited = e
-        if (!cleared.includes(id))
-            cleared = cleared.concat([id])
-        reloaded()
-    }
-    function stateOf(id) {
-        if (sources[id] === "local")
-            return "local"
-        if (edited[id] === true || (sources[id] === "project" && !cleared.includes(id)))
-            return "project"
-        return "yours"
-    }
-    function apply() {
-        const changed = {}
-        for (const id in edited)
-            changed[id] = values[id]
-        const keysOk = aiKeys.apply()
-        const ok = app.applyProjectSettings(shellWindow, changed, cleared) && keysOk
-        problem = ok ? "" : qsTr("project.toml could not be written, so some Project settings were not saved.")
-        load()
-        return ok
-    }
+    function load() { aiKeys.load() }
 
-    component RowState: RowLayout {
-        id: rowState
-        required property string key
-        property string pair: ""
-        readonly property var states: [project.stateOf(key)].concat(pair.length > 0 ? [project.stateOf(pair)] : [])
-        readonly property string origin: states.includes("local") ? "local" : states.includes("project") ? "project" : "yours"
-        spacing: 4
+    component Page: ColumnLayout {
+        id: page
+        required property string page
+        default property alias content: pageColumn.data
+        visible: project.dialog.pageShown(page)
+        spacing: 12
+        Layout.fillWidth: true
         Label {
-            objectName: "projectState_" + rowState.key
-            color: Theme.muted
-            text: rowState.origin === "local" ? qsTr("Set in project.local.toml")
-                : rowState.origin === "project" ? qsTr("Set in this project") : qsTr("Uses yours")
+            text: project.dialog.catalogue.find(p => p.id === page.page)?.name ?? ""
+            font.pixelSize: 20
+            font.weight: Font.DemiBold
+            color: Theme.text
+            Accessible.role: Accessible.Heading
+            Layout.topMargin: 12
         }
-        IconToolButton {
-            objectName: "projectUseYours_" + rowState.key
-            visible: rowState.origin === "project"
-            iconRole: "restore-default"
-            text: qsTr("Use yours")
-            onClicked: {
-                project.useYours(rowState.key)
-                if (rowState.pair.length > 0)
-                    project.useYours(rowState.pair)
-            }
+        ColumnLayout {
+            id: pageColumn
+            spacing: 24
+            Layout.fillWidth: true
         }
     }
-    component ProjectCheck: RowLayout {
+    component Section: SettingsSection {
+        host: project.dialog
+        project: true
+    }
+    component ProjectCheck: SettingsRow {
         id: checkRow
-        required property string key
-        property string text
-        Layout.fillWidth: true
+        host: project.dialog
+        project: true
+        inline: true
         CheckBox {
             id: check
-            objectName: "project_" + checkRow.key
+            objectName: "project_" + checkRow.setting
             text: checkRow.text
-            enabled: project.stateOf(checkRow.key) !== "local"
             leftPadding: 1
             spacing: 9
-            Layout.fillWidth: true
             Accessible.name: text
-            function refresh() { checked = project.values[checkRow.key] === true }
+            Accessible.description: checkRow.note
+            function refresh() { checked = project.dialog.projectValues[checkRow.setting] === true }
             Component.onCompleted: refresh()
-            Connections { target: project; function onReloaded() { check.refresh() } }
-            onToggled: project.put(checkRow.key, checked)
+            Connections { target: project.dialog; function onProjectValuesChanged() { check.refresh() } }
+            onToggled: project.dialog.projectPut(checkRow.setting, checked)
         }
-        RowState { key: checkRow.key }
     }
-    component ProjectChoice: RowLayout {
+    component ProjectChoice: SettingsRow {
         id: choiceRow
-        required property string key
-        property string text
         property var model: []
-        Layout.fillWidth: true
-        Label { text: choiceRow.text; Layout.preferredWidth: 160 }
+        host: project.dialog
+        project: true
         ComboBox {
             id: choice
-            objectName: "project_" + choiceRow.key
+            objectName: "project_" + choiceRow.setting
             model: choiceRow.model
-            enabled: count > 0 && project.stateOf(choiceRow.key) !== "local"
-            Layout.preferredWidth: 220
+            enabled: count > 0
+            Layout.preferredWidth: 260
             Accessible.name: choiceRow.text
             function refresh() {
-                const v = project.values[choiceRow.key] ?? -1
+                const v = project.dialog.projectValues[choiceRow.setting] ?? -1
                 currentIndex = v >= 0 && v < count ? v : -1
             }
             Component.onCompleted: refresh()
             onCountChanged: refresh()
-            Connections { target: project; function onReloaded() { choice.refresh() } }
-            onActivated: index => project.put(choiceRow.key, index)
+            Connections { target: project.dialog; function onProjectValuesChanged() { choice.refresh() } }
+            onActivated: index => project.dialog.projectPut(choiceRow.setting, index)
         }
-        Item { Layout.fillWidth: true }
-        RowState { key: choiceRow.key }
     }
-    component ProjectField: RowLayout {
+    component ProjectField: SettingsRow {
         id: fieldRow
-        required property string key
-        property string text
         property string placeholder
-        Layout.fillWidth: true
-        Label { text: fieldRow.text; Layout.preferredWidth: 160 }
+        host: project.dialog
+        project: true
         TextField {
             id: plain
-            objectName: "project_" + fieldRow.key
-            enabled: project.stateOf(fieldRow.key) !== "local"
+            objectName: "project_" + fieldRow.setting
             placeholderText: fieldRow.placeholder
             Layout.fillWidth: true
             Accessible.name: fieldRow.text
-            function refresh() { text = project.values[fieldRow.key] ?? "" }
+            function refresh() { text = project.dialog.projectValues[fieldRow.setting] ?? "" }
+            function commit() {
+                typing.stop()
+                if ((project.dialog.projectValues[fieldRow.setting] ?? "") !== text.trim())
+                    project.dialog.projectPut(fieldRow.setting, text.trim())
+            }
             Component.onCompleted: refresh()
-            Connections { target: project; function onReloaded() { plain.refresh() } }
-            onTextEdited: project.put(fieldRow.key, text.trim())
+            Connections {
+                target: project.dialog
+                function onProjectValuesChanged() { if (!plain.activeFocus) plain.refresh() }
+            }
+            onTextEdited: typing.restart()
+            onEditingFinished: commit()
+            Timer {
+                id: typing
+                interval: 500
+                onTriggered: plain.commit()
+            }
         }
-        RowState { key: fieldRow.key }
     }
-    component ProjectText: RowLayout {
+    component ProjectValue: SettingsRow {
+        id: valueRow
+        host: project.dialog
+        project: true
+        TextField {
+            objectName: "project_" + valueRow.setting
+            readOnly: true
+            selectByMouse: true
+            text: {
+                const v = project.dialog.projectValues[valueRow.setting]
+                return Array.isArray(v) ? v.join(", ") : String(v ?? "")
+            }
+            Layout.fillWidth: true
+            Accessible.name: valueRow.text
+        }
+        IconTextButton {
+            iconRole: "open"
+            text: qsTranslate("HikariSub.Options", "Open settings file")
+            onClicked: project.dialog.openSettingsFile(valueRow.setting)
+        }
+    }
+    component ProjectText: SettingsRow {
         id: textRow
-        required property string key
-        required property string switchSetting
-        property string text
-        Layout.fillWidth: true
+        required property var modelData
+        readonly property string key: "scriptProperties." + modelData.id
+        host: project.dialog
+        project: true
+        setting: key
+        settings: [key, key + "On"]
+        text: modelData.name
+        note: ""
         CheckBox {
             id: on
-            objectName: "project_" + textRow.switchSetting
-            text: textRow.text
-            enabled: project.stateOf(textRow.switchSetting) !== "local"
-            leftPadding: 1
-            spacing: 9
-            Layout.preferredWidth: 160
-            Accessible.name: text
-            function refresh() { checked = project.values[textRow.switchSetting] === true }
+            objectName: "project_" + textRow.key + "On"
+            text: qsTranslate("HikariSub.Options", "Write")
+            Accessible.name: qsTranslate("HikariSub.Options", "Write %1").arg(textRow.modelData.name)
+            function refresh() { checked = project.dialog.projectValues[textRow.key + "On"] === true }
             Component.onCompleted: refresh()
-            Connections { target: project; function onReloaded() { on.refresh() } }
-            onToggled: project.put(textRow.switchSetting, checked)
+            Connections { target: project.dialog; function onProjectValuesChanged() { on.refresh() } }
+            onToggled: project.dialog.projectPut(textRow.key + "On", checked)
         }
         TextField {
             id: field
             objectName: "project_" + textRow.key
-            enabled: project.stateOf(textRow.key) !== "local"
             Layout.fillWidth: true
-            Accessible.name: textRow.text
-            function refresh() { text = project.values[textRow.key] ?? "" }
+            Accessible.name: textRow.modelData.name
+            function refresh() { text = project.dialog.projectValues[textRow.key] ?? "" }
+            function commit() {
+                typing.stop()
+                if ((project.dialog.projectValues[textRow.key] ?? "") !== text)
+                    project.dialog.projectPut(textRow.key, text)
+            }
             Component.onCompleted: refresh()
-            Connections { target: project; function onReloaded() { field.refresh() } }
-            onTextEdited: project.put(textRow.key, text)
+            Connections {
+                target: project.dialog
+                function onProjectValuesChanged() { if (!field.activeFocus) field.refresh() }
+            }
+            onTextEdited: typing.restart()
+            onEditingFinished: commit()
+            Timer {
+                id: typing
+                interval: 500
+                onTriggered: field.commit()
+            }
         }
-        RowState { key: textRow.key; pair: textRow.switchSetting }
     }
 
-    Rectangle {
-        color: Theme.background
-        Layout.preferredWidth: 220
-        Layout.fillHeight: true
-        ListView {
-            id: pageList
-            objectName: "projectSettingsPages"
-            anchors.fill: parent
-            anchors.rightMargin: 1
-            topMargin: 8
-            clip: true
-            model: project.pages
-            keyNavigationEnabled: true
-            activeFocusOnTab: true
-            Accessible.role: Accessible.PageTabList
-            delegate: ItemDelegate {
-                id: pageItem
-                required property var modelData
-                required property int index
-                objectName: "projectSettingsPage_" + modelData.id
-                width: ListView.view.width
-                height: 36
-                highlighted: ListView.isCurrentItem
-                text: modelData.name
-                leftPadding: 16
-                rightPadding: 12
-                focusPolicy: Qt.NoFocus
-                onClicked: pageList.currentIndex = index
-                Accessible.role: Accessible.PageTab
-                Accessible.name: text
-                Accessible.selected: highlighted
-                background: Rectangle {
-                    color: pageItem.highlighted ? Theme.select : pageItem.hovered ? Theme.raised : "transparent"
-                    Rectangle {
-                        visible: pageItem.highlighted
-                        width: 3
-                        height: parent.height
-                        color: Theme.accent
-                    }
-                }
-                contentItem: RowLayout {
-                    spacing: 12
-                    Icon { iconRole: pageItem.modelData.iconRole }
-                    Label {
-                        text: pageItem.text
-                        font.bold: pageItem.highlighted
-                        color: Theme.text
-                        elide: Text.ElideRight
-                        Layout.fillWidth: true
-                    }
-                }
+    Page {
+        page: "lineEditor"
+        Section {
+            key: "lineEditor.translationMode"
+            ProjectCheck { setting: "translation.autoMoveTagsFromOriginal" }
+            ProjectField { setting: "translation.sourceLanguage"; placeholder: qsTr("Detect") }
+            ProjectField {
+                setting: "translation.targetLanguage"
+                placeholder: project.dialog.projectYours["ai.inline.translateTo"] ?? ""
             }
-        }
-        Rectangle {
-            anchors.right: parent.right
-            width: 1
-            height: parent.height
-            color: Theme.line
+            ProjectValue { setting: "translation.glossary" }
         }
     }
-    ColumnLayout {
-        spacing: 0
-        Layout.fillWidth: true
-        Layout.fillHeight: true
-        InlineBar {
-            objectName: "projectSettingsProblem"
-            visible: project.problem.length > 0
-            severity: "error"
-            text: project.problem
-            Layout.fillWidth: true
-            onClosed: project.problem = ""
+    Page {
+        page: "spelling"
+        Section {
+            key: "spelling.spelling"
+            ProjectCheck { setting: "editor.spellchecker" }
+            ProjectChoice { setting: "editor.dictionaryLanguage"; model: project.dialog.dictionaries }
         }
-        StackLayout {
-            objectName: "projectSettingsStack"
-            currentIndex: pageList.currentIndex
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-
-            ScrollView {
-                contentWidth: availableWidth
-                ColumnLayout {
-                    x: 24
-                    y: 20
-                    width: parent.width - 48
-                    spacing: 10
-                    ProjectCheck { key: "editor.spellchecker"; text: qsTranslate("HikariSub.Options", "Check spelling") }
-                    ProjectChoice {
-                        key: "editor.dictionaryLanguage"
-                        text: qsTranslate("HikariSub.Options", "Primary language")
-                        model: project.dictionaries
-                    }
-                    ProjectChoice {
-                        key: "grammar.language"
-                        text: qsTranslate("HikariSub.Options", "Grammar check")
-                        model: [qsTranslate("HikariSub.Options", "Off"), qsTranslate("HikariSub.Options", "English (US)"),
-                                qsTranslate("HikariSub.Options", "English (UK)"), qsTranslate("HikariSub.Options", "English (Canada)"),
-                                qsTranslate("HikariSub.Options", "English (Australia)")]
-                    }
-                    Repeater {
-                        model: project.app.grammarGroups()
-                        ProjectCheck {
-                            required property var modelData
-                            key: "grammar.group." + modelData.id
-                            text: modelData.name
-                        }
-                    }
+        Section {
+            key: "spelling.grammar"
+            ProjectChoice {
+                setting: "grammar.language"
+                model: [qsTranslate("HikariSub.Options", "Off"), qsTranslate("HikariSub.Options", "English (US)"),
+                        qsTranslate("HikariSub.Options", "English (UK)"), qsTranslate("HikariSub.Options", "English (Canada)"),
+                        qsTranslate("HikariSub.Options", "English (Australia)")]
+            }
+        }
+        Section {
+            key: "spelling.ruleGroups"
+            Repeater {
+                model: project.app.grammarGroups()
+                ProjectCheck {
+                    required property var modelData
+                    setting: "grammar.group." + modelData.id
+                    text: modelData.name
                 }
             }
-            ScrollView {
-                contentWidth: availableWidth
-                ColumnLayout {
-                    x: 24
-                    y: 20
-                    width: parent.width - 48
-                    spacing: 10
-                    Label {
-                        text: qsTr("Saving a file writes the switched-on fields into its Script Info.")
-                        color: Theme.muted
-                        wrapMode: Text.Wrap
-                        Layout.fillWidth: true
+        }
+    }
+    Page {
+        page: "conversion"
+        Section {
+            key: "conversion.export"
+            SettingsRow {
+                host: project.dialog
+        project: true
+                setting: "export.format"
+                ComboBox {
+                    id: exportFormat
+                    objectName: "project_export.format"
+                    model: project.exportFormats
+                    textRole: "text"
+                    Layout.preferredWidth: 260
+                    Accessible.name: SettingsCatalogue.label("export.format")
+                    function refresh() {
+                        currentIndex = Math.max(0, project.exportFormats.findIndex(f => f.id === (project.dialog.projectValues["export.format"] ?? "")))
                     }
-                    Repeater {
-                        model: project.scriptFields
-                        ProjectText {
-                            required property var modelData
-                            key: "scriptProperties." + modelData.id
-                            switchSetting: "scriptProperties." + modelData.id + "On"
-                            text: modelData.name
-                        }
-                    }
-                    ProjectCheck { key: "scriptProperties.askForChange"; text: qsTr("Ask before changing them on save") }
+                    Component.onCompleted: refresh()
+                    Connections { target: project.dialog; function onProjectValuesChanged() { exportFormat.refresh() } }
+                    onActivated: index => project.dialog.projectPut("export.format", project.exportFormats[index].id)
                 }
             }
-            ScrollView {
-                contentWidth: availableWidth
-                ColumnLayout {
-                    x: 24
-                    y: 20
-                    width: parent.width - 48
-                    spacing: 10
-                    ProjectCheck {
-                        key: "translation.autoMoveTagsFromOriginal"
-                        text: qsTranslate("HikariSub.Translation", "Tags from original")
-                    }
-                    ProjectField {
-                        key: "translation.sourceLanguage"
-                        text: qsTr("Source language")
-                        placeholder: qsTr("Detect")
-                    }
-                    ProjectField {
-                        key: "translation.targetLanguage"
-                        text: qsTr("Target language")
-                        placeholder: project.yours["ai.inline.translateTo"] ?? ""
-                    }
-                }
+        }
+    }
+    Page {
+        page: "subtitleProperties"
+        Section {
+            key: "subtitleProperties.credits"
+            Label {
+                text: qsTr("Saving a file writes the switched-on fields into its Script Info.")
+                color: Theme.muted
+                wrapMode: Text.Wrap
+                Layout.fillWidth: true
             }
-            ScrollView {
-                contentWidth: availableWidth
-                ColumnLayout {
-                    x: 24
-                    y: 20
-                    width: parent.width - 48
-                    spacing: 10
-                    RowLayout {
-                        Layout.fillWidth: true
-                        Label { text: qsTr("Export format"); Layout.preferredWidth: 160 }
-                        ComboBox {
-                            id: exportFormat
-                            objectName: "project_export.format"
-                            model: project.exportFormats
-                            textRole: "text"
-                            enabled: project.stateOf("export.format") !== "local"
-                            Layout.preferredWidth: 220
-                            Accessible.name: qsTr("Export format")
-                            function refresh() {
-                                currentIndex = Math.max(0, project.exportFormats.findIndex(f => f.id === (project.values["export.format"] ?? "")))
-                            }
-                            Component.onCompleted: refresh()
-                            Connections { target: project; function onReloaded() { exportFormat.refresh() } }
-                            onActivated: index => project.put("export.format", project.exportFormats[index].id)
-                        }
-                        Item { Layout.fillWidth: true }
-                        RowState { key: "export.format" }
-                    }
-                    Label {
-                        text: qsTr("Used for files that haven’t been exported yet.")
-                        color: Theme.muted
-                        wrapMode: Text.Wrap
-                        Layout.fillWidth: true
-                    }
-                }
+            Repeater {
+                model: project.scriptFields
+                ProjectText {}
             }
+            ProjectCheck { setting: "scriptProperties.askForChange" }
+        }
+    }
+    Page {
+        page: "ai"
+        Section {
+            key: "ai.models"
+            ProjectValue { setting: "translation.translator" }
+            ProjectValue { setting: "translation.reviewer" }
+        }
+        Section {
+            key: "ai.privacy"
+            ProjectValue { setting: "ai.exclude" }
+        }
+        Section {
+            key: "ai.keys"
             ProjectAiKeysPage {
                 id: aiKeys
                 app: project.app

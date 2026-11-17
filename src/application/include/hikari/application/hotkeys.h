@@ -207,6 +207,14 @@ public:
     // 6 Audio, 7 Automation (the macros' rows), 8 Plugins (the plugin
     // commands' rows). The selection goes to the first shown row.
     void filter(int mode);
+    // 0 every row, 1 built-in (the default key), 2 yours (a key set or cleared), 3 plugin commands, 4 macros.
+    void filterSource(int source);
+    int sourceFilter() const { return m_source; }
+    // Only rows whose key another row also has where their windows overlap.
+    void filterConflicts(bool on);
+    bool conflictsOnly() const { return m_conflicts; }
+    // The rows (indexes into rows()) whose key clashes with row `index`'s.
+    std::vector<int> clashes(int index) const;
     // Within the filter, only rows whose Function or Hotkey column holds `text`
     // (ASCII case-insensitive; macros' rows also by `also`) show. Empty shows
     // every row the filter shows. The selection goes to the first shown row.
@@ -273,6 +281,8 @@ private:
     bool m_modified = false;
     int m_sel = 0; // a position in m_filtered; -1 for none
     int m_filterMode = 0;
+    int m_source = 0;
+    bool m_conflicts = false;
     std::string m_search; // lower case
     std::function<std::string(const Row &)> m_searchAlso;
     bool m_isFiltered = false;

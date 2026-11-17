@@ -341,6 +341,8 @@ public:
     // and {sources}: "project" or "local" for each one a project file sets. Empty without a Project.
     Q_INVOKABLE QVariantMap openProjectSettings(int shellWindow);
     Q_INVOKABLE QStringList projectOverrides(int shellWindow) const;
+    // Projectable settings the window's Project sets that wait for trust (ADR 0030).
+    Q_INVOKABLE QStringList projectWaitsForTrust(int shellWindow) const;
     // Writes each value that differs from the window's to project.toml and removes `cleared` from it; false when a write failed.
     Q_INVOKABLE bool applyProjectSettings(int shellWindow, const QVariantMap &values, const QStringList &cleared);
     // The Project is untrusted and holds scripts (.hikari/automation/), a [plugins] table or AI keys it names.

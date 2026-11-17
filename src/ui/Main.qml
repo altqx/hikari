@@ -8921,6 +8921,7 @@ ApplicationWindow {
             return root.app.projectPlugins(root.shellWindow)
         }
         onCopyRequested: text => root.app.copyText(text)
+        onSettingsRequested: node => root.settingsWindow().openDialog(node)
         onTrustRequested: root.app.trustProject(root.shellWindow)
     }
     Connections {
@@ -10203,6 +10204,8 @@ ApplicationWindow {
                 colourPicker: root.colourPicker
                 tagButtons: root.tagButtons
                 importer: root.settingsImport
+                pluginManager: root.app.pluginManager
+                onPluginsRequested: plugin => plugin.length > 0 ? pluginManagerDialog.showPlugin(plugin) : pluginManagerDialog.show()
                 onCreditsRequested: root.lazy(creditsDialogLoader).open()
                 onLegacyImportRequested: root.importLegacySettings()
                 onLegacyRollBackRequested: root.lazy(settingsImportDialogLoader).openRollBack()
@@ -10215,6 +10218,13 @@ ApplicationWindow {
     }
     function openSettings(page, filter) { settingsWindow().openDialog(page, filter) }
     function openProjectSettingsPage(page) { settingsWindow().openDialog(undefined, undefined, page) }
+    // hikarisub://settings/<id>[?scope=project] and settings.open.
+    function openSettingLink(setting, project) { settingsWindow().openSetting(setting, project) }
+    Connections {
+        target: root.app.apiHost
+        enabled: root.servesApi
+        function onSettingsOpenRequested(setting, project) { root.openSettingLink(setting, project) }
+    }
     function repeatInlineAi(inEditor, field) {
         if (root.inlineAi.last.action)
             inlineAiBox.begin(Object.assign({}, root.inlineAi.last, {repeat: true}), inEditor, field)

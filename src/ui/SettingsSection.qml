@@ -5,13 +5,19 @@ import Hikari.Ui
 
 ColumnLayout {
     id: section
-    property string title
+    // The Settings window; with it and a key ("<page>.<section>"), the section hides while a search leaves it out.
+    property var host: null
+    property string key
+    property bool project: false
+    property string title: key.length > 0 ? SettingsCatalogue.sectionTitle(key) : ""
     property bool ruled: true
     default property alias content: rows.data
     property alias trailing: trailingSlot.data
 
     spacing: 10
+    visible: host === null || key.length === 0 || host.sectionShown(key)
     Layout.fillWidth: true
+    Component.onCompleted: if (host !== null && key.length > 0) host.registerSection(key, section, project)
     Accessible.role: Accessible.Grouping
     Accessible.name: title
 

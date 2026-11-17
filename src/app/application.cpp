@@ -7504,7 +7504,8 @@ void Application::applySettings(const QVariantMap &values, bool resetAll)
 namespace {
 
 // Projectable settings the Options dialog doesn't hold.
-constexpr std::string_view kProjectExtras[] = {"translation.autoMoveTagsFromOriginal", "translation.sourceLanguage",
+constexpr std::string_view kProjectExtras[] = {"translation.autoMoveTagsFromOriginal", "translation.sourceLanguage", "translation.glossary",
+                                               "translation.translator", "translation.reviewer", "ai.exclude",
                                                "translation.targetLanguage", "export.format"};
 
 void insertExtras(QVariantMap &values, const application::Settings &settings)
@@ -7549,6 +7550,16 @@ QStringList Application::projectOverrides(int shellWindow) const
     const auto &window = *views(shellWindow).settings;
     for (const auto &setting : application::settingDefinitions())
         if (setting.projectable && window.overridden(setting.id))
+            ids << qs(setting.id);
+    return ids;
+}
+
+QStringList Application::projectWaitsForTrust(int shellWindow) const
+{
+    QStringList ids;
+    const auto &window = *views(shellWindow).settings;
+    for (const auto &setting : application::settingDefinitions())
+        if (setting.projectable && window.waitsForTrust(setting.id))
             ids << qs(setting.id);
     return ids;
 }
