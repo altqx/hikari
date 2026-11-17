@@ -53,6 +53,7 @@ DialogWindow {
     property var sectionItems: ({})
     property var folded: ({})
     property string currentNode: ""
+    readonly property string currentPage: currentNode.split(".")[0]
     readonly property bool searching: query.trim().length > 0
     readonly property var pluginRows: {
         const out = []
@@ -65,7 +66,7 @@ DialogWindow {
     }
     readonly property var pluginsWithSettings: (pluginManager ? pluginManager.plugins : []).filter(p => (p.settings ?? []).length > 0)
     readonly property var found: SettingsCatalogue.search(query, pluginRows, projectTab ? Object.keys(projectSources).filter(id => projectSources[id] === "project") : changedIds, projectTab)
-    readonly property var catalogue: (SettingsCatalogue.revision, SettingsCatalogue.pages())
+    readonly property var catalogue: (SettingsCatalogue.revision >= 0 ? SettingsCatalogue.pages() : [])
     signal reloaded()
     signal creditsRequested()
     signal legacyImportRequested()
@@ -314,8 +315,11 @@ DialogWindow {
         id: reloadValues
         interval: 0
         onTriggered: {
-            dialog.values = dialog.app.currentSettings()
+            const current = dialog.app.currentSettings()
             dialog.refreshChanged()
+            if (JSON.stringify(current) === JSON.stringify(dialog.values))
+                return
+            dialog.values = current
             dialog.reloaded()
         }
     }
@@ -666,8 +670,8 @@ DialogWindow {
             from: numberRow.from
             to: numberRow.to
             editable: true
-            Accessible.name: numberRow.name || (SettingsCatalogue.revision, SettingsCatalogue.label(numberRow.setting))
-            Accessible.description: (SettingsCatalogue.revision, SettingsCatalogue.description(numberRow.setting))
+            Accessible.name: numberRow.name || (SettingsCatalogue.revision >= 0 ? SettingsCatalogue.label(numberRow.setting) : "")
+            Accessible.description: (SettingsCatalogue.revision >= 0 ? SettingsCatalogue.description(numberRow.setting) : "")
             Layout.preferredWidth: 120
             ToolTip.text: numberRow.tip
             ToolTip.visible: hovered && numberRow.tip !== ""
@@ -695,7 +699,7 @@ DialogWindow {
         property string before: ""
         objectName: "setting_" + setting
         Layout.preferredWidth: 260
-        Accessible.description: (SettingsCatalogue.revision, SettingsCatalogue.description(setting))
+        Accessible.description: (SettingsCatalogue.revision >= 0 ? SettingsCatalogue.description(setting) : "")
         function refresh() { text = dialog.values[setting] ?? "" }
         function commit() {
             typing.stop()
@@ -727,7 +731,7 @@ DialogWindow {
         required property string setting
         objectName: "setting_" + setting
         Layout.preferredWidth: 260
-        Accessible.description: (SettingsCatalogue.revision, SettingsCatalogue.description(setting))
+        Accessible.description: (SettingsCatalogue.revision >= 0 ? SettingsCatalogue.description(setting) : "")
         signal chosen(int index)
         function refresh() {
             const v = dialog.values[setting] ?? -1
@@ -789,7 +793,7 @@ DialogWindow {
             Accessible.name: valueRow.text
         }
         IconTextButton {
-            iconRole: "open"
+            iconRole: "folder-open"
             text: qsTr("Open settings file")
             onClicked: dialog.openSettingsFile(valueRow.setting)
         }
@@ -909,17 +913,20 @@ DialogWindow {
                     id: filterMenu
                     ShellMenuItem {
                         objectName: "settingsFilterModified"
+                        iconRole: "document-modified"
                         text: qsTr("Modified")
                         onTriggered: dialog.addToken("@modified")
                     }
                     ShellMenu {
                         objectName: "settingsFilterPlugin"
+                        iconRole: "plugins"
                         title: qsTr("Plugin")
                         enabled: dialog.pluginsWithSettings.length > 0
                         Repeater {
                             model: dialog.pluginsWithSettings
                             ShellMenuItem {
                                 required property var modelData
+                                iconRole: "plugins"
                                 text: modelData.name
                                 onTriggered: dialog.addToken("@plugin:" + modelData.id)
                             }
@@ -928,7 +935,7 @@ DialogWindow {
                 }
                 IconTextButton {
                     objectName: "settingsOpenFile"
-                    iconRole: "open"
+                    iconRole: "folder-open"
                     text: qsTr("Open settings file")
                     onClicked: dialog.openSettingsFile("")
                 }
@@ -1063,6 +1070,7 @@ DialogWindow {
                     property string page
                     ShellMenuItem {
                         objectName: "settingsResetPage"
+                        iconRole: "restore-default"
                         text: qsTr("Reset page…")
                         onTriggered: dialog.askResetPage(pageMenu.page)
                     }
@@ -1082,7 +1090,9 @@ DialogWindow {
                     id: rowsView
                     objectName: "settingsRows"
                     anchors.fill: parent
-                    contentWidth: availableWidth
+                    // MUST KILL: narrowest is copied in later because binding to the column's minimum width loops
+                    property real narrowest: 0
+                    contentWidth: Math.max(availableWidth, narrowest)
                     contentHeight: rowsColumn.implicitHeight + 48
                     Connections {
                         target: rowsView.contentItem
@@ -1092,8 +1102,9 @@ DialogWindow {
                         id: rowsColumn
                         x: 24
                         y: 12
-                        width: rowsView.availableWidth - 48
+                        width: rowsView.contentWidth - 48
                         spacing: 24
+                        onImplicitWidthChanged: Qt.callLater(() => rowsView.narrowest = Layout.minimumWidth + 48)
                         InlineBar {
                             objectName: "settingsFileProblem"
                             visible: !dialog.projectTab && dialog.settings !== null && dialog.settings.fileProblem.length > 0
@@ -2016,7 +2027,7 @@ DialogWindow {
                                 model: projectPages.exportFormats
                                 textRole: "text"
                                 Layout.preferredWidth: 260
-                                Accessible.name: (SettingsCatalogue.revision, SettingsCatalogue.label("export.format"))
+                                Accessible.name: (SettingsCatalogue.revision >= 0 ? SettingsCatalogue.label("export.format") : "")
                                 currentIndex: {
                                     dialog.changedIds
                                     const v = dialog.settings ? dialog.settings.value("export.format") : ""
@@ -2724,7 +2735,7 @@ DialogWindow {
                     Accessible.name: pluginRow.text
                 }
                 IconTextButton {
-                    iconRole: "open"
+                    iconRole: "folder-open"
                     text: qsTr("Open settings file")
                     onClicked: dialog.openSettingsFile(pluginRow.setting)
                 }

@@ -13,8 +13,8 @@ Item {
     property string setting
     property var settings: setting.length > 0 ? [setting] : []
     property string iconRole
-    property string text: setting.length > 0 ? (SettingsCatalogue.revision, SettingsCatalogue.label(setting)) : ""
-    property string note: setting.length > 0 ? (SettingsCatalogue.revision, SettingsCatalogue.description(setting)) : ""
+    property string text: setting.length > 0 ? (SettingsCatalogue.revision >= 0 ? SettingsCatalogue.label(setting) : "") : ""
+    property string note: setting.length > 0 ? (SettingsCatalogue.revision >= 0 ? SettingsCatalogue.description(setting) : "") : ""
     property int labelWidth: 220
     // The controls sit in the label's place, as a check box does.
     property bool inline: false
@@ -106,7 +106,7 @@ Item {
         Layout.fillWidth: true
         Icon {
             visible: row.elsewhere !== null && row.elsewhere.warning === true
-            iconRole: "warning"
+            iconRole: "notice-warning"
         }
         Label {
             objectName: "settingElsewhere"
@@ -150,22 +150,26 @@ Item {
         id: menu
         ShellMenuItem {
             objectName: "settingMenuReset"
+            iconRole: "restore-default"
             text: qsTr("Reset")
             enabled: row.changed && !row.readOnly
             onTriggered: row.host.resetSetting(row.settings)
         }
         ShellMenuItem {
             objectName: "settingMenuCopyId"
+            iconRole: "edit-copy"
             text: qsTr("Copy setting id")
             onTriggered: row.host.copyText(row.setting)
         }
         ShellMenuItem {
             objectName: "settingMenuCopyLink"
+            iconRole: "link"
             text: qsTr("Copy link")
             onTriggered: row.host.copyText(row.host.linkTo(row.setting))
         }
         ShellMenuItem {
             objectName: "settingMenuOpenFile"
+            iconRole: "folder-open"
             text: qsTr("Open settings file")
             onTriggered: row.host.openSettingsFile(row.setting)
         }

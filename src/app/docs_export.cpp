@@ -289,6 +289,11 @@ QJsonObject settings(Application &application, QObject *dialog)
     for (const QString &key : ui::SettingsCatalogue::settings())
         if (application::optionsBindingShown(key.toStdString()))
             out.add(key, ui::SettingsCatalogue::sectionOf(key), out.control(key));
+    for (const application::OptionsBinding &binding : application::optionsBindings()) {
+        const QString key = qs(binding.setting);
+        if (QQuickItem *item = out.control(key); item && application::optionsBindingShown(binding.setting))
+            out.add(key, sectionKeyAbove(item), item);
+    }
 
     QJsonArray pages;
     for (const QVariant &v : ui::SettingsCatalogue::pages()) {

@@ -9,7 +9,7 @@ ColumnLayout {
     property var host: null
     property string key
     property bool project: false
-    property string title: key.length > 0 ? (SettingsCatalogue.revision, SettingsCatalogue.sectionTitle(key)) : ""
+    property string title: key.length > 0 ? (SettingsCatalogue.revision >= 0 ? SettingsCatalogue.sectionTitle(key) : "") : ""
     property bool ruled: true
     default property alias content: rows.data
     property alias trailing: trailingSlot.data

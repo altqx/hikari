@@ -42,7 +42,7 @@ ColumnLayout {
         id: page
         required property string page
         default property alias content: pageColumn.data
-        visible: pages.dialog.pageShown(page)
+        visible: pages.dialog.pageShown(page.page)
         spacing: 12
         Layout.fillWidth: true
         Label {
@@ -151,7 +151,7 @@ ColumnLayout {
             Accessible.name: valueRow.text
         }
         IconTextButton {
-            iconRole: "open"
+            iconRole: "folder-open"
             text: qsTranslate("HikariSub.Options", "Open settings file")
             onClicked: pages.dialog.openSettingsFile(valueRow.setting)
         }

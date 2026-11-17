@@ -1684,7 +1684,6 @@ private slots:
         QCOMPARE(name(useSystem), QStringLiteral("Use system title bar"));
         QVERIFY(QMetaObject::invokeMethod(useSystem, "click"));
         QCOMPARE(settingsValues(dialog).value(QStringLiteral("appearance.titleBar")).toString(), QStringLiteral("system"));
-        QVERIFY(frame->custom());
         QTRY_VERIFY(!frame->custom());
         QCOMPARE(settings.text("appearance.titleBar"), QStringLiteral("system"));
         QVERIFY(QMetaObject::invokeMethod(useSystem, "click"));
@@ -5384,7 +5383,7 @@ private slots:
         auto *box = dialogItem("settingsDialog", "setting_program.font");
         QVERIFY(box);
         box->setProperty("families", QStringList{"Arial", "Comic Sans MS", "Impact", "Tahoma", "Verdana"});
-        auto *flick = dialogItem("settingsDialog", "settingsPageAppearance")->property("contentItem").value<QQuickItem *>();
+        auto *flick = dialogItem("settingsDialog", "settingsRows")->property("contentItem").value<QQuickItem *>();
         QVERIFY(flick);
         const QPointF corner = box->mapToItem(flick->property("contentItem").value<QQuickItem *>(), QPointF(box->width(), box->height()));
         flick->setProperty("contentX", std::max(0.0, corner.x() - flick->width()));
@@ -19006,8 +19005,7 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(check, "click"));
         QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "settingsOfferAgain"), "click"));
         QVERIFY(!dialogItem("settingsDialog", "settingsSkippedVersion")->isVisible());
-        QCOMPARE(updates.autoCheck(), autoCheck);
-        QCOMPARE(updates.skippedVersion(), QStringLiteral("9.0.0"));
+        QCOMPARE(updates.autoCheck(), !autoCheck);
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsClose"), "click"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
         QCOMPARE(updates.autoCheck(), !autoCheck);
@@ -19082,7 +19080,6 @@ private slots:
         QVERIFY(noWarning);
         QVERIFY(QMetaObject::invokeMethod(noWarning, "click"));
         QVERIFY(noWarning->property("checked").toBool());
-        QVERIFY(application->askForBadResolution());
         QVERIFY(!application->askForBadResolution());
         QCOMPARE(askChanged.count(), 1);
         QVERIFY(dialog->property("visible").toBool());
@@ -19113,32 +19110,24 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(changeActive, "click"));
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsClose"), "click"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
-        QVERIFY(settings.boolean("grid.changeActiveOnSelection"));
+        QVERIFY(!settings.boolean("grid.changeActiveOnSelection"));
         const auto recent = application->recentEntries();
         QVERIFY(openSettings());
         QTRY_VERIFY(dialog->property("visible").toBool());
         QVERIFY(QMetaObject::invokeMethod(dialog, "resetAll"));
         answerSettingsQuestion("cancel");
         QVERIFY(dialogItem("settingsDialog", "setting_video.dontAskForBadResolution")->property("checked").toBool());
+        QVERIFY(!application->askForBadResolution());
         QVERIFY(QMetaObject::invokeMethod(dialog, "resetAll"));
         answerSettingsQuestion("reset");
         QVERIFY(!dialogItem("settingsDialog", "setting_video.dontAskForBadResolution")->property("checked").toBool());
-        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsClose"), "click"));
-        QTRY_VERIFY(!dialog->property("visible").toBool());
-        QVERIFY(!application->askForBadResolution());
-        QCOMPARE(askChanged.count(), 1);
-        QCOMPARE(settings.integer("autosave.maxFiles"), 2);
-        QVERIFY(settings.boolean("grid.duplicationDontChangeSelection"));
-        QVERIFY(openSettings());
-        QTRY_VERIFY(dialog->property("visible").toBool());
-        QVERIFY(QMetaObject::invokeMethod(dialog, "resetAll"));
-        answerSettingsQuestion("reset");
-        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsClose"), "click"));
-        QTRY_VERIFY(!dialog->property("visible").toBool());
         QVERIFY(application->askForBadResolution());
         QCOMPARE(askChanged.count(), 2);
         QCOMPARE(settings.integer("autosave.maxFiles"), 3);
         QVERIFY(!settings.contains("grid.duplicationDontChangeSelection"));
+        QVERIFY(settings.boolean("grid.changeActiveOnSelection"));
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsClose"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
         QCOMPARE(application->recentEntries(), recent);
         QCOMPARE(settings.list("recent.subtitles").size(), qsizetype(recent.size()));
         QVERIFY(application->closeEditingTarget());
@@ -19327,8 +19316,14 @@ private slots:
             auto *page = dialogItem("settingsDialog", pageName);
             QVERIFY2(page, pageName);
             std::vector<QQuickItem *> found;
+            const auto bound = [](const QString &id) {
+                return std::ranges::any_of(application::optionsBindings(), [&](const application::OptionsBinding &b) {
+                    return id == QLatin1String(b.setting.data(), qsizetype(b.setting.size())) ||
+                           id == QLatin1String(b.sizeSetting.data(), qsizetype(b.sizeSetting.size()));
+                });
+            };
             std::function<void(QQuickItem *)> walk = [&](QQuickItem *item) {
-                if (item->objectName().startsWith(QLatin1String("setting_")))
+                if (item->objectName().startsWith(QLatin1String("setting_")) && bound(item->objectName().mid(8)))
                     found.push_back(item);
                 for (QQuickItem *child : item->childItems())
                     walk(child);
@@ -19442,8 +19437,9 @@ private slots:
         QTRY_VERIFY(dialogItem("settingsDialog", "aiOffSummary")->isVisible());
         for (const char *section : {"aiProviders", "aiModels", "aiPrivacy"})
             QVERIFY2(!dialogItem("settingsDialog", section)->isVisible(), section);
-        QVERIFY(application->ai()->on());
+        QTRY_VERIFY(!application->ai()->on());
         QVERIFY(QMetaObject::invokeMethod(off, "click"));
+        QTRY_VERIFY(application->ai()->on());
         QTRY_VERIFY(dialogItem("settingsDialog", "aiProviders")->isVisible());
         QVERIFY(dialogItem("settingsDialog", "aiSandboxNote")->isVisible());
         QCOMPARE(dialogItem("settingsDialog", "aiSandboxNote")->property("text").toString().contains(QStringLiteral("isn’t sandboxed")),
@@ -20122,9 +20118,8 @@ private slots:
         QVERIFY(dialog);
         QTRY_VERIFY(dialog->property("visible").toBool());
         showSettingsPage("appearance");
-        auto *page = dialogItem("settingsDialog", "settingsPageAppearance");
-        QVERIFY(page);
-        auto *flick = page->property("contentItem").value<QQuickItem *>();
+        QVERIFY(dialogItem("settingsDialog", "settingsPageAppearance"));
+        auto *flick = dialogItem("settingsDialog", "settingsRows")->property("contentItem").value<QQuickItem *>();
         QVERIFY(flick);
         auto *content = flick->property("contentItem").value<QQuickItem *>();
         for (const char *name : {"setting_program.fontSize", "appearanceTheme_highContrastBlack"}) {
@@ -20154,13 +20149,7 @@ private slots:
         QVERIFY(askAgain->property("enabled").toBool());
         QVERIFY(QMetaObject::invokeMethod(askAgain, "click"));
         QVERIFY(!askAgain->property("enabled").toBool());
-        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsClose"), "click"));
-        QCOMPARE(settings.list("notices.hiddenQuestions"), hidden);
-        dialog = openSettings();
-        QTRY_VERIFY(dialog->property("visible").toBool());
-        askAgain = dialogItem("settingsDialog", "settingsAskAgain");
-        QVERIFY(askAgain->property("enabled").toBool());
-        QVERIFY(QMetaObject::invokeMethod(askAgain, "click"));
+        QCOMPARE(settings.list("notices.hiddenQuestions"), QStringList());
         QVERIFY(QMetaObject::invokeMethod(dialog, "chooseCatalog", Q_ARG(QVariant, 0)));
         QVERIFY(!dialogItem("settingsDialog", "settingsAskAgain")->property("enabled").toBool());
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsClose"), "click"));
@@ -24091,7 +24080,7 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsClose"), "click"));
     }
 
-    void hotkeysResetPageIsStaged()
+    void hotkeysResetPageAppliesAtOnce()
     {
         auto &store = *application->settingsStore();
         store.set("shortcuts.hotkeys", QStringList{QStringLiteral("GLOBAL_SAVE_SUBS G=Ctrl-K")});
@@ -24122,15 +24111,7 @@ private slots:
         QCOMPARE(hotkeyRow(QStringLiteral("Global Script a.lua-1")).value(QStringLiteral("accel")).toString(), QString());
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsClose"), "click"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
-        QCOMPARE(store.list("shortcuts.hotkeys"), saved);
-        QCOMPARE(store.list(application::kAutomationHotkeysSetting.data()).size(), 1);
-        QCOMPARE(installedKeys("global").value(QStringLiteral("GLOBAL_SAVE_SUBS")).toString(), QStringLiteral("Ctrl+K"));
-        dialog = openSettings();
-        QTRY_VERIFY(dialog->property("visible").toBool());
-        QCOMPARE(hotkeyRow(QStringLiteral("Global Save")).value(QStringLiteral("accel")).toString(), QStringLiteral("Ctrl-K"));
-        QVERIFY(QMetaObject::invokeMethod(dialog, "resetPage", Q_ARG(QVariant, QStringLiteral("hotkeys"))));
-        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsClose"), "click"));
-        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QVERIFY(store.list("shortcuts.hotkeys") != saved);
         QVERIFY(store.list("shortcuts.hotkeys").contains(QStringLiteral("GLOBAL_SAVE_SUBS G=Ctrl-S")));
         QVERIFY(application->automationHotkeys().committedKeys().empty());
         QCOMPARE(installedKeys("global").value(QStringLiteral("GLOBAL_SAVE_SUBS")).toString(), QStringLiteral("Ctrl+S"));
@@ -24148,13 +24129,6 @@ private slots:
         QCOMPARE(dialog->property("tagButtonList").toList().size(), 2);
         QVERIFY(QMetaObject::invokeMethod(dialog, "resetPage", Q_ARG(QVariant, QStringLiteral("lineEditor"))));
         QVERIFY(dialog->property("tagButtonList").toList().isEmpty());
-        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsClose"), "click"));
-        QTRY_VERIFY(!dialog->property("visible").toBool());
-        QCOMPARE(buttons.count(), 2);
-        dialog = openSettings();
-        QTRY_VERIFY(dialog->property("visible").toBool());
-        QCOMPARE(dialog->property("tagButtonList").toList().size(), 2);
-        QVERIFY(QMetaObject::invokeMethod(dialog, "resetPage", Q_ARG(QVariant, QStringLiteral("lineEditor"))));
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsClose"), "click"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
         QCOMPARE(buttons.count(), 0);
@@ -27871,12 +27845,12 @@ private slots:
         QVERIFY(checked("accent_red"));
         click("accent_purple");
         QCOMPARE(accent(), ui::theme::accent(true, QStringLiteral("purple")).accent);
-        QCOMPARE(settings.text("appearance.darkAccent"), QStringLiteral("red"));
+        QCOMPARE(settings.text("appearance.darkAccent"), QStringLiteral("purple"));
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsClose"), "click"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
         QCOMPARE(code(), QStringLiteral("dark"));
-        QCOMPARE(accent(), ui::theme::accent(true, QStringLiteral("red")).accent);
-        QCOMPARE(settings.text("appearance.darkAccent"), QStringLiteral("red"));
+        QCOMPARE(accent(), ui::theme::accent(true, QStringLiteral("purple")).accent);
+        QCOMPARE(settings.text("appearance.darkAccent"), QStringLiteral("purple"));
         QCOMPARE(settings.text("appearance.lightAccent"), QStringLiteral("blue"));
 
         QVERIFY((dialog = openAppearance()) != nullptr);
@@ -33861,7 +33835,6 @@ private slots:
         QCOMPARE(name(seek), QStringLiteral("Move video to the selected line"));
         QCOMPARE(name(play), QStringLiteral("After moving, play"));
         QVERIFY(QMetaObject::invokeMethod(seek, "activated", Q_ARG(int, 5)));
-        QCOMPARE(settings.integer("video.moveToActiveLine"), 3);
         QTRY_COMPARE(settings.integer("video.moveToActiveLine"), 5);
         QCOMPARE(settings.integer("video.playAfterSelection"), 2);
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsClose"), "click"));
@@ -35730,7 +35703,7 @@ private slots:
         QVERIFY(check);
         QVERIFY(!check->property("checked").toBool());
         QVERIFY(QMetaObject::invokeMethod(check, "click"));
-        QVERIFY(!application->editor().showFrames());
+        QTRY_VERIFY(application->editor().showFrames());
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsClose"), "click"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
         QVERIFY(application->editor().showFrames());
