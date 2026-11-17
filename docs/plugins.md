@@ -495,7 +495,7 @@ A data-only package never starts a helper. It may hold only `themes`, `iconTheme
 | `main` | A `.lua` file, or `{"program": "<id>"}`. Optional now. |
 | `permissions.programs` | The reason for running the plugin's programs. Needed when `programs` isn't empty. Shown as **Run programs**: "Runs programs that come with it: <titles>: <reason>". |
 | `permissions.background` | The reason for working in the background. Shown as "Works in the background while HikariSub is open: <reason>". |
-| `contributes.commands[]` | Gains `description` (one line for the command palette and the AI), `icon` and `when`. A handler is now `fn(args, context)`: `args` is the table a caller passed (`{}` from a menu or key), `context.via` is `menu`, `key`, `palette`, `status`, `api` or `ai`, and what it returns is the command's result. |
+| `contributes.commands[]` | Gains `description` (one line for the command palette and the AI), `icon`, `when` and `palette` (`false` keeps it out of the [command palette](#the-command-palette)). The description is in the next row's terms. A handler is now `fn(args, context)`: `args` is the table a caller passed (`{}` from a menu or key), `context.via` is `menu`, `key`, `palette`, `status`, `api` or `ai`, and what it returns is the command's result. |
 | `contributes.panels[]` | Gains `icon`, shown on the panel's tab and in a side bar. |
 | `contributes.themes`, `iconThemes`, `icons` | [Themes and icons](#themes-and-icons). |
 | `contributes.styles`, `karaokePresets`, `graphs`, `snippets`, `dictionaries`, `layouts` | [Content packs](#content-packs). |
@@ -604,7 +604,7 @@ Other colours are refused, so the icons follow the theme and high contrast. A ro
 | `menuBar` | The plugin section of the menu bar: the Automation menu, after Plugins… and before the per-plugin submenus. |
 
 - **Order and groups.** Items keep manifest order. Items of one `group` sit together, and a separator parts groups and plugins. Each item shows its command's title and icon, with the plugin's name on hover.
-- **What stays.** Every command still sits in Automation › <plugin> and the command palette.
+- **What stays.** Every command still sits in Automation › <plugin>, and in the [command palette](#the-command-palette) once #1236 brings it.
 - **Items.** They are `ShellMenuItem`s named `pluginMenu_<plugin id>_<command>`, and the listed-menu tests skip that prefix as they skip `macro_`.
 
 **Conditions.** A command's `when` is a list of conditions that must all hold. `!` in front negates one, as in `["selection", "!video"]`.
@@ -628,6 +628,76 @@ A command whose conditions fail is disabled in every menu and the palette, and i
 - **When a default applies.** It applies while the plugin runs, unless the user bound or cleared that command's shortcut, or the key is taken.
 - **When the key is taken.** A key that the user, HikariSub or an earlier-installed plugin already binds stays theirs, in any context. The plugin's default is dropped, and Settings › Shortcuts and the plugin's details say "Ctrl+Alt+K is taken by <owner>".
 - **Changing it.** The user changes or clears a plugin default like any shortcut, and the change is kept in the hotkeys file with the other plugin shortcuts. A default never overwrites a kept row. Plugin shortcuts stay global.
+
+### Quick picks and input boxes
+
+#1236. A plugin can open HikariSub's own quick-pick list and input box, the popups the command palette and Quick Open use, modelled on VS Code's `showQuickPick`, `showInputBox` and `createQuickPick`. Their look, place and keys are in the command palette spec (`docs/ux/command-palette.md`, [#1236](https://github.com/altqx/hikari/issues/1236)). They need no permission. AI and MCP callers get `not_granted`.
+
+**When a plugin may open one.** Only while it answers the user:
+
+- a command (`context.via` other than `ai`);
+- a `click` or `button` event in its own panel or dialog;
+- a status item's click.
+
+Anywhere else, such as a timer, an event or an AI tool, the call answers `refused` with reason `not_user_initiated`, so no popup takes the focus unasked. One quick pick or input box shows at a time in a window. Opening another closes the shown one, which then answers as cancelled.
+
+**Ask for a pick.** `hikari.quick_pick.ask(spec)` is [`quick_pick.ask`](api.md#quick_pickask): it shows the list and waits.
+
+```lua
+local picked = hikari.quick_pick.ask{
+    title = "Apply a style",
+    placeholder = "Style name",
+    items = {
+        {id = "main", label = "Main", description = "Default dialogue"},
+        {kind = "separator", label = "Signs"},
+        {id = "sign", label = "Sign", detail = "Top, 48 px", icon = "style"},
+    },
+}
+if picked then print(picked[1]) end
+```
+
+- **Items.** At most 10000, each `{id, label, description, detail, icon, picked, always_show, buttons}`. A `kind = "separator"` item is a heading with only a `label`. `icon` is an icon role or `own:<id>`. `buttons` are up to 2 icon buttons `{id, icon, tooltip}`, shown on the active row.
+- **Filtering.** The user's typing filters the list as they type, with the palette's fuzzy match on `label`, and on `description` and `detail` when `match_on` names them. Matches sort best first unless `keep_order = true`. `always_show` items stay whatever is typed. `value` fills the box at the start.
+- **Picking several.** `many = true` shows a check box per item, starting from `picked`. Enter takes every checked item.
+- **The answer.** A list of the picked ids, in list order, or `nil` when the user pressed Esc, clicked outside, or another popup took the place. The operation answers `{cancelled = true}` then.
+- **Steps.** `step = {current, total}` shows "2 / 3" for a flow of several popups.
+
+**Ask for text.** `hikari.input_box.ask(spec)` is [`input_box.ask`](api.md#input_boxask). `spec` is `{title, prompt, placeholder, value, selection, password, validation}`. `selection` is `{from, to}` in `value`. `password = true` shows dots. `validation = {pattern, message, min_length, max_length}` is checked as the user types: while it fails, `message` shows under the box and Enter does nothing. It returns the text, or `nil` when cancelled.
+
+**A live quick pick.** For a list that changes as the user types, such as a search over a glossary, `hikari.quick_pick.open(spec)` is [`quick_pick.open`](api.md#quick_pickopen-quick_pickupdate-and-quick_pickclose). It shows the list and returns its id at once.
+
+```lua
+local pick = hikari.quick_pick.open{placeholder = "Search the glossary", filter = "none", busy = true}
+hikari.quick_pick.on(pick, function(e)
+    if e.kind == "value" then
+        hikari.quick_pick.update(pick, {items = search(e.value), busy = false})
+    elseif e.kind == "accept" then
+        insert(e.items[1])
+        hikari.quick_pick.close(pick)
+    end
+end)
+```
+
+- **`filter`.** `"fuzzy"` (the default) filters as `ask` does. `"none"` shows the items as given, for a plugin that filters itself.
+- **`hikari.quick_pick.update(pick, fields)`** changes any field of the spec, plus `busy`, a moving bar, and `active`, the id of the highlighted item.
+- **Events.** Each is `{kind, pick, …}`:
+  - `value` `{value}`, as the user types. Only the newest waits, like a text field's.
+  - `active` `{item}`.
+  - `accept` `{items}`.
+  - `button` `{button, item}`.
+  - `hide`. The list is gone for good, by Esc, a click outside, another popup or `close`.
+- **Lifetime.** The list stays open after `accept` until the plugin closes it, so a flow can go on. It closes when the plugin stops. While it is open, the plugin's handler may run as long as it needs, and the list shows `busy` only when the plugin says so.
+
+### The command palette
+
+The palette itself is #1236's, in the command palette spec (`docs/ux/command-palette.md`, [#1236](https://github.com/altqx/hikari/issues/1236)). For plugins:
+
+- **What it lists.** Every command of a plugin that is on in that window, unless the command has `"palette": false`.
+- **How a row reads.** "<plugin name>: <title>", with `description` under it, the command's `icon` and its shortcut. The row also names where the command sits in the menus: Automation › <plugin>, and any [menu placement](#menus-status-items-and-shortcuts).
+- **Search.** It matches the title, the plugin's name and `description`.
+- **Conditions.** A command whose `when` fails stays listed, greyed, with the same reason `commands.list` gives.
+- **Running it.** Choosing it runs the command with `args = {}` and `context.via = "palette"`. A command that then needs input asks with `hikari.quick_pick.ask` or `hikari.input_box.ask`, which the palette's own popup hands over to.
+- **Quick Open.** Plugins add no Quick Open prefixes or result sources in API 1.
 
 ### Background plugins and time
 
@@ -732,12 +802,13 @@ This changes the index schema, `docs/schemas/marketplace-index.schema.json` and 
   | `command` | `{command, args, via}` | What the command gives back, or `null`. `via` is `menu`, `key`, `palette`, `status`, `api` or `ai`. |
   | `event` | `{name, data}` | `null`, for each event it subscribed to. |
   | `panel`, `dialog` | `{panel or dialog, event}` | `null`, as `hikari.panels.on` and `hikari.dialogs.on` get them. |
+| `quick_pick` | `{pick, event}` | `null`, for an [open quick pick](#quick-picks-and-input-boxes)'s events. |
   | `complete`, `hover` | As for [Lua providers](#language-features-and-problems) | The items, or the hover. |
   | `export`, `import` | As for [Lua formats](#formats) | The bytes, or the Lines. |
   | `shutdown` | `{}` | `null`, after which HikariSub sends the notification `exit` and closes stdin. It ends the program 5 seconds later. |
 
 - **The program calls HikariSub:**
-  - **Operations.** Every [Hikari API](api.md) operation is a method of its own name with its own params, such as `{"jsonrpc": "2.0", "id": 7, "method": "lines.list", "params": {}}`. So are the plugin services: `panels.*`, `dialogs.*`, `files.*`, `net.fetch`, `job.begin`, `job.progress` and `job.cancelled`.
+  - **Operations.** Every [Hikari API](api.md) operation is a method of its own name with its own params, such as `{"jsonrpc": "2.0", "id": 7, "method": "lines.list", "params": {}}`. So are the plugin services: `panels.*`, `dialogs.*`, `quick_pick.*`, `input_box.ask`, `files.*`, `net.fetch`, `job.begin`, `job.progress` and `job.cancelled`.
   - **What Lua's members do.** `hikari/notify` `{text, level}`, `hikari/settings.get` `{id}`, `hikari/settings.set` `{id, value}`, `hikari/subscribe` `{events}`, `hikari/unsubscribe` `{events}`, `hikari/edit.begin` `{document, name}` and `hikari/edit.end` `{}`. The last two take and give back the app-wide edit turn that `hikari.document.edit` holds. Every step the program commits between them is one undo step, "<plugin name>: <name>", as `document.group_begin` makes. The turn also ends when the request from HikariSub it was taken in is answered.
 - **Errors.** A Hikari API error comes back as `{"code": -32000, "message", "data": {"code": "not_granted", "data": {…}}}`. An unknown method is `-32601`, and parameters that break the schema are `-32602` with `data.pointer`.
 - **Other output.** stderr goes to the Log panel.
@@ -838,7 +909,9 @@ end)
 
 ### Settings, grown
 
-#1230. Every setting may add:
+#1230. **Provisional:** the owner is deciding one unified Settings window ([ADR 0034](adr/0034-plugins-grow-into-an-extension-system.md#settings)), so the fields, `scope`, grouping and the Settings page below may change. `secret` and `${setting:<id>}` stand.
+
+Every setting may add:
 
 | Field | Meaning |
 | --- | --- |

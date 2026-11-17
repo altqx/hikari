@@ -148,7 +148,12 @@
                 "$ref": "#/$defs/Summary"
               },
               "icon": {"$ref": "#/$defs/IconRef"},
-              "when": {"$ref": "#/$defs/Conditions"}
+              "when": {"$ref": "#/$defs/Conditions"},
+              "palette": {
+                "description": "false keeps the command out of the command palette, for one only a status item, a menu or the AI runs.",
+                "type": "boolean",
+                "default": true
+              }
             }
           }
         },

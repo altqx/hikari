@@ -133,7 +133,7 @@ An error is `{code, message, data}`. The message is English text for developers 
 
 ## Extension operations
 
-[ADR 0034](adr/0034-plugins-grow-into-an-extension-system.md) adds these operations and events. They arrive with the code cards [#1222](https://github.com/altqx/hikari/issues/1222)–[#1231](https://github.com/altqx/hikari/issues/1231) on beta.5, all `since` 1, and each card moves its rows into the tables above as it lands. [Extensions](plugins.md#extensions) says how plugins use them. Schemas are in the subset above and use the shared `$defs`. Two new `$defs` are added: `Problem` and `ProgramProcess`.
+[ADR 0034](adr/0034-plugins-grow-into-an-extension-system.md) adds these operations and events. They arrive with the code cards [#1222](https://github.com/altqx/hikari/issues/1222)–[#1231](https://github.com/altqx/hikari/issues/1231) on beta.5, all `since` 1, and each card moves its rows into the tables above as it lands. [Extensions](plugins.md#extensions) says how plugins use them. Schemas are in the subset above and use the shared `$defs`. New `$defs`: `Problem` and `ProgramProcess`, and for the [quick-pick services](#quick-picks-and-input-boxes) `QuickPickItem` and `QuickPickButton`.
 
 | Operation | Mark | Callers | What it does | Card |
 | --- | --- | --- | --- | --- |
@@ -380,6 +380,124 @@ It takes no parameters (`{"type": "object", "additionalProperties": false}`). `d
 ### `plugins.run`, grown
 
 `plugins.run` gains the optional parameter `args` (`{"type": "object"}`), which reaches the command's handler, and the optional result field `result`, what the handler returned. It stays on the AI's always-ask list. An [AI tool](plugins.md#ai-tools-and-mcp-servers) call goes through its own gate instead, which checks `args` against the tool's `parameters` and `result` against its `result`.
+
+### Quick picks and input boxes
+
+#1236. These are plugin services, like `panels.*` and `dialogs.*`: the helper's `Ui` service carries them, and program plugins call them by name over JSON-RPC. They aren't registry operations, so they have no read/write mark and no `reference-v1.json` entry, and AI and MCP callers can't reach them. They need no permission, and open only while the plugin answers the user, as [Quick picks and input boxes](plugins.md#quick-picks-and-input-boxes) says; elsewhere they answer `refused` with reason `not_user_initiated`. Opening one closes any other in that window, which answers as cancelled.
+
+| Service | What it does |
+| --- | --- |
+| `quick_pick.ask` | Shows a quick pick and waits for the pick or a cancel. |
+| `input_box.ask` | Shows an input box and waits for the text or a cancel. |
+| `quick_pick.open` | Shows a live quick pick and answers its id at once; its events go to the plugin. |
+| `quick_pick.update` | Changes an open quick pick. |
+| `quick_pick.close` | Closes an open quick pick. |
+
+#### `quick_pick.ask`
+
+```json
+{"type": "object", "properties": {
+  "title": {"type": "string", "maxLength": 100},
+  "placeholder": {"type": "string", "maxLength": 200},
+  "value": {"type": "string", "maxLength": 1000, "description": "The filter text it starts with."},
+  "items": {"type": "array", "maxItems": 10000, "items": {"$ref": "#/$defs/QuickPickItem"}},
+  "many": {"type": "boolean", "description": "A check box per item; Enter takes every checked one."},
+  "match_on": {"type": "array", "maxItems": 2, "items": {"enum": ["description", "detail"]}, "description": "Filtering always matches label, and these too."},
+  "keep_order": {"type": "boolean", "description": "Keep the given order instead of sorting matches best first."},
+  "step": {"type": "object", "properties": {"current": {"type": "integer", "minimum": 1}, "total": {"type": "integer", "minimum": 1}},
+    "required": ["current", "total"], "additionalProperties": false},
+  "buttons": {"type": "array", "maxItems": 3, "items": {"$ref": "#/$defs/QuickPickButton"}, "description": "Icon buttons in the title row."}},
+ "required": ["items"], "additionalProperties": false}
+```
+
+```json
+{"type": "object", "properties": {
+  "cancelled": {"type": "boolean"},
+  "items": {"type": "array", "items": {"type": "string"}, "description": "The picked ids in list order; absent when cancelled."},
+  "button": {"type": "string", "description": "A title button the user pressed instead of picking; cancelled is then true."}},
+ "required": ["cancelled"], "additionalProperties": false}
+```
+
+Item ids are unique in the list, and separators have none. With `many`, Enter with nothing checked answers `{"cancelled": false, "items": []}`.
+
+#### `input_box.ask`
+
+```json
+{"type": "object", "properties": {
+  "title": {"type": "string", "maxLength": 100},
+  "prompt": {"type": "string", "maxLength": 300, "description": "One line under the box."},
+  "placeholder": {"type": "string", "maxLength": 200},
+  "value": {"type": "string", "maxLength": 10000},
+  "selection": {"type": "object", "properties": {"from": {"type": "integer", "minimum": 0}, "to": {"type": "integer", "minimum": 0}},
+    "required": ["from", "to"], "additionalProperties": false, "description": "UTF-16 offsets in value; all of it when omitted."},
+  "password": {"type": "boolean"},
+  "validation": {"type": "object", "properties": {
+    "pattern": {"type": "string", "maxLength": 500, "description": "An ECMAScript expression the whole text must match."},
+    "message": {"type": "string", "minLength": 1, "maxLength": 200},
+    "min_length": {"type": "integer", "minimum": 0},
+    "max_length": {"type": "integer", "minimum": 1, "maximum": 10000}},
+   "required": ["message"], "additionalProperties": false},
+  "step": {"type": "object", "properties": {"current": {"type": "integer", "minimum": 1}, "total": {"type": "integer", "minimum": 1}},
+    "required": ["current", "total"], "additionalProperties": false}},
+ "additionalProperties": false}
+```
+
+```json
+{"type": "object", "properties": {
+  "cancelled": {"type": "boolean"},
+  "value": {"type": "string", "description": "Absent when cancelled."}},
+ "required": ["cancelled"], "additionalProperties": false}
+```
+
+A `pattern` that isn't a valid expression answers `invalid_params`.
+
+#### `quick_pick.open`, `quick_pick.update` and `quick_pick.close`
+
+`quick_pick.open` takes `quick_pick.ask`'s parameters with `items` optional, plus:
+
+```json
+"filter": {"enum": ["fuzzy", "none"], "description": "none shows the items as given, for a plugin that filters on its value events."},
+"busy": {"type": "boolean"},
+"active": {"type": "string", "description": "The id of the item to highlight."}
+```
+
+It answers `{"pick": "q1"}` (`{"type": "string", "pattern": "^q[0-9]{1,9}$"}`). `quick_pick.update` takes `{pick}` and any field `open` takes, and replaces what it names. `quick_pick.close` takes `{pick}`. Both answer `{pick}`, and a quick pick that has closed answers `not_found`. A plugin has at most one open.
+
+Its events reach the plugin's `hikari.quick_pick.on` handler, or a program plugin's `quick_pick` request:
+
+```json
+{"type": "object", "properties": {
+  "kind": {"enum": ["value", "active", "accept", "button", "hide"]},
+  "pick": {"type": "string"},
+  "value": {"type": "string"},
+  "item": {"type": "string"},
+  "items": {"type": "array", "items": {"type": "string"}},
+  "button": {"type": "string"}},
+ "required": ["kind", "pick"], "additionalProperties": false}
+```
+
+`value` comes with `value`; `active` with `item`; `accept` with `items`; `button` with `button`, plus `item` for an item's button. Waiting `value` events merge, so only the newest arrives.
+
+#### New `$defs`
+
+```json
+"QuickPickItem": {"type": "object", "properties": {
+  "kind": {"enum": ["item", "separator"], "description": "item when omitted."},
+  "id": {"type": "string", "minLength": 1, "maxLength": 200, "description": "Needed by every item but a separator."},
+  "label": {"type": "string", "minLength": 1, "maxLength": 200},
+  "description": {"type": "string", "maxLength": 200, "description": "Shown after the label, muted."},
+  "detail": {"type": "string", "maxLength": 500, "description": "Shown on a second line."},
+  "icon": {"type": "string", "maxLength": 68, "pattern": "^(own:)?[a-z0-9]+(-[a-z0-9]+)*$"},
+  "picked": {"type": "boolean", "description": "Checked at the start, with many."},
+  "always_show": {"type": "boolean", "description": "Kept whatever the filter."},
+  "buttons": {"type": "array", "maxItems": 2, "items": {"$ref": "#/$defs/QuickPickButton"}}},
+ "required": ["label"], "additionalProperties": false},
+"QuickPickButton": {"type": "object", "properties": {
+  "id": {"type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$", "maxLength": 64},
+  "icon": {"type": "string", "maxLength": 68, "pattern": "^(own:)?[a-z0-9]+(-[a-z0-9]+)*$"},
+  "tooltip": {"type": "string", "minLength": 1, "maxLength": 100}},
+ "required": ["id", "icon", "tooltip"], "additionalProperties": false}
+```
 
 ### Events
 

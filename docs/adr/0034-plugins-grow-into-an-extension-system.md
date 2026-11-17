@@ -84,6 +84,8 @@ Q600: `contributes.formats` adds subtitle formats, export first. For an export, 
 
 ## Settings
 
+**Provisional.** The owner is deciding one unified Settings window for the app's, Projects' and plugins' settings. Until then, the setting fields below, `scope`, grouping and where plugin settings show may change. `secret` settings and `${setting:<id>}` in programs stand.
+
 Q601: plugin settings gain:
 
 - a `description`, a `group` and an `order`;
@@ -92,6 +94,14 @@ Q601: plugin settings gain:
 - a `scope`: `user` settings can't be overridden by a Project.
 
 Each plugin's settings also get a page under Settings › Plugins. Settings may fill a program's arguments and environment, so a token reaches an MCP server without being written down.
+
+## Quick picks, input boxes and the command palette
+
+The owner added a VS Code-style command palette (Ctrl+Shift+P), Quick Open (Ctrl+P) and one quick-pick list and input box, on [#1236](https://github.com/altqx/hikari/issues/1236). Plugins open the same popups:
+
+- **Services, not operations.** `quick_pick.ask`, `input_box.ask`, `quick_pick.open`, `quick_pick.update` and `quick_pick.close` are plugin services like `dialogs.*`, modelled on VS Code's `showQuickPick`, `showInputBox` and `createQuickPick`. They need no permission, and AI and MCP callers can't reach them.
+- **Only when the user asked.** A plugin opens one only while it answers a command, a click in its own panel or dialog, or a status item. A timer, an event or an AI tool can't take the focus with one.
+- **The palette** lists every plugin command as "<plugin>: <title>" with its `description`, unless the command sets `palette: false`, and runs it with `via: "palette"`. Its look and Quick Open's prefixes are #1236's UX spec. Plugins add no Quick Open prefixes in API 1.
 
 ## Panels
 
@@ -133,6 +143,7 @@ The split on #1209 stands. Its order changes in two places: formats move up beca
 8. #1226, programs and program plugins.
 9. #1227, language features and the problems list. Its LSP half needs #1226.
 10. #1228, AI tools and MCP servers. MCP servers need #1226.
-11. #1231, developer tools. Each earlier card adds its own guide page; this card adds the harness, dev plugins and type hints.
+11. #1236, the command palette and popups, after its UX spec. Its plugin services follow #1224.
+12. #1231, developer tools. Each earlier card adds its own guide page; this card adds the harness, dev plugins and type hints.
 
 Each card updates `tests/api/reference-v1.json`, `api.json`, `docs/plugins.md`, `docs/api-reference.md` and the manifest schema as it lands. The manifest schema already holds every key, so a card that finds a key wrong changes the schema and this record together.
