@@ -8163,7 +8163,7 @@ ApplicationWindow {
                 id: agentPanel
                 objectName: "agentPanel"
                 dockName: root.engineName("Agent")
-                minimumBodySize: Qt.size(300, 240)
+                minimumBodySize: Qt.size(300, Math.max(240, agentLoader.item ? agentLoader.item.minimumHeight : 0))
                 anchors.fill: parent
                 title: qsTranslate("HikariSub.Agent", "Agent")
                 Loader {

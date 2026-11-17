@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, test } from "bun:test";
 import { spawn } from "node:child_process";
+import { once } from "node:events";
 import { mkdtempSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -35,6 +36,7 @@ function harness(answers: Partial<Record<OperationName, unknown>> = {}, system =
     const calls: { operation: string; params: unknown }[] = [];
     const updates: SessionUpdate[] = [];
     const spawned: string[] = [];
+    const closed: Promise<unknown>[] = [];
     let session: CodexSession | undefined;
     const params = { sessionId: "t1", agent: "codex" as const, model: { providerId: "", model }, system,
         ...(child ? { task: { parent: "p1", taskId: "k1", scope: { document: 1, lines: [1] } } } : {}) };
@@ -58,9 +60,11 @@ function harness(answers: Partial<Record<OperationName, unknown>> = {}, system =
     const codex = session = new CodexSession("t1", params, {
         spawn: (id) => {
             spawned.push(id);
-            return spawn(process.execPath, [kFake, "app-server", "-c", `mcp_servers.hikari.url="${channel.url}mcp"`,
+            const codexProcess = spawn(process.execPath, [kFake, "app-server", "-c", `mcp_servers.hikari.url="${channel.url}mcp"`,
                 "-c", 'mcp_servers.hikari.bearer_token_env_var="HIKARI_MCP_TOKEN"'],
             { env: { ...process.env, HIKARI_MCP_TOKEN: kToken, FAKE_CODEX_LOG: log }, stdio: ["pipe", "pipe", "pipe"] });
+            closed.push(once(codexProcess, "close"));
+            return codexProcess;
         },
         kindOf: (tool) => (tool === "document_apply" ? "edit" : "read"),
         send: (update) => updates.push(update),
@@ -70,7 +74,7 @@ function harness(answers: Partial<Record<OperationName, unknown>> = {}, system =
     const script = (s: unknown) => [{ type: "text" as const, text: typeof s === "string" ? s : JSON.stringify(s) }];
     const logged = (method: string) => readFileSync(log, "utf8").split("\n").filter((l) => l.startsWith(`${method} `))
         .map((l) => JSON.parse(l.slice(method.length + 1)) as unknown);
-    return { session: codex, calls, updates, spawned, script, logged, log };
+    return { session: codex, calls, updates, spawned, closed, script, logged, log };
 }
 
 describe("Codex through its app-server", () => {
@@ -211,8 +215,9 @@ describe("Codex through its app-server", () => {
             expect((failed as RpcError).message).toBe("You've hit your usage limit.");
             expect((failed as RpcError).data).toEqual({ kind: "rateLimited", httpStatus: 0, detail: "You've hit your usage limit." });
         } finally {
-            console.error = error;
             h.session.close();
+            await Promise.all(h.closed);
+            console.error = error;
         }
         const text = logged.join("\n");
         expect(text).toContain("Codex turn failed: You've hit your usage limit.");

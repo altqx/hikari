@@ -344,7 +344,10 @@ FocusScope {
         background: Rectangle { color: Theme.field; radius: 3 }
     }
 
+    readonly property real minimumHeight: composerBox.heightWithoutChips + (chips.visible ? composerBox.chipRowHeight : 0)
+
     ColumnLayout {
+        id: column
         anchors.fill: parent
         spacing: 0
 
@@ -783,9 +786,18 @@ FocusScope {
             readonly property int foldedFiles: Math.max(0, attached.length - chipRoom)
             readonly property int chipCount: (hasActiveTab ? 1 : 0) + Math.min(attached.length, chipRoom) + (foldedFiles > 0 ? 1 : 0)
             readonly property real chipRowHeight: 22 + chips.spacing
-            readonly property real roomForChips: panel.height - timeline.y - timeline.Layout.minimumHeight - lineHeight - fieldPadding
-                                                 - buttonRow.implicitHeight - 64
-            readonly property int chipRows: Math.max(1, Math.floor(roomForChips / chipRowHeight))
+            readonly property real heightWithoutChips: {
+                let rest = 0
+                for (const sibling of column.children) {
+                    if (sibling === composerBox || !sibling.visible)
+                        continue
+                    rest += (sibling.Layout.fillHeight ? sibling.Layout.minimumHeight : sibling.implicitHeight)
+                        + sibling.Layout.topMargin + sibling.Layout.bottomMargin
+                }
+                return rest + Layout.topMargin + Layout.bottomMargin + 2 * composerColumn.y + lineHeight + fieldPadding
+                    + composerColumn.spacing + buttonRow.implicitHeight
+            }
+            readonly property int chipRows: Math.max(1, Math.floor((panel.height - heightWithoutChips) / chipRowHeight))
             readonly property int chipsPerRow: Math.ceil(chipCount / chipRows)
             readonly property bool chipsShareRows: chipsPerRow > 1
             readonly property real moreWidth: foldedFiles > 0 ? moreFiles.implicitWidth + chips.spacing : 0
