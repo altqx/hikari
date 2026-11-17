@@ -9,8 +9,7 @@ namespace hikari::ui::style {
 
 namespace {
 
-QColor g_focus;
-QColor g_control;
+StyleColours::Colours g_colours;
 std::vector<StyleColours *> g_instances;
 
 }
@@ -32,33 +31,94 @@ StyleColours *StyleColours::create(QQmlEngine *engine, QJSEngine *)
 
 bool StyleColours::themed() const
 {
-    return g_focus.isValid();
+    return g_colours.focus.isValid();
+}
+
+bool StyleColours::highContrast() const
+{
+    return g_colours.highContrast;
 }
 
 QColor StyleColours::focus() const
 {
-    return g_focus;
+    return g_colours.focus;
 }
 
 QColor StyleColours::control() const
 {
-    return g_control;
+    return g_colours.control;
 }
 
-void StyleColours::setControl(const QColor &control)
+QColor StyleColours::text() const
 {
-    if (control == g_control)
-        return;
-    g_control = control;
-    for (auto *instance : g_instances)
-        emit instance->changed();
+    return g_colours.text;
 }
 
-void StyleColours::setFocus(const QColor &focus)
+QColor StyleColours::muted() const
 {
-    if (focus == g_focus)
+    return g_colours.muted;
+}
+
+QColor StyleColours::line() const
+{
+    return g_colours.line;
+}
+
+QColor StyleColours::panel() const
+{
+    return g_colours.panel;
+}
+
+QColor StyleColours::raised() const
+{
+    return g_colours.raised;
+}
+
+QColor StyleColours::field() const
+{
+    return g_colours.field;
+}
+
+QColor StyleColours::accent() const
+{
+    return g_colours.accent;
+}
+
+QColor StyleColours::onAccent() const
+{
+    return g_colours.onAccent;
+}
+
+QColor StyleColours::select() const
+{
+    return g_colours.select;
+}
+
+QColor StyleColours::hover() const
+{
+    return g_colours.hover;
+}
+
+QColor StyleColours::pressed() const
+{
+    return g_colours.pressed;
+}
+
+QColor StyleColours::disabled() const
+{
+    return g_colours.disabled;
+}
+
+QColor StyleColours::danger() const
+{
+    return g_colours.danger;
+}
+
+void StyleColours::set(const Colours &colours)
+{
+    if (colours == g_colours)
         return;
-    g_focus = focus;
+    g_colours = colours;
     for (auto *instance : g_instances)
         emit instance->changed();
 }

@@ -62,7 +62,7 @@ TEST(PluginManifest, EveryFieldReads)
     json["permissions"] = *Json::parse(R"({"documents.all": "Compares scripts",
         "network": {"hosts": ["api.example.com"], "reason": "Looks words up"},
         "files": [{"id": "fonts", "title": "Fonts", "writable": true, "reason": "Reads fonts"}],
-        "vcs.read": "Marks Lines changed since a tag"})");
+        "vcs.read": "Marks Lines changed since a tag", "background": "Checks the feed"})");
     json["contributes"] = *Json::parse(R"({"commands": [{"id": "greet", "title": "Greet"}],
         "panels": [{"id": "board", "title": "Board"}, {"id": "notes", "title": "Notes", "area": "bottom"}],
         "settings": [{"id": "loud", "title": "Loud", "type": "boolean", "default": false},
@@ -78,6 +78,7 @@ TEST(PluginManifest, EveryFieldReads)
     ASSERT_EQ(m->permissions.files.size(), 1u);
     EXPECT_TRUE(m->permissions.files[0].writable);
     EXPECT_EQ(m->permissions.vcsRead, "Marks Lines changed since a tag");
+    EXPECT_EQ(m->permissions.background, "Checks the feed");
     ASSERT_EQ(m->commands.size(), 1u);
     EXPECT_EQ(m->commands[0].title, "Greet");
     ASSERT_EQ(m->panels.size(), 2u);
@@ -85,6 +86,21 @@ TEST(PluginManifest, EveryFieldReads)
     EXPECT_EQ(m->panels[0].area, PanelArea::Right);
     EXPECT_EQ(m->panels[1].area, PanelArea::Bottom);
     EXPECT_EQ(m->settings.size(), 3u);
+}
+
+TEST(PluginManifest, ACommandsPaletteFieldsRead)
+{
+    Json json = minimal();
+    json["contributes"] = *Json::parse(R"({"commands": [
+        {"id": "greet", "title": "Greet", "description": "Says hello to the selected Lines"},
+        {"id": "status", "title": "Status", "palette": false}]})");
+    const auto m = parse(json);
+    ASSERT_TRUE(m) << m.error().at << " " << m.error().detail;
+    ASSERT_EQ(m->commands.size(), 2u);
+    EXPECT_EQ(m->commands[0].description, "Says hello to the selected Lines");
+    EXPECT_TRUE(m->commands[0].palette);
+    EXPECT_EQ(m->commands[1].description, "");
+    EXPECT_FALSE(m->commands[1].palette);
 }
 
 TEST(PluginManifest, APanelDocksInTheAreaItNames)
@@ -326,9 +342,10 @@ TEST(PluginManifest, ListedPermissionsOfTheWrongShapeAreLeftOut)
 {
     const Permissions p = readPermissions(*Json::parse(
         R"({"documents.all": 1, "network": {"hosts": ["api.example.com", 2], "reason": "Looks words up"},
-            "files": [{"id": "fonts", "title": "Fonts", "writable": "yes", "reason": 3}], "vcs.read": true})"));
+            "files": [{"id": "fonts", "title": "Fonts", "writable": "yes", "reason": 3}], "vcs.read": true, "background": false})"));
     EXPECT_FALSE(p.allDocuments);
     EXPECT_FALSE(p.vcsRead);
+    EXPECT_FALSE(p.background);
     EXPECT_EQ(p.networkHosts, std::vector<std::string>{"api.example.com"});
     EXPECT_EQ(p.networkReason, "Looks words up");
     ASSERT_EQ(p.files.size(), 1u);
@@ -353,6 +370,7 @@ TEST(PluginManifest, AnUpdateAsksForMoreOnlyWhenItAddsAPermission)
     more.tier = Tier::Unrestricted;
     more.permissions.allDocuments = "Compares scripts";
     more.permissions.vcsRead = "Marks changed Lines";
+    more.permissions.background = "Checks the feed";
     more.permissions.networkHosts = {"api.example.com", "cdn.example.com"};
     more.permissions.files = {{"fonts", "Fonts", true, "r"}, {"out", "Out", true, "r"}, {"logs", "Logs", false, "r"}};
     const PermissionIncrease increase = permissionIncrease(current, more);
@@ -360,9 +378,81 @@ TEST(PluginManifest, AnUpdateAsksForMoreOnlyWhenItAddsAPermission)
     EXPECT_TRUE(increase.unrestricted);
     EXPECT_TRUE(increase.allDocuments);
     EXPECT_TRUE(increase.vcsRead);
+    EXPECT_TRUE(increase.background);
     EXPECT_EQ(increase.networkHosts, std::vector<std::string>{"cdn.example.com"});
     EXPECT_EQ(increase.files, (std::vector<std::string>{"fonts", "logs"}));
     EXPECT_FALSE(permissionIncrease(more, more).any());
+}
+
+
+TEST(PluginManifest, ProgramsReadWithTheirPlatforms)
+{
+    Json json = minimal();
+    json["permissions"] = *Json::parse(R"({"programs": "Checks grammar"})");
+    json["contributes"] = *Json::parse(R"({"settings": [{"id": "lang", "title": "Language", "type": "string", "default": "en"}],
+        "programs": [{"id": "ltex", "title": "LTeX", "network": true, "confinement": "lowIntegrity", "platforms": {
+            "linux-x64": {"path": "bin/ltex", "args": ["--stdio", "${setting:lang}"], "env": {"LTEX_HOME": "${data}"}},
+            "windows-x64": {"download": {"url": "https://example.com/ltex.zip", "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "size": 10,
+                "archive": "zip", "entry": "ltex/bin/ltex.exe"}}}}]})");
+    const auto m = parse(json);
+    ASSERT_TRUE(m) << m.error().at << " " << m.error().detail;
+    EXPECT_EQ(m->permissions.programs, "Checks grammar");
+    const Program *ltex = m->program("ltex");
+    ASSERT_NE(ltex, nullptr);
+    EXPECT_EQ(ltex->title, "LTeX");
+    EXPECT_TRUE(ltex->network);
+    EXPECT_EQ(ltex->confinement, Confinement::LowIntegrity);
+    const ProgramRun &linux = ltex->platforms.at("linux-x64");
+    EXPECT_EQ(linux.path, "bin/ltex");
+    EXPECT_EQ(linux.args, (std::vector<std::string>{"--stdio", "${setting:lang}"}));
+    EXPECT_EQ(linux.env, (std::vector<std::pair<std::string, std::string>>{{"LTEX_HOME", "${data}"}}));
+    const ProgramRun &windows = ltex->platforms.at("windows-x64");
+    ASSERT_TRUE(windows.download);
+    EXPECT_EQ(windows.download->size, 10);
+    EXPECT_EQ(windows.download->entry, "ltex/bin/ltex.exe");
+    EXPECT_EQ(m->program("nope"), nullptr);
+}
+
+TEST(PluginManifest, ProgramsAreRefusedWithoutThePermissionOrInAShapeTheyCantRun)
+{
+    Json json = minimal();
+    json["contributes"] = *Json::parse(R"({"programs": [{"id": "x", "title": "X", "platforms": {"linux-x64": {"path": "x"}}}]})");
+    EXPECT_EQ(problem(json).at, "/permissions/programs");
+
+    json["permissions"] = *Json::parse(R"({"programs": "Runs X"})");
+    json["contributes"] = *Json::parse(R"({"programs": [{"id": "x", "title": "X", "platforms": {"linux-x64": {"path": "x"}}},
+        {"id": "x", "title": "Y", "platforms": {"linux-x64": {"path": "y"}}}]})");
+    EXPECT_EQ(problem(json).kind, Kind::DuplicateId);
+
+    json["contributes"] = *Json::parse(R"({"programs": [{"id": "x", "title": "X", "confinement": "lowIntegrity",
+        "platforms": {"windows-x64": {"path": "x.exe"}}}]})");
+    EXPECT_EQ(problem(json).at, "/contributes/programs/0");
+
+    json["contributes"] = *Json::parse(std::string(R"({"programs": [{"id": "x", "title": "X", "platforms": {"linux-x64":
+        {"download": {"url": "https://example.com/x.zip", "sha256": ")") + std::string(64, 'a') + R"(", "size": 1, "archive": "zip"}}}}]})");
+    EXPECT_EQ(problem(json).at, "/contributes/programs/0/platforms/linux-x64/download");
+
+    json["contributes"] = *Json::parse(R"({"settings": [{"id": "key", "title": "Key", "type": "string", "default": ""}],
+        "programs": [{"id": "x", "title": "X", "platforms": {"linux-x64": {"path": "x", "args": ["${setting:key}"]}}}]})");
+    EXPECT_TRUE(parse(json));
+}
+
+TEST(PluginManifest, AnUpdateAsksAgainForANewProgramOrOneThatGainsTheNetwork)
+{
+    Manifest current;
+    current.permissions.programs = "Runs tools";
+    current.programs = {Program{"a", "A", {}, false, false, Confinement::Container}};
+    EXPECT_FALSE(permissionIncrease(current, current).any());
+
+    Manifest next = current;
+    next.programs[0].network = true;
+    next.programs.push_back(Program{"b", "B", {}, false, false, Confinement::Container});
+    const PermissionIncrease increase = permissionIncrease(current, next);
+    EXPECT_FALSE(increase.runPrograms);
+    EXPECT_EQ(increase.programs, (std::vector<std::string>{"a", "b"}));
+
+    Manifest none;
+    EXPECT_TRUE(permissionIncrease(none, current).runPrograms);
 }
 
 }

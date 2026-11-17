@@ -820,7 +820,7 @@ void PositionShifterTool::drawShape(Overlay &out, const std::vector<ClipPoint> &
 
 Overlay PositionShifterTool::overlay(const VisualHost &host) const
 {
-    Overlay out;
+    Overlay out{.handles = host.handleColours()};
     out.unit = unitOf(host);
     PointF &drawingPos = m_drawingPos;
     for (const Element &e : m_elems) {

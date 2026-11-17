@@ -1038,7 +1038,7 @@ void LineGrid::drawRowMarks(QPainter *painter, const QRectF &cell, const QVarian
     const double part = (bar.height() - gap * double(colours.size() - 1)) / double(colours.size());
     for (qsizetype i = 0; i < colours.size(); ++i)
         painter->fillRect(QRectF(bar.left(), bar.top() + double(i) * (part + gap), bar.width(), part), ink(colours[i].toInt()));
-    if (theme::isHighContrast(state.code)) {
+    if (themes::isHighContrast(state.type)) {
         painter->save();
         painter->setPen(QPen(roles.text, 1));
         painter->setBrush(Qt::NoBrush);

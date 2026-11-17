@@ -500,12 +500,12 @@ bool RotationZTool::cancelPending(VisualHost &host)
 
 Overlay RotationZTool::overlay(const VisualHost &host) const
 {
-    Overlay out;
+    Overlay out{.handles = host.handleColours()};
     out.unit = unitOf(host);
     const float u = out.unit;
     if (m_hasTwoPoints) {
         if (m_visibility[1]) {
-            out.lines.push_back({m_twoPoints[0], m_twoPoints[1], 2.f, kHandleBorder});
+            out.lines.push_back({m_twoPoints[0], m_twoPoints[1], 2.f, out.handles.border});
             drawRect(out, m_twoPoints[1], m_hover[1], 4.f);
         }
         if (m_visibility[0])
@@ -552,12 +552,12 @@ Overlay RotationZTool::overlay(const VisualHost &host) const
         const float xx3 = xx1 + (radius * std::sin((m_lastmove.y - 90) * kRad));
         const float yy3 = yy1 + (radius * std::cos((m_lastmove.y - 90) * kRad));
         out.lines.push_back({{xx1 - 5.0f * u, yy1}, {xx1 + 5.0f * u, yy1}, 10.f, 0xAAFF0000});
-        out.lines.push_back({org, {xx1, yy1}, 2.f, kHandleBorder});
-        out.lines.push_back({{xx2, yy2}, {xx3, yy3}, 2.f, kHandleBorder});
+        out.lines.push_back({org, {xx1, yy1}, 2.f, out.handles.border});
+        out.lines.push_back({{xx2, yy2}, {xx3, yy3}, 2.f, out.handles.border});
     }
-    out.lines.push_back({{org.x - 10.0f * u, org.y}, {org.x + 10.0f * u, org.y}, 2.f, kHandleBorder});
-    out.lines.push_back({{org.x, org.y - 10.0f * u}, {org.x, org.y + 10.0f * u}, 2.f, kHandleBorder});
-    out.lines.push_back({org, m_to, 2.f, kHandleBorder});
+    out.lines.push_back({{org.x - 10.0f * u, org.y}, {org.x + 10.0f * u, org.y}, 2.f, out.handles.border});
+    out.lines.push_back({{org.x, org.y - 10.0f * u}, {org.x, org.y + 10.0f * u}, 2.f, out.handles.border});
+    out.lines.push_back({org, m_to, 2.f, out.handles.border});
     return out;
 }
 
@@ -950,7 +950,7 @@ void RotationXYTool::pointer(const Pointer &event, VisualHost &host)
 
 Overlay RotationXYTool::overlay(const VisualHost &host) const
 {
-    Overlay out;
+    Overlay out{.handles = host.handleColours()};
     out.unit = unitOf(host);
     const VideoView &view = host.view();
     const int time = static_cast<int>(host.videoTimeMs());
@@ -977,8 +977,8 @@ Overlay RotationXYTool::overlay(const VisualHost &host) const
         drawXYGrid(out, p, m_an);
     const PointF org = m_org;
     const float arm = 10.0f * unitOf(host);
-    out.lines.push_back({{org.x - arm, org.y}, {org.x + arm, org.y}, 2.f, kHandleBorder});
-    out.lines.push_back({{org.x, org.y - arm}, {org.x, org.y + arm}, 2.f, kHandleBorder});
+    out.lines.push_back({{org.x - arm, org.y}, {org.x + arm, org.y}, 2.f, out.handles.border});
+    out.lines.push_back({{org.x, org.y - arm}, {org.x, org.y + arm}, 2.f, out.handles.border});
     return out;
 }
 
@@ -1236,7 +1236,7 @@ void drawXYGrid(Overlay &out, const XYProjection &p, int an)
     }
     const float addy = (an < 4) ? 9.f : -9.f, addx = (an % 3 == 0) ? -9.f : 9.f;
     const float add1y = (an < 4) ? 10.f : -10.f, add1x = (an % 3 == 0) ? -10.f : 10.f;
-    const std::uint32_t colour = kHandleBorder;
+    const std::uint32_t colour = out.handles.border;
     const float ly[3] = {0.f, addy, 0.f}, o[3] = {0.f, 0.f, 0.f}, lx[3] = {addx, 0.f, 0.f}, lz[3] = {0.f, 0.f, 9.f};
     line3(out, pipe, ly, o, colour);
     line3(out, pipe, o, lx, colour);

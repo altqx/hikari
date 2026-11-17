@@ -102,6 +102,7 @@ Grid > Swap lines [GRID_SWAP_LINES]
 Grid > Make times continuous >
 Grid > Make times continuous > With the previous line [GRID_MAKE_CONTINOUS_PREVIOUS_LINE]
 Grid > Make times continuous > With the next line [GRID_MAKE_CONTINOUS_NEXT_LINE]
+Grid > Snap to the scene [GLOBAL_SNAP_TO_SCENE]
 Grid > Save audio of selected lines… [GLOBAL_SAVE_SELECTED_AUDIO]
 Grid > Make line group [GRID_TREE_MAKE]
 Grid > Convert Aegisub folds to line groups [GLOBAL_CONVERT_FOLDS_TO_GROUPS]

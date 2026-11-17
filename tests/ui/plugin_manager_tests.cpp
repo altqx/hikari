@@ -189,6 +189,23 @@ private slots:
         QCOMPARE(only(manager).value(QStringLiteral("permissions")).toStringList().size(), 2);
     }
 
+    void theInstallQuestionNamesProgramsAndWhatTheyReach()
+    {
+        hikari::plugins::Permissions permissions;
+        permissions.programs = "It checks grammar.";
+        std::vector<hikari::plugins::Program> programs{
+            {"ltex", "LTeX", {}, true, false, hikari::plugins::Confinement::LowIntegrity},
+            {"lint", "Lint", {}, false, false, hikari::plugins::Confinement::Container}};
+        QCOMPARE(hikari::app::permissionLines(false, permissions, false, programs),
+                 (QStringList{QStringLiteral("Runs programs that come with it: LTeX, Lint: It checks grammar."),
+                              QStringLiteral("Connects to the internet"), QStringLiteral("Can read your files")}));
+        programs.pop_back();
+        programs[0].network = false;
+        programs[0].confinement = hikari::plugins::Confinement::Container;
+        QCOMPARE(hikari::app::permissionLines(false, permissions, false, programs),
+                 QStringList{QStringLiteral("Runs programs that come with it: LTeX: It checks grammar.")});
+    }
+
     void detailsListWhatAPluginAsksForAddsAndKeeps()
     {
         PluginManager manager(folders());
@@ -198,7 +215,8 @@ private slots:
         QVERIFY(manifest.open(QIODevice::WriteOnly | QIODevice::Truncate));
         manifest.write(R"({"id": "com.example.hello", "name": "Hello", "version": "1.0.0", "api": 1, "main": "main.lua",
             "authors": ["Ana", "Bo"], "icon": "icon.png",
-            "permissions": {"documents.all": "It checks every tab.", "vcs.read": "It marks Lines changed since a tag."},
+            "permissions": {"documents.all": "It checks every tab.", "vcs.read": "It marks Lines changed since a tag.",
+                            "background": "It checks the feed."},
             "contributes": {"commands": [{"id": "greet", "title": "Say hello"}],
                             "panels": [{"id": "notes", "title": "Notes"}],
                             "settings": [{"id": "count", "title": "Count", "type": "integer", "default": 1, "maximum": 5}]}})");
@@ -210,10 +228,11 @@ private slots:
         QCOMPARE(row.value(QStringLiteral("adds")).toStringList(),
                  (QStringList{QStringLiteral("Command: Say hello"), QStringLiteral("Panel: Notes")}));
         const QStringList permissions = row.value(QStringLiteral("permissions")).toStringList();
-        QCOMPARE(permissions.size(), 2);
+        QCOMPARE(permissions.size(), 3);
         QVERIFY(permissions.first().contains(QStringLiteral("It checks every tab.")));
-        QCOMPARE(permissions.last(), QStringLiteral("Read the branches, tags and history of the git repository holding your "
-                                                    "subtitle files: It marks Lines changed since a tag."));
+        QCOMPARE(permissions.at(1), QStringLiteral("Read the branches, tags and history of the git repository holding your "
+                                                   "subtitle files: It marks Lines changed since a tag."));
+        QCOMPARE(permissions.last(), QStringLiteral("Works in the background while HikariSub is open: It checks the feed."));
         QUrl opened;
         const auto routes = hikari::backends::desktop::replaceRoutes({[&](const QUrl &url) { opened = url; return true; }, {}, {}});
         QVERIFY(reread.openDataFolder(QStringLiteral("com.example.hello")));

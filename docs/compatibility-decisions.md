@@ -2,6 +2,10 @@
 
 Where HikariSub's automation API and file formats knowingly differ from what they were, or from Aegisub 3.5.1, and why. HikariSub follows Aegisub 3.5.1 and the Lua API additions of arch1t3cht's fork, so scripts written for them run unchanged. Each entry names its card. This is not the legacy parity ledger that wave 7 removed.
 
+## C06-set-undo-point
+
+`aegisub.set_undo_point(description)` closes an undo step, as in Aegisub 3.5.1. A run applies as one history step for each undo point that closed changes, named "Automation: <description>", then one for the changes after the last point, named after the macro. An undo point with no changes since the last one adds nothing. A run that errors or is cancelled applies no step. Validation and anything outside a macro run raise Aegisub's "Attempt to set an undo point in a context where it makes no sense to do so." It used to do nothing, so every run was one step. Steps keep HikariSub's "Automation: " prefix, which Aegisub doesn't add. [#1216](https://github.com/altqx/hikari/issues/1216), owner Q586 (2026-11-17).
+
 ## FA4-getpixel-rgb
 
 `frame:getPixel(x, y)` returns three integers, r, g and b, as arch1t3cht's fork does. It used to return one packed integer (`b * 65536 + g * 256 + r`). Outside the frame it returns nil. [FA4 #561](https://github.com/altqx/hikari/issues/561), owner decision 2026-10-31.
@@ -99,6 +103,13 @@ A file or session that stores a blank-audio path with `noise` in it (`dummy-audi
 ## PT-spectrum-curve
 
 The audio spectrum has a frequency curve: Linear (legacy's spectrum, unchanged), Speech (legacy's non-linear spectrum) and Logarithmic. Speech and Logarithmic draw power in decibels over 60 dB; Linear keeps legacy's linear power. Legacy's `AUDIO_SPECTRUM_NON_LINEAR_ON=true` imports as Speech. [PT #1212](https://github.com/altqx/hikari/issues/1212).
+## PT-timing-keys
+
+Settings › Audio › "Timing keys work in every panel" (Never, In the Timing layout, Always; In the Timing layout by default) is HikariSub's version of Aegisub's Medusa timing keys. When it applies, the audio panel's shortcuts also work in the video and the line editor. The grid already takes every audio shortcut but the five primary ones (Enter and the arrows), as legacy does, whatever the setting. Unlike Aegisub, arrows, Page Up and Down, Home, End, Enter, Tab and Escape keep their panel's meaning, and in a text box only shortcuts with Ctrl, Alt or Meta take part (coordinator, 2026-11-17). Switching layouts never changes the setting. [PT #1212](https://github.com/altqx/hikari/issues/1212).
+
+## PT-keyframes-close
+
+Video › Close keyframes goes back to the video's own keyframes, as Aegisub's `keyframe/close` does, and the next save drops `Keyframes File` from the Aegisub Project Garbage. Video › Save keyframes… writes the current keyframes in Aegisub's keyframe format v1. [PT #1212](https://github.com/altqx/hikari/issues/1212).
 
 ## FA9-clip-places
 

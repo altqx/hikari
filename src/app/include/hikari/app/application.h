@@ -189,6 +189,8 @@ public:
         QString luaHelper;
         // Empty: next to the application, else the build tree's.
         QString pluginHelper;
+        // How long a plugin's command, event or timer callback runs before its "still working" card shows.
+        int pluginStillWorkingMs = 10'000;
         QString automationDir;
         // Empty: automationDir.
         QString userAutomationDir;
@@ -438,6 +440,7 @@ public:
     Q_PROPERTY(QString translationHint READ translationHint NOTIFY tabsChanged)
     Q_PROPERTY(bool directShowPlayback READ directShowPlayback NOTIFY playbackPlayerChanged)
     Q_PROPERTY(QString timecodesFile READ timecodesFile NOTIFY timecodesChanged)
+    Q_PROPERTY(QString keyframesFile READ keyframesFile NOTIFY keyframesChanged)
     bool translatorModeAvailable() const;
     QString translationHint() const;
     Q_INVOKABLE bool turnOnTranslationMode();
@@ -533,6 +536,12 @@ public:
     Q_INVOKABLE bool exactTimebase() const;
     // Empty: loaded (or kept until a video opens); else the message.
     Q_INVOKABLE QString openKeyframes(const QUrl &file);
+    // Writes the video's current keyframes as an Aegisub keyframes file. Empty: saved; else the message.
+    Q_INVOKABLE QString saveKeyframesFile(const QUrl &file);
+    // Drops the loaded keyframes file; the video's own keyframes come back.
+    Q_INVOKABLE void closeKeyframes();
+    // The current tab's loaded keyframes file; empty when none.
+    QString keyframesFile() const;
     Q_INVOKABLE QString activeLineStyle() const;
     // {subsWidth, subsHeight, videoWidth, videoHeight, hasVideo} (without a video the
     // video size is the subtitles'); empty for a Document that is not ASS.
@@ -877,9 +886,10 @@ public:
     // end as a mono 16-bit WAV; the problem, or empty when saved.
     Q_INVOKABLE QString saveSelectedAudio(const QUrl &file);
     Q_INVOKABLE bool canSaveSelectedAudio();
+    Q_INVOKABLE bool snapToScene();
     // The amounts are audio.leadInValue / audio.leadOutValue.
     Q_INVOKABLE bool changeLead(bool end, bool add);
-    Q_INVOKABLE bool nudgeEdge(bool end, int frames);
+    Q_INVOKABLE bool nudgeEdge(bool end, int steps, bool shiftFollowing = false);
     Q_INVOKABLE bool extendNeighbour(bool next);
     // The Timing assistant's suggestion for the active Line, from the postprocessor rules:
     // {ok, line, index, count, style, text, startBefore, endBefore, start, end, startReason,
@@ -1161,6 +1171,7 @@ signals:
     // A later start handed files over, about to open.
     void filesForwarded();
     void timecodesChanged();
+    void keyframesChanged();
 
 private:
     struct WindowMedia;
@@ -1385,6 +1396,7 @@ private:
     std::unique_ptr<InlineAiController> m_inlineAi;
     std::unique_ptr<PluginManager> m_pluginManager;
     std::unique_ptr<PluginMarketplace> m_pluginMarketplace;
+    std::unique_ptr<PluginPrograms> m_pluginPrograms;
     std::unique_ptr<PluginRuntime> m_pluginRuntime;
     std::unique_ptr<UpdateChecker> m_updates;
     std::unique_ptr<Analytics> m_analytics;
@@ -1758,6 +1770,7 @@ private:
         QString timecodes;
         std::optional<application::AegisubFrameTimes> frameTimes;
         bool timecodesDropped = false;
+        bool keyframesDropped = false;
         bool timecodesListFrames = false;
         int scroll = 0;
         bool audioFromVideo = false;
@@ -1782,7 +1795,7 @@ private:
     std::map<std::uint64_t, TabMedia> m_tabMedia;
     void loadTabTimecodes(TabMedia &media, const QString &path, const application::Timecodes &timecodes);
     void warnShortTimecodes(TabMedia &media);
-    std::vector<application::ProjectGarbageEdit> timecodesGarbage(application::DocumentId document,
+    std::vector<application::ProjectGarbageEdit> mediaFileGarbage(application::DocumentId document,
                                                                    const application::DestinationKey &destination) const;
     std::vector<UnresolvedRestore> m_unresolved;
     std::optional<PendingSession> m_pendingSession;

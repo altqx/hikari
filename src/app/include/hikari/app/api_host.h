@@ -8,6 +8,7 @@
 
 #include <QJSValue>
 #include <QObject>
+#include <QVariantList>
 
 #include <functional>
 #include <map>
@@ -75,6 +76,7 @@ public:
             setKeyframes;
         application::RowMarks *marks = nullptr;
         application::VcsPort *vcs = nullptr;
+        api::ProgramHost *programs = nullptr;
     };
     explicit ApiHost(Wiring wiring, QObject *parent = nullptr);
     ~ApiHost() override;
@@ -89,6 +91,10 @@ public:
     void setPanelHandler(const QJSValue &handler) { m_panelHandler = handler; }
     Q_INVOKABLE void commandRan(const QString &command, bool ok);
     Q_INVOKABLE void panelChanged(const QString &panel);
+    // commands.list's commands, for the command palette.
+    Q_INVOKABLE QVariantList commands();
+    // An operation as the command palette's caller; the result, or undefined when it failed or answers later.
+    Q_INVOKABLE QVariant call(const QString &operation, const QVariantMap &params = {});
 
     const application::Workspace &workspace() const override { return m_wiring.workspace; }
     application::EditSession *session(application::DocumentId document) const override;

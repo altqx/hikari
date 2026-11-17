@@ -76,6 +76,24 @@ std::optional<int> keyframeAfter(std::span<const int> sorted, int frame)
     return *it;
 }
 
+template <typename Visit>
+void forEachNudged(const EditSession &session, bool shiftFollowing, Visit visit)
+{
+    const auto lines = linesOf(session);
+    const auto &selected = session.selection().selected;
+    const auto lastSelected = std::find_if(lines.rbegin(), lines.rend(),
+                                           [&](const core::LineRecord *l) { return selected.contains(l->id); });
+    if (lastSelected == lines.rend())
+        return;
+    const auto below = lastSelected.base();
+    for (auto it = lines.begin(); it != lines.end(); ++it) {
+        if (selected.contains((*it)->id))
+            visit(**it, true);
+        else if (shiftFollowing && it >= below)
+            visit(**it, false);
+    }
+}
+
 std::vector<int> sortedKeyframes(std::span<const int> keyframes)
 {
     std::vector<int> sorted(keyframes.begin(), keyframes.end());
@@ -109,6 +127,27 @@ std::expected<void, CommandRefusal> snapToAdjacentKeyframe(EditSession &session,
             times[l->id].endMs = frameStart(timebase, *kf);
     }
     return apply(session, "Snapping to the adjacent keyframe", times);
+}
+
+std::expected<void, CommandRefusal> snapToScene(EditSession &session, const LegacyTimebase &timebase,
+                                                std::span<const int> keyframes, int videoFrame)
+{
+    commitPending(session);
+    const auto sorted = sortedKeyframes(keyframes);
+    if (sorted.empty())
+        return std::unexpected(CommandRefusal::Invalid);
+    const auto &selected = session.selection().selected;
+    std::map<core::LineId, Retime> times;
+    for (const auto *l : linesOf(session)) {
+        if (!selected.contains(l->id))
+            continue;
+        const int frame = selected.size() < 2 ? videoFrame : timebase.frameAt(msOf(l->start.value));
+        const auto at = std::upper_bound(sorted.begin(), sorted.end(), frame);
+        const int first = at == sorted.begin() ? 0 : *(at - 1);
+        const int after = at == sorted.end() ? std::max(timebase.frameCount(), first + 1) : *at;
+        times[l->id] = Retime{frameStart(timebase, first), frameStart(timebase, after)};
+    }
+    return apply(session, "Snapping to the scene", times);
 }
 
 std::expected<void, CommandRefusal> changeLead(EditSession &session, const LegacyTimebase &timebase, TimingEdge edge,
@@ -152,22 +191,38 @@ std::expected<void, CommandRefusal> changeLead(EditSession &session, const Legac
 }
 
 std::expected<void, CommandRefusal> nudgeEdgeByFrames(EditSession &session, const LegacyTimebase &timebase,
-                                                      TimingEdge edge, int frames)
+                                                      TimingEdge edge, int frames, bool shiftFollowing)
 {
     commitPending(session);
-    const auto &selected = session.selection().selected;
     std::map<core::LineId, Retime> times;
-    for (const auto *l : linesOf(session)) {
-        if (!selected.contains(l->id))
-            continue;
-        const int first = timebase.frameAt(msOf(l->start.value));
-        const int after = timebase.frameAt(msOf(l->end.value));
-        if (edge == TimingEdge::Start)
-            times[l->id].startMs = frameStart(timebase, std::clamp(first + frames, 0, std::max(after - 1, 0)));
+    forEachNudged(session, shiftFollowing, [&](const core::LineRecord &l, bool selected) {
+        const int first = timebase.frameAt(msOf(l.start.value));
+        const int after = timebase.frameAt(msOf(l.end.value));
+        if (!selected)
+            times[l.id] = Retime{frameStart(timebase, first + frames), frameStart(timebase, after + frames)};
+        else if (edge == TimingEdge::Start)
+            times[l.id].startMs = frameStart(timebase, std::clamp(first + frames, 0, std::max(after - 1, 0)));
         else
-            times[l->id].endMs = frameStart(timebase, std::max(after + frames, first + 1));
-    }
+            times[l.id].endMs = frameStart(timebase, std::max(after + frames, first + 1));
+    });
     return apply(session, edge == TimingEdge::Start ? "Moving the start by frames" : "Moving the end by frames", times);
+}
+
+std::expected<void, CommandRefusal> nudgeEdgeByMs(EditSession &session, TimingEdge edge, int ms, bool shiftFollowing)
+{
+    constexpr int kShortest = 10;
+    commitPending(session);
+    std::map<core::LineId, Retime> times;
+    forEachNudged(session, shiftFollowing, [&](const core::LineRecord &l, bool selected) {
+        const int start = msOf(l.start.value), end = msOf(l.end.value);
+        if (!selected)
+            times[l.id] = Retime{start + ms, end + ms};
+        else if (edge == TimingEdge::Start)
+            times[l.id].startMs = std::clamp(start + ms, 0, std::max(end - kShortest, 0));
+        else
+            times[l.id].endMs = std::max(end + ms, start + kShortest);
+    });
+    return apply(session, edge == TimingEdge::Start ? "Moving the start" : "Moving the end", times);
 }
 
 std::expected<void, CommandRefusal> extendNeighbour(EditSession &session, TimingToward toward)
