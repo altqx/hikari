@@ -2,6 +2,8 @@
 
 HikariSub can show what you are doing in your Discord status (Rich Presence, [#599](https://github.com/altqx/hikari/issues/599)). It talks to the Discord app on your computer only; nothing goes to a HikariSub server.
 
+The design for more control (own text, per-project choices, idle, buttons, more modes) is in [Discord presence settings](ux/discord-presence.md) (#1245); this page changes when it ships.
+
 ## The basics
 
 **It is off by default**, and so is the file name. Turn it on in **Settings > Updates and privacy > Show what I am doing in Discord**. **Include the file name** below it adds the file name.
