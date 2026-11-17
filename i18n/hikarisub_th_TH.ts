@@ -16572,12 +16572,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>The plugin isn’t installed, is turned off, or no longer has this command</source>
         <translation>ปลั๊กอินไม่ได้ติดตั้งไว้ ถูกปิดอยู่ หรือไม่มีคำสั่งนี้แล้ว</translation>
     </message>
-    <message numerus="yes">
-        <source>It ran for more than %n second(s).</source>
-        <translation type="vanished">
-            <numerusform>ทำงานนานกว่า %n วินาที</numerusform>
-        </translation>
-    </message>
     <message>
         <source>It stopped unexpectedly.</source>
         <translation>หยุดทำงานโดยไม่คาดคิด</translation>
@@ -16605,12 +16599,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Its %1 handler failed: %2</source>
         <translation>ตัวจัดการ %1 ของปลั๊กอินล้มเหลว: %2</translation>
-    </message>
-    <message numerus="yes">
-        <source>The plugin ran for more than %n second(s), so HikariSub stopped it. Its next command starts it again.</source>
-        <translation type="vanished">
-            <numerusform>ปลั๊กอินทำงานนานกว่า %n วินาที HikariSub จึงหยุดปลั๊กอินไว้ คำสั่งถัดไปจะเริ่มปลั๊กอินอีกครั้ง</numerusform>
-        </translation>
     </message>
     <message>
         <source>The plugin stopped unexpectedly. Its next command starts it again.</source>

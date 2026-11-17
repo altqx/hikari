@@ -16572,12 +16572,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>The plugin isn’t installed, is turned off, or no longer has this command</source>
         <translation>플러그인이 설치되어 있지 않거나, 꺼져 있거나, 더 이상 이 명령이 없습니다</translation>
     </message>
-    <message numerus="yes">
-        <source>It ran for more than %n second(s).</source>
-        <translation type="vanished">
-            <numerusform>%n초 넘게 실행되었습니다.</numerusform>
-        </translation>
-    </message>
     <message>
         <source>It stopped unexpectedly.</source>
         <translation>예기치 않게 중지되었습니다.</translation>
@@ -16605,12 +16599,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Its %1 handler failed: %2</source>
         <translation>플러그인의 %1 처리기가 실패했습니다: %2</translation>
-    </message>
-    <message numerus="yes">
-        <source>The plugin ran for more than %n second(s), so HikariSub stopped it. Its next command starts it again.</source>
-        <translation type="vanished">
-            <numerusform>플러그인이 %n초 넘게 실행되어 HikariSub가 중지했습니다. 다음 명령을 실행하면 다시 시작됩니다.</numerusform>
-        </translation>
     </message>
     <message>
         <source>The plugin stopped unexpectedly. Its next command starts it again.</source>

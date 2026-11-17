@@ -16698,13 +16698,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>The plugin isn’t installed, is turned off, or no longer has this command</source>
         <translation>செருகுநிரல் நிறுவப்படவில்லை, அணைக்கப்பட்டுள்ளது, அல்லது இந்தக் கட்டளை இனி அதில் இல்லை</translation>
     </message>
-    <message numerus="yes">
-        <source>It ran for more than %n second(s).</source>
-        <translation type="vanished">
-            <numerusform>அது %n வினாடிக்கு மேல் இயங்கியது.</numerusform>
-            <numerusform>அது %n வினாடிகளுக்கு மேல் இயங்கியது.</numerusform>
-        </translation>
-    </message>
     <message>
         <source>It stopped unexpectedly.</source>
         <translation>அது எதிர்பாராமல் நின்றுவிட்டது.</translation>
@@ -16732,13 +16725,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Its %1 handler failed: %2</source>
         <translation>அதன் %1 கையாளி தோல்வியடைந்தது: %2</translation>
-    </message>
-    <message numerus="yes">
-        <source>The plugin ran for more than %n second(s), so HikariSub stopped it. Its next command starts it again.</source>
-        <translation type="vanished">
-            <numerusform>செருகுநிரல் %n வினாடிக்கு மேல் இயங்கியதால் HikariSub அதை நிறுத்தியது. அதன் அடுத்த கட்டளை அதை மீண்டும் தொடங்கும்.</numerusform>
-            <numerusform>செருகுநிரல் %n வினாடிகளுக்கு மேல் இயங்கியதால் HikariSub அதை நிறுத்தியது. அதன் அடுத்த கட்டளை அதை மீண்டும் தொடங்கும்.</numerusform>
-        </translation>
     </message>
     <message>
         <source>The plugin stopped unexpectedly. Its next command starts it again.</source>
