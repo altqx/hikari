@@ -97,7 +97,10 @@ class PluginRuntimeTests : public QObject {
             "keybindings": [{"command": "greet", "key": "Ctrl+Alt+K"}, {"command": "spin", "key": "Ctrl+S"}]}})");
         write(folder + QStringLiteral("/main.lua"), R"~(
             hikari.commands.register('greet', function(args, context) hikari.notify('via ' .. context.via) end)
-            hikari.commands.register('spin', function(args, context) hikari.notify('spun via ' .. context.via) end)
+            hikari.commands.register('spin', function(args, context)
+                hikari.status.set('count', {text = 'spun', tone = 'danger'})
+                hikari.notify('spun via ' .. context.via)
+            end)
         )~");
         m_registry[QStringLiteral("com.example.marks")] =
             QJsonObject{{QStringLiteral("version"), QStringLiteral("1.0.0")}, {QStringLiteral("enabled"), true}};
@@ -1522,6 +1525,13 @@ private slots:
             return v.toMap().value(QStringLiteral("legacyName")).toString() == greet;
         }));
         QVERIFY(a.settingsStore()->list(application::kAutomationHotkeysSetting.data()).isEmpty());
+
+        QTRY_COMPARE(a.pluginRuntime()->statusItems().size(), qsizetype(1));
+        QVERIFY(a.pluginRuntime()->run(spin, QStringLiteral("status")));
+        QTRY_COMPARE(a.pluginRuntime()->statusItems().first().toMap().value(QStringLiteral("text")).toString(),
+                     QStringLiteral("spun"));
+        QCOMPARE(a.pluginRuntime()->statusItems().first().toMap().value(QStringLiteral("tone")).toString(),
+                 QStringLiteral("danger"));
 
         shortcuts.clearKeys(greet);
         QVERIFY(!shortcuts.keys().contains(greet));
