@@ -137,8 +137,20 @@ The window mode that edits a Document's node effects on a canvas, with its own p
 _Avoid_: Node editor as the mode's name; it is one panel (Graph) of the mode.
 
 **Plugin**:
-A `.hikariplugin` package that extends HikariSub through the Hikari API, installed per user and run in its own helper.
-_Avoid_: Automation script or macro, which name Aegisub automation; extension or add-on.
+A `.hikariplugin` package that extends HikariSub through the Hikari API, installed per user. Its code runs in its own helper (Lua) or as its own program; a data-only plugin runs none. ADR 0034 calls the whole system an extension system, but each package is a plugin.
+_Avoid_: Automation script or macro, which name Aegisub automation; extension or add-on for a package.
+
+**Data-only plugin**:
+A plugin package with no code: no `main` and no programs. It only adds themes, icons or content such as Styles, presets, snippets, dictionaries and layouts, and never starts a helper ([ADR 0034](docs/adr/0034-plugins-grow-into-an-extension-system.md)).
+_Avoid_: Theme pack or resource pack as separate kinds; they are plugins.
+
+**Program**:
+An outside program a plugin declares in its manifest, bundled or downloaded with a pinned SHA-256, that HikariSub starts in its sandbox: a language server, an MCP server, a tool, or a program plugin's own code.
+_Avoid_: Process or binary for the declared thing; a program can run as several processes.
+
+**Problem**:
+One finding on a Line in the problems list, with a severity, a message and optional quick fixes, from a plugin, a language server or an open QC note; shown as a squiggle and a Grid mark too.
+_Avoid_: Diagnostic or lint; QC note for a plugin's finding.
 
 **Pinned key**:
 The minisign public key HikariSub recorded at a plugin's first signed install; updates must be signed by it unless the user re-trusts another.

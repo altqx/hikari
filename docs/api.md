@@ -131,6 +131,472 @@ An error is `{code, message, data}`. The message is English text for developers 
 | `refused` | The application refused; `data.reason` says why when the caller can act on it (`disabled`, `not_run`, `group_break`, `invalid_draft`, `loading`, `private`, `too_large`, `not_text`, …). |
 | `busy` | Another write is running. |
 
+## Extension operations
+
+[ADR 0034](adr/0034-plugins-grow-into-an-extension-system.md) adds these operations and events. They arrive with the code cards [#1222](https://github.com/altqx/hikari/issues/1222)–[#1231](https://github.com/altqx/hikari/issues/1231) on beta.5, all `since` 1, and each card moves its rows into the tables above as it lands. [Extensions](plugins.md#extensions) says how plugins use them. Schemas are in the subset above and use the shared `$defs`. New `$defs`: `Problem` and `ProgramProcess`, and for the [quick-pick services](#quick-picks-and-input-boxes) `QuickPickItem` and `QuickPickButton`.
+
+| Operation | Mark | Callers | What it does | Card |
+| --- | --- | --- | --- | --- |
+| `status_items.set` | write | plugins | Changes one of the caller's status bar items. | #1224 |
+| `problems.list` | read | all | The problems on a Document: the open QC notes, plugins' problems and language servers' findings. | #1227 |
+| `problems.set` | write | plugins | Replaces the caller's problems from one source on a Document. | #1227 |
+| `problems.clear` | write | plugins | Removes the caller's problems. | #1227 |
+| `problems.fix` | write | all | Applies one quick fix as one undo step. | #1227 |
+| `programs.run` | write | plugins | Runs a declared program to the end and gives its output. | #1226 |
+| `programs.start` | write | plugins | Starts a declared program and keeps it running. | #1226 |
+| `programs.send` | write | plugins | Writes to a started program's stdin. | #1226 |
+| `programs.stop` | write | plugins | Ends a started program. | #1226 |
+| `formats.list` | read | all | The subtitle formats HikariSub can open and export, built-in and from plugins. | #1229 |
+| `plugins.run` | write | all | Gains `args` and gives the command's `result`. | #1228 |
+| `settings.open` | write | all | Opens the Settings window at a setting, on the Yours or Project tab. | #1238 |
+| `settings.list`, `settings.get` | read | all | Gain `title`, `source` and `projectable`, and list plugins' settings too. | #1238 |
+| `presence.set_text` | write | plugins | Sets or clears the caller's text for `{plugin}` in the user's Discord status. | #1245 |
+
+"Plugins" means every plugin, Lua or program; AI and MCP callers get `not_granted`. `programs.*` need the plugin's `programs` permission, and `presence.set_text` its `presence` permission. While a plugin runs as a `read` [AI tool](plugins.md#ai-tools-and-mcp-servers), each of its write operations, and the services `net.fetch`, `files.write` and `hikari/settings.set`, answer `refused` with reason `read_tool`.
+
+| Event | When | Card |
+| --- | --- | --- |
+| `problems.changed` | The problems on a Document changed; it names the Document and the sources that changed. | #1227 |
+| `program.output` | A started program wrote to stdout or stderr. Only its plugin hears it. | #1226 |
+| `program.exited` | A started program ended. Only its plugin hears it. | #1226 |
+| `plugin_settings.changed` | One of the plugin's own settings changed, from the plugin manager, Settings or a Project. Only its plugin hears it. | #1230 |
+
+### New `$defs`
+
+```json
+"Problem": {
+  "type": "object",
+  "properties": {
+    "id": {"type": "string", "maxLength": 64, "description": "Given by problems.list; problems.set ignores it."},
+    "line": {"$ref": "#/$defs/LineId", "description": "Absent only for a QC note that matches no Line."},
+    "time": {"type": "integer", "description": "A QC note's time in milliseconds; problems.set ignores it."},
+    "field": {"enum": ["text", "translation"], "description": "text when omitted."},
+    "from": {"type": "integer", "minimum": 0, "description": "UTF-16 offset in the field; with to, the squiggle. The whole Line when omitted."},
+    "to": {"type": "integer", "minimum": 0},
+    "severity": {"enum": ["error", "warning", "info", "hint"]},
+    "message": {"type": "string", "minLength": 1, "maxLength": 500},
+    "code": {"type": "string", "minLength": 1, "maxLength": 64, "description": "The check's own name, such as a grammar rule."},
+    "source": {
+      "type": "object",
+      "description": "Given by problems.list.",
+      "properties": {
+        "kind": {"enum": ["qc", "plugin", "server"]},
+        "id": {"type": "string", "description": "qc, a plugin id, or plugin:<plugin id>/<server id>."},
+        "set": {"type": "string", "description": "The plugin's own source name from problems.set, or a QC note's section."},
+        "name": {"type": "string", "description": "What the problems list shows."}
+      },
+      "required": ["kind", "id", "name"],
+      "additionalProperties": false
+    },
+    "fixes": {
+      "type": "array",
+      "maxItems": 8,
+      "items": {
+        "type": "object",
+        "properties": {
+          "title": {"type": "string", "minLength": 1, "maxLength": 100},
+          "edits": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 64,
+            "description": "Replacements in this Line's field, by UTF-16 offsets in the text the problem was set against.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "from": {"type": "integer", "minimum": 0},
+                "to": {"type": "integer", "minimum": 0},
+                "insert": {"type": "string", "maxLength": 10000}
+              },
+              "required": ["from", "to", "insert"],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": ["title", "edits"],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": ["severity", "message"],
+  "additionalProperties": false
+},
+"ProgramProcess": {"type": "string", "pattern": "^p[0-9]{1,9}$", "description": "A started program, such as p1."}
+```
+
+### `status_items.set`
+
+Write. Plugins only. Fields left out keep their value; `text` and `icon` can't both end up empty.
+
+```json
+{"type": "object", "properties": {
+  "item": {"type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$", "maxLength": 64, "description": "An id from contributes.statusItems."},
+  "text": {"type": "string", "maxLength": 40, "description": "Empty: icon only."},
+  "icon": {"type": "string", "maxLength": 68, "pattern": "^((own:)?[a-z0-9]+(-[a-z0-9]+)*)?$", "description": "An icon role or own:<id>; empty: text only."},
+  "tooltip": {"type": "string", "maxLength": 300},
+  "tone": {"enum": ["normal", "warning", "danger"]},
+  "visible": {"type": "boolean"}},
+ "required": ["item"], "additionalProperties": false}
+```
+
+Result: `{"type": "object", "properties": {"item": {"type": "string"}}, "required": ["item"], "additionalProperties": false}`.
+
+### `problems.list`
+
+Read. Every caller, with the usual Document grants.
+
+```json
+{"type": "object", "properties": {
+  "document": {"$ref": "#/$defs/DocumentId", "description": "Defaults to the active Document."},
+  "lines": {"type": "array", "maxItems": 20000, "items": {"$ref": "#/$defs/LineId"}, "description": "These Lines only."},
+  "severity": {"enum": ["error", "warning", "info", "hint"], "description": "This severity and worse only."},
+  "source": {"type": "string", "description": "One source id only."}},
+ "additionalProperties": false}
+```
+
+```json
+{"type": "object", "properties": {
+  "document": {"$ref": "#/$defs/DocumentId"},
+  "revision": {"$ref": "#/$defs/Revision"},
+  "problems": {"type": "array", "items": {"$ref": "#/$defs/Problem"}}},
+ "required": ["document", "revision", "problems"], "additionalProperties": false}
+```
+
+Problems come in Document order, then by `from`, and problems with no Line last. An open QC note is a problem of `kind` `qc` with severity `info`, its `time`, its section as `source.set`, and the Line the QC notes panel matches it to (the latest start at its time, else the nearest within 15 seconds), or no `line`.
+
+### `problems.set`
+
+Write. Plugins only. Replaces every problem the caller set under `set` on that Document. Each problem needs `line`; `to` comes with `from`, and `from` ≤ `to` ≤ the field's length, or the call is `invalid_params`. Problems are never saved and aren't undo steps; they go when the plugin stops or the Document closes, and a problem whose Line is deleted goes with it. A plugin holds at most 20000 problems per Document.
+
+```json
+{"type": "object", "properties": {
+  "document": {"$ref": "#/$defs/DocumentId", "description": "Defaults to the active Document."},
+  "revision": {"$ref": "#/$defs/Revision", "description": "The revision the offsets were measured on; stale_revision when it moved."},
+  "set": {"type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$", "maxLength": 64, "description": "The plugin's own name for this group of checks; default when omitted."},
+  "problems": {"type": "array", "maxItems": 20000, "items": {"$ref": "#/$defs/Problem"}}},
+ "required": ["revision", "problems"], "additionalProperties": false}
+```
+
+```json
+{"type": "object", "properties": {
+  "document": {"$ref": "#/$defs/DocumentId"},
+  "count": {"type": "integer", "minimum": 0}},
+ "required": ["document", "count"], "additionalProperties": false}
+```
+
+### `problems.clear`
+
+Write. Plugins only.
+
+```json
+{"type": "object", "properties": {
+  "document": {"$ref": "#/$defs/DocumentId", "description": "Every Document when omitted."},
+  "set": {"type": "string", "description": "Every set of the caller's when omitted."}},
+ "additionalProperties": false}
+```
+
+Result: `{"type": "object", "properties": {"cleared": {"type": "integer", "minimum": 0}}, "required": ["cleared"], "additionalProperties": false}`.
+
+### `problems.fix`
+
+Write. Every caller. Applies the fix through `document.apply` as one undo step named `"<source name>: <fix title>"`, and answers as `document.apply` does. A fix whose Line changed since its problem was set answers `stale_revision`. Its edits may not overlap, or it answers `invalid_params`.
+
+```json
+{"type": "object", "properties": {
+  "document": {"$ref": "#/$defs/DocumentId", "description": "Defaults to the active Document."},
+  "problem": {"type": "string", "description": "An id from problems.list."},
+  "fix": {"type": "integer", "minimum": 0, "description": "The fix's index."}},
+ "required": ["problem", "fix"], "additionalProperties": false}
+```
+
+### `programs.run`
+
+Write. Plugins with the `programs` permission. Runs the program with its declared arguments, then `args`. It answers once the program ends, or with `refused` and reason `timed_out` after `timeout`, when HikariSub ends it. Output is capped at 16 MiB per stream, and more is `refused` with reason `too_large`. A program not available on this platform answers `unavailable` with reason `platform`; one not downloaded yet, `unavailable` with reason `not_downloaded`.
+
+```json
+{"type": "object", "properties": {
+  "program": {"type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$", "maxLength": 64},
+  "args": {"type": "array", "maxItems": 256, "items": {"type": "string", "maxLength": 32768},
+    "description": "${file:N} becomes the path of files[N], which the program may then open."},
+  "files": {"type": "array", "maxItems": 16, "items": {"type": "string", "description": "A file or folder handle the plugin holds."},
+    "description": "Read-only unless the handle is writable."},
+  "stdin": {"type": "string", "maxLength": 16777216},
+  "encoding": {"enum": ["utf8", "base64"], "description": "Of stdin, stdout and stderr; utf8 when omitted."},
+  "timeout": {"type": "integer", "minimum": 1000, "maximum": 86400000, "description": "Milliseconds; 60000 when omitted."}},
+ "required": ["program"], "additionalProperties": false}
+```
+
+```json
+{"type": "object", "properties": {
+  "exitCode": {"type": "integer"},
+  "stdout": {"type": "string"},
+  "stderr": {"type": "string"},
+  "encoding": {"enum": ["utf8", "base64"]}},
+ "required": ["exitCode", "stdout", "stderr", "encoding"], "additionalProperties": false}
+```
+
+### `programs.start`, `programs.send` and `programs.stop`
+
+Write. Plugins with the `programs` permission. A plugin keeps at most 8 programs running. They end when the plugin stops.
+
+```json
+{"type": "object", "properties": {
+  "program": {"type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$", "maxLength": 64},
+  "args": {"type": "array", "maxItems": 256, "items": {"type": "string", "maxLength": 32768}},
+  "files": {"type": "array", "maxItems": 16, "items": {"type": "string"}},
+  "encoding": {"enum": ["utf8", "base64"], "description": "Of what program.output carries and programs.send takes."}},
+ "required": ["program"], "additionalProperties": false}
+```
+
+`programs.start` answers `{"type": "object", "properties": {"process": {"$ref": "#/$defs/ProgramProcess"}}, "required": ["process"], "additionalProperties": false}`.
+
+`programs.send` takes `{"process", "data", "close"}`, where `close: true` closes stdin after `data`:
+
+```json
+{"type": "object", "properties": {
+  "process": {"$ref": "#/$defs/ProgramProcess"},
+  "data": {"type": "string", "maxLength": 16777216},
+  "close": {"type": "boolean"}},
+ "required": ["process"], "additionalProperties": false}
+```
+
+`programs.stop` takes `{"process"}` and ends the program and its children. Both answer `{"process"}`, and a process that has ended answers `not_found`.
+
+### `formats.list`
+
+Read. Every caller.
+
+```json
+{"type": "object", "properties": {
+  "formats": {"type": "array", "items": {"type": "object", "properties": {
+    "id": {"type": "string", "description": "ass, srt, … or plugin:<plugin id>/<format id>."},
+    "title": {"type": "string"},
+    "extensions": {"type": "array", "items": {"type": "string"}},
+    "import": {"type": "boolean"},
+    "export": {"type": "boolean"},
+    "plugin": {"type": "string", "description": "The plugin's id, for a plugin format."}},
+   "required": ["id", "title", "extensions", "import", "export"], "additionalProperties": false}}},
+ "required": ["formats"], "additionalProperties": false}
+```
+
+It takes no parameters (`{"type": "object", "additionalProperties": false}`). `documents.list`'s `format` takes these ids too.
+
+### `plugins.run`, grown
+
+`plugins.run` gains the optional parameter `args` (`{"type": "object"}`), which reaches the command's handler, and the optional result field `result`, what the handler returned. It stays on the AI's always-ask list. An [AI tool](plugins.md#ai-tools-and-mcp-servers) call goes through its own gate instead, which checks `args` against the tool's `parameters` and `result` against its `result`.
+
+### `settings.open`
+
+Write, as `panels.open` is. Every caller. It does what the link `hikarisub://settings/<id>` does ([Settings](plugins.md#settings-grown)): opens the Settings window in the shell window used last and shows the setting, or the window alone without `setting`. It changes no setting. There is no page or query parameter: HikariSub's page ids are never API.
+
+```json
+{"type": "object", "properties": {
+  "setting": {"type": "string", "pattern": "^[A-Za-z0-9_.-]{1,200}$",
+    "description": "A setting id from settings.list, such as appearance.theme or plugin.<plugin id>.<setting id>."},
+  "scope": {"enum": ["yours", "project"], "description": "The tab; yours when omitted."}},
+ "additionalProperties": false}
+```
+
+Result: `{"type": "object", "properties": {"opened": {"const": true}}, "required": ["opened"], "additionalProperties": false}`. An id `settings.list` doesn't give answers `not_found`, and an AI caller naming a `privacy.*` or `recent.*` setting gets `refused` with reason `private`. `project` without a trusted Project still opens the Project tab, with its note.
+
+### `settings.list` and `settings.get`, grown
+
+Each setting in their results gains three optional fields:
+
+```json
+"title": {"type": "string", "description": "The name the Settings window shows, in the UI language."},
+"source": {"type": "string", "description": "app, or the id of the plugin whose setting it is."},
+"projectable": {"type": "boolean", "description": "Whether a Project can override it on the Project tab."}
+```
+
+They also list each running plugin's settings, as `plugin.<plugin id>.<setting id>` with that plugin as `source`. A `secret` setting is listed without its value, and `settings.get` and `settings.set` refuse it with reason `private` for every caller; its plugin reads it with `hikari.settings.get`. For AI callers, `settings.set` of a `plugin.` setting joins the always-ask list beside `plugins.*` (#1228 amends [ai-agent.md](ai-agent.md)).
+
+### `presence.set_text`
+
+Write. Plugins only, with the `presence` permission. Sets the caller's text, which shows only where the user's own Discord presence text has `{plugin}` and only while the user picked this plugin and presence is on ([Discord status text](plugins.md#discord-status-text)). Empty text clears it. HikariSub still sends presence at most once every 4 seconds, so only the newest text in that gap goes out.
+
+```json
+{"type": "object", "properties": {
+  "text": {"type": "string", "maxLength": 64, "pattern": "^[^\\u0000-\\u001F\\u007F]*$", "description": "Plain text; empty clears it."}},
+ "required": ["text"], "additionalProperties": false}
+```
+
+Result: `{"type": "object", "additionalProperties": false}`.
+
+### Quick picks and input boxes
+
+#1236. These are plugin services, like `panels.*` and `dialogs.*`: the helper's `Ui` service carries them, and program plugins call them by name over JSON-RPC. They aren't registry operations, so they have no read/write mark and no `reference-v1.json` entry, and AI and MCP callers can't reach them. They need no permission, and open only while the plugin answers something the user started, as [Quick picks and input boxes](plugins.md#quick-picks-and-input-boxes) says; elsewhere they answer `refused` with reason `not_user_initiated`. Opening one closes any other in that window, which answers as cancelled.
+
+| Service | What it does |
+| --- | --- |
+| `quick_pick.ask` | Shows a quick pick and waits for the pick or a cancel. |
+| `input_box.ask` | Shows an input box and waits for the text or a cancel. |
+| `quick_pick.open` | Shows a live quick pick and answers its id at once; its events go to the plugin. |
+| `quick_pick.update` | Changes an open quick pick. |
+| `quick_pick.close` | Closes an open quick pick. |
+| `input_box.open` | Shows a live input box and answers its id at once; its events go to the plugin. |
+| `input_box.update` | Changes an open input box, with a message of a severity or a pending check. |
+| `input_box.close` | Closes an open input box. |
+
+#### `quick_pick.ask`
+
+```json
+{"type": "object", "properties": {
+  "title": {"type": "string", "maxLength": 100},
+  "placeholder": {"type": "string", "maxLength": 200},
+  "value": {"type": "string", "maxLength": 1000, "description": "The filter text it starts with."},
+  "items": {"type": "array", "maxItems": 10000, "items": {"$ref": "#/$defs/QuickPickItem"}},
+  "many": {"type": "boolean", "description": "A check box per item; Enter takes every checked one."},
+  "match_on": {"type": "array", "maxItems": 2, "items": {"enum": ["description", "detail"]}, "description": "Filtering always matches label, and these too."},
+  "keep_order": {"type": "boolean", "description": "Keep the given order instead of sorting matches best first."},
+  "step": {"type": "object", "properties": {"current": {"type": "integer", "minimum": 1}, "total": {"type": "integer", "minimum": 1}},
+    "required": ["current", "total"], "additionalProperties": false},
+  "back": {"type": "boolean", "description": "Back in the title row, for a step after the first."},
+  "buttons": {"type": "array", "maxItems": 3, "items": {"$ref": "#/$defs/QuickPickButton"}, "description": "Icon buttons in the title row."}},
+ "required": ["items"], "additionalProperties": false}
+```
+
+```json
+{"type": "object", "properties": {
+  "cancelled": {"type": "boolean"},
+  "items": {"type": "array", "items": {"type": "string"}, "description": "The picked ids in list order; absent when cancelled."},
+  "button": {"type": "string", "description": "A title button the user pressed instead of picking; cancelled is then true."},
+  "back": {"type": "boolean", "description": "true when the user pressed Back; cancelled is then true."}},
+ "required": ["cancelled"], "additionalProperties": false}
+```
+
+Item ids are unique in the list, and separators have none. With `many`, Enter with nothing checked answers `{"cancelled": false, "items": []}`.
+
+#### `input_box.ask`
+
+```json
+{"type": "object", "properties": {
+  "title": {"type": "string", "maxLength": 100},
+  "prompt": {"type": "string", "maxLength": 300, "description": "One line under the box."},
+  "placeholder": {"type": "string", "maxLength": 200},
+  "value": {"type": "string", "maxLength": 10000},
+  "selection": {"type": "object", "properties": {"from": {"type": "integer", "minimum": 0}, "to": {"type": "integer", "minimum": 0}},
+    "required": ["from", "to"], "additionalProperties": false, "description": "UTF-16 offsets in value; all of it when omitted."},
+  "password": {"type": "boolean"},
+  "validation": {"type": "object", "properties": {
+    "pattern": {"type": "string", "maxLength": 500, "description": "An ECMAScript expression the whole text must match."},
+    "message": {"type": "string", "minLength": 1, "maxLength": 200},
+    "min_length": {"type": "integer", "minimum": 0},
+    "max_length": {"type": "integer", "minimum": 1, "maximum": 10000}},
+   "required": ["message"], "additionalProperties": false},
+  "step": {"type": "object", "properties": {"current": {"type": "integer", "minimum": 1}, "total": {"type": "integer", "minimum": 1}},
+    "required": ["current", "total"], "additionalProperties": false},
+  "back": {"type": "boolean"}},
+ "additionalProperties": false}
+```
+
+```json
+{"type": "object", "properties": {
+  "cancelled": {"type": "boolean"},
+  "value": {"type": "string", "description": "Absent when cancelled."},
+  "back": {"type": "boolean", "description": "true when the user pressed Back; cancelled is then true."}},
+ "required": ["cancelled"], "additionalProperties": false}
+```
+
+A `pattern` that isn't a valid expression answers `invalid_params`. A `validation` failure is always an error; levels and slow checks need `input_box.open`.
+
+#### `input_box.open`, `input_box.update` and `input_box.close`
+
+`input_box.open` takes `input_box.ask`'s parameters and answers `{"box": "b1"}` (`{"type": "string", "pattern": "^b[0-9]{1,9}$"}`). `input_box.update` takes `{box}`, any field `open` takes, and:
+
+```json
+"message": {"oneOf": [{"type": "null"}, {"type": "object", "properties": {
+  "severity": {"enum": ["error", "warning", "info"]},
+  "text": {"type": "string", "minLength": 1, "maxLength": 300}},
+ "required": ["severity", "text"], "additionalProperties": false}], "description": "Shown under the box; null clears it. An error blocks Enter."},
+"busy": {"type": "boolean", "description": "A check is pending: Enter waits for it."}
+```
+
+`input_box.close` takes `{box}`. Both answer `{box}`, and a box that has closed answers `not_found`. A plugin has at most one open, apart from its quick pick. Its events reach `hikari.input_box.on`, or a program plugin's `input_box` request:
+
+```json
+{"type": "object", "properties": {
+  "kind": {"enum": ["value", "accept", "back", "hide"]},
+  "box": {"type": "string"},
+  "value": {"type": "string"}},
+ "required": ["kind", "box"], "additionalProperties": false}
+```
+
+`value` and `accept` come with `value`. An `accept` comes only when the message isn't an error and `busy` is false. Waiting `value` events merge, so only the newest arrives.
+
+#### `quick_pick.open`, `quick_pick.update` and `quick_pick.close`
+
+`quick_pick.open` takes `quick_pick.ask`'s parameters with `items` optional, plus:
+
+```json
+"filter": {"enum": ["fuzzy", "none"], "description": "none shows the items as given, for a plugin that filters on its value events."},
+"busy": {"type": "boolean"},
+"active": {"type": "string", "description": "The id of the item to highlight."}
+```
+
+It answers `{"pick": "q1"}` (`{"type": "string", "pattern": "^q[0-9]{1,9}$"}`). `quick_pick.update` takes `{pick}` and any field `open` takes, and replaces what it names. `quick_pick.close` takes `{pick}`. Both answer `{pick}`, and a quick pick that has closed answers `not_found`. A plugin has at most one open.
+
+Its events reach the plugin's `hikari.quick_pick.on` handler, or a program plugin's `quick_pick` request:
+
+```json
+{"type": "object", "properties": {
+  "kind": {"enum": ["value", "active", "accept", "button", "back", "hide"]},
+  "pick": {"type": "string"},
+  "value": {"type": "string"},
+  "item": {"type": "string"},
+  "items": {"type": "array", "items": {"type": "string"}},
+  "button": {"type": "string"}},
+ "required": ["kind", "pick"], "additionalProperties": false}
+```
+
+`value` comes with `value`; `active` with `item`; `accept` with `items`; `button` with `button`, plus `item` for an item's button. Waiting `value` events merge, so only the newest arrives.
+
+#### New `$defs`
+
+```json
+"QuickPickItem": {"type": "object", "properties": {
+  "kind": {"enum": ["item", "separator"], "description": "item when omitted."},
+  "id": {"type": "string", "minLength": 1, "maxLength": 200, "description": "Needed by every item but a separator."},
+  "label": {"type": "string", "minLength": 1, "maxLength": 200},
+  "description": {"type": "string", "maxLength": 200, "description": "Shown after the label, muted."},
+  "detail": {"type": "string", "maxLength": 500, "description": "Shown on a second line."},
+  "icon": {"type": "string", "maxLength": 68, "pattern": "^(own:)?[a-z0-9]+(-[a-z0-9]+)*$"},
+  "picked": {"type": "boolean", "description": "Checked at the start, with many."},
+  "always_show": {"type": "boolean", "description": "Kept whatever the filter."},
+  "disabled": {"type": "string", "minLength": 1, "maxLength": 200, "description": "Why the item can't be picked; it shows greyed with this reason."},
+  "buttons": {"type": "array", "maxItems": 2, "items": {"$ref": "#/$defs/QuickPickButton"}}},
+ "required": ["label"], "additionalProperties": false},
+"QuickPickButton": {"type": "object", "properties": {
+  "id": {"type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$", "maxLength": 64},
+  "icon": {"type": "string", "maxLength": 68, "pattern": "^(own:)?[a-z0-9]+(-[a-z0-9]+)*$"},
+  "tooltip": {"type": "string", "minLength": 1, "maxLength": 100}},
+ "required": ["id", "icon", "tooltip"], "additionalProperties": false}
+```
+
+### Events
+
+```json
+"problems.changed": {"type": "object", "properties": {
+  "document": {"$ref": "#/$defs/DocumentId"},
+  "sources": {"type": "array", "items": {"type": "string"}}},
+ "required": ["document", "sources"], "additionalProperties": false},
+"program.output": {"type": "object", "properties": {
+  "process": {"$ref": "#/$defs/ProgramProcess"},
+  "stream": {"enum": ["stdout", "stderr"]},
+  "data": {"type": "string"},
+  "encoding": {"enum": ["utf8", "base64"]}},
+ "required": ["process", "stream", "data", "encoding"], "additionalProperties": false},
+"program.exited": {"type": "object", "properties": {
+  "process": {"$ref": "#/$defs/ProgramProcess"},
+  "exitCode": {"type": "integer"},
+  "stopped": {"type": "boolean", "description": "true when programs.stop or the plugin's end stopped it."}},
+ "required": ["process", "exitCode", "stopped"], "additionalProperties": false},
+"plugin_settings.changed": {"type": "object", "properties": {
+  "ids": {"type": "array", "items": {"type": "string"}}},
+ "required": ["ids"], "additionalProperties": false}
+```
+
+Several `program.output` events of one process are delivered in order and never merged, unlike other events.
+
 ## Versioning
 
 The version is a running number. Every release that grows the API bumps it, and each operation records the version it arrived in (`since`). Changes are add-only: an operation's name, mark and existing parameters and results stay; new optional parameters and result fields may be added. A removal is deprecated for at least one version first. A plugin declares the lowest version it needs.
