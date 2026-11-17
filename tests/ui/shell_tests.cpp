@@ -7624,6 +7624,8 @@ private slots:
         QTRY_VERIFY(view->property("opened").toBool());
         QVERIFY(root->property("menuHasKeys").toBool());
         press(Qt::Key_Down);
+        QCOMPARE(current(view)->objectName(), QStringLiteral("commandPaletteMenuItem"));
+        press(Qt::Key_Down);
         QCOMPARE(current(view)->property("subMenu").value<QObject *>(), named("viewLayoutMenu"));
         QStringList between;
         for (int presses = 0; current(view)->property("subMenu").value<QObject *>() != panels; ++presses) {

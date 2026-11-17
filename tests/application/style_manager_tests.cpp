@@ -1,3 +1,4 @@
+#include "hikari/application/plugin_content.h"
 #include "hikari/application/style_manager.h"
 #include "hikari/core/ass_load.h"
 #include "hikari/core/ass_save.h"
@@ -386,6 +387,61 @@ TEST(StyleCatalogTiers, TheProjectsCopyHidesMineByName)
 
     catalogs.setProjectDirectory({});
     EXPECT_EQ(catalogs.find(u8"Show", u8"Mine show")->name, u8"Mine show");
+}
+
+TEST(StyleCatalogTiers, APluginsCatalogueIsReadOnlyAndCopiesIntoMine)
+{
+    TierDirs dirs;
+    dirs.write(dirs.mine, "Default", {named(u8"Mine default")});
+    dirs.write(dirs.mine, "Signs (Kit)", {named(u8"Mine sign")});
+    const std::filesystem::path pack = dirs.root / "plugins" / "com.example.kit" / "styles";
+    dirs.write(pack, "signs", {named(u8"Sign"), named(u8"Sign alt")});
+    StyleCatalogs catalogs(dirs.mine);
+    catalogs.setPluginCatalogs({{u8"Signs (Kit)", pack / "signs.sty"}});
+    EXPECT_FALSE(catalogs.choosePlugin(u8"Other (Kit)"));
+    ASSERT_TRUE(catalogs.choosePlugin(u8"Signs (Kit)"));
+    EXPECT_TRUE(catalogs.fromPlugin());
+    EXPECT_TRUE(catalogs.readOnly());
+    EXPECT_EQ(names(catalogs.styles()), (std::vector<std::u8string>{u8"Sign", u8"Sign alt"}));
+    EXPECT_EQ(names(*catalogs.list(u8"Signs (Kit)", Tier::Mine)), (std::vector<std::u8string>{u8"Mine sign"}));
+
+    catalogs.styles().push_back(named(u8"Never written"));
+    catalogs.markChanged();
+    ASSERT_TRUE(catalogs.save());
+    std::stringstream onDisk;
+    onDisk << std::ifstream(pack / "signs.sty", std::ios::binary).rdbuf();
+    EXPECT_EQ(names(readCatalog(onDisk.str())), (std::vector<std::u8string>{u8"Sign", u8"Sign alt"}));
+
+    ASSERT_TRUE(catalogs.choosePlugin(u8"Signs (Kit)"));
+    EXPECT_EQ(catalogs.copyPluginToMine(), std::u8string(u8"Signs (Kit) (2)"));
+    EXPECT_FALSE(catalogs.fromPlugin());
+    EXPECT_FALSE(catalogs.readOnly());
+    EXPECT_EQ(catalogs.current(), u8"Signs (Kit) (2)");
+    EXPECT_EQ(names(catalogs.styles()), (std::vector<std::u8string>{u8"Sign", u8"Sign alt"}));
+    EXPECT_FALSE(catalogs.copyPluginToMine()) << "only a plugin's catalogue shown copies";
+}
+
+TEST(StyleCatalogTiers, ThePluginCatalogueShownGoesWithItsPlugin)
+{
+    TierDirs dirs;
+    dirs.write(dirs.mine, "Default", {named(u8"Mine default")});
+    dirs.write(dirs.root, "pack", {named(u8"Sign")});
+    StyleCatalogs catalogs(dirs.mine);
+    catalogs.setPluginCatalogs({{u8"Signs (Kit)", dirs.root / "pack.sty"}});
+    ASSERT_TRUE(catalogs.choosePlugin(u8"Signs (Kit)"));
+    catalogs.setPluginCatalogs({});
+    EXPECT_FALSE(catalogs.fromPlugin());
+    EXPECT_EQ(catalogs.current(), u8"Default");
+    EXPECT_EQ(names(catalogs.styles()), (std::vector<std::u8string>{u8"Mine default"}));
+}
+
+TEST(PluginContentChecks, AStyleCatalogueNeedsAStyleLine)
+{
+    const auto check = [](std::string_view text) { return styleCatalogueProblem(std::as_bytes(std::span(text))); };
+    EXPECT_EQ(check("\xEF\xBB\xBFStyle: Sign,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,0,2,10,10,10,1"),
+              std::nullopt);
+    EXPECT_EQ(check("[V4+ Styles]\nFormat: Name\n"), "holds no Style: lines");
+    EXPECT_EQ(check(""), "holds no Style: lines");
 }
 
 TEST(StyleCatalogTiers, OpeningAProjectAddsNoFilesAndSavingMakesTheFolder)
