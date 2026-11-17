@@ -1241,6 +1241,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         m_recoveryDir.isEmpty() ? std::filesystem::path() : std::filesystem::path(m_recoveryDir.toStdU16String()),
         m_sessionId.toStdString(), m_recoveryDir.isEmpty() ? 0 : capacity);
     m_recovery->prune(std::chrono::system_clock::now());
+    m_autosaveIntervalMs = options.autosaveIntervalMs;
     m_spellingText = backends::legacySpellingText(true);
     m_bundledDictionaryDir = options.bundledDictionaryDir;
     m_spellingOn = m_settings->boolean("editor.spellchecker");
@@ -4086,9 +4087,9 @@ void Application::scheduleAutosave(std::optional<application::DocumentId> docume
     if (!timer) {
         timer = new QTimer(this);
         timer->setSingleShot(true);
-        timer->setInterval(20'000);
+        timer->setInterval(m_autosaveIntervalMs);
         const auto id = *target;
-        connect(timer, &QTimer::timeout, this, [this, id] { autosave(id); });
+        connect(timer, &QTimer::timeout, this, [this, id] { autosave(id, false); });
     }
     if (!timer->isActive())
         timer->start();
@@ -4103,10 +4104,13 @@ bool Application::autosavePending(application::DocumentId document) const
 bool Application::autosaveNow()
 {
     const auto target = m_workspace.editingTarget();
-    return target && autosave(*target);
+    if (!target)
+        return false;
+    m_recoveryWrites.finishWrites();
+    return autosave(*target, true);
 }
 
-bool Application::autosave(application::DocumentId document)
+bool Application::autosave(application::DocumentId document, bool now)
 {
     auto *session = m_files->session(document);
     if (!session || !m_recovery->enabled())
@@ -4141,17 +4145,26 @@ bool Application::autosave(application::DocumentId document)
     if (const auto &rate = session->document().frameRate())
         content.frameRate = std::pair(rate->framesPerSecond().numerator(), rate->framesPerSecond().denominator());
     content.writtenMs = QDateTime::currentMSecsSinceEpoch();
-    if (!m_recovery->write(recoveryKey(document), content))
-        return false;
-    if (activeLine)
-        session->amendScriptInfo(application::kActiveLineKey, *activeLine);
-    return true;
+    const std::string key = recoveryKey(document);
+    auto write = [store = *m_recovery, key, content = std::move(content)]() mutable { return store.write(key, content); };
+    auto wrote = [this, document, activeLine](bool written) {
+        if (auto *s = m_files->session(document); written && activeLine && s)
+            s->amendScriptInfo(application::kActiveLineKey, *activeLine);
+    };
+    if (!now) {
+        m_recoveryWrites.put(QString::fromStdString(key), std::move(write), std::move(wrote));
+        return true;
+    }
+    const bool written = write();
+    wrote(written);
+    return written;
 }
 
 void Application::discardRecovery(application::DocumentId document)
 {
     if (const auto it = m_autosaveTimers.find(document.value); it != m_autosaveTimers.end() && it->second)
         it->second->stop();
+    m_recoveryWrites.finishWrites();
     if (m_recovery)
         m_recovery->discard(recoveryKey(document));
 }
@@ -4383,6 +4396,7 @@ bool Application::openLegacyAutosave(const QString &file)
 
 void Application::dismissBundle(const QString &key)
 {
+    m_recoveryWrites.finishWrites();
     if (m_recovery)
         m_recovery->discard(key.toStdString());
 }

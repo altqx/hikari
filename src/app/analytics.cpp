@@ -433,6 +433,7 @@ void Analytics::clear()
         m_reply = nullptr;
         m_inFlight = 0;
     }
+    m_writes.finishWrites();
     if (!m_config.queueFile.isEmpty())
         QFile::remove(m_config.queueFile);
     for (auto &count : m_frames)
@@ -553,17 +554,18 @@ void Analytics::load()
 
 void Analytics::save()
 {
-    if (m_config.queueFile.isEmpty() || !active())
-        return;
-    if (m_queue.isEmpty()) {
-        QFile::remove(m_config.queueFile);
-        return;
-    }
-    QSaveFile file(m_config.queueFile);
-    if (file.open(QIODevice::WriteOnly)) {
-        file.write(QJsonDocument(m_queue).toJson(QJsonDocument::Compact));
-        file.commit();
-    }
+    if (!m_config.queueFile.isEmpty() && active())
+        m_writes.put(m_config.queueFile, queueWrite());
+}
+
+ui::FileWriteQueue::Write Analytics::queueWrite() const
+{
+    if (m_queue.isEmpty())
+        return [file = m_config.queueFile] { return QFile::remove(file) || !QFile::exists(file); };
+    return [file = m_config.queueFile, bytes = QJsonDocument(m_queue).toJson(QJsonDocument::Compact)] {
+        QSaveFile out(file);
+        return out.open(QIODevice::WriteOnly) && out.write(bytes) == bytes.size() && out.commit();
+    };
 }
 
 QJsonArray Analytics::queued() const
@@ -831,7 +833,9 @@ void Analytics::quit(int timeoutMs)
             m_inFlight = 0;
         }
     }
-    save();
+    m_writes.finishWrites();
+    if (!m_config.queueFile.isEmpty())
+        queueWrite()();
 }
 
 QString Analytics::osId()
