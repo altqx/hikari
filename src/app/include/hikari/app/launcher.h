@@ -26,8 +26,8 @@ struct Look {
     std::uint32_t muted;
     bool operator==(const Look &) const = default;
 };
-inline constexpr Look kDarkLook{0x171B20, 0xE8EDF2, 0xA5B1BD};
-inline constexpr Look kLightLook{0xE5E9EC, 0x202832, 0x526170};
+inline constexpr Look kDarkLook{0x181B20, 0xE4E7EB, 0xA0A8B2};
+inline constexpr Look kLightLook{0xEEF0F3, 0x1E2329, 0x56616C};
 // Under %LOCALAPPDATA%, beside the app's cache: "#background #text #muted".
 inline constexpr wchar_t kLookFile[] = L"\\HikariSub\\cache\\startup-look.txt";
 

@@ -1,24 +1,21 @@
-// Fusion's own outline (window colour darkened 140%) is about 1.1:1 on dark panels.
 import QtQuick
 import QtQuick.Controls.Fusion as F
-import QtQuick.Controls.Fusion.impl as FI
 import QtQuick.Templates as T
 
 F.TextArea {
     id: control
+    leftPadding: 8
+    rightPadding: 8
+    color: StyleColours.themed ? (enabled ? StyleColours.text : StyleColours.disabled) : palette.text
+    placeholderTextColor: StyleColours.themed ? (enabled ? StyleColours.muted : StyleColours.disabled) : palette.placeholderText
     T.ContextMenu.menu: null
     T.ContextMenu.onRequested: position => {
         if (!T.ContextMenu.menu)
             TextMenus.menuFor(control)?.popup(control, position)
     }
-    background: FI.TextFieldBackground {
+    background: FieldBackground {
         control: control
-        border.color: control.activeFocus ? F.Fusion.highlightedOutline(control.palette)
-            : (control.enabled && StyleColours.themed ? StyleColours.control : control.palette.mid)
-        FocusFrame {
-            control: control
-            shown: control.activeFocus && (control.focusReason === Qt.TabFocusReason
-                || control.focusReason === Qt.BacktabFocusReason || control.focusReason === Qt.ShortcutFocusReason)
-        }
+        keyboardFocus: control.activeFocus && (control.focusReason === Qt.TabFocusReason
+            || control.focusReason === Qt.BacktabFocusReason || control.focusReason === Qt.ShortcutFocusReason)
     }
 }

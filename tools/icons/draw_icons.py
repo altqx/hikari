@@ -314,6 +314,9 @@ icon("history", "History", ["History.png"], [EDIT, "history-panel"],
 icon("find-replace", "Find and replace", ["FindReplace.png"], [EDIT, "search-tool"],
      magnifier(6, 6, 4, 2) + accent(stroke("M8.5 12.5h6M12.5 10.5l2 2-2 2")), mirror=True)
 icon("search", "Find", ["Search.png"], [EDIT, "search-tool"], magnifier(6.5, 6.5, 4.5, 4))
+icon("quick-open", "Quick Open", [], [FILE, "quick-pick"], page(True) + accent(magnifier(11, 11, 2.5, 1.75)))
+icon("command-palette", "Command palette", [], [VIEW, "quick-pick"],
+     rect(1.5, 2.5, 13, 11, 1) + accent(stroke("M4.5 6l2 2-2 2")) + stroke("M8.5 10h3"), mirror=True)
 icon("sort", "Sort lines", ["Sort.png"], [EDIT, "style-manager"],
      stroke("M1.5 4.5h7M1.5 8h5M1.5 11.5h3") + accent(stroke("M12 2.5v11M9.5 11l2.5 2.5 2.5-2.5")), mirror=True)
 icon("sort-selected", "Sort selected lines", ["SortSel.png"], [EDIT],
@@ -330,6 +333,8 @@ icon("recent-video", "Recently opened videos", ["RecentVideo.png"], [VIDEO, "vid
      + accent(stroke("M11.5 9.5h2a4 4 0 0 1 2 2v2a4 4 0 0 1-2 2h-2a4 4 0 0 1-2-2v-2a4 4 0 0 1 2-2z"),
               stroke("M12.5 11.5v1h1")))
 icon("open-keyframes", "Open keyframes", ["OpenKeyframes.png"], [VIDEO, "explorer"], diamond(6, 6.5, 4.5) + plus_badge())
+icon("save-keyframes", "Save keyframes", [], [VIDEO], diamond(6, 6.5, 4.5) + accent(stroke("M12 9.5v4.5M10 12l2 2 2-2")))
+icon("close-keyframes", "Close keyframes", [], [VIDEO], diamond(6, 6.5, 4.5) + cross_badge())
 icon("recent-keyframes", "Recently opened keyframes", ["RecentKeyframes.png"], [VIDEO],
      diamond(6, 6.5, 4.5) + clock_badge())
 icon("open-timecodes", "Open timecodes", [], [VIDEO, "explorer"], timecodes_ruler() + plus_badge())

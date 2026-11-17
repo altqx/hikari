@@ -3,6 +3,7 @@
 #include "hikari/api/json.h"
 
 #include <cstddef>
+#include <cstdint>
 #include <expected>
 #include <filesystem>
 #include <memory>
@@ -15,8 +16,8 @@ namespace hikari::plugin_helper {
 
 enum class Tier { Restricted, Unrestricted };
 enum class Level { Info, Warning, Error };
-// What a request beyond the Hikari API is about: panels and dialogs, files, or the network.
-enum class Area { Ui, Files, Net, Job };
+// What a request beyond the Hikari API is about: panels and dialogs, files, the network, a job or a timer.
+enum class Area { Ui, Files, Net, Job, Timer };
 
 // What a plugin asks of HikariSub. Each call blocks until HikariSub answers.
 class Host {
@@ -39,7 +40,7 @@ struct Options {
     std::string id;
     std::string version;
     Tier tier = Tier::Restricted;
-    std::size_t memoryLimit = 256u << 20;
+    std::size_t memoryLimit = std::size_t(2) << 30;
     std::string locale;
     api::Json settings = api::Json::object();
     std::vector<std::string> commands;
@@ -58,6 +59,8 @@ public:
     std::expected<void, std::string> run(const std::string &command, Host &host);
     // Runs every handler for `event`; the error is the first handler's.
     std::expected<void, std::string> dispatch(const std::string &event, const api::Json &data, Host &host);
+    // Runs the timer's callback; `last` forgets it afterwards. An unknown id does nothing.
+    std::expected<void, std::string> fire(std::int64_t timer, bool last, Host &host);
     std::size_t memoryInUse() const { return m_budget.used; }
 
     struct Budget {

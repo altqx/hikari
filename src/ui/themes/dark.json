@@ -1,0 +1,146 @@
+{
+  "$schema": "https://hikarisub.altqx.com/schemas/hikari-theme.schema.json",
+  "type": "dark",
+  "roles": {
+    "background": "#181B20",
+    "panel": "#1E2127",
+    "raised": "#2A2E35",
+    "field": "#15171B",
+    "text": "#E4E7EB",
+    "muted": "#A0A8B2",
+    "line": "#2C3037",
+    "control": "#757E89",
+    "disabled": "#737B85",
+    "accent": "#9CDBC9",
+    "onAccent": "#102C24",
+    "select": "#304C47",
+    "hover": "#E4E7EB0F",
+    "pressed": "#E4E7EB1E",
+    "danger": "#FFADAD",
+    "warning": "#E0A030",
+    "success": "#4DBA4D"
+  },
+  "accents": [
+    {
+      "id": "red",
+      "title": "Red",
+      "accent": "#F4A9A3",
+      "onAccent": "#2C1210",
+      "select": "#4C3230"
+    },
+    {
+      "id": "orange",
+      "title": "Orange",
+      "accent": "#F5BB8A",
+      "onAccent": "#2C1D10",
+      "select": "#4C3D30"
+    },
+    {
+      "id": "gold",
+      "title": "Gold",
+      "accent": "#E3CF7E",
+      "onAccent": "#2C2610",
+      "select": "#4C4630"
+    },
+    {
+      "id": "green",
+      "title": "Green",
+      "accent": "#9CDBC9",
+      "onAccent": "#102C24",
+      "select": "#304C47"
+    },
+    {
+      "id": "blue",
+      "title": "Blue",
+      "accent": "#A6C8F2",
+      "onAccent": "#101D2C",
+      "select": "#303D4C"
+    },
+    {
+      "id": "purple",
+      "title": "Purple",
+      "accent": "#C6B5F4",
+      "onAccent": "#18102C",
+      "select": "#38304C"
+    },
+    {
+      "id": "pink",
+      "title": "Pink",
+      "accent": "#EFAAD3",
+      "onAccent": "#2C1021",
+      "select": "#4C3041"
+    }
+  ],
+  "content": {
+    "spellcheck": "#FF6B6B",
+    "grammar": "#6EA8FE",
+    "grid": {
+      "alternate": "#242A31",
+      "warning": "#7A2E2E",
+      "comment": "#253A57",
+      "comparison": [
+        "#2700FF",
+        "#272B32",
+        "#3A3E45",
+        "#003176",
+        "#3662A1"
+      ],
+      "labels": {
+        "normal": "#2F3136",
+        "modified": "#322F4E",
+        "saved": "#202225",
+        "doubtful": "#925B1F"
+      }
+    },
+    "syntax": {
+      "curlyBraces": "#8791FD",
+      "operators": "#00C3FF",
+      "names": "#00C3FF",
+      "values": "#0076FF",
+      "splitAndDrawings": "#ADABAB",
+      "templateVariables": "#BDB76B",
+      "templateCodeMarks": "#FB4544",
+      "templateFunctions": "#00C3FF",
+      "templateKeywords": "#8D80D3",
+      "templateStrings": "#11A243",
+      "drawingX": "#4EC9B0",
+      "drawingY": "#E5A0D9"
+    },
+    "ports": {
+      "units": "#C9A0FF",
+      "tags": "#7FD6A8",
+      "number": "#8EC5FF",
+      "text": "#F2C46D",
+      "colour": "#FF9EB5",
+      "point": "#FFB37A",
+      "bool": "#B0B8C0",
+      "drawing": "#66D9E8"
+    },
+    "audio": {
+      "background": "#36393E",
+      "lineStart": "#940000",
+      "lineEnd": "#940000",
+      "inactiveBoundary": "#00D77D",
+      "cursor": "#8791FD",
+      "secondBoundaries": "#F4F4F437",
+      "keyframe": "#F4F4F4",
+      "inactiveBackground": "#00000055",
+      "waveform": "#202225",
+      "waveformInactive": "#2F3136",
+      "waveformModified": "#FF6968",
+      "timescaleBackground": "#202225",
+      "timescaleText": "#AEAFB2",
+      "spectrumBackground": "#000000",
+      "spectrumEcho": "#674FD7",
+      "spectrumInner": "#F4F4F4",
+      "lineBoundaryMark": "#FFFFFF",
+      "syllableBoundaries": "#202225",
+      "syllableText": "#8791FD"
+    },
+    "visualTools": {
+      "handle": "#121150AA",
+      "handleSelected": "#FCE6B1AA",
+      "handleBorder": "#BB0000"
+    }
+  }
+}

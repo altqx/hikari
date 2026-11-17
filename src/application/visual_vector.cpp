@@ -107,8 +107,6 @@ int toInt(float value)
 namespace {
 
 constexpr std::uint32_t kRed = 0xFFBB0000;
-constexpr std::uint32_t kHandleFill = 0xAA121150;
-constexpr std::uint32_t kSelectedFill = 0xAAFCE6B1;
 constexpr std::uint32_t kBezierArms = 0xFF0000FF;
 constexpr std::uint32_t kSplineHull = 0xFFAA33AA;
 constexpr std::uint32_t kHoverFill = 0xAACC8748;
@@ -311,8 +309,8 @@ void pointSquare(Overlay &out, PointF pos, bool sel, float rcsize)
                 {pos.x + rcsize, pos.y - rcsize},
                 {pos.x + rcsize, pos.y + rcsize},
                 {pos.x - rcsize, pos.y + rcsize}};
-    p.fill = sel ? kSelectedFill : kHandleFill;
-    p.border = kRed;
+    p.fill = sel ? out.handles.selectedFill : out.handles.fill;
+    p.border = out.handles.border;
     p.above = true;
     out.polygons.push_back(std::move(p));
 }
@@ -323,8 +321,8 @@ void pointCircle(Overlay &out, PointF pos, bool sel, float crsize)
     OverlayPolygon p;
     for (int j = 0; j < 18; j++)
         p.points.push_back({pos.x + (crsize * std::sin((j * 20) * rad)), pos.y + (crsize * std::cos((j * 20) * rad))});
-    p.fill = sel ? kSelectedFill : kHandleFill;
-    p.border = kRed;
+    p.fill = sel ? out.handles.selectedFill : out.handles.fill;
+    p.border = out.handles.border;
     p.above = true;
     out.polygons.push_back(std::move(p));
 }

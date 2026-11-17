@@ -9,6 +9,7 @@
 #include <QTemporaryDir>
 #include <gtest/gtest.h>
 
+#include <memory>
 #include <optional>
 
 using hikari::application::VcsFailure;
@@ -50,6 +51,31 @@ private:
     bool m_had;
     QByteArray m_old;
 };
+
+bool insideAWorkTree(const QString &folder)
+{
+    QProcess git;
+    QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
+    for (const QString &key : env.keys())
+        if (key.startsWith(QStringLiteral("GIT_"), Qt::CaseInsensitive))
+            env.remove(key);
+    git.setProcessEnvironment(env);
+    git.setWorkingDirectory(folder);
+    git.start(QStandardPaths::findExecutable(QStringLiteral("git")), {QStringLiteral("rev-parse"), QStringLiteral("--is-inside-work-tree")});
+    return git.waitForFinished(30'000) && git.exitCode() == 0 && git.readAllStandardOutput().trimmed() == "true";
+}
+
+std::unique_ptr<QTemporaryDir> temporaryDirOutsideAnyWorkTree()
+{
+    for (const QString &base : {QDir::tempPath(), QStringLiteral("/tmp"), QStringLiteral("/var/tmp")}) {
+        if (!QDir(base).exists() || insideAWorkTree(base))
+            continue;
+        auto dir = std::make_unique<QTemporaryDir>(base + QStringLiteral("/git_reader_outside-XXXXXX"));
+        if (dir->isValid())
+            return dir;
+    }
+    return nullptr;
+}
 
 constexpr char kOld[] = "[Script Info]\nTitle: old\n";
 constexpr char kNew[] = "[Script Info]\nTitle: new\n";
@@ -278,8 +304,9 @@ TEST_F(GitReaderTest, AMissingRefFileOrRepositorySaysWhich)
     EXPECT_EQ(problemOf(show(file(), "nope")), VcsProblem::NoRef);
     EXPECT_EQ(problemOf(show(file(QStringLiteral("u16.ass")), "v1")), VcsProblem::NoFile);
     EXPECT_EQ(problemOf(show(file(QStringLiteral("never.ass")), "HEAD")), VcsProblem::NoFile);
-    const QString outside = m_dir.filePath(QStringLiteral("outside"));
-    QDir().mkpath(outside);
+    const auto outsideDir = temporaryDirOutsideAnyWorkTree();
+    ASSERT_TRUE(outsideDir) << "every temporary folder is inside a git work tree";
+    const QString outside = outsideDir->path();
     EXPECT_EQ(problemOf(show(outside + QStringLiteral("/a.ass"), "HEAD")), VcsProblem::NoRepository);
     EXPECT_EQ(problemOf(show(m_dir.filePath(QStringLiteral("gone/a.ass")), "HEAD")), VcsProblem::NoRepository);
     const auto listed = refs(outside);

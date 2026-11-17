@@ -1,0 +1,6 @@
+#include "hikari/themes/theme.h"
+
+std::string_view hikari::themes::schema()
+{
+    return R"hikari-schema(@HIKARI_THEME_SCHEMA@)hikari-schema";
+}

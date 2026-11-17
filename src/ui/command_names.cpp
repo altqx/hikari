@@ -409,6 +409,11 @@ constexpr const char *kHotkeyCommands[] = {
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Snap to the scene"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Lengthen and shift what follows"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Shorten and shift what follows"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Quick Open…"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Command palette…"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Clear command history"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Save keyframes…"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Close keyframes"),
 };
 
 constexpr const char *kHotkeyWindows[] = {

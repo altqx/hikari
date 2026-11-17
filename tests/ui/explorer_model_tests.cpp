@@ -80,6 +80,30 @@ private slots:
 
     void cleanup() { QDir(m_root).removeRecursively(); }
 
+    void aScanListsEveryShownFileAtAnyDepthByPath()
+    {
+        ExplorerModel model;
+        model.setFolder(m_root);
+        QSignalSpy found(&model, &ExplorerModel::filesFound);
+        model.scanFiles();
+        QVERIFY(model.scanning());
+        QTRY_VERIFY(!found.isEmpty() && found.last().at(1).toBool());
+        QVERIFY(!model.scanning());
+        QStringList relative;
+        for (const QVariant &file : found.last().at(0).toList())
+            relative << file.toMap().value(QStringLiteral("relative")).toString();
+        QVERIFY(relative.contains(QStringLiteral("raws/ep02.mkv")));
+        QVERIFY(!relative.contains(QStringLiteral("readme.md")));
+        QVERIFY(!relative.contains(QStringLiteral("ep01.mkv.lwi")));
+        QVERIFY(!relative.contains(QStringLiteral(".notes.ass")));
+        QVERIFY(!relative.contains(QStringLiteral(".hikari/project.toml")));
+        QVERIFY(relative.indexOf(QStringLiteral("ep02.ass")) < relative.indexOf(QStringLiteral("ep10.ass")));
+        const QVariantMap first = found.last().at(0).toList().at(relative.indexOf(QStringLiteral("ep01.ass"))).toMap();
+        QCOMPARE(first.value(QStringLiteral("kind")).toString(), QStringLiteral("subtitles"));
+        QCOMPARE(first.value(QStringLiteral("name")).toString(), QStringLiteral("ep01.ass"));
+        QCOMPARE(first.value(QStringLiteral("path")).toString(), at(QStringLiteral("ep01.ass")));
+    }
+
     void theDefaultFilterShowsHikariSubFilesFoldersFirst()
     {
         ExplorerModel model;

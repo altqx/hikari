@@ -1,0 +1,10 @@
+#include <string_view>
+
+namespace hikari::ui::theme {
+
+std::string_view fallbackDark()
+{
+    return R"hikari-theme(@HIKARI_FALLBACK_DARK@)hikari-theme";
+}
+
+}
