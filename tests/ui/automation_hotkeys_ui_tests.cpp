@@ -93,17 +93,17 @@ private slots:
             QVERIFY(loadScripts(a));
             auto &macros = a.automationHotkeys();
             auto &h = a.hotkeys();
-            QVERIFY(map(h, kPrefix, "Ctrl-Shift-P").isEmpty());
-            QCOMPARE(keysOf(macros, kPrefix), QStringLiteral("Ctrl+Shift+P"));
+            QVERIFY(map(h, kPrefix, "Ctrl-Shift-J").isEmpty());
+            QCOMPARE(keysOf(macros, kPrefix), QStringLiteral("Ctrl+Shift+J"));
             QCOMPARE(macros.shortcuts().size(), qsizetype(1));
-            QVERIFY(!map(h, kEdgeblur, "Ctrl-Shift-P", "delete").isEmpty());
+            QVERIFY(!map(h, kEdgeblur, "Ctrl-Shift-J", "delete").isEmpty());
             QCOMPARE(keysOf(macros, kPrefix), QString());
-            QCOMPARE(keysOf(macros, kEdgeblur), QStringLiteral("Ctrl+Shift+P"));
-            QCOMPARE(h.holdersOf(QStringLiteral("Ctrl-Shift-P"), h.gestureTarget(QLatin1String(kPrefix)).value("id").toInt()),
+            QCOMPARE(keysOf(macros, kEdgeblur), QStringLiteral("Ctrl+Shift+J"));
+            QCOMPARE(h.holdersOf(QStringLiteral("Ctrl-Shift-J"), h.gestureTarget(QLatin1String(kPrefix)).value("id").toInt()),
                      QStringList{QStringLiteral("Add edgeblur")});
             QCOMPARE(h.holdersOf(QStringLiteral("Ctrl-S"), -1), QStringList{QStringLiteral("Save")});
             QCOMPARE(h.globalHolder(QStringLiteral("Ctrl+S")), QStringLiteral("Save"));
-            QCOMPARE(h.globalHolder(QStringLiteral("Ctrl+Shift+P")), QString());
+            QCOMPARE(h.globalHolder(QStringLiteral("Ctrl+Shift+J")), QString());
             QVERIFY(map(h, kEdgeblur, "Ctrl-Shift-E").isEmpty());
             macros.replaceCommitted({{kEdgeblur, "Ctrl+Shift+E"}, {"Script gone.lua-0", "F8"}});
             macros.save();

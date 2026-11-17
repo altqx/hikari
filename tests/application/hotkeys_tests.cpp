@@ -71,7 +71,7 @@ constexpr ToolCommand kToolCommands[] = {
 TEST(Hotkeys, ActionTableIsLegacyIdsAndTheMigrationMap)
 {
     ASSERT_EQ(ids().size(), 243u);
-    ASSERT_EQ(hotkeyActions().size(), 421u);
+    ASSERT_EQ(hotkeyActions().size(), 424u);
     for (const auto &a : hotkeyActions().first(kLegacyHotkeyActions)) {
         EXPECT_EQ(hotkeyIdOf(a.symbol), a.id);
         EXPECT_EQ(hotkeySymbol(a.id), a.symbol);
@@ -435,12 +435,15 @@ TEST(Hotkeys, ListOrderIsAddHotkeysOnList)
     HotkeyList list(copy);
     auto live = defaultHotkeys();
     list.build(live);
-    ASSERT_EQ(list.rowCount(), 396u);
-    EXPECT_EQ(list.row(0).text, "Global Run the last macro again");
-    EXPECT_EQ(list.row(1).text, "Global Swap side bars");
-    EXPECT_EQ(list.row(4).text, "Global Typesetting graph…");
-    EXPECT_EQ(list.row(5).text, "Global Explorer");
-    EXPECT_EQ(list.row(6).text, "Global Position to margins");
+    ASSERT_EQ(list.rowCount(), 399u);
+    EXPECT_EQ(list.row(0).text, "Global Clear command history");
+    EXPECT_EQ(list.row(1).text, "Global Command palette…");
+    EXPECT_EQ(list.row(2).text, "Global Quick Open…");
+    EXPECT_EQ(list.row(3).text, "Global Run the last macro again");
+    EXPECT_EQ(list.row(4).text, "Global Swap side bars");
+    EXPECT_EQ(list.row(7).text, "Global Typesetting graph…");
+    EXPECT_EQ(list.row(8).text, "Global Explorer");
+    EXPECT_EQ(list.row(9).text, "Global Position to margins");
     EXPECT_EQ(list.row(0).accel, "");
     EXPECT_EQ(rowNamed(list, "Global Close tab").accel, "Ctrl-W");
     EXPECT_EQ(rowNamed(list, "Global Load session from file…").accel, "");
@@ -516,7 +519,7 @@ TEST(Hotkeys, ListOrderIsAddHotkeysOnList)
     live[HotkeyId{kSave, GridHotkey}] = Hotkey{"Save", "F7"};
     HotkeyList more(copy);
     more.build(live);
-    ASSERT_EQ(more.rowCount(), 398u);
+    ASSERT_EQ(more.rowCount(), 401u);
     const int script = more.find("Global Script a.lua-1");
     const int copied = more.find("Subtitles Save");
     ASSERT_GE(script, 0);
@@ -530,13 +533,13 @@ TEST(Hotkeys, ListOrderIsAddHotkeysOnList)
     fewer.erase(HotkeyId{kAudioCommitAlt, AudioHotkey});
     HotkeyList cut(copy);
     cut.build(fewer);
-    EXPECT_EQ(cut.rowCount(), 395u);
+    EXPECT_EQ(cut.rowCount(), 398u);
     EXPECT_EQ(cut.find("Audio Apply changes alt"), -1);
     auto odd = fewer;
     odd[HotkeyId{5001, -1}] = Hotkey{"", "F1"};
     HotkeyList whole(copy);
     whole.build(odd);
-    EXPECT_EQ(whole.rowCount(), 396u);
+    EXPECT_EQ(whole.rowCount(), 399u);
 }
 
 TEST(Hotkeys, AutomationAndPluginsFiltersSplitTheScriptRows)
@@ -572,7 +575,7 @@ TEST(Hotkeys, FilterModesAndSelection)
         list.filter(mode);
         return list.shown().size();
     };
-    EXPECT_EQ(count(1), 115u);
+    EXPECT_EQ(count(1), 117u);
     EXPECT_EQ(count(3), std::size_t(std::ranges::count_if(hotkeyNames(), [](const auto &n) { return hotkeyType(n.first) == GridHotkey; })));
     EXPECT_EQ(count(6), 30u);
     list.filter(5);
@@ -582,12 +585,12 @@ TEST(Hotkeys, FilterModesAndSelection)
     list.filter(1);
     const int first = list.selection();
     list.remove(first, live);
-    EXPECT_EQ(list.shown().size(), 115u);
+    EXPECT_EQ(list.shown().size(), 117u);
     EXPECT_EQ(list.row(first).accel, "");
     list.filter(1);
-    EXPECT_EQ(list.shown().size(), 114u);
+    EXPECT_EQ(list.shown().size(), 116u);
     list.filter(0);
-    EXPECT_EQ(list.shown().size(), 396u);
+    EXPECT_EQ(list.shown().size(), 399u);
 }
 
 TEST(Hotkeys, SearchNarrowsTheFilter)
@@ -660,7 +663,7 @@ TEST(Hotkeys, EditsRerunTheSearch)
     list.build(live);
     const int history = list.find("Global History");
     const auto shown = [&](int row) { return std::ranges::any_of(list.shown(), [&](int i) { return i == row; }); };
-    list.search("history");
+    list.search("global history");
     list.map(history, "Ctrl-Shift-J", GlobalHotkey, HotkeyAnswer::Cancel, live);
     EXPECT_TRUE(shown(history));
     EXPECT_EQ(list.selection(), history);
@@ -803,17 +806,17 @@ TEST(Hotkeys, MapToAnotherWindowAddsOrUpdatesItsRow)
     const int save = list.find("Global Save");
     list.map(save, "F7", VideoHotkey, HotkeyAnswer::Cancel, live);
     EXPECT_EQ(list.row(save).accel, "Ctrl-S");
-    ASSERT_EQ(list.rowCount(), 397u);
-    const auto &added = list.row(396);
+    ASSERT_EQ(list.rowCount(), 400u);
+    const auto &added = list.row(399);
     EXPECT_EQ(added.text, "Video Save");
     EXPECT_EQ((added.key), (HotkeyId{kSave, VideoHotkey}));
     EXPECT_EQ(added.accel, "F7");
     EXPECT_EQ(list.selection(), -1);
     EXPECT_EQ(copy.at(HotkeyId{kSave, VideoHotkey}).accel, "F7");
     list.map(save, "F6", VideoHotkey, HotkeyAnswer::Cancel, live);
-    EXPECT_EQ(list.rowCount(), 397u);
-    EXPECT_EQ(list.row(396).accel, "F6");
-    EXPECT_EQ(list.selection(), 396);
+    EXPECT_EQ(list.rowCount(), 400u);
+    EXPECT_EQ(list.row(399).accel, "F6");
+    EXPECT_EQ(list.selection(), 399);
 }
 
 TEST(Hotkeys, ResetDeleteUndoRedo)
@@ -894,7 +897,7 @@ TEST(Hotkeys, TheCopyOutlivesTheDialogAndSetDefault)
     auto reset = defaultHotkeys();
     third.clear();
     third.build(reset);
-    EXPECT_EQ(third.shown().size(), 396u);
+    EXPECT_EQ(third.shown().size(), 399u);
     EXPECT_EQ(third.filterMode(), 2);
     EXPECT_EQ(rowNamed(third, "Global Open subtitles…").accel, "Ctrl-O");
     EXPECT_TRUE(third.modified());
@@ -1028,7 +1031,7 @@ TEST(Hotkeys, FilteredListShowsAndHidesBlocks)
     list.filter(1);
     ASSERT_TRUE(list.filtered());
     const auto shown = list.shown();
-    ASSERT_EQ(shown.front(), 3);
+    ASSERT_EQ(shown.front(), 1);
     EXPECT_EQ(list.hiddenBlock(-1), 1);
     int position = -1;
     for (int i = 0; i + 1 < int(shown.size()); ++i)
