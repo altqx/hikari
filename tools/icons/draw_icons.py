@@ -330,6 +330,8 @@ icon("recent-video", "Recently opened videos", ["RecentVideo.png"], [VIDEO, "vid
      + accent(stroke("M11.5 9.5h2a4 4 0 0 1 2 2v2a4 4 0 0 1-2 2h-2a4 4 0 0 1-2-2v-2a4 4 0 0 1 2-2z"),
               stroke("M12.5 11.5v1h1")))
 icon("open-keyframes", "Open keyframes", ["OpenKeyframes.png"], [VIDEO, "explorer"], diamond(6, 6.5, 4.5) + plus_badge())
+icon("save-keyframes", "Save keyframes", [], [VIDEO], diamond(6, 6.5, 4.5) + accent(stroke("M12 9.5v4.5M10 12l2 2 2-2")))
+icon("close-keyframes", "Close keyframes", [], [VIDEO], diamond(6, 6.5, 4.5) + cross_badge())
 icon("recent-keyframes", "Recently opened keyframes", ["RecentKeyframes.png"], [VIDEO],
      diamond(6, 6.5, 4.5) + clock_badge())
 icon("open-timecodes", "Open timecodes", [], [VIDEO, "explorer"], timecodes_ruler() + plus_badge())

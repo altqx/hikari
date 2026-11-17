@@ -405,6 +405,8 @@ constexpr const char *kHotkeyCommands[] = {
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Delete old autosaves…"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Open dummy video…"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Run the last macro again"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Save keyframes…"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Close keyframes"),
 };
 
 constexpr const char *kHotkeyWindows[] = {

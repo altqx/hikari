@@ -92,6 +92,14 @@ A dummy video's frame rate may be a fraction, such as `24000/1001`, and its path
 
 A dummy video can be up to 100000 pixels on each side, as in Aegisub 3.5. The smallest is still 300×200. When a side is over 8192, the frames are drawn scaled down to fit 8192×8192, so a huge dummy doesn't need gigabytes of memory per frame. The size you asked for is what the visual tools, the PlayRes and LayoutRes checks, Script properties and Lua (`aegisub.video_size()`) see. Only the picture and `aegisub.get_frame()` have the smaller size. [FA9 #566](https://github.com/altqx/hikari/issues/566), coordinator decision 2026-11-03.
 
+## PT-timing-keys
+
+Settings › Audio › "Timing keys work in every panel" (Never, In the Timing layout, Always; In the Timing layout by default) is HikariSub's version of Aegisub's Medusa timing keys. When it applies, the audio panel's shortcuts also work in the grid, the video and the line editor. Unlike Aegisub, arrows, Page Up and Down, Home, End, Enter, Tab and Escape keep their panel's meaning, and in a text box only shortcuts with Ctrl, Alt or Meta take part (coordinator, 2026-11-17). Switching layouts never changes the setting. [PT #1212](https://github.com/altqx/hikari/issues/1212).
+
+## PT-keyframes-close
+
+Video › Close keyframes goes back to the video's own keyframes, as Aegisub's `keyframe/close` does, and the next save drops `Keyframes File` from the Aegisub Project Garbage. Video › Save keyframes… writes the current keyframes in Aegisub's keyframe format v1. [PT #1212](https://github.com/altqx/hikari/issues/1212).
+
 ## FA9-clip-places
 
 Vector clips are written with up to two decimal places, as Aegisub 3.5 writes them, by the vector clip tool and the Position shifter. They used to be rounded to whole pixels. Rectangle clips, and the clips the scale and rotation tools rewrite, keep whole pixels. Files from older versions read back unchanged. [FA9 #566](https://github.com/altqx/hikari/issues/566).

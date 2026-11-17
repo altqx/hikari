@@ -1341,6 +1341,16 @@ DialogWindow {
                         SettingCheck { setting: "audio.lockScrollOnCursor"; text: qsTr("Follow audio during playback") }
                         SettingCheck { setting: "audio.dontPlayWhenLineChanges"; text: qsTr("Don’t play after changing the line") }
                         SettingCheck { setting: "audio.autoFocus"; text: qsTr("Focus the panel under the pointer") }
+                        SettingsRow {
+                            iconRole: "hotkeys"
+                            text: qsTr("Timing keys work in every panel")
+                            SettingChoice {
+                                setting: "audio.timingKeysEverywhere"
+                                model: [qsTr("Never"), qsTr("In the Timing layout"), qsTr("Always")]
+                                Accessible.name: qsTr("Timing keys work in every panel")
+                            }
+                        }
+                        SettingNote { text: qsTr("The audio panel’s shortcuts also work in the grid, the video and the line editor. Unlike Aegisub’s Medusa keys, arrows, Page Up and Down, Home, End, Enter, Tab and Escape keep their panel’s meaning. In a text box only shortcuts with Ctrl, Alt or Meta work.") }
                         SettingCheck { setting: "audio.playMono"; text: qsTr("Play in mono") }
                         SettingNote { text: qsTr("Mixes the channels for the audio panel and editing playback. General video playback keeps the file’s channels.") }
                     }
