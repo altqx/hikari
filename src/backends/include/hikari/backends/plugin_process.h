@@ -64,7 +64,8 @@ public:
     void start();
     // Queued behind running work; starts the helper again after a stop. False when the plugin
     // failed to load or the queue is full.
-    bool run(const std::string &command);
+    // `call` is the JSON {args, context} the handler gets.
+    bool run(const std::string &command, const std::string &call);
     // Dropped unless the plugin runs. A queued event of the same name takes the newer data.
     bool push(const std::string &event, const std::string &json) { return deliver(event, json, event); }
     // As push, but a queued event takes the newer data only when both carry the same non-empty key.

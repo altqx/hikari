@@ -17664,6 +17664,82 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>Its panel “%1” couldn’t load: %2</source>
         <translation>இதன் பலகம் “%1” ஐ ஏற்ற முடியவில்லை: %2</translation>
     </message>
+    <message>
+        <source>hikari-plugin.json names the command “%1” at %2, which it doesn’t declare.</source>
+        <translation>hikari-plugin.json %2 இல் “%1” கட்டளையைக் குறிப்பிடுகிறது, ஆனால் அதை அறிவிக்கவில்லை.</translation>
+    </message>
+    <message>
+        <source>hikari-plugin.json binds %1 twice, at %2.</source>
+        <translation>hikari-plugin.json %1 ஐ %2 இல் இரண்டு முறை இணைக்கிறது.</translation>
+    </message>
+    <message>
+        <source>Status bar item: %1</source>
+        <translation>நிலைப் பட்டி உருப்படி: %1</translation>
+    </message>
+    <message>
+        <source>Shortcut: %1 for %2</source>
+        <translation>குறுக்குவிசை: %2 க்கு %1</translation>
+    </message>
+    <message>
+        <source>%1 is taken by %2</source>
+        <translation>%1 ஐ %2 ஏற்கெனவே பயன்படுத்துகிறது</translation>
+    </message>
+    <message>
+        <source>Needs an open file</source>
+        <translation>திறந்த கோப்பு தேவை</translation>
+    </message>
+    <message>
+        <source>Works only without an open file</source>
+        <translation>திறந்த கோப்பு இல்லாதபோது மட்டுமே இயங்கும்</translation>
+    </message>
+    <message>
+        <source>Needs a selection</source>
+        <translation>தேர்வு தேவை</translation>
+    </message>
+    <message>
+        <source>Works only without a selection</source>
+        <translation>தேர்வு இல்லாதபோது மட்டுமே இயங்கும்</translation>
+    </message>
+    <message>
+        <source>Needs two or more selected lines</source>
+        <translation>இரண்டு அல்லது அதற்கு மேற்பட்ட தேர்ந்தெடுத்த வரிகள் தேவை</translation>
+    </message>
+    <message>
+        <source>Works only with one line selected or none</source>
+        <translation>ஒரு வரி தேர்ந்தெடுக்கப்பட்டிருக்கும்போது அல்லது தேர்வு இல்லாதபோது மட்டுமே இயங்கும்</translation>
+    </message>
+    <message>
+        <source>Needs an open video</source>
+        <translation>திறந்த வீடியோ தேவை</translation>
+    </message>
+    <message>
+        <source>Works only without an open video</source>
+        <translation>திறந்த வீடியோ இல்லாதபோது மட்டுமே இயங்கும்</translation>
+    </message>
+    <message>
+        <source>Needs open audio</source>
+        <translation>திறந்த ஆடியோ தேவை</translation>
+    </message>
+    <message>
+        <source>Works only without open audio</source>
+        <translation>திறந்த ஆடியோ இல்லாதபோது மட்டுமே இயங்கும்</translation>
+    </message>
+    <message>
+        <source>Needs a karaoke line</source>
+        <translation>கரோக்கி வரி தேவை</translation>
+    </message>
+    <message>
+        <source>Works only on a line without karaoke</source>
+        <translation>கரோக்கி இல்லாத வரியில் மட்டுமே இயங்கும்</translation>
+    </message>
+    <message>
+        <source>Needs Translation mode</source>
+        <translation>மொழிபெயர்ப்பு பயன்முறை தேவை</translation>
+    </message>
+    <message>
+        <source>Works only outside Translation mode</source>
+        <translation>மொழிபெயர்ப்பு பயன்முறைக்கு வெளியே மட்டுமே இயங்கும்</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Position</name>

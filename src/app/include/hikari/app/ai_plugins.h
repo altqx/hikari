@@ -25,7 +25,8 @@ public:
 
     std::vector<api::PluginState> plugins() const override;
     std::optional<std::string> manifest(std::string_view plugin) const override;
-    api::PluginRun run(std::string_view plugin, std::string_view command) override;
+    api::PluginRun run(std::string_view plugin, std::string_view command, std::string_view via) override;
+    api::StatusItemSet setStatusItem(std::string_view plugin, const api::StatusItemChange &change) override;
     std::expected<api::ScaffoldedPlugin, std::string> scaffold(std::string_view plugin,
                                                                const std::vector<api::PluginFile> &files) override;
     std::optional<std::string> scaffoldedPackage(std::string_view plugin) const override;

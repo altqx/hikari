@@ -211,8 +211,12 @@ std::expected<void, std::string> Installer::install(const InstallReview &review,
         return failed("cannot create", m_folders.data / manifest.id, error);
 
     InstalledPlugin entry{manifest.version, true, review.signer, {}, api::Json::object(), review.source};
+    entry.installed = 1;
+    for (const auto &[id, plugin] : *registry)
+        entry.installed = std::max(entry.installed, plugin.installed + 1);
     if (existing != registry->end()) {
         const InstalledPlugin &old = existing->second;
+        entry.installed = old.installed;
         entry.enabled = old.enabled || old.revoked.has_value();
         entry.autoUpdate = old.autoUpdate;
         entry.skip = old.skip == manifest.version ? std::string() : old.skip;

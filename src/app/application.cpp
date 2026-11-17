@@ -917,9 +917,12 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     connect(m_pluginManager.get(), &PluginManager::folderForgotten, m_pluginRuntime.get(), &PluginRuntime::endFileAccess);
     connect(m_pluginManager.get(), &PluginManager::pluginsChanged, m_pluginRuntime.get(), &PluginRuntime::sync);
     connect(m_pluginManager.get(), &PluginManager::settingChanged, m_pluginRuntime.get(), &PluginRuntime::settingChanged);
-    m_automationHotkeys->setPluginRunner([this](const QString &command) { return m_pluginRuntime->run(command); });
-    connect(m_pluginRuntime.get(), &PluginRuntime::commandsChanged, m_automationHotkeys.get(),
-            [this] { m_automationHotkeys->setPluginCommands(m_pluginRuntime->commands()); });
+    m_automationHotkeys->setPluginRunner(
+        [this](const QString &command) { return m_pluginRuntime->run(command, QStringLiteral("key")); });
+    connect(m_pluginRuntime.get(), &PluginRuntime::commandsChanged, m_automationHotkeys.get(), [this] {
+        m_automationHotkeys->setPluginCommands(m_pluginRuntime->commands());
+        m_automationHotkeys->setPluginDefaults(m_pluginRuntime->keybindings());
+    });
     m_pluginMarketplace->setBusy([this](const QString &id) { return m_pluginRuntime->busy(id); });
     connect(m_pluginRuntime.get(), &PluginRuntime::idle, m_pluginMarketplace.get(), &PluginMarketplace::pluginIdle);
     QMetaObject::invokeMethod(m_pluginRuntime.get(), &PluginRuntime::sync, Qt::QueuedConnection);

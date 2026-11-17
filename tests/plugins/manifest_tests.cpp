@@ -3,6 +3,8 @@
 
 #include <gtest/gtest.h>
 
+#include <tuple>
+
 using namespace hikari::plugins;
 using hikari::api::Json;
 using Kind = ManifestProblem::Kind;
@@ -365,4 +367,103 @@ TEST(PluginManifest, AnUpdateAsksForMoreOnlyWhenItAddsAPermission)
     EXPECT_FALSE(permissionIncrease(more, more).any());
 }
 
+}
+
+namespace {
+
+Json withCommands()
+{
+    Json json = minimal();
+    json["contributes"] = *Json::parse(R"({"commands": [
+        {"id": "count", "title": "Count", "icon": "plugins", "when": ["selection", "!video"]},
+        {"id": "clean", "title": "Clean"}]})");
+    return json;
+}
+
+}
+
+TEST(PluginManifest, MenusStatusItemsAndKeybindingsRead)
+{
+    Json json = withCommands();
+    Json &contributes = json["contributes"];
+    contributes["menus"] = *Json::parse(R"([{"command": "count", "location": "grid.context", "group": "tools"},
+        {"command": "count", "location": "lineEditor.context"}, {"command": "clean", "location": "menuBar"}])");
+    contributes["statusItems"] = *Json::parse(R"([{"id": "words", "title": "Words", "text": "0 words",
+        "tooltip": "Words in the Line", "command": "count"}, {"id": "dot", "title": "Dot", "icon": "plugins"}])");
+    contributes["keybindings"] = *Json::parse(R"([{"command": "count", "key": "Ctrl+Alt+K"}])");
+    const auto m = parse(json);
+    ASSERT_TRUE(m) << m.error().at << ": " << m.error().detail;
+    EXPECT_EQ(m->commands[0].icon, "plugins");
+    EXPECT_EQ(m->commands[0].when, (std::vector<std::string>{"selection", "!video"}));
+    EXPECT_TRUE(m->commands[1].when.empty());
+    ASSERT_EQ(m->menus.size(), 3u);
+    EXPECT_EQ(m->menus[0].location, MenuLocation::Grid);
+    EXPECT_EQ(m->menus[0].group, "tools");
+    EXPECT_EQ(m->menus[1].location, MenuLocation::LineEditor);
+    EXPECT_EQ(m->menus[2].location, MenuLocation::MenuBar);
+    EXPECT_EQ(m->menus[2].command, "clean");
+    ASSERT_EQ(m->statusItems.size(), 2u);
+    EXPECT_EQ(m->statusItems[0].text, "0 words");
+    EXPECT_EQ(m->statusItems[0].command, "count");
+    EXPECT_EQ(m->statusItems[1].icon, "plugins");
+    EXPECT_TRUE(m->statusItems[1].command.empty());
+    ASSERT_EQ(m->keybindings.size(), 1u);
+    EXPECT_EQ(m->keybindings[0].key, "Ctrl+Alt+K");
+}
+
+TEST(PluginManifest, ACommandThatIsntDeclaredIsRefused)
+{
+    for (const auto &[list, entry, at] :
+         {std::tuple{"menus", R"({"command": "nope", "location": "menuBar"})", "/contributes/menus/0/command"},
+          std::tuple{"statusItems", R"({"id": "a", "title": "A", "text": "A", "command": "nope"})",
+                     "/contributes/statusItems/0/command"},
+          std::tuple{"keybindings", R"({"command": "nope", "key": "Ctrl+Alt+K"})", "/contributes/keybindings/0/command"}}) {
+        Json json = withCommands();
+        json["contributes"][list] = Json::array({*Json::parse(entry)});
+        const ManifestProblem p = problem(json);
+        EXPECT_EQ(p.kind, Kind::UnknownCommand) << list;
+        EXPECT_EQ(p.at, at);
+        EXPECT_EQ(p.detail, "nope");
+    }
+}
+
+TEST(PluginManifest, RepeatsInMenusStatusItemsAndKeysAreRefused)
+{
+    Json json = withCommands();
+    json["contributes"]["menus"] = *Json::parse(R"([{"command": "count", "location": "menuBar"},
+        {"command": "count", "location": "grid.context"}, {"command": "count", "location": "menuBar", "group": "x"}])");
+    ManifestProblem p = problem(json);
+    EXPECT_EQ(p.kind, Kind::DuplicateId);
+    EXPECT_EQ(p.at, "/contributes/menus/2/command");
+
+    json = withCommands();
+    json["contributes"]["statusItems"] = *Json::parse(R"([{"id": "a", "title": "A", "text": "A"},
+        {"id": "a", "title": "B", "text": "B"}])");
+    p = problem(json);
+    EXPECT_EQ(p.kind, Kind::DuplicateId);
+    EXPECT_EQ(p.at, "/contributes/statusItems/1/id");
+
+    json = withCommands();
+    json["contributes"]["keybindings"] = *Json::parse(R"([{"command": "count", "key": "Ctrl+Alt+K"},
+        {"command": "clean", "key": "Ctrl+Alt+K"}])");
+    p = problem(json);
+    EXPECT_EQ(p.kind, Kind::DuplicateKey);
+    EXPECT_EQ(p.at, "/contributes/keybindings/1/key");
+}
+
+TEST(PluginManifest, KeysAndConditionsFollowTheSchema)
+{
+    for (const char *key : {"K", "Shift+K", "Alt+Ctrl+K", "Ctrl+Alt+K+L", "Meta+K"}) {
+        Json json = withCommands();
+        json["contributes"]["keybindings"] = Json::array({Json::object({{"command", Json("count")}, {"key", Json(key)}})});
+        EXPECT_EQ(problem(json).kind, Kind::Schema) << key;
+    }
+    for (const char *key : {"Ctrl+Alt+K", "Alt+Shift+F2", "F5", "Shift+F12", "Ctrl+Shift+Meta+Space"}) {
+        Json json = withCommands();
+        json["contributes"]["keybindings"] = Json::array({Json::object({{"command", Json("count")}, {"key", Json(key)}})});
+        EXPECT_TRUE(parse(json)) << key;
+    }
+    Json json = withCommands();
+    json["contributes"]["commands"] = *Json::parse(R"([{"id": "count", "title": "Count", "when": ["lines"]}])");
+    EXPECT_EQ(problem(json).kind, Kind::Schema);
 }

@@ -510,6 +510,26 @@ ApplicationWindow {
     readonly property bool originalShown: root.editor.translationMode && root.panelShown(originalDock)
     readonly property bool translationMode: root.editor.translationMode
     onTranslationModeChanged: root.placeOriginal()
+    readonly property var pluginConditions: ({
+        document: root.shell.hasEditingTarget,
+        selectedLines: root.shell.selectedCount,
+        video: root.video.hasVideo,
+        audio: root.audio.hasAudio,
+        karaoke: root.editor.hasLine && /\\(?:kf|ko|k|K)\d/.test(root.editor.text),
+        translation: root.translationMode
+    })
+    onPluginConditionsChanged: root.app.pluginRuntime?.setConditions(root.shellWindow, root.pluginConditions)
+    Component.onDestruction: root.app.pluginRuntime?.forgetWindow(root.shellWindow)
+    function pluginMenuItems(location) {
+        const runtime = root.app.pluginRuntime
+        if (!runtime)
+            return []
+        runtime.windowsRevision
+        return runtime.menuItems.filter(item => item.location === location && runtime.onIn(item.plugin, root.shellWindow))
+    }
+    function runPluginCommand(id, via) {
+        root.app.pluginRuntime.run(id, via)
+    }
     function placeOriginal() {
         if (!root.arrangementSettled)
             return
@@ -4188,6 +4208,15 @@ ApplicationWindow {
                     objectName: "pluginsMenuItem"
                     action: pluginsAction
                 }
+                PluginMenuEntries {
+                    menu: automationMenu
+                    after: pluginsMenuItem
+                    items: automationMenu.lazyItems?.placed ? root.pluginMenuItems("menuBar") : []
+                    runtime: root.app.pluginRuntime
+                    shellWindow: root.shellWindow
+                    keys: item => root.automationHotkeys.keys[item.id] ?? ""
+                    onTriggered: item => root.runPluginCommand(item.id, "menu")
+                }
                 MenuSeparator {
                     id: pluginCommandsSeparator
                     objectName: "pluginCommandsSeparator"
@@ -4206,9 +4235,13 @@ ApplicationWindow {
                         return runtime.commands.filter(c => runtime.onIn(c.plugin, root.shellWindow))
                     }
                     keys: command => root.automationHotkeys.keys[command.id] ?? ""
+                    reasonOf: command => {
+                        root.app.pluginRuntime.conditionsRevision
+                        return root.app.pluginRuntime.disabledReason(command.id, root.shellWindow)
+                    }
                     itemPrefix: "pluginCommand_"
                     menuPrefix: "pluginCommandMenu_"
-                    onTriggered: command => root.app.pluginRuntime.run(command.id)
+                    onTriggered: command => root.runPluginCommand(command.id, "menu")
                 }
                 MenuSeparator {
                     id: macrosSeparator
@@ -4947,6 +4980,15 @@ ApplicationWindow {
         ContextMenu.menu: ShellMenu {
             id: editMenu
             objectName: field.objectName + "Menu"
+            PluginMenuEntries {
+                menu: editMenu
+                items: field.objectName === "lineText" || field.objectName === "translationText"
+                       ? root.pluginMenuItems("lineEditor.context") : []
+                runtime: root.app.pluginRuntime
+                shellWindow: root.shellWindow
+                keys: item => root.automationHotkeys.keys[item.id] ?? ""
+                onTriggered: item => root.runPluginCommand(item.id, "menu")
+            }
             readonly property bool grammar: !!field.grammar.rule
             readonly property var suggestions: (grammar ? field.grammar.suggestions : field.misspell.suggestions) || []
             property bool headerShown: false
@@ -7628,6 +7670,14 @@ ApplicationWindow {
                     ShellMenu {
                         id: gridMenu
                         objectName: "gridMenu"
+                        PluginMenuEntries {
+                            menu: gridMenu
+                            items: root.pluginMenuItems("grid.context")
+                            runtime: root.app.pluginRuntime
+                            shellWindow: root.shellWindow
+                            keys: item => root.automationHotkeys.keys[item.id] ?? ""
+                            onTriggered: item => root.runPluginCommand(item.id, "menu")
+                        }
                         property bool canPasteTranslation: false
                         property bool canShiftTranslation: false
                         readonly property int lineCount: Math.max(1, root.shell.selectedCount)
@@ -8799,6 +8849,35 @@ ApplicationWindow {
         reviewText: root.review.on && root.review.waiting > 0
                     ? qsTranslate("HikariSub.Review", "%n AI change(s) to review", "", root.review.waiting) : ""
         onReviewClicked: root.showPanel(reviewDock)
+        pluginItems: {
+            const runtime = root.app.pluginRuntime
+            if (!runtime)
+                return []
+            runtime.windowsRevision
+            return runtime.statusItems.filter(item => runtime.onIn(item.plugin, root.shellWindow))
+        }
+        pluginTitles: {
+            const runtime = root.app.pluginRuntime
+            if (!runtime)
+                return []
+            runtime.windowsRevision
+            return runtime.statusItemTitles.filter(item => runtime.onIn(item.plugin, root.shellWindow))
+        }
+        hiddenItems: root.app.settings.value("statusBar.hiddenItems") || []
+        Connections {
+            target: root.app.settings
+            function onChanged(id) {
+                if (id === "statusBar.hiddenItems")
+                    statusStrip.hiddenItems = root.app.settings.value(id) || []
+            }
+        }
+        onPluginItemClicked: item => root.runPluginCommand(item.command, "status")
+        onPluginItemHidden: (key, hidden) => {
+            const rows = (root.app.settings.value("statusBar.hiddenItems") || []).filter(k => k !== key)
+            if (hidden)
+                rows.push(key)
+            root.app.settings.setValue("statusBar.hiddenItems", rows)
+        }
     }
     function currentTab() {
         const tabs = root.app.tabs
@@ -8911,6 +8990,7 @@ ApplicationWindow {
     PluginManagerDialog {
         id: pluginManagerDialog
         manager: root.app.pluginManager
+        takenShortcuts: root.automationHotkeys.takenDefaults
         market: root.app.pluginMarketplace
         runtime: root.app.pluginRuntime
         settings: root.app.settings
@@ -10561,6 +10641,7 @@ ApplicationWindow {
 
     Component.onCompleted: {
         root.app.shellWindowLoaded(root)
+        root.app.pluginRuntime?.setConditions(root.shellWindow, root.pluginConditions)
         root.connectApi()
         const turnedOn = root.app.settings.value("workspace.karaokeTurnedOn")
         root.karaokeTurnedOn = turnedOn.indexOf("audio.karaoke") >= 0
