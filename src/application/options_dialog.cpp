@@ -57,10 +57,6 @@ constexpr OptionsBinding kBindings[] = {
     {"program.font", Font, Appearance, 0, 0, 0, "program.fontSize"},
     {"grid.calcSpacesAndPunctuationForWraps", Check, Grid},
     {"grid.calcSpacesAndPunctuationForCps", Check, Grid},
-    {"grid.cpsWarning", Number, Grid, 1, 100},
-    {"grid.cpsError", Number, Grid, 1, 100},
-    {"grid.lineLength", Number, Grid, 1, 1000},
-    {"grid.maxLines", Number, Grid, 1, 20},
     {"automation.loadingMethod", IndexChoice, Automation, 0, 0, 4},
     {"fonts.externalDirectory", Text, General},
     {"convert.styleCatalog", Catalog, Conversion},
@@ -176,6 +172,10 @@ constexpr OptionsBinding kBindings[] = {
     {"editing.cycleValues.alpha", Text, Editing},
     {"editing.cycleValues.an", Text, Editing},
     {"editing.cycleValues.fsp", Text, Editing},
+    {"grid.cpsWarning", Number, Grid, 1, 100},
+    {"grid.cpsError", Number, Grid, 1, 100},
+    {"grid.lineLength", Number, Grid, 1, 1000},
+    {"grid.maxLines", Number, Grid, 1, 20},
 #ifdef _WIN32
     {"audio.outputHostApi", IndexChoice, Audio, 0, 0, 2},  // 0 WASAPI, 1 DirectSound
     {"video.playbackPlayer", IndexChoice, Video, 0, 0, 2}, // 0 built-in, 1 DirectShow
