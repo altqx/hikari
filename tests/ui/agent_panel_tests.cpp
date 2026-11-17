@@ -45,6 +45,7 @@
 #include <QTemporaryDir>
 #include <QtTest>
 
+#include <algorithm>
 #include <memory>
 #include <cmath>
 #include <optional>
@@ -415,6 +416,47 @@ class AgentPanelTest : public QObject {
     }
 
     static QRectF onScene(const QQuickItem *at) { return at->mapRectToScene(QRectF(0, 0, at->width(), at->height())); }
+    static bool takesRightClicks(const QQuickItem *at)
+    {
+        if (at->acceptedMouseButtons() & Qt::RightButton)
+            return true;
+        for (const QObject *child : at->children())
+            if (child->inherits("QQuickPointerHandler") && child->property("enabled").toBool()
+                && (child->property("acceptedButtons").toInt() & Qt::RightButton))
+                return true;
+        return false;
+    }
+    static QQuickItem *rightClickTakerAt(QQuickItem *at, const QPointF &scene)
+    {
+        if (!at->isVisible() || !at->isEnabled())
+            return nullptr;
+        const QPointF local = at->mapFromScene(scene);
+        if (at->clip() && !at->contains(local))
+            return nullptr;
+        QList<QQuickItem *> children = at->childItems();
+        std::stable_sort(children.begin(), children.end(), [](QQuickItem *a, QQuickItem *b) { return a->z() < b->z(); });
+        for (auto child = children.rbegin(); child != children.rend(); ++child)
+            if (QQuickItem *taker = rightClickTakerAt(*child, scene))
+                return taker;
+        return at->contains(local) && takesRightClicks(at) ? at : nullptr;
+    }
+    QString rightClick(QQuickItem *target, const QPointF &local)
+    {
+        QQuickItem *taker = nullptr;
+        const bool reachable = QTest::qWaitFor([&] {
+            taker = rightClickTakerAt(window()->contentItem(), target->mapToScene(local));
+            return taker == target || (taker && target->isAncestorOf(taker));
+        });
+        if (!reachable)
+            return QStringLiteral("%1 at %2,%3 is under %4")
+                .arg(target->objectName())
+                .arg(target->mapToScene(local).x())
+                .arg(target->mapToScene(local).y())
+                .arg(taker ? QString::fromLatin1(taker->metaObject()->className()) + u' ' + taker->objectName()
+                           : QStringLiteral("nothing that takes a right click"));
+        QTest::mouseClick(window(), Qt::RightButton, {}, target->mapToScene(local).toPoint());
+        return {};
+    }
     static QStringList sticksOut(QQuickItem *from, const QRectF &bounds)
     {
         QStringList out;
@@ -935,7 +977,8 @@ private slots:
         QTRY_VERIFY(!agent().thread().value(QStringLiteral("running")).toBool());
         auto *answerMenu = window()->findChild<QObject *>(QStringLiteral("agentAnswerMenu"));
         QVERIFY(answerMenu);
-        QTest::mouseClick(window(), Qt::RightButton, {}, answer->mapToScene(QPointF(4, answer->height() / 2)).toPoint());
+        const QString answerMissed = rightClick(answer, QPointF(4, answer->height() / 2));
+        QVERIFY2(answerMissed.isEmpty(), qPrintable(answerMissed));
         QTRY_VERIFY(answerMenu->property("opened").toBool());
         QCOMPARE(menu_rows::shown(answerMenu), (QStringList{"textCopy", "|", "textSelectAll"}));
         shootMenu(QStringLiteral("cx7-agent-answer"), answerMenu);
@@ -963,7 +1006,8 @@ private slots:
                              ids << t.toMap().value(QStringLiteral("id")).toString();
                          return ids.join(u' ');
                      }()));
-        QTest::mouseClick(window(), Qt::RightButton, {}, firstRow->mapToScene(QPointF(20, firstRow->height() / 2)).toPoint());
+        const QString rowMissed = rightClick(firstRow, QPointF(20, firstRow->height() / 2));
+        QVERIFY2(rowMissed.isEmpty(), qPrintable(rowMissed));
         QTRY_VERIFY(menu->property("opened").toBool());
         QCOMPARE(agent().current(), first);
         shootMenu(QStringLiteral("cx7-agent-thread-row"), menu);
